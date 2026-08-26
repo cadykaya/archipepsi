@@ -422,3 +422,37 @@ def test_request_next_zone_carries_the_finale_choice():
     assert isinstance(msg, RequestNextZone) and msg.finale
     default = TypeAdapter(ClientMessage).validate_python({"type": "request_next_zone"})
     assert default.finale is False
+
+
+# ---------------------------------------------------------------------------
+# Generated artifacts
+# ---------------------------------------------------------------------------
+
+def test_generated_artifacts_are_not_stale(tmp_path):
+    """`generated/` is committed for convenience, which creates a drift risk:
+    a schema change that nobody re-exports leaves Godot reading constants the
+    validator no longer enforces. This makes the packet's own
+    "regenerate, never hand-edit" rule enforceable instead of remembered."""
+    import pathlib
+    import export
+
+    committed = pathlib.Path(__file__).parent / "generated"
+    if not committed.is_dir():
+        pytest.skip("generated/ not present; run `python export.py generated`")
+
+    import sys
+    argv = sys.argv
+    try:
+        sys.argv = ["export.py", str(tmp_path)]
+        export.main()
+    finally:
+        sys.argv = argv
+
+    stale = [
+        f.name for f in sorted(committed.iterdir())
+        if f.is_file() and f.read_text() != (tmp_path / f.name).read_text()
+    ]
+    assert not stale, (
+        f"stale generated artifacts: {stale}. "
+        "Run `python export.py generated` and commit the result."
+    )

@@ -47,9 +47,11 @@ Be honest about the limit: the bridge **cannot** verify that the chamber's objec
 
 # 3. Technology
 
-**Godot 4.4.x, stock, GDScript.** Pin the exact patch version in `project.godot`. Do not fork. No C# or GDExtension without a demonstrated hard blocker recorded in `docs/IMPLEMENTATION_DECISIONS.md`.
+**Godot 4.5.1 stable** (official build `f62fdbde1`), stock, GDScript. Pin it in `project.godot`. Do not fork. No C# or GDExtension without a demonstrated hard blocker recorded in `docs/IMPLEMENTATION_DECISIONS.md`.
 
-**Python 3.12** (Archipelago requires ≥3.11.9 and <3.14; 3.12 is the safe middle).
+**Python 3.11.15** — the developer's system Python. Archipelago 0.6.7 requires ≥3.11.9 and <3.14, so this is in range.
+
+These are the versions actually installed on the development machine, not a guess. Nothing Archipepsi uses changed between Godot 4.4 and 4.5: the only GDScript-incompatible breaks in that migration are `JSONRPC.set_scope` → `set_method`, two removed `RenderingServer` physics-interpolation methods, and a new `oversampling` parameter on `TextServerExtension`. None are in our surface — `WebSocketPeer`, `CharacterBody3D`, `BaseMaterial3D.texture_filter`, `Image.create` and `RandomNumberGenerator` are all unaffected.
 
 **Archipelago 0.6.7**, pinned by tag.
 
@@ -301,7 +303,7 @@ archipepsi/
 ├─ .gitignore                    .archipelago/  .env  .godot/  __pycache__/  *.tmp
 │
 ├─ godot/
-│  ├─ project.godot              Godot 4.4.x pinned
+│  ├─ project.godot              Godot 4.5.1 stable pinned
 │  ├─ scenes/                    main/ ui/ player/ enemies/ zone/ props/ hub/
 │  ├─ scripts/
 │  │  ├─ autoload/               bridge_client.gd, constants.gd (GENERATED)
@@ -392,6 +394,7 @@ Checked against Archipelago 0.6.7 sources rather than recalled. Re-verify agains
 - `archipelago.json` requires `game`; `.apworld` `version`/`compatible_version` are added by AP's own build component and must not be hand-written.
 - Archipelago is **not** pip-installable; `CommonClient` imports `worlds` at module load.
 - Archipelago requires Python ≥3.11.9, <3.14.
-- Godot 4 `WebSocketPeer.send_text` is correct for JSON text frames.
+- Godot 4 `WebSocketPeer.send_text` is correct for JSON text frames; unchanged in 4.5.
+- The Godot 4.4 → 4.5 migration touches nothing Archipepsi uses (see §3).
 
 **References:** [Network Protocol](https://github.com/ArchipelagoMW/Archipelago/blob/main/docs/network%20protocol.md) · [World API](https://github.com/ArchipelagoMW/Archipelago/blob/main/docs/world%20api.md) · [apworld Specification](https://github.com/ArchipelagoMW/Archipelago/blob/main/docs/apworld%20specification.md) · [CommonClient.py](https://github.com/ArchipelagoMW/Archipelago/blob/main/CommonClient.py) · [MultiServer.py](https://github.com/ArchipelagoMW/Archipelago/blob/main/MultiServer.py) · [Running from source](https://github.com/ArchipelagoMW/Archipelago/blob/main/docs/running%20from%20source.md) · [Godot WebSocket](https://docs.godotengine.org/en/stable/tutorials/networking/websocket.html)

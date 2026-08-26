@@ -72,7 +72,7 @@ Status: **Fixed** · **Decided** (was an open question) · **Documented** (corre
 | G4 | Saves not atomic | **Fixed** | temp → fsync → rename, one `.bak`, parse-failure recovery |
 | G5 | Godot needs Python even for Mock | **Documented** | Accepted. The bridge is authoritative in v0.4, so Godot depending on it is now structural rather than incidental |
 | G6 | No bridge reconnect/heartbeat | **Fixed** | Backoff policy, `BRIDGE OFFLINE` display, in-flight requests abandoned not retried. `TECHNICAL_ARCHITECTURE.md` §9.1 |
-| G7 | Versions unpinned | **Fixed** | Godot 4.4.x, Python 3.12, Archipelago 0.6.7 |
+| G7 | Versions unpinned | **Fixed** | Godot 4.5.1 stable (`f62fdbde1`), Python 3.11.15, Archipelago 0.6.7 — the versions actually installed, confirmed by the developer |
 | G8 | No Godot test runner | **Decided** | No addon. Headless `--script` tests limited to what they can genuinely assert; the rest listed as manual. `ACCEPTANCE_TESTS.md` §5, §7 |
 | G9 | Schemas promised, not written | **Fixed** | `schemas/` ships as runnable, tested Pydantic; JSON Schema and `constants.gd` are generated from it |
 | G10 | Epsilon Static does nothing | **Fixed** | Cosmetic Hub corruption + a counter Epsilon can reference. Explicitly non-logic |

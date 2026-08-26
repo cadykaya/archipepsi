@@ -100,7 +100,7 @@ If all 15 work the central hypothesis is proven. Echo-gated traversal is **not**
 
 ## 5.1 In
 
-Stock Godot 4.4.x + GDScript; Python bridge owning campaign state; Archipelago `CommonContext` from a pinned checkout; first-person movement, jump, interact, health, simple combat; 3 enemy archetypes; runtime scene construction from 5 chamber templates; 30 AP locations; 2 Pepsi Keys; Epsilon Coins; Epsilon Static; 3 logic tiers; real AP connection; scouting with `create_as_hint = 0`; `items_handling = 0b111`; reconnect reconciliation; persisted pending transactions; Epsilon provider abstraction with Claude / mock / fallback; Echo generation; one-equipped-Echo inventory; generated Zones; a reserved finale Zone; fixed-Hub shop; save/load; debug overlay; `.apworld` build; README; example YAML.
+Stock Godot 4.5.1 + GDScript; Python bridge owning campaign state; Archipelago `CommonContext` from a pinned checkout; first-person movement, jump, interact, health, simple combat; 3 enemy archetypes; runtime scene construction from 5 chamber templates; 30 AP locations; 2 Pepsi Keys; Epsilon Coins; Epsilon Static; 3 logic tiers; real AP connection; scouting with `create_as_hint = 0`; `items_handling = 0b111`; reconnect reconciliation; persisted pending transactions; Epsilon provider abstraction with Claude / mock / fallback; Echo generation; one-equipped-Echo inventory; generated Zones; a reserved finale Zone; fixed-Hub shop; save/load; debug overlay; `.apworld` build; README; example YAML.
 
 ## 5.2 Out
 
@@ -489,6 +489,8 @@ Low-poly, blocky, deliberately crude, readable, colorful by theme. Nearest-neigh
 > **Do not search for, download, browse, or evaluate external asset packs, texture packs, or model libraries.** Themes are `StandardMaterial3D` with flat colors and `texture_filter = NEAREST`. If a texture is wanted, generate it procedurally at runtime with `Image.create()` — a 16×16 two-tone checker or noise per theme, written in code. No image files ship in the first pass.
 
 Six themes as six color triplets is ~20 lines of GDScript, looks appropriately terrible in exactly the way §3.4 wants, and costs zero minutes of asset archaeology. This rule exists because that archaeology is an easy way to lose 30–45 minutes of a five-hour build.
+
+**Blender is installed on the development machine (4.5.9). Do not use it.** No modelling, no `.blend` files, no glTF export pipeline, no import step. The POC's geometry is `BoxMesh`, `CylinderMesh` and `PlaneMesh` assembled in code — that is the entire mesh budget, and "the developer happens to have Blender" is not a reason to build an asset pipeline the design explicitly defers. Custom block models are roadmap material (§23), not POC work.
 
 ---
 

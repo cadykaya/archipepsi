@@ -58,7 +58,8 @@ The first genuinely important milestone:
 - API keys never enter committed files, Godot project files, or logs.
 
 **Engine**
-- Stock Godot 4.4.x. Do not fork. No GDExtension without a recorded hard blocker.
+- Stock Godot 4.5.1 (`f62fdbde1`). Do not fork. No GDExtension without a recorded hard blocker.
+- Python 3.11.15. Do not require a different interpreter.
 
 ---
 

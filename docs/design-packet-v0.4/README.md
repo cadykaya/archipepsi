@@ -67,7 +67,7 @@ PYTHON BRIDGE                  owns the Archipepsi campaign
 
 ## POC shape
 
-30 Checks · 2 Pepsi Keys · 3 AP tiers · 10 Epsilon Coins · 18 Epsilon Static · fixed Hub · 2–3 Checks per Zone · a reserved single-Check finale · 5 chamber templates · 3 enemy archetypes · 3 objectives · 6 themes · one equipped Echo · 10 composable Echo effects · Hub-only shop · Claude-compatible Epsilon with mock and deterministic fallback providers · stock Godot 4.4.x · Python bridge on a pinned Archipelago 0.6.7 checkout.
+30 Checks · 2 Pepsi Keys · 3 AP tiers · 10 Epsilon Coins · 18 Epsilon Static · fixed Hub · 2–3 Checks per Zone · a reserved single-Check finale · 5 chamber templates · 3 enemy archetypes · 3 objectives · 6 themes · one equipped Echo · 10 composable Echo effects · Hub-only shop · Claude-compatible Epsilon with mock and deterministic fallback providers · stock Godot 4.5.1 · Python 3.11 bridge on a pinned Archipelago 0.6.7 checkout.
 
 No Godot fork. No model-generated executable code. No Echo-gated mandatory traversal.
 
