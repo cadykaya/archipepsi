@@ -1,0 +1,557 @@
+{
+  "$defs": {
+    "Dash": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "dash",
+          "title": "Type",
+          "type": "string"
+        },
+        "force": {
+          "maximum": 20,
+          "minimum": 4,
+          "title": "Force",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "force"
+      ],
+      "title": "Dash",
+      "type": "object"
+    },
+    "GrappleToSurface": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "grapple_to_surface",
+          "title": "Type",
+          "type": "string"
+        },
+        "range": {
+          "maximum": 35,
+          "minimum": 5,
+          "title": "Range",
+          "type": "number"
+        },
+        "pull_force": {
+          "maximum": 25,
+          "minimum": 4,
+          "title": "Pull Force",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "range",
+        "pull_force"
+      ],
+      "title": "GrappleToSurface",
+      "type": "object"
+    },
+    "HealSelf": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "heal_self",
+          "title": "Type",
+          "type": "string"
+        },
+        "amount": {
+          "maximum": 60,
+          "minimum": 5,
+          "title": "Amount",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "amount"
+      ],
+      "title": "HealSelf",
+      "type": "object"
+    },
+    "HitscanDamage": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "hitscan_damage",
+          "title": "Type",
+          "type": "string"
+        },
+        "damage": {
+          "maximum": 25,
+          "minimum": 1,
+          "title": "Damage",
+          "type": "number"
+        },
+        "pellets": {
+          "maximum": 16,
+          "minimum": 1,
+          "title": "Pellets",
+          "type": "integer"
+        },
+        "spread_degrees": {
+          "maximum": 30,
+          "minimum": 0,
+          "title": "Spread Degrees",
+          "type": "number"
+        },
+        "range": {
+          "maximum": 60,
+          "minimum": 5,
+          "title": "Range",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "damage",
+        "pellets",
+        "spread_degrees",
+        "range"
+      ],
+      "title": "HitscanDamage",
+      "type": "object"
+    },
+    "KnockbackTarget": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "knockback_target",
+          "title": "Type",
+          "type": "string"
+        },
+        "force": {
+          "maximum": 16,
+          "minimum": 0,
+          "title": "Force",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "force"
+      ],
+      "title": "KnockbackTarget",
+      "type": "object"
+    },
+    "ModifyGravity": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "modify_gravity",
+          "title": "Type",
+          "type": "string"
+        },
+        "multiplier": {
+          "maximum": 1.0,
+          "minimum": 0.35,
+          "title": "Multiplier",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "multiplier"
+      ],
+      "title": "ModifyGravity",
+      "type": "object"
+    },
+    "ModifySpeed": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "modify_speed",
+          "title": "Type",
+          "type": "string"
+        },
+        "multiplier": {
+          "maximum": 1.6,
+          "minimum": 0.9,
+          "title": "Multiplier",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "multiplier"
+      ],
+      "title": "ModifySpeed",
+      "type": "object"
+    },
+    "PassiveEcho": {
+      "additionalProperties": false,
+      "description": "Applies while equipped. RMB does nothing. No cooldown field exists.",
+      "properties": {
+        "schema_version": {
+          "const": 5,
+          "default": 5,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "echo_id": {
+          "maxLength": 32,
+          "minLength": 1,
+          "pattern": "^echo_\\d+$",
+          "title": "Echo Id",
+          "type": "string"
+        },
+        "source_location_id": {
+          "maximum": 89100030,
+          "minimum": 89100001,
+          "title": "Source Location Id",
+          "type": "integer"
+        },
+        "source_item_name": {
+          "maxLength": 96,
+          "minLength": 1,
+          "title": "Source Item Name",
+          "type": "string"
+        },
+        "source_game": {
+          "maxLength": 96,
+          "minLength": 1,
+          "title": "Source Game",
+          "type": "string"
+        },
+        "source_recipient_name": {
+          "maxLength": 96,
+          "minLength": 1,
+          "title": "Source Recipient Name",
+          "type": "string"
+        },
+        "display_name": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Display Name",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "maxLength": 24,
+            "type": "string"
+          },
+          "maxItems": 6,
+          "title": "Tags",
+          "type": "array"
+        },
+        "activation": {
+          "const": "passive",
+          "title": "Activation",
+          "type": "string"
+        },
+        "archetype": {
+          "enum": [
+            "passive",
+            "mobility"
+          ],
+          "title": "Archetype",
+          "type": "string"
+        },
+        "effects": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "modify_gravity": "#/$defs/ModifyGravity",
+                "modify_speed": "#/$defs/ModifySpeed"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ModifyGravity"
+              },
+              {
+                "$ref": "#/$defs/ModifySpeed"
+              }
+            ]
+          },
+          "maxItems": 2,
+          "minItems": 1,
+          "title": "Effects",
+          "type": "array"
+        }
+      },
+      "required": [
+        "echo_id",
+        "source_location_id",
+        "source_item_name",
+        "source_game",
+        "source_recipient_name",
+        "display_name",
+        "description",
+        "activation",
+        "archetype",
+        "effects"
+      ],
+      "title": "PassiveEcho",
+      "type": "object"
+    },
+    "PrimaryEcho": {
+      "additionalProperties": false,
+      "description": "Activated with RMB, subject to cooldown. LMB stays Static Pulse.",
+      "properties": {
+        "schema_version": {
+          "const": 5,
+          "default": 5,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "echo_id": {
+          "maxLength": 32,
+          "minLength": 1,
+          "pattern": "^echo_\\d+$",
+          "title": "Echo Id",
+          "type": "string"
+        },
+        "source_location_id": {
+          "maximum": 89100030,
+          "minimum": 89100001,
+          "title": "Source Location Id",
+          "type": "integer"
+        },
+        "source_item_name": {
+          "maxLength": 96,
+          "minLength": 1,
+          "title": "Source Item Name",
+          "type": "string"
+        },
+        "source_game": {
+          "maxLength": 96,
+          "minLength": 1,
+          "title": "Source Game",
+          "type": "string"
+        },
+        "source_recipient_name": {
+          "maxLength": 96,
+          "minLength": 1,
+          "title": "Source Recipient Name",
+          "type": "string"
+        },
+        "display_name": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Display Name",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "maxLength": 24,
+            "type": "string"
+          },
+          "maxItems": 6,
+          "title": "Tags",
+          "type": "array"
+        },
+        "activation": {
+          "const": "primary",
+          "title": "Activation",
+          "type": "string"
+        },
+        "archetype": {
+          "enum": [
+            "weapon",
+            "tool",
+            "mobility"
+          ],
+          "title": "Archetype",
+          "type": "string"
+        },
+        "cooldown": {
+          "maximum": 15.0,
+          "minimum": 0.15,
+          "title": "Cooldown",
+          "type": "number"
+        },
+        "initiator": {
+          "discriminator": {
+            "mapping": {
+              "dash": "#/$defs/Dash",
+              "grapple_to_surface": "#/$defs/GrappleToSurface",
+              "heal_self": "#/$defs/HealSelf",
+              "hitscan_damage": "#/$defs/HitscanDamage",
+              "projectile_damage": "#/$defs/ProjectileDamage",
+              "shield": "#/$defs/Shield"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/HitscanDamage"
+            },
+            {
+              "$ref": "#/$defs/ProjectileDamage"
+            },
+            {
+              "$ref": "#/$defs/Dash"
+            },
+            {
+              "$ref": "#/$defs/GrappleToSurface"
+            },
+            {
+              "$ref": "#/$defs/HealSelf"
+            },
+            {
+              "$ref": "#/$defs/Shield"
+            }
+          ],
+          "title": "Initiator"
+        },
+        "modifiers": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "knockback_target": "#/$defs/KnockbackTarget",
+                "recoil_self": "#/$defs/RecoilSelf"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/RecoilSelf"
+              },
+              {
+                "$ref": "#/$defs/KnockbackTarget"
+              }
+            ]
+          },
+          "maxItems": 2,
+          "title": "Modifiers",
+          "type": "array"
+        }
+      },
+      "required": [
+        "echo_id",
+        "source_location_id",
+        "source_item_name",
+        "source_game",
+        "source_recipient_name",
+        "display_name",
+        "description",
+        "activation",
+        "archetype",
+        "cooldown",
+        "initiator"
+      ],
+      "title": "PrimaryEcho",
+      "type": "object"
+    },
+    "ProjectileDamage": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "projectile_damage",
+          "title": "Type",
+          "type": "string"
+        },
+        "damage": {
+          "maximum": 25,
+          "minimum": 1,
+          "title": "Damage",
+          "type": "number"
+        },
+        "speed": {
+          "maximum": 45,
+          "minimum": 5,
+          "title": "Speed",
+          "type": "number"
+        },
+        "lifetime": {
+          "maximum": 6,
+          "minimum": 0.5,
+          "title": "Lifetime",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "damage",
+        "speed",
+        "lifetime"
+      ],
+      "title": "ProjectileDamage",
+      "type": "object"
+    },
+    "RecoilSelf": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "recoil_self",
+          "title": "Type",
+          "type": "string"
+        },
+        "force": {
+          "maximum": 16,
+          "minimum": 0,
+          "title": "Force",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "force"
+      ],
+      "title": "RecoilSelf",
+      "type": "object"
+    },
+    "Shield": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "shield",
+          "title": "Type",
+          "type": "string"
+        },
+        "amount": {
+          "maximum": 80,
+          "minimum": 5,
+          "title": "Amount",
+          "type": "number"
+        },
+        "duration": {
+          "maximum": 15,
+          "minimum": 1,
+          "title": "Duration",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "amount",
+        "duration"
+      ],
+      "title": "Shield",
+      "type": "object"
+    }
+  },
+  "discriminator": {
+    "mapping": {
+      "passive": "#/$defs/PassiveEcho",
+      "primary": "#/$defs/PrimaryEcho"
+    },
+    "propertyName": "activation"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/PrimaryEcho"
+    },
+    {
+      "$ref": "#/$defs/PassiveEcho"
+    }
+  ]
+}

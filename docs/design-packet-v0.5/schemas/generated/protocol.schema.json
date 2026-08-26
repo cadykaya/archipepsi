@@ -1,0 +1,3880 @@
+{
+  "client_message": {
+    "$defs": {
+      "AbandonZone": {
+        "additionalProperties": false,
+        "description": "Give up on a Zone that cannot be finished.\n\nReturns its unclaimed locations to the eligible pool and preserves any\nChecks already confirmed inside it. Without this, one enemy steered off\na ledge blocks the campaign permanently.",
+        "properties": {
+          "type": {
+            "const": "abandon_zone",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id"
+        ],
+        "title": "AbandonZone",
+        "type": "object"
+      },
+      "ApConnect": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "ap_connect",
+            "title": "Type",
+            "type": "string"
+          },
+          "server": {
+            "maxLength": 256,
+            "title": "Server",
+            "type": "string"
+          },
+          "slot_name": {
+            "maxLength": 96,
+            "title": "Slot Name",
+            "type": "string"
+          },
+          "password": {
+            "default": "",
+            "maxLength": 256,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "server",
+          "slot_name"
+        ],
+        "title": "ApConnect",
+        "type": "object"
+      },
+      "ApDisconnect": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "ap_disconnect",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "ApDisconnect",
+        "type": "object"
+      },
+      "BuyShopStock": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "buy_shop_stock",
+            "title": "Type",
+            "type": "string"
+          },
+          "location_id": {
+            "maximum": 89100030,
+            "minimum": 89100001,
+            "title": "Location Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "location_id"
+        ],
+        "title": "BuyShopStock",
+        "type": "object"
+      },
+      "ClaimCheck": {
+        "additionalProperties": false,
+        "description": "Sent when the player interacts with an unlocked reward object.\n\nThe bridge re-verifies what it actually can: a campaign is loaded, the\nZone is ACTIVE, the location is in that Zone's allocated_location_ids,\nit is not already confirmed, and no pending transaction exists for it.\nIt cannot verify the chamber objective was satisfied \u2014 it does not\nsimulate enemies. Objective gating is client-side.",
+        "properties": {
+          "type": {
+            "const": "claim_check",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "location_id": {
+            "maximum": 89100030,
+            "minimum": 89100001,
+            "title": "Location Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "location_id"
+        ],
+        "title": "ClaimCheck",
+        "type": "object"
+      },
+      "DebugCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "debug_command",
+            "title": "Type",
+            "type": "string"
+          },
+          "command": {
+            "enum": [
+              "resync",
+              "print_snapshot",
+              "force_fallback_zone",
+              "grant_mock_coin",
+              "grant_mock_signal_key",
+              "clear_campaign"
+            ],
+            "title": "Command",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "command"
+        ],
+        "title": "DebugCommand",
+        "type": "object"
+      },
+      "EnterZone": {
+        "additionalProperties": false,
+        "description": "Player walked into the portal. Moves GENERATED -> ACTIVE.\n\nv0.4 had no such intent, which is why GENERATED was unreachable and\nunrecoverable.",
+        "properties": {
+          "type": {
+            "const": "enter_zone",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id"
+        ],
+        "title": "EnterZone",
+        "type": "object"
+      },
+      "EquipEcho": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "equip_echo",
+            "title": "Type",
+            "type": "string"
+          },
+          "echo_id": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Echo Id"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "EquipEcho",
+        "type": "object"
+      },
+      "ExitZone": {
+        "additionalProperties": false,
+        "description": "Exit portal. Pure travel: completion is driven by Check confirmation,\nnot by this intent, so it is a no-op-plus-snapshot on a finished Zone.",
+        "properties": {
+          "type": {
+            "const": "exit_zone",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id"
+        ],
+        "title": "ExitZone",
+        "type": "object"
+      },
+      "Hello": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "hello",
+            "title": "Type",
+            "type": "string"
+          },
+          "client_version": {
+            "maxLength": 32,
+            "title": "Client Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "client_version"
+        ],
+        "title": "Hello",
+        "type": "object"
+      },
+      "LeaveZone": {
+        "additionalProperties": false,
+        "description": "Pause-menu Return to Hub. Zone stays ACTIVE; transient state resets.",
+        "properties": {
+          "type": {
+            "const": "leave_zone",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "LeaveZone",
+        "type": "object"
+      },
+      "RequestNextZone": {
+        "additionalProperties": false,
+        "description": "Generate the next Zone.\n\n`finale` picks between an ordinary Zone and the reserved Check 030 Zone\nwhen both are offered. The bridge rejects finale=True unless\nHubStatus.finale_available, and rejects either while a Zone is held.",
+        "properties": {
+          "type": {
+            "const": "request_next_zone",
+            "title": "Type",
+            "type": "string"
+          },
+          "finale": {
+            "default": false,
+            "title": "Finale",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "RequestNextZone",
+        "type": "object"
+      },
+      "SetCreativity": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "set_creativity",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "enum": [
+              0,
+              1,
+              2
+            ],
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ],
+        "title": "SetCreativity",
+        "type": "object"
+      },
+      "StartMockCampaign": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "start_mock_campaign",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "StartMockCampaign",
+        "type": "object"
+      }
+    },
+    "discriminator": {
+      "mapping": {
+        "abandon_zone": "#/$defs/AbandonZone",
+        "ap_connect": "#/$defs/ApConnect",
+        "ap_disconnect": "#/$defs/ApDisconnect",
+        "buy_shop_stock": "#/$defs/BuyShopStock",
+        "claim_check": "#/$defs/ClaimCheck",
+        "debug_command": "#/$defs/DebugCommand",
+        "enter_zone": "#/$defs/EnterZone",
+        "equip_echo": "#/$defs/EquipEcho",
+        "exit_zone": "#/$defs/ExitZone",
+        "hello": "#/$defs/Hello",
+        "leave_zone": "#/$defs/LeaveZone",
+        "request_next_zone": "#/$defs/RequestNextZone",
+        "set_creativity": "#/$defs/SetCreativity",
+        "start_mock_campaign": "#/$defs/StartMockCampaign"
+      },
+      "propertyName": "type"
+    },
+    "oneOf": [
+      {
+        "$ref": "#/$defs/Hello"
+      },
+      {
+        "$ref": "#/$defs/ApConnect"
+      },
+      {
+        "$ref": "#/$defs/ApDisconnect"
+      },
+      {
+        "$ref": "#/$defs/StartMockCampaign"
+      },
+      {
+        "$ref": "#/$defs/RequestNextZone"
+      },
+      {
+        "$ref": "#/$defs/EnterZone"
+      },
+      {
+        "$ref": "#/$defs/LeaveZone"
+      },
+      {
+        "$ref": "#/$defs/ExitZone"
+      },
+      {
+        "$ref": "#/$defs/AbandonZone"
+      },
+      {
+        "$ref": "#/$defs/ClaimCheck"
+      },
+      {
+        "$ref": "#/$defs/BuyShopStock"
+      },
+      {
+        "$ref": "#/$defs/EquipEcho"
+      },
+      {
+        "$ref": "#/$defs/SetCreativity"
+      },
+      {
+        "$ref": "#/$defs/DebugCommand"
+      }
+    ]
+  },
+  "server_message": {
+    "$defs": {
+      "ArenaChamber": {
+        "additionalProperties": false,
+        "description": "Rectangular combat room. A boss room is an arena holding one brute.",
+        "properties": {
+          "id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "flavor": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Flavor"
+          },
+          "reward_location_id": {
+            "anyOf": [
+              {
+                "maximum": 89100030,
+                "minimum": 89100001,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reward Location Id"
+          },
+          "type": {
+            "const": "arena",
+            "title": "Type",
+            "type": "string"
+          },
+          "width": {
+            "maximum": 28,
+            "minimum": 10,
+            "title": "Width",
+            "type": "number"
+          },
+          "depth": {
+            "maximum": 28,
+            "minimum": 10,
+            "title": "Depth",
+            "type": "number"
+          },
+          "wall_height": {
+            "maximum": 8,
+            "minimum": 4,
+            "title": "Wall Height",
+            "type": "number"
+          },
+          "objective": {
+            "enum": [
+              "kill_all",
+              "reach_reward"
+            ],
+            "title": "Objective",
+            "type": "string"
+          },
+          "enemies": {
+            "items": {
+              "$ref": "#/$defs/EnemyGroup"
+            },
+            "maxItems": 4,
+            "title": "Enemies",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "width",
+          "depth",
+          "wall_height",
+          "objective"
+        ],
+        "title": "ArenaChamber",
+        "type": "object"
+      },
+      "BridgeError": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "error",
+            "title": "Type",
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "ap",
+              "epsilon",
+              "bridge",
+              "protocol"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "recoverable": {
+            "title": "Recoverable",
+            "type": "boolean"
+          },
+          "message": {
+            "maxLength": 160,
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "scope",
+          "recoverable",
+          "message"
+        ],
+        "title": "BridgeError",
+        "type": "object"
+      },
+      "BridgeReady": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "bridge_ready",
+            "title": "Type",
+            "type": "string"
+          },
+          "protocol_version": {
+            "const": 5,
+            "default": 5,
+            "title": "Protocol Version",
+            "type": "integer"
+          },
+          "bridge_version": {
+            "maxLength": 32,
+            "title": "Bridge Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "bridge_version"
+        ],
+        "title": "BridgeReady",
+        "type": "object"
+      },
+      "CampaignSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "campaign_snapshot",
+            "default": "campaign_snapshot",
+            "title": "Type",
+            "type": "string"
+          },
+          "protocol_version": {
+            "const": 5,
+            "default": 5,
+            "title": "Protocol Version",
+            "type": "integer"
+          },
+          "bridge_connected": {
+            "title": "Bridge Connected",
+            "type": "boolean"
+          },
+          "ap_connected": {
+            "title": "Ap Connected",
+            "type": "boolean"
+          },
+          "ap_mode": {
+            "enum": [
+              "real",
+              "mock"
+            ],
+            "title": "Ap Mode",
+            "type": "string"
+          },
+          "epsilon_provider": {
+            "enum": [
+              "claude",
+              "mock",
+              "fallback"
+            ],
+            "title": "Epsilon Provider",
+            "type": "string"
+          },
+          "race_mode": {
+            "default": false,
+            "title": "Race Mode",
+            "type": "boolean"
+          },
+          "ap_state_is_current": {
+            "default": false,
+            "title": "Ap State Is Current",
+            "type": "boolean"
+          },
+          "seed_name": {
+            "default": "",
+            "maxLength": 128,
+            "title": "Seed Name",
+            "type": "string"
+          },
+          "slot_name": {
+            "default": "",
+            "maxLength": 96,
+            "title": "Slot Name",
+            "type": "string"
+          },
+          "slot_id": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Slot Id",
+            "type": "integer"
+          },
+          "team": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Team",
+            "type": "integer"
+          },
+          "checked_location_ids": {
+            "items": {
+              "maximum": 89100030,
+              "minimum": 89100001,
+              "type": "integer"
+            },
+            "title": "Checked Location Ids",
+            "type": "array"
+          },
+          "missing_location_ids": {
+            "items": {
+              "maximum": 89100030,
+              "minimum": 89100001,
+              "type": "integer"
+            },
+            "title": "Missing Location Ids",
+            "type": "array"
+          },
+          "scouted": {
+            "additionalProperties": {
+              "$ref": "#/$defs/ScoutedLocation"
+            },
+            "title": "Scouted",
+            "type": "object"
+          },
+          "signal_keys": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Signal Keys",
+            "type": "integer"
+          },
+          "unlocked_tier": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Unlocked Tier",
+            "type": "integer"
+          },
+          "coins_received": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Coins Received",
+            "type": "integer"
+          },
+          "coins_spent": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Coins Spent",
+            "type": "integer"
+          },
+          "coins_available": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Coins Available",
+            "type": "integer"
+          },
+          "static_received": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Static Received",
+            "type": "integer"
+          },
+          "static_glitch_units": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Static Glitch Units",
+            "type": "integer"
+          },
+          "echoes": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "passive": "#/$defs/PassiveEcho",
+                  "primary": "#/$defs/PrimaryEcho"
+                },
+                "propertyName": "activation"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/PrimaryEcho"
+                },
+                {
+                  "$ref": "#/$defs/PassiveEcho"
+                }
+              ]
+            },
+            "title": "Echoes",
+            "type": "array"
+          },
+          "equipped_echo_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Equipped Echo Id"
+          },
+          "active_zone": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ZoneRecord"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "completed_zone_count": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Completed Zone Count",
+            "type": "integer"
+          },
+          "shop": {
+            "$ref": "#/$defs/ShopState"
+          },
+          "pending_checks": {
+            "items": {
+              "$ref": "#/$defs/PendingCheck"
+            },
+            "title": "Pending Checks",
+            "type": "array"
+          },
+          "hub": {
+            "$ref": "#/$defs/HubStatus"
+          },
+          "last_generation_error": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Last Generation Error"
+          }
+        },
+        "required": [
+          "bridge_connected",
+          "ap_connected",
+          "ap_mode",
+          "epsilon_provider",
+          "hub"
+        ],
+        "title": "CampaignSnapshot",
+        "type": "object"
+      },
+      "CorridorChamber": {
+        "additionalProperties": false,
+        "description": "Connector. Has no objective, so enemies here gate nothing.",
+        "properties": {
+          "id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "flavor": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Flavor"
+          },
+          "reward_location_id": {
+            "anyOf": [
+              {
+                "maximum": 89100030,
+                "minimum": 89100001,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reward Location Id"
+          },
+          "type": {
+            "const": "corridor",
+            "title": "Type",
+            "type": "string"
+          },
+          "length": {
+            "maximum": 30,
+            "minimum": 6,
+            "title": "Length",
+            "type": "number"
+          },
+          "width": {
+            "maximum": 10,
+            "minimum": 4,
+            "title": "Width",
+            "type": "number"
+          },
+          "enemies": {
+            "items": {
+              "$ref": "#/$defs/EnemyGroup"
+            },
+            "maxItems": 4,
+            "title": "Enemies",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "length",
+          "width"
+        ],
+        "title": "CorridorChamber",
+        "type": "object"
+      },
+      "Dash": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "dash",
+            "title": "Type",
+            "type": "string"
+          },
+          "force": {
+            "maximum": 20,
+            "minimum": 4,
+            "title": "Force",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "force"
+        ],
+        "title": "Dash",
+        "type": "object"
+      },
+      "EnemyGroup": {
+        "additionalProperties": false,
+        "properties": {
+          "archetype": {
+            "enum": [
+              "melee",
+              "ranged",
+              "brute"
+            ],
+            "title": "Archetype",
+            "type": "string"
+          },
+          "count": {
+            "maximum": 8,
+            "minimum": 1,
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "archetype",
+          "count"
+        ],
+        "title": "EnemyGroup",
+        "type": "object"
+      },
+      "GrappleToSurface": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "grapple_to_surface",
+            "title": "Type",
+            "type": "string"
+          },
+          "range": {
+            "maximum": 35,
+            "minimum": 5,
+            "title": "Range",
+            "type": "number"
+          },
+          "pull_force": {
+            "maximum": 25,
+            "minimum": 4,
+            "title": "Pull Force",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "range",
+          "pull_force"
+        ],
+        "title": "GrappleToSurface",
+        "type": "object"
+      },
+      "HealSelf": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "heal_self",
+            "title": "Type",
+            "type": "string"
+          },
+          "amount": {
+            "maximum": 60,
+            "minimum": 5,
+            "title": "Amount",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "amount"
+        ],
+        "title": "HealSelf",
+        "type": "object"
+      },
+      "HitscanDamage": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "hitscan_damage",
+            "title": "Type",
+            "type": "string"
+          },
+          "damage": {
+            "maximum": 25,
+            "minimum": 1,
+            "title": "Damage",
+            "type": "number"
+          },
+          "pellets": {
+            "maximum": 16,
+            "minimum": 1,
+            "title": "Pellets",
+            "type": "integer"
+          },
+          "spread_degrees": {
+            "maximum": 30,
+            "minimum": 0,
+            "title": "Spread Degrees",
+            "type": "number"
+          },
+          "range": {
+            "maximum": 60,
+            "minimum": 5,
+            "title": "Range",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "damage",
+          "pellets",
+          "spread_degrees",
+          "range"
+        ],
+        "title": "HitscanDamage",
+        "type": "object"
+      },
+      "HubStatus": {
+        "additionalProperties": false,
+        "description": "What the Hub portal may do right now.\n\n`mode` and `finale_available` are INDEPENDENT. The finale unlocks with\nup to 5 ordinary Checks still outstanding; collapsing both into one enum\nwould either hide the finale or strand that content.\n\nv0.5 removes `CAMPAIGN_COMPLETE`. Sending the Archipelago goal no longer\nends play \u2014 `goal_sent` becomes a banner, and the portal keeps working\nwhile real AP locations remain. Disabling play on goal would abandon up\nto 5 locations and the other players' items sitting on them.",
+        "properties": {
+          "mode": {
+            "enum": [
+              "NO_CAMPAIGN",
+              "ZONE_READY",
+              "ZONE_ACTIVE",
+              "ZONE_AVAILABLE",
+              "FINALE_ONLY",
+              "WAITING_FOR_AP",
+              "ALL_CHECKS_CLEARED"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "headline": {
+            "maxLength": 160,
+            "title": "Headline",
+            "type": "string"
+          },
+          "detail": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Detail",
+            "type": "string"
+          },
+          "portal_enabled": {
+            "title": "Portal Enabled",
+            "type": "boolean"
+          },
+          "goal_sent": {
+            "default": false,
+            "title": "Goal Sent",
+            "type": "boolean"
+          },
+          "postgame": {
+            "default": false,
+            "title": "Postgame",
+            "type": "boolean"
+          },
+          "finale_available": {
+            "default": false,
+            "title": "Finale Available",
+            "type": "boolean"
+          },
+          "finale_progress": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Finale Progress",
+            "type": "integer"
+          },
+          "finale_required": {
+            "default": 24,
+            "title": "Finale Required",
+            "type": "integer"
+          },
+          "signal_keys_required": {
+            "default": 2,
+            "title": "Signal Keys Required",
+            "type": "integer"
+          },
+          "generation_in_progress": {
+            "default": false,
+            "title": "Generation In Progress",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mode",
+          "headline",
+          "portal_enabled"
+        ],
+        "title": "HubStatus",
+        "type": "object"
+      },
+      "KnockbackTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "knockback_target",
+            "title": "Type",
+            "type": "string"
+          },
+          "force": {
+            "maximum": 16,
+            "minimum": 0,
+            "title": "Force",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "force"
+        ],
+        "title": "KnockbackTarget",
+        "type": "object"
+      },
+      "ModifyGravity": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "modify_gravity",
+            "title": "Type",
+            "type": "string"
+          },
+          "multiplier": {
+            "maximum": 1.0,
+            "minimum": 0.35,
+            "title": "Multiplier",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "multiplier"
+        ],
+        "title": "ModifyGravity",
+        "type": "object"
+      },
+      "ModifySpeed": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "modify_speed",
+            "title": "Type",
+            "type": "string"
+          },
+          "multiplier": {
+            "maximum": 1.6,
+            "minimum": 0.9,
+            "title": "Multiplier",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "multiplier"
+        ],
+        "title": "ModifySpeed",
+        "type": "object"
+      },
+      "Notification": {
+        "additionalProperties": false,
+        "description": "One-shot UI event. Never state: the snapshot is state.",
+        "properties": {
+          "type": {
+            "const": "notification",
+            "default": "notification",
+            "title": "Type",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "check_confirmed",
+              "echo_acquired",
+              "reveal",
+              "coin_received",
+              "signal_key_received",
+              "static_received",
+              "shop_purchased",
+              "fallback_used",
+              "goal_reached",
+              "ap_offline",
+              "sync_warning",
+              "zone_abandoned"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 160,
+            "title": "Title",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "maxLength": 160,
+              "type": "string"
+            },
+            "maxItems": 12,
+            "title": "Lines",
+            "type": "array"
+          },
+          "location_id": {
+            "anyOf": [
+              {
+                "maximum": 89100030,
+                "minimum": 89100001,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Location Id"
+          },
+          "echo_id": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Echo Id"
+          }
+        },
+        "required": [
+          "kind",
+          "title"
+        ],
+        "title": "Notification",
+        "type": "object"
+      },
+      "PassiveEcho": {
+        "additionalProperties": false,
+        "description": "Applies while equipped. RMB does nothing. No cooldown field exists.",
+        "properties": {
+          "schema_version": {
+            "const": 5,
+            "default": 5,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "echo_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^echo_\\d+$",
+            "title": "Echo Id",
+            "type": "string"
+          },
+          "source_location_id": {
+            "maximum": 89100030,
+            "minimum": 89100001,
+            "title": "Source Location Id",
+            "type": "integer"
+          },
+          "source_item_name": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Item Name",
+            "type": "string"
+          },
+          "source_game": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Game",
+            "type": "string"
+          },
+          "source_recipient_name": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Recipient Name",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "maxLength": 24,
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Tags",
+            "type": "array"
+          },
+          "activation": {
+            "const": "passive",
+            "title": "Activation",
+            "type": "string"
+          },
+          "archetype": {
+            "enum": [
+              "passive",
+              "mobility"
+            ],
+            "title": "Archetype",
+            "type": "string"
+          },
+          "effects": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "modify_gravity": "#/$defs/ModifyGravity",
+                  "modify_speed": "#/$defs/ModifySpeed"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/ModifyGravity"
+                },
+                {
+                  "$ref": "#/$defs/ModifySpeed"
+                }
+              ]
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Effects",
+            "type": "array"
+          }
+        },
+        "required": [
+          "echo_id",
+          "source_location_id",
+          "source_item_name",
+          "source_game",
+          "source_recipient_name",
+          "display_name",
+          "description",
+          "activation",
+          "archetype",
+          "effects"
+        ],
+        "title": "PassiveEcho",
+        "type": "object"
+      },
+      "PendingCheck": {
+        "additionalProperties": false,
+        "properties": {
+          "transaction_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Transaction Id",
+            "type": "string"
+          },
+          "location_id": {
+            "maximum": 89100030,
+            "minimum": 89100001,
+            "title": "Location Id",
+            "type": "integer"
+          },
+          "source": {
+            "enum": [
+              "zone",
+              "shop"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "shop_cost": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Shop Cost",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "transaction_id",
+          "location_id",
+          "source"
+        ],
+        "title": "PendingCheck",
+        "type": "object"
+      },
+      "PlatformPathChamber": {
+        "additionalProperties": false,
+        "description": "Base-movement platforming.\n\n`gap_size` and `vertical_step` are bounded JOINTLY: the reachable gap\nshrinks as the landing rises. v0.4 bounded them independently, so both\ncould be maxed and the real margin was 1.17x rather than the 1.56x the\nflat-jump derivation advertised.",
+        "properties": {
+          "id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "flavor": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Flavor"
+          },
+          "reward_location_id": {
+            "anyOf": [
+              {
+                "maximum": 89100030,
+                "minimum": 89100001,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reward Location Id"
+          },
+          "type": {
+            "const": "platform_path",
+            "title": "Type",
+            "type": "string"
+          },
+          "segment_count": {
+            "maximum": 8,
+            "minimum": 3,
+            "title": "Segment Count",
+            "type": "integer"
+          },
+          "gap_size": {
+            "maximum": 2.6,
+            "minimum": 0.5,
+            "title": "Gap Size",
+            "type": "number"
+          },
+          "vertical_step": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Vertical Step",
+            "type": "number"
+          },
+          "objective": {
+            "const": "platform_to_goal",
+            "default": "platform_to_goal",
+            "title": "Objective",
+            "type": "string"
+          },
+          "enemies": {
+            "items": {
+              "$ref": "#/$defs/EnemyGroup"
+            },
+            "maxItems": 2,
+            "title": "Enemies",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "segment_count",
+          "gap_size",
+          "vertical_step"
+        ],
+        "title": "PlatformPathChamber",
+        "type": "object"
+      },
+      "PrimaryEcho": {
+        "additionalProperties": false,
+        "description": "Activated with RMB, subject to cooldown. LMB stays Static Pulse.",
+        "properties": {
+          "schema_version": {
+            "const": 5,
+            "default": 5,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "echo_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^echo_\\d+$",
+            "title": "Echo Id",
+            "type": "string"
+          },
+          "source_location_id": {
+            "maximum": 89100030,
+            "minimum": 89100001,
+            "title": "Source Location Id",
+            "type": "integer"
+          },
+          "source_item_name": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Item Name",
+            "type": "string"
+          },
+          "source_game": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Game",
+            "type": "string"
+          },
+          "source_recipient_name": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Recipient Name",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "maxLength": 24,
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Tags",
+            "type": "array"
+          },
+          "activation": {
+            "const": "primary",
+            "title": "Activation",
+            "type": "string"
+          },
+          "archetype": {
+            "enum": [
+              "weapon",
+              "tool",
+              "mobility"
+            ],
+            "title": "Archetype",
+            "type": "string"
+          },
+          "cooldown": {
+            "maximum": 15.0,
+            "minimum": 0.15,
+            "title": "Cooldown",
+            "type": "number"
+          },
+          "initiator": {
+            "discriminator": {
+              "mapping": {
+                "dash": "#/$defs/Dash",
+                "grapple_to_surface": "#/$defs/GrappleToSurface",
+                "heal_self": "#/$defs/HealSelf",
+                "hitscan_damage": "#/$defs/HitscanDamage",
+                "projectile_damage": "#/$defs/ProjectileDamage",
+                "shield": "#/$defs/Shield"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/HitscanDamage"
+              },
+              {
+                "$ref": "#/$defs/ProjectileDamage"
+              },
+              {
+                "$ref": "#/$defs/Dash"
+              },
+              {
+                "$ref": "#/$defs/GrappleToSurface"
+              },
+              {
+                "$ref": "#/$defs/HealSelf"
+              },
+              {
+                "$ref": "#/$defs/Shield"
+              }
+            ],
+            "title": "Initiator"
+          },
+          "modifiers": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "knockback_target": "#/$defs/KnockbackTarget",
+                  "recoil_self": "#/$defs/RecoilSelf"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/RecoilSelf"
+                },
+                {
+                  "$ref": "#/$defs/KnockbackTarget"
+                }
+              ]
+            },
+            "maxItems": 2,
+            "title": "Modifiers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "echo_id",
+          "source_location_id",
+          "source_item_name",
+          "source_game",
+          "source_recipient_name",
+          "display_name",
+          "description",
+          "activation",
+          "archetype",
+          "cooldown",
+          "initiator"
+        ],
+        "title": "PrimaryEcho",
+        "type": "object"
+      },
+      "ProjectileDamage": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "projectile_damage",
+            "title": "Type",
+            "type": "string"
+          },
+          "damage": {
+            "maximum": 25,
+            "minimum": 1,
+            "title": "Damage",
+            "type": "number"
+          },
+          "speed": {
+            "maximum": 45,
+            "minimum": 5,
+            "title": "Speed",
+            "type": "number"
+          },
+          "lifetime": {
+            "maximum": 6,
+            "minimum": 0.5,
+            "title": "Lifetime",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "damage",
+          "speed",
+          "lifetime"
+        ],
+        "title": "ProjectileDamage",
+        "type": "object"
+      },
+      "RecoilSelf": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "recoil_self",
+            "title": "Type",
+            "type": "string"
+          },
+          "force": {
+            "maximum": 16,
+            "minimum": 0,
+            "title": "Force",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "force"
+        ],
+        "title": "RecoilSelf",
+        "type": "object"
+      },
+      "ScoutedLocation": {
+        "additionalProperties": false,
+        "description": "One scouted location as Godot sees it.\n\nItem identity is omitted until revealed. v0.4 shipped every unrevealed\nitem name to the client in every snapshot, which handed the client the\nanswer to all 30 Checks before the player entered a Zone \u2014 and the\nreveal is the payoff moment the whole design is built around.",
+        "properties": {
+          "location_id": {
+            "maximum": 89100030,
+            "minimum": 89100001,
+            "title": "Location Id",
+            "type": "integer"
+          },
+          "location_name": {
+            "maxLength": 96,
+            "title": "Location Name",
+            "type": "string"
+          },
+          "revealed": {
+            "default": false,
+            "title": "Revealed",
+            "type": "boolean"
+          },
+          "recipient_is_self": {
+            "default": false,
+            "title": "Recipient Is Self",
+            "type": "boolean"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Item Id"
+          },
+          "item_name": {
+            "anyOf": [
+              {
+                "maxLength": 96,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Item Name"
+          },
+          "recipient_player": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Recipient Player"
+          },
+          "recipient_name": {
+            "anyOf": [
+              {
+                "maxLength": 96,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Recipient Name"
+          },
+          "recipient_game": {
+            "anyOf": [
+              {
+                "maxLength": 96,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Recipient Game"
+          },
+          "flags": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Flags"
+          }
+        },
+        "required": [
+          "location_id",
+          "location_name"
+        ],
+        "title": "ScoutedLocation",
+        "type": "object"
+      },
+      "Shield": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "shield",
+            "title": "Type",
+            "type": "string"
+          },
+          "amount": {
+            "maximum": 80,
+            "minimum": 5,
+            "title": "Amount",
+            "type": "number"
+          },
+          "duration": {
+            "maximum": 15,
+            "minimum": 1,
+            "title": "Duration",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "amount",
+          "duration"
+        ],
+        "title": "Shield",
+        "type": "object"
+      },
+      "ShopState": {
+        "additionalProperties": false,
+        "properties": {
+          "stock": {
+            "items": {
+              "$ref": "#/$defs/ShopStockItem"
+            },
+            "maxItems": 2,
+            "title": "Stock",
+            "type": "array"
+          },
+          "created_after_zone_count": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Created After Zone Count",
+            "type": "integer"
+          }
+        },
+        "title": "ShopState",
+        "type": "object"
+      },
+      "ShopStockItem": {
+        "additionalProperties": false,
+        "properties": {
+          "location_id": {
+            "maximum": 89100030,
+            "minimum": 89100001,
+            "title": "Location Id",
+            "type": "integer"
+          },
+          "cost": {
+            "minimum": 0,
+            "title": "Cost",
+            "type": "integer"
+          },
+          "status": {
+            "default": "available",
+            "enum": [
+              "available",
+              "pending",
+              "purchased"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "item_name": {
+            "maxLength": 96,
+            "title": "Item Name",
+            "type": "string"
+          },
+          "recipient_name": {
+            "maxLength": 96,
+            "title": "Recipient Name",
+            "type": "string"
+          },
+          "recipient_game": {
+            "maxLength": 96,
+            "title": "Recipient Game",
+            "type": "string"
+          }
+        },
+        "required": [
+          "location_id",
+          "cost",
+          "item_name",
+          "recipient_name",
+          "recipient_game"
+        ],
+        "title": "ShopStockItem",
+        "type": "object"
+      },
+      "TowerChamber": {
+        "additionalProperties": false,
+        "description": "Vertical traversal. The template always emits a base-movement route.",
+        "properties": {
+          "id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "flavor": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Flavor"
+          },
+          "reward_location_id": {
+            "anyOf": [
+              {
+                "maximum": 89100030,
+                "minimum": 89100001,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reward Location Id"
+          },
+          "type": {
+            "const": "tower",
+            "title": "Type",
+            "type": "string"
+          },
+          "floors": {
+            "maximum": 5,
+            "minimum": 2,
+            "title": "Floors",
+            "type": "integer"
+          },
+          "objective": {
+            "enum": [
+              "reach_reward",
+              "kill_all"
+            ],
+            "title": "Objective",
+            "type": "string"
+          },
+          "enemies": {
+            "items": {
+              "$ref": "#/$defs/EnemyGroup"
+            },
+            "maxItems": 4,
+            "title": "Enemies",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "floors",
+          "objective"
+        ],
+        "title": "TowerChamber",
+        "type": "object"
+      },
+      "TreasureRoomChamber": {
+        "additionalProperties": false,
+        "description": "Small safe reward room. Exactly one reward, never enemies.",
+        "properties": {
+          "id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "flavor": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Flavor"
+          },
+          "reward_location_id": {
+            "maximum": 89100030,
+            "minimum": 89100001,
+            "title": "Reward Location Id",
+            "type": "integer"
+          },
+          "type": {
+            "const": "treasure_room",
+            "title": "Type",
+            "type": "string"
+          },
+          "objective": {
+            "const": "reach_reward",
+            "default": "reach_reward",
+            "title": "Objective",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reward_location_id",
+          "type"
+        ],
+        "title": "TreasureRoomChamber",
+        "type": "object"
+      },
+      "Zone": {
+        "additionalProperties": false,
+        "properties": {
+          "schema_version": {
+            "const": 5,
+            "default": 5,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "target_game": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Target Game",
+            "type": "string"
+          },
+          "theme": {
+            "enum": [
+              "concrete_facility",
+              "rusted_industrial",
+              "neon_transit",
+              "gothic_stone",
+              "temple_ruin",
+              "void_glitch"
+            ],
+            "title": "Theme",
+            "type": "string"
+          },
+          "designer_note": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Designer Note"
+          },
+          "featured_echo_ids": {
+            "items": {
+              "maxLength": 32,
+              "pattern": "^echo_\\d+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Featured Echo Ids",
+            "type": "array"
+          },
+          "chambers": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "arena": "#/$defs/ArenaChamber",
+                  "corridor": "#/$defs/CorridorChamber",
+                  "platform_path": "#/$defs/PlatformPathChamber",
+                  "tower": "#/$defs/TowerChamber",
+                  "treasure_room": "#/$defs/TreasureRoomChamber"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/CorridorChamber"
+                },
+                {
+                  "$ref": "#/$defs/ArenaChamber"
+                },
+                {
+                  "$ref": "#/$defs/PlatformPathChamber"
+                },
+                {
+                  "$ref": "#/$defs/TowerChamber"
+                },
+                {
+                  "$ref": "#/$defs/TreasureRoomChamber"
+                }
+              ]
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Chambers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "zone_id",
+          "display_name",
+          "target_game",
+          "theme",
+          "chambers"
+        ],
+        "title": "Zone",
+        "type": "object"
+      },
+      "ZoneReady": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "zone_ready",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone": {
+            "$ref": "#/$defs/Zone"
+          },
+          "used_fallback": {
+            "title": "Used Fallback",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "zone",
+          "used_fallback"
+        ],
+        "title": "ZoneReady",
+        "type": "object"
+      },
+      "ZoneRecord": {
+        "additionalProperties": false,
+        "description": "A Zone across its whole lifecycle.\n\n`allocated_location_ids` is populated at PENDING_GENERATION, before the\nprovider is called, so a crash mid-generation is representable.\n\n`GENERATED` means accepted-but-not-yet-entered. In v0.4 that state had\nno Hub mode, no entering intent and no reconciliation clause, so a Zone\ngenerated and then abandoned at the loading screen orphaned its AP\nlocations permanently. `active_zone_id` is now set at GENERATED, not at\nentry, so the Zone is always visible and always resumable.",
+        "properties": {
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "PENDING_GENERATION",
+              "GENERATED",
+              "ACTIVE",
+              "COMPLETE",
+              "ABANDONED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "allocated_location_ids": {
+            "items": {
+              "maximum": 89100030,
+              "minimum": 89100001,
+              "type": "integer"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Allocated Location Ids",
+            "type": "array"
+          },
+          "target_game": {
+            "maxLength": 96,
+            "title": "Target Game",
+            "type": "string"
+          },
+          "is_finale": {
+            "default": false,
+            "title": "Is Finale",
+            "type": "boolean"
+          },
+          "zone": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Zone"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "used_fallback": {
+            "default": false,
+            "title": "Used Fallback",
+            "type": "boolean"
+          },
+          "generation_index": {
+            "minimum": 0,
+            "title": "Generation Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "zone_id",
+          "state",
+          "allocated_location_ids",
+          "target_game",
+          "generation_index"
+        ],
+        "title": "ZoneRecord",
+        "type": "object"
+      }
+    },
+    "discriminator": {
+      "mapping": {
+        "bridge_ready": "#/$defs/BridgeReady",
+        "campaign_snapshot": "#/$defs/CampaignSnapshot",
+        "error": "#/$defs/BridgeError",
+        "notification": "#/$defs/Notification",
+        "zone_ready": "#/$defs/ZoneReady"
+      },
+      "propertyName": "type"
+    },
+    "oneOf": [
+      {
+        "$ref": "#/$defs/BridgeReady"
+      },
+      {
+        "$ref": "#/$defs/CampaignSnapshot"
+      },
+      {
+        "$ref": "#/$defs/ZoneReady"
+      },
+      {
+        "$ref": "#/$defs/Notification"
+      },
+      {
+        "$ref": "#/$defs/BridgeError"
+      }
+    ]
+  },
+  "campaign_snapshot": {
+    "$defs": {
+      "ArenaChamber": {
+        "additionalProperties": false,
+        "description": "Rectangular combat room. A boss room is an arena holding one brute.",
+        "properties": {
+          "id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "flavor": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Flavor"
+          },
+          "reward_location_id": {
+            "anyOf": [
+              {
+                "maximum": 89100030,
+                "minimum": 89100001,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reward Location Id"
+          },
+          "type": {
+            "const": "arena",
+            "title": "Type",
+            "type": "string"
+          },
+          "width": {
+            "maximum": 28,
+            "minimum": 10,
+            "title": "Width",
+            "type": "number"
+          },
+          "depth": {
+            "maximum": 28,
+            "minimum": 10,
+            "title": "Depth",
+            "type": "number"
+          },
+          "wall_height": {
+            "maximum": 8,
+            "minimum": 4,
+            "title": "Wall Height",
+            "type": "number"
+          },
+          "objective": {
+            "enum": [
+              "kill_all",
+              "reach_reward"
+            ],
+            "title": "Objective",
+            "type": "string"
+          },
+          "enemies": {
+            "items": {
+              "$ref": "#/$defs/EnemyGroup"
+            },
+            "maxItems": 4,
+            "title": "Enemies",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "width",
+          "depth",
+          "wall_height",
+          "objective"
+        ],
+        "title": "ArenaChamber",
+        "type": "object"
+      },
+      "CorridorChamber": {
+        "additionalProperties": false,
+        "description": "Connector. Has no objective, so enemies here gate nothing.",
+        "properties": {
+          "id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "flavor": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Flavor"
+          },
+          "reward_location_id": {
+            "anyOf": [
+              {
+                "maximum": 89100030,
+                "minimum": 89100001,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reward Location Id"
+          },
+          "type": {
+            "const": "corridor",
+            "title": "Type",
+            "type": "string"
+          },
+          "length": {
+            "maximum": 30,
+            "minimum": 6,
+            "title": "Length",
+            "type": "number"
+          },
+          "width": {
+            "maximum": 10,
+            "minimum": 4,
+            "title": "Width",
+            "type": "number"
+          },
+          "enemies": {
+            "items": {
+              "$ref": "#/$defs/EnemyGroup"
+            },
+            "maxItems": 4,
+            "title": "Enemies",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "length",
+          "width"
+        ],
+        "title": "CorridorChamber",
+        "type": "object"
+      },
+      "Dash": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "dash",
+            "title": "Type",
+            "type": "string"
+          },
+          "force": {
+            "maximum": 20,
+            "minimum": 4,
+            "title": "Force",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "force"
+        ],
+        "title": "Dash",
+        "type": "object"
+      },
+      "EnemyGroup": {
+        "additionalProperties": false,
+        "properties": {
+          "archetype": {
+            "enum": [
+              "melee",
+              "ranged",
+              "brute"
+            ],
+            "title": "Archetype",
+            "type": "string"
+          },
+          "count": {
+            "maximum": 8,
+            "minimum": 1,
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "archetype",
+          "count"
+        ],
+        "title": "EnemyGroup",
+        "type": "object"
+      },
+      "GrappleToSurface": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "grapple_to_surface",
+            "title": "Type",
+            "type": "string"
+          },
+          "range": {
+            "maximum": 35,
+            "minimum": 5,
+            "title": "Range",
+            "type": "number"
+          },
+          "pull_force": {
+            "maximum": 25,
+            "minimum": 4,
+            "title": "Pull Force",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "range",
+          "pull_force"
+        ],
+        "title": "GrappleToSurface",
+        "type": "object"
+      },
+      "HealSelf": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "heal_self",
+            "title": "Type",
+            "type": "string"
+          },
+          "amount": {
+            "maximum": 60,
+            "minimum": 5,
+            "title": "Amount",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "amount"
+        ],
+        "title": "HealSelf",
+        "type": "object"
+      },
+      "HitscanDamage": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "hitscan_damage",
+            "title": "Type",
+            "type": "string"
+          },
+          "damage": {
+            "maximum": 25,
+            "minimum": 1,
+            "title": "Damage",
+            "type": "number"
+          },
+          "pellets": {
+            "maximum": 16,
+            "minimum": 1,
+            "title": "Pellets",
+            "type": "integer"
+          },
+          "spread_degrees": {
+            "maximum": 30,
+            "minimum": 0,
+            "title": "Spread Degrees",
+            "type": "number"
+          },
+          "range": {
+            "maximum": 60,
+            "minimum": 5,
+            "title": "Range",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "damage",
+          "pellets",
+          "spread_degrees",
+          "range"
+        ],
+        "title": "HitscanDamage",
+        "type": "object"
+      },
+      "HubStatus": {
+        "additionalProperties": false,
+        "description": "What the Hub portal may do right now.\n\n`mode` and `finale_available` are INDEPENDENT. The finale unlocks with\nup to 5 ordinary Checks still outstanding; collapsing both into one enum\nwould either hide the finale or strand that content.\n\nv0.5 removes `CAMPAIGN_COMPLETE`. Sending the Archipelago goal no longer\nends play \u2014 `goal_sent` becomes a banner, and the portal keeps working\nwhile real AP locations remain. Disabling play on goal would abandon up\nto 5 locations and the other players' items sitting on them.",
+        "properties": {
+          "mode": {
+            "enum": [
+              "NO_CAMPAIGN",
+              "ZONE_READY",
+              "ZONE_ACTIVE",
+              "ZONE_AVAILABLE",
+              "FINALE_ONLY",
+              "WAITING_FOR_AP",
+              "ALL_CHECKS_CLEARED"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "headline": {
+            "maxLength": 160,
+            "title": "Headline",
+            "type": "string"
+          },
+          "detail": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Detail",
+            "type": "string"
+          },
+          "portal_enabled": {
+            "title": "Portal Enabled",
+            "type": "boolean"
+          },
+          "goal_sent": {
+            "default": false,
+            "title": "Goal Sent",
+            "type": "boolean"
+          },
+          "postgame": {
+            "default": false,
+            "title": "Postgame",
+            "type": "boolean"
+          },
+          "finale_available": {
+            "default": false,
+            "title": "Finale Available",
+            "type": "boolean"
+          },
+          "finale_progress": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Finale Progress",
+            "type": "integer"
+          },
+          "finale_required": {
+            "default": 24,
+            "title": "Finale Required",
+            "type": "integer"
+          },
+          "signal_keys_required": {
+            "default": 2,
+            "title": "Signal Keys Required",
+            "type": "integer"
+          },
+          "generation_in_progress": {
+            "default": false,
+            "title": "Generation In Progress",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mode",
+          "headline",
+          "portal_enabled"
+        ],
+        "title": "HubStatus",
+        "type": "object"
+      },
+      "KnockbackTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "knockback_target",
+            "title": "Type",
+            "type": "string"
+          },
+          "force": {
+            "maximum": 16,
+            "minimum": 0,
+            "title": "Force",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "force"
+        ],
+        "title": "KnockbackTarget",
+        "type": "object"
+      },
+      "ModifyGravity": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "modify_gravity",
+            "title": "Type",
+            "type": "string"
+          },
+          "multiplier": {
+            "maximum": 1.0,
+            "minimum": 0.35,
+            "title": "Multiplier",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "multiplier"
+        ],
+        "title": "ModifyGravity",
+        "type": "object"
+      },
+      "ModifySpeed": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "modify_speed",
+            "title": "Type",
+            "type": "string"
+          },
+          "multiplier": {
+            "maximum": 1.6,
+            "minimum": 0.9,
+            "title": "Multiplier",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "multiplier"
+        ],
+        "title": "ModifySpeed",
+        "type": "object"
+      },
+      "PassiveEcho": {
+        "additionalProperties": false,
+        "description": "Applies while equipped. RMB does nothing. No cooldown field exists.",
+        "properties": {
+          "schema_version": {
+            "const": 5,
+            "default": 5,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "echo_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^echo_\\d+$",
+            "title": "Echo Id",
+            "type": "string"
+          },
+          "source_location_id": {
+            "maximum": 89100030,
+            "minimum": 89100001,
+            "title": "Source Location Id",
+            "type": "integer"
+          },
+          "source_item_name": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Item Name",
+            "type": "string"
+          },
+          "source_game": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Game",
+            "type": "string"
+          },
+          "source_recipient_name": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Recipient Name",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "maxLength": 24,
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Tags",
+            "type": "array"
+          },
+          "activation": {
+            "const": "passive",
+            "title": "Activation",
+            "type": "string"
+          },
+          "archetype": {
+            "enum": [
+              "passive",
+              "mobility"
+            ],
+            "title": "Archetype",
+            "type": "string"
+          },
+          "effects": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "modify_gravity": "#/$defs/ModifyGravity",
+                  "modify_speed": "#/$defs/ModifySpeed"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/ModifyGravity"
+                },
+                {
+                  "$ref": "#/$defs/ModifySpeed"
+                }
+              ]
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Effects",
+            "type": "array"
+          }
+        },
+        "required": [
+          "echo_id",
+          "source_location_id",
+          "source_item_name",
+          "source_game",
+          "source_recipient_name",
+          "display_name",
+          "description",
+          "activation",
+          "archetype",
+          "effects"
+        ],
+        "title": "PassiveEcho",
+        "type": "object"
+      },
+      "PendingCheck": {
+        "additionalProperties": false,
+        "properties": {
+          "transaction_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Transaction Id",
+            "type": "string"
+          },
+          "location_id": {
+            "maximum": 89100030,
+            "minimum": 89100001,
+            "title": "Location Id",
+            "type": "integer"
+          },
+          "source": {
+            "enum": [
+              "zone",
+              "shop"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "shop_cost": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Shop Cost",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "transaction_id",
+          "location_id",
+          "source"
+        ],
+        "title": "PendingCheck",
+        "type": "object"
+      },
+      "PlatformPathChamber": {
+        "additionalProperties": false,
+        "description": "Base-movement platforming.\n\n`gap_size` and `vertical_step` are bounded JOINTLY: the reachable gap\nshrinks as the landing rises. v0.4 bounded them independently, so both\ncould be maxed and the real margin was 1.17x rather than the 1.56x the\nflat-jump derivation advertised.",
+        "properties": {
+          "id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "flavor": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Flavor"
+          },
+          "reward_location_id": {
+            "anyOf": [
+              {
+                "maximum": 89100030,
+                "minimum": 89100001,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reward Location Id"
+          },
+          "type": {
+            "const": "platform_path",
+            "title": "Type",
+            "type": "string"
+          },
+          "segment_count": {
+            "maximum": 8,
+            "minimum": 3,
+            "title": "Segment Count",
+            "type": "integer"
+          },
+          "gap_size": {
+            "maximum": 2.6,
+            "minimum": 0.5,
+            "title": "Gap Size",
+            "type": "number"
+          },
+          "vertical_step": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Vertical Step",
+            "type": "number"
+          },
+          "objective": {
+            "const": "platform_to_goal",
+            "default": "platform_to_goal",
+            "title": "Objective",
+            "type": "string"
+          },
+          "enemies": {
+            "items": {
+              "$ref": "#/$defs/EnemyGroup"
+            },
+            "maxItems": 2,
+            "title": "Enemies",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "segment_count",
+          "gap_size",
+          "vertical_step"
+        ],
+        "title": "PlatformPathChamber",
+        "type": "object"
+      },
+      "PrimaryEcho": {
+        "additionalProperties": false,
+        "description": "Activated with RMB, subject to cooldown. LMB stays Static Pulse.",
+        "properties": {
+          "schema_version": {
+            "const": 5,
+            "default": 5,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "echo_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^echo_\\d+$",
+            "title": "Echo Id",
+            "type": "string"
+          },
+          "source_location_id": {
+            "maximum": 89100030,
+            "minimum": 89100001,
+            "title": "Source Location Id",
+            "type": "integer"
+          },
+          "source_item_name": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Item Name",
+            "type": "string"
+          },
+          "source_game": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Game",
+            "type": "string"
+          },
+          "source_recipient_name": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Recipient Name",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "maxLength": 24,
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Tags",
+            "type": "array"
+          },
+          "activation": {
+            "const": "primary",
+            "title": "Activation",
+            "type": "string"
+          },
+          "archetype": {
+            "enum": [
+              "weapon",
+              "tool",
+              "mobility"
+            ],
+            "title": "Archetype",
+            "type": "string"
+          },
+          "cooldown": {
+            "maximum": 15.0,
+            "minimum": 0.15,
+            "title": "Cooldown",
+            "type": "number"
+          },
+          "initiator": {
+            "discriminator": {
+              "mapping": {
+                "dash": "#/$defs/Dash",
+                "grapple_to_surface": "#/$defs/GrappleToSurface",
+                "heal_self": "#/$defs/HealSelf",
+                "hitscan_damage": "#/$defs/HitscanDamage",
+                "projectile_damage": "#/$defs/ProjectileDamage",
+                "shield": "#/$defs/Shield"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/HitscanDamage"
+              },
+              {
+                "$ref": "#/$defs/ProjectileDamage"
+              },
+              {
+                "$ref": "#/$defs/Dash"
+              },
+              {
+                "$ref": "#/$defs/GrappleToSurface"
+              },
+              {
+                "$ref": "#/$defs/HealSelf"
+              },
+              {
+                "$ref": "#/$defs/Shield"
+              }
+            ],
+            "title": "Initiator"
+          },
+          "modifiers": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "knockback_target": "#/$defs/KnockbackTarget",
+                  "recoil_self": "#/$defs/RecoilSelf"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/RecoilSelf"
+                },
+                {
+                  "$ref": "#/$defs/KnockbackTarget"
+                }
+              ]
+            },
+            "maxItems": 2,
+            "title": "Modifiers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "echo_id",
+          "source_location_id",
+          "source_item_name",
+          "source_game",
+          "source_recipient_name",
+          "display_name",
+          "description",
+          "activation",
+          "archetype",
+          "cooldown",
+          "initiator"
+        ],
+        "title": "PrimaryEcho",
+        "type": "object"
+      },
+      "ProjectileDamage": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "projectile_damage",
+            "title": "Type",
+            "type": "string"
+          },
+          "damage": {
+            "maximum": 25,
+            "minimum": 1,
+            "title": "Damage",
+            "type": "number"
+          },
+          "speed": {
+            "maximum": 45,
+            "minimum": 5,
+            "title": "Speed",
+            "type": "number"
+          },
+          "lifetime": {
+            "maximum": 6,
+            "minimum": 0.5,
+            "title": "Lifetime",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "damage",
+          "speed",
+          "lifetime"
+        ],
+        "title": "ProjectileDamage",
+        "type": "object"
+      },
+      "RecoilSelf": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "recoil_self",
+            "title": "Type",
+            "type": "string"
+          },
+          "force": {
+            "maximum": 16,
+            "minimum": 0,
+            "title": "Force",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "force"
+        ],
+        "title": "RecoilSelf",
+        "type": "object"
+      },
+      "ScoutedLocation": {
+        "additionalProperties": false,
+        "description": "One scouted location as Godot sees it.\n\nItem identity is omitted until revealed. v0.4 shipped every unrevealed\nitem name to the client in every snapshot, which handed the client the\nanswer to all 30 Checks before the player entered a Zone \u2014 and the\nreveal is the payoff moment the whole design is built around.",
+        "properties": {
+          "location_id": {
+            "maximum": 89100030,
+            "minimum": 89100001,
+            "title": "Location Id",
+            "type": "integer"
+          },
+          "location_name": {
+            "maxLength": 96,
+            "title": "Location Name",
+            "type": "string"
+          },
+          "revealed": {
+            "default": false,
+            "title": "Revealed",
+            "type": "boolean"
+          },
+          "recipient_is_self": {
+            "default": false,
+            "title": "Recipient Is Self",
+            "type": "boolean"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Item Id"
+          },
+          "item_name": {
+            "anyOf": [
+              {
+                "maxLength": 96,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Item Name"
+          },
+          "recipient_player": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Recipient Player"
+          },
+          "recipient_name": {
+            "anyOf": [
+              {
+                "maxLength": 96,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Recipient Name"
+          },
+          "recipient_game": {
+            "anyOf": [
+              {
+                "maxLength": 96,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Recipient Game"
+          },
+          "flags": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Flags"
+          }
+        },
+        "required": [
+          "location_id",
+          "location_name"
+        ],
+        "title": "ScoutedLocation",
+        "type": "object"
+      },
+      "Shield": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "shield",
+            "title": "Type",
+            "type": "string"
+          },
+          "amount": {
+            "maximum": 80,
+            "minimum": 5,
+            "title": "Amount",
+            "type": "number"
+          },
+          "duration": {
+            "maximum": 15,
+            "minimum": 1,
+            "title": "Duration",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "amount",
+          "duration"
+        ],
+        "title": "Shield",
+        "type": "object"
+      },
+      "ShopState": {
+        "additionalProperties": false,
+        "properties": {
+          "stock": {
+            "items": {
+              "$ref": "#/$defs/ShopStockItem"
+            },
+            "maxItems": 2,
+            "title": "Stock",
+            "type": "array"
+          },
+          "created_after_zone_count": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Created After Zone Count",
+            "type": "integer"
+          }
+        },
+        "title": "ShopState",
+        "type": "object"
+      },
+      "ShopStockItem": {
+        "additionalProperties": false,
+        "properties": {
+          "location_id": {
+            "maximum": 89100030,
+            "minimum": 89100001,
+            "title": "Location Id",
+            "type": "integer"
+          },
+          "cost": {
+            "minimum": 0,
+            "title": "Cost",
+            "type": "integer"
+          },
+          "status": {
+            "default": "available",
+            "enum": [
+              "available",
+              "pending",
+              "purchased"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "item_name": {
+            "maxLength": 96,
+            "title": "Item Name",
+            "type": "string"
+          },
+          "recipient_name": {
+            "maxLength": 96,
+            "title": "Recipient Name",
+            "type": "string"
+          },
+          "recipient_game": {
+            "maxLength": 96,
+            "title": "Recipient Game",
+            "type": "string"
+          }
+        },
+        "required": [
+          "location_id",
+          "cost",
+          "item_name",
+          "recipient_name",
+          "recipient_game"
+        ],
+        "title": "ShopStockItem",
+        "type": "object"
+      },
+      "TowerChamber": {
+        "additionalProperties": false,
+        "description": "Vertical traversal. The template always emits a base-movement route.",
+        "properties": {
+          "id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "flavor": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Flavor"
+          },
+          "reward_location_id": {
+            "anyOf": [
+              {
+                "maximum": 89100030,
+                "minimum": 89100001,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reward Location Id"
+          },
+          "type": {
+            "const": "tower",
+            "title": "Type",
+            "type": "string"
+          },
+          "floors": {
+            "maximum": 5,
+            "minimum": 2,
+            "title": "Floors",
+            "type": "integer"
+          },
+          "objective": {
+            "enum": [
+              "reach_reward",
+              "kill_all"
+            ],
+            "title": "Objective",
+            "type": "string"
+          },
+          "enemies": {
+            "items": {
+              "$ref": "#/$defs/EnemyGroup"
+            },
+            "maxItems": 4,
+            "title": "Enemies",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "floors",
+          "objective"
+        ],
+        "title": "TowerChamber",
+        "type": "object"
+      },
+      "TreasureRoomChamber": {
+        "additionalProperties": false,
+        "description": "Small safe reward room. Exactly one reward, never enemies.",
+        "properties": {
+          "id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "flavor": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Flavor"
+          },
+          "reward_location_id": {
+            "maximum": 89100030,
+            "minimum": 89100001,
+            "title": "Reward Location Id",
+            "type": "integer"
+          },
+          "type": {
+            "const": "treasure_room",
+            "title": "Type",
+            "type": "string"
+          },
+          "objective": {
+            "const": "reach_reward",
+            "default": "reach_reward",
+            "title": "Objective",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reward_location_id",
+          "type"
+        ],
+        "title": "TreasureRoomChamber",
+        "type": "object"
+      },
+      "Zone": {
+        "additionalProperties": false,
+        "properties": {
+          "schema_version": {
+            "const": 5,
+            "default": 5,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "target_game": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Target Game",
+            "type": "string"
+          },
+          "theme": {
+            "enum": [
+              "concrete_facility",
+              "rusted_industrial",
+              "neon_transit",
+              "gothic_stone",
+              "temple_ruin",
+              "void_glitch"
+            ],
+            "title": "Theme",
+            "type": "string"
+          },
+          "designer_note": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Designer Note"
+          },
+          "featured_echo_ids": {
+            "items": {
+              "maxLength": 32,
+              "pattern": "^echo_\\d+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Featured Echo Ids",
+            "type": "array"
+          },
+          "chambers": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "arena": "#/$defs/ArenaChamber",
+                  "corridor": "#/$defs/CorridorChamber",
+                  "platform_path": "#/$defs/PlatformPathChamber",
+                  "tower": "#/$defs/TowerChamber",
+                  "treasure_room": "#/$defs/TreasureRoomChamber"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/CorridorChamber"
+                },
+                {
+                  "$ref": "#/$defs/ArenaChamber"
+                },
+                {
+                  "$ref": "#/$defs/PlatformPathChamber"
+                },
+                {
+                  "$ref": "#/$defs/TowerChamber"
+                },
+                {
+                  "$ref": "#/$defs/TreasureRoomChamber"
+                }
+              ]
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Chambers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "zone_id",
+          "display_name",
+          "target_game",
+          "theme",
+          "chambers"
+        ],
+        "title": "Zone",
+        "type": "object"
+      },
+      "ZoneRecord": {
+        "additionalProperties": false,
+        "description": "A Zone across its whole lifecycle.\n\n`allocated_location_ids` is populated at PENDING_GENERATION, before the\nprovider is called, so a crash mid-generation is representable.\n\n`GENERATED` means accepted-but-not-yet-entered. In v0.4 that state had\nno Hub mode, no entering intent and no reconciliation clause, so a Zone\ngenerated and then abandoned at the loading screen orphaned its AP\nlocations permanently. `active_zone_id` is now set at GENERATED, not at\nentry, so the Zone is always visible and always resumable.",
+        "properties": {
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "PENDING_GENERATION",
+              "GENERATED",
+              "ACTIVE",
+              "COMPLETE",
+              "ABANDONED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "allocated_location_ids": {
+            "items": {
+              "maximum": 89100030,
+              "minimum": 89100001,
+              "type": "integer"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Allocated Location Ids",
+            "type": "array"
+          },
+          "target_game": {
+            "maxLength": 96,
+            "title": "Target Game",
+            "type": "string"
+          },
+          "is_finale": {
+            "default": false,
+            "title": "Is Finale",
+            "type": "boolean"
+          },
+          "zone": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Zone"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "used_fallback": {
+            "default": false,
+            "title": "Used Fallback",
+            "type": "boolean"
+          },
+          "generation_index": {
+            "minimum": 0,
+            "title": "Generation Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "zone_id",
+          "state",
+          "allocated_location_ids",
+          "target_game",
+          "generation_index"
+        ],
+        "title": "ZoneRecord",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "type": {
+        "const": "campaign_snapshot",
+        "default": "campaign_snapshot",
+        "title": "Type",
+        "type": "string"
+      },
+      "protocol_version": {
+        "const": 5,
+        "default": 5,
+        "title": "Protocol Version",
+        "type": "integer"
+      },
+      "bridge_connected": {
+        "title": "Bridge Connected",
+        "type": "boolean"
+      },
+      "ap_connected": {
+        "title": "Ap Connected",
+        "type": "boolean"
+      },
+      "ap_mode": {
+        "enum": [
+          "real",
+          "mock"
+        ],
+        "title": "Ap Mode",
+        "type": "string"
+      },
+      "epsilon_provider": {
+        "enum": [
+          "claude",
+          "mock",
+          "fallback"
+        ],
+        "title": "Epsilon Provider",
+        "type": "string"
+      },
+      "race_mode": {
+        "default": false,
+        "title": "Race Mode",
+        "type": "boolean"
+      },
+      "ap_state_is_current": {
+        "default": false,
+        "title": "Ap State Is Current",
+        "type": "boolean"
+      },
+      "seed_name": {
+        "default": "",
+        "maxLength": 128,
+        "title": "Seed Name",
+        "type": "string"
+      },
+      "slot_name": {
+        "default": "",
+        "maxLength": 96,
+        "title": "Slot Name",
+        "type": "string"
+      },
+      "slot_id": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Slot Id",
+        "type": "integer"
+      },
+      "team": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Team",
+        "type": "integer"
+      },
+      "checked_location_ids": {
+        "items": {
+          "maximum": 89100030,
+          "minimum": 89100001,
+          "type": "integer"
+        },
+        "title": "Checked Location Ids",
+        "type": "array"
+      },
+      "missing_location_ids": {
+        "items": {
+          "maximum": 89100030,
+          "minimum": 89100001,
+          "type": "integer"
+        },
+        "title": "Missing Location Ids",
+        "type": "array"
+      },
+      "scouted": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ScoutedLocation"
+        },
+        "title": "Scouted",
+        "type": "object"
+      },
+      "signal_keys": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Signal Keys",
+        "type": "integer"
+      },
+      "unlocked_tier": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Unlocked Tier",
+        "type": "integer"
+      },
+      "coins_received": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Coins Received",
+        "type": "integer"
+      },
+      "coins_spent": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Coins Spent",
+        "type": "integer"
+      },
+      "coins_available": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Coins Available",
+        "type": "integer"
+      },
+      "static_received": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Static Received",
+        "type": "integer"
+      },
+      "static_glitch_units": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Static Glitch Units",
+        "type": "integer"
+      },
+      "echoes": {
+        "items": {
+          "discriminator": {
+            "mapping": {
+              "passive": "#/$defs/PassiveEcho",
+              "primary": "#/$defs/PrimaryEcho"
+            },
+            "propertyName": "activation"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/PrimaryEcho"
+            },
+            {
+              "$ref": "#/$defs/PassiveEcho"
+            }
+          ]
+        },
+        "title": "Echoes",
+        "type": "array"
+      },
+      "equipped_echo_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Equipped Echo Id"
+      },
+      "active_zone": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/ZoneRecord"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "completed_zone_count": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Completed Zone Count",
+        "type": "integer"
+      },
+      "shop": {
+        "$ref": "#/$defs/ShopState"
+      },
+      "pending_checks": {
+        "items": {
+          "$ref": "#/$defs/PendingCheck"
+        },
+        "title": "Pending Checks",
+        "type": "array"
+      },
+      "hub": {
+        "$ref": "#/$defs/HubStatus"
+      },
+      "last_generation_error": {
+        "anyOf": [
+          {
+            "maxLength": 160,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Last Generation Error"
+      }
+    },
+    "required": [
+      "bridge_connected",
+      "ap_connected",
+      "ap_mode",
+      "epsilon_provider",
+      "hub"
+    ],
+    "title": "CampaignSnapshot",
+    "type": "object"
+  }
+}
