@@ -14,15 +14,40 @@ The full surface — 5 chamber builders, 3 enemy archetypes, 10 Echo effects, a 
 
 If the whole thing finishes, excellent. The plan is ordered so that stopping anywhere still leaves something real.
 
-## 1.1 The T−60 rule
+## 1.1 The T−60 rule — binding
 
-**With 60 minutes left, stop feature work.** No exceptions, no "just one more subsystem."
+**T−60 minutes is a feature freeze. No new subsystems after that point.** No exceptions, no "just one more subsystem."
 
-Spend the remaining hour on:
+From T−60 onward the only permitted code changes are **regression fixes** to what is already implemented. Not new features, not "finishing" a phase that is half-built, not starting the next one. If a subsystem is incomplete at T−60 it stays incomplete and is described in `NEXT_STEPS.md`.
+
+**The goal is to leave the highest completed vertical slice fully running — not six later systems half-finished.**
+
+### The T−60 gate
+
+Run **every automated test applicable to the phases actually implemented**, then fix regressions only.
+
+For the expected Phase 0–3 result the gate is:
+
+| Gate item | Condition |
+|---|---|
+| All schema tests (`schemas/test_schemas.py`) | **Always.** They ship green, so any failure is a regression you introduced |
+| Bridge tests **1–20** (§2) | Phase 2 onward |
+| Campaign / allocation tests **21–35** (§3) | Phase 2 onward |
+| APWorld tests **36–47** (§4) | Phase 1 onward |
+| APWorld test **48** (packaging) | only if `.apworld` packaging is implemented |
+| Godot headless tests **49–59** (§5) | all that exist for the builders and systems implemented |
+| End-to-end **Test A** (foreign item Echo) | Phase 3 onward |
+| End-to-end **Test E** (provider failure) | only if fallback/provider plumbing exists |
+
+**Do not require the later end-to-end tests (B, C, D, F, G, H, I, J, K) at T−60 unless the systems they exercise were already implemented.** Test C cannot pass without a shop; Test J cannot pass without the finale. Their absence is expected, is not a failure, and is recorded in `NEXT_STEPS.md` rather than chased.
+
+Record every result honestly, **including failures**. A truthful "Test A fails at reconnect, cause unknown" is worth far more than a green summary that was never run.
+
+### The rest of the hour
 
 1. Make the highest completed milestone actually run, end to end, from documented commands.
-2. Run the acceptance tests that currently apply and record the results honestly, including failures.
-3. Update `README.md` with exact setup and run commands.
+2. Run the gate above. Fix regressions only.
+3. Update `README.md` with exact setup and run commands, and the known limitations from `DESIGN.md` §18.
 4. Update `docs/IMPLEMENTATION_DECISIONS.md` with every deviation and assumption.
 5. Write `docs/NEXT_STEPS.md` naming the exact next blocker.
 6. Commit.
@@ -41,7 +66,7 @@ Running out of time at Phase 3 below leaves a real, connected, provable slice. R
 
 1. Repo skeleton, `Makefile`, `.gitignore` (`.archipelago/`, `.env`, `.godot/`, `__pycache__/`, `*.tmp`).
 2. Copy `schemas/` from the packet into `bridge/archipepsi_bridge/schemas/` **verbatim**. Do not retype them.
-3. `python -m pytest` on the packet's schema tests — 32 tests, all passing, before anything else is written.
+3. `python -m pytest` on the packet's schema tests — 37 tests, all green, before anything else is written.
 4. `bootstrap.py`: clone Archipelago at `0.6.7`, run `ModuleUpdate.py --yes`, verify `import CommonClient`.
 
 **Milestone: `make setup && make test` works on a clean machine.**

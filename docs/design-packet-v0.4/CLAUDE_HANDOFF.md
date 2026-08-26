@@ -65,7 +65,7 @@ The first genuinely important milestone:
 
 ## Rules that will save you time
 
-**Copy `schemas/` verbatim.** It runs and it is tested. Run `pytest` on it before writing anything else — 32 tests, all green. Do not retype the models from the prose; the prose describes them, the code *is* them. Regenerate `constants.gd` and the JSON Schemas with `python schemas/export.py` and never hand-edit the outputs.
+**Copy `schemas/` verbatim.** It runs and it is tested. Run `pytest` on it before writing anything else — 37 tests, all green. Do not retype the models from the prose; the prose describes them, the code *is* them. Regenerate `constants.gd` and the JSON Schemas with `python schemas/export.py` and never hand-edit the outputs.
 
 **Every gameplay number is already decided**, in `schemas/constants.py`. Do not invent movement, combat, or timing values. If one is missing, add it there rather than inline.
 
@@ -101,12 +101,14 @@ The reveal (`DESIGN.md` §16). Structurally it is the only genuinely novel momen
 
 ## Before the session ends — the T−60 rule
 
-**With 60 minutes left, stop feature work.** No exceptions.
+**T−60 minutes is a feature freeze. No new subsystems after that point.** No exceptions.
+
+From T−60 the only permitted code changes are regression fixes to what already works. The goal is to leave the highest completed vertical slice fully running — not six later systems half-finished.
 
 Then:
 
 1. Make the highest completed milestone run end to end from documented commands.
-2. Run the acceptance tests that apply and record results **honestly**, including failures.
+2. Run **the T−60 gate** in `IMPLEMENTATION_PLAN.md` §1.1 — every automated test applicable to the phases you actually implemented — and record results **honestly**, including failures. Do not chase end-to-end tests for systems you never built.
 3. Update `README.md` with exact setup and run commands, and the known limitations from `DESIGN.md` §18.
 4. Update `docs/IMPLEMENTATION_DECISIONS.md`.
 5. Write `docs/NEXT_STEPS.md` naming the exact next blocker.
