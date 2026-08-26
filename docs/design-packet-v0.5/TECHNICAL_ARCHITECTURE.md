@@ -170,7 +170,7 @@ Concretely:
 - After sending a check, a reconcile timer (5s, then 15s, then on every snapshot) re-examines `checked_locations` rather than waiting.
 - On reconnect, every `PendingCheck` is reconciled: already checked → finalize; still missing → re-send.
 
-**Every pending check needs a terminal failure state, not just the shop's.** `check_locations()` **returns the set it actually sent**, and returns an empty set when the location is in neither `missing_locations` nor `checked_locations`. Capture that return. An empty return with the location still unchecked means AP does not recognise it as this slot's: log loudly, emit a `sync_warning`, drop the pending record, release the location.
+**Every pending check needs a terminal failure state, not just the shop's.** `check_locations()` **returns the set it actually sent**, and returns an empty set when the location is in neither `missing_locations` nor `checked_locations`. Capture that return. An empty return with the location still unchecked means AP does not recognise it as this slot's: log loudly, emit a `sync_warning`, drop the pending record, release the location — **and for a `shop`-source record, subtract its `shop_cost` from `coins_spent`**, exactly as `DESIGN.md` §11.7's rollback does. This is one code path; dropping a shop record without the refund destroys coins.
 
 Without this a Zone-source check reconciles forever — and because the exit portal needs every Check confirmed and no new Zone may generate while one is `ACTIVE`, **one stuck check permanently blocks the campaign.** v0.4 gave the shop path a rollback trigger and left the Zone path with none.
 
@@ -215,6 +215,7 @@ v0.3 was organized entirely around "a crash must never corrupt the campaign" and
 
 ```
 PENDING_GENERATION → GENERATED → ACTIVE → COMPLETE
+                                        \→ ABANDONED
 ```
 
 `allocated_location_ids` is populated at `PENDING_GENERATION`, **before** the provider is called, and saved. This closes the v0.3 crash window: a Zone recorded as allocated-but-ungenerated re-runs generation against its committed IDs on load and never re-allocates. It also means those locations are visible to the shop's eligibility check, which in v0.3 excluded only locations "assigned to current saved Zone" — a Zone that did not exist yet.
@@ -287,7 +288,7 @@ Local WebSocket, `ws://127.0.0.1:38290`, bound to loopback only. Godot is the cl
 
 This is **not** the Archipelago protocol. The bridge translates.
 
-**Godot → bridge (intents):** `hello`, `ap_connect`, `ap_disconnect`, `start_mock_campaign`, `request_next_zone`, `resume_zone`, `claim_check`, `buy_shop_stock`, `equip_echo`, `set_creativity`, `leave_zone`, `exit_zone`, `debug_command`.
+**Godot → bridge (intents):** `hello`, `ap_connect`, `ap_disconnect`, `start_mock_campaign`, `request_next_zone`, **`enter_zone`**, `leave_zone`, `exit_zone`, **`abandon_zone`**, `claim_check`, `buy_shop_stock`, `equip_echo`, `set_creativity`, `debug_command`. (`ClientMessage` in `schemas/protocol.py` is authoritative; there is no `resume_zone`.)
 
 **Bridge → Godot:** `bridge_ready`, `campaign_snapshot`, `zone_ready`, `notification`, `error`.
 

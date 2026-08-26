@@ -109,7 +109,7 @@ Small client-required seed information only. Location→item placements are obta
 
 ```json
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "location_ids": [89100001, "...", 89100030],
   "tiers": {
     "0": [89100001, "...", 89100010],
@@ -171,7 +171,7 @@ Develop as a normal world folder. `apworld/archipepsi/archipelago.json`:
 ```json
 {
   "game": "Archipepsi",
-  "world_version": "0.4.0",
+  "world_version": "0.5.0",
   "minimum_ap_version": "0.6.7",
   "authors": ["Skyiah"]
 }

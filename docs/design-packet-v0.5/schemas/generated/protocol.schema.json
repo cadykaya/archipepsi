@@ -1038,6 +1038,11 @@
             "title": "Finale Available",
             "type": "boolean"
           },
+          "holding_finale": {
+            "default": false,
+            "title": "Holding Finale",
+            "type": "boolean"
+          },
           "finale_progress": {
             "default": 0,
             "minimum": 0,
@@ -2583,6 +2588,11 @@
           "finale_available": {
             "default": false,
             "title": "Finale Available",
+            "type": "boolean"
+          },
+          "holding_finale": {
+            "default": false,
+            "title": "Holding Finale",
             "type": "boolean"
           },
           "finale_progress": {

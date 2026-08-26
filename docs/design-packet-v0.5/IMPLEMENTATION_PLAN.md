@@ -43,7 +43,7 @@ For the expected Phase 0–3 result the gate is:
 | End-to-end **Test A** (foreign item Echo) | Phase 3 onward |
 | End-to-end **Test E** (provider failure) | only if fallback/provider plumbing exists |
 
-**Do not require the later end-to-end tests (B, C, D, F, G, H, I, J, K) at T−60 unless the systems they exercise were already implemented.** Test C cannot pass without a shop; Test J cannot pass without the finale. Their absence is expected, is not a failure, and is recorded in `NEXT_STEPS.md` rather than chased.
+**Do not require the later end-to-end tests (B, C, D, F, G, H, I, J, K, L, M, N, O, P) at T−60 unless the systems they exercise were already implemented.** Test C cannot pass without a shop; Test J cannot pass without the finale. Their absence is expected, is not a failure, and is recorded in `NEXT_STEPS.md` rather than chased.
 
 Record every result honestly, **including failures**. A truthful "Test A fails at reconnect, cause unknown" is worth far more than a green summary that was never run.
 
@@ -108,17 +108,17 @@ Generation is the only thing that catches a bad `origin_region_name` — module-
 
 ### Phase 3 — Godot vertical slice (~150 min)
 
-21. `bridge_client.gd` autoload: WebSocket, reconnect with backoff, snapshot handling.
+22. `bridge_client.gd` autoload: WebSocket, reconnect with backoff, snapshot handling.
 22. Generated `constants.gd` (`python schemas/export.py`).
 23. Main menu → connect / Mock Campaign.
-24. Hub scene with the portal, status board, and all six `HubStatus` modes including `WAITING_FOR_AP`.
+24. Hub scene with the portal, status board, and all seven `HubStatus` modes including `ZONE_READY` and `WAITING_FOR_AP`.
 25. First-person controller using the binding constants. LMB Static Pulse, RMB Echo.
 26. `corridor` and `arena` builders; linear chaining; the appended exit portal.
 27. `melee` enemy; objective latching; reward objects and the claim flow.
 28. **The reveal sequence** (`DESIGN.md` §16). Treat as core, not polish.
 29. Echo runtime for `hitscan_damage` + `recoil_self` + `knockback_target` — enough for Conference Call.
 30. Echo inventory; equip and cycle.
-31. Leave-zone and exit-zone.
+31. `enter_zone`, `leave_zone`, `exit_zone`, `abandon_zone` — including the Hub-side Abandon control (see below).
 
 **Milestone: launch, connect, enter a generated Zone, clear a Check, watch the reveal, equip and fire the Echo, return to Hub, quit, reload, same state. This is the demo.**
 

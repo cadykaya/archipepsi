@@ -181,7 +181,7 @@ Retune movement and all of it recomputes. That is what makes "every mandatory pa
 
 Enemy stats are chosen so the worst legal Zone (14 enemies including one brute) is ~25 seconds of sustained Static Pulse fire. Asserted in `test_schemas.py`.
 
-Epsilon should prefer making Echo weapons much more satisfying than Static Pulse; the bounds allow roughly 2.6× its DPS.
+Epsilon should prefer making Echo weapons much more satisfying than Static Pulse. A *reference* mid-bounds Echo (`REFERENCE_ECHO_*`) lands around **2.6×** its DPS. The bounds themselves permit far more — 25 damage × 16 pellets on a 0.15 s cooldown is roughly 156× — so quote the reference figure to Epsilon, never the ceiling.
 
 ---
 
@@ -189,7 +189,7 @@ Epsilon should prefer making Echo weapons much more satisfying than Static Pulse
 
 100 HP. Enemies deal fixed damage. Death respawns at Zone start after a short delay. Completed AP locations stay completed, Echoes stay owned, coins spent stay spent.
 
-**Objective latching.** A chamber objective, once satisfied, stays satisfied for the lifetime of the Zone. Enemies may respawn on player death for simplicity, but a `kill_all` chamber that has already been cleared does **not** re-lock its reward. (v0.3 left this undefined.)
+**Objective latching.** A chamber objective, once satisfied, stays satisfied **for the lifetime of the loaded Zone instance**. Returning to the Hub resets it; see §14.3. Enemies may respawn on player death for simplicity, but a `kill_all` chamber that has already been cleared does **not** re-lock its reward. (v0.3 left this undefined.)
 
 ---
 
@@ -226,7 +226,8 @@ A location is an eligible **normal Zone candidate** when all hold:
 - it is in an unlocked tier (tier N requires N Signal Keys)
 - the server reports it missing
 - **it is not Check 030** — the goal is fully reserved
-- it is not held by any Zone whose state is not `COMPLETE` (including `PENDING_GENERATION`)
+- it is not held by a Zone in a **non-terminal** state — `ZoneRecord.holds_locations`, i.e. `PENDING_GENERATION`, `GENERATED` or `ACTIVE`. `COMPLETE` and `ABANDONED` release their locations
+- it has no entry in `pending_checks` (a claimed-but-unconfirmed location stays reserved until it finalizes or rolls back)
 - it is not currently reserved as shop stock
 
 ## 10.5 Selecting a normal Zone
@@ -234,8 +235,8 @@ A location is an eligible **normal Zone candidate** when all hold:
 1. Compute unlocked tiers from received Signal Keys.
 2. Build the eligible set per §10.4.
 3. If it is empty, do not generate — enter `WAITING_FOR_AP` (§13).
-4. Advance the Track cursor to the next Track with eligible locations.
-5. Shuffle that Track's eligible IDs with `(seed_name, slot_id, generation_counter, target_game)`.
+4. Read the Track cursor. If that Track has no eligible locations, scan forward to one that does — **without writing the cursor back**. The cursor advances only at Zone completion (§14.5).
+5. Shuffle that Track's eligible IDs with `zone_selection_seed(seed_name, team, slot_id, generation_counter, target_game)` from `constants.py`. Do not hand-assemble the tuple; `team` belongs in it.
 6. Take up to 3.
 7. If fewer than 2 and other Tracks have eligible locations, fill to 2 from subsequent Tracks.
 8. A **1-Check Zone is allowed only when exactly one eligible location remains in total.**
@@ -280,7 +281,7 @@ Archipelago does not know Archipepsi's `coins_spent`. No location may be permane
 
 ## 11.3 Eligibility
 
-Stock must be: in an unlocked tier; server-missing; **not Check 030**; recipient is not the Archipepsi slot; not held by any non-`COMPLETE` Zone; not already reserved.
+Stock must be: in an unlocked tier; server-missing; **not Check 030**; recipient is not the Archipepsi slot; not held by a Zone in a non-terminal state (`ZoneRecord.holds_locations`); has no entry in `pending_checks`; not already reserved.
 
 ## 11.4 Price
 
@@ -351,6 +352,7 @@ The portal's behavior is driven by `HubStatus.mode`:
 | Mode | Portal | Meaning |
 |---|---|---|
 | `NO_CAMPAIGN` | disabled | not connected |
+| *(generating)* | disabled | a Zone is `PENDING_GENERATION`. Keep the previous mode and set `generation_in_progress`; **never** show `WAITING_FOR_AP` here — the player is waiting on us, not on the multiworld |
 | `ZONE_READY` | **enter** | a Zone is `GENERATED` and waiting to be entered |
 | `ZONE_ACTIVE` | **resume** | a Zone is `ACTIVE`; re-enter it |
 | `ZONE_AVAILABLE` | **generate** | eligible ordinary locations exist |
@@ -426,7 +428,15 @@ Objective latching is scoped to the **loaded scene instance**, not the Zone reco
 
 ## 14.4 Abandoning
 
-`abandon_zone` gives up on a Zone that cannot be finished. Its unclaimed locations return to the eligible pool; Checks already confirmed inside it stay confirmed; the record moves to `ABANDONED`.
+`abandon_zone` gives up on a Zone that cannot be finished:
+
+1. move the record to `ABANDONED`
+2. **clear `active_zone_id`** — without this the Hub still reports a held Zone and the escape hatch has no exit
+3. its unclaimed locations return to the eligible pool; Checks already confirmed inside it stay confirmed
+4. a location with a live `PendingCheck` stays reserved until that transaction finalizes or rolls back, so it cannot be re-allocated while its own check is in flight
+5. save
+
+`ABANDONED` is terminal: `holds_locations` is false, and the save rejects an `active_zone_id` naming it.
 
 This exists because a schema-valid Zone can still be unfinishable. An enemy steered off a tower floor leaves `kill_all` permanently unsatisfied, and with no new Zone generatable while one is `ACTIVE`, the campaign stops. `ENEMY_FALL_KILL_Y` removes the most likely trigger — an enemy below it counts as dead — but the escape hatch has to exist regardless, or the promise that "a bad response never blocks a run" is false for valid responses.
 

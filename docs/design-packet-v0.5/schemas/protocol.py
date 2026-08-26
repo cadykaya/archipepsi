@@ -61,7 +61,9 @@ class ZoneRecord(Strict):
     """
     zone_id: str = _ID
     state: ZoneState
-    allocated_location_ids: list[_LOC] = Field(min_length=1, max_length=3)
+    allocated_location_ids: list[_LOC] = Field(
+        min_length=1, max_length=C.ZONE_MAX_CHECKS
+    )
     target_game: _AP_STR
     is_finale: bool = False
     zone: Zone | None = None          # None only while PENDING_GENERATION
@@ -82,6 +84,17 @@ class ZoneRecord(Strict):
             raise ValueError(
                 f"{C.GOAL_LOCATION_ID} is reserved for the finale Zone"
             )
+        if self.zone is not None:
+            if self.zone.zone_id != self.zone_id:
+                raise ValueError(
+                    f"record '{self.zone_id}' wraps zone '{self.zone.zone_id}'"
+                )
+            if sorted(self.zone.reward_location_ids) != sorted(
+                    self.allocated_location_ids):
+                raise ValueError(
+                    "the accepted Zone's rewards must be exactly its "
+                    "allocated_location_ids"
+                )
         return self
 
     @property
@@ -118,6 +131,13 @@ class ShopState(Strict):
         default_factory=list, max_length=C.SHOP_STOCK_SIZE
     )
     created_after_zone_count: int = Field(default=0, ge=0)
+
+    @model_validator(mode="after")
+    def _one_entry_per_location(self):
+        ids = [i.location_id for i in self.stock]
+        if len(set(ids)) != len(ids):
+            raise ValueError("two stock entries for the same location")
+        return self
 
 
 class CampaignSave(Strict):
@@ -170,6 +190,24 @@ class CampaignSave(Strict):
         seen = [p.location_id for p in self.pending_checks]
         if len(set(seen)) != len(seen):
             raise ValueError("two pending checks for the same location")
+
+        # At most one Zone may hold locations, and active_zone_id must name
+        # it. Without this the v0.4 orphan shape - several non-terminal
+        # Zones with active_zone_id on one of them - stays representable.
+        holding = [z for z in self.zones.values() if z.holds_locations]
+        if len(holding) > 1:
+            raise ValueError(
+                "more than one Zone holds locations: "
+                + ", ".join(sorted(z.zone_id for z in holding))
+            )
+        if holding and self.active_zone_id != holding[0].zone_id:
+            raise ValueError(
+                f"active_zone_id must name the held Zone '{holding[0].zone_id}'"
+            )
+        if not holding and self.active_zone_id is not None:
+            raise ValueError(
+                "active_zone_id must be cleared when no Zone holds locations"
+            )
         return self
 
     @property
@@ -206,10 +244,17 @@ class ScoutedLocation(Strict):
 
     @model_validator(mode="after")
     def _unrevealed_withholds_identity(self):
-        if not self.revealed and self.item_name is not None:
-            raise ValueError(
-                "item_name must be omitted until the location is revealed"
-            )
+        # recipient_game is deliberately exempt: themes derive from it, so
+        # the player learns it the moment a Zone loads. Everything else
+        # identifies the item, item_id included.
+        if not self.revealed:
+            leaked = [n for n in ("item_id", "item_name", "recipient_player",
+                                  "recipient_name", "flags")
+                      if getattr(self, n) is not None]
+            if leaked:
+                raise ValueError(
+                    f"unrevealed location must omit {', '.join(leaked)}"
+                )
         return self
 
 
@@ -259,6 +304,7 @@ class HubStatus(Strict):
     postgame: bool = False
 
     finale_available: bool = False
+    holding_finale: bool = False
     finale_progress: int = Field(default=0, ge=0)
     finale_required: int = C.FINALE_REQUIRED_OTHER_CHECKS
     signal_keys_required: int = C.FINALE_REQUIRED_SIGNAL_KEYS
@@ -274,14 +320,29 @@ class HubStatus(Strict):
                 "not waiting on Archipelago if the finale is available; "
                 "use FINALE_ONLY"
             )
-        # A Zone in hand takes precedence: generating another would orphan it.
-        if self.mode in ("ZONE_READY", "ZONE_ACTIVE") and self.finale_available:
+        # A Zone in hand takes precedence: generating another would orphan
+        # it. `holding_finale` exempts the finale Zone itself, which is
+        # obviously allowed to be held while available.
+        if (self.mode in ("ZONE_READY", "ZONE_ACTIVE")
+                and self.finale_available and not self.holding_finale):
             raise ValueError(
                 "finish or abandon the current Zone before the finale is "
                 "offered; otherwise its unclaimed Checks are stranded"
             )
         if self.postgame and not self.goal_sent:
             raise ValueError("postgame requires goal_sent")
+
+        # v0.4's stranding state was exactly "a playable mode with the portal
+        # switched off". Tie them together so it cannot be described.
+        playable = self.mode in (
+            "ZONE_READY", "ZONE_ACTIVE", "ZONE_AVAILABLE", "FINALE_ONLY")
+        if playable != self.portal_enabled:
+            raise ValueError(
+                f"mode {self.mode} requires portal_enabled="
+                f"{str(playable).lower()}"
+            )
+        if self.mode == "ALL_CHECKS_CLEARED" and not self.goal_sent:
+            raise ValueError("every Check cleared implies the goal was sent")
         return self
 
 

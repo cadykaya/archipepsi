@@ -85,7 +85,7 @@ Godot ships no test framework. Rather than adopt an addon, assert what a headles
 50. The corridor builder returns connected entrance/exit transforms.
 51. The arena builder returns connected transforms and non-overlapping bounds.
 52. Linear chaining produces no overlapping chamber bounds for a 6-chamber Zone.
-53. **The platform-path builder never emits a gap exceeding `SAFE_BASE_JUMP_GAP` or a step exceeding `MAX_VERTICAL_STEP`**, across every legal parameter combination.
+53. **The platform-path builder never emits a gap exceeding `max_safe_gap(vertical_step)`** (not the flat `SAFE_BASE_JUMP_GAP` — the bound tightens with the step) **or a step exceeding `MAX_VERTICAL_STEP`**, across every legal parameter combination.
 54. The tower builder always emits a base-movement route.
 55. The treasure-room builder places exactly one reward.
 56. An exit portal is appended after the final chamber of every generated Zone.

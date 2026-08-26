@@ -21,16 +21,16 @@ try:
     from . import constants as C
     from .echo import Echo, PassiveEcho, PrimaryEcho, validate_echo
     from .protocol import (
-        CampaignSave, ClientMessage, HubStatus, ScoutedLocation, ShopStockItem,
-        ZoneRecord,
+        CampaignSave, ClientMessage, HubStatus, ScoutedLocation, ShopState,
+        ShopStockItem, ZoneRecord,
     )
     from .zone import Zone, validate_zone
 except ImportError:  # pragma: no cover
     import constants as C
     from echo import Echo, PassiveEcho, PrimaryEcho, validate_echo
     from protocol import (
-        CampaignSave, ClientMessage, HubStatus, ScoutedLocation, ShopStockItem,
-        ZoneRecord,
+        CampaignSave, ClientMessage, HubStatus, ScoutedLocation, ShopState,
+        ShopStockItem, ZoneRecord,
     )
     from zone import Zone, validate_zone
 
@@ -496,13 +496,15 @@ def test_semantic_echo_validation_checks_the_source():
 # ===========================================================================
 
 def _record(**over):
-    base = dict(zone_id="zone_001", state="ACTIVE",
-                allocated_location_ids=[89100001], target_game="Borderlands 2",
+    zid = over.pop("zone_id", "zone_001")
+    loc = over.pop("location_id", 89100001)
+    base = dict(zone_id=zid, state="ACTIVE",
+                allocated_location_ids=[loc], target_game="Borderlands 2",
                 generation_index=1,
                 zone=Zone.model_validate(_zone(
-                    zone_id="zone_001",
+                    zone_id=zid,
                     chambers=[{"id": "c1", "type": "treasure_room",
-                               "reward_location_id": 89100001}])))
+                               "reward_location_id": loc}])))
     base.update(over)
     return ZoneRecord(**base)
 
@@ -600,10 +602,19 @@ def test_unrevealed_locations_withhold_item_identity():
     s = ScoutedLocation(location_id=89100030,
                         location_name="Archipepsi Check 030")
     assert s.item_name is None and not s.revealed
-    with pytest.raises(ValidationError, match="omitted until"):
+    with pytest.raises(ValidationError, match="must omit"):
         ScoutedLocation(location_id=89100030,
                         location_name="Archipepsi Check 030",
                         item_name="Master Sword")
+    # item_id identifies the AP item just as exactly as its name does
+    for field in ("item_id", "recipient_player", "flags"):
+        with pytest.raises(ValidationError, match="must omit"):
+            ScoutedLocation(location_id=89100030,
+                            location_name="Archipepsi Check 030",
+                            **{field: 1})
+    # recipient_game is exempt by design: themes derive from it
+    ScoutedLocation(location_id=89100030, location_name="Archipepsi Check 030",
+                    recipient_game="Ocarina of Time")
     ok = ScoutedLocation(location_id=89100030,
                          location_name="Archipepsi Check 030",
                          revealed=True, item_name="Master Sword")
@@ -659,7 +670,10 @@ def test_goal_does_not_end_play():
 
 def HubMode_values():
     import typing
-    from protocol import HubMode  # noqa: F401  (re-imported for get_args)
+    try:
+        from .protocol import HubMode
+    except ImportError:  # pragma: no cover
+        from protocol import HubMode
     return typing.get_args(HubMode)
 
 
@@ -736,3 +750,63 @@ def test_every_demo_game_maps_to_a_distinct_real_theme():
     hinted = C.THEME_BY_GAME_HINT
     assert set(hinted.values()) <= set(C.THEMES)
     assert len(set(hinted.values())) == len(hinted), "two games share a theme"
+
+
+def test_only_one_zone_may_hold_locations():
+    """The v0.4 orphan shape - several non-terminal Zones, active_zone_id on
+    one - stayed representable in a v0.5 save until this validator."""
+    a = _record(zone_id="zone_001", location_id=89100001)
+    b = _record(zone_id="zone_002", location_id=89100002)
+    with pytest.raises(ValidationError, match="more than one Zone holds"):
+        CampaignSave(seed_name="S", team=0, slot_id=1, slot_name="n",
+                     zones={"zone_001": a, "zone_002": b},
+                     active_zone_id="zone_001")
+
+
+def test_active_zone_id_tracks_the_held_zone():
+    """Abandoning must clear it; a terminal record may not stay 'active'."""
+    done = _record(state="ABANDONED")
+    with pytest.raises(ValidationError, match="must be cleared"):
+        CampaignSave(seed_name="S", team=0, slot_id=1, slot_name="n",
+                     zones={"zone_001": done}, active_zone_id="zone_001")
+    ok = CampaignSave(seed_name="S", team=0, slot_id=1, slot_name="n",
+                      zones={"zone_001": done})
+    assert ok.active_zone_id is None
+
+
+def test_zone_record_must_describe_the_zone_it_wraps():
+    z = Zone.model_validate(_zone(zone_id="zone_009"))
+    with pytest.raises(ValidationError, match="wraps zone"):
+        ZoneRecord(zone_id="zone_001", state="ACTIVE",
+                   allocated_location_ids=[89100012, 89100013],
+                   target_game="G", generation_index=1, zone=z)
+    with pytest.raises(ValidationError, match="rewards must be exactly"):
+        ZoneRecord(zone_id="zone_003", state="ACTIVE",
+                   allocated_location_ids=[89100019],
+                   target_game="G", generation_index=1,
+                   zone=Zone.model_validate(_zone()))
+
+
+def test_shop_cannot_list_one_location_twice():
+    item = dict(cost=2, item_name="x", recipient_name="y", recipient_game="z")
+    with pytest.raises(ValidationError, match="same location"):
+        ShopState(stock=[ShopStockItem(location_id=89100005, **item),
+                         ShopStockItem(location_id=89100005, **item)])
+
+
+def test_portal_state_cannot_contradict_the_mode():
+    """v0.4's stranding state was a playable mode with the portal off."""
+    with pytest.raises(ValidationError, match="requires portal_enabled=true"):
+        _hub(mode="ZONE_AVAILABLE", portal_enabled=False)
+    with pytest.raises(ValidationError, match="requires portal_enabled=false"):
+        _hub(mode="WAITING_FOR_AP", portal_enabled=True)
+    with pytest.raises(ValidationError, match="goal was sent"):
+        _hub(mode="ALL_CHECKS_CLEARED", portal_enabled=False)
+
+
+def test_the_finale_zone_itself_may_be_held_while_available():
+    """The guard must not forbid describing the finale while playing it."""
+    with pytest.raises(ValidationError, match="finish or abandon"):
+        _hub(mode="ZONE_ACTIVE", finale_available=True)
+    ok = _hub(mode="ZONE_ACTIVE", finale_available=True, holding_finale=True)
+    assert ok.holding_finale

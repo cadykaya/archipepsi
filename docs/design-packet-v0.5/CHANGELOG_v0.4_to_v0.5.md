@@ -69,11 +69,23 @@ Open: m21, m22 (`bootstrap.py` interrupted-clone recovery and probe quoting), m2
 
 ---
 
+## Delta re-audit (two fresh reviewers, v0.4 vs v0.5)
+
+Verdicts on the five criticals: **shop double-charge** and **goal-ends-play** VERIFIED FIXED; **orphaned Zones**, **unfinishable Zone** and **passive-Echo traversal** confirmed correct *in the schemas* but PARTIALLY FIXED, because the prose still described v0.4. One reviewer brute-forced every legal `(gap_size, vertical_step)` pair at 1 cm resolution against the worst legal loadout: zero failures, tightest margin 1.563×.
+
+The structural criticism was fair and is the lesson of this revision: **each fix landed in the code and in one prose location, and the other locations stayed at v0.4** — while this changelog asserted the fix landed everywhere. Prose is now swept *mechanically* against the schemas, with a checker that validates every JSON example and every named intent, theme and Hub mode against the models.
+
+Fixed in the sweep: Track cursor still advanced in §10.5 (the exact double-advance M10 claimed to fix); `zone_selection_seed` missing `team` in prose; eligibility still keyed on "not `COMPLETE`" so `ABANDONED` held its locations forever; `abandon_zone` never clearing `active_zone_id`, leaving the escape hatch with no exit; a released location re-allocatable while its own check was in flight; four JSON examples at `schema_version: 4`; `safe_base_jump_gap: 3.0` in the payload Epsilon actually receives; the independent gap/step formulation in two more places; the intent list naming a nonexistent `resume_zone`; objective latching still saying "lifetime of the Zone" in two documents; the 2.6× DPS claim; `world_version 0.4.0`; the T−60 excusal list missing L–P.
+
+Schema hardening the re-audit prompted: `ScoutedLocation` withholds `item_id` and the recipient fields, not just `item_name`; `CampaignSave` permits at most one Zone holding locations and requires `active_zone_id` to name it; `ZoneRecord` must describe the Zone it wraps; `ShopState` rejects duplicate stock; `HubStatus.portal_enabled` must agree with `mode`; the finale guard exempts the finale Zone itself.
+
+**Still open, needing a decision:** `validate_assignment` re-validates assignment but not in-place list mutation (`chambers.append` bypasses the Zone-wide caps) — either narrow the claim or freeze the models. And `extra="ignore"` on `CampaignSave` does not buy the forward-compatibility its docstring claims, because `schema_version` is `Literal[5]`; it costs typo detection instead.
+
 ## Counted
 
-62 findings: **52 fixed**, **1 decided**, **3 documented**, **6 open**. None of the open items can break a campaign; five are `bootstrap.py` and tooling polish, one is request-model coverage.
+62 findings: **52 fixed**, **1 decided**, **3 documented**, **6 open**. Plus 17 from the delta re-audit: **14 fixed**, **2 open** (above), **1 documented**.
 
-Schema suite: **37 → 67 tests.**
+Schema suite: **37 → 73 tests**, green in both the standalone and nested layouts.
 
 ---
 

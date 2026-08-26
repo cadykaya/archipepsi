@@ -27,7 +27,7 @@ The builder guarantees:
 - spawn is on walkable ground
 - exits connect
 - the mandatory critical path never needs an Echo
-- every mandatory gap ≤ `SAFE_BASE_JUMP_GAP`, every step ≤ `MAX_VERTICAL_STEP`
+- every mandatory gap ≤ `max_safe_gap(vertical_step)` — the bound tightens as the landing rises — and every step ≤ `MAX_VERTICAL_STEP`
 - chambers do not overlap
 - reward objects are reachable once their objective is satisfied
 
@@ -102,7 +102,7 @@ Defined by `schemas/zone.py`. Example:
 
 ```json
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "zone_id": "zone_003",
   "display_name": "Cathedral of Excessive Firepower",
   "target_game": "Dark Souls III",
@@ -191,7 +191,7 @@ Numeric bounds are in `schemas/echo.py`. Out-of-bounds values are rejected, not 
 
 ```json
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "zone_id": "zone_003",
   "generation_id": "ExampleSeed-0-6-zone-003",
   "campaign": {
@@ -228,7 +228,8 @@ Numeric bounds are in `schemas/echo.py`. Out-of-bounds values are rejected, not 
   },
   "constraints": {
     "max_chambers": 6, "max_enemies_total": 14, "max_enemies_per_chamber": 8,
-    "max_brutes": 1, "safe_base_jump_gap": 3.0, "max_vertical_step": 1.0,
+    "max_brutes": 1, "max_vertical_step": 1.0,
+    "gap_bound": "gap_size <= max_safe_gap(vertical_step); 2.6 flat, 2.0 at a 1.0m step",
     "all_locations_must_appear_once": true, "critical_path_requires_echo": false
   }
 }
@@ -244,7 +245,7 @@ Numeric bounds are in `schemas/echo.py`. Out-of-bounds values are rejected, not 
 
 ```json
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "source": {
     "location_id": 89100001,
     "item_name": "Conference Call",
@@ -266,7 +267,8 @@ Numeric bounds are in `schemas/echo.py`. Out-of-bounds values are rejected, not 
     "a passive Echo has 1-2 passives and no cooldown",
     "modifiers require hitscan_damage or projectile_damage in the same Echo"
   ],
-  "balance_limits": {"damage": [1, 25], "pellets": [1, 16], "cooldown": [0.15, 15.0]}
+  "balance_limits": {"damage": [1, 25], "pellets": [1, 16], "cooldown": [0.15, 15.0],
+                     "gravity_multiplier": [0.35, 1.0], "speed_multiplier": [0.9, 1.6]}
 }
 ```
 
