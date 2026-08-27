@@ -209,6 +209,37 @@ func _run() -> void:
 	_check(slots_used.size() >= 2,
 			"the campaign's Actions reach more than one slot (%s)"
 			% str(slots_used.keys()))
+	# S10: every interpretation in a finished campaign read its item as
+	# something, and labelled itself truthfully. Before S10 the fallback
+	# shipped an empty concept tuple and a hardcoded "literal", so §15's
+	# chain was unexercised by exactly this run.
+	var modes_seen: Dictionary = {}
+	for interpretation: Dictionary in BridgeClient.snapshot.get(
+			"interpretations", []):
+		var item := str(interpretation.get("source_item_name", "?"))
+		var concepts: Array = interpretation.get("concepts", [])
+		_check(not concepts.is_empty(),
+				"'%s' was read as something (§15)" % item)
+		var mode := str(interpretation.get("mode", ""))
+		modes_seen[mode] = true
+		# The mode has to be earned: the archive shows it as "how Epsilon
+		# read it", so one the operations do not support is a lie.
+		var ops: Dictionary = {}
+		var made: Dictionary = {}
+		for operation: Dictionary in interpretation.get("operations", []):
+			ops[str(operation.get("op", ""))] = true
+			if str(operation.get("op", "")) == "create":
+				made[str(operation.get("component", {}).get("kind", ""))] = true
+		var touches := ops.has("link") or ops.has("merge") or ops.has("modify")
+		if mode == "systemic":
+			_check(touches or made.has("rule"),
+					"'%s' claims systemic and earns it" % item)
+		elif mode == "literal":
+			_check(not touches and made.size() <= 1 and made.has("action"),
+					"'%s' claims literal and earns it" % item)
+	_check(modes_seen.size() >= 2,
+			"a full campaign reads items in more than one mode (%s)"
+			% str(modes_seen.keys()))
 	_check(dispositions >= 1,
 			"the campaign emitted at least one non-create operation (%d)"
 			% dispositions)

@@ -726,3 +726,83 @@ of its traps turned out to be exactly right.
   refuse (`test_stage_tripwires.py`, `test_schemas.py`,
   `test_s1_review_fixes.py`). `validate_interpretation` already took
   `implemented_primitives` as a parameter; that seam is what they use.
+
+## S10 — the interpretation pipeline
+
+- **The mode is a fact, not a preference.** §15 says modes are
+  "influenced by" the creativity setting, and the first draft read that as
+  a ceiling: creativity 0 forbids `systemic`. That is wrong in a way worth
+  recording, because the wrongness is not obvious. A ceiling has to do
+  something when an interpretation exceeds it, and the only two options
+  are to reject an otherwise-perfect Echo, or to relabel it — and
+  relabelling makes the archive misdescribe the thing in the player's
+  hands. The mode is shown as "how Epsilon read it", so it has to stay
+  true. The influence therefore lives in the request as
+  `preferred_modes`, exactly like `over_soft_budget`, and
+  `mode_for_operations` takes no creativity argument at all.
+
+- **Concepts are validated for attachment, never for taste.** There is no
+  correct reading to check a provider against: "Master Sword reads as
+  heroism" and "as obligation" are both defensible, and a validator with
+  an opinion would make every provider a worse version of
+  `read_concepts`. So `reading_errors` refuses exactly two things — an
+  empty reading, which breaks §15's chain outright, and one sharing no
+  vocabulary with the item or its game, which is not a reading of *this*
+  item. That second case is the real failure mode: concepts pasted from
+  another Echo.
+
+- **The lexicon reproduces §15's own worked examples.** *Water Tunic*,
+  *BLJ* and *Master Sword* are the only worked examples of the reading
+  step anywhere in the contract, so the deterministic reader has to get
+  them right or the documentation describes behaviour the code lacks. A
+  companion test asserts those three items are still the ones the prose
+  uses — `check_packet.py` compares identifiers, not worked examples.
+
+- **The reading is stamped after the operations are settled.** The mode is
+  derived *from* the operations, so choosing it up front would describe a
+  draft rather than the finished Echo. `_read_and_label` runs last in
+  `fallback_echo`, after `_as_sequel` has had its chance to turn a CREATE
+  into an evolution — which is exactly the case where the mode changes.
+
+- **Affordances are budgeted in distinct tags, and the budget is
+  currently unreachable.** §16 says "Distinct affordance tags" and the
+  unit is load-bearing: a tag is a capability, so two Echoes both
+  granting `rail` add one vocabulary rather than two, and counting
+  components would charge the player twice for a redundant grant. Only
+  seven tags exist, so soft 8 / hard 12 cannot fire today. That is the
+  right shape for a budget — better than a number that fires for the
+  wrong reason — and a test states it, so a growing catalog reports in
+  rather than silently going live.
+
+  Both the steer (`budget_headroom`) and the refusal (`budget_errors`)
+  count it, in two different functions, so both are proven. The refusal's
+  half needed the budget narrowed by hand to be observable at all, the
+  same seam-narrowing the primitive-gate tests use — without it the
+  refusal could count components while the steer counted tags and every
+  real-data test would still pass.
+
+- **`budget_headroom` replaces guessing.** `over_soft_budget` says which
+  kinds are crowded; a provider deciding whether one more resource is fine
+  or is the sixteenth needs `[owned, soft, hard]`, and guessing wrong
+  costs a repair round.
+
+- **`relevance_hint` puts §15's rule in a sentence.** The owned graph has
+  been in the request since S6, but a graph is a list; this is the line
+  that says what to do with it ("already well supplied: hitscan_damage x3;
+  prefer a new relationship..."). Empty on a fresh campaign, where there
+  is nothing to relate to and steering toward a disposition would push a
+  provider at an operation that cannot validate. The specific half leads,
+  because `MAX_TEXT_LEN` is 160 and the generic sentence alone nearly
+  fills it — the first draft truncated away the only part a provider
+  could act on.
+
+- **Mock Epsilon reads aloud; it does not invent.** It shares one
+  validated vocabulary with the fallback — a mock that could express more
+  would be testing a game nobody ships. What it adds is the reading: the
+  concepts, the mode, and a description that states both. That is the half
+  of §15 the fallback deliberately does not do.
+
+- **The archive shows the mode.** It was worth nothing before S10, since
+  every interpretation said "literal" because the fallback hardcoded it.
+  Now it is derived, so the row reads "read systemic: tension / reach" and
+  tells the player how far Epsilon travelled from the item.

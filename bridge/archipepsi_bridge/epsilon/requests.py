@@ -194,6 +194,27 @@ class EchoGenerationRequest(Strict):
     #: S6 completed the vocabulary it steers toward: UPGRADE, MODIFY and
     #: MERGE are all implementable now.
     over_soft_budget: tuple[str, ...] = ()
+    #: S10, §16 in full. `over_soft_budget` says WHICH kinds are crowded;
+    #: this says by how much and how much room is left, as
+    #: `{kind: [owned, soft, hard]}` with `hard` null where §16 has none.
+    #: A provider given only the boolean has to guess whether one more
+    #: resource is fine or is the sixteenth, and guessing wrong costs a
+    #: repair round.
+    budget_headroom: dict = Field(default_factory=dict)
+    #: S10, §15's reading, offered rather than imposed. The deterministic
+    #: lexicon's answer for this item, as a starting point — a provider is
+    #: free to read the item differently and usually should, since a model
+    #: that only ever echoed this back would be a slower `read_concepts`.
+    suggested_concepts: tuple[str, ...] = ()
+    #: S10: which readings the creativity setting leans toward, most first
+    #: (§15, "influenced by Epsilon's creativity setting"). Steering, like
+    #: `over_soft_budget` — the mode that gets stored must describe what
+    #: the operations actually did, so this cannot be a rule.
+    preferred_modes: tuple[str, ...] = ()
+    #: S10, §15's relevance rule, phrased against THIS campaign: what a
+    #: disposition could usefully touch. Empty on a fresh campaign, where
+    #: there is nothing to relate to and CREATE is the only honest answer.
+    relevance_hint: str = Field(default="", max_length=C.MAX_TEXT_LEN)
     allowed: dict = Field(default_factory=lambda: {
         "operations": list(CAP.IMPLEMENTED_OPERATION_KINDS),
         "modes": list(E.INTERPRETATION_MODES),

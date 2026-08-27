@@ -454,6 +454,51 @@ readouts' read-only promise. `make godot-test` had to become a booted run
 in the same change — chambers now reach the player, which reaches
 `BridgeClient`, and a `--script` run has no autoloads.
 
+## Echoes 2.0 — S10 landed (the interpretation pipeline)
+
+§15's chain is real now: `item -> concepts -> supported systems ->
+validated recipe`.
+
+**The reading.** `epsilon/concepts.py` is the deterministic reader — a
+whole-word lexicon plus qualifiers, reproducing §15's own three worked
+examples (*Water Tunic* → water/buoyancy/pressure/protection, *BLJ* →
+backwards/momentum/acceleration/exploit, *Master Sword* →
+blade/heroism/anti-evil/energy). A companion test asserts the prose still
+uses those three items, because `check_packet.py` compares identifiers
+rather than worked examples. The fallback reads every item; mock Epsilon
+says the reading out loud in its description. Before this, both shipped an
+empty concept tuple, so §15 was unexercised by every deterministic run
+including the integration one.
+
+**The mode is a fact, not a preference.** It is derived from what the
+operations actually did and shown in the archive as "how Epsilon read it",
+so it cannot be talked out of the truth: `mode_for_operations` takes no
+creativity argument at all. §15's "influenced by Epsilon's creativity
+setting" lives in the request as `preferred_modes`, steering like
+`over_soft_budget`. The first draft made it a ceiling, and the reason that
+is wrong is worth knowing: a ceiling has to either reject a good Echo or
+relabel it, and relabelling makes the archive misdescribe the thing in the
+player's hands.
+
+**Validation has no taste.** `reading_errors` refuses exactly two things —
+an empty reading, and one sharing no vocabulary with the item or its game
+(concepts pasted from another Echo). Whether a reading is *good* is the
+provider's job; a validator with an opinion would make every provider a
+worse `read_concepts`.
+
+**Budgets.** §16 is now counted in the units the prose states — which
+matters for affordances, measured in **distinct tags**, because a tag is a
+capability and two Echoes granting `rail` add one vocabulary rather than
+two. Only seven tags exist, so that budget cannot fire today; a test says
+so, and reports in if the catalog grows. The request carries
+`budget_headroom` (`[owned, soft, hard]` per kind) and `relevance_hint`
+(§15's "don't make it gun four", phrased against this campaign), and the
+Claude prompt states the pipeline, the four modes and the budgets rather
+than leaving them to be inferred.
+
+The integration run ends with all 26 interpretations having read their
+item, in four different modes.
+
 ## Next useful work
 1. **Play-feel pass on real hardware** — the manual checks in
    ACCEPTANCE_TESTS §7 (gap feel, reveal timing, Conference Call comedy)
@@ -473,7 +518,7 @@ postgame, so clients also require the goal to be missing
 (`docs/IMPLEMENTATION_DECISIONS.md`).
 
 ## Commands
-    make test                  # 305 pytest
+    make test                  # 329 pytest
     make godot-test            # chamber geometry
     make godot-blink           # invariant I14, every builder
     make godot-hud             # S3: palette, glyphs, pressure valve, archive

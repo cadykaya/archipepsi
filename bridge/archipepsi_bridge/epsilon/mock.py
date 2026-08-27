@@ -88,6 +88,21 @@ def _vault(rng: random.Random, index: int) -> dict:
 _REWARD_SHAPES = (_arena_brawl, _arena_snipers, _tower_climb, _tower_fight,
                   _platforms, _vault)
 
+#: How the mock designer announces each §15 mode. The mode is derived from
+#: the operations, so these phrases are always true of the Echo they
+#: describe — which is the point of announcing them at all.
+_MODE_PHRASING = {
+    "literal": "Read",
+    "mechanical": "Took the working parts of",
+    "conceptual": "Read, loosely,",
+    "systemic": "Wired",
+}
+
+
+def _join(concepts) -> str:
+    """`a / b / c`, the archive's own separator (§15)."""
+    return " / ".join(concepts) if concepts else "nothing in particular"
+
 
 def _connector(rng: random.Random) -> dict:
     return {"type": "corridor",
@@ -154,8 +169,22 @@ class MockEpsilonProvider:
 
     async def generate_echo(self, request: EchoGenerationRequest, *,
                             repair_errors: list[str] | None = None) -> dict:
+        """The fallback's mechanics, read aloud (§15).
+
+        Mock Epsilon does not invent mechanics the fallback cannot — the
+        two providers share one validated vocabulary, and a mock that
+        could express more would be testing a game nobody ships. What it
+        adds is the *reading*: the concepts it took from the item, the
+        mode it read it in, and a description that says so. That is the
+        half of §15 the fallback deliberately does not do, and without a
+        provider that does it the pipeline is only ever exercised by unit
+        tests.
+        """
         echo = fallback_echo(request)
+        concepts = tuple(echo.get("concepts") or ())
+        mode = str(echo.get("mode", "literal"))
         echo["description"] = _clamp(
-            f"Mock Epsilon's reading of {request.source.item_name}: "
-            + echo["description"], C.MAX_TEXT_LEN)
+            f"{_MODE_PHRASING.get(mode, 'Read')} "
+            f"{request.source.item_name} as "
+            f"{_join(concepts)}. " + echo["description"], C.MAX_TEXT_LEN)
         return echo

@@ -10,6 +10,7 @@ from __future__ import annotations
 from ..schemas import constants as C
 from ..schemas import migration as MG
 from ..schemas.echo import COMPLEXITY_BUDGETS
+from .concepts import mode_for_operations, read_concepts
 from .requests import EchoGenerationRequest, ZoneGenerationRequest
 
 
@@ -158,9 +159,10 @@ def _common(request: EchoGenerationRequest, description: str,
         "source_item_name": src.item_name,
         "source_game": src.source_game,
         "source_recipient_name": src.recipient_name,
+        # Both are stamped by `_read_and_label` once the operations are
+        # settled — the mode is derived FROM them, so choosing it here
+        # would describe a draft rather than the finished Echo.
         "concepts": (),
-        # The fallback does not interpret, it maps. Claiming a richer mode
-        # would be a lie the archive then shows to the player.
         "mode": "literal",
         "display_name": _clamp(src.item_name, C.MAX_TEXT_LEN),
         "description": _clamp(description, C.MAX_TEXT_LEN),
@@ -392,7 +394,26 @@ def fallback_echo(request: EchoGenerationRequest, *,
     something only a fixture ever showed.
     """
     interpretation = _fallback_echo_create(request, mechanics=mechanics)
-    return _as_sequel(interpretation, request) or interpretation
+    interpretation = _as_sequel(interpretation, request) or interpretation
+    return _read_and_label(interpretation, request)
+
+
+def _read_and_label(interpretation: dict, request: EchoGenerationRequest) -> dict:
+    """The §15 reading, stamped on last.
+
+    Concepts and mode are stamped after the operations are settled rather
+    than chosen up front, because both are *about* the finished
+    interpretation: the mode is derived from what the operations actually
+    did (`mode_for_operations`), so it cannot end up describing an earlier
+    draft. The fallback used to ship an empty concept tuple and a hardcoded
+    "literal", which made §15's chain unexercised by every deterministic
+    run — including the integration run.
+    """
+    interpretation["concepts"] = read_concepts(
+        request.source.item_name, request.source.source_game)
+    interpretation["mode"] = mode_for_operations(
+        interpretation.get("operations", []))
+    return interpretation
 
 
 def _fallback_echo_create(request: EchoGenerationRequest, *,

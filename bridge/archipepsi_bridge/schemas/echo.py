@@ -977,14 +977,43 @@ def budget_errors(interpretation, mechanics) -> list[str]:
         _soft, hard = budget
         if hard is None:
             continue
-        owned = len([o for o in mechanics.owned if o.kind == kind])
-        if owned + count > hard:
+        owned, would_be = _budget_counts(kind, mechanics, interpretation)
+        if would_be > hard:
             errors.append(
                 f"creating {count} more '{kind}' component(s) would put the "
-                f"campaign at {owned + count}, over the hard budget of "
+                f"campaign at {would_be}, over the hard budget of "
                 f"{hard}; upgrade, link or merge an existing one instead"
             )
     return errors
+
+
+def _budget_counts(kind: str, mechanics, interpretation) -> tuple[int, int]:
+    """`(owned now, owned after this Echo)` in the unit the budget uses.
+
+    Every kind is counted in components except `affordance`, which §16
+    measures in **distinct tags**. That difference is not a detail: an
+    affordance tag is a capability, so two Echoes that both grant `rail`
+    add one vocabulary to the campaign, not two. Counting components there
+    would charge a player twice for a redundant grant.
+
+    A consequence worth stating plainly: only seven tags exist, so the
+    affordance budget (soft 8, hard 12) cannot currently be reached. It is
+    a ceiling that becomes live if the tag catalog grows — which is the
+    right shape for a budget, and better than a number that fires for the
+    wrong reason. `test_interpretation.py` asserts this is deliberate.
+    """
+    if kind != "affordance":
+        owned = len([o for o in mechanics.owned if o.kind == kind])
+        added = len([op for op in interpretation.operations
+                     if op.op == "create" and op.component.kind == kind])
+        return owned, owned + added
+    owned_tags = {o.component.tag for o in mechanics.owned
+                  if o.component.kind == "affordance"}
+    new_tags = set(owned_tags)
+    for op in interpretation.operations:
+        if op.op == "create" and op.component.kind == "affordance":
+            new_tags.add(op.component.tag)
+    return len(owned_tags), len(new_tags)
 
 
 def over_soft_budget(mechanics) -> tuple[str, ...]:
@@ -995,7 +1024,15 @@ def over_soft_budget(mechanics) -> tuple[str, ...]:
     """
     out: list[str] = []
     for kind, (soft, _hard) in sorted(COMPLEXITY_BUDGETS.items()):
-        if len([o for o in mechanics.owned if o.kind == kind]) >= soft:
+        if kind == "affordance":
+            # Distinct tags, matching the hard budget's unit (§16). The two
+            # halves of one budget counting different things would be a
+            # steer that fires at a size the refusal never agrees with.
+            count = len({o.component.tag for o in mechanics.owned
+                         if o.component.kind == "affordance"})
+        else:
+            count = len([o for o in mechanics.owned if o.kind == kind])
+        if count >= soft:
             out.append(kind)
     return tuple(out)
 

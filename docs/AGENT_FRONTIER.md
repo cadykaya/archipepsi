@@ -60,9 +60,26 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   `pull_pickup` is implemented, so **nothing is gated any more**:
   `DEFERRED_PRIMITIVES` is empty and every registry equals its contract.
   `make godot-affordance` is the suite.
-- **Next: S10 interpretation pipeline** (IMPLEMENTATION_PLAN §2.5):
-  concepts, modes and budgets in the Claude provider, and a mock provider
-  rich enough to keep the integration run meaningful.
+- S10: **complete** — §15's chain (`item -> concepts -> supported systems
+  -> validated recipe`) is real. `epsilon/concepts.py` is the
+  deterministic reader; it reproduces §15's own three worked examples
+  (*Water Tunic*, *BLJ*, *Master Sword*) and a test asserts the prose
+  still uses them. The fallback reads every item and labels itself with a
+  mode **derived from what its operations did**, so the archive cannot
+  misdescribe an Echo; mock Epsilon says the reading out loud. The mode is
+  a fact, never a preference — creativity steers via `preferred_modes` in
+  the request rather than capping the label. `reading_errors` refuses an
+  empty reading and one sharing no vocabulary with the item, and nothing
+  else: taste is the provider's job. §16 is now counted in the units the
+  prose states (affordances in **distinct tags**), the request carries
+  `budget_headroom` and `relevance_hint`, and the Claude prompt states the
+  pipeline, the four modes and the budgets instead of leaving them to be
+  inferred. The archive shows the mode.
+- **Next: the plan is exhausted.** IMPLEMENTATION_PLAN §2.5 ends at S10
+  ("Deployables come after S10, if at all"). Per the standing handoff, do
+  not stop here — continue developing the game, and stop only where
+  continuing would require inventing an architecture decision the contract
+  does not answer (document that decision instead of guessing).
 
 ## Stage dependency trap
 A live one: a chamber carrying an affordance feature must be at least `MIN_FEATURE_CHAMBER_WIDTH` (5.2 m) wide, and only a corridor can carry one at all — every other chamber type has a Check or a gating objective. A generator that hangs a feature on a default-width connector gets its Zone refused. The fallback widens its own connectors; anything else must too.
@@ -93,7 +110,7 @@ modifier. Recorded in `docs/IMPLEMENTATION_DECISIONS.md` (S5).
 
 ## Last full green verification
 At S9 completion (this commit):
-- `make test`: 307 passed
+- `make test`: 329 passed
 - `check_packet.py`: green, 10 docs
 - `make godot-test`: GODOT CHAMBER TESTS OK
 - `make godot-blink`: 5125 resolved / 17825 refused; GODOT BLINK TESTS OK
@@ -106,8 +123,9 @@ At S9 completion (this commit):
 - `make godot-integration`: GODOT INTEGRATION OK, full 12-zone campaign;
   every interpretation credited in some provenance chain, components at
   Mk II+, Actions reaching several slots, the Hub's Lab present and inert,
-  affordance features offered and built, and a local reward earned and
-  recorded without touching a single AP location
+  affordance features offered and built, a local reward earned and
+  recorded without touching a single AP location, and all 26
+  interpretations reading their item in four different modes
 
 Do not assume these counts remain current after new commits; update this section only after the corresponding suites actually run green.
 

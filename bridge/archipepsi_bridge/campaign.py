@@ -27,7 +27,9 @@ from .schemas import constants as C
 from .schemas import transitions as T
 from .schemas.mechanics import (
     Mechanics, derive_mechanics, owned_affordance_tags)
-from .schemas.echo import over_soft_budget, upgradable_field_info
+from .epsilon.concepts import preferred_modes, read_concepts
+from .schemas.echo import (
+    COMPLEXITY_BUDGETS, over_soft_budget, upgradable_field_info)
 from .schemas.protocol import (
     CampaignSave, CampaignSnapshot, EarnedLocalReward, HubStatus,
     Notification, ScoutedLocation, ShopState, SlotAssignment, ZoneReady,
@@ -73,6 +75,61 @@ def _clamp_ap_string(text: str) -> str:
     """AP-sourced strings are untrusted: clamp and strip control chars."""
     cleaned = "".join(ch for ch in text if ch.isprintable())
     return cleaned[:C.MAX_AP_STRING_LEN] or "?"
+
+
+def budget_headroom(mechanics) -> dict:
+    """§16 in full: `{kind: [owned, soft, hard]}`.
+
+    `over_soft_budget` answers "is this kind crowded"; a provider deciding
+    whether one more resource is fine or is the sixteenth needs the
+    numbers, and guessing wrong costs a repair round. `affordance` is
+    counted in DISTINCT TAGS, matching the unit §16 states and the unit
+    `budget_errors` refuses in — a steer measured differently from the
+    refusal would fire at a size the refusal never agrees with.
+    """
+    out: dict = {}
+    for kind, (soft, hard) in sorted(COMPLEXITY_BUDGETS.items()):
+        if kind == "affordance":
+            owned = len({o.component.tag for o in mechanics.owned
+                         if o.component.kind == "affordance"})
+        else:
+            owned = len([o for o in mechanics.owned if o.kind == kind])
+        out[kind] = [owned, soft, hard]
+    return out
+
+
+def _relevance_hint(mechanics) -> str:
+    """§15's rule, phrased against this campaign.
+
+    "If you already own three guns, Master Sword should not be gun four."
+    The request has carried the owned graph since S6, but a graph is a
+    list — this is the sentence that says what to DO with it, which is the
+    half §15 calls the prompt-level rule.
+
+    Empty on a fresh campaign: with nothing owned there is nothing to
+    relate to, and telling a provider to relate to nothing would push it
+    toward a disposition that cannot validate.
+    """
+    if not mechanics.owned:
+        return ""
+    families: dict[str, int] = {}
+    for owned in mechanics.owned:
+        primitive = getattr(owned.component, "primitive", None)
+        if primitive is not None:
+            families[primitive.type] = families.get(primitive.type, 0) + 1
+    crowded = sorted((count, verb) for verb, count in families.items()
+                     if count >= 2)
+    # The specific half leads. `MAX_TEXT_LEN` is 160 characters, and the
+    # generic sentence alone very nearly fills it — putting it first
+    # truncated away the only part a provider could act on.
+    parts: list[str] = []
+    if crowded:
+        worst = ", ".join(f"{verb} x{count}" for count, verb in
+                          reversed(crowded[-3:]))
+        parts.append(f"already well supplied: {worst}")
+    parts.append("prefer a new relationship with what is owned over a "
+                 "fourth of something")
+    return "; ".join(parts)[:C.MAX_TEXT_LEN]
 
 
 class CampaignEngine:
@@ -739,7 +796,13 @@ class CampaignEngine:
                     for edge in mechanics.links),
                 aliases=tuple(mechanics.aliases)),
             required_echo_id=f"echo_{location_id}",
-            over_soft_budget=over_soft_budget(mechanics))
+            over_soft_budget=over_soft_budget(mechanics),
+            budget_headroom=budget_headroom(mechanics),
+            suggested_concepts=read_concepts(
+                _clamp_ap_string(s.item_name),
+                _clamp_ap_string(s.recipient_game)),
+            preferred_modes=preferred_modes(save.epsilon_creativity),
+            relevance_hint=_relevance_hint(mechanics))
 
     async def grant_echo(self, location_id: int) -> str | None:
         """Generate and persist the Echo for a confirmed foreign location.

@@ -12,6 +12,7 @@ the same rules everything else obeys.
 from __future__ import annotations
 
 from archipepsi_bridge.epsilon import capabilities as CAP
+from archipepsi_bridge.epsilon.concepts import plausible_concepts
 from archipepsi_bridge.epsilon.fallback import fallback_echo
 from archipepsi_bridge.epsilon.requests import (
     EchoGenerationRequest, EchoPlayerState, EchoSource,
@@ -101,7 +102,30 @@ def test_the_fallback_is_still_structurally_boring():
     from archipepsi_bridge.epsilon import capabilities as CAP
     for index, name in enumerate(ITEM_NAMES):
         echo = _echo_for(index, name)
-        assert echo.mode == "literal", name
+        # S10: the mode is derived from what the operations DID, so it can
+        # no longer be a hardcoded "literal". What must hold instead is
+        # that the claim is earned — the archive shows this to the player
+        # as "how Epsilon read it", so a mode the operations do not
+        # support would be the archive lying. Checked against the
+        # operations directly rather than by re-calling the derivation,
+        # which would only prove the function equals itself.
+        ops = {op.op for op in echo.operations}
+        made = {op.component.kind for op in echo.operations
+                if op.op == "create"}
+        touches_existing = bool(ops & {"link", "merge", "modify"})
+        if echo.mode == "systemic":
+            assert touches_existing or "rule" in made, (name, ops, made)
+        elif echo.mode == "conceptual":
+            assert made & {"trait", "resource", "status", "info",
+                           "affordance"}, (name, made)
+        elif echo.mode == "literal":
+            assert not touches_existing and made <= {"action"}, (name, made)
+        # ...and it read the item as something. An empty tuple was the old
+        # behaviour and it made §15's chain unexercised by every
+        # deterministic run.
+        assert echo.concepts, name
+        assert plausible_concepts(
+            echo.concepts, name, echo.source_game), (name, echo.concepts)
         assert 1 <= len(echo.operations) <= 4, name
         created = {op.component.component_id for op in echo.operations
                    if op.op == "create"}

@@ -16,6 +16,16 @@ signal closed
 const SLOT_KEYCAPS := {"echo_a": "RMB", "echo_b": "MMB", "mobility": "SHIFT",
 		"utility": "C"}
 
+#: The four §15 modes, warming as the reading travels further from the
+#: item. Purely a tint — the word itself is always shown, because a colour
+#: nobody has been taught is not information.
+const _MODE_TINT := {
+	"literal": Color(0.62, 0.70, 0.82),
+	"mechanical": Color(0.70, 0.72, 0.92),
+	"conceptual": Color(0.80, 0.66, 0.92),
+	"systemic": Color(0.95, 0.72, 0.55),
+}
+
 var _list: VBoxContainer
 var _scroll: ScrollContainer
 
@@ -144,8 +154,14 @@ func _row(echo: Dictionary, slotted: Array) -> Control:
 		var words: PackedStringArray = []
 		for concept in concepts:
 			words.append(str(concept))
-		read.text = "read: " + " / ".join(words)
-		read.modulate = Color(0.75, 0.65, 0.9)
+		# The mode rides on the same line. It was worth nothing before
+		# S10 — every interpretation said "literal" because the fallback
+		# hardcoded it — and is now derived from what the operations
+		# actually did, so it tells the player how far Epsilon travelled
+		# from the item to get here.
+		var mode := str(echo.get("mode", "literal"))
+		read.text = "read %s: %s" % [mode, " / ".join(words)]
+		read.modulate = _MODE_TINT.get(mode, Color(0.75, 0.65, 0.9))
 		read.add_theme_font_size_override("font_size", 13)
 		text_box.add_child(read)
 

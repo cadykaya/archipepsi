@@ -144,6 +144,9 @@ def _sixteenth_resource_echo() -> dict:
         "interpretation_seq": 0, "source_location_id": 89100001,
         "source_item_name": "Magic Meter", "source_game": "Ocarina of Time",
         "source_recipient_name": "oot_player",
+        # S10: an Echo with no reading is refused (§15), so a
+        # scripted provider has to supply one like any other.
+        "concepts": ["arcane", "energy", "capacity"],
         "display_name": "One Meter Too Many", "description": "no.",
         "operations": [{"op": "create", "component": {
             "kind": "resource", "component_id": "res_overflow",
@@ -159,6 +162,9 @@ def _plain_action_echo() -> dict:
         "interpretation_seq": 0, "source_location_id": 89100001,
         "source_item_name": "Magic Meter", "source_game": "Ocarina of Time",
         "source_recipient_name": "oot_player",
+        # S10: an Echo with no reading is refused (§15), so a
+        # scripted provider has to supply one like any other.
+        "concepts": ["arcane", "energy", "capacity"],
         "display_name": "Meter, Reread", "description": "ok.",
         "operations": [{"op": "create", "component": {
             "kind": "action", "component_id": "act_meter",
@@ -266,6 +272,9 @@ def test_the_request_carries_the_soft_budget_steer_and_it_validates():
         "interpretation_seq": 6, "source_location_id": 89100007,
         "source_item_name": "Magic Meter", "source_game": "Ocarina of Time",
         "source_recipient_name": "oot_player",
+        # S10: an Echo with no reading is refused (§15), so a
+        # scripted provider has to supply one like any other.
+        "concepts": ["arcane", "energy", "capacity"],
         "display_name": "Related, Not Duplicated",
         "description": "It powers what you already own.",
         "operations": [
