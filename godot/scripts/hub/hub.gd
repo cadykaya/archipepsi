@@ -31,6 +31,31 @@ var _working_line := 0
 ## The Echo Lab annexe. Built with the room; never a Zone, never a Check.
 var lab: EchoLab
 
+# --- Epsilon between Zones -------------------------------------------------
+#
+# Epsilon designed every Zone the player has been through and then had to
+# wait here while they played them, which is most of its personality. It
+# was silent in the Hub until now: `EpsilonVoice` only ever fired from
+# inside a Zone, so the one room where the player stands still and reads
+# was the one room the designer never spoke in.
+#
+# Everything below reacts to campaign state the boards ALREADY display, so
+# a bark cannot tell the player anything Archipelago has not confirmed —
+# the same rule the in-Zone lines follow. Nothing here reads, reports,
+# invents or reorders a location, an item, a coin or an Echo.
+
+#: Set by main when the Hub is built, so the barks land in the HUD's own
+#: voice line rather than in a second overlapping label.
+var hud: Hud = null
+
+var _voice_idle := 0.0
+var _voice_greeted := false
+#: Snapshot values from the previous refresh, so a bark fires on the EDGE
+#: of a change rather than every frame the condition is true.
+var _seen_completed := -1
+var _seen_keys := -1
+var _seen_finale := false
+
 func _ready() -> void:
 	_build_room()
 	player = Player.create()
@@ -38,6 +63,52 @@ func _ready() -> void:
 	# Face +Z: the portal and boards are on the far wall.
 	player.set_spawn(Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.8, 3.0)))
 	refresh()
+
+func _process(delta: float) -> void:
+	if hud == null:
+		return
+	_voice_idle += delta
+	if not _voice_greeted:
+		# Not on the first frame: the arrival fade and the zone-complete
+		# reveal are both still on screen, and a line under them is a line
+		# nobody reads.
+		if _voice_idle > 2.5:
+			_voice_greeted = true
+			_voice_idle = 0.0
+			hud.say_line("hub_arrived" if _seen_completed <= 0
+					else "hub_zone_done")
+		return
+	if _voice_idle < EpsilonVoice.HUB_IDLE_INTERVAL:
+		return
+	_voice_idle = 0.0
+	# Coins first: an unspent coin is the one thing in the Hub the player
+	# can act on immediately, and the kiosk is easy to walk past.
+	if int(BridgeClient.snapshot.get("coins_available", 0)) > 0:
+		hud.say_line("hub_coins_idle")
+	else:
+		hud.say_line("hub_idle")
+
+## Fire the lines that mark a change, on the edge rather than the level.
+## Called from `refresh`, which every snapshot already runs.
+func _voice_on_change() -> void:
+	if hud == null:
+		return
+	var snapshot := BridgeClient.snapshot
+	var completed := int(snapshot.get("completed_zone_count", 0))
+	var keys := int(snapshot.get("signal_keys", 0))
+	var finale := bool(BridgeClient.hub().get("finale_unlocked", false))
+	# First refresh establishes the baseline and says nothing: every value
+	# is "new" on arrival, and greeting the player with three barks at once
+	# would be worse than silence.
+	var first := _seen_completed < 0
+	if not first:
+		if keys > _seen_keys:
+			hud.say_line("hub_key_landed")
+		elif finale and not _seen_finale:
+			hud.say_line("hub_finale_ready")
+	_seen_completed = completed
+	_seen_keys = keys
+	_seen_finale = finale
 
 ## The west wall is solid by default; the Lab needs a way through. Built
 ## as two wall segments with a gap rather than by moving the perimeter,
@@ -251,6 +322,7 @@ func refresh() -> void:
 		lines.append("ARCHIPELAGO OFFLINE")
 	_sub_board.text = "\n".join(lines)
 
+	_voice_on_change()
 	_portal.refresh(hub, mode)
 	# finale_offered stays true in postgame (schema-computed from thresholds
 	# that remain met); only offer it while the goal is actually missing.

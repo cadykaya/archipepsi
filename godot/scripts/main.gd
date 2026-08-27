@@ -30,70 +30,39 @@ var _abandoning := false
 ## Headless integration mode: the driver owns the flow; views stay quiet.
 var headless_test := false
 
+## The headless suites, as PRELOADS rather than runtime `load`s.
+##
+## `preload` is resolved at parse time, which puts every driver into the
+## dependency graph `--import` walks — so `make godot-import` compiles
+## them, which is the guard that already exists. A runtime `load` does
+## not: a parse error confined to a driver (a `var x := dict.get(...)`,
+## Variant inference, a warning treated as an error here) sat undetected
+## through a green import and surfaced only as "Nonexistent function
+## 'new' in base 'GDScript'" four minutes into an integration run, with
+## the bridge already up.
+##
+## Every suite boots the real project rather than running under
+## `--script`, because a SceneTree script never instantiates the
+## autoloads and so every script touching BridgeClient fails to compile.
+const DRIVERS := {
+	"--integration-test": preload("res://tests/integration_driver.gd"),
+	"--chamber-test": preload("res://tests/test_chambers.gd"),
+	"--blink-test": preload("res://tests/blink_driver.gd"),
+	"--hud-test": preload("res://tests/hud_driver.gd"),
+	"--rules-test": preload("res://tests/rules_driver.gd"),
+	"--stats-test": preload("res://tests/stats_driver.gd"),
+	"--lab-test": preload("res://tests/lab_driver.gd"),
+	"--affordance-test": preload("res://tests/affordance_driver.gd"),
+}
+
 func _ready() -> void:
 	var user_args := OS.get_cmdline_user_args()
-	headless_test = "--integration-test" in user_args
-	if headless_test:
-		var driver: Node = load("res://tests/integration_driver.gd").new()
-		add_child(driver)
-		return
-	# The blink suite (invariant I14) needs live physics AND the autoloads,
-	# and a `--script` SceneTree run has neither: it never instantiates the
-	# autoloads, so every script that touches BridgeClient fails to compile
-	# and the suite reports zero attempts. Booting the real project the way
-	# the integration driver does is what makes the raycasts real. It needs
-	# no bridge -- it builds its own zones.
-	if "--blink-test" in user_args:
-		headless_test = true
-		var blink: Node = load("res://tests/blink_driver.gd").new()
-		add_child(blink)
-		return
-	# The S3 HUD suite boots the project for the same reason blink does:
-	# the meters, the pool and the archive all read the autoloads.
-	if "--hud-test" in user_args:
-		headless_test = true
-		var hud_suite: Node = load("res://tests/hud_driver.gd").new()
-		add_child(hud_suite)
-		return
-	# The S4 rule-engine suite (invariant I5): same boot, same reason.
-	if "--rules-test" in user_args:
-		headless_test = true
-		var rules_suite: Node = load("res://tests/rules_driver.gd").new()
-		add_child(rules_suite)
-		return
-	# The S8 Echo Lab suite: same boot, same reason.
-	if "--lab-test" in user_args:
-		headless_test = true
-		var lab_suite: Node = load("res://tests/lab_driver.gd").new()
-		add_child(lab_suite)
-		return
-	# The chamber builder tests. Booted rather than `--script`ed since S9:
-	# chambers build affordance features, which reach the player, which
-	# reaches BridgeClient -- none of which compiles without the autoloads.
-	if "--chamber-test" in user_args:
-		headless_test = true
-		var chamber_suite: Node = load("res://tests/test_chambers.gd").new()
-		add_child(chamber_suite)
-		return
-	# The S9 affordance suite (invariants I4, I12, I13): same boot, same
-	# reason — the volumes write into the player's own physics step.
-	if "--affordance-test" in user_args:
-		headless_test = true
-		var affordance_suite: Node = load(
-				"res://tests/affordance_driver.gd").new()
-		add_child(affordance_suite)
-		return
-	# The S5 stat-stack suite (invariant I3): same boot, same reason.
-	if "--stats-test" in user_args:
-		headless_test = true
-		var stats_suite: Node = load("res://tests/stats_driver.gd").new()
-		add_child(stats_suite)
-		return
-	world = Node3D.new()
-	world.name = "World"
-	add_child(world)
-	tones = Tones.new()
-	add_child(tones)
+	for flag: String in DRIVERS:
+		if flag in user_args:
+			headless_test = true
+			add_child((DRIVERS[flag] as GDScript).new())
+			return
+
 	menu = MainMenu.new()
 	add_child(menu)
 	resource_pool = ResourcePool.new()
@@ -326,6 +295,10 @@ func _to_hub() -> void:
 	hub.enter_zone_requested.connect(_on_enter_zone)
 	hub.open_inventory_requested.connect(_toggle_inventory)
 	hub.open_shop_requested.connect(_toggle_shop)
+	# Epsilon speaks in the Hub too now. Handed the HUD rather than
+	# reaching for it: the Hub is built by this file, so this file is
+	# where the wiring belongs.
+	hub.hud = hud
 	hub.refresh()
 	hud.bind_player(hub.player)
 	hub.player.fired_pulse.connect(func() -> void: tones.play("pulse"))

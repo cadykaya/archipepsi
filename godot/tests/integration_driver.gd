@@ -297,7 +297,59 @@ func _check_hub_builds() -> void:
 			lit += 1
 	_check(lit == Constants.LOCATION_COUNT,
 			"every board cell is tinted (%d)" % lit)
+	await _hub_epsilon_speaks(hub)
 	hub.queue_free()
+
+## Epsilon designed every Zone the player just played and then waited here
+## while they played them. It was silent in the Hub until now — the one
+## room where the player stands still and reads was the one room the
+## designer never spoke in.
+##
+## Two properties matter and neither is "a line appeared": the greeting
+## must not land under the arrival fade, and a change bark must fire on the
+## EDGE of a change rather than every frame the condition holds — a
+## designer who announces your key count once a frame is a status bar.
+func _hub_epsilon_speaks(hub: HubController) -> void:
+	var voice_hud := Hud.new()
+	get_tree().root.add_child(voice_hud)
+	await get_tree().process_frame
+	hub.hud = voice_hud
+	hub._voice_greeted = false
+	hub._voice_idle = 0.0
+
+	# Silent while the arrival is still on screen.
+	hub._process(1.0)
+	_check(not hub._voice_greeted, "Epsilon waits out the arrival fade")
+	hub._process(2.0)
+	_check(hub._voice_greeted, "Epsilon greets you in the Hub")
+
+	# A change fires once, on the edge. The first refresh only takes a
+	# baseline: on arrival every value is "new", and three barks at once
+	# would be worse than silence.
+	hub._seen_completed = -1
+	voice_hud._voice.reset()
+	hub._voice_on_change()
+	var baseline := voice_hud._voice._last_line
+	hub._voice_on_change()
+	_check(voice_hud._voice._last_line == baseline,
+			"an unchanged Hub says nothing new")
+
+	# Now move a Signal Key and watch it land exactly once.
+	var before: Variant = BridgeClient.snapshot.get("signal_keys", 0)
+	BridgeClient.snapshot["signal_keys"] = int(hub._seen_keys) + 1
+	voice_hud._voice.reset()
+	hub._voice_on_change()
+	var spoken: String = voice_hud._voice._last_line
+	_check(spoken in EpsilonVoice.LINES["hub_key_landed"],
+			"a Signal Key gets a line ('%s')" % spoken)
+	voice_hud._voice.reset()
+	hub._voice_on_change()
+	_check(voice_hud._voice._last_line == "",
+			"...and only once, on the edge")
+	BridgeClient.snapshot["signal_keys"] = before
+
+	voice_hud.queue_free()
+	await get_tree().process_frame
 	await get_tree().process_frame
 
 ## The client colours a game by re-deriving the bridge's theme rule. If

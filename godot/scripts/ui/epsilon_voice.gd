@@ -70,6 +70,42 @@ const LINES := {
 		"I put something on a wall around here. Find it or do not.",
 		"This corridor is longer than I remember specifying.",
 	],
+
+	# -- the Hub. Epsilon designed every Zone you have been through and
+	# then had to wait here while you played them, which is most of its
+	# personality. Same rules as everything above: each line reacts to
+	# something already on screen, and none of them reads, reports or
+	# could disagree with Archipelago about anything.
+	"hub_arrived": [
+		"You are back. I have been here the whole time. Obviously.",
+		"Welcome to the room I did not design. It came with the building.",
+		"Back already. I had barely finished being nervous about it.",
+	],
+	"hub_zone_done": [
+		"That one went better than the draft. There was a draft.",
+		"I have taken notes. You will not enjoy the notes.",
+		"Another relay closed. Somebody, somewhere, got a parcel.",
+		"I am told that counted. I am not told much.",
+	],
+	"hub_coins_idle": [
+		"You are carrying coins. The kiosk is right there. It is lonely.",
+		"Spending them is allowed. I checked the rules. I wrote the rules.",
+		"Those coins do not appreciate in value. Nothing here does.",
+	],
+	"hub_key_landed": [
+		"A Signal Key. That opens a tier, which opens a door I have not built yet.",
+		"Key received. I will start worrying about the next one immediately.",
+	],
+	"hub_finale_ready": [
+		"The finale is open. I would like it noted that I asked for more time.",
+		"That is the last door. Everything past it is somebody else's game.",
+	],
+	"hub_idle": [
+		"Take your time. I have literally nothing else scheduled.",
+		"The board is over there. It has not changed since you last looked.",
+		"I could design another one. I am going to anyway.",
+		"There is a test chamber through the west wall. I built it for you. Mostly.",
+	],
 }
 
 #: Events worth interrupting for. Everything else is ambient colour and
@@ -78,7 +114,13 @@ const LINES := {
 #: literally unreachable, and so was the payoff for reaching a secret if
 #: anything at all had been said in the previous six seconds.
 const PRIORITY := ["died", "revived", "secret_found",
-		"finale_open", "finale_brute"]
+		"finale_open", "finale_brute", "hub_key_landed",
+		"hub_finale_ready"]
+
+#: Hub lines are ambient rather than reactive: nothing is trying to kill
+#: you, so a bark every six seconds would be pestering rather than
+#: commentary. `hub_idle` in particular waits this long between airings.
+const HUB_IDLE_INTERVAL := 42.0
 
 var _last_line := ""
 var _cooldown := 0.0
