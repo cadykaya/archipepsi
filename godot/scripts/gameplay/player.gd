@@ -12,8 +12,12 @@ signal fired_pulse
 ## Emitted with the world position damage came from, so the HUD can show
 ## which way to turn. `Vector3.INF` means "no direction" (falls, etc).
 signal damaged_from(source_position: Vector3)
+## `kind` is "step_a" / "step_b" / "land"; main routes it to the mixer.
+signal footstep(kind: String)
 
 const MOUSE_SENSITIVITY := 0.0022
+#: Metres between footfalls. Paced by distance so it tracks speed Echoes.
+const STEP_DISTANCE := 2.2
 
 var hp: float = Constants.PLAYER_MAX_HP
 var input_frozen := false
@@ -26,6 +30,8 @@ var _jump_buffer := 0.0
 var _dead := false
 var _spawn_transform: Transform3D
 var _interact_target: Node = null
+var _step_accumulator := 0.0
+var _step_toggle := false
 
 @onready var camera: Camera3D = $Camera3D
 @onready var echo_runtime: EchoRuntime = $EchoRuntime
@@ -157,7 +163,9 @@ func _physics_process(delta: float) -> void:
 		velocity.x = lerpf(velocity.x, 0.0, 0.2)
 		velocity.z = lerpf(velocity.z, 0.0, 0.2)
 
+	var was_airborne := not is_on_floor()
 	move_and_slide()
+	_update_footsteps(delta, was_airborne)
 	_update_interact_target()
 
 	if global_position.y < Constants.FALL_KILL_Y:
@@ -176,6 +184,24 @@ func _fire_static_pulse() -> void:
 			target.take_damage(Constants.STATIC_PULSE_DAMAGE,
 					-camera.global_transform.basis.z, 0.0)
 	_spawn_tracer(hit)
+
+## Footfalls paced by distance travelled, not by a timer, so they stay in
+## step with the player at any speed multiplier.
+func _update_footsteps(delta: float, was_airborne: bool) -> void:
+	if not is_on_floor():
+		return
+	if was_airborne:
+		footstep.emit("land")
+		_step_accumulator = 0.0
+		return
+	var travelled := Vector2(velocity.x, velocity.z).length() * delta
+	if travelled < 0.01:
+		return
+	_step_accumulator += travelled
+	if _step_accumulator >= STEP_DISTANCE:
+		_step_accumulator = 0.0
+		_step_toggle = not _step_toggle
+		footstep.emit("step_a" if _step_toggle else "step_b")
 
 func camera_ray(distance: float, spread_dir: Vector3 = Vector3.ZERO) -> Dictionary:
 	var from := camera.global_position

@@ -279,8 +279,29 @@ func take_damage(amount: float, direction: Vector3, knockback: float) -> void:
 		var tween := create_tween()
 		scale = Vector3.ONE * 0.88
 		tween.tween_property(self, "scale", Vector3.ONE, 0.1)
+	_refresh_damage_tint()
 	if hp <= 0.0:
 		die()
+
+## Wounded enemies visibly cook: the eye brightens and the body reddens as
+## health drops, so "nearly dead" is readable without a health bar.
+func _refresh_damage_tint() -> void:
+	var hurt := 1.0 - clampf(hp / maxf(1.0, float(stats["hp"])), 0.0, 1.0)
+	if hurt <= 0.0:
+		return
+	for child in get_children():
+		if not (child is MeshInstance3D):
+			continue
+		var material: Material = child.material_override
+		if material is StandardMaterial3D:
+			var standard: StandardMaterial3D = material.duplicate()
+			if standard.emission_enabled:
+				standard.emission_energy_multiplier = \
+						1.0 + 2.4 * hurt          # the eye flares
+			else:
+				standard.albedo_color = Color(1.0, 0.45, 0.35).lerp(
+						Color.WHITE, 1.0 - hurt * 0.75)
+			child.material_override = standard
 
 func apply_knockback(impulse: Vector3) -> void:
 	_knockback += impulse

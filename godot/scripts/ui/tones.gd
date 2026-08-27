@@ -19,6 +19,13 @@ func _ready() -> void:
 	_players["denied"] = _make_player(_square_burst(110.0, 0.15, 0.3))
 	_players["goal"] = _make_player(_arp(
 			[262.0, 330.0, 392.0, 523.0, 659.0, 784.0], 0.11, 0.4))
+	# Two footstep variants, alternated, so walking is not one ticking tone.
+	_players["step_a"] = _make_player(_thud(78.0, 0.09))
+	_players["step_b"] = _make_player(_thud(64.0, 0.10))
+	_players["step_a"].volume_db = -22.0
+	_players["step_b"].volume_db = -22.0
+	_players["land"] = _make_player(_thud(52.0, 0.16))
+	_players["land"].volume_db = -15.0
 
 func play(kind: String) -> void:
 	var player: AudioStreamPlayer = _players.get(kind)
@@ -55,6 +62,17 @@ func _make_player(stream: AudioStreamWAV) -> AudioStreamPlayer:
 	player.volume_db = -8.0
 	add_child(player)
 	return player
+
+## A footfall: a low thump with a short noise transient on top.
+static func _thud(freq: float, duration: float) -> AudioStreamWAV:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(freq * 100.0)
+	return _synth(func(t: float) -> float:
+		var envelope := pow(1.0 - t / duration, 2.5)
+		var body := sin(t * freq * TAU) * 0.5
+		var grit := rng.randf_range(-1.0, 1.0) * 0.22 \
+				* pow(1.0 - t / duration, 8.0)
+		return (body + grit) * envelope, duration)
 
 static func _square_burst(freq: float, duration: float,
 		volume: float) -> AudioStreamWAV:

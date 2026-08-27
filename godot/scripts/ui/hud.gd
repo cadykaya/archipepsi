@@ -37,6 +37,13 @@ const _HIT_RADIUS := 96.0
 var _cooldown_track: ColorRect
 var _cooldown_fill: ColorRect
 
+## Zone title card: Epsilon presenting the thing it just built for you.
+## Unlike the reveal it never freezes input — you can walk while it fades.
+var _title_box: VBoxContainer
+var _title_index: Label
+var _title_name: Label
+var _title_note: Label
+
 func _ready() -> void:
 	layer = 5
 	_damage_flash = ColorRect.new()
@@ -127,6 +134,32 @@ func _ready() -> void:
 	_cooldown_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cooldown_track.add_child(_cooldown_fill)
 
+	_title_box = VBoxContainer.new()
+	_title_box.set_anchors_preset(Control.PRESET_CENTER)
+	_title_box.offset_left = -420.0
+	_title_box.offset_right = 420.0
+	_title_box.offset_top = -60.0
+	_title_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	_title_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_title_box.modulate.a = 0.0
+	add_child(_title_box)
+	_title_index = Label.new()
+	_title_index.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title_index.add_theme_font_size_override("font_size", 17)
+	_title_index.modulate = Color(0.6, 0.68, 0.75)
+	_title_box.add_child(_title_index)
+	_title_name = Label.new()
+	_title_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_title_name.add_theme_font_size_override("font_size", 34)
+	_title_box.add_child(_title_name)
+	_title_note = Label.new()
+	_title_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_title_note.add_theme_font_size_override("font_size", 16)
+	_title_note.modulate = Color(0.68, 0.72, 0.66)
+	_title_box.add_child(_title_note)
+
 	# Persistent connectivity banner (§9.1): shown while the bridge or
 	# Archipelago is down, distinct from one-shot toasts.
 	_banner = Label.new()
@@ -157,6 +190,20 @@ func _ready() -> void:
 
 func set_banner(text: String) -> void:
 	_banner.text = text
+
+## Present a Zone on entry: index, name, and Epsilon's note about it.
+## Fades in, holds, fades out; never takes input away from the player.
+func show_zone_title(index_text: String, zone_name: String,
+		note: String, accent: Color) -> void:
+	_title_index.text = index_text
+	_title_name.text = zone_name
+	_title_name.modulate = accent
+	_title_note.text = "“%s”" % note if note != "" else ""
+	_title_box.modulate.a = 0.0
+	var tween := create_tween()
+	tween.tween_property(_title_box, "modulate:a", 1.0, 0.45)
+	tween.tween_interval(2.6)
+	tween.tween_property(_title_box, "modulate:a", 0.0, 0.9)
 
 ## Zone progress line, e.g. "CHECKS 1/3 CLAIMED". Empty clears it.
 func set_objective_text(text: String) -> void:

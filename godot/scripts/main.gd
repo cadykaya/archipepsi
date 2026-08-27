@@ -192,6 +192,7 @@ func _to_hub() -> void:
 	hub.refresh()
 	hud.bind_player(hub.player)
 	hub.player.fired_pulse.connect(func() -> void: tones.play("pulse"))
+	hub.player.footstep.connect(func(kind: String) -> void: tones.play(kind))
 	hub.player.echo_runtime.set_equipped(BridgeClient.equipped_echo())
 	tones.play_ambience(1.0)
 	_update_modal()
@@ -231,14 +232,20 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	zone.exit_requested.connect(_on_exit_zone)
 	hud.bind_player(zone.player)
 	zone.player.fired_pulse.connect(func() -> void: tones.play("pulse"))
+	zone.player.footstep.connect(func(kind: String) -> void: tones.play(kind))
 	var theme := str(zone_dict.get("theme", "void_glitch"))
 	tones.play_ambience(0.8 + float(hash(theme) % 100) / 200.0)
+
+	var record := BridgeClient.active_zone()
+	var index_text := "FINALE TRANSMISSION" if record.get("is_finale", false) \
+			else "ZONE %d · %s" % [
+				int(record.get("generation_index", 0)) + 1,
+				str(zone_dict.get("target_game", "?")).to_upper()]
+	hud.show_zone_title(index_text, str(zone_dict.get("display_name", "")),
+			str(zone_dict.get("designer_note", "") or ""),
+			Color(ThemeMaterials.spec(theme)["accent_color"]).lightened(0.25))
 	_sync_equipped()
 	zone.refresh()
-	hud.toast(str(zone_dict.get("display_name", "")), Color(0.7, 0.9, 1.0))
-	var note: Variant = zone_dict.get("designer_note")
-	if note:
-		hud.toast(str(note), Color(0.55, 0.65, 0.7), 6.0)
 	_update_modal()
 
 func _on_exit_zone() -> void:
