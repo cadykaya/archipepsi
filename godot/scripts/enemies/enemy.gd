@@ -161,6 +161,9 @@ var statuses := StatusEffects.new()
 
 func _ready() -> void:
 	add_to_group("enemies")
+	# ...and the wider group every damage path tests. "enemies" still
+	# means enemies, for the paths that mean enemies.
+	add_to_group(Damageable.GROUP)
 	statuses.side = "enemy"
 	statuses.status_applied.connect(func(_kind: String) -> void:
 		_refresh_damage_tint())

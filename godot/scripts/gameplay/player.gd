@@ -150,6 +150,9 @@ func total_shield() -> float:
 ## that features are off the mandatory path would stop being enough.
 const MIN_VOLUME_SPEED_SCALE := 0.4
 const MAX_VOLUME_DRAG := 6.0
+## The slipperiest a volume may make the ground. A rail is meant to carry
+## you further, not to be a surface you can never stop on.
+const MIN_VOLUME_FRICTION_SCALE := 0.05
 
 var _volumes: Dictionary = {}
 
@@ -167,7 +170,7 @@ func exit_volume(volume: Node) -> void:
 ## strongest claim, and the result is clamped to what cannot trap.
 func environment_influence() -> Dictionary:
 	var out := {"gravity_scale": 1.0, "speed_scale": 1.0, "lift": 0.0,
-			"drag": 0.0, "terminal_fall": INF, "axis": Vector3.ZERO}
+			"drag": 0.0, "terminal_fall": INF, "friction_scale": 1.0}
 	for volume: Variant in _volumes.keys():
 		if not is_instance_valid(volume):
 			continue
@@ -181,12 +184,18 @@ func environment_influence() -> Dictionary:
 				float(influence.get("drag", 0.0)))
 		out["terminal_fall"] = minf(float(out["terminal_fall"]),
 				float(influence.get("terminal_fall", INF)))
-		if influence.has("axis"):
-			out["axis"] = influence["axis"]
+		out["friction_scale"] = minf(
+				float(out["friction_scale"]),
+				float(influence.get("friction_scale", 1.0)))
 	out["speed_scale"] = maxf(float(out["speed_scale"]),
 			MIN_VOLUME_SPEED_SCALE)
 	out["drag"] = minf(float(out["drag"]), MAX_VOLUME_DRAG)
 	out["lift"] = maxf(float(out["lift"]), 0.0)
+	# Floored, for the same reason speed is: a surface with no friction at
+	# all is one you can never stop on, which is a trap wearing a rail's
+	# clothes.
+	out["friction_scale"] = clampf(
+			float(out["friction_scale"]), MIN_VOLUME_FRICTION_SCALE, 1.0)
 	return out
 @onready var viewmodel: Node3D = $Camera3D/Viewmodel
 
@@ -401,7 +410,13 @@ func _physics_process(delta: float) -> void:
 				* float(env["speed_scale"])
 		# Friction below base is how a downside is allowed to express
 		# (§10): slippier control, never a shorter jump.
-		var control := friction_mult if is_on_floor() \
+		# A grind rail's lane multiplies ground friction down, so a dash
+		# along it keeps its speed instead of being lerped back to walking
+		# pace. The rail's first influence was `{drag: 0.0, speed_scale:
+		# 1.0}` — both the identity element of how these merge, so the
+		# whole feature did nothing at all.
+		var control := friction_mult * float(env["friction_scale"]) \
+				if is_on_floor() \
 				else Constants.AIR_CONTROL * air_control_mult
 		control = minf(control, 1.0)
 		velocity.x = lerpf(velocity.x, direction.x * speed, control * 0.4)
@@ -447,11 +462,13 @@ func _fire_static_pulse() -> void:
 	var hit := camera_ray(Constants.STATIC_PULSE_RANGE)
 	if not hit.is_empty():
 		var target: Variant = hit["collider"]
-		if is_instance_valid(target) and target.is_in_group("enemies"):
-			var enemy := target as Enemy
+		# Anything damageable, not just enemies: the Pulse is how a player
+		# discovers that a breakable panel needs a heavier hit, and a
+		# panel nothing could shoot was a wall with no feedback at all.
+		if Damageable.of(target) != null:
 			# §9: the Pulse's identity is untouchable, but a global
 			# damage_dealt trait still multiplies it.
-			report_hit(enemy.take_damage(
+			report_hit(Damageable.hit(target,
 					Constants.STATIC_PULSE_DAMAGE * damage_dealt_mult,
 					-camera.global_transform.basis.z, 0.0))
 	_spawn_tracer(hit)
@@ -611,17 +628,17 @@ func _resolve_pending_slam() -> void:
 	pending_slam = {}
 	var hit_any := false
 	var killed_any := false
-	for node in get_tree().get_nodes_in_group("enemies"):
-		var enemy := node as Enemy
-		if enemy == null or not is_instance_valid(enemy):
+	for node in get_tree().get_nodes_in_group(Damageable.GROUP):
+		var struck := node as Node3D
+		if struck == null or not is_instance_valid(struck):
 			continue
-		var offset := enemy.global_position - global_position
+		var offset := struck.global_position - global_position
 		var distance := offset.length()
 		if distance > radius:
 			continue
 		var falloff := 1.0 - clampf(distance / maxf(radius, 0.001), 0.0, 1.0) * 0.6
 		var away := offset.normalized() if distance > 0.001 else Vector3.UP
-		if enemy.take_damage(damage * falloff, away, 0.0):
+		if Damageable.hit(struck, damage * falloff, away, 0.0):
 			killed_any = true
 		hit_any = true
 	if hit_any:

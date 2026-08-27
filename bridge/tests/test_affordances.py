@@ -30,7 +30,7 @@ from pydantic import TypeAdapter
 from .test_providers import zone_request
 
 from archipepsi_bridge.schemas.constants import (
-    MIN_FEATURE_CHAMBER_WIDTH as C_MIN_WIDTH)
+    FEATURE_MIN_WIDTH as C_MIN_WIDTH)
 
 GODOT = Path(__file__).resolve().parents[2] / "godot"
 
@@ -160,49 +160,72 @@ def test_the_client_builder_keeps_features_out_of_the_walking_lane():
     produce a feature clear of the door lane.
     """
     source = (GODOT / "scripts/generation/affordance_features.gd").read_text()
-    match = re.search(r"const LANE_HALF_WIDTH := ([0-9.]+)", source)
-    assert match, "the lane constant is what I4 rests on client-side"
-    lane = float(match.group(1))
+    lane = _gd_const(
+        GODOT / "scripts/generation/affordance_features.gd", "LANE_HALF_WIDTH")
     # Wider than the door it protects, or it is not protecting it.
     door = _gd_const(
         GODOT / "scripts/generation/chamber_builders.gd", "DOOR_WIDTH")
     assert lane > door / 2.0, (lane, door)
-    # And the clamp must push OUT of the lane, not merely clamp inside the
-    # room: `clampf(absf(x), LANE_HALF_WIDTH + ...` is the shape that does
-    # it, and a rewrite that dropped the lower bound would pass a test
-    # that only looked for `clampf`.
-    assert re.search(
-        r"clampf\(absf\(x\), LANE_HALF_WIDTH \+", source), source
+    # The clamp must push a feature's near EDGE out of the lane, not just
+    # its origin — a pad 2 m across whose centre sat at the lane edge put
+    # half its trigger inside the lane, and launched a player who was
+    # only walking past. `inner` is that edge, and the clamp must use it.
+    assert re.search(r"var inner := LANE_HALF_WIDTH \+ half_width", source)
+    assert re.search(r"clampf\(absf\(x\), inner,", source), source
 
 
-def test_the_narrowest_feature_chamber_agrees_across_languages():
-    """`MIN_FEATURE_CHAMBER_WIDTH` and `AffordanceFeatures.fits` are the
-    same rule in two languages, and they have to agree exactly.
+def test_every_tags_minimum_width_agrees_across_languages():
+    """`FEATURE_MIN_WIDTH` and `AffordanceFeatures.FOOTPRINT` are the same
+    rule in two languages, and they have to agree per tag.
 
     If Python allowed a chamber the builder refuses, the feature is
     silently dropped and the Zone reads richer than it plays — which is
-    what the integration run caught. If Python refused one the builder
-    would happily build, Zones get rejected for no reason.
+    what the integration run caught the first time. If Python refused one
+    the builder would happily build, content is lost for no reason.
     """
     from archipepsi_bridge.schemas import constants as C
     source = (GODOT / "scripts/generation/affordance_features.gd").read_text()
     lane = _gd_const(
         GODOT / "scripts/generation/affordance_features.gd", "LANE_HALF_WIDTH")
-    clearance = _gd_const(
-        GODOT / "scripts/generation/affordance_features.gd", "MIN_CLEARANCE")
-    # `fits` is `width / 2 >= LANE_HALF_WIDTH + MIN_CLEARANCE`; read the
-    # shape too, so a rewrite that changed the rule rather than the
-    # numbers cannot slip past.
+    margin = _gd_const(
+        GODOT / "scripts/generation/affordance_features.gd", "WALL_MARGIN")
+    footprints = dict(re.findall(
+        r'"(\w+)": \{"half_width": ([0-9.]+)', source))
+    assert set(footprints) == set(_tags()), set(footprints) ^ set(_tags())
+    assert set(C.FEATURE_MIN_WIDTH) == set(_tags())
+    for tag, half_width in footprints.items():
+        expected = 2.0 * (lane + 2.0 * float(half_width) + margin)
+        assert abs(C.FEATURE_MIN_WIDTH[tag] - expected) < 0.001, (
+            tag, C.FEATURE_MIN_WIDTH[tag], expected)
+    # ...and the rule itself, so a rewrite that changed the shape rather
+    # than the numbers cannot slip past.
     assert re.search(
-        r"return width / 2\.0 >= LANE_HALF_WIDTH \+ MIN_CLEARANCE", source)
-    assert C.MIN_FEATURE_CHAMBER_WIDTH == 2.0 * (lane + clearance), (
-        C.MIN_FEATURE_CHAMBER_WIDTH, lane, clearance)
+        r"return 2\.0 \* \(LANE_HALF_WIDTH \+ 2\.0 \* reach \+ WALL_MARGIN\)",
+        source)
+
+
+def test_a_corridor_that_cannot_hold_a_feature_still_holds_a_smaller_one():
+    """Per-tag, not one conservative number: a rail fits a 5.9 m corridor
+    that a wind column needs 8.3 m for, and refusing the rail there would
+    lose content for no reason."""
+    from archipepsi_bridge.schemas import constants as C
+    assert C.FEATURE_MIN_WIDTH["rail"] < C.FEATURE_MIN_WIDTH["wind_volume"]
+    narrow = 7.0
+    assert C.FEATURE_MIN_WIDTH["rail"] <= narrow
+    assert C.FEATURE_MIN_WIDTH["wind_volume"] > narrow
+    _zone(chambers=[
+        {"id": "c1", "type": "corridor", "length": 14.0, "width": narrow,
+         "features": [{"tag": "rail", "at": (0.5, 0.5)}]}])
+    with pytest.raises(ValidationError, match="wind_volume"):
+        _zone(chambers=[
+            {"id": "c1", "type": "corridor", "length": 14.0, "width": narrow,
+             "features": [{"tag": "wind_volume", "at": (0.5, 0.5)}]}])
 
 
 def test_a_corridor_too_narrow_for_a_feature_is_refused():
     """The Zone is refused rather than quietly stripped, so the repair
     loop gets a chance to widen the corridor."""
-    with pytest.raises(ValidationError, match="wide to sit clear"):
+    with pytest.raises(ValidationError, match="to sit clear"):
         _zone(chambers=[
             {"id": "c1", "type": "corridor", "length": 12.0, "width": 4.5,
              "features": [{"tag": "bounce_pad", "at": (0.5, 0.5)}]},
@@ -224,8 +247,9 @@ def test_the_fallback_only_hangs_features_on_chambers_with_nothing_on_them():
     # ...and it must be BUILDABLE, not just legal: the fallback widens a
     # corridor it is about to hang something on.
     for chamber in zone.chambers:
-        if chamber.features:
-            assert chamber.width >= C_MIN_WIDTH, (chamber.id, chamber.width)
+        for feature in chamber.features:
+            assert chamber.width >= C_MIN_WIDTH[feature.tag], (
+                chamber.id, chamber.width, feature.tag)
     for chamber in zone.chambers:
         if chamber.features:
             assert chamber.reward_location_id is None, chamber.id
@@ -430,7 +454,7 @@ def _zone_with_features(features: list[dict]) -> Z.Zone:
         "schema_version": 7, "zone_id": "zone_001",
         "display_name": "Relay", "target_game": "Game", "theme": "void_glitch",
         "chambers": [
-            {"id": "c1", "type": "corridor", "length": 12.0, "width": 6.0,
+            {"id": "c1", "type": "corridor", "length": 12.0, "width": 9.5,
              "features": features},
             {"id": "c2", "type": "arena", "width": 16.0, "depth": 14.0,
              "wall_height": 5.0, "objective": "kill_all",

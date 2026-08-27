@@ -93,7 +93,11 @@ class BreakablePanel extends StaticBody3D:
 	var _label: Label3D
 
 	func _ready() -> void:
-		add_to_group("breakable")
+		# The group every damage path tests. Without it the panel was
+		# unreachable: every call site filtered on "enemies" first, so
+		# nothing in the game could deliver a single point of damage to
+		# it and `take_damage` below was dead code.
+		add_to_group(Damageable.GROUP)
 		var shape := CollisionShape3D.new()
 		var box := BoxShape3D.new()
 		box.size = Vector3(0.4, 2.6, 2.4)

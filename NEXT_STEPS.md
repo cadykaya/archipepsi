@@ -499,6 +499,61 @@ than leaving them to be inferred.
 The integration run ends with all 26 interpretations having read their
 item, in four different modes.
 
+## Adversarial review pass over S6–S10
+
+Two passes, one on the client and one on the bridge. Everything below was
+found, verified by running it, fixed, and sabotage-proven.
+
+**The affordance geometry was built for a room that cannot exist.** Every
+chamber type except a corridor carries a Check or a gating objective by
+construction, and §13.2 bars features from both — so a corridor is the
+only host there is: 5–10 m wide, 3.6 m to the ceiling. The first version
+was written and tested against an 18×20 arena with a 6 m ceiling. Four of
+the seven rewards sat above the corridor ceiling, the breakable wall's
+alcove was outside the room behind masonry that is never removed, and the
+suite passed because it built the arena too.
+
+Reworked around per-tag footprints: the lane rule now applies to a
+feature's whole extent rather than its origin (a pad whose centre cleared
+the lane still put half its trigger inside it), width and depth
+requirements are per tag on both sides of the language boundary, and a
+corridor is **built to the height its features declare** instead of
+features being clamped to whatever fits.
+
+**An advertised upgrade bound the model would not honour.** The one
+save-integrity bug: `TraitComponent.multiplier` is `ge=0.1, le=4.0` but a
+gravity trait is capped at 1.0 by a model validator, so the request
+invited the fallback to raise a trait at 0.9 by 0.15. Every validator
+passed it and it failed inside `append_interpretation`, deterministically,
+so the Check could never be granted and reconciliation aborted every time.
+`upgradable_field_info` probes the model now; `target_errors` checks where
+an upgrade lands.
+
+**"Damageable" was a missing concept.** Every damage path tested
+`is_in_group("enemies")`, so nothing in the game could deliver a point of
+damage to the breakable wall and its `take_damage` was unreachable code.
+The suite passed because it called `take_damage` directly; it fires the
+real weapon now.
+
+**Smaller, each real:** a concept validator that was wrong in both
+directions (it passed `art`/`row`/`here` for every item, and refused the
+readings §15 argues for) — deleted rather than tuned; a mode that called
+self-contained Echoes "systemic", so the archive described an Echo that
+touched nothing you owned; one affordance tag dropped from every Zone
+forever, because the round-robin never rotated; the relevance hint missing
+§15's own three-guns example, because it keyed on exact primitives;
+claimed rewards respawning, because nothing read the snapshot's
+`local_rewards`; and `pull_pickup` yanking a reward to the player without
+taking it.
+
+**One decision is deliberately not made.** `challenge_marker` and its
+`challenge_timer` readout have a complete bridge half and no world half,
+because §14 never says where a run starts or what ends it. A tripwire
+names the decision.
+
+**And the import guard now covers the test drivers** — `preload` rather
+than runtime `load`, so `--import` walks them.
+
 ## Next useful work
 1. **Play-feel pass on real hardware** — the manual checks in
    ACCEPTANCE_TESTS §7 (gap feel, reveal timing, Conference Call comedy)
@@ -518,7 +573,7 @@ postgame, so clients also require the goal to be missing
 (`docs/IMPLEMENTATION_DECISIONS.md`).
 
 ## Commands
-    make test                  # 329 pytest
+    make test                  # 343 pytest
     make godot-test            # chamber geometry
     make godot-blink           # invariant I14, every builder
     make godot-hud             # S3: palette, glyphs, pressure valve, archive

@@ -806,3 +806,86 @@ of its traps turned out to be exactly right.
   every interpretation said "literal" because the fallback hardcoded it.
   Now it is derived, so the row reads "read systemic: tension / reach" and
   tells the player how far Epsilon travelled from the item.
+
+## Adversarial review of S9/S10 — what it found and what changed
+
+Two review passes over the S6–S10 code, one on the client and one on the
+bridge. The findings that changed a design decision rather than a line:
+
+- **The affordance geometry was designed for a room that cannot exist.**
+  The single deepest finding. Every other chamber type carries a Check or
+  a gating objective by construction, and §13.2 bars features from both —
+  so **the only chamber that can ever host an affordance is a corridor**:
+  5–10 m wide, with a 3.6 m ceiling. The first version was written and
+  tested against an 18×20 arena with a 6 m ceiling. Four of the seven
+  rewards sat above the corridor ceiling where nothing could reach them,
+  the breakable wall's alcove was outside the room behind masonry that is
+  never removed, and the whole suite passed because it built the arena
+  too.
+
+  The rework: per-tag footprints (`FOOTPRINT`), the lane rule applied to a
+  feature's whole extent rather than its origin, per-tag width and depth
+  requirements on both sides of the language boundary
+  (`FEATURE_MIN_WIDTH`), and a corridor that is **built to the height its
+  features declare** rather than clamping features to whatever fits. The
+  suite now builds the narrowest legal corridor for each tag, which is the
+  room the feature will actually be in.
+
+  `required_width` counted the feature's reach once and needed to count it
+  twice: the origin has to clear the lane by a reach *and* stay a reach
+  inside the wall, so only a width covering both leaves anywhere to put
+  it. That arithmetic slip let an anchor poke out through a wall.
+
+- **"Damageable" was missing as a concept.** Every damage path tested
+  `is_in_group("enemies")` before dealing damage, which was fine while
+  enemies were the only thing that could be hurt. The S9 breakable wall —
+  an affordance whose entire contract is that it opens to a hard enough
+  hit — was in no such group, so nothing in the game could deliver a
+  single point of damage to it and `BreakablePanel.take_damage` was
+  unreachable code. `Damageable` now names the question the damage paths
+  actually mean. Target *selection* still asks the narrower one:
+  `scan_mark` marks enemies and `grapple_pull_target` pulls them, and
+  neither should reach for a wall.
+
+- **A validator that is wrong in both directions should be deleted, not
+  tuned.** `plausible_concepts` refused a reading sharing no vocabulary
+  with the item. It passed `art`/`row`/`here` for every item in every
+  game (substring matching against an unconditional seed), and it refused
+  "Master Sword reads as obligation" — the exact kind of reading §15
+  argues *for*. Attachment is not decidable from an item name. The gate is
+  gone; the function survives as a diagnostic the lexicon's own tests use.
+
+- **An advertised bound must be one the model will honour.** See the S10
+  section above and `test_upgrade_headroom.py`: the field said 4.0, the
+  model said 1.0, the fallback believed the field, and the resulting
+  `FoldError` could not be retried past.
+
+- **A mode has to be earned.** A link whose two endpoints the same
+  interpretation created adds a self-contained thing; calling it
+  "systemic" made the archive describe an Echo that touched nothing the
+  player owned. Every resource-bearing fallback outcome was affected.
+
+- **`challenge_marker` is a decision, not missing code.** §14.2 calls it
+  "an optional timed or scored challenge" and §14.1 gives it a readout,
+  but neither says where a run starts, what ends it, or what counts as
+  one. The bridge half is complete and tested — the kind is grantable,
+  recorded, and `best_seconds` only improves. The world half is not built,
+  because building it means inventing a mechanic the contract does not
+  describe. `test_the_challenge_marker_still_has_no_challenge` names the
+  decision and comes due when it is made.
+
+- **A claimed reward has to stay claimed.** The save recorded local
+  rewards from S9 and the snapshot mirrored them from S10, and nothing
+  read the mirror — so a note picked up reappeared on every re-entry and
+  the bridge silently discarded each re-report as a duplicate. A reward
+  that looks repeatable and is not is worse than one that is simply gone.
+
+- **`preload` over runtime `load` for the test drivers.** `--import`
+  walks the dependency graph from scenes and autoloads; a driver reached
+  only by a runtime `load()` is not in it, so a parse error in one
+  survived a green import and surfaced four minutes into an integration
+  run. Two other approaches were tried and rejected: `--check-only
+  --script` reports an error for every driver whether or not one is real
+  (no autoloads), and parsing each file's source into a detached
+  `GDScript` gives false positives on any cross-file `class_name`
+  reference.

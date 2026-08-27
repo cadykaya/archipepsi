@@ -155,18 +155,38 @@ ZONE_MIN_CHECKS = 2       # 1 only when exactly one eligible Check remains
 ZONE_MAX_CHAMBERS = 6
 ZONE_MIN_CHAMBERS = 1
 
-#: The narrowest chamber that can hold an affordance feature (ECHOES 13.2).
+#: The narrowest chamber each affordance tag can be built in (ECHOES 13.2).
 #:
 #: A feature must sit clear of the walking lane, and the client's builder
-#: is what enforces that in metres: lane half-width 2.0 plus 0.6 clearance
-#: either side. A chamber narrower than that is ENTIRELY lane, so a
-#: feature placed in one would be built into the wall or across the door.
+#: is what enforces that in metres: `2 * (2.0 lane + 2 * reach + 0.35 wall
+#: clearance)`. The reach is counted TWICE because a feature spans it on
+#: each side of its origin — the origin must clear the lane by a reach AND
+#: stay a reach inside the wall, and only a width covering both leaves
+#: anywhere to put it.
+#:
+#: Per tag rather than one number, because the tags are not the same size:
+#: a rail needs 6.7 m and a water volume 7.9 m. A
+#: single conservative constant would refuse the rail from every corridor
+#: the wind column could not fit in either, which is content lost for no
+#: reason.
 #:
 #: Validated rather than left to the builder to drop, because a silently
-#: discarded feature is a Zone that reads richer than it plays -- and the
-#: repair loop can fix a refusal. Pinned against `AffordanceFeatures.fits`
-#: from both sides in `test_affordances.py`.
-MIN_FEATURE_CHAMBER_WIDTH = 5.2
+#: discarded feature is a Zone that reads richer than it plays — and a
+#: refusal is something the repair loop can fix. Pinned against
+#: `AffordanceFeatures.FOOTPRINT` from both sides in `test_affordances.py`.
+FEATURE_MIN_WIDTH = {
+    "grapple_anchor": 7.5,
+    "breakable_wall": 7.5,
+    "water_volume": 7.9,
+    "rail": 6.7,
+    "wind_volume": 7.9,
+    "bounce_pad": 7.1,
+    "moving_platform": 7.9,
+}
+
+#: The narrowest chamber that can host ANY feature — the cheapest thing a
+#: generator can check before choosing a tag.
+MIN_FEATURE_CHAMBER_WIDTH = min(FEATURE_MIN_WIDTH.values())
 
 # --------------------------------------------------------------------------
 # Shop

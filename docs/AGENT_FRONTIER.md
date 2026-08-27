@@ -75,11 +75,27 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   `budget_headroom` and `relevance_hint`, and the Claude prompt states the
   pipeline, the four modes and the budgets instead of leaving them to be
   inferred. The archive shows the mode.
+- **Adversarial review of S6–S10: done, all findings fixed.** Two passes
+  (client and bridge). The deepest: the affordance geometry was designed
+  and tested in an 18×20 arena, which the schema refuses for features —
+  **a corridor is the only chamber that can ever host one**, and four of
+  seven rewards sat above its 3.6 m ceiling. Reworked around per-tag
+  footprints, extent-based lane clearance, and corridors built to the
+  height their features declare. Also: an advertised upgrade bound the
+  model would not honour (a `FoldError` no retry could pass, the one
+  save-integrity bug), a `Damageable` concept that was missing so the
+  breakable wall could not be hit by anything, a concept validator wrong
+  in both directions, a mode that called self-contained Echoes "systemic",
+  a tag dropped from every Zone forever, and claimed rewards respawning.
+  All sabotage-proven. See `docs/IMPLEMENTATION_DECISIONS.md`.
 - **Next: the plan is exhausted.** IMPLEMENTATION_PLAN §2.5 ends at S10
   ("Deployables come after S10, if at all"). Per the standing handoff, do
   not stop here — continue developing the game, and stop only where
   continuing would require inventing an architecture decision the contract
   does not answer (document that decision instead of guessing).
+
+## Open decision, deliberately not guessed
+`challenge_marker` (§14.2) and its `challenge_timer` readout (§14.1) have a complete bridge half — grantable, recorded, `best_seconds` improves — and no world half, because neither section says where a run starts, what ends it, or what counts as one. `test_stage_tripwires.py::test_the_challenge_marker_still_has_no_challenge` names the decision and comes due when it is made.
 
 ## Stage dependency trap
 A live one: a chamber carrying an affordance feature must be at least `MIN_FEATURE_CHAMBER_WIDTH` (5.2 m) wide, and only a corridor can carry one at all — every other chamber type has a Check or a gating objective. A generator that hangs a feature on a default-width connector gets its Zone refused. The fallback widens its own connectors; anything else must too.
@@ -110,7 +126,7 @@ modifier. Recorded in `docs/IMPLEMENTATION_DECISIONS.md` (S5).
 
 ## Last full green verification
 At S9 completion (this commit):
-- `make test`: 329 passed
+- `make test`: 343 passed
 - `check_packet.py`: green, 10 docs
 - `make godot-test`: GODOT CHAMBER TESTS OK
 - `make godot-blink`: 5125 resolved / 17825 refused; GODOT BLINK TESTS OK

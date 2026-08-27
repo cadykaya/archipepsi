@@ -122,6 +122,20 @@ func _watch_enemy_health() -> void:
 
 ## An active challenge marker's clock (§14.2). The marker owns the
 ## challenge; this only shows the time.
+##
+## **Nothing calls this yet, and that is deliberate.** §14.2 says a
+## `challenge_marker` is "an optional timed or scored challenge; records a
+## personal best" and §14.1 says the readout shows "elapsed time and best
+## on an active challenge marker" — but neither says what the challenge
+## IS: where it starts, what ends it, or what counts as a run. Picking one
+## would be inventing a mechanic the contract does not describe, so the
+## clock is wired and waiting rather than guessed at. `test_stage_tripwires
+## .py::test_the_challenge_marker_still_has_no_challenge` is the reminder,
+## and names the decision that has to be made first.
+##
+## The rest of §14.2 works today: a `challenge_marker` reward can be
+## granted, is recorded, and `best_seconds` improves monotonically — the
+## bridge half is complete and tested. What is missing is the world half.
 func set_challenge(running: bool, elapsed: float, best: float) -> void:
 	_challenge_running = running
 	_challenge_elapsed = elapsed

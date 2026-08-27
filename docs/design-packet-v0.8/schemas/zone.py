@@ -152,14 +152,16 @@ class CorridorChamber(_WithEnemies):
         builder: a silently discarded feature is a Zone that reads richer
         than it plays, and a refusal is something the repair loop can fix.
         """
-        if self.features and self.width < C.MIN_FEATURE_CHAMBER_WIDTH:
-            raise ValueError(
-                f"chamber '{self.id}' is {self.width}m wide and carries "
-                f"{len(self.features)} affordance feature(s); a feature "
-                f"needs a chamber at least "
-                f"{C.MIN_FEATURE_CHAMBER_WIDTH}m wide to sit clear of the "
-                "walking lane (ECHOES.md 13.2)"
-            )
+        for feature in self.features:
+            needed = C.FEATURE_MIN_WIDTH.get(
+                feature.tag, C.MIN_FEATURE_CHAMBER_WIDTH)
+            if self.width < needed:
+                raise ValueError(
+                    f"chamber '{self.id}' is {self.width}m wide and carries "
+                    f"a '{feature.tag}', which needs {needed}m to sit clear "
+                    "of the walking lane on both sides (ECHOES.md 13.2); "
+                    "widen the corridor or offer a smaller feature"
+                )
         return self
 
 

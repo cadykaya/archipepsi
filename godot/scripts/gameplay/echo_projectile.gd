@@ -95,10 +95,15 @@ func _physics_process(delta: float) -> void:
 		else:
 			queue_free()
 
+## Whether the swept ray hit something that should take the shot rather
+## than stop it. A breakable panel counts: a projectile that punched
+## through it as if it were air, or bounced off it as if it were masonry,
+## would both be wrong.
 func _is_actor(collider: Variant) -> bool:
+	if Damageable.of(collider) != null:
+		return true
 	return is_instance_valid(collider) and collider is Node \
-			and ((collider as Node).is_in_group("enemies")
-					or (collider as Node).is_in_group("player"))
+			and (collider as Node).is_in_group("player")
 
 func _on_world_hit(hit: Dictionary) -> void:
 	if blast_radius > 0.0:
@@ -121,13 +126,12 @@ func _on_body_entered(body: Node3D) -> void:
 	if blast_radius > 0.0:
 		_detonate()
 		return
-	if body.is_in_group("enemies"):
-		var enemy := body as Enemy
-		var killed := enemy.take_damage(damage, direction, 0.0)
+	if Damageable.of(body) != null:
+		var killed := Damageable.hit(body, damage, direction, 0.0)
 		if is_instance_valid(shooter):
 			shooter.report_hit(killed)
-		if knockback > 0.0:
-			enemy.apply_knockback(direction * knockback)
+		if knockback > 0.0 and body.has_method("apply_knockback"):
+			body.apply_knockback(direction * knockback)
 		_spent = true
 		queue_free()
 		return

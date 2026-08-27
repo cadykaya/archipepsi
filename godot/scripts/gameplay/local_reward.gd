@@ -52,6 +52,16 @@ static func create(kind_in: String, reward_id_in: String,
 var _tint := Color(0.6, 1.0, 0.85)
 
 func _ready() -> void:
+	# Already found? Then it is not here any more.
+	#
+	# The save has recorded local rewards since S9 and the snapshot has
+	# mirrored them since S10, but nothing read the mirror — so a note you
+	# picked up reappeared every time you re-entered the Zone, and the
+	# bridge silently discarded each re-report as a duplicate. The reward
+	# looked repeatable and was not.
+	if already_earned(reward_id):
+		queue_free()
+		return
 	add_to_group(GROUP)
 	monitoring = true
 	var shape := CollisionShape3D.new()
@@ -87,6 +97,20 @@ func _process(delta: float) -> void:
 func _on_body_entered(body: Node3D) -> void:
 	if body is Player:
 		collect()
+
+## Whether this reward is already in the campaign's earned list.
+##
+## Read from the snapshot rather than remembered client-side: the save is
+## the authority on what has been found, and a Zone rebuilt after a
+## reconnect has to agree with it.
+static func already_earned(id: String) -> bool:
+	var earned: Variant = BridgeClient.snapshot.get("local_rewards", [])
+	if typeof(earned) != TYPE_ARRAY:
+		return false
+	for record: Dictionary in earned:
+		if str(record.get("reward_id", "")) == id:
+			return true
+	return false
 
 ## Split from the signal so a test — and `pull_pickup` delivering one into
 ## the player — can take it without staging a physics overlap.

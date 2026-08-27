@@ -10,6 +10,8 @@ Failing one of these is not a regression. It is the reminder firing.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from archipepsi_bridge.epsilon.capabilities import (
     IMPLEMENTED_COMPONENT_KINDS, IMPLEMENTED_OPERATION_KINDS)
 from archipepsi_bridge.epsilon.requests import EchoGenerationRequest
@@ -77,3 +79,38 @@ def test_the_registry_still_runs_even_though_it_gates_nothing():
         assert validate_stage_support(fake) != []
     finally:
         CAP.IMPLEMENTED_MODIFIER_TYPES = original
+
+
+def test_the_challenge_marker_still_has_no_challenge():
+    """A deliberate gap, named so it cannot be forgotten.
+
+    §14.2 lists `challenge_marker` as "an optional timed or scored
+    challenge; records a personal best", and §14.1 lists a
+    `challenge_timer` readout showing "elapsed time and best on an active
+    challenge marker". Neither says what the challenge IS — where a run
+    starts, what ends it, what counts as a run — so the world half is not
+    built and `Readouts.set_challenge` has no callers.
+
+    Everything that does not need that decision works: the reward kind is
+    grantable, it is recorded, and `best_seconds` only improves. What is
+    missing is a decision, not code.
+
+    **When that decision is made,** this test comes due: give the marker a
+    start and an end in the world, call `set_challenge` from it, and
+    assert the readout draws — then delete this.
+    """
+    from archipepsi_bridge.schemas.protocol import EarnedLocalReward
+    kinds = EarnedLocalReward.model_fields["kind"].annotation.__args__
+    assert "challenge_marker" in kinds
+    assert "best_seconds" in EarnedLocalReward.model_fields
+
+    readouts = (Path(__file__).resolve().parents[2]
+                / "godot/scripts/ui/readouts.gd").read_text()
+    assert "func set_challenge(" in readouts, (
+        "the clock is wired and waiting; if it has gone, the decision was "
+        "made and this tripwire is stale")
+    callers = [line for line in readouts.splitlines()
+               if "set_challenge(" in line and "func " not in line]
+    assert not callers, (
+        "something calls set_challenge now, so the challenge exists — "
+        "assert the readout draws and delete this tripwire", callers)

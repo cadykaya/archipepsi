@@ -440,8 +440,9 @@ func _beam_tick(delta: float) -> void:
 	var hit := player.camera_ray(float(primitive.get("range", 20.0)))
 	if not hit.is_empty():
 		var target: Variant = hit["collider"]
-		if is_instance_valid(target) and target.is_in_group("enemies"):
-			player.report_hit(target.take_damage(
+		if Damageable.of(target) != null:
+			player.report_hit(Damageable.hit(
+					target,
 					float(primitive.get("damage_per_second", 0.0)) * delta
 					* player.damage_dealt_mult,
 					-player.camera.global_transform.basis.z, 0.0))
@@ -585,11 +586,11 @@ func _melee_thrust(primitive: Dictionary) -> Array[Node]:
 	if hit.is_empty():
 		return damaged
 	var target: Variant = hit["collider"]
-	if is_instance_valid(target) and target is Node \
-			and (target as Node).is_in_group("enemies"):
-		var enemy := target as Enemy
-		var killed := enemy.take_damage(float(primitive["damage"]), forward, 0.0)
-		damaged.append(enemy)
+	var struck := Damageable.of(target)
+	if struck != null:
+		var killed := Damageable.hit(
+				target, float(primitive["damage"]), forward, 0.0)
+		damaged.append(struck)
 		player.report_hit(killed)
 	return damaged
 
@@ -641,9 +642,8 @@ func _hitscan(primitive: Dictionary) -> Array[Node]:
 				to, source_color(), 0.08, source_particles())
 		if not hit.is_empty():
 			var target: Variant = hit["collider"]
-			if is_instance_valid(target) and target.is_in_group("enemies"):
-				var enemy := target as Enemy
-				if enemy.take_damage(damage, dir, 0.0):
+			if Damageable.of(target) != null:
+				if Damageable.hit(target, damage, dir, 0.0):
 					killed = true
 				if target not in damaged:
 					damaged.append(target)
@@ -1048,13 +1048,21 @@ func absorb_with_shield(damage: float) -> float:
 ## range. That separation is the whole reason this verb waited for S9.
 func _pull_pickup(primitive: Dictionary) -> void:
 	var radius := float(primitive.get("radius", 6.0))
-	for node in get_tree().get_nodes_in_group("local_rewards"):
+	for node in get_tree().get_nodes_in_group(LocalRewardPickup.GROUP):
 		if node is Node3D and not node.is_queued_for_deletion():
 			var pickup := node as Node3D
 			if pickup.global_position.distance_to(
 					player.global_position) <= radius:
 				pickup.global_position = pickup.global_position.move_toward(
 						player.global_position + Vector3.UP * 0.6, radius)
+				# ...and taken, rather than left touching the player while
+				# hoping the next physics tick notices the overlap.
+				# `move_toward` with the search radius as its distance
+				# lands the pickup ON the player in one call, so "pulled"
+				# and "collected" are the same moment; pretending
+				# otherwise just made the verb unreliable.
+				if pickup is LocalRewardPickup:
+					(pickup as LocalRewardPickup).collect()
 
 func _place_marker(primitive: Dictionary) -> void:
 	var hit := player.camera_ray(40.0)

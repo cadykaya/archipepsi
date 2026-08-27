@@ -478,16 +478,28 @@ static func build(chamber: Dictionary, theme: String) -> Dictionary:
 static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 	var length := float(chamber.get("length", 12.0))
 	var width := float(chamber.get("width", 5.0))
+	# A corridor is the ONLY chamber that may carry an affordance feature
+	# (every other type has a Check or a gating objective, and §13.2 bars
+	# features from both), and the standard 3.6 m ceiling is not enough for
+	# a grapple ledge or a bounce arc. So a corridor carrying one is built
+	# to the height that feature needs.
+	#
+	# The alternative — clamping the feature to whatever fits — is what the
+	# first version did, and it put the grapple plate, the bounce reward
+	# and the wind perch above a solid ceiling slab where nothing could
+	# reach them.
+	var height := maxf(CORRIDOR_HEIGHT,
+			AffordanceFeatures.required_height(chamber))
 	var root := Node3D.new()
 	_box(root, Vector3(width, 0.5, length),
 			Vector3(0, -0.25, length / 2.0), ThemeMaterials.floor_mat(theme))
 	var wall := ThemeMaterials.wall_mat(theme)
-	_box(root, Vector3(WALL_THICKNESS, CORRIDOR_HEIGHT, length),
-			Vector3(-width / 2.0, CORRIDOR_HEIGHT / 2.0, length / 2.0), wall)
-	_box(root, Vector3(WALL_THICKNESS, CORRIDOR_HEIGHT, length),
-			Vector3(width / 2.0, CORRIDOR_HEIGHT / 2.0, length / 2.0), wall)
+	_box(root, Vector3(WALL_THICKNESS, height, length),
+			Vector3(-width / 2.0, height / 2.0, length / 2.0), wall)
+	_box(root, Vector3(WALL_THICKNESS, height, length),
+			Vector3(width / 2.0, height / 2.0, length / 2.0), wall)
 	_box(root, Vector3(width, WALL_THICKNESS, length),
-			Vector3(0, CORRIDOR_HEIGHT, length / 2.0),
+			Vector3(0, height, length / 2.0),
 			ThemeMaterials.trim_mat(theme))
 	# Pipes along one wall: the load-bearing GoldSrc prop.
 	var pipe := MeshInstance3D.new()
@@ -497,15 +509,15 @@ static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 	cylinder.height = length
 	pipe.mesh = cylinder
 	pipe.rotation.x = PI / 2.0
-	pipe.position = Vector3(width / 2.0 - 0.3, CORRIDOR_HEIGHT - 0.5,
+	pipe.position = Vector3(width / 2.0 - 0.3, height - 0.5,
 			length / 2.0)
 	pipe.material_override = ThemeMaterials.trim_mat(theme)
 	root.add_child(pipe)
 	var count := maxi(1, int(length / 8.0))
 	for i in count:
-		_light(root, Vector3(0, CORRIDOR_HEIGHT - 0.3,
+		_light(root, Vector3(0, height - 0.3,
 				length * (i + 0.5) / count), theme)
-	_greeble_corridor(root, length, width, CORRIDOR_HEIGHT, theme,
+	_greeble_corridor(root, length, width, height, theme,
 			_greeble_rng(chamber, theme))
 	var spawns: Array = []
 	for group: Dictionary in chamber.get("enemies", []):
@@ -516,9 +528,9 @@ static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 						0.2, length * 0.4 + float(i) * 1.9)})
 	return {"root": root, "exit_offset": Vector3(0, 0, length),
 			"bounds": AABB(Vector3(-width / 2.0, -1, 0),
-					Vector3(width, CORRIDOR_HEIGHT + 1, length)),
+					Vector3(width, height + 1, length)),
 			"enemy_spawns": spawns,
-			"room_height": CORRIDOR_HEIGHT,
+			"room_height": height,
 			"reward_position": Vector3(0, 0, length / 2.0)}
 
 static func arena(chamber: Dictionary, theme: String) -> Dictionary:

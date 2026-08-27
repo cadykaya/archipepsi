@@ -27,6 +27,9 @@ var failures := 0
 ## every "nothing bad happened" assertion below.
 var features_built := 0
 var volume_frames := 0
+## Real weapon discharges that reached a feature, as opposed to direct
+## `take_damage` calls. Zero here means the damage PATH is untested.
+var shots_landed := 0
 
 func _check(condition: bool, message: String) -> void:
 	if not condition:
@@ -46,11 +49,14 @@ func _run() -> void:
 	await _the_seven_are_built()
 	await _a_bounce_pad_beats_a_jump()
 	await _water_slows_you_but_cannot_trap_you()
+	await _a_rail_carries_a_dash_further()
 	await _wind_only_lifts()
 	await _a_volume_freed_under_you_lets_go()
+	await _the_panel_is_reachable_by_a_real_shot()
 	await _the_panel_needs_a_real_hit()
 	await _a_moving_platform_comes_back()
 	await _a_local_reward_reports_itself_once()
+	await _an_earned_reward_does_not_come_back()
 	await _pull_pickup_cannot_reach_an_ap_reward()
 	await _readouts_only_show_what_is_owned()
 	await _readouts_change_nothing()
@@ -72,41 +78,51 @@ func _features_stay_out_of_the_lane() -> void:
 	var lane := AffordanceFeatures.LANE_HALF_WIDTH
 	var checked := 0
 	var narrowest := INF
-	# A room narrower than lane + clearance either side has no "beside the
-	# path" at all, and `place_all` drops its features rather than burying
-	# them. Asserted separately below; the sweep covers rooms that fit.
-	for width in [4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 16.0, 22.0]:
-		if not AffordanceFeatures.fits(width):
-			continue
-		for depth in [8.0, 12.0, 20.0, 28.0]:
-			for ui in range(0, 11):
-				for vi in range(0, 11):
-					var at := [float(ui) / 10.0, float(vi) / 10.0]
-					var p := AffordanceFeatures.resolve_position(
-							at, width, depth)
-					checked += 1
-					narrowest = minf(narrowest, absf(p.x))
-					_check_once(absf(p.x) >= lane,
-							"a feature at %s in a %.0fm room landed %.2fm "
-							% [at, width, p.x] + "from centre, inside the lane")
-					# ...and still inside the room, or it is buried in a wall
-					# and the lane rule bought nothing.
-					_check_once(absf(p.x) <= width / 2.0,
-							"a feature at %s escaped a %.0fm room" % [at, width])
-					# Clear of both doorways.
-					_check_once(p.z >= 2.0 and p.z <= depth - 2.0
-							or depth < 6.0,
-							"a feature at %s sat in a threshold" % [at])
+	# Per TAG, because the tags are not the same size and the rule is
+	# about a feature's whole footprint. A pad whose ORIGIN cleared the
+	# lane still put half its trigger inside it, and launched a player who
+	# was only walking past.
+	for tag: String in AffordanceFeatures.FOOTPRINT:
+		var reach: Dictionary = AffordanceFeatures.FOOTPRINT[tag]
+		var half_width: float = float(reach["half_width"])
+		var half_depth: float = float(reach["half_depth"])
+		for width in [5.0, 6.0, 8.0, 10.0, 14.0, 20.0]:
+			for depth in [12.0, 20.0, 28.0]:
+				if not AffordanceFeatures.fits(width, tag, depth):
+					continue
+				for ui in range(0, 11):
+					for vi in range(0, 11):
+						var at := [float(ui) / 10.0, float(vi) / 10.0]
+						var p := AffordanceFeatures.resolve_position(
+								at, width, depth, tag)
+						checked += 1
+						narrowest = minf(narrowest, absf(p.x) - half_width)
+						# The near EDGE clears the lane.
+						_check_once(absf(p.x) - half_width >= lane - 0.001,
+								"'%s' at %s in a %.0fm room reaches %.2fm "
+								% [tag, at, width, absf(p.x) - half_width]
+								+ "from centre, inside the lane")
+						# The far edge stays inside the room.
+						_check_once(
+								absf(p.x) + half_width <= width / 2.0 + 0.001,
+								"'%s' at %s escaped a %.0fm room"
+								% [tag, at, width])
+						# And both ends clear both doorways.
+						_check_once(p.z - half_depth >= 1.99
+								and p.z + half_depth <= depth - 1.99,
+								"'%s' at %s reached a threshold (z %.2f±%.2f "
+								% [tag, at, p.z, half_depth]
+								+ "in a %.0fm room)" % [depth])
 	_check(checked > 2000, "the lane sweep covered the fraction space")
 	# The sweep must actually PRESS on the bound, or a rule that pushed
 	# every feature to the far wall would pass it without protecting
 	# anything the lane is for.
 	_check(narrowest < lane + 1.0,
-			"the sweep never approached the lane edge (nearest %.2f)"
+			"the sweep never pressed on the lane edge (nearest %.2f)"
 			% narrowest)
-	# ...and the narrow rooms the sweep skipped get nothing, rather than a
+	# ...and a room too narrow for a tag gets none of it, rather than a
 	# feature squeezed into the doorway or the wall.
-	_check(not AffordanceFeatures.fits(4.0),
+	_check(not AffordanceFeatures.fits(4.0, "bounce_pad"),
 			"a 4m corridor is all walking lane")
 	var cramped := ChamberBuilders.build(
 			{"id": "narrow", "type": "corridor", "length": 12.0, "width": 4.0,
@@ -129,14 +145,27 @@ func _check_once(condition: bool, message: String) -> void:
 
 # --- the geometry ----------------------------------------------------------
 
+## A CORRIDOR, and one only just wide enough for the tag under test.
+##
+## The first version of this suite built an 18×20 arena with a 6 m ceiling
+## — a chamber the schema would refuse outright, because a feature may not
+## share a chamber with a Check or a gating objective and arena, tower,
+## platform_path and treasure_room all carry one by construction. Testing
+## in a big room proved the geometry worked somewhere it can never be
+## built, and hid four rewards placed above the corridor ceiling.
+##
+## Width is taken from the tag's own requirement rather than a generous
+## constant, so every case runs against the tightest room that tag will
+## ever see.
 func _chamber_with(tags: Array) -> Dictionary:
 	var features: Array = []
+	var width := 5.0
 	for i in tags.size():
 		features.append({"tag": tags[i],
 				"at": [0.2 if i % 2 == 0 else 0.8, 0.4 + 0.1 * i]})
-	return {"id": "c1", "type": "arena", "width": 18.0, "depth": 20.0,
-			"wall_height": 6.0, "objective": "reach_reward",
-			"features": features}
+		width = maxf(width, AffordanceFeatures.required_width(str(tags[i])))
+	return {"id": "c1", "zone_id": "zone_001", "type": "corridor",
+			"length": 22.0, "width": width, "features": features}
 
 func _build_chamber(tags: Array) -> Dictionary:
 	var result := ChamberBuilders.build(_chamber_with(tags), "concrete_facility")
@@ -161,11 +190,56 @@ func _the_seven_are_built() -> void:
 		var rewards := _descendants_in_group(result["root"],
 				LocalRewardPickup.GROUP)
 		_check(rewards.size() >= 1, "'%s' offers a local reward" % tag)
+		_nothing_is_built_through_the_ceiling(tag, result, rewards)
 		# I13, structurally: what a feature holds is never an AP reward.
 		_check(_descendants_of_type(result["root"], "RewardObject").is_empty(),
 				"'%s' hung no AP reward" % tag)
 		result["root"].queue_free()
 		await get_tree().process_frame
+
+## The finding that motivated rebuilding all of this.
+##
+## Every vertical constant used to clamp to "as high as fits", which in a
+## 3.6 m corridor put the grapple plate, the bounce reward and the wind
+## perch ABOVE a solid ceiling slab — geometry no raycast could reach and
+## no player could stand on. Nothing noticed, because the suite built an
+## 18x20 arena with a 6 m ceiling, which is a chamber the schema refuses
+## to put a feature in at all.
+##
+## So: the room is built to the height the feature declares, and every
+## piece of the feature has to live under it.
+func _nothing_is_built_through_the_ceiling(tag: String, result: Dictionary,
+		rewards: Array) -> void:
+	var room_height := float(result["room_height"])
+	var declared: float = float(
+			AffordanceFeatures.FOOTPRINT[tag]["height"])
+	_check(room_height >= declared,
+			"a corridor carrying '%s' is built %.1fm tall, not the %.1fm it "
+			% [tag, room_height, declared] + "declares")
+	# The slab's underside. Anything at or above this is inside the
+	# ceiling or through it.
+	var ceiling := room_height
+	for node in _descendants(result["root"]):
+		if not node is Node3D:
+			continue
+		var top: float = (node as Node3D).position.y
+		# Only the pieces a player has to reach or a ray has to hit; a
+		# decorative ring flush with the ceiling is nobody's problem.
+		if node is StaticBody3D or node is LocalRewardPickup:
+			_check(top < ceiling,
+					"'%s' built a %s at y=%.2f, at or through a %.2fm ceiling"
+					% [tag, node.get_class(), top, ceiling])
+	for reward in rewards:
+		var at: float = (reward as Node3D).global_position.y
+		_check(at < ceiling and at > 0.0,
+				"'%s' hung its reward at y=%.2f, outside a 0..%.2f room"
+				% [tag, at, ceiling])
+
+func _descendants(root: Node) -> Array:
+	var out: Array = [root]
+	for child in root.get_children():
+		out.append_array(_descendants(child))
+	return out
 
 func _a_bounce_pad_beats_a_jump() -> void:
 	var pad := AffordanceNodes.BouncePad.new()
@@ -222,6 +296,67 @@ func _water_slows_you_but_cannot_trap_you() -> void:
 ## The SHIPPED updraft, not a plausible one written here: lift has to beat
 ## the gravity the same volume applies, and a test with its own numbers
 ## would happily pass while the real column let you sink.
+## The rail's whole claim is that a dash along it carries further. Its
+## first influence was `{"drag": 0.0, "speed_scale": 1.0}` — the identity
+## element of both merge rules — so the feature was decoration with a
+## docstring. This measures the carry.
+func _a_rail_carries_a_dash_further() -> void:
+	var result: Dictionary = await _build_chamber(["rail"])
+	var lane: AffordanceNodes.Volume = null
+	for node in _descendants(result["root"]):
+		if node is AffordanceNodes.Volume:
+			lane = node
+	_check(lane != null, "the rail built its lane")
+	if lane == null:
+		return
+	_check(float(lane.influence.get("friction_scale", 1.0)) < 1.0,
+			"the lane actually lowers friction")
+
+	# A floor, because ground friction is what the rail changes: without
+	# one `is_on_floor()` is false, the air branch runs instead, and both
+	# runs decelerate identically while appearing to test something.
+	var ground := StaticBody3D.new()
+	var ground_shape := CollisionShape3D.new()
+	var ground_box := BoxShape3D.new()
+	ground_box.size = Vector3(40, 1, 80)
+	ground_shape.shape = ground_box
+	ground.add_child(ground_shape)
+	ground.position = Vector3(0, -0.5, 0)
+	add_child(ground)
+	await get_tree().physics_frame
+
+	var travelled := {}
+	for on_rail: bool in [false, true]:
+		var player := Player.create()
+		add_child(player)
+		await get_tree().process_frame
+		player.global_position = Vector3(0, 0.05, 0)
+		await get_tree().physics_frame
+		# NOT frozen: `input_frozen` takes its own branch that lerps
+		# velocity to zero without consulting ground friction at all, so a
+		# frozen player would decelerate identically on and off the rail
+		# and this test would measure nothing.
+		if on_rail:
+			player.enter_volume(self, lane.influence)
+		# A dash is a velocity change; what differs is how fast the floor
+		# takes it back.
+		player.velocity = Vector3(0, 0, -14.0)
+		var start := player.global_position.z
+		for i in 30:
+			player._physics_process(DT)
+			volume_frames += 1
+		travelled[on_rail] = absf(player.global_position.z - start)
+		if on_rail:
+			player.exit_volume(self)
+		player.queue_free()
+		await get_tree().process_frame
+	_check(travelled[true] > travelled[false] * 1.5,
+			"a dash on the rail carries further (%.2fm vs %.2fm)"
+			% [travelled[true], travelled[false]])
+	ground.queue_free()
+	result["root"].queue_free()
+	await get_tree().process_frame
+
 func _wind_only_lifts() -> void:
 	var result: Dictionary = await _build_chamber(["wind_volume"])
 	var column: AffordanceNodes.Volume = (result["features"] as Array)[0]
@@ -262,6 +397,65 @@ func _a_volume_freed_under_you_lets_go() -> void:
 	await get_tree().process_frame
 	_check(float(player.environment_influence()["speed_scale"]) == 1.0,
 			"a freed volume releases its influence")
+	player.queue_free()
+	await get_tree().process_frame
+
+## The panel has to be reachable by an actual shot, not merely by a direct
+## call to `take_damage`.
+##
+## It was not. Every damage path in the game tested `is_in_group("enemies")`
+## before dealing damage, and nothing put the panel in that group — so the
+## Static Pulse, melee, projectiles and slams all passed straight through
+## it and `BreakablePanel.take_damage` was unreachable code. The suite
+## passed anyway, because it called `take_damage` directly. This fires the
+## real weapon.
+func _the_panel_is_reachable_by_a_real_shot() -> void:
+	var panel := AffordanceNodes.BreakablePanel.new()
+	add_child(panel)
+	var player := Player.create()
+	add_child(player)
+	await get_tree().process_frame
+	# Panel dead ahead: the player faces -Z by default, and `camera_ray`
+	# casts along the camera's forward.
+	player.global_position = Vector3.ZERO
+	await get_tree().physics_frame
+	# Turned to face the shooter. In a Zone the panel is set into a SIDE
+	# wall, so its 2.4 m face points along X and only a 0.4 m edge points
+	# down the corridor — a shot fired along -Z at an unrotated panel goes
+	# past it, which is a fact about the panel rather than about the
+	# damage path.
+	panel.rotation.y = PI / 2.0
+	panel.global_position = player.camera.global_position \
+			+ (-player.camera.global_transform.basis.z) * 3.0
+	await get_tree().physics_frame
+	_check(player.camera_ray(30.0).get("collider") == panel,
+			"the test is actually aiming at the panel")
+
+	# The Static Pulse reaches it — and is refused, which is the point:
+	# §13.1 pays for this affordance with an action that hits HARD, so a
+	# base-kit shot must land and be turned away rather than pass through.
+	player._fire_static_pulse()
+	_check(panel.refused == 1,
+			"the Static Pulse reaches the panel (refused %d)" % panel.refused)
+	_check(panel.hp == AffordanceNodes.BreakablePanel.HP,
+			"...and chips nothing")
+	shots_landed += 1
+
+	# A heavy Echo hitscan opens it, through the same path.
+	var runtime: EchoRuntime = player.runtimes["echo_a"]
+	runtime.set_equipped({
+		"component_id": "act_heavy", "display_name": "Heavy", "slot": "echo_a",
+		"cooldown": 0.1, "kind": "action", "description": "d",
+		"primitive": {"type": "hitscan_damage",
+			"damage": AffordanceNodes.BreakablePanel.HP + 1.0,
+			"pellets": 1, "spread_degrees": 0.0, "range": 30.0},
+		"modifiers": []})
+	runtime.activate()
+	await get_tree().process_frame
+	_check(not is_instance_valid(panel) or panel.is_queued_for_deletion(),
+			"a heavy Echo shot opens it")
+	shots_landed += 1
+
 	player.queue_free()
 	await get_tree().process_frame
 
@@ -347,6 +541,35 @@ func _a_local_reward_reports_itself_once() -> void:
 					"a local reward intent carries no '%s'" % forbidden)
 	await get_tree().process_frame
 
+## A reward already in the save is not in the world.
+##
+## The save has recorded local rewards since S9 and the snapshot has
+## mirrored them since S10 — and nothing read the mirror, so a note you
+## picked up reappeared every time you re-entered the Zone and the bridge
+## silently discarded each re-report as a duplicate. The reward looked
+## repeatable and was not.
+func _an_earned_reward_does_not_come_back() -> void:
+	BridgeClient.snapshot["local_rewards"] = [
+		{"kind": "epsilon_note", "reward_id": "zone_001_c1_rail_0",
+		 "display_name": "Note", "description": "d",
+		 "source_zone_id": "zone_001", "best_seconds": 0.0}]
+	var earned := LocalRewardPickup.create(
+			"epsilon_note", "zone_001_c1_rail_0", "Note")
+	add_child(earned)
+	var fresh := LocalRewardPickup.create(
+			"epsilon_note", "zone_001_c1_rail_1", "Note")
+	add_child(fresh)
+	await get_tree().process_frame
+	_check(not is_instance_valid(earned) or earned.is_queued_for_deletion(),
+			"a reward already in the save removes itself")
+	_check(is_instance_valid(fresh) and not fresh.is_queued_for_deletion(),
+			"...and one that is not stays")
+	_check(fresh.is_in_group(LocalRewardPickup.GROUP),
+			"the one that stays is still collectable")
+	fresh.queue_free()
+	BridgeClient.snapshot["local_rewards"] = []
+	await get_tree().process_frame
+
 ## `pull_pickup` reaches local rewards and nothing else. An AP reward is
 ## claimed by walking up and interacting; a verb that could yank one across
 ## a room would be an Action moving Check truth.
@@ -356,6 +579,7 @@ func _pull_pickup_cannot_reach_an_ap_reward() -> void:
 	await get_tree().process_frame
 	player.global_position = Vector3.ZERO
 
+	BridgeClient.sent_intents.clear()
 	var pickup := LocalRewardPickup.create("flavor_log", "c1_note", "Note")
 	add_child(pickup)
 	var ap_reward := RewardObject.create(
@@ -370,6 +594,10 @@ func _pull_pickup_cannot_reach_an_ap_reward() -> void:
 	runtime._pull_pickup({"type": "pull_pickup", "radius": 8.0})
 	_check(pickup.global_position.distance_to(player.global_position) < 4.0,
 			"pull_pickup drew the local reward in")
+	# ...and took it. Leaving it touching the player and waiting for the
+	# next physics tick to notice made the verb unreliable.
+	_check(_intents_of_type("grant_local_reward").size() == 1,
+			"pull_pickup collects what it pulls")
 	_check(ap_reward.global_position == reward_before,
 			"pull_pickup did not move the AP reward")
 	pickup.queue_free()
@@ -473,6 +701,8 @@ func _the_suite_actually_exercised_something() -> void:
 			% features_built)
 	_check(volume_frames > 30, "the suite ran volumes over live frames (%d)"
 			% volume_frames)
+	_check(shots_landed >= 2,
+			"the suite fired real weapons at a feature (%d)" % shots_landed)
 
 func _intents_of_type(type: String) -> Array:
 	var out: Array = []

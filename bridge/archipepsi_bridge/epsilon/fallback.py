@@ -89,6 +89,12 @@ def fallback_zone(request: ZoneGenerationRequest) -> dict:
     }
 
 
+#: The schema's own upper bound on a corridor (`CorridorChamber.width`).
+#: Widening past it would make a Zone the validator refuses, which is the
+#: opposite of what the widening is for.
+MAX_CORRIDOR_WIDTH = 10.0
+
+
 def _add_features(chambers: list[dict], unlocked: tuple[str, ...],
                   zone_index: int = 0) -> None:
     """Hang the unlocked affordances (§13) off the plain chambers.
@@ -116,9 +122,16 @@ def _add_features(chambers: list[dict], unlocked: tuple[str, ...],
              and not c.get("objective")]
     if not plain:
         return
+    # Widen enough for the WIDEST tag this Zone will actually place, and
+    # never past the schema's corridor cap. A single conservative width
+    # would refuse a rail from a corridor it fits in perfectly well.
+    wanted = [t for t in unlocked if t in C.FEATURE_MIN_WIDTH]
+    if not wanted:
+        return
+    widest = min(MAX_CORRIDOR_WIDTH,
+                 max(C.FEATURE_MIN_WIDTH[t] for t in wanted))
     for chamber in plain:
-        chamber["width"] = max(
-            float(chamber.get("width", 5.0)), C.MIN_FEATURE_CHAMBER_WIDTH + 1.0)
+        chamber["width"] = max(float(chamber.get("width", 5.0)), widest)
     # Deal round-robin so a run that unlocks five tags does not stack all
     # five in the first corridor. Both loops are ordered, so the same
     # campaign lays out the same Zone twice — the fallback is the
@@ -136,6 +149,12 @@ def _add_features(chambers: list[dict], unlocked: tuple[str, ...],
         ordered = ordered[offset:] + ordered[:offset]
     for index, tag in enumerate(ordered):
         chamber = plain[index % len(plain)]
+        # A tag the corridor cannot hold is skipped rather than emitted
+        # for the validator to refuse: the fallback's job is to always
+        # produce something acceptable.
+        if float(chamber["width"]) < C.FEATURE_MIN_WIDTH.get(
+                tag, C.MIN_FEATURE_CHAMBER_WIDTH):
+            continue
         features = list(chamber.get("features", []))
         # The schema's per-chamber cap is the only cap there is; when the
         # plain chambers are full the remaining tags simply do not appear
