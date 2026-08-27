@@ -10,6 +10,7 @@ var _crosshair: Label
 
 var _damage_flash: ColorRect
 var _last_hp := -1.0
+var _bound_player: Player = null
 var _banner: Label
 var _death_overlay: ColorRect
 var _death_label: Label
@@ -30,6 +31,7 @@ const _ARROWS := ["▶", "◢", "▼", "◣", "◀", "◤", "▲", "◥"]
 ## Damage direction wedge: which way to turn to see what just hit you.
 var _hit_marker: Label
 var _hit_fade := 0.0
+var _hit_source := Vector3.INF
 const _HIT_FADE_TIME := 1.1
 const _HIT_RADIUS := 96.0
 
@@ -225,7 +227,11 @@ func _process(delta: float) -> void:
 		_hit_fade = maxf(0.0, _hit_fade - delta)
 		var strength := _hit_fade / _HIT_FADE_TIME
 		_hit_marker.modulate = Color(1.0, 0.35, 0.3, strength)
-		_hit_marker.visible = _hit_fade > 0.0 and _crosshair.visible
+		if _hit_fade > 0.0:
+			_place_hit_marker()      # track as the player turns
+		else:
+			_hit_marker.visible = false
+			_hit_source = Vector3.INF
 	if not _waypoint_active or not _crosshair.visible:
 		_waypoint.visible = false
 		return
@@ -244,7 +250,13 @@ func _process(delta: float) -> void:
 		point = centre - (point - centre)
 
 	var distance := camera.global_position.distance_to(_waypoint_target)
-	var margin := Vector2(_EDGE_MARGIN, _EDGE_MARGIN)
+	# The pin must clear half the LAID-OUT label, not a fixed 46px, or a
+	# long string like "◀ CHECK 003 · SENDING  27m" hangs off the edge —
+	# which is exactly the case the edge indicator exists for.
+	var half_label := _waypoint.size / 2.0
+	var margin := Vector2(maxf(_EDGE_MARGIN, half_label.x + 8.0),
+			maxf(_EDGE_MARGIN, half_label.y + 8.0))
+	margin = margin.min(size / 2.0 - Vector2.ONE)
 	var clamped := point.clamp(margin, size - margin)
 	var off_screen := behind or not clamped.is_equal_approx(point)
 
@@ -279,6 +291,7 @@ func _on_player_died() -> void:
 			Constants.RESPAWN_DELAY * 0.6)
 
 func bind_player(player: Player) -> void:
+	_bound_player = player
 	player.hp_changed.connect(_on_hp_changed)
 	player.interact_prompt_changed.connect(_on_prompt)
 	player.echo_runtime.cooldown_changed.connect(_on_cooldown)
@@ -317,11 +330,20 @@ func _on_cooldown(remaining: float, total: float) -> void:
 func _on_damaged_from(source_position: Vector3) -> void:
 	if source_position == Vector3.INF:
 		return                       # a fall, a pit — no direction to give
+	_hit_source = source_position
+	_hit_fade = _HIT_FADE_TIME
+	_place_hit_marker()
+
+## Recomputed every frame while visible: an indicator that told you to turn
+## left and then kept pointing left as you turned would steer you past the
+## thing that shot you.
+func _place_hit_marker() -> void:
 	var camera := get_viewport().get_camera_3d()
-	if camera == null:
+	if camera == null or _hit_source == Vector3.INF:
+		_hit_marker.visible = false
 		return
 	var basis := camera.global_transform.basis
-	var to_source := source_position - camera.global_position
+	var to_source := _hit_source - camera.global_position
 	# Project into the camera's own plane: x right, y "ahead" on screen.
 	var right := basis.x.dot(to_source)
 	var ahead := -basis.z.dot(to_source)
@@ -333,10 +355,14 @@ func _on_damaged_from(source_position: Vector3) -> void:
 	_hit_marker.position = size / 2.0 - _hit_marker.pivot_offset \
 			+ Vector2(sin(angle), -cos(angle)) * _HIT_RADIUS
 	_hit_marker.rotation = angle
-	_hit_fade = _HIT_FADE_TIME
-	_hit_marker.visible = true
+	_hit_marker.visible = _crosshair.visible
 
-func refresh_echo(cooldown := 0.0, total := 0.0) -> void:
+## `cooldown < 0` means "ask the runtime" — a plain default of 0.0 made
+## every snapshot repaint the bar as fully ready mid-cooldown.
+func refresh_echo(cooldown := -1.0, total := 0.0) -> void:
+	if cooldown < 0.0:
+		cooldown = _bound_player.echo_runtime.cooldown_remaining \
+				if _bound_player != null else 0.0
 	var echo := BridgeClient.equipped_echo()
 	if echo.is_empty():
 		_echo_label.text = "RMB: no Echo equipped"

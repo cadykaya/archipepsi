@@ -18,6 +18,10 @@ signal footstep(kind: String)
 const MOUSE_SENSITIVITY := 0.0022
 #: Metres between footfalls. Paced by distance so it tracks speed Echoes.
 const STEP_DISTANCE := 2.2
+#: A landing needs real airtime AND real downward speed, so stair seams
+#: and the first frame after a spawn do not thump.
+const LAND_MIN_AIRTIME := 0.18
+const LAND_MIN_SPEED := 3.0
 
 var hp: float = Constants.PLAYER_MAX_HP
 var input_frozen := false
@@ -32,6 +36,7 @@ var _spawn_transform: Transform3D
 var _interact_target: Node = null
 var _step_accumulator := 0.0
 var _step_toggle := false
+var _airborne_time := 0.0
 
 @onready var camera: Camera3D = $Camera3D
 @onready var echo_runtime: EchoRuntime = $EchoRuntime
@@ -187,9 +192,9 @@ func _physics_process(delta: float) -> void:
 		velocity.x = lerpf(velocity.x, 0.0, 0.2)
 		velocity.z = lerpf(velocity.z, 0.0, 0.2)
 
-	var was_airborne := not is_on_floor()
+	var falling_speed := -velocity.y
 	move_and_slide()
-	_update_footsteps(delta, was_airborne)
+	_update_footsteps(delta, falling_speed)
 	_update_interact_target()
 
 	if global_position.y < Constants.FALL_KILL_Y:
@@ -211,13 +216,18 @@ func _fire_static_pulse() -> void:
 
 ## Footfalls paced by distance travelled, not by a timer, so they stay in
 ## step with the player at any speed multiplier.
-func _update_footsteps(delta: float, was_airborne: bool) -> void:
+func _update_footsteps(delta: float, falling_speed: float) -> void:
 	if not is_on_floor():
+		_airborne_time += delta
 		return
-	if was_airborne:
+	# Only a real fall lands. A single-frame loss of floor contact on a
+	# stair seam or ramp is not a landing, and treating it as one both
+	# replayed the loudest tone and reset the step cadence to silence.
+	if _airborne_time > LAND_MIN_AIRTIME and falling_speed > LAND_MIN_SPEED:
 		footstep.emit("land")
 		_step_accumulator = 0.0
-		return
+	_airborne_time = 0.0
+
 	var travelled := Vector2(velocity.x, velocity.z).length() * delta
 	if travelled < 0.01:
 		return

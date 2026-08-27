@@ -21,6 +21,10 @@ var _knockback := Vector3.ZERO
 var _sidestep_timer := 0.0
 var _sidestep_dir := Vector3.ZERO
 var _sidestep_flip := false
+# Per-instance materials for the damage tint, unshared once on first hit.
+var _tint_parts: Array[StandardMaterial3D] = []
+var _tint_base_energy: Array[float] = []
+var _tint_base_albedo: Array[Color] = []
 # Brute slam windup.
 var _windup := 0.0
 
@@ -67,13 +71,7 @@ static func _part(parent: Node3D, size: Vector3, position: Vector3,
 
 static func _eye(parent: Node3D, size: Vector3, position: Vector3,
 		color: Color) -> void:
-	var eye := MeshInstance3D.new()
-	var mesh := BoxMesh.new()
-	mesh.size = size
-	eye.mesh = mesh
-	eye.position = position
-	eye.material_override = ThemeMaterials.glow_material(color, 2.4)
-	parent.add_child(eye)
+	_part(parent, size, position, ThemeMaterials.glow_material(color, 2.4))
 
 ## Melee: hunched and forward-leaning, with stubby arms — it reads as
 ## something that wants to be where you are.
@@ -91,9 +89,12 @@ static func _build_melee(enemy: Node3D, size: Vector3, theme: String) -> void:
 	head.rotation.x = PI / 2.0          # snout forward, not spire upward
 	head.material_override = trim
 	enemy.add_child(head)
+	# Arms stay inside the collider half-width (size.x * 0.5): geometry
+	# that reaches past it clips through walls and door frames, and the
+	# corridor lane budgets are sized to the collider.
 	for side in [-1.0, 1.0]:
 		_part(enemy, Vector3(size.x * 0.24, size.y * 0.36, size.z * 0.24),
-				Vector3(side * size.x * 0.6, size.y * 0.34, -0.1), trim, -0.4)
+				Vector3(side * size.x * 0.38, size.y * 0.34, -0.1), trim, -0.4)
 	_part(enemy, Vector3(size.x * 0.7, size.y * 0.2, size.z * 0.6),
 			Vector3(0, size.y * 0.1, 0), trim)
 	_eye(enemy, Vector3(size.x * 0.42, 0.07, 0.05),
@@ -110,8 +111,9 @@ static func _build_ranged(enemy: Node3D, size: Vector3, theme: String) -> void:
 					cos(angle) * size.z * 0.4), trim)
 	_part(enemy, Vector3(0.16, size.y * 0.35, 0.16),
 			Vector3(0, size.y * 0.62, 0), trim)
-	# The head is the whole point of it: a wide sensor block.
-	_part(enemy, Vector3(size.x * 1.1, size.y * 0.3, size.z * 0.7),
+	# The head is the whole point of it: a wide sensor block, kept just
+	# inside the collider so it cannot poke through walls.
+	_part(enemy, Vector3(size.x * 0.95, size.y * 0.3, size.z * 0.7),
 			Vector3(0, size.y * 0.88, 0), accent)
 	_eye(enemy, Vector3(size.x * 0.8, 0.14, 0.05),
 			Vector3(0, size.y * 0.88, -size.z * 0.38), Color(1.0, 0.6, 0.15))
@@ -123,12 +125,15 @@ static func _build_brute(enemy: Node3D, size: Vector3, theme: String) -> void:
 	var trim := ThemeMaterials.trim_mat(theme)
 	_part(enemy, Vector3(size.x, size.y * 0.46, size.z * 0.75),
 			Vector3(0, size.y * 0.44, 0), accent)
+	# Shoulders and arms are held inside the collider half-width
+	# (size.x * 0.5). The brute's 1.8 m body already nearly fills a 2.4 m
+	# doorway; geometry wider than the collider clips straight through it.
 	for side in [-1.0, 1.0]:
-		_part(enemy, Vector3(size.x * 0.34, size.y * 0.26, size.z * 0.9),
-				Vector3(side * size.x * 0.56, size.y * 0.62, 0), trim)
+		_part(enemy, Vector3(size.x * 0.28, size.y * 0.26, size.z * 0.9),
+				Vector3(side * size.x * 0.36, size.y * 0.62, 0), trim)
 		# Heavy arms hanging past the waist.
-		_part(enemy, Vector3(size.x * 0.28, size.y * 0.42, size.z * 0.28),
-				Vector3(side * size.x * 0.58, size.y * 0.26, -0.1), accent)
+		_part(enemy, Vector3(size.x * 0.24, size.y * 0.42, size.z * 0.28),
+				Vector3(side * size.x * 0.37, size.y * 0.26, -0.1), accent)
 		# Legs.
 		_part(enemy, Vector3(size.x * 0.3, size.y * 0.24, size.z * 0.35),
 				Vector3(side * size.x * 0.24, size.y * 0.11, 0), trim)
@@ -285,23 +290,37 @@ func take_damage(amount: float, direction: Vector3, knockback: float) -> void:
 
 ## Wounded enemies visibly cook: the eye brightens and the body reddens as
 ## health drops, so "nearly dead" is readable without a health bar.
+##
+## The per-instance materials are unshared ONCE, on first damage, and then
+## mutated in place. Duplicating them on every hit re-uploaded a dozen
+## materials per Static Pulse tick and permanently broke batching with the
+## cached theme materials.
 func _refresh_damage_tint() -> void:
 	var hurt := 1.0 - clampf(hp / maxf(1.0, float(stats["hp"])), 0.0, 1.0)
 	if hurt <= 0.0:
 		return
-	for child in get_children():
-		if not (child is MeshInstance3D):
-			continue
-		var material: Material = child.material_override
-		if material is StandardMaterial3D:
-			var standard: StandardMaterial3D = material.duplicate()
-			if standard.emission_enabled:
-				standard.emission_energy_multiplier = \
-						1.0 + 2.4 * hurt          # the eye flares
-			else:
-				standard.albedo_color = Color(1.0, 0.45, 0.35).lerp(
-						Color.WHITE, 1.0 - hurt * 0.75)
-			child.material_override = standard
+	if _tint_parts.is_empty():
+		for child in get_children():
+			if not (child is MeshInstance3D):
+				continue
+			var shared: Material = child.material_override
+			if not (shared is StandardMaterial3D):
+				continue
+			var mine: StandardMaterial3D = shared.duplicate()
+			child.material_override = mine
+			_tint_parts.append(mine)
+			# Capture the base energy BEFORE overwriting it, or the first
+			# chip of damage makes the eye dimmer than undamaged.
+			_tint_base_energy.append(mine.emission_energy_multiplier)
+			_tint_base_albedo.append(mine.albedo_color)
+	for i in _tint_parts.size():
+		var material: StandardMaterial3D = _tint_parts[i]
+		if material.emission_enabled:
+			material.emission_energy_multiplier = \
+					_tint_base_energy[i] * (1.0 + 1.6 * hurt)
+		else:
+			material.albedo_color = _tint_base_albedo[i].lerp(
+					Color(1.0, 0.4, 0.3), hurt * 0.7)
 
 func apply_knockback(impulse: Vector3) -> void:
 	_knockback += impulse

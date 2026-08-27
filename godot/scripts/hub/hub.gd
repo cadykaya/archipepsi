@@ -246,20 +246,27 @@ func _build_campaign_board() -> void:
 
 	var cell := 0.36
 	var gap := 0.09
-	for tier in 3:
-		for column in 10:
-			var quad := MeshInstance3D.new()
-			var mesh := BoxMesh.new()
-			mesh.size = Vector3(0.05, cell, cell)
-			quad.mesh = mesh
-			quad.position = Vector3(wall_x + 0.09,
-					3.0 - float(tier) * (cell + gap),
-					panel_z - 2.0 + float(column) * (cell + gap))
-			root.add_child(quad)
+	var tier_names := ["START", "TIER 1", "TIER 2"]
+	# Tier shape comes from the generated constants, not from literals —
+	# the unlock rule below reads the same source.
+	for tier in Constants.TIER_COUNT:
+		for column in Constants.TIER_SIZE:
+			var quad: MeshInstance3D = b._box(root,
+					Vector3(0.05, cell, cell),
+					Vector3(wall_x + 0.09,
+						3.0 - float(tier) * (cell + gap),
+						panel_z - 2.0 + float(column) * (cell + gap)),
+					null, false)
+			# One material per cell, built once and mutated in place: the
+			# board refreshes on a timer AND on every snapshot, and 30
+			# fresh materials per refresh churned the GPU for nothing.
+			var material := StandardMaterial3D.new()
+			material.emission_enabled = true
+			quad.material_override = material
 			_board_cells.append(quad)
-		var tier_names := ["START", "TIER 1", "TIER 2"]
 		var tier_label := Label3D.new()
-		tier_label.text = tier_names[tier]
+		tier_label.text = tier_names[tier] if tier < tier_names.size() \
+				else "TIER %d" % tier
 		tier_label.font_size = 22
 		tier_label.pixel_size = 0.005
 		tier_label.position = Vector3(wall_x + 0.09,
@@ -280,41 +287,68 @@ func _refresh_campaign_board(snapshot: Dictionary) -> void:
 	if _board_cells.is_empty():
 		return
 	var keys := int(snapshot.get("signal_keys", 0))
-	var stocked: Array = []
+	# Hoist the snapshot's lists into sets once, rather than rescanning
+	# them thirty times per refresh.
+	var stocked := {}
 	for item: Dictionary in snapshot.get("shop", {}).get("stock", []):
-		stocked.append(int(item.get("location_id", 0)))
-	var counts := {"done": 0, "flight": 0, "open": 0, "locked": 0}
+		stocked[int(item.get("location_id", 0))] = true
+	var checked := {}
+	for location in snapshot.get("checked_location_ids", []):
+		checked[int(location)] = true
+	var pending := {}
+	for record: Dictionary in snapshot.get("pending_checks", []):
+		pending[int(record.get("location_id", 0))] = true
+	var games := {}
+	for scout: Dictionary in snapshot.get("scouted", []):
+		games[int(scout.get("location_id", 0))] = str(
+				scout.get("recipient_game", ""))
+
+	var done := 0
+	var flight := 0
+	var for_sale := 0
+	var open := 0
+	var locked := 0
+	var unlocked_tiers := mini(keys, Constants.TIER_COUNT - 1)
 
 	for index in _board_cells.size():
 		var location: int = Constants.FIRST_LOCATION_ID + index
-		var scout := BridgeClient.scout_for(location)
-		var game := str(scout.get("recipient_game", "")) if scout else ""
+		var game: String = games.get(location, "")
 		var tint: Color = ThemeMaterials.color_for_game(game) if game != "" \
 				else Color(0.4, 0.42, 0.46)
 		var energy := 0.5
-		if BridgeClient.is_checked(location):
+		if checked.has(location):
 			# Confirmed: bright, saturated — this one really happened.
 			energy = 2.0
-			counts["done"] += 1
-		elif BridgeClient.is_pending(location) or location in stocked:
+			done += 1
+		elif pending.has(location):
 			tint = Color(1.0, 0.85, 0.35)
 			energy = 1.2 + 0.7 * _board_pulse
-			counts["flight"] += 1
-		elif index / 10 > mini(keys, 2):
+			flight += 1
+		elif stocked.has(location):
+			# On the shop counter behind you — purchasable, not in flight.
+			# The schema keeps these disjoint; so does the board.
+			tint = Color(0.55, 0.95, 0.55)
+			energy = 0.9 + 0.4 * _board_pulse
+			for_sale += 1
+		elif index / Constants.TIER_SIZE > unlocked_tiers:
 			# Behind a Signal Key you do not have yet.
 			tint = tint.darkened(0.82)
 			energy = 0.06
-			counts["locked"] += 1
+			locked += 1
 		else:
 			tint = tint.darkened(0.45)
 			energy = 0.35
-			counts["open"] += 1
-		_board_cells[index].material_override = \
-				ThemeMaterials.glow_material(tint, energy)
+			open += 1
+		var material: StandardMaterial3D = _board_cells[index].material_override
+		material.albedo_color = tint
+		material.emission = tint
+		material.emission_energy_multiplier = energy
 
-	_board_legend.text = "%d sent · %d in flight · %d waiting · %d key-locked" \
-			% [counts["done"], counts["flight"], counts["open"],
-			counts["locked"]]
+	var legend := "%d sent · %d in flight" % [done, flight]
+	if for_sale > 0:
+		legend += " · %d for sale" % for_sale
+	legend += " · %d waiting · %d key-locked" % [open, locked]
+	_board_legend.text = legend
 
 ## Epsilon Static slowly eats the status board. Purely cosmetic: the more
 ## Static the multiworld has delivered, the less legible the Hub becomes.

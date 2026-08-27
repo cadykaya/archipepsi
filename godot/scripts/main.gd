@@ -237,11 +237,17 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	tones.play_ambience(0.8 + float(hash(theme) % 100) / 200.0)
 
 	var record := BridgeClient.active_zone()
+	# Count the zones the player has actually played, not the generation
+	# counter — that also advances for zones generated then abandoned, and
+	# would disagree with the Hub's completed-zone count on screen.
+	var played := int(BridgeClient.snapshot.get("completed_zone_count", 0)) + 1
 	var index_text := "FINALE TRANSMISSION" if record.get("is_finale", false) \
-			else "ZONE %d · %s" % [
-				int(record.get("generation_index", 0)) + 1,
+			else "ZONE %d · %s" % [played,
 				str(zone_dict.get("target_game", "?")).to_upper()]
-	var note := str(zone_dict.get("designer_note", "") or "")
+	# NOT `x or ""`: GDScript's `or` yields a bool, so that renders the
+	# literal text "true"/"false" on the card.
+	var note_value: Variant = zone_dict.get("designer_note")
+	var note := str(note_value) if note_value != null else ""
 	# If Epsilon designed around an Echo you own, say so — that connection
 	# is the premise, and it was previously invisible.
 	var featured: Array = zone_dict.get("featured_echo_ids", [])
