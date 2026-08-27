@@ -30,7 +30,7 @@ func setup(zone_dict: Dictionary) -> void:
 
 	for entry: Dictionary in build["chambers"]:
 		var chamber: Dictionary = entry["chamber"]
-		var origin: Vector3 = entry["origin"]
+		var xform: Transform3D = entry["xform"]
 		var result: Dictionary = entry["build"]
 		var record := {
 			"chamber": chamber,
@@ -43,7 +43,7 @@ func setup(zone_dict: Dictionary) -> void:
 		for spawn: Dictionary in result.get("enemy_spawns", []):
 			var enemy := Enemy.create(spawn["archetype"], theme)
 			add_child(enemy)
-			enemy.global_position = origin + spawn["position"]
+			enemy.global_position = xform * spawn["position"]
 			record["enemies"].append(enemy)
 			enemy.enemy_died.connect(_on_enemy_died.bind(record))
 
@@ -51,7 +51,7 @@ func setup(zone_dict: Dictionary) -> void:
 		if location != null:
 			var reward := RewardObject.create(int(location), zone_id, theme)
 			add_child(reward)
-			reward.global_position = origin + result.get(
+			reward.global_position = xform * result.get(
 					"reward_position", Vector3(0, 0, 1))
 			record["reward"] = reward
 
@@ -63,8 +63,9 @@ func setup(zone_dict: Dictionary) -> void:
 			shape.shape = box
 			area.add_child(shape)
 			add_child(area)
-			area.global_position = origin + result.get(
-					"goal_area_position", result["exit_offset"])
+			area.global_transform = Transform3D(xform.basis,
+					xform * result.get("goal_area_position",
+						result["exit_offset"]))
 			area.body_entered.connect(
 					_on_goal_area_entered.bind(record))
 

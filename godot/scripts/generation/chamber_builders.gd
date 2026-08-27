@@ -464,6 +464,50 @@ static func tower(chamber: Dictionary, theme: String) -> Dictionary:
 			"enemy_spawns": spawns,
 			"reward_position": Vector3(-2.0, top_y, side - 2.0)}
 
+## A 90° corner piece for non-linear layouts. Entrance on local z=0 facing
+## +Z; exit through the +X wall (turn=+1) or -X wall (turn=-1) at z=S/2.
+## The new heading after this piece is yaw + turn * PI/2.
+static func corner(turn: int, theme: String) -> Dictionary:
+	var S := 6.0
+	var H := CORRIDOR_HEIGHT
+	var root := Node3D.new()
+	var wall := ThemeMaterials.wall_mat(theme)
+	_box(root, Vector3(S, 0.5, S), Vector3(0, -0.25, S / 2.0),
+			ThemeMaterials.floor_mat(theme))
+	_box(root, Vector3(S, WALL_THICKNESS, S), Vector3(0, H, S / 2.0),
+			ThemeMaterials.trim_mat(theme))
+	# Entrance wall (z=0) with a centered door.
+	var side := (S - DOOR_WIDTH) / 2.0
+	for sign_x in [-1.0, 1.0]:
+		_box(root, Vector3(side, H, WALL_THICKNESS),
+				Vector3(sign_x * (DOOR_WIDTH + side) / 2.0, H / 2.0, 0), wall)
+	_box(root, Vector3(DOOR_WIDTH, H - DOOR_HEIGHT, WALL_THICKNESS),
+			Vector3(0, DOOR_HEIGHT + (H - DOOR_HEIGHT) / 2.0, 0), wall)
+	# Back wall (z=S): solid.
+	_box(root, Vector3(S, H, WALL_THICKNESS), Vector3(0, H / 2.0, S), wall)
+	# Exit wall (x = turn * S/2) with a door centered at z = S/2; the other
+	# side wall is solid.
+	var exit_x := float(turn) * S / 2.0
+	for seg in [[0.0, S / 2.0 - DOOR_WIDTH / 2.0],
+			[S / 2.0 + DOOR_WIDTH / 2.0, S]]:
+		var seg_length: float = seg[1] - seg[0]
+		_box(root, Vector3(WALL_THICKNESS, H, seg_length),
+				Vector3(exit_x, H / 2.0, seg[0] + seg_length / 2.0), wall)
+	_box(root, Vector3(WALL_THICKNESS, H - DOOR_HEIGHT, DOOR_WIDTH),
+			Vector3(exit_x, DOOR_HEIGHT + (H - DOOR_HEIGHT) / 2.0, S / 2.0),
+			wall)
+	_box(root, Vector3(WALL_THICKNESS, H, S),
+			Vector3(-exit_x, H / 2.0, S / 2.0), wall)
+	_light(root, Vector3(0, H - 0.3, S / 2.0), theme)
+	# A corner marker: hazard stripe on the turn's inner wall.
+	_box(root, Vector3(0.06, 1.0, 2.0),
+			Vector3(-exit_x * 0.92, 1.4, S / 2.0),
+			ThemeMaterials.hazard_mat(theme), false)
+	return {"root": root,
+			"exit_offset": Vector3(exit_x, 0, S / 2.0),
+			"bounds": AABB(Vector3(-S / 2.0, -1, 0), Vector3(S, H + 1, S)),
+			"turn": turn}
+
 static func treasure_room(chamber: Dictionary, theme: String) -> Dictionary:
 	var side := 8.0
 	var height := 4.5

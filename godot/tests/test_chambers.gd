@@ -14,6 +14,7 @@ func _init() -> void:
 	_test_corridor()
 	_test_arena()
 	_test_chaining_no_overlap()
+	_test_bent_layouts_never_overlap()
 	_test_platform_path_bounds()
 	_test_tower_route()
 	_test_treasure_room()
@@ -77,6 +78,43 @@ func _test_chaining_no_overlap() -> void:  # test 52
 					"chambers %d and %d overlap (volume %.2f)" % [
 						i, j, overlap.get_volume()])
 	build["root"].free()
+
+func _test_bent_layouts_never_overlap() -> void:
+	## Non-linear layouts: across many seeds, every placement stays
+	## disjoint, and at least one seed actually bends (the feature is live).
+	var any_bend := false
+	for seed_index in 12:
+		var zone := {
+			"zone_id": "zone_bend_%02d" % seed_index,
+			"display_name": "B", "theme": "rusted_industrial",
+			"target_game": "X",
+			"chambers": [
+				{"id": "c1", "type": "corridor", "length": 12.0, "width": 5.0},
+				{"id": "c2", "type": "arena", "width": 24.0, "depth": 20.0,
+					"wall_height": 6.0, "objective": "reach_reward",
+					"reward_location_id": 89100001},
+				{"id": "c3", "type": "corridor", "length": 8.0, "width": 4.0},
+				{"id": "c4", "type": "arena", "width": 28.0, "depth": 28.0,
+					"wall_height": 5.0, "objective": "reach_reward",
+					"reward_location_id": 89100002},
+				{"id": "c5", "type": "treasure_room",
+					"reward_location_id": 89100003},
+			]}
+		var build := ZoneBuilder.build(zone)
+		var bounds_list: Array = build["bounds_list"]
+		for i in bounds_list.size():
+			for j in range(i + 1, bounds_list.size()):
+				var a: AABB = bounds_list[i]
+				var b: AABB = bounds_list[j]
+				_check(a.intersection(b).get_volume() < 0.5,
+						"bent layout %d: pieces %d/%d overlap (%.2f)" % [
+							seed_index, i, j,
+							a.intersection(b).get_volume()])
+		for entry: Dictionary in build["chambers"]:
+			if absf(entry["node"].rotation.y) > 0.01:
+				any_bend = true
+		build["root"].free()
+	_check(any_bend, "at least one seeded layout actually bends")
 
 func _test_platform_path_bounds() -> void:  # test 53
 	# Every legal parameter combination stays within the derived bound.
