@@ -26,6 +26,10 @@ func _ready() -> void:
 	_players["step_b"].volume_db = -22.0
 	_players["land"] = _make_player(_thud(52.0, 0.16))
 	_players["land"].volume_db = -15.0
+	# Hit confirmation: deliberately tiny. It fires as often as you pull the
+	# trigger, so it has to read as a tick, not as an event.
+	_players["confirm"] = _make_player(_square_burst(1180.0, 0.03, 0.16))
+	_players["confirm"].volume_db = -16.0
 
 func play(kind: String) -> void:
 	var player: AudioStreamPlayer = _players.get(kind)

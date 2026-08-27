@@ -296,9 +296,11 @@ func _fire_projectile(player: Player) -> void:
 	projectile.direction = (player.global_position + Vector3.UP
 			- projectile.global_position).normalized()
 
-func take_damage(amount: float, direction: Vector3, knockback: float) -> void:
+## Returns true when THIS hit was the one that killed it, so the shooter
+## can confirm a kill without inspecting hp and racing the death tween.
+func take_damage(amount: float, direction: Vector3, knockback: float) -> bool:
 	if _dead:
-		return
+		return false
 	hp -= amount
 	if knockback > 0.0:
 		_knockback += direction * knockback
@@ -311,6 +313,8 @@ func take_damage(amount: float, direction: Vector3, knockback: float) -> void:
 	_refresh_damage_tint()
 	if hp <= 0.0:
 		die()
+		return true
+	return false
 
 ## Wounded enemies visibly cook: the eye brightens and the body reddens as
 ## health drops, so "nearly dead" is readable without a health bar.

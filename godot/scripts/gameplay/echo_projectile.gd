@@ -8,6 +8,9 @@ var speed := 15.0
 var lifetime := 3.0
 var knockback := 0.0
 var direction := Vector3.FORWARD
+## Who fired it. A projectile can outlive its shooter's zone, so this is
+## checked with `is_instance_valid` before it is used.
+var shooter: Player
 
 func _ready() -> void:
 	var shape := CollisionShape3D.new()
@@ -36,7 +39,10 @@ func _on_body_entered(body: Node3D) -> void:
 	if body.is_in_group("player"):
 		return
 	if body.is_in_group("enemies"):
-		body.take_damage(damage, direction, 0.0)
-		if knockback > 0.0 and body.has_method("apply_knockback"):
-			body.apply_knockback(direction * knockback)
+		var enemy := body as Enemy
+		var killed := enemy.take_damage(damage, direction, 0.0)
+		if is_instance_valid(shooter):
+			shooter.report_hit(killed)
+		if knockback > 0.0:
+			enemy.apply_knockback(direction * knockback)
 	queue_free()

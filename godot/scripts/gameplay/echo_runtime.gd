@@ -114,6 +114,7 @@ func _hitscan(initiator: Dictionary) -> Array[Node]:
 	var reach := float(initiator["range"])
 	var basis := player.camera.global_transform.basis
 	var rng := RandomNumberGenerator.new()
+	var killed := false
 	for i in pellets:
 		var dir := -basis.z
 		if spread > 0.0:
@@ -130,9 +131,15 @@ func _hitscan(initiator: Dictionary) -> Array[Node]:
 		if not hit.is_empty():
 			var target: Variant = hit["collider"]
 			if is_instance_valid(target) and target.is_in_group("enemies"):
-				target.take_damage(damage, dir, 0.0)
+				var enemy := target as Enemy
+				if enemy.take_damage(damage, dir, 0.0):
+					killed = true
 				if target not in damaged:
 					damaged.append(target)
+	# One confirmation per trigger pull, not one per pellet: a spread Echo
+	# would otherwise stack three kill tones on a single shot.
+	if not damaged.is_empty():
+		player.report_hit(killed)
 	return damaged
 
 func _projectile(initiator: Dictionary, modifiers: Array) -> void:
@@ -143,6 +150,8 @@ func _projectile(initiator: Dictionary, modifiers: Array) -> void:
 	for modifier: Dictionary in modifiers:
 		if modifier.get("type") == "knockback_target":
 			projectile.knockback = float(modifier["force"])
+	# The projectile outlives this call, so it confirms its own hit.
+	projectile.shooter = player
 	get_tree().current_scene.add_child(projectile)
 	var camera := player.camera
 	projectile.global_position = camera.global_position \

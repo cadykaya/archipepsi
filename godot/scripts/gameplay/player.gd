@@ -9,6 +9,10 @@ signal hp_changed(hp: float, shield: float)
 signal died
 signal interact_prompt_changed(text: String)
 signal fired_pulse
+## One of the player's own attacks connected. `killed` marks the shot that
+## finished the target: the crosshair and the mixer each say something
+## different about that one.
+signal hit_confirmed(killed: bool)
 ## Emitted with the world position damage came from, so the HUD can show
 ## which way to turn. `Vector3.INF` means "no direction" (falls, etc).
 signal damaged_from(source_position: Vector3)
@@ -210,9 +214,16 @@ func _fire_static_pulse() -> void:
 	if not hit.is_empty():
 		var target: Variant = hit["collider"]
 		if is_instance_valid(target) and target.is_in_group("enemies"):
-			target.take_damage(Constants.STATIC_PULSE_DAMAGE,
-					-camera.global_transform.basis.z, 0.0)
+			var enemy := target as Enemy
+			report_hit(enemy.take_damage(Constants.STATIC_PULSE_DAMAGE,
+					-camera.global_transform.basis.z, 0.0))
 	_spawn_tracer(hit)
+
+## Attacks that do not originate here — Echo hitscans, Echo projectiles
+## still in flight — confirm through this, so "my shot connected" is one
+## signal no matter what fired it.
+func report_hit(killed: bool) -> void:
+	hit_confirmed.emit(killed)
 
 ## Footfalls paced by distance travelled, not by a timer, so they stay in
 ## step with the player at any speed multiplier.

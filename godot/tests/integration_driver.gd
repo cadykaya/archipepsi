@@ -61,6 +61,7 @@ func _run() -> void:
 			"30 locations scouted")
 	await _check_hub_builds()
 	_check_enemy_silhouettes()
+	_check_hit_confirmation()
 	_check_theme_agreement()
 
 	if not await _play_one_zone(true):
@@ -192,6 +193,21 @@ func _check_enemy_silhouettes() -> void:
 				"%s silhouette fits its collider (%.2f <= %.2f)"
 				% [kind, worst, half_width])
 		enemy.free()
+
+## The kill flag on a hit confirmation has to come from the hit that did
+## the killing, not from reading hp afterwards — otherwise every later
+## shot into a corpse re-reports a kill and the crosshair keeps stamping
+## an X at a body that is already sinking through the floor.
+func _check_hit_confirmation() -> void:
+	var enemy := Enemy.create("brute", "concrete_facility")
+	add_child(enemy)                 # take_damage tweens, so it needs a tree
+	_check(not enemy.take_damage(1.0, Vector3.FORWARD, 0.0),
+			"a survivable hit is not reported as a kill")
+	_check(enemy.take_damage(100000.0, Vector3.FORWARD, 0.0),
+			"the fatal hit reports the kill")
+	_check(not enemy.take_damage(100000.0, Vector3.FORWARD, 0.0),
+			"shooting a corpse never re-reports a kill")
+	enemy.queue_free()
 
 func _play_one_zone(detailed: bool) -> bool:
 	var mode := BridgeClient.hub_mode()

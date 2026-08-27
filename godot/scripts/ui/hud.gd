@@ -35,6 +35,15 @@ var _hit_source := Vector3.INF
 const _HIT_FADE_TIME := 1.1
 const _HIT_RADIUS := 96.0
 
+## Hit confirmation. Everything else on screen tells you what the world is
+## doing to you; this is the one that tells you your shot landed. A connect
+## tints and punches the crosshair; a kill also stamps an X over it.
+var _confirm_mark: Label
+var _confirm_fade := 0.0
+var _confirm_kill := false
+const _CONFIRM_TIME := 0.20
+const _KILL_TIME := 0.45
+
 ## Echo cooldown, as a bar rather than a number.
 var _cooldown_track: ColorRect
 var _cooldown_fill: ColorRect
@@ -58,6 +67,20 @@ func _ready() -> void:
 	_crosshair.add_theme_font_size_override("font_size", 22)
 	_crosshair.set_anchors_preset(Control.PRESET_CENTER)
 	add_child(_crosshair)
+
+	# Positioned by hand each frame like the damage wedge, rather than by an
+	# anchor preset, so swapping its glyph can never nudge the crosshair the
+	# player is aiming with.
+	_confirm_mark = Label.new()
+	_confirm_mark.text = "✕"
+	_confirm_mark.add_theme_font_size_override("font_size", 30)
+	_confirm_mark.custom_minimum_size = Vector2(44, 44)
+	_confirm_mark.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_confirm_mark.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_confirm_mark.pivot_offset = Vector2(22, 22)
+	_confirm_mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_confirm_mark.visible = false
+	add_child(_confirm_mark)
 
 	var bottom_left := VBoxContainer.new()
 	bottom_left.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
@@ -223,6 +246,7 @@ func clear_waypoint() -> void:
 	_waypoint.visible = false
 
 func _process(delta: float) -> void:
+	_animate_confirmation(delta)
 	if _hit_fade > 0.0:
 		_hit_fade = maxf(0.0, _hit_fade - delta)
 		var strength := _hit_fade / _HIT_FADE_TIME
@@ -282,6 +306,40 @@ func _process(delta: float) -> void:
 	_waypoint.modulate = _waypoint_color
 	_waypoint.visible = true
 
+## One of our shots landed. A kill outranks a plain connect and is never
+## downgraded by one: the second enemy clipped by a spread Echo must not
+## take the X back off the enemy the first pellet killed.
+func _on_hit_confirmed(killed: bool) -> void:
+	if killed or _confirm_fade <= 0.0 or not _confirm_kill:
+		_confirm_kill = killed
+	_confirm_fade = _KILL_TIME if _confirm_kill else _CONFIRM_TIME
+
+func _animate_confirmation(delta: float) -> void:
+	if _confirm_fade <= 0.0:
+		return
+	_confirm_fade = maxf(0.0, _confirm_fade - delta)
+	if _confirm_fade <= 0.0 or not _crosshair.visible:
+		_crosshair.scale = Vector2.ONE
+		_crosshair.modulate = Color.WHITE
+		_confirm_mark.visible = false
+		_confirm_fade = 0.0
+		return
+	var strength := _confirm_fade / (_KILL_TIME if _confirm_kill
+			else _CONFIRM_TIME)
+	# Pivot from the laid-out size, so the punch grows about the point the
+	# player is actually aiming at rather than the label's top-left corner.
+	_crosshair.pivot_offset = _crosshair.size / 2.0
+	_crosshair.scale = Vector2.ONE * (1.0 + 0.45 * strength)
+	_crosshair.modulate = Color.WHITE.lerp(
+			Color(1.0, 0.55, 0.25) if _confirm_kill else Color(0.5, 1.0, 0.8),
+			strength)
+	_confirm_mark.visible = _confirm_kill
+	if _confirm_kill:
+		var size := Vector2(get_viewport().get_visible_rect().size)
+		_confirm_mark.position = size / 2.0 - _confirm_mark.pivot_offset
+		_confirm_mark.scale = Vector2.ONE * (1.0 + 0.7 * strength)
+		_confirm_mark.modulate = Color(1.0, 0.6, 0.3, minf(1.0, strength * 1.6))
+
 func _on_player_died() -> void:
 	_death_overlay.visible = true
 	_death_label.visible = true
@@ -297,8 +355,14 @@ func bind_player(player: Player) -> void:
 	player.echo_runtime.cooldown_changed.connect(_on_cooldown)
 	player.died.connect(_on_player_died)
 	player.damaged_from.connect(_on_damaged_from)
+	player.hit_confirmed.connect(_on_hit_confirmed)
 	_hit_fade = 0.0
 	_hit_marker.visible = false
+	_confirm_fade = 0.0
+	_confirm_kill = false
+	_confirm_mark.visible = false
+	_crosshair.scale = Vector2.ONE
+	_crosshair.modulate = Color.WHITE
 	_last_hp = -1.0
 	_death_overlay.visible = false
 	_death_label.visible = false

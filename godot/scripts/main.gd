@@ -233,6 +233,11 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	hud.bind_player(zone.player)
 	zone.player.fired_pulse.connect(func() -> void: tones.play("pulse"))
 	zone.player.footstep.connect(func(kind: String) -> void: tones.play(kind))
+	# Only the connect ticks here: a kill already has the death tone that
+	# ZoneController plays, and stacking both on one shot reads as a stutter.
+	zone.player.hit_confirmed.connect(func(killed: bool) -> void:
+		if not killed:
+			tones.play("confirm"))
 	var theme := str(zone_dict.get("theme", "void_glitch"))
 	tones.play_ambience(0.8 + float(hash(theme) % 100) / 200.0)
 
