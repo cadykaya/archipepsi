@@ -90,10 +90,13 @@ def test_the_fallback_is_still_deterministic():
 
 
 def test_the_fallback_is_still_structurally_boring():
-    """One CREATE per operation, no links, no merges.
+    """Against a FRESH campaign: creates, and links it closes itself.
 
-    The fallback is the test oracle for every stage after this one. It got a
-    wider vocabulary in S2; it did not get permission to become interesting.
+    The fallback is the test oracle for every stage after this one. Its
+    vocabulary widened at S2, S4, S5 and S6; what has never widened is its
+    licence to emit something that could fail to fold. Given a campaign it
+    can see, S6 lets it evolve what is there — checked for legality first,
+    and proven in `test_dispositions.py`.
     """
     from archipepsi_bridge.epsilon import capabilities as CAP
     for index, name in enumerate(ITEM_NAMES):
@@ -103,13 +106,14 @@ def test_the_fallback_is_still_structurally_boring():
         created = {op.component.component_id for op in echo.operations
                    if op.op == "create"}
         for operation in echo.operations:
-            # No UPGRADE, MODIFY or MERGE: those are the ops that reach
-            # BACKWARD into the campaign, and refusing them is what keeps
-            # the fallback unable to dangle a target or fail a fold. S5
-            # added LINK, which the fallback uses only INSIDE one
-            # interpretation — both endpoints created here, above the link.
-            # That is the property, so it is what the test asserts rather
-            # than the op list it used to stand in for.
+            # Judged with NO mechanics, which is a fresh campaign: with
+            # nothing owned there is nothing to evolve, so every outcome
+            # here is a CREATE plus at most an internal LINK (both
+            # endpoints created above it). S6's backward-reaching
+            # dispositions are proven separately, in
+            # `test_dispositions.py`, because they only exist relative to
+            # a campaign — and that is the property, not "the fallback
+            # never upgrades".
             assert operation.op in ("create", "link"), (name, operation.op)
             if operation.op == "link":
                 assert operation.source in created, (name, operation.source)

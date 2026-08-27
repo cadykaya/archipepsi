@@ -995,6 +995,146 @@ def over_soft_budget(mechanics) -> tuple[str, ...]:
     return tuple(out)
 
 
+def upgradable_field_info(component) -> tuple[tuple[str, float, float, float], ...]:
+    """`(field, current, minimum, maximum)` for everything upgradable here.
+
+    A provider proposing an `UPGRADE` has to pick a delta that lands
+    inside the field's declared range, because the fold re-validates and
+    refuses one that does not (that refusal is deliberate: it is what
+    stops an upgrade walking a value out of range one small step at a
+    time). Without the range, a provider can only guess — so the request
+    carries this, and guessing stops being part of the job.
+
+    Bounds come from the models themselves rather than a hand-kept table,
+    so a schema that tightens a bound tightens this in the same commit.
+    """
+    out: list[tuple[str, float, float, float]] = []
+    for field in UPGRADABLE_FIELDS.get(component.kind, ()):
+        holder = component
+        if getattr(component, field, None) is None:
+            holder = getattr(component, "primitive", None)
+        if holder is None or getattr(holder, field, None) is None:
+            continue
+        info = type(holder).model_fields.get(field)
+        if info is None:
+            continue
+        low, high = None, None
+        for constraint in info.metadata:
+            low = getattr(constraint, "ge", None) if low is None else low
+            high = getattr(constraint, "le", None) if high is None else high
+        if low is None or high is None:
+            continue
+        out.append((field, float(getattr(holder, field)),
+                    float(low), float(high)))
+    return tuple(out)
+
+
+def _has_upgradable_value(component, field: str) -> bool:
+    """Whether `field` is a thing this component actually carries.
+
+    An action's upgradable numbers mostly live on its PRIMITIVE (a melee
+    swing has `reach`, a hitscan has `range`), with `cooldown` on the
+    action itself. `mechanics._apply_upgrade` resolves it exactly this
+    way; the two must agree, or this check would reject upgrades the fold
+    accepts, or wave through ones it does not.
+    """
+    if getattr(component, field, None) is not None:
+        return True
+    primitive = getattr(component, "primitive", None)
+    return primitive is not None and getattr(primitive, field, None) is not None
+
+
+def target_errors(interpretation, mechanics) -> list[str]:
+    """Contextual validation: can this interpretation's operations LAND?
+
+    Sibling of `budget_errors`, and for the same reason — an operation
+    naming a component is only answerable against the fold. The fold does
+    check it (I11, loudly, and that check stays: it is what makes a
+    corrupt log unrepresentable). What this adds is the check happening
+    EARLY, at generation, where a wrong target becomes a repair prompt
+    naming the mistake instead of a save that refuses to build.
+
+    Providers could not emit `UPGRADE` / `MODIFY` / `MERGE` before S6, so
+    a dangling target was not a shape a generation could take. Now it is
+    the single likeliest way a disposition goes wrong.
+
+    Ids resolve through the alias table first, exactly as the fold does:
+    an operation written against a merged-away resource keeps meaning the
+    survivor (§3.1, aliases are permanent).
+    """
+    errors: list[str] = []
+    owned = {o.component_id: o.component for o in mechanics.owned}
+    aliases = dict(mechanics.aliases)
+    # Components created earlier in THIS interpretation are legal targets:
+    # the fold applies operations in order, so an upgrade may follow its
+    # own create.
+    pending: dict[str, object] = {}
+
+    def resolve(component_id: str):
+        canonical = aliases.get(component_id, component_id)
+        return pending.get(canonical) or owned.get(canonical), canonical
+
+    for index, op in enumerate(interpretation.operations):
+        where = f"operation {index + 1} ({op.op})"
+        if op.op == "create":
+            pending[op.component.component_id] = op.component
+            continue
+
+        if op.op in ("upgrade", "modify"):
+            component, canonical = resolve(op.target)
+            if component is None:
+                errors.append(
+                    f"{where} targets '{op.target}', which the campaign "
+                    f"does not own; target something in the owned graph or "
+                    f"create it first"
+                )
+                continue
+            if op.op == "upgrade":
+                allowed = UPGRADABLE_FIELDS.get(component.kind, ())
+                if op.field not in allowed:
+                    errors.append(
+                        f"{where} raises '{op.field}' on '{canonical}', a "
+                        f"{component.kind}; that kind upgrades "
+                        f"{', '.join(allowed) or 'nothing'}"
+                    )
+                elif not _has_upgradable_value(component, op.field):
+                    errors.append(
+                        f"{where} raises '{op.field}' on '{canonical}', "
+                        f"which has no such field to raise"
+                    )
+        elif op.op == "link":
+            for side in ("source", "target"):
+                component, _ = resolve(getattr(op, side))
+                if component is None:
+                    errors.append(
+                        f"{where} names {side} '{getattr(op, side)}', which "
+                        f"the campaign does not own"
+                    )
+        elif op.op == "merge":
+            absorbed, absorbed_id = resolve(op.absorbed)
+            survivor, survivor_id = resolve(op.survivor)
+            for side, component, name in (
+                    ("absorbed", absorbed, op.absorbed),
+                    ("survivor", survivor, op.survivor)):
+                if component is None:
+                    errors.append(
+                        f"{where} names {side} '{name}', which the campaign "
+                        f"does not own"
+                    )
+                elif component.kind != "resource":
+                    errors.append(
+                        f"{where} merges {side} '{name}', a "
+                        f"{component.kind}; only resources may merge"
+                    )
+            if (absorbed is not None and survivor is not None
+                    and absorbed_id == survivor_id):
+                errors.append(
+                    f"{where} merges '{op.absorbed}' into '{op.survivor}', "
+                    f"but both already resolve to '{survivor_id}'"
+                )
+    return errors
+
+
 def validate_interpretation(
     interpretation: EchoInterpretation,
     *,

@@ -21,7 +21,8 @@ from pydantic import TypeAdapter, ValidationError
 
 from ..schemas import constants as C
 from ..schemas.echo import (
-    EchoInterpretation, budget_errors, validate_interpretation)
+    EchoInterpretation, budget_errors, target_errors,
+    validate_interpretation)
 from ..schemas.mechanics import EMPTY_MECHANICS
 from ..schemas.zone import Zone, validate_zone
 from . import capabilities as CAP
@@ -183,6 +184,7 @@ async def generate_echo_validated(
                 e, expected_source_location_id=request.source.location_id)
             + CAP.validate_stage_support(e)
             + budget_errors(e, live)
+            + target_errors(e, live)
         ),
         build_fallback=lambda r: fallback_echo(r, mechanics=live),
         archive_dir=archive_dir,

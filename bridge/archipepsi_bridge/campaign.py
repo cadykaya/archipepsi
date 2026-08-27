@@ -21,11 +21,12 @@ from .epsilon import (
     RequestLocation, ZoneGenerationRequest, ZoneSummary,
     generate_echo_validated, generate_zone_validated,
 )
-from .epsilon.requests import EchoPlayerState, EchoSource
+from .epsilon.requests import (
+    EchoPlayerState, EchoSource, OwnedComponentSummary, OwnedLinkSummary)
 from .schemas import constants as C
 from .schemas import transitions as T
 from .schemas.mechanics import Mechanics, derive_mechanics
-from .schemas.echo import over_soft_budget
+from .schemas.echo import over_soft_budget, upgradable_field_info
 from .schemas.protocol import (
     CampaignSave, CampaignSnapshot, HubStatus, Notification, ScoutedLocation,
     ShopState, SlotAssignment, ZoneReady, ZoneRecord,
@@ -49,6 +50,21 @@ def set_creativity(save: CampaignSave, value: int) -> CampaignSave:
     """Bridge-local transition, same shape as `schemas/transitions.py`:
     build the complete next save and validate in one step."""
     return CampaignSave(**{**save.model_dump(), "epsilon_creativity": value})
+
+
+def _component_detail(component) -> str:
+    """One word for what a component IS, for the S6 request graph.
+
+    A provider choosing what to upgrade needs to tell a grapple from a
+    shotgun; the kind alone says "action" for both.
+    """
+    for attribute in ("primitive", "stat", "status", "event", "readout",
+                      "tag", "palette_color"):
+        value = getattr(component, attribute, None)
+        if value is None:
+            continue
+        return str(getattr(value, "type", value))[:32]
+    return ""
 
 
 def _clamp_ap_string(text: str) -> str:
@@ -662,6 +678,7 @@ class CampaignEngine:
     def _echo_request(self, location_id: int) -> EchoGenerationRequest:
         s = self.ap.scouts[location_id]
         save = self.save
+        mechanics = save.derive()
         return EchoGenerationRequest(
             source=EchoSource(
                 location_id=location_id,
@@ -680,9 +697,23 @@ class CampaignEngine:
                     for e in save.interpretations),
                 signal_keys=self.ap.signal_keys,
                 coins_available=max(
-                    0, self.ap.coins_received - save.coins_spent)),
+                    0, self.ap.coins_received - save.coins_spent),
+                owned_components=tuple(
+                    OwnedComponentSummary(
+                        component_id=owned.component_id,
+                        kind=owned.kind,
+                        display_name=owned.component.display_name,
+                        mk=owned.mk,
+                        upgradable=upgradable_field_info(owned.component),
+                        detail=_component_detail(owned.component))
+                    for owned in mechanics.owned),
+                owned_links=tuple(
+                    OwnedLinkSummary(link=edge.link, source=edge.source,
+                                     target=edge.target)
+                    for edge in mechanics.links),
+                aliases=tuple(mechanics.aliases)),
             required_echo_id=f"echo_{location_id}",
-            over_soft_budget=over_soft_budget(save.derive()))
+            over_soft_budget=over_soft_budget(mechanics))
 
     async def grant_echo(self, location_id: int) -> str | None:
         """Generate and persist the Echo for a confirmed foreign location.

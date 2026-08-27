@@ -221,7 +221,8 @@ func _clear_world() -> void:
 		rule_runtime.echo_runtime = null
 		rule_runtime.zone_root = null
 
-## Wire one freshly created player's gameplay signals into the rule engine.
+## Wire one freshly created player's gameplay signals into the rule engine,
+## and the two places a source world's identity package is heard.
 ## A new player instance arrives with every Hub/Zone entry, so these are
 ## fresh connects, never duplicates. The engine only interprets folded rule
 ## components; this is the one place the game's own events reach it.
@@ -247,7 +248,12 @@ func _bind_rule_runtime(target: Player, zone_ctl: ZoneController) -> void:
 	target.echo_runtime.parried.connect(func() -> void:
 		rule_runtime.notify("parry_success"))
 	target.echo_runtime.action_used.connect(func() -> void:
-		rule_runtime.notify("action_used"))
+		rule_runtime.notify("action_used")
+		# ECHOES §12: an Echo sounds like the world it came from. Same
+		# procedural bank, pitched by that world's sound family — which is
+		# what keeps a campaign of borrowed parts sounding like a place
+		# rather than like one instrument.
+		tones.play("echo", target.echo_runtime.source_pitch()))
 	target.echo_runtime.action_ready.connect(func() -> void:
 		rule_runtime.notify("action_ready"))
 	target.echo_runtime.dash_ended.connect(func() -> void:

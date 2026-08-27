@@ -84,3 +84,50 @@ def test_the_client_glyph_table_has_the_pinned_length():
     assert count == GLYPH_COUNT, (
         f"the client has {count} glyphs, this side pins indices modulo "
         f"{GLYPH_COUNT}; change both together or every pin is wrong")
+
+
+#: ECHOES §12's other two identity fields, pinned as indices exactly like
+#: the glyphs above. Must stay identical to
+#: `hud_driver.gd::PINNED_IDENTITY`, which holds them as names.
+SOUND_FAMILY_COUNT = 6
+PARTICLE_STYLE_COUNT = 6
+
+PINNED_IDENTITY_INDICES = {
+    "Ocarina of Time": (3, 1),
+    "Dark Souls": (3, 1),
+    "Borderlands 2": (3, 2),
+    "Hollow Knight": (2, 1),
+}
+
+
+def test_identity_package_indices_match_the_client_pins():
+    for game, (sound, particle) in PINNED_IDENTITY_INDICES.items():
+        assert C.prng_seed(game, "sound_family") % SOUND_FAMILY_COUNT == sound
+        assert (C.prng_seed(game, "particle_style") % PARTICLE_STYLE_COUNT
+                == particle), game
+
+
+def test_the_client_identity_tables_have_the_pinned_lengths():
+    source = (GODOT_UI.parent / "generation" / "source_identity.gd").read_text()
+    families = re.findall(r'\{"name": "([a-z]+)", "pitch": ', source)
+    assert len(families) == SOUND_FAMILY_COUNT, families
+    styles = re.search(r"const PARTICLE_STYLES := \[(.*?)\]", source, re.S)
+    assert styles, "PARTICLE_STYLES is no longer declared"
+    assert len(re.findall(r'"([a-z]+)"', styles.group(1))) \
+        == PARTICLE_STYLE_COUNT
+
+
+def test_every_particle_style_has_a_tracer_rendering():
+    """A style the tracer has no width for silently renders as the
+    default, which would make one world's shots indistinguishable from
+    another's while the package claims otherwise."""
+    identity = (GODOT_UI.parent / "generation" / "source_identity.gd").read_text()
+    tracer = (GODOT_UI.parent / "gameplay" / "tracer.gd").read_text()
+    styles = re.search(r"const PARTICLE_STYLES := \[(.*?)\]", identity, re.S)
+    widths = re.search(r"const STYLE_WIDTH := \{(.*?)\}", tracer, re.S)
+    assert styles and widths
+    declared = set(re.findall(r'"([a-z]+)"', styles.group(1)))
+    rendered = set(re.findall(r'"([a-z]+)":', widths.group(1)))
+    assert declared == rendered, (
+        f"styles without a rendering: {sorted(declared - rendered)}; "
+        f"renderings for no style: {sorted(rendered - declared)}")

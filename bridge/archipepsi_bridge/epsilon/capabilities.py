@@ -23,9 +23,13 @@ from ..schemas.echo import EchoInterpretation
 # moves none of it: the wider systems are still ahead.
 #: S5 added "link": the four kinds have runtime meaning now — `powers`
 #: costs and drains, `fills` refills, `gates` withholds, `scales`
-#: interpolates a trait — so a LINK operation is an edge the game actually
-#: walks. UPGRADE / MODIFY / MERGE stay S6 (dispositions).
-IMPLEMENTED_OPERATION_KINDS = ("create", "link")
+#: interpolates a trait. S6 opens the rest: the fold has folded UPGRADE,
+#: MODIFY and MERGE since S1, and `target_errors` now checks a
+#: disposition can land BEFORE the save refuses it, so a provider may
+#: finally answer an item the campaign already owns. This tuple is now
+#: the whole v0.8 operation vocabulary.
+IMPLEMENTED_OPERATION_KINDS = ("create", "upgrade", "modify", "link",
+                               "merge")
 #: S3 added "resource": the fifteen HUD channels exist, so a Resource is
 #: now a thing the client can render and tick rather than a definition
 #: nothing reads. S4 added "rule": the ECHOES §5 interpreter runs in the

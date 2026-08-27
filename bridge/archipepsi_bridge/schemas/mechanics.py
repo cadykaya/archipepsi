@@ -212,6 +212,25 @@ def _check_rule_references(component, components, aliases, seq: int) -> None:
             )
 
 
+def upgrade_is_legal(component, field: str, delta: float) -> bool:
+    """Would this upgrade survive the fold?
+
+    `_apply_upgrade` re-validates the component against its own field
+    bounds, so an upgrade that would walk a value out of range raises
+    rather than clamping. A GENERATOR needs to ask that question before
+    emitting, because a fallback whose output validation refuses is a
+    RuntimeError by construction, not a recoverable error.
+
+    Public because the deterministic fallback is a first-class consumer:
+    it proposes a Mk II and takes this answer for yes.
+    """
+    try:
+        _apply_upgrade(component, field, delta, 0)
+    except FoldError:
+        return False
+    return True
+
+
 def derive_mechanics(log) -> Mechanics:
     """Fold an interpretation log into live mechanics.
 

@@ -130,8 +130,24 @@ func _run() -> void:
 		expected_seqs.append(i)
 	_check(seqs == expected_seqs,
 			"interpretation_seq is unique and gapless across the campaign")
-	_check(BridgeClient.mechanics().get("owned", []).size() >= foreign,
-			"the fold produced a component for every interpretation")
+	# NOT "a component per interpretation" any more: since S6 an
+	# interpretation may EVOLVE what is owned instead of adding to it, so
+	# counting components would fail exactly when dispositions work. The
+	# invariant that assertion was reaching for survives intact and is
+	# stronger: every interpretation must have LANDED somewhere, which the
+	# fold records as its sequence appearing in some component's
+	# provenance. Nothing silently dropped, nothing double-counted.
+	var credited: Dictionary = {}
+	for entry: Dictionary in BridgeClient.mechanics().get("owned", []):
+		for link: Dictionary in entry.get("provenance", []):
+			credited[int(link.get("interpretation_seq", -1))] = true
+	var uncredited: Array = []
+	for seq in seqs:
+		if not credited.has(seq):
+			uncredited.append(seq)
+	_check(uncredited.is_empty(),
+			"every interpretation left a mark on the fold (uncredited: %s)"
+			% str(uncredited))
 	# The mock seed deterministically holds Estus Shard and Power Star as
 	# foreign checks, so a full campaign always grants resource channels
 	# (S3) and rules (S4). This is the end-to-end proof the pipeline needs:
@@ -155,6 +171,31 @@ func _run() -> void:
 		if str(link.get("link", "")) == "powers":
 			powers += 1
 	_check(powers >= 1, "the campaign owns at least one powers link")
+	# S6: the mock seed pairs items whose verbs collide (Wing Cap then
+	# Metal Cap, REP then Fresh Rep), so a full campaign evolves rather
+	# than only accumulating — the fold reports it as an Mk above I with a
+	# provenance chain naming every item responsible.
+	var dispositions := 0
+	for entry: Dictionary in interpretations:
+		for operation: Dictionary in entry.get("operations", []):
+			if str(operation.get("op", "")) != "create":
+				dispositions += 1
+	var evolved := 0
+	var longest_chain := 0
+	for entry: Dictionary in BridgeClient.mechanics().get("owned", []):
+		if int(entry.get("mk", 1)) > 1:
+			evolved += 1
+		longest_chain = maxi(longest_chain,
+				int(entry.get("provenance", []).size()))
+	_check(dispositions >= 1,
+			"the campaign emitted at least one non-create operation (%d)"
+			% dispositions)
+	_check(evolved >= 1,
+			"at least one component reached Mk II or better (%d did)"
+			% evolved)
+	_check(longest_chain >= 2,
+			"a provenance chain names more than one item (longest %d)"
+			% longest_chain)
 	_check(stock_ever_seen, "shop stocked at least once during the campaign")
 	if stock_ever_seen:
 		_check(_bought_once, "at least one shop purchase completed")

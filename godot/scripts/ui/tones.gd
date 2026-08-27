@@ -35,9 +35,14 @@ func _ready() -> void:
 	_players["secret"] = _make_player(_arp([587.0, 880.0, 1175.0], 0.06, 0.24))
 	_players["secret"].volume_db = -11.0
 
-func play(kind: String) -> void:
+func play(kind: String, pitch := 1.0) -> void:
 	var player: AudioStreamPlayer = _players.get(kind)
 	if player != null:
+		# ECHOES §12: a source game's sound family is a pitch shift of the
+		# shared procedural bank, not a second sample. Set per play and
+		# left set — the next caller states its own pitch, and the default
+		# is the bank's own voice.
+		player.pitch_scale = pitch
 		player.play()
 
 ## The room tone. Pitch varies by place: the Hub hums at 1.0, each theme a

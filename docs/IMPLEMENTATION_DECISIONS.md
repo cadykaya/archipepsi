@@ -420,3 +420,76 @@ Two corrections were made on top of it:
   ownership is the default, equipping is the modifier, and the only
   things forced into the equipped form are the ones §10 says must be
   removable.
+
+## S6 — dispositions
+
+- **A disposition is checked twice, and the two checks answer different
+  questions.** The fold has always refused a dangling target (I11), and
+  that stays: it is what makes a corrupt log unrepresentable. But before
+  S6 no provider could emit an operation that reached backward, so a bad
+  target was not a shape a generation could take. Now it is the likeliest
+  way one goes wrong, and a `FoldError` raised while building the save is
+  the wrong failure: it skips the repair loop and answers a recoverable
+  mistake with a refused campaign. `target_errors` runs at generation,
+  next to `budget_errors`, and names the id — so the provider gets one
+  chance to fix it. `test_dispositions.py` asserts the two agree, because
+  an early check that passed something the fold rejects would be worse
+  than no early check at all.
+
+- **The request carries upgrade HEADROOM, not just field names.** The
+  fold re-validates every upgrade against the target's declared bounds
+  and refuses one that would walk a value out of range — deliberately, so
+  a value cannot escape its range one small step at a time. A provider
+  without the range can only guess at the one number it must not guess
+  at, so `OwnedComponentSummary.upgradable` carries `(field, current,
+  minimum, maximum)`, read out of the models themselves by
+  `upgradable_field_info` rather than a hand-kept table. A schema that
+  tightens a bound tightens the request in the same commit.
+
+- **The owned component graph landed at S6, not S10.** S1 recorded that
+  the full request — owned components, aliases, budgets — belongs with
+  the interpretation pipeline, on the grounds that context no rule uses
+  is just a longer prompt. That reasoning is intact; what changed is
+  which rules use it. The budget steer landed at S5 and the graph lands
+  here, each at the stage where an operation could finally obey it. A
+  disposition that cannot see its target is not a disposition.
+
+- **The fallback works from the request, like every other provider.** The
+  first cut of `_as_sequel` read the live fold, which was wrong in a way
+  the integration run caught immediately: `FallbackEpsilonProvider` is
+  invoked through the provider protocol, which passes a request and
+  nothing else, so the sequel path never fired in a real campaign. It
+  reads `player_state.owned_components` now. That is not a workaround —
+  it is the constraint every provider is under, and the fallback being
+  under it too is what keeps it an honest oracle.
+
+- **Evolution is semantic, never textual.** ECHOES §11 says ancestry is
+  about verbs, not names, so the fallback's family key is the primitive
+  for an action and the stat for a trait. *Hookshot* and *Longshot* are
+  one grapple because both resolve to `grapple_to_surface`. Two names
+  were added to the grapple bucket (`longshot`, `clawshot`) and the
+  generic "claw" bucket now yields to the specific one — this maps names
+  to verbs, and those names mean grapple. The shipped fallback therefore
+  reproduces §11's own worked example, and the mock campaign ends with
+  seven components at Mk II or better and a provenance chain four items
+  long.
+
+- **Identity packages are pinned but not unique.** §12 derives glyph,
+  accent, sound family and particle style from the game name by the
+  shared sha256 rule. With six sound families and six particle styles,
+  two worlds can collide on both — Ocarina of Time and Dark Souls do —
+  and nothing in §12 promises otherwise. What the suite holds is
+  determinism per field and that the *package* still separates them,
+  which it does on the glyph. Sound is a pitch shift of the shared
+  procedural bank rather than a second sample, and particle style is
+  tracer width and lifetime: no asset, no copyright, and both languages
+  pinned to the same indices.
+
+- **"A component per interpretation" stopped being true, on purpose.**
+  The integration run asserted the fold produced at least one component
+  per interpretation — reasonable when every interpretation created
+  something, and false the moment one evolves instead. It now asserts
+  what that check was reaching for and could not say before: every
+  interpretation's sequence appears in some component's provenance.
+  Nothing dropped, nothing double-counted, and it holds whether an
+  interpretation creates, upgrades, links or merges.

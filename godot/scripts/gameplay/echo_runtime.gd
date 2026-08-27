@@ -121,26 +121,26 @@ const SLOT_COLORS := {"echo_a": Color(1.0, 0.55, 0.3),
 ## The equipped Echo's source world, as a colour. Falls back to a neutral
 ## white for an Echo with no source game rather than picking a confident
 ## wrong world out of the hash.
-func source_color() -> Color:
-	var game := BridgeClient.component_source_game(
+func source_game() -> String:
+	return BridgeClient.component_source_game(
 			str(equipped.get("component_id", "")))
+
+func source_color() -> Color:
+	var game := source_game()
 	if game.is_empty():
 		return Color(0.85, 0.88, 0.92)
 	return ThemeMaterials.color_for_game(game)
 
-## Owned traits, folded onto the player.
-##
-## v0.7 applied one passive, the equipped one. A trait is not equipment: it
-## is true once owned, which is the whole reason a Check can matter without
-## occupying a slot. So this reads what the campaign OWNS, not what is in a
-## slot, and stacks it.
-##
-## Stacking is why the clamp is here and not only in the schema. Each trait
-## is individually floored at base — a gravity trait may only lighten, a
-## speed trait may only quicken — but three of them multiply, and
-## `max_safe_gap` was derived from these two constants, not from an
-## unbounded product. Clamping to them is what keeps every generated jump
-## valid without recomputing a single one.
+## ECHOES §12: the identity package of the world that CREATED this Action.
+## After S6 an Action can be the work of several worlds; the package stays
+## the creator's, so a thing keeps sounding like where it came from while
+## its provenance chain records everyone who touched it.
+func source_pitch() -> float:
+	return SourceIdentity.sound_pitch(source_game())
+
+func source_particles() -> String:
+	return SourceIdentity.particle_style(source_game())
+
 func _primitive() -> Dictionary:
 	return equipped.get("primitive", {})
 
@@ -534,7 +534,7 @@ func _melee_thrust(primitive: Dictionary) -> Array[Node]:
 	Tracer.spawn(get_tree().current_scene,
 			player.camera.global_position + forward * 0.4,
 			player.camera.global_position + forward * reach,
-			source_color(), 0.09)
+			source_color(), 0.09, source_particles())
 	if hit.is_empty():
 		return damaged
 	var target: Variant = hit["collider"]
@@ -564,7 +564,7 @@ func _swing_arc_effect(reach: float, half_arc: float) -> void:
 	for step: float in [-half_arc, 0.0, half_arc]:
 		var dir := (basis * Basis.from_euler(Vector3(0, step, 0)).z) * -1.0
 		Tracer.spawn(get_tree().current_scene, origin,
-				origin + dir * reach, source_color(), 0.08)
+				origin + dir * reach, source_color(), 0.08, source_particles())
 
 # ---------------------------------------------------------------------------
 # Ranged
@@ -591,7 +591,7 @@ func _hitscan(primitive: Dictionary) -> Array[Node]:
 		Tracer.spawn(get_tree().current_scene,
 				player.camera.global_position
 				+ basis * Vector3(0.18, -0.14, -0.3),
-				to, source_color(), 0.08)
+				to, source_color(), 0.08, source_particles())
 		if not hit.is_empty():
 			var target: Variant = hit["collider"]
 			if is_instance_valid(target) and target.is_in_group("enemies"):
@@ -811,7 +811,7 @@ func _blink(primitive: Dictionary) -> void:
 	# the destination would fling you off the ledge you just arrived on.
 	player.velocity = Vector3.ZERO
 	Tracer.spawn(get_tree().current_scene, before + Vector3.UP * 0.9,
-			landing + Vector3.UP * 0.9, source_color(), 0.16)
+			landing + Vector3.UP * 0.9, source_color(), 0.16, source_particles())
 
 ## A press that could not resolve gives the cooldown back. Charging for a
 ## blink that refused to happen is indistinguishable from a broken ability.
@@ -878,7 +878,7 @@ func _grapple(primitive: Dictionary) -> void:
 		player.velocity = pull * float(primitive["pull_force"])
 		Tracer.spawn(get_tree().current_scene,
 				player.global_position + Vector3.UP * 1.2, hit["position"],
-				source_color(), 0.15)
+				source_color(), 0.15, source_particles())
 
 ## Reels a LIGHT enemy in. `max_target_hp` is what stops it being a way to
 ## drag a brute off its perch and into a corner.
@@ -901,7 +901,7 @@ func _grapple_pull_target(primitive: Dictionary) -> Array[Node]:
 	damaged.append(enemy)
 	Tracer.spawn(get_tree().current_scene,
 			player.global_position + Vector3.UP * 1.2,
-			enemy.global_position, source_color(), 0.15)
+			enemy.global_position, source_color(), 0.15, source_particles())
 	return damaged
 
 ## A tether you arc from. Held: while the key is down and the anchor holds,
@@ -920,7 +920,7 @@ func _grapple_swing(primitive: Dictionary) -> void:
 			float(primitive["max_duration"]))
 	Tracer.spawn(get_tree().current_scene,
 			player.global_position + Vector3.UP * 1.2, hit["position"],
-			source_color(), 0.2)
+			source_color(), 0.2, source_particles())
 
 # ---------------------------------------------------------------------------
 # Defensive

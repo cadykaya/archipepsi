@@ -237,8 +237,111 @@ def _budget_room(mechanics, *, resources: int = 0, rules: int = 0) -> bool:
             and owned("rule") + rules <= COMPLEXITY_BUDGETS["rule"][1])
 
 
+#: What to raise when an item turns out to be a sequel, per field, and by
+#: how much. Ordered: the first field the target actually has, wins.
+#: Deltas are deliberately modest — a Mk II should read as "the same thing,
+#: better", not as a replacement — and every one is checked against the
+#: target's own bounds before it is emitted.
+_UPGRADE_LADDER = (
+    ("damage", 4.0),
+    ("damage_per_second", 6.0),
+    ("range", 6.0),
+    ("reach", 0.6),
+    ("radius", 1.0),
+    ("pull_force", 3.0),
+    ("force", 2.0),
+    ("amount", 8.0),
+    ("max_value", 25.0),
+    ("multiplier", 0.15),
+    ("cooldown", -0.2),
+)
+
+
+def _family_of_summary(summary) -> str:
+    """What makes two components "the same thing" for evolution.
+
+    ECHOES §11: ancestry is semantic, not textual — *Hookshot* and
+    *Longshot* are one grapple because they resolve to the same verb, not
+    because their names rhyme. The request's `detail` carries that verb
+    for an action and the stat for a trait, which is exactly the key.
+    """
+    if summary.kind not in ("action", "trait"):
+        return ""
+    return f"{summary.kind}:{summary.detail}"
+
+
+def _as_sequel(interpretation: dict, request: EchoGenerationRequest):
+    """Turn a CREATE into an UPGRADE when the campaign already owns the
+    family — the *Hookshot → Longshot* rule, ECHOES §11.
+
+    Works from the REQUEST, not from the fold: a provider sees what it is
+    given and nothing else, and the fallback is a provider. Everything it
+    needs is in `player_state.owned_components` — the family key, and the
+    bounds each field still has room inside.
+
+    Returns None when there is nothing to evolve, when the item is not a
+    single-component interpretation, or when every rung of the ladder
+    would leave the target's declared range. In all three cases the caller
+    keeps its ordinary CREATE, so this can only make the fallback richer,
+    never invalid.
+    """
+    operations = interpretation.get("operations", [])
+    if len(operations) != 1 or operations[0].get("op") != "create":
+        return None
+    component = operations[0]["component"]
+    if component["kind"] not in ("action", "trait"):
+        return None
+    primitive = component.get("primitive")
+    family = (f"action:{primitive['type']}" if primitive
+              else f"trait:{component.get('stat')}")
+
+    for owned in request.player_state.owned_components:
+        if _family_of_summary(owned) != family:
+            continue
+        headroom = {field: (current, low, high)
+                    for field, current, low, high in owned.upgradable}
+        for field, delta in _UPGRADE_LADDER:
+            if field not in headroom:
+                continue
+            current, low, high = headroom[field]
+            if not (low <= current + delta <= high):
+                continue
+            return {
+                **interpretation,
+                "description": _clamp(
+                    "The same %s, %s. Mk %d."
+                    % (owned.display_name,
+                       "sharper" if delta >= 0 else "quicker", owned.mk + 1),
+                    C.MAX_TEXT_LEN),
+                "tags": list(interpretation.get("tags", [])) + ["evolution"],
+                "operations": [{
+                    "op": "upgrade",
+                    "target": owned.component_id,
+                    "field": field,
+                    "delta": delta,
+                }],
+            }
+    return None
+
+
 def fallback_echo(request: EchoGenerationRequest, *,
                   mechanics=None) -> dict:
+    """The §12.2 heuristics, then one question: is this a sequel?
+
+    S6. Every outcome below is a fresh CREATE, which is what made a
+    26-Check campaign twenty-six unrelated things. Running the answer
+    through `_as_sequel` first means an item whose verb the campaign
+    already owns evolves it instead — *Longshot* after *Hookshot* is one
+    grapple at Mk II, exactly as ECHOES §11 describes, and the archive's
+    provenance chain becomes something real play produces rather than
+    something only a fixture ever showed.
+    """
+    interpretation = _fallback_echo_create(request, mechanics=mechanics)
+    return _as_sequel(interpretation, request) or interpretation
+
+
+def _fallback_echo_create(request: EchoGenerationRequest, *,
+                          mechanics=None) -> dict:
     """Deterministic heuristics on the lowercased item name (§12.2).
 
     `mechanics` is the campaign's current fold, for the hard budgets; None
@@ -360,7 +463,11 @@ def fallback_echo(request: EchoGenerationRequest, *,
             initiator={"type": "double_jump", "force": 8.0, "extra_jumps": 1},
             description="One more jump than the world budgeted for.",
             tags=["jump", "mobility"])
-    if has("claw", "gecko", "climb", "wall", "gauntlet"):
+    # "clawshot" is a grapple that happens to contain "claw", and the
+    # generic bucket would otherwise swallow it before the specific one
+    # below ever ran. Specificity beats generality in a name mapper.
+    if has("claw", "gecko", "climb", "wall", "gauntlet") \
+            and not has("clawshot"):
         return _primary(
             request, archetype="mobility", cooldown=0.8,
             initiator={"type": "wall_kick", "force": 12.0,
@@ -379,7 +486,11 @@ def fallback_echo(request: EchoGenerationRequest, *,
             initiator={"type": "place_marker", "duration": 120.0},
             description="Somewhere worth remembering. Now it is marked.",
             tags=["marker", "utility"])
-    if has("hook", "grapple", "chain"):
+    # "longshot"/"clawshot" are named here for the same reason "hookshot"
+    # is: this maps names to verbs, and those names mean grapple. It is
+    # also what makes ECHOES §11's own example — Hookshot → Longshot →
+    # Clawshot as one grapple — reachable from the shipped fallback.
+    if has("hook", "grapple", "chain", "longshot", "clawshot"):
         return _primary(
             request, archetype="mobility", cooldown=2.0,
             initiator={"type": "grapple_to_surface", "range": 25.0,

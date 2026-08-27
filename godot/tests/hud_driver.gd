@@ -1,7 +1,7 @@
 extends Node
 ## The S3 HUD suite (`make godot-hud`): the §7.1 safe palette, the §12
-## source glyph rule, the §7 pressure valve, and the §15.4 / ECHOES §11
-## archive provenance chains.
+## source identity package (glyph, sound family, particle style), the §7
+## pressure valve, and the §15.4 / ECHOES §11 archive provenance chains.
 ##
 ## Boots the real project (`--hud-test`) because ResourceMeters,
 ## ResourcePool and InventoryLayer all read the BridgeClient autoload and a
@@ -49,6 +49,7 @@ func _ready() -> void:
 
 	_palette_distances()
 	_glyph_pins()
+	_source_identity_package()
 	_pressure_valve()
 	_archive_provenance()
 
@@ -247,3 +248,52 @@ func _count_containing(labels: Array[String], needle: String) -> int:
 		if needle in text:
 			count += 1
 	return count
+
+
+# --- §12: the whole source identity package -------------------------------
+
+#: Pinned from both sides as INDICES in `test_hud_contract.py`, the same
+#: way the glyphs are. Two worlds may land on the same sound family or the
+#: same particle style — six buckets each, and nothing in §12 promises
+#: uniqueness — so what the suite holds is determinism, plus that the
+#: PACKAGE as a whole still tells worlds apart.
+const PINNED_IDENTITY := {
+	"Ocarina of Time": {"sound": "bright", "particle": "drift"},
+	"Dark Souls": {"sound": "bright", "particle": "drift"},
+	"Borderlands 2": {"sound": "bright", "particle": "shard"},
+	"Hollow Knight": {"sound": "plain", "particle": "drift"},
+}
+
+func _source_identity_package() -> void:
+	for game: String in PINNED_IDENTITY:
+		var expected: Dictionary = PINNED_IDENTITY[game]
+		_check(SourceIdentity.sound_family(game) == expected["sound"],
+				"%s sounds %s, pinned %s" % [game,
+				SourceIdentity.sound_family(game), expected["sound"]])
+		_check(SourceIdentity.particle_style(game) == expected["particle"],
+				"%s throws %s, pinned %s" % [game,
+				SourceIdentity.particle_style(game), expected["particle"]])
+	_check(is_equal_approx(SourceIdentity.sound_pitch(""), 1.0),
+			"an unattributed sound is the bank's own voice")
+	_check(SourceIdentity.particle_style("") == "spark",
+			"...and its own particles")
+
+	# Determinism, and that a pitch is always a usable one.
+	for game: String in PINNED_IDENTITY:
+		_check(SourceIdentity.sound_family(game)
+				== SourceIdentity.sound_family(game),
+				"%s is stable across calls" % game)
+		var pitch := SourceIdentity.sound_pitch(game)
+		_check(pitch >= 0.7 and pitch <= 1.7,
+				"%s pitches inside the audible band (%f)" % [game, pitch])
+
+	# Ocarina and Dark Souls share a sound family AND a particle style —
+	# six buckets each, and §12 promises determinism, not uniqueness. The
+	# package still separates them, which is the property worth holding.
+	var oot: Dictionary = SourceIdentity.package("Ocarina of Time")
+	var souls: Dictionary = SourceIdentity.package("Dark Souls")
+	_check(oot != souls, "two worlds sharing a sound still differ overall")
+	_check(str(oot["glyph"]) != str(souls["glyph"]),
+			"...and it is the glyph that separates them here")
+	_check(oot.has("accent") and oot.has("sound_pitch"),
+			"the package carries all four §12 fields")

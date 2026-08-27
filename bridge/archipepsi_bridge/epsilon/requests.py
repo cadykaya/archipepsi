@@ -108,20 +108,65 @@ class EchoSource(Strict):
     item_flags: int = Field(ge=0)
 
 
+class OwnedComponentSummary(Strict):
+    """One folded component, as a target a disposition may name.
+
+    S6's arrival. An `UPGRADE` needs a component id and a field that
+    exists on it; a `MERGE` needs to know which ids are resources. A
+    summary of interpretations cannot answer either, so this is the
+    "owned component graph" S1 deferred — landing at the stage where a
+    provider can finally act on it rather than at S10, because a
+    disposition that cannot see its target is not a disposition.
+
+    Deliberately narrow: identity, kind, what it is called, how many
+    times it has been touched, and what may still be raised and by how
+    much. Not a component dump — everything here is what a disposition
+    needs to LAND, and nothing is what it would need to re-derive the
+    component itself.
+    """
+    component_id: str = Field(max_length=32)
+    kind: str = Field(max_length=16)
+    display_name: str = Field(max_length=C.MAX_TEXT_LEN)
+    mk: int = Field(ge=1)
+    #: `(field, current, minimum, maximum)` per upgradable field. The
+    #: range matters as much as the name: the fold refuses an upgrade
+    #: that walks a value out of its declared bounds, so a provider
+    #: without the bounds is guessing at the one thing it must not guess.
+    upgradable: tuple[tuple[str, float, float, float], ...] = ()
+    #: For an action, its primitive verb; for a trait, its stat; for a
+    #: resource, its palette colour. What the component "is", in one word.
+    detail: str = Field(default="", max_length=32)
+
+
+class OwnedLinkSummary(Strict):
+    link: str = Field(max_length=16)
+    source: str = Field(max_length=32)
+    target: str = Field(max_length=32)
+
+
 class EchoPlayerState(Strict):
     existing_echoes: tuple[EchoSummary, ...] = ()
     signal_keys: int = Field(default=0, ge=0)
     coins_available: int = Field(default=0, ge=0)
+    #: The graph an interpretation may answer (S6). Empty for every
+    #: pre-S6 caller and for a fresh campaign, which is the same thing.
+    owned_components: tuple[OwnedComponentSummary, ...] = ()
+    owned_links: tuple[OwnedLinkSummary, ...] = ()
+    #: absorbed id -> surviving id. A disposition written against an
+    #: absorbed id still lands (aliases are permanent, §3.1), but a
+    #: provider that can see the table can name the survivor directly.
+    aliases: tuple[tuple[str, str], ...] = ()
 
 
 class EchoGenerationRequest(Strict):
     """What a provider is given to interpret one foreign item.
 
-    S1 deliberately keeps this narrow. The full v0.8 request — the owned
-    component graph, the alias table, the live budgets — is what lets an
-    interpretation answer another item, and it lands with the interpretation
-    pipeline in S10. Sending it before anything can act on it would be a
-    prompt full of context no rule uses.
+    S1 kept this narrow on the grounds that context no rule uses is just
+    a longer prompt. S5 added the budget steer and S6 the owned component
+    graph — each at the stage where an operation could finally obey it,
+    which is the same rule applied twice rather than a change of mind.
+    What is still absent is Epsilon's own reasoning scaffolding (concepts,
+    modes, the interpretation pipeline): that is S10.
 
     The schema describes the whole v0.8 language, while `allowed` describes
     the subset the runtime can execute *today*. Both this request and the
@@ -138,7 +183,8 @@ class EchoGenerationRequest(Strict):
     #: S5, the first stage where a provider can genuinely obey it — a
     #: LINK op is implementable now, so "the campaign is resource-rich,
     #: relate instead of duplicating" is advice validation accepts.
-    #: UPGRADE and MERGE join the obeying vocabulary at S6.
+    #: S6 completed the vocabulary it steers toward: UPGRADE, MODIFY and
+    #: MERGE are all implementable now.
     over_soft_budget: tuple[str, ...] = ()
     allowed: dict = Field(default_factory=lambda: {
         "operations": list(CAP.IMPLEMENTED_OPERATION_KINDS),
@@ -163,6 +209,10 @@ class EchoGenerationRequest(Strict):
         "interpretation, before the rule, counts)",
         "a move_speed, jump_height or air_control trait may never fall below "
         "1.0, and a gravity trait may never exceed 1.0",
+        "an upgrade, modify or merge must name a component_id from "
+        "player_state.owned_components (or one this interpretation creates "
+        "before it); an absorbed id resolves to its survivor",
+        "only resources may merge, and never into themselves",
     )
     balance_limits: dict = Field(default_factory=lambda: {
         "damage": [1, 25], "pellets": [1, 16],

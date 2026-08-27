@@ -15,18 +15,26 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   auto-heal rule) and a kill-fed CELL (self-discharging shield rule); I8
   proven and the fallback is budget-aware; integration asserts the
   campaign ends owning folded resources AND rules.
-- S5: **complete** — the nine-stat derived stack with I3's floors
+- S5: complete — the nine-stat derived stack with I3's floors
   (`stat_stack.gd`, `make godot-stats`), per-target statuses
   (`status_effects.gd`), all four link kinds walking in the runner, the
   last six verbs (`beam_sustained`/`hover`/`block`/`restore_resource`/
   `scan_mark`/`cleanse`), I7 enforced by the trait model, and the
   §5 status rule vocabulary. Both S3 tripwires discharged.
-- **Next: S6 dispositions** (IMPLEMENTATION_PLAN §2.5): `UPGRADE` /
-  `MODIFY` / `LINK` / `MERGE` as things a PROVIDER may emit (the fold has
-  always folded them; the capability gate still refuses upgrade, modify
-  and merge), families and Mk levels, source identity packages. This is
-  the stage that makes the archive's provenance chains reachable from
-  real play rather than only from fixtures.
+- S6: **complete** — the operation vocabulary is whole. The capability
+  gate admits `upgrade`/`modify`/`merge`; `target_errors` checks a
+  disposition can land at GENERATION (repair loop) as well as at fold
+  (I11); the request carries the owned component graph with per-field
+  upgrade headroom; the fallback evolves families (ECHOES §11's own
+  Hookshot→Longshot→Clawshot example is reachable from
+  `--epsilon=fallback`); I10 alias soundness proven; §12 identity
+  packages complete (sound family, particle style) and pinned from both
+  sides.
+- **Next: S7 slots + loadout UX** (IMPLEMENTATION_PLAN §2.5): four Action
+  slots (`SLOT_NAMES`), favourites, comparison. `IMPLEMENTED_ACTION_SLOTS`
+  is still `("echo_a",)` and `main.gd` binds only `slotted_action()`;
+  S7 is what retires the S1.1 `ARCHETYPE_SLOT` stopgap, whose comment
+  names S7 explicitly.
 
 ## Stage dependency trap
 `pull_pickup` is the ONLY verb still deferred: it collects local rewards, which are S9. `DEFERRED_PRIMITIVES` must name the last required stage, not the first.
@@ -40,6 +48,12 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   (`test_theme_agreement.py` ↔ `integration_driver.gd`), runner arms
   (`test_runner_coverage.py`).
 
+## Standing stopgap, due at S7
+`IMPLEMENTED_ACTION_SLOTS` is one slot, and migrated mobility Echoes are
+collapsed onto `echo_a` (S1.1). The comment names S7; do not widen either
+before `main.gd` binds more than one button, or an Action lands on a slot
+no key reaches.
+
 ## Resolved at S5 (was the standing unresolved decision)
 Traits apply because they are OWNED — unchanged, and now deliberate
 rather than inherited. S5 added the escape hatch the contract always
@@ -49,16 +63,17 @@ model, not merely described). Ownership is the default; equipping is the
 modifier. Recorded in `docs/IMPLEMENTATION_DECISIONS.md` (S5).
 
 ## Last full green verification
-At S5 completion (this commit):
-- `make test`: 265 passed
+At S6 completion (this commit):
+- `make test`: 285 passed
 - `check_packet.py`: green, 10 docs
 - `make godot-test`: GODOT CHAMBER TESTS OK
 - `make godot-blink`: 5125 resolved / 17825 refused; GODOT BLINK TESTS OK
 - `make godot-hud`: GODOT HUD TESTS OK
 - `make godot-rules`: GODOT RULES TESTS OK
 - `make godot-stats`: GODOT STATS TESTS OK (I3, 300-round seeded sweep)
-- `make godot-integration`: GODOT INTEGRATION OK, full 12-zone campaign,
-  asserting folded resources, rules AND a powers link at campaign end
+- `make godot-integration`: GODOT INTEGRATION OK, full 12-zone campaign;
+  every interpretation credited in some provenance chain, 7 components at
+  Mk II+, longest chain 4 items
 
 Do not assume these counts remain current after new commits; update this section only after the corresponding suites actually run green.
 
