@@ -1,4 +1,7 @@
-"""S1.1 regressions found by post-S1 repository review."""
+"""S1.1 regressions found by post-S1 repository review.
+
+Authored by ChatGPT (GPT-5.6 Sol, OpenAI) alongside the S1.1 review patch.
+"""
 
 from __future__ import annotations
 
