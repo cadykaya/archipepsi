@@ -22,6 +22,11 @@ signal shield_changed(shield: float)
 ## Emitted when a `parry` window catches a hit. The rule engine (S4) is what
 ## turns this into the `parry_success` event; until then it is feedback.
 signal parried
+## Rule-engine events (ECHOES §5): a press that genuinely resolved, the
+## cooldown's ready edge, and the end of a dash's movement window.
+signal action_used
+signal action_ready
+signal dash_ended
 
 #: The Action component in this runtime's slot, straight from the folded
 #: mechanics. Empty is legal and playable — the Static Pulse is never here.
@@ -35,6 +40,7 @@ var _held := false
 var _charge := 0.0
 var _gliding := false
 var _parry_window := 0.0
+var _dash_window := 0.0
 var _burst_left := 0
 var _burst_timer := 0.0
 
@@ -165,6 +171,9 @@ func set_grounded(grounded: bool) -> void:
 		_refill_air_budget()
 		if _gliding:
 			_end_glide()
+		if _dash_window > 0.0:
+			_dash_window = 0.0
+			dash_ended.emit()
 	_was_grounded = grounded
 
 func _process(delta: float) -> void:
@@ -172,6 +181,8 @@ func _process(delta: float) -> void:
 		cooldown_remaining = maxf(0.0, cooldown_remaining - delta)
 		cooldown_changed.emit(cooldown_remaining,
 				float(equipped.get("cooldown", 1.0)))
+		if cooldown_remaining == 0.0:
+			action_ready.emit()
 	if shield_hp > 0.0:
 		_shield_timer -= delta
 		if _shield_timer <= 0.0:
@@ -181,6 +192,11 @@ func _process(delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	if _parry_window > 0.0:
 		_parry_window = maxf(0.0, _parry_window - delta)
+
+	if _dash_window > 0.0:
+		_dash_window = maxf(0.0, _dash_window - delta)
+		if _dash_window == 0.0:
+			dash_ended.emit()
 
 	if _burst_left > 0:
 		_burst_timer -= delta
@@ -258,6 +274,11 @@ func activate() -> void:
 		"place_marker": _place_marker(primitive)
 
 	_apply_modifiers(modifiers, damaged)
+	if _primitive_type() in ["dash", "air_dash"]:
+		# The impulse decays over roughly this window under ground
+		# friction; landing ends it early via set_grounded.
+		_dash_window = 0.35
+	action_used.emit()
 
 ## The slot's key, released. Only the held verbs care.
 func release() -> void:
@@ -760,6 +781,42 @@ func _shield(primitive: Dictionary) -> void:
 	shield_hp = float(primitive["amount"])
 	_shield_timer = float(primitive["duration"])
 	shield_changed.emit(shield_hp)
+
+## Rule-effect entry points (ECHOES §5, applied by RuleRuntime). Shields
+## from rules follow the same don't-stack reading as the shield verb: the
+## stronger value wins, timers never add.
+func grant_shield(amount: float, duration: float) -> void:
+	shield_hp = maxf(shield_hp, amount)
+	_shield_timer = maxf(_shield_timer, duration)
+	shield_changed.emit(shield_hp)
+
+func reset_cooldown() -> void:
+	if cooldown_remaining > 0.0:
+		cooldown_remaining = 0.0
+		cooldown_changed.emit(0.0, float(equipped.get("cooldown", 1.0)))
+		action_ready.emit()
+
+## A rule's projectile: no modifiers, no slot involvement — a plain bolt
+## along the given rule direction, damage from the effect's amount.
+func fire_rule_projectile(damage: float, direction_kind: String) -> void:
+	if player == null or player.camera == null:
+		return
+	var projectile := EchoProjectile.new()
+	projectile.damage = maxf(1.0, damage)
+	projectile.speed = 28.0
+	var direction: Vector3 = -player.camera.global_transform.basis.z
+	match direction_kind:
+		"up":
+			direction = Vector3.UP
+		"forward", "aim", "":
+			pass
+		"backward":
+			direction = -direction
+		"velocity":
+			var velocity: Vector3 = player.velocity
+			if velocity.length() > 0.5:
+				direction = velocity.normalized()
+	_launch(projectile, [], direction)
 
 func _begin_parry(primitive: Dictionary) -> void:
 	_parry_window = float(primitive["window"])

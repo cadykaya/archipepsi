@@ -24,11 +24,35 @@ from ..schemas.echo import EchoInterpretation
 IMPLEMENTED_OPERATION_KINDS = ("create",)
 #: S3 added "resource": the fifteen HUD channels exist, so a Resource is
 #: now a thing the client can render and tick rather than a definition
-#: nothing reads. What it still cannot do is get SPENT — costs are rules
-#: (S4) and `powers`/`fills` links are S5 — which is why no Action verb
-#: un-gates alongside it. See DEFERRED_PRIMITIVES.
-IMPLEMENTED_COMPONENT_KINDS = ("action", "trait", "resource")
+#: nothing reads. S4 added "rule": the ECHOES §5 interpreter runs in the
+#: client (`rule_runtime.gd`, proven by `make godot-rules`), so a rule can
+#: watch events, hold conditions, SPEND a resource and apply effects.
+#: Still no Action verb un-gates: the four powered/filled verbs need S5
+#: links, not just rules. See DEFERRED_PRIMITIVES.
+IMPLEMENTED_COMPONENT_KINDS = ("action", "trait", "resource", "rule")
 IMPLEMENTED_TRAIT_STATS = ("gravity", "move_speed")
+
+#: The §5 allowlists, minus what later stages own. `status_applied` /
+#: `status_active` / `apply_status` are S5 (statuses), `trait_pulse` is S5
+#: (the derived stat stack), `grant_local_reward` is S9. The three tuples
+#: are pinned against the GDScript interpreter's actual arms in both
+#: directions by `test_rules_contract.py` — a kind admitted here that the
+#: interpreter cannot run is an Echo that validates and does nothing.
+IMPLEMENTED_RULE_EVENTS = (
+    "zone_enter", "chamber_enter", "jump", "land", "dash_end", "kill",
+    "damage_dealt", "damage_taken", "action_used", "action_ready",
+    "parry_success", "check_claimed", "tick_1hz", "resource_full",
+    "resource_empty", "low_health",
+)
+IMPLEMENTED_CONDITION_KINDS = (
+    "resource_at_least", "resource_at_most", "hp_below", "hp_above",
+    "moving_backward", "airborne", "grounded", "speed_above",
+    "enemy_within", "slot_is", "zone_is_finale",
+)
+IMPLEMENTED_EFFECT_KINDS = (
+    "resource_add", "heal", "grant_shield", "impulse_self", "damage_around",
+    "fire_projectile", "reset_action_cooldown", "refill_resource",
+)
 
 #: Still one slot, and this is the line people will reach for first when
 #: they read that S2 "ships the catalog". S2 ships the *verbs*; the number
@@ -76,6 +100,26 @@ def validate_stage_support(interpretation: EchoInterpretation) -> list[str]:
                     f"trait stat '{component.stat}' is not implemented by the "
                     "current runtime"
                 )
+            continue
+
+        if component.kind == "rule":
+            if component.event not in IMPLEMENTED_RULE_EVENTS:
+                errors.append(
+                    f"rule event '{component.event}' is not implemented by "
+                    "the current runtime"
+                )
+            for condition in component.conditions:
+                if condition.type not in IMPLEMENTED_CONDITION_KINDS:
+                    errors.append(
+                        f"rule condition '{condition.type}' is not "
+                        "implemented by the current runtime"
+                    )
+            for effect in component.effects:
+                if effect.type not in IMPLEMENTED_EFFECT_KINDS:
+                    errors.append(
+                        f"rule effect '{effect.type}' is not implemented by "
+                        "the current runtime"
+                    )
             continue
 
         if component.kind == "action":

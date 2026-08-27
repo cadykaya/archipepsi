@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from ..schemas import constants as C
 from ..schemas import migration as MG
+from ..schemas.echo import COMPLEXITY_BUDGETS
 from .requests import EchoGenerationRequest, ZoneGenerationRequest
 
 
@@ -183,6 +184,17 @@ def _primary_and_resource(
     ]}
 
 
+def _create_ops(request: EchoGenerationRequest, description: str,
+                tags: list[str], components: list[dict]) -> dict:
+    """1-4 CREATEs, in the order given. Still the boring shape — CREATE
+    only, so nothing can dangle or fail a fold — but S4 lets one of them be
+    a rule, and the fold requires a rule's resource to exist EARLIER in the
+    same interpretation, so order in this list is load-bearing."""
+    return {**_common(request, description, tags), "operations": [
+        {"op": "create", "component": component} for component in components
+    ]}
+
+
 def _passive(request: EchoGenerationRequest, *, effects: list[dict],
              description: str, tags: list[str]) -> dict:
     """One CREATE per passive, each a Trait. Traits are always on, so a
@@ -202,12 +214,39 @@ def _passive(request: EchoGenerationRequest, *, effects: list[dict],
     } for index, effect in enumerate(effects)]}
 
 
-def fallback_echo(request: EchoGenerationRequest) -> dict:
-    """Deterministic heuristics on the lowercased item name (§12.2)."""
+def _budget_room(mechanics, *, resources: int = 0, rules: int = 0) -> bool:
+    """Whether the campaign can absorb this many more without breaching a
+    hard budget (§16). The fallback is the last resort AFTER validation has
+    already refused the provider — a fallback the same validation then
+    refuses is a RuntimeError in `_pipeline` ("a bug in our own
+    generator"), so a resource- or rule-bearing outcome must step aside
+    near the ceiling and let the item read as its budget-free shape."""
+    if mechanics is None:
+        return True
+
+    def owned(kind: str) -> int:
+        return len([o for o in mechanics.owned if o.kind == kind])
+
+    return (owned("resource") + resources <= COMPLEXITY_BUDGETS["resource"][1]
+            and owned("rule") + rules <= COMPLEXITY_BUDGETS["rule"][1])
+
+
+def fallback_echo(request: EchoGenerationRequest, *,
+                  mechanics=None) -> dict:
+    """Deterministic heuristics on the lowercased item name (§12.2).
+
+    `mechanics` is the campaign's current fold, for the hard budgets; None
+    means "assume room", which every pre-S4 caller meant. Determinism is
+    per (item, campaign state), which is the same determinism the archive
+    replays: the same log prefix always yields the same interpretation.
+    """
     name = request.source.item_name.lower()
 
     def has(*words: str) -> bool:
         return any(w in name for w in words)
+
+    def room(**counts: int) -> bool:
+        return _budget_room(mechanics, **counts)
 
     if has("conference call", "shotgun"):
         return _primary(
@@ -247,7 +286,8 @@ def fallback_echo(request: EchoGenerationRequest) -> dict:
                        "descent_force": 20.0},
             description="Only works from up there. Bring yourself down hard.",
             tags=["melee", "slam"])
-    if has("magic", "mana", "ether", "spell", "meter", "essence"):
+    if has("magic", "mana", "ether", "spell", "meter", "essence") \
+            and room(resources=1):
         return _primary_and_resource(
             request, archetype="weapon", cooldown=0.5,
             initiator={"type": "charge_shot", "min_damage": 5.0,
@@ -261,7 +301,8 @@ def fallback_echo(request: EchoGenerationRequest) -> dict:
             },
             description="A meter and something to spend it on, eventually.",
             tags=["magic", "resource"])
-    if has("stamina", "vigor", "endurance", "breath"):
+    if has("stamina", "vigor", "endurance", "breath") \
+            and room(resources=1):
         return _primary_and_resource(
             request, archetype="mobility", cooldown=1.2,
             initiator={"type": "dash", "force": 13.0},
@@ -353,12 +394,109 @@ def fallback_echo(request: EchoGenerationRequest) -> dict:
             initiator={"type": "shield", "amount": 40.0, "duration": 8.0},
             description="A temporary layer of somebody else's protection.",
             tags=["shield", "defense"])
-    if has("estus", "potion", "flask", "food", "heart", "heal", "shard"):
-        return _primary(
-            request, archetype="tool", cooldown=10.0,
-            initiator={"type": "heal_self", "amount": 30.0},
-            description="Drink the interpretation of a drink.",
-            tags=["heal"])
+    if has("estus", "potion", "flask", "food", "heart", "heal", "shard") \
+            and room(resources=1, rules=1):
+        # S4: the drink kept its button, and gained an economy — three
+        # charges a Zone, one of which spends ITSELF when you are about to
+        # die. The first fallback outcome where a rule, a cost and a
+        # resource meet.
+        src = request.source
+        return _create_ops(
+            request,
+            "Drink the interpretation of a drink. One drinks itself.",
+            ["heal", "resource", "rule"],
+            [
+                {
+                    "kind": "resource",
+                    "component_id": MG.component_id_for("res",
+                                                        src.location_id),
+                    "display_name": "FLASK",
+                    "description": "Charges of somebody's recovery item.",
+                    "max_value": 3.0, "initial_fraction": 1.0,
+                    "presentation": "pips", "pip_count": 3,
+                    "palette_color": "ember",
+                },
+                {
+                    "kind": "rule",
+                    "component_id": MG.component_id_for("rule",
+                                                        src.location_id),
+                    "display_name": "Reflex Sip",
+                    "description": "Falling low uncorks one on its own.",
+                    "event": "low_health",
+                    "conditions": [],
+                    "costs": [{"resource_id": MG.component_id_for(
+                        "res", src.location_id), "amount": 1.0}],
+                    "effects": [{"type": "heal", "amount": 25.0}],
+                    "cooldown": 5.0,
+                },
+                {
+                    "kind": "action",
+                    "component_id": MG.component_id_for("act",
+                                                        src.location_id),
+                    "display_name": _clamp(src.item_name, C.MAX_TEXT_LEN),
+                    "description": "Drink the interpretation of a drink.",
+                    "slot": MG.ARCHETYPE_SLOT.get("tool", "echo_a"),
+                    "cooldown": 10.0,
+                    "primitive": {"type": "heal_self", "amount": 30.0},
+                    "modifiers": [],
+                },
+            ])
+    if has("star", "orb", "battery", "cell", "core", "dynamo") \
+            and room(resources=1, rules=2):
+        # A pure economy, no button at all: kills feed the cell, and a full
+        # cell discharges itself into a shield. Exercises the edge-derived
+        # events end to end in the shipped campaign.
+        src = request.source
+        cell = MG.component_id_for("res", src.location_id)
+        return _create_ops(
+            request,
+            "It wants to be full. It has opinions about what happens then.",
+            ["energy", "resource", "rule"],
+            [
+                {
+                    "kind": "resource",
+                    "component_id": cell,
+                    "display_name": _clamp(src.item_name.upper(),
+                                           C.MAX_TEXT_LEN),
+                    "description": "Charged by violence, spent on your "
+                                   "behalf.",
+                    "max_value": 100.0, "initial_fraction": 0.0,
+                    "presentation": "bar", "palette_color": "signal",
+                },
+                {
+                    "kind": "rule",
+                    "component_id": MG.component_id_for("rule",
+                                                        src.location_id,
+                                                        "feed"),
+                    "display_name": "Kinetic Intake",
+                    "description": "Every kill feeds the cell.",
+                    "event": "kill",
+                    "conditions": [],
+                    "costs": [],
+                    "effects": [{"type": "resource_add", "subject": cell,
+                                 "amount": 15.0}],
+                    "cooldown": 0.3,
+                },
+                {
+                    "kind": "rule",
+                    "component_id": MG.component_id_for("rule",
+                                                        src.location_id,
+                                                        "burst"),
+                    "display_name": "Overflow Ward",
+                    "description": "A full cell discharges into a shield.",
+                    "event": "resource_full",
+                    "conditions": [{"type": "resource_at_least",
+                                    "subject": cell, "value": 0.999}],
+                    "costs": [],
+                    "effects": [
+                        {"type": "grant_shield", "amount": 20.0,
+                         "duration": 4.0},
+                        {"type": "resource_add", "subject": cell,
+                         "amount": -100.0},
+                    ],
+                    "cooldown": 2.0,
+                },
+            ])
     if has("bomb", "grenade", "mine", "explosive"):
         return _primary(
             request, archetype="weapon", cooldown=3.0,

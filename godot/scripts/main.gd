@@ -24,6 +24,7 @@ var _entering_zone := false
 ## entry (ECHOES.md 22), so nothing here is ever saved and no
 ## reconnect path has to reconcile a half-spent meter.
 var resource_pool: ResourcePool
+var rule_runtime: RuleRuntime
 var _abandoning := false
 
 ## Headless integration mode: the driver owns the flow; views stay quiet.
@@ -70,6 +71,16 @@ func _ready() -> void:
 	resource_pool = ResourcePool.new()
 	resource_pool.name = "ResourcePool"
 	add_child(resource_pool)
+	rule_runtime = RuleRuntime.new()
+	rule_runtime.name = "RuleRuntime"
+	rule_runtime.pool = resource_pool
+	add_child(rule_runtime)
+	# The fold owns which rules exist; every snapshot may change them.
+	BridgeClient.snapshot_received.connect(func(_s: Dictionary) -> void:
+		rule_runtime.refresh_rules())
+	BridgeClient.notification_received.connect(func(n: Dictionary) -> void:
+		if str(n.get("kind", "")) in ["reveal", "check_confirmed"]:
+			rule_runtime.notify("check_claimed"))
 	hud = Hud.new()
 	add_child(hud)
 	hud.meters.pool = resource_pool
@@ -199,6 +210,41 @@ func _clear_world() -> void:
 		child.queue_free()
 	hub = null
 	zone = null
+	if rule_runtime != null:
+		rule_runtime.player = null
+		rule_runtime.echo_runtime = null
+		rule_runtime.zone_root = null
+
+## Wire one freshly created player's gameplay signals into the rule engine.
+## A new player instance arrives with every Hub/Zone entry, so these are
+## fresh connects, never duplicates. The engine only interprets folded rule
+## components; this is the one place the game's own events reach it.
+func _bind_rule_runtime(target: Player, zone_ctl: ZoneController) -> void:
+	rule_runtime.player = target
+	rule_runtime.echo_runtime = target.echo_runtime
+	rule_runtime.zone_root = zone_ctl
+	rule_runtime.refresh_rules()
+	target.jumped.connect(func() -> void: rule_runtime.notify("jump"))
+	target.footstep.connect(func(kind: String) -> void:
+		if kind == "land":
+			rule_runtime.notify("land"))
+	target.hit_confirmed.connect(func(killed: bool) -> void:
+		rule_runtime.notify("damage_dealt")
+		if killed:
+			rule_runtime.notify("kill"))
+	target.damaged_from.connect(func(_source: Vector3) -> void:
+		rule_runtime.notify("damage_taken"))
+	target.echo_runtime.parried.connect(func() -> void:
+		rule_runtime.notify("parry_success"))
+	target.echo_runtime.action_used.connect(func() -> void:
+		rule_runtime.notify("action_used"))
+	target.echo_runtime.action_ready.connect(func() -> void:
+		rule_runtime.notify("action_ready"))
+	target.echo_runtime.dash_ended.connect(func() -> void:
+		rule_runtime.notify("dash_end"))
+	if zone_ctl != null:
+		zone_ctl.chamber_entered.connect(func(_index: int) -> void:
+			rule_runtime.notify("chamber_enter"))
 
 func _to_menu() -> void:
 	_clear_world()
@@ -229,6 +275,7 @@ func _to_hub() -> void:
 	hub.player.fired_pulse.connect(func() -> void: tones.play("pulse"))
 	hub.player.footstep.connect(func(kind: String) -> void: tones.play(kind))
 	hub.player.echo_runtime.set_equipped(BridgeClient.slotted_action())
+	_bind_rule_runtime(hub.player, null)
 	tones.play_ambience(1.0)
 	_update_modal()
 
@@ -279,6 +326,8 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	zone.player.hit_confirmed.connect(func(killed: bool) -> void:
 		if not killed:
 			tones.play("confirm"))
+	_bind_rule_runtime(zone.player, zone)
+	rule_runtime.notify("zone_enter")
 	var theme := str(zone_dict.get("theme", "void_glitch"))
 	# The last transmission gets a lower, heavier room tone than any Zone
 	# before it, so the finale sounds different before it looks different.

@@ -132,6 +132,21 @@ func _run() -> void:
 			"interpretation_seq is unique and gapless across the campaign")
 	_check(BridgeClient.mechanics().get("owned", []).size() >= foreign,
 			"the fold produced a component for every interpretation")
+	# The mock seed deterministically holds Estus Shard and Power Star as
+	# foreign checks, so a full campaign always grants resource channels
+	# (S3) and rules (S4). This is the end-to-end proof the pipeline needs:
+	# fallback -> grant -> fold -> snapshot, in the shipped campaign rather
+	# than a fixture.
+	var owned_kinds: Dictionary = {}
+	for entry: Dictionary in BridgeClient.mechanics().get("owned", []):
+		var kind := str(entry.get("component", {}).get("kind", ""))
+		owned_kinds[kind] = int(owned_kinds.get(kind, 0)) + 1
+	_check(int(owned_kinds.get("resource", 0)) >= 1,
+			"the campaign owns at least one folded resource channel")
+	_check(int(owned_kinds.get("rule", 0)) >= 1,
+			"the campaign owns at least one folded rule")
+	_check(BridgeClient.mechanics().get("channel_order", []).size() >= 1,
+			"the fold assigned the resource a HUD channel")
 	_check(stock_ever_seen, "shop stocked at least once during the campaign")
 	if stock_ever_seen:
 		_check(_bought_once, "at least one shop purchase completed")

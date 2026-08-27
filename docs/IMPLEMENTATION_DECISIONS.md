@@ -285,3 +285,65 @@ Two corrections were made on top of it:
   above). Each is now a test that asserts the gate and, in its docstring,
   names the work due in the same change that opens it. A note gets read by
   whoever happens to look; a red test gets read by whoever moves the gate.
+
+## S4 — the rule engine
+
+- **Derived events are per-rule edge LATCHES, not queued events.** §5.1's
+  clauses pull against each other at one point: "sitting at a threshold
+  fires nothing" (edge, not level) versus I5's "a fill-on-empty /
+  drain-on-full pair oscillates at the cooldown rate". A derived event
+  that is simply dropped when every listener is cooling deadlocks that
+  pair after one cycle — the value then SITS at the threshold and no new
+  edge ever comes; the rules suite found exactly this on its first run. A
+  queued event, redelivered until handled, is the backlog cascade the
+  design bans. The resolution: a crossing ARMS each listening rule (one
+  latched firing), the cooldown delays consumption, firing consumes the
+  arm, and a value that leaves the threshold unfired takes the arm with
+  it. Arms are state bounded by the rule count, never a growing queue;
+  sitting still fires nothing because sitting never re-arms.
+
+- **World consequences of effects are events; synthetic events are not.**
+  "No effect emits, enqueues or raises an event, directly or indirectly"
+  is read as banning effects from touching the DISPATCH machinery. A
+  `damage_around` that kills an enemy produces a real `kill` — the same
+  observation the engine would make had the Static Pulse done it — and it
+  lands in the pending queue for the NEXT tick, outside the running
+  dispatch. Termination is unaffected: such events are bounded by world
+  resources (an enemy dies once), not by rule feedback.
+
+- **The cap skips; push and armed differ in what "skipped" means.** A push
+  event the cap skips is gone — a jump nothing answered. An armed edge
+  the cap skips stays armed and retries next tick, which is not a queue
+  (at most one pending firing per rule, ever). Rules the cap skipped are
+  never carried over as events.
+
+- **A rule's resource references are validated by the fold, like I11.** A
+  rule whose cost, resource condition or resource effect names nothing
+  the campaign owns can never fire — a missing bar reads as empty forever
+  — and a dead rule that persists is the exact failure the staged gates
+  exist to prevent. The fold refuses it loudly at the rule's own sequence
+  position, resolving through merge aliases first (a rule written against
+  an absorbed resource keeps meaning the survivor), and re-checks after
+  every `MODIFY` that can add a condition or effect. Creating the
+  resource earlier in the same interpretation counts, and the fallback's
+  rule outcomes lean on that ordering.
+
+- **The fallback steps aside at the hard budgets.** `_pipeline` treats a
+  fallback its own validation refuses as a RuntimeError — correctly, but
+  since S3 that was reachable: a 16th resource-hinted item name at the
+  hard budget would have made the fallback breach. With rules the surface
+  doubled, so `fallback_echo` now takes the live fold and each resource-
+  or rule-bearing outcome checks for room first, degrading to the item's
+  budget-free shape when the ceiling is close. Determinism is per (item,
+  campaign state) — the same determinism the archive replays.
+
+- **`slot_is` reads as "the named slot is occupied".** The schema says
+  only "names a slot"; with one string and no second operand, occupancy
+  is the reading that needs no invented syntax. Revisit at S7 if
+  favourites need a component-identity form.
+
+- **`dash_end` is a 0.35 s window, ended early by landing.** The S2 dash
+  is an instantaneous impulse with no tracked state, so the engine
+  defines the dashing window as roughly the impulse's decay under ground
+  friction. Chosen over inventing a dash state machine a stage that owns
+  movement polish can replace.

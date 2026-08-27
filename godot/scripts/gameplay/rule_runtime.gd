@@ -80,6 +80,12 @@ func refresh_rules() -> void:
 func _resolve(component_id: String) -> String:
 	return str(_aliases.get(component_id, component_id))
 
+## The suites drive `tick()` by hand, off-tree. In the game this node sits
+## in main's tree and ticks itself while a player is bound.
+func _physics_process(delta: float) -> void:
+	if player != null:
+		tick(delta)
+
 func notify(event: String) -> void:
 	if event not in PUSH_EVENTS:
 		push_error("rule event '%s' is not engine-emittable" % event)

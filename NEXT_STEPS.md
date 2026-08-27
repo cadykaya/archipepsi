@@ -235,7 +235,54 @@ Cross-language contracts got their own net (`test_hud_contract.py`):
 palette names ↔ `PALETTE_COLORS`, `ResourceMeters.CHANNELS` ↔
 `HUD_CHANNELS`, glyph indices ↔ client pins.
 
-**Then: S4** — the rule engine, which is what finally *spends* a resource.
+## Echoes 2.0 — S4 landed (the rule engine)
+
+The ECHOES §5 interpreter: EVENT → CONDITIONS → COST → EFFECTS, with the
+§5.1 termination properties structural rather than aspirational. **The
+first stage where a Resource gets spent.**
+
+- **`rule_runtime.gd`**, driven by `make godot-rules` at a fixed 1/60
+  against a fold-derived fixture (two resources, twenty rules — at the
+  hard budget — and a merge whose alias a rule cost still references).
+  I5 proven: an effect that fills a bar does not dispatch `resource_full`
+  in the tick that filled it; next tick, once, edge not level; the
+  fill-on-empty/drain-on-full pair oscillates at the cooldown rate; the
+  per-tick cap skips rather than queues; costs are all-or-nothing with
+  refund; conditions conjoin; aliases resolve to the survivor.
+- **Derived events are per-rule edge latches.** The naive
+  drop-if-cooling reading deadlocks the I5 oscillator after one cycle
+  (the suite found it immediately); a queue would be the banned backlog.
+  A crossing arms, cooldown delays, firing consumes, leaving the
+  threshold unfired disarms. Recorded in IMPLEMENTATION_DECISIONS.
+- **The fold validates rule references like I11**: a cost/condition/
+  effect naming an unowned resource fails loudly at the rule's own
+  sequence position, through merge aliases, re-checked after MODIFY.
+- **Wired into play**: jump/land/dash_end/kill/damage/action/parry/
+  check_claimed/zone_enter/chamber_enter (new chamber tracking with
+  1 m hysteresis in ZoneController), plus tick_1hz and the three
+  derived edges. Effects reach the pool, the player, the shield, the
+  enemies group and the projectile layer.
+- **The fallback grants real rules**: heal-hint items became a
+  three-charge FLASK whose rule drinks one on the low_health edge;
+  star/orb items became a kill-fed CELL that discharges itself into a
+  shield at full — both deterministic foreign checks in the mock seed,
+  so `make godot-integration` now asserts the campaign ends owning at
+  least one folded resource AND one folded rule.
+- **I8 proven**: a 16th-resource CREATE at the hard budget is rejected,
+  the repair prompt carries the reason, a repaired answer is accepted;
+  and the fallback itself now steps aside at the hard budgets (it takes
+  the live fold), because a fallback that validation refuses is a
+  RuntimeError by design.
+- **Capability gates opened one kind**: `rule` joined
+  IMPLEMENTED_COMPONENT_KINDS with per-piece gates for the §5 allowlists
+  (statuses S5, trait_pulse S5, grant_local_reward S9), pinned against
+  the interpreter's actual match arms both ways
+  (`test_rules_contract.py`).
+
+**Then: S5** — traits, links, statuses: the derived stat stack with
+clamps, the four link kinds (which un-gate `beam_sustained`, `hover`,
+`block`, `restore_resource` and fire both stage tripwires), and player
+and enemy statuses.
 
 
 
@@ -258,10 +305,11 @@ postgame, so clients also require the goal to be missing
 (`docs/IMPLEMENTATION_DECISIONS.md`).
 
 ## Commands
-    make test                  # 247 pytest (125 schema)
+    make test                  # 263 pytest (125 schema)
     make godot-test            # chamber geometry
     make godot-blink           # invariant I14, every builder
     make godot-hud             # S3: palette, glyphs, pressure valve, archive
+    make godot-rules           # S4: invariant I5, the ECHOES 5 interpreter
     make godot-integration     # the whole game, headlessly
     make replay ARCHIVE=<dir>  # re-validate a generation archive
     make seed-multi && make host && make bridge   # real server play

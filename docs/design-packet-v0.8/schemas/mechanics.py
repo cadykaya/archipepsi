@@ -182,6 +182,36 @@ EMPTY_MECHANICS = Mechanics()
 # The fold
 # ---------------------------------------------------------------------------
 
+
+def _check_rule_references(component, components, aliases, seq: int) -> None:
+    """A rule that names a resource nobody owns can never fire: a missing
+    bar reads as empty, so it is never affordable and never `at_least`
+    anything. A dead rule that validates and persists is exactly the
+    failure the staged gates exist to prevent, so the fold refuses it the
+    way it refuses a dangling operation target (I11) — loudly, at the
+    rule's own point in the log. References resolve through aliases first:
+    a rule written against a merged-away resource keeps meaning the
+    survivor (TECHNICAL_ARCHITECTURE §9)."""
+    if component.kind != "rule":
+        return
+    refs = [(c.resource_id, "cost") for c in component.costs]
+    refs += [(c.subject or "", f"condition '{c.type}'")
+             for c in component.conditions
+             if c.type in ("resource_at_least", "resource_at_most")]
+    refs += [(e.subject or "", f"effect '{e.type}'")
+             for e in component.effects
+             if e.type in ("resource_add", "refill_resource")]
+    for ref, where in refs:
+        resolved = aliases.get(ref, ref)
+        target = components.get(resolved)
+        if target is None or target.kind != "resource":
+            raise FoldError(
+                f"interpretation_seq {seq}: rule "
+                f"'{component.component_id}' {where} names {ref!r}, which "
+                f"is not an owned resource at that point in the log"
+            )
+
+
 def derive_mechanics(log) -> Mechanics:
     """Fold an interpretation log into live mechanics.
 
@@ -255,6 +285,7 @@ def derive_mechanics(log) -> Mechanics:
                 order.append(cid)
                 mk[cid] = 1
                 record(cid, "create", op.component.display_name)
+                _check_rule_references(op.component, components, aliases, seq)
 
             elif op.op == "upgrade":
                 cid = live(op.target, "upgrade", seq)
@@ -267,6 +298,7 @@ def derive_mechanics(log) -> Mechanics:
             elif op.op == "modify":
                 cid = live(op.target, "modify", seq)
                 components[cid], note = _apply_modify(components[cid], op, seq)
+                _check_rule_references(components[cid], components, aliases, seq)
                 mk[cid] += 1
                 record(cid, "modify", note)
 

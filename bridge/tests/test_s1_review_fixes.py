@@ -101,21 +101,37 @@ def test_s1_stage_gate_rejects_schema_valid_noops():
     })
     assert CAP.validate_stage_support(resource) == []
 
-    # A Rule still is one: events, conditions and effects are S4, so a rule
-    # accepted now would persist and never fire.
+    # S4 landed the rule interpreter, so a Rule the runtime can dispatch is
+    # accepted now — and the gate moved INSIDE the rule: the S5/S9
+    # vocabulary (statuses, trait pulses, local rewards) is still refused
+    # per piece rather than per kind. Both directions asserted, so neither
+    # the retired gate nor the remaining one can silently drift.
     rule = _interpretation_with({
         "kind": "rule",
         "component_id": "rule_test",
         "display_name": "On Kill",
-        "description": "Nothing dispatches this until the rule engine lands.",
+        "description": "The S4 interpreter dispatches this.",
         "event": "kill",
         "conditions": [],
         "costs": [],
         "effects": [{"type": "heal", "amount": 5.0}],
         "cooldown": 1.0,
     })
-    assert any("component kind 'rule'" in error
-               for error in CAP.validate_stage_support(rule))
+    assert CAP.validate_stage_support(rule) == []
+
+    status = _interpretation_with({
+        "kind": "status",
+        "component_id": "status_test",
+        "display_name": "Burning",
+        "description": "Statuses are S5; accepting one now would persist a "
+                       "mechanic that silently does nothing.",
+        "status": "burning",
+        "target": "enemy",
+        "duration": 3.0,
+        "magnitude": 0.5,
+    })
+    assert any("component kind 'status'" in error
+               for error in CAP.validate_stage_support(status))
 
     # S2 landed the bouncing, gravity-affected projectile, so the gate S1.1
     # put on `bounces` is retired rather than kept as a check that no longer

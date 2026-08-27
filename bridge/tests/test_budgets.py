@@ -21,6 +21,8 @@ from archipepsi_bridge.schemas.echo import (
 )
 from archipepsi_bridge.schemas.mechanics import EMPTY_MECHANICS, derive_mechanics
 
+from .conftest import ScriptedProvider, run
+
 
 def _resource_echo(seq: int, *, ops: int = 1) -> EchoInterpretation:
     # Location ids are bounded to the campaign's 30 Checks, so the probe
@@ -121,3 +123,123 @@ def test_channels_are_assigned_in_creation_order(count):
     for index, owned in enumerate(mechanics.resources):
         assert mechanics.channel_of(owned.component_id) == index
     assert mechanics.channel_of("res_nonexistent") is None
+
+
+# --- Invariant I8: a breaching CREATE is rejected and repair steers -------
+
+def _echo_request(item_name="Magic Meter"):
+    from archipepsi_bridge.epsilon.requests import (
+        EchoGenerationRequest, EchoPlayerState, EchoSource)
+    return EchoGenerationRequest(
+        source=EchoSource(location_id=89100001, item_name=item_name,
+                          source_game="Ocarina of Time",
+                          recipient_name="oot_player", item_flags=0),
+        player_state=EchoPlayerState(),
+        required_echo_id="echo_89100001")
+
+
+def _sixteenth_resource_echo() -> dict:
+    return {
+        "schema_version": 8, "echo_id": "echo_89100001",
+        "interpretation_seq": 0, "source_location_id": 89100001,
+        "source_item_name": "Magic Meter", "source_game": "Ocarina of Time",
+        "source_recipient_name": "oot_player",
+        "display_name": "One Meter Too Many", "description": "no.",
+        "operations": [{"op": "create", "component": {
+            "kind": "resource", "component_id": "res_overflow",
+            "display_name": "MP", "description": "The 16th.",
+            "max_value": 100.0, "initial_fraction": 1.0,
+            "presentation": "bar", "palette_color": "moss"}}],
+    }
+
+
+def _plain_action_echo() -> dict:
+    return {
+        "schema_version": 8, "echo_id": "echo_89100001",
+        "interpretation_seq": 0, "source_location_id": 89100001,
+        "source_item_name": "Magic Meter", "source_game": "Ocarina of Time",
+        "source_recipient_name": "oot_player",
+        "display_name": "Meter, Reread", "description": "ok.",
+        "operations": [{"op": "create", "component": {
+            "kind": "action", "component_id": "act_meter",
+            "display_name": "Meter", "description": "ok.",
+            "slot": "echo_a", "cooldown": 1.0,
+            "primitive": {"type": "hitscan_damage", "damage": 8.0,
+                          "pellets": 1, "spread_degrees": 1.0,
+                          "range": 30.0}}}],
+    }
+
+
+def test_i8_a_breaching_create_is_rejected_and_repaired():
+    """The hard budget refuses; the repair prompt carries the reason; a
+    repaired answer that stops breaching is accepted with no fallback."""
+    from archipepsi_bridge.epsilon.base import generate_echo_validated
+
+    async def scenario():
+        provider = ScriptedProvider(
+            echo_outputs=[_sixteenth_resource_echo(), _plain_action_echo()])
+        outcome = await generate_echo_validated(
+            provider, _echo_request(), mechanics=_campaign(15))
+        assert provider.echo_repairs == 1
+        assert outcome.used_fallback is False
+        assert outcome.value.operations[0].component.kind == "action"
+        assert any("hard budget" in e
+                   for e in outcome.archive["validation_errors"])
+    run(scenario())
+
+
+def test_i8_the_fallback_steps_aside_at_the_hard_budget():
+    """A resource-hinted item at 15/15 resources must not make the fallback
+    breach — `_pipeline` treats a refused fallback as a RuntimeError. The
+    outcome degrades to the item's budget-free shape instead."""
+    from archipepsi_bridge.epsilon.base import generate_echo_validated
+
+    async def scenario():
+        provider = ScriptedProvider(
+            echo_outputs=[_sixteenth_resource_echo(),
+                          _sixteenth_resource_echo()])
+        outcome = await generate_echo_validated(
+            provider, _echo_request(), mechanics=_campaign(15))
+        assert outcome.used_fallback is True
+        kinds = [op.component.kind for op in outcome.value.operations]
+        assert "resource" not in kinds
+    run(scenario())
+
+
+def test_the_fallback_rule_outcomes_fold_and_pass_stage_support():
+    """The flask and the cell are the first fallback outcomes carrying
+    rules; each must fold from an empty log (resource created BEFORE the
+    rule that names it) and clear the staged gates."""
+    from archipepsi_bridge.epsilon import capabilities as CAP
+    from archipepsi_bridge.epsilon.fallback import fallback_echo
+
+    for name in ["Estus Shard", "Power Star"]:
+        raw = fallback_echo(_echo_request(name))
+        echo = EchoInterpretation.model_validate(raw)
+        assert CAP.validate_stage_support(echo) == [], name
+        mechanics = derive_mechanics([echo])
+        kinds = sorted(o.kind for o in mechanics.owned)
+        assert "rule" in kinds, name
+
+
+def test_the_fallback_rule_outcomes_step_aside_at_the_rule_budget():
+    from archipepsi_bridge.epsilon.fallback import fallback_echo
+
+    rule_hard = COMPLEXITY_BUDGETS["rule"][1]
+    base = _resource_echo(0)
+    rules = [EchoInterpretation.model_validate({
+        **base.model_dump(exclude={"operations", "interpretation_seq",
+                                   "echo_id", "source_location_id"}),
+        "interpretation_seq": 1 + i,
+        "source_location_id": 89100002 + i,
+        "echo_id": f"echo_{89100002 + i}",
+        "operations": [{"op": "create", "component": {
+            "kind": "rule", "component_id": f"rule_{i}",
+            "display_name": "R", "description": "r", "event": "kill",
+            "conditions": [], "costs": [],
+            "effects": [{"type": "heal", "amount": 1.0}],
+            "cooldown": 0.1}}]}) for i in range(rule_hard)]
+    full = derive_mechanics([base] + rules)
+    degraded = fallback_echo(_echo_request("Power Star"), mechanics=full)
+    kinds = [op["component"]["kind"] for op in degraded["operations"]]
+    assert "rule" not in kinds

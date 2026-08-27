@@ -18,6 +18,9 @@ signal hit_confirmed(killed: bool)
 signal damaged_from(source_position: Vector3)
 ## `kind` is "step_a" / "step_b" / "land"; main routes it to the mixer.
 signal footstep(kind: String)
+## The frame a deliberate jump actually launched (buffered input resolving
+## against coyote time) — the rule engine's `jump` event, not the input.
+signal jumped
 
 const MOUSE_SENSITIVITY := 0.0022
 #: Metres between footfalls. Paced by distance so it tracks speed Echoes.
@@ -226,6 +229,7 @@ func _physics_process(delta: float) -> void:
 			velocity.y = Constants.JUMP_VELOCITY
 			_jump_buffer = 0.0
 			_coyote = 0.0
+			jumped.emit()
 
 		var input_dir := Input.get_vector(
 				"move_left", "move_right", "move_forward", "move_back")

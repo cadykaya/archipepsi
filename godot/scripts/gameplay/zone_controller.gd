@@ -5,6 +5,9 @@ extends Node3D
 ## leaving the Zone, which is why leaving resets objectives (§14.3).
 
 signal exit_requested
+## The player moved into a different chamber's bounds — the rule engine's
+## `chamber_enter` event. Fires for the first chamber on the first frame.
+signal chamber_entered(index: int)
 
 var zone: Dictionary = {}
 var zone_id := ""
@@ -22,6 +25,7 @@ var _first_kill_seen := false
 var _portal_was_locked := true
 var _quiet_time := 0.0
 var _last_claimed := -1
+var _current_chamber := -1
 ## Union of every chamber and connector AABB the builder placed.
 ## `blink` tests its landing point against this: outside it is
 ## outside the level, wall or no wall (invariant I14).
@@ -62,6 +66,10 @@ func setup(zone_dict: Dictionary) -> void:
 			"satisfied": false,
 			"enemies": [] as Array,
 			"reward": null,
+			# Grown a metre so a doorway seam cannot flicker between
+			# chambers frame to frame.
+			"bounds": ZoneBuilder._world_aabb(result["bounds"], xform.origin,
+					xform.basis.get_euler().y).grow(1.0),
 		}
 
 		for spawn: Dictionary in result.get("enemy_spawns", []):
@@ -201,7 +209,21 @@ func refresh() -> void:
 		hud.say_line("portal_open")
 	_portal_was_locked = not complete
 
+## Connector segments belong to no chamber, so the current chamber holds
+## until the next one's bounds are genuinely entered — hysteresis for free.
+func _track_chamber() -> void:
+	if player == null:
+		return
+	for index in _chambers.size():
+		var bounds: AABB = _chambers[index].get("bounds", AABB())
+		if bounds.has_point(player.global_position):
+			if index != _current_chamber:
+				_current_chamber = index
+				chamber_entered.emit(index)
+			return
+
 func _process(delta: float) -> void:
+	_track_chamber()
 	if hud == null or player == null:
 		return
 	var claimed := 0

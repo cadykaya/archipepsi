@@ -141,6 +141,9 @@ class EchoGenerationRequest(Strict):
         "modifiers": list(CAP.IMPLEMENTED_MODIFIER_TYPES),
         "trait_stats": list(CAP.IMPLEMENTED_TRAIT_STATS),
         "slots": list(CAP.IMPLEMENTED_ACTION_SLOTS),
+        "rule_events": list(CAP.IMPLEMENTED_RULE_EVENTS),
+        "rule_conditions": list(CAP.IMPLEMENTED_CONDITION_KINDS),
+        "rule_effects": list(CAP.IMPLEMENTED_EFFECT_KINDS),
     })
     composition_rules: tuple[str, ...] = (
         "an interpretation carries 1-4 operations",
@@ -148,6 +151,9 @@ class EchoGenerationRequest(Strict):
         "(act_, trait_, res_, rule_, status_, aff_, info_)",
         "an action has exactly one primitive plus 0-2 modifiers",
         "modifiers require a damage primitive in the same action",
+        "a rule's costs, resource conditions and resource effects must name "
+        "a resource the campaign owns (creating one in the same "
+        "interpretation, before the rule, counts)",
         "a move_speed, jump_height or air_control trait may never fall below "
         "1.0, and a gravity trait may never exceed 1.0",
     )

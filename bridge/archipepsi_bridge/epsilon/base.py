@@ -184,5 +184,6 @@ async def generate_echo_validated(
             + CAP.validate_stage_support(e)
             + budget_errors(e, live)
         ),
-        build_fallback=fallback_echo, archive_dir=archive_dir,
+        build_fallback=lambda r: fallback_echo(r, mechanics=live),
+        archive_dir=archive_dir,
         timeout=timeout)
