@@ -45,6 +45,13 @@ refused). The bridge is also proven against a real Archipelago 0.6.7 server
   reconnects reuse server truth; anthropic pin >=1.0. Three new bridge
   regression tests (188 total).
 
+## Also completed: non-linear zone layouts
+90° corner pieces with alternating turns, exact rotated-AABB overlap
+guards, and forward-push clearance; chamber transforms flow through to
+enemies/rewards/goal areas. 12-seed widest-arena test proves zero overlap
+and that bends actually occur. (Test L against a real server is also done
+— smoke_real kills the bridge at the loading screen and revives.)
+
 ## Next useful work (roughly in value order)
 1. **Play-feel pass on real hardware** — the manual checks in
    ACCEPTANCE_TESTS §7 (gap feel, reveal timing, Conference Call comedy)
@@ -52,10 +59,11 @@ refused). The bridge is also proven against a real Archipelago 0.6.7 server
 2. Live-fire the Claude provider once an ANTHROPIC_API_KEY is present
    (`EPSILON_PROVIDER=claude make bridge`); offline stub tests cover the
    mechanics but a real generation archive would be gold.
-3. Zone variety: safe non-linear arrangements (L-bends need rotated
-   chaining + overlap checks — design before building).
-4. Robustness: bridge-restart-mid-zone against a REAL server (mock resets
-   its truth on restart by design, so this needs `make host`).
+3. More per-theme differentiation inside chambers (theme-specific prop
+   picks: torch sconces for gothic_stone, hanging signs for neon_transit,
+   roots for temple_ruin) — the greeble pass is currently theme-tinted but
+   shape-identical.
+4. A Hub ambient hum (procedural loop) and per-theme zone ambience.
 
 ## Known blockers / bugs
 - None known. One recorded schema corner: `finale_offered` stays true in
