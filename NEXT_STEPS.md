@@ -15,7 +15,7 @@ Proof the loop is real:
   **Test L** (kill the bridge at the loading screen; the GENERATED zone
   revives with its committed allocation) against a **real Archipelago
   0.6.7 server**.
-- 191 pytest + the headless chamber-geometry suite.
+- 193 pytest + the headless chamber-geometry suite.
 
 ## What works
 - APWorld: `make seed` / `seed-multi` / `host` / `apworld` (official build
@@ -71,6 +71,34 @@ Proof the loop is real:
   never tracked; the waypoint chevron rendered off-screen; wounded
   enemies got dimmer; silhouettes clipped through doorways).
 
+## Latest session: feel, voice, secrets — and a flaky-harness fix
+- **Hit confirmation.** Everything on screen told you what the world was
+  doing to you; nothing told you your own shot landed. A connect tints and
+  punches the crosshair and ticks quietly; a kill stamps an X. All three
+  attack paths report it, and `Enemy.take_damage` returns whether *this*
+  hit was the fatal one, so shooting a sinking corpse never re-reports a
+  kill.
+- **Epsilon talks during play** — first kill, room genuinely cleared,
+  portal unlock edge, low health, death, revival, and a long stretch with
+  nothing claimed. Authored client-side like the graffiti: no line reads
+  or reports any AP state. Throttled to one per six seconds, never
+  repeating back to back, on its own row below the interact prompt.
+- **Secrets** (DESIGN §19): about one arena in three grows a ledge whose
+  lip is out of reach of the 1.33 m standing jump, holding one of
+  Epsilon's private notes and nothing else. Reaching one earns a flourish
+  and a line. The geometry test proves the exit, reward and enemy spawns
+  are untouched, that no ledge overhangs a door lane, and that each has
+  exactly one sensing (not blocking) trigger.
+- **Harness fix — the integration run was not hermetic.** It started the
+  bridge with no save-directory override, so every run resumed the one
+  before it: the zone counter climbed past 50, "coins were genuinely
+  spent" passed on an *earlier* run's coins, and the shop assertion failed
+  at random. It now gets its own throwaway save dir. Also: an import pass
+  before the headless runs (a `--script` run does not rescan for new
+  `class_name` scripts), and a liveness check on the bridge (one left over
+  from an earlier run holds the port, and the driver silently tests
+  against the stale one).
+
 ## Next useful work
 1. **Play-feel pass on real hardware** — the manual checks in
    ACCEPTANCE_TESTS §7 (gap feel, reveal timing, Conference Call comedy)
@@ -79,10 +107,10 @@ Proof the loop is real:
    (`EPSILON_PROVIDER=claude make bridge`); offline stub tests cover the
    mechanics, but a real generation archive would be the interesting thing
    — then `make replay` reports its first-try acceptance rate.
-3. Secrets: the packet allows optional Echo-reachable alcoves (never on a
-   mandatory path). Flavor-only payloads, since items are AP's alone.
-4. Enemy audio: an aggro cue and a per-archetype attack tone. Currently
-   only death and player fire make noise.
+3. Secrets in the tower and platform_path chambers — both have the
+   vertical room for it; only arenas grow them today.
+4. Epsilon's voice in the Hub between Zones (it currently only speaks
+   inside a Zone, plus the existing generating-screen lines).
 
 ## Known blockers / bugs
 None known. One recorded schema corner: `finale_offered` stays true in
@@ -90,7 +118,7 @@ postgame, so clients also require the goal to be missing
 (`docs/IMPLEMENTATION_DECISIONS.md`).
 
 ## Commands
-    make test                  # 191 pytest
+    make test                  # 193 pytest
     make godot-test            # chamber geometry
     make godot-integration     # the whole game, headlessly
     make replay ARCHIVE=<dir>  # re-validate a generation archive
