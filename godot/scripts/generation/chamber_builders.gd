@@ -351,6 +351,9 @@ const _SECRET_NOTES := [
 const SECRET_LIP_MIN := 2.9
 const SECRET_LIP_MAX := 4.2
 const SECRET_LEDGE_DEPTH := 1.8
+#: Node group on a secret's trigger volume, so ZoneController can find one
+#: without the builders having to hand a list back up through the chain.
+const SECRET_GROUP := "secret_alcove"
 
 ## An optional ledge, holding a plaque and nothing else. DESIGN §19 permits
 ## exactly this: Echoes may open secrets, but never a mandatory path — so a
@@ -395,6 +398,18 @@ static func _secret_alcove(root: Node3D, theme: String, side: float,
 	note.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	note.modulate = Color(0.6, 1.0, 0.88)
 	root.add_child(note)
+	# A trigger so the game can notice you got up here. Grouped rather than
+	# wired: a chamber builder makes geometry and knows nothing about the
+	# HUD. It carries no reward and reports nothing to Archipelago.
+	var trigger := Area3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(SECRET_LEDGE_DEPTH, 2.0, 2.4)
+	shape.shape = box
+	trigger.add_child(shape)
+	trigger.position = Vector3(center_x, lip + 1.0, z)
+	trigger.add_to_group(SECRET_GROUP)
+	root.add_child(trigger)
 
 ## Corner buttresses, perimeter crates and a hazard strip for room-like
 ## spaces. Crates hug the walls so the arena floor stays fightable.

@@ -49,6 +49,12 @@ const LINES := {
 		"Back on your feet. The enemies did not reset. Neither did I.",
 		"Try the doorway this time.",
 	],
+	"secret_found": [
+		"You got up here. I did not leave anything. Read the wall.",
+		"Nobody was supposed to reach that. Well. Nobody was required to.",
+		"Every item in this campaign belongs to someone. This does not.",
+		"There is no reward. There is a view. Take the view.",
+	],
 	"long_walk": [
 		"Take your time. I have nowhere to be.",
 		"I put something on a wall around here. Find it or do not.",

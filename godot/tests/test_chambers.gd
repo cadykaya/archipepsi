@@ -185,6 +185,7 @@ func _test_secrets_are_optional() -> void:
 				"reward_location_id": 89100001,
 				"enemies": [{"archetype": "melee", "count": 2}]},
 				"concrete_facility")
+		var ledges := 0
 		for box: AABB in _collidable_boxes(result["root"]):
 			# Perimeter walls reach the floor and door lintels sit on the
 			# z faces; only interior geometry starting above head height
@@ -194,6 +195,7 @@ func _test_secrets_are_optional() -> void:
 				continue
 			if box.position.y <= reach:
 				continue
+			ledges += 1
 			found += 1
 			var lip := box.position.y + box.size.y
 			_check(lip >= lip_min - 0.001,
@@ -207,6 +209,16 @@ func _test_secrets_are_optional() -> void:
 						% center.x)
 			if wall_height < 5.0:
 				cramped += 1
+		# One trigger per ledge, and it is a sensor, not an obstacle.
+		var triggers := 0
+		for child in result["root"].get_children():
+			if not child.is_in_group(ChamberBuilders.SECRET_GROUP):
+				continue
+			triggers += 1
+			_check(child is Area3D and not (child is PhysicsBody3D),
+					"a secret trigger senses rather than blocks")
+		_check(triggers == ledges,
+				"%d secret ledges but %d triggers" % [ledges, triggers])
 		# Nothing the run needs ever rides up there.
 		_check(result["exit_offset"] == Vector3(0, 0, depth),
 				"a secret never moves the arena exit")

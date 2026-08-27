@@ -30,6 +30,10 @@ func _ready() -> void:
 	# trigger, so it has to read as a tick, not as an event.
 	_players["confirm"] = _make_player(_square_burst(1180.0, 0.03, 0.16))
 	_players["confirm"].volume_db = -16.0
+	# Reaching a secret. Small and rising, deliberately unlike "reward":
+	# nothing was granted, so it must not sound like a Check confirming.
+	_players["secret"] = _make_player(_arp([587.0, 880.0, 1175.0], 0.06, 0.24))
+	_players["secret"].volume_db = -11.0
 
 func play(kind: String) -> void:
 	var player: AudioStreamPlayer = _players.get(kind)

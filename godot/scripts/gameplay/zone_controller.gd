@@ -34,6 +34,12 @@ func setup(zone_dict: Dictionary) -> void:
 	add_child(player)
 	player.set_spawn(build["spawn_transform"])
 
+	# Optional ledges (DESIGN §19). Walked, not searched: nothing is
+	# reported anywhere, so reaching one only ever earns a remark.
+	for node in _collect_group(build["root"], ChamberBuilders.SECRET_GROUP):
+		var area := node as Area3D
+		area.body_entered.connect(_on_secret_entered.bind(area))
+
 	for entry: Dictionary in build["chambers"]:
 		var chamber: Dictionary = entry["chamber"]
 		var xform: Transform3D = entry["xform"]
@@ -97,6 +103,28 @@ func _on_enemy_died(_enemy: Enemy, record: Dictionary) -> void:
 		# that merely happened to be last in the list.
 		if record["satisfied"] and hud != null:
 			hud.say_line("room_cleared")
+
+## Walked into a secret. Says one thing, once, and stops watching: a ledge
+## you are standing on should not keep congratulating you.
+func _on_secret_entered(body: Node3D, area: Area3D) -> void:
+	if not (body is Player):
+		return
+	area.set_deferred("monitoring", false)
+	if tones != null:
+		tones.play("secret")
+	if hud != null:
+		hud.say_line("secret_found")
+
+## Walks a freshly built Zone for grouped nodes. `get_tree()` would also
+## sweep up the previous Zone's nodes, which are queue_freed but still in
+## the tree for the rest of the frame.
+static func _collect_group(node: Node, group: String) -> Array[Node]:
+	var out: Array[Node] = []
+	if node.is_in_group(group):
+		out.append(node)
+	for child in node.get_children():
+		out.append_array(_collect_group(child, group))
+	return out
 
 func _on_goal_area_entered(body: Node3D, record: Dictionary) -> void:
 	if body is Player and not record["satisfied"]:
