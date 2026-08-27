@@ -95,11 +95,42 @@ async def run(server: str, slot: str, password: str) -> None:
     assert after.completed_zone_count == before.completed_zone_count
     assert set(after.checked_location_ids) == set(before.checked_location_ids)
     log.info("reload OK: identical state after reconnect")
-    await backend2.disconnect()
+
+    # Test L: die at the loading screen. Generate a Zone, kill the bridge
+    # before entering, restart — the GENERATED record must survive with its
+    # committed allocation, never orphaned, never re-pooled.
+    if engine2.hub_status().mode == "ZONE_AVAILABLE":
+        await engine2.handle_request_next_zone(False)
+        await engine2._generation_task
+        held = engine2.save.active_zone
+        assert held is not None and held.state == "GENERATED"
+        committed = tuple(held.allocated_location_ids)
+        await backend2.disconnect()               # bridge "dies" here
+
+        engine3 = _engine(save_dir)
+        backend3 = RealAPBackend(engine3)
+        engine3.backend = backend3
+        await backend3.connect(server, slot, password)
+        await wait_for(lambda: engine3.save is not None, 30, "restart")
+        revived = engine3.save.active_zone
+        assert revived is not None, "GENERATED zone lost on restart (test L)"
+        assert revived.state == "GENERATED"
+        assert tuple(revived.allocated_location_ids) == committed
+        assert engine3.hub_status().mode == "ZONE_READY"
+        try:
+            await engine3.handle_request_next_zone(False)
+            raise AssertionError("second request accepted while zone held")
+        except Exception as exc:
+            assert "cannot be started" in str(exc), exc
+        log.info("test L OK: GENERATED zone survives a bridge death at the "
+                 "loading screen (%s)", list(committed))
+        await backend3.disconnect()
+    else:
+        await backend2.disconnect()
 
     print(f"\nREAL AP SMOKE OK against {server} as {slot}: scout, allocate, "
           f"generate, claim, confirm, {len(after.echoes)} echo(es), reload — "
-          "no duplication.")
+          "no duplication; GENERATED zone survives a bridge death (test L).")
 
 
 def main() -> None:

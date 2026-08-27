@@ -33,6 +33,18 @@ refused). The bridge is also proven against a real Archipelago 0.6.7 server
   timer; authored Epsilon graffiti appears on corridor walls; Static Pulse
   tracers discolor as Static accumulates; the victory card holds longer.
 
+## Also completed since
+- Connectivity banners (BRIDGE OFFLINE / ARCHIPELAGO OFFLINE), SIGNAL LOST
+  death overlay, Hub screen-fuzz shader driven by Static.
+- **Adversarial code review of the whole branch** + fixes: externally-
+  confirmed goal now sets goal_sent (ALL_CHECKS_CLEARED was
+  unrepresentable after a release); releasing a zone's last stuck location
+  no longer wedges reconcile; the tower's summit exit was sealed — now a
+  carved doorway with a geometry probe test; spawns face the level; the
+  disabled portal stopped advertising [E]; vertical tracers fixed; mock
+  reconnects reuse server truth; anthropic pin >=1.0. Three new bridge
+  regression tests (188 total).
+
 ## Next useful work (roughly in value order)
 1. **Play-feel pass on real hardware** — the manual checks in
    ACCEPTANCE_TESTS §7 (gap feel, reveal timing, Conference Call comedy)
@@ -42,9 +54,8 @@ refused). The bridge is also proven against a real Archipelago 0.6.7 server
    mechanics but a real generation archive would be gold.
 3. Zone variety: safe non-linear arrangements (L-bends need rotated
    chaining + overlap checks — design before building).
-4. Hub screen-fuzz shader tied to Static (a CanvasLayer shader, subtle).
-5. Robustness: bridge-restart-mid-zone manual pass (Test L headless
-   equivalent is covered by bridge test 18).
+4. Robustness: bridge-restart-mid-zone against a REAL server (mock resets
+   its truth on restart by design, so this needs `make host`).
 
 ## Known blockers / bugs
 - None known. One recorded schema corner: `finale_offered` stays true in
