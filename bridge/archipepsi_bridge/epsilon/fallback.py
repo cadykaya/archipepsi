@@ -142,7 +142,7 @@ def _primary(request: EchoGenerationRequest, *, archetype: str, cooldown: float,
 def _primary_and_resource(
         request: EchoGenerationRequest, *, archetype: str, cooldown: float,
         initiator: dict, resource: dict, description: str,
-        tags: list[str]) -> dict:
+        tags: list[str], powers: float | None = None) -> dict:
     """One Action and one Resource, from one item.
 
     The recorded S1 decision is that the fallback stays deliberately boring,
@@ -152,11 +152,9 @@ def _primary_and_resource(
     only way the resource pipeline — grant, fold, channel assignment,
     snapshot, HUD — is exercised end to end by the integration run.
 
-    Nothing SPENDS these yet: costs are rules (S4) and `powers`/`fills`
-    links are S5. A full, unspent channel is not a bug, it is §7's pressure
-    valve doing its job — it collapses to an idle strip until something
-    makes it relevant. Starting below full with a slow regen is what makes
-    that visible instead of theoretical.
+    S5 closed the loop: `powers` names the press cost the resource pays
+    for the action, so the button finally spends the bar it arrived with.
+    Starting below full with a slow regen keeps the pressure valve visible.
     """
     src = request.source
     return {**_common(request, description, tags), "operations": [
@@ -181,7 +179,12 @@ def _primary_and_resource(
                 **resource,
             },
         },
-    ]}
+    ] + ([] if powers is None else [{
+        "op": "link", "link": "powers",
+        "source": MG.component_id_for("res", src.location_id),
+        "target": MG.component_id_for("act", src.location_id),
+        "strength": powers,
+    }])}
 
 
 def _create_ops(request: EchoGenerationRequest, description: str,
@@ -277,8 +280,12 @@ def fallback_echo(request: EchoGenerationRequest, *,
         return _primary(
             request, archetype="weapon", cooldown=0.9,
             initiator={"type": "melee_thrust", "damage": 34.0, "reach": 4.2},
-            description="Reach beats width. Pick your line and commit.",
-            tags=["melee", "weapon"])
+            modifiers=[{"type": "apply_status_on_hit",
+                        "status": "vulnerable", "duration": 4.0,
+                        "magnitude": 0.6}],
+            description="Reach beats width, and a pierced guard stays "
+                        "pierced.",
+            tags=["melee", "weapon", "status"])
     if has("hammer", "mallet", "stomp", "smash", "quake"):
         return _primary(
             request, archetype="weapon", cooldown=3.5,
@@ -299,8 +306,8 @@ def fallback_echo(request: EchoGenerationRequest, *,
                 "regen_per_second": 4.0, "regen_delay": 1.0,
                 "presentation": "bar", "palette_color": "tide",
             },
-            description="A meter and something to spend it on, eventually.",
-            tags=["magic", "resource"])
+            description="A meter and something that spends it.",
+            tags=["magic", "resource", "linked"], powers=12.0)
     if has("stamina", "vigor", "endurance", "breath") \
             and room(resources=1):
         return _primary_and_resource(
@@ -314,8 +321,8 @@ def fallback_echo(request: EchoGenerationRequest, *,
                 "presentation": "pips", "pip_count": 6,
                 "palette_color": "moss",
             },
-            description="Borrowed wind. It comes back on its own.",
-            tags=["stamina", "resource"])
+            description="Borrowed wind, spent a lungful per dash.",
+            tags=["stamina", "resource", "linked"], powers=15.0)
     if has("staff", "wand", "charge", "rod", "focus"):
         return _primary(
             request, archetype="weapon", cooldown=0.5,

@@ -25,6 +25,7 @@ from .epsilon.requests import EchoPlayerState, EchoSource
 from .schemas import constants as C
 from .schemas import transitions as T
 from .schemas.mechanics import Mechanics, derive_mechanics
+from .schemas.echo import over_soft_budget
 from .schemas.protocol import (
     CampaignSave, CampaignSnapshot, HubStatus, Notification, ScoutedLocation,
     ShopState, SlotAssignment, ZoneReady, ZoneRecord,
@@ -680,7 +681,8 @@ class CampaignEngine:
                 signal_keys=self.ap.signal_keys,
                 coins_available=max(
                     0, self.ap.coins_received - save.coins_spent)),
-            required_echo_id=f"echo_{location_id}")
+            required_echo_id=f"echo_{location_id}",
+            over_soft_budget=over_soft_budget(save.derive()))
 
     async def grant_echo(self, location_id: int) -> str | None:
         """Generate and persist the Echo for a confirmed foreign location.

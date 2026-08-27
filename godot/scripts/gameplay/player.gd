@@ -61,6 +61,9 @@ var statuses := StatusEffects.new()
 ## survives here as two numbers rather than as a reference to an ability.
 var glide_fall_speed := 0.0
 var glide_forward_speed := 0.0
+## Set by EchoRuntime while a `hover` is held; 1.0 otherwise. Applied on
+## top of the trait stack's gravity, same ownership split as the glide.
+var hover_gravity_scale := 1.0
 
 ## Set by EchoRuntime when a `slam_ground` is committed to, and paid out on
 ## landing. It has to resolve HERE because only the body knows the frame it
@@ -239,7 +242,7 @@ func _physics_process(delta: float) -> void:
 		return
 	_refresh_derived_stats(delta)
 
-	var gravity := Constants.GRAVITY * gravity_mult
+	var gravity := Constants.GRAVITY * gravity_mult * hover_gravity_scale
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 		_coyote -= delta

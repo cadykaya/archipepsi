@@ -389,27 +389,22 @@ IMPLEMENTED_PRIMITIVES = (
     "melee_swing", "melee_thrust", "slam_ground",
     # ranged
     "hitscan_damage", "projectile_damage", "arc_lob", "burst_fire",
-    "charge_shot",
+    "charge_shot", "beam_sustained",
     # movement
-    "dash", "air_dash", "double_jump", "wall_kick", "glide", "blink",
-    "grapple_to_surface", "grapple_pull_target", "grapple_swing",
+    "dash", "air_dash", "double_jump", "wall_kick", "hover", "glide",
+    "blink", "grapple_to_surface", "grapple_pull_target", "grapple_swing",
     # defensive
-    "shield", "parry", "heal_self",
+    "shield", "block", "parry", "heal_self", "cleanse",
     # utility
-    "place_marker",
+    "scan_mark", "restore_resource", "place_marker",
 )
 
 #: Why each still-gated primitive is gated, and the stage that lands it.
 #: Paired with `IMPLEMENTED_PRIMITIVES` so the two together must account for
 #: every entry in the catalog — see `test_schemas.py`.
 DEFERRED_PRIMITIVES = {
-    "beam_sustained": "S5: needs a Resource (S3) and a `powers` link (S5)",
-    "hover": "S5: needs a Resource (S3) and a `powers` link (S5)",
-    "block": "S5: needs a Resource (S3) and a `powers` link (S5)",
-    "restore_resource": "S5: needs a Resource (S3) and a `fills` link (S5)",
-    "scan_mark": "S5: applies the `marked` status",
-    "cleanse": "S5: removes statuses",
-    "pull_pickup": "S9: local rewards are the only thing it may attract",
+    "pull_pickup": "S9: pulls LOCAL rewards, which do not exist until the "
+                   "local-reward catalog lands",
 }
 
 #: Primitives that are meaningless without something to spend, so a `powers`
@@ -501,6 +496,10 @@ TraitStat = Literal[
 #: any of these worse than base, which is what keeps `max_safe_gap` valid
 #: without recomputation (ECHOES.md 10).
 TRAVERSAL_STATS = ("move_speed", "jump_height", "gravity", "air_control")
+
+#: I7's mild band: the largest harmful deviation from base an ALWAYS-ON
+#: component may carry. Anything worse must declare `requires_equipped`.
+MILD_DOWNSIDE_LIMIT = 1.0 / 3.0
 
 
 class Condition(Strict):
@@ -629,7 +628,7 @@ class TraitComponent(ComponentBase):
     #: from 1.0 to `multiplier` across that fraction.
     scaled_by: str | None = Field(default=None, max_length=32)
     #: Set when the trait only applies while a given Action is slotted. A
-    #: severe downside MUST set this — see `validate_interpretation`.
+    #: severe downside MUST set this — enforced by the validator below.
     requires_equipped: ComponentId | None = None
 
     @model_validator(mode="after")
@@ -653,6 +652,32 @@ class TraitComponent(ComponentBase):
             raise ValueError(
                 f"a '{self.stat}' trait may not fall below base "
                 f"(multiplier {self.multiplier} < 1.0)"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _severe_downsides_must_be_removable(self):
+        """I7: permanent means mild; severe means removable (ECHOES 10).
+
+        A downside is a non-traversal multiplier in the harmful direction:
+        under base for ground_friction, damage_dealt, knockback_resist and
+        regen; over base for damage_taken. Beyond the mild band it must be
+        bound to an Action the player can take off. The band is a third of
+        base — wide enough for Iron Boots to feel heavy while equipped,
+        narrow enough that an always-on curse never decides a fight.
+        """
+        if self.requires_equipped is not None or self.stat in TRAVERSAL_STATS:
+            return self
+        harmful = 0.0
+        if self.stat == "damage_taken":
+            harmful = self.multiplier - 1.0
+        else:
+            harmful = 1.0 - self.multiplier
+        if harmful > MILD_DOWNSIDE_LIMIT:
+            raise ValueError(
+                f"an always-on '{self.stat}' trait at {self.multiplier} is "
+                "a severe downside; bind it to an Action with "
+                "requires_equipped, or soften it past the mild bound"
             )
         return self
 

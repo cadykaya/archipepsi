@@ -41,6 +41,14 @@ var _charge := 0.0
 var _gliding := false
 var _parry_window := 0.0
 var _dash_window := 0.0
+var _hover_left := 0.0
+#: Wired by main; null in suites that never activate powered verbs.
+var pool: ResourcePool = null
+
+#: The held verbs that pay per second through their `powers` link rather
+#: than per press. The fold guarantees each HAS that link (S1's
+#: `_require_power_links`), so an empty lookup here is drift, not data.
+const DRAIN_VERBS := ["beam_sustained", "hover", "block"]
 var _burst_left := 0
 var _burst_timer := 0.0
 
@@ -198,6 +206,16 @@ func _physics_process(delta: float) -> void:
 		_charge = minf(_charge + delta,
 				float(_primitive().get("charge_time", 1.0)))
 
+	if _held:
+		match _primitive_type():
+			"beam_sustained":
+				_beam_tick(delta)
+			"hover":
+				_hover_tick(delta)
+			"block":
+				if not _drain(delta):
+					_held = false
+
 	if _gliding:
 		# A glide that outlives the ground is just flight. Landing ends it
 		# through set_grounded; this ends it when the key comes up.
@@ -216,6 +234,13 @@ func activate() -> void:
 	# resolved — an air dash on the ground, a slam with the floor under you
 	# — reads as the ability being broken.
 	if not _conditions_met():
+		return
+	# Links, in the same pre-cooldown position: a `gates` threshold not
+	# met, or a `powers` press cost the bar cannot pay, is a press that
+	# could never have resolved.
+	if not _gates_open():
+		return
+	if not _pay_powers_cost():
 		return
 
 	cooldown_remaining = float(equipped.get("cooldown", 1.0))
@@ -252,14 +277,22 @@ func activate() -> void:
 		"shield": _shield(primitive)
 		"parry": _begin_parry(primitive)
 		"heal_self": player.heal(float(primitive["amount"]))
+		"block": pass               # held: the absorb path reads the hold
+		"cleanse": player.statuses.cleanse(int(primitive.get("count", 1)))
+		# -- powered / linked (S5)
+		"beam_sustained": pass      # resolves per frame while held
+		"hover": _begin_hover(primitive)
+		"restore_resource": _restore_resource(primitive)
 		# -- utility
 		"place_marker": _place_marker(primitive)
+		"scan_mark": _scan_mark(primitive)
 
 	_apply_modifiers(modifiers, damaged)
 	if _primitive_type() in ["dash", "air_dash"]:
 		# The impulse decays over roughly this window under ground
 		# friction; landing ends it early via set_grounded.
 		_dash_window = 0.35
+	_apply_fills()
 	action_used.emit()
 
 ## The slot's key, released. Only the held verbs care.
@@ -270,6 +303,133 @@ func release() -> void:
 	match _primitive_type():
 		"charge_shot": _fire_charge_shot(_primitive())
 		"glide": _end_glide()
+		"hover": _end_hover()
+
+# --- S5: links, and the verbs they power ----------------------------------
+
+func _link_edges(kind: String) -> Array:
+	var out: Array = []
+	for link: Dictionary in BridgeClient.mechanics().get("links", []):
+		if str(link.get("link", "")) == kind:
+			out.append(link)
+	return out
+
+## The `powers` link whose target is the equipped Action. The fold already
+## resolved merge aliases, so ids here are canonical.
+func _powers_link() -> Dictionary:
+	var my_id := str(equipped.get("component_id", ""))
+	for link: Dictionary in _link_edges("powers"):
+		if str(link.get("target", "")) == my_id:
+			return link
+	return {}
+
+## `gates(resource → action)`: unavailable below the threshold. Strength
+## up to 1 reads as a fraction; above 1 as absolute units, so "needs 20
+## charge" and "needs a third of the bar" both say what they mean.
+func _gates_open() -> bool:
+	if pool == null:
+		return true
+	var my_id := str(equipped.get("component_id", ""))
+	for link: Dictionary in _link_edges("gates"):
+		if str(link.get("target", "")) != my_id:
+			continue
+		var source := str(link.get("source", ""))
+		var strength := float(link.get("strength", 1.0))
+		if strength <= 1.0:
+			if pool.fraction_of(source) < strength:
+				return false
+		elif pool.value_of(source) < strength:
+			return false
+	return true
+
+## `powers` on a press verb: pay strength units on the press, all or
+## nothing. Drain verbs pay per second instead — their press is free and
+## their empty bar ends the hold.
+func _pay_powers_cost() -> bool:
+	var link := _powers_link()
+	if link.is_empty() or pool == null:
+		return true
+	var source := str(link.get("source", ""))
+	if _primitive_type() in DRAIN_VERBS:
+		return pool.value_of(source) > 0.0
+	return pool.spend(source, float(link.get("strength", 1.0)))
+
+## `fills(action → resource)`: a successful use adds strength. The
+## restore_resource verb fills by its OWN amount through the same link —
+## the link says where, the primitive says how much — so it is skipped
+## here rather than counted twice.
+func _apply_fills() -> void:
+	if pool == null or _primitive_type() == "restore_resource":
+		return
+	var my_id := str(equipped.get("component_id", ""))
+	for link: Dictionary in _link_edges("fills"):
+		if str(link.get("source", "")) == my_id:
+			pool.refill(str(link.get("target", "")),
+					float(link.get("strength", 1.0)))
+
+func _restore_resource(primitive: Dictionary) -> void:
+	if pool == null:
+		return
+	var my_id := str(equipped.get("component_id", ""))
+	for link: Dictionary in _link_edges("fills"):
+		if str(link.get("source", "")) == my_id:
+			pool.refill(str(link.get("target", "")),
+					float(primitive.get("amount", 0.0)))
+
+## Drain the powering resource; false means the bar ran dry and the hold
+## must end. The spend path keeps regen_delay honest per tick.
+func _drain(delta: float) -> bool:
+	var link := _powers_link()
+	if link.is_empty() or pool == null:
+		return false
+	var rate := float(_primitive().get("drain_per_second", 0.0))
+	return pool.spend(str(link.get("source", "")), rate * delta)
+
+func _beam_tick(delta: float) -> void:
+	if not _drain(delta):
+		_held = false
+		return
+	var primitive := _primitive()
+	var hit := player.camera_ray(float(primitive.get("range", 20.0)))
+	if not hit.is_empty():
+		var target: Variant = hit["collider"]
+		if is_instance_valid(target) and target.is_in_group("enemies"):
+			player.report_hit(target.take_damage(
+					float(primitive.get("damage_per_second", 0.0)) * delta
+					* player.damage_dealt_mult,
+					-player.camera.global_transform.basis.z, 0.0))
+	player.muzzle_flash(1.1, source_color())
+
+func _begin_hover(primitive: Dictionary) -> void:
+	_hover_left = float(primitive.get("max_duration", 1.0))
+	player.hover_gravity_scale = float(
+			primitive.get("gravity_multiplier", 0.5))
+
+func _end_hover() -> void:
+	_hover_left = 0.0
+	player.hover_gravity_scale = 1.0
+
+func _hover_tick(delta: float) -> void:
+	_hover_left -= delta
+	if _hover_left <= 0.0 or not _drain(delta):
+		_end_hover()
+		_held = false
+
+## Incoming damage removed while a `block` is genuinely held. The drain
+## tick already ended the hold if the bar ran dry, so held is the truth.
+func block_reduction() -> float:
+	if _held and _primitive_type() == "block":
+		return clampf(float(_primitive().get("reduction", 0.0)), 0.0, 0.9)
+	return 0.0
+
+func _scan_mark(primitive: Dictionary) -> void:
+	var reach := float(primitive.get("range", 20.0))
+	var duration := float(primitive.get("duration", 5.0))
+	for node in get_tree().get_nodes_in_group("enemies"):
+		if node is Node3D and not node.is_queued_for_deletion() \
+				and (node as Node3D).global_position.distance_to(
+						player.global_position) <= reach:
+			node.statuses.apply("marked", duration, 1.0)
 
 ## Whether a conditional verb could resolve right now. Kept in one place so
 ## `activate()` reads as a list of verbs rather than a thicket of guards.
@@ -322,6 +482,13 @@ func _apply_modifiers(modifiers: Array, damaged: Array[Node]) -> void:
 						var away: Vector3 = (enemy.global_position
 								- player.global_position).normalized()
 						enemy.apply_knockback(away * float(modifier["force"]))
+			"apply_status_on_hit":
+				for enemy in damaged:
+					if is_instance_valid(enemy) and "statuses" in enemy:
+						enemy.statuses.apply(
+								str(modifier.get("status", "")),
+								float(modifier.get("duration", 1.0)),
+								float(modifier.get("magnitude", 0.5)))
 
 # ---------------------------------------------------------------------------
 # Close combat
@@ -811,6 +978,9 @@ func absorb_with_shield(damage: float) -> float:
 		parried.emit()
 		player.muzzle_flash(3.0, source_color().lightened(0.4))
 		return 0.0
+	# A held block shaves its fraction next: cheaper than a shield point
+	# for point, and it costs drain rather than a timed read.
+	damage *= 1.0 - block_reduction()
 	if shield_hp <= 0.0:
 		return damage
 	var absorbed := minf(shield_hp, damage)

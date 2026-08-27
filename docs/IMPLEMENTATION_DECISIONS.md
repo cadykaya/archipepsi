@@ -347,3 +347,76 @@ Two corrections were made on top of it:
   defines the dashing window as roughly the impulse's decay under ground
   friction. Chosen over inventing a dash state machine a stage that owns
   movement polish can replace.
+
+## S5 — traits, links, statuses
+
+- **The catalog is complete but for one verb.** `beam_sustained`, `hover`,
+  `block` and `restore_resource` needed a Resource *and* a link, and both
+  now exist; `scan_mark` and `cleanse` needed statuses. `pull_pickup` is
+  the only primitive left in `DEFERRED_PRIMITIVES`, waiting on S9's local
+  rewards — the stage that gives it something to pull.
+
+- **`powers` and `fills` run in opposite directions, and the S3 HUD code
+  had both wrong.** `_is_cost_of_slotted_action` read the link kind from a
+  `kind` field the fold does not emit (the wire name is `link`), and then
+  matched `source in slotted` for both kinds — correct for `fills` (action
+  → resource), backwards for `powers` (resource → action). Neither could
+  fire before S5, because no operation could create a link; the HUD
+  suite's new case caught both on its first run with links present. This
+  is the S3 tripwire paying for itself: it existed precisely because that
+  third of the relevance rule was unprovable.
+
+- **A press verb pays `strength` on the press; a held verb pays
+  `drain_per_second` per second.** The link carries one number and the
+  primitive carries the other, so `powers` means "this bar is what the
+  action costs" without the link having to know which shape of action it
+  points at. `_pay_powers_cost` therefore only checks a drain verb's bar
+  is non-empty, and `_drain` does the paying — which also gives the hold
+  its natural end when the bar runs out.
+
+- **`gates` strength reads as a fraction at or below 1.0 and as absolute
+  units above it.** The schema bounds strength to [0, 200] and says
+  nothing about units. One number has to express both "needs a third of
+  the bar" and "needs 20 charge"; the split at 1.0 is unambiguous because
+  a fractional threshold above 1.0 would mean "more than full", which is
+  never satisfiable.
+
+- **I7 is enforced by the model now, not just described.** `ECHOES` §10's
+  "permanent means mild, severe means removable" had no validator: a
+  always-on `ground_friction` at 0.4 was schema-valid. A harmful
+  deviation past `MILD_DOWNSIDE_LIMIT` (a third of base) must now declare
+  `requires_equipped`. The mild band is wide enough for a noticeable
+  always-on cost and narrow enough that no permanent curse decides a
+  fight, and the traversal stats are exempt because their own floor is
+  stricter than any band.
+
+- **Statuses are per-target containers, and an owned `StatusComponent` is
+  a FLOOR for its kind on its side.** A campaign that owns a tuned
+  "burning" cannot have a weaker burning applied to it; that is what
+  keeps an owned status definition from being an inert component. Re-
+  application max-merges duration and magnitude rather than stacking,
+  because two burnings that summed would breach the schema's own
+  magnitude bound from outside it.
+
+- **A self-slow expresses as `ground_friction`, never `move_speed`.** §10
+  reserves the traversal stats, and the stat stack floors them after
+  status factors as well as trait factors — so `slowed` on the player
+  makes control slippery rather than making a generated gap unclearable.
+  Enemies have no such floor: `slowed`, `frozen` and `stunned` gate their
+  movement and attacks directly.
+
+- **`over_soft_budget` is on the request, as S3's decision promised.** The
+  recorded condition was "when a non-CREATE operation becomes
+  implementable", and LINK is one: telling a provider "the campaign is
+  resource-rich, relate instead of duplicating" is now advice validation
+  accepts rather than a prompt that manufactures its own repair loop.
+
+- **Traits still apply because they are owned.** S5 is the stage where
+  this became operational, and the v0.8 contract still says a trait is
+  true once owned (`ECHOES` §2). What S5 adds is the escape hatch the
+  contract always intended: `requires_equipped` makes a trait conditional
+  on a slot, and I7 now *requires* it for anything severe. So the model
+  is unchanged and the reconsideration is answered rather than deferred:
+  ownership is the default, equipping is the modifier, and the only
+  things forced into the equipped form are the ones §10 says must be
+  removable.

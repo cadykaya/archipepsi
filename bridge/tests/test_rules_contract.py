@@ -67,7 +67,8 @@ def test_implemented_events_are_exactly_push_plus_derived_plus_the_timer():
     push_block = re.search(r"const PUSH_EVENTS := \[(.*?)\]", source, re.S)
     assert push_block, "the runtime no longer declares PUSH_EVENTS"
     push = set(re.findall(r'"([a-z_0-9]+)"', push_block.group(1)))
-    derived = {"resource_full", "resource_empty", "low_health"}
+    derived = {"resource_full", "resource_empty", "low_health",
+               "status_applied"}
     for kind in derived:
         assert f'"{kind}"' in source[source.index("func _derive_edges("):], (
             f"{kind} is no longer derived by _derive_edges")
@@ -78,15 +79,14 @@ def test_implemented_events_are_exactly_push_plus_derived_plus_the_timer():
 
 def test_every_gated_kind_is_a_real_schema_kind():
     """The gates must gate the schema's vocabulary, not typos of it."""
-    assert set(IMPLEMENTED_RULE_EVENTS) < set(get_args(EventKind))
-    assert set(IMPLEMENTED_CONDITION_KINDS) < set(get_args(ConditionKind))
+    assert set(IMPLEMENTED_RULE_EVENTS) <= set(get_args(EventKind))
+    assert set(IMPLEMENTED_CONDITION_KINDS) <= set(get_args(ConditionKind))
     assert set(IMPLEMENTED_EFFECT_KINDS) < set(get_args(EffectKind))
-    assert set(get_args(EventKind)) - set(IMPLEMENTED_RULE_EVENTS) \
-        == {"status_applied"}
-    assert set(get_args(ConditionKind)) - set(IMPLEMENTED_CONDITION_KINDS) \
-        == {"status_active"}
+    # S5 opened the status vocabulary; S9 owns what is left.
+    assert set(get_args(EventKind)) == set(IMPLEMENTED_RULE_EVENTS)
+    assert set(get_args(ConditionKind)) == set(IMPLEMENTED_CONDITION_KINDS)
     assert set(get_args(EffectKind)) - set(IMPLEMENTED_EFFECT_KINDS) \
-        == {"trait_pulse", "apply_status", "grant_local_reward"}
+        == {"grant_local_reward"}
 
 
 # --- the fold half --------------------------------------------------------
@@ -184,13 +184,19 @@ def test_stage_support_admits_a_runnable_rule():
     assert validate_stage_support(interpretation) == []
 
 
-def test_stage_support_refuses_the_s5_and_s9_vocabulary():
-    gated = _interp(0, [_rule(
+def test_stage_support_admits_the_s5_status_vocabulary_now():
+    """S5 landed statuses, so the gate moved rather than merely closing."""
+    landed = _interp(0, [_rule(
         event="status_applied",
         conditions=[{"type": "status_active", "subject": "burning"}],
         effects=[{"type": "apply_status", "subject": "burning",
                   "amount": 1.0, "duration": 3.0}])])
+    assert validate_stage_support(landed) == []
+
+
+def test_stage_support_still_refuses_the_s9_vocabulary():
+    gated = _interp(0, [_rule(
+        effects=[{"type": "grant_local_reward", "subject": "epsilon_note",
+                  "amount": 1.0}])])
     errors = validate_stage_support(gated)
-    assert any("status_applied" in e for e in errors)
-    assert any("status_active" in e for e in errors)
-    assert any("apply_status" in e for e in errors)
+    assert any("grant_local_reward" in e for e in errors)

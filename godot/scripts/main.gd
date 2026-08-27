@@ -230,8 +230,10 @@ func _bind_rule_runtime(target: Player, zone_ctl: ZoneController) -> void:
 	rule_runtime.echo_runtime = target.echo_runtime
 	rule_runtime.zone_root = zone_ctl
 	rule_runtime.refresh_rules()
-	# The stat stack reads live fractions; the pool is main's.
+	# The stat stack and the action runner both read live fractions; the
+	# pool is main's.
 	target.stat_stack.pool = resource_pool
+	target.echo_runtime.pool = resource_pool
 	target.jumped.connect(func() -> void: rule_runtime.notify("jump"))
 	target.footstep.connect(func(kind: String) -> void:
 		if kind == "land":

@@ -67,6 +67,8 @@ def test_the_fallback_reaches_a_real_spread_of_verbs():
     primitives = set()
     for index, name in enumerate(ITEM_NAMES):
         for operation in _echo_for(index, name).operations:
+            if operation.op != "create":     # S5: links carry no component
+                continue
             component = operation.component
             if component.kind == "action":
                 primitives.add(component.primitive.type)
@@ -98,16 +100,24 @@ def test_the_fallback_is_still_structurally_boring():
         echo = _echo_for(index, name)
         assert echo.mode == "literal", name
         assert 1 <= len(echo.operations) <= 4, name
+        created = {op.component.component_id for op in echo.operations
+                   if op.op == "create"}
         for operation in echo.operations:
-            # CREATE only is the load-bearing half: no UPGRADE, MODIFY,
-            # LINK or MERGE means the fallback can never dangle a target or
-            # fail a fold, which is what keeps it usable as the oracle for
-            # every stage after this one.
-            assert operation.op == "create", (name, operation.op)
+            # No UPGRADE, MODIFY or MERGE: those are the ops that reach
+            # BACKWARD into the campaign, and refusing them is what keeps
+            # the fallback unable to dangle a target or fail a fold. S5
+            # added LINK, which the fallback uses only INSIDE one
+            # interpretation — both endpoints created here, above the link.
+            # That is the property, so it is what the test asserts rather
+            # than the op list it used to stand in for.
+            assert operation.op in ("create", "link"), (name, operation.op)
+            if operation.op == "link":
+                assert operation.source in created, (name, operation.source)
+                assert operation.target in created, (name, operation.target)
+                continue
             # Which KINDS it may create is a staging question, not a
             # boringness one, so it is asked of the registry rather than of
-            # a literal that would need editing every stage. S3 added
-            # "resource" here; the constraint above did not move.
+            # a literal that would need editing every stage.
             assert operation.component.kind in CAP.IMPLEMENTED_COMPONENT_KINDS, (
                 name, operation.component.kind)
 

@@ -21,16 +21,26 @@ from ..schemas.echo import EchoInterpretation
 # schemas.echo.IMPLEMENTED_PRIMITIVES — S2 opened that to 21 of 28. What
 # follows is everything else about the shape of an interpretation, and S2
 # moves none of it: the wider systems are still ahead.
-IMPLEMENTED_OPERATION_KINDS = ("create",)
+#: S5 added "link": the four kinds have runtime meaning now — `powers`
+#: costs and drains, `fills` refills, `gates` withholds, `scales`
+#: interpolates a trait — so a LINK operation is an edge the game actually
+#: walks. UPGRADE / MODIFY / MERGE stay S6 (dispositions).
+IMPLEMENTED_OPERATION_KINDS = ("create", "link")
 #: S3 added "resource": the fifteen HUD channels exist, so a Resource is
 #: now a thing the client can render and tick rather than a definition
 #: nothing reads. S4 added "rule": the ECHOES §5 interpreter runs in the
 #: client (`rule_runtime.gd`, proven by `make godot-rules`), so a rule can
 #: watch events, hold conditions, SPEND a resource and apply effects.
-#: Still no Action verb un-gates: the four powered/filled verbs need S5
-#: links, not just rules. See DEFERRED_PRIMITIVES.
-IMPLEMENTED_COMPONENT_KINDS = ("action", "trait", "resource", "rule")
-IMPLEMENTED_TRAIT_STATS = ("gravity", "move_speed")
+#: S5 added "status": the per-target containers run in the client, and an
+#: owned definition floors applications of its kind.
+IMPLEMENTED_COMPONENT_KINDS = ("action", "trait", "resource", "rule",
+                               "status")
+#: S5: the full derived stat stack (`stat_stack.gd`, `make godot-stats`).
+IMPLEMENTED_TRAIT_STATS = (
+    "move_speed", "jump_height", "gravity", "air_control",
+    "ground_friction", "damage_dealt", "damage_taken", "knockback_resist",
+    "regen",
+)
 
 #: The §5 allowlists, minus what later stages own. `status_applied` /
 #: `status_active` / `apply_status` are S5 (statuses), `trait_pulse` is S5
@@ -42,16 +52,17 @@ IMPLEMENTED_RULE_EVENTS = (
     "zone_enter", "chamber_enter", "jump", "land", "dash_end", "kill",
     "damage_dealt", "damage_taken", "action_used", "action_ready",
     "parry_success", "check_claimed", "tick_1hz", "resource_full",
-    "resource_empty", "low_health",
+    "resource_empty", "low_health", "status_applied",
 )
 IMPLEMENTED_CONDITION_KINDS = (
     "resource_at_least", "resource_at_most", "hp_below", "hp_above",
     "moving_backward", "airborne", "grounded", "speed_above",
-    "enemy_within", "slot_is", "zone_is_finale",
+    "enemy_within", "slot_is", "zone_is_finale", "status_active",
 )
 IMPLEMENTED_EFFECT_KINDS = (
     "resource_add", "heal", "grant_shield", "impulse_self", "damage_around",
     "fire_projectile", "reset_action_cooldown", "refill_resource",
+    "apply_status", "trait_pulse",
 )
 
 #: Still one slot, and this is the line people will reach for first when
@@ -61,8 +72,8 @@ IMPLEMENTED_EFFECT_KINDS = (
 #: Action on a slot no key is wired to — owned, slotted, and unreachable.
 IMPLEMENTED_ACTION_SLOTS = ("echo_a",)
 
-#: `apply_status_on_hit` waits for statuses in S5.
-IMPLEMENTED_MODIFIER_TYPES = ("recoil_self", "knockback_target")
+IMPLEMENTED_MODIFIER_TYPES = ("recoil_self", "knockback_target",
+                              "apply_status_on_hit")
 
 
 def validate_stage_support(interpretation: EchoInterpretation) -> list[str]:
@@ -81,9 +92,9 @@ def validate_stage_support(interpretation: EchoInterpretation) -> list[str]:
             )
             continue
 
-        # S1 supports only CREATE, so this branch is exhaustive today. Keep
-        # it shaped this way so later stages can add an operation without
-        # accidentally bypassing the component gate for CREATE.
+        # A LINK op carries no component; the component gates below are
+        # CREATE's. Keep the explicit skip so a later op kind cannot
+        # accidentally bypass them.
         if op.op != "create":
             continue
         component = op.component

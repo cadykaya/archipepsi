@@ -122,7 +122,7 @@ const ENEMY_STATS = {
 const ECHO_ACTION_PRIMITIVES = ["melee_swing", "melee_thrust", "slam_ground", "hitscan_damage", "projectile_damage", "arc_lob", "burst_fire", "charge_shot", "beam_sustained", "dash", "air_dash", "double_jump", "wall_kick", "hover", "glide", "blink", "grapple_to_surface", "grapple_pull_target", "grapple_swing", "shield", "block", "parry", "heal_self", "cleanse", "scan_mark", "restore_resource", "pull_pickup", "place_marker"]
 
 # The subset this engine must be able to execute today.
-const ECHO_IMPLEMENTED_PRIMITIVES = ["melee_swing", "melee_thrust", "slam_ground", "hitscan_damage", "projectile_damage", "arc_lob", "burst_fire", "charge_shot", "dash", "air_dash", "double_jump", "wall_kick", "glide", "blink", "grapple_to_surface", "grapple_pull_target", "grapple_swing", "shield", "parry", "heal_self", "place_marker"]
+const ECHO_IMPLEMENTED_PRIMITIVES = ["melee_swing", "melee_thrust", "slam_ground", "hitscan_damage", "projectile_damage", "arc_lob", "burst_fire", "charge_shot", "beam_sustained", "dash", "air_dash", "double_jump", "wall_kick", "hover", "glide", "blink", "grapple_to_surface", "grapple_pull_target", "grapple_swing", "shield", "block", "parry", "heal_self", "cleanse", "scan_mark", "restore_resource", "place_marker"]
 
 # Held back by a stage, with the stage that lands each one.
-const ECHO_DEFERRED_PRIMITIVES = {"beam_sustained": "S5: needs a Resource (S3) and a `powers` link (S5)", "hover": "S5: needs a Resource (S3) and a `powers` link (S5)", "block": "S5: needs a Resource (S3) and a `powers` link (S5)", "restore_resource": "S5: needs a Resource (S3) and a `fills` link (S5)", "scan_mark": "S5: applies the `marked` status", "cleanse": "S5: removes statuses", "pull_pickup": "S9: local rewards are the only thing it may attract"}
+const ECHO_DEFERRED_PRIMITIVES = {"pull_pickup": "S9: pulls LOCAL rewards, which do not exist until the local-reward catalog lands"}

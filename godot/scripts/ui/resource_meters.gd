@@ -217,9 +217,18 @@ func _is_cost_of_slotted_action(component_id: String) -> bool:
 	if slotted.is_empty():
 		return false
 	for link: Dictionary in BridgeClient.mechanics().get("links", []):
-		if str(link.get("kind", "")) not in ["powers", "fills"]:
-			continue
-		if str(link.get("source", "")) in slotted \
-				and str(link.get("target", "")) == component_id:
-			return true
+		# The wire field is `link`, not `kind` — and `powers` runs
+		# resource → action while `fills` runs action → resource, so the
+		# slotted end differs per kind. Both were wrong when this was
+		# written in S3, and neither could be caught until S5 made links
+		# possible; the HUD suite caught both on its first run with them.
+		match str(link.get("link", "")):
+			"powers":
+				if str(link.get("target", "")) in slotted \
+						and str(link.get("source", "")) == component_id:
+					return true
+			"fills":
+				if str(link.get("source", "")) in slotted \
+						and str(link.get("target", "")) == component_id:
+					return true
 	return false

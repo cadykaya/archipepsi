@@ -156,11 +156,30 @@ func _pressure_valve() -> void:
 	_check(is_equal_approx(_height(meters, 0), meters._IDLE_HEIGHT),
 			"full and quiet again, the channel collapses again")
 
+	# The THIRD leg, live since S5: a FULL, quiet channel stays expanded
+	# while a slotted Action is powered by it. This is the case
+	# test_stage_tripwires.py held open until links landed.
+	BridgeClient.snapshot = {
+		"mechanics": {
+			"owned": BridgeClient.mechanics().get("owned", []),
+			"aliases": [], "links": [{"link": "powers",
+					"source": "res_magic", "target": "act_wand",
+					"strength": 5.0}],
+			"channel_order": BridgeClient.resource_channels()},
+		# The archive scenario runs after this one and reads them.
+		"interpretations": BridgeClient.snapshot.get("interpretations", []),
+		"slots": {"echo_a": "act_wand", "echo_b": null,
+				"mobility": null, "utility": null},
+	}
+	_drive(meters, 400)
+	_check(is_equal_approx(_height(meters, 0), meters._FULL_HEIGHT),
+			"a full, quiet channel stays open while it powers a slotted "
+			+ "action")
+	_check(is_equal_approx(_height(meters, 1), meters._IDLE_HEIGHT),
+			"...and an unpowering neighbour still collapses")
+
 	# A channel that is NOT full stays expanded long after the change
 	# stopped being recent — that is the second leg of §7's relevance rule.
-	# (The third leg, "a cost of a slotted action", cannot fire until
-	# `powers`/`fills` links exist: S5. `test_stage_tripwires.py` fails the
-	# moment links land, and the case belongs here when it does.)
 	pool.spend("res_vigor", 2.0)
 	_drive(meters, 400)
 	_check(is_equal_approx(_height(meters, 1), meters._FULL_HEIGHT),

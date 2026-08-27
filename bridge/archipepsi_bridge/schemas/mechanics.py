@@ -357,6 +357,7 @@ def derive_mechanics(log) -> Mechanics:
                 mk.pop(absorbed, None)
 
     _require_power_links(components, links)
+    _require_fill_links(components, links)
 
     return Mechanics(
         owned=tuple(
@@ -469,4 +470,24 @@ def _require_power_links(components, links) -> None:
             raise FoldError(
                 f"action '{cid}' uses '{component.primitive.type}', which "
                 f"must be powered by a resource; no 'powers' link targets it"
+            )
+
+
+def _require_fill_links(components, links) -> None:
+    """`restore_resource` names no resource on purpose — the `fills` link
+    says which one — so a restore with no fills link is a button that
+    refills nothing. Same medicine as the powered verbs."""
+    filling = {
+        link.source for link in links
+        if link.link == "fills"
+    }
+    for cid, component in components.items():
+        if component.kind != "action":
+            continue
+        if component.primitive.type != "restore_resource":
+            continue
+        if cid not in filling:
+            raise FoldError(
+                f"action '{cid}' uses 'restore_resource' but is the source "
+                f"of no 'fills' link; it would refill nothing"
             )

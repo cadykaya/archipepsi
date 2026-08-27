@@ -133,6 +133,13 @@ class EchoGenerationRequest(Strict):
     source: EchoSource
     player_state: EchoPlayerState
     required_echo_id: str = Field(max_length=32, pattern=r"^echo_\d+$")
+    #: §16's steer, populated by the campaign from the live fold: the
+    #: component kinds already at or past their soft budget. Landed with
+    #: S5, the first stage where a provider can genuinely obey it — a
+    #: LINK op is implementable now, so "the campaign is resource-rich,
+    #: relate instead of duplicating" is advice validation accepts.
+    #: UPGRADE and MERGE join the obeying vocabulary at S6.
+    over_soft_budget: tuple[str, ...] = ()
     allowed: dict = Field(default_factory=lambda: {
         "operations": list(CAP.IMPLEMENTED_OPERATION_KINDS),
         "modes": list(E.INTERPRETATION_MODES),

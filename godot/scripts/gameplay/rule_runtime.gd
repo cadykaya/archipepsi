@@ -57,6 +57,7 @@ var _pending: Array[String] = []
 var _armed: Dictionary = {}
 var _watched_fractions: Dictionary = {}
 var _watched_hp := 1.0
+var _watched_status_kinds: Dictionary = {}
 var _one_hz := 0.0
 
 #: Every effect that fired, `{rule_id, effect}`, capped. The suite reads
@@ -221,9 +222,14 @@ func _conditions_hold(rule: Dictionary, snapshot: Dictionary) -> bool:
 				if not bool(BridgeClient.active_zone().get(
 						"is_finale", false)):
 					return false
+			"status_active":
+				if player == null or player.get("statuses") == null \
+						or not player.statuses.has(
+								str(condition.get("subject", ""))):
+					return false
 			_:
-				# A condition the runtime does not implement (statuses are
-				# S5) cannot be allowed to silently pass as true.
+				# A condition the runtime does not implement cannot be
+				# allowed to silently pass as true.
 				push_error("rule condition '%s' has no interpreter arm"
 						% condition.get("type", ""))
 				return false
@@ -281,10 +287,21 @@ func _apply_effect(rule_id: String, effect: Dictionary) -> void:
 		"reset_action_cooldown":
 			if echo_runtime != null:
 				echo_runtime.reset_cooldown()
+		"apply_status":
+			# A rule's status lands on the PLAYER: rules are the player's
+			# machinery, and the enemy-facing paths are the hit modifier
+			# and scan_mark. `amount` is the magnitude.
+			if player != null and player.get("statuses") != null:
+				player.statuses.apply(str(effect.get("subject", "")),
+						float(effect.get("duration", 1.0)), amount)
+		"trait_pulse":
+			if player != null and player.get("stat_stack") != null:
+				player.stat_stack.add_pulse(str(effect.get("subject", "")),
+						amount, float(effect.get("duration", 1.0)))
 		_:
-			# trait_pulse (S5), apply_status (S5), grant_local_reward (S9).
-			# Capability gating means none can be owned yet; reaching here
-			# is drift between the gates and this interpreter.
+			# grant_local_reward (S9). Capability gating means none can be
+			# owned yet; reaching here is drift between the gates and this
+			# interpreter.
 			push_error("rule effect '%s' has no interpreter arm"
 					% effect.get("type", ""))
 
@@ -325,9 +342,19 @@ func _damage_around(radius: float, amount: float) -> void:
 ## firing, because "low" stopped being true before the rule ever ran.
 func _derive_edges() -> void:
 	var crossed := {"resource_full": false, "resource_empty": false,
-			"low_health": false}
+			"low_health": false, "status_applied": false}
 	var holding := {"resource_full": false, "resource_empty": false,
-			"low_health": false}
+			"low_health": false, "status_applied": false}
+	if player != null and player.get("statuses") != null:
+		# status_applied's edge is a KIND appearing that was absent last
+		# tick; holding is any status being active at all.
+		for kind in player.statuses.active_kinds():
+			holding["status_applied"] = true
+			if not _watched_status_kinds.has(kind):
+				crossed["status_applied"] = true
+		_watched_status_kinds.clear()
+		for kind in player.statuses.active_kinds():
+			_watched_status_kinds[kind] = true
 	if pool != null:
 		for entry: Dictionary in BridgeClient.owned_components("resource"):
 			var id := str(entry.get("component", {}).get("component_id", ""))

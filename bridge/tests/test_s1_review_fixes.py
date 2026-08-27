@@ -119,19 +119,31 @@ def test_s1_stage_gate_rejects_schema_valid_noops():
     })
     assert CAP.validate_stage_support(rule) == []
 
+    # S5 landed statuses, so that gate is retired too — asserting the
+    # ACCEPTANCE is what stops it being reintroduced — and the boundary
+    # moved on to affordances, which are S9.
     status = _interpretation_with({
         "kind": "status",
         "component_id": "status_test",
         "display_name": "Burning",
-        "description": "Statuses are S5; accepting one now would persist a "
-                       "mechanic that silently does nothing.",
+        "description": "The S5 containers apply and tick this.",
         "status": "burning",
         "target": "enemy",
         "duration": 3.0,
         "magnitude": 0.5,
     })
-    assert any("component kind 'status'" in error
-               for error in CAP.validate_stage_support(status))
+    assert CAP.validate_stage_support(status) == []
+
+    affordance = _interpretation_with({
+        "kind": "affordance",
+        "component_id": "aff_test",
+        "display_name": "Water",
+        "description": "Nothing generates or reads an affordance tag until "
+                       "the S9 capability registry exists.",
+        "tag": "water_volume",
+    })
+    assert any("component kind 'affordance'" in error
+               for error in CAP.validate_stage_support(affordance))
 
     # S2 landed the bouncing, gravity-affected projectile, so the gate S1.1
     # put on `bounces` is retired rather than kept as a check that no longer
@@ -176,11 +188,11 @@ def test_s1_stage_gate_rejects_schema_valid_noops():
     gated = _interpretation_with({
         "kind": "action",
         "component_id": "act_gated",
-        "display_name": "Cleanse",
-        "description": "Statuses are S5.",
+        "display_name": "Magnet",
+        "description": "Local rewards are S9.",
         "slot": "echo_a",
         "cooldown": 1.0,
-        "primitive": {"type": "cleanse", "count": 2},
+        "primitive": {"type": "pull_pickup", "radius": 5.0},
         "modifiers": [],
     })
     from archipepsi_bridge.schemas.echo import validate_interpretation

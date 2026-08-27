@@ -29,6 +29,7 @@ func _ready() -> void:
 	_pulses_decay_and_respect_floors()
 	_status_container_rules()
 	_status_stat_factors()
+	_link_semantics()
 	if failures == 0:
 		print("GODOT STATS TESTS OK")
 		get_tree().quit(0)
@@ -239,3 +240,109 @@ func _status_stat_factors() -> void:
 	stack.statuses.apply("vulnerable", 5.0, 1.0)
 	_check(is_equal_approx(float(stack.evaluate()["damage_taken"]), 1.5),
 			"vulnerable raises damage taken")
+
+
+# --- §4: the four link kinds, at the runner's own helpers -----------------
+
+func _linked_snapshot(links: Array) -> ResourcePool:
+	BridgeClient.snapshot = {
+		"mechanics": {"owned": [{"component": {
+			"kind": "resource", "component_id": "res_fuel",
+			"display_name": "FUEL", "description": "f", "max_value": 100.0,
+			"initial_fraction": 0.5, "regen_per_second": 0.0,
+			"regen_delay": 0.0, "presentation": "bar",
+			"palette_color": "tide", "pip_count": null}}],
+			"aliases": [], "links": links, "channel_order": ["res_fuel"]},
+		"slots": {"echo_a": "act_x", "echo_b": null, "mobility": null,
+				"utility": null},
+	}
+	var pool := ResourcePool.new()
+	pool.reset_for_zone()
+	return pool
+
+func _runner(pool: ResourcePool, primitive: Dictionary) -> EchoRuntime:
+	var runtime := EchoRuntime.new()
+	runtime.pool = pool
+	runtime.equipped = {"component_id": "act_x", "display_name": "X",
+			"cooldown": 1.0, "primitive": primitive, "modifiers": []}
+	return runtime
+
+## `powers` and `fills` are opposite directions on purpose (§4), and the
+## fold serializes the kind under `link`, not `kind`. Both were wrong in
+## the S3 HUD code and unreachable until now.
+func _link_semantics() -> void:
+	# gates: below the threshold the press is refused, above it opens.
+	var pool := _linked_snapshot([{"link": "gates", "source": "res_fuel",
+			"target": "act_x", "strength": 0.8}])
+	var runtime := _runner(pool, {"type": "dash", "force": 12.0})
+	_check(not runtime._gates_open(),
+			"a gates link withholds the action below its threshold")
+	pool.refill("res_fuel", 40.0)
+	_check(runtime._gates_open(), "...and opens it at or above")
+	runtime.free()
+
+	# gates above 1.0 reads as absolute units rather than a fraction.
+	pool = _linked_snapshot([{"link": "gates", "source": "res_fuel",
+			"target": "act_x", "strength": 70.0}])
+	runtime = _runner(pool, {"type": "dash", "force": 12.0})
+	_check(not runtime._gates_open(), "a strength over 1 is absolute units")
+	runtime.free()
+
+	# powers: a press verb pays strength, all or nothing.
+	pool = _linked_snapshot([{"link": "powers", "source": "res_fuel",
+			"target": "act_x", "strength": 20.0}])
+	runtime = _runner(pool, {"type": "dash", "force": 12.0})
+	_check(runtime._pay_powers_cost(), "an affordable press pays")
+	_check(is_equal_approx(pool.value_of("res_fuel"), 30.0),
+			"...exactly its strength")
+	pool.spend("res_fuel", 25.0)
+	_check(not runtime._pay_powers_cost(), "an unaffordable press refuses")
+	_check(is_equal_approx(pool.value_of("res_fuel"), 5.0),
+			"...and takes nothing")
+	runtime.free()
+
+	# powers on a DRAIN verb: the press is free, the hold pays per second.
+	pool = _linked_snapshot([{"link": "powers", "source": "res_fuel",
+			"target": "act_x", "strength": 20.0}])
+	runtime = _runner(pool, {"type": "hover", "gravity_multiplier": 0.2,
+			"drain_per_second": 30.0, "max_duration": 5.0})
+	_check(runtime._pay_powers_cost() and is_equal_approx(
+			pool.value_of("res_fuel"), 50.0),
+			"a drain verb's press costs nothing up front")
+	_check(runtime._drain(1.0) and is_equal_approx(
+			pool.value_of("res_fuel"), 20.0),
+			"...it pays per second while held")
+	_check(not runtime._drain(1.0),
+			"...and an empty bar refuses, which ends the hold")
+	runtime.free()
+
+	# fills: action → resource, so the SOURCE is the action.
+	pool = _linked_snapshot([{"link": "fills", "source": "act_x",
+			"target": "res_fuel", "strength": 12.0}])
+	runtime = _runner(pool, {"type": "dash", "force": 12.0})
+	runtime._apply_fills()
+	_check(is_equal_approx(pool.value_of("res_fuel"), 62.0),
+			"a fills link refills on use")
+	runtime.free()
+
+	# restore_resource names no resource; the link says where, the
+	# primitive says how much, and _apply_fills must not double-count it.
+	pool = _linked_snapshot([{"link": "fills", "source": "act_x",
+			"target": "res_fuel", "strength": 12.0}])
+	runtime = _runner(pool, {"type": "restore_resource", "amount": 30.0})
+	runtime._restore_resource(runtime._primitive())
+	runtime._apply_fills()
+	_check(is_equal_approx(pool.value_of("res_fuel"), 80.0),
+			"restore_resource fills by its own amount, once (got %f)"
+			% pool.value_of("res_fuel"))
+	runtime.free()
+
+	# A link pointed at someone else leaves this action alone.
+	pool = _linked_snapshot([{"link": "powers", "source": "res_fuel",
+			"target": "act_other", "strength": 20.0}])
+	runtime = _runner(pool, {"type": "dash", "force": 12.0})
+	_check(runtime._pay_powers_cost() and is_equal_approx(
+			pool.value_of("res_fuel"), 50.0),
+			"another action's powers link costs this one nothing")
+	runtime.free()
+	pool.free()

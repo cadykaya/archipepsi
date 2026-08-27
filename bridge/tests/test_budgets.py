@@ -243,3 +243,44 @@ def test_the_fallback_rule_outcomes_step_aside_at_the_rule_budget():
     degraded = fallback_echo(_echo_request("Power Star"), mechanics=full)
     kinds = [op["component"]["kind"] for op in degraded["operations"]]
     assert "rule" not in kinds
+
+
+def test_the_request_carries_the_soft_budget_steer_and_it_validates():
+    """S5's discharge of the S3 decision: the steer is on the request, and
+    a provider that obeys it produces something validation ACCEPTS.
+
+    Before links, "relate instead of duplicating" named only operations
+    the capability gate refused, so the advice manufactured repair loops.
+    A LINK is implementable now, so the steer is honest."""
+    from archipepsi_bridge.epsilon import capabilities as CAP
+    from archipepsi_bridge.epsilon.requests import EchoGenerationRequest
+
+    rich = _campaign(COMPLEXITY_BUDGETS["resource"][0])
+    steer = over_soft_budget(rich)
+    assert "resource" in steer
+    request = _echo_request()
+    assert isinstance(request.over_soft_budget, tuple)
+
+    obedient = EchoInterpretation.model_validate({
+        "schema_version": 8, "echo_id": "echo_89100007",
+        "interpretation_seq": 6, "source_location_id": 89100007,
+        "source_item_name": "Magic Meter", "source_game": "Ocarina of Time",
+        "source_recipient_name": "oot_player",
+        "display_name": "Related, Not Duplicated",
+        "description": "It powers what you already own.",
+        "operations": [
+            {"op": "create", "component": {
+                "kind": "action", "component_id": "act_wand",
+                "display_name": "Wand", "description": "Zap.",
+                "slot": "echo_a", "cooldown": 1.0,
+                "primitive": {"type": "hitscan_damage", "damage": 8.0,
+                              "pellets": 1, "spread_degrees": 1.0,
+                              "range": 30.0}}},
+            {"op": "link", "link": "powers", "source": "res_0_0",
+             "target": "act_wand", "strength": 10.0}],
+    })
+    assert CAP.validate_stage_support(obedient) == []
+    assert budget_errors(obedient, rich) == []
+    assert len(derive_mechanics(
+        [_resource_echo(i) for i in range(COMPLEXITY_BUDGETS["resource"][0])]
+        + [obedient]).links) == 1

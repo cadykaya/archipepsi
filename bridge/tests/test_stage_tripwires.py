@@ -10,44 +10,37 @@ Failing one of these is not a regression. It is the reminder firing.
 
 from __future__ import annotations
 
-from archipepsi_bridge.epsilon.capabilities import IMPLEMENTED_OPERATION_KINDS
+from archipepsi_bridge.epsilon.capabilities import (
+    IMPLEMENTED_COMPONENT_KINDS, IMPLEMENTED_OPERATION_KINDS)
 from archipepsi_bridge.epsilon.requests import EchoGenerationRequest
 
 
-def test_links_are_gated_so_cost_relevance_is_dormant():
-    """§7's third relevance leg sleeps until `powers`/`fills` links exist.
+def test_the_s5_obligations_were_discharged_when_links_landed():
+    """Both S3-era tripwires fired at S5, and both were paid.
 
-    `ResourceMeters._is_cost_of_slotted_action` reads the fold's links and
-    can never answer true today: LINK operations are stage-gated, so the
-    fold's `links` tuple is always empty. One third of the pressure-valve
-    relevance rule is therefore intentionally dead code — correct, but
-    unprovable.
-
-    When this fails, LINK operations just landed. In the same change:
-    add the case to `godot/tests/hud_driver.gd::_pressure_valve` proving a
-    FULL, quiet resource stays expanded while a slotted Action is powered
-    by it, then repoint this test at the next dormant boundary (statuses)
-    or delete it.
+    They asserted that LINK was gated (so §7's third relevance leg was
+    dead code) and that the request carried no soft-budget steer (so a
+    provider could not be told to do what validation refused). S5 landed
+    LINK, so this is the discharge receipt: the request carries the steer,
+    and `hud_driver.gd::_pressure_valve` now proves a FULL, quiet channel
+    stays expanded while it powers a slotted Action.
     """
-    assert "link" not in IMPLEMENTED_OPERATION_KINDS
+    assert "link" in IMPLEMENTED_OPERATION_KINDS
+    assert "over_soft_budget" in EchoGenerationRequest.model_fields
 
 
-def test_create_only_requests_carry_no_soft_budget_steer():
-    """`over_soft_budget()` stays out of the request until it can be obeyed.
+def test_affordances_and_local_rewards_are_gated_until_s9():
+    """The next dormant boundary, with the work due when it opens.
 
-    §16's soft budget steers a provider toward UPGRADE / LINK / MERGE once
-    the campaign is rich in some kind. Today the capability gate refuses
-    every one of those operations, so carrying the steer would invite the
-    provider to do the one thing validation then rejects — a prompt that
-    manufactures its own repair loop. The staging table places budget
-    context in the provider at S10 ("concepts, modes and budgets"), after
-    dispositions land in S6. Decision recorded in
-    docs/IMPLEMENTATION_DECISIONS.md (S3).
+    An Affordance is a tag on generated geometry and an Info readout is a
+    HUD element; neither exists, so accepting one would persist a
+    component that renders nothing. `grant_local_reward` is the rule
+    effect that pays one out, and `pull_pickup` the verb that collects
+    one — the last deferred primitive.
 
-    When this fails, a non-CREATE operation just became implementable.
-    In the same change: put `over_soft_budget(mechanics)` on
-    `EchoGenerationRequest` (and into the prompt), and prove a steered
-    request still validates.
+    When this fails, S9 landed. In the same change: the never-mandatory
+    validator (I4), the capability registry the generator grammar reads,
+    and I12's water-volume acceptance test.
     """
-    assert IMPLEMENTED_OPERATION_KINDS == ("create",)
-    assert "over_soft_budget" not in EchoGenerationRequest.model_fields
+    assert "affordance" not in IMPLEMENTED_COMPONENT_KINDS
+    assert "info" not in IMPLEMENTED_COMPONENT_KINDS

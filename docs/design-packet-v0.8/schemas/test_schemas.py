@@ -503,9 +503,21 @@ def test_traversal_traits_may_only_ever_help():
         TraitComponent(kind="trait", component_id="trait_heavy",
                        display_name="H", description="d",
                        stat="gravity", multiplier=1.5)
-    # A non-traversal stat may absolutely bite.
+    # A non-traversal stat may bite — mildly while always on, severely only
+    # when bound to an Action the player can take off (I7, ECHOES 10).
     TraitComponent(kind="trait", component_id="trait_slick", display_name="S",
-                   description="d", stat="ground_friction", multiplier=0.4)
+                   description="d", stat="ground_friction", multiplier=0.8)
+    TraitComponent(kind="trait", component_id="trait_iron", display_name="I",
+                   description="d", stat="ground_friction", multiplier=0.4,
+                   requires_equipped="act_boots")
+    with pytest.raises(ValidationError, match="severe downside"):
+        TraitComponent(kind="trait", component_id="trait_curse",
+                       display_name="C", description="d",
+                       stat="ground_friction", multiplier=0.4)
+    with pytest.raises(ValidationError, match="severe downside"):
+        TraitComponent(kind="trait", component_id="trait_glass",
+                       display_name="G", description="d",
+                       stat="damage_taken", multiplier=1.5)
 
 
 def test_out_of_bounds_and_unsupported_primitives_are_rejected():
@@ -569,11 +581,12 @@ def test_the_catalog_is_closed_and_the_engine_admits_what_it_can_run():
     for primitive, why in DEFERRED_PRIMITIVES.items():
         assert re.match(r"^S\d+: ", why), (primitive, why)
 
-    # `cleanse` removes statuses, and statuses are S5. Deliberately not a
-    # POWERED_PRIMITIVE: those would also fail for want of a `powers` link,
-    # so they cannot show that the stage gate itself fires.
+    # `pull_pickup` pulls LOCAL rewards, which are S9 — the one verb still
+    # deferred. Deliberately not a POWERED_PRIMITIVE: those would also fail
+    # for want of a `powers` link, so they cannot show that the stage gate
+    # itself fires.
     gated = EchoAdapter.validate_python({**_CONFERENCE_CALL, "operations": [
-        _action_op(primitive={"type": "cleanse", "count": 2})]})
+        _action_op(primitive={"type": "pull_pickup", "radius": 5.0})]})
     errs = validate_interpretation(gated, expected_source_location_id=89100001)
     assert any("not yet implemented" in e for e in errs)
 
