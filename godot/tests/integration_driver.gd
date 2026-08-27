@@ -62,6 +62,7 @@ func _run() -> void:
 	await _check_hub_builds()
 	_check_enemy_silhouettes()
 	_check_hit_confirmation()
+	_check_epsilon_voice()
 	_check_theme_agreement()
 
 	if not await _play_one_zone(true):
@@ -193,6 +194,39 @@ func _check_enemy_silhouettes() -> void:
 				"%s silhouette fits its collider (%.2f <= %.2f)"
 				% [kind, worst, half_width])
 		enemy.free()
+
+## Epsilon is meant to be an occasional voice, not a status bar. Two things
+## keep it that way and both are easy to lose: the throttle, and never
+## saying the same line twice running.
+func _check_epsilon_voice() -> void:
+	var voice := EpsilonVoice.new()
+	var previous := voice.line_for("room_cleared")
+	_check(not previous.is_empty(), "Epsilon speaks when a room clears")
+	_check(voice.line_for("room_cleared").is_empty(),
+			"a second line inside the cooldown is withheld")
+	var repeated := ""
+	var withheld := false
+	for i in 24:
+		voice.tick(EpsilonVoice.COOLDOWN)
+		var next := voice.line_for("room_cleared")
+		if next.is_empty():
+			withheld = true
+			break
+		if next == previous:
+			repeated = next
+			break
+		previous = next
+	_check(not withheld, "a line lands once the cooldown has expired")
+	if repeated.is_empty():
+		_check(true, "Epsilon never repeats a line back to back (24 draws)")
+	else:
+		_check(false, "Epsilon said '%s' twice running" % repeated)
+	voice.tick(EpsilonVoice.COOLDOWN)
+	_check(voice.line_for("no_such_event_at_all").is_empty(),
+			"an unknown event says nothing")
+	voice.reset()
+	_check(not voice.line_for("died").is_empty(),
+			"reset drops the throttle for the next Zone")
 
 ## The kill flag on a hit confirmation has to come from the hit that did
 ## the killing, not from reading hp afterwards — otherwise every later

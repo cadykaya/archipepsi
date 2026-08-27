@@ -44,6 +44,18 @@ var _confirm_kill := false
 const _CONFIRM_TIME := 0.20
 const _KILL_TIME := 0.45
 
+## Epsilon talking over your shoulder. Its own line, below the interact
+## prompt, so a bark never displaces a "HOLD E" the player needs to read.
+var _voice_label: Label
+var _voice: EpsilonVoice = EpsilonVoice.new()
+var _voice_fade := 0.0
+## HP fraction that counts as being in trouble, and the fraction you have
+## to climb back above before it counts again — without the gap, hovering
+## on the threshold makes Epsilon comment on every stray pellet.
+const _HURT_AT := 0.35
+const _HURT_CLEAR := 0.6
+var _hurt_spoken := false
+
 ## Echo cooldown, as a bar rather than a number.
 var _cooldown_track: ColorRect
 var _cooldown_fill: ColorRect
@@ -105,6 +117,18 @@ func _ready() -> void:
 	_prompt_label.add_theme_font_size_override("font_size", 20)
 	_prompt_label.modulate = Color(1.0, 0.95, 0.7)
 	add_child(_prompt_label)
+
+	_voice_label = Label.new()
+	_voice_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_voice_label.offset_top = -108.0
+	_voice_label.offset_left = -420.0
+	_voice_label.offset_right = 420.0
+	_voice_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_voice_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_voice_label.add_theme_font_size_override("font_size", 19)
+	_voice_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_voice_label.modulate = Color(0.62, 0.95, 0.88, 0.0)
+	add_child(_voice_label)
 
 	_toast_box = VBoxContainer.new()
 	_toast_box.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -247,6 +271,7 @@ func clear_waypoint() -> void:
 
 func _process(delta: float) -> void:
 	_animate_confirmation(delta)
+	_animate_voice(delta)
 	if _hit_fade > 0.0:
 		_hit_fade = maxf(0.0, _hit_fade - delta)
 		var strength := _hit_fade / _HIT_FADE_TIME
@@ -306,6 +331,33 @@ func _process(delta: float) -> void:
 	_waypoint.modulate = _waypoint_color
 	_waypoint.visible = true
 
+## Ask Epsilon to remark on something. It decides whether the moment is
+## worth a line — callers name the event and never carry their own throttle.
+func say_line(kind: String) -> void:
+	var line := _voice.line_for(kind)
+	if line.is_empty():
+		return
+	_voice_label.text = "EPSILON:  " + line
+	_voice_fade = EpsilonVoice.DWELL
+
+## Between Zones: drop the throttle so the next Zone's first line is not
+## swallowed by the tail of the last one's cooldown, and clear the label so
+## a stale remark never hangs over a loading screen.
+func reset_voice() -> void:
+	_voice.reset()
+	_voice_fade = 0.0
+	_voice_label.modulate.a = 0.0
+	_hurt_spoken = false
+
+func _animate_voice(delta: float) -> void:
+	_voice.tick(delta)
+	if _voice_fade <= 0.0:
+		return
+	_voice_fade = maxf(0.0, _voice_fade - delta)
+	# Holds solid, then fades over the last second, so a line is never
+	# dimming while it is still the newest thing said.
+	_voice_label.modulate.a = minf(1.0, _voice_fade)
+
 ## One of our shots landed. A kill outranks a plain connect and is never
 ## downgraded by one: the second enemy clipped by a spread Echo must not
 ## take the X back off the enemy the first pellet killed.
@@ -341,6 +393,7 @@ func _animate_confirmation(delta: float) -> void:
 		_confirm_mark.modulate = Color(1.0, 0.6, 0.3, minf(1.0, strength * 1.6))
 
 func _on_player_died() -> void:
+	say_line("died")
 	_death_overlay.visible = true
 	_death_label.visible = true
 	_death_overlay.color.a = 0.0
@@ -381,6 +434,13 @@ func _on_hp_changed(hp: float, shield: float) -> void:
 	if hp > 0.0 and _death_overlay.visible:
 		_death_overlay.visible = false      # respawned
 		_death_label.visible = false
+		say_line("revived")
+	var fraction := hp / Constants.PLAYER_MAX_HP
+	if fraction >= _HURT_CLEAR:
+		_hurt_spoken = false
+	elif fraction > 0.0 and fraction < _HURT_AT and not _hurt_spoken:
+		_hurt_spoken = true
+		say_line("hurt")
 	_last_hp = hp
 
 func _on_prompt(text: String) -> void:

@@ -15,6 +15,11 @@ var hud: Hud = null              # set by main; null in headless tests
 var _chambers: Array = []      # {chamber, objective, satisfied, enemies,
                                #  reward, goal_area}
 var _exit_portal: ExitPortal
+var _first_kill_seen := false
+var _portal_was_locked := true
+var _quiet_time := 0.0
+var _last_claimed := -1
+const _QUIET_BEFORE_ASIDE := 75.0
 
 func setup(zone_dict: Dictionary) -> void:
 	zone = zone_dict
@@ -82,8 +87,16 @@ func _objective_of(chamber: Dictionary) -> String:
 func _on_enemy_died(_enemy: Enemy, record: Dictionary) -> void:
 	if tones != null:
 		tones.play("hit")
+	_quiet_time = 0.0                # a fight is not a quiet stretch
+	if hud != null and not _first_kill_seen:
+		_first_kill_seen = true
+		hud.say_line("first_blood")
 	if record["objective"] == "kill_all" and not record["satisfied"]:
 		_evaluate_objectives()
+		# Said only once the room is genuinely finished, not on the kill
+		# that merely happened to be last in the list.
+		if record["satisfied"] and hud != null:
+			hud.say_line("room_cleared")
 
 func _on_goal_area_entered(body: Node3D, record: Dictionary) -> void:
 	if body is Player and not record["satisfied"]:
@@ -131,8 +144,12 @@ func refresh() -> void:
 		if not BridgeClient.is_checked(int(location)):
 			outstanding += 1
 	_exit_portal.set_unlocked(complete, outstanding)
+	# The unlock is pushed on every snapshot, so remark on the edge only.
+	if complete and _portal_was_locked and hud != null:
+		hud.say_line("portal_open")
+	_portal_was_locked = not complete
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if hud == null or player == null:
 		return
 	var claimed := 0
@@ -163,6 +180,18 @@ func _process(_delta: float) -> void:
 		hud.set_objective_text("CHECKS %d/%d CLAIMED" % [claimed, total])
 	else:
 		hud.set_objective_text("")
+
+	# A long stretch with nothing claimed usually means the player is lost
+	# or exploring; either way it is the one moment a designer's aside is
+	# welcome rather than an interruption.
+	if claimed != _last_claimed:
+		_last_claimed = claimed
+		_quiet_time = 0.0
+	else:
+		_quiet_time += delta
+		if _quiet_time >= _QUIET_BEFORE_ASIDE:
+			_quiet_time = 0.0
+			hud.say_line("long_walk")
 
 	if best != null:
 		var label := "CHECK %03d" % (best.location_id % 1000)

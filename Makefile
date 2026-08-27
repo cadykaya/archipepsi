@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export bridge smoke
+.PHONY: setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export bridge smoke godot-import godot-test godot-integration
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -66,7 +66,14 @@ replay:                        # re-validate the generation archive (EPSILON_SPE
 
 GODOT := godot-bin/godot
 
-godot-test:                    # headless builder tests (no bridge needed)
+# A `--script` or `--headless` game run does NOT rescan for new class_name
+# scripts, so adding one and going straight to a headless run fails with
+# "Identifier not declared in the current scope" for a file that is plainly
+# there. Only an import pass rewrites .godot/global_script_class_cache.cfg.
+godot-import:                  # refresh the script class cache
+	$(GODOT) --headless --path godot --import >/dev/null
+
+godot-test: godot-import       # headless builder tests (no bridge needed)
 	$(GODOT) --headless --path godot --script tests/test_chambers.gd
 
 # The integration run gets its own throwaway save directory. Sharing
@@ -75,10 +82,13 @@ godot-test:                    # headless builder tests (no bridge needed)
 # earlier run had spent, and the shop assertion failed at random.
 INTEGRATION_SAVES := $(CURDIR)/.integration-saves
 
-godot-integration:             # full loop through a live mock bridge, fresh state
+godot-integration: godot-import   # full loop through a live mock bridge, fresh state
 	rm -rf $(INTEGRATION_SAVES)
 	cd bridge && ARCHIPEPSI_SAVE_DIR=$(INTEGRATION_SAVES) \
 	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback & \
 	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start (port already serving? see the traceback above)"; \
+	  exit 1; }; \
 	$(GODOT) --headless --path godot -- --integration-test; \
 	STATUS=$$?; kill $$BRIDGE_PID; exit $$STATUS

@@ -184,6 +184,7 @@ func _to_hub() -> void:
 	hud.visible = true
 	hud.clear_waypoint()
 	hud.set_objective_text("")
+	hud.reset_voice()
 	hub = HubController.new()
 	world.add_child(hub)
 	hub.enter_zone_requested.connect(_on_enter_zone)
@@ -224,6 +225,7 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	view = View.ZONE
 	menu.visible = false
 	hud.visible = true
+	hud.reset_voice()
 	zone = ZoneController.new()
 	zone.tones = tones
 	zone.hud = hud
