@@ -16,6 +16,7 @@ func _init() -> void:
 	_test_chaining_no_overlap()
 	_test_bent_layouts_never_overlap()
 	_test_props_leave_a_walkable_lane()
+	_test_secrets_are_optional()
 	_test_platform_path_bounds()
 	_test_tower_route()
 	_test_treasure_room()
@@ -161,6 +162,62 @@ func _test_props_leave_a_walkable_lane() -> void:
 							"%s w=%.0f: a prop blocks the %.1fm lane at x=%.2f"
 							% [theme, width, lane, box.get_center().x])
 				result["root"].free()
+
+func _test_secrets_are_optional() -> void:
+	## Optional ledges (DESIGN §19). Three things have to hold at once:
+	## they must actually appear, they must be out of reach from the floor,
+	## and they must never carry anything the run needs — a secret holding
+	## a reward or an exit would be the mandatory Echo gate the design
+	## forbids outright.
+	var reach: float = Constants.JUMP_APEX_HEIGHT + 0.4
+	var lip_min: float = ChamberBuilders.SECRET_LIP_MIN
+	var found := 0
+	var cramped := 0
+	for seed_index in 24:
+		var width := 10.0 + float(seed_index % 5) * 4.0
+		var depth := 12.0 + float(seed_index % 3) * 6.0
+		# Sweeps the schema's whole legal wall_height range, 4 m to 8 m.
+		var wall_height := 4.0 + float(seed_index % 9) * 0.5
+		var result := ChamberBuilders.arena(
+				{"id": "secret_%02d" % seed_index, "type": "arena",
+				"width": width, "depth": depth, "wall_height": wall_height,
+				"objective": "reach_reward",
+				"reward_location_id": 89100001,
+				"enemies": [{"archetype": "melee", "count": 2}]},
+				"concrete_facility")
+		for box: AABB in _collidable_boxes(result["root"]):
+			# Perimeter walls reach the floor and door lintels sit on the
+			# z faces; only interior geometry starting above head height
+			# can be a ledge.
+			var center := box.get_center()
+			if center.z < 1.0 or center.z > depth - 1.0:
+				continue
+			if box.position.y <= reach:
+				continue
+			found += 1
+			var lip := box.position.y + box.size.y
+			_check(lip >= lip_min - 0.001,
+					"secret ledge lip at %.2f is under SECRET_LIP_MIN" % lip)
+			_check(lip + Constants.PLAYER_HEIGHT <= wall_height,
+					"secret lip %.2f leaves no standing room under %.1f m"
+						% [lip, wall_height])
+			_check(absf(center.x) - box.size.x / 2.0
+						>= ChamberBuilders.DOOR_WIDTH / 2.0,
+					"secret ledge overhangs the door lane at x=%.2f"
+						% center.x)
+			if wall_height < 5.0:
+				cramped += 1
+		# Nothing the run needs ever rides up there.
+		_check(result["exit_offset"] == Vector3(0, 0, depth),
+				"a secret never moves the arena exit")
+		_check(absf(result["reward_position"].y) < 0.01,
+				"a secret never lifts the reward off the floor")
+		for spawn: Dictionary in result["enemy_spawns"]:
+			_check(spawn["position"].y < reach,
+					"a secret never strands an enemy out of reach")
+		result["root"].free()
+	_check(found > 0, "no arena in 24 seeds grew a secret ledge")
+	_check(cramped == 0, "a low arena got a secret it has no headroom for")
 
 func _test_platform_path_bounds() -> void:  # test 53
 	# Every legal parameter combination stays within the derived bound.

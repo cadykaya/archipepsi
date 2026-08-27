@@ -331,6 +331,71 @@ static func _theme_props(root: Node3D, theme: String,
 						rng.randf_range(0.6, height - 0.8), z)
 				root.add_child(missing)
 
+#: Epsilon's private notes, left up where the floor cannot take you.
+const _SECRET_NOTES := [
+	"You brought the right toy. I did not think you would.",
+	"There is nothing up here. I built it anyway.",
+	"Congratulations. This is the reward. It is a sentence.",
+	"I hid this before I knew what you would be carrying.",
+	"Somebody else's item paid for the jump you just made.",
+	"This ledge is not in the schema. Do not tell anyone.",
+	"If you are reading this, unequip and try walking it. You cannot.",
+	"Every wall in here is 0.4 metres thick. Including this one.",
+]
+
+## SECRET_LIP_MIN is the lowest a secret ledge may sit. A standing jump
+## tops out at JUMP_APEX_HEIGHT (1.33 m) and the player has no mantle, so
+## this is out of reach from the floor by better than a body length. A
+## determined crate-hop off the arena's cover may still get you up there;
+## that is allowed, because nothing up here is ever required.
+const SECRET_LIP_MIN := 2.9
+const SECRET_LIP_MAX := 4.2
+const SECRET_LEDGE_DEPTH := 1.8
+
+## An optional ledge, holding a plaque and nothing else. DESIGN §19 permits
+## exactly this: Echoes may open secrets, but never a mandatory path — so a
+## secret never holds a reward, an exit or an objective, and the room plays
+## identically if you never reach it.
+##
+## Built axis-aligned against the wall at `side * wall_x` rather than
+## rotated into place, so the headless collider tests read its extents
+## without having to unwind a basis.
+static func _secret_alcove(root: Node3D, theme: String, side: float,
+		wall_x: float, z: float, ceiling: float,
+		rng: RandomNumberGenerator) -> void:
+	var lip := clampf(ceiling - 2.4, SECRET_LIP_MIN, SECRET_LIP_MAX)
+	# No headroom, no secret: a ledge you cannot stand on is a bump.
+	if lip + Constants.PLAYER_HEIGHT + 0.3 > ceiling:
+		return
+	var inward := -side
+	var center_x := side * (wall_x - 0.2) + inward * SECRET_LEDGE_DEPTH / 2.0
+	_box(root, Vector3(SECRET_LEDGE_DEPTH, 0.3, 2.4),
+			Vector3(center_x, lip - 0.15, z),
+			ThemeMaterials.accent_mat(theme))
+	# The lip rail is decorative and non-colliding, so a hard landing is
+	# never bounced back off the edge by a rail you meant to clear.
+	_box(root, Vector3(0.12, 0.35, 2.4),
+			Vector3(center_x + inward * (SECRET_LEDGE_DEPTH / 2.0 - 0.06),
+				lip + 0.17, z), ThemeMaterials.trim_mat(theme), false)
+	var glow := MeshInstance3D.new()
+	var glow_mesh := BoxMesh.new()
+	glow_mesh.size = Vector3(0.08, 0.45, 0.45)
+	glow.mesh = glow_mesh
+	glow.position = Vector3(side * (wall_x - 0.25), lip + 0.55, z)
+	glow.material_override = ThemeMaterials.glow_material(
+			Color(0.5, 1.0, 0.85), 1.8)
+	root.add_child(glow)
+	var note := Label3D.new()
+	note.text = _SECRET_NOTES[rng.randi_range(0, _SECRET_NOTES.size() - 1)]
+	note.font_size = 28
+	note.pixel_size = 0.004
+	note.width = 700
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.position = Vector3(center_x, lip + 1.1, z)
+	note.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	note.modulate = Color(0.6, 1.0, 0.88)
+	root.add_child(note)
+
 ## Corner buttresses, perimeter crates and a hazard strip for room-like
 ## spaces. Crates hug the walls so the arena floor stays fightable.
 static func _greeble_room(root: Node3D, width: float, depth: float,
@@ -447,8 +512,15 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 			Vector3(width / 2.0 - 2, wall_height - 0.5, depth - 2)]:
 		_light(root, corner, theme, 16.0)
 	_light(root, Vector3(0, wall_height - 0.5, depth / 2.0), theme, 18.0)
-	_greeble_room(root, width, depth, wall_height, theme,
-			_greeble_rng(chamber, theme))
+	var greeble_rng := _greeble_rng(chamber, theme)
+	_greeble_room(root, width, depth, wall_height, theme, greeble_rng)
+	# Roughly one arena in three gets a ledge you cannot walk to. It holds
+	# nothing but one of Epsilon's notes; see `_secret_alcove`.
+	if greeble_rng.randf() < 0.34:
+		_secret_alcove(root, theme,
+				-1.0 if greeble_rng.randf() < 0.5 else 1.0, width / 2.0,
+				greeble_rng.randf_range(3.0, maxf(3.2, depth - 3.0)),
+				wall_height, greeble_rng)
 	var spawns: Array = []
 	var index := 0
 	for group: Dictionary in chamber.get("enemies", []):
