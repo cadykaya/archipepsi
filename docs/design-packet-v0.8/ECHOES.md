@@ -606,7 +606,15 @@ Migration is a pure, total function:
 - a v7 `PrimaryEcho` → one interpretation, `CREATE` one `ActionComponent`
   in `echo_a`, initiator and modifiers carried across verbatim;
 - a v7 `PassiveEcho` → one interpretation, `CREATE` one `TraitComponent`
-  per passive;
+  per passive, its multiplier clamped into v8's I3 floor by
+  `traversal_multiplier`. v7 bounded each Echo alone and let a passive make
+  you slower (`SPEED_MULT_MIN` was 0.9); v8 traits are always on and stack,
+  so `move_speed`, `jump_height` and `air_control` may not end below 1.0 and
+  `gravity` may not end above it. Copying such a multiplier across produced
+  a save v8 refuses, which is what makes the clamp a totality requirement
+  rather than a nicety. The Echo is kept and clamped, never dropped: the
+  interpretation log is provenance, and a campaign that silently lost an
+  Echo to a version bump would fold differently than it played;
 - `equipped_echo_id` → the `echo_a` slot, if that Echo had an action;
 - `interpretation_seq` assigned in the v7 save's own echo order, which is
   grant order, so a migrated campaign folds exactly as it played.

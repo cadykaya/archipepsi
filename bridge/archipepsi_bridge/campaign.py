@@ -31,7 +31,7 @@ from .epsilon.concepts import preferred_modes, read_concepts
 from .schemas.echo import (
     COMPLEXITY_BUDGETS, over_soft_budget, upgradable_field_info)
 from .schemas.protocol import (
-    CampaignSave, CampaignSnapshot, EarnedLocalReward, HubStatus,
+    BridgeError, CampaignSave, CampaignSnapshot, EarnedLocalReward, HubStatus,
     Notification, ScoutedLocation, ShopState, SlotAssignment, ZoneReady,
     ZoneRecord,
 )
@@ -457,7 +457,25 @@ class CampaignEngine:
             self._lazy_echo_budget = MAX_LAZY_ECHOES_PER_LOAD
         self._save_path = store.save_path(
             self.save_dir, ap.seed_name, ap.team, ap.slot_id, ap.slot_name)
-        existing = store.load_save(self._save_path)
+        try:
+            existing = store.load_save(self._save_path)
+        except store.SaveUnreadable as exc:
+            # Files are there and none of them parsed. Starting fresh here
+            # would create an empty campaign whose first write moves the
+            # player's real save into the `.bak` slot — the whole thing
+            # gone behind one logged line. Refuse instead: a save that
+            # cannot be read is a problem to report.
+            log.error("%s", exc)
+            # A `BridgeError`, not a `Notification`: notifications are the
+            # one-shot vocabulary of things that WENT WELL, and none of its
+            # kinds means "stop". `recoverable=False` because retrying the
+            # same connect reads the same unreadable files; a human has to
+            # move them aside or restore a copy.
+            await self._emit(BridgeError(
+                type="error", scope="bridge", recoverable=False,
+                message=f"{exc} Nothing has been overwritten."[
+                    :C.MAX_TEXT_LEN]))
+            raise IntentError(str(exc)) from exc
         if existing is not None and (
                 existing.seed_name != ap.seed_name
                 or existing.team != ap.team

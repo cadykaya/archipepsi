@@ -91,6 +91,7 @@ def migrate_echo_v7_to_v8(entry: dict[str, Any], seq: int) -> dict[str, Any]:
 
     operations = []
     for index, effect in enumerate(entry["effects"]):
+        stat = PASSIVE_STAT[effect["type"]]
         operations.append({
             "op": "create",
             "component": {
@@ -98,11 +99,44 @@ def migrate_echo_v7_to_v8(entry: dict[str, Any], seq: int) -> dict[str, Any]:
                 "component_id": component_id_for("trait", location_id, str(index)),
                 "display_name": entry["display_name"],
                 "description": entry["description"],
-                "stat": PASSIVE_STAT[effect["type"]],
-                "multiplier": effect["multiplier"],
+                "stat": stat,
+                "multiplier": traversal_multiplier(stat, effect["multiplier"]),
             },
         })
     return {**common, "operations": tuple(operations)}
+
+
+def traversal_multiplier(stat: str, multiplier: float) -> float:
+    """A v7 multiplier, made legal under v8's traversal floor (I3).
+
+    v7 bounded each Echo separately and let a passive make you SLOWER —
+    `SPEED_MULT_MIN` was 0.9, and the v7 comment says so: "floored so the
+    worst legal loadout still clears every mandatory gap". v8 traits are
+    always on and stack across everything owned, so
+    `_traversal_stats_may_only_help` forbids `move_speed` below 1.0
+    outright. A v7 slow-down simply cannot be represented in v8.
+
+    It has to be clamped, and the reason this function exists rather than
+    an inline `max()` is the consequence of not clamping. The migration
+    used to copy the multiplier straight across, so a save holding one
+    legal v7 Echo — anything that read as "heavy" — produced a v8 save the
+    model refuses. `store.load_save` then caught, tried the `.bak` (the
+    same v7 file, failing the same way), and returned None; the engine
+    read that as "no campaign", built a fresh empty one, and the next
+    write moved the player's real save into the `.bak` slot. Zones, coins,
+    Echoes and track order, gone, behind one logged exception.
+
+    Clamping loses the downside and keeps the Echo. That is the right
+    trade: the component stays owned, so provenance and the archive remain
+    truthful about what the player earned, and what is lost is a penalty
+    the new rules would not have allowed anyone to be given in the first
+    place.
+    """
+    if stat == "gravity":
+        return min(float(multiplier), 1.0)
+    if stat in ("move_speed", "jump_height", "air_control"):
+        return max(float(multiplier), 1.0)
+    return float(multiplier)
 
 
 def migrate_v7_to_v8(data: dict[str, Any]) -> dict[str, Any]:
