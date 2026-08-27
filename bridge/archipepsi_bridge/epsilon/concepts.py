@@ -10,17 +10,17 @@ concepts are **stored** rather than merely used: the inventory says
 charm and all of the accountability. An Echo whose concepts do not explain
 its mechanics is one the player has no way to argue with.
 
-This module is the *deterministic* reading. It exists for three reasons:
+This module is the *deterministic* reading. It exists for two reasons:
 
 1. `--epsilon=mock` and the fallback need concepts of their own, or the
    integration run proves the pipeline works on empty tuples.
-2. A model-authored reading has to be checkable. `plausible_concepts`
-   answers "could a reasonable reader have got that from this item", which
-   is the only honest question — there is no correct answer to check
-   against.
-3. The lexicon doubles as the vocabulary the Claude prompt is shown, so
-   the model is steered by examples rather than by an abstract
-   instruction.
+2. It is what the request offers a model provider as `suggested_concepts`
+   — a starting point to disagree with, so the model is steered by an
+   example rather than by an abstract instruction.
+
+It does **not** validate a model's reading. `shares_vocabulary_with` once
+did, and was wrong in both directions at once; see its docstring, which is
+worth reading before anyone tries again.
 
 **It reads AP strings; it never touches AP identity.** A concept is
 derived from an item's *name*, is stored on the interpretation, and means
@@ -180,9 +180,11 @@ def read_concepts(item_name: str, source_game: str = "") -> tuple[str, ...]:
     the project, and a wandering reading would make the archive lie about
     what happened last time.
 
-    Order is meaningful: the most specific noun leads, qualifiers follow,
-    and the source game contributes at most one trailing concept, because
-    "it came from Stardew Valley" is context rather than a reading.
+    Order is meaningful: nouns lead in the item's own word order, then
+    qualifiers. The source game contributes only when the item name yields
+    nothing at all — "it came from Stardew Valley" is context rather than a
+    reading, and adding it to a reading that already worked just made every
+    concept list end in a franchise name.
     """
     out: list[str] = []
 
@@ -192,8 +194,11 @@ def read_concepts(item_name: str, source_game: str = "") -> tuple[str, ...]:
             out.append(cleaned)
 
     tokens = _tokens(item_name)
-    # Nouns first, in the item's own word order, so "Fire Sword" reads as
-    # fire before blade and "Sword of Fire" the same way.
+    # Nouns first, in the ITEM'S OWN word order: "Fire Sword" leads with
+    # fire, "Sword of Fire" leads with blade. Word order is the only signal
+    # available about which half of a name matters, and following it beats
+    # imposing an order of our own — but the two do NOT read alike, which
+    # an earlier version of this comment claimed.
     for token in tokens:
         for concept in LEXICON.get(token, ()):
             add(concept)

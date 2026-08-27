@@ -293,3 +293,46 @@ def test_the_request_carries_the_soft_budget_steer_and_it_validates():
     assert len(derive_mechanics(
         [_resource_echo(i) for i in range(COMPLEXITY_BUDGETS["resource"][0])]
         + [obedient]).links) == 1
+
+
+def test_a_shipping_provider_obeys_the_budget_from_its_own_request():
+    """§16 through the provider protocol, which has no `mechanics`.
+
+    `FallbackEpsilonProvider` and `MockEpsilonProvider` are reached through
+    `generate_echo(request, *, repair_errors)` — there is nowhere to hand
+    them the fold. Both asked `_budget_room` with `None` and always heard
+    "yes", so at a full resource budget each produced an Echo the validator
+    refused, burned the one repair round, and only then reached the
+    last-resort builder (which does get the fold).
+
+    The player-visible cost is the tell: with `--epsilon=mock`, a run that
+    never involved a model reported "EPSILON OFFLINE — FALLBACK USED".
+
+    S10 put `budget_headroom` in the request for exactly this question, so
+    a provider reading what it was GIVEN is both the fix and the right way
+    round.
+    """
+    import asyncio
+
+    from archipepsi_bridge.campaign import budget_headroom
+    from archipepsi_bridge.epsilon.base import generate_echo_validated
+    from archipepsi_bridge.epsilon.fallback import FallbackEpsilonProvider
+    from archipepsi_bridge.epsilon.mock import MockEpsilonProvider
+    from archipepsi_bridge.schemas.mechanics import derive_mechanics
+
+    live = derive_mechanics([_resource_echo(i) for i in range(15)])
+    assert budget_headroom(live)["resource"][0] == 15, "the channels are full"
+
+    request = _echo_request("Magic Meter").model_copy(
+        update={"budget_headroom": budget_headroom(live)})
+    for provider in (FallbackEpsilonProvider(), MockEpsilonProvider()):
+        outcome = asyncio.run(generate_echo_validated(
+            provider, request, mechanics=live))
+        assert outcome.used_fallback is False, (
+            f"{provider.name} needed the last-resort builder at a full "
+            f"budget: {outcome.error}")
+        # ...and what it produced creates no resource at all, which is the
+        # budget-free shape §16 asks for past the ceiling.
+        created = [op.component.kind for op in outcome.value.operations
+                   if op.op == "create"]
+        assert "resource" not in created, (provider.name, created)

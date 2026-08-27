@@ -281,8 +281,14 @@ class Zone(Strict):
                     f"feature; an affordance may never sit on the path to "
                     f"an AP reward (ECHOES.md 13.2)"
                 )
-            if chamber.features and getattr(chamber, "objective", "none") \
-                    not in (None, "none", "reach_exit"):
+            # A corridor has no `objective` attribute at all, which is
+            # why the default matters more than the allowlist: the
+            # allowlist named `"reach_exit"`, a value no chamber type in
+            # the union can hold, so it never matched anything. Left out
+            # rather than kept "just in case" — a condition that cannot
+            # fire reads as a rule somebody relies on.
+            if chamber.features and getattr(chamber, "objective", None) \
+                    not in (None, "none"):
                 raise ValueError(
                     f"chamber '{chamber.id}' has objective "
                     f"'{chamber.objective}' and an affordance feature; an "

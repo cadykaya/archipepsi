@@ -307,21 +307,44 @@ def _passive(request: EchoGenerationRequest, *, effects: list[dict],
     } for index, effect in enumerate(effects)]}
 
 
-def _budget_room(mechanics, *, resources: int = 0, rules: int = 0) -> bool:
+def _budget_room(mechanics, *, resources: int = 0, rules: int = 0,
+                 request=None) -> bool:
     """Whether the campaign can absorb this many more without breaching a
     hard budget (§16). The fallback is the last resort AFTER validation has
     already refused the provider — a fallback the same validation then
     refuses is a RuntimeError in `_pipeline` ("a bug in our own
     generator"), so a resource- or rule-bearing outcome must step aside
-    near the ceiling and let the item read as its budget-free shape."""
-    if mechanics is None:
+    near the ceiling and let the item read as its budget-free shape.
+
+    Reads the REQUEST when no fold is handed over, which is the case that
+    actually matters. `FallbackEpsilonProvider` and `MockEpsilonProvider`
+    are called through the provider protocol, which has no `mechanics`
+    parameter — so both were asking this question with `None` and always
+    hearing "yes". At a full resource budget that produced an Echo the
+    validator refused, burned the one repair round, and only then reached
+    the last-resort builder (which does get the fold). With
+    `--epsilon=mock` the player watched a run that never involved a model
+    report "EPSILON OFFLINE — FALLBACK USED".
+
+    S10 put `budget_headroom` in the request for exactly this shape of
+    question, and a provider reading what it was given is the right way
+    round: it sees what any other provider sees.
+    """
+    owned_counts: dict[str, int] = {}
+    if mechanics is not None:
+        for component in mechanics.owned:
+            owned_counts[component.kind] = owned_counts.get(
+                component.kind, 0) + 1
+    elif request is not None and getattr(request, "budget_headroom", None):
+        for kind, (owned, _soft, _hard) in request.budget_headroom.items():
+            owned_counts[kind] = int(owned)
+    else:
         return True
 
-    def owned(kind: str) -> int:
-        return len([o for o in mechanics.owned if o.kind == kind])
-
-    return (owned("resource") + resources <= COMPLEXITY_BUDGETS["resource"][1]
-            and owned("rule") + rules <= COMPLEXITY_BUDGETS["rule"][1])
+    return (owned_counts.get("resource", 0) + resources
+            <= COMPLEXITY_BUDGETS["resource"][1]
+            and owned_counts.get("rule", 0) + rules
+            <= COMPLEXITY_BUDGETS["rule"][1])
 
 
 #: What to raise when an item turns out to be a sequel, per field, and by
@@ -461,7 +484,7 @@ def _fallback_echo_create(request: EchoGenerationRequest, *,
         return any(w in name for w in words)
 
     def room(**counts: int) -> bool:
-        return _budget_room(mechanics, **counts)
+        return _budget_room(mechanics, request=request, **counts)
 
     if has("conference call", "shotgun"):
         return _primary(
@@ -828,3 +851,7 @@ class FallbackEpsilonProvider:
     async def generate_echo(self, request: EchoGenerationRequest, *,
                             repair_errors: list[str] | None = None) -> dict:
         return fallback_echo(request)
+
+    # No `mechanics` here, and none is needed: `_budget_room` reads the
+    # request's own `budget_headroom` when no fold is passed, so this
+    # provider obeys §16 from what it was given like any other.
