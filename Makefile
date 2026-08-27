@@ -15,7 +15,8 @@ export SKIP_REQUIREMENTS_UPDATE = 1
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
 
-test: test-schemas test-bridge test-apworld
+test:                          # full suite (schemas + bridge + apworld)
+	$(PY) -m pytest -q
 
 test-schemas:
 	$(PY) -m pytest bridge/archipepsi_bridge/schemas/test_schemas.py -q

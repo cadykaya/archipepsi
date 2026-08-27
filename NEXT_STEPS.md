@@ -1,40 +1,54 @@
 # Archipepsi — build state
 
 ## Highest completed milestone
-Phase 1 (APWorld): `make seed` and `make seed-multi` produce real zips against
-the pinned Archipelago 0.6.7 checkout; 25 APWorld tests green.
+Phase 2 (bridge): the entire campaign machine works headlessly against mock
+AP **and against a real Archipelago 0.6.7 server** (`smoke_real.py`), with
+save/reload showing no duplication. 180 tests green
+(110 schema + 45 bridge + 25 APWorld).
 
 ## What currently works
-- `make setup` — clones/pins Archipelago 0.6.7, verifies `CommonClient` imports
-  (container quirk: core requirements were installed with
-  `pip install -r .archipelago/requirements.txt --ignore-installed`; see
-  docs/IMPLEMENTATION_DECISIONS.md)
-- `make test-schemas` — 110 binding schema tests
-- `make test-apworld` — 25 tests (structure, tiers, victory, slot data, real
-  solo + multiworld generation via Generate.py)
-- `make seed` / `make seed-multi` / `make host`
-- Godot 4.5.1.stable.official.f62fdbde1 downloaded at `godot-bin/godot`
-  (headless-capable)
+- `make setup` / `make seed` / `make seed-multi` / `make host` (APWorld)
+- `make test` — full suite from the repo root
+- `make bridge` — WebSocket bridge on ws://127.0.0.1:38290
+  (`--ap=real|mock`, `--epsilon=claude|mock|fallback`)
+- `make smoke` — headless full loop: connect → scout → allocate →
+  fallback-generate → enter → claim → confirm → Echo → equip → save →
+  reload → regenerate
+- `python3 -m archipepsi_bridge.smoke_real` — same against a live server
+  (host one with `make host` first)
+- Campaign brain: deterministic allocation (§10.5), tier gating, finale
+  gating + goal reporting, shop stock/cadence/purchase/rollback, pending-
+  check reconciliation (never event-waiting), Echo grant with bulk guard,
+  WAITING_FOR_AP with reservation release, postgame.
+- Providers: fallback + mock, with validate → one-repair → fallback
+  pipeline and generation archive.
 
 ## In progress
-Phase 2: the bridge (`bridge/archipepsi_bridge/`) — nothing written yet beyond
-the verbatim `schemas/` copy.
+Phase 3: Godot vertical slice. Godot 4.5.1.stable.official.f62fdbde1 is at
+`godot-bin/godot` (downloaded; see docs/IMPLEMENTATION_DECISIONS.md).
 
 ## Remaining planned work
-Phases 2–7 of docs/design-packet-v0.7/IMPLEMENTATION_PLAN.md.
+- Phase 3: bridge_client.gd, constants.gd export, main menu, Hub (8 modes),
+  FPS controller, corridor+arena builders, melee enemy, claim flow, the
+  reveal, Echo runtime (hitscan+recoil+knockback), inventory,
+  enter/leave/exit/abandon.
+- Phase 4: platform_path/tower/treasure_room builders, ranged/brute,
+  remaining Echo effects.
+- Phase 5: ClaudeEpsilonProvider (bridge-side pipeline is provider-ready).
+- Phase 6: shop/finale UI in Godot (bridge logic already exists + tested).
+- Phase 7: acceptance run, `.apworld` packaging via AP's build component.
 
 ## Known blockers / bugs
-None.
+None known.
 
-## Exact next action
-Write `bridge/archipepsi_bridge/` Phase 2 modules in this order:
-`store.py` (atomic save/load) → `campaign.py` (allocation/tiers/finale/shop
-logic through schemas/transitions.py) → `epsilon/` (fallback + mock providers)
-→ `ap_client.py` (CommonContext subclass) → `mock_ap.py` → `transactions.py`
-(reconcile) → `server.py` (WebSocket) → `smoke.py` (headless full loop).
-Then bridge tests 1–18, 20; campaign tests 21–35 subset; regression 61–70.
+## Exact next concrete action
+Run `make export` to generate `godot/scripts/autoload/constants.gd`, create
+`godot/project.godot` pinned to 4.5.1, then write `bridge_client.gd`
+(WebSocket + reconnect backoff + snapshot store) and the main menu scene.
 
 ## Commands
-    make test-schemas          # always green
-    make test-apworld          # needs .archipelago (make setup)
-    make seed && make host     # generate + serve a solo seed on :38281
+    make test                                   # 180 tests
+    make smoke                                  # headless full loop
+    make seed-multi && make host                # real server on :38281
+    make bridge                                 # bridge for Godot
+    godot-bin/godot --path godot --headless     # engine (once project exists)
