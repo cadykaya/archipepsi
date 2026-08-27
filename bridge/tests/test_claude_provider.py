@@ -94,8 +94,9 @@ def test_repair_turn_carries_previous_output_and_errors():
 
 
 def test_schema_rejection_degrades_to_prompt_json():
+    httpx2 = pytest.importorskip("httpx2")
+
     async def scenario():
-        import httpx2
         bad_request = anthropic.BadRequestError(
             "unsupported schema",
             response=httpx2.Response(

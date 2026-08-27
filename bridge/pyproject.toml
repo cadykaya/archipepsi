@@ -11,7 +11,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
-claude = ["anthropic>=0.40"]
+claude = ["anthropic>=1.0"]     # the provider targets the 1.x SDK surface
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "archipepsi_bridge/schemas"]

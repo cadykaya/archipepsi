@@ -99,9 +99,7 @@ class BridgeServer:
                 await engine.backend.disconnect()
             await engine.broadcast_snapshot()
         elif m.type == "start_mock_campaign":
-            backend = MockAPBackend(engine)
-            engine.backend = backend
-            await backend.connect("", "Skyiah", "")
+            await self._connect_mock()
         elif m.type == "request_next_zone":
             await engine.handle_request_next_zone(m.finale)
         elif m.type == "enter_zone":
@@ -125,16 +123,28 @@ class BridgeServer:
         else:  # unreachable: the adapter is a closed union
             raise IntentError(f"unknown intent '{m.type}'", scope="protocol")
 
+    async def _connect_mock(self) -> None:
+        """Reuse a live mock backend (its server truth must survive
+        reconnects); disconnect any real backend so its events stop."""
+        engine = self.engine
+        if engine.backend is not None and engine.backend.mode != "mock":
+            await engine.backend.disconnect()
+            engine.backend = None
+        if engine.backend is None:
+            engine.backend = MockAPBackend(engine)
+        await engine.backend.connect("", "Skyiah", "")
+
     async def _connect_ap(self, server: str, slot_name: str,
                           password: str) -> None:
         engine = self.engine
         if self.ap_default == "mock":
-            backend = MockAPBackend(engine)
-            engine.backend = backend
-            await backend.connect(server, slot_name or "Skyiah", password)
+            await self._connect_mock()
             return
         from .ap_client import RealAPBackend
-        if engine.backend is None or engine.backend.mode != "real":
+        if engine.backend is not None and engine.backend.mode != "real":
+            await engine.backend.disconnect()
+            engine.backend = None
+        if engine.backend is None:
             engine.backend = RealAPBackend(engine)
         await engine.backend.connect(server, slot_name, password)
 

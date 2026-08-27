@@ -15,6 +15,11 @@ static func spawn(parent: Node, from: Vector3, to: Vector3, color: Color,
 	parent.add_child(tracer)
 	tracer.global_position = (from + to) / 2.0
 	if not from.is_equal_approx(to):
-		tracer.look_at_from_position(tracer.global_position, to, Vector3.UP)
+		# A vertical beam is collinear with UP (pitch clamps at exactly
+		# ±90°) — pick a perpendicular up vector for that case.
+		var dir := (to - from).normalized()
+		var up := Vector3.UP if absf(dir.dot(Vector3.UP)) < 0.99 \
+				else Vector3.RIGHT
+		tracer.look_at_from_position(tracer.global_position, to, up)
 	var timer := tracer.get_tree().create_timer(lifetime)
 	timer.timeout.connect(tracer.queue_free)

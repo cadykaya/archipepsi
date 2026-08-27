@@ -90,6 +90,12 @@ async def finalize(engine: CampaignEngine, location_id: int) -> None:
                        and not save.goal_sent)
 
     engine._apply(T.confirm_check(save, location_id))
+    # confirm_check is idempotent via its pending record — a goal confirmed
+    # EXTERNALLY (release/!collect, so no pending) returns the save
+    # unchanged and would leave goal_sent False forever, re-sending the goal
+    # on every pass and making ALL_CHECKS_CLEARED unrepresentable.
+    if goal_newly_sent and not engine.save.goal_sent:
+        engine._apply(_set_goal_sent(engine.save))
 
     if goal_newly_sent:
         if engine.backend is not None and engine.ap.connected:
@@ -141,7 +147,11 @@ async def terminal_release(engine: CampaignEngine, location_id: int) -> None:
         holder = next((z for z in save.zones if z.holds_locations
                        and location_id in z.allocated_location_ids), None)
         if holder is not None:
-            engine._apply(T.release_location(save, holder.zone_id,
+            # Drop the pending BEFORE releasing: when this is the zone's
+            # last location, release_location abandons the zone, and
+            # abandon_zone rejects a zone with checks still in flight.
+            engine._apply(_drop_pending(engine.save, location_id))
+            engine._apply(T.release_location(engine.save, holder.zone_id,
                                              location_id))
         else:  # unbacked pending cannot exist in a valid save; belt+braces
             engine._apply(_drop_pending(save, location_id))
@@ -153,14 +163,19 @@ async def terminal_release(engine: CampaignEngine, location_id: int) -> None:
 
 
 def _drop_pending(save, location_id):
-    """Unreachable in a valid save (every zone pending is backed); kept so a
-    corrupted state degrades to a release instead of a crash."""
+    """Bridge-local rebuild dropping one pending record, full validation."""
     from .schemas.protocol import CampaignSave
     return CampaignSave(**{
         **save.model_dump(),
         "pending_checks": tuple(
             p.model_dump() for p in save.pending_checks
             if p.location_id != location_id)})
+
+
+def _set_goal_sent(save):
+    """Bridge-local rebuild for the externally-confirmed-goal path."""
+    from .schemas.protocol import CampaignSave
+    return CampaignSave(**{**save.model_dump(), "goal_sent": True})
 
 
 def zone_completion_sweep(engine: CampaignEngine) -> None:

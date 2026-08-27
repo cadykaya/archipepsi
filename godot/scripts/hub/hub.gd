@@ -28,7 +28,8 @@ func _ready() -> void:
 	_build_room()
 	player = Player.create()
 	add_child(player)
-	player.set_spawn(Transform3D(Basis.IDENTITY, Vector3(0, 0.8, 3.0)))
+	# Face +Z: the portal and boards are on the far wall.
+	player.set_spawn(Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.8, 3.0)))
 	refresh()
 
 func _build_room() -> void:
@@ -318,6 +319,9 @@ class HubPortal extends StaticBody3D:
 			_:
 				_prompt = ""
 				_label.text = "PORTAL"
+		if not _enabled and mode in ["ZONE_AVAILABLE", "FINALE_ONLY"]:
+			# The portal is present but unusable: say why, don't show an [E].
+			_prompt = "ARCHIPELAGO OFFLINE — RECONNECT TO GENERATE"
 		var color := Color(0.4, 0.9, 1.0) if _enabled else Color(0.25, 0.25, 0.3)
 		if mode == "GENERATING":
 			color = Color(0.9, 0.5, 1.0)
@@ -325,7 +329,7 @@ class HubPortal extends StaticBody3D:
 				color, 1.8 if _enabled else 0.5)
 
 	func interact_prompt() -> String:
-		return _prompt if _enabled else _prompt
+		return _prompt
 
 	func interact(_player: Node) -> void:
 		if _enabled:

@@ -68,7 +68,8 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 	portal.position = cursor + Vector3(0, 0, 6.5)
 	root.add_child(portal)
 
-	var spawn := Transform3D(Basis.IDENTITY, Vector3(0, 0.8, 1.2))
+	# Face +Z, where the level actually is (identity looks down -Z).
+	var spawn := Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.8, 1.2))
 	return {"root": root, "spawn_transform": spawn,
 			"chambers": built_chambers, "exit_portal": portal,
 			"bounds_list": bounds_list}

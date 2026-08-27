@@ -72,8 +72,10 @@ static func _light(parent: Node3D, position: Vector3, theme: String,
 	parent.add_child(fixture)
 
 ## Walls around a rectangular room with door gaps at entrance/exit centers.
+## `exit_gap_y` raises the exit door's sill — a tower exits at its summit.
 static func _perimeter(root: Node3D, width: float, depth: float,
-		height: float, theme: String, door_in := true, door_out := true) -> void:
+		height: float, theme: String, door_in := true, door_out := true,
+		exit_gap_y := 0.0) -> void:
 	var wall := ThemeMaterials.wall_mat(theme)
 	var half_w := width / 2.0
 	var side := (width - DOOR_WIDTH) / 2.0
@@ -91,16 +93,20 @@ static func _perimeter(root: Node3D, width: float, depth: float,
 	else:
 		_box(root, Vector3(width, height, WALL_THICKNESS),
 				Vector3(0, height / 2.0, 0), wall)
-	# Back wall (z=depth).
+	# Back wall (z=depth), door gap carved from exit_gap_y up.
 	if door_out:
 		_box(root, Vector3(side, height, WALL_THICKNESS),
 				Vector3(-(DOOR_WIDTH + side) / 2.0, height / 2.0, depth), wall)
 		_box(root, Vector3(side, height, WALL_THICKNESS),
 				Vector3((DOOR_WIDTH + side) / 2.0, height / 2.0, depth), wall)
-		if height > DOOR_HEIGHT:
-			_box(root, Vector3(DOOR_WIDTH, height - DOOR_HEIGHT,
+		if exit_gap_y > 0.0:
+			_box(root, Vector3(DOOR_WIDTH, exit_gap_y, WALL_THICKNESS),
+					Vector3(0, exit_gap_y / 2.0, depth), wall)
+		var lintel_bottom := exit_gap_y + DOOR_HEIGHT
+		if height > lintel_bottom:
+			_box(root, Vector3(DOOR_WIDTH, height - lintel_bottom,
 					WALL_THICKNESS),
-					Vector3(0, DOOR_HEIGHT + (height - DOOR_HEIGHT) / 2.0,
+					Vector3(0, lintel_bottom + (height - lintel_bottom) / 2.0,
 					depth), wall)
 	else:
 		_box(root, Vector3(width, height, WALL_THICKNESS),
@@ -391,7 +397,10 @@ static func tower(chamber: Dictionary, theme: String) -> Dictionary:
 	var floor_mat := ThemeMaterials.floor_mat(theme)
 	_box(root, Vector3(side, 0.5, side),
 			Vector3(0, -0.25, side / 2.0), floor_mat)
-	_perimeter(root, side, side, total_rise + 5.0, theme, true, false)
+	# The exit door is carved at summit height — the tower is climbed, and
+	# its way out is at the top of the back wall.
+	var summit := step_rise * ceil(total_rise / step_rise)
+	_perimeter(root, side, side, total_rise + 5.0, theme, true, true, summit)
 
 	# Central column, so the shaft reads as a structure and blocks
 	# straight-line ranged fire across it.

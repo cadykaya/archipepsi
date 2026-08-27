@@ -116,7 +116,30 @@ func _test_tower_route() -> void:  # test 54
 		# The route rises in steps no larger than MAX_VERTICAL_STEP.
 		var rise: float = result["exit_offset"].y
 		_check(rise > 0.0, "tower exit is elevated")
+		# The exit at the summit must actually be open: no collidable box
+		# may seal the doorway the route leads to (the review found the
+		# back wall built solid, stranding the player at the top).
+		var probe := Vector3(0, rise + 1.5, 12.0)
+		var sealed := false
+		for box in _collidable_boxes(result["root"]):
+			if box.has_point(probe):
+				sealed = true
+		_check(not sealed, "tower summit exit is open (floors=%d)" % floors)
 		result["root"].free()
+
+func _collidable_boxes(root: Node3D) -> Array[AABB]:
+	var out: Array[AABB] = []
+	for child in root.get_children():
+		if child is MeshInstance3D:
+			for sub in child.get_children():
+				if sub is StaticBody3D:
+					for shape_node in sub.get_children():
+						if shape_node is CollisionShape3D \
+								and shape_node.shape is BoxShape3D:
+							var size: Vector3 = shape_node.shape.size
+							out.append(AABB(child.position - size / 2.0,
+									size))
+	return out
 
 func _test_treasure_room() -> void:  # test 55
 	var result := ChamberBuilders.treasure_room(

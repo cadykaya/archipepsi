@@ -712,6 +712,15 @@ class CampaignEngine:
         generate now; the rest lazily, at most 3 per load, one at a time."""
         save = self.save
         interacted = self._interacted_location_ids()
+
+        async def grant_and_announce(loc: int) -> None:
+            echo_id = await self.grant_echo(loc)
+            if echo_id:
+                echo = self.save.echo_by_id(echo_id)
+                await self._notify(
+                    "echo_acquired", "EPSILON ECHO ACQUIRED",
+                    (echo.display_name,), location_id=loc, echo_id=echo_id)
+
         for loc in sorted(self.ap.checked):
             scout = self.ap.scouts.get(loc)
             if scout is None or scout.recipient_is_self:
@@ -719,22 +728,10 @@ class CampaignEngine:
             if save.echo_by_id(f"echo_{loc}") is not None:
                 continue
             if loc in interacted:
-                echo_id = await self.grant_echo(loc)
-                if echo_id:
-                    echo = self.save.echo_by_id(echo_id)
-                    await self._notify(
-                        "echo_acquired", "EPSILON ECHO ACQUIRED",
-                        (echo.display_name,), location_id=loc,
-                        echo_id=echo_id)
+                await grant_and_announce(loc)
             elif self._lazy_echo_budget > 0:
                 self._lazy_echo_budget -= 1
-                echo_id = await self.grant_echo(loc)
-                if echo_id:
-                    echo = self.save.echo_by_id(echo_id)
-                    await self._notify(
-                        "echo_acquired", "EPSILON ECHO ACQUIRED",
-                        (echo.display_name,), location_id=loc,
-                        echo_id=echo_id)
+                await grant_and_announce(loc)
 
     # ------------------------------------------------------------------
     # Reconciliation — implemented in transactions.py, exposed here
