@@ -129,22 +129,45 @@ def test_mock_provider_zones_are_varied_and_always_valid():
         adapter = TypeAdapter(Zone)
         shapes_seen: set[str] = set()
         names_seen: set[str] = set()
+        features_seen: set[str] = set()
         for seed_index in range(30):
             for count in (1, 2, 3):
                 ids = [89100001 + i for i in range(count)]
                 request = zone_request(tuple(ids))
                 request = request.model_copy(update={
                     "zone_id": f"zone_{seed_index:03d}"})
-                raw = await provider.generate_zone(request)
-                zone = adapter.validate_python(raw)
-                assert validate_zone(
-                    zone, expected_zone_id=request.zone_id,
-                    allocated_location_ids=ids, owned_echo_ids=[]) == []
-                shapes_seen.add("|".join(c.type for c in zone.chambers))
-                names_seen.add(zone.display_name)
+                # Swept twice: with nothing unlocked, and with affordances
+                # the campaign can use. S9's features change chamber
+                # widths and add geometry, and the first sweep alone could
+                # not see any of it — which is how a provider that placed
+                # NO features passed this test for a whole stage.
+                for unlocked in ((), ("bounce_pad", "moving_platform",
+                                      "rail", "wind_volume")):
+                    scoped = request.model_copy(
+                        update={"unlocked_affordances": unlocked})
+                    raw = await provider.generate_zone(scoped)
+                    zone = adapter.validate_python(raw)
+                    assert validate_zone(
+                        zone, expected_zone_id=scoped.zone_id,
+                        allocated_location_ids=ids, owned_echo_ids=[],
+                        owned_affordance_tags=unlocked) == [], (
+                            seed_index, count, unlocked)
+                    placed = [f.tag for c in zone.chambers for f in c.features]
+                    if unlocked:
+                        assert placed, (seed_index, count)
+                        features_seen.update(placed)
+                    else:
+                        assert not placed, (seed_index, count)
+                    shapes_seen.add("|".join(c.type for c in zone.chambers))
+                    names_seen.add(zone.display_name)
         assert len(shapes_seen) > 10, (
             f"mock zones barely vary: {len(shapes_seen)} distinct shapes")
         assert len(names_seen) > 10
+        # ...and every unlocked tag reached a Zone somewhere in the sweep.
+        # A provider that only ever placed the alphabetically-first tag
+        # would otherwise satisfy "placed something" 90 times over.
+        assert features_seen == {"bounce_pad", "moving_platform", "rail",
+                                 "wind_volume"}, features_seen
     run(scenario())
 
 
