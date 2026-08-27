@@ -44,6 +44,8 @@ What v0.8 adds structurally:
 
 from __future__ import annotations
 
+import math
+
 from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -1037,6 +1039,74 @@ def over_soft_budget(mechanics) -> tuple[str, ...]:
     return tuple(out)
 
 
+#: Nudge used to step inside an exclusive (`gt`/`lt`) bound. Small enough
+#: not to matter to any field here, large enough to survive float noise.
+_EPSILON = 1e-6
+
+
+def _validated_range(component, field: str, current: float,
+                     low: float, high: float) -> tuple[float, float]:
+    """Narrow a field's declared range to what the MODEL will accept.
+
+    A field bound is not the whole rule. `TraitComponent.multiplier` is
+    `ge=0.1, le=4.0`, but `_traversal_stats_may_only_help` refuses a
+    gravity trait above 1.0 — so a provider told "0.1 to 4.0" for a
+    gravity trait at 0.9 is being told it may raise by 0.15, and the fold
+    then refuses the upgrade it was invited to make.
+
+    That is not hypothetical: the deterministic fallback took the
+    advertised range at face value, emitted `multiplier +0.15` on a
+    gravity trait at 0.9, and every validator in the generation pipeline
+    passed it — because none of them range-checks the RESULT. It failed
+    inside `append_interpretation`, where a `FoldError` is a crash rather
+    than a repairable rejection, and it failed deterministically, so the
+    Check could never be granted and reconciliation aborted every time.
+
+    Probing rather than enumerating the validators: the model is the
+    authority on what it accepts, and a hand-kept list of which stats have
+    extra rules would be a second copy of the rules to keep in sync.
+    """
+    try:
+        from .mechanics import upgrade_is_legal
+    except ImportError:                        # pragma: no cover
+        from mechanics import upgrade_is_legal
+
+    def reachable(target: float) -> bool:
+        return upgrade_is_legal(component, field, target - current)
+
+    # Each end independently: a gravity trait's floor is its plain field
+    # bound and only its ceiling is narrowed, and bisecting both would
+    # report 0.1001 where 0.1 is exactly right.
+    return (low if reachable(low) else _bisect(reachable, current, low),
+            high if reachable(high) else _bisect(reachable, current, high))
+
+
+def _bisect(reachable, current: float, bound: float) -> float:
+    """The furthest value toward `bound` the model still accepts.
+
+    `current` is always reachable (it is the component's own value), so
+    the search is well-founded. Twenty-four halvings resolve any field in
+    this schema to well under its meaningful precision.
+    """
+    if reachable(bound):
+        return bound
+    good, bad = current, bound
+    for _ in range(24):
+        middle = (good + bad) / 2.0
+        if reachable(middle):
+            good = middle
+        else:
+            bad = middle
+    # Rounded INWARD, toward `current`: a bisected bound carries float
+    # noise that reads as false precision in a prompt ("0.10000004768"),
+    # and rounding the other way would re-admit the value just proven
+    # illegal.
+    step = 1e-4
+    if bound > current:
+        return math.floor(good / step) * step
+    return math.ceil(good / step) * step
+
+
 def upgradable_field_info(component) -> tuple[tuple[str, float, float, float], ...]:
     """`(field, current, minimum, maximum)` for everything upgradable here.
 
@@ -1062,12 +1132,22 @@ def upgradable_field_info(component) -> tuple[tuple[str, float, float, float], .
             continue
         low, high = None, None
         for constraint in info.metadata:
-            low = getattr(constraint, "ge", None) if low is None else low
-            high = getattr(constraint, "le", None) if high is None else high
+            for attribute in ("ge", "gt"):
+                bound = getattr(constraint, attribute, None)
+                if bound is not None and low is None:
+                    # `gt` is exclusive; nudge inside it so the advertised
+                    # floor is a value that actually validates.
+                    low = float(bound) + (_EPSILON if attribute == "gt" else 0.0)
+            for attribute in ("le", "lt"):
+                bound = getattr(constraint, attribute, None)
+                if bound is not None and high is None:
+                    high = float(bound) - (_EPSILON if attribute == "lt" else 0.0)
         if low is None or high is None:
             continue
-        out.append((field, float(getattr(holder, field)),
-                    float(low), float(high)))
+        current = float(getattr(holder, field))
+        low, high = _validated_range(component, field, current,
+                                     float(low), float(high))
+        out.append((field, current, low, high))
     return tuple(out)
 
 
@@ -1084,6 +1164,39 @@ def _has_upgradable_value(component, field: str) -> bool:
         return True
     primitive = getattr(component, "primitive", None)
     return primitive is not None and getattr(primitive, field, None) is not None
+
+
+def _upgrade_lands(component, canonical: str, op, where: str) -> list[str]:
+    """Would the RESULT of this upgrade validate?
+
+    The three checks above ask whether the target exists and whether the
+    field is upgradable at all. Neither asks where the value ENDS UP, and
+    that gap had teeth: the deterministic fallback emitted `multiplier
+    +0.15` on a gravity trait at 0.9, every validator in the pipeline
+    passed it, and it failed inside `append_interpretation` — where a
+    `FoldError` is a crash rather than a repairable rejection, and where
+    it repeated on every retry, so the Check could never be granted and
+    reconciliation aborted each time.
+
+    Asking the model rather than re-deriving the rule: `upgrade_is_legal`
+    applies the real upgrade to a copy and reports whether it survives, so
+    a validator added to a component tomorrow is honoured here today.
+    """
+    try:
+        from .mechanics import upgrade_is_legal
+    except ImportError:                        # pragma: no cover
+        from mechanics import upgrade_is_legal
+    if upgrade_is_legal(component, op.field, op.delta):
+        return []
+    headroom = {f: (low, high)
+                for f, _current, low, high in upgradable_field_info(component)}
+    room = headroom.get(op.field)
+    limits = (f"; '{op.field}' accepts {room[0]} to {room[1]} on this "
+              f"component" if room else "")
+    return [
+        f"{where} raises '{op.field}' on '{canonical}' by {op.delta}, "
+        f"which lands outside what that component accepts{limits}"
+    ]
 
 
 def target_errors(interpretation, mechanics) -> list[str]:
@@ -1144,6 +1257,9 @@ def target_errors(interpretation, mechanics) -> list[str]:
                         f"{where} raises '{op.field}' on '{canonical}', "
                         f"which has no such field to raise"
                     )
+                else:
+                    errors.extend(_upgrade_lands(
+                        component, canonical, op, where))
         elif op.op == "link":
             for side in ("source", "target"):
                 component, _ = resolve(getattr(op, side))
