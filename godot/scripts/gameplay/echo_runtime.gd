@@ -34,11 +34,29 @@ func _refresh_viewmodel_attachment() -> void:
 		part.visible = false
 		return
 	part.visible = true
-	var colors := {"weapon": Color(1.0, 0.55, 0.3),
-			"tool": Color(0.5, 0.9, 0.6), "mobility": Color(0.5, 0.7, 1.0)}
-	part.material_override = ThemeMaterials.glow_material(
-			colors.get(equipped.get("archetype", "weapon"),
-					Color(0.9, 0.9, 0.9)), 1.2)
+	# The body carries the world this Echo was reinterpreted FROM, in the
+	# same colour the campaign board, the reward pedestals and the reveal
+	# card use for that game — so an Echo is visibly a piece of somebody
+	# else's world that you are holding. The tip keeps the archetype, so
+	# "what does this do" and "where did it come from" stay separate.
+	part.material_override = ThemeMaterials.glow_material(source_color(), 1.2)
+	var tip: MeshInstance3D = part.get_node_or_null("EchoTip")
+	if tip != null:
+		tip.material_override = ThemeMaterials.glow_material(
+				ARCHETYPE_COLORS.get(equipped.get("archetype", "weapon"),
+						Color(0.9, 0.9, 0.9)), 1.8)
+
+const ARCHETYPE_COLORS := {"weapon": Color(1.0, 0.55, 0.3),
+		"tool": Color(0.5, 0.9, 0.6), "mobility": Color(0.5, 0.7, 1.0)}
+
+## The equipped Echo's source world, as a colour. Falls back to a neutral
+## white for an Echo with no source game rather than picking a confident
+## wrong world out of the hash.
+func source_color() -> Color:
+	var game := str(equipped.get("source_game", ""))
+	if game.is_empty():
+		return Color(0.85, 0.88, 0.92)
+	return ThemeMaterials.color_for_game(game)
 
 func _apply_passives() -> void:
 	player.gravity_mult = 1.0
@@ -71,15 +89,17 @@ func activate() -> void:
 	cooldown_remaining = float(equipped.get("cooldown", 1.0))
 	cooldown_changed.emit(cooldown_remaining, cooldown_remaining)
 	player.kick_viewmodel(0.12)
-	# A bigger, warmer flash than Static Pulse — the Echo should feel like
-	# the loud option.
+	# Brighter than Static Pulse — the Echo is the loud option. Brightness
+	# still says what kind of thing just fired; the hue says which world it
+	# came out of.
 	var initiator_type := str(equipped.get("initiator", {}).get("type", ""))
+	var flash := source_color().lightened(0.25)
 	if initiator_type in ["hitscan_damage", "projectile_damage"]:
-		player.muzzle_flash(3.2, Color(1.0, 0.7, 0.35))
+		player.muzzle_flash(3.2, flash)
 	elif initiator_type in ["dash", "grapple_to_surface"]:
-		player.muzzle_flash(2.0, Color(0.6, 0.9, 1.0))
+		player.muzzle_flash(2.0, flash)
 	elif initiator_type in ["heal_self", "shield"]:
-		player.muzzle_flash(2.4, Color(0.55, 1.0, 0.7))
+		player.muzzle_flash(2.4, flash)
 
 	var initiator: Dictionary = equipped.get("initiator", {})
 	var modifiers: Array = equipped.get("modifiers", [])
@@ -127,7 +147,7 @@ func _hitscan(initiator: Dictionary) -> Array[Node]:
 		Tracer.spawn(get_tree().current_scene,
 				player.camera.global_position
 				+ basis * Vector3(0.18, -0.14, -0.3),
-				to, Color(1.0, 0.7, 0.35), 0.08)
+				to, source_color(), 0.08)
 		if not hit.is_empty():
 			var target: Variant = hit["collider"]
 			if is_instance_valid(target) and target.is_in_group("enemies"):
@@ -152,6 +172,9 @@ func _projectile(initiator: Dictionary, modifiers: Array) -> void:
 			projectile.knockback = float(modifier["force"])
 	# The projectile outlives this call, so it confirms its own hit.
 	projectile.shooter = player
+	# Before add_child: _ready builds the visual, and a tint assigned after
+	# it has run paints nothing.
+	projectile.tint = source_color()
 	get_tree().current_scene.add_child(projectile)
 	var camera := player.camera
 	projectile.global_position = camera.global_position \
@@ -173,7 +196,7 @@ func _grapple(initiator: Dictionary) -> void:
 		player.velocity = pull * float(initiator["pull_force"])
 		Tracer.spawn(get_tree().current_scene,
 				player.global_position + Vector3.UP * 1.2, hit["position"],
-				Color(0.6, 1.0, 0.7), 0.15)
+				source_color(), 0.15)
 
 func _shield(initiator: Dictionary) -> void:
 	shield_hp = float(initiator["amount"])

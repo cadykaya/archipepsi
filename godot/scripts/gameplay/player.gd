@@ -107,6 +107,15 @@ static func create() -> Player:
 	echo_part.mesh = echo_mesh
 	echo_part.position = Vector3(-0.11, 0.0, -0.05)
 	echo_part.visible = false
+	# The attachment's emitter tip. EchoRuntime paints the body with the
+	# source world's colour and this with the archetype's.
+	var echo_tip := MeshInstance3D.new()
+	echo_tip.name = "EchoTip"
+	var echo_tip_mesh := BoxMesh.new()
+	echo_tip_mesh.size = Vector3(0.05, 0.04, 0.05)
+	echo_tip.mesh = echo_tip_mesh
+	echo_tip.position = Vector3(0, 0, -0.15)
+	echo_part.add_child(echo_tip)
 	viewmodel.add_child(echo_part)
 	camera.add_child(viewmodel)
 

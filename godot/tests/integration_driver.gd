@@ -66,6 +66,7 @@ func _run() -> void:
 	_test_reveal_splits_the_two_halves()
 	_check_input_bindings()
 	_check_camera_feel()
+	_check_echo_source_tint()
 	_check_theme_agreement()
 
 	if not await _play_one_zone(true):
@@ -197,6 +198,37 @@ func _check_enemy_silhouettes() -> void:
 				"%s silhouette fits its collider (%.2f <= %.2f)"
 				% [kind, worst, half_width])
 		enemy.free()
+
+## An Echo is somebody else's item, reinterpreted. It should look like it:
+## the attachment's body wears the source world's colour — the same one
+## the campaign board, the reward pedestals and the reveal card use — and
+## its tip keeps the archetype, so "where did this come from" and "what
+## does it do" stay readable as two separate facts rather than one.
+func _check_echo_source_tint() -> void:
+	var player := Player.create()
+	add_child(player)
+	var runtime: EchoRuntime = player.echo_runtime
+	_check(runtime.source_color().is_equal_approx(Color(0.85, 0.88, 0.92)),
+			"an empty slot claims no world's colour")
+	runtime.set_equipped({"echo_id": "echo_89100001",
+			"activation": "primary", "archetype": "mobility",
+			"cooldown": 1.0, "source_game": "Celeste",
+			"initiator": {"type": "dash", "force": 12.0}})
+	_check(runtime.source_color().is_equal_approx(
+				ThemeMaterials.color_for_game("Celeste")),
+			"the equipped Echo wears its source world's colour")
+	var part: MeshInstance3D = player.viewmodel.get_node("EchoPart")
+	var tip: MeshInstance3D = part.get_node("EchoTip")
+	_check(part.visible, "a primary Echo shows its attachment")
+	var body_mat := part.material_override as StandardMaterial3D
+	var tip_mat := tip.material_override as StandardMaterial3D
+	_check(body_mat != null and tip_mat != null,
+			"body and tip are both painted")
+	_check(body_mat != null and tip_mat != null
+				and not body_mat.albedo_color.is_equal_approx(
+					tip_mat.albedo_color),
+			"source colour and archetype colour stay distinguishable")
+	player.free()
 
 ## Head bob is the classic way to make a first-person walk feel like a
 ## walk and the classic way to make people motion-sick, so its bounds are

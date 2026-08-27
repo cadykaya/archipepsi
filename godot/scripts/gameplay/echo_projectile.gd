@@ -8,6 +8,9 @@ var speed := 15.0
 var lifetime := 3.0
 var knockback := 0.0
 var direction := Vector3.FORWARD
+## The source world's colour, set before the node enters the tree — after
+## _ready has built the visual, assigning it paints nothing.
+var tint := Color(1.0, 0.55, 0.2)
 ## Who fired it. A projectile can outlive its shooter's zone, so this is
 ## checked with `is_instance_valid` before it is used.
 var shooter: Player
@@ -23,8 +26,7 @@ func _ready() -> void:
 	mesh.radius = 0.22
 	mesh.height = 0.44
 	visual.mesh = mesh
-	visual.material_override = ThemeMaterials.glow_material(
-			Color(1.0, 0.55, 0.2), 2.5)
+	visual.material_override = ThemeMaterials.glow_material(tint, 2.5)
 	add_child(visual)
 	monitoring = true
 	body_entered.connect(_on_body_entered)
