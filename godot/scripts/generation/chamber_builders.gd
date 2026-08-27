@@ -15,6 +15,12 @@ const DOOR_WIDTH := 2.4
 const DOOR_HEIGHT := 3.2
 const CORRIDOR_HEIGHT := 3.6
 
+## Lane budget for colliding props: the widest actor is the 1.8 m brute,
+## plus margin. A prop reaching PROP_FOOTPRINT in from each wall must
+## still leave BRUTE_LANE between them.
+const PROP_FOOTPRINT := 1.4
+const BRUTE_LANE := 2.6
+
 static func _box(parent: Node3D, size: Vector3, position: Vector3,
 		material: Material, collide := true) -> MeshInstance3D:
 	var mesh_instance := MeshInstance3D.new()
@@ -48,6 +54,28 @@ static func _wedge(parent: Node3D, size: Vector3, position: Vector3,
 	var body := StaticBody3D.new()
 	var shape := CollisionShape3D.new()
 	shape.shape = prism.create_convex_shape()
+	body.add_child(shape)
+	mesh_instance.add_child(body)
+	return mesh_instance
+
+## A collidable cylinder prop (drum, column stump), mirroring `_box`.
+static func _cylinder_prop(parent: Node3D, radius: float, height: float,
+		position: Vector3, material: Material) -> MeshInstance3D:
+	var mesh_instance := MeshInstance3D.new()
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = radius
+	mesh.bottom_radius = radius
+	mesh.height = height
+	mesh_instance.mesh = mesh
+	mesh_instance.position = position
+	mesh_instance.material_override = material
+	parent.add_child(mesh_instance)
+	var body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var cylinder := CylinderShape3D.new()
+	cylinder.radius = radius
+	cylinder.height = height
+	shape.shape = cylinder
 	body.add_child(shape)
 	mesh_instance.add_child(body)
 	return mesh_instance
@@ -207,6 +235,11 @@ static func _theme_props(root: Node3D, theme: String,
 		rng: RandomNumberGenerator, span_x: float, span_z: float,
 		height: float) -> void:
 	var wall_x := span_x / 2.0
+	# Colliding floor props are allowed only where the leftover lane still
+	# admits the widest actor (the 1.8 m brute) with margin. A
+	# schema-minimum 4 m corridor gets wall-mounted variants instead, so
+	# the greeble invariant above stays literally true.
+	var floor_props_ok := span_x - 2.0 * PROP_FOOTPRINT >= BRUTE_LANE
 	var count := rng.randi_range(1, 2 + int(span_z / 10.0))
 	for i in count:
 		var z := rng.randf_range(1.4, span_z - 1.4)
@@ -226,29 +259,23 @@ static func _theme_props(root: Node3D, theme: String,
 						Color(1.0, 0.62, 0.2), 2.4)
 				root.add_child(flame)
 			"rusted_industrial":
-				# Oil drums against the wall, sometimes stacked.
-				var drum := CylinderMesh.new()
-				drum.top_radius = 0.42
-				drum.bottom_radius = 0.42
-				drum.height = 0.95
-				var drum_node := MeshInstance3D.new()
-				drum_node.mesh = drum
-				drum_node.position = Vector3(side * (wall_x - 0.75),
-						0.48, z)
-				drum_node.material_override = ThemeMaterials.accent_mat(theme)
-				root.add_child(drum_node)
-				var body := StaticBody3D.new()
-				var shape := CollisionShape3D.new()
-				var cylinder_shape := CylinderShape3D.new()
-				cylinder_shape.radius = 0.42
-				cylinder_shape.height = 0.95
-				shape.shape = cylinder_shape
-				body.add_child(shape)
-				drum_node.add_child(body)
-				if rng.randf() < 0.4:
-					var top := drum_node.duplicate()
-					top.position.y += 0.95
-					root.add_child(top)
+				if floor_props_ok:
+					# Oil drums against the wall, sometimes stacked.
+					var drum := _cylinder_prop(root, 0.42, 0.95,
+							Vector3(side * (wall_x - 0.75), 0.48, z),
+							ThemeMaterials.accent_mat(theme))
+					if rng.randf() < 0.4:
+						var top := drum.duplicate()
+						top.position.y += 0.95
+						root.add_child(top)
+				else:
+					# Narrow space: a wall valve wheel instead.
+					_box(root, Vector3(0.1, 0.7, 0.7),
+							Vector3(side * (wall_x - 0.06), 1.5, z),
+							ThemeMaterials.accent_mat(theme), false)
+					_box(root, Vector3(0.16, 0.12, 0.12),
+							Vector3(side * (wall_x - 0.2), 1.5, z),
+							ThemeMaterials.trim_mat(theme), false)
 			"neon_transit":
 				# Hanging signage with authored transit nonsense.
 				var signs := ["PLATFORM ε", "EXIT →", "← EXIT", "NO SIGNAL",
@@ -271,33 +298,20 @@ static func _theme_props(root: Node3D, theme: String,
 				root.add_child(sign_label)
 			"temple_ruin":
 				# Root tendrils crawling down the wall, or a column stump.
-				if rng.randf() < 0.5:
-					var root_length := rng.randf_range(1.2, height - 0.6)
+				if not floor_props_ok or rng.randf() < 0.5:
+					var root_length := rng.randf_range(1.2,
+							maxf(1.4, height - 0.6))
 					_box(root, Vector3(0.1, root_length, 0.1),
 							Vector3(side * (wall_x - 0.1),
 								height - root_length / 2.0 - 0.2, z),
 							ThemeMaterials.glow_material(
 								Color(0.35, 0.5, 0.28), 0.15), false)
 				else:
-					var stump := CylinderMesh.new()
-					stump.top_radius = 0.5
-					stump.bottom_radius = 0.55
-					stump.height = rng.randf_range(0.6, 1.6)
-					var stump_node := MeshInstance3D.new()
-					stump_node.mesh = stump
-					stump_node.position = Vector3(side * (wall_x - 0.85),
-							stump.height / 2.0, z)
-					stump_node.material_override = ThemeMaterials.wall_mat(
-							theme)
-					root.add_child(stump_node)
-					var body := StaticBody3D.new()
-					var shape := CollisionShape3D.new()
-					var cylinder_shape := CylinderShape3D.new()
-					cylinder_shape.radius = 0.55
-					cylinder_shape.height = stump.height
-					shape.shape = cylinder_shape
-					body.add_child(shape)
-					stump_node.add_child(body)
+					var stump_height := rng.randf_range(0.6, 1.6)
+					_cylinder_prop(root, 0.55, stump_height,
+							Vector3(side * (wall_x - 0.85),
+								stump_height / 2.0, z),
+							ThemeMaterials.wall_mat(theme))
 			"concrete_facility":
 				# Bolted warning plate.
 				_box(root, Vector3(0.06, 0.6, 0.9),
@@ -623,8 +637,13 @@ static func corner(turn: int, theme: String) -> Dictionary:
 	_box(root, Vector3(0.06, 1.0, 2.0),
 			Vector3(-exit_x * 0.92, 1.4, S / 2.0),
 			ThemeMaterials.hazard_mat(theme), false)
+	# Step the cursor a full wall thickness past the exit wall's center
+	# plane: the next chamber's own front wall then butts against this
+	# one's outer face instead of occupying the same slab (coincident
+	# faces z-fight, and only bent layouts can produce them).
 	return {"root": root,
-			"exit_offset": Vector3(exit_x, 0, S / 2.0),
+			"exit_offset": Vector3(
+					exit_x + float(turn) * WALL_THICKNESS, 0, S / 2.0),
 			"bounds": AABB(Vector3(-S / 2.0, -1, 0), Vector3(S, H + 1, S)),
 			"turn": turn}
 

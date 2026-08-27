@@ -20,6 +20,7 @@ var _knockback := Vector3.ZERO
 # Collision recovery (EPSILON_SPEC §5): sidestep briefly when walled.
 var _sidestep_timer := 0.0
 var _sidestep_dir := Vector3.ZERO
+var _sidestep_flip := false
 # Brute slam windup.
 var _windup := 0.0
 
@@ -86,7 +87,22 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= Constants.GRAVITY * delta
 
 	_sidestep_timer = maxf(0.0, _sidestep_timer - delta)
+	var intended := Vector3.ZERO
+	var position_before := global_position
 	var player := _find_player()
+
+	# The slam countdown runs unconditionally: a windup that started must
+	# always resolve, even if the player dies or runs out of aggro range
+	# during it. Otherwise the brute freezes mid-swell and fires a stale,
+	# untelegraphed slam whenever the player next wanders close.
+	if _windup > 0.0:
+		_windup -= delta
+		scale = Vector3.ONE * (1.0 + 0.12 * sin((0.5 - _windup) * TAU))
+		if _windup <= 0.0:
+			scale = Vector3.ONE
+			if player != null:
+				_slam(player)
+
 	if player != null:
 		var to_player := player.global_position - global_position
 		var distance := to_player.length()
@@ -96,19 +112,16 @@ func _physics_process(delta: float) -> void:
 				look_at(global_position + flat, Vector3.UP)
 			var speed := float(stats["speed"])
 			if _windup > 0.0:
-				# Committed to the slam: plant and telegraph.
-				_windup -= delta
+				# Committed to the slam: plant and telegraph. The countdown
+				# itself runs below, outside this branch, so losing aggro
+				# mid-swing cannot freeze the brute mid-telegraph.
 				velocity.x = lerpf(velocity.x, 0.0, 0.4)
 				velocity.z = lerpf(velocity.z, 0.0, 0.4)
-				scale = Vector3.ONE * (1.0 + 0.12 * sin(
-						(0.5 - _windup) * TAU))
-				if _windup <= 0.0:
-					scale = Vector3.ONE
-					_slam(player)
 			elif speed > 0.0 and distance > float(stats["reach"]) * 0.8:
 				var dir := flat.normalized()
 				if _sidestep_timer > 0.0:
 					dir = _sidestep_dir
+				intended = dir * speed
 				velocity.x = lerpf(velocity.x, dir.x * speed, 0.2)
 				velocity.z = lerpf(velocity.z, dir.z * speed, 0.2)
 			else:
@@ -117,17 +130,24 @@ func _physics_process(delta: float) -> void:
 			if _windup <= 0.0:
 				_try_attack(player, distance)
 	move_and_slide()
-	# Collision recovery: walled while trying to move -> slide sideways
+	# Collision recovery: wanted to move but barely did -> slide sideways
 	# for a beat instead of grinding into the geometry forever.
-	if is_on_wall() and _sidestep_timer <= 0.0 \
-			and Vector2(velocity.x, velocity.z).length() > 0.5 \
-			and player != null:
-		var toward := (player.global_position - global_position)
-		var side := Vector3(toward.z, 0, -toward.x).normalized()
-		if get_instance_id() % 2 == 0:
-			side = -side
-		_sidestep_dir = side
-		_sidestep_timer = 0.55
+	#
+	# The test is ACTUAL displacement, not post-slide velocity:
+	# move_and_slide() rewrites velocity to the slid value, so a head-on
+	# wall hit leaves ~0 horizontal velocity and a velocity-based test
+	# never fires — precisely the stuck case this exists for.
+	if player != null and _sidestep_timer <= 0.0 and intended != Vector3.ZERO:
+		var moved := global_position - position_before
+		var wanted := intended.length() * delta
+		if Vector2(moved.x, moved.z).length() < wanted * 0.35:
+			var toward := player.global_position - global_position
+			var side := Vector3(toward.z, 0, -toward.x).normalized()
+			# Alternate on each attempt: a side that stayed blocked is not
+			# retried forever in a concave corner.
+			_sidestep_flip = not _sidestep_flip
+			_sidestep_dir = -side if _sidestep_flip else side
+			_sidestep_timer = 0.55
 
 func _find_player() -> Player:
 	var players := get_tree().get_nodes_in_group("player")
@@ -182,9 +202,11 @@ func take_damage(amount: float, direction: Vector3, knockback: float) -> void:
 	if knockback > 0.0:
 		_knockback += direction * knockback
 	# Crude hit feedback: a scale punch. 1998 did not have hit shaders.
-	var tween := create_tween()
-	scale = Vector3.ONE * 0.88
-	tween.tween_property(self, "scale", Vector3.ONE, 0.1)
+	# Skipped mid-windup so it cannot cancel the brute's telegraph.
+	if _windup <= 0.0:
+		var tween := create_tween()
+		scale = Vector3.ONE * 0.88
+		tween.tween_property(self, "scale", Vector3.ONE, 0.1)
 	if hp <= 0.0:
 		die()
 

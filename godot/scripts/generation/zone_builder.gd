@@ -35,8 +35,11 @@ static func _overlaps(placed: Array, candidate: AABB) -> bool:
 ## by value, which silently pinned every connector to the origin.
 static func _emit_connector(root: Node3D, theme: String, cursor: Vector3,
 		yaw: float, placed: Array, bounds_list: Array) -> Vector3:
+	# A distinct id per connector: greebles and theme props seed from it,
+	# and every connector sharing one id made them visibly copy-pasted.
 	var connector := ChamberBuilders.corridor(
-			{"length": CONNECTOR_LENGTH, "width": CONNECTOR_WIDTH}, theme)
+			{"id": "conn_%d" % bounds_list.size(),
+			"length": CONNECTOR_LENGTH, "width": CONNECTOR_WIDTH}, theme)
 	var node: Node3D = connector["root"]
 	node.name = "Connector"
 	node.position = cursor
@@ -133,14 +136,23 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 				bounds_list)
 		first = false
 
-	# Exit room with the appended portal.
-	var exit_room := ChamberBuilders.treasure_room({}, theme)
+	# Exit room with the appended portal — checked like every other
+	# placement, not trusted to clear by arithmetic coincidence.
+	var exit_room := ChamberBuilders.treasure_room({"id": "exit"}, theme)
+	var exit_attempts := 0
+	while _overlaps(placed, _world_aabb(exit_room["bounds"], cursor, yaw)) \
+			and exit_attempts < 6:
+		cursor = _emit_connector(root, theme, cursor, yaw, placed,
+				bounds_list)
+		exit_attempts += 1
 	var exit_node: Node3D = exit_room["root"]
 	exit_node.name = "ExitRoom"
 	exit_node.position = cursor
 	exit_node.rotation.y = yaw
 	root.add_child(exit_node)
-	bounds_list.append(_world_aabb(exit_room["bounds"], cursor, yaw))
+	var exit_world: AABB = _world_aabb(exit_room["bounds"], cursor, yaw)
+	placed.append(exit_world)
+	bounds_list.append(exit_world)
 	var portal := ExitPortal.create(theme)
 	portal.position = cursor + _rot(yaw, Vector3(0, 0, 6.5))
 	portal.rotation.y = yaw

@@ -36,15 +36,17 @@ func stop_ambience() -> void:
 	_ambience.stop()
 
 static func _hum_loop() -> AudioStreamWAV:
-	# A seamless 2s loop: low drone plus a faint slow shimmer. All partials
-	# complete whole cycles in the window, so the seam is silent.
+	# A seamless 1s loop: low drone plus a faint slow shimmer. Every
+	# partial (55/110/220 Hz carriers, 3 Hz modulator) completes whole
+	# cycles in the window, so the seam is silent.
 	var stream := _synth(func(t: float) -> float:
 		var drone := sin(t * 55.0 * TAU) * 0.22 + sin(t * 110.0 * TAU) * 0.08
 		var shimmer := sin(t * 220.0 * TAU + sin(t * 3.0 * TAU) * 1.5) * 0.04
-		return drone + shimmer, 2.0)
+		return drone + shimmer, 1.0)
 	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	stream.loop_begin = 0
-	stream.loop_end = int(2.0 * 22050)
+	# Derived from the buffer, never a second copy of the sample rate.
+	stream.loop_end = stream.data.size() / 2
 	return stream
 
 func _make_player(stream: AudioStreamWAV) -> AudioStreamPlayer:

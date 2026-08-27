@@ -15,6 +15,7 @@ func _init() -> void:
 	_test_arena()
 	_test_chaining_no_overlap()
 	_test_bent_layouts_never_overlap()
+	_test_props_leave_a_walkable_lane()
 	_test_platform_path_bounds()
 	_test_tower_route()
 	_test_treasure_room()
@@ -80,26 +81,43 @@ func _test_chaining_no_overlap() -> void:  # test 52
 	build["root"].free()
 
 func _test_bent_layouts_never_overlap() -> void:
-	## Non-linear layouts: across many seeds, every placement stays
-	## disjoint, and at least one seed actually bends (the feature is live).
+	## Non-linear layouts: across many seeds and every theme, all placements
+	## stay disjoint, and at least one seed actually bends. The mixes
+	## include the vertically-advancing chambers (tower, platform_path),
+	## whose exit offsets carry a y component through the rotation.
+	var themes := Constants.THEMES
+	var wide_mix: Array = [
+		{"id": "c1", "type": "corridor", "length": 12.0, "width": 5.0},
+		{"id": "c2", "type": "arena", "width": 24.0, "depth": 20.0,
+			"wall_height": 6.0, "objective": "reach_reward",
+			"reward_location_id": 89100001},
+		{"id": "c3", "type": "corridor", "length": 8.0, "width": 4.0},
+		{"id": "c4", "type": "arena", "width": 28.0, "depth": 28.0,
+			"wall_height": 5.0, "objective": "reach_reward",
+			"reward_location_id": 89100002},
+		{"id": "c5", "type": "treasure_room",
+			"reward_location_id": 89100003},
+	]
+	var vertical_mix: Array = [
+		{"id": "v1", "type": "corridor", "length": 6.0, "width": 4.0},
+		{"id": "v2", "type": "tower", "floors": 5,
+			"objective": "reach_reward", "reward_location_id": 89100004},
+		{"id": "v3", "type": "platform_path", "segment_count": 8,
+			"gap_size": 2.0, "vertical_step": 0.5},
+		{"id": "v4", "type": "tower", "floors": 2,
+			"objective": "reach_reward", "reward_location_id": 89100005},
+		{"id": "v5", "type": "arena", "width": 28.0, "depth": 12.0,
+			"wall_height": 8.0, "objective": "reach_reward",
+			"reward_location_id": 89100006},
+	]
 	var any_bend := false
-	for seed_index in 12:
+	for seed_index in 16:
+		var mix: Array = wide_mix if seed_index % 2 == 0 else vertical_mix
 		var zone := {
 			"zone_id": "zone_bend_%02d" % seed_index,
-			"display_name": "B", "theme": "rusted_industrial",
-			"target_game": "X",
-			"chambers": [
-				{"id": "c1", "type": "corridor", "length": 12.0, "width": 5.0},
-				{"id": "c2", "type": "arena", "width": 24.0, "depth": 20.0,
-					"wall_height": 6.0, "objective": "reach_reward",
-					"reward_location_id": 89100001},
-				{"id": "c3", "type": "corridor", "length": 8.0, "width": 4.0},
-				{"id": "c4", "type": "arena", "width": 28.0, "depth": 28.0,
-					"wall_height": 5.0, "objective": "reach_reward",
-					"reward_location_id": 89100002},
-				{"id": "c5", "type": "treasure_room",
-					"reward_location_id": 89100003},
-			]}
+			"display_name": "B",
+			"theme": themes[seed_index % themes.size()],
+			"target_game": "X", "chambers": mix}
 		var build := ZoneBuilder.build(zone)
 		var bounds_list: Array = build["bounds_list"]
 		for i in bounds_list.size():
@@ -115,6 +133,34 @@ func _test_bent_layouts_never_overlap() -> void:
 				any_bend = true
 		build["root"].free()
 	_check(any_bend, "at least one seeded layout actually bends")
+
+func _test_props_leave_a_walkable_lane() -> void:
+	## Theme props may not choke a chamber: at the schema-minimum corridor
+	## width, no colliding prop may intrude on the central lane the widest
+	## actor (the brute) needs.
+	var lane := ChamberBuilders.BRUTE_LANE
+	for theme: String in Constants.THEMES:
+		for width in [4.0, 6.0, 10.0]:
+			for attempt in 4:
+				var result := ChamberBuilders.corridor(
+						{"id": "lane_%s_%d" % [theme, attempt],
+						"length": 30.0, "width": width}, theme)
+				for box: AABB in _collidable_boxes(result["root"]):
+					# Only obstacles in the walkable band matter: the floor
+					# slab, the ceiling and overhead fittings are not
+					# obstructions, and the side walls define the lane.
+					if box.position.y + box.size.y <= 0.15:
+						continue          # floor
+					if box.position.y >= 2.0:
+						continue          # ceiling / overhead
+					if absf(box.get_center().x) > width / 2.0 - 0.25:
+						continue          # side wall
+					var intrudes: bool = box.position.x < lane / 2.0 \
+							and box.position.x + box.size.x > -lane / 2.0
+					_check(not intrudes,
+							"%s w=%.0f: a prop blocks the %.1fm lane at x=%.2f"
+							% [theme, width, lane, box.get_center().x])
+				result["root"].free()
 
 func _test_platform_path_bounds() -> void:  # test 53
 	# Every legal parameter combination stays within the derived bound.
@@ -166,17 +212,28 @@ func _test_tower_route() -> void:  # test 54
 		result["root"].free()
 
 func _collidable_boxes(root: Node3D) -> Array[AABB]:
+	## Every colliding piece as a local-space AABB: boxes directly, and
+	## cylinder props (drums, column stumps) by their bounding box.
 	var out: Array[AABB] = []
 	for child in root.get_children():
-		if child is MeshInstance3D:
-			for sub in child.get_children():
-				if sub is StaticBody3D:
-					for shape_node in sub.get_children():
-						if shape_node is CollisionShape3D \
-								and shape_node.shape is BoxShape3D:
-							var size: Vector3 = shape_node.shape.size
-							out.append(AABB(child.position - size / 2.0,
-									size))
+		if not (child is MeshInstance3D):
+			continue
+		for sub in child.get_children():
+			if not (sub is StaticBody3D):
+				continue
+			for shape_node in sub.get_children():
+				if not (shape_node is CollisionShape3D):
+					continue
+				var size := Vector3.ZERO
+				if shape_node.shape is BoxShape3D:
+					size = shape_node.shape.size
+				elif shape_node.shape is CylinderShape3D:
+					var cylinder: CylinderShape3D = shape_node.shape
+					size = Vector3(cylinder.radius * 2.0, cylinder.height,
+							cylinder.radius * 2.0)
+				else:
+					continue
+				out.append(AABB(child.position - size / 2.0, size))
 	return out
 
 func _test_treasure_room() -> void:  # test 55
