@@ -1,5 +1,7 @@
 """Runtime capability gates for staged Echoes 2.0 implementation.
 
+S1.1 review patch authored by ChatGPT (GPT-5.6 Sol, OpenAI).
+
 The v0.8 schema describes the whole Echo language up front, but the engine
 implements it stage by stage. A schema-valid interpretation must therefore
 also be *runnable today* before it can be accepted and persisted.
