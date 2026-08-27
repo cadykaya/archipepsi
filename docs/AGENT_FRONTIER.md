@@ -88,6 +88,13 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   in both directions, a mode that called self-contained Echoes "systemic",
   a tag dropped from every Zone forever, and claimed rewards respawning.
   All sabotage-proven. See `docs/IMPLEMENTATION_DECISIONS.md`.
+- **Secrets reach the vertical chambers.** `platform_path` and `tower`
+  grow them now, over the highest FLAT GROUND in each (the end ledge at
+  `rise`, the top deck at the summit) — `_secret_alcove` takes a `floor_y`,
+  because measuring from absolute zero put the alcove *below* the player
+  in both. A tower that grows one is built 1.5 m taller; five metres over
+  the summit left it 0.15 m short of standing room and the builder
+  declined silently. Epsilon also speaks in the Hub now.
 - **Next: the plan is exhausted.** IMPLEMENTATION_PLAN §2.5 ends at S10
   ("Deployables come after S10, if at all"). Per the standing handoff, do
   not stop here — continue developing the game, and stop only where

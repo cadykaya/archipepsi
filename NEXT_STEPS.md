@@ -562,10 +562,15 @@ than runtime `load`, so `--import` walks them.
    (`EPSILON_PROVIDER=claude make bridge`); offline stub tests cover the
    mechanics, but a real generation archive would be the interesting thing
    — then `make replay` reports its first-try acceptance rate.
-3. Secrets in the tower and platform_path chambers — both have the
-   vertical room for it; only arenas grow them today.
-4. Epsilon's voice in the Hub between Zones (it currently only speaks
-   inside a Zone, plus the existing generating-screen lines).
+3. ~~Secrets in the tower and platform_path chambers~~ — **done.** Both
+   put theirs over the highest FLAT GROUND in the chamber (the
+   platform_path's end ledge at `rise`, the tower's top deck at its
+   summit), which is the same argument the arena makes applied to a floor
+   that is not at zero — `_secret_alcove` takes a `floor_y` now. A tower
+   that grows one is built 1.5 m taller, because five metres over the
+   summit left the alcove 0.15 m short of standing room and the builder
+   declined to place it *silently*, which is the worst of both.
+4. ~~Epsilon's voice in the Hub between Zones~~ — **done.**
 
 ## Known blockers / bugs
 None known. One recorded schema corner: `finale_offered` stays true in

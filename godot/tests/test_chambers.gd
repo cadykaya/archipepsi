@@ -27,6 +27,7 @@ func _ready() -> void:
 	_test_bent_layouts_never_overlap()
 	_test_props_leave_a_walkable_lane()
 	_test_secrets_are_optional()
+	_test_secrets_reach_the_vertical_chambers()
 	_test_platform_path_bounds()
 	_test_tower_route()
 	_test_treasure_room()
@@ -258,6 +259,69 @@ func _test_secrets_are_optional() -> void:
 	_check(at_the_floor > 0,
 			"the sweep builds the minimum-lip ledge, not just roomy ones")
 	_check(cramped == 0, "a low arena got a secret it has no headroom for")
+
+## The two chamber types that always had the vertical room and never got a
+## secret. Both put theirs over the highest FLAT GROUND in the chamber —
+## the platform_path's end ledge, the tower's top deck — which is the same
+## argument the arena makes, applied to a floor that is not at zero.
+##
+## The measurement that matters is the lip's height ABOVE THAT FLOOR: an
+## alcove measured from absolute zero in a chamber whose floor is at
+## `rise` lands below the player, which is a step rather than a secret.
+func _test_secrets_reach_the_vertical_chambers() -> void:
+	var reach: float = Constants.JUMP_APEX_HEIGHT + 0.4
+	var lip_min: float = ChamberBuilders.SECRET_LIP_MIN
+	var paths := 0
+	var towers := 0
+	for seed_index in 60:
+		var step := 0.25 + float(seed_index % 4) * 0.25
+		var path := ChamberBuilders.platform_path(
+				{"id": "path_%03d" % seed_index, "type": "platform_path",
+				"segment_count": 3 + seed_index % 6,
+				"gap_size": minf(2.0, _max_safe_gap(step)),
+				"vertical_step": step,
+				"objective": "platform_to_goal"}, "concrete_facility")
+		var rise: float = step * float(3 + seed_index % 6)
+		paths += _count_secrets_above(path, rise, lip_min, reach,
+				"platform_path")
+		path["root"].free()
+
+		var tower := ChamberBuilders.tower(
+				{"id": "tower_%03d" % seed_index, "type": "tower",
+				"floors": 2 + seed_index % 4, "objective": "reach_reward",
+				"enemies": []}, "concrete_facility")
+		# The top deck's height is the tower's own summit, which is what
+		# `exit_offset` already reports.
+		towers += _count_secrets_above(tower, tower["exit_offset"].y, lip_min,
+				reach, "tower")
+		tower["root"].free()
+	_check(paths > 0, "platform_paths grow secrets (%d)" % paths)
+	_check(towers > 0, "towers grow secrets (%d)" % towers)
+
+## Secret triggers above `floor_y`, checking each is genuinely out of reach
+## FROM that floor and that nothing the run needs went up with it.
+func _count_secrets_above(result: Dictionary, floor_y: float,
+		lip_min: float, reach: float, what: String) -> int:
+	var found := 0
+	for child in result["root"].get_children():
+		if not child.is_in_group(ChamberBuilders.SECRET_GROUP):
+			continue
+		found += 1
+		var above := (child as Node3D).position.y - floor_y
+		_check(above > reach,
+				"a %s secret sits %.2fm over its floor — a base jump reaches "
+					% [what, above] + "%.2fm, so that is a step" % reach)
+		_check(above >= lip_min - 1.5,
+				"a %s secret at %.2fm over its floor is not the alcove"
+					% [what, above])
+	# Nothing the run needs rides up with it.
+	if found > 0:
+		_check(absf(result["reward_position"].y - floor_y) < 2.5,
+				"a %s secret never lifts the reward to itself" % what)
+		for spawn: Dictionary in result["enemy_spawns"]:
+			_check(spawn["position"].y - floor_y < reach,
+					"a %s secret never strands an enemy out of reach" % what)
+	return found
 
 func _test_platform_path_bounds() -> void:  # test 53
 	# Every legal parameter combination stays within the derived bound.

@@ -371,10 +371,20 @@ const SECRET_GROUP := "secret_alcove"
 ## Built axis-aligned against the wall at `side * wall_x` rather than
 ## rotated into place, so the headless collider tests read its extents
 ## without having to unwind a basis.
+## `floor_y` is the height of the floor a player would jump FROM, and
+## every vertical measurement here is relative to it.
+##
+## It exists because an arena is not the only room with a floor. A
+## platform_path's end ledge sits at `rise`, and a tower's top deck at its
+## summit — both are flat ground the player is standing on, and both are
+## the highest place base movement reaches in their chamber. Measuring the
+## lip from absolute zero put the alcove *below* the player in either of
+## them, which is a step rather than a secret.
 static func _secret_alcove(root: Node3D, theme: String, side: float,
 		wall_x: float, z: float, ceiling: float,
-		rng: RandomNumberGenerator) -> void:
-	var lip := clampf(ceiling - 2.4, SECRET_LIP_MIN, SECRET_LIP_MAX)
+		rng: RandomNumberGenerator, floor_y := 0.0) -> void:
+	var headroom := ceiling - floor_y
+	var lip := floor_y + clampf(headroom - 2.4, SECRET_LIP_MIN, SECRET_LIP_MAX)
 	# No headroom, no secret: a ledge you cannot stand on is a bump.
 	if lip + Constants.PLAYER_HEIGHT + 0.3 > ceiling:
 		return
@@ -624,6 +634,20 @@ static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 		_light(root, Vector3(0, rise + 4.0,
 				total * (float(i) + 0.5) / maxf(2.0, segments / 2.0)), theme,
 				18.0)
+	# Roughly one platform_path in three grows a secret, over the END
+	# LEDGE. That ledge is the highest flat ground in the chamber and the
+	# last thing the mandatory route touches, so a shelf above it is out of
+	# reach of a standing jump from anywhere a base kit can stand — the
+	# same argument the arena's alcove makes, applied to the floor that
+	# happens to be at `rise` rather than at zero.
+	#
+	# Never over the platforms: a shelf above the route would be a shelf
+	# somebody tries to jump to from a platform over a bottomless pit.
+	var path_rng := _greeble_rng(chamber, theme)
+	if path_rng.randf() < 0.34:
+		_secret_alcove(root, theme,
+				-1.0 if path_rng.randf() < 0.5 else 1.0, width / 2.0,
+				total - ledge / 2.0, wall_height, path_rng, rise)
 	var spawns: Array = []
 	for group: Dictionary in chamber.get("enemies", []):
 		for i in int(group.get("count", 0)):
@@ -654,7 +678,14 @@ static func tower(chamber: Dictionary, theme: String) -> Dictionary:
 	# The exit door is carved at summit height — the tower is climbed, and
 	# its way out is at the top of the back wall.
 	var summit := step_rise * ceilf(total_rise / step_rise)
-	_perimeter(root, side, side, total_rise + 5.0, theme, true, true, summit)
+	# Rolled BEFORE the shaft is built, because a tower that grows a secret
+	# is a taller tower. Five metres over the summit leaves the alcove
+	# 0.15 m short of standing room and `_secret_alcove` declines to build
+	# it — silently, which is the worst of both.
+	var tower_rng := _greeble_rng(chamber, theme)
+	var wants_secret := tower_rng.randf() < 0.34
+	var shaft_height := total_rise + (6.5 if wants_secret else 5.0)
+	_perimeter(root, side, side, shaft_height, theme, true, true, summit)
 
 	# Central column, so the shaft reads as a structure and blocks
 	# straight-line ranged fire across it.
@@ -697,6 +728,15 @@ static func tower(chamber: Dictionary, theme: String) -> Dictionary:
 	# Bridge strip out through the back wall to the exit.
 	_box(root, Vector3(3.0, 0.5, 2.4),
 			Vector3(0, top_y, side + 1.0), floor_mat)
+	# Roughly one tower in three grows a secret over the TOP DECK. The
+	# spiral hugs the walls the whole way up, so a shelf partway up the
+	# shaft would be a step off the nearest platform rather than a secret;
+	# above the deck is the one height the climb has finished at, and the
+	# shaft is built `total_rise + 5` tall, which leaves the headroom.
+	if wants_secret:
+		_secret_alcove(root, theme,
+				-1.0 if tower_rng.randf() < 0.5 else 1.0, side / 2.0,
+				side - 2.0, shaft_height, tower_rng, top_y)
 
 	for level in range(0, int(total_rise / per_floor) + 1):
 		_light(root, Vector3(0, per_floor * float(level) + 2.5,
@@ -714,9 +754,9 @@ static func tower(chamber: Dictionary, theme: String) -> Dictionary:
 			index += 1
 	return {"root": root, "exit_offset": Vector3(0, top_y, side + 2.2),
 			"bounds": AABB(Vector3(-side / 2.0, -1, 0),
-					Vector3(side, total_rise + 6.0, side + 2.2)),
+					Vector3(side, shaft_height + 1.0, side + 2.2)),
 			"enemy_spawns": spawns,
-			"room_height": total_rise + 6.0,
+			"room_height": shaft_height,
 			"reward_position": Vector3(-2.0, top_y, side - 2.0)}
 
 ## A 90° corner piece for non-linear layouts. Entrance on local z=0 facing
