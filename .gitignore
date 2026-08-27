@@ -8,5 +8,6 @@ __pycache__/
 *.pyc
 .venv/
 saves/
+.integration-saves/
 generation_archive/
 godot-bin/

@@ -69,8 +69,16 @@ GODOT := godot-bin/godot
 godot-test:                    # headless builder tests (no bridge needed)
 	$(GODOT) --headless --path godot --script tests/test_chambers.gd
 
-godot-integration:             # full loop through a live mock bridge
-	cd bridge && $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback & \
+# The integration run gets its own throwaway save directory. Sharing
+# bridge/saves/ made the run resume the PREVIOUS run's campaign: the zone
+# counter climbed forever, "coins were genuinely spent" passed on coins an
+# earlier run had spent, and the shop assertion failed at random.
+INTEGRATION_SAVES := $(CURDIR)/.integration-saves
+
+godot-integration:             # full loop through a live mock bridge, fresh state
+	rm -rf $(INTEGRATION_SAVES)
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(INTEGRATION_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback & \
 	BRIDGE_PID=$$!; sleep 2; \
 	$(GODOT) --headless --path godot -- --integration-test; \
 	STATUS=$$?; kill $$BRIDGE_PID; exit $$STATUS
