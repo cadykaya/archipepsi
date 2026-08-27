@@ -25,6 +25,8 @@ var _sidestep_flip := false
 var _tint_parts: Array[StandardMaterial3D] = []
 var _tint_base_energy: Array[float] = []
 var _tint_base_albedo: Array[Color] = []
+var _voice: AudioStreamPlayer3D = null
+var _has_noticed := false
 # Brute slam windup.
 var _windup := 0.0
 
@@ -149,6 +151,19 @@ static func _build_brute(enemy: Node3D, size: Vector3, theme: String) -> void:
 
 func _ready() -> void:
 	add_to_group("enemies")
+	# Positional audio: a shot from off-screen should tell you where to
+	# look, which the damage indicator can only do after you are already hit.
+	_voice = AudioStreamPlayer3D.new()
+	_voice.unit_size = 6.0
+	_voice.max_distance = 45.0
+	_voice.volume_db = -6.0
+	add_child(_voice)
+
+func _say(kind: String) -> void:
+	if _voice == null:
+		return
+	_voice.stream = Tones.enemy_stream(kind)
+	_voice.play()
 
 func _physics_process(delta: float) -> void:
 	if _dead:
@@ -177,6 +192,7 @@ func _physics_process(delta: float) -> void:
 		scale = Vector3.ONE * (1.0 + 0.12 * sin((0.5 - _windup) * TAU))
 		if _windup <= 0.0:
 			scale = Vector3.ONE
+			_say("slam")
 			if player != null:
 				_slam(player)
 
@@ -184,6 +200,9 @@ func _physics_process(delta: float) -> void:
 		var to_player := player.global_position - global_position
 		var distance := to_player.length()
 		if distance <= Constants.ENEMY_AGGRO_RADIUS:
+			if not _has_noticed:
+				_has_noticed = true
+				_say("aggro")
 			var flat := Vector3(to_player.x, 0, to_player.z)
 			if flat.length() > 0.05:
 				look_at(global_position + flat, Vector3.UP)
@@ -241,10 +260,14 @@ func _try_attack(player: Player, distance: float) -> void:
 	elif archetype == "brute":
 		if distance <= reach:
 			# The boss telegraphs: half a second of swelling, then the slam.
+			# The growl matters more than the swell — you can hear it while
+			# looking somewhere else.
 			_attack_cooldown = float(stats["cooldown"])
 			_windup = 0.5
+			_say("windup")
 	elif distance <= reach:
 		_attack_cooldown = float(stats["cooldown"])
+		_say("melee_hit")
 		player.take_damage(float(stats["damage"]), global_position)
 
 ## The brute's payoff: damage plus a shove if the player lingered.
@@ -264,6 +287,7 @@ func _has_line_of_sight(player: Player) -> bool:
 	return not hit.is_empty() and hit["collider"] == player
 
 func _fire_projectile(player: Player) -> void:
+	_say("shot")
 	var projectile := EnemyProjectile.new()
 	projectile.damage = float(stats["damage"])
 	projectile.speed = Constants.RANGED_PROJECTILE_SPEED

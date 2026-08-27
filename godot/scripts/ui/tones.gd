@@ -91,6 +91,34 @@ static func _arp(freqs: Array, note_length: float,
 		var envelope := 1.0 - local / note_length
 		return sin(t * freq * TAU) * volume * envelope, total)
 
+## Streams for positional enemy audio. Enemies own their own 3D players
+## (so you can hear WHERE a shot came from), but the waveforms are
+## generated here and cached, not re-synthesized per enemy.
+static var _enemy_cache: Dictionary = {}
+
+static func enemy_stream(kind: String) -> AudioStreamWAV:
+	if _enemy_cache.has(kind):
+		return _enemy_cache[kind]
+	var stream: AudioStreamWAV
+	match kind:
+		"aggro":                    # it has noticed you
+			stream = _arp([180.0, 300.0], 0.05, 0.3)
+		"shot":                     # ranged fires
+			stream = _square_burst(340.0, 0.09, 0.32)
+		"windup":                   # the brute commits
+			stream = _synth(func(t: float) -> float:
+				# A rising growl over the half-second telegraph.
+				var freq := 60.0 + 90.0 * (t / 0.5)
+				return sin(t * freq * TAU) * 0.42 * (0.4 + t / 0.5), 0.5)
+		"slam":
+			stream = _thud(44.0, 0.3)
+		"melee_hit":
+			stream = _square_burst(150.0, 0.07, 0.3)
+		_:
+			stream = _square_burst(220.0, 0.06, 0.25)
+	_enemy_cache[kind] = stream
+	return stream
+
 static func _synth(sample_fn: Callable, duration: float) -> AudioStreamWAV:
 	var rate := 22050
 	var count := int(duration * rate)
