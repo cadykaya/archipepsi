@@ -352,6 +352,44 @@ def check_action_primitive_count() -> None:
         )
 
 
+#: The packet's schemas are the binding contract and the bridge holds a
+#: verbatim copy (README 23: "Copy verbatim"). Nothing enforced that until a
+#: post-S1 review patch edited the bridge copy of `migration.py` alone: both
+#: trees stayed internally consistent, every suite stayed green, and the
+#: contract and the code silently disagreed about which slot a migrated
+#: mobility Echo lands in. Two files that must be identical need a check that
+#: says so, or "verbatim" is only a comment.
+_BRIDGE_SCHEMAS = (
+    Path(__file__).resolve().parents[2]
+    / "bridge" / "archipepsi_bridge" / "schemas"
+)
+
+
+def check_schema_copies() -> None:
+    packet_dir = Path(__file__).resolve().parent / "schemas"
+    if not _BRIDGE_SCHEMAS.is_dir():
+        failures.append(
+            f"no bridge schema copy at {_BRIDGE_SCHEMAS}; the packet cannot "
+            "verify that the binding contract is the code that runs"
+        )
+        return
+    packet_files = {p.name for p in packet_dir.glob("*.py")}
+    bridge_files = {p.name for p in _BRIDGE_SCHEMAS.glob("*.py")}
+    for missing in sorted(packet_files - bridge_files):
+        failures.append(f"schemas/{missing} is in the packet but not the bridge")
+    for extra in sorted(bridge_files - packet_files):
+        failures.append(f"schemas/{extra} is in the bridge but not the packet")
+    for name in sorted(packet_files & bridge_files):
+        packet_text = (packet_dir / name).read_text()
+        bridge_text = (_BRIDGE_SCHEMAS / name).read_text()
+        if packet_text != bridge_text:
+            failures.append(
+                f"schemas/{name} differs between the packet and the bridge; "
+                "the packet is the contract, so reconcile toward it "
+                "deliberately rather than letting the copies drift"
+            )
+
+
 def main() -> int:
     for doc in DOCS:
         text = doc.read_text()
@@ -361,6 +399,7 @@ def main() -> int:
         check_banned_terms(doc, text)
     check_catalog_coverage("\n".join(d.read_text() for d in DOCS))
     check_action_primitive_count()
+    check_schema_copies()
     check_test_count()
 
     if failures:

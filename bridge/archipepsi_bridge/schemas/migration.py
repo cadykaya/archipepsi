@@ -28,12 +28,19 @@ except ImportError:  # pragma: no cover
 #: v7 archetypes mapped onto the slot the S1 runtime can actually execute.
 #: v0.7 had one active Echo button (RMB), so migration must preserve that
 #: control regardless of whether the old Echo was described as a weapon,
-#: tool or mobility ability. S2 introduces the wider slot runtime; until then
-#: putting a migrated Hookshot into `mobility` would make a previously usable
-#: equipped Echo disappear from RMB.
+#: tool or mobility ability. Putting a migrated Hookshot into `mobility`
+#: would make a previously usable equipped Echo disappear from RMB, because
+#: `main.gd` binds `slotted_action()` — which defaults to `echo_a` — and
+#: nothing else.
+#:
+#: This collapse expires at **S7** (`IMPLEMENTATION_PLAN.md` §2.5: "Slots +
+#: loadout UX"), which is the stage that actually binds four slots. Not S2:
+#: S2 ships the primitive catalog and the action runner, and leaves the
+#: number of reachable buttons at one. Restoring `"mobility": "mobility"`
+#: before S7 re-opens the regression this row exists to prevent.
 #:
 #: Public because the deterministic fallback uses the same compatibility
-#: mapping: newly generated S1 mobility Echoes must also remain playable.
+#: mapping: newly generated mobility Echoes must also remain playable.
 ARCHETYPE_SLOT = {
     "weapon": "echo_a",
     "tool": "echo_a",

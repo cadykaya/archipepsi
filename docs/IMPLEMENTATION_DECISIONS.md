@@ -106,3 +106,52 @@ Only real deviations from the v0.7 packet and material constraints live here.
   merges. It cannot breach a budget, dangle a target or fail a fold, which
   is what keeps it usable as the test oracle for every stage after this
   one. The mock provider is the one that has to grow, and that is S10.
+
+## S1.1 — an externally authored review pass, and what it exposed
+
+A post-S1 review patch (commits `a0e61e3`, `7e2837e`, `68c1015`) was
+authored outside this build by ChatGPT (GPT-5.6 Sol, OpenAI). It was
+reviewed against the packet and the running code rather than accepted on
+description, and all three of its substantive changes hold up:
+
+- **Staged capability gating** (`epsilon/capabilities.py`). `IMPLEMENTED_-
+  PRIMITIVES` gated which Action verbs the engine could run, but nothing
+  gated operations, component kinds, slots, trait stats, modifiers or the
+  projectile fields v8 added. A Resource, a Rule or a `LINK` was therefore
+  *schema-valid* and would validate, persist and then do nothing — the
+  precise failure `IMPLEMENTED_PRIMITIVES` exists to prevent, left open
+  everywhere except Actions. The request and the post-parse validator now
+  read one registry, so the prompt cannot advertise what validation would
+  accept as a no-op. The fallback runs through the same `check()`, so a
+  fallback that ever drifts out of stage raises instead of persisting.
+
+- **Batch grant order** (`transactions.reconcile`). `ECHOES.md` §5 says
+  sequence numbers within one reconciliation batch are assigned in
+  `source_location_id` ascending order. The fold honoured that; `reconcile`
+  iterated `pending_checks` in claim order and never did. A documented
+  determinism rule that the only code path capable of violating it does not
+  enforce is not a rule, and one `RoomUpdate` confirming several Checks was
+  enough to expose it.
+
+- **Collapsing `ARCHETYPE_SLOT` onto `echo_a`.** A migrated v0.7 mobility
+  Echo was given `slot="mobility"`, and `main.gd` binds `slotted_action()`,
+  which defaults to `echo_a`, and nothing else. The Echo was owned,
+  slotted, and unreachable by any button.
+
+Two corrections were made on top of it:
+
+- **The expiry stage was wrong.** The patch documented the slot collapse as
+  lifting at S2. S2 ships the primitive catalog and the action runner and
+  leaves the number of reachable buttons at one; four-slot binding is
+  **S7**. A stopgap whose comment names the wrong stage gets removed a
+  stage early, by someone reading the comment and believing it.
+
+- **The packet and the bridge had silently diverged.** The patch edited
+  `bridge/archipepsi_bridge/schemas/migration.py` without the packet copy
+  that README §23 calls the binding contract. Both trees stayed internally
+  consistent and every suite stayed green while the contract and the code
+  disagreed about which slot a migrated Echo lands in. `check_packet.py`
+  now compares the two directory-wide and fails on any difference, added
+  and then verified by deliberately introducing drift. This is the same
+  medicine as the derived primitive count: two things that must agree need
+  a check that says so, or the agreement is only a comment.
