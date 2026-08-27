@@ -399,7 +399,7 @@ static func tower(chamber: Dictionary, theme: String) -> Dictionary:
 			Vector3(0, -0.25, side / 2.0), floor_mat)
 	# The exit door is carved at summit height — the tower is climbed, and
 	# its way out is at the top of the back wall.
-	var summit := step_rise * ceil(total_rise / step_rise)
+	var summit := step_rise * ceilf(total_rise / step_rise)
 	_perimeter(root, side, side, total_rise + 5.0, theme, true, true, summit)
 
 	# Central column, so the shaft reads as a structure and blocks
