@@ -27,6 +27,7 @@ var _fuzz: ColorRect
 var _board_cells: Array[MeshInstance3D] = []
 var _board_legend: Label3D
 var _board_pulse := 0.0
+var _working_line := 0
 
 func _ready() -> void:
 	_build_room()
@@ -115,6 +116,7 @@ func _build_room() -> void:
 	_abandon.position = Vector3(-W / 2.0 + 2.4, 0, D - 2.4)
 
 	_build_campaign_board()
+	_build_controls_board()
 
 	_static_root = Node3D.new()
 	add_child(_static_root)
@@ -178,6 +180,11 @@ func refresh() -> void:
 	var detail := str(hub.get("detail", ""))
 	if detail != "":
 		lines.append(detail)
+	if mode == "GENERATING":
+		# A Claude generation can run two minutes. Cycling status keeps it
+		# reading as work rather than as a hang.
+		_working_line = (_working_line + 1) % _WORKING_LINES.size()
+		lines.append("EPSILON: %s" % _WORKING_LINES[_working_line])
 	var last := BridgeClient.last_completed_zone
 	if not last.is_empty():
 		lines.append("LAST TRANSMISSION: %s" % last.get("display_name", "?"))
@@ -282,6 +289,60 @@ func _build_campaign_board() -> void:
 	_board_legend.rotation.y = -PI / 2.0
 	_board_legend.modulate = Color(0.62, 0.7, 0.76)
 	root.add_child(_board_legend)
+
+## A training-room card on the right wall. Every FPS of the era had one,
+## and nothing else in the game tells you that LMB is always Static Pulse.
+func _build_controls_board() -> void:
+	var panel_z := D * 0.62
+	var wall_x := W / 2.0 - 0.35
+	var b := ChamberBuilders
+	var root := Node3D.new()
+	root.name = "ControlsBoard"
+	add_child(root)
+	b._box(root, Vector3(0.12, 2.4, 4.0), Vector3(wall_x, 2.2, panel_z),
+			ThemeMaterials.trim_mat(THEME), false)
+
+	var title := Label3D.new()
+	title.text = "OPERATING PROCEDURE"
+	title.font_size = 34
+	title.pixel_size = 0.005
+	title.position = Vector3(wall_x - 0.09, 3.15, panel_z)
+	title.rotation.y = PI / 2.0
+	title.modulate = Color(0.85, 0.8, 0.55)
+	root.add_child(title)
+
+	var body := Label3D.new()
+	body.text = """WASD  move        SPACE  jump
+LMB   Static Pulse — always, never replaced
+RMB   equipped Echo
+E     interact / claim        Q  cycle Echo
+TAB   Echo archive            ESC  pause
+F3    diagnostics
+
+Every mandatory path is clearable with
+Static Pulse and base movement alone."""
+	body.font_size = 26
+	body.pixel_size = 0.005
+	body.position = Vector3(wall_x - 0.09, 2.0, panel_z)
+	body.rotation.y = PI / 2.0
+	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	body.modulate = Color(0.72, 0.78, 0.82)
+	root.add_child(body)
+
+#: Shown one at a time while Epsilon is designing, so a long generation
+#: reads as work in progress rather than a hang.
+const _WORKING_LINES := [
+	"reading the item pool…",
+	"deciding how mean to be…",
+	"placing a room you will walk through exactly once…",
+	"considering the brute…",
+	"reconsidering the brute…",
+	"choosing a colour for the walls…",
+	"checking that you can still jump it…",
+	"naming the place…",
+	"hiding something you will not find…",
+	"aligning the corridor with nothing in particular…",
+]
 
 func _refresh_campaign_board(snapshot: Dictionary) -> void:
 	if _board_cells.is_empty():
