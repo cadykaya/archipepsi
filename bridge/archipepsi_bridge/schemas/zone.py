@@ -44,9 +44,45 @@ class Strict(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+#: ECHOES.md §13. Same seven tags the `affordance` component kind names —
+#: one vocabulary, because a Zone feature and an owned capability tag are
+#: the same concept seen from the two ends.
+AffordanceTag = Literal[
+    "grapple_anchor", "breakable_wall", "water_volume", "rail",
+    "wind_volume", "bounce_pad", "moving_platform",
+]
+
+
 class EnemyGroup(Strict):
     archetype: Archetype
     count: int = Field(ge=1, le=C.MAX_ENEMIES_PER_CHAMBER)
+
+
+class AffordanceFeature(Strict):
+    """One optional world feature a Zone may offer (ECHOES.md §13).
+
+    Optional is the whole point. A feature may never lie on the mandatory
+    path, host an AP reward, an exit or an objective — §13.2, enforced by
+    `validate_zone` rather than by good intentions — so a Zone with every
+    feature stripped out is still completable with the base kit. That is
+    what makes affordances safe to generate against a campaign whose
+    capabilities the generator cannot fully predict.
+    """
+    tag: AffordanceTag
+    #: Where in the chamber, as a fraction of its extent. The builder owns
+    #: metres; a generator that could name a coordinate could name one
+    #: inside the exit lane.
+    at: tuple[float, float] = ((0.5, 0.5))
+    note: str | None = Field(default=None, max_length=C.MAX_TEXT_LEN)
+
+    @model_validator(mode="after")
+    def _inside_the_chamber(self):
+        for value in self.at:
+            if not 0.0 <= value <= 1.0:
+                raise ValueError(
+                    f"affordance position {self.at} is outside the chamber"
+                )
+        return self
 
 
 class ChamberBase(Strict):
@@ -55,6 +91,11 @@ class ChamberBase(Strict):
     reward_location_id: int | None = Field(
         default=None, ge=C.FIRST_LOCATION_ID, le=C.LAST_LOCATION_ID
     )
+    #: S9. Additive and optional: a Zone generated before affordances
+    #: existed is still a valid Zone, which is why `schema_version` stays
+    #: 7 — bumping it would fail every Zone already inside a save for a
+    #: change that requires nothing and removes nothing.
+    features: tuple[AffordanceFeature, ...] = Field(default=(), max_length=3)
 
     @property
     def enemy_total(self) -> int:
@@ -98,6 +139,26 @@ class CorridorChamber(_WithEnemies):
             raise ValueError(
                 f"chamber '{self.id}': a corridor has no objective, so its enemies "
                 "cannot gate a reward. Use an arena with objective 'kill_all'."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _features_need_room_beside_the_path(self):
+        """A corridor is the only chamber type that may carry a feature —
+        every other type has either a Check or a gating objective — and it
+        is also the narrowest. One barely wider than its door is entirely
+        walking lane, so a feature in it would end up in the masonry or
+        across the doorway. Refused here rather than dropped by the
+        builder: a silently discarded feature is a Zone that reads richer
+        than it plays, and a refusal is something the repair loop can fix.
+        """
+        if self.features and self.width < C.MIN_FEATURE_CHAMBER_WIDTH:
+            raise ValueError(
+                f"chamber '{self.id}' is {self.width}m wide and carries "
+                f"{len(self.features)} affordance feature(s); a feature "
+                f"needs a chamber at least "
+                f"{C.MIN_FEATURE_CHAMBER_WIDTH}m wide to sit clear of the "
+                "walking lane (ECHOES.md 13.2)"
             )
         return self
 
@@ -203,6 +264,28 @@ class Zone(Strict):
         rewards = self.reward_location_ids
         if len(set(rewards)) != len(rewards):
             raise ValueError("duplicate reward_location_id")
+
+        # §13.2, the structural half: a chamber that HOLDS an AP reward may
+        # not also host affordance features. Nothing forces the two to
+        # interact, and keeping them in separate rooms is the cheapest
+        # possible proof that no feature sits between the player and a
+        # Check. The semantic half — capability ownership — needs the
+        # campaign and lives in `validate_zone`.
+        for chamber in self.chambers:
+            if chamber.features and chamber.reward_location_id is not None:
+                raise ValueError(
+                    f"chamber '{chamber.id}' holds Check "
+                    f"{chamber.reward_location_id} and an affordance "
+                    f"feature; an affordance may never sit on the path to "
+                    f"an AP reward (ECHOES.md 13.2)"
+                )
+            if chamber.features and getattr(chamber, "objective", "none") \
+                    not in (None, "none", "reach_exit"):
+                raise ValueError(
+                    f"chamber '{chamber.id}' has objective "
+                    f"'{chamber.objective}' and an affordance feature; an "
+                    f"affordance may never gate an objective"
+                )
         return self
 
     @property
@@ -221,6 +304,7 @@ def validate_zone(
     expected_zone_id: str,
     allocated_location_ids: list[int],
     owned_echo_ids: list[str],
+    owned_affordance_tags: tuple[str, ...] = (),
 ) -> list[str]:
     """Check a structurally-valid Zone against its request.
 
@@ -229,6 +313,19 @@ def validate_zone(
     accepted Zone is always something Epsilon actually chose.
     """
     errors: list[str] = []
+
+    # I12: a feature the campaign cannot interact with is set dressing
+    # that looks like content, which §13.1 says is worse than nothing.
+    # Evaluated over OWNED capability, never equipped — you own the
+    # grapple whether or not it is slotted, and you can always slot it.
+    for chamber in zone.chambers:
+        for feature in chamber.features:
+            if feature.tag not in owned_affordance_tags:
+                errors.append(
+                    f"chamber '{chamber.id}' offers a '{feature.tag}', "
+                    f"which this campaign has no capability to use; "
+                    f"offer one of {sorted(owned_affordance_tags)} or none"
+                )
 
     if zone.zone_id != expected_zone_id:
         errors.append(

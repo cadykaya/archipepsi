@@ -204,6 +204,63 @@
         "title": "ExitZone",
         "type": "object"
       },
+      "GrantLocalReward": {
+        "additionalProperties": false,
+        "description": "Record a local reward the player earned (ECHOES.md \u00a714.2).\n\nClient-initiated because the world is where a note is found, and\nvalidated here because the save is where it is kept. There is no field\nthat could name an AP item, location or Check \u2014 the intent is\nstructurally incapable of the mistake \u00a714.2 forbids, rather than\ntrusted not to make it.",
+        "properties": {
+          "type": {
+            "const": "grant_local_reward",
+            "title": "Type",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "epsilon_note",
+              "challenge_marker",
+              "cosmetic_grant",
+              "hub_decoration",
+              "lab_fixture",
+              "flavor_log"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "reward_id": {
+            "maxLength": 48,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Reward Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Description",
+            "type": "string"
+          },
+          "best_seconds": {
+            "default": 0.0,
+            "maximum": 36000.0,
+            "minimum": 0.0,
+            "title": "Best Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "kind",
+          "reward_id",
+          "display_name"
+        ],
+        "title": "GrantLocalReward",
+        "type": "object"
+      },
       "Hello": {
         "additionalProperties": false,
         "properties": {
@@ -361,6 +418,7 @@
         "debug_command": "#/$defs/DebugCommand",
         "enter_zone": "#/$defs/EnterZone",
         "exit_zone": "#/$defs/ExitZone",
+        "grant_local_reward": "#/$defs/GrantLocalReward",
         "hello": "#/$defs/Hello",
         "leave_zone": "#/$defs/LeaveZone",
         "request_next_zone": "#/$defs/RequestNextZone",
@@ -406,6 +464,9 @@
       },
       {
         "$ref": "#/$defs/SlotAction"
+      },
+      {
+        "$ref": "#/$defs/GrantLocalReward"
       },
       {
         "$ref": "#/$defs/SetCreativity"
@@ -674,6 +735,61 @@
         "title": "AffordanceComponent",
         "type": "object"
       },
+      "AffordanceFeature": {
+        "additionalProperties": false,
+        "description": "One optional world feature a Zone may offer (ECHOES.md \u00a713).\n\nOptional is the whole point. A feature may never lie on the mandatory\npath, host an AP reward, an exit or an objective \u2014 \u00a713.2, enforced by\n`validate_zone` rather than by good intentions \u2014 so a Zone with every\nfeature stripped out is still completable with the base kit. That is\nwhat makes affordances safe to generate against a campaign whose\ncapabilities the generator cannot fully predict.",
+        "properties": {
+          "tag": {
+            "enum": [
+              "grapple_anchor",
+              "breakable_wall",
+              "water_volume",
+              "rail",
+              "wind_volume",
+              "bounce_pad",
+              "moving_platform"
+            ],
+            "title": "Tag",
+            "type": "string"
+          },
+          "at": {
+            "default": [
+              0.5,
+              0.5
+            ],
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "At",
+            "type": "array"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          }
+        },
+        "required": [
+          "tag"
+        ],
+        "title": "AffordanceFeature",
+        "type": "object"
+      },
       "AirDash": {
         "additionalProperties": false,
         "properties": {
@@ -828,6 +944,15 @@
             ],
             "default": null,
             "title": "Reward Location Id"
+          },
+          "features": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/AffordanceFeature"
+            },
+            "maxItems": 3,
+            "title": "Features",
+            "type": "array"
           },
           "type": {
             "const": "arena",
@@ -1243,6 +1368,14 @@
           "slots": {
             "$ref": "#/$defs/SlotAssignment"
           },
+          "local_rewards": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/EarnedLocalReward"
+            },
+            "title": "Local Rewards",
+            "type": "array"
+          },
           "active_zone": {
             "anyOf": [
               {
@@ -1510,6 +1643,15 @@
             "default": null,
             "title": "Reward Location Id"
           },
+          "features": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/AffordanceFeature"
+            },
+            "maxItems": 3,
+            "title": "Features",
+            "type": "array"
+          },
           "type": {
             "const": "corridor",
             "title": "Type",
@@ -1649,6 +1791,63 @@
           "extra_jumps"
         ],
         "title": "DoubleJump",
+        "type": "object"
+      },
+      "EarnedLocalReward": {
+        "additionalProperties": false,
+        "description": "A payoff that is not Archipelago's (ECHOES.md \u00a714.2).\n\nRecorded in the save because it is *earned* \u2014 a note you found stays\nfound \u2014 and worth exactly zero to Archipelago. The closed catalog is\nthe enforcement: there is no shape here that could name an AP item, a\nlocation, a Check, a Coin, a Signal Key or an Echo, because the only\nfields are a kind from the catalog, a local id and where it was found.\n\n`source_zone_id` is a Zone id, never a location id. A local reward\nthat could carry a location id would be a second, unvalidated path to\nAP truth, which is the one thing \u00a714.2 exists to prevent.",
+        "properties": {
+          "kind": {
+            "enum": [
+              "epsilon_note",
+              "challenge_marker",
+              "cosmetic_grant",
+              "hub_decoration",
+              "lab_fixture",
+              "flavor_log"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "reward_id": {
+            "maxLength": 48,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Reward Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Description",
+            "type": "string"
+          },
+          "source_zone_id": {
+            "default": "",
+            "maxLength": 24,
+            "title": "Source Zone Id",
+            "type": "string"
+          },
+          "best_seconds": {
+            "default": 0.0,
+            "maximum": 36000.0,
+            "minimum": 0.0,
+            "title": "Best Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "kind",
+          "reward_id",
+          "display_name"
+        ],
+        "title": "EarnedLocalReward",
         "type": "object"
       },
       "EchoInterpretation": {
@@ -2439,8 +2638,20 @@
             },
             "title": "Links",
             "type": "array"
+          },
+          "channel_order": {
+            "description": "Resource ids in HUD-channel order, serialized for the client.\n\nThe client must not work this out for itself. It could \u2014 the list is\nalready ordered \u2014 but \"which resource is channel 3\" would then be\nderived in two languages, and the fold exists precisely so that the\none thing that must be identical everywhere is computed once. Godot\nowns where channel 3 is DRAWN; this owns what channel 3 IS.",
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true,
+            "title": "Channel Order",
+            "type": "array"
           }
         },
+        "required": [
+          "channel_order"
+        ],
         "title": "Mechanics",
         "type": "object"
       },
@@ -2888,6 +3099,15 @@
             ],
             "default": null,
             "title": "Reward Location Id"
+          },
+          "features": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/AffordanceFeature"
+            },
+            "maxItems": 3,
+            "title": "Features",
+            "type": "array"
           },
           "type": {
             "const": "platform_path",
@@ -3722,6 +3942,15 @@
             "default": null,
             "title": "Reward Location Id"
           },
+          "features": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/AffordanceFeature"
+            },
+            "maxItems": 3,
+            "title": "Features",
+            "type": "array"
+          },
           "type": {
             "const": "tower",
             "title": "Type",
@@ -3877,6 +4106,15 @@
             "minimum": 89100001,
             "title": "Reward Location Id",
             "type": "integer"
+          },
+          "features": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/AffordanceFeature"
+            },
+            "maxItems": 3,
+            "title": "Features",
+            "type": "array"
           },
           "type": {
             "const": "treasure_room",
@@ -4476,6 +4714,61 @@
         "title": "AffordanceComponent",
         "type": "object"
       },
+      "AffordanceFeature": {
+        "additionalProperties": false,
+        "description": "One optional world feature a Zone may offer (ECHOES.md \u00a713).\n\nOptional is the whole point. A feature may never lie on the mandatory\npath, host an AP reward, an exit or an objective \u2014 \u00a713.2, enforced by\n`validate_zone` rather than by good intentions \u2014 so a Zone with every\nfeature stripped out is still completable with the base kit. That is\nwhat makes affordances safe to generate against a campaign whose\ncapabilities the generator cannot fully predict.",
+        "properties": {
+          "tag": {
+            "enum": [
+              "grapple_anchor",
+              "breakable_wall",
+              "water_volume",
+              "rail",
+              "wind_volume",
+              "bounce_pad",
+              "moving_platform"
+            ],
+            "title": "Tag",
+            "type": "string"
+          },
+          "at": {
+            "default": [
+              0.5,
+              0.5
+            ],
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "At",
+            "type": "array"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Note"
+          }
+        },
+        "required": [
+          "tag"
+        ],
+        "title": "AffordanceFeature",
+        "type": "object"
+      },
       "AirDash": {
         "additionalProperties": false,
         "properties": {
@@ -4630,6 +4923,15 @@
             ],
             "default": null,
             "title": "Reward Location Id"
+          },
+          "features": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/AffordanceFeature"
+            },
+            "maxItems": 3,
+            "title": "Features",
+            "type": "array"
           },
           "type": {
             "const": "arena",
@@ -5034,6 +5336,15 @@
             "default": null,
             "title": "Reward Location Id"
           },
+          "features": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/AffordanceFeature"
+            },
+            "maxItems": 3,
+            "title": "Features",
+            "type": "array"
+          },
           "type": {
             "const": "corridor",
             "title": "Type",
@@ -5173,6 +5484,63 @@
           "extra_jumps"
         ],
         "title": "DoubleJump",
+        "type": "object"
+      },
+      "EarnedLocalReward": {
+        "additionalProperties": false,
+        "description": "A payoff that is not Archipelago's (ECHOES.md \u00a714.2).\n\nRecorded in the save because it is *earned* \u2014 a note you found stays\nfound \u2014 and worth exactly zero to Archipelago. The closed catalog is\nthe enforcement: there is no shape here that could name an AP item, a\nlocation, a Check, a Coin, a Signal Key or an Echo, because the only\nfields are a kind from the catalog, a local id and where it was found.\n\n`source_zone_id` is a Zone id, never a location id. A local reward\nthat could carry a location id would be a second, unvalidated path to\nAP truth, which is the one thing \u00a714.2 exists to prevent.",
+        "properties": {
+          "kind": {
+            "enum": [
+              "epsilon_note",
+              "challenge_marker",
+              "cosmetic_grant",
+              "hub_decoration",
+              "lab_fixture",
+              "flavor_log"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "reward_id": {
+            "maxLength": 48,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Reward Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Description",
+            "type": "string"
+          },
+          "source_zone_id": {
+            "default": "",
+            "maxLength": 24,
+            "title": "Source Zone Id",
+            "type": "string"
+          },
+          "best_seconds": {
+            "default": 0.0,
+            "maximum": 36000.0,
+            "minimum": 0.0,
+            "title": "Best Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "kind",
+          "reward_id",
+          "display_name"
+        ],
+        "title": "EarnedLocalReward",
         "type": "object"
       },
       "EchoInterpretation": {
@@ -5963,8 +6331,20 @@
             },
             "title": "Links",
             "type": "array"
+          },
+          "channel_order": {
+            "description": "Resource ids in HUD-channel order, serialized for the client.\n\nThe client must not work this out for itself. It could \u2014 the list is\nalready ordered \u2014 but \"which resource is channel 3\" would then be\nderived in two languages, and the fold exists precisely so that the\none thing that must be identical everywhere is computed once. Godot\nowns where channel 3 is DRAWN; this owns what channel 3 IS.",
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true,
+            "title": "Channel Order",
+            "type": "array"
           }
         },
+        "required": [
+          "channel_order"
+        ],
         "title": "Mechanics",
         "type": "object"
       },
@@ -6334,6 +6714,15 @@
             ],
             "default": null,
             "title": "Reward Location Id"
+          },
+          "features": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/AffordanceFeature"
+            },
+            "maxItems": 3,
+            "title": "Features",
+            "type": "array"
           },
           "type": {
             "const": "platform_path",
@@ -7168,6 +7557,15 @@
             "default": null,
             "title": "Reward Location Id"
           },
+          "features": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/AffordanceFeature"
+            },
+            "maxItems": 3,
+            "title": "Features",
+            "type": "array"
+          },
           "type": {
             "const": "tower",
             "title": "Type",
@@ -7323,6 +7721,15 @@
             "minimum": 89100001,
             "title": "Reward Location Id",
             "type": "integer"
+          },
+          "features": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/AffordanceFeature"
+            },
+            "maxItems": 3,
+            "title": "Features",
+            "type": "array"
           },
           "type": {
             "const": "treasure_room",
@@ -7761,6 +8168,14 @@
       },
       "slots": {
         "$ref": "#/$defs/SlotAssignment"
+      },
+      "local_rewards": {
+        "default": [],
+        "items": {
+          "$ref": "#/$defs/EarnedLocalReward"
+        },
+        "title": "Local Rewards",
+        "type": "array"
       },
       "active_zone": {
         "anyOf": [

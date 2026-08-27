@@ -303,6 +303,7 @@ func activate() -> void:
 		# -- utility
 		"place_marker": _place_marker(primitive)
 		"scan_mark": _scan_mark(primitive)
+		"pull_pickup": _pull_pickup(primitive)
 
 	_apply_modifiers(modifiers, damaged)
 	if _primitive_type() in ["dash", "air_dash"]:
@@ -358,6 +359,35 @@ func _gates_open() -> bool:
 		elif pool.value_of(source) < strength:
 			return false
 	return true
+
+## Could a press resolve right now? Exactly the questions `activate` asks,
+## with nothing spent and nothing charged.
+##
+## Public because `resource_forecast` (§14.1) needs the answer and an Info
+## readout may never alter the world — a forecast that worked by trying the
+## press would be the one thing that kind of component must not do. Asking
+## the runtime rather than reimplementing the cost rules also means the
+## forecast cannot drift away from what pressing actually does.
+func can_activate() -> bool:
+	if equipped.is_empty() or cooldown_remaining > 0.0:
+		return false
+	if not _conditions_met() or not _gates_open():
+		return false
+	var link := _powers_link()
+	if link.is_empty() or pool == null:
+		return true
+	var source := str(link.get("source", ""))
+	if _primitive_type() in DRAIN_VERBS:
+		return pool.value_of(source) > 0.0
+	return pool.value_of(source) >= float(link.get("strength", 1.0))
+
+## The equipped Action's primitive, for anything that needs to know what
+## kind of thing a press would do without pressing it.
+func primitive() -> Dictionary:
+	return _primitive()
+
+func has_action() -> bool:
+	return not equipped.is_empty()
 
 ## `powers` on a press verb: pay strength units on the press, all or
 ## nothing. Drain verbs pay per second instead — their press is free and
@@ -1011,6 +1041,21 @@ func absorb_with_shield(damage: float) -> float:
 
 ## Cosmetic only, and deliberately so: it marks a spot you chose, and marking
 ## a spot can never be what a mandatory Check is behind.
+## The last verb in the catalog (S9). Pulls LOCAL rewards toward the
+## player — notes, markers, cosmetics. It cannot reach an AP reward: those
+## are `RewardObject`s in a different group, and claiming one is an intent
+## the player sends by interacting, never something an Action does at
+## range. That separation is the whole reason this verb waited for S9.
+func _pull_pickup(primitive: Dictionary) -> void:
+	var radius := float(primitive.get("radius", 6.0))
+	for node in get_tree().get_nodes_in_group("local_rewards"):
+		if node is Node3D and not node.is_queued_for_deletion():
+			var pickup := node as Node3D
+			if pickup.global_position.distance_to(
+					player.global_position) <= radius:
+				pickup.global_position = pickup.global_position.move_toward(
+						player.global_position + Vector3.UP * 0.6, radius)
+
 func _place_marker(primitive: Dictionary) -> void:
 	var hit := player.camera_ray(40.0)
 	var at: Vector3 = hit.get("position",

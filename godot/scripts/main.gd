@@ -67,6 +67,22 @@ func _ready() -> void:
 		var lab_suite: Node = load("res://tests/lab_driver.gd").new()
 		add_child(lab_suite)
 		return
+	# The chamber builder tests. Booted rather than `--script`ed since S9:
+	# chambers build affordance features, which reach the player, which
+	# reaches BridgeClient -- none of which compiles without the autoloads.
+	if "--chamber-test" in user_args:
+		headless_test = true
+		var chamber_suite: Node = load("res://tests/test_chambers.gd").new()
+		add_child(chamber_suite)
+		return
+	# The S9 affordance suite (invariants I4, I12, I13): same boot, same
+	# reason — the volumes write into the player's own physics step.
+	if "--affordance-test" in user_args:
+		headless_test = true
+		var affordance_suite: Node = load(
+				"res://tests/affordance_driver.gd").new()
+		add_child(affordance_suite)
+		return
 	# The S5 stat-stack suite (invariant I3): same boot, same reason.
 	if "--stats-test" in user_args:
 		headless_test = true

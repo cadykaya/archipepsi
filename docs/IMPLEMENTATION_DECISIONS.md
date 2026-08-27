@@ -612,3 +612,117 @@ of its traps turned out to be exactly right.
   local rewards, no Info readouts, no `pull_pickup`. The Lab is finished
   when the vocabulary that exists has a safe deterministic place to be
   understood.
+
+## S9 — affordances, local rewards, Info readouts
+
+- **The generator names a fraction; the client owns the metres.** An
+  `AffordanceFeature` carries `at: (u, v)`, both in 0..1, and nothing
+  else about where it goes. `affordance_features.gd::resolve_position`
+  turns that into a position, and pushes it clear of the walking lane
+  whatever it was handed. This is the same division `ZoneBuilder` already
+  makes for layout, and it is what makes §13.2 structural: a generator
+  that could name a coordinate could name one in the exit lane, so it
+  never gets to name one.
+
+- **I4 is enforced in two places because it means two things.** The
+  schema half — no feature in a chamber holding a Check, none on a gating
+  objective — is a `Zone` model validator, so no provider can emit one
+  and no caller has to remember to check. The metre half — no feature in
+  the walking lane — only exists where metres do, so it lives in the
+  builder and is pinned from Python by reading the GDScript
+  (`test_affordances.py`), the same way the HUD palette is pinned.
+
+- **A room too narrow for a feature gets none.** A corridor barely wider
+  than its door is *entirely* walking lane; pushing a feature out of the
+  lane would push it into the wall. `AffordanceFeatures.fits(width)`
+  says so and `place_all` drops the features rather than building them
+  somewhere wrong. Optional content is allowed to be absent; it is not
+  allowed to be in the doorway. The suite's lane sweep found this — the
+  first version happily placed a bounce pad 0.6 m outside a 4 m room.
+
+- **A corridor carrying a feature has a minimum width, and it is
+  validated.** The first version left the builder to drop what it could
+  not place, and the integration run caught the consequence immediately:
+  the fallback's plain chambers are corridors, corridors are the
+  narrowest type, and every feature it offered was silently discarded —
+  a Zone that read richer than it played. `MIN_FEATURE_CHAMBER_WIDTH`
+  now refuses such a chamber at validation, where the repair loop can
+  widen it, and the fallback widens its own connectors before hanging
+  anything on them. The constant is `2 * (LANE_HALF_WIDTH +
+  MIN_CLEARANCE)` and is pinned against the GDScript from both sides.
+
+  Worth noting why the corridor is the only case: every other chamber
+  type carries either a Check or a gating objective, so §13.2 already
+  bars features from all of them.
+
+- **An `AffordanceComponent` grants its tag outright.** §13.1's table
+  names the derived capability that makes each tag interactable, and this
+  component kind *is* that capability rather than a proxy for it. Before
+  this, an Echo reading "you can grind rails now" owned a component that
+  unlocked nothing. `owned_affordance_tags` now honours a direct grant,
+  an owned primitive, or an owned stat — still over OWNED mechanics,
+  never slotted ones, so a Zone does not change meaning when the player
+  opens the loadout.
+
+- **Movement volumes are a layer on the player, not writes into the stat
+  stack.** `_refresh_derived_stats` rewrites every multiplier from the
+  fold each physics frame, so a volume writing into those fields would be
+  either erased or permanent depending on frame order. `enter_volume` /
+  `exit_volume` keep an influence per overlapping volume and
+  `environment_influence()` merges them after the stack, lasting exactly
+  as long as the overlap. A volume freed while the player is inside it
+  releases its own influence — otherwise a Zone teardown would leave the
+  player permanently swimming.
+
+- **No volume may trap you.** Lift is upward-only, drag is capped, and
+  speed has a hard floor (`MIN_VOLUME_SPEED_SCALE`). §13.2 keeps features
+  off the mandatory path, which is enough for geometry; it is not enough
+  for a volume, because a volume you cannot leave would strand you
+  wherever it was. The floor is what makes "the base kit is always
+  enough" true of volumes too, and the suite presses on it from below
+  with a volume asking for zero.
+
+- **The breakable wall's threshold is per-hit, not cumulative.** §13.1
+  pays for `breakable_wall` with an action that can deal impact damage
+  *at or above a threshold*. A cumulative pool would let a long enough
+  Static Pulse burst open it, and the capability that was supposed to pay
+  for the affordance would never have mattered. `MIN_IMPACT` is defined
+  against `STATIC_PULSE_DAMAGE` so the two cannot drift apart.
+
+- **Info readouts observe; they are never told.** Damage numbers watch
+  enemy hp fall rather than receiving a signal from `Enemy`. A signal
+  would point the wrong way — §14.1 says an Info component never alters
+  the world, and the cheapest way to keep that true is for the world not
+  to know the readout exists. Watching also cannot miss a hit that some
+  future damage path forgets to announce. `report_damage` remains for
+  things that are not `Enemy`s.
+
+- **`resource_forecast` asks the runtime instead of reimplementing it.**
+  `EchoRuntime.can_activate()` answers exactly the questions `activate()`
+  asks, spending nothing and charging nothing. A forecast that worked by
+  attempting the press would be the one thing §14.1 forbids, and a
+  forecast with its own copy of the cost rules would drift away from what
+  pressing actually does.
+
+- **`local_rewards` is on the snapshot, and never in the fold.** A local
+  reward derives no mechanic, so it has no business in `Mechanics`. But a
+  note you found stays found, and the client is what has to stop drawing
+  a pickup already claimed — so the save's list is mirrored onto the
+  snapshot. Both halves are asserted.
+
+- **The chamber suite is booted now, not `--script`ed.** Chambers build
+  affordance features, which reach the player, which reaches
+  `BridgeClient`; none of that compiles in a run that never instantiates
+  the autoloads. The symptom was exactly what the Makefile guard was
+  written for: `GODOT CHAMBER TESTS OK` printed by a suite that had
+  loaded nothing. The guard caught it; the fix was to boot the project
+  like every other suite.
+
+- **Nothing is gated any more.** `pull_pickup` was the last deferred
+  verb and S9 implemented it, so `DEFERRED_PRIMITIVES` is empty and every
+  capability registry equals its contract. That leaves the gate
+  mechanism with nothing to refuse, which is one refactor from being
+  deleted — so three tests now narrow a registry by hand and watch it
+  refuse (`test_stage_tripwires.py`, `test_schemas.py`,
+  `test_s1_review_fixes.py`). `validate_interpretation` already took
+  `implemented_primitives` as a parameter; that seam is what they use.

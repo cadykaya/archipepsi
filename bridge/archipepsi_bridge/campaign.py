@@ -25,11 +25,13 @@ from .epsilon.requests import (
     EchoPlayerState, EchoSource, OwnedComponentSummary, OwnedLinkSummary)
 from .schemas import constants as C
 from .schemas import transitions as T
-from .schemas.mechanics import Mechanics, derive_mechanics
+from .schemas.mechanics import (
+    Mechanics, derive_mechanics, owned_affordance_tags)
 from .schemas.echo import over_soft_budget, upgradable_field_info
 from .schemas.protocol import (
-    CampaignSave, CampaignSnapshot, HubStatus, Notification, ScoutedLocation,
-    ShopState, SlotAssignment, ZoneReady, ZoneRecord,
+    CampaignSave, CampaignSnapshot, EarnedLocalReward, HubStatus,
+    Notification, ScoutedLocation, ShopState, SlotAssignment, ZoneReady,
+    ZoneRecord,
 )
 from . import store
 
@@ -332,6 +334,7 @@ class CampaignEngine:
             # thing that has to be identical everywhere.
             mechanics=save.derive() if save else Mechanics(),
             slots=save.slots if save else SlotAssignment(),
+            local_rewards=save.local_rewards if save else (),
             active_zone=save.active_zone if save else None,
             completed_zone_count=save.completed_zone_count if save else 0,
             shop=save.shop if save else ShopState(),
@@ -487,7 +490,12 @@ class CampaignEngine:
                 signal_keys=ap.signal_keys,
                 coins_available=max(0, ap.coins_received - save.coins_spent),
                 echoes=echoes),
-            locations=tuple(locations))
+            locations=tuple(locations),
+            # §13: only what this campaign can actually interact with.
+            # Over OWNED mechanics, never the loadout — a Zone whose
+            # contents depended on the slots at generation time would lie
+            # about itself the moment the player changed them.
+            unlocked_affordances=owned_affordance_tags(save.derive()))
 
     async def _run_generation(self, zone_id: str) -> None:
         """Provider call for an already-committed PENDING_GENERATION record."""
@@ -592,6 +600,24 @@ class CampaignEngine:
     # ------------------------------------------------------------------
     # Small intents
     # ------------------------------------------------------------------
+
+    async def handle_grant_local_reward(self, intent) -> None:
+        """Record an earned local reward (§14.2). Never AP truth.
+
+        The Zone the player is standing in is stamped on here rather than
+        taken from the client: what the client knows is that it found a
+        note, and where it was found is the campaign's own business.
+        """
+        if self.save is None:
+            raise IntentError("no campaign loaded")
+        active = self.save.active_zone_id or ""
+        self._apply(T.grant_local_reward(self.save, EarnedLocalReward(
+            kind=intent.kind, reward_id=intent.reward_id,
+            display_name=_clamp_ap_string(intent.display_name),
+            description=intent.description[:C.MAX_TEXT_LEN],
+            source_zone_id=active,
+            best_seconds=intent.best_seconds)))
+        await self.broadcast_snapshot()
 
     async def handle_slot_action(
         self, slot: str, component_id: str | None

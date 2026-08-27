@@ -581,22 +581,37 @@ def test_the_catalog_is_closed_and_the_engine_admits_what_it_can_run():
     for primitive, why in DEFERRED_PRIMITIVES.items():
         assert re.match(r"^S\d+: ", why), (primitive, why)
 
-    # `pull_pickup` pulls LOCAL rewards, which are S9 — the one verb still
-    # deferred. Deliberately not a POWERED_PRIMITIVE: those would also fail
-    # for want of a `powers` link, so they cannot show that the stage gate
-    # itself fires.
-    gated = EchoAdapter.validate_python({**_CONFERENCE_CALL, "operations": [
+    # S9 landed local rewards, so `pull_pickup` — the last verb the runtime
+    # was behind on — is accepted now. The catalog and the engine agree:
+    # `DEFERRED_PRIMITIVES` is empty and every verb runs.
+    assert not DEFERRED_PRIMITIVES
+    pulled = EchoAdapter.validate_python({**_CONFERENCE_CALL, "operations": [
         _action_op(primitive={"type": "pull_pickup", "radius": 5.0})]})
-    errs = validate_interpretation(gated, expected_source_location_id=89100001)
+    assert validate_interpretation(
+        pulled, expected_source_location_id=89100001) == []
+
+    # With nothing deferred, no real primitive can show that the gate still
+    # FIRES — and a gate nobody can see fire is one refactor from being
+    # deleted. So narrow the implemented set through the seam the signature
+    # already provides, and watch the same Echo get refused. Deliberately
+    # not a POWERED_PRIMITIVE: those would also fail for want of a `powers`
+    # link, so they cannot show that the stage gate itself is what fired.
+    errs = validate_interpretation(
+        pulled, expected_source_location_id=89100001,
+        implemented_primitives=tuple(
+            p for p in IMPLEMENTED_PRIMITIVES if p != "pull_pickup"))
     assert any("not yet implemented" in e for e in errs)
 
-    # ...and the verb S2 just landed is now accepted, so this test proves a
-    # gate that moves rather than one that is merely closed.
+    # ...and a verb from an earlier stage stays accepted under that same
+    # narrowing, so what refused above was the missing entry rather than
+    # the narrowing itself.
     melee = EchoAdapter.validate_python({**_CONFERENCE_CALL, "operations": [
         _action_op(primitive={"type": "melee_swing", "damage": 20.0,
                               "reach": 2.5, "arc_degrees": 90.0})]})
     assert validate_interpretation(
-        melee, expected_source_location_id=89100001) == []
+        melee, expected_source_location_id=89100001,
+        implemented_primitives=tuple(
+            p for p in IMPLEMENTED_PRIMITIVES if p != "pull_pickup")) == []
 
 
 # ===========================================================================

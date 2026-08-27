@@ -159,7 +159,10 @@ async def generate_zone_validated(
         semantic=lambda z: validate_zone(
             z, expected_zone_id=request.zone_id,
             allocated_location_ids=allocated_location_ids,
-            owned_echo_ids=owned_echo_ids),
+            owned_echo_ids=owned_echo_ids,
+            # I12, from the request the provider was given: what it was
+            # told it could place is exactly what it is held to.
+            owned_affordance_tags=request.unlocked_affordances),
         build_fallback=fallback_zone, archive_dir=archive_dir,
         timeout=timeout)
 

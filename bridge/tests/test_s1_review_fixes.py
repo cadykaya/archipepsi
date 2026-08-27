@@ -75,14 +75,16 @@ def test_the_request_advertises_only_mechanics_the_runtime_can_execute():
     assert allowed["slots"] == list(CAP.IMPLEMENTED_ACTION_SLOTS)
     assert allowed["modifiers"] == list(CAP.IMPLEMENTED_MODIFIER_TYPES)
     assert allowed["trait_stats"] == list(CAP.IMPLEMENTED_TRAIT_STATS)
-    # ...and the registry still gates SOMETHING, or the assertions above
-    # would hold vacuously. Slots stopped being one of those things at S7
-    # (every slot is a bound key now), so the vacuity guard rests on the
-    # gates that are genuinely still narrower than the contract.
+    # S9 opened the last gate, so the registry no longer narrows anything:
+    # every tuple equals its contract. That is a milestone rather than a
+    # hole — the registry's remaining job is to catch the NEXT schema
+    # addition before a runtime exists for it — and the honest assertion
+    # is the equality, plus that the mechanism still runs (below).
     from archipepsi_bridge.schemas import echo as E
-    assert set(CAP.IMPLEMENTED_COMPONENT_KINDS) < set(E.COMPONENT_KINDS)
+    assert set(CAP.IMPLEMENTED_COMPONENT_KINDS) == set(E.COMPONENT_KINDS)
     assert set(CAP.IMPLEMENTED_ACTION_SLOTS) == set(E.SLOT_NAMES)
-    assert set(E.IMPLEMENTED_PRIMITIVES) < set(E.ACTION_PRIMITIVES)
+    assert set(E.IMPLEMENTED_PRIMITIVES) == set(E.ACTION_PRIMITIVES)
+    assert E.DEFERRED_PRIMITIVES == {}
 
 
 def test_s1_stage_gate_rejects_schema_valid_noops():
@@ -136,16 +138,18 @@ def test_s1_stage_gate_rejects_schema_valid_noops():
     })
     assert CAP.validate_stage_support(status) == []
 
+    # S9 landed the capability registry and the Zone validator that reads
+    # it, so an affordance is accepted now. With every kind open, the gate
+    # that still fires is the one INSIDE a component: a schema field the
+    # runtime cannot honour.
     affordance = _interpretation_with({
         "kind": "affordance",
         "component_id": "aff_test",
         "display_name": "Water",
-        "description": "Nothing generates or reads an affordance tag until "
-                       "the S9 capability registry exists.",
+        "description": "The Zone validator reads this tag since S9.",
         "tag": "water_volume",
     })
-    assert any("component kind 'affordance'" in error
-               for error in CAP.validate_stage_support(affordance))
+    assert CAP.validate_stage_support(affordance) == []
 
     # S2 landed the bouncing, gravity-affected projectile, so the gate S1.1
     # put on `bounces` is retired rather than kept as a check that no longer
@@ -184,21 +188,34 @@ def test_s1_stage_gate_rejects_schema_valid_noops():
     })
     assert CAP.validate_stage_support(slotted) == []
 
-    # And a verb whose supporting system is still ahead stays refused, so
-    # this test still proves the primitive gate fires at all.
-    gated = _interpretation_with({
+    # The primitive gate moved again at S9: local rewards exist, so the
+    # verb that pulls them is reachable and accepted.
+    magnet = _interpretation_with({
         "kind": "action",
-        "component_id": "act_gated",
+        "component_id": "act_magnet",
         "display_name": "Magnet",
-        "description": "Local rewards are S9.",
+        "description": "Local rewards landed with S9.",
         "slot": "echo_a",
         "cooldown": 1.0,
         "primitive": {"type": "pull_pickup", "radius": 5.0},
         "modifiers": [],
     })
-    from archipepsi_bridge.schemas.echo import validate_interpretation
+    from archipepsi_bridge.schemas.echo import (
+        IMPLEMENTED_PRIMITIVES, validate_interpretation)
+    assert validate_interpretation(
+        magnet, expected_source_location_id=LOC_A) == []
+    assert CAP.validate_stage_support(magnet) == []
+
+    # Every verb in the catalog runs now, so the only way left to watch the
+    # gate refuse something is to narrow the implemented set through the
+    # seam the signature provides. A gate that can no longer be seen firing
+    # is one refactor away from being deleted.
     assert any("not yet implemented" in error for error in
-               validate_interpretation(gated, expected_source_location_id=LOC_A))
+               validate_interpretation(
+                   magnet, expected_source_location_id=LOC_A,
+                   implemented_primitives=tuple(
+                       p for p in IMPLEMENTED_PRIMITIVES
+                       if p != "pull_pickup")))
 
 
 def test_v7_equipped_mobility_echo_lands_on_the_slot_it_names():

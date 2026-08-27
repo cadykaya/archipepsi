@@ -6,6 +6,8 @@ var _hp_label: Label
 var _echo_label: Label
 ## The fifteen pre-laid resource channels (ECHOES.md 7).
 var meters: ResourceMeters
+## The owned Info readouts (§14.1). Read-only: it observes and draws.
+var readouts: Readouts
 var _prompt_label: Label
 var _toast_box: VBoxContainer
 var _crosshair: Label
@@ -73,6 +75,13 @@ var _title_note: Label
 
 func _ready() -> void:
 	layer = 5
+	# The §14.1 readouts, under everything the base HUD draws: an owned
+	# readout adds information to the display, it never occludes the
+	# display. It is a child of the HUD so it shows and hides with it —
+	# an overlay left drawing enemy bars over the Hub would be a bug you
+	# only notice in a screenshot.
+	readouts = Readouts.new()
+	add_child(readouts)
 	_damage_flash = ColorRect.new()
 	_damage_flash.color = Color(0.8, 0.1, 0.05, 0.0)
 	_damage_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -460,6 +469,7 @@ func _on_player_died() -> void:
 
 func bind_player(player: Player) -> void:
 	_bound_player = player
+	readouts.bind(player)
 	player.hp_changed.connect(_on_hp_changed)
 	player.interact_prompt_changed.connect(_on_prompt)
 	# Every slot's runtime reports; `_on_cooldown` keeps the bar on the

@@ -29,18 +29,51 @@ def test_the_s5_obligations_were_discharged_when_links_landed():
     assert "over_soft_budget" in EchoGenerationRequest.model_fields
 
 
-def test_affordances_and_local_rewards_are_gated_until_s9():
-    """The next dormant boundary, with the work due when it opens.
+def test_the_s9_obligations_were_discharged():
+    """The last tripwire fired at S9, and was paid.
 
-    An Affordance is a tag on generated geometry and an Info readout is a
-    HUD element; neither exists, so accepting one would persist a
-    component that renders nothing. `grant_local_reward` is the rule
-    effect that pays one out, and `pull_pickup` the verb that collects
-    one — the last deferred primitive.
+    It asserted that affordances and Info readouts were gated, and named
+    the work due when they opened: the capability registry, the
+    never-mandatory validator, and I12's acceptance test. All three
+    landed with the gate, so this is the receipt.
 
-    When this fails, S9 landed. In the same change: the never-mandatory
-    validator (I4), the capability registry the generator grammar reads,
-    and I12's water-volume acceptance test.
+    Nothing is gated any more — the registry equals its contract in every
+    dimension — so there is no next dormant boundary to point at. The
+    remaining guard is `test_the_registry_still_runs` below: a mechanism
+    that gates nothing is one refactor away from being deleted, and the
+    thing it protects against is the NEXT schema addition.
     """
-    assert "affordance" not in IMPLEMENTED_COMPONENT_KINDS
-    assert "info" not in IMPLEMENTED_COMPONENT_KINDS
+    assert "affordance" in IMPLEMENTED_COMPONENT_KINDS
+    assert "info" in IMPLEMENTED_COMPONENT_KINDS
+
+
+def test_the_registry_still_runs_even_though_it_gates_nothing():
+    """The capability gate must still be wired, and still be capable of
+    refusing something, or the next schema addition lands unguarded."""
+    from archipepsi_bridge.epsilon.capabilities import validate_stage_support
+    from archipepsi_bridge.schemas.echo import EchoInterpretation
+
+    # Schema-legal in every respect, and accepted today. The registry is
+    # what would catch a schema that grew a new modifier, primitive or
+    # component kind before a runtime learned to run it.
+    fake = EchoInterpretation.model_validate({
+        "schema_version": 8, "echo_id": "echo_89100001",
+        "interpretation_seq": 0, "source_location_id": 89100001,
+        "source_item_name": "I", "source_game": "G",
+        "source_recipient_name": "P", "display_name": "T",
+        "description": "d.", "operations": [{"op": "create", "component": {
+            "kind": "action", "component_id": "act_x", "display_name": "X",
+            "description": "d", "slot": "echo_a", "cooldown": 1.0,
+            "primitive": {
+                "type": "melee_swing", "damage": 12.0,
+                "reach": 2.0, "arc_degrees": 90.0},
+            "modifiers": [{"type": "recoil_self", "force": 5.0}]}}],
+    })
+    assert validate_stage_support(fake) == []
+    import archipepsi_bridge.epsilon.capabilities as CAP
+    original = CAP.IMPLEMENTED_MODIFIER_TYPES
+    CAP.IMPLEMENTED_MODIFIER_TYPES = ()
+    try:
+        assert validate_stage_support(fake) != []
+    finally:
+        CAP.IMPLEMENTED_MODIFIER_TYPES = original

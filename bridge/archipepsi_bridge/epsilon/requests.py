@@ -78,6 +78,11 @@ class ZoneGenerationRequest(Strict):
     player: PlayerContext
     locations: tuple[RequestLocation, ...] = Field(
         min_length=1, max_length=C.ZONE_MAX_CHECKS)
+    #: §13: the affordance tags this campaign can actually USE, computed
+    #: from OWNED mechanics. Epsilon may place matching optional features
+    #: and nothing else — a water volume in a run with no way to move
+    #: through water is set dressing that looks like content.
+    unlocked_affordances: tuple[str, ...] = ()
     catalog: dict = Field(default_factory=lambda: {
         "themes": list(C.THEMES),
         "chamber_types": list(C.CHAMBER_TYPES),
@@ -97,6 +102,9 @@ class ZoneGenerationRequest(Strict):
             f"{C.MAX_VERTICAL_STEP}m step"),
         "all_locations_must_appear_once": True,
         "critical_path_requires_echo": False,
+        "affordances_are_optional_only": (
+            "a chamber holding a reward_location_id may not carry features, "
+            "and a feature may never gate an objective or an exit"),
     })
 
 

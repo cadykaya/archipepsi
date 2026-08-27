@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-integration
+.PHONY: setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-integration
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -90,7 +90,7 @@ godot-import:                  # refresh the script class cache
 # supposed to make never execute, and the suite prints OK having tested
 # nothing. So a script error fails the target regardless of the exit code.
 godot-test: godot-import       # headless builder tests (no bridge needed)
-	@out=$$($(GODOT) --headless --path godot --script tests/test_chambers.gd 2>&1); \
+	@out=$$($(GODOT) --headless --path godot -- --chamber-test 2>&1); \
 	printf '%s\n' "$$out"; \
 	printf '%s\n' "$$out" | grep -q "GODOT CHAMBER TESTS OK" || exit 1; \
 	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
@@ -150,6 +150,18 @@ godot-lab: godot-import        # the Hub test chamber, and what it must not do
 	@out=$$($(GODOT) --headless --path godot -- --lab-test 2>&1); \
 	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
 	printf '%s\n' "$$out" | grep -q "GODOT LAB TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# The S9 affordance suite: features off the mandatory path (I4), a
+# capability paying for each one (I12), local rewards that are never AP's
+# (I13), and readouts that only ever read.
+godot-affordance: godot-import # world affordances, local rewards, readouts
+	@out=$$($(GODOT) --headless --path godot -- --affordance-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT AFFORDANCE TESTS OK" || exit 1; \
 	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
 	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
 	  exit 1; \

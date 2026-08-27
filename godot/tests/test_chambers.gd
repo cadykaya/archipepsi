@@ -1,6 +1,16 @@
-extends SceneTree
+extends Node
 ## Headless builder tests (ACCEPTANCE_TESTS §5: 50–56).
-## Run: godot --headless --path godot --script tests/test_chambers.gd
+## Run: `make godot-test` (boots the project with `--chamber-test`).
+##
+## This was a `--script` SceneTree run until S9. It stopped being one when
+## chambers gained affordance features: a chamber now builds nodes that
+## reach the player, and the player reaches `BridgeClient`, so the whole
+## dependency chain fails to compile in a run that never instantiates the
+## autoloads. The symptom was the one the Makefile guard exists for — the
+## suite printed OK having loaded nothing at all.
+##
+## The geometry itself still needs no tree: every test builds a chamber,
+## measures it and frees it, exactly as before.
 
 var failures := 0
 
@@ -10,7 +20,7 @@ func _check(condition: bool, message: String) -> void:
 		push_error("FAIL: " + message)
 		print("FAIL: " + message)
 
-func _init() -> void:
+func _ready() -> void:
 	_test_corridor()
 	_test_arena()
 	_test_chaining_no_overlap()
@@ -23,10 +33,10 @@ func _init() -> void:
 	_test_exit_portal_appended()
 	if failures == 0:
 		print("GODOT CHAMBER TESTS OK")
-		quit(0)
+		get_tree().quit(0)
 	else:
 		print("GODOT CHAMBER TESTS: %d failures" % failures)
-		quit(1)
+		get_tree().quit(1)
 
 func _test_corridor() -> void:  # test 50
 	var result := ChamberBuilders.corridor(

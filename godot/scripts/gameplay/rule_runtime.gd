@@ -298,10 +298,21 @@ func _apply_effect(rule_id: String, effect: Dictionary) -> void:
 			if player != null and player.get("stat_stack") != null:
 				player.stat_stack.add_pulse(str(effect.get("subject", "")),
 						amount, float(effect.get("duration", 1.0)))
+		"grant_local_reward":
+			# Local rewards are earned save state (§14.2), so the client
+			# asks the bridge to record one instead of inventing it. The
+			# catalog is enforced schema-side; nothing here can name an AP
+			# item, location or Check because the intent has no field for
+			# one.
+			BridgeClient.send_intent({
+				"type": "grant_local_reward",
+				"kind": str(effect.get("subject", "flavor_log")),
+				"reward_id": "rule_%s" % rule_id,
+				"display_name": str(effect.get("subject", "flavor_log")),
+			})
 		_:
-			# grant_local_reward (S9). Capability gating means none can be
-			# owned yet; reaching here is drift between the gates and this
-			# interpreter.
+			# Every effect kind has an arm since S9; reaching here is
+			# drift between the gates and this interpreter.
 			push_error("rule effect '%s' has no interpreter arm"
 					% effect.get("type", ""))
 

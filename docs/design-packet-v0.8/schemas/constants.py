@@ -155,6 +155,19 @@ ZONE_MIN_CHECKS = 2       # 1 only when exactly one eligible Check remains
 ZONE_MAX_CHAMBERS = 6
 ZONE_MIN_CHAMBERS = 1
 
+#: The narrowest chamber that can hold an affordance feature (ECHOES 13.2).
+#:
+#: A feature must sit clear of the walking lane, and the client's builder
+#: is what enforces that in metres: lane half-width 2.0 plus 0.6 clearance
+#: either side. A chamber narrower than that is ENTIRELY lane, so a
+#: feature placed in one would be built into the wall or across the door.
+#:
+#: Validated rather than left to the builder to drop, because a silently
+#: discarded feature is a Zone that reads richer than it plays -- and the
+#: repair loop can fix a refusal. Pinned against `AffordanceFeatures.fits`
+#: from both sides in `test_affordances.py`.
+MIN_FEATURE_CHAMBER_WIDTH = 5.2
+
 # --------------------------------------------------------------------------
 # Shop
 # --------------------------------------------------------------------------

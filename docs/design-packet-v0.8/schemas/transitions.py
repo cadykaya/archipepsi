@@ -34,14 +34,16 @@ try:
     from . import constants as C
     from .echo import EchoInterpretation
     from .protocol import (
-        CampaignSave, PendingCheck, ShopState, ShopStockItem, ZoneRecord,
+        CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
+        ShopStockItem, ZoneRecord,
     )
     from .zone import Zone
 except ImportError:  # pragma: no cover
     import constants as C
     from echo import EchoInterpretation
     from protocol import (
-        CampaignSave, PendingCheck, ShopState, ShopStockItem, ZoneRecord,
+        CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
+        ShopStockItem, ZoneRecord,
     )
     from zone import Zone
 
@@ -359,11 +361,40 @@ def slot_action(
     return _rebuild(save, slots=save.slots.with_slot(slot, component_id))
 
 
+def grant_local_reward(
+    save: CampaignSave, reward: EarnedLocalReward
+) -> CampaignSave:
+    """Record a local reward as earned (ECHOES.md §14.2).
+
+    Idempotent by `reward_id`: finding the same note twice is one note.
+    A `challenge_marker` is the exception that proves the rule — it is
+    replaced rather than ignored when the new time is better, because a
+    personal best that could not improve would be a trophy rather than a
+    challenge.
+
+    Nothing here can touch AP: `EarnedLocalReward` has no field that could
+    name a location, an item or a Check, so this transition is incapable
+    of the mistake §14.2 forbids rather than merely avoiding it.
+    """
+    existing = {r.reward_id: r for r in save.local_rewards}
+    previous = existing.get(reward.reward_id)
+    if previous is not None:
+        improved = (reward.kind == "challenge_marker"
+                    and previous.best_seconds > 0.0
+                    and 0.0 < reward.best_seconds < previous.best_seconds)
+        if not improved:
+            return save
+        existing[reward.reward_id] = reward
+        return _rebuild(save, local_rewards=tuple(
+            existing[r.reward_id] for r in save.local_rewards))
+    return _rebuild(save, local_rewards=save.local_rewards + (reward,))
+
+
 #: Every transition, for the census test. A new one fails the suite until it
 #: is listed — the same shape as the location-field and HubMode censuses.
 TRANSITIONS = (
     start_generation, accept_zone, enter_zone, complete_zone, abandon_zone,
     release_location, claim_zone_check, buy_shop_stock, confirm_check,
     rollback_shop_purchase, restock_shop, append_interpretation,
-    slot_action,
+    slot_action, grant_local_reward,
 )

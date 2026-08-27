@@ -116,6 +116,8 @@ class BridgeServer:
             await transactions.buy_shop_stock(engine, m.location_id)
         elif m.type == "slot_action":
             await engine.handle_slot_action(m.slot, m.component_id)
+        elif m.type == "grant_local_reward":
+            await engine.handle_grant_local_reward(m)
         elif m.type == "set_creativity":
             await engine.handle_set_creativity(m.value)
         elif m.type == "debug_command":

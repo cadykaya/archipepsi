@@ -1,5 +1,60 @@
 {
   "$defs": {
+    "AffordanceFeature": {
+      "additionalProperties": false,
+      "description": "One optional world feature a Zone may offer (ECHOES.md \u00a713).\n\nOptional is the whole point. A feature may never lie on the mandatory\npath, host an AP reward, an exit or an objective \u2014 \u00a713.2, enforced by\n`validate_zone` rather than by good intentions \u2014 so a Zone with every\nfeature stripped out is still completable with the base kit. That is\nwhat makes affordances safe to generate against a campaign whose\ncapabilities the generator cannot fully predict.",
+      "properties": {
+        "tag": {
+          "enum": [
+            "grapple_anchor",
+            "breakable_wall",
+            "water_volume",
+            "rail",
+            "wind_volume",
+            "bounce_pad",
+            "moving_platform"
+          ],
+          "title": "Tag",
+          "type": "string"
+        },
+        "at": {
+          "default": [
+            0.5,
+            0.5
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "At",
+          "type": "array"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "required": [
+        "tag"
+      ],
+      "title": "AffordanceFeature",
+      "type": "object"
+    },
     "ArenaChamber": {
       "additionalProperties": false,
       "description": "Rectangular combat room. A boss room is an arena holding one brute.",
@@ -37,6 +92,15 @@
           ],
           "default": null,
           "title": "Reward Location Id"
+        },
+        "features": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AffordanceFeature"
+          },
+          "maxItems": 3,
+          "title": "Features",
+          "type": "array"
         },
         "type": {
           "const": "arena",
@@ -127,6 +191,15 @@
           ],
           "default": null,
           "title": "Reward Location Id"
+        },
+        "features": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AffordanceFeature"
+          },
+          "maxItems": 3,
+          "title": "Features",
+          "type": "array"
         },
         "type": {
           "const": "corridor",
@@ -228,6 +301,15 @@
           "default": null,
           "title": "Reward Location Id"
         },
+        "features": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AffordanceFeature"
+          },
+          "maxItems": 3,
+          "title": "Features",
+          "type": "array"
+        },
         "type": {
           "const": "platform_path",
           "title": "Type",
@@ -315,6 +397,15 @@
           "default": null,
           "title": "Reward Location Id"
         },
+        "features": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AffordanceFeature"
+          },
+          "maxItems": 3,
+          "title": "Features",
+          "type": "array"
+        },
         "type": {
           "const": "tower",
           "title": "Type",
@@ -382,6 +473,15 @@
           "minimum": 89100001,
           "title": "Reward Location Id",
           "type": "integer"
+        },
+        "features": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AffordanceFeature"
+          },
+          "maxItems": 3,
+          "title": "Features",
+          "type": "array"
         },
         "type": {
           "const": "treasure_room",

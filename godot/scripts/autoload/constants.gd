@@ -55,6 +55,7 @@ const MAX_ENEMIES_PER_CHAMBER = 8
 const MAX_ENEMIES_PER_ZONE = 14
 const MAX_TEXT_LEN = 160
 const MAX_VERTICAL_STEP = 1.0
+const MIN_FEATURE_CHAMBER_WIDTH = 5.2
 const MIN_PLATFORM_SIZE = 2.5
 const OBJECTIVES = ["reach_reward", "kill_all", "platform_to_goal"]
 const PLAYER_EYE_HEIGHT = 1.6
@@ -123,7 +124,7 @@ const ENEMY_STATS = {
 const ECHO_ACTION_PRIMITIVES = ["melee_swing", "melee_thrust", "slam_ground", "hitscan_damage", "projectile_damage", "arc_lob", "burst_fire", "charge_shot", "beam_sustained", "dash", "air_dash", "double_jump", "wall_kick", "hover", "glide", "blink", "grapple_to_surface", "grapple_pull_target", "grapple_swing", "shield", "block", "parry", "heal_self", "cleanse", "scan_mark", "restore_resource", "pull_pickup", "place_marker"]
 
 # The subset this engine must be able to execute today.
-const ECHO_IMPLEMENTED_PRIMITIVES = ["melee_swing", "melee_thrust", "slam_ground", "hitscan_damage", "projectile_damage", "arc_lob", "burst_fire", "charge_shot", "beam_sustained", "dash", "air_dash", "double_jump", "wall_kick", "hover", "glide", "blink", "grapple_to_surface", "grapple_pull_target", "grapple_swing", "shield", "block", "parry", "heal_self", "cleanse", "scan_mark", "restore_resource", "place_marker"]
+const ECHO_IMPLEMENTED_PRIMITIVES = ["melee_swing", "melee_thrust", "slam_ground", "hitscan_damage", "projectile_damage", "arc_lob", "burst_fire", "charge_shot", "beam_sustained", "dash", "air_dash", "double_jump", "wall_kick", "hover", "glide", "blink", "grapple_to_surface", "grapple_pull_target", "grapple_swing", "shield", "block", "parry", "heal_self", "cleanse", "scan_mark", "restore_resource", "pull_pickup", "place_marker"]
 
 # Held back by a stage, with the stage that lands each one.
-const ECHO_DEFERRED_PRIMITIVES = {"pull_pickup": "S9: pulls LOCAL rewards, which do not exist until the local-reward catalog lands"}
+const ECHO_DEFERRED_PRIMITIVES = {}

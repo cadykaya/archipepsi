@@ -74,6 +74,8 @@ def fallback_zone(request: ZoneGenerationRequest) -> dict:
                              "length": 10.0, "width": 4.0})
         chambers.append(chamber)
 
+    _add_features(chambers, request.unlocked_affordances)
+
     return {
         "schema_version": 7,
         "zone_id": request.zone_id,
@@ -84,6 +86,59 @@ def fallback_zone(request: ZoneGenerationRequest) -> dict:
         "designer_note": "Deterministic fallback zone.",
         "chambers": chambers,
     }
+
+
+def _add_features(chambers: list[dict], unlocked: tuple[str, ...]) -> None:
+    """Hang the unlocked affordances (§13) off the plain chambers.
+
+    Only chambers with nothing riding on them: a feature may not share a
+    chamber with an AP reward or a gating objective (§13.2), and
+    `validate_zone` refuses the Zone if one does. Placing them only where
+    they are legal keeps the fallback's Zones acceptable by construction
+    rather than by a validator catching it afterwards.
+
+    Every tag here is one the campaign can already USE — `unlocked` comes
+    from `owned_affordance_tags`, over owned mechanics. A campaign that has
+    interpreted nothing still gets the two base-kit tags, so even the first
+    Zone has something optional in it.
+    """
+    if not unlocked:
+        return
+    # A corridor is the only chamber type that may carry one: every other
+    # type has a Check or a gating objective. It also has to be wide
+    # enough to hold something beside the walking lane, so widen the ones
+    # that will carry a feature rather than emitting a Zone the validator
+    # would refuse. Widening a connector costs nothing.
+    plain = [c for c in chambers
+             if c.get("reward_location_id") is None
+             and not c.get("objective")]
+    if not plain:
+        return
+    for chamber in plain:
+        chamber["width"] = max(
+            float(chamber.get("width", 5.0)), C.MIN_FEATURE_CHAMBER_WIDTH + 1.0)
+    # Deal round-robin so a run that unlocks five tags does not stack all
+    # five in the first corridor. Both loops are ordered, so the same
+    # campaign lays out the same Zone twice — the fallback is the
+    # deterministic provider, and a feature set that wandered between runs
+    # would make the integration run's assertions unreproducible.
+    for index, tag in enumerate(sorted(unlocked)):
+        chamber = plain[index % len(plain)]
+        features = list(chamber.get("features", []))
+        # The schema's per-chamber cap is the only cap there is; when the
+        # plain chambers are full the remaining tags simply do not appear
+        # in this Zone. They are optional content, so dropping one costs
+        # nothing — and the next Zone deals from the same ordered set.
+        if len(features) >= 3:
+            continue
+        # Off-centre and staggered down the length. The builder pushes a
+        # feature clear of the walking lane whatever it is handed, but
+        # asking for the lane and relying on that would be writing a bug
+        # that another file happens to correct.
+        lateral = 0.18 if index % 2 == 0 else 0.82
+        along = 0.3 + 0.2 * (index // 2 % 3)
+        features.append({"tag": tag, "at": (lateral, along)})
+        chamber["features"] = features
 
 
 # ---------------------------------------------------------------------------

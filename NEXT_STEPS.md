@@ -405,7 +405,54 @@ damage path) are both now assertions.
 the generator grammar, the never-mandatory validator, the local-reward
 catalog, Info readouts.
 
+## Echoes 2.0 — S9 landed (affordances, local rewards, readouts)
 
+The seven §13 tags are real geometry now, and the last deferred verb is
+gone: `DEFERRED_PRIMITIVES` is empty, and every capability registry
+equals its contract.
+
+**The seven, and who pays for them.** `affordance_features.gd` builds a
+grapple anchor with a reachable ledge, a breakable panel with a nook
+behind it, a shallow pool, a grind rail, an updraft with a perch, a
+bounce pad and a moving platform. `affordance_nodes.gd` holds the four
+that do something: a `Volume` that hands the player an influence, a
+`BreakablePanel` on `Enemy`'s own damage signature, a `BouncePad` and a
+`MovingPlatform`. Each tag is paid for by an owned capability
+(`owned_affordance_tags`), which now also honours a direct
+`AffordanceComponent` grant — before this an Echo saying "you can grind
+rails now" unlocked nothing.
+
+**I4, twice.** The schema keeps features out of chambers holding a Check
+and off gating objectives (a `Zone` model validator, so no provider can
+emit one). The builder keeps them out of the walking lane, and refuses a
+room too narrow to have a "beside the path" at all. The lane rule is
+pinned from Python by reading the GDScript, the way the HUD palette is.
+
+**I13.** Every feature hangs a `LocalRewardPickup`, never a
+`RewardObject`. Collecting one sends `grant_local_reward` — an intent
+with no field that could name AP truth — the bridge stamps the Zone and
+records it idempotently, and the snapshot mirrors `local_rewards` back so
+the client stops drawing what it already has.
+
+**§14.1.** `readouts.gd` draws the ten readouts, each on only when the
+fold says it is owned. It observes and never writes: damage numbers watch
+enemy hp fall rather than taking a signal, and `resource_forecast` asks
+`EchoRuntime.can_activate()` rather than attempting a press. The suite
+freezes the world for twenty frames and asserts nothing moved and no
+intent was sent — then hurts an enemy to prove the overlay was awake.
+
+**Movement volumes.** A layer on the player applied after the stat stack,
+not writes into it: `_refresh_derived_stats` rewrites every multiplier
+each frame from the fold, so a volume writing there would be erased or
+permanent by frame order. Nothing can trap you — upward-only lift,
+capped drag, a hard speed floor.
+
+**`make godot-affordance`** is the suite: a 2900-case sweep of the lane
+rule, all seven built and checked for local rewards, the volumes,
+the panel threshold, the platform's loop, pickup idempotence, and the
+readouts' read-only promise. `make godot-test` had to become a booted run
+in the same change — chambers now reach the player, which reaches
+`BridgeClient`, and a `--script` run has no autoloads.
 
 ## Next useful work
 1. **Play-feel pass on real hardware** — the manual checks in
@@ -426,13 +473,14 @@ postgame, so clients also require the goal to be missing
 (`docs/IMPLEMENTATION_DECISIONS.md`).
 
 ## Commands
-    make test                  # 286 pytest (126 schema)
+    make test                  # 305 pytest
     make godot-test            # chamber geometry
     make godot-blink           # invariant I14, every builder
     make godot-hud             # S3: palette, glyphs, pressure valve, archive
     make godot-rules           # S4: invariant I5, the ECHOES 5 interpreter
     make godot-stats           # S5/S7: invariant I3, links, slots
     make godot-lab             # S8: the Echo Lab, and what it must not do
+    make godot-affordance      # S9: I4/I12/I13, volumes, local rewards, readouts
     make godot-integration     # the whole game, headlessly
     make replay ARCHIVE=<dir>  # re-validate a generation archive
     make seed-multi && make host && make bridge   # real server play

@@ -46,19 +46,38 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   and proves the negative: a full session sends no intent and moves no
   campaign truth. ChatGPT/GPT-5.6 Sol's build brief is cherry-picked at
   `docs/proposals/S8_ECHO_LAB_BUILD_BRIEF.md`.
-- **Next: S9 affordances + local rewards** (IMPLEMENTATION_PLAN §2.5):
-  the capability registry, the generator grammar, the never-mandatory
-  validator (I4), the local-reward catalog, Info readouts. This fires
-  `test_stage_tripwires.py` and un-gates the last deferred verb
-  (`pull_pickup`). I12 and I13 belong to it.
+- S9: **complete** — the seven world affordances build as real geometry
+  (`affordance_features.gd`, `affordance_nodes.gd`), each paid for by an
+  owned capability (I12, `owned_affordance_tags` over OWNED mechanics);
+  features never touch the mandatory path (I4 — the schema keeps them out
+  of reward chambers and gating objectives, the builder keeps them out of
+  the walking lane, and a room too narrow to have a "beside the path" gets
+  none); every feature holds a `LocalRewardPickup` and never an AP reward
+  (I13); movement volumes write into a player environment layer that
+  cannot trap you (`MIN_VOLUME_SPEED_SCALE`, upward-only lift); the ten
+  §14.1 readouts draw from the fold in `readouts.gd`, observing only —
+  proven by a frozen-world frame that moves nothing and sends no intent.
+  `pull_pickup` is implemented, so **nothing is gated any more**:
+  `DEFERRED_PRIMITIVES` is empty and every registry equals its contract.
+  `make godot-affordance` is the suite.
+- **Next: S10 interpretation pipeline** (IMPLEMENTATION_PLAN §2.5):
+  concepts, modes and budgets in the Claude provider, and a mock provider
+  rich enough to keep the integration run meaningful.
 
 ## Stage dependency trap
-`pull_pickup` is the ONLY verb still deferred: it collects local rewards, which are S9. `DEFERRED_PRIMITIVES` must name the last required stage, not the first.
+A live one: a chamber carrying an affordance feature must be at least `MIN_FEATURE_CHAMBER_WIDTH` (5.2 m) wide, and only a corridor can carry one at all — every other chamber type has a Check or a gating objective. A generator that hangs a feature on a default-width connector gets its Zone refused. The fallback widens its own connectors; anything else must too.
+
+Retired at S9: every verb in the catalog runs, and `DEFERRED_PRIMITIVES` is empty (deliberately, so the partition test in `test_schemas.py` stays true rather than vacuous). The rule it encoded still applies to whatever is deferred next — name the LAST required stage, not the first.
 
 ## Standing tripwires (deliberate, will fire on stage advance)
-- `test_stage_tripwires.py` now guards the S9 boundary (affordances and
-  Info readouts); its docstring names the work due when it fires. The two
-  S3-era tripwires fired at S5 and were paid — that test is their receipt.
+- `test_stage_tripwires.py` is now all receipts: the S3 pair fired at S5,
+  the S9 pair fired at S9, and each is recorded as discharged. Nothing is
+  gated, so `test_the_registry_still_runs_even_though_it_gates_nothing`
+  is what keeps the mechanism from being refactored away — it narrows the
+  registry by hand and watches it refuse. The same trick keeps the
+  primitive gate visible in `test_schemas.py` and `test_s1_review_fixes.py`
+  (both pass a narrowed `implemented_primitives` through the seam the
+  signature already provides).
 - Cross-language pins: glyph indices, palette names, channel count
   (`test_hud_contract.py` ↔ `hud_driver.gd`), theme rule
   (`test_theme_agreement.py` ↔ `integration_driver.gd`), runner arms
@@ -73,8 +92,8 @@ model, not merely described). Ownership is the default; equipping is the
 modifier. Recorded in `docs/IMPLEMENTATION_DECISIONS.md` (S5).
 
 ## Last full green verification
-At S8 completion (this commit):
-- `make test`: 286 passed
+At S9 completion (this commit):
+- `make test`: 307 passed
 - `check_packet.py`: green, 10 docs
 - `make godot-test`: GODOT CHAMBER TESTS OK
 - `make godot-blink`: 5125 resolved / 17825 refused; GODOT BLINK TESTS OK
@@ -82,10 +101,13 @@ At S8 completion (this commit):
 - `make godot-rules`: GODOT RULES TESTS OK
 - `make godot-stats`: GODOT STATS TESTS OK (I3 sweep, links, S7 slots)
 - `make godot-lab`: GODOT LAB TESTS OK (fixtures, and no campaign mutation)
+- `make godot-affordance`: GODOT AFFORDANCE TESTS OK (I4 lane sweep, the
+  seven built, volumes that cannot trap, readouts that only read)
 - `make godot-integration`: GODOT INTEGRATION OK, full 12-zone campaign;
-  every interpretation credited in some provenance chain, 7 components at
-  Mk II+, longest chain 4 items, Actions reaching 3 of the 4 slots, and
-  the Hub's Lab present and inert
+  every interpretation credited in some provenance chain, components at
+  Mk II+, Actions reaching several slots, the Hub's Lab present and inert,
+  affordance features offered and built, and a local reward earned and
+  recorded without touching a single AP location
 
 Do not assume these counts remain current after new commits; update this section only after the corresponding suites actually run green.
 

@@ -47,6 +47,7 @@ const LAST_LOCATION_ID = 89100030
 const LAST_NON_FINALE_LOCATION_ID = 89100029
 const LOCATION_COUNT = 30
 const LOCATION_ID_BASE = 89100000
+const LOW_HEALTH_FRACTION = 0.33
 const MAX_AP_STRING_LEN = 96
 const MAX_BRUTES_PER_ZONE = 1
 const MAX_DESIGNER_NOTE_LEN = 300
@@ -54,6 +55,7 @@ const MAX_ENEMIES_PER_CHAMBER = 8
 const MAX_ENEMIES_PER_ZONE = 14
 const MAX_TEXT_LEN = 160
 const MAX_VERTICAL_STEP = 1.0
+const MIN_FEATURE_CHAMBER_WIDTH = 5.2
 const MIN_PLATFORM_SIZE = 2.5
 const OBJECTIVES = ["reach_reward", "kill_all", "platform_to_goal"]
 const PLAYER_EYE_HEIGHT = 1.6
@@ -68,6 +70,7 @@ const REFERENCE_ECHO_DAMAGE = 12.0
 const REFERENCE_ECHO_PELLETS = 3
 const REPAIR_ATTEMPTS = 1
 const RESPAWN_DELAY = 1.5
+const RULE_FIRINGS_PER_TICK_CAP = 8
 const SAFE_BASE_JUMP_GAP = 2.6
 const SAFE_GAP_MARGIN = 0.64
 const SAFE_STEP_MARGIN = 0.75
@@ -79,6 +82,7 @@ const SHOP_PRICE_USEFUL = 4
 const SHOP_RESTOCK_EVERY_ZONES = 2
 const SHOP_STOCK_SIZE = 2
 const SIGNAL_KEY_COUNT = 2
+const SLOT_NAMES = ["echo_a", "echo_b", "mobility", "utility"]
 const SPEED_MULT_MAX = 1.6
 const SPEED_MULT_MIN = 0.9
 const STATIC_GLITCH_UNITS_PER_ITEM = 1
@@ -87,6 +91,8 @@ const STATIC_PULSE_COOLDOWN = 0.35
 const STATIC_PULSE_DAMAGE = 6.0
 const STATIC_PULSE_DPS = 17.142857142857142
 const STATIC_PULSE_RANGE = 40.0
+const STAT_STACK_MAX = 4.0
+const STAT_STACK_MIN = 0.25
 const TEXTURE_SIZE_DEFAULT = 64
 const TEXTURE_SIZE_MAX = 128
 const TEXTURE_SIZE_MIN = 32
@@ -113,3 +119,12 @@ const ENEMY_STATS = {
 	"ranged": {"hp": 16.0, "damage": 8.0, "cooldown": 2.0, "speed": 0.0, "reach": 40.0},
 	"brute": {"hp": 120.0, "damage": 18.0, "cooldown": 1.6, "speed": 2.2, "reach": 2.5},
 }
+
+# The closed Action catalog (all 28), in catalog order.
+const ECHO_ACTION_PRIMITIVES = ["melee_swing", "melee_thrust", "slam_ground", "hitscan_damage", "projectile_damage", "arc_lob", "burst_fire", "charge_shot", "beam_sustained", "dash", "air_dash", "double_jump", "wall_kick", "hover", "glide", "blink", "grapple_to_surface", "grapple_pull_target", "grapple_swing", "shield", "block", "parry", "heal_self", "cleanse", "scan_mark", "restore_resource", "pull_pickup", "place_marker"]
+
+# The subset this engine must be able to execute today.
+const ECHO_IMPLEMENTED_PRIMITIVES = ["melee_swing", "melee_thrust", "slam_ground", "hitscan_damage", "projectile_damage", "arc_lob", "burst_fire", "charge_shot", "beam_sustained", "dash", "air_dash", "double_jump", "wall_kick", "hover", "glide", "blink", "grapple_to_surface", "grapple_pull_target", "grapple_swing", "shield", "block", "parry", "heal_self", "cleanse", "scan_mark", "restore_resource", "pull_pickup", "place_marker"]
+
+# Held back by a stage, with the stage that lands each one.
+const ECHO_DEFERRED_PRIMITIVES = {}

@@ -404,6 +404,34 @@ def _reject_duplicate_ids(items, attr: str, label: str) -> None:
         raise ValueError(f"duplicate {label}")
 
 
+class EarnedLocalReward(Strict):
+    """A payoff that is not Archipelago's (ECHOES.md §14.2).
+
+    Recorded in the save because it is *earned* — a note you found stays
+    found — and worth exactly zero to Archipelago. The closed catalog is
+    the enforcement: there is no shape here that could name an AP item, a
+    location, a Check, a Coin, a Signal Key or an Echo, because the only
+    fields are a kind from the catalog, a local id and where it was found.
+
+    `source_zone_id` is a Zone id, never a location id. A local reward
+    that could carry a location id would be a second, unvalidated path to
+    AP truth, which is the one thing §14.2 exists to prevent.
+    """
+    kind: Literal[
+        "epsilon_note", "challenge_marker", "cosmetic_grant",
+        "hub_decoration", "lab_fixture", "flavor_log",
+    ]
+    #: Local identity, unique per campaign. Not an AP id in any namespace.
+    reward_id: str = Field(min_length=1, max_length=48,
+                           pattern=r"^[a-z0-9_]+$")
+    display_name: str = Field(min_length=1, max_length=C.MAX_TEXT_LEN)
+    description: str = Field(default="", max_length=C.MAX_TEXT_LEN)
+    source_zone_id: str = Field(default="", max_length=24)
+    #: For `challenge_marker`: the personal best, in seconds. Zero means
+    #: "recorded, never beaten", which is a different thing from absent.
+    best_seconds: float = Field(default=0.0, ge=0.0, le=36000.0)
+
+
 class CampaignSave(Strict):
     """The on-disk campaign. Written atomically (temp, fsync, os.replace).
 
@@ -431,6 +459,12 @@ class CampaignSave(Strict):
     #: inclusive of pending purchases. Only the rollback path decrements it.
     coins_spent: int = Field(default=0, ge=0)
     pending_checks: tuple[PendingCheck, ...] = ()
+    #: S9. Earned, local, and worth nothing to Archipelago (§14.2). In the
+    #: save because finding a note twice should not be a thing that
+    #: happens; never in the fold, because a local reward is not a
+    #: mechanic and derives nothing.
+    local_rewards: tuple[EarnedLocalReward, ...] = Field(
+        default=(), max_length=120)
 
     #: The interpretation log: append-only, ordered by `interpretation_seq`,
     #: and the ONLY persisted form of what the player has earned. Live
@@ -783,6 +817,12 @@ class CampaignSnapshot(Strict):
     interpretations: tuple[EchoInterpretation, ...] = ()
     mechanics: Mechanics = Field(default_factory=lambda: Mechanics())
     slots: SlotAssignment = Field(default_factory=lambda: SlotAssignment())
+    #: What the player has found that Archipelago does not care about
+    #: (§14.2). Mirrored from the save rather than folded: a local reward
+    #: derives nothing and grants no mechanic, so it has no business in
+    #: `mechanics` — but a note you found stays found, and the client is
+    #: what has to stop drawing a pickup it already has.
+    local_rewards: tuple[EarnedLocalReward, ...] = ()
 
     active_zone: ZoneRecord | None = None
     completed_zone_count: int = Field(default=0, ge=0)
@@ -993,6 +1033,27 @@ class SlotAction(Strict):
     component_id: str | None = Field(default=None, max_length=32)
 
 
+class GrantLocalReward(Strict):
+    """Record a local reward the player earned (ECHOES.md §14.2).
+
+    Client-initiated because the world is where a note is found, and
+    validated here because the save is where it is kept. There is no field
+    that could name an AP item, location or Check — the intent is
+    structurally incapable of the mistake §14.2 forbids, rather than
+    trusted not to make it.
+    """
+    type: Literal["grant_local_reward"]
+    kind: Literal[
+        "epsilon_note", "challenge_marker", "cosmetic_grant",
+        "hub_decoration", "lab_fixture", "flavor_log",
+    ]
+    reward_id: str = Field(min_length=1, max_length=48,
+                           pattern=r"^[a-z0-9_]+$")
+    display_name: str = Field(min_length=1, max_length=C.MAX_TEXT_LEN)
+    description: str = Field(default="", max_length=C.MAX_TEXT_LEN)
+    best_seconds: float = Field(default=0.0, ge=0.0, le=36000.0)
+
+
 class SetCreativity(Strict):
     type: Literal["set_creativity"]
     value: Literal[0, 1, 2]
@@ -1016,7 +1077,7 @@ ClientMessage = Annotated[
     Union[
         Hello, ApConnect, ApDisconnect, StartMockCampaign, RequestNextZone,
         EnterZone, LeaveZone, ExitZone, AbandonZone, ClaimCheck, BuyShopStock,
-        SlotAction, SetCreativity, DebugCommand,
+        SlotAction, GrantLocalReward, SetCreativity, DebugCommand,
     ],
     Field(discriminator="type"),
 ]

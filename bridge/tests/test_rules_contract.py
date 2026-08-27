@@ -78,15 +78,17 @@ def test_implemented_events_are_exactly_push_plus_derived_plus_the_timer():
 
 
 def test_every_gated_kind_is_a_real_schema_kind():
-    """The gates must gate the schema's vocabulary, not typos of it."""
-    assert set(IMPLEMENTED_RULE_EVENTS) <= set(get_args(EventKind))
-    assert set(IMPLEMENTED_CONDITION_KINDS) <= set(get_args(ConditionKind))
-    assert set(IMPLEMENTED_EFFECT_KINDS) < set(get_args(EffectKind))
-    # S5 opened the status vocabulary; S9 owns what is left.
-    assert set(get_args(EventKind)) == set(IMPLEMENTED_RULE_EVENTS)
-    assert set(get_args(ConditionKind)) == set(IMPLEMENTED_CONDITION_KINDS)
-    assert set(get_args(EffectKind)) - set(IMPLEMENTED_EFFECT_KINDS) \
-        == {"grant_local_reward"}
+    """The gates must gate the schema's vocabulary, not typos of it.
+
+    S9 opened the last of it: all three tuples now equal their contract.
+    The registry has stopped being a filter on what the runtime has
+    caught up to and become a tripwire for what a future schema adds —
+    so what this asserts is EQUALITY, which is the state that says the
+    engine implements the whole §5 language.
+    """
+    assert set(IMPLEMENTED_RULE_EVENTS) == set(get_args(EventKind))
+    assert set(IMPLEMENTED_CONDITION_KINDS) == set(get_args(ConditionKind))
+    assert set(IMPLEMENTED_EFFECT_KINDS) == set(get_args(EffectKind))
 
 
 # --- the fold half --------------------------------------------------------
@@ -194,9 +196,10 @@ def test_stage_support_admits_the_s5_status_vocabulary_now():
     assert validate_stage_support(landed) == []
 
 
-def test_stage_support_still_refuses_the_s9_vocabulary():
-    gated = _interp(0, [_rule(
+def test_stage_support_admits_the_s9_vocabulary_now():
+    """S9 landed local rewards, so the last gated effect opened. Asserting
+    the ACCEPTANCE is what stops the gate being reintroduced."""
+    landed = _interp(0, [_rule(
         effects=[{"type": "grant_local_reward", "subject": "epsilon_note",
                   "amount": 1.0}])])
-    errors = validate_stage_support(gated)
-    assert any("grant_local_reward" in e for e in errors)
+    assert validate_stage_support(landed) == []

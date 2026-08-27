@@ -212,6 +212,71 @@ def _check_rule_references(component, components, aliases, seq: int) -> None:
             )
 
 
+#: ECHOES.md §13.1. Each affordance tag names the derived capability that
+#: makes it *interactable*, as a set of action primitives, trait stats, or
+#: neither. A tag with no requirement is base-kit usable.
+#:
+#: Deliberately expressed over the vocabulary the fold already produces
+#: rather than as a second taxonomy: "can this campaign grapple" is
+#: "does it own an action whose primitive is in the grapple family", and
+#: that question has exactly one right answer, held here.
+AFFORDANCE_REQUIREMENTS: dict[str, dict[str, tuple[str, ...]]] = {
+    "grapple_anchor": {"primitives": (
+        "grapple_to_surface", "grapple_pull_target", "grapple_swing")},
+    "breakable_wall": {"primitives": (
+        "slam_ground", "melee_swing", "melee_thrust", "arc_lob",
+        "beam_sustained")},
+    "water_volume": {"primitives": ("hover", "glide"),
+                     "stats": ("gravity",)},
+    "rail": {"primitives": ("dash", "air_dash")},
+    "wind_volume": {"primitives": ("glide", "hover")},
+    # Base-kit usable: a bounce pad bounces anyone, and a moving platform
+    # carries anyone. Requiring nothing is a real entry, not an omission.
+    "bounce_pad": {},
+    "moving_platform": {},
+}
+
+
+def owned_affordance_tags(mechanics) -> tuple[str, ...]:
+    """Which affordance tags this campaign can actually USE (§13.1).
+
+    Over owned components, never slotted ones: you own the grapple whether
+    or not it is in a slot, and you can always slot it. Evaluating this
+    over the loadout would make a Zone's contents depend on what the
+    player happened to have equipped when it generated, which is a Zone
+    that lies about itself the moment they change slots.
+    """
+    primitives: set[str] = set()
+    stats: set[str] = set()
+    granted: set[str] = set()
+    for owned in mechanics.owned:
+        component = owned.component
+        primitive = getattr(component, "primitive", None)
+        if primitive is not None:
+            primitives.add(primitive.type)
+        stat = getattr(component, "stat", None)
+        if stat is not None:
+            stats.add(stat)
+        # An AffordanceComponent grants its tag outright. §13.1's table
+        # names the derived capability that makes each tag interactable,
+        # and this component kind IS that capability rather than a proxy
+        # for it: an Echo that reads "you can grind rails now" has to
+        # actually unlock rails, or the component kind means nothing.
+        if component.kind == "affordance":
+            granted.add(component.tag)
+    out: list[str] = []
+    for tag, requirement in AFFORDANCE_REQUIREMENTS.items():
+        needed_primitives = set(requirement.get("primitives", ()))
+        needed_stats = set(requirement.get("stats", ()))
+        if tag in granted:
+            out.append(tag)
+        elif not needed_primitives and not needed_stats:
+            out.append(tag)                      # base-kit usable
+        elif primitives & needed_primitives or stats & needed_stats:
+            out.append(tag)
+    return tuple(sorted(out))
+
+
 def upgrade_is_legal(component, field: str, delta: float) -> bool:
     """Would this upgrade survive the fold?
 

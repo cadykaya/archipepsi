@@ -15,6 +15,11 @@ var failures := 0
 var _bought_once := false
 var _double_buy_probed := false
 var _error_count := 0
+## S9 vacuity guards. A campaign whose Zones happened to carry no
+## features would sail through every affordance assertion above having
+## checked nothing.
+var _affordances_seen := 0
+var _local_rewards_earned := 0
 
 func _check(condition: bool, message: String) -> void:
 	if condition:
@@ -221,6 +226,14 @@ func _run() -> void:
 	var lab_ok: bool = await _lab_built_and_changed_nothing()
 	_check(lab_ok,
 			"the Hub's Echo Lab exists and the visit changed no campaign truth")
+	# S9: the campaign must actually have offered affordances and paid out
+	# a local reward. Base-kit tags are unlocked from the first Zone, so
+	# zero here means the feature path quietly stopped working.
+	_check(_affordances_seen > 0,
+			"the campaign offered affordance features (%d)" % _affordances_seen)
+	_check(_local_rewards_earned > 0,
+			"a local reward was earned and recorded in the save (%d)"
+			% _local_rewards_earned)
 	_check(stock_ever_seen, "shop stocked at least once during the campaign")
 	if stock_ever_seen:
 		_check(_bought_once, "at least one shop purchase completed")
@@ -547,6 +560,7 @@ func _play_one_zone(detailed: bool) -> bool:
 	if detailed:
 		_check(controller.player != null, "player spawned")
 		_check(controller._exit_portal != null, "exit portal appended")
+		await _check_affordances_and_local_rewards(controller, zone_dict)
 		_check(controller._exit_portal.unlocked == false,
 				"exit portal starts sealed")
 		controller = await _test_leave_and_resume(controller, zone_dict)
@@ -589,6 +603,68 @@ func _play_one_zone(detailed: bool) -> bool:
 	controller.queue_free()
 	await get_tree().process_frame
 	return true
+
+## S9, end to end through the live bridge: the fallback offers only what
+## the campaign can use, the client builds it off the mandatory path, and
+## collecting what it holds records a LOCAL reward and no AP truth.
+##
+## Everything below runs against a real generated Zone rather than a
+## fixture, which is the point: `make godot-affordance` proves the rules
+## in isolation, and this proves a provider, a validator, a builder and a
+## save actually agree about one Zone.
+func _check_affordances_and_local_rewards(controller: ZoneController,
+		zone_dict: Dictionary) -> void:
+	var offered: Array = []
+	for chamber: Dictionary in zone_dict.get("chambers", []):
+		for feature: Dictionary in chamber.get("features", []):
+			offered.append(str(feature.get("tag", "")))
+			# §13.2 on the wire, not just in the validator: a feature must
+			# never share a chamber with a Check.
+			_check(chamber.get("reward_location_id") == null,
+					"no feature shares a chamber with an AP reward")
+	if offered.is_empty():
+		# Base-kit tags are always unlocked, so an empty set means the
+		# fallback stopped placing features and the rest of this proves
+		# nothing. Worth failing on rather than skipping past.
+		_check(false, "a generated Zone offered no affordance at all")
+		return
+	_affordances_seen += offered.size()
+
+	# I12 through the whole stack: the bridge told the client what the
+	# campaign owns, and nothing outside that set was offered.
+	var usable: Array = []
+	for entry: Dictionary in BridgeClient.owned_components("affordance"):
+		usable.append(str(entry.get("component", {}).get("tag", "")))
+	for tag: String in offered:
+		_check(tag in ["bounce_pad", "moving_platform"] or tag in usable,
+				"'%s' was offered without the capability that pays for it"
+				% tag)
+
+	# The builder turned them into geometry, off the walking lane.
+	var built := get_tree().get_nodes_in_group(AffordanceFeatures.GROUP)
+	_check(built.size() > 0, "the client built the offered affordances")
+
+	# ...and each one hung a LOCAL reward, never an AP one. Collecting it
+	# has to reach the save through the bridge and come back in a snapshot.
+	var pickups := get_tree().get_nodes_in_group(LocalRewardPickup.GROUP)
+	_check(pickups.size() > 0, "the affordances hold local rewards")
+	if pickups.is_empty():
+		return
+	var before := _local_reward_count()
+	var checked_before: Array = BridgeClient.snapshot.get(
+			"checked_location_ids", []).duplicate()
+	(pickups[0] as LocalRewardPickup).collect()
+	if await _await_condition("local reward recorded",
+			func() -> bool: return _local_reward_count() > before, 10.0):
+		_local_rewards_earned += 1
+	# I13: it moved nothing of Archipelago's.
+	_check(BridgeClient.snapshot.get("checked_location_ids", [])
+			== checked_before,
+			"earning a local reward checked no AP location")
+
+func _local_reward_count() -> int:
+	var rewards: Variant = BridgeClient.snapshot.get("local_rewards", [])
+	return (rewards as Array).size() if typeof(rewards) == TYPE_ARRAY else 0
 
 ## Satisfy one chamber's objective honestly, then claim its reward.
 func _process_chamber(controller: ZoneController,

@@ -457,13 +457,23 @@ static func _greeble_room(root: Node3D, width: float, depth: float,
 # ---------------------------------------------------------------------------
 
 static func build(chamber: Dictionary, theme: String) -> Dictionary:
+	var result: Dictionary
 	match chamber.get("type", ""):
-		"corridor": return corridor(chamber, theme)
-		"arena": return arena(chamber, theme)
-		"platform_path": return platform_path(chamber, theme)
-		"tower": return tower(chamber, theme)
-		"treasure_room": return treasure_room(chamber, theme)
-	return corridor({"length": 8.0, "width": 4.0}, theme)
+		"corridor": result = corridor(chamber, theme)
+		"arena": result = arena(chamber, theme)
+		"platform_path": result = platform_path(chamber, theme)
+		"tower": result = tower(chamber, theme)
+		"treasure_room": result = treasure_room(chamber, theme)
+		_: result = corridor({"length": 8.0, "width": 4.0}, theme)
+	# Affordance features (§13) go in AFTER the room exists, because the
+	# only safe way to place one is against the room's real extent — the
+	# generator gives a fraction, this end owns the metres.
+	var bounds: AABB = result["bounds"]
+	result["features"] = AffordanceFeatures.place_all(
+			result["root"], chamber, theme,
+			bounds.size.x, bounds.size.z,
+			float(result.get("room_height", CORRIDOR_HEIGHT)))
+	return result
 
 static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 	var length := float(chamber.get("length", 12.0))
@@ -508,6 +518,7 @@ static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 			"bounds": AABB(Vector3(-width / 2.0, -1, 0),
 					Vector3(width, CORRIDOR_HEIGHT + 1, length)),
 			"enemy_spawns": spawns,
+			"room_height": CORRIDOR_HEIGHT,
 			"reward_position": Vector3(0, 0, length / 2.0)}
 
 static func arena(chamber: Dictionary, theme: String) -> Dictionary:
@@ -557,6 +568,7 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 			"bounds": AABB(Vector3(-width / 2.0, -1, 0),
 					Vector3(width, wall_height + 1, depth)),
 			"enemy_spawns": spawns,
+			"room_height": wall_height,
 			"reward_position": Vector3(0, 0, depth * 0.72)}
 
 static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
@@ -610,6 +622,7 @@ static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 			"bounds": AABB(Vector3(-width / 2.0, -40, 0),
 					Vector3(width, wall_height + 41.0, total)),
 			"enemy_spawns": spawns,
+			"room_height": wall_height,
 			"reward_position": Vector3(0, rise, total - ledge / 2.0),
 			"goal_area_position": Vector3(0, rise + 1.0, total - ledge)}
 
@@ -691,6 +704,7 @@ static func tower(chamber: Dictionary, theme: String) -> Dictionary:
 			"bounds": AABB(Vector3(-side / 2.0, -1, 0),
 					Vector3(side, total_rise + 6.0, side + 2.2)),
 			"enemy_spawns": spawns,
+			"room_height": total_rise + 6.0,
 			"reward_position": Vector3(-2.0, top_y, side - 2.0)}
 
 ## A 90° corner piece for non-linear layouts. Entrance on local z=0 facing
@@ -762,4 +776,5 @@ static func treasure_room(chamber: Dictionary, theme: String) -> Dictionary:
 			"bounds": AABB(Vector3(-side / 2.0, -1, 0),
 					Vector3(side, height + 1, side)),
 			"enemy_spawns": [],
+			"room_height": height,
 			"reward_position": Vector3(0, 1.0, side / 2.0)}

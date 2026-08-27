@@ -130,6 +130,64 @@ func total_shield() -> float:
 	for runtime: EchoRuntime in runtimes.values():
 		total += runtime.shield_hp
 	return total
+
+# --- Affordance volumes (ECHOES §13) --------------------------------------
+#
+# Water, wind and rails influence movement while you are inside them. They
+# are kept apart from the stat stack on purpose: `_refresh_derived_stats`
+# rewrites every multiplier from the fold each frame, so a volume that
+# wrote into those fields would be either erased or permanent depending on
+# frame order. This layer is applied AFTER the stack and lasts exactly as
+# long as the overlap.
+#
+# A volume may never strand you. Nothing here can pin you in place: lift is
+# upward-only, drag is bounded, and speed is floored — see
+# `MIN_VOLUME_SPEED_SCALE`. Combined with §13.2 (no feature on the mandatory
+# path), that keeps the base kit sufficient no matter what a Zone offers.
+
+## The hard floor on how slow any volume may make you. A volume is optional
+## content; one that could stop you moving would be a trap, and the fact
+## that features are off the mandatory path would stop being enough.
+const MIN_VOLUME_SPEED_SCALE := 0.4
+const MAX_VOLUME_DRAG := 6.0
+
+var _volumes: Dictionary = {}
+
+## Called by an affordance volume's own Area3D on overlap. Keyed by the
+## node so overlapping volumes cannot leave a stale influence behind when
+## one of them is freed mid-overlap.
+func enter_volume(volume: Node, influence: Dictionary) -> void:
+	_volumes[volume] = influence
+
+func exit_volume(volume: Node) -> void:
+	_volumes.erase(volume)
+
+## Merge every overlapping volume into one influence. Scales multiply so
+## two volumes compose, lift sums, drag and terminal fall take the
+## strongest claim, and the result is clamped to what cannot trap.
+func environment_influence() -> Dictionary:
+	var out := {"gravity_scale": 1.0, "speed_scale": 1.0, "lift": 0.0,
+			"drag": 0.0, "terminal_fall": INF, "axis": Vector3.ZERO}
+	for volume: Variant in _volumes.keys():
+		if not is_instance_valid(volume):
+			continue
+		var influence: Dictionary = _volumes[volume]
+		out["gravity_scale"] = float(out["gravity_scale"]) \
+				* float(influence.get("gravity_scale", 1.0))
+		out["speed_scale"] = float(out["speed_scale"]) \
+				* float(influence.get("speed_scale", 1.0))
+		out["lift"] = float(out["lift"]) + float(influence.get("lift", 0.0))
+		out["drag"] = maxf(float(out["drag"]),
+				float(influence.get("drag", 0.0)))
+		out["terminal_fall"] = minf(float(out["terminal_fall"]),
+				float(influence.get("terminal_fall", INF)))
+		if influence.has("axis"):
+			out["axis"] = influence["axis"]
+	out["speed_scale"] = maxf(float(out["speed_scale"]),
+			MIN_VOLUME_SPEED_SCALE)
+	out["drag"] = minf(float(out["drag"]), MAX_VOLUME_DRAG)
+	out["lift"] = maxf(float(out["lift"]), 0.0)
+	return out
 @onready var viewmodel: Node3D = $Camera3D/Viewmodel
 
 static func create() -> Player:
@@ -290,13 +348,25 @@ func _physics_process(delta: float) -> void:
 		return
 	_refresh_derived_stats(delta)
 
-	var gravity := Constants.GRAVITY * gravity_mult * hover_gravity_scale
+	var env := environment_influence()
+	var gravity := Constants.GRAVITY * gravity_mult * hover_gravity_scale \
+			* float(env["gravity_scale"])
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 		_coyote -= delta
 	else:
 		_coyote = Constants.COYOTE_TIME
 	_jump_buffer -= delta
+
+	# Upward-only, and applied whether or not you are grounded: an updraft
+	# you have to jump into first is an updraft nobody finds.
+	if float(env["lift"]) > 0.0:
+		velocity.y += float(env["lift"]) * delta
+	velocity.y = maxf(velocity.y, -float(env["terminal_fall"]))
+	if float(env["drag"]) > 0.0:
+		var damping := 1.0 - minf(0.9, float(env["drag"]) * delta)
+		velocity.x *= damping
+		velocity.z *= damping
 
 	# A glide caps the fall and adds a push along the look direction. Only
 	# ever a CAP: it cannot make you rise, so it stays a descent you steer
@@ -327,7 +397,8 @@ func _physics_process(delta: float) -> void:
 				"move_left", "move_right", "move_forward", "move_back")
 		var direction := (transform.basis
 				* Vector3(input_dir.x, 0, input_dir.y)).normalized()
-		var speed := Constants.WALK_SPEED * speed_mult
+		var speed := Constants.WALK_SPEED * speed_mult \
+				* float(env["speed_scale"])
 		# Friction below base is how a downside is allowed to express
 		# (§10): slippier control, never a shorter jump.
 		var control := friction_mult if is_on_floor() \

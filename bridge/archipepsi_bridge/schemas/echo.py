@@ -396,16 +396,17 @@ IMPLEMENTED_PRIMITIVES = (
     # defensive
     "shield", "block", "parry", "heal_self", "cleanse",
     # utility
-    "scan_mark", "restore_resource", "place_marker",
+    "scan_mark", "restore_resource", "pull_pickup", "place_marker",
 )
 
 #: Why each still-gated primitive is gated, and the stage that lands it.
 #: Paired with `IMPLEMENTED_PRIMITIVES` so the two together must account for
 #: every entry in the catalog — see `test_schemas.py`.
-DEFERRED_PRIMITIVES = {
-    "pull_pickup": "S9: pulls LOCAL rewards, which do not exist until the "
-                   "local-reward catalog lands",
-}
+#: Empty since S9, and kept rather than deleted: the tuple pair is what
+#: `test_schemas.py` partitions the catalog with, and an empty half is the
+#: honest way to say "every verb runs" — deleting it would make the
+#: partition test vacuous instead of true.
+DEFERRED_PRIMITIVES: dict[str, str] = {}
 
 #: Primitives that are meaningless without something to spend, so a `powers`
 #: link is mandatory rather than encouraged.

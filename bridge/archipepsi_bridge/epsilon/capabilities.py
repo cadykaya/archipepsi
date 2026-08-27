@@ -15,6 +15,7 @@ capability that validation would silently accept as a no-op.
 from __future__ import annotations
 
 from ..schemas import constants as C
+from ..schemas import echo as E
 from ..schemas.echo import EchoInterpretation
 
 
@@ -38,8 +39,13 @@ IMPLEMENTED_OPERATION_KINDS = ("create", "upgrade", "modify", "link",
 #: watch events, hold conditions, SPEND a resource and apply effects.
 #: S5 added "status": the per-target containers run in the client, and an
 #: owned definition floors applications of its kind.
-IMPLEMENTED_COMPONENT_KINDS = ("action", "trait", "resource", "rule",
-                               "status")
+#: S9 added the last two. An `affordance` is a capability tag the Zone
+#: validator reads (§13.1) and an `info` is a readout the HUD draws
+#: (§14.1); both were refused while nothing generated or rendered them.
+#: This tuple is now the whole `COMPONENT_KINDS` vocabulary — every gate
+#: except the primitive catalog is open, and that one has a single entry
+#: left.
+IMPLEMENTED_COMPONENT_KINDS = E.COMPONENT_KINDS
 #: S5: the full derived stat stack (`stat_stack.gd`, `make godot-stats`).
 IMPLEMENTED_TRAIT_STATS = (
     "move_speed", "jump_height", "gravity", "air_control",
@@ -67,7 +73,7 @@ IMPLEMENTED_CONDITION_KINDS = (
 IMPLEMENTED_EFFECT_KINDS = (
     "resource_add", "heal", "grant_shield", "impulse_self", "damage_around",
     "fire_projectile", "reset_action_cooldown", "refill_resource",
-    "apply_status", "trait_pulse",
+    "apply_status", "trait_pulse", "grant_local_reward",
 )
 
 #: S7 bound the other three. `player.gd` builds one runtime per slot and
