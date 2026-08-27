@@ -155,8 +155,15 @@ static func _build_brute(enemy: Node3D, size: Vector3, theme: String) -> void:
 	_eye(enemy, Vector3(size.x * 0.22, 0.09, 0.05),
 			Vector3(0, size.y * 0.74, -size.z * 0.3), Color(1.0, 0.2, 0.15))
 
+## S5 statuses: this enemy's own conditions. Reset with the enemy, which
+## dies or despawns with the Zone — nothing here is ever saved (I9).
+var statuses := StatusEffects.new()
+
 func _ready() -> void:
 	add_to_group("enemies")
+	statuses.side = "enemy"
+	statuses.status_applied.connect(func(_kind: String) -> void:
+		_refresh_damage_tint())
 	# Positional audio: a shot from off-screen should tell you where to
 	# look, which the damage indicator can only do after you are already hit.
 	_voice = AudioStreamPlayer3D.new()
@@ -177,7 +184,15 @@ func _physics_process(delta: float) -> void:
 	if global_position.y < Constants.ENEMY_FALL_KILL_Y:
 		die()                      # counts as dead: kill_all stays satisfiable
 		return
-	_attack_cooldown = maxf(0.0, _attack_cooldown - delta)
+	# Shocked nerves recover slower; the cooldown itself is the stagger.
+	_attack_cooldown = maxf(0.0, _attack_cooldown - delta
+			* (1.0 - 0.5 * clampf(statuses.magnitude_of("shocked"), 0.0, 1.0)))
+	statuses.tick(delta)
+	var dot := statuses.dot_per_second()
+	if dot > 0.0:
+		_take_dot(dot * delta)
+		if _dead:
+			return
 
 	velocity += _knockback
 	_knockback = Vector3.ZERO
@@ -205,15 +220,27 @@ func _physics_process(delta: float) -> void:
 	if player != null:
 		var to_player := player.global_position - global_position
 		var distance := to_player.length()
-		if distance <= Constants.ENEMY_AGGRO_RADIUS:
+		# `low_profile` on the player shrinks how far this enemy notices —
+		# §10's "visibility" channel, a downside's counterpart.
+		var aggro := Constants.ENEMY_AGGRO_RADIUS \
+				* (1.0 - 0.5 * clampf(
+						player.statuses.magnitude_of("low_profile"), 0.0, 1.0))
+		if distance <= aggro:
 			if not _has_noticed:
 				_has_noticed = true
 				_say("aggro")
 			var flat := Vector3(to_player.x, 0, to_player.z)
 			if flat.length() > 0.05:
 				look_at(global_position + flat, Vector3.UP)
-			var speed := float(stats["speed"])
-			if _windup > 0.0:
+			var speed := float(stats["speed"]) \
+					* (1.0 - 0.5 * clampf(
+							statuses.magnitude_of("slowed"), 0.0, 1.0))
+			if statuses.has("frozen") or statuses.has("stunned"):
+				# Held in place, attacks withheld. The two differ in how
+				# they were earned and how they read, not in physics.
+				velocity.x = lerpf(velocity.x, 0.0, 0.5)
+				velocity.z = lerpf(velocity.z, 0.0, 0.5)
+			elif _windup > 0.0:
 				# Committed to the slam: plant and telegraph. The countdown
 				# itself runs below, outside this branch, so losing aggro
 				# mid-swing cannot freeze the brute mid-telegraph.
@@ -229,7 +256,8 @@ func _physics_process(delta: float) -> void:
 			else:
 				velocity.x = lerpf(velocity.x, 0.0, 0.3)
 				velocity.z = lerpf(velocity.z, 0.0, 0.3)
-			if _windup <= 0.0:
+			if _windup <= 0.0 and not statuses.has("frozen") \
+					and not statuses.has("stunned"):
 				_try_attack(player, distance)
 	move_and_slide()
 	# Collision recovery: wanted to move but barely did -> slide sideways
@@ -282,7 +310,7 @@ func _slam(player: Player) -> void:
 	if to_player.length() <= float(stats["reach"]) * 1.4:
 		player.take_damage(float(stats["damage"]), global_position)
 		var away := Vector3(to_player.x, 0, to_player.z).normalized()
-		player.velocity += away * 7.0 + Vector3.UP * 3.0
+		player.receive_knockback(away * 7.0 + Vector3.UP * 3.0)
 
 func _has_line_of_sight(player: Player) -> bool:
 	var from := global_position + Vector3.UP * 1.2
@@ -307,6 +335,10 @@ func _fire_projectile(player: Player) -> void:
 func take_damage(amount: float, direction: Vector3, knockback: float) -> bool:
 	if _dead:
 		return false
+	# Marked and vulnerable targets take more — the mark is a promise, not
+	# just a glow.
+	amount *= 1.0 + 0.25 * clampf(statuses.magnitude_of("marked"), 0.0, 2.0)
+	amount *= 1.0 + 0.5 * clampf(statuses.magnitude_of("vulnerable"), 0.0, 2.0)
 	hp -= amount
 	if knockback > 0.0:
 		_knockback += direction * knockback
@@ -329,35 +361,54 @@ func take_damage(amount: float, direction: Vector3, knockback: float) -> bool:
 ## mutated in place. Duplicating them on every hit re-uploaded a dozen
 ## materials per Static Pulse tick and permanently broke batching with the
 ## cached theme materials.
+func _ensure_tint_parts() -> void:
+	if not _tint_parts.is_empty():
+		return
+	for child in get_children():
+		if not (child is MeshInstance3D):
+			continue
+		var shared: Material = child.material_override
+		if not (shared is StandardMaterial3D):
+			continue
+		var mine: StandardMaterial3D = shared.duplicate()
+		child.material_override = mine
+		_tint_parts.append(mine)
+		# Capture the base energy BEFORE overwriting it, or the first
+		# chip of damage makes the eye dimmer than undamaged.
+		_tint_base_energy.append(mine.emission_energy_multiplier)
+		_tint_base_albedo.append(mine.albedo_color)
+
 func _refresh_damage_tint() -> void:
 	var hurt := 1.0 - clampf(hp / maxf(1.0, float(stats["hp"])), 0.0, 1.0)
-	if hurt <= 0.0:
+	var marked := statuses.has("marked")
+	if hurt <= 0.0 and not marked:
 		return
-	if _tint_parts.is_empty():
-		for child in get_children():
-			if not (child is MeshInstance3D):
-				continue
-			var shared: Material = child.material_override
-			if not (shared is StandardMaterial3D):
-				continue
-			var mine: StandardMaterial3D = shared.duplicate()
-			child.material_override = mine
-			_tint_parts.append(mine)
-			# Capture the base energy BEFORE overwriting it, or the first
-			# chip of damage makes the eye dimmer than undamaged.
-			_tint_base_energy.append(mine.emission_energy_multiplier)
-			_tint_base_albedo.append(mine.albedo_color)
+	_ensure_tint_parts()
 	for i in _tint_parts.size():
 		var material: StandardMaterial3D = _tint_parts[i]
 		if material.emission_enabled:
+			# A marked target glows over and above its wounds — scan_mark
+			# is only worth a slot if the mark is visible across a room.
 			material.emission_energy_multiplier = \
-					_tint_base_energy[i] * (1.0 + 1.6 * hurt)
+					_tint_base_energy[i] * (1.0 + 1.6 * hurt) \
+					* (2.2 if marked else 1.0)
 		else:
-			material.albedo_color = _tint_base_albedo[i].lerp(
+			var albedo := _tint_base_albedo[i].lerp(
 					Color(1.0, 0.4, 0.3), hurt * 0.7)
+			if marked:
+				albedo = albedo.lerp(Color(1.0, 0.85, 0.3), 0.45)
+			material.albedo_color = albedo
 
 func apply_knockback(impulse: Vector3) -> void:
 	_knockback += impulse
+
+## Burning and poison chip without the scale-punch flinch: a tween per
+## physics frame is a strobe, and a DoT is ambient harm rather than a hit.
+func _take_dot(amount: float) -> void:
+	hp -= amount
+	_refresh_damage_tint()
+	if hp <= 0.0:
+		die()
 
 func die() -> void:
 	if _dead:

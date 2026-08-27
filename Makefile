@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-integration
+.PHONY: setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-integration
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -127,6 +127,18 @@ godot-rules: godot-import      # the ECHOES 5 interpreter, deterministically
 	@out=$$($(GODOT) --headless --path godot -- --rules-test 2>&1); \
 	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
 	printf '%s\n' "$$out" | grep -q "GODOT RULES TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# The S5 stat-stack suite: invariant I3 over a seeded random sweep of
+# legal trait stacks, plus scaled_by, scales links, requires_equipped,
+# trait pulses and the status container's rules.
+godot-stats: godot-import      # the derived stat stack holds its floors
+	@out=$$($(GODOT) --headless --path godot -- --stats-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT STATS TESTS OK" || exit 1; \
 	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
 	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
 	  exit 1; \

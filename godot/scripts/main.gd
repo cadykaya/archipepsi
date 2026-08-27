@@ -61,6 +61,12 @@ func _ready() -> void:
 		var rules_suite: Node = load("res://tests/rules_driver.gd").new()
 		add_child(rules_suite)
 		return
+	# The S5 stat-stack suite (invariant I3): same boot, same reason.
+	if "--stats-test" in user_args:
+		headless_test = true
+		var stats_suite: Node = load("res://tests/stats_driver.gd").new()
+		add_child(stats_suite)
+		return
 	world = Node3D.new()
 	world.name = "World"
 	add_child(world)
@@ -224,6 +230,8 @@ func _bind_rule_runtime(target: Player, zone_ctl: ZoneController) -> void:
 	rule_runtime.echo_runtime = target.echo_runtime
 	rule_runtime.zone_root = zone_ctl
 	rule_runtime.refresh_rules()
+	# The stat stack reads live fractions; the pool is main's.
+	target.stat_stack.pool = resource_pool
 	target.jumped.connect(func() -> void: rule_runtime.notify("jump"))
 	target.footstep.connect(func(kind: String) -> void:
 		if kind == "land":

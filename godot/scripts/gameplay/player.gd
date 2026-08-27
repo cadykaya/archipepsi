@@ -43,6 +43,18 @@ var hp: float = Constants.PLAYER_MAX_HP
 var input_frozen := false
 var gravity_mult := 1.0
 var speed_mult := 1.0
+## The rest of the S5 derived stat stack, refreshed every physics frame
+## from `stat_stack`. Base is 1.0 for each; the stack owns floors/clamps.
+var jump_mult := 1.0
+var air_control_mult := 1.0
+var friction_mult := 1.0
+var damage_dealt_mult := 1.0
+var damage_taken_mult := 1.0
+var knockback_resist_mult := 1.0
+var regen_mult := 1.0
+
+var stat_stack := StatStack.new()
+var statuses := StatusEffects.new()
 
 ## Set by EchoRuntime while a `glide` is held. 0 means not gliding. The
 ## runtime owns the decision; the player owns the physics, so a glide
@@ -158,9 +170,34 @@ static func create() -> Player:
 func _ready() -> void:
 	add_to_group("player")
 	_spawn_transform = global_transform
+	statuses.side = "self"
+	stat_stack.statuses = statuses
 	fired_pulse.connect(func() -> void:
 		kick_viewmodel(0.05)
 		muzzle_flash(1.6, Color(0.75, 0.85, 1.0)))
+
+## Evaluate the stack and let statuses breathe. Runs at the top of every
+## physics frame so `scaled_by` traits track live fractions.
+func _refresh_derived_stats(delta: float) -> void:
+	statuses.tick(delta)
+	stat_stack.tick(delta)
+	stat_stack.hp_fraction = hp / Constants.PLAYER_MAX_HP
+	var stats := stat_stack.evaluate()
+	speed_mult = float(stats["move_speed"])
+	gravity_mult = float(stats["gravity"])
+	jump_mult = float(stats["jump_height"])
+	air_control_mult = float(stats["air_control"])
+	friction_mult = float(stats["ground_friction"])
+	damage_dealt_mult = float(stats["damage_dealt"])
+	damage_taken_mult = float(stats["damage_taken"])
+	knockback_resist_mult = float(stats["knockback_resist"])
+	regen_mult = float(stats["regen"])
+	var dot := statuses.dot_per_second()
+	if dot > 0.0 and not _dead:
+		take_damage(dot * delta)
+	var regen := statuses.regen_per_second()
+	if regen > 0.0 and not _dead and hp < Constants.PLAYER_MAX_HP:
+		heal(regen * delta)
 
 ## A brief light at the barrel, sized to the shot.
 func muzzle_flash(energy: float, color: Color) -> void:
@@ -200,6 +237,7 @@ func _physics_process(delta: float) -> void:
 	_pulse_cooldown = maxf(0.0, _pulse_cooldown - delta)
 	if _dead:
 		return
+	_refresh_derived_stats(delta)
 
 	var gravity := Constants.GRAVITY * gravity_mult
 	if not is_on_floor():
@@ -226,7 +264,9 @@ func _physics_process(delta: float) -> void:
 		if Input.is_action_just_pressed("jump"):
 			_jump_buffer = Constants.JUMP_BUFFER
 		if _jump_buffer > 0.0 and _coyote > 0.0:
-			velocity.y = Constants.JUMP_VELOCITY
+			# Height scales with the square of launch speed, so a
+			# jump_height multiplier rides in as its square root.
+			velocity.y = Constants.JUMP_VELOCITY * sqrt(jump_mult)
 			_jump_buffer = 0.0
 			_coyote = 0.0
 			jumped.emit()
@@ -236,7 +276,11 @@ func _physics_process(delta: float) -> void:
 		var direction := (transform.basis
 				* Vector3(input_dir.x, 0, input_dir.y)).normalized()
 		var speed := Constants.WALK_SPEED * speed_mult
-		var control := 1.0 if is_on_floor() else Constants.AIR_CONTROL
+		# Friction below base is how a downside is allowed to express
+		# (§10): slippier control, never a shorter jump.
+		var control := friction_mult if is_on_floor() \
+				else Constants.AIR_CONTROL * air_control_mult
+		control = minf(control, 1.0)
 		velocity.x = lerpf(velocity.x, direction.x * speed, control * 0.4)
 		velocity.z = lerpf(velocity.z, direction.z * speed, control * 0.4)
 
@@ -276,7 +320,10 @@ func _fire_static_pulse() -> void:
 		var target: Variant = hit["collider"]
 		if is_instance_valid(target) and target.is_in_group("enemies"):
 			var enemy := target as Enemy
-			report_hit(enemy.take_damage(Constants.STATIC_PULSE_DAMAGE,
+			# §9: the Pulse's identity is untouchable, but a global
+			# damage_dealt trait still multiplies it.
+			report_hit(enemy.take_damage(
+					Constants.STATIC_PULSE_DAMAGE * damage_dealt_mult,
 					-camera.global_transform.basis.z, 0.0))
 	_spawn_tracer(hit)
 
@@ -369,6 +416,7 @@ func take_damage(amount: float,
 		source_position: Vector3 = Vector3.INF) -> void:
 	if _dead:
 		return
+	amount *= damage_taken_mult
 	amount = echo_runtime.absorb_with_shield(amount)
 	hp = maxf(0.0, hp - amount)
 	hp_changed.emit(hp, echo_runtime.shield_hp)
@@ -376,8 +424,16 @@ func take_damage(amount: float,
 	if hp <= 0.0:
 		_die()
 
+## External shoves come through here so `knockback_resist` has one place
+## to push back. Self-chosen recoil (the shotgun's travel plan) does not —
+## resisting your own movement tech would be a downside wearing a buff.
+func receive_knockback(impulse: Vector3) -> void:
+	velocity += impulse / maxf(knockback_resist_mult, 0.25)
+
 func heal(amount: float) -> void:
-	hp = minf(Constants.PLAYER_MAX_HP, hp + amount)
+	# `regen` is a multiplier on recovery received — the game has no base
+	# trickle for it to scale, and healing-in is the recovery that exists.
+	hp = minf(Constants.PLAYER_MAX_HP, hp + amount * regen_mult)
 	hp_changed.emit(hp, echo_runtime.shield_hp)
 
 func _die() -> void:

@@ -55,11 +55,9 @@ var _was_grounded := true
 @onready var player: Player = get_parent()
 
 func set_equipped(action: Dictionary) -> void:
-	# Traits refresh on EVERY snapshot, not only when the slot changes: a
-	# newly granted trait is owned the moment its Check confirms, and
-	# gating that on a slot change would leave it inert until the player
-	# happened to switch Echoes.
-	apply_owned_traits()
+	# Traits used to be re-applied here; S5 moved them to the player's
+	# StatStack, evaluated every physics frame, because `scaled_by` and
+	# statuses change continuously rather than on snapshots.
 	if action.get("component_id") == equipped.get("component_id"):
 		equipped = action
 		return
@@ -135,22 +133,6 @@ func source_color() -> Color:
 ## `max_safe_gap` was derived from these two constants, not from an
 ## unbounded product. Clamping to them is what keeps every generated jump
 ## valid without recomputing a single one.
-func apply_owned_traits() -> void:
-	var gravity := 1.0
-	var speed := 1.0
-	for entry: Dictionary in BridgeClient.owned_components("trait"):
-		var trait_component: Dictionary = entry.get("component", {})
-		var multiplier := float(trait_component.get("multiplier", 1.0))
-		match str(trait_component.get("stat", "")):
-			"gravity":
-				gravity *= multiplier
-			"move_speed":
-				speed *= multiplier
-	player.gravity_mult = clampf(gravity,
-			float(Constants.GRAVITY_MULT_MIN), float(Constants.GRAVITY_MULT_MAX))
-	player.speed_mult = clampf(speed,
-			float(Constants.SPEED_MULT_MIN), float(Constants.SPEED_MULT_MAX))
-
 func _primitive() -> Dictionary:
 	return equipped.get("primitive", {})
 

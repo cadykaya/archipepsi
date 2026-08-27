@@ -329,6 +329,14 @@ RULE_FIRINGS_PER_TICK_CAP = 8
 #: worried voice line cannot disagree about what "low" means.
 LOW_HEALTH_FRACTION = 0.33
 
+#: The envelope every non-traversal derived stat is clamped into after the
+#: whole stack multiplies out (traits x scales links x statuses x pulses).
+#: One trait is schema-bounded to [0.1, 4.0]; the STACK needs its own bound
+#: or four stacked traits could reach 256x. Traversal stats have the harder
+#: rule (floored at base, speed/gravity to their own caps) and ignore this.
+STAT_STACK_MIN = 0.25
+STAT_STACK_MAX = 4.0
+
 #: Reference mid-bounds Echo, used to state the Static Pulse comparison
 #: honestly. The *bounds* permit far more; a typical Echo lands near this.
 REFERENCE_ECHO_DAMAGE = 12.0
