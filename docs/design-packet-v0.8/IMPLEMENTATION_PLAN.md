@@ -184,7 +184,7 @@ system is two of them at once.
 
 | Stage | Ships | Done when |
 |---|---|---|
-| **S1** | Schema v8, the fold, migration | Sequence assignment, alias resolution, target-liveness. **No new mechanics**: v7 Echoes migrate and the game plays identically. The riskiest stage, done first and alone. Includes a fold benchmark — it runs on the save path. |
+| **S1** ✅ | Schema v8, the fold, migration | **Done.** Sequence assignment, alias resolution, target-liveness, the v7 corpus, replay compatibility both ways, and the fold benchmark (0.16 ms on a full 26-echo campaign). |
 | **S2** | Action primitive catalog | `ECHOES.md` §6 in full, plus the action runner. The first stage the player can feel. Ships the catalog **closed**. |
 | **S3** | Resources + HUD channels | Channel assignment, the safe palette, source glyphs, contextual visibility, provenance in the archive. |
 | **S4** | Rule engine | Events, conditions, costs, effects, edge derivation, deferred dispatch, cooldowns and the per-tick cap. |

@@ -48,3 +48,61 @@ Only real deviations from the v0.7 packet and material constraints live here.
   the schema (constrained-decoding subset), it degrades to prompt-level JSON
   for the rest of the process. Archipepsi's validators remain the authority
   on every path, so this changes reliability, never correctness.
+
+## Echoes 2.0 — S1
+
+- **`schemas/` is v8, and the packet's temporary authority exception is
+  gone.** The v0.8 packet was written before implementation and, for one
+  stage, let `ECHOES.md` outrank `schemas/echo.py`. S1 landed the executable
+  contract, so `schemas/` outranks every document again — the normal rule.
+  `check_packet.py` now derives the 28-primitive catalog count from
+  `ACTION_PRIMITIVES` instead of trusting the prose, after the first draft
+  of `ECHOES.md` advertised 26 while listing 28.
+
+- **`zone.py` stays at `schema_version = 7`, deliberately.** The Zone
+  contract did not change in v0.8 — Echoes 2.0 changes what an Echo means,
+  not what a Zone is — and bumping a version to match its neighbours would
+  claim a change happened where none did. `protocol_version` and the Echo
+  and save versions all move to 8, because those genuinely changed.
+
+- **Traits apply because they are owned, not because something is
+  equipped.** This is the one place S1 does not "play identically" to v0.7,
+  and it is a consequence of the model rather than a choice made here:
+  v0.7's passives applied only while their Echo was equipped, and a v8
+  trait is true once owned (`ECHOES.md` §2). A migrated save with several
+  passive Echoes therefore has all of them at once.
+
+  It cannot break traversal. Each trait is individually floored at base by
+  a model validator — a gravity trait may only lighten, a speed trait may
+  only quicken — and the runtime clamps the *product* to
+  `GRAVITY_MULT_MIN`/`SPEED_MULT_MAX`, which are the same two constants
+  `max_safe_gap` was derived from. So every generated jump stays valid
+  without recomputing one.
+
+- **The fold is not cached on the model.** `CampaignSave.derive()` runs it
+  on demand, and `CampaignSave`'s own validator runs it once per
+  construction so a log that cannot fold cannot be written to disk. A
+  cached fold would be a second source of truth waiting to go stale.
+  Measured at 0.16 ms for a full 26-echo campaign
+  (`test_migration_corpus.py`), which is comfortably cheap for something on
+  the save path.
+
+- **Migration happens at the dict level, before validation.** Keeping a
+  parallel tree of v7 models alive forever costs more than converting the
+  JSON, and validating the *output* as an ordinary v8 save means a
+  migration that produced something the models reject fails at load rather
+  than somewhere downstream. `store.load_save` writes the migrated save back
+  immediately: a migration that only lives in memory runs again on every
+  load, and the first crash after it loses whichever half was in flight.
+
+- **`EchoGenerationRequest` stays narrow in S1.** The full v0.8 request —
+  the owned component graph, the alias table, the live budgets — is what
+  lets an interpretation answer another item, and it lands with the
+  interpretation pipeline in S10. Sending it now would be a prompt full of
+  context no rule uses. What S1 does change is the shape of the *answer*.
+
+- **The fallback provider stays deliberately boring.** One `CREATE`, one
+  Action or one Trait, mode `literal`, no resources, rules, links or
+  merges. It cannot breach a budget, dangle a target or fail a fold, which
+  is what keeps it usable as the test oracle for every stage after this
+  one. The mock provider is the one that has to grow, and that is S10.

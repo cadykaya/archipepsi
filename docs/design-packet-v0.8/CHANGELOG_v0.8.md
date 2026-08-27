@@ -166,7 +166,7 @@ Coin, Key or Echo, and never on a mandatory path.
 | `ACCEPTANCE_TESTS.md` | §5.7, one test per invariant with the stage that owns it, plus the two migration tests. Test D extended to affordances. |
 | `DECISIONS_TO_REVIEW.md` | Deployables and geometry-changing forms added as open/deferred; the four settled decisions recorded. |
 | `APWORLD_SPEC.md` | Header only. The Archipelago side does not change. |
-| `schemas/` | **Unchanged — still v7.** S1 lands v8. |
+| `schemas/` | **v8, shipped in S1.** `echo.py` rewritten; `mechanics.py` (the fold) and `migration.py` (v7 → v8) are new; `protocol.py` carries the interpretation log, `next_interpretation_seq` and `SlotAssignment`; `transitions.py` gains `append_interpretation` and `slot_action`. |
 
 ---
 

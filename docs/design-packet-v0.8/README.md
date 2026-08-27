@@ -44,11 +44,9 @@ If two files disagree:
 7. **`ACCEPTANCE_TESTS.md`** — observable behavior.
 8. **`IMPLEMENTATION_PLAN.md`** — build order, not product truth.
 
-### One temporary exception, and its expiry
+No exceptions. `schemas/` is the v8 contract — `echo.py`, `mechanics.py` and `migration.py` included — and it outranks every document here, `ECHOES.md` among them.
 
-`schemas/` in this packet is still the **v7** contract, and it stays binding for everything Echoes 2.0 does not touch. For the Echo contract specifically, `ECHOES.md` is normative *until* **S1** lands `schemas/echo.py` at `SCHEMA_VERSION = 8` — after which the schema is binding over the prose again, in the usual order.
-
-This exception exists because the packet was revised before implementation, deliberately. It is the only place in the packet where prose outranks a schema, it applies to one file, and it ends at S1. `check_packet.py` still validates the prose against the v7 schemas it ships with; the rows it cannot yet check are the v8 rows, and S1 is where they become checkable.
+There was a temporary exception while this packet was revised ahead of implementation: `ECHOES.md` was normative for the Echo contract until S1 landed the executable version. **S1 landed it, and the exception is gone.** `check_packet.py` now derives the action primitive count from `ACTION_PRIMITIVES` rather than trusting the prose, so the catalog cannot drift from the enum again.
 
 `schemas/` sits at the top because a Pydantic model that runs cannot be misread, and every number in it is asserted by a test. Where this document set says something a schema contradicts, the schema is right and the prose is a bug — report it in `docs/IMPLEMENTATION_DECISIONS.md`.
 

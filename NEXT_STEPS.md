@@ -15,7 +15,8 @@ Proof the loop is real:
   **Test L** (kill the bridge at the loading screen; the GENERATED zone
   revives with its committed allocation) against a **real Archipelago
   0.6.7 server**.
-- 193 pytest + the headless chamber-geometry suite.
+- 208 pytest (125 of them the packet's own schema suite) + the
+  headless chamber-geometry suite.
 
 ## What works
 - APWorld: `make seed` / `seed-multi` / `host` / `apworld` (official build
@@ -99,6 +100,44 @@ Proof the loop is real:
   from an earlier run holds the port, and the driver silently tests
   against the stale one).
 
+## Echoes 2.0 — S1 landed
+The Echo contract is v8. **No new mechanics**: v7 Echoes migrate and the
+game plays the same campaign it did before.
+
+- **`schemas/echo.py` v8.** An Echo is an *interpretation* carrying 1–4
+  operations (`CREATE` / `UPGRADE` / `MODIFY` / `LINK` / `MERGE`) that
+  contribute components: Action, Trait, Resource, Rule, Status, Affordance,
+  Info. Only Actions occupy a slot. The 28-primitive catalog is closed;
+  `IMPLEMENTED_PRIMITIVES` gates what the engine can honour today, so an
+  Action it cannot run is rejected rather than accepted as an ability that
+  silently does nothing. S2 widens that one tuple.
+- **`schemas/mechanics.py` — the fold.** Live mechanics are a pure fold over
+  the log in `interpretation_seq` order and are never persisted. Aliases
+  resolve with path compression, a dangling target *raises* rather than
+  being skipped, every upgrade revalidates the component it touched, and a
+  `beam_sustained`/`hover`/`block` without a `powers` link is refused.
+- **`schemas/migration.py`.** v7 → v8 at the dict level, before validation.
+  Sequence follows the v7 save's own echo order, which is grant order.
+- **`CampaignSave` folds in its validator**, so a corrupt log is
+  unrepresentable rather than merely detected: a save that cannot fold
+  cannot be written to disk.
+- **The store migrates on load and writes back immediately** — a migration
+  that only lives in memory runs again every load.
+- **Proof:** a seven-shape v7 corpus that loads, folds, writes back and
+  reloads identically (including grant-order-unlike-location-order); `make
+  replay` accepting both archive versions; the fold benchmarked at
+  **0.16 ms** on a full 26-echo campaign.
+
+One behaviour change comes with the model rather than from a choice:
+**traits are on because they are owned**, not because something is
+equipped. A migrated save with several passive Echoes now has all of them
+at once. The stack is clamped to the same two constants `max_safe_gap` was
+derived from, which is what keeps every generated jump valid without
+recomputing one.
+
+**Next: S2** — the action primitive catalog and the action runner
+(`IMPLEMENTATION_PLAN.md` §2.5).
+
 ## Next useful work
 1. **Play-feel pass on real hardware** — the manual checks in
    ACCEPTANCE_TESTS §7 (gap feel, reveal timing, Conference Call comedy)
@@ -118,7 +157,7 @@ postgame, so clients also require the goal to be missing
 (`docs/IMPLEMENTATION_DECISIONS.md`).
 
 ## Commands
-    make test                  # 193 pytest
+    make test                  # 208 pytest (125 schema)
     make godot-test            # chamber geometry
     make godot-integration     # the whole game, headlessly
     make replay ARCHIVE=<dir>  # re-validate a generation archive
