@@ -44,31 +44,103 @@ static func create(kind: String, theme: String) -> Enemy:
 	shape.position = Vector3(0, size.y / 2.0, 0)
 	enemy.add_child(shape)
 
-	# Deliberately crude low-poly body: a prism head on a box torso.
+	# Each archetype gets its own silhouette, because telling a sniper
+	# from a charger across a dark room is gameplay information, not
+	# decoration. Theme only supplies the palette.
+	match kind:
+		"ranged": _build_ranged(enemy, size, theme)
+		"brute": _build_brute(enemy, size, theme)
+		_: _build_melee(enemy, size, theme)
+	return enemy
+
+static func _part(parent: Node3D, size: Vector3, position: Vector3,
+		material: Material, tilt := 0.0) -> MeshInstance3D:
+	var part := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	part.mesh = mesh
+	part.position = position
+	part.rotation.x = tilt
+	part.material_override = material
+	parent.add_child(part)
+	return part
+
+static func _eye(parent: Node3D, size: Vector3, position: Vector3,
+		color: Color) -> void:
+	var eye := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	eye.mesh = mesh
+	eye.position = position
+	eye.material_override = ThemeMaterials.glow_material(color, 2.4)
+	parent.add_child(eye)
+
+## Melee: hunched and forward-leaning, with stubby arms — it reads as
+## something that wants to be where you are.
+static func _build_melee(enemy: Node3D, size: Vector3, theme: String) -> void:
 	var accent := ThemeMaterials.accent_mat(theme)
-	var body := MeshInstance3D.new()
-	var body_mesh := BoxMesh.new()
-	body_mesh.size = Vector3(size.x, size.y * 0.62, size.z)
-	body.mesh = body_mesh
-	body.position = Vector3(0, size.y * 0.31, 0)
-	body.material_override = accent
-	enemy.add_child(body)
+	var trim := ThemeMaterials.trim_mat(theme)
+	_part(enemy, Vector3(size.x, size.y * 0.5, size.z * 0.8),
+			Vector3(0, size.y * 0.34, -0.06), accent, -0.22)
+	# Low, jutting head.
 	var head := MeshInstance3D.new()
 	var head_mesh := PrismMesh.new()
-	head_mesh.size = Vector3(size.x * 0.8, size.y * 0.3, size.z * 0.8)
+	head_mesh.size = Vector3(size.x * 0.7, size.y * 0.22, size.z * 0.9)
 	head.mesh = head_mesh
-	head.position = Vector3(0, size.y * 0.78, 0)
-	head.material_override = ThemeMaterials.trim_mat(theme)
+	head.position = Vector3(0, size.y * 0.66, -size.z * 0.2)
+	head.rotation.x = PI / 2.0          # snout forward, not spire upward
+	head.material_override = trim
 	enemy.add_child(head)
-	var eye := MeshInstance3D.new()
-	var eye_mesh := BoxMesh.new()
-	eye_mesh.size = Vector3(size.x * 0.5, 0.08, 0.06)
-	eye.mesh = eye_mesh
-	eye.position = Vector3(0, size.y * 0.72, -size.z * 0.42)
-	eye.material_override = ThemeMaterials.glow_material(
-			Color(1.0, 0.25, 0.2), 2.0)
-	enemy.add_child(eye)
-	return enemy
+	for side in [-1.0, 1.0]:
+		_part(enemy, Vector3(size.x * 0.24, size.y * 0.36, size.z * 0.24),
+				Vector3(side * size.x * 0.6, size.y * 0.34, -0.1), trim, -0.4)
+	_part(enemy, Vector3(size.x * 0.7, size.y * 0.2, size.z * 0.6),
+			Vector3(0, size.y * 0.1, 0), trim)
+	_eye(enemy, Vector3(size.x * 0.42, 0.07, 0.05),
+			Vector3(0, size.y * 0.66, -size.z * 0.56), Color(1.0, 0.3, 0.2))
+
+## Ranged: a tall tripod that never moves — narrow stalk, big single lens.
+static func _build_ranged(enemy: Node3D, size: Vector3, theme: String) -> void:
+	var accent := ThemeMaterials.accent_mat(theme)
+	var trim := ThemeMaterials.trim_mat(theme)
+	for leg in 3:
+		var angle := TAU * float(leg) / 3.0
+		_part(enemy, Vector3(0.12, size.y * 0.5, 0.12),
+				Vector3(sin(angle) * size.x * 0.4, size.y * 0.25,
+					cos(angle) * size.z * 0.4), trim)
+	_part(enemy, Vector3(0.16, size.y * 0.35, 0.16),
+			Vector3(0, size.y * 0.62, 0), trim)
+	# The head is the whole point of it: a wide sensor block.
+	_part(enemy, Vector3(size.x * 1.1, size.y * 0.3, size.z * 0.7),
+			Vector3(0, size.y * 0.88, 0), accent)
+	_eye(enemy, Vector3(size.x * 0.8, 0.14, 0.05),
+			Vector3(0, size.y * 0.88, -size.z * 0.38), Color(1.0, 0.6, 0.15))
+
+## Brute: wide and low-slung, with shoulder blocks and a tiny head, so it
+## reads as heavy before it reads as anything else.
+static func _build_brute(enemy: Node3D, size: Vector3, theme: String) -> void:
+	var accent := ThemeMaterials.accent_mat(theme)
+	var trim := ThemeMaterials.trim_mat(theme)
+	_part(enemy, Vector3(size.x, size.y * 0.46, size.z * 0.75),
+			Vector3(0, size.y * 0.44, 0), accent)
+	for side in [-1.0, 1.0]:
+		_part(enemy, Vector3(size.x * 0.34, size.y * 0.26, size.z * 0.9),
+				Vector3(side * size.x * 0.56, size.y * 0.62, 0), trim)
+		# Heavy arms hanging past the waist.
+		_part(enemy, Vector3(size.x * 0.28, size.y * 0.42, size.z * 0.28),
+				Vector3(side * size.x * 0.58, size.y * 0.26, -0.1), accent)
+		# Legs.
+		_part(enemy, Vector3(size.x * 0.3, size.y * 0.24, size.z * 0.35),
+				Vector3(side * size.x * 0.24, size.y * 0.11, 0), trim)
+	var head := MeshInstance3D.new()
+	var head_mesh := PrismMesh.new()
+	head_mesh.size = Vector3(size.x * 0.34, size.y * 0.16, size.z * 0.34)
+	head.mesh = head_mesh
+	head.position = Vector3(0, size.y * 0.74, -size.z * 0.1)
+	head.material_override = trim
+	enemy.add_child(head)
+	_eye(enemy, Vector3(size.x * 0.22, 0.09, 0.05),
+			Vector3(0, size.y * 0.74, -size.z * 0.3), Color(1.0, 0.2, 0.15))
 
 func _ready() -> void:
 	add_to_group("enemies")
