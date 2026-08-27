@@ -10,6 +10,7 @@ var zone: Dictionary = {}
 var zone_id := ""
 var player: Player
 var tones: Tones = null          # set by main; null in headless tests
+var hud: Hud = null              # set by main; null in headless tests
 
 var _chambers: Array = []      # {chamber, objective, satisfied, enemies,
                                #  reward, goal_area}
@@ -125,7 +126,60 @@ func refresh() -> void:
 	var complete: bool = active.is_empty() \
 			or active.get("zone_id") != zone_id \
 			or _all_checks_confirmed()
-	_exit_portal.set_unlocked(complete)
+	var outstanding := 0
+	for location in active.get("allocated_location_ids", []):
+		if not BridgeClient.is_checked(int(location)):
+			outstanding += 1
+	_exit_portal.set_unlocked(complete, outstanding)
+
+func _process(_delta: float) -> void:
+	if hud == null or player == null:
+		return
+	var claimed := 0
+	var total := 0
+	# Nearest actionable reward wins; a reward whose objective is already
+	# satisfied outranks one that still needs clearing, so the waypoint
+	# always names the thing you can finish soonest.
+	var best: RewardObject = null
+	var best_rank := 99
+	var best_distance := INF
+	for record: Dictionary in _chambers:
+		var reward: RewardObject = record["reward"]
+		if reward == null:
+			continue
+		total += 1
+		if reward.state == "confirmed":
+			claimed += 1
+			continue
+		var rank := 0 if reward.state == "available" else 1
+		var distance := player.global_position.distance_to(
+				reward.global_position)
+		if rank < best_rank or (rank == best_rank and distance < best_distance):
+			best = reward
+			best_rank = rank
+			best_distance = distance
+
+	if total > 0:
+		hud.set_objective_text("CHECKS %d/%d CLAIMED" % [claimed, total])
+	else:
+		hud.set_objective_text("")
+
+	if best != null:
+		var label := "CHECK %03d" % (best.location_id % 1000)
+		if best.state == "sending":
+			hud.set_waypoint(best.global_position, label + " · SENDING",
+					Color(1.0, 0.9, 0.4))
+		elif best.state == "available":
+			hud.set_waypoint(best.global_position, label + " · READY",
+					Color(0.45, 1.0, 0.9))
+		else:
+			hud.set_waypoint(best.global_position, label,
+					Color(0.72, 0.78, 0.85))
+	elif _exit_portal != null and _exit_portal.unlocked:
+		hud.set_waypoint(_exit_portal.global_position + Vector3.UP * 2.0,
+				"EXIT", Color(0.5, 1.0, 0.6))
+	else:
+		hud.clear_waypoint()
 
 func _all_checks_confirmed() -> bool:
 	var active := BridgeClient.active_zone()

@@ -9,6 +9,9 @@ signal hp_changed(hp: float, shield: float)
 signal died
 signal interact_prompt_changed(text: String)
 signal fired_pulse
+## Emitted with the world position damage came from, so the HUD can show
+## which way to turn. `Vector3.INF` means "no direction" (falls, etc).
+signal damaged_from(source_position: Vector3)
 
 const MOUSE_SENSITIVITY := 0.0022
 
@@ -199,12 +202,14 @@ func _spawn_tracer(hit: Dictionary) -> void:
 			Color(1.0, 0.35, 0.9), corruption * 0.7)
 	Tracer.spawn(get_tree().current_scene, from, to, color, 0.06)
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float,
+		source_position: Vector3 = Vector3.INF) -> void:
 	if _dead:
 		return
 	amount = echo_runtime.absorb_with_shield(amount)
 	hp = maxf(0.0, hp - amount)
 	hp_changed.emit(hp, echo_runtime.shield_hp)
+	damaged_from.emit(source_position)
 	if hp <= 0.0:
 		_die()
 

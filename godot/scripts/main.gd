@@ -171,6 +171,8 @@ func _to_menu() -> void:
 	view = View.MENU
 	menu.visible = true
 	hud.visible = false
+	hud.clear_waypoint()
+	hud.set_objective_text("")
 	tones.stop_ambience()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	menu.refresh()
@@ -180,6 +182,8 @@ func _to_hub() -> void:
 	view = View.HUB
 	menu.visible = false
 	hud.visible = true
+	hud.clear_waypoint()
+	hud.set_objective_text("")
 	hub = HubController.new()
 	world.add_child(hub)
 	hub.enter_zone_requested.connect(_on_enter_zone)
@@ -221,6 +225,7 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	hud.visible = true
 	zone = ZoneController.new()
 	zone.tones = tones
+	zone.hud = hud
 	world.add_child(zone)
 	zone.setup(zone_dict)
 	zone.exit_requested.connect(_on_exit_zone)

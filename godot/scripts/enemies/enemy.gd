@@ -168,13 +168,13 @@ func _try_attack(player: Player, distance: float) -> void:
 			_windup = 0.5
 	elif distance <= reach:
 		_attack_cooldown = float(stats["cooldown"])
-		player.take_damage(float(stats["damage"]))
+		player.take_damage(float(stats["damage"]), global_position)
 
 ## The brute's payoff: damage plus a shove if the player lingered.
 func _slam(player: Player) -> void:
 	var to_player := player.global_position - global_position
 	if to_player.length() <= float(stats["reach"]) * 1.4:
-		player.take_damage(float(stats["damage"]))
+		player.take_damage(float(stats["damage"]), global_position)
 		var away := Vector3(to_player.x, 0, to_player.z).normalized()
 		player.velocity += away * 7.0 + Vector3.UP * 3.0
 
@@ -259,5 +259,7 @@ class EnemyProjectile extends Area3D:
 		if body is Enemy:
 			return
 		if body.is_in_group("player"):
-			body.take_damage(damage)
+			# The projectile's own position: the shot came from where it
+			# is, which is what the player needs to turn toward.
+			body.take_damage(damage, global_position)
 		queue_free()
