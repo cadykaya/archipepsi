@@ -1,9 +1,12 @@
-__pycache__/
-*.py[cod]
-.pytest_cache/
 .archipelago/
 .env
 .godot/
+__pycache__/
+.pytest_cache/
 *.tmp
 *.bak
-build/
+*.pyc
+.venv/
+saves/
+generation_archive/
+godot-bin/

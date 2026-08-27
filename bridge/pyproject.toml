@@ -1,0 +1,17 @@
+[project]
+name = "archipepsi-bridge"
+version = "0.1.0"
+description = "Archipepsi campaign bridge: AP client, deterministic allocator, Epsilon providers"
+requires-python = ">=3.11.9,<3.14"
+dependencies = [
+    "pydantic>=2.6",
+    # AP 0.6.7 pins websockets==13.1; the bridge must not fight that pin.
+    "websockets==13.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+claude = ["anthropic>=0.40"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "archipepsi_bridge/schemas"]
