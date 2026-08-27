@@ -98,6 +98,46 @@ def budget_headroom(mechanics) -> dict:
     return out
 
 
+#: What a component counts AS, for §15's "don't make it gun four".
+#:
+#: By family rather than by exact primitive, which is the difference
+#: between noticing the campaign §15 actually describes and noticing only
+#: a campaign with three of the literally-same verb. A hitscan, a
+#: burst-fire and a projectile are three guns to a player; keying on
+#: `primitive.type` counted them as one each and said nothing.
+_FAMILIES: dict[str, tuple[str, ...]] = {
+    "guns": ("hitscan_damage", "projectile_damage", "burst_fire",
+             "charge_shot", "arc_lob", "beam_sustained"),
+    "melee": ("melee_swing", "melee_thrust", "slam_ground"),
+    "dashes": ("dash", "air_dash", "blink"),
+    "jumps": ("double_jump", "wall_kick", "hover", "glide"),
+    "grapples": ("grapple_to_surface", "grapple_pull_target",
+                 "grapple_swing"),
+    "guards": ("shield", "block", "parry"),
+    "sustain": ("heal_self", "cleanse", "restore_resource"),
+}
+
+
+def _family_of(component) -> str:
+    """One word for what this component adds to the build, or "" if it
+    adds nothing §15 would count."""
+    primitive = getattr(component, "primitive", None)
+    if primitive is not None:
+        for family, verbs in _FAMILIES.items():
+            if primitive.type in verbs:
+                return family
+        return str(primitive.type)
+    # Traits and resources count too: a campaign with four damage traits
+    # is as lopsided as one with four guns, and keying only on actions
+    # meant the hint went quiet for exactly the builds it should notice.
+    stat = getattr(component, "stat", None)
+    if stat is not None:
+        return f"{stat} traits"
+    if component.kind == "resource":
+        return "resources"
+    return ""
+
+
 def _relevance_hint(mechanics) -> str:
     """§15's rule, phrased against this campaign.
 
@@ -114,9 +154,9 @@ def _relevance_hint(mechanics) -> str:
         return ""
     families: dict[str, int] = {}
     for owned in mechanics.owned:
-        primitive = getattr(owned.component, "primitive", None)
-        if primitive is not None:
-            families[primitive.type] = families.get(primitive.type, 0) + 1
+        family = _family_of(owned.component)
+        if family:
+            families[family] = families.get(family, 0) + 1
     crowded = sorted((count, verb) for verb, count in families.items()
                      if count >= 2)
     # The specific half leads. `MAX_TEXT_LEN` is 160 characters, and the

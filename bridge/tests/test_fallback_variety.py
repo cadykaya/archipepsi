@@ -12,7 +12,7 @@ the same rules everything else obeys.
 from __future__ import annotations
 
 from archipepsi_bridge.epsilon import capabilities as CAP
-from archipepsi_bridge.epsilon.concepts import plausible_concepts
+from archipepsi_bridge.epsilon.concepts import shares_vocabulary_with
 from archipepsi_bridge.epsilon.fallback import fallback_echo
 from archipepsi_bridge.epsilon.requests import (
     EchoGenerationRequest, EchoPlayerState, EchoSource,
@@ -124,7 +124,10 @@ def test_the_fallback_is_still_structurally_boring():
         # behaviour and it made §15's chain unexercised by every
         # deterministic run.
         assert echo.concepts, name
-        assert plausible_concepts(
+        # The lexicon's own reading, so it must reuse the item's words.
+        # This is a claim about `read_concepts`, not about what a provider
+        # is allowed to say — see `shares_vocabulary_with`.
+        assert shares_vocabulary_with(
             echo.concepts, name, echo.source_game), (name, echo.concepts)
         assert 1 <= len(echo.operations) <= 4, name
         created = {op.component.component_id for op in echo.operations

@@ -23,7 +23,6 @@ from ..schemas import constants as C
 from ..schemas.echo import (
     EchoInterpretation, budget_errors, target_errors,
     validate_interpretation)
-from .concepts import plausible_concepts
 from ..schemas.mechanics import EMPTY_MECHANICS
 from ..schemas.zone import Zone, validate_zone
 from . import capabilities as CAP
@@ -171,36 +170,31 @@ async def generate_zone_validated(
 def reading_errors(interpretation, request) -> list[str]:
     """§15's chain has to actually connect (S10).
 
-    Two checks, and deliberately only two. Whether a reading is *good* is
-    taste, and a validator with taste would make every provider a worse
-    version of `read_concepts`. What can be checked is whether the chain
-    is there at all:
+    One check, and deliberately only one: an Echo with no concepts breaks
+    the chain outright — the archive shows "read this as:" followed by
+    nothing, and the player has no way to argue with the mechanics that
+    followed.
 
-    * An Echo with no concepts breaks the chain outright — the archive
-      shows "read this as:" followed by nothing, and the player has no way
-      to argue with the mechanics that followed.
-    * Concepts sharing no vocabulary with the item or its game are not a
-      reading of THIS item. That is the failure mode worth catching:
-      concepts pasted from another Echo, or invented wholesale.
+    A second check briefly lived here, refusing a reading that shared no
+    vocabulary with the item, on the theory that it would catch concepts
+    pasted from another Echo. It was wrong in both directions: it passed
+    any reading containing a substring of "artifact"/"elsewhere"/
+    "borrowed", and it refused "Master Sword reads as obligation" — the
+    exact kind of reading §15 argues FOR ("the best interpretation is not
+    the one most similar to the source item"). Attachment is not decidable
+    from an item name. See `concepts.shares_vocabulary_with`.
 
-    The mode is not checked against the operations here. It could be — but
-    a provider that reached for something systemic and mislabelled it has
-    made a describable mistake, and forcing a relabel is the repair loop's
-    job only if the label is what is wrong. Left to the prompt, which
-    states the rule, and to `mode_for_operations` for the deterministic
+    The mode is not checked against the operations either. A provider that
+    reached for something systemic and mislabelled it has made a
+    describable mistake, and forcing a relabel is the repair loop's job
+    only if the label is what is wrong. Left to the prompt, which states
+    the rule, and to `mode_for_operations` for the deterministic
     providers, which cannot get it wrong.
     """
     if not interpretation.concepts:
         return ["concepts must not be empty: name what you read in the item "
                 "(a few short lowercase words), which is stored and shown "
                 "to the player"]
-    if not plausible_concepts(interpretation.concepts,
-                              request.source.item_name,
-                              request.source.source_game):
-        return [
-            f"concepts {list(interpretation.concepts)} share nothing with "
-            f"'{request.source.item_name}' or its game; read THIS item"
-        ]
     return []
 
 

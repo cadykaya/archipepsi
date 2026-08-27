@@ -106,13 +106,33 @@ def test_the_lexicon_matches_whole_words_only():
     assert "cold" not in K.read_concepts("Police Radio", "G")
 
 
-def test_a_reading_of_a_different_item_is_refused():
-    """The check that earns its place: concepts pasted from another Echo,
-    or invented wholesale, are not a reading of THIS item."""
-    assert K.plausible_concepts(("water", "buoyancy"), "Water Tunic")
-    assert K.plausible_concepts(("obligation",), "Boss Key")
-    assert not K.plausible_concepts(("cheese", "fermentation"), "Water Tunic")
-    assert not K.plausible_concepts((), "Water Tunic")
+def test_attachment_is_a_diagnostic_and_not_a_gate():
+    """`shares_vocabulary_with` briefly validated provider output, and it
+    was wrong in both directions at once.
+
+    Too loose: it matched substrings against a vocabulary unconditionally
+    seeded with "artifact"/"elsewhere"/"borrowed", so `art`, `row` and
+    `here` passed for every item in every game — and a reading pasted
+    wholesale from another Echo passed as soon as one of its words
+    happened to contain `art`.
+
+    Too strict: §15 argues that the best reading is NOT the one most
+    similar to the source item, and this refused exactly the readings §15
+    is arguing for.
+    """
+    # Whole words now, so the substring hole is closed. "us" is inside
+    # "rusty" and "cket" inside "bucket"; neither is a reading of the item.
+    assert not K.shares_vocabulary_with(("us", "cket"), "Rusty Bucket")
+    assert not K.shares_vocabulary_with(("blade", "heroism"), "Rusty Bucket")
+    # It still answers the question it is FOR: does this reuse the item's
+    # own vocabulary?
+    assert K.shares_vocabulary_with(("water", "buoyancy"), "Water Tunic")
+    assert not K.shares_vocabulary_with((), "Water Tunic")
+    # And it is honest that a good reading may share nothing at all —
+    # which is why it no longer gates anything.
+    assert not K.shares_vocabulary_with(("obligation",), "Master Sword")
+    assert B.reading_errors(
+        _echo_with(concepts=["obligation"]), _request()) == []
 
 
 def test_the_pipeline_refuses_an_echo_that_read_nothing():
@@ -120,8 +140,6 @@ def test_the_pipeline_refuses_an_echo_that_read_nothing():
     good = _echo_with(concepts=["water", "buoyancy"])
     assert B.reading_errors(good, request) == []
     assert B.reading_errors(_echo_with(concepts=[]), request) != []
-    assert B.reading_errors(
-        _echo_with(concepts=["cheese", "fermentation"]), request) != []
 
 
 def test_a_reading_is_only_checked_for_attachment_not_for_taste():
@@ -130,9 +148,11 @@ def test_a_reading_is_only_checked_for_attachment_not_for_taste():
     defensible — and a validator with taste would make every provider a
     worse version of `read_concepts`."""
     request = _request("Master Sword", "The Legend of Zelda")
-    # Nothing like the lexicon's answer, but plainly about the item.
+    # Deliberately sharing NOTHING with the item, the lexicon or the game:
+    # the earlier version of this test passed only because "sword" was in
+    # the list, which hid that the gate refused the interesting half.
     assert B.reading_errors(
-        _echo_with(concepts=["sword", "obligation", "weight"]), request) == []
+        _echo_with(concepts=["obligation", "inheritance"]), request) == []
 
 
 # --- §15: modes -----------------------------------------------------------
@@ -145,11 +165,39 @@ def test_the_mode_describes_what_the_operations_did():
     assert K.mode_for_operations(
         [{"op": "create", "component": {"kind": "trait"}}]) == "conceptual"
     assert K.mode_for_operations([{"op": "upgrade"}]) == "mechanical"
-    for op in ({"op": "link"}, {"op": "merge"}, {"op": "modify"}):
+    for op in ({"op": "link", "source": "res_old", "target": "act_old"},
+               {"op": "merge", "absorbed": "res_a", "survivor": "res_b"},
+               {"op": "modify", "target": "act_old"}):
         assert K.mode_for_operations([op]) == "systemic", op
     # A rule conditions the build rather than adding to it, even by CREATE.
     assert K.mode_for_operations(
         [{"op": "create", "component": {"kind": "rule"}}]) == "systemic"
+
+
+def test_a_self_contained_echo_is_not_called_systemic():
+    """`MODE_MEANINGS["systemic"]` says the Echo relates to what you
+    ALREADY OWN "rather than adding to it". A link whose two endpoints
+    this same interpretation created adds a self-contained thing.
+
+    Not pedantic: every resource-bearing fallback outcome is
+    `create action + create resource + link`, so before this the archive
+    told the player "Wired Magic Meter" about an Echo that touched nothing
+    they had.
+    """
+    self_contained = [
+        {"op": "create", "component": {"kind": "action",
+                                       "component_id": "act_new"}},
+        {"op": "create", "component": {"kind": "resource",
+                                       "component_id": "res_new"}},
+        {"op": "link", "link": "powers", "source": "res_new",
+         "target": "act_new"},
+    ]
+    assert K.mode_for_operations(self_contained) == "conceptual"
+    # One endpoint reaching back is enough to make it systemic again.
+    reaching = list(self_contained)
+    reaching[2] = {"op": "link", "link": "powers", "source": "res_owned",
+                   "target": "act_new"}
+    assert K.mode_for_operations(reaching) == "systemic"
 
 
 def test_creativity_steers_the_mode_and_never_overrides_it():
@@ -186,7 +234,7 @@ def test_the_fallback_reads_the_item_and_labels_itself_truthfully():
     echo = EchoInterpretation.model_validate(
         fallback_echo(_request("Hookshot", "The Legend of Zelda")))
     assert echo.concepts
-    assert K.plausible_concepts(
+    assert K.shares_vocabulary_with(
         echo.concepts, "Hookshot", "The Legend of Zelda")
     assert echo.mode == K.mode_for_operations(
         [op.model_dump() for op in echo.operations])
@@ -333,10 +381,25 @@ def test_a_fresh_campaign_is_told_to_relate_to_nothing():
 def test_a_campaign_full_of_guns_says_so():
     """§15's own example: "if you already own three guns, Master Sword
     should not be gun four". The owned graph has been in the request since
-    S6; this is the sentence that says what to do with it."""
-    log = [_gun_echo(seq=i, loc=89100001 + i) for i in range(3)]
+    S6; this is the sentence that says what to do with it.
+
+    Counted by FAMILY, because §15's three guns are three *different*
+    guns. Keying on `primitive.type` saw one hitscan, one burst and one
+    projectile — three families of one — and said nothing at all about
+    the exact campaign the rule was written for.
+    """
+    verbs = [
+        {"type": "hitscan_damage", "damage": 8.0, "pellets": 1,
+         "spread_degrees": 1.0, "range": 30.0},
+        {"type": "burst_fire", "damage": 6.0, "shots": 3, "interval": 0.1,
+         "spread_degrees": 2.0, "range": 30.0},
+        {"type": "projectile_damage", "damage": 9.0, "speed": 18.0,
+         "lifetime": 3.0, "gravity_scale": 0.0, "bounces": 0},
+    ]
+    log = [_gun_echo(seq=i, loc=89100001 + i, primitive=verbs[i])
+           for i in range(3)]
     hint = _relevance_hint(M.derive_mechanics(log))
-    assert "hitscan_damage x3" in hint, hint
+    assert "guns x3" in hint, hint
     assert "relationship" in hint, hint
     # ...and the specific half survives the field's 160-character clamp,
     # which it did not when the generic sentence led.
@@ -384,11 +447,12 @@ def _resource_echo(*, seq: int, loc: int) -> dict:
         "presentation": "bar", "palette_color": "moss"})
 
 
-def _gun_echo(*, seq: int, loc: int):
+def _gun_echo(*, seq: int, loc: int, primitive: dict | None = None):
     return EchoInterpretation.model_validate(_base(seq, loc, {
         "kind": "action", "component_id": f"act_{seq}",
         "display_name": f"Gun {seq}", "description": "d",
         "slot": "echo_a", "cooldown": 1.0,
-        "primitive": {"type": "hitscan_damage", "damage": 8.0, "pellets": 1,
-                      "spread_degrees": 1.0, "range": 30.0},
+        "primitive": primitive or {
+            "type": "hitscan_damage", "damage": 8.0, "pellets": 1,
+            "spread_degrees": 1.0, "range": 30.0},
         "modifiers": []}))

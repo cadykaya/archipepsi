@@ -230,35 +230,49 @@ _STOPWORDS = frozenset({
 })
 
 
-def plausible_concepts(concepts, item_name: str, source_game: str = "") -> bool:
-    """Could a reasonable reader have got these concepts from this item?
+def shares_vocabulary_with(concepts, item_name: str,
+                          source_game: str = "") -> bool:
+    """Does this reading reuse any word the item or its lexicon entry uses?
 
-    Deliberately weak, and the weakness is the point. There is no correct
-    reading to check a model against — "Master Sword reads as heroism" and
-    "Master Sword reads as obligation" are both defensible, and a validator
-    that insisted on the lexicon's answer would make every provider a
-    worse version of `read_concepts`.
+    A **diagnostic, not a gate.** It was briefly used to validate provider
+    output and it was wrong in both directions at once, which is worth
+    recording because the shape of the mistake is instructive.
 
-    So this only refuses a reading that is *unattached*: one sharing no
-    word with the item, the game, or anything the lexicon associates with
-    them. That catches concepts pasted from another Echo, which is the
-    failure mode worth catching.
+    Too loose: it asked whether a concept was a substring of any
+    vocabulary word, and seeded the vocabulary with `artifact`,
+    `elsewhere` and `borrowed` unconditionally — so `art`, `row` and
+    `here` passed for every item in every game, and a reading pasted
+    wholesale from another Echo passed as soon as one of its words
+    happened to contain `art`.
+
+    Too strict: §15's whole argument is that the best reading is *not* the
+    one most similar to the source item. "Master Sword reads as
+    obligation" is a defensible reading that shares no word with the item,
+    the lexicon or the game, and refusing it burns the one repair round
+    and can drop a good Echo to the fallback.
+
+    Attachment is not decidable from an item name, so nothing validates it
+    now: the prompt carries §15's rule, the archive shows the reading, and
+    a dull reading is visible to the player rather than corrupting
+    anything. What IS still refused is an empty reading — see
+    `base.reading_errors` — because that breaks the chain outright.
+
+    Kept because the lexicon's own tests want to ask this question, and
+    fixed to match whole words rather than substrings.
     """
     if not concepts:
         return False
     vocabulary: set[str] = set()
     for token in _tokens(item_name) + _tokens(source_game):
         vocabulary.add(token)
-        vocabulary.update(LEXICON.get(token, ()))
+        for concept in LEXICON.get(token, ()):
+            vocabulary.update(_tokens(concept))
         qualifier = QUALIFIERS.get(token)
         if qualifier:
             vocabulary.add(qualifier)
-    vocabulary.update(_GENERIC)
-    if not vocabulary:
-        return True
     for concept in concepts:
         for word in _tokens(concept):
-            if word in vocabulary or any(word in v for v in vocabulary):
+            if word in vocabulary:
                 return True
     return False
 
@@ -317,10 +331,29 @@ def mode_for_operations(operations) -> str:
     kinds = {str(op.get("op", "")) for op in operations}
     created = {str(op.get("component", {}).get("kind", ""))
                for op in operations if op.get("op") == "create"}
+    made_here = {str(op.get("component", {}).get("component_id", ""))
+                 for op in operations if op.get("op") == "create"}
 
-    # Touching what already exists IS the systemic reading, by definition.
-    if kinds & {"link", "merge", "modify"}:
-        return "systemic"
+    # Touching what ALREADY EXISTS is the systemic reading, by definition —
+    # `MODE_MEANINGS` says "rather than adding to it". A link whose two
+    # endpoints this same interpretation created adds a self-contained
+    # thing, so it is not systemic however many operations it took.
+    #
+    # That distinction is not pedantic: every resource-bearing fallback
+    # outcome is `create action + create resource + link`, so without it
+    # the archive told the player "Wired Magic Meter" about an Echo that
+    # touched nothing they already had.
+    for op in operations:
+        if str(op.get("op", "")) not in ("link", "merge", "modify"):
+            continue
+        references = [str(op.get(key, ""))
+                      for key in ("source", "target", "absorbed", "survivor")
+                      if op.get(key)]
+        # No references at all means a malformed operation, which will not
+        # validate anyway; call it systemic rather than quietly reporting
+        # the mildest reading of something that cannot be read.
+        if not references or any(r not in made_here for r in references):
+            return "systemic"
     if "rule" in created:
         # A rule conditions the build rather than adding to it, even when
         # it arrives by CREATE.

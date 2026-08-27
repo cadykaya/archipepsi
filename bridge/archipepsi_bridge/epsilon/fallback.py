@@ -75,7 +75,7 @@ def fallback_zone(request: ZoneGenerationRequest) -> dict:
                              "length": 10.0, "width": 4.0})
         chambers.append(chamber)
 
-    _add_features(chambers, request.unlocked_affordances)
+    _add_features(chambers, request.unlocked_affordances, n)
 
     return {
         "schema_version": 7,
@@ -89,7 +89,8 @@ def fallback_zone(request: ZoneGenerationRequest) -> dict:
     }
 
 
-def _add_features(chambers: list[dict], unlocked: tuple[str, ...]) -> None:
+def _add_features(chambers: list[dict], unlocked: tuple[str, ...],
+                  zone_index: int = 0) -> None:
     """Hang the unlocked affordances (§13) off the plain chambers.
 
     Only chambers with nothing riding on them: a feature may not share a
@@ -123,7 +124,17 @@ def _add_features(chambers: list[dict], unlocked: tuple[str, ...]) -> None:
     # campaign lays out the same Zone twice — the fallback is the
     # deterministic provider, and a feature set that wandered between runs
     # would make the integration run's assertions unreproducible.
-    for index, tag in enumerate(sorted(unlocked)):
+    # Rotated by the Zone's index. Both the tag order and the corridor
+    # list are fixed, so a plain round-robin dealt the same hand every
+    # time: a fully-unlocked campaign has 7 tags, a fallback Zone has 2
+    # corridors capped at 3 features each, and the sixth tag in sorted
+    # order was dropped from EVERY Zone, forever. Rotating means each
+    # Zone drops a different one, so all seven appear across a campaign.
+    ordered = sorted(unlocked)
+    if ordered:
+        offset = zone_index % len(ordered)
+        ordered = ordered[offset:] + ordered[:offset]
+    for index, tag in enumerate(ordered):
         chamber = plain[index % len(plain)]
         features = list(chamber.get("features", []))
         # The schema's per-chamber cap is the only cap there is; when the

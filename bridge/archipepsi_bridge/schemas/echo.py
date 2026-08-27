@@ -981,10 +981,16 @@ def budget_errors(interpretation, mechanics) -> list[str]:
             continue
         owned, would_be = _budget_counts(kind, mechanics, interpretation)
         if would_be > hard:
+            # Said in the budget's OWN unit. Interpolating `count` (a
+            # component count) beside `would_be` (distinct tags, for
+            # affordances) produced "creating 2 more 'affordance'
+            # component(s) would put the campaign at 3" — a repair prompt
+            # whose two numbers cannot both be right.
+            unit = "distinct tag" if kind == "affordance" else kind
             errors.append(
-                f"creating {count} more '{kind}' component(s) would put the "
-                f"campaign at {would_be}, over the hard budget of "
-                f"{hard}; upgrade, link or merge an existing one instead"
+                f"this would take the campaign from {owned} to {would_be} "
+                f"{unit}(s), over the hard budget of {hard}; upgrade, link "
+                f"or merge an existing one instead"
             )
     return errors
 

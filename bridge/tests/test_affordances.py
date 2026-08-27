@@ -271,6 +271,29 @@ def test_the_fallback_offers_nothing_it_was_not_told_the_player_can_use():
     assert [f for c in zone.chambers for f in c.features] == []
 
 
+def test_every_unlocked_tag_reaches_a_zone_across_a_campaign():
+    """A fully-unlocked campaign has 7 tags; a fallback Zone has 2 plain
+    corridors capped at 3 features each. Six fit, one does not — and with
+    a fixed tag order and a fixed corridor list the deal never rotated, so
+    the SAME tag was dropped from every Zone in the campaign, forever.
+
+    Rotating by zone index means each Zone drops a different one, so a
+    player who owns a capability eventually sees something that uses it.
+    """
+    from archipepsi_bridge.epsilon.fallback import fallback_zone
+    all_tags = _tags()
+    seen: set[str] = set()
+    for zone_index in range(len(all_tags)):
+        request = _zone_request(all_tags).model_copy(update={
+            "campaign": _zone_request(all_tags).campaign.model_copy(
+                update={"zone_index": zone_index})})
+        zone = TypeAdapter(Z.Zone).validate_python(fallback_zone(request))
+        placed = {f.tag for c in zone.chambers for f in c.features}
+        assert placed, zone_index
+        seen |= placed
+    assert seen == set(all_tags), sorted(set(all_tags) - seen)
+
+
 def test_the_fallback_lays_out_the_same_zone_twice():
     """The fallback is the DETERMINISTIC provider. A feature set that
     wandered between two runs of the same campaign would make the

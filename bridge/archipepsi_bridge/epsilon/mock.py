@@ -156,7 +156,8 @@ class MockEpsilonProvider:
         # second thing to get wrong. Mock Epsilon skipped this entirely
         # until the archive run noticed it shipping Zones with no optional
         # content at all, while the deliberately-boring fallback had some.
-        _add_features(chambers, request.unlocked_affordances)
+        _add_features(chambers, request.unlocked_affordances,
+                      request.campaign.zone_index)
 
         # Naming draws from its own stream: sharing the layout stream made
         # every 3-Check Zone land on the same word, because the number of
