@@ -1,0 +1,18 @@
+{
+  "packet_version": "0.3",
+  "source_spec": "ARCHIPEPSI_POC_DESIGN_SPEC_v0.2_ORIGINAL.md",
+  "files": [
+    "ACCEPTANCE_TESTS.md",
+    "APWORLD_SPEC.md",
+    "ARCHIPEPSI_POC_DESIGN_SPEC_v0.2_ORIGINAL.md",
+    "CHAT_TRANSCRIPT.md",
+    "CLAUDE_HANDOFF.md",
+    "DECISIONS_TO_REVIEW.md",
+    "DESIGN.md",
+    "EPSILON_SPEC.md",
+    "IMPLEMENTATION_PLAN.md",
+    "README.md",
+    "SOURCE_MAP.md",
+    "TECHNICAL_ARCHITECTURE.md"
+  ]
+}
