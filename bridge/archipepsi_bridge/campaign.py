@@ -476,6 +476,9 @@ class CampaignEngine:
             from .epsilon import FallbackEpsilonProvider
             provider = FallbackEpsilonProvider()
             self.force_fallback_once = False
+        # Creativity changes model instructions only (§11.4); providers
+        # without the knob simply carry an unused attribute.
+        provider.creativity = self.save.epsilon_creativity
         request = self._zone_request(record)
         try:
             outcome = await generate_zone_validated(
@@ -681,6 +684,7 @@ class CampaignEngine:
         async with self._echo_lock:              # one at a time
             if self.save.echo_by_id(echo_id) is not None:
                 return echo_id
+            self.provider.creativity = save.epsilon_creativity
             outcome = await generate_echo_validated(
                 self.provider, self._echo_request(location_id),
                 archive_dir=self.archive_dir)

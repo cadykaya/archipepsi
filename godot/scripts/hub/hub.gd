@@ -154,8 +154,14 @@ func refresh() -> void:
 	_sub_board.text = "\n".join(lines)
 
 	_portal.refresh(hub, mode)
+	# finale_offered stays true in postgame (schema-computed from thresholds
+	# that remain met); only offer it while the goal is actually missing.
+	var goal_missing := false
+	for loc in snapshot.get("missing_location_ids", []):
+		if int(loc) == Constants.GOAL_LOCATION_ID:
+			goal_missing = true
 	_finale_portal.visible = bool(hub.get("finale_offered", false)) \
-			and mode == "ZONE_AVAILABLE"
+			and goal_missing and mode == "ZONE_AVAILABLE"
 	_finale_portal.refresh(hub, "FINALE_OFFERED")
 	_abandon.refresh(mode, BridgeClient.active_zone())
 	_refresh_static(int(snapshot.get("static_glitch_units", 0)))

@@ -13,6 +13,7 @@ var menu: MainMenu
 var hud: Hud
 var reveal: RevealLayer
 var inventory: InventoryLayer
+var shop: ShopUI
 var pause_menu: PauseMenu
 var debug: DebugOverlay
 var tones: Tones
@@ -44,6 +45,8 @@ func _ready() -> void:
 	add_child(reveal)
 	inventory = InventoryLayer.new()
 	add_child(inventory)
+	shop = ShopUI.new()
+	add_child(shop)
 	pause_menu = PauseMenu.new()
 	add_child(pause_menu)
 	debug = DebugOverlay.new()
@@ -54,6 +57,7 @@ func _ready() -> void:
 	reveal.reveal_started.connect(_update_modal)
 	reveal.reveal_finished.connect(_update_modal)
 	inventory.closed.connect(_update_modal)
+	shop.closed.connect(_update_modal)
 	pause_menu.resumed.connect(_update_modal)
 	pause_menu.return_to_hub_requested.connect(_on_return_to_hub)
 	pause_menu.abandon_confirmed.connect(_on_abandon)
@@ -102,6 +106,8 @@ func _on_snapshot(snapshot: Dictionary) -> void:
 				_sync_equipped()
 	if inventory.visible:
 		inventory.rebuild()
+	if shop.visible:
+		shop.rebuild()
 	hud.refresh_echo()
 
 func _sync_equipped() -> void:
@@ -165,7 +171,7 @@ func _to_hub() -> void:
 	world.add_child(hub)
 	hub.enter_zone_requested.connect(_on_enter_zone)
 	hub.open_inventory_requested.connect(_toggle_inventory)
-	hub.open_shop_requested.connect(_toggle_inventory)  # shop UI: Phase 6
+	hub.open_shop_requested.connect(_toggle_shop)
 	hub.refresh()
 	hud.bind_player(hub.player)
 	hub.player.echo_runtime.set_equipped(BridgeClient.equipped_echo())
@@ -176,6 +182,13 @@ func _toggle_inventory() -> void:
 		inventory.close()
 	else:
 		inventory.open()
+	_update_modal()
+
+func _toggle_shop() -> void:
+	if shop.visible:
+		shop.close()
+	else:
+		shop.open()
 	_update_modal()
 
 func _on_enter_zone() -> void:
@@ -232,6 +245,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause"):
 		if inventory.visible:
 			inventory.close()
+		elif shop.visible:
+			shop.close()
 		elif pause_menu.visible:
 			pause_menu.close()
 		else:
@@ -258,7 +273,8 @@ func _cycle_echo() -> void:
 	BridgeClient.send_intent({"type": "equip_echo", "echo_id": next})
 
 func _update_modal() -> void:
-	var modal := pause_menu.visible or inventory.visible or reveal.visible
+	var modal: bool = pause_menu.visible or inventory.visible \
+			or shop.visible or reveal.visible
 	var player: Player = null
 	if hub != null:
 		player = hub.player
@@ -267,7 +283,8 @@ func _update_modal() -> void:
 	if player != null:
 		player.input_frozen = modal
 	hud.set_crosshair_visible(not modal)
-	if view == View.MENU or pause_menu.visible or inventory.visible:
+	if view == View.MENU or pause_menu.visible or inventory.visible \
+			or shop.visible:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

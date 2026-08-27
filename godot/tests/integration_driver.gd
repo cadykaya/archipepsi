@@ -1,12 +1,19 @@
 extends Node
-## Full-loop integration driver against a LIVE bridge (mock AP, fallback
-## Epsilon): connect → mock campaign → generate → enter → objectives →
-## claim → confirm → echo → equip → zone completes → exit unlocks.
+## Full-campaign integration driver against a LIVE bridge (mock AP,
+## fallback Epsilon): plays the whole game headlessly.
 ##
-##     make bridge-mock &        # python -m archipepsi_bridge --ap=mock
+## Pass 1 (detailed): first zone with objective-gating assertions
+## (tests 58/59), echo grant, equip.
+## Pass 2 (campaign): loops zones to the finale and postgame, buying shop
+## stock when affordable (with a double-buy refusal probe — test O),
+## until ALL_CHECKS_CLEARED.
+##
+##     make bridge-mock &
 ##     godot --headless --path godot -- --integration-test
 
 var failures := 0
+var _bought_once := false
+var _double_buy_probed := false
 
 func _check(condition: bool, message: String) -> void:
 	if condition:
@@ -50,44 +57,109 @@ func _run() -> void:
 	_check(BridgeClient.snapshot.get("scouted", []).size() == 30,
 			"30 locations scouted")
 
-	BridgeClient.send_intent({"type": "request_next_zone", "finale": false})
+	if not await _play_one_zone(true):
+		_finish(1)
+		return
+
+	# ---- Pass 2: play the campaign to the end -----------------------------
+	var zones_played := 1
+	var stock_ever_seen := false
+	while zones_played < 40:
+		var mode := BridgeClient.hub_mode()
+		if mode == "ALL_CHECKS_CLEARED":
+			break
+		if mode == "WAITING_FOR_AP":
+			# Mock AP only delivers on checks; this should clear itself as
+			# deliveries land. Give it a moment.
+			await _await_condition("WAITING_FOR_AP to clear",
+					func() -> bool:
+						return BridgeClient.hub_mode() != "WAITING_FOR_AP",
+					10.0)
+			continue
+		if not BridgeClient.snapshot.get("shop", {}).get("stock",
+				[]).is_empty():
+			stock_ever_seen = true
+			await _try_shop_purchase()
+		if mode in ["ZONE_AVAILABLE", "FINALE_ONLY"]:
+			if not await _play_one_zone(false):
+				_finish(1)
+				return
+			zones_played += 1
+			continue
+		await get_tree().process_frame
+
+	var snapshot := BridgeClient.snapshot
+	_check(BridgeClient.hub_mode() == "ALL_CHECKS_CLEARED",
+			"campaign reaches ALL_CHECKS_CLEARED (after %d zones)"
+			% zones_played)
+	_check(snapshot.get("checked_location_ids", []).size() == 30,
+			"all 30 checks confirmed")
+	_check(bool(snapshot.get("hub", {}).get("goal_sent", false)),
+			"goal reported")
+	var foreign := 0
+	for scout: Dictionary in snapshot.get("scouted", []):
+		if not scout.get("recipient_is_self", false):
+			foreign += 1
+	_check(snapshot.get("echoes", []).size() == foreign,
+			"%d foreign checks -> %d echoes, none missing, none duplicated"
+			% [foreign, snapshot.get("echoes", []).size()])
+	_check(stock_ever_seen, "shop stocked at least once during the campaign")
+	if stock_ever_seen:
+		_check(_bought_once, "at least one shop purchase completed")
+		_check(int(snapshot.get("coins_spent", 0)) > 0,
+				"coins were genuinely spent")
+	_finish(0 if failures == 0 else 1)
+
+# ---------------------------------------------------------------------------
+
+func _play_one_zone(detailed: bool) -> bool:
+	var mode := BridgeClient.hub_mode()
+	# finale_offered stays true in postgame by schema construction (both its
+	# operands remain honestly true); the goal being missing is the extra
+	# client-side condition. See docs/IMPLEMENTATION_DECISIONS.md.
+	var goal_missing := false
+	for loc in BridgeClient.snapshot.get("missing_location_ids", []):
+		if int(loc) == Constants.GOAL_LOCATION_ID:
+			goal_missing = true
+	var finale := goal_missing and (mode == "FINALE_ONLY"
+			or bool(BridgeClient.hub().get("finale_offered", false)))
+	BridgeClient.send_intent({"type": "request_next_zone", "finale": finale})
 	if not await _await_condition("ZONE_READY",
 			func() -> bool: return BridgeClient.hub_mode() == "ZONE_READY",
 			30.0):
-		_finish(1)
-		return
+		return false
 	var record := BridgeClient.active_zone()
 	var zone_dict: Dictionary = record.get("zone", {})
-	_check(not zone_dict.is_empty(), "zone content arrived")
-	print("zone: '%s' (%s), checks %s" % [zone_dict.get("display_name"),
-			zone_dict.get("theme"),
+	if detailed:
+		_check(not zone_dict.is_empty(), "zone content arrived")
+	print("zone %s: '%s' (%s)%s checks %s" % [record.get("zone_id"),
+			zone_dict.get("display_name"), zone_dict.get("theme"),
+			" [FINALE]" if record.get("is_finale") else "",
 			str(record.get("allocated_location_ids", []))])
 
 	BridgeClient.send_intent({"type": "enter_zone",
 			"zone_id": record.get("zone_id", "")})
 	if not await _await_condition("ZONE_ACTIVE",
 			func() -> bool: return BridgeClient.hub_mode() == "ZONE_ACTIVE"):
-		_finish(1)
-		return
+		return false
 
-	# Instantiate the Zone exactly as the game would.
 	var controller := ZoneController.new()
 	get_tree().root.add_child(controller)
 	controller.setup(zone_dict)
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	_check(controller.player != null, "player spawned")
-	_check(controller._exit_portal != null, "exit portal appended")
-	_check(controller._exit_portal.unlocked == false,
-			"exit portal starts sealed")
+	if detailed:
+		_check(controller.player != null, "player spawned")
+		_check(controller._exit_portal != null, "exit portal appended")
+		_check(controller._exit_portal.unlocked == false,
+				"exit portal starts sealed")
 
-	# Walk each chamber: satisfy its objective honestly, then claim.
 	for chamber_record: Dictionary in controller._chambers:
 		var reward: RewardObject = chamber_record["reward"]
 		match chamber_record["objective"]:
 			"kill_all":
-				if reward != null:
+				if detailed and reward != null:
 					_check(reward.state == "locked",
 							"kill_all reward locked before combat")
 					reward.interact(controller.player)
@@ -99,8 +171,6 @@ func _run() -> void:
 						enemy.die()
 				await get_tree().process_frame
 			"platform_to_goal":
-				# Latching is driven by the goal Area3D; trip it directly the
-				# way a player crossing it would.
 				controller._on_goal_area_entered(controller.player,
 						chamber_record)
 				await get_tree().process_frame
@@ -109,48 +179,67 @@ func _run() -> void:
 					% reward.location_id,
 					func() -> bool: return reward.state == "available", 5.0):
 				continue
-			# Objective latching survives player death (test 59).
-			controller.player.take_damage(10000.0)
-			await get_tree().process_frame
-			_check(reward.state == "available",
-					"objective stays latched through death (test 59)")
+			if detailed:
+				controller.player.take_damage(10000.0)
+				await get_tree().process_frame
+				_check(reward.state == "available",
+						"objective stays latched through death (test 59)")
 			reward.interact(controller.player)
 			await _await_condition("check %d confirmed" % reward.location_id,
 					func() -> bool:
 						return BridgeClient.is_checked(reward.location_id),
 					15.0)
 
-	# The bridge completes the Zone when its last Check confirms.
-	if not await _await_condition("zone auto-completes",
+	if not await _await_condition("zone completes",
 			func() -> bool: return BridgeClient.active_zone().is_empty(),
 			15.0):
-		_finish(1)
-		return
+		return false
 	controller.refresh()
-	_check(controller._exit_portal.unlocked, "exit portal unlocked")
-	_check(int(BridgeClient.snapshot.get("completed_zone_count", 0)) == 1,
-			"completed_zone_count == 1")
+	if detailed:
+		_check(controller._exit_portal.unlocked, "exit portal unlocked")
+		var echoes: Array = BridgeClient.snapshot.get("echoes", [])
+		if not echoes.is_empty():
+			var echo_id: String = echoes[0]["echo_id"]
+			BridgeClient.send_intent({"type": "equip_echo",
+					"echo_id": echo_id})
+			await _await_condition("echo equipped",
+					func() -> bool:
+						return BridgeClient.snapshot.get("equipped_echo_id") \
+								== echo_id)
+			controller.player.echo_runtime.set_equipped(
+					BridgeClient.equipped_echo())
+			controller.player.echo_runtime.activate()
+			_check(controller.player.echo_runtime.cooldown_remaining >= 0.0,
+					"equipped echo activates on demand")
+	controller.queue_free()
+	await get_tree().process_frame
+	return true
 
-	# Echoes for the foreign recipients, equipped over the wire.
-	var echoes: Array = BridgeClient.snapshot.get("echoes", [])
-	var foreign := 0
-	for location in record.get("allocated_location_ids", []):
-		var scout := BridgeClient.scout_for(int(location))
-		if not scout.get("recipient_is_self", false):
-			foreign += 1
-	_check(echoes.size() == foreign,
-			"%d foreign checks produced %d echoes" % [foreign, echoes.size()])
-	if not echoes.is_empty():
-		var echo_id: String = echoes[0]["echo_id"]
-		BridgeClient.send_intent({"type": "equip_echo", "echo_id": echo_id})
-		await _await_condition("echo equipped",
-				func() -> bool:
-					return BridgeClient.snapshot.get("equipped_echo_id") \
-							== echo_id)
-		controller.player.echo_runtime.set_equipped(
-				BridgeClient.equipped_echo())
-		controller.player.echo_runtime.activate()
-		_check(controller.player.echo_runtime.cooldown_remaining >= 0.0,
-				"equipped echo activates on demand")
-
-	_finish(0 if failures == 0 else 1)
+func _try_shop_purchase() -> void:
+	var snapshot := BridgeClient.snapshot
+	var coins := int(snapshot.get("coins_available", 0))
+	for item: Dictionary in snapshot.get("shop", {}).get("stock", []):
+		var cost := int(item.get("cost", 0))
+		if coins < cost:
+			continue
+		var location := int(item.get("location_id", 0))
+		var spent_before := int(snapshot.get("coins_spent", 0))
+		BridgeClient.send_intent({"type": "buy_shop_stock",
+				"location_id": location})
+		if not _double_buy_probed:
+			# Test O: the second intent for the same location must be
+			# refused and charge nothing.
+			_double_buy_probed = true
+			BridgeClient.send_intent({"type": "buy_shop_stock",
+					"location_id": location})
+		var confirmed := await _await_condition(
+				"purchase %d confirms" % location,
+				func() -> bool: return BridgeClient.is_checked(location),
+				15.0)
+		if confirmed:
+			_bought_once = true
+			var spent_after := int(
+					BridgeClient.snapshot.get("coins_spent", 0))
+			_check(spent_after == spent_before + cost,
+					"double buy charged exactly once (test O)")
+		return
