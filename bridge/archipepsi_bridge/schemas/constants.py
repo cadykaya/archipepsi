@@ -318,6 +318,17 @@ ECHO_EFFECTS_MAX = 3
 ECHO_COOLDOWN_MIN = 0.15
 ECHO_COOLDOWN_MAX = 15.0
 
+#: ECHOES.md §5.1: rule firings per physics tick, globally capped. The
+#: termination argument needs a finite bound stated somewhere both languages
+#: can read; 8 is generous against the hard rule budget of 20 given every
+#: rule also carries a mandatory 0.1 s cooldown.
+RULE_FIRINGS_PER_TICK_CAP = 8
+
+#: The hp fraction under which the engine derives `low_health`, on the
+#: crossing edge only. One shared number so a rule, the HUD and Epsilon's
+#: worried voice line cannot disagree about what "low" means.
+LOW_HEALTH_FRACTION = 0.33
+
 #: Reference mid-bounds Echo, used to state the Static Pulse comparison
 #: honestly. The *bounds* permit far more; a typical Echo lands near this.
 REFERENCE_ECHO_DAMAGE = 12.0

@@ -54,6 +54,12 @@ func _ready() -> void:
 		var hud_suite: Node = load("res://tests/hud_driver.gd").new()
 		add_child(hud_suite)
 		return
+	# The S4 rule-engine suite (invariant I5): same boot, same reason.
+	if "--rules-test" in user_args:
+		headless_test = true
+		var rules_suite: Node = load("res://tests/rules_driver.gd").new()
+		add_child(rules_suite)
+		return
 	world = Node3D.new()
 	world.name = "World"
 	add_child(world)
