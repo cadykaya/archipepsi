@@ -17,6 +17,11 @@ var stats: Dictionary = {}
 var _attack_cooldown := 0.0
 var _dead := false
 var _knockback := Vector3.ZERO
+# Collision recovery (EPSILON_SPEC §5): sidestep briefly when walled.
+var _sidestep_timer := 0.0
+var _sidestep_dir := Vector3.ZERO
+# Brute slam windup.
+var _windup := 0.0
 
 static func create(kind: String, theme: String) -> Enemy:
 	var enemy := CharacterBody3D.new()
@@ -80,6 +85,7 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= Constants.GRAVITY * delta
 
+	_sidestep_timer = maxf(0.0, _sidestep_timer - delta)
 	var player := _find_player()
 	if player != null:
 		var to_player := player.global_position - global_position
@@ -89,15 +95,39 @@ func _physics_process(delta: float) -> void:
 			if flat.length() > 0.05:
 				look_at(global_position + flat, Vector3.UP)
 			var speed := float(stats["speed"])
-			if speed > 0.0 and distance > float(stats["reach"]) * 0.8:
+			if _windup > 0.0:
+				# Committed to the slam: plant and telegraph.
+				_windup -= delta
+				velocity.x = lerpf(velocity.x, 0.0, 0.4)
+				velocity.z = lerpf(velocity.z, 0.0, 0.4)
+				scale = Vector3.ONE * (1.0 + 0.12 * sin(
+						(0.5 - _windup) * TAU))
+				if _windup <= 0.0:
+					scale = Vector3.ONE
+					_slam(player)
+			elif speed > 0.0 and distance > float(stats["reach"]) * 0.8:
 				var dir := flat.normalized()
+				if _sidestep_timer > 0.0:
+					dir = _sidestep_dir
 				velocity.x = lerpf(velocity.x, dir.x * speed, 0.2)
 				velocity.z = lerpf(velocity.z, dir.z * speed, 0.2)
 			else:
 				velocity.x = lerpf(velocity.x, 0.0, 0.3)
 				velocity.z = lerpf(velocity.z, 0.0, 0.3)
-			_try_attack(player, distance)
+			if _windup <= 0.0:
+				_try_attack(player, distance)
 	move_and_slide()
+	# Collision recovery: walled while trying to move -> slide sideways
+	# for a beat instead of grinding into the geometry forever.
+	if is_on_wall() and _sidestep_timer <= 0.0 \
+			and Vector2(velocity.x, velocity.z).length() > 0.5 \
+			and player != null:
+		var toward := (player.global_position - global_position)
+		var side := Vector3(toward.z, 0, -toward.x).normalized()
+		if get_instance_id() % 2 == 0:
+			side = -side
+		_sidestep_dir = side
+		_sidestep_timer = 0.55
 
 func _find_player() -> Player:
 	var players := get_tree().get_nodes_in_group("player")
@@ -111,9 +141,22 @@ func _try_attack(player: Player, distance: float) -> void:
 		if distance <= reach and _has_line_of_sight(player):
 			_attack_cooldown = float(stats["cooldown"])
 			_fire_projectile(player)
+	elif archetype == "brute":
+		if distance <= reach:
+			# The boss telegraphs: half a second of swelling, then the slam.
+			_attack_cooldown = float(stats["cooldown"])
+			_windup = 0.5
 	elif distance <= reach:
 		_attack_cooldown = float(stats["cooldown"])
 		player.take_damage(float(stats["damage"]))
+
+## The brute's payoff: damage plus a shove if the player lingered.
+func _slam(player: Player) -> void:
+	var to_player := player.global_position - global_position
+	if to_player.length() <= float(stats["reach"]) * 1.4:
+		player.take_damage(float(stats["damage"]))
+		var away := Vector3(to_player.x, 0, to_player.z).normalized()
+		player.velocity += away * 7.0 + Vector3.UP * 3.0
 
 func _has_line_of_sight(player: Player) -> bool:
 	var from := global_position + Vector3.UP * 1.2
