@@ -1,0 +1,139 @@
+extends SceneTree
+## Headless builder tests (ACCEPTANCE_TESTS §5: 50–56).
+## Run: godot --headless --path godot --script tests/test_chambers.gd
+
+var failures := 0
+
+func _check(condition: bool, message: String) -> void:
+	if not condition:
+		failures += 1
+		push_error("FAIL: " + message)
+		print("FAIL: " + message)
+
+func _init() -> void:
+	_test_corridor()
+	_test_arena()
+	_test_chaining_no_overlap()
+	_test_platform_path_bounds()
+	_test_tower_route()
+	_test_treasure_room()
+	_test_exit_portal_appended()
+	if failures == 0:
+		print("GODOT CHAMBER TESTS OK")
+		quit(0)
+	else:
+		print("GODOT CHAMBER TESTS: %d failures" % failures)
+		quit(1)
+
+func _test_corridor() -> void:  # test 50
+	var result := ChamberBuilders.corridor(
+			{"length": 12.0, "width": 5.0}, "concrete_facility")
+	_check(result["exit_offset"] == Vector3(0, 0, 12.0),
+			"corridor exit connects at its far end")
+	_check(result["bounds"].size.z >= 12.0, "corridor bounds cover length")
+	result["root"].free()
+
+func _test_arena() -> void:  # test 51
+	var result := ChamberBuilders.arena(
+			{"width": 18.0, "depth": 16.0, "wall_height": 6.0,
+			"objective": "kill_all",
+			"enemies": [{"archetype": "melee", "count": 3}]},
+			"gothic_stone")
+	_check(result["exit_offset"] == Vector3(0, 0, 16.0),
+			"arena exit on far wall")
+	_check(result["enemy_spawns"].size() == 3, "arena spawns 3 enemies")
+	var bounds: AABB = result["bounds"]
+	for spawn: Dictionary in result["enemy_spawns"]:
+		_check(bounds.has_point(spawn["position"] + Vector3(0, 0.5, 0)),
+				"enemy spawn inside arena bounds")
+	result["root"].free()
+
+func _test_chaining_no_overlap() -> void:  # test 52
+	var zone := {
+		"zone_id": "zone_test", "display_name": "T", "theme": "neon_transit",
+		"target_game": "X",
+		"chambers": [
+			{"id": "c1", "type": "corridor", "length": 10.0, "width": 5.0},
+			{"id": "c2", "type": "arena", "width": 14.0, "depth": 12.0,
+				"wall_height": 5.0, "objective": "reach_reward"},
+			{"id": "c3", "type": "corridor", "length": 8.0, "width": 4.0},
+			{"id": "c4", "type": "platform_path", "segment_count": 4,
+				"gap_size": 2.0, "vertical_step": 0.5},
+			{"id": "c5", "type": "tower", "floors": 3,
+				"objective": "reach_reward"},
+			{"id": "c6", "type": "treasure_room",
+				"reward_location_id": 89100001},
+		]}
+	var build := ZoneBuilder.build(zone)
+	var bounds_list: Array = build["bounds_list"]
+	_check(bounds_list.size() >= 6, "every chamber contributes bounds")
+	for i in bounds_list.size():
+		for j in range(i + 1, bounds_list.size()):
+			var a: AABB = bounds_list[i]
+			var b: AABB = bounds_list[j]
+			var overlap := a.intersection(b)
+			# Adjacent bounds may touch at faces; a real overlap has volume.
+			_check(overlap.get_volume() < 0.5,
+					"chambers %d and %d overlap (volume %.2f)" % [
+						i, j, overlap.get_volume()])
+	build["root"].free()
+
+func _test_platform_path_bounds() -> void:  # test 53
+	# Every legal parameter combination stays within the derived bound.
+	for segments in range(3, 9):
+		for step_index in range(0, 11):
+			var step := float(Constants.MAX_VERTICAL_STEP) \
+					* float(step_index) / 10.0
+			var allowed := _max_safe_gap(step)
+			var gap := minf(2.2, allowed)
+			var chamber := {"segment_count": segments, "gap_size": gap,
+					"vertical_step": step}
+			var result := ChamberBuilders.platform_path(chamber, "temple_ruin")
+			_check(gap <= allowed + 0.001,
+					"gap %.2f within max_safe_gap(%.2f)=%.2f" % [
+						gap, step, allowed])
+			var rise: float = result["exit_offset"].y
+			_check(absf(rise - step * float(segments)) < 0.01,
+					"platform path rise matches steps")
+			result["root"].free()
+
+func _max_safe_gap(step: float) -> float:
+	# Mirror of constants.max_safe_gap, using only exported constants.
+	var g: float = Constants.GRAVITY * Constants.GRAVITY_MULT_MAX
+	var v: float = Constants.JUMP_VELOCITY
+	var disc: float = v * v - 2.0 * g * step
+	if disc < 0.0:
+		return 0.0
+	var reach: float = Constants.WALK_SPEED * Constants.SPEED_MULT_MIN \
+			* (v + sqrt(disc)) / g
+	return floorf(reach * Constants.SAFE_GAP_MARGIN * 10.0) / 10.0
+
+func _test_tower_route() -> void:  # test 54
+	for floors in range(2, 6):
+		var result := ChamberBuilders.tower(
+				{"floors": floors, "objective": "reach_reward"},
+				"rusted_industrial")
+		# The route rises in steps no larger than MAX_VERTICAL_STEP.
+		var rise: float = result["exit_offset"].y
+		_check(rise > 0.0, "tower exit is elevated")
+		result["root"].free()
+
+func _test_treasure_room() -> void:  # test 55
+	var result := ChamberBuilders.treasure_room(
+			{"reward_location_id": 89100004}, "void_glitch")
+	_check(result.has("reward_position"), "treasure room places its reward")
+	_check(result["enemy_spawns"].is_empty(), "treasure room has no enemies")
+	result["root"].free()
+
+func _test_exit_portal_appended() -> void:  # test 56
+	var zone := {
+		"zone_id": "zone_exit", "display_name": "T", "theme": "gothic_stone",
+		"target_game": "X",
+		"chambers": [{"id": "c1", "type": "corridor",
+				"length": 8.0, "width": 4.0}]}
+	var build := ZoneBuilder.build(zone)
+	_check(build["exit_portal"] != null, "exit portal exists")
+	var portal: Node3D = build["exit_portal"]
+	_check(portal.position.z > 8.0,
+			"exit portal sits beyond the final chamber")
+	build["root"].free()

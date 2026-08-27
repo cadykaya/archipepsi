@@ -54,5 +54,19 @@ apworld: world-install         # official packaging; never hand-roll the zip
 bridge:
 	cd bridge && $(PY) -m archipepsi_bridge
 
+bridge-mock:
+	cd bridge && $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback
+
 smoke:                         # headless full-loop smoke test, mock AP + fallback Epsilon
 	cd bridge && $(PY) -m archipepsi_bridge.smoke
+
+GODOT := godot-bin/godot
+
+godot-test:                    # headless builder tests (no bridge needed)
+	$(GODOT) --headless --path godot --script tests/test_chambers.gd
+
+godot-integration:             # full loop through a live mock bridge
+	cd bridge && $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback & \
+	BRIDGE_PID=$$!; sleep 2; \
+	$(GODOT) --headless --path godot -- --integration-test; \
+	STATUS=$$?; kill $$BRIDGE_PID; exit $$STATUS

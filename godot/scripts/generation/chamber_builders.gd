@@ -1,0 +1,359 @@
+class_name ChamberBuilders
+extends RefCounted
+## Brush-style chamber construction. Each builder returns:
+##   { root: Node3D, exit_offset: Vector3, bounds: AABB,
+##     enemy_spawns: Array[Vector3], reward_position: Vector3,
+##     goal_area_position: Vector3 }
+## Entrance is always local (0,0,0) facing +Z; the exit is on local +Z at
+## exit_offset. ZoneBuilder chains chambers by translating each root.
+##
+## Geometry is boxes, prisms (wedges/ramps) and cylinders — the brushes of
+## a 1998 level editor. Not voxels, not a visible grid.
+
+const WALL_THICKNESS := 0.4
+const DOOR_WIDTH := 2.4
+const DOOR_HEIGHT := 3.2
+const CORRIDOR_HEIGHT := 3.6
+
+static func _box(parent: Node3D, size: Vector3, position: Vector3,
+		material: Material, collide := true) -> MeshInstance3D:
+	var mesh_instance := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	mesh_instance.mesh = mesh
+	mesh_instance.position = position
+	mesh_instance.material_override = material
+	parent.add_child(mesh_instance)
+	if collide:
+		var body := StaticBody3D.new()
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = size
+		shape.shape = box
+		body.add_child(shape)
+		mesh_instance.add_child(body)
+	return mesh_instance
+
+static func _wedge(parent: Node3D, size: Vector3, position: Vector3,
+		material: Material, y_rotation := 0.0) -> MeshInstance3D:
+	## A PrismMesh ramp, collidable via ConvexPolygonShape.
+	var mesh_instance := MeshInstance3D.new()
+	var prism := PrismMesh.new()
+	prism.size = size
+	mesh_instance.mesh = prism
+	mesh_instance.position = position
+	mesh_instance.rotation.y = y_rotation
+	mesh_instance.material_override = material
+	parent.add_child(mesh_instance)
+	var body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	shape.shape = prism.create_convex_shape()
+	body.add_child(shape)
+	mesh_instance.add_child(body)
+	return mesh_instance
+
+static func _light(parent: Node3D, position: Vector3, theme: String,
+		range_override := 0.0) -> void:
+	var light := OmniLight3D.new()
+	light.position = position
+	light.light_color = ThemeMaterials.light_color(theme)
+	light.light_energy = ThemeMaterials.light_energy(theme)
+	light.omni_range = range_override if range_override > 0.0 else 12.0
+	light.shadow_enabled = false
+	parent.add_child(light)
+	# The fixture itself: a crude glowing slab.
+	var fixture := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(0.8, 0.1, 0.4)
+	fixture.mesh = mesh
+	fixture.position = position + Vector3(0, 0.15, 0)
+	fixture.material_override = ThemeMaterials.glow_material(
+			ThemeMaterials.light_color(theme), 1.4)
+	parent.add_child(fixture)
+
+## Walls around a rectangular room with door gaps at entrance/exit centers.
+static func _perimeter(root: Node3D, width: float, depth: float,
+		height: float, theme: String, door_in := true, door_out := true) -> void:
+	var wall := ThemeMaterials.wall_mat(theme)
+	var half_w := width / 2.0
+	var side := (width - DOOR_WIDTH) / 2.0
+	# Front wall (z=0) with optional door gap.
+	if door_in:
+		_box(root, Vector3(side, height, WALL_THICKNESS),
+				Vector3(-(DOOR_WIDTH + side) / 2.0, height / 2.0, 0), wall)
+		_box(root, Vector3(side, height, WALL_THICKNESS),
+				Vector3((DOOR_WIDTH + side) / 2.0, height / 2.0, 0), wall)
+		if height > DOOR_HEIGHT:
+			_box(root, Vector3(DOOR_WIDTH, height - DOOR_HEIGHT,
+					WALL_THICKNESS),
+					Vector3(0, DOOR_HEIGHT + (height - DOOR_HEIGHT) / 2.0, 0),
+					wall)
+	else:
+		_box(root, Vector3(width, height, WALL_THICKNESS),
+				Vector3(0, height / 2.0, 0), wall)
+	# Back wall (z=depth).
+	if door_out:
+		_box(root, Vector3(side, height, WALL_THICKNESS),
+				Vector3(-(DOOR_WIDTH + side) / 2.0, height / 2.0, depth), wall)
+		_box(root, Vector3(side, height, WALL_THICKNESS),
+				Vector3((DOOR_WIDTH + side) / 2.0, height / 2.0, depth), wall)
+		if height > DOOR_HEIGHT:
+			_box(root, Vector3(DOOR_WIDTH, height - DOOR_HEIGHT,
+					WALL_THICKNESS),
+					Vector3(0, DOOR_HEIGHT + (height - DOOR_HEIGHT) / 2.0,
+					depth), wall)
+	else:
+		_box(root, Vector3(width, height, WALL_THICKNESS),
+				Vector3(0, height / 2.0, depth), wall)
+	# Side walls.
+	_box(root, Vector3(WALL_THICKNESS, height, depth),
+			Vector3(-half_w, height / 2.0, depth / 2.0), wall)
+	_box(root, Vector3(WALL_THICKNESS, height, depth),
+			Vector3(half_w, height / 2.0, depth / 2.0), wall)
+
+# ---------------------------------------------------------------------------
+
+static func build(chamber: Dictionary, theme: String) -> Dictionary:
+	match chamber.get("type", ""):
+		"corridor": return corridor(chamber, theme)
+		"arena": return arena(chamber, theme)
+		"platform_path": return platform_path(chamber, theme)
+		"tower": return tower(chamber, theme)
+		"treasure_room": return treasure_room(chamber, theme)
+	return corridor({"length": 8.0, "width": 4.0}, theme)
+
+static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
+	var length := float(chamber.get("length", 12.0))
+	var width := float(chamber.get("width", 5.0))
+	var root := Node3D.new()
+	_box(root, Vector3(width, 0.5, length),
+			Vector3(0, -0.25, length / 2.0), ThemeMaterials.floor_mat(theme))
+	var wall := ThemeMaterials.wall_mat(theme)
+	_box(root, Vector3(WALL_THICKNESS, CORRIDOR_HEIGHT, length),
+			Vector3(-width / 2.0, CORRIDOR_HEIGHT / 2.0, length / 2.0), wall)
+	_box(root, Vector3(WALL_THICKNESS, CORRIDOR_HEIGHT, length),
+			Vector3(width / 2.0, CORRIDOR_HEIGHT / 2.0, length / 2.0), wall)
+	_box(root, Vector3(width, WALL_THICKNESS, length),
+			Vector3(0, CORRIDOR_HEIGHT, length / 2.0),
+			ThemeMaterials.trim_mat(theme))
+	# Pipes along one wall: the load-bearing GoldSrc prop.
+	var pipe := MeshInstance3D.new()
+	var cylinder := CylinderMesh.new()
+	cylinder.top_radius = 0.12
+	cylinder.bottom_radius = 0.12
+	cylinder.height = length
+	pipe.mesh = cylinder
+	pipe.rotation.x = PI / 2.0
+	pipe.position = Vector3(width / 2.0 - 0.3, CORRIDOR_HEIGHT - 0.5,
+			length / 2.0)
+	pipe.material_override = ThemeMaterials.trim_mat(theme)
+	root.add_child(pipe)
+	var count := maxi(1, int(length / 8.0))
+	for i in count:
+		_light(root, Vector3(0, CORRIDOR_HEIGHT - 0.3,
+				length * (i + 0.5) / count), theme)
+	var spawns: Array = []
+	for group: Dictionary in chamber.get("enemies", []):
+		for i in int(group.get("count", 0)):
+			spawns.append({"archetype": group["archetype"],
+					"position": Vector3(
+						fposmod(float(i) * 1.7, width - 1.6) - (width - 1.6) / 2.0,
+						0.2, length * 0.4 + float(i) * 1.9)})
+	return {"root": root, "exit_offset": Vector3(0, 0, length),
+			"bounds": AABB(Vector3(-width / 2.0, -1, 0),
+					Vector3(width, CORRIDOR_HEIGHT + 1, length)),
+			"enemy_spawns": spawns,
+			"reward_position": Vector3(0, 0, length / 2.0)}
+
+static func arena(chamber: Dictionary, theme: String) -> Dictionary:
+	var width := float(chamber.get("width", 16.0))
+	var depth := float(chamber.get("depth", 16.0))
+	var wall_height := float(chamber.get("wall_height", 5.0))
+	var root := Node3D.new()
+	_box(root, Vector3(width, 0.5, depth),
+			Vector3(0, -0.25, depth / 2.0), ThemeMaterials.floor_mat(theme))
+	_perimeter(root, width, depth, wall_height, theme)
+	# Crude cover: a few boxes and a wedge.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(str(chamber.get("id", "c")) + theme)
+	for i in 3:
+		var size := Vector3(rng.randf_range(1.2, 2.4), rng.randf_range(0.8, 2.0),
+				rng.randf_range(1.2, 2.4))
+		_box(root, size, Vector3(
+				rng.randf_range(-width / 2.0 + 2.5, width / 2.0 - 2.5),
+				size.y / 2.0,
+				rng.randf_range(depth * 0.25, depth * 0.75)),
+				ThemeMaterials.accent_mat(theme))
+	_wedge(root, Vector3(2.2, 1.2, 2.2), Vector3(width * 0.25, 0.6, depth * 0.6),
+			ThemeMaterials.floor_mat(theme), rng.randf_range(0.0, TAU))
+	for corner in [Vector3(-width / 2.0 + 2, wall_height - 0.5, 2),
+			Vector3(width / 2.0 - 2, wall_height - 0.5, depth - 2)]:
+		_light(root, corner, theme, 16.0)
+	_light(root, Vector3(0, wall_height - 0.5, depth / 2.0), theme, 18.0)
+	var spawns: Array = []
+	var index := 0
+	for group: Dictionary in chamber.get("enemies", []):
+		for i in int(group.get("count", 0)):
+			var angle := TAU * float(index) / 8.0
+			spawns.append({"archetype": group["archetype"],
+					"position": Vector3(cos(angle) * width * 0.3, 0.2,
+							depth / 2.0 + sin(angle) * depth * 0.3)})
+			index += 1
+	return {"root": root, "exit_offset": Vector3(0, 0, depth),
+			"bounds": AABB(Vector3(-width / 2.0, -1, 0),
+					Vector3(width, wall_height + 1, depth)),
+			"enemy_spawns": spawns,
+			"reward_position": Vector3(0, 0, depth * 0.72)}
+
+static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
+	var segments := int(chamber.get("segment_count", 4))
+	var gap := float(chamber.get("gap_size", 2.0))
+	var step := float(chamber.get("vertical_step", 0.5))
+	var platform := float(Constants.MIN_PLATFORM_SIZE)
+	var width := 8.0
+	var ledge := 4.0
+	var total := ledge + (gap + platform) * segments + gap + ledge
+	var rise := step * float(segments)
+	var wall_height := rise + 6.0
+	var root := Node3D.new()
+	var floor_mat := ThemeMaterials.floor_mat(theme)
+	# Start ledge.
+	_box(root, Vector3(width, 0.5, ledge),
+			Vector3(0, -0.25, ledge / 2.0), floor_mat)
+	# Platforms, rising by `step` each. Crude prism feet make them read as
+	# brushwork rather than floating tiles.
+	for i in segments:
+		var z := ledge + gap + (gap + platform) * float(i) + platform / 2.0
+		var y := step * float(i + 1)
+		_box(root, Vector3(platform, 0.6, platform),
+				Vector3(0, y - 0.3, z), floor_mat)
+		_wedge(root, Vector3(platform * 0.7, 0.5, platform * 0.7),
+				Vector3(0, y - 0.75, z), ThemeMaterials.trim_mat(theme))
+	# End ledge at full rise.
+	_box(root, Vector3(width, 0.5, ledge),
+			Vector3(0, rise - 0.25, total - ledge / 2.0), floor_mat)
+	# The pit: deep enough that a fall passes FALL_KILL_Y.
+	_box(root, Vector3(width, 0.5, total),
+			Vector3(0, Constants.FALL_KILL_Y - 6.0, total / 2.0),
+			ThemeMaterials.hazard_mat(theme), false)
+	# Side walls, full height.
+	var wall := ThemeMaterials.wall_mat(theme)
+	_box(root, Vector3(WALL_THICKNESS, wall_height + 40.0, total),
+			Vector3(-width / 2.0, wall_height / 2.0 - 20.0, total / 2.0), wall)
+	_box(root, Vector3(WALL_THICKNESS, wall_height + 40.0, total),
+			Vector3(width / 2.0, wall_height / 2.0 - 20.0, total / 2.0), wall)
+	for i in maxi(2, segments / 2):
+		_light(root, Vector3(0, rise + 4.0,
+				total * (float(i) + 0.5) / maxf(2.0, segments / 2.0)), theme,
+				18.0)
+	var spawns: Array = []
+	for group: Dictionary in chamber.get("enemies", []):
+		for i in int(group.get("count", 0)):
+			spawns.append({"archetype": group["archetype"],
+					"position": Vector3(0, rise + 0.3,
+							total - ledge + float(i) * 1.5)})
+	return {"root": root, "exit_offset": Vector3(0, rise, total),
+			"bounds": AABB(Vector3(-width / 2.0, -40, 0),
+					Vector3(width, wall_height + 41.0, total)),
+			"enemy_spawns": spawns,
+			"reward_position": Vector3(0, rise, total - ledge / 2.0),
+			"goal_area_position": Vector3(0, rise + 1.0, total - ledge)}
+
+static func tower(chamber: Dictionary, theme: String) -> Dictionary:
+	## A vertical shaft climbed on a square spiral of wall-hugging platforms.
+	## Each platform rises `step_rise` ≤ MAX_VERTICAL_STEP, so the mandatory
+	## route needs only base jumping — the template's guarantee.
+	var floors := int(chamber.get("floors", 3))
+	var side := 12.0
+	var per_floor := 3.0
+	var total_rise := per_floor * float(floors)
+	var step_rise := minf(1.0, float(Constants.MAX_VERTICAL_STEP))
+	var root := Node3D.new()
+	var floor_mat := ThemeMaterials.floor_mat(theme)
+	_box(root, Vector3(side, 0.5, side),
+			Vector3(0, -0.25, side / 2.0), floor_mat)
+	_perimeter(root, side, side, total_rise + 5.0, theme, true, false)
+
+	# Central column, so the shaft reads as a structure and blocks
+	# straight-line ranged fire across it.
+	_box(root, Vector3(2.2, total_rise + 2.0, 2.2),
+			Vector3(0, (total_rise + 2.0) / 2.0 - 0.5, side / 2.0),
+			ThemeMaterials.accent_mat(theme))
+
+	# Square spiral path around the shaft interior.
+	var inset := side / 2.0 - 1.7
+	var margin := 2.0
+	var corners := [
+		Vector3(-inset, 0, margin), Vector3(-inset, 0, side - margin),
+		Vector3(inset, 0, side - margin), Vector3(inset, 0, margin),
+	]
+	var platform_count := int(ceil(total_rise / step_rise))
+	var spacing := 2.4
+	var leg := 0
+	var leg_progress := 0.0
+	var platform_positions: Array[Vector3] = []
+	for i in platform_count:
+		var a: Vector3 = corners[leg % 4]
+		var b: Vector3 = corners[(leg + 1) % 4]
+		var leg_length := a.distance_to(b)
+		leg_progress += spacing
+		while leg_progress > leg_length:
+			leg_progress -= leg_length
+			leg += 1
+			a = corners[leg % 4]
+			b = corners[(leg + 1) % 4]
+			leg_length = a.distance_to(b)
+		var along := a.lerp(b, leg_progress / leg_length)
+		var y := step_rise * float(i + 1)
+		platform_positions.append(Vector3(along.x, y, along.z))
+		_box(root, Vector3(2.6, 0.4, 2.6),
+				Vector3(along.x, y - 0.2, along.z), floor_mat)
+	# Top deck across the back, at the summit.
+	var top_y := step_rise * float(platform_count)
+	_box(root, Vector3(side, 0.5, 4.0),
+			Vector3(0, top_y, side - 2.0), floor_mat)
+	# Bridge strip out through the back wall to the exit.
+	_box(root, Vector3(3.0, 0.5, 2.4),
+			Vector3(0, top_y, side + 1.0), floor_mat)
+
+	for level in range(0, int(total_rise / per_floor) + 1):
+		_light(root, Vector3(0, per_floor * float(level) + 2.5,
+				side / 2.0), theme, 14.0)
+	var spawns: Array = []
+	var index := 0
+	for group: Dictionary in chamber.get("enemies", []):
+		for i in int(group.get("count", 0)):
+			var spot := platform_positions[
+					(index * 3 + 2) % platform_positions.size()] \
+					if not platform_positions.is_empty() \
+					else Vector3(0, 0.3, side * 0.6)
+			spawns.append({"archetype": group["archetype"],
+					"position": Vector3(spot.x * 0.6, spot.y + 0.3, spot.z)})
+			index += 1
+	return {"root": root, "exit_offset": Vector3(0, top_y, side + 2.2),
+			"bounds": AABB(Vector3(-side / 2.0, -1, 0),
+					Vector3(side, total_rise + 6.0, side + 2.2)),
+			"enemy_spawns": spawns,
+			"reward_position": Vector3(-2.0, top_y, side - 2.0)}
+
+static func treasure_room(chamber: Dictionary, theme: String) -> Dictionary:
+	var side := 8.0
+	var height := 4.5
+	var root := Node3D.new()
+	_box(root, Vector3(side, 0.5, side),
+			Vector3(0, -0.25, side / 2.0), ThemeMaterials.floor_mat(theme))
+	_perimeter(root, side, side, height, theme)
+	_box(root, Vector3(side, WALL_THICKNESS, side),
+			Vector3(0, height, side / 2.0), ThemeMaterials.trim_mat(theme))
+	# The one warm room in the building.
+	_light(root, Vector3(0, height - 0.6, side / 2.0), theme, 12.0)
+	# Pedestal steps.
+	_box(root, Vector3(3.0, 0.4, 3.0), Vector3(0, 0.2, side / 2.0),
+			ThemeMaterials.accent_mat(theme))
+	_box(root, Vector3(2.2, 0.4, 2.2), Vector3(0, 0.6, side / 2.0),
+			ThemeMaterials.accent_mat(theme))
+	return {"root": root, "exit_offset": Vector3(0, 0, side),
+			"bounds": AABB(Vector3(-side / 2.0, -1, 0),
+					Vector3(side, height + 1, side)),
+			"enemy_spawns": [],
+			"reward_position": Vector3(0, 1.0, side / 2.0)}
