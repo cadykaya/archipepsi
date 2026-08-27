@@ -368,6 +368,11 @@ func _test_leave_and_resume(controller: ZoneController,
 	await _process_chamber(controller, first, true)
 	var claimed: int = first["reward"].location_id
 	_check(BridgeClient.is_checked(claimed), "first check confirmed")
+	# The pedestal has not repainted yet — refresh drives that — so do it
+	# here and watch for the beam the confirming transition should fire.
+	first["reward"].refresh_from_snapshot()
+	_check(first["reward"].get_node_or_null(RewardObject.BEAM_NAME) != null,
+			"confirming a check fires its transmission beam")
 
 	var zone_id := controller.zone_id
 	controller.queue_free()
@@ -400,6 +405,11 @@ func _test_leave_and_resume(controller: ZoneController,
 		if reward.location_id == claimed:
 			_check(reward.state == "confirmed",
 					"confirmed reward stays disabled after resume (test I)")
+			# A resumed Zone rebuilds every pedestal straight into its
+			# final state. Those are not transmissions happening now, so
+			# none of them may fire the send beam.
+			_check(reward.get_node_or_null(RewardObject.BEAM_NAME) == null,
+					"resuming does not replay the transmission beam")
 		elif chamber_record["objective"] != "reach_reward":
 			_check(reward.state == "locked",
 					"objectives reset on resume (test I)")

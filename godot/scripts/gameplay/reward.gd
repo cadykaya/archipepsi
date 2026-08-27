@@ -6,6 +6,10 @@ extends StaticBody3D
 
 signal claim_requested(location_id: int)
 
+#: Node name of the transmission beam, so tests can assert one fired — or,
+#: on a resumed Zone, that none did.
+const BEAM_NAME := "SendBeam"
+
 var location_id := 0
 var zone_id := ""
 var objective_satisfied := false
@@ -13,7 +17,13 @@ var state := "locked"
 
 var _item_visual: MeshInstance3D
 var _label: Label3D
+var _ring: MeshInstance3D
 var _spin := 0.0
+var _last_state := ""
+## A Zone rebuilt on resume walks straight to "confirmed" for everything
+## already sent. Those are not transmissions happening now, so the beam
+## stays disarmed until the first visual pass is behind us.
+var _transitions_live := false
 
 static func create(location_id_in: int, zone_id_in: String,
 		theme: String) -> RewardObject:
@@ -48,6 +58,19 @@ static func create(location_id_in: int, zone_id_in: String,
 	item.position = Vector3(0, 1.7, 0)
 	reward.add_child(item)
 
+	# Destination ring. State and destination are separate questions, so
+	# they get separate channels: the floating item says how far along the
+	# Check is, the ring says which world receives it — in the same colour
+	# the Hub's campaign board uses for that game.
+	var ring := MeshInstance3D.new()
+	var ring_mesh := TorusMesh.new()
+	ring_mesh.inner_radius = 0.86
+	ring_mesh.outer_radius = 1.02
+	ring.mesh = ring_mesh
+	ring.name = "DestinationRing"
+	ring.position = Vector3(0, 0.05, 0)
+	reward.add_child(ring)
+
 	var label := Label3D.new()
 	label.name = "StateLabel"
 	label.position = Vector3(0, 2.6, 0)
@@ -60,7 +83,14 @@ static func create(location_id_in: int, zone_id_in: String,
 func _ready() -> void:
 	_item_visual = get_node("ItemVisual")
 	_label = get_node("StateLabel")
-	_refresh_visual()
+	_ring = get_node("DestinationRing")
+	# _recompute, not _refresh_visual: painting the default "locked" here
+	# and only deriving the real state on the next snapshot means an
+	# already-sent Check reads LOCKED for a frame — and, worse, the
+	# locked→confirmed step that follows looks exactly like a Check
+	# confirming, so a resumed Zone replayed a beam for every one of them.
+	_recompute()
+	_transitions_live = true
 
 func _process(delta: float) -> void:
 	if state in ["locked", "available"]:
@@ -113,6 +143,38 @@ func _refresh_visual() -> void:
 			var item: String = scout.get("item_name", "") if scout else ""
 			_label.text = "SENT\n%s" % item if item else "SENT"
 			_label.modulate = Color(0.5, 0.55, 0.5)
+
+	# Unknown recipient (no scout yet) gets a dead grey rather than a
+	# confident wrong colour.
+	var destination := ThemeMaterials.color_for_game(game) if scout \
+			else Color(0.3, 0.32, 0.35)
+	_ring.material_override = ThemeMaterials.glow_material(destination,
+			0.35 if state == "locked" else 1.5)
+
+	if _transitions_live and state == "confirmed" \
+			and _last_state != "confirmed":
+		_send_beam(destination)
+	_last_state = state
+
+## The item leaving for whichever world owns it: a column of that world's
+## colour, straight up and out. Purely cosmetic — the bridge confirmed the
+## Check long before this plays, and nothing here can change that.
+func _send_beam(color: Color) -> void:
+	var beam := MeshInstance3D.new()
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 0.18
+	mesh.bottom_radius = 0.40
+	mesh.height = 40.0
+	beam.mesh = mesh
+	beam.name = BEAM_NAME
+	beam.position = Vector3(0, 20.0, 0)
+	var material := ThemeMaterials.glow_material(color, 4.0)
+	beam.material_override = material
+	add_child(beam)
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(beam, "scale", Vector3(0.06, 1.0, 0.06), 0.85)
+	tween.tween_property(material, "emission_energy_multiplier", 0.0, 0.85)
+	tween.chain().tween_callback(beam.queue_free)
 
 func interact_prompt() -> String:
 	match state:
