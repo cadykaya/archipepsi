@@ -174,6 +174,7 @@ func _to_hub() -> void:
 	hub.open_shop_requested.connect(_toggle_shop)
 	hub.refresh()
 	hud.bind_player(hub.player)
+	hub.player.fired_pulse.connect(func() -> void: tones.play("pulse"))
 	hub.player.echo_runtime.set_equipped(BridgeClient.equipped_echo())
 	_update_modal()
 
@@ -205,10 +206,12 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	menu.visible = false
 	hud.visible = true
 	zone = ZoneController.new()
+	zone.tones = tones
 	world.add_child(zone)
 	zone.setup(zone_dict)
 	zone.exit_requested.connect(_on_exit_zone)
 	hud.bind_player(zone.player)
+	zone.player.fired_pulse.connect(func() -> void: tones.play("pulse"))
 	_sync_equipped()
 	zone.refresh()
 	hud.toast(str(zone_dict.get("display_name", "")), Color(0.7, 0.9, 1.0))

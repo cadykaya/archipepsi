@@ -22,6 +22,23 @@ func set_equipped(echo: Dictionary) -> void:
 	equipped = echo
 	cooldown_remaining = 0.0
 	_apply_passives()
+	_refresh_viewmodel_attachment()
+
+func _refresh_viewmodel_attachment() -> void:
+	var part: MeshInstance3D = null
+	if player != null and player.viewmodel != null:
+		part = player.viewmodel.get_node_or_null("EchoPart") as MeshInstance3D
+	if part == null:
+		return
+	if equipped.is_empty() or equipped.get("activation") != "primary":
+		part.visible = false
+		return
+	part.visible = true
+	var colors := {"weapon": Color(1.0, 0.55, 0.3),
+			"tool": Color(0.5, 0.9, 0.6), "mobility": Color(0.5, 0.7, 1.0)}
+	part.material_override = ThemeMaterials.glow_material(
+			colors.get(equipped.get("archetype", "weapon"),
+					Color(0.9, 0.9, 0.9)), 1.2)
 
 func _apply_passives() -> void:
 	player.gravity_mult = 1.0
@@ -53,6 +70,7 @@ func activate() -> void:
 		return
 	cooldown_remaining = float(equipped.get("cooldown", 1.0))
 	cooldown_changed.emit(cooldown_remaining, cooldown_remaining)
+	player.kick_viewmodel(0.12)
 
 	var initiator: Dictionary = equipped.get("initiator", {})
 	var modifiers: Array = equipped.get("modifiers", [])

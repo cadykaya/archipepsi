@@ -15,6 +15,11 @@ signal error_received(err: Dictionary)
 var online := false
 var snapshot: Dictionary = {}
 
+## Session flavor memory: the zone most recently completed, so the Hub can
+## quote Epsilon back at the player. Client-side only; lost on restart.
+var last_completed_zone: Dictionary = {}
+var _held_zone: Dictionary = {}
+
 var _socket := WebSocketPeer.new()
 var _retry_delay := 0.5
 var _retry_timer := 0.0
@@ -71,7 +76,17 @@ func _handle(raw: String) -> void:
 		"bridge_ready":
 			pass
 		"campaign_snapshot":
+			var previous_count := int(snapshot.get("completed_zone_count", 0))
 			snapshot = message
+			if int(message.get("completed_zone_count", 0)) > previous_count \
+					and not _held_zone.is_empty():
+				last_completed_zone = _held_zone
+			# `zone` is null while PENDING_GENERATION; .get's default does
+			# not apply to an explicit null.
+			var zone_content: Variant = active_zone().get("zone")
+			if typeof(zone_content) == TYPE_DICTIONARY \
+					and not zone_content.is_empty():
+				_held_zone = zone_content
 			snapshot_received.emit(message)
 		"zone_ready":
 			zone_ready_received.emit(message.get("zone", {}),

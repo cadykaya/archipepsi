@@ -138,6 +138,10 @@ func take_damage(amount: float, direction: Vector3, knockback: float) -> void:
 	hp -= amount
 	if knockback > 0.0:
 		_knockback += direction * knockback
+	# Crude hit feedback: a scale punch. 1998 did not have hit shaders.
+	var tween := create_tween()
+	scale = Vector3.ONE * 0.88
+	tween.tween_property(self, "scale", Vector3.ONE, 0.1)
 	if hp <= 0.0:
 		die()
 

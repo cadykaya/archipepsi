@@ -9,6 +9,7 @@ signal exit_requested
 var zone: Dictionary = {}
 var zone_id := ""
 var player: Player
+var tones: Tones = null          # set by main; null in headless tests
 
 var _chambers: Array = []      # {chamber, objective, satisfied, enemies,
                                #  reward, goal_area}
@@ -77,6 +78,8 @@ func _objective_of(chamber: Dictionary) -> String:
 	return str(chamber.get("objective", "reach_reward"))
 
 func _on_enemy_died(_enemy: Enemy, record: Dictionary) -> void:
+	if tones != null:
+		tones.play("hit")
 	if record["objective"] == "kill_all" and not record["satisfied"]:
 		_evaluate_objectives()
 

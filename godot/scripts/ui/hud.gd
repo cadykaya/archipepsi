@@ -8,8 +8,16 @@ var _prompt_label: Label
 var _toast_box: VBoxContainer
 var _crosshair: Label
 
+var _damage_flash: ColorRect
+var _last_hp := -1.0
+
 func _ready() -> void:
 	layer = 5
+	_damage_flash = ColorRect.new()
+	_damage_flash.color = Color(0.8, 0.1, 0.05, 0.0)
+	_damage_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_damage_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_damage_flash)
 	_crosshair = Label.new()
 	_crosshair.text = "+"
 	_crosshair.add_theme_font_size_override("font_size", 22)
@@ -59,6 +67,11 @@ func _on_hp_changed(hp: float, shield: float) -> void:
 	if shield > 0.0:
 		text += "  +%d SHIELD" % int(shield)
 	_hp_label.text = text
+	if _last_hp >= 0.0 and hp < _last_hp:
+		_damage_flash.color.a = 0.35
+		var tween := create_tween()
+		tween.tween_property(_damage_flash, "color:a", 0.0, 0.35)
+	_last_hp = hp
 
 func _on_prompt(text: String) -> void:
 	_prompt_label.text = text

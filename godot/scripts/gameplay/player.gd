@@ -26,6 +26,7 @@ var _interact_target: Node = null
 
 @onready var camera: Camera3D = $Camera3D
 @onready var echo_runtime: EchoRuntime = $EchoRuntime
+@onready var viewmodel: Node3D = $Camera3D/Viewmodel
 
 static func create() -> Player:
 	var player := CharacterBody3D.new()
@@ -43,6 +44,42 @@ static func create() -> Player:
 	camera.position = Vector3(0, Constants.PLAYER_EYE_HEIGHT, 0)
 	camera.fov = 90.0
 	player.add_child(camera)
+
+	# The viewmodel: a crude handheld transmitter, very 1998. The Static
+	# Pulse emitter is always there; the Echo attachment appears when a
+	# primary Echo is equipped.
+	var viewmodel := Node3D.new()
+	viewmodel.name = "Viewmodel"
+	viewmodel.position = Vector3(0.34, -0.3, -0.62)
+	viewmodel.rotation_degrees = Vector3(0, 8, -4)
+	var device := MeshInstance3D.new()
+	device.name = "Device"
+	var device_mesh := PrismMesh.new()
+	device_mesh.size = Vector3(0.14, 0.16, 0.4)
+	device.mesh = device_mesh
+	device.rotation_degrees = Vector3(-90, 0, 0)
+	device.material_override = ThemeMaterials.glow_material(
+			Color(0.35, 0.42, 0.5), 0.25)
+	viewmodel.add_child(device)
+	var tip := MeshInstance3D.new()
+	tip.name = "Tip"
+	var tip_mesh := BoxMesh.new()
+	tip_mesh.size = Vector3(0.05, 0.05, 0.08)
+	tip.mesh = tip_mesh
+	tip.position = Vector3(0, 0.02, -0.24)
+	tip.material_override = ThemeMaterials.glow_material(
+			Color(0.75, 0.85, 1.0), 1.6)
+	viewmodel.add_child(tip)
+	var echo_part := MeshInstance3D.new()
+	echo_part.name = "EchoPart"
+	var echo_mesh := BoxMesh.new()
+	echo_mesh.size = Vector3(0.10, 0.08, 0.26)
+	echo_part.mesh = echo_mesh
+	echo_part.position = Vector3(-0.11, 0.0, -0.05)
+	echo_part.visible = false
+	viewmodel.add_child(echo_part)
+	camera.add_child(viewmodel)
+
 	var runtime := Node.new()
 	runtime.name = "EchoRuntime"
 	runtime.set_script(load("res://scripts/gameplay/echo_runtime.gd"))
@@ -52,6 +89,16 @@ static func create() -> Player:
 func _ready() -> void:
 	add_to_group("player")
 	_spawn_transform = global_transform
+	fired_pulse.connect(func() -> void: kick_viewmodel(0.05))
+
+func kick_viewmodel(strength: float) -> void:
+	if viewmodel == null:
+		return
+	var rest := Vector3(0.34, -0.3, -0.62)
+	viewmodel.position = rest + Vector3(0, strength * 0.4, strength * 2.0)
+	var tween := create_tween()
+	tween.tween_property(viewmodel, "position", rest, 0.12) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 func set_spawn(xform: Transform3D) -> void:
 	_spawn_transform = xform

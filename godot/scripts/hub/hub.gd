@@ -111,6 +111,13 @@ func _build_room() -> void:
 	_static_root = Node3D.new()
 	add_child(_static_root)
 
+	# The corruption crawls: re-render the board every couple of seconds.
+	var timer := Timer.new()
+	timer.wait_time = 2.2
+	timer.autostart = true
+	timer.timeout.connect(refresh)
+	add_child(timer)
+
 func _on_portal_activated() -> void:
 	var hub := BridgeClient.hub()
 	match BridgeClient.hub_mode():
@@ -132,11 +139,18 @@ func refresh() -> void:
 	var hub := BridgeClient.hub()
 	var mode := BridgeClient.hub_mode()
 
-	_board.text = str(hub.get("headline", ""))
+	var static_units := int(snapshot.get("static_glitch_units", 0))
+	_board.text = _garble(str(hub.get("headline", "")), static_units)
 	var lines: Array[String] = []
 	var detail := str(hub.get("detail", ""))
 	if detail != "":
 		lines.append(detail)
+	var last := BridgeClient.last_completed_zone
+	if not last.is_empty():
+		lines.append("LAST TRANSMISSION: %s" % last.get("display_name", "?"))
+		var note: Variant = last.get("designer_note")
+		if note:
+			lines.append("EPSILON: “%s”" % str(note))
 	lines.append("CHECKS %d/30   KEYS %d/2   COINS %d" % [
 			snapshot.get("checked_location_ids", []).size(),
 			int(snapshot.get("signal_keys", 0)),
@@ -165,6 +179,24 @@ func refresh() -> void:
 	_finale_portal.refresh(hub, "FINALE_OFFERED")
 	_abandon.refresh(mode, BridgeClient.active_zone())
 	_refresh_static(int(snapshot.get("static_glitch_units", 0)))
+
+## Epsilon Static slowly eats the status board. Purely cosmetic: the more
+## Static the multiworld has delivered, the less legible the Hub becomes.
+func _garble(text: String, static_units: int) -> String:
+	if static_units < 4 or text.is_empty():
+		return text
+	var glyphs := "▓▒░#%&@?!"
+	var rng := RandomNumberGenerator.new()
+	# Reseed every couple of seconds so the corruption crawls.
+	rng.seed = hash(text) + int(Time.get_ticks_msec() / 2200.0)
+	var chance := minf(0.30, float(static_units) * 0.015)
+	var out := ""
+	for character in text:
+		if character != " " and rng.randf() < chance:
+			out += glyphs[rng.randi_range(0, glyphs.length() - 1)]
+		else:
+			out += character
+	return out
 
 ## Epsilon Static: permanent cosmetic Hub corruption, one unit per Static.
 func _refresh_static(count: int) -> void:

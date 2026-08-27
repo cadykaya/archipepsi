@@ -14,6 +14,7 @@ extends Node
 var failures := 0
 var _bought_once := false
 var _double_buy_probed := false
+var _error_count := 0
 
 func _check(condition: bool, message: String) -> void:
 	if condition:
@@ -24,6 +25,8 @@ func _check(condition: bool, message: String) -> void:
 		print("FAIL: " + message)
 
 func _ready() -> void:
+	BridgeClient.error_received.connect(
+			func(_err: Dictionary) -> void: _error_count += 1)
 	_run()
 
 func _finish(code: int) -> void:
@@ -154,41 +157,12 @@ func _play_one_zone(detailed: bool) -> bool:
 		_check(controller._exit_portal != null, "exit portal appended")
 		_check(controller._exit_portal.unlocked == false,
 				"exit portal starts sealed")
+		controller = await _test_leave_and_resume(controller, zone_dict)
+		if controller == null:
+			return false
 
 	for chamber_record: Dictionary in controller._chambers:
-		var reward: RewardObject = chamber_record["reward"]
-		match chamber_record["objective"]:
-			"kill_all":
-				if detailed and reward != null:
-					_check(reward.state == "locked",
-							"kill_all reward locked before combat")
-					reward.interact(controller.player)
-					await get_tree().process_frame
-					_check(not BridgeClient.is_pending(reward.location_id),
-							"locked reward refuses interaction (test 58)")
-				for enemy in chamber_record["enemies"]:
-					if is_instance_valid(enemy):
-						enemy.die()
-				await get_tree().process_frame
-			"platform_to_goal":
-				controller._on_goal_area_entered(controller.player,
-						chamber_record)
-				await get_tree().process_frame
-		if reward != null:
-			if not await _await_condition("reward %d available"
-					% reward.location_id,
-					func() -> bool: return reward.state == "available", 5.0):
-				continue
-			if detailed:
-				controller.player.take_damage(10000.0)
-				await get_tree().process_frame
-				_check(reward.state == "available",
-						"objective stays latched through death (test 59)")
-			reward.interact(controller.player)
-			await _await_condition("check %d confirmed" % reward.location_id,
-					func() -> bool:
-						return BridgeClient.is_checked(reward.location_id),
-					15.0)
+		await _process_chamber(controller, chamber_record, detailed)
 
 	if not await _await_condition("zone completes",
 			func() -> bool: return BridgeClient.active_zone().is_empty(),
@@ -214,6 +188,96 @@ func _play_one_zone(detailed: bool) -> bool:
 	controller.queue_free()
 	await get_tree().process_frame
 	return true
+
+## Satisfy one chamber's objective honestly, then claim its reward.
+func _process_chamber(controller: ZoneController,
+		chamber_record: Dictionary, detailed: bool) -> void:
+	var reward: RewardObject = chamber_record["reward"]
+	if reward != null and BridgeClient.is_checked(reward.location_id):
+		return                                    # confirmed on a prior visit
+	match chamber_record["objective"]:
+		"kill_all":
+			if detailed and reward != null and reward.state == "locked":
+				reward.interact(controller.player)
+				await get_tree().process_frame
+				_check(not BridgeClient.is_pending(reward.location_id),
+						"locked reward refuses interaction (test 58)")
+			for enemy in chamber_record["enemies"]:
+				if is_instance_valid(enemy):
+					enemy.die()
+			await get_tree().process_frame
+		"platform_to_goal":
+			controller._on_goal_area_entered(controller.player,
+					chamber_record)
+			await get_tree().process_frame
+	if reward == null:
+		return
+	if not await _await_condition("reward %d available" % reward.location_id,
+			func() -> bool: return reward.state == "available", 5.0):
+		return
+	if detailed:
+		controller.player.take_damage(10000.0)
+		await get_tree().process_frame
+		_check(reward.state == "available",
+				"objective stays latched through death (test 59)")
+	reward.interact(controller.player)
+	await _await_condition("check %d confirmed" % reward.location_id,
+			func() -> bool:
+				return BridgeClient.is_checked(reward.location_id), 15.0)
+
+## Acceptance Test I: leave and resume. Clears ONE chamber, leaves via the
+## pause path, verifies the Zone stays ACTIVE and no new Zone can start,
+## then rebuilds the scene and verifies transient reset + persistence.
+func _test_leave_and_resume(controller: ZoneController,
+		zone_dict: Dictionary) -> ZoneController:
+	var first: Dictionary = {}
+	for chamber_record: Dictionary in controller._chambers:
+		if chamber_record["reward"] != null:
+			first = chamber_record
+			break
+	if first.is_empty():
+		return controller
+	await _process_chamber(controller, first, true)
+	var claimed: int = first["reward"].location_id
+	_check(BridgeClient.is_checked(claimed), "first check confirmed")
+
+	var zone_id := controller.zone_id
+	controller.queue_free()
+	await get_tree().process_frame
+	BridgeClient.send_intent({"type": "leave_zone", "zone_id": zone_id})
+	await get_tree().process_frame
+	if not await _await_condition("snapshot after leave",
+			func() -> bool:
+				return BridgeClient.hub_mode() == "ZONE_ACTIVE", 5.0):
+		return null
+	_check(BridgeClient.hub_mode() == "ZONE_ACTIVE",
+			"zone stays ACTIVE after leaving (test I)")
+
+	var errors_before := _error_count
+	BridgeClient.send_intent({"type": "request_next_zone", "finale": false})
+	await _await_condition("second zone request refused",
+			func() -> bool: return _error_count > errors_before, 5.0)
+	_check(BridgeClient.hub_mode() == "ZONE_ACTIVE",
+			"no new zone can be generated while one is ACTIVE (test I)")
+
+	var resumed := ZoneController.new()
+	get_tree().root.add_child(resumed)
+	resumed.setup(zone_dict)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	for chamber_record: Dictionary in resumed._chambers:
+		var reward: RewardObject = chamber_record["reward"]
+		if reward == null:
+			continue
+		if reward.location_id == claimed:
+			_check(reward.state == "confirmed",
+					"confirmed reward stays disabled after resume (test I)")
+		elif chamber_record["objective"] != "reach_reward":
+			_check(reward.state == "locked",
+					"objectives reset on resume (test I)")
+	_check(resumed._exit_portal.unlocked == false,
+			"exit portal stays locked until every check confirms (test I)")
+	return resumed
 
 func _try_shop_purchase() -> void:
 	var snapshot := BridgeClient.snapshot
