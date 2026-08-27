@@ -49,6 +49,28 @@ Proof the loop is real:
 - **Personality**: Epsilon graffiti, Static-garbled Hub board, Static-
   corrupted tracers, theme-signature props, designer notes surfaced.
 
+## Latest session: playability pass (+ a third review)
+- **Navigation**: objective waypoint (floats on target, pins to the screen
+  edge as a chevron with distance), `CHECKS n/m CLAIMED`, exit portal
+  stating what holds it shut. Zones bend now, so this is the readability
+  the corner pieces owed.
+- **Combat readability**: damage-direction wedge that tracks as you turn,
+  Echo cooldown as a refilling bar, enemies that visibly cook toward
+  death, distinct silhouettes per archetype (hunched charger / static
+  tripod / heavy brute).
+- **The multiworld, visible**: a campaign board on the Hub wall showing
+  all 30 Checks in three rows of ten (the tier structure), each tinted by
+  the game that receives its item — matching the bridge's sha256 theme
+  rule exactly, pinned from both sides.
+- **Presentation**: zone title cards with Epsilon's designer note and a
+  featured-Echo credit, game-tinted reveal cards, muzzle flashes,
+  footsteps, landing thumps, controls card, Epsilon narrating long
+  generations.
+- **Third adversarial review**, all findings fixed — several defeated the
+  feature they were in (the title card printed "true"; the damage wedge
+  never tracked; the waypoint chevron rendered off-screen; wounded
+  enemies got dimmer; silhouettes clipped through doorways).
+
 ## Next useful work
 1. **Play-feel pass on real hardware** — the manual checks in
    ACCEPTANCE_TESTS §7 (gap feel, reveal timing, Conference Call comedy)
@@ -57,10 +79,10 @@ Proof the loop is real:
    (`EPSILON_PROVIDER=claude make bridge`); offline stub tests cover the
    mechanics, but a real generation archive would be the interesting thing
    — then `make replay` reports its first-try acceptance rate.
-3. Reveal card tinted by the recipient game; featured-Echo line on the
-   zone title card.
-4. Muzzle-flash light for Static Pulse and Echo fire (dark rooms read flat
-   without it).
+3. Secrets: the packet allows optional Echo-reachable alcoves (never on a
+   mandatory path). Flavor-only payloads, since items are AP's alone.
+4. Enemy audio: an aggro cue and a per-archetype attack tone. Currently
+   only death and player fire make noise.
 
 ## Known blockers / bugs
 None known. One recorded schema corner: `finale_offered` stays true in
