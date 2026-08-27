@@ -66,7 +66,18 @@ func _ready() -> void:
 	BridgeClient.notification_received.connect(_on_notification)
 	BridgeClient.error_received.connect(_on_bridge_error)
 	BridgeClient.bridge_state_changed.connect(
-			func(_online: bool) -> void: menu.refresh())
+			func(_online: bool) -> void:
+				menu.refresh()
+				_refresh_banner())
+
+func _refresh_banner() -> void:
+	if not BridgeClient.online:
+		hud.set_banner("BRIDGE OFFLINE — RECONNECTING…")
+	elif view != View.MENU \
+			and not BridgeClient.snapshot.get("ap_connected", false):
+		hud.set_banner("ARCHIPELAGO OFFLINE")
+	else:
+		hud.set_banner("")
 
 func _on_menu_connect(server: String, slot: String, password: String) -> void:
 	menu.show_error("Connecting to %s…" % server)
@@ -81,6 +92,7 @@ func _on_menu_mock() -> void:
 func _on_snapshot(snapshot: Dictionary) -> void:
 	menu.refresh()
 	debug.refresh()
+	_refresh_banner()
 	var mode := BridgeClient.hub_mode()
 	match view:
 		View.MENU:

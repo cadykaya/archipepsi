@@ -22,6 +22,7 @@ var _board: Label3D
 var _sub_board: Label3D
 var _static_root: Node3D
 var _static_count := -1
+var _fuzz: ColorRect
 
 func _ready() -> void:
 	_build_room()
@@ -118,6 +119,31 @@ func _build_room() -> void:
 	timer.timeout.connect(refresh)
 	add_child(timer)
 
+	# Screen fuzz: the Hub itself degrades as Epsilon Static accumulates.
+	# Lives on the Hub node so Zones stay clean.
+	var fuzz_layer := CanvasLayer.new()
+	fuzz_layer.layer = 3
+	add_child(fuzz_layer)
+	_fuzz = ColorRect.new()
+	_fuzz.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_fuzz.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var shader := Shader.new()
+	shader.code = """
+shader_type canvas_item;
+uniform float intensity = 0.0;
+void fragment() {
+	float n = fract(sin(dot(floor(FRAGCOORD.xy / 2.0)
+			+ vec2(floor(TIME * 24.0) * 13.0, 0.0),
+			vec2(12.9898, 78.233))) * 43758.5453);
+	float scan = sin(FRAGCOORD.y * 1.7 + TIME * 6.0) * 0.5 + 0.5;
+	COLOR = vec4(vec3(n), intensity * (0.05 + 0.05 * scan));
+}
+"""
+	var material := ShaderMaterial.new()
+	material.shader = shader
+	_fuzz.material = material
+	fuzz_layer.add_child(_fuzz)
+
 func _on_portal_activated() -> void:
 	var hub := BridgeClient.hub()
 	match BridgeClient.hub_mode():
@@ -178,7 +204,11 @@ func refresh() -> void:
 			and goal_missing and mode == "ZONE_AVAILABLE"
 	_finale_portal.refresh(hub, "FINALE_OFFERED")
 	_abandon.refresh(mode, BridgeClient.active_zone())
-	_refresh_static(int(snapshot.get("static_glitch_units", 0)))
+	_refresh_static(static_units)
+	if _fuzz != null and _fuzz.material is ShaderMaterial:
+		(_fuzz.material as ShaderMaterial).set_shader_parameter(
+				"intensity", minf(1.0, float(static_units)
+					/ float(Constants.STATIC_GLITCH_VISUAL_CAP)))
 
 ## Epsilon Static slowly eats the status board. Purely cosmetic: the more
 ## Static the multiworld has delivered, the less legible the Hub becomes.
