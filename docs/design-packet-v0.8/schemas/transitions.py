@@ -32,14 +32,14 @@ from __future__ import annotations
 
 try:
     from . import constants as C
-    from .echo import Echo
+    from .echo import EchoInterpretation
     from .protocol import (
         CampaignSave, PendingCheck, ShopState, ShopStockItem, ZoneRecord,
     )
     from .zone import Zone
 except ImportError:  # pragma: no cover
     import constants as C
-    from echo import Echo
+    from echo import EchoInterpretation
     from protocol import (
         CampaignSave, PendingCheck, ShopState, ShopStockItem, ZoneRecord,
     )
@@ -312,18 +312,51 @@ def restock_shop(save: CampaignSave, items) -> CampaignSave:
     })
 
 
-def add_echo(save: CampaignSave, echo: Echo) -> CampaignSave:
-    """Idempotent: an Echo is keyed by its source location, and duplicate
+def append_interpretation(
+    save: CampaignSave, interpretation: EchoInterpretation
+) -> CampaignSave:
+    """Append one interpretation to the log and advance the counter.
+
+    Replaces v0.7's `add_echo`. Two things it must get right:
+
+    - **The sequence is assigned here, once.** The caller does not choose it;
+      whatever `interpretation_seq` arrives is overwritten with the
+      campaign's next number, and the counter moves. Nothing downstream ever
+      renumbers it.
+    - **The fold has to survive it.** `CampaignSave` folds in its validator,
+      so an interpretation whose operations dangle cannot be appended — the
+      `ValueError` reaches the bridge as a recoverable error, and the
+      campaign on disk is untouched.
+
+    Idempotent: an Echo is keyed by its source location, and duplicate
     confirmation of one location must not mint a second."""
-    if save.echo_by_id(echo.echo_id) is not None:
+    if save.interpretation_by_id(interpretation.echo_id) is not None:
         return save
-    return _rebuild(save, echoes=save.echoes + (echo,))
+    seq = save.next_interpretation_seq
+    # Revalidated, not `model_copy(update=...)`: the packet bans that
+    # everywhere for the same reason, and stamping a sequence is exactly the
+    # kind of "one small field" change that skips a validator.
+    stamped = EchoInterpretation.model_validate(
+        {**interpretation.model_dump(), "interpretation_seq": seq}
+    )
+    return _rebuild(
+        save,
+        interpretations=save.interpretations + (stamped,),
+        next_interpretation_seq=seq + 1,
+    )
 
 
-def equip_echo(save: CampaignSave, echo_id: str | None) -> CampaignSave:
-    if echo_id is not None and save.echo_by_id(echo_id) is None:
-        raise ValueError(f"Echo '{echo_id}' is not owned")
-    return _rebuild(save, equipped_echo_id=echo_id)
+def slot_action(
+    save: CampaignSave, slot: str, component_id: str | None
+) -> CampaignSave:
+    """Put an owned Action in a slot, or clear it with a null id.
+
+    Replaces v0.7's `equip_echo`. The checks that matter — the component is
+    owned, it is an Action, and its declared slot matches — live in
+    `CampaignSave`'s validator, so they hold on every path that can ever
+    build a save, not just this one.
+    """
+    return _rebuild(save, slots=save.slots.with_slot(slot, component_id))
 
 
 #: Every transition, for the census test. A new one fails the suite until it
@@ -331,5 +364,6 @@ def equip_echo(save: CampaignSave, echo_id: str | None) -> CampaignSave:
 TRANSITIONS = (
     start_generation, accept_zone, enter_zone, complete_zone, abandon_zone,
     release_location, claim_zone_check, buy_shop_stock, confirm_check,
-    rollback_shop_purchase, restock_shop, add_echo, equip_echo,
+    rollback_shop_purchase, restock_shop, append_interpretation,
+    slot_action,
 )

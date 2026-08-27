@@ -73,11 +73,13 @@ async def run(server: str, slot: str, password: str) -> None:
 
     foreign = [l for l in zone.allocated_location_ids
                if not engine.ap.scouts[l].recipient_is_self]
-    assert len(engine.save.echoes) >= len(foreign), (
-        f"{len(foreign)} foreign checks, {len(engine.save.echoes)} echoes")
+    assert len(engine.save.interpretations) >= len(foreign), (
+        f"{len(foreign)} foreign checks, "
+        f"{len(engine.save.interpretations)} interpretations")
     snap = engine.snapshot()
     log.info("zone complete; %d echoes; %d coins; %d keys; hub %s",
-             len(snap.echoes), snap.coins_received, snap.signal_keys,
+             len(snap.interpretations), snap.coins_received,
+             snap.signal_keys,
              snap.hub.mode)
 
     before = snap
@@ -91,7 +93,9 @@ async def run(server: str, slot: str, password: str) -> None:
                    and not engine2.save.pending_checks, 30, "reload")
     after = engine2.snapshot()
     assert after.coins_received == before.coins_received, "coins duplicated"
-    assert len(after.echoes) == len(before.echoes), "echoes duplicated"
+    assert len(after.interpretations) == len(before.interpretations), \
+        "interpretations duplicated"
+    assert after.mechanics == before.mechanics, "the fold changed on reload"
     assert after.completed_zone_count == before.completed_zone_count
     assert set(after.checked_location_ids) == set(before.checked_location_ids)
     log.info("reload OK: identical state after reconnect")
@@ -129,7 +133,8 @@ async def run(server: str, slot: str, password: str) -> None:
         await backend2.disconnect()
 
     print(f"\nREAL AP SMOKE OK against {server} as {slot}: scout, allocate, "
-          f"generate, claim, confirm, {len(after.echoes)} echo(es), reload — "
+          f"generate, claim, confirm, {len(after.interpretations)} echo(es), "
+          f"reload — "
           "no duplication; GENERATED zone survives a bridge death (test L).")
 
 

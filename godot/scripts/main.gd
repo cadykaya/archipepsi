@@ -124,7 +124,7 @@ func _on_snapshot(snapshot: Dictionary) -> void:
 
 func _sync_equipped() -> void:
 	if zone != null and zone.player != null:
-		zone.player.echo_runtime.set_equipped(BridgeClient.equipped_echo())
+		zone.player.echo_runtime.set_equipped(BridgeClient.slotted_action())
 
 func _on_notification(note: Dictionary) -> void:
 	var kind := str(note.get("kind", ""))
@@ -194,7 +194,7 @@ func _to_hub() -> void:
 	hud.bind_player(hub.player)
 	hub.player.fired_pulse.connect(func() -> void: tones.play("pulse"))
 	hub.player.footstep.connect(func(kind: String) -> void: tones.play(kind))
-	hub.player.echo_runtime.set_equipped(BridgeClient.equipped_echo())
+	hub.player.echo_runtime.set_equipped(BridgeClient.slotted_action())
 	tones.play_ambience(1.0)
 	_update_modal()
 
@@ -263,7 +263,8 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	# is the premise, and it was previously invisible.
 	var featured: Array = zone_dict.get("featured_echo_ids", [])
 	if not featured.is_empty():
-		for echo: Dictionary in BridgeClient.snapshot.get("echoes", []):
+		for echo: Dictionary in BridgeClient.snapshot.get(
+				"interpretations", []):
 			if echo.get("echo_id") == featured[0]:
 				note = "Built with your %s in mind. %s" % [
 						echo.get("display_name", "Echo"), note]
@@ -324,18 +325,24 @@ func _unhandled_input(event: InputEvent) -> void:
 ## `step` is +1 or -1. By the end of a campaign the archive holds 26
 ## Echoes, and a forward-only cycle means overshooting one costs 25 more
 ## presses -- which is why the wheel scrolls it both ways.
-func _cycle_echo(step: int) -> void:
-	var echoes: Array = BridgeClient.snapshot.get("echoes", [])
-	if echoes.is_empty():
+func _cycle_echo(step: int, slot := "echo_a") -> void:
+	# Only Actions declared for THIS slot are candidates. A mobility Echo is
+	# not a thing RMB can hold, and offering it would produce an intent the
+	# bridge is obliged to refuse.
+	var ids: Array = []
+	for entry: Dictionary in BridgeClient.owned_components("action"):
+		var component: Dictionary = entry.get("component", {})
+		if component.get("slot", "") == slot:
+			ids.append(str(component.get("component_id", "")))
+	if ids.is_empty():
 		return
-	var equipped: Variant = BridgeClient.snapshot.get("equipped_echo_id")
-	var ids: Array = echoes.map(
-			func(echo: Dictionary) -> String: return str(echo["echo_id"]))
-	var index := ids.find(equipped) if equipped != null else -1
+	var current: Variant = BridgeClient.slots().get(slot)
+	var index := ids.find(str(current)) if current != null else -1
 	# posmod, not %: GDScript's % keeps the sign, so stepping back from the
-	# first Echo would index -1 and equip nothing.
+	# first Action would index -1 and slot nothing.
 	var next: String = ids[posmod(index + step, ids.size())]
-	BridgeClient.send_intent({"type": "equip_echo", "echo_id": next})
+	BridgeClient.send_intent({"type": "slot_action", "slot": slot,
+			"component_id": next})
 
 func _update_modal() -> void:
 	var modal: bool = pause_menu.visible or inventory.visible \

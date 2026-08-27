@@ -164,6 +164,10 @@ Chamber = Annotated[
 
 
 class Zone(Strict):
+    #: Still 7, and deliberately. The Zone contract did not change in v0.8 —
+    #: Echoes 2.0 changes what an Echo means, not what a Zone is — and
+    #: bumping a version to match its neighbours would say a change happened
+    #: where none did.
     schema_version: Literal[7] = 7
     zone_id: str = _ID
     display_name: str = Field(min_length=1, max_length=C.MAX_TEXT_LEN)

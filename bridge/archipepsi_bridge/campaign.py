@@ -24,9 +24,10 @@ from .epsilon import (
 from .epsilon.requests import EchoPlayerState, EchoSource
 from .schemas import constants as C
 from .schemas import transitions as T
+from .schemas.mechanics import Mechanics
 from .schemas.protocol import (
     CampaignSave, CampaignSnapshot, HubStatus, Notification, ScoutedLocation,
-    ShopState, ZoneReady, ZoneRecord,
+    ShopState, SlotAssignment, ZoneReady, ZoneRecord,
 )
 from . import store
 
@@ -308,8 +309,12 @@ class CampaignEngine:
             static_received=ap.static_received,
             static_glitch_units=ap.static_received
             * C.STATIC_GLITCH_UNITS_PER_ITEM,
-            echoes=save.echoes if save else (),
-            equipped_echo_id=save.equipped_echo_id if save else None,
+            interpretations=save.interpretations if save else (),
+            # Folded here, once, and sent. The client never folds: a second
+            # implementation of this is a second source of truth for the one
+            # thing that has to be identical everywhere.
+            mechanics=save.derive() if save else Mechanics(),
+            slots=save.slots if save else SlotAssignment(),
             active_zone=save.active_zone if save else None,
             completed_zone_count=save.completed_zone_count if save else 0,
             shop=save.shop if save else ShopState(),
@@ -445,9 +450,10 @@ class CampaignEngine:
         echoes = tuple(
             EchoSummary(
                 echo_id=e.echo_id, display_name=e.display_name,
-                archetype=e.archetype, activation=e.activation,
+                kinds=tuple(sorted({op.component.kind for op in e.operations
+                                    if op.op == "create"})),
                 tags=tuple(e.tags), description=e.description)
-            for e in save.echoes)
+            for e in save.interpretations)
         return ZoneGenerationRequest(
             zone_id=record.zone_id,
             generation_id=(f"{save.seed_name}-{save.team}-{save.slot_id}-"
@@ -484,7 +490,8 @@ class CampaignEngine:
             outcome = await generate_zone_validated(
                 provider, request,
                 allocated_location_ids=list(record.allocated_location_ids),
-                owned_echo_ids=[e.echo_id for e in self.save.echoes],
+                owned_echo_ids=[e.echo_id
+                                for e in self.save.interpretations],
                 archive_dir=self.archive_dir)
         except Exception:
             log.exception("generation failed past fallback for %s", zone_id)
@@ -569,10 +576,12 @@ class CampaignEngine:
     # Small intents
     # ------------------------------------------------------------------
 
-    async def handle_equip_echo(self, echo_id: str | None) -> None:
+    async def handle_slot_action(
+        self, slot: str, component_id: str | None
+    ) -> None:
         self._require_save()
         try:
-            self._apply(T.equip_echo(self.save, echo_id))
+            self._apply(T.slot_action(self.save, slot, component_id))
         except ValueError as exc:
             raise IntentError(str(exc)) from exc
         await self.broadcast_snapshot()
@@ -663,9 +672,11 @@ class CampaignEngine:
                 existing_echoes=tuple(
                     EchoSummary(
                         echo_id=e.echo_id, display_name=e.display_name,
-                        archetype=e.archetype, activation=e.activation,
+                        kinds=tuple(sorted({op.component.kind
+                                            for op in e.operations
+                                            if op.op == "create"})),
                         tags=tuple(e.tags), description=e.description)
-                    for e in save.echoes),
+                    for e in save.interpretations),
                 signal_keys=self.ap.signal_keys,
                 coins_available=max(
                     0, self.ap.coins_received - save.coins_spent)),
@@ -679,16 +690,16 @@ class CampaignEngine:
         if scout is None or scout.recipient_is_self:
             return None
         echo_id = f"echo_{location_id}"
-        if save.echo_by_id(echo_id) is not None:
+        if save.interpretation_by_id(echo_id) is not None:
             return echo_id
         async with self._echo_lock:              # one at a time
-            if self.save.echo_by_id(echo_id) is not None:
+            if self.save.interpretation_by_id(echo_id) is not None:
                 return echo_id
             self.provider.creativity = save.epsilon_creativity
             outcome = await generate_echo_validated(
                 self.provider, self._echo_request(location_id),
                 archive_dir=self.archive_dir)
-            self._apply(T.add_echo(self.save, outcome.value))
+            self._apply(T.append_interpretation(self.save, outcome.value))
             if outcome.used_fallback and self.provider_name != "fallback":
                 await self._notify("fallback_used",
                                    "EPSILON OFFLINE — FALLBACK USED",
@@ -716,7 +727,7 @@ class CampaignEngine:
         async def grant_and_announce(loc: int) -> None:
             echo_id = await self.grant_echo(loc)
             if echo_id:
-                echo = self.save.echo_by_id(echo_id)
+                echo = self.save.interpretation_by_id(echo_id)
                 await self._notify(
                     "echo_acquired", "EPSILON ECHO ACQUIRED",
                     (echo.display_name,), location_id=loc, echo_id=echo_id)
@@ -725,7 +736,7 @@ class CampaignEngine:
             scout = self.ap.scouts.get(loc)
             if scout is None or scout.recipient_is_self:
                 continue
-            if save.echo_by_id(f"echo_{loc}") is not None:
+            if save.interpretation_by_id(f"echo_{loc}") is not None:
                 continue
             if loc in interacted:
                 await grant_and_announce(loc)

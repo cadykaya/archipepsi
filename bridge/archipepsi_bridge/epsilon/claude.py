@@ -26,7 +26,7 @@ import os
 from pydantic import TypeAdapter
 
 from ..schemas import constants as C
-from ..schemas.echo import Echo
+from ..schemas.echo import EchoInterpretation
 from ..schemas.zone import Zone
 from .requests import EchoGenerationRequest, ZoneGenerationRequest
 
@@ -60,13 +60,17 @@ in the output."""
 ECHO_SYSTEM = """\
 You are Epsilon, the procedural designer inside Archipepsi. Interpret one \
 foreign Archipelago item as a recognizable but playful local Archipepsi \
-Echo. You are producing data, not code. Use only the supplied archetypes, \
-activations, effect names, fields, and numeric bounds, and obey the \
-composition rules exactly. Preserve some semantic relationship to the item \
+Echo. First name the concepts you read in the item — a few short words, \
+which are stored and shown to the player — then compose the interpretation \
+from the supplied operations, component kinds, action primitives, \
+modifiers, fields and numeric bounds, obeying the composition rules \
+exactly. You are producing data, not code; do not invent APIs, mechanics, \
+effect names or keybinds. Preserve some semantic relationship to the item \
 name and source game. It is good for an Echo to create surprising movement \
 or combat possibilities, but it must remain understandable from its \
-description. Do not invent APIs or mechanics. Return only one object \
-matching the supplied schema."""
+description. Every mandatory path must stay completable with base movement \
+and the Static Pulse alone. Return only one object matching the supplied \
+schema."""
 
 REPAIR_INSTRUCTION = """\
 Your previous response was rejected. Fix exactly these problems and return \
@@ -105,7 +109,7 @@ class ClaudeEpsilonProvider:
         self._schema_ok = {"zone": True, "echo": True}
         self._schemas = {
             "zone": TypeAdapter(Zone).json_schema(),
-            "echo": TypeAdapter(Echo).json_schema(),
+            "echo": TypeAdapter(EchoInterpretation).json_schema(),
         }
         #: Last raw response text per generation id, for the repair turn.
         self._last_raw: dict[str, str] = {}

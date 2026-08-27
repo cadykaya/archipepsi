@@ -180,34 +180,6 @@
         "title": "EnterZone",
         "type": "object"
       },
-      "EquipEcho": {
-        "additionalProperties": false,
-        "properties": {
-          "type": {
-            "const": "equip_echo",
-            "title": "Type",
-            "type": "string"
-          },
-          "echo_id": {
-            "anyOf": [
-              {
-                "maxLength": 32,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Echo Id"
-          }
-        },
-        "required": [
-          "type"
-        ],
-        "title": "EquipEcho",
-        "type": "object"
-      },
       "ExitZone": {
         "additionalProperties": false,
         "description": "Exit portal. Pure travel: completion is driven by Check confirmation,\nnot by this intent, so it is a no-op-plus-snapshot on a finished Zone.",
@@ -323,6 +295,46 @@
         "title": "SetCreativity",
         "type": "object"
       },
+      "SlotAction": {
+        "additionalProperties": false,
+        "description": "Put an owned Action in a slot, or clear the slot with a null id.\n\nReplaces v0.7's `equip_echo`: there are four slots now, and only Actions\noccupy them.",
+        "properties": {
+          "type": {
+            "const": "slot_action",
+            "title": "Type",
+            "type": "string"
+          },
+          "slot": {
+            "enum": [
+              "echo_a",
+              "echo_b",
+              "mobility",
+              "utility"
+            ],
+            "title": "Slot",
+            "type": "string"
+          },
+          "component_id": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Component Id"
+          }
+        },
+        "required": [
+          "type",
+          "slot"
+        ],
+        "title": "SlotAction",
+        "type": "object"
+      },
       "StartMockCampaign": {
         "additionalProperties": false,
         "properties": {
@@ -348,12 +360,12 @@
         "claim_check": "#/$defs/ClaimCheck",
         "debug_command": "#/$defs/DebugCommand",
         "enter_zone": "#/$defs/EnterZone",
-        "equip_echo": "#/$defs/EquipEcho",
         "exit_zone": "#/$defs/ExitZone",
         "hello": "#/$defs/Hello",
         "leave_zone": "#/$defs/LeaveZone",
         "request_next_zone": "#/$defs/RequestNextZone",
         "set_creativity": "#/$defs/SetCreativity",
+        "slot_action": "#/$defs/SlotAction",
         "start_mock_campaign": "#/$defs/StartMockCampaign"
       },
       "propertyName": "type"
@@ -393,7 +405,7 @@
         "$ref": "#/$defs/BuyShopStock"
       },
       {
-        "$ref": "#/$defs/EquipEcho"
+        "$ref": "#/$defs/SlotAction"
       },
       {
         "$ref": "#/$defs/SetCreativity"
@@ -405,6 +417,380 @@
   },
   "server_message": {
     "$defs": {
+      "ActionComponent": {
+        "additionalProperties": false,
+        "description": "A verb on a slot. Exactly one primitive, by arity.",
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "action",
+            "title": "Kind",
+            "type": "string"
+          },
+          "slot": {
+            "enum": [
+              "echo_a",
+              "echo_b",
+              "mobility",
+              "utility"
+            ],
+            "title": "Slot",
+            "type": "string"
+          },
+          "cooldown": {
+            "maximum": 15.0,
+            "minimum": 0.15,
+            "title": "Cooldown",
+            "type": "number"
+          },
+          "primitive": {
+            "discriminator": {
+              "mapping": {
+                "air_dash": "#/$defs/AirDash",
+                "arc_lob": "#/$defs/ArcLob",
+                "beam_sustained": "#/$defs/BeamSustained",
+                "blink": "#/$defs/Blink",
+                "block": "#/$defs/Block",
+                "burst_fire": "#/$defs/BurstFire",
+                "charge_shot": "#/$defs/ChargeShot",
+                "cleanse": "#/$defs/Cleanse",
+                "dash": "#/$defs/Dash",
+                "double_jump": "#/$defs/DoubleJump",
+                "glide": "#/$defs/Glide",
+                "grapple_pull_target": "#/$defs/GrapplePullTarget",
+                "grapple_swing": "#/$defs/GrappleSwing",
+                "grapple_to_surface": "#/$defs/GrappleToSurface",
+                "heal_self": "#/$defs/HealSelf",
+                "hitscan_damage": "#/$defs/HitscanDamage",
+                "hover": "#/$defs/Hover",
+                "melee_swing": "#/$defs/MeleeSwing",
+                "melee_thrust": "#/$defs/MeleeThrust",
+                "parry": "#/$defs/Parry",
+                "place_marker": "#/$defs/PlaceMarker",
+                "projectile_damage": "#/$defs/ProjectileDamage",
+                "pull_pickup": "#/$defs/PullPickup",
+                "restore_resource": "#/$defs/RestoreResource",
+                "scan_mark": "#/$defs/ScanMark",
+                "shield": "#/$defs/Shield",
+                "slam_ground": "#/$defs/SlamGround",
+                "wall_kick": "#/$defs/WallKick"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/MeleeSwing"
+              },
+              {
+                "$ref": "#/$defs/MeleeThrust"
+              },
+              {
+                "$ref": "#/$defs/SlamGround"
+              },
+              {
+                "$ref": "#/$defs/HitscanDamage"
+              },
+              {
+                "$ref": "#/$defs/ProjectileDamage"
+              },
+              {
+                "$ref": "#/$defs/ArcLob"
+              },
+              {
+                "$ref": "#/$defs/BurstFire"
+              },
+              {
+                "$ref": "#/$defs/ChargeShot"
+              },
+              {
+                "$ref": "#/$defs/BeamSustained"
+              },
+              {
+                "$ref": "#/$defs/Dash"
+              },
+              {
+                "$ref": "#/$defs/AirDash"
+              },
+              {
+                "$ref": "#/$defs/DoubleJump"
+              },
+              {
+                "$ref": "#/$defs/WallKick"
+              },
+              {
+                "$ref": "#/$defs/Hover"
+              },
+              {
+                "$ref": "#/$defs/Glide"
+              },
+              {
+                "$ref": "#/$defs/Blink"
+              },
+              {
+                "$ref": "#/$defs/GrappleToSurface"
+              },
+              {
+                "$ref": "#/$defs/GrapplePullTarget"
+              },
+              {
+                "$ref": "#/$defs/GrappleSwing"
+              },
+              {
+                "$ref": "#/$defs/Shield"
+              },
+              {
+                "$ref": "#/$defs/Block"
+              },
+              {
+                "$ref": "#/$defs/Parry"
+              },
+              {
+                "$ref": "#/$defs/HealSelf"
+              },
+              {
+                "$ref": "#/$defs/Cleanse"
+              },
+              {
+                "$ref": "#/$defs/ScanMark"
+              },
+              {
+                "$ref": "#/$defs/RestoreResource"
+              },
+              {
+                "$ref": "#/$defs/PullPickup"
+              },
+              {
+                "$ref": "#/$defs/PlaceMarker"
+              }
+            ],
+            "title": "Primitive"
+          },
+          "modifiers": {
+            "default": [],
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "apply_status_on_hit": "#/$defs/ApplyStatusOnHit",
+                  "knockback_target": "#/$defs/KnockbackTarget",
+                  "recoil_self": "#/$defs/RecoilSelf"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/RecoilSelf"
+                },
+                {
+                  "$ref": "#/$defs/KnockbackTarget"
+                },
+                {
+                  "$ref": "#/$defs/ApplyStatusOnHit"
+                }
+              ]
+            },
+            "maxItems": 2,
+            "title": "Modifiers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "slot",
+          "cooldown",
+          "primitive"
+        ],
+        "title": "ActionComponent",
+        "type": "object"
+      },
+      "AffordanceComponent": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "affordance",
+            "title": "Kind",
+            "type": "string"
+          },
+          "tag": {
+            "enum": [
+              "grapple_anchor",
+              "breakable_wall",
+              "water_volume",
+              "rail",
+              "wind_volume",
+              "bounce_pad",
+              "moving_platform"
+            ],
+            "title": "Tag",
+            "type": "string"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "tag"
+        ],
+        "title": "AffordanceComponent",
+        "type": "object"
+      },
+      "AirDash": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "air_dash",
+            "title": "Type",
+            "type": "string"
+          },
+          "force": {
+            "maximum": 22,
+            "minimum": 4,
+            "title": "Force",
+            "type": "number"
+          },
+          "uses_per_airtime": {
+            "maximum": 3,
+            "minimum": 1,
+            "title": "Uses Per Airtime",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "force",
+          "uses_per_airtime"
+        ],
+        "title": "AirDash",
+        "type": "object"
+      },
+      "ApplyStatusOnHit": {
+        "additionalProperties": false,
+        "description": "How *Fire Flower* becomes an upgrade to a gun you already own.",
+        "properties": {
+          "type": {
+            "const": "apply_status_on_hit",
+            "title": "Type",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "burning",
+              "slowed",
+              "frozen",
+              "shocked",
+              "poisoned",
+              "marked",
+              "stunned",
+              "vulnerable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "duration": {
+            "maximum": 12,
+            "minimum": 0.5,
+            "title": "Duration",
+            "type": "number"
+          },
+          "magnitude": {
+            "maximum": 3.0,
+            "minimum": 0.05,
+            "title": "Magnitude",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "status",
+          "duration",
+          "magnitude"
+        ],
+        "title": "ApplyStatusOnHit",
+        "type": "object"
+      },
+      "ArcLob": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "arc_lob",
+            "title": "Type",
+            "type": "string"
+          },
+          "damage": {
+            "maximum": 45,
+            "minimum": 1,
+            "title": "Damage",
+            "type": "number"
+          },
+          "radius": {
+            "maximum": 6.0,
+            "minimum": 1.0,
+            "title": "Radius",
+            "type": "number"
+          },
+          "launch_force": {
+            "maximum": 30,
+            "minimum": 6,
+            "title": "Launch Force",
+            "type": "number"
+          },
+          "fuse": {
+            "maximum": 5.0,
+            "minimum": 0.4,
+            "title": "Fuse",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "damage",
+          "radius",
+          "launch_force",
+          "fuse"
+        ],
+        "title": "ArcLob",
+        "type": "object"
+      },
       "ArenaChamber": {
         "additionalProperties": false,
         "description": "Rectangular combat room. A boss room is an arena holding one brute.",
@@ -495,6 +881,102 @@
         "title": "ArenaChamber",
         "type": "object"
       },
+      "BeamSustained": {
+        "additionalProperties": false,
+        "description": "Continuous damage while held.\n\nAn unlimited beam is a movement contract rather than an ability, so this\nprimitive is only legal with a `powers` link to a resource. That rule is\nenforced by `mechanics.derive_mechanics`, where the links are known.",
+        "properties": {
+          "type": {
+            "const": "beam_sustained",
+            "title": "Type",
+            "type": "string"
+          },
+          "damage_per_second": {
+            "maximum": 45,
+            "minimum": 2,
+            "title": "Damage Per Second",
+            "type": "number"
+          },
+          "range": {
+            "maximum": 45,
+            "minimum": 5,
+            "title": "Range",
+            "type": "number"
+          },
+          "drain_per_second": {
+            "maximum": 60,
+            "minimum": 1,
+            "title": "Drain Per Second",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "damage_per_second",
+          "range",
+          "drain_per_second"
+        ],
+        "title": "BeamSustained",
+        "type": "object"
+      },
+      "Blink": {
+        "additionalProperties": false,
+        "description": "Instant translation along a validated ray to a surface hit.\n\nNever free-space: the runtime casts along aim, requires a hit, steps back\nfrom the surface by the player radius, and clearance-tests the landing\npoint. Free-space teleport is an out-of-bounds bug waiting to be written.",
+        "properties": {
+          "type": {
+            "const": "blink",
+            "title": "Type",
+            "type": "string"
+          },
+          "range": {
+            "maximum": 25,
+            "minimum": 3,
+            "title": "Range",
+            "type": "number"
+          },
+          "clearance": {
+            "default": 0.4,
+            "maximum": 1.5,
+            "minimum": 0.4,
+            "title": "Clearance",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "range"
+        ],
+        "title": "Blink",
+        "type": "object"
+      },
+      "Block": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "block",
+            "title": "Type",
+            "type": "string"
+          },
+          "reduction": {
+            "maximum": 0.9,
+            "minimum": 0.1,
+            "title": "Reduction",
+            "type": "number"
+          },
+          "drain_per_second": {
+            "maximum": 40,
+            "minimum": 1,
+            "title": "Drain Per Second",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "reduction",
+          "drain_per_second"
+        ],
+        "title": "Block",
+        "type": "object"
+      },
       "BridgeError": {
         "additionalProperties": false,
         "properties": {
@@ -541,8 +1023,8 @@
             "type": "string"
           },
           "protocol_version": {
-            "const": 7,
-            "default": 7,
+            "const": 8,
+            "default": 8,
             "title": "Protocol Version",
             "type": "integer"
           },
@@ -559,6 +1041,56 @@
         "title": "BridgeReady",
         "type": "object"
       },
+      "BurstFire": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "burst_fire",
+            "title": "Type",
+            "type": "string"
+          },
+          "damage": {
+            "maximum": 18,
+            "minimum": 1,
+            "title": "Damage",
+            "type": "number"
+          },
+          "shots": {
+            "maximum": 8,
+            "minimum": 2,
+            "title": "Shots",
+            "type": "integer"
+          },
+          "interval": {
+            "maximum": 0.4,
+            "minimum": 0.04,
+            "title": "Interval",
+            "type": "number"
+          },
+          "spread_degrees": {
+            "maximum": 20,
+            "minimum": 0,
+            "title": "Spread Degrees",
+            "type": "number"
+          },
+          "range": {
+            "maximum": 60,
+            "minimum": 5,
+            "title": "Range",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "damage",
+          "shots",
+          "interval",
+          "spread_degrees",
+          "range"
+        ],
+        "title": "BurstFire",
+        "type": "object"
+      },
       "CampaignSnapshot": {
         "additionalProperties": false,
         "properties": {
@@ -569,8 +1101,8 @@
             "type": "string"
           },
           "protocol_version": {
-            "const": 7,
-            "default": 7,
+            "const": 8,
+            "default": 8,
             "title": "Protocol Version",
             "type": "integer"
           },
@@ -697,39 +1229,19 @@
             "title": "Static Glitch Units",
             "type": "integer"
           },
-          "echoes": {
+          "interpretations": {
             "default": [],
             "items": {
-              "discriminator": {
-                "mapping": {
-                  "passive": "#/$defs/PassiveEcho",
-                  "primary": "#/$defs/PrimaryEcho"
-                },
-                "propertyName": "activation"
-              },
-              "oneOf": [
-                {
-                  "$ref": "#/$defs/PrimaryEcho"
-                },
-                {
-                  "$ref": "#/$defs/PassiveEcho"
-                }
-              ]
+              "$ref": "#/$defs/EchoInterpretation"
             },
-            "title": "Echoes",
+            "title": "Interpretations",
             "type": "array"
           },
-          "equipped_echo_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Equipped Echo Id"
+          "mechanics": {
+            "$ref": "#/$defs/Mechanics"
+          },
+          "slots": {
+            "$ref": "#/$defs/SlotAssignment"
           },
           "active_zone": {
             "anyOf": [
@@ -791,6 +1303,173 @@
           "coins_available"
         ],
         "title": "CampaignSnapshot",
+        "type": "object"
+      },
+      "ChargeShot": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "charge_shot",
+            "title": "Type",
+            "type": "string"
+          },
+          "min_damage": {
+            "maximum": 20,
+            "minimum": 1,
+            "title": "Min Damage",
+            "type": "number"
+          },
+          "max_damage": {
+            "maximum": 60,
+            "minimum": 1,
+            "title": "Max Damage",
+            "type": "number"
+          },
+          "charge_time": {
+            "maximum": 3.0,
+            "minimum": 0.3,
+            "title": "Charge Time",
+            "type": "number"
+          },
+          "speed": {
+            "maximum": 60,
+            "minimum": 10,
+            "title": "Speed",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "min_damage",
+          "max_damage",
+          "charge_time",
+          "speed"
+        ],
+        "title": "ChargeShot",
+        "type": "object"
+      },
+      "Cleanse": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "cleanse",
+            "title": "Type",
+            "type": "string"
+          },
+          "count": {
+            "maximum": 4,
+            "minimum": 1,
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "count"
+        ],
+        "title": "Cleanse",
+        "type": "object"
+      },
+      "ComponentProvenance": {
+        "additionalProperties": false,
+        "description": "Which AP item is responsible for which part of a component.\n\nNever deleted, never rewritten. A merged resource carries both sides'\nprovenance, in sequence order, so neither source item stops being\ncredited.",
+        "properties": {
+          "interpretation_seq": {
+            "minimum": 0,
+            "title": "Interpretation Seq",
+            "type": "integer"
+          },
+          "source_location_id": {
+            "title": "Source Location Id",
+            "type": "integer"
+          },
+          "source_item_name": {
+            "title": "Source Item Name",
+            "type": "string"
+          },
+          "source_game": {
+            "title": "Source Game",
+            "type": "string"
+          },
+          "source_recipient_name": {
+            "title": "Source Recipient Name",
+            "type": "string"
+          },
+          "operation": {
+            "enum": [
+              "create",
+              "upgrade",
+              "modify",
+              "link",
+              "merge"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 96,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "interpretation_seq",
+          "source_location_id",
+          "source_item_name",
+          "source_game",
+          "source_recipient_name",
+          "operation"
+        ],
+        "title": "ComponentProvenance",
+        "type": "object"
+      },
+      "Condition": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "enum": [
+              "resource_at_least",
+              "resource_at_most",
+              "hp_below",
+              "hp_above",
+              "moving_backward",
+              "airborne",
+              "grounded",
+              "speed_above",
+              "enemy_within",
+              "slot_is",
+              "zone_is_finale",
+              "status_active"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Subject"
+          },
+          "value": {
+            "default": 0.0,
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "Condition",
         "type": "object"
       },
       "CorridorChamber": {
@@ -867,6 +1546,60 @@
         "title": "CorridorChamber",
         "type": "object"
       },
+      "CreateOperation": {
+        "additionalProperties": false,
+        "properties": {
+          "op": {
+            "const": "create",
+            "title": "Op",
+            "type": "string"
+          },
+          "component": {
+            "discriminator": {
+              "mapping": {
+                "action": "#/$defs/ActionComponent",
+                "affordance": "#/$defs/AffordanceComponent",
+                "info": "#/$defs/InfoComponent",
+                "resource": "#/$defs/ResourceComponent",
+                "rule": "#/$defs/RuleComponent",
+                "status": "#/$defs/StatusComponent",
+                "trait": "#/$defs/TraitComponent"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ActionComponent"
+              },
+              {
+                "$ref": "#/$defs/TraitComponent"
+              },
+              {
+                "$ref": "#/$defs/ResourceComponent"
+              },
+              {
+                "$ref": "#/$defs/RuleComponent"
+              },
+              {
+                "$ref": "#/$defs/StatusComponent"
+              },
+              {
+                "$ref": "#/$defs/AffordanceComponent"
+              },
+              {
+                "$ref": "#/$defs/InfoComponent"
+              }
+            ],
+            "title": "Component"
+          }
+        },
+        "required": [
+          "op",
+          "component"
+        ],
+        "title": "CreateOperation",
+        "type": "object"
+      },
       "Dash": {
         "additionalProperties": false,
         "properties": {
@@ -887,6 +1620,255 @@
           "force"
         ],
         "title": "Dash",
+        "type": "object"
+      },
+      "DoubleJump": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "double_jump",
+            "title": "Type",
+            "type": "string"
+          },
+          "force": {
+            "maximum": 11.2,
+            "minimum": 4.8,
+            "title": "Force",
+            "type": "number"
+          },
+          "extra_jumps": {
+            "maximum": 2,
+            "minimum": 1,
+            "title": "Extra Jumps",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "force",
+          "extra_jumps"
+        ],
+        "title": "DoubleJump",
+        "type": "object"
+      },
+      "EchoInterpretation": {
+        "additionalProperties": false,
+        "description": "One foreign item, read by Epsilon, expressed as operations.\n\n`interpretation_seq` is the whole ordering story. It is assigned once, at\ngrant time, and never recomputed \u2014 see `mechanics.derive_mechanics` and\nECHOES.md 2.1 for why sorting by `source_location_id` is a corrupt fold.",
+        "properties": {
+          "schema_version": {
+            "const": 8,
+            "default": 8,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "echo_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^echo_\\d+$",
+            "title": "Echo Id",
+            "type": "string"
+          },
+          "interpretation_seq": {
+            "minimum": 0,
+            "title": "Interpretation Seq",
+            "type": "integer"
+          },
+          "source_location_id": {
+            "maximum": 89100030,
+            "minimum": 89100001,
+            "title": "Source Location Id",
+            "type": "integer"
+          },
+          "source_item_name": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Item Name",
+            "type": "string"
+          },
+          "source_game": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Game",
+            "type": "string"
+          },
+          "source_recipient_name": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Recipient Name",
+            "type": "string"
+          },
+          "concepts": {
+            "default": [],
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Concepts",
+            "type": "array"
+          },
+          "mode": {
+            "default": "literal",
+            "enum": [
+              "literal",
+              "mechanical",
+              "conceptual",
+              "systemic"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "tags": {
+            "default": [],
+            "items": {
+              "maxLength": 24,
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Tags",
+            "type": "array"
+          },
+          "operations": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "create": "#/$defs/CreateOperation",
+                  "link": "#/$defs/LinkOperation",
+                  "merge": "#/$defs/MergeOperation",
+                  "modify": "#/$defs/ModifyOperation",
+                  "upgrade": "#/$defs/UpgradeOperation"
+                },
+                "propertyName": "op"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/CreateOperation"
+                },
+                {
+                  "$ref": "#/$defs/UpgradeOperation"
+                },
+                {
+                  "$ref": "#/$defs/ModifyOperation"
+                },
+                {
+                  "$ref": "#/$defs/LinkOperation"
+                },
+                {
+                  "$ref": "#/$defs/MergeOperation"
+                }
+              ]
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Operations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "echo_id",
+          "interpretation_seq",
+          "source_location_id",
+          "source_item_name",
+          "source_game",
+          "source_recipient_name",
+          "display_name",
+          "description",
+          "operations"
+        ],
+        "title": "EchoInterpretation",
+        "type": "object"
+      },
+      "Effect": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "enum": [
+              "resource_add",
+              "heal",
+              "grant_shield",
+              "impulse_self",
+              "trait_pulse",
+              "damage_around",
+              "fire_projectile",
+              "apply_status",
+              "reset_action_cooldown",
+              "refill_resource",
+              "grant_local_reward"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Subject"
+          },
+          "amount": {
+            "default": 0.0,
+            "maximum": 200.0,
+            "minimum": -200.0,
+            "title": "Amount",
+            "type": "number"
+          },
+          "duration": {
+            "default": 0.0,
+            "maximum": 60.0,
+            "minimum": 0.0,
+            "title": "Duration",
+            "type": "number"
+          },
+          "radius": {
+            "default": 0.0,
+            "maximum": 20.0,
+            "minimum": 0.0,
+            "title": "Radius",
+            "type": "number"
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "enum": [
+                  "aim",
+                  "forward",
+                  "backward",
+                  "up",
+                  "velocity"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Direction"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "Effect",
         "type": "object"
       },
       "EnemyGroup": {
@@ -913,6 +1895,107 @@
           "count"
         ],
         "title": "EnemyGroup",
+        "type": "object"
+      },
+      "Glide": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "glide",
+            "title": "Type",
+            "type": "string"
+          },
+          "fall_speed": {
+            "maximum": 6.0,
+            "minimum": 0.5,
+            "title": "Fall Speed",
+            "type": "number"
+          },
+          "forward_speed": {
+            "maximum": 16,
+            "minimum": 2,
+            "title": "Forward Speed",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "fall_speed",
+          "forward_speed"
+        ],
+        "title": "Glide",
+        "type": "object"
+      },
+      "GrapplePullTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "grapple_pull_target",
+            "title": "Type",
+            "type": "string"
+          },
+          "range": {
+            "maximum": 35,
+            "minimum": 5,
+            "title": "Range",
+            "type": "number"
+          },
+          "pull_force": {
+            "maximum": 25,
+            "minimum": 4,
+            "title": "Pull Force",
+            "type": "number"
+          },
+          "max_target_hp": {
+            "maximum": 60,
+            "minimum": 1,
+            "title": "Max Target Hp",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "range",
+          "pull_force",
+          "max_target_hp"
+        ],
+        "title": "GrapplePullTarget",
+        "type": "object"
+      },
+      "GrappleSwing": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "grapple_swing",
+            "title": "Type",
+            "type": "string"
+          },
+          "range": {
+            "maximum": 35,
+            "minimum": 5,
+            "title": "Range",
+            "type": "number"
+          },
+          "tether_force": {
+            "maximum": 25,
+            "minimum": 4,
+            "title": "Tether Force",
+            "type": "number"
+          },
+          "max_duration": {
+            "maximum": 6.0,
+            "minimum": 0.5,
+            "title": "Max Duration",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "range",
+          "tether_force",
+          "max_duration"
+        ],
+        "title": "GrappleSwing",
         "type": "object"
       },
       "GrappleToSurface": {
@@ -1007,6 +2090,43 @@
           "range"
         ],
         "title": "HitscanDamage",
+        "type": "object"
+      },
+      "Hover": {
+        "additionalProperties": false,
+        "description": "Reduced gravity while held. Requires a `powers` link, like the beam.",
+        "properties": {
+          "type": {
+            "const": "hover",
+            "title": "Type",
+            "type": "string"
+          },
+          "gravity_multiplier": {
+            "maximum": 0.6,
+            "minimum": 0.0,
+            "title": "Gravity Multiplier",
+            "type": "number"
+          },
+          "drain_per_second": {
+            "maximum": 60,
+            "minimum": 1,
+            "title": "Drain Per Second",
+            "type": "number"
+          },
+          "max_duration": {
+            "maximum": 8.0,
+            "minimum": 0.5,
+            "title": "Max Duration",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "gravity_multiplier",
+          "drain_per_second",
+          "max_duration"
+        ],
+        "title": "Hover",
         "type": "object"
       },
       "HubStatus": {
@@ -1122,6 +2242,60 @@
         "title": "HubStatus",
         "type": "object"
       },
+      "InfoComponent": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "info",
+            "title": "Kind",
+            "type": "string"
+          },
+          "readout": {
+            "enum": [
+              "enemy_health",
+              "enemy_radar",
+              "threat_direction",
+              "secret_ping",
+              "affordance_highlight",
+              "trajectory_preview",
+              "damage_numbers",
+              "resource_forecast",
+              "speedometer",
+              "challenge_timer"
+            ],
+            "title": "Readout",
+            "type": "string"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "readout"
+        ],
+        "title": "InfoComponent",
+        "type": "object"
+      },
       "KnockbackTarget": {
         "additionalProperties": false,
         "properties": {
@@ -1144,48 +2318,312 @@
         "title": "KnockbackTarget",
         "type": "object"
       },
-      "ModifyGravity": {
+      "LinkEdge": {
         "additionalProperties": false,
         "properties": {
-          "type": {
-            "const": "modify_gravity",
-            "title": "Type",
+          "link": {
+            "enum": [
+              "powers",
+              "fills",
+              "scales",
+              "gates"
+            ],
+            "title": "Link",
             "type": "string"
           },
-          "multiplier": {
-            "maximum": 1.0,
-            "minimum": 0.35,
-            "title": "Multiplier",
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          },
+          "strength": {
+            "title": "Strength",
             "type": "number"
           }
         },
         "required": [
-          "type",
-          "multiplier"
+          "link",
+          "source",
+          "target",
+          "strength"
         ],
-        "title": "ModifyGravity",
+        "title": "LinkEdge",
         "type": "object"
       },
-      "ModifySpeed": {
+      "LinkOperation": {
+        "additionalProperties": false,
+        "properties": {
+          "op": {
+            "const": "link",
+            "title": "Op",
+            "type": "string"
+          },
+          "link": {
+            "enum": [
+              "powers",
+              "fills",
+              "scales",
+              "gates"
+            ],
+            "title": "Link",
+            "type": "string"
+          },
+          "source": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Source",
+            "type": "string"
+          },
+          "target": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Target",
+            "type": "string"
+          },
+          "strength": {
+            "default": 1.0,
+            "maximum": 200.0,
+            "minimum": 0.0,
+            "title": "Strength",
+            "type": "number"
+          }
+        },
+        "required": [
+          "op",
+          "link",
+          "source",
+          "target"
+        ],
+        "title": "LinkOperation",
+        "type": "object"
+      },
+      "Mechanics": {
+        "additionalProperties": false,
+        "description": "Everything the campaign's interpretations add up to.",
+        "properties": {
+          "owned": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/OwnedComponent"
+            },
+            "title": "Owned",
+            "type": "array"
+          },
+          "aliases": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Aliases",
+            "type": "array"
+          },
+          "links": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/LinkEdge"
+            },
+            "title": "Links",
+            "type": "array"
+          }
+        },
+        "title": "Mechanics",
+        "type": "object"
+      },
+      "MeleeSwing": {
         "additionalProperties": false,
         "properties": {
           "type": {
-            "const": "modify_speed",
+            "const": "melee_swing",
             "title": "Type",
             "type": "string"
           },
-          "multiplier": {
-            "maximum": 1.6,
-            "minimum": 0.9,
-            "title": "Multiplier",
+          "damage": {
+            "maximum": 40,
+            "minimum": 1,
+            "title": "Damage",
+            "type": "number"
+          },
+          "reach": {
+            "maximum": 3.5,
+            "minimum": 1.0,
+            "title": "Reach",
+            "type": "number"
+          },
+          "arc_degrees": {
+            "maximum": 160,
+            "minimum": 20,
+            "title": "Arc Degrees",
             "type": "number"
           }
         },
         "required": [
           "type",
-          "multiplier"
+          "damage",
+          "reach",
+          "arc_degrees"
         ],
-        "title": "ModifySpeed",
+        "title": "MeleeSwing",
+        "type": "object"
+      },
+      "MeleeThrust": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "melee_thrust",
+            "title": "Type",
+            "type": "string"
+          },
+          "damage": {
+            "maximum": 55,
+            "minimum": 1,
+            "title": "Damage",
+            "type": "number"
+          },
+          "reach": {
+            "maximum": 5.0,
+            "minimum": 1.5,
+            "title": "Reach",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "damage",
+          "reach"
+        ],
+        "title": "MeleeThrust",
+        "type": "object"
+      },
+      "MergeOperation": {
+        "additionalProperties": false,
+        "description": "Two economies become one.\n\nThe only operation that can change what an id *means*, so it carries the\nmost rules \u2014 the rest are enforced by the fold, where the alias table and\nthe live component set are both known.",
+        "properties": {
+          "op": {
+            "const": "merge",
+            "title": "Op",
+            "type": "string"
+          },
+          "absorbed": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Absorbed",
+            "type": "string"
+          },
+          "survivor": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Survivor",
+            "type": "string"
+          },
+          "capacity": {
+            "default": "sum",
+            "enum": [
+              "sum",
+              "keep_survivor"
+            ],
+            "title": "Capacity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "absorbed",
+          "survivor"
+        ],
+        "title": "MergeOperation",
+        "type": "object"
+      },
+      "ModifyOperation": {
+        "additionalProperties": false,
+        "description": "A new capability on something owned, rather than a bigger number.",
+        "properties": {
+          "op": {
+            "const": "modify",
+            "title": "Op",
+            "type": "string"
+          },
+          "target": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Target",
+            "type": "string"
+          },
+          "add_modifier": {
+            "anyOf": [
+              {
+                "discriminator": {
+                  "mapping": {
+                    "apply_status_on_hit": "#/$defs/ApplyStatusOnHit",
+                    "knockback_target": "#/$defs/KnockbackTarget",
+                    "recoil_self": "#/$defs/RecoilSelf"
+                  },
+                  "propertyName": "type"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/RecoilSelf"
+                  },
+                  {
+                    "$ref": "#/$defs/KnockbackTarget"
+                  },
+                  {
+                    "$ref": "#/$defs/ApplyStatusOnHit"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Add Modifier"
+          },
+          "add_effect": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Effect"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "add_condition": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Condition"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "op",
+          "target"
+        ],
+        "title": "ModifyOperation",
         "type": "object"
       },
       "Notification": {
@@ -1266,119 +2704,90 @@
         "title": "Notification",
         "type": "object"
       },
-      "PassiveEcho": {
+      "OwnedComponent": {
         "additionalProperties": false,
-        "description": "Applies while equipped. RMB does nothing. No cooldown field exists.",
+        "description": "A folded component plus the display facts a client needs.\n\nThe bridge folds; the client never does. Re-implementing the fold in\nGDScript would be a second source of truth for the one thing that must be\nidentical everywhere.",
         "properties": {
-          "schema_version": {
-            "const": 7,
-            "default": 7,
-            "title": "Schema Version",
-            "type": "integer"
-          },
-          "echo_id": {
-            "maxLength": 32,
-            "minLength": 1,
-            "pattern": "^echo_\\d+$",
-            "title": "Echo Id",
-            "type": "string"
-          },
-          "source_location_id": {
-            "maximum": 89100030,
-            "minimum": 89100001,
-            "title": "Source Location Id",
-            "type": "integer"
-          },
-          "source_item_name": {
-            "maxLength": 96,
-            "minLength": 1,
-            "title": "Source Item Name",
-            "type": "string"
-          },
-          "source_game": {
-            "maxLength": 96,
-            "minLength": 1,
-            "title": "Source Game",
-            "type": "string"
-          },
-          "source_recipient_name": {
-            "maxLength": 96,
-            "minLength": 1,
-            "title": "Source Recipient Name",
-            "type": "string"
-          },
-          "display_name": {
-            "maxLength": 160,
-            "minLength": 1,
-            "title": "Display Name",
-            "type": "string"
-          },
-          "description": {
-            "maxLength": 160,
-            "minLength": 1,
-            "title": "Description",
-            "type": "string"
-          },
-          "tags": {
-            "default": [],
-            "items": {
-              "maxLength": 24,
-              "type": "string"
-            },
-            "maxItems": 6,
-            "title": "Tags",
-            "type": "array"
-          },
-          "activation": {
-            "const": "passive",
-            "title": "Activation",
-            "type": "string"
-          },
-          "archetype": {
-            "enum": [
-              "passive",
-              "mobility"
-            ],
-            "title": "Archetype",
-            "type": "string"
-          },
-          "effects": {
-            "items": {
-              "discriminator": {
-                "mapping": {
-                  "modify_gravity": "#/$defs/ModifyGravity",
-                  "modify_speed": "#/$defs/ModifySpeed"
-                },
-                "propertyName": "type"
+          "component": {
+            "discriminator": {
+              "mapping": {
+                "action": "#/$defs/ActionComponent",
+                "affordance": "#/$defs/AffordanceComponent",
+                "info": "#/$defs/InfoComponent",
+                "resource": "#/$defs/ResourceComponent",
+                "rule": "#/$defs/RuleComponent",
+                "status": "#/$defs/StatusComponent",
+                "trait": "#/$defs/TraitComponent"
               },
-              "oneOf": [
-                {
-                  "$ref": "#/$defs/ModifyGravity"
-                },
-                {
-                  "$ref": "#/$defs/ModifySpeed"
-                }
-              ]
+              "propertyName": "kind"
             },
-            "maxItems": 2,
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ActionComponent"
+              },
+              {
+                "$ref": "#/$defs/TraitComponent"
+              },
+              {
+                "$ref": "#/$defs/ResourceComponent"
+              },
+              {
+                "$ref": "#/$defs/RuleComponent"
+              },
+              {
+                "$ref": "#/$defs/StatusComponent"
+              },
+              {
+                "$ref": "#/$defs/AffordanceComponent"
+              },
+              {
+                "$ref": "#/$defs/InfoComponent"
+              }
+            ],
+            "title": "Component"
+          },
+          "mk": {
+            "minimum": 1,
+            "title": "Mk",
+            "type": "integer"
+          },
+          "provenance": {
+            "items": {
+              "$ref": "#/$defs/ComponentProvenance"
+            },
             "minItems": 1,
-            "title": "Effects",
+            "title": "Provenance",
             "type": "array"
           }
         },
         "required": [
-          "echo_id",
-          "source_location_id",
-          "source_item_name",
-          "source_game",
-          "source_recipient_name",
-          "display_name",
-          "description",
-          "activation",
-          "archetype",
-          "effects"
+          "component",
+          "mk",
+          "provenance"
         ],
-        "title": "PassiveEcho",
+        "title": "OwnedComponent",
+        "type": "object"
+      },
+      "Parry": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "parry",
+            "title": "Type",
+            "type": "string"
+          },
+          "window": {
+            "maximum": 0.6,
+            "minimum": 0.08,
+            "title": "Window",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "window"
+        ],
+        "title": "Parry",
         "type": "object"
       },
       "PendingCheck": {
@@ -1418,6 +2827,28 @@
           "source"
         ],
         "title": "PendingCheck",
+        "type": "object"
+      },
+      "PlaceMarker": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "place_marker",
+            "title": "Type",
+            "type": "string"
+          },
+          "duration": {
+            "maximum": 300,
+            "minimum": 5,
+            "title": "Duration",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "duration"
+        ],
+        "title": "PlaceMarker",
         "type": "object"
       },
       "PlatformPathChamber": {
@@ -1507,163 +2938,6 @@
         "title": "PlatformPathChamber",
         "type": "object"
       },
-      "PrimaryEcho": {
-        "additionalProperties": false,
-        "description": "Activated with RMB, subject to cooldown. LMB stays Static Pulse.",
-        "properties": {
-          "schema_version": {
-            "const": 7,
-            "default": 7,
-            "title": "Schema Version",
-            "type": "integer"
-          },
-          "echo_id": {
-            "maxLength": 32,
-            "minLength": 1,
-            "pattern": "^echo_\\d+$",
-            "title": "Echo Id",
-            "type": "string"
-          },
-          "source_location_id": {
-            "maximum": 89100030,
-            "minimum": 89100001,
-            "title": "Source Location Id",
-            "type": "integer"
-          },
-          "source_item_name": {
-            "maxLength": 96,
-            "minLength": 1,
-            "title": "Source Item Name",
-            "type": "string"
-          },
-          "source_game": {
-            "maxLength": 96,
-            "minLength": 1,
-            "title": "Source Game",
-            "type": "string"
-          },
-          "source_recipient_name": {
-            "maxLength": 96,
-            "minLength": 1,
-            "title": "Source Recipient Name",
-            "type": "string"
-          },
-          "display_name": {
-            "maxLength": 160,
-            "minLength": 1,
-            "title": "Display Name",
-            "type": "string"
-          },
-          "description": {
-            "maxLength": 160,
-            "minLength": 1,
-            "title": "Description",
-            "type": "string"
-          },
-          "tags": {
-            "default": [],
-            "items": {
-              "maxLength": 24,
-              "type": "string"
-            },
-            "maxItems": 6,
-            "title": "Tags",
-            "type": "array"
-          },
-          "activation": {
-            "const": "primary",
-            "title": "Activation",
-            "type": "string"
-          },
-          "archetype": {
-            "enum": [
-              "weapon",
-              "tool",
-              "mobility"
-            ],
-            "title": "Archetype",
-            "type": "string"
-          },
-          "cooldown": {
-            "maximum": 15.0,
-            "minimum": 0.15,
-            "title": "Cooldown",
-            "type": "number"
-          },
-          "initiator": {
-            "discriminator": {
-              "mapping": {
-                "dash": "#/$defs/Dash",
-                "grapple_to_surface": "#/$defs/GrappleToSurface",
-                "heal_self": "#/$defs/HealSelf",
-                "hitscan_damage": "#/$defs/HitscanDamage",
-                "projectile_damage": "#/$defs/ProjectileDamage",
-                "shield": "#/$defs/Shield"
-              },
-              "propertyName": "type"
-            },
-            "oneOf": [
-              {
-                "$ref": "#/$defs/HitscanDamage"
-              },
-              {
-                "$ref": "#/$defs/ProjectileDamage"
-              },
-              {
-                "$ref": "#/$defs/Dash"
-              },
-              {
-                "$ref": "#/$defs/GrappleToSurface"
-              },
-              {
-                "$ref": "#/$defs/HealSelf"
-              },
-              {
-                "$ref": "#/$defs/Shield"
-              }
-            ],
-            "title": "Initiator"
-          },
-          "modifiers": {
-            "default": [],
-            "items": {
-              "discriminator": {
-                "mapping": {
-                  "knockback_target": "#/$defs/KnockbackTarget",
-                  "recoil_self": "#/$defs/RecoilSelf"
-                },
-                "propertyName": "type"
-              },
-              "oneOf": [
-                {
-                  "$ref": "#/$defs/RecoilSelf"
-                },
-                {
-                  "$ref": "#/$defs/KnockbackTarget"
-                }
-              ]
-            },
-            "maxItems": 2,
-            "title": "Modifiers",
-            "type": "array"
-          }
-        },
-        "required": [
-          "echo_id",
-          "source_location_id",
-          "source_item_name",
-          "source_game",
-          "source_recipient_name",
-          "display_name",
-          "description",
-          "activation",
-          "archetype",
-          "cooldown",
-          "initiator"
-        ],
-        "title": "PrimaryEcho",
-        "type": "object"
-      },
       "ProjectileDamage": {
         "additionalProperties": false,
         "properties": {
@@ -1689,6 +2963,20 @@
             "minimum": 0.5,
             "title": "Lifetime",
             "type": "number"
+          },
+          "gravity_scale": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Gravity Scale",
+            "type": "number"
+          },
+          "bounces": {
+            "default": 0,
+            "maximum": 4,
+            "minimum": 0,
+            "title": "Bounces",
+            "type": "integer"
           }
         },
         "required": [
@@ -1698,6 +2986,28 @@
           "lifetime"
         ],
         "title": "ProjectileDamage",
+        "type": "object"
+      },
+      "PullPickup": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "pull_pickup",
+            "title": "Type",
+            "type": "string"
+          },
+          "radius": {
+            "maximum": 20,
+            "minimum": 2,
+            "title": "Radius",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "radius"
+        ],
+        "title": "PullPickup",
         "type": "object"
       },
       "RecoilSelf": {
@@ -1720,6 +3030,282 @@
           "force"
         ],
         "title": "RecoilSelf",
+        "type": "object"
+      },
+      "ResourceComponent": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "resource",
+            "title": "Kind",
+            "type": "string"
+          },
+          "max_value": {
+            "exclusiveMinimum": 0,
+            "maximum": 1000,
+            "title": "Max Value",
+            "type": "number"
+          },
+          "initial_fraction": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Initial Fraction",
+            "type": "number"
+          },
+          "regen_per_second": {
+            "default": 0.0,
+            "maximum": 100.0,
+            "minimum": -100.0,
+            "title": "Regen Per Second",
+            "type": "number"
+          },
+          "regen_delay": {
+            "default": 0.0,
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Regen Delay",
+            "type": "number"
+          },
+          "presentation": {
+            "enum": [
+              "bar",
+              "pips",
+              "counter"
+            ],
+            "title": "Presentation",
+            "type": "string"
+          },
+          "pip_count": {
+            "anyOf": [
+              {
+                "maximum": 12,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Pip Count"
+          },
+          "palette_color": {
+            "enum": [
+              "moss",
+              "signal",
+              "ember",
+              "violet",
+              "bone",
+              "rust",
+              "tide",
+              "sulphur"
+            ],
+            "title": "Palette Color",
+            "type": "string"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "max_value",
+          "initial_fraction",
+          "presentation",
+          "palette_color"
+        ],
+        "title": "ResourceComponent",
+        "type": "object"
+      },
+      "ResourceCost": {
+        "additionalProperties": false,
+        "properties": {
+          "resource_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "amount": {
+            "exclusiveMinimum": 0,
+            "maximum": 200,
+            "title": "Amount",
+            "type": "number"
+          }
+        },
+        "required": [
+          "resource_id",
+          "amount"
+        ],
+        "title": "ResourceCost",
+        "type": "object"
+      },
+      "RestoreResource": {
+        "additionalProperties": false,
+        "description": "The primitive that turns a consumable into a button.\n\nIt names no resource: the `fills` link says which one, so a later\ninterpretation can point it somewhere else without rewriting this one.",
+        "properties": {
+          "type": {
+            "const": "restore_resource",
+            "title": "Type",
+            "type": "string"
+          },
+          "amount": {
+            "maximum": 200,
+            "minimum": 1,
+            "title": "Amount",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "amount"
+        ],
+        "title": "RestoreResource",
+        "type": "object"
+      },
+      "RuleComponent": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "rule",
+            "title": "Kind",
+            "type": "string"
+          },
+          "event": {
+            "enum": [
+              "zone_enter",
+              "chamber_enter",
+              "jump",
+              "land",
+              "dash_end",
+              "kill",
+              "damage_dealt",
+              "damage_taken",
+              "action_used",
+              "action_ready",
+              "parry_success",
+              "check_claimed",
+              "tick_1hz",
+              "resource_full",
+              "resource_empty",
+              "low_health",
+              "status_applied"
+            ],
+            "title": "Event",
+            "type": "string"
+          },
+          "conditions": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/Condition"
+            },
+            "maxItems": 3,
+            "title": "Conditions",
+            "type": "array"
+          },
+          "costs": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ResourceCost"
+            },
+            "maxItems": 2,
+            "title": "Costs",
+            "type": "array"
+          },
+          "effects": {
+            "items": {
+              "$ref": "#/$defs/Effect"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Effects",
+            "type": "array"
+          },
+          "cooldown": {
+            "maximum": 30.0,
+            "minimum": 0.1,
+            "title": "Cooldown",
+            "type": "number"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "event",
+          "effects",
+          "cooldown"
+        ],
+        "title": "RuleComponent",
+        "type": "object"
+      },
+      "ScanMark": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "scan_mark",
+            "title": "Type",
+            "type": "string"
+          },
+          "range": {
+            "maximum": 60,
+            "minimum": 5,
+            "title": "Range",
+            "type": "number"
+          },
+          "duration": {
+            "maximum": 30,
+            "minimum": 2,
+            "title": "Duration",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "range",
+          "duration"
+        ],
+        "title": "ScanMark",
         "type": "object"
       },
       "ScoutedLocation": {
@@ -1923,6 +3509,181 @@
         "title": "ShopStockItem",
         "type": "object"
       },
+      "SlamGround": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "slam_ground",
+            "title": "Type",
+            "type": "string"
+          },
+          "damage": {
+            "maximum": 45,
+            "minimum": 1,
+            "title": "Damage",
+            "type": "number"
+          },
+          "radius": {
+            "maximum": 7.0,
+            "minimum": 1.5,
+            "title": "Radius",
+            "type": "number"
+          },
+          "descent_force": {
+            "maximum": 30,
+            "minimum": 4,
+            "title": "Descent Force",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "damage",
+          "radius",
+          "descent_force"
+        ],
+        "title": "SlamGround",
+        "type": "object"
+      },
+      "SlotAssignment": {
+        "additionalProperties": false,
+        "description": "Which owned Action sits in each of the four slots.\n\nFour named fields rather than a dict: the slot grammar belongs to the\ngame, not to generation, so it is structural. Epsilon assigns an Action\na slot *category*; the player chooses which owned Action fills it.\nLMB is not here at all \u2014 Static Pulse is never replaced.",
+        "properties": {
+          "echo_a": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Echo A"
+          },
+          "echo_b": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Echo B"
+          },
+          "mobility": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Mobility"
+          },
+          "utility": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Utility"
+          }
+        },
+        "title": "SlotAssignment",
+        "type": "object"
+      },
+      "StatusComponent": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "status",
+            "title": "Kind",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "burning",
+              "slowed",
+              "frozen",
+              "shocked",
+              "poisoned",
+              "marked",
+              "stunned",
+              "vulnerable",
+              "empowered",
+              "low_profile",
+              "haste",
+              "regenerating"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "target": {
+            "enum": [
+              "self",
+              "enemy"
+            ],
+            "title": "Target",
+            "type": "string"
+          },
+          "duration": {
+            "maximum": 30.0,
+            "minimum": 0.5,
+            "title": "Duration",
+            "type": "number"
+          },
+          "magnitude": {
+            "maximum": 3.0,
+            "minimum": 0.05,
+            "title": "Magnitude",
+            "type": "number"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "status",
+          "target",
+          "duration",
+          "magnitude"
+        ],
+        "title": "StatusComponent",
+        "type": "object"
+      },
       "TowerChamber": {
         "additionalProperties": false,
         "description": "Vertical traversal. The template always emits a base-movement route.",
@@ -1999,6 +3760,94 @@
         "title": "TowerChamber",
         "type": "object"
       },
+      "TraitComponent": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "trait",
+            "title": "Kind",
+            "type": "string"
+          },
+          "stat": {
+            "enum": [
+              "move_speed",
+              "jump_height",
+              "gravity",
+              "air_control",
+              "ground_friction",
+              "damage_dealt",
+              "damage_taken",
+              "knockback_resist",
+              "regen"
+            ],
+            "title": "Stat",
+            "type": "string"
+          },
+          "multiplier": {
+            "maximum": 4.0,
+            "minimum": 0.1,
+            "title": "Multiplier",
+            "type": "number"
+          },
+          "scaled_by": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Scaled By"
+          },
+          "requires_equipped": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "minLength": 5,
+                "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Requires Equipped"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "stat",
+          "multiplier"
+        ],
+        "title": "TraitComponent",
+        "type": "object"
+      },
       "TreasureRoomChamber": {
         "additionalProperties": false,
         "description": "Small safe reward room. Exactly one reward, never enemies.",
@@ -2047,6 +3896,87 @@
           "type"
         ],
         "title": "TreasureRoomChamber",
+        "type": "object"
+      },
+      "UpgradeOperation": {
+        "additionalProperties": false,
+        "description": "Numeric growth of something already owned. This is what Mk II is.",
+        "properties": {
+          "op": {
+            "const": "upgrade",
+            "title": "Op",
+            "type": "string"
+          },
+          "target": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Target",
+            "type": "string"
+          },
+          "field": {
+            "enum": [
+              "cooldown",
+              "damage",
+              "range",
+              "amount",
+              "force",
+              "pull_force",
+              "reach",
+              "radius",
+              "duration",
+              "max_value",
+              "regen_per_second",
+              "regen_delay",
+              "pip_count",
+              "multiplier"
+            ],
+            "title": "Field",
+            "type": "string"
+          },
+          "delta": {
+            "maximum": 500.0,
+            "minimum": -500.0,
+            "title": "Delta",
+            "type": "number"
+          }
+        },
+        "required": [
+          "op",
+          "target",
+          "field",
+          "delta"
+        ],
+        "title": "UpgradeOperation",
+        "type": "object"
+      },
+      "WallKick": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "wall_kick",
+            "title": "Type",
+            "type": "string"
+          },
+          "force": {
+            "maximum": 18,
+            "minimum": 5,
+            "title": "Force",
+            "type": "number"
+          },
+          "outward_fraction": {
+            "maximum": 0.8,
+            "minimum": 0.1,
+            "title": "Outward Fraction",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "force",
+          "outward_fraction"
+        ],
+        "title": "WallKick",
         "type": "object"
       },
       "Zone": {
@@ -2289,6 +4219,380 @@
   },
   "campaign_snapshot": {
     "$defs": {
+      "ActionComponent": {
+        "additionalProperties": false,
+        "description": "A verb on a slot. Exactly one primitive, by arity.",
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "action",
+            "title": "Kind",
+            "type": "string"
+          },
+          "slot": {
+            "enum": [
+              "echo_a",
+              "echo_b",
+              "mobility",
+              "utility"
+            ],
+            "title": "Slot",
+            "type": "string"
+          },
+          "cooldown": {
+            "maximum": 15.0,
+            "minimum": 0.15,
+            "title": "Cooldown",
+            "type": "number"
+          },
+          "primitive": {
+            "discriminator": {
+              "mapping": {
+                "air_dash": "#/$defs/AirDash",
+                "arc_lob": "#/$defs/ArcLob",
+                "beam_sustained": "#/$defs/BeamSustained",
+                "blink": "#/$defs/Blink",
+                "block": "#/$defs/Block",
+                "burst_fire": "#/$defs/BurstFire",
+                "charge_shot": "#/$defs/ChargeShot",
+                "cleanse": "#/$defs/Cleanse",
+                "dash": "#/$defs/Dash",
+                "double_jump": "#/$defs/DoubleJump",
+                "glide": "#/$defs/Glide",
+                "grapple_pull_target": "#/$defs/GrapplePullTarget",
+                "grapple_swing": "#/$defs/GrappleSwing",
+                "grapple_to_surface": "#/$defs/GrappleToSurface",
+                "heal_self": "#/$defs/HealSelf",
+                "hitscan_damage": "#/$defs/HitscanDamage",
+                "hover": "#/$defs/Hover",
+                "melee_swing": "#/$defs/MeleeSwing",
+                "melee_thrust": "#/$defs/MeleeThrust",
+                "parry": "#/$defs/Parry",
+                "place_marker": "#/$defs/PlaceMarker",
+                "projectile_damage": "#/$defs/ProjectileDamage",
+                "pull_pickup": "#/$defs/PullPickup",
+                "restore_resource": "#/$defs/RestoreResource",
+                "scan_mark": "#/$defs/ScanMark",
+                "shield": "#/$defs/Shield",
+                "slam_ground": "#/$defs/SlamGround",
+                "wall_kick": "#/$defs/WallKick"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/MeleeSwing"
+              },
+              {
+                "$ref": "#/$defs/MeleeThrust"
+              },
+              {
+                "$ref": "#/$defs/SlamGround"
+              },
+              {
+                "$ref": "#/$defs/HitscanDamage"
+              },
+              {
+                "$ref": "#/$defs/ProjectileDamage"
+              },
+              {
+                "$ref": "#/$defs/ArcLob"
+              },
+              {
+                "$ref": "#/$defs/BurstFire"
+              },
+              {
+                "$ref": "#/$defs/ChargeShot"
+              },
+              {
+                "$ref": "#/$defs/BeamSustained"
+              },
+              {
+                "$ref": "#/$defs/Dash"
+              },
+              {
+                "$ref": "#/$defs/AirDash"
+              },
+              {
+                "$ref": "#/$defs/DoubleJump"
+              },
+              {
+                "$ref": "#/$defs/WallKick"
+              },
+              {
+                "$ref": "#/$defs/Hover"
+              },
+              {
+                "$ref": "#/$defs/Glide"
+              },
+              {
+                "$ref": "#/$defs/Blink"
+              },
+              {
+                "$ref": "#/$defs/GrappleToSurface"
+              },
+              {
+                "$ref": "#/$defs/GrapplePullTarget"
+              },
+              {
+                "$ref": "#/$defs/GrappleSwing"
+              },
+              {
+                "$ref": "#/$defs/Shield"
+              },
+              {
+                "$ref": "#/$defs/Block"
+              },
+              {
+                "$ref": "#/$defs/Parry"
+              },
+              {
+                "$ref": "#/$defs/HealSelf"
+              },
+              {
+                "$ref": "#/$defs/Cleanse"
+              },
+              {
+                "$ref": "#/$defs/ScanMark"
+              },
+              {
+                "$ref": "#/$defs/RestoreResource"
+              },
+              {
+                "$ref": "#/$defs/PullPickup"
+              },
+              {
+                "$ref": "#/$defs/PlaceMarker"
+              }
+            ],
+            "title": "Primitive"
+          },
+          "modifiers": {
+            "default": [],
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "apply_status_on_hit": "#/$defs/ApplyStatusOnHit",
+                  "knockback_target": "#/$defs/KnockbackTarget",
+                  "recoil_self": "#/$defs/RecoilSelf"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/RecoilSelf"
+                },
+                {
+                  "$ref": "#/$defs/KnockbackTarget"
+                },
+                {
+                  "$ref": "#/$defs/ApplyStatusOnHit"
+                }
+              ]
+            },
+            "maxItems": 2,
+            "title": "Modifiers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "slot",
+          "cooldown",
+          "primitive"
+        ],
+        "title": "ActionComponent",
+        "type": "object"
+      },
+      "AffordanceComponent": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "affordance",
+            "title": "Kind",
+            "type": "string"
+          },
+          "tag": {
+            "enum": [
+              "grapple_anchor",
+              "breakable_wall",
+              "water_volume",
+              "rail",
+              "wind_volume",
+              "bounce_pad",
+              "moving_platform"
+            ],
+            "title": "Tag",
+            "type": "string"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "tag"
+        ],
+        "title": "AffordanceComponent",
+        "type": "object"
+      },
+      "AirDash": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "air_dash",
+            "title": "Type",
+            "type": "string"
+          },
+          "force": {
+            "maximum": 22,
+            "minimum": 4,
+            "title": "Force",
+            "type": "number"
+          },
+          "uses_per_airtime": {
+            "maximum": 3,
+            "minimum": 1,
+            "title": "Uses Per Airtime",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "force",
+          "uses_per_airtime"
+        ],
+        "title": "AirDash",
+        "type": "object"
+      },
+      "ApplyStatusOnHit": {
+        "additionalProperties": false,
+        "description": "How *Fire Flower* becomes an upgrade to a gun you already own.",
+        "properties": {
+          "type": {
+            "const": "apply_status_on_hit",
+            "title": "Type",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "burning",
+              "slowed",
+              "frozen",
+              "shocked",
+              "poisoned",
+              "marked",
+              "stunned",
+              "vulnerable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "duration": {
+            "maximum": 12,
+            "minimum": 0.5,
+            "title": "Duration",
+            "type": "number"
+          },
+          "magnitude": {
+            "maximum": 3.0,
+            "minimum": 0.05,
+            "title": "Magnitude",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "status",
+          "duration",
+          "magnitude"
+        ],
+        "title": "ApplyStatusOnHit",
+        "type": "object"
+      },
+      "ArcLob": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "arc_lob",
+            "title": "Type",
+            "type": "string"
+          },
+          "damage": {
+            "maximum": 45,
+            "minimum": 1,
+            "title": "Damage",
+            "type": "number"
+          },
+          "radius": {
+            "maximum": 6.0,
+            "minimum": 1.0,
+            "title": "Radius",
+            "type": "number"
+          },
+          "launch_force": {
+            "maximum": 30,
+            "minimum": 6,
+            "title": "Launch Force",
+            "type": "number"
+          },
+          "fuse": {
+            "maximum": 5.0,
+            "minimum": 0.4,
+            "title": "Fuse",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "damage",
+          "radius",
+          "launch_force",
+          "fuse"
+        ],
+        "title": "ArcLob",
+        "type": "object"
+      },
       "ArenaChamber": {
         "additionalProperties": false,
         "description": "Rectangular combat room. A boss room is an arena holding one brute.",
@@ -2379,6 +4683,319 @@
         "title": "ArenaChamber",
         "type": "object"
       },
+      "BeamSustained": {
+        "additionalProperties": false,
+        "description": "Continuous damage while held.\n\nAn unlimited beam is a movement contract rather than an ability, so this\nprimitive is only legal with a `powers` link to a resource. That rule is\nenforced by `mechanics.derive_mechanics`, where the links are known.",
+        "properties": {
+          "type": {
+            "const": "beam_sustained",
+            "title": "Type",
+            "type": "string"
+          },
+          "damage_per_second": {
+            "maximum": 45,
+            "minimum": 2,
+            "title": "Damage Per Second",
+            "type": "number"
+          },
+          "range": {
+            "maximum": 45,
+            "minimum": 5,
+            "title": "Range",
+            "type": "number"
+          },
+          "drain_per_second": {
+            "maximum": 60,
+            "minimum": 1,
+            "title": "Drain Per Second",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "damage_per_second",
+          "range",
+          "drain_per_second"
+        ],
+        "title": "BeamSustained",
+        "type": "object"
+      },
+      "Blink": {
+        "additionalProperties": false,
+        "description": "Instant translation along a validated ray to a surface hit.\n\nNever free-space: the runtime casts along aim, requires a hit, steps back\nfrom the surface by the player radius, and clearance-tests the landing\npoint. Free-space teleport is an out-of-bounds bug waiting to be written.",
+        "properties": {
+          "type": {
+            "const": "blink",
+            "title": "Type",
+            "type": "string"
+          },
+          "range": {
+            "maximum": 25,
+            "minimum": 3,
+            "title": "Range",
+            "type": "number"
+          },
+          "clearance": {
+            "default": 0.4,
+            "maximum": 1.5,
+            "minimum": 0.4,
+            "title": "Clearance",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "range"
+        ],
+        "title": "Blink",
+        "type": "object"
+      },
+      "Block": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "block",
+            "title": "Type",
+            "type": "string"
+          },
+          "reduction": {
+            "maximum": 0.9,
+            "minimum": 0.1,
+            "title": "Reduction",
+            "type": "number"
+          },
+          "drain_per_second": {
+            "maximum": 40,
+            "minimum": 1,
+            "title": "Drain Per Second",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "reduction",
+          "drain_per_second"
+        ],
+        "title": "Block",
+        "type": "object"
+      },
+      "BurstFire": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "burst_fire",
+            "title": "Type",
+            "type": "string"
+          },
+          "damage": {
+            "maximum": 18,
+            "minimum": 1,
+            "title": "Damage",
+            "type": "number"
+          },
+          "shots": {
+            "maximum": 8,
+            "minimum": 2,
+            "title": "Shots",
+            "type": "integer"
+          },
+          "interval": {
+            "maximum": 0.4,
+            "minimum": 0.04,
+            "title": "Interval",
+            "type": "number"
+          },
+          "spread_degrees": {
+            "maximum": 20,
+            "minimum": 0,
+            "title": "Spread Degrees",
+            "type": "number"
+          },
+          "range": {
+            "maximum": 60,
+            "minimum": 5,
+            "title": "Range",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "damage",
+          "shots",
+          "interval",
+          "spread_degrees",
+          "range"
+        ],
+        "title": "BurstFire",
+        "type": "object"
+      },
+      "ChargeShot": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "charge_shot",
+            "title": "Type",
+            "type": "string"
+          },
+          "min_damage": {
+            "maximum": 20,
+            "minimum": 1,
+            "title": "Min Damage",
+            "type": "number"
+          },
+          "max_damage": {
+            "maximum": 60,
+            "minimum": 1,
+            "title": "Max Damage",
+            "type": "number"
+          },
+          "charge_time": {
+            "maximum": 3.0,
+            "minimum": 0.3,
+            "title": "Charge Time",
+            "type": "number"
+          },
+          "speed": {
+            "maximum": 60,
+            "minimum": 10,
+            "title": "Speed",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "min_damage",
+          "max_damage",
+          "charge_time",
+          "speed"
+        ],
+        "title": "ChargeShot",
+        "type": "object"
+      },
+      "Cleanse": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "cleanse",
+            "title": "Type",
+            "type": "string"
+          },
+          "count": {
+            "maximum": 4,
+            "minimum": 1,
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "count"
+        ],
+        "title": "Cleanse",
+        "type": "object"
+      },
+      "ComponentProvenance": {
+        "additionalProperties": false,
+        "description": "Which AP item is responsible for which part of a component.\n\nNever deleted, never rewritten. A merged resource carries both sides'\nprovenance, in sequence order, so neither source item stops being\ncredited.",
+        "properties": {
+          "interpretation_seq": {
+            "minimum": 0,
+            "title": "Interpretation Seq",
+            "type": "integer"
+          },
+          "source_location_id": {
+            "title": "Source Location Id",
+            "type": "integer"
+          },
+          "source_item_name": {
+            "title": "Source Item Name",
+            "type": "string"
+          },
+          "source_game": {
+            "title": "Source Game",
+            "type": "string"
+          },
+          "source_recipient_name": {
+            "title": "Source Recipient Name",
+            "type": "string"
+          },
+          "operation": {
+            "enum": [
+              "create",
+              "upgrade",
+              "modify",
+              "link",
+              "merge"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 96,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "interpretation_seq",
+          "source_location_id",
+          "source_item_name",
+          "source_game",
+          "source_recipient_name",
+          "operation"
+        ],
+        "title": "ComponentProvenance",
+        "type": "object"
+      },
+      "Condition": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "enum": [
+              "resource_at_least",
+              "resource_at_most",
+              "hp_below",
+              "hp_above",
+              "moving_backward",
+              "airborne",
+              "grounded",
+              "speed_above",
+              "enemy_within",
+              "slot_is",
+              "zone_is_finale",
+              "status_active"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Subject"
+          },
+          "value": {
+            "default": 0.0,
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "Condition",
+        "type": "object"
+      },
       "CorridorChamber": {
         "additionalProperties": false,
         "description": "Connector. Has no objective, so enemies here gate nothing.",
@@ -2453,6 +5070,60 @@
         "title": "CorridorChamber",
         "type": "object"
       },
+      "CreateOperation": {
+        "additionalProperties": false,
+        "properties": {
+          "op": {
+            "const": "create",
+            "title": "Op",
+            "type": "string"
+          },
+          "component": {
+            "discriminator": {
+              "mapping": {
+                "action": "#/$defs/ActionComponent",
+                "affordance": "#/$defs/AffordanceComponent",
+                "info": "#/$defs/InfoComponent",
+                "resource": "#/$defs/ResourceComponent",
+                "rule": "#/$defs/RuleComponent",
+                "status": "#/$defs/StatusComponent",
+                "trait": "#/$defs/TraitComponent"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ActionComponent"
+              },
+              {
+                "$ref": "#/$defs/TraitComponent"
+              },
+              {
+                "$ref": "#/$defs/ResourceComponent"
+              },
+              {
+                "$ref": "#/$defs/RuleComponent"
+              },
+              {
+                "$ref": "#/$defs/StatusComponent"
+              },
+              {
+                "$ref": "#/$defs/AffordanceComponent"
+              },
+              {
+                "$ref": "#/$defs/InfoComponent"
+              }
+            ],
+            "title": "Component"
+          }
+        },
+        "required": [
+          "op",
+          "component"
+        ],
+        "title": "CreateOperation",
+        "type": "object"
+      },
       "Dash": {
         "additionalProperties": false,
         "properties": {
@@ -2473,6 +5144,255 @@
           "force"
         ],
         "title": "Dash",
+        "type": "object"
+      },
+      "DoubleJump": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "double_jump",
+            "title": "Type",
+            "type": "string"
+          },
+          "force": {
+            "maximum": 11.2,
+            "minimum": 4.8,
+            "title": "Force",
+            "type": "number"
+          },
+          "extra_jumps": {
+            "maximum": 2,
+            "minimum": 1,
+            "title": "Extra Jumps",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "force",
+          "extra_jumps"
+        ],
+        "title": "DoubleJump",
+        "type": "object"
+      },
+      "EchoInterpretation": {
+        "additionalProperties": false,
+        "description": "One foreign item, read by Epsilon, expressed as operations.\n\n`interpretation_seq` is the whole ordering story. It is assigned once, at\ngrant time, and never recomputed \u2014 see `mechanics.derive_mechanics` and\nECHOES.md 2.1 for why sorting by `source_location_id` is a corrupt fold.",
+        "properties": {
+          "schema_version": {
+            "const": 8,
+            "default": 8,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "echo_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^echo_\\d+$",
+            "title": "Echo Id",
+            "type": "string"
+          },
+          "interpretation_seq": {
+            "minimum": 0,
+            "title": "Interpretation Seq",
+            "type": "integer"
+          },
+          "source_location_id": {
+            "maximum": 89100030,
+            "minimum": 89100001,
+            "title": "Source Location Id",
+            "type": "integer"
+          },
+          "source_item_name": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Item Name",
+            "type": "string"
+          },
+          "source_game": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Game",
+            "type": "string"
+          },
+          "source_recipient_name": {
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Source Recipient Name",
+            "type": "string"
+          },
+          "concepts": {
+            "default": [],
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Concepts",
+            "type": "array"
+          },
+          "mode": {
+            "default": "literal",
+            "enum": [
+              "literal",
+              "mechanical",
+              "conceptual",
+              "systemic"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "tags": {
+            "default": [],
+            "items": {
+              "maxLength": 24,
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Tags",
+            "type": "array"
+          },
+          "operations": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "create": "#/$defs/CreateOperation",
+                  "link": "#/$defs/LinkOperation",
+                  "merge": "#/$defs/MergeOperation",
+                  "modify": "#/$defs/ModifyOperation",
+                  "upgrade": "#/$defs/UpgradeOperation"
+                },
+                "propertyName": "op"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/CreateOperation"
+                },
+                {
+                  "$ref": "#/$defs/UpgradeOperation"
+                },
+                {
+                  "$ref": "#/$defs/ModifyOperation"
+                },
+                {
+                  "$ref": "#/$defs/LinkOperation"
+                },
+                {
+                  "$ref": "#/$defs/MergeOperation"
+                }
+              ]
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Operations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "echo_id",
+          "interpretation_seq",
+          "source_location_id",
+          "source_item_name",
+          "source_game",
+          "source_recipient_name",
+          "display_name",
+          "description",
+          "operations"
+        ],
+        "title": "EchoInterpretation",
+        "type": "object"
+      },
+      "Effect": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "enum": [
+              "resource_add",
+              "heal",
+              "grant_shield",
+              "impulse_self",
+              "trait_pulse",
+              "damage_around",
+              "fire_projectile",
+              "apply_status",
+              "reset_action_cooldown",
+              "refill_resource",
+              "grant_local_reward"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Subject"
+          },
+          "amount": {
+            "default": 0.0,
+            "maximum": 200.0,
+            "minimum": -200.0,
+            "title": "Amount",
+            "type": "number"
+          },
+          "duration": {
+            "default": 0.0,
+            "maximum": 60.0,
+            "minimum": 0.0,
+            "title": "Duration",
+            "type": "number"
+          },
+          "radius": {
+            "default": 0.0,
+            "maximum": 20.0,
+            "minimum": 0.0,
+            "title": "Radius",
+            "type": "number"
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "enum": [
+                  "aim",
+                  "forward",
+                  "backward",
+                  "up",
+                  "velocity"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Direction"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "Effect",
         "type": "object"
       },
       "EnemyGroup": {
@@ -2499,6 +5419,107 @@
           "count"
         ],
         "title": "EnemyGroup",
+        "type": "object"
+      },
+      "Glide": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "glide",
+            "title": "Type",
+            "type": "string"
+          },
+          "fall_speed": {
+            "maximum": 6.0,
+            "minimum": 0.5,
+            "title": "Fall Speed",
+            "type": "number"
+          },
+          "forward_speed": {
+            "maximum": 16,
+            "minimum": 2,
+            "title": "Forward Speed",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "fall_speed",
+          "forward_speed"
+        ],
+        "title": "Glide",
+        "type": "object"
+      },
+      "GrapplePullTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "grapple_pull_target",
+            "title": "Type",
+            "type": "string"
+          },
+          "range": {
+            "maximum": 35,
+            "minimum": 5,
+            "title": "Range",
+            "type": "number"
+          },
+          "pull_force": {
+            "maximum": 25,
+            "minimum": 4,
+            "title": "Pull Force",
+            "type": "number"
+          },
+          "max_target_hp": {
+            "maximum": 60,
+            "minimum": 1,
+            "title": "Max Target Hp",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "range",
+          "pull_force",
+          "max_target_hp"
+        ],
+        "title": "GrapplePullTarget",
+        "type": "object"
+      },
+      "GrappleSwing": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "grapple_swing",
+            "title": "Type",
+            "type": "string"
+          },
+          "range": {
+            "maximum": 35,
+            "minimum": 5,
+            "title": "Range",
+            "type": "number"
+          },
+          "tether_force": {
+            "maximum": 25,
+            "minimum": 4,
+            "title": "Tether Force",
+            "type": "number"
+          },
+          "max_duration": {
+            "maximum": 6.0,
+            "minimum": 0.5,
+            "title": "Max Duration",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "range",
+          "tether_force",
+          "max_duration"
+        ],
+        "title": "GrappleSwing",
         "type": "object"
       },
       "GrappleToSurface": {
@@ -2593,6 +5614,43 @@
           "range"
         ],
         "title": "HitscanDamage",
+        "type": "object"
+      },
+      "Hover": {
+        "additionalProperties": false,
+        "description": "Reduced gravity while held. Requires a `powers` link, like the beam.",
+        "properties": {
+          "type": {
+            "const": "hover",
+            "title": "Type",
+            "type": "string"
+          },
+          "gravity_multiplier": {
+            "maximum": 0.6,
+            "minimum": 0.0,
+            "title": "Gravity Multiplier",
+            "type": "number"
+          },
+          "drain_per_second": {
+            "maximum": 60,
+            "minimum": 1,
+            "title": "Drain Per Second",
+            "type": "number"
+          },
+          "max_duration": {
+            "maximum": 8.0,
+            "minimum": 0.5,
+            "title": "Max Duration",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "gravity_multiplier",
+          "drain_per_second",
+          "max_duration"
+        ],
+        "title": "Hover",
         "type": "object"
       },
       "HubStatus": {
@@ -2708,6 +5766,60 @@
         "title": "HubStatus",
         "type": "object"
       },
+      "InfoComponent": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "info",
+            "title": "Kind",
+            "type": "string"
+          },
+          "readout": {
+            "enum": [
+              "enemy_health",
+              "enemy_radar",
+              "threat_direction",
+              "secret_ping",
+              "affordance_highlight",
+              "trajectory_preview",
+              "damage_numbers",
+              "resource_forecast",
+              "speedometer",
+              "challenge_timer"
+            ],
+            "title": "Readout",
+            "type": "string"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "readout"
+        ],
+        "title": "InfoComponent",
+        "type": "object"
+      },
       "KnockbackTarget": {
         "additionalProperties": false,
         "properties": {
@@ -2730,163 +5842,398 @@
         "title": "KnockbackTarget",
         "type": "object"
       },
-      "ModifyGravity": {
+      "LinkEdge": {
         "additionalProperties": false,
         "properties": {
-          "type": {
-            "const": "modify_gravity",
-            "title": "Type",
+          "link": {
+            "enum": [
+              "powers",
+              "fills",
+              "scales",
+              "gates"
+            ],
+            "title": "Link",
             "type": "string"
           },
-          "multiplier": {
-            "maximum": 1.0,
-            "minimum": 0.35,
-            "title": "Multiplier",
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          },
+          "strength": {
+            "title": "Strength",
             "type": "number"
           }
         },
         "required": [
-          "type",
-          "multiplier"
+          "link",
+          "source",
+          "target",
+          "strength"
         ],
-        "title": "ModifyGravity",
+        "title": "LinkEdge",
         "type": "object"
       },
-      "ModifySpeed": {
+      "LinkOperation": {
         "additionalProperties": false,
         "properties": {
-          "type": {
-            "const": "modify_speed",
-            "title": "Type",
+          "op": {
+            "const": "link",
+            "title": "Op",
             "type": "string"
           },
-          "multiplier": {
-            "maximum": 1.6,
-            "minimum": 0.9,
-            "title": "Multiplier",
-            "type": "number"
-          }
-        },
-        "required": [
-          "type",
-          "multiplier"
-        ],
-        "title": "ModifySpeed",
-        "type": "object"
-      },
-      "PassiveEcho": {
-        "additionalProperties": false,
-        "description": "Applies while equipped. RMB does nothing. No cooldown field exists.",
-        "properties": {
-          "schema_version": {
-            "const": 7,
-            "default": 7,
-            "title": "Schema Version",
-            "type": "integer"
+          "link": {
+            "enum": [
+              "powers",
+              "fills",
+              "scales",
+              "gates"
+            ],
+            "title": "Link",
+            "type": "string"
           },
-          "echo_id": {
+          "source": {
             "maxLength": 32,
-            "minLength": 1,
-            "pattern": "^echo_\\d+$",
-            "title": "Echo Id",
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Source",
             "type": "string"
           },
-          "source_location_id": {
-            "maximum": 89100030,
-            "minimum": 89100001,
-            "title": "Source Location Id",
-            "type": "integer"
-          },
-          "source_item_name": {
-            "maxLength": 96,
-            "minLength": 1,
-            "title": "Source Item Name",
+          "target": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Target",
             "type": "string"
           },
-          "source_game": {
-            "maxLength": 96,
-            "minLength": 1,
-            "title": "Source Game",
-            "type": "string"
-          },
-          "source_recipient_name": {
-            "maxLength": 96,
-            "minLength": 1,
-            "title": "Source Recipient Name",
-            "type": "string"
-          },
-          "display_name": {
-            "maxLength": 160,
-            "minLength": 1,
-            "title": "Display Name",
-            "type": "string"
-          },
-          "description": {
-            "maxLength": 160,
-            "minLength": 1,
-            "title": "Description",
-            "type": "string"
-          },
-          "tags": {
+          "strength": {
+            "default": 1.0,
+            "maximum": 200.0,
+            "minimum": 0.0,
+            "title": "Strength",
+            "type": "number"
+          }
+        },
+        "required": [
+          "op",
+          "link",
+          "source",
+          "target"
+        ],
+        "title": "LinkOperation",
+        "type": "object"
+      },
+      "Mechanics": {
+        "additionalProperties": false,
+        "description": "Everything the campaign's interpretations add up to.",
+        "properties": {
+          "owned": {
             "default": [],
             "items": {
-              "maxLength": 24,
-              "type": "string"
+              "$ref": "#/$defs/OwnedComponent"
             },
-            "maxItems": 6,
-            "title": "Tags",
+            "title": "Owned",
             "type": "array"
           },
-          "activation": {
-            "const": "passive",
-            "title": "Activation",
-            "type": "string"
-          },
-          "archetype": {
-            "enum": [
-              "passive",
-              "mobility"
-            ],
-            "title": "Archetype",
-            "type": "string"
-          },
-          "effects": {
+          "aliases": {
+            "default": [],
             "items": {
-              "discriminator": {
-                "mapping": {
-                  "modify_gravity": "#/$defs/ModifyGravity",
-                  "modify_speed": "#/$defs/ModifySpeed"
-                },
-                "propertyName": "type"
-              },
-              "oneOf": [
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
                 {
-                  "$ref": "#/$defs/ModifyGravity"
+                  "type": "string"
                 },
                 {
-                  "$ref": "#/$defs/ModifySpeed"
+                  "type": "string"
                 }
-              ]
+              ],
+              "type": "array"
             },
-            "maxItems": 2,
+            "title": "Aliases",
+            "type": "array"
+          },
+          "links": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/LinkEdge"
+            },
+            "title": "Links",
+            "type": "array"
+          }
+        },
+        "title": "Mechanics",
+        "type": "object"
+      },
+      "MeleeSwing": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "melee_swing",
+            "title": "Type",
+            "type": "string"
+          },
+          "damage": {
+            "maximum": 40,
+            "minimum": 1,
+            "title": "Damage",
+            "type": "number"
+          },
+          "reach": {
+            "maximum": 3.5,
+            "minimum": 1.0,
+            "title": "Reach",
+            "type": "number"
+          },
+          "arc_degrees": {
+            "maximum": 160,
+            "minimum": 20,
+            "title": "Arc Degrees",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "damage",
+          "reach",
+          "arc_degrees"
+        ],
+        "title": "MeleeSwing",
+        "type": "object"
+      },
+      "MeleeThrust": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "melee_thrust",
+            "title": "Type",
+            "type": "string"
+          },
+          "damage": {
+            "maximum": 55,
+            "minimum": 1,
+            "title": "Damage",
+            "type": "number"
+          },
+          "reach": {
+            "maximum": 5.0,
+            "minimum": 1.5,
+            "title": "Reach",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "damage",
+          "reach"
+        ],
+        "title": "MeleeThrust",
+        "type": "object"
+      },
+      "MergeOperation": {
+        "additionalProperties": false,
+        "description": "Two economies become one.\n\nThe only operation that can change what an id *means*, so it carries the\nmost rules \u2014 the rest are enforced by the fold, where the alias table and\nthe live component set are both known.",
+        "properties": {
+          "op": {
+            "const": "merge",
+            "title": "Op",
+            "type": "string"
+          },
+          "absorbed": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Absorbed",
+            "type": "string"
+          },
+          "survivor": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Survivor",
+            "type": "string"
+          },
+          "capacity": {
+            "default": "sum",
+            "enum": [
+              "sum",
+              "keep_survivor"
+            ],
+            "title": "Capacity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "absorbed",
+          "survivor"
+        ],
+        "title": "MergeOperation",
+        "type": "object"
+      },
+      "ModifyOperation": {
+        "additionalProperties": false,
+        "description": "A new capability on something owned, rather than a bigger number.",
+        "properties": {
+          "op": {
+            "const": "modify",
+            "title": "Op",
+            "type": "string"
+          },
+          "target": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Target",
+            "type": "string"
+          },
+          "add_modifier": {
+            "anyOf": [
+              {
+                "discriminator": {
+                  "mapping": {
+                    "apply_status_on_hit": "#/$defs/ApplyStatusOnHit",
+                    "knockback_target": "#/$defs/KnockbackTarget",
+                    "recoil_self": "#/$defs/RecoilSelf"
+                  },
+                  "propertyName": "type"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/RecoilSelf"
+                  },
+                  {
+                    "$ref": "#/$defs/KnockbackTarget"
+                  },
+                  {
+                    "$ref": "#/$defs/ApplyStatusOnHit"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Add Modifier"
+          },
+          "add_effect": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Effect"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "add_condition": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Condition"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "op",
+          "target"
+        ],
+        "title": "ModifyOperation",
+        "type": "object"
+      },
+      "OwnedComponent": {
+        "additionalProperties": false,
+        "description": "A folded component plus the display facts a client needs.\n\nThe bridge folds; the client never does. Re-implementing the fold in\nGDScript would be a second source of truth for the one thing that must be\nidentical everywhere.",
+        "properties": {
+          "component": {
+            "discriminator": {
+              "mapping": {
+                "action": "#/$defs/ActionComponent",
+                "affordance": "#/$defs/AffordanceComponent",
+                "info": "#/$defs/InfoComponent",
+                "resource": "#/$defs/ResourceComponent",
+                "rule": "#/$defs/RuleComponent",
+                "status": "#/$defs/StatusComponent",
+                "trait": "#/$defs/TraitComponent"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ActionComponent"
+              },
+              {
+                "$ref": "#/$defs/TraitComponent"
+              },
+              {
+                "$ref": "#/$defs/ResourceComponent"
+              },
+              {
+                "$ref": "#/$defs/RuleComponent"
+              },
+              {
+                "$ref": "#/$defs/StatusComponent"
+              },
+              {
+                "$ref": "#/$defs/AffordanceComponent"
+              },
+              {
+                "$ref": "#/$defs/InfoComponent"
+              }
+            ],
+            "title": "Component"
+          },
+          "mk": {
+            "minimum": 1,
+            "title": "Mk",
+            "type": "integer"
+          },
+          "provenance": {
+            "items": {
+              "$ref": "#/$defs/ComponentProvenance"
+            },
             "minItems": 1,
-            "title": "Effects",
+            "title": "Provenance",
             "type": "array"
           }
         },
         "required": [
-          "echo_id",
-          "source_location_id",
-          "source_item_name",
-          "source_game",
-          "source_recipient_name",
-          "display_name",
-          "description",
-          "activation",
-          "archetype",
-          "effects"
+          "component",
+          "mk",
+          "provenance"
         ],
-        "title": "PassiveEcho",
+        "title": "OwnedComponent",
+        "type": "object"
+      },
+      "Parry": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "parry",
+            "title": "Type",
+            "type": "string"
+          },
+          "window": {
+            "maximum": 0.6,
+            "minimum": 0.08,
+            "title": "Window",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "window"
+        ],
+        "title": "Parry",
         "type": "object"
       },
       "PendingCheck": {
@@ -2926,6 +6273,28 @@
           "source"
         ],
         "title": "PendingCheck",
+        "type": "object"
+      },
+      "PlaceMarker": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "place_marker",
+            "title": "Type",
+            "type": "string"
+          },
+          "duration": {
+            "maximum": 300,
+            "minimum": 5,
+            "title": "Duration",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "duration"
+        ],
+        "title": "PlaceMarker",
         "type": "object"
       },
       "PlatformPathChamber": {
@@ -3015,163 +6384,6 @@
         "title": "PlatformPathChamber",
         "type": "object"
       },
-      "PrimaryEcho": {
-        "additionalProperties": false,
-        "description": "Activated with RMB, subject to cooldown. LMB stays Static Pulse.",
-        "properties": {
-          "schema_version": {
-            "const": 7,
-            "default": 7,
-            "title": "Schema Version",
-            "type": "integer"
-          },
-          "echo_id": {
-            "maxLength": 32,
-            "minLength": 1,
-            "pattern": "^echo_\\d+$",
-            "title": "Echo Id",
-            "type": "string"
-          },
-          "source_location_id": {
-            "maximum": 89100030,
-            "minimum": 89100001,
-            "title": "Source Location Id",
-            "type": "integer"
-          },
-          "source_item_name": {
-            "maxLength": 96,
-            "minLength": 1,
-            "title": "Source Item Name",
-            "type": "string"
-          },
-          "source_game": {
-            "maxLength": 96,
-            "minLength": 1,
-            "title": "Source Game",
-            "type": "string"
-          },
-          "source_recipient_name": {
-            "maxLength": 96,
-            "minLength": 1,
-            "title": "Source Recipient Name",
-            "type": "string"
-          },
-          "display_name": {
-            "maxLength": 160,
-            "minLength": 1,
-            "title": "Display Name",
-            "type": "string"
-          },
-          "description": {
-            "maxLength": 160,
-            "minLength": 1,
-            "title": "Description",
-            "type": "string"
-          },
-          "tags": {
-            "default": [],
-            "items": {
-              "maxLength": 24,
-              "type": "string"
-            },
-            "maxItems": 6,
-            "title": "Tags",
-            "type": "array"
-          },
-          "activation": {
-            "const": "primary",
-            "title": "Activation",
-            "type": "string"
-          },
-          "archetype": {
-            "enum": [
-              "weapon",
-              "tool",
-              "mobility"
-            ],
-            "title": "Archetype",
-            "type": "string"
-          },
-          "cooldown": {
-            "maximum": 15.0,
-            "minimum": 0.15,
-            "title": "Cooldown",
-            "type": "number"
-          },
-          "initiator": {
-            "discriminator": {
-              "mapping": {
-                "dash": "#/$defs/Dash",
-                "grapple_to_surface": "#/$defs/GrappleToSurface",
-                "heal_self": "#/$defs/HealSelf",
-                "hitscan_damage": "#/$defs/HitscanDamage",
-                "projectile_damage": "#/$defs/ProjectileDamage",
-                "shield": "#/$defs/Shield"
-              },
-              "propertyName": "type"
-            },
-            "oneOf": [
-              {
-                "$ref": "#/$defs/HitscanDamage"
-              },
-              {
-                "$ref": "#/$defs/ProjectileDamage"
-              },
-              {
-                "$ref": "#/$defs/Dash"
-              },
-              {
-                "$ref": "#/$defs/GrappleToSurface"
-              },
-              {
-                "$ref": "#/$defs/HealSelf"
-              },
-              {
-                "$ref": "#/$defs/Shield"
-              }
-            ],
-            "title": "Initiator"
-          },
-          "modifiers": {
-            "default": [],
-            "items": {
-              "discriminator": {
-                "mapping": {
-                  "knockback_target": "#/$defs/KnockbackTarget",
-                  "recoil_self": "#/$defs/RecoilSelf"
-                },
-                "propertyName": "type"
-              },
-              "oneOf": [
-                {
-                  "$ref": "#/$defs/RecoilSelf"
-                },
-                {
-                  "$ref": "#/$defs/KnockbackTarget"
-                }
-              ]
-            },
-            "maxItems": 2,
-            "title": "Modifiers",
-            "type": "array"
-          }
-        },
-        "required": [
-          "echo_id",
-          "source_location_id",
-          "source_item_name",
-          "source_game",
-          "source_recipient_name",
-          "display_name",
-          "description",
-          "activation",
-          "archetype",
-          "cooldown",
-          "initiator"
-        ],
-        "title": "PrimaryEcho",
-        "type": "object"
-      },
       "ProjectileDamage": {
         "additionalProperties": false,
         "properties": {
@@ -3197,6 +6409,20 @@
             "minimum": 0.5,
             "title": "Lifetime",
             "type": "number"
+          },
+          "gravity_scale": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Gravity Scale",
+            "type": "number"
+          },
+          "bounces": {
+            "default": 0,
+            "maximum": 4,
+            "minimum": 0,
+            "title": "Bounces",
+            "type": "integer"
           }
         },
         "required": [
@@ -3206,6 +6432,28 @@
           "lifetime"
         ],
         "title": "ProjectileDamage",
+        "type": "object"
+      },
+      "PullPickup": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "pull_pickup",
+            "title": "Type",
+            "type": "string"
+          },
+          "radius": {
+            "maximum": 20,
+            "minimum": 2,
+            "title": "Radius",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "radius"
+        ],
+        "title": "PullPickup",
         "type": "object"
       },
       "RecoilSelf": {
@@ -3228,6 +6476,282 @@
           "force"
         ],
         "title": "RecoilSelf",
+        "type": "object"
+      },
+      "ResourceComponent": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "resource",
+            "title": "Kind",
+            "type": "string"
+          },
+          "max_value": {
+            "exclusiveMinimum": 0,
+            "maximum": 1000,
+            "title": "Max Value",
+            "type": "number"
+          },
+          "initial_fraction": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Initial Fraction",
+            "type": "number"
+          },
+          "regen_per_second": {
+            "default": 0.0,
+            "maximum": 100.0,
+            "minimum": -100.0,
+            "title": "Regen Per Second",
+            "type": "number"
+          },
+          "regen_delay": {
+            "default": 0.0,
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Regen Delay",
+            "type": "number"
+          },
+          "presentation": {
+            "enum": [
+              "bar",
+              "pips",
+              "counter"
+            ],
+            "title": "Presentation",
+            "type": "string"
+          },
+          "pip_count": {
+            "anyOf": [
+              {
+                "maximum": 12,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Pip Count"
+          },
+          "palette_color": {
+            "enum": [
+              "moss",
+              "signal",
+              "ember",
+              "violet",
+              "bone",
+              "rust",
+              "tide",
+              "sulphur"
+            ],
+            "title": "Palette Color",
+            "type": "string"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "max_value",
+          "initial_fraction",
+          "presentation",
+          "palette_color"
+        ],
+        "title": "ResourceComponent",
+        "type": "object"
+      },
+      "ResourceCost": {
+        "additionalProperties": false,
+        "properties": {
+          "resource_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "amount": {
+            "exclusiveMinimum": 0,
+            "maximum": 200,
+            "title": "Amount",
+            "type": "number"
+          }
+        },
+        "required": [
+          "resource_id",
+          "amount"
+        ],
+        "title": "ResourceCost",
+        "type": "object"
+      },
+      "RestoreResource": {
+        "additionalProperties": false,
+        "description": "The primitive that turns a consumable into a button.\n\nIt names no resource: the `fills` link says which one, so a later\ninterpretation can point it somewhere else without rewriting this one.",
+        "properties": {
+          "type": {
+            "const": "restore_resource",
+            "title": "Type",
+            "type": "string"
+          },
+          "amount": {
+            "maximum": 200,
+            "minimum": 1,
+            "title": "Amount",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "amount"
+        ],
+        "title": "RestoreResource",
+        "type": "object"
+      },
+      "RuleComponent": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "rule",
+            "title": "Kind",
+            "type": "string"
+          },
+          "event": {
+            "enum": [
+              "zone_enter",
+              "chamber_enter",
+              "jump",
+              "land",
+              "dash_end",
+              "kill",
+              "damage_dealt",
+              "damage_taken",
+              "action_used",
+              "action_ready",
+              "parry_success",
+              "check_claimed",
+              "tick_1hz",
+              "resource_full",
+              "resource_empty",
+              "low_health",
+              "status_applied"
+            ],
+            "title": "Event",
+            "type": "string"
+          },
+          "conditions": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/Condition"
+            },
+            "maxItems": 3,
+            "title": "Conditions",
+            "type": "array"
+          },
+          "costs": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ResourceCost"
+            },
+            "maxItems": 2,
+            "title": "Costs",
+            "type": "array"
+          },
+          "effects": {
+            "items": {
+              "$ref": "#/$defs/Effect"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Effects",
+            "type": "array"
+          },
+          "cooldown": {
+            "maximum": 30.0,
+            "minimum": 0.1,
+            "title": "Cooldown",
+            "type": "number"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "event",
+          "effects",
+          "cooldown"
+        ],
+        "title": "RuleComponent",
+        "type": "object"
+      },
+      "ScanMark": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "scan_mark",
+            "title": "Type",
+            "type": "string"
+          },
+          "range": {
+            "maximum": 60,
+            "minimum": 5,
+            "title": "Range",
+            "type": "number"
+          },
+          "duration": {
+            "maximum": 30,
+            "minimum": 2,
+            "title": "Duration",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "range",
+          "duration"
+        ],
+        "title": "ScanMark",
         "type": "object"
       },
       "ScoutedLocation": {
@@ -3431,6 +6955,181 @@
         "title": "ShopStockItem",
         "type": "object"
       },
+      "SlamGround": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "slam_ground",
+            "title": "Type",
+            "type": "string"
+          },
+          "damage": {
+            "maximum": 45,
+            "minimum": 1,
+            "title": "Damage",
+            "type": "number"
+          },
+          "radius": {
+            "maximum": 7.0,
+            "minimum": 1.5,
+            "title": "Radius",
+            "type": "number"
+          },
+          "descent_force": {
+            "maximum": 30,
+            "minimum": 4,
+            "title": "Descent Force",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "damage",
+          "radius",
+          "descent_force"
+        ],
+        "title": "SlamGround",
+        "type": "object"
+      },
+      "SlotAssignment": {
+        "additionalProperties": false,
+        "description": "Which owned Action sits in each of the four slots.\n\nFour named fields rather than a dict: the slot grammar belongs to the\ngame, not to generation, so it is structural. Epsilon assigns an Action\na slot *category*; the player chooses which owned Action fills it.\nLMB is not here at all \u2014 Static Pulse is never replaced.",
+        "properties": {
+          "echo_a": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Echo A"
+          },
+          "echo_b": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Echo B"
+          },
+          "mobility": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Mobility"
+          },
+          "utility": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Utility"
+          }
+        },
+        "title": "SlotAssignment",
+        "type": "object"
+      },
+      "StatusComponent": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "status",
+            "title": "Kind",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "burning",
+              "slowed",
+              "frozen",
+              "shocked",
+              "poisoned",
+              "marked",
+              "stunned",
+              "vulnerable",
+              "empowered",
+              "low_profile",
+              "haste",
+              "regenerating"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "target": {
+            "enum": [
+              "self",
+              "enemy"
+            ],
+            "title": "Target",
+            "type": "string"
+          },
+          "duration": {
+            "maximum": 30.0,
+            "minimum": 0.5,
+            "title": "Duration",
+            "type": "number"
+          },
+          "magnitude": {
+            "maximum": 3.0,
+            "minimum": 0.05,
+            "title": "Magnitude",
+            "type": "number"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "status",
+          "target",
+          "duration",
+          "magnitude"
+        ],
+        "title": "StatusComponent",
+        "type": "object"
+      },
       "TowerChamber": {
         "additionalProperties": false,
         "description": "Vertical traversal. The template always emits a base-movement route.",
@@ -3507,6 +7206,94 @@
         "title": "TowerChamber",
         "type": "object"
       },
+      "TraitComponent": {
+        "additionalProperties": false,
+        "properties": {
+          "component_id": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Component Id",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "const": "trait",
+            "title": "Kind",
+            "type": "string"
+          },
+          "stat": {
+            "enum": [
+              "move_speed",
+              "jump_height",
+              "gravity",
+              "air_control",
+              "ground_friction",
+              "damage_dealt",
+              "damage_taken",
+              "knockback_resist",
+              "regen"
+            ],
+            "title": "Stat",
+            "type": "string"
+          },
+          "multiplier": {
+            "maximum": 4.0,
+            "minimum": 0.1,
+            "title": "Multiplier",
+            "type": "number"
+          },
+          "scaled_by": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Scaled By"
+          },
+          "requires_equipped": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "minLength": 5,
+                "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Requires Equipped"
+          }
+        },
+        "required": [
+          "component_id",
+          "display_name",
+          "description",
+          "kind",
+          "stat",
+          "multiplier"
+        ],
+        "title": "TraitComponent",
+        "type": "object"
+      },
       "TreasureRoomChamber": {
         "additionalProperties": false,
         "description": "Small safe reward room. Exactly one reward, never enemies.",
@@ -3555,6 +7342,87 @@
           "type"
         ],
         "title": "TreasureRoomChamber",
+        "type": "object"
+      },
+      "UpgradeOperation": {
+        "additionalProperties": false,
+        "description": "Numeric growth of something already owned. This is what Mk II is.",
+        "properties": {
+          "op": {
+            "const": "upgrade",
+            "title": "Op",
+            "type": "string"
+          },
+          "target": {
+            "maxLength": 32,
+            "minLength": 5,
+            "pattern": "^(act|trait|res|rule|status|aff|info)_[a-z0-9_]{1,24}$",
+            "title": "Target",
+            "type": "string"
+          },
+          "field": {
+            "enum": [
+              "cooldown",
+              "damage",
+              "range",
+              "amount",
+              "force",
+              "pull_force",
+              "reach",
+              "radius",
+              "duration",
+              "max_value",
+              "regen_per_second",
+              "regen_delay",
+              "pip_count",
+              "multiplier"
+            ],
+            "title": "Field",
+            "type": "string"
+          },
+          "delta": {
+            "maximum": 500.0,
+            "minimum": -500.0,
+            "title": "Delta",
+            "type": "number"
+          }
+        },
+        "required": [
+          "op",
+          "target",
+          "field",
+          "delta"
+        ],
+        "title": "UpgradeOperation",
+        "type": "object"
+      },
+      "WallKick": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "wall_kick",
+            "title": "Type",
+            "type": "string"
+          },
+          "force": {
+            "maximum": 18,
+            "minimum": 5,
+            "title": "Force",
+            "type": "number"
+          },
+          "outward_fraction": {
+            "maximum": 0.8,
+            "minimum": 0.1,
+            "title": "Outward Fraction",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "force",
+          "outward_fraction"
+        ],
+        "title": "WallKick",
         "type": "object"
       },
       "Zone": {
@@ -3752,8 +7620,8 @@
         "type": "string"
       },
       "protocol_version": {
-        "const": 7,
-        "default": 7,
+        "const": 8,
+        "default": 8,
         "title": "Protocol Version",
         "type": "integer"
       },
@@ -3880,39 +7748,19 @@
         "title": "Static Glitch Units",
         "type": "integer"
       },
-      "echoes": {
+      "interpretations": {
         "default": [],
         "items": {
-          "discriminator": {
-            "mapping": {
-              "passive": "#/$defs/PassiveEcho",
-              "primary": "#/$defs/PrimaryEcho"
-            },
-            "propertyName": "activation"
-          },
-          "oneOf": [
-            {
-              "$ref": "#/$defs/PrimaryEcho"
-            },
-            {
-              "$ref": "#/$defs/PassiveEcho"
-            }
-          ]
+          "$ref": "#/$defs/EchoInterpretation"
         },
-        "title": "Echoes",
+        "title": "Interpretations",
         "type": "array"
       },
-      "equipped_echo_id": {
-        "anyOf": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "null"
-          }
-        ],
-        "default": null,
-        "title": "Equipped Echo Id"
+      "mechanics": {
+        "$ref": "#/$defs/Mechanics"
+      },
+      "slots": {
+        "$ref": "#/$defs/SlotAssignment"
       },
       "active_zone": {
         "anyOf": [

@@ -112,14 +112,47 @@ func active_zone() -> Dictionary:
 	var zone: Variant = snapshot.get("active_zone")
 	return zone if typeof(zone) == TYPE_DICTIONARY else {}
 
-func equipped_echo() -> Dictionary:
-	var id: Variant = snapshot.get("equipped_echo_id")
+## The folded component set. The BRIDGE folds; nothing here re-derives it.
+func mechanics() -> Dictionary:
+	var m: Variant = snapshot.get("mechanics")
+	return m if typeof(m) == TYPE_DICTIONARY else {}
+
+## Every owned component, already folded: `{component, mk, provenance}`.
+func owned_components(kind := "") -> Array:
+	var out: Array = []
+	for entry: Dictionary in mechanics().get("owned", []):
+		var component: Dictionary = entry.get("component", {})
+		if kind == "" or component.get("kind", "") == kind:
+			out.append(entry)
+	return out
+
+func owned_component(component_id: String) -> Dictionary:
+	for entry: Dictionary in mechanics().get("owned", []):
+		if entry.get("component", {}).get("component_id", "") == component_id:
+			return entry
+	return {}
+
+func slots() -> Dictionary:
+	var s: Variant = snapshot.get("slots")
+	return s if typeof(s) == TYPE_DICTIONARY else {}
+
+## The Action in a slot, as the runtime wants it. Empty when the slot is
+## clear — which is a legal, playable state: the Static Pulse is never the
+## thing in a slot.
+func slotted_action(slot := "echo_a") -> Dictionary:
+	var id: Variant = slots().get(slot)
 	if id == null:
 		return {}
-	for echo: Dictionary in snapshot.get("echoes", []):
-		if echo.get("echo_id") == id:
-			return echo
-	return {}
+	return owned_component(str(id)).get("component", {})
+
+## What an Echo was interpreted from, for tints and provenance. Reads the
+## folded provenance rather than the log, so an upgraded component still
+## answers with the world that created it.
+func component_source_game(component_id: String) -> String:
+	var provenance: Array = owned_component(component_id).get("provenance", [])
+	if provenance.is_empty():
+		return ""
+	return str(provenance[0].get("source_game", ""))
 
 func scout_for(location_id: int) -> Dictionary:
 	for scout: Dictionary in snapshot.get("scouted", []):

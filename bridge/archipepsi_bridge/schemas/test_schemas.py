@@ -20,7 +20,12 @@ from pydantic import TypeAdapter, ValidationError
 try:
     from . import constants as C
     from .echo import SCHEMA_VERSION as ECHO_SCHEMA_VERSION
-    from .echo import Echo, PassiveEcho, PrimaryEcho, validate_echo
+    from .echo import (
+        ActionComponent, EchoInterpretation, TraitComponent,
+        validate_interpretation,
+    )
+    from . import mechanics as M
+    from . import migration as MG
     from . import protocol as P
     from . import transitions as T
     from .protocol import (
@@ -33,7 +38,12 @@ try:
 except ImportError:  # pragma: no cover
     import constants as C
     from echo import SCHEMA_VERSION as ECHO_SCHEMA_VERSION
-    from echo import Echo, PassiveEcho, PrimaryEcho, validate_echo
+    from echo import (
+        ActionComponent, EchoInterpretation, TraitComponent,
+        validate_interpretation,
+    )
+    import mechanics as M
+    import migration as MG
     import protocol as P
     import transitions as T
     from protocol import (
@@ -44,7 +54,7 @@ except ImportError:  # pragma: no cover
     from zone import SCHEMA_VERSION as ZONE_SCHEMA_VERSION
     from zone import Zone, validate_zone
 
-EchoAdapter = TypeAdapter(Echo)
+EchoAdapter = TypeAdapter(EchoInterpretation)
 ClientAdapter = TypeAdapter(ClientMessage)
 
 
@@ -107,15 +117,15 @@ def test_reference_echo_beats_static_pulse_by_the_stated_margin():
     """Asserts the REFERENCE Echo, not three magic literals. v0.4's version
     referenced no field at all and passed with the bounds crushed to 1-2
     damage. The prose claim was also wrong: the bounds permit ~156x."""
-    e = EchoAdapter.validate_python(dict(
-        _CONFERENCE_CALL,
-        cooldown=C.REFERENCE_ECHO_COOLDOWN,
-        initiator={"type": "hitscan_damage", "damage": C.REFERENCE_ECHO_DAMAGE,
-                   "pellets": C.REFERENCE_ECHO_PELLETS,
-                   "spread_degrees": 10.0, "range": 35.0},
-        modifiers=[],
-    ))
-    dps = e.initiator.damage * e.initiator.pellets / e.cooldown
+    e = EchoAdapter.validate_python({**_CONFERENCE_CALL, "operations": [
+        _action_op(cooldown=C.REFERENCE_ECHO_COOLDOWN, modifiers=[],
+                   primitive={"type": "hitscan_damage",
+                              "damage": C.REFERENCE_ECHO_DAMAGE,
+                              "pellets": C.REFERENCE_ECHO_PELLETS,
+                              "spread_degrees": 10.0, "range": 35.0})]})
+    action = e.operations[0].component
+    dps = (action.primitive.damage * action.primitive.pellets
+           / action.cooldown)
     assert 2.0 < dps / C.STATIC_PULSE_DPS < 3.5
 
 
@@ -370,135 +380,403 @@ def test_semantic_validation_catches_unowned_echo_and_wrong_zone_id():
 # Echo
 # ===========================================================================
 
+def _interp(seq, loc, ops, **over):
+    """A minimal valid interpretation. Tests override what they care about."""
+    base = {
+        "schema_version": 8, "echo_id": f"echo_{loc}", "interpretation_seq": seq,
+        "source_location_id": loc, "source_item_name": "Item",
+        "source_game": "Some Game", "source_recipient_name": "Somebody",
+        "display_name": "Thing", "description": "It does a thing.",
+        "operations": tuple(ops),
+    }
+    return EchoAdapter.validate_python({**base, **over})
+
+
+def _action_op(cid="act_cc", primitive=None, **over):
+    return {"op": "create", "component": {
+        "kind": "action", "component_id": cid, "display_name": "Conference Call",
+        "description": "A ridiculous shotgun with enough kick to move you.",
+        "slot": "echo_a", "cooldown": 0.8,
+        "primitive": primitive or {
+            "type": "hitscan_damage", "damage": 8.0, "pellets": 12,
+            "spread_degrees": 10.0, "range": 35.0},
+        **over}}
+
+
+def _resource_op(cid="res_mp", **over):
+    return {"op": "create", "component": {
+        "kind": "resource", "component_id": cid, "display_name": "MP",
+        "description": "Magic.", "max_value": 100.0, "initial_fraction": 1.0,
+        "presentation": "bar", "palette_color": "moss", **over}}
+
+
 _CONFERENCE_CALL = {
-    "schema_version": ECHO_SCHEMA_VERSION,
+    "schema_version": 8,
     "echo_id": "echo_89100001",
+    "interpretation_seq": 0,
     "source_location_id": 89100001,
     "source_item_name": "Conference Call",
     "source_game": "Borderlands 2",
     "source_recipient_name": "BL2Player",
+    "concepts": ["shotgun", "recoil", "absurd"],
+    "mode": "literal",
     "display_name": "Conference Call",
     "description": "A ridiculous shotgun with enough kick to double as movement.",
-    "archetype": "weapon",
-    "activation": "primary",
-    "cooldown": 0.8,
-    "initiator": {"type": "hitscan_damage", "damage": 8.0, "pellets": 12,
-                  "spread_degrees": 10.0, "range": 35.0},
-    "modifiers": [{"type": "recoil_self", "force": 8.0},
-                  {"type": "knockback_target", "force": 5.0}],
     "tags": ["weapon", "shotgun", "recoil", "mobility"],
+    "operations": [_action_op(modifiers=[{"type": "recoil_self", "force": 8.0},
+                                         {"type": "knockback_target", "force": 5.0}])],
 }
 
 _WING_CAP = {
-    "schema_version": ECHO_SCHEMA_VERSION,
+    "schema_version": 8,
     "echo_id": "echo_89100003",
+    "interpretation_seq": 1,
     "source_location_id": 89100003,
     "source_item_name": "Wing Cap",
     "source_game": "Super Mario 64",
     "source_recipient_name": "Mario",
+    "concepts": ["flight", "weightlessness"],
+    "mode": "conceptual",
     "display_name": "Wing Cap",
     "description": "The world stops taking your weight quite so seriously.",
-    "archetype": "passive",
-    "activation": "passive",
-    "effects": [{"type": "modify_gravity", "multiplier": 0.55}],
     "tags": ["passive", "gravity"],
+    "operations": [{"op": "create", "component": {
+        "kind": "trait", "component_id": "trait_wing", "display_name": "Wing Cap",
+        "description": "Lighter.", "stat": "gravity", "multiplier": 0.55}}],
 }
 
 
-def test_the_canonical_echoes_parse():
+def test_the_canonical_interpretations_parse():
     e = EchoAdapter.validate_python(_CONFERENCE_CALL)
-    assert isinstance(e, PrimaryEcho)
-    assert [x.type for x in e.effects] == [
-        "hitscan_damage", "recoil_self", "knockback_target"]
-    assert isinstance(EchoAdapter.validate_python(_WING_CAP), PassiveEcho)
+    action = e.operations[0].component
+    assert isinstance(action, ActionComponent)
+    assert action.primitive.type == "hitscan_damage"
+    assert [m.type for m in action.modifiers] == [
+        "recoil_self", "knockback_target"]
+    wing = EchoAdapter.validate_python(_WING_CAP)
+    assert isinstance(wing.operations[0].component, TraitComponent)
 
 
-def test_exactly_one_initiator_is_structural_not_a_count_check():
+def test_exactly_one_primitive_is_structural_not_a_count_check():
     """v0.4 used a flat effects list, so appending a second initiator
-    post-parse restored the hole in one line."""
+    post-parse restored the hole in one line. It is a field now, and the
+    exported JSON Schema carries the rule."""
     e = EchoAdapter.validate_python(_CONFERENCE_CALL)
-    assert not isinstance(e.initiator, list)
+    assert not isinstance(e.operations[0].component.primitive, list)
     with pytest.raises(ValidationError):
-        e.modifiers = [{"type": "dash", "force": 10.0}]   # not a Modifier
-    with pytest.raises(ValidationError):
-        EchoAdapter.validate_python(dict(_CONFERENCE_CALL, initiator=[
-            {"type": "dash", "force": 10.0},
-            {"type": "heal_self", "amount": 30.0}]))
+        EchoAdapter.validate_python({**_CONFERENCE_CALL, "operations": [
+            _action_op(primitive=[{"type": "dash", "force": 10.0},
+                                  {"type": "heal_self", "amount": 30.0}])]})
 
 
 def test_modifiers_require_something_that_hits():
-    with pytest.raises(ValidationError, match="requires a damage initiator"):
-        EchoAdapter.validate_python(dict(
-            _CONFERENCE_CALL,
-            initiator={"type": "heal_self", "amount": 30.0},
-            modifiers=[{"type": "recoil_self", "force": 8.0}]))
+    with pytest.raises(ValidationError, match="requires a damage primitive"):
+        EchoAdapter.validate_python({**_CONFERENCE_CALL, "operations": [
+            _action_op(primitive={"type": "heal_self", "amount": 30.0},
+                       modifiers=[{"type": "recoil_self", "force": 8.0}])]})
 
 
-def test_a_modifier_alone_is_not_an_echo():
+def test_a_modifier_is_not_a_primitive():
     with pytest.raises(ValidationError):
-        EchoAdapter.validate_python(dict(
-            _CONFERENCE_CALL,
-            initiator={"type": "knockback_target", "force": 5.0},
-            modifiers=[]))
+        EchoAdapter.validate_python({**_CONFERENCE_CALL, "operations": [
+            _action_op(primitive={"type": "knockback_target", "force": 5.0})]})
 
 
-def test_passive_echo_has_no_cooldown_field():
-    e = EchoAdapter.validate_python(_WING_CAP)
-    assert not hasattr(e, "cooldown")
+def test_a_component_id_must_match_its_kind():
+    """A `res_` id naming an action is a parse error, not a debugging
+    session six operations later."""
+    with pytest.raises(ValidationError, match="must start with 'act_'"):
+        EchoAdapter.validate_python({**_CONFERENCE_CALL,
+                                     "operations": [_action_op(cid="res_wrong")]})
+
+
+def test_traversal_traits_may_only_ever_help():
+    """v0.7 bounded each Echo separately and got away with it because one
+    applied at a time. v0.8 traits are always on and stack across
+    everything owned, so the floor has to be absolute."""
+    with pytest.raises(ValidationError, match="may not fall below base"):
+        TraitComponent(kind="trait", component_id="trait_slow",
+                       display_name="S", description="d",
+                       stat="move_speed", multiplier=0.7)
+    with pytest.raises(ValidationError, match="only ever make the player lighter"):
+        TraitComponent(kind="trait", component_id="trait_heavy",
+                       display_name="H", description="d",
+                       stat="gravity", multiplier=1.5)
+    # A non-traversal stat may absolutely bite.
+    TraitComponent(kind="trait", component_id="trait_slick", display_name="S",
+                   description="d", stat="ground_friction", multiplier=0.4)
+
+
+def test_out_of_bounds_and_unsupported_primitives_are_rejected():
     with pytest.raises(ValidationError):
-        EchoAdapter.validate_python(dict(_WING_CAP, cooldown=1.0))
-
-
-def test_passive_echo_cannot_carry_an_attack():
+        EchoAdapter.validate_python({**_CONFERENCE_CALL, "operations": [
+            _action_op(primitive={"type": "hitscan_damage", "damage": 9999.0,
+                                  "pellets": 12, "spread_degrees": 10.0,
+                                  "range": 35.0})]})
     with pytest.raises(ValidationError):
-        EchoAdapter.validate_python(dict(_WING_CAP, effects=[
-            {"type": "hitscan_damage", "damage": 8.0, "pellets": 1,
-             "spread_degrees": 0.0, "range": 20.0}]))
-
-
-def test_passive_multipliers_cannot_break_traversal():
-    with pytest.raises(ValidationError):
-        EchoAdapter.validate_python(dict(_WING_CAP, effects=[
-            {"type": "modify_gravity", "multiplier": 1.5}]))
-    with pytest.raises(ValidationError):
-        EchoAdapter.validate_python(dict(_WING_CAP, effects=[
-            {"type": "modify_speed", "multiplier": 0.65}]))
-
-
-def test_out_of_bounds_and_unsupported_effects_are_rejected():
-    with pytest.raises(ValidationError):
-        EchoAdapter.validate_python(dict(_CONFERENCE_CALL, initiator={
-            "type": "hitscan_damage", "damage": 9999.0, "pellets": 12,
-            "spread_degrees": 10.0, "range": 35.0}))
-    with pytest.raises(ValidationError):
-        EchoAdapter.validate_python(dict(_CONFERENCE_CALL, initiator={
-            "type": "summon_black_hole", "radius": 12.0}))
+        EchoAdapter.validate_python({**_CONFERENCE_CALL, "operations": [
+            _action_op(primitive={"type": "summon_black_hole", "radius": 12.0})]})
 
 
 def test_nan_and_infinity_are_rejected():
     for bad in (float("nan"), float("inf"), float("-inf")):
         with pytest.raises(ValidationError):
-            EchoAdapter.validate_python(dict(_CONFERENCE_CALL, cooldown=bad))
-    with pytest.raises(ValidationError):
-        EchoAdapter.validate_python(
-            {**_CONFERENCE_CALL, "cooldown": math.nan})
+            EchoAdapter.validate_python({**_CONFERENCE_CALL,
+                                         "operations": [_action_op(cooldown=bad)]})
 
 
 def test_echo_id_is_derived_from_its_source_location():
     with pytest.raises(ValidationError, match="echo_id must be"):
-        EchoAdapter.validate_python(dict(_CONFERENCE_CALL, echo_id="echo_89100999"))
+        EchoAdapter.validate_python(dict(_CONFERENCE_CALL,
+                                         echo_id="echo_89100999"))
 
 
-def test_echo_json_round_trips_losslessly():
+def test_interpretation_json_round_trips_losslessly():
     e = EchoAdapter.validate_python(_CONFERENCE_CALL)
-    assert EchoAdapter.validate_json(
-        TypeAdapter(Echo).dump_json(e)) == e
+    assert EchoAdapter.validate_json(EchoAdapter.dump_json(e)) == e
 
 
-def test_semantic_echo_validation_checks_the_source():
+def test_semantic_validation_checks_the_source():
     e = EchoAdapter.validate_python(_CONFERENCE_CALL)
-    assert validate_echo(e, expected_source_location_id=89100001) == []
-    assert validate_echo(e, expected_source_location_id=89100011) != []
+    assert validate_interpretation(e, expected_source_location_id=89100001) == []
+    assert validate_interpretation(e, expected_source_location_id=89100011) != []
+
+
+def test_the_catalog_is_closed_and_the_engine_admits_what_it_can_run():
+    """The schema declares the whole catalog; the runtime catches up stage by
+    stage. An Action the engine cannot execute is refused rather than
+    accepted as an ability that silently does nothing."""
+    try:
+        from .echo import ACTION_PRIMITIVES, IMPLEMENTED_PRIMITIVES
+    except ImportError:  # pragma: no cover
+        from echo import ACTION_PRIMITIVES, IMPLEMENTED_PRIMITIVES
+    assert len(ACTION_PRIMITIVES) == 28
+    assert len(set(ACTION_PRIMITIVES)) == 28
+    assert set(IMPLEMENTED_PRIMITIVES) <= set(ACTION_PRIMITIVES)
+    melee = EchoAdapter.validate_python({**_CONFERENCE_CALL, "operations": [
+        _action_op(primitive={"type": "melee_swing", "damage": 20.0,
+                              "reach": 2.5, "arc_degrees": 90.0})]})
+    errs = validate_interpretation(melee, expected_source_location_id=89100001)
+    assert any("not yet implemented" in e for e in errs)
+
+
+# ===========================================================================
+# The fold
+# ===========================================================================
+
+def _grapple_op(cid="act_grapple"):
+    return {"op": "create", "component": {
+        "kind": "action", "component_id": cid, "display_name": "Hookshot",
+        "description": "Pull.", "slot": "mobility", "cooldown": 1.5,
+        "primitive": {"type": "grapple_to_surface", "range": 20.0,
+                      "pull_force": 14.0}}}
+
+
+def test_the_fold_orders_by_sequence_not_by_location_id():
+    """The regression this ordering exists for.
+
+    `Longshot` upgrades the grapple that `Hookshot` created, and Hookshot
+    sits at a HIGHER location id. Ordering by location id replays the
+    upgrade first, against a component that does not exist yet.
+    """
+    log = [_interp(0, 89100020, [_grapple_op()], source_item_name="Hookshot"),
+           _interp(1, 89100002, [{"op": "upgrade", "target": "act_grapple",
+                                  "field": "range", "delta": 12.0}],
+                   source_item_name="Longshot")]
+    m = M.derive_mechanics(log)
+    assert m.by_id("act_grapple").component.primitive.range == 32.0
+    assert m.by_id("act_grapple").mk == 2
+    # Same log, shuffled input: the fold sorts, so the answer is identical.
+    assert M.derive_mechanics(list(reversed(log))) == m
+    # And the location-id order really is the wrong one.
+    assert [i.source_item_name
+            for i in sorted(log, key=lambda i: i.source_location_id)] == [
+        "Longshot", "Hookshot"]
+
+
+def test_a_dangling_target_fails_the_fold_loudly():
+    """Never skipped: a skipped operation is a build that quietly differs
+    from the one the player earned."""
+    with pytest.raises(M.FoldError, match="does not exist at that point"):
+        M.derive_mechanics([_interp(0, 89100002, [
+            {"op": "upgrade", "target": "act_nope", "field": "range",
+             "delta": 1.0}])])
+
+
+def test_a_duplicate_sequence_is_a_corrupt_log():
+    with pytest.raises(M.FoldError, match="duplicate interpretation_seq"):
+        M.derive_mechanics([_interp(0, 89100002, [_grapple_op()]),
+                            _interp(0, 89100003, [_grapple_op("act_two")])])
+
+
+def test_an_upgrade_cannot_walk_a_value_out_of_range():
+    """Bounds re-run on every apply, so a field cannot be grown past its
+    declared maximum one small step at a time."""
+    with pytest.raises(M.FoldError, match="leaves it invalid"):
+        M.derive_mechanics([
+            _interp(0, 89100020, [_grapple_op()]),
+            _interp(1, 89100002, [{"op": "upgrade", "target": "act_grapple",
+                                   "field": "range", "delta": 400.0}])])
+
+
+def test_merge_resolves_permanently_and_unions_provenance():
+    log = [
+        _interp(0, 89100005, [_resource_op()], source_item_name="Magic Meter"),
+        _interp(1, 89100007, [
+            _resource_op("res_estus", display_name="Estus", max_value=40.0,
+                         presentation="pips", pip_count=2,
+                         palette_color="tide"),
+            {"op": "merge", "absorbed": "res_estus", "survivor": "res_mp",
+             "capacity": "sum"}], source_item_name="Blue Estus"),
+    ]
+    m = M.derive_mechanics(log)
+    assert m.by_id("res_mp").component.max_value == 140.0
+    # The absorbed id keeps resolving, forever.
+    assert m.resolve("res_estus") == "res_mp"
+    assert m.by_id("res_estus").component_id == "res_mp"
+    names = [p.source_item_name for p in m.by_id("res_mp").provenance]
+    assert "Magic Meter" in names and "Blue Estus" in names
+    assert [o.component_id for o in m.owned] == ["res_mp"]
+
+
+def test_merge_rejects_a_self_merge_after_aliasing():
+    """Structurally impossible to write `absorbed == survivor`; the case
+    that needs the fold is two ids that already resolve to one."""
+    with pytest.raises(M.FoldError, match="already resolve to the same"):
+        M.derive_mechanics([
+            _interp(0, 89100005, [
+                _resource_op(),
+                _resource_op("res_es", palette_color="tide"),
+                {"op": "merge", "absorbed": "res_es", "survivor": "res_mp"}]),
+            _interp(1, 89100007, [
+                {"op": "merge", "absorbed": "res_es", "survivor": "res_mp"}]),
+        ])
+
+
+def test_only_resources_may_merge():
+    with pytest.raises(M.FoldError, match="only.*resources may merge"):
+        M.derive_mechanics([_interp(0, 89100005, [
+            _grapple_op(), _grapple_op("act_two"),
+            {"op": "merge", "absorbed": "act_two", "survivor": "act_grapple"}])])
+
+
+def test_a_powered_primitive_needs_its_link():
+    """An unlimited beam is a movement contract, not an ability."""
+    beam = {"op": "create", "component": {
+        "kind": "action", "component_id": "act_beam", "display_name": "Beam",
+        "description": "b", "slot": "echo_a", "cooldown": 1.0,
+        "primitive": {"type": "beam_sustained", "damage_per_second": 20.0,
+                      "range": 20.0, "drain_per_second": 10.0}}}
+    with pytest.raises(M.FoldError, match="must be powered by a resource"):
+        M.derive_mechanics([_interp(0, 89100005, [beam])])
+    m = M.derive_mechanics([_interp(0, 89100005, [
+        beam, _resource_op(),
+        {"op": "link", "link": "powers", "source": "res_mp",
+         "target": "act_beam"}])])
+    assert m.links[0].link == "powers"
+
+
+def test_modify_adds_a_capability_and_bumps_the_mark():
+    """Fire Flower onto a gun you already own."""
+    m = M.derive_mechanics([
+        _interp(0, 89100001, [_action_op()]),
+        _interp(1, 89100009, [{"op": "modify", "target": "act_cc",
+                               "add_modifier": {
+                                   "type": "apply_status_on_hit",
+                                   "status": "burning", "duration": 4.0,
+                                   "magnitude": 1.0}}],
+                source_item_name="Fire Flower"),
+    ])
+    action = m.by_id("act_cc")
+    assert [x.type for x in action.component.modifiers] == ["apply_status_on_hit"]
+    assert action.mk == 2
+    assert action.provenance[-1].source_item_name == "Fire Flower"
+
+
+# ===========================================================================
+# Migration
+# ===========================================================================
+
+_V7_SAVE = {
+    "schema_version": 7, "seed_name": "S", "slot_name": "Skyiah",
+    "slot_id": 1, "team": 0,
+    "echoes": [
+        {"schema_version": 7, "echo_id": "echo_89100020",
+         "source_location_id": 89100020, "source_item_name": "Hookshot",
+         "source_game": "Ocarina of Time", "source_recipient_name": "P",
+         "display_name": "Hookshot Echo", "description": "Pulls you in.",
+         "tags": ["grapple"], "activation": "primary", "archetype": "mobility",
+         "cooldown": 2.0,
+         "initiator": {"type": "grapple_to_surface", "range": 20.0,
+                       "pull_force": 14.0},
+         "modifiers": []},
+        {"schema_version": 7, "echo_id": "echo_89100002",
+         "source_location_id": 89100002, "source_item_name": "Cape",
+         "source_game": "Super Mario World", "source_recipient_name": "Q",
+         "display_name": "Cape Echo", "description": "You fall gently.",
+         "tags": [], "activation": "passive", "archetype": "passive",
+         "effects": [{"type": "modify_gravity", "multiplier": 0.6}]},
+        {"schema_version": 7, "echo_id": "echo_89100003",
+         "source_location_id": 89100003,
+         "source_item_name": "Conference Call", "source_game": "Borderlands 2",
+         "source_recipient_name": "R", "display_name": "Conference Call",
+         "description": "Twelve pellets and regret.", "tags": [],
+         "activation": "primary", "archetype": "weapon", "cooldown": 1.2,
+         "initiator": {"type": "hitscan_damage", "damage": 6.0, "pellets": 12,
+                       "spread_degrees": 14.0, "range": 30.0},
+         "modifiers": [{"type": "recoil_self", "force": 9.0}]}],
+    "equipped_echo_id": "echo_89100003",
+}
+
+
+def test_a_v7_save_migrates_loads_and_folds():
+    save = CampaignSave.model_validate(MG.migrate_v7_to_v8(_V7_SAVE))
+    assert len(save.interpretations) == 3
+    assert save.next_interpretation_seq == 3
+    m = save.derive()
+    assert {o.kind for o in m.owned} == {"action", "trait"}
+    cc = m.by_id("act_l89100003")
+    assert cc.component.primitive.pellets == 12
+    assert [x.type for x in cc.component.modifiers] == ["recoil_self"]
+
+
+def test_migration_preserves_grant_order_not_location_order():
+    """The v7 save's echo order IS grant order — `add_echo` appended — so a
+    migrated campaign folds exactly as it played. Location order would put
+    Cape and Conference Call before Hookshot."""
+    save = CampaignSave.model_validate(MG.migrate_v7_to_v8(_V7_SAVE))
+    assert [i.source_item_name for i in save.interpretations] == [
+        "Hookshot", "Cape", "Conference Call"]
+    assert [i.interpretation_seq for i in save.interpretations] == [0, 1, 2]
+
+
+def test_the_equipped_echo_becomes_a_slotted_action():
+    save = CampaignSave.model_validate(MG.migrate_v7_to_v8(_V7_SAVE))
+    assert save.slots.assigned() == (("echo_a", "act_l89100003"),)
+
+
+def test_a_passive_echo_equipped_in_v7_slots_nothing():
+    """Traits are always on, so there is nothing to slot — and nothing is
+    lost: the v7 player had it while equipped, the v8 player has it always."""
+    v7 = {**_V7_SAVE, "equipped_echo_id": "echo_89100002"}
+    save = CampaignSave.model_validate(MG.migrate_v7_to_v8(v7))
+    assert save.slots.assigned() == ()
+    assert save.derive().by_id("trait_l89100002_0").component.stat == "gravity"
+
+
+def test_migration_is_idempotent_and_refuses_unknown_versions():
+    once = MG.migrate_v7_to_v8(_V7_SAVE)
+    assert MG.migrate_v7_to_v8(once) == once
+    with pytest.raises(ValueError, match="only 7 -> 8"):
+        MG.migrate_v7_to_v8({**_V7_SAVE, "schema_version": 5})
+
+
+def test_an_empty_v7_save_migrates_to_an_empty_log():
+    bare = {"schema_version": 7, "seed_name": "S", "slot_name": "n",
+            "slot_id": 1, "team": 0}
+    save = CampaignSave.model_validate(MG.migrate_v7_to_v8(bare))
+    assert save.interpretations == () and save.next_interpretation_seq == 0
+    assert save.derive() == M.EMPTY_MECHANICS
 
 
 # ===========================================================================
@@ -566,12 +844,13 @@ def test_campaign_save_round_trips_with_real_content():
     save = CampaignSave(
         seed_name="ExampleSeed", team=0, slot_id=6, slot_name="Skyiah",
         track_order=["Dark Souls III", "Ocarina of Time"],
-        echoes=[EchoAdapter.validate_python(_CONFERENCE_CALL)],
-        equipped_echo_id="echo_89100001",
+        interpretations=[EchoAdapter.validate_python(_CONFERENCE_CALL)],
+        next_interpretation_seq=1,
+        slots={"echo_a": "act_cc"},
         zones=[_record()], active_zone_id="zone_001")
     again = CampaignSave.model_validate_json(save.model_dump_json())
     assert again.campaign_key == save.campaign_key
-    assert type(again.echo_by_id("echo_89100001")).__name__ == "PrimaryEcho"
+    assert again.derive().by_id("act_cc").component.primitive.pellets == 12
     assert type(again.zone_by_id("zone_001").zone.chambers[0]).__name__ == \
         "TreasureRoomChamber"
 
@@ -582,7 +861,7 @@ def test_campaign_save_rejects_dangling_references():
                      active_zone_id="zone_nope")
     with pytest.raises(ValidationError, match="not owned"):
         CampaignSave(seed_name="S", team=0, slot_id=1, slot_name="n",
-                     equipped_echo_id="echo_89100001")
+                     slots={"echo_a": "act_nope"})
 
 
 def test_campaign_save_rejects_two_pending_checks_for_one_location():
@@ -1332,7 +1611,7 @@ def test_campaign_models_cannot_be_mutated_at_all():
             setattr(obj, field, value)
 
     for collection in (save.zones, save.pending_checks, snap.pending_checks,
-                       snap.echoes, snap.shop.stock, snap.checked_location_ids,
+                       snap.interpretations, snap.shop.stock, snap.checked_location_ids,
                        save.zones[0].allocated_location_ids):
         assert isinstance(collection, tuple), "no append(), by construction"
 
@@ -1495,7 +1774,7 @@ def test_transitions_reject_illegal_requests_without_corrupting_state():
             lambda: T.claim_zone_check(save, zone_id="zone_001",
                                        location_id=89100029,
                                        transaction_id="t"),
-            lambda: T.equip_echo(save, "echo_89100999"),
+            lambda: T.slot_action(save, "echo_a", "act_nope"),
             lambda: T.release_location(save, "zone_001", 89100029),
     ):
         with pytest.raises(ValueError):
@@ -1558,7 +1837,7 @@ def test_the_snapshot_enforces_what_the_save_enforces():
         _snapshot(pending_checks=[dup[0]], coins_spent=0)
 
     with pytest.raises(ValidationError, match="not owned"):
-        _snapshot(equipped_echo_id="echo_89100001")
+        _snapshot(slots={"echo_a": "act_nope"})
 
     # A Zone claim IS backed when the snapshot carries its Zone.
     ok = _snapshot(active_zone=_record(state="ACTIVE"),

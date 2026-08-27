@@ -114,7 +114,8 @@ async def finalize(engine: CampaignEngine, location_id: int) -> None:
                 location_id=location_id)
         else:
             echo_id = await engine.grant_echo(location_id)
-            echo = engine.save.echo_by_id(echo_id) if echo_id else None
+            echo = (engine.save.interpretation_by_id(echo_id)
+                    if echo_id else None)
             lines = [scout.item_name, scout.recipient_game]
             if echo is not None:
                 lines += ["", "EPSILON ECHO ACQUIRED", echo.display_name,

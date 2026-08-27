@@ -66,7 +66,7 @@ func _run() -> void:
 	_test_reveal_splits_the_two_halves()
 	_check_input_bindings()
 	_check_camera_feel()
-	_check_echo_source_tint()
+	_check_empty_slot_claims_no_world()
 	_check_theme_agreement()
 
 	if not await _play_one_zone(true):
@@ -112,9 +112,26 @@ func _run() -> void:
 	for scout: Dictionary in snapshot.get("scouted", []):
 		if not scout.get("recipient_is_self", false):
 			foreign += 1
-	_check(snapshot.get("echoes", []).size() == foreign,
-			"%d foreign checks -> %d echoes, none missing, none duplicated"
-			% [foreign, snapshot.get("echoes", []).size()])
+	var interpretations: Array = snapshot.get("interpretations", [])
+	# GDScript has no implicit adjacent-string concatenation; the `+` is
+	# load-bearing, not style.
+	_check(interpretations.size() == foreign,
+			("%d foreign checks -> %d interpretations, none missing, "
+			+ "none duplicated") % [foreign, interpretations.size()])
+	# The log is the save; the fold is what the game plays. Both have to be
+	# whole, and the sequence has to be the unique, gapless thing the
+	# ordering depends on.
+	var seqs: Array = []
+	for entry: Dictionary in interpretations:
+		seqs.append(int(entry.get("interpretation_seq", -1)))
+	seqs.sort()
+	var expected_seqs: Array = []
+	for i in interpretations.size():
+		expected_seqs.append(i)
+	_check(seqs == expected_seqs,
+			"interpretation_seq is unique and gapless across the campaign")
+	_check(BridgeClient.mechanics().get("owned", []).size() >= foreign,
+			"the fold produced a component for every interpretation")
 	_check(stock_ever_seen, "shop stocked at least once during the campaign")
 	if stock_ever_seen:
 		_check(_bought_once, "at least one shop purchase completed")
@@ -210,27 +227,33 @@ func _check_enemy_silhouettes() -> void:
 					% [ChamberBuilders.TALLEST_ACTOR, height])
 		enemy.free()
 
-## An Echo is somebody else's item, reinterpreted. It should look like it:
-## the attachment's body wears the source world's colour — the same one
-## the campaign board, the reward pedestals and the reveal card use — and
-## its tip keeps the archetype, so "where did this come from" and "what
-## does it do" stay readable as two separate facts rather than one.
-func _check_echo_source_tint() -> void:
+## An Echo is somebody else's item, reinterpreted, and it should look like
+## it. Half of that is checkable before a campaign exists — an empty slot
+## must claim no world — and half needs a real owned component, because in
+## v0.8 the source game lives in the FOLD's provenance rather than on the
+## component. The second half runs in `_check_slotted_action_tint`, after
+## the first Zone has actually granted something.
+func _check_empty_slot_claims_no_world() -> void:
 	var player := Player.create()
 	add_child(player)
 	var runtime: EchoRuntime = player.echo_runtime
 	_check(runtime.source_color().is_equal_approx(Color(0.85, 0.88, 0.92)),
 			"an empty slot claims no world's colour")
-	runtime.set_equipped({"echo_id": "echo_89100001",
-			"activation": "primary", "archetype": "mobility",
-			"cooldown": 1.0, "source_game": "Celeste",
-			"initiator": {"type": "dash", "force": 12.0}})
-	_check(runtime.source_color().is_equal_approx(
-				ThemeMaterials.color_for_game("Celeste")),
-			"the equipped Echo wears its source world's colour")
 	var part: MeshInstance3D = player.viewmodel.get_node("EchoPart")
+	_check(not part.visible, "an empty slot shows no attachment")
+	player.free()
+
+## The other half, with a component the campaign really owns.
+func _check_slotted_action_tint(runtime: EchoRuntime) -> void:
+	var component_id := str(runtime.equipped.get("component_id", ""))
+	var game := BridgeClient.component_source_game(component_id)
+	_check(game != "", "a slotted action knows the world it came from")
+	_check(runtime.source_color().is_equal_approx(
+				ThemeMaterials.color_for_game(game)),
+			"the slotted action wears its source world's colour (%s)" % game)
+	var part: MeshInstance3D = runtime.player.viewmodel.get_node("EchoPart")
 	var tip: MeshInstance3D = part.get_node("EchoTip")
-	_check(part.visible, "a primary Echo shows its attachment")
+	_check(part.visible, "a slotted action shows its attachment")
 	var body_mat := part.material_override as StandardMaterial3D
 	var tip_mat := tip.material_override as StandardMaterial3D
 	_check(body_mat != null and tip_mat != null,
@@ -238,8 +261,7 @@ func _check_echo_source_tint() -> void:
 	_check(body_mat != null and tip_mat != null
 				and not body_mat.albedo_color.is_equal_approx(
 					tip_mat.albedo_color),
-			"source colour and archetype colour stay distinguishable")
-	player.free()
+			"source colour and slot colour stay distinguishable")
 
 ## Head bob is the classic way to make a first-person walk feel like a
 ## walk and the classic way to make people motion-sick, so its bounds are
@@ -452,20 +474,29 @@ func _play_one_zone(detailed: bool) -> bool:
 	controller.refresh()
 	if detailed:
 		_check(controller._exit_portal.unlocked, "exit portal unlocked")
-		var echoes: Array = BridgeClient.snapshot.get("echoes", [])
-		if not echoes.is_empty():
-			var echo_id: String = echoes[0]["echo_id"]
-			BridgeClient.send_intent({"type": "equip_echo",
-					"echo_id": echo_id})
-			await _await_condition("echo equipped",
+		var actions: Array = BridgeClient.owned_components("action")
+		if not actions.is_empty():
+			var action: Dictionary = actions[0].get("component", {})
+			var slot := str(action.get("slot", "echo_a"))
+			var component_id := str(action.get("component_id", ""))
+			BridgeClient.send_intent({"type": "slot_action", "slot": slot,
+					"component_id": component_id})
+			await _await_condition("action slotted",
 					func() -> bool:
-						return BridgeClient.snapshot.get("equipped_echo_id") \
-								== echo_id)
+						return str(BridgeClient.slots().get(slot)) \
+								== component_id)
 			controller.player.echo_runtime.set_equipped(
-					BridgeClient.equipped_echo())
+					BridgeClient.slotted_action(slot))
 			controller.player.echo_runtime.activate()
 			_check(controller.player.echo_runtime.cooldown_remaining >= 0.0,
-					"equipped echo activates on demand")
+					"a slotted action activates on demand")
+			_check_slotted_action_tint(controller.player.echo_runtime)
+			# Only Actions occupy slots. A trait is on because it is owned,
+			# which is the whole reason a Check can matter unequipped.
+			for entry: Dictionary in BridgeClient.owned_components("trait"):
+				_check(not (str(entry.get("component", {}).get(
+						"component_id", "")) in BridgeClient.slots().values()),
+						"a trait never occupies a slot")
 	controller.queue_free()
 	await get_tree().process_frame
 	return true

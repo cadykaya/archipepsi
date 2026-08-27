@@ -13,7 +13,8 @@ from archipepsi_bridge.epsilon.requests import (
     EchoGenerationRequest, EchoPlayerState, EchoSource,
 )
 from archipepsi_bridge.schemas import constants as C
-from archipepsi_bridge.schemas.echo import Echo
+from archipepsi_bridge.schemas import echo as E
+from archipepsi_bridge.schemas.echo import EchoInterpretation
 from archipepsi_bridge.schemas.zone import Zone, validate_zone
 from pydantic import TypeAdapter
 
@@ -65,14 +66,18 @@ def test_13_invalid_model_json_falls_back():
 def test_14_unsupported_echo_effect_one_repair_then_fallback():
     async def scenario():
         bad_echo = {
-            "schema_version": 7, "echo_id": "echo_89100001",
+            "schema_version": 8, "echo_id": "echo_89100001",
+            "interpretation_seq": 0,
             "source_location_id": 89100001,
             "source_item_name": "Conference Call",
             "source_game": "Borderlands 2",
             "source_recipient_name": "BL2Player",
             "display_name": "Dragonmaster", "description": "no.",
-            "activation": "primary", "archetype": "weapon", "cooldown": 1.0,
-            "initiator": {"type": "summon_dragon", "dragons": 7},
+            "operations": [{"op": "create", "component": {
+                "kind": "action", "component_id": "act_dragon",
+                "display_name": "Dragonmaster", "description": "no.",
+                "slot": "echo_a", "cooldown": 1.0,
+                "primitive": {"type": "summon_dragon", "dragons": 7}}}],
         }
         provider = ScriptedProvider(zone_outputs=[],
                                     echo_outputs=[bad_echo, bad_echo])
@@ -81,8 +86,10 @@ def test_14_unsupported_echo_effect_one_repair_then_fallback():
         assert provider.echo_repairs == 1          # exactly one repair
         assert provider.echo_calls == 2
         # The unsupported mechanic never reaches gameplay: the accepted
-        # object is a validated Echo with a real initiator.
-        assert outcome.value.initiator.type != "summon_dragon"
+        # object is a validated interpretation with a real primitive.
+        component = outcome.value.operations[0].component
+        assert component.primitive.type != "summon_dragon"
+        assert component.primitive.type in E.IMPLEMENTED_PRIMITIVES
     run(scenario())
 
 
@@ -195,7 +202,7 @@ def test_archive_replay_accepts_good_and_catches_drift():
 
 
 def test_fallback_echo_heuristics_all_valid():
-    echo_adapter = TypeAdapter(Echo)
+    echo_adapter = TypeAdapter(EchoInterpretation)
     names = ["Conference Call", "Master Sword", "Hookshot", "Jet Boots",
              "Wing Cap", "Hylian Shield", "Estus Flask", "Bomb Bag",
              "Progressive Glove", "REP", "Mystery Trinket 9000"]
@@ -208,3 +215,9 @@ def test_fallback_echo_heuristics_all_valid():
             required_echo_id="echo_89100005")
         echo = echo_adapter.validate_python(fallback_echo(req))
         assert echo.echo_id == "echo_89100005"
+        # Whatever the heuristic picked, the engine can run it: the
+        # fallback is the one provider that must never produce an Action
+        # that silently does nothing.
+        for op in echo.operations:
+            if op.component.kind == "action":
+                assert op.component.primitive.type in E.IMPLEMENTED_PRIMITIVES

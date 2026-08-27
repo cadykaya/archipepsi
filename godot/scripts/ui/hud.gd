@@ -511,21 +511,23 @@ func refresh_echo(cooldown := -1.0, total := 0.0) -> void:
 	if cooldown < 0.0:
 		cooldown = _bound_player.echo_runtime.cooldown_remaining \
 				if _bound_player != null else 0.0
-	var echo := BridgeClient.equipped_echo()
+	var echo := BridgeClient.slotted_action()
 	if echo.is_empty():
 		_echo_label.text = "RMB: no Echo equipped"
 		_cooldown_track.visible = false
 		return
-	var suffix := ""
-	if echo.get("activation") == "passive":
-		suffix = "  (passive)"
+	# A component upgraded more than once earns its mark. Mk I is the
+	# default and says nothing, because everything starts there.
+	var mk := int(BridgeClient.owned_component(
+			str(echo.get("component_id", ""))).get("mk", 1))
+	var suffix := "  Mk %d" % mk if mk > 1 else ""
 	_echo_label.text = "RMB: %s%s" % [echo.get("display_name", "?"), suffix]
 
 	# The bar fills back up as the Echo comes off cooldown; full and green
 	# means "ready", which reads at a glance where a number did not.
 	var window: float = total if total > 0.0 \
 			else float(echo.get("cooldown", 0.0))
-	if echo.get("activation") == "passive" or window <= 0.0:
+	if window <= 0.0:
 		_cooldown_track.visible = false
 		return
 	_cooldown_track.visible = true

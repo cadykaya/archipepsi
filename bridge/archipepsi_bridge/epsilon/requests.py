@@ -12,6 +12,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..schemas import constants as C
+from ..schemas import echo as E
 
 _AP_STR = Annotated[str, Field(max_length=C.MAX_AP_STRING_LEN)]
 
@@ -27,10 +28,15 @@ class ZoneSummary(Strict):
 
 
 class EchoSummary(Strict):
+    """One owned interpretation, as Epsilon sees it in a request.
+
+    v0.7 carried `archetype` and `activation`, which were properties of an
+    Echo when an Echo was one ability. An interpretation contributes
+    components, so what a summary reports is which kinds it contributed.
+    """
     echo_id: str = Field(max_length=32)
     display_name: str = Field(max_length=C.MAX_TEXT_LEN)
-    archetype: str = Field(max_length=16)
-    activation: Literal["primary", "passive"]
+    kinds: tuple[Annotated[str, Field(max_length=16)], ...] = ()
     tags: tuple[Annotated[str, Field(max_length=24)], ...] = ()
     description: str = Field(max_length=C.MAX_TEXT_LEN)
 
@@ -108,22 +114,41 @@ class EchoPlayerState(Strict):
 
 
 class EchoGenerationRequest(Strict):
-    schema_version: Literal[7] = 7
+    """What a provider is given to interpret one foreign item.
+
+    S1 deliberately keeps this narrow. The full v0.8 request — the owned
+    component graph, the alias table, the live budgets — is what lets an
+    interpretation answer another item, and it lands with the interpretation
+    pipeline in S10. Sending it before anything can act on it would be a
+    prompt full of context no rule uses.
+
+    What S1 does change is the shape of the answer: a provider now emits an
+    `EchoInterpretation` with operations, and `allowed` says so.
+    """
+    schema_version: Literal[8] = 8
     source: EchoSource
     player_state: EchoPlayerState
     required_echo_id: str = Field(max_length=32, pattern=r"^echo_\d+$")
     allowed: dict = Field(default_factory=lambda: {
-        "archetypes": ["weapon", "tool", "mobility", "passive"],
-        "activations": ["primary", "passive"],
-        "initiators": ["hitscan_damage", "projectile_damage", "dash",
-                       "grapple_to_surface", "heal_self", "shield"],
-        "modifiers": ["recoil_self", "knockback_target"],
-        "passives": ["modify_gravity", "modify_speed"],
+        "operations": list(E.OPERATION_KINDS),
+        "modes": list(E.INTERPRETATION_MODES),
+        "component_kinds": list(E.COMPONENT_KINDS),
+        # The catalog holds 28; the engine can run these. An Action the
+        # engine cannot execute is refused by `validate_interpretation`, so
+        # offering it here would only invite a rejection.
+        "action_primitives": list(E.IMPLEMENTED_PRIMITIVES),
+        "modifiers": list(E.MODIFIER_TYPES),
+        "trait_stats": ["gravity", "move_speed"],
+        "slots": list(E.SLOT_NAMES),
     })
     composition_rules: tuple[str, ...] = (
-        "a primary Echo has exactly one initiator plus 0-2 modifiers",
-        "a passive Echo has 1-2 passives and no cooldown",
-        "modifiers require hitscan_damage or projectile_damage in the same Echo",
+        "an interpretation carries 1-4 operations",
+        "a create operation's component id must start with its kind prefix "
+        "(act_, trait_, res_, rule_, status_, aff_, info_)",
+        "an action has exactly one primitive plus 0-2 modifiers",
+        "modifiers require a damage primitive in the same action",
+        "a move_speed, jump_height or air_control trait may never fall below "
+        "1.0, and a gravity trait may never exceed 1.0",
     )
     balance_limits: dict = Field(default_factory=lambda: {
         "damage": [1, 25], "pellets": [1, 16],

@@ -179,7 +179,7 @@ def test_9_checked_pending_finalizes_without_event(tmp_path):
         assert not any(p.location_id == loc
                        for p in engine.save.pending_checks)
         if not backend.data.scouts[loc].recipient_is_self:
-            assert engine.save.echo_by_id(f"echo_{loc}") is not None
+            assert engine.save.interpretation_by_id(f"echo_{loc}") is not None
     run(scenario())
 
 
@@ -371,5 +371,5 @@ def test_20_bulk_confirmation_max_3_echoes(tmp_path):
         state.checked = set(foreign[:25])
         engine, _ = await connected_engine(tmp_path, server_state=state)
         await drain(50)
-        assert len(engine.save.echoes) <= 3
+        assert len(engine.save.interpretations) <= 3
     run(scenario())

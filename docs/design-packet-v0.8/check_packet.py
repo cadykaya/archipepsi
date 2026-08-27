@@ -120,7 +120,7 @@ for _module in (P, zone_mod, echo_mod, _T):
 
 ADAPTERS = {
     "Zone": TypeAdapter(zone_mod.Zone),
-    "Echo": TypeAdapter(echo_mod.Echo),
+    "EchoInterpretation": TypeAdapter(echo_mod.EchoInterpretation),
     "CampaignSnapshot": TypeAdapter(P.CampaignSnapshot),
     "ClientMessage": TypeAdapter(P.ClientMessage),
 }
@@ -141,8 +141,8 @@ def _classify(obj):
         return None
     if "chambers" in obj and "theme" in obj:
         return "Zone"
-    if "echo_id" in obj and "archetype" in obj:
-        return "Echo"
+    if "echo_id" in obj and "operations" in obj:
+        return "EchoInterpretation"
     if obj.get("type") == "campaign_snapshot":
         return "CampaignSnapshot"
     if obj.get("type") in INTENTS:
@@ -301,6 +301,57 @@ def check_test_count() -> None:
                 fail(doc, f"quotes {n} schema tests; the suite has {actual}")
 
 
+#: Written out because the point is to catch drift: the prose says a number,
+#: the enum knows the number, and one of them is wrong the moment they differ.
+_PRIMITIVE_GROUPS = {
+    "close combat": echo_mod.CLOSE_COMBAT_PRIMITIVES,
+    "ranged": echo_mod.RANGED_PRIMITIVES,
+    "movement": echo_mod.MOVEMENT_PRIMITIVES,
+    "defensive": echo_mod.DEFENSIVE_PRIMITIVES,
+    "utility": echo_mod.UTILITY_PRIMITIVES,
+}
+
+
+def check_action_primitive_count() -> None:
+    """The catalog count in the prose must equal the executable catalog.
+
+    The first draft of ECHOES.md advertised 26 while listing 28, which is
+    exactly the kind of rot a document full of tables grows on its own. The
+    count is derived here rather than restated, so the prose cannot drift
+    from the enum again without failing.
+    """
+    total = len(echo_mod.ACTION_PRIMITIVES)
+    if len(set(echo_mod.ACTION_PRIMITIVES)) != total:
+        failures.append("ACTION_PRIMITIVES contains a duplicate")
+    grouped = sum(len(v) for v in _PRIMITIVE_GROUPS.values())
+    if grouped != total:
+        failures.append(
+            f"the primitive groups sum to {grouped} but ACTION_PRIMITIVES "
+            f"holds {total}"
+        )
+
+    # Whitespace-tolerant: the prose wraps, and a check that only fires on
+    # an unwrapped line is a check that quietly stops firing.
+    pattern = re.compile(
+        r"catalog holds\s+(\d+)\s+primitives\*\*:\s+(\d+)\s+close combat,"
+        r"\s+(\d+)\s+ranged,\s+(\d+)\s+movement,\s+(\d+)\s+defensive,"
+        r"\s+(\d+)\s+utility"
+    )
+    claimed_anywhere = False
+    for doc in DOCS:
+        for match in pattern.finditer(doc.read_text()):
+            claimed_anywhere = True
+            claimed = [int(g) for g in match.groups()]
+            actual = [total] + [len(v) for v in _PRIMITIVE_GROUPS.values()]
+            if claimed != actual:
+                fail(doc, f"claims primitives {claimed}, catalog is {actual}")
+    if not claimed_anywhere:
+        failures.append(
+            "no document states the action primitive count; ECHOES.md 6 "
+            "must, so this check has something to hold the enum against"
+        )
+
+
 def main() -> int:
     for doc in DOCS:
         text = doc.read_text()
@@ -309,6 +360,7 @@ def main() -> int:
         check_quoted_enum_strings(doc, text)
         check_banned_terms(doc, text)
     check_catalog_coverage("\n".join(d.read_text() for d in DOCS))
+    check_action_primitive_count()
     check_test_count()
 
     if failures:

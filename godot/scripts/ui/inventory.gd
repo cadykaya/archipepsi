@@ -48,23 +48,43 @@ func close() -> void:
 func rebuild() -> void:
 	for child in _list.get_children():
 		child.queue_free()
-	var echoes: Array = BridgeClient.snapshot.get("echoes", [])
-	var equipped: Variant = BridgeClient.snapshot.get("equipped_echo_id")
+	var echoes: Array = BridgeClient.snapshot.get("interpretations", [])
 	if echoes.is_empty():
 		var empty := Label.new()
 		empty.text = "No Echoes yet. Send another player their item first."
 		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_list.add_child(empty)
 		return
+	var slots: Dictionary = BridgeClient.slots()
+	var slotted: Array = []
+	for value in slots.values():
+		if value != null:
+			slotted.append(str(value))
 	for echo: Dictionary in echoes:
-		_list.add_child(_row(echo, echo.get("echo_id") == equipped))
+		_list.add_child(_row(echo, slotted))
 	var unequip := Button.new()
-	unequip.text = "UNEQUIP ALL"
+	unequip.text = "CLEAR ALL SLOTS"
 	unequip.pressed.connect(func() -> void:
-		BridgeClient.send_intent({"type": "equip_echo", "echo_id": null}))
+		for slot: String in ["echo_a", "echo_b", "mobility", "utility"]:
+			BridgeClient.send_intent({"type": "slot_action", "slot": slot,
+					"component_id": null}))
 	_list.add_child(unequip)
 
-func _row(echo: Dictionary, is_equipped: bool) -> Control:
+## One interpretation. It may have contributed several components, and only
+## the Actions among them are slottable — a trait row with an EQUIP button
+## would be a button that cannot do anything.
+func _row(echo: Dictionary, slotted: Array) -> Control:
+	var actions: Array = []
+	for operation: Dictionary in echo.get("operations", []):
+		if operation.get("op", "") != "create":
+			continue
+		var component: Dictionary = operation.get("component", {})
+		if component.get("kind", "") == "action":
+			actions.append(component)
+	var is_equipped := false
+	for action: Dictionary in actions:
+		if str(action.get("component_id", "")) in slotted:
+			is_equipped = true
 	var panel := PanelContainer.new()
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14)
@@ -75,8 +95,16 @@ func _row(echo: Dictionary, is_equipped: bool) -> Control:
 
 	var name_label := Label.new()
 	var location := int(echo.get("source_location_id", 0))
+	var kinds: Array = []
+	for operation: Dictionary in echo.get("operations", []):
+		if operation.get("op", "") == "create":
+			var kind := str(operation.get("component", {}).get("kind", ""))
+			if kind != "" and kind not in kinds:
+				kinds.append(kind)
+		elif not kinds.has(str(operation.get("op", ""))):
+			kinds.append(str(operation.get("op", "")))
 	name_label.text = "%s   [%s]" % [echo.get("display_name", "?"),
-			str(echo.get("activation", "")).to_upper()]
+			" + ".join(kinds).to_upper()]
 	name_label.add_theme_font_size_override("font_size", 20)
 	name_label.modulate = Color(0.95, 0.9, 0.5) if is_equipped \
 			else Color.WHITE
@@ -103,12 +131,27 @@ func _row(echo: Dictionary, is_equipped: bool) -> Control:
 	effects.add_theme_font_size_override("font_size", 15)
 	text_box.add_child(effects)
 
-	var button := Button.new()
-	button.text = "EQUIPPED" if is_equipped else "EQUIP"
-	button.disabled = is_equipped
-	button.custom_minimum_size = Vector2(110, 0)
-	button.pressed.connect(func() -> void:
-		BridgeClient.send_intent({"type": "equip_echo",
-				"echo_id": echo.get("echo_id")}))
-	row.add_child(button)
+	# An interpretation that contributed no Action has nothing to slot, and
+	# says so rather than offering a dead control. That is not a lesser
+	# Echo: traits, resources and rules are on the moment they are owned.
+	if actions.is_empty():
+		var always := Label.new()
+		always.text = "ALWAYS ON"
+		always.modulate = Color(0.6, 0.95, 0.85)
+		always.custom_minimum_size = Vector2(110, 0)
+		always.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		row.add_child(always)
+		return panel
+	for action: Dictionary in actions:
+		var component_id := str(action.get("component_id", ""))
+		var here := component_id in slotted
+		var button := Button.new()
+		button.text = "SLOTTED" if here else "SLOT"
+		button.disabled = here
+		button.custom_minimum_size = Vector2(110, 0)
+		button.pressed.connect(func() -> void:
+			BridgeClient.send_intent({"type": "slot_action",
+					"slot": action.get("slot", "echo_a"),
+					"component_id": component_id}))
+		row.add_child(button)
 	return panel

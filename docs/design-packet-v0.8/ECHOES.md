@@ -233,6 +233,13 @@ Echoes 2.0 has to broaden the *verbs* as well as the systems. Actions draw
 from a closed, validated catalog; every primitive has bounded numeric
 parameters and a fixed slot category.
 
+**The catalog holds 28 primitives**: 3 close combat, 6 ranged, 10 movement,
+5 defensive, 4 utility. That count is not decoration — from S1 on,
+`check_packet.py` derives it from the exported enum and fails if this
+document and the schema disagree, because a prose catalog that quietly
+drifts from the executable one is exactly the class of rot the packet's
+self-check exists to prevent.
+
 ## 6.1 Close combat
 
 | Primitive | Shape |

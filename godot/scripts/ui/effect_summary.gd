@@ -3,19 +3,68 @@ extends RefCounted
 ## The shared Echo effect formatter: the reveal card and the inventory must
 ## describe an Echo identically (DESIGN §16).
 
-static func lines(echo: Dictionary) -> Array[String]:
+## Describes one INTERPRETATION: every component it contributed, in order.
+## An interpretation may contribute more than one, so this concatenates
+## rather than branching on a single activation the way v0.7 did.
+static func lines(interpretation: Dictionary) -> Array[String]:
 	var out: Array[String] = []
-	if echo.is_empty():
+	if interpretation.is_empty():
 		return out
-	if echo.get("activation") == "primary":
-		out.append_array(_initiator_lines(echo.get("initiator", {})))
-		for modifier: Dictionary in echo.get("modifiers", []):
-			out.append(_modifier_line(modifier))
-		out.append("%.1fs cooldown" % float(echo.get("cooldown", 0.0)))
-	else:
-		for effect: Dictionary in echo.get("effects", []):
-			out.append(_passive_line(effect))
-		out.append("Passive — active while equipped")
+	for operation: Dictionary in interpretation.get("operations", []):
+		out.append_array(operation_lines(operation))
+	return out
+
+static func operation_lines(operation: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	match str(operation.get("op", "")):
+		"create":
+			out.append_array(component_lines(operation.get("component", {})))
+		"upgrade":
+			out.append("Upgrades %s (%+g %s)" % [
+					operation.get("target", "?"),
+					float(operation.get("delta", 0.0)),
+					operation.get("field", "?")])
+		"modify":
+			out.append("Modifies %s" % operation.get("target", "?"))
+		"link":
+			out.append("%s → %s (%s)" % [operation.get("source", "?"),
+					operation.get("target", "?"),
+					operation.get("link", "?")])
+		"merge":
+			out.append("Folds %s into %s" % [operation.get("absorbed", "?"),
+					operation.get("survivor", "?")])
+	return out
+
+## Describes one owned component. Used by the archive, where what you want
+## to read is what you HAVE rather than which operation produced it.
+static func component_lines(component: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	match str(component.get("kind", "")):
+		"action":
+			out.append_array(_initiator_lines(component.get("primitive", {})))
+			for modifier: Dictionary in component.get("modifiers", []):
+				out.append(_modifier_line(modifier))
+			out.append("%.1fs cooldown" % float(component.get("cooldown", 0.0)))
+			out.append("Slot: %s" % str(component.get("slot", "?")).replace(
+					"_", " ").to_upper())
+		"trait":
+			out.append(_trait_line(component))
+			out.append("Always on — no slot needed")
+		"resource":
+			out.append("%s, max %.0f" % [component.get("display_name", "?"),
+					float(component.get("max_value", 0.0))])
+		"rule":
+			out.append("On %s" % str(component.get("event", "?")).replace(
+					"_", " "))
+		"status":
+			out.append("Applies %s to %s" % [component.get("status", "?"),
+					component.get("target", "?")])
+		"affordance":
+			out.append("Unlocks %s in generated Zones" % str(
+					component.get("tag", "?")).replace("_", " "))
+		"info":
+			out.append("Readout: %s" % str(
+					component.get("readout", "?")).replace("_", " "))
 	return out
 
 static func _initiator_lines(initiator: Dictionary) -> Array[String]:
@@ -51,10 +100,12 @@ static func _modifier_line(modifier: Dictionary) -> String:
 			return "Knocks enemies backward"
 	return ""
 
-static func _passive_line(effect: Dictionary) -> String:
-	match effect.get("type", ""):
-		"modify_gravity":
-			return "%.0f%% gravity" % (float(effect.get("multiplier", 1)) * 100)
-		"modify_speed":
-			return "%.0f%% move speed" % (float(effect.get("multiplier", 1)) * 100)
-	return ""
+static func _trait_line(component: Dictionary) -> String:
+	var multiplier := float(component.get("multiplier", 1.0)) * 100.0
+	match str(component.get("stat", "")):
+		"gravity":
+			return "%.0f%% gravity" % multiplier
+		"move_speed":
+			return "%.0f%% move speed" % multiplier
+	return "%.0f%% %s" % [multiplier,
+			str(component.get("stat", "?")).replace("_", " ")]

@@ -26,12 +26,12 @@ from pydantic import TypeAdapter
 
 try:
     from . import constants as C
-    from .echo import Echo
+    from .echo import EchoInterpretation
     from .protocol import CampaignSnapshot, ClientMessage, ServerMessage
     from .zone import Zone
 except ImportError:  # pragma: no cover
     import constants as C
-    from echo import Echo
+    from echo import EchoInterpretation
     from protocol import CampaignSnapshot, ClientMessage, ServerMessage
     from zone import Zone
 
@@ -104,7 +104,7 @@ def main() -> None:
     #   provider output   validation:    what Epsilon must produce
     artifacts = {
         "zone.schema.json": TypeAdapter(Zone).json_schema(),
-        "echo.schema.json": TypeAdapter(Echo).json_schema(),
+        "echo.schema.json": TypeAdapter(EchoInterpretation).json_schema(),
         "protocol.schema.json": {
             "client_message": TypeAdapter(ClientMessage).json_schema(),
             "server_message": TypeAdapter(ServerMessage).json_schema(

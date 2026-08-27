@@ -114,8 +114,8 @@ class BridgeServer:
             await transactions.claim_check(engine, m.zone_id, m.location_id)
         elif m.type == "buy_shop_stock":
             await transactions.buy_shop_stock(engine, m.location_id)
-        elif m.type == "equip_echo":
-            await engine.handle_equip_echo(m.echo_id)
+        elif m.type == "slot_action":
+            await engine.handle_slot_action(m.slot, m.component_id)
         elif m.type == "set_creativity":
             await engine.handle_set_creativity(m.value)
         elif m.type == "debug_command":

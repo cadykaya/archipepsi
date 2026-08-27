@@ -127,7 +127,8 @@ func _show_next() -> void:
 	# card and the inventory describe it identically.
 	var echo_id: Variant = note.get("echo_id")
 	if echo_id != null:
-		for echo: Dictionary in BridgeClient.snapshot.get("echoes", []):
+		for echo: Dictionary in BridgeClient.snapshot.get(
+				"interpretations", []):
 			if echo.get("echo_id") == echo_id:
 				echo_lines.append("")
 				echo_lines.append_array(EffectSummary.lines(echo))

@@ -74,15 +74,21 @@ async def run() -> None:
 
     foreign = [l for l in zone.allocated_location_ids
                if not backend.data.scouts[l].recipient_is_self]
-    assert len(snap.echoes) == len(foreign), (
-        f"{len(foreign)} foreign checks but {len(snap.echoes)} echoes")
+    assert len(snap.interpretations) == len(foreign), (
+        f"{len(foreign)} foreign checks but "
+        f"{len(snap.interpretations)} interpretations")
     log.info("zone complete; %d echoes; coins %d; keys %d",
-             len(snap.echoes), snap.coins_received, snap.signal_keys)
+             len(snap.interpretations), snap.coins_received,
+             snap.signal_keys)
 
-    if snap.echoes:
-        await engine.handle_equip_echo(snap.echoes[0].echo_id)
-        assert engine.snapshot().equipped_echo_id == snap.echoes[0].echo_id
-        log.info("equipped %s", snap.echoes[0].display_name)
+    actions = snap.mechanics.actions
+    if actions:
+        first = actions[0]
+        await engine.handle_slot_action(first.component.slot, first.component_id)
+        assert dict(engine.snapshot().slots.assigned())[
+            first.component.slot] == first.component_id
+        log.info("slotted %s into %s", first.component.display_name,
+                 first.component.slot)
 
     before = engine.snapshot()
 
@@ -96,12 +102,15 @@ async def run() -> None:
 
     assert after.coins_received == before.coins_received, "coins duplicated"
     assert after.coins_spent == before.coins_spent
-    assert len(after.echoes) == len(before.echoes), "echoes duplicated"
-    assert after.equipped_echo_id == before.equipped_echo_id
+    assert len(after.interpretations) == len(before.interpretations), \
+        "interpretations duplicated"
+    assert after.slots == before.slots
+    # The fold survives the round trip too: same log, same mechanics.
+    assert after.mechanics == before.mechanics
     assert after.completed_zone_count == 1
     assert len(after.checked_location_ids) == len(before.checked_location_ids)
     log.info("reload OK: state identical (coins %d, echoes %d, %d checked)",
-             after.coins_received, len(after.echoes),
+             after.coins_received, len(after.interpretations),
              len(after.checked_location_ids))
 
     # One more zone to prove the loop continues after reload.
@@ -110,7 +119,7 @@ async def run() -> None:
     await _drain()
     snap = engine2.snapshot()
     assert snap.hub.mode == "ZONE_READY"
-    request_echoes = len(snap.echoes)
+    request_echoes = len(snap.interpretations)
     log.info("second zone '%s' generated with %d owned echoes in context",
              snap.active_zone.zone.display_name, request_echoes)
 

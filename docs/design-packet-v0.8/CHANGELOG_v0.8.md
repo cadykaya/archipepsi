@@ -87,7 +87,7 @@ one identity mechanism. `ACCEPTANCE_TESTS.md` I10.
 systemic mechanics. Design a closed, validated catalog; give it an
 implementation stage. Deployables may remain deferred.
 
-**Resolution.** `ECHOES.md` §6 — twenty-six primitives across close
+**Resolution.** `ECHOES.md` §6 — twenty-eight primitives across close
 combat, ranged, movement, defence and utility, each with bounded
 parameters and a slot category. Three carry mandatory conditions rather
 than mere bounds: `beam_sustained` and `hover` must be `powers`-linked to

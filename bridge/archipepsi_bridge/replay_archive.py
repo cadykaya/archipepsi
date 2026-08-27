@@ -8,7 +8,8 @@ Epsilon actually needs" — and that a local model succeeds when it
 satisfies the *same* contracts. Nothing read the archive until now.
 
 This replays every archived generation through the exact validators the
-live path uses (structural parse plus `validate_zone` / `validate_echo`
+live path uses (structural parse plus `validate_zone` /
+`validate_interpretation`
 against the recorded request) and reports:
 
 * whether each accepted output still validates — a red line means the
@@ -30,11 +31,56 @@ from pathlib import Path
 from pydantic import TypeAdapter, ValidationError
 
 from .epsilon.requests import EchoGenerationRequest, ZoneGenerationRequest
-from .schemas.echo import Echo, validate_echo
+from .schemas import migration as MG
+from .schemas.echo import EchoInterpretation, validate_interpretation
 from .schemas.zone import Zone, validate_zone
 
 _ZONE = TypeAdapter(Zone)
-_ECHO = TypeAdapter(Echo)
+_ECHO = TypeAdapter(EchoInterpretation)
+
+
+def _upgrade_echo_request(data: dict) -> dict:
+    """Accept a v7 archived request against the v8 model.
+
+    The archive is a benchmark corpus: a schema bump that silently
+    invalidated every generation recorded before it would throw away the
+    only evidence of how Epsilon actually behaves. Only the parts a
+    validator uses are carried across — `source`, `required_echo_id`, and
+    who owned what. `allowed` and `composition_rules` are prompt
+    scaffolding, and replaying them verbatim would re-check the OLD rules
+    rather than today's.
+    """
+    if data.get("schema_version") == 8:
+        return data
+    out = {k: v for k, v in data.items()
+           if k in ("source", "required_echo_id")}
+    state = dict(data.get("player_state") or {})
+    upgraded = []
+    for summary in state.get("existing_echoes", ()):
+        kinds = ("trait",) if summary.get("activation") == "passive" \
+            else ("action",)
+        upgraded.append({
+            "echo_id": summary["echo_id"],
+            "display_name": summary["display_name"],
+            "kinds": kinds,
+            "tags": tuple(summary.get("tags", ())),
+            "description": summary["description"],
+        })
+    state["existing_echoes"] = tuple(upgraded)
+    out["player_state"] = state
+    return out
+
+
+def _upgrade_echo_output(accepted: dict) -> dict:
+    """Accept a v7 archived Echo as the v8 interpretation it migrates to.
+
+    The same function the save migration uses, so an archived v7 Echo and a
+    migrated v7 save produce the same component — one conversion, not two
+    that can disagree.
+    """
+    if accepted.get("schema_version") == 8:
+        return accepted
+    return MG.migrate_echo_v7_to_v8(accepted, seq=0)
 
 
 def replay_one(record: dict) -> tuple[bool, str]:
@@ -53,9 +99,10 @@ def replay_one(record: dict) -> tuple[bool, str]:
                                         for l in request.locations],
                 owned_echo_ids=[e.echo_id for e in request.player.echoes])
         elif kind == "echo":
-            request = EchoGenerationRequest.model_validate(record["request"])
-            echo = _ECHO.validate_python(accepted)
-            errors = validate_echo(
+            request = EchoGenerationRequest.model_validate(
+                _upgrade_echo_request(record["request"]))
+            echo = _ECHO.validate_python(_upgrade_echo_output(accepted))
+            errors = validate_interpretation(
                 echo, expected_source_location_id=request.source.location_id)
         else:
             return False, f"unknown archive kind {kind!r}"

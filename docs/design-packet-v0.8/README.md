@@ -110,7 +110,7 @@ Full traceability: `CHANGELOG_v0.7.md`.
 - **Items can answer each other.** `CREATE` / `UPGRADE` / `MODIFY` / `LINK` / `MERGE`, which is why *Longshot* after *Hookshot* is one grapple at Mk II rather than a second grapple.
 - **The campaign is an append-only log, folded.** Live mechanics are a pure fold over interpretations in grant order — which is what makes provenance, determinism, save safety, Mk levels and cross-item modification the same mechanism rather than five.
 - **Rules cannot cascade.** Effects never emit events; threshold events are edge-derived at end of tick and deferred by at least one tick.
-- **Twenty-six action primitives**, closed and validated, so the verbs widen alongside the systems.
+- **Twenty-eight action primitives**, closed and validated, so the verbs widen alongside the systems.
 - **The floor got blunter, not softer.** Derived movement stats have a hard floor at base, so `max_safe_gap` and every generated jump stay valid unmodified.
 
 Full traceability: `CHANGELOG_v0.8.md`.

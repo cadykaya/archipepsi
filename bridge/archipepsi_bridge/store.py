@@ -8,11 +8,14 @@ Write: temp file, flush, fsync, os.replace; keep one previous generation as
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import os
 import re
 from pathlib import Path
 
+from .schemas.echo import SCHEMA_VERSION
+from .schemas.migration import migrate_save_dict
 from .schemas.protocol import CampaignSave
 
 log = logging.getLogger("archipepsi.store")
@@ -49,8 +52,8 @@ def write_save(path: Path, save: CampaignSave) -> None:
         bak = path.with_suffix(path.suffix + ".bak")
         os.replace(path, bak)
     os.replace(tmp, path)
-    log.debug("wrote save %s (%d zones, %d echoes)", path,
-              len(save.zones), len(save.echoes))
+    log.debug("wrote save %s (%d zones, %d interpretations)", path,
+              len(save.zones), len(save.interpretations))
 
 
 def load_save(path: Path) -> CampaignSave | None:
@@ -60,11 +63,28 @@ def load_save(path: Path) -> CampaignSave | None:
         if not candidate.exists():
             continue
         try:
-            save = CampaignSave.model_validate_json(
-                candidate.read_text(encoding="utf-8"))
+            raw = json.loads(candidate.read_text(encoding="utf-8"))
+            version = raw.get("schema_version")
+            if version != SCHEMA_VERSION:
+                # Migrate BEFORE validating, and validate the result like any
+                # other save. A migration that produced something the models
+                # reject is a migration that failed, and it should fail here,
+                # at load, rather than somewhere downstream.
+                raw = migrate_save_dict(raw)
+                log.info("migrated %s save %s from schema_version %s to %s",
+                         label, candidate, version, SCHEMA_VERSION)
+                migrated = True
+            else:
+                migrated = False
+            save = CampaignSave.model_validate(raw)
         except Exception:
             log.exception("failed to load %s save %s", label, candidate)
             continue
+        if migrated:
+            # Written back immediately: a migration that only lives in memory
+            # runs again on every load, and the first crash after it loses
+            # whichever half was in flight.
+            write_save(path, save)
         if label == "backup":
             log.error("primary save unreadable; recovered from backup %s",
                       candidate)

@@ -48,14 +48,16 @@ from pydantic import (
 
 try:
     from . import constants as C
-    from .echo import Echo
+    from .echo import EchoInterpretation, SlotName
+    from .mechanics import Mechanics, derive_mechanics
     from .zone import Zone
 except ImportError:  # pragma: no cover
     import constants as C
-    from echo import Echo
+    from echo import EchoInterpretation, SlotName
+    from mechanics import Mechanics, derive_mechanics
     from zone import Zone
 
-PROTOCOL_VERSION = 7
+PROTOCOL_VERSION = 8
 
 _ID = Field(min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")
 
@@ -318,9 +320,82 @@ def _reject_underfunded_ledger(coins_spent: int, pending) -> None:
         )
 
 
-def _reject_unowned_equipped_echo(equipped_echo_id, echoes) -> None:
-    if equipped_echo_id and equipped_echo_id not in {e.echo_id for e in echoes}:
-        raise ValueError(f"equipped_echo_id '{equipped_echo_id}' not owned")
+class SlotAssignment(Strict):
+    """Which owned Action sits in each of the four slots.
+
+    Four named fields rather than a dict: the slot grammar belongs to the
+    game, not to generation, so it is structural. Epsilon assigns an Action
+    a slot *category*; the player chooses which owned Action fills it.
+    LMB is not here at all — Static Pulse is never replaced.
+    """
+    echo_a: str | None = Field(default=None, max_length=32)
+    echo_b: str | None = Field(default=None, max_length=32)
+    mobility: str | None = Field(default=None, max_length=32)
+    utility: str | None = Field(default=None, max_length=32)
+
+    def assigned(self) -> tuple[tuple[str, str], ...]:
+        return tuple(
+            (slot, value)
+            for slot, value in (
+                ("echo_a", self.echo_a), ("echo_b", self.echo_b),
+                ("mobility", self.mobility), ("utility", self.utility),
+            )
+            if value is not None
+        )
+
+    def with_slot(self, slot: str, component_id: str | None) -> "SlotAssignment":
+        if slot not in ("echo_a", "echo_b", "mobility", "utility"):
+            raise ValueError(f"unknown slot '{slot}'")
+        return SlotAssignment.model_validate(
+            {**self.model_dump(), slot: component_id}
+        )
+
+
+def _reject_unslottable(slots, mechanics) -> None:
+    """A slot may only name an Action the campaign actually owns.
+
+    Checked against the FOLD rather than against the log, because a merged
+    or upgraded component is only knowable after folding — and because this
+    is the one place that catches a slot pointing at a resource.
+    """
+    for slot, component_id in slots.assigned():
+        owned = mechanics.by_id(component_id)
+        if owned is None:
+            raise ValueError(
+                f"slot '{slot}' holds '{component_id}', which is not owned"
+            )
+        if owned.kind != "action":
+            raise ValueError(
+                f"slot '{slot}' holds '{component_id}', which is a "
+                f"'{owned.kind}'; only actions occupy slots"
+            )
+        if owned.component.slot != slot:
+            raise ValueError(
+                f"'{component_id}' is a '{owned.component.slot}' action and "
+                f"cannot be placed in slot '{slot}'"
+            )
+
+
+def _reject_nonmonotonic_seq(interpretations, next_seq: int) -> None:
+    """`interpretation_seq` is assigned once and never reused.
+
+    The counter is persisted rather than derived from the log, so a
+    campaign that loses its last interpretation to a crash still never
+    hands out a number it has already used.
+    """
+    seen = set()
+    for entry in interpretations:
+        if entry.interpretation_seq in seen:
+            raise ValueError(
+                f"duplicate interpretation_seq {entry.interpretation_seq}"
+            )
+        seen.add(entry.interpretation_seq)
+        if entry.interpretation_seq >= next_seq:
+            raise ValueError(
+                f"interpretation_seq {entry.interpretation_seq} is at or "
+                f"beyond next_interpretation_seq {next_seq}; the counter "
+                f"must always be ahead of every number it has issued"
+            )
 
 
 def _reject_duplicate_ids(items, attr: str, label: str) -> None:
@@ -339,7 +414,7 @@ class CampaignSave(Strict):
     `transitions.py`; never edit this one.
     """
     save_version: Literal[1] = 1
-    schema_version: Literal[7] = 7
+    schema_version: Literal[8] = 8
 
     seed_name: str = Field(min_length=1, max_length=128)
     team: int = Field(ge=0)
@@ -357,12 +432,20 @@ class CampaignSave(Strict):
     coins_spent: int = Field(default=0, ge=0)
     pending_checks: tuple[PendingCheck, ...] = ()
 
+    #: The interpretation log: append-only, ordered by `interpretation_seq`,
+    #: and the ONLY persisted form of what the player has earned. Live
+    #: mechanics are a fold over it (`mechanics.derive_mechanics`) and are
+    #: never written to disk.
+    #:
     #: Tuples, not dicts. v0.6 keyed these by id, and nothing tied the key to
     #: the id inside the value — `{"totally_bogus": echo_89100002}` validated,
     #: defeating the dedupe key the design is built on. One representation,
-    #: with `zone_by_id` / `echo_by_id` for lookup.
-    echoes: tuple[Echo, ...] = ()
-    equipped_echo_id: str | None = None
+    #: with `zone_by_id` / `interpretation_by_id` for lookup.
+    interpretations: tuple[EchoInterpretation, ...] = ()
+    #: Persisted, monotonic, always ahead of every number issued. Never
+    #: derived from the log — see `_reject_nonmonotonic_seq`.
+    next_interpretation_seq: int = Field(default=0, ge=0)
+    slots: SlotAssignment = Field(default_factory=lambda: SlotAssignment())
 
     zones: tuple[ZoneRecord, ...] = ()
     active_zone_id: str | None = None
@@ -375,8 +458,14 @@ class CampaignSave(Strict):
     @model_validator(mode="after")
     def _references_resolve(self):
         _reject_duplicate_ids(self.zones, "zone_id", "zone_id")
-        _reject_duplicate_ids(self.echoes, "echo_id", "echo_id")
-        _reject_unowned_equipped_echo(self.equipped_echo_id, self.echoes)
+        _reject_duplicate_ids(self.interpretations, "echo_id", "echo_id")
+        _reject_nonmonotonic_seq(
+            self.interpretations, self.next_interpretation_seq
+        )
+        # Folding here means a corrupt log is unrepresentable rather than
+        # merely detected later: a CampaignSave that cannot fold cannot be
+        # constructed, so it can never be written to disk.
+        _reject_unslottable(self.slots, derive_mechanics(self.interpretations))
         _reject_duplicate_pending(self.pending_checks)
         _reject_unbacked_pending(self.pending_checks, self.zones)
         _reject_underfunded_ledger(self.coins_spent, self.pending_checks)
@@ -423,8 +512,17 @@ class CampaignSave(Strict):
     def zone_by_id(self, zone_id: str) -> ZoneRecord | None:
         return next((z for z in self.zones if z.zone_id == zone_id), None)
 
-    def echo_by_id(self, echo_id: str) -> Echo | None:
-        return next((e for e in self.echoes if e.echo_id == echo_id), None)
+    def interpretation_by_id(self, echo_id: str) -> EchoInterpretation | None:
+        return next(
+            (e for e in self.interpretations if e.echo_id == echo_id), None
+        )
+
+    def derive(self) -> Mechanics:
+        """The live mechanics. Cheap enough to call freely (linear in the
+        log, which is at most 30 entries), and deliberately not cached on
+        the model: a cached fold is a second source of truth waiting to go
+        stale."""
+        return derive_mechanics(self.interpretations)
 
     @property
     def active_zone(self) -> ZoneRecord | None:
@@ -647,7 +745,7 @@ class HubStatus(Strict):
 
 class CampaignSnapshot(Strict):
     type: Literal["campaign_snapshot"] = "campaign_snapshot"
-    protocol_version: Literal[7] = 7
+    protocol_version: Literal[8] = 8
 
     bridge_connected: bool
     ap_connected: bool
@@ -677,8 +775,14 @@ class CampaignSnapshot(Strict):
     static_received: int = Field(default=0, ge=0)
     static_glitch_units: int = Field(default=0, ge=0)
 
-    echoes: tuple[Echo, ...] = ()
-    equipped_echo_id: str | None = None
+    #: Both halves are sent. The log is what the archive shows — provenance,
+    #: concepts, which item is responsible for what. `mechanics` is the
+    #: FOLD, computed by the bridge, because re-implementing it in GDScript
+    #: would be a second source of truth for the one thing that has to be
+    #: identical everywhere.
+    interpretations: tuple[EchoInterpretation, ...] = ()
+    mechanics: Mechanics = Field(default_factory=lambda: Mechanics())
+    slots: SlotAssignment = Field(default_factory=lambda: SlotAssignment())
 
     active_zone: ZoneRecord | None = None
     completed_zone_count: int = Field(default=0, ge=0)
@@ -701,15 +805,17 @@ class CampaignSnapshot(Strict):
 
         v0.6 closed these on `CampaignSave` only, so the snapshot could carry
         a pending claim on the goal, two pending checks for one location, or
-        an equipped Echo the player did not own.
+        a slotted Action the player did not own.
         """
         _reject_duplicate_pending(self.pending_checks)
         _reject_unbacked_pending(
             self.pending_checks,
             (self.active_zone,) if self.active_zone else ())
         _reject_underfunded_ledger(self.coins_spent, self.pending_checks)
-        _reject_unowned_equipped_echo(self.equipped_echo_id, self.echoes)
-        _reject_duplicate_ids(self.echoes, "echo_id", "echo_id")
+        _reject_duplicate_ids(self.interpretations, "echo_id", "echo_id")
+        # Against the mechanics actually sent, not a re-fold: if the two
+        # ever disagreed, the client would render one and validate the other.
+        _reject_unslottable(self.slots, self.mechanics)
 
         both = sorted(set(self.checked_location_ids)
                       & set(self.missing_location_ids))
@@ -876,9 +982,15 @@ class BuyShopStock(Strict):
     location_id: _NON_FINALE_LOC
 
 
-class EquipEcho(Strict):
-    type: Literal["equip_echo"]
-    echo_id: str | None = Field(default=None, max_length=32)
+class SlotAction(Strict):
+    """Put an owned Action in a slot, or clear the slot with a null id.
+
+    Replaces v0.7's `equip_echo`: there are four slots now, and only Actions
+    occupy them.
+    """
+    type: Literal["slot_action"]
+    slot: SlotName
+    component_id: str | None = Field(default=None, max_length=32)
 
 
 class SetCreativity(Strict):
@@ -904,7 +1016,7 @@ ClientMessage = Annotated[
     Union[
         Hello, ApConnect, ApDisconnect, StartMockCampaign, RequestNextZone,
         EnterZone, LeaveZone, ExitZone, AbandonZone, ClaimCheck, BuyShopStock,
-        EquipEcho, SetCreativity, DebugCommand,
+        SlotAction, SetCreativity, DebugCommand,
     ],
     Field(discriminator="type"),
 ]
@@ -916,7 +1028,7 @@ ClientMessage = Annotated[
 
 class BridgeReady(Strict):
     type: Literal["bridge_ready"]
-    protocol_version: Literal[7] = 7
+    protocol_version: Literal[8] = 8
     bridge_version: str = Field(max_length=32)
 
 

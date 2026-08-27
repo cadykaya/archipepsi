@@ -8,6 +8,7 @@ validators as model output — no exceptions.
 from __future__ import annotations
 
 from ..schemas import constants as C
+from ..schemas import migration as MG
 from .requests import EchoGenerationRequest, ZoneGenerationRequest
 
 
@@ -88,45 +89,72 @@ def fallback_zone(request: ZoneGenerationRequest) -> dict:
 # Echo
 # ---------------------------------------------------------------------------
 
-def _primary(request: EchoGenerationRequest, *, archetype: str, cooldown: float,
-             initiator: dict, modifiers: list[dict] | None = None,
-             description: str, tags: list[str]) -> dict:
+def _common(request: EchoGenerationRequest, description: str,
+            tags: list[str]) -> dict:
     src = request.source
     return {
-        "schema_version": 7,
+        "schema_version": 8,
         "echo_id": request.required_echo_id,
+        # Overwritten by `transitions.append_interpretation`, which owns
+        # sequence assignment. A provider never chooses its own number.
+        "interpretation_seq": 0,
         "source_location_id": src.location_id,
         "source_item_name": src.item_name,
         "source_game": src.source_game,
         "source_recipient_name": src.recipient_name,
+        "concepts": (),
+        # The fallback does not interpret, it maps. Claiming a richer mode
+        # would be a lie the archive then shows to the player.
+        "mode": "literal",
         "display_name": _clamp(src.item_name, C.MAX_TEXT_LEN),
         "description": _clamp(description, C.MAX_TEXT_LEN),
         "tags": tags,
-        "activation": "primary",
-        "archetype": archetype,
-        "cooldown": cooldown,
-        "initiator": initiator,
-        "modifiers": modifiers or [],
     }
+
+
+def _primary(request: EchoGenerationRequest, *, archetype: str, cooldown: float,
+             initiator: dict, modifiers: list[dict] | None = None,
+             description: str, tags: list[str]) -> dict:
+    """One CREATE, one Action. The v8 shape; the same §12.2 decisions.
+
+    The heuristics below are pinned by the packet and did not change — only
+    what they emit did. Keeping the signature means the mapping table stays
+    readable as a mapping table rather than becoming a wall of component
+    dictionaries.
+    """
+    src = request.source
+    return {**_common(request, description, tags), "operations": [{
+        "op": "create",
+        "component": {
+            "kind": "action",
+            "component_id": MG.component_id_for("act", src.location_id),
+            "display_name": _clamp(src.item_name, C.MAX_TEXT_LEN),
+            "description": _clamp(description, C.MAX_TEXT_LEN),
+            "slot": MG.ARCHETYPE_SLOT.get(archetype, "echo_a"),
+            "cooldown": cooldown,
+            "primitive": initiator,
+            "modifiers": modifiers or [],
+        },
+    }]}
 
 
 def _passive(request: EchoGenerationRequest, *, effects: list[dict],
              description: str, tags: list[str]) -> dict:
+    """One CREATE per passive, each a Trait. Traits are always on, so a
+    fallback passive is strictly better for the player than v0.7's was."""
     src = request.source
-    return {
-        "schema_version": 7,
-        "echo_id": request.required_echo_id,
-        "source_location_id": src.location_id,
-        "source_item_name": src.item_name,
-        "source_game": src.source_game,
-        "source_recipient_name": src.recipient_name,
-        "display_name": _clamp(src.item_name, C.MAX_TEXT_LEN),
-        "description": _clamp(description, C.MAX_TEXT_LEN),
-        "tags": tags,
-        "activation": "passive",
-        "archetype": "passive",
-        "effects": effects,
-    }
+    return {**_common(request, description, tags), "operations": [{
+        "op": "create",
+        "component": {
+            "kind": "trait",
+            "component_id": MG.component_id_for("trait", src.location_id,
+                                                str(index)),
+            "display_name": _clamp(src.item_name, C.MAX_TEXT_LEN),
+            "description": _clamp(description, C.MAX_TEXT_LEN),
+            "stat": MG.PASSIVE_STAT[effect["type"]],
+            "multiplier": effect["multiplier"],
+        },
+    } for index, effect in enumerate(effects)]}
 
 
 def fallback_echo(request: EchoGenerationRequest) -> dict:

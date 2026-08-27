@@ -8,20 +8,26 @@ extends Node
 signal cooldown_changed(remaining: float, total: float)
 signal shield_changed(shield: float)
 
-var equipped: Dictionary = {}      # validated Echo dict from the snapshot
+#: The Action component in this runtime's slot, straight from the folded
+#: mechanics. Empty is legal and playable — the Static Pulse is never here.
+var equipped: Dictionary = {}
 var cooldown_remaining := 0.0
 var shield_hp := 0.0
 var _shield_timer := 0.0
 
 @onready var player: Player = get_parent()
 
-func set_equipped(echo: Dictionary) -> void:
-	if echo.get("echo_id") == equipped.get("echo_id"):
-		equipped = echo
+func set_equipped(action: Dictionary) -> void:
+	# Traits refresh on EVERY snapshot, not only when the slot changes: a
+	# newly granted trait is owned the moment its Check confirms, and
+	# gating that on a slot change would leave it inert until the player
+	# happened to switch Echoes.
+	apply_owned_traits()
+	if action.get("component_id") == equipped.get("component_id"):
+		equipped = action
 		return
-	equipped = echo
+	equipped = action
 	cooldown_remaining = 0.0
-	_apply_passives()
 	_refresh_viewmodel_attachment()
 
 func _refresh_viewmodel_attachment() -> void:
@@ -30,44 +36,67 @@ func _refresh_viewmodel_attachment() -> void:
 		part = player.viewmodel.get_node_or_null("EchoPart") as MeshInstance3D
 	if part == null:
 		return
-	if equipped.is_empty() or equipped.get("activation") != "primary":
+	if equipped.is_empty():
 		part.visible = false
 		return
 	part.visible = true
 	# The body carries the world this Echo was reinterpreted FROM, in the
 	# same colour the campaign board, the reward pedestals and the reveal
 	# card use for that game — so an Echo is visibly a piece of somebody
-	# else's world that you are holding. The tip keeps the archetype, so
-	# "what does this do" and "where did it come from" stay separate.
+	# else's world that you are holding. The tip keeps the slot, so "which
+	# button is this" and "where did it come from" stay separate.
 	part.material_override = ThemeMaterials.glow_material(source_color(), 1.2)
 	var tip: MeshInstance3D = part.get_node_or_null("EchoTip")
 	if tip != null:
 		tip.material_override = ThemeMaterials.glow_material(
-				ARCHETYPE_COLORS.get(equipped.get("archetype", "weapon"),
+				SLOT_COLORS.get(equipped.get("slot", "echo_a"),
 						Color(0.9, 0.9, 0.9)), 1.8)
 
-const ARCHETYPE_COLORS := {"weapon": Color(1.0, 0.55, 0.3),
-		"tool": Color(0.5, 0.9, 0.6), "mobility": Color(0.5, 0.7, 1.0)}
+#: By slot rather than by v0.7's archetype. The slot is what the player
+#: chose and what the key does, which is the more useful thing for a tip to
+#: be telling you mid-fight.
+const SLOT_COLORS := {"echo_a": Color(1.0, 0.55, 0.3),
+		"echo_b": Color(1.0, 0.75, 0.35), "utility": Color(0.5, 0.9, 0.6),
+		"mobility": Color(0.5, 0.7, 1.0)}
 
 ## The equipped Echo's source world, as a colour. Falls back to a neutral
 ## white for an Echo with no source game rather than picking a confident
 ## wrong world out of the hash.
 func source_color() -> Color:
-	var game := str(equipped.get("source_game", ""))
+	var game := BridgeClient.component_source_game(
+			str(equipped.get("component_id", "")))
 	if game.is_empty():
 		return Color(0.85, 0.88, 0.92)
 	return ThemeMaterials.color_for_game(game)
 
-func _apply_passives() -> void:
-	player.gravity_mult = 1.0
-	player.speed_mult = 1.0
-	if equipped.get("activation") == "passive":
-		for effect: Dictionary in equipped.get("effects", []):
-			match effect.get("type"):
-				"modify_gravity":
-					player.gravity_mult = float(effect["multiplier"])
-				"modify_speed":
-					player.speed_mult = float(effect["multiplier"])
+## Owned traits, folded onto the player.
+##
+## v0.7 applied one passive, the equipped one. A trait is not equipment: it
+## is true once owned, which is the whole reason a Check can matter without
+## occupying a slot. So this reads what the campaign OWNS, not what is in a
+## slot, and stacks it.
+##
+## Stacking is why the clamp is here and not only in the schema. Each trait
+## is individually floored at base — a gravity trait may only lighten, a
+## speed trait may only quicken — but three of them multiply, and
+## `max_safe_gap` was derived from these two constants, not from an
+## unbounded product. Clamping to them is what keeps every generated jump
+## valid without recomputing a single one.
+func apply_owned_traits() -> void:
+	var gravity := 1.0
+	var speed := 1.0
+	for entry: Dictionary in BridgeClient.owned_components("trait"):
+		var trait_component: Dictionary = entry.get("component", {})
+		var multiplier := float(trait_component.get("multiplier", 1.0))
+		match str(trait_component.get("stat", "")):
+			"gravity":
+				gravity *= multiplier
+			"move_speed":
+				speed *= multiplier
+	player.gravity_mult = clampf(gravity,
+			float(Constants.GRAVITY_MULT_MIN), float(Constants.GRAVITY_MULT_MAX))
+	player.speed_mult = clampf(speed,
+			float(Constants.SPEED_MULT_MIN), float(Constants.SPEED_MULT_MAX))
 
 func _process(delta: float) -> void:
 	if cooldown_remaining > 0.0:
@@ -80,9 +109,10 @@ func _process(delta: float) -> void:
 			shield_hp = 0.0
 			shield_changed.emit(0.0)
 
-## RMB. Passive Echoes do nothing here by design.
+## The slot's key. An empty slot does nothing, by design: the Static Pulse
+## is on its own button and is never what is missing here.
 func activate() -> void:
-	if equipped.is_empty() or equipped.get("activation") != "primary":
+	if equipped.is_empty():
 		return
 	if cooldown_remaining > 0.0:
 		return
@@ -92,7 +122,7 @@ func activate() -> void:
 	# Brighter than Static Pulse — the Echo is the loud option. Brightness
 	# still says what kind of thing just fired; the hue says which world it
 	# came out of.
-	var initiator_type := str(equipped.get("initiator", {}).get("type", ""))
+	var initiator_type := str(equipped.get("primitive", {}).get("type", ""))
 	var flash := source_color().lightened(0.25)
 	if initiator_type in ["hitscan_damage", "projectile_damage"]:
 		player.muzzle_flash(3.2, flash)
@@ -101,7 +131,7 @@ func activate() -> void:
 	elif initiator_type in ["heal_self", "shield"]:
 		player.muzzle_flash(2.4, flash)
 
-	var initiator: Dictionary = equipped.get("initiator", {})
+	var initiator: Dictionary = equipped.get("primitive", {})
 	var modifiers: Array = equipped.get("modifiers", [])
 	var damaged: Array[Node] = []
 	match initiator.get("type", ""):
