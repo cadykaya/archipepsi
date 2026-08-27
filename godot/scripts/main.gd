@@ -171,6 +171,7 @@ func _to_menu() -> void:
 	view = View.MENU
 	menu.visible = true
 	hud.visible = false
+	tones.stop_ambience()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	menu.refresh()
 
@@ -188,6 +189,7 @@ func _to_hub() -> void:
 	hud.bind_player(hub.player)
 	hub.player.fired_pulse.connect(func() -> void: tones.play("pulse"))
 	hub.player.echo_runtime.set_equipped(BridgeClient.equipped_echo())
+	tones.play_ambience(1.0)
 	_update_modal()
 
 func _toggle_inventory() -> void:
@@ -224,6 +226,8 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	zone.exit_requested.connect(_on_exit_zone)
 	hud.bind_player(zone.player)
 	zone.player.fired_pulse.connect(func() -> void: tones.play("pulse"))
+	var theme := str(zone_dict.get("theme", "void_glitch"))
+	tones.play_ambience(0.8 + float(hash(theme) % 100) / 200.0)
 	_sync_equipped()
 	zone.refresh()
 	hud.toast(str(zone_dict.get("display_name", "")), Color(0.7, 0.9, 1.0))

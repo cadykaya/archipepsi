@@ -160,6 +160,7 @@ static func _greeble_corridor(root: Node3D, length: float, width: float,
 		_box(root, Vector3(0.06, 0.06, seg_length + 0.05),
 				Vector3(cable_x, height - 0.25 - sag, z0 + seg_length / 2.0),
 				trim, false)
+	_theme_props(root, theme, rng, width, length, height)
 	# Occasionally, Epsilon leaves a note.
 	if rng.randf() < 0.3:
 		_graffiti(root, Vector3(
@@ -198,6 +199,124 @@ static func _graffiti(root: Node3D, at: Vector3, theme: String,
 	label.rotation.z = rng.randf_range(-0.06, 0.06)
 	root.add_child(label)
 
+## Theme-signature props: what makes a gothic room gothic and a transit
+## station a station. Wall-adjacent or ceiling-mounted; only floor pieces
+## that hug walls may collide. `span_x` is the room width, `span_z` its
+## depth/length; positions stay inside [1.2, span_z - 1.2].
+static func _theme_props(root: Node3D, theme: String,
+		rng: RandomNumberGenerator, span_x: float, span_z: float,
+		height: float) -> void:
+	var wall_x := span_x / 2.0
+	var count := rng.randi_range(1, 2 + int(span_z / 10.0))
+	for i in count:
+		var z := rng.randf_range(1.4, span_z - 1.4)
+		var side := -1.0 if rng.randf() < 0.5 else 1.0
+		match theme:
+			"gothic_stone":
+				# Torch sconce: iron bracket, a flame that glows.
+				_box(root, Vector3(0.12, 0.5, 0.12),
+						Vector3(side * (wall_x - 0.16), 1.9, z),
+						ThemeMaterials.trim_mat(theme), false)
+				var flame := MeshInstance3D.new()
+				var flame_mesh := PrismMesh.new()
+				flame_mesh.size = Vector3(0.2, 0.35, 0.2)
+				flame.mesh = flame_mesh
+				flame.position = Vector3(side * (wall_x - 0.16), 2.35, z)
+				flame.material_override = ThemeMaterials.glow_material(
+						Color(1.0, 0.62, 0.2), 2.4)
+				root.add_child(flame)
+			"rusted_industrial":
+				# Oil drums against the wall, sometimes stacked.
+				var drum := CylinderMesh.new()
+				drum.top_radius = 0.42
+				drum.bottom_radius = 0.42
+				drum.height = 0.95
+				var drum_node := MeshInstance3D.new()
+				drum_node.mesh = drum
+				drum_node.position = Vector3(side * (wall_x - 0.75),
+						0.48, z)
+				drum_node.material_override = ThemeMaterials.accent_mat(theme)
+				root.add_child(drum_node)
+				var body := StaticBody3D.new()
+				var shape := CollisionShape3D.new()
+				var cylinder_shape := CylinderShape3D.new()
+				cylinder_shape.radius = 0.42
+				cylinder_shape.height = 0.95
+				shape.shape = cylinder_shape
+				body.add_child(shape)
+				drum_node.add_child(body)
+				if rng.randf() < 0.4:
+					var top := drum_node.duplicate()
+					top.position.y += 0.95
+					root.add_child(top)
+			"neon_transit":
+				# Hanging signage with authored transit nonsense.
+				var signs := ["PLATFORM ε", "EXIT →", "← EXIT", "NO SIGNAL",
+						"MIND THE STATIC", "TRANSFER: EVERYWHERE"]
+				_box(root, Vector3(1.6, 0.5, 0.08),
+						Vector3(rng.randf_range(-wall_x * 0.4, wall_x * 0.4),
+							height - 0.7, z),
+						ThemeMaterials.glow_material(
+							Color(ThemeMaterials.spec(theme)["accent_color"]),
+							1.3), false)
+				var sign_label := Label3D.new()
+				sign_label.text = signs[rng.randi_range(0, signs.size() - 1)]
+				sign_label.font_size = 34
+				sign_label.pixel_size = 0.004
+				sign_label.modulate = Color(0.08, 0.09, 0.12)
+				sign_label.position = Vector3(
+						rng.randf_range(-wall_x * 0.4, wall_x * 0.4),
+						height - 0.7, z - 0.05)
+				sign_label.rotation.y = PI
+				root.add_child(sign_label)
+			"temple_ruin":
+				# Root tendrils crawling down the wall, or a column stump.
+				if rng.randf() < 0.5:
+					var root_length := rng.randf_range(1.2, height - 0.6)
+					_box(root, Vector3(0.1, root_length, 0.1),
+							Vector3(side * (wall_x - 0.1),
+								height - root_length / 2.0 - 0.2, z),
+							ThemeMaterials.glow_material(
+								Color(0.35, 0.5, 0.28), 0.15), false)
+				else:
+					var stump := CylinderMesh.new()
+					stump.top_radius = 0.5
+					stump.bottom_radius = 0.55
+					stump.height = rng.randf_range(0.6, 1.6)
+					var stump_node := MeshInstance3D.new()
+					stump_node.mesh = stump
+					stump_node.position = Vector3(side * (wall_x - 0.85),
+							stump.height / 2.0, z)
+					stump_node.material_override = ThemeMaterials.wall_mat(
+							theme)
+					root.add_child(stump_node)
+					var body := StaticBody3D.new()
+					var shape := CollisionShape3D.new()
+					var cylinder_shape := CylinderShape3D.new()
+					cylinder_shape.radius = 0.55
+					cylinder_shape.height = stump.height
+					shape.shape = cylinder_shape
+					body.add_child(shape)
+					stump_node.add_child(body)
+			"concrete_facility":
+				# Bolted warning plate.
+				_box(root, Vector3(0.06, 0.6, 0.9),
+						Vector3(side * (wall_x - 0.05),
+							rng.randf_range(1.2, 2.0), z),
+						ThemeMaterials.hazard_mat(theme), false)
+			"void_glitch":
+				# The prop that never loaded.
+				var missing := Label3D.new()
+				missing.text = "prop_missing.mdl"
+				missing.font_size = 28
+				missing.pixel_size = 0.005
+				missing.modulate = Color(1.0, 0.0, 0.9)
+				missing.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+				missing.position = Vector3(
+						side * (wall_x - 0.9),
+						rng.randf_range(0.6, height - 0.8), z)
+				root.add_child(missing)
+
 ## Corner buttresses, perimeter crates and a hazard strip for room-like
 ## spaces. Crates hug the walls so the arena floor stays fightable.
 static func _greeble_room(root: Node3D, width: float, depth: float,
@@ -231,6 +350,7 @@ static func _greeble_room(root: Node3D, width: float, depth: float,
 	# Hazard strip across the entrance threshold.
 	_box(root, Vector3(DOOR_WIDTH + 0.8, 0.02, 0.6),
 			Vector3(0, 0.02, 0.6), ThemeMaterials.hazard_mat(theme), false)
+	_theme_props(root, theme, rng, width, depth, height)
 
 # ---------------------------------------------------------------------------
 

@@ -3,8 +3,13 @@ extends Node
 ## Procedurally generated audio: simple synthesized blips, no files shipped.
 
 var _players: Dictionary = {}
+var _ambience: AudioStreamPlayer
 
 func _ready() -> void:
+	_ambience = AudioStreamPlayer.new()
+	_ambience.stream = _hum_loop()
+	_ambience.volume_db = -20.0
+	add_child(_ambience)
 	_players["pulse"] = _make_player(_square_burst(220.0, 0.05, 0.25))
 	_players["hit"] = _make_player(_square_burst(520.0, 0.05, 0.2))
 	_players["reward"] = _make_player(_arp([392.0, 494.0, 587.0], 0.07, 0.3))
@@ -19,6 +24,28 @@ func play(kind: String) -> void:
 	var player: AudioStreamPlayer = _players.get(kind)
 	if player != null:
 		player.play()
+
+## The room tone. Pitch varies by place: the Hub hums at 1.0, each theme a
+## little differently — the same machine heard through different walls.
+func play_ambience(pitch: float = 1.0) -> void:
+	_ambience.pitch_scale = pitch
+	if not _ambience.playing:
+		_ambience.play()
+
+func stop_ambience() -> void:
+	_ambience.stop()
+
+static func _hum_loop() -> AudioStreamWAV:
+	# A seamless 2s loop: low drone plus a faint slow shimmer. All partials
+	# complete whole cycles in the window, so the seam is silent.
+	var stream := _synth(func(t: float) -> float:
+		var drone := sin(t * 55.0 * TAU) * 0.22 + sin(t * 110.0 * TAU) * 0.08
+		var shimmer := sin(t * 220.0 * TAU + sin(t * 3.0 * TAU) * 1.5) * 0.04
+		return drone + shimmer, 2.0)
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	stream.loop_begin = 0
+	stream.loop_end = int(2.0 * 22050)
+	return stream
 
 func _make_player(stream: AudioStreamWAV) -> AudioStreamPlayer:
 	var player := AudioStreamPlayer.new()
