@@ -30,7 +30,7 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   `--epsilon=fallback`); I10 alias soundness proven; §12 identity
   packages complete (sound family, particle style) and pinned from both
   sides.
-- S7: **complete** — four slots, four runtimes, four keys (RMB / MMB+F /
+- S7: complete — four slots, four runtimes, four keys (RMB / MMB+F /
   Shift / C). `IMPLEMENTED_ACTION_SLOTS` is the whole contract;
   `SLOT_NAMES` shared through `constants.py`; the S1.1 `ARCHETYPE_SLOT`
   collapse retired (migrated mobility Echoes go back to Shift); the HUD
@@ -38,11 +38,19 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   button lands on, compares against what it would replace, and marks
   favourites (client preference, `user://loadout.cfg`, never campaign
   state); the wheel cycles favourites within the highlighted slot.
-- **Next: S8 the Echo Lab** (IMPLEMENTATION_PLAN §2.5): the Hub test
-  chamber that grows with the vocabulary. NOTE: ChatGPT/GPT-5.6 Sol
-  prepared S8 design notes and traps on a separate branch — read and
-  cherry-pick before starting, but the v0.8 packet and the live
-  interfaces win over anything written ahead of the code.
+- S8: **complete** — the Echo Lab, a walk-in Hub annexe (never a Zone,
+  never a Check): dummy that cannot die or farm `kill` events, tall wall
+  with height bands, measured runway, gap with a safe return, armed
+  hazard through the production damage path, deterministic moving target,
+  reset pad that clears transient state only. `make godot-lab` proves it
+  and proves the negative: a full session sends no intent and moves no
+  campaign truth. ChatGPT/GPT-5.6 Sol's build brief is cherry-picked at
+  `docs/proposals/S8_ECHO_LAB_BUILD_BRIEF.md`.
+- **Next: S9 affordances + local rewards** (IMPLEMENTATION_PLAN §2.5):
+  the capability registry, the generator grammar, the never-mandatory
+  validator (I4), the local-reward catalog, Info readouts. This fires
+  `test_stage_tripwires.py` and un-gates the last deferred verb
+  (`pull_pickup`). I12 and I13 belong to it.
 
 ## Stage dependency trap
 `pull_pickup` is the ONLY verb still deferred: it collects local rewards, which are S9. `DEFERRED_PRIMITIVES` must name the last required stage, not the first.
@@ -65,7 +73,7 @@ model, not merely described). Ownership is the default; equipping is the
 modifier. Recorded in `docs/IMPLEMENTATION_DECISIONS.md` (S5).
 
 ## Last full green verification
-At S7 completion (this commit):
+At S8 completion (this commit):
 - `make test`: 286 passed
 - `check_packet.py`: green, 10 docs
 - `make godot-test`: GODOT CHAMBER TESTS OK
@@ -73,9 +81,11 @@ At S7 completion (this commit):
 - `make godot-hud`: GODOT HUD TESTS OK
 - `make godot-rules`: GODOT RULES TESTS OK
 - `make godot-stats`: GODOT STATS TESTS OK (I3 sweep, links, S7 slots)
+- `make godot-lab`: GODOT LAB TESTS OK (fixtures, and no campaign mutation)
 - `make godot-integration`: GODOT INTEGRATION OK, full 12-zone campaign;
   every interpretation credited in some provenance chain, 7 components at
-  Mk II+, longest chain 4 items, Actions reaching 3 of the 4 slots
+  Mk II+, longest chain 4 items, Actions reaching 3 of the 4 slots, and
+  the Hub's Lab present and inert
 
 Do not assume these counts remain current after new commits; update this section only after the corresponding suites actually run green.
 

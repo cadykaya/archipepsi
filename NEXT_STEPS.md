@@ -371,8 +371,39 @@ covers it alongside I3.
   working Echo buttons at all. The suite's per-slot check found it
   immediately; `create()` fills the map where it makes the nodes now.
 
-**Then: S8** — the Echo Lab: the Hub test chamber that grows with the
-vocabulary.
+## Echoes 2.0 — S8 landed (the Echo Lab)
+
+A permanent Hub annexe where a new mechanic can be understood by touching
+it (ECHOES §17). `make godot-lab` is its suite.
+
+- **A room, not a mode.** You walk in through a doorway in the Hub's west
+  wall and walk out the same way, which makes "base movement can always
+  leave the Lab" structural — there is no transition to be stranded in,
+  and nothing about entering goes near the bridge.
+- **Six fixtures**: a dummy, a tall wall with height bands, a runway with
+  distance ticks, a gap with a safe return, an armed hazard, a
+  deterministic moving target — plus a reset pad.
+- **The dummy cannot die**, and that is mechanical rather than
+  convenient: since S4 a rule may fire on `kill`, and the fallback ships
+  `kill → resource_add`, so a dying dummy would let you farm the economy
+  in the Hub. It clamps, reports the damage, and never returns a kill.
+- **Fixtures adapt, never copy.** The dummy answers `Enemy.take_damage`;
+  the hazard calls `player.take_damage`. The suite proves the hazard used
+  the real path by showing a shield absorbing it and a `damage_taken`
+  trait doubling it.
+- **The load-bearing property is a negative**: a full session of use
+  sends no intent and leaves the interpretation log, fold, slots, Mk
+  levels and checked locations byte-identical. Proven by fingerprinting
+  both sides, and proven able to fail by making the Lab send one intent.
+
+ChatGPT/GPT-5.6 Sol wrote the build brief for this stage in parallel; it
+is cherry-picked at `docs/proposals/S8_ECHO_LAB_BUILD_BRIEF.md` and its
+two sharpest traps (kill-farming, and the hazard bypassing the real
+damage path) are both now assertions.
+
+**Then: S9** — affordances and local rewards: the capability registry,
+the generator grammar, the never-mandatory validator, the local-reward
+catalog, Info readouts.
 
 
 
@@ -400,7 +431,8 @@ postgame, so clients also require the goal to be missing
     make godot-blink           # invariant I14, every builder
     make godot-hud             # S3: palette, glyphs, pressure valve, archive
     make godot-rules           # S4: invariant I5, the ECHOES 5 interpreter
-    make godot-stats           # S5: invariant I3, the stat stack and links
+    make godot-stats           # S5/S7: invariant I3, links, slots
+    make godot-lab             # S8: the Echo Lab, and what it must not do
     make godot-integration     # the whole game, headlessly
     make replay ARCHIVE=<dir>  # re-validate a generation archive
     make seed-multi && make host && make bridge   # real server play

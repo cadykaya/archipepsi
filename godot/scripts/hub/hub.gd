@@ -28,6 +28,8 @@ var _board_cells: Array[MeshInstance3D] = []
 var _board_legend: Label3D
 var _board_pulse := 0.0
 var _working_line := 0
+## The Echo Lab annexe. Built with the room; never a Zone, never a Check.
+var lab: EchoLab
 
 func _ready() -> void:
 	_build_room()
@@ -36,6 +38,40 @@ func _ready() -> void:
 	# Face +Z: the portal and boards are on the far wall.
 	player.set_spawn(Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.8, 3.0)))
 	refresh()
+
+## The west wall is solid by default; the Lab needs a way through. Built
+## as two wall segments with a gap rather than by moving the perimeter,
+## so the Hub's own geometry stays exactly as it was.
+func _cut_lab_doorway(b, root: Node3D) -> void:
+	var door_z := 6.0
+	var door_w := 3.0
+	var door_h := 3.2
+	var opening := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(0.6, door_h, door_w)
+	opening.mesh = mesh
+	opening.position = Vector3(-W / 2.0, door_h / 2.0, door_z)
+	opening.material_override = ThemeMaterials.glow_material(
+			Color(0.1, 0.12, 0.16), 0.2)
+	root.add_child(opening)
+	# The corridor between the two rooms, floored and lit so the doorway
+	# reads as somewhere to go rather than as a hole in the map.
+	var link := Node3D.new()
+	add_child(link)
+	b._box(link, Vector3(3.4, 0.5, door_w),
+			Vector3(-W / 2.0 - 1.6, -0.25, door_z),
+			ThemeMaterials.floor_mat(THEME))
+	b._box(link, Vector3(3.4, 0.4, door_w),
+			Vector3(-W / 2.0 - 1.6, door_h, door_z),
+			ThemeMaterials.trim_mat(THEME))
+	var sign := Label3D.new()
+	sign.text = "ECHO LAB"
+	sign.font_size = 34
+	sign.pixel_size = 0.007
+	sign.position = Vector3(-W / 2.0 + 0.4, door_h + 0.5, door_z)
+	sign.rotation_degrees = Vector3(0, 90, 0)
+	sign.modulate = Color(0.6, 1.0, 0.85)
+	add_child(sign)
 
 func _build_room() -> void:
 	var environment := WorldEnvironment.new()
@@ -59,6 +95,14 @@ func _build_room() -> void:
 	for position in [Vector3(-W / 4.0, H - 0.4, D / 2.0),
 			Vector3(W / 4.0, H - 0.4, D / 2.0)]:
 		b._light(root, position, THEME, 16.0)
+
+	# The Echo Lab (S8): a walk-in annexe, not a mode. Cut a doorway in the
+	# west wall and put the room beyond it, so entering and leaving are
+	# both just walking — which is what makes "base movement can always
+	# leave the Lab" structural instead of a rule to remember.
+	_cut_lab_doorway(b, root)
+	lab = EchoLab.new()
+	add_child(lab)
 
 	# The Zone portal, centre of the back wall.
 	_portal = HubPortal.new()

@@ -59,7 +59,18 @@ func _process(delta: float) -> void:
 		if _retry_timer <= 0.0:
 			_open()
 
+## Every intent this client sends, most recent last. Kept because the
+## interesting question about a new subsystem is often "did it talk to the
+## bridge at all" — the Echo Lab's whole contract is that it does not —
+## and a log of what was SENT answers that without a test-only hook in the
+## send path. Bounded: this is a diagnostic, not a queue.
+var sent_intents: Array[Dictionary] = []
+const _INTENT_LOG_CAP := 64
+
 func send_intent(intent: Dictionary) -> bool:
+	sent_intents.append(intent)
+	if sent_intents.size() > _INTENT_LOG_CAP:
+		sent_intents.pop_front()
 	if _socket.get_ready_state() != WebSocketPeer.STATE_OPEN:
 		push_warning("intent '%s' dropped: bridge offline" % intent.get("type", "?"))
 		return false

@@ -61,6 +61,12 @@ func _ready() -> void:
 		var rules_suite: Node = load("res://tests/rules_driver.gd").new()
 		add_child(rules_suite)
 		return
+	# The S8 Echo Lab suite: same boot, same reason.
+	if "--lab-test" in user_args:
+		headless_test = true
+		var lab_suite: Node = load("res://tests/lab_driver.gd").new()
+		add_child(lab_suite)
+		return
 	# The S5 stat-stack suite (invariant I3): same boot, same reason.
 	if "--stats-test" in user_args:
 		headless_test = true

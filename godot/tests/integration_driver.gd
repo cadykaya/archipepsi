@@ -213,6 +213,14 @@ func _run() -> void:
 	_check(longest_chain >= 2,
 			"a provenance chain names more than one item (longest %d)"
 			% longest_chain)
+	# S8: the Lab is Hub geometry, so a campaign that never notices it is a
+	# campaign where it silently failed to build. Cheap end-to-end check
+	# only — the fixtures themselves are `make godot-lab`'s business.
+	# Awaited into a local first: `_check(await ...)` passes a coroutine
+	# where a bool belongs, and the run hangs instead of failing.
+	var lab_ok: bool = await _lab_built_and_changed_nothing()
+	_check(lab_ok,
+			"the Hub's Echo Lab exists and the visit changed no campaign truth")
 	_check(stock_ever_seen, "shop stocked at least once during the campaign")
 	if stock_ever_seen:
 		_check(_bought_once, "at least one shop purchase completed")
@@ -710,3 +718,27 @@ func _try_shop_purchase() -> void:
 			_check(spent_after == spent_before + cost,
 					"double buy charged exactly once (test O)")
 		return
+
+
+## The Lab is built with the Hub, so this asks the Hub for it and then
+## asserts the one thing that would be catastrophic: that having it there
+## moved campaign truth. Everything else about the Lab is proven by
+## `make godot-lab`.
+func _lab_built_and_changed_nothing() -> bool:
+	var before := JSON.stringify({
+		"checked": BridgeClient.snapshot.get("checked_location_ids", []),
+		"mechanics": BridgeClient.mechanics(),
+		"slots": BridgeClient.slots()})
+	var hub := HubController.new()
+	get_tree().root.add_child(hub)
+	await get_tree().process_frame
+	var ok := hub.lab != null and hub.lab.dummy != null \
+			and hub.lab.fixture("hazard") != null
+	hub.lab.reset(hub.player)
+	var after := JSON.stringify({
+		"checked": BridgeClient.snapshot.get("checked_location_ids", []),
+		"mechanics": BridgeClient.mechanics(),
+		"slots": BridgeClient.slots()})
+	hub.queue_free()
+	await get_tree().process_frame
+	return ok and before == after

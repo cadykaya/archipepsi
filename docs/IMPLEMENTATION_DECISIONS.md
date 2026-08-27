@@ -548,3 +548,67 @@ Two corrections were made on top of it:
   two, and a hit eats both before reaching hp. `total_shield()` is what
   the HUD reports; the single-runtime `shield_hp` it used to read would
   have shown whichever slot happened to be highlighted.
+
+## S8 — the Echo Lab
+
+The build brief for this stage (`docs/proposals/S8_ECHO_LAB_BUILD_BRIEF.md`)
+was written in parallel by ChatGPT / GPT-5.6 Sol against the S6 tree and
+cherry-picked here. It was read as a checklist against the live S7
+interfaces rather than implemented from; its boundaries all hold, and two
+of its traps turned out to be exactly right.
+
+- **The Lab is a room, not a mode.** It is an annexe off the Hub's west
+  wall, reached by walking through a doorway. That makes "base movement is
+  always enough to leave the Lab" structural rather than a rule someone
+  has to maintain: there is no transition to be stranded inside, no view
+  to fail to exit, and no Zone state to consume. It also means the Lab
+  cannot allocate, claim or fake a Check, because nothing about entering
+  it goes near the bridge.
+
+- **The dummy cannot die, and that is mechanical.** The brief flagged this
+  and it is sharper than it first sounds: since S4 a rule may fire on
+  `kill`, and the shipped fallback produces `kill → resource_add`. A dummy
+  that died would let the player stand in the Hub farming the economy the
+  Lab exists to inspect. It clamps at 1 hp, reports the damage, and never
+  returns true from `take_damage`. The suite asserts all three, and that
+  the damage still counts — a dummy that ignored damage would also never
+  report a kill.
+
+- **Fixtures are adapters, never copies.** The dummy answers `Enemy`'s own
+  `take_damage` signature and wears a real `StatusEffects` on the enemy
+  side; the hazard calls `player.take_damage`, the entry point enemies
+  use. The suite proves the hazard went through it rather than writing hp
+  — a shield absorbs a strike, and a `damage_taken` trait doubles one —
+  because a hazard that touched hp directly would silently test nothing
+  about shields, block, statuses or any low-health rule.
+
+- **Reset is a workbench control, not a save operation.** It returns dummy
+  health and statuses, the moving target's phase, the hazard's armed
+  state and the player's HP and statuses to baseline. It does not touch
+  the interpretation log, folded ownership, provenance, Mk levels, slots
+  or favourites, and the suite fingerprints all of that either side of a
+  full session to prove it.
+
+- **`sent_intents` on the client, rather than a test-only hook.** The
+  Lab's load-bearing property is a negative one — it must never talk to
+  the bridge — and a negative is only worth asserting if the assertion
+  can fail. A bounded log of what the client sent answers "did this
+  subsystem talk to the bridge at all" for any subsystem, without a seam
+  that exists only for tests. Proven by making the Lab send one.
+
+- **A rotated room needs `global_transform * point`.** The Lab is placed a
+  quarter turn round so its doorway faces the Hub corridor, which made
+  `global_position + local_offset` land somewhere else entirely — the gap
+  recovery put the player outside the room. Caught by the suite on its
+  first run.
+
+- **The "chamber updated" notice is session-local.** §17's joke is worth
+  one line and not worth a new column in the save, so the announcement
+  fires from owned vocabulary within a session and is not remembered
+  across restarts. The fixture registry it drives is the seam S9's water
+  volumes, rails and anchors attach to.
+
+- **S9 was deliberately not pulled forward.** No affordance registry, no
+  local rewards, no Info readouts, no `pull_pickup`. The Lab is finished
+  when the vocabulary that exists has a safe deterministic place to be
+  understood.
