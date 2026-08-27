@@ -13,6 +13,11 @@ signal enemy_died(enemy: Enemy)
 
 var archetype := "melee"
 var hp := 24.0
+## Starting HP, kept so an ability can ask how heavy this is.
+## `grapple_pull_target` refuses a brute by asking this rather
+## than by naming archetypes, so a future heavy enemy is
+## covered without touching the primitive.
+var max_hp := 24.0
 var stats: Dictionary = {}
 var _attack_cooldown := 0.0
 var _dead := false
@@ -38,6 +43,7 @@ static func create(kind: String, theme: String) -> Enemy:
 	var stats: Dictionary = Constants.ENEMY_STATS[kind]
 	enemy.stats = stats
 	enemy.hp = float(stats["hp"])
+	enemy.max_hp = float(stats["hp"])
 
 	var size := Vector3(0.8, 1.6, 0.8)
 	match kind:

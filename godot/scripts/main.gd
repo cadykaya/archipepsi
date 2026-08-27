@@ -25,10 +25,22 @@ var _abandoning := false
 var headless_test := false
 
 func _ready() -> void:
-	headless_test = "--integration-test" in OS.get_cmdline_user_args()
+	var user_args := OS.get_cmdline_user_args()
+	headless_test = "--integration-test" in user_args
 	if headless_test:
 		var driver: Node = load("res://tests/integration_driver.gd").new()
 		add_child(driver)
+		return
+	# The blink suite (invariant I14) needs live physics AND the autoloads,
+	# and a `--script` SceneTree run has neither: it never instantiates the
+	# autoloads, so every script that touches BridgeClient fails to compile
+	# and the suite reports zero attempts. Booting the real project the way
+	# the integration driver does is what makes the raycasts real. It needs
+	# no bridge -- it builds its own zones.
+	if "--blink-test" in user_args:
+		headless_test = true
+		var blink: Node = load("res://tests/blink_driver.gd").new()
+		add_child(blink)
 		return
 	world = Node3D.new()
 	world.name = "World"

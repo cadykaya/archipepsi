@@ -22,6 +22,11 @@ var _first_kill_seen := false
 var _portal_was_locked := true
 var _quiet_time := 0.0
 var _last_claimed := -1
+## Union of every chamber and connector AABB the builder placed.
+## `blink` tests its landing point against this: outside it is
+## outside the level, wall or no wall (invariant I14).
+var _world_bounds := AABB()
+var _has_bounds := false
 const _QUIET_BEFORE_ASIDE := 75.0
 
 func setup(zone_dict: Dictionary) -> void:
@@ -31,6 +36,10 @@ func setup(zone_dict: Dictionary) -> void:
 	var build := ZoneBuilder.build(zone)
 	add_child(build["root"])
 	_exit_portal = build["exit_portal"]
+	for box: AABB in build["bounds_list"]:
+		_world_bounds = box if not _has_bounds \
+				else _world_bounds.merge(box)
+		_has_bounds = true
 	_exit_portal.exit_requested.connect(func() -> void: exit_requested.emit())
 
 	player = Player.create()
@@ -261,3 +270,9 @@ func _all_checks_confirmed() -> bool:
 		if not BridgeClient.is_checked(int(location)):
 			return false
 	return true
+
+## The Zone's outer bounds in world space, or null before it is built.
+## Returning null rather than a zero AABB matters: an empty box would read
+## as "nowhere is inside the level" and refuse every blink.
+func world_bounds() -> Variant:
+	return _world_bounds if _has_bounds else null

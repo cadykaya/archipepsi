@@ -15,8 +15,8 @@ Proof the loop is real:
   **Test L** (kill the bridge at the loading screen; the GENERATED zone
   revives with its committed allocation) against a **real Archipelago
   0.6.7 server**.
-- 208 pytest (125 of them the packet's own schema suite) + the
-  headless chamber-geometry suite.
+- 229 pytest (125 of them the packet's own schema suite) + the
+  headless chamber-geometry and blink-invariant suites.
 
 ## What works
 - APWorld: `make seed` / `seed-multi` / `host` / `apworld` (official build
@@ -135,8 +135,46 @@ at once. The stack is clamped to the same two constants `max_safe_gap` was
 derived from, which is what keeps every generated jump valid without
 recomputing one.
 
-**Next: S2** — the action primitive catalog and the action runner
-(`IMPLEMENTATION_PLAN.md` §2.5).
+## Echoes 2.0 — S1.1 and S2 landed
+
+**S1.1** was an externally authored review patch (ChatGPT, GPT-5.6 Sol),
+reviewed here against the packet and the running code. All three of its
+changes hold up, and two closed holes S1 shipped: nothing gated operations,
+component kinds, slots or modifiers (so a schema-valid Resource would
+validate, persist and do nothing), and `reconcile()` iterated pending Checks
+in claim order despite `ECHOES.md` §5 requiring location-id ascending. Two
+corrections on top: the slot stopgap expires at **S7**, not S2, and the
+packet copy of `migration.py` had silently diverged from the bridge copy —
+`check_packet.py` now compares the schema directories and fails on any
+difference.
+
+**S2** opened the catalog from six verbs to **21 of 28**.
+
+- **The other seven are staged, not forgotten.** `DEFERRED_PRIMITIVES` names
+  each with the stage that lands it (S3 resources, S5 statuses, S9 local
+  rewards), and the schema suite asserts the two tuples partition the
+  catalog so a verb cannot vanish from both.
+- **Three shapes of Action.** Press, held (`glide`, `charge_shot`), and
+  scheduled (`burst_fire`). Cooldown is charged on the press either way;
+  conditional verbs check their condition first, so an air dash on the
+  ground costs nothing.
+- **`blink` got its own suite** (`make godot-blink`, invariant I14): ~23k
+  attempts across five builders × five themes. It found two real bugs
+  immediately — landings a full body-length *under* the floor (350), and an
+  ankle-height clearance probe that cleared bodies inside walls (100). Both
+  fixed; it now reports 5125 resolved and 17825 refused with no violations.
+- **The runner is checked against the schema across the language boundary.**
+  `test_runner_coverage.py` reads `echo_runtime.gd` and asserts its match
+  arms equal `IMPLEMENTED_PRIMITIVES` in both directions.
+- **The fallback reaches 20 distinct outcomes** across a 30-Check campaign,
+  up from about five — and a sword is a sword now rather than a six-metre
+  hitscan. Still deterministic, still one `CREATE` per operation.
+- **`make godot-import` fails on a parse error.** It is the only step that
+  compiles every script, and a broken action runner printed `GODOT CHAMBER
+  TESTS OK` while the game refused to load.
+
+**Next: S3** — resources and the HUD channels (`IMPLEMENTATION_PLAN.md`
+§2.5). That stage also un-gates four of the seven deferred verbs.
 
 ## Next useful work
 1. **Play-feel pass on real hardware** — the manual checks in
@@ -157,8 +195,9 @@ postgame, so clients also require the goal to be missing
 (`docs/IMPLEMENTATION_DECISIONS.md`).
 
 ## Commands
-    make test                  # 208 pytest (125 schema)
+    make test                  # 229 pytest (125 schema)
     make godot-test            # chamber geometry
+    make godot-blink           # invariant I14, every builder
     make godot-integration     # the whole game, headlessly
     make replay ARCHIVE=<dir>  # re-validate a generation archive
     make seed-multi && make host && make bridge   # real server play

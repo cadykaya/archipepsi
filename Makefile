@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export bridge smoke godot-import godot-test godot-integration
+.PHONY: setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export bridge smoke godot-import godot-test godot-blink godot-integration
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -70,8 +70,20 @@ GODOT := godot-bin/godot
 # scripts, so adding one and going straight to a headless run fails with
 # "Identifier not declared in the current scope" for a file that is plainly
 # there. Only an import pass rewrites .godot/global_script_class_cache.cfg.
+#
+# The import is also the only step that compiles EVERY script rather than
+# the ones a given entry point happens to reach. `godot-test` guards its own
+# run, but its guard cannot see a file the suite does not depend on -- so a
+# parse error in the action runner printed CHAMBER TESTS OK with the game
+# itself refusing to load. Discard stdout, keep stderr, and fail on a parse
+# error here, where the whole tree is in scope.
 godot-import:                  # refresh the script class cache
-	$(GODOT) --headless --path godot --import >/dev/null
+	@err=$$($(GODOT) --headless --path godot --import 2>&1 >/dev/null); \
+	if printf '%s\n' "$$err" | grep -qE "Parse Error|Compile Error|Failed to load script"; then \
+	  printf '%s\n' "$$err"; \
+	  echo "-- the project does not compile; every headless run below is meaningless"; \
+	  exit 1; \
+	fi
 
 # A SceneTree script whose dependencies fail to compile still RUNS: the
 # unresolved calls raise SCRIPT ERROR at runtime, the assertions they were
@@ -85,6 +97,15 @@ godot-test: godot-import       # headless builder tests (no bridge needed)
 	  echo "-- a script error was raised: the suite cannot vouch for itself"; \
 	  exit 1; \
 	fi
+
+# Invariant I14 (ACCEPTANCE_TESTS 5.7). Boots the real project rather than
+# using `--script`: a SceneTree script never instantiates the autoloads, so
+# every script touching BridgeClient fails to compile and the suite reports
+# zero attempts. Needs no bridge -- it builds its own zones.
+godot-blink: godot-import      # blink never leaves the world
+	@out=$$($(GODOT) --headless --path godot -- --blink-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT BLINK TESTS OK" || exit 1
 
 # The integration run gets its own throwaway save directory. Sharing
 # bridge/saves/ made the run resume the PREVIOUS run's campaign: the zone

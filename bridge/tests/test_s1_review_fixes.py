@@ -84,11 +84,15 @@ def test_s1_stage_gate_rejects_schema_valid_noops():
     assert any("component kind 'resource'" in error
                for error in CAP.validate_stage_support(resource))
 
-    action = _interpretation_with({
+    # S2 landed the bouncing, gravity-affected projectile, so the gate S1.1
+    # put on `bounces` is retired rather than kept as a check that no longer
+    # describes the engine. Asserting it is now ACCEPTED is what stops the
+    # gate from being silently reintroduced.
+    bouncy = _interpretation_with({
         "kind": "action",
         "component_id": "act_test",
         "display_name": "Bouncy Shot",
-        "description": "The current projectile runner does not bounce.",
+        "description": "The S2 projectile runner bounces and falls.",
         "slot": "echo_a",
         "cooldown": 1.0,
         "primitive": {
@@ -96,13 +100,43 @@ def test_s1_stage_gate_rejects_schema_valid_noops():
             "damage": 10,
             "speed": 18,
             "lifetime": 3,
-            "gravity_scale": 0.0,
+            "gravity_scale": 0.5,
             "bounces": 1,
         },
         "modifiers": [],
     })
-    assert any("bounces" in error
-               for error in CAP.validate_stage_support(action))
+    assert CAP.validate_stage_support(bouncy) == []
+
+    # The slot gate is the one that has NOT moved: four-slot binding is S7,
+    # and until then an Action on `mobility` is owned and unreachable.
+    misslotted = _interpretation_with({
+        "kind": "action",
+        "component_id": "act_slot",
+        "display_name": "Unreachable Dash",
+        "description": "No key is wired to this slot until S7.",
+        "slot": "mobility",
+        "cooldown": 1.0,
+        "primitive": {"type": "dash", "force": 12.0},
+        "modifiers": [],
+    })
+    assert any("slot 'mobility'" in error
+               for error in CAP.validate_stage_support(misslotted))
+
+    # And a verb whose supporting system is still ahead stays refused, so
+    # this test still proves the primitive gate fires at all.
+    gated = _interpretation_with({
+        "kind": "action",
+        "component_id": "act_gated",
+        "display_name": "Cleanse",
+        "description": "Statuses are S5.",
+        "slot": "echo_a",
+        "cooldown": 1.0,
+        "primitive": {"type": "cleanse", "count": 2},
+        "modifiers": [],
+    })
+    from archipepsi_bridge.schemas.echo import validate_interpretation
+    assert any("not yet implemented" in error for error in
+               validate_interpretation(gated, expected_source_location_id=LOC_A))
 
 
 def test_v7_equipped_mobility_echo_stays_on_the_existing_rmb_control():

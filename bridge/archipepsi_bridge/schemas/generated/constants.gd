@@ -113,3 +113,12 @@ const ENEMY_STATS = {
 	"ranged": {"hp": 16.0, "damage": 8.0, "cooldown": 2.0, "speed": 0.0, "reach": 40.0},
 	"brute": {"hp": 120.0, "damage": 18.0, "cooldown": 1.6, "speed": 2.2, "reach": 2.5},
 }
+
+# The closed Action catalog (all 28), in catalog order.
+const ECHO_ACTION_PRIMITIVES = ["melee_swing", "melee_thrust", "slam_ground", "hitscan_damage", "projectile_damage", "arc_lob", "burst_fire", "charge_shot", "beam_sustained", "dash", "air_dash", "double_jump", "wall_kick", "hover", "glide", "blink", "grapple_to_surface", "grapple_pull_target", "grapple_swing", "shield", "block", "parry", "heal_self", "cleanse", "scan_mark", "restore_resource", "pull_pickup", "place_marker"]
+
+# The subset this engine must be able to execute today.
+const ECHO_IMPLEMENTED_PRIMITIVES = ["melee_swing", "melee_thrust", "slam_ground", "hitscan_damage", "projectile_damage", "arc_lob", "burst_fire", "charge_shot", "dash", "air_dash", "double_jump", "wall_kick", "glide", "blink", "grapple_to_surface", "grapple_pull_target", "grapple_swing", "shield", "parry", "heal_self", "place_marker"]
+
+# Held back by a stage, with the stage that lands each one.
+const ECHO_DEFERRED_PRIMITIVES = {"beam_sustained": "S3: needs a Resource to drain via a `powers` link", "hover": "S3: needs a Resource to drain via a `powers` link", "block": "S3: needs a Resource to drain via a `powers` link", "restore_resource": "S3: needs a Resource to refill", "scan_mark": "S5: applies the `marked` status", "cleanse": "S5: removes statuses", "pull_pickup": "S9: local rewards are the only thing it may attract"}

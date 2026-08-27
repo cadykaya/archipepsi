@@ -17,12 +17,22 @@ from __future__ import annotations
 from ..schemas.echo import EchoInterpretation
 
 
-# S1 deliberately preserves only the v0.7 mechanical surface. New Actions
-# are separately gated by schemas.echo.IMPLEMENTED_PRIMITIVES.
+# Which *Action verbs* run is gated separately, by
+# schemas.echo.IMPLEMENTED_PRIMITIVES — S2 opened that to 21 of 28. What
+# follows is everything else about the shape of an interpretation, and S2
+# moves none of it: the wider systems are still ahead.
 IMPLEMENTED_OPERATION_KINDS = ("create",)
 IMPLEMENTED_COMPONENT_KINDS = ("action", "trait")
 IMPLEMENTED_TRAIT_STATS = ("gravity", "move_speed")
+
+#: Still one slot, and this is the line people will reach for first when
+#: they read that S2 "ships the catalog". S2 ships the *verbs*; the number
+#: of reachable buttons is S7 ("Slots + loadout UX"). Widening this before
+#: `main.gd` binds more than `slotted_action()` would let Epsilon place an
+#: Action on a slot no key is wired to — owned, slotted, and unreachable.
 IMPLEMENTED_ACTION_SLOTS = ("echo_a",)
+
+#: `apply_status_on_hit` waits for statuses in S5.
 IMPLEMENTED_MODIFIER_TYPES = ("recoil_self", "knockback_target")
 
 
@@ -75,19 +85,10 @@ def validate_stage_support(interpretation: EchoInterpretation) -> list[str]:
                         f"modifier '{modifier.type}' is not implemented by the "
                         "current runtime"
                     )
-            primitive = component.primitive
-            # v8 added optional projectile features before the S2 runner exists.
-            # The old S1 projectile path ignores them, so non-default values
-            # must be refused rather than accepted as fake mechanics.
-            if primitive.type == "projectile_damage":
-                if primitive.gravity_scale != 0.0:
-                    errors.append(
-                        "projectile_damage gravity_scale is not implemented by "
-                        "the current runtime"
-                    )
-                if primitive.bounces != 0:
-                    errors.append(
-                        "projectile_damage bounces are not implemented by the "
-                        "current runtime"
-                    )
+            # v8 added `gravity_scale` and `bounces` to projectile_damage
+            # before a runner existed for them, and S1 correctly refused
+            # non-default values rather than accepting fake mechanics. The
+            # S2 projectile integrates gravity and reflects off surfaces, so
+            # that refusal is retired here rather than left as a gate that
+            # no longer describes the engine.
     return errors

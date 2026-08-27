@@ -181,12 +181,80 @@ def fallback_echo(request: EchoGenerationRequest) -> dict:
             description="A straightforward sidearm, reinterpreted from static.",
             tags=["weapon"])
     if has("sword", "blade", "knife", "dagger", "axe"):
+        # Was a 6-metre hitscan, because in S1 there was nothing else a
+        # sword could be. It is a sword now.
         return _primary(
-            request, archetype="weapon", cooldown=0.8,
-            initiator={"type": "hitscan_damage", "damage": 20.0, "pellets": 1,
-                       "spread_degrees": 0.0, "range": 6.0},
+            request, archetype="weapon", cooldown=0.7,
+            initiator={"type": "melee_swing", "damage": 24.0, "reach": 2.6,
+                       "arc_degrees": 110.0},
             description="Short reach, serious opinion.",
             tags=["melee", "weapon"])
+    if has("spear", "lance", "pike", "halberd", "trident"):
+        return _primary(
+            request, archetype="weapon", cooldown=0.9,
+            initiator={"type": "melee_thrust", "damage": 34.0, "reach": 4.2},
+            description="Reach beats width. Pick your line and commit.",
+            tags=["melee", "weapon"])
+    if has("hammer", "mallet", "stomp", "smash", "quake"):
+        return _primary(
+            request, archetype="weapon", cooldown=3.5,
+            initiator={"type": "slam_ground", "damage": 32.0, "radius": 5.0,
+                       "descent_force": 20.0},
+            description="Only works from up there. Bring yourself down hard.",
+            tags=["melee", "slam"])
+    if has("staff", "wand", "charge", "rod", "focus"):
+        return _primary(
+            request, archetype="weapon", cooldown=0.5,
+            initiator={"type": "charge_shot", "min_damage": 6.0,
+                       "max_damage": 38.0, "charge_time": 1.1, "speed": 30.0},
+            description="Hold it. It gets angrier. Let go.",
+            tags=["charge", "weapon"])
+    if has("smg", "burst", "repeater", "machine", "uzi"):
+        return _primary(
+            request, archetype="weapon", cooldown=0.9,
+            initiator={"type": "burst_fire", "damage": 7.0, "shots": 4,
+                       "interval": 0.08, "spread_degrees": 4.0,
+                       "range": 35.0},
+            description="Four opinions in rapid succession.",
+            tags=["burst", "weapon"])
+    if has("teleport", "warp", "blink", "recall", "portal"):
+        return _primary(
+            request, archetype="mobility", cooldown=2.5,
+            initiator={"type": "blink", "range": 14.0, "clearance": 0.4},
+            description="You are looking at somewhere. Now you are there.",
+            tags=["blink", "mobility"])
+    if has("glider", "glide", "parachute", "sail", "umbrella"):
+        return _primary(
+            request, archetype="mobility", cooldown=0.6,
+            initiator={"type": "glide", "fall_speed": 2.0,
+                       "forward_speed": 10.0},
+            description="Hold it and the fall becomes a decision.",
+            tags=["glide", "mobility"])
+    if has("jet", "thruster", "rocket boot", "booster", "jump"):
+        return _primary(
+            request, archetype="mobility", cooldown=1.2,
+            initiator={"type": "double_jump", "force": 8.0, "extra_jumps": 1},
+            description="One more jump than the world budgeted for.",
+            tags=["jump", "mobility"])
+    if has("claw", "gecko", "climb", "wall", "gauntlet"):
+        return _primary(
+            request, archetype="mobility", cooldown=0.8,
+            initiator={"type": "wall_kick", "force": 12.0,
+                       "outward_fraction": 0.45},
+            description="Walls are just floors you have not argued with.",
+            tags=["wall", "mobility"])
+    if has("parry", "riposte", "counter", "deflect"):
+        return _primary(
+            request, archetype="tool", cooldown=2.0,
+            initiator={"type": "parry", "window": 0.35},
+            description="A short window and a lot of confidence.",
+            tags=["parry", "defense"])
+    if has("compass", "map", "marker", "flag", "beacon"):
+        return _primary(
+            request, archetype="tool", cooldown=1.0,
+            initiator={"type": "place_marker", "duration": 120.0},
+            description="Somewhere worth remembering. Now it is marked.",
+            tags=["marker", "utility"])
     if has("hook", "grapple", "chain"):
         return _primary(
             request, archetype="mobility", cooldown=2.0,
@@ -218,17 +286,33 @@ def fallback_echo(request: EchoGenerationRequest) -> dict:
             initiator={"type": "heal_self", "amount": 30.0},
             description="Drink the interpretation of a drink.",
             tags=["heal"])
-    if has("bomb", "grenade", "rocket", "missile"):
+    if has("bomb", "grenade", "mine", "explosive"):
+        return _primary(
+            request, archetype="weapon", cooldown=3.0,
+            initiator={"type": "arc_lob", "damage": 34.0, "radius": 4.0,
+                       "launch_force": 17.0, "fuse": 1.4},
+            description="Lob it, count, regret nothing.",
+            tags=["explosive", "weapon"])
+    if has("rocket", "missile", "cannonball", "mortar"):
         return _primary(
             request, archetype="weapon", cooldown=3.0,
             initiator={"type": "projectile_damage", "damage": 22.0,
-                       "speed": 18.0, "lifetime": 3.0},
+                       "speed": 26.0, "lifetime": 3.0,
+                       "gravity_scale": 0.15, "bounces": 0},
             description="A slow, regrettable projectile.",
             tags=["projectile", "weapon"])
 
-    # Hash to a modest default: hitscan weapon, dash, or passive speed.
+    # Most items reach here — nothing in a multiworld is named for what
+    # Epsilon does with it — so this branch, not the table above, is what
+    # variety means in play. S1 hashed to three outcomes: a gun, a dash, or
+    # walking slightly faster. A whole campaign of that is one verb repeated
+    # 26 times.
+    #
+    # Still deterministic (the same Check always yields the same Echo) and
+    # still structurally boring: one CREATE, one component, no links. Only
+    # the vocabulary widened.
     choice = C.prng_seed(request.source.source_game, request.source.item_name,
-                         request.source.location_id) % 3
+                         request.source.location_id) % 8
     if choice == 0:
         return _primary(
             request, archetype="weapon", cooldown=0.8,
@@ -242,6 +326,41 @@ def fallback_echo(request: EchoGenerationRequest) -> dict:
             initiator={"type": "dash", "force": 10.0},
             description="Whatever it was, now it makes you faster briefly.",
             tags=["dash", "mobility"])
+    if choice == 2:
+        return _primary(
+            request, archetype="weapon", cooldown=0.9,
+            initiator={"type": "burst_fire", "damage": 6.0, "shots": 3,
+                       "interval": 0.09, "spread_degrees": 5.0,
+                       "range": 32.0},
+            description="It stutters when it speaks. Three times, quickly.",
+            tags=["burst", "weapon"])
+    if choice == 3:
+        return _primary(
+            request, archetype="mobility", cooldown=3.0,
+            initiator={"type": "blink", "range": 11.0, "clearance": 0.4},
+            description="Epsilon could not place it, so it moved you instead.",
+            tags=["blink", "mobility"])
+    if choice == 4:
+        return _primary(
+            request, archetype="weapon", cooldown=1.0,
+            initiator={"type": "melee_swing", "damage": 18.0, "reach": 2.4,
+                       "arc_degrees": 120.0},
+            description="Held wrong, swung anyway.",
+            tags=["melee", "weapon"])
+    if choice == 5:
+        return _primary(
+            request, archetype="mobility", cooldown=1.4,
+            initiator={"type": "air_dash", "force": 14.0,
+                       "uses_per_airtime": 1},
+            description="It only means anything once you have left the floor.",
+            tags=["dash", "mobility"])
+    if choice == 6:
+        return _primary(
+            request, archetype="weapon", cooldown=2.6,
+            initiator={"type": "arc_lob", "damage": 26.0, "radius": 3.5,
+                       "launch_force": 15.0, "fuse": 1.2},
+            description="Epsilon decided the safest reading was 'throw it'.",
+            tags=["explosive", "weapon"])
     return _passive(
         request,
         effects=[{"type": "modify_speed", "multiplier": 1.2}],

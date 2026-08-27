@@ -282,8 +282,21 @@ func clear_waypoint() -> void:
 	_waypoint_active = false
 	_waypoint.visible = false
 
+## Tracks the charge across frames so the bar can be handed BACK to the
+## cooldown on the frame a charge ends. Without the edge, releasing early
+## leaves the bar frozen at whatever the charge reached.
+var _was_charging := false
+
 func _process(delta: float) -> void:
 	_centre_aim_marks()
+	# A charge advances every frame, but `cooldown_changed` stops firing the
+	# moment the cooldown itself is spent — and charge_time can outlast it.
+	# So the charge bar needs a tick of its own.
+	var charging := _bound_player != null \
+			and _bound_player.echo_runtime.charge_ratio() > 0.0
+	if charging or _was_charging:
+		refresh_echo()
+	_was_charging = charging
 	_animate_confirmation(delta)
 	_animate_voice(delta)
 	if _hit_fade > 0.0:
@@ -531,6 +544,21 @@ func refresh_echo(cooldown := -1.0, total := 0.0) -> void:
 		_cooldown_track.visible = false
 		return
 	_cooldown_track.visible = true
+
+	# A charge_shot in the middle of charging takes the bar over. The
+	# cooldown is not the interesting number while you are holding the key
+	# down -- the charge is -- and a charge you cannot see the state of is a
+	# charge you cannot time. Full and white means "let go now".
+	var charge := 0.0
+	if _bound_player != null:
+		charge = _bound_player.echo_runtime.charge_ratio()
+	if charge > 0.0:
+		_cooldown_fill.size = Vector2(_cooldown_track.size.x * charge,
+				_cooldown_track.size.y)
+		_cooldown_fill.color = Color(1.0, 0.95, 0.75) if charge >= 1.0 \
+				else Color(0.6, 0.8, 1.0)
+		return
+
 	var ready := 1.0 - clampf(cooldown / window, 0.0, 1.0)
 	_cooldown_fill.size = Vector2(_cooldown_track.size.x * ready,
 			_cooldown_track.size.y)

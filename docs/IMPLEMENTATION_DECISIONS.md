@@ -155,3 +155,74 @@ Two corrections were made on top of it:
   and then verified by deliberately introducing drift. This is the same
   medicine as the derived primitive count: two things that must agree need
   a check that says so, or the agreement is only a comment.
+
+## S2 — the action primitive catalog and the action runner
+
+- **21 of 28, and the other 7 named.** S2 "ships §6 in full" as far as its
+  dependencies exist. `beam_sustained`, `hover`, `block` and
+  `restore_resource` need a Resource to drain or refill (S3); `scan_mark`
+  and `cleanse` need statuses (S5); `pull_pickup` needs local rewards (S9).
+  Rather than omit them, `DEFERRED_PRIMITIVES` names each with the stage
+  that lands it, and `test_schemas.py` asserts the two tuples *partition*
+  the catalog — a primitive dropped from both would otherwise read exactly
+  like one nobody got to.
+
+- **The catalog is exported to GDScript, and the runner is checked against
+  it.** `IMPLEMENTED_PRIMITIVES` promises that a verb the engine cannot run
+  is refused rather than accepted as an ability that does nothing. Nothing
+  could verify that promise, because the list is Python and the runner is
+  GDScript. `test_runner_coverage.py` now reads `echo_runtime.gd` and
+  asserts the match arms equal the implemented set, in both directions: a
+  missing branch is an Echo that validates and does nothing, and a branch
+  for a still-refused verb is dead code that reads like a shipped feature.
+
+- **Three shapes of Action, not one.** `activate()` no longer resolves
+  everything. A held verb (`glide`, `charge_shot`) starts on the press and
+  ends on the release; a scheduled one (`burst_fire`) pays out over later
+  frames. The cooldown is charged on the *press* in every case, so holding
+  cannot dodge the cost. Conditional verbs check their condition **before**
+  the cooldown is charged: spending a dash on a press that could never have
+  resolved reads as the ability being broken.
+
+- **Airtime budgets live on the runtime, not the player.** `air_dash` uses
+  and `double_jump` charges belong to the Action, so swapping the slot
+  resets them and touching the floor refills them. Keeping them on the body
+  would have let a slot change hand out a free extra jump.
+
+- **`blink` was the dangerous one, and the sweep proved it.** It is the only
+  verb that sets a position rather than a velocity, so nothing downstream
+  catches a bad result. The I14 sweep (`make godot-blink`, 23k attempts
+  across five builders × five themes) found two real bugs on its first run:
+
+  1. Converting the ray-derived point from camera height to feet by
+     subtracting the eye height put the player *under* the floor they were
+     aiming at — through the level and into the void, 350 times. A landing
+     on a walkable surface now never goes below the point the ray hit.
+  2. The clearance probe was a small sphere near the ankles, which cleared
+     landings whose feet were in open air while the body was inside a wall
+     or a ceiling — 100 more. It asks with the player's own capsule now.
+
+  The suite also guards against passing vacuously: it asserts that a real
+  number of attempts *resolved* and that a real number were *refused*,
+  because all four properties are trivially true of a blink that never
+  fires.
+
+- **The blink suite boots the real project rather than using `--script`.** A
+  `--script` SceneTree run never instantiates the autoloads, so every script
+  touching `BridgeClient` fails to compile and the suite reports zero
+  attempts while printing nothing alarming. `make godot-import` now fails on
+  a parse error for the same reason: it is the only step that compiles every
+  script rather than the ones one entry point happens to reach, and a parse
+  error in the action runner printed `GODOT CHAMBER TESTS OK` while the game
+  itself refused to load.
+
+- **The fallback got a wider vocabulary, not a wider licence.** It is what
+  `--epsilon=fallback`, `make bridge-mock`, the integration run and any
+  player without an API key actually get, so its expressive range *is* the
+  game for them. S1 hashed an unrecognised item to three outcomes — a gun, a
+  dash, or walking faster — which made a 26-Check campaign one verb repeated.
+  It now reaches 20 distinct outcomes across a 30-Check campaign. It is
+  still deterministic and still structurally boring: one `CREATE`, one
+  Action or Trait, mode `literal`, no links or merges. A sword also stopped
+  being a six-metre hitscan, which is what it had to be when melee did not
+  exist.

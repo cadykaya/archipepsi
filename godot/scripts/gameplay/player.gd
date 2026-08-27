@@ -41,6 +41,23 @@ var input_frozen := false
 var gravity_mult := 1.0
 var speed_mult := 1.0
 
+## Set by EchoRuntime while a `glide` is held. 0 means not gliding. The
+## runtime owns the decision; the player owns the physics, so a glide
+## survives here as two numbers rather than as a reference to an ability.
+var glide_fall_speed := 0.0
+var glide_forward_speed := 0.0
+
+## Set by EchoRuntime when a `slam_ground` is committed to, and paid out on
+## landing. It has to resolve HERE because only the body knows the frame it
+## touched down on, and a slam that detonates on the way down is just a
+## fast fall.
+var pending_slam: Dictionary = {}
+
+## `grapple_swing` tether: anchor, pull strength and the time it has left.
+var _swing_anchor := Vector3.ZERO
+var _swing_force := 0.0
+var _swing_time := 0.0
+
 var _pulse_cooldown := 0.0
 var _coyote := 0.0
 var _jump_buffer := 0.0
@@ -189,6 +206,19 @@ func _physics_process(delta: float) -> void:
 		_coyote = Constants.COYOTE_TIME
 	_jump_buffer -= delta
 
+	# A glide caps the fall and adds a push along the look direction. Only
+	# ever a CAP: it cannot make you rise, so it stays a descent you steer
+	# rather than flight, and no gap becomes trivially crossable.
+	if glide_fall_speed > 0.0 and not is_on_floor():
+		velocity.y = maxf(velocity.y, -glide_fall_speed)
+		var glide_dir := -camera.global_transform.basis.z
+		var flat := Vector3(glide_dir.x, 0.0, glide_dir.z).normalized()
+		velocity.x = lerpf(velocity.x, flat.x * glide_forward_speed, 0.08)
+		velocity.z = lerpf(velocity.z, flat.z * glide_forward_speed, 0.08)
+
+	_update_swing(delta)
+	echo_runtime.set_grounded(is_on_floor())
+
 	if not input_frozen:
 		if Input.is_action_just_pressed("jump"):
 			_jump_buffer = Constants.JUMP_BUFFER
@@ -210,6 +240,8 @@ func _physics_process(delta: float) -> void:
 			_fire_static_pulse()
 		if Input.is_action_just_pressed("fire_echo"):
 			echo_runtime.activate()
+		if Input.is_action_just_released("fire_echo"):
+			echo_runtime.release()
 		if Input.is_action_just_pressed("interact") \
 				and _interact_target != null:
 			_interact_target.interact(self)
@@ -218,7 +250,10 @@ func _physics_process(delta: float) -> void:
 		velocity.z = lerpf(velocity.z, 0.0, 0.2)
 
 	var falling_speed := -velocity.y
+	var was_airborne := not is_on_floor()
 	move_and_slide()
+	if was_airborne and is_on_floor():
+		_resolve_pending_slam()
 	_update_footsteps(delta, falling_speed)
 	_update_camera_feel(delta)
 	_update_interact_target()
@@ -369,3 +404,66 @@ func _update_interact_target() -> void:
 		elif target != null:
 			prompt = "[E] INTERACT"
 		interact_prompt_changed.emit(prompt)
+
+## Pays out a committed `slam_ground` on the frame the body touches down.
+## Radial, falling off toward the rim, exactly like `arc_lob` — the two are
+## the same shape of hit and should read the same way.
+func _resolve_pending_slam() -> void:
+	if pending_slam.is_empty():
+		return
+	var damage := float(pending_slam.get("damage", 0.0))
+	var radius := float(pending_slam.get("radius", 0.0))
+	var tint: Color = pending_slam.get("tint", Color(1.0, 0.6, 0.3))
+	pending_slam = {}
+	var hit_any := false
+	var killed_any := false
+	for node in get_tree().get_nodes_in_group("enemies"):
+		var enemy := node as Enemy
+		if enemy == null or not is_instance_valid(enemy):
+			continue
+		var offset := enemy.global_position - global_position
+		var distance := offset.length()
+		if distance > radius:
+			continue
+		var falloff := 1.0 - clampf(distance / maxf(radius, 0.001), 0.0, 1.0) * 0.6
+		var away := offset.normalized() if distance > 0.001 else Vector3.UP
+		if enemy.take_damage(damage * falloff, away, 0.0):
+			killed_any = true
+		hit_any = true
+	if hit_any:
+		report_hit(killed_any)
+	Blast.spawn(get_tree().current_scene, global_position, radius, tint)
+	_land_dip = LAND_DIP_MAX
+
+## Starts a `grapple_swing` tether. The anchor is a point, not a node: the
+## geometry it was cast at is static, and holding a reference would keep a
+## freed chamber alive across a zone change.
+func begin_swing(anchor: Vector3, force: float, duration: float) -> void:
+	_swing_anchor = anchor
+	_swing_force = force
+	_swing_time = duration
+
+## A tether pulls you toward the anchor along the rope and leaves the
+## tangential component alone — that difference is the whole reason this is
+## a swing and not a second grapple. It ends on the timer, on landing, or
+## when the key comes up.
+func _update_swing(delta: float) -> void:
+	if _swing_time <= 0.0:
+		return
+	_swing_time -= delta
+	if _swing_time <= 0.0 or is_on_floor() \
+			or not Input.is_action_pressed("fire_echo"):
+		_swing_time = 0.0
+		return
+	var to_anchor := _swing_anchor - global_position
+	var distance := to_anchor.length()
+	if distance < 0.6:
+		_swing_time = 0.0
+		return
+	var rope := to_anchor / distance
+	# Only the part of the pull that is not already along the rope does
+	# anything, so the arc accelerates instead of snapping taut.
+	velocity += rope * _swing_force * delta
+	var along := velocity.dot(rope)
+	if along < 0.0:
+		velocity -= rope * along * 0.5

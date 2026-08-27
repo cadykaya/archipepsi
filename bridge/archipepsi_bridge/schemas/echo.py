@@ -355,12 +355,52 @@ ACTION_PRIMITIVES = (
 #: stage by stage, and validation refuses anything it cannot honour rather
 #: than accepting an Action that silently does nothing.
 #:
-#: S1 implements exactly what v0.7 implemented. S2 widens this to the full
-#: catalog — and that is the only line S2 has to change here.
+#: S1 implemented exactly what v0.7 implemented: six verbs. S2 opens the
+#: catalog to every primitive whose dependencies actually exist, which is 21
+#: of the 28.
+#:
+#: The remaining seven are held back by a *stage*, not by an oversight, and
+#: each names the one that unblocks it. Listing them here rather than
+#: quietly omitting them is the point: a primitive missing from this tuple
+#: with no stated reason is indistinguishable from a primitive somebody
+#: forgot, and `test_schemas.py` asserts this partition covers the catalog
+#: exactly, so a new primitive cannot be added without landing on one side.
+#:
+#:   beam_sustained, hover, block   S3 — all three are POWERED_PRIMITIVES,
+#:                                  meaningless until a Resource exists to
+#:                                  drain and a `powers` link to drain it.
+#:   restore_resource               S3 — it refills a resource.
+#:   scan_mark, cleanse             S5 — both are statuses: one applies
+#:                                  `marked`, the other removes statuses.
+#:   pull_pickup                    S9 — local rewards are the only thing it
+#:                                  is allowed to touch, and they land there.
 IMPLEMENTED_PRIMITIVES = (
-    "hitscan_damage", "projectile_damage", "dash", "grapple_to_surface",
-    "heal_self", "shield",
+    # close combat
+    "melee_swing", "melee_thrust", "slam_ground",
+    # ranged
+    "hitscan_damage", "projectile_damage", "arc_lob", "burst_fire",
+    "charge_shot",
+    # movement
+    "dash", "air_dash", "double_jump", "wall_kick", "glide", "blink",
+    "grapple_to_surface", "grapple_pull_target", "grapple_swing",
+    # defensive
+    "shield", "parry", "heal_self",
+    # utility
+    "place_marker",
 )
+
+#: Why each still-gated primitive is gated, and the stage that lands it.
+#: Paired with `IMPLEMENTED_PRIMITIVES` so the two together must account for
+#: every entry in the catalog — see `test_schemas.py`.
+DEFERRED_PRIMITIVES = {
+    "beam_sustained": "S3: needs a Resource to drain via a `powers` link",
+    "hover": "S3: needs a Resource to drain via a `powers` link",
+    "block": "S3: needs a Resource to drain via a `powers` link",
+    "restore_resource": "S3: needs a Resource to refill",
+    "scan_mark": "S5: applies the `marked` status",
+    "cleanse": "S5: removes statuses",
+    "pull_pickup": "S9: local rewards are the only thing it may attract",
+}
 
 #: Primitives that are meaningless without something to spend, so a `powers`
 #: link is mandatory rather than encouraged.

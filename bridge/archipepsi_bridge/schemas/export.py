@@ -26,11 +26,13 @@ from pydantic import TypeAdapter
 
 try:
     from . import constants as C
+    from . import echo as E
     from .echo import EchoInterpretation
     from .protocol import CampaignSnapshot, ClientMessage, ServerMessage
     from .zone import Zone
 except ImportError:  # pragma: no cover
     import constants as C
+    import echo as E
     from echo import EchoInterpretation
     from protocol import CampaignSnapshot, ClientMessage, ServerMessage
     from zone import Zone
@@ -84,6 +86,26 @@ def export_constants_gd() -> str:
     for archetype, stats in C.ENEMY_STATS.items():
         lines.append(f'\t"{archetype}": {_gd_literal(stats)},')
     lines.append("}")
+
+    # The Action catalog, so the GDScript runner can be checked against the
+    # contract instead of being trusted to match it. `chamber_tests.gd`
+    # asserts the runner handles exactly ECHO_IMPLEMENTED_PRIMITIVES: a verb
+    # the schema admits but the engine forgot is a live Echo that does
+    # nothing when you press the key, and that is precisely the failure
+    # IMPLEMENTED_PRIMITIVES exists to prevent -- it just cannot see across
+    # the language boundary on its own.
+    lines += [
+        "",
+        "# The closed Action catalog (all 28), in catalog order.",
+        f"const ECHO_ACTION_PRIMITIVES = {_gd_literal(list(E.ACTION_PRIMITIVES))}",
+        "",
+        "# The subset this engine must be able to execute today.",
+        "const ECHO_IMPLEMENTED_PRIMITIVES = "
+        f"{_gd_literal(list(E.IMPLEMENTED_PRIMITIVES))}",
+        "",
+        "# Held back by a stage, with the stage that lands each one.",
+        f"const ECHO_DEFERRED_PRIMITIVES = {_gd_literal(dict(E.DEFERRED_PRIMITIVES))}",
+    ]
     lines.append("")
     return "\n".join(lines)
 

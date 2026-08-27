@@ -13,6 +13,7 @@ that is the first command the coding agent runs.
 from __future__ import annotations
 
 import math
+import re
 
 import pytest
 from pydantic import TypeAdapter, ValidationError
@@ -547,17 +548,42 @@ def test_the_catalog_is_closed_and_the_engine_admits_what_it_can_run():
     stage. An Action the engine cannot execute is refused rather than
     accepted as an ability that silently does nothing."""
     try:
-        from .echo import ACTION_PRIMITIVES, IMPLEMENTED_PRIMITIVES
+        from .echo import (
+            ACTION_PRIMITIVES, DEFERRED_PRIMITIVES, IMPLEMENTED_PRIMITIVES)
     except ImportError:  # pragma: no cover
-        from echo import ACTION_PRIMITIVES, IMPLEMENTED_PRIMITIVES
+        from echo import (
+            ACTION_PRIMITIVES, DEFERRED_PRIMITIVES, IMPLEMENTED_PRIMITIVES)
     assert len(ACTION_PRIMITIVES) == 28
     assert len(set(ACTION_PRIMITIVES)) == 28
     assert set(IMPLEMENTED_PRIMITIVES) <= set(ACTION_PRIMITIVES)
+
+    # The two halves must PARTITION the catalog: every primitive is either
+    # runnable now or held back for a stated reason. Without this, a
+    # primitive dropped from both tuples reads exactly like one nobody got
+    # to yet, and the catalog quietly shrinks.
+    implemented, deferred = set(IMPLEMENTED_PRIMITIVES), set(DEFERRED_PRIMITIVES)
+    assert not implemented & deferred, implemented & deferred
+    assert implemented | deferred == set(ACTION_PRIMITIVES), (
+        set(ACTION_PRIMITIVES) ^ (implemented | deferred))
+    # A reason that does not name a stage is not a reason.
+    for primitive, why in DEFERRED_PRIMITIVES.items():
+        assert re.match(r"^S\d+: ", why), (primitive, why)
+
+    # `cleanse` removes statuses, and statuses are S5. Deliberately not a
+    # POWERED_PRIMITIVE: those would also fail for want of a `powers` link,
+    # so they cannot show that the stage gate itself fires.
+    gated = EchoAdapter.validate_python({**_CONFERENCE_CALL, "operations": [
+        _action_op(primitive={"type": "cleanse", "count": 2})]})
+    errs = validate_interpretation(gated, expected_source_location_id=89100001)
+    assert any("not yet implemented" in e for e in errs)
+
+    # ...and the verb S2 just landed is now accepted, so this test proves a
+    # gate that moves rather than one that is merely closed.
     melee = EchoAdapter.validate_python({**_CONFERENCE_CALL, "operations": [
         _action_op(primitive={"type": "melee_swing", "damage": 20.0,
                               "reach": 2.5, "arc_degrees": 90.0})]})
-    errs = validate_interpretation(melee, expected_source_location_id=89100001)
-    assert any("not yet implemented" in e for e in errs)
+    assert validate_interpretation(
+        melee, expected_source_location_id=89100001) == []
 
 
 # ===========================================================================
