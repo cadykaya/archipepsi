@@ -226,3 +226,62 @@ Two corrections were made on top of it:
   Action or Trait, mode `literal`, no links or merges. A sword also stopped
   being a six-metre hitscan, which is what it had to be when melee did not
   exist.
+
+## S3 — resources, the HUD channels, and the archive
+
+- **The palette's safety claim was false, and the proof said so on its
+  first run.** `ResourcePalette` promised no hue collides with the HUD's
+  reserved semantics; nothing checked it, and `signal` sat 0.11 (RGB
+  Euclidean) from the cooldown-ready confirmation cyan with `ember` 0.20
+  from danger amber. The VALUES moved — signal to a deep teal, ember to a
+  coal-salmon, rust to a darker oxide — and the eight NAMES, which are the
+  schema contract (`PALETTE_COLORS`), did not. `make godot-hud` now holds
+  every fill and dim at least 0.30 from every reserved colour and fills
+  0.25 from each other, floors the palette clears with real margin (worst
+  case 0.314 / 0.290).
+
+- **The source glyph now uses the shared sha256 rule, because the packet
+  says there is exactly one.** ECHOES.md §12 derives source identity "by
+  the sha256 rule the bridge and client already share" (`prng_seed` /
+  `_prng_seed_mod`, the campaign-board theme rule). S3's first draft
+  invented a second derivation — a character sum, deterministic but
+  private. It was replaced rather than pinned: pinning it would have
+  enshrined the deviation. The rule is pinned from both sides the way the
+  theme rule is: glyph strings in `hud_driver.gd`, sha256 indices in
+  `test_hud_contract.py`.
+
+- **`EffectSummary`'s upgrade arm was Python in GDScript's clothing.**
+  `"%+g"` is not a GDScript conversion; the arm had never once executed,
+  because nothing in the game can produce a non-CREATE operation yet. The
+  HUD suite's fixture — a real fold of create + upgrade — ran it first and
+  Godot raised "unsupported format character" mid-archive. It now renders
+  "+40", matching the fold's provenance-note style, and the suite pins the
+  line. The fixture testing renderers AHEAD of providers being able to
+  produce the data is deliberate: S6 should land into an archive that
+  already works.
+
+- **Provenance chains render on every interpretation that touched the
+  component, and chains of one stay silent.** ECHOES §11's block is the
+  rendering contract (Mk in Roman numerals, every AP item in order, §12
+  accent per row). The chain answers "what did this Check do for me", so
+  it appears under the upgrader's row as well as the creator's. A
+  single-entry chain adds nothing the row's source line does not already
+  say, and repeating it under every young Echo would bury the rows with
+  real history.
+
+- **`EchoGenerationRequest` does not carry `over_soft_budget` yet, on
+  purpose.** The steer exists to redirect a provider toward `UPGRADE` /
+  `LINK` / `MERGE`; the capability gate refuses every one of those
+  operations today, so sending it would invite the provider to do the one
+  thing validation then rejects — a prompt that manufactures its own
+  repair loop. The staging table already places budget context in the
+  provider at S10, after S6 lands dispositions. `test_stage_tripwires.py`
+  fails the moment a non-CREATE operation becomes implementable and names
+  this decision for re-execution.
+
+- **Stage tripwires are tests, not notes.** Two S3 obligations were of the
+  form "this is intentionally dead until stage N" (`_is_cost_of_slotted_-
+  action` reads links that cannot exist before S5; the budget steer
+  above). Each is now a test that asserts the gate and, in its docstring,
+  names the work due in the same change that opens it. A note gets read by
+  whoever happens to look; a red test gets read by whoever moves the gate.

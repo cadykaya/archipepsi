@@ -15,27 +15,40 @@ extends RefCounted
 ## green because magic meters are green, and stays green when Dark Souls
 ## later refills it.
 
-#: Light/dark pairs, so a fill reads on either ground. Deliberately none of
-#: them a saturated red or amber: those are damage and danger, and a
-#: resource that borrowed one would read as a warning every time it dropped.
+#: Light/dark pairs, so a fill reads on either ground. Every entry keeps a
+#: minimum RGB distance from every RESERVED colour below — enforced by the
+#: HUD suite, after the first draft of this palette failed its own claim:
+#: `signal` was the cooldown-ready cyan almost exactly, and `ember` sat in
+#: danger amber's lap. Signal is a deep teal now, ember a coal-salmon, rust
+#: a darker oxide; the names, which are the schema contract, never moved.
 const HUES := {
 	"moss":    {"fill": Color(0.40, 0.78, 0.44), "dim": Color(0.16, 0.30, 0.18)},
-	"signal":  {"fill": Color(0.45, 0.85, 0.95), "dim": Color(0.14, 0.30, 0.34)},
-	"ember":   {"fill": Color(0.98, 0.62, 0.35), "dim": Color(0.36, 0.22, 0.13)},
+	"signal":  {"fill": Color(0.20, 0.72, 0.68), "dim": Color(0.10, 0.26, 0.24)},
+	"ember":   {"fill": Color(0.95, 0.55, 0.50), "dim": Color(0.34, 0.20, 0.18)},
 	"violet":  {"fill": Color(0.70, 0.55, 0.95), "dim": Color(0.25, 0.19, 0.36)},
 	"bone":    {"fill": Color(0.90, 0.88, 0.80), "dim": Color(0.32, 0.31, 0.28)},
-	"rust":    {"fill": Color(0.82, 0.47, 0.32), "dim": Color(0.30, 0.17, 0.12)},
+	"rust":    {"fill": Color(0.72, 0.42, 0.26), "dim": Color(0.26, 0.15, 0.09)},
 	"tide":    {"fill": Color(0.42, 0.62, 0.92), "dim": Color(0.15, 0.22, 0.34)},
 	"sulphur": {"fill": Color(0.88, 0.85, 0.36), "dim": Color(0.32, 0.31, 0.13)},
 }
 
 #: Reserved by the HUD for things a resource must never be mistaken for.
-#: Asserted against in the tests, not merely documented here.
+#: Grounded in the actual HUD, not invented here: damage is the flash and
+#: wedge family, danger the low-warning amber, confirmation the exact
+#: cooldown-ready / waypoint cyan (`hud.gd`). Asserted against in
+#: `hud_driver.gd`, not merely documented.
 const RESERVED := {
 	"damage": Color(1.0, 0.25, 0.25),
 	"danger": Color(1.0, 0.65, 0.15),
 	"confirmation": Color(0.45, 0.95, 0.9),
 }
+
+#: The floors the HUD suite holds the table above to. Distances are plain
+#: RGB Euclidean — crude as perception but stable as a contract, and the
+#: margins are wide enough (worst case 0.31 / 0.29) that the metric's
+#: crudeness cannot flip a verdict.
+const MIN_RESERVED_DISTANCE := 0.30
+const MIN_MUTUAL_DISTANCE := 0.25
 
 static func fill(name: String) -> Color:
 	return HUES.get(name, HUES["bone"])["fill"]
@@ -44,20 +57,17 @@ static func dim(name: String) -> Color:
 	return HUES.get(name, HUES["bone"])["dim"]
 
 ## A short mark for the world that contributed this, so one economy built by
-## two games shows both. Deterministic from the name — the same rule shape
-## the campaign board and reward pedestals use, so nothing disagrees about
-## who a thing came from.
+## two games shows both. ECHOES.md §12: source identity derives from the
+## game name "by the sha256 rule the bridge and client already share" — the
+## SAME `prng_seed` rule the campaign board's theme tint uses, not a private
+## one. The first draft used a character sum here; that was deterministic
+## but a second derivation rule where the packet says there is exactly one.
+## Pinned from both sides like the theme rule (`test_hud_contract.py` /
+## `hud_driver.gd`).
 static func source_glyph(game: String) -> String:
 	if game.is_empty():
 		return "·"
 	const GLYPHS := ["◆", "▲", "■", "●", "★", "◇", "△", "□", "○", "☆",
 			"✦", "❖", "⬢", "⬟", "✚", "✜"]
-	# A plain character sum rather than `hash()`. GDScript's hash is stable
-	# within a build but is not a documented contract across engine
-	# versions, and a glyph that silently changed under the player would
-	# break the one thing it is for: recognising a world at a glance across
-	# a whole campaign. This is inspectable and pinned by a test.
-	var total := 0
-	for i in game.length():
-		total += game.unicode_at(i) * (i + 1)
-	return GLYPHS[total % GLYPHS.size()]
+	return GLYPHS[ThemeMaterials._prng_seed_mod(
+			"%s|source_glyph" % game, GLYPHS.size())]

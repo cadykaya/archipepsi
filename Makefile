@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export bridge smoke godot-import godot-test godot-blink godot-integration
+.PHONY: setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export bridge smoke godot-import godot-test godot-blink godot-hud godot-integration
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -106,6 +106,19 @@ godot-blink: godot-import      # blink never leaves the world
 	@out=$$($(GODOT) --headless --path godot -- --blink-test 2>&1); \
 	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
 	printf '%s\n' "$$out" | grep -q "GODOT BLINK TESTS OK" || exit 1
+
+# The S3 HUD suite: safe palette, glyph rule, the §7 pressure valve, and
+# the archive's provenance chains. Boots the real project (the meters, the
+# pool and the archive read the autoloads); needs no bridge -- the
+# snapshot is a fold-derived fixture.
+godot-hud: godot-import        # resource channels and the Echo archive
+	@out=$$($(GODOT) --headless --path godot -- --hud-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT HUD TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
 
 # The integration run gets its own throwaway save directory. Sharing
 # bridge/saves/ made the run resume the PREVIOUS run's campaign: the zone

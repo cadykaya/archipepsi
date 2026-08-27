@@ -47,6 +47,13 @@ func _ready() -> void:
 		var blink: Node = load("res://tests/blink_driver.gd").new()
 		add_child(blink)
 		return
+	# The S3 HUD suite boots the project for the same reason blink does:
+	# the meters, the pool and the archive all read the autoloads.
+	if "--hud-test" in user_args:
+		headless_test = true
+		var hud_suite: Node = load("res://tests/hud_driver.gd").new()
+		add_child(hud_suite)
+		return
 	world = Node3D.new()
 	world.name = "World"
 	add_child(world)

@@ -20,9 +20,18 @@ static func operation_lines(operation: Dictionary) -> Array[String]:
 		"create":
 			out.append_array(component_lines(operation.get("component", {})))
 		"upgrade":
-			out.append("Upgrades %s (%+g %s)" % [
-					operation.get("target", "?"),
-					float(operation.get("delta", 0.0)),
+			# Signed and trimmed by hand: GDScript's `%` has no `g`
+			# conversion (this arm first RAN when the HUD suite fed it an
+			# upgrade), and the rendering must match the fold's provenance
+			# note style — "+40", not "+40.0" — so the archive's two
+			# descriptions of one upgrade agree.
+			var delta := float(operation.get("delta", 0.0))
+			var number := str(int(delta)) if delta == floorf(delta) \
+					else str(delta)
+			if delta >= 0.0:
+				number = "+" + number
+			out.append("Upgrades %s (%s %s)" % [
+					operation.get("target", "?"), number,
 					operation.get("field", "?")])
 		"modify":
 			out.append("Modifies %s" % operation.get("target", "?"))

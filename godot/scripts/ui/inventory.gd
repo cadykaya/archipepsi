@@ -3,6 +3,12 @@ extends CanvasLayer
 ## Echo inventory (Tab): name, source game, recipient, SOURCE LOCATION,
 ## description, activation, and the shared effect summary. Two Hookshots
 ## must read as Check 002's and Check 026's, not as duplicates.
+##
+## v0.8 additions (DESIGN §15.4): the concepts Epsilon read, and provenance
+## chains — a component upgraded three times shows every AP item
+## responsible, in order (ECHOES §11), each row accented by its source
+## game (§12). The chains read from the FOLD, so they grow on their own as
+## later stages land UPGRADE / MODIFY / LINK / MERGE.
 
 signal closed
 
@@ -125,11 +131,26 @@ func _row(echo: Dictionary, slotted: Array) -> Control:
 	description.add_theme_font_size_override("font_size", 15)
 	text_box.add_child(description)
 
+	# §15.4: the concepts Epsilon read are half the charm, and they are
+	# stored on the interpretation for exactly this line.
+	var concepts: Array = echo.get("concepts", [])
+	if not concepts.is_empty():
+		var read := Label.new()
+		var words: PackedStringArray = []
+		for concept in concepts:
+			words.append(str(concept))
+		read.text = "read: " + " / ".join(words)
+		read.modulate = Color(0.75, 0.65, 0.9)
+		read.add_theme_font_size_override("font_size", 13)
+		text_box.add_child(read)
+
 	var effects := Label.new()
 	effects.text = " · ".join(EffectSummary.lines(echo))
 	effects.modulate = Color(0.6, 0.95, 0.85)
 	effects.add_theme_font_size_override("font_size", 15)
 	text_box.add_child(effects)
+
+	_add_provenance_rows(text_box, echo)
 
 	# An interpretation that contributed no Action has nothing to slot, and
 	# says so rather than offering a dead control. That is not a lesser
@@ -155,3 +176,62 @@ func _row(echo: Dictionary, slotted: Array) -> Control:
 					"component_id": component_id}))
 		row.add_child(button)
 	return panel
+
+## ECHOES §11: every owned component this interpretation touched shows its
+## whole chain — every AP item responsible, in order, never rewritten:
+##
+##     GRAPPLE  Mk III
+##       Mk I    pull to surface  ← Hookshot  (Ocarina of Time)
+##       Mk II   +12 range        ← Longshot  (Ocarina of Time)
+##
+## Chains of one stay silent: the source line above already credits the
+## creator, and repeating it under every young Echo would bury the rows
+## that genuinely have history. The chain appears on every interpretation
+## that touched the component — the upgrader's row and the creator's both —
+## because "what did this Check do for me" is the question the archive
+## answers, and for an upgrade the answer lives in someone else's Echo.
+func _add_provenance_rows(text_box: VBoxContainer, echo: Dictionary) -> void:
+	var seq := int(echo.get("interpretation_seq", -1))
+	for entry: Dictionary in BridgeClient.mechanics().get("owned", []):
+		var chain: Array = entry.get("provenance", [])
+		if chain.size() < 2 or not _touched(chain, seq):
+			continue
+		var component: Dictionary = entry.get("component", {})
+		var header := Label.new()
+		header.text = "%s  Mk %s" % [
+				str(component.get("display_name", "?")).to_upper(),
+				_mk_roman(int(entry.get("mk", 1)))]
+		header.add_theme_font_size_override("font_size", 13)
+		header.modulate = Color(0.85, 0.85, 0.9)
+		text_box.add_child(header)
+		var mk := 0
+		for link: Dictionary in chain:
+			var op := str(link.get("operation", ""))
+			var mark: String
+			if op in ["create", "upgrade", "modify"]:
+				mk += 1
+				mark = "Mk " + _mk_roman(mk)
+			else:
+				mark = "linked" if op == "link" else "merged"
+			var row := Label.new()
+			row.text = "    %s  %s ← %s  (%s)" % [mark,
+					str(link.get("note", "")),
+					str(link.get("source_item_name", "?")),
+					str(link.get("source_game", "?"))]
+			row.add_theme_font_size_override("font_size", 13)
+			# §12: the accent on a provenance row marks contribution.
+			# Lifted toward white so a dark theme accent stays readable.
+			row.modulate = ThemeMaterials.color_for_game(
+					str(link.get("source_game", ""))).lerp(Color.WHITE, 0.35)
+			text_box.add_child(row)
+
+func _touched(chain: Array, seq: int) -> bool:
+	for link: Dictionary in chain:
+		if int(link.get("interpretation_seq", -1)) == seq:
+			return true
+	return false
+
+func _mk_roman(n: int) -> String:
+	const NUMERALS := ["I", "II", "III", "IV", "V", "VI", "VII", "VIII",
+			"IX", "X", "XI", "XII"]
+	return NUMERALS[n - 1] if n >= 1 and n <= NUMERALS.size() else str(n)

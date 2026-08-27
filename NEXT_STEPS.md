@@ -198,26 +198,42 @@ difference.
   so the grant → fold → channel → snapshot → HUD path is exercised by the
   integration run rather than only by unit tests.
 
-**Still to do for S3:**
+**S3 closed** (247 pytest, chamber, blink, hud, full integration). The six
+remaining obligations all landed, and three of them found real bugs:
 
-1. **No test yet for the pressure valve** (§7 contextual visibility): a
-   channel should collapse to an idle strip when full and irrelevant, and
-   expand when it changes. `ResourceMeters` implements it; nothing proves it.
-2. **No test that the palette avoids the reserved HUD semantics.**
-   `ResourcePalette.RESERVED` names damage/danger/confirmation and the
-   comment claims no palette hue collides with them — unverified. Assert a
-   minimum colour distance.
-3. **Source glyph determinism is untested.** It uses a character sum rather
-   than `hash()` deliberately (GDScript's hash is not a cross-version
-   contract); pin it.
-4. **`_is_cost_of_slotted_action` cannot return true until S5** — it reads
-   `powers`/`fills` links that no operation can create yet. Correct, but it
-   means one third of the relevance rule is currently dead. Worth a note or
-   a test that turns on with S5.
-5. **Provenance in the archive** (the stage's last listed deliverable) is
-   not done.
-6. Consider whether `EchoGenerationRequest` should carry `over_soft_budget`
-   — the function exists and nothing calls it yet.
+1. **`make godot-hud`** — a fourth Godot suite that boots the project the
+   way blink does (the meters, pool and archive read the autoloads) and
+   drives them off-tree at a fixed 1/60 step against a fold-derived
+   fixture: create ← Ocarina, create ← Dark Souls, upgrade ← Dark Souls,
+   so a two-entry provenance chain and a Mk II exist before any provider
+   can produce one.
+2. **The §7 pressure valve is proven**: a new channel opens expanded, a
+   full untouched one collapses to the idle strip, spending expands it and
+   not its neighbour, a refilled one stays open 2.5 s and closes, a
+   partly-empty one never closes.
+3. **The palette claim was FALSE and is now enforced**: `signal` sat 0.11
+   from the confirmation cyan, `ember` 0.20 from danger amber. Values
+   retuned (names are the contract and never moved); the suite floors
+   every fill/dim at 0.30 from every reserved colour, fills 0.25 apart.
+4. **The glyph rule was a packet deviation and is now ECHOES §12's**: the
+   character sum was a second derivation where the packet says the sha256
+   `prng_seed` rule is shared; replaced and pinned from both sides
+   (`hud_driver.gd` glyphs, `test_hud_contract.py` indices).
+5. **Provenance is in the archive**: concepts line, ECHOES §11 chains
+   (Roman Mk, every AP item in order, §12 accent per row) on every
+   interpretation that touched the component; chains of one stay silent.
+   Rendering the fixture's upgrade exposed a `%+g` in `EffectSummary` that
+   GDScript does not have — the arm had never run before.
+6. **`over_soft_budget` stays off the request, recorded**: steering toward
+   operations the capability gate refuses would manufacture repair loops;
+   it joins the request when non-CREATE ops become implementable
+   (`test_stage_tripwires.py` fails at that exact moment and says so).
+   The same tripwire pattern covers `_is_cost_of_slotted_action`, dead by
+   design until S5 links.
+
+Cross-language contracts got their own net (`test_hud_contract.py`):
+palette names ↔ `PALETTE_COLORS`, `ResourceMeters.CHANNELS` ↔
+`HUD_CHANNELS`, glyph indices ↔ client pins.
 
 **Then: S4** — the rule engine, which is what finally *spends* a resource.
 
@@ -242,9 +258,10 @@ postgame, so clients also require the goal to be missing
 (`docs/IMPLEMENTATION_DECISIONS.md`).
 
 ## Commands
-    make test                  # 229 pytest (125 schema)
+    make test                  # 247 pytest (125 schema)
     make godot-test            # chamber geometry
     make godot-blink           # invariant I14, every builder
+    make godot-hud             # S3: palette, glyphs, pressure valve, archive
     make godot-integration     # the whole game, headlessly
     make replay ARCHIVE=<dir>  # re-validate a generation archive
     make seed-multi && make host && make bridge   # real server play
