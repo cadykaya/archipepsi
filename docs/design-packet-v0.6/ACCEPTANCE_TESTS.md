@@ -1,4 +1,4 @@
-# Archipepsi — Acceptance Tests (v0.5)
+# Archipepsi — Acceptance Tests (v0.6)
 
 Observable proof that the idea works. A technically elegant codebase that cannot pass the end-to-end paths here is not a successful POC.
 
@@ -8,7 +8,7 @@ All examples use the canonical fixture in `IMPLEMENTATION_PLAN.md` §3.1. v0.3 s
 
 # 1. Schema tests — ship with the packet
 
-`schemas/test_schemas.py` — 67 tests at time of writing, all passing. Run them first, before writing anything else. The count will grow; what matters is that they are green on arrival, so any red one is a regression you introduced.
+`schemas/test_schemas.py` — 91 tests at time of writing, all passing. Run them first, before writing anything else. The count will grow; what matters is that they are green on arrival, so any red one is a regression you introduced.
 
 They pin: the derived jump gap and its margin; the worst-case Zone clear time; the PRNG recipe (with a pinned seed value); Zone structural and semantic rules; the impossibility of expressing an Echo gate; Echo composition rules; rejection of invented fields and unsupported effects; save round-tripping; and that a `PENDING_GENERATION` Zone retains its allocation.
 
@@ -42,8 +42,8 @@ They pin: the derived jump gap and its margin; the worst-case Zone clear time; t
 # 3. Allocation and campaign tests — pytest
 
 21. Track order is stable across runs for the same seed, and differs for a different slot.
-22. Check 030 never appears in normal Zone allocation.
-23. Check 030 never appears in shop stock.
+22. Check 030 never appears in normal Zone allocation — because the allocator starts from `eligible_location_ids()`, not because a later filter removes it.
+23. Check 030 never appears in shop stock. `ShopStockItem.location_id` cannot even express it.
 24. A 1-Check Zone is produced only when exactly one eligible location remains.
 25. With 0 Signal Keys, only Checks 001–010 are eligible.
 26. Receiving one Signal Key makes 011–020 eligible.
@@ -70,7 +70,7 @@ They pin: the derived jump gap and its margin; the worst-case Zone clear time; t
 42. The Victory event exists, is unaddressed, and is in Tier 2.
 43. `completion_condition` uses the Victory item.
 44. Check 030 is in Tier 2.
-45. Slot data is schema version 5 and contains no location→item placements.
+45. Slot data is schema version 6 and contains no location→item placements.
 46. Solo generation succeeds.
 47. Multiworld generation with `non_local_items: Epsilon Coin` succeeds alongside another world.
 48. `.apworld` packaging succeeds via AP's build component and the manifest validates.
@@ -92,6 +92,51 @@ Godot ships no test framework. Rather than adopt an addon, assert what a headles
 57. Zone JSON round-trips into scene construction without loss.
 58. The reward state machine refuses interaction before its objective is satisfied.
 59. Objective completion latches: satisfying `kill_all`, then dying, leaves the reward unlocked.
+
+---
+
+# 5.5 Campaign-integrity regression tests — pytest, no engine
+
+Numbered after §5 so the existing numbers stay stable; these are bridge tests
+and belong with §3. They exist because every one of the defects below was
+closed on one path in an earlier revision and left open on its neighbour, so
+each test walks the *adjacent* path rather than the originally reported one.
+
+60. **No acquisition path can name Check 030.** Exercise every one in a single
+    test: shop stock, a `buy_shop_stock` intent, a `PendingCheck` with
+    `source="shop"`, an ordinary `ZoneRecord`, and the allocator's candidate
+    pool. Each must reject it; `PendingCheck(source="zone")` must accept it.
+61. **The allocator never derives its pool from `unlocked_location_ids()`.**
+    `eligible_location_ids(keys)` excludes the goal at every key count and is
+    otherwise identical to the reachable set. Both the Zone allocator and the
+    shop call it.
+62. **A save cannot claim the goal without a finale Zone.** A `CampaignSave`
+    holding a pending check for 89100030 with no `is_finale` record is
+    rejected on load; with one, it loads. (Save/reload is an acquisition path
+    too: it is how a bad build's state, or a hand-edited file, gets back in.)
+63. **A Zone check is never charged and a shop check always is.** `shop_cost`
+    must be 0 for `source="zone"` and at least 1 for `source="shop"`, and
+    stock cannot be priced at zero. This keeps `coins_spent` from drifting
+    between the two paths.
+64. **A second `request_next_zone` during generation is refused.** While a
+    `ZoneRecord` is `PENDING_GENERATION` the Hub reports `GENERATING`,
+    `portal_enabled` is false, `accepts_zone_request` is false, and the
+    intent is rejected — for `finale=True` exactly as for `finale=False`.
+65. **The Hub mode cannot disagree with the Zone state.** In an emitted
+    snapshot, `PENDING_GENERATION`/`GENERATED`/`ACTIVE` admit exactly
+    `GENERATING`/`ZONE_READY`/`ZONE_ACTIVE` respectively; a terminal Zone is
+    never presented as active; `holding_finale` matches
+    `active_zone.is_finale`; and `generation_in_progress` is true exactly in
+    `GENERATING`.
+66. **The finale is suppressed during generation, not just during play.** With
+    `finale_available` true and a Zone in `PENDING_GENERATION`, the Hub must
+    not offer the finale — taking it would strand the in-flight Zone's
+    Checks, which is the same reason it is suppressed during `ZONE_ACTIVE`.
+
+The schema suite already proves the *structural* half of 60–66 (see
+`schemas/test_schemas.py`, the two v0.6 sections). These numbers cover the
+*bridge behaviour*: that the intent handlers, the allocator and the snapshot
+builder actually respect what the models make unrepresentable.
 
 ---
 

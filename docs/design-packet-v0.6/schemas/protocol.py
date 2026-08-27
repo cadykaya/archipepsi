@@ -1,4 +1,4 @@
-"""Archipepsi v0.5 — bridge protocol and campaign state.
+"""Archipepsi v0.6 — bridge protocol and campaign state.
 
 The bridge owns persistent campaign truth; Godot sends INTENTS and renders
 the CAMPAIGN SNAPSHOT it gets back. Python owns allocation, tiers, coins,
@@ -24,10 +24,23 @@ except ImportError:  # pragma: no cover
     from echo import Echo
     from zone import Zone
 
-PROTOCOL_VERSION = 5
+PROTOCOL_VERSION = 6
 
 _ID = Field(min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")
+
+#: Any Archipepsi location, goal included. Correct for the read-only mirrors
+#: of Archipelago truth (checked/missing/scouted) and for notifications: to
+#: Archipelago, Check 030 is an ordinary location.
 _LOC = Annotated[int, Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_LOCATION_ID)]
+
+#: Any location EXCEPT the goal. Required on every field that can RESERVE,
+#: STOCK, PRICE or SELL a location — i.e. every acquisition path other than
+#: the finale Zone. Derived from constants, and a plain range rather than a
+#: Python-only validator so the restriction survives into
+#: `protocol.schema.json` and into the engine.
+_NON_FINALE_LOC = Annotated[int, Field(
+    ge=C.FIRST_NON_FINALE_LOCATION_ID, le=C.LAST_NON_FINALE_LOCATION_ID)]
+
 _AP_STR = Annotated[str, Field(max_length=C.MAX_AP_STRING_LEN)]
 
 
@@ -58,32 +71,45 @@ class ZoneRecord(Strict):
     generated and then abandoned at the loading screen orphaned its AP
     locations permanently. `active_zone_id` is now set at GENERATED, not at
     entry, so the Zone is always visible and always resumable.
+
+    v0.6 makes `zone`-vs-`state` exact rather than one-directional:
+    PENDING_GENERATION means no content yet, full stop. Accepting a Zone is
+    therefore a single atomic transition — build a new record, do not assign
+    `state` and `zone` one at a time (`validate_assignment=True` would reject
+    the intermediate, which is the point), and do not reach for
+    `model_copy(update=...)`, which skips validation entirely:
+
+        rec = ZoneRecord(**{**rec.model_dump(), "state": "GENERATED", "zone": z})
     """
     zone_id: str = _ID
     state: ZoneState
+    #: `_LOC`, not `_NON_FINALE_LOC`: the finale Zone legitimately holds the
+    #: goal. `_finale_owns_the_goal` below splits the two cases — this is the
+    #: ONE model in the packet allowed to carry Check 030 on an
+    #: acquisition path.
     allocated_location_ids: list[_LOC] = Field(
         min_length=1, max_length=C.ZONE_MAX_CHECKS
     )
     target_game: _AP_STR
     is_finale: bool = False
-    zone: Zone | None = None          # None only while PENDING_GENERATION
+    zone: Zone | None = None          # None iff PENDING_GENERATION (or ABANDONED)
     used_fallback: bool = False
     generation_index: int = Field(ge=0)
 
     @model_validator(mode="after")
     def _state_implies_content(self):
-        if self.state != "PENDING_GENERATION" and self.zone is None:
+        if self.state == "PENDING_GENERATION" and self.zone is not None:
+            raise ValueError(
+                "PENDING_GENERATION means no accepted zone yet; accept the "
+                "Zone and set state in one construction"
+            )
+        # ABANDONED is exempt: v0.5 required content in every non-pending
+        # state, which made "the provider timed out, give the locations back"
+        # unrepresentable — the exact deadlock ABANDONED was added to break.
+        if self.state in ("GENERATED", "ACTIVE", "COMPLETE") and self.zone is None:
             raise ValueError(f"state {self.state} requires an accepted zone")
         if len(set(self.allocated_location_ids)) != len(self.allocated_location_ids):
             raise ValueError("duplicate allocated location id")
-        if self.is_finale and self.allocated_location_ids != [C.GOAL_LOCATION_ID]:
-            raise ValueError(
-                f"a finale Zone holds exactly [{C.GOAL_LOCATION_ID}]"
-            )
-        if not self.is_finale and C.GOAL_LOCATION_ID in self.allocated_location_ids:
-            raise ValueError(
-                f"{C.GOAL_LOCATION_ID} is reserved for the finale Zone"
-            )
         if self.zone is not None:
             if self.zone.zone_id != self.zone_id:
                 raise ValueError(
@@ -97,6 +123,27 @@ class ZoneRecord(Strict):
                 )
         return self
 
+    @model_validator(mode="after")
+    def _finale_owns_the_goal(self):
+        """The Zone half of the goal reservation (`constants.GOAL_LOCATION_ID`).
+
+        Both directions, because either one alone is a hole: the finale holds
+        the goal and nothing else, and nothing that is not the finale holds
+        the goal at all. Every other acquisition path uses `_NON_FINALE_LOC`
+        and cannot express the goal in the first place.
+        """
+        holds_goal = any(C.is_goal_location(i)
+                         for i in self.allocated_location_ids)
+        if self.is_finale and self.allocated_location_ids != [C.GOAL_LOCATION_ID]:
+            raise ValueError(
+                f"a finale Zone holds exactly [{C.GOAL_LOCATION_ID}]"
+            )
+        if not self.is_finale and holds_goal:
+            raise ValueError(
+                f"{C.GOAL_LOCATION_ID} is reserved for the finale Zone"
+            )
+        return self
+
     @property
     def holds_locations(self) -> bool:
         """Whether this record still reserves its locations."""
@@ -104,18 +151,48 @@ class ZoneRecord(Strict):
 
 
 class PendingCheck(Strict):
+    """A Check sent to Archipelago and not yet confirmed back.
+
+    Source-aware because the two sources have different rights: a `zone`
+    check may be the goal (the finale Zone is exactly how the goal is
+    claimed) and never costs coins; a `shop` check always costs coins and
+    may never be the goal.
+    """
     transaction_id: str = Field(min_length=1, max_length=64)
+    #: `_LOC`, because `source="zone"` covers the finale. The validator below
+    #: narrows it to `_NON_FINALE_LOC` semantics for `source="shop"`.
     location_id: _LOC
     source: Literal["zone", "shop"]
     shop_cost: int = Field(default=0, ge=0)
+
+    @model_validator(mode="after")
+    def _source_bounds_what_may_be_claimed(self):
+        if self.source == "shop":
+            if C.is_goal_location(self.location_id):
+                raise ValueError(
+                    f"{C.GOAL_LOCATION_ID} is reserved for the finale Zone "
+                    "and can never be purchased"
+                )
+            if self.shop_cost <= 0:
+                raise ValueError("a shop purchase costs at least one coin")
+        elif self.shop_cost != 0:
+            # Otherwise a Zone claim could debit `coins_spent`, which is a
+            # monotonic accumulator only the rollback path decrements.
+            raise ValueError("a Zone check is never charged; shop_cost must be 0")
+        return self
 
 
 ShopItemStatus = Literal["available", "pending", "purchased"]
 
 
 class ShopStockItem(Strict):
-    location_id: _LOC
-    cost: int = Field(ge=0)
+    #: `_NON_FINALE_LOC`: the shop can never stock the goal, and cannot even
+    #: describe stocking it. v0.5 relied on prose in five documents plus a
+    #: procedure step, and the model accepted 89100030.
+    location_id: _NON_FINALE_LOC
+    #: ge=1, matching `PendingCheck.shop_cost`. Stock priced at zero would be
+    #: a purchase that never debits coins; the price table is 6/4/2 anyway.
+    cost: int = Field(ge=1)
     #: v0.5: without a status the snapshot could not express an in-flight
     #: purchase, so Godot had nothing to disable and a second buy intent
     #: charged again.
@@ -152,7 +229,7 @@ class CampaignSave(Strict):
     model_config = ConfigDict(extra="ignore", validate_assignment=True)
 
     save_version: Literal[1] = 1
-    schema_version: Literal[5] = 5
+    schema_version: Literal[6] = 6
 
     seed_name: str = Field(min_length=1, max_length=128)
     team: int = Field(ge=0)
@@ -208,6 +285,31 @@ class CampaignSave(Strict):
             raise ValueError(
                 "active_zone_id must be cleared when no Zone holds locations"
             )
+        return self
+
+    @model_validator(mode="after")
+    def _goal_is_only_ever_in_flight_from_the_finale(self):
+        """The save/reload half of the goal reservation.
+
+        Field types already stop the shop from reserving the goal, and
+        `ZoneRecord` stops an ordinary Zone from holding it. This closes the
+        remaining path: a save on disk, hand-edited or written by a build
+        with the bug, claiming Check 030 with no live finale Zone behind it.
+        `extra="ignore"` above makes forward-compatible saves loadable; it
+        must not make an illegal campaign loadable.
+        """
+        # Deliberately NOT "at most one finale record ever": a finale whose
+        # generation failed goes ABANDONED and must be retryable. Double
+        # reservation is already impossible, because at most one Zone of any
+        # kind may hold locations at a time (rule above) — so any earlier
+        # finale record still present is terminal and reserves nothing.
+        has_finale = any(z.is_finale for z in self.zones.values())
+        for p in self.pending_checks:
+            if C.is_goal_location(p.location_id) and not has_finale:
+                raise ValueError(
+                    f"pending check for {C.GOAL_LOCATION_ID} with no finale "
+                    "Zone: the goal is claimable only inside it"
+                )
         return self
 
     @property
@@ -274,6 +376,7 @@ class ReceivedItem(Strict):
 
 HubMode = Literal[
     "NO_CAMPAIGN",       # not connected / no save
+    "GENERATING",        # a Zone is PENDING_GENERATION; portal is inert
     "ZONE_READY",        # a Zone is GENERATED but not yet entered
     "ZONE_ACTIVE",       # a Zone is ACTIVE; portal resumes it
     "ZONE_AVAILABLE",    # portal generates a new ordinary Zone
@@ -281,6 +384,15 @@ HubMode = Literal[
     "WAITING_FOR_AP",    # nothing eligible; other players hold progression
     "ALL_CHECKS_CLEARED",  # everything done; postgame, nothing left to play
 ]
+
+#: The only two modes in which a `request_next_zone` intent is legal. Every
+#: other mode either already holds a Zone or has nothing to allocate. Both
+#: kinds of generation — ordinary and finale — are covered: the finale is
+#: requested from FINALE_ONLY, never from GENERATING or a Zone-in-hand mode.
+ZONE_REQUEST_MODES = ("ZONE_AVAILABLE", "FINALE_ONLY")
+
+#: Modes in which the campaign already has a Zone and must not start another.
+ZONE_HELD_MODES = ("GENERATING", "ZONE_READY", "ZONE_ACTIVE")
 
 
 class HubStatus(Strict):
@@ -294,6 +406,14 @@ class HubStatus(Strict):
     ends play — `goal_sent` becomes a banner, and the portal keeps working
     while real AP locations remain. Disabling play on goal would abandon up
     to 5 locations and the other players' items sitting on them.
+
+    v0.6 adds `GENERATING`. v0.5 had `generation_in_progress` as a free
+    boolean and no mode for the window it describes, so while a Zone sat in
+    `PENDING_GENERATION` the Hub still had to report some other mode — and
+    every honest choice was wrong. `ZONE_AVAILABLE` left the portal enabled
+    and invited a second `request_next_zone`; `ZONE_READY` claimed content
+    that did not exist yet. The mode now exists, the portal is off in it, and
+    the flag is derived from it rather than tracked beside it.
     """
     mode: HubMode
     headline: str = Field(max_length=C.MAX_TEXT_LEN)
@@ -322,8 +442,11 @@ class HubStatus(Strict):
             )
         # A Zone in hand takes precedence: generating another would orphan
         # it. `holding_finale` exempts the finale Zone itself, which is
-        # obviously allowed to be held while available.
-        if (self.mode in ("ZONE_READY", "ZONE_ACTIVE")
+        # obviously allowed to be held while available. v0.6 adds GENERATING
+        # to the list — a Zone being built is as much "in hand" as one
+        # already built, and v0.5 leaving it out is how the finale could be
+        # offered on top of an in-flight ordinary Zone.
+        if (self.mode in ZONE_HELD_MODES
                 and self.finale_available and not self.holding_finale):
             raise ValueError(
                 "finish or abandon the current Zone before the finale is "
@@ -332,8 +455,17 @@ class HubStatus(Strict):
         if self.postgame and not self.goal_sent:
             raise ValueError("postgame requires goal_sent")
 
+        # Derived, not tracked alongside. A boolean that can disagree with
+        # the mode is a boolean that eventually does.
+        if self.generation_in_progress != (self.mode == "GENERATING"):
+            raise ValueError(
+                "generation_in_progress is true exactly in mode GENERATING"
+            )
+
         # v0.4's stranding state was exactly "a playable mode with the portal
         # switched off". Tie them together so it cannot be described.
+        # GENERATING is deliberately NOT playable: there is nothing to enter,
+        # and an enabled portal is an invitation to request a second Zone.
         playable = self.mode in (
             "ZONE_READY", "ZONE_ACTIVE", "ZONE_AVAILABLE", "FINALE_ONLY")
         if playable != self.portal_enabled:
@@ -345,6 +477,17 @@ class HubStatus(Strict):
             raise ValueError("every Check cleared implies the goal was sent")
         return self
 
+    @property
+    def accepts_zone_request(self) -> bool:
+        """Whether `request_next_zone` is legal right now, finale or not.
+
+        The bridge's one-Zone-at-a-time admission test. It is a property of
+        the mode alone, so the ordinary and finale paths cannot answer it
+        differently — `RequestNextZone.finale` selects WHICH Zone, never
+        WHETHER one may be started.
+        """
+        return self.mode in ZONE_REQUEST_MODES
+
 
 # ---------------------------------------------------------------------------
 # Snapshot
@@ -352,7 +495,7 @@ class HubStatus(Strict):
 
 class CampaignSnapshot(Strict):
     type: Literal["campaign_snapshot"] = "campaign_snapshot"
-    protocol_version: Literal[5] = 5
+    protocol_version: Literal[6] = 6
 
     bridge_connected: bool
     ap_connected: bool
@@ -394,6 +537,52 @@ class CampaignSnapshot(Strict):
     hub: HubStatus
     last_generation_error: str | None = Field(default=None, max_length=C.MAX_TEXT_LEN)
 
+    @model_validator(mode="after")
+    def _hub_agrees_with_the_zone(self):
+        """One mapping from Zone state to Hub mode, in one place.
+
+        v0.5 left `ZoneRecord.state` and `HubStatus.mode` as two independent
+        descriptions of the same fact, related only by prose. Every D3
+        symptom was a disagreement between them. They are now checked against
+        each other on every snapshot, which is the message Godot renders and
+        the message the bridge tests assert on — so a divergence fails at the
+        boundary rather than showing up as a portal that offers a second
+        Zone.
+        """
+        az = self.active_zone
+        if az is not None and az.state in TERMINAL_ZONE_STATES:
+            raise ValueError(
+                f"active_zone '{az.zone_id}' is {az.state}; a terminal Zone "
+                "reserves nothing and must not be presented as active"
+            )
+
+        expected = {
+            "PENDING_GENERATION": "GENERATING",
+            "GENERATED": "ZONE_READY",
+            "ACTIVE": "ZONE_ACTIVE",
+        }
+        if az is None:
+            if self.hub.mode in ZONE_HELD_MODES:
+                raise ValueError(
+                    f"mode {self.hub.mode} claims a Zone but active_zone is null"
+                )
+        else:
+            want = expected[az.state]
+            if self.hub.mode != want:
+                raise ValueError(
+                    f"active_zone is {az.state}, so mode must be {want}, "
+                    f"not {self.hub.mode}"
+                )
+
+        # Ordinary vs finale, the paired path: `holding_finale` is not a
+        # separate opinion about what is held.
+        holding_finale = az is not None and az.is_finale
+        if self.hub.holding_finale != holding_finale:
+            raise ValueError(
+                "holding_finale must describe active_zone.is_finale"
+            )
+        return self
+
 
 # ---------------------------------------------------------------------------
 # Godot -> bridge
@@ -422,9 +611,16 @@ class StartMockCampaign(Strict):
 class RequestNextZone(Strict):
     """Generate the next Zone.
 
-    `finale` picks between an ordinary Zone and the reserved Check 030 Zone
-    when both are offered. The bridge rejects finale=True unless
-    HubStatus.finale_available, and rejects either while a Zone is held.
+    `finale` picks WHICH Zone — ordinary, or the reserved Check 030 Zone —
+    and never whether one may be started. Admission is `HubStatus
+    .accepts_zone_request` (mode in ZONE_REQUEST_MODES) for both values, so
+    the ordinary and finale paths cannot drift apart; `finale=True`
+    additionally requires `HubStatus.finale_available`.
+
+    Concretely, the bridge refuses this intent whenever a Zone is held, and
+    `GENERATING` counts as held. v0.5 only barred it for GENERATED and
+    ACTIVE, so a second request arriving while the provider was still working
+    started a second allocation against the same eligible pool.
     """
     type: Literal["request_next_zone"]
     finale: bool = False
@@ -478,8 +674,15 @@ class ClaimCheck(Strict):
 
 
 class BuyShopStock(Strict):
+    """Buy one stocked location.
+
+    `_NON_FINALE_LOC` makes `{"type":"buy_shop_stock","location_id":89100030}`
+    an unparseable message rather than a message the bridge is trusted to
+    refuse. The bridge still re-verifies stock membership, status and
+    balance — this only removes the goal from the reachable input space.
+    """
     type: Literal["buy_shop_stock"]
-    location_id: _LOC
+    location_id: _NON_FINALE_LOC
 
 
 class EquipEcho(Strict):
@@ -516,7 +719,7 @@ ClientMessage = Annotated[
 
 class BridgeReady(Strict):
     type: Literal["bridge_ready"]
-    protocol_version: Literal[5] = 5
+    protocol_version: Literal[6] = 6
     bridge_version: str = Field(max_length=32)
 
 

@@ -1,4 +1,4 @@
-# Archipepsi — Implementation Plan (v0.5)
+# Archipepsi — Implementation Plan (v0.6)
 
 How to sequence the build while always preserving a running vertical slice. This file is *not* product truth; it never overrides the authorities.
 
@@ -28,22 +28,33 @@ From T−60 onward the only permitted code changes are **regression fixes** to w
 
 ### The T−60 gate
 
-Run **every automated test applicable to the phases actually implemented**, then fix regressions only.
+Run **every automated test applicable to the systems actually implemented**, then fix regressions only.
 
-For the expected Phase 0–3 result the gate is:
+Each row below names a *system*, not a phase range. v0.5's table gated on phases and lumped whole numeric ranges together — "campaign / allocation tests 21–35, Phase 2 onward" — but 27, 28 and 31–33 in that range need the shop and the finale, which are **Phase 6**. So the plan's own expected stopping point, Phase 0–2, could not pass its own gate. Read every row as "run this if and only if the system named on the right exists."
 
-| Gate item | Condition |
+All test numbers refer to `ACCEPTANCE_TESTS.md`.
+
+| Gate item | Run it when |
 |---|---|
-| All schema tests (`schemas/test_schemas.py`) | **Always.** They ship green, so any failure is a regression you introduced |
-| Bridge tests **1–20** (§2) | Phase 2 onward |
-| Campaign / allocation tests **21–35** (§3) | Phase 2 onward |
-| APWorld tests **36–47** (§4) | Phase 1 onward |
-| APWorld test **48** (packaging) | only if `.apworld` packaging is implemented |
-| Godot headless tests **49–59** (§5) | all that exist for the builders and systems implemented |
-| End-to-end **Test A** (foreign item Echo) | Phase 3 onward |
-| End-to-end **Test E** (provider failure) | only if fallback/provider plumbing exists |
+| Schema tests (`schemas/test_schemas.py`, 91) | **Always.** They ship green, so any failure is a regression you introduced |
+| APWorld tests **36–47** | the APWorld generates a seed |
+| APWorld test **48** | `.apworld` packaging is implemented |
+| Bridge tests **1–18**, **20** | the bridge connects and holds campaign state |
+| Provider tests **13–15** | any Epsilon provider and the fallback exist |
+| Campaign tests **21, 22, 24, 25, 26, 29, 30, 34, 35** | allocation, tiers and coin accounting exist |
+| Regression tests **60–66** | the bridge holds campaign state (they are the v0.6 campaign-integrity tests) |
+| Shop tests **19, 23, 27, 28** | the shop exists |
+| Finale tests **31, 32, 33** | the finale exists |
+| Godot tests **49–52, 56–59** | the corridor/arena builders and the claim flow exist |
+| Godot tests **53, 54, 55** | the platform_path / tower / treasure_room builders exist |
+| End-to-end **A, D, I, L, M, P** | the Godot slice runs against the bridge |
+| End-to-end **B, H, K** | real or mock AP drives received items |
+| End-to-end **E, F** | provider failure and repair paths exist |
+| End-to-end **G** | the race-mode guard exists |
+| End-to-end **C, O** | the shop exists |
+| End-to-end **J, N** | the finale exists |
 
-**Do not require the later end-to-end tests (B, C, D, F, G, H, I, J, K, L, M, N, O, P) at T−60 unless the systems they exercise were already implemented.** Test C cannot pass without a shop; Test J cannot pass without the finale. Their absence is expected, is not a failure, and is recorded in `NEXT_STEPS.md` rather than chased.
+**The expected Phase 0–2 stop therefore gates on exactly:** schema tests (91), APWorld 36–47, bridge 1–18 and 20, provider 13–15, campaign 21/22/24/25/26/29/30/34/35, and regression 60–66. Everything else is absent by design at that point. Their absence is expected, is not a failure, and is recorded in `NEXT_STEPS.md` rather than chased.
 
 Record every result honestly, **including failures**. A truthful "Test A fails at reconnect, cause unknown" is worth far more than a green summary that was never run.
 
@@ -72,7 +83,8 @@ Running out of time at Phase 3 below leaves a real, connected, provable slice. R
    **If Godot is absent:** do not install it and do not go looking. Build Phases 0–2 (all Python, all verifiable), write the Phase 3 GDScript unverified, and say so plainly in `NEXT_STEPS.md` and at the T−60 gate. An honest "engine layer written but never run" is worth more than a silent one.
 1. Repo skeleton, `Makefile` (including the §8.5 targets), `.gitignore` (`.archipelago/`, `.env`, `.godot/`, `__pycache__/`, `.pytest_cache/`, `*.tmp`, `*.bak`).
 2. Copy `schemas/` from the packet into `bridge/archipepsi_bridge/schemas/` **verbatim**. Do not retype them.
-3. `python -m pytest` on the packet's schema tests — 67 tests, all green, before anything else is written. They pass both standalone and from the repo root; if they do not, you copied them wrong.
+3. `python -m pytest` on the packet's schema tests — 91 tests, all green, before anything else is written. They pass both standalone and from the repo root; if they do not, you copied them wrong.
+3b. `python docs/design-packet-v0.6/check_packet.py` — proves the packet's prose still matches the schemas you just copied. It is also the guard to re-run if you ever edit the packet.
 4. `bootstrap.py`: clone Archipelago at `0.6.7`, run `ModuleUpdate.py --yes`, verify `import CommonClient` with `SKIP_REQUIREMENTS_UPDATE=1`.
 
 **Milestone: `make setup && make test` works on a clean machine.**
@@ -111,7 +123,7 @@ Generation is the only thing that catches a bad `origin_region_name` — module-
 22. `bridge_client.gd` autoload: WebSocket, reconnect with backoff, snapshot handling.
 22. Generated `constants.gd` (`python schemas/export.py`).
 23. Main menu → connect / Mock Campaign.
-24. Hub scene with the portal, status board, and all seven `HubStatus` modes including `ZONE_READY` and `WAITING_FOR_AP`.
+24. Hub scene with the portal, status board, and all eight `HubStatus` modes including `GENERATING`, `ZONE_READY` and `WAITING_FOR_AP`. Drive the portal from `mode` alone; do not track a local generating flag.
 25. First-person controller using the binding constants. LMB Static Pulse, RMB Echo.
 26. `corridor` and `arena` builders; linear chaining; the appended exit portal.
 27. `melee` enemy; objective latching; reward objects and the claim flow.

@@ -24,7 +24,7 @@ try:  # works standalone and when copied into a package
 except ImportError:  # pragma: no cover
     import constants as C
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 Theme = Literal[
     "concrete_facility", "rusted_industrial", "neon_transit",
@@ -164,7 +164,7 @@ Chamber = Annotated[
 
 
 class Zone(Strict):
-    schema_version: Literal[5] = 5
+    schema_version: Literal[6] = 6
     zone_id: str = _ID
     display_name: str = Field(min_length=1, max_length=C.MAX_TEXT_LEN)
     target_game: str = Field(min_length=1, max_length=C.MAX_AP_STRING_LEN)

@@ -1,4 +1,4 @@
-# Archipepsi — Coding Agent Handoff (v0.5)
+# Archipepsi — Coding Agent Handoff (v0.6)
 
 You are implementing the Archipepsi proof of concept.
 
@@ -52,7 +52,8 @@ The first genuinely important milestone:
 - Every accepted Zone must be completable on the mandatory path with base movement and Static Pulse — **including with any legal Echo equipped.**
 - No Echo-gated mandatory traversal. The schema cannot express one; keep it that way.
 - **LMB is always Static Pulse. RMB is the equipped Echo.** Never rebind LMB on equip.
-- Check 030 is reserved: never shop stock, never a normal Zone reward.
+- Check 030 is reserved: never shop stock, never a normal Zone reward. This is enforced by types, not by procedure — allocate from `eligible_location_ids()`, and note that `ShopStockItem`, `BuyShopStock` and `PendingCheck(source="shop")` cannot express the goal at all. Do not add a path that can.
+- **One Zone at a time starts at the request, not at the loading screen.** `GENERATING`, `ZONE_READY` and `ZONE_ACTIVE` all refuse a new `request_next_zone`; the test is `HubStatus.accepts_zone_request` and it is the same test for the finale.
 - **Sending the goal does not end play.** Remaining real Checks stay reachable through the Hub. Never abandon an unchecked AP location because the goal fired — those are other players' items.
 - Set `active_zone_id` when a Zone is **saved**, not when it is entered, or a Zone abandoned at the loading screen orphans its locations forever.
 - Verify **no pending check exists** before charging for shop stock, or a double purchase destroys coins.
@@ -73,7 +74,7 @@ The first genuinely important milestone:
 
 ## Rules that will save you time
 
-**Copy `schemas/` verbatim.** It runs and it is tested. Run `pytest` on it before writing anything else — 67 tests, all green, both standalone and from the repo root. Do not retype the models from the prose; the prose describes them, the code *is* them. Regenerate `constants.gd` and the JSON Schemas with `python schemas/export.py` and never hand-edit the outputs.
+**Copy `schemas/` verbatim.** It runs and it is tested. Run `pytest` on it before writing anything else — 91 tests, all green, both standalone and from the repo root. Do not retype the models from the prose; the prose describes them, the code *is* them. Regenerate `constants.gd` and the JSON Schemas with `python schemas/export.py` and never hand-edit the outputs.
 
 **Every gameplay number is already decided**, in `schemas/constants.py`. Do not invent movement, combat, or timing values. If one is missing, add it there rather than inline.
 

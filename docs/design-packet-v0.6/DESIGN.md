@@ -1,4 +1,4 @@
-# Archipepsi — Game Design (v0.5)
+# Archipepsi — Game Design (v0.6)
 
 Primary product authority. Defines the fantasy, scope, terminology, player loop, campaign allocation, shop, controls, Hub, pacing, and what is deliberately deferred.
 
@@ -26,7 +26,7 @@ Epsilon learns things like:
 - Check 002 contains an Ocarina of Time item for Sage
 - Check 006 contains an Archipepsi Coin for the Archipepsi player
 
-and builds a playable blocky first-person campaign from that.
+and builds a playable late-90s first-person campaign from that.
 
 When the player clears a Check containing `Conference Call → BL2Player`:
 
@@ -221,28 +221,30 @@ Zone generation round-robins the saved order, skipping Tracks with no eligible l
 
 ## 10.4 What is eligible
 
-A location is an eligible **normal Zone candidate** when all hold:
+**Start from `constants.eligible_location_ids(signal_keys)`.** That function is the only place the candidate pool is derived — it applies the tier rule and removes Check 030, and both the normal-Zone path (§10.5) and the shop path (§11.3) call it. Do not open-code either rule. `unlocked_location_ids()` is a different function for a different job: it answers Archipelago's reachability question, includes the goal, and nothing that allocates may call it.
 
-- it is in an unlocked tier (tier N requires N Signal Keys)
+A location from that pool is an eligible **normal Zone candidate** when all of the remaining conditions hold:
+
 - the server reports it missing
-- **it is not Check 030** — the goal is fully reserved
 - it is not held by a Zone in a **non-terminal** state — `ZoneRecord.holds_locations`, i.e. `PENDING_GENERATION`, `GENERATED` or `ACTIVE`. `COMPLETE` and `ABANDONED` release their locations
 - it has no entry in `pending_checks` (a claimed-but-unconfirmed location stays reserved until it finalizes or rolls back)
 - it is not currently reserved as shop stock
 
 ## 10.5 Selecting a normal Zone
 
-1. Compute unlocked tiers from received Signal Keys.
-2. Build the eligible set per §10.4.
+0. **Refuse the request unless `HubStatus.accepts_zone_request`** — i.e. the Hub is in `ZONE_AVAILABLE` or `FINALE_ONLY`. This is the one-Zone-at-a-time admission test and it covers ordinary *and* finale generation (§10.7).
+1. Call `eligible_location_ids(signal_keys)` — do not recompute tiers by hand.
+2. Filter it by the remaining §10.4 conditions.
 3. If it is empty, do not generate — enter `WAITING_FOR_AP` (§13).
 4. Read the Track cursor. If that Track has no eligible locations, scan forward to one that does — **without writing the cursor back**. The cursor advances only at Zone completion (§14.5).
 5. Shuffle that Track's eligible IDs with `zone_selection_seed(seed_name, team, slot_id, generation_counter, target_game)` from `constants.py`. Do not hand-assemble the tuple; `team` belongs in it.
 6. Take up to 3.
 7. If fewer than 2 and other Tracks have eligible locations, fill to 2 from subsequent Tracks.
 8. A **1-Check Zone is allowed only when exactly one eligible location remains in total.**
-9. Create the `ZoneRecord` in state `PENDING_GENERATION` with its `allocated_location_ids`, and **save**.
-10. Build the request, call Epsilon, validate, one repair, else fallback.
-11. Save the accepted Zone, move to `GENERATED`, then `ACTIVE` on entry.
+9. Create the `ZoneRecord` in state `PENDING_GENERATION` with its `allocated_location_ids`, and **save**. The Hub is now in `GENERATING`: the portal is disabled and a second `request_next_zone` is refused until this record leaves `PENDING_GENERATION`.
+10. Build the request, call Epsilon, validate, one repair, else fallback. Neither the live provider nor the fallback allocates anything — allocation already happened at step 9, and both are validated against the same `allocated_location_ids` by `validate_zone()`.
+11. Save the accepted Zone, move to `GENERATED`, then `ACTIVE` on entry. Build a fresh `ZoneRecord` for the transition rather than assigning `state` and `zone` separately; `PENDING_GENERATION` with content attached is rejected.
+12. If generation fails past repair *and* the fallback cannot be built, move the record to `ABANDONED` — it is allowed to be `ABANDONED` with no `zone`, which is how its locations get back into the pool.
 
 `target_game` is **the Track that initiated selection** (step 4), even when steps 7 pulled in locations from other Tracks. Per-location recipient games are still passed so Epsilon can theme individual chambers.
 
@@ -251,6 +253,8 @@ Epsilon may not swap, add, delete or reserve AP location IDs. The validator reje
 ## 10.6 The finale
 
 Check 030 is **never** normal Zone stock and **never** shop stock.
+
+That sentence is not the enforcement. v0.5 stated it here and in four other documents and enforced it on one path, so the shop accepted it and `6 coins → buy Check 030 → win` was a legal message sequence. The reservation now has exactly one definition, `constants.GOAL_LOCATION_ID` plus the `FIRST/LAST_NON_FINALE_LOCATION_ID` range derived from it, and every path that can reserve, stock, price or sell a location is typed against that range — `ShopStockItem`, `BuyShopStock`, `PendingCheck(source="shop")`, the allocator's `eligible_location_ids()`, and the save-file validator. The restriction is a plain numeric bound, so it survives into `protocol.schema.json` and `constants.gd` too. `ZoneRecord` is the one model allowed to carry Check 030, and only with `is_finale=True`.
 
 The finale Zone unlocks when both hold:
 
@@ -265,7 +269,11 @@ Five Checks of slack means the ending is not cleanup duty and a single awkward s
 
 ## 10.7 Generation timing
 
-Generation happens from the Hub, behind a loading screen. No background generation is required. One Zone at a time: no new Zone can be generated while one is `ACTIVE`.
+Generation happens from the Hub, behind a loading screen. No background generation is required.
+
+**One Zone at a time, and "at a time" starts at the request, not at the loading screen.** A Zone is held from the moment its `ZoneRecord` exists — `PENDING_GENERATION`, `GENERATED` and `ACTIVE` all count — so the Hub modes `GENERATING`, `ZONE_READY` and `ZONE_ACTIVE` all refuse a new `request_next_zone`. The test is `HubStatus.accepts_zone_request`, which is a property of the mode alone; `RequestNextZone.finale` chooses *which* Zone to build and never *whether* one may be started, so the ordinary and finale paths cannot answer the question differently.
+
+While a Zone is `PENDING_GENERATION` the Hub reports `GENERATING` with the portal **disabled**. v0.5 had no mode for that window, so the Hub had to report something else while generation ran — `ZONE_AVAILABLE` left the portal live and invited a second request against the same eligible pool; `ZONE_READY` promised content that did not exist yet. The finale is suppressed during `GENERATING` for the same reason it is suppressed during `ZONE_ACTIVE`: taking it would strand the in-flight Zone's Checks.
 
 ---
 
@@ -281,7 +289,11 @@ Archipelago does not know Archipepsi's `coins_spent`. No location may be permane
 
 ## 11.3 Eligibility
 
-Stock must be: in an unlocked tier; server-missing; **not Check 030**; recipient is not the Archipepsi slot; not held by a Zone in a non-terminal state (`ZoneRecord.holds_locations`); has no entry in `pending_checks`; not already reserved.
+**Start from `constants.eligible_location_ids(signal_keys)` — the same function §10.4 uses.** The shop and the Zone allocator are the paired path this design keeps getting wrong; they share one candidate source so they cannot disagree about what is allocatable.
+
+From that pool, stock must additionally be: server-missing; recipient is not the Archipepsi slot; not held by a Zone in a non-terminal state (`ZoneRecord.holds_locations`); has no entry in `pending_checks`; not already reserved.
+
+Check 030 is absent from the pool by construction, and `ShopStockItem.location_id` cannot express it even if the procedure is implemented wrongly — the bound is `FIRST_NON_FINALE_LOCATION_ID..LAST_NON_FINALE_LOCATION_ID`.
 
 ## 11.4 Price
 
@@ -352,7 +364,7 @@ The portal's behavior is driven by `HubStatus.mode`:
 | Mode | Portal | Meaning |
 |---|---|---|
 | `NO_CAMPAIGN` | disabled | not connected |
-| *(generating)* | disabled | a Zone is `PENDING_GENERATION`. Keep the previous mode and set `generation_in_progress`; **never** show `WAITING_FOR_AP` here — the player is waiting on us, not on the multiworld |
+| `GENERATING` | disabled | a Zone is `PENDING_GENERATION`. **Never** show `WAITING_FOR_AP` here — the player is waiting on us, not on the multiworld |
 | `ZONE_READY` | **enter** | a Zone is `GENERATED` and waiting to be entered |
 | `ZONE_ACTIVE` | **resume** | a Zone is `ACTIVE`; re-enter it |
 | `ZONE_AVAILABLE` | **generate** | eligible ordinary locations exist |
@@ -364,10 +376,14 @@ The portal's behavior is driven by `HubStatus.mode`:
 
 The finale unlocks at 24 of 29, so up to 5 ordinary Checks normally remain when it appears. If the finale were a mode that displaced `ZONE_AVAILABLE`, those Checks would become unreachable — the player forced to end the campaign the moment they qualified. So when both are possible the Hub offers **both**, and `RequestNextZone.finale` carries the choice.
 
-Two guards the schema enforces:
+`GENERATING` is a real mode, not a flag layered over another one. v0.5 said "keep the previous mode and set `generation_in_progress`", which meant the Hub reported `ZONE_AVAILABLE` — portal live, inviting a second request — for the whole 120-second generation window. `generation_in_progress` still exists and still survives a restart (§13.2), but it is now *derived*: it is true exactly in `GENERATING`, and the schema rejects any snapshot where the two disagree.
+
+Four guards the schema enforces:
 
 - `WAITING_FOR_AP` and an available finale are mutually exclusive. If you can start the finale you are not waiting on anyone.
-- The finale is **not offered while a Zone is held** (`ZONE_READY` or `ZONE_ACTIVE`). Taking it mid-Zone would strand that Zone's unclaimed Checks. Finish or abandon first.
+- The finale is **not offered while a Zone is held** — `GENERATING`, `ZONE_READY` or `ZONE_ACTIVE`. Taking it mid-Zone would strand that Zone's unclaimed Checks. Finish or abandon first.
+- `generation_in_progress` is true **exactly** in `GENERATING`.
+- The mode must agree with `active_zone.state`: `PENDING_GENERATION`→`GENERATING`, `GENERATED`→`ZONE_READY`, `ACTIVE`→`ZONE_ACTIVE`, and a `COMPLETE` or `ABANDONED` Zone is never presented as the active one. `holding_finale` is read off `active_zone.is_finale` rather than tracked beside it.
 
 ## 13.1 `WAITING_FOR_AP`
 
@@ -386,7 +402,7 @@ The shop will normally be empty here, because shop-eligible is a subset of Zone-
 
 ## 13.2 Generation is a visible state
 
-Generation can take up to 120 seconds (one call plus one repair). `HubStatus.generation_in_progress` carries it, so the loading state survives a Godot restart and a bridge reconnect. Godot must not track this locally — a locally-tracked flag is lost exactly when it matters, producing the permanent-loading-screen failure the abandon-not-retry rule exists to prevent.
+Generation can take up to 120 seconds (one call plus one repair). Mode `GENERATING` and its derived `HubStatus.generation_in_progress` carry it, so the loading state survives a Godot restart and a bridge reconnect. Godot must not track this locally — a locally-tracked flag is lost exactly when it matters, producing the permanent-loading-screen failure the abandon-not-retry rule exists to prevent.
 
 ## 13.3 Postgame
 
@@ -541,7 +557,7 @@ Documented deliberately so they are not later mistaken for bugs.
 
 **Deleting the save restores spent coins.** AP remembers every delivered Coin; spending is intentionally local. Deleting the campaign file resets `coins_spent` while `coins_received` recomputes at full value. Unavoidable given the correct AP/local split, and self-limiting: purchased locations stay checked server-side, so the coins come back but the purchases do not.
 
-**Duplicate source items produce independent Echoes.** Two separately-sent Hookshots become two unrelated Hookshot Echoes. This is the intended reading of the design: the Echo is Epsilon's *interpretation* of an item, not the item, and the same word read twice giving two answers is exactly what "a local AI handed a box of videogame Legos" would produce.
+**Duplicate source items produce independent Echoes.** Two separately-sent Hookshots become two unrelated Hookshot Echoes. This is the intended reading of the design: the Echo is Epsilon's *interpretation* of an item, not the item, and the same word read twice giving two answers is exactly what "a local AI handed a crate of mismatched videogame parts" would produce.
 
 **The shop may not appear in a short live session.** It needs 2 completed Zones and Coins that other players must find first.
 

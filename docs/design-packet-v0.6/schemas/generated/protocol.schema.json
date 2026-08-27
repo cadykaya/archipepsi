@@ -75,6 +75,7 @@
       },
       "BuyShopStock": {
         "additionalProperties": false,
+        "description": "Buy one stocked location.\n\n`_NON_FINALE_LOC` makes `{\"type\":\"buy_shop_stock\",\"location_id\":89100030}`\nan unparseable message rather than a message the bridge is trusted to\nrefuse. The bridge still re-verifies stock membership, status and\nbalance \u2014 this only removes the goal from the reachable input space.",
         "properties": {
           "type": {
             "const": "buy_shop_stock",
@@ -82,7 +83,7 @@
             "type": "string"
           },
           "location_id": {
-            "maximum": 89100030,
+            "maximum": 89100029,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -269,7 +270,7 @@
       },
       "RequestNextZone": {
         "additionalProperties": false,
-        "description": "Generate the next Zone.\n\n`finale` picks between an ordinary Zone and the reserved Check 030 Zone\nwhen both are offered. The bridge rejects finale=True unless\nHubStatus.finale_available, and rejects either while a Zone is held.",
+        "description": "Generate the next Zone.\n\n`finale` picks WHICH Zone \u2014 ordinary, or the reserved Check 030 Zone \u2014\nand never whether one may be started. Admission is `HubStatus\n.accepts_zone_request` (mode in ZONE_REQUEST_MODES) for both values, so\nthe ordinary and finale paths cannot drift apart; `finale=True`\nadditionally requires `HubStatus.finale_available`.\n\nConcretely, the bridge refuses this intent whenever a Zone is held, and\n`GENERATING` counts as held. v0.5 only barred it for GENERATED and\nACTIVE, so a second request arriving while the provider was still working\nstarted a second allocation against the same eligible pool.",
         "properties": {
           "type": {
             "const": "request_next_zone",
@@ -530,8 +531,8 @@
             "type": "string"
           },
           "protocol_version": {
-            "const": 5,
-            "default": 5,
+            "const": 6,
+            "default": 6,
             "title": "Protocol Version",
             "type": "integer"
           },
@@ -558,8 +559,8 @@
             "type": "string"
           },
           "protocol_version": {
-            "const": 5,
-            "default": 5,
+            "const": 6,
+            "default": 6,
             "title": "Protocol Version",
             "type": "integer"
           },
@@ -993,11 +994,12 @@
       },
       "HubStatus": {
         "additionalProperties": false,
-        "description": "What the Hub portal may do right now.\n\n`mode` and `finale_available` are INDEPENDENT. The finale unlocks with\nup to 5 ordinary Checks still outstanding; collapsing both into one enum\nwould either hide the finale or strand that content.\n\nv0.5 removes `CAMPAIGN_COMPLETE`. Sending the Archipelago goal no longer\nends play \u2014 `goal_sent` becomes a banner, and the portal keeps working\nwhile real AP locations remain. Disabling play on goal would abandon up\nto 5 locations and the other players' items sitting on them.",
+        "description": "What the Hub portal may do right now.\n\n`mode` and `finale_available` are INDEPENDENT. The finale unlocks with\nup to 5 ordinary Checks still outstanding; collapsing both into one enum\nwould either hide the finale or strand that content.\n\nv0.5 removes `CAMPAIGN_COMPLETE`. Sending the Archipelago goal no longer\nends play \u2014 `goal_sent` becomes a banner, and the portal keeps working\nwhile real AP locations remain. Disabling play on goal would abandon up\nto 5 locations and the other players' items sitting on them.\n\nv0.6 adds `GENERATING`. v0.5 had `generation_in_progress` as a free\nboolean and no mode for the window it describes, so while a Zone sat in\n`PENDING_GENERATION` the Hub still had to report some other mode \u2014 and\nevery honest choice was wrong. `ZONE_AVAILABLE` left the portal enabled\nand invited a second `request_next_zone`; `ZONE_READY` claimed content\nthat did not exist yet. The mode now exists, the portal is off in it, and\nthe flag is derived from it rather than tracked beside it.",
         "properties": {
           "mode": {
             "enum": [
               "NO_CAMPAIGN",
+              "GENERATING",
               "ZONE_READY",
               "ZONE_ACTIVE",
               "ZONE_AVAILABLE",
@@ -1221,8 +1223,8 @@
         "description": "Applies while equipped. RMB does nothing. No cooldown field exists.",
         "properties": {
           "schema_version": {
-            "const": 5,
-            "default": 5,
+            "const": 6,
+            "default": 6,
             "title": "Schema Version",
             "type": "integer"
           },
@@ -1332,6 +1334,7 @@
       },
       "PendingCheck": {
         "additionalProperties": false,
+        "description": "A Check sent to Archipelago and not yet confirmed back.\n\nSource-aware because the two sources have different rights: a `zone`\ncheck may be the goal (the finale Zone is exactly how the goal is\nclaimed) and never costs coins; a `shop` check always costs coins and\nmay never be the goal.",
         "properties": {
           "transaction_id": {
             "maxLength": 64,
@@ -1459,8 +1462,8 @@
         "description": "Activated with RMB, subject to cooldown. LMB stays Static Pulse.",
         "properties": {
           "schema_version": {
-            "const": 5,
-            "default": 5,
+            "const": 6,
+            "default": 6,
             "title": "Schema Version",
             "type": "integer"
           },
@@ -1829,13 +1832,13 @@
         "additionalProperties": false,
         "properties": {
           "location_id": {
-            "maximum": 89100030,
+            "maximum": 89100029,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
           },
           "cost": {
-            "minimum": 0,
+            "minimum": 1,
             "title": "Cost",
             "type": "integer"
           },
@@ -2004,8 +2007,8 @@
         "additionalProperties": false,
         "properties": {
           "schema_version": {
-            "const": 5,
-            "default": 5,
+            "const": 6,
+            "default": 6,
             "title": "Schema Version",
             "type": "integer"
           },
@@ -2135,7 +2138,7 @@
       },
       "ZoneRecord": {
         "additionalProperties": false,
-        "description": "A Zone across its whole lifecycle.\n\n`allocated_location_ids` is populated at PENDING_GENERATION, before the\nprovider is called, so a crash mid-generation is representable.\n\n`GENERATED` means accepted-but-not-yet-entered. In v0.4 that state had\nno Hub mode, no entering intent and no reconciliation clause, so a Zone\ngenerated and then abandoned at the loading screen orphaned its AP\nlocations permanently. `active_zone_id` is now set at GENERATED, not at\nentry, so the Zone is always visible and always resumable.",
+        "description": "A Zone across its whole lifecycle.\n\n`allocated_location_ids` is populated at PENDING_GENERATION, before the\nprovider is called, so a crash mid-generation is representable.\n\n`GENERATED` means accepted-but-not-yet-entered. In v0.4 that state had\nno Hub mode, no entering intent and no reconciliation clause, so a Zone\ngenerated and then abandoned at the loading screen orphaned its AP\nlocations permanently. `active_zone_id` is now set at GENERATED, not at\nentry, so the Zone is always visible and always resumable.\n\nv0.6 makes `zone`-vs-`state` exact rather than one-directional:\nPENDING_GENERATION means no content yet, full stop. Accepting a Zone is\ntherefore a single atomic transition \u2014 build a new record, do not assign\n`state` and `zone` one at a time (`validate_assignment=True` would reject\nthe intermediate, which is the point), and do not reach for\n`model_copy(update=...)`, which skips validation entirely:\n\n    rec = ZoneRecord(**{**rec.model_dump(), \"state\": \"GENERATED\", \"zone\": z})",
         "properties": {
           "zone_id": {
             "maxLength": 24,
@@ -2545,11 +2548,12 @@
       },
       "HubStatus": {
         "additionalProperties": false,
-        "description": "What the Hub portal may do right now.\n\n`mode` and `finale_available` are INDEPENDENT. The finale unlocks with\nup to 5 ordinary Checks still outstanding; collapsing both into one enum\nwould either hide the finale or strand that content.\n\nv0.5 removes `CAMPAIGN_COMPLETE`. Sending the Archipelago goal no longer\nends play \u2014 `goal_sent` becomes a banner, and the portal keeps working\nwhile real AP locations remain. Disabling play on goal would abandon up\nto 5 locations and the other players' items sitting on them.",
+        "description": "What the Hub portal may do right now.\n\n`mode` and `finale_available` are INDEPENDENT. The finale unlocks with\nup to 5 ordinary Checks still outstanding; collapsing both into one enum\nwould either hide the finale or strand that content.\n\nv0.5 removes `CAMPAIGN_COMPLETE`. Sending the Archipelago goal no longer\nends play \u2014 `goal_sent` becomes a banner, and the portal keeps working\nwhile real AP locations remain. Disabling play on goal would abandon up\nto 5 locations and the other players' items sitting on them.\n\nv0.6 adds `GENERATING`. v0.5 had `generation_in_progress` as a free\nboolean and no mode for the window it describes, so while a Zone sat in\n`PENDING_GENERATION` the Hub still had to report some other mode \u2014 and\nevery honest choice was wrong. `ZONE_AVAILABLE` left the portal enabled\nand invited a second `request_next_zone`; `ZONE_READY` claimed content\nthat did not exist yet. The mode now exists, the portal is off in it, and\nthe flag is derived from it rather than tracked beside it.",
         "properties": {
           "mode": {
             "enum": [
               "NO_CAMPAIGN",
+              "GENERATING",
               "ZONE_READY",
               "ZONE_ACTIVE",
               "ZONE_AVAILABLE",
@@ -2696,8 +2700,8 @@
         "description": "Applies while equipped. RMB does nothing. No cooldown field exists.",
         "properties": {
           "schema_version": {
-            "const": 5,
-            "default": 5,
+            "const": 6,
+            "default": 6,
             "title": "Schema Version",
             "type": "integer"
           },
@@ -2807,6 +2811,7 @@
       },
       "PendingCheck": {
         "additionalProperties": false,
+        "description": "A Check sent to Archipelago and not yet confirmed back.\n\nSource-aware because the two sources have different rights: a `zone`\ncheck may be the goal (the finale Zone is exactly how the goal is\nclaimed) and never costs coins; a `shop` check always costs coins and\nmay never be the goal.",
         "properties": {
           "transaction_id": {
             "maxLength": 64,
@@ -2934,8 +2939,8 @@
         "description": "Activated with RMB, subject to cooldown. LMB stays Static Pulse.",
         "properties": {
           "schema_version": {
-            "const": 5,
-            "default": 5,
+            "const": 6,
+            "default": 6,
             "title": "Schema Version",
             "type": "integer"
           },
@@ -3304,13 +3309,13 @@
         "additionalProperties": false,
         "properties": {
           "location_id": {
-            "maximum": 89100030,
+            "maximum": 89100029,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
           },
           "cost": {
-            "minimum": 0,
+            "minimum": 1,
             "title": "Cost",
             "type": "integer"
           },
@@ -3479,8 +3484,8 @@
         "additionalProperties": false,
         "properties": {
           "schema_version": {
-            "const": 5,
-            "default": 5,
+            "const": 6,
+            "default": 6,
             "title": "Schema Version",
             "type": "integer"
           },
@@ -3586,7 +3591,7 @@
       },
       "ZoneRecord": {
         "additionalProperties": false,
-        "description": "A Zone across its whole lifecycle.\n\n`allocated_location_ids` is populated at PENDING_GENERATION, before the\nprovider is called, so a crash mid-generation is representable.\n\n`GENERATED` means accepted-but-not-yet-entered. In v0.4 that state had\nno Hub mode, no entering intent and no reconciliation clause, so a Zone\ngenerated and then abandoned at the loading screen orphaned its AP\nlocations permanently. `active_zone_id` is now set at GENERATED, not at\nentry, so the Zone is always visible and always resumable.",
+        "description": "A Zone across its whole lifecycle.\n\n`allocated_location_ids` is populated at PENDING_GENERATION, before the\nprovider is called, so a crash mid-generation is representable.\n\n`GENERATED` means accepted-but-not-yet-entered. In v0.4 that state had\nno Hub mode, no entering intent and no reconciliation clause, so a Zone\ngenerated and then abandoned at the loading screen orphaned its AP\nlocations permanently. `active_zone_id` is now set at GENERATED, not at\nentry, so the Zone is always visible and always resumable.\n\nv0.6 makes `zone`-vs-`state` exact rather than one-directional:\nPENDING_GENERATION means no content yet, full stop. Accepting a Zone is\ntherefore a single atomic transition \u2014 build a new record, do not assign\n`state` and `zone` one at a time (`validate_assignment=True` would reject\nthe intermediate, which is the point), and do not reach for\n`model_copy(update=...)`, which skips validation entirely:\n\n    rec = ZoneRecord(**{**rec.model_dump(), \"state\": \"GENERATED\", \"zone\": z})",
         "properties": {
           "zone_id": {
             "maxLength": 24,
@@ -3669,8 +3674,8 @@
         "type": "string"
       },
       "protocol_version": {
-        "const": 5,
-        "default": 5,
+        "const": 6,
+        "default": 6,
         "title": "Protocol Version",
         "type": "integer"
       },

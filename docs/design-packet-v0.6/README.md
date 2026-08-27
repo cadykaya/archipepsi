@@ -1,8 +1,8 @@
-# Archipepsi — Build Packet v0.5
+# Archipepsi — Build Packet v0.6
 
 The implementation contract for the Archipepsi proof of concept.
 
-v0.3 was a design packet. v0.4 made it an implementation contract. v0.5 is the version that survived four independent hostile reviewers who had not designed it.
+v0.3 was a design packet. v0.4 made it an implementation contract. v0.5 is the version that survived four independent hostile reviewers who had not designed it. v0.6 closes the defects a fifth review found, and — more importantly — closes them across *every* path that can reach each invariant rather than only the one the reviewer reproduced.
 
 *Archipepsi* is the project codename. The game's terminology is not soda-based; a real title comes once we know what it feels like.
 
@@ -20,7 +20,9 @@ v0.3 was a design packet. v0.4 made it an implementation contract. v0.5 is the v
 8. `ACCEPTANCE_TESTS.md` — observable pass/fail
 9. `DECISIONS_TO_REVIEW.md` — only what is still genuinely open
 
-`CHANGELOG_v0.4_to_v0.5.md` maps every pass-3 finding to its resolution. `../design-packet/` (v0.3), `../design-packet-v0.4/` and `../audit/` are history, not authority — do not implement from them.
+`check_packet.py` validates this prose against `schemas/` — every JSON example, every named constant and enum member, the retired terminology, and the quoted test count. Run it after editing any document; a green schema suite does not prove the prose still describes it.
+
+`CHANGELOG_v0.6.md` maps every pass-4 finding to its resolution; `CHANGELOG_v0.5.md` does the same for pass 3. `../design-packet/` (v0.3), `../design-packet-v0.4/` and `../audit/` are history, not authority — do not implement from them.
 
 ---
 

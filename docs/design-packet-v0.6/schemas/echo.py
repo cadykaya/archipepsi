@@ -40,7 +40,7 @@ try:
 except ImportError:  # pragma: no cover
     import constants as C
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 
 class Strict(BaseModel):
@@ -141,7 +141,7 @@ Passive = Annotated[Union[ModifyGravity, ModifySpeed], Field(discriminator="type
 # ---------------------------------------------------------------------------
 
 class EchoBase(Strict):
-    schema_version: Literal[5] = 5
+    schema_version: Literal[6] = 6
     echo_id: str = Field(min_length=1, max_length=32, pattern=r"^echo_\d+$")
     source_location_id: int = Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_LOCATION_ID)
     source_item_name: str = Field(min_length=1, max_length=C.MAX_AP_STRING_LEN)

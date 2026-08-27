@@ -1,4 +1,4 @@
-"""Archipepsi v0.5 — schema tests.
+"""Archipepsi v0.6 — schema tests.
 
 Each test pins a rule the prose states and could otherwise not enforce.
 
@@ -19,19 +19,27 @@ from pydantic import TypeAdapter, ValidationError
 
 try:
     from . import constants as C
+    from .echo import SCHEMA_VERSION as ECHO_SCHEMA_VERSION
     from .echo import Echo, PassiveEcho, PrimaryEcho, validate_echo
+    from . import protocol as P
     from .protocol import (
-        CampaignSave, ClientMessage, HubStatus, ScoutedLocation, ShopState,
+        ZONE_HELD_MODES, ZONE_REQUEST_MODES, CampaignSave, CampaignSnapshot,
+        ClientMessage, HubStatus, PendingCheck, ScoutedLocation, ShopState,
         ShopStockItem, ZoneRecord,
     )
+    from .zone import SCHEMA_VERSION as ZONE_SCHEMA_VERSION
     from .zone import Zone, validate_zone
 except ImportError:  # pragma: no cover
     import constants as C
+    from echo import SCHEMA_VERSION as ECHO_SCHEMA_VERSION
     from echo import Echo, PassiveEcho, PrimaryEcho, validate_echo
+    import protocol as P
     from protocol import (
-        CampaignSave, ClientMessage, HubStatus, ScoutedLocation, ShopState,
+        ZONE_HELD_MODES, ZONE_REQUEST_MODES, CampaignSave, CampaignSnapshot,
+        ClientMessage, HubStatus, PendingCheck, ScoutedLocation, ShopState,
         ShopStockItem, ZoneRecord,
     )
+    from zone import SCHEMA_VERSION as ZONE_SCHEMA_VERSION
     from zone import Zone, validate_zone
 
 EchoAdapter = TypeAdapter(Echo)
@@ -193,7 +201,7 @@ def test_both_seed_recipes_include_team():
 
 def _zone(**over):
     base = {
-        "schema_version": 5,
+        "schema_version": ZONE_SCHEMA_VERSION,
         "zone_id": "zone_003",
         "display_name": "Cathedral of Excessive Firepower",
         "target_game": "Dark Souls III",
@@ -361,7 +369,7 @@ def test_semantic_validation_catches_unowned_echo_and_wrong_zone_id():
 # ===========================================================================
 
 _CONFERENCE_CALL = {
-    "schema_version": 5,
+    "schema_version": ECHO_SCHEMA_VERSION,
     "echo_id": "echo_89100001",
     "source_location_id": 89100001,
     "source_item_name": "Conference Call",
@@ -380,7 +388,7 @@ _CONFERENCE_CALL = {
 }
 
 _WING_CAP = {
-    "schema_version": 5,
+    "schema_version": ECHO_SCHEMA_VERSION,
     "echo_id": "echo_89100003",
     "source_location_id": 89100003,
     "source_item_name": "Wing Cap",
@@ -810,3 +818,392 @@ def test_the_finale_zone_itself_may_be_held_while_available():
         _hub(mode="ZONE_ACTIVE", finale_available=True)
     ok = _hub(mode="ZONE_ACTIVE", finale_available=True, holding_finale=True)
     assert ok.holding_finale
+
+
+# ===========================================================================
+# v0.6 — the goal reservation, closed across every path (D1)
+# ===========================================================================
+#
+# v0.5 enforced "Check 030 is never shop stock, never a normal Zone reward"
+# on exactly one path and stated it in prose on five others. These tests are
+# deliberately written as CENSUSES rather than as reproductions of the shop
+# exploit: a new field or a new mode added later fails them until it is
+# classified, which is the only shape of test that stops the defect returning
+# through the next neighbouring path.
+
+#: Fields that may legitimately carry the goal, each with the reason.
+GOAL_PERMITTED = {
+    # The finale Zone is how the goal is claimed at all.
+    ("ZoneRecord", "allocated_location_ids"),
+    ("ClaimCheck", "location_id"),
+    # Source-gated: legal for source="zone", rejected for source="shop".
+    ("PendingCheck", "location_id"),
+    # Read-only mirrors of Archipelago truth. To AP, Check 030 is ordinary.
+    ("ScoutedLocation", "location_id"),
+    ("CampaignSnapshot", "checked_location_ids"),
+    ("CampaignSnapshot", "missing_location_ids"),
+    # Presentation only; reserves nothing.
+    ("Notification", "location_id"),
+}
+
+#: Fields on an acquisition path. These must not be able to express the goal.
+GOAL_FORBIDDEN = {
+    ("ShopStockItem", "location_id"),
+    ("BuyShopStock", "location_id"),
+}
+
+
+def _protocol_models():
+    import inspect
+    from pydantic import BaseModel
+    return {
+        name: obj for name, obj in inspect.getmembers(P, inspect.isclass)
+        if issubclass(obj, BaseModel) and obj.__module__ == P.__name__
+        and obj is not P.Strict
+    }
+
+
+def _declared_max(cls, field: str):
+    """The upper bound the EXPORTED schema puts on a location field."""
+    prop = cls.model_json_schema()["properties"][field]
+
+    def find(node):
+        if isinstance(node, dict):
+            if "maximum" in node:
+                return node["maximum"]
+            for v in node.values():
+                got = find(v)
+                if got is not None:
+                    return got
+        elif isinstance(node, list):
+            for v in node:
+                got = find(v)
+                if got is not None:
+                    return got
+        return None
+
+    return find(prop)
+
+
+def test_every_location_bearing_field_is_classified():
+    """A census, not a spot check.
+
+    Add a field that carries a location id and this fails until you decide,
+    in writing, whether the goal belongs on it. D1 was precisely a field
+    nobody had to make that decision about.
+    """
+    found = {
+        (name, fname)
+        for name, cls in _protocol_models().items()
+        for fname in cls.model_fields
+        if "location_id" in fname
+    }
+    classified = GOAL_PERMITTED | GOAL_FORBIDDEN
+    assert found - classified == set(), (
+        "unclassified location field(s); decide whether the goal may appear "
+        f"there and add them to GOAL_PERMITTED or GOAL_FORBIDDEN: "
+        f"{sorted(found - classified)}")
+    assert classified - found == set(), (
+        f"classified field(s) that no longer exist: {sorted(classified - found)}")
+
+
+def test_forbidden_paths_exclude_the_goal_in_the_exported_schema():
+    """Not just in a Python validator.
+
+    The bound must be a plain range so it survives into
+    `protocol.schema.json` and `constants.gd` — Godot and the provider see
+    the same restriction the bridge enforces.
+    """
+    models = _protocol_models()
+    for cls_name, field in GOAL_FORBIDDEN:
+        assert _declared_max(models[cls_name], field) == \
+            C.LAST_NON_FINALE_LOCATION_ID, f"{cls_name}.{field} admits the goal"
+    for cls_name, field in GOAL_PERMITTED:
+        assert _declared_max(models[cls_name], field) == C.LAST_LOCATION_ID, \
+            f"{cls_name}.{field} should span the whole location range"
+
+
+def test_no_acquisition_path_accepts_the_goal():
+    """Every way a location can be reserved, stocked, priced, sold or claimed
+    outside the finale Zone, exercised with Check 030."""
+    goal = C.GOAL_LOCATION_ID
+    stock_rest = dict(cost=6, item_name="x", recipient_name="y",
+                      recipient_game="z")
+
+    with pytest.raises(ValidationError):            # shop stock
+        ShopStockItem(location_id=goal, **stock_rest)
+
+    with pytest.raises(ValidationError):            # purchase intent
+        ClientAdapter.validate_python(
+            {"type": "buy_shop_stock", "location_id": goal})
+
+    with pytest.raises(ValidationError, match="never be purchased"):
+        PendingCheck(transaction_id="t", location_id=goal,
+                     source="shop", shop_cost=6)
+
+    with pytest.raises(ValidationError, match="reserved for the finale"):
+        ZoneRecord(zone_id="z", state="PENDING_GENERATION",
+                   allocated_location_ids=[goal], target_game="G",
+                   generation_index=1)
+
+    # ... and the one path that legitimately may.
+    ok = PendingCheck(transaction_id="t", location_id=goal, source="zone")
+    assert ok.shop_cost == 0
+
+
+def test_the_allocator_helper_never_offers_the_goal():
+    """v0.5's docstring on `unlocked_location_ids` read "legal to allocate,
+    goal included" — on the one helper the packet told the allocator and the
+    APWorld to derive from. That is how the shop got Check 030."""
+    for keys in range(0, C.SIGNAL_KEY_COUNT + 2):
+        eligible = C.eligible_location_ids(keys)
+        assert C.GOAL_LOCATION_ID not in eligible
+        # and it is otherwise exactly the reachable set
+        assert eligible == [i for i in C.unlocked_location_ids(keys)
+                            if i != C.GOAL_LOCATION_ID]
+    # The goal is reachable in AP logic; it is only allocation that is barred.
+    assert C.GOAL_LOCATION_ID in C.unlocked_location_ids(C.SIGNAL_KEY_COUNT)
+    assert C.is_goal_location(C.GOAL_LOCATION_ID)
+    assert not C.is_goal_location(C.LAST_NON_FINALE_LOCATION_ID)
+
+
+def test_the_non_finale_range_tracks_the_goal():
+    """The range trick only works while the goal is the last id."""
+    assert C.LAST_NON_FINALE_LOCATION_ID == C.GOAL_LOCATION_ID - 1
+    assert C.GOAL_LOCATION_ID == C.LAST_LOCATION_ID
+    assert len(C.eligible_location_ids(C.TIER_COUNT)) == C.LOCATION_COUNT - 1
+
+
+def test_a_saved_campaign_cannot_claim_the_goal_without_a_finale():
+    """Save/load is an acquisition path too: a save written by a build with
+    the bug, or hand-edited, must not load into a winning campaign."""
+    base = dict(seed_name="S", team=0, slot_id=1, slot_name="Skyiah")
+    with pytest.raises(ValidationError, match="no finale Zone"):
+        CampaignSave(**base, pending_checks=[
+            PendingCheck(transaction_id="t", location_id=C.GOAL_LOCATION_ID,
+                         source="zone")])
+
+    finale = ZoneRecord(zone_id="zone_fin", state="PENDING_GENERATION",
+                        is_finale=True, target_game="Archipepsi",
+                        allocated_location_ids=[C.GOAL_LOCATION_ID],
+                        generation_index=9)
+    ok = CampaignSave(**base, zones={"zone_fin": finale},
+                      active_zone_id="zone_fin",
+                      pending_checks=[PendingCheck(
+                          transaction_id="t", location_id=C.GOAL_LOCATION_ID,
+                          source="zone")])
+    assert ok.zones["zone_fin"].is_finale
+
+
+def test_a_zone_check_is_never_charged_and_a_shop_check_always_is():
+    """Shop and Zone are the paired acquisition paths; the coin accounting
+    must not be able to leak from one into the other."""
+    with pytest.raises(ValidationError, match="never charged"):
+        PendingCheck(transaction_id="t", location_id=89100004,
+                     source="zone", shop_cost=6)
+    with pytest.raises(ValidationError, match="at least one coin"):
+        PendingCheck(transaction_id="t", location_id=89100004,
+                     source="shop", shop_cost=0)
+    with pytest.raises(ValidationError):   # free stock would allow the above
+        ShopStockItem(location_id=89100004, cost=0, item_name="x",
+                      recipient_name="y", recipient_game="z")
+
+
+# ===========================================================================
+# v0.6 — one Zone at a time, across generation as well (D3)
+# ===========================================================================
+#
+# v0.5 had `generation_in_progress` as a free boolean with no mode behind it,
+# so while a Zone sat in PENDING_GENERATION the Hub had to report some other
+# mode and every honest choice was wrong. As above these are censuses: a new
+# HubMode or a new ZoneState fails them until it is classified.
+
+#: Every HubMode, sorted into exactly one bucket.
+MODE_BUCKETS = {
+    "holds_a_zone": ("GENERATING", "ZONE_READY", "ZONE_ACTIVE"),
+    "may_request":  ("ZONE_AVAILABLE", "FINALE_ONLY"),
+    "idle":         ("NO_CAMPAIGN", "WAITING_FOR_AP", "ALL_CHECKS_CLEARED"),
+}
+
+
+def _snapshot(**over):
+    base = dict(bridge_connected=True, ap_connected=True, ap_mode="mock",
+                epsilon_provider="mock", hub=_hub())
+    base.update(over)
+    return CampaignSnapshot(**base)
+
+
+def test_every_hub_mode_is_classified_exactly_once():
+    buckets = [set(v) for v in MODE_BUCKETS.values()]
+    union = set().union(*buckets)
+    assert union == set(HubMode_values()), (
+        "unclassified HubMode(s); a mode that nobody decided about is how "
+        f"D3 happened: {union ^ set(HubMode_values())}")
+    assert sum(len(b) for b in buckets) == len(union), "a mode is in two buckets"
+
+
+def test_holding_a_zone_and_requesting_one_are_disjoint():
+    """The one-Zone-at-a-time rule, stated once and covering both kinds of
+    generation. `RequestNextZone.finale` chooses WHICH Zone, never WHETHER."""
+    assert set(ZONE_HELD_MODES) == set(MODE_BUCKETS["holds_a_zone"])
+    assert set(ZONE_REQUEST_MODES) == set(MODE_BUCKETS["may_request"])
+    assert not set(ZONE_HELD_MODES) & set(ZONE_REQUEST_MODES)
+    for mode in HubMode_values():
+        h = _hub(mode=mode, portal_enabled=mode in (
+            "ZONE_READY", "ZONE_ACTIVE", "ZONE_AVAILABLE", "FINALE_ONLY"),
+            finale_available=mode == "FINALE_ONLY",
+            goal_sent=mode == "ALL_CHECKS_CLEARED",
+            generation_in_progress=mode == "GENERATING")
+        assert h.accepts_zone_request == (mode in ZONE_REQUEST_MODES)
+
+
+def test_generating_is_not_playable_and_invites_nothing():
+    h = _hub(mode="GENERATING", portal_enabled=False,
+             generation_in_progress=True)
+    assert not h.portal_enabled and not h.accepts_zone_request
+    with pytest.raises(ValidationError, match="requires portal_enabled=false"):
+        _hub(mode="GENERATING", portal_enabled=True,
+             generation_in_progress=True)
+
+
+def test_generation_in_progress_cannot_disagree_with_the_mode():
+    """v0.5 tracked it beside the mode, so the two could differ. A boolean
+    that can disagree with the state it describes eventually does."""
+    with pytest.raises(ValidationError, match="exactly in mode GENERATING"):
+        _hub(mode="GENERATING", portal_enabled=False,
+             generation_in_progress=False)
+    with pytest.raises(ValidationError, match="exactly in mode GENERATING"):
+        _hub(mode="ZONE_AVAILABLE", generation_in_progress=True)
+
+
+def test_the_finale_is_not_offered_during_generation_either():
+    """v0.5's guard listed ZONE_READY and ZONE_ACTIVE only, so the finale
+    could be offered on top of an ordinary Zone that was still being built —
+    and taking it stranded that Zone's Checks."""
+    # Iterate the literal bucket, not ZONE_HELD_MODES: a test that derives
+    # its own cases from the constant under test passes when that constant
+    # loses an entry, which is the exact regression this guards.
+    for mode in MODE_BUCKETS["holds_a_zone"]:
+        with pytest.raises(ValidationError, match="finish or abandon"):
+            _hub(mode=mode, portal_enabled=mode != "GENERATING",
+                 generation_in_progress=mode == "GENERATING",
+                 finale_available=True)
+
+
+def test_every_non_terminal_zone_state_pins_exactly_one_hub_mode():
+    """The snapshot is where the two descriptions of 'what is happening' meet,
+    so it is where they are made to agree."""
+    want = {"PENDING_GENERATION": "GENERATING",
+            "GENERATED": "ZONE_READY", "ACTIVE": "ZONE_ACTIVE"}
+    states = [s for s in typing_args_of_zone_state()
+              if s not in P.TERMINAL_ZONE_STATES]
+    assert set(states) == set(want), (
+        f"unclassified ZoneState(s): {set(states) ^ set(want)}")
+
+    for state, mode in want.items():
+        rec = (ZoneRecord(zone_id="zone_001", state=state,
+                          allocated_location_ids=[89100001], target_game="G",
+                          generation_index=1)
+               if state == "PENDING_GENERATION" else _record(state=state))
+        ok = _snapshot(active_zone=rec, hub=_hub(
+            mode=mode, portal_enabled=mode != "GENERATING",
+            generation_in_progress=mode == "GENERATING"))
+        assert ok.hub.mode == mode
+
+        for other in want.values():
+            if other == mode:
+                continue
+            with pytest.raises(ValidationError, match="so mode must be"):
+                _snapshot(active_zone=rec, hub=_hub(
+                    mode=other, portal_enabled=other != "GENERATING",
+                    generation_in_progress=other == "GENERATING"))
+
+
+def typing_args_of_zone_state():
+    import typing
+    return typing.get_args(P.ZoneState)
+
+
+def test_a_mode_that_claims_a_zone_must_have_one():
+    for mode in MODE_BUCKETS["holds_a_zone"]:
+        with pytest.raises(ValidationError, match="active_zone is null"):
+            _snapshot(hub=_hub(mode=mode, portal_enabled=mode != "GENERATING",
+                               generation_in_progress=mode == "GENERATING"))
+
+
+def test_a_terminal_zone_is_never_presented_as_active():
+    """COMPLETE and ABANDONED reserve nothing. Showing one as the active Zone
+    is how a released allocation looks like a held one."""
+    for state in P.TERMINAL_ZONE_STATES:
+        with pytest.raises(ValidationError, match="reserves nothing"):
+            _snapshot(active_zone=_record(state=state),
+                      hub=_hub(mode="ZONE_AVAILABLE"))
+
+
+def test_holding_finale_is_not_a_second_opinion():
+    """Ordinary vs finale, the paired path: one fact, one source."""
+    rec = _record(state="ACTIVE")
+    with pytest.raises(ValidationError, match="holding_finale must describe"):
+        _snapshot(active_zone=rec,
+                  hub=_hub(mode="ZONE_ACTIVE", holding_finale=True))
+
+    fin_zone = Zone.model_validate(_zone(
+        zone_id="zone_fin",
+        chambers=[{"id": "c1", "type": "treasure_room",
+                   "reward_location_id": C.GOAL_LOCATION_ID}]))
+    fin = ZoneRecord(zone_id="zone_fin", state="ACTIVE", is_finale=True,
+                     allocated_location_ids=[C.GOAL_LOCATION_ID],
+                     target_game="Archipepsi", generation_index=9,
+                     zone=fin_zone)
+    with pytest.raises(ValidationError, match="holding_finale must describe"):
+        _snapshot(active_zone=fin, hub=_hub(mode="ZONE_ACTIVE"))
+    ok = _snapshot(active_zone=fin, hub=_hub(mode="ZONE_ACTIVE",
+                                             holding_finale=True))
+    assert ok.hub.holding_finale
+
+
+def test_a_pending_generation_that_failed_can_be_abandoned():
+    """v0.5 required an accepted Zone in every non-pending state, so
+    'the provider timed out, give the locations back' was unrepresentable —
+    inside the state added to break exactly that kind of deadlock."""
+    rec = ZoneRecord(zone_id="zone_007", state="ABANDONED",
+                     allocated_location_ids=[89100011, 89100012],
+                     target_game="G", generation_index=7)
+    assert rec.zone is None and not rec.holds_locations
+    with pytest.raises(ValidationError, match="no accepted zone yet"):
+        _record(state="PENDING_GENERATION")
+
+
+def test_the_new_invariants_survive_post_parse_mutation():
+    """Parse-time vs post-parse is the other paired path.
+
+    Every v0.6 rule lives in a `mode="after"` model validator, and
+    `validate_assignment=True` re-runs those on assignment. Without this the
+    fixes would hold only for messages parsed off the wire and not for state
+    the bridge mutates in place.
+    """
+    snap = _snapshot(active_zone=_record(state="ACTIVE"),
+                     hub=_hub(mode="ZONE_ACTIVE"))
+    with pytest.raises(ValidationError, match="so mode must be"):
+        snap.hub = _hub(mode="ZONE_AVAILABLE")
+
+    item = ShopStockItem(location_id=89100005, cost=2, item_name="x",
+                         recipient_name="y", recipient_game="z")
+    with pytest.raises(ValidationError):
+        item.location_id = C.GOAL_LOCATION_ID
+
+    pending = PendingCheck(transaction_id="t", location_id=89100004,
+                           source="shop", shop_cost=4)
+    with pytest.raises(ValidationError, match="never be purchased"):
+        pending.location_id = C.GOAL_LOCATION_ID
+
+    hub = _hub(mode="GENERATING", portal_enabled=False,
+               generation_in_progress=True)
+    with pytest.raises(ValidationError, match="exactly in mode GENERATING"):
+        hub.generation_in_progress = False
+
+    rec = ZoneRecord(zone_id="zone_001", state="PENDING_GENERATION",
+                     allocated_location_ids=[89100001], target_game="G",
+                     generation_index=1)
+    with pytest.raises(ValidationError, match="reserved for the finale"):
+        rec.allocated_location_ids = [C.GOAL_LOCATION_ID]

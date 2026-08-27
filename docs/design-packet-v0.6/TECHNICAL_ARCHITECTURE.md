@@ -1,4 +1,4 @@
-# Archipepsi — Technical Architecture (v0.5)
+# Archipepsi — Technical Architecture (v0.6)
 
 Process boundaries, the Archipelago dependency, the Godot↔bridge protocol, campaign state ownership, persistence, transactions, failure behavior, security, and logging.
 
@@ -215,8 +215,21 @@ v0.3 was organized entirely around "a crash must never corrupt the campaign" and
 
 ```
 PENDING_GENERATION → GENERATED → ACTIVE → COMPLETE
-                                        \→ ABANDONED
+        \                     \        \→ ABANDONED
+         \                     \→ ABANDONED
+          \→ ABANDONED   (generation failed past repair and fallback)
 ```
+
+A record is `PENDING_GENERATION` **iff** it has no accepted `zone` yet, and
+`ABANDONED` is the one other state allowed to have none. v0.5 required content
+in every non-pending state, which made the leftmost arrow above
+unrepresentable — a Zone whose generation failed outright could not be
+abandoned, inside the state added to break exactly that deadlock.
+
+Accepting a Zone is one atomic transition: build a fresh `ZoneRecord` with the
+new `state` and `zone` together. Assigning them one at a time is rejected
+(`validate_assignment=True`), and `model_copy(update=...)` skips validation
+entirely — do not use it here.
 
 `allocated_location_ids` is populated at `PENDING_GENERATION`, **before** the provider is called, and saved. This closes the v0.3 crash window: a Zone recorded as allocated-but-ungenerated re-runs generation against its committed IDs on load and never re-allocates. It also means those locations are visible to the shop's eligibility check, which in v0.3 excluded only locations "assigned to current saved Zone" — a Zone that did not exist yet.
 
@@ -242,7 +255,7 @@ Handle every state explicitly:
 
 | On load | Action |
 |---|---|
-| `PENDING_GENERATION` | re-run generation against its **already-committed** ids; never re-allocate |
+| `PENDING_GENERATION` | the Hub shows `GENERATING` with the portal disabled. Re-run generation against its **already-committed** ids; never re-allocate. If generation fails past repair *and* fallback, move it to `ABANDONED` — allowed with no `zone` — which returns its locations to the pool |
 | `GENERATED` | resumable. `active_zone_id` points at it, the Hub shows `ZONE_READY`. **Never silently orphan it** |
 | `ACTIVE` | resume; if every Check is confirmed, run the completion procedure |
 | `COMPLETE` / `ABANDONED` | terminal; its locations are back in the pool |

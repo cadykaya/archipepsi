@@ -1,4 +1,4 @@
-# Archipepsi — Still Open After v0.5
+# Archipepsi — Still Open After v0.6
 
 v0.3 listed nine product questions; v0.4 closed them. v0.5 closed the pass-3 findings and three more product decisions (postgame, visual target, terminology). See `CHANGELOG_v0.4_to_v0.5.md`.
 

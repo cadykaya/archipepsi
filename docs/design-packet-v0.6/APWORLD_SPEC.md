@@ -1,4 +1,4 @@
-# Archipepsi — APWorld Specification (v0.5)
+# Archipepsi — APWorld Specification (v0.6)
 
 Authority for the Archipepsi APWorld: locations, items, regions, logic, slot data, packaging, and the recommended YAML.
 
@@ -60,6 +60,8 @@ class ArchipepsiWorld(World):
 
 The bridge mirrors this tier structure when deciding eligibility. **The mirror is `schemas/constants.py`: `TIER_BOUNDS`, `tier_of()`, `locations_in_tier()`, `unlocked_location_ids()`.** Build the regions from those functions and derive the slot-data `tiers` block from them too, so the mapping exists once rather than four times. (v0.4 pointed at a `TIER_BOUNDS` that was never defined, which guaranteed the opposite.)
 
+**`unlocked_location_ids()` is the APWorld's function, not the bridge allocator's.** It answers "is this location reachable in Archipelago logic", so it includes Check 030 — correct here, because to Archipelago the goal is an ordinary Tier 2 location. The runtime's allocator and shop call **`eligible_location_ids()`** instead, which is the same set minus the goal. v0.5 described the first function as "legal to allocate ... goal included" and told both callers to derive from it; that sentence is how the shop ended up able to sell the goal. The two functions are deliberately named differently and the goal-free one is the one every allocation path uses.
+
 ---
 
 # 4. Items
@@ -109,7 +111,7 @@ Small client-required seed information only. Location→item placements are obta
 
 ```json
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "location_ids": [89100001, "...", 89100030],
   "tiers": {
     "0": [89100001, "...", 89100010],
@@ -200,7 +202,7 @@ Assert in `apworld/tests`:
 - the Victory event exists, is unaddressed, and sits in Tier 2
 - `completion_condition` uses the Victory item
 - Check 030 is in Tier 2
-- slot data is schema version 5 and contains no placements
+- slot data is schema version 6 and contains no placements
 - the world generates end-to-end, solo
 - the world generates in a multiworld alongside another world with `non_local_items: Epsilon Coin`
 - `.apworld` packaging succeeds and the manifest validates

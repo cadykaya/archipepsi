@@ -1,4 +1,4 @@
-# Archipepsi — Epsilon Contract (v0.5)
+# Archipepsi — Epsilon Contract (v0.6)
 
 Authority for runtime generation. Epsilon is a designer operating inside an allowlisted data contract, never a runtime programmer.
 
@@ -78,7 +78,7 @@ A theme is a validated **late-90s FPS material set**, not generated art:
 | `temple_ruin` | cracked sandstone, root intrusion, brass fittings |
 | `void_glitch` | untextured dev surfaces, missing-texture checker |
 
-Each defines floor / wall / accent / trim colours, a sky-or-void colour, and light colour and energy. **Textures are generated procedurally in code** — `Image.create()` at `TEXTURE_SIZE_DEFAULT` (64×64, bounded 32–128), `NEAREST` filtering. Noise, grime, panel lines, tile grids, hazard stripes. No image files, no asset-pack searching, no Blender — see `DESIGN.md` §20.
+Each theme's actual numbers are **`THEME_MATERIALS` in `constants.py`** — base / accent / trim colour, light colour and energy, roughness, and the name of the procedural noise generator to use. Do not invent them per theme; v0.5 named the six themes and described them only in prose, which left roughly forty values to be guessed and six themes likely to render identically. `THEME_MATERIAL_KEYS` pins the field set, and `export.py` puts the whole table into `constants.gd` so Godot reads the same values. **Textures are generated procedurally in code** — `Image.create()` at `TEXTURE_SIZE_DEFAULT` (64×64, bounded 32–128), `NEAREST` filtering. Noise, grime, panel lines, tile grids, hazard stripes. No image files, no asset-pack searching, no Blender — see `DESIGN.md` §20.
 
 Geometry is prisms, wedges and ramps as much as boxes. A room built only from axis-aligned cubes reads as Minecraft, which is precisely the thing to avoid.
 
@@ -102,7 +102,7 @@ Defined by `schemas/zone.py`. Example:
 
 ```json
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "zone_id": "zone_003",
   "display_name": "Cathedral of Excessive Firepower",
   "target_game": "Dark Souls III",
@@ -191,7 +191,7 @@ Numeric bounds are in `schemas/echo.py`. Out-of-bounds values are rejected, not 
 
 ```json
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "zone_id": "zone_003",
   "generation_id": "ExampleSeed-0-6-zone-003",
   "campaign": {
@@ -245,7 +245,7 @@ Numeric bounds are in `schemas/echo.py`. Out-of-bounds values are rejected, not 
 
 ```json
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "source": {
     "location_id": 89100001,
     "item_name": "Conference Call",
@@ -280,7 +280,7 @@ Numeric bounds are in `schemas/echo.py`. Out-of-bounds values are rejected, not 
 
 ## 11.1 Zone system instruction
 
-> You are Epsilon, the procedural level designer inside Archipepsi. You are given a small fixed set of Archipelago locations that MUST all appear exactly once in the Zone. Those location IDs were selected by deterministic game code; you may not add, remove, replace, reserve, or renumber them. Design a short blocky first-person Zone using only the supplied themes, chamber templates, enemies, objectives, and numeric fields. You are producing structured data, not executable code. Use the recipient game as strong thematic inspiration. You may use unrevealed item identity privately as design inspiration, but never place an unrevealed exact item name in player-facing text. Account for the player's owned Echoes and make them fun to use, but every mandatory path must remain completable with base walking, base jumping, and the default attack — never require an Echo. Prefer a coherent little videogame idea over random nonsense. Return only one schema-valid Zone object.
+> You are Epsilon, the procedural level designer inside Archipepsi. You are given a small fixed set of Archipelago locations that MUST all appear exactly once in the Zone. Those location IDs were selected by deterministic game code; you may not add, remove, replace, reserve, or renumber them. Design a short late-1990s-PC-FPS Zone — GoldSrc/Quake-era brushwork, chunky industrial rooms, harsh lighting — using only the supplied themes, chamber templates, enemies, objectives, and numeric fields. You are producing structured data, not executable code. Use the recipient game as strong thematic inspiration. You may use unrevealed item identity privately as design inspiration, but never place an unrevealed exact item name in player-facing text. Account for the player's owned Echoes and make them fun to use, but every mandatory path must remain completable with base walking, base jumping, and the default attack — never require an Echo. Prefer a coherent little videogame idea over random nonsense. Return only one schema-valid Zone object.
 
 Quality preferences: 2–5 chambers is usually enough; avoid the same chamber type three times in a row; at most one brute; give every supplied Check a real payoff moment; design opportunities for a featured Echo without requiring it; humor sparingly and coherently; do not explain your reasoning in the output.
 
@@ -335,7 +335,7 @@ corridor → arena/check → corridor → platform_path/check → arena(brute)/c
 
 trimmed to the number of allocated Checks. Theme chosen by `THEME_BY_GAME_HINT[target_game]`, falling back to a hash. No model required. Must always produce a schema-valid, semantically-valid Zone.
 
-The finale fallback is a single `arena` containing one `brute` and Check 030.
+The finale fallback is a single `arena` containing one `brute` and Check 030. Note that neither fallback allocates anything: `allocated_location_ids` is committed before any provider is called, and both the live and fallback paths are validated against the same set by `validate_zone()`. The finale's set is `[GOAL_LOCATION_ID]` and only ever reaches a `ZoneRecord` with `is_finale=True`; there is no path by which a fallback can put Check 030 into an ordinary Zone.
 
 ## 12.2 Fallback Echo
 
