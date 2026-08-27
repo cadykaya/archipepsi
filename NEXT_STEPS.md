@@ -45,6 +45,20 @@ refused). The bridge is also proven against a real Archipelago 0.6.7 server
   reconnects reuse server truth; anthropic pin >=1.0. Three new bridge
   regression tests (188 total).
 
+## Also completed: enemies, props, ambience, mock designer
+- Enemy collision recovery (displacement-based, alternating sides) and the
+  brute's telegraphed slam.
+- Theme-signature props per theme, gated so colliding floor props never
+  narrow a corridor below the brute's lane (tested).
+- Procedural room-tone hum, Hub at pitch 1.0, Zones per theme.
+- **Mock Epsilon is a real designer now**: six reward-chamber shapes drawn
+  without replacement, themed enemy mixes, a one-per-Zone boss room,
+  authored designer notes, independent naming stream. The *fallback* keeps
+  the packet's pinned shape (§12.1) — that one is not ours to improve.
+- **Second adversarial review** of the bends/props/enemy work, all findings
+  fixed (the sidestep never fired; brute froze mid-telegraph; corner walls
+  z-fought; exit room unchecked; connectors shared a greeble seed).
+
 ## Also completed: non-linear zone layouts
 90° corner pieces with alternating turns, exact rotated-AABB overlap
 guards, and forward-push clearance; chamber transforms flow through to
@@ -59,11 +73,12 @@ and that bends actually occur. (Test L against a real server is also done
 2. Live-fire the Claude provider once an ANTHROPIC_API_KEY is present
    (`EPSILON_PROVIDER=claude make bridge`); offline stub tests cover the
    mechanics but a real generation archive would be gold.
-3. More per-theme differentiation inside chambers (theme-specific prop
-   picks: torch sconces for gothic_stone, hanging signs for neon_transit,
-   roots for temple_ruin) — the greeble pass is currently theme-tinted but
-   shape-identical.
-4. A Hub ambient hum (procedural loop) and per-theme zone ambience.
+3. A generation-archive replay tool (`--archive-dir` already writes them):
+   re-validate every archived generation against current schemas. This is
+   the EPSILON_SPEC §14 local-model migration guard, and nothing reads the
+   archive yet.
+4. Echo cooldown as a HUD bar rather than a number; reveal card tinted by
+   the recipient game's theme.
 
 ## Known blockers / bugs
 - None known. One recorded schema corner: `finale_offered` stays true in

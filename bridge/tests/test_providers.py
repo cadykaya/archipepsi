@@ -109,6 +109,54 @@ def test_fallback_zone_valid_for_all_check_counts():
                              owned_echo_ids=[]) == []
 
 
+def test_mock_provider_zones_are_varied_and_always_valid():
+    """Mock Epsilon designs real shapes. Every one must still satisfy the
+    same validators as live model output, at every Check count, for many
+    seeds — and the set must actually vary."""
+    from archipepsi_bridge.epsilon import MockEpsilonProvider
+
+    async def scenario():
+        provider = MockEpsilonProvider()
+        adapter = TypeAdapter(Zone)
+        shapes_seen: set[str] = set()
+        names_seen: set[str] = set()
+        for seed_index in range(30):
+            for count in (1, 2, 3):
+                ids = [89100001 + i for i in range(count)]
+                request = zone_request(tuple(ids))
+                request = request.model_copy(update={
+                    "zone_id": f"zone_{seed_index:03d}"})
+                raw = await provider.generate_zone(request)
+                zone = adapter.validate_python(raw)
+                assert validate_zone(
+                    zone, expected_zone_id=request.zone_id,
+                    allocated_location_ids=ids, owned_echo_ids=[]) == []
+                shapes_seen.add("|".join(c.type for c in zone.chambers))
+                names_seen.add(zone.display_name)
+        assert len(shapes_seen) > 10, (
+            f"mock zones barely vary: {len(shapes_seen)} distinct shapes")
+        assert len(names_seen) > 10
+    run(scenario())
+
+
+def test_mock_finale_keeps_the_reserved_shape():
+    from archipepsi_bridge.epsilon import MockEpsilonProvider
+
+    async def scenario():
+        request = zone_request((C.GOAL_LOCATION_ID,))
+        request = request.model_copy(update={
+            "campaign": request.campaign.model_copy(
+                update={"is_finale": True})})
+        raw = await MockEpsilonProvider().generate_zone(request)
+        zone = TypeAdapter(Zone).validate_python(raw)
+        assert zone.reward_location_ids == [C.GOAL_LOCATION_ID]
+        assert validate_zone(
+            zone, expected_zone_id=request.zone_id,
+            allocated_location_ids=[C.GOAL_LOCATION_ID],
+            owned_echo_ids=[]) == []
+    run(scenario())
+
+
 def test_fallback_echo_heuristics_all_valid():
     echo_adapter = TypeAdapter(Echo)
     names = ["Conference Call", "Master Sword", "Hookshot", "Jet Boots",
