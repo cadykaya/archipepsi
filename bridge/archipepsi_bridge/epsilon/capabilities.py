@@ -22,7 +22,12 @@ from ..schemas.echo import EchoInterpretation
 # follows is everything else about the shape of an interpretation, and S2
 # moves none of it: the wider systems are still ahead.
 IMPLEMENTED_OPERATION_KINDS = ("create",)
-IMPLEMENTED_COMPONENT_KINDS = ("action", "trait")
+#: S3 added "resource": the fifteen HUD channels exist, so a Resource is
+#: now a thing the client can render and tick rather than a definition
+#: nothing reads. What it still cannot do is get SPENT — costs are rules
+#: (S4) and `powers`/`fills` links are S5 — which is why no Action verb
+#: un-gates alongside it. See DEFERRED_PRIMITIVES.
+IMPLEMENTED_COMPONENT_KINDS = ("action", "trait", "resource")
 IMPLEMENTED_TRAIT_STATS = ("gravity", "move_speed")
 
 #: Still one slot, and this is the line people will reach for first when

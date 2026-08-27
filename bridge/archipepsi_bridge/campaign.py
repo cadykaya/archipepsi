@@ -24,7 +24,7 @@ from .epsilon import (
 from .epsilon.requests import EchoPlayerState, EchoSource
 from .schemas import constants as C
 from .schemas import transitions as T
-from .schemas.mechanics import Mechanics
+from .schemas.mechanics import Mechanics, derive_mechanics
 from .schemas.protocol import (
     CampaignSave, CampaignSnapshot, HubStatus, Notification, ScoutedLocation,
     ShopState, SlotAssignment, ZoneReady, ZoneRecord,
@@ -698,6 +698,7 @@ class CampaignEngine:
             self.provider.creativity = save.epsilon_creativity
             outcome = await generate_echo_validated(
                 self.provider, self._echo_request(location_id),
+                mechanics=derive_mechanics(self.save.interpretations),
                 archive_dir=self.archive_dir)
             self._apply(T.append_interpretation(self.save, outcome.value))
             if outcome.used_fallback and self.provider_name != "fallback":

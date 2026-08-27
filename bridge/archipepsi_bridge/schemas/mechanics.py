@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from typing import Literal, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 try:
     from . import echo as E
@@ -129,6 +129,44 @@ class Mechanics(Strict):
     @property
     def actions(self) -> tuple[OwnedComponent, ...]:
         return self.of_kind("action")
+
+    @computed_field
+    @property
+    def channel_order(self) -> tuple[str, ...]:
+        """Resource ids in HUD-channel order, serialized for the client.
+
+        The client must not work this out for itself. It could — the list is
+        already ordered — but "which resource is channel 3" would then be
+        derived in two languages, and the fold exists precisely so that the
+        one thing that must be identical everywhere is computed once. Godot
+        owns where channel 3 is DRAWN; this owns what channel 3 IS.
+        """
+        return tuple(o.component_id for o in self.of_kind("resource"))
+
+    @property
+    def resources(self) -> tuple[OwnedComponent, ...]:
+        """Resources in channel order, which is creation order.
+
+        `owned` is already in `interpretation_seq` ascending, so this needs
+        no sort of its own — and must not have one. Ordering resources by
+        anything else (name, palette, id) would relay out the dashboard the
+        moment an unrelated Echo arrived.
+        """
+        return self.of_kind("resource")
+
+    def channel_of(self, component_id: str) -> int | None:
+        """Which of the fifteen pre-laid HUD channels a resource occupies.
+
+        Derived rather than stored: a channel index that lived on the
+        component could disagree with the fold after a MERGE, and there is
+        no version of that disagreement the client could resolve. Godot owns
+        where channel N is drawn; this owns which resource IS channel N.
+        """
+        target = self.resolve(component_id)
+        for index, owned in enumerate(self.resources):
+            if owned.component_id == target:
+                return index
+        return None
 
     @property
     def affordance_tags(self) -> tuple[str, ...]:

@@ -4,6 +4,8 @@ extends CanvasLayer
 
 var _hp_label: Label
 var _echo_label: Label
+## The fifteen pre-laid resource channels (ECHOES.md 7).
+var meters: ResourceMeters
 var _prompt_label: Label
 var _toast_box: VBoxContainer
 var _crosshair: Label
@@ -113,6 +115,20 @@ func _ready() -> void:
 	bottom_left.offset_top = -100.0
 	bottom_left.offset_left = 18.0
 	add_child(bottom_left)
+
+	# The fifteen channels sit ABOVE hp and the Echo label, in their own
+	# container, and grow upward. Putting them below would let a newly
+	# granted Resource push the two readings you actually need under
+	# pressure -- health and which Echo is bound -- to a different place on
+	# the screen mid-fight.
+	meters = ResourceMeters.new()
+	meters.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	meters.offset_left = 18.0
+	meters.offset_top = -420.0
+	meters.offset_bottom = -104.0
+	meters.alignment = BoxContainer.ALIGNMENT_END
+	add_child(meters)
+
 	_hp_label = Label.new()
 	_hp_label.add_theme_font_size_override("font_size", 26)
 	bottom_left.add_child(_hp_label)

@@ -629,7 +629,7 @@ leaves it half-migrated.
 | | Stage | Ships |
 | --- | --- | --- |
 | **S1** | Schema v8, the fold, migration | No new mechanics. v7 Echoes migrate and play identically. Sequence assignment, alias resolution, target-liveness checks. The riskiest stage, done first and alone. |
-| **S2** | Action primitive catalog | §6 plus the action runner. The first stage the player can feel. Landed 21 of the 28 verbs: the other seven are not deferrals of effort but of *stage* — three `POWERED_PRIMITIVES` and `restore_resource` need a Resource to drain or refill (S3), `scan_mark` and `cleanse` need statuses (S5), and `pull_pickup` needs local rewards (S9). `IMPLEMENTED_PRIMITIVES` and `DEFERRED_PRIMITIVES` partition the catalog so a verb cannot go missing from both. |
+| **S2** | Action primitive catalog | §6 plus the action runner. The first stage the player can feel. Landed 21 of the 28 verbs: the other seven are not deferrals of effort but of *stage* — three `POWERED_PRIMITIVES` and `restore_resource` need a Resource **and** a `powers`/`fills` link, so they land with the links in S5; `scan_mark` and `cleanse` need statuses (S5); `pull_pickup` needs local rewards (S9). S3 therefore un-gates no verb on its own. `IMPLEMENTED_PRIMITIVES` and `DEFERRED_PRIMITIVES` partition the catalog so a verb cannot go missing from both. |
 | **S3** | Resources + HUD channels | Channel assignment, safe palette, source glyphs, contextual visibility, provenance in the inventory. |
 | **S4** | Rule engine | Events, conditions, costs, effects, edge derivation, deferred dispatch, cooldowns and caps. |
 | **S5** | Traits, links, statuses | Derived stat stack with clamps; the four link kinds; player and enemy statuses. |

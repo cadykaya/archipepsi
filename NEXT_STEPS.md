@@ -173,8 +173,55 @@ difference.
   compiles every script, and a broken action runner printed `GODOT CHAMBER
   TESTS OK` while the game refused to load.
 
-**Next: S3** — resources and the HUD channels (`IMPLEMENTATION_PLAN.md`
-§2.5). That stage also un-gates four of the seven deferred verbs.
+## Echoes 2.0 — S3 in progress (resources and the HUD channels)
+
+**Landed and green** (241 pytest, chamber, blink, full integration):
+
+- **A correction to S2.** `DEFERRED_PRIMITIVES` said `beam_sustained`,
+  `hover`, `block` and `restore_resource` un-gate at S3. They do not: none
+  of them names the resource it uses, `powers`/`fills` are LINK kinds, and
+  links are S5. **S3 un-gates no verb on its own.** Fixed in the schema and
+  the packet.
+- **Channel assignment lives in the fold.** `Mechanics.channel_of()` and a
+  serialized `channel_order` computed field, ordered by `interpretation_seq`
+  and nothing else. Godot reads the order rather than re-deriving it.
+- **Contextual budgets (§16).** `budget_errors()` counts campaign totals at
+  grant time — the one rule that cannot be enforced per-interpretation. The
+  hard resource budget and `HUD_CHANNELS` are the *same constant*, because a
+  sixteenth resource would have nowhere to render. `over_soft_budget()`
+  steers the request toward `UPGRADE`/`LINK`/`MERGE` first.
+- **The fifteen pre-laid channels.** `ResourceMeters` builds all fifteen rows
+  once and never reflows; `ResourcePalette` holds the safe light/dark pairs
+  and the deterministic source glyph; `ResourcePool` holds current values,
+  ticks regen/decay, and resets on Zone entry only (§22 — never saved).
+- **The fallback makes real channels** (`magic`/`mana`, `stamina`/`vigor`),
+  so the grant → fold → channel → snapshot → HUD path is exercised by the
+  integration run rather than only by unit tests.
+
+**Still to do for S3:**
+
+1. **No test yet for the pressure valve** (§7 contextual visibility): a
+   channel should collapse to an idle strip when full and irrelevant, and
+   expand when it changes. `ResourceMeters` implements it; nothing proves it.
+2. **No test that the palette avoids the reserved HUD semantics.**
+   `ResourcePalette.RESERVED` names damage/danger/confirmation and the
+   comment claims no palette hue collides with them — unverified. Assert a
+   minimum colour distance.
+3. **Source glyph determinism is untested.** It uses a character sum rather
+   than `hash()` deliberately (GDScript's hash is not a cross-version
+   contract); pin it.
+4. **`_is_cost_of_slotted_action` cannot return true until S5** — it reads
+   `powers`/`fills` links that no operation can create yet. Correct, but it
+   means one third of the relevance rule is currently dead. Worth a note or
+   a test that turns on with S5.
+5. **Provenance in the archive** (the stage's last listed deliverable) is
+   not done.
+6. Consider whether `EchoGenerationRequest` should carry `over_soft_budget`
+   — the function exists and nothing calls it yet.
+
+**Then: S4** — the rule engine, which is what finally *spends* a resource.
+
+
 
 ## Next useful work
 1. **Play-feel pass on real hardware** — the manual checks in

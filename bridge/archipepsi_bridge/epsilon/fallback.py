@@ -138,6 +138,51 @@ def _primary(request: EchoGenerationRequest, *, archetype: str, cooldown: float,
     }]}
 
 
+def _primary_and_resource(
+        request: EchoGenerationRequest, *, archetype: str, cooldown: float,
+        initiator: dict, resource: dict, description: str,
+        tags: list[str]) -> dict:
+    """One Action and one Resource, from one item.
+
+    The recorded S1 decision is that the fallback stays deliberately boring,
+    and this does not breach it: still `CREATE` only, still no links, merges
+    or rules, still nothing that can dangle a target or fail a fold. What it
+    adds is a second component from a single interpretation, which is the
+    only way the resource pipeline — grant, fold, channel assignment,
+    snapshot, HUD — is exercised end to end by the integration run.
+
+    Nothing SPENDS these yet: costs are rules (S4) and `powers`/`fills`
+    links are S5. A full, unspent channel is not a bug, it is §7's pressure
+    valve doing its job — it collapses to an idle strip until something
+    makes it relevant. Starting below full with a slow regen is what makes
+    that visible instead of theoretical.
+    """
+    src = request.source
+    return {**_common(request, description, tags), "operations": [
+        {
+            "op": "create",
+            "component": {
+                "kind": "action",
+                "component_id": MG.component_id_for("act", src.location_id),
+                "display_name": _clamp(src.item_name, C.MAX_TEXT_LEN),
+                "description": _clamp(description, C.MAX_TEXT_LEN),
+                "slot": MG.ARCHETYPE_SLOT.get(archetype, "echo_a"),
+                "cooldown": cooldown,
+                "primitive": initiator,
+                "modifiers": [],
+            },
+        },
+        {
+            "op": "create",
+            "component": {
+                "kind": "resource",
+                "component_id": MG.component_id_for("res", src.location_id),
+                **resource,
+            },
+        },
+    ]}
+
+
 def _passive(request: EchoGenerationRequest, *, effects: list[dict],
              description: str, tags: list[str]) -> dict:
     """One CREATE per passive, each a Trait. Traits are always on, so a
@@ -202,6 +247,34 @@ def fallback_echo(request: EchoGenerationRequest) -> dict:
                        "descent_force": 20.0},
             description="Only works from up there. Bring yourself down hard.",
             tags=["melee", "slam"])
+    if has("magic", "mana", "ether", "spell", "meter", "essence"):
+        return _primary_and_resource(
+            request, archetype="weapon", cooldown=0.5,
+            initiator={"type": "charge_shot", "min_damage": 5.0,
+                       "max_damage": 34.0, "charge_time": 1.0, "speed": 28.0},
+            resource={
+                "display_name": "MP",
+                "description": "A meter, reinterpreted as a meter.",
+                "max_value": 100.0, "initial_fraction": 0.35,
+                "regen_per_second": 4.0, "regen_delay": 1.0,
+                "presentation": "bar", "palette_color": "tide",
+            },
+            description="A meter and something to spend it on, eventually.",
+            tags=["magic", "resource"])
+    if has("stamina", "vigor", "endurance", "breath"):
+        return _primary_and_resource(
+            request, archetype="mobility", cooldown=1.2,
+            initiator={"type": "dash", "force": 13.0},
+            resource={
+                "display_name": "STAMINA",
+                "description": "Spent on moving, in a world that allows it.",
+                "max_value": 60.0, "initial_fraction": 0.5,
+                "regen_per_second": 8.0, "regen_delay": 0.6,
+                "presentation": "pips", "pip_count": 6,
+                "palette_color": "moss",
+            },
+            description="Borrowed wind. It comes back on its own.",
+            tags=["stamina", "resource"])
     if has("staff", "wand", "charge", "rod", "focus"):
         return _primary(
             request, archetype="weapon", cooldown=0.5,

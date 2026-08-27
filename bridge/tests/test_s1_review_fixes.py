@@ -59,21 +59,39 @@ def _interpretation_with(component: dict) -> EchoInterpretation:
     })
 
 
-def test_s1_request_advertises_only_mechanics_the_runtime_can_execute():
+def test_the_request_advertises_only_mechanics_the_runtime_can_execute():
+    """The prompt and the validator must read the same registry.
+
+    Written against `capabilities` rather than against a hardcoded list on
+    purpose. The literal version had to be edited every time a stage landed,
+    and a test you edit to make it pass is a test that eventually gets
+    edited into agreeing with a bug. What matters is not which kinds are
+    allowed today but that the request never advertises something
+    validation would then refuse.
+    """
     allowed = _request().allowed
-    assert allowed["operations"] == ["create"]
-    assert allowed["component_kinds"] == ["action", "trait"]
-    assert allowed["slots"] == ["echo_a"]
-    assert allowed["modifiers"] == ["recoil_self", "knockback_target"]
-    assert allowed["trait_stats"] == ["gravity", "move_speed"]
+    assert allowed["operations"] == list(CAP.IMPLEMENTED_OPERATION_KINDS)
+    assert allowed["component_kinds"] == list(CAP.IMPLEMENTED_COMPONENT_KINDS)
+    assert allowed["slots"] == list(CAP.IMPLEMENTED_ACTION_SLOTS)
+    assert allowed["modifiers"] == list(CAP.IMPLEMENTED_MODIFIER_TYPES)
+    assert allowed["trait_stats"] == list(CAP.IMPLEMENTED_TRAIT_STATS)
+    # ...and the registry is a real subset of the contract, not a copy of
+    # it, or the assertions above would hold vacuously once it stopped
+    # gating anything.
+    from archipepsi_bridge.schemas import echo as E
+    assert set(CAP.IMPLEMENTED_COMPONENT_KINDS) < set(E.COMPONENT_KINDS)
+    assert set(CAP.IMPLEMENTED_ACTION_SLOTS) < set(E.SLOT_NAMES)
 
 
 def test_s1_stage_gate_rejects_schema_valid_noops():
+    # S3 landed the fifteen HUD channels, so a Resource is no longer a
+    # definition nothing reads and the gate S1.1 put on it is retired.
+    # Asserting it is ACCEPTED is what stops it being reintroduced.
     resource = _interpretation_with({
         "kind": "resource",
         "component_id": "res_test",
         "display_name": "MP",
-        "description": "Not live until the resource stage.",
+        "description": "A channel the HUD can actually draw.",
         "max_value": 100,
         "initial_fraction": 1.0,
         "regen_per_second": 0.0,
@@ -81,8 +99,23 @@ def test_s1_stage_gate_rejects_schema_valid_noops():
         "presentation": "bar",
         "palette_color": "moss",
     })
-    assert any("component kind 'resource'" in error
-               for error in CAP.validate_stage_support(resource))
+    assert CAP.validate_stage_support(resource) == []
+
+    # A Rule still is one: events, conditions and effects are S4, so a rule
+    # accepted now would persist and never fire.
+    rule = _interpretation_with({
+        "kind": "rule",
+        "component_id": "rule_test",
+        "display_name": "On Kill",
+        "description": "Nothing dispatches this until the rule engine lands.",
+        "event": "kill",
+        "conditions": [],
+        "costs": [],
+        "effects": [{"type": "heal", "amount": 5.0}],
+        "cooldown": 1.0,
+    })
+    assert any("component kind 'rule'" in error
+               for error in CAP.validate_stage_support(rule))
 
     # S2 landed the bouncing, gravity-affected projectile, so the gate S1.1
     # put on `bounces` is retired rather than kept as a check that no longer

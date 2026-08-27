@@ -31,7 +31,7 @@ ITEM_NAMES = [
     "Climbing Claws", "Riposte Manual", "Brass Compass", "Bomb Bag",
     "Rocket Launcher", "Boss Key", "Small Key", "Rupee", "Blue Orb",
     "Power Star", "Heart Container", "Master Ball", "Ancient Tablet",
-    "Red Coin", "Silver Feather", "Chaos Emerald", "Moon Pearl",
+    "Red Coin", "Silver Feather", "Magic Meter", "Stamina Ring",
 ]
 assert len(ITEM_NAMES) == 30, len(ITEM_NAMES)
 
@@ -93,10 +93,54 @@ def test_the_fallback_is_still_structurally_boring():
     The fallback is the test oracle for every stage after this one. It got a
     wider vocabulary in S2; it did not get permission to become interesting.
     """
+    from archipepsi_bridge.epsilon import capabilities as CAP
     for index, name in enumerate(ITEM_NAMES):
         echo = _echo_for(index, name)
         assert echo.mode == "literal", name
         assert 1 <= len(echo.operations) <= 4, name
         for operation in echo.operations:
+            # CREATE only is the load-bearing half: no UPGRADE, MODIFY,
+            # LINK or MERGE means the fallback can never dangle a target or
+            # fail a fold, which is what keeps it usable as the oracle for
+            # every stage after this one.
             assert operation.op == "create", (name, operation.op)
-            assert operation.component.kind in ("action", "trait"), name
+            # Which KINDS it may create is a staging question, not a
+            # boringness one, so it is asked of the registry rather than of
+            # a literal that would need editing every stage. S3 added
+            # "resource" here; the constraint above did not move.
+            assert operation.component.kind in CAP.IMPLEMENTED_COMPONENT_KINDS, (
+                name, operation.component.kind)
+
+
+def test_the_fallback_produces_resource_channels():
+    """S3's pipeline is only proven if something actually creates a channel.
+
+    Without a fallback that makes one, `--epsilon=fallback` — which is what
+    the integration run and any keyless player use — would never exercise
+    grant, fold, channel assignment, snapshot or HUD for resources at all.
+    """
+    from archipepsi_bridge.schemas.mechanics import derive_mechanics
+    log = []
+    for index, name in enumerate(ITEM_NAMES):
+        echo = _echo_for(index, name)
+        log.append(echo.model_copy(update={"interpretation_seq": index}))
+    mechanics = derive_mechanics(log)
+    resources = mechanics.resources
+    assert len(resources) >= 2, [r.component_id for r in resources]
+
+    # Channels are dense and creation-ordered, and the serialized order the
+    # client reads agrees with the method the bridge uses.
+    assert mechanics.channel_order == tuple(
+        r.component_id for r in resources)
+    for index, owned in enumerate(resources):
+        assert mechanics.channel_of(owned.component_id) == index
+
+    # Each carries the world that made it, which is what the source glyph
+    # and accent are drawn from.
+    for owned in resources:
+        assert owned.source_game, owned.component_id
+
+    # And a channel that starts full would never visibly move, so at least
+    # one starts below it — that is what makes the pressure valve legible
+    # rather than theoretical.
+    assert any(r.component.initial_fraction < 1.0 for r in resources)

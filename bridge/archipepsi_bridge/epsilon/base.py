@@ -20,7 +20,9 @@ from typing import Protocol
 from pydantic import TypeAdapter, ValidationError
 
 from ..schemas import constants as C
-from ..schemas.echo import EchoInterpretation, validate_interpretation
+from ..schemas.echo import (
+    EchoInterpretation, budget_errors, validate_interpretation)
+from ..schemas.mechanics import EMPTY_MECHANICS
 from ..schemas.zone import Zone, validate_zone
 from . import capabilities as CAP
 from .fallback import fallback_echo, fallback_zone
@@ -163,8 +165,16 @@ async def generate_zone_validated(
 
 async def generate_echo_validated(
         provider: EpsilonProvider, request: EchoGenerationRequest, *,
+        mechanics=None,
         archive_dir: Path | None = None,
         timeout: float = C.PROVIDER_TIMEOUT_SECONDS) -> GenerationOutcome:
+    """`mechanics` is the campaign's current fold, for the §16 budgets.
+
+    Optional so that every existing caller and test keeps working with no
+    budget applied — passing nothing means "judge this Echo on its own",
+    which is exactly what the older callers meant. The campaign passes it.
+    """
+    live = EMPTY_MECHANICS if mechanics is None else mechanics
     return await _pipeline(
         provider, request, kind="echo",
         generation_id=request.required_echo_id, adapter=_ECHO_ADAPTER,
@@ -172,6 +182,7 @@ async def generate_echo_validated(
             validate_interpretation(
                 e, expected_source_location_id=request.source.location_id)
             + CAP.validate_stage_support(e)
+            + budget_errors(e, live)
         ),
         build_fallback=fallback_echo, archive_dir=archive_dir,
         timeout=timeout)

@@ -2439,8 +2439,20 @@
             },
             "title": "Links",
             "type": "array"
+          },
+          "channel_order": {
+            "description": "Resource ids in HUD-channel order, serialized for the client.\n\nThe client must not work this out for itself. It could \u2014 the list is\nalready ordered \u2014 but \"which resource is channel 3\" would then be\nderived in two languages, and the fold exists precisely so that the\none thing that must be identical everywhere is computed once. Godot\nowns where channel 3 is DRAWN; this owns what channel 3 IS.",
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true,
+            "title": "Channel Order",
+            "type": "array"
           }
         },
+        "required": [
+          "channel_order"
+        ],
         "title": "Mechanics",
         "type": "object"
       },
@@ -5963,8 +5975,20 @@
             },
             "title": "Links",
             "type": "array"
+          },
+          "channel_order": {
+            "description": "Resource ids in HUD-channel order, serialized for the client.\n\nThe client must not work this out for itself. It could \u2014 the list is\nalready ordered \u2014 but \"which resource is channel 3\" would then be\nderived in two languages, and the fold exists precisely so that the\none thing that must be identical everywhere is computed once. Godot\nowns where channel 3 is DRAWN; this owns what channel 3 IS.",
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true,
+            "title": "Channel Order",
+            "type": "array"
           }
         },
+        "required": [
+          "channel_order"
+        ],
         "title": "Mechanics",
         "type": "object"
       },

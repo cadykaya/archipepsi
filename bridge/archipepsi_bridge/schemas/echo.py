@@ -366,10 +366,20 @@ ACTION_PRIMITIVES = (
 #: forgot, and `test_schemas.py` asserts this partition covers the catalog
 #: exactly, so a new primitive cannot be added without landing on one side.
 #:
-#:   beam_sustained, hover, block   S3 — all three are POWERED_PRIMITIVES,
-#:                                  meaningless until a Resource exists to
-#:                                  drain and a `powers` link to drain it.
-#:   restore_resource               S3 — it refills a resource.
+#: Each names the stage that actually unblocks it, which is the LATEST of
+#: its dependencies rather than the first. S2 shipped this list naming S3
+#: for the four resource-hungry verbs; that was wrong, and wrong in the
+#: direction that misleads — a Resource alone does not make any of them
+#: runnable, because none of them names the resource it uses. `powers` and
+#: `fills` are LINK kinds, and links land in S5 (`IMPLEMENTATION_PLAN.md`
+#: §2.5, "Traits, links, statuses"). So S3 un-gates nothing here, and
+#: saying otherwise sets someone up to finish S3 and wonder why four verbs
+#: are still refused.
+#:
+#:   beam_sustained, hover, block   S5 — POWERED_PRIMITIVES: need a Resource
+#:                                  (S3) AND a `powers` link to drain it.
+#:   restore_resource               S5 — needs a Resource (S3) AND a `fills`
+#:                                  link, because it names no resource itself.
 #:   scan_mark, cleanse             S5 — both are statuses: one applies
 #:                                  `marked`, the other removes statuses.
 #:   pull_pickup                    S9 — local rewards are the only thing it
@@ -393,10 +403,10 @@ IMPLEMENTED_PRIMITIVES = (
 #: Paired with `IMPLEMENTED_PRIMITIVES` so the two together must account for
 #: every entry in the catalog — see `test_schemas.py`.
 DEFERRED_PRIMITIVES = {
-    "beam_sustained": "S3: needs a Resource to drain via a `powers` link",
-    "hover": "S3: needs a Resource to drain via a `powers` link",
-    "block": "S3: needs a Resource to drain via a `powers` link",
-    "restore_resource": "S3: needs a Resource to refill",
+    "beam_sustained": "S5: needs a Resource (S3) and a `powers` link (S5)",
+    "hover": "S5: needs a Resource (S3) and a `powers` link (S5)",
+    "block": "S5: needs a Resource (S3) and a `powers` link (S5)",
+    "restore_resource": "S5: needs a Resource (S3) and a `fills` link (S5)",
     "scan_mark": "S5: applies the `marked` status",
     "cleanse": "S5: removes statuses",
     "pull_pickup": "S9: local rewards are the only thing it may attract",
@@ -543,6 +553,31 @@ READOUT_KINDS = (
     "affordance_highlight", "trajectory_preview", "damage_numbers",
     "resource_forecast", "speedometer", "challenge_timer",
 )
+
+#: The contextual budgets from ECHOES.md §16, as (soft, hard).
+#:
+#: Soft steers: over it, the request asks Epsilon for `UPGRADE` / `MODIFY` /
+#: `LINK` / `MERGE` instead of another `CREATE`. Hard refuses: `CREATE` is
+#: rejected and the existing repair-once loop runs. `None` means no hard
+#: ceiling — owned Actions are unbounded because only four can be slotted,
+#: so the twelfth one costs screen space rather than balance.
+#:
+#: These are campaign totals, so they cannot be checked against one Echo in
+#: isolation the way every other rule in this module can. `budget_errors`
+#: takes the folded mechanics and is called at grant time.
+COMPLEXITY_BUDGETS: dict[str, tuple[int, int | None]] = {
+    "resource": (6, 15),
+    "action": (12, None),
+    "rule": (14, 20),
+    "affordance": (8, 12),
+    "info": (3, 5),
+}
+
+#: Fifteen pre-laid HUD channels. Godot owns every pixel of them; Epsilon
+#: owns which one is alive and what it means. Named here because the hard
+#: resource budget IS the channel count -- a sixteenth resource would have
+#: nowhere to render, so the two must never drift apart.
+HUD_CHANNELS = COMPLEXITY_BUDGETS["resource"][1]
 
 #: Closed palette for resource fills. Named rather than hex so the client
 #: owns the actual light/dark pairs and a chosen colour is legible on both
@@ -883,6 +918,57 @@ class EchoInterpretation(Strict):
 # ---------------------------------------------------------------------------
 # Semantic validation — request context, and what the engine can honour
 # ---------------------------------------------------------------------------
+
+def budget_errors(interpretation, mechanics) -> list[str]:
+    """Contextual validation: what this Echo would make the CAMPAIGN.
+
+    Every other rule in this module judges one interpretation on its own,
+    which is what makes them enforceable by the model layer. This one cannot
+    be: "is this the sixteenth resource" is only answerable against the
+    fold, so it lives here and runs at grant time.
+
+    Only `CREATE` is counted. That is the whole point of the budget —
+    `UPGRADE`, `MODIFY`, `LINK` and `MERGE` are the pressure valve, so they
+    stay legal at any size. Merging over duplicating is enforced, not
+    encouraged (§7).
+    """
+    errors: list[str] = []
+    created: dict[str, int] = {}
+    for operation in interpretation.operations:
+        if operation.op != "create":
+            continue
+        created[operation.component.kind] = (
+            created.get(operation.component.kind, 0) + 1)
+
+    for kind, count in sorted(created.items()):
+        budget = COMPLEXITY_BUDGETS.get(kind)
+        if budget is None:
+            continue
+        _soft, hard = budget
+        if hard is None:
+            continue
+        owned = len([o for o in mechanics.owned if o.kind == kind])
+        if owned + count > hard:
+            errors.append(
+                f"creating {count} more '{kind}' component(s) would put the "
+                f"campaign at {owned + count}, over the hard budget of "
+                f"{hard}; upgrade, link or merge an existing one instead"
+            )
+    return errors
+
+
+def over_soft_budget(mechanics) -> tuple[str, ...]:
+    """Kinds the campaign already has enough of, for the request to say so.
+
+    Steering, not enforcement: a provider told the campaign is resource-rich
+    can still create one, and the hard budget is what actually refuses.
+    """
+    out: list[str] = []
+    for kind, (soft, _hard) in sorted(COMPLEXITY_BUDGETS.items()):
+        if len([o for o in mechanics.owned if o.kind == kind]) >= soft:
+            out.append(kind)
+    return tuple(out)
+
 
 def validate_interpretation(
     interpretation: EchoInterpretation,

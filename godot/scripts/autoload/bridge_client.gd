@@ -172,3 +172,13 @@ func is_pending(location_id: int) -> bool:
 		if int(pending.get("location_id", 0)) == location_id:
 			return true
 	return false
+
+## Resource ids in HUD-channel order, straight from the fold.
+##
+## The client does NOT work this out for itself. It could — `owned` is
+## already ordered — but then "which resource is channel 3" would be derived
+## in two languages, and the whole reason the fold lives on the bridge is
+## that the thing which must be identical everywhere gets computed once.
+func resource_channels() -> Array:
+	var order: Variant = mechanics().get("channel_order")
+	return order if typeof(order) == TYPE_ARRAY else []
