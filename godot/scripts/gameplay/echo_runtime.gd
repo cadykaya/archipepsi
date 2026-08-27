@@ -71,6 +71,15 @@ func activate() -> void:
 	cooldown_remaining = float(equipped.get("cooldown", 1.0))
 	cooldown_changed.emit(cooldown_remaining, cooldown_remaining)
 	player.kick_viewmodel(0.12)
+	# A bigger, warmer flash than Static Pulse — the Echo should feel like
+	# the loud option.
+	var initiator_type := str(equipped.get("initiator", {}).get("type", ""))
+	if initiator_type in ["hitscan_damage", "projectile_damage"]:
+		player.muzzle_flash(3.2, Color(1.0, 0.7, 0.35))
+	elif initiator_type in ["dash", "grapple_to_surface"]:
+		player.muzzle_flash(2.0, Color(0.6, 0.9, 1.0))
+	elif initiator_type in ["heal_self", "shield"]:
+		player.muzzle_flash(2.4, Color(0.55, 1.0, 0.7))
 
 	var initiator: Dictionary = equipped.get("initiator", {})
 	var modifiers: Array = equipped.get("modifiers", [])

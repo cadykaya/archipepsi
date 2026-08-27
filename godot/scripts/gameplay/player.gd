@@ -89,6 +89,16 @@ static func create() -> Player:
 	viewmodel.add_child(echo_part)
 	camera.add_child(viewmodel)
 
+	# Muzzle flash: a one-frame light at the barrel. Without it a shot in
+	# an unlit corridor lights nothing, which reads flat and cheap.
+	var flash := OmniLight3D.new()
+	flash.name = "MuzzleFlash"
+	flash.position = Vector3(0, 0.02, -0.3)
+	flash.omni_range = 9.0
+	flash.light_energy = 0.0
+	flash.shadow_enabled = false
+	viewmodel.add_child(flash)
+
 	var runtime := Node.new()
 	runtime.name = "EchoRuntime"
 	runtime.set_script(load("res://scripts/gameplay/echo_runtime.gd"))
@@ -98,7 +108,21 @@ static func create() -> Player:
 func _ready() -> void:
 	add_to_group("player")
 	_spawn_transform = global_transform
-	fired_pulse.connect(func() -> void: kick_viewmodel(0.05))
+	fired_pulse.connect(func() -> void:
+		kick_viewmodel(0.05)
+		muzzle_flash(1.6, Color(0.75, 0.85, 1.0)))
+
+## A brief light at the barrel, sized to the shot.
+func muzzle_flash(energy: float, color: Color) -> void:
+	if viewmodel == null:
+		return
+	var flash: OmniLight3D = viewmodel.get_node_or_null("MuzzleFlash")
+	if flash == null:
+		return
+	flash.light_color = color
+	flash.light_energy = energy
+	var tween := create_tween()
+	tween.tween_property(flash, "light_energy", 0.0, 0.09)
 
 func kick_viewmodel(strength: float) -> void:
 	if viewmodel == null:

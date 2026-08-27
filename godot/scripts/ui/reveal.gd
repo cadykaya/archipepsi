@@ -67,6 +67,18 @@ func _show_next() -> void:
 				lines.append_array(EffectSummary.lines(echo))
 				break
 	_body.text = "\n".join(lines)
+
+	# Tint the card by the game that received the item, using the same
+	# per-game colour the Hub's campaign board uses — so the reveal, the
+	# board and the multiworld all agree about who this went to.
+	var accent := Color(1.0, 0.85, 0.4)
+	var location: Variant = note.get("location_id")
+	if location != null:
+		var scout := BridgeClient.scout_for(int(location))
+		var game := str(scout.get("recipient_game", "")) if scout else ""
+		if game != "":
+			accent = ThemeMaterials.color_for_game(game).lightened(0.35)
+	_title.modulate = accent
 	visible = true
 	if tones != null:
 		tones.play("goal" if note.get("kind") == "goal_reached" else "echo")

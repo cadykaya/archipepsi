@@ -241,8 +241,18 @@ func _to_zone(zone_dict: Dictionary) -> void:
 			else "ZONE %d · %s" % [
 				int(record.get("generation_index", 0)) + 1,
 				str(zone_dict.get("target_game", "?")).to_upper()]
+	var note := str(zone_dict.get("designer_note", "") or "")
+	# If Epsilon designed around an Echo you own, say so — that connection
+	# is the premise, and it was previously invisible.
+	var featured: Array = zone_dict.get("featured_echo_ids", [])
+	if not featured.is_empty():
+		for echo: Dictionary in BridgeClient.snapshot.get("echoes", []):
+			if echo.get("echo_id") == featured[0]:
+				note = "Built with your %s in mind. %s" % [
+						echo.get("display_name", "Echo"), note]
+				break
 	hud.show_zone_title(index_text, str(zone_dict.get("display_name", "")),
-			str(zone_dict.get("designer_note", "") or ""),
+			note.strip_edges(),
 			Color(ThemeMaterials.spec(theme)["accent_color"]).lightened(0.25))
 	_sync_equipped()
 	zone.refresh()

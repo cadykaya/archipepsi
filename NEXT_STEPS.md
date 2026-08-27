@@ -1,98 +1,77 @@
 # Archipepsi — build state
 
-## Highest completed milestone
-**The full v0.7 POC (Phases 0–7).** The entire campaign — scout, allocate,
-generate, play, claim, confirm, Echo, shop, finale, postgame — is proven
-end-to-end by `make godot-integration`, which plays the whole game
-headlessly against the live mock bridge (12 zones, all 30 checks, goal
-reported once, 26 foreign checks → 26 Echoes, purchases with the double-buy
-refused). The bridge is also proven against a real Archipelago 0.6.7 server
-(`python3 -m archipepsi_bridge.smoke_real`).
+## Where this is
+**The full v0.7 POC (Phases 0–7) is complete and green**, and the build has
+moved on to making it good to actually play. Everything below "What works"
+is post-POC.
 
-## What currently works
-- 184 pytest tests (110 schema / 49 bridge+campaign+providers+Claude /
-  25 APWorld) + headless Godot chamber tests + the full-campaign driver
-- `make seed` / `make seed-multi` / `make host` / `make apworld`
-  (official Build APWorlds component; manifest validated)
+Proof the loop is real:
+- `make godot-integration` plays the **entire campaign** headlessly through
+  the live WebSocket bridge: 12 zones, tier unlocks, shop purchases with
+  the double-buy refused (Test O), leave/resume (Test I), the finale,
+  postgame (Test N), `ALL_CHECKS_CLEARED`, 26 foreign checks → 26 Echoes,
+  nothing lost or duplicated. It also builds the Hub and checks its board.
+- `python3 -m archipepsi_bridge.smoke_real` proves the same core loop plus
+  **Test L** (kill the bridge at the loading screen; the GENERATED zone
+  revives with its committed allocation) against a **real Archipelago
+  0.6.7 server**.
+- 191 pytest + the headless chamber-geometry suite.
+
+## What works
+- APWorld: `make seed` / `seed-multi` / `host` / `apworld` (official build
+  component, manifest validated).
 - Bridge: `make bridge` (real AP) / `make bridge-mock`; providers
-  claude/mock/fallback with validate → repair-once → fallback and the
-  generation archive (`--archive-dir`)
-- Game: menu (connect/mock), Hub (8 modes, finale portal, abandon console,
-  shop, echo terminal, Static corruption), 5 chamber builders, 3 enemies,
-  10 Echo effects, reveal cards, inventory, pause, debug overlay,
-  procedural tones and textures
+  claude/mock/fallback behind validate → repair-once → fallback, with the
+  generation archive and `make replay` to re-validate it (EPSILON_SPEC §14).
+- Game: menu, Hub (8 modes, campaign board, shop, Echo terminal, abandon
+  console, Static corruption + screen fuzz), 5 chamber builders with
+  bending layouts, 3 enemies with distinct silhouettes, 10 Echo effects,
+  reveal cards, zone title cards, inventory, pause, F3 overlay,
+  procedural textures/audio.
 
-## Post-POC work completed this run
-- Acceptance Test I (leave/resume) runs inside the integration driver.
-- Feel: first-person viewmodel with fire kick, enemy hit punch, damage
-  flash, pulse/death tones.
-- Look: greeble pass (ribs, ceiling beams, cables, vents, crates,
-  buttresses, hazard strips), deterministic per chamber, lane-checked.
-- Personality: Hub board quotes the last completed Zone and its
-  designer_note; Epsilon Static garbles the board headline on a crawl
-  timer; authored Epsilon graffiti appears on corridor walls; Static Pulse
-  tracers discolor as Static accumulates; the victory card holds longer.
+## Post-POC work so far
+- **Two adversarial review passes**, all findings fixed with regression
+  tests. Notable: an externally-confirmed goal never set `goal_sent`;
+  releasing a zone's last stuck location wedged reconcile; the tower's
+  summit exit was sealed; the enemy sidestep tested post-slide velocity so
+  it never fired.
+- **Non-linear layouts**: 90° corners, alternating turns, exact rotated
+  AABB overlap guards, forward-push clearance. 16-seed test across all
+  themes including vertical chambers.
+- **Mock Epsilon is a real designer** (six chamber shapes, boss rooms,
+  authored notes). The fallback keeps its pinned §12.1 shape.
+- **Readability**: objective waypoint (on-screen and edge-pinned with
+  distance), zone progress, exit portal stating what holds it shut, damage
+  direction wedge, Echo cooldown bar, campaign board showing all 30 Checks
+  by tier tinted per recipient game.
+- **Feel**: viewmodel with fire kick, hit punch, damage flash, footsteps,
+  landing thump, room-tone hum, enemy damage tint, zone title cards.
+- **Personality**: Epsilon graffiti, Static-garbled Hub board, Static-
+  corrupted tracers, theme-signature props, designer notes surfaced.
 
-## Also completed since
-- Connectivity banners (BRIDGE OFFLINE / ARCHIPELAGO OFFLINE), SIGNAL LOST
-  death overlay, Hub screen-fuzz shader driven by Static.
-- **Adversarial code review of the whole branch** + fixes: externally-
-  confirmed goal now sets goal_sent (ALL_CHECKS_CLEARED was
-  unrepresentable after a release); releasing a zone's last stuck location
-  no longer wedges reconcile; the tower's summit exit was sealed — now a
-  carved doorway with a geometry probe test; spawns face the level; the
-  disabled portal stopped advertising [E]; vertical tracers fixed; mock
-  reconnects reuse server truth; anthropic pin >=1.0. Three new bridge
-  regression tests (188 total).
-
-## Also completed: enemies, props, ambience, mock designer
-- Enemy collision recovery (displacement-based, alternating sides) and the
-  brute's telegraphed slam.
-- Theme-signature props per theme, gated so colliding floor props never
-  narrow a corridor below the brute's lane (tested).
-- Procedural room-tone hum, Hub at pitch 1.0, Zones per theme.
-- **Mock Epsilon is a real designer now**: six reward-chamber shapes drawn
-  without replacement, themed enemy mixes, a one-per-Zone boss room,
-  authored designer notes, independent naming stream. The *fallback* keeps
-  the packet's pinned shape (§12.1) — that one is not ours to improve.
-- **Second adversarial review** of the bends/props/enemy work, all findings
-  fixed (the sidestep never fired; brute froze mid-telegraph; corner walls
-  z-fought; exit room unchecked; connectors shared a greeble seed).
-
-## Also completed: non-linear zone layouts
-90° corner pieces with alternating turns, exact rotated-AABB overlap
-guards, and forward-push clearance; chamber transforms flow through to
-enemies/rewards/goal areas. 12-seed widest-arena test proves zero overlap
-and that bends actually occur. (Test L against a real server is also done
-— smoke_real kills the bridge at the loading screen and revives.)
-
-## Next useful work (roughly in value order)
+## Next useful work
 1. **Play-feel pass on real hardware** — the manual checks in
    ACCEPTANCE_TESTS §7 (gap feel, reveal timing, Conference Call comedy)
    need human eyes. Cannot be done in this container.
-2. Live-fire the Claude provider once an ANTHROPIC_API_KEY is present
+2. **Live-fire the Claude provider** once `ANTHROPIC_API_KEY` exists
    (`EPSILON_PROVIDER=claude make bridge`); offline stub tests cover the
-   mechanics but a real generation archive would be gold.
-3. Echo cooldown as a HUD bar rather than a number; reveal card tinted by
-   the recipient game's theme.
-4. Per-theme enemy silhouettes (currently one body shape, theme-tinted).
+   mechanics, but a real generation archive would be the interesting thing
+   — then `make replay` reports its first-try acceptance rate.
+3. Reveal card tinted by the recipient game; featured-Echo line on the
+   zone title card.
+4. Muzzle-flash light for Static Pulse and Echo fire (dark rooms read flat
+   without it).
 
 ## Known blockers / bugs
-- None known. One recorded schema corner: `finale_offered` stays true in
-  postgame; clients also require the goal missing
-  (docs/IMPLEMENTATION_DECISIONS.md).
-
-## Exact next concrete action
-Pick item 2: extend `ChamberBuilders` with per-theme prop kits (pipe runs,
-crates, wall panels, hanging cables) applied by deterministic RNG seeded
-from chamber id — pure visual, no traversal impact, keeps every geometry
-test green.
+None known. One recorded schema corner: `finale_offered` stays true in
+postgame, so clients also require the goal to be missing
+(`docs/IMPLEMENTATION_DECISIONS.md`).
 
 ## Commands
-    make test                # pytest suites (191)
-    make godot-test          # chamber geometry
-    make godot-integration   # the whole game, headlessly
-    make replay ARCHIVE=<dir>  # re-validate a generation archive (§14)
+    make test                  # 191 pytest
+    make godot-test            # chamber geometry
+    make godot-integration     # the whole game, headlessly
+    make replay ARCHIVE=<dir>  # re-validate a generation archive
     make seed-multi && make host && make bridge   # real server play
     godot-bin/godot --path godot                  # the game
 
