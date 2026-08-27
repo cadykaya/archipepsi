@@ -92,7 +92,10 @@ func _sweep_zone(kind: String, theme: String) -> void:
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 
-	var runtime: EchoRuntime = player.get_node("EchoRuntime")
+	# S7 gives every slot its own runtime; blink is a mobility verb, so it
+	# is Shift's. The node name carries the slot now — a bare "EchoRuntime"
+	# stopped existing, and this suite's vacuity guard is what said so.
+	var runtime: EchoRuntime = player.runtimes["mobility"]
 	var bounds: AABB = holder.world_bounds()
 
 	for reach: float in [3.0, 9.0, 25.0]:

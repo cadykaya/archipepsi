@@ -462,7 +462,11 @@ func bind_player(player: Player) -> void:
 	_bound_player = player
 	player.hp_changed.connect(_on_hp_changed)
 	player.interact_prompt_changed.connect(_on_prompt)
-	player.echo_runtime.cooldown_changed.connect(_on_cooldown)
+	# Every slot's runtime reports; `_on_cooldown` keeps the bar on the
+	# highlighted one. Connecting only the highlighted runtime would go
+	# stale the moment the player fired a different slot.
+	for runtime: EchoRuntime in player.runtimes.values():
+		runtime.cooldown_changed.connect(_on_cooldown)
 	player.died.connect(_on_player_died)
 	player.damaged_from.connect(_on_damaged_from)
 	player.hit_confirmed.connect(_on_hit_confirmed)
@@ -472,7 +476,7 @@ func bind_player(player: Player) -> void:
 	_last_hp = -1.0
 	_death_overlay.visible = false
 	_death_label.visible = false
-	_on_hp_changed(player.hp, player.echo_runtime.shield_hp)
+	_on_hp_changed(player.hp, player.total_shield())
 	refresh_echo()
 
 func _on_hp_changed(hp: float, shield: float) -> void:
@@ -499,8 +503,12 @@ func _on_hp_changed(hp: float, shield: float) -> void:
 func _on_prompt(text: String) -> void:
 	_prompt_label.text = text
 
-func _on_cooldown(remaining: float, total: float) -> void:
-	refresh_echo(remaining, total)
+## Four runtimes report here; the bar belongs to the highlighted slot, so
+## a cooldown ticking on an unwatched slot must not repaint it. Passing a
+## negative cooldown means "ask the highlighted runtime", which is exactly
+## what the loadout rows want anyway.
+func _on_cooldown(_remaining: float, _total: float) -> void:
+	refresh_echo()
 
 ## Which way to turn: a wedge in a ring around the crosshair, pointing at
 ## whatever just hit you.
@@ -534,23 +542,46 @@ func _place_hit_marker() -> void:
 	_hit_marker.rotation = angle
 	_hit_marker.visible = _crosshair.visible
 
+#: ECHOES §9's control grammar, as the player reads it. Not derived from
+#: the input map: this is what the KEYCAP says, and "MMB" is shorter than
+#: what Godot calls that button.
+const SLOT_KEYCAPS := {"echo_a": "RMB", "echo_b": "MMB", "mobility": "SHIFT",
+		"utility": "C"}
+
+## All four slots at once (S7). One line each, the highlighted one marked:
+## a loadout you cannot see is a loadout you do not use, and three of the
+## four buttons were invisible before this.
+func _loadout_text(highlighted: String) -> String:
+	var rows: PackedStringArray = []
+	for slot: String in Constants.SLOT_NAMES:
+		var action := BridgeClient.slotted_action(slot)
+		var mark := "▸" if slot == highlighted else " "
+		var keycap: String = SLOT_KEYCAPS.get(slot, "?")
+		if action.is_empty():
+			rows.append("%s %-5s —" % [mark, keycap])
+			continue
+		# A component upgraded more than once earns its mark. Mk I is the
+		# default and says nothing, because everything starts there.
+		var mk := int(BridgeClient.owned_component(
+				str(action.get("component_id", ""))).get("mk", 1))
+		rows.append("%s %-5s %s%s" % [mark, keycap,
+				action.get("display_name", "?"),
+				"  Mk %d" % mk if mk > 1 else ""])
+	return "\n".join(rows)
+
 ## `cooldown < 0` means "ask the runtime" — a plain default of 0.0 made
 ## every snapshot repaint the bar as fully ready mid-cooldown.
 func refresh_echo(cooldown := -1.0, total := 0.0) -> void:
+	var slot := _bound_player.highlighted_slot if _bound_player != null \
+			else "echo_a"
 	if cooldown < 0.0:
 		cooldown = _bound_player.echo_runtime.cooldown_remaining \
 				if _bound_player != null else 0.0
-	var echo := BridgeClient.slotted_action()
+	_echo_label.text = _loadout_text(slot)
+	var echo := BridgeClient.slotted_action(slot)
 	if echo.is_empty():
-		_echo_label.text = "RMB: no Echo equipped"
 		_cooldown_track.visible = false
 		return
-	# A component upgraded more than once earns its mark. Mk I is the
-	# default and says nothing, because everything starts there.
-	var mk := int(BridgeClient.owned_component(
-			str(echo.get("component_id", ""))).get("mk", 1))
-	var suffix := "  Mk %d" % mk if mk > 1 else ""
-	_echo_label.text = "RMB: %s%s" % [echo.get("display_name", "?"), suffix]
 
 	# The bar fills back up as the Echo comes off cooldown; full and green
 	# means "ready", which reads at a glance where a number did not.

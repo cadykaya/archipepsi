@@ -493,3 +493,58 @@ Two corrections were made on top of it:
   interpretation's sequence appears in some component's provenance.
   Nothing dropped, nothing double-counted, and it holds whether an
   interpretation creates, upgrades, links or merges.
+
+## S7 — slots and loadout
+
+- **One `EchoRuntime` per slot, built where the nodes are made.** Cooldown,
+  held state and the airtime budgets belong to the Action, so four buttons
+  need four runtimes: sharing one would let a dash and a grapple contend
+  for a single cooldown, which is the exact bug four slots exist to make
+  impossible. The first cut collected them with an `@onready` tree read
+  and came back empty — a player with no working Echo buttons at all, in
+  production, silently. `create()` fills the map as it makes each node
+  now, and the S7 suite asserts one runtime per slot with none shared.
+
+- **`SLOT_NAMES` moved to `constants.py`.** The client builds a runtime and
+  binds a key per slot, so the count is a cross-language fact and belongs
+  where the exporter can see it. `echo.py` re-exports it; the `SlotName`
+  Literal still has to be spelled out because a type cannot be built from
+  a runtime tuple, so a test asserts the two spellings agree.
+
+- **The S1.1 slot collapse is retired, and the property it protected is
+  now the gate's job.** `ARCHETYPE_SLOT` mapped every v7 archetype onto
+  `echo_a` because one button was bound; its comment named S7 as the
+  expiry, and this is S7. A migrated Hookshot goes back to `mobility`,
+  where a v0.7 player would look for it. What the collapse was really
+  protecting — nothing lands where no key reaches — is asserted directly:
+  every value in `ARCHETYPE_SLOT` must be in `IMPLEMENTED_ACTION_SLOTS`.
+
+- **`IMPLEMENTED_ACTION_SLOTS` is the whole contract now**, which cost the
+  S1.1 vacuity guard its example. That test asserted the capability
+  registry was a *proper* subset of the contract, using slots as the
+  witness; slots stopped being one, so the guard rests on component kinds
+  and the primitive catalog, both still genuinely narrower.
+
+- **Favourites are a client preference, not campaign state.** They appear
+  in the prose (§9, DESIGN §15.4) and nowhere in `schemas/`, which is the
+  binding contract — and correctly so: a favourite changes nothing
+  mechanical, no rule reads it, and losing the list costs a preference
+  rather than a capability. So they live in `user://loadout.cfg` beside
+  the keybinds, never touch the save, the interpretation log or the
+  bridge, and are keyed by component id, which the fold keeps stable
+  across an Action's whole evolution.
+
+- **One favourite does not narrow the wheel.** Cycling a single-entry set
+  lands back where it started, which reads as a broken wheel rather than
+  an unconfigured one, so the narrowing needs at least two.
+
+- **The viewmodel belongs to the highlighted slot.** Four runtimes and one
+  viewmodel mesh: each runtime paints it only while its slot is
+  highlighted, or they would fight over the same node every time any of
+  them changed. Firing a slot highlights it, so the gun in your hands is
+  always the one you last used.
+
+- **Shields add across slots.** Two Echoes granting a shield each read as
+  two, and a hit eats both before reaching hp. `total_shield()` is what
+  the HUD reports; the single-runtime `shield_hp` it used to read would
+  have shown whichever slot happened to be highlighted.

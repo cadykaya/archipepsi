@@ -339,8 +339,40 @@ proof; the integration run is where you can see it.
   two worlds may share a family, and the test says so rather than
   claiming a uniqueness §12 never promises.
 
-**Then: S7** — slots and loadout UX: four Action slots, favourites,
-comparison. This is what retires the S1.1 one-slot stopgap.
+## Echoes 2.0 — S7 landed (slots and loadout)
+
+Three of the four buttons were invisible before this. `make godot-stats`
+covers it alongside I3.
+
+- **Four slots, four runtimes, four keys** (RMB / MMB+F / Shift / C, per
+  ECHOES §9). Cooldown, held state and airtime budgets belong to the
+  Action, so each slot owns a runtime; a shared one would let a dash and
+  a grapple contend for a single cooldown. The suite proves cooldowns,
+  equipment and shields are per-slot and none is shared.
+- **The S1.1 collapse is retired.** `ARCHETYPE_SLOT` put every migrated
+  Echo on `echo_a` because one button was bound; its comment named S7 as
+  the expiry. A migrated Hookshot goes back to Shift now, and the
+  property the collapse protected is asserted directly: every archetype
+  slot must be one a key reaches.
+- **The HUD shows the whole loadout** — four rows, keycap, name, Mk
+  level, the highlighted one marked — and the cooldown bar follows
+  whichever slot you last fired.
+- **The archive slots, compares and favourites.** Buttons name the key
+  they land on (`TO SHIFT`, `REPLACE RMB`), show what you would be giving
+  up right where the decision is made, and carry a star. Favourites are a
+  **client preference**, not campaign state: the schema has no field for
+  them because a favourite changes nothing mechanical, so they live in
+  `user://loadout.cfg` beside the keybinds.
+- **The wheel cycles favourites within the highlighted slot**, falling
+  back to everything when fewer than two are marked — a wheel that cycles
+  a single entry reads as broken rather than as unconfigured.
+- **A caught bug worth naming**: the first runtime map used an `@onready`
+  tree read and came back empty, which in production is a player with no
+  working Echo buttons at all. The suite's per-slot check found it
+  immediately; `create()` fills the map where it makes the nodes now.
+
+**Then: S8** — the Echo Lab: the Hub test chamber that grows with the
+vocabulary.
 
 
 
@@ -363,7 +395,7 @@ postgame, so clients also require the goal to be missing
 (`docs/IMPLEMENTATION_DECISIONS.md`).
 
 ## Commands
-    make test                  # 285 pytest (125 schema)
+    make test                  # 286 pytest (126 schema)
     make godot-test            # chamber geometry
     make godot-blink           # invariant I14, every builder
     make godot-hud             # S3: palette, glyphs, pressure valve, archive

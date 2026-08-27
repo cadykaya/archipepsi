@@ -187,6 +187,23 @@ func _run() -> void:
 			evolved += 1
 		longest_chain = maxi(longest_chain,
 				int(entry.get("provenance", []).size()))
+	# S7: a campaign that only ever fills RMB has not tested four slots.
+	# The mock seed's items declare mobility and utility verbs, so a full
+	# run should reach more than one — and every Action it owns must
+	# declare a slot that has a key.
+	var slots_used: Dictionary = {}
+	for entry: Dictionary in BridgeClient.mechanics().get("owned", []):
+		var component: Dictionary = entry.get("component", {})
+		if str(component.get("kind", "")) != "action":
+			continue
+		var slot := str(component.get("slot", ""))
+		slots_used[slot] = true
+		_check(slot in Constants.SLOT_NAMES,
+				"Action %s declares a real slot (%s)"
+				% [component.get("component_id", "?"), slot])
+	_check(slots_used.size() >= 2,
+			"the campaign's Actions reach more than one slot (%s)"
+			% str(slots_used.keys()))
 	_check(dispositions >= 1,
 			"the campaign emitted at least one non-create operation (%d)"
 			% dispositions)

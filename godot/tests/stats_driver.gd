@@ -1,5 +1,5 @@
 extends Node
-## The S5 stat-stack and status suite (`make godot-stats`): invariant **I3**
+## The S5/S7 loadout suite (`make godot-stats`): invariant **I3**
 ## plus the pieces it depends on — `scaled_by`, `scales` links,
 ## `requires_equipped`, `trait_pulse`, status factors, and the
 ## StatusEffects container's own rules.
@@ -30,6 +30,8 @@ func _ready() -> void:
 	_status_container_rules()
 	_status_stat_factors()
 	_link_semantics()
+	_slots_are_independent()
+	_favourites_narrow_the_wheel()
 	if failures == 0:
 		print("GODOT STATS TESTS OK")
 		get_tree().quit(0)
@@ -346,3 +348,103 @@ func _link_semantics() -> void:
 			"another action's powers link costs this one nothing")
 	runtime.free()
 	pool.free()
+
+# --- S7: four slots, four runtimes, one wheel ------------------------------
+
+func _slot_snapshot() -> void:
+	var owned: Array = []
+	var slots := {"echo_a": "act_gun", "echo_b": null,
+			"mobility": "act_dash", "utility": null}
+	for entry in [["act_gun", "echo_a", {"type": "hitscan_damage",
+					"damage": 8.0, "pellets": 1, "spread_degrees": 1.0,
+					"range": 30.0}],
+			["act_dash", "mobility", {"type": "dash", "force": 12.0}],
+			["act_blink", "mobility", {"type": "blink", "range": 14.0,
+					"clearance": 0.4}],
+			["act_heal", "utility", {"type": "heal_self", "amount": 20.0}]]:
+		owned.append({"component": {
+			"kind": "action", "component_id": entry[0],
+			"display_name": str(entry[0]).to_upper(), "description": "d",
+			"slot": entry[1], "cooldown": 2.0, "primitive": entry[2],
+			"modifiers": []}, "mk": 1, "provenance": []})
+	BridgeClient.snapshot = {
+		"mechanics": {"owned": owned, "aliases": [], "links": [],
+				"channel_order": []},
+		"slots": slots, "interpretations": []}
+
+## Cooldowns, held state and airtime budgets belong to the Action, so four
+## buttons need four runtimes. One shared runtime would let a dash and a
+## shot contend for a single cooldown — the exact bug four slots exist to
+## make impossible.
+func _slots_are_independent() -> void:
+	_slot_snapshot()
+	var player := Player.create()
+	get_tree().root.add_child(player)
+	_check(player.runtimes.size() == Constants.SLOT_NAMES.size(),
+			"one runtime per slot (%d)" % player.runtimes.size())
+	var seen: Array = []
+	for slot: String in Constants.SLOT_NAMES:
+		_check(player.runtimes.has(slot), "slot %s has a runtime" % slot)
+		var runtime: EchoRuntime = player.runtimes[slot]
+		_check(runtime.slot == slot, "%s knows its own slot" % slot)
+		_check(not (runtime in seen), "%s's runtime is its own" % slot)
+		seen.append(runtime)
+
+	player.runtimes["echo_a"].set_equipped(BridgeClient.slotted_action("echo_a"))
+	player.runtimes["mobility"].set_equipped(
+			BridgeClient.slotted_action("mobility"))
+	_check(str(player.runtimes["echo_a"].equipped.get("component_id", ""))
+			== "act_gun", "echo_a holds the Action the fold put there")
+	_check(str(player.runtimes["mobility"].equipped.get("component_id", ""))
+			== "act_dash", "mobility holds its own, not echo_a's")
+
+	player.runtimes["echo_a"].cooldown_remaining = 2.0
+	_check(is_equal_approx(player.runtimes["mobility"].cooldown_remaining, 0.0),
+			"a cooldown on one slot leaves the others ready")
+
+	# Shields add up across slots rather than the last one winning.
+	player.runtimes["echo_a"].shield_hp = 10.0
+	player.runtimes["mobility"].shield_hp = 5.0
+	_check(is_equal_approx(player.total_shield(), 15.0),
+			"shields from two slots both count (%f)" % player.total_shield())
+
+	# The highlight follows what you fired, and only one slot paints the
+	# viewmodel.
+	player.set_highlighted_slot("mobility")
+	_check(player.echo_runtime == player.runtimes["mobility"],
+			"the highlighted slot is the one `echo_runtime` means")
+	player.set_highlighted_slot("echo_a")
+	_check(player.echo_runtime == player.runtimes["echo_a"],
+			"...and it follows the highlight back")
+
+	# Every slot has its own binding, and none of them is the Pulse's.
+	var bound: Array = []
+	for slot: String in Constants.SLOT_NAMES:
+		var action: String = Player.SLOT_ACTIONS.get(slot, "")
+		_check(InputMap.has_action(action),
+				"%s is bound to a real input action (%s)" % [slot, action])
+		_check(not (action in bound), "%s does not share a binding" % slot)
+		bound.append(action)
+	_check(not ("fire_pulse" in bound),
+			"the Static Pulse is not one of the slots")
+	player.queue_free()
+
+## The wheel narrows to favourites when at least two are marked, and stays
+## whole otherwise — a wheel that cycles nothing until configured reads as
+## broken rather than as unconfigured.
+func _favourites_narrow_the_wheel() -> void:
+	Favourites._reset_for_test()
+	var all := ["act_dash", "act_blink", "act_hover"]
+	_check(Favourites.cycle_set(all).size() == 3,
+			"with nothing marked the wheel cycles everything")
+	Favourites.toggle("act_dash")
+	_check(Favourites.cycle_set(all).size() == 3,
+			"one favourite would cycle to itself, so the full list stays")
+	Favourites.toggle("act_blink")
+	var starred := Favourites.cycle_set(all)
+	_check(starred.size() == 2 and "act_hover" not in starred,
+			"two favourites narrow the wheel to them")
+	_check(Favourites.is_favourite("act_dash"), "a mark reads back")
+	Favourites.toggle("act_dash")
+	_check(not Favourites.is_favourite("act_dash"), "and toggles off")
+	Favourites._reset_for_test()

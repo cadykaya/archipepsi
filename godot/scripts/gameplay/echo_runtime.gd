@@ -28,6 +28,14 @@ signal action_used
 signal action_ready
 signal dash_ended
 
+#: Which of the four slots this runtime IS (S7). Set by the player when
+#: it collects them; every runtime is otherwise identical, which is the
+#: point — a slot is a binding, not a kind of ability.
+var slot := "echo_a"
+#: Set alongside `slot`. `@onready var player` resolves the same node, but
+#: not until the tree is ready, and `_collect_runtimes` runs first.
+var player_ref: Player = null
+
 #: The Action component in this runtime's slot, straight from the folded
 #: mechanics. Empty is legal and playable — the Static Pulse is never here.
 var equipped: Dictionary = {}
@@ -89,10 +97,19 @@ func _cancel_held_state() -> void:
 		player.glide_fall_speed = 0.0
 		player.glide_forward_speed = 0.0
 
+func refresh_viewmodel() -> void:
+	_refresh_viewmodel_attachment()
+
 func _refresh_viewmodel_attachment() -> void:
+	# One viewmodel, four slots: only the highlighted one paints it, or
+	# four runtimes would fight over the same mesh every time any of them
+	# changed. Which slot you are looking at is the player's business.
+	var body: Player = player_ref if player_ref != null else player
+	if body == null or body.highlighted_slot != slot:
+		return
 	var part: MeshInstance3D = null
-	if player != null and player.viewmodel != null:
-		part = player.viewmodel.get_node_or_null("EchoPart") as MeshInstance3D
+	if body.viewmodel != null:
+		part = body.viewmodel.get_node_or_null("EchoPart") as MeshInstance3D
 	if part == null:
 		return
 	if equipped.is_empty():

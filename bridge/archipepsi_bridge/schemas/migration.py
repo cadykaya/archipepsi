@@ -25,26 +25,21 @@ try:
 except ImportError:  # pragma: no cover
     import echo as E
 
-#: v7 archetypes mapped onto the slot the S1 runtime can actually execute.
-#: v0.7 had one active Echo button (RMB), so migration must preserve that
-#: control regardless of whether the old Echo was described as a weapon,
-#: tool or mobility ability. Putting a migrated Hookshot into `mobility`
-#: would make a previously usable equipped Echo disappear from RMB, because
-#: `main.gd` binds `slotted_action()` — which defaults to `echo_a` — and
-#: nothing else.
+#: v7 archetypes mapped onto v8 slots.
 #:
-#: This collapse expires at **S7** (`IMPLEMENTATION_PLAN.md` §2.5: "Slots +
-#: loadout UX"), which is the stage that actually binds four slots. Not S2:
-#: S2 ships the primitive catalog and the action runner, and leaves the
-#: number of reachable buttons at one. Restoring `"mobility": "mobility"`
-#: before S7 re-opens the regression this row exists to prevent.
+#: S1.1 collapsed every archetype onto `echo_a`, because v0.7 had one Echo
+#: button and `main.gd` bound `slotted_action()` and nothing else: a
+#: migrated Hookshot landing in `mobility` would have been owned, slotted
+#: and unreachable. The comment named S7 as the expiry, and this is S7 —
+#: four slots are bound, `player.gd` builds a runtime per slot, and the
+#: collapse is retired. A migrated mobility Echo goes back to Shift, which
+#: is where a v0.7 player would look for it.
 #:
-#: Public because the deterministic fallback uses the same compatibility
-#: mapping: newly generated mobility Echoes must also remain playable.
+#: Public because the deterministic fallback uses the same mapping.
 ARCHETYPE_SLOT = {
     "weapon": "echo_a",
-    "tool": "echo_a",
-    "mobility": "echo_a",
+    "tool": "utility",
+    "mobility": "mobility",
     "passive": "echo_a",
 }
 

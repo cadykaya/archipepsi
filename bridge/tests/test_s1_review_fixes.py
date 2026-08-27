@@ -75,12 +75,14 @@ def test_the_request_advertises_only_mechanics_the_runtime_can_execute():
     assert allowed["slots"] == list(CAP.IMPLEMENTED_ACTION_SLOTS)
     assert allowed["modifiers"] == list(CAP.IMPLEMENTED_MODIFIER_TYPES)
     assert allowed["trait_stats"] == list(CAP.IMPLEMENTED_TRAIT_STATS)
-    # ...and the registry is a real subset of the contract, not a copy of
-    # it, or the assertions above would hold vacuously once it stopped
-    # gating anything.
+    # ...and the registry still gates SOMETHING, or the assertions above
+    # would hold vacuously. Slots stopped being one of those things at S7
+    # (every slot is a bound key now), so the vacuity guard rests on the
+    # gates that are genuinely still narrower than the contract.
     from archipepsi_bridge.schemas import echo as E
     assert set(CAP.IMPLEMENTED_COMPONENT_KINDS) < set(E.COMPONENT_KINDS)
-    assert set(CAP.IMPLEMENTED_ACTION_SLOTS) < set(E.SLOT_NAMES)
+    assert set(CAP.IMPLEMENTED_ACTION_SLOTS) == set(E.SLOT_NAMES)
+    assert set(E.IMPLEMENTED_PRIMITIVES) < set(E.ACTION_PRIMITIVES)
 
 
 def test_s1_stage_gate_rejects_schema_valid_noops():
@@ -168,20 +170,19 @@ def test_s1_stage_gate_rejects_schema_valid_noops():
     })
     assert CAP.validate_stage_support(bouncy) == []
 
-    # The slot gate is the one that has NOT moved: four-slot binding is S7,
-    # and until then an Action on `mobility` is owned and unreachable.
-    misslotted = _interpretation_with({
+    # The slot gate moved at S7: `mobility` is Shift now, with its own
+    # runtime, so an Action there is reachable and accepted.
+    slotted = _interpretation_with({
         "kind": "action",
         "component_id": "act_slot",
-        "display_name": "Unreachable Dash",
-        "description": "No key is wired to this slot until S7.",
+        "display_name": "Shift Dash",
+        "description": "Shift is wired since S7.",
         "slot": "mobility",
         "cooldown": 1.0,
         "primitive": {"type": "dash", "force": 12.0},
         "modifiers": [],
     })
-    assert any("slot 'mobility'" in error
-               for error in CAP.validate_stage_support(misslotted))
+    assert CAP.validate_stage_support(slotted) == []
 
     # And a verb whose supporting system is still ahead stays refused, so
     # this test still proves the primitive gate fires at all.
@@ -200,7 +201,7 @@ def test_s1_stage_gate_rejects_schema_valid_noops():
                validate_interpretation(gated, expected_source_location_id=LOC_A))
 
 
-def test_v7_equipped_mobility_echo_stays_on_the_existing_rmb_control():
+def test_v7_equipped_mobility_echo_lands_on_the_slot_it_names():
     old_echo = {
         "schema_version": 7,
         "echo_id": f"echo_{MOBILITY_LOC}",
@@ -231,15 +232,23 @@ def test_v7_equipped_mobility_echo_stays_on_the_existing_rmb_control():
     }
     save = CampaignSave.model_validate(migrate_v7_to_v8(raw))
     action_id = component_id_for("act", MOBILITY_LOC)
-    assert save.slots.echo_a == action_id
-    assert save.slots.mobility is None
-    assert save.derive().by_id(action_id).component.slot == "echo_a"
+    # S1.1 collapsed this onto `echo_a` because one button was bound and a
+    # mobility Echo would have been unreachable. S7 binds four, so the
+    # collapse is retired and a migrated Hookshot goes back to Shift —
+    # where a v0.7 player would look for it. Asserting the NEW placement is
+    # what stops the stopgap being reintroduced by habit.
+    assert save.slots.mobility == action_id
+    assert save.slots.echo_a is None
+    assert save.derive().by_id(action_id).component.slot == "mobility"
 
-    # The deterministic S1 fallback follows the same compatibility rule, so
-    # a newly generated Hookshot is usable instead of landing in an unwired
-    # Shift slot before S2 exists.
     generated = fallback_echo(_request(MOBILITY_LOC, "Hookshot"))
-    assert generated["operations"][0]["component"]["slot"] == "echo_a"
+    assert generated["operations"][0]["component"]["slot"] == "mobility"
+
+    # The property the stopgap protected — nothing lands where no key
+    # reaches — is preserved by the gate rather than by the collapse.
+    from archipepsi_bridge.schemas import migration as MG
+    assert set(MG.ARCHETYPE_SLOT.values()) <= set(
+        CAP.IMPLEMENTED_ACTION_SLOTS)
 
 
 def test_reconcile_assigns_batch_order_by_location_id(monkeypatch):

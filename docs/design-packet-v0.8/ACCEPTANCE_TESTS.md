@@ -8,7 +8,7 @@ All examples use the canonical fixture in `IMPLEMENTATION_PLAN.md` §3.1. v0.3 s
 
 # 1. Schema tests — ship with the packet
 
-`schemas/test_schemas.py` — 125 tests at time of writing, all passing. Run them first, before writing anything else. The count will grow; what matters is that they are green on arrival, so any red one is a regression you introduced.
+`schemas/test_schemas.py` — 126 tests at time of writing, all passing. Run them first, before writing anything else. The count will grow; what matters is that they are green on arrival, so any red one is a regression you introduced.
 
 They pin: the derived jump gap and its margin; the worst-case Zone clear time; the PRNG recipe (with a pinned seed value); Zone structural and semantic rules; the impossibility of expressing an Echo gate; Echo composition rules; rejection of invented fields and unsupported effects; save round-tripping; and that a `PENDING_GENERATION` Zone retains its allocation.
 

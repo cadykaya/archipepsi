@@ -21,7 +21,7 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   last six verbs (`beam_sustained`/`hover`/`block`/`restore_resource`/
   `scan_mark`/`cleanse`), I7 enforced by the trait model, and the
   §5 status rule vocabulary. Both S3 tripwires discharged.
-- S6: **complete** — the operation vocabulary is whole. The capability
+- S6: complete — the operation vocabulary is whole. The capability
   gate admits `upgrade`/`modify`/`merge`; `target_errors` checks a
   disposition can land at GENERATION (repair loop) as well as at fold
   (I11); the request carries the owned component graph with per-field
@@ -30,11 +30,19 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   `--epsilon=fallback`); I10 alias soundness proven; §12 identity
   packages complete (sound family, particle style) and pinned from both
   sides.
-- **Next: S7 slots + loadout UX** (IMPLEMENTATION_PLAN §2.5): four Action
-  slots (`SLOT_NAMES`), favourites, comparison. `IMPLEMENTED_ACTION_SLOTS`
-  is still `("echo_a",)` and `main.gd` binds only `slotted_action()`;
-  S7 is what retires the S1.1 `ARCHETYPE_SLOT` stopgap, whose comment
-  names S7 explicitly.
+- S7: **complete** — four slots, four runtimes, four keys (RMB / MMB+F /
+  Shift / C). `IMPLEMENTED_ACTION_SLOTS` is the whole contract;
+  `SLOT_NAMES` shared through `constants.py`; the S1.1 `ARCHETYPE_SLOT`
+  collapse retired (migrated mobility Echoes go back to Shift); the HUD
+  shows all four slots with Mk levels; the archive names the key each
+  button lands on, compares against what it would replace, and marks
+  favourites (client preference, `user://loadout.cfg`, never campaign
+  state); the wheel cycles favourites within the highlighted slot.
+- **Next: S8 the Echo Lab** (IMPLEMENTATION_PLAN §2.5): the Hub test
+  chamber that grows with the vocabulary. NOTE: ChatGPT/GPT-5.6 Sol
+  prepared S8 design notes and traps on a separate branch — read and
+  cherry-pick before starting, but the v0.8 packet and the live
+  interfaces win over anything written ahead of the code.
 
 ## Stage dependency trap
 `pull_pickup` is the ONLY verb still deferred: it collects local rewards, which are S9. `DEFERRED_PRIMITIVES` must name the last required stage, not the first.
@@ -48,12 +56,6 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   (`test_theme_agreement.py` ↔ `integration_driver.gd`), runner arms
   (`test_runner_coverage.py`).
 
-## Standing stopgap, due at S7
-`IMPLEMENTED_ACTION_SLOTS` is one slot, and migrated mobility Echoes are
-collapsed onto `echo_a` (S1.1). The comment names S7; do not widen either
-before `main.gd` binds more than one button, or an Action lands on a slot
-no key reaches.
-
 ## Resolved at S5 (was the standing unresolved decision)
 Traits apply because they are OWNED — unchanged, and now deliberate
 rather than inherited. S5 added the escape hatch the contract always
@@ -63,17 +65,17 @@ model, not merely described). Ownership is the default; equipping is the
 modifier. Recorded in `docs/IMPLEMENTATION_DECISIONS.md` (S5).
 
 ## Last full green verification
-At S6 completion (this commit):
-- `make test`: 285 passed
+At S7 completion (this commit):
+- `make test`: 286 passed
 - `check_packet.py`: green, 10 docs
 - `make godot-test`: GODOT CHAMBER TESTS OK
 - `make godot-blink`: 5125 resolved / 17825 refused; GODOT BLINK TESTS OK
 - `make godot-hud`: GODOT HUD TESTS OK
 - `make godot-rules`: GODOT RULES TESTS OK
-- `make godot-stats`: GODOT STATS TESTS OK (I3, 300-round seeded sweep)
+- `make godot-stats`: GODOT STATS TESTS OK (I3 sweep, links, S7 slots)
 - `make godot-integration`: GODOT INTEGRATION OK, full 12-zone campaign;
   every interpretation credited in some provenance chain, 7 components at
-  Mk II+, longest chain 4 items
+  Mk II+, longest chain 4 items, Actions reaching 3 of the 4 slots
 
 Do not assume these counts remain current after new commits; update this section only after the corresponding suites actually run green.
 

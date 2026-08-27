@@ -337,6 +337,14 @@ LOW_HEALTH_FRACTION = 0.33
 STAT_STACK_MIN = 0.25
 STAT_STACK_MAX = 4.0
 
+#: The four Action slots (ECHOES.md §9). Here rather than only in
+#: `echo.py` because the CLIENT binds one key per slot and builds one
+#: action runtime per slot: a slot the schema admits and no key reaches is
+#: an Action you own and cannot press, which is the failure
+#: `IMPLEMENTED_ACTION_SLOTS` exists to prevent. Exported to GDScript, so
+#: the two sides cannot disagree about how many there are.
+SLOT_NAMES = ("echo_a", "echo_b", "mobility", "utility")
+
 #: Reference mid-bounds Echo, used to state the Static Pulse comparison
 #: honestly. The *bounds* permit far more; a typical Echo lands near this.
 REFERENCE_ECHO_DAMAGE = 12.0

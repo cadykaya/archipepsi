@@ -14,6 +14,7 @@ capability that validation would silently accept as a no-op.
 
 from __future__ import annotations
 
+from ..schemas import constants as C
 from ..schemas.echo import EchoInterpretation
 
 
@@ -69,12 +70,12 @@ IMPLEMENTED_EFFECT_KINDS = (
     "apply_status", "trait_pulse",
 )
 
-#: Still one slot, and this is the line people will reach for first when
-#: they read that S2 "ships the catalog". S2 ships the *verbs*; the number
-#: of reachable buttons is S7 ("Slots + loadout UX"). Widening this before
-#: `main.gd` binds more than `slotted_action()` would let Epsilon place an
-#: Action on a slot no key is wired to — owned, slotted, and unreachable.
-IMPLEMENTED_ACTION_SLOTS = ("echo_a",)
+#: S7 bound the other three. `player.gd` builds one runtime per slot and
+#: `SLOT_ACTIONS` gives each its own key (RMB / MMB+F / Shift / C), so an
+#: Action on any of them is reachable. This was the last gate still
+#: narrower than the contract: every slot the schema admits is now a
+#: button, which is what the gate was waiting for.
+IMPLEMENTED_ACTION_SLOTS = C.SLOT_NAMES
 
 IMPLEMENTED_MODIFIER_TYPES = ("recoil_self", "knockback_target",
                               "apply_status_on_hit")

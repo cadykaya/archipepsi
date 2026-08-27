@@ -3,7 +3,8 @@ extends CharacterBody3D
 ## First-person controller. Every number comes from Constants (generated
 ## from schemas/constants.py) — do not invent movement values here.
 ##
-## LMB is ALWAYS Static Pulse. RMB is the equipped Echo. Never rebound.
+## LMB is ALWAYS Static Pulse, never rebound. The four Echo slots take
+## RMB / MMB+F / Shift / C (ECHOES §9), one runtime each.
 
 signal hp_changed(hp: float, shield: float)
 signal died
@@ -21,6 +22,16 @@ signal footstep(kind: String)
 ## The frame a deliberate jump actually launched (buffered input resolving
 ## against coyote time) — the rule engine's `jump` event, not the input.
 signal jumped
+
+#: ECHOES §9's control grammar, one binding per slot. LMB is the Static
+#: Pulse and appears nowhere here: its identity is untouchable, so it is
+#: not a slot and cannot be rebound to one.
+const SLOT_ACTIONS := {
+	"echo_a": "fire_echo",
+	"echo_b": "fire_echo_b",
+	"mobility": "fire_mobility",
+	"utility": "fire_utility",
+}
 
 const MOUSE_SENSITIVITY := 0.0022
 #: Metres between footfalls. Paced by distance so it tracks speed Echoes.
@@ -90,7 +101,35 @@ var _bob_weight := 0.0
 var _land_dip := 0.0
 
 @onready var camera: Camera3D = $Camera3D
-@onready var echo_runtime: EchoRuntime = $EchoRuntime
+## slot -> EchoRuntime, one per `SLOT_NAMES`. Filled by `create()`, which
+## is where the nodes are made — an `@onready` collection read the tree
+## back and came up empty, and a dictionary that is sometimes empty is a
+## loadout that sometimes silently has no buttons.
+var runtimes: Dictionary = {}
+## The slot the wheel cycles and the viewmodel shows. Every slot fires on
+## its own key regardless; this is only "which one are you looking at".
+var highlighted_slot := "echo_a"
+
+## The highlighted slot's runtime. The HUD's cooldown bar, the viewmodel
+## and the favourites wheel all mean this one; anything that must reach
+## every slot iterates `runtimes` instead.
+var echo_runtime: EchoRuntime:
+	get:
+		return runtimes.get(highlighted_slot, runtimes.get("echo_a"))
+
+func set_highlighted_slot(slot: String) -> void:
+	if slot in runtimes and slot != highlighted_slot:
+		highlighted_slot = slot
+		for runtime: EchoRuntime in runtimes.values():
+			runtime.refresh_viewmodel()
+
+## Total shield across every slot: two Echoes granting one each should
+## read as two, and a hit should eat both before it reaches hp.
+func total_shield() -> float:
+	var total := 0.0
+	for runtime: EchoRuntime in runtimes.values():
+		total += runtime.shield_hp
+	return total
 @onready var viewmodel: Node3D = $Camera3D/Viewmodel
 
 static func create() -> Player:
@@ -164,10 +203,19 @@ static func create() -> Player:
 	flash.shadow_enabled = false
 	viewmodel.add_child(flash)
 
-	var runtime := Node.new()
-	runtime.name = "EchoRuntime"
-	runtime.set_script(load("res://scripts/gameplay/echo_runtime.gd"))
-	player.add_child(runtime)
+	# S7: one runtime per slot (ECHOES §9). Cooldowns, held state and
+	# airtime budgets belong to the Action, so four buttons need four of
+	# them — sharing one would let a dash and a grapple contend for a
+	# single cooldown, which is the bug the four-slot loadout exists to
+	# make impossible.
+	for slot: String in Constants.SLOT_NAMES:
+		var runtime := Node.new()
+		runtime.name = "EchoRuntime_" + slot
+		runtime.set_script(load("res://scripts/gameplay/echo_runtime.gd"))
+		player.add_child(runtime)
+		runtime.slot = slot
+		runtime.player_ref = player
+		player.runtimes[slot] = runtime
 	return player
 
 func _ready() -> void:
@@ -261,7 +309,8 @@ func _physics_process(delta: float) -> void:
 		velocity.z = lerpf(velocity.z, flat.z * glide_forward_speed, 0.08)
 
 	_update_swing(delta)
-	echo_runtime.set_grounded(is_on_floor())
+	for runtime: EchoRuntime in runtimes.values():
+		runtime.set_grounded(is_on_floor())
 
 	if not input_frozen:
 		if Input.is_action_just_pressed("jump"):
@@ -289,10 +338,16 @@ func _physics_process(delta: float) -> void:
 
 		if Input.is_action_pressed("fire_pulse"):
 			_fire_static_pulse()
-		if Input.is_action_just_pressed("fire_echo"):
-			echo_runtime.activate()
-		if Input.is_action_just_released("fire_echo"):
-			echo_runtime.release()
+		# The Static Pulse keeps LMB and is never any of these. Each slot
+		# owns exactly one binding, so "which button was that" and "which
+		# Echo fired" are the same question.
+		for slot: String in SLOT_ACTIONS:
+			var action: String = SLOT_ACTIONS[slot]
+			if Input.is_action_just_pressed(action):
+				set_highlighted_slot(slot)
+				runtimes[slot].activate()
+			if Input.is_action_just_released(action):
+				runtimes[slot].release()
 		if Input.is_action_just_pressed("interact") \
 				and _interact_target != null:
 			_interact_target.interact(self)
@@ -420,9 +475,14 @@ func take_damage(amount: float,
 	if _dead:
 		return
 	amount *= damage_taken_mult
-	amount = echo_runtime.absorb_with_shield(amount)
+	# Parry first wherever it is, then shields in slot order — the same
+	# precedence one runtime used, spread across four.
+	for runtime: EchoRuntime in runtimes.values():
+		amount = runtime.absorb_with_shield(amount)
+		if amount <= 0.0:
+			break
 	hp = maxf(0.0, hp - amount)
-	hp_changed.emit(hp, echo_runtime.shield_hp)
+	hp_changed.emit(hp, total_shield())
 	damaged_from.emit(source_position)
 	if hp <= 0.0:
 		_die()
@@ -437,7 +497,7 @@ func heal(amount: float) -> void:
 	# `regen` is a multiplier on recovery received — the game has no base
 	# trickle for it to scale, and healing-in is the recovery that exists.
 	hp = minf(Constants.PLAYER_MAX_HP, hp + amount * regen_mult)
-	hp_changed.emit(hp, echo_runtime.shield_hp)
+	hp_changed.emit(hp, total_shield())
 
 func _die() -> void:
 	_dead = true
@@ -450,7 +510,7 @@ func _respawn() -> void:
 	velocity = Vector3.ZERO
 	hp = Constants.PLAYER_MAX_HP
 	_dead = false
-	hp_changed.emit(hp, echo_runtime.shield_hp)
+	hp_changed.emit(hp, total_shield())
 
 func _update_interact_target() -> void:
 	var hit := camera_ray(3.0)

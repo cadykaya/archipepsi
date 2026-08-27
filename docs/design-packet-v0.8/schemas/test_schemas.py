@@ -1905,3 +1905,20 @@ def test_coins_available_is_derived_not_asserted():
     assert "coins_available" not in CampaignSnapshot.model_fields
     assert _snapshot(coins_received=10, coins_spent=4).coins_available == 6
     assert _snapshot(coins_received=2, coins_spent=9).coins_available == 0
+
+
+def test_slot_names_and_the_slot_literal_cannot_drift():
+    """`SLOT_NAMES` is shared with the client through `constants.py`; the
+    `SlotName` Literal has to be written out by hand because a type cannot
+    be built from a runtime tuple. So they are two spellings of one fact,
+    which is exactly the shape that rots without a test."""
+    from typing import get_args
+    try:
+        from .echo import SLOT_NAMES, SlotName
+        from . import constants as K
+    except ImportError:  # pragma: no cover
+        from echo import SLOT_NAMES, SlotName
+        import constants as K
+    assert set(get_args(SlotName)) == set(SLOT_NAMES)
+    assert SLOT_NAMES == K.SLOT_NAMES
+    assert len(SLOT_NAMES) == 4

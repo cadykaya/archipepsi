@@ -87,7 +87,7 @@ Running out of time at Phase 3 below leaves a real, connected, provable slice. R
    **If Godot is absent:** do not install it and do not go looking. Build Phases 0–2 (all Python, all verifiable), write the Phase 3 GDScript unverified, and say so plainly in `NEXT_STEPS.md` and at the T−60 gate. An honest "engine layer written but never run" is worth more than a silent one.
 1. Repo skeleton, `Makefile` (including the §8.5 targets), `.gitignore` (`.archipelago/`, `.env`, `.godot/`, `__pycache__/`, `.pytest_cache/`, `*.tmp`, `*.bak`).
 2. Copy `schemas/` from the packet into `bridge/archipepsi_bridge/schemas/` **verbatim**, `transitions.py` included. Do not retype them.
-3. `python -m pytest` on the packet's schema tests — 125 tests, all green, before anything else is written. They pass both standalone and from the repo root; if they do not, you copied them wrong.
+3. `python -m pytest` on the packet's schema tests — 126 tests, all green, before anything else is written. They pass both standalone and from the repo root; if they do not, you copied them wrong.
 3b. `python docs/design-packet-v0.8/check_packet.py` — proves the packet's prose still matches the schemas you just copied. It is also the guard to re-run if you ever edit the packet.
 4. `bootstrap.py`: clone Archipelago at `0.6.7`, run `ModuleUpdate.py --yes`, verify `import CommonClient` with `SKIP_REQUIREMENTS_UPDATE=1`.
 

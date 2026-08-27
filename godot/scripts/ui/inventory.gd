@@ -12,6 +12,10 @@ extends CanvasLayer
 
 signal closed
 
+#: Same table the HUD's loadout uses: what the keycap says.
+const SLOT_KEYCAPS := {"echo_a": "RMB", "echo_b": "MMB", "mobility": "SHIFT",
+		"utility": "C"}
+
 var _list: VBoxContainer
 var _scroll: ScrollContainer
 
@@ -38,7 +42,8 @@ func _ready() -> void:
 	_list.add_theme_constant_override("separation", 10)
 	_scroll.add_child(_list)
 	var hint := Label.new()
-	hint.text = "[Tab] close   [Q] cycle equipped in play"
+	hint.text = "[Tab] close   [wheel] cycle the highlighted slot   " \
+			+ "[★] mark a favourite"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.modulate = Color(0.6, 0.65, 0.7)
 	box.add_child(hint)
@@ -165,16 +170,53 @@ func _row(echo: Dictionary, slotted: Array) -> Control:
 		return panel
 	for action: Dictionary in actions:
 		var component_id := str(action.get("component_id", ""))
-		var here := component_id in slotted
+		var slot := str(action.get("slot", "echo_a"))
 		var button := Button.new()
-		button.text = "SLOTTED" if here else "SLOT"
-		button.disabled = here
-		button.custom_minimum_size = Vector2(110, 0)
+		# S7: the button names the KEY it would land on. Four slots make
+		# "SLOT" ambiguous — the useful question is which button this
+		# becomes, and whether something is already there.
+		var occupant: Variant = BridgeClient.slots().get(slot)
+		if component_id in slotted:
+			button.text = "ON %s" % SLOT_KEYCAPS.get(slot, "?")
+			button.disabled = true
+		elif occupant != null:
+			button.text = "REPLACE %s" % SLOT_KEYCAPS.get(slot, "?")
+		else:
+			button.text = "TO %s" % SLOT_KEYCAPS.get(slot, "?")
+		button.custom_minimum_size = Vector2(120, 0)
 		button.pressed.connect(func() -> void:
 			BridgeClient.send_intent({"type": "slot_action",
-					"slot": action.get("slot", "echo_a"),
-					"component_id": component_id}))
+					"slot": slot, "component_id": component_id}))
 		row.add_child(button)
+
+		# Favouriting (§9): marking which Actions the wheel cycles. A
+		# client preference, not campaign state — the schema has no field
+		# for it because a favourite changes nothing mechanical.
+		var star := Button.new()
+		star.toggle_mode = true
+		star.button_pressed = Favourites.is_favourite(component_id)
+		star.text = "★" if star.button_pressed else "☆"
+		star.tooltip_text = "cycle this one with the wheel"
+		star.custom_minimum_size = Vector2(38, 0)
+		star.toggled.connect(func(on: bool) -> void:
+			Favourites.toggle(component_id)
+			star.text = "★" if on else "☆")
+		row.add_child(star)
+
+		# Comparison (§9): what you would be giving up, right where the
+		# decision is made, rather than remembered from another screen.
+		if occupant != null and component_id not in slotted:
+			var against: Dictionary = BridgeClient.owned_component(
+					str(occupant)).get("component", {})
+			var versus := Label.new()
+			versus.text = "replaces %s\n%s" % [
+					against.get("display_name", "?"),
+					" · ".join(EffectSummary.component_lines(against))]
+			versus.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			versus.custom_minimum_size = Vector2(150, 0)
+			versus.add_theme_font_size_override("font_size", 12)
+			versus.modulate = Color(0.95, 0.75, 0.55)
+			row.add_child(versus)
 	return panel
 
 ## ECHOES §11: every owned component this interpretation touched shows its

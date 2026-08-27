@@ -585,7 +585,11 @@ PALETTE_COLORS = (
     "moss", "signal", "ember", "violet", "bone", "rust", "tide", "sulphur",
 )
 
-SLOT_NAMES = ("echo_a", "echo_b", "mobility", "utility")
+#: One definition, in `constants.py`, because the client builds a runtime
+#: per slot from the exported copy. The Literal below has to be spelled
+#: out — a type cannot be built from a runtime tuple — so a test asserts
+#: the two agree.
+SLOT_NAMES = C.SLOT_NAMES
 SlotName = Literal["echo_a", "echo_b", "mobility", "utility"]
 
 

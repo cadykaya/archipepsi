@@ -175,7 +175,16 @@ func _on_snapshot(snapshot: Dictionary) -> void:
 
 func _sync_equipped() -> void:
 	if zone != null and zone.player != null:
-		zone.player.echo_runtime.set_equipped(BridgeClient.slotted_action())
+		_equip_all_slots(zone.player)
+
+## S7: four slots, four runtimes, each fed the Action the fold says is in
+## it. An empty slot is legal and stays empty — the Static Pulse is what
+## you always have, and it is on its own button.
+func _equip_all_slots(target: Player) -> void:
+	for slot: String in Constants.SLOT_NAMES:
+		var runtime: EchoRuntime = target.runtimes.get(slot)
+		if runtime != null:
+			runtime.set_equipped(BridgeClient.slotted_action(slot))
 
 func _on_notification(note: Dictionary) -> void:
 	var kind := str(note.get("kind", ""))
@@ -228,13 +237,17 @@ func _clear_world() -> void:
 ## components; this is the one place the game's own events reach it.
 func _bind_rule_runtime(target: Player, zone_ctl: ZoneController) -> void:
 	rule_runtime.player = target
+	# The rule engine's `reset_action_cooldown` and `grant_shield` act on
+	# the slot the player is looking at, which is what "your Echo" means
+	# from inside a rule.
 	rule_runtime.echo_runtime = target.echo_runtime
 	rule_runtime.zone_root = zone_ctl
 	rule_runtime.refresh_rules()
 	# The stat stack and the action runner both read live fractions; the
 	# pool is main's.
 	target.stat_stack.pool = resource_pool
-	target.echo_runtime.pool = resource_pool
+	for runtime: EchoRuntime in target.runtimes.values():
+		runtime.pool = resource_pool
 	target.jumped.connect(func() -> void: rule_runtime.notify("jump"))
 	target.footstep.connect(func(kind: String) -> void:
 		if kind == "land":
@@ -245,19 +258,24 @@ func _bind_rule_runtime(target: Player, zone_ctl: ZoneController) -> void:
 			rule_runtime.notify("kill"))
 	target.damaged_from.connect(func(_source: Vector3) -> void:
 		rule_runtime.notify("damage_taken"))
-	target.echo_runtime.parried.connect(func() -> void:
-		rule_runtime.notify("parry_success"))
-	target.echo_runtime.action_used.connect(func() -> void:
-		rule_runtime.notify("action_used")
-		# ECHOES §12: an Echo sounds like the world it came from. Same
-		# procedural bank, pitched by that world's sound family — which is
-		# what keeps a campaign of borrowed parts sounding like a place
-		# rather than like one instrument.
-		tones.play("echo", target.echo_runtime.source_pitch()))
-	target.echo_runtime.action_ready.connect(func() -> void:
-		rule_runtime.notify("action_ready"))
-	target.echo_runtime.dash_ended.connect(func() -> void:
-		rule_runtime.notify("dash_end"))
+	# Every slot reports, not just the highlighted one: a rule watching
+	# `action_used` means "you used an Echo", and a dash on Shift is as
+	# much an Echo as a shot on RMB.
+	for runtime: EchoRuntime in target.runtimes.values():
+		var fired: EchoRuntime = runtime
+		fired.parried.connect(func() -> void:
+			rule_runtime.notify("parry_success"))
+		fired.action_used.connect(func() -> void:
+			rule_runtime.notify("action_used")
+			# ECHOES §12: an Echo sounds like the world it came from. Same
+			# procedural bank, pitched by that world's sound family —
+			# which is what keeps a campaign of borrowed parts sounding
+			# like a place rather than like one instrument.
+			tones.play("echo", fired.source_pitch()))
+		fired.action_ready.connect(func() -> void:
+			rule_runtime.notify("action_ready"))
+		fired.dash_ended.connect(func() -> void:
+			rule_runtime.notify("dash_end"))
 	if zone_ctl != null:
 		zone_ctl.chamber_entered.connect(func(_index: int) -> void:
 			rule_runtime.notify("chamber_enter"))
@@ -290,7 +308,7 @@ func _to_hub() -> void:
 	hud.bind_player(hub.player)
 	hub.player.fired_pulse.connect(func() -> void: tones.play("pulse"))
 	hub.player.footstep.connect(func(kind: String) -> void: tones.play(kind))
-	hub.player.echo_runtime.set_equipped(BridgeClient.slotted_action())
+	_equip_all_slots(hub.player)
 	_bind_rule_runtime(hub.player, null)
 	tones.play_ambience(1.0)
 	_update_modal()
@@ -420,9 +438,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			inventory.open()
 		_update_modal()
 	elif event.is_action_pressed("cycle_echo"):
-		_cycle_echo(1)
+		_cycle_echo(1, _highlighted_slot())
 	elif event.is_action_pressed("cycle_echo_back"):
-		_cycle_echo(-1)
+		_cycle_echo(-1, _highlighted_slot())
 
 ## `step` is +1 or -1. By the end of a campaign the archive holds 26
 ## Echoes, and a forward-only cycle means overshooting one costs 25 more
@@ -438,6 +456,10 @@ func _cycle_echo(step: int, slot := "echo_a") -> void:
 			ids.append(str(component.get("component_id", "")))
 	if ids.is_empty():
 		return
+	# S7: favourites narrow the wheel, if the player marked at least two
+	# in this slot. One favourite would cycle to itself, which is a wheel
+	# that appears to be broken, so that case keeps the full list.
+	ids = Favourites.cycle_set(ids)
 	var current: Variant = BridgeClient.slots().get(slot)
 	var index := ids.find(str(current)) if current != null else -1
 	# posmod, not %: GDScript's % keeps the sign, so stepping back from the
@@ -445,6 +467,16 @@ func _cycle_echo(step: int, slot := "echo_a") -> void:
 	var next: String = ids[posmod(index + step, ids.size())]
 	BridgeClient.send_intent({"type": "slot_action", "slot": slot,
 			"component_id": next})
+
+## The wheel cycles within whichever slot you last fired (ECHOES §9:
+## "favourites within the highlighted slot"), so one wheel serves four
+## slots without a modifier key.
+func _highlighted_slot() -> String:
+	if zone != null and zone.player != null:
+		return zone.player.highlighted_slot
+	if hub != null and hub.player != null:
+		return hub.player.highlighted_slot
+	return "echo_a"
 
 func _update_modal() -> void:
 	var modal: bool = pause_menu.visible or inventory.visible \

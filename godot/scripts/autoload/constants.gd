@@ -81,6 +81,7 @@ const SHOP_PRICE_USEFUL = 4
 const SHOP_RESTOCK_EVERY_ZONES = 2
 const SHOP_STOCK_SIZE = 2
 const SIGNAL_KEY_COUNT = 2
+const SLOT_NAMES = ["echo_a", "echo_b", "mobility", "utility"]
 const SPEED_MULT_MAX = 1.6
 const SPEED_MULT_MIN = 0.9
 const STATIC_GLITCH_UNITS_PER_ITEM = 1
