@@ -1,54 +1,58 @@
 # Archipepsi — build state
 
 ## Highest completed milestone
-Phase 2 (bridge): the entire campaign machine works headlessly against mock
-AP **and against a real Archipelago 0.6.7 server** (`smoke_real.py`), with
-save/reload showing no duplication. 180 tests green
-(110 schema + 45 bridge + 25 APWorld).
+**The full v0.7 POC (Phases 0–7).** The entire campaign — scout, allocate,
+generate, play, claim, confirm, Echo, shop, finale, postgame — is proven
+end-to-end by `make godot-integration`, which plays the whole game
+headlessly against the live mock bridge (12 zones, all 30 checks, goal
+reported once, 26 foreign checks → 26 Echoes, purchases with the double-buy
+refused). The bridge is also proven against a real Archipelago 0.6.7 server
+(`python3 -m archipepsi_bridge.smoke_real`).
 
 ## What currently works
-- `make setup` / `make seed` / `make seed-multi` / `make host` (APWorld)
-- `make test` — full suite from the repo root
-- `make bridge` — WebSocket bridge on ws://127.0.0.1:38290
-  (`--ap=real|mock`, `--epsilon=claude|mock|fallback`)
-- `make smoke` — headless full loop: connect → scout → allocate →
-  fallback-generate → enter → claim → confirm → Echo → equip → save →
-  reload → regenerate
-- `python3 -m archipepsi_bridge.smoke_real` — same against a live server
-  (host one with `make host` first)
-- Campaign brain: deterministic allocation (§10.5), tier gating, finale
-  gating + goal reporting, shop stock/cadence/purchase/rollback, pending-
-  check reconciliation (never event-waiting), Echo grant with bulk guard,
-  WAITING_FOR_AP with reservation release, postgame.
-- Providers: fallback + mock, with validate → one-repair → fallback
-  pipeline and generation archive.
+- 184 pytest tests (110 schema / 49 bridge+campaign+providers+Claude /
+  25 APWorld) + headless Godot chamber tests + the full-campaign driver
+- `make seed` / `make seed-multi` / `make host` / `make apworld`
+  (official Build APWorlds component; manifest validated)
+- Bridge: `make bridge` (real AP) / `make bridge-mock`; providers
+  claude/mock/fallback with validate → repair-once → fallback and the
+  generation archive (`--archive-dir`)
+- Game: menu (connect/mock), Hub (8 modes, finale portal, abandon console,
+  shop, echo terminal, Static corruption), 5 chamber builders, 3 enemies,
+  10 Echo effects, reveal cards, inventory, pause, debug overlay,
+  procedural tones and textures
 
-## In progress
-Phase 3: Godot vertical slice. Godot 4.5.1.stable.official.f62fdbde1 is at
-`godot-bin/godot` (downloaded; see docs/IMPLEMENTATION_DECISIONS.md).
-
-## Remaining planned work
-- Phase 3: bridge_client.gd, constants.gd export, main menu, Hub (8 modes),
-  FPS controller, corridor+arena builders, melee enemy, claim flow, the
-  reveal, Echo runtime (hitscan+recoil+knockback), inventory,
-  enter/leave/exit/abandon.
-- Phase 4: platform_path/tower/treasure_room builders, ranged/brute,
-  remaining Echo effects.
-- Phase 5: ClaudeEpsilonProvider (bridge-side pipeline is provider-ready).
-- Phase 6: shop/finale UI in Godot (bridge logic already exists + tested).
-- Phase 7: acceptance run, `.apworld` packaging via AP's build component.
+## In progress / next useful work (post-POC polish)
+Nothing half-built. Candidate improvements, roughly in value order:
+1. **Play-feel pass on real hardware** — nobody has held it; the manual
+   checks in ACCEPTANCE_TESTS §7 (gap feel, reveal timing, Conference Call
+   comedy) need human eyes. Cannot be done in this container.
+2. Visual depth: more brush variety per theme (trim pipes, buttresses,
+   signage), corridor prop variety, hub screen-fuzz shader for Static.
+3. Zone variety: additional safe chamber arrangement logic in builders
+   (L-bends via rotated chaining would need overlap checks — design first).
+4. Epsilon flavor: designer_note surfacing in the Hub board after
+   completion; per-theme reveal card tints.
+5. Live-fire the Claude provider once an ANTHROPIC_API_KEY is present
+   (`make bridge` + `EPSILON_PROVIDER=claude`); the offline stub tests
+   cover the mechanics but a real generation archive would be gold.
+6. Robustness: bridge-restart-mid-zone manual pass (Test L is covered
+   headlessly by test 18; the Godot-side resume path deserves a manual run).
 
 ## Known blockers / bugs
-None known.
+- None known. One recorded schema corner: `finale_offered` stays true in
+  postgame; clients also require the goal missing
+  (docs/IMPLEMENTATION_DECISIONS.md).
 
 ## Exact next concrete action
-Run `make export` to generate `godot/scripts/autoload/constants.gd`, create
-`godot/project.godot` pinned to 4.5.1, then write `bridge_client.gd`
-(WebSocket + reconnect backoff + snapshot store) and the main menu scene.
+Pick item 2: extend `ChamberBuilders` with per-theme prop kits (pipe runs,
+crates, wall panels, hanging cables) applied by deterministic RNG seeded
+from chamber id — pure visual, no traversal impact, keeps every geometry
+test green.
 
 ## Commands
-    make test                                   # 180 tests
-    make smoke                                  # headless full loop
-    make seed-multi && make host                # real server on :38281
-    make bridge                                 # bridge for Godot
-    godot-bin/godot --path godot --headless     # engine (once project exists)
+    make test                # pytest suites
+    make godot-test          # chamber geometry
+    make godot-integration   # the whole game, headlessly
+    make seed-multi && make host && make bridge   # real server play
+    godot-bin/godot --path godot                  # the game
