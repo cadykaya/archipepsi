@@ -309,9 +309,38 @@ The stage that makes a build a *graph*. `make godot-stats` is its suite.
   and matched the `powers` direction backwards. That leg was unprovable
   before, which is exactly why it had a tripwire.
 
-**Then: S6** — dispositions: `UPGRADE` / `MODIFY` / `LINK` / `MERGE` as
-operations a *provider* may emit, families and Mk levels, source identity
-packages.
+## Echoes 2.0 — S6 landed (dispositions)
+
+The stage where items answer each other. `test_dispositions.py` is its
+proof; the integration run is where you can see it.
+
+- **The operation vocabulary is whole.** The gate admits `upgrade`,
+  `modify` and `merge`. The fold has folded them since S1 — what was
+  missing was permission, and a way for a wrong guess to be survivable.
+- **`target_errors` at generation.** A disposition naming an unowned
+  component is a validation error carrying the id, so the repair loop
+  gets a chance; the fold's own refusal (I11) stays, because that is
+  what makes a corrupt log unrepresentable. A test asserts they agree.
+- **The request carries the owned graph**, including per-field upgrade
+  headroom `(field, current, min, max)` read out of the models. The fold
+  refuses an upgrade that leaves a declared range, so a provider without
+  the range is guessing at the one number it must not guess at.
+- **The fallback evolves.** Ancestry is semantic (§11): the family key is
+  the verb for an action, the stat for a trait. *Hookshot → Longshot →
+  Clawshot* is one grapple at Mk III, from the shipped fallback. The mock
+  campaign ends with **7 components at Mk II or better** and a provenance
+  chain **4 items long**.
+- **I10 proven**: self-merge rejected, no reachable alias cycle, an
+  absorbed id resolving straight through three merges, provenance unioned
+  in sequence order, only resources merging.
+- **§12 identity packages complete**: sound family (a pitch shift of the
+  shared procedural bank — an Echo sounds like the world it came from)
+  and particle style (tracer width and lifetime). Pinned from both sides;
+  two worlds may share a family, and the test says so rather than
+  claiming a uniqueness §12 never promises.
+
+**Then: S7** — slots and loadout UX: four Action slots, favourites,
+comparison. This is what retires the S1.1 one-slot stopgap.
 
 
 
@@ -334,7 +363,7 @@ postgame, so clients also require the goal to be missing
 (`docs/IMPLEMENTATION_DECISIONS.md`).
 
 ## Commands
-    make test                  # 265 pytest (125 schema)
+    make test                  # 285 pytest (125 schema)
     make godot-test            # chamber geometry
     make godot-blink           # invariant I14, every builder
     make godot-hud             # S3: palette, glyphs, pressure valve, archive
