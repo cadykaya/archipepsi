@@ -112,6 +112,84 @@ static func _perimeter(root: Node3D, width: float, depth: float,
 			Vector3(half_w, height / 2.0, depth / 2.0), wall)
 
 # ---------------------------------------------------------------------------
+# Greebles: the detail pass that makes a box read as 1998 level design.
+# Deterministic per (chamber id, theme); wall- and ceiling-mounted only, so
+# the mandatory path is never obstructed. All non-colliding.
+# ---------------------------------------------------------------------------
+
+static func _greeble_rng(chamber: Dictionary, theme: String) -> RandomNumberGenerator:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash("%s|%s|greebles" % [chamber.get("id", "c"), theme])
+	return rng
+
+## Structural ribs + a ceiling beam every few metres along a corridor-like
+## space, plus wall vents and a sagging cable run.
+static func _greeble_corridor(root: Node3D, length: float, width: float,
+		height: float, theme: String, rng: RandomNumberGenerator) -> void:
+	var trim := ThemeMaterials.trim_mat(theme)
+	var accent := ThemeMaterials.accent_mat(theme)
+	var rib_count := maxi(1, int(length / 6.0))
+	for i in rib_count:
+		var z := length * (float(i) + 0.5) / float(rib_count)
+		for side in [-1.0, 1.0]:
+			_box(root, Vector3(0.22, height, 0.35),
+					Vector3(side * (width / 2.0 - 0.13), height / 2.0, z),
+					trim, false)
+		_box(root, Vector3(width, 0.25, 0.35),
+				Vector3(0, height - 0.12, z), trim, false)
+	# Wall vents.
+	for i in rng.randi_range(1, 2):
+		var z := rng.randf_range(1.5, length - 1.5)
+		var side := -1.0 if rng.randf() < 0.5 else 1.0
+		_box(root, Vector3(0.08, 0.7, 1.1),
+				Vector3(side * (width / 2.0 - 0.05),
+					rng.randf_range(1.0, height - 1.0), z), accent, false)
+	# A cable run sagging along the ceiling.
+	var cable_x := rng.randf_range(-width / 4.0, width / 4.0)
+	var segments := maxi(2, int(length / 4.0))
+	for i in segments:
+		var z0 := length * float(i) / float(segments)
+		var seg_length := length / float(segments)
+		var sag := 0.12 + 0.1 * sin(float(i) * 1.7)
+		_box(root, Vector3(0.06, 0.06, seg_length + 0.05),
+				Vector3(cable_x, height - 0.25 - sag, z0 + seg_length / 2.0),
+				trim, false)
+
+## Corner buttresses, perimeter crates and a hazard strip for room-like
+## spaces. Crates hug the walls so the arena floor stays fightable.
+static func _greeble_room(root: Node3D, width: float, depth: float,
+		height: float, theme: String, rng: RandomNumberGenerator) -> void:
+	var trim := ThemeMaterials.trim_mat(theme)
+	var accent := ThemeMaterials.accent_mat(theme)
+	for corner_x in [-1.0, 1.0]:
+		for corner_z in [0.0, 1.0]:
+			_box(root, Vector3(0.5, height, 0.5),
+					Vector3(corner_x * (width / 2.0 - 0.3), height / 2.0,
+						0.35 + corner_z * (depth - 0.7)), trim, false)
+	for i in rng.randi_range(2, 4):
+		var against_x := rng.randf() < 0.5
+		var size := rng.randf_range(0.7, 1.3)
+		var crate_position: Vector3
+		if against_x:
+			crate_position = Vector3(
+					(-1.0 if rng.randf() < 0.5 else 1.0)
+					* (width / 2.0 - size / 2.0 - 0.4),
+					size / 2.0, rng.randf_range(2.0, depth - 2.0))
+		else:
+			# Back wall — keep clear of the exit door lane (a 1.3 m crate is
+			# taller than MAX_VERTICAL_STEP, so it must never block a door).
+			var lane := rng.randf_range(2.0, maxf(2.2, width / 2.0 - 2.0))
+			crate_position = Vector3(
+					lane * (-1.0 if rng.randf() < 0.5 else 1.0),
+					size / 2.0, depth - size / 2.0 - 1.2)
+		var crate := _box(root, Vector3(size, size, size), crate_position,
+				accent, true)
+		crate.rotation.y = rng.randf_range(-0.2, 0.2)
+	# Hazard strip across the entrance threshold.
+	_box(root, Vector3(DOOR_WIDTH + 0.8, 0.02, 0.6),
+			Vector3(0, 0.02, 0.6), ThemeMaterials.hazard_mat(theme), false)
+
+# ---------------------------------------------------------------------------
 
 static func build(chamber: Dictionary, theme: String) -> Dictionary:
 	match chamber.get("type", ""):
@@ -152,6 +230,8 @@ static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 	for i in count:
 		_light(root, Vector3(0, CORRIDOR_HEIGHT - 0.3,
 				length * (i + 0.5) / count), theme)
+	_greeble_corridor(root, length, width, CORRIDOR_HEIGHT, theme,
+			_greeble_rng(chamber, theme))
 	var spawns: Array = []
 	for group: Dictionary in chamber.get("enemies", []):
 		for i in int(group.get("count", 0)):
@@ -190,6 +270,8 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 			Vector3(width / 2.0 - 2, wall_height - 0.5, depth - 2)]:
 		_light(root, corner, theme, 16.0)
 	_light(root, Vector3(0, wall_height - 0.5, depth / 2.0), theme, 18.0)
+	_greeble_room(root, width, depth, wall_height, theme,
+			_greeble_rng(chamber, theme))
 	var spawns: Array = []
 	var index := 0
 	for group: Dictionary in chamber.get("enemies", []):
