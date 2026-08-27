@@ -147,6 +147,14 @@ func _run() -> void:
 			"the campaign owns at least one folded rule")
 	_check(BridgeClient.mechanics().get("channel_order", []).size() >= 1,
 			"the fold assigned the resource a HUD channel")
+	# S5: the mock seed's Magic Meter and Stamina Ring make powered
+	# actions, so a full campaign ends with a real link graph — the button
+	# actually spends the bar it arrived with.
+	var powers := 0
+	for link: Dictionary in BridgeClient.mechanics().get("links", []):
+		if str(link.get("link", "")) == "powers":
+			powers += 1
+	_check(powers >= 1, "the campaign owns at least one powers link")
 	_check(stock_ever_seen, "shop stocked at least once during the campaign")
 	if stock_ever_seen:
 		_check(_bought_once, "at least one shop purchase completed")

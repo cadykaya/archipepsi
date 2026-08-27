@@ -189,12 +189,15 @@ def _primary_and_resource(
 
 def _create_ops(request: EchoGenerationRequest, description: str,
                 tags: list[str], components: list[dict]) -> dict:
-    """1-4 CREATEs, in the order given. Still the boring shape — CREATE
-    only, so nothing can dangle or fail a fold — but S4 lets one of them be
-    a rule, and the fold requires a rule's resource to exist EARLIER in the
-    same interpretation, so order in this list is load-bearing."""
+    """1-4 operations, in the order given. An entry carrying its own `op`
+    passes through (S5 links); anything else is wrapped as a CREATE. Still
+    the boring shape — nothing reaches backward into the campaign — but the
+    fold requires a rule's resource, and a link's endpoints, to exist
+    EARLIER in the interpretation, so order here is load-bearing."""
     return {**_common(request, description, tags), "operations": [
-        {"op": "create", "component": component} for component in components
+        component if "op" in component
+        else {"op": "create", "component": component}
+        for component in components
     ]}
 
 
@@ -446,6 +449,16 @@ def fallback_echo(request: EchoGenerationRequest, *,
                     "cooldown": 10.0,
                     "primitive": {"type": "heal_self", "amount": 30.0},
                     "modifiers": [],
+                },
+                # S5: the button spends a charge too, so the meter is the
+                # same economy whether you drink deliberately or the rule
+                # drinks for you. Without this the charges only ever left
+                # by the reflex, which read as two unrelated things.
+                {
+                    "op": "link", "link": "powers",
+                    "source": MG.component_id_for("res", src.location_id),
+                    "target": MG.component_id_for("act", src.location_id),
+                    "strength": 1.0,
                 },
             ])
     if has("star", "orb", "battery", "cell", "core", "dynamo") \

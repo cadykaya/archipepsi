@@ -219,5 +219,7 @@ def test_fallback_echo_heuristics_all_valid():
         # fallback is the one provider that must never produce an Action
         # that silently does nothing.
         for op in echo.operations:
+            if op.op != "create":        # S5: links carry no component
+                continue
             if op.component.kind == "action":
                 assert op.component.primitive.type in E.IMPLEMENTED_PRIMITIVES

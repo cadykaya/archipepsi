@@ -279,10 +279,39 @@ first stage where a Resource gets spent.**
   the interpreter's actual match arms both ways
   (`test_rules_contract.py`).
 
-**Then: S5** — traits, links, statuses: the derived stat stack with
-clamps, the four link kinds (which un-gate `beam_sustained`, `hover`,
-`block`, `restore_resource` and fire both stage tripwires), and player
-and enemy statuses.
+## Echoes 2.0 — S5 landed (traits, links, statuses)
+
+The stage that makes a build a *graph*. `make godot-stats` is its suite.
+
+- **The derived stat stack.** All nine trait stats compose, re-evaluated
+  every physics frame because the inputs move: `scaled_by` (a resource,
+  `hp_fraction`, or `hp_inverse` — Berserker with no special case), the
+  `scales` link, `requires_equipped`, `trait_pulse`, and status factors.
+  **I3** is a 300-round seeded sweep of random legal stacks: no
+  combination leaves a traversal stat under base or any stat outside its
+  envelope, with a vacuity guard that the sweep genuinely reached the
+  floor.
+- **The four links walk.** `powers` costs (strength on a press,
+  `drain_per_second` while held), `fills` refills, `gates` withholds
+  below a threshold (fractional at/below 1.0, absolute units above),
+  `scales` interpolates a trait.
+- **The last six verbs.** `beam_sustained`, `hover`, `block`,
+  `restore_resource`, `scan_mark`, `cleanse`. Only `pull_pickup` is still
+  deferred, waiting on S9's local rewards.
+- **Statuses**, per target: max-merging containers, owned definitions as
+  floors for their kind, worst-first cleanse. On the player they drive
+  damage/knockback/aggro; on enemies they gate movement and attacks, and
+  a marked target glows over its wounds.
+- **I7 is enforced now**: an always-on trait whose harmful deviation
+  exceeds a third of base must declare `requires_equipped`.
+- **Two real bugs surfaced the instant links existed** — the S3 HUD
+  relevance code read the link kind from a field the fold does not emit,
+  and matched the `powers` direction backwards. That leg was unprovable
+  before, which is exactly why it had a tripwire.
+
+**Then: S6** — dispositions: `UPGRADE` / `MODIFY` / `LINK` / `MERGE` as
+operations a *provider* may emit, families and Mk levels, source identity
+packages.
 
 
 
@@ -305,11 +334,12 @@ postgame, so clients also require the goal to be missing
 (`docs/IMPLEMENTATION_DECISIONS.md`).
 
 ## Commands
-    make test                  # 263 pytest (125 schema)
+    make test                  # 265 pytest (125 schema)
     make godot-test            # chamber geometry
     make godot-blink           # invariant I14, every builder
     make godot-hud             # S3: palette, glyphs, pressure valve, archive
     make godot-rules           # S4: invariant I5, the ECHOES 5 interpreter
+    make godot-stats           # S5: invariant I3, the stat stack and links
     make godot-integration     # the whole game, headlessly
     make replay ARCHIVE=<dir>  # re-validate a generation archive
     make seed-multi && make host && make bridge   # real server play
