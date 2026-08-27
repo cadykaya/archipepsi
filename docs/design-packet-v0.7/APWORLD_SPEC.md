@@ -1,4 +1,4 @@
-# Archipepsi — APWorld Specification (v0.6)
+# Archipepsi — APWorld Specification (v0.7)
 
 Authority for the Archipepsi APWorld: locations, items, regions, logic, slot data, packaging, and the recommended YAML.
 
@@ -97,7 +97,7 @@ multiworld.completion_condition[player] = lambda state: state.has("Victory", pla
 
 So the generator's completion condition is effectively "2 Signal Keys".
 
-**Runtime completion is deliberately stricter, and does not end play.** Confirming Check 030 reports goal and shows the victory presentation; the campaign then continues in postgame with the Hub portal still working, because up to 5 real locations may still be unchecked and their items belong to other players. See `DESIGN.md` §13.3.
+**Runtime completion is deliberately stricter, and does not end play.** Confirming Check 030 reports goal and shows the victory presentation; the campaign then continues in postgame with the Hub portal still working, because up to 5 real locations may still be unchecked and their items belong to other players. See `DESIGN.md` §13.5.
 
  The client reports goal (`ClientStatus.CLIENT_GOAL`, value 30) only when **Check 030 is confirmed**, and Check 030 is only reachable through the finale Zone, which requires 2 Keys **and** 24 of the other 29 Checks (`DESIGN.md` §10.6).
 
@@ -111,7 +111,7 @@ Small client-required seed information only. Location→item placements are obta
 
 ```json
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "location_ids": [89100001, "...", 89100030],
   "tiers": {
     "0": [89100001, "...", 89100010],
@@ -173,7 +173,7 @@ Develop as a normal world folder. `apworld/archipepsi/archipelago.json`:
 ```json
 {
   "game": "Archipepsi",
-  "world_version": "0.5.0",
+  "world_version": "0.7.0",
   "minimum_ap_version": "0.6.7",
   "authors": ["Skyiah"]
 }
@@ -202,7 +202,7 @@ Assert in `apworld/tests`:
 - the Victory event exists, is unaddressed, and sits in Tier 2
 - `completion_condition` uses the Victory item
 - Check 030 is in Tier 2
-- slot data is schema version 6 and contains no placements
+- slot data is schema version 7 and contains no placements
 - the world generates end-to-end, solo
 - the world generates in a multiworld alongside another world with `non_local_items: Epsilon Coin`
 - `.apworld` packaging succeeds and the manifest validates

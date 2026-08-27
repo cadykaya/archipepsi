@@ -1,6 +1,6 @@
-# Archipepsi — Still Open After v0.6
+# Archipepsi — Still Open After v0.7
 
-v0.3 listed nine product questions; v0.4 closed them. v0.5 closed the pass-3 findings and three more product decisions (postgame, visual target, terminology). See `CHANGELOG_v0.4_to_v0.5.md`.
+v0.3 listed nine product questions; v0.4 closed them. v0.5 closed the pass-3 findings and three more product decisions (postgame, visual target, terminology). See `CHANGELOG_v0.7.md`.
 
 What remains is genuinely small. **None of it blocks the autonomous build pass.** If the coding agent reaches any of these, the stated default applies and it should keep going.
 
@@ -48,7 +48,7 @@ These were open in v0.3. They are now decided and the reasoning is in the author
 | Movement and combat constants? | Adopted as binding, tunable after first play | `schemas/constants.py` |
 | Enemy tuning? | Same | Same |
 | Which button fires the Echo? | RMB; LMB is always Static Pulse | `DESIGN.md` §7 |
-| Does goaling end the campaign? | No — postgame keeps the portal live | `DESIGN.md` §13.3 |
+| Does goaling end the campaign? | No — postgame keeps the portal live | `DESIGN.md` §13.5 |
 | Minecraft or late-90s FPS? | Late-90s PC FPS, GoldSrc-era brushwork | `DESIGN.md` §3.4, §20 |
 | Is the terminology soda-based? | No. Signal Key, Static Pulse; Archipepsi is the codename | `constants.py` |
 | Epsilon shop flavor text? | Cut | `DESIGN.md` §11.6 |

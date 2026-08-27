@@ -3,7 +3,7 @@
     "$defs": {
       "AbandonZone": {
         "additionalProperties": false,
-        "description": "Give up on a Zone that cannot be finished.\n\nReturns its unclaimed locations to the eligible pool and preserves any\nChecks already confirmed inside it. Without this, one enemy steered off\na ledge blocks the campaign permanently.",
+        "description": "Give up on a Zone that cannot be finished.\n\nReturns its unclaimed locations to the eligible pool and preserves any\nChecks already confirmed inside it. Without this, one enemy steered off\na ledge blocks the campaign permanently.\n\nOffered from the pause menu AND from the Hub, because `GENERATING` and\n`ZONE_READY` are states where abandoning is the only exit and there is no\npause menu to reach.",
         "properties": {
           "type": {
             "const": "abandon_zone",
@@ -75,7 +75,7 @@
       },
       "BuyShopStock": {
         "additionalProperties": false,
-        "description": "Buy one stocked location.\n\n`_NON_FINALE_LOC` makes `{\"type\":\"buy_shop_stock\",\"location_id\":89100030}`\nan unparseable message rather than a message the bridge is trusted to\nrefuse. The bridge still re-verifies stock membership, status and\nbalance \u2014 this only removes the goal from the reachable input space.",
+        "description": "Buy one stocked location.\n\n`_NON_FINALE_LOC` makes `{\"type\":\"buy_shop_stock\",\"location_id\":89100030}`\nan unparseable message rather than a message the bridge is trusted to\nrefuse. The bridge still re-verifies stock membership and balance \u2014 this\nonly removes the goal from the reachable input space.",
         "properties": {
           "type": {
             "const": "buy_shop_stock",
@@ -129,6 +129,7 @@
       },
       "DebugCommand": {
         "additionalProperties": false,
+        "description": "Debug overlay commands.\n\n`force_fallback_zone` is a Zone request like any other and goes through\n`HubStatus.accepts_zone_request`; it chooses the PROVIDER, not whether a\nZone may be started. `grant_mock_*` are mock-AP only.",
         "properties": {
           "type": {
             "const": "debug_command",
@@ -260,17 +261,25 @@
             "const": "leave_zone",
             "title": "Type",
             "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
           }
         },
         "required": [
-          "type"
+          "type",
+          "zone_id"
         ],
         "title": "LeaveZone",
         "type": "object"
       },
       "RequestNextZone": {
         "additionalProperties": false,
-        "description": "Generate the next Zone.\n\n`finale` picks WHICH Zone \u2014 ordinary, or the reserved Check 030 Zone \u2014\nand never whether one may be started. Admission is `HubStatus\n.accepts_zone_request` (mode in ZONE_REQUEST_MODES) for both values, so\nthe ordinary and finale paths cannot drift apart; `finale=True`\nadditionally requires `HubStatus.finale_available`.\n\nConcretely, the bridge refuses this intent whenever a Zone is held, and\n`GENERATING` counts as held. v0.5 only barred it for GENERATED and\nACTIVE, so a second request arriving while the provider was still working\nstarted a second allocation against the same eligible pool.",
+        "description": "Generate the next Zone.\n\n`finale` picks WHICH Zone \u2014 ordinary, or the reserved Check 030 Zone \u2014\nand never whether one may be started. Admission is `HubStatus\n.accepts_zone_request` for both values, so the ordinary and finale paths\ncannot drift apart; `finale=True` additionally requires\n`HubStatus.finale_offered`.\n\nConcretely, the bridge refuses this intent whenever a Zone is held, and\n`GENERATING` counts as held. v0.5 only barred it for GENERATED and\nACTIVE, so a second request arriving while the provider was still working\nstarted a second allocation against the same eligible pool.",
         "properties": {
           "type": {
             "const": "request_next_zone",
@@ -466,6 +475,7 @@
             "type": "string"
           },
           "enemies": {
+            "default": [],
             "items": {
               "$ref": "#/$defs/EnemyGroup"
             },
@@ -531,8 +541,8 @@
             "type": "string"
           },
           "protocol_version": {
-            "const": 6,
-            "default": 6,
+            "const": 7,
+            "default": 7,
             "title": "Protocol Version",
             "type": "integer"
           },
@@ -559,8 +569,8 @@
             "type": "string"
           },
           "protocol_version": {
-            "const": 6,
-            "default": 6,
+            "const": 7,
+            "default": 7,
             "title": "Protocol Version",
             "type": "integer"
           },
@@ -624,6 +634,7 @@
             "type": "integer"
           },
           "checked_location_ids": {
+            "default": [],
             "items": {
               "maximum": 89100030,
               "minimum": 89100001,
@@ -633,6 +644,7 @@
             "type": "array"
           },
           "missing_location_ids": {
+            "default": [],
             "items": {
               "maximum": 89100030,
               "minimum": 89100001,
@@ -642,11 +654,12 @@
             "type": "array"
           },
           "scouted": {
-            "additionalProperties": {
+            "default": [],
+            "items": {
               "$ref": "#/$defs/ScoutedLocation"
             },
             "title": "Scouted",
-            "type": "object"
+            "type": "array"
           },
           "signal_keys": {
             "default": 0,
@@ -672,12 +685,6 @@
             "title": "Coins Spent",
             "type": "integer"
           },
-          "coins_available": {
-            "default": 0,
-            "minimum": 0,
-            "title": "Coins Available",
-            "type": "integer"
-          },
           "static_received": {
             "default": 0,
             "minimum": 0,
@@ -691,6 +698,7 @@
             "type": "integer"
           },
           "echoes": {
+            "default": [],
             "items": {
               "discriminator": {
                 "mapping": {
@@ -744,6 +752,7 @@
             "$ref": "#/$defs/ShopState"
           },
           "pending_checks": {
+            "default": [],
             "items": {
               "$ref": "#/$defs/PendingCheck"
             },
@@ -765,6 +774,12 @@
             ],
             "default": null,
             "title": "Last Generation Error"
+          },
+          "coins_available": {
+            "description": "Derived, never stored \u2014 `DESIGN.md` \u00a712 said so and v0.6 shipped it\nas a free integer that could read 9999 against zero received.",
+            "readOnly": true,
+            "title": "Coins Available",
+            "type": "integer"
           }
         },
         "required": [
@@ -772,7 +787,8 @@
           "ap_connected",
           "ap_mode",
           "epsilon_provider",
-          "hub"
+          "hub",
+          "coins_available"
         ],
         "title": "CampaignSnapshot",
         "type": "object"
@@ -833,6 +849,7 @@
             "type": "number"
           },
           "enemies": {
+            "default": [],
             "items": {
               "$ref": "#/$defs/EnemyGroup"
             },
@@ -994,7 +1011,7 @@
       },
       "HubStatus": {
         "additionalProperties": false,
-        "description": "What the Hub portal may do right now.\n\n`mode` and `finale_available` are INDEPENDENT. The finale unlocks with\nup to 5 ordinary Checks still outstanding; collapsing both into one enum\nwould either hide the finale or strand that content.\n\nv0.5 removes `CAMPAIGN_COMPLETE`. Sending the Archipelago goal no longer\nends play \u2014 `goal_sent` becomes a banner, and the portal keeps working\nwhile real AP locations remain. Disabling play on goal would abandon up\nto 5 locations and the other players' items sitting on them.\n\nv0.6 adds `GENERATING`. v0.5 had `generation_in_progress` as a free\nboolean and no mode for the window it describes, so while a Zone sat in\n`PENDING_GENERATION` the Hub still had to report some other mode \u2014 and\nevery honest choice was wrong. `ZONE_AVAILABLE` left the portal enabled\nand invited a second `request_next_zone`; `ZONE_READY` claimed content\nthat did not exist yet. The mode now exists, the portal is off in it, and\nthe flag is derived from it rather than tracked beside it.",
+        "description": "What the Hub portal may do right now.\n\n**Campaign state and connectivity are orthogonal axes**, and v0.7 stops\nconflating them. `mode` describes the campaign; `ap_online` describes\nArchipelago. v0.6 forced `portal_enabled` from `mode` alone, which made\n\"a campaign is loaded and Archipelago is down\" impossible to describe:\nTest P requires the mode be unchanged across a drop and the design forbids\nflapping into `WAITING_FOR_AP`, so the Hub had to show a live \"generate\"\nportal at exactly the moment `reset_server_state()` had cleared the scout\ntable that generation needs.\n\nEverything that used to be an independently-set boolean the bridge could\nget wrong is now DERIVED. Five fields became five computed properties, and\nfive of v0.6's invariants disappeared with them \u2014 a rule you cannot state\nwrongly needs no validator. What is left below is the short list of facts\nthat are genuinely independent.\n\n`finale_unlocked` in particular is computed from the two counters beside\nit, so the finale gate is executable rather than decorative: v0.6 carried\n`FINALE_REQUIRED_SIGNAL_KEYS` and `FINALE_REQUIRED_OTHER_CHECKS` as\ndefaults that no validator ever read, and `FINALE_ONLY` at 0/24 with zero\nSignal Keys validated.",
         "properties": {
           "mode": {
             "enum": [
@@ -1021,8 +1038,9 @@
             "title": "Detail",
             "type": "string"
           },
-          "portal_enabled": {
-            "title": "Portal Enabled",
+          "ap_online": {
+            "default": true,
+            "title": "Ap Online",
             "type": "boolean"
           },
           "goal_sent": {
@@ -1035,15 +1053,16 @@
             "title": "Postgame",
             "type": "boolean"
           },
-          "finale_available": {
-            "default": false,
-            "title": "Finale Available",
-            "type": "boolean"
-          },
           "holding_finale": {
             "default": false,
             "title": "Holding Finale",
             "type": "boolean"
+          },
+          "signal_keys": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Signal Keys",
+            "type": "integer"
           },
           "finale_progress": {
             "default": 0,
@@ -1061,8 +1080,32 @@
             "title": "Signal Keys Required",
             "type": "integer"
           },
+          "finale_unlocked": {
+            "description": "Whether the finale threshold is MET. Never suppressed.\n\nv0.6's `finale_available` conflated \"unlocked\" with \"offerable now\"\nand its own docstring claimed the field was independent of `mode`\nwhile four validator branches constrained it. An implementer setting\nit to the honest threshold value raised on every snapshot from the\nmoment the 24th Check confirmed while a Zone was still held.",
+            "readOnly": true,
+            "title": "Finale Unlocked",
+            "type": "boolean"
+          },
+          "finale_offered": {
+            "description": "Whether the portal may start the finale right now.\n\nSuppressed while a Zone is held \u2014 taking it mid-Zone would strand\nthat Zone's unclaimed Checks \u2014 and while Archipelago is down.",
+            "readOnly": true,
+            "title": "Finale Offered",
+            "type": "boolean"
+          },
+          "portal_enabled": {
+            "description": "Both axes, which is the whole point.\n\nA Zone that already exists locally can be entered or resumed with\nArchipelago down; claiming its rewards still blocks until reconnect,\nas specified. Starting a NEW Zone needs the scout table, so it waits.",
+            "readOnly": true,
+            "title": "Portal Enabled",
+            "type": "boolean"
+          },
+          "accepts_zone_request": {
+            "description": "Whether `request_next_zone` is legal right now, finale or not.\n\nThe bridge's one-Zone-at-a-time admission test. `RequestNextZone\n.finale` selects WHICH Zone, never WHETHER one may be started, so the\nordinary and finale paths cannot answer this differently.",
+            "readOnly": true,
+            "title": "Accepts Zone Request",
+            "type": "boolean"
+          },
           "generation_in_progress": {
-            "default": false,
+            "readOnly": true,
             "title": "Generation In Progress",
             "type": "boolean"
           }
@@ -1070,7 +1113,11 @@
         "required": [
           "mode",
           "headline",
-          "portal_enabled"
+          "finale_unlocked",
+          "finale_offered",
+          "portal_enabled",
+          "accepts_zone_request",
+          "generation_in_progress"
         ],
         "title": "HubStatus",
         "type": "object"
@@ -1175,6 +1222,7 @@
             "type": "string"
           },
           "lines": {
+            "default": [],
             "items": {
               "maxLength": 160,
               "type": "string"
@@ -1223,8 +1271,8 @@
         "description": "Applies while equipped. RMB does nothing. No cooldown field exists.",
         "properties": {
           "schema_version": {
-            "const": 6,
-            "default": 6,
+            "const": 7,
+            "default": 7,
             "title": "Schema Version",
             "type": "integer"
           },
@@ -1272,6 +1320,7 @@
             "type": "string"
           },
           "tags": {
+            "default": [],
             "items": {
               "maxLength": 24,
               "type": "string"
@@ -1334,7 +1383,7 @@
       },
       "PendingCheck": {
         "additionalProperties": false,
-        "description": "A Check sent to Archipelago and not yet confirmed back.\n\nSource-aware because the two sources have different rights: a `zone`\ncheck may be the goal (the finale Zone is exactly how the goal is\nclaimed) and never costs coins; a `shop` check always costs coins and\nmay never be the goal.",
+        "description": "A Check sent to Archipelago and not yet confirmed back.\n\nThis ledger is the single source of truth for an in-flight acquisition.\nA shop purchase leaves `ShopState.stock` and appears here in one\ntransition; there is no second opinion about whether it is in flight.\n\nSource-aware because the two sources have different rights: a `zone`\ncheck may be the goal (the finale Zone is exactly how the goal is\nclaimed) and never costs coins; a `shop` check always costs coins and\nmay never be the goal.",
         "properties": {
           "transaction_id": {
             "maxLength": 64,
@@ -1439,6 +1488,7 @@
             "type": "string"
           },
           "enemies": {
+            "default": [],
             "items": {
               "$ref": "#/$defs/EnemyGroup"
             },
@@ -1462,8 +1512,8 @@
         "description": "Activated with RMB, subject to cooldown. LMB stays Static Pulse.",
         "properties": {
           "schema_version": {
-            "const": 6,
-            "default": 6,
+            "const": 7,
+            "default": 7,
             "title": "Schema Version",
             "type": "integer"
           },
@@ -1511,6 +1561,7 @@
             "type": "string"
           },
           "tags": {
+            "default": [],
             "items": {
               "maxLength": 24,
               "type": "string"
@@ -1574,6 +1625,7 @@
             "title": "Initiator"
           },
           "modifiers": {
+            "default": [],
             "items": {
               "discriminator": {
                 "mapping": {
@@ -1809,8 +1861,10 @@
       },
       "ShopState": {
         "additionalProperties": false,
+        "description": "Currently purchasable offers only.\n\nCapped at `SHOP_STOCK_SIZE`. An in-flight purchase does NOT live here and\ndoes not count against the cap \u2014 v0.6 kept bought-but-unconfirmed items\nin `stock`, so a restock arriving while a purchase was still pending had\nno representable outcome except dropping the pending entry, whose cost\nwas already in `coins_spent`.",
         "properties": {
           "stock": {
+            "default": [],
             "items": {
               "$ref": "#/$defs/ShopStockItem"
             },
@@ -1830,6 +1884,7 @@
       },
       "ShopStockItem": {
         "additionalProperties": false,
+        "description": "One location the shop is offering RIGHT NOW.\n\nv0.6 carried a `status` field so an in-flight purchase could be greyed\nout \u2014 a second opinion about the same fact as `pending_checks`, and the\ntwo could disagree in both directions. Stock now means purchasable and\nnothing else: buying removes the item from stock and creates the pending\nrecord atomically. Godot renders \"SENDING\u2026\" from the ledger.",
         "properties": {
           "location_id": {
             "maximum": 89100029,
@@ -1841,16 +1896,6 @@
             "minimum": 1,
             "title": "Cost",
             "type": "integer"
-          },
-          "status": {
-            "default": "available",
-            "enum": [
-              "available",
-              "pending",
-              "purchased"
-            ],
-            "title": "Status",
-            "type": "string"
           },
           "item_name": {
             "maxLength": 96,
@@ -1936,6 +1981,7 @@
             "type": "string"
           },
           "enemies": {
+            "default": [],
             "items": {
               "$ref": "#/$defs/EnemyGroup"
             },
@@ -2007,8 +2053,8 @@
         "additionalProperties": false,
         "properties": {
           "schema_version": {
-            "const": 6,
-            "default": 6,
+            "const": 7,
+            "default": 7,
             "title": "Schema Version",
             "type": "integer"
           },
@@ -2057,6 +2103,7 @@
             "title": "Designer Note"
           },
           "featured_echo_ids": {
+            "default": [],
             "items": {
               "maxLength": 32,
               "pattern": "^echo_\\d+$",
@@ -2138,7 +2185,7 @@
       },
       "ZoneRecord": {
         "additionalProperties": false,
-        "description": "A Zone across its whole lifecycle.\n\n`allocated_location_ids` is populated at PENDING_GENERATION, before the\nprovider is called, so a crash mid-generation is representable.\n\n`GENERATED` means accepted-but-not-yet-entered. In v0.4 that state had\nno Hub mode, no entering intent and no reconciliation clause, so a Zone\ngenerated and then abandoned at the loading screen orphaned its AP\nlocations permanently. `active_zone_id` is now set at GENERATED, not at\nentry, so the Zone is always visible and always resumable.\n\nv0.6 makes `zone`-vs-`state` exact rather than one-directional:\nPENDING_GENERATION means no content yet, full stop. Accepting a Zone is\ntherefore a single atomic transition \u2014 build a new record, do not assign\n`state` and `zone` one at a time (`validate_assignment=True` would reject\nthe intermediate, which is the point), and do not reach for\n`model_copy(update=...)`, which skips validation entirely:\n\n    rec = ZoneRecord(**{**rec.model_dump(), \"state\": \"GENERATED\", \"zone\": z})",
+        "description": "A Zone across its whole lifecycle.\n\n`allocated_location_ids` is populated at PENDING_GENERATION, before the\nprovider is called, so a crash mid-generation is representable.\n\n`GENERATED` means accepted-but-not-yet-entered. In v0.4 that state had\nno Hub mode, no entering intent and no reconciliation clause, so a Zone\ngenerated and then abandoned at the loading screen orphaned its AP\nlocations permanently. `active_zone_id` is set at GENERATED, not at\nentry, so the Zone is always visible and always resumable.",
         "properties": {
           "zone_id": {
             "maxLength": 24,
@@ -2312,6 +2359,7 @@
             "type": "string"
           },
           "enemies": {
+            "default": [],
             "items": {
               "$ref": "#/$defs/EnemyGroup"
             },
@@ -2387,6 +2435,7 @@
             "type": "number"
           },
           "enemies": {
+            "default": [],
             "items": {
               "$ref": "#/$defs/EnemyGroup"
             },
@@ -2548,7 +2597,7 @@
       },
       "HubStatus": {
         "additionalProperties": false,
-        "description": "What the Hub portal may do right now.\n\n`mode` and `finale_available` are INDEPENDENT. The finale unlocks with\nup to 5 ordinary Checks still outstanding; collapsing both into one enum\nwould either hide the finale or strand that content.\n\nv0.5 removes `CAMPAIGN_COMPLETE`. Sending the Archipelago goal no longer\nends play \u2014 `goal_sent` becomes a banner, and the portal keeps working\nwhile real AP locations remain. Disabling play on goal would abandon up\nto 5 locations and the other players' items sitting on them.\n\nv0.6 adds `GENERATING`. v0.5 had `generation_in_progress` as a free\nboolean and no mode for the window it describes, so while a Zone sat in\n`PENDING_GENERATION` the Hub still had to report some other mode \u2014 and\nevery honest choice was wrong. `ZONE_AVAILABLE` left the portal enabled\nand invited a second `request_next_zone`; `ZONE_READY` claimed content\nthat did not exist yet. The mode now exists, the portal is off in it, and\nthe flag is derived from it rather than tracked beside it.",
+        "description": "What the Hub portal may do right now.\n\n**Campaign state and connectivity are orthogonal axes**, and v0.7 stops\nconflating them. `mode` describes the campaign; `ap_online` describes\nArchipelago. v0.6 forced `portal_enabled` from `mode` alone, which made\n\"a campaign is loaded and Archipelago is down\" impossible to describe:\nTest P requires the mode be unchanged across a drop and the design forbids\nflapping into `WAITING_FOR_AP`, so the Hub had to show a live \"generate\"\nportal at exactly the moment `reset_server_state()` had cleared the scout\ntable that generation needs.\n\nEverything that used to be an independently-set boolean the bridge could\nget wrong is now DERIVED. Five fields became five computed properties, and\nfive of v0.6's invariants disappeared with them \u2014 a rule you cannot state\nwrongly needs no validator. What is left below is the short list of facts\nthat are genuinely independent.\n\n`finale_unlocked` in particular is computed from the two counters beside\nit, so the finale gate is executable rather than decorative: v0.6 carried\n`FINALE_REQUIRED_SIGNAL_KEYS` and `FINALE_REQUIRED_OTHER_CHECKS` as\ndefaults that no validator ever read, and `FINALE_ONLY` at 0/24 with zero\nSignal Keys validated.",
         "properties": {
           "mode": {
             "enum": [
@@ -2575,8 +2624,9 @@
             "title": "Detail",
             "type": "string"
           },
-          "portal_enabled": {
-            "title": "Portal Enabled",
+          "ap_online": {
+            "default": true,
+            "title": "Ap Online",
             "type": "boolean"
           },
           "goal_sent": {
@@ -2589,15 +2639,16 @@
             "title": "Postgame",
             "type": "boolean"
           },
-          "finale_available": {
-            "default": false,
-            "title": "Finale Available",
-            "type": "boolean"
-          },
           "holding_finale": {
             "default": false,
             "title": "Holding Finale",
             "type": "boolean"
+          },
+          "signal_keys": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Signal Keys",
+            "type": "integer"
           },
           "finale_progress": {
             "default": 0,
@@ -2615,8 +2666,32 @@
             "title": "Signal Keys Required",
             "type": "integer"
           },
+          "finale_unlocked": {
+            "description": "Whether the finale threshold is MET. Never suppressed.\n\nv0.6's `finale_available` conflated \"unlocked\" with \"offerable now\"\nand its own docstring claimed the field was independent of `mode`\nwhile four validator branches constrained it. An implementer setting\nit to the honest threshold value raised on every snapshot from the\nmoment the 24th Check confirmed while a Zone was still held.",
+            "readOnly": true,
+            "title": "Finale Unlocked",
+            "type": "boolean"
+          },
+          "finale_offered": {
+            "description": "Whether the portal may start the finale right now.\n\nSuppressed while a Zone is held \u2014 taking it mid-Zone would strand\nthat Zone's unclaimed Checks \u2014 and while Archipelago is down.",
+            "readOnly": true,
+            "title": "Finale Offered",
+            "type": "boolean"
+          },
+          "portal_enabled": {
+            "description": "Both axes, which is the whole point.\n\nA Zone that already exists locally can be entered or resumed with\nArchipelago down; claiming its rewards still blocks until reconnect,\nas specified. Starting a NEW Zone needs the scout table, so it waits.",
+            "readOnly": true,
+            "title": "Portal Enabled",
+            "type": "boolean"
+          },
+          "accepts_zone_request": {
+            "description": "Whether `request_next_zone` is legal right now, finale or not.\n\nThe bridge's one-Zone-at-a-time admission test. `RequestNextZone\n.finale` selects WHICH Zone, never WHETHER one may be started, so the\nordinary and finale paths cannot answer this differently.",
+            "readOnly": true,
+            "title": "Accepts Zone Request",
+            "type": "boolean"
+          },
           "generation_in_progress": {
-            "default": false,
+            "readOnly": true,
             "title": "Generation In Progress",
             "type": "boolean"
           }
@@ -2624,7 +2699,11 @@
         "required": [
           "mode",
           "headline",
-          "portal_enabled"
+          "finale_unlocked",
+          "finale_offered",
+          "portal_enabled",
+          "accepts_zone_request",
+          "generation_in_progress"
         ],
         "title": "HubStatus",
         "type": "object"
@@ -2700,8 +2779,8 @@
         "description": "Applies while equipped. RMB does nothing. No cooldown field exists.",
         "properties": {
           "schema_version": {
-            "const": 6,
-            "default": 6,
+            "const": 7,
+            "default": 7,
             "title": "Schema Version",
             "type": "integer"
           },
@@ -2749,6 +2828,7 @@
             "type": "string"
           },
           "tags": {
+            "default": [],
             "items": {
               "maxLength": 24,
               "type": "string"
@@ -2811,7 +2891,7 @@
       },
       "PendingCheck": {
         "additionalProperties": false,
-        "description": "A Check sent to Archipelago and not yet confirmed back.\n\nSource-aware because the two sources have different rights: a `zone`\ncheck may be the goal (the finale Zone is exactly how the goal is\nclaimed) and never costs coins; a `shop` check always costs coins and\nmay never be the goal.",
+        "description": "A Check sent to Archipelago and not yet confirmed back.\n\nThis ledger is the single source of truth for an in-flight acquisition.\nA shop purchase leaves `ShopState.stock` and appears here in one\ntransition; there is no second opinion about whether it is in flight.\n\nSource-aware because the two sources have different rights: a `zone`\ncheck may be the goal (the finale Zone is exactly how the goal is\nclaimed) and never costs coins; a `shop` check always costs coins and\nmay never be the goal.",
         "properties": {
           "transaction_id": {
             "maxLength": 64,
@@ -2916,6 +2996,7 @@
             "type": "string"
           },
           "enemies": {
+            "default": [],
             "items": {
               "$ref": "#/$defs/EnemyGroup"
             },
@@ -2939,8 +3020,8 @@
         "description": "Activated with RMB, subject to cooldown. LMB stays Static Pulse.",
         "properties": {
           "schema_version": {
-            "const": 6,
-            "default": 6,
+            "const": 7,
+            "default": 7,
             "title": "Schema Version",
             "type": "integer"
           },
@@ -2988,6 +3069,7 @@
             "type": "string"
           },
           "tags": {
+            "default": [],
             "items": {
               "maxLength": 24,
               "type": "string"
@@ -3051,6 +3133,7 @@
             "title": "Initiator"
           },
           "modifiers": {
+            "default": [],
             "items": {
               "discriminator": {
                 "mapping": {
@@ -3286,8 +3369,10 @@
       },
       "ShopState": {
         "additionalProperties": false,
+        "description": "Currently purchasable offers only.\n\nCapped at `SHOP_STOCK_SIZE`. An in-flight purchase does NOT live here and\ndoes not count against the cap \u2014 v0.6 kept bought-but-unconfirmed items\nin `stock`, so a restock arriving while a purchase was still pending had\nno representable outcome except dropping the pending entry, whose cost\nwas already in `coins_spent`.",
         "properties": {
           "stock": {
+            "default": [],
             "items": {
               "$ref": "#/$defs/ShopStockItem"
             },
@@ -3307,6 +3392,7 @@
       },
       "ShopStockItem": {
         "additionalProperties": false,
+        "description": "One location the shop is offering RIGHT NOW.\n\nv0.6 carried a `status` field so an in-flight purchase could be greyed\nout \u2014 a second opinion about the same fact as `pending_checks`, and the\ntwo could disagree in both directions. Stock now means purchasable and\nnothing else: buying removes the item from stock and creates the pending\nrecord atomically. Godot renders \"SENDING\u2026\" from the ledger.",
         "properties": {
           "location_id": {
             "maximum": 89100029,
@@ -3318,16 +3404,6 @@
             "minimum": 1,
             "title": "Cost",
             "type": "integer"
-          },
-          "status": {
-            "default": "available",
-            "enum": [
-              "available",
-              "pending",
-              "purchased"
-            ],
-            "title": "Status",
-            "type": "string"
           },
           "item_name": {
             "maxLength": 96,
@@ -3413,6 +3489,7 @@
             "type": "string"
           },
           "enemies": {
+            "default": [],
             "items": {
               "$ref": "#/$defs/EnemyGroup"
             },
@@ -3484,8 +3561,8 @@
         "additionalProperties": false,
         "properties": {
           "schema_version": {
-            "const": 6,
-            "default": 6,
+            "const": 7,
+            "default": 7,
             "title": "Schema Version",
             "type": "integer"
           },
@@ -3534,6 +3611,7 @@
             "title": "Designer Note"
           },
           "featured_echo_ids": {
+            "default": [],
             "items": {
               "maxLength": 32,
               "pattern": "^echo_\\d+$",
@@ -3591,7 +3669,7 @@
       },
       "ZoneRecord": {
         "additionalProperties": false,
-        "description": "A Zone across its whole lifecycle.\n\n`allocated_location_ids` is populated at PENDING_GENERATION, before the\nprovider is called, so a crash mid-generation is representable.\n\n`GENERATED` means accepted-but-not-yet-entered. In v0.4 that state had\nno Hub mode, no entering intent and no reconciliation clause, so a Zone\ngenerated and then abandoned at the loading screen orphaned its AP\nlocations permanently. `active_zone_id` is now set at GENERATED, not at\nentry, so the Zone is always visible and always resumable.\n\nv0.6 makes `zone`-vs-`state` exact rather than one-directional:\nPENDING_GENERATION means no content yet, full stop. Accepting a Zone is\ntherefore a single atomic transition \u2014 build a new record, do not assign\n`state` and `zone` one at a time (`validate_assignment=True` would reject\nthe intermediate, which is the point), and do not reach for\n`model_copy(update=...)`, which skips validation entirely:\n\n    rec = ZoneRecord(**{**rec.model_dump(), \"state\": \"GENERATED\", \"zone\": z})",
+        "description": "A Zone across its whole lifecycle.\n\n`allocated_location_ids` is populated at PENDING_GENERATION, before the\nprovider is called, so a crash mid-generation is representable.\n\n`GENERATED` means accepted-but-not-yet-entered. In v0.4 that state had\nno Hub mode, no entering intent and no reconciliation clause, so a Zone\ngenerated and then abandoned at the loading screen orphaned its AP\nlocations permanently. `active_zone_id` is set at GENERATED, not at\nentry, so the Zone is always visible and always resumable.",
         "properties": {
           "zone_id": {
             "maxLength": 24,
@@ -3674,8 +3752,8 @@
         "type": "string"
       },
       "protocol_version": {
-        "const": 6,
-        "default": 6,
+        "const": 7,
+        "default": 7,
         "title": "Protocol Version",
         "type": "integer"
       },
@@ -3739,6 +3817,7 @@
         "type": "integer"
       },
       "checked_location_ids": {
+        "default": [],
         "items": {
           "maximum": 89100030,
           "minimum": 89100001,
@@ -3748,6 +3827,7 @@
         "type": "array"
       },
       "missing_location_ids": {
+        "default": [],
         "items": {
           "maximum": 89100030,
           "minimum": 89100001,
@@ -3757,11 +3837,12 @@
         "type": "array"
       },
       "scouted": {
-        "additionalProperties": {
+        "default": [],
+        "items": {
           "$ref": "#/$defs/ScoutedLocation"
         },
         "title": "Scouted",
-        "type": "object"
+        "type": "array"
       },
       "signal_keys": {
         "default": 0,
@@ -3787,12 +3868,6 @@
         "title": "Coins Spent",
         "type": "integer"
       },
-      "coins_available": {
-        "default": 0,
-        "minimum": 0,
-        "title": "Coins Available",
-        "type": "integer"
-      },
       "static_received": {
         "default": 0,
         "minimum": 0,
@@ -3806,6 +3881,7 @@
         "type": "integer"
       },
       "echoes": {
+        "default": [],
         "items": {
           "discriminator": {
             "mapping": {
@@ -3859,6 +3935,7 @@
         "$ref": "#/$defs/ShopState"
       },
       "pending_checks": {
+        "default": [],
         "items": {
           "$ref": "#/$defs/PendingCheck"
         },
@@ -3880,6 +3957,12 @@
         ],
         "default": null,
         "title": "Last Generation Error"
+      },
+      "coins_available": {
+        "description": "Derived, never stored \u2014 `DESIGN.md` \u00a712 said so and v0.6 shipped it\nas a free integer that could read 9999 against zero received.",
+        "readOnly": true,
+        "title": "Coins Available",
+        "type": "integer"
       }
     },
     "required": [
@@ -3887,7 +3970,8 @@
       "ap_connected",
       "ap_mode",
       "epsilon_provider",
-      "hub"
+      "hub",
+      "coins_available"
     ],
     "title": "CampaignSnapshot",
     "type": "object"

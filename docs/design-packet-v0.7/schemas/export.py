@@ -92,13 +92,25 @@ def main() -> None:
     out = Path(sys.argv[1] if len(sys.argv) > 1 else "generated")
     out.mkdir(parents=True, exist_ok=True)
 
+    # Direction decides the mode, and it matters. A validation-mode schema
+    # omits computed fields, and v0.7 derives half of HubStatus - so Godot
+    # would have been handed a snapshot contract with no `portal_enabled`,
+    # `finale_offered` or `coins_available` in it, and would have had to
+    # re-derive them. Re-deriving a rule on the far side of the wire is the
+    # drift this file exists to prevent.
+    #
+    #   bridge -> Godot   serialization: what the bridge actually emits
+    #   Godot  -> bridge  validation:    what the bridge accepts
+    #   provider output   validation:    what Epsilon must produce
     artifacts = {
         "zone.schema.json": TypeAdapter(Zone).json_schema(),
         "echo.schema.json": TypeAdapter(Echo).json_schema(),
         "protocol.schema.json": {
             "client_message": TypeAdapter(ClientMessage).json_schema(),
-            "server_message": TypeAdapter(ServerMessage).json_schema(),
-            "campaign_snapshot": TypeAdapter(CampaignSnapshot).json_schema(),
+            "server_message": TypeAdapter(ServerMessage).json_schema(
+                mode="serialization"),
+            "campaign_snapshot": TypeAdapter(CampaignSnapshot).json_schema(
+                mode="serialization"),
         },
     }
     for name, schema in artifacts.items():

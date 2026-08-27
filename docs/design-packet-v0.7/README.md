@@ -1,4 +1,4 @@
-# Archipepsi — Build Packet v0.6
+# Archipepsi — Build Packet v0.7
 
 The implementation contract for the Archipepsi proof of concept.
 
@@ -22,7 +22,7 @@ v0.3 was a design packet. v0.4 made it an implementation contract. v0.5 is the v
 
 `check_packet.py` validates this prose against `schemas/` — every JSON example, every named constant and enum member, the retired terminology, and the quoted test count. Run it after editing any document; a green schema suite does not prove the prose still describes it.
 
-`CHANGELOG_v0.6.md` maps every pass-4 finding to its resolution; `CHANGELOG_v0.5.md` does the same for pass 3. `../design-packet/` (v0.3), `../design-packet-v0.4/` and `../audit/` are history, not authority — do not implement from them.
+`CHANGELOG_v0.7.md` maps every pass-5 finding to its resolution; `CHANGELOG_v0.6.md` and `CHANGELOG_v0.5.md` do the same for passes 4 and 3. `../design-packet/` (v0.3), `../design-packet-v0.4/` and `../audit/` are history, not authority — do not implement from them.
 
 ---
 
@@ -90,4 +90,4 @@ Five criticals from the independent audit, plus a visual retarget and a terminol
 - **The look is late-90s PC FPS**, not Minecraft. Same zero-asset pipeline, 64×64 procedural textures.
 - **No soda in the game.** Signal Key and Static Pulse; *Archipepsi* stays as the codename.
 
-Full traceability: `CHANGELOG_v0.4_to_v0.5.md`.
+Full traceability: `CHANGELOG_v0.7.md`.

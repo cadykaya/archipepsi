@@ -1,4 +1,4 @@
-"""Archipepsi v0.6 — bridge protocol and campaign state.
+"""Archipepsi v0.7 — bridge protocol and campaign state.
 
 The bridge owns persistent campaign truth; Godot sends INTENTS and renders
 the CAMPAIGN SNAPSHOT it gets back. Python owns allocation, tiers, coins,
@@ -7,13 +7,44 @@ movement, player HP, living enemies, projectiles, and objective progress in
 the current room — none of which survives leaving a Zone.
 
 Every state-changing intent is answered with a fresh full snapshot.
+
+---------------------------------------------------------------------------
+THE ONE RULE THAT GOVERNS THIS FILE
+---------------------------------------------------------------------------
+
+**These models are validated VALUE OBJECTS, not live mutable state.**
+
+Every model here is `frozen=True` and every collection is a tuple, so a model
+cannot be changed after it is validated — not by assignment, not by appending
+to a list, not by reaching into a nested model. This is deliberate and it
+replaces v0.6's `validate_assignment=True`, which only ever re-validated
+TOP-LEVEL assignment. Nested mutation and list mutation ran no validators at
+all, so every cross-model invariant below was bypassable by exactly the
+mutations a bridge naturally performs — and the save that resulted could not
+be read back, which silently rolled the campaign back to `.bak`.
+
+Persistent campaign changes therefore go through `transitions.py`, which
+builds the complete new `CampaignSave` and validates it in one step. There is
+no supported way to edit a campaign in place. If you find yourself wanting
+one, you want a transition function.
+
+Two consequences worth stating plainly, because the previous revision made
+a claim it could not keep:
+
+* An invariant here holds at CONSTRUCTION. That is now the only moment there
+  is, which is why it is enough.
+* `dict` and `list` are gone from the campaign models. Collections keyed by
+  an id are tuples with a uniqueness rule and a lookup property, so a key can
+  no longer disagree with the id inside its value.
 """
 
 from __future__ import annotations
 
 from typing import Annotated, Literal, Union
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    BaseModel, ConfigDict, Field, computed_field, model_validator,
+)
 
 try:
     from . import constants as C
@@ -24,7 +55,7 @@ except ImportError:  # pragma: no cover
     from echo import Echo
     from zone import Zone
 
-PROTOCOL_VERSION = 6
+PROTOCOL_VERSION = 7
 
 _ID = Field(min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")
 
@@ -45,7 +76,8 @@ _AP_STR = Annotated[str, Field(max_length=C.MAX_AP_STRING_LEN)]
 
 
 class Strict(BaseModel):
-    model_config = ConfigDict(extra="forbid", validate_assignment=True)
+    """Frozen, closed, and validated once — see the module docstring."""
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
 
 # ---------------------------------------------------------------------------
@@ -69,17 +101,8 @@ class ZoneRecord(Strict):
     `GENERATED` means accepted-but-not-yet-entered. In v0.4 that state had
     no Hub mode, no entering intent and no reconciliation clause, so a Zone
     generated and then abandoned at the loading screen orphaned its AP
-    locations permanently. `active_zone_id` is now set at GENERATED, not at
+    locations permanently. `active_zone_id` is set at GENERATED, not at
     entry, so the Zone is always visible and always resumable.
-
-    v0.6 makes `zone`-vs-`state` exact rather than one-directional:
-    PENDING_GENERATION means no content yet, full stop. Accepting a Zone is
-    therefore a single atomic transition — build a new record, do not assign
-    `state` and `zone` one at a time (`validate_assignment=True` would reject
-    the intermediate, which is the point), and do not reach for
-    `model_copy(update=...)`, which skips validation entirely:
-
-        rec = ZoneRecord(**{**rec.model_dump(), "state": "GENERATED", "zone": z})
     """
     zone_id: str = _ID
     state: ZoneState
@@ -87,12 +110,20 @@ class ZoneRecord(Strict):
     #: goal. `_finale_owns_the_goal` below splits the two cases — this is the
     #: ONE model in the packet allowed to carry Check 030 on an
     #: acquisition path.
-    allocated_location_ids: list[_LOC] = Field(
+    #:
+    #: This SHRINKS over the record's life. A location released because its
+    #: check cannot be finalized leaves this tuple while the Zone plays on;
+    #: v0.6 pinned it equal to the accepted Zone's rewards forever, so the
+    #: only way to release one stuck location was to abandon the whole Zone
+    #: and discard its other unclaimed Checks — the deadlock ABANDONED was
+    #: added to break. Equality is checked once, at acceptance, by
+    #: `zone.validate_zone()`, which is where an accept-time rule belongs.
+    allocated_location_ids: tuple[_LOC, ...] = Field(
         min_length=1, max_length=C.ZONE_MAX_CHECKS
     )
     target_game: _AP_STR
     is_finale: bool = False
-    zone: Zone | None = None          # None iff PENDING_GENERATION (or ABANDONED)
+    zone: Zone | None = None          # None iff PENDING_GENERATION or ABANDONED
     used_fallback: bool = False
     generation_index: int = Field(ge=0)
 
@@ -115,11 +146,12 @@ class ZoneRecord(Strict):
                 raise ValueError(
                     f"record '{self.zone_id}' wraps zone '{self.zone.zone_id}'"
                 )
-            if sorted(self.zone.reward_location_ids) != sorted(
-                    self.allocated_location_ids):
+            extra = sorted(set(self.allocated_location_ids)
+                           - set(self.zone.reward_location_ids))
+            if extra:
                 raise ValueError(
-                    "the accepted Zone's rewards must be exactly its "
-                    "allocated_location_ids"
+                    "allocated locations with no reward chamber in the "
+                    f"accepted Zone: {extra}"
                 )
         return self
 
@@ -134,7 +166,8 @@ class ZoneRecord(Strict):
         """
         holds_goal = any(C.is_goal_location(i)
                          for i in self.allocated_location_ids)
-        if self.is_finale and self.allocated_location_ids != [C.GOAL_LOCATION_ID]:
+        if self.is_finale and tuple(self.allocated_location_ids) not in (
+                (C.GOAL_LOCATION_ID,), ()):
             raise ValueError(
                 f"a finale Zone holds exactly [{C.GOAL_LOCATION_ID}]"
             )
@@ -152,6 +185,10 @@ class ZoneRecord(Strict):
 
 class PendingCheck(Strict):
     """A Check sent to Archipelago and not yet confirmed back.
+
+    This ledger is the single source of truth for an in-flight acquisition.
+    A shop purchase leaves `ShopState.stock` and appears here in one
+    transition; there is no second opinion about whether it is in flight.
 
     Source-aware because the two sources have different rights: a `zone`
     check may be the goal (the finale Zone is exactly how the goal is
@@ -182,10 +219,15 @@ class PendingCheck(Strict):
         return self
 
 
-ShopItemStatus = Literal["available", "pending", "purchased"]
-
-
 class ShopStockItem(Strict):
+    """One location the shop is offering RIGHT NOW.
+
+    v0.6 carried a `status` field so an in-flight purchase could be greyed
+    out — a second opinion about the same fact as `pending_checks`, and the
+    two could disagree in both directions. Stock now means purchasable and
+    nothing else: buying removes the item from stock and creates the pending
+    record atomically. Godot renders "SENDING…" from the ledger.
+    """
     #: `_NON_FINALE_LOC`: the shop can never stock the goal, and cannot even
     #: describe stocking it. v0.5 relied on prose in five documents plus a
     #: procedure step, and the model accepted 89100030.
@@ -193,10 +235,6 @@ class ShopStockItem(Strict):
     #: ge=1, matching `PendingCheck.shop_cost`. Stock priced at zero would be
     #: a purchase that never debits coins; the price table is 6/4/2 anyway.
     cost: int = Field(ge=1)
-    #: v0.5: without a status the snapshot could not express an in-flight
-    #: purchase, so Godot had nothing to disable and a second buy intent
-    #: charged again.
-    status: ShopItemStatus = "available"
     # Revealed because the player is being asked to pay for it.
     item_name: _AP_STR
     recipient_name: _AP_STR
@@ -204,8 +242,16 @@ class ShopStockItem(Strict):
 
 
 class ShopState(Strict):
-    stock: list[ShopStockItem] = Field(
-        default_factory=list, max_length=C.SHOP_STOCK_SIZE
+    """Currently purchasable offers only.
+
+    Capped at `SHOP_STOCK_SIZE`. An in-flight purchase does NOT live here and
+    does not count against the cap — v0.6 kept bought-but-unconfirmed items
+    in `stock`, so a restock arriving while a purchase was still pending had
+    no representable outcome except dropping the pending entry, whose cost
+    was already in `coins_spent`.
+    """
+    stock: tuple[ShopStockItem, ...] = Field(
+        default=(), max_length=C.SHOP_STOCK_SIZE
     )
     created_after_zone_count: int = Field(default=0, ge=0)
 
@@ -217,19 +263,83 @@ class ShopState(Strict):
         return self
 
 
+# ---------------------------------------------------------------------------
+# Invariants shared by the save and the snapshot
+# ---------------------------------------------------------------------------
+# v0.6 enforced these on `CampaignSave` and not on `CampaignSnapshot`, so the
+# message Godot actually renders could carry a state the save had rejected —
+# including a pending claim on the goal. They are functions rather than
+# duplicated validator bodies so the two cannot drift apart.
+
+def _reject_duplicate_pending(pending) -> None:
+    seen = [p.location_id for p in pending]
+    if len(set(seen)) != len(seen):
+        raise ValueError("two pending checks for the same location")
+
+
+def _reject_unbacked_pending(pending, zones) -> None:
+    """Every in-flight Check must be backed by something that reserved it.
+
+    A `zone` claim is backed by a Zone still holding that location; a `shop`
+    purchase is backed by its own coin cost, having left the stock list at
+    purchase time.
+
+    This also subsumes the goal reservation on the save path — the only Zone
+    that may hold Check 030 is the finale — so v0.6's separate goal check is
+    gone rather than duplicated.
+    """
+    held = {i for z in zones if z.holds_locations
+            for i in z.allocated_location_ids}
+    stranded = sorted(p.location_id for p in pending
+                      if p.source == "zone" and p.location_id not in held)
+    if stranded:
+        raise ValueError(
+            "pending Zone checks backed by no Zone that still holds them: "
+            + ", ".join(str(i) for i in stranded)
+            + ". A pending check reserves a real Archipelago location; one "
+            "with nothing behind it is either re-sent for free or stranded "
+            "forever."
+        )
+
+
+def _reject_underfunded_ledger(coins_spent: int, pending) -> None:
+    """`coins_spent` is documented as already inclusive of pending purchases.
+
+    Unenforced, a purchase could be in flight with nothing debited — and the
+    documented rollback (`coins_spent -= cost`) would then drive the field
+    below zero and raise inside the error path.
+    """
+    owed = sum(p.shop_cost for p in pending if p.source == "shop")
+    if coins_spent < owed:
+        raise ValueError(
+            f"coins_spent {coins_spent} is less than the {owed} coins already "
+            "committed to pending purchases; the cost is persisted BEFORE the "
+            "send, not after confirmation"
+        )
+
+
+def _reject_unowned_equipped_echo(equipped_echo_id, echoes) -> None:
+    if equipped_echo_id and equipped_echo_id not in {e.echo_id for e in echoes}:
+        raise ValueError(f"equipped_echo_id '{equipped_echo_id}' not owned")
+
+
+def _reject_duplicate_ids(items, attr: str, label: str) -> None:
+    ids = [getattr(i, attr) for i in items]
+    if len(set(ids)) != len(ids):
+        raise ValueError(f"duplicate {label}")
+
+
 class CampaignSave(Strict):
     """The on-disk campaign. Written atomically (temp, fsync, os.replace).
 
     Owns generated content and local decisions ONLY. Never persists a second
     copy of AP truth.
-    """
-    # extra="ignore" here specifically: a save written by a newer build must
-    # remain loadable by an older one rather than hard-failing, and the .bak
-    # would otherwise inherit the same problem.
-    model_config = ConfigDict(extra="ignore", validate_assignment=True)
 
+    Immutable, like everything else here. Build the next one with
+    `transitions.py`; never edit this one.
+    """
     save_version: Literal[1] = 1
-    schema_version: Literal[6] = 6
+    schema_version: Literal[7] = 7
 
     seed_name: str = Field(min_length=1, max_length=128)
     team: int = Field(ge=0)
@@ -238,40 +348,47 @@ class CampaignSave(Strict):
 
     epsilon_creativity: Literal[0, 1, 2] = 1
 
-    track_order: list[_AP_STR] = Field(default_factory=list)
+    track_order: tuple[_AP_STR, ...] = ()
     track_cursor: int = Field(default=0, ge=0)
     generation_counter: int = Field(default=0, ge=0)
 
     #: Monotonic accumulator, incremented at purchase time and already
     #: inclusive of pending purchases. Only the rollback path decrements it.
     coins_spent: int = Field(default=0, ge=0)
-    pending_checks: list[PendingCheck] = Field(default_factory=list)
+    pending_checks: tuple[PendingCheck, ...] = ()
 
-    echoes: dict[str, Echo] = Field(default_factory=dict)
+    #: Tuples, not dicts. v0.6 keyed these by id, and nothing tied the key to
+    #: the id inside the value — `{"totally_bogus": echo_89100002}` validated,
+    #: defeating the dedupe key the design is built on. One representation,
+    #: with `zone_by_id` / `echo_by_id` for lookup.
+    echoes: tuple[Echo, ...] = ()
     equipped_echo_id: str | None = None
 
-    zones: dict[str, ZoneRecord] = Field(default_factory=dict)
+    zones: tuple[ZoneRecord, ...] = ()
     active_zone_id: str | None = None
     completed_zone_count: int = Field(default=0, ge=0)
-    zone_history: list[str] = Field(default_factory=list)
+    zone_history: tuple[str, ...] = ()
 
     shop: ShopState = Field(default_factory=ShopState)
     goal_sent: bool = False
 
     @model_validator(mode="after")
     def _references_resolve(self):
-        if self.active_zone_id and self.active_zone_id not in self.zones:
+        _reject_duplicate_ids(self.zones, "zone_id", "zone_id")
+        _reject_duplicate_ids(self.echoes, "echo_id", "echo_id")
+        _reject_unowned_equipped_echo(self.equipped_echo_id, self.echoes)
+        _reject_duplicate_pending(self.pending_checks)
+        _reject_unbacked_pending(self.pending_checks, self.zones)
+        _reject_underfunded_ledger(self.coins_spent, self.pending_checks)
+
+        if self.active_zone_id and self.active_zone_id not in {
+                z.zone_id for z in self.zones}:
             raise ValueError(f"active_zone_id '{self.active_zone_id}' has no record")
-        if self.equipped_echo_id and self.equipped_echo_id not in self.echoes:
-            raise ValueError(f"equipped_echo_id '{self.equipped_echo_id}' not owned")
-        seen = [p.location_id for p in self.pending_checks]
-        if len(set(seen)) != len(seen):
-            raise ValueError("two pending checks for the same location")
 
         # At most one Zone may hold locations, and active_zone_id must name
         # it. Without this the v0.4 orphan shape - several non-terminal
         # Zones with active_zone_id on one of them - stays representable.
-        holding = [z for z in self.zones.values() if z.holds_locations]
+        holding = [z for z in self.zones if z.holds_locations]
         if len(holding) > 1:
             raise ValueError(
                 "more than one Zone holds locations: "
@@ -285,32 +402,33 @@ class CampaignSave(Strict):
             raise ValueError(
                 "active_zone_id must be cleared when no Zone holds locations"
             )
+
+        stocked = {i.location_id for i in self.shop.stock}
+        reserved = {i for z in self.zones if z.holds_locations
+                    for i in z.allocated_location_ids}
+        clash = sorted(stocked & reserved)
+        if clash:
+            raise ValueError(
+                "the shop is offering locations a live Zone already holds: "
+                + ", ".join(str(i) for i in clash)
+            )
+        in_flight = {p.location_id for p in self.pending_checks}
+        if stocked & in_flight:
+            raise ValueError(
+                "the shop is offering locations that are already in flight: "
+                + ", ".join(str(i) for i in sorted(stocked & in_flight))
+            )
         return self
 
-    @model_validator(mode="after")
-    def _goal_is_only_ever_in_flight_from_the_finale(self):
-        """The save/reload half of the goal reservation.
+    def zone_by_id(self, zone_id: str) -> ZoneRecord | None:
+        return next((z for z in self.zones if z.zone_id == zone_id), None)
 
-        Field types already stop the shop from reserving the goal, and
-        `ZoneRecord` stops an ordinary Zone from holding it. This closes the
-        remaining path: a save on disk, hand-edited or written by a build
-        with the bug, claiming Check 030 with no live finale Zone behind it.
-        `extra="ignore"` above makes forward-compatible saves loadable; it
-        must not make an illegal campaign loadable.
-        """
-        # Deliberately NOT "at most one finale record ever": a finale whose
-        # generation failed goes ABANDONED and must be retryable. Double
-        # reservation is already impossible, because at most one Zone of any
-        # kind may hold locations at a time (rule above) — so any earlier
-        # finale record still present is terminal and reserves nothing.
-        has_finale = any(z.is_finale for z in self.zones.values())
-        for p in self.pending_checks:
-            if C.is_goal_location(p.location_id) and not has_finale:
-                raise ValueError(
-                    f"pending check for {C.GOAL_LOCATION_ID} with no finale "
-                    "Zone: the goal is claimable only inside it"
-                )
-        return self
+    def echo_by_id(self, echo_id: str) -> Echo | None:
+        return next((e for e in self.echoes if e.echo_id == echo_id), None)
+
+    @property
+    def active_zone(self) -> ZoneRecord | None:
+        return self.zone_by_id(self.active_zone_id) if self.active_zone_id else None
 
     @property
     def campaign_key(self) -> str:
@@ -376,7 +494,7 @@ class ReceivedItem(Strict):
 
 HubMode = Literal[
     "NO_CAMPAIGN",       # not connected / no save
-    "GENERATING",        # a Zone is PENDING_GENERATION; portal is inert
+    "GENERATING",        # a Zone is PENDING_GENERATION; nothing to enter yet
     "ZONE_READY",        # a Zone is GENERATED but not yet entered
     "ZONE_ACTIVE",       # a Zone is ACTIVE; portal resumes it
     "ZONE_AVAILABLE",    # portal generates a new ordinary Zone
@@ -394,99 +512,133 @@ ZONE_REQUEST_MODES = ("ZONE_AVAILABLE", "FINALE_ONLY")
 #: Modes in which the campaign already has a Zone and must not start another.
 ZONE_HELD_MODES = ("GENERATING", "ZONE_READY", "ZONE_ACTIVE")
 
+#: Modes with something the player can walk into right now. Entering one of
+#: these needs no Archipelago round-trip: the Zone already exists locally.
+ZONE_ENTERABLE_MODES = ("ZONE_READY", "ZONE_ACTIVE")
+
 
 class HubStatus(Strict):
     """What the Hub portal may do right now.
 
-    `mode` and `finale_available` are INDEPENDENT. The finale unlocks with
-    up to 5 ordinary Checks still outstanding; collapsing both into one enum
-    would either hide the finale or strand that content.
+    **Campaign state and connectivity are orthogonal axes**, and v0.7 stops
+    conflating them. `mode` describes the campaign; `ap_online` describes
+    Archipelago. v0.6 forced `portal_enabled` from `mode` alone, which made
+    "a campaign is loaded and Archipelago is down" impossible to describe:
+    Test P requires the mode be unchanged across a drop and the design forbids
+    flapping into `WAITING_FOR_AP`, so the Hub had to show a live "generate"
+    portal at exactly the moment `reset_server_state()` had cleared the scout
+    table that generation needs.
 
-    v0.5 removes `CAMPAIGN_COMPLETE`. Sending the Archipelago goal no longer
-    ends play — `goal_sent` becomes a banner, and the portal keeps working
-    while real AP locations remain. Disabling play on goal would abandon up
-    to 5 locations and the other players' items sitting on them.
+    Everything that used to be an independently-set boolean the bridge could
+    get wrong is now DERIVED. Five fields became five computed properties, and
+    five of v0.6's invariants disappeared with them — a rule you cannot state
+    wrongly needs no validator. What is left below is the short list of facts
+    that are genuinely independent.
 
-    v0.6 adds `GENERATING`. v0.5 had `generation_in_progress` as a free
-    boolean and no mode for the window it describes, so while a Zone sat in
-    `PENDING_GENERATION` the Hub still had to report some other mode — and
-    every honest choice was wrong. `ZONE_AVAILABLE` left the portal enabled
-    and invited a second `request_next_zone`; `ZONE_READY` claimed content
-    that did not exist yet. The mode now exists, the portal is off in it, and
-    the flag is derived from it rather than tracked beside it.
+    `finale_unlocked` in particular is computed from the two counters beside
+    it, so the finale gate is executable rather than decorative: v0.6 carried
+    `FINALE_REQUIRED_SIGNAL_KEYS` and `FINALE_REQUIRED_OTHER_CHECKS` as
+    defaults that no validator ever read, and `FINALE_ONLY` at 0/24 with zero
+    Signal Keys validated.
     """
     mode: HubMode
     headline: str = Field(max_length=C.MAX_TEXT_LEN)
     detail: str = Field(default="", max_length=C.MAX_TEXT_LEN)
-    portal_enabled: bool
+
+    #: Connectivity, not campaign state. False during an Archipelago outage;
+    #: the mode is deliberately left alone (`DESIGN.md` §13.4).
+    ap_online: bool = True
 
     goal_sent: bool = False
     postgame: bool = False
 
-    finale_available: bool = False
+    #: Whether the Zone currently held IS the finale. Checked against
+    #: `active_zone.is_finale` on the snapshot.
     holding_finale: bool = False
+
+    #: The two operands of the finale gate, and the two thresholds.
+    signal_keys: int = Field(default=0, ge=0)
     finale_progress: int = Field(default=0, ge=0)
     finale_required: int = C.FINALE_REQUIRED_OTHER_CHECKS
     signal_keys_required: int = C.FINALE_REQUIRED_SIGNAL_KEYS
 
-    generation_in_progress: bool = False
+    @computed_field
+    @property
+    def finale_unlocked(self) -> bool:
+        """Whether the finale threshold is MET. Never suppressed.
 
-    @model_validator(mode="after")
-    def _mode_is_consistent(self):
-        if self.mode == "FINALE_ONLY" and not self.finale_available:
-            raise ValueError("mode FINALE_ONLY requires finale_available=True")
-        if self.mode == "WAITING_FOR_AP" and self.finale_available:
-            raise ValueError(
-                "not waiting on Archipelago if the finale is available; "
-                "use FINALE_ONLY"
-            )
-        # A Zone in hand takes precedence: generating another would orphan
-        # it. `holding_finale` exempts the finale Zone itself, which is
-        # obviously allowed to be held while available. v0.6 adds GENERATING
-        # to the list — a Zone being built is as much "in hand" as one
-        # already built, and v0.5 leaving it out is how the finale could be
-        # offered on top of an in-flight ordinary Zone.
-        if (self.mode in ZONE_HELD_MODES
-                and self.finale_available and not self.holding_finale):
-            raise ValueError(
-                "finish or abandon the current Zone before the finale is "
-                "offered; otherwise its unclaimed Checks are stranded"
-            )
-        if self.postgame and not self.goal_sent:
-            raise ValueError("postgame requires goal_sent")
+        v0.6's `finale_available` conflated "unlocked" with "offerable now"
+        and its own docstring claimed the field was independent of `mode`
+        while four validator branches constrained it. An implementer setting
+        it to the honest threshold value raised on every snapshot from the
+        moment the 24th Check confirmed while a Zone was still held.
+        """
+        return (self.finale_progress >= self.finale_required
+                and self.signal_keys >= self.signal_keys_required)
 
-        # Derived, not tracked alongside. A boolean that can disagree with
-        # the mode is a boolean that eventually does.
-        if self.generation_in_progress != (self.mode == "GENERATING"):
-            raise ValueError(
-                "generation_in_progress is true exactly in mode GENERATING"
-            )
+    @computed_field
+    @property
+    def finale_offered(self) -> bool:
+        """Whether the portal may start the finale right now.
 
-        # v0.4's stranding state was exactly "a playable mode with the portal
-        # switched off". Tie them together so it cannot be described.
-        # GENERATING is deliberately NOT playable: there is nothing to enter,
-        # and an enabled portal is an invitation to request a second Zone.
-        playable = self.mode in (
-            "ZONE_READY", "ZONE_ACTIVE", "ZONE_AVAILABLE", "FINALE_ONLY")
-        if playable != self.portal_enabled:
-            raise ValueError(
-                f"mode {self.mode} requires portal_enabled="
-                f"{str(playable).lower()}"
-            )
-        if self.mode == "ALL_CHECKS_CLEARED" and not self.goal_sent:
-            raise ValueError("every Check cleared implies the goal was sent")
-        return self
+        Suppressed while a Zone is held — taking it mid-Zone would strand
+        that Zone's unclaimed Checks — and while Archipelago is down.
+        """
+        return self.finale_unlocked and self.accepts_zone_request
 
+    @computed_field
+    @property
+    def portal_enabled(self) -> bool:
+        """Both axes, which is the whole point.
+
+        A Zone that already exists locally can be entered or resumed with
+        Archipelago down; claiming its rewards still blocks until reconnect,
+        as specified. Starting a NEW Zone needs the scout table, so it waits.
+        """
+        if self.mode in ZONE_ENTERABLE_MODES:
+            return True
+        if self.mode in ZONE_REQUEST_MODES:
+            return self.ap_online
+        return False
+
+    @computed_field
     @property
     def accepts_zone_request(self) -> bool:
         """Whether `request_next_zone` is legal right now, finale or not.
 
-        The bridge's one-Zone-at-a-time admission test. It is a property of
-        the mode alone, so the ordinary and finale paths cannot answer it
-        differently — `RequestNextZone.finale` selects WHICH Zone, never
-        WHETHER one may be started.
+        The bridge's one-Zone-at-a-time admission test. `RequestNextZone
+        .finale` selects WHICH Zone, never WHETHER one may be started, so the
+        ordinary and finale paths cannot answer this differently.
         """
-        return self.mode in ZONE_REQUEST_MODES
+        return self.mode in ZONE_REQUEST_MODES and self.ap_online
+
+    @computed_field
+    @property
+    def generation_in_progress(self) -> bool:
+        return self.mode == "GENERATING"
+
+    @model_validator(mode="after")
+    def _mode_is_consistent(self):
+        if self.mode == "FINALE_ONLY" and not self.finale_unlocked:
+            raise ValueError(
+                "mode FINALE_ONLY requires the finale threshold to be met "
+                f"({self.finale_progress}/{self.finale_required} Checks, "
+                f"{self.signal_keys}/{self.signal_keys_required} Signal Keys)"
+            )
+        if self.mode == "WAITING_FOR_AP" and self.finale_unlocked:
+            raise ValueError(
+                "not waiting on Archipelago if the finale is unlocked; "
+                "use FINALE_ONLY"
+            )
+        if self.holding_finale and self.mode not in ZONE_HELD_MODES:
+            raise ValueError(
+                f"mode {self.mode} holds no Zone, so holding_finale is false"
+            )
+        if self.postgame and not self.goal_sent:
+            raise ValueError("postgame requires goal_sent")
+        if self.mode == "ALL_CHECKS_CLEARED" and not self.goal_sent:
+            raise ValueError("every Check cleared implies the goal was sent")
+        return self
 
 
 # ---------------------------------------------------------------------------
@@ -495,7 +647,7 @@ class HubStatus(Strict):
 
 class CampaignSnapshot(Strict):
     type: Literal["campaign_snapshot"] = "campaign_snapshot"
-    protocol_version: Literal[6] = 6
+    protocol_version: Literal[7] = 7
 
     bridge_connected: bool
     ap_connected: bool
@@ -514,28 +666,66 @@ class CampaignSnapshot(Strict):
     slot_id: int = Field(default=0, ge=0)
     team: int = Field(default=0, ge=0)
 
-    checked_location_ids: list[_LOC] = Field(default_factory=list)
-    missing_location_ids: list[_LOC] = Field(default_factory=list)
-    scouted: dict[str, ScoutedLocation] = Field(default_factory=dict)
+    checked_location_ids: tuple[_LOC, ...] = ()
+    missing_location_ids: tuple[_LOC, ...] = ()
+    scouted: tuple[ScoutedLocation, ...] = ()
 
     signal_keys: int = Field(default=0, ge=0)
     unlocked_tier: int = Field(default=0, ge=0)
     coins_received: int = Field(default=0, ge=0)
     coins_spent: int = Field(default=0, ge=0)
-    coins_available: int = Field(default=0, ge=0)
     static_received: int = Field(default=0, ge=0)
     static_glitch_units: int = Field(default=0, ge=0)
 
-    echoes: list[Echo] = Field(default_factory=list)
+    echoes: tuple[Echo, ...] = ()
     equipped_echo_id: str | None = None
 
     active_zone: ZoneRecord | None = None
     completed_zone_count: int = Field(default=0, ge=0)
     shop: ShopState = Field(default_factory=ShopState)
-    pending_checks: list[PendingCheck] = Field(default_factory=list)
+    pending_checks: tuple[PendingCheck, ...] = ()
 
     hub: HubStatus
     last_generation_error: str | None = Field(default=None, max_length=C.MAX_TEXT_LEN)
+
+    @computed_field
+    @property
+    def coins_available(self) -> int:
+        """Derived, never stored — `DESIGN.md` §12 said so and v0.6 shipped it
+        as a free integer that could read 9999 against zero received."""
+        return max(0, self.coins_received - self.coins_spent)
+
+    @model_validator(mode="after")
+    def _mirrors_are_consistent(self):
+        """The same invariants the save enforces, on the message Godot reads.
+
+        v0.6 closed these on `CampaignSave` only, so the snapshot could carry
+        a pending claim on the goal, two pending checks for one location, or
+        an equipped Echo the player did not own.
+        """
+        _reject_duplicate_pending(self.pending_checks)
+        _reject_unbacked_pending(
+            self.pending_checks,
+            (self.active_zone,) if self.active_zone else ())
+        _reject_underfunded_ledger(self.coins_spent, self.pending_checks)
+        _reject_unowned_equipped_echo(self.equipped_echo_id, self.echoes)
+        _reject_duplicate_ids(self.echoes, "echo_id", "echo_id")
+
+        both = sorted(set(self.checked_location_ids)
+                      & set(self.missing_location_ids))
+        if both:
+            raise ValueError(
+                "a location cannot be both checked and missing: "
+                + ", ".join(str(i) for i in both)
+            )
+        if self.unlocked_tier > min(self.signal_keys, C.TIER_COUNT - 1):
+            raise ValueError(
+                f"unlocked_tier {self.unlocked_tier} exceeds what "
+                f"{self.signal_keys} Signal Keys unlock"
+            )
+        if self.hub.signal_keys != self.signal_keys:
+            raise ValueError("hub.signal_keys must mirror the campaign's count")
+        return self
 
     @model_validator(mode="after")
     def _hub_agrees_with_the_zone(self):
@@ -543,11 +733,7 @@ class CampaignSnapshot(Strict):
 
         v0.5 left `ZoneRecord.state` and `HubStatus.mode` as two independent
         descriptions of the same fact, related only by prose. Every D3
-        symptom was a disagreement between them. They are now checked against
-        each other on every snapshot, which is the message Godot renders and
-        the message the bridge tests assert on — so a divergence fails at the
-        boundary rather than showing up as a portal that offers a second
-        Zone.
+        symptom was a disagreement between them.
         """
         az = self.active_zone
         if az is not None and az.state in TERMINAL_ZONE_STATES:
@@ -613,9 +799,9 @@ class RequestNextZone(Strict):
 
     `finale` picks WHICH Zone — ordinary, or the reserved Check 030 Zone —
     and never whether one may be started. Admission is `HubStatus
-    .accepts_zone_request` (mode in ZONE_REQUEST_MODES) for both values, so
-    the ordinary and finale paths cannot drift apart; `finale=True`
-    additionally requires `HubStatus.finale_available`.
+    .accepts_zone_request` for both values, so the ordinary and finale paths
+    cannot drift apart; `finale=True` additionally requires
+    `HubStatus.finale_offered`.
 
     Concretely, the bridge refuses this intent whenever a Zone is held, and
     `GENERATING` counts as held. v0.5 only barred it for GENERATED and
@@ -639,6 +825,7 @@ class EnterZone(Strict):
 class LeaveZone(Strict):
     """Pause-menu Return to Hub. Zone stays ACTIVE; transient state resets."""
     type: Literal["leave_zone"]
+    zone_id: str = _ID
 
 
 class ExitZone(Strict):
@@ -654,6 +841,10 @@ class AbandonZone(Strict):
     Returns its unclaimed locations to the eligible pool and preserves any
     Checks already confirmed inside it. Without this, one enemy steered off
     a ledge blocks the campaign permanently.
+
+    Offered from the pause menu AND from the Hub, because `GENERATING` and
+    `ZONE_READY` are states where abandoning is the only exit and there is no
+    pause menu to reach.
     """
     type: Literal["abandon_zone"]
     zone_id: str = _ID
@@ -678,8 +869,8 @@ class BuyShopStock(Strict):
 
     `_NON_FINALE_LOC` makes `{"type":"buy_shop_stock","location_id":89100030}`
     an unparseable message rather than a message the bridge is trusted to
-    refuse. The bridge still re-verifies stock membership, status and
-    balance — this only removes the goal from the reachable input space.
+    refuse. The bridge still re-verifies stock membership and balance — this
+    only removes the goal from the reachable input space.
     """
     type: Literal["buy_shop_stock"]
     location_id: _NON_FINALE_LOC
@@ -696,6 +887,12 @@ class SetCreativity(Strict):
 
 
 class DebugCommand(Strict):
+    """Debug overlay commands.
+
+    `force_fallback_zone` is a Zone request like any other and goes through
+    `HubStatus.accepts_zone_request`; it chooses the PROVIDER, not whether a
+    Zone may be started. `grant_mock_*` are mock-AP only.
+    """
     type: Literal["debug_command"]
     command: Literal[
         "resync", "print_snapshot", "force_fallback_zone",
@@ -719,7 +916,7 @@ ClientMessage = Annotated[
 
 class BridgeReady(Strict):
     type: Literal["bridge_ready"]
-    protocol_version: Literal[6] = 6
+    protocol_version: Literal[7] = 7
     bridge_version: str = Field(max_length=32)
 
 
@@ -742,8 +939,8 @@ class Notification(Strict):
     type: Literal["notification"] = "notification"
     kind: NotificationKind
     title: str = Field(max_length=C.MAX_TEXT_LEN)
-    lines: list[Annotated[str, Field(max_length=C.MAX_TEXT_LEN)]] = Field(
-        default_factory=list, max_length=12
+    lines: tuple[Annotated[str, Field(max_length=C.MAX_TEXT_LEN)], ...] = Field(
+        default=(), max_length=12
     )
     location_id: _LOC | None = None
     echo_id: str | None = Field(default=None, max_length=32)

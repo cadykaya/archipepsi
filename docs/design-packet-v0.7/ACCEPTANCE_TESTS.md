@@ -1,4 +1,4 @@
-# Archipepsi — Acceptance Tests (v0.6)
+# Archipepsi — Acceptance Tests (v0.7)
 
 Observable proof that the idea works. A technically elegant codebase that cannot pass the end-to-end paths here is not a successful POC.
 
@@ -8,7 +8,7 @@ All examples use the canonical fixture in `IMPLEMENTATION_PLAN.md` §3.1. v0.3 s
 
 # 1. Schema tests — ship with the packet
 
-`schemas/test_schemas.py` — 91 tests at time of writing, all passing. Run them first, before writing anything else. The count will grow; what matters is that they are green on arrival, so any red one is a regression you introduced.
+`schemas/test_schemas.py` — 110 tests at time of writing, all passing. Run them first, before writing anything else. The count will grow; what matters is that they are green on arrival, so any red one is a regression you introduced.
 
 They pin: the derived jump gap and its margin; the worst-case Zone clear time; the PRNG recipe (with a pinned seed value); Zone structural and semantic rules; the impossibility of expressing an Echo gate; Echo composition rules; rejection of invented fields and unsupported effects; save round-tripping; and that a `PENDING_GENERATION` Zone retains its allocation.
 
@@ -70,7 +70,7 @@ They pin: the derived jump gap and its margin; the worst-case Zone clear time; t
 42. The Victory event exists, is unaddressed, and is in Tier 2.
 43. `completion_condition` uses the Victory item.
 44. Check 030 is in Tier 2.
-45. Slot data is schema version 6 and contains no location→item placements.
+45. Slot data is schema version 7 and contains no location→item placements.
 46. Solo generation succeeds.
 47. Multiworld generation with `non_local_items: Epsilon Coin` succeeds alongside another world.
 48. `.apworld` packaging succeeds via AP's build component and the manifest validates.
@@ -102,41 +102,63 @@ and belong with §3. They exist because every one of the defects below was
 closed on one path in an earlier revision and left open on its neighbour, so
 each test walks the *adjacent* path rather than the originally reported one.
 
-60. **No acquisition path can name Check 030.** Exercise every one in a single
-    test: shop stock, a `buy_shop_stock` intent, a `PendingCheck` with
-    `source="shop"`, an ordinary `ZoneRecord`, and the allocator's candidate
-    pool. Each must reject it; `PendingCheck(source="zone")` must accept it.
+**Which need the shop:** 60, 63 and 66. The rest run from Phase 2. v0.6 gated the whole block on Phase 2 and three of them need Phase 6 — the same defect the gate table was rewritten to fix.
+
+60. *(needs the shop)* **No acquisition path can name Check 030.** Exercise every
+    one in a single test: shop stock, a `buy_shop_stock` intent, a
+    `PendingCheck` with `source="shop"`, an ordinary `ZoneRecord`, and the
+    allocator's candidate pool. Each must reject it; `PendingCheck(source=
+    "zone")` must accept it.
 61. **The allocator never derives its pool from `unlocked_location_ids()`.**
     `eligible_location_ids(keys)` excludes the goal at every key count and is
     otherwise identical to the reachable set. Both the Zone allocator and the
     shop call it.
-62. **A save cannot claim the goal without a finale Zone.** A `CampaignSave`
-    holding a pending check for 89100030 with no `is_finale` record is
-    rejected on load; with one, it loads. (Save/reload is an acquisition path
-    too: it is how a bad build's state, or a hand-edited file, gets back in.)
-63. **A Zone check is never charged and a shop check always is.** `shop_cost`
-    must be 0 for `source="zone"` and at least 1 for `source="shop"`, and
-    stock cannot be priced at zero. This keeps `coins_spent` from drifting
-    between the two paths.
+62. **Every pending check is backed by something that reserved it.** A
+    `CampaignSave` holding a pending `source="zone"` claim with no Zone still
+    holding that location is rejected on load — including 29 of them, which
+    reconcile would otherwise re-send as 29 free items to other players. The
+    goal case falls out of the same rule: the only Zone allowed to hold Check
+    030 is the finale.
+63. *(needs the shop)* **The coin ledger covers what is in flight.**
+    `coins_spent` must be at least the sum of pending shop costs; `shop_cost`
+    is 0 for `source="zone"` and ≥1 for `source="shop"`; stock cannot be
+    priced at zero. A rollback then never drives `coins_spent` below zero.
 64. **A second `request_next_zone` during generation is refused.** While a
     `ZoneRecord` is `PENDING_GENERATION` the Hub reports `GENERATING`,
-    `portal_enabled` is false, `accepts_zone_request` is false, and the
-    intent is rejected — for `finale=True` exactly as for `finale=False`.
+    `portal_enabled` and `accepts_zone_request` are false, and the intent is
+    rejected — for `finale=True` exactly as for `finale=False`. The
+    transition layer refuses it too, so a debug command cannot route around
+    the Hub mode.
 65. **The Hub mode cannot disagree with the Zone state.** In an emitted
     snapshot, `PENDING_GENERATION`/`GENERATED`/`ACTIVE` admit exactly
-    `GENERATING`/`ZONE_READY`/`ZONE_ACTIVE` respectively; a terminal Zone is
-    never presented as active; `holding_finale` matches
-    `active_zone.is_finale`; and `generation_in_progress` is true exactly in
-    `GENERATING`.
-66. **The finale is suppressed during generation, not just during play.** With
-    `finale_available` true and a Zone in `PENDING_GENERATION`, the Hub must
-    not offer the finale — taking it would strand the in-flight Zone's
-    Checks, which is the same reason it is suppressed during `ZONE_ACTIVE`.
+    `GENERATING`/`ZONE_READY`/`ZONE_ACTIVE`; a terminal Zone is never
+    presented as active; `holding_finale` matches `active_zone.is_finale`.
+66. *(needs the shop)* **Buying leaves stock and enters the ledger
+    atomically.** After a purchase the item is gone from `shop.stock` and
+    present in `pending_checks`, and `coins_spent` has risen by its cost. A
+    restock arriving while it is in flight cannot evict it, because it is no
+    longer in stock. A second buy for the same location is refused.
+67. **Campaign state cannot be mutated in place.** Assignment to any model
+    raises; every collection is a tuple. Completion and abandon are single
+    transitions that change `zones` and `active_zone_id` together — both
+    orders of separate assignment are illegal states, which is why the
+    transition exists.
+68. **Connectivity does not change the campaign mode.** Dropping Archipelago
+    leaves `hub.mode` untouched and `ap_online` false; `ZONE_AVAILABLE` and
+    `FINALE_ONLY` disable the portal with `ARCHIPELAGO OFFLINE — RECONNECT TO
+    GENERATE`; `ZONE_READY` and `ZONE_ACTIVE` still let the player in.
+69. **A stuck location can be released without losing its Zone.**
+    `release_location` narrows the Zone's allocation and leaves it playable;
+    releasing the last one abandons the Zone.
+70. **The finale gate is executable.** `finale_unlocked` is computed from the
+    two counters, so `FINALE_ONLY` at 0/24 with zero Signal Keys is
+    unrepresentable. `finale_unlocked` and `finale_offered` are distinct: the
+    threshold stays true while a Zone is held, but the offer does not.
 
-The schema suite already proves the *structural* half of 60–66 (see
-`schemas/test_schemas.py`, the two v0.6 sections). These numbers cover the
-*bridge behaviour*: that the intent handlers, the allocator and the snapshot
-builder actually respect what the models make unrepresentable.
+The schema suite already proves the *structural* half of these (see
+`schemas/test_schemas.py`). These numbers cover the *bridge behaviour*: that
+the intent handlers, the allocator, the transitions and the snapshot builder
+actually respect what the models make unrepresentable.
 
 ---
 
@@ -203,7 +225,7 @@ Expect: the second is rejected; `coins_spent` increases by exactly one cost; exa
 
 ## Test P — Disconnect does not zero the campaign
 Drop the AP connection mid-session.
-Expect: `coins_received`, `signal_keys`, `unlocked_tier` and `hub.mode` are unchanged in the emitted snapshot; `ap_state_is_current` is false; no `sync_warning` fires; reconnect restores without a spurious low-coin warning.
+Expect: `coins_received`, `signal_keys`, `unlocked_tier` and `hub.mode` are unchanged in the emitted snapshot; `hub.ap_online` is false, so the portal disables itself in `ZONE_AVAILABLE`/`FINALE_ONLY` while remaining usable in `ZONE_READY`/`ZONE_ACTIVE`; `ap_state_is_current` is false; no `sync_warning` fires; reconnect restores without a spurious low-coin warning.
 
 ## Test K — Bulk confirmation
 Run `!collect` mid-campaign.

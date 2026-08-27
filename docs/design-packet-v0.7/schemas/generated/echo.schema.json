@@ -187,8 +187,8 @@
       "description": "Applies while equipped. RMB does nothing. No cooldown field exists.",
       "properties": {
         "schema_version": {
-          "const": 6,
-          "default": 6,
+          "const": 7,
+          "default": 7,
           "title": "Schema Version",
           "type": "integer"
         },
@@ -236,6 +236,7 @@
           "type": "string"
         },
         "tags": {
+          "default": [],
           "items": {
             "maxLength": 24,
             "type": "string"
@@ -301,8 +302,8 @@
       "description": "Activated with RMB, subject to cooldown. LMB stays Static Pulse.",
       "properties": {
         "schema_version": {
-          "const": 6,
-          "default": 6,
+          "const": 7,
+          "default": 7,
           "title": "Schema Version",
           "type": "integer"
         },
@@ -350,6 +351,7 @@
           "type": "string"
         },
         "tags": {
+          "default": [],
           "items": {
             "maxLength": 24,
             "type": "string"
@@ -413,6 +415,7 @@
           "title": "Initiator"
         },
         "modifiers": {
+          "default": [],
           "items": {
             "discriminator": {
               "mapping": {

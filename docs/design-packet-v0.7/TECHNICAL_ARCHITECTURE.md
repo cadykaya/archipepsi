@@ -1,4 +1,4 @@
-# Archipepsi — Technical Architecture (v0.6)
+# Archipepsi — Technical Architecture (v0.7)
 
 Process boundaries, the Archipelago dependency, the Godot↔bridge protocol, campaign state ownership, persistence, transactions, failure behavior, security, and logging.
 
@@ -49,7 +49,7 @@ Be honest about the limit: the bridge **cannot** verify that the chamber's objec
 
 # 3. Technology
 
-**Godot 4.5.1 stable** (official build `f62fdbde1`), stock, GDScript. **Verify it is on PATH in Phase 0**; if it is not, everything from Phase 3 on is unverifiable and the plan's fallback (§`IMPLEMENTATION_PLAN` Phase 0) applies. Pin it in `project.godot`. Do not fork. No C# or GDExtension without a demonstrated hard blocker recorded in `docs/IMPLEMENTATION_DECISIONS.md`.
+**Godot 4.5.1 stable** (official build `f62fdbde1`), stock, GDScript. **Verify it is on PATH in Phase 0**; if it is not, everything from Phase 3 on is unverifiable and the plan's fallback (§`IMPLEMENTATION_PLAN.md` Phase 0) applies. Pin it in `project.godot`. Do not fork. No C# or GDExtension without a demonstrated hard blocker recorded in `docs/IMPLEMENTATION_DECISIONS.md`.
 
 **Python 3.11.15** — the developer's system Python. Archipelago 0.6.7 requires ≥3.11.9 and <3.14, so this is in range.
 
@@ -126,7 +126,7 @@ Never increment coins because "an item event happened." Always recount from the 
 
 **But `CommonContext` wipes that inventory on every disconnect.** `reset_server_state()` sets `items_received = []` and `locations_info = {}` (it does *not* clear `checked_locations`/`missing_locations`). So a recount during an outage yields zero Coins, zero Signal Keys, zero Static and an empty scout table.
 
-The bridge therefore keeps its own last-known normalized copy in memory — not on disk, AP still owns the truth — and emits it with `ap_state_is_current: false` rather than emitting zeros. Without this, a five-second dropout regresses `unlocked_tier` to 0, collapses eligibility, flaps the Hub into `WAITING_FOR_AP`, and fires a spurious sync warning. The §12 low-coin warning fires only after a *completed* post-`Connected` reconciliation.
+The bridge therefore keeps its own last-known normalized copy in memory — not on disk, AP still owns the truth — and emits it with `ap_state_is_current: false` rather than emitting zeros. Without this, a five-second dropout regresses `unlocked_tier` to 0, collapses eligibility, flaps the Hub into `WAITING_FOR_AP`, and fires a spurious sync warning. The `DESIGN.md` §12 low-coin warning fires only after a *completed* post-`Connected` reconciliation.
 
 **Self-recipient detection uses `ctx.slot_concerns_self(item.player)`**, never `player == ctx.slot`. Its own docstring says so: it abstracts player groups. If the Archipepsi player joins an item link, a scout's `player` can be the group slot id, and a naive comparison classifies a self-destined item as foreign — generating an Echo for an item the player physically receives, and making that location shop-eligible in violation of §11.3.
 
@@ -207,6 +207,29 @@ Shape: `CampaignSave` in `schemas/protocol.py`.
 
 v0.3 was organized entirely around "a crash must never corrupt the campaign" and then specified plain JSON writes at the exact moment it was protecting — the save-before-send step.
 
+## 7.0 Campaign state is replaced, never edited
+
+**`schemas/` models are frozen value objects. Every persistent change goes through `schemas/transitions.py`, which builds the complete next `CampaignSave` and validates it in one step.**
+
+This is the single most important implementation rule in the packet, because the alternative was tried and it failed silently. v0.6 relied on Pydantic's `validate_assignment=True`, which re-validates **top-level assignment only**. These ran no validators at all:
+
+```python
+save.zones["z1"].state = "COMPLETE"      # nested model
+save.pending_checks.append(...)          # list
+save.shop.stock.append(...)              # list
+```
+
+Each produced a campaign that serialized cleanly and then **failed to load**, so the bridge fell back to `.bak` and silently rolled back a completed Zone or re-enabled a purchase. The duplicate-pending rule that exists to stop the shop double-charge was bypassable with one `append`.
+
+So: every model is `frozen=True`, every collection is a tuple, and there is no supported way to edit a campaign in place. An invariant checked at construction is therefore checked at every point the campaign ever reaches.
+
+Two corollaries the implementer must not work around:
+
+- **Never `model_copy(update=...)`.** It skips validation entirely and reintroduces the whole problem.
+- **A multi-field change is one transition, not two assignments.** Completion changes `zones` *and* `active_zone_id`; both orders of assignment raise, because the intermediate state is illegal by design. That is correct, and it is why `transitions.complete_zone()` exists.
+
+The transitions are: `start_generation`, `accept_zone`, `enter_zone`, `complete_zone`, `abandon_zone`, `release_location`, `claim_zone_check`, `buy_shop_stock`, `confirm_check`, `rollback_shop_purchase`, `restock_shop`, `add_echo`, `equip_echo`. Each takes the save first, returns a new one, and raises `ValueError` for an illegal request — which the bridge answers with a recoverable `error`.
+
 **The save owns:** generated Zones and their lifecycle, generated Echoes, the equipped choice, local spending, pending transactions, deterministic allocation state, shop reservations, creativity setting.
 
 **The AP server owns:** checked locations, missing locations, delivered items. Never persist a second copy of these and trust it over the server.
@@ -241,7 +264,11 @@ After connect and a full scout:
 
 **Identity** — verify seed name, team, slot id. If any differ, do not load that save as the current run.
 
-**Pending checks** — already checked → finalize; still missing → resend. Shop pending costs are already in `coins_spent`.
+**Pending checks** — already checked → `confirm_check`; still missing → resend. Shop pending costs are already in `coins_spent`, and the save now enforces that: a pending purchase whose cost was never debited is rejected on load.
+
+A pending check that can neither finalize nor re-send is released with `release_location`, which drops that one location from its Zone and keeps the rest of the Zone playable. v0.6 pinned a Zone's allocation equal to the accepted Zone's rewards for the record's whole life, so the only escape was abandoning the Zone and discarding its other unclaimed Checks — the deadlock `ABANDONED` was added to break.
+
+**Every pending check must be backed by something that reserved it.** A `zone` claim is backed by a Zone still holding that location; a `shop` purchase is backed by its own debited cost. A save carrying pending claims with no Zone behind them is rejected rather than loaded, because reconcile would re-send every one of them — handing other players their items for free.
 
 **Confirmed checks** — for a foreign-recipient location that is checked with no Echo, generate one *subject to the bulk-confirmation guard*: only for locations in `pending_checks` or in a Zone or shop batch the player interacted with. Everything else waits for lazy generation. `!collect` and release can flip up to 29 locations at once; without this guard that is dozens of model calls at 60-second timeouts on a loading screen.
 

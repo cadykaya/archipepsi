@@ -88,7 +88,17 @@ def verify(ap_root: Path) -> None:
         "import CommonClient, Utils;"
         "print('  CommonContext ok, Archipelago', Utils.__version__)" % ap_root
     )
-    result = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True)
+    # SKIP_REQUIREMENTS_UPDATE is mandatory, not hygiene: importing
+    # CommonClient runs ModuleUpdate.update(), which drops into a bare
+    # input() when a requirement is missing. `ModuleUpdate.py --yes` above
+    # ignores pip's exit code, so a partially-failed install lands this
+    # probe on a prompt with no stdin -- inside the step that gates every
+    # later phase. The packet documented this gotcha three times and then
+    # did not apply it here.
+    env = {**os.environ, "SKIP_REQUIREMENTS_UPDATE": "1"}
+    result = subprocess.run([sys.executable, "-c", probe], env=env,
+                            stdin=subprocess.DEVNULL,
+                            capture_output=True, text=True)
     if result.returncode != 0:
         fail(
             "could not import CommonClient from the checkout:\n"

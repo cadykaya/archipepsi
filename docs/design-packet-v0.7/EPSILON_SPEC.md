@@ -1,4 +1,4 @@
-# Archipepsi — Epsilon Contract (v0.6)
+# Archipepsi — Epsilon Contract (v0.7)
 
 Authority for runtime generation. Epsilon is a designer operating inside an allowlisted data contract, never a runtime programmer.
 
@@ -102,7 +102,7 @@ Defined by `schemas/zone.py`. Example:
 
 ```json
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "zone_id": "zone_003",
   "display_name": "Cathedral of Excessive Firepower",
   "target_game": "Dark Souls III",
@@ -191,7 +191,7 @@ Numeric bounds are in `schemas/echo.py`. Out-of-bounds values are rejected, not 
 
 ```json
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "zone_id": "zone_003",
   "generation_id": "ExampleSeed-0-6-zone-003",
   "campaign": {
@@ -245,7 +245,7 @@ Numeric bounds are in `schemas/echo.py`. Out-of-bounds values are rejected, not 
 
 ```json
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "source": {
     "location_id": 89100001,
     "item_name": "Conference Call",

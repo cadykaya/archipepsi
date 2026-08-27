@@ -1,4 +1,4 @@
-# Archipepsi — Game Design (v0.6)
+# Archipepsi — Game Design (v0.7)
 
 Primary product authority. Defines the fantasy, scope, terminology, player loop, campaign allocation, shop, controls, Hub, pacing, and what is deliberately deferred.
 
@@ -359,7 +359,7 @@ Purely cosmetic. It is AP `filler` and must never affect logic, difficulty, or r
 
 Authored, not generated. Contains the Zone portal, Echo inventory terminal, fixed shop counter, AP status board, and generation status display. The only place that initiates Zone generation.
 
-The portal's behavior is driven by `HubStatus.mode`:
+The portal's behaviour is driven by **two independent axes**: `HubStatus.mode` (campaign state) and `HubStatus.ap_online` (connectivity). Everything else the Hub shows is derived from those, so there is no second opinion to get wrong — `portal_enabled`, `finale_unlocked`, `finale_offered`, `accepts_zone_request` and `generation_in_progress` are all computed, and Godot reads them straight off the snapshot rather than re-deriving the rules.
 
 | Mode | Portal | Meaning |
 |---|---|---|
@@ -372,9 +372,28 @@ The portal's behavior is driven by `HubStatus.mode`:
 | `WAITING_FOR_AP` | disabled | nothing eligible, real Checks still outstanding |
 | `ALL_CHECKS_CLEARED` | disabled | every Check confirmed; nothing left to play |
 
-`HubStatus.finale_available` is a **separate boolean**, independent of `mode`.
+**`finale_unlocked` and `finale_offered` are different questions, and v0.7 stops conflating them.**
+
+- `finale_unlocked` — the threshold is met: 2 Signal Keys **and** 24 of the other 29 Checks. Computed from the counters beside it, never asserted, never suppressed. v0.6 carried both thresholds as constants no validator ever read, so `FINALE_ONLY` at 0/24 with zero Signal Keys was a legal snapshot.
+- `finale_offered` — the portal may start it *right now*: unlocked, no Zone in hand, and Archipelago reachable.
+
+v0.6 had one boolean for both, called it "independent of `mode`" in this document and in the model docstring, and then constrained it in four validator branches. An implementer who read this page and emitted the honest threshold value got a `ValidationError` on every snapshot from the moment the 24th Check confirmed while a Zone was still held.
 
 The finale unlocks at 24 of 29, so up to 5 ordinary Checks normally remain when it appears. If the finale were a mode that displaced `ZONE_AVAILABLE`, those Checks would become unreachable — the player forced to end the campaign the moment they qualified. So when both are possible the Hub offers **both**, and `RequestNextZone.finale` carries the choice.
+
+## 13.1 Archipelago going down is not a campaign state
+
+Connectivity is orthogonal to `mode`, and a dropout must not change it. `ap_online` goes false; the mode stays exactly where it was; `WAITING_FOR_AP` is **not** entered, because the player is waiting on us, not on the multiworld.
+
+| While offline | Portal |
+|---|---|
+| `ZONE_READY`, `ZONE_ACTIVE` | **works.** The Zone already exists locally; entering or resuming it needs no server. Rewards that require Archipelago stay blocked until reconnect, as §14 already specifies |
+| `ZONE_AVAILABLE`, `FINALE_ONLY` | **disabled**, with `ARCHIPELAGO OFFLINE — RECONNECT TO GENERATE`. Generation needs the scout table, and `reset_server_state()` cleared it |
+| everything else | unchanged |
+
+v0.6 forced `portal_enabled` from the mode alone, which left this state with no honest description at all: Test P requires the mode be unchanged across a drop and §13.2 forbids flapping into `WAITING_FOR_AP`, so the Hub had to show a live "generate" portal at exactly the moment the data generation needs had been wiped. The invariant is gone; usability is derived from **both** axes.
+
+## 13.2 Generating is a real mode
 
 `GENERATING` is a real mode, not a flag layered over another one. v0.5 said "keep the previous mode and set `generation_in_progress`", which meant the Hub reported `ZONE_AVAILABLE` — portal live, inviting a second request — for the whole 120-second generation window. `generation_in_progress` still exists and still survives a restart (§13.2), but it is now *derived*: it is true exactly in `GENERATING`, and the schema rejects any snapshot where the two disagree.
 
@@ -385,14 +404,14 @@ Four guards the schema enforces:
 - `generation_in_progress` is true **exactly** in `GENERATING`.
 - The mode must agree with `active_zone.state`: `PENDING_GENERATION`→`GENERATING`, `GENERATED`→`ZONE_READY`, `ACTIVE`→`ZONE_ACTIVE`, and a `COMPLETE` or `ABANDONED` Zone is never presented as the active one. `holding_finale` is read off `active_zone.is_finale` rather than tracked beside it.
 
-## 13.1 `WAITING_FOR_AP`
+## 13.3 `WAITING_FOR_AP`
 
 ```
 WAITING FOR ARCHIPELAGO
 Your next progression is somewhere in the multiworld.
 ```
 
-Reached when there are zero eligible non-goal Checks, the finale is not unlocked, and real Checks remain — after unsold shop reservations have been released.
+Reached when there are zero eligible non-goal Checks, the finale is not unlocked, Archipelago is reachable, and real Checks remain — after unsold shop reservations have been released.
 
 Hub, inventory and shop stay usable. The portal is disabled, not broken. The state clears automatically when AP state changes.
 
@@ -400,11 +419,11 @@ This is the most likely state a real six-player run will hit, and it must read a
 
 The shop will normally be empty here, because shop-eligible is a subset of Zone-eligible. Say so in the copy rather than implying stock might appear: `NOTHING LEFT TO SELL YOU`.
 
-## 13.2 Generation is a visible state
+## 13.4 Generation is a visible state
 
 Generation can take up to 120 seconds (one call plus one repair). Mode `GENERATING` and its derived `HubStatus.generation_in_progress` carry it, so the loading state survives a Godot restart and a bridge reconnect. Godot must not track this locally — a locally-tracked flag is lost exactly when it matters, producing the permanent-loading-screen failure the abandon-not-retry rule exists to prevent.
 
-## 13.3 Postgame
+## 13.5 Postgame
 
 Sending the Archipelago goal **does not end play.**
 

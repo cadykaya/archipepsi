@@ -1,4 +1,4 @@
-"""Archipepsi v0.5 — Echo contract.
+"""Archipepsi v0.7 — Echo contract.
 
 This module IS the Echo specification.
 
@@ -17,7 +17,7 @@ appending to `effects` walked straight past.
 v0.5 makes them structural for real:
 
     PrimaryEcho  initiator: Initiator          <- exactly one, by arity
-                 modifiers: list[Modifier]     <- 0-2, and only modifiers
+                 modifiers: list[Modifier]           <- 0-2, and only modifiers
                  cooldown: float               <- required
     PassiveEcho  effects: list[Passive]        <- 1-2, no cooldown field
 
@@ -40,11 +40,11 @@ try:
 except ImportError:  # pragma: no cover
     import constants as C
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 
 class Strict(BaseModel):
-    model_config = ConfigDict(extra="forbid", validate_assignment=True)
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
 
 # ---------------------------------------------------------------------------
@@ -141,7 +141,7 @@ Passive = Annotated[Union[ModifyGravity, ModifySpeed], Field(discriminator="type
 # ---------------------------------------------------------------------------
 
 class EchoBase(Strict):
-    schema_version: Literal[6] = 6
+    schema_version: Literal[7] = 7
     echo_id: str = Field(min_length=1, max_length=32, pattern=r"^echo_\d+$")
     source_location_id: int = Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_LOCATION_ID)
     source_item_name: str = Field(min_length=1, max_length=C.MAX_AP_STRING_LEN)
@@ -151,7 +151,7 @@ class EchoBase(Strict):
     display_name: str = Field(min_length=1, max_length=C.MAX_TEXT_LEN)
     description: str = Field(min_length=1, max_length=C.MAX_TEXT_LEN)
     tags: list[Annotated[str, Field(max_length=24)]] = Field(
-        default_factory=list, max_length=6
+        default=(), max_length=6
     )
 
     @model_validator(mode="after")
@@ -168,7 +168,7 @@ class PrimaryEcho(EchoBase):
     archetype: Literal["weapon", "tool", "mobility"]
     cooldown: float = Field(ge=C.ECHO_COOLDOWN_MIN, le=C.ECHO_COOLDOWN_MAX)
     initiator: Initiator
-    modifiers: list[Modifier] = Field(default_factory=list, max_length=2)
+    modifiers: tuple[Modifier, ...] = Field(default=(), max_length=2)
 
     @model_validator(mode="after")
     def _modifiers_need_something_that_hits(self):

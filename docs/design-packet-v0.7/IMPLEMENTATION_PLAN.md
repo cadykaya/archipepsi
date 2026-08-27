@@ -1,4 +1,4 @@
-# Archipepsi — Implementation Plan (v0.6)
+# Archipepsi — Implementation Plan (v0.7)
 
 How to sequence the build while always preserving a running vertical slice. This file is *not* product truth; it never overrides the authorities.
 
@@ -36,15 +36,17 @@ All test numbers refer to `ACCEPTANCE_TESTS.md`.
 
 | Gate item | Run it when |
 |---|---|
-| Schema tests (`schemas/test_schemas.py`, 91) | **Always.** They ship green, so any failure is a regression you introduced |
+| Schema tests (`schemas/test_schemas.py`, 110) | **Always.** They ship green, so any failure is a regression you introduced |
 | APWorld tests **36–47** | the APWorld generates a seed |
 | APWorld test **48** | `.apworld` packaging is implemented |
 | Bridge tests **1–18**, **20** | the bridge connects and holds campaign state |
 | Provider tests **13–15** | any Epsilon provider and the fallback exist |
 | Campaign tests **21, 22, 24, 25, 26, 29, 30, 34, 35** | allocation, tiers and coin accounting exist |
-| Regression tests **60–66** | the bridge holds campaign state (they are the v0.6 campaign-integrity tests) |
+| Regression tests **61, 62, 64, 65, 67, 68** | the bridge holds campaign state |
+| Regression tests **60, 63, 66** | the shop exists (they exercise stock, pricing and purchase) |
 | Shop tests **19, 23, 27, 28** | the shop exists |
-| Finale tests **31, 32, 33** | the finale exists |
+| Finale tests **31, 32** | finale *gating* exists — pure `campaign.py` logic, buildable at Phase 2 |
+| Finale test **33** | goal reporting exists |
 | Godot tests **49–52, 56–59** | the corridor/arena builders and the claim flow exist |
 | Godot tests **53, 54, 55** | the platform_path / tower / treasure_room builders exist |
 | End-to-end **A, D, I, L, M, P** | the Godot slice runs against the bridge |
@@ -54,7 +56,9 @@ All test numbers refer to `ACCEPTANCE_TESTS.md`.
 | End-to-end **C, O** | the shop exists |
 | End-to-end **J, N** | the finale exists |
 
-**The expected Phase 0–2 stop therefore gates on exactly:** schema tests (91), APWorld 36–47, bridge 1–18 and 20, provider 13–15, campaign 21/22/24/25/26/29/30/34/35, and regression 60–66. Everything else is absent by design at that point. Their absence is expected, is not a failure, and is recorded in `NEXT_STEPS.md` rather than chased.
+**The expected Phase 0–2 stop therefore gates on exactly:** schema tests (110), APWorld 36–47, bridge 1–18 and 20, provider 13–15, campaign 21/22/24/25/26/29/30/34/35, and regression 61/62/64/65/67/68. Everything else is absent by design at that point.
+
+v0.6 wrote this table to fix exactly this defect and then reintroduced it on the row it added: it gated regression tests 60–66 on Phase 2 while 60, 63 and 66 need the Phase 6 shop. Check every row you touch against `ACCEPTANCE_TESTS.md` before believing it — "the fix has the same bug" is this packet's most frequent failure mode. Their absence is expected, is not a failure, and is recorded in `NEXT_STEPS.md` rather than chased.
 
 Record every result honestly, **including failures**. A truthful "Test A fails at reconnect, cause unknown" is worth far more than a green summary that was never run.
 
@@ -82,9 +86,9 @@ Running out of time at Phase 3 below leaves a real, connected, provable slice. R
 0. **Verify the toolchain before anything else.** `git`; `python --version` in [3.11.9, 3.14); `godot --version` matching `4.5.1.stable`; network reachability to github.com.
    **If Godot is absent:** do not install it and do not go looking. Build Phases 0–2 (all Python, all verifiable), write the Phase 3 GDScript unverified, and say so plainly in `NEXT_STEPS.md` and at the T−60 gate. An honest "engine layer written but never run" is worth more than a silent one.
 1. Repo skeleton, `Makefile` (including the §8.5 targets), `.gitignore` (`.archipelago/`, `.env`, `.godot/`, `__pycache__/`, `.pytest_cache/`, `*.tmp`, `*.bak`).
-2. Copy `schemas/` from the packet into `bridge/archipepsi_bridge/schemas/` **verbatim**. Do not retype them.
-3. `python -m pytest` on the packet's schema tests — 91 tests, all green, before anything else is written. They pass both standalone and from the repo root; if they do not, you copied them wrong.
-3b. `python docs/design-packet-v0.6/check_packet.py` — proves the packet's prose still matches the schemas you just copied. It is also the guard to re-run if you ever edit the packet.
+2. Copy `schemas/` from the packet into `bridge/archipepsi_bridge/schemas/` **verbatim**, `transitions.py` included. Do not retype them.
+3. `python -m pytest` on the packet's schema tests — 110 tests, all green, before anything else is written. They pass both standalone and from the repo root; if they do not, you copied them wrong.
+3b. `python docs/design-packet-v0.7/check_packet.py` — proves the packet's prose still matches the schemas you just copied. It is also the guard to re-run if you ever edit the packet.
 4. `bootstrap.py`: clone Archipelago at `0.6.7`, run `ModuleUpdate.py --yes`, verify `import CommonClient` with `SKIP_REQUIREMENTS_UPDATE=1`.
 
 **Milestone: `make setup && make test` works on a clean machine.**
@@ -109,7 +113,7 @@ Generation is the only thing that catches a bad `origin_region_name` — module-
 13. Race-mode guard via `_read_race_mode`.
 14. Bulk scout all 30 with `create_as_hint = 0`; normalize `NetworkItem` in recipient-game context.
 15. Reconstruct `items_received`; derive Signal Keys, Coins, Static.
-16. `campaign.py`: track order, allocation, tier gating, finale gating, eligibility, starvation handling.
+16. `campaign.py`: track order, allocation via `eligible_location_ids()`, tier gating, finale gating, eligibility, starvation handling. **Change campaign state only through `schemas/transitions.py`** — see `TECHNICAL_ARCHITECTURE.md` §7.0.
 17. `store.py`: atomic save/load with `.bak` recovery.
 18. `transactions.py`: pending checks, **reconciliation-based finalization** (never event-waiting — see `TECHNICAL_ARCHITECTURE.md` §5).
 19. `mock_ap.py` with the canonical fixture.
@@ -120,17 +124,17 @@ Generation is the only thing that catches a bad `origin_region_name` — module-
 
 ### Phase 3 — Godot vertical slice (~150 min)
 
-22. `bridge_client.gd` autoload: WebSocket, reconnect with backoff, snapshot handling.
-22. Generated `constants.gd` (`python schemas/export.py`).
+22. `bridge_client.gd` autoload: WebSocket (`BRIDGE_HOST`/`BRIDGE_PORT` from `constants.gd`), reconnect with backoff, snapshot handling.
+23. Generated `constants.gd` (`python schemas/export.py`).
 23. Main menu → connect / Mock Campaign.
-24. Hub scene with the portal, status board, and all eight `HubStatus` modes including `GENERATING`, `ZONE_READY` and `WAITING_FOR_AP`. Drive the portal from `mode` alone; do not track a local generating flag.
+24. Hub scene with the portal, status board, and all eight `HubStatus` modes including `GENERATING`, `ZONE_READY` and `WAITING_FOR_AP`. Read `portal_enabled`, `finale_offered` and `generation_in_progress` **off the snapshot**; never re-derive them in GDScript and never track a local generating flag.
 25. First-person controller using the binding constants. LMB Static Pulse, RMB Echo.
 26. `corridor` and `arena` builders; linear chaining; the appended exit portal.
 27. `melee` enemy; objective latching; reward objects and the claim flow.
 28. **The reveal sequence** (`DESIGN.md` §16). Treat as core, not polish.
 29. Echo runtime for `hitscan_damage` + `recoil_self` + `knockback_target` — enough for Conference Call.
 30. Echo inventory; equip and cycle.
-31. `enter_zone`, `leave_zone`, `exit_zone`, `abandon_zone` — including the Hub-side Abandon control (see below).
+31. `enter_zone`, `leave_zone`, `exit_zone`, `abandon_zone` — including a **Hub-side Abandon control**: `GENERATING` and `ZONE_READY` have no pause menu to reach, and abandoning is the only exit from them.
 
 **Milestone: launch, connect, enter a generated Zone, clear a Check, watch the reveal, equip and fire the Echo, return to Hub, quit, reload, same state. This is the demo.**
 
@@ -144,27 +148,27 @@ Generation is the only thing that catches a bad `origin_region_name` — module-
 
 ### Phase 5 — Real Epsilon (~30 min)
 
-36. `ClaudeEpsilonProvider` with structured output against the exported JSON Schema.
-37. Zone and Echo prompts; untrusted-input wrapping.
-38. One repair attempt with verbatim validator errors; timeout → fallback.
-39. Generation archive.
+35. `ClaudeEpsilonProvider` with structured output against the exported JSON Schema.
+36. Zone and Echo prompts; untrusted-input wrapping.
+37. One repair attempt with verbatim validator errors; timeout → fallback.
+38. Generation archive.
 
 **Milestone: live Epsilon designs a real Zone, and disabling the key degrades cleanly.**
 
 ### Phase 6 — Shop and finale (~30 min)
 
-40. Deterministic stock selection, pricing, cadence, the never-starve rule.
-41. Purchase transaction sharing the pending ledger; rollback on the real trigger.
-42. Reservation release and return-to-pool.
-43. Finale gating and goal reporting.
+39. Deterministic stock selection (seeded by `shop_stock_seed`), pricing, cadence, the never-starve rule.
+40. Purchase transaction sharing the pending ledger; rollback on the real trigger.
+41. Reservation release and return-to-pool.
+42. Goal reporting. (Finale *gating* is step 16, Phase 2 — `HubStatus.finale_unlocked` computes it. v0.6 listed gating in both phases.)
 
 **Milestone: full POC.**
 
 ### Phase 7 — Acceptance
 
-44. Run `ACCEPTANCE_TESTS.md` end to end.
-45. Build the `.apworld`.
-46. README, `IMPLEMENTATION_DECISIONS.md`, `NEXT_STEPS.md`.
+43. Run `ACCEPTANCE_TESTS.md` end to end.
+44. Build the `.apworld`.
+45. README, `IMPLEMENTATION_DECISIONS.md`, `NEXT_STEPS.md`.
 
 ---
 

@@ -70,6 +70,7 @@
           "type": "string"
         },
         "enemies": {
+          "default": [],
           "items": {
             "$ref": "#/$defs/EnemyGroup"
           },
@@ -145,6 +146,7 @@
           "type": "number"
         },
         "enemies": {
+          "default": [],
           "items": {
             "$ref": "#/$defs/EnemyGroup"
           },
@@ -256,6 +258,7 @@
           "type": "string"
         },
         "enemies": {
+          "default": [],
           "items": {
             "$ref": "#/$defs/EnemyGroup"
           },
@@ -332,6 +335,7 @@
           "type": "string"
         },
         "enemies": {
+          "default": [],
           "items": {
             "$ref": "#/$defs/EnemyGroup"
           },
@@ -403,8 +407,8 @@
   "additionalProperties": false,
   "properties": {
     "schema_version": {
-      "const": 6,
-      "default": 6,
+      "const": 7,
+      "default": 7,
       "title": "Schema Version",
       "type": "integer"
     },
@@ -453,6 +457,7 @@
       "title": "Designer Note"
     },
     "featured_echo_ids": {
+      "default": [],
       "items": {
         "maxLength": 32,
         "pattern": "^echo_\\d+$",

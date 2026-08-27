@@ -47,6 +47,7 @@ sys.path.insert(0, str(HERE / "schemas"))
 import constants as C           # noqa: E402
 import echo as echo_mod         # noqa: E402
 import protocol as P            # noqa: E402
+import transitions as _T        # noqa: E402
 import zone as zone_mod         # noqa: E402
 from pydantic import BaseModel, TypeAdapter, ValidationError   # noqa: E402
 
@@ -105,7 +106,7 @@ ENUM_MEMBERS = _enum_members() | set(C.THEMES) | set(C.CHAMBER_TYPES) \
 
 KNOWN: set[str] = set(ENUM_MEMBERS)
 KNOWN |= {n for n in dir(C) if not n.startswith("_")}
-for _module in (P, zone_mod, echo_mod):
+for _module in (P, zone_mod, echo_mod, _T):
     for _model in _models(_module):
         KNOWN.add(_model.__name__)
         KNOWN |= set(_model.model_fields)
@@ -184,14 +185,28 @@ FOREIGN_UPPER = {
 }
 
 #: Cross-references to the packet's own documents, not code symbols.
+#: Files the BUILD produces, which the packet legitimately names in advance.
 DOC_NAMES = {d.name for d in HERE.glob("*.md")} | {
     "IMPLEMENTATION_DECISIONS.md", "NEXT_STEPS.md", "IMPLEMENTATION_PLAN",
+    "README.md", "CommonClient.py", "ModuleUpdate.py", "MultiServer.py",
+    "NetUtils.py", "Utils.py", "AutoWorld.py", "archipelago.json",
+    "campaign.py", "store.py", "transactions.py", "mock_ap.py",
+    "bridge_client.gd", "constants.gd", "Makefile",
+    "build_apworld.py", "export.py", "bootstrap.py", "check_packet.py",
 }
 
 
 def check_ticked_identifiers(doc: Path, text: str) -> None:
     for ident in sorted(set(_TICKED.findall(text))):
-        if ident in DOC_NAMES or ident.endswith(".md"):
+        if ident.endswith((".md", ".py", ".gd", ".json")):
+            # v0.6 skipped every file reference instead of checking it, and
+            # missed two documents pointing at a changelog that had been
+            # renamed. Cross-references are claims too.
+            if (ident not in DOC_NAMES
+                    and not (HERE / ident).exists()
+                    and not (HERE / "schemas" / ident).exists()
+                    and not (HERE / "schemas" / "generated" / ident).exists()):
+                fail(doc, f"points at `{ident}`, which is not in the packet")
             continue
         head = ident.split(".")[0]
         if not (head.isupper() and "_" in head):

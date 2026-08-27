@@ -6,6 +6,8 @@
 extends Node
 
 const AIR_CONTROL = 0.4
+const BRIDGE_HOST = "127.0.0.1"
+const BRIDGE_PORT = 38290
 const CHAMBER_TYPES = ["corridor", "arena", "platform_path", "tower", "treasure_room"]
 const COYOTE_TIME = 0.12
 const ECHO_COOLDOWN_MAX = 15.0

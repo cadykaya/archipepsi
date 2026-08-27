@@ -1,4 +1,4 @@
-"""Archipepsi v0.5 — Zone contract.
+"""Archipepsi v0.7 — Zone contract.
 
 This module IS the Zone specification. EPSILON_SPEC.md describes it; where
 they disagree, this file wins.
@@ -24,7 +24,7 @@ try:  # works standalone and when copied into a package
 except ImportError:  # pragma: no cover
     import constants as C
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 Theme = Literal[
     "concrete_facility", "rusted_industrial", "neon_transit",
@@ -41,7 +41,7 @@ class Strict(BaseModel):
     # them silently, so a hallucinated mechanic fails loudly.
     # validate_assignment closes the v0.4 hole where post-parse mutation
     # walked straight through every bound.
-    model_config = ConfigDict(extra="forbid", validate_assignment=True)
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
 
 class EnemyGroup(Strict):
@@ -90,7 +90,7 @@ class CorridorChamber(_WithEnemies):
     type: Literal["corridor"]
     length: float = Field(ge=6, le=30)
     width: float = Field(ge=4, le=10)
-    enemies: list[EnemyGroup] = Field(default_factory=list, max_length=4)
+    enemies: tuple[EnemyGroup, ...] = Field(default=(), max_length=4)
 
     @model_validator(mode="after")
     def _reward_needs_a_gate(self):
@@ -109,7 +109,7 @@ class ArenaChamber(_WithEnemies):
     depth: float = Field(ge=10, le=28)
     wall_height: float = Field(ge=4, le=8)
     objective: Literal["kill_all", "reach_reward"]
-    enemies: list[EnemyGroup] = Field(default_factory=list, max_length=4)
+    enemies: tuple[EnemyGroup, ...] = Field(default=(), max_length=4)
 
 
 class PlatformPathChamber(_WithEnemies):
@@ -125,7 +125,7 @@ class PlatformPathChamber(_WithEnemies):
     gap_size: float = Field(ge=0.5, le=C.SAFE_BASE_JUMP_GAP)
     vertical_step: float = Field(ge=0.0, le=C.MAX_VERTICAL_STEP)
     objective: Literal["platform_to_goal"] = "platform_to_goal"
-    enemies: list[EnemyGroup] = Field(default_factory=list, max_length=2)
+    enemies: tuple[EnemyGroup, ...] = Field(default=(), max_length=2)
 
     @model_validator(mode="after")
     def _gap_reachable_at_this_step(self):
@@ -144,7 +144,7 @@ class TowerChamber(_WithEnemies):
     type: Literal["tower"]
     floors: int = Field(ge=2, le=5)
     objective: Literal["reach_reward", "kill_all"]
-    enemies: list[EnemyGroup] = Field(default_factory=list, max_length=4)
+    enemies: tuple[EnemyGroup, ...] = Field(default=(), max_length=4)
 
 
 class TreasureRoomChamber(ChamberBase):
@@ -164,14 +164,14 @@ Chamber = Annotated[
 
 
 class Zone(Strict):
-    schema_version: Literal[6] = 6
+    schema_version: Literal[7] = 7
     zone_id: str = _ID
     display_name: str = Field(min_length=1, max_length=C.MAX_TEXT_LEN)
     target_game: str = Field(min_length=1, max_length=C.MAX_AP_STRING_LEN)
     theme: Theme
     designer_note: str | None = Field(default=None, max_length=C.MAX_DESIGNER_NOTE_LEN)
-    featured_echo_ids: list[_ECHO_ID] = Field(default_factory=list, max_length=4)
-    chambers: list[Chamber] = Field(
+    featured_echo_ids: tuple[_ECHO_ID, ...] = Field(default=(), max_length=4)
+    chambers: tuple[Chamber, ...] = Field(
         min_length=C.ZONE_MIN_CHAMBERS, max_length=C.ZONE_MAX_CHAMBERS
     )
 
