@@ -72,6 +72,14 @@ const LINES := {
 	],
 }
 
+#: Events worth interrupting for. Everything else is ambient colour and
+#: waits its turn. Without this, "died" set the six-second throttle and
+#: the respawn 1.5 s later was always swallowed — the revival lines were
+#: literally unreachable, and so was the payoff for reaching a secret if
+#: anything at all had been said in the previous six seconds.
+const PRIORITY := ["died", "revived", "secret_found",
+		"finale_open", "finale_brute"]
+
 var _last_line := ""
 var _cooldown := 0.0
 
@@ -82,7 +90,9 @@ func tick(delta: float) -> void:
 ## name the event; deciding whether it is worth saying is this object's job,
 ## so no caller has to carry its own throttle.
 func line_for(kind: String) -> String:
-	if _cooldown > 0.0 or not LINES.has(kind):
+	if not LINES.has(kind):
+		return ""
+	if _cooldown > 0.0 and not (kind in PRIORITY):
 		return ""
 	var pool: Array = LINES[kind]
 	# Never the same line twice running. With a pool of two that means

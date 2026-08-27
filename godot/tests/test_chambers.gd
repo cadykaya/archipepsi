@@ -171,15 +171,23 @@ func _test_secrets_are_optional() -> void:
 	## forbids outright.
 	var reach: float = Constants.JUMP_APEX_HEIGHT + 0.4
 	var lip_min: float = ChamberBuilders.SECRET_LIP_MIN
+	var underside_min: float = ChamberBuilders.SECRET_UNDERSIDE_MIN
 	var found := 0
 	var cramped := 0
-	for seed_index in 24:
+	var at_the_floor := 0
+	# The interesting ledge is the one pinned to SECRET_LIP_MIN, because
+	# that is where it comes closest to the actors walking underneath it. A
+	# coarse sweep missed it entirely: only wall_height 5.0 could produce
+	# one, and the three seeds that reached 5.0 all failed the 34% roll, so
+	# the minimum-lip branch was never built and the lip assertions below
+	# were decorative. Sweep the legal range finely instead.
+	for seed_index in 240:
 		var width := 10.0 + float(seed_index % 5) * 4.0
 		var depth := 12.0 + float(seed_index % 3) * 6.0
-		# Sweeps the schema's whole legal wall_height range, 4 m to 8 m.
-		var wall_height := 4.0 + float(seed_index % 9) * 0.5
+		# Every legal wall_height, 4 m to 8 m in 0.25 m steps.
+		var wall_height := 4.0 + float(seed_index % 17) * 0.25
 		var result := ChamberBuilders.arena(
-				{"id": "secret_%02d" % seed_index, "type": "arena",
+				{"id": "secret_%03d" % seed_index, "type": "arena",
 				"width": width, "depth": depth, "wall_height": wall_height,
 				"objective": "reach_reward",
 				"reward_location_id": 89100001,
@@ -200,6 +208,14 @@ func _test_secrets_are_optional() -> void:
 			var lip := box.position.y + box.size.y
 			_check(lip >= lip_min - 0.001,
 					"secret ledge lip at %.2f is under SECRET_LIP_MIN" % lip)
+			if lip <= lip_min + 0.001:
+				at_the_floor += 1
+			# The one that actually bit: a slab whose UNDERSIDE sits at the
+			# brute's collider height is not a ledge, it is a wall the
+			# brute walks into and stops at.
+			_check(box.position.y >= underside_min - 0.001,
+					"secret ledge underside at %.2f blocks a %.1f m actor"
+						% [box.position.y, ChamberBuilders.TALLEST_ACTOR])
 			_check(lip + Constants.PLAYER_HEIGHT <= wall_height,
 					"secret lip %.2f leaves no standing room under %.1f m"
 						% [lip, wall_height])
@@ -228,7 +244,9 @@ func _test_secrets_are_optional() -> void:
 			_check(spawn["position"].y < reach,
 					"a secret never strands an enemy out of reach")
 		result["root"].free()
-	_check(found > 0, "no arena in 24 seeds grew a secret ledge")
+	_check(found > 0, "arenas grow secret ledges (%d across the sweep)" % found)
+	_check(at_the_floor > 0,
+			"the sweep builds the minimum-lip ledge, not just roomy ones")
 	_check(cramped == 0, "a low arena got a secret it has no headroom for")
 
 func _test_platform_path_bounds() -> void:  # test 53

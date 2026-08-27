@@ -39,9 +39,11 @@ const _HIT_RADIUS := 96.0
 ## doing to you; this is the one that tells you your shot landed. A connect
 ## tints and punches the crosshair; a kill also stamps an X over it.
 var _confirm_mark: Label
-var _confirm_fade := 0.0
-var _confirm_kill := false
+var _kill_fade := 0.0
+var _connect_fade := 0.0
 const _CONFIRM_TIME := 0.20
+#: Both aim-point marks share one box, so both centre on the same pixel.
+const _MARK_SIZE := Vector2(44, 44)
 const _KILL_TIME := 0.45
 
 ## Epsilon talking over your shoulder. Its own line, below the interact
@@ -74,10 +76,20 @@ func _ready() -> void:
 	_damage_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_damage_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_damage_flash)
+	# Positioned by hand, not by PRESET_CENTER: that preset is applied when
+	# the label still has zero size, so its offsets stay 0 and the label's
+	# top-left CORNER lands on the aim point rather than its centre. The
+	# cross sat half a glyph off the thing it points at, and scaling it
+	# grew about a pivot that was off by the same amount.
 	_crosshair = Label.new()
 	_crosshair.text = "+"
 	_crosshair.add_theme_font_size_override("font_size", 22)
-	_crosshair.set_anchors_preset(Control.PRESET_CENTER)
+	_crosshair.custom_minimum_size = _MARK_SIZE
+	_crosshair.size = _MARK_SIZE
+	_crosshair.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_crosshair.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_crosshair.pivot_offset = _MARK_SIZE / 2.0
+	_crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_crosshair)
 
 	# Positioned by hand each frame like the damage wedge, rather than by an
@@ -86,10 +98,11 @@ func _ready() -> void:
 	_confirm_mark = Label.new()
 	_confirm_mark.text = "✕"
 	_confirm_mark.add_theme_font_size_override("font_size", 30)
-	_confirm_mark.custom_minimum_size = Vector2(44, 44)
+	_confirm_mark.custom_minimum_size = _MARK_SIZE
+	_confirm_mark.size = _MARK_SIZE
 	_confirm_mark.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_confirm_mark.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_confirm_mark.pivot_offset = Vector2(22, 22)
+	_confirm_mark.pivot_offset = _MARK_SIZE / 2.0
 	_confirm_mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_confirm_mark.visible = false
 	add_child(_confirm_mark)
@@ -270,6 +283,7 @@ func clear_waypoint() -> void:
 	_waypoint.visible = false
 
 func _process(delta: float) -> void:
+	_centre_aim_marks()
 	_animate_confirmation(delta)
 	_animate_voice(delta)
 	if _hit_fade > 0.0:
@@ -358,39 +372,53 @@ func _animate_voice(delta: float) -> void:
 	# dimming while it is still the newest thing said.
 	_voice_label.modulate.a = minf(1.0, _voice_fade)
 
-## One of our shots landed. A kill outranks a plain connect and is never
-## downgraded by one: the second enemy clipped by a spread Echo must not
-## take the X back off the enemy the first pellet killed.
+## One of our shots landed. The two timers are independent on purpose: a
+## single shared one that a kill "won" latched, because auto-fire refreshed
+## it every 0.35 s with plain connects and it never decayed far enough to
+## be re-evaluated — so killing one enemy and then holding the trigger on
+## the next left the X stamped for the whole fight.
 func _on_hit_confirmed(killed: bool) -> void:
-	if killed or _confirm_fade <= 0.0 or not _confirm_kill:
-		_confirm_kill = killed
-	_confirm_fade = _KILL_TIME if _confirm_kill else _CONFIRM_TIME
+	if killed:
+		_kill_fade = _KILL_TIME
+	else:
+		_connect_fade = _CONFIRM_TIME
 
 func _animate_confirmation(delta: float) -> void:
-	if _confirm_fade <= 0.0:
+	if _kill_fade <= 0.0 and _connect_fade <= 0.0:
 		return
-	_confirm_fade = maxf(0.0, _confirm_fade - delta)
-	if _confirm_fade <= 0.0 or not _crosshair.visible:
-		_crosshair.scale = Vector2.ONE
-		_crosshair.modulate = Color.WHITE
-		_confirm_mark.visible = false
-		_confirm_fade = 0.0
+	_kill_fade = maxf(0.0, _kill_fade - delta)
+	_connect_fade = maxf(0.0, _connect_fade - delta)
+	# A kill outranks a plain connect while it lasts, but only while it
+	# lasts — connects can no longer hold it open.
+	var killing := _kill_fade > 0.0
+	var strength := _kill_fade / _KILL_TIME if killing \
+			else _connect_fade / _CONFIRM_TIME
+	if strength <= 0.0 or not _crosshair.visible:
+		_reset_confirmation()
 		return
-	var strength := _confirm_fade / (_KILL_TIME if _confirm_kill
-			else _CONFIRM_TIME)
-	# Pivot from the laid-out size, so the punch grows about the point the
-	# player is actually aiming at rather than the label's top-left corner.
-	_crosshair.pivot_offset = _crosshair.size / 2.0
 	_crosshair.scale = Vector2.ONE * (1.0 + 0.45 * strength)
 	_crosshair.modulate = Color.WHITE.lerp(
-			Color(1.0, 0.55, 0.25) if _confirm_kill else Color(0.5, 1.0, 0.8),
+			Color(1.0, 0.55, 0.25) if killing else Color(0.5, 1.0, 0.8),
 			strength)
-	_confirm_mark.visible = _confirm_kill
-	if _confirm_kill:
-		var size := Vector2(get_viewport().get_visible_rect().size)
-		_confirm_mark.position = size / 2.0 - _confirm_mark.pivot_offset
+	_confirm_mark.visible = killing
+	if killing:
 		_confirm_mark.scale = Vector2.ONE * (1.0 + 0.7 * strength)
 		_confirm_mark.modulate = Color(1.0, 0.6, 0.3, minf(1.0, strength * 1.6))
+
+## Both marks sit on the aim point, recomputed each frame so a resolution
+## change cannot leave either of them pointing at where the centre was.
+func _centre_aim_marks() -> void:
+	var centre := Vector2(get_viewport().get_visible_rect().size) / 2.0 \
+			- _MARK_SIZE / 2.0
+	_crosshair.position = centre
+	_confirm_mark.position = centre
+
+func _reset_confirmation() -> void:
+	_kill_fade = 0.0
+	_connect_fade = 0.0
+	_crosshair.scale = Vector2.ONE
+	_crosshair.modulate = Color.WHITE
+	_confirm_mark.visible = false
 
 func _on_player_died() -> void:
 	say_line("died")
@@ -411,11 +439,7 @@ func bind_player(player: Player) -> void:
 	player.hit_confirmed.connect(_on_hit_confirmed)
 	_hit_fade = 0.0
 	_hit_marker.visible = false
-	_confirm_fade = 0.0
-	_confirm_kill = false
-	_confirm_mark.visible = false
-	_crosshair.scale = Vector2.ONE
-	_crosshair.modulate = Color.WHITE
+	_reset_confirmation()
 	_last_hp = -1.0
 	_death_overlay.visible = false
 	_death_label.visible = false

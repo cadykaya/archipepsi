@@ -99,20 +99,25 @@ func _on_enemy_died(enemy: Enemy, record: Dictionary) -> void:
 	if tones != null:
 		tones.play("hit")
 	_quiet_time = 0.0                # a fight is not a quiet stretch
-	if hud != null and is_finale and enemy.archetype == "brute":
-		# The finale's boss. Outranks first_blood, which would otherwise
-		# claim the moment with a line about the shape of the room.
-		hud.say_line("finale_brute")
-		_first_kill_seen = true
-	elif hud != null and not _first_kill_seen:
-		_first_kill_seen = true
-		hud.say_line("first_blood")
+	# Objectives resolve BEFORE anything is said, so a one-enemy room says
+	# "cleared" rather than having first_blood claim the kill and the
+	# throttle swallow the line that actually mattered.
+	var cleared := false
 	if record["objective"] == "kill_all" and not record["satisfied"]:
 		_evaluate_objectives()
-		# Said only once the room is genuinely finished, not on the kill
-		# that merely happened to be last in the list.
-		if record["satisfied"] and hud != null:
-			hud.say_line("room_cleared")
+		cleared = record["satisfied"]
+	if hud == null:
+		return
+	if is_finale and enemy.archetype == "brute":
+		# The finale's boss outranks both of the others.
+		hud.say_line("finale_brute")
+		_first_kill_seen = true
+	elif cleared:
+		hud.say_line("room_cleared")
+		_first_kill_seen = true
+	elif not _first_kill_seen:
+		_first_kill_seen = true
+		hud.say_line("first_blood")
 
 ## Walked into a secret. Says one thing, once, and stops watching: a ledge
 ## you are standing on should not keep congratulating you.

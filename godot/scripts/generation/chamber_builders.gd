@@ -343,12 +343,20 @@ const _SECRET_NOTES := [
 	"Every wall in here is 0.4 metres thick. Including this one.",
 ]
 
-## SECRET_LIP_MIN is the lowest a secret ledge may sit. A standing jump
-## tops out at JUMP_APEX_HEIGHT (1.33 m) and the player has no mantle, so
-## this is out of reach from the floor by better than a body length. A
-## determined crate-hop off the arena's cover may still get you up there;
-## that is allowed, because nothing up here is ever required.
-const SECRET_LIP_MIN := 2.9
+## A secret ledge has to clear two different things, and the second one
+## bit: its UNDERSIDE must pass over the tallest actor in the game, or the
+## slab becomes a wall the brute walks into. The brute's collider is 2.6 m
+## (`Enemy.create`), and the integration driver cross-checks this constant
+## against it so the two cannot drift apart.
+const TALLEST_ACTOR := 2.6
+const SECRET_LEDGE_THICKNESS := 0.3
+const SECRET_UNDERSIDE_MIN := TALLEST_ACTOR + 0.15
+## The lip, in turn, must be out of reach: a standing jump tops out at
+## JUMP_APEX_HEIGHT (1.33 m) and the player has no mantle, so this clears
+## it by better than a body length. A determined crate-hop off the arena's
+## cover may still get you up there; that is allowed, because nothing up
+## here is ever required.
+const SECRET_LIP_MIN := SECRET_UNDERSIDE_MIN + SECRET_LEDGE_THICKNESS
 const SECRET_LIP_MAX := 4.2
 const SECRET_LEDGE_DEPTH := 1.8
 #: Node group on a secret's trigger volume, so ZoneController can find one
@@ -372,8 +380,8 @@ static func _secret_alcove(root: Node3D, theme: String, side: float,
 		return
 	var inward := -side
 	var center_x := side * (wall_x - 0.2) + inward * SECRET_LEDGE_DEPTH / 2.0
-	_box(root, Vector3(SECRET_LEDGE_DEPTH, 0.3, 2.4),
-			Vector3(center_x, lip - 0.15, z),
+	_box(root, Vector3(SECRET_LEDGE_DEPTH, SECRET_LEDGE_THICKNESS, 2.4),
+			Vector3(center_x, lip - SECRET_LEDGE_THICKNESS / 2.0, z),
 			ThemeMaterials.accent_mat(theme))
 	# The lip rail is decorative and non-colliding, so a hard landing is
 	# never bounced back off the edge by a rail you meant to clear.

@@ -197,6 +197,17 @@ func _check_enemy_silhouettes() -> void:
 		_check(half_width > 0.0 and worst <= half_width + 0.001,
 				"%s silhouette fits its collider (%.2f <= %.2f)"
 				% [kind, worst, half_width])
+		if kind == "brute":
+			# Secret ledges are placed to pass over the tallest actor, and
+			# that budget is a constant in the builders. This is where the
+			# two are held together: a taller brute has to move the ledges.
+			var height := 0.0
+			for child in enemy.get_children():
+				if child is CollisionShape3D and child.shape is BoxShape3D:
+					height = child.shape.size.y
+			_check(height > 0.0 and ChamberBuilders.TALLEST_ACTOR >= height,
+					"TALLEST_ACTOR (%.2f) still covers the brute (%.2f)"
+					% [ChamberBuilders.TALLEST_ACTOR, height])
 		enemy.free()
 
 ## An Echo is somebody else's item, reinterpreted. It should look like it:
@@ -346,9 +357,29 @@ func _check_epsilon_voice() -> void:
 	voice.tick(EpsilonVoice.COOLDOWN)
 	_check(voice.line_for("no_such_event_at_all").is_empty(),
 			"an unknown event says nothing")
+	# An unknown event returns early WITHOUT arming the throttle, so
+	# asserting reset() straight after it proved nothing — the throttle was
+	# already clear either way. Arm it with a real line first.
+	_check(not voice.line_for("room_cleared").is_empty(),
+			"a real line arms the throttle")
+	_check(voice.line_for("room_cleared").is_empty(),
+			"the throttle is genuinely armed")
 	voice.reset()
-	_check(not voice.line_for("died").is_empty(),
+	_check(not voice.line_for("room_cleared").is_empty(),
 			"reset drops the throttle for the next Zone")
+	# Payoff lines must not be swallowed by ambient chatter: dying arms six
+	# seconds of silence and the respawn lands 1.5 s later, which made the
+	# revival lines literally unreachable.
+	voice.reset()
+	_check(not voice.line_for("long_walk").is_empty(), "an aside lands")
+	_check(not voice.line_for("died").is_empty(),
+			"death interrupts whatever was being said")
+	_check(not voice.line_for("revived").is_empty(),
+			"getting back up is never swallowed by the death line")
+	_check(not voice.line_for("secret_found").is_empty(),
+			"reaching a secret is never swallowed either")
+	_check(voice.line_for("long_walk").is_empty(),
+			"ambient lines still wait their turn")
 
 ## The kill flag on a hit confirmation has to come from the hit that did
 ## the killing, not from reading hp afterwards — otherwise every later
