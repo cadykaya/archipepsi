@@ -65,6 +65,7 @@ func _run() -> void:
 	_check_epsilon_voice()
 	_test_reveal_splits_the_two_halves()
 	_check_input_bindings()
+	_check_camera_feel()
 	_check_theme_agreement()
 
 	if not await _play_one_zone(true):
@@ -196,6 +197,30 @@ func _check_enemy_silhouettes() -> void:
 				"%s silhouette fits its collider (%.2f <= %.2f)"
 				% [kind, worst, half_width])
 		enemy.free()
+
+## Head bob is the classic way to make a first-person walk feel like a
+## walk and the classic way to make people motion-sick, so its bounds are
+## asserted rather than eyeballed — and standing still must put the eye
+## exactly where every other number in the game assumes it is.
+func _check_camera_feel() -> void:
+	var still := Player.camera_feel_offset(2.3, 0.0, 0.0)
+	_check(still.is_equal_approx(Vector3.ZERO),
+			"standing still leaves the eye exactly at eye height")
+	var worst := 0.0
+	var lowest := 0.0
+	for i in 400:
+		var phase := TAU * float(i) / 40.0
+		var offset := Player.camera_feel_offset(phase, 1.0,
+				Player.LAND_DIP_MAX)
+		worst = maxf(worst, maxf(absf(offset.x), absf(offset.y)))
+		lowest = minf(lowest, offset.y)
+	_check(worst <= Player.BOB_RISE + Player.LAND_DIP_MAX + 0.001,
+			"the view never strays more than %.3f m from the eye" % worst)
+	_check(lowest >= -(Player.BOB_RISE + Player.LAND_DIP_MAX) - 0.001,
+			"the deepest dip is bounded (%.3f m)" % lowest)
+	_check(Player.BOB_RISE + Player.LAND_DIP_MAX
+				< Constants.PLAYER_EYE_HEIGHT * 0.15,
+			"the whole effect stays a fraction of eye height")
 
 ## project.godot's InputMap is hand-edited text; a malformed event object
 ## is dropped silently at load, and the first symptom is a control that

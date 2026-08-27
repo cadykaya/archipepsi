@@ -27,6 +27,15 @@ const STEP_DISTANCE := 2.2
 const LAND_MIN_AIRTIME := 0.18
 const LAND_MIN_SPEED := 3.0
 
+## Head bob, paced by distance travelled like the footsteps are, so the
+## dip and the footfall stay in phase at any speed multiplier — a bob on a
+## wall-clock timer drifts away from the sound it is supposed to be part
+## of. Small on purpose: this is a walk, not a boat.
+const BOB_RISE := 0.032
+const BOB_SWAY := 0.020
+#: Deepest a hard landing may drop the view, in metres.
+const LAND_DIP_MAX := 0.15
+
 var hp: float = Constants.PLAYER_MAX_HP
 var input_frozen := false
 var gravity_mult := 1.0
@@ -41,6 +50,9 @@ var _interact_target: Node = null
 var _step_accumulator := 0.0
 var _step_toggle := false
 var _airborne_time := 0.0
+var _bob_phase := 0.0
+var _bob_weight := 0.0
+var _land_dip := 0.0
 
 @onready var camera: Camera3D = $Camera3D
 @onready var echo_runtime: EchoRuntime = $EchoRuntime
@@ -199,6 +211,7 @@ func _physics_process(delta: float) -> void:
 	var falling_speed := -velocity.y
 	move_and_slide()
 	_update_footsteps(delta, falling_speed)
+	_update_camera_feel(delta)
 	_update_interact_target()
 
 	if global_position.y < Constants.FALL_KILL_Y:
@@ -236,6 +249,8 @@ func _update_footsteps(delta: float, falling_speed: float) -> void:
 	# replayed the loudest tone and reset the step cadence to silence.
 	if _airborne_time > LAND_MIN_AIRTIME and falling_speed > LAND_MIN_SPEED:
 		footstep.emit("land")
+		# The view drops with the thump, in proportion to the drop.
+		_land_dip = clampf(falling_speed / 90.0, 0.04, LAND_DIP_MAX)
 		_step_accumulator = 0.0
 	_airborne_time = 0.0
 
@@ -247,6 +262,35 @@ func _update_footsteps(delta: float, falling_speed: float) -> void:
 		_step_accumulator = 0.0
 		_step_toggle = not _step_toggle
 		footstep.emit("step_a" if _step_toggle else "step_b")
+
+## Head bob and the landing dip. Only the camera's POSITION moves, never
+## its rotation: the crosshair is where you aim, and a view that rolled
+## with your gait would put shots somewhere other than the cross.
+func _update_camera_feel(delta: float) -> void:
+	if camera == null:
+		return
+	var speed := Vector2(velocity.x, velocity.z).length()
+	var walking := is_on_floor() and speed > 0.6 and not _dead
+	if walking:
+		_bob_phase += speed * delta / STEP_DISTANCE * PI
+	# Weight, not phase, is what fades: cutting the phase would snap the
+	# view to wherever the sine happened to be when you stopped.
+	_bob_weight = lerpf(_bob_weight, 1.0 if walking else 0.0,
+			minf(1.0, delta * 9.0))
+	_land_dip = lerpf(_land_dip, 0.0, minf(1.0, delta * 9.0))
+	if _bob_weight < 0.001 and _land_dip < 0.001:
+		_bob_weight = 0.0
+		_land_dip = 0.0
+	camera.position = Vector3(0, Constants.PLAYER_EYE_HEIGHT, 0) \
+			+ camera_feel_offset(_bob_phase, _bob_weight, _land_dip)
+
+## Pure, so the bounds below can be tested rather than trusted: whatever
+## the gait is doing, the view stays within a few centimetres of the eye
+## height every other number in the game is derived from.
+static func camera_feel_offset(phase: float, weight: float,
+		dip: float) -> Vector3:
+	return Vector3(sin(phase) * BOB_SWAY * weight,
+			sin(phase * 2.0) * BOB_RISE * weight - dip, 0.0)
 
 func camera_ray(distance: float, spread_dir: Vector3 = Vector3.ZERO) -> Dictionary:
 	var from := camera.global_position
