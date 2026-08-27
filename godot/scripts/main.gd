@@ -226,9 +226,11 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	menu.visible = false
 	hud.visible = true
 	hud.reset_voice()
+	var record := BridgeClient.active_zone()
 	zone = ZoneController.new()
 	zone.tones = tones
 	zone.hud = hud
+	zone.is_finale = bool(record.get("is_finale", false))
 	world.add_child(zone)
 	zone.setup(zone_dict)
 	zone.exit_requested.connect(_on_exit_zone)
@@ -241,9 +243,11 @@ func _to_zone(zone_dict: Dictionary) -> void:
 		if not killed:
 			tones.play("confirm"))
 	var theme := str(zone_dict.get("theme", "void_glitch"))
-	tones.play_ambience(0.8 + float(hash(theme) % 100) / 200.0)
+	# The last transmission gets a lower, heavier room tone than any Zone
+	# before it, so the finale sounds different before it looks different.
+	tones.play_ambience(0.55 if zone.is_finale
+			else 0.8 + float(hash(theme) % 100) / 200.0)
 
-	var record := BridgeClient.active_zone()
 	# Count the zones the player has actually played, not the generation
 	# counter — that also advances for zones generated then abandoned, and
 	# would disagree with the Hub's completed-zone count on screen.

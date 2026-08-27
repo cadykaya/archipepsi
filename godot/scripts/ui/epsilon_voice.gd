@@ -49,6 +49,16 @@ const LINES := {
 		"Back on your feet. The enemies did not reset. Neither did I.",
 		"Try the doorway this time.",
 	],
+	"finale_open": [
+		"Last one. I built this before I knew how you played. Sorry.",
+		"This is the finale. I did not have long, and I only had you.",
+		"Everything after this is bookkeeping. Enjoy the bookkeeping.",
+	],
+	"finale_brute": [
+		"That was the biggest thing I know how to make.",
+		"It is down. Take Check 030 and go be somebody else's item.",
+		"I have nothing bigger. I checked twice.",
+	],
 	"secret_found": [
 		"You got up here. I did not leave anything. Read the wall.",
 		"Nobody was supposed to reach that. Well. Nobody was required to.",

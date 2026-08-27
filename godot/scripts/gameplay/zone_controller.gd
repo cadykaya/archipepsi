@@ -11,6 +11,9 @@ var zone_id := ""
 var player: Player
 var tones: Tones = null          # set by main; null in headless tests
 var hud: Hud = null              # set by main; null in headless tests
+## Set by main before setup(). The Zone geometry is whatever the schema
+## said; this only changes how the last transmission is presented.
+var is_finale := false
 
 var _chambers: Array = []      # {chamber, objective, satisfied, enemies,
                                #  reward, goal_area}
@@ -84,17 +87,24 @@ func setup(zone_dict: Dictionary) -> void:
 		_chambers.append(record)
 	_evaluate_objectives()
 	refresh()
+	if is_finale and hud != null:
+		hud.say_line("finale_open")
 
 func _objective_of(chamber: Dictionary) -> String:
 	# A corridor has no objective; a reward inside one is implicitly
 	# reach_reward. treasure_room defaults reach_reward too.
 	return str(chamber.get("objective", "reach_reward"))
 
-func _on_enemy_died(_enemy: Enemy, record: Dictionary) -> void:
+func _on_enemy_died(enemy: Enemy, record: Dictionary) -> void:
 	if tones != null:
 		tones.play("hit")
 	_quiet_time = 0.0                # a fight is not a quiet stretch
-	if hud != null and not _first_kill_seen:
+	if hud != null and is_finale and enemy.archetype == "brute":
+		# The finale's boss. Outranks first_blood, which would otherwise
+		# claim the moment with a line about the shape of the room.
+		hud.say_line("finale_brute")
+		_first_kill_seen = true
+	elif hud != null and not _first_kill_seen:
 		_first_kill_seen = true
 		hud.say_line("first_blood")
 	if record["objective"] == "kill_all" and not record["satisfied"]:
