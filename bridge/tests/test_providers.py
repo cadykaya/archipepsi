@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 from archipepsi_bridge.epsilon import (
     CampaignContext, PlayerContext, RequestLocation, ZoneGenerationRequest,
     fallback_echo, fallback_zone,
@@ -155,6 +157,41 @@ def test_mock_finale_keeps_the_reserved_shape():
             allocated_location_ids=[C.GOAL_LOCATION_ID],
             owned_echo_ids=[]) == []
     run(scenario())
+
+
+def test_archive_replay_accepts_good_and_catches_drift():
+    """The §14 migration guard: archived generations are replayed through
+    the live validators, so a schema change that invalidates the benchmark
+    corpus is loud instead of silent."""
+    from archipepsi_bridge.replay_archive import replay_one
+
+    request = zone_request()
+    good = {"kind": "zone", "request": request.model_dump(mode="json"),
+            "accepted_output": fallback_zone(request)}
+    ok, detail = replay_one(good)
+    assert ok, detail
+
+    # Structural drift: a field the current schema rejects.
+    broken = dict(good)
+    broken["accepted_output"] = dict(good["accepted_output"],
+                                     invented_mechanic=True)
+    ok, detail = replay_one(broken)
+    assert not ok and "structural" in detail
+
+    # Semantic drift: the accepted Zone no longer covers its allocation.
+    reward_swapped = json.loads(json.dumps(good["accepted_output"]))
+    for chamber in reward_swapped["chambers"]:
+        if chamber.get("reward_location_id"):
+            chamber["reward_location_id"] = 89100009
+            break
+    ok, detail = replay_one(dict(good, accepted_output=reward_swapped))
+    assert not ok and "semantic" in detail
+
+    # A generation that failed outright archives no accepted output and is
+    # not a validation failure.
+    ok, _ = replay_one({"kind": "zone",
+                        "request": request.model_dump(mode="json")})
+    assert ok
 
 
 def test_fallback_echo_heuristics_all_valid():

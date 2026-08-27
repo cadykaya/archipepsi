@@ -73,12 +73,9 @@ and that bends actually occur. (Test L against a real server is also done
 2. Live-fire the Claude provider once an ANTHROPIC_API_KEY is present
    (`EPSILON_PROVIDER=claude make bridge`); offline stub tests cover the
    mechanics but a real generation archive would be gold.
-3. A generation-archive replay tool (`--archive-dir` already writes them):
-   re-validate every archived generation against current schemas. This is
-   the EPSILON_SPEC §14 local-model migration guard, and nothing reads the
-   archive yet.
-4. Echo cooldown as a HUD bar rather than a number; reveal card tinted by
+3. Echo cooldown as a HUD bar rather than a number; reveal card tinted by
    the recipient game's theme.
+4. Per-theme enemy silhouettes (currently one body shape, theme-tinted).
 
 ## Known blockers / bugs
 - None known. One recorded schema corner: `finale_offered` stays true in
@@ -92,8 +89,13 @@ from chamber id — pure visual, no traversal impact, keeps every geometry
 test green.
 
 ## Commands
-    make test                # pytest suites
+    make test                # pytest suites (191)
     make godot-test          # chamber geometry
     make godot-integration   # the whole game, headlessly
+    make replay ARCHIVE=<dir>  # re-validate a generation archive (§14)
     make seed-multi && make host && make bridge   # real server play
     godot-bin/godot --path godot                  # the game
+
+Collect an archive while playing:
+    cd bridge && python3 -m archipepsi_bridge --ap=mock --epsilon=mock \
+      --archive-dir ../generation_archive

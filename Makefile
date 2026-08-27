@@ -60,6 +60,10 @@ bridge-mock:
 smoke:                         # headless full-loop smoke test, mock AP + fallback Epsilon
 	cd bridge && $(PY) -m archipepsi_bridge.smoke
 
+replay:                        # re-validate the generation archive (EPSILON_SPEC §14)
+	cd bridge && $(PY) -m archipepsi_bridge.replay_archive \
+	  $(or $(ARCHIVE),../generation_archive)
+
 GODOT := godot-bin/godot
 
 godot-test:                    # headless builder tests (no bridge needed)
