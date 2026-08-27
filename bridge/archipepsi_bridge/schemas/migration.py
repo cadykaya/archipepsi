@@ -25,16 +25,19 @@ try:
 except ImportError:  # pragma: no cover
     import echo as E
 
-#: v7 archetypes mapped onto v8 slots. Public because the fallback provider
-#: uses the same mapping: a v7 save migrated and a fresh fallback for the
-#: same location then produce the same component id, which is one less way
-#: for two paths to disagree. A weapon or tool goes to the primary
-#: Echo slot because that is where RMB was; mobility gets the slot it was
-#: always really asking for.
+#: v7 archetypes mapped onto the slot the S1 runtime can actually execute.
+#: v0.7 had one active Echo button (RMB), so migration must preserve that
+#: control regardless of whether the old Echo was described as a weapon,
+#: tool or mobility ability. S2 introduces the wider slot runtime; until then
+#: putting a migrated Hookshot into `mobility` would make a previously usable
+#: equipped Echo disappear from RMB.
+#:
+#: Public because the deterministic fallback uses the same compatibility
+#: mapping: newly generated S1 mobility Echoes must also remain playable.
 ARCHETYPE_SLOT = {
     "weapon": "echo_a",
     "tool": "echo_a",
-    "mobility": "mobility",
+    "mobility": "echo_a",
     "passive": "echo_a",
 }
 

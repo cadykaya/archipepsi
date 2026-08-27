@@ -211,7 +211,12 @@ async def reconcile(engine: CampaignEngine) -> None:
         return
 
     resend: list[int] = []
-    for p in list(engine.save.pending_checks):
+    # A single RoomUpdate can confirm several pending Checks at once. Echo
+    # interpretation_seq is assigned while finalizing, so the packet's
+    # within-batch tie-break must be enforced *here*, before grant_echo runs:
+    # source/location id ascending, never claim order.
+    for p in sorted(tuple(engine.save.pending_checks),
+                    key=lambda pending: pending.location_id):
         if p.location_id in ap.checked:
             await finalize(engine, p.location_id)
         elif p.location_id in ap.missing:

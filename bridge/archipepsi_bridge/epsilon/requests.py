@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from ..schemas import constants as C
 from ..schemas import echo as E
+from . import capabilities as CAP
 
 _AP_STR = Annotated[str, Field(max_length=C.MAX_AP_STRING_LEN)]
 
@@ -122,24 +123,24 @@ class EchoGenerationRequest(Strict):
     pipeline in S10. Sending it before anything can act on it would be a
     prompt full of context no rule uses.
 
-    What S1 does change is the shape of the answer: a provider now emits an
-    `EchoInterpretation` with operations, and `allowed` says so.
+    The schema describes the whole v0.8 language, while `allowed` describes
+    the subset the runtime can execute *today*. Both this request and the
+    post-parse validator read the same staged capability registry; Epsilon is
+    never invited to create a mechanic that would validate and then do
+    nothing.
     """
     schema_version: Literal[8] = 8
     source: EchoSource
     player_state: EchoPlayerState
     required_echo_id: str = Field(max_length=32, pattern=r"^echo_\d+$")
     allowed: dict = Field(default_factory=lambda: {
-        "operations": list(E.OPERATION_KINDS),
+        "operations": list(CAP.IMPLEMENTED_OPERATION_KINDS),
         "modes": list(E.INTERPRETATION_MODES),
-        "component_kinds": list(E.COMPONENT_KINDS),
-        # The catalog holds 28; the engine can run these. An Action the
-        # engine cannot execute is refused by `validate_interpretation`, so
-        # offering it here would only invite a rejection.
+        "component_kinds": list(CAP.IMPLEMENTED_COMPONENT_KINDS),
         "action_primitives": list(E.IMPLEMENTED_PRIMITIVES),
-        "modifiers": list(E.MODIFIER_TYPES),
-        "trait_stats": ["gravity", "move_speed"],
-        "slots": list(E.SLOT_NAMES),
+        "modifiers": list(CAP.IMPLEMENTED_MODIFIER_TYPES),
+        "trait_stats": list(CAP.IMPLEMENTED_TRAIT_STATS),
+        "slots": list(CAP.IMPLEMENTED_ACTION_SLOTS),
     })
     composition_rules: tuple[str, ...] = (
         "an interpretation carries 1-4 operations",

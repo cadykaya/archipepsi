@@ -22,6 +22,7 @@ from pydantic import TypeAdapter, ValidationError
 from ..schemas import constants as C
 from ..schemas.echo import EchoInterpretation, validate_interpretation
 from ..schemas.zone import Zone, validate_zone
+from . import capabilities as CAP
 from .fallback import fallback_echo, fallback_zone
 from .requests import EchoGenerationRequest, ZoneGenerationRequest
 
@@ -167,7 +168,10 @@ async def generate_echo_validated(
     return await _pipeline(
         provider, request, kind="echo",
         generation_id=request.required_echo_id, adapter=_ECHO_ADAPTER,
-        semantic=lambda e: validate_interpretation(
-            e, expected_source_location_id=request.source.location_id),
+        semantic=lambda e: (
+            validate_interpretation(
+                e, expected_source_location_id=request.source.location_id)
+            + CAP.validate_stage_support(e)
+        ),
         build_fallback=fallback_echo, archive_dir=archive_dir,
         timeout=timeout)
