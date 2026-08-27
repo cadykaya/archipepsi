@@ -59,6 +59,7 @@ func _run() -> void:
 		return
 	_check(BridgeClient.snapshot.get("scouted", []).size() == 30,
 			"30 locations scouted")
+	await _check_hub_builds()
 
 	if not await _play_one_zone(true):
 		_finish(1)
@@ -114,6 +115,32 @@ func _run() -> void:
 	_finish(0 if failures == 0 else 1)
 
 # ---------------------------------------------------------------------------
+
+## The Hub is authored, not generated, so nothing else in this driver
+## exercises it — but it is where the player spends half their time, and
+## its board reads live campaign state.
+func _check_hub_builds() -> void:
+	var hub := HubController.new()
+	get_tree().root.add_child(hub)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(hub.player != null, "hub spawns the player")
+	_check(hub._board_cells.size() == Constants.LOCATION_COUNT,
+			"campaign board has one cell per Check (%d)"
+			% hub._board_cells.size())
+	hub.refresh()
+	await get_tree().process_frame
+	var legend: String = hub._board_legend.text
+	_check(legend.contains("sent") and legend.contains("key-locked"),
+			"campaign board legend reads live state: '%s'" % legend)
+	var lit := 0
+	for cell: MeshInstance3D in hub._board_cells:
+		if cell.material_override != null:
+			lit += 1
+	_check(lit == Constants.LOCATION_COUNT,
+			"every board cell is tinted (%d)" % lit)
+	hub.queue_free()
+	await get_tree().process_frame
 
 func _play_one_zone(detailed: bool) -> bool:
 	var mode := BridgeClient.hub_mode()

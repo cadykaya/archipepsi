@@ -23,6 +23,10 @@ var _sub_board: Label3D
 var _static_root: Node3D
 var _static_count := -1
 var _fuzz: ColorRect
+## The campaign board: all 30 Checks, one cell each, laid out by tier.
+var _board_cells: Array[MeshInstance3D] = []
+var _board_legend: Label3D
+var _board_pulse := 0.0
 
 func _ready() -> void:
 	_build_room()
@@ -109,6 +113,8 @@ func _build_room() -> void:
 	_abandon = AbandonConsole.new()
 	add_child(_abandon)
 	_abandon.position = Vector3(-W / 2.0 + 2.4, 0, D - 2.4)
+
+	_build_campaign_board()
 
 	_static_root = Node3D.new()
 	add_child(_static_root)
@@ -205,11 +211,110 @@ func refresh() -> void:
 			and goal_missing and mode == "ZONE_AVAILABLE"
 	_finale_portal.refresh(hub, "FINALE_OFFERED")
 	_abandon.refresh(mode, BridgeClient.active_zone())
+	_board_pulse = 1.0 - _board_pulse       # slow blink for in-flight cells
+	_refresh_campaign_board(snapshot)
 	_refresh_static(static_units)
 	if _fuzz != null and _fuzz.material is ShaderMaterial:
 		(_fuzz.material as ShaderMaterial).set_shader_parameter(
 				"intensity", minf(1.0, float(static_units)
 					/ float(Constants.STATIC_GLITCH_VISUAL_CAP)))
+
+## The campaign board: 30 cells on the left wall, one per Check, in three
+## rows of ten — which is exactly the tier structure, so the board shows
+## you why Tier 2 is dark before it shows you anything else. Each cell is
+## tinted by the game that will receive that location's item, so the wall
+## is a picture of the multiworld you are embedded in.
+func _build_campaign_board() -> void:
+	var panel_z := D * 0.62
+	var wall_x := -W / 2.0 + 0.35
+	var b := ChamberBuilders
+	var root := Node3D.new()
+	root.name = "CampaignBoard"
+	add_child(root)
+	# Backing plate and frame.
+	b._box(root, Vector3(0.12, 2.6, 5.2), Vector3(wall_x, 2.3, panel_z),
+			ThemeMaterials.trim_mat(THEME), false)
+
+	var title := Label3D.new()
+	title.text = "THE MULTIWORLD"
+	title.font_size = 40
+	title.pixel_size = 0.005
+	title.position = Vector3(wall_x + 0.09, 3.45, panel_z)
+	title.rotation.y = -PI / 2.0
+	title.modulate = Color(0.8, 0.88, 0.95)
+	root.add_child(title)
+
+	var cell := 0.36
+	var gap := 0.09
+	for tier in 3:
+		for column in 10:
+			var quad := MeshInstance3D.new()
+			var mesh := BoxMesh.new()
+			mesh.size = Vector3(0.05, cell, cell)
+			quad.mesh = mesh
+			quad.position = Vector3(wall_x + 0.09,
+					3.0 - float(tier) * (cell + gap),
+					panel_z - 2.0 + float(column) * (cell + gap))
+			root.add_child(quad)
+			_board_cells.append(quad)
+		var tier_names := ["START", "TIER 1", "TIER 2"]
+		var tier_label := Label3D.new()
+		tier_label.text = tier_names[tier]
+		tier_label.font_size = 22
+		tier_label.pixel_size = 0.005
+		tier_label.position = Vector3(wall_x + 0.09,
+				3.0 - float(tier) * (cell + gap), panel_z - 2.55)
+		tier_label.rotation.y = -PI / 2.0
+		tier_label.modulate = Color(0.55, 0.6, 0.68)
+		root.add_child(tier_label)
+
+	_board_legend = Label3D.new()
+	_board_legend.font_size = 22
+	_board_legend.pixel_size = 0.005
+	_board_legend.position = Vector3(wall_x + 0.09, 1.15, panel_z)
+	_board_legend.rotation.y = -PI / 2.0
+	_board_legend.modulate = Color(0.62, 0.7, 0.76)
+	root.add_child(_board_legend)
+
+func _refresh_campaign_board(snapshot: Dictionary) -> void:
+	if _board_cells.is_empty():
+		return
+	var keys := int(snapshot.get("signal_keys", 0))
+	var stocked: Array = []
+	for item: Dictionary in snapshot.get("shop", {}).get("stock", []):
+		stocked.append(int(item.get("location_id", 0)))
+	var counts := {"done": 0, "flight": 0, "open": 0, "locked": 0}
+
+	for index in _board_cells.size():
+		var location: int = Constants.FIRST_LOCATION_ID + index
+		var scout := BridgeClient.scout_for(location)
+		var game := str(scout.get("recipient_game", "")) if scout else ""
+		var tint: Color = ThemeMaterials.color_for_game(game) if game != "" \
+				else Color(0.4, 0.42, 0.46)
+		var energy := 0.5
+		if BridgeClient.is_checked(location):
+			# Confirmed: bright, saturated — this one really happened.
+			energy = 2.0
+			counts["done"] += 1
+		elif BridgeClient.is_pending(location) or location in stocked:
+			tint = Color(1.0, 0.85, 0.35)
+			energy = 1.2 + 0.7 * _board_pulse
+			counts["flight"] += 1
+		elif index / 10 > mini(keys, 2):
+			# Behind a Signal Key you do not have yet.
+			tint = tint.darkened(0.82)
+			energy = 0.06
+			counts["locked"] += 1
+		else:
+			tint = tint.darkened(0.45)
+			energy = 0.35
+			counts["open"] += 1
+		_board_cells[index].material_override = \
+				ThemeMaterials.glow_material(tint, energy)
+
+	_board_legend.text = "%d sent · %d in flight · %d waiting · %d key-locked" \
+			% [counts["done"], counts["flight"], counts["open"],
+			counts["locked"]]
 
 ## Epsilon Static slowly eats the status board. Purely cosmetic: the more
 ## Static the multiworld has delivered, the less legible the Hub becomes.

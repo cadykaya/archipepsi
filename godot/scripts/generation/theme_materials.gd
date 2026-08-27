@@ -9,6 +9,19 @@ static func spec(theme: String) -> Dictionary:
 	var all: Dictionary = Constants.THEME_MATERIALS
 	return all.get(theme, all["void_glitch"])
 
+## The theme a source game reads as. Mirrors the bridge's fallback rule:
+## the pinned hint if there is one, else a stable hash into the catalog.
+static func theme_for_game(game: String) -> String:
+	var hint: Dictionary = Constants.THEME_BY_GAME_HINT
+	if hint.has(game):
+		return hint[game]
+	var themes: Array = Constants.THEMES
+	return themes[absi(hash(game)) % themes.size()]
+
+## A game's signature colour, for anywhere the multiworld is visualised.
+static func color_for_game(game: String) -> Color:
+	return Color(spec(theme_for_game(game))["accent_color"])
+
 static func _material(theme: String, kind: String,
 		noise_override: String = "") -> StandardMaterial3D:
 	var key := "%s|%s|%s" % [theme, kind, noise_override]
