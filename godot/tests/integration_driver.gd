@@ -63,6 +63,7 @@ func _run() -> void:
 	_check_enemy_silhouettes()
 	_check_hit_confirmation()
 	_check_epsilon_voice()
+	_test_reveal_splits_the_two_halves()
 	_check_theme_agreement()
 
 	if not await _play_one_zone(true):
@@ -194,6 +195,38 @@ func _check_enemy_silhouettes() -> void:
 				"%s silhouette fits its collider (%.2f <= %.2f)"
 				% [kind, worst, half_width])
 		enemy.free()
+
+func _test_reveal_splits_the_two_halves() -> void:
+	## DESIGN §16: the card has to make it unmistakable that the other
+	## player got the real item and you got Epsilon's reinterpretation. The
+	## split is on the blank line the bridge writes between them, and the
+	## failure that matters is misattribution — an item name landing under
+	## Epsilon's heading, or the reinterpretation reading as what was sent.
+	var reveal: Array = RevealLayer.split_halves(
+			["Conference Call", "Borderlands 2", "",
+			"EPSILON ECHO ACQUIRED", "Conference Call", "12 pellets"])
+	_check(reveal[0] == ["Conference Call", "Borderlands 2"],
+			"the sent half is what the bridge put before the break")
+	_check(reveal[1] == ["EPSILON ECHO ACQUIRED", "Conference Call",
+			"12 pellets"],
+			"the Echo half is everything after it")
+
+	# A self-recipient check has no Echo half at all.
+	var own: Array = RevealLayer.split_halves(
+			["Signal Key", "Delivered to you."])
+	_check(own[0].size() == 2 and own[1].is_empty(),
+			"a check with no Echo renders as one block, not two")
+
+	# Only the FIRST blank divides; blank lines inside the Echo half are
+	# spacing the bridge chose, not a second boundary.
+	var spaced: Array = RevealLayer.split_halves(
+			["Item", "Game", "", "ECHO", "", "12 pellets"])
+	_check(spaced[0] == ["Item", "Game"]
+			and spaced[1] == ["ECHO", "", "12 pellets"],
+			"a later blank line does not start a third block")
+
+	_check(RevealLayer.split_halves([])[0].is_empty(),
+			"an empty card splits into nothing rather than erroring")
 
 ## Epsilon is meant to be an occasional voice, not a status bar. Two things
 ## keep it that way and both are easy to lose: the throttle, and never

@@ -73,8 +73,18 @@ GODOT := godot-bin/godot
 godot-import:                  # refresh the script class cache
 	$(GODOT) --headless --path godot --import >/dev/null
 
+# A SceneTree script whose dependencies fail to compile still RUNS: the
+# unresolved calls raise SCRIPT ERROR at runtime, the assertions they were
+# supposed to make never execute, and the suite prints OK having tested
+# nothing. So a script error fails the target regardless of the exit code.
 godot-test: godot-import       # headless builder tests (no bridge needed)
-	$(GODOT) --headless --path godot --script tests/test_chambers.gd
+	@out=$$($(GODOT) --headless --path godot --script tests/test_chambers.gd 2>&1); \
+	printf '%s\n' "$$out"; \
+	printf '%s\n' "$$out" | grep -q "GODOT CHAMBER TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
 
 # The integration run gets its own throwaway save directory. Sharing
 # bridge/saves/ made the run resume the PREVIOUS run's campaign: the zone
