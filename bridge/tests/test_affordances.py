@@ -234,6 +234,36 @@ def test_the_fallback_only_hangs_features_on_chambers_with_nothing_on_them():
                      allocated=[loc.location_id for loc in request.locations]) == []
 
 
+def test_every_shipping_provider_offers_affordances():
+    """Not just the fallback.
+
+    Mock Epsilon builds its own chambers rather than the fallback's, and
+    it simply never placed a feature — so `--epsilon=mock`, the *richer*
+    designer, shipped Zones with no optional content at all while the
+    deliberately-boring fallback had some. Nothing caught it, because
+    every affordance test named the fallback. A per-provider test is what
+    notices the next provider that forgets.
+    """
+    import asyncio
+
+    from archipepsi_bridge.epsilon.fallback import fallback_zone
+    from archipepsi_bridge.epsilon.mock import MockEpsilonProvider
+
+    request = _zone_request(("bounce_pad", "moving_platform", "rail"))
+    produced = {
+        "fallback": fallback_zone(request),
+        "mock": asyncio.run(MockEpsilonProvider().generate_zone(request)),
+    }
+    for name, raw in produced.items():
+        zone = TypeAdapter(Z.Zone).validate_python(raw)
+        placed = [f.tag for c in zone.chambers for f in c.features]
+        assert placed, f"{name} offered no affordance at all"
+        assert set(placed) <= set(request.unlocked_affordances), (name, placed)
+        assert _validate(
+            zone, owned=request.unlocked_affordances,
+            allocated=[loc.location_id for loc in request.locations]) == [], name
+
+
 def test_the_fallback_offers_nothing_it_was_not_told_the_player_can_use():
     from archipepsi_bridge.epsilon.fallback import fallback_zone
     request = _zone_request(())

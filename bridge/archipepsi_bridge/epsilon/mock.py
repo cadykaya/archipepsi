@@ -16,7 +16,8 @@ from __future__ import annotations
 import random
 
 from ..schemas import constants as C
-from .fallback import _clamp, _theme_for, fallback_echo, fallback_zone
+from .fallback import (
+    _add_features, _clamp, _theme_for, fallback_echo, fallback_zone)
 from .requests import EchoGenerationRequest, ZoneGenerationRequest
 
 _ADJECTIVES = ("Humming", "Sunken", "Borrowed", "Restless", "Overgrown",
@@ -147,6 +148,15 @@ class MockEpsilonProvider:
                 f"Presented in the manner of {location.recipient_game}.",
                 C.MAX_TEXT_LEN)
             chambers.append(chamber)
+
+        # Affordances (§13), on the connectors — the only chambers here
+        # with neither a Check nor a gating objective. Shared with the
+        # fallback rather than reimplemented: the placement RULES are
+        # §13.2's, not this designer's taste, and a second copy would be a
+        # second thing to get wrong. Mock Epsilon skipped this entirely
+        # until the archive run noticed it shipping Zones with no optional
+        # content at all, while the deliberately-boring fallback had some.
+        _add_features(chambers, request.unlocked_affordances)
 
         # Naming draws from its own stream: sharing the layout stream made
         # every 3-Check Zone land on the same word, because the number of
