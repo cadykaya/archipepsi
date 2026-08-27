@@ -22,22 +22,29 @@ refused). The bridge is also proven against a real Archipelago 0.6.7 server
   10 Echo effects, reveal cards, inventory, pause, debug overlay,
   procedural tones and textures
 
-## In progress / next useful work (post-POC polish)
-Nothing half-built. Candidate improvements, roughly in value order:
-1. **Play-feel pass on real hardware** — nobody has held it; the manual
-   checks in ACCEPTANCE_TESTS §7 (gap feel, reveal timing, Conference Call
-   comedy) need human eyes. Cannot be done in this container.
-2. Visual depth: more brush variety per theme (trim pipes, buttresses,
-   signage), corridor prop variety, hub screen-fuzz shader for Static.
-3. Zone variety: additional safe chamber arrangement logic in builders
-   (L-bends via rotated chaining would need overlap checks — design first).
-4. Epsilon flavor: designer_note surfacing in the Hub board after
-   completion; per-theme reveal card tints.
-5. Live-fire the Claude provider once an ANTHROPIC_API_KEY is present
-   (`make bridge` + `EPSILON_PROVIDER=claude`); the offline stub tests
-   cover the mechanics but a real generation archive would be gold.
-6. Robustness: bridge-restart-mid-zone manual pass (Test L is covered
-   headlessly by test 18; the Godot-side resume path deserves a manual run).
+## Post-POC work completed this run
+- Acceptance Test I (leave/resume) runs inside the integration driver.
+- Feel: first-person viewmodel with fire kick, enemy hit punch, damage
+  flash, pulse/death tones.
+- Look: greeble pass (ribs, ceiling beams, cables, vents, crates,
+  buttresses, hazard strips), deterministic per chamber, lane-checked.
+- Personality: Hub board quotes the last completed Zone and its
+  designer_note; Epsilon Static garbles the board headline on a crawl
+  timer; authored Epsilon graffiti appears on corridor walls; Static Pulse
+  tracers discolor as Static accumulates; the victory card holds longer.
+
+## Next useful work (roughly in value order)
+1. **Play-feel pass on real hardware** — the manual checks in
+   ACCEPTANCE_TESTS §7 (gap feel, reveal timing, Conference Call comedy)
+   need human eyes. Cannot be done in this container.
+2. Live-fire the Claude provider once an ANTHROPIC_API_KEY is present
+   (`EPSILON_PROVIDER=claude make bridge`); offline stub tests cover the
+   mechanics but a real generation archive would be gold.
+3. Zone variety: safe non-linear arrangements (L-bends need rotated
+   chaining + overlap checks — design before building).
+4. Hub screen-fuzz shader tied to Static (a CanvasLayer shader, subtle).
+5. Robustness: bridge-restart-mid-zone manual pass (Test L headless
+   equivalent is covered by bridge test 18).
 
 ## Known blockers / bugs
 - None known. One recorded schema corner: `finale_offered` stays true in

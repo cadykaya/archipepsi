@@ -154,6 +154,43 @@ static func _greeble_corridor(root: Node3D, length: float, width: float,
 		_box(root, Vector3(0.06, 0.06, seg_length + 0.05),
 				Vector3(cable_x, height - 0.25 - sag, z0 + seg_length / 2.0),
 				trim, false)
+	# Occasionally, Epsilon leaves a note.
+	if rng.randf() < 0.3:
+		_graffiti(root, Vector3(
+				(-1.0 if rng.randf() < 0.5 else 1.0) * (width / 2.0 - 0.12),
+				rng.randf_range(1.2, 2.2),
+				rng.randf_range(2.0, length - 2.0)), theme, rng)
+
+#: Authored, never generated at runtime. Epsilon's marginalia.
+const GRAFFITI := [
+	"EPSILON WAS HERE",
+	"THIS WALL IS LOAD-BEARING, EMOTIONALLY",
+	"DO NOT LICK THE STATIC",
+	"THE EXIT IS REAL. PROBABLY.",
+	"ANOTHER QUALITY CHAMBER",
+	"I HAD MORE POLYGONS IN MIND",
+	"YOUR ITEMS ARE IN ANOTHER WORLD",
+	"SIGNAL LOST? KEEP WALKING",
+	"BUILT IN 0.4 SECONDS. BE KIND.",
+	"THE BRUTE IS A GOOD BOY",
+	"MIND THE GAP",
+	"1998 CALLED. I ANSWERED.",
+]
+
+static func _graffiti(root: Node3D, at: Vector3, theme: String,
+		rng: RandomNumberGenerator) -> void:
+	var label := Label3D.new()
+	label.text = GRAFFITI[rng.randi_range(0, GRAFFITI.size() - 1)]
+	label.font_size = 40
+	label.pixel_size = 0.005
+	label.modulate = Color(
+			ThemeMaterials.spec(theme)["accent_color"]).lightened(0.2)
+	label.modulate.a = 0.85
+	label.position = at
+	# Face into the corridor from whichever wall it is on.
+	label.rotation.y = PI / 2.0 if at.x < 0 else -PI / 2.0
+	label.rotation.z = rng.randf_range(-0.06, 0.06)
+	root.add_child(label)
 
 ## Corner buttresses, perimeter crates and a hazard strip for room-like
 ## spaces. Crates hug the walls so the arena floor stays fightable.

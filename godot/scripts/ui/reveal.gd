@@ -50,6 +50,9 @@ func _show_next() -> void:
 		_showing = true
 		reveal_started.emit()
 	var note: Dictionary = _queue.pop_front()
+	var hold := HOLD_SECONDS
+	if note.get("kind") == "goal_reached":
+		hold = 4.5                     # the victory moment earns a beat
 	_title.text = str(note.get("title", ""))
 	var lines: Array[String] = []
 	for line in note.get("lines", []):
@@ -67,5 +70,5 @@ func _show_next() -> void:
 	visible = true
 	if tones != null:
 		tones.play("goal" if note.get("kind") == "goal_reached" else "echo")
-	var timer := get_tree().create_timer(HOLD_SECONDS)
+	var timer := get_tree().create_timer(hold)
 	timer.timeout.connect(_show_next)

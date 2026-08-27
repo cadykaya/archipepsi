@@ -190,8 +190,14 @@ func _spawn_tracer(hit: Dictionary) -> void:
 	var to: Vector3 = hit["position"] if not hit.is_empty() \
 			else camera.global_position \
 			- camera.global_transform.basis.z * Constants.STATIC_PULSE_RANGE
-	Tracer.spawn(get_tree().current_scene, from, to,
-			Color(0.75, 0.85, 1.0), 0.06)
+	# Static Pulse is made of the garbage Epsilon leaves behind: the more
+	# Static the multiworld has delivered, the more it discolors.
+	var units := int(BridgeClient.snapshot.get("static_glitch_units", 0))
+	var corruption := minf(1.0, float(units)
+			/ float(Constants.STATIC_GLITCH_VISUAL_CAP))
+	var color := Color(0.75, 0.85, 1.0).lerp(
+			Color(1.0, 0.35, 0.9), corruption * 0.7)
+	Tracer.spawn(get_tree().current_scene, from, to, color, 0.06)
 
 func take_damage(amount: float) -> void:
 	if _dead:
