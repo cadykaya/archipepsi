@@ -317,9 +317,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			inventory.open()
 		_update_modal()
 	elif event.is_action_pressed("cycle_echo"):
-		_cycle_echo()
+		_cycle_echo(1)
+	elif event.is_action_pressed("cycle_echo_back"):
+		_cycle_echo(-1)
 
-func _cycle_echo() -> void:
+## `step` is +1 or -1. By the end of a campaign the archive holds 26
+## Echoes, and a forward-only cycle means overshooting one costs 25 more
+## presses -- which is why the wheel scrolls it both ways.
+func _cycle_echo(step: int) -> void:
 	var echoes: Array = BridgeClient.snapshot.get("echoes", [])
 	if echoes.is_empty():
 		return
@@ -327,7 +332,9 @@ func _cycle_echo() -> void:
 	var ids: Array = echoes.map(
 			func(echo: Dictionary) -> String: return str(echo["echo_id"]))
 	var index := ids.find(equipped) if equipped != null else -1
-	var next: String = ids[(index + 1) % ids.size()]
+	# posmod, not %: GDScript's % keeps the sign, so stepping back from the
+	# first Echo would index -1 and equip nothing.
+	var next: String = ids[posmod(index + step, ids.size())]
 	BridgeClient.send_intent({"type": "equip_echo", "echo_id": next})
 
 func _update_modal() -> void:

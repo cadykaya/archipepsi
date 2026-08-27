@@ -64,6 +64,7 @@ func _run() -> void:
 	_check_hit_confirmation()
 	_check_epsilon_voice()
 	_test_reveal_splits_the_two_halves()
+	_check_input_bindings()
 	_check_theme_agreement()
 
 	if not await _play_one_zone(true):
@@ -195,6 +196,37 @@ func _check_enemy_silhouettes() -> void:
 				"%s silhouette fits its collider (%.2f <= %.2f)"
 				% [kind, worst, half_width])
 		enemy.free()
+
+## project.godot's InputMap is hand-edited text; a malformed event object
+## is dropped silently at load, and the first symptom is a control that
+## does nothing. Assert the bindings the Hub's controls board promises.
+func _check_input_bindings() -> void:
+	var wheel_up := MOUSE_BUTTON_WHEEL_UP
+	var wheel_down := MOUSE_BUTTON_WHEEL_DOWN
+	var arrows := {"move_forward": KEY_UP, "move_back": KEY_DOWN,
+			"move_left": KEY_LEFT, "move_right": KEY_RIGHT}
+	for action: String in arrows:
+		_check(InputMap.has_action(action)
+					and _binds_key(action, arrows[action]),
+				"%s is also on its arrow key" % action)
+	_check(_binds_key("cycle_echo", KEY_Q)
+				and _binds_button("cycle_echo", wheel_down),
+			"cycle Echo is on Q and the wheel")
+	_check(InputMap.has_action("cycle_echo_back")
+				and _binds_button("cycle_echo_back", wheel_up),
+			"the wheel scrolls the archive back as well as forward")
+
+func _binds_key(action: String, keycode: Key) -> bool:
+	for event in InputMap.action_get_events(action):
+		if event is InputEventKey and event.physical_keycode == keycode:
+			return true
+	return false
+
+func _binds_button(action: String, button: MouseButton) -> bool:
+	for event in InputMap.action_get_events(action):
+		if event is InputEventMouseButton and event.button_index == button:
+			return true
+	return false
 
 func _test_reveal_splits_the_two_halves() -> void:
 	## DESIGN §16: the card has to make it unmistakable that the other

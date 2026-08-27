@@ -312,10 +312,11 @@ func _build_controls_board() -> void:
 	root.add_child(title)
 
 	var body := Label3D.new()
-	body.text = """WASD  move        SPACE  jump
+	body.text = """WASD / ARROWS  move        SPACE  jump
 LMB   Static Pulse — always, never replaced
 RMB   equipped Echo
-E     interact / claim        Q  cycle Echo
+E     interact / claim
+Q / MOUSE WHEEL  cycle Echo
 TAB   Echo archive            ESC  pause
 F3    diagnostics
 
