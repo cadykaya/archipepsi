@@ -2110,7 +2110,7 @@
       "type": "integer"
     },
     "source_location_id": {
-      "maximum": 89100030,
+      "maximum": 89100600,
       "minimum": 89100001,
       "title": "Source Location Id",
       "type": "integer"

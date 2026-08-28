@@ -9,10 +9,12 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from .. import content_value as V
 from ..schemas import constants as C
 from ..schemas import echo as E
+from ..schemas import zone as Z
 from . import capabilities as CAP
 
 _AP_STR = Annotated[str, Field(max_length=C.MAX_AP_STRING_LEN)]
@@ -42,6 +44,11 @@ class EchoSummary(Strict):
     description: str = Field(max_length=C.MAX_TEXT_LEN)
 
 
+#: Read from the schema rather than retyped, so a family added to the
+#: vocabulary reaches Epsilon without anybody remembering to list it.
+_ACTIVITY_KINDS = tuple(Z.ActivityKind.__args__)
+
+
 class CampaignContext(Strict):
     seed_name: str = Field(max_length=128)
     slot_name: _AP_STR
@@ -53,6 +60,17 @@ class CampaignContext(Strict):
     static_glitch_units: int = Field(ge=0)
     completed_zone_summaries: tuple[ZoneSummary, ...] = ()
 
+    #: How much content this Zone must contain (CAMPAIGN_SCALE.md 5).
+    #:
+    #: Defaults to the PROTOTYPE, like everything else that had to keep
+    #: working while the options landed. A request that forgets to carry
+    #: the campaign's real budget therefore asks for a small Zone, which
+    #: is the safe direction: too little content is a Zone that fails its
+    #: band and gets repaired, not one the engine cannot hold.
+    zone_budget: int = Field(
+        default=C.PROTOTYPE_CONFIG.zone_budget,
+        ge=C.ZONE_BUDGET_MIN, le=C.ZONE_BUDGET_MAX)
+
 
 class PlayerContext(Strict):
     signal_keys: int = Field(ge=0)
@@ -61,7 +79,7 @@ class PlayerContext(Strict):
 
 
 class RequestLocation(Strict):
-    location_id: int = Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_LOCATION_ID)
+    location_id: int = Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_UNIVERSE_ID)
     location_name: _AP_STR
     item_name: _AP_STR
     recipient_name: _AP_STR
@@ -76,8 +94,11 @@ class ZoneGenerationRequest(Strict):
     generation_id: str = Field(max_length=160)
     campaign: CampaignContext
     player: PlayerContext
+    #: Bounded by the largest campaign anyone can configure, not by the
+    #: prototype's three. `zone_target_checks` is a per-seed option now,
+    #: so a request carrying fifteen is ordinary rather than exceptional.
     locations: tuple[RequestLocation, ...] = Field(
-        min_length=1, max_length=C.ZONE_MAX_CHECKS)
+        min_length=1, max_length=C.ZONE_TARGET_CHECKS_MAX)
     #: §13: the affordance tags this campaign can actually USE, computed
     #: from OWNED mechanics. Epsilon may place matching optional features
     #: and nothing else — a water volume in a run with no way to move
@@ -89,15 +110,26 @@ class ZoneGenerationRequest(Strict):
         "enemy_archetypes": list(C.ENEMY_ARCHETYPES),
         "objectives": list(C.OBJECTIVES),
     })
-    constraints: dict = Field(default_factory=lambda: {
+    #: Filled from the campaign's own budget after validation, because a
+    #: `default_factory` cannot see the instance it belongs to -- and
+    #: these numbers are exactly the ones that stopped being global when
+    #: scale became a per-seed option.
+    constraints: dict = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _constraints_describe_THIS_campaign(self):
+        if self.constraints:
+            return self
+        budget = self.campaign.zone_budget
+        object.__setattr__(self, "constraints", {
         "max_chambers": C.ZONE_MAX_CHAMBERS,
-        "rooms_suggested": C.zone_room_envelope(
-            C.PROTOTYPE_CONFIG.zone_budget),
-        "max_enemies_total": C.max_enemies_per_zone(
-            C.PROTOTYPE_CONFIG.zone_budget),
+        "rooms_suggested": C.zone_room_envelope(budget),
+        "zone_budget": budget,
+        "budget_tolerance": V.ZONE_BUDGET_TOLERANCE,
+        "activity_kinds": list(_ACTIVITY_KINDS),
+        "max_enemies_total": C.max_enemies_per_zone(budget),
         "max_enemies_per_chamber": C.MAX_ENEMIES_PER_CHAMBER,
-        "max_brutes": C.max_brutes_per_zone(
-            C.PROTOTYPE_CONFIG.zone_budget),
+        "max_brutes": C.max_brutes_per_zone(budget),
         "max_vertical_step": C.MAX_VERTICAL_STEP,
         "gap_bound": (
             "gap_size <= max_safe_gap(vertical_step); "
@@ -109,11 +141,15 @@ class ZoneGenerationRequest(Strict):
         "affordances_are_optional_only": (
             "a chamber may hold Checks AND features, but only where the room is wide enough for the feature to sit clear of the walking lane, "
             "and a feature may never gate an objective or an exit"),
-    })
+        "content_is_scored_by_the_engine": (
+            "room value is recomputed from what a room actually contains; "
+            "a Check on its own is worth nothing"),
+        })
+        return self
 
 
 class EchoSource(Strict):
-    location_id: int = Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_LOCATION_ID)
+    location_id: int = Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_UNIVERSE_ID)
     item_name: _AP_STR
     source_game: _AP_STR
     recipient_name: _AP_STR

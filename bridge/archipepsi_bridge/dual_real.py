@@ -42,7 +42,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import transactions as TX
-from .ap_client import ALL_LOCATION_IDS, RealAPBackend
+from .ap_client import RealAPBackend
 from .campaign import CampaignEngine
 from .epsilon import FallbackEpsilonProvider
 from .schemas import constants as C
@@ -126,11 +126,18 @@ async def connect(player: Player, server: str, password: str = "") -> None:
 # ---------------------------------------------------------------------------
 
 def prove_identities_are_separate(a: Player, b: Player) -> None:
+    # The SEED's scale, not the prototype's. `demo.yaml` and
+    # `partner.yaml` ask for 450 locations, so a harness that expected
+    # thirty was asserting against a campaign nobody generates.
+    size = a.engine.config.location_count
+    ids = set(a.engine.config.active_location_ids())
     for p in (a, b):
-        _check(len(p.engine.ap.scouts) == C.LOCATION_COUNT,
-               f"{p.slot} scouted {len(p.engine.ap.scouts)}, "
-               f"not {C.LOCATION_COUNT}")
-        _check(set(p.engine.ap.scouts) == set(ALL_LOCATION_IDS),
+        _check(p.engine.config.location_count == size,
+               f"{p.slot} reports {p.engine.config.location_count} "
+               f"locations, not {size}; the two slots disagree on the seed")
+        _check(len(p.engine.ap.scouts) == size,
+               f"{p.slot} scouted {len(p.engine.ap.scouts)}, not {size}")
+        _check(set(p.engine.ap.scouts) == ids,
                f"{p.slot} scouted ids outside the Archipepsi range")
 
     _check(a.engine.ap.seed_name == b.engine.ap.seed_name,
@@ -147,23 +154,23 @@ def prove_identities_are_separate(a: Player, b: Player) -> None:
     # world. If any of this leaked, the two campaigns would be reading each
     # other's placements while believing they were their own.
     differing = 0
-    for loc in ALL_LOCATION_IDS:
+    for loc in sorted(ids):
         sa, sb = a.engine.ap.scouts[loc], b.engine.ap.scouts[loc]
         if (sa.item_id, sa.recipient_player) != (sb.item_id, sb.recipient_player):
             differing += 1
-    _check(differing >= C.LOCATION_COUNT // 2,
-           f"only {differing} of {C.LOCATION_COUNT} locations resolve "
+    _check(differing >= size // 2,
+           f"only {differing} of {size} locations resolve "
            f"differently between the slots; a scout cache is being shared")
 
     # And each slot's own goal belongs to itself.
     for p in (a, b):
-        goal = p.engine.ap.scouts[C.GOAL_LOCATION_ID]
+        goal = p.engine.ap.scouts[p.engine.config.goal_location_id]
         _check(goal.recipient_player in
                (a.engine.ap.slot_id, b.engine.ap.slot_id) or True,
                "unreachable")     # the goal may legitimately go anywhere
     log.info("identity OK: seed %s, slots %d/%d, %d of %d locations differ",
              a.engine.ap.seed_name, a.engine.ap.slot_id, b.engine.ap.slot_id,
-             differing, C.LOCATION_COUNT)
+             differing, size)
 
 
 def prove_track_semantics(a: Player, b: Player) -> None:
@@ -183,15 +190,15 @@ def prove_track_semantics(a: Player, b: Player) -> None:
     assumed so that if it ever changes, it changes deliberately.
     """
     for p in (a, b):
-        keys = {p.engine.ap.scouts[loc].track_key
-                for loc in ALL_LOCATION_IDS}
+        locations = p.engine.config.active_location_ids()
+        keys = {p.engine.ap.scouts[loc].track_key for loc in locations}
         _check("Archipepsi" in keys,
                f"{p.slot} has no Archipepsi Track at all")
         foreign_archipepsi = [
-            loc for loc in ALL_LOCATION_IDS
+            loc for loc in locations
             if not p.engine.ap.scouts[loc].recipient_is_self
             and p.engine.ap.scouts[loc].track_key == "Archipepsi"]
-        mine = [loc for loc in ALL_LOCATION_IDS
+        mine = [loc for loc in locations
                 if p.engine.ap.scouts[loc].recipient_is_self]
         if foreign_archipepsi and mine:
             _check(set(p.save.track_order) == keys,
@@ -527,8 +534,8 @@ async def prove_reconnect_leaves_the_other_alone(down: Player,
            f"{down.slot}'s Zone records changed across a reconnect")
     _check(len(up.engine.ap.received) >= up_received_before,
            f"{up.slot} LOST received items while {down.slot} reconnected")
-    _check(f"echo_{C.GOAL_LOCATION_ID}" not in (down.echo_ids()
-                                                & up.echo_ids())
+    goal_echo = f"echo_{a.engine.config.goal_location_id}"
+    _check(goal_echo not in (down.echo_ids() & up.echo_ids())
            or down.save.slot_id != up.save.slot_id,
            "unreachable")
     log.info("reconnect OK: %s left and returned unchanged; %s never "
@@ -543,11 +550,12 @@ async def prove_both_can_reach_goal(a: Player, b: Player) -> None:
     """Each slot's goal location is its own. Reporting one must not report
     or consume the other's."""
     for p in (a, b):
-        if C.GOAL_LOCATION_ID in p.engine.ap.checked:
+        if p.engine.config.goal_location_id in p.engine.ap.checked:
             continue
-        await p.backend.check_locations([C.GOAL_LOCATION_ID])
+        await p.backend.check_locations([p.engine.config.goal_location_id])
     await _wait(
-        lambda: all(C.GOAL_LOCATION_ID in p.engine.ap.checked for p in (a, b)),
+        lambda: all(p.engine.config.goal_location_id in p.engine.ap.checked
+                    for p in (a, b)),
         45, "both goals confirmed")
     await asyncio.gather(a.engine.reconcile(), b.engine.reconcile())
     await _settle(3.0)

@@ -58,6 +58,24 @@ def test_3_scout_packet():
     assert len(msg["locations"]) == 30
 
 
+def test_3b_the_scout_packet_covers_the_whole_seed():
+    """A fixed range scouts the first thirty of a 450-location seed.
+
+    The bridge then never learns what is on Check 031, so the allocator
+    never offers it and a 450-location campaign stops at 30
+    (CAMPAIGN_SCALE.md 2, 3).
+    """
+    for config in (C.DEFAULT_CONFIG,
+                   C.CampaignConfig(location_count=90,
+                                    zone_target_checks=5, zone_budget=400),
+                   C.PROTOTYPE_CONFIG):
+        msg = scout_message(config)
+        assert len(msg["locations"]) == config.location_count
+        assert max(msg["locations"]) == config.goal_location_id
+    # No scale at all is the prototype, never the current default.
+    assert scout_message(None)["locations"] == list(ALL_LOCATION_IDS)
+
+
 # -- 4: recipient-game resolution ------------------------------------------
 
 def test_4_scout_resolution_uses_recipient_game(tmp_path):

@@ -122,7 +122,7 @@
         "reward_location_id": {
           "anyOf": [
             {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
@@ -282,7 +282,7 @@
         "reward_location_id": {
           "anyOf": [
             {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
@@ -452,7 +452,7 @@
         "reward_location_id": {
           "anyOf": [
             {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
@@ -609,7 +609,7 @@
         "reward_location_id": {
           "anyOf": [
             {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
@@ -753,7 +753,7 @@
           "title": "Flavor"
         },
         "reward_location_id": {
-          "maximum": 89100030,
+          "maximum": 89100600,
           "minimum": 89100001,
           "title": "Reward Location Id",
           "type": "integer"

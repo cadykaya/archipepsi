@@ -160,7 +160,11 @@ class ChamberBase(Strict):
     id: str = _ID
     flavor: str | None = Field(default=None, max_length=C.MAX_TEXT_LEN)
     reward_location_id: int | None = Field(
-        default=None, ge=C.FIRST_LOCATION_ID, le=C.LAST_LOCATION_ID
+        # The stable 600-id universe, not one campaign's range: a
+        # Zone carries whichever Checks its own seed allocated, and
+        # the campaign's range is checked where the scale is known
+        # (CAMPAIGN_SCALE.md 3).
+        default=None, ge=C.FIRST_LOCATION_ID, le=C.LAST_UNIVERSE_ID
     )
     #: S9. Additive and optional: a Zone generated before affordances
     #: existed is still a valid Zone, which is why `schema_version` stays
@@ -381,7 +385,7 @@ class TreasureRoomChamber(ChamberBase):
     """Small safe reward room. Exactly one reward, never enemies."""
     type: Literal["treasure_room"]
     objective: Literal["reach_reward"] = "reach_reward"
-    reward_location_id: int = Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_LOCATION_ID)
+    reward_location_id: int = Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_UNIVERSE_ID)
 
 
 Chamber = Annotated[

@@ -233,3 +233,96 @@ def test_a_save_cannot_hold_a_scale_the_system_would_refuse():
 
     with pytest.raises(Exception, match="location_count"):
         CampaignScale(location_count=C.LOCATION_COUNT_MAX + 1)
+
+
+# ----------------------------------------------------------------------
+# A Zone is built for the content its Checks are worth
+# ----------------------------------------------------------------------
+
+@pytest.mark.parametrize("size", [30, 100, 450, 600])
+def test_a_full_zone_gets_the_whole_budget(size):
+    config = C.CampaignConfig(location_count=size)
+    assert config.zone_budget_for(config.zone_target_checks) \
+        == config.zone_budget
+    # More than a full Zone's worth cannot ask for more than the budget:
+    # the ceiling is what the engine and the provider were sized for.
+    assert config.zone_budget_for(config.zone_target_checks + 5) \
+        == config.zone_budget
+
+
+def test_a_remainder_zone_asks_for_a_proportional_budget():
+    """449 Checks at 15 per Zone leaves a last Zone holding 14 of them,
+    and a campaign at 20 per Zone can leave one holding a single Check.
+
+    A short Zone is a short level, not a broken one -- asking for a
+    full-length level around one Check demands content the Zone has no
+    reason to contain, and the Zone then fails its own budget band.
+    """
+    config = C.DEFAULT_CONFIG
+    assert config.zone_budget_for(15) == 1000
+    assert config.zone_budget_for(12) == 800
+    assert config.zone_budget_for(8) == 533
+    # ...and never below the floor the whole system is bounded by.
+    assert config.zone_budget_for(1) == C.ZONE_BUDGET_MIN
+    assert config.zone_budget_for(0) == C.ZONE_BUDGET_MIN
+
+
+@pytest.mark.parametrize("size", [30, 90, 200, 450, 600])
+def test_every_reachable_zone_budget_is_a_legal_one(size):
+    """Every Zone a campaign of this size can produce asks for a budget
+    the schema, the provider and the engine all accept."""
+    config = C.CampaignConfig(location_count=size)
+    for allocated in range(0, config.zone_target_checks + 2):
+        budget = config.zone_budget_for(allocated)
+        assert C.ZONE_BUDGET_MIN <= budget <= C.ZONE_BUDGET_MAX
+        assert budget >= allocated * C.MIN_BUDGET_PER_CHECK, (
+            f"{allocated} Checks cannot fit in {budget} points")
+
+
+def test_the_campaign_asks_for_the_budget_the_zone_is_worth(tmp_path):
+    """The wiring, not the arithmetic: a Zone request has to CARRY it.
+
+    `zone_budget_for` computing the right number changes nothing if the
+    request still asks the provider for the campaign's full budget --
+    the provider builds a full-length level around one Check, and the
+    Zone fails its band on the way back in.
+    """
+    from archipepsi_bridge.schemas import protocol as P
+    from .conftest import make_engine
+
+    engine = make_engine(tmp_path)
+    engine.save = P.CampaignSave(
+        seed_name="Seed", team=0, slot_id=1, slot_name="Skyiah",
+        scale=P.CampaignScale(location_count=450, zone_target_checks=15,
+                              zone_budget=1000))
+    config = engine.save.scale.config()
+
+    def budget_for(allocated: int, *, finale: bool = False) -> int:
+        record = P.ZoneRecord(
+            zone_id="zone_001", state="PENDING_GENERATION",
+            allocated_location_ids=tuple(
+                C.FIRST_LOCATION_ID + i for i in range(allocated)),
+            target_game="Some Game", is_finale=finale, generation_index=0)
+        return engine._zone_request(record).campaign.zone_budget
+
+    assert budget_for(15) == config.zone_budget
+    assert budget_for(8) == config.zone_budget_for(8)
+    assert budget_for(1) == C.ZONE_BUDGET_MIN
+    assert budget_for(1, finale=True) == C.ZONE_BUDGET_MIN
+
+
+def test_a_prototype_campaign_still_asks_for_a_prototype_zone(tmp_path):
+    """A save from before the options is not resized by the new default."""
+    from archipepsi_bridge.schemas import protocol as P
+    from .conftest import make_engine
+
+    engine = make_engine(tmp_path)
+    engine.save = P.CampaignSave(
+        seed_name="Seed", team=0, slot_id=1, slot_name="Skyiah")
+    record = P.ZoneRecord(
+        zone_id="zone_001", state="PENDING_GENERATION",
+        allocated_location_ids=(C.FIRST_LOCATION_ID, C.FIRST_LOCATION_ID + 1,
+                                C.FIRST_LOCATION_ID + 2),
+        target_game="Some Game", generation_index=0)
+    assert (engine._zone_request(record).campaign.zone_budget
+            == C.PROTOTYPE_CONFIG.zone_budget)

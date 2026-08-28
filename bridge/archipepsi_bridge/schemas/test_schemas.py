@@ -932,14 +932,33 @@ def test_terminal_states_release_their_locations():
 
 
 def test_the_goal_check_is_reserved_to_the_finale():
-    with pytest.raises(ValidationError, match="reserved for the finale"):
-        ZoneRecord(zone_id="z", state="PENDING_GENERATION",
-                   allocated_location_ids=[89100029, C.GOAL_LOCATION_ID],
-                   target_game="G", generation_index=1)
-    with pytest.raises(ValidationError, match="holds exactly"):
+    """The rule is unchanged; where it is enforced is not.
+
+    Which id is the goal depends on `location_count`, so a ZoneRecord
+    cannot decide it alone -- it enforces the half that is scale-free
+    (a finale holds exactly ONE location), and `CampaignSave` pins that
+    one to the campaign's own goal (CAMPAIGN_SCALE.md 2).
+    """
+    with pytest.raises(ValidationError, match="exactly one location"):
         ZoneRecord(zone_id="z", state="PENDING_GENERATION", is_finale=True,
-                   allocated_location_ids=[89100029],
+                   allocated_location_ids=[89100028, 89100029],
                    target_game="G", generation_index=1)
+
+    def save_with(record):
+        return CampaignSave(seed_name="S", team=0, slot_id=1,
+                            slot_name="Skyiah", zones=[record],
+                            active_zone_id="z")
+
+    with pytest.raises(ValidationError, match="reserved for the finale"):
+        save_with(ZoneRecord(
+            zone_id="z", state="PENDING_GENERATION",
+            allocated_location_ids=[89100029, C.GOAL_LOCATION_ID],
+            target_game="G", generation_index=1))
+    with pytest.raises(ValidationError, match="holds exactly"):
+        save_with(ZoneRecord(
+            zone_id="z", state="PENDING_GENERATION", is_finale=True,
+            allocated_location_ids=[89100029],
+            target_game="G", generation_index=1))
 
 
 def test_zone_record_rejects_junk():
@@ -1399,48 +1418,77 @@ def test_every_location_bearing_field_is_classified():
         f"classified field(s) that no longer exist: {sorted(classified - found)}")
 
 
-def test_forbidden_paths_exclude_the_goal_in_the_exported_schema():
-    """Not just in a Python validator.
+def test_every_location_field_spans_the_stable_universe():
+    """What the exported schema can and cannot say, stated honestly.
 
-    The bound must be a plain range so it survives into
-    `protocol.schema.json` and `constants.gd` — Godot and the provider see
-    the same restriction the bridge enforces.
+    Until campaign scale became an option, every acquisition-capable
+    field was typed `... le=89100029` and every mirror `... le=89100030`,
+    so "no acquisition path can express the goal" survived into
+    `protocol.schema.json` and `constants.gd` as a plain range.
+
+    It cannot any more. The goal is the last of however many locations
+    this campaign has, so a static bound cannot name it, and every field
+    is bounded by the 600-id UNIVERSE instead -- a save has to be able to
+    hold whichever prefix its own seed was generated with
+    (CAMPAIGN_SCALE.md 3).
+
+    What replaces it is a `CampaignSave` validator, which knows the
+    scale, plus a named refusal on the purchase intent in the engine. So
+    what the exported schema still guarantees is only the universe bound,
+    and this test says so rather than asserting a range that is no longer
+    there. `test_no_acquisition_path_accepts_the_goal` covers the rule.
     """
     models = _protocol_models()
-    for cls_name, field in GOAL_FORBIDDEN:
-        assert _declared_max(models[cls_name], field) == \
-            C.LAST_NON_FINALE_LOCATION_ID, f"{cls_name}.{field} admits the goal"
-    for cls_name, field in GOAL_PERMITTED:
-        assert _declared_max(models[cls_name], field) == C.LAST_LOCATION_ID, \
-            f"{cls_name}.{field} should span the whole location range"
+    for cls_name, field in GOAL_PERMITTED | GOAL_FORBIDDEN:
+        assert _declared_max(models[cls_name], field) == C.LAST_UNIVERSE_ID, \
+            f"{cls_name}.{field} does not span the stable location universe"
 
 
 def test_no_acquisition_path_accepts_the_goal():
-    """Every way a location can be reserved, stocked, priced, sold or claimed
-    outside the finale Zone, exercised with Check 030."""
-    goal = C.GOAL_LOCATION_ID
-    stock_rest = dict(cost=6, item_name="x", recipient_name="y",
-                      recipient_game="z")
+    """Every way a location can be reserved, stocked, priced, sold or
+    claimed outside the finale Zone, at TWO campaign sizes.
 
-    with pytest.raises(ValidationError):            # shop stock
-        ShopStockItem(location_id=goal, **stock_rest)
+    Two sizes on purpose. A rule that reads a constant passes at the
+    prototype and reserves an ordinary Check everywhere else, which is
+    exactly the bug this covers.
+    """
+    for scale, goal in (
+            (P.CampaignScale(), C.PROTOTYPE_CONFIG.goal_location_id),
+            (P.CampaignScale(location_count=450, zone_target_checks=15,
+                             zone_budget=1000),
+             C.DEFAULT_CONFIG.goal_location_id)):
+        stock_rest = dict(cost=6, item_name="x", recipient_name="y",
+                          recipient_game="z")
 
-    with pytest.raises(ValidationError):            # purchase intent
-        ClientAdapter.validate_python(
-            {"type": "buy_shop_stock", "location_id": goal})
+        def save(**kw):
+            return CampaignSave(seed_name="S", team=0, slot_id=1,
+                                slot_name="Skyiah", scale=scale, **kw)
 
-    with pytest.raises(ValidationError, match="never be purchased"):
-        PendingCheck(transaction_id="t", location_id=goal,
-                     source="shop", shop_cost=6)
+        with pytest.raises(ValidationError, match="never be purchased"):
+            save(shop=P.ShopState(stock=[ShopStockItem(location_id=goal,
+                                                       **stock_rest)]))
 
-    with pytest.raises(ValidationError, match="reserved for the finale"):
-        ZoneRecord(zone_id="z", state="PENDING_GENERATION",
-                   allocated_location_ids=[goal], target_game="G",
-                   generation_index=1)
+        with pytest.raises(ValidationError, match="never be purchased"):
+            save(coins_spent=6,
+                 pending_checks=[PendingCheck(
+                     transaction_id="t", location_id=goal, source="shop",
+                     shop_cost=6)])
 
-    # ... and the one path that legitimately may.
-    ok = PendingCheck(transaction_id="t", location_id=goal, source="zone")
-    assert ok.shop_cost == 0
+        with pytest.raises(ValidationError, match="reserved for the finale"):
+            save(zones=[ZoneRecord(
+                zone_id="z", state="PENDING_GENERATION",
+                allocated_location_ids=[goal], target_game="G",
+                generation_index=1)], active_zone_id="z")
+
+        # ... and the one path that legitimately may.
+        ok = PendingCheck(transaction_id="t", location_id=goal, source="zone")
+        assert ok.shop_cost == 0
+
+    # The purchase INTENT is refused by the engine, by name, rather than
+    # by a range that can no longer express the rule -- see
+    # `tests/test_campaign.py::test_23_shop_cannot_stock_goal`.
+    ClientAdapter.validate_python(
+        {"type": "buy_shop_stock", "location_id": C.GOAL_LOCATION_ID})
 
 
 def test_the_allocator_helper_never_offers_the_goal():
@@ -1460,7 +1508,13 @@ def test_the_allocator_helper_never_offers_the_goal():
 
 
 def test_the_non_finale_range_tracks_the_goal():
-    """The range trick only works while the goal is the last id."""
+    """The range trick only works while the goal is the last id.
+
+    Still true of the PROTOTYPE constants, which is all these are now.
+    The live rule reads `CampaignConfig`, and the same property is pinned
+    there for every configurable size by
+    `tests/test_campaign_config.py`.
+    """
     assert C.LAST_NON_FINALE_LOCATION_ID == C.GOAL_LOCATION_ID - 1
     assert C.GOAL_LOCATION_ID == C.LAST_LOCATION_ID
     assert len(C.eligible_location_ids(C.TIER_COUNT)) == C.LOCATION_COUNT - 1

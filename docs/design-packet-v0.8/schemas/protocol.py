@@ -63,16 +63,27 @@ _ID = Field(min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")
 
 #: Any Archipepsi location, goal included. Correct for the read-only mirrors
 #: of Archipelago truth (checked/missing/scouted) and for notifications: to
-#: Archipelago, Check 030 is an ordinary location.
-_LOC = Annotated[int, Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_LOCATION_ID)]
+#: Archipelago, the goal is an ordinary location.
+#:
+#: The bound is the STABLE UNIVERSE, not one campaign's range: location ids
+#: mean the same Check in every campaign size, and a save has to be able to
+#: hold whichever prefix its own seed was generated with
+#: (CAMPAIGN_SCALE.md 3). Which of those ids this campaign actually has is
+#: a per-campaign question, answered by `CampaignSave` below.
+_LOC = Annotated[int, Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_UNIVERSE_ID)]
 
 #: Any location EXCEPT the goal. Required on every field that can RESERVE,
 #: STOCK, PRICE or SELL a location — i.e. every acquisition path other than
-#: the finale Zone. Derived from constants, and a plain range rather than a
-#: Python-only validator so the restriction survives into
-#: `protocol.schema.json` and into the engine.
-_NON_FINALE_LOC = Annotated[int, Field(
-    ge=C.FIRST_NON_FINALE_LOCATION_ID, le=C.LAST_NON_FINALE_LOCATION_ID)]
+#: the finale Zone.
+#:
+#: This USED to be a closed range ending one below the goal, because with a
+#: single campaign size the goal was always id 89100030. It is now the same
+#: range as `_LOC`, and the reservation is enforced by `CampaignSave`, which
+#: is the smallest object that knows where this campaign's goal is. The
+#: annotation is kept distinct because it still marks which fields the rule
+#: applies to, and the rule is checked once per save rather than once per
+#: field.
+_NON_FINALE_LOC = _LOC
 
 _AP_STR = Annotated[str, Field(max_length=C.MAX_AP_STRING_LEN)]
 
@@ -120,8 +131,11 @@ class ZoneRecord(Strict):
     #: and discard its other unclaimed Checks — the deadlock ABANDONED was
     #: added to break. Equality is checked once, at acceptance, by
     #: `zone.validate_zone()`, which is where an accept-time rule belongs.
+    #: Bounded by the largest campaign anyone can configure, not by the
+    #: prototype's three -- a save that cannot record a fifteen-Check
+    #: Zone is a 450-location campaign that cannot start one.
     allocated_location_ids: tuple[_LOC, ...] = Field(
-        min_length=1, max_length=C.ZONE_MAX_CHECKS
+        min_length=1, max_length=C.ZONE_TARGET_CHECKS_MAX
     )
     target_game: _AP_STR
     is_finale: bool = False
@@ -158,24 +172,18 @@ class ZoneRecord(Strict):
         return self
 
     @model_validator(mode="after")
-    def _finale_owns_the_goal(self):
-        """The Zone half of the goal reservation (`constants.GOAL_LOCATION_ID`).
+    def _a_finale_holds_one_location(self):
+        """The scale-free half of the goal reservation.
 
-        Both directions, because either one alone is a hole: the finale holds
-        the goal and nothing else, and nothing that is not the finale holds
-        the goal at all. Every other acquisition path uses `_NON_FINALE_LOC`
-        and cannot express the goal in the first place.
+        A record cannot know where its campaign's goal is -- that moved
+        with `location_count` -- but it can know a finale holds exactly
+        one Check, or none once released. `CampaignSave` pins that one to
+        the campaign's own goal, and pins every other path off it.
         """
-        holds_goal = any(C.is_goal_location(i)
-                         for i in self.allocated_location_ids)
-        if self.is_finale and tuple(self.allocated_location_ids) not in (
-                (C.GOAL_LOCATION_ID,), ()):
+        if self.is_finale and len(self.allocated_location_ids) > 1:
             raise ValueError(
-                f"a finale Zone holds exactly [{C.GOAL_LOCATION_ID}]"
-            )
-        if not self.is_finale and holds_goal:
-            raise ValueError(
-                f"{C.GOAL_LOCATION_ID} is reserved for the finale Zone"
+                "a finale Zone holds exactly one location: the goal, "
+                f"not {list(self.allocated_location_ids)}"
             )
         return self
 
@@ -206,12 +214,10 @@ class PendingCheck(Strict):
 
     @model_validator(mode="after")
     def _source_bounds_what_may_be_claimed(self):
+        # Which id is the goal is a per-campaign fact, so the "never the
+        # goal" half of this rule lives on `CampaignSave`. What survives
+        # here is what a record can check alone.
         if self.source == "shop":
-            if C.is_goal_location(self.location_id):
-                raise ValueError(
-                    f"{C.GOAL_LOCATION_ID} is reserved for the finale Zone "
-                    "and can never be purchased"
-                )
             if self.shop_cost <= 0:
                 raise ValueError("a shop purchase costs at least one coin")
         elif self.shop_cost != 0:
@@ -581,6 +587,67 @@ class CampaignSave(Strict):
             )
         return self
 
+    @model_validator(mode="after")
+    def _every_location_belongs_to_this_campaign(self):
+        """Ids are universal; a CAMPAIGN is a prefix of them.
+
+        The models are bounded by the 600-id universe so that a save can
+        hold whichever prefix its seed was generated with. That bound
+        alone would let a 30-location campaign reserve Check 400, which
+        Archipelago has never heard of -- so the campaign's own range is
+        checked here, where the scale is known.
+        """
+        config = self.scale.config()
+        active = range(config.first_location_id, config.last_location_id + 1)
+        for label, ids in (
+                ("a Zone", {i for z in self.zones
+                            for i in z.allocated_location_ids}),
+                ("the shop", {i.location_id for i in self.shop.stock}),
+                ("a pending check",
+                 {p.location_id for p in self.pending_checks})):
+            outside = sorted(i for i in ids if i not in active)
+            if outside:
+                raise ValueError(
+                    f"{label} holds locations this {config.location_count}"
+                    "-location campaign does not have: "
+                    + ", ".join(str(i) for i in outside))
+        return self
+
+    @model_validator(mode="after")
+    def _the_goal_is_reserved_for_the_finale(self):
+        """The whole goal reservation, in ONE place.
+
+        v0.5 stated the rule in prose five times and enforced it on the
+        Zone path only, so `6 coins -> buy Check 030 -> win` was a legal
+        message sequence. v0.7 fixed that with a closed id range on every
+        acquisition-capable field -- which worked because the goal was
+        always the last of exactly thirty locations.
+
+        It is now the last of however many this campaign has, so a static
+        range cannot express it and this validator is the rule: the
+        finale Zone holds the goal and nothing else, and no other path
+        holds it at all.
+        """
+        goal = self.scale.config().goal_location_id
+        for zone in self.zones:
+            holds = goal in zone.allocated_location_ids
+            if zone.is_finale and zone.allocated_location_ids not in (
+                    (goal,), ()):
+                raise ValueError(f"a finale Zone holds exactly [{goal}]")
+            if holds and not zone.is_finale:
+                raise ValueError(
+                    f"{goal} is reserved for the finale Zone")
+        if any(i.location_id == goal for i in self.shop.stock):
+            raise ValueError(
+                f"{goal} is reserved for the finale Zone and can never be "
+                "purchased")
+        for pending in self.pending_checks:
+            if pending.location_id == goal and pending.source != "zone":
+                raise ValueError(
+                    f"{goal} is reserved for the finale Zone and can never "
+                    "be purchased")
+        return self
+
     def zone_by_id(self, zone_id: str) -> ZoneRecord | None:
         return next((z for z in self.zones if z.zone_id == zone_id), None)
 
@@ -729,6 +796,10 @@ class HubStatus(Strict):
     #: The two operands of the finale gate, and the two thresholds.
     signal_keys: int = Field(default=0, ge=0)
     finale_progress: int = Field(default=0, ge=0)
+    #: Defaulted to the prototype's 24, and SET by the engine from the
+    #: campaign's own config on every snapshot -- the Hub renders this
+    #: number, so a 450-location campaign that shipped the default would
+    #: tell the player it needs 24 of 449.
     finale_required: int = C.FINALE_REQUIRED_OTHER_CHECKS
     signal_keys_required: int = C.FINALE_REQUIRED_SIGNAL_KEYS
 

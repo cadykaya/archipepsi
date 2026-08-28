@@ -916,7 +916,7 @@ class EchoInterpretation(Strict):
     interpretation_seq: int = Field(ge=0)
 
     source_location_id: int = Field(
-        ge=C.FIRST_LOCATION_ID, le=C.LAST_LOCATION_ID
+        ge=C.FIRST_LOCATION_ID, le=C.LAST_UNIVERSE_ID
     )
     source_item_name: str = _AP_STR
     source_game: str = _AP_STR

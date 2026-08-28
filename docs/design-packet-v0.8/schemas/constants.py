@@ -62,6 +62,20 @@ LOCATION_UNIVERSE = LOCATION_COUNT_MAX
 #: than one item short after rounding.
 COIN_SHARE_OF_NON_KEY = 10 / 28
 
+#: The least content a Zone must be worth per Check it is asked to hold.
+#:
+#: Every Check needs a room, and a room the player crosses to reach a
+#: pedestal is worth something whether or not anybody budgeted for it. So
+#: `zone_target_checks` and `zone_budget` are not independent, even
+#: though they are separate options: 15 Checks in a 200-point Zone is a
+#: configuration that cannot be built, and the honest place to say so is
+#: at generation rather than when a player's portal refuses to open.
+#:
+#: Measured rather than guessed: the fallback's Check rooms score in the
+#: mid-twenties once they have an objective and a small encounter, and
+#: 25 is the floor of that.
+MIN_BUDGET_PER_CHECK = 25
+
 #: The finale opens after a substantial majority of non-goal Checks.
 #:
 #: 0.8 rather than the prototype's literal 24: `ceil(29 * 0.8) == 24`, so
@@ -103,6 +117,15 @@ class CampaignConfig:
         # only location is the goal and the finale gate can never open.
         if self.location_count <= 1:
             raise ValueError("a campaign needs a non-goal Check")
+        # ...and a Zone must be able to HOLD the Checks it is given.
+        needed = self.zone_target_checks * MIN_BUDGET_PER_CHECK
+        if self.zone_budget < needed:
+            raise ValueError(
+                f"zone_budget={self.zone_budget} cannot hold "
+                f"zone_target_checks={self.zone_target_checks}: every "
+                f"Check needs a room, so this Zone needs at least "
+                f"{needed} points of content. Raise the budget or lower "
+                "the Checks per Zone.")
 
     # -- the active id range ------------------------------------------------
 
@@ -175,7 +198,45 @@ class CampaignConfig:
         return [i for i in self.unlocked_location_ids(signal_keys)
                 if not self.is_goal_location(i)]
 
+    # -- allocation ---------------------------------------------------------
+
+    @property
+    def zone_min_checks(self) -> int:
+        """Below this, a Zone is padded from another track.
+
+        A campaign can be configured at one Check per Zone, and a floor
+        of two would then be unsatisfiable -- so the floor is whichever
+        is smaller.
+        """
+        return min(ZONE_MIN_CHECKS, self.zone_target_checks)
+
+    @property
+    def shop_reserve(self) -> int:
+        """Checks the shop leaves in the pool for the next Zone.
+
+        One Zone's worth, which is a per-campaign number: reserving the
+        prototype's three in a fifteen-Check campaign lets the shop
+        strip a Zone down to a fifth of its length.
+        """
+        return self.zone_target_checks
+
     # -- finale -------------------------------------------------------------
+
+    def zone_budget_for(self, allocated_checks: int) -> int:
+        """The budget for a Zone holding this many Checks.
+
+        The LAST Zone of a campaign is a remainder: 449 Checks at 15 per
+        Zone leaves a short one, and holding it to a full 1000 points
+        would demand a forty-minute level built around two pedestals.
+
+        So the budget scales with what the Zone was actually given, and
+        is floored at the minimum: a one-Check Zone is a short level, not
+        a broken one.
+        """
+        if allocated_checks >= self.zone_target_checks:
+            return self.zone_budget
+        share = allocated_checks / max(1, self.zone_target_checks)
+        return max(ZONE_BUDGET_MIN, round(self.zone_budget * share))
 
     def finale_required_checks(self) -> int:
         """Non-goal Checks needed before the finale is offered."""
@@ -227,6 +288,11 @@ ITEM_ID_BASE = 89_200_000
 FIRST_LOCATION_ID = LOCATION_ID_BASE + 1              # 89100001
 LAST_LOCATION_ID = LOCATION_ID_BASE + LOCATION_COUNT  # 89100030
 GOAL_LOCATION_ID = LAST_LOCATION_ID                   # Check 030
+
+#: The highest id the universe reaches. Every persistent model is bounded by
+#: THIS rather than by one campaign's last location, so a save can hold
+#: whichever prefix its own seed was generated with.
+LAST_UNIVERSE_ID = LOCATION_ID_BASE + LOCATION_UNIVERSE
 
 # --------------------------------------------------------------------------
 # The goal reservation — ONE definition, used by every path
@@ -343,6 +409,12 @@ POSTGAME_ENABLED = True
 # Zone allocation
 # --------------------------------------------------------------------------
 
+#: The PROTOTYPE's allocation shape, kept because a save written before
+#: the options is a prototype campaign and has to keep behaving like one.
+#: The live numbers come from the campaign's own `CampaignConfig`
+#: (CAMPAIGN_SCALE.md 2) -- a campaign at fifteen Checks per Zone that
+#: allocated three would be a 450-location campaign played at prototype
+#: density, which is the whole thing the options exist to change.
 ZONE_TARGET_CHECKS = 3
 ZONE_MAX_CHECKS = 3
 ZONE_MIN_CHECKS = 2       # 1 only when exactly one eligible Check remains

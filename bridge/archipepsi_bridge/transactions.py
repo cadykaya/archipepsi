@@ -58,6 +58,14 @@ async def buy_shop_stock(engine: CampaignEngine, location_id: int) -> None:
     """§11.7: verify all four conditions, persist cost before send."""
     engine._require_save()
     engine._require_online()
+    # Named, not accidental. The goal used to be unbuyable because every
+    # purchase field was typed to a range that ended one below it; the
+    # goal moved with `location_count`, so the reservation is a rule now
+    # and the intent path states it (CAMPAIGN_SCALE.md 2).
+    if engine.config.is_goal_location(location_id):
+        raise IntentError(
+            f"{location_id} is reserved for the finale Zone and can never "
+            "be purchased")
     if location_id not in engine.ap.missing:
         # Server no longer reports it missing: stale stock. Reconcile clears.
         await engine.reconcile()
@@ -86,7 +94,7 @@ async def finalize(engine: CampaignEngine, location_id: int) -> None:
     pending = next((p for p in save.pending_checks
                     if p.location_id == location_id), None)
     was_shop = pending is not None and pending.source == "shop"
-    goal_newly_sent = (C.is_goal_location(location_id)
+    goal_newly_sent = (save.scale.config().is_goal_location(location_id)
                        and not save.goal_sent)
 
     engine._apply(T.confirm_check(save, location_id))
@@ -230,8 +238,9 @@ async def reconcile(engine: CampaignEngine) -> None:
     # Goal confirmed externally (e.g. an admin release checked everything).
     # The goal re-send for a reconnect lives in on_ap_ready; here we only
     # react to a fresh confirmation.
-    if C.GOAL_LOCATION_ID in ap.checked and not engine.save.goal_sent:
-        await finalize(engine, C.GOAL_LOCATION_ID)
+    goal_id = engine.config.goal_location_id
+    if goal_id in ap.checked and not engine.save.goal_sent:
+        await finalize(engine, goal_id)
 
     zone_completion_sweep(engine)
 

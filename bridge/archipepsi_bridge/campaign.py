@@ -209,6 +209,20 @@ class CampaignEngine:
     def ap(self) -> APData:
         return self.backend.data if self.backend else APData()
 
+    @property
+    def config(self) -> C.CampaignConfig:
+        """This campaign's scale — the single place the engine asks.
+
+        The SAVE wins, because a campaign in progress keeps the shape it
+        was created with; a seed's scale is only consulted before there
+        is a save. Neither means the current default: a run that predates
+        the options is a prototype campaign, and reinterpreting it as a
+        450-location one strands every Check it has (CAMPAIGN_SCALE.md 2).
+        """
+        if self.save is not None:
+            return self.save.scale.config()
+        return self.ap.campaign_scale or C.PROTOTYPE_CONFIG
+
     def _apply(self, new_save: CampaignSave) -> None:
         """Replace the campaign and persist atomically. The only write path.
 
@@ -268,7 +282,7 @@ class CampaignEngine:
     def zone_candidates(self, *, ignore_stock: bool = False) -> set[int]:
         """§10.4: the ordinary-Zone candidate pool. Starts from
         `eligible_location_ids()` — the goal-free function — always."""
-        pool = set(C.eligible_location_ids(self.ap.signal_keys))
+        pool = set(self.config.eligible_location_ids(self.ap.signal_keys))
         pool &= self.ap.missing
         pool -= self._held_location_ids()
         pool -= self._pending_location_ids()
@@ -310,17 +324,21 @@ class CampaignEngine:
                                        save.slot_id, save.generation_counter,
                                        track))
 
-        picked = shuffled(target)[:C.ZONE_MAX_CHECKS]
-        if len(picked) < C.ZONE_MIN_CHECKS:
+        # This campaign's shape, not the prototype's. Allocating three
+        # Checks in a campaign configured for fifteen is a 450-location
+        # run played at prototype density (CAMPAIGN_SCALE.md 2, 4).
+        config = save.scale.config()
+        picked = shuffled(target)[:config.zone_target_checks]
+        if len(picked) < config.zone_min_checks:
             for track in scan:
                 if track == target:
                     continue
                 for loc in shuffled(track):
                     if loc not in picked:
                         picked.append(loc)
-                    if len(picked) >= C.ZONE_MIN_CHECKS:
+                    if len(picked) >= config.zone_min_checks:
                         break
-                if len(picked) >= C.ZONE_MIN_CHECKS:
+                if len(picked) >= config.zone_min_checks:
                     break
         if len(picked) == 1 and len(pool) > 1:
             raise IntentError(
@@ -332,9 +350,10 @@ class CampaignEngine:
     # ------------------------------------------------------------------
 
     def _finale_progress(self) -> int:
+        config = self.config
         return len(self.ap.checked
-                   & set(range(C.FIRST_NON_FINALE_LOCATION_ID,
-                               C.LAST_NON_FINALE_LOCATION_ID + 1)))
+                   & set(range(config.first_location_id,
+                               config.goal_location_id)))
 
     def hub_status(self) -> HubStatus:
         ap = self.ap
@@ -343,7 +362,11 @@ class CampaignEngine:
         base = dict(ap_online=ap.connected and ap.synced,
                     goal_sent=bool(self.save and self.save.goal_sent),
                     postgame=bool(self.save and self.save.goal_sent),
-                    signal_keys=keys, finale_progress=progress)
+                    signal_keys=keys, finale_progress=progress,
+                    # The Hub RENDERS this. Left at its default, a
+                    # 450-location campaign told the player it needed 24
+                    # of 449 while the gate actually wanted 360.
+                    finale_required=self.config.finale_required_checks())
 
         if self.save is None:
             return HubStatus(mode="NO_CAMPAIGN", headline="NOT CONNECTED",
@@ -367,10 +390,10 @@ class CampaignEngine:
             return HubStatus(mode=mode, headline=headline, detail=detail,
                              holding_finale=az.is_finale, **base)
 
-        finale_unlocked = (progress >= C.FINALE_REQUIRED_OTHER_CHECKS
+        finale_unlocked = (progress >= self.config.finale_required_checks()
                           and keys >= C.FINALE_REQUIRED_SIGNAL_KEYS)
-        goal_missing = C.GOAL_LOCATION_ID in ap.missing
-        all_checked = len(ap.checked) >= C.LOCATION_COUNT
+        goal_missing = self.config.goal_location_id in ap.missing
+        all_checked = len(ap.checked) >= self.config.location_count
 
         if all_checked:
             return HubStatus(mode="ALL_CHECKS_CLEARED",
@@ -644,7 +667,14 @@ class CampaignEngine:
                 target_game=_clamp_ap_string(record.target_game),
                 is_finale=record.is_finale,
                 static_glitch_units=ap.static_received,
-                completed_zone_summaries=tuple(summaries[-6:])),
+                completed_zone_summaries=tuple(summaries[-6:]),
+                # A Zone is built for the content its Checks are worth.
+                # The last Zone of a campaign holds whatever divides out
+                # -- often one Check -- and asking for a full-length
+                # level around it would demand content the Zone has no
+                # reason to contain (CAMPAIGN_SCALE.md 5).
+                zone_budget=save.scale.config().zone_budget_for(
+                    len(record.allocated_location_ids))),
             player=PlayerContext(
                 signal_keys=ap.signal_keys,
                 coins_available=max(0, ap.coins_received - save.coins_spent),
@@ -750,11 +780,11 @@ class CampaignEngine:
         if finale:
             if not hub.finale_offered:
                 raise IntentError("the finale is not offered right now")
-            if C.GOAL_LOCATION_ID not in self.ap.missing:
+            if self.config.goal_location_id not in self.ap.missing:
                 raise IntentError("the finale is already resolved")
-            goal_scout = self.ap.scouts.get(C.GOAL_LOCATION_ID)
+            goal_scout = self.ap.scouts.get(self.config.goal_location_id)
             target = goal_scout.track_key if goal_scout else "Archipepsi"
-            ids: list[int] = [C.GOAL_LOCATION_ID]
+            ids: list[int] = [self.config.goal_location_id]
         else:
             ids, target = self._select_zone_locations()
         zone_id = f"zone_{self.save.generation_counter + 1:03d}"
@@ -870,10 +900,12 @@ class CampaignEngine:
             return
         candidates = sorted(self.shop_candidates()
                             | self._stocked_location_ids())
-        # Leave at least SHOP_MIN_REMAINING_AFTER_STOCK for the next Zone.
+        # Leave one Zone's worth of Checks for the next Zone -- this
+        # campaign's Zone, not the prototype's three, or the shop can
+        # strip a fifteen-Check Zone down to a fifth of its length.
         zone_pool_size = len(self.zone_candidates(ignore_stock=True))
         n = min(C.SHOP_STOCK_SIZE, len(candidates),
-                max(0, zone_pool_size - C.SHOP_MIN_REMAINING_AFTER_STOCK))
+                max(0, zone_pool_size - save.scale.config().shop_reserve))
         shuffled = C.deterministic_shuffle(
             candidates, *C.shop_stock_seed(save.seed_name, save.team,
                                            save.slot_id, count))

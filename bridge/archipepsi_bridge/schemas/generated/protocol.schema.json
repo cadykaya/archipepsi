@@ -83,7 +83,7 @@
             "type": "string"
           },
           "location_id": {
-            "maximum": 89100029,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -113,7 +113,7 @@
             "type": "string"
           },
           "location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -974,7 +974,7 @@
           "reward_location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -1394,7 +1394,7 @@
           "checked_location_ids": {
             "default": [],
             "items": {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
@@ -1404,7 +1404,7 @@
           "missing_location_ids": {
             "default": [],
             "items": {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
@@ -1734,7 +1734,7 @@
           "reward_location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -2036,7 +2036,7 @@
             "type": "integer"
           },
           "source_location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Source Location Id",
             "type": "integer"
@@ -3049,7 +3049,7 @@
           "location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -3178,7 +3178,7 @@
             "type": "string"
           },
           "location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -3255,7 +3255,7 @@
           "reward_location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -3760,7 +3760,7 @@
         "description": "One scouted location as Godot sees it.\n\nItem identity is omitted until revealed. v0.4 shipped every unrevealed\nitem name to the client in every snapshot, which handed the client the\nanswer to all 30 Checks before the player entered a Zone \u2014 and the\nreveal is the payoff moment the whole design is built around.",
         "properties": {
           "location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -3920,7 +3920,7 @@
         "description": "One location the shop is offering RIGHT NOW.\n\nv0.6 carried a `status` field so an in-flight purchase could be greyed\nout \u2014 a second opinion about the same fact as `pending_checks`, and the\ntwo could disagree in both directions. Stock now means purchasable and\nnothing else: buying removes the item from stock and creates the pending\nrecord atomically. Godot renders \"SENDING\u2026\" from the ledger.",
         "properties": {
           "location_id": {
-            "maximum": 89100029,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -4158,7 +4158,7 @@
           "reward_location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -4391,7 +4391,7 @@
             "title": "Flavor"
           },
           "reward_location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Reward Location Id",
             "type": "integer"
@@ -4725,11 +4725,11 @@
           },
           "allocated_location_ids": {
             "items": {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
-            "maxItems": 3,
+            "maxItems": 30,
             "minItems": 1,
             "title": "Allocated Location Ids",
             "type": "array"
@@ -5303,7 +5303,7 @@
           "reward_location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -5777,7 +5777,7 @@
           "reward_location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -6079,7 +6079,7 @@
             "type": "integer"
           },
           "source_location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Source Location Id",
             "type": "integer"
@@ -7143,7 +7143,7 @@
             "type": "string"
           },
           "location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -7220,7 +7220,7 @@
           "reward_location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -7725,7 +7725,7 @@
         "description": "One scouted location as Godot sees it.\n\nItem identity is omitted until revealed. v0.4 shipped every unrevealed\nitem name to the client in every snapshot, which handed the client the\nanswer to all 30 Checks before the player entered a Zone \u2014 and the\nreveal is the payoff moment the whole design is built around.",
         "properties": {
           "location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -7885,7 +7885,7 @@
         "description": "One location the shop is offering RIGHT NOW.\n\nv0.6 carried a `status` field so an in-flight purchase could be greyed\nout \u2014 a second opinion about the same fact as `pending_checks`, and the\ntwo could disagree in both directions. Stock now means purchasable and\nnothing else: buying removes the item from stock and creates the pending\nrecord atomically. Godot renders \"SENDING\u2026\" from the ledger.",
         "properties": {
           "location_id": {
-            "maximum": 89100029,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -8123,7 +8123,7 @@
           "reward_location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -8356,7 +8356,7 @@
             "title": "Flavor"
           },
           "reward_location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Reward Location Id",
             "type": "integer"
@@ -8666,11 +8666,11 @@
           },
           "allocated_location_ids": {
             "items": {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
-            "maxItems": 3,
+            "maxItems": 30,
             "minItems": 1,
             "title": "Allocated Location Ids",
             "type": "array"
@@ -8794,7 +8794,7 @@
       "checked_location_ids": {
         "default": [],
         "items": {
-          "maximum": 89100030,
+          "maximum": 89100600,
           "minimum": 89100001,
           "type": "integer"
         },
@@ -8804,7 +8804,7 @@
       "missing_location_ids": {
         "default": [],
         "items": {
-          "maximum": 89100030,
+          "maximum": 89100600,
           "minimum": 89100001,
           "type": "integer"
         },

@@ -162,7 +162,13 @@ async def generate_zone_validated(
             owned_echo_ids=owned_echo_ids,
             # I12, from the request the provider was given: what it was
             # told it could place is exactly what it is held to.
-            owned_affordance_tags=request.unlocked_affordances),
+            owned_affordance_tags=request.unlocked_affordances,
+            # ...and the same for how much content it was asked for. The
+            # budget is what bounds the enemy count, so accepting against
+            # the default instead held a 1000-point Zone to a 200-point
+            # Zone's limits and rejected every real level
+            # (CAMPAIGN_SCALE.md 5, 6).
+            zone_budget=request.campaign.zone_budget),
         build_fallback=fallback_zone, archive_dir=archive_dir,
         timeout=timeout)
 

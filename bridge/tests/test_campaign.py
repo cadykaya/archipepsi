@@ -11,6 +11,7 @@ from archipepsi_bridge import transactions as TX
 from archipepsi_bridge.ap_backend import NormalizedItem
 from archipepsi_bridge.mock_ap import MockAPBackend, MockServerState, SELF_SLOT
 from archipepsi_bridge.schemas import constants as C
+from archipepsi_bridge.campaign import IntentError
 from archipepsi_bridge.schemas.protocol import CampaignSave
 
 from .conftest import (
@@ -262,16 +263,26 @@ def test_28_reservations_release_before_waiting(tmp_path):
 
 def test_23_shop_cannot_stock_goal(tmp_path):
     import pytest
-    from archipepsi_bridge.schemas.protocol import ShopStockItem
-    with pytest.raises(Exception):
-        ShopStockItem(location_id=C.GOAL_LOCATION_ID, cost=6,
-                      item_name="x", recipient_name="y", recipient_game="z")
+    from archipepsi_bridge.schemas.protocol import (
+        CampaignSave, ShopState, ShopStockItem)
+    # The refusal is on the SAVE now, not on the item: which id is the
+    # goal depends on the campaign's size, and an item does not know it.
+    with pytest.raises(Exception, match="finale"):
+        CampaignSave(
+            seed_name="S", team=0, slot_id=1, slot_name="Skyiah",
+            shop=ShopState(stock=(ShopStockItem(
+                location_id=C.GOAL_LOCATION_ID, cost=6, item_name="x",
+                recipient_name="y", recipient_game="z"),)))
 
     async def scenario():
         state = MockServerState()
         preload_items(state, C.ITEM_ID_SIGNAL_KEY, C.ITEM_ID_SIGNAL_KEY)
         engine, _ = await connected_engine(tmp_path, server_state=state)
         assert C.GOAL_LOCATION_ID not in engine.shop_candidates()
+        # ...and the intent path refuses it by name, rather than by the
+        # accident of it never reaching stock.
+        with pytest.raises(IntentError, match="finale"):
+            await TX.buy_shop_stock(engine, C.GOAL_LOCATION_ID)
     run(scenario())
 
 
