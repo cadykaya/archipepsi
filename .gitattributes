@@ -1,0 +1,5 @@
+# Batch files need CRLF: some constructs break on LF under cmd.exe, and
+# the failure looks like a corrupted script rather than a line-ending
+# problem.
+*.bat text eol=crlf
+*.sh text eol=lf
