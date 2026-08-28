@@ -111,8 +111,20 @@ plus bright emission at strength > 1 clips every channel and renders
 including the enemy's eye — the one cue on the figure, the thing that says
 which way it is facing, and it had lost its colour entirely.
 
-`common.make_signal_material()` is now the only sanctioned way to build one:
-**dark albedo, bright emission, strength ≈ 1.0.**
+The first fix — dark albedo, bright emission, a strength picked by hand —
+was better and **still wrong.** Epsilon's core is a much larger surface than
+an eye slit, and it clipped again at the strength the eye was happy with,
+because a hand-picked strength is a guess about a sum nobody computed.
+
+`common.make_signal_material()` now takes a `saturation` and **solves** for
+the strength at which the brightest channel of `albedo + strength × emission`
+reaches 1.0. The same call is then correct for a 5 cm eye slit and a
+half-metre core, and there are no magic numbers left to be wrong. The
+fixture lens asks for `saturation=1.0` deliberately: a lamp is the one place
+in the batch where clipping the brightest channel is the intent.
+
+> A constant you tuned by eye on one asset is a constant that will be wrong
+> on the next one. Solve for it.
 
 ---
 
