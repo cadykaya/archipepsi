@@ -394,7 +394,7 @@ Each theme's identity, for the record:
 | --- | --- | --- | --- | --- | --- |
 | `source_identity_frame` | L0 | B | `generation/source_identity.gd` | the sha256 glyph / accent / sound / particle derivation is **grammar and stays**; only its rendering is authored | — |
 | `echo_acquisition_geometry` | L2 | A | `gameplay/echo_marker.gd` | the payoff beat; must read the same every time to mean anything | — |
-| `ap_send_presentation` | L0 | A | `reward.gd` `SendBeam` | — | — |
+| `ap_send_presentation` | L0 | A | `reward.gd` `SendBeam` | **the same object as §2's `check_send_beam`**, which is built and PASSed as part of Batch 005. Two rows named one asset and disagreed about whether it existed; this one is the duplicate | **B5**, as `check_send_beam` |
 | `ap_receive_presentation` | L0 | B | `ui/` | — | — |
 | `loading_generation_hardware` | L2 | B | `ui/` | up to 120 s; must not read as a hang | — |
 | `provider_failure_state` | L2 | B | `ui/` | the moment the player most needs to trust what they see | — |
