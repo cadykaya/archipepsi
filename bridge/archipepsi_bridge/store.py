@@ -81,12 +81,28 @@ def write_save(path: Path, save: CampaignSave) -> None:
 
 
 def _fsync_file(path: Path) -> None:
+    """Best-effort durability, like `_fsync_dir` below.
+
+    Opened O_RDWR rather than O_RDONLY because Windows will not flush a
+    read-only handle: `_commit()` rejects it with EBADF, and POSIX's
+    willingness to fsync a read-only fd is what hid that for the entire
+    life of this function. It surfaced in playtest 1 as a red
+    `OSError: [Errno 9] Bad file descriptor` in the HUD on the SECOND
+    save of a session -- the first has no primary to back up, so this is
+    never reached -- which read as the portal being broken.
+
+    And the fsync is now tolerated rather than fatal. Failing to flush a
+    BACKUP is a weaker durability guarantee; failing the whole save
+    because the backup would not flush loses the data outright.
+    """
     try:
-        fd = os.open(path, os.O_RDONLY)
+        fd = os.open(path, os.O_RDWR)
     except OSError:                              # pragma: no cover
         return
     try:
         os.fsync(fd)
+    except OSError:                              # pragma: no cover
+        pass
     finally:
         os.close(fd)
 

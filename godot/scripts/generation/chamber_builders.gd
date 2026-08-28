@@ -21,6 +21,28 @@ const CORRIDOR_HEIGHT := 3.6
 const PROP_FOOTPRINT := 1.4
 const BRUTE_LANE := 2.6
 
+## Point a Label3D so its READABLE face looks toward `toward`.
+##
+## The one convention for world-space text. A Label3D draws on its local
+## XY plane and reads correctly only from its local +Z side -- which is
+## the OPPOSITE of the -Z that a Node3D calls "forward". So writing
+## `rotation.y` by hand has a right answer and a plausible wrong one that
+## differ by a sign, and both look equally deliberate in review.
+##
+## Playtest 1 found ten Hub signs on the wrong side of that sign. Every
+## one of them was correct as state, as geometry and as protocol, which
+## is why nine green suites had nothing to say about it. `make
+## godot-legible` now checks the built room instead.
+##
+## Pass the direction from the sign to whoever must read it. Vertical
+## component is dropped: wall text stays upright.
+static func face_label(label: Label3D, toward: Vector3) -> void:
+	var flat := Vector3(toward.x, 0.0, toward.z)
+	if flat.length() < 0.0001:
+		return
+	# rotation.y = t sends local +Z to (sin t, 0, cos t).
+	label.rotation.y = atan2(flat.x, flat.z)
+
 static func _box(parent: Node3D, size: Vector3, position: Vector3,
 		material: Material, collide := true) -> MeshInstance3D:
 	var mesh_instance := MeshInstance3D.new()

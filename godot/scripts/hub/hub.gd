@@ -173,6 +173,10 @@ func _cut_lab_doorway(b, root: Node3D) -> void:
 	sign_plate.modulate = Color(0.6, 1.0, 0.85)
 	add_child(sign_plate)
 
+## Where a reader stands. Signs face this, not the wall behind them.
+func _player_side() -> Vector3:
+	return Vector3(0.0, 0.0, 3.0)
+
 func _build_room() -> void:
 	var environment := WorldEnvironment.new()
 	var env := Environment.new()
@@ -224,6 +228,7 @@ func _build_room() -> void:
 	_board.font_size = 96
 	_board.pixel_size = 0.008
 	_board.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ChamberBuilders.face_label(_board, _player_side() - _board.position)
 	add_child(_board)
 	_sub_board = Label3D.new()
 	# Hangs under the board rather than at a coordinate of its own: an
@@ -235,6 +240,8 @@ func _build_room() -> void:
 	_sub_board.pixel_size = 0.008
 	_sub_board.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_sub_board.modulate = Color(0.75, 0.8, 0.85)
+	ChamberBuilders.face_label(_sub_board,
+			_player_side() - _sub_board.position)
 	add_child(_sub_board)
 
 	# Shop counter, left wall.
@@ -415,7 +422,7 @@ func _build_campaign_board() -> void:
 	title.font_size = 40
 	title.pixel_size = 0.005
 	title.position = Vector3(wall_x + 0.09, 3.45, panel_z)
-	title.rotation.y = -PI / 2.0
+	ChamberBuilders.face_label(title, Vector3(0.0, 0.0, panel_z) - title.position)
 	title.modulate = Color(0.8, 0.88, 0.95)
 	root.add_child(title)
 
@@ -446,7 +453,8 @@ func _build_campaign_board() -> void:
 		tier_label.pixel_size = 0.005
 		tier_label.position = Vector3(wall_x + 0.09,
 				3.0 - float(tier) * (cell + gap), panel_z - 2.55)
-		tier_label.rotation.y = -PI / 2.0
+		ChamberBuilders.face_label(tier_label,
+				Vector3(0.0, 0.0, panel_z) - tier_label.position)
 		tier_label.modulate = Color(0.55, 0.6, 0.68)
 		root.add_child(tier_label)
 
@@ -454,7 +462,8 @@ func _build_campaign_board() -> void:
 	_board_legend.font_size = 22
 	_board_legend.pixel_size = 0.005
 	_board_legend.position = Vector3(wall_x + 0.09, 1.15, panel_z)
-	_board_legend.rotation.y = -PI / 2.0
+	ChamberBuilders.face_label(_board_legend,
+			Vector3(0.0, 0.0, panel_z) - _board_legend.position)
 	_board_legend.modulate = Color(0.62, 0.7, 0.76)
 	root.add_child(_board_legend)
 
@@ -475,7 +484,7 @@ func _build_controls_board() -> void:
 	title.font_size = 34
 	title.pixel_size = 0.005
 	title.position = Vector3(wall_x - 0.09, 3.15, panel_z)
-	title.rotation.y = PI / 2.0
+	ChamberBuilders.face_label(title, Vector3(0.0, 0.0, panel_z) - title.position)
 	title.modulate = Color(0.85, 0.8, 0.55)
 	root.add_child(title)
 
@@ -493,7 +502,7 @@ Static Pulse and base movement alone."""
 	body.font_size = 26
 	body.pixel_size = 0.005
 	body.position = Vector3(wall_x - 0.09, 2.0, panel_z)
-	body.rotation.y = PI / 2.0
+	ChamberBuilders.face_label(body, Vector3(0.0, 0.0, panel_z) - body.position)
 	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	body.modulate = Color(0.72, 0.78, 0.82)
 	root.add_child(body)
@@ -754,6 +763,9 @@ class SimpleStation extends StaticBody3D:
 		label.font_size = 36
 		label.pixel_size = 0.006
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		# Local PI, not a world facing: the placard hangs off a station
+		# that is itself rotated, and only the TEXT is on the wrong side.
+		label.rotation.y = PI
 		add_child(label)
 		_label = label
 		_apply_complete()

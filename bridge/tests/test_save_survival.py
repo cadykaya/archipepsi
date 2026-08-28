@@ -23,7 +23,9 @@ Both halves are fixed and both are tested here: the migration clamps, and
 
 from __future__ import annotations
 
+import errno
 import json
+import os
 
 import pytest
 
@@ -200,3 +202,78 @@ def test_the_engine_refuses_to_start_fresh_over_an_unreadable_save(tmp_path):
 
     after = {p.name: p.read_bytes() for p in tmp_path.iterdir() if p.is_file()}
     assert after == before, "a refused load must not write anything"
+
+
+def test_a_platform_that_refuses_to_flush_a_backup_still_saves(
+        tmp_path, monkeypatch):
+    """Windows, on the second save of every session.
+
+    `_fsync_file` used to open the backup O_RDONLY and fsync it. POSIX
+    allows that, so Linux CI never saw a thing; Windows `_commit()`
+    rejects a read-only handle with EBADF, and the exception escaped
+    `write_save` to become a red `OSError: [Errno 9] Bad file descriptor`
+    in the player's HUD. It fired on the SECOND save, because the first
+    has no primary to back up and never reaches this code -- so the game
+    launched fine and then broke at the portal, which is the worst
+    possible shape for a bug to have.
+
+    Durability of a BACKUP is worth less than the save itself. Losing the
+    write because the backup would not flush is the wrong trade.
+    """
+    path = tmp_path / "c.json"
+    store.write_save(path, _save(tmp_path, zones=5))     # no .bak yet
+    assert not path.with_suffix(path.suffix + ".bak").exists()
+
+    real_open, real_fsync = store.os.open, store.os.fsync
+    read_only_fds: set[int] = set()
+
+    def remember_access(p, flags, *a, **k):
+        fd = real_open(p, flags, *a, **k)
+        if not flags & (os.O_RDWR | os.O_WRONLY):
+            read_only_fds.add(fd)
+        return fd
+
+    def windows_refuses_read_only_handles(fd):
+        # `_commit()` only rejects handles it cannot write through. A
+        # blanket failure would be a different, easier bug -- and would
+        # let an O_RDONLY fix pass this test.
+        if fd in read_only_fds:
+            raise OSError(errno.EBADF, "Bad file descriptor")
+        return real_fsync(fd)
+
+    monkeypatch.setattr(store.os, "open", remember_access)
+    monkeypatch.setattr(store.os, "fsync", windows_refuses_read_only_handles)
+    store.write_save(path, _save(tmp_path, zones=6))
+    monkeypatch.undo()
+
+    saved = store.load_save(path)
+    assert saved is not None and saved.completed_zone_count == 6, (
+        "the save was lost because its BACKUP could not be flushed")
+
+
+def test_the_backup_is_opened_in_a_mode_that_windows_can_flush(tmp_path):
+    """The fix above tolerates the failure; this one prevents it.
+
+    Pinned because O_RDONLY is the natural thing to write here -- it is
+    what the function said for its whole life, and it is correct on every
+    platform the tests run on.
+    """
+    modes = []
+    real_open = store.os.open
+
+    def record(p, flags, *a, **k):
+        modes.append(flags)
+        return real_open(p, flags, *a, **k)
+
+    path = tmp_path / "c.json"
+    store.write_save(path, _save(tmp_path, zones=1))
+    store.os.open = record
+    try:
+        store.write_save(path, _save(tmp_path, zones=2))
+    finally:
+        store.os.open = real_open
+
+    backup_opens = [m for m in modes if m & os.O_RDWR]
+    assert backup_opens, (
+        "the backup was opened without write access; Windows cannot "
+        f"fsync such a handle (flags seen: {modes})")

@@ -209,10 +209,26 @@ class CampaignEngine:
         return self.backend.data if self.backend else APData()
 
     def _apply(self, new_save: CampaignSave) -> None:
-        """Replace the campaign and persist atomically. The only write path."""
-        self.save = new_save
+        """Replace the campaign and persist atomically. The only write path.
+
+        Persist BEFORE assigning. The other order looks equivalent and is
+        not: a write that raises leaves the campaign running on state
+        that was never saved, so memory and disk disagree until restart.
+
+        Playtest 1 is what that costs. A Windows-only fsync error fired
+        inside `start_generation`, so the mode advanced to GENERATING in
+        memory, the save never landed, and the generation task after this
+        call never launched -- leaving a Hub whose portal answered "a
+        Zone cannot be started right now (mode GENERATING)" forever, for
+        a generation that was not running and never would.
+
+        Assigning last means a failed save is just a failed save: the
+        campaign is exactly where it was, and the player can press the
+        button again.
+        """
         if self._save_path is not None:
             store.write_save(self._save_path, new_save)
+        self.save = new_save
 
     async def _emit(self, message) -> None:
         if self.emit is not None:

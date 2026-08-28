@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+import errno
+
+import pytest
+
+from archipepsi_bridge import store
 from archipepsi_bridge import transactions as TX
 from archipepsi_bridge.ap_backend import NormalizedItem
 from archipepsi_bridge.mock_ap import MockAPBackend, MockServerState, SELF_SLOT
@@ -267,4 +272,46 @@ def test_23_shop_cannot_stock_goal(tmp_path):
         preload_items(state, C.ITEM_ID_SIGNAL_KEY, C.ITEM_ID_SIGNAL_KEY)
         engine, _ = await connected_engine(tmp_path, server_state=state)
         assert C.GOAL_LOCATION_ID not in engine.shop_candidates()
+    run(scenario())
+
+
+def test_a_failed_save_does_not_strand_the_campaign_in_generating(
+        tmp_path, monkeypatch):
+    """Playtest 1's softlock, which was the fsync bug's real damage.
+
+    `_apply` used to assign `self.save` and THEN persist. When the write
+    raised -- a Windows-only fsync error, in the event -- the mode had
+    already advanced to GENERATING in memory, the save never landed, and
+    the generation task that runs AFTER `_apply` never launched. The
+    player got a Hub whose portal answered "a Zone cannot be started
+    right now (mode GENERATING)" forever, for a generation that was not
+    running and never would be.
+
+    Any IO failure must leave a legal, retryable Hub. The write is the
+    commit point: state that did not persist did not happen.
+    """
+    async def scenario():
+        engine, _ = await connected_engine(tmp_path)
+        before = engine.hub_status().mode
+        assert before != "GENERATING"
+
+        def disk_is_full(path, save):
+            raise OSError(errno.ENOSPC, "No space left on device")
+
+        monkeypatch.setattr(store, "write_save", disk_is_full)
+        with pytest.raises(OSError):
+            await engine.handle_request_next_zone(False)
+        monkeypatch.undo()
+
+        assert engine.hub_status().mode == before, (
+            f"the failed save left the campaign in "
+            f"{engine.hub_status().mode}; the portal will refuse every "
+            "future press")
+
+        # And the real proof: the player can just press it again.
+        await engine.handle_request_next_zone(False)
+        await drain()
+        assert engine.hub_status().mode != before, (
+            "the retry after a failed save did nothing")
+
     run(scenario())
