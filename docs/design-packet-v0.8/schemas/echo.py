@@ -1205,6 +1205,96 @@ def _upgrade_lands(component, canonical: str, op, where: str) -> list[str]:
     ]
 
 
+def _modify_lands(component, canonical: str, op, where: str,
+                  owned, aliases) -> list[str]:
+    """Would the RESULT of this modify validate?
+
+    `_upgrade_lands` asks this for UPGRADE; MODIFY had only the existence
+    check above, and fell straight through. Five reproduced ways that
+    ended in a `FoldError` inside `append_interpretation` — a crash, on
+    every retry, so the Check could never be granted: a third modifier on
+    an action capped at two, a duplicate modifier type, a modifier added
+    to a primitive with no damage to modify, an effect or condition
+    naming a resource nobody owns, and a modifier aimed at a component
+    that is not an action at all.
+
+    Asked of the model, like its sibling: `modify_is_legal` applies the
+    real operation to a copy, so a validator added tomorrow is honoured
+    here today.
+    """
+    try:
+        from .mechanics import modify_is_legal
+    except ImportError:                        # pragma: no cover
+        from mechanics import modify_is_legal
+    reason = modify_is_legal(component, op, owned, aliases)
+    if not reason:
+        return []
+    return [f"{where} on '{canonical}' would leave it invalid: {reason}"]
+
+
+def _merge_lands(survivor, absorbed, op, where: str) -> list[str]:
+    """`capacity="sum"` walks the survivor's `max_value` up by the
+    absorbed's, and `_apply_upgrade` re-validates rather than clamping.
+    Two resources near the top of the range sum past it.
+
+    This is the likeliest of the landing failures, not the rarest: `sum`
+    is the DEFAULT capacity, so an interpretation that says nothing about
+    capacity says `sum`.
+    """
+    try:
+        from .mechanics import merge_capacity_is_legal
+    except ImportError:                        # pragma: no cover
+        from mechanics import merge_capacity_is_legal
+    if merge_capacity_is_legal(survivor, absorbed):
+        return []
+    return [
+        f"{where} sums the capacities of '{absorbed.component_id}' "
+        f"({absorbed.max_value:g}) and '{survivor.component_id}' "
+        f"({survivor.max_value:g}), which lands outside what a resource "
+        f"accepts; use capacity 'keep_survivor' or merge smaller bars"
+    ]
+
+
+def _singular_link_errors(interpretation, mechanics, merged) -> list[str]:
+    """`powers` and `scales` are at-most-one-per-target, and the fold
+    enforces it. Caught here first so it is a repair prompt.
+
+    Two routes reach the same conflict and both are checked: a LINK that
+    adds a second edge to a target that already has one, and a MERGE that
+    collapses two edges written against different bars onto the same one.
+    The second is the nastier of the two, because both edges were legal
+    when they were written.
+    """
+    try:
+        from .mechanics import SINGULAR_LINK_KINDS
+    except ImportError:                        # pragma: no cover
+        from mechanics import SINGULAR_LINK_KINDS
+
+    def canonical(component_id: str) -> str:
+        after = mechanics.resolve(component_id)
+        return merged.get(after, after)
+
+    errors: list[str] = []
+    for kind in SINGULAR_LINK_KINDS:
+        seen: dict[str, str] = {}
+        edges = [(canonical(e.source), canonical(e.target))
+                 for e in mechanics.links if e.link == kind]
+        edges += [(canonical(op.source), canonical(op.target))
+                  for op in interpretation.operations
+                  if op.op == "link" and op.link == kind]
+        for source, target in edges:
+            first = seen.get(target)
+            if first is not None and first != source:
+                errors.append(
+                    f"'{target}' would end up the target of two '{kind}' "
+                    f"links, from '{first}' and '{source}'; that kind is at "
+                    f"most one per target, so the second would be discarded"
+                )
+                break
+            seen[target] = source
+    return errors
+
+
 def target_errors(interpretation, mechanics) -> list[str]:
     """Contextual validation: can this interpretation's operations LAND?
 
@@ -1230,6 +1320,10 @@ def target_errors(interpretation, mechanics) -> list[str]:
     # the fold applies operations in order, so an upgrade may follow its
     # own create.
     pending: dict[str, object] = {}
+    #: Merges this interpretation performs, so the link check below sees
+    #: the graph as it will be AFTER the whole interpretation lands, not
+    #: as it is now. A merge and a link in one interpretation is legal.
+    merged: dict[str, str] = {}
 
     def resolve(component_id: str):
         canonical = aliases.get(component_id, component_id)
@@ -1249,6 +1343,11 @@ def target_errors(interpretation, mechanics) -> list[str]:
                     f"does not own; target something in the owned graph or "
                     f"create it first"
                 )
+                continue
+            if op.op == "modify":
+                errors.extend(_modify_lands(
+                    component, canonical, op, where,
+                    {**owned, **pending}, aliases))
                 continue
             if op.op == "upgrade":
                 allowed = UPGRADABLE_FIELDS.get(component.kind, ())
@@ -1296,6 +1395,13 @@ def target_errors(interpretation, mechanics) -> list[str]:
                     f"{where} merges '{op.absorbed}' into '{op.survivor}', "
                     f"but both already resolve to '{survivor_id}'"
                 )
+            elif (absorbed is not None and survivor is not None
+                    and absorbed.kind == "resource" == survivor.kind
+                    and op.capacity == "sum"):
+                errors.extend(_merge_lands(survivor, absorbed, op, where))
+            if absorbed is not None and survivor is not None:
+                merged[absorbed_id] = survivor_id
+    errors.extend(_singular_link_errors(interpretation, mechanics, merged))
     return errors
 
 

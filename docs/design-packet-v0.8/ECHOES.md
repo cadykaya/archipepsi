@@ -174,6 +174,27 @@ kills ──fills──▶ MP ──powers──▶ Grapple ──fills──▶
 
 Four unrelated AP items; one network; inspectable as a network.
 
+`powers` and `scales` are **at most one per target**; `fills` and `gates`
+may be many. That is not a taste call — it is what the clients read.
+`echo_runtime.gd::_powers_link` returns the first `powers` edge aimed at
+the equipped Action and never looks again, and `stat_stack.gd::evaluate`
+keys its `scales` lookup by target, so a second edge of either kind is not
+combined, it is discarded, and which one survives depends on fold order.
+The fold refuses the second edge (`_require_singular_links`) so the choice
+never has to be arbitrary, and `target_errors` refuses it one step earlier
+so a provider gets a repair prompt rather than a crash. Both routes to the
+conflict are checked: a `LINK` that adds a second edge, and a `MERGE` that
+collapses two edges written against different bars onto the same one.
+
+A `MERGE` **rewrites stored edges**, it does not rely on the alias table to
+resolve them later. Aliases catch every later *mention* of an absorbed id;
+a link written before the merge is not a mention, it is a stored edge, and
+leaving it raw published a `source` naming a component the fold had just
+deleted. A missing bar reads as 0 of 0, so the spend always refuses and the
+Echo could never fire again — permanently, since aliases are permanent.
+Edges that become exact duplicates collapse to one; edges that disagree on
+strength are two different promises and both survive.
+
 # 5. The rule engine
 
 ```

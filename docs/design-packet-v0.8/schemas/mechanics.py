@@ -296,6 +296,52 @@ def upgrade_is_legal(component, field: str, delta: float) -> bool:
     return True
 
 
+def modify_is_legal(component, op, owned=None, aliases=None) -> str:
+    """Would this MODIFY survive the fold? Empty string for yes.
+
+    Sibling of `upgrade_is_legal`, and it exists for the same reason and
+    the same bug. `target_errors` checked that a MODIFY's target EXISTS
+    and stopped there, so five separate refusals reached the fold instead
+    — a third modifier on an action whose list caps at two, a duplicate
+    modifier type, a modifier aimed at a primitive that has no damage to
+    modify, an effect naming a resource the campaign does not own. Each
+    was a `FoldError` inside `append_interpretation`, which is a crash
+    rather than a repair prompt, and which repeated on every retry, so the
+    Check could never be granted.
+
+    Returns the reason rather than a bool because `_apply_modify` refuses
+    for several different reasons and a repair loop can act on which.
+    """
+    try:
+        modified, _ = _apply_modify(component, op, 0)
+    except FoldError as exc:
+        return str(exc).split(": ", 1)[-1]
+    except Exception as exc:                     # pragma: no cover
+        return str(exc)
+    if owned is None:
+        return ""
+    # The fold runs this immediately after `_apply_modify`, and it is the
+    # half that catches an added effect or condition naming a resource
+    # nobody owns. Skipped when the caller has no component set to check
+    # against, which keeps the two-argument form honest rather than
+    # quietly checking less than it looks like it does.
+    try:
+        _check_rule_references(modified, owned, aliases or {}, 0)
+    except FoldError as exc:
+        return str(exc).split(": ", 1)[-1]
+    return ""
+
+
+def merge_capacity_is_legal(survivor, absorbed) -> bool:
+    """Would `capacity="sum"` walk the survivor's `max_value` out of range?
+
+    The default is `"sum"` (`echo.py::MergeOperation`), and two resources
+    near the top of the allowed range sum past it. `_apply_upgrade`
+    re-validates, so the fold raises; asked here, it is a repair prompt.
+    """
+    return upgrade_is_legal(survivor, "max_value", absorbed.max_value)
+
+
 def derive_mechanics(log) -> Mechanics:
     """Fold an interpretation log into live mechanics.
 
@@ -435,11 +481,24 @@ def derive_mechanics(log) -> Mechanics:
                 for old, new in list(aliases.items()):
                     if new == absorbed:
                         aliases[old] = survivor
+                # Links are rewritten HERE, not resolved at read time. The
+                # alias table catches every later MENTION of the absorbed
+                # id, but a link written before the merge is not a mention
+                # — it is a stored edge, and it kept pointing at a
+                # component this fold has just deleted. The client is told
+                # the ids it receives are canonical (`echo_runtime.gd`
+                # `_powers_link`), and it was not true: a `powers` edge
+                # whose source merged away asked the pool to spend from a
+                # bar that no longer exists, which always refuses, so the
+                # Echo could never fire again — permanently, since aliases
+                # are permanent.
+                links = _relink(links, absorbed, survivor, seq)
                 del components[absorbed]
                 order.remove(absorbed)
                 provenance.pop(absorbed, None)
                 mk.pop(absorbed, None)
 
+    _require_singular_links(links)
     _require_power_links(components, links)
     _require_fill_links(components, links)
 
@@ -534,6 +593,80 @@ def _apply_modify(component, op, seq: int):
             f"interpretation_seq {seq}: modifying "
             f"'{component.component_id}' leaves it invalid: {exc}"
         ) from exc
+
+
+def _relink(links, absorbed: str, survivor: str, seq: int):
+    """Point every stored edge at the survivor, and collapse the twins.
+
+    Rewriting rather than resolving-at-read is deliberate. The alias table
+    is consulted for every later MENTION of an id, but a link written
+    before the merge is not a mention — it is a stored edge, and the
+    client is told (`echo_runtime.gd::_powers_link`) that the ids it
+    receives are already canonical. Resolving at read would mean teaching
+    four call sites in two languages to do it, and `stat_stack.gd` would
+    still be reading a dict keyed by a raw id.
+
+    Rewriting creates twins: two edges of the same kind between what are
+    now the same pair. Exact duplicates — same strength — are one edge
+    asserted twice, so they collapse. Twins that DISAGREE on strength are
+    left alone here; `_require_singular_links` decides whether that is
+    legal for the kind, because the answer differs per kind and belongs
+    with the other structural checks rather than buried in a merge.
+    """
+    out = []
+    for link in links:
+        source = survivor if link.source == absorbed else link.source
+        target = survivor if link.target == absorbed else link.target
+        if source == target:
+            # Only reachable if a link somehow spanned the two merged
+            # resources. An edge from a thing to itself has no runtime
+            # meaning, and the LINK op refuses to create one.
+            raise FoldError(
+                f"interpretation_seq {seq}: merging '{absorbed}' into "
+                f"'{survivor}' would leave a '{link.link}' link from "
+                f"'{survivor}' to itself"
+            )
+        moved = LinkEdge(link=link.link, source=source, target=target,
+                         strength=link.strength)
+        if moved not in out:
+            out.append(moved)
+    return out
+
+
+#: Link kinds the client reads as at-most-one-per-target, and where.
+#: `powers` picks the FIRST match (`echo_runtime.gd::_powers_link`) and
+#: `scales` builds a dict keyed by target (`stat_stack.gd::evaluate`), so a
+#: second edge of either kind is not combined — it is silently discarded,
+#: and which one survives depends on fold order. `fills` and `gates` are
+#: genuinely many: both clients iterate, and several actions filling one
+#: bar or several bars gating one action are shapes the graph in ECHOES
+#: section 4 is meant to express.
+SINGULAR_LINK_KINDS = ("powers", "scales")
+
+
+def _require_singular_links(links) -> None:
+    """At most one `powers` per action and one `scales` per trait.
+
+    Enforced here rather than trusted, because the client cannot enforce
+    it: by the time `stat_stack` sees two `scales` edges on one trait the
+    fold has already published both, and all it can do is pick one. Making
+    the second edge unrepresentable is the only place the choice does not
+    have to be arbitrary.
+    """
+    for kind in SINGULAR_LINK_KINDS:
+        seen: dict[str, LinkEdge] = {}
+        for link in links:
+            if link.link != kind:
+                continue
+            first = seen.get(link.target)
+            if first is not None:
+                raise FoldError(
+                    f"'{link.target}' is the target of two '{kind}' links "
+                    f"(from '{first.source}' and '{link.source}'); that kind "
+                    f"is at most one per target, because the client reads "
+                    f"one and would discard the other"
+                )
+            seen[link.target] = link
 
 
 def _require_power_links(components, links) -> None:
