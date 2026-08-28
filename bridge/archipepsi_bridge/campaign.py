@@ -196,6 +196,9 @@ class CampaignEngine:
         self._low_coin_warned = False
         self._reconcile_tasks: set[asyncio.Task] = set()
         self._generation_task: asyncio.Task | None = None
+        #: Which Zone `_generation_task` is building, so a resume can tell
+        #: "already running" from "a different Zone".
+        self._generating_zone_id: str | None = None
 
     # ------------------------------------------------------------------
     # Plumbing
@@ -509,8 +512,7 @@ class CampaignEngine:
         # A Zone interrupted mid-generation re-runs against its committed ids.
         az = self.save.active_zone
         if az is not None and az.state == "PENDING_GENERATION":
-            self._generation_task = asyncio.create_task(
-                self._run_generation(az.zone_id))
+            self._start_generation_task(az.zone_id)
         await self.broadcast_snapshot()
 
     async def on_ap_disconnected(self) -> None:
@@ -612,6 +614,38 @@ class CampaignEngine:
             # about itself the moment the player changed them.
             unlocked_affordances=owned_affordance_tags(save.derive()))
 
+    def _start_generation_task(self, zone_id: str) -> None:
+        """Start the provider call for `zone_id`, unless one is in flight.
+
+        A reconnect re-runs `on_ap_ready`, which resumes a Zone still in
+        `PENDING_GENERATION` — and a real provider call takes seconds, so a
+        connection that drops during generation is exactly when the resume
+        lands on top of the original. Unguarded, that called the provider
+        TWICE for one Zone (billed twice, against a live Epsilon), and the
+        loser then raised `ValueError: Zone is GENERATED, not pending`
+        inside a bare task, where nothing surfaces it.
+        """
+        task = self._generation_task
+        if (task is not None and not task.done()
+                and self._generating_zone_id == zone_id):
+            log.info("generation for %s is already running; not starting a "
+                     "second", zone_id)
+            return
+        self._generating_zone_id = zone_id
+        self._generation_task = asyncio.create_task(
+            self._run_generation(zone_id))
+        # A bare task swallows its exception until garbage collection, which
+        # reports it as "Task exception was never retrieved" long after the
+        # fact and never to the player.
+        self._generation_task.add_done_callback(self._generation_finished)
+
+    def _generation_finished(self, task: asyncio.Task) -> None:
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc is not None:
+            log.error("zone generation task failed", exc_info=exc)
+
     async def _run_generation(self, zone_id: str) -> None:
         """Provider call for an already-committed PENDING_GENERATION record."""
         record = self.save.zone_by_id(zone_id)
@@ -644,6 +678,17 @@ class CampaignEngine:
             return
 
         self.last_generation_error = outcome.error
+        # Re-checked AFTER the await: the state guard at the top of this
+        # method was true seconds ago, and a Zone can be abandoned (or
+        # accepted by a duplicate run) while the provider is thinking.
+        # `accept_zone` refuses anything but PENDING_GENERATION, and it
+        # RAISES, so without this the loser dies rather than standing down.
+        current = self.save.zone_by_id(zone_id)
+        if current is None or current.state != "PENDING_GENERATION":
+            log.info("zone %s is %s by the time generation returned; "
+                     "discarding this outcome", zone_id,
+                     current.state if current else "gone")
+            return
         self._apply(T.accept_zone(self.save, outcome.value,
                                   used_fallback=outcome.used_fallback))
         if outcome.used_fallback and self.provider_name != "fallback":
@@ -675,8 +720,7 @@ class CampaignEngine:
             self.save, zone_id=zone_id, allocated_location_ids=ids,
             target_game=_clamp_ap_string(target), is_finale=finale))
         await self.broadcast_snapshot()          # GENERATING is visible state
-        self._generation_task = asyncio.create_task(
-            self._run_generation(zone_id))
+        self._start_generation_task(zone_id)
 
     # ------------------------------------------------------------------
     # Zone traversal intents
