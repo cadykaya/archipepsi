@@ -180,6 +180,25 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   location yielding two Echoes, the allocator never starving (§11.5), the
   save validating after every transition, and the fold publishing no edge
   that names a component it deleted.
+- **Mock Epsilon does S10's other half now.** EPSILON_SPEC §12.2 named it
+  and scheduled it: `--epsilon=mock` must exercise resources, rules, links,
+  merges and the wider action catalog "or the headless integration run
+  stops proving anything about the systems S2–S6 add." It never grew — mock
+  delegated its whole echo to `fallback_echo` and added narration. Measured
+  across ten campaigns that cost **8 of 28 primitives, 1 of 4 link kinds,
+  and no Info readout**: `make godot-blink` fired 23k attempts at a verb
+  nothing granted, the hover/beam/block holds in `make godot-verbs` covered
+  presses no player could perform, and all ten §14.1 readouts stayed dark
+  because only an `info` component turns one on and nothing emitted one.
+  Mock now picks a shape from the §15 READING (`beam` → a beam and the
+  charge it burns; `revelation` → a radar) and falls through to the
+  fallback for an item it cannot read. Every shape is self-contained, so a
+  link cannot dangle and the three `POWERED_PRIMITIVES` are expressible at
+  last. The roster was the real limit — ten names over 21 fill slots —
+  widened to 21, every one a name the reader already understood.
+  A mock campaign now reaches **all four link kinds, real readouts, 16 of
+  28 primitives**. `test_mock_catalog.py` holds both levels: every row of
+  the table folds, and a real campaign reaches the systems.
 - **Next: the plan is exhausted.** IMPLEMENTATION_PLAN §2.5 ends at S10
   ("Deployables come after S10, if at all"). Per the standing handoff, do
   not stop here — continue developing the game, and stop only where

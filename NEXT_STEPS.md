@@ -718,6 +718,76 @@ the save validates after every single transition, and the fold publishes
 no edge naming a component it deleted. One test asserts the vocabulary
 above is not theoretical.
 
+## Mock Epsilon, and the other half of S10
+
+`EPSILON_SPEC` §12.2 ends with an obligation that was scheduled and never
+discharged: *"The **mock** provider is the one that must grow:
+`--epsilon=mock` has to exercise resources, rules, links, merges and the
+wider action catalog, or the headless integration run stops proving
+anything about the systems S2–S6 add. That growth is scheduled as part of
+S10."*
+
+Mock did not grow. It delegated its whole echo to `fallback_echo` and added
+narration — its own docstring said so: *"Mock Epsilon does not invent
+mechanics the fallback cannot."*
+
+Measured across ten full campaigns, the shipped providers reached **8 of
+the 28 action primitives, one of the four link kinds, and no Info readout
+at all**. Which means:
+
+- `make godot-blink` fires ~23,000 attempts at `blink`, a verb no campaign
+  grants.
+- The hover, beam and block holds proved by `make godot-verbs` cover
+  presses no player can perform.
+- All ten §14.1 readouts are drawn and tested, and every one is turned on
+  by an `info` component that nothing in the tree emitted.
+- `gates` and `scales` handling in `echo_runtime.gd` and `stat_stack.gd` is
+  dead code in play.
+
+Mock now selects a shape from the **§15 reading** rather than from the item
+name — `beam` gives a beam and the charge it burns, `revelation` gives a
+radar, `momentum` gives a trait that rides a bar, `authority` gives a burst
+behind a `gates` threshold — and falls through to the fallback for an item
+it has no shape for. The fallback stays the floor deliberately: everything
+it does is proved by its own tests, and falling through is what keeps an
+item mock cannot read from being an item mock gets wrong.
+
+Each shape is self-contained: it creates every component it names, so a
+link can never dangle, and the three `POWERED_PRIMITIVES` are finally
+expressible — the fold REFUSES a beam, hover or block with no `powers`
+link, so only a multi-operation shape can carry one, which is exactly what
+the fallback's pinned shape could not do. The `scales` shape emits the
+LINK rather than the trait's `scaled_by` field: `stat_stack.gd` reads both
+and only the field had a producer.
+
+The concept reader was never the limit — **the item roster was**. Ten
+names cycled across twenty-one fill slots, so a campaign saw ten distinct
+readings. Widened to exactly twenty-one, every name one the reader already
+understood; none was chosen and then taught to the lexicon, which would be
+bending §15's reader to fit a fixture (the mistake the S6–S10 review caught
+in the concept-attachment validator). *Metal Cap* and *Fresh Rep* stay
+where they are: `integration_driver.gd` counts on their collisions with the
+fixture's *Wing Cap* and *REP* to force evolutions.
+
+A mock campaign now reaches **all four link kinds, real Info readouts, and
+16 of the 28 primitives**. `test_mock_catalog.py` holds two levels,
+because they fail differently: every ROW of the shape table must
+individually fold (a row that cannot is a row that silently never fires,
+and the pipeline would repair or fall back and the campaign would look
+fine), and a real CAMPAIGN must reach the systems (a table nothing selects
+from is the same gap in a new place).
+
+**The contract prose was stale in two directions.** §12.2 still claimed the
+fallback keeps a pinned one-`CREATE` shape with no resources, rules, links
+or merges. That stopped being true at S4 and was superseded three more
+times — S6's `UPGRADE`, S10's derived mode, and the disposition pass's
+`MODIFY`/`MERGE` — each deliberately, and each on the same recorded
+argument: the fallback is what `--epsilon=fallback`, the integration run
+and every player without an API key actually get, so its expressive range
+*is* the game for them. Both §12.2 and the S1 decision entry now say what
+is true, and both keep the sentence that always was: the fallback can never
+breach a budget, dangle a target, or be the reason a fold fails.
+
 ## Next useful work
 1. **Play-feel pass on real hardware** — the manual checks in
    ACCEPTANCE_TESTS §7 (gap feel, reveal timing, Conference Call comedy)
@@ -739,6 +809,7 @@ above is not theoretical.
 6. ~~Adversarial pass over `ap_client.py`~~ — **done**, one finding (a
    reconnect during generation built the same Zone twice).
 7. ~~The whole disposition vocabulary, and a multi-seed soak~~ — **done.**
+8. ~~Mock Epsilon's S10 growth (§12.2's unmet obligation)~~ — **done.**
 
 ## Known blockers / bugs
 None known. One recorded schema corner: `finale_offered` stays true in
