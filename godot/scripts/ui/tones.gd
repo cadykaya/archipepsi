@@ -66,6 +66,10 @@ static func _hum_loop() -> AudioStreamWAV:
 	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	stream.loop_begin = 0
 	# Derived from the buffer, never a second copy of the sample rate.
+	# 16-bit samples: two bytes each, so the frame count is half the
+	# byte count. `@warning_ignore` rather than a float cast because
+	# truncation is the CORRECT behaviour here, not a tolerated one.
+	@warning_ignore("integer_division")
 	stream.loop_end = stream.data.size() / 2
 	return stream
 

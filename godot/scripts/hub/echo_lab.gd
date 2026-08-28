@@ -212,8 +212,8 @@ func _build_fixtures() -> void:
 	_notice.visible = false
 	add_child(_notice)
 
-func fixture(name: String) -> Node:
-	return _fixtures.get(name)
+func fixture(fixture_name: String) -> Node:
+	return _fixtures.get(fixture_name)
 
 ## The Lab grows with the vocabulary (§17). A fixture appears because the
 ## campaign OWNS the capability, never because a provider decided Hub
@@ -234,20 +234,20 @@ func refresh_fixture_visibility() -> void:
 		var primitive: Dictionary = entry.get("component", {}).get(
 				"primitive", {})
 		verbs[str(primitive.get("type", ""))] = true
-	for name: String in VOCABULARY_FIXTURES:
-		var node: Node = _fixtures.get(name)
+	for fixture_name: String in VOCABULARY_FIXTURES:
+		var node: Node = _fixtures.get(fixture_name)
 		if node == null:
 			continue
 		var wanted := false
-		for verb: String in VOCABULARY_FIXTURES[name]:
+		for verb: String in VOCABULARY_FIXTURES[fixture_name]:
 			if verbs.has(verb):
 				wanted = true
 				break
 		# Core fixtures stay present with an empty campaign; what the
 		# vocabulary changes is whether they are ANNOUNCED, so a base-kit
 		# player still has a full room to learn the base kit in.
-		if wanted and not _announced.has(name):
-			_announced[name] = true
+		if wanted and not _announced.has(fixture_name):
+			_announced[fixture_name] = true
 			_announce()
 
 ## Session-local, deliberately: the joke is worth one line, not a new

@@ -90,8 +90,8 @@ func _run() -> void:
 
 # --- scratch manifests -----------------------------------------------------
 
-func _socket(name: String = "entry") -> Dictionary:
-	return {"name": name, "kind": "doorway",
+func _socket(socket_name: String = "entry") -> Dictionary:
+	return {"name": socket_name, "kind": "doorway",
 			"position": [0.0, 0.0, 0.0], "width": 2.4, "height": 3.2}
 
 func _entry(over: Dictionary = {}) -> Dictionary:
@@ -390,9 +390,9 @@ func _an_unregistered_chamber_type_still_builds() -> void:
 
 # --- the S15 connector grammar ---------------------------------------------
 
-func _door(name: String, w: float, h: float,
+func _door(field: String, w: float, h: float,
 		kind: String = "doorway") -> Dictionary:
-	return {"name": name, "kind": kind, "position": [0.0, 0.0, 0.0],
+	return {"name": field, "kind": kind, "position": [0.0, 0.0, 0.0],
 			"width": w, "height": h}
 
 func _the_grammar_refuses_a_join_the_player_cannot_use() -> void:
@@ -719,16 +719,16 @@ func _a_hand_edited_config_cannot_unbind_the_base_kit() -> void:
 
 func _settings_are_clamped_on_the_way_in() -> void:
 	var settings := PlayerSettings.new()
-	for name: String in PlayerSettings.RANGES:
-		var spec: Array = PlayerSettings.RANGES[name]
-		settings.set_value(name, -1000.0)
-		_check(is_equal_approx(settings.value(name), float(spec[1])),
+	for key: String in PlayerSettings.RANGES:
+		var spec: Array = PlayerSettings.RANGES[key]
+		settings.set_value(key, -1000.0)
+		_check(is_equal_approx(settings.value(key), float(spec[1])),
 				"'%s' must clamp to its minimum, got %f"
-				% [name, settings.value(name)])
-		settings.set_value(name, 1000.0)
-		_check(is_equal_approx(settings.value(name), float(spec[2])),
+				% [key, settings.value(key)])
+		settings.set_value(key, 1000.0)
+		_check(is_equal_approx(settings.value(key), float(spec[2])),
 				"'%s' must clamp to its maximum, got %f"
-				% [name, settings.value(name)])
+				% [key, settings.value(key)])
 
 func _reduced_motion_actually_reaches_zero() -> void:
 	## An accessibility option with a floor above off is not one. Motion
@@ -758,21 +758,21 @@ func _preferences_never_enter_campaign_truth() -> void:
 	## differ for a reason no rule cares about, and would turn changing a
 	## preference into a state transition.
 	##
-	## Checked by name against the snapshot the bridge actually sends,
+	## Checked by key against the snapshot the bridge actually sends,
 	## since that is the only campaign truth this side can see.
 	var settings := PlayerSettings.new()
 	var preference_names: Array = []
-	for name: String in PlayerSettings.RANGES:
-		preference_names.append(name)
-	for name: String in PlayerSettings.FLAGS:
-		preference_names.append(name)
+	for key: String in PlayerSettings.RANGES:
+		preference_names.append(key)
+	for key: String in PlayerSettings.FLAGS:
+		preference_names.append(key)
 	preference_names.append("bindings")
 
 	var snapshot: Dictionary = BridgeClient.snapshot
-	for name: String in preference_names:
-		_check(not snapshot.has(name),
+	for key: String in preference_names:
+		_check(not snapshot.has(key),
 				"'%s' is a preference and must never appear in the "
-				% name + "campaign snapshot")
+				% key + "campaign snapshot")
 
 	## And it must be stored where preferences go.
 	_check(PlayerSettings.PATH.begins_with("user://"),
@@ -864,10 +864,10 @@ func _a_shell_that_lies_about_its_geometry_is_refused() -> void:
 
 	var joined := "\n".join(refusals)
 	_check(joined.contains("as built"),
-			"the refusal must name what was MEASURED, not what was "
+			"the refusal must field what was MEASURED, not what was "
 			+ "declared; got: %s" % joined)
 	_check(joined.contains("safe reach"),
-			"the refusal must name the bound it broke; got: %s" % joined)
+			"the refusal must field the bound it broke; got: %s" % joined)
 	instance.free()
 
 func _an_unmeasurable_mandatory_route_is_refused() -> void:

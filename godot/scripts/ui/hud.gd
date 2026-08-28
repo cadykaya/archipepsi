@@ -616,10 +616,10 @@ func refresh_echo(cooldown := -1.0, total := 0.0) -> void:
 				else Color(0.6, 0.8, 1.0)
 		return
 
-	var ready := 1.0 - clampf(cooldown / window, 0.0, 1.0)
-	_cooldown_fill.size = Vector2(_cooldown_track.size.x * ready,
+	var is_ready := 1.0 - clampf(cooldown / window, 0.0, 1.0)
+	_cooldown_fill.size = Vector2(_cooldown_track.size.x * is_ready,
 			_cooldown_track.size.y)
-	_cooldown_fill.color = Color(0.45, 0.95, 0.9) if ready >= 1.0 \
+	_cooldown_fill.color = Color(0.45, 0.95, 0.9) if is_ready >= 1.0 \
 			else Color(0.85, 0.7, 0.3)
 
 func toast(text: String, color := Color.WHITE, seconds := 3.5) -> void:

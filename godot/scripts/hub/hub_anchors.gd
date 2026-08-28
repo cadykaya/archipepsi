@@ -66,8 +66,8 @@ static func defaults() -> Dictionary:
 		"generation_loading": _at(Vector3(-W / 2.0 + 2.4, 0, D - 2.4), 0.0),
 	}
 
-static func _at(origin: Vector3, yaw: float) -> Transform3D:
-	return Transform3D(Basis(Vector3.UP, yaw), origin)
+static func _at(where: Vector3, facing: float) -> Transform3D:
+	return Transform3D(Basis(Vector3.UP, facing), where)
 
 var _anchors: Dictionary = {}
 

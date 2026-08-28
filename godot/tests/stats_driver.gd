@@ -96,7 +96,7 @@ func _i3_sweep() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 89100001
 	var worst_speed := INF
-	for round in 300:
+	for pass_index in 300:
 		var traits: Array = []
 		for i in rng.randi_range(1, 8):
 			traits.append(_random_legal_trait(rng, i))
@@ -115,21 +115,21 @@ func _i3_sweep() -> void:
 		for stat: String in ["move_speed", "jump_height", "air_control"]:
 			_check(float(stats[stat]) >= 1.0,
 					"round %d: %s fell under base (%f)"
-					% [round, stat, stats[stat]])
+					% [pass_index, stat, stats[stat]])
 		_check(float(stats["gravity"]) <= 1.0
 				and float(stats["gravity"])
 				>= float(Constants.GRAVITY_MULT_MIN),
-				"round %d: gravity outside [min, 1]" % round)
+				"round %d: gravity outside [min, 1]" % pass_index)
 		_check(float(stats["move_speed"])
 				<= float(Constants.SPEED_MULT_MAX),
-				"round %d: speed over the derivation cap" % round)
+				"round %d: speed over the derivation cap" % pass_index)
 		for stat: String in ["ground_friction", "damage_dealt",
 				"damage_taken", "knockback_resist", "regen"]:
 			_check(float(stats[stat]) >= float(Constants.STAT_STACK_MIN)
 					and float(stats[stat])
 					<= float(Constants.STAT_STACK_MAX),
 					"round %d: %s outside the envelope (%f)"
-					% [round, stat, stats[stat]])
+					% [pass_index, stat, stats[stat]])
 		worst_speed = minf(worst_speed, float(stats["move_speed"]))
 	# Vacuity guard: the sweep must have genuinely pressed the floor.
 	_check(is_equal_approx(worst_speed, 1.0),

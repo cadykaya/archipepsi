@@ -403,7 +403,11 @@ def test_the_exported_gap_bound_is_the_python_one():
     from archipepsi_bridge.schemas import constants as C
 
     gd = GD_CONSTANTS.read_text()
-    assert "static func max_safe_gap" in gd, (
+    # Not `static`: `Constants` is an autoload, so every call site
+    # reaches it through the singleton instance, and a static function
+    # called that way warns on every one of them. What matters is that
+    # the FUNCTION is exported, not its storage class.
+    assert "func max_safe_gap" in gd, (
         "the gap bound is no longer exported to Godot; every builder "
         "placing a raised platform is back to guessing")
 

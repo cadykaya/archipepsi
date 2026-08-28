@@ -93,12 +93,12 @@ func restore_defaults() -> void:
 ## Clamped on the way in, not on the way out. A value read a hundred
 ## times a frame should not have to be defended a hundred times a frame,
 ## and a stored value outside its range would survive every read.
-func set_value(name: String, value: float) -> void:
+func set_value(name: String, amount: float) -> void:
 	if not RANGES.has(name):
-		push_warning("settings: unknown value '%s'" % name)
+		push_warning("settings: unknown amount '%s'" % name)
 		return
 	var range_spec: Array = RANGES[name]
-	values[name] = clampf(value, float(range_spec[1]), float(range_spec[2]))
+	values[name] = clampf(amount, float(range_spec[1]), float(range_spec[2]))
 
 func value(name: String) -> float:
 	if not RANGES.has(name):

@@ -630,7 +630,11 @@ static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 			Vector3(-width / 2.0, wall_height / 2.0 - 20.0, total / 2.0), wall)
 	_box(root, Vector3(WALL_THICKNESS, wall_height + 40.0, total),
 			Vector3(width / 2.0, wall_height / 2.0 - 20.0, total / 2.0), wall)
-	for i in maxi(2, segments / 2):
+	# Half the segments, rounded down: an odd count gets the smaller
+	# half, which is what the layout wants.
+	@warning_ignore("integer_division")
+	var pairs := maxi(2, segments / 2)
+	for i in pairs:
 		_light(root, Vector3(0, rise + 4.0,
 				total * (float(i) + 0.5) / maxf(2.0, segments / 2.0)), theme,
 				18.0)
@@ -818,7 +822,7 @@ static func corner(turn: int, theme: String) -> Dictionary:
 			"bounds": AABB(Vector3(-S / 2.0, -1, 0), Vector3(S, H + 1, S)),
 			"turn": turn}
 
-static func treasure_room(chamber: Dictionary, theme: String) -> Dictionary:
+static func treasure_room(_chamber: Dictionary, theme: String) -> Dictionary:
 	var side := 8.0
 	var height := 4.5
 	var root := Node3D.new()

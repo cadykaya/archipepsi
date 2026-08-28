@@ -303,7 +303,7 @@ static func _breakable_wall(root: Node3D, theme: String, origin: Vector3,
 ## A shallow pool. Buoyant and draggy: you sink slowly, you swim slowly,
 ## and you can always get out — `Player.MIN_VOLUME_SPEED_SCALE` is the
 ## floor that makes "always" structural.
-static func _water_volume(root: Node3D, theme: String, origin: Vector3,
+static func _water_volume(root: Node3D, _theme: String, origin: Vector3,
 		reward_id: String, note: String) -> Node3D:
 	var pool := AffordanceNodes.Volume.new()
 	pool.influence = {
@@ -328,7 +328,7 @@ static func _water_volume(root: Node3D, theme: String, origin: Vector3,
 ## A grind rail: a beam with a low-friction lane over it, so a dash along
 ## it carries much further than a dash on the floor.
 static func _rail(root: Node3D, theme: String, origin: Vector3,
-		depth: float, reward_id: String, note: String) -> Node3D:
+		_depth: float, reward_id: String, note: String) -> Node3D:
 	# Bounded by the footprint's own half_depth, so the beam cannot reach
 	# past a doorway that `resolve_position` kept its origin clear of.
 	var length := 2.0 * float(FOOTPRINT["rail"]["half_depth"]) - 1.0

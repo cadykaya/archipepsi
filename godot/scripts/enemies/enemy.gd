@@ -40,10 +40,10 @@ static func create(kind: String, theme: String) -> Enemy:
 	enemy.set_script(load("res://scripts/enemies/enemy.gd"))
 	enemy.archetype = kind
 	enemy.name = "Enemy_%s" % kind
-	var stats: Dictionary = Constants.ENEMY_STATS[kind]
-	enemy.stats = stats
-	enemy.hp = float(stats["hp"])
-	enemy.max_hp = float(stats["hp"])
+	var block: Dictionary = Constants.ENEMY_STATS[kind]
+	enemy.stats = block
+	enemy.hp = float(block["hp"])
+	enemy.max_hp = float(block["hp"])
 
 	var size := Vector3(0.8, 1.6, 0.8)
 	match kind:
@@ -65,21 +65,21 @@ static func create(kind: String, theme: String) -> Enemy:
 		_: _build_melee(enemy, size, theme)
 	return enemy
 
-static func _part(parent: Node3D, size: Vector3, position: Vector3,
+static func _part(parent: Node3D, size: Vector3, at: Vector3,
 		material: Material, tilt := 0.0) -> MeshInstance3D:
 	var part := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = size
 	part.mesh = mesh
-	part.position = position
+	part.position = at
 	part.rotation.x = tilt
 	part.material_override = material
 	parent.add_child(part)
 	return part
 
-static func _eye(parent: Node3D, size: Vector3, position: Vector3,
+static func _eye(parent: Node3D, size: Vector3, at: Vector3,
 		color: Color) -> void:
-	_part(parent, size, position, ThemeMaterials.glow_material(color, 2.4))
+	_part(parent, size, at, ThemeMaterials.glow_material(color, 2.4))
 
 ## Melee: hunched and forward-leaning, with stubby arms — it reads as
 ## something that wants to be where you are.

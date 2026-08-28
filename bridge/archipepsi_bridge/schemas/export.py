@@ -96,7 +96,14 @@ def export_constants_gd() -> str:
         "## higher. The joint bound: gap and step maxed independently is",
         "## not the same as either maxed alone. Mirrors",
         "## `constants.max_safe_gap`, pinned by `test_schemas.py`.",
-        "static func max_safe_gap(vertical_step: float = 0.0) -> float:",
+        "## NOT `static`: `Constants` is an autoload, so every call site "
+        "reaches it",
+        "## through the singleton INSTANCE. A static function called that "
+        "way is",
+        "## correct but warns on every one of them, and a warning nobody "
+        "can act",
+        "## on is a warning everybody learns to scroll past.",
+        "func max_safe_gap(vertical_step: float = 0.0) -> float:",
         "\tvar g := GRAVITY * GRAVITY_MULT_MAX",
         "\tvar disc := JUMP_VELOCITY * JUMP_VELOCITY - 2.0 * g * vertical_step",
         "\tif disc < 0.0:",

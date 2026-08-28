@@ -695,7 +695,7 @@ func _play_one_zone(detailed: bool) -> bool:
 ## fixture, which is the point: `make godot-affordance` proves the rules
 ## in isolation, and this proves a provider, a validator, a builder and a
 ## save actually agree about one Zone.
-func _check_affordances_and_local_rewards(controller: ZoneController,
+func _check_affordances_and_local_rewards(_controller: ZoneController,
 		zone_dict: Dictionary) -> void:
 	var offered: Array = []
 	for chamber: Dictionary in zone_dict.get("chambers", []):

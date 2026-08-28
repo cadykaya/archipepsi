@@ -113,8 +113,8 @@ func _campaign_fingerprint() -> String:
 # --- fixtures --------------------------------------------------------------
 
 func _fixtures_exist(lab: EchoLab) -> void:
-	for name: String in ["dummy", "moving_target", "hazard", "reset_pad"]:
-		_check(lab.fixture(name) != null, "the Lab has a %s" % name)
+	for fixture_name: String in ["dummy", "moving_target", "hazard", "reset_pad"]:
+		_check(lab.fixture(fixture_name) != null, "the Lab has a %s" % fixture_name)
 	_check(lab.get_node_or_null("GapRecovery") != null,
 			"the gap has a recovery trigger")
 
@@ -286,7 +286,7 @@ func _reset_clears_transient_only(lab: EchoLab, player: Player) -> void:
 
 ## The whole point, asserted last: a full session of use sent no intent
 ## and moved no campaign truth.
-func _no_campaign_mutation(lab: EchoLab) -> void:
+func _no_campaign_mutation(_lab: EchoLab) -> void:
 	_check(BridgeClient.sent_intents.is_empty(),
 			"the Lab sent no intent all session (%s)"
 			% str(BridgeClient.sent_intents))
@@ -303,7 +303,7 @@ func _no_campaign_mutation(lab: EchoLab) -> void:
 ## counts what it actually caused and refuses to be green without it.
 var _exercised := {"damage": 0.0, "statuses": 0, "hazard": 0, "motion": 0.0}
 
-func _the_suite_actually_exercised_something(lab: EchoLab) -> void:
+func _the_suite_actually_exercised_something(_lab: EchoLab) -> void:
 	_check(_exercised["damage"] > 0.0,
 			"the suite dealt real damage (%f)" % _exercised["damage"])
 	_check(int(_exercised["statuses"]) > 0,

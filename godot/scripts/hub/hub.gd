@@ -164,14 +164,14 @@ func _cut_lab_doorway(b, root: Node3D) -> void:
 	b._box(link, Vector3(3.4, 0.4, door_w),
 			Vector3(-W / 2.0 - 1.6, door_h, door_z),
 			ThemeMaterials.trim_mat(THEME))
-	var sign := Label3D.new()
-	sign.text = "ECHO LAB"
-	sign.font_size = 34
-	sign.pixel_size = 0.007
-	sign.position = Vector3(-W / 2.0 + 0.4, door_h + 0.5, door_z)
-	sign.rotation_degrees = Vector3(0, 90, 0)
-	sign.modulate = Color(0.6, 1.0, 0.85)
-	add_child(sign)
+	var sign_plate := Label3D.new()
+	sign_plate.text = "ECHO LAB"
+	sign_plate.font_size = 34
+	sign_plate.pixel_size = 0.007
+	sign_plate.position = Vector3(-W / 2.0 + 0.4, door_h + 0.5, door_z)
+	sign_plate.rotation_degrees = Vector3(0, 90, 0)
+	sign_plate.modulate = Color(0.6, 1.0, 0.85)
+	add_child(sign_plate)
 
 func _build_room() -> void:
 	var environment := WorldEnvironment.new()
@@ -192,9 +192,9 @@ func _build_room() -> void:
 	b._perimeter(root, W, D, H, THEME, false, false)
 	b._box(root, Vector3(W, 0.4, D), Vector3(0, H, D / 2.0),
 			ThemeMaterials.trim_mat(THEME))
-	for position in [Vector3(-W / 4.0, H - 0.4, D / 2.0),
+	for at in [Vector3(-W / 4.0, H - 0.4, D / 2.0),
 			Vector3(W / 4.0, H - 0.4, D / 2.0)]:
-		b._light(root, position, THEME, 16.0)
+		b._light(root, at, THEME, 16.0)
 
 	# The Echo Lab (S8): a walk-in annexe, not a mode. Cut a doorway in the
 	# west wall and put the room beyond it, so entering and leaving are
@@ -739,15 +739,15 @@ class SimpleStation extends StaticBody3D:
 		counter.material_override = ThemeMaterials.accent_mat(
 				HubController.THEME)
 		add_child(counter)
-		var sign := MeshInstance3D.new()
+		var placard := MeshInstance3D.new()
 		var sign_mesh := BoxMesh.new()
 		sign_mesh.size = Vector3(2.2, 0.5, 0.1)
-		sign.mesh = sign_mesh
-		sign.position = Vector3(0, 2.2, 0)
-		sign.material_override = ThemeMaterials.glow_material(
+		placard.mesh = sign_mesh
+		placard.position = Vector3(0, 2.2, 0)
+		placard.material_override = ThemeMaterials.glow_material(
 				station_color, 1.2)
-		add_child(sign)
-		_sign = sign
+		add_child(placard)
+		_sign = placard
 		var label := Label3D.new()
 		label.text = label_text
 		label.position = Vector3(0, 2.2, 0.1)
