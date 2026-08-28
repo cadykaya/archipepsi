@@ -199,10 +199,45 @@ Zone. It now varies deterministically by zone index. Real variety is the
 Claude provider composing from the vocabulary; this is only about making
 a keyless campaign bearable.
 
-**Open, and the owner's call: Zone LENGTH.** A Zone is about two minutes
-and they want roughly twenty. That is a pacing decision (checks per Zone,
-rooms per Check, the shape of the campaign), not a bug, and it is not
-mine to pick.
+**Zone LENGTH: decided, implemented, NOT yet proven.** The owner's
+CAMPAIGN SCALE brief (2026-08-28) answered the pacing question and
+`docs/design-packet-v0.9/CAMPAIGN_SCALE.md` is the normative spec.
+Defaults: `location_count: 450`, `zone_target_checks: 15`,
+`zone_budget: 1000`, all exposed in YAML over bounded ranges
+(30..600 / 1..30 / 200..2000). Every stage CS0-CS10 is implemented.
+
+Read `CAMPAIGN_SCALE.md` before touching any of it. The three rules that
+are load bearing and easy to break:
+
+- **Epsilon does not declare its own score.** The engine computes
+  `room_value` from what a room contains (`bridge/.../content_value.py`).
+  A provider claiming a number is a provider grading its own homework.
+- **Checks do not count as content.** `CHECK_VALUE = 0`. A Zone's length
+  comes from what is in it, so the budget buys ROOMS, and a Zone with one
+  Check and a thousand points is a long level rather than one big room.
+- **Per-campaign config is truth, and the SAVE wins.** A run keeps the
+  scale it was created with. A seed with no `campaign_scale` is a
+  PROTOTYPE campaign (30 locations), never the current default —
+  reinterpreting it would strand every Check it has.
+
+**The 40-minute Zone and the 20-hour campaign are still TARGETS.** They
+are arithmetic, not measurements, and must not be described as proven.
+CS10 is what can turn them into facts: Godot times each Zone (elapsed,
+per-room dwell, deaths, encounter durations) and the bridge joins that to
+the values it computed, one JSON line per Zone in `playtime.jsonl` beside
+the saves. Local only — no analytics, no upload path, and a test asserts
+`instrumentation.py` imports nothing that could reach a network. Read it
+with `instrumentation.read_records()` / `summarise()`.
+
+What CS8 turned up is the thing to remember: **the options, the item pool
+and the apworld all scaled, and the ENGINE did not.** Scouting,
+allocation, the save's Check cap, the goal id in five places, and the
+acceptance validator were all still pinned to the prototype's thirty, so
+a 450-location campaign scouted the first thirty, played them three at a
+time, and ended itself when Check 030 confirmed. Every one of those had a
+green suite over it, because the suite ran at prototype scale. The mock
+backend now takes a `CampaignConfig` and
+`bridge/tests/test_production_scale.py` runs the real engine at 450.
 
 ## What playtest 1 taught, and the guard it left behind
 

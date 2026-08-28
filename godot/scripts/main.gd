@@ -423,12 +423,28 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	_update_modal()
 
 func _on_exit_zone() -> void:
+	_send_zone_timing(true)
 	BridgeClient.send_intent({"type": "exit_zone", "zone_id": zone.zone_id})
 	_to_hub()
+
+## What the Zone cost, sent once as the player leaves (CAMPAIGN_SCALE.md
+## 13). The bridge writes it to a local file and nothing else -- it is
+## not campaign state, no snapshot carries it, and it goes nowhere near
+## the network beyond the bridge already running on this machine.
+##
+## `completed` separates a Zone finished from one bailed out of: an
+## abandoned Zone's elapsed time is not a Zone length.
+func _send_zone_timing(completed: bool) -> void:
+	if zone == null:
+		return
+	var intent: Dictionary = zone.playtime.to_intent(zone.zone_id, completed)
+	if not intent.is_empty():
+		BridgeClient.send_intent(intent)
 
 func _on_return_to_hub() -> void:
 	pause_menu.close()
 	if view == View.ZONE:
+		_send_zone_timing(false)
 		BridgeClient.send_intent({"type": "leave_zone",
 				"zone_id": zone.zone_id})
 		_to_hub()
@@ -437,6 +453,7 @@ func _on_abandon() -> void:
 	pause_menu.close()
 	if view == View.ZONE:
 		_abandoning = true
+		_send_zone_timing(false)
 		BridgeClient.send_intent({"type": "abandon_zone",
 				"zone_id": zone.zone_id})
 

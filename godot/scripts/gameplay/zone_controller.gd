@@ -36,6 +36,10 @@ var _current_chamber := -1
 ## outside the level, wall or no wall (invariant I14).
 var _world_bounds := AABB()
 var _has_bounds := false
+## Measures how long this Zone actually takes (CAMPAIGN_SCALE.md 13).
+## Never read by anything in the Zone: it observes and reports, and the
+## Zone plays identically without it.
+var playtime := PlaytimeLog.new()
 const _QUIET_BEFORE_ASIDE := 75.0
 
 func setup(zone_dict: Dictionary) -> void:
@@ -49,11 +53,23 @@ func setup(zone_dict: Dictionary) -> void:
 		_world_bounds = box if not _has_bounds \
 				else _world_bounds.merge(box)
 		_has_bounds = true
+	playtime.begin(build["chambers"].size())
 	_exit_portal.exit_requested.connect(func() -> void: exit_requested.emit())
 
 	player = Player.create()
 	add_child(player)
 	player.set_spawn(build["spawn_transform"])
+
+	# The measurement hooks (CAMPAIGN_SCALE.md 13). An encounter starts
+	# when someone actually engages -- a shot that connects, or a hit
+	# taken -- rather than when a room is entered, because a room you
+	# sprint through is not a fight and would otherwise report a
+	# thirty-second one.
+	player.died.connect(func() -> void: playtime.note_death())
+	player.hit_confirmed.connect(func(_killed: bool) -> void:
+		playtime.note_engagement(_live_enemy_count()))
+	player.damaged_from.connect(func(_source: Vector3) -> void:
+		playtime.note_engagement(_live_enemy_count()))
 
 	# Optional ledges (DESIGN §19). Walked, not searched: nothing is
 	# reported anywhere, so reaching one only ever earns a remark.
@@ -143,6 +159,7 @@ func _objective_of(chamber: Dictionary) -> String:
 	return str(chamber.get("objective", "reach_reward"))
 
 func _on_enemy_died(enemy: Enemy, record: Dictionary) -> void:
+	playtime.note_enemy_died(_live_enemy_count())
 	if tones != null:
 		tones.play("hit")
 	_quiet_time = 0.0                # a fight is not a quiet stretch
@@ -192,6 +209,17 @@ func _on_goal_area_entered(body: Node3D, record: Dictionary) -> void:
 	if body is Player and not record["satisfied"]:
 		record["satisfied"] = true          # latches for this instance
 		_push_objective_state(record)
+
+## Enemies still standing anywhere in the Zone. An encounter ends when
+## this reaches zero, which is also how a fight that spilled between two
+## rooms counts as one fight rather than two halves.
+func _live_enemy_count() -> int:
+	var alive := 0
+	for record: Dictionary in _chambers:
+		for enemy in record["enemies"]:
+			if is_instance_valid(enemy) and not enemy._dead:
+				alive += 1
+	return alive
 
 func _evaluate_objectives() -> void:
 	for record: Dictionary in _chambers:
@@ -249,11 +277,13 @@ func _track_chamber() -> void:
 		if bounds.has_point(player.global_position):
 			if index != _current_chamber:
 				_current_chamber = index
+				playtime.enter_chamber(index)
 				chamber_entered.emit(index)
 			return
 
 func _process(delta: float) -> void:
 	_track_chamber()
+	playtime.tick(delta)
 	if hud == null or player == null:
 		return
 	var claimed := 0
@@ -289,6 +319,8 @@ func _process(delta: float) -> void:
 	# or exploring; either way it is the one moment a designer's aside is
 	# welcome rather than an interruption.
 	if claimed != _last_claimed:
+		if claimed > _last_claimed and _last_claimed >= 0:
+			playtime.note_check_confirmed()
 		_last_claimed = claimed
 		_quiet_time = 0.0
 	else:

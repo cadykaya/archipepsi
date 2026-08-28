@@ -34,6 +34,8 @@ func _ready() -> void:
 	_test_exit_portal_appended()
 	await _test_every_chamber_is_sealed()
 	_test_light_fixtures_are_not_buried()
+	_test_playtime_measures_what_it_claims()
+	_test_playtime_is_silent_about_a_zone_nobody_played()
 	if failures == 0:
 		print("GODOT CHAMBER TESTS OK")
 		get_tree().quit(0)
@@ -579,3 +581,66 @@ func _fixtures(node: Node) -> Array[MeshInstance3D]:
 	for child in node.get_children():
 		out.append_array(_fixtures(child))
 	return out
+
+
+## CAMPAIGN_SCALE.md 13. The forty-minute Zone is a TARGET; this is the
+## only thing that can make it a measurement, so what it reports has to
+## be what happened.
+func _test_playtime_measures_what_it_claims() -> void:
+	var log := PlaytimeLog.new()
+	log.begin(3)
+	log.enter_chamber(0)
+	for i in 60:
+		log.tick(0.1)                       # 6s in the first room
+	log.enter_chamber(2)
+	for i in 100:
+		log.tick(0.1)                       # 10s in the third
+	# A fight: engaged with two alive, ends when the last one dies.
+	log.note_engagement(2)
+	for i in 40:
+		log.tick(0.1)
+	log.note_enemy_died(1)
+	log.note_enemy_died(0)
+	log.note_check_confirmed()
+	log.note_death()
+
+	var intent: Dictionary = log.to_intent("zone_001", true)
+	_check(intent.get("type") == "zone_timing", "not a zone_timing intent")
+	_check(absf(float(intent["elapsed_seconds"]) - 20.0) < 0.05,
+			"elapsed reported %s, not 20s" % intent["elapsed_seconds"])
+	_check(int(intent["deaths"]) == 1, "deaths not counted")
+	_check(int(intent["checks_completed"]) == 1, "Checks not counted")
+	var dwell: Array = intent["dwell"]
+	_check(dwell.size() == 3,
+			"one entry per chamber; got %d" % dwell.size())
+	_check(absf(float(dwell[0]["seconds"]) - 6.0) < 0.05,
+			"room 0 dwell reported %s, not 6s" % dwell[0]["seconds"])
+	_check(float(dwell[1]["seconds"]) == 0.0,
+			"a room nobody entered reported time in it")
+	# 10s in room 2 up to the fight, then 4s of fighting.
+	_check(absf(float(dwell[2]["seconds"]) - 14.0) < 0.05,
+			"room 2 dwell reported %s, not 14s" % dwell[2]["seconds"])
+	var encounters: Array = intent["encounter_seconds"]
+	_check(encounters.size() == 1,
+			"a fight from first engagement to last kill is ONE encounter; "
+			+ "got %d" % encounters.size())
+	_check(absf(float(encounters[0]) - 4.0) < 0.05,
+			"encounter reported %s, not 4s" % encounters[0])
+	_check(bool(intent["completed"]), "completed flag lost")
+
+func _test_playtime_is_silent_about_a_zone_nobody_played() -> void:
+	var log := PlaytimeLog.new()
+	log.begin(4)
+	_check(log.to_intent("zone_001", true).is_empty(),
+			"a Zone with no elapsed time still reported a measurement")
+	log.tick(1.0)
+	_check(log.to_intent("", true).is_empty(),
+			"a timing was reported for no Zone at all")
+	# ...and a death mid-fight does not report the respawn walk as combat.
+	log.note_engagement(2)
+	log.tick(3.0)
+	log.note_death()
+	log.tick(30.0)
+	log.note_enemy_died(0)
+	_check(log.to_intent("zone_001", false)["encounter_seconds"].is_empty(),
+			"a fight the player died in was reported as a long encounter")

@@ -338,6 +338,18 @@ then bounded room plans, then assembled Zone validation. Epsilon still
 owns composition, and the immutable interpretation log still fully
 determines the built Zone. **No second mechanics truth.**
 
+**Measured (CS9).** A Zone's JSON at the 1000-point default is 23 rooms
+and about 2,100 tokens; the largest campaign anyone can configure — 30
+Checks at 2000 — is 36 rooms and about 4,000. Both fit comfortably in
+one response, so the hierarchical pipeline is NOT needed and was not
+built. Two things did need fixing: the output allowance was a fixed
+8192 set when a Zone was six rooms, and now scales with the Zone's
+content budget (`claude.zone_output_budget`, 8192 to 32,000); and
+`stop_reason == "max_tokens"` was not handled at all, so a response cut
+off mid-Zone could parse into a valid-looking object holding a few rooms
+and none of the Checks. That is now a named error rather than a small
+Zone.
+
 ---
 
 ## 13. Instrumentation
@@ -360,6 +372,37 @@ Zone 7: budget 1008 · 14 rooms · 15 Checks · player time 41m 12s
 
 This is how the weights get tuned from evidence instead of asserting
 "room_value 80 = four minutes" by fiat.
+
+**Implemented (CS10).** Godot owns the clock — `PlaytimeLog`
+(`godot/scripts/gameplay/playtime_log.gd`) measures elapsed time,
+per-chamber dwell, deaths and encounter durations, and sends one
+`zone_timing` intent as the player leaves. The bridge joins it to the
+room and Zone values it computed for the same Zone and appends one line
+of JSON to `playtime.jsonl` beside the saves
+(`bridge/archipepsi_bridge/instrumentation.py`).
+
+Four properties hold, and each is tested:
+
+- **Local.** One file under the player's own save directory. No
+  analytics service, no upload path, and no identifier beyond the seed
+  and slot they already gave Archipelago. A test reads the module's
+  imports and refuses anything that could reach a network.
+- **Inert.** No campaign state depends on it, no snapshot carries it,
+  and a Zone plays identically with the whole thing removed.
+- **Never costly.** A failed write logs and returns. Losing the Zone a
+  player just finished because a log file could not be opened would be a
+  far worse trade than losing one measurement.
+- **Honest about what it measured.** An abandoned Zone's elapsed time is
+  not a Zone length (`completed` separates them), a room nobody entered
+  reads zero rather than being absent, and a fight the player died in is
+  not reported as a long encounter.
+
+The record carries `seconds_per_budget_point`, which is the number this
+whole redesign is a bet on: a 1000-point Zone that takes four minutes
+means the weights in `content_value.py` are wrong, and this is how
+anyone finds out. `instrumentation.summarise()` reports what the records
+say and nothing more — `zones: 3` means three Zones were timed, and the
+numbers are worth exactly that much.
 
 ---
 

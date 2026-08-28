@@ -1163,6 +1163,54 @@ class GrantLocalReward(Strict):
     best_seconds: float = Field(default=0.0, ge=0.0, le=36000.0)
 
 
+class ChamberDwell(Strict):
+    """How long the player spent in one chamber. Seconds, one entry per
+    chamber the Zone has, whether or not it was entered."""
+    chamber_index: int = Field(ge=0, lt=C.ZONE_MAX_CHAMBERS)
+    seconds: float = Field(ge=0.0, le=36000.0)
+
+
+class ZoneTiming(Strict):
+    """What the Zone actually cost the player, measured (CAMPAIGN_SCALE.md 13).
+
+    The 40-minute Zone and the 20-hour campaign are TARGETS. This is the
+    only thing that can turn either into a fact, and it is the reason the
+    engine's content budget can be calibrated against play rather than
+    against a designer's guess.
+
+    Godot owns the clock -- elapsed time, per-chamber dwell, deaths and
+    encounter durations are things only the running game knows. The
+    bridge joins them to the room and Zone VALUES it computed for the
+    same Zone, so one local record holds both halves.
+
+    Local only: the bridge appends it to a file under the save directory.
+    Nothing is sent anywhere (CAMPAIGN_SCALE.md 13).
+    """
+    type: Literal["zone_timing"]
+    zone_id: str = _ID
+    #: Wall-clock inside the Zone, excluding time spent paused.
+    elapsed_seconds: float = Field(ge=0.0, le=36000.0)
+    deaths: int = Field(default=0, ge=0, le=9999)
+    checks_completed: int = Field(default=0, ge=0,
+                                  le=C.ZONE_TARGET_CHECKS_MAX)
+    dwell: tuple[ChamberDwell, ...] = Field(default=(),
+                                            max_length=C.ZONE_MAX_CHAMBERS)
+    #: One entry per encounter the player finished, in seconds from the
+    #: first shot to the last enemy dying. This is what
+    #: `WORST_CASE_ENCOUNTER_TTK_BUDGET` was a guess about.
+    encounter_seconds: tuple[float, ...] = Field(default=(), max_length=64)
+    #: True when the player left through the portal rather than bailing
+    #: to the Hub -- an abandoned Zone's elapsed time is not a Zone length.
+    completed: bool = False
+
+    @model_validator(mode="after")
+    def _one_entry_per_chamber(self):
+        indices = [d.chamber_index for d in self.dwell]
+        if len(set(indices)) != len(indices):
+            raise ValueError("a chamber appears twice in the dwell record")
+        return self
+
+
 class SetCreativity(Strict):
     type: Literal["set_creativity"]
     value: Literal[0, 1, 2]
@@ -1187,6 +1235,7 @@ ClientMessage = Annotated[
         Hello, ApConnect, ApDisconnect, StartMockCampaign, RequestNextZone,
         EnterZone, LeaveZone, ExitZone, AbandonZone, ClaimCheck, BuyShopStock,
         SlotAction, GrantLocalReward, SetCreativity, DebugCommand,
+        ZoneTiming,
     ],
     Field(discriminator="type"),
 ]

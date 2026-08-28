@@ -96,6 +96,30 @@
         "title": "BuyShopStock",
         "type": "object"
       },
+      "ChamberDwell": {
+        "additionalProperties": false,
+        "description": "How long the player spent in one chamber. Seconds, one entry per\nchamber the Zone has, whether or not it was entered.",
+        "properties": {
+          "chamber_index": {
+            "exclusiveMaximum": 40,
+            "minimum": 0,
+            "title": "Chamber Index",
+            "type": "integer"
+          },
+          "seconds": {
+            "maximum": 36000.0,
+            "minimum": 0.0,
+            "title": "Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "chamber_index",
+          "seconds"
+        ],
+        "title": "ChamberDwell",
+        "type": "object"
+      },
       "ClaimCheck": {
         "additionalProperties": false,
         "description": "Sent when the player interacts with an unlocked reward object.\n\nThe bridge re-verifies what it actually can: a campaign is loaded, the\nZone is ACTIVE, the location is in that Zone's allocated_location_ids,\nit is not already confirmed, and no pending transaction exists for it.\nIt cannot verify the chamber objective was satisfied \u2014 it does not\nsimulate enemies. Objective gating is client-side.",
@@ -406,6 +430,74 @@
         ],
         "title": "StartMockCampaign",
         "type": "object"
+      },
+      "ZoneTiming": {
+        "additionalProperties": false,
+        "description": "What the Zone actually cost the player, measured (CAMPAIGN_SCALE.md 13).\n\nThe 40-minute Zone and the 20-hour campaign are TARGETS. This is the\nonly thing that can turn either into a fact, and it is the reason the\nengine's content budget can be calibrated against play rather than\nagainst a designer's guess.\n\nGodot owns the clock -- elapsed time, per-chamber dwell, deaths and\nencounter durations are things only the running game knows. The\nbridge joins them to the room and Zone VALUES it computed for the\nsame Zone, so one local record holds both halves.\n\nLocal only: the bridge appends it to a file under the save directory.\nNothing is sent anywhere (CAMPAIGN_SCALE.md 13).",
+        "properties": {
+          "type": {
+            "const": "zone_timing",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "elapsed_seconds": {
+            "maximum": 36000.0,
+            "minimum": 0.0,
+            "title": "Elapsed Seconds",
+            "type": "number"
+          },
+          "deaths": {
+            "default": 0,
+            "maximum": 9999,
+            "minimum": 0,
+            "title": "Deaths",
+            "type": "integer"
+          },
+          "checks_completed": {
+            "default": 0,
+            "maximum": 30,
+            "minimum": 0,
+            "title": "Checks Completed",
+            "type": "integer"
+          },
+          "dwell": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ChamberDwell"
+            },
+            "maxItems": 40,
+            "title": "Dwell",
+            "type": "array"
+          },
+          "encounter_seconds": {
+            "default": [],
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 64,
+            "title": "Encounter Seconds",
+            "type": "array"
+          },
+          "completed": {
+            "default": false,
+            "title": "Completed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "elapsed_seconds"
+        ],
+        "title": "ZoneTiming",
+        "type": "object"
       }
     },
     "discriminator": {
@@ -424,7 +516,8 @@
         "request_next_zone": "#/$defs/RequestNextZone",
         "set_creativity": "#/$defs/SetCreativity",
         "slot_action": "#/$defs/SlotAction",
-        "start_mock_campaign": "#/$defs/StartMockCampaign"
+        "start_mock_campaign": "#/$defs/StartMockCampaign",
+        "zone_timing": "#/$defs/ZoneTiming"
       },
       "propertyName": "type"
     },
@@ -473,6 +566,9 @@
       },
       {
         "$ref": "#/$defs/DebugCommand"
+      },
+      {
+        "$ref": "#/$defs/ZoneTiming"
       }
     ]
   },

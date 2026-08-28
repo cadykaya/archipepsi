@@ -36,6 +36,7 @@ from .schemas.protocol import (
     Notification, ScoutedLocation, ShopState, SlotAssignment, ZoneReady,
     ZoneRecord,
 )
+from . import instrumentation
 from . import store
 
 log = logging.getLogger("archipepsi.campaign")
@@ -769,6 +770,28 @@ class CampaignEngine:
         await self._emit(ZoneReady(type="zone_ready", zone=outcome.value,
                                    used_fallback=outcome.used_fallback))
         await self.broadcast_snapshot()
+
+    # ------------------------------------------------------------------
+    # Local instrumentation (CAMPAIGN_SCALE.md 13)
+    # ------------------------------------------------------------------
+
+    def record_zone_timing(self, timing) -> None:
+        """Append what the Zone actually cost. Local file, never a request.
+
+        Not a state transition: nothing in the campaign reads it back, no
+        snapshot carries it and no rule depends on it. It exists so the
+        40-minute Zone can stop being a target and start being a
+        measurement -- and so a content budget that turns out to buy four
+        minutes of play can be seen to.
+
+        Deliberately silent about failure. A Zone the player just finished
+        must not be lost because a log file could not be opened.
+        """
+        if self.save is None:
+            return
+        record = instrumentation.build_record(self.save, timing)
+        if record is not None:
+            instrumentation.append_record(self.save_dir, record)
 
     async def handle_request_next_zone(self, finale: bool) -> None:
         if self.save is None:
