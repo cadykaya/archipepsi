@@ -87,7 +87,7 @@ file accurate, and end the turn.** Do not invent work to fill a heartbeat.
 | `python3 tools/blender/check_docs_metrics.py` | PASS — every number in ART_REVIEW.md and ASSET_INVENTORY.md matches the build |
 | `tools/sabotage_checks.sh` | see the commit for the run |
 | `tools/check_art_current.sh` | PASS — every asset byte-identical from source |
-| Assets built | 40 models + 16 theme textures + 66 review images |
+| Assets built | 40 models + 16 theme textures + 7 prop skins + 68 review images (46 in 001, 22 in 002) |
 | Composed room | 3,272 / 12,000 triangles |
 
 ### What a heartbeat cannot see
