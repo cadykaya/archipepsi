@@ -1,5 +1,6 @@
 {
   "epsilon_a_lectern": {
+    "anchor": "floor",
     "path": "batch001/epsilon/epsilon_a_lectern.glb",
     "size": [
       1.18,
@@ -10,6 +11,7 @@
     "triangles": 140
   },
   "epsilon_b_core": {
+    "anchor": "floor",
     "path": "batch001/epsilon/epsilon_b_core.glb",
     "size": [
       1.25,
@@ -20,6 +22,7 @@
     "triangles": 136
   },
   "epsilon_c_aperture": {
+    "anchor": "floor",
     "path": "batch001/epsilon/epsilon_c_aperture.glb",
     "size": [
       1.34,

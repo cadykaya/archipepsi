@@ -1,5 +1,6 @@
 {
   "enemy_melee_a_stooped": {
+    "anchor": "floor",
     "path": "batch001/enemy/enemy_melee_a_stooped.glb",
     "size": [
       0.77,
@@ -10,6 +11,7 @@
     "triangles": 448
   },
   "enemy_melee_b_tripod": {
+    "anchor": "floor",
     "path": "batch001/enemy/enemy_melee_b_tripod.glb",
     "size": [
       0.685,
@@ -20,6 +22,7 @@
     "triangles": 240
   },
   "enemy_melee_c_squat": {
+    "anchor": "floor",
     "path": "batch001/enemy/enemy_melee_c_squat.glb",
     "size": [
       0.786,
