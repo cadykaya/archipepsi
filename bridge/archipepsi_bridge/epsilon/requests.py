@@ -91,9 +91,11 @@ class ZoneGenerationRequest(Strict):
     })
     constraints: dict = Field(default_factory=lambda: {
         "max_chambers": C.ZONE_MAX_CHAMBERS,
-        "max_enemies_total": C.MAX_ENEMIES_PER_ZONE,
+        "max_enemies_total": C.max_enemies_per_zone(
+            C.PROTOTYPE_CONFIG.zone_budget),
         "max_enemies_per_chamber": C.MAX_ENEMIES_PER_CHAMBER,
-        "max_brutes": C.MAX_BRUTES_PER_ZONE,
+        "max_brutes": C.max_brutes_per_zone(
+            C.PROTOTYPE_CONFIG.zone_budget),
         "max_vertical_step": C.MAX_VERTICAL_STEP,
         "gap_bound": (
             "gap_size <= max_safe_gap(vertical_step); "

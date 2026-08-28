@@ -55,7 +55,10 @@ AffordanceTag = Literal[
 
 class EnemyGroup(Strict):
     archetype: Archetype
-    count: int = Field(ge=1, le=C.MAX_ENEMIES_PER_CHAMBER)
+    #: One group is one encounter, so this is the encounter cap rather
+    #: than the room's: a room may hold two or three waves, but the
+    #: player fights them one at a time.
+    count: int = Field(ge=1, le=C.MAX_ENEMIES_PER_ENCOUNTER)
 
 
 class AffordanceFeature(Strict):
@@ -342,16 +345,21 @@ class Zone(Strict):
         if len(set(ids)) != len(ids):
             raise ValueError("duplicate chamber id")
 
+        # The PERFORMANCE ceiling only. How many enemies a Zone may hold
+        # by DESIGN depends on its content budget, which is campaign
+        # config and not visible from inside a model -- that check lives
+        # in `validate_zone`, which has it.
+        #
+        # Splitting them this way is the point of CAMPAIGN_SCALE.md 8: a
+        # design that wants more than the engine can hold is wrong about
+        # the target machine and should fail here regardless of budget,
+        # while a design that merely wants more than its Zone was paid
+        # for is a budget question.
         total = sum(c.enemy_total for c in self.chambers)
-        if total > C.MAX_ENEMIES_PER_ZONE:
+        if total > C.MAX_ENEMIES_SPAWNED_CAP:
             raise ValueError(
-                f"zone has {total} enemies, limit is {C.MAX_ENEMIES_PER_ZONE}"
-            )
-
-        brutes = sum(c.brute_total for c in self.chambers)
-        if brutes > C.MAX_BRUTES_PER_ZONE:
-            raise ValueError(
-                f"zone has {brutes} brutes, limit is {C.MAX_BRUTES_PER_ZONE}"
+                f"zone instantiates {total} enemies, past the engine cap "
+                f"of {C.MAX_ENEMIES_SPAWNED_CAP}"
             )
 
         rewards = self.reward_location_ids
@@ -412,6 +420,28 @@ def validate_zone(
     accepted components; nothing the provider sent is read as a score.
     """
     errors: list[str] = []
+
+    # Enemy counts scale with the Zone's content budget: a longer level
+    # holds more enemies OVER TIME. `MAX_ENEMIES_ACTIVE` is what bounds
+    # the moment, and it does not scale.
+    #
+    # No budget means a campaign generated before budgets existed, so it
+    # gets the prototype's caps rather than none -- "optional" must not
+    # be how a limit stops being enforced.
+    combat_budget = (zone_budget if zone_budget is not None
+                     else C.PROTOTYPE_CONFIG.zone_budget)
+    enemy_cap = C.max_enemies_per_zone(combat_budget)
+    total_enemies = sum(c.enemy_total for c in zone.chambers)
+    if total_enemies > enemy_cap:
+        errors.append(
+            f"zone has {total_enemies} enemies, limit is {enemy_cap} for a "
+            f"{combat_budget}-point Zone")
+    brute_cap = C.max_brutes_per_zone(combat_budget)
+    brutes = sum(c.brute_total for c in zone.chambers)
+    if brutes > brute_cap:
+        errors.append(
+            f"zone has {brutes} brutes, limit is {brute_cap} for a "
+            f"{combat_budget}-point Zone")
 
     if zone_budget is not None:
         from ..content_value import budget_errors

@@ -109,9 +109,23 @@ def test_gravity_echoes_can_only_ever_help():
     assert C.GRAVITY_MULT_MAX <= 1.0
 
 
-def test_worst_legal_zone_is_not_a_plinkfest():
-    ttk = C.worst_case_zone_ttk()
-    assert ttk < C.WORST_CASE_ZONE_TTK_BUDGET
+def test_worst_legal_encounter_is_not_a_plinkfest():
+    """Per ENCOUNTER, not per Zone (CAMPAIGN_SCALE.md 8).
+
+    "The whole level equals 40 seconds of shooting" was a real statement
+    about difficulty while a Zone was six rooms. At forty minutes it caps
+    a production Zone at roughly the combat of one arena, which is not a
+    difficulty rule any more -- it is a length rule wearing one.
+
+    What the player actually experiences is a fight, so the fight is what
+    is bounded.
+    """
+    ttk = C.worst_case_encounter_ttk()
+    assert ttk < C.WORST_CASE_ENCOUNTER_TTK_BUDGET, (
+        f"the worst legal single encounter needs {ttk:.0f}s of sustained "
+        "Static Pulse; that is a plinkfest whatever the Zone is worth")
+    # ...and not trivially short either, or the bound proves nothing.
+    assert ttk > 5.0, f"the worst legal encounter is over in {ttk:.0f}s"
 
 
 def test_reference_echo_beats_static_pulse_by_the_stated_margin():
@@ -282,10 +296,14 @@ def test_valid_platform_path_and_treasure_room_parse():
 def test_per_chamber_enemy_cap_is_enforced():
     """v0.4 bounded each GROUP at 8 and allowed 4 groups, so one chamber
     could legally hold 14 while the prose and Epsilon's constraints said 8."""
+    over = C.MAX_ENEMIES_PER_CHAMBER + 2
+    half = over // 2
     bad = _zone()
     bad["chambers"][1]["enemies"] = [
-        {"archetype": "melee", "count": 7}, {"archetype": "ranged", "count": 7}]
-    with pytest.raises(ValidationError, match="limit is 8"):
+        {"archetype": "melee", "count": half},
+        {"archetype": "ranged", "count": over - half}]
+    with pytest.raises(ValidationError,
+                       match=f"limit is {C.MAX_ENEMIES_PER_CHAMBER}"):
         Zone.model_validate(bad)
 
 
@@ -304,16 +322,56 @@ def test_kill_all_requires_enemies():
         Zone.model_validate(bad)
 
 
-def test_zone_enemy_and_brute_budgets():
+def test_zone_enemy_and_brute_budgets_scale_with_the_zone():
+    """The caps moved from the model to `validate_zone` and became
+    budget-relative (CAMPAIGN_SCALE.md 8).
+
+    They could not stay in the model: how many enemies a Zone may hold by
+    DESIGN depends on its content budget, which is campaign config and
+    invisible from inside a Zone. What stayed in the model is the engine
+    ceiling, which is absolute.
+    """
+    over = C.max_enemies_per_zone(C.PROTOTYPE_CONFIG.zone_budget) + 2
     bad = _zone()
-    bad["chambers"][1]["enemies"] = [{"archetype": "melee", "count": 8}]
-    bad["chambers"][2]["enemies"] = [{"archetype": "melee", "count": 8}]
-    with pytest.raises(ValidationError, match="limit is 14"):
-        Zone.model_validate(bad)
+    bad["chambers"][1]["enemies"] = [{"archetype": "melee", "count": over // 2}]
+    bad["chambers"][2]["enemies"] = [
+        {"archetype": "melee", "count": over - over // 2}]
+    zone = Zone.model_validate(bad)          # legal to BUILD
+    errors = validate_zone(
+        zone, expected_zone_id=zone.zone_id,
+        allocated_location_ids=list(zone.reward_location_ids),
+        owned_echo_ids=[])
+    assert any("enemies, limit is" in e for e in errors), errors
+
+    # ...and the same Zone is fine once it is paid for. This is the half
+    # that matters: the rule scales rather than merely refusing more.
+    roomy = validate_zone(
+        zone, expected_zone_id=zone.zone_id,
+        allocated_location_ids=list(zone.reward_location_ids),
+        owned_echo_ids=[], zone_budget=C.DEFAULT_CONFIG.zone_budget)
+    assert not any("enemies, limit is" in e for e in roomy), roomy
+
     bad2 = _zone()
     bad2["chambers"][1]["enemies"] = [{"archetype": "brute", "count": 2}]
-    with pytest.raises(ValidationError, match="brutes"):
-        Zone.model_validate(bad2)
+    brute_errors = validate_zone(
+        Zone.model_validate(bad2), expected_zone_id="zone_001",
+        allocated_location_ids=[], owned_echo_ids=[])
+    assert any("brutes" in e for e in brute_errors), brute_errors
+
+
+def test_the_engine_ceiling_is_absolute_and_stays_in_the_model():
+    """A design wanting more than the machine can hold is wrong about the
+    machine, not about its budget -- so this refuses at construction, with
+    no budget consulted."""
+    huge = _zone()
+    huge["chambers"][1]["enemies"] = [
+        {"archetype": "melee", "count": C.MAX_ENEMIES_PER_ENCOUNTER}]
+    # Build a Zone past the engine cap by repetition rather than by one
+    # enormous group, since a group is bounded on its own.
+    assert C.MAX_ENEMIES_SPAWNED_CAP > C.max_enemies_per_zone(
+        C.ZONE_BUDGET_MAX), (
+        "the engine ceiling is below the largest budgeted Zone, so the "
+        "design cap can never be the binding one")
 
 
 def test_featured_echo_ids_are_shaped_ids_not_free_text():

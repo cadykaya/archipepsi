@@ -523,16 +523,79 @@ ENEMY_STATS = {
 ENEMY_AGGRO_RADIUS = 18.0
 RANGED_PROJECTILE_SPEED = 14.0
 
-MAX_ENEMIES_PER_ZONE = 14
-MAX_ENEMIES_PER_CHAMBER = 8
-MAX_BRUTES_PER_ZONE = 1
-WORST_CASE_ZONE_TTK_BUDGET = 40.0
+# --------------------------------------------------------------------------
+# Combat scale (CAMPAIGN_SCALE.md 8)
+# --------------------------------------------------------------------------
+# These were one number, `MAX_ENEMIES_PER_ZONE = 14`, doing four jobs:
+# how many the player meets, how many are alive at once, how long the
+# shooting lasts, and what the engine can afford. That works while a Zone
+# is six rooms and every enemy in it is effectively one fight. It cannot
+# describe a forty-minute level, and replacing 14 with a bigger number
+# would just make the conflation bigger.
+#
+# So they separate. Two of them SCALE with the Zone's content budget --
+# a longer level has more enemies in it over time -- and two do NOT,
+# because they are about a single moment: what is on screen, and what the
+# player is being asked to survive right now.
+
+#: Enemies in one encounter group, and how many of those may be brutes.
+#: This is the unit a player actually fights, and it does not grow with
+#: the level: a 40-minute Zone is more fights, not a bigger fight.
+MAX_ENEMIES_PER_ENCOUNTER = 10
+MAX_BRUTES_PER_ENCOUNTER = 1
+
+#: Alive and hostile at the same instant, across the whole Zone. Bounded
+#: for fairness first and frame time second -- a player cannot read
+#: thirty telegraphs, whatever the renderer can manage.
+MAX_ENEMIES_ACTIVE = 12
+
+#: One room, over the whole time the player is in it. Larger than an
+#: encounter because a big arena may hold two or three waves.
+MAX_ENEMIES_PER_CHAMBER = 12
+
+#: The hard engine ceiling on enemies instantiated for one Zone. Not a
+#: design number: a design that wants more is wrong about what the target
+#: machine can hold, and should say so by failing here.
+MAX_ENEMIES_SPAWNED_CAP = 240
+
+#: How the two scaling caps derive from `zone_budget`.
+#:
+#: Both reproduce the prototype EXACTLY at the 200-point floor -- 14
+#: enemies, 1 brute -- so a campaign generated before budgets existed
+#: keeps the combat it was built with, the same property CampaignConfig
+#: has for tiers and the item pool.
+ENEMIES_PER_BUDGET_POINT = 14 / 200
+BRUTES_PER_BUDGET_POINT = 1 / 200
 
 
-def worst_case_zone_ttk() -> float:
-    """Seconds of sustained Static Pulse fire to clear the worst legal Zone."""
-    brute_hp = ENEMY_STATS["brute"]["hp"] * MAX_BRUTES_PER_ZONE
-    grunt_hp = ENEMY_STATS["melee"]["hp"] * (MAX_ENEMIES_PER_ZONE - MAX_BRUTES_PER_ZONE)
+def max_enemies_per_zone(zone_budget: int) -> int:
+    """Total enemies a Zone may contain, over its whole length.
+
+    NOT how many are alive at once -- that is `MAX_ENEMIES_ACTIVE`, and
+    conflating the two is what made the old single number unable to
+    describe a long level.
+    """
+    return min(MAX_ENEMIES_SPAWNED_CAP,
+               round(zone_budget * ENEMIES_PER_BUDGET_POINT))
+
+
+def max_brutes_per_zone(zone_budget: int) -> int:
+    return max(1, round(zone_budget * BRUTES_PER_BUDGET_POINT))
+
+
+#: Seconds of sustained Static Pulse fire the worst legal ENCOUNTER may
+#: need. Per encounter, because "the whole level equals 40 seconds of
+#: shooting" stopped being a statement about difficulty the moment a Zone
+#: became forty minutes long -- it would have capped a production Zone at
+#: about the combat of one arena.
+WORST_CASE_ENCOUNTER_TTK_BUDGET = 40.0
+
+
+def worst_case_encounter_ttk() -> float:
+    """Seconds to clear the worst legal single encounter with the base kit."""
+    brute_hp = ENEMY_STATS["brute"]["hp"] * MAX_BRUTES_PER_ENCOUNTER
+    grunts = MAX_ENEMIES_PER_ENCOUNTER - MAX_BRUTES_PER_ENCOUNTER
+    grunt_hp = ENEMY_STATS["melee"]["hp"] * grunts
     return (brute_hp + grunt_hp) / STATIC_PULSE_DPS
 
 

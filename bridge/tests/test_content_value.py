@@ -270,3 +270,57 @@ def test_nothing_outside_the_schema_reads_the_raw_reward_fields():
     assert not offenders, (
         "these read a raw reward field instead of `reward_ids`, so they "
         "see only the first Check in a room: " + "; ".join(offenders))
+
+
+# --- CS6: the combat concepts are separate --------------------------------
+
+def test_what_is_alive_at_once_does_not_scale_with_the_zone():
+    """The heart of CAMPAIGN_SCALE.md 8.
+
+    A forty-minute Zone holds more enemies than a two-minute one -- OVER
+    TIME. It must not put more of them on the player at once: a fight is
+    a fight, and thirty simultaneous telegraphs is unreadable whatever
+    the level is worth.
+
+    `MAX_ENEMIES_ACTIVE` and the per-encounter caps are therefore plain
+    constants with no budget in sight, and this test exists to fail if
+    anybody makes them functions of one.
+    """
+    from archipepsi_bridge.schemas import constants as C
+    import inspect
+
+    for name in ("MAX_ENEMIES_ACTIVE", "MAX_ENEMIES_PER_ENCOUNTER",
+                 "MAX_BRUTES_PER_ENCOUNTER", "MAX_ENEMIES_PER_CHAMBER"):
+        value = getattr(C, name)
+        assert isinstance(value, int), (
+            f"{name} became {type(value).__name__}; what the player faces "
+            "at one moment must not depend on how long the level is")
+
+    # ...while the over-time caps DO scale, or the separation is cosmetic.
+    small = C.max_enemies_per_zone(C.ZONE_BUDGET_MIN)
+    large = C.max_enemies_per_zone(C.DEFAULT_ZONE_BUDGET)
+    assert large > small * 3, (
+        f"a {C.DEFAULT_ZONE_BUDGET}-point Zone allows {large} enemies "
+        f"against {small} for a {C.ZONE_BUDGET_MIN}-point one; the totals "
+        "are not really scaling")
+    assert not inspect.isfunction(getattr(C, "MAX_ENEMIES_ACTIVE", 0))
+
+
+def test_the_prototype_keeps_exactly_the_combat_it_was_built_with():
+    """14 enemies and 1 brute at the 200-point floor, as before.
+
+    The same property CampaignConfig has for tiers and the item pool: a
+    campaign generated before any of this keeps the game it was."""
+    from archipepsi_bridge.schemas import constants as C
+    floor = C.PROTOTYPE_CONFIG.zone_budget
+    assert C.max_enemies_per_zone(floor) == 14
+    assert C.max_brutes_per_zone(floor) == 1
+
+
+def test_an_encounter_stays_survivable_at_every_budget():
+    """Zone budget buys more fights, never a longer single fight."""
+    from archipepsi_bridge.schemas import constants as C
+    assert C.worst_case_encounter_ttk() < C.WORST_CASE_ENCOUNTER_TTK_BUDGET
+    for budget in (C.ZONE_BUDGET_MIN, 1000, C.ZONE_BUDGET_MAX):
+        assert C.MAX_ENEMIES_PER_ENCOUNTER <= C.max_enemies_per_zone(budget) \
+            or budget == C.ZONE_BUDGET_MIN
