@@ -1409,3 +1409,75 @@ up the column at 1.2 m intervals, and `A_wind_column.png` shows it that way.
 | `A_movplat_water.png` | the two that are read from above |
 
 Status: **PENDING** — production work inheriting locked DNA.
+
+---
+
+## Batch 010 — the dressing the generator actually places
+
+### The finding first, because it matters more than the three props
+
+`ASSET_INVENTORY.md` §8 lists twenty-two universal props — `prop_barrel`,
+`prop_locker`, `prop_canister`, `prop_fan`. **Nothing places any of them.**
+
+`chamber_builders._theme_props` is the only thing in the generator that
+puts dressing in a Zone, and it places exactly one prop per *theme*:
+
+| Theme | What every Zone actually gets | Was it in the inventory? |
+| --- | --- | --- |
+| concrete_facility | a bolted warning plate | no |
+| rusted_industrial | an oil drum, sometimes stacked, or a wall valve | no |
+| gothic_stone | a torch sconce with a lit flame | no |
+| neon_transit | hanging signage | no |
+| temple_ruin | root tendrils, or a column stump | no |
+| void_glitch | a `Label3D` reading `prop_missing.mdl` | no |
+
+So the inventory's prop section described a library the game does not use,
+and the six props every Zone in the game *does* contain were not in it at
+all. §9's *signature dressing props* row is their home and it was `—` for
+all six themes. Both are corrected.
+
+### What was built, and what was not
+
+| ID | Tris | Size (m) | Theme |
+| --- | --- | --- | --- |
+| `prop_wall_plate` | 84 | 0.90 × 0.10 × 0.62 | concrete_facility |
+| `prop_oil_drum` | 184 | 0.78 × 0.78 × 0.95 | rusted_industrial |
+| `prop_valve_wheel` | 176 | 0.62 × 0.23 × 0.62 | rusted_industrial |
+
+Three, gated by which theme material families exist —
+`materials.built_themes()` is concrete_facility, rusted_industrial and
+void_glitch. A gothic torch sconce cannot be painted before gothic_stone has
+a family, and building it against another theme's ramps is a prop that gets
+rebuilt.
+
+**void_glitch's is deliberately left alone.** Its prop is a text label
+reading `prop_missing.mdl` — the prop that never loaded — and authoring a
+mesh for it would destroy the joke, which is that theme's whole identity.
+
+### The drum stacks, so it tiles
+
+`_theme_props` duplicates the drum at `position.y += 0.95` four times in
+ten. It is therefore exactly 0.95 tall with flat full-width faces, its
+rolling hoops are recessed inside the body radius, and its bung is flush
+rather than proud — a 20 mm boss would make every stacked pair
+interpenetrate by exactly that. `D_drum_stack.png` is two of them on each
+other, which is the only way to know.
+
+### Evidence
+
+`docs/art/review/batch010/`, from `tools/shots/batch010_dressing.json`.
+
+| Image | What it answers |
+| --- | --- |
+| `D_drum_stack.png` · `_grey` | does the drum tile |
+| `D_dressing_family.png` · `_silhouette` | three of six, side by side |
+| `D_wall_plate.png` · `D_valve_wheel.png` | each on its own |
+
+One thing to look at: the warning plate is a 0.9 × 0.6 m field of hazard
+orange, and it is the *only* dressing a concrete_facility Zone gets. That
+is what `hazard_mat` already does and it is semantically right — a warning
+plate is a warning — but it is also the largest single area of orange
+anywhere in the facility, so it is worth your eye against the Batch 004
+rule that orange stays rare.
+
+Status: **PENDING** — production work inheriting locked DNA.

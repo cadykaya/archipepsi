@@ -57,7 +57,7 @@ with the approved authored vocabulary come first.
 | 3 | Common architecture | **in progress** — Batch 007 built the five remaining Pri-A modules (stair, ramp, ledge, straight connector, both corners). 15 of 29; what is left is all Pri B/C |
 | 4 | The enemy production family | **mostly blocked** — Batch 008 built the three projectiles, the one Pri-A row with nothing in its way. Seven of the ten roles wait on colliders (req 7) and the telegraph on a node that does not exist (req 14) |
 | 5 | Movement affordances | **done** — Batch 009 built the six remaining fixtures, all in the `signal` family the approved anchors wear |
-| 6 | Universal props | 7 exist |
+| 6 | Universal props | **corrected** — §8's 22-prop library is placed by nothing. Batch 010 built the three the generator actually places whose theme family exists; three more wait on their theme kits |
 | 7 | Room-shell vocabulary | none |
 | 8 | The six theme kits | 3 of 6 material families |
 | 9 | Presentation / polish | none |
@@ -84,7 +84,7 @@ line rather than inventing work.
 | | |
 | --- | --- |
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
-| Phase | **STYLE LOCK PASSED — production.** Batch 004 is `PASS`. Batch 005 is `PASS IN DIRECTION`, its one required revision delivered as 005-R. Batches 005-R, 006, 007, 008 and 009 are `PENDING`. |
+| Phase | **STYLE LOCK PASSED — production.** Batch 004 is `PASS`. Batch 005 is `PASS IN DIRECTION`, its one required revision delivered as 005-R. Batches 005-R, 006, 007, 008, 009 and 010 are `PENDING`. |
 | Owner review | Style Lock passed 2026-08-28. Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
 | Next action | **Tier 6: universal props**, then Tier 3's Pri-B architecture. Tiers 1, 2 and 5 are done to their Pri-A rows; Tier 4 is blocked past the projectiles (reqs 7 and 14). Five batches — 005-R, 006, 007, 008, 009 — are with the owner. |
 
@@ -142,9 +142,9 @@ grow again until Style Lock passes.
 | `python3 tools/blender/palette.py` | PASS |
 | `python3 tools/blender/check_docs_metrics.py` | PASS — every number in ART_REVIEW.md and ASSET_INVENTORY.md matches the build |
 | `tools/sabotage_checks.sh` | see the commit for the run |
-| `python3 tools/blender/sync_inventory.py` | 81 assets written |
+| `python3 tools/blender/sync_inventory.py` | 84 assets written |
 | `tools/check_art_current.sh` | PASS — every asset byte-identical from source |
-| Assets built | 81 models + 16 theme textures + 7 prop skins + review images in `review/batch001` … `batch009` |
+| Assets built | 84 models + 16 theme textures + 7 prop skins + review images in `review/batch001` … `batch010` |
 | Composed room | 3,272 / 12,000 triangles |
 
 ### What a heartbeat cannot see
@@ -164,7 +164,7 @@ should say it cannot rather than guess.
 
 ## Where the review images are
 
-**[`docs/art/review/batch005r/`](review/batch005r/)** · **[`batch006/`](review/batch006/)** · **[`batch007/`](review/batch007/)** · **[`batch008/`](review/batch008/)** · **[`batch009/`](review/batch009/)** — with the owner now
+**[`docs/art/review/batch005r/`](review/batch005r/)** · **[`batch006/`](review/batch006/)** · **[`batch007/`](review/batch007/)** · **[`batch008/`](review/batch008/)** · **[`batch009/`](review/batch009/)** · **[`batch010/`](review/batch010/)** — with the owner now
 
 `batch005r/` is the one required Batch 005 revision: locked against
 confirmed at 39.6 m, measured. Start at `R_state_family_far_inset.png`.
@@ -234,7 +234,7 @@ B=.tools/blender/blender
 for s in materials architecture props concept_epsilon concept_check \
          concept_portal concept_enemy concept_anchor \
          batch002_enemies epsilon_installation hub lab check \
-         ways_out traversal projectile affordances; do
+         ways_out traversal projectile affordances dressing; do
   $B -b --python tools/blender/build_$s.py
 done
 tools/batch001_sheets.sh      # ~12 min: 28 sheets
@@ -247,6 +247,7 @@ tools/shoot.sh <list.json>    # ANY shot, from a JSON list. Start here.
                               #   tools/shots/batch007_traversal.json
                               #   tools/shots/batch008_projectile.json
                               #   tools/shots/batch009_affordances.json
+                              #   tools/shots/batch010_dressing.json
 tools/pixel_inset.py          # a region of a render, magnified NEAREST
 tools/hub_room.sh             # the Hub, built out of authored assets
 tools/epsilon_views.sh        # the operator / oblique / fusion / value views

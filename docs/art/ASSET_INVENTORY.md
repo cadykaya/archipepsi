@@ -118,6 +118,9 @@ These are the vocabulary everything after them inherits.
 | `wind_perch` | L2 | interactable | 80 | 1.50 × 1.50 × 0.64 | ceiling | B9 | B9 | PEND |
 | `bounce_pad` | L2 | interactable | 160 | 2.03 × 2.03 × 0.42 | floor | B9 | B9 | PEND |
 | `movplat_deck` | L2 | interactable | 144 | 2.40 × 2.40 × 0.72 | floor | B9 | B9 | PEND |
+| `prop_wall_plate` | L0 | prop | 84 | 0.90 × 0.10 × 0.62 | wall | B10 | B10 | PEND |
+| `prop_oil_drum` | L0 | prop | 184 | 0.78 × 0.78 × 0.95 | floor | B10 | B10 | PEND |
+| `prop_valve_wheel` | L0 | prop | 176 | 0.62 × 0.23 × 0.62 | wall | B10 | B10 | PEND |
 
 | Theme material | Roles built |
 | --- | --- |
@@ -318,6 +321,20 @@ Asserted at build time.
 Environmental-storytelling clusters are **L2** — composed alcoves and
 stations Epsilon selects whole, not props it arranges itself.
 
+> **Nothing in this section is placed by the generator.**
+> `chamber_builders._theme_props` is the only thing that puts dressing in a
+> Zone, and it places exactly one prop per THEME, none of which is listed
+> above: a bolted warning plate (concrete_facility), an oil drum or a wall
+> valve (rusted_industrial), a torch sconce (gothic_stone), hanging signage
+> (neon_transit), root tendrils or a column stump (temple_ruin), and a
+> `Label3D` reading `prop_missing.mdl` (void_glitch).
+>
+> Those six belong in §9's *signature dressing props* row, and Batch 010
+> built the three whose theme material family exists. The rest of this
+> section is a library the game does not currently use; it stays inventoried
+> because a placement path for it is a reasonable thing to want, but no
+> more of it should be built before something places it.
+
 ---
 
 ## 9. Theme kits — one row per theme
@@ -337,7 +354,7 @@ For **each** of `concrete_facility`, `rusted_industrial`, `neon_transit`,
 | accent material | 1 | A | B1 | B1 | B1 | — |
 | hazard / signage treatment | 1 | A | shared | shared | shared | shared |
 | light fixture family | 1–2 | A | — | — | — | — |
-| signature dressing props | 3–8 | B | — | — | — | — |
+| signature dressing props | 3–8 | B | **B10** | **B10** | engine text, deliberate | — |
 | larger architectural modules | 1–3 | B | — | — | — | — |
 | landmark / hero piece | 1 | B | — | — | — | — |
 | decals: paint, stains, damage | 4–6 | B | — | — | — | — |

@@ -61,6 +61,8 @@ ORDER = [
     ("batch009", "affordance",
      ["breakwall_panel", "water_basin", "rail_beam", "wind_ring",
       "wind_perch", "bounce_pad", "movplat_deck"]),
+    ("batch010", "dressing",
+     ["prop_wall_plate", "prop_oil_drum", "prop_valve_wheel"]),
 ]
 CAT = {"epsilon": "hero", "check": "hero", "portal": "interactable",
        "door": "module", "breakwall": "interactable",
