@@ -34,6 +34,30 @@ log = logging.getLogger("archipepsi.epsilon.claude")
 
 DEFAULT_MODEL = "claude-opus-5"
 
+#: An Echo is one small object; 8192 was always plenty and still is.
+ECHO_OUTPUT_TOKENS = 8192
+
+#: How much room a ZONE needs to come back whole.
+#:
+#: Measured rather than guessed (CAMPAIGN_SCALE.md 12). The fallback's
+#: terse JSON is about 2,100 tokens at the 1000-point default and about
+#: 4,000 at the largest campaign anyone can configure (30 Checks, 2000
+#: budget, 36 rooms). A model's Zone carries prose the fallback does not
+#: -- display names, designer notes, feature labels -- so the allowance
+#: is several times the measured floor, and it SCALES, because a fixed
+#: 8192 was set when a Zone was six rooms. A generous ceiling costs
+#: nothing: output tokens are billed as generated, not as allowed, and
+#: the failure it prevents is a Zone that comes back missing rooms.
+_ZONE_TOKENS_PER_BUDGET_POINT = 16.0
+ZONE_OUTPUT_TOKENS_MIN = 8_192
+ZONE_OUTPUT_TOKENS_MAX = 32_000
+
+
+def zone_output_budget(zone_budget: int) -> int:
+    """Output tokens to allow for a Zone of this content budget."""
+    want = int(zone_budget * _ZONE_TOKENS_PER_BUDGET_POINT)
+    return max(ZONE_OUTPUT_TOKENS_MIN, min(ZONE_OUTPUT_TOKENS_MAX, want))
+
 ZONE_SYSTEM = """\
 You are Epsilon, the procedural level designer inside Archipepsi. You are \
 given a small fixed set of Archipelago locations that MUST all appear \
@@ -158,7 +182,9 @@ class ClaudeEpsilonProvider:
             + json.dumps(self._schemas["zone"]),
         ])
         return await self._call("zone", request.generation_id, ZONE_SYSTEM,
-                                prompt, repair_errors)
+                                prompt, repair_errors,
+                                max_tokens=zone_output_budget(
+                                    request.campaign.zone_budget))
 
     async def generate_echo(self, request: EchoGenerationRequest, *,
                             repair_errors: list[str] | None = None) -> dict:
@@ -174,7 +200,8 @@ class ClaudeEpsilonProvider:
     # ------------------------------------------------------------------
 
     async def _call(self, kind: str, generation_id: str, system: str,
-                    prompt: str, repair_errors: list[str] | None):
+                    prompt: str, repair_errors: list[str] | None,
+                    max_tokens: int = ECHO_OUTPUT_TOKENS):
         import anthropic
 
         messages = [{"role": "user", "content": prompt}]
@@ -190,7 +217,7 @@ class ClaudeEpsilonProvider:
 
         kwargs: dict = dict(
             model=self.model,
-            max_tokens=8192,
+            max_tokens=max_tokens,
             system=[{"type": "text", "text": system,
                      "cache_control": {"type": "ephemeral"}}],
             messages=messages,
@@ -213,6 +240,18 @@ class ClaudeEpsilonProvider:
                 response = await self.client.messages.create(**kwargs)
             else:
                 raise
+
+        # A Zone cut off mid-object is the one failure that can look like
+        # success: `_parse_json_object` finds the last `}` in a truncated
+        # body and can hand back a syntactically fine object that is
+        # missing half its rooms and some of its Checks. Named here so it
+        # reaches the repair/fallback path as an error rather than being
+        # accepted as a small Zone (CAMPAIGN_SCALE.md 12).
+        if response.stop_reason == "max_tokens":
+            raise RuntimeError(
+                f"Epsilon's {kind} response hit the {max_tokens}-token "
+                "output limit and is truncated; a partial Zone is not a "
+                "small Zone")
 
         if response.stop_reason == "refusal":
             details = getattr(response, "stop_details", None)

@@ -327,3 +327,119 @@ def test_every_fallback_zone_validates_at_every_index():
             assert not errors, (
                 f"fallback zone {index} (finale={finale}) is invalid, so "
                 f"the portal would refuse to open: {errors}")
+
+
+# ---------------------------------------------------------------------------
+# Output size and truncation (CAMPAIGN_SCALE.md 12)
+# ---------------------------------------------------------------------------
+
+def test_the_output_allowance_scales_with_the_zone():
+    """8192 was set when a Zone was six rooms.
+
+    A 2000-point Zone is thirty-six, and a model's version of it carries
+    prose the fallback does not -- so a fixed allowance is a Zone that
+    gets cut off partway through at exactly the sizes the owner asked
+    for.
+    """
+    from archipepsi_bridge.epsilon.claude import (
+        ZONE_OUTPUT_TOKENS_MAX, ZONE_OUTPUT_TOKENS_MIN, zone_output_budget)
+
+    budgets = [C.ZONE_BUDGET_MIN, 600, C.DEFAULT_ZONE_BUDGET, 1500,
+               C.ZONE_BUDGET_MAX]
+    allowed = [zone_output_budget(b) for b in budgets]
+    assert allowed == sorted(allowed), "a bigger Zone gets no more room"
+    assert allowed[0] == ZONE_OUTPUT_TOKENS_MIN
+    assert allowed[-1] == ZONE_OUTPUT_TOKENS_MAX
+    assert zone_output_budget(C.DEFAULT_ZONE_BUDGET) > ZONE_OUTPUT_TOKENS_MIN
+
+
+def test_the_allowance_clears_the_measured_size_with_room_to_spare():
+    """Measured against real Zones, not asserted from a guess."""
+    from archipepsi_bridge.epsilon.claude import zone_output_budget
+
+    for checks, budget in ((3, C.ZONE_BUDGET_MIN),
+                           (C.DEFAULT_ZONE_TARGET_CHECKS,
+                            C.DEFAULT_ZONE_BUDGET),
+                           (C.ZONE_TARGET_CHECKS_MAX, C.ZONE_BUDGET_MAX)):
+        request = zone_request(
+            location_ids=tuple(89100001 + i for i in range(checks)))
+        request = request.model_copy(update={
+            "campaign": request.campaign.model_copy(
+                update={"zone_budget": budget})})
+        payload = json.dumps(fallback_zone(request), indent=2)
+        # ~4 characters per token, the usual rule of thumb.
+        measured = len(payload) // 4
+        assert zone_output_budget(budget) > measured * 3, (
+            f"{checks} Checks at {budget} measures ~{measured} tokens "
+            f"against an allowance of {zone_output_budget(budget)}")
+
+
+def _stub_provider(response):
+    """A ClaudeEpsilonProvider with a scripted client and no API key."""
+    from types import SimpleNamespace
+
+    from archipepsi_bridge.epsilon.claude import ClaudeEpsilonProvider
+
+    provider = ClaudeEpsilonProvider.__new__(ClaudeEpsilonProvider)
+    provider.model = "test"
+    provider.creativity = 1
+    provider._last_raw = {}
+    provider._schema_ok = {"zone": False, "echo": False}
+    provider._schemas = {"zone": {}, "echo": {}}
+    seen: dict = {}
+
+    class _Messages:
+        async def create(self, **kwargs):
+            seen.update(kwargs)
+            return response
+
+    provider.client = SimpleNamespace(messages=_Messages())
+    return provider, seen
+
+
+def test_the_request_actually_carries_the_scaled_allowance():
+    """Computing the right number changes nothing if the call sends 8192."""
+    import asyncio
+    from types import SimpleNamespace
+
+    from archipepsi_bridge.epsilon.claude import zone_output_budget
+
+    ok = SimpleNamespace(stop_reason="end_turn",
+                         content=[SimpleNamespace(type="text", text="{}")])
+    for budget in (C.ZONE_BUDGET_MIN, C.DEFAULT_ZONE_BUDGET,
+                   C.ZONE_BUDGET_MAX):
+        provider, seen = _stub_provider(ok)
+        request = zone_request()
+        request = request.model_copy(update={
+            "campaign": request.campaign.model_copy(
+                update={"zone_budget": budget})})
+        asyncio.run(provider.generate_zone(request))
+        assert seen["max_tokens"] == zone_output_budget(budget), (
+            f"a {budget}-point Zone was given {seen['max_tokens']} tokens")
+
+
+def test_a_truncated_response_is_an_error_and_not_a_small_zone():
+    """The one failure that can look like success.
+
+    `_parse_json_object` extracts from the first `{` to the LAST `}`, so
+    a response cut off mid-Zone can still parse into a syntactically
+    valid object holding a few rooms and none of the Checks. Accepted,
+    that is a Zone the player cannot finish; the pipeline has to see an
+    error so it repairs or falls back.
+    """
+    import asyncio
+    from types import SimpleNamespace
+
+    import pytest
+
+    truncated = SimpleNamespace(
+        stop_reason="max_tokens",
+        content=[SimpleNamespace(
+            type="text",
+            text='{"schema_version": 7, "zone_id": "zone_001", '
+                 '"chambers": [{"id": "c1", "type": "corridor"}')],
+    )
+    provider, _ = _stub_provider(truncated)
+
+    with pytest.raises(RuntimeError, match="truncated"):
+        asyncio.run(provider.generate_zone(zone_request()))
