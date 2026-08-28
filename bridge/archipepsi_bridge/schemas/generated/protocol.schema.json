@@ -684,6 +684,46 @@
         "title": "ActionComponent",
         "type": "object"
       },
+      "ActivityPrimitive": {
+        "additionalProperties": false,
+        "description": "One instance of an activity family, with its difficulty dialled in.\n\nEpsilon picks the family and the numbers. It does not describe the\npuzzle in prose, because prose cannot be built and cannot be scored:\nan unimplemented tag counts for nothing (CAMPAIGN_SCALE.md 9), and\nthe way to guarantee that is to have no field it could put prose in.",
+        "properties": {
+          "kind": {
+            "enum": [
+              "switch_sequence",
+              "timed_run",
+              "target_challenge",
+              "pressure_routing"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "element_count": {
+            "default": 1,
+            "maximum": 8,
+            "minimum": 1,
+            "title": "Element Count",
+            "type": "integer"
+          },
+          "time_limit": {
+            "default": 0.0,
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Time Limit",
+            "type": "number"
+          },
+          "ordered": {
+            "default": false,
+            "title": "Ordered",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "ActivityPrimitive",
+        "type": "object"
+      },
       "AffordanceComponent": {
         "additionalProperties": false,
         "properties": {
@@ -961,6 +1001,15 @@
             },
             "maxItems": 2,
             "title": "Additional Reward Location Ids",
+            "type": "array"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
             "type": "array"
           },
           "shell_id": {
@@ -1712,6 +1761,15 @@
             },
             "maxItems": 2,
             "title": "Additional Reward Location Ids",
+            "type": "array"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
             "type": "array"
           },
           "shell_id": {
@@ -3226,6 +3284,15 @@
             "title": "Additional Reward Location Ids",
             "type": "array"
           },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
+            "type": "array"
+          },
           "shell_id": {
             "anyOf": [
               {
@@ -4120,6 +4187,15 @@
             "title": "Additional Reward Location Ids",
             "type": "array"
           },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
+            "type": "array"
+          },
           "shell_id": {
             "anyOf": [
               {
@@ -4336,6 +4412,15 @@
             },
             "maxItems": 2,
             "title": "Additional Reward Location Ids",
+            "type": "array"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
             "type": "array"
           },
           "shell_id": {
@@ -4928,6 +5013,46 @@
         "title": "ActionComponent",
         "type": "object"
       },
+      "ActivityPrimitive": {
+        "additionalProperties": false,
+        "description": "One instance of an activity family, with its difficulty dialled in.\n\nEpsilon picks the family and the numbers. It does not describe the\npuzzle in prose, because prose cannot be built and cannot be scored:\nan unimplemented tag counts for nothing (CAMPAIGN_SCALE.md 9), and\nthe way to guarantee that is to have no field it could put prose in.",
+        "properties": {
+          "kind": {
+            "enum": [
+              "switch_sequence",
+              "timed_run",
+              "target_challenge",
+              "pressure_routing"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "element_count": {
+            "default": 1,
+            "maximum": 8,
+            "minimum": 1,
+            "title": "Element Count",
+            "type": "integer"
+          },
+          "time_limit": {
+            "default": 0.0,
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Time Limit",
+            "type": "number"
+          },
+          "ordered": {
+            "default": false,
+            "title": "Ordered",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "ActivityPrimitive",
+        "type": "object"
+      },
       "AffordanceComponent": {
         "additionalProperties": false,
         "properties": {
@@ -5205,6 +5330,15 @@
             },
             "maxItems": 2,
             "title": "Additional Reward Location Ids",
+            "type": "array"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
             "type": "array"
           },
           "shell_id": {
@@ -5670,6 +5804,15 @@
             },
             "maxItems": 2,
             "title": "Additional Reward Location Ids",
+            "type": "array"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
             "type": "array"
           },
           "shell_id": {
@@ -7106,6 +7249,15 @@
             "title": "Additional Reward Location Ids",
             "type": "array"
           },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
+            "type": "array"
+          },
           "shell_id": {
             "anyOf": [
               {
@@ -8000,6 +8152,15 @@
             "title": "Additional Reward Location Ids",
             "type": "array"
           },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
+            "type": "array"
+          },
           "shell_id": {
             "anyOf": [
               {
@@ -8216,6 +8377,15 @@
             },
             "maxItems": 2,
             "title": "Additional Reward Location Ids",
+            "type": "array"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
             "type": "array"
           },
           "shell_id": {

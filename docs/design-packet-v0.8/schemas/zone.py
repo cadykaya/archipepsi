@@ -53,6 +53,74 @@ AffordanceTag = Literal[
 ]
 
 
+#: The activity vocabulary (CAMPAIGN_SCALE.md 9).
+#:
+#: Four composable families, not fifteen bespoke minigames. Each is a
+#: system whose difficulty comes from BOUNDED COMPOSITION -- how many
+#: elements, how generous the timing, how far apart -- rather than from a
+#: separate hand-made puzzle per flavour.
+#:
+#: Every one is solvable with base movement and Static Pulse alone. A
+#: switch is touched, a target is shot, a plate is stood on, a timed run
+#: is run; nothing here needs an Echo, and nothing may be added that
+#: does.
+#:
+#: `switch_sequence`  N switches, optionally in a required order.
+#: `timed_run`        activate, then reach the target before it lapses.
+#: `target_challenge` shoot N targets, optionally against a clock.
+#: `pressure_routing` hold plates / route power to open the way.
+ActivityKind = Literal[
+    "switch_sequence", "timed_run", "target_challenge", "pressure_routing",
+]
+
+
+class ActivityPrimitive(Strict):
+    """One instance of an activity family, with its difficulty dialled in.
+
+    Epsilon picks the family and the numbers. It does not describe the
+    puzzle in prose, because prose cannot be built and cannot be scored:
+    an unimplemented tag counts for nothing (CAMPAIGN_SCALE.md 9), and
+    the way to guarantee that is to have no field it could put prose in.
+    """
+
+    kind: ActivityKind
+
+    #: Switches, targets or plates. The primary difficulty dial.
+    element_count: int = Field(default=1, ge=1, le=8)
+
+    #: Seconds allowed, or 0 for untimed. Bounded below so a timed run is
+    #: never a reflex test the base kit cannot pass.
+    time_limit: float = Field(default=0.0, ge=0.0, le=120.0)
+
+    #: Whether the elements must be used in a specific order. Free on its
+    #: own; expensive combined with a clock, which is the composition the
+    #: difficulty is supposed to come from.
+    ordered: bool = False
+
+    @model_validator(mode="after")
+    def _a_timed_puzzle_stays_base_kit_solvable(self):
+        """Base-kit solvability is absolute (CAMPAIGN_SCALE.md 9).
+
+        A clock is the one dial here that can make an activity
+        IMPOSSIBLE rather than merely hard, so it is the one with a
+        floor: each element needs time to reach at base movement speed.
+        Without this a provider could ask for eight ordered switches in
+        three seconds, which validates as a puzzle and plays as a wall.
+        """
+        if self.time_limit == 0.0:
+            return self
+        needed = self.element_count * C.SECONDS_PER_ACTIVITY_ELEMENT
+        if self.ordered:
+            needed *= C.ORDERED_ACTIVITY_TIME_MULTIPLIER
+        if self.time_limit < needed:
+            raise ValueError(
+                f"a {self.kind} with {self.element_count} elements"
+                f"{' in order' if self.ordered else ''} needs at least "
+                f"{needed:.0f}s at base movement speed, not "
+                f"{self.time_limit:.0f}s")
+        return self
+
+
 class EnemyGroup(Strict):
     archetype: Archetype
     #: One group is one encounter, so this is the encounter cap rather
@@ -114,6 +182,11 @@ class ChamberBase(Strict):
     #: the cheap structural half of preventing it.
     additional_reward_location_ids: tuple[int, ...] = Field(
         default=(), max_length=2)
+
+    #: CAMPAIGN_SCALE.md 9. Additive and optional, like `features` before
+    #: it: a Zone from before the vocabulary existed is still valid.
+    activities: tuple[ActivityPrimitive, ...] = Field(
+        default=(), max_length=3)
 
     #: D1: authored-shell selection. Epsilon names INTENT, and may pick a
     #: shell id out of the legal catalog it was handed. It never names

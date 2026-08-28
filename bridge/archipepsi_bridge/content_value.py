@@ -53,6 +53,22 @@ TRAVERSAL_SEGMENT_VALUE = 3
 #: Per authored secret. Optional, findable, and the reason to look around.
 SECRET_VALUE = 8
 
+#: Activities (CAMPAIGN_SCALE.md 9). A base for existing at all, plus the
+#: composition that makes one harder than another -- elements, a clock,
+#: an order to get right. Difficulty comes from bounded composition, so
+#: the score does too.
+#:
+#: Only kinds the ENGINE BUILDS may appear here at all: the schema's
+#: `ActivityKind` is pinned to `activities.gd` by
+#: `test_runner_coverage`, so there is no way to name a puzzle that
+#: cannot be built and no way to score one. That is the strong form of
+#: "an unimplemented puzzle tag counts for nothing" -- not a rule applied
+#: at scoring time, but a thing that cannot be expressed.
+ACTIVITY_BASE_VALUE = 6
+ACTIVITY_PER_ELEMENT = 3
+ACTIVITY_TIMED_BONUS = 4
+ACTIVITY_ORDERED_BONUS = 3
+
 #: Floor area per point of space value, and the cap.
 #:
 #: Space is worth something -- a big room reads and plays differently --
@@ -108,6 +124,14 @@ def room_value(chamber) -> int:
 
     segments = int(getattr(chamber, "segment_count", 0) or 0)
     total += TRAVERSAL_SEGMENT_VALUE * segments
+
+    for activity in getattr(chamber, "activities", ()) or ():
+        total += ACTIVITY_BASE_VALUE
+        total += ACTIVITY_PER_ELEMENT * activity.element_count
+        if activity.time_limit > 0.0:
+            total += ACTIVITY_TIMED_BONUS
+        if activity.ordered:
+            total += ACTIVITY_ORDERED_BONUS
 
     # Checks add nothing. Stated as an explicit no-op rather than an
     # omission, so that deleting it is a visible decision -- and read

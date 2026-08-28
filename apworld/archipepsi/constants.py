@@ -567,6 +567,16 @@ RANGED_PROJECTILE_SPEED = 14.0
 #: Enemies in one encounter group, and how many of those may be brutes.
 #: This is the unit a player actually fights, and it does not grow with
 #: the level: a 40-minute Zone is more fights, not a bigger fight.
+#: Seconds a player needs per activity element at base movement speed,
+#: used to floor a timed puzzle's clock. Derived from the walk across a
+#: mid-size room plus the interaction itself, generously: a puzzle that
+#: is tight for a good player is fine, one that is impossible for the
+#: base kit is a wall.
+SECONDS_PER_ACTIVITY_ELEMENT = 4.0
+
+#: Ordered puzzles cost more time because a mistake means going back.
+ORDERED_ACTIVITY_TIME_MULTIPLIER = 1.5
+
 MAX_ENEMIES_PER_ENCOUNTER = 10
 MAX_BRUTES_PER_ENCOUNTER = 1
 

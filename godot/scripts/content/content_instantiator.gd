@@ -120,6 +120,16 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 	}
 	result["features"] = AffordanceFeatures.place_all(
 			root, chamber, theme, size.x, size.z, size.y)
+	# CAMPAIGN_SCALE.md 9. Built, not described: a Zone that names a
+	# puzzle and produces an empty room is the exact thing the
+	# vocabulary-to-builder pin exists to prevent, and building them here
+	# is the other half of that.
+	var activities: Array = []
+	for activity: Variant in chamber.get("activities", []) as Array:
+		if typeof(activity) == TYPE_DICTIONARY:
+			activities.append(Activities.build(
+					root, activity, theme, size.x, size.z))
+	result["activities"] = activities
 	return result
 
 ## Where the next room's entry goes, taken from the socket the artist
