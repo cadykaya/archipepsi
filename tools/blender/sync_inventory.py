@@ -83,6 +83,9 @@ ORDER = [
      ["shell_path_ascent", "shell_path_stagger", "shell_path_spans"]),
     ("batch018", "shells",
      ["shell_tower_collapsed", "shell_tower_spiral", "shell_tower_gantry"]),
+    ("batch019", "shells",
+     ["shell_treasure_vault", "shell_treasure_cache", "shell_treasure_coffer",
+      "shell_corner_left", "shell_corner_right"]),
 ]
 #: Batches the OWNER has passed, by the date of the verdict. This script
 #: may never approve art; every entry here is a transcription of a decision

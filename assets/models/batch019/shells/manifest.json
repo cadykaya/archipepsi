@@ -1,0 +1,213 @@
+{
+  "shell_corner_left": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -3.0,
+        -1.0,
+        0.0
+      ],
+      [
+        6.0,
+        4.6,
+        6.0
+      ]
+    ],
+    "check_anchor": null,
+    "enemy_anchors": [],
+    "exit_offset": [
+      3.4,
+      0.0,
+      3.0
+    ],
+    "interior": [
+      6.0,
+      3.6,
+      6.0
+    ],
+    "marker": "form",
+    "path": "batch019/shells/shell_corner_left.glb",
+    "size": [
+      6.8,
+      6.8,
+      4.5
+    ],
+    "texel_density": 32.0,
+    "triangles": 216,
+    "turn": 1
+  },
+  "shell_corner_right": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -3.0,
+        -1.0,
+        0.0
+      ],
+      [
+        6.0,
+        4.6,
+        6.0
+      ]
+    ],
+    "check_anchor": null,
+    "enemy_anchors": [],
+    "exit_offset": [
+      -3.4,
+      0.0,
+      3.0
+    ],
+    "interior": [
+      6.0,
+      3.6,
+      6.0
+    ],
+    "marker": "form",
+    "path": "batch019/shells/shell_corner_right.glb",
+    "size": [
+      6.8,
+      6.8,
+      4.5
+    ],
+    "texel_density": 32.0,
+    "triangles": 216,
+    "turn": -1
+  },
+  "shell_treasure_cache": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -4.0,
+        -1.0,
+        0.0
+      ],
+      [
+        8.0,
+        5.5,
+        8.0
+      ]
+    ],
+    "ceiling": "flat",
+    "check_anchor": [
+      0.0,
+      1.0,
+      4.0
+    ],
+    "enemy_anchors": [],
+    "exit_offset": [
+      0.0,
+      0.0,
+      8.0
+    ],
+    "interior": [
+      8.0,
+      4.5,
+      8.0
+    ],
+    "objective": [
+      "reach_reward"
+    ],
+    "path": "batch019/shells/shell_treasure_cache.glb",
+    "plinth": "pallet",
+    "shelf_depth": 0.55,
+    "size": [
+      8.8,
+      8.8,
+      5.4
+    ],
+    "story": "stored",
+    "texel_density": 32.0,
+    "triangles": 456
+  },
+  "shell_treasure_coffer": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -4.0,
+        -1.0,
+        0.0
+      ],
+      [
+        8.0,
+        5.5,
+        8.0
+      ]
+    ],
+    "ceiling": "coffer",
+    "check_anchor": [
+      0.0,
+      1.0,
+      4.0
+    ],
+    "coffer_depth": 0.9,
+    "enemy_anchors": [],
+    "exit_offset": [
+      0.0,
+      0.0,
+      8.0
+    ],
+    "interior": [
+      8.0,
+      4.5,
+      8.0
+    ],
+    "objective": [
+      "reach_reward"
+    ],
+    "path": "batch019/shells/shell_treasure_coffer.glb",
+    "plinth": "riser",
+    "size": [
+      8.8,
+      8.8,
+      6.3
+    ],
+    "story": "displayed",
+    "texel_density": 32.0,
+    "triangles": 384
+  },
+  "shell_treasure_vault": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -4.0,
+        -1.0,
+        0.0
+      ],
+      [
+        8.0,
+        5.5,
+        8.0
+      ]
+    ],
+    "ceiling": "coffered",
+    "check_anchor": [
+      0.0,
+      1.0,
+      4.0
+    ],
+    "enemy_anchors": [],
+    "exit_offset": [
+      0.0,
+      0.0,
+      8.0
+    ],
+    "interior": [
+      8.0,
+      4.5,
+      8.0
+    ],
+    "objective": [
+      "reach_reward"
+    ],
+    "path": "batch019/shells/shell_treasure_vault.glb",
+    "plinth": "curb",
+    "size": [
+      8.8,
+      8.8,
+      5.4
+    ],
+    "story": "protected",
+    "texel_density": 32.0,
+    "triangles": 360
+  }
+}

@@ -2294,3 +2294,92 @@ across the back and a bridge strip out through it. `exit_offset` is
 | `T_gantry_landing.png` | the third landing, two storeys above the door |
 
 Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 019 — treasure rooms and corners: §7 complete
+
+The last two families, and the two with the least room to move. That is the
+interesting part.
+
+### Treasure rooms: three answers to *why the reward is here*
+
+`TreasureRoomChamber` has **no dimensional parameters at all**. `side` 8.0
+and `height` 4.5 are literals in `treasure_room()`, `reward_position` is
+`Vector3(0, 1.0, side / 2)` — the centre of the room, on a two-step plinth
+— and the schema's whole content is *small safe reward room, exactly one
+reward, never enemies*.
+
+So all three shells put the reward in exactly the same place, in exactly
+the same box, and differ only in the room around it:
+
+| Shell | Tris | The room says |
+| --- | --- | --- |
+| `shell_treasure_vault` | 360 | **this was protected** — heavy frames on both doors, a curb ring keeping the floor clear around the plinth, a coffered ceiling |
+| `shell_treasure_cache` | 456 | **this was stored** — racking on three walls with empties on the shelves, and the plinth reading as the one pallet nobody took |
+| `shell_treasure_coffer` | 384 | **this was displayed** — the ceiling steps up into a closed pocket 0.90 m deep over the plinth, carried down by four pilasters |
+
+The coffer's pocket is **closed**. A light well open to the sky in a
+windowless facility would be a hole, and `treasure_room()` roofs itself
+deliberately — which is also the evidence that sharpened interface
+requirement 19: corridors, corners and treasure rooms all close their tops,
+and only arenas and towers do not. It is not a rule that rooms are open; it
+is that two of the five were never closed.
+
+Every shelf in the cache sits behind the plinth's 3.0 m footprint and clear
+of both 2.4 m door lanes, and the empties are on shelves, never on the
+floor. A safe room the player has to squeeze through is not a safe room.
+
+### Corners: two, and the render corrected the name
+
+`corner()` produces a left turn and a right turn and nothing else, so two
+mirrored shells is the honest answer: a player who learns to read one turn
+should read the other without relearning it.
+
+Which of `turn` +1 and −1 is *left* is derived rather than assumed, and the
+first pass got it backwards. `corner(+1)` exits through the **+X** wall,
+`zone_builder`'s `_rot` maps +Z to +X under a +90° yaw, and in Godot a node
+facing +Z has been yawed 180° so its right is world −X — making +X the
+player's **left**. The review render disagreed with its own caption, and
+the fix was the **name**, not the camera (L-61).
+
+### What these deliberately do not copy
+
+`corner()` marks its turn with a 0.06 × 1.0 × 2.0 stripe in
+`ThemeMaterials.hazard_mat` — hazard orange, used as a navigation cue. The
+Batch 010 ruling is that **orange must remain warning / hazard language**
+and that generic facility dressing gets its own neutral vocabulary. A turn
+is not a warning.
+
+These corners carry no hazard material. The turn is marked by **form**: a
+stepped chamfer on the far edge of the opening, where a player walking in
+sees it head-on; a deep reveal on both jambs; and the skirting carried
+around. And the write-up says plainly that the **opening itself is the
+primary cue** — at 6 m across, nothing has to announce it — with the form
+marker secondary.
+
+That is **interface requirement 20**, and it is surfaced rather than
+decided. Art has not removed a gameplay cue on its own authority; it has
+declined to spend orange on it and asked what should replace it. If the
+engine keeps its stripe, a chamber will contradict the asset standing in
+it, and orange stops meaning anything for the second time.
+
+### Evidence
+
+`docs/art/review/batch019/`
+
+| Image | What it answers |
+| --- | --- |
+| `R_treasure_family.png` | **start here** — the three from above. Same box, same reward position, three rooms |
+| `R_vault_entry.png` · `R_cache_entry.png` · `R_coffer_entry.png` | the same camera in each, which is the comparison |
+| `R_coffer_under.png` | at the plinth, looking up into the pocket — a recess, not a hole |
+| `R_corner_left.png` · `R_corner_right.png` | one design and its reflection |
+| `R_corner_turning.png` | mid-turn, facing the exit: where `corner()` paints orange and this does not |
+
+Status: **PENDING** — not self-marked.
+
+### Tier 7 is complete
+
+Nineteen shells across six families: 4 corridors, 4 arenas, 3 platform
+paths, 3 towers, 3 treasure rooms, 2 corners. `ASSET_INVENTORY.md` §7 was
+empty five batches ago.

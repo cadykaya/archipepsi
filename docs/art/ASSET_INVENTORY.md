@@ -153,6 +153,11 @@ These are the vocabulary everything after them inherits.
 | `shell_tower_collapsed` | L3 | room | 528 | 12.80 × 14.60 × 11.50 | entrance | B18 | B18 | PEND |
 | `shell_tower_spiral` | L3 | room | 636 | 12.80 × 14.60 × 14.50 | entrance | B18 | B18 | PEND |
 | `shell_tower_gantry` | L3 | room | 852 | 12.80 × 14.60 × 20.50 | entrance | B18 | B18 | PEND |
+| `shell_treasure_vault` | L3 | room | 360 | 8.80 × 8.80 × 5.40 | entrance | B19 | B19 | PEND |
+| `shell_treasure_cache` | L3 | room | 456 | 8.80 × 8.80 × 5.40 | entrance | B19 | B19 | PEND |
+| `shell_treasure_coffer` | L3 | room | 384 | 8.80 × 8.80 × 6.30 | entrance | B19 | B19 | PEND |
+| `shell_corner_left` | L3 | room | 216 | 6.80 × 6.80 × 4.50 | entrance | B19 | B19 | PEND |
+| `shell_corner_right` | L3 | room | 216 | 6.80 × 6.80 × 4.50 | entrance | B19 | B19 | PEND |
 
 | Theme material | Roles built |
 | --- | --- |
@@ -320,8 +325,8 @@ obviously repeating one room — **but not before Style Lock.**
 | `shell_arena_*` | `arena` | 10–28 m square, walls 4–8 m | 4 | A | **B16** — `shell_arena_pit` / `_pillars` / `_balcony` / `_split`: one subtraction, one addition, one storey, one division |
 | `shell_platform_path_*` | `platform_path` | 3–8 segments, gap ≤ 2.6 m, step ≤ 1.0 m | 3 | A | **B17** — `shell_path_ascent` / `_stagger` / `_spans`. Gap and step are bounded **jointly**, so no gap in these is a literal: each is checked against `max_safe_gap(step)` before export |
 | `shell_tower_*` | `tower` | 2–5 floors | 3 | A | **B18** — `shell_tower_collapsed` / `_spiral` / `_gantry` at 2, 3 and 5 floors. `floors` is the only number `TowerChamber` gives art, so the three sit at the bottom, middle and top of it and answer the climb differently |
-| `shell_treasure_*` | `treasure_room` | carries a `reward_location_id` | 3 | A | — |
-| `shell_corner_*` | connector | `chamber_builders.corner` | 2 | A | — |
+| `shell_treasure_*` | `treasure_room` | carries a `reward_location_id` | 3 | A | **B19** — `shell_treasure_vault` / `_cache` / `_coffer`. The schema has **no** dimensional parameters (8.0 × 8.0 × 4.5 are literals) and `reward_position` is the room's centre, so the three differ only in what the room says about why the reward is there |
+| `shell_corner_*` | connector | `chamber_builders.corner` | 2 | A | **B19** — `shell_corner_left` (`turn` +1, out through +X) and `shell_corner_right` (`turn` −1). One design and its reflection. Neither carries `hazard_mat`: see interface requirement 20 |
 
 A Zone is 1–6 chambers chaining linearly along +Z, with the exit portal
 appended automatically. **Epsilon never places the exit and never chooses

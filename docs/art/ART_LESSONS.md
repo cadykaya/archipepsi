@@ -845,6 +845,27 @@ not beside it -- these are at pitch -72 above the shaft centre.
 > table; it is the table.
 
 
+### L-61 · When the render disagrees with the caption, suspect the caption
+`shell_corner_left` rendered with its exit on the RIGHT of frame. The
+obvious explanation was the runner's 180 degree model yaw -- it mirrors
+everything, it has caused this before (L-45, L-52), and the fix looked like
+a camera change.
+
+It was not. `corner(+1)` exits through the +X wall; `zone_builder._rot`
+maps +Z to +X under a +90 degree yaw; and in Godot a node facing +Z has
+been yawed 180 degrees so its right is world -X, which makes +X the
+player's LEFT. `corner(+1)` turns left, `corner(-1)` turns right, and the
+two shells had been named the other way round. The mirrored render was
+telling the truth about geometry that was wrong.
+
+Three previous lessons about the same 180 degree yaw made the wrong answer
+the easy one to reach for. A known failure mode is a hypothesis, not a
+diagnosis.
+
+> The camera had been guilty three times. That is exactly why it was worth
+> checking whether it was guilty a fourth.
+
+
 ## Process
 
 ### L-39 · Four batches to lock a style, and every one of them was cheap

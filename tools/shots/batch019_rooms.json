@@ -1,0 +1,158 @@
+{
+  "_comment": [
+    "Batch 019 -- the last two shell families.",
+    "",
+    "Treasure rooms have NO dimensional parameters: side 8.0 and height 4.5",
+    "are literals, and reward_position is the centre of the room. So the",
+    "three frames are the same room, the same camera and the same reward",
+    "position three times, and everything that differs is the answer.",
+    "",
+    "Corners are two mirrored pieces, shot from the entrance where the turn",
+    "has to read.",
+    "",
+    "CAMERA FRAME (L-52): every `eye` is a manifest anchor with x and z",
+    "negated. These are roofed rooms, so the key light is the standard 1.25.",
+    "corner(+1) exits through the +X wall, and facing +Z a player's left IS +X -- so +1 is the LEFT turn. The first pass had the two names swapped and the review render caught it by disagreeing with its own caption (L-61). The fix was the name, not the camera."
+  ],
+  "defaults": {
+    "size": [
+      1600,
+      900
+    ],
+    "ambient": 0.16,
+    "backdrop": "none",
+    "game_lens": true
+  },
+  "shots": [
+    {
+      "name": "R_vault_entry",
+      "scene": "model:batch019/shells/shell_treasure_vault.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -1.4
+      ],
+      "yaw": 180,
+      "pitch": -2,
+      "caption": "VAULT - THIS WAS PROTECTED",
+      "note": "HEAVY DOOR FRAMES, A CURB RING, A COFFERED CEILING"
+    },
+    {
+      "name": "R_cache_entry",
+      "scene": "model:batch019/shells/shell_treasure_cache.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -1.4
+      ],
+      "yaw": 180,
+      "pitch": -2,
+      "caption": "CACHE - THIS WAS STORED",
+      "note": "RACKING ON THREE WALLS. THE PLINTH IS THE PALLET NOBODY TOOK"
+    },
+    {
+      "name": "R_coffer_entry",
+      "scene": "model:batch019/shells/shell_treasure_coffer.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -1.4
+      ],
+      "yaw": 180,
+      "pitch": 4,
+      "caption": "COFFER - THIS WAS DISPLAYED",
+      "note": "THE CEILING STEPS UP 0.90 M OVER THE PLINTH. CLOSED, NOT A WELL"
+    },
+    {
+      "name": "R_coffer_under",
+      "scene": "model:batch019/shells/shell_treasure_coffer.glb",
+      "eye": [
+        0,
+        0,
+        -6.4
+      ],
+      "yaw": 180,
+      "pitch": 26,
+      "caption": "STANDING AT THE PLINTH, LOOKING UP INTO THE POCKET",
+      "note": "FOUR PILASTERS CARRY IT DOWN - A RECESS, NOT A HOLE"
+    },
+    {
+      "name": "R_corner_left",
+      "scene": "model:batch019/shells/shell_corner_left.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -1.2
+      ],
+      "yaw": 180,
+      "pitch": 0,
+      "caption": "CORNER LEFT - THE TURN IS MARKED BY FORM, NOT BY ORANGE",
+      "note": "A STEPPED CHAMFER FLANKING THE OPENING, AND A DEEP JAMB REVEAL"
+    },
+    {
+      "name": "R_corner_right",
+      "scene": "model:batch019/shells/shell_corner_right.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -1.2
+      ],
+      "yaw": 180,
+      "pitch": 0,
+      "caption": "CORNER RIGHT - ONE DESIGN AND ITS REFLECTION",
+      "note": "A PLAYER WHO READS ONE TURN SHOULD NOT HAVE TO RELEARN THE OTHER"
+    },
+    {
+      "name": "R_corner_turning",
+      "scene": "model:batch019/shells/shell_corner_left.glb",
+      "eye": [
+        0,
+        0,
+        -3.0
+      ],
+      "yaw": 250,
+      "pitch": 0,
+      "caption": "MID-TURN, FACING THE EXIT",
+      "note": "CORNER() PAINTS A HAZARD-ORANGE STRIPE HERE. THIS DOES NOT"
+    },
+    {
+      "name": "R_treasure_family",
+      "scene": "model:batch019/shells/shell_treasure_vault.glb + batch019/shells/shell_treasure_cache.glb@-10,0,0 + batch019/shells/shell_treasure_coffer.glb@10,0,0",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        14.0,
+        4.0
+      ],
+      "yaw": 180,
+      "pitch": -46,
+      "lens": 24,
+      "game_lens": false,
+      "caption": "THE THREE, FROM ABOVE - SAME BOX, SAME REWARD POSITION",
+      "note": "8 X 8 X 4.5 IS A LITERAL. NOTHING HERE DIFFERS BY BEING BIGGER"
+    }
+  ]
+}
