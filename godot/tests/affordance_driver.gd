@@ -819,8 +819,16 @@ func _the_rail_mesh_and_ride_come_from_one_path() -> void:
 	])
 	var runs := [4.0, 3.0, 5.5]
 
+	# DETACHED, and never added to the tree. Every assertion below reads
+	# geometry -- extents, position, rotation, mesh -- and none of it
+	# needs a scene tree. A `Volume` that enters the tree registers
+	# global influence, and this suite has concurrent coroutine tests
+	# that read exactly that: when the type error below aborted this
+	# function mid-way, the leaked Volume failed "a freed volume
+	# releases its influence" three tests away. Not being in the tree
+	# removes the whole class of interference rather than tidying up
+	# after it.
 	var root := Node3D.new()
-	add_child(root)
 	var built: Dictionary = AffordanceFeatures.build_rail_along(root, bent)
 	var beams: Array = built["beams"]
 	var lanes: Array = built["lanes"]
@@ -869,7 +877,9 @@ func _the_rail_mesh_and_ride_come_from_one_path() -> void:
 		_check(absf(beam.rotation.y - lane.rotation.y) < 0.01,
 				"beam segment %d and its ride volume face different ways"
 				% i)
-	root.queue_free()
+	# Immediate, not deferred: a queued free leaves the nodes alive for a
+	# frame, which is a frame the next test shares with them.
+	root.free()
 
 ## The BoxMesh a `_solid` built, whether it came back as a bare mesh or
 ## as a StaticBody3D wrapping one.
