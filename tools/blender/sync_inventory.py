@@ -58,15 +58,19 @@ def main():
     rows = ["| ID | L | Category | Tris | Size (m) | Anchor | Model | Tex | Rev |",
             "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     for batch, _, ids in ORDER:
-        # B1R for what the 001 revision built, B2 for what 002 did. Every
-        # row stays PEND: only the owner turns PENDING into PASS.
+        # B1R for what the 001 revision built, B2 for what 002 did. The
+        # review column reads PASS because the OWNER passed Style Lock on
+        # 2026-08-28 -- see the top of ART_REVIEW.md. It is a transcription
+        # of a decision, not one this script is entitled to make, and if a
+        # later asset is built before its own review it does not go in this
+        # table until it has one.
         rev = "B1R" if batch == "batch001" else "B2"
         for i in ids:
             m = manifests[i]
             s = m["size"]
             pre = i.split("_")[0]
             rows.append("| `%s` | %s | %s | %d | %.2f \u00d7 %.2f \u00d7 %.2f | %s "
-                        "| %s | %s | PEND |"
+                        "| %s | %s | PASS |"
                         % (i, LEVEL[pre], CAT[pre], m["triangles"],
                            s[0], s[1], s[2], m["anchor"], rev, rev))
     table = "\n".join(rows)

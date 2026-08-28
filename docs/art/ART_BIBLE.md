@@ -44,6 +44,65 @@ half would be out of contract.
 
 ---
 
+## 1z. THE LOCKED DNA — Style Lock PASSED
+
+Everything in this section is the owner's, recorded from the Batch 002-R
+verdict. **It is not reopened by this lane.** Where anything else in this
+document appears to disagree with it, this section wins and the other
+passage is the one that needs fixing.
+
+### Human facility
+
+Cold grey / white / pale-blue abandoned research facility. Industrial
+corridors, pipes, vents, rails, catwalks. Old institutional machinery. Cold
+overall lighting, with localized warm-yellow utility pools. **No global
+sepia wash.**
+
+### Epsilon
+
+Invasive alien technology. Hostile, uncanny shape language. Neon-green
+internal and emissive identity. **Asymmetry.** Machinery that penetrates,
+replaces and commandeers human infrastructure.
+
+### Check
+
+Pedestal / beacon **A**. A distinct Archipelago identity, and **not**
+Epsilon green.
+
+### Portal
+
+Human architectural hardware plus an alien wound / intrusion. Variants may
+get stranger; the split itself does not move.
+
+### Grapple
+
+Both anchors. A soffit overhead; B jib directional / wall-side.
+
+### Enemies
+
+The current family and silhouette language. The expanded role set is
+preserved. **Flying enemies are a core combat category** — the grapple makes
+vertical combat useful, so flyers are not a novelty tier.
+
+### The Epsilon installation
+
+Preserve the giant human-facing display, the operator desk and control
+surface, the wall-scale racks and housings, the cold old research-facility
+construction, the asymmetric intrusion, the neon-green alien structures, the
+alien components physically intersecting and replacing human hardware, and
+the visible contrast between the original machine and the takeover.
+
+> **Do not symmetrize or clean up the alien side.** An intrusion that has
+> been tidied is a design; the point is that it is not one.
+
+The display is Epsilon's **presentation surface** — the place the player
+looks when interacting with it, while the physical mass is what explains who
+owns the machine. Its dormant state (dark glass, dead terminal, a damaged
+human interface) is what ships today; the active and generating states are
+deferred with the rest of the animation question.
+
+---
+
 ## 1a. THE CONTRAST — settled at the Batch 001 review
 
 This is the axis the game leans on, and it governs every decision below it.

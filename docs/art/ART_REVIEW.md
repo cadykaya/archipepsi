@@ -4,6 +4,12 @@
 objective failure; it may never mark an aesthetic success, and it may not
 pick a winner among concepts.
 
+> # STYLE LOCK IS PASSED.
+> Recorded 2026-08-28 from the owner's Batch 002-R verdict. Mass production
+> is unlocked; the locked DNA is at the top of this document and is not
+> reopened by anyone but the owner. Passing Style Lock does **not** approve
+> future assets — see *Review process after Style Lock* at the end.
+
 | Status | Means |
 | --- | --- |
 | `PENDING` | Built, measured, evidence rendered. Awaiting the owner. |
@@ -13,6 +19,135 @@ pick a winner among concepts.
 | `KEPT` | Not selected, not discarded. Preserved for later use. |
 
 **Where the images are:** [`review/batch001/`](review/batch001/) · [`review/batch002/`](review/batch002/)
+
+
+---
+
+# STYLE LOCK — PASSED
+
+> STYLE LOCK = PASS. The revised Epsilon installation lands. [...] Lock this
+> design language.
+
+The owner's Batch 002-R verdict, recorded verbatim in substance. **These are
+foundations now.** Nothing below is an art-lane opinion and none of it may be
+reopened, softened or "cleaned up" by this lane.
+
+## HUMAN FACILITY
+
+- cold grey / white / pale-blue abandoned research facility
+- industrial corridors, pipes, vents, rails, catwalks
+- old institutional machinery
+- cold overall lighting
+- localized warm-yellow utility pools
+- **no global sepia wash**
+
+## EPSILON
+
+- invasive alien technology
+- hostile / uncanny shape language
+- neon-green internal / emissive identity
+- **asymmetry**
+- machinery that penetrates / replaces / commandeers human infrastructure
+
+## CHECK
+
+- pedestal / beacon **A**
+- distinct Archipelago identity
+- **NOT Epsilon green**
+
+## PORTAL
+
+- human architectural hardware + alien wound / intrusion
+- the current portal DNA is approved
+
+## GRAPPLE
+
+- **both** anchors approved
+- soffit overhead anchor
+- jib directional / wall-side anchor
+
+## ENEMIES
+
+- the current family and silhouette language are approved
+- the current expanded role set is worth preserving
+- **flying enemies are a core category**, because grapple traversal creates
+  useful vertical combat
+
+## The Epsilon installation, specifically
+
+`PASS`. Preserve, and do not symmetrize or clean up the alien side:
+
+- giant human-facing display
+- operator desk / control surface
+- wall-scale racks and machine housings
+- cold old research-facility construction
+- asymmetric Epsilon intrusion
+- neon-green alien structures
+- alien components physically intersecting / replacing human hardware
+- visible contrast between original machine and foreign takeover
+
+**Do not redesign the installation before production** unless an integration
+problem proves it necessary.
+
+### Production note on the display — NOT a blocker
+
+The giant display is an **Epsilon presentation surface**. It is where the
+player looks when interacting with Epsilon; the alien physical mass is what
+explains who now owns the computer. States to build toward, later:
+
+| State | What the screen does |
+| --- | --- |
+| Dormant / inactive | Old dark glass, dead terminal, faint static, damaged human interface. |
+| Epsilon active / speaking | Alien-green UI takeover — strange diagrams, waveforms, symbols, text. Display behaviour visibly foreign to the original computer. |
+| Generation / portal activity | More aggressive activity, corruption, telemetry. |
+
+The current model ships the dormant state and nothing else. Anything
+animated is deferred with the rest of the animation question.
+
+---
+
+# Review process AFTER Style Lock
+
+Style Lock passing does **not** mean every future asset is approved. The
+gate moved; it did not disappear.
+
+| Needs a review sheet | Can move faster |
+| --- | --- |
+| Major hero assets | Routine variations that clearly inherit locked DNA |
+| New enemy families or roles | Additional instances of an approved module family |
+| New theme landmarks | Re-skins of approved geometry into an approved theme |
+| **Anything establishing new visual DNA** | Fixes to something already approved |
+
+And the rule that has not changed and does not change: **if a genuinely new
+style question appears, surface it and continue elsewhere.** This lane does
+not invent subjective owner decisions to unblock itself.
+
+## The production order the owner set
+
+Assets that let the game replace its procedural / debug-looking presentation
+with the approved authored vocabulary come first.
+
+1. Hub / permanent spaces, and the Epsilon installation
+2. Core interactables
+3. Common architecture
+4. The enemy production family
+5. Movement affordances
+6. Universal props
+7. Room-shell vocabulary
+8. The six theme kits
+9. Presentation / polish assets
+
+## The enemy roster target, recorded
+
+Eventually a broad classic-FPS ecosystem, roughly **~20 distinct enemies**
+if the roles stay meaningful. Doom / Doom II / Doom 64 / Half-Life 1 are
+references for the **breadth of combat roles**, never for copied designs.
+Archipepsi's own equivalents in function: common pressure, melee, ranged,
+flyers, artillery, flankers, chargers, defensive units, support,
+specialists, elites, miniboss-scale threats.
+
+> Do not make twenty cosmetic variants of the same enemy. Each addition
+> should justify itself through silhouette + combat role.
 
 ---
 
@@ -120,7 +255,9 @@ a windup is the only orange an enemy ever shows.
 A new build guard refuses any enemy filling under 80 % of its collision
 height — it caught the brute at 78 % on the first build.
 
-Status: **PENDING** (all three)
+Status: **PASS** (all three) — *"ENEMY FAMILY / SILHOUETTE LANGUAGE = PASS.
+Keep the current roster concepts."* Locked at the 002 review, together with
+the seven roles proposed in 002.
 
 ### E · Anchor
 
@@ -155,7 +292,9 @@ and the accent survives only as a band on the minority that earn one. In
 terminal screen and an orange warning sign among them, instead of eight blue
 objects.
 
-Status: **PENDING**
+Status: **PASS** — carried by *"FACILITY ARCHITECTURE = PASS. Keep this as
+the baseline human/facility language."* The props are painted from the
+facility's own ramps and are part of that baseline.
 
 ### H · Materials, and two in-engine probes
 
@@ -218,7 +357,9 @@ kick rail's accent cut from a third of its cycle to a thin stripe.
 
 Room: 3,272 / 12,000 triangles.
 
-Status: **PENDING**
+Status: **PASS** — *"FACILITY ARCHITECTURE = PASS. Keep this as the baseline
+human/facility language."* Locked at the 002 review, with the lighting
+clarification that became the `LIGHTING RULE = PASS` entry.
 
 ---
 
@@ -330,7 +471,7 @@ Look at: `A_epsilon_installation.png` (wide, silhouette, clay, 1.8 m scale
 rod, 8 m play distance), `_medium.png` at 4 m, `_close.png` at 2 m, and
 `A_epsilon_in_room.png` / `_oblique.png` for it standing in a room.
 
-Status: **REVISE** — scale and the human-computer/alien-intrusion idea are both right and neither is to be thrown away. One targeted revision remains; see Batch 002-R below.
+Status: **PASS** — superseded by the 002-R revision below, which the owner passed.
 
 ### B · Facility lighting — cold room, local warm pools
 
@@ -544,11 +685,13 @@ as completely as emission would.
 Plus `A_epsilon_installation.png` at 8 m, `_medium.png` at 4 m and
 `_close.png` at 2 m, all rebuilt.
 
-Status: **PENDING**
+Status: **PASS** — *"The revised Epsilon installation lands."* See
+**STYLE LOCK — PASSED** at the top of this document for what must be
+preserved.
 
 ---
 
-## What I am asking for on 002-R
+## What I asked for on 002-R, and the answers
 
 1. Does it now read as **a huge computer somebody operated**, rather than a
    server installation?

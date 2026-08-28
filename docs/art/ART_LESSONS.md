@@ -482,6 +482,31 @@ must never be measured as if it were.
 
 ## Process
 
+### L-39 · Four batches to lock a style, and every one of them was cheap
+Style Lock took 001, 001-R, 002 and 002-R. It is worth writing down what
+that actually cost, because the instinct at the start was that fewer, bigger
+batches would be faster.
+
+Every round was one build and one render away from the previous one. The
+expensive thing was never the geometry — the Epsilon installation is 1,644
+triangles and rebuilds in eight seconds. The expensive thing would have been
+**producing at scale against an unapproved language**, and none of that
+happened, because the gate held through four rounds of "not yet".
+
+Each round also moved a rule out of somebody's head and into a file:
+
+| Round | What the owner had to say out loud, once |
+| --- | --- |
+| 001 | The facility and Epsilon are two civilisations. |
+| 001-R | Cold room, warm pools — not a warm room. |
+| 002 | Epsilon is an installation, not a shrine. |
+| 002-R | And a machine somebody *operated*. |
+
+None of those were guessable, and all four are now `ART_BIBLE.md` §1z.
+
+> A style gate is not a delay before production. It is the thing that makes
+> production reusable, and it costs a render each time.
+
 ### L-25 · …and that applies to check output, not just renders
 At the 05:45 heartbeat this lane reported "working tree clean, in sync, base
 branch unchanged, and all three cheap verifiers still pass" — having run

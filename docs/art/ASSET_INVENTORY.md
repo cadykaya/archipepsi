@@ -26,53 +26,57 @@ Everything else is `—` and stays `—` until the Style Lock gate opens.
 
 ---
 
-## 0. Batch 001-R — built, pending review
+## 0. Built and approved — the Style Lock set
+
+**Style Lock passed 2026-08-28.** Every asset below carries the owner's
+`PASS`; the locked DNA they establish is at the top of `ART_REVIEW.md`.
+These are the vocabulary everything after them inherits.
 
 <!-- GENERATED TABLE: regenerate with tools/blender/sync_inventory.py.
      Hand-editing it is how the two 10 mm transcription errors got in. -->
 
 | ID | L | Category | Tris | Size (m) | Anchor | Model | Tex | Rev |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `epsilon_a_lectern` | L4 | hero | 140 | 1.18 × 0.86 × 2.62 | floor | B1R | B1R | PEND |
-| `epsilon_b_core` | L4 | hero | 284 | 1.40 × 1.28 × 2.63 | floor | B1R | B1R | PEND |
-| `epsilon_c_aperture` | L4 | hero | 188 | 1.34 × 0.50 × 2.77 | floor | B1R | B1R | PEND |
-| `epsilon_installation` | L4 | hero | 1644 | 9.02 × 3.48 × 3.55 | floor | B2 | B2 | PEND |
-| `check_a_pedestal` | L2 | hero | 300 | 0.96 × 1.04 × 2.22 | floor | B1R | B1R | PEND |
-| `check_b_vault` | L2 | hero | 232 | 1.38 × 1.37 × 2.16 | floor | B1R | B1R | PEND |
-| `check_c_mast` | L2 | hero | 268 | 1.11 × 1.14 × 2.22 | floor | B1R | B1R | PEND |
-| `portal_a_blast` | L2 | interactable | 252 | 3.54 × 1.02 × 4.60 | floor | B1R | B1R | PEND |
-| `portal_b_collar` | L2 | interactable | 412 | 3.50 × 1.26 × 4.36 | floor | B1R | B1R | PEND |
-| `portal_b2_wound` | L2 | interactable | 512 | 3.59 × 1.29 × 4.45 | floor | B2 | B2 | PEND |
-| `enemy_melee_stooped` | L0 | enemy | 460 | 0.77 × 0.57 × 1.57 | floor | B1R | B1R | PEND |
-| `enemy_ranged_tripod` | L0 | enemy | 368 | 0.57 × 0.59 × 1.38 | floor | B1R | B1R | PEND |
-| `enemy_brute_squat` | L0 | enemy | 424 | 1.70 × 1.54 × 2.50 | floor | B1R | B1R | PEND |
-| `enemy_scuttler` | L0 | enemy | 212 | 1.19 × 0.59 × 0.54 | floor | B2 | B2 | PEND |
-| `enemy_charger` | L0 | enemy | 176 | 0.86 × 1.62 × 1.03 | floor | B2 | B2 | PEND |
-| `enemy_bulwark` | L0 | enemy | 280 | 1.45 × 0.83 × 1.92 | floor | B2 | B2 | PEND |
-| `enemy_artillery` | L0 | enemy | 144 | 0.63 × 0.75 × 1.52 | floor | B2 | B2 | PEND |
-| `enemy_beacon` | L0 | enemy | 152 | 0.57 × 0.61 × 2.12 | floor | B2 | B2 | PEND |
-| `enemy_drifter` | L0 | enemy | 208 | 1.25 × 1.24 × 0.84 | floor | B2 | B2 | PEND |
-| `enemy_diver` | L0 | enemy | 84 | 0.61 × 1.05 × 0.35 | floor | B2 | B2 | PEND |
-| `anchor_a_soffit` | L2 | interactable | 160 | 1.10 × 1.10 × 1.00 | ceiling | B1R | B1R | PEND |
-| `anchor_b_jib` | L2 | interactable | 168 | 1.15 × 0.60 × 1.02 | ceiling | B1R | B1R | PEND |
-| `anchor_b_wall_jib` | L2 | interactable | 168 | 0.62 × 1.25 × 0.72 | wall | B2 | B2 | PEND |
-| `arch_wall_panel` | L1 | module | 12 | 4.00 × 0.40 × 4.00 | floor | B1R | B1R | PEND |
-| `arch_wall_ribbed` | L1 | module | 108 | 4.00 × 0.68 × 4.00 | floor | B1R | B1R | PEND |
-| `arch_floor_slab` | L1 | module | 12 | 4.00 × 4.00 × 0.40 | floor | B1R | B1R | PEND |
-| `arch_ceiling_beam` | L1 | module | 40 | 4.00 × 4.00 × 0.85 | ceiling | B1R | B1R | PEND |
-| `arch_doorway` | L1 | module | 96 | 4.00 × 0.55 × 4.00 | floor | B1R | B1R | PEND |
-| `arch_trim_rail` | L1 | module | 20 | 4.00 × 0.12 × 0.48 | floor | B1R | B1R | PEND |
-| `arch_railing` | L1 | module | 96 | 4.00 × 0.11 × 1.05 | floor | B1R | B1R | PEND |
-| `arch_pipe_run` | L1 | module | 172 | 4.00 × 0.40 × 0.62 | module_floor | B1R | B1R | PEND |
-| `arch_light_fixture` | L1 | module | 144 | 1.50 × 0.39 × 0.26 | ceiling | B1R | B1R | PEND |
-| `arch_utility_lamp` | L1 | module | 96 | 0.34 × 0.44 × 0.28 | wall | B2 | B2 | PEND |
-| `prop_crate` | L0 | prop | 72 | 1.04 × 1.04 × 1.01 | floor | B1R | B1R | PEND |
-| `prop_utility_box` | L0 | prop | 76 | 0.52 × 0.33 × 1.01 | floor | B1R | B1R | PEND |
-| `prop_terminal` | L0 | prop | 68 | 0.86 × 0.62 × 1.41 | floor | B1R | B1R | PEND |
-| `prop_pipe_cluster` | L0 | prop | 284 | 0.77 × 0.52 × 2.20 | floor | B1R | B1R | PEND |
-| `prop_machinery_unit` | L0 | prop | 180 | 1.30 × 0.99 × 1.90 | floor | B1R | B1R | PEND |
-| `prop_debris` | L0 | prop | 96 | 1.23 × 1.24 × 0.58 | floor | B1R | B1R | PEND |
-| `prop_warning_sign` | L0 | prop | 48 | 0.65 × 0.17 × 0.44 | wall | B1R | B1R | PEND |
+| `epsilon_a_lectern` | L4 | hero | 140 | 1.18 × 0.86 × 2.62 | floor | B1R | B1R | PASS |
+| `epsilon_b_core` | L4 | hero | 284 | 1.40 × 1.28 × 2.63 | floor | B1R | B1R | PASS |
+| `epsilon_c_aperture` | L4 | hero | 188 | 1.34 × 0.50 × 2.77 | floor | B1R | B1R | PASS |
+| `epsilon_installation` | L4 | hero | 1644 | 9.02 × 3.48 × 3.55 | floor | B2 | B2 | PASS |
+| `check_a_pedestal` | L2 | hero | 300 | 0.96 × 1.04 × 2.22 | floor | B1R | B1R | PASS |
+| `check_b_vault` | L2 | hero | 232 | 1.38 × 1.37 × 2.16 | floor | B1R | B1R | PASS |
+| `check_c_mast` | L2 | hero | 268 | 1.11 × 1.14 × 2.22 | floor | B1R | B1R | PASS |
+| `portal_a_blast` | L2 | interactable | 252 | 3.54 × 1.02 × 4.60 | floor | B1R | B1R | PASS |
+| `portal_b_collar` | L2 | interactable | 412 | 3.50 × 1.26 × 4.36 | floor | B1R | B1R | PASS |
+| `portal_b2_wound` | L2 | interactable | 512 | 3.59 × 1.29 × 4.45 | floor | B2 | B2 | PASS |
+| `enemy_melee_stooped` | L0 | enemy | 460 | 0.77 × 0.57 × 1.57 | floor | B1R | B1R | PASS |
+| `enemy_ranged_tripod` | L0 | enemy | 368 | 0.57 × 0.59 × 1.38 | floor | B1R | B1R | PASS |
+| `enemy_brute_squat` | L0 | enemy | 424 | 1.70 × 1.54 × 2.50 | floor | B1R | B1R | PASS |
+| `enemy_scuttler` | L0 | enemy | 212 | 1.19 × 0.59 × 0.54 | floor | B2 | B2 | PASS |
+| `enemy_charger` | L0 | enemy | 176 | 0.86 × 1.62 × 1.03 | floor | B2 | B2 | PASS |
+| `enemy_bulwark` | L0 | enemy | 280 | 1.45 × 0.83 × 1.92 | floor | B2 | B2 | PASS |
+| `enemy_artillery` | L0 | enemy | 144 | 0.63 × 0.75 × 1.52 | floor | B2 | B2 | PASS |
+| `enemy_beacon` | L0 | enemy | 152 | 0.57 × 0.61 × 2.12 | floor | B2 | B2 | PASS |
+| `enemy_drifter` | L0 | enemy | 208 | 1.25 × 1.24 × 0.84 | floor | B2 | B2 | PASS |
+| `enemy_diver` | L0 | enemy | 84 | 0.61 × 1.05 × 0.35 | floor | B2 | B2 | PASS |
+| `anchor_a_soffit` | L2 | interactable | 160 | 1.10 × 1.10 × 1.00 | ceiling | B1R | B1R | PASS |
+| `anchor_b_jib` | L2 | interactable | 168 | 1.15 × 0.60 × 1.02 | ceiling | B1R | B1R | PASS |
+| `anchor_b_wall_jib` | L2 | interactable | 168 | 0.62 × 1.25 × 0.72 | wall | B2 | B2 | PASS |
+| `arch_wall_panel` | L1 | module | 12 | 4.00 × 0.40 × 4.00 | floor | B1R | B1R | PASS |
+| `arch_wall_ribbed` | L1 | module | 108 | 4.00 × 0.68 × 4.00 | floor | B1R | B1R | PASS |
+| `arch_floor_slab` | L1 | module | 12 | 4.00 × 4.00 × 0.40 | floor | B1R | B1R | PASS |
+| `arch_ceiling_beam` | L1 | module | 40 | 4.00 × 4.00 × 0.85 | ceiling | B1R | B1R | PASS |
+| `arch_doorway` | L1 | module | 96 | 4.00 × 0.55 × 4.00 | floor | B1R | B1R | PASS |
+| `arch_trim_rail` | L1 | module | 20 | 4.00 × 0.12 × 0.48 | floor | B1R | B1R | PASS |
+| `arch_railing` | L1 | module | 96 | 4.00 × 0.11 × 1.05 | floor | B1R | B1R | PASS |
+| `arch_pipe_run` | L1 | module | 172 | 4.00 × 0.40 × 0.62 | module_floor | B1R | B1R | PASS |
+| `arch_light_fixture` | L1 | module | 144 | 1.50 × 0.39 × 0.26 | ceiling | B1R | B1R | PASS |
+| `arch_utility_lamp` | L1 | module | 96 | 0.34 × 0.44 × 0.28 | wall | B2 | B2 | PASS |
+| `prop_crate` | L0 | prop | 72 | 1.04 × 1.04 × 1.01 | floor | B1R | B1R | PASS |
+| `prop_utility_box` | L0 | prop | 76 | 0.52 × 0.33 × 1.01 | floor | B1R | B1R | PASS |
+| `prop_terminal` | L0 | prop | 68 | 0.86 × 0.62 × 1.41 | floor | B1R | B1R | PASS |
+| `prop_pipe_cluster` | L0 | prop | 284 | 0.77 × 0.52 × 2.20 | floor | B1R | B1R | PASS |
+| `prop_machinery_unit` | L0 | prop | 180 | 1.30 × 0.99 × 1.90 | floor | B1R | B1R | PASS |
+| `prop_debris` | L0 | prop | 96 | 1.23 × 1.24 × 0.58 | floor | B1R | B1R | PASS |
+| `prop_warning_sign` | L0 | prop | 48 | 0.65 × 0.17 × 0.44 | wall | B1R | B1R | PASS |
 
 | Theme material | Roles built |
 | --- | --- |
@@ -93,7 +97,7 @@ than any Zone and their whole value is being the same every time.
 | --- | --- | --- | --- | --- | --- | --- |
 | `hub_shell` | L4 | H | `hub/hub.gd` `_build_room` | A | 22 × 16 × 5 m; spawn at (0, 0.8, 3.0) facing −Z | — |
 | `hub_portal_assembly` | L4 | H | `hub/hub.gd` `_Terminal` "main" | A | 3.0 × 4.0 × 0.8 box at (0, 0, D−1.2); a second finale portal at (W/2−3, 0, D−1.2) | — |
-| `hub_epsilon_presence` | L4 | H | none — Epsilon has no fixture today | A | **no contract yet.** Batch 001 concepts fit hub.gd's 2.0 × 3.0 × 0.8 terminal envelope | B1 |
+| `hub_epsilon_presence` | L4 | H | none — Epsilon has no fixture today | A | **no contract yet, and the gap is now large.** `epsilon_installation` is 9.02 × 3.48 × 3.55 m against hub.gd's generic 2.0 × 3.0 × 0.8 terminal envelope. It needs a reserved bay; see `ART_FRONTIER.md` interface item 4 | **B2 · PASS** |
 | `hub_shop_counter` | L2 | H | `hub/hub.gd` shop `SimpleStation` | A | at (−W/2+1.6, 0, D×0.45) | — |
 | `hub_archive_terminal` | L2 | H | `hub/hub.gd` inventory `SimpleStation` | A | at (W/2−1.6, 0, D×0.45) | — |
 | `hub_campaign_board` | L2 | H | `hub/hub.gd` `_build_campaign_board` | A | 30 cells in 3 tiers on a 0.12 × 2.6 × 5.2 panel; cell tint is `SourceIdentity`'s and is **derived, not chosen** | — |

@@ -8,48 +8,64 @@ file is the only one that says what to *do next*.
 
 ## THE GATE
 
-> ## BATCH 002-R IS AWAITING OWNER REVIEW.
-> ## MASS ASSET PRODUCTION IS STILL BLOCKED.
+> ## STYLE LOCK IS PASSED. PRODUCTION IS UNLOCKED.
 
-Batch 002 came back with **most of the style lock approved** — facility
-architecture, the lighting rule, Check A, both grapple anchors, the portal
-language and the enemy family are all `PASS` and locked — and **one targeted
-Epsilon revision** outstanding:
+The owner's Batch 002-R verdict passed the revised Epsilon installation and
+locked the whole visual language. `ART_REVIEW.md` opens with the locked DNA;
+`ART_BIBLE.md` §1z carries the same text as a build rule. **Neither is
+reopened by this lane.**
 
-> If the revised Epsilon installation lands, I expect to declare STYLE LOCK
-> PASSED. Do NOT begin broad mass production until I approve that final
-> Epsilon revision.
+### What is now allowed
 
-002-R is that revision, and it is the only thing in it. The gate has **not**
-moved.
+- Produce assets in coherent **batches**, in the priority order below.
+- Re-skin approved geometry into approved themes.
+- Extend an approved module family with more instances of the same kind.
+- Build the six theme kits, room shells, and the enemy production family.
 
-**Only the owner turns `PENDING` into `PASS` in
-[`ART_REVIEW.md`](ART_REVIEW.md).** No entry there may be moved by anyone
-else, for any reason, including "it obviously passes".
+### What still needs a review sheet
 
-### Until the owner has reviewed, a heartbeat MAY
+| Needs review | Can move faster |
+| --- | --- |
+| Major hero assets | Routine variations that clearly inherit locked DNA |
+| New enemy families or roles | More instances of an approved module family |
+| New theme landmarks | Re-skins of approved geometry into an approved theme |
+| **Anything establishing new visual DNA** | Fixes to something already approved |
 
-- fix objective pipeline failures — a broken build, export or import
-- fix defects in the review tooling itself
-- re-render evidence that has gone stale
-- fill out `ASSET_INVENTORY.md` or the other packet documents
-- record a lesson in `ART_LESSONS.md`
-- correct something that **objectively** violates a written rule in
-  `ART_BIBLE.md` (a budget overrun, a density out of band, an asset outside
-  its collider, an enemy wearing the theme's colours)
+### What is still forbidden, and always was
 
-### Until the owner has reviewed, a heartbeat MAY NOT
+- Declaring a visual concept approved. `PASS` is still the owner's word
+  alone, and Style Lock passing did not delegate it.
+- Deleting a rejected or superseded alternative.
+- Symmetrizing or tidying the Epsilon intrusion.
+- Redesigning the locked installation, unless an **integration problem**
+  proves it necessary — and then the conflict is surfaced, not resolved
+  quietly.
+- Changing gameplay truth or an engineering contract to make an asset
+  convenient. Surface the conflict and work elsewhere.
+- Inventing a subjective owner decision. If a genuinely new style question
+  appears: **state it, and continue on something else.**
 
-- declare any visual concept approved
-- silently pick one of three concepts
-- extrapolate an unapproved concept into more assets
-- delete a rejected alternative
-- start theme production — the three unbuilt themes stay unbuilt
-- start final Hub or Echo Lab modelling
-- expand the asset count for any reason
+### The production order
 
-**If there is nothing objective left to do, say so in one line, leave this
-file accurate, and end the turn.** Do not invent work to fill a heartbeat.
+Assets that let the game replace its procedural / debug-looking presentation
+with the approved authored vocabulary come first.
+
+| # | Tier | State |
+| --- | --- | --- |
+| 1 | Hub / permanent spaces, and the Epsilon installation | **in progress** — the installation is built and locked |
+| 2 | Core interactables | Check A and the portal DNA are locked; instances to build |
+| 3 | Common architecture | 9 modules exist; the kit is not complete |
+| 4 | The enemy production family | 10 roles concepted; production versions to build |
+| 5 | Movement affordances | 2 of 7 fixtures exist |
+| 6 | Universal props | 7 exist |
+| 7 | Room-shell vocabulary | none |
+| 8 | The six theme kits | 3 of 6 material families |
+| 9 | Presentation / polish | none |
+
+**Heartbeats now do production work** in this order, one coherent batch at a
+time, and stop for review only where the table above says a review sheet is
+needed. A heartbeat with nothing productive available still says so in one
+line rather than inventing work.
 
 ---
 
@@ -58,9 +74,9 @@ file accurate, and end the turn.** Do not invent work to fill a heartbeat.
 | | |
 | --- | --- |
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
-| Phase | **Batch 002-R built and rendered.** 001, 001-R and 002 are all reviewed; every verdict is recorded in `ART_REVIEW.md`. |
-| Owner review | **002-R REQUESTED — not yet received.** Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
-| Next action | **Wait.** The gate above is the whole of the current instruction. |
+| Phase | **STYLE LOCK PASSED — production.** Every style batch is reviewed and every verdict recorded in `ART_REVIEW.md`; there are no open `PENDING` entries. |
+| Owner review | Style Lock passed 2026-08-28. Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
+| Next action | **Tier 1: the Hub.** Replace its procedural shell and stations with the authored vocabulary. |
 
 ### What the Batch 002 review LOCKED
 
