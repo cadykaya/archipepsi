@@ -8,4 +8,12 @@ game: Archipepsi
 Archipepsi:
   accessibility: full
   progression_balancing: 0
+
+  # Deliberately tiny: this slot exists for generation and connection
+  # smoke tests, and a 450-location seed makes them slow without making
+  # them stronger. Small values staying available is the point of the
+  # bounds, not an accident of them.
+  location_count: 30
+  zone_target_checks: 3
+  zone_budget: 200
   # no non_local_items - everything stays local and reachable solo

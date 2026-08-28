@@ -107,6 +107,31 @@ def build_context_class(backend: "RealAPBackend", slot_name: str):
     return ArchipepsiContext
 
 
+def _scale_from_slot_data(slot_data: dict) -> C.CampaignConfig | None:
+    """The campaign scale the seed was generated with, or None.
+
+    None means "this seed predates the options", which is the PROTOTYPE
+    campaign -- not the current default. Returning the default here would
+    quietly resize somebody's finished 30-location run to 450 the first
+    time they reconnected with a newer build.
+
+    A malformed block is also None rather than a guess: an unreadable
+    scale is not a licence to invent one.
+    """
+    block = slot_data.get("campaign_scale")
+    if not isinstance(block, dict):
+        return None
+    try:
+        return C.CampaignConfig(
+            location_count=int(block["location_count"]),
+            zone_target_checks=int(block["zone_target_checks"]),
+            zone_budget=int(block["zone_budget"]))
+    except (KeyError, TypeError, ValueError) as exc:
+        log.warning("slot data carried an unusable campaign_scale (%s); "
+                    "treating this seed as a prototype campaign", exc)
+        return None
+
+
 class RealAPBackend:
     mode = "real"
 
@@ -249,6 +274,8 @@ class RealAPBackend:
             d.team = int(ctx.team or 0)
             d.slot_id = int(ctx.slot or 0)
             d.slot_name = str(ctx.auth or "")
+            d.campaign_scale = _scale_from_slot_data(
+                getattr(ctx, "slot_data", None) or {})
             self._sync_truth_sets()
             log.info("connected as slot %d '%s' (seed %s); awaiting race-mode "
                      "answer before scouting", d.slot_id, d.slot_name,

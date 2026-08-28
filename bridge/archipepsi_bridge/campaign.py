@@ -31,6 +31,7 @@ from .epsilon.concepts import preferred_modes, read_concepts
 from .schemas.echo import (
     COMPLEXITY_BUDGETS, over_soft_budget, upgradable_field_info)
 from .schemas.protocol import (
+    CampaignScale,
     BridgeError, CampaignSave, CampaignSnapshot, EarnedLocalReward, HubStatus,
     Notification, ScoutedLocation, ShopState, SlotAssignment, ZoneReady,
     ZoneRecord,
@@ -507,16 +508,41 @@ class CampaignEngine:
             games = sorted({s.track_key for s in ap.scouts.values()})
             order = C.deterministic_shuffle(
                 games, *C.track_order_seed(ap.seed_name, ap.team, ap.slot_id))
+            # The scale the SEED was generated with. None means the seed
+            # predates the options, which is the prototype campaign and
+            # not the current default (CAMPAIGN_SCALE.md 2).
+            scale = ap.campaign_scale or C.PROTOTYPE_CONFIG
             fresh = CampaignSave(
                 seed_name=ap.seed_name, team=ap.team, slot_id=ap.slot_id,
                 slot_name=_clamp_ap_string(ap.slot_name),
-                track_order=tuple(order))
+                track_order=tuple(order),
+                scale=CampaignScale(
+                    location_count=scale.location_count,
+                    zone_target_checks=scale.zone_target_checks,
+                    zone_budget=scale.zone_budget))
             self._apply(fresh)
-            log.info("created campaign %s (track order: %s)",
-                     self._save_path.name, " → ".join(order))
+            log.info("created campaign %s at %d locations / %d per Zone / "
+                     "%d budget (track order: %s)",
+                     self._save_path.name, scale.location_count,
+                     scale.zone_target_checks, scale.zone_budget,
+                     " → ".join(order))
         elif self.save is None:
+            # A campaign in progress keeps the scale it was created with.
+            # If the seed now reports a different one, the save and the
+            # seed are describing different campaigns -- resizing a run
+            # underneath a player would strand every Check outside the
+            # new range, so this is reported and the SAVE wins.
+            if (ap.campaign_scale is not None
+                    and existing.scale.config() != ap.campaign_scale):
+                log.error(
+                    "campaign scale mismatch: the save is %d locations and "
+                    "the seed says %d. Keeping the save's scale; this "
+                    "campaign was generated against different options.",
+                    existing.scale.location_count,
+                    ap.campaign_scale.location_count)
             self.save = existing
-            log.info("loaded campaign %s", self._save_path.name)
+            log.info("loaded campaign %s at %d locations",
+                     self._save_path.name, existing.scale.location_count)
 
         self._low_coin_warned = False
         await self.on_items_updated(notify=False)
