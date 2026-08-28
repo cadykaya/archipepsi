@@ -17,11 +17,27 @@ steps later.
 
 from __future__ import annotations
 
+import os
 import pathlib
 import re
 import subprocess
 
+import pytest
+
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+
+#: The preflight's whole job is reporting what a setup is MISSING, so a
+#: test that asserts it reports nothing missing only means anything where
+#: the setup exists. Tier 1 CI runs with `ARCHIPELAGO_ROOT=/nonexistent`
+#: on purpose -- to prove the suite skips cleanly without a checkout --
+#: and the first version of this test asserted the opposite there, which
+#: is how it turned Tier 1 red. Same skip pattern as `test_bridge.py`.
+AP_AVAILABLE = pathlib.Path(
+    os.environ.get("ARCHIPELAGO_ROOT", ROOT / ".archipelago")
+).is_dir()
+
+needs_ap = pytest.mark.skipif(not AP_AVAILABLE,
+                              reason="no Archipelago checkout (make setup)")
 
 #: Key shapes worth refusing outright. Real prefixes, so a genuine
 #: pasted key is caught rather than a plausible-looking placeholder.
@@ -133,6 +149,7 @@ def test_nothing_third_party_is_bundled_without_a_licence():
           "allowlist with its licence.")
 
 
+@needs_ap
 def test_the_preflight_runs_and_separates_required_from_optional():
     """A preflight that calls a working setup broken is worse than none:
     the single most discouraging thing a first run can do is present a
@@ -140,7 +157,7 @@ def test_the_preflight_runs_and_separates_required_from_optional():
     out = subprocess.run(
         ["python", "-m", "archipepsi_bridge.doctor"],
         cwd=ROOT / "bridge", capture_output=True, text=True, timeout=120,
-        env={k: v for k, v in __import__("os").environ.items()
+        env={k: v for k, v in os.environ.items()
              if k != "ANTHROPIC_API_KEY"})
     assert out.returncode == 0, (
         f"the preflight reports this container as broken:\n{out.stdout}")
