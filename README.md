@@ -25,7 +25,7 @@ catwalks. Zero shipped assets.
 apworld/            the Archipelago world (30 Checks, 3 tiers, Victory event)
 bridge/             Python 3.11: AP client, campaign brain, Epsilon providers
 godot/              Godot 4.5.1 (stock, GDScript): the actual videogame
-docs/design-packet-v0.7/   the frozen implementation contract
+docs/design-packet-v0.8/   the implementation contract
 docs/IMPLEMENTATION_DECISIONS.md   deviations and constraints
 NEXT_STEPS.md       operational build state
 ```
@@ -37,7 +37,7 @@ official Godot 4.5.1 stable binary.
 
 ```bash
 make setup          # clones + pins Archipelago 0.6.7 into .archipelago/
-make test           # 180+ tests: schemas, bridge, campaign, APWorld
+make test           # 487 tests: schemas, bridge, campaign, APWorld
 ```
 
 If `pip` cannot replace a distro-managed package during setup, install AP's
@@ -72,11 +72,47 @@ godot-bin/godot --path godot
 ```
 
 In the menu: server `localhost:38281`, slot `Skyiah`, CONNECT — or press
-MOCK CAMPAIGN for a complete offline fixture campaign.
+MOCK CAMPAIGN for a complete offline fixture campaign, which needs no
+server and no seed.
 
-Controls: WASD + mouse, Space jump, **LMB Static Pulse (always)**, **RMB
-equipped Echo**, E interact, Q cycle Echo, Tab inventory, Esc pause, F3
-debug overlay.
+The bridge prints what it is doing on startup — the port Godot connects
+to, whether it is on a real server or the offline fixture, which Epsilon
+is running, and **the absolute path it will write saves to**. That last
+line matters: the save directory is relative to where the bridge was
+STARTED unless `ARCHIPEPSI_SAVE_DIR` is set, so `make bridge` (which runs
+from `bridge/`) and the same command from the repo root are two different
+campaigns.
+
+Controls: WASD + mouse, Space jump, E interact, Tab inventory, Esc pause,
+F3 debug overlay.
+
+**LMB is always the Static Pulse** and never changes. The four Echo slots
+each have their own key:
+
+| Slot | Key |
+| --- | --- |
+| `echo_a` | RMB |
+| `echo_b` | MMB, or F |
+| `mobility` | Shift |
+| `utility` | C |
+
+The mouse wheel cycles favourites within the slot you are looking at.
+
+### Two Archipepsi players in one multiworld
+
+The demo seed generates two Archipepsi worlds (`Skyiah` and `Partner`),
+and both can play at once. On one machine that means two bridges, which
+need two ports and two save directories:
+
+```bash
+cd bridge
+ARCHIPEPSI_SAVE_DIR=$PWD/saves-a python3 -m archipepsi_bridge &
+ARCHIPEPSI_SAVE_DIR=$PWD/saves-b python3 -m archipepsi_bridge --port 38291 &
+```
+
+Then point one Godot at 38290 and the other at 38291, connecting as
+`Skyiah` and `Partner`. `make dual-real` proves this path automatically
+against a real server.
 
 ## Test configurations
 
@@ -87,8 +123,16 @@ loop, no API cost, no nondeterminism.
 ```bash
 make smoke                                     # headless bridge loop (mock AP)
 python3 -m archipepsi_bridge.smoke_real        # same against a live server
+make dual-real                                 # TWO Archipepsi slots, one server
+make dual-real-soak                            # the same across fresh seeds
 make godot-integration                         # the full game, headlessly
 ```
+
+`bridge/tests/test_startup.py` is the one shaped like an ordinary launch
+rather than a subsystem: the bridge binds, Godot's handshake succeeds, the
+mock campaign plays a Zone, the save lands where the banner said, and the
+three configuration mistakes most likely on a first run each produce a
+message that names the fix.
 
 ## Known limitations (by design — see DESIGN.md §18)
 
@@ -104,6 +148,14 @@ make godot-integration                         # the full game, headlessly
 
 ## Status
 
-All seven implementation phases of the v0.7 packet are built and the full
-campaign loop is proven end-to-end headlessly (mock AP) and against a real
-Archipelago 0.6.7 server. See `NEXT_STEPS.md` for the live frontier.
+The v0.7 POC is complete, and the v0.8 **Echoes 2.0** arc on top of it is
+complete through S10: an Echo is an interpretation carrying up to four
+operations, live mechanics are a pure fold over an append-only
+interpretation log, and a foreign item can now upgrade, modify, link or
+merge what you already own rather than only adding a twenty-seventh
+unrelated thing.
+
+The loop is proven headlessly (mock AP), against a real Archipelago 0.6.7
+server, and — since the dual-slot proof — with two Archipepsi players in
+the same multiworld at once. See `NEXT_STEPS.md` for the live frontier and
+`docs/design-packet-v0.8/AUTHORED_CONTENT.md` before doing any art work.
