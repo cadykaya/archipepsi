@@ -1,0 +1,79 @@
+{
+  "check_destination_ring": {
+    "anchor": "module_floor",
+    "path": "batch005/check/check_destination_ring.glb",
+    "size": [
+      1.897,
+      1.897,
+      0.12
+    ],
+    "texel_density": null,
+    "triangles": 160
+  },
+  "check_item_available": {
+    "anchor": "module_floor",
+    "path": "batch005/check/check_item_available.glb",
+    "size": [
+      0.277,
+      0.277,
+      0.28
+    ],
+    "texel_density": null,
+    "triangles": 84
+  },
+  "check_item_confirmed": {
+    "anchor": "module_floor",
+    "path": "batch005/check/check_item_confirmed.glb",
+    "size": [
+      0.259,
+      0.259,
+      0.25
+    ],
+    "texel_density": null,
+    "triangles": 84
+  },
+  "check_item_locked": {
+    "anchor": "module_floor",
+    "path": "batch005/check/check_item_locked.glb",
+    "size": [
+      0.259,
+      0.259,
+      0.04
+    ],
+    "texel_density": null,
+    "triangles": 28
+  },
+  "check_item_sending": {
+    "anchor": "module_floor",
+    "path": "batch005/check/check_item_sending.glb",
+    "size": [
+      0.259,
+      0.259,
+      0.31
+    ],
+    "texel_density": null,
+    "triangles": 112
+  },
+  "check_mast": {
+    "anchor": "floor",
+    "path": "batch005/check/check_mast.glb",
+    "size": [
+      0.961,
+      1.043,
+      2.22
+    ],
+    "texel_density": null,
+    "triangles": 288
+  },
+  "check_send_beam": {
+    "anchor": "module_floor",
+    "path": "batch005/check/check_send_beam.glb",
+    "size": [
+      0.739,
+      0.739,
+      40.0
+    ],
+    "texel_density": null,
+    "triangles": 28
+  }
+}

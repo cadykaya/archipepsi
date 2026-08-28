@@ -42,6 +42,8 @@ extends SceneTree
 ##                         lights, all at hub.gd's own numbers
 ##   `void`                a backdrop and lights, nothing else
 ##   `model:<rel path>`    one .glb on the backdrop, floor-anchored at origin
+##   `model:<a> + <b>`     several, in one frame. Each may carry an
+##                         `@x,y,z` offset: `model:mast.glb + item.glb@0,0,0`
 ##
 ## ### Camera, pick ONE of
 ##
@@ -163,26 +165,54 @@ func _build(scene: String, root: Node3D, vp: SubViewport) -> AABB:
 	var env: Environment = (vp.get_node("WorldEnvironment")
 			as WorldEnvironment).environment
 	env.background_color = Color(0.56, 0.57, 0.60)
-	_slab(root, Vector3(60, 0.2, 40), Vector3(0, -0.1, -14.0),
+	# Big enough to still be under and behind the camera at the Check's
+	# review distance. At 60 x 40 the floor ended at z -34 and a camera at
+	# -39.6 m stood off the end of it, so the bottom half of the frame was
+	# the underside of the backdrop.
+	_slab(root, Vector3(200, 0.2, 160), Vector3(0, -0.1, -64.0),
 			Color(0.42, 0.43, 0.46))
-	_slab(root, Vector3(60, 24, 0.3), Vector3(0, 12, 1.55),
+	_slab(root, Vector3(200, 44, 0.3), Vector3(0, 22, 1.55),
 			Color(0.56, 0.57, 0.60))
 
 	if scene.begins_with("model:"):
-		var rel := scene.substr(6)
-		var node: Node3D = ArtBench.load_glb("%s/models/%s" % [_assets, rel])
-		if node == null:
-			push_error("shoot: missing model %s" % rel)
+		# One `model:` scene may name SEVERAL glbs, joined by "+", each with
+		# an optional "@x,y,z" offset. Batch 005 is why: reward.gd builds
+		# the Check out of a mast, an item and a ring as separate nodes, so
+		# a picture of one file is a picture of a third of a Check.
+		var loaded := 0
+		var union := AABB()
+		for spec in scene.substr(6).split("+", false):
+			var at := Vector3.ZERO
+			var rel: String = spec.strip_edges()
+			if "@" in rel:
+				var bits := rel.split("@")
+				rel = bits[0].strip_edges()
+				at = _vec(Array(bits[1].split(",")), Vector3.ZERO)
+			var node: Node3D = ArtBench.load_glb("%s/models/%s" % [_assets, rel])
+			if node == null:
+				push_error("shoot: missing model %s" % rel)
+				continue
+			ArtBench.force_nearest(node)
+			# Yawed to face -Z, which is where the cameras are. glTF maps
+			# Blender +Y to -Z, so a face authored along Blender -Y leaves
+			# the exporter pointing at +Z -- the mistake that made a whole
+			# sheet of Epsilon views pictures of the back of the bank.
+			node.rotation_degrees = Vector3(0, 180, 0)
+			# The offset is expressed in the SAME yawed frame as the model,
+			# so `@-1.2,0,0` means "1.2 m to the VIEWER's left" -- which is
+			# what anyone arranging four models on a shelf means by it. The
+			# first run took the offsets in world space and rendered the
+			# four Check states in reverse under a caption naming them
+			# left to right (ART_LESSONS L-41, again).
+			node.position = Vector3(-at.x, at.y, -at.z)
+			root.add_child(node)
+			var box := ArtBench.aabb_of(node)
+			var here := AABB(node.global_position + box.position, box.size)
+			union = here if loaded == 0 else union.merge(here)
+			loaded += 1
+		if loaded == 0:
 			return AABB(Vector3.ZERO, Vector3.ONE)
-		ArtBench.force_nearest(node)
-		# Yawed to face -Z, which is where the cameras are. glTF maps
-		# Blender +Y to -Z, so a face authored along Blender -Y leaves the
-		# exporter pointing at +Z -- the mistake that made a whole sheet of
-		# Epsilon views pictures of the back of the bank.
-		node.rotation_degrees = Vector3(0, 180, 0)
-		root.add_child(node)
-		var box := ArtBench.aabb_of(node)
-		return AABB(node.global_position + box.position, box.size)
+		return union
 
 	return AABB(Vector3(-1, 0, -1), Vector3(2, 2, 2))
 

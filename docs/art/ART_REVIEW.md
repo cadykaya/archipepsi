@@ -852,3 +852,133 @@ Shot with the new camera rig from `tools/shots/batch004_lab.json`: `L_*.png`,
 graduated fixtures — what they are FOR is being read straight.
 
 Status: **PENDING** — production work inheriting locked DNA.
+
+---
+
+## Batch 005 — the Check, produced, and its four states
+
+Tier 2 opens with core interactables, and `ASSET_INVENTORY.md` §2 opens with
+the Check. `AUTHORED_CONTENT.md` says why: thirty of them across a campaign
+makes it the most repeated moment in the game. Batch 001 concepted three
+silhouettes, you selected **A** revised, and Style Lock passed it — but what
+existed was a *review model*, one joined mesh that stands still. This is the
+produced one.
+
+### The split is `reward.gd`'s, not a composition choice
+
+`reward.gd` builds the Check out of five children and then drives three of
+them independently: `ItemVisual` spins, bobs and is repainted per **state**;
+`DestinationRing` is repainted per **recipient world**; `SendBeam` is
+spawned, scaled and faded on confirm. One joined mesh cannot do any of that,
+so this batch exports along those node boundaries and reads every dimension
+out of that file.
+
+| ID | Tris | Size (m) | Anchor |
+| --- | --- | --- | --- |
+| `check_mast` | 288 | 0.96 × 1.04 × 2.22 | floor |
+| `check_item_locked` | 28 | 0.26 × 0.26 × 0.04 | module_floor |
+| `check_item_available` | 84 | 0.28 × 0.28 × 0.28 | module_floor |
+| `check_item_sending` | 112 | 0.26 × 0.26 × 0.31 | module_floor |
+| `check_item_confirmed` | 84 | 0.26 × 0.26 × 0.25 | module_floor |
+| `check_destination_ring` | 160 | 1.90 × 1.90 × 0.12 | module_floor |
+| `check_send_beam` | 28 | 0.74 × 0.74 × 40.00 | module_floor |
+
+The mast's geometry is **imported** from `build_concept_check.py` rather than
+copied, so the silhouette you passed has exactly one source and cannot drift.
+
+### Two kinds of variation, and only one of them can be authored
+
+- **State is a closed set of four.** A closed set can be authored, so it is:
+  four meshes, swapped. That keeps the authored surface in every state — a
+  runtime `material_override` would replace it — and it lets state differ in
+  **form** as well as hue, which matters for a player who cannot rely on hue.
+- **Destination is an open set** derived from the multiworld:
+  `ThemeMaterials.color_for_game()` can return a colour for any game in the
+  room. That cannot be authored, so the ring and the beam are single flat
+  materials the engine tints, and their **form** carries the read alone.
+
+If engineering keeps `material_override` on the item instead of swapping
+meshes, nothing breaks — `check_item_available` is a fine mesh to override.
+The batch just delivers more when the decision goes the other way.
+
+### The four states, and what makes them different
+
+Every state is a **cradle** — an octagonal socket plate on the cage floor,
+present in all four because it is the fixture — plus what sits in it.
+
+| State | The item | Family | `reward.gd` energy |
+| --- | --- | --- | --- |
+| locked | nothing. An empty cradle | `dead` | 0.4 |
+| available | the full spindle, the largest lit area of the four | `signal` | 1.8 |
+| sending | the spindle stretched into a column toward the cap | `send` | 1.2 |
+| confirmed | a small dark husk in the cradle | `dead` | 0.2 |
+
+So four silhouettes, not four hues: `K_item_family_silhouette.png` is the
+sheet that proves it. Locked and confirmed share the `dead` family on
+purpose — the engine gives them 0.4 and 0.2 — and are told apart by the
+cradle being **empty** against **occupied**.
+
+### What reads at 39.6 m, and what does not — measured, not claimed
+
+`art_budgets.json` puts the Check's review distance at 39.6 m, the largest
+arena diagonal. At the engine's own 90° camera on a 1080p frame:
+
+| Part | Size | Pixels |
+| --- | --- | --- |
+| the collision box the budget quotes | 2.6 m | 35 |
+| the mast as built | 2.22 m | 30 |
+| the destination ring | 1.90 m across | 26 |
+| the item, in its cage | 0.28 m | 4 |
+
+`K_state_family_far.png` is the four states at that distance, and
+`K_state_family_far_inset.png` is the same pixels at 4× with no filtering.
+Read it before the pretty sheets. **Available and sending separate by hue
+across three or four pixels of cage. Locked and confirmed do not separate at
+all.**
+
+That is not a defect this lane can fix by modelling: 4 px is 4 px. In the
+running game they will separate, because `reward.gd` drops the destination
+ring to 0.35 emission energy when locked and leaves it at 1.5 otherwise —
+26 px of channel against the item's 4. **The ring is therefore load-bearing
+for the distance read**, which nothing wrote down before. Interface
+requirement 11 records it; if the ring's locked dimming is ever removed,
+locked and confirmed become the same object across a room.
+
+The sheet cannot show that, because the ring's material here is authored and
+the engine's is not. Saying so is more useful than a sheet that implies
+otherwise.
+
+### The one paint change from the approved model, stated plainly
+
+The concept's base collar wore the `send` family, because in a joined review
+model it *was* the destination ring. It is not any more: `reward.gd`'s ring
+has outer radius 1.02 — 1.90 m across as an octagon, nearly twice the
+collar — and it lives on the floor. So the collar is repainted structural and
+the `send` channel moves to the ring at the engine's own radii. Silhouette,
+proportion and the lit band are untouched.
+
+The ring itself is **eight pads and a curb**, not a solid band. Built as the
+plain octagonal tube it came out the brightest object in the frame — a gold
+mat with a Check standing on it, which is the `hero_shell` rule (*if two
+things compete for the eye at 35 px, neither wins*) broken by the channel
+that is not even carrying state. Turning it down is only half a fix, because
+the engine can tint it back up; the half that survives an override is form.
+
+### Evidence
+
+Shot from `tools/shots/batch005_check.json`.
+
+| Image | What it answers |
+| --- | --- |
+| `K_state_family.png` | **start here** — the four states on the mast, one camera, one frame |
+| `K_state_family_far.png` · `_far_inset.png` | the same four at 39.6 m, and those pixels at 4× |
+| `K_check_assembled.png` | mast, item and ring together, with grey / silhouette / clay |
+| `K_check_operator.png` | walk-up at eye height on the engine's own lens |
+| `K_check_far_read.png` | one Check at 39.6 m |
+| `K_check_cage_detail.png` | the caged head at 85 mm — 20 mm clearance so it can spin |
+| `K_item_family*.png` | the four items alone, lit / grey / silhouette |
+| `K_destination_ring.png` · `K_send_beam.png` | the two the engine tints |
+
+Status: **PENDING** — production work inheriting locked DNA. The state
+language (empty cradle → bright spindle → stretched column → dark husk) is
+the one judgement call in the batch and is yours to confirm or redirect.

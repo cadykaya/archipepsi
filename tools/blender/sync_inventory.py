@@ -46,6 +46,10 @@ ORDER = [
     ("batch004", "lab",
      ["lab_dummy", "lab_height_markers", "lab_runway_measure", "lab_hazard",
       "lab_moving_target", "lab_reset_pad", "lab_notice_board"]),
+    ("batch005", "check",
+     ["check_mast", "check_item_locked", "check_item_available",
+      "check_item_sending", "check_item_confirmed",
+      "check_destination_ring", "check_send_beam"]),
 ]
 CAT = {"epsilon": "hero", "check": "hero", "portal": "interactable",
        "enemy": "enemy", "anchor": "interactable", "arch": "module",
@@ -73,8 +77,12 @@ def main():
         # of a decision, not one this script is entitled to make, and if a
         # later asset is built before its own review it does not go in this
         # table until it has one.
-        rev = {"batch001": "B1R", "batch002": "B2",
-               "batch003": "B3"}.get(batch, "B4")
+        # Derived, not tabulated. The literal table said B4 for anything it
+        # did not know, so batch005 would have been labelled as batch004's
+        # work -- the same shape of staleness as L-33, in the one column
+        # that says WHICH REVIEW an asset belongs to.
+        rev = "B1R" if batch == "batch001" \
+            else "B" + batch.removeprefix("batch").lstrip("0")
         for i in ids:
             m = manifests[i]
             s = m["size"]

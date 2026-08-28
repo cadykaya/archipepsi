@@ -202,6 +202,39 @@ intrusion the brightest thing in the room without touching the intrusion.
 > Before reaching for a colour, ask which ramp the object belongs to. A
 > value problem solved with a hue is still a value problem.
 
+### L-42 · The palette's brightest step is not where an emitter starts
+`make_signal_material(dark, bright)` was called with step 0 and step **3**
+everywhere, because step 3 is the family's brightest colour and the emitter
+should obviously be brightest. For `identity` (`#57ff1f`) and `send`
+(`#ffd45c`) that is fine — both are saturated at step 3. For `signal` it is
+not: step 3 is `#85fff3`, R 0.52 against G 1.00 and B 0.95, which is a mint
+so pale that emitting it renders a **white** hexagon with no teal in it.
+
+The concept got away with it on a core the size of a fist inside a cage. At
+the size the Check's state channel needs, the available state — the one
+state that must be unmistakable — was the least saturated thing on the
+object. `signal` now emits step **2** (`#39d7c8`).
+
+> A ramp's brightest step is the brightest a TEXTURE may go. An emitter
+> starts from the most SATURATED step, and those are not the same index.
+
+### L-43 · The channel that is not carrying the message must not be loudest
+The Check's destination ring, built as the engine's plain octagonal tube and
+lit at the same saturation as the item, came out the brightest object in the
+frame: a gold mat with a Check standing on it. `hero_shell`'s own docstring
+states the rule it broke — *if two things compete for the eye at 35 px,
+neither wins* — and the ring is the **destination** channel, not the state
+one.
+
+Turning it down was only half a fix. The engine overrides that material per
+recipient world and can turn it straight back up, so brightness is not a
+property this lane controls. What survives an override is **form**: eight
+pads with floor showing between them read as a marker ring at any tint,
+where a solid band reads as a slab at most of them.
+
+> When the engine owns the paint, the composition has to be in the mesh.
+
+
 ## Geometry
 
 ### L-10 · `rotation_euler` on a positioned part rotates about the WORLD origin
@@ -516,6 +549,34 @@ because taking it had been expensive.
 
 > Cheap iteration is not a convenience. It changes which pictures get
 > looked at, and the pictures nobody takes are where the bugs live.
+
+### L-44 · Do not caption a pixel count you have not counted
+The far-read sheet went out captioned `MAST 35 PX`. 35 is the number in
+`art_budgets.json`, and it is correct — for the 2.6 m **collision box** the
+budget derives from. The mast as built is 2.22 m, which at 39.6 m on a 90°
+vertical fov and 1080 lines is **30 px**. The ring was captioned 30 and is
+26. Both numbers were quoted from the right document about the wrong object.
+
+The arithmetic is four characters wide — `1080 * h / (2 * d * tan(fov/2))` —
+and it took longer to write this entry than to run it.
+
+> A number copied from a budget is a claim about the budget. A number about
+> the render has to come from the render, or from the render's own geometry.
+
+### L-45 · An offset in a frame the renderer flips reverses the caption
+`shoot.gd` yaws every loaded model 180° so an authored front faces the
+camera. The new multi-model offsets were applied in world space, so
+`@-1.2,0,0` — "1.2 m to the left" to anyone writing a shot list — put the
+model 1.2 m to the viewer's **right**. The four Check states rendered in
+reverse under a caption naming them left to right, and the picture looked
+entirely plausible: four states, four positions, nothing missing.
+
+The offset now goes through the same yaw as the model, so the shot list
+means what a person arranging four models on a shelf means.
+
+> A convention that is right for the geometry and wrong for the caption is
+> the kind of bug a render cannot show you, because both halves look fine.
+
 
 ## Process
 
