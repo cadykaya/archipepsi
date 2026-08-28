@@ -268,6 +268,14 @@ class ContentEntry(Strict):
     sockets: tuple[Socket, ...] = ()
     volumes: tuple[Volume, ...] = ()
 
+    #: Art-lane review state. `pending` means someone is still deciding
+    #: whether this asset is right, and shipping it would decide for
+    #: them; the art lane is in STYLE LOCK 001-R and a file existing in
+    #: the tree is not approval. Absent means the entry predates the gate
+    #: -- those are the procedural placeholders, which are not art and
+    #: were never art-reviewed.
+    review: Literal["pending", "pass"] | None = None
+
     #: D1: the semantic size Epsilon asks for, when it asks at all.
     #: Optional -- a shell that is simply "the corridor" needs no class.
     size_class: SizeClass | None = None

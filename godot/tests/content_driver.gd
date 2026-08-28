@@ -70,6 +70,11 @@ func _run() -> void:
 	_the_catalog_offers_only_authored_shells_and_is_sorted()
 	_variant_selection_is_deterministic()
 	_a_lying_shell_never_reaches_the_player()
+	await _archipelago_truth_is_not_epsilon()
+	_source_game_identity_survives_epsilon()
+	_the_tier_arc_is_presentation_only()
+	_a_pending_asset_cannot_ship_itself()
+	_the_challenge_marker_hook_is_dormant_not_gone()
 	_the_base_kit_can_never_be_unbound()
 	_a_hand_edited_config_cannot_unbind_the_base_kit()
 	_settings_are_clamped_on_the_way_in()
@@ -957,3 +962,124 @@ func _a_lying_shell_never_reaches_the_player() -> void:
 	_check(built.has("exit_offset"),
 			"the degraded build must still produce a usable chamber")
 	root.free()
+
+
+# --- D6/D4: separate semantic layers ---------------------------------------
+
+func _archipelago_truth_is_not_epsilon() -> void:
+	## The decision, stated as a test because a strong visual language
+	## pulls everything into itself. If a Check reads as an Epsilon
+	## organ, the player loses the distinction the whole game is about:
+	## this is somebody else's item, and Epsilon only interpreted it.
+	_check(not VisualOwnership.reads_as_epsilon(
+			VisualOwnership.CHECK_SIGNAL),
+			"the Check signal reads as Epsilon's; Archipelago truth "
+			+ "needs its own identity")
+	var clash := VisualOwnership.collision(
+			"Epsilon", VisualOwnership.EPSILON_SIGNAL,
+			"Check", VisualOwnership.CHECK_SIGNAL)
+	_check(clash.is_empty(), clash)
+
+	## And the pedestal in the world must actually use its own layer
+	## rather than borrowing Epsilon's.
+	BridgeClient.snapshot = {"scouted": [{
+		"location_id": 89100003, "location_name": "C", "revealed": false,
+		"recipient_game": "A Link to the Past"}]}
+	var reward := RewardObject.create(89100003, "zone_1", "void_glitch")
+	add_child(reward)
+	await get_tree().process_frame
+	reward.state = "available"
+	reward._refresh_visual()
+	var label: Label3D = reward.get_node("StateLabel")
+	_check(not VisualOwnership.reads_as_epsilon(label.modulate),
+			"an available Check is painted in Epsilon's signal (%s); "
+			% label.modulate + "Checks are Archipelago truth, not "
+			+ "Epsilon's property")
+	reward.queue_free()
+	BridgeClient.snapshot = {}
+
+func _source_game_identity_survives_epsilon() -> void:
+	## The third layer. A Zone's colours come from the source game, and
+	## the decision is explicit that advancing tiers must NOT wash them
+	## in Epsilon green.
+	var seen: Array = []
+	for game: String in ["Super Mario 64", "Ocarina of Time",
+			"Dark Souls III", "Bomb Rush Cyberfunk"]:
+		var color := ThemeMaterials.color_for_game(game)
+		_check(not VisualOwnership.reads_as_epsilon(color),
+				"'%s' resolves to a colour that reads as Epsilon's (%s); "
+				% [game, color] + "source-game identity must stay its own "
+				+ "layer")
+		seen.append(color)
+	## And they must differ from EACH OTHER, or "per-game identity" is
+	## one colour with four names.
+	for i in seen.size():
+		for j in range(i + 1, seen.size()):
+			_check(seen[i] != seen[j],
+					"two source games share a colour; per-game identity "
+					+ "stops identifying anything")
+
+func _the_tier_arc_is_presentation_only() -> void:
+	## D4 allows a Hub atmosphere arc and forbids it touching anything
+	## else. Intrusion must rise across tiers...
+	var early := VisualOwnership.hub_intrusion(0)
+	var late := VisualOwnership.hub_intrusion(2)
+	_check(early < late,
+			"Epsilon should look more embedded late than early")
+	_check(early > 0.0,
+			"Epsilon is present from the start; it built the campaign")
+
+	## ...and nothing outside the Hub may read it. A Zone built at tier 2
+	## must be identical to the same Zone at tier 0, because the tier is
+	## atmosphere and the Zone belongs to its source game.
+	var source := FileAccess.get_file_as_string(
+			"res://scripts/generation/zone_builder.gd")
+	_check(not source.contains("hub_intrusion") and not source.contains("tier"),
+			"zone generation reads the tier arc; generated Zones must "
+			+ "keep their source-game identity at every tier")
+
+func _a_pending_asset_cannot_ship_itself() -> void:
+	## The art lane is in STYLE LOCK 001-R. A file existing in the tree
+	## is not approval, and putting a pending asset in a zone decides a
+	## question somebody else is still deciding.
+	var pending := _authored_entry({"id": "shell_arena_proc",
+			"review": "pending"})
+	var registry := _load([pending, _entry({"id": "shell_arena_backup"})])
+	var built := ContentInstantiator.build_chamber(
+			{"id": "c1", "type": "arena", "width": 18.0, "depth": 18.0,
+			"wall_height": 6.0, "enemies": []}, "void_glitch", registry)
+	var root: Node3D = built["root"]
+	_check(root.name != "ShellGrayboxFixture",
+			"a PENDING asset was instantiated into a zone; review status "
+			+ "is not advisory")
+	root.free()
+
+	## A passed asset ships normally, or the gate is a wall.
+	var passed := _authored_entry({"id": "shell_arena_proc",
+			"review": "pass"})
+	var ok_registry := _load([passed])
+	var ok_built := ContentInstantiator.build_chamber(
+			{"id": "c1", "type": "arena", "enemies": []}, "void_glitch",
+			ok_registry)
+	_check((ok_built["root"] as Node3D).name == "ShellGrayboxFixture",
+			"an approved asset must actually be used")
+	(ok_built["root"] as Node3D).free()
+
+func _the_challenge_marker_hook_is_dormant_not_gone() -> void:
+	## Deliberately deferred (OWNER_DECISIONS). The hook stays so the
+	## eventual semantics have somewhere to attach, and nothing may
+	## depend on it in the meantime -- a dormant hook that something
+	## quietly started using is how a deferred decision gets made by
+	## accident.
+	_check("challenge_marker" in LocalRewardPickup.KINDS,
+			"the challenge_marker hook was removed from LocalRewardPickup.KINDS; "
+			+ "it is deferred, not cancelled")
+
+	## Nothing about AP truth or progression may depend on it. If it ever
+	## does, the deferred decision has been made by accident.
+	for source: String in ["res://scripts/gameplay/zone_controller.gd",
+			"res://scripts/hub/hub.gd"]:
+		var text := FileAccess.get_file_as_string(source)
+		_check(not text.contains("challenge_marker"),
+				"%s reads challenge_marker; no progression may depend on "
+				% source + "a hook whose semantics are undefined")

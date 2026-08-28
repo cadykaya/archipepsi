@@ -67,6 +67,13 @@ static func build_chamber(chamber: Dictionary, theme: String,
 	var entry := reg.get_entry(chosen)
 	if bool(entry.get("procedural_fallback", false)):
 		return ChamberBuilders.build(chamber, theme)
+	# The art-lane gate. A PENDING asset is one somebody is still
+	# deciding about; putting it in a zone decides for them, and the
+	# decision was explicit that files existing is not approval.
+	if not VisualOwnership.is_shippable(entry):
+		push_warning("content: '%s' is pending art review; using the "
+				% chosen + "placeholder until it passes")
+		return ChamberBuilders.build(chamber, theme)
 	return _from_authored_scene(entry, chamber, theme)
 
 ## Instantiates an authored shell and derives the build contract from its

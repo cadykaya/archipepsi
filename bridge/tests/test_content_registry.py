@@ -573,3 +573,64 @@ def test_the_godot_validator_measures_rather_than_trusting():
     # And the refusal has to be legible: a bare "invalid" tells an artist
     # nothing they can act on.
     assert "as built" in gd
+
+
+# --- 8: the suites must actually run their own tests ----------------------
+
+DRIVERS = sorted((ROOT / "godot" / "tests").glob("*_driver.gd")) + [
+    ROOT / "godot" / "tests" / "test_chambers.gd"]
+
+
+def test_every_awaiting_driver_test_is_awaited_by_its_caller():
+    """A GDScript function containing `await`, called WITHOUT `await`,
+    returns at its first suspend. Its assertions never run and the suite
+    prints OK having checked nothing.
+
+    This is written as a structural check because I have now made the
+    mistake twice — once in the S17 presentation tests, caught by
+    sabotage; once in the D6 colour tests, caught by sabotage again, in
+    a file where the first case is commented three functions above. A
+    comment did not stop the second one, so the suite checks instead.
+
+    Only calls from a driver's own run list matter: a helper that awaits
+    and is awaited by an awaiting caller is fine, and that is what the
+    per-function scan below distinguishes.
+    """
+    offenders = []
+    for path in DRIVERS:
+        if not path.is_file():
+            continue
+        text = path.read_text()
+
+        # Which functions suspend, and which function each line is in.
+        suspending: set[str] = set()
+        owner: dict[int, str] = {}
+        current = ""
+        for index, line in enumerate(text.splitlines(), start=1):
+            if line.startswith("func "):
+                current = line[5:].split("(")[0]
+            owner[index] = current
+            if current and re.search(r"(^|\s)await\s", line):
+                suspending.add(current)
+
+        for match in re.finditer(r"^\t+(\w+)\(\)\s*$", text, re.M):
+            name = match[1]
+            if name not in suspending:
+                continue
+            line_no = text[:match.start()].count("\n") + 1
+            # `_ready` is exempt, and this is not a loophole: the engine
+            # calls it and cannot await it, so the top-level entry point
+            # is unawaited by construction. It runs to completion through
+            # the scene tree, and quits from inside itself.
+            if owner.get(line_no) == "_ready":
+                continue
+            line_start = text.rfind("\n", 0, match.start()) + 1
+            if "await" in text[line_start:match.start()]:
+                continue
+            offenders.append(
+                f"{path.name}:{line_no} calls {name}(), which awaits, "
+                f"without awaiting it")
+
+    assert not offenders, (
+        "these driver tests return before asserting anything:\n  "
+        + "\n  ".join(offenders))
