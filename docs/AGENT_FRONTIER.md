@@ -2,7 +2,117 @@
 
 This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS.md` for the detailed project/history handoff and the v0.8 packet for authoritative contract details.
 
-## Current frontier
+## THE ACTIVE FRONTIER: v0.9 — production and the authored-content transition
+
+**`docs/design-packet-v0.9/IMPLEMENTATION_PLAN.md` is what wake-ups
+execute.** S1–S10 (Echoes 2.0) are complete and are history below; the
+plan is NOT exhausted.
+
+The governing rule, from `docs/design-packet-v0.8/AUTHORED_CONTENT.md`
+(normative, outranks the v0.9 plan): **humans make the alphabet, Godot
+enforces the grammar, Epsilon writes sentences.** Epsilon is a composer,
+never an asset generator. Do not manufacture "final art" procedurally to
+claim a stage. Existing primitive geometry and materials are valid
+TESTABLE placeholders and stay. Graybox `.tscn` scenes are legitimate
+deliverables and must say in-file that they are not final art.
+
+Dependency order (S21/S22 are independent of the asset pipeline, and are
+the work that continues if an art gate blocks the rest):
+
+```
+S11  CI                        ── independent, first
+S12  registry + asset contract ── the foundation S13-S19 consume
+ ├── S13 instantiation pipeline
+ │     ├── S14 Hub + Echo Lab migration
+ │     ├── S15 room shells + connectors ── S16 encounter/traversal vocabulary
+ │     ├── S17 interactable/presentation contracts
+ │     └── S18 enemy/player/affordance visual interfaces
+ └── S19 material/VFX/audio/lighting registries
+S20  campaign spine (human-decision gates)
+S21  settings/input/a11y       ── INDEPENDENT
+S22  packaging/first-run       ── mostly independent
+S23  release hardening         ── last
+```
+
+**Stage status:** see the plan document. Nothing started yet beyond this
+handoff.
+
+**Heartbeat behaviour:** while v0.9 has unfinished INDEPENDENT stages,
+continue the next real frontier item. Once everything left is blocked on
+human-authored assets or design decisions, record the exact remaining
+gates here and make wake-ups no-ops until the user provides feedback or
+assets.
+
+---
+
+## Completed: v0.8 Echoes 2.0 (S1–S10) and the pre-playtest pass
+
+## Open decision, deliberately not guessed
+`challenge_marker` (§14.2) and its `challenge_timer` readout (§14.1) have a complete bridge half — grantable, recorded, `best_seconds` improves — and no world half, because neither section says where a run starts, what ends it, or what counts as one. `test_stage_tripwires.py::test_the_challenge_marker_still_has_no_challenge` names the decision and comes due when it is made.
+
+## Stage dependency trap
+A live one: a chamber carrying an affordance feature must be at least `MIN_FEATURE_CHAMBER_WIDTH` (5.2 m) wide, and only a corridor can carry one at all — every other chamber type has a Check or a gating objective. A generator that hangs a feature on a default-width connector gets its Zone refused. The fallback widens its own connectors; anything else must too.
+
+Retired at S9: every verb in the catalog runs, and `DEFERRED_PRIMITIVES` is empty (deliberately, so the partition test in `test_schemas.py` stays true rather than vacuous). The rule it encoded still applies to whatever is deferred next — name the LAST required stage, not the first.
+
+## Standing tripwires (deliberate, will fire on stage advance)
+- `test_stage_tripwires.py` is now all receipts: the S3 pair fired at S5,
+  the S9 pair fired at S9, and each is recorded as discharged. Nothing is
+  gated, so `test_the_registry_still_runs_even_though_it_gates_nothing`
+  is what keeps the mechanism from being refactored away — it narrows the
+  registry by hand and watches it refuse. The same trick keeps the
+  primitive gate visible in `test_schemas.py` and `test_s1_review_fixes.py`
+  (both pass a narrowed `implemented_primitives` through the seam the
+  signature already provides).
+- Cross-language pins: glyph indices, palette names, channel count
+  (`test_hud_contract.py` ↔ `hud_driver.gd`), theme rule
+  (`test_theme_agreement.py` ↔ `integration_driver.gd`), runner arms
+  (`test_runner_coverage.py`).
+
+## Resolved at S5 (was the standing unresolved decision)
+Traits apply because they are OWNED — unchanged, and now deliberate
+rather than inherited. S5 added the escape hatch the contract always
+intended: `requires_equipped` makes a trait conditional on a slot, and
+I7 now *requires* it for any severe downside (enforced by the trait
+model, not merely described). Ownership is the default; equipping is the
+modifier. Recorded in `docs/IMPLEMENTATION_DECISIONS.md` (S5).
+
+## Last full green verification
+At the pre-playtest checkpoint (this commit):
+- `make test`: **487 passed** (schemas + bridge + apworld together)
+- `check_packet.py`: green, **11 documents**
+- `make dual-real-soak`: 3/3 freshly generated two-Archipepsi multiworlds
+- `make smoke`: SMOKE OK
+- (was 343 at S9 completion, 362 after the S1–S5 review)
+- `check_packet.py`: green, 10 docs
+- `make godot-test`: GODOT CHAMBER TESTS OK
+- `make godot-blink`: 5125 resolved / 17825 refused; GODOT BLINK TESTS OK
+- `make godot-hud`: GODOT HUD TESTS OK
+- `make godot-rules`: GODOT RULES TESTS OK
+- `make godot-stats`: GODOT STATS TESTS OK (I3 sweep, links, S7 slots)
+- `make godot-lab`: GODOT LAB TESTS OK (fixtures, and no campaign mutation)
+- `make godot-affordance`: GODOT AFFORDANCE TESTS OK (I4 lane sweep, the
+  seven built, volumes that cannot trap, readouts that only read)
+- `make godot-verbs`: GODOT VERBS TESTS OK (press/release/cancel/death,
+  the complete refund, hover claims across four slots, parry vs. DoT,
+  shield timers, and rule effects following the highlighted slot)
+- `make godot-integration`: GODOT INTEGRATION OK, full 12-zone campaign;
+  every interpretation credited in some provenance chain, components at
+  Mk II+, Actions reaching several slots, the Hub's Lab present and inert,
+  affordance features offered and built, a local reward earned and
+  recorded without touching a single AP location, and all 26
+  interpretations reading their item in four different modes
+
+Do not assume these counts remain current after new commits; update this section only after the corresponding suites actually run green.
+
+## Core invariants
+AP integrity > save integrity > deterministic campaign state > playable integration > polish.
+
+Archipelago owns randomized truth. Python owns campaign/allocation/save/fold truth. Epsilon owns presentation/creative structured interpretation only. Godot renders/simulates and sends player intents. Persistent state changes go through transitions. Mechanics are derived from the interpretation log and never persisted as a second truth. Preserve base-kit solvability.
+
+<!-- Compact frontier format authored by ChatGPT / GPT-5.6 Sol, OpenAI. -->
+
+### v0.8 stage log
 - Branch: `claude/archipepsi-build-inzshp`
 - v0.7 POC: complete
 - Echoes 2.0 S1 + S1.1 + S2 + S3: complete
@@ -244,73 +354,3 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   the footgun). `test_startup.py` is the launch-shaped suite: bind,
   handshake, mock campaign plays a Zone, save lands where announced, and
   each likely first-run misconfiguration names its own fix.
-- **Next: the plan is exhausted, and the pre-playtest pass is done.** IMPLEMENTATION_PLAN §2.5 ends at S10
-  ("Deployables come after S10, if at all"). Per the standing handoff, do
-  not stop here — continue developing the game, and stop only where
-  continuing would require inventing an architecture decision the contract
-  does not answer (document that decision instead of guessing).
-
-## Open decision, deliberately not guessed
-`challenge_marker` (§14.2) and its `challenge_timer` readout (§14.1) have a complete bridge half — grantable, recorded, `best_seconds` improves — and no world half, because neither section says where a run starts, what ends it, or what counts as one. `test_stage_tripwires.py::test_the_challenge_marker_still_has_no_challenge` names the decision and comes due when it is made.
-
-## Stage dependency trap
-A live one: a chamber carrying an affordance feature must be at least `MIN_FEATURE_CHAMBER_WIDTH` (5.2 m) wide, and only a corridor can carry one at all — every other chamber type has a Check or a gating objective. A generator that hangs a feature on a default-width connector gets its Zone refused. The fallback widens its own connectors; anything else must too.
-
-Retired at S9: every verb in the catalog runs, and `DEFERRED_PRIMITIVES` is empty (deliberately, so the partition test in `test_schemas.py` stays true rather than vacuous). The rule it encoded still applies to whatever is deferred next — name the LAST required stage, not the first.
-
-## Standing tripwires (deliberate, will fire on stage advance)
-- `test_stage_tripwires.py` is now all receipts: the S3 pair fired at S5,
-  the S9 pair fired at S9, and each is recorded as discharged. Nothing is
-  gated, so `test_the_registry_still_runs_even_though_it_gates_nothing`
-  is what keeps the mechanism from being refactored away — it narrows the
-  registry by hand and watches it refuse. The same trick keeps the
-  primitive gate visible in `test_schemas.py` and `test_s1_review_fixes.py`
-  (both pass a narrowed `implemented_primitives` through the seam the
-  signature already provides).
-- Cross-language pins: glyph indices, palette names, channel count
-  (`test_hud_contract.py` ↔ `hud_driver.gd`), theme rule
-  (`test_theme_agreement.py` ↔ `integration_driver.gd`), runner arms
-  (`test_runner_coverage.py`).
-
-## Resolved at S5 (was the standing unresolved decision)
-Traits apply because they are OWNED — unchanged, and now deliberate
-rather than inherited. S5 added the escape hatch the contract always
-intended: `requires_equipped` makes a trait conditional on a slot, and
-I7 now *requires* it for any severe downside (enforced by the trait
-model, not merely described). Ownership is the default; equipping is the
-modifier. Recorded in `docs/IMPLEMENTATION_DECISIONS.md` (S5).
-
-## Last full green verification
-At the pre-playtest checkpoint (this commit):
-- `make test`: **487 passed** (schemas + bridge + apworld together)
-- `check_packet.py`: green, **11 documents**
-- `make dual-real-soak`: 3/3 freshly generated two-Archipepsi multiworlds
-- `make smoke`: SMOKE OK
-- (was 343 at S9 completion, 362 after the S1–S5 review)
-- `check_packet.py`: green, 10 docs
-- `make godot-test`: GODOT CHAMBER TESTS OK
-- `make godot-blink`: 5125 resolved / 17825 refused; GODOT BLINK TESTS OK
-- `make godot-hud`: GODOT HUD TESTS OK
-- `make godot-rules`: GODOT RULES TESTS OK
-- `make godot-stats`: GODOT STATS TESTS OK (I3 sweep, links, S7 slots)
-- `make godot-lab`: GODOT LAB TESTS OK (fixtures, and no campaign mutation)
-- `make godot-affordance`: GODOT AFFORDANCE TESTS OK (I4 lane sweep, the
-  seven built, volumes that cannot trap, readouts that only read)
-- `make godot-verbs`: GODOT VERBS TESTS OK (press/release/cancel/death,
-  the complete refund, hover claims across four slots, parry vs. DoT,
-  shield timers, and rule effects following the highlighted slot)
-- `make godot-integration`: GODOT INTEGRATION OK, full 12-zone campaign;
-  every interpretation credited in some provenance chain, components at
-  Mk II+, Actions reaching several slots, the Hub's Lab present and inert,
-  affordance features offered and built, a local reward earned and
-  recorded without touching a single AP location, and all 26
-  interpretations reading their item in four different modes
-
-Do not assume these counts remain current after new commits; update this section only after the corresponding suites actually run green.
-
-## Core invariants
-AP integrity > save integrity > deterministic campaign state > playable integration > polish.
-
-Archipelago owns randomized truth. Python owns campaign/allocation/save/fold truth. Epsilon owns presentation/creative structured interpretation only. Godot renders/simulates and sends player intents. Persistent state changes go through transitions. Mechanics are derived from the interpretation log and never persisted as a second truth. Preserve base-kit solvability.
-
-<!-- Compact frontier format authored by ChatGPT / GPT-5.6 Sol, OpenAI. -->
