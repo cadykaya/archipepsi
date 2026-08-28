@@ -46,8 +46,18 @@ S23  release hardening         ── last
 | S16 encounter/traversal vocabulary | **done** — tower ascent bounded, gap bound exported |
 | S17 interactable/presentation contracts | **done** — `interactable_contract.gd` |
 | S18 enemy/player/affordance visual interfaces | **done** — `visual_interface.gd` |
-| S19 material/VFX/audio/lighting vocabularies | **next** |
-| S20–S23 | not started |
+| S19 material/VFX/audio/lighting vocabularies | **done** — `test_epsilon_vocabulary.py` |
+| S20 campaign spine | **next** (expect human-decision gates) |
+| S21–S23 | not started |
+
+S19 enforces "Epsilon is a composer, never an asset generator"
+STRUCTURALLY rather than by review: every string field of every model
+Epsilon authors must be a closed vocabulary, a charset that cannot spell
+a path, or allowlisted prose with a stated reason. A new free-text field
+fails the test until someone says what it is for — which is the moment
+to notice it is a filename. `concepts`, `tags`, `subject` and
+`scaled_by` gained charset patterns; `res://x.tscn` is twelve characters
+and fitted comfortably inside a 24-character free string.
 
 S18 proved a visual swap cannot move a hitbox: every archetype built
 under all six themes must produce byte-identical collision, and the

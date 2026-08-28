@@ -517,7 +517,12 @@ class Condition(Strict):
     type: ConditionKind
     #: Names a resource for the resource conditions, a status for
     #: `status_active`, a slot for `slot_is`. Unused otherwise.
-    subject: str | None = Field(default=None, max_length=32)
+    #: Charset-constrained (v0.9 S19): this names a resource, a stat, a
+    #: status or a slot -- all internal identifiers, all of the form
+    #: `res_battery` or `burning`. Nothing here is prose, so nothing here
+    #: needs the characters that spell a path.
+    subject: str | None = Field(
+        default=None, max_length=32, pattern=r"^[a-z0-9_]+$")
     #: Fraction for hp/resource comparisons, metres for `enemy_within`,
     #: m/s for `speed_above`. Unused by the flag conditions.
     value: float = Field(default=0.0, ge=0.0, le=100.0)
@@ -541,7 +546,12 @@ class Effect(Strict):
     type: EffectKind
     #: A resource id, a stat name, a status name or a local-reward kind,
     #: depending on `type`.
-    subject: str | None = Field(default=None, max_length=32)
+    #: Charset-constrained (v0.9 S19): this names a resource, a stat, a
+    #: status or a slot -- all internal identifiers, all of the form
+    #: `res_battery` or `burning`. Nothing here is prose, so nothing here
+    #: needs the characters that spell a path.
+    subject: str | None = Field(
+        default=None, max_length=32, pattern=r"^[a-z0-9_]+$")
     amount: float = Field(default=0.0, ge=-200.0, le=200.0)
     duration: float = Field(default=0.0, ge=0.0, le=60.0)
     radius: float = Field(default=0.0, ge=0.0, le=20.0)
@@ -641,7 +651,9 @@ class TraitComponent(ComponentBase):
     multiplier: float = Field(ge=0.1, le=4.0)
     #: A resource id, `hp_fraction` or `hp_inverse`. The trait interpolates
     #: from 1.0 to `multiplier` across that fraction.
-    scaled_by: str | None = Field(default=None, max_length=32)
+    #: Charset-constrained (v0.9 S19): a stat or resource id, never prose.
+    scaled_by: str | None = Field(
+        default=None, max_length=32, pattern=r"^[a-z0-9_]+$")
     #: Set when the trait only applies while a given Action is slotted. A
     #: severe downside MUST set this — enforced by the validator below.
     requires_equipped: ComponentId | None = None
@@ -912,14 +924,23 @@ class EchoInterpretation(Strict):
 
     #: What Epsilon read the item as. Stored, not merely used: the archive
     #: shows it, and it is most of the charm.
-    concepts: tuple[Annotated[str, Field(min_length=1, max_length=24)], ...] = (
+    #: Charset-constrained, not merely length-clamped (v0.9 S19). These
+    #: stay deliberately open in MEANING -- Epsilon reading "Ice Beam" as
+    #: `frost` is most of the charm and no catalog should bound it -- but
+    #: `res://x.tscn` is twelve characters and fits comfortably inside a
+    #: 24-character free string. A plain identifier charset costs nothing
+    #: (every concept ever produced is one lowercase word) and removes
+    #: the whole category of a provider naming a file here.
+    concepts: tuple[Annotated[str, Field(
+        min_length=1, max_length=24, pattern=r"^[a-z0-9 _-]+$")], ...] = (
         Field(default=(), max_length=6)
     )
     mode: InterpretationMode = "literal"
 
     display_name: str = _NAME
     description: str = _NAME
-    tags: tuple[Annotated[str, Field(max_length=24)], ...] = Field(
+    tags: tuple[Annotated[str, Field(
+        max_length=24, pattern=r"^[a-z0-9 _-]*$")], ...] = Field(
         default=(), max_length=6
     )
 

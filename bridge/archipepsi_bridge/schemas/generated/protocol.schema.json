@@ -1582,6 +1582,7 @@
             "anyOf": [
               {
                 "maxLength": 32,
+                "pattern": "^[a-z0-9_]+$",
                 "type": "string"
               },
               {
@@ -1901,6 +1902,7 @@
             "items": {
               "maxLength": 24,
               "minLength": 1,
+              "pattern": "^[a-z0-9 _-]+$",
               "type": "string"
             },
             "maxItems": 6,
@@ -1934,6 +1936,7 @@
             "default": [],
             "items": {
               "maxLength": 24,
+              "pattern": "^[a-z0-9 _-]*$",
               "type": "string"
             },
             "maxItems": 6,
@@ -2014,6 +2017,7 @@
             "anyOf": [
               {
                 "maxLength": 32,
+                "pattern": "^[a-z0-9_]+$",
                 "type": "string"
               },
               {
@@ -4041,6 +4045,7 @@
             "anyOf": [
               {
                 "maxLength": 32,
+                "pattern": "^[a-z0-9_]+$",
                 "type": "string"
               },
               {
@@ -5275,6 +5280,7 @@
             "anyOf": [
               {
                 "maxLength": 32,
+                "pattern": "^[a-z0-9_]+$",
                 "type": "string"
               },
               {
@@ -5594,6 +5600,7 @@
             "items": {
               "maxLength": 24,
               "minLength": 1,
+              "pattern": "^[a-z0-9 _-]+$",
               "type": "string"
             },
             "maxItems": 6,
@@ -5627,6 +5634,7 @@
             "default": [],
             "items": {
               "maxLength": 24,
+              "pattern": "^[a-z0-9 _-]*$",
               "type": "string"
             },
             "maxItems": 6,
@@ -5707,6 +5715,7 @@
             "anyOf": [
               {
                 "maxLength": 32,
+                "pattern": "^[a-z0-9_]+$",
                 "type": "string"
               },
               {
@@ -7656,6 +7665,7 @@
             "anyOf": [
               {
                 "maxLength": 32,
+                "pattern": "^[a-z0-9_]+$",
                 "type": "string"
               },
               {
