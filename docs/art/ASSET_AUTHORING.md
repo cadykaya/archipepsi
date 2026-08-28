@@ -337,3 +337,61 @@ settings the game does not use. `check_art_current.sh` compares the two.
 When engineering's contracts stabilise, approved art can be rebased,
 cherry-picked or merged deliberately — by then it will be a set of files in
 paths nobody else touches, plus one registry the engineering lane owns.
+
+---
+
+## The camera
+
+Shots are data. `tools/shoot.sh <list.json>` runs a shot list and writes a
+folder of PNGs; adding a shot is a JSON object and nudging one is a number.
+
+```sh
+tools/shoot.sh tools/shots/demo.json            # -> docs/art/review/shots/
+tools/shoot.sh tools/shots/mylist.json out/dir
+```
+
+### A shot
+
+```json
+{ "name": "epsilon_wide",
+  "scene": "model:batch002/epsilon/epsilon_installation.glb",
+  "frame": 0.75, "azimuth": 18, "elevation": 6, "lens": 35,
+  "caption": "EPSILON", "variants": ["grey", "silhouette"] }
+```
+
+| Field | What |
+| --- | --- |
+| `scene` | `hub`, `void`, or `model:<path under assets/models>` |
+| `frame` | fraction of the frame the subject fits inside; **the distance is solved** |
+| `orbit` | `[radius, azimuth, elevation]` if you want to place it by hand |
+| `eye` | `[x, y, z]` floor position, plus `yaw` and `pitch` — stand where the player stands |
+| `look` | `[[from], [at]]` — the raw case |
+| `lens` | 35 mm equivalent focal length. 24 wide, 35 normal-wide, 50 normal, 85 portrait |
+| `game_lens` | `true` to shoot at the engine's own 90°. Use it for anything claiming to show what the player sees |
+| `dolly` `truck` `pedestal` `roll` | relative nudges, applied after placement |
+| `variants` | `grey`, `silhouette`, `clay`, `guides` |
+| `caption` `note` | the two label lines |
+
+`defaults` at the top of the list applies to every shot in it.
+
+### Why focal length and not fov
+
+`Camera3D.fov` is the **vertical** angle under Godot's default KEEP_HEIGHT,
+so the same number is a different picture at a different aspect. Two benches
+derived screen positions from a formula that assumed it was horizontal and
+put every label in the wrong place (`ART_LESSONS.md` L-34). Focal length has
+no such ambiguity, and `camera_rig.gd` converts it for the actual viewport.
+
+The game's own camera is 90°, which is not a focal length and is not
+pretended to be one — that is what `game_lens` is for.
+
+### In the game itself
+
+`docs/art/proposals/photo_mode.gd` is a complete in-game free camera —
+fly, look, roll, lens on the wheel, hide the interface, save a PNG — plus
+`frame()`, `frame_orbit()` and `frame_box()` for scripted shots, using the
+same framing maths as the bench so a composition transfers.
+
+**It is a proposal and the art lane did not install it.** It belongs in
+`godot/`, which this lane does not write. The file carries its own install
+note.

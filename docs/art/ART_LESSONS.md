@@ -339,6 +339,27 @@ Nothing about the geometry changed.
 > When an object needs to read as a different KIND of thing, the surface has
 > to say so too. At any real distance the map is louder than the silhouette.
 
+### L-40 · The docstring said no orange. The code painted orange on all ten.
+`build_concept_enemy.py` says it in bold:
+
+> **Hazard orange is deliberately absent, and that is a rule rather than an
+> omission.** Green says *whose this is*; orange says *what is about to
+> happen*.
+
+`ART_BIBLE.md` says it. The owner locked it. And `propkit.enemy_skin`'s
+signature was `marking="hazard"`, so every enemy in the roster carried a
+full-width band of `#9f3a15` across its chest.
+
+It survived four review batches because of where it is: at 18 m the band is
+two pixels, and every enemy shot in this project is taken at 18 m on
+purpose. It took a **50 mm lens at 3 m** -- a shot nobody had a reason to
+compose before the camera rig made composing one free -- for it to be the
+second thing in the frame.
+
+> A rule written in three places and implemented in none is the normal
+> case, not the surprising one. The thing that finds it is a view you had
+> no reason to take.
+
 ## Checks and benches
 
 ### L-15 · A check that passes on a clean tree has proved nothing
@@ -479,6 +500,22 @@ through the luma conversion as if they were part of the render.
 
 Capture, then derive, then caption. A caption is not part of the render and
 must never be measured as if it were.
+
+### L-41 · A bench that is hard to aim is a bench that gets aimed once
+Six review scripts, every camera written into GDScript as a pair of raw
+`Vector3`s and a 90 degree fov. Moving one camera 40 cm meant editing a
+source file and re-running a render, so in practice cameras got placed once
+and lived with. Batch 002 spent more wall-clock on `look_at_from_position`
+arithmetic than on modelling, two benches computed screen positions from a
+formula about the camera instead of asking it (L-34), and the one lens
+anybody ever used was the game's.
+
+`camera_rig.gd` and a JSON shot list fixed the cost, and the first thing
+that happened afterwards was L-40: a shot nobody had bothered to take,
+because taking it had been expensive.
+
+> Cheap iteration is not a convenience. It changes which pictures get
+> looked at, and the pictures nobody takes are where the bugs live.
 
 ## Process
 

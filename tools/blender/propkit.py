@@ -289,7 +289,7 @@ def hero_face(theme, name, family, label):
 # enemies
 # ----------------------------------------------------------------------
 
-def enemy_skin(theme, name, marking="hazard"):
+def enemy_skin(theme, name, marking="dead"):
     """An enemy's skin, and the one rule that decides it.
 
     > **An enemy never wears its room's colours.**
@@ -322,8 +322,20 @@ def enemy_skin(theme, name, marking="hazard"):
     surf.seams = tuple(range(0, PROP_SIZE, surf.texels(0.22)))
     surf.bolt_pitch = surf.texels(0.11)
     paintkit.bolts(canvas, surf, pal.grime(0), base[1], inset=2)
-    # ONE marking band, narrow. Enough to say "hostile" at close range and
-    # not enough to compete with the eye at long range.
+    # ONE marking band, narrow, and NOT in the hazard family.
+    #
+    # This defaulted to `hazard` -- orange -- while the enemy builder's own
+    # docstring said, in bold, that hazard orange is deliberately absent
+    # from enemies and that reserving it for telegraphs means the windup is
+    # the only orange an enemy ever shows. The rule was written down twice
+    # and the code painted a full-width orange band on every enemy in the
+    # roster anyway. At 18 m it is two pixels and invisible; on a review
+    # sheet at 3 m it is the second thing you see.
+    #
+    # The rule is the owner's and it is locked, so the code moved. `dead`
+    # is the palette's cold unpowered family: a manufactured marking that
+    # says "hostile" without spending the telegraph colour or competing
+    # with the green optic that says whose the thing is.
     top = surf.texels(0.46)
     height = max(2, surf.texels(0.045))
     canvas.rect(0, top, PROP_SIZE, height, pal.universal(marking, 1))

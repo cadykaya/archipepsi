@@ -62,6 +62,13 @@ with the approved authored vocabulary come first.
 | 8 | The six theme kits | 3 of 6 material families |
 | 9 | Presentation / polish | none |
 
+**Tooling:** `tools/shoot.sh` runs a JSON shot list through
+`camera_rig.gd` — lenses in millimetres, `frame` solving its own distance,
+grey / silhouette / clay / guides variants. Prefer it over writing a new
+bench script; the six that exist are each a camera nobody could afford to
+move. `docs/art/proposals/photo_mode.gd` is the in-game half, delivered as
+a proposal because it belongs in `godot/`.
+
 **Heartbeats now do production work** in this order, one coherent batch at a
 time, and stop for review only where the table above says a review sheet is
 needed. A heartbeat with nothing productive available still says so in one
@@ -202,6 +209,7 @@ for s in materials architecture props concept_epsilon concept_check \
 done
 tools/batch001_sheets.sh      # ~12 min: 28 sheets
 tools/composed_room.sh        # ~2 min: 12 room captures, incl. Epsilon in context
+tools/shoot.sh <list.json>    # ANY shot, from a JSON list. Start here.
 tools/hub_room.sh             # the Hub, built out of authored assets
 tools/epsilon_views.sh        # the operator / oblique / fusion / value views
 tools/enemy_family.sh         # the ten-role family sheet
@@ -230,6 +238,7 @@ them; each is a thing the art lane will need when contracts settle.
 | 3 | **A decision on `TEXTURE_SIZE_MAX` for imported assets.** 128 bounds the runtime generator. Batch 001 stays under it so nothing depends on the answer. | The deferred first-person viewmodel tier needs 256. | `viewmodel_*` |
 | 4 | **A footprint contract for the Epsilon presence, and it is now a big one.** `hub.gd` has a generic 2.0 × 3.0 × 0.8 m terminal and no dedicated fixture. Batch 002's installation is **8.80 × 2.61 × 3.55 m** — roughly a third of one 22 m Hub wall. The 001 concepts fit the old envelope; this one does not, on purpose, because the owner asked for an installation rather than a prop. | An object this size needs a reserved bay, a wall to stand against, and a rule about what may not spawn in front of it. | `hub_epsilon_presence` |
 | 7 | **Collision boxes for seven proposed enemy roles.** `enemy.gd` defines melee, ranged and brute. Batch 002 proposes scuttler, charger, bulwark, artillery, beacon, drifter and diver, each with a declared box and `"engine_box": false` in its manifest, and the two flyers with a proposed hover height. | Nothing past the trio can be placed until its collider exists, and a model built to a box nobody agreed to is a model that will be rebuilt. | every batch002 enemy |
+| 9 | **An in-game photo mode.** `docs/art/proposals/photo_mode.gd` is complete and parses clean: a free camera with scripted `frame()` / `frame_orbit()` / `frame_box()` entry points sharing the art bench's framing maths. It belongs at `godot/scripts/ui/photo_mode.gd` and this lane does not write there. | Every screenshot of the running game is currently whatever the player camera happened to be pointing at. | nothing — it is additive |
 | 8 | **A wall-mounted grapple anchor.** `affordance_features.gd` only knows the ceiling case. `anchor_b_wall_jib` proposes a 2.6 m plate height. | The directional variant the 001-R review asked to keep cannot be placed without it. | `anchor_b_wall_jib` |
 | 5 | **A larger footprint, or an L2 placement path, for composed clusters.** `PROP_FOOTPRINT` is 1.4 m. | Right for L0, too small for an L2 station or storytelling cluster. | `cluster_*` |
 | 6 | **`challenge_marker` world semantics** (`AGENT_FRONTIER.md` still lists this open). | Its visual cannot be specified until its meaning is. | `local_reward_pickup` |
