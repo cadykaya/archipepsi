@@ -44,7 +44,9 @@ reported, not silently applied.
 449 ordinary Checks / 15 per Zone  ≈ 30 ordinary Zones + finale
 ```
 
-If a 1000-budget Zone lands near ~40 minutes median, that is ~20 hours.
+If a 1000-budget Zone lands near ~40 minutes median, a 100% clear is
+~20 hours. **That is not the same number as when the goal becomes
+available**, and the two must never be quoted as one — see §3.
 
 **The 40-minute figure is a design target, not a measurement.** It is
 provisional until CS10's instrumentation and human playtests support it.
@@ -111,6 +113,60 @@ The literal `FINALE_REQUIRED_OTHER_CHECKS = 24` was 24-of-29. It becomes
 a **derived proportion of campaign size**, preserving the intent: the
 finale opens after a substantial majority of non-goal Checks are done.
 No new fixed integer.
+
+#### OPEN PACING DECISION: goal availability lands four hours early
+
+**Owner note, 2026-08-28, after CS10 landed. Recorded, deliberately NOT
+acted on.**
+
+`FINALE_REQUIRED_FRACTION = 0.8` at the defaults gives:
+
+```
+449 non-goal Checks x 0.8  = 360 Checks required
+360 / 15 per Zone          = 24 Zones exactly
+449 / 15 per Zone          = 30 Zones for a 100% clear
+```
+
+At the provisional 40 minutes per Zone that is **16 hours to goal
+availability and 20 hours to a full clear** — a four-hour gap. The
+campaign target is ~20+ hours, so as written the default campaign can
+normally END four hours before the number it is described by.
+
+The gap is not closed by nudging the percentage. Zones to goal, at 40
+minutes each:
+
+| fraction | Checks | Zones | hours |
+|---|---|---|---|
+| 80% (current) | 360 | 24 | 16.0 |
+| 85% | 382 | 26 | 17.3 |
+| 90% | 405 | 27 | 18.0 |
+| 95% | 427 | 29 | 19.3 |
+| 100% | 449 | 30 | 20.0 |
+
+Only 100% reaches 20 hours, and 100% is not an early finale at all — it
+deletes the choice the finale gate exists to offer. So "raise the
+percentage" alone is not a sufficient answer.
+
+**Do not change any of this yet.** Both hour figures are the 40-minute
+target multiplied out, and that target is unmeasured. Changing a real
+gate to satisfy an imaginary number is how a campaign gets tuned to a
+guess.
+
+**Revisit immediately after the first 1000-budget human playtests.**
+Candidates, in the owner's words:
+
+1. increase the finale completion percentage
+2. expose `finale_check_percent` as a YAML campaign option
+3. adjust the intended Zone-time target
+
+A fourth, implied by the table: state both numbers separately and stop
+describing the campaign by one of them. "~16 hours to the goal, ~20 to a
+full clear" may simply be the honest description of a game with an
+optional early finale.
+
+The playtime log already carries what the decision needs — median Zone
+time, and the campaign config the Zone counts derive from — so no
+instrumentation change is required first (§13).
 
 ---
 
@@ -441,6 +497,9 @@ the test confirmed to fail, then restored.
 ## 15. What this document does not decide
 
 - **The 40-minute Zone.** A target to calibrate against, not a fact.
+- **`FINALE_REQUIRED_FRACTION`.** Recorded as an open pacing decision in
+  §3, to be revisited on the first 1000-budget playtest evidence and not
+  before.
 - **Final weights.** The scoring table starts from reasoned estimates and
   is tuned from playtest evidence.
 - **Art.** The art lane owns its subjective visual decisions

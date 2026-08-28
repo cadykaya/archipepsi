@@ -326,3 +326,64 @@ def test_a_prototype_campaign_still_asks_for_a_prototype_zone(tmp_path):
         target_game="Some Game", generation_index=0)
     assert (engine._zone_request(record).campaign.zone_budget
             == C.PROTOTYPE_CONFIG.zone_budget)
+
+
+# ----------------------------------------------------------------------
+# The open pacing decision (CAMPAIGN_SCALE.md 3)
+# ----------------------------------------------------------------------
+
+def test_goal_availability_and_a_full_clear_are_different_numbers():
+    """Owner note, 2026-08-28. Recorded, deliberately NOT acted on.
+
+    At the defaults the finale opens after 24 Zones and a 100% clear
+    takes 30, so the campaign can normally END four hours before the
+    ~20-hour figure it is described by (at the provisional 40 minutes a
+    Zone). Both numbers are real; quoting one of them as "the campaign
+    length" is what this test exists to prevent.
+
+    It pins the arithmetic, not a decision. `FINALE_REQUIRED_FRACTION`
+    stays at 0.8 until the first 1000-budget playtests say otherwise --
+    changing a real gate to satisfy an unmeasured target is how a
+    campaign gets tuned to a guess.
+    """
+    config = C.DEFAULT_CONFIG
+    zones_to_goal = math.ceil(config.finale_required_checks()
+                              / config.zone_target_checks)
+    zones_to_clear = math.ceil(config.non_goal_count
+                               / config.zone_target_checks)
+    assert (zones_to_goal, zones_to_clear) == (24, 30)
+    assert zones_to_goal < zones_to_clear, (
+        "the finale gate no longer offers an early ending; if that is "
+        "deliberate, CAMPAIGN_SCALE.md 3 is the decision record to update")
+
+
+@pytest.mark.parametrize("size,per_zone", [(30, 3), (90, 5), (450, 15),
+                                           (600, 30)])
+def test_the_early_finale_is_early_at_every_configured_size(size, per_zone):
+    """Whatever the gap turns out to be, the gate must still be a gate."""
+    config = C.CampaignConfig(location_count=size,
+                              zone_target_checks=per_zone)
+    zones_to_goal = math.ceil(config.finale_required_checks() / per_zone)
+    zones_to_clear = math.ceil(config.non_goal_count / per_zone)
+    assert 0 < zones_to_goal <= zones_to_clear
+
+
+def test_raising_the_fraction_alone_cannot_reach_a_full_clear():
+    """Why "just increase the percentage" is not the answer on its own.
+
+    Recorded because the table in CAMPAIGN_SCALE.md 3 is the reason the
+    decision was left open rather than made: only 100% reaches the
+    30-Zone mark, and 100% is not an early finale at all.
+    """
+    config = C.DEFAULT_CONFIG
+    zones_to_clear = math.ceil(config.non_goal_count
+                               / config.zone_target_checks)
+    reached = {
+        fraction: math.ceil(math.ceil(config.non_goal_count * fraction)
+                            / config.zone_target_checks)
+        for fraction in (0.80, 0.85, 0.90, 0.95, 1.0)
+    }
+    assert reached == {0.80: 24, 0.85: 26, 0.90: 27, 0.95: 29, 1.0: 30}
+    below = [f for f, z in reached.items() if z < zones_to_clear]
+    assert below == [0.80, 0.85, 0.90, 0.95], (
+        "every fraction short of 100% still ends the campaign early")

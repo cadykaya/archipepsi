@@ -220,6 +220,27 @@ are load bearing and easy to break:
   PROTOTYPE campaign (30 locations), never the current default —
   reinterpreting it would strand every Check it has.
 
+**OPEN PACING DECISION — recorded 2026-08-28, do NOT act on it.** The
+owner spotted that the default campaign's goal becomes AVAILABLE well
+before the campaign is finished: `FINALE_REQUIRED_FRACTION = 0.8` needs
+360 of 449 Checks, which at 15 per Zone is exactly 24 Zones, against 30
+for a 100% clear. At the provisional 40 minutes a Zone that is 16 hours
+to the goal and 20 to a full clear.
+
+So **do not quote "~20 hours" as the campaign length** — that is the
+clear, not the ending. Both numbers are real and they are four hours
+apart.
+
+It is NOT to be changed yet: both figures are the unmeasured 40-minute
+target multiplied out, and retuning a real gate to satisfy a guess is
+exactly the mistake. Revisit on the first 1000-budget human playtest
+evidence. `CAMPAIGN_SCALE.md` 3 holds the decision record, the
+sensitivity table (only 100% reaches 30 Zones, so raising the percentage
+alone is not an answer) and the owner's candidate fixes;
+`test_campaign_config.py` pins the two numbers apart so they cannot be
+quietly conflated again. The playtime log already carries what the
+decision needs, so no instrumentation change comes first.
+
 **The 40-minute Zone and the 20-hour campaign are still TARGETS.** They
 are arithmetic, not measurements, and must not be described as proven.
 CS10 is what can turn them into facts: Godot times each Zone (elapsed,

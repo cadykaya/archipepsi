@@ -2,8 +2,9 @@
 
 **Q1, Q2 and Q3 were answered on 2026-08-28. The decisions live in
 `OWNER_DECISIONS.md`; the analysis below is kept as the record of what
-was weighed, not as a live question.** One item, `challenge_marker`,
-remains genuinely open and is at the bottom.
+was weighed, not as a live question.** Two items remain genuinely open
+and are at the bottom: `challenge_marker`, and the finale pacing
+question the owner raised once the campaign-scale work landed.
 
 Each entry names what was already built, what was blocked, and what
 changed under each option — so the answer was a choice, not a design
@@ -231,3 +232,59 @@ these are defined:
 
 A challenge is not an excuse to give Epsilon authored content
 (`AUTHORED_CONTENT.md` §7).
+
+
+---
+
+## OPEN — when should the finale actually become available?
+
+**Raised by the owner, 2026-08-28, after CS0–CS10 landed. Recorded and
+deliberately NOT acted on. `CAMPAIGN_SCALE.md` 3 is the full record.**
+
+At the defaults, `FINALE_REQUIRED_FRACTION = 0.8` puts goal availability
+at 360 of 449 Checks — exactly 24 Zones at 15 per Zone — against 30
+Zones for a 100% clear. At the provisional 40 minutes per Zone that is
+**~16 hours to the goal and ~20 to a full clear**, while the campaign is
+described as ~20+ hours.
+
+### Why it is open rather than fixed
+
+Both hour figures are the 40-minute target multiplied out, and that
+target is unmeasured. Retuning a real progression gate to satisfy a
+number nobody has observed is the mistake this whole document exists to
+avoid. It waits on the first 1000-budget human playtests.
+
+### Why "raise the percentage" is not obviously the answer
+
+| fraction | Checks | Zones | hours at 40m |
+|---|---|---|---|
+| 80% (current) | 360 | 24 | 16.0 |
+| 85% | 382 | 26 | 17.3 |
+| 90% | 405 | 27 | 18.0 |
+| 95% | 427 | 29 | 19.3 |
+| 100% | 449 | 30 | 20.0 |
+
+Only 100% reaches the full-clear mark, and at 100% there is no early
+finale left to gate — the choice the threshold exists to offer is gone.
+
+### The candidates
+
+1. **Increase the completion percentage.** Simple, and the table shows
+   how little it buys short of removing the early ending.
+2. **Expose `finale_check_percent` as a YAML campaign option.** Consistent
+   with how the other three pacing levers were handled, and it makes the
+   answer a per-seed choice rather than one global guess. Would need the
+   same treatment as the others: bounded range, carried in slot data,
+   owned by the save, tested at both ends.
+3. **Adjust the intended Zone-time target.** If a 1000-budget Zone
+   measures at 50 minutes, 24 Zones is already 20 hours and nothing
+   needs changing.
+4. **State both numbers and stop describing the campaign by one.** A game
+   with an optional early finale honestly has two lengths. "~16 hours to
+   the goal, ~20 to a full clear" may simply be the description.
+
+### What must not happen meanwhile
+
+The 20-hour figure may not be quoted as the campaign length while the
+goal can normally arrive four hours earlier. Pinned by
+`test_campaign_config.py::test_goal_availability_and_a_full_clear_are_different_numbers`.

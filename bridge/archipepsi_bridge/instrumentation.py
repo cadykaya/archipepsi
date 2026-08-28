@@ -1,7 +1,14 @@
 """Local playtime records (CAMPAIGN_SCALE.md 13).
 
 The 40-minute Zone and the 20-hour campaign are TARGETS, and this module
-is the only thing that can turn either into a fact. It joins what only
+is the only thing that can turn either into a fact.
+
+Two facts, in fact. A campaign has a length to its GOAL and a length to a
+100% clear, and at the defaults those are 24 and 30 Zones -- four hours
+apart at the 40-minute target. Which is why the record carries the
+campaign config rather than a single duration: median Zone time from
+here, Zone counts from `CampaignConfig`, and both numbers fall out.
+That open pacing decision is CAMPAIGN_SCALE.md 3. It joins what only
 the running game knows -- elapsed time, per-room dwell, deaths, how long
 an encounter actually took -- to what only the bridge knows: the content
 value the engine computed for the same rooms.
