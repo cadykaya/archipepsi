@@ -13,25 +13,44 @@
     "under a stable id. Runtime Epsilon generation remains forbidden and",
     "is a different question entirely."
   ],
-
   "first_party": {
     "holder": "Archipepsi project",
-    "_comment": "Paths (or path prefixes) that are ours. No record needed beyond being listed here.",
+    "_comment": "Paths (or path prefixes) that are ours. No record needed beyond being listed here. A path with an explicit third_party record is still validated as third-party even if it sits under one of these prefixes -- otherwise a first-party directory would launder anything dropped into it.",
     "paths": [
-      "godot/content/test_fixtures/"
+      "assets/models/",
+      "assets/textures/",
+      "docs/art/review/",
+      "godot/content/test_fixtures/",
+      "tools/artpreview/"
     ]
   },
-
   "approved_licenses": {
     "_comment": "Safe by default per D2. Anything not here needs an explicit owner decision.",
-    "CC0-1.0": {"attribution_required": false, "redistribute_source": true},
-    "CC-BY-4.0": {"attribution_required": true, "redistribute_source": true},
-    "CC-BY-3.0": {"attribution_required": true, "redistribute_source": true},
-    "OFL-1.1": {"attribution_required": true, "redistribute_source": true},
-    "MIT": {"attribution_required": true, "redistribute_source": true},
-    "Apache-2.0": {"attribution_required": true, "redistribute_source": true}
+    "CC0-1.0": {
+      "attribution_required": false,
+      "redistribute_source": true
+    },
+    "CC-BY-4.0": {
+      "attribution_required": true,
+      "redistribute_source": true
+    },
+    "CC-BY-3.0": {
+      "attribution_required": true,
+      "redistribute_source": true
+    },
+    "OFL-1.1": {
+      "attribution_required": true,
+      "redistribute_source": true
+    },
+    "MIT": {
+      "attribution_required": true,
+      "redistribute_source": true
+    },
+    "Apache-2.0": {
+      "attribution_required": true,
+      "redistribute_source": true
+    }
   },
-
   "refused_licenses": {
     "_comment": [
       "Named so a refusal explains itself rather than just failing.",
@@ -48,9 +67,7 @@
     "ai-service-unclear": "third-party AI output with unclear terms",
     "marketplace-no-redistribution": "usable in a compiled build, but the raw asset may not live in a public repository"
   },
-
   "third_party": [],
-
   "_third_party_record_shape": {
     "_comment": "Every entry in `third_party` must carry all of these (D2).",
     "path": "repo-relative path of the asset",

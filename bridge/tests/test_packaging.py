@@ -167,9 +167,14 @@ def test_every_bundled_binary_is_first_party_or_licensed():
     first_party = tuple(data["first_party"]["paths"])
     registered = {e["path"] for e in data.get("third_party", [])}
 
+    # An explicit third-party record WINS over a first-party prefix, and
+    # is then validated by the test below. Without that precedence, a
+    # first-party directory would launder anything dropped into it --
+    # which is the failure mode of every allowlist that grows by
+    # directory rather than by decision.
     unaccounted = [
         path for path in _tracked_binaries()
-        if not path.startswith(first_party) and path not in registered]
+        if path not in registered and not path.startswith(first_party)]
 
     assert not unaccounted, (
         "these tracked binaries are neither first-party nor registered:\n  "
