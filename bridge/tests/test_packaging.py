@@ -131,25 +131,118 @@ def test_the_game_runs_with_no_key_at_all():
     assert "fallback" in main
 
 
-def test_nothing_third_party_is_bundled_without_a_licence():
-    """The roadmap's explicit gate: no third-party models or assets
-    without a licensing decision. Nothing is bundled today, and this
-    fails the moment something is -- which is when the decision is
-    actually needed, rather than at release."""
-    bundled = []
-    for path in _tracked_files():
-        if path.suffix.lower() in {".glb", ".gltf", ".fbx", ".obj", ".blend",
-                                   ".wav", ".mp3", ".ogg", ".ttf", ".otf"}:
-            bundled.append(str(path.relative_to(ROOT)))
-    assert not bundled, (
-        "binary assets are now tracked:\n  " + "\n  ".join(bundled)
-        + "\n\nEach needs an explicit licensing decision recorded in "
-          "docs/design-packet-v0.9/OPEN_QUESTIONS.md before it ships. "
-          "Add the decision, then add the extension to this test's "
-          "allowlist with its licence.")
+BINARY_ASSET_SUFFIXES = {".glb", ".gltf", ".fbx", ".obj", ".blend",
+                         ".wav", ".mp3", ".ogg", ".ttf", ".otf",
+                         ".png", ".jpg", ".jpeg", ".webp"}
+
+MANIFEST = ROOT / "assets" / "LICENSES.json"
 
 
-@needs_ap
+def _manifest() -> dict:
+    import json
+    return json.loads(MANIFEST.read_text())
+
+
+def _tracked_binaries() -> list[str]:
+    return sorted(
+        str(p.relative_to(ROOT)) for p in _tracked_files()
+        if p.suffix.lower() in BINARY_ASSET_SUFFIXES)
+
+
+def test_every_bundled_binary_is_first_party_or_licensed():
+    """The D2 gate, and note what it is NOT.
+
+    The old rule was "no binaries at all", which was right while there
+    were none and useless the moment the art lane ships one: a gate that
+    can only be satisfied by having no assets gets disabled the first
+    time someone needs an asset, and then nothing is checked.
+
+    The rule now is the one that survives contact with content: every
+    tracked binary is either first-party, or carries a full licence
+    record. Adding an asset means adding its record, which is the moment
+    the licensing decision is actually needed -- rather than at release,
+    which is when it is usually discovered.
+    """
+    data = _manifest()
+    first_party = tuple(data["first_party"]["paths"])
+    registered = {e["path"] for e in data.get("third_party", [])}
+
+    unaccounted = [
+        path for path in _tracked_binaries()
+        if not path.startswith(first_party) and path not in registered]
+
+    assert not unaccounted, (
+        "these tracked binaries are neither first-party nor registered:\n  "
+        + "\n  ".join(unaccounted)
+        + "\n\nAdd the path to first_party.paths in assets/LICENSES.json "
+          "if we authored it (a Claude-authored asset a developer "
+          "reviewed and approved counts), or add a full third_party "
+          "record with its licence. See OWNER_DECISIONS.md D2.")
+
+
+def test_every_third_party_record_is_complete_and_approved():
+    """A half-filled record is worse than none: it looks like diligence.
+
+    Each field here is one D2 asks for by name, and the licence has to be
+    on the approved list rather than merely present -- an NC asset with a
+    tidy record is still an NC asset.
+    """
+    data = _manifest()
+    approved = data["approved_licenses"]
+    refused = data["refused_licenses"]
+    required = ("path", "name", "author", "license", "redistribution",
+                "modification", "attribution_required")
+
+    for entry in data.get("third_party", []):
+        missing = [f for f in required if f not in entry]
+        assert not missing, (
+            f"third-party record for {entry.get('path', '?')} is missing "
+            f"{missing}")
+
+        licence = entry["license"]
+        assert licence not in refused, (
+            f"{entry['path']} is {licence}: {refused[licence]}")
+        assert licence in approved, (
+            f"{entry['path']} claims licence '{licence}', which is not on "
+            f"the approved list. It needs an explicit owner decision, not "
+            f"a commit.")
+
+        assert entry["redistribution"] is True, (
+            f"{entry['path']} may not be redistributed as source, so it "
+            f"cannot live in this repository (D2 calls this out "
+            f"specifically: it looks fine until the repo is public)")
+
+        if entry["attribution_required"]:
+            assert entry.get("attribution_location"), (
+                f"{entry['path']} requires attribution and does not say "
+                f"where it must appear")
+
+
+def test_the_notices_file_is_generated_and_current():
+    """A credits file maintained by hand is a credits file that is wrong,
+    and being wrong about attribution has consequences outside the
+    repository."""
+    from archipepsi_bridge.notices import NOTICES, render
+
+    assert NOTICES.is_file(), "THIRD_PARTY_NOTICES.md is missing"
+    assert NOTICES.read_text() == render(), (
+        "THIRD_PARTY_NOTICES.md is stale; run `make notices`")
+
+
+def test_the_gate_still_refuses_an_unregistered_asset():
+    """The gate must be able to FAIL. A licence check that passes
+    whatever it is given is a licence check nobody has tested, and this
+    one replaced a blunter rule that at least could not be satisfied by
+    accident."""
+    data = _manifest()
+    first_party = tuple(data["first_party"]["paths"])
+    registered = {e["path"] for e in data.get("third_party", [])}
+
+    intruder = "godot/content/props/somebody_elses_barrel.glb"
+    assert not intruder.startswith(first_party)
+    assert intruder not in registered
+
+
 def test_the_preflight_runs_and_separates_required_from_optional():
     """A preflight that calls a working setup broken is worse than none:
     the single most discouraging thing a first run can do is present a

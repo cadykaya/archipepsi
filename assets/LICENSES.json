@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "_comment": [
+    "The asset licence manifest (OWNER_DECISIONS D2).",
+    "Every tracked binary asset must appear here, or be declared",
+    "first-party. `bridge/tests/test_packaging.py` enforces it: an",
+    "unregistered binary fails the suite the moment it is committed,",
+    "which is when the licensing decision is actually needed rather",
+    "than at release, which is when it is usually discovered.",
+    "",
+    "First-party includes assets a developer authored with Claude, once",
+    "reproducibly authored, reviewed, approved, committed and registered",
+    "under a stable id. Runtime Epsilon generation remains forbidden and",
+    "is a different question entirely."
+  ],
+
+  "first_party": {
+    "holder": "Archipepsi project",
+    "_comment": "Paths (or path prefixes) that are ours. No record needed beyond being listed here.",
+    "paths": [
+      "godot/content/test_fixtures/"
+    ]
+  },
+
+  "approved_licenses": {
+    "_comment": "Safe by default per D2. Anything not here needs an explicit owner decision.",
+    "CC0-1.0": {"attribution_required": false, "redistribute_source": true},
+    "CC-BY-4.0": {"attribution_required": true, "redistribute_source": true},
+    "CC-BY-3.0": {"attribution_required": true, "redistribute_source": true},
+    "OFL-1.1": {"attribution_required": true, "redistribute_source": true},
+    "MIT": {"attribution_required": true, "redistribute_source": true},
+    "Apache-2.0": {"attribution_required": true, "redistribute_source": true}
+  },
+
+  "refused_licenses": {
+    "_comment": [
+      "Named so a refusal explains itself rather than just failing.",
+      "An NC or ND asset is not a judgement call to be made in a hurry",
+      "at commit time; a marketplace asset that may ship in a compiled",
+      "build but not be redistributed as source is the trap D2 calls out",
+      "specifically, because it looks fine until the repo is public."
+    ],
+    "CC-BY-NC": "non-commercial; incompatible with an open release",
+    "CC-BY-ND": "no-derivatives; we modify assets as a matter of course",
+    "CC-BY-NC-ND": "both of the above",
+    "unknown": "no licence is not a permissive licence",
+    "ripped": "extracted from another game; never acceptable",
+    "ai-service-unclear": "third-party AI output with unclear terms",
+    "marketplace-no-redistribution": "usable in a compiled build, but the raw asset may not live in a public repository"
+  },
+
+  "third_party": [],
+
+  "_third_party_record_shape": {
+    "_comment": "Every entry in `third_party` must carry all of these (D2).",
+    "path": "repo-relative path of the asset",
+    "name": "what it is",
+    "author": "who made it",
+    "source_url": "canonical source, where one exists",
+    "license": "an id from approved_licenses",
+    "redistribution": "may the raw asset live in this repository",
+    "modification": "may we modify it",
+    "attribution_required": "true/false",
+    "attribution_location": "where the credit must appear"
+  }
+}
