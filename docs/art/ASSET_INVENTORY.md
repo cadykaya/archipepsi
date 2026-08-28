@@ -77,6 +77,14 @@ These are the vocabulary everything after them inherits.
 | `prop_machinery_unit` | L0 | prop | 180 | 1.30 × 0.99 × 1.90 | floor | B1R | B1R | PASS |
 | `prop_debris` | L0 | prop | 96 | 1.23 × 1.24 × 0.58 | floor | B1R | B1R | PASS |
 | `prop_warning_sign` | L0 | prop | 48 | 0.65 × 0.17 × 0.44 | wall | B1R | B1R | PASS |
+| `arch_wall_upper` | L1 | module | 172 | 4.00 × 0.80 × 1.00 | floor | B3 | B3 | PEND |
+| `arch_pilaster` | L1 | module | 60 | 0.60 × 0.35 × 5.00 | floor | B3 | B3 | PEND |
+| `hub_lab_doorway` | L2 | fixture | 84 | 3.94 × 0.74 × 3.66 | floor | B3 | B3 | PEND |
+| `hub_shop_counter` | L2 | fixture | 332 | 2.60 × 1.00 × 2.45 | floor | B3 | B3 | PEND |
+| `hub_archive_terminal` | L2 | fixture | 460 | 2.54 × 1.00 × 2.45 | floor | B3 | B3 | PEND |
+| `hub_abandon_station` | L2 | fixture | 92 | 1.12 × 1.00 × 1.27 | floor | B3 | B3 | PEND |
+| `hub_campaign_board` | L2 | fixture | 104 | 5.48 × 0.37 × 3.18 | centre | B3 | B3 | PEND |
+| `hub_controls_board` | L2 | fixture | 104 | 4.28 × 0.37 × 2.98 | centre | B3 | B3 | PEND |
 
 | Theme material | Roles built |
 | --- | --- |

@@ -702,3 +702,94 @@ preserved.
 
 Nothing else in the batch was touched. The roster did not grow, no theme
 production started, and every 002 `PASS` stands as you wrote it.
+
+---
+
+# PRODUCTION
+
+Style Lock passed, so what follows is production rather than style. Batches
+here are **not** automatically approved: they inherit locked DNA, and the
+review policy at the top of this document says which ones still need a sheet.
+
+## Batch 003 — the Hub
+
+The owner's production order opens with *Hub / permanent spaces*, and the
+Hub is also the room where the game most looks like a prototype: every
+fixture in `hub/hub.gd` is an untextured `BoxMesh` or `PrismMesh` with a
+flat colour on it.
+
+Nothing in this batch establishes new visual DNA. Each fixture is the locked
+facility language applied to an object that already exists, at an envelope
+read out of `hub.gd` rather than chosen.
+
+### The fixtures
+
+| ID | Tris | Size (m) | Replaces in `hub.gd` |
+| --- | --- | --- | --- |
+| `hub_shop_counter` | 332 | 2.60 × 1.00 × 2.45 | shop `SimpleStation` |
+| `hub_archive_terminal` | 460 | 2.54 × 1.00 × 2.45 | inventory `SimpleStation` |
+| `hub_abandon_station` | 92 | 1.12 × 1.00 × 1.27 | `AbandonConsole` |
+| `hub_campaign_board` | 104 | 5.48 × 0.37 × 3.18 | `_build_campaign_board` backing plate |
+| `hub_controls_board` | 104 | 4.28 × 0.37 × 2.98 | `_build_controls_board` backing plate |
+
+Both boards are **housings only**. The campaign board's 30 cells carry
+`SourceIdentity` tints derived from the actual multiworld and the controls
+board carries text; an authored asset that baked either would be wrong the
+first time the data moved.
+
+The shop and the archive share their counter bones on purpose — same
+institution's furniture, at the same 0.95 m work height the Epsilon console
+uses — and differ entirely above the counter: a roller shutter and stock
+against a card-index bank. The abandon console is the only fixture in the
+Hub wearing `hazard`, because throwing away a generated Zone is the one
+thing in that room that happens *to* you.
+
+### The architecture
+
+| ID | Tris | Size (m) | Why it exists |
+| --- | --- | --- | --- |
+| `arch_wall_upper` | 172 | 4.00 × 0.80 × 1.00 | the 1 m course that takes a 4 m wall to the Hub's 5 m |
+| `arch_pilaster` | 60 | 0.60 × 0.35 × 5.00 | 22 m is not a multiple of 4; the remainder becomes structure |
+| `hub_lab_doorway` | 84 | 3.94 × 0.74 × 3.66 | `_cut_lab_doorway` cuts a hole; this is the lining that makes it a doorway |
+
+`hub.gd` builds a 5.0 m room and the approved kit is a 4.0 m module. Of the
+three ways to close a 1 m gap, only one is architecture: put the services
+band up there, which is what a real facility does with the metre above a
+partition. The seam under it becomes a structural line instead of an
+accident. `arch_pilaster` exists because 22 m is not a multiple of 4.
+
+The band is painted from the **trim** ramp, not the accent one. On the
+accent it came out as a steel-blue stripe running round all four walls at
+the 4 m line — a hundred square metres of the colour whose only job is to
+mark a thing as significant, which is the Batch 001 "accent carrying too
+much" failure at room scale.
+
+### Evidence
+
+| Image | What it answers |
+| --- | --- |
+| `I_hub_from_spawn.png` | The Hub from the player's spawn, at 22 × 16 × 5 m, every fixture where `hub.gd` puts it. |
+| `I_hub_greyscale.png` | The same without colour. |
+| `I_hub_shop_wall.png` | Walking up to the shop: counter, Lab doorway, and a warm utility pool on the opposite wall. |
+| `I_hub_back_wall.png` | The portal and the Epsilon installation. |
+| `H_*.png` · `F_*.png` | Per-asset sheets for all eight. |
+
+Authored triangles in the composed Hub: **10,564**.
+
+### One thing that is a proposal, not a reading
+
+Every position in the Hub preview comes out of `hub.gd` except one. The
+Epsilon installation is placed at **x −5.5, z 14.2** on the back wall, and
+`hub.gd` has no fixture for it at all — the generic terminal envelope it
+does have is 2.0 × 3.0 × 0.8 m against the installation's 9.02 × 3.48 ×
+3.55 m.
+
+That back-wall run is the only 9 m of Hub wall not already spoken for, and
+it puts Epsilon in the player's eyeline on the turn from spawn. **It also
+clashes with the abandon console at (−8.6, 0, 13.6).** Art is not resolving
+that quietly: it is interface item 4 in `ART_FRONTIER.md`, and it needs an
+engineering decision about a reserved bay.
+
+Status: **PENDING** — production work, inheriting locked DNA. Flagged for a
+look rather than a verdict; the Hub is a permanent space and permanent
+spaces are worth one.

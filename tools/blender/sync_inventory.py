@@ -38,12 +38,17 @@ ORDER = [
      ["prop_crate", "prop_utility_box", "prop_terminal",
       "prop_pipe_cluster", "prop_machinery_unit", "prop_debris",
       "prop_warning_sign"]),
+    ("batch003", "architecture",
+     ["arch_wall_upper", "arch_pilaster", "hub_lab_doorway"]),
+    ("batch003", "hub",
+     ["hub_shop_counter", "hub_archive_terminal", "hub_abandon_station",
+      "hub_campaign_board", "hub_controls_board"]),
 ]
 CAT = {"epsilon": "hero", "check": "hero", "portal": "interactable",
        "enemy": "enemy", "anchor": "interactable", "arch": "module",
-       "prop": "prop"}
+       "prop": "prop", "hub": "fixture"}
 LEVEL = {"epsilon": "L4", "check": "L2", "portal": "L2", "enemy": "L0",
-         "anchor": "L2", "arch": "L1", "prop": "L0"}
+         "anchor": "L2", "arch": "L1", "prop": "L0", "hub": "L2"}
 
 
 def main():
@@ -64,15 +69,21 @@ def main():
         # of a decision, not one this script is entitled to make, and if a
         # later asset is built before its own review it does not go in this
         # table until it has one.
-        rev = "B1R" if batch == "batch001" else "B2"
+        rev = {"batch001": "B1R", "batch002": "B2"}.get(batch, "B3")
         for i in ids:
             m = manifests[i]
             s = m["size"]
             pre = i.split("_")[0]
+            # Style Lock's own assets carry the owner's PASS. Anything
+            # produced AFTER the lock is NEW: it inherits approved DNA but
+            # has not itself been looked at, and writing PASS on it would be
+            # this script approving art, which it may never do.
+            verdict = "PASS" if batch in ("batch001", "batch002") else "PEND"
             rows.append("| `%s` | %s | %s | %d | %.2f \u00d7 %.2f \u00d7 %.2f | %s "
-                        "| %s | %s | PASS |"
+                        "| %s | %s | %s |"
                         % (i, LEVEL[pre], CAT[pre], m["triangles"],
-                           s[0], s[1], s[2], m["anchor"], rev, rev))
+                           s[0], s[1], s[2], m["anchor"], rev, rev,
+                           verdict))
     table = "\n".join(rows)
 
     path = os.path.join(ROOT, "docs/art/ASSET_INVENTORY.md")
