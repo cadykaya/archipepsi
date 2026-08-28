@@ -36,8 +36,8 @@ AP_AVAILABLE = pathlib.Path(
     os.environ.get("ARCHIPELAGO_ROOT", ROOT / ".archipelago")
 ).is_dir()
 
-needs_ap = pytest.mark.skipif(not AP_AVAILABLE,
-                              reason="no Archipelago checkout (make setup)")
+# Deliberately NOT exposed as a `needs_ap` decorator here: the one test
+# that needs it guards itself in its body, for the reason recorded there.
 
 #: Key shapes worth refusing outright. Real prefixes, so a genuine
 #: pasted key is caught rather than a plausible-looking placeholder.
@@ -246,7 +246,17 @@ def test_the_gate_still_refuses_an_unregistered_asset():
 def test_the_preflight_runs_and_separates_required_from_optional():
     """A preflight that calls a working setup broken is worse than none:
     the single most discouraging thing a first run can do is present a
-    playable game as a failure. No API key is a NOTE, not a MISSING."""
+    playable game as a failure. No API key is a NOTE, not a MISSING.
+
+    The skip is the FIRST STATEMENT rather than a decorator, and that is
+    deliberate. This test has broken Tier 1 twice: once by living in the
+    wrong tier at all, and once because a later rewrite of the block
+    above it sliced away the `@needs_ap` line while keeping the function
+    intact. A decorator is a separate line an edit can lose. A guard in
+    the body cannot be lost without deleting the test it guards.
+    """
+    if not AP_AVAILABLE:
+        pytest.skip("no Archipelago checkout (make setup)")
     out = subprocess.run(
         ["python", "-m", "archipepsi_bridge.doctor"],
         cwd=ROOT / "bridge", capture_output=True, text=True, timeout=120,
