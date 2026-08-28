@@ -41,6 +41,10 @@ var _assets := ""
 var _out := ""
 var _tris := 0
 var _theme := "concrete_facility"
+var _fixture := "batch001/architecture/arch_light_fixture.glb"
+## Write the theme probe even for concrete_facility, which is otherwise
+## skipped -- a six-theme comparison needs its control in it.
+var _probe_always := false
 
 ## Which theme texture each module wears. The modules bake concrete_facility
 ## in at build time, so re-theming them here means overriding the albedo with
@@ -68,6 +72,14 @@ func _initialize() -> void:
 	_out = args[1]
 	if args.size() > 2:
 		_theme = args[2]
+	if args.size() > 3:
+		# Which ceiling fixture the room hangs. Batch 014 gave every theme
+		# its own, and a probe room that lit gothic_stone with a facility
+		# strip would be answering the wrong question -- it is the exact
+		# thing the owner flagged: "castles illuminated by office
+		# fluorescents".
+		_fixture = args[3]
+		_probe_always = true
 	DirAccess.make_dir_recursive_absolute(_out)
 
 	# Ambient 0.10, not 0.30. The first room render summed three omni lights
@@ -92,7 +104,7 @@ func _initialize() -> void:
 	print("[room] theme %s, authored triangles: %d (budget 12000)"
 			% [_theme, _tris])
 
-	if _theme != "concrete_facility":
+	if _theme != "concrete_facility" or _probe_always:
 		# A theme probe answers one question -- does this material family
 		# survive being a room rather than a texture sheet -- so it is one
 		# shot from the doorway plus its greyscale, and nothing else.
@@ -261,7 +273,7 @@ func _add(root: Node3D, relative: String, at: Vector3,
 	if node == null:
 		return null
 	ArtBench.force_nearest(node)
-	if _theme != "concrete_facility":
+	if _theme != "concrete_facility" or _probe_always:
 		_retheme(node, relative.get_file().get_basename())
 	node.position = at
 	node.rotation_degrees = Vector3(0, yaw, 0)
@@ -417,8 +429,7 @@ func _place_lights(root: Node3D) -> void:
 	for i in 2:
 		var z := -3.0 + i * 6.0
 		# Anchored "ceiling": hangs below the plane it is placed on.
-		_add(root, "batch001/architecture/arch_light_fixture.glb",
-				Vector3(0.0, WALL_H - 0.72, z))
+		_add(root, _fixture, Vector3(0.0, WALL_H - 0.72, z))
 		var lamp := OmniLight3D.new()
 		lamp.position = Vector3(0.0, WALL_H - 1.15, z)
 		# chamber_builders._light: theme energy, range 12, shadows OFF.

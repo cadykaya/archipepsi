@@ -129,6 +129,16 @@ These are the vocabulary everything after them inherits.
 | `prop_transit_sign` | L0 | prop | 96 | 1.62 × 0.16 × 0.69 | ceiling | B13 | B13 | PEND |
 | `prop_root_fall` | L0 | prop | 112 | 0.26 × 0.26 × 1.04 | ceiling | B13 | B13 | PEND |
 | `prop_column_stump` | L0 | prop | 140 | 1.15 × 1.15 × 1.20 | floor | B13 | B13 | PEND |
+| `light_rusted_cage` | L0 | prop | 240 | 0.46 × 0.37 × 0.72 | ceiling | B14 | B14 | PEND |
+| `light_rusted_clamp` | L0 | prop | 104 | 0.31 × 0.42 × 0.38 | wall | B14 | B14 | PEND |
+| `light_neon_channel` | L0 | prop | 72 | 1.62 × 0.28 × 0.15 | ceiling | B14 | B14 | PEND |
+| `light_neon_edge` | L0 | prop | 60 | 1.25 × 0.14 × 0.20 | wall | B14 | B14 | PEND |
+| `light_gothic_corona` | L0 | prop | 256 | 0.67 × 0.73 × 0.52 | ceiling | B14 | B14 | PEND |
+| `light_gothic_lantern` | L0 | prop | 184 | 0.30 × 0.34 × 0.44 | wall | B14 | B14 | PEND |
+| `light_temple_bowl` | L0 | prop | 212 | 0.54 × 0.54 × 0.62 | ceiling | B14 | B14 | PEND |
+| `light_temple_niche` | L0 | prop | 140 | 0.52 × 0.30 × 0.68 | wall | B14 | B14 | PEND |
+| `light_void_absent` | L0 | prop | 84 | 0.65 × 0.16 × 0.51 | ceiling | B14 | B14 | PEND |
+| `light_void_debug` | L0 | prop | 60 | 0.63 × 0.62 × 0.49 | ceiling | B14 | B14 | PEND |
 
 | Theme material | Roles built |
 | --- | --- |
@@ -350,7 +360,9 @@ stations Epsilon selects whole, not props it arranges itself.
 
 ## 9. Theme kits — one row per theme
 
-**Only three treatments exist and only their four base roles are built.**
+**All six treatments now exist**, and every theme has a light fixture
+family (Batch 014). What remains per theme is dressing beyond the one prop
+the generator places, larger architectural modules, a landmark, and decals.
 Everything else in this section is `—` and stays `—` until the Style Lock
 gate opens. Building all six is theme production.
 
@@ -364,7 +376,7 @@ For **each** of `concrete_facility`, `rusted_industrial`, `neon_transit`,
 | trim material | 1 | A | B1 | B1 | B1 | — |
 | accent material | 1 | A | B1 | B1 | B1 | — |
 | hazard / signage treatment | 1 | A | shared | shared | shared | shared |
-| light fixture family | 1–2 | A | — | — | — | — |
+| light fixture family | 1–2 | A | B1 + B2 | **B14** | **B14** | **B14** |
 | signature dressing props | 3–8 | B | **B10** | **B10** | engine text, deliberate | **B13** |
 | larger architectural modules | 1–3 | B | — | — | — | — |
 | landmark / hero piece | 1 | B | — | — | — | — |

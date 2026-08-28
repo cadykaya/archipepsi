@@ -1858,3 +1858,89 @@ not drawn.
 | `G_transit_sign.png` · `G_column_stump.png` | each on its own |
 
 Status: **PENDING** — production work inheriting locked DNA.
+
+---
+
+## Batch 014 — a light fixture family for every theme
+
+`ASSET_INVENTORY.md` §9 listed *light fixture family, 1–2, Pri A* and it was
+blank for all six themes. Two fixtures existed and both were
+concrete_facility's — so five of six themes were lit by facility hardware,
+which is the Batch 012 note verbatim: *"final Gothic Stone spaces must not
+look like castles illuminated by office fluorescents."*
+
+| Theme | Hung | Wall / bracket |
+| --- | --- | --- |
+| concrete_facility | `arch_light_fixture` (B1) | `arch_utility_lamp` (B2) |
+| rusted_industrial | `light_rusted_cage` 240 | `light_rusted_clamp` 104 |
+| neon_transit | `light_neon_channel` 72 | `light_neon_edge` 60 |
+| gothic_stone | `light_gothic_corona` 256 | `light_gothic_lantern` 184 |
+| temple_ruin | `light_temple_bowl` 212 | `light_temple_niche` 140 |
+| void_glitch | `light_void_absent` 84 | `light_void_debug` 60 |
+
+**concrete_facility builds nothing here, and that is the point.** Its family
+exists and you approved it; a third would be padding a batch rather than
+filling a gap. It is in every sheet as the control.
+
+### The test this batch lives or dies by
+
+> Do not rely only on bulb/emissive hue. … I especially want to see whether
+> the physical fixtures remain distinguishable without hue.
+
+`L_light_family_silhouette.png` is that test, and it is the sheet to open
+first: twelve fixtures, no colour, twelve different objects — strip, caged
+can, long trough, ring on three chains, bowl on three chains, a bracket with
+a hole in it, a box floating with struts at wrong angles; and below, lamp
+box, clamp cone, edge blade, peaked lantern, stone niche.
+
+Every design was chosen for its outline first and its emitter second.
+
+### What each theme's construction language is doing
+
+- **rusted_industrial** — a cage, because a work light in a refinery is
+  caged; and a clamp-on with a cable, deliberately asymmetric, because that
+  is the fixture somebody *carried in* rather than the one installed with
+  the building. Two different sentences about the same theme.
+- **neon_transit** — the least ornamental fixture in the batch, on purpose.
+  Your brief warned against making every fixture a giant neon sign, so the
+  ceiling light is a flush recessed trough that reads as part of the soffit,
+  and the platform-edge strip is the only fixture here whose emissive face
+  points at the **floor**: you never see the source, only the wash.
+- **gothic_stone** — a corona hung from one point on three chains, the way a
+  thing gets hung from a vault, with candle stubs that are what stop the
+  ring reading as a hoop. The lantern has a **roof**, because a flat-topped
+  box on a wall is a junction box and a flame needs a chimney.
+- **temple_ruin** — two materials with the join as the story: the carved
+  boss is the building, the brass bowl is what somebody hung from it. And
+  the niche is the only fixture in the batch that is a **hole** rather than
+  an object — cut into the masonry, not fixed to it.
+- **void_glitch** — the mount is there and the fixture is not, and the light
+  happens anyway; plus a placeholder that shipped, untextured and hanging
+  from nothing with its struts missing the box. It is the only asset in the
+  project that deliberately uses `make_material` with no painted canvas.
+  Both still function as light sources, which was the one hard requirement.
+
+### What art did not decide
+
+The gameplay light. `chamber_builders._light` places its `OmniLight3D`s at
+the theme's energy, range 12, shadows off, and that stays engineering's
+contract. Every fixture here is a **housing**: the emissive face says where
+the light comes from, and the light comes from the engine. None of them is
+bright enough to light a room, because a fixture that were is a fixture you
+cannot look at.
+
+### Evidence
+
+`docs/art/review/batch014/`
+
+| Image | What it answers |
+| --- | --- |
+| `L_light_family_silhouette.png` | **start here** — twelve fixtures, no hue |
+| `L_light_family.png` · `_grey` | the same lit, and its value read |
+| `L_pair_*.png` | each theme's two, alone, same camera |
+| `H_probe_*_room.png` · `_greyscale` | **the common comparison room** — same geometry, same camera, same bench as Batch 012, each theme now under its own fixture |
+
+The probe rooms are a direct A/B against Batch 012's: identical rooms, one
+variable changed. Gothic's is the one to compare.
+
+Status: **PENDING** — theme-identity work, not self-marked.

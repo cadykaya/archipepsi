@@ -59,7 +59,7 @@ with the approved authored vocabulary come first.
 | 5 | Movement affordances | **done** — Batch 009 built the six remaining fixtures, all in the `signal` family the approved anchors wear |
 | 6 | Universal props | **done as far as it can go** — **corrected** — §8's 22-prop library is placed by nothing. Batch 010 built the three the generator actually places whose theme family exists; three more wait on their theme kits |
 | 7 | Room-shell vocabulary | none |
-| 8 | The six theme kits | **6 of 6 material families, and every placed dressing prop authored (Batch 013)** — Batch 012 built `neon_transit`, `gothic_stone` and `temple_ruin` to the identity §9 already recorded. Per-theme dressing, light fixtures and landmarks remain |
+| 8 | The six theme kits | **6 of 6 material families, every placed dressing prop authored (Batch 013), and a light fixture family per theme (Batch 014)** — Batch 012 built `neon_transit`, `gothic_stone` and `temple_ruin` to the identity §9 already recorded. Per-theme dressing, light fixtures and landmarks remain |
 | 9 | Presentation / polish | none |
 
 **Tooling:** `tools/shoot.sh` runs a JSON shot list through
@@ -86,9 +86,9 @@ line rather than inventing work.
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
 | Phase | **STYLE LOCK PASSED — production.** Batch 004 is `PASS`. Batch 005 is `PASS IN DIRECTION`, its one required revision delivered as 005-R. Batches 001, 002, 004, 005 (incl. 005-R), 006, 007, 008 and 009 are `PASS`. Batches 003, 010, 011 and 012 are `PENDING`. |
 | Owner review | Style Lock passed 2026-08-28. Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
-| Next action | **Tier 7: the room-shell vocabulary** (`ASSET_INVENTORY.md` §7, L3, nothing built). It is the level that stops Epsilon obviously repeating one room, and it is the next thing that is *placeable* rather than inventory-padding — the owner's standing steer. Batch 013 finished the dressing side: every prop the generator places is now authored except void_glitch's deliberate text label. Also available and explicitly permitted: routine expansion of the Batch 007 architecture grammar. `objective_marker` / `signage_module` stay blocked pending their own navigation-language review, and Tier 4 stays blocked past the projectiles (reqs 7 and 14). |
+| Next action | **Tier 7: the room shells** (`ASSET_INVENTORY.md` §7, L3, nothing built) — started immediately, per the owner's instruction not to idle while 014 waits. Six families, all Pri A: corridor, arena, platform-path, tower, treasure room, corner. They inherit engine-truth dimensions and traversal bounds, differ in scale / verticality / sightline / routing / encounter and Check placement rather than in dressing, and must not be generic stretches of one another where gameplay geometry matters. The approved six material families and the Batch 014 fixture language both apply. |
 | ~~Superseded~~ | ~~**Tier 8: the three unbuilt theme material families** (`neon_transit`, `gothic_stone`, `temple_ruin`). It is the highest-leverage unblocked work left — it also unblocks three of the six dressing props §9 needs — and it is routine in the sense that `art_palette.json` already carries all six themes' ramps and `materials.paint()` already builds any of them. **But it is the first look at three themes**, so it wants a review sheet the owner can redirect cheaply, and textures are the cheapest thing in the project to rebuild.~~ Done as Batch 012. |
-| Queue depth | **Two batches pending**: 003 (the Hub, never verdicted on its own) and 013. Everything else is approved. Holding remains a legitimate heartbeat outcome when the queue grows again, and this line is why. |
+| Queue depth | **Three batches pending**: 003 (the Hub, never verdicted on its own), 013 and 014. Everything else is approved. Holding remains a legitimate heartbeat outcome when the queue grows again, and this line is why. |
 
 ### What the Batch 002 review LOCKED
 
@@ -144,9 +144,9 @@ grow again until Style Lock passes.
 | `python3 tools/blender/palette.py` | PASS |
 | `python3 tools/blender/check_docs_metrics.py` | PASS — every number in ART_REVIEW.md and ASSET_INVENTORY.md matches the build |
 | `tools/sabotage_checks.sh` | see the commit for the run |
-| `python3 tools/blender/sync_inventory.py` | 92 assets written |
+| `python3 tools/blender/sync_inventory.py` | 102 assets written |
 | `tools/check_art_current.sh` | PASS — every asset byte-identical from source |
-| Assets built | 92 models + **31 theme textures (six of six families)** + 7 prop skins + review images in `review/batch001` … `batch013` |
+| Assets built | 102 models + **31 theme textures (six of six families)** + 7 prop skins + review images in `review/batch001` … `batch014` |
 | Composed room | 3,272 / 12,000 triangles |
 
 ### What a heartbeat cannot see

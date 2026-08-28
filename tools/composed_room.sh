@@ -10,6 +10,8 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GODOT="${GODOT:-$ROOT/.tools/godot}"
 OUT="${1:-$ROOT/docs/art/review/batch001}"
 THEME="${2:-concrete_facility}"
+# Optional: which ceiling fixture to hang (Batch 014 gave each theme one).
+FIXTURE="${3:-}"
 # Godot's cwd is not the repo root, so a relative out-dir silently writes the
 # captures somewhere nobody looks -- and save_png reports no error, so the
 # script still says it wrote them.
@@ -19,5 +21,5 @@ if [ ! -f "$ROOT/tools/artpreview/.godot/global_script_class_cache.cfg" ]; then
   "$GODOT" --headless --path "$ROOT/tools/artpreview" --import >/dev/null 2>&1 || true
 fi
 xvfb-run -a -s "-screen 0 1920x1200x24" "$GODOT" --rendering-driver opengl3 --path "$ROOT/tools/artpreview" \
-  -s ComposedRoom.gd -- "$ROOT/assets" "$OUT" "$THEME" 2>&1 \
+  -s ComposedRoom.gd -- "$ROOT/assets" "$OUT" "$THEME" $FIXTURE 2>&1 \
   | grep -E "^\[room\]|SCRIPT ERROR|ERROR: Node" || true
