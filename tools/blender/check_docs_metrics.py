@@ -48,6 +48,31 @@ TRIS_AND_SIZE = re.compile(
     r"\s*(?P<tris>\d{1,5})\s*\|"
     r"\s*(?P<w>\d+\.\d\d)\s*×\s*(?P<d>\d+\.\d\d)\s*×\s*(?P<h>\d+\.\d\d)\s*\|")
 
+#: The prose form ART_REVIEW.md uses in its per-concept rows:
+#:     | Metrics | 284 tris · 1.40 × 1.28 × 2.63 m · 249 px at 6 m |
+#:
+#: Added after a sabotage run found that changing the review document's
+#: table shape had quietly taken it out of this checker's scope entirely --
+#: the checker still reported "29 of 29 verified" because it was finding all
+#: 29 in the inventory and none at all in the ledger the owner actually
+#: reads. A checker whose coverage can silently shrink to zero while its
+#: pass line stays true is the same failure as a filter that cannot express
+#: failure.
+INLINE = re.compile(
+    r"(?P<tris>\d{1,5})\s*tris\s*·\s*"
+    r"(?P<w>\d+\.\d\d)\s*×\s*(?P<d>\d+\.\d\d)\s*×\s*(?P<h>\d+\.\d\d)\s*m")
+#: ART_REVIEW's headings carry no bare ID -- they reference sheets like
+#: `A_epsilon_b_core.png`, which CONTAINS the asset id rather than being it.
+#: So the association is by substring against the real manifest keys, and
+#: the nearest preceding match owns the metrics row beneath it.
+def _id_in(line, built):
+    hit, at = None, -1
+    for asset_id in built:
+        found = line.find(asset_id)
+        if found > at:
+            hit, at = asset_id, found
+    return hit
+
 
 def manifests():
     out = {}
@@ -65,41 +90,80 @@ def check():
     built = manifests()
     problems = []
     seen = set()
+    inline_hits = {}
+    table_hits = {}
 
     for rel in DOCS:
         path = os.path.join(REPO_ROOT, rel)
         with open(path, "r", encoding="utf-8") as handle:
-            for number, line in enumerate(handle, 1):
-                if not line.lstrip().startswith("|"):
-                    continue
-                match = TRIS_AND_SIZE.search(line)
-                if not match:
-                    continue
-                asset_id = match.group("id")
-                if asset_id not in built:
-                    # An ID quoted with metrics that does not exist is worse
-                    # than a wrong number: it is a row about nothing.
-                    problems.append(
-                        "%s:%d quotes metrics for `%s`, which no manifest "
-                        "contains. Either the asset was renamed or the row "
-                        "describes something that was never built."
-                        % (rel, number, asset_id))
-                    continue
-                seen.add(asset_id)
-                info = built[asset_id]
-                tris = int(match.group("tris"))
+            lines = handle.readlines()
+        recent = None
+        for number, line in enumerate(lines, 1):
+            named = _id_in(line, built)
+            if named:
+                recent = named
+            if not line.lstrip().startswith("|"):
+                continue
+            inline = INLINE.search(line)
+            if inline and recent:
+                info = built[recent]
+                tris = int(inline.group("tris"))
                 if tris != info["triangles"]:
                     problems.append(
                         "%s:%d says `%s` is %d triangles; the build says %d."
-                        % (rel, number, asset_id, tris, info["triangles"]))
-                doc_size = (float(match.group("w")), float(match.group("d")),
-                            float(match.group("h")))
+                        % (rel, number, recent, tris, info["triangles"]))
+                doc_size = (float(inline.group("w")), float(inline.group("d")),
+                            float(inline.group("h")))
                 real = tuple(round(v, 2) for v in info["size"])
                 if doc_size != real:
                     problems.append(
                         "%s:%d says `%s` measures %.2f x %.2f x %.2f m; the "
                         "build says %.2f x %.2f x %.2f m."
-                        % ((rel, number, asset_id) + doc_size + real))
+                        % ((rel, number, recent) + doc_size + real))
+                seen.add(recent)
+                inline_hits[rel] = inline_hits.get(rel, 0) + 1
+                continue
+            match = TRIS_AND_SIZE.search(line)
+            if not match:
+                continue
+            asset_id = match.group("id")
+            if asset_id not in built:
+                # An ID quoted with metrics that does not exist is worse
+                # than a wrong number: it is a row about nothing.
+                problems.append(
+                    "%s:%d quotes metrics for `%s`, which no manifest "
+                    "contains. Either the asset was renamed or the row "
+                    "describes something that was never built."
+                    % (rel, number, asset_id))
+                continue
+            seen.add(asset_id)
+            table_hits[rel] = table_hits.get(rel, 0) + 1
+            info = built[asset_id]
+            tris = int(match.group("tris"))
+            if tris != info["triangles"]:
+                problems.append(
+                    "%s:%d says `%s` is %d triangles; the build says %d."
+                    % (rel, number, asset_id, tris, info["triangles"]))
+            doc_size = (float(match.group("w")), float(match.group("d")),
+                        float(match.group("h")))
+            real = tuple(round(v, 2) for v in info["size"])
+            if doc_size != real:
+                problems.append(
+                    "%s:%d says `%s` measures %.2f x %.2f x %.2f m; the "
+                    "build says %.2f x %.2f x %.2f m."
+                    % ((rel, number, asset_id) + doc_size + real))
+
+    # Every document this checks must actually contribute rows. A document
+    # whose table shape changed can silently leave this checker's scope
+    # while the pass line stays true, which is how ART_REVIEW.md spent a
+    # revision unchecked.
+    for rel in DOCS:
+        if not inline_hits.get(rel) and not table_hits.get(rel):
+            problems.append(
+                "%s contributed NO checkable metrics. Either its format "
+                "changed or it stopped quoting any -- and a checker that "
+                "silently covers one document less still prints PASS."
+                % rel)
 
     missing = sorted(set(built) - seen)
     if missing:

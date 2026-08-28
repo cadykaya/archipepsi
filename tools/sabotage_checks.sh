@@ -165,13 +165,34 @@ git checkout -- assets/art_palette.json
 echo
 echo "sabotage: the owner's ledger -- does a wrong number get caught?"
 expect_pass "document metrics on a clean tree" python3 tools/blender/check_docs_metrics.py
-sed -i 's/| `prop_crate` | 72 |/| `prop_crate` | 71 |/' docs/art/ART_REVIEW.md
-expect_fail "a triangle count mistyped in ART_REVIEW.md" \
-  python3 tools/blender/check_docs_metrics.py
+
+# `sed` that matches nothing exits 0 and changes nothing, so a sabotage case
+# whose pattern goes stale stops sabotaging and the guard it is testing
+# reports NOT CAUGHT -- which reads as the guard being broken. Both cases
+# below did exactly that when the inventory table's shape changed. Every
+# edit is now verified to have landed before the guard is asked about it.
+sabotage_edit() { # <file> <sed-expr>
+  before=$(md5sum "$1" | cut -d" " -f1)
+  sed -i "$2" "$1"
+  after=$(md5sum "$1" | cut -d" " -f1)
+  if [ "$before" = "$after" ]; then
+    printf '  %-52s STALE CASE\n' "sabotage of $1 changed nothing"
+    echo "      the pattern no longer matches; this case tests nothing"
+    FAILED=$((FAILED + 1))
+    return 1
+  fi
+}
+
+if sabotage_edit docs/art/ART_REVIEW.md 's/| 300 tris/| 299 tris/'; then
+  expect_fail "a triangle count mistyped in ART_REVIEW.md" \
+    python3 tools/blender/check_docs_metrics.py
+fi
 git checkout -- docs/art/ART_REVIEW.md
-sed -i 's/| `prop_crate` | L0 | U | prop | 72 | 1.04 × 1.04 × 1.01 |/| `prop_crate` | L0 | U | prop | 72 | 1.04 × 1.04 × 1.10 |/' docs/art/ASSET_INVENTORY.md
-expect_fail "a measured size mistyped in ASSET_INVENTORY.md" \
-  python3 tools/blender/check_docs_metrics.py
+
+if sabotage_edit docs/art/ASSET_INVENTORY.md 's/1.04 × 1.04 × 1.01/1.04 × 1.04 × 1.10/'; then
+  expect_fail "a measured size mistyped in ASSET_INVENTORY.md" \
+    python3 tools/blender/check_docs_metrics.py
+fi
 git checkout -- docs/art/ASSET_INVENTORY.md
 
 echo
