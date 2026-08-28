@@ -278,7 +278,7 @@ func _test_secrets_reach_the_vertical_chambers() -> void:
 		var path := ChamberBuilders.platform_path(
 				{"id": "path_%03d" % seed_index, "type": "platform_path",
 				"segment_count": 3 + seed_index % 6,
-				"gap_size": minf(2.0, _max_safe_gap(step)),
+				"gap_size": minf(2.0, Constants.max_safe_gap(step)),
 				"vertical_step": step,
 				"objective": "platform_to_goal"}, "concrete_facility")
 		var rise: float = step * float(3 + seed_index % 6)
@@ -329,7 +329,7 @@ func _test_platform_path_bounds() -> void:  # test 53
 		for step_index in range(0, 11):
 			var step := float(Constants.MAX_VERTICAL_STEP) \
 					* float(step_index) / 10.0
-			var allowed := _max_safe_gap(step)
+			var allowed := Constants.max_safe_gap(step)
 			var gap := minf(2.2, allowed)
 			var chamber := {"segment_count": segments, "gap_size": gap,
 					"vertical_step": step}
@@ -341,17 +341,6 @@ func _test_platform_path_bounds() -> void:  # test 53
 			_check(absf(rise - step * float(segments)) < 0.01,
 					"platform path rise matches steps")
 			result["root"].free()
-
-func _max_safe_gap(step: float) -> float:
-	# Mirror of constants.max_safe_gap, using only exported constants.
-	var g: float = Constants.GRAVITY * Constants.GRAVITY_MULT_MAX
-	var v: float = Constants.JUMP_VELOCITY
-	var disc: float = v * v - 2.0 * g * step
-	if disc < 0.0:
-		return 0.0
-	var reach: float = Constants.WALK_SPEED * Constants.SPEED_MULT_MIN \
-			* (v + sqrt(disc)) / g
-	return floorf(reach * Constants.SAFE_GAP_MARGIN * 10.0) / 10.0
 
 func _test_tower_route() -> void:  # test 54
 	for floors in range(2, 6):
@@ -370,6 +359,38 @@ func _test_tower_route() -> void:  # test 54
 			if box.has_point(probe):
 				sealed = true
 		_check(not sealed, "tower summit exit is open (floors=%d)" % floors)
+
+		# The ascent itself. `platform_path` has had its gaps bounded by
+		# the schema since v0.4; the tower's spiral is placed here, where
+		# nothing measured it, and it asked for 2.4 m at a 1.0 m rise
+		# against a bound of 2.0 -- the engine breaking a rule it imposes
+		# on Epsilon. Measured off the built positions, not inferred, so
+		# a change to the spiral cannot slip past.
+		var platforms: Array = result.get("platforms", [])
+		_check(not platforms.is_empty(),
+				"the tower reports its ascent (floors=%d)" % floors)
+		# The first platform is reached from the floor DIRECTLY BENEATH
+		# it -- the entry slab spans the whole footprint, so the player
+		# walks under it and jumps straight up. Starting from a guessed
+		# floor position instead measures a walk as though it were a
+		# jump, which is how the first version of this check reported a
+		# 4.74 m leap that nobody has to make.
+		var first: Vector3 = platforms[0]
+		var previous := Vector3(first.x, 0.0, first.z)
+		for platform: Vector3 in platforms:
+			var rise_to := platform.y - previous.y
+			var flat := Vector2(platform.x - previous.x,
+					platform.z - previous.z).length()
+			var allowed := Constants.max_safe_gap(maxf(rise_to, 0.0))
+			_check(flat <= allowed + 0.001,
+					("tower jump of %.2f m at a %.2f m rise exceeds the "
+					% [flat, rise_to])
+					+ "base kit's safe reach of %.2f m (floors=%d)"
+					% [allowed, floors])
+			_check(rise_to <= Constants.MAX_VERTICAL_STEP + 0.001,
+					"tower step of %.2f m exceeds MAX_VERTICAL_STEP"
+					% rise_to)
+			previous = platform
 		result["root"].free()
 
 func _collidable_boxes(root: Node3D) -> Array[AABB]:

@@ -80,6 +80,33 @@ def export_constants_gd() -> str:
                 "Add it to GD_SKIP deliberately, or change its type."
             ) from exc
 
+    # The joint gap/step bound, as a FUNCTION rather than a number.
+    #
+    # `SAFE_BASE_JUMP_GAP` is the flat-ground case, and exporting only
+    # that left every builder placing a raised platform with nothing to
+    # ask. The tower's spiral was typed as a flat 2.4 m at a 1.0 m rise,
+    # where the safe bound is 2.0 -- the schema enforces that same bound
+    # on Epsilon's `platform_path` and the engine broke it in its own
+    # geometry. A number cannot be asked a question, so this is a
+    # function; `test_schemas.py` pins it against the Python original
+    # across the whole legal step range.
+    lines += [
+        "",
+        "## Largest gap a MANDATORY jump may span, landing this much",
+        "## higher. The joint bound: gap and step maxed independently is",
+        "## not the same as either maxed alone. Mirrors",
+        "## `constants.max_safe_gap`, pinned by `test_schemas.py`.",
+        "static func max_safe_gap(vertical_step: float = 0.0) -> float:",
+        "\tvar g := GRAVITY * GRAVITY_MULT_MAX",
+        "\tvar disc := JUMP_VELOCITY * JUMP_VELOCITY - 2.0 * g * vertical_step",
+        "\tif disc < 0.0:",
+        "\t\treturn 0.0",
+        "\tvar reach := WALK_SPEED * SPEED_MULT_MIN \\",
+        "\t\t\t* (JUMP_VELOCITY + sqrt(disc)) / g",
+        "\t# Floor to one decimal: a safety bound must never round upward.",
+        "\treturn floor(reach * SAFE_GAP_MARGIN * 10.0) / 10.0",
+    ]
+
     lines += ["", "# Tier bounds: tier N holds [TIER_BOUNDS[N], TIER_BOUNDS[N+1]).",
               f"const TIER_BOUNDS = {_gd_literal(list(C.TIER_BOUNDS))}",
               "", "# Enemy stat block, keyed by archetype.", "const ENEMY_STATS = {"]

@@ -701,7 +701,12 @@ static func tower(chamber: Dictionary, theme: String) -> Dictionary:
 		Vector3(inset, 0, side - margin), Vector3(inset, 0, margin),
 	]
 	var platform_count := int(ceil(total_rise / step_rise))
-	var spacing := 2.4
+	# The furthest a base jump may be ASKED to reach when landing
+	# `step_rise` higher. This was a typed 2.4 against a bound of 2.0 --
+	# the same bound `platform_path.gap_size` is held to in the schema,
+	# so the engine was breaking a rule it imposes on Epsilon. Derived,
+	# not typed, so it cannot drift from the movement constants again.
+	var spacing := Constants.max_safe_gap(step_rise)
 	var leg := 0
 	var leg_progress := 0.0
 	var platform_positions: Array[Vector3] = []
@@ -757,6 +762,11 @@ static func tower(chamber: Dictionary, theme: String) -> Dictionary:
 					Vector3(side, shaft_height + 1.0, side + 2.2)),
 			"enemy_spawns": spawns,
 			"room_height": shaft_height,
+			# The ascent, so a test can MEASURE the mandatory jumps
+			# rather than infer them from the source. Reading the code
+			# proves the spacing is derived; reading the positions proves
+			# the geometry that came out of it is walkable.
+			"platforms": platform_positions,
 			"reward_position": Vector3(-2.0, top_y, side - 2.0)}
 
 ## A 90° corner piece for non-linear layouts. Entrance on local z=0 facing

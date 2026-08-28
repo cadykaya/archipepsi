@@ -381,3 +381,77 @@ def test_both_grammars_agree_on_what_joins_and_on_the_clearances():
     # it, which is the only reason the two stay equal under a change.
     assert "Constants.PLAYER_RADIUS * 2.0 + SIDE_CLEARANCE" in gd
     assert "Constants.PLAYER_HEIGHT + HEAD_CLEARANCE" in gd
+
+
+# --- 6: the S16 traversal bound -------------------------------------------
+
+GD_CONSTANTS = ROOT / "godot" / "scripts" / "autoload" / "constants.gd"
+
+
+def test_the_exported_gap_bound_is_the_python_one():
+    """Godot places platforms; Python refuses seeds. If the two disagree
+    about how far a base jump reaches, one of them is wrong about whether
+    a mandatory path can be walked -- and only one of them is in the
+    room with the player.
+
+    Re-derives the GDScript arithmetic here and compares across the whole
+    legal step range rather than at one point, because the two curves
+    could agree at 0.0 and diverge everywhere else.
+    """
+    import math
+
+    from archipepsi_bridge.schemas import constants as C
+
+    gd = GD_CONSTANTS.read_text()
+    assert "static func max_safe_gap" in gd, (
+        "the gap bound is no longer exported to Godot; every builder "
+        "placing a raised platform is back to guessing")
+
+    def gd_max_safe_gap(step: float) -> float:
+        g = C.GRAVITY * C.GRAVITY_MULT_MAX
+        disc = C.JUMP_VELOCITY ** 2 - 2.0 * g * step
+        if disc < 0.0:
+            return 0.0
+        reach = C.WALK_SPEED * C.SPEED_MULT_MIN * (
+            C.JUMP_VELOCITY + math.sqrt(disc)) / g
+        return math.floor(reach * C.SAFE_GAP_MARGIN * 10.0) / 10.0
+
+    steps = [i * C.MAX_VERTICAL_STEP / 20.0 for i in range(21)]
+    for step in steps:
+        assert gd_max_safe_gap(step) == pytest.approx(C.max_safe_gap(step)), (
+            f"the two gap bounds disagree at a {step:.2f} m step")
+
+
+def test_the_tower_never_asks_for_a_jump_it_would_refuse_from_epsilon():
+    """The rule the engine has to hold to as well as impose.
+
+    `platform_path.gap_size` is bounded by `max_safe_gap(vertical_step)`
+    in the schema -- Epsilon cannot generate a mandatory jump outside it.
+    The tower's ascent is just as mandatory (it is the way up) and its
+    spiral is placed in GDScript, where nothing checked it. It asked for
+    2.4 m at a 1.0 m rise, where the bound is 2.0.
+    """
+    from archipepsi_bridge.schemas import constants as C
+
+    builders = (ROOT / "godot" / "scripts" / "generation"
+                / "chamber_builders.gd").read_text()
+    tower = builders[builders.index("static func tower"):]
+    tower = tower[:tower.index("static func treasure_room")]
+
+    step = float(re.search(r"var step_rise := minf\(([\d.]+)", tower)[1])
+    step = min(step, C.MAX_VERTICAL_STEP)
+    spacing = re.search(r"var spacing := ([\w.]+)", tower)[1]
+
+    # Derived, not typed: a literal here would silently stop tracking the
+    # bound the moment the movement constants moved.
+    assert not re.fullmatch(r"[\d.]+", spacing), (
+        f"the tower's platform spacing is the literal {spacing}; it must "
+        f"be derived from Constants.max_safe_gap so it cannot drift from "
+        f"the bound the schema enforces on Epsilon")
+    assert "max_safe_gap" in spacing, (
+        f"the tower's spacing is '{spacing}', which is not the gap bound")
+
+    # And the bound it will resolve to actually admits a tower.
+    assert C.max_safe_gap(step) >= C.MIN_PLATFORM_SIZE - 0.6, (
+        f"a {step} m step leaves only {C.max_safe_gap(step)} m of reach, "
+        f"which cannot span platforms {C.MIN_PLATFORM_SIZE} m across")

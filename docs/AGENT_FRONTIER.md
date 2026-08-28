@@ -43,8 +43,17 @@ S23  release hardening         ── last
 | S13 instantiation pipeline | **done** — `content_instantiator.gd`, routed from `ZoneBuilder` |
 | S14 Hub + Echo Lab migration | **done** — `hub_anchors.gd`, Lab gap pinned |
 | S15 room shells + connectors | **grammar done; shells BLOCKED on Q1** |
-| S16 encounter/traversal vocabulary | **next** |
-| S17–S23 | not started |
+| S16 encounter/traversal vocabulary | **done** — tower ascent bounded, gap bound exported |
+| S17 interactable/presentation contracts | **next** |
+| S18–S23 | not started |
+
+S16 found and fixed a real I3/I4 inconsistency: the tower's spiral asked
+for a 2.4 m mandatory jump at a 1.0 m rise, where the safe bound is 2.0 m
+— the same bound the schema enforces on Epsilon's `platform_path`. The
+engine was breaking a rule it imposes. `max_safe_gap` is now EXPORTED to
+GDScript as a function, so a builder placing a raised platform can ask
+instead of typing a number, and the tower's spacing is derived from it.
+The tower suite now measures the built ascent rather than inferring it.
 
 **Open question Q1 (`docs/design-packet-v0.9/OPEN_QUESTIONS.md`) blocks
 graybox archetype shells.** Every chamber archetype carries continuous

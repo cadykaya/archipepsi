@@ -113,6 +113,20 @@ const ZONE_MIN_CHAMBERS = 1
 const ZONE_MIN_CHECKS = 2
 const ZONE_TARGET_CHECKS = 3
 
+## Largest gap a MANDATORY jump may span, landing this much
+## higher. The joint bound: gap and step maxed independently is
+## not the same as either maxed alone. Mirrors
+## `constants.max_safe_gap`, pinned by `test_schemas.py`.
+static func max_safe_gap(vertical_step: float = 0.0) -> float:
+	var g := GRAVITY * GRAVITY_MULT_MAX
+	var disc := JUMP_VELOCITY * JUMP_VELOCITY - 2.0 * g * vertical_step
+	if disc < 0.0:
+		return 0.0
+	var reach := WALK_SPEED * SPEED_MULT_MIN \
+			* (JUMP_VELOCITY + sqrt(disc)) / g
+	# Floor to one decimal: a safety bound must never round upward.
+	return floor(reach * SAFE_GAP_MARGIN * 10.0) / 10.0
+
 # Tier bounds: tier N holds [TIER_BOUNDS[N], TIER_BOUNDS[N+1]).
 const TIER_BOUNDS = [89100001, 89100011, 89100021, 89100031]
 
