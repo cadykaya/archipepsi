@@ -116,7 +116,7 @@ def make_textured_material(name, image, roughness=0.9):
     return mat
 
 
-def make_signal_material(name, dark_hex, bright_hex, strength=0.95,
+def make_signal_material(name, dark_hex, bright_hex, saturation=0.92,
                          roughness=0.3):
     """A lit surface whose COLOUR survives being lit.
 
@@ -127,15 +127,28 @@ def make_signal_material(name, dark_hex, bright_hex, strength=0.95,
     enemy's eye, which is the ONE cue on the figure and the thing that says
     which way it is facing, came out as a white bar with no hue at all.
 
-    So the albedo is the family's DARK step and the emission is its bright
-    one. The sum lands inside range and the hue is still the hue, which is
-    the whole reason the cue is coloured.
+    The first fix was a dark albedo under a bright emission, at a strength
+    picked by hand. That was better and still wrong -- Epsilon's core, a
+    much larger surface than an eye, clipped again at the strength an eye
+    was happy with, because a hand-picked strength is a guess about a sum
+    nobody computed.
 
-    This sandbox renders in Compatibility with glow off, so a lit surface
-    here is only a bright surface. On the owner's Forward+ build these will
-    also bloom; that makes every capture a lower bound, never a flattering
-    one.
+    So `saturation` SOLVES for the strength instead. At 1.0 the brightest
+    channel of `albedo + strength * emission` lands exactly at 1.0; below
+    that it stays under, and the hue is whatever the two colours make. No
+    magic numbers, and the same call is correct for a 5 cm eye slit and a
+    half-metre core.
     """
+    dark = pal.rgb(dark_hex)
+    bright = pal.rgb(bright_hex)
+    # Solve per channel for where albedo + s*emission reaches 1.0, and take
+    # the tightest -- that is the channel that would clip first and turn the
+    # colour white.
+    headroom = min(
+        ((1.0 - d) / b) if b > 1e-6 else 1e6
+        for d, b in zip(dark, bright))
+    strength = max(0.05, headroom * saturation)
+
     mat = bpy.data.materials.new(name)
     mat.use_nodes = True
     bsdf = mat.node_tree.nodes["Principled BSDF"]

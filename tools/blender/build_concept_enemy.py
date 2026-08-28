@@ -55,7 +55,7 @@ SIZE = common.DIM["enemy_melee_size"]          # 0.8 x 1.6 x 0.8
 BOX = (SIZE[0], SIZE[2], SIZE[1])              # x, y, z
 
 
-def _eye(name, strength=0.95):
+def _eye(name, saturation=0.95):
     """The one lit cue on the figure, built so its colour survives.
 
     See `common.make_signal_material`: bright albedo plus bright emission
@@ -64,7 +64,7 @@ def _eye(name, strength=0.95):
     """
     return common.make_signal_material(name, pal.universal("hazard", 0),
                                        pal.universal("hazard", 3),
-                                       strength=strength)
+                                       saturation=saturation)
 
 
 def concept_a_stooped():

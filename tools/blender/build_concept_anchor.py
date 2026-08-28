@@ -52,10 +52,10 @@ FOOT = common.DIM["affordance_footprint"]["grapple_anchor"]
 ANCHOR_BOX = (FOOT["half_width"] * 2.0, FOOT["half_depth"] * 2.0, None)
 
 
-def _signal(name, step=3, strength=1.05):
+def _signal(name, step=3, saturation=0.95):
     return common.make_signal_material(name, pal.universal("signal", 0),
                                        pal.universal("signal", step),
-                                       strength=strength)
+                                       saturation=saturation)
 
 
 def concept_a_soffit():
@@ -132,7 +132,7 @@ def build_one(name, builder):
         propkit.painted_metal(THEME, name, label="grp",
                               band=False).to_blender(name + "_body_tex"),
         roughness=pal.roughness(THEME)))
-    common.assign(collar, _signal(name + "_collar", step=1, strength=1.4))
+    common.assign(collar, _signal(name + "_collar", step=1, saturation=0.6))
     common.assign(ring, _signal(name + "_ring"))
     obj = common.join([body, collar, ring], name)
     # Anchored 'ceiling': the plate is at Z 0 and the ring hangs below,

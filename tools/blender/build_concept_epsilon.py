@@ -47,10 +47,13 @@ THEME = "concrete_facility"
 EPSILON_BOX = (1.4, 1.4, 2.8)
 
 
-def _emissive(name, strength=1.15):
+def _emissive(name, saturation=0.88):
+    # 0.88 rather than the default: the aperture is the single largest
+    # emissive surface in the batch, and a large surface at full saturation
+    # is a lamp rather than a cue.
     return common.make_signal_material(name, pal.universal("identity", 0),
                                        pal.universal("identity", 3),
-                                       strength=strength, roughness=0.25)
+                                       saturation=saturation, roughness=0.25)
 
 
 def concept_a_lectern():

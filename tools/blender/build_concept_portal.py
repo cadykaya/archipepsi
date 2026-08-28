@@ -43,10 +43,10 @@ PORTAL_BOX = (3.6, 1.3, 4.6)
 APERTURE = (2.4, 3.4)
 
 
-def _emissive(name, family="signal", strength=1.0):
+def _emissive(name, family="signal", saturation=0.92):
     return common.make_signal_material(name, pal.universal(family, 0),
                                        pal.universal(family, 3),
-                                       strength=strength, roughness=0.35)
+                                       saturation=saturation, roughness=0.35)
 
 
 def concept_a_blast():

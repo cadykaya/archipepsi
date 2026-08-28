@@ -50,7 +50,7 @@ CHECK_BOX = (1.4, 1.4, 2.6)
 
 def _emissive(name, family):
     return common.make_signal_material(name, pal.universal(family, 0),
-                                       pal.universal(family, 3), strength=1.05)
+                                       pal.universal(family, 3))
 
 
 def concept_a_pedestal():

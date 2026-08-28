@@ -302,13 +302,15 @@ def main():
     common.uv_project_world(body, ARCH_DENSITY, ARCH_SIZE)
     common.assign(body, common.make_textured_material(
         "arch_light_fixture", theme_image("trim"), roughness=pal.roughness(THEME)))
-    light_hex, energy = pal.light(THEME)
-    # Dark albedo under a bright emission -- see make_signal_material. The
-    # theme's own light_energy scales it, so a neon_transit fixture is
-    # brighter than a gothic_stone one without the art choosing that.
+    light_hex, _energy = pal.light(THEME)
+    # Dark albedo under the theme's own light colour -- see
+    # make_signal_material.
+    # A fixture lens IS meant to read as a lamp, so it goes to full
+    # saturation -- the one place in the batch where clipping the brightest
+    # channel is the intent rather than a mistake.
     common.assign(lens, common.make_signal_material(
         "arch_light_lens", pal.theme(THEME, "trim", 0), light_hex,
-        strength=min(1.6, energy * 0.4), roughness=0.2))
+        saturation=1.0, roughness=0.2))
     fixture = common.join([body, lens], "arch_light_fixture")
     common.set_origin(fixture, "ceiling")
     report["arch_light_fixture"] = common.export_glb(
