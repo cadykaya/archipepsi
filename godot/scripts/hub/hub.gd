@@ -202,9 +202,10 @@ func _build_room() -> void:
 			ThemeMaterials.floor_mat(THEME))
 	# The Lab doorway is a real hole in the left wall, cut here rather
 	# than drawn over a solid one by `_cut_lab_doorway`.
+	# `ceiling = false`: the Hub raises its own, two lines below.
 	b._perimeter(root, W, D, H, THEME, false, false, 0.0,
 			HubAnchors.LAB_DOOR_Z, HubAnchors.LAB_DOOR_WIDTH,
-			HubAnchors.LAB_DOOR_HEIGHT)
+			HubAnchors.LAB_DOOR_HEIGHT, false)
 	b._box(root, Vector3(W, 0.4, D), Vector3(0, H, D / 2.0),
 			ThemeMaterials.trim_mat(THEME))
 	for at in [Vector3(-W / 4.0, H - 0.4, D / 2.0),

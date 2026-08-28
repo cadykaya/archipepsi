@@ -123,10 +123,34 @@ static func _light(parent: Node3D, position: Vector3, theme: String,
 
 ## Walls around a rectangular room with door gaps at entrance/exit centers.
 ## `exit_gap_y` raises the exit door's sill — a tower exits at its summit.
+## One end wall with a doorway in it, at whatever height the doorway sits.
+##
+## `_perimeter` does this inline for its own two ends. The builders that
+## raise their own walls -- `corridor`, `platform_path`, `corner` -- had
+## no such thing, so they simply had no ends and no ceiling, and playtest
+## 2 bounced out through the hole. A wall nobody raises is not a wall
+## anybody notices missing: the bounds Dictionary still reads right, the
+## exit socket is still in the right place, and every assertion passes.
+static func _end_wall(root: Node3D, width: float, height: float, z: float,
+		wall: Material, gap_y := 0.0) -> void:
+	var side := (width - DOOR_WIDTH) / 2.0
+	if side > 0.01:
+		for sign_x: float in [-1.0, 1.0]:
+			_box(root, Vector3(side, height, WALL_THICKNESS),
+					Vector3(sign_x * (DOOR_WIDTH + side) / 2.0,
+					height / 2.0, z), wall)
+	if gap_y > 0.0:
+		_box(root, Vector3(DOOR_WIDTH, gap_y, WALL_THICKNESS),
+				Vector3(0, gap_y / 2.0, z), wall)
+	var lintel := gap_y + DOOR_HEIGHT
+	if height > lintel:
+		_box(root, Vector3(DOOR_WIDTH, height - lintel, WALL_THICKNESS),
+				Vector3(0, lintel + (height - lintel) / 2.0, z), wall)
+
 static func _perimeter(root: Node3D, width: float, depth: float,
 		height: float, theme: String, door_in := true, door_out := true,
 		exit_gap_y := 0.0, left_gap_z := 0.0, left_gap_width := 0.0,
-		left_gap_height := 0.0) -> void:
+		left_gap_height := 0.0, ceiling := true) -> void:
 	var wall := ThemeMaterials.wall_mat(theme)
 	var half_w := width / 2.0
 	var side := (width - DOOR_WIDTH) / 2.0
@@ -173,6 +197,14 @@ static func _perimeter(root: Node3D, width: float, depth: float,
 				Vector3(-half_w, height / 2.0, depth / 2.0), wall)
 	_box(root, Vector3(WALL_THICKNESS, height, depth),
 			Vector3(half_w, height / 2.0, depth / 2.0), wall)
+	# A ceiling, by DEFAULT. This built four walls and called itself a
+	# perimeter, so every chamber that did not add its own roof was open
+	# to the void -- and one that jumps (bounce pad, platform, blink)
+	# leaves the level through it. Callers that raise their own ceiling
+	# pass `false` rather than stacking two coplanar slabs.
+	if ceiling:
+		_box(root, Vector3(width, WALL_THICKNESS, depth),
+				Vector3(0, height, depth / 2.0), wall)
 
 ## A side wall in three pieces, leaving a hole you can actually walk
 ## through. Split rather than subtracted: `_box` is both the mesh and the
@@ -687,6 +719,15 @@ static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 			Vector3(-width / 2.0, wall_height / 2.0 - 20.0, total / 2.0), wall)
 	_box(root, Vector3(WALL_THICKNESS, wall_height + 40.0, total),
 			Vector3(width / 2.0, wall_height / 2.0 - 20.0, total / 2.0), wall)
+	# Ends and a ceiling. There were none: the lights below hung off
+	# nothing, and the chamber was open to the void sideways of its own
+	# doorways. The exit doorway is raised by `rise` because that is
+	# where the path leaves from.
+	_end_wall(root, width, wall_height, 0.0, wall)
+	_end_wall(root, width, wall_height, total, wall, rise)
+	_box(root, Vector3(width, WALL_THICKNESS, total),
+			Vector3(0, wall_height, total / 2.0),
+			ThemeMaterials.trim_mat(theme))
 	# Half the segments, rounded down: an odd count gets the smaller
 	# half, which is what the layout wants.
 	@warning_ignore("integer_division")

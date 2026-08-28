@@ -32,6 +32,7 @@ func _ready() -> void:
 	_test_tower_route()
 	_test_treasure_room()
 	_test_exit_portal_appended()
+	await _test_every_chamber_is_sealed()
 	if failures == 0:
 		print("GODOT CHAMBER TESTS OK")
 		get_tree().quit(0)
@@ -213,6 +214,13 @@ func _test_secrets_are_optional() -> void:
 			if center.z < 1.0 or center.z > depth - 1.0:
 				continue
 			if box.position.y <= reach:
+				continue
+			# ...and the CEILING, which is interior and above head height
+			# and is not a ledge. It spans the whole room; a secret shelf
+			# is a shelf. This list of exceptions is the cost of finding
+			# ledges by shape instead of by name, and it grew the moment
+			# `_perimeter` learned to roof itself.
+			if box.size.x >= width - 0.5 and box.size.z >= depth - 0.5:
 				continue
 			ledges += 1
 			found += 1
@@ -437,3 +445,88 @@ func _test_exit_portal_appended() -> void:  # test 56
 	_check(portal.position.z > 8.0,
 			"exit portal sits beyond the final chamber")
 	build["root"].free()
+
+## Can the player leave the level? (`make godot-test`)
+##
+## Playtest 2 found a room with a bounce pad and two of its four walls,
+## and used the one to get out through the other. Only three of the six
+## chamber builders call `_perimeter`; `corridor`, `platform_path` and
+## `corner` each raise their own walls, and a wall nobody raises is not a
+## wall anybody notices missing -- the bounds Dictionary still says the
+## right thing, the exit socket is still in the right place, and every
+## existing assertion passes.
+##
+## So this stands INSIDE each archetype and fires rays outward. Sideways
+## and upward must be stopped. Forward and back are the doorways and are
+## allowed through.
+func _test_every_chamber_is_sealed() -> void:  # test 57
+	var world := Node3D.new()
+	add_child(world)
+	var cases := {
+		"corridor": ChamberBuilders.corridor(
+				{"length": 12.0, "width": 5.0}, "concrete_facility"),
+		"arena": ChamberBuilders.arena(
+				{"width": 18.0, "depth": 16.0}, "concrete_facility"),
+		"platform_path": ChamberBuilders.platform_path(
+				{"width": 12.0, "length": 20.0, "gap_size": 1.6,
+				"platform_count": 4, "vertical_step": 0.8},
+				"concrete_facility"),
+		"treasure_room": ChamberBuilders.treasure_room(
+				{}, "concrete_facility"),
+		"corner_left": ChamberBuilders.corner(-1, "concrete_facility"),
+		"corner_right": ChamberBuilders.corner(1, "concrete_facility"),
+		# Extremes of the schema, because a wall that seals at the
+		# default width can still miss at the widest one.
+		"corridor_widest": ChamberBuilders.corridor(
+				{"length": 30.0, "width": 10.0}, "concrete_facility"),
+		"corridor_narrowest": ChamberBuilders.corridor(
+				{"length": 6.0, "width": 4.0}, "concrete_facility"),
+		"arena_widest": ChamberBuilders.arena(
+				{"width": 28.0, "depth": 28.0}, "concrete_facility"),
+		"platform_path_long": ChamberBuilders.platform_path(
+				{"width": 12.0, "length": 30.0, "gap_size": 2.0,
+				"segment_count": 8, "vertical_step": 1.0},
+				"concrete_facility"),
+	}
+	# Spread far apart. Built at the origin they overlap, and a ray
+	# leaving one chamber lands in another's wall -- so the suite passes
+	# by borrowing geometry the player would never be standing in. That
+	# is not a hypothetical: deleting platform_path's ceiling failed the
+	# ARENA, which had been leaning on it.
+	var lane := 0
+	var spread := 400.0
+	for name: String in cases:
+		var result: Dictionary = cases[name]
+		var root: Node3D = result["root"]
+		root.position = Vector3(float(lane) * spread, 0.0, 0.0)
+		lane += 1
+		world.add_child(root)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+
+	var space := world.get_world_3d().direct_space_state
+	for name: String in cases:
+		var result: Dictionary = cases[name]
+		var bounds: AABB = result["bounds"]
+		var root: Node3D = result["root"]
+		var centre := bounds.get_center() + root.position
+		# Chest height, and again high enough that a bounce pad reaches.
+		for eye_y: float in [centre.y, bounds.position.y + bounds.size.y * 0.8]:
+			var from := Vector3(centre.x, eye_y, centre.z)
+			# A corner LEAVES through its side, so the direction of its
+			# own exit is a doorway rather than a hole. Everything else
+			# has to stop you.
+			var exit_dir: Vector3 = (result["exit_offset"] as Vector3)
+			exit_dir.y = 0.0
+			for dir: Vector3 in [Vector3.LEFT, Vector3.RIGHT, Vector3.UP]:
+				if exit_dir.length() > 0.01 \
+						and dir.dot(exit_dir.normalized()) > 0.5:
+					continue
+				var reach: float = bounds.size.length() + 4.0
+				var probe := PhysicsRayQueryParameters3D.create(
+						from, from + dir * reach)
+				_check(not space.intersect_ray(probe).is_empty(),
+						"%s has no surface %s of its centre at y=%.1f: "
+						% [name, dir, eye_y]
+						+ "the player leaves the level through it")
+	world.queue_free()
