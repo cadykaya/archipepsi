@@ -23,7 +23,10 @@ This is explicitly **not** a reopened design review. Files this change does not 
 7. `schemas/` — **the binding contract. Copy verbatim; run its tests first.**
 8. `IMPLEMENTATION_PLAN.md` — build order and stopping rules (§2.5 is the Echoes 2.0 staging)
 9. `ACCEPTANCE_TESTS.md` — observable pass/fail (§5.7 is the invariant matrix)
-10. `DECISIONS_TO_REVIEW.md` — only what is still genuinely open
+10. **`AUTHORED_CONTENT.md`** — **what Epsilon may not author.** Normative for
+    the art and content boundary: humans make the alphabet, Godot enforces
+    the grammar, Epsilon writes sentences. Read before any asset work.
+11. `DECISIONS_TO_REVIEW.md` — only what is still genuinely open
 
 `check_packet.py` validates this prose against `schemas/` — every JSON example, every named constant and enum member, the retired terminology, and the quoted test count. Run it after editing any document; a green schema suite does not prove the prose still describes it.
 
@@ -40,9 +43,10 @@ If two files disagree:
 3. **`APWORLD_SPEC.md`** — Archipelago generation, network and logic rules.
 4. **`ECHOES.md`** — what an Echo is. Beats DESIGN and EPSILON_SPEC on Echoes specifically, and nothing else.
 5. **`EPSILON_SPEC.md`** — what Epsilon may receive, decide and emit.
-6. **`TECHNICAL_ARCHITECTURE.md`** — implementation boundaries, persistence, security.
-7. **`ACCEPTANCE_TESTS.md`** — observable behavior.
-8. **`IMPLEMENTATION_PLAN.md`** — build order, not product truth.
+6. **`AUTHORED_CONTENT.md`** — what Epsilon may not AUTHOR, as distinct from what it may decide. Beats EPSILON_SPEC on the art and content boundary; silent on everything else.
+7. **`TECHNICAL_ARCHITECTURE.md`** — implementation boundaries, persistence, security.
+8. **`ACCEPTANCE_TESTS.md`** — observable behavior.
+9. **`IMPLEMENTATION_PLAN.md`** — build order, not product truth.
 
 No exceptions. `schemas/` is the v8 contract — `echo.py`, `mechanics.py` and `migration.py` included — and it outranks every document here, `ECHOES.md` among them.
 

@@ -188,6 +188,7 @@ FOREIGN_UPPER = {
 #: Files the BUILD produces, which the packet legitimately names in advance.
 DOC_NAMES = {d.name for d in HERE.glob("*.md")} | {
     "IMPLEMENTATION_DECISIONS.md", "NEXT_STEPS.md", "IMPLEMENTATION_PLAN",
+    "AGENT_FRONTIER.md",
     "README.md", "CommonClient.py", "ModuleUpdate.py", "MultiServer.py",
     "NetUtils.py", "Utils.py", "AutoWorld.py", "archipelago.json",
     "campaign.py", "store.py", "transactions.py", "mock_ap.py",
