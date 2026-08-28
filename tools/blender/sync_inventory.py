@@ -90,6 +90,9 @@ ORDER = [
      ["arch_wall_variant_a", "arch_wall_variant_b", "arch_ceiling_plain",
       "arch_trim_ceiling", "arch_floor_grate", "arch_column",
       "arch_beam_span"]),
+    ("batch021", "architecture",
+     ["arch_vent", "arch_duct", "arch_catwalk", "arch_tunnel_bore",
+      "arch_secret_alcove", "arch_window"]),
 ]
 #: Batches the OWNER has passed, by the date of the verdict. This script
 #: may never approve art; every entry here is a transcription of a decision

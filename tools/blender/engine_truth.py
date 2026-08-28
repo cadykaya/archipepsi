@@ -190,6 +190,16 @@ def dimensions():
         # `tower()`'s own layout constants.
         "tower_side": 12.0,
         "tower_per_floor": 3.0,
+        # `_secret_alcove`'s contract. The underside must clear the tallest
+        # actor or the slab is a wall the brute walks into; the lip must be
+        # out of a standing jump's reach, because nothing up there is ever
+        # required.
+        "secret_ledge_depth": 1.8,
+        "secret_ledge_thickness": 0.3,
+        "secret_ledge_width": 2.4,
+        "secret_underside_min": 2.75,
+        "secret_lip_min": 3.05,
+        "secret_lip_max": 4.2,
         # --- the distances an asset is actually looked at from ------------
         "camera_fov_deg": 90.0,
         "enemy_aggro_radius": c.ENEMY_AGGRO_RADIUS,
@@ -308,7 +318,16 @@ def verify():
             ("platform_path ledge", "var ledge := %.1f" % dim["path_ledge"]),
             ("tower side", "var side := %.1f" % dim["tower_side"]),
             ("tower floor spacing",
-             "var per_floor := %.1f" % dim["tower_per_floor"])):
+             "var per_floor := %.1f" % dim["tower_per_floor"]),
+            ("secret ledge depth",
+             "const SECRET_LEDGE_DEPTH := %.1f" % dim["secret_ledge_depth"]),
+            ("secret ledge thickness",
+             "const SECRET_LEDGE_THICKNESS := %.1f"
+             % dim["secret_ledge_thickness"]),
+            ("secret lip max",
+             "const SECRET_LIP_MAX := %.1f" % dim["secret_lip_max"]),
+            ("secret underside base",
+             "const SECRET_UNDERSIDE_MIN := TALLEST_ACTOR + 0.15")):
         if needle not in cb_text:
             problems.append(
                 "%s changed in chamber_builders.gd (looked for: %s). An "

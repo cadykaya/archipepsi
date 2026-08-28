@@ -2632,3 +2632,86 @@ against.
 | `K_grate.png` | the bars, the void and the bearer |
 
 Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 021 — architecture Pri-B/C, the services and openings
+
+Batch 020 took the seven modules a chamber is made **of**. These are the
+six it is fitted **out** with, and they finish every Tier 3 row that has an
+engine contract to build against.
+
+| Module | Pri | Tris | Where its numbers come from |
+| --- | --- | --- | --- |
+| `arch_vent` | B | 116 | `_greeble_corridor` builds a 0.08 × 0.7 × 1.1 wall vent as a flat accent box. Same opening, with seven real louvres over a recess |
+| `arch_duct` | B | 96 | no procedural counterpart. 0.46 deep hung 0.22 clear, inside `CEILING_GAP` 0.5, with a flanged joint at mid-run |
+| `arch_catwalk` | B | 220 | deck at **2.60** — `SAFE_BASE_JUMP_GAP`, and the height the approved gallery corridor and balcony arena already use |
+| `arch_tunnel_bore` | B | 156 | a 4 m section at `corridor_width_min` 4.0 across |
+| `arch_secret_alcove` | B | 68 | `_secret_alcove`, exactly |
+| `arch_window` | C | 108 | `door_width` 2.40 wide, sill 1.00, head at `door_height` 3.20 |
+
+### Three decisions worth stating
+
+**The bore has a flat invert.** A perfectly round tunnel would be a
+different construction language from the rest of the facility, and it would
+have no floor. This is a horseshoe: flat walkable invert, straight
+springing to 1.20 m, and a twelve-segment crown over it —
+`max_radial_segments` permits twelve above a 1.5 m radius. Rings every 2 m
+are what make it read as bored and lined rather than as a pipe.
+
+**The catwalk is 1.60 m wide, deliberately not `brute_lane` 2.60.** The
+player is 0.80 across, so that is two body widths, and something a brute
+cannot follow you onto is the point of a catwalk. Its deck height is not a
+new number either: 2.60 is what Batch 015's gallery corridor and Batch
+016's balcony arena already use, so a catwalk dropped into either lands
+level rather than introducing a third height.
+
+**The alcove is built to the letter of `_secret_alcove`.** The same
+1.8 × 0.3 × 2.4 slab with its **top** at the lip rather than its centre,
+and the same 0.12 × 0.35 lip rail inset 0.06 from the inward edge —
+non-colliding in the engine, *so a hard landing is never bounced back off a
+rail you meant to clear*. Built at `SECRET_LIP_MAX` 4.20, which puts the
+underside at 3.90, well over `secret_underside_min` 2.75 (`TALLEST_ACTOR` +
+0.15): below that the slab stops being a secret and becomes a wall the
+brute walks into.
+
+`DESIGN` §19 permits exactly one thing up there — *a plaque and nothing
+else* — so a plaque is modelled and nothing else is. No reward, no exit, no
+objective. The room plays identically if you never reach it.
+
+### The budget did its job again
+
+`arch_catwalk` came in at **280 against the 250 ceiling**. Nine treads
+became six and three posts a side became two: 220 triangles. Same rule as
+Batch 020's grate — delete geometry, never raise the ceiling.
+
+### Tier 3 after this batch
+
+28 of 31 rows in §3 are built. What remains:
+
+- `arch_signage_mount` and `arch_objective_socket` — **blocked with the
+  navigation language.** A socket's size and shape prejudge what plugs into
+  it.
+- `arch_affordance_socket` — **buildable and deferred, not blocked.** The
+  seven affordances it would mount are approved and built (Batch 009), so
+  this one has a contract; it just was not in this batch's scope.
+- `arch_vista_socket` — Pri C with no engine contract to build against.
+
+### Evidence
+
+`docs/art/review/batch021/`
+
+| Image | What it answers |
+| --- | --- |
+| `S_bore_inside.png` | **start here** — three bore sections chained, from inside |
+| `S_catwalk.png` | the deck, treads, stringers, rails and brackets |
+| `S_alcove.png` | the alcove from below, which is where a player sees it |
+| `S_vent.png` · `S_services_family.png` | the louvres, and the two services together |
+| `S_bore.png` | the horseshoe section alone |
+| `S_window.png` · `_silhouette` | the opening, lit and as shape |
+
+Every camera here is a solving one except `S_bore_inside`, which says in
+its own note why it is placed: the point of that shot is where you stand
+(L-62).
+
+Status: **PENDING** — not self-marked.

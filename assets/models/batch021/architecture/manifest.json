@@ -1,0 +1,68 @@
+{
+  "arch_catwalk": {
+    "anchor": "floor",
+    "path": "batch021/architecture/arch_catwalk.glb",
+    "size": [
+      1.6,
+      4.0,
+      1.635
+    ],
+    "texel_density": 32.0,
+    "triangles": 220
+  },
+  "arch_duct": {
+    "anchor": "ceiling",
+    "path": "batch021/architecture/arch_duct.glb",
+    "size": [
+      0.74,
+      4.0,
+      0.75
+    ],
+    "texel_density": 32.0,
+    "triangles": 96
+  },
+  "arch_secret_alcove": {
+    "anchor": "module_floor",
+    "path": "batch021/architecture/arch_secret_alcove.glb",
+    "size": [
+      1.8,
+      2.4,
+      1.54
+    ],
+    "texel_density": 32.0,
+    "triangles": 68
+  },
+  "arch_tunnel_bore": {
+    "anchor": "module_floor",
+    "path": "batch021/architecture/arch_tunnel_bore.glb",
+    "size": [
+      4.68,
+      4.0,
+      4.032
+    ],
+    "texel_density": 32.0,
+    "triangles": 156
+  },
+  "arch_vent": {
+    "anchor": "wall",
+    "path": "batch021/architecture/arch_vent.glb",
+    "size": [
+      0.7,
+      0.155,
+      1.1
+    ],
+    "texel_density": 32.0,
+    "triangles": 116
+  },
+  "arch_window": {
+    "anchor": "wall",
+    "path": "batch021/architecture/arch_window.glb",
+    "size": [
+      4.0,
+      0.62,
+      4.0
+    ],
+    "texel_density": 32.0,
+    "triangles": 108
+  }
+}

@@ -165,6 +165,12 @@ These are the vocabulary everything after them inherits.
 | `arch_floor_grate` | L1 | module | 204 | 4.00 × 4.00 × 0.36 | module_floor | B20 | B20 | PEND |
 | `arch_column` | L1 | module | 60 | 0.76 × 0.76 × 4.00 | floor | B20 | B20 | PEND |
 | `arch_beam_span` | L1 | module | 76 | 4.00 × 0.44 × 0.80 | ceiling | B20 | B20 | PEND |
+| `arch_vent` | L1 | module | 116 | 0.70 × 0.15 × 1.10 | wall | B21 | B21 | PEND |
+| `arch_duct` | L1 | module | 96 | 0.74 × 4.00 × 0.75 | ceiling | B21 | B21 | PEND |
+| `arch_catwalk` | L1 | module | 220 | 1.60 × 4.00 × 1.64 | floor | B21 | B21 | PEND |
+| `arch_tunnel_bore` | L1 | module | 156 | 4.68 × 4.00 × 4.03 | module_floor | B21 | B21 | PEND |
+| `arch_secret_alcove` | L1 | module | 68 | 1.80 × 2.40 × 1.54 | module_floor | B21 | B21 | PEND |
+| `arch_window` | L1 | module | 108 | 4.00 × 0.62 × 4.00 | wall | B21 | B21 | PEND |
 
 | Theme material | Roles built |
 | --- | --- |
@@ -294,21 +300,21 @@ primitives today. Module grid **4.0 m**; wall thickness **0.40 m**; door
 
 | ID | L | Pri | Model | | ID | L | Pri | Model |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `arch_wall_panel` | L1 | A | B1 | | `arch_catwalk` | L1 | B | — |
+| `arch_wall_panel` | L1 | A | B1 | | `arch_catwalk` | L1 | B | **B21** |
 | `arch_wall_variant_a/b` | L1 | B | **B20** | | `arch_railing` | L1 | A | B1 |
-| `arch_floor_slab` | L1 | A | B1 | | `arch_vent` | L1 | B | — |
-| `arch_floor_grate` | L1 | B | **B20** | | `arch_duct` | L1 | B | — |
+| `arch_floor_slab` | L1 | A | B1 | | `arch_vent` | L1 | B | **B21** |
+| `arch_floor_grate` | L1 | B | **B20** | | `arch_duct` | L1 | B | **B21** |
 | `arch_ceiling_beam` | L1 | A | B1 | | `arch_pipe_run` | L1 | A | B1 |
-| `arch_ceiling_plain` | L1 | B | **B20** | | `arch_tunnel_bore` | L1 | B | — |
-| `arch_doorway` | L1 | A | B1 | | `arch_window` | L1 | C | — |
+| `arch_ceiling_plain` | L1 | B | **B20** | | `arch_tunnel_bore` | L1 | B | **B21** |
+| `arch_doorway` | L1 | A | B1 | | `arch_window` | L1 | C | **B21** |
 | `arch_connector_straight` | L1 | A | **B7** | | `arch_trim_rail` | L1 | A | B1 |
 | `arch_corner_left/right` | L1 | A | **B7** | | `arch_trim_ceiling` | L1 | B | **B20** |
 | `arch_column` | L1 | B | **B20** | | `arch_light_fixture` | L1 | A | B1 |
 | `arch_beam_span` | L1 | B | **B20** | | `arch_signage_mount` | L0 | B | **blocked with the navigation language** |
 | `arch_stair` | L1 | A | **B7** | | `arch_objective_socket` | L1 | B | **blocked with the navigation language** |
 | `arch_ramp` | L1 | A | **B7** | | `arch_affordance_socket` | L1 | B | — |
-| `arch_ledge` | L1 | A | **B7** | | `arch_secret_alcove` | L2 | B | — |
-| | | | | | `arch_vista_socket` | L2 | C | — |
+| `arch_ledge` | L1 | A | **B7** | | `arch_secret_alcove` | L2 | B | **B21** |
+| | | | | | `arch_vista_socket` | L2 | C | **no engine contract to build against** |
 
 `arch_stair` and `arch_ledge` are **A** because `MAX_VERTICAL_STEP` (1.0 m)
 and `SAFE_BASE_JUMP_GAP` (2.6 m) are the numbers the player's muscle memory
