@@ -222,6 +222,7 @@ func _ready() -> void:
 	_cooldown_track.add_child(_cooldown_fill)
 
 	_title_box = VBoxContainer.new()
+	# PRESET_CENTER is only correct WITH these offsets -- see UILayout.
 	_title_box.set_anchors_preset(Control.PRESET_CENTER)
 	_title_box.offset_left = -420.0
 	_title_box.offset_right = 420.0
@@ -268,12 +269,11 @@ func _ready() -> void:
 	add_child(_death_overlay)
 	_death_label = Label.new()
 	_death_label.text = "SIGNAL LOST"
-	_death_label.set_anchors_preset(Control.PRESET_CENTER)
 	_death_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_death_label.add_theme_font_size_override("font_size", 52)
 	_death_label.modulate = Color(1.0, 0.3, 0.5)
 	_death_label.visible = false
-	add_child(_death_label)
+	UILayout.centred(self, _death_label)
 
 func set_banner(text: String) -> void:
 	_banner.text = text
@@ -472,6 +472,13 @@ func bind_player(player: Player) -> void:
 	readouts.bind(player)
 	player.hp_changed.connect(_on_hp_changed)
 	player.interact_prompt_changed.connect(_on_prompt)
+	# Clear whatever the LAST world left on screen. The player only emits
+	# when its interact target CHANGES, and a fresh player starts with a
+	# null target -- so one that spawns looking at nothing emits nothing,
+	# and the HUD keeps the previous view's prompt. That is how "[E]
+	# ENTER ZONE" followed the player into the Zone it had just entered
+	# and stayed there for the whole level.
+	_on_prompt("")
 	# Every slot's runtime reports; `_on_cooldown` keeps the bar on the
 	# highlighted one. Connecting only the highlighted runtime would go
 	# stale the moment the player fired a different slot.

@@ -3,6 +3,8 @@ test_providers.py."""
 
 from __future__ import annotations
 
+import builtins
+
 import os
 from pathlib import Path
 from types import SimpleNamespace
@@ -304,10 +306,26 @@ def test_17b_interrupted_tmp_write_leaves_previous_loadable(tmp_path,
     s1 = CampaignSave(seed_name="Seed", team=0, slot_id=1, slot_name="Skyiah")
     store.write_save(path, s1)
 
-    def explode(fd):
-        raise OSError("simulated crash during fsync")
+    # Injected at the WRITE, not at fsync. fsync is deliberately
+    # non-fatal now (`store._flush`): a refused flush costs a durability
+    # margin, not the campaign, so failing it no longer simulates a
+    # crash. An interrupted tmp write is what this test is named for and
+    # is the stronger scenario anyway -- a half-written payload on disk.
+    real_open = builtins.open
 
-    monkeypatch.setattr(os, "fsync", explode)
+    def dies_partway(file, *args, **kwargs):
+        handle = real_open(file, *args, **kwargs)
+        if str(file).endswith(".tmp"):
+            real_write = handle.write
+
+            def write_then_die(chunk):
+                real_write(chunk[:len(chunk) // 2])
+                raise OSError("simulated crash during the tmp write")
+
+            handle.write = write_then_die
+        return handle
+
+    monkeypatch.setattr(builtins, "open", dies_partway)
     with pytest.raises(OSError):
         store.write_save(path, CampaignSave(
             seed_name="Seed", team=0, slot_id=1, slot_name="Skyiah",

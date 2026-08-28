@@ -69,6 +69,7 @@ func _run() -> void:
 	_check(true, "_clear_world survived a boot")
 
 	await _the_menu_is_actually_on_screen(main)
+	await _every_panel_opens_in_the_middle()
 	_finish()
 
 ## The other thing nine green suites never checked: WHERE a control
@@ -119,3 +120,50 @@ func _finish() -> void:
 	else:
 		print("GODOT BOOT TESTS: %d failures" % failures)
 		get_tree().quit(1)
+
+## Playtest 1, twice. `PRESET_CENTER` puts a control's TOP-LEFT CORNER at
+## the screen centre and lets it grow down and right, so six panels
+## shipped wedged into the bottom-right quadrant: the title screen, the
+## pause menu, the shop, the Echo archive, the reveal card and the death
+## label. Fixing the title screen alone left five, because the bug is a
+## misreading of an engine preset rather than a mistake in one file.
+##
+## Each is opened for real and measured. A panel is not centred because
+## the code says CENTER; it is centred when its rect is.
+func _every_panel_opens_in_the_middle() -> void:
+	get_window().size = Vector2i(1280, 720)
+	var screen := Vector2(get_window().size)
+	var panels := {
+		"pause menu": PauseMenu.new(),
+		"shop": ShopUI.new(),
+		"Echo archive": InventoryLayer.new(),
+	}
+	for label: String in panels:
+		var ui: CanvasLayer = panels[label]
+		add_child(ui)
+		await get_tree().process_frame
+		ui.visible = true
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var panel := _first_panel(ui)
+		if panel == null:
+			_check(false, "%s has no panel to measure" % label)
+			continue
+		var rect := panel.get_global_rect()
+		_check(rect.size.x > 1.0 and rect.size.y > 1.0,
+				"%s laid out to nothing (%s), so the centring check "
+				% [label, rect.size] + "below would pass vacuously")
+		var offset := (rect.position + rect.size / 2.0) - screen / 2.0
+		_check(absf(offset.x) < 2.0 and absf(offset.y) < 2.0,
+				"the %s opens %s off centre -- rect %s on a %s screen"
+				% [label, offset, rect, screen])
+		ui.queue_free()
+
+func _first_panel(node: Node) -> Control:
+	if node is PanelContainer:
+		return node as Control
+	for child in node.get_children():
+		var found := _first_panel(child)
+		if found != null:
+			return found
+	return null

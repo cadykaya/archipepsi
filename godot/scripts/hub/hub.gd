@@ -146,24 +146,31 @@ func _cut_lab_doorway(b, root: Node3D) -> void:
 	var door_z := _anchors.origin("lab_entrance").z
 	var door_w := HubAnchors.LAB_DOOR_WIDTH
 	var door_h := HubAnchors.LAB_DOOR_HEIGHT
-	var opening := MeshInstance3D.new()
-	var mesh := BoxMesh.new()
-	mesh.size = Vector3(0.6, door_h, door_w)
-	opening.mesh = mesh
-	opening.position = Vector3(-W / 2.0, door_h / 2.0, door_z)
-	opening.material_override = ThemeMaterials.glow_material(
-			Color(0.1, 0.12, 0.16), 0.2)
-	root.add_child(opening)
-	# The corridor between the two rooms, floored and lit so the doorway
-	# reads as somewhere to go rather than as a hole in the map.
+	# No decorative pane in the opening any more. It existed to imply a
+	# door on a solid wall; the wall now has a real hole, so the same box
+	# would just stand in it.
+	#
+	# The corridor between the two rooms: floor, ceiling and SIDES. It
+	# had no sides, so the Lab was reached down an open-walled slot with
+	# the void either hand.
 	var link := Node3D.new()
 	add_child(link)
-	b._box(link, Vector3(3.4, 0.5, door_w),
-			Vector3(-W / 2.0 - 1.6, -0.25, door_z),
+	var run := 3.4
+	# Butted against the Hub floor, not overlapping it. At `- 1.6` the
+	# corridor floor reached x = -10.9 while the room floor reaches -11,
+	# so 0.1m of the two top faces were coplanar -- which is the
+	# z-fighting shimmer at the doorway.
+	var mid_x := -W / 2.0 - run / 2.0
+	b._box(link, Vector3(run, 0.5, door_w), Vector3(mid_x, -0.25, door_z),
 			ThemeMaterials.floor_mat(THEME))
-	b._box(link, Vector3(3.4, 0.4, door_w),
-			Vector3(-W / 2.0 - 1.6, door_h, door_z),
+	b._box(link, Vector3(run, 0.4, door_w),
+			Vector3(mid_x, door_h, door_z),
 			ThemeMaterials.trim_mat(THEME))
+	for side: float in [-1.0, 1.0]:
+		b._box(link, Vector3(run, door_h, ChamberBuilders.WALL_THICKNESS),
+				Vector3(mid_x, door_h / 2.0,
+				door_z + side * (door_w / 2.0)),
+				ThemeMaterials.wall_mat(THEME))
 	var sign_plate := Label3D.new()
 	sign_plate.text = "ECHO LAB"
 	sign_plate.font_size = 34
@@ -238,8 +245,13 @@ func _build_room() -> void:
 	# Hangs under the board rather than at a coordinate of its own: an
 	# authored scene that moves `progression_display` must not leave the
 	# legend behind on the far wall.
+	# 1.35 below, not 0.8. The headline is 96pt at 0.008 -- 0.77 world
+	# units tall -- and the legend runs up to five 40pt lines, 1.6 more.
+	# Half of each is 1.18, so 0.8 of separation had them printing
+	# through one another; the screenshot showed four readouts in one
+	# smear of letters.
 	_sub_board.position = _anchors.origin("progression_display") \
-			+ Vector3(0, -0.8, 0)
+			+ Vector3(0, -1.35, 0)
 	_sub_board.font_size = 40
 	_sub_board.pixel_size = 0.008
 	_sub_board.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

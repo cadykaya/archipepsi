@@ -70,3 +70,26 @@ def test_the_check_can_actually_see_the_runner():
     assert RUNNER.is_file(), RUNNER
     handled = _handled_primitives()
     assert len(handled) >= 20, handled
+
+
+def test_binding_a_player_clears_the_previous_world_s_prompt():
+    """"[E] ENTER ZONE" followed the player into the Zone they entered.
+
+    The player emits `interact_prompt_changed` only when its target
+    CHANGES. A fresh player after a view transition starts with a null
+    target, so one that spawns looking at nothing compares null to null,
+    emits nothing, and the HUD keeps whatever the last world put there.
+    The prompt was never wrong; it was never asked to update.
+
+    Source-level, and that is a real limitation -- it proves the clear is
+    written, not that it runs. A behavioural version needs a fully wired
+    Player (runtimes, camera, readouts), and a bare one raises inside
+    `bind_player` before reaching the assertion. Worth revisiting if a
+    Player fixture ever exists.
+    """
+    hud = (Path(__file__).resolve().parents[2] / "godot"
+           / "scripts" / "ui" / "hud.gd").read_text()
+    body = hud.split("func bind_player(")[1].split("\nfunc ")[0]
+    assert '_on_prompt("")' in body, (
+        "bind_player no longer clears the prompt, so a stale one from the "
+        "previous world survives the transition")

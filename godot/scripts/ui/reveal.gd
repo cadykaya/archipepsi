@@ -41,14 +41,13 @@ func _ready() -> void:
 	add_child(_backdrop)
 
 	_panel = PanelContainer.new()
-	_panel.set_anchors_preset(Control.PRESET_CENTER)
 	_panel.custom_minimum_size = Vector2(560, 300)
 	_frame = StyleBoxFlat.new()
 	_frame.bg_color = Color(0.05, 0.06, 0.08, 0.97)
 	_frame.set_border_width_all(3)
 	_frame.set_content_margin_all(26)
 	_panel.add_theme_stylebox_override("panel", _frame)
-	add_child(_panel)
+	UILayout.centred(self, _panel)
 
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 12)

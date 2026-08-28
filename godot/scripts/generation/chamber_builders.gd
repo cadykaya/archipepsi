@@ -330,9 +330,15 @@ static func _theme_props(root: Node3D, theme: String,
 				# Hanging signage with authored transit nonsense.
 				var signs := ["PLATFORM ε", "EXIT →", "← EXIT", "NO SIGNAL",
 						"MIND THE STATIC", "TRANSFER: EVERYWHERE"]
+				# ONE x for the plate and its text. This drew
+				# `randf_range` twice, so the sign hung in one place and
+				# its words in another -- the text was never on its own
+				# plate, which is the "sign is off centre" from playtest
+				# 1. Two draws from the same call read as one value at a
+				# glance, and the second is a different number.
+				var sign_x := rng.randf_range(-wall_x * 0.4, wall_x * 0.4)
 				_box(root, Vector3(1.6, 0.5, 0.08),
-						Vector3(rng.randf_range(-wall_x * 0.4, wall_x * 0.4),
-							height - 0.7, z),
+						Vector3(sign_x, height - 0.7, z),
 						ThemeMaterials.glow_material(
 							Color(ThemeMaterials.spec(theme)["accent_color"]),
 							1.3), false)
@@ -341,10 +347,11 @@ static func _theme_props(root: Node3D, theme: String,
 				sign_label.font_size = 34
 				sign_label.pixel_size = 0.004
 				sign_label.modulate = Color(0.08, 0.09, 0.12)
-				sign_label.position = Vector3(
-						rng.randf_range(-wall_x * 0.4, wall_x * 0.4),
-						height - 0.7, z - 0.05)
-				sign_label.rotation.y = PI
+				sign_label.position = Vector3(sign_x, height - 0.7, z - 0.05)
+				# Faces the way in. A chamber is entered at z=0, so the
+				# sign is readable while you walk toward it -- and, like a
+				# real sign, backwards once you have gone by.
+				face_label(sign_label, Vector3.BACK)
 				root.add_child(sign_label)
 			"temple_ruin":
 				# Root tendrils crawling down the wall, or a column stump.

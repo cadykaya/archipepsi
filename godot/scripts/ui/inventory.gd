@@ -33,9 +33,8 @@ func _ready() -> void:
 	layer = 8
 	visible = false
 	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.custom_minimum_size = Vector2(680, 520)
-	add_child(panel)
+	UILayout.centred(self, panel)
 	var box := VBoxContainer.new()
 	panel.add_child(box)
 	var title := Label.new()

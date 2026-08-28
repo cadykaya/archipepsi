@@ -277,3 +277,54 @@ def test_the_backup_is_opened_in_a_mode_that_windows_can_flush(tmp_path):
     assert backup_opens, (
         "the backup was opened without write access; Windows cannot "
         f"fsync such a handle (flags seen: {modes})")
+
+
+def test_no_fsync_failure_anywhere_can_lose_a_save(tmp_path, monkeypatch):
+    """The general guarantee, not one platform's quirk.
+
+    Playtest 1 was diagnosed as Windows refusing to flush a read-only
+    handle, that call site was fixed -- and the error came back on the
+    next session. Whether or not the cause was a stale process, the
+    lesson stands: a save must not depend on ANY fsync succeeding.
+
+    So this fails every flush in the module at once, which no real
+    platform does, and demands the save still land. Durability is a
+    margin against power loss; the write is the campaign.
+    """
+    path = tmp_path / "c.json"
+    store.write_save(path, _save(tmp_path, zones=1))     # make a .bak exist
+
+    def nothing_can_be_flushed(fd):
+        raise OSError(errno.EBADF, "Bad file descriptor")
+
+    monkeypatch.setattr(store.os, "fsync", nothing_can_be_flushed)
+    store.write_save(path, _save(tmp_path, zones=7))
+    store.write_save(path, _save(tmp_path, zones=8))     # and again, with .bak
+    monkeypatch.undo()
+
+    saved = store.load_save(path)
+    assert saved is not None and saved.completed_zone_count == 8, (
+        "a save was lost to an fsync failure; durability is best-effort "
+        "and the write is not")
+
+
+def test_a_close_that_fails_does_not_lose_the_save_either(tmp_path,
+                                                          monkeypatch):
+    """`finally: os.close(fd)` was outside the guard, so a platform that
+    invalidates a handle during flush would raise on the way out -- past
+    every `except OSError` in the function."""
+    path = tmp_path / "c.json"
+    store.write_save(path, _save(tmp_path, zones=1))
+
+    real_close = store.os.close
+
+    def close_refuses(fd):
+        real_close(fd)
+        raise OSError(errno.EBADF, "Bad file descriptor")
+
+    monkeypatch.setattr(store.os, "close", close_refuses)
+    store.write_save(path, _save(tmp_path, zones=9))
+    monkeypatch.undo()
+
+    saved = store.load_save(path)
+    assert saved is not None and saved.completed_zone_count == 9

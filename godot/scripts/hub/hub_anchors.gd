@@ -66,7 +66,13 @@ static func defaults() -> Dictionary:
 		"shop": _at(Vector3(-W / 2.0 + 1.6, 0, D * 0.15), -PI / 2.0),
 		"archive_loadout": _at(Vector3(W / 2.0 - 1.6, 0, D * 0.45), PI / 2.0),
 		"lab_entrance": _at(Vector3(-W / 2.0, 0, LAB_DOOR_Z), -PI / 2.0),
-		"progression_display": _at(Vector3(0, 4.2, D - 1.4), 0.0),
+		# Clear of the portal, not inside it. The main door is 3 x 4 x 0.8
+		# centred on `main_portal` at z = D - 1.2, so it fills z from
+		# D - 1.6 to D - 0.8 and y from 0 to 4. At (4.2, D - 1.4) the
+		# status board was embedded in that slab and its sub-lines hung
+		# down through the door -- which is why playtest 1 read the
+		# headline as letters buried in a wall.
+		"progression_display": _at(Vector3(0, 4.55, D - 2.2), 0.0),
 		"postgame": _at(Vector3(W / 2.0 - 3.0, 0, D - 1.2), 0.0),
 		"generation_loading": _at(Vector3(-W / 2.0 + 2.4, 0, D - 2.4), 0.0),
 	}

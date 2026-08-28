@@ -15,9 +15,8 @@ func _ready() -> void:
 	layer = 9
 	visible = false
 	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.custom_minimum_size = Vector2(420, 100)
-	add_child(panel)
+	UILayout.centred(self, panel)
 	_box = VBoxContainer.new()
 	_box.add_theme_constant_override("separation", 10)
 	panel.add_child(_box)

@@ -70,6 +70,7 @@ func _run() -> void:
 	print("legibility: checked %d fixed labels of %d total"
 			% [checked, labels.size()])
 	_the_lab_doorway_is_a_hole_not_a_picture_of_one(hub)
+	_the_lab_corridor_has_walls(hub)
 	_finish()
 
 ## Playtest 1 could not reach the Echo Lab. `_cut_lab_doorway` added a
@@ -138,3 +139,36 @@ func _finish() -> void:
 	else:
 		print("GODOT LEGIBILITY TESTS: %d failures" % failures)
 		get_tree().quit(1)
+
+## Walking to the Echo Lab, playtest 1 found an open-walled slot with the
+## void either hand, shimmering at the threshold.
+##
+## The corridor was built as a floor and a ceiling and nothing else, and
+## its floor overlapped the room's by 0.1m -- two coplanar top faces,
+## which is exactly what z-fighting is. Both are the same kind of miss:
+## geometry checked by looking at it from the one angle it was authored
+## from.
+func _the_lab_corridor_has_walls(hub: Node) -> void:
+	var space: PhysicsDirectSpaceState3D = \
+			hub.get_world_3d().direct_space_state
+	var door_z: float = HubAnchors.LAB_DOOR_Z
+	var half: float = HubAnchors.LAB_DOOR_WIDTH / 2.0
+	var mid_x: float = -HubAnchors.W / 2.0 - 1.7
+	var eye_y: float = 1.2
+
+	# Stand in the corridor, look sideways. Something must stop you.
+	for side: float in [-1.0, 1.0]:
+		var probe := PhysicsRayQueryParameters3D.create(
+				Vector3(mid_x, eye_y, door_z),
+				Vector3(mid_x, eye_y, door_z + side * (half + 1.5)))
+		_check(not space.intersect_ray(probe).is_empty(),
+				"the Lab corridor has no wall on the %s side -- you walk "
+				% ("+z" if side > 0.0 else "-z")
+				+ "to the Lab down an open slot")
+
+	# And a ceiling, or the corridor is a trench.
+	var up := PhysicsRayQueryParameters3D.create(
+			Vector3(mid_x, eye_y, door_z),
+			Vector3(mid_x, HubAnchors.H + 1.0, door_z))
+	_check(not space.intersect_ray(up).is_empty(),
+			"the Lab corridor is open to the sky")
