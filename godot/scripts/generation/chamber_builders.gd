@@ -125,7 +125,8 @@ static func _light(parent: Node3D, position: Vector3, theme: String,
 ## `exit_gap_y` raises the exit door's sill — a tower exits at its summit.
 static func _perimeter(root: Node3D, width: float, depth: float,
 		height: float, theme: String, door_in := true, door_out := true,
-		exit_gap_y := 0.0) -> void:
+		exit_gap_y := 0.0, left_gap_z := 0.0, left_gap_width := 0.0,
+		left_gap_height := 0.0) -> void:
 	var wall := ThemeMaterials.wall_mat(theme)
 	var half_w := width / 2.0
 	var side := (width - DOOR_WIDTH) / 2.0
@@ -161,11 +162,38 @@ static func _perimeter(root: Node3D, width: float, depth: float,
 	else:
 		_box(root, Vector3(width, height, WALL_THICKNESS),
 				Vector3(0, height / 2.0, depth), wall)
-	# Side walls.
-	_box(root, Vector3(WALL_THICKNESS, height, depth),
-			Vector3(-half_w, height / 2.0, depth / 2.0), wall)
+	# Side walls. The left one can carry a real opening -- segments with a
+	# hole, not a dark rectangle painted onto a solid slab. Playtest 1
+	# walked into the Echo Lab's "doorway" and hit the wall behind it.
+	if left_gap_width > 0.0:
+		_side_wall_with_gap(root, -half_w, height, depth, wall,
+				left_gap_z, left_gap_width, left_gap_height)
+	else:
+		_box(root, Vector3(WALL_THICKNESS, height, depth),
+				Vector3(-half_w, height / 2.0, depth / 2.0), wall)
 	_box(root, Vector3(WALL_THICKNESS, height, depth),
 			Vector3(half_w, height / 2.0, depth / 2.0), wall)
+
+## A side wall in three pieces, leaving a hole you can actually walk
+## through. Split rather than subtracted: `_box` is both the mesh and the
+## collider, so a gap has to be an absence of boxes.
+static func _side_wall_with_gap(root: Node3D, wall_x: float, height: float,
+		depth: float, wall: Material, gap_z: float, gap_w: float,
+		gap_h: float) -> void:
+	var near_depth := (gap_z - gap_w / 2.0)
+	if near_depth > 0.01:
+		_box(root, Vector3(WALL_THICKNESS, height, near_depth),
+				Vector3(wall_x, height / 2.0, near_depth / 2.0), wall)
+	var far_start := gap_z + gap_w / 2.0
+	if depth - far_start > 0.01:
+		_box(root, Vector3(WALL_THICKNESS, height, depth - far_start),
+				Vector3(wall_x, height / 2.0,
+				far_start + (depth - far_start) / 2.0), wall)
+	# Lintel: the wall above the opening, so the room still has a ceiling
+	# line and the gap reads as a door rather than a missing wall.
+	if height > gap_h:
+		_box(root, Vector3(WALL_THICKNESS, height - gap_h, gap_w),
+				Vector3(wall_x, gap_h + (height - gap_h) / 2.0, gap_z), wall)
 
 # ---------------------------------------------------------------------------
 # Greebles: the detail pass that makes a box read as 1998 level design.

@@ -69,7 +69,61 @@ func _run() -> void:
 			% checked + "all-billboard this suite stopped proving anything")
 	print("legibility: checked %d fixed labels of %d total"
 			% [checked, labels.size()])
+	_the_lab_doorway_is_a_hole_not_a_picture_of_one(hub)
 	_finish()
+
+## Playtest 1 could not reach the Echo Lab. `_cut_lab_doorway` added a
+## dark box IN FRONT OF the perimeter wall and called it an opening --
+## the wall behind kept its collider, so the doorway was a picture of a
+## doorway. It looked right from across the room, which is exactly how it
+## survived: nothing renders differently, and no suite had ever tried to
+## walk through anything.
+func _the_lab_doorway_is_a_hole_not_a_picture_of_one(hub: Node) -> void:
+	var space: PhysicsDirectSpaceState3D = \
+			hub.get_world_3d().direct_space_state
+	var door_z: float = HubAnchors.LAB_DOOR_Z
+	var eye_y: float = 1.2
+
+	# Straight at the doorway from inside the room, and out the far side.
+	# Sweep the doorway's whole width. One ray down the middle would pass
+	# a door with a station parked across half of it.
+	var half := HubAnchors.LAB_DOOR_WIDTH / 2.0
+	for offset: float in [-half + 0.4, 0.0, half - 0.4]:
+		var probe := PhysicsRayQueryParameters3D.create(
+				Vector3(-4.0, eye_y, door_z + offset),
+				Vector3(-HubAnchors.W / 2.0 - 2.5, eye_y, door_z + offset))
+		var blocked: Dictionary = space.intersect_ray(probe)
+		var by: String = ""
+		if not blocked.is_empty():
+			var who: Node = blocked.get("collider") as Node
+			by = who.get_path() if who != null else "?"
+		_check(blocked.is_empty(),
+				"the Echo Lab doorway is blocked at z=%.1f (%s) by %s"
+				% [door_z + offset, blocked.get("position", Vector3.ZERO), by])
+
+	var from := Vector3(-4.0, eye_y, door_z)
+	var to := Vector3(-HubAnchors.W / 2.0 - 2.5, eye_y, door_z)
+	var query := PhysicsRayQueryParameters3D.create(from, to)
+	var hit: Dictionary = space.intersect_ray(query)
+	var blocker: String = ""
+	if not hit.is_empty():
+		var node: Node = hit.get("collider") as Node
+		blocker = node.get_path() if node != null else "?"
+	_check(hit.is_empty(),
+			"the Echo Lab doorway is blocked at %s by %s -- the player "
+			% [hit.get("position", Vector3.ZERO), blocker]
+			+ "walks into a wall with a picture of a door on it")
+
+	# And the wall either side must still be solid, or the "fix" was to
+	# delete the wall.
+	for probe_z: float in [door_z - HubAnchors.LAB_DOOR_WIDTH - 1.5,
+			door_z + HubAnchors.LAB_DOOR_WIDTH + 1.5]:
+		var wall_query := PhysicsRayQueryParameters3D.create(
+				Vector3(-4.0, eye_y, probe_z),
+				Vector3(-HubAnchors.W / 2.0 - 2.5, eye_y, probe_z))
+		_check(not space.intersect_ray(wall_query).is_empty(),
+				"the wall at z=%.1f is missing; the doorway was widened "
+				% probe_z + "into an open side of the room")
 
 func _collect(node: Node, out: Array[Label3D]) -> void:
 	if node is Label3D:

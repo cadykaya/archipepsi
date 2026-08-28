@@ -58,7 +58,12 @@ static func defaults() -> Dictionary:
 		# Reserved. Beside the portal, facing the room: where a presence
 		# would stand to watch the player leave.
 		"epsilon_presence": _at(Vector3(-3.2, 0, D - 3.2), 0.0),
-		"shop": _at(Vector3(-W / 2.0 + 1.6, 0, D * 0.45), -PI / 2.0),
+		# Forward of the Lab doorway, not across it. At D * 0.45 the
+		# counter spanned z 6.0-8.4 and the doorway spans 4.5-7.5, so
+		# the shop stood in two thirds of the only way into the Echo
+		# Lab -- which is how playtest 1 found the Lab unreachable
+		# even once the wall had a hole in it.
+		"shop": _at(Vector3(-W / 2.0 + 1.6, 0, D * 0.15), -PI / 2.0),
 		"archive_loadout": _at(Vector3(W / 2.0 - 1.6, 0, D * 0.45), PI / 2.0),
 		"lab_entrance": _at(Vector3(-W / 2.0, 0, LAB_DOOR_Z), -PI / 2.0),
 		"progression_display": _at(Vector3(0, 4.2, D - 1.4), 0.0),
