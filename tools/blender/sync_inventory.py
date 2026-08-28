@@ -63,6 +63,8 @@ ORDER = [
       "wind_perch", "bounce_pad", "movplat_deck"]),
     ("batch010", "dressing",
      ["prop_wall_plate", "prop_oil_drum", "prop_valve_wheel"]),
+    ("batch011", "affordance",
+     ["rail_arc_rise", "rail_arc_launch", "rail_arc_weave"]),
 ]
 CAT = {"epsilon": "hero", "check": "hero", "portal": "interactable",
        "door": "module", "breakwall": "interactable",

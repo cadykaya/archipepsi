@@ -121,6 +121,9 @@ These are the vocabulary everything after them inherits.
 | `prop_wall_plate` | L0 | prop | 84 | 0.90 × 0.10 × 0.62 | wall | B10 | B10 | PEND |
 | `prop_oil_drum` | L0 | prop | 184 | 0.78 × 0.78 × 0.95 | floor | B10 | B10 | PEND |
 | `prop_valve_wheel` | L0 | prop | 176 | 0.62 × 0.23 × 0.62 | wall | B10 | B10 | PEND |
+| `rail_arc_rise` | L2 | interactable | 408 | 0.42 × 6.36 × 2.74 | floor | B11 | B11 | PEND |
+| `rail_arc_launch` | L2 | interactable | 480 | 0.42 × 6.36 × 2.84 | floor | B11 | B11 | PEND |
+| `rail_arc_weave` | L2 | interactable | 480 | 0.89 × 6.36 × 1.54 | floor | B11 | B11 | PEND |
 
 | Theme material | Roles built |
 | --- | --- |

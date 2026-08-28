@@ -1481,3 +1481,82 @@ anywhere in the facility, so it is worth your eye against the Batch 004
 rule that orange stays rare.
 
 Status: **PENDING** — production work inheriting locked DNA.
+
+---
+
+## Batch 011 — rails that bend
+
+Owner request: *"can we do a spline for the rail? So like it has cool bends
+and stuff and we can ride one"*. Yes — and the interesting part of the
+answer is which bends the game can afford today.
+
+| ID | Tris | Size (m) | Path |
+| --- | --- | --- | --- |
+| `rail_arc_rise` | 408 | 0.42 × 6.36 × 2.74 | 11 points |
+| `rail_arc_launch` | 480 | 0.42 × 6.36 × 2.84 | 13 points |
+| `rail_arc_weave` | 480 | 0.89 × 6.36 × 1.54 | 13 points |
+
+### The footprint decides which bends exist
+
+`affordance_features.FOOTPRINT["rail"]` is `half_width 0.5, half_depth 3.5`,
+height 3.6 — so a rail's whole footprint is **1.0 m wide, 7.0 long, 3.6
+tall**:
+
+- **Vertical bends are free.** There is 3.6 m of headroom and a straight
+  rail uses 1.7 of it. `rail_arc_rise` climbs 1.30 m; `rail_arc_launch`
+  dips 0.75 and then rises 1.55 past where it started.
+- **Lateral bends are not.** The rail is 0.42 m across, leaving 0.27 m
+  either side of the centreline. `rail_arc_weave` is exactly that — a real
+  S, and a gentle one, and that is the footprint's decision rather than a
+  design choice.
+
+A proper banked turn needs a wider `half_width`, and that is **interface
+requirement 16** rather than a model nobody can place.
+
+### Why they are polylines, and the contract that comes with it
+
+`_rail` hangs an `AffordanceNodes.Volume` over the beam — an axis-aligned
+box `Area3D`. **A box cannot follow a curve**, so a swept spline would be a
+rail the player falls straight through.
+
+A polyline can: one box per segment, oriented along its own segment, is
+implementable with the class that already exists. So each rail is built
+from an explicit chain of straight segments, and **its manifest entry
+carries `ride_path`** — the same points the mesh was swept along, in metres,
+in the asset's own space.
+
+> The mesh and the ride come from one list of points.
+
+That is the whole ask of engineering here. A second description of the
+curve, written by hand beside the first, is a description that drifts.
+
+### Two shaping decisions worth your eye
+
+- **The launch dips at 40% of the run, not the middle.** A symmetric valley
+  gives back exactly what it took and reads as decoration. Off-centre, the
+  second half is longer and shallower, so the rail trades height for
+  distance — which is what a launch is.
+- **The posts are generated from the path**, dropped wherever the deck is
+  more than 0.45 m up, so a rail that changes shape cannot end up with its
+  posts in mid-air. Ends keep Batch 009's hard stops, which matter more on
+  a launch than on a straight.
+
+### Not decided here
+
+Speed, friction and lift on a curve are gameplay. `_rail`'s lane runs
+`{friction_scale: 0.05, speed_scale: 1.25, gravity_scale: 0.85}`, and a dip
+that converts height into speed may want different numbers. This lane does
+not pick them; `rail_arc_launch` is shaped so the question is worth asking.
+
+### Evidence
+
+`docs/art/review/batch011/`, from `tools/shots/batch011_rails.json`.
+
+| Image | What it answers |
+| --- | --- |
+| `R_rail_family.png` · `_grey` · `_silhouette` | **start here** — all three side-on, with Batch 009's straight for scale |
+| `R_rail_ride.png` | riding at the launch, on the engine's own lens |
+| `R_rail_launch.png` | the launch alone — where the low point sits |
+| `R_rail_weave_above.png` | the weave from above: ± 0.27 m is all there is |
+
+Status: **PENDING** — and this one has a question in it as well as a model.

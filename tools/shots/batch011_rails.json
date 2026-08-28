@@ -1,0 +1,92 @@
+{
+  "_comment": [
+    "Batch 011 -- rails that bend.",
+    "",
+    "The eye-level shot is the one that matters: a rail is a thing you ride",
+    "toward at speed, and whether its bend reads as a bend at 6 m on the",
+    "engine's own lens is the only question worth asking about it."
+  ],
+  "defaults": {
+    "size": [
+      1600,
+      900
+    ],
+    "lens": 35,
+    "ambient": 0.2
+  },
+  "shots": [
+    {
+      "name": "R_rail_family",
+      "scene": "model:batch011/affordance/rail_arc_rise.glb@-2.2,0,0 + batch011/affordance/rail_arc_launch.glb@0,0,0 + batch011/affordance/rail_arc_weave.glb@2.2,0,0 + batch009/affordance/rail_beam.glb@4.4,0,0",
+      "size": [
+        1920,
+        1080
+      ],
+      "lens": 35,
+      "backdrop": "floor",
+      "frame": 0.88,
+      "azimuth": 88,
+      "elevation": 8,
+      "caption": "RISE / LAUNCH / WEAVE, AND BATCH 009'S STRAIGHT FOR SCALE",
+      "note": "SIDE ON, BECAUSE A RAIL'S WHOLE SHAPE IS ITS ELEVATION",
+      "variants": [
+        "grey",
+        "silhouette"
+      ]
+    },
+    {
+      "name": "R_rail_launch",
+      "scene": "model:batch011/affordance/rail_arc_launch.glb",
+      "size": [
+        1600,
+        1000
+      ],
+      "lens": 50,
+      "frame": 0.8,
+      "azimuth": 74,
+      "elevation": 10,
+      "caption": "LAUNCH - DIPS AT 40% OF THE RUN, NOT THE MIDDLE",
+      "note": "A SYMMETRIC VALLEY GIVES BACK WHAT IT TOOK. THIS TRADES HEIGHT FOR DISTANCE"
+    },
+    {
+      "name": "R_rail_ride",
+      "scene": "model:batch011/affordance/rail_arc_launch.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "game_lens": true,
+      "caption": "RIDING AT IT - 4.6 M OUT, THE ENGINE'S OWN LENS",
+      "note": "DOES THE BEND READ AS A BEND FROM WHERE THE PLAYER MEETS IT?",
+      "look": [
+        [
+          2.6,
+          1.6,
+          -5.4
+        ],
+        [
+          -0.2,
+          1.5,
+          1.4
+        ]
+      ]
+    },
+    {
+      "name": "R_rail_weave_above",
+      "scene": "model:batch011/affordance/rail_arc_weave.glb",
+      "orbit": [
+        7.0,
+        0,
+        62
+      ],
+      "target": [
+        0,
+        0.8,
+        0
+      ],
+      "lens": 35,
+      "caption": "WEAVE FROM ABOVE - THE WIDEST LATERAL SWING THAT FITS",
+      "note": "+/- 0.27 M. FOOTPRINT HALF_WIDTH IS 0.5 AND THE RAIL IS 0.42 WIDE"
+    }
+  ]
+}

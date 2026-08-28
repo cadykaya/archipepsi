@@ -232,6 +232,53 @@ def stair(name, run, rise, width, steps, at=(0.0, 0.0, 0.0)):
     return obj
 
 
+def sweep(name, points, width, thickness, overlap=0.03):
+    """A run of box segments swept along a polyline. Rails, pipes, tendrils.
+
+    Every curve in this project is a POLYLINE, not a smooth tube, and that
+    is the era rather than a shortcut: a 1998 rail was a chain of brushes
+    and the facets are what make it read as built. It is also what makes it
+    RIDEABLE with the code the engine already has -- `AffordanceNodes.Volume`
+    is an axis-aligned box, so a curve made of straight segments can carry
+    one box per segment, where a swept spline could not carry any.
+
+    Segments overlap slightly at the joints, so a bend has no gap in it and
+    no mitre to compute. At the angles a rail actually bends through the
+    overlap is invisible; at a sharp one it reads as a fishplate, which is
+    what a real bent rail has.
+    """
+    bm = bmesh.new()
+    half_w, half_t = width / 2.0, thickness / 2.0
+    for start, end in zip(points, points[1:]):
+        a, b = Vector(start), Vector(end)
+        span = b - a
+        if span.length < 1e-6:
+            continue
+        forward = span.normalized()
+        # World up, unless the segment is running up it.
+        reference = Vector((0.0, 0.0, 1.0))
+        if abs(forward.dot(reference)) > 0.99:
+            reference = Vector((0.0, 1.0, 0.0))
+        right = forward.cross(reference).normalized()
+        up = right.cross(forward).normalized()
+        a = a - forward * (overlap / 2.0)
+        b = b + forward * (overlap / 2.0)
+        ring = []
+        for base in (a, b):
+            ring.append([bm.verts.new(base + right * (sx * half_w)
+                                      + up * (sz * half_t))
+                         for sx, sz in ((-1, -1), (1, -1), (1, 1), (-1, 1))])
+        bm.verts.ensure_lookup_table()
+        lo, hi = ring
+        for i in range(4):
+            j = (i + 1) % 4
+            bm.faces.new((lo[i], lo[j], hi[j], hi[i]))
+        bm.faces.new(list(reversed(lo)))
+        bm.faces.new(hi)
+    obj = common.mesh_from_bmesh(bm, name)
+    return common.shade_flat(obj)
+
+
 def grate(name, size, bars, thickness, at=(0.0, 0.0, 0.0), axis="x"):
     """A slatted cover: floor grating, a vent face, a cage panel.
 

@@ -84,7 +84,7 @@ line rather than inventing work.
 | | |
 | --- | --- |
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
-| Phase | **STYLE LOCK PASSED — production.** Batch 004 is `PASS`. Batch 005 is `PASS IN DIRECTION`, its one required revision delivered as 005-R. Batches 005-R, 006, 007, 008, 009 and 010 are `PENDING`. |
+| Phase | **STYLE LOCK PASSED — production.** Batch 004 is `PASS`. Batch 005 is `PASS IN DIRECTION`, its one required revision delivered as 005-R. Batches 005-R and 006 to 011 are `PENDING`. |
 | Owner review | Style Lock passed 2026-08-28. Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
 | Next action | **Tier 6: universal props**, then Tier 3's Pri-B architecture. Tiers 1, 2 and 5 are done to their Pri-A rows; Tier 4 is blocked past the projectiles (reqs 7 and 14). Five batches — 005-R, 006, 007, 008, 009 — are with the owner. |
 
@@ -142,9 +142,9 @@ grow again until Style Lock passes.
 | `python3 tools/blender/palette.py` | PASS |
 | `python3 tools/blender/check_docs_metrics.py` | PASS — every number in ART_REVIEW.md and ASSET_INVENTORY.md matches the build |
 | `tools/sabotage_checks.sh` | see the commit for the run |
-| `python3 tools/blender/sync_inventory.py` | 84 assets written |
+| `python3 tools/blender/sync_inventory.py` | 87 assets written |
 | `tools/check_art_current.sh` | PASS — every asset byte-identical from source |
-| Assets built | 84 models + 16 theme textures + 7 prop skins + review images in `review/batch001` … `batch010` |
+| Assets built | 87 models + 16 theme textures + 7 prop skins + review images in `review/batch001` … `batch011` |
 | Composed room | 3,272 / 12,000 triangles |
 
 ### What a heartbeat cannot see
@@ -164,7 +164,7 @@ should say it cannot rather than guess.
 
 ## Where the review images are
 
-**[`docs/art/review/batch005r/`](review/batch005r/)** · **[`batch006/`](review/batch006/)** · **[`batch007/`](review/batch007/)** · **[`batch008/`](review/batch008/)** · **[`batch009/`](review/batch009/)** · **[`batch010/`](review/batch010/)** — with the owner now
+**[`docs/art/review/batch005r/`](review/batch005r/)** · **[`batch006/`](review/batch006/)** · **[`batch007/`](review/batch007/)** · **[`batch008/`](review/batch008/)** · **[`batch009/`](review/batch009/)** · **[`batch010/`](review/batch010/)** · **[`batch011/`](review/batch011/)** — with the owner now
 
 `batch005r/` is the one required Batch 005 revision: locked against
 confirmed at 39.6 m, measured. Start at `R_state_family_far_inset.png`.
@@ -234,7 +234,8 @@ B=.tools/blender/blender
 for s in materials architecture props concept_epsilon concept_check \
          concept_portal concept_enemy concept_anchor \
          batch002_enemies epsilon_installation hub lab check \
-         ways_out traversal projectile affordances dressing; do
+         ways_out traversal projectile affordances dressing \
+         rails; do
   $B -b --python tools/blender/build_$s.py
 done
 tools/batch001_sheets.sh      # ~12 min: 28 sheets
@@ -248,6 +249,7 @@ tools/shoot.sh <list.json>    # ANY shot, from a JSON list. Start here.
                               #   tools/shots/batch008_projectile.json
                               #   tools/shots/batch009_affordances.json
                               #   tools/shots/batch010_dressing.json
+                              #   tools/shots/batch011_rails.json
 tools/pixel_inset.py          # a region of a render, magnified NEAREST
 tools/hub_room.sh             # the Hub, built out of authored assets
 tools/epsilon_views.sh        # the operator / oblique / fusion / value views
@@ -285,6 +287,7 @@ them; each is a thing the art lane will need when contracts settle.
 | 13 | **`echo_projectile.gd` picks its visual by nothing.** It builds one `SphereMesh` and scales it 1.5× for a lob, so `gravity_scale` and `blast_radius` — the two facts that decide whether the player steps sideways or runs — are invisible. Batch 008 authors one mesh per kind; selecting between them is a `match` on data the node already holds. | Three reactions, one silhouette. The distinction the engine does draw, size, is the least useful of the three. | `enemy_projectile_*` |
 | 14 | **There is no node an authored enemy telegraph could be.** `ASSET_INVENTORY.md` §4 asks for one telegraph per archetype, readable at 18 m. `enemy.gd` has exactly one windup — the brute's — and it is `scale = Vector3.ONE * (1.0 + 0.12 * sin(...))` on the whole body. Melee and ranged have a cooldown and no windup at all. An authored telegraph needs either a child node the engine shows during windup, or a second body mesh it swaps to. | *A telegraph is a promise* (`AUTHORED_CONTENT.md`). Two of the three archetypes currently make none. | `enemy_telegraph_*` |
 | 15 | **The six affordance tints are six ad-hoc colours and the family rule says they should be one.** `ASSET_INVENTORY.md` §5 states *the seven look the same everywhere or they teach nothing*, and the approved grapple anchors wear `signal`. `affordance_features.gd` gives the breakable wall the theme hazard, water `(0.35, 0.75, 0.95)`, the rail `(0.9, 0.7, 0.95)`, wind `(0.7, 0.95, 0.9)`, and the bounce pad and moving platform the theme accent and trim. Four are absent from `art_palette.json`; two vary per theme; and the rail's violet sits beside `glitch`, which means *cosmetic corruption, no mechanical meaning*. | An affordance is a promise about the player's own body. A promise that has to be re-learnt per theme is not one, and one wearing the glitch family says the opposite of the truth. | every `batch009` asset |
+| 16 | **A rail that turns needs a wider `FOOTPRINT["rail"].half_width`, and every curved rail needs its ride built from `ride_path`.** Two halves of one request. (a) `half_width` is 0.5 and the rail is 0.42 m across, so a lateral swing has 270 mm either side — a weave, never a turn; a banked 90° turn wants roughly 1.6 m of half-width. (b) The lane over a rail is an axis-aligned box `Area3D`, which cannot follow a curve — so each Batch 011 rail is a POLYLINE and its manifest carries `ride_path`, the points the mesh was swept along. One box per segment is implementable with the class that already exists, and building the volume chain from that list keeps the mesh and the ride from drifting apart. | A swept spline is a rail the player falls through. A second, hand-written description of the same curve is a description that goes stale. | `rail_arc_*`, and any turn |
 | 5 | **A larger footprint, or an L2 placement path, for composed clusters.** `PROP_FOOTPRINT` is 1.4 m. | Right for L0, too small for an L2 station or storytelling cluster. | `cluster_*` |
 | 6 | **`challenge_marker` world semantics** (`AGENT_FRONTIER.md` still lists this open). | Its visual cannot be specified until its meaning is. | `local_reward_pickup` |
 
