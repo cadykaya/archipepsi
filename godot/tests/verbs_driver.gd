@@ -29,6 +29,11 @@ var _uses := 0
 func _count_use() -> void:
 	_uses += 1
 
+var _parries := 0
+
+func _count_parry() -> void:
+	_parries += 1
+
 func _check(condition: bool, message: String) -> void:
 	if not condition:
 		failures += 1
@@ -53,6 +58,9 @@ func _run() -> void:
 	await _a_slot_swap_ends_a_hover()
 	await _one_slots_key_up_leaves_another_slots_hover_alone()
 	await _two_hovers_at_once_do_not_cancel_each_other()
+	await _a_burn_tick_does_not_spend_the_parry_window()
+	await _an_absorbed_shield_does_not_inflate_the_next_one()
+	await _rule_effects_follow_the_slot_the_player_is_looking_at()
 
 	if failures == 0:
 		print("GODOT VERBS TESTS OK")
@@ -100,6 +108,9 @@ func _reset() -> void:
 		var runtime: EchoRuntime = _player.runtimes[slot]
 		runtime.cancel_holds()
 		runtime.reset_cooldown()
+		runtime.shield_hp = 0.0
+		runtime._shield_timer = 0.0
+		runtime._parry_window = 0.0
 		# Re-equipped every time: `_a_slot_swap_ends_a_hover` hands the
 		# mobility runtime a different Action, and that is the point of it.
 		var equipped: Variant = BridgeClient.slots().get(slot)
@@ -328,3 +339,91 @@ func _two_hovers_at_once_do_not_cancel_each_other() -> void:
 	_check(is_equal_approx(_player.hover_gravity_scale, 1.0),
 			"the last one ending releases gravity: %f"
 			% _player.hover_gravity_scale)
+
+## A parry is a timed answer to something arriving. A tick of
+## damage-over-time is neither timed nor arriving -- it is the same status
+## bleeding out a sixtieth of a second's worth -- and it used to spend the
+## whole window on 0.067 damage of burn. Any DoT made parry unusable, and
+## it emitted `parried`, which `main.gd` turns into a free `parry_success`
+## rule event: a burn made that event something you could produce by
+## standing still.
+func _a_burn_tick_does_not_spend_the_parry_window() -> void:
+	await _reset()
+	var runtime := _runtime("echo_a")
+	_parries = 0
+	if not runtime.parried.is_connected(_count_parry):
+		runtime.parried.connect(_count_parry)
+	runtime._parry_window = 0.4
+	_player.statuses.apply("burning", 5.0, 1.0)
+	for i in range(4):
+		await get_tree().physics_frame
+	_check(runtime._parry_window > 0.0,
+			"the window survives a burning player: %f"
+			% runtime._parry_window)
+	_check(_player.hp < Constants.PLAYER_MAX_HP,
+			"...and the burn is genuinely burning")
+	_check(_parries == 0,
+			"...and no `parried` is emitted, which main.gd would turn into "
+			+ "a free parry_success rule event (%d)" % _parries)
+
+	# A real hit still spends it.
+	_player.take_damage(20.0)
+	_check(is_equal_approx(runtime._parry_window, 0.0),
+			"a real hit still spends the window")
+	_check(_parries == 1, "...and reports the parry (%d)" % _parries)
+	_player.statuses.clear()
+
+## The shield timer used to decay only while there was shield left on it,
+## so a shield absorbed down to nothing froze its timer -- and
+## `grant_shield` takes the MAX of the old and new durations, so the next
+## grant inherited it. A rule's one-second shield lasted the thirty
+## seconds of a shield that had been gone for half a minute.
+func _an_absorbed_shield_does_not_inflate_the_next_one() -> void:
+	await _reset()
+	var runtime := _runtime("echo_a")
+	runtime.grant_shield(50.0, 30.0)
+	_check(is_equal_approx(runtime.shield_hp, 50.0), "the shield is up")
+
+	# Absorbed away entirely.
+	_player.take_damage(50.0)
+	_check(is_equal_approx(runtime.shield_hp, 0.0), "and absorbed away")
+	for i in range(20):
+		await get_tree().physics_frame
+	_check(runtime._shield_timer < 30.0,
+			"a spent shield's timer keeps decaying: %f"
+			% runtime._shield_timer)
+
+	# The interesting half: a new, short shield must be short.
+	runtime._shield_timer = 0.0
+	runtime.grant_shield(10.0, 1.0)
+	_check(is_equal_approx(runtime._shield_timer, 1.0),
+			"a one-second shield lasts one second, not thirty: %f"
+			% runtime._shield_timer)
+
+## `Player.echo_runtime` is a getter over `highlighted_slot`, and the rule
+## engine used to copy its VALUE at bind time -- pinning every rule shield
+## and cooldown reset to whichever slot was highlighted when the Zone
+## loaded, which is `echo_a`, always.
+func _rule_effects_follow_the_slot_the_player_is_looking_at() -> void:
+	await _reset()
+	var rules := RuleRuntime.new()
+	add_child(rules)
+	rules.pool = _pool
+	rules.player = _player
+
+	_player.set_highlighted_slot("echo_a")
+	_check(rules.echo_runtime == _runtime("echo_a"),
+			"the rule engine looks at the highlighted slot")
+	_player.set_highlighted_slot("mobility")
+	_check(rules.echo_runtime == _runtime("mobility"),
+			"...and follows it when the player looks elsewhere")
+
+	# And a rule shield lands there, not on echo_a.
+	rules._apply_effect("rule_test", {
+		"type": "grant_shield", "amount": 25.0, "duration": 5.0})
+	_check(is_equal_approx(_runtime("mobility").shield_hp, 25.0),
+			"a rule shield lands on the slot being looked at: %f"
+			% _runtime("mobility").shield_hp)
+	_check(is_equal_approx(_runtime("echo_a").shield_hp, 0.0),
+			"...and not on whichever slot loaded first")
+	rules.queue_free()

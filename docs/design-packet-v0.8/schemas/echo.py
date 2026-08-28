@@ -46,7 +46,7 @@ from __future__ import annotations
 
 import math
 
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal, Union, get_args
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -489,6 +489,14 @@ StatusKind = Literal[
     "stunned", "vulnerable", "empowered", "low_profile", "haste",
     "regenerating",
 ]
+
+#: The closed status vocabulary, as a tuple, so the client can be checked
+#: against it. `StatusEffects.apply` used to accept any string: an unknown
+#: kind was inert -- nothing reads it, so it does nothing -- while still
+#: satisfying `status_active` conditions and `status_applied` edges, and
+#: `cleanse` could never remove it because it is not in the cleanse order.
+#: A typo produced a status that was permanent and did nothing.
+STATUS_KINDS = get_args(StatusKind)
 
 TraitStat = Literal[
     "move_speed", "jump_height", "gravity", "air_control", "ground_friction",

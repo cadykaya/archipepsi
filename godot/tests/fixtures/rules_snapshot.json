@@ -480,6 +480,46 @@
    },
    {
     "component": {
+     "component_id": "rule_full_when_hurt",
+     "display_name": "rule_full_when_hurt",
+     "description": "x",
+     "kind": "rule",
+     "event": "resource_full",
+     "conditions": [
+      {
+       "type": "hp_below",
+       "subject": null,
+       "value": 0.5
+      }
+     ],
+     "costs": [],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 1.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 14,
+      "source_location_id": 89100015,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_full_when_hurt"
+     }
+    ]
+   },
+   {
+    "component": {
      "component_id": "rule_greedy",
      "display_name": "rule_greedy",
      "description": "x",
@@ -511,8 +551,8 @@
     "mk": 1,
     "provenance": [
      {
-      "interpretation_seq": 14,
-      "source_location_id": 89100015,
+      "interpretation_seq": 15,
+      "source_location_id": 89100016,
       "source_item_name": "Item",
       "source_game": "Some Game",
       "source_recipient_name": "Somebody",
@@ -545,8 +585,8 @@
     "mk": 1,
     "provenance": [
      {
-      "interpretation_seq": 15,
-      "source_location_id": 89100016,
+      "interpretation_seq": 16,
+      "source_location_id": 89100017,
       "source_item_name": "Item",
       "source_game": "Some Game",
       "source_recipient_name": "Somebody",
@@ -579,8 +619,8 @@
     "mk": 1,
     "provenance": [
      {
-      "interpretation_seq": 16,
-      "source_location_id": 89100017,
+      "interpretation_seq": 17,
+      "source_location_id": 89100018,
       "source_item_name": "Item",
       "source_game": "Some Game",
       "source_recipient_name": "Somebody",
@@ -613,8 +653,8 @@
     "mk": 1,
     "provenance": [
      {
-      "interpretation_seq": 17,
-      "source_location_id": 89100018,
+      "interpretation_seq": 18,
+      "source_location_id": 89100019,
       "source_item_name": "Item",
       "source_game": "Some Game",
       "source_recipient_name": "Somebody",
@@ -647,8 +687,8 @@
     "mk": 1,
     "provenance": [
      {
-      "interpretation_seq": 18,
-      "source_location_id": 89100019,
+      "interpretation_seq": 19,
+      "source_location_id": 89100020,
       "source_item_name": "Item",
       "source_game": "Some Game",
       "source_recipient_name": "Somebody",
@@ -681,8 +721,8 @@
     "mk": 1,
     "provenance": [
      {
-      "interpretation_seq": 19,
-      "source_location_id": 89100020,
+      "interpretation_seq": 20,
+      "source_location_id": 89100021,
       "source_item_name": "Item",
       "source_game": "Some Game",
       "source_recipient_name": "Somebody",
@@ -715,8 +755,8 @@
     "mk": 1,
     "provenance": [
      {
-      "interpretation_seq": 20,
-      "source_location_id": 89100021,
+      "interpretation_seq": 21,
+      "source_location_id": 89100022,
       "source_item_name": "Item",
       "source_game": "Some Game",
       "source_recipient_name": "Somebody",
@@ -749,8 +789,8 @@
     "mk": 1,
     "provenance": [
      {
-      "interpretation_seq": 21,
-      "source_location_id": 89100022,
+      "interpretation_seq": 22,
+      "source_location_id": 89100023,
       "source_item_name": "Item",
       "source_game": "Some Game",
       "source_recipient_name": "Somebody",
@@ -783,8 +823,8 @@
     "mk": 1,
     "provenance": [
      {
-      "interpretation_seq": 22,
-      "source_location_id": 89100023,
+      "interpretation_seq": 23,
+      "source_location_id": 89100024,
       "source_item_name": "Item",
       "source_game": "Some Game",
       "source_recipient_name": "Somebody",
@@ -817,8 +857,8 @@
     "mk": 1,
     "provenance": [
      {
-      "interpretation_seq": 23,
-      "source_location_id": 89100024,
+      "interpretation_seq": 24,
+      "source_location_id": 89100025,
       "source_item_name": "Item",
       "source_game": "Some Game",
       "source_recipient_name": "Somebody",
@@ -851,8 +891,8 @@
     "mk": 1,
     "provenance": [
      {
-      "interpretation_seq": 24,
-      "source_location_id": 89100025,
+      "interpretation_seq": 25,
+      "source_location_id": 89100026,
       "source_item_name": "Item",
       "source_game": "Some Game",
       "source_recipient_name": "Somebody",

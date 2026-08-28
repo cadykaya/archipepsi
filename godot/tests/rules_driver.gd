@@ -57,6 +57,8 @@ func _ready() -> void:
 	_low_health_is_an_edge()
 	_a_refused_payment_leaves_regen_alone()
 	_a_negative_resource_add_arms_the_delay()
+	_an_arm_belongs_to_the_value_that_made_it()
+	_zone_entry_resets_the_latches_and_the_cooldowns()
 
 	if _runtime != null:
 		_runtime.free()
@@ -322,3 +324,90 @@ func _a_negative_resource_add_arms_the_delay() -> void:
 		"type": "resource_add", "subject": "res_bat2", "amount": -500.0})
 	_check(is_equal_approx(_pool.value_of("res_bat2"), 0.0),
 			"an oversized drain empties rather than refusing")
+
+## "A value that left its threshold takes unfired arms with it" -- which
+## it did not. `crossed` and `holding` were computed per EVENT KIND across
+## every resource, so `holding["resource_full"]` was true if ANY owned
+## resource was full. A latch armed by one bar crossing full was kept
+## alive by a second, unrelated bar that happened to be full, and the rule
+## fired seconds later against a threshold that had long since ended.
+func _an_arm_belongs_to_the_value_that_made_it() -> void:
+	_fresh(true)
+	# res_battery is the bystander: filled and held there for the whole
+	# scenario. res_osc is parked mid-bar so the oscillator pair stays
+	# asleep, and res_bat2 is parked below full so it can cross.
+	_pool.refill("res_battery", 200.0)
+	_pool.spend("res_osc", _pool.value_of("res_osc") * 0.5)
+	_pool.spend("res_bat2", 50.0)
+	# Reset rather than tick it out: this is the state the scenario starts
+	# FROM, so none of it should read as an edge.
+	_runtime.reset_for_zone()
+	_player.hp = 100.0
+	_runtime.tick(DT)
+	_check(_pool.is_full("res_battery"), "the bystander is full throughout")
+	_check(not _runtime._armed.has("rule_full_when_hurt"),
+			"nothing is armed to begin with")
+
+	# res_bat2 crosses full: the latch arms, and cannot fire, because the
+	# player is healthy.
+	_pool.refill("res_bat2", 100.0)
+	_runtime.tick(DT)
+	_check(_runtime._armed.has("rule_full_when_hurt"),
+			"crossing full arms the rule")
+	_check(int(_fired.get("rule_full_when_hurt", 0)) == 0,
+			"...without firing, because the condition does not hold")
+
+	# res_bat2 leaves full -- halfway down, not to empty: emptying it
+	# would fire `rule_fill_on_empty`, which tops up res_osc and wakes the
+	# oscillator pair inside this scenario. Its edge is over either way,
+	# and res_battery is still full, which used to keep this latch alive
+	# on its behalf.
+	_pool.spend("res_bat2", _pool.value_of("res_bat2") * 0.5)
+	_runtime.tick(DT)
+	_check(not _runtime._armed.has("rule_full_when_hurt"),
+			"a latch dies with the value that armed it, not with the kind")
+
+	# The proof that it mattered: the condition becoming true long after
+	# the edge ended must NOT fire the rule.
+	_player.hp = 10.0
+	for i in range(int(1.0 / DT)):
+		_runtime.tick(DT)
+	_check(int(_fired.get("rule_full_when_hurt", 0)) == 0,
+			"...so it cannot fire a second after its edge ended (%d)"
+			% int(_fired.get("rule_full_when_hurt", 0)))
+
+	# And a real edge, with the condition holding, still fires it.
+	_pool.refill("res_bat2", 100.0)
+	_runtime.tick(DT)
+	_runtime.tick(DT)
+	_check(int(_fired.get("rule_full_when_hurt", 0)) == 1,
+			"a real edge still fires the rule watching that kind (%d)"
+			% int(_fired.get("rule_full_when_hurt", 0)))
+
+## I9 resets resource values and statuses on Zone entry. Every latch,
+## cooldown and watched value in here is DERIVED from exactly that state,
+## and none of them was cleared -- so a latch armed in one Zone fired on
+## the first tick of the next, and a cooldown charged in one Zone held a
+## rule down in another.
+func _zone_entry_resets_the_latches_and_the_cooldowns() -> void:
+	_fresh()
+	_pool.spend("res_osc", _pool.value_of("res_osc"))
+	_runtime.tick(DT)
+	_pool.refill("res_osc", 100.0)
+	_runtime.tick(DT)
+	_runtime.notify("land")
+	_runtime.tick(DT)
+	_check(not _runtime._armed.is_empty() or not _runtime._cooldowns.is_empty(),
+			"the first Zone leaves state behind")
+
+	_pool.reset_for_zone()
+	_runtime.reset_for_zone()
+	_check(_runtime._armed.is_empty(), "Zone entry clears the latches")
+	_check(_runtime._cooldowns.is_empty(), "...and the cooldowns")
+	_check(_runtime._watched_fractions.is_empty(),
+			"...and the watched values, which would otherwise read the new "
+			+ "Zone's fresh fractions as an edge against the old Zone's")
+	_fired.clear()
+	_runtime.tick(DT)
+	_check(_fired.is_empty(),
+			"...so the new Zone's first tick fires nothing: %s" % [_fired])

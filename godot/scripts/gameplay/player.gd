@@ -312,7 +312,7 @@ func _refresh_derived_stats(delta: float) -> void:
 	regen_mult = float(stats["regen"])
 	var dot := statuses.dot_per_second()
 	if dot > 0.0 and not _dead:
-		take_damage(dot * delta)
+		take_damage(dot * delta, Vector3.INF, false)
 	var regen := statuses.regen_per_second()
 	if regen > 0.0 and not _dead and hp < Constants.PLAYER_MAX_HP:
 		heal(regen * delta)
@@ -558,15 +558,25 @@ func _spawn_tracer(hit: Dictionary) -> void:
 			Color(1.0, 0.35, 0.9), corruption * 0.7)
 	Tracer.spawn(get_tree().current_scene, from, to, color, 0.06)
 
+## `parryable` is false for damage that is not a hit to read.
+##
+## A parry is a timed answer to something arriving, and a damage-over-time
+## tick is neither timed nor arriving: it is the same status bleeding out
+## a sixtieth of a second's worth. Letting it through the parry path meant
+## 0.067 damage of burn spent the whole window, so any DoT made parry
+## unusable -- and it emitted `parried`, which `main.gd` turns into a free
+## `parry_success` rule event, so a burn turned that event into something
+## the player could produce by standing still.
 func take_damage(amount: float,
-		source_position: Vector3 = Vector3.INF) -> void:
+		source_position: Vector3 = Vector3.INF,
+		parryable: bool = true) -> void:
 	if _dead:
 		return
 	amount *= damage_taken_mult
 	# Parry first wherever it is, then shields in slot order — the same
 	# precedence one runtime used, spread across four.
 	for runtime: EchoRuntime in runtimes.values():
-		amount = runtime.absorb_with_shield(amount)
+		amount = runtime.absorb_with_shield(amount, parryable)
 		if amount <= 0.0:
 			break
 	hp = maxf(0.0, hp - amount)

@@ -105,6 +105,13 @@ def export_constants_gd() -> str:
         "",
         "# Held back by a stage, with the stage that lands each one.",
         f"const ECHO_DEFERRED_PRIMITIVES = {_gd_literal(dict(E.DEFERRED_PRIMITIVES))}",
+        "",
+        "# The closed status vocabulary, so `StatusEffects.apply` can refuse",
+        "# a kind the schema does not admit. An unknown kind is inert --",
+        "# nothing reads it -- while still satisfying `status_active`",
+        "# conditions and `status_applied` edges, and `cleanse` can never",
+        "# remove it, because it is not in the cleanse order.",
+        f"const ECHO_STATUS_KINDS = {_gd_literal(list(E.STATUS_KINDS))}",
     ]
     lines.append("")
     return "\n".join(lines)

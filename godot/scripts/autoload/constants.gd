@@ -129,3 +129,10 @@ const ECHO_IMPLEMENTED_PRIMITIVES = ["melee_swing", "melee_thrust", "slam_ground
 
 # Held back by a stage, with the stage that lands each one.
 const ECHO_DEFERRED_PRIMITIVES = {}
+
+# The closed status vocabulary, so `StatusEffects.apply` can refuse
+# a kind the schema does not admit. An unknown kind is inert --
+# nothing reads it -- while still satisfying `status_active`
+# conditions and `status_applied` edges, and `cleanse` can never
+# remove it, because it is not in the cleanse order.
+const ECHO_STATUS_KINDS = ["burning", "slowed", "frozen", "shocked", "poisoned", "marked", "stunned", "vulnerable", "empowered", "low_profile", "haste", "regenerating"]

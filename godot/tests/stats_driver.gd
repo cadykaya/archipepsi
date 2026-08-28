@@ -29,6 +29,9 @@ func _ready() -> void:
 	_pulses_decay_and_respect_floors()
 	_status_container_rules()
 	_status_stat_factors()
+	_a_magnitude_never_outlives_the_duration_it_came_with()
+	_cleanse_is_aimed_at_what_this_side_suffers()
+	_an_unknown_status_kind_is_refused()
 	_link_semantics()
 	_slots_are_independent()
 	_favourites_narrow_the_wheel()
@@ -448,3 +451,94 @@ func _favourites_narrow_the_wheel() -> void:
 	Favourites.toggle("act_dash")
 	_check(not Favourites.is_favourite("act_dash"), "and toggles off")
 	Favourites._reset_for_test()
+
+## Re-application max-merges, but the two dimensions must merge TOGETHER.
+##
+## Maxed independently, a feeble long application inherited a brutal short
+## one's magnitude and carried it for its whole life: 0.5 s at magnitude 3
+## followed by 30 s at magnitude 0.05 gave thirty seconds at 12 damage a
+## second, eight times what either application asked for -- from two rule
+## effects that are individually schema-legal.
+func _a_magnitude_never_outlives_the_duration_it_came_with() -> void:
+	_snapshot([])
+	var statuses := StatusEffects.new()
+	statuses.side = "self"
+	statuses.apply("burning", 0.5, 3.0)
+	_check(is_equal_approx(statuses.dot_per_second(), 12.0),
+			"the fierce one burns fiercely")
+	# A feeble thirty-second application arrives before it expires.
+	for i in range(int(0.4 / DT)):
+		statuses.tick(DT)
+	statuses.apply("burning", 30.0, 0.05)
+	_check(is_equal_approx(statuses.magnitude_of("burning"), 3.0),
+			"the fierce one still runs while it has time left: %f"
+			% statuses.magnitude_of("burning"))
+	# Five seconds later the fierce one is long gone.
+	for i in range(int(5.0 / DT)):
+		statuses.tick(DT)
+	_check(statuses.has("burning"), "the long one is still running")
+	_check(is_equal_approx(statuses.magnitude_of("burning"), 0.05),
+			"...at its OWN magnitude, not the one it inherited: %f"
+			% statuses.magnitude_of("burning"))
+	# And it ends when it should: 0.5 + 30 from the first application.
+	for i in range(int(26.0 / DT)):
+		statuses.tick(DT)
+	_check(not statuses.has("burning"), "the pair ends on time")
+
+	# A weaker, shorter application is entirely contained and changes
+	# nothing.
+	statuses.apply("slowed", 10.0, 2.0)
+	statuses.apply("slowed", 1.0, 0.1)
+	_check(is_equal_approx(statuses.magnitude_of("slowed"), 2.0),
+			"a weaker shorter application is swallowed whole")
+
+## `cleanse` is only ever aimed at the player, and the old order was
+## written as if it were aimed at an enemy: `stunned` and `marked` are read
+## by `enemy.gd` and by nothing on the player, so they spent charges on
+## nothing while outranking `vulnerable`, which the player does suffer. And
+## `low_profile` was in the list at all -- `enemy.gd` reads it as the
+## player's stealth, so a cleanse could strip the player's own buff.
+func _cleanse_is_aimed_at_what_this_side_suffers() -> void:
+	_snapshot([])
+	var mine := StatusEffects.new()
+	mine.side = "self"
+	mine.apply("stunned", 5.0, 1.0)
+	mine.apply("vulnerable", 5.0, 1.0)
+	var removed := mine.cleanse(1)
+	_check(removed == 1 and not mine.has("vulnerable"),
+			"one charge removes what the player actually suffers")
+
+	mine.clear()
+	mine.apply("low_profile", 5.0, 1.0)
+	mine.apply("haste", 5.0, 1.0)
+	mine.apply("regenerating", 5.0, 1.0)
+	_check(mine.cleanse(3) == 0,
+			"a cleanse never strips the player's own buffs")
+	_check(mine.has("low_profile"),
+			"...low_profile above all, which is stealth, not a debuff")
+
+	# The enemy side keeps the ranks that only enemies read.
+	var theirs := StatusEffects.new()
+	theirs.side = "enemy"
+	theirs.apply("stunned", 5.0, 1.0)
+	_check(theirs.cleanse(1) == 1,
+			"an enemy can be cleansed of what an enemy suffers")
+
+## The vocabulary is closed and generated from the schema. An unknown kind
+## was inert -- nothing reads it -- yet still satisfied `status_active`
+## conditions and `status_applied` edges, and could never be cleansed,
+## because it is not in any cleanse order.
+func _an_unknown_status_kind_is_refused() -> void:
+	_snapshot([])
+	var statuses := StatusEffects.new()
+	statuses.side = "self"
+	statuses.apply("on_fire", 5.0, 1.0)
+	_check(not statuses.has("on_fire"),
+			"a status the schema does not admit is refused, not stored")
+	_check(statuses.active_kinds().is_empty(),
+			"...and leaves nothing behind: %s" % [statuses.active_kinds()])
+	for kind: String in Constants.ECHO_STATUS_KINDS:
+		statuses.apply(kind, 1.0, 1.0)
+	_check(statuses.active_kinds().size()
+			== Constants.ECHO_STATUS_KINDS.size(),
+			"every kind the schema DOES admit is accepted")

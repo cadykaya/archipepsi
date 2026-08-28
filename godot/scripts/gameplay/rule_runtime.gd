@@ -44,7 +44,26 @@ const _EFFECT_LOG_CAP := 256
 
 var pool: ResourcePool = null
 var player = null          # hp / max_hp / velocity / is_on_floor() / heal()
-var echo_runtime = null    # grant_shield() / reset_cooldown() / rule projectiles
+## grant_shield() / reset_cooldown() / rule projectiles.
+##
+## Resolved live from the player rather than stored. `Player.echo_runtime`
+## is a getter over `highlighted_slot`, and copying its VALUE at bind time
+## pinned every rule shield and cooldown reset to whichever slot happened
+## to be highlighted when the Zone loaded -- `echo_a`, always, since that
+## is the default. The comment at the bind site says these act on "the
+## slot the player is looking at", and this is what makes that true.
+var echo_runtime:
+	get:
+		if _echo_runtime_override != null:
+			return _echo_runtime_override
+		if player == null or player.get("echo_runtime") == null:
+			return null
+		return player.echo_runtime
+	set(value):
+		_echo_runtime_override = value
+
+#: Set only by tests and by `_clear_world`, which nulls it on teardown.
+var _echo_runtime_override = null
 var zone_root: Node = null # where damage_around looks for the enemies group
 
 signal rule_fired(rule_id: String)
@@ -363,20 +382,43 @@ func _damage_around(radius: float, amount: float) -> void:
 ## dispatch, never this one. A value that left its threshold takes unfired
 ## arms with it: a heal that outran a cooling low_health rule means no
 ## firing, because "low" stopped being true before the rule ever ran.
+## Zone entry, the same moment `ResourcePool.reset_for_zone` fires.
+##
+## I9 resets resource current values and statuses on entry, and every one
+## of these is DERIVED from exactly that state -- so leaving them meant a
+## latch armed in one Zone fired on the first tick of the next, against a
+## threshold that no longer existed, and a cooldown charged in one Zone
+## held a rule down in another. The watched values have to go too: kept,
+## they would read the new Zone's fresh fractions as an edge against the
+## old Zone's last ones.
+func reset_for_zone() -> void:
+	_armed.clear()
+	_cooldowns.clear()
+	_pending.clear()
+	_watched_fractions.clear()
+	_watched_status_kinds.clear()
+	_watched_hp = 1.0
+
 func _derive_edges() -> void:
-	var crossed := {"resource_full": false, "resource_empty": false,
-			"low_health": false, "status_applied": false}
-	var holding := {"resource_full": false, "resource_empty": false,
-			"low_health": false, "status_applied": false}
+	# Both are keyed by event kind and then by SOURCE -- which resource,
+	# which status kind. Tracking them per kind alone made the arm and the
+	# disarm answer different questions: a latch armed by one bar crossing
+	# full was kept alive by any OTHER bar being full, so a rule fired
+	# seconds after its own edge had ended, on a threshold that was never
+	# true at the same time as the event that armed it.
+	var crossed := {"resource_full": [], "resource_empty": [],
+			"low_health": [], "status_applied": []}
+	var holding := {"resource_full": {}, "resource_empty": {},
+			"low_health": {}, "status_applied": {}}
 	if player != null and player.get("statuses") != null:
 		# status_applied's edge is a KIND appearing that was absent last
-		# tick; holding is any status being active at all.
-		for kind in player.statuses.active_kinds():
-			holding["status_applied"] = true
+		# tick; it holds while that same kind is still active.
+		for kind: String in player.statuses.active_kinds():
+			holding["status_applied"][kind] = true
 			if not _watched_status_kinds.has(kind):
-				crossed["status_applied"] = true
+				(crossed["status_applied"] as Array).append(kind)
 		_watched_status_kinds.clear()
-		for kind in player.statuses.active_kinds():
+		for kind: String in player.statuses.active_kinds():
 			_watched_status_kinds[kind] = true
 	if pool != null:
 		for entry: Dictionary in BridgeClient.owned_components("resource"):
@@ -384,22 +426,22 @@ func _derive_edges() -> void:
 			var fraction := pool.fraction_of(id)
 			var previous := float(_watched_fractions.get(id, fraction))
 			if fraction >= 0.999:
-				holding["resource_full"] = true
+				holding["resource_full"][id] = true
 				if previous < 0.999:
-					crossed["resource_full"] = true
+					(crossed["resource_full"] as Array).append(id)
 			if fraction <= 0.001:
-				holding["resource_empty"] = true
+				holding["resource_empty"][id] = true
 				if previous > 0.001:
-					crossed["resource_empty"] = true
+					(crossed["resource_empty"] as Array).append(id)
 			_watched_fractions[id] = fraction
 	if player != null:
 		var max_hp := float(player.get("max_hp") if player.get("max_hp") != null
 				else Constants.PLAYER_MAX_HP)
 		var hp_fraction := clampf(float(player.hp) / max_hp, 0.0, 1.0)
 		if hp_fraction < Constants.LOW_HEALTH_FRACTION:
-			holding["low_health"] = true
+			holding["low_health"]["hp"] = true
 			if _watched_hp >= Constants.LOW_HEALTH_FRACTION:
-				crossed["low_health"] = true
+				(crossed["low_health"] as Array).append("hp")
 		_watched_hp = hp_fraction
 
 	for rule: Dictionary in _rules:
@@ -407,7 +449,11 @@ func _derive_edges() -> void:
 		if not crossed.has(event):
 			continue
 		var rule_id := str(rule.get("component_id", ""))
-		if crossed[event]:
-			_armed[rule_id] = true
-		elif not holding[event]:
+		var edges: Array = crossed[event]
+		if not edges.is_empty():
+			# The arm remembers WHICH source made it, so the disarm below
+			# can ask about that one rather than about the kind.
+			_armed[rule_id] = edges[0]
+		elif _armed.has(rule_id) \
+				and not (holding[event] as Dictionary).has(_armed[rule_id]):
 			_armed.erase(rule_id)

@@ -344,8 +344,13 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	zone.is_finale = bool(record.get("is_finale", false))
 	world.add_child(zone)
 	# Before setup, so a Zone whose first frame already spends something
-	# sees full channels rather than last Zone's leftovers.
+	# sees full channels rather than last Zone's leftovers. The rule
+	# engine resets with it: its latches, cooldowns and watched values are
+	# derived from exactly the state I9 is clearing, so a latch left armed
+	# fired on the next Zone's first tick against a threshold that no
+	# longer existed.
 	resource_pool.reset_for_zone()
+	rule_runtime.reset_for_zone()
 	zone.setup(zone_dict)
 	zone.exit_requested.connect(_on_exit_zone)
 	hud.bind_player(zone.player)

@@ -109,6 +109,11 @@ def build_log() -> list[EchoInterpretation]:
         [_rule("rule_double_cost", "chamber_enter", [_heal(3.0)],
                costs=[{"resource_id": "res_battery", "amount": 15.0},
                       {"resource_id": "res_osc", "amount": 15.0}])],
+        # Arms on any bar filling, but can only FIRE while the player is
+        # hurt: an arm that outlives its own edge is visible only on a rule
+        # that arms without firing.
+        [_rule("rule_full_when_hurt", "resource_full", [_heal(1.0)],
+               conditions=[{"type": "hp_below", "value": 0.5}])],
         # The same shape against the regenerating channel: cheap first
         # cost, impossible second. Every attempt used to re-arm the delay.
         [_rule("rule_greedy", "chamber_enter", [_heal(3.0)],

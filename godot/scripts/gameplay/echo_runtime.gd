@@ -214,9 +214,15 @@ func _process(delta: float) -> void:
 				float(equipped.get("cooldown", 1.0)))
 		if cooldown_remaining == 0.0:
 			action_ready.emit()
-	if shield_hp > 0.0:
-		_shield_timer -= delta
-		if _shield_timer <= 0.0:
+	# The timer decays whether or not there is shield left on it. Gated on
+	# `shield_hp > 0.0`, a shield absorbed down to nothing froze its timer
+	# at whatever remained -- and `grant_shield` takes the MAX of the old
+	# and new durations, so the next grant inherited the frozen one. A
+	# rule's one-second shield lasted the thirty seconds of a shield that
+	# had been gone for half a minute.
+	if _shield_timer > 0.0:
+		_shield_timer = maxf(0.0, _shield_timer - delta)
+		if _shield_timer <= 0.0 and shield_hp > 0.0:
 			shield_hp = 0.0
 			shield_changed.emit(0.0)
 
@@ -1104,10 +1110,11 @@ func fire_rule_projectile(damage: float, direction_kind: String) -> void:
 func _begin_parry(primitive: Dictionary) -> void:
 	_parry_window = float(primitive["window"])
 
-func absorb_with_shield(damage: float) -> float:
+func absorb_with_shield(damage: float, parryable: bool = true) -> float:
 	# Parry first: it is the timed, skilful one, and letting a shield soak a
-	# hit the player actually parried would waste the read.
-	if _parry_window > 0.0:
+	# hit the player actually parried would waste the read. A tick of
+	# damage-over-time is not a hit to read, and is not offered the window.
+	if parryable and _parry_window > 0.0:
 		_parry_window = 0.0
 		parried.emit()
 		player.muzzle_flash(3.0, source_color().lightened(0.4))
