@@ -95,9 +95,92 @@ open item, and it is engineering's, not art's.
 
 ---
 
+## Enemy telegraphs (requirement 14)
+
+**Contract:** signals `telegraph_started(kind, duration)` and
+`telegraph_finished(kind, completed)` on `Enemy`, plus
+`telegraph_progress()`, `is_telegraphing()`, and a `TelegraphOrigin`
+`Marker3D` to attach to.
+
+Engineering owns the event, the state and the attachment point. Art owns
+what a telegraph looks like. The two meet at those three things and
+nowhere else.
+
+### The lifecycle
+
+```
+_begin_telegraph(kind, duration)   ->  telegraph_started(kind, duration)
+   ... the attack's own countdown ...  telegraph_progress() 0.0 -> 1.0
+attack lands                       ->  telegraph_finished(kind, true)
+enemy dies or despawns first       ->  telegraph_finished(kind, false)
+```
+
+Four guarantees, each with a test:
+
+- **It derives from the real attack state.** `telegraph_progress()` reads
+  the same countdown the attack uses. A presentation with its own clock
+  drifts, and a drifting telegraph is a promise broken by a rounding
+  error.
+- **It is deterministic.** A windup that started always resolves, and a
+  second one cannot open on top of it.
+- **It is always closed.** Death and despawn both emit
+  `telegraph_finished(kind, false)`, so a listener is told rather than
+  left announcing a slam that is never coming.
+- **It is never mechanics truth.** See below.
+
+### The attachment point
+
+`TelegraphOrigin` is a `Marker3D` at the collider's centre —
+`ENEMY_ENVELOPES[role].centre_y`, the same number the collider uses, so
+the two cannot drift. It is a direct child of the body rather than of
+`Visual`, so a hit flinch does not drag the telegraph around with it.
+Art offsets from there.
+
+### A real bug this found
+
+**`scale` on a `CharacterBody3D` scales its `CollisionShape3D` child.**
+
+The brute's windup was `scale = Vector3.ONE * (1.0 + 0.12 * sin(...))` on
+the body, so **its hitbox grew 12% for the half second it telegraphed**,
+and the hit flinch shrank it to 88% every time it was hit. Presentation
+was mechanics truth, silently, in the one place the game most wants it
+not to be.
+
+Every mesh now hangs off a `Visual` container and nothing solid does.
+Presentation scales `Visual`; the collider is a direct child of the body
+and cannot move. The rule is structural rather than a discipline, and a
+test walks every archetype for a mesh parented to the body.
+
+### What art can now do
+
+Author a telegraph for the brute's slam, attached to `TelegraphOrigin`,
+driven by `telegraph_started` / `telegraph_progress()` /
+`telegraph_finished`. The engine's scale swell is a fallback, not a
+requirement — a listener replaces the look and never the timing.
+
+### What is still blocked, and it is not engineering's to unblock
+
+**Two of the three placeable archetypes make no promise at all.** The
+brute has a 0.5 s windup. Melee hits the instant it is in reach; ranged
+fires the instant it has line of sight. There is nothing to telegraph,
+and the seam reports that honestly (`is_telegraphing()` is false)
+rather than inventing a delay.
+
+Giving melee or ranged a windup **changes how hard the game is**. That is
+a combat design decision and a pacing one, not an integration detail, so
+it is not made here. Until it is, an authored telegraph for those two
+roles has no state to attach to.
+
+Same for the seven roles that have envelopes and no behaviour: a
+telegraph needs an attack to announce.
+
+---
+
 ## Still open, and why
 
 | # | Requirement | Status |
 | --- | --- | --- |
 | 6 | `challenge_marker` semantics | Owner decision. Deferred, hook dormant |
+| 14 | Telegraphs for melee and ranged | **Combat decision.** The seam exists; those two roles have no windup to attach it to, and adding one changes difficulty |
+| 7 | Behaviour for the seven enveloped roles | **Combat decision.** They can be built and measured; they cannot yet be placed |
 | — | `objective_marker` / `signage_module` navigation language | Owner decision. Not engineering's to invent |

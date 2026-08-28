@@ -64,6 +64,10 @@ func _run() -> void:
 	_an_enemy_hitbox_is_a_function_of_its_archetype()
 	_every_built_collider_matches_the_envelope_contract()
 	_the_envelope_table_covers_the_whole_approved_family()
+	await _a_telegraph_derives_from_the_real_attack_state()
+	await _presentation_can_never_move_the_hitbox()
+	_the_telegraph_attachment_point_is_the_contract()
+	await _a_broken_promise_is_reported_rather_than_timed_out()
 	_no_visual_anywhere_carries_collision()
 	_a_shell_that_tells_the_truth_is_accepted()
 	_a_shell_that_lies_about_its_geometry_is_refused()
@@ -1154,3 +1158,178 @@ func _the_envelope_table_covers_the_whole_approved_family() -> void:
 		_check(is_zero_approx(
 				float(Constants.ENEMY_ENVELOPES[role]["bottom_y"])),
 				"'%s' walks but does not touch the floor" % role)
+
+
+## Art requirement 14: a telegraph is a promise, and a promise timed by a
+## second clock is a promise broken by a rounding error. There is exactly
+## one countdown -- the attack's -- and the presentation reads it.
+func _a_telegraph_derives_from_the_real_attack_state() -> void:
+	var enemy := Enemy.create("brute", "concrete_facility")
+	add_child(enemy)
+	var started: Array = []
+	var finished: Array = []
+	enemy.telegraph_started.connect(
+			func(kind: String, duration: float) -> void:
+				started.append([kind, duration]))
+	enemy.telegraph_finished.connect(
+			func(kind: String, completed: bool) -> void:
+				finished.append([kind, completed]))
+
+	_check(not enemy.is_telegraphing(),
+			"a fresh enemy is already telegraphing something")
+	_check(is_zero_approx(enemy.telegraph_progress()),
+			"progress is non-zero with nothing being telegraphed")
+
+	enemy._begin_telegraph("slam", 0.5)
+	_check(started.size() == 1, "telegraph_started did not fire")
+	if started.size() == 1:
+		_check(started[0][0] == "slam" and absf(started[0][1] - 0.5) < 0.001,
+				"telegraph_started carried %s" % str(started[0]))
+	_check(enemy.is_telegraphing(), "the enemy is not telegraphing")
+	_check(is_zero_approx(enemy.telegraph_progress()),
+			"progress starts at %f, not 0" % enemy.telegraph_progress())
+
+	# A second attack cannot open on top of the first: a windup that
+	# started must always resolve, so a re-entrant start would strand it.
+	enemy._begin_telegraph("slam", 5.0)
+	_check(started.size() == 1,
+			"a second telegraph opened on top of a running one")
+	_check(absf(enemy.telegraph_duration - 0.5) < 0.001,
+			"the re-entrant start overwrote the running duration")
+
+	# Progress tracks the ATTACK's countdown, not wall time.
+	enemy._windup = 0.25
+	_check(absf(enemy.telegraph_progress() - 0.5) < 0.001,
+			"halfway through the windup reads %f, not 0.5"
+			% enemy.telegraph_progress())
+	enemy._windup = 0.0
+	_check(absf(enemy.telegraph_progress() - 1.0) < 0.001,
+			"a finished windup reads %f, not 1.0"
+			% enemy.telegraph_progress())
+
+	enemy._end_telegraph(true)
+	_check(finished.size() == 1 and bool(finished[0][1]),
+			"a kept promise did not report completed")
+	_check(not enemy.is_telegraphing(), "still telegraphing after the end")
+	_check(is_zero_approx(enemy.telegraph_progress()),
+			"progress survived the end of the telegraph")
+	enemy.free()
+
+## The bug this seam exists to make impossible. `scale` on a
+## CharacterBody3D scales its CollisionShape3D child, so the brute's
+## hitbox grew 12% for the half second it telegraphed and shrank to 88%
+## every time it was hit. Presentation is never mechanics truth.
+func _presentation_can_never_move_the_hitbox() -> void:
+	var enemy := Enemy.create("brute", "concrete_facility")
+	add_child(enemy)
+	var before := VisualInterface.collision_profile(enemy)
+
+	enemy._begin_telegraph("slam", 0.5)
+	enemy._set_visual_scale(1.12)
+	_check(VisualInterface.same_collision(
+			before, VisualInterface.collision_profile(enemy)).is_empty(),
+			"a windup swell moved the collider")
+	_check(enemy.scale.is_equal_approx(Vector3.ONE),
+			"the BODY was scaled; that is what moved the hitbox")
+	_check(enemy.visual != null and enemy.visual.scale.x > 1.0,
+			"the swell did not reach `visual` at all")
+
+	enemy._set_visual_scale(0.88)
+	_check(VisualInterface.same_collision(
+			before, VisualInterface.collision_profile(enemy)).is_empty(),
+			"a hit flinch moved the collider")
+	enemy._end_telegraph(true)
+	_check(enemy.visual.scale.is_equal_approx(Vector3.ONE),
+			"the visual stayed swollen after the telegraph ended")
+
+	_check(VisualInterface.visuals_carrying_collision(enemy).is_empty(),
+			"something under `visual` carries collision")
+	enemy.free()
+
+	# Every mesh hangs off `visual` and nothing solid does -- which is
+	# what makes the rule structural rather than a discipline. Checked for
+	# EVERY archetype: each has its own `_build_*`, so checking one leaves
+	# the other two free to parent onto the body.
+	for archetype: String in ARCHETYPES:
+		var built := Enemy.create(archetype, "concrete_facility")
+		add_child(built)
+		for child in built.get_children():
+			if child is MeshInstance3D:
+				_check(false,
+						"'%s' parents a mesh (%s) to the BODY; scaling it "
+						% [archetype, child.name]
+						+ "for presentation would move the collider")
+		var under_visual := 0
+		for child in built.visual.get_children():
+			if child is MeshInstance3D:
+				under_visual += 1
+		_check(under_visual > 0,
+				"'%s' has no meshes under `visual` at all" % archetype)
+		built.free()
+
+## Art authors against an attachment point, so it has to be one point,
+## in one place, derived from the same envelope the collider is.
+func _the_telegraph_attachment_point_is_the_contract() -> void:
+	for archetype: String in ARCHETYPES:
+		var enemy := Enemy.create(archetype, "concrete_facility")
+		add_child(enemy)
+		_check(enemy.telegraph_origin != null,
+				"'%s' has no TelegraphOrigin" % archetype)
+		if enemy.telegraph_origin != null:
+			var want := float(Constants.ENEMY_ENVELOPES[archetype]["centre_y"])
+			_check(absf(enemy.telegraph_origin.position.y - want) < 0.001,
+					"'%s' telegraph origin is at y=%.3f, the envelope "
+					% [archetype, enemy.telegraph_origin.position.y]
+					+ "centre is %.3f" % want)
+			# Outside `visual`, or a flinch drags the telegraph with it.
+			_check(enemy.telegraph_origin.get_parent() == enemy,
+					"'%s' telegraph origin hangs off `visual`" % archetype)
+		enemy.free()
+
+	# The three placeable roles are all ground roles, so `centre_y` and
+	# half the height are the SAME number for every one of them -- the
+	# check above cannot tell the contract from the coincidence, and a
+	# flyer cannot be built because it has no behaviour yet. So the source
+	# is pinned instead: the origin comes from the envelope.
+	var source := FileAccess.get_file_as_string(
+			"res://scripts/enemies/enemy.gd")
+	_check(source.contains(
+			'origin.position = Vector3(0, float(envelope["centre_y"]), 0)'),
+			"the telegraph origin is no longer taken from the envelope; "
+			+ "half-height only agrees with it for a role that walks")
+
+## Death and despawn mid-windup. The listener is TOLD, because a
+## presentation left to time out finishes announcing a slam that is
+## never coming.
+func _a_broken_promise_is_reported_rather_than_timed_out() -> void:
+	var enemy := Enemy.create("brute", "concrete_facility")
+	add_child(enemy)
+	var finished: Array = []
+	enemy.telegraph_finished.connect(
+			func(kind: String, completed: bool) -> void:
+				finished.append([kind, completed]))
+	enemy._begin_telegraph("slam", 0.5)
+	enemy.die()
+	_check(finished.size() == 1,
+			"dying mid-windup reported %d telegraph endings, expected 1"
+			% finished.size())
+	if finished.size() == 1:
+		_check(not bool(finished[0][1]),
+				"a promise broken by death reported completed")
+	_check(not enemy.is_telegraphing(), "a dead enemy is still telegraphing")
+
+	# ...and despawn, which is the other way a telegraph outlives its
+	# enemy. `_exit_tree` closes it.
+	var despawned := Enemy.create("brute", "concrete_facility")
+	add_child(despawned)
+	var closed: Array = []
+	despawned.telegraph_finished.connect(
+			func(kind: String, completed: bool) -> void:
+				closed.append(completed))
+	despawned._begin_telegraph("slam", 0.5)
+	remove_child(despawned)
+	_check(closed.size() == 1 and not bool(closed[0]),
+			"despawning mid-windup did not close the telegraph")
+	despawned.free()
+	await get_tree().process_frame
+	enemy.queue_free()
