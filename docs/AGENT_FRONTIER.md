@@ -44,8 +44,19 @@ S23  release hardening         ── last
 | S14 Hub + Echo Lab migration | **done** — `hub_anchors.gd`, Lab gap pinned |
 | S15 room shells + connectors | **grammar done; shells BLOCKED on Q1** |
 | S16 encounter/traversal vocabulary | **done** — tower ascent bounded, gap bound exported |
-| S17 interactable/presentation contracts | **next** |
-| S18–S23 | not started |
+| S17 interactable/presentation contracts | **done** — `interactable_contract.gd` |
+| S18 enemy/player/affordance visual interfaces | **next** |
+| S19–S23 | not started |
+
+S17's "do not leak hidden scouting information" was ALREADY enforced
+where it matters: the bridge does not send item identity for an
+unrevealed location (`ScoutedLocation._unrevealed_withholds_identity`),
+tested in Python since the v0.4 review. S17 added the client-side half —
+the client legitimately knows some item names (a shop-stocked location
+is revealed), so a pedestal reading `scout.item_name` without checking
+state would spoil exactly the Checks the player paid to learn about —
+plus a readability rule: no two AP states may share both their words and
+their colour.
 
 S16 found and fixed a real I3/I4 inconsistency: the tower's spiral asked
 for a 2.4 m mandatory jump at a 1.0 m rise, where the safe bound is 2.0 m

@@ -26,6 +26,9 @@ func _check(condition: bool, message: String) -> void:
 		print("FAIL: " + message)
 
 func _ready() -> void:
+	_run()
+
+func _run() -> void:
 	_the_committed_registry_loads()
 	_the_committed_registry_covers_every_chamber_the_game_builds()
 	_a_category_at_the_wrong_level_is_refused()
@@ -50,6 +53,13 @@ func _ready() -> void:
 	_a_room_that_cannot_be_chained_is_named()
 	_every_shipped_shell_is_chainable_by_the_base_kit()
 	_cleanup()
+	# Both awaited. A function containing `await` called WITHOUT one
+	# returns at its first suspend, and the suite goes on to print OK
+	# before its assertions have run -- the exact "tested nothing"
+	# failure the Makefile guards elsewhere.
+	await _the_ap_moment_never_spoils_what_it_holds()
+	await _every_ap_state_is_distinguishable()
+	_a_scene_missing_a_required_part_is_named()
 	if failures == 0:
 		print("GODOT CONTENT TESTS OK")
 		get_tree().quit(0)
@@ -426,3 +436,101 @@ func _every_shipped_shell_is_chainable_by_the_base_kit() -> void:
 		var entry := registry.get_entry(id)
 		var why := ConnectorGrammar.chainable(entry)
 		_check(why.is_empty(), "shipped shell is not chainable: %s" % why)
+
+
+# --- the S17 presentation contract -----------------------------------------
+
+const SECRET_ITEM := "Progressive Hookshot"
+const SECRET_PLAYER := "Zelda3Runner"
+
+func _the_ap_moment_never_spoils_what_it_holds() -> void:
+	## The client is not always ignorant. A shop-stocked location IS
+	## revealed, so the bridge legitimately sends its `item_name` -- and
+	## a pedestal that read `scout.item_name` without checking state
+	## would spoil exactly the Checks the player paid to learn about.
+	##
+	## The bridge withholding identity for unrevealed locations
+	## (`ScoutedLocation._unrevealed_withholds_identity`) is the first
+	## line and is already tested in Python. This is the second: given a
+	## scout the client fully knows, the pedestal must still say nothing
+	## until the Check is claimed.
+	BridgeClient.snapshot = {"scouted": [{
+		"location_id": 89100001, "location_name": "Archipepsi Check 001",
+		"revealed": true, "item_name": SECRET_ITEM,
+		"recipient_name": SECRET_PLAYER, "recipient_game": "A Link to the Past",
+	}]}
+
+	var reward := RewardObject.create(89100001, "zone_1", "void_glitch")
+	add_child(reward)
+	await get_tree().process_frame
+
+	var label: Label3D = reward.get_node("StateLabel")
+	for state: String in InteractableContract.STATES:
+		reward.state = state
+		reward._refresh_visual()
+		var leaked := InteractableContract.leak(
+				label.text, BridgeClient.scout_for(89100001), state)
+		_check(leaked.is_empty(),
+				"the '%s' pedestal leaks %s; identity is the claim's "
+				% [state, leaked] + "payoff and nothing before it may "
+				+ "give it away. Label was: '%s'" % label.text)
+
+	## And the reveal must actually happen, or the check above passes by
+	## saying nothing ever.
+	reward.state = "confirmed"
+	reward._refresh_visual()
+	_check(label.text.contains(SECRET_ITEM),
+			"a claimed Check must show what it held; got '%s'" % label.text)
+
+	reward.queue_free()
+	BridgeClient.snapshot = {}
+
+func _every_ap_state_is_distinguishable() -> void:
+	## Readability is the other half. A player across a room has the
+	## colour and the word; two states sharing both are two states they
+	## cannot tell apart.
+	BridgeClient.snapshot = {"scouted": [{
+		"location_id": 89100002, "location_name": "Archipepsi Check 002",
+		"revealed": true, "item_name": SECRET_ITEM,
+		"recipient_game": "A Link to the Past",
+	}]}
+	var reward := RewardObject.create(89100002, "zone_1", "void_glitch")
+	add_child(reward)
+	await get_tree().process_frame
+	var label: Label3D = reward.get_node("StateLabel")
+
+	var seen: Array = []
+	for state: String in InteractableContract.STATES:
+		reward.state = state
+		reward._refresh_visual()
+		seen.append({"state": state, "text": label.text,
+				"color": label.modulate})
+	for i in seen.size():
+		for j in range(i + 1, seen.size()):
+			var a: Dictionary = seen[i]
+			var b: Dictionary = seen[j]
+			_check(InteractableContract.distinguishable(
+					a["text"], a["color"], b["text"], b["color"]),
+					"'%s' and '%s' look identical (%s / %s)"
+					% [a["state"], b["state"], a["text"], a["color"]])
+	reward.queue_free()
+	BridgeClient.snapshot = {}
+
+func _a_scene_missing_a_required_part_is_named() -> void:
+	## An authored interactable missing a part fails at the moment it
+	## changes state -- mid-claim, in front of the player -- rather than
+	## at load, unless something checks first.
+	var bare := Node3D.new()
+	add_child(bare)
+	var missing := InteractableContract.missing_parts(bare)
+	_check(missing.size() == InteractableContract.REQUIRED_PARTS.size(),
+			"an empty scene must be missing every required part, got %s"
+			% str(missing))
+
+	var visual := MeshInstance3D.new()
+	visual.name = "state_visual"
+	bare.add_child(visual)
+	var still: Array[String] = InteractableContract.missing_parts(bare)
+	_check(Array(still) == ["state_label"],
+			"only the still-absent part should be named, got %s" % str(still))
+	bare.queue_free()
