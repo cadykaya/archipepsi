@@ -42,8 +42,17 @@ S23  release hardening         ── last
 | S12 registry + asset contract | **done** — `schemas/content.py`, `content_registry.gd`, `docs/ART_ASSET_SPEC.md`, `make godot-content` |
 | S13 instantiation pipeline | **done** — `content_instantiator.gd`, routed from `ZoneBuilder` |
 | S14 Hub + Echo Lab migration | **done** — `hub_anchors.gd`, Lab gap pinned |
-| S15 room shells + connectors | **next** |
-| S16–S23 | not started |
+| S15 room shells + connectors | **grammar done; shells BLOCKED on Q1** |
+| S16 encounter/traversal vocabulary | **next** |
+| S17–S23 | not started |
+
+**Open question Q1 (`docs/design-packet-v0.9/OPEN_QUESTIONS.md`) blocks
+graybox archetype shells.** Every chamber archetype carries continuous
+generator-chosen dimensions and a `.tscn` is a fixed size; for
+`platform_path` the schema's `gap_size <= SAFE_BASE_JUMP_GAP` bound is
+how I3/I4 are enforced today, and a baked gap escapes it. The connector
+grammar half of S15 is done and shipped. Do NOT author archetype shells
+before Q1 is answered — doing so silently picks option C.
 
 S14 put a named anchor contract between the Hub's logic and its
 geometry: logic asks for `main_portal` or `shop`, `HubAnchors` decides

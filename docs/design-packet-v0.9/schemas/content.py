@@ -79,6 +79,23 @@ _TAG = Annotated[str, Field(min_length=2, max_length=32,
                             pattern=r"^[a-z][a-z0-9_]*$")]
 
 
+#: Socket kinds that join to another socket -- the ways through. Mirrors
+#: `ConnectorGrammar.JOINABLE` in GDScript.
+JOINING_KINDS = ("doorway", "corridor_end")
+
+#: Clearance beyond the player's own capsule, mirroring
+#: `ConnectorGrammar.SIDE_CLEARANCE` / `HEAD_CLEARANCE`. A doorway exactly
+#: one capsule wide is one the player scrapes through and, with any
+#: lateral velocity, does not.
+SIDE_CLEARANCE = 0.4
+HEAD_CLEARANCE = 0.2
+
+#: The narrowest and lowest opening a player can actually use. Derived
+#: from the real capsule so they cannot drift from what they protect.
+MIN_PASSABLE_WIDTH = C.PLAYER_RADIUS * 2.0 + SIDE_CLEARANCE
+MIN_PASSABLE_HEIGHT = C.PLAYER_HEIGHT + HEAD_CLEARANCE
+
+
 class Socket(Strict):
     """A named attachment point in the content's own local space.
 
@@ -99,12 +116,39 @@ class Socket(Strict):
 
     @model_validator(mode="after")
     def _joining_sockets_have_an_opening(self):
-        if self.kind in ("doorway", "corridor_end"):
+        if self.kind in JOINING_KINDS:
             if self.width <= 0.0 or self.height <= 0.0:
                 raise ValueError(
                     f"socket '{self.name}' is a {self.kind} and must "
                     f"declare a width and height; two openings cannot be "
                     f"checked for fit without them")
+        return self
+
+    @model_validator(mode="after")
+    def _a_way_through_is_a_way_the_player_fits_through(self):
+        """The S15 grammar's half of invariant I4.
+
+        An opening narrower than the player is not a tight corridor, it
+        is a wall the generator believes is a door. The seed passes every
+        other check and then cannot be finished, and it fails in a zone
+        the player is already standing in. Refusing it here costs a
+        manifest edit; refusing it there costs a run.
+
+        Bounds come from the player's real capsule (`constants.py`), so
+        they cannot drift from the thing they are protecting.
+        """
+        if self.kind not in JOINING_KINDS:
+            return self
+        if self.width < MIN_PASSABLE_WIDTH:
+            raise ValueError(
+                f"socket '{self.name}' is {self.width:.2f} m wide; the "
+                f"player needs {MIN_PASSABLE_WIDTH:.2f} m to walk "
+                f"through, so nothing could ever use it")
+        if self.height < MIN_PASSABLE_HEIGHT:
+            raise ValueError(
+                f"socket '{self.name}' is {self.height:.2f} m high; the "
+                f"player needs {MIN_PASSABLE_HEIGHT:.2f} m of headroom, "
+                f"so nothing could ever use it")
         return self
 
 

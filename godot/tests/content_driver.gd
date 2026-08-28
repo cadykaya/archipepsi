@@ -44,6 +44,11 @@ func _ready() -> void:
 	_the_pipeline_builds_an_authored_shell_from_its_metadata()
 	_an_authored_shell_that_will_not_load_degrades_instead_of_crashing()
 	_an_unregistered_chamber_type_still_builds()
+	_the_grammar_refuses_a_join_the_player_cannot_use()
+	_the_grammar_only_joins_ways_through()
+	_the_narrower_opening_decides()
+	_a_room_that_cannot_be_chained_is_named()
+	_every_shipped_shell_is_chainable_by_the_base_kit()
 	_cleanup()
 	if failures == 0:
 		print("GODOT CONTENT TESTS OK")
@@ -350,3 +355,74 @@ func _an_unregistered_chamber_type_still_builds() -> void:
 	_check(built.has("root") and built["root"] != null,
 			"an unregistered chamber type must still produce a room")
 	(built["root"] as Node3D).free()
+
+
+# --- the S15 connector grammar ---------------------------------------------
+
+func _door(name: String, w: float, h: float,
+		kind: String = "doorway") -> Dictionary:
+	return {"name": name, "kind": kind, "position": [0.0, 0.0, 0.0],
+			"width": w, "height": h}
+
+func _the_grammar_refuses_a_join_the_player_cannot_use() -> void:
+	## Invariant I4, at the joint. A doorway the player does not fit
+	## through is not a tight corridor, it is a wall the generator
+	## believes is a door.
+	var wide := _door("wide", 2.4, 3.2)
+	var narrow := _door("narrow", ConnectorGrammar.min_passable_width()
+			- 0.01, 3.2)
+	_check(not ConnectorGrammar.can_join(wide, narrow),
+			"an opening under the player's width must be refused")
+	_check(ConnectorGrammar.refusal(wide, narrow).contains("walk through"),
+			"the refusal must say what is wrong, got '%s'"
+			% ConnectorGrammar.refusal(wide, narrow))
+
+	var low := _door("low", 2.4, ConnectorGrammar.min_passable_height()
+			- 0.01)
+	_check(not ConnectorGrammar.can_join(wide, low),
+			"an opening under the player's height must be refused")
+
+	## And the ordinary case still works, or the grammar refuses the game.
+	_check(ConnectorGrammar.can_join(wide, _door("other", 2.4, 3.2)),
+			"two standard doorways must join")
+
+func _the_grammar_only_joins_ways_through() -> void:
+	var door := _door("entry", 2.4, 3.2)
+	var mount := _door("plate", 2.4, 3.2, "affordance")
+	_check(not ConnectorGrammar.can_join(door, mount),
+			"an affordance mount is not a way through and must not join")
+	_check(ConnectorGrammar.can_join(door,
+			_door("end_a", 2.4, 3.2, "corridor_end")),
+			"a room doorway must join a connector end")
+
+func _the_narrower_opening_decides() -> void:
+	## Two joined openings leave the smaller of each dimension. If the
+	## wider one decided, a 3 m doorway would launder a 0.5 m one.
+	var passage := ConnectorGrammar.passage(
+			_door("a", 3.0, 4.0), _door("b", 1.4, 2.2))
+	_check(passage == Vector2(1.4, 2.2),
+			"the passage must be the smaller of each dimension, got %s"
+			% passage)
+
+func _a_room_that_cannot_be_chained_is_named() -> void:
+	## The mandatory path is a chain: a shell with one usable opening is
+	## a dead end on it.
+	var dead_end := {"id": "shell_dead", "sockets": [_door("entry", 2.4, 3.2)]}
+	_check(not ConnectorGrammar.chainable(dead_end).is_empty(),
+			"a shell with one opening must not be chainable")
+	var through := {"id": "shell_through", "sockets": [
+			_door("entry", 2.4, 3.2), _door("exit", 2.4, 3.2)]}
+	_check(ConnectorGrammar.chainable(through).is_empty(),
+			"a shell with two usable openings must chain: %s"
+			% ConnectorGrammar.chainable(through))
+
+func _every_shipped_shell_is_chainable_by_the_base_kit() -> void:
+	## The one that matters. Whatever is in the registry today has to be
+	## something the mandatory path can actually run through, with no
+	## Echo and no exception.
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	for id: String in registry.ids_of_category("room_shell"):
+		var entry := registry.get_entry(id)
+		var why := ConnectorGrammar.chainable(entry)
+		_check(why.is_empty(), "shipped shell is not chainable: %s" % why)

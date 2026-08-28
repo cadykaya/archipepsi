@@ -306,3 +306,78 @@ def test_the_art_spec_names_every_category_the_registry_accepts():
         assert f"`{category}`" in text, (
             f"the registry accepts category '{category}' and the art spec "
             f"never mentions it")
+
+
+# --- 5: the S15 connector grammar ----------------------------------------
+
+GRAMMAR = ROOT / "godot" / "scripts" / "content" / "connector_grammar.gd"
+
+
+def test_an_opening_the_player_cannot_fit_through_is_refused():
+    """The grammar's half of I4. An opening narrower than the player is
+    not a tight corridor, it is a wall the generator believes is a door:
+    the seed passes every other check and then cannot be finished, in a
+    zone the player is already standing in."""
+    from archipepsi_bridge.schemas.content import (
+        MIN_PASSABLE_HEIGHT, MIN_PASSABLE_WIDTH)
+
+    with pytest.raises(ValidationError, match="to walk through"):
+        ContentEntry.model_validate(_entry(sockets=[
+            {"name": "entry", "kind": "doorway", "position": [0.0, 0.0, 0.0],
+             "width": MIN_PASSABLE_WIDTH - 0.01, "height": 3.2}]))
+
+    with pytest.raises(ValidationError, match="headroom"):
+        ContentEntry.model_validate(_entry(sockets=[
+            {"name": "entry", "kind": "doorway", "position": [0.0, 0.0, 0.0],
+             "width": 2.4, "height": MIN_PASSABLE_HEIGHT - 0.01}]))
+
+
+def test_the_passable_minimum_is_the_real_player_and_not_a_typed_number():
+    """If these were literals they would survive a change to the player's
+    capsule, and the first thing anyone would notice is a doorway that
+    used to work."""
+    from archipepsi_bridge.schemas import constants as C
+    from archipepsi_bridge.schemas.content import (
+        HEAD_CLEARANCE, MIN_PASSABLE_HEIGHT, MIN_PASSABLE_WIDTH,
+        SIDE_CLEARANCE)
+
+    assert MIN_PASSABLE_WIDTH == pytest.approx(
+        C.PLAYER_RADIUS * 2.0 + SIDE_CLEARANCE)
+    assert MIN_PASSABLE_HEIGHT == pytest.approx(
+        C.PLAYER_HEIGHT + HEAD_CLEARANCE)
+    # And the real doorways the game builds must clear them, or every
+    # chamber the generator makes is refused by its own contract.
+    builders = (ROOT / "godot" / "scripts" / "generation"
+                / "chamber_builders.gd").read_text()
+    door_w = float(re.search(r"const DOOR_WIDTH := ([\d.]+)", builders)[1])
+    door_h = float(re.search(r"const DOOR_HEIGHT := ([\d.]+)", builders)[1])
+    assert door_w >= MIN_PASSABLE_WIDTH
+    assert door_h >= MIN_PASSABLE_HEIGHT
+
+
+def test_both_grammars_agree_on_what_joins_and_on_the_clearances():
+    """`test_runner_coverage.py`'s trick: read the GDScript and compare.
+    A rule enforced in one language and not the other fires on a
+    developer's machine and not in the game, or the reverse -- and this
+    particular rule is the one standing between a seed and I4."""
+    from archipepsi_bridge.schemas.content import (
+        HEAD_CLEARANCE, JOINING_KINDS, SIDE_CLEARANCE)
+
+    gd = GRAMMAR.read_text()
+
+    joinable = set(re.findall(r'^\t"(\w+)": \[', gd, re.M))
+    assert joinable == set(JOINING_KINDS), (
+        f"GDScript joins {sorted(joinable)}, Python joins "
+        f"{sorted(JOINING_KINDS)}")
+
+    for name, value in (("SIDE_CLEARANCE", SIDE_CLEARANCE),
+                        ("HEAD_CLEARANCE", HEAD_CLEARANCE)):
+        found = re.search(rf"^const {name} := ([\d.]+)", gd, re.M)
+        assert found, f"{name} is no longer a const in the grammar"
+        assert float(found[1]) == pytest.approx(value), (
+            f"GDScript {name} is {found[1]}, Python's is {value}")
+
+    # Both must derive the minimum from the capsule rather than restate
+    # it, which is the only reason the two stay equal under a change.
+    assert "Constants.PLAYER_RADIUS * 2.0 + SIDE_CLEARANCE" in gd
+    assert "Constants.PLAYER_HEIGHT + HEAD_CLEARANCE" in gd
