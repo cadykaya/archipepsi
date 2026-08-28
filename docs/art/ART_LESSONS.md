@@ -245,7 +245,34 @@ caught `AssertionError` and `ValueError`. A harness that cannot recognise a
 guard firing is the same class of mistake as a filter that cannot express
 failure.
 
-### L-20 · Generated assets go stale in silence
+### L-20 · The owner's ledger is the one place a wrong number is invisible
+`ART_REVIEW.md` and `ASSET_INVENTORY.md` quote a triangle count and a
+measured size for all twenty-eight assets, both transcribed by hand. A wrong
+figure there is worse than a wrong asset: everything else has a build that
+would notice, and the ledger has only the person reading it.
+
+`tools/blender/check_docs_metrics.py` parses the tables and compares every
+number against the manifests. On its first run it caught two —
+`prop_terminal` at 1.40 m against a built 1.41, `prop_debris` at 0.59
+against 0.58. Small, and exactly the class of thing that never gets caught
+by looking.
+
+> *Do not narrate a result you have not read* has a mechanical form: have a
+> machine read it and compare.
+
+### L-21 · A restore-with-`git checkout` script eats uncommitted work
+`tools/sabotage_checks.sh` restores every file it sabotages with
+`git checkout --`, which reverts to **HEAD** — so it silently discarded a
+two-line correction to `ASSET_INVENTORY.md` that had been made and not yet
+committed. The next run then failed its own clean-tree baseline on numbers
+the author had already fixed, which reads as the check being broken rather
+than as the check having eaten the fix.
+
+It now refuses to run against a dirty tree, the same way
+`check_art_current.sh` does. **A tool that restores state must say what
+state it will destroy.**
+
+### L-22 · Generated assets go stale in silence
 A model is built by one command and its review sheet by another. A pass that
 runs only the first leaves every sheet describing an object that no longer
 exists, and **nothing fails**: the build is deterministic, the checks are
@@ -256,7 +283,7 @@ difference. On its first run it caught four manifests that predated the
 `anchor` field — and confirmed, in the same pass, that every `.glb` rebuilds
 byte-identical.
 
-### L-21 · Guards find real bugs, not just hypothetical ones
+### L-23 · Guards find real bugs, not just hypothetical ones
 `assert_fits` was written on the principle that collision truth is Godot's.
 Within one session it caught **four** real overruns: a debris pile 256 mm
 past `PROP_FOOTPRINT`, a blast-door portal 220 mm wider than the narrowest
@@ -267,7 +294,7 @@ four would have clipped through walls the character body never touches.
 
 ## Process
 
-### L-22 · Read your own render before writing down what it shows
+### L-24 · Read your own render before writing down what it shows
 Every fix in L-05, L-08, L-09, L-11, L-13 and L-14 came from **looking at
 the image**, not from the build log. The logs were green throughout: correct
 triangle counts, exact texel densities, every assertion passing. The

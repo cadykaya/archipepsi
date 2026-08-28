@@ -47,7 +47,7 @@ file accurate, and end the turn.** Do not invent work to fill a heartbeat.
 | --- | --- |
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
 | Phase | **A–D complete.** Packet, inventory, toolchain and Style Lock Batch 001 are built and rendered. |
-| Owner review | **REQUESTED — not yet received.** |
+| Owner review | **REQUESTED — not yet received.** Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
 | Next action | **Wait.** The gate above is the whole of the current instruction. |
 
 ### Objective state, last verified
@@ -56,7 +56,8 @@ file accurate, and end the turn.** Do not invent work to fill a heartbeat.
 | --- | --- |
 | `python3 tools/blender/engine_truth.py` | PASS |
 | `python3 tools/blender/palette.py` | PASS |
-| `tools/sabotage_checks.sh` | PASS — 16/16 |
+| `python3 tools/blender/check_docs_metrics.py` | PASS — every number in ART_REVIEW.md and ASSET_INVENTORY.md matches the build |
+| `tools/sabotage_checks.sh` | PASS — 19/19 |
 | `tools/check_art_current.sh` | PASS — every asset byte-identical from source |
 | Assets built | 28 models + 12 theme textures + 37 review images |
 | Composed room | 2,888 / 12,000 triangles |
@@ -94,8 +95,8 @@ for s in materials architecture props concept_epsilon concept_check \
 done
 tools/batch001_sheets.sh      # ~12 min: 28 sheets
 tools/composed_room.sh        # ~1 min: 6 room captures
-tools/check_art_current.sh
-tools/sabotage_checks.sh
+tools/check_art_current.sh    # includes the document-metric check
+tools/sabotage_checks.sh      # refuses to run against a dirty tree
 ```
 
 Toolchains are fetched per session into `.tools/` (gitignored) — see
