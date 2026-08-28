@@ -91,6 +91,8 @@ class ZoneGenerationRequest(Strict):
     })
     constraints: dict = Field(default_factory=lambda: {
         "max_chambers": C.ZONE_MAX_CHAMBERS,
+        "rooms_suggested": C.zone_room_envelope(
+            C.PROTOTYPE_CONFIG.zone_budget),
         "max_enemies_total": C.max_enemies_per_zone(
             C.PROTOTYPE_CONFIG.zone_budget),
         "max_enemies_per_chamber": C.MAX_ENEMIES_PER_CHAMBER,

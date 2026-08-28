@@ -444,8 +444,13 @@ def validate_zone(
             f"{combat_budget}-point Zone")
 
     if zone_budget is not None:
+        from ..composition import composition_errors
         from ..content_value import budget_errors
         errors.extend(budget_errors(zone, zone_budget))
+        # A Zone that holds enough content can still be a hundred
+        # identical rooms (CAMPAIGN_SCALE.md 6). Budget is necessary and
+        # not sufficient, so both run.
+        errors.extend(composition_errors(zone, zone_budget))
 
     # D1: Epsilon may SELECT among the authored shells it was offered,
     # and only those. The catalog is handed to it in the request; a shell

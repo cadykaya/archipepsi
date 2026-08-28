@@ -346,8 +346,34 @@ POSTGAME_ENABLED = True
 ZONE_TARGET_CHECKS = 3
 ZONE_MAX_CHECKS = 3
 ZONE_MIN_CHECKS = 2       # 1 only when exactly one eligible Check remains
-ZONE_MAX_CHAMBERS = 6
+#: The engine's ceiling on rooms in one Zone, NOT the composition target
+#: (CAMPAIGN_SCALE.md 7).
+#:
+#: Six was the prototype's shape, and it stopped a 1000-point Zone from
+#: existing at all: fifteen Checks capped at three per room need five
+#: rooms before a single corridor, fight or quiet space is added. This is
+#: now a safety limit -- the point past which a Zone stops being a level
+#: and starts being a memory problem -- and nothing should be designing
+#: toward it.
+ZONE_MAX_CHAMBERS = 40
 ZONE_MIN_CHAMBERS = 1
+
+#: Advisory room count for a budget, which is what Epsilon is TOLD.
+#:
+#: An envelope, not a rule: a Zone may be fewer large complicated spaces
+#: or more small ones, provided the content budget and the composition
+#: constraints hold. Deliberately not validated -- validating it would
+#: make it the rule it is explicitly not, and the thing that actually
+#: matters (is there enough real content, and is it varied) is checked
+#: directly.
+ROOMS_PER_BUDGET_POINT = 15 / 1000
+
+
+def zone_room_envelope(zone_budget: int) -> tuple[int, int]:
+    """Roughly how many meaningful spaces a Zone of this size wants."""
+    middle = zone_budget * ROOMS_PER_BUDGET_POINT
+    return (max(ZONE_MIN_CHAMBERS, round(middle * 0.7)),
+            min(ZONE_MAX_CHAMBERS, round(middle * 1.35)))
 
 #: The narrowest chamber each affordance tag can be built in (ECHOES 13.2).
 #:

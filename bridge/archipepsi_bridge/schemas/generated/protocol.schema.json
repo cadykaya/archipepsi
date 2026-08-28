@@ -4576,7 +4576,7 @@
                 }
               ]
             },
-            "maxItems": 6,
+            "maxItems": 40,
             "minItems": 1,
             "title": "Chambers",
             "type": "array"
@@ -8456,7 +8456,7 @@
                 }
               ]
             },
-            "maxItems": 6,
+            "maxItems": 40,
             "minItems": 1,
             "title": "Chambers",
             "type": "array"
