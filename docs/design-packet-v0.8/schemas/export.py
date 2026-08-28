@@ -47,7 +47,7 @@ except ImportError:  # pragma: no cover
 #: and the DEFAULT_* numbers still export, because validating a received
 #: value against the tested range is exactly what the client should do.
 GD_SKIP = ("ENEMY_STATS", "TIER_BOUNDS", "DEFAULT_CONFIG",
-           "PROTOTYPE_CONFIG")
+           "PROTOTYPE_CONFIG", "ENEMY_ENVELOPES")
 
 
 def _gd_literal(value) -> str:
@@ -129,6 +129,34 @@ def export_constants_gd() -> str:
               "", "# Enemy stat block, keyed by archetype.", "const ENEMY_STATS = {"]
     for archetype, stats in C.ENEMY_STATS.items():
         lines.append(f'\t"{archetype}": {_gd_literal(stats)},')
+    lines.append("}")
+
+    # Physical envelopes for the whole approved family (art requirement 7).
+    # Emitted by hand rather than through `_gd_literal` so the field NAMES
+    # cross the boundary: `enemy.gd` used to hold three magic vectors, and
+    # a positional triple is exactly how a width and a depth get swapped.
+    lines += [
+        "",
+        "# Enemy physical envelopes, keyed by role. PHYSICAL ONLY -- an",
+        "# envelope says how much room a role takes and whether it walks or",
+        "# holds a height, never what it does. `ENEMY_STATS` is behaviour,",
+        "# and it covers fewer roles on purpose.",
+        "#",
+        "# `size` is Godot's Vector3(width, height, depth). `centre_y` is",
+        "# where the collider's centre sits above the floor -- half the",
+        "# height for a walker, the hover height for a flyer.",
+        "const ENEMY_ENVELOPES = {",
+    ]
+    for role in C.ENEMY_ROLES:
+        envelope = C.ENEMY_ENVELOPES[role]
+        lines.append(
+            f'	"{role}": {{'
+            f'"size": Vector3{envelope.godot_size()}, '
+            f'"centre_y": {envelope.centre_y!r}, '
+            f'"bottom_y": {envelope.bottom_y!r}, "top_y": {envelope.top_y!r}, '
+            f'"lane_width": {envelope.lane_width!r}, '
+            f'"hover_height": {envelope.hover_height!r}, '
+            f'"flying": {"true" if envelope.is_flying else "false"}}},')
     lines.append("}")
 
     # The Action catalog, so the GDScript runner can be checked against the

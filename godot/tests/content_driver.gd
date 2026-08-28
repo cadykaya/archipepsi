@@ -62,6 +62,8 @@ func _run() -> void:
 	_a_scene_missing_a_required_part_is_named()
 	_a_theme_cannot_move_an_enemy_hitbox()
 	_an_enemy_hitbox_is_a_function_of_its_archetype()
+	_every_built_collider_matches_the_envelope_contract()
+	_the_envelope_table_covers_the_whole_approved_family()
 	_no_visual_anywhere_carries_collision()
 	_a_shell_that_tells_the_truth_is_accepted()
 	_a_shell_that_lies_about_its_geometry_is_refused()
@@ -1083,3 +1085,72 @@ func _the_challenge_marker_hook_is_dormant_not_gone() -> void:
 		_check(not text.contains("challenge_marker"),
 				"%s reads challenge_marker; no progression may depend on "
 				% source + "a hook whose semantics are undefined")
+
+
+## Art requirement 7. The contract is only worth something if the thing
+## the engine actually BUILDS is the thing the contract describes --
+## reading `enemy.gd` proves it asks for the right number, not that the
+## collider ends up there. So this measures the node.
+func _every_built_collider_matches_the_envelope_contract() -> void:
+	for archetype: String in ARCHETYPES:
+		var envelope: Dictionary = Constants.ENEMY_ENVELOPES[archetype]
+		var enemy := Enemy.create(archetype, "concrete_facility")
+		add_child(enemy)
+		var shape: CollisionShape3D = null
+		for child in enemy.get_children():
+			if child is CollisionShape3D:
+				shape = child
+				break
+		_check(shape != null, "'%s' has no CollisionShape3D" % archetype)
+		if shape != null:
+			var box := shape.shape as BoxShape3D
+			_check(box != null,
+					"'%s' collider is not a BoxShape3D" % archetype)
+			if box != null:
+				var want: Vector3 = envelope["size"]
+				_check(box.size.is_equal_approx(want),
+						"'%s' collider is %.3v, contract says %.3v"
+						% [archetype, box.size, want])
+			_check(absf(shape.position.y - float(envelope["centre_y"]))
+					< 0.001,
+					"'%s' collider centre is at y=%.3f, contract says %.3f"
+					% [archetype, shape.position.y,
+						float(envelope["centre_y"])])
+		# ...and the enemy carries its own envelope, so anything that needs
+		# the role's footprint asks rather than measuring the tree back out.
+		_check(enemy.envelope.get("size", Vector3.ZERO)
+				== envelope["size"],
+				"'%s' did not keep its envelope" % archetype)
+		enemy.free()
+
+## The approved family is TEN. This suite only builds the three that have
+## behaviour, so without this the export could quietly shrink back to the
+## prototype trio and every test above would still pass.
+func _the_envelope_table_covers_the_whole_approved_family() -> void:
+	var approved := ["melee", "ranged", "brute", "charger", "bulwark",
+			"scuttler", "artillery", "beacon", "diver", "drifter"]
+	for role: String in approved:
+		_check(Constants.ENEMY_ENVELOPES.has(role),
+				"'%s' has no envelope; the approved art family is ten "
+				% role + "roles and must not be reduced to three")
+	_check(Constants.ENEMY_ENVELOPES.size() == approved.size(),
+			"ENEMY_ENVELOPES holds %d roles, expected %d"
+			% [Constants.ENEMY_ENVELOPES.size(), approved.size()])
+	# Floor vs flying has to survive the crossing too: a flyer whose
+	# `centre_y` came across as half its height would be buried.
+	for role: String in ["diver", "drifter"]:
+		var envelope: Dictionary = Constants.ENEMY_ENVELOPES[role]
+		_check(bool(envelope["flying"]), "'%s' is not marked flying" % role)
+		var size: Vector3 = envelope["size"]
+		# `bottom_y` is what flying MEANS physically: the collider's
+		# underside clear of the floor. Asserted directly rather than by
+		# comparing a hover against half a height, which is a float
+		# comparison that can land either way at the boundary.
+		_check(float(envelope["bottom_y"]) > 0.0,
+				"'%s' rests on the floor; it is not flying" % role)
+	for role: String in ["melee", "brute", "bulwark", "scuttler"]:
+		_check(not bool(Constants.ENEMY_ENVELOPES[role]["flying"]),
+				"'%s' is marked flying" % role)
+		_check(is_zero_approx(
+				float(Constants.ENEMY_ENVELOPES[role]["bottom_y"])),
+				"'%s' walks but does not touch the floor" % role)

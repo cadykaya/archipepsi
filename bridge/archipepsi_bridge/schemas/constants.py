@@ -621,6 +621,168 @@ ENEMY_STATS = {
 ENEMY_AGGRO_RADIUS = 18.0
 RANGED_PROJECTILE_SPEED = 14.0
 
+
+# --------------------------------------------------------------------------
+# Enemy physical envelopes (art requirement 7)
+# --------------------------------------------------------------------------
+# The approved enemy production family is TEN roles. `enemy.gd` knew three,
+# and it knew their colliders as three magic vectors inside a `match kind:`
+# in `create()` -- so a model built to a declared box and a collider built
+# to a literal could disagree, and nothing would notice until something
+# clipped through a wall.
+#
+# One table, here, because this is the file the art toolchain already reads
+# (`tools/blender/engine_truth.py` imports it rather than transcribing it).
+# An envelope is PHYSICAL INTEGRATION ONLY: how much room the role occupies
+# and whether it stands on the floor or holds a height. It says nothing
+# about what the role DOES -- see `ENEMY_ARCHETYPES` below for the
+# separation, which is deliberate and load bearing.
+
+#: Axis order, stated once because it is the likeliest silent disagreement.
+#:
+#: Godot is Y-up and takes `Vector3(width, height, depth)`. The authoring
+#: tool is Z-up and writes `[width, depth, height]`. The same three numbers
+#: in a different order, and a transposed height is a model that fits a
+#: doorway on one side of the seam and not the other. So an envelope is
+#: NAMED fields, and both orders are derived from them rather than typed.
+@dataclass(frozen=True)
+class EnemyEnvelope:
+    """How much space one enemy role occupies, and where it sits.
+
+    `hover_height` is the height of the collider's CENTRE above the floor,
+    and zero means the role walks. Centre rather than base on purpose: a
+    flyer described by its base can be given a height that puts its crown
+    through a doorway, and the reader cannot tell which was meant.
+    """
+    width: float
+    height: float
+    depth: float
+    hover_height: float = 0.0
+
+    def __post_init__(self):
+        for field, value in (("width", self.width), ("height", self.height),
+                             ("depth", self.depth)):
+            if not 0.1 <= value <= 6.0:
+                raise ValueError(
+                    f"{field} {value} is outside the buildable range")
+        if self.hover_height < 0.0:
+            raise ValueError("hover_height is a height above the floor")
+        if 0.0 < self.hover_height <= self.height / 2.0:
+            raise ValueError(
+                "a hovering enemy whose centre is at or below its own "
+                "half-height is resting on the floor; it walks, so "
+                "hover_height is 0")
+
+    @property
+    def is_flying(self) -> bool:
+        return self.hover_height > 0.0
+
+    @property
+    def centre_y(self) -> float:
+        """Where the collider's centre sits above the floor."""
+        return self.hover_height if self.is_flying else self.height / 2.0
+
+    @property
+    def bottom_y(self) -> float:
+        """The lowest point the role occupies.
+
+        Exactly 0.0 for a walker, and strictly above it for a flyer. This
+        is what "flying" MEANS physically, so it is the thing to assert
+        rather than comparing a hover height against half a height and
+        hoping the floats land the right way.
+        """
+        return self.centre_y - self.height / 2.0
+
+    @property
+    def top_y(self) -> float:
+        """The highest point the role occupies. What a lintel must clear."""
+        return self.centre_y + self.height / 2.0
+
+    @property
+    def lane_width(self) -> float:
+        """The corridor width this role needs. The wider ground axis."""
+        return max(self.width, self.depth)
+
+    def godot_size(self) -> tuple[float, float, float]:
+        """`Vector3(x, y, z)` for a `BoxShape3D`."""
+        return (self.width, self.height, self.depth)
+
+    def authoring_size(self) -> tuple[float, float, float]:
+        """`[X, Y, Z]` as the Z-up authoring tool writes a bounding box."""
+        return (self.width, self.depth, self.height)
+
+
+#: The approved production family (ART_REVIEW Batch 002, `PASS`). Every
+#: envelope is the box the art lane declared for the role, so a model and a
+#: collider cannot be built to different numbers.
+#:
+#: THIS IS NOT THE LIST OF ENEMIES A ZONE MAY CONTAIN. It is the list of
+#: roles that have an agreed physical envelope. `ENEMY_ARCHETYPES` is the
+#: placeable set, and it is smaller.
+ENEMY_ENVELOPES = {
+    # -- the three with behaviour, unchanged from `enemy.gd`'s literals
+    "melee":     EnemyEnvelope(width=0.8, height=1.6, depth=0.8),
+    "ranged":    EnemyEnvelope(width=0.7, height=1.4, depth=0.7),
+    "brute":     EnemyEnvelope(width=1.8, height=2.6, depth=1.8),
+    # -- ground roles awaiting behaviour
+    "charger":   EnemyEnvelope(width=0.9, height=1.05, depth=1.9),
+    "bulwark":   EnemyEnvelope(width=1.45, height=2.05, depth=0.85),
+    "scuttler":  EnemyEnvelope(width=1.3, height=0.62, depth=1.2),
+    "artillery": EnemyEnvelope(width=1.25, height=1.55, depth=1.25),
+    "beacon":    EnemyEnvelope(width=0.62, height=2.2, depth=0.62),
+    # -- flyers. `hover_height` is the collider CENTRE above the floor.
+    "diver":     EnemyEnvelope(width=0.7, height=0.5, depth=1.2,
+                               hover_height=1.9),
+    "drifter":   EnemyEnvelope(width=1.35, height=0.95, depth=1.35,
+                               hover_height=2.55),
+}
+
+#: The whole approved family, in a stable order.
+ENEMY_ROLES = tuple(ENEMY_ENVELOPES)
+
+#: Roles that hold a height instead of standing on the floor. Explicit
+#: rather than inferred at each call site, because "is this a flyer" is
+#: asked by spawn placement, by ceiling clearance and by the art toolchain,
+#: and three inferences are three chances to disagree.
+FLYING_ENEMY_ROLES = tuple(
+    role for role, envelope in ENEMY_ENVELOPES.items() if envelope.is_flying)
+GROUND_ENEMY_ROLES = tuple(
+    role for role, envelope in ENEMY_ENVELOPES.items()
+    if not envelope.is_flying)
+
+
+#: The tallest thing that can WALK INTO a slab.
+#:
+#: `chamber_builders.SECRET_UNDERSIDE_MIN` derives from this: a ledge whose
+#: underside does not clear the tallest walker becomes a wall that walker
+#: walks into. Flyers are excluded on purpose -- a flyer is steered and can
+#: descend, so a low soffit is a route it does not take rather than a wall
+#: it collides with.
+TALLEST_GROUND_ACTOR = max(
+    ENEMY_ENVELOPES[role].top_y for role in GROUND_ENEMY_ROLES)
+
+#: The tallest thing in the family, flyers included. NOT the number the
+#: secret-ledge geometry uses, and deliberately separate: the drifter's
+#: crown sits at 3.025 m, above the 2.6 m every room was built around, and
+#: collapsing the two would move generated geometry for the sake of a role
+#: that has no behaviour yet. See `docs/ART_INTEGRATION.md`.
+TALLEST_ACTOR_INCLUDING_FLYERS = max(
+    envelope.top_y for envelope in ENEMY_ENVELOPES.values())
+
+
+def enemy_envelope(role: str) -> EnemyEnvelope:
+    """The envelope for a role. Raises rather than guessing a default.
+
+    A missing envelope is a role somebody added to one list and not the
+    other, and a default box would hide it until something clipped.
+    """
+    try:
+        return ENEMY_ENVELOPES[role]
+    except KeyError:
+        raise KeyError(
+            f"'{role}' has no agreed physical envelope; add one to "
+            "ENEMY_ENVELOPES rather than assuming a box") from None
+
 # --------------------------------------------------------------------------
 # Combat scale (CAMPAIGN_SCALE.md 8)
 # --------------------------------------------------------------------------

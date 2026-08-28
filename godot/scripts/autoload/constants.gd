@@ -24,6 +24,7 @@ const ENEMIES_PER_BUDGET_POINT = 0.07
 const ENEMY_AGGRO_RADIUS = 18.0
 const ENEMY_ARCHETYPES = ["melee", "ranged", "brute"]
 const ENEMY_FALL_KILL_Y = -30.0
+const ENEMY_ROLES = ["melee", "ranged", "brute", "charger", "bulwark", "scuttler", "artillery", "beacon", "diver", "drifter"]
 const EPSILON_COIN_COUNT = 10
 const EPSILON_STATIC_COUNT = 18
 const FALL_KILL_Y = -30.0
@@ -36,10 +37,12 @@ const FIRST_NON_FINALE_LOCATION_ID = 89100001
 const FLAG_PROGRESSION = 1
 const FLAG_TRAP = 4
 const FLAG_USEFUL = 2
+const FLYING_ENEMY_ROLES = ["diver", "drifter"]
 const GOAL_LOCATION_ID = 89100030
 const GRAVITY = 24.0
 const GRAVITY_MULT_MAX = 1.0
 const GRAVITY_MULT_MIN = 0.35
+const GROUND_ENEMY_ROLES = ["melee", "ranged", "brute", "charger", "bulwark", "scuttler", "artillery", "beacon"]
 const ITEM_ID_BASE = 89200000
 const ITEM_ID_EPSILON_COIN = 89200002
 const ITEM_ID_EPSILON_STATIC = 89200003
@@ -113,6 +116,8 @@ const STATIC_PULSE_DPS = 17.142857142857142
 const STATIC_PULSE_RANGE = 40.0
 const STAT_STACK_MAX = 4.0
 const STAT_STACK_MIN = 0.25
+const TALLEST_ACTOR_INCLUDING_FLYERS = 3.025
+const TALLEST_GROUND_ACTOR = 2.6
 const TEXTURE_SIZE_DEFAULT = 64
 const TEXTURE_SIZE_MAX = 128
 const TEXTURE_SIZE_MIN = 32
@@ -160,6 +165,27 @@ const ENEMY_STATS = {
 	"melee": {"hp": 24.0, "damage": 6.0, "cooldown": 1.0, "speed": 4.0, "reach": 2.0},
 	"ranged": {"hp": 16.0, "damage": 8.0, "cooldown": 2.0, "speed": 0.0, "reach": 40.0},
 	"brute": {"hp": 120.0, "damage": 18.0, "cooldown": 1.6, "speed": 2.2, "reach": 2.5},
+}
+
+# Enemy physical envelopes, keyed by role. PHYSICAL ONLY -- an
+# envelope says how much room a role takes and whether it walks or
+# holds a height, never what it does. `ENEMY_STATS` is behaviour,
+# and it covers fewer roles on purpose.
+#
+# `size` is Godot's Vector3(width, height, depth). `centre_y` is
+# where the collider's centre sits above the floor -- half the
+# height for a walker, the hover height for a flyer.
+const ENEMY_ENVELOPES = {
+	"melee": {"size": Vector3(0.8, 1.6, 0.8), "centre_y": 0.8, "bottom_y": 0.0, "top_y": 1.6, "lane_width": 0.8, "hover_height": 0.0, "flying": false},
+	"ranged": {"size": Vector3(0.7, 1.4, 0.7), "centre_y": 0.7, "bottom_y": 0.0, "top_y": 1.4, "lane_width": 0.7, "hover_height": 0.0, "flying": false},
+	"brute": {"size": Vector3(1.8, 2.6, 1.8), "centre_y": 1.3, "bottom_y": 0.0, "top_y": 2.6, "lane_width": 1.8, "hover_height": 0.0, "flying": false},
+	"charger": {"size": Vector3(0.9, 1.05, 1.9), "centre_y": 0.525, "bottom_y": 0.0, "top_y": 1.05, "lane_width": 1.9, "hover_height": 0.0, "flying": false},
+	"bulwark": {"size": Vector3(1.45, 2.05, 0.85), "centre_y": 1.025, "bottom_y": 0.0, "top_y": 2.05, "lane_width": 1.45, "hover_height": 0.0, "flying": false},
+	"scuttler": {"size": Vector3(1.3, 0.62, 1.2), "centre_y": 0.31, "bottom_y": 0.0, "top_y": 0.62, "lane_width": 1.3, "hover_height": 0.0, "flying": false},
+	"artillery": {"size": Vector3(1.25, 1.55, 1.25), "centre_y": 0.775, "bottom_y": 0.0, "top_y": 1.55, "lane_width": 1.25, "hover_height": 0.0, "flying": false},
+	"beacon": {"size": Vector3(0.62, 2.2, 0.62), "centre_y": 1.1, "bottom_y": 0.0, "top_y": 2.2, "lane_width": 0.62, "hover_height": 0.0, "flying": false},
+	"diver": {"size": Vector3(0.7, 0.5, 1.2), "centre_y": 1.9, "bottom_y": 1.65, "top_y": 2.15, "lane_width": 1.2, "hover_height": 1.9, "flying": true},
+	"drifter": {"size": Vector3(1.35, 0.95, 1.35), "centre_y": 2.55, "bottom_y": 2.0749999999999997, "top_y": 3.025, "lane_width": 1.35, "hover_height": 2.55, "flying": true},
 }
 
 # The closed Action catalog (all 28), in catalog order.

@@ -1,9 +1,16 @@
 class_name Enemy
 extends CharacterBody3D
-## All three archetypes in one script, stat-driven from Constants.ENEMY_STATS.
+## Stat-driven from Constants.ENEMY_STATS, sized from
+## Constants.ENEMY_ENVELOPES.
 ## melee: walks at the player, short-range hits.
 ## ranged: holds position, fires slow visible projectiles.
 ## brute: large, slow, high-health — the POC boss.
+##
+## Those three are the roles that can be PLACED. The approved art family is
+## ten (`Constants.ENEMY_ROLES`), and every one of them has an agreed
+## physical envelope so models can be built against it — but a role with an
+## envelope and no stat block still has no behaviour, and `create()` refuses
+## it rather than inventing one. Physical integration first (art req 7).
 ##
 ## Direct steering plus collision recovery; no navmesh (EPSILON_SPEC §5).
 ## An enemy below ENEMY_FALL_KILL_Y counts as dead, so a steered-off enemy
@@ -12,6 +19,10 @@ extends CharacterBody3D
 signal enemy_died(enemy: Enemy)
 
 var archetype := "melee"
+## This role's physical envelope, from `Constants.ENEMY_ENVELOPES`. Read by
+## anything that needs to know how much room this enemy takes without
+## measuring its collider back out of the tree.
+var envelope: Dictionary = {}
 var hp := 24.0
 ## Starting HP, kept so an ability can ask how heavy this is.
 ## `grapple_pull_target` refuses a brute by asking this rather
@@ -40,20 +51,30 @@ static func create(kind: String, theme: String) -> Enemy:
 	enemy.set_script(load("res://scripts/enemies/enemy.gd"))
 	enemy.archetype = kind
 	enemy.name = "Enemy_%s" % kind
+	assert(Constants.ENEMY_STATS.has(kind),
+			"'%s' has a physical envelope but no behaviour; " % kind
+			+ "an approved art role is not yet a placeable enemy")
 	var block: Dictionary = Constants.ENEMY_STATS[kind]
 	enemy.stats = block
 	enemy.hp = float(block["hp"])
 	enemy.max_hp = float(block["hp"])
 
-	var size := Vector3(0.8, 1.6, 0.8)
-	match kind:
-		"ranged": size = Vector3(0.7, 1.4, 0.7)
-		"brute": size = Vector3(1.8, 2.6, 1.8)
+	# The envelope is CONTRACT, not a literal (art requirement 7). It used
+	# to be three magic vectors in this match, while the art lane built
+	# models to boxes it declared in a manifest -- two numbers for one
+	# thing, and a model that clips through a door frame is the first time
+	# anyone finds out. Both sides now read Constants.ENEMY_ENVELOPES.
+	var envelope: Dictionary = Constants.ENEMY_ENVELOPES[kind]
+	var size: Vector3 = envelope["size"]
+	enemy.envelope = envelope
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
 	box.size = size
 	shape.shape = box
-	shape.position = Vector3(0, size.y / 2.0, 0)
+	# Half-height for a walker, hover height for a flyer. Asking the
+	# contract rather than assuming size.y / 2.0, which is only true of
+	# something standing on the floor.
+	shape.position = Vector3(0, float(envelope["centre_y"]), 0)
 	enemy.add_child(shape)
 
 	# Each archetype gets its own silhouette, because telling a sniper
