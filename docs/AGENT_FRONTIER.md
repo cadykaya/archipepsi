@@ -48,8 +48,16 @@ S23  release hardening         ── last
 | S18 enemy/player/affordance visual interfaces | **done** — `visual_interface.gd` |
 | S19 material/VFX/audio/lighting vocabularies | **done** — `test_epsilon_vocabulary.py` |
 | S21 settings/input/a11y | **done** — `player_settings.gd` |
+| S22 packaging/first-run | **done** — `make doctor`, secrets tests |
 | S20 campaign spine | **next** (expect human-decision gates) |
-| S22–S23 | not started |
+| S23 release hardening | not started |
+
+S22 added `make doctor` (a fresh-clone preflight that separates
+REQUIRED from optional — no API key is reported as fine, because the
+fallback provider is what a player without one plays) and the secrets
+tests: no tracked file may contain a key-shaped string, `.env` must be
+ignored AND git must agree, and no third-party binary may be tracked
+without a licensing decision (Q2).
 
 S21 holds two rules: a preference is never campaign truth (asserted
 against `CampaignSnapshot` and `CampaignSave` by reading the preference

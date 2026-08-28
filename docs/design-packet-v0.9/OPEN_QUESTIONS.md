@@ -90,3 +90,38 @@ decision most, because it moves authority away from Epsilon.
 No graybox archetype shells. Authoring five fixed-size shells before
 this is decided would either bake the answer in as option C without
 anyone choosing it, or produce five scenes that get rebuilt.
+
+
+---
+
+## Q2 — What licence covers bundled third-party assets and models?
+
+**Status:** not blocking anything yet. Recorded because the moment it
+blocks something is the moment a decision is needed, and that moment is
+usually "we already committed the file".
+
+Nothing third-party is bundled today. `test_packaging.py` fails the
+instant a `.glb`, `.wav`, `.ttf` or similar becomes tracked, and its
+message points here.
+
+### What needs deciding, when it comes up
+
+1. **Licence compatibility.** What licence is Archipepsi released under,
+   and what asset licences are compatible with it? CC0 and CC-BY are
+   usually fine; CC-BY-NC and most asset-store licences are not
+   compatible with an open release.
+2. **Attribution.** CC-BY needs a credits file that ships with the game,
+   not just a line in the README.
+3. **Fonts.** Almost always separately licensed, and almost always the
+   thing that gets missed.
+4. **AI-generated assets**, if any are ever considered: whose, under
+   what terms, and whether that is consistent with
+   `AUTHORED_CONTENT.md` at all -- the answer there is probably "no",
+   since the whole document exists to say humans make the alphabet.
+
+### What is already built
+
+- No third-party binary is tracked, and a test enforces it.
+- API keys come only from the environment; `.env` is ignored and git
+  agrees; a test refuses any tracked file containing a key-shaped
+  string.

@@ -107,6 +107,9 @@ jobs:
       - name: Godot project imports
         run: make godot-import
 
+      - name: Preflight
+        run: make doctor
+
       - name: Headless Godot suites
         run: |
           make godot-test
