@@ -793,3 +793,62 @@ engineering decision about a reserved bay.
 Status: **PENDING** — production work, inheriting locked DNA. Flagged for a
 look rather than a verdict; the Hub is a permanent space and permanent
 spaces are worth one.
+
+## Batch 004 — the Echo Lab
+
+Tier 1's other permanent space. The Lab is a 16 × 26 × 6 m annexe you reach
+by walking, which is what makes *base movement can always leave the Lab*
+structural rather than a rule to remember — and it is the room in the game
+with the most untextured primitives in it. Every fixture in
+`hub/lab_fixtures.gd` is a `BoxMesh` or `CapsuleMesh` with a `glow_material`
+on it.
+
+Nothing here establishes new visual DNA.
+
+### The Lab is a MEASURING ROOM, and that decides everything
+
+The Hub is where you are; the Lab is where you find out what you can do.
+Every fixture answers a question about the player's own movement, so its
+numbers have to be **exactly** the engine's — and they are read from
+`engine_truth`, not remembered.
+
+| ID | Tris | Size (m) | What it answers |
+| --- | --- | --- | --- |
+| `lab_dummy` | 320 | 0.90 × 0.79 × 1.78 | nothing. It is what you practise ON |
+| `lab_height_markers` | 132 | 0.46 × 7.10 × 6.00 | how high did that send me — against 1.00 m and 1.333 m |
+| `lab_runway_measure` | 96 | 3.12 × 4.05 × 0.09 | how far did that carry me — against 4.667 m |
+| `lab_hazard` | 132 | 1.54 × 1.54 × 1.60 | what happens if I touch it |
+| `lab_moving_target` | 232 | 0.90 × 0.63 × 1.41 | can I lead a moving shot |
+| `lab_reset_pad` | 156 | 1.60 × 1.60 × 0.36 | how do I put the room back |
+| `lab_notice_board` | 104 | 3.54 × 0.40 × 1.39 | what changed since last time |
+
+The two graduated fixtures carry no decorative marks. On the height wall
+every metre gets a plain tick and only **1.000 m** (`MAX_VERTICAL_STEP`, what
+you can walk up) and **1.333 m** (`JUMP_APEX`, what a jump gets you without a
+trait) are called out — wider, projecting further, and lit. A wall where all
+the marks look equally important is a wall you have to count. On the runway
+module the **4.667 m** `JUMP_FLAT_REACH` mark falls 0.667 m into the second
+module, which is why the module is `module_floor` anchored: laid the other
+way round it would put the mark at 3.33.
+
+### Where hazard orange actually belongs
+
+`lab_hazard` is the one object in the game that is permanently a telegraph.
+A fixture whose entire job is *this will hurt you* is exactly what the
+hazard family is reserved for — which is the same rule that says it has no
+business on an enemy's body. It has real diagonal stripes, snapped to whole
+texels, and an emitter at the family's **orange** step rather than its pale
+salmon one.
+
+The training dummy deliberately gets neither. It wears the facility's
+painted plate rather than `enemy_skin`, has no optic, and its silhouette is
+a symmetrical post — the one shape the entire enemy roster avoids. A dummy
+that reads as an enemy teaches the player to shoot the wrong silhouette.
+
+### Evidence
+
+Shot with the new camera rig from `tools/shots/batch004_lab.json`: `L_*.png`,
+50 mm at three-quarter for the objects, 35 mm square-on for the two
+graduated fixtures — what they are FOR is being read straight.
+
+Status: **PENDING** — production work inheriting locked DNA.

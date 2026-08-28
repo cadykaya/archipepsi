@@ -43,12 +43,16 @@ ORDER = [
     ("batch003", "hub",
      ["hub_shop_counter", "hub_archive_terminal", "hub_abandon_station",
       "hub_campaign_board", "hub_controls_board"]),
+    ("batch004", "lab",
+     ["lab_dummy", "lab_height_markers", "lab_runway_measure", "lab_hazard",
+      "lab_moving_target", "lab_reset_pad", "lab_notice_board"]),
 ]
 CAT = {"epsilon": "hero", "check": "hero", "portal": "interactable",
        "enemy": "enemy", "anchor": "interactable", "arch": "module",
-       "prop": "prop", "hub": "fixture"}
+       "prop": "prop", "hub": "fixture", "lab": "fixture"}
 LEVEL = {"epsilon": "L4", "check": "L2", "portal": "L2", "enemy": "L0",
-         "anchor": "L2", "arch": "L1", "prop": "L0", "hub": "L2"}
+         "anchor": "L2", "arch": "L1", "prop": "L0", "hub": "L2",
+         "lab": "L1"}
 
 
 def main():
@@ -69,7 +73,8 @@ def main():
         # of a decision, not one this script is entitled to make, and if a
         # later asset is built before its own review it does not go in this
         # table until it has one.
-        rev = {"batch001": "B1R", "batch002": "B2"}.get(batch, "B3")
+        rev = {"batch001": "B1R", "batch002": "B2",
+               "batch003": "B3"}.get(batch, "B4")
         for i in ids:
             m = manifests[i]
             s = m["size"]

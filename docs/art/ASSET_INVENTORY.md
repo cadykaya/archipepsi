@@ -85,6 +85,13 @@ These are the vocabulary everything after them inherits.
 | `hub_abandon_station` | L2 | fixture | 92 | 1.12 × 1.00 × 1.27 | floor | B3 | B3 | PEND |
 | `hub_campaign_board` | L2 | fixture | 104 | 5.48 × 0.37 × 3.18 | centre | B3 | B3 | PEND |
 | `hub_controls_board` | L2 | fixture | 104 | 4.28 × 0.37 × 2.98 | centre | B3 | B3 | PEND |
+| `lab_dummy` | L1 | fixture | 320 | 0.90 × 0.79 × 1.78 | floor | B4 | B4 | PEND |
+| `lab_height_markers` | L1 | fixture | 132 | 0.46 × 7.10 × 6.00 | floor | B4 | B4 | PEND |
+| `lab_runway_measure` | L1 | fixture | 96 | 3.12 × 4.05 × 0.09 | module_floor | B4 | B4 | PEND |
+| `lab_hazard` | L1 | fixture | 132 | 1.54 × 1.54 × 1.60 | floor | B4 | B4 | PEND |
+| `lab_moving_target` | L1 | fixture | 232 | 0.90 × 0.63 × 1.41 | floor | B4 | B4 | PEND |
+| `lab_reset_pad` | L1 | fixture | 156 | 1.60 × 1.60 × 0.36 | floor | B4 | B4 | PEND |
+| `lab_notice_board` | L1 | fixture | 104 | 3.54 × 0.40 × 1.39 | centre | B4 | B4 | PEND |
 
 | Theme material | Roles built |
 | --- | --- |

@@ -52,7 +52,7 @@ with the approved authored vocabulary come first.
 
 | # | Tier | State |
 | --- | --- | --- |
-| 1 | Hub / permanent spaces, and the Epsilon installation | **in progress** — installation locked; Batch 003 built the Hub's eight fixtures and modules. Echo Lab next |
+| 1 | Hub / permanent spaces, and the Epsilon installation | **done for now** — installation locked, Batch 003 built the Hub's eight fixtures and modules, Batch 004 the Lab's seven. Shells themselves remain `hub.gd` / `echo_lab.gd` geometry |
 | 2 | Core interactables | Check A and the portal DNA are locked; instances to build |
 | 3 | Common architecture | 9 modules exist; the kit is not complete |
 | 4 | The enemy production family | 10 roles concepted; production versions to build |
@@ -83,7 +83,7 @@ line rather than inventing work.
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
 | Phase | **STYLE LOCK PASSED — production.** Every style batch is reviewed and every verdict recorded in `ART_REVIEW.md`; there are no open `PENDING` entries. |
 | Owner review | Style Lock passed 2026-08-28. Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
-| Next action | **Tier 1, continued: the Echo Lab.** Its shell, dummy, height markers, runway measure, gap and fixtures are all still `hub/echo_lab.gd` primitives. |
+| Next action | **Tier 2: core interactables.** The Check and the portal have locked DNA and one built instance each; `ASSET_INVENTORY.md` §2 lists what is still a `BoxMesh`. |
 
 ### What the Batch 002 review LOCKED
 
@@ -140,7 +140,7 @@ grow again until Style Lock passes.
 | `python3 tools/blender/check_docs_metrics.py` | PASS — every number in ART_REVIEW.md and ASSET_INVENTORY.md matches the build |
 | `tools/sabotage_checks.sh` | see the commit for the run |
 | `tools/check_art_current.sh` | PASS — every asset byte-identical from source |
-| Assets built | 48 models + 16 theme textures + 7 prop skins + review images in `review/batch001`, `batch002`, `batch003` |
+| Assets built | 55 models + 16 theme textures + 7 prop skins + review images in `review/batch001`, `batch002`, `batch003` |
 | Composed room | 3,272 / 12,000 triangles |
 
 ### What a heartbeat cannot see
@@ -204,7 +204,7 @@ the pieces make a place, which is the question the other 31 sheets cannot.
 B=.tools/blender/blender
 for s in materials architecture props concept_epsilon concept_check \
          concept_portal concept_enemy concept_anchor \
-         batch002_enemies epsilon_installation hub; do
+         batch002_enemies epsilon_installation hub lab; do
   $B -b --python tools/blender/build_$s.py
 done
 tools/batch001_sheets.sh      # ~12 min: 28 sheets
