@@ -333,6 +333,57 @@ def test_every_fallback_zone_validates_at_every_index():
 # Output size and truncation (CAMPAIGN_SCALE.md 12)
 # ---------------------------------------------------------------------------
 
+def test_the_provider_guards_do_not_need_the_sdk_installed():
+    """Neither CI tier installs `anthropic`, and these guards ship anyway.
+
+    A structural check rather than a comment, because the comment above
+    is exactly what stopped being true once someone needed an exception
+    class: `claude.py` may not import the SDK at module scope or inside
+    `_call`, or the truncation refusal becomes untestable in CI.
+    """
+    import ast
+
+    from archipepsi_bridge.epsilon import claude
+
+    tree = ast.parse(open(claude.__file__, encoding="utf-8").read())
+
+    def imports_the_sdk(scope) -> int | None:
+        for node in ast.walk(scope):
+            names: list[str] = []
+            if isinstance(node, ast.Import):
+                names = [a.name.split(".")[0] for a in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                names = [(node.module or "").split(".")[0]]
+            if "anthropic" in names:
+                return node.lineno
+        return None
+
+    # Module scope: an import here fails the whole file on a runner
+    # without the SDK, taking the fallback provider with it.
+    for node in tree.body:
+        assert imports_the_sdk(node) is None or not isinstance(
+            node, (ast.Import, ast.ImportFrom)), (
+            f"claude.py imports the SDK at module scope (line {node.lineno})")
+
+    # `_call`: the one function that carries both guards.
+    calls = [n for n in ast.walk(tree)
+             if isinstance(n, ast.AsyncFunctionDef) and n.name == "_call"]
+    assert len(calls) == 1, "_call moved or was renamed; update this test"
+    line = imports_the_sdk(calls[0])
+    assert line is None, (
+        f"_call imports the SDK at line {line}; the truncation refusal "
+        "and the output allowance then cannot be tested on a runner "
+        "without it, which is both CI tiers")
+
+    # The constructor may -- it builds the real client, and cannot run
+    # without one either way.
+    init = [n for n in ast.walk(tree)
+            if isinstance(n, ast.FunctionDef) and n.name == "__init__"]
+    assert init and imports_the_sdk(init[0]) is not None, (
+        "the constructor no longer imports the SDK; if the client is "
+        "built some other way this test is checking the wrong thing")
+
+
 def test_the_output_allowance_scales_with_the_zone():
     """8192 was set when a Zone was six rooms.
 
@@ -375,7 +426,16 @@ def test_the_allowance_clears_the_measured_size_with_room_to_spare():
 
 
 def _stub_provider(response):
-    """A ClaudeEpsilonProvider with a scripted client and no API key."""
+    """A ClaudeEpsilonProvider with a scripted client and no API key.
+
+    Built with `__new__` on purpose: constructing one properly needs the
+    `anthropic` SDK and a key, and NEITHER CI TIER INSTALLS THE SDK.
+    These tests are about the provider's own guards -- the scaled output
+    allowance and the truncation refusal -- so they must run where those
+    guards actually ship. `_call` used to open with `import anthropic`
+    purely to name one exception class, which made them fail on both
+    runners while passing on a machine that happened to have it.
+    """
     from types import SimpleNamespace
 
     from archipepsi_bridge.epsilon.claude import ClaudeEpsilonProvider

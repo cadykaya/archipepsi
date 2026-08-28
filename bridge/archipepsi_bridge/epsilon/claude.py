@@ -22,6 +22,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import sys
 
 from pydantic import TypeAdapter
 
@@ -202,8 +203,6 @@ class ClaudeEpsilonProvider:
     async def _call(self, kind: str, generation_id: str, system: str,
                     prompt: str, repair_errors: list[str] | None,
                     max_tokens: int = ECHO_OUTPUT_TOKENS):
-        import anthropic
-
         messages = [{"role": "user", "content": prompt}]
         if repair_errors:
             previous = self._last_raw.get(generation_id, "")
@@ -228,18 +227,17 @@ class ClaudeEpsilonProvider:
                            "schema": self._schemas[kind]}}
         try:
             response = await self.client.messages.create(**kwargs)
-        except anthropic.BadRequestError as exc:
-            if self._schema_ok[kind]:
-                # The exported schema may exceed the constrained-decoding
-                # subset. Drop to prompt-level JSON; our validators are the
-                # authority either way.
-                log.warning("structured output rejected for %s (%s); "
-                            "falling back to prompt-level JSON", kind, exc)
-                self._schema_ok[kind] = False
-                kwargs.pop("output_config", None)
-                response = await self.client.messages.create(**kwargs)
-            else:
+        except Exception as exc:
+            if not (_is_bad_request(exc) and self._schema_ok[kind]):
                 raise
+            # The exported schema may exceed the constrained-decoding
+            # subset. Drop to prompt-level JSON; our validators are the
+            # authority either way.
+            log.warning("structured output rejected for %s (%s); "
+                        "falling back to prompt-level JSON", kind, exc)
+            self._schema_ok[kind] = False
+            kwargs.pop("output_config", None)
+            response = await self.client.messages.create(**kwargs)
 
         # A Zone cut off mid-object is the one failure that can look like
         # success: `_parse_json_object` finds the last `}` in a truncated
@@ -264,6 +262,25 @@ class ClaudeEpsilonProvider:
                      if block.type == "text"), "")
         self._last_raw[generation_id] = text
         return _parse_json_object(text)
+
+
+def _is_bad_request(exc: BaseException) -> bool:
+    """`anthropic.BadRequestError`, asked without importing the SDK.
+
+    `_call` used to open with `import anthropic` purely to name this one
+    exception class in an `except`. That made the provider's OWN guards
+    -- the scaled output allowance and the truncation refusal --
+    untestable anywhere the SDK is absent, which is both CI tiers: the
+    tests passed on a developer machine that happened to have it and
+    failed on the runners that do not.
+
+    Looked up rather than imported, because a real client can only exist
+    if the SDK is loaded. No `anthropic` in `sys.modules` means no
+    `anthropic` client, so there is no BadRequestError to catch.
+    """
+    module = sys.modules.get("anthropic")
+    cls = getattr(module, "BadRequestError", None) if module else None
+    return cls is not None and isinstance(exc, cls)
 
 
 def _parse_json_object(text: str):
