@@ -57,7 +57,7 @@ with the approved authored vocabulary come first.
 | 3 | Common architecture | **in progress** — Batch 007 built the five remaining Pri-A modules (stair, ramp, ledge, straight connector, both corners). 15 of 29; what is left is all Pri B/C |
 | 4 | The enemy production family | **mostly blocked** — Batch 008 built the three projectiles, the one Pri-A row with nothing in its way. Seven of the ten roles wait on colliders (req 7) and the telegraph on a node that does not exist (req 14) |
 | 5 | Movement affordances | **done** — Batch 009 built the six remaining fixtures, all in the `signal` family the approved anchors wear |
-| 6 | Universal props | **corrected** — §8's 22-prop library is placed by nothing. Batch 010 built the three the generator actually places whose theme family exists; three more wait on their theme kits |
+| 6 | Universal props | **done as far as it can go** — **corrected** — §8's 22-prop library is placed by nothing. Batch 010 built the three the generator actually places whose theme family exists; three more wait on their theme kits |
 | 7 | Room-shell vocabulary | none |
 | 8 | The six theme kits | 3 of 6 material families |
 | 9 | Presentation / polish | none |
@@ -86,7 +86,8 @@ line rather than inventing work.
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
 | Phase | **STYLE LOCK PASSED — production.** Batch 004 is `PASS`. Batch 005 is `PASS IN DIRECTION`, its one required revision delivered as 005-R. Batches 005-R and 006 to 011 are `PENDING`. |
 | Owner review | Style Lock passed 2026-08-28. Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
-| Next action | **Tier 6: universal props**, then Tier 3's Pri-B architecture. Tiers 1, 2 and 5 are done to their Pri-A rows; Tier 4 is blocked past the projectiles (reqs 7 and 14). Five batches — 005-R, 006, 007, 008, 009 — are with the owner. |
+| Next action | **Tier 8: the three unbuilt theme material families** (`neon_transit`, `gothic_stone`, `temple_ruin`). It is the highest-leverage unblocked work left — it also unblocks three of the six dressing props §9 needs — and it is routine in the sense that `art_palette.json` already carries all six themes' ramps and `materials.paint()` already builds any of them. **But it is the first look at three themes**, so it wants a review sheet the owner can redirect cheaply, and textures are the cheapest thing in the project to rebuild. Everything before it is done to its Pri-A rows or blocked: Tier 4 past the projectiles (reqs 7 and 14), Tier 2's last two rows on a navigation-language decision, Tier 6's §8 library on the fact that nothing places it. |
+| Queue depth | **Seven batches are with the owner and none is reviewed**: 005-R, 006, 007, 008, 009, 010, 011. That is worth weighing before starting an eighth — a heartbeat that keeps producing is building on ground nobody has walked on yet. If a heartbeat would rather hold, holding is a legitimate outcome and this line is why. |
 
 ### What the Batch 002 review LOCKED
 
