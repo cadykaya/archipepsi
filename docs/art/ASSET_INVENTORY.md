@@ -312,7 +312,7 @@ primitives today. Module grid **4.0 m**; wall thickness **0.40 m**; door
 | `arch_column` | L1 | B | **B20** | | `arch_light_fixture` | L1 | A | B1 |
 | `arch_beam_span` | L1 | B | **B20** | | `arch_signage_mount` | L0 | B | **blocked with the navigation language** |
 | `arch_stair` | L1 | A | **B7** | | `arch_objective_socket` | L1 | B | **blocked with the navigation language** |
-| `arch_ramp` | L1 | A | **B7** | | `arch_affordance_socket` | L1 | B | — |
+| `arch_ramp` | L1 | A | **B7** | | `arch_affordance_socket` | L1 | B | **no placement path — see interface req 22** |
 | `arch_ledge` | L1 | A | **B7** | | `arch_secret_alcove` | L2 | B | **B21** |
 | | | | | | `arch_vista_socket` | L2 | C | **no engine contract to build against** |
 
