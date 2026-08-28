@@ -187,6 +187,9 @@ def dimensions():
         "fall_kill_y": c.FALL_KILL_Y,
         "tower_floors_min": 2,
         "tower_floors_max": 5,
+        # `tower()`'s own layout constants.
+        "tower_side": 12.0,
+        "tower_per_floor": 3.0,
         # --- the distances an asset is actually looked at from ------------
         "camera_fov_deg": 90.0,
         "enemy_aggro_radius": c.ENEMY_AGGRO_RADIUS,
@@ -302,7 +305,10 @@ def verify():
         cb_text = handle.read()
     for label, needle in (
             ("platform_path width", "var width := %.1f" % dim["path_width"]),
-            ("platform_path ledge", "var ledge := %.1f" % dim["path_ledge"])):
+            ("platform_path ledge", "var ledge := %.1f" % dim["path_ledge"]),
+            ("tower side", "var side := %.1f" % dim["tower_side"]),
+            ("tower floor spacing",
+             "var per_floor := %.1f" % dim["tower_per_floor"])):
         if needle not in cb_text:
             problems.append(
                 "%s changed in chamber_builders.gd (looked for: %s). An "

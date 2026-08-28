@@ -1,0 +1,155 @@
+{
+  "_comment": [
+    "Batch 018 -- the tower shell family.",
+    "",
+    "Three frames each: from the entrance looking UP, which is the question",
+    "a tower asks; from somewhere on the climb; and from above the open",
+    "shaft, where the whole route reads at once.",
+    "",
+    "CAMERA FRAME (L-52): every `eye` is a manifest anchor with x and z",
+    "negated. LIGHTING (L-56): key_energy 0.70, because a tower has no roof",
+    "and the bench rig is built for a subject on a backdrop.",
+    "The _over cameras stand over the shaft CENTRE at pitch -72, not in front of it: a tower has walls as tall as it is, so any oblique from outside photographs the outside."
+  ],
+  "defaults": {
+    "size": [
+      1600,
+      900
+    ],
+    "ambient": 0.24,
+    "key_energy": 0.7,
+    "backdrop": "none",
+    "game_lens": true
+  },
+  "shots": [
+    {
+      "name": "T_collapsed_entry",
+      "scene": "model:batch018/shells/shell_tower_collapsed.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -2.5
+      ],
+      "yaw": 180,
+      "pitch": 14,
+      "caption": "COLLAPSED - 2 FLOORS, 6 M, THE SHORTEST A TOWER MAY BE",
+      "note": "TWO HALF-FLOORS THAT TORE AT OPPOSITE ENDS, 3.0 M APART"
+    },
+    {
+      "name": "T_collapsed_upper",
+      "scene": "model:batch018/shells/shell_tower_collapsed.glb",
+      "eye": [
+        0,
+        6.0,
+        -3.9
+      ],
+      "yaw": 180,
+      "pitch": -10,
+      "caption": "ON THE UPPER HALF-FLOOR, LOOKING BACK OVER THE TEAR",
+      "note": "10.8 X 6.6 M - A ROOM TWICE, NOT A CLIMB"
+    },
+    {
+      "name": "T_collapsed_over",
+      "scene": "model:batch018/shells/shell_tower_collapsed.glb",
+      "eye": [
+        0,
+        17.0,
+        -6.0
+      ],
+      "yaw": 180,
+      "pitch": -72,
+      "caption": "INTO THE SHAFT FROM ABOVE",
+      "note": "THE CLIMB HAPPENS ON THE SLAB BELOW IT - NO JUMP CROSSES OPEN SHAFT"
+    },
+    {
+      "name": "T_spiral_entry",
+      "scene": "model:batch018/shells/shell_tower_spiral.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -2.5
+      ],
+      "yaw": 180,
+      "pitch": 16,
+      "caption": "SPIRAL - 3 FLOORS, 9 M, THE CANONICAL SQUARE HELIX",
+      "note": "TOWER()'S OWN INSET AND SPACING, BUILT AS CANTILEVERED SLABS"
+    },
+    {
+      "name": "T_spiral_climb",
+      "scene": "model:batch018/shells/shell_tower_spiral.glb",
+      "eye": [
+        4.3,
+        3.0,
+        -9.2
+      ],
+      "yaw": 130,
+      "pitch": 8,
+      "caption": "PART WAY UP, WHERE THE HELIX TURNS",
+      "note": "EVERY SLAB IS CARRIED BY TWO BRACKETS INTO THE WALL"
+    },
+    {
+      "name": "T_spiral_over",
+      "scene": "model:batch018/shells/shell_tower_spiral.glb",
+      "eye": [
+        0,
+        20.0,
+        -6.0
+      ],
+      "yaw": 180,
+      "pitch": -72,
+      "caption": "INTO THE SHAFT FROM ABOVE",
+      "note": "THE CENTRAL COLUMN IS TOWER()'S - IT BLOCKS FIRE ACROSS THE SHAFT"
+    },
+    {
+      "name": "T_gantry_entry",
+      "scene": "model:batch018/shells/shell_tower_gantry.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -2.5
+      ],
+      "yaw": 180,
+      "pitch": 22,
+      "caption": "GANTRY - 5 FLOORS, 15 M, THE TALLEST A TOWER MAY BE",
+      "note": "A FULL LANDING EVERY 3.0 M - TOWER()'S OWN FLOOR SPACING"
+    },
+    {
+      "name": "T_gantry_landing",
+      "scene": "model:batch018/shells/shell_tower_gantry.glb",
+      "eye": [
+        0,
+        9.0,
+        -10.6
+      ],
+      "yaw": 0,
+      "pitch": -8,
+      "caption": "ON THE THIRD LANDING, TWO STOREYS ABOVE THE DOOR",
+      "note": "SOMEWHERE TO STAND AND FIGHT AT FIVE DIFFERENT HEIGHTS"
+    },
+    {
+      "name": "T_gantry_over",
+      "scene": "model:batch018/shells/shell_tower_gantry.glb",
+      "eye": [
+        0,
+        26.0,
+        -6.0
+      ],
+      "yaw": 180,
+      "pitch": -72,
+      "caption": "INTO THE SHAFT FROM ABOVE",
+      "note": "THE ONLY TOWER WHERE THE TOP IS OUT OF SIGHT FROM THE BOTTOM"
+    }
+  ]
+}

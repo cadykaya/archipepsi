@@ -150,6 +150,9 @@ These are the vocabulary everything after them inherits.
 | `shell_path_ascent` | L3 | room | 300 | 8.80 × 31.30 × 19.00 | entrance | B17 | B17 | PEND |
 | `shell_path_stagger` | L3 | room | 312 | 8.80 × 38.40 × 17.00 | entrance | B17 | B17 | PEND |
 | `shell_path_spans` | L3 | room | 216 | 8.80 × 25.10 × 14.00 | entrance | B17 | B17 | PEND |
+| `shell_tower_collapsed` | L3 | room | 528 | 12.80 × 14.60 × 11.50 | entrance | B18 | B18 | PEND |
+| `shell_tower_spiral` | L3 | room | 636 | 12.80 × 14.60 × 14.50 | entrance | B18 | B18 | PEND |
+| `shell_tower_gantry` | L3 | room | 852 | 12.80 × 14.60 × 20.50 | entrance | B18 | B18 | PEND |
 
 | Theme material | Roles built |
 | --- | --- |
@@ -316,7 +319,7 @@ obviously repeating one room — **but not before Style Lock.**
 | `shell_corridor_*` | `corridor` | 6–30 m long, 4–10 m wide, 3.6 m high | 4 | A | **B15** — `shell_corridor_narrow` / `_bays` / `_stepped` / `_gallery`, four discrete sizes, not one stretched box |
 | `shell_arena_*` | `arena` | 10–28 m square, walls 4–8 m | 4 | A | **B16** — `shell_arena_pit` / `_pillars` / `_balcony` / `_split`: one subtraction, one addition, one storey, one division |
 | `shell_platform_path_*` | `platform_path` | 3–8 segments, gap ≤ 2.6 m, step ≤ 1.0 m | 3 | A | **B17** — `shell_path_ascent` / `_stagger` / `_spans`. Gap and step are bounded **jointly**, so no gap in these is a literal: each is checked against `max_safe_gap(step)` before export |
-| `shell_tower_*` | `tower` | 2–5 floors | 3 | A | — |
+| `shell_tower_*` | `tower` | 2–5 floors | 3 | A | **B18** — `shell_tower_collapsed` / `_spiral` / `_gantry` at 2, 3 and 5 floors. `floors` is the only number `TowerChamber` gives art, so the three sit at the bottom, middle and top of it and answer the climb differently |
 | `shell_treasure_*` | `treasure_room` | carries a `reward_location_id` | 3 | A | — |
 | `shell_corner_*` | connector | `chamber_builders.corner` | 2 | A | — |
 

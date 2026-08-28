@@ -2212,3 +2212,85 @@ already shot moves, and this batch is at 0.70 (L-56).
 | `P_spans_back.png` | from the end ledge — where `platform_path()` spawns its enemies, never on the route |
 
 Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 018 — the tower family
+
+Fourth of §7's six families. A tower is a 12 m square shaft climbed from
+the floor to a deck at the top of the back wall, and `TowerChamber` gives
+art exactly **one** number: `floors`, 2 to 5. The side, the 3.0 m floor
+spacing, the central column and where the exit is carved are all
+`tower()`'s, and these three keep every one of them.
+
+### What one number buys
+
+`floors` moves `total_rise` between 6 and 15 m inside a 12 m square — the
+whole range from a room with a gallery to a genuine shaft. So the three sit
+at the bottom, middle and top of it, and each answers the climb
+differently, because 6 m and 15 m are not the same problem at two scales.
+
+| Shell | Floors | Rise | Tris | Worst jump | The climb is |
+| --- | --- | --- | --- | --- | --- |
+| `shell_tower_collapsed` | 2 | 6 m | 528 | 0.800 | two storeys of floor slab that fell in, alternating far and near. You climb over the wreckage, and each 10.8 × 6.6 m half-floor is somewhere a fight can stand |
+| `shell_tower_spiral` | 3 | 9 m | 636 | 1.700 | the canonical square helix at `tower()`'s own inset and spacing, built as slabs cantilevered off the wall on brackets. A stairwell whose stairs are gone |
+| `shell_tower_gantry` | 5 | 15 m | 852 | 0.100 | maintenance access up the core: a full landing every 3.0 m — `tower()`'s own `per_floor` — joined by short flights. The only tower where the top is out of sight from the bottom |
+
+All three against a 2.00 m bound at `MAX_VERTICAL_STEP`.
+
+### The check paid for itself on its first run
+
+`routecheck` is now a shared module rather than two copies — Batch 017's
+platform paths and this batch enforce the same rule, so the two families
+cannot drift apart on what a legal climb is. The platform-path shells
+rebuild byte-identical after the extraction.
+
+Its first run on new geometry **refused a shell**. `shell_tower_collapsed`
+originally alternated its surviving half-floors **left and right**, which
+put a 3.60 m crossing between them against a 2.00 m bound — an
+unfinishable level that no render would have shown, because from every
+camera it looks like two floors with a gap. Alternating in **depth**
+instead means each climb happens on the slab below it and no jump ever
+crosses open shaft.
+
+Towers pass `require_gap=False`. `tower()` spaces its 2.6 m platforms 2.4 m
+apart, so the procedural spiral **overlaps** and the mandatory climb is
+very nearly a staircase. Failing a shell for being easier than a jump would
+be inventing a rule the engine does not have.
+
+### A number that was wrong for a subtle reason
+
+Every shell first reported a worst jump of about **1.93 m** against the
+2.00 m bound — alarming, and false. The route was measured from the
+*doorway*, but a tower's ground floor is a full 12 × 12 slab: the player
+walks under the first platform and steps up. Measured from the ground the
+same three shells read 0.800, 1.700 and 0.100.
+
+The geometry never changed. What changed is that the check now starts where
+the player actually stands, and a number that says "nearly illegal" about a
+step nobody has to make is worse than no number (L-58).
+
+### What all three keep
+
+The **central column**. `tower()` builds a 2.2 m core and says what it is
+for — it "blocks straight-line ranged fire across it" — so that is a
+gameplay property, not decoration. Every shell here has one; they differ in
+how it is dressed (capital, banded, riven) and never in whether it exists.
+
+The **exit at the summit**, carved in the back wall at `top_y` with a deck
+across the back and a bridge strip out through it. `exit_offset` is
+`(0, rise, 14.2)`. A tower that exited at grade would be a room.
+
+### Evidence
+
+`docs/art/review/batch018/`
+
+| Image | What it answers |
+| --- | --- |
+| `T_*_entry.png` | the question a tower asks: from the door, looking up |
+| `T_*_over.png` | the whole route, from over the open shaft |
+| `T_collapsed_upper.png` | standing on the upper half-floor, over the tear |
+| `T_spiral_climb.png` | part way up, where the helix turns |
+| `T_gantry_landing.png` | the third landing, two storeys above the door |
+
+Status: **PENDING** — not self-marked.

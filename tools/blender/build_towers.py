@@ -1,0 +1,432 @@
+"""Batch 018 -- room shells, the tower family.
+
+    .tools/blender/blender -b --python tools/blender/build_towers.py
+
+Fourth of §7's six families. A tower is a 12 m square shaft climbed from
+the floor to a deck at the top of the back wall, and `TowerChamber` gives
+art exactly one number: `floors`, 2 to 5. Everything else -- the side, the
+3.0 m floor spacing, the central column, where the exit is carved -- is
+`tower()`'s, and the three shells here keep all of it.
+
+## The guarantee that cannot be broken
+
+> Each platform rises `step_rise` <= MAX_VERTICAL_STEP, so the mandatory
+> route needs only base jumping -- the template's guarantee.
+
+`routecheck` enforces that, the same module the platform paths use, so the
+two families cannot drift apart on what a legal climb is. Towers pass
+`require_gap=False`: `tower()` spaces 2.6 m platforms 2.4 m apart, so its
+own spiral OVERLAPS and the mandatory climb is very nearly a staircase.
+Failing a shell for being *easier* than a jump would be inventing a rule
+the engine does not have.
+
+## What one number buys
+
+`floors` moves `total_rise` between 6 and 15 m inside a 12 m square, which
+is the whole range from a room with a gallery to a genuine shaft. So the
+three shells sit at the bottom, middle and top of it -- and each answers
+the climb differently, because a 6 m rise and a 15 m rise are not the same
+problem at different scales.
+
+| Shell | Floors | Rise | The climb is |
+| --- | --- | --- | --- |
+| `shell_tower_collapsed` | 2 | 6 m | two storeys of floor slab that fell in. You climb over the wreckage of the building, and each half-floor is somewhere a fight can stand |
+| `shell_tower_spiral` | 3 | 9 m | the canonical square spiral, built as architecture: cantilevered slabs on brackets off the wall. A stairwell whose stairs are gone |
+| `shell_tower_gantry` | 5 | 15 m | maintenance access up the core: full landings every 3.0 m -- `tower()`'s own floor spacing -- joined by short flights. The tall one, and the only one where the top is out of sight from the bottom |
+
+## What all three keep
+
+The **central column**. `tower()` builds a 2.2 m square core and says why:
+it "blocks straight-line ranged fire across it". That is a gameplay
+property, not decoration, so every shell here has one and they differ in
+how it is dressed rather than in whether it exists.
+
+The **exit at the summit**, carved in the back wall at `top_y`, with a top
+deck across the back and a bridge strip out through it. A tower that exited
+at grade would be a room.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import brushkit  # noqa: E402
+import common  # noqa: E402
+import materials  # noqa: E402
+import palette as pal  # noqa: E402
+import routecheck  # noqa: E402
+
+THEME = "concrete_facility"
+OUT = "batch018/shells"
+
+DIM = common.DIM
+WALL = DIM["wall_thickness"]
+DOOR_W = DIM["door_width"]
+DOOR_H = DIM["door_height"]
+STEP = DIM["max_vertical_step"]              # 1.00
+SIDE = DIM["tower_side"]                     # 12.0
+PER_FLOOR = DIM["tower_per_floor"]           # 3.0
+F_MIN = DIM["tower_floors_min"]              # 2
+F_MAX = DIM["tower_floors_max"]              # 5
+#: The route starts on the WHOLE ground floor, not in the doorway. A tower's
+#: first platform is reached by walking under it and stepping up; measuring
+#: from the door instead put a false 1.93 m jump at the entrance of every
+#: shell in this batch, against a 2.00 m bound -- a number that would have
+#: read as "nearly illegal" for a step the player never has to make.
+_GROUND = ((0.0, -DIM["tower_side"] / 2.0),
+           (DIM["tower_side"], DIM["tower_side"]))
+
+CORE = 2.2                                   # tower()'s central column
+PLAT = 2.6                                   # tower()'s spiral platform
+
+_IMAGES = {}
+
+
+def _image(role):
+    if role not in _IMAGES:
+        canvas, _ = materials.paint(THEME, role)
+        _IMAGES[role] = canvas.to_blender("tower_%s_%s" % (THEME, role))
+    return _IMAGES[role]
+
+
+def _paint(obj, name, role):
+    common.assign(obj, common.make_textured_material(
+        "%s_%s" % (name, role), _image(role), roughness=pal.roughness(THEME)))
+    return obj
+
+
+def _shaft(name, height, summit):
+    """Floor, four walls, no roof, a door in at grade and one out at the top.
+
+    `_perimeter(root, side, side, shaft_height, theme, true, true, summit)`
+    -- the exit gap starts at `summit`, because the tower is climbed and its
+    way out is at the top of the back wall.
+    """
+    mid = -SIDE / 2.0
+    parts = [_paint(brushkit.block("%s_floor" % name, (SIDE, SIDE, 0.50),
+                                   (0.0, mid, -0.25)), name, "floor")]
+    for side in (-1.0, 1.0):
+        parts.append(_paint(brushkit.block(
+            "%s_wall_%d" % (name, int(side)), (WALL, SIDE, height),
+            (side * (SIDE + WALL) / 2.0, mid, height / 2.0)), name, "wall"))
+    jamb = (SIDE - DOOR_W) / 2.0
+    # Entrance wall: a door at grade.
+    for side in (-1.0, 1.0):
+        parts.append(_paint(brushkit.block(
+            "%s_in_%d" % (name, int(side)), (jamb, WALL, height),
+            (side * (DOOR_W + jamb) / 2.0, WALL / 2.0, height / 2.0)),
+            name, "wall"))
+    parts.append(_paint(brushkit.block(
+        "%s_in_lintel" % name, (DOOR_W, WALL, height - DOOR_H),
+        (0.0, WALL / 2.0, DOOR_H + (height - DOOR_H) / 2.0)), name, "wall"))
+    # Back wall: the door starts at the summit, so the sill is a solid
+    # panel from the floor all the way up to the deck.
+    back = -SIDE - WALL / 2.0
+    for side in (-1.0, 1.0):
+        parts.append(_paint(brushkit.block(
+            "%s_out_%d" % (name, int(side)), (jamb, WALL, height),
+            (side * (DOOR_W + jamb) / 2.0, back, height / 2.0)),
+            name, "wall"))
+    parts.append(_paint(brushkit.block(
+        "%s_out_sill" % name, (DOOR_W, WALL, summit),
+        (0.0, back, summit / 2.0), ), name, "wall"))
+    top = summit + DOOR_H
+    if height > top:
+        parts.append(_paint(brushkit.block(
+            "%s_out_lintel" % name, (DOOR_W, WALL, height - top),
+            (0.0, back, top + (height - top) / 2.0)), name, "wall"))
+    parts.append(_paint(brushkit.block(
+        "%s_out_head" % name, (DOOR_W + 0.6, 0.24, 0.30),
+        (0.0, back, top + 0.15)), name, "trim"))
+    return parts
+
+
+def _core(name, rise, treatment):
+    """`tower()`'s central column, which blocks fire across the shaft.
+
+    Not optional and not decoration -- the engine says what it is for. The
+    three shells differ in how it is dressed, never in whether it is there.
+    """
+    h = rise + 2.0
+    mid = -SIDE / 2.0
+    parts = [_paint(brushkit.block("%s_core" % name, (CORE, CORE, h),
+                                   (0.0, mid, h / 2.0 - 0.5)), name, "wall")]
+    if treatment == "banded":
+        for i in range(int(rise // PER_FLOOR) + 1):
+            z = PER_FLOOR * i + 0.4
+            parts.append(_paint(brushkit.block(
+                "%s_coreband_%d" % (name, i), (CORE + 0.30, CORE + 0.30, 0.26),
+                (0.0, mid, z)), name, "trim"))
+    elif treatment == "capital":
+        for z, flare in ((0.15, 0.40), (h - 0.65, 0.30)):
+            parts.append(_paint(brushkit.block(
+                "%s_corecap_%.0f" % (name, z * 10),
+                (CORE + flare, CORE + flare, 0.30), (0.0, mid, z)),
+                name, "trim"))
+    elif treatment == "riven":
+        # A column the collapse took a bite out of, on one side only. Not
+        # symmetric, because nothing that fell down is.
+        for i, (dz, dx) in enumerate(((1.6, 0.5), (3.4, 0.8), (4.9, 0.35))):
+            parts.append(_paint(brushkit.block(
+                "%s_corebite_%d" % (name, i), (dx, CORE * 0.7, 0.5),
+                (CORE / 2.0 - dx / 2.0 + 0.12, mid + 0.3, dz)), name, "trim"))
+    return parts
+
+
+def _deck(name, top_y):
+    """The top deck across the back, and the bridge out through the wall."""
+    return [
+        _paint(brushkit.block("%s_deck" % name, (SIDE, 4.0, 0.50),
+                              (0.0, -SIDE + 2.0, top_y - 0.25)),
+               name, "floor"),
+        _paint(brushkit.block("%s_decknose" % name, (SIDE, 0.24, 0.20),
+                              (0.0, -SIDE + 4.0, top_y - 0.10)),
+               name, "trim"),
+        _paint(brushkit.block("%s_bridge" % name, (3.0, 2.4, 0.50),
+                              (0.0, -SIDE - 1.0, top_y - 0.25)),
+               name, "floor"),
+    ]
+
+
+def _slab(name, tag, x, y, z, size, thickness=0.40):
+    """A platform, its nose, and the bracket that carries it.
+
+    Built from the surface it hangs off rather than from its own centre
+    (L-55): the bracket starts at the slab's underside.
+    """
+    sx, sy = size
+    return [
+        _paint(brushkit.block("%s_p_%s" % (name, tag), (sx, sy, thickness),
+                              (x, y, z - thickness / 2.0)), name, "floor"),
+        _paint(brushkit.block("%s_pn_%s" % (name, tag),
+                              (sx + 0.14, sy + 0.14, 0.14),
+                              (x, y, z - 0.07)), name, "trim"),
+    ]
+
+
+def _spiral(name, rise, step):
+    """`tower()`'s square spiral: 2.6 m platforms every 2.4 m of perimeter.
+
+    The corners, inset and spacing are the engine's -- `inset = side/2 -
+    1.7`, `margin = 2.0`, `spacing = 2.4` -- so an authored spiral climbs
+    the same helix the procedural one does and a Check placed against
+    either lands in the same place.
+    """
+    inset, margin, spacing = SIDE / 2.0 - 1.7, 2.0, 2.4
+    corners = [(-inset, -margin), (-inset, -SIDE + margin),
+               (inset, -SIDE + margin), (inset, -margin)]
+    count = int(round(rise / step))
+    leg, along = 0, 0.0
+    out = []
+    for i in range(count):
+        a, b = corners[leg % 4], corners[(leg + 1) % 4]
+        length = max(abs(b[0] - a[0]), abs(b[1] - a[1]))
+        along += spacing
+        while along > length:
+            along -= length
+            leg += 1
+            a, b = corners[leg % 4], corners[(leg + 1) % 4]
+            length = max(abs(b[0] - a[0]), abs(b[1] - a[1]))
+        t = along / length
+        out.append((a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t,
+                    step * (i + 1)))
+    return out
+
+
+def shell_tower_spiral():
+    """3 floors, 9 m of rise, on the square spiral built as architecture.
+
+    The engine's own layout, authored: each 2.6 m platform is a slab
+    cantilevered off the wall on two brackets, with a nose. `tower()`'s
+    boxes float; a slab that is carried by something reads as a stairwell
+    whose stairs are gone rather than as tiles that happen to be there.
+    """
+    floors = 3
+    rise = PER_FLOOR * floors
+    height = rise + 5.0
+    name = "ts"
+    parts = _shaft(name, height, rise) + _core(name, rise, "capital")
+    stones, anchors = [_GROUND], []
+    for i, (x, y, z) in enumerate(_spiral(name, rise, STEP)):
+        parts += _slab(name, str(i), x, y, z, (PLAT, PLAT))
+        # Two brackets into the nearest wall, so the slab is carried.
+        wall_x = (SIDE / 2.0) * (1.0 if x > 0 else -1.0)
+        for j, dy in ((0, -0.9), (1, 0.9)):
+            parts.append(_paint(brushkit.block(
+                "ts_br_%d_%d" % (i, j), (abs(wall_x - x) + 0.2, 0.20, 0.42),
+                ((wall_x + x) / 2.0, y + dy, z - 0.55)), name, "trim"))
+        stones.append(((x, y), (PLAT, PLAT)))
+        anchors.append([round(x, 2), round(z, 2), round(-y, 2)])
+    parts += _deck(name, rise)
+    stones.append(((0.0, -SIDE + 2.0), (SIDE, 4.0)))
+    worst, allowed = routecheck.assert_reachable(
+        "shell_tower_spiral", stones, STEP, require_gap=False)
+    meta = {"floors": floors, "climb": "spiral", "core": "capital",
+            "worst_jump": worst, "max_safe_gap_at_step": allowed,
+            "platform_anchors": anchors}
+    return "shell_tower_spiral", parts, floors, rise, height, meta
+
+
+def shell_tower_gantry():
+    """5 floors, 15 m -- the tallest a tower may be -- on maintenance access.
+
+    At `floors` 5 the shaft is taller than it is wide, and a spiral of
+    fifteen identical slabs up a 12 m box is a staircase pretending to be a
+    climb. This one is honest about the height instead: a full landing at
+    every 3.0 m, which is `tower()`'s own `per_floor`, joined by short
+    flights of three slabs.
+
+    The landings are what the other two do not have. They are somewhere to
+    stand and fight at five different heights, and they are why this is the
+    only tower where the top is out of sight from the bottom.
+    """
+    floors = F_MAX
+    rise = PER_FLOOR * floors
+    height = rise + 5.0
+    name = "tg"
+    parts = _shaft(name, height, rise) + _core(name, rise, "banded")
+    stones, anchors, landings = [_GROUND], [], []
+    run, depth = 4.2, 2.8
+    for level in range(floors):
+        z = PER_FLOOR * (level + 1)
+        side = -1.0 if level % 2 == 0 else 1.0
+        # Three slabs of 1.00 m rise each, up the side wall, to the landing.
+        for k in range(3):
+            sz = z - PER_FLOOR + STEP * (k + 1)
+            sy = -3.0 - k * 2.4 if side < 0 else -SIDE + 3.0 + k * 2.4
+            sx = side * (SIDE / 2.0 - 1.6)
+            parts += _slab(name, "%d_%d" % (level, k), sx, sy, sz,
+                           (PLAT, PLAT))
+            stones.append(((sx, sy), (PLAT, PLAT)))
+        ly = -SIDE + depth / 2.0 if side < 0 else -depth / 2.0
+        parts += _slab(name, "L%d" % level, 0.0, ly, z, (run * 2.0, depth),
+                       thickness=0.50)
+        for j, sx in enumerate((-run + 0.4, run - 0.4)):
+            parts.append(_paint(brushkit.block(
+                "tg_post_%d_%d" % (level, j), (0.26, 0.26, PER_FLOOR - 0.5),
+                (sx, ly, z - 0.25 - (PER_FLOOR - 0.5) / 2.0)), name, "trim"))
+        stones.append(((0.0, ly), (run * 2.0, depth)))
+        landings.append([0.0, round(z, 2), round(-ly, 2)])
+        anchors.append([0.0, round(z, 2), round(-ly, 2)])
+    parts += _deck(name, rise)
+    stones.append(((0.0, -SIDE + 2.0), (SIDE, 4.0)))
+    worst, allowed = routecheck.assert_reachable(
+        "shell_tower_gantry", stones, STEP, require_gap=False)
+    meta = {"floors": floors, "climb": "gantry", "core": "banded",
+            "worst_jump": worst, "max_safe_gap_at_step": allowed,
+            "platform_anchors": anchors, "landing_anchors": landings}
+    return "shell_tower_gantry", parts, floors, rise, height, meta
+
+
+def shell_tower_collapsed():
+    """2 floors, 6 m -- the shortest a tower may be -- climbed on wreckage.
+
+    At the bottom of the range the shaft is half as tall as it is wide, and
+    a spiral in it is a ramp with gaps. What 6 m of rise is good for is a
+    room with two broken storeys still in it: each floor slab survives over
+    HALF THE DEPTH and has torn away over the other, alternating far and
+    near, so the two survivors overlap in the middle with 3.0 m of headroom
+    between them.
+
+    Those half-floors are the point. 10.8 x 6.6 m against a 2.6 m spiral
+    platform is somewhere a fight can happen, twice, at two heights. A
+    2-floor tower should be a room twice rather than a short climb, and a
+    scaled-down spiral is not that.
+
+    The first version of this shell alternated the survivors LEFT and RIGHT
+    instead, which put a 3.60 m crossing between them -- `routecheck`
+    refused it against a 2.00 m bound, which is exactly what that module is
+    for. Alternating in depth means each climb happens ON the slab below
+    it, so no jump ever crosses open shaft.
+    """
+    floors = F_MIN
+    rise = PER_FLOOR * floors
+    height = rise + 5.0
+    name = "tc"
+    parts = _shaft(name, height, rise) + _core(name, rise, "riven")
+    stones, anchors = [_GROUND], []
+    span, depth = SIDE - 1.2, 6.6
+    for level in range(floors):
+        z = PER_FLOOR * (level + 1)
+        far = level % 2 == 0
+        cy = -SIDE + depth / 2.0 + 0.6 if far else -depth / 2.0 - 0.6
+        parts += _slab(name, "F%d" % level, 0.0, cy, z, (span, depth),
+                       thickness=0.55)
+        # The rubble climbs on the surface BELOW this slab, in the half
+        # that this slab does not cover: the ground for level 0, level 0's
+        # own floor for level 1.
+        climb_y0 = -2.0 if far else -SIDE + 2.0
+        sign = -1.0 if far else 1.0
+        for k in range(3):
+            rz = z - PER_FLOOR + STEP * (k + 1)
+            ry = climb_y0 + sign * k * 1.5
+            rx = (SIDE / 2.0 - 2.2) * (1.0 if level % 2 == 0 else -1.0) \
+                - (0.5 * k if level % 2 == 0 else -0.5 * k)
+            parts += _slab(name, "R%d_%d" % (level, k), rx, ry, rz,
+                           (PLAT + 0.4, PLAT), thickness=0.5)
+            stones.append(((rx, ry), (PLAT + 0.4, PLAT)))
+        stones.append(((0.0, cy), (span, depth)))
+        # The tear: a run of stubs along the edge the rest of the slab went
+        # over, uneven because nothing that fell is uniform.
+        edge_y = cy + (depth / 2.0 if far else -depth / 2.0)
+        for k in range(5):
+            parts.append(_paint(brushkit.block(
+                "tc_tear_%d_%d" % (level, k),
+                (1.4, 0.55 + 0.18 * (k % 3), 0.55),
+                (-4.4 + k * 2.2, edge_y, z - 0.28)), name, "trim"))
+        anchors.append([0.0, round(z, 2), round(-cy, 2)])
+    parts += _deck(name, rise)
+    stones.append(((0.0, -SIDE + 2.0), (SIDE, 4.0)))
+    worst, allowed = routecheck.assert_reachable(
+        "shell_tower_collapsed", stones, STEP, require_gap=False)
+    meta = {"floors": floors, "climb": "collapse", "core": "riven",
+            "worst_jump": worst, "max_safe_gap_at_step": allowed,
+            "platform_anchors": anchors, "half_floor": [span, depth]}
+    return "shell_tower_collapsed", parts, floors, rise, height, meta
+
+
+SHELLS = [shell_tower_collapsed, shell_tower_spiral, shell_tower_gantry]
+
+
+def main():
+    common.reset_scene()
+    report = {}
+    for builder in SHELLS:
+        name, parts, floors, rise, height, meta = builder()
+        if not (F_MIN <= floors <= F_MAX):
+            raise AssertionError(
+                "%s: %d floors is outside zone.py's %d-%d."
+                % (name, floors, F_MIN, F_MAX))
+        obj = common.join(parts, name)
+        common.uv_project_world(obj, materials.ARCH_DENSITY,
+                                materials.ARCH_SIZE)
+        entry = common.export_glb(obj, "%s/%s.glb" % (OUT, name), "room",
+                                  tier="architecture",
+                                  texture_size=materials.ARCH_SIZE,
+                                  anchor="entrance", check_flat=False)
+        entry.update(meta)
+        # `tower()` exits through the BACK WALL at summit height, 2.2 m
+        # beyond the shaft -- the bridge strip's far end.
+        entry["exit_offset"] = [0.0, round(rise, 2), round(SIDE + 2.2, 2)]
+        entry["check_anchor"] = [-2.0, round(rise, 2), round(SIDE - 2.0, 2)]
+        entry["enemy_anchors"] = [[round(a[0] * 0.6, 2), round(a[1] + 0.3, 2),
+                                   a[2]] for a in meta["platform_anchors"][:4]]
+        entry["bounds"] = [[-SIDE / 2.0, -1.0, 0.0],
+                           [SIDE, height + 1.0, SIDE + 2.2]]
+        entry["interior"] = [SIDE, height, SIDE]
+        entry["total_rise"] = rise
+        report[name] = entry
+    out = os.path.join(common.REPO_ROOT, "assets", "models", "batch018",
+                       "shells", "manifest.json")
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    with open(out, "w", encoding="utf-8") as handle:
+        json.dump(report, handle, indent=2, sort_keys=True)
+    print("[art] batch018 manifest -> %s" % out)
+
+
+if __name__ == "__main__":
+    main()

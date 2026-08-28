@@ -115,6 +115,8 @@
     "tallest_actor": 2.6,
     "tower_floors_max": 5,
     "tower_floors_min": 2,
+    "tower_per_floor": 3.0,
+    "tower_side": 12.0,
     "walk_speed": 7.0,
     "wall_thickness": 0.4
   }

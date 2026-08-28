@@ -1,0 +1,307 @@
+{
+  "shell_tower_collapsed": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -6.0,
+        -1.0,
+        0.0
+      ],
+      [
+        12.0,
+        12.0,
+        14.2
+      ]
+    ],
+    "check_anchor": [
+      -2.0,
+      6.0,
+      10.0
+    ],
+    "climb": "collapse",
+    "core": "riven",
+    "enemy_anchors": [
+      [
+        0.0,
+        3.3,
+        8.1
+      ],
+      [
+        0.0,
+        6.3,
+        3.9
+      ]
+    ],
+    "exit_offset": [
+      0.0,
+      6.0,
+      14.2
+    ],
+    "floors": 2,
+    "half_floor": [
+      10.8,
+      6.6
+    ],
+    "interior": [
+      12.0,
+      11.0,
+      12.0
+    ],
+    "max_safe_gap_at_step": 2.0,
+    "path": "batch018/shells/shell_tower_collapsed.glb",
+    "platform_anchors": [
+      [
+        0.0,
+        3.0,
+        8.1
+      ],
+      [
+        0.0,
+        6.0,
+        3.9
+      ]
+    ],
+    "size": [
+      12.8,
+      14.6,
+      11.5
+    ],
+    "texel_density": 32.0,
+    "total_rise": 6.0,
+    "triangles": 528,
+    "worst_jump": 0.8
+  },
+  "shell_tower_gantry": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -6.0,
+        -1.0,
+        0.0
+      ],
+      [
+        12.0,
+        21.0,
+        14.2
+      ]
+    ],
+    "check_anchor": [
+      -2.0,
+      15.0,
+      10.0
+    ],
+    "climb": "gantry",
+    "core": "banded",
+    "enemy_anchors": [
+      [
+        0.0,
+        3.3,
+        10.6
+      ],
+      [
+        0.0,
+        6.3,
+        1.4
+      ],
+      [
+        0.0,
+        9.3,
+        10.6
+      ],
+      [
+        0.0,
+        12.3,
+        1.4
+      ]
+    ],
+    "exit_offset": [
+      0.0,
+      15.0,
+      14.2
+    ],
+    "floors": 5,
+    "interior": [
+      12.0,
+      20.0,
+      12.0
+    ],
+    "landing_anchors": [
+      [
+        0.0,
+        3.0,
+        10.6
+      ],
+      [
+        0.0,
+        6.0,
+        1.4
+      ],
+      [
+        0.0,
+        9.0,
+        10.6
+      ],
+      [
+        0.0,
+        12.0,
+        1.4
+      ],
+      [
+        0.0,
+        15.0,
+        10.6
+      ]
+    ],
+    "max_safe_gap_at_step": 2.0,
+    "path": "batch018/shells/shell_tower_gantry.glb",
+    "platform_anchors": [
+      [
+        0.0,
+        3.0,
+        10.6
+      ],
+      [
+        0.0,
+        6.0,
+        1.4
+      ],
+      [
+        0.0,
+        9.0,
+        10.6
+      ],
+      [
+        0.0,
+        12.0,
+        1.4
+      ],
+      [
+        0.0,
+        15.0,
+        10.6
+      ]
+    ],
+    "size": [
+      12.8,
+      14.6,
+      20.5
+    ],
+    "texel_density": 32.0,
+    "total_rise": 15.0,
+    "triangles": 852,
+    "worst_jump": 0.1
+  },
+  "shell_tower_spiral": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -6.0,
+        -1.0,
+        0.0
+      ],
+      [
+        12.0,
+        15.0,
+        14.2
+      ]
+    ],
+    "check_anchor": [
+      -2.0,
+      9.0,
+      10.0
+    ],
+    "climb": "spiral",
+    "core": "capital",
+    "enemy_anchors": [
+      [
+        -2.58,
+        1.3,
+        4.4
+      ],
+      [
+        -2.58,
+        2.3,
+        6.8
+      ],
+      [
+        -2.58,
+        3.3,
+        9.2
+      ],
+      [
+        -1.62,
+        4.3,
+        10.0
+      ]
+    ],
+    "exit_offset": [
+      0.0,
+      9.0,
+      14.2
+    ],
+    "floors": 3,
+    "interior": [
+      12.0,
+      14.0,
+      12.0
+    ],
+    "max_safe_gap_at_step": 2.0,
+    "path": "batch018/shells/shell_tower_spiral.glb",
+    "platform_anchors": [
+      [
+        -4.3,
+        1.0,
+        4.4
+      ],
+      [
+        -4.3,
+        2.0,
+        6.8
+      ],
+      [
+        -4.3,
+        3.0,
+        9.2
+      ],
+      [
+        -2.7,
+        4.0,
+        10.0
+      ],
+      [
+        -0.3,
+        5.0,
+        10.0
+      ],
+      [
+        2.1,
+        6.0,
+        10.0
+      ],
+      [
+        4.3,
+        7.0,
+        9.8
+      ],
+      [
+        4.3,
+        8.0,
+        7.4
+      ],
+      [
+        4.3,
+        9.0,
+        5.0
+      ]
+    ],
+    "size": [
+      12.8,
+      14.6,
+      14.5
+    ],
+    "texel_density": 32.0,
+    "total_rise": 9.0,
+    "triangles": 636,
+    "worst_jump": 1.7
+  }
+}

@@ -71,6 +71,7 @@ import brushkit  # noqa: E402
 import common  # noqa: E402
 import materials  # noqa: E402
 import palette as pal  # noqa: E402
+import routecheck  # noqa: E402
 
 THEME = "concrete_facility"
 OUT = "batch017/shells"
@@ -83,8 +84,6 @@ W = DIM["path_width"]                        # 8.00
 LEDGE = DIM["path_ledge"]                    # 4.00
 SEG_MIN = DIM["path_segment_min"]            # 3
 SEG_MAX = DIM["path_segment_max"]            # 8
-GAP_MIN = DIM["path_gap_min"]                # 0.50
-MAX_SAFE_GAP = DIM["max_safe_gap"]           # a FUNCTION of the step
 FALL_KILL_Y = DIM["fall_kill_y"]             # -30.0
 SHAFT = 8.0                                  # how far down these model
 
@@ -104,43 +103,9 @@ def _paint(obj, name, role):
     return obj
 
 
-def _jump(a, b, size_a, size_b):
-    """Edge-to-edge distance between two platform footprints, in metres.
-
-    Centre-to-centre would flatter every layout in this file. The player
-    jumps from the near edge of one to the near edge of the next, so that
-    is what gets measured -- and it is why a lateral offset up to a
-    platform's own width costs nothing, while one beyond it costs the
-    difference.
-    """
-    dz = max(0.0, abs(a[1] - b[1]) - (size_a[1] + size_b[1]) / 2.0)
-    dx = max(0.0, abs(a[0] - b[0]) - (size_a[0] + size_b[0]) / 2.0)
-    return math.sqrt(dz * dz + dx * dx)
-
-
 def _assert_reachable(name, stones, step):
-    """Every mandatory jump, against the joint bound at this landing height.
-
-    Not a style rule. `PlatformPathChamber` exists because gap and step
-    were once bounded independently and a legal chamber could be
-    unfinishable; this is the same check, applied to authored geometry
-    before it can be exported.
-    """
-    allowed = MAX_SAFE_GAP(step)
-    worst = 0.0
-    for (a, sa), (b, sb) in zip(stones, stones[1:]):
-        d = _jump(a, b, sa, sb)
-        worst = max(worst, d)
-        if d > allowed + 1e-9:
-            raise AssertionError(
-                "%s: a mandatory jump of %.3f m exceeds max_safe_gap(%.2f) = "
-                "%.3f. This shell would be unfinishable with the base kit."
-                % (name, d, step, allowed))
-        if d < GAP_MIN - 1e-9:
-            raise AssertionError(
-                "%s: a jump of %.3f m is under zone.py's gap_size floor of "
-                "%.2f -- that is a step, not a gap." % (name, d, GAP_MIN))
-    return round(worst, 3), allowed
+    """`routecheck`'s rule, so towers and paths cannot disagree about it."""
+    return routecheck.assert_reachable(name, stones, step)
 
 
 def _shaft(name, total, top):

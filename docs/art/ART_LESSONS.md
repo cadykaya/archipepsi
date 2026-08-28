@@ -802,6 +802,49 @@ ground under the viewer and the gap where it belongs.
 > "you are standing here", the standing has to be in it.
 
 
+### L-58 · Measure the route from where the player stands
+`routecheck` reported a worst mandatory jump of 1.93 m against a 2.00 m
+bound for all three tower shells -- alarming, and false. It measured from
+the entrance DOORWAY, and a tower's ground floor is a full 12 x 12 slab:
+the player walks under the first platform and steps up. From the ground the
+same geometry reads 0.800, 1.700 and 0.100.
+
+Nothing about the shells changed. What was wrong was the check's idea of
+where a route begins, and the failure mode is the nastier direction of the
+two: a number that cries "nearly illegal" about a step nobody has to make
+trains you to ignore it, and the run where it means something looks the
+same as the runs where it did not.
+
+> A guard that is wrong in the safe direction still costs you the guard.
+
+### L-59 · A check earns its keep the first time it refuses something
+The same module refused `shell_tower_collapsed` outright: the surviving
+half-floors alternated left and right, which put a 3.60 m crossing between
+them. Unfinishable with the base kit, and invisible -- from every camera it
+looks like two floors with a gap, and a gap is what a tower is supposed to
+have.
+
+That is the whole argument for a rule expressed as executable geometry
+rather than as a paragraph in a design document. The paragraph would have
+been read, agreed with, and not applied.
+
+It is also why the module is now shared rather than copied into each
+builder. Two authored families disagreeing about how far a jump reaches
+would be worse than not checking at all: it would look checked.
+
+### L-60 · Any oblique from outside a walled room photographs the outside
+Three tower overview shots were placed 7 m in front of the shaft at 16 m
+up, pitched down 48 degrees -- a natural three-quarter view. Every one
+returned the OUTSIDE of the box, because a tower's walls are as tall as the
+tower: the sight line met the entrance wall four metres below its top.
+
+An open-topped room only opens upward. The camera has to be over the hole,
+not beside it -- these are at pitch -72 above the shaft centre.
+
+> "Above and in front" is a view of a model on a table. A room is not on a
+> table; it is the table.
+
+
 ## Process
 
 ### L-39 · Four batches to lock a style, and every one of them was cheap
