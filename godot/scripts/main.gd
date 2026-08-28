@@ -54,6 +54,7 @@ const DRIVERS := {
 	"--lab-test": preload("res://tests/lab_driver.gd"),
 	"--affordance-test": preload("res://tests/affordance_driver.gd"),
 	"--verbs-test": preload("res://tests/verbs_driver.gd"),
+	"--boot-test": preload("res://tests/boot_driver.gd"),
 	"--content-test": preload("res://tests/content_driver.gd"),
 }
 
@@ -64,6 +65,28 @@ func _ready() -> void:
 			headless_test = true
 			add_child((DRIVERS[flag] as GDScript).new())
 			return
+	boot()
+
+## Everything the real game needs, extracted so a test can call it.
+##
+## It used to be the tail of `_ready`, which meant NO suite ran it: every
+## driver takes the branch above and returns first. That is how ba0a804
+## deleted the world and the sound bank and nine green suites plus two CI
+## tiers said nothing for a day, while the game could not enter the Hub
+## at all. `--boot-test` calls this directly.
+func boot() -> void:
+	# The world every Hub and Zone is parented to, and the sound bank.
+	#
+	# These were lost in ba0a804, which replaced the block of per-driver
+	# `if` statements above with the `DRIVERS` loop and took the five
+	# lines that happened to sit underneath it. The game could not enter
+	# the Hub from that commit until this one: `_clear_world()` is the
+	# first thing every transition calls, and it dereferenced null.
+	world = Node3D.new()
+	world.name = "World"
+	add_child(world)
+	tones = Tones.new()
+	add_child(tones)
 
 	menu = MainMenu.new()
 	add_child(menu)
@@ -133,7 +156,7 @@ func _on_menu_mock() -> void:
 
 # ---------------------------------------------------------------------------
 
-func _on_snapshot(snapshot: Dictionary) -> void:
+func _on_snapshot(_snapshot: Dictionary) -> void:
 	menu.refresh()
 	debug.refresh()
 	_refresh_banner()

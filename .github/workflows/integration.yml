@@ -112,6 +112,7 @@ jobs:
 
       - name: Headless Godot suites
         run: |
+          make godot-boot
           make godot-test
           make godot-hud
           make godot-rules
