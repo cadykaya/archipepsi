@@ -211,7 +211,40 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   merges 1 → 14, resources pinned at exactly the soft budget of six, Mk III
   chains. **The whole disposition vocabulary now reaches a real campaign**,
   merge included, rather than only a crafted request.
-- **Next: the plan is exhausted.** IMPLEMENTATION_PLAN §2.5 ends at S10
+- **Dual Archipepsi is proven and supported.** `make dual-real` /
+  `make dual-real-soak`: a real MultiServer on a real generated two-slot
+  seed, two bridges connected at once, two saves in ONE shared directory
+  (the realistic same-machine case), each checking the other's locations.
+  Ten properties across three freshly generated multiworlds. Four
+  sabotages caught (shared scout cache, shared received list, a campaign
+  key dropping the slot, a save path dropping both). The bridge port is
+  configurable (`--port`, `BridgeServer(port=...)`), defaulting to the
+  generated constant. Two findings, neither a bug: an echo id is unique
+  only WITHIN a campaign (both worlds number locations 89100001–89100030,
+  so `echo_89100001` exists in both and means different items — the
+  correct property is that the other player's state does not MOVE), and a
+  Track is a GAME not a slot (`track_key` is `recipient_game`, so a
+  location whose item goes to the other Archipepsi player shares the
+  "Archipepsi" Track with one that comes back to you; asserted so a change
+  would be deliberate).
+- **`AUTHORED_CONTENT.md` is in the packet and authoritative.** Humans
+  make the alphabet, Godot enforces the grammar, Epsilon writes sentences.
+  Reading position 10, authority position 6 (above EPSILON_SPEC on the art
+  boundary, silent elsewhere). Epsilon may not author anything whose value
+  depends on consistency, readability, identity, repeated exposure or
+  exact mechanical dimensions. Five authoring levels, props → set pieces.
+  §6 records the debt: **zero imported assets exist and every visual is a
+  procedural placeholder**, with seven named file-level conflicts. Not to
+  be ripped out — the placeholders are load-bearing for every suite.
+  `test_authored_boundary.py` guards the vocabulary (no schema field may
+  name a mesh/material/texture; `theme` and `palette_color` must stay
+  closed Literals).
+- **Playtest ready.** The bridge announces port, AP mode, provider and the
+  RESOLVED save path at startup (the save dir is cwd-relative, which is
+  the footgun). `test_startup.py` is the launch-shaped suite: bind,
+  handshake, mock campaign plays a Zone, save lands where announced, and
+  each likely first-run misconfiguration names its own fix.
+- **Next: the plan is exhausted, and the pre-playtest pass is done.** IMPLEMENTATION_PLAN §2.5 ends at S10
   ("Deployables come after S10, if at all"). Per the standing handoff, do
   not stop here — continue developing the game, and stop only where
   continuing would require inventing an architecture decision the contract
@@ -248,9 +281,12 @@ model, not merely described). Ownership is the default; equipping is the
 modifier. Recorded in `docs/IMPLEMENTATION_DECISIONS.md` (S5).
 
 ## Last full green verification
-At the S1–S5 review completion (this commit):
-- `make test`: 362 passed (bridge) + 126 (schemas) + 26 (apworld)
-- (was 343 at S9 completion)
+At the pre-playtest checkpoint (this commit):
+- `make test`: **487 passed** (schemas + bridge + apworld together)
+- `check_packet.py`: green, **11 documents**
+- `make dual-real-soak`: 3/3 freshly generated two-Archipepsi multiworlds
+- `make smoke`: SMOKE OK
+- (was 343 at S9 completion, 362 after the S1–S5 review)
 - `check_packet.py`: green, 10 docs
 - `make godot-test`: GODOT CHAMBER TESTS OK
 - `make godot-blink`: 5125 resolved / 17825 refused; GODOT BLINK TESTS OK

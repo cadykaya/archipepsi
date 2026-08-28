@@ -824,6 +824,109 @@ six campaigns past Mk I. That threshold sits between the two measurements
 a mock that skips the chain still produces a working campaign, just one
 that never gets deeper.
 
+## The pre-playtest pass
+
+Three finite pieces, then stop.
+
+### 1. Two Archipepsi players in one real multiworld — proven
+
+The APWorld's demo seed has always GENERATED two Archipepsi worlds
+(`Skyiah` and `Partner`) and nothing ever exercised them at runtime.
+`make dual-real` does: a real `MultiServer.py` on a real generated seed,
+two bridges connected simultaneously, two saves, each checking the
+other's locations. `make dual-real-soak` repeats it across freshly
+generated multiworlds.
+
+It has to be a real server. Every hazard here lives in the seam between a
+slot and the multiworld, and `MockAPBackend` IS one slot by construction:
+both Archipepsi worlds number their locations 89100001–89100030, the same
+thirty integers, and the only thing making A's 89100001 a different
+location from B's is the slot context the server keeps.
+
+Ten properties, all holding: both connect and scout their own thirty; the
+same numeric ids resolve to different items per slot (22–27 of 30 differ
+per seed); A checks a location holding B's item and AP delivers to B
+exactly once while A gets exactly one Echo and B's campaign does not move;
+the symmetric case; native items land only where owed (checked against
+external ground truth — what the two worlds' checked locations OWE each
+slot, not against each player's own bookkeeping); both generate and claim
+Zones concurrently, interleaved on one event loop, with overlapping
+numeric allocations; no duplicate Zone record or generation; saves
+independent and both reload; one disconnects and returns unchanged while
+the other never notices; both report goal; nothing claimed or granted
+twice.
+
+The players share **one save directory**, deliberately: `ARCHIPEPSI_SAVE_DIR`
+defaults to a single `bridge/saves/`, so two bridges on one machine write
+into one folder, and giving each its own would prove isolation the
+deployment does not have.
+
+**Two assertions had to be written twice, and neither was a bug.** "B has
+no `echo_89100001`" and "89100001 is not in B's checked set" both failed,
+because B legitimately owns a location numbered 89100001 and an Echo for
+it, meaning a different item entirely. **An echo id is unique within a
+campaign, which is the only scope it needs.** The correct property is that
+the other player's state did not MOVE — strictly stronger than an absence
+test, and what the file now asserts.
+
+Sabotage: a module-level scout cache (0 of 30 locations differ), a shared
+received list (a delivery counted twice), a campaign key dropping the slot
+(both hash the same), a save path dropping both (one file, two
+campaigns). A fifth — dropping only the slot NAME — correctly did *not*
+fail, because the key still carries the slot id.
+
+**Bridge port is configurable**: `--port`, and `BridgeServer(port=...)`,
+defaulting to the generated constant so nothing that does not ask changes.
+Proven by connecting a client to each of two bridges, and by reverting the
+parameter to watch the second bind fail with `EADDRINUSE`.
+
+**One behaviour pinned rather than changed.** A Track is a GAME, not a
+slot: `track_key` is `recipient_game`, so a location whose item goes to
+the other Archipepsi player carries the same "Archipepsi" Track as one
+coming back to you — 19 and 11 of thirty in a typical seed. They stay
+distinguishable (`recipient_is_self` separates them, and the reveal, the
+Echo grant and the archive all read it); they share one Hub rotation.
+Coherent, and now asserted so a change would be deliberate.
+
+### 2. The authored-asset / Epsilon boundary — codified
+
+`docs/design-packet-v0.8/AUTHORED_CONTENT.md`, normative, reading position
+10 and authority position 6. **Humans make the alphabet, Godot enforces
+the grammar, Epsilon writes sentences.** Epsilon may not author anything
+whose value depends on consistency, readability, identity, repeated
+exposure or exact mechanical dimensions. Five authoring levels from props
+to set pieces.
+
+§6 is the honest part: **there are zero imported assets in `godot/` and
+every visual is a procedural placeholder**, with seven named file-level
+conflicts (chamber builders composing room shells from primitives, the Hub
+and Lab built in code, enemy silhouettes as primitives, the material
+vocabulary generated at 64×64). Recorded as debt rather than removed — the
+placeholders are load-bearing for every suite in the frontier. And the
+note for later: replacing a placeholder moves work from Godot to a *human*,
+never to Epsilon.
+
+`test_authored_boundary.py` keeps a document from being the only defence.
+It is a VOCABULARY test, because the erosion would be someone adding a
+schema field that names a mesh or a material while every validator keeps
+passing. It also proves `theme` and `palette_color` are still closed
+`Literal`s — a selector is only selection while its values are a fixed
+list — and that the debt table names files that still exist.
+
+### 3. Playtest readiness
+
+The bridge printed one line and now prints four: port, AP mode, provider,
+and the **resolved absolute save path**. That last is the footgun —
+`DEFAULT_SAVE_DIR` is `Path.cwd()/"saves"`, so `make bridge` (from
+`bridge/`) and the same command from the repo root are different
+campaigns. `resolve_provider_name` is its own function because asking for
+`claude` without a key is the likeliest first-run mistake.
+
+`bridge/tests/test_startup.py` is the launch-shaped suite: bind,
+handshake at the version the client checks, MOCK CAMPAIGN playing a whole
+Zone with no server and no seed, the save landing where announced, and
+each likely misconfiguration naming its own fix.
+
 ## Next useful work
 1. **Play-feel pass on real hardware** — the manual checks in
    ACCEPTANCE_TESTS §7 (gap feel, reveal timing, Conference Call comedy)
@@ -846,6 +949,7 @@ that never gets deeper.
    reconnect during generation built the same Zone twice).
 7. ~~The whole disposition vocabulary, and a multi-seed soak~~ — **done.**
 8. ~~Mock Epsilon's S10 growth (§12.2's unmet obligation)~~ — **done.**
+9. ~~Dual-Archipepsi proof, authored-asset boundary, playtest readiness~~ — **done.**
 
 ## Known blockers / bugs
 None known. One recorded schema corner: `finale_offered` stays true in
@@ -853,7 +957,7 @@ postgame, so clients also require the goal to be missing
 (`docs/IMPLEMENTATION_DECISIONS.md`).
 
 ## Commands
-    make test                  # 362 pytest (bridge) + 126 + 26
+    make test                  # 487 pytest (schemas + bridge + apworld)
     make godot-test            # chamber geometry
     make godot-blink           # invariant I14, every builder
     make godot-hud             # S3: palette, glyphs, pressure valve, archive
@@ -862,6 +966,8 @@ postgame, so clients also require the goal to be missing
     make godot-lab             # S8: the Echo Lab, and what it must not do
     make godot-affordance      # S9: I4/I12/I13, volumes, local rewards, readouts
     make godot-verbs           # the press/release lifecycle, over a real floor
+    make dual-real             # TWO Archipepsi slots, one real MultiServer
+    make dual-real-soak        # the same, across freshly generated seeds
     #                            (the 25-seed campaign soak runs inside `make test`)
     make rules-fixture         # regenerate the rule suite's folded snapshot
     make verbs-fixture         # regenerate the verb suite's folded snapshot

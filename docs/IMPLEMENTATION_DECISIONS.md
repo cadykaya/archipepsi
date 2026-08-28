@@ -1085,3 +1085,87 @@ the allocator never starves while unallocated locations remain; the save
 validates after every transition rather than only where a test looks; and
 the fold publishes no edge naming a component it deleted.
 
+## Two Archipepsi players in one multiworld
+
+- **An echo id is unique WITHIN a campaign, and that is the only scope it
+  needs.** `echo_{location_id}` looks like a global identifier and is not.
+  Both Archipepsi worlds number their locations 89100001–89100030, so
+  `echo_89100001` exists in each and means a different item in each. Two
+  assertions in the dual-slot proof were written on the wrong assumption
+  and failed on correct behaviour — "B has no `echo_89100001`" and
+  "89100001 is not in B's checked set" — because B legitimately owns both.
+  The property that holds is that the OTHER player's state does not move
+  when this one acts, which is strictly stronger than an absence test.
+  Recorded because the wrong reading is the intuitive one.
+
+- **A Track is a GAME, not a slot.** `ScoutInfo.track_key` is
+  `recipient_game`, so with two Archipepsi slots a location whose item
+  goes to the *other* Archipepsi player shares the "Archipepsi" Track with
+  one that comes back to you — around 19 and 11 of thirty in a typical
+  seed. They remain distinguishable, because `recipient_is_self` is a
+  separate field that the reveal, the Echo grant and the archive all read;
+  what they share is one Hub rotation rather than two. That is coherent —
+  a Track answers "which game receives this", and both answers are
+  Archipepsi — and it is now asserted in `dual_real.py` so that changing
+  it would be a decision rather than a drift.
+
+- **The dual proof shares one save directory, deliberately.**
+  `ARCHIPEPSI_SAVE_DIR` defaults to a single `bridge/saves/`, so two
+  bridges on one development machine write into one folder. Giving each
+  test player its own directory would have proved isolation the actual
+  deployment does not have. The campaign key
+  (`sha256(seed|team|slot_id)[:16]`) is what keeps them apart, and the
+  slot-name suffix on the filename is readable decoration on top of it —
+  a sabotage dropping only the suffix correctly did not fail.
+
+- **The bridge port is a parameter, not a redesign.** `BridgeServer` took
+  `C.BRIDGE_HOST` / `C.BRIDGE_PORT` directly from the generated constants.
+  It now takes them as defaulted arguments, with a `--port` flag. Two
+  Archipepsi slots in one multiworld is a supported way to play, and on
+  one machine that means two bridges, which cannot both hold 38290. The
+  constants remain the default, so nothing that does not ask changes.
+
+## The authored-asset boundary
+
+- **The boundary is about kind of value, not difficulty.** A thing does
+  not become Epsilon's because authoring it would be tedious, and it does
+  not stay ours because Epsilon would find it hard. The question is
+  whether it gets better by being the same every time or different every
+  time. `AUTHORED_CONTENT.md` is normative for this and outranks
+  `EPSILON_SPEC.md` on it.
+
+- **A document is not a defence, so the boundary has a vocabulary test.**
+  The way it would erode is nobody deciding anything: someone adds a
+  schema field that lets a provider name a mesh, a material or a colour,
+  and every validator keeps passing because the schema now permits it.
+  `test_authored_boundary.py` therefore tests the shape of what a provider
+  may SAY rather than what it does, and separately proves that `theme` and
+  `palette_color` are still closed `Literal`s — a selector is only
+  selection while its values are a fixed list.
+
+- **The placeholders are debt, and they stay.** Every visual in the game
+  is procedural and there are zero imported assets. That was right for a
+  POC and it conflicts with the boundary document; §6 names the seven
+  file-level conflicts so later work can find them. Removing them tonight
+  would leave the game unrunnable and every suite in the frontier
+  untestable, which is a worse state than documented debt. Replacing one
+  moves the work from Godot to a human, never to Epsilon.
+
+## Playtest readiness
+
+- **The save directory is cwd-relative, and the fix is to say so.**
+  `DEFAULT_SAVE_DIR` is `Path.cwd() / "saves"` unless
+  `ARCHIPEPSI_SAVE_DIR` overrides it, so `make bridge` (which runs from
+  `bridge/`) and the same command from the repo root are two different
+  campaigns. Both are correct. Changing the default would break every
+  existing save; printing the resolved absolute path at startup makes the
+  behaviour visible instead of mysterious, which is what a player needs
+  when last night's campaign does not come back.
+
+- **A launch-shaped test, alongside the subsystem ones.** Every other
+  suite finds bugs; `test_startup.py` finds out whether the game starts.
+  Bind, handshake at the version the client checks, MOCK CAMPAIGN playing
+  a whole Zone with no server and no seed, the save landing where the
+  banner said, and each likely first-run misconfiguration producing a
+  message that names its own fix.
+
