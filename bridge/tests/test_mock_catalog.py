@@ -178,6 +178,8 @@ def test_a_mock_campaign_exercises_the_systems_s2_to_s6_added(tmp_path):
         primitives: set[str] = set()
         links: set[str] = set()
         kinds: set[str] = set()
+        operations: set[str] = set()
+        evolved = 0
         for seed in soak.SEEDS[:6]:
             watcher = soak.run(soak._play(tmp_path, seed))
             mechanics = M.derive_mechanics(
@@ -186,10 +188,36 @@ def test_a_mock_campaign_exercises_the_systems_s2_to_s6_added(tmp_path):
                 kinds.add(owned.kind)
                 if owned.kind == "action":
                     primitives.add(owned.component.primitive.type)
+                if owned.mk > 1:
+                    evolved += 1
             for edge in mechanics.links:
                 links.add(edge.link)
+            for interpretation in watcher.engine.save.interpretations:
+                operations.update(op.op for op in interpretation.operations)
+            # The confluence is what keeps the fifteen HUD channels from
+            # filling with flasks now that most shapes carry a bar.
+            hard = E.COMPLEXITY_BUDGETS["resource"][1]
+            assert len(mechanics.resources) <= hard, (
+                f"seed {seed} owns {len(mechanics.resources)} resources "
+                f"against a hard ceiling of {hard}")
     finally:
         soak.make_engine = original
+
+    assert operations == {"create", "upgrade", "modify", "link", "merge"}, (
+        f"a mock campaign produced {sorted(operations)}; the whole "
+        f"disposition vocabulary has to be reachable in play, not only in "
+        f"a crafted request")
+    # Measured: 18 with the chain running on mock's own shapes, 9 without
+    # (the fallback's own path accounts for those nine). The threshold sits
+    # between, because the failure it guards is silent — mock's catalog
+    # shapes are fresh CREATEs, so a mock that skipped the chain would
+    # still produce a working campaign, just one that accumulates instead
+    # of evolving: seventeen unrelated Actions where twelve is the soft
+    # budget, and a provenance chain that never gets longer than one.
+    assert evolved >= 14, (
+        f"only {evolved} components across six campaigns are past Mk I; "
+        f"the fallback's own path alone reaches nine, so mock is not "
+        f"running the disposition chain on its catalog shapes")
 
     assert links == {"powers", "fills", "gates", "scales"}, (
         f"a mock campaign reached {sorted(links)}; the client's handling "

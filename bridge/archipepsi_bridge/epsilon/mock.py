@@ -19,8 +19,8 @@ from ..schemas import constants as C
 from ..schemas import migration as MG
 from .concepts import mode_for_operations, read_concepts
 from .fallback import (
-    _add_features, _clamp, _common, _create_ops, _theme_for, fallback_echo,
-    fallback_zone)
+    _add_features, _clamp, _common, _create_ops, _theme_for, as_disposition,
+    fallback_echo, fallback_zone)
 from .requests import EchoGenerationRequest, ZoneGenerationRequest
 
 _ADJECTIVES = ("Humming", "Sunken", "Borrowed", "Restless", "Overgrown",
@@ -435,19 +435,23 @@ def _mock_echo(request: EchoGenerationRequest) -> dict:
     What this adds is reach — the verbs, the link kinds and the readouts
     the fallback's pinned shape cannot express.
 
-    The disposition chain is NOT re-run here. `fallback_echo` already
-    tries sequel, enhancement and confluence, and a shape from the table
-    below is a fresh CREATE by construction: it names only components it
-    creates itself, so there is nothing for a disposition to attach to
-    that the fold would not refuse.
+    The disposition chain runs on the result, exactly as it does inside
+    `fallback_echo`. Skipping it looked safe — a table shape is a fresh
+    CREATE by construction — and cost the campaign its evolutions: ten
+    Zones ended with seventeen unrelated Actions against a soft budget of
+    twelve, and eight upgrades where the fallback produced thirty-one. A
+    second glide item has to become the first glide at Mk II, or mock is
+    the accumulation problem `_as_sequel` was written to solve, wearing a
+    wider catalog.
     """
     shape = mock_echo_shape(request)
     if shape is None:
         return fallback_echo(request)
     components, phrase = shape
-    interpretation = _create_ops(
-        request, f"{request.source.item_name}, as {phrase}.",
-        ["mock", "catalog"], components)
+    interpretation = as_disposition(
+        _create_ops(request, f"{request.source.item_name}, as {phrase}.",
+                    ["mock", "catalog"], components),
+        request, enhancement=False)
     # The §15 reading is stamped the same way `fallback_echo` stamps it:
     # concepts from the item, mode DERIVED from what the operations did,
     # so the archive cannot describe a draft that no longer exists.

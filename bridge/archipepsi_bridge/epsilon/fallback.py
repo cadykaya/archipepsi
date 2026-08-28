@@ -571,17 +571,42 @@ def fallback_echo(request: EchoGenerationRequest, *,
     something only a fixture ever showed.
     """
     interpretation = _fallback_echo_create(request, mechanics=mechanics)
-    # Tried most-specific first. A sequel is the strongest claim (the
-    # campaign owns this exact verb already); an enhancement is next (it
-    # owns something the element can attach to); a confluence is last,
-    # because it fires on a budget condition rather than on a reading.
-    # Each returns None when it cannot land, so the ordinary CREATE
-    # survives and none of them can make the fallback invalid.
-    interpretation = (_as_sequel(interpretation, request)
-                      or _as_enhancement(interpretation, request)
-                      or _as_confluence(interpretation, request)
-                      or interpretation)
-    return _read_and_label(interpretation, request)
+    return _read_and_label(as_disposition(interpretation, request), request)
+
+
+def as_disposition(interpretation: dict, request: EchoGenerationRequest, *,
+                   enhancement: bool = True) -> dict:
+    """The strongest claim this interpretation can make on what is already
+    owned, or the interpretation unchanged.
+
+    Tried most-specific first. A sequel is the strongest claim (the
+    campaign owns this exact verb already); an enhancement is next (it
+    owns something the element can attach to); a confluence is last,
+    because it fires on a budget condition rather than on a reading. Each
+    returns None when it cannot land, so the ordinary CREATE survives and
+    none of them can make a provider invalid.
+
+    Public because mock is the other caller. A provider that skips this
+    accumulates: mock's own catalog shapes are fresh CREATEs, and without
+    the chain a ten-Zone campaign ended with seventeen unrelated Actions
+    against a soft budget of twelve, and eight upgrades where the fallback
+    produced thirty-one. Evolving is not decoration — it is what keeps a
+    26-Check campaign from being 26 unrelated things.
+
+    `enhancement=False` for a caller that has already made a specific
+    reading of this item. Mock's catalog is that caller: "Ice Beam" reads
+    as both `cold` and `beam`, and letting the generic enhancement (cold,
+    so chill an owned weapon) outrank the specific shape (a beam and the
+    charge it burns) swallowed every elemental item and put
+    `beam_sustained` back out of reach. Sequel still applies, because
+    owning the same verb is a fact about identity rather than a rival
+    reading; confluence still applies, because it is about capacity.
+    """
+    return (_as_sequel(interpretation, request)
+            or (_as_enhancement(interpretation, request)
+                if enhancement else None)
+            or _as_confluence(interpretation, request)
+            or interpretation)
 
 
 def _read_and_label(interpretation: dict, request: EchoGenerationRequest) -> dict:
