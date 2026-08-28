@@ -35,6 +35,66 @@
     "texels_per_metre": 32,
     "texture": "theme/concrete_facility_wall_ribbed.png"
   },
+  "gothic_stone/accent": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/gothic_stone_accent.png"
+  },
+  "gothic_stone/ceiling": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/gothic_stone_ceiling.png"
+  },
+  "gothic_stone/floor": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/gothic_stone_floor.png"
+  },
+  "gothic_stone/trim": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/gothic_stone_trim.png"
+  },
+  "gothic_stone/wall": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/gothic_stone_wall.png"
+  },
+  "neon_transit/accent": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/neon_transit_accent.png"
+  },
+  "neon_transit/ceiling": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/neon_transit_ceiling.png"
+  },
+  "neon_transit/floor": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/neon_transit_floor.png"
+  },
+  "neon_transit/trim": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/neon_transit_trim.png"
+  },
+  "neon_transit/wall": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/neon_transit_wall.png"
+  },
   "rusted_industrial/accent": {
     "covers_m": 4.0,
     "size_px": 128,
@@ -64,6 +124,36 @@
     "size_px": 128,
     "texels_per_metre": 32,
     "texture": "theme/rusted_industrial_wall.png"
+  },
+  "temple_ruin/accent": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/temple_ruin_accent.png"
+  },
+  "temple_ruin/ceiling": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/temple_ruin_ceiling.png"
+  },
+  "temple_ruin/floor": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/temple_ruin_floor.png"
+  },
+  "temple_ruin/trim": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/temple_ruin_trim.png"
+  },
+  "temple_ruin/wall": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/temple_ruin_wall.png"
   },
   "void_glitch/accent": {
     "covers_m": 4.0,

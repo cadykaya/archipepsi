@@ -28,6 +28,14 @@ import paintkit  # noqa: E402
 import palette as pal  # noqa: E402
 
 REVIEW_DIR = os.path.join(common.REPO_ROOT, "docs", "art", "review", "batch001")
+#: Which review folder each theme's sheet belongs in -- the batch that
+#: built it. Absent means Batch 001.
+SHEET_BATCH = {
+    "neon_transit": "batch012",
+    "gothic_stone": "batch012",
+    "temple_ruin": "batch012",
+}
+
 ZOOM = 4
 LABEL_H = 8
 
@@ -100,10 +108,17 @@ def main():
             common.log("theme/%-34s %dpx over %.2f m = %d texels/m"
                        % ("%s_%s.png" % (theme, role), materials.ARCH_SIZE,
                           materials.ARCH_METRES, materials.ARCH_DENSITY))
+        # A theme's sheet lives with the batch that BUILT it. The first
+        # three were Batch 001's and stay there; moving them would churn
+        # three files the owner has already looked at and approved, to no
+        # purpose. The map is the honest version of that.
+        review = os.path.join(common.REPO_ROOT, "docs", "art", "review",
+                              SHEET_BATCH.get(theme, "batch001"))
+        os.makedirs(review, exist_ok=True)
         _save(_sheet(theme, canvases),
-              os.path.join(REVIEW_DIR, "H_material_%s.png" % theme))
-        common.log("sheet  docs/art/review/batch001/H_material_%s.png (%dx zoom)"
-                   % (theme, ZOOM))
+              os.path.join(review, "H_material_%s.png" % theme))
+        common.log("sheet  %s/H_material_%s.png (%dx zoom)"
+                   % (os.path.relpath(review, common.REPO_ROOT), theme, ZOOM))
 
     out = os.path.join(common.REPO_ROOT, "assets", "textures", "theme",
                        "manifest.json")

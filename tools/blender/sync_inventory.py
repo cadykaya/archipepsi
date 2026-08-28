@@ -66,6 +66,19 @@ ORDER = [
     ("batch011", "affordance",
      ["rail_arc_rise", "rail_arc_launch", "rail_arc_weave"]),
 ]
+#: Batches the OWNER has passed, by the date of the verdict. This script
+#: may never approve art; every entry here is a transcription of a decision
+#: recorded in ART_REVIEW.md, and anything not listed is PEND.
+#:
+#:   batch001, batch002   Style Lock, 2026-08-28
+#:   batch004             Echo Lab, 2026-08-28
+#:   batch005             Check, PASS IN DIRECTION then full PASS after 005-R
+#:   batch006 .. batch009 portal/door, traversal, projectiles, affordances
+#:
+#: batch003 (the Hub) has had no verdict of its own and stays PEND.
+APPROVED = ("batch001", "batch002", "batch004", "batch005", "batch006",
+            "batch007", "batch008", "batch009")
+
 CAT = {"epsilon": "hero", "check": "hero", "portal": "interactable",
        "door": "module", "breakwall": "interactable",
        "water": "interactable", "rail": "interactable",
@@ -112,7 +125,7 @@ def main():
             # produced AFTER the lock is NEW: it inherits approved DNA but
             # has not itself been looked at, and writing PASS on it would be
             # this script approving art, which it may never do.
-            verdict = "PASS" if batch in ("batch001", "batch002") else "PEND"
+            verdict = "PASS" if batch in APPROVED else "PEND"
             rows.append("| `%s` | %s | %s | %d | %.2f \u00d7 %.2f \u00d7 %.2f | %s "
                         "| %s | %s | %s |"
                         % (i, LEVEL[pre], CAT[pre], m["triangles"],

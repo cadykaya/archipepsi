@@ -59,7 +59,7 @@ with the approved authored vocabulary come first.
 | 5 | Movement affordances | **done** — Batch 009 built the six remaining fixtures, all in the `signal` family the approved anchors wear |
 | 6 | Universal props | **done as far as it can go** — **corrected** — §8's 22-prop library is placed by nothing. Batch 010 built the three the generator actually places whose theme family exists; three more wait on their theme kits |
 | 7 | Room-shell vocabulary | none |
-| 8 | The six theme kits | 3 of 6 material families |
+| 8 | The six theme kits | **6 of 6 material families** — Batch 012 built `neon_transit`, `gothic_stone` and `temple_ruin` to the identity §9 already recorded. Per-theme dressing, light fixtures and landmarks remain |
 | 9 | Presentation / polish | none |
 
 **Tooling:** `tools/shoot.sh` runs a JSON shot list through
@@ -84,10 +84,11 @@ line rather than inventing work.
 | | |
 | --- | --- |
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
-| Phase | **STYLE LOCK PASSED — production.** Batch 004 is `PASS`. Batch 005 is `PASS IN DIRECTION`, its one required revision delivered as 005-R. Batches 005-R and 006 to 011 are `PENDING`. |
+| Phase | **STYLE LOCK PASSED — production.** Batch 004 is `PASS`. Batch 005 is `PASS IN DIRECTION`, its one required revision delivered as 005-R. Batches 001, 002, 004, 005 (incl. 005-R), 006, 007, 008 and 009 are `PASS`. Batches 003, 010, 011 and 012 are `PENDING`. |
 | Owner review | Style Lock passed 2026-08-28. Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
-| Next action | **Tier 8: the three unbuilt theme material families** (`neon_transit`, `gothic_stone`, `temple_ruin`). It is the highest-leverage unblocked work left — it also unblocks three of the six dressing props §9 needs — and it is routine in the sense that `art_palette.json` already carries all six themes' ramps and `materials.paint()` already builds any of them. **But it is the first look at three themes**, so it wants a review sheet the owner can redirect cheaply, and textures are the cheapest thing in the project to rebuild. Everything before it is done to its Pri-A rows or blocked: Tier 4 past the projectiles (reqs 7 and 14), Tier 2's last two rows on a navigation-language decision, Tier 6's §8 library on the fact that nothing places it. |
-| Queue depth | **Seven batches are with the owner and none is reviewed**: 005-R, 006, 007, 008, 009, 010, 011. That is worth weighing before starting an eighth — a heartbeat that keeps producing is building on ground nobody has walked on yet. If a heartbeat would rather hold, holding is a legitimate outcome and this line is why. |
+| Next action | **HOLDING at the owner's request** — *"lets take a break when v10 is done, i wanna review it"*. Batch 012 is finished, verified and pushed; nothing is left half-built. When production resumes, the ranked backlog is: the three theme dressing props Batch 012 unblocks (gothic sconce, neon signage, temple tendrils / stump); then Tier 7 room shells; then routine expansion of the Batch 007 architecture grammar, which the owner explicitly permitted. `objective_marker` / `signage_module` stay blocked pending their own review as a navigation-language batch. |
+| ~~Superseded~~ | ~~**Tier 8: the three unbuilt theme material families** (`neon_transit`, `gothic_stone`, `temple_ruin`). It is the highest-leverage unblocked work left — it also unblocks three of the six dressing props §9 needs — and it is routine in the sense that `art_palette.json` already carries all six themes' ramps and `materials.paint()` already builds any of them. **But it is the first look at three themes**, so it wants a review sheet the owner can redirect cheaply, and textures are the cheapest thing in the project to rebuild.~~ Done as Batch 012. |
+| Queue depth | **Three batches pending**: 003 (the Hub, never verdicted on its own), 010, 011, 012. The 2026-08-28 review cleared 005-R and 006–009 in one pass, so the queue is short again. Holding remains a legitimate heartbeat outcome and this line is why. |
 
 ### What the Batch 002 review LOCKED
 
@@ -145,7 +146,7 @@ grow again until Style Lock passes.
 | `tools/sabotage_checks.sh` | see the commit for the run |
 | `python3 tools/blender/sync_inventory.py` | 87 assets written |
 | `tools/check_art_current.sh` | PASS — every asset byte-identical from source |
-| Assets built | 87 models + 16 theme textures + 7 prop skins + review images in `review/batch001` … `batch011` |
+| Assets built | 87 models + **31 theme textures (six of six families)** + 7 prop skins + review images in `review/batch001` … `batch012` |
 | Composed room | 3,272 / 12,000 triangles |
 
 ### What a heartbeat cannot see
@@ -287,8 +288,9 @@ them; each is a thing the art lane will need when contracts settle.
 | 12 | **`exit_portal.gd`'s `Core` is placed for a solid box frame, not an authored one.** It is a 2.4 × 3.4 mesh at `y 1.9`, so it spans 0.2 to 3.6 — invisible inside a 4.2 m `BoxMesh` `Frame`, and wrong inside an authored frame whose aperture is a real hole from the floor to a 3.4 m lintel. The authored cores are built at true height and anchored `module_floor`, so `Core.position` becomes `Vector3.ZERO`. Same contract as `check_item_*`. Also: the remaining-Checks count stays engineering's `StateLabel` — it is an unbounded integer, and a pip row that saturated at eight would be lying at nine. | A core placed 200 mm high leaves a gap at the threshold and pokes through the lintel. | `portal_core_*` |
 | 13 | **`echo_projectile.gd` picks its visual by nothing.** It builds one `SphereMesh` and scales it 1.5× for a lob, so `gravity_scale` and `blast_radius` — the two facts that decide whether the player steps sideways or runs — are invisible. Batch 008 authors one mesh per kind; selecting between them is a `match` on data the node already holds. | Three reactions, one silhouette. The distinction the engine does draw, size, is the least useful of the three. | `enemy_projectile_*` |
 | 14 | **There is no node an authored enemy telegraph could be.** `ASSET_INVENTORY.md` §4 asks for one telegraph per archetype, readable at 18 m. `enemy.gd` has exactly one windup — the brute's — and it is `scale = Vector3.ONE * (1.0 + 0.12 * sin(...))` on the whole body. Melee and ranged have a cooldown and no windup at all. An authored telegraph needs either a child node the engine shows during windup, or a second body mesh it swaps to. | *A telegraph is a promise* (`AUTHORED_CONTENT.md`). Two of the three archetypes currently make none. | `enemy_telegraph_*` |
-| 15 | **The six affordance tints are six ad-hoc colours and the family rule says they should be one.** `ASSET_INVENTORY.md` §5 states *the seven look the same everywhere or they teach nothing*, and the approved grapple anchors wear `signal`. `affordance_features.gd` gives the breakable wall the theme hazard, water `(0.35, 0.75, 0.95)`, the rail `(0.9, 0.7, 0.95)`, wind `(0.7, 0.95, 0.9)`, and the bounce pad and moving platform the theme accent and trim. Four are absent from `art_palette.json`; two vary per theme; and the rail's violet sits beside `glitch`, which means *cosmetic corruption, no mechanical meaning*. | An affordance is a promise about the player's own body. A promise that has to be re-learnt per theme is not one, and one wearing the glitch family says the opposite of the truth. | every `batch009` asset |
+| 15 | **The six affordance tints are six ad-hoc colours and the family rule says they should be one.** `ASSET_INVENTORY.md` §5 states *the seven look the same everywhere or they teach nothing*, and the approved grapple anchors wear `signal`. `affordance_features.gd` gives the breakable wall the theme hazard, water `(0.35, 0.75, 0.95)`, the rail `(0.9, 0.7, 0.95)`, wind `(0.7, 0.95, 0.9)`, and the bounce pad and moving platform the theme accent and trim. Four are absent from `art_palette.json`; two vary per theme; and the rail's violet sits beside `glitch`, which means *cosmetic corruption, no mechanical meaning*. | **DECIDED 2026-08-28, in art's favour.** The owner's ruling: all optional traversal affordances use the approved SIGNAL family; silhouette / form tells the player WHICH affordance it is; SIGNAL colour tells them THIS IS A CAPABILITY OPPORTUNITY; and theme, source-game colour and Epsilon green each do **not** redefine that semantic. Two engine-owned dynamic channels are explicitly preserved: the breakable wall's damage / crack state, and the wind ring count and stack presentation. This is now a requirement for Production Engineering rather than a question, and no gameplay behaviour changes from this branch. | every `batch009` asset |
 | 16 | **A rail that turns needs a wider `FOOTPRINT["rail"].half_width`, and every curved rail needs its ride built from `ride_path`.** Two halves of one request. (a) `half_width` is 0.5 and the rail is 0.42 m across, so a lateral swing has 270 mm either side — a weave, never a turn; a banked 90° turn wants roughly 1.6 m of half-width. (b) The lane over a rail is an axis-aligned box `Area3D`, which cannot follow a curve — so each Batch 011 rail is a POLYLINE and its manifest carries `ride_path`, the points the mesh was swept along. One box per segment is implementable with the class that already exists, and building the volume chain from that list keeps the mesh and the ride from drifting apart. | A swept spline is a rail the player falls through. A second, hand-written description of the same curve is a description that goes stale. | `rail_arc_*`, and any turn |
+| 17 | **A playtest check that the three projectiles stay readable in motion, in all six themes.** The owner passed them as art on the 12 m Hub evidence and asked for this explicitly as integration validation: that moving projectiles remain trackable, that straight / falling / lobbed keep reading as three different reactions during actual gameplay, and that it holds in every theme environment. | Not a blocker and not a reason to redesign anything: *"Do not redesign them preemptively unless that test fails."* | nothing — it gates a future revision, not the models |
 | 5 | **A larger footprint, or an L2 placement path, for composed clusters.** `PROP_FOOTPRINT` is 1.4 m. | Right for L0, too small for an L2 station or storytelling cluster. | `cluster_*` |
 | 6 | **`challenge_marker` world semantics** (`AGENT_FRONTIER.md` still lists this open). | Its visual cannot be specified until its meaning is. | `local_reward_pickup` |
 
@@ -306,10 +308,10 @@ truth remain Godot's.
 - **Nothing is rigged or animated.** A telegraph is a promise
   (`AUTHORED_CONTENT.md`), and a promise cannot be judged from a static
   model. This is the next large question after style approval — not before.
-- **Three themes are unbuilt.** `neon_transit`, `gothic_stone`,
-  `temple_ruin` are inventoried and behind this gate.
-- **Only `concrete_facility` has a room shot.** The other two probes exist
-  as texture sheets only.
+- ~~**Three themes are unbuilt.**~~ Built in Batch 012; all six families
+  now build, and each has an in-engine probe room.
+- ~~**Only `concrete_facility` has a room shot.**~~ All six themes now have
+  an in-engine probe room and a greyscale of it.
 - **The review sheets are Compatibility-renderer captures**, so every one is
   a lower bound on the owner's Forward+ build.
 - **`prop_*` reads blue in `concrete_facility`**, because props paint from

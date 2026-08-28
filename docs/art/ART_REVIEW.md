@@ -1098,6 +1098,17 @@ were the brightest.** Both now get albedo and no emission at all, and
 top. Visibility at range was never the item's job: `hero_shell` paints a
 lit `signal` band on the mast that is on in all four states.
 
+### Status: PASS — the owner's verdict, recorded 2026-08-28
+
+> The targeted Check revision works. LOCKED vs CONFIRMED now separates at
+> ~39.6 m through actual head form / negative space rather than hue or the
+> destination ring. The confirmed spent husk becoming a larger solid mass
+> is exactly the kind of cue requested. Lock it.
+
+**Batch 005 is now fully `PASS`.** And the luminance correction is kept as
+a rule, not an incident: *dead / spent components should not accidentally
+be the brightest parts of the Check before runtime effects are applied.*
+
 ### Evidence — the five sheets the verdict asked for
 
 `docs/art/review/batch005r/`
@@ -1169,6 +1180,25 @@ No modelled bolt heads. Eight of them cost 96 triangles against an
 rule — over budget means delete geometry and paint it instead. What the
 triangles bought instead is a kick plate on each face, because the part of
 a doorway that actually takes damage is the bottom 400 mm.
+
+### Status: PASS — 2026-08-28
+
+Portal states `PASS`, standard door `PASS`. Kept: sealed as an alien-grown
+obstruction / closed wound, open as a visibly torn usable passage, the same
+approved frame, and the `identity` family **rather than inventing a false
+red / hazard semantic**.
+
+The door wearing theme trim is approved on its own terms:
+
+> A normal doorway should not advertise itself as a gameplay interaction
+> merely because it exists.
+
+And the surfaced question was handled the way it should be:
+
+> The surfaced `objective_marker` / `signage_module` question is correctly
+> treated as NEW visual-language work. Do not invent that language
+> silently. Continue elsewhere until we review it as its own coherent
+> batch.
 
 ### The question this batch is surfacing rather than answering
 
@@ -1257,7 +1287,18 @@ is to be a silhouette that says **this edge is a drop**.
 | `T_stair.png` · `T_ramp.png` · `T_ledge.png` | each on its own |
 | `T_corner_left.png` | the junction as an object |
 
-Status: **PENDING** — production work inheriting locked DNA.
+### Status: PASS — 2026-08-28
+
+The corridor assembly reads correctly at player eye level. Approved:
+straight corridor grammar, corner / junction grammar, stair, ramp, ledge.
+
+> Preserve the rule that traversal dimensions come from ENGINE TRUTH rather
+> than aesthetic guesses. The fact that the stair / ramp / ledge were
+> dimensioned against actual movement bounds is important, especially as
+> production Zones become much larger and more compositionally complex.
+
+These are legal authored vocabulary for Epsilon / Godot integration, and
+**routine expansion of this architectural grammar may continue.**
 
 ---
 
@@ -1330,7 +1371,23 @@ The Hub shot is the trackability test, and it is **one theme of six**. The
 other five are behind the theme-kit gate `ART_FRONTIER.md` already records.
 Saying so beats a sheet that implies the test was done.
 
-Status: **PENDING** — production work inheriting locked DNA.
+### Status: PASS AS ART ASSETS — 2026-08-28
+
+> Straight / falling / lobbed correctly spend SHAPE rather than hue on
+> attack type. That is the right semantic split because source-world / Echo
+> tint already owns the projectile's color.
+
+Kept as written: straight's simple single lateral profile, falling's
+doubled / vertically differentiated profile, lobbed's substantially larger
+and heavier silhouette. The 12 m Hub evidence is sufficient for art
+approval.
+
+**Not a blocker, but recorded:** an engine-integration check is still owed
+— that moving projectiles stay trackable, that the three reactions stay
+readable during actual gameplay, and that readability holds in all six
+theme environments. That is playtest validation, not a model problem, and
+these are not to be redesigned pre-emptively unless it fails. Interface
+requirement 17.
 
 ---
 
@@ -1408,7 +1465,33 @@ up the column at 1.2 m intervals, and `A_wind_column.png` shows it that way.
 | `A_rail_beam.png` · `A_bounce_pad.png` · `A_breakwall_panel.png` | each on its own |
 | `A_movplat_water.png` | the two that are read from above |
 
-Status: **PENDING** — production work inheriting locked DNA.
+### Status: PASS — 2026-08-28, and the interface question is decided
+
+> This is exactly the universal gameplay-language direction I want:
+> **ONE FAMILY, SEVEN PROMISES.**
+
+Approved by name: the bounce pad's circular impact read, the rail beam and
+support language, the breakwall panel, the moving platform's directional
+deck, the water lip / basin language, and the stacked wind rings with their
+perch.
+
+And the conflict this batch surfaced is **ruled in art's favour**:
+
+> AFFORDANCES SHOULD NOT EACH RECEIVE AN ARBITRARY UNIQUE COLOR.
+>
+> - all optional traversal affordances use the approved SIGNAL family
+> - silhouette / form tells the player WHICH affordance it is
+> - SIGNAL color tells the player THIS IS AN AFFORDANCE / CAPABILITY
+>   OPPORTUNITY
+> - theme does not redefine that semantic
+> - source-game color does not redefine that semantic
+> - Epsilon green does not replace that semantic
+
+with two engine-owned dynamic channels explicitly preserved: the breakable
+wall's damage / crack state, and the wind ring count and stack
+presentation. Interface requirement 15 is no longer a question — it is a
+requirement for Production Engineering, and no gameplay behaviour changes
+from this branch.
 
 ---
 
@@ -1560,3 +1643,59 @@ not pick them; `rail_arc_launch` is shaped so the question is worth asking.
 | `R_rail_weave_above.png` | the weave from above: ± 0.27 m is all there is |
 
 Status: **PENDING** — and this one has a question in it as well as a model.
+
+---
+
+## Batch 012 — the three unbuilt themes
+
+Style Lock opened theme production, and this closes the largest single gap
+in the project: `neon_transit`, `gothic_stone` and `temple_ruin` had no
+material family, so every theme-specific asset behind them was blocked and
+half the game looked like the other half.
+
+**Nothing here is invented.** §9 of `ASSET_INVENTORY.md` already recorded
+each theme's identity, and each treatment implements the line written there:
+
+| Theme | Structure | History it carries |
+| --- | --- | --- |
+| `neon_transit` | glazed tile grid, grout, signage band | stains from above, wet floor, ground-in dirt at the grout |
+| `gothic_stone` | coursed ashlar, iron banding | soot, chipped arrises, mortar loss |
+| `temple_ruin` | cut sandstone, brass mechanism | cracks, root intrusion, wind polish and drift |
+
+Five roles each — wall, floor, ceiling, trim, accent — at the same 128 px
+over 4.00 m, 32 texels/m as the approved three. **Six of six themes now
+build.**
+
+### Three things that are decisions rather than transcription
+
+- **Coursed stone is not a grid.** `panel_grid` is right for a panelled
+  wall and wrong for a wall that was *laid*: the whole read of ashlar is
+  that no vertical joint continues past its own course. A new `_coursed`
+  helper staggers each course and jitters the offset off the nominal bond,
+  because a perfectly alternating bond is a machine's bond.
+- **The wet floor is darker, not shinier.** `neon_transit` gets broad
+  pools that are darker and slightly bluer. A painted specular highlight
+  moves with the camera in every engine and does not move in a texture, so
+  it is a lie that only works from one place.
+- **Temple's wind polish is two opposite gradients**, which is why it is
+  not one `tonal_drift` call: the upper part of a ruin wall is scoured pale
+  and the lower part holds drift. Its roots come from the top edge and fork
+  as they descend — a root that started halfway down a wall is a squiggle.
+
+### Evidence
+
+`docs/art/review/batch012/`
+
+| Image | What it answers |
+| --- | --- |
+| `H_probe_*_room.png` | **start here** — each theme in engine, in a composed room |
+| `H_probe_*_greyscale.png` | does it hold without hue |
+| `H_material_*.png` | the five roles at 4× nearest-neighbour, for judging the paint |
+
+The probe rooms are the same bench and the same 3,272-triangle room the
+approved themes were judged in, with only the material family swapped —
+which is also the runtime model these are built for: **one authored mesh,
+six theme materials, selected by Godot.**
+
+Status: **PENDING** — and this one is cheap to redirect. A texture rebuilds
+in seconds, so if a theme reads wrong, say which and it changes.
