@@ -45,8 +45,17 @@ S23  release hardening         ── last
 | S15 room shells + connectors | **grammar done; shells BLOCKED on Q1** |
 | S16 encounter/traversal vocabulary | **done** — tower ascent bounded, gap bound exported |
 | S17 interactable/presentation contracts | **done** — `interactable_contract.gd` |
-| S18 enemy/player/affordance visual interfaces | **next** |
-| S19–S23 | not started |
+| S18 enemy/player/affordance visual interfaces | **done** — `visual_interface.gd` |
+| S19 material/VFX/audio/lighting vocabularies | **next** |
+| S20–S23 | not started |
+
+S18 proved a visual swap cannot move a hitbox: every archetype built
+under all six themes must produce byte-identical collision, and the
+archetypes must differ from each other so that check cannot pass by
+everything being one box. Two different rules, because procedural and
+authored geometry fail differently — `_box` derives mesh and collider
+from one `size` (so they must AGREE), while an authored scene has a
+person on each side (so art must not carry collision at all).
 
 S17's "do not leak hidden scouting information" was ALREADY enforced
 where it matters: the bridge does not send item identity for an

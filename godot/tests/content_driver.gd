@@ -60,6 +60,9 @@ func _run() -> void:
 	await _the_ap_moment_never_spoils_what_it_holds()
 	await _every_ap_state_is_distinguishable()
 	_a_scene_missing_a_required_part_is_named()
+	_a_theme_cannot_move_an_enemy_hitbox()
+	_an_enemy_hitbox_is_a_function_of_its_archetype()
+	_no_visual_anywhere_carries_collision()
 	if failures == 0:
 		print("GODOT CONTENT TESTS OK")
 		get_tree().quit(0)
@@ -534,3 +537,110 @@ func _a_scene_missing_a_required_part_is_named() -> void:
 	_check(Array(still) == ["state_label"],
 			"only the still-absent part should be named, got %s" % str(still))
 	bare.queue_free()
+
+
+# --- S18: visuals may not decide what is solid -----------------------------
+
+const ARCHETYPES := ["melee", "ranged", "brute"]
+
+func _a_theme_cannot_move_an_enemy_hitbox() -> void:
+	## The S18 proof, in the form the risk actually takes. Theme is the
+	## only thing that varies an enemy's appearance today, and authored
+	## models will arrive the same way: as a different look for the same
+	## creature. Build each archetype under every theme and require the
+	## collision to be identical -- not similar, identical.
+	for archetype: String in ARCHETYPES:
+		var reference: Array = []
+		var reference_theme := ""
+		for theme: String in Constants.THEMES:
+			var enemy := Enemy.create(archetype, theme)
+			add_child(enemy)
+			var profile := VisualInterface.collision_profile(enemy)
+			_check(not profile.is_empty(),
+					"a '%s' has no collision at all" % archetype)
+			if reference.is_empty():
+				reference = profile
+				reference_theme = theme
+			else:
+				var difference := VisualInterface.same_collision(
+						reference, profile)
+				_check(difference.is_empty(),
+						"a '%s' has different collision under '%s' than "
+						% [archetype, theme]
+						+ "under '%s': %s" % [reference_theme, difference])
+			enemy.free()
+
+func _an_enemy_hitbox_is_a_function_of_its_archetype() -> void:
+	## And the archetypes must differ from each other, or the check above
+	## passes by everything being the same box. Telling a brute from a
+	## sniper is gameplay information; so is being able to hit one.
+	var profiles: Dictionary = {}
+	for archetype: String in ARCHETYPES:
+		var enemy := Enemy.create(archetype, "void_glitch")
+		add_child(enemy)
+		profiles[archetype] = VisualInterface.collision_profile(enemy)
+		enemy.free()
+	_check(not VisualInterface.same_collision(
+			profiles["brute"], profiles["melee"]).is_empty(),
+			"a brute and a melee enemy have the same hitbox; one of them "
+			+ "is the wrong size")
+
+func _no_visual_anywhere_carries_collision() -> void:
+	## The rule an authored asset is most likely to break, because in
+	## most engines putting a collider under a mesh is the normal thing
+	## to do. Here it would mean the ART decides what is solid, so
+	## replacing the art changes what is solid.
+	##
+	## Checked across enemies, a built chamber and the player -- the
+	## three places geometry and appearance meet.
+	for archetype: String in ARCHETYPES:
+		var enemy := Enemy.create(archetype, "void_glitch")
+		add_child(enemy)
+		var offenders := VisualInterface.visuals_carrying_collision(enemy)
+		_check(offenders.is_empty(),
+				"'%s' has meshes carrying collision: %s"
+				% [archetype, str(offenders)])
+		enemy.free()
+
+	## Chamber geometry is the other case, and it needs the other check.
+	## `_box` derives the mesh and the collider from one `size`, so the
+	## meshes DO carry collision by design and nothing can be swapped.
+	## What must hold there is that the two agree: a 4 m mesh with a 3 m
+	## collider is a wall the player can see through, and a 3 m mesh with
+	## a 4 m collider is an invisible one they walk into.
+	var chamber := ChamberBuilders.build(
+			{"id": "c1", "type": "arena", "width": 18.0, "depth": 18.0,
+			"wall_height": 6.0, "objective": "reach_reward", "enemies": []},
+			"void_glitch")
+	var root: Node3D = chamber["root"]
+	add_child(root)
+	var mismatched := VisualInterface.mesh_collider_mismatches(root)
+	_check(mismatched.is_empty(),
+			"an arena's visuals and colliders disagree: %s"
+			% str(mismatched.slice(0, 3)))
+	root.free()
+
+	## And the authored case, where a mesh carrying a collider DOES mean
+	## the art decides what is solid. The shipped graybox fixture keeps
+	## them separate; a scene that does not must be named.
+	var authored: PackedScene = load(FIXTURE)
+	var instance: Node3D = authored.instantiate()
+	add_child(instance)
+	_check(VisualInterface.visuals_carrying_collision(instance).is_empty(),
+			"the authored fixture puts collision under a mesh, which is "
+			+ "the arrangement that lets replacing art move a wall")
+	var bad := MeshInstance3D.new()
+	var body := StaticBody3D.new()
+	body.add_child(CollisionShape3D.new())
+	bad.add_child(body)
+	instance.add_child(bad)
+	_check(not VisualInterface.visuals_carrying_collision(instance).is_empty(),
+			"a mesh with a collider under it must be reported")
+	instance.free()
+
+	var player := Player.create()
+	add_child(player)
+	var on_player := VisualInterface.visuals_carrying_collision(player)
+	_check(on_player.is_empty(),
+			"the player has meshes carrying collision: %s" % str(on_player))
+	player.free()
