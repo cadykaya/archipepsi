@@ -8,13 +8,20 @@ file is the only one that says what to *do next*.
 
 ## THE GATE
 
-> ## BATCH 002 IS AWAITING OWNER REVIEW.
+> ## BATCH 002-R IS AWAITING OWNER REVIEW.
 > ## MASS ASSET PRODUCTION IS STILL BLOCKED.
 
-Batch 001 came back **PASS WITH REVISIONS**; 001-R came back *close, but do
-not unlock mass production yet — do one more style-lock revision pass
-first*. Batch 002 is that pass. The gate has **not** moved and it did not
-move at 001-R either: stop at the review gate again.
+Batch 002 came back with **most of the style lock approved** — facility
+architecture, the lighting rule, Check A, both grapple anchors, the portal
+language and the enemy family are all `PASS` and locked — and **one targeted
+Epsilon revision** outstanding:
+
+> If the revised Epsilon installation lands, I expect to declare STYLE LOCK
+> PASSED. Do NOT begin broad mass production until I approve that final
+> Epsilon revision.
+
+002-R is that revision, and it is the only thing in it. The gate has **not**
+moved.
 
 **Only the owner turns `PENDING` into `PASS` in
 [`ART_REVIEW.md`](ART_REVIEW.md).** No entry there may be moved by anyone
@@ -51,9 +58,32 @@ file accurate, and end the turn.** Do not invent work to fill a heartbeat.
 | | |
 | --- | --- |
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
-| Phase | **Batch 002 built and rendered.** 001 and 001-R are both reviewed; every verdict is recorded in `ART_REVIEW.md`. |
-| Owner review | **002 REQUESTED — not yet received.** Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
+| Phase | **Batch 002-R built and rendered.** 001, 001-R and 002 are all reviewed; every verdict is recorded in `ART_REVIEW.md`. |
+| Owner review | **002-R REQUESTED — not yet received.** Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
 | Next action | **Wait.** The gate above is the whole of the current instruction. |
+
+### What the Batch 002 review LOCKED
+
+Six things are `PASS` and are not open again:
+
+- **Facility architecture** — the baseline human language.
+- **The lighting rule** — cold facility, pale surfaces, localized yellow
+  utility pools, never a globally warm room.
+- **Check A** — its identity stays separate from Epsilon green.
+- **Both grapple anchors** — A common/ceiling, B directional/wall.
+- **The portal language** — human architecture + alien intrusion. Future
+  variants may get stranger; the split does not.
+- **The enemy family** — reads at gameplay distance, role diversity good.
+  **This roster is the first production family and must not be reduced back
+  to melee / ranged / brute.**
+
+And one thing is recorded for later, so it is not re-derived: the long-term
+roster target is a broad classic-FPS ecosystem — common, flyers, flankers,
+artillery, support, bruisers, elites, specialist weirdos, miniboss-scale —
+**inspired by the ROLE COVERAGE** of the classics and never copying their
+designs, roughly ~20 types over time, with **flyers as a core category**
+because the grapple gives the game verticality. Not now: the roster does not
+grow again until Style Lock passes.
 
 ### What the Batch 001-R review settled
 
@@ -87,7 +117,7 @@ file accurate, and end the turn.** Do not invent work to fill a heartbeat.
 | `python3 tools/blender/check_docs_metrics.py` | PASS — every number in ART_REVIEW.md and ASSET_INVENTORY.md matches the build |
 | `tools/sabotage_checks.sh` | see the commit for the run |
 | `tools/check_art_current.sh` | PASS — every asset byte-identical from source |
-| Assets built | 40 models + 16 theme textures + 7 prop skins + 68 review images (46 in 001, 22 in 002) |
+| Assets built | 40 models + 16 theme textures + 7 prop skins + 72 review images (46 in 001, 26 in 002) |
 | Composed room | 3,272 / 12,000 triangles |
 
 ### What a heartbeat cannot see
@@ -111,6 +141,8 @@ should say it cannot rather than guess.
 
 | Prefix | What |
 | --- | --- |
+| `A_epsilon_operator` | **the frontal operator view** — eye height, one pace back. The shot 002-R exists for. |
+| `A_epsilon_fusion` · `_oblique` · `_value` | the takeover close up, from the alien end, and with the hue removed |
 | `A_epsilon_installation*` | **the room-scale computer installation** — wide sheet, 4 m medium, 2 m close |
 | `A_epsilon_in_room*` | the same object standing in a 12 m room, head-on and oblique |
 | `I_room_utility_pools*` | **cold room, local warm pools** — lit, greyscale, and standing in one |
@@ -120,7 +152,7 @@ should say it cannot rather than guess.
 | `E_anchor_{a,b}_use` | **what each anchor is for**, with the jump it has to beat drawn in |
 | `F_style_board*` | the two languages in one frame, lit and greyscale |
 
-Start with `A_epsilon_in_room.png` and `D_enemy_family_silhouette.png`.
+Start with `A_epsilon_operator.png` and `A_epsilon_in_room.png`.
 
 **[`docs/art/review/batch001/`](review/batch001/)** — the previous batch
 
@@ -154,6 +186,7 @@ for s in materials architecture props concept_epsilon concept_check \
 done
 tools/batch001_sheets.sh      # ~12 min: 28 sheets
 tools/composed_room.sh        # ~2 min: 12 room captures, incl. Epsilon in context
+tools/epsilon_views.sh        # the operator / oblique / fusion / value views
 tools/enemy_family.sh         # the ten-role family sheet
 tools/anchor_use.sh           # what each anchor is for
 tools/style_board.sh          # the two languages in one frame

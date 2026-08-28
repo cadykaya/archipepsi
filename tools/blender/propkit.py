@@ -522,10 +522,18 @@ def machine_bank(theme, name, kind="panel"):
         # grid the panels and bolts already use means every window samples
         # one, and taking it to the dark trim step keeps the human half
         # cold and dead -- a stamped plate, never a lit one.
+        # On roughly half the cells, not all of them. At every cell the
+        # plate became the loudest thing on a 9 m installation -- seven rows
+        # of identical stencils across the whole bank, which is repetition
+        # doing the opposite of what texture is for. Skipping cells keeps
+        # the map uniform in the sense that matters (no window is
+        # conspicuously brighter than another) while breaking the drumbeat.
         cell = surf.texels(0.5)
         plate_w, plate_h = surf.texels(0.22), surf.texels(0.13)
         for cx in range(0, PROP_SIZE, cell):
             for cy in range(0, PROP_SIZE, cell):
+                if surf.hash.breaker("plate", cx, cy) > 0.55:
+                    continue
                 x, y = cx + cell - plate_w - 4, cy + 6
                 canvas.rect(x, y, plate_w, plate_h, pal.grime(0))
                 canvas.outline(x, y, plate_w, plate_h, trim[1])

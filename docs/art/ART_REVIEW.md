@@ -254,7 +254,44 @@ production after this batch either — the gate holds until you lift it.
 
 ---
 
-## Batch 002 — the second revision. Everything below is PENDING.
+## Batch 002 — the owner's verdict, recorded
+
+**Overall: MOST OF THE STYLE LOCK IS APPROVED.** Six items were asked for and
+six were built; five came back `PASS`, and Epsilon takes one more targeted
+revision before Style Lock is declared.
+
+> If the revised Epsilon installation lands, I expect to declare STYLE LOCK
+> PASSED. Do NOT begin broad mass production until I approve that final
+> Epsilon revision.
+
+### What is LOCKED
+
+| | Verdict | What the lock means |
+| --- | --- | --- |
+| **Facility architecture** | `PASS` | The baseline human / facility language. |
+| **Lighting rule** | `PASS` | Cold overall facility; white / pale-blue / grey surfaces; localized yellow utility pools; **never** globally warm the room. |
+| **Check A** | `PASS` | The pedestal / beacon identity stays separate from Epsilon green. |
+| **Grapple anchors A + B** | `PASS` | Both kept. A = common ceiling / soffit. B = directional wall / side / jib. |
+| **Portal language** | `PASS` | The human-architecture + alien-intrusion split is the DNA. Future variants may get stranger; this split does not change. |
+| **Enemy family / silhouettes** | `PASS` | The roster reads at gameplay distance and the role diversity is good. |
+
+**The expanded enemy roster is the first production family and must not be
+reduced back to melee / ranged / brute.**
+
+### Enemy roster — the future direction, recorded now so it is not re-derived
+
+The owner's long-term target: a broad classic-FPS-style ecosystem — common
+enemies, flyers, flankers, artillery, support, bruisers, elites, specialist
+weirdos, miniboss-scale threats — **inspired by the ROLE COVERAGE** of
+Doom / Doom II / Doom 64 / Half-Life 1 and **never copying their designs**.
+Roughly **~20 distinct types over time** is acceptable provided each stays
+mechanically distinct, visually readable, and part of the same
+Epsilon-fabricated family. **Flying enemies are a core combat category, not
+a novelty**, because the grapple gives the game verticality.
+
+Not now. The roster does not grow again until Style Lock is passed.
+
+### Everything built for 002, as reviewed
 
 **Where the images are:** [`review/batch002/`](review/batch002/)
 
@@ -293,7 +330,7 @@ Look at: `A_epsilon_installation.png` (wide, silhouette, clay, 1.8 m scale
 rod, 8 m play distance), `_medium.png` at 4 m, `_close.png` at 2 m, and
 `A_epsilon_in_room.png` / `_oblique.png` for it standing in a room.
 
-Status: **PENDING**
+Status: **REVISE** — scale and the human-computer/alien-intrusion idea are both right and neither is to be thrown away. One targeted revision remains; see Batch 002-R below.
 
 ### B · Facility lighting — cold room, local warm pools
 
@@ -313,7 +350,7 @@ Look at: `I_room_utility_pools.png`, its greyscale, `I_room_utility_pool_near.pn
 and `I_room_warmlight_rejected.png` — the 001-R globally-warm version, kept
 and labelled rather than deleted.
 
-Status: **PENDING**
+Status: **PASS** — locked. Cold facility, localized warm pools, never a globally warm room.
 
 ### C · Portal — the human/alien split pushed
 
@@ -332,7 +369,7 @@ B and B-R are both kept.
 
 Look at: `C_portal_b2_wound.png`.
 
-Status: **PENDING**
+Status: **PASS** — the human-architecture + alien-intrusion split is locked as the portal DNA. Future variants may get stranger; the split does not.
 
 ### D · The enemy family — seven proposed roles
 
@@ -367,7 +404,7 @@ manifest entry says `"engine_box": false`.
 Look at: `D_enemy_family_18m.png` and `D_enemy_family_silhouette.png` — two
 ranks of five, both at 18 m, true 1080p scale then 2×.
 
-Status: **PENDING**
+Status: **PASS** — the family reads at gameplay distance and the role diversity is good. This roster is the first production family and is not to be reduced.
 
 ### E · Grapple anchors — what each one is FOR
 
@@ -386,7 +423,7 @@ Look at: `E_anchor_a_use.png` and `E_anchor_b_use.png`. Both carry the 1.8 m
 rod at the jump's 4.67 m flat reach and an orange bar at the 1.33 m jump
 apex, because an anchor that does not beat a jump is decoration.
 
-Status: **PENDING**
+Status: **PASS** — both kept. A is the common ceiling anchor, B the directional wall one.
 
 ### F · The family board (optional item)
 
@@ -397,7 +434,7 @@ exists only in hue will not survive a dark corridor.
 
 Look at: `F_style_board.png` and `F_style_board_greyscale.png`.
 
-Status: **PENDING**
+Status: **PASS** — the two languages hold apart.
 
 ---
 
@@ -429,3 +466,96 @@ Status: **PENDING**
    is filed under?
 
 No mass production. Statuses stay `PENDING` until you say otherwise.
+
+---
+
+## Batch 002-R — the targeted Epsilon revision. PENDING.
+
+**Where the images are:** [`review/batch002/`](review/batch002/), the
+`A_epsilon_*` sheets.
+
+The 002 review passed the scale and the idea and named one thing:
+
+> Right now it reads more like "big server installation". I want it to also
+> read like "a huge computer a researcher could physically walk up to and
+> operate".
+
+### What changed
+
+`epsilon_installation` — **1644 triangles, 9.02 × 3.48 × 3.55 m**, floor anchored.
+Same seven-bay module, same wall-sized presence, same rack language, same
+hostile green. Three changes, and nothing else was touched.
+
+**1 · The middle three bays are now an OPERATOR CONSOLE.** Every part of it
+answers "how would you use this?", and every height comes from engineering:
+
+| Part | What it says |
+| --- | --- |
+| Desk top at 0.95 m | You stand at this. It is not a shelf. |
+| Footwell under it | Your feet go here, so you can get close. |
+| Raked control panel | Your hands go here, angled toward you. |
+| Monitor at eye + 0.45 m | You look slightly UP at it. Oversized, institutional. |
+| Instrument strip between them | The row you read while your hands are busy. |
+| Two auxiliary screens, unlevel | A control room has more than one display, and they are never level. |
+| Floor grating, worn | Somebody stood here. For a long time. |
+
+The console is built OUT from the rack line in layers — bezel, hood, panel,
+desk, floor plate, each projecting further than the one behind it — because
+at any distance the parts of this object are the same value, and depth is
+the only thing separating them. It also wears a **different skin**: switch
+banks and patch rows, not cabinet louvres. With one map over everything the
+console was a differently shaped piece of the same wall.
+
+**2 · The breach moved to one END.** Bays 5 and 6, hard right. Not the
+middle.
+
+**3 · The mass reaches back INTO the console it wrecked.** A limb over the
+desk's right end with fingers gripping it; a spur through the right side of
+the monitor housing; alien plate flush where the console's own right-hand
+skin used to be; green conduits running left along the human cable tray they
+hijacked; buttons overtaken at the panel's right end. Nothing mirrors.
+
+The console's right third is being taken. Its left two thirds are still a
+machine a person could use. The sentence, in that order: **humans built this
+computer, then something foreign took it over.**
+
+### The rule that survived
+
+**Nothing on the human half glows.** The monitor is dead glass — except
+where the alien is through it, which is not the console powering up. That is
+the review's "monitor behaving strangely", and the light arrives from inside
+the housing.
+
+Its screen material also went from roughness 0.25 to 0.50: at 0.25 a 2.7 m
+console screen caught a specular off the key light broad enough to look like
+a picture, and a highlight that reads as a display breaks that rule exactly
+as completely as emission would.
+
+### The five views
+
+| Image | What it answers |
+| --- | --- |
+| `A_epsilon_in_room.png` · `_oblique.png` | **Wide, in a room.** Does it read as an installation at all? |
+| `A_epsilon_operator.png` | **The frontal operator view** — eye height, one pace back, aimed level so the desk top is visible. This is the shot the revision exists for. |
+| `A_epsilon_oblique.png` | From the alien end, looking back across the console. |
+| `A_epsilon_fusion.png` | Close, where the mass comes over the desk and through the screen. |
+| `A_epsilon_value.png` | The operator frame with the hue removed. If the split only exists in green it will not survive a dark room. |
+
+Plus `A_epsilon_installation.png` at 8 m, `_medium.png` at 4 m and
+`_close.png` at 2 m, all rebuilt.
+
+Status: **PENDING**
+
+---
+
+## What I am asking for on 002-R
+
+1. Does it now read as **a huge computer somebody operated**, rather than a
+   server installation?
+2. Is the takeover asymmetric enough — does the right-hand third read as
+   *taken* rather than as decorated?
+3. Is the console face at the right scale against the racks, or should it
+   be larger still?
+
+Nothing else in the batch was touched. The roster did not grow, no theme
+production started, and every 002 `PASS` stands as you wrote it.

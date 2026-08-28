@@ -1,6 +1,8 @@
 # Style Lock Batch 002 — review images
 
-**22 images. Nothing here is approved.** The ledger is
+**26 images.** Most of Batch 002 came back `PASS`; the Epsilon
+installation took one targeted revision, and that revision is the only thing
+still awaiting a verdict. The ledger is
 [`../../ART_REVIEW.md`](../../ART_REVIEW.md) and every entry in it is
 `PENDING`. Only the owner turns `PENDING` into `PASS`.
 
@@ -8,12 +10,19 @@ This is the second revision pass. The 001-R verdict was *close, but do not
 unlock mass production yet*, and it asked for six things. Each has its own
 section below.
 
-## Start here — two images
+## Start here — the 002-R revision
 
 | | |
 | --- | --- |
-| **[`A_epsilon_in_room.png`](A_epsilon_in_room.png)** | The Epsilon installation standing in a room, from the doorway, in the game's own camera. 8.8 m of abandoned mainframe with the alien mass erupting through it. **This is the shot the whole batch turns on** — a turntable cannot tell you whether an object is an installation or a prop, and a room can. |
-| **[`D_enemy_family_silhouette.png`](D_enemy_family_silhouette.png)** | Ten enemy roles as black shapes at 18 m, the distance you first see one. If any two of them are the same shape, the roster is wrong however good the models are. |
+| **[`A_epsilon_operator.png`](A_epsilon_operator.png)** | The installation from where a person would stand: eye height, one pace back from the desk, aimed level so the desk top is visible. **This is the shot the revision exists for.** Does it read as a huge computer somebody operated? |
+| **[`A_epsilon_fusion.png`](A_epsilon_fusion.png)** | Close, at the right-hand third — the mass over the desk, through the monitor housing, replacing the console's own panels. Is the takeover asymmetric enough? |
+| **[`A_epsilon_in_room.png`](A_epsilon_in_room.png)** | The same object in a room, from the doorway, in the game's own camera. |
+| **[`A_epsilon_oblique.png`](A_epsilon_oblique.png)** | From the alien end, looking back across the console. |
+| **[`A_epsilon_value.png`](A_epsilon_value.png)** | The operator frame with the hue removed. If the split only exists in green it will not survive a dark room. |
+
+Everything below is the batch as first reviewed. The five verdicts stand as
+written; nothing in those sections was rebuilt except where the emissive
+solve changed, which affected every lit surface in the project.
 
 ## 1 · Epsilon — a room-scale computer installation
 

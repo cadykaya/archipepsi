@@ -353,6 +353,11 @@ bright emission clips every channel and renders white. Every lit cue in
 Batch 001 did this on its first render — including the enemy's eye, which is
 the one cue on the figure and the thing that says which way it is facing.
 
+And one that is not about emission at all: **a specular highlight can break
+this rule as completely as a glow.** At roughness 0.25 the Epsilon console's
+dead screen caught a bloom off the key light that read as a picture. Glass
+that must read as OFF runs rougher than glass would be. See L-36.
+
 The rule: **albedo is the family's dark step, emission is its bright step,
 and the strength is SOLVED, never chosen.**
 `common.make_signal_material()` is the only sanctioned way to build one.
@@ -379,6 +384,39 @@ thing in its own pool.
 
 > A green cue that renders orange inverts the one rule the colour language
 > has. Green says whose this is; orange says what is about to happen.
+
+---
+
+### 4d. The interaction face — settled at the Batch 002 review
+
+A machine the player is meant to believe **people used** needs a face built
+at the heights a person works at. Scale alone does not do it: a wall of
+racks says *this facility had computers*; it does not say *somebody used
+this one*.
+
+So any authored machine that is meant to read as operated carries:
+
+| Part | Height | Why |
+| --- | --- | --- |
+| Work surface | ~0.95 m | Standing desk height. Below it, a shelf; above it, a counter. |
+| Footwell under it | clear to ~0.45 m | Feet go here. Without it the desk is a cabinet with a flat top. |
+| Raked control panel | just above the desk | Hands go here, angled toward the operator. |
+| Main display | eye height + ~0.4 m | You look slightly UP. Institutional, oversized. |
+| Instrument row | between them | What you read while your hands are busy. |
+| Floor plate or grating | at the feet | Somebody stood here. This is the part that is about a person. |
+
+Eye height and player height come from `engine_truth`, never from taste.
+
+Two rules the first attempt paid for:
+
+**Build it OUT in layers.** Every part of a machine like this is the same
+value, so DEPTH is the only thing separating one from another. Bezel, hood,
+panel, desk and floor plate each project further than the part behind them,
+and the whole face self-shades.
+
+**Give it a different surface.** Geometry that says "console" under a map
+that says "cabinet" reads as cabinet. At any real distance the map is louder
+than the silhouette. See `ART_LESSONS.md` L-37.
 
 ---
 

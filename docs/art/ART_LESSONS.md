@@ -293,6 +293,52 @@ It is now hard-edged blocks at unrelated angles, none of them tapering.
 **When a review names a shape as wrong, check the fix against the name, not
 against your intent.**
 
+### L-35 · A box that swallows what it frames is invisible in the worst way
+The console's monitor was three parts: a housing box, a bezel frame, and the
+glass. Their depths were written as *centres and sizes*, and the arithmetic
+put the bezel 10 mm in front of the housing's front face and the glass
+entirely **inside** the housing. From eight metres the whole console rendered
+as one flat pale panel — there was no screen in it to see, and nothing said
+so. A build log cannot report "this box is eating that one".
+
+Rewriting the three depths as **faces** rather than centres made the mistake
+impossible to write:
+
+    bezel_face   = front - 1.38     # the ring, front-most
+    glass_face   = front - 1.30     # recessed 80 mm behind the ring
+    housing_face = front - 1.26     # and the box behind that
+
+> When parts nest, name the surfaces, not the centres. A centre-and-size
+> pair is a claim about where a face is, made indirectly, and indirection is
+> where the sign error lives.
+
+### L-36 · A specular highlight can break a "nothing glows" rule
+The installation's single hardest rule is that nothing on the human half
+emits — the moment a console has a lit readout, the machine reads as
+powered and the intrusion stops being the only living thing in the room.
+Every emissive was accounted for and the rule still broke: at roughness 0.25
+the 2.7 m console screen caught a broad specular off the key light and
+rendered with a bright bloom across its lower corner. It looked exactly like
+a monitor that was on.
+
+The fix is roughness 0.50 — still glass, no longer a picture.
+
+> A rule about emission is really a rule about what the surface LOOKS like.
+> Enumerating the emissive materials proves nothing on its own.
+
+### L-37 · Geometry said console, surface said cabinet, and surface won
+The operator console was built as its own form — hood, bezel, desk,
+footwell, floor grating — and then painted with the same `machine_bank`
+cabinet map as the racks either side. At a pace back it read as a
+differently shaped piece of the same wall.
+
+Giving the desk, apron, housing, hood, auxiliaries and raked panel the
+**console** skin — switch banks and patch rows — separated them instantly.
+Nothing about the geometry changed.
+
+> When an object needs to read as a different KIND of thing, the surface has
+> to say so too. At any real distance the map is louder than the silhouette.
+
 ## Checks and benches
 
 ### L-15 · A check that passes on a clean tree has proved nothing
@@ -424,6 +470,15 @@ in the scene that actually knows where something drew.
 
 > A label under the wrong figure is worse than no label. Derive positions
 > from the camera, never from a formula about the camera.
+
+### L-38 · Do not measure a frame you have already written on
+The Epsilon value read is the operator frame desaturated. It was derived
+*after* the operator captions were drawn, so the value caption landed on top
+of them and both became unreadable — and, worse, the caption pixels went
+through the luma conversion as if they were part of the render.
+
+Capture, then derive, then caption. A caption is not part of the render and
+must never be measured as if it were.
 
 ## Process
 

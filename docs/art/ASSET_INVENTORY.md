@@ -36,7 +36,7 @@ Everything else is `—` and stays `—` until the Style Lock gate opens.
 | `epsilon_a_lectern` | L4 | hero | 140 | 1.18 × 0.86 × 2.62 | floor | B1R | B1R | PEND |
 | `epsilon_b_core` | L4 | hero | 284 | 1.40 × 1.28 × 2.63 | floor | B1R | B1R | PEND |
 | `epsilon_c_aperture` | L4 | hero | 188 | 1.34 × 0.50 × 2.77 | floor | B1R | B1R | PEND |
-| `epsilon_installation` | L4 | hero | 1396 | 8.80 × 2.61 × 3.55 | floor | B2 | B2 | PEND |
+| `epsilon_installation` | L4 | hero | 1644 | 9.02 × 3.48 × 3.55 | floor | B2 | B2 | PEND |
 | `check_a_pedestal` | L2 | hero | 300 | 0.96 × 1.04 × 2.22 | floor | B1R | B1R | PEND |
 | `check_b_vault` | L2 | hero | 232 | 1.38 × 1.37 × 2.16 | floor | B1R | B1R | PEND |
 | `check_c_mast` | L2 | hero | 268 | 1.11 × 1.14 × 2.22 | floor | B1R | B1R | PEND |
