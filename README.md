@@ -66,6 +66,23 @@ two libraries the bridge needs if they are missing, and starts it in
 offline mock mode. Leave that window open, launch Godot, and press
 **MOCK CAMPAIGN** — no Archipelago server, no seed, no `make setup`.
 
+### Getting updates
+
+**Clone the repository once; do not download a zip.** Then double-click
+**`Update Archipepsi (Windows).bat`** (or `./update-archipepsi.sh`) each
+time you want the latest.
+
+Downloading a fresh zip and erasing the old folder deletes three things
+that live inside it and are not in Git: your campaign saves in
+`bridge/saves/`, your settings, and Godot's `.godot/` import cache — so
+every update costs you a campaign and a full reimport. Updating in place
+costs neither, and the folder path never changes, so Godot keeps pointing
+at the right project.
+
+No terminal needed to get started: [GitHub
+Desktop](https://desktop.github.com) includes Git and clones with a
+button.
+
 ### The long way
 
 ```bash
