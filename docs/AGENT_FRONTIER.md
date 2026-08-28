@@ -41,8 +41,17 @@ S23  release hardening         ── last
 | S11 CI | **done** — three tiers green on real runners; `docs/CI.md` |
 | S12 registry + asset contract | **done** — `schemas/content.py`, `content_registry.gd`, `docs/ART_ASSET_SPEC.md`, `make godot-content` |
 | S13 instantiation pipeline | **done** — `content_instantiator.gd`, routed from `ZoneBuilder` |
-| S14 Hub + Echo Lab migration | **next** |
-| S15–S23 | not started |
+| S14 Hub + Echo Lab migration | **done** — `hub_anchors.gd`, Lab gap pinned |
+| S15 room shells + connectors | **next** |
+| S16–S23 | not started |
+
+S14 put a named anchor contract between the Hub's logic and its
+geometry: logic asks for `main_portal` or `shop`, `HubAnchors` decides
+where that is, from the procedural defaults or from an authored scene's
+markers. Adoption is per-anchor, so a graybox Hub can replace the room
+one marker at a time. The Echo Lab's gap width is now a documented
+constant pinned between `SAFE_BASE_JUMP_GAP` and `JUMP_FLAT_REACH` --
+both bounds are silent failures if they break.
 
 S13 routed every chamber through the registry, and every route still
 ends at `ChamberBuilders` because every entry is still a declared

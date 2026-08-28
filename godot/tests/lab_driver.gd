@@ -58,6 +58,9 @@ func _run() -> void:
 	_reset_clears_transient_only(lab, player)
 	_no_campaign_mutation(lab)
 	_the_suite_actually_exercised_something(lab)
+	_the_labs_gap_stays_mechanically_meaningful()
+	_the_hub_resolves_every_anchor_its_logic_needs()
+	_an_authored_scene_can_move_an_anchor()
 
 	lab.queue_free()
 	player.queue_free()
@@ -309,3 +312,77 @@ func _the_suite_actually_exercised_something(lab: EchoLab) -> void:
 	_check(float(_exercised["motion"]) > 1.0,
 			"...and moved the target a real distance (%f)"
 			% _exercised["motion"])
+
+
+# --- S14: the Hub/Lab geometry contract ------------------------------------
+
+## The Lab's gap is not decoration and its width is not a free number.
+## Both bounds are silent failures if they break: too wide and the Lab
+## cannot be crossed without an Echo, too narrow and it stops showing
+## that an Echo does anything.
+func _the_labs_gap_stays_mechanically_meaningful() -> void:
+	_check(EchoLab.GAP_WIDTH < Constants.JUMP_FLAT_REACH,
+			"the Lab gap (%.2f m) must stay INSIDE the base kit's flat "
+			% EchoLab.GAP_WIDTH
+			+ "reach (%.2f m), or the Lab needs an Echo to cross"
+			% Constants.JUMP_FLAT_REACH)
+	_check(EchoLab.GAP_WIDTH > Constants.SAFE_BASE_JUMP_GAP,
+			"the Lab gap (%.2f m) must stay WIDER than the safe mandatory "
+			% EchoLab.GAP_WIDTH
+			+ "gap (%.2f m), or it demonstrates nothing about mobility"
+			% Constants.SAFE_BASE_JUMP_GAP)
+
+	## The margin is what makes it a demonstration rather than a coin
+	## flip. A gap 1 cm inside the reach is a gap the player fails at and
+	## blames the game for.
+	var margin := Constants.JUMP_FLAT_REACH - EchoLab.GAP_WIDTH
+	_check(margin > 0.1,
+			"the Lab gap leaves only %.3f m of margin inside the base "
+			% margin + "kit's reach; that reads as a bug, not a jump")
+
+func _the_hub_resolves_every_anchor_its_logic_needs() -> void:
+	## The S14 contract. A Hub scene that cannot answer one of these
+	## leaves a station, the portal or the way out of GENERATING with
+	## nowhere to be -- and the Hub is the only screen with no pause menu
+	## to escape from.
+	var anchors := HubAnchors.new()
+	_check(anchors.missing().is_empty(),
+			"the Hub cannot resolve these anchors: %s"
+			% str(anchors.missing()))
+	_check(anchors.outside_room().is_empty(),
+			"these Hub anchors are outside the room: %s"
+			% str(anchors.outside_room()))
+
+	## The Lab lines up with the Hub through the doorway, not by
+	## coincidence: both read the same Z.
+	_check(is_equal_approx(anchors.origin("lab_entrance").z,
+			HubAnchors.LAB_DOOR_Z),
+			"the lab_entrance anchor drifted from LAB_DOOR_Z")
+	_check(is_equal_approx(EchoLab.OFFSET.z, HubAnchors.LAB_DOOR_Z),
+			"the Echo Lab (offset z=%.1f) no longer lines up with the "
+			% EchoLab.OFFSET.z + "Hub doorway (z=%.1f); the way through "
+			% HubAnchors.LAB_DOOR_Z + "opens onto a wall")
+
+func _an_authored_scene_can_move_an_anchor() -> void:
+	## The migration path S14 exists to open: a graybox or authored Hub
+	## supplies anchors as markers, one at a time, and anything it does
+	## not name keeps the procedural default. If adoption were all or
+	## nothing, the first graybox would have to place all eight correctly
+	## before the Hub could boot at all.
+	var scene := Node3D.new()
+	var marker := Marker3D.new()
+	marker.name = "shop"
+	marker.transform = Transform3D(Basis(Vector3.UP, PI), Vector3(1, 0, 2))
+	scene.add_child(marker)
+	add_child(scene)
+
+	var anchors := HubAnchors.new(scene)
+	_check(anchors.origin("shop") == Vector3(1, 0, 2),
+			"a scene's marker must win over the default, got %s"
+			% anchors.origin("shop"))
+	_check(anchors.origin("main_portal")
+			== HubAnchors.defaults()["main_portal"].origin,
+			"an anchor the scene did not name must keep its default")
+	_check(anchors.missing().is_empty(),
+			"partial adoption must still resolve every anchor")
+	scene.queue_free()

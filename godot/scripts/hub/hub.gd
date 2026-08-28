@@ -10,14 +10,20 @@ signal open_inventory_requested
 signal open_shop_requested
 
 const THEME := "concrete_facility"
-const W := 22.0
-const D := 16.0
-const H := 5.0
+# Room dimensions live with the anchors that derive from them, so a
+# change to the room moves the stations instead of stranding them.
+const W := HubAnchors.W
+const D := HubAnchors.D
+const H := HubAnchors.H
 
 var player: Player
 var _portal: HubPortal
 var _finale_portal: HubPortal
 var _abandon: AbandonConsole
+## S14: where things go. Logic asks by name; `HubAnchors`
+## decides where, from the procedural defaults or from an
+## authored scene's markers.
+var _anchors := HubAnchors.new()
 var _board: Label3D
 var _sub_board: Label3D
 var _static_root: Node3D
@@ -114,9 +120,12 @@ func _voice_on_change() -> void:
 ## as two wall segments with a gap rather than by moving the perimeter,
 ## so the Hub's own geometry stays exactly as it was.
 func _cut_lab_doorway(b, root: Node3D) -> void:
-	var door_z := 6.0
-	var door_w := 3.0
-	var door_h := 3.2
+	# The doorway's Z is the `lab_entrance` anchor's, and its metrics are
+	# HubAnchors' -- the Lab lines up against the same numbers, so they
+	# have one home rather than two that drift.
+	var door_z := _anchors.origin("lab_entrance").z
+	var door_w := HubAnchors.LAB_DOOR_WIDTH
+	var door_h := HubAnchors.LAB_DOOR_HEIGHT
 	var opening := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(0.6, door_h, door_w)
@@ -179,25 +188,29 @@ func _build_room() -> void:
 	_portal = HubPortal.new()
 	_portal.kind = "main"
 	add_child(_portal)
-	_portal.position = Vector3(0, 0, D - 1.2)
+	_portal.position = _anchors.origin("main_portal")
 	_portal.activated.connect(_on_portal_activated)
 
 	# The finale portal: smaller, redder, only shown when offered.
 	_finale_portal = HubPortal.new()
 	_finale_portal.kind = "finale"
 	add_child(_finale_portal)
-	_finale_portal.position = Vector3(W / 2.0 - 3.0, 0, D - 1.2)
+	_finale_portal.position = _anchors.origin("postgame")
 	_finale_portal.activated.connect(_on_finale_activated)
 
 	# Status board above the portal.
 	_board = Label3D.new()
-	_board.position = Vector3(0, 4.2, D - 1.4)
+	_board.position = _anchors.origin("progression_display")
 	_board.font_size = 96
 	_board.pixel_size = 0.008
 	_board.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(_board)
 	_sub_board = Label3D.new()
-	_sub_board.position = Vector3(0, 3.4, D - 1.4)
+	# Hangs under the board rather than at a coordinate of its own: an
+	# authored scene that moves `progression_display` must not leave the
+	# legend behind on the far wall.
+	_sub_board.position = _anchors.origin("progression_display") \
+			+ Vector3(0, -0.8, 0)
 	_sub_board.font_size = 40
 	_sub_board.pixel_size = 0.008
 	_sub_board.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -210,8 +223,8 @@ func _build_room() -> void:
 	shop.prompt = "[E] BROWSE SHOP"
 	shop.station_color = Color(0.9, 0.7, 0.25)
 	add_child(shop)
-	shop.position = Vector3(-W / 2.0 + 1.6, 0, D * 0.45)
-	shop.rotation.y = -PI / 2.0
+	shop.position = _anchors.origin("shop")
+	shop.rotation.y = _anchors.yaw("shop")
 	shop.used.connect(func() -> void: open_shop_requested.emit())
 
 	# Echo terminal, right wall.
@@ -220,15 +233,15 @@ func _build_room() -> void:
 	terminal.prompt = "[E] OPEN ECHO INVENTORY"
 	terminal.station_color = Color(0.4, 0.9, 0.85)
 	add_child(terminal)
-	terminal.position = Vector3(W / 2.0 - 1.6, 0, D * 0.45)
-	terminal.rotation.y = PI / 2.0
+	terminal.position = _anchors.origin("archive_loadout")
+	terminal.rotation.y = _anchors.yaw("archive_loadout")
 	terminal.used.connect(func() -> void: open_inventory_requested.emit())
 
 	# Abandon console, next to the portal; the only exit from GENERATING
 	# and ZONE_READY, which have no pause menu to reach.
 	_abandon = AbandonConsole.new()
 	add_child(_abandon)
-	_abandon.position = Vector3(-W / 2.0 + 2.4, 0, D - 2.4)
+	_abandon.position = _anchors.origin("generation_loading")
 
 	_build_campaign_board()
 	_build_controls_board()

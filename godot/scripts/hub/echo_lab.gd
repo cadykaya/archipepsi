@@ -31,6 +31,26 @@ const H := 6.0
 #: `_perimeter` opens) sits at the far end of the Hub's west corridor.
 #: Rotated a quarter turn: the room's depth runs away from the Hub, so
 #: walking through the door walks you down the runway.
+## The gap, and why its width is not a free number.
+##
+## `GAP_WIDTH` is MECHANICALLY MEANINGFUL and regression-tested
+## (`lab_driver.gd`). It sits deliberately between two movement
+## constants:
+##
+##   - INSIDE `JUMP_FLAT_REACH` (4.667 m), so the base kit can clear it.
+##     The Lab must never require an Echo to cross, or it stops being
+##     somewhere a player can learn the base kit.
+##   - well OUTSIDE `SAFE_BASE_JUMP_GAP` (2.6 m), the widest a MANDATORY
+##     path may ask for (I3/I4). So it demonstrates that a mobility Echo
+##     makes a real difference, without ever being something progression
+##     depends on.
+##
+## Widen it past the reach and the Lab becomes unpassable without an
+## Echo. Narrow it under the safe gap and it stops demonstrating
+## anything. Both failures are silent, which is why they are tested.
+const GAP_WIDTH := 4.5
+const GAP_START := 14.0
+
 const OFFSET := Vector3(-13.0, 0.0, 6.0)
 const YAW := -90.0
 
@@ -117,8 +137,8 @@ func _carve_gap(b) -> void:
 	# geometry the builders cannot subtract.
 	var pit := Node3D.new()
 	add_child(pit)
-	var hole_start := 14.0
-	var hole_width := 4.5
+	var hole_start := GAP_START
+	var hole_width := GAP_WIDTH
 	# Two floor strips either side of the hole, laid over the base slab at
 	# a hair's height so the hole reads as a hole.
 	for strip in [[-W / 2.0, -W / 4.0 + 1.0], [W / 4.0 - 1.0, W / 2.0]]:
