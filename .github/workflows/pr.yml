@@ -1,0 +1,61 @@
+# TIER 1 — the fast PR gate.
+#
+# Everything here runs WITHOUT an Archipelago checkout and without Godot,
+# which is not a shortcut but a real property worth protecting: the bridge
+# imports Archipelago lazily (`ap_client.ensure_ap_importable`), so a
+# change that makes AP a load-time dependency would break offline
+# development and this job is what notices.
+#
+# Budget: about a minute. If it grows past two, move something to
+# `integration.yml` rather than letting the PR gate get slow.
+name: PR gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: pr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fast:
+    name: schemas, bridge, packet (no Archipelago, no Godot)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install the bridge
+        run: python -m pip install -e './bridge[dev]'
+
+      - name: Schema contract
+        run: make test-schemas
+
+      - name: Bridge and campaign
+        # ARCHIPELAGO_ROOT points nowhere on purpose: the two tests that
+        # genuinely need a checkout skip themselves and say so, and every
+        # other test must pass without one.
+        env:
+          ARCHIPELAGO_ROOT: /nonexistent
+        run: cd bridge && python -m pytest -q -rs
+
+      - name: Packet prose against the models
+        run: python docs/design-packet-v0.8/check_packet.py
+
+      - name: Generated artifacts are not stale
+        # `make export` is deterministic; a diff here means someone edited
+        # a generated file by hand or forgot to regenerate.
+        run: |
+          make export
+          git diff --exit-code -- \
+            bridge/archipepsi_bridge/schemas/generated \
+            godot/scripts/autoload/constants.gd \
+          || { echo "::error::generated artifacts are stale — run 'make export'"; exit 1; }

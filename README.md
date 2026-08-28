@@ -134,6 +134,18 @@ mock campaign plays a Zone, the save lands where the banner said, and the
 three configuration mistakes most likely on a first run each produce a
 message that names the fix.
 
+## CI
+
+Three tiers, documented in `docs/CI.md`: a fast PR gate that needs neither
+Archipelago nor Godot, a full integration gate that adds both and runs the
+whole campaign headlessly, and a nightly tier that generates real
+multiworlds and — importantly — proves a **fresh clone reaches green with
+no caches at all**.
+
+```bash
+make version        # what this build is: version, commit, tree state
+```
+
 ## Known limitations (by design — see DESIGN.md §18)
 
 - **Deleting the save restores spent coins.** AP remembers every delivered

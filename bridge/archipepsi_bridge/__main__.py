@@ -91,12 +91,15 @@ def _announce(engine, server, provider_name: str, args) -> None:
     campaigns; printing the resolved absolute path is what makes that
     visible rather than mysterious.
     """
+    from .version import build_metadata
+    build = build_metadata()
     save_dir = Path(engine.save_dir).resolve()
     epsilon = provider_name
     if args.epsilon == "claude" and provider_name != "claude":
         epsilon = "fallback (no ANTHROPIC_API_KEY)"
     print(
-        f"\n  Archipepsi bridge v{BRIDGE_VERSION}\n"
+        f"\n  Archipepsi bridge v{BRIDGE_VERSION}"
+        f"  ({build['commit']}{'*' if build['tree'] == 'dirty' else ''})\n"
         f"    listening   ws://{server.host}:{server.port}"
         f"   (Godot connects here)\n"
         f"    archipelago {'real server' if args.ap == 'real' else 'MOCK — offline fixture campaign'}\n"

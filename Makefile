@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-integration
+.PHONY: setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-integration
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -42,6 +42,9 @@ verbs-fixture:
 # Two Archipepsi slots in ONE real multiworld: a real MultiServer, two
 # bridges, two saves, checking each other's locations. Needs a generated
 # seed (`make seed-multi`); the harness starts and stops its own server.
+version:                       # what this build IS (CI attaches it to a run)
+	cd bridge && $(PY) -m archipepsi_bridge.version
+
 dual-real:
 	bash bridge/archipepsi_bridge/dual_harness.sh
 
