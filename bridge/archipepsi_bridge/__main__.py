@@ -28,6 +28,12 @@ def main() -> None:
     parser.add_argument("--save-dir", type=Path, default=None)
     parser.add_argument("--archive-dir", type=Path, default=None,
                         help="save every generation for the benchmark archive")
+    parser.add_argument(
+        "--port", type=int, default=None,
+        help="WebSocket port for Godot to connect to (default: the "
+             "generated BRIDGE_PORT). Two Archipepsi slots in one "
+             "multiworld need two bridges, and on one machine they need "
+             "two ports.")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
@@ -47,7 +53,9 @@ def main() -> None:
         provider_name=provider_name,
         save_dir=args.save_dir,
         archive_dir=args.archive_dir)
-    server = BridgeServer(engine, ap_default=args.ap)
+    server = BridgeServer(engine, ap_default=args.ap,
+                          **({} if args.port is None
+                             else {"port": args.port}))
     asyncio.run(server.serve_forever())
 
 

@@ -26,9 +26,16 @@ _CLIENT_ADAPTER = TypeAdapter(ClientMessage)
 
 
 class BridgeServer:
-    def __init__(self, engine: CampaignEngine, *, ap_default: str = "real"):
+    def __init__(self, engine: CampaignEngine, *, ap_default: str = "real",
+                 host: str = C.BRIDGE_HOST, port: int = C.BRIDGE_PORT):
         self.engine = engine
         self.ap_default = ap_default
+        # The generated constants stay the default, so nothing that does not
+        # ask changes behaviour. Overridable because two Archipepsi slots in
+        # one multiworld is a supported way to play, and on one development
+        # machine that means two bridges, which cannot both hold 38290.
+        self.host = host
+        self.port = port
         self.clients: set = set()
         engine.emit = self.broadcast
 
@@ -153,7 +160,6 @@ class BridgeServer:
     # ------------------------------------------------------------------
 
     async def serve_forever(self) -> None:
-        async with serve(self.handler, C.BRIDGE_HOST, C.BRIDGE_PORT):
-            log.info("bridge listening on ws://%s:%d",
-                     C.BRIDGE_HOST, C.BRIDGE_PORT)
+        async with serve(self.handler, self.host, self.port):
+            log.info("bridge listening on ws://%s:%d", self.host, self.port)
             await asyncio.Future()
