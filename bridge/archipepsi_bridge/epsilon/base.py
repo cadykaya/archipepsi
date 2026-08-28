@@ -163,6 +163,15 @@ async def generate_zone_validated(
             # I12, from the request the provider was given: what it was
             # told it could place is exactly what it is held to.
             owned_affordance_tags=request.unlocked_affordances,
+            # The shells this request OFFERED, so a Zone naming one that
+            # was not on the menu is refused. Taken from the request
+            # rather than recomputed, for the same reason the affordance
+            # tags are: what the provider was told is exactly what it is
+            # held to.
+            legal_shell_ids=tuple(
+                shell_id
+                for ids in request.catalog.get("room_shells", {}).values()
+                for shell_id in ids),
             # ...and the same for how much content it was asked for. The
             # budget is what bounds the enemy count, so accepting against
             # the default instead held a 1000-point Zone to a 200-point

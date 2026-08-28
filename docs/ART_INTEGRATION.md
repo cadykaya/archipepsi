@@ -348,6 +348,80 @@ inventing it would be engineering authoring content.
 
 ---
 
+## Room-shell integration (Tier 7)
+
+**Contract:** `archipepsi_bridge.shells`, the `room_shells` entry in the
+generation request's catalog, `legal_shell_ids` on `validate_zone`, and
+`chamber.shell_id` in `ContentInstantiator.build_chamber`.
+
+D1 built most of this and the loop was never closed. `zone.py` carried
+`shell_id`, `size_class` and `intent`; `validate_zone` refused a
+`shell_id` that was not offered; the registry resolved fallback chains
+and gated `review: pending`. **But nothing ever offered a shell.**
+`legal_shell_ids` defaulted to empty everywhere in the live pipeline, so
+Epsilon was never told a shell existed — and `content_instantiator.gd`
+mapped a chamber type straight to its procedural id without ever reading
+what Epsilon chose. Three broken links, and every link's own test passed.
+
+### The loop, closed
+
+```
+registry manifests
+  -> shells.shell_catalog()          offerable shells, by chamber type
+  -> request.catalog["room_shells"]  IDS, never paths
+  -> Epsilon names one               shell_id on a chamber
+  -> validate_zone(legal_shell_ids)  refused if it was not offered
+  -> ContentInstantiator             resolves the id, measures the result
+```
+
+### What is offerable
+
+Three gates, and the middle one is the art lane's:
+
+- it is a `room_shell`;
+- it is **not** `review: pending` — a file existing in the tree is not
+  approval, and offering a pending asset decides for whoever is still
+  deciding;
+- it is **authored**. A procedural entry is what the builder reaches
+  anyway, so offering it would let Epsilon "choose" the thing it gets by
+  choosing nothing.
+
+Shells are matched by `semantic_tags`, and the offer is sorted — a
+catalog that reshuffles makes two identical campaigns generate
+differently. A chamber type with no authored shell is **absent** from the
+catalog rather than present-and-empty.
+
+### Ids, never paths
+
+An Epsilon that can name a resource path can name any file (art
+requirement 1). The catalog carries short ids from a closed list; Godot
+resolves them. A test serialises the request and refuses `res://` and
+`.tscn` anywhere in it.
+
+### What the engine still owns
+
+Unchanged from D1, and worth restating because this is the seam that
+makes it load-bearing: the authored shell owns its exact geometry, Godot
+**measures the instantiated result** rather than trusting the manifest,
+a shell that fails measurement degrades to the placeholder, and there is
+no arbitrary stretching of collision-critical geometry — discrete size
+classes instead. A shell id a registry no longer carries is a downgrade,
+not a crash: a saved Zone outlives a registry edit.
+
+### Today's state, stated honestly
+
+The committed registry is **entirely procedural**, so the catalog is
+empty and Epsilon is offered nothing. That is correct: the game is ready
+to receive authored shells and has none in this branch. The moment art's
+approved shells land as authored entries with `review: pass`, they appear
+in the catalog with no code change — and a test will fail, telling
+whoever lands them to start asserting the offer rather than its absence.
+
+**Assets were deliberately not copied across.** The seam is the
+deliverable; the assets arrive when the branches are reconciled.
+
+---
+
 ## Still open, and why
 
 | # | Requirement | Status |

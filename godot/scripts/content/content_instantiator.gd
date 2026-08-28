@@ -46,7 +46,27 @@ static func build_chamber(chamber: Dictionary, theme: String,
 		registry: ContentRegistry = null) -> Dictionary:
 	var reg := registry if registry != null else ContentRegistry.shared()
 	var type := str(chamber.get("type", ""))
+
+	# What EPSILON chose, if it chose. `shell_id` has been on the chamber
+	# schema since D1 and `validate_zone` has refused an id that was not
+	# offered -- but nothing read it here, so a Zone that named a shell
+	# got the procedural one anyway and no test could tell.
+	#
+	# The id is a key into the registry and never a path: an Epsilon that
+	# could name a path could name any file, which is why the catalog it
+	# is offered carries ids alone.
+	var chosen_by_epsilon := str(chamber.get("shell_id", ""))
 	var wanted: String = SHELL_FOR_TYPE.get(type, "")
+	if not chosen_by_epsilon.is_empty():
+		if reg.has(chosen_by_epsilon):
+			wanted = chosen_by_epsilon
+		else:
+			# Not a reason to fail to build a room. A registry that no
+			# longer carries a shell a saved Zone names is a downgrade,
+			# not a corruption, and the procedural route still plays.
+			push_warning("content: zone names shell '%s', which this "
+					% chosen_by_epsilon + "registry does not carry; "
+					+ "falling back")
 
 	# An unregistered chamber type is not a reason to fail to build a
 	# room. The generator has always had a default arm and still does;

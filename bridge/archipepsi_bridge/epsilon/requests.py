@@ -49,6 +49,18 @@ class EchoSummary(Strict):
 _ACTIVITY_KINDS = tuple(Z.ActivityKind.__args__)
 
 
+def _shell_catalog() -> dict:
+    """The authored shells on offer. Empty while the registry has none.
+
+    Loaded per request rather than cached at import: the registry is a
+    file on disk, a packaged game can ship a different one, and a
+    catalog frozen at import time would describe whichever build
+    happened to start first.
+    """
+    from ..shells import shell_catalog
+    return shell_catalog()
+
+
 class CampaignContext(Strict):
     seed_name: str = Field(max_length=128)
     slot_name: _AP_STR
@@ -109,6 +121,17 @@ class ZoneGenerationRequest(Strict):
         "chamber_types": list(C.CHAMBER_TYPES),
         "enemy_archetypes": list(C.ENEMY_ARCHETYPES),
         "objectives": list(C.OBJECTIVES),
+        # Authored room shells Epsilon may name, keyed by chamber type.
+        #
+        # IDS, NEVER PATHS. An Epsilon that can name a resource path can
+        # name any file; Godot resolves the id. A type with no authored
+        # shell is absent rather than present-and-empty.
+        #
+        # `validate_zone` refuses a `shell_id` that is not in here, so
+        # this is the offer AND the bound. It was empty everywhere in
+        # the live pipeline until now -- the field existed, the
+        # validator enforced it, and nothing ever put a shell in it.
+        "room_shells": _shell_catalog(),
     })
     #: Filled from the campaign's own budget after validation, because a
     #: `default_factory` cannot see the instance it belongs to -- and
