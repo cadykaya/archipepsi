@@ -63,6 +63,11 @@ func _run() -> void:
 	_a_theme_cannot_move_an_enemy_hitbox()
 	_an_enemy_hitbox_is_a_function_of_its_archetype()
 	_no_visual_anywhere_carries_collision()
+	_the_base_kit_can_never_be_unbound()
+	_a_hand_edited_config_cannot_unbind_the_base_kit()
+	_settings_are_clamped_on_the_way_in()
+	_reduced_motion_actually_reaches_zero()
+	_preferences_never_enter_campaign_truth()
 	if failures == 0:
 		print("GODOT CONTENT TESTS OK")
 		get_tree().quit(0)
@@ -644,3 +649,118 @@ func _no_visual_anywhere_carries_collision() -> void:
 	_check(on_player.is_empty(),
 			"the player has meshes carrying collision: %s" % str(on_player))
 	player.free()
+
+
+# --- S21: preferences, and the inputs that may not be lost -----------------
+
+func _the_base_kit_can_never_be_unbound() -> void:
+	## A player who unbinds `jump` has made their own seed unfinishable,
+	## in a menu, three rooms from the gap they can no longer cross. The
+	## menu is where that has to be refused.
+	var settings := PlayerSettings.new()
+	for action: String in PlayerSettings.MANDATORY_ACTIONS:
+		var refusal := settings.rebind(action, [])
+		_check(not refusal.is_empty(),
+				"unbinding '%s' must be refused; it is base kit" % action)
+
+	## And an OPTIONAL action must still be unbindable, or this is not a
+	## rule, it is a locked settings screen. An Echo slot may legitimately
+	## be empty.
+	_check(settings.rebind("fire_echo", []).is_empty(),
+			"an Echo slot must be unbindable; a slot may be empty")
+
+	## Rebinding a mandatory action to something else is fine -- the rule
+	## is about it staying bound, not about which key.
+	var key := InputEventKey.new()
+	key.physical_keycode = KEY_Q
+	_check(settings.rebind("jump", [key]).is_empty(),
+			"rebinding jump to another key must be allowed")
+	_check(settings.unbound_mandatory().is_empty(),
+			"after a legal rebind nothing mandatory is unbound: %s"
+			% str(settings.unbound_mandatory()))
+
+	## Put the project's own bindings back: this suite shares an InputMap
+	## with every test after it.
+	InputMap.load_from_project_settings()
+
+func _a_hand_edited_config_cannot_unbind_the_base_kit() -> void:
+	## The refusal above guards the menu. A config file is not a menu --
+	## it can be edited by hand, or written by an older build with a
+	## different mandatory set -- so loading repairs rather than obeys.
+	var config := ConfigFile.new()
+	config.set_value("bindings", "jump", [])
+	config.set_value("values", "mouse_sensitivity", 999.0)
+	config.save(PlayerSettings.PATH)
+
+	var settings := PlayerSettings.new()
+	settings.load_from_disk()
+	_check(settings.unbound_mandatory().is_empty(),
+			"a config unbinding jump must be repaired, not obeyed: %s"
+			% str(settings.unbound_mandatory()))
+	_check(settings.value("mouse_sensitivity") <= 0.02,
+			"a hand-edited value must be clamped on load, got %f"
+			% settings.value("mouse_sensitivity"))
+
+	DirAccess.remove_absolute(PlayerSettings.PATH)
+	InputMap.load_from_project_settings()
+
+func _settings_are_clamped_on_the_way_in() -> void:
+	var settings := PlayerSettings.new()
+	for name: String in PlayerSettings.RANGES:
+		var spec: Array = PlayerSettings.RANGES[name]
+		settings.set_value(name, -1000.0)
+		_check(is_equal_approx(settings.value(name), float(spec[1])),
+				"'%s' must clamp to its minimum, got %f"
+				% [name, settings.value(name)])
+		settings.set_value(name, 1000.0)
+		_check(is_equal_approx(settings.value(name), float(spec[2])),
+				"'%s' must clamp to its maximum, got %f"
+				% [name, settings.value(name)])
+
+func _reduced_motion_actually_reaches_zero() -> void:
+	## An accessibility option with a floor above off is not one. Motion
+	## sickness is the reason this setting exists.
+	var spec: Array = PlayerSettings.RANGES["motion_intensity"]
+	_check(is_equal_approx(float(spec[1]), 0.0),
+			"motion_intensity must be able to reach 0; its floor is %s"
+			% str(spec[1]))
+
+	var settings := PlayerSettings.new()
+	settings.set_value("motion_intensity", 0.0)
+	_check(is_equal_approx(settings.value("motion_intensity"), 0.0),
+			"motion_intensity must store 0")
+
+	## And the player must actually read it, or the option is a lie. The
+	## source is checked rather than the motion, because head-bob over a
+	## frame is not something a headless suite can watch.
+	var source := FileAccess.get_file_as_string(
+			"res://scripts/gameplay/player.gd")
+	_check(source.contains("motion_intensity"),
+			"the player never reads motion_intensity; the accessibility "
+			+ "option would be inert")
+
+func _preferences_never_enter_campaign_truth() -> void:
+	## The other S21 rule. A player's sensitivity is not a fact about
+	## their multiworld: in the save it would make two players' saves
+	## differ for a reason no rule cares about, and would turn changing a
+	## preference into a state transition.
+	##
+	## Checked by name against the snapshot the bridge actually sends,
+	## since that is the only campaign truth this side can see.
+	var settings := PlayerSettings.new()
+	var preference_names: Array = []
+	for name: String in PlayerSettings.RANGES:
+		preference_names.append(name)
+	for name: String in PlayerSettings.FLAGS:
+		preference_names.append(name)
+	preference_names.append("bindings")
+
+	var snapshot: Dictionary = BridgeClient.snapshot
+	for name: String in preference_names:
+		_check(not snapshot.has(name),
+				"'%s' is a preference and must never appear in the "
+				% name + "campaign snapshot")
+
+	## And it must be stored where preferences go.
+	_check(PlayerSettings.PATH.begins_with("user://"),
+			"preferences must live in user://, not beside the save")

@@ -213,7 +213,7 @@ static func create() -> Player:
 	var camera := Camera3D.new()
 	camera.name = "Camera3D"
 	camera.position = Vector3(0, Constants.PLAYER_EYE_HEIGHT, 0)
-	camera.fov = 90.0
+	camera.fov = PlayerSettings.shared().value("field_of_view")
 	player.add_child(camera)
 
 	# The viewmodel: a crude handheld transmitter, very 1998. The Static
@@ -347,8 +347,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseMotion \
 			and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
-		camera.rotate_x(-event.relative.y * MOUSE_SENSITIVITY)
+		# S21: sensitivity and invert-Y are preferences, read live so a
+		# change in the pause menu takes effect without a reload.
+		var settings := PlayerSettings.shared()
+		var sensitivity := settings.value("mouse_sensitivity")
+		var invert := -1.0 if settings.flag("invert_look_y") else 1.0
+		rotate_y(-event.relative.x * sensitivity)
+		camera.rotate_x(-event.relative.y * sensitivity * invert)
 		camera.rotation.x = clampf(camera.rotation.x, -PI / 2.0, PI / 2.0)
 
 func _physics_process(delta: float) -> void:
@@ -530,8 +535,14 @@ func _update_camera_feel(delta: float) -> void:
 ## height every other number in the game is derived from.
 static func camera_feel_offset(phase: float, weight: float,
 		dip: float) -> Vector3:
-	return Vector3(sin(phase) * BOB_SWAY * weight,
-			sin(phase * 2.0) * BOB_RISE * weight - dip, 0.0)
+	# S21 accessibility: `motion_intensity` scales view bob and the
+	# landing dip, and 0 turns both off completely. Motion sickness is
+	# the reason the option exists, so "off" has to actually be off --
+	# a reduced-motion setting with a floor above zero is not one.
+	var motion := PlayerSettings.shared().value("motion_intensity")
+	return Vector3(sin(phase) * BOB_SWAY * weight * motion,
+			sin(phase * 2.0) * BOB_RISE * weight * motion - dip * motion,
+			0.0)
 
 func camera_ray(distance: float, spread_dir: Vector3 = Vector3.ZERO) -> Dictionary:
 	var from := camera.global_position

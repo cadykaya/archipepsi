@@ -248,3 +248,42 @@ def test_the_allowlist_does_not_rot():
     stale = sorted(set(ALLOWED_FREE_TEXT) - live)
     assert not stale, (
         f"ALLOWED_FREE_TEXT names fields that no longer exist: {stale}")
+
+
+# --- S21: a preference is not campaign truth ------------------------------
+
+def test_no_player_preference_is_part_of_campaign_truth():
+    """A player's mouse sensitivity is not a fact about their multiworld.
+
+    In the save it would make two players' saves differ for a reason no
+    rule cares about, and would turn changing a preference into a state
+    transition -- something the fold would then have to have an opinion
+    about. Preferences live in `user://settings.cfg`; this asserts they
+    stay out of everything the bridge persists or sends.
+
+    Read from the GDScript so the two cannot drift: adding a preference
+    there and a field of the same name here is exactly the mistake.
+    """
+    import pathlib
+    import re as _re
+
+    from archipepsi_bridge.schemas.protocol import (
+        CampaignSave, CampaignSnapshot)
+
+    settings = (pathlib.Path(__file__).resolve().parents[2] / "godot"
+                / "scripts" / "autoload" / "player_settings.gd").read_text()
+
+    # The RANGES and FLAGS blocks name every preference there is.
+    names = set()
+    for block in ("RANGES", "FLAGS"):
+        body = settings.split(f"const {block} := {{", 1)[1].split("}", 1)[0]
+        names |= set(_re.findall(r'^\t"(\w+)":', body, _re.M))
+    names.add("bindings")
+    assert len(names) >= 5, f"found only {names}; the parse has gone stale"
+
+    for model in (CampaignSnapshot, CampaignSave):
+        overlap = names & set(model.model_fields)
+        assert not overlap, (
+            f"{model.__name__} carries player preferences {sorted(overlap)}; "
+            f"preferences belong in user://settings.cfg, never in campaign "
+            f"truth")

@@ -47,8 +47,16 @@ S23  release hardening         ── last
 | S17 interactable/presentation contracts | **done** — `interactable_contract.gd` |
 | S18 enemy/player/affordance visual interfaces | **done** — `visual_interface.gd` |
 | S19 material/VFX/audio/lighting vocabularies | **done** — `test_epsilon_vocabulary.py` |
+| S21 settings/input/a11y | **done** — `player_settings.gd` |
 | S20 campaign spine | **next** (expect human-decision gates) |
-| S21–S23 | not started |
+| S22–S23 | not started |
+
+S21 holds two rules: a preference is never campaign truth (asserted
+against `CampaignSnapshot` and `CampaignSave` by reading the preference
+names out of the GDScript, so the two cannot drift), and rebinding can
+never leave a base-kit action unbound — a player who unbinds `jump` has
+made their own seed unfinishable, in a menu, three rooms from the gap.
+A hand-edited config is repaired rather than obeyed.
 
 S19 enforces "Epsilon is a composer, never an asset generator"
 STRUCTURALLY rather than by review: every string field of every model
