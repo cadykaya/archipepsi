@@ -246,3 +246,84 @@ def test_fallback_echo_heuristics_all_valid():
                 continue
             if op.component.kind == "action":
                 assert op.component.primitive.type in E.IMPLEMENTED_PRIMITIVES
+
+
+def test_the_fallback_is_reproducible_but_not_monotonous():
+    """Playtest 2: "the levels are the same? i went through 4 and they
+    were all the same layout with only a few minor changes."
+
+    They were. `fallback_zone` emitted one hardcoded room list at one set
+    of dimensions, so every Zone was the same five rooms and only the
+    theme moved. Determinism is the point of this provider -- the
+    integration run plays a whole campaign against it -- but determinism
+    means "zone 3 is always zone 3", not "zone 3 is zone 4".
+
+    Both halves are pinned here, because fixing one by breaking the other
+    is the easy mistake: seed it per-zone and the campaign stops being
+    reproducible; leave it fixed and the game is one room forever.
+    """
+    from archipepsi_bridge.epsilon.fallback import fallback_zone
+
+    def zone(index: int) -> dict:
+        base = zone_request()
+        return fallback_zone(base.model_copy(update={
+            "campaign": base.campaign.model_copy(
+                update={"zone_index": index})}))
+
+    # Reproducible: the same index twice is the same Zone.
+    assert zone(3) == zone(3), (
+        "the fallback stopped being deterministic; the integration run "
+        "and every replay depend on it")
+
+    # And distinct: consecutive Zones must not be the same rooms at the
+    # same sizes.
+    shapes = []
+    for i in range(6):
+        chambers = zone(i)["chambers"]
+        shapes.append(tuple(
+            (c["type"], c.get("width"), c.get("depth"), c.get("length"),
+             c.get("segment_count"))
+            for c in chambers))
+    assert len(set(shapes)) >= 5, (
+        "six Zones produced only %d distinct layouts; a player walking "
+        "four in a row is walking one four times" % len(set(shapes)))
+
+
+def test_every_fallback_zone_validates_at_every_index():
+    """The fallback is the ONE provider that has no fallback.
+
+    A Claude zone that breaks a rule gets repaired, and failing that
+    replaced by this one. When THIS one breaks a rule, generation fails
+    outright and the player gets a Hub that will not open a portal.
+
+    That is not hypothetical: widening the fallback for variety drew 1-2
+    brutes per arena, `MAX_BRUTES_PER_ZONE` is a ZONE-wide cap of 1, and
+    zone 6 of the campaign died on it. Only the full 12-zone integration
+    run caught that, which is an expensive way to learn it. Every index
+    a campaign can reach is checked here instead.
+    """
+    from archipepsi_bridge.epsilon.fallback import fallback_zone
+    from archipepsi_bridge.schemas import zone as Z
+    from pydantic import TypeAdapter
+
+    base = zone_request()
+    for index in range(0, 31):
+        for finale in (False, True):
+            # A finale is allocated exactly one location (the goal),
+            # which is what the campaign actually sends it.
+            locations = (base.locations[:1] if finale else base.locations)
+            request = base.model_copy(update={
+                "locations": locations,
+                "campaign": base.campaign.model_copy(update={
+                    "zone_index": index, "is_finale": finale})})
+            raw = fallback_zone(request)
+            zone = TypeAdapter(Z.Zone).validate_python(raw)
+            errors = Z.validate_zone(
+                zone, expected_zone_id=request.zone_id,
+                allocated_location_ids=[
+                    loc.location_id for loc in request.locations],
+                owned_echo_ids=[],
+                owned_affordance_tags=request.unlocked_affordances)
+            assert not errors, (
+                f"fallback zone {index} (finale={finale}) is invalid, so "
+                f"the portal would refuse to open: {errors}")

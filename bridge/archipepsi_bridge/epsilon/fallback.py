@@ -7,6 +7,8 @@ validators as model output — no exceptions.
 
 from __future__ import annotations
 
+import random
+
 from ..schemas import constants as C
 from ..schemas import migration as MG
 from ..schemas import echo as E
@@ -52,28 +54,63 @@ def fallback_zone(request: ZoneGenerationRequest) -> dict:
             ],
         }
 
-    step = 0.6
-    gap = min(2.2, C.max_safe_gap(step))
+    # Deterministic, but not IDENTICAL. Every Zone used to be the same
+    # five rooms at the same five sizes, so playing four in a row was
+    # playing one four times -- with only the theme changing. The
+    # dimensions and the order of the reward rooms are now drawn from the
+    # zone index, so zone 3 differs from zone 4 while zone 3 is still
+    # always zone 3. Reproducibility is the point of this provider; the
+    # sameness never was.
+    #
+    # This is still the OFFLINE FIXTURE. Real variety is the Claude
+    # provider composing from the vocabulary; widening this one is about
+    # making a keyless campaign bearable, not about replacing that.
+    rng = random.Random(f"archipepsi/fallback/zone/{n}")
+
+    step = round(rng.uniform(0.4, 0.9), 2)
+    # I3/I4: the mandatory gap stays inside the base kit's safe reach at
+    # whatever rise was drawn. The bound moves with `step`, so it is
+    # asked rather than assumed.
+    gap = round(min(rng.uniform(1.4, 2.4), C.max_safe_gap(step)), 2)
+
     reward_chambers = [
-        {"id": "c2", "type": "arena", "width": 16.0, "depth": 14.0,
-         "wall_height": 5.0, "objective": "kill_all",
-         "enemies": [{"archetype": "melee", "count": 3}]},
-        {"id": "c4", "type": "platform_path", "segment_count": 4,
+        {"id": "c2", "type": "arena",
+         "width": round(rng.uniform(14.0, 24.0), 1),
+         "depth": round(rng.uniform(12.0, 22.0), 1),
+         "wall_height": round(rng.uniform(4.5, 7.0), 1),
+         "objective": "kill_all",
+         "enemies": [{"archetype": "melee", "count": rng.randint(2, 4)}]},
+        {"id": "c4", "type": "platform_path",
+         "segment_count": rng.randint(3, 7),
          "gap_size": gap, "vertical_step": step,
          "objective": "platform_to_goal"},
-        {"id": "c5", "type": "arena", "width": 20.0, "depth": 18.0,
-         "wall_height": 6.0, "objective": "kill_all",
+        {"id": "c5", "type": "arena",
+         "width": round(rng.uniform(16.0, 26.0), 1),
+         "depth": round(rng.uniform(14.0, 24.0), 1),
+         "wall_height": round(rng.uniform(5.0, 7.5), 1),
+         "objective": "kill_all",
+         # ONE brute. `MAX_BRUTES_PER_ZONE` is a zone-wide cap, not a
+         # per-room one, and drawing 1-2 here put zone 6 over it: the
+         # repair loop could not fix a fallback, so generation failed
+         # outright. Variety inside the rules, or it is not variety.
          "enemies": [{"archetype": "brute", "count": 1},
-                     {"archetype": "melee", "count": 2}]},
+                     {"archetype": "melee", "count": rng.randint(1, 3)}]},
     ]
+    # Which room you meet first changes too, so the shape of a Zone is
+    # not just its measurements.
+    rng.shuffle(reward_chambers)
+
     chambers: list[dict] = [
-        {"id": "c1", "type": "corridor", "length": 12.0, "width": 5.0}]
+        {"id": "c1", "type": "corridor",
+         "length": round(rng.uniform(10.0, 20.0), 1),
+         "width": round(rng.uniform(4.5, 8.0), 1)}]
     for i, loc in enumerate(locations[:3]):
         chamber = dict(reward_chambers[i])
         chamber["reward_location_id"] = loc.location_id
         if i == 1:
             chambers.append({"id": "c3", "type": "corridor",
-                             "length": 10.0, "width": 4.0})
+                             "length": round(rng.uniform(8.0, 18.0), 1),
+                             "width": round(rng.uniform(4.0, 7.0), 1)})
         chambers.append(chamber)
 
     _add_features(chambers, request.unlocked_affordances, n)
