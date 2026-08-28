@@ -1,0 +1,275 @@
+{
+  "shell_path_ascent": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -4.0,
+        -40.0,
+        0.0
+      ],
+      [
+        8.0,
+        52.0,
+        31.3
+      ]
+    ],
+    "check_anchor": [
+      0.0,
+      5.0,
+      29.3
+    ],
+    "enemy_anchors": [
+      [
+        0.0,
+        5.3,
+        27.3
+      ],
+      [
+        0.0,
+        5.3,
+        28.8
+      ]
+    ],
+    "exit_offset": [
+      0.0,
+      5.0,
+      31.3
+    ],
+    "fall_kill_y": -30.0,
+    "gap_size": 1.8,
+    "goal_anchor": [
+      0.0,
+      6.0,
+      27.3
+    ],
+    "interior": [
+      8.0,
+      11.0,
+      31.3
+    ],
+    "max_safe_gap_at_step": 2.0,
+    "modelled_shaft_depth": 8.0,
+    "objective": [
+      "platform_to_goal"
+    ],
+    "path": "batch017/shells/shell_path_ascent.glb",
+    "platform_anchors": [
+      [
+        0.0,
+        1.0,
+        7.05
+      ],
+      [
+        0.0,
+        2.0,
+        11.35
+      ],
+      [
+        0.0,
+        3.0,
+        15.65
+      ],
+      [
+        0.0,
+        4.0,
+        19.95
+      ],
+      [
+        0.0,
+        5.0,
+        24.25
+      ]
+    ],
+    "segment_count": 5,
+    "size": [
+      8.8,
+      31.3,
+      19.0
+    ],
+    "texel_density": 32.0,
+    "triangles": 300,
+    "vertical_step": 1.0,
+    "worst_jump": 1.8
+  },
+  "shell_path_spans": {
+    "anchor": "entrance",
+    "beam_width": 6.0,
+    "bounds": [
+      [
+        -4.0,
+        -40.0,
+        0.0
+      ],
+      [
+        8.0,
+        47.0,
+        25.1
+      ]
+    ],
+    "check_anchor": [
+      0.0,
+      0.0,
+      23.1
+    ],
+    "enemy_anchors": [
+      [
+        0.0,
+        0.3,
+        21.1
+      ],
+      [
+        0.0,
+        0.3,
+        22.6
+      ]
+    ],
+    "exit_offset": [
+      0.0,
+      0.0,
+      25.1
+    ],
+    "fall_kill_y": -30.0,
+    "gap_size": 2.4,
+    "goal_anchor": [
+      0.0,
+      1.0,
+      21.1
+    ],
+    "interior": [
+      8.0,
+      6.0,
+      25.1
+    ],
+    "max_safe_gap_at_step": 2.6,
+    "modelled_shaft_depth": 8.0,
+    "objective": [
+      "platform_to_goal"
+    ],
+    "path": "batch017/shells/shell_path_spans.glb",
+    "platform_anchors": [
+      [
+        0.0,
+        0.0,
+        7.65
+      ],
+      [
+        0.0,
+        0.0,
+        12.55
+      ],
+      [
+        0.0,
+        0.0,
+        17.45
+      ]
+    ],
+    "segment_count": 3,
+    "size": [
+      8.8,
+      25.1,
+      14.0
+    ],
+    "texel_density": 32.0,
+    "triangles": 216,
+    "vertical_step": 0.0,
+    "worst_jump": 2.4
+  },
+  "shell_path_stagger": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -4.0,
+        -40.0,
+        0.0
+      ],
+      [
+        8.0,
+        50.0,
+        38.4
+      ]
+    ],
+    "check_anchor": [
+      0.0,
+      3.0,
+      36.4
+    ],
+    "enemy_anchors": [
+      [
+        0.0,
+        3.3,
+        34.4
+      ],
+      [
+        0.0,
+        3.3,
+        35.9
+      ]
+    ],
+    "exit_offset": [
+      0.0,
+      3.0,
+      38.4
+    ],
+    "fall_kill_y": -30.0,
+    "gap_size": 2.2,
+    "goal_anchor": [
+      0.0,
+      4.0,
+      34.4
+    ],
+    "interior": [
+      8.0,
+      9.0,
+      38.4
+    ],
+    "lateral_offset": 1.6,
+    "max_safe_gap_at_step": 2.4,
+    "modelled_shaft_depth": 8.0,
+    "objective": [
+      "platform_to_goal"
+    ],
+    "path": "batch017/shells/shell_path_stagger.glb",
+    "platform_anchors": [
+      [
+        -1.6,
+        0.5,
+        7.45
+      ],
+      [
+        1.6,
+        1.0,
+        12.15
+      ],
+      [
+        -1.6,
+        1.5,
+        16.85
+      ],
+      [
+        1.6,
+        2.0,
+        21.55
+      ],
+      [
+        -1.6,
+        2.5,
+        26.25
+      ],
+      [
+        1.6,
+        3.0,
+        30.95
+      ]
+    ],
+    "segment_count": 6,
+    "size": [
+      8.8,
+      38.4,
+      17.0
+    ],
+    "texel_density": 32.0,
+    "triangles": 312,
+    "vertical_step": 0.5,
+    "worst_jump": 2.309
+  }
+}

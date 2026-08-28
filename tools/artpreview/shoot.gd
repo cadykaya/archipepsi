@@ -60,6 +60,14 @@ extends SceneTree
 ## ### Lens
 ##
 ##   `lens`        35 mm equivalent focal length. Default 24.
+##
+## ### Lighting
+##
+##   `ambient`     ambient light energy. Default 0.10.
+##   `key_energy`  the three-light rig's key. Default 1.25. Lower it for an
+##                 open-topped ROOM shell, where the key reaches a wall it
+##                 would never reach on a backdrop. Both are scene-group
+##                 options: they are read from the group's first shot.
 ##   `game_lens`   true to shoot at the engine's own fov instead. Use this
 ##                 for anything claiming to show what the player sees.
 ##
@@ -154,7 +162,8 @@ func _run_scene(scene: String, shots: Array) -> void:
 	var rig := CameraRig.new(cam, size)
 
 	var subject := _build(scene, root, vp,
-			str(_opt(shots[0], "backdrop", "full")))
+			str(_opt(shots[0], "backdrop", "full")),
+			float(_opt(shots[0], "key_energy", 1.25)))
 
 	for shot in shots:
 		await _take(shot, vp, root, rig, subject)
@@ -165,7 +174,7 @@ func _run_scene(scene: String, shots: Array) -> void:
 
 ## Returns the AABB of whatever the shots are about, in world space.
 func _build(scene: String, root: Node3D, vp: SubViewport,
-		backdrop: String = "full") -> AABB:
+		backdrop: String = "full", key_energy: float = 1.25) -> AABB:
 	_backdrop.clear()
 	if scene == "hub" or scene.begins_with("hub +"):
 		HubScene.build(root, _assets)
@@ -183,7 +192,13 @@ func _build(scene: String, root: Node3D, vp: SubViewport,
 		return AABB(Vector3(-11, 0, 0), Vector3(22, 5, 16))
 
 	# Everything else stands on the backdrop.
-	ArtBench.add_lights(root, 1.25)
+	# `key_energy` is a scene-group option like `ambient`. The rig is
+	# built for a subject standing on a backdrop, where the key clears
+	# the model and dies on the floor. A ROOM the size of the rig's own
+	# scale does not behave that way: a corridor's ceiling occludes the
+	# key, and an open-topped shell -- an arena, a platform path -- lets
+	# it hit one wall square-on and blow it out (L-56).
+	ArtBench.add_lights(root, key_energy)
 	var env: Environment = (vp.get_node("WorldEnvironment")
 			as WorldEnvironment).environment
 	env.background_color = Color(0.56, 0.57, 0.60)

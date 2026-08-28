@@ -176,6 +176,17 @@ def dimensions():
         "arena_span_max": 28.0,
         "arena_wall_height_min": 4.0,
         "arena_wall_height_max": 8.0,
+        "path_segment_min": 3,
+        "path_segment_max": 8,
+        "path_gap_min": 0.5,
+        "path_vertical_step_min": 0.0,
+        # `platform_path()`'s own layout constants, so an authored shell
+        # lands its ledges and platforms where the procedural one does.
+        "path_width": 8.0,
+        "path_ledge": 4.0,
+        "fall_kill_y": c.FALL_KILL_Y,
+        "tower_floors_min": 2,
+        "tower_floors_max": 5,
         # --- the distances an asset is actually looked at from ------------
         "camera_fov_deg": 90.0,
         "enemy_aggro_radius": c.ENEMY_AGGRO_RADIUS,
@@ -191,6 +202,11 @@ def dimensions():
         "proc_texture_default": c.TEXTURE_SIZE_DEFAULT,
         "proc_texture_max": c.TEXTURE_SIZE_MAX,
     }
+    # NOT a number: gap and vertical step are bounded JOINTLY, and v0.4's
+    # bug was bounding them independently. Art gets the live function, so a
+    # shell asks the engine how far a jump reaches at the height it built
+    # rather than remembering a figure that was true at one step.
+    dim["max_safe_gap"] = c.max_safe_gap
     # Affordance footprints are Godot's and stay Godot's; art may not change
     # a single one. Carried through verbatim so a builder can read the
     # clearance it must not violate.
@@ -265,11 +281,33 @@ def verify():
             ("corridor width", "width: float = Field(ge=4, le=10)"),
             ("arena width", "width: float = Field(ge=10, le=28)"),
             ("arena depth", "depth: float = Field(ge=10, le=28)"),
-            ("arena wall height", "wall_height: float = Field(ge=4, le=8)")):
+            ("arena wall height", "wall_height: float = Field(ge=4, le=8)"),
+            ("platform_path segments",
+             "segment_count: int = Field(ge=3, le=8)"),
+            ("platform_path gap",
+             "gap_size: float = Field(ge=0.5, le=C.SAFE_BASE_JUMP_GAP)"),
+            ("platform_path step",
+             "vertical_step: float = Field(ge=0.0, le=C.MAX_VERTICAL_STEP)"),
+            ("tower floors", "floors: int = Field(ge=2, le=5)")):
         if needle not in zone_text:
             problems.append(
                 "%s bounds changed in zone.py (looked for: %s). The room-shell "
                 "size range art builds against is stale." % (label, needle))
+
+    # platform_path()'s layout constants are LITERALS in the builder, so
+    # unlike the schema bounds they can move without any schema changing.
+    cb_path = os.path.join(
+        REPO_ROOT, "godot", "scripts", "generation", "chamber_builders.gd")
+    with open(cb_path, "r", encoding="utf-8") as handle:
+        cb_text = handle.read()
+    for label, needle in (
+            ("platform_path width", "var width := %.1f" % dim["path_width"]),
+            ("platform_path ledge", "var ledge := %.1f" % dim["path_ledge"])):
+        if needle not in cb_text:
+            problems.append(
+                "%s changed in chamber_builders.gd (looked for: %s). An "
+                "authored path shell lands its ledges where the procedural "
+                "one does, so this is load-bearing." % (label, needle))
 
     # The camera FOV decides every "is it readable at range" claim in the
     # art bible, so it is checked rather than remembered.

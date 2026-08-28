@@ -2121,3 +2121,94 @@ The four `_entry` frames are the comparison: same lens, same eye height,
 same ambient, four different problems.
 
 Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 017 — the platform-path family
+
+Third of §7's six families, and the only one where getting a number
+slightly wrong makes the game unfinishable.
+
+### The bound that is not a number
+
+`PlatformPathChamber` bounds `gap_size` and `vertical_step` **jointly**.
+v0.4 bounded them independently, both could be maxed, and the real margin
+was 1.17× rather than the 1.56× the flat-jump derivation advertised. So
+`engine_truth` now carries `C.max_safe_gap` as a **function**, not a
+figure: a shell asks the engine how far a jump reaches at the height it
+built, rather than remembering a number that was true at one step.
+
+Every mandatory jump is measured **edge to edge** between platform
+footprints — centre to centre would flatter every layout here — and
+`_assert_reachable` runs that over each consecutive pair before anything is
+exported:
+
+| Shell | Segments | Step | Gap | Worst jump | Bound at that step |
+| --- | --- | --- | --- | --- | --- |
+| `shell_path_ascent` | 5 | 1.00 | 1.80 | **1.800** | 2.00 |
+| `shell_path_stagger` | 6 | 0.50 | 2.20 | **2.309** | 2.40 |
+| `shell_path_spans` | 3 | 0.00 | 2.40 | **2.400** | 2.60 |
+
+The stagger's 2.309 is the interesting one. Platforms alternate 1.6 m
+either side of the centre line, so neighbours differ by 3.2 m laterally —
+0.7 m more than a 2.5 m platform's own width — and that 0.7 costs
+`sqrt(2.20² + 0.70²)` against a 2.40 m bound. The lateral offset is free
+right up to the platform width and priced beyond it, which is a fact about
+the geometry rather than a rule of thumb.
+
+### What differs, given how little is free
+
+`platform_path()` fixes more than the other builders: an 8.0 m width, 4.0 m
+ledges, 2.5 m square platforms, a rise of `step` per segment, enemies
+waiting on the **end ledge** rather than on the route, and a 40 m void
+below. What is left to author is the shape of the route and what the walls
+say about why the floor is gone.
+
+| Shell | Tris | What it does |
+| --- | --- | --- |
+| `shell_path_ascent` | 300 | the climb. Every landing at `MAX_VERTICAL_STEP`, straight up the centre, and a stub of the original floor slab left on both walls at the height the platforms are climbing back to |
+| `shell_path_stagger` | 312 | the same climb made into a route. Every jump turns you, so a shooter on the end ledge is never at the same angle twice |
+| `shell_path_spans` | 216 | not a climb at all. `vertical_step` may be 0.0, and a flat path is a different chamber rather than an easier one: three 6 m beams, the far ledge visible from the first step |
+
+### Two contracts these carry that no earlier shell did
+
+`exit_offset` has a **Y**. `platform_path()` returns `Vector3(0, rise,
+total)` because you leave at the top of what you climbed; every shell in
+Batches 015 and 016 exited at grade. Writing `(0, 0, total)` out of habit
+would have stacked the next chamber five metres below its own doorway.
+
+`bounds` reaches **40 m below** the origin. The void is engine-owned —
+`FALL_KILL_Y` is where a fall stops being a fall — and these shells model
+8 m of shaft, which is as far as anyone sees into an 8 m slot from above,
+carrying the real figures in the manifest rather than modelling forty
+metres of nothing.
+
+### No ceiling, and this time deliberately
+
+Interface requirement 19 is about **room** chambers, roofed in a corridor
+and open in an arena for no stated reason. A platform path is not that
+case: `platform_path()` builds its side walls `wall_height + 40` tall,
+running 20 m above the top of the climb. That is a chamber deliberately
+open to a shaft, and these keep it. Requirement 19 is unchanged.
+
+### What the bench could not do, and now can
+
+The three-light rig is built for a **subject on a backdrop**, where the key
+clears the model and dies on the floor. An open-topped shell is the size of
+the rig's own scale: the first pass put the key square onto one wall and
+rendered it pure white. `key_energy` is now a scene-group option in
+`shoot.sh` alongside `ambient`, defaulting to the old 1.25 so nothing
+already shot moves, and this batch is at 0.70 (L-56).
+
+### Evidence
+
+`docs/art/review/batch017/`
+
+| Image | What it answers |
+| --- | --- |
+| `P_*_over.png` | **start here** — the whole route from above. The stagger's alternation only reads from this frame |
+| `P_ascent_start.png` · `P_stagger_start.png` · `P_spans_start.png` | what the player is asked to read from the start ledge |
+| `P_ascent_mid.png` · `P_stagger_mid.png` | mid-route, where the next jump is the only thing that matters |
+| `P_spans_back.png` | from the end ledge — where `platform_path()` spawns its enemies, never on the route |
+
+Status: **PENDING** — not self-marked.

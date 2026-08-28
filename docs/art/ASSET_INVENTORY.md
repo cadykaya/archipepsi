@@ -147,6 +147,9 @@ These are the vocabulary everything after them inherits.
 | `shell_arena_pillars` | L3 | room | 744 | 22.80 × 22.80 × 5.90 | entrance | B16 | B16 | PEND |
 | `shell_arena_balcony` | L3 | room | 480 | 26.80 × 24.80 × 8.90 | entrance | B16 | B16 | PEND |
 | `shell_arena_split` | L3 | room | 288 | 20.80 × 20.80 × 5.90 | entrance | B16 | B16 | PEND |
+| `shell_path_ascent` | L3 | room | 300 | 8.80 × 31.30 × 19.00 | entrance | B17 | B17 | PEND |
+| `shell_path_stagger` | L3 | room | 312 | 8.80 × 38.40 × 17.00 | entrance | B17 | B17 | PEND |
+| `shell_path_spans` | L3 | room | 216 | 8.80 × 25.10 × 14.00 | entrance | B17 | B17 | PEND |
 
 | Theme material | Roles built |
 | --- | --- |
@@ -312,7 +315,7 @@ obviously repeating one room — **but not before Style Lock.**
 | --- | --- | --- | --- | --- | --- |
 | `shell_corridor_*` | `corridor` | 6–30 m long, 4–10 m wide, 3.6 m high | 4 | A | **B15** — `shell_corridor_narrow` / `_bays` / `_stepped` / `_gallery`, four discrete sizes, not one stretched box |
 | `shell_arena_*` | `arena` | 10–28 m square, walls 4–8 m | 4 | A | **B16** — `shell_arena_pit` / `_pillars` / `_balcony` / `_split`: one subtraction, one addition, one storey, one division |
-| `shell_platform_path_*` | `platform_path` | 3–8 segments, gap ≤ 2.6 m, step ≤ 1.0 m | 3 | A | — |
+| `shell_platform_path_*` | `platform_path` | 3–8 segments, gap ≤ 2.6 m, step ≤ 1.0 m | 3 | A | **B17** — `shell_path_ascent` / `_stagger` / `_spans`. Gap and step are bounded **jointly**, so no gap in these is a literal: each is checked against `max_safe_gap(step)` before export |
 | `shell_tower_*` | `tower` | 2–5 floors | 3 | A | — |
 | `shell_treasure_*` | `treasure_room` | carries a `reward_location_id` | 3 | A | — |
 | `shell_corner_*` | connector | `chamber_builders.corner` | 2 | A | — |
@@ -338,6 +341,7 @@ runtime needs in order to place it without opening the file:
 | `sightline` | how far down the run the **floor** stays visible from the entrance at eye height — measured off the review render |
 | `open_floor` | *(arenas)* fraction of the floor plate with nothing standing on it. `chamber_builders` hugs its crates to the walls so *the arena floor stays fightable*; this is that rule, measured |
 | `cover_reach` | *(arenas)* fraction of the plate within `brute_reach` of something to hide behind. `open_floor` says how much plate a shell gives back; this says whether standing on it is worth anything |
+| `worst_jump` · `max_safe_gap_at_step` | *(paths)* the longest mandatory jump in the shell, measured **edge to edge** between platform footprints, and the joint bound at that shell's `vertical_step`. A path whose first number exceeds its second is a level nobody can finish, and no render would show it |
 | `objective` | *(arenas)* which of `zone.py`'s two objectives the shape actually supports. `shell_arena_balcony` lists only `kill_all`: it is the boss room, and its Check anchor is on an open plate with nothing to reach it past |
 
 `sightline` is a claim that is easy to make falsely, so it is defined as

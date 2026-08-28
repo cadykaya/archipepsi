@@ -770,6 +770,38 @@ floor is not a chamber.
 > that touches a surface should be positioned from that surface.
 
 
+### L-56 · The bench rig is built for an object, not for a room
+Every review render for fifteen batches used one three-light setup: key
+well above fill, rim carrying the silhouette, subject standing on a
+backdrop. It works because the key clears the model and dies on the floor.
+
+A room the size of the rig's own scale does not behave that way. Corridors
+survived it -- their ceilings occlude the key -- but an open-topped shell
+does not: the first platform-path render put the key square onto the
+right-hand wall and returned pure white across a third of the frame, with
+the route a dark smear in the middle of it.
+
+The fix was a knob, not a workaround: `key_energy` is a scene-group option
+alongside `ambient`, defaulting to the value everything already used so no
+existing sheet moves. Arenas and paths shoot at 0.70.
+
+> A tool that has been right fifteen times is not thereby right. Ask what
+> it assumes, and whether this subject still meets the assumption.
+
+### L-57 · At a 90 degree lens the frame starts 1.6 m in front of you
+Three platform-path shots were composed from the lip of the start ledge,
+looking down the route -- the natural place to stand. Every one rendered
+the ledge as empty grey: at the engine's fov the bottom of the frame is
+about 1.6 m ahead of the camera, and the ledge ended 0.6 m ahead.
+
+It read as a camera floating in a void, which is a very different picture
+from a player standing somewhere about to jump. Moving 2 m back put the
+ground under the viewer and the gap where it belongs.
+
+> A frame that shows no ground shows no scale. If a shot is meant to say
+> "you are standing here", the standing has to be in it.
+
+
 ## Process
 
 ### L-39 · Four batches to lock a style, and every one of them was cheap
