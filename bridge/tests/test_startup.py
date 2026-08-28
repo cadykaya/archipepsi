@@ -186,3 +186,50 @@ def test_a_missing_archipelago_checkout_says_what_to_run(monkeypatch):
     message = str(caught.value)
     assert "make setup" in message, message
     assert "ARCHIPELAGO_ROOT" in message, message
+
+
+def test_the_requirements_installer_is_not_silently_disabled(monkeypatch):
+    """`make setup` was broken on every fresh clone and worked here.
+
+    The Makefile exports `SKIP_REQUIREMENTS_UPDATE=1` globally, and
+    correctly: importing `CommonClient` runs `ModuleUpdate.update()`,
+    which drops into a bare `input()` on a missing requirement, so every
+    other entry point needs it. Inherited by the INSTALLER it made the one
+    command whose job is installing requirements install nothing, and
+    `make setup` then died at its own verify step with
+    `ModuleNotFoundError: No module named 'yaml'` on any machine that did
+    not already have them.
+
+    CI found this on its first run against a real fresh checkout. This
+    machine had the requirements pre-installed and could not.
+    """
+    import subprocess as _subprocess
+    import sys as _sys
+    from pathlib import Path as _Path
+
+    _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+    import bootstrap
+
+    monkeypatch.setenv("SKIP_REQUIREMENTS_UPDATE", "1")
+    captured = {}
+
+    class _Result:
+        returncode = 0
+
+    def fake_run(cmd, cwd=None, env=None, **kwargs):
+        captured["env"] = env or {}
+        return _Result()
+
+    monkeypatch.setattr(bootstrap.subprocess, "run", fake_run)
+    bootstrap.install_ap_requirements(_Path("/tmp/does-not-matter"))
+
+    assert "env" in captured, "the installer was never invoked"
+    assert "SKIP_REQUIREMENTS_UPDATE" not in captured["env"], (
+        "the requirements installer inherits the flag that turns it into "
+        "a no-op; `make setup` will install nothing and then fail")
+    # And the rest of the environment survives — clearing one variable
+    # must not hand the installer an empty env.
+    assert captured["env"].get("PATH"), (
+        "the installer lost PATH; it needs the real environment minus "
+        "one variable, not a blank one")
+    _ = _subprocess

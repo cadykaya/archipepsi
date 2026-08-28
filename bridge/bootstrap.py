@@ -77,9 +77,32 @@ def ensure_checkout(root: Path, tag: str) -> Path:
 
 
 def install_ap_requirements(ap_root: Path) -> None:
-    # ModuleUpdate is Archipelago's own dependency installer. --yes skips its
-    # interactive prompt, which would otherwise hang an unattended run.
-    run([sys.executable, "ModuleUpdate.py", "--yes"], cwd=ap_root)
+    """Install Archipelago's own requirements with Archipelago's own
+    installer.
+
+    `--yes` skips its interactive prompt, which would otherwise hang an
+    unattended run.
+
+    **`SKIP_REQUIREMENTS_UPDATE` must be cleared for exactly this call.**
+    The Makefile exports it globally, and correctly: importing
+    `CommonClient` runs `ModuleUpdate.update()`, which drops into a bare
+    `input()` when a requirement is missing, so every OTHER entry point
+    needs it set. Inherited here it made the installer a no-op — the one
+    command whose whole job is installing requirements, silently
+    installing nothing. `make setup` then failed at the verify step with
+    `No module named 'yaml'` on any machine that did not already have
+    them, which is every fresh clone. CI found it on its first run;
+    this machine had them pre-installed and could not.
+    """
+    env = {k: v for k, v in os.environ.items()
+           if k != "SKIP_REQUIREMENTS_UPDATE"}
+    print(f"  $ {sys.executable} ModuleUpdate.py --yes")
+    result = subprocess.run([sys.executable, "ModuleUpdate.py", "--yes"],
+                            cwd=ap_root, env=env)
+    if result.returncode != 0:
+        fail(f"Archipelago's own installer failed (exit "
+             f"{result.returncode}). Install its requirements by hand:\n"
+             f"    pip install -r {ap_root}/requirements.txt")
 
 
 def verify(ap_root: Path) -> None:
@@ -100,10 +123,14 @@ def verify(ap_root: Path) -> None:
                             stdin=subprocess.DEVNULL,
                             capture_output=True, text=True)
     if result.returncode != 0:
-        fail(
-            "could not import CommonClient from the checkout:\n"
-            + (result.stderr or "").strip()
-        )
+        detail = (result.stderr or "").strip()
+        hint = ""
+        if "ModuleNotFoundError" in detail:
+            hint = (f"\n\n  Archipelago's requirements are not installed. "
+                    f"Install them with:\n"
+                    f"    pip install -r {ap_root}/requirements.txt")
+        fail("could not import CommonClient from the checkout:\n"
+             + detail + hint)
     print(result.stdout.rstrip())
 
 

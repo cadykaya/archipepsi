@@ -58,6 +58,47 @@ def test_a_dirty_tree_says_so():
     assert data["tree"] in ("clean", "dirty", "unknown")
 
 
+def test_a_clean_tree_can_actually_report_clean(monkeypatch):
+    """`clean` used to be unreachable. `_git` collapsed empty output into
+    None, and `git status --porcelain` returns nothing for a clean tree —
+    so every clean checkout, CI's included, reported `unknown`."""
+    from archipepsi_bridge import version as V
+
+    monkeypatch.setattr(V, "_git", lambda *a: "" if a[0] == "status" else "x")
+    assert V.build_metadata()["tree"] == "clean"
+
+    monkeypatch.setattr(V, "_git",
+                        lambda *a: " M f" if a[0] == "status" else "x")
+    assert V.build_metadata()["tree"] == "dirty"
+
+    monkeypatch.setattr(V, "_git", lambda *a: None)
+    assert V.build_metadata()["tree"] == "unknown"
+
+
+def test_an_untracked_build_artifact_is_not_a_dirty_tree():
+    """The question is whether this build's CODE differs from the commit
+    it names. `pip install -e` leaves an `.egg-info`, and counting that
+    made every CI run report itself dirty."""
+    from archipepsi_bridge import version as V
+
+    seen = []
+
+    def record(*args):
+        seen.append(args)
+        return ""
+
+    original = V._git
+    V._git = record
+    try:
+        V.build_metadata()
+    finally:
+        V._git = original
+    status = [a for a in seen if a and a[0] == "status"]
+    assert status, "build metadata never asked about the tree state"
+    assert "--untracked-files=no" in status[0], (
+        f"tree state asked {status[0]}; untracked files must not count")
+
+
 def test_the_module_runs_as_a_command():
     """`make version` is a CI step; it has to exit zero and print."""
     out = subprocess.run(

@@ -24,6 +24,13 @@ _ROOT = Path(__file__).resolve().parents[2]
 
 
 def _git(*args: str) -> str | None:
+    """Stripped stdout, or None when git could not answer.
+
+    An EMPTY answer is not None. `git status --porcelain` returns nothing
+    for a clean tree, and collapsing that into None made "clean"
+    unreachable — every clean checkout reported its tree as `unknown`,
+    including CI's.
+    """
     try:
         out = subprocess.run(("git", *args), cwd=_ROOT, capture_output=True,
                              text=True, timeout=5)
@@ -31,7 +38,7 @@ def _git(*args: str) -> str | None:
         return None
     if out.returncode != 0:
         return None
-    return out.stdout.strip() or None
+    return out.stdout.strip()
 
 
 def build_metadata() -> dict[str, str]:
@@ -40,7 +47,12 @@ def build_metadata() -> dict[str, str]:
     missing key is a caller crash."""
     commit = _git("rev-parse", "--short=12", "HEAD") or "unknown"
     branch = _git("rev-parse", "--abbrev-ref", "HEAD") or "unknown"
-    dirty = _git("status", "--porcelain")
+    # `--untracked-files=no` on purpose. The question this answers is
+    # "does this build's code differ from the commit it claims", and an
+    # untracked file does not change that. Without it an editable install
+    # (`pip install -e`) leaves an `.egg-info` behind and every CI run
+    # reported itself dirty.
+    dirty = _git("status", "--porcelain", "--untracked-files=no")
     return {
         "bridge_version": BRIDGE_VERSION,
         "commit": commit,
@@ -48,7 +60,7 @@ def build_metadata() -> dict[str, str]:
         # A build made from an edited tree is not the commit it claims,
         # and CI attaching "clean" to a dirty run would be a lie it told
         # every time someone reproduced a bug from an artifact.
-        "tree": "dirty" if dirty else ("clean" if dirty == "" else "unknown"),
+        "tree": "unknown" if dirty is None else ("dirty" if dirty else "clean"),
         "python": platform.python_version(),
         "platform": f"{platform.system()} {platform.machine()}",
         # Set by every CI provider worth the name; absent locally.

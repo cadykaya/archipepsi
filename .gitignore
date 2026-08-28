@@ -11,3 +11,6 @@ saves/
 .integration-saves/
 generation_archive/
 godot-bin/
+
+# Editable installs leave these behind; they are build output, not source.
+*.egg-info/
