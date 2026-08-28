@@ -1,0 +1,83 @@
+# TIER 3 — heavyweight and nightly.
+#
+# Two jobs that do not belong on a PR for opposite reasons. `dual` is slow
+# because it generates real multiworlds and starts real servers. `clean`
+# is fast but must run with NO CACHES AT ALL, which would waste a PR's
+# time and is the whole point of running it here: every other job in this
+# repository caches something, and a cache is how a missing requirement
+# stops being visible.
+name: Nightly
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+env:
+  ARCHIPELAGO_TAG: 0.6.7
+
+jobs:
+  clean:
+    name: a fresh clone reaches green with no caches
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # Deliberately no `cache: pip`, no cache steps anywhere in this job.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: The documented route, exactly as README says
+        run: |
+          set -euo pipefail
+          python -m pip install -e './bridge[dev]'
+          make setup
+          python -m pip install -r .archipelago/requirements.txt
+          make world-install
+          make test
+
+      - name: A seed generates from a clean tree
+        run: make seed-multi
+
+  dual:
+    name: two Archipepsi slots in one real multiworld
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install the bridge
+        run: python -m pip install -e './bridge[dev]'
+
+      - name: Cache the Archipelago checkout
+        id: ap-cache
+        uses: actions/cache@v4
+        with:
+          path: .archipelago
+          key: archipelago-${{ env.ARCHIPELAGO_TAG }}-${{ runner.os }}
+
+      - name: Obtain Archipelago ${{ env.ARCHIPELAGO_TAG }}
+        if: steps.ap-cache.outputs.cache-hit != 'true'
+        run: make setup
+
+      - name: Install Archipelago's requirements
+        run: python -m pip install -r .archipelago/requirements.txt
+
+      - name: Link the APWorld
+        run: make world-install
+
+      - name: Dual-Archipepsi across freshly generated multiworlds
+        run: make dual-real-soak
+
+      - name: Server logs on failure
+        if: failure()
+        run: |
+          echo "--- any MultiServer output left behind ---"
+          find /tmp -name 'multiserver.log' -mmin -60 -exec tail -50 {} + 2>/dev/null || true

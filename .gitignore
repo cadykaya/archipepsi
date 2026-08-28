@@ -1,0 +1,16 @@
+.archipelago/
+.env
+.godot/
+__pycache__/
+.pytest_cache/
+*.tmp
+*.bak
+*.pyc
+.venv/
+saves/
+.integration-saves/
+generation_archive/
+godot-bin/
+
+# Editable installs leave these behind; they are build output, not source.
+*.egg-info/

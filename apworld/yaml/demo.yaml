@@ -1,0 +1,12 @@
+# The recommended Archipepsi slot: forces Epsilon Coins out into the
+# multiworld so other players find our currency, which is the premise.
+name: Skyiah
+game: Archipepsi
+
+Archipepsi:
+  accessibility: full
+  progression_balancing: 50
+
+  # The POC exists to demonstrate other players finding our currency.
+  non_local_items:
+    - Epsilon Coin

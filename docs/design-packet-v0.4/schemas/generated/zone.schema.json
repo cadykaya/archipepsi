@@ -1,0 +1,508 @@
+{
+  "$defs": {
+    "ArenaChamber": {
+      "additionalProperties": false,
+      "description": "Rectangular combat room. A boss room is an arena holding one brute.",
+      "properties": {
+        "id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "flavor": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Flavor"
+        },
+        "reward_location_id": {
+          "anyOf": [
+            {
+              "maximum": 89100030,
+              "minimum": 89100001,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reward Location Id"
+        },
+        "type": {
+          "const": "arena",
+          "title": "Type",
+          "type": "string"
+        },
+        "width": {
+          "maximum": 28,
+          "minimum": 10,
+          "title": "Width",
+          "type": "number"
+        },
+        "depth": {
+          "maximum": 28,
+          "minimum": 10,
+          "title": "Depth",
+          "type": "number"
+        },
+        "wall_height": {
+          "maximum": 8,
+          "minimum": 4,
+          "title": "Wall Height",
+          "type": "number"
+        },
+        "objective": {
+          "enum": [
+            "kill_all",
+            "reach_reward"
+          ],
+          "title": "Objective",
+          "type": "string"
+        },
+        "enemies": {
+          "items": {
+            "$ref": "#/$defs/EnemyGroup"
+          },
+          "maxItems": 4,
+          "title": "Enemies",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "width",
+        "depth",
+        "wall_height",
+        "objective"
+      ],
+      "title": "ArenaChamber",
+      "type": "object"
+    },
+    "CorridorChamber": {
+      "additionalProperties": false,
+      "description": "Connector. Objective is implicitly reach_reward when it holds a reward.",
+      "properties": {
+        "id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "flavor": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Flavor"
+        },
+        "reward_location_id": {
+          "anyOf": [
+            {
+              "maximum": 89100030,
+              "minimum": 89100001,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reward Location Id"
+        },
+        "type": {
+          "const": "corridor",
+          "title": "Type",
+          "type": "string"
+        },
+        "length": {
+          "maximum": 30,
+          "minimum": 6,
+          "title": "Length",
+          "type": "number"
+        },
+        "width": {
+          "maximum": 10,
+          "minimum": 4,
+          "title": "Width",
+          "type": "number"
+        },
+        "enemies": {
+          "items": {
+            "$ref": "#/$defs/EnemyGroup"
+          },
+          "maxItems": 4,
+          "title": "Enemies",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "length",
+        "width"
+      ],
+      "title": "CorridorChamber",
+      "type": "object"
+    },
+    "EnemyGroup": {
+      "additionalProperties": false,
+      "properties": {
+        "archetype": {
+          "enum": [
+            "melee",
+            "ranged",
+            "brute"
+          ],
+          "title": "Archetype",
+          "type": "string"
+        },
+        "count": {
+          "maximum": 8,
+          "minimum": 1,
+          "title": "Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "archetype",
+        "count"
+      ],
+      "title": "EnemyGroup",
+      "type": "object"
+    },
+    "PlatformPathChamber": {
+      "additionalProperties": false,
+      "description": "Base-movement platforming. Gaps are clamped to the derived safe jump.",
+      "properties": {
+        "id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "flavor": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Flavor"
+        },
+        "reward_location_id": {
+          "anyOf": [
+            {
+              "maximum": 89100030,
+              "minimum": 89100001,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reward Location Id"
+        },
+        "type": {
+          "const": "platform_path",
+          "title": "Type",
+          "type": "string"
+        },
+        "segment_count": {
+          "maximum": 8,
+          "minimum": 3,
+          "title": "Segment Count",
+          "type": "integer"
+        },
+        "gap_size": {
+          "maximum": 3.0,
+          "minimum": 0.5,
+          "title": "Gap Size",
+          "type": "number"
+        },
+        "vertical_step": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Vertical Step",
+          "type": "number"
+        },
+        "objective": {
+          "const": "platform_to_goal",
+          "default": "platform_to_goal",
+          "title": "Objective",
+          "type": "string"
+        },
+        "enemies": {
+          "items": {
+            "$ref": "#/$defs/EnemyGroup"
+          },
+          "maxItems": 2,
+          "title": "Enemies",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "segment_count",
+        "gap_size",
+        "vertical_step"
+      ],
+      "title": "PlatformPathChamber",
+      "type": "object"
+    },
+    "TowerChamber": {
+      "additionalProperties": false,
+      "description": "Vertical traversal. The template always emits a base-movement route.",
+      "properties": {
+        "id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "flavor": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Flavor"
+        },
+        "reward_location_id": {
+          "anyOf": [
+            {
+              "maximum": 89100030,
+              "minimum": 89100001,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reward Location Id"
+        },
+        "type": {
+          "const": "tower",
+          "title": "Type",
+          "type": "string"
+        },
+        "floors": {
+          "maximum": 5,
+          "minimum": 2,
+          "title": "Floors",
+          "type": "integer"
+        },
+        "objective": {
+          "enum": [
+            "reach_reward",
+            "kill_all"
+          ],
+          "title": "Objective",
+          "type": "string"
+        },
+        "enemies": {
+          "items": {
+            "$ref": "#/$defs/EnemyGroup"
+          },
+          "maxItems": 4,
+          "title": "Enemies",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "floors",
+        "objective"
+      ],
+      "title": "TowerChamber",
+      "type": "object"
+    },
+    "TreasureRoomChamber": {
+      "additionalProperties": false,
+      "description": "Small safe reward room. Always holds exactly one reward, never enemies.",
+      "properties": {
+        "id": {
+          "maxLength": 24,
+          "minLength": 1,
+          "pattern": "^[a-z0-9_]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "flavor": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Flavor"
+        },
+        "reward_location_id": {
+          "maximum": 89100030,
+          "minimum": 89100001,
+          "title": "Reward Location Id",
+          "type": "integer"
+        },
+        "type": {
+          "const": "treasure_room",
+          "title": "Type",
+          "type": "string"
+        },
+        "objective": {
+          "const": "reach_reward",
+          "default": "reach_reward",
+          "title": "Objective",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "reward_location_id",
+        "type"
+      ],
+      "title": "TreasureRoomChamber",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 4,
+      "default": 4,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "zone_id": {
+      "maxLength": 24,
+      "minLength": 1,
+      "pattern": "^[a-z0-9_]+$",
+      "title": "Zone Id",
+      "type": "string"
+    },
+    "display_name": {
+      "maxLength": 160,
+      "minLength": 1,
+      "title": "Display Name",
+      "type": "string"
+    },
+    "target_game": {
+      "maxLength": 96,
+      "minLength": 1,
+      "title": "Target Game",
+      "type": "string"
+    },
+    "theme": {
+      "enum": [
+        "grass_block",
+        "stone_dungeon",
+        "neon_city",
+        "gothic_castle",
+        "desert_scrap",
+        "void_glitch"
+      ],
+      "title": "Theme",
+      "type": "string"
+    },
+    "designer_note": {
+      "anyOf": [
+        {
+          "maxLength": 300,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Designer Note"
+    },
+    "featured_echo_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 4,
+      "title": "Featured Echo Ids",
+      "type": "array"
+    },
+    "chambers": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "arena": "#/$defs/ArenaChamber",
+            "corridor": "#/$defs/CorridorChamber",
+            "platform_path": "#/$defs/PlatformPathChamber",
+            "tower": "#/$defs/TowerChamber",
+            "treasure_room": "#/$defs/TreasureRoomChamber"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/CorridorChamber"
+          },
+          {
+            "$ref": "#/$defs/ArenaChamber"
+          },
+          {
+            "$ref": "#/$defs/PlatformPathChamber"
+          },
+          {
+            "$ref": "#/$defs/TowerChamber"
+          },
+          {
+            "$ref": "#/$defs/TreasureRoomChamber"
+          }
+        ]
+      },
+      "maxItems": 6,
+      "minItems": 1,
+      "title": "Chambers",
+      "type": "array"
+    }
+  },
+  "required": [
+    "zone_id",
+    "display_name",
+    "target_game",
+    "theme",
+    "chambers"
+  ],
+  "title": "Zone",
+  "type": "object"
+}
