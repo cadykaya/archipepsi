@@ -83,7 +83,11 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 	var first := true
 
 	for chamber: Dictionary in zone.get("chambers", []):
-		var result := ChamberBuilders.build(chamber, theme)
+		# S13: every chamber's geometry is chosen here, not assumed.
+		# Today every route ends at ChamberBuilders because every registry
+		# entry is still a declared placeholder; the routing is what lets an
+		# authored shell replace one without touching this file.
+		var result := ContentInstantiator.build_chamber(chamber, theme)
 
 		# Maybe take a corner first. Turns alternate direction, and both the
 		# corner and the chamber beyond it must clear every prior arm.

@@ -40,8 +40,16 @@ S23  release hardening         ── last
 |---|---|
 | S11 CI | **done** — three tiers green on real runners; `docs/CI.md` |
 | S12 registry + asset contract | **done** — `schemas/content.py`, `content_registry.gd`, `docs/ART_ASSET_SPEC.md`, `make godot-content` |
-| S13 instantiation pipeline | **next** |
-| S14–S23 | not started |
+| S13 instantiation pipeline | **done** — `content_instantiator.gd`, routed from `ZoneBuilder` |
+| S14 Hub + Echo Lab migration | **next** |
+| S15–S23 | not started |
+
+S13 routed every chamber through the registry, and every route still
+ends at `ChamberBuilders` because every entry is still a declared
+placeholder. That is the design: the generator is now the documented last
+resort rather than the only path, so an authored shell can replace one at
+a time without a flag day. A test pins the placeholder route to produce
+exactly what calling the builder directly produces.
 
 S12 landed the alphabet's shape, not the alphabet: everything in
 `godot/content/registry/legacy_procedural.json` is `procedural_fallback:

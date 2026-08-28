@@ -164,6 +164,12 @@ and set the old one's `fallback` instead.
 refuses any other path, in both Godot and Python. Match the file stem to the
 id: `res://content/shells/shell_arena_ruined.tscn`.
 
+`res://content/test_fixtures/` is **not content**. It holds the deliberately
+dumbest legal scenes, used only by `make godot-content` to exercise the
+authored-scene path. No shipped manifest references them and they never
+reach a zone. Do not put real assets there, and do not model to their
+example.
+
 **Nodes inside a scene.** `PascalCase` for structural nodes (`Floor`,
 `WallNorth`, `CeilingTrim`), and sockets named exactly as their manifest
 `name` (see below) so a human reading the scene tree can find them.

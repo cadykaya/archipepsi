@@ -35,6 +35,21 @@ const LEVELS := {
 	"landmark": [4],
 }
 
+## The process-wide registry, loaded once. A static rather than a third
+## autoload: it needs no scene tree, no load order, and nothing to happen
+## before it is first asked a question. `reset_shared()` exists for tests
+## that need a registry built from a scratch directory instead.
+static var _shared: ContentRegistry = null
+
+static func shared() -> ContentRegistry:
+	if _shared == null:
+		_shared = ContentRegistry.new()
+		_shared.load_all()
+	return _shared
+
+static func reset_shared() -> void:
+	_shared = null
+
 var entries: Dictionary = {}          ## id -> entry Dictionary
 var errors: Array[String] = []        ## every refusal, in discovery order
 

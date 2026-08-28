@@ -40,6 +40,10 @@ func _ready() -> void:
 	_resolution_prefers_authored_and_degrades_to_the_placeholder()
 	_resolution_of_an_unknown_id_is_empty_not_a_guess()
 	_queries_are_sorted_so_selection_is_deterministic()
+	_the_pipeline_routes_placeholders_to_the_generator()
+	_the_pipeline_builds_an_authored_shell_from_its_metadata()
+	_an_authored_shell_that_will_not_load_degrades_instead_of_crashing()
+	_an_unregistered_chamber_type_still_builds()
 	_cleanup()
 	if failures == 0:
 		print("GODOT CONTENT TESTS OK")
@@ -226,3 +230,123 @@ func _queries_are_sorted_so_selection_is_deterministic() -> void:
 			"ids_with_tags must be sorted and filtered, got %s" % str(by_tag))
 	_check(registry.ids_with_tags(["ruined"], "prop").is_empty(),
 			"a category filter that matches nothing must return nothing")
+
+
+# --- the S13 pipeline ------------------------------------------------------
+
+const FIXTURE := "res://content/test_fixtures/shell_graybox_fixture.tscn"
+
+func _authored_entry(over: Dictionary = {}) -> Dictionary:
+	var base := {
+		"id": "shell_arena_proc",   # the id the pipeline asks for
+		"level": 3, "category": "room_shell",
+		"display_name": "Authored Fixture",
+		"procedural_fallback": false, "scene": FIXTURE,
+		"size": [6.0, 3.6, 10.0],
+		"sockets": [
+			_socket("entry"),
+			{"name": "exit", "kind": "doorway",
+			 "position": [0.0, 0.0, 9.0], "width": 2.4, "height": 3.2},
+		],
+	}
+	base.merge(over, true)
+	return base
+
+func _the_pipeline_routes_placeholders_to_the_generator() -> void:
+	## The "do NOT rip out working procedural generation" requirement,
+	## made testable: with the shipped registry (every entry a declared
+	## placeholder), routing through the pipeline must produce exactly
+	## what calling the builder directly produces. If this ever drifts,
+	## S13 changed the game while claiming only to have added a choice.
+	var chamber := {"id": "c1", "type": "arena", "width": 18.0,
+			"depth": 18.0, "enemies": []}
+	var direct := ChamberBuilders.build(chamber, "void_glitch")
+	var routed := ContentInstantiator.build_chamber(chamber, "void_glitch")
+
+	_check(routed["exit_offset"] == direct["exit_offset"],
+			"routing changed exit_offset: %s vs %s"
+			% [routed["exit_offset"], direct["exit_offset"]])
+	_check(routed["bounds"] == direct["bounds"],
+			"routing changed bounds: %s vs %s"
+			% [routed["bounds"], direct["bounds"]])
+	_check(routed["room_height"] == direct["room_height"],
+			"routing changed room_height")
+	_check(routed["reward_position"] == direct["reward_position"],
+			"routing changed reward_position")
+	(direct["root"] as Node3D).free()
+	(routed["root"] as Node3D).free()
+
+func _the_pipeline_builds_an_authored_shell_from_its_metadata() -> void:
+	var registry := _load([_authored_entry()])
+	_check(registry.errors.is_empty(),
+			"the authored fixture should validate: %s"
+			% "\n".join(registry.errors))
+
+	var chamber := {"id": "c1", "type": "arena",
+			"enemies": [{"archetype": "drone", "count": 2}]}
+	var built := ContentInstantiator.build_chamber(chamber, "void_glitch",
+			registry)
+	var root: Node3D = built["root"]
+	_check(root.name == "ShellGrayboxFixture",
+			"the authored scene should have been instantiated, got '%s'"
+			% root.name)
+
+	## The contract ZoneBuilder chains on, taken from metadata rather than
+	## measured off the mesh: a decorative overhang must not be able to
+	## move a room's exit.
+	# 9, not the room's depth of 10: the exit doorway is inset, as a real
+	# shell's would be. If these were equal the assertion could not tell
+	# a socket-derived offset from a size-derived guess -- and the first
+	# version of this fixture had exactly that hole.
+	_check(built["exit_offset"] == Vector3(0, 0, 9),
+			"exit_offset must come from the declared exit socket, got %s"
+			% built["exit_offset"])
+	_check(built["bounds"] == AABB(Vector3(-3, -1, 0), Vector3(6, 4.6, 10)),
+			"bounds must come from declared size in the same envelope the "
+			+ "builders use, got %s" % built["bounds"])
+	# `is_equal_approx`, not `==`: Vector3 stores 32-bit components, so
+	# `size.y` is 3.5999999046... while the GDScript literal 3.6 is a
+	# 64-bit float. Harmless for geometry, fatal for an equality check.
+	_check(is_equal_approx(built["room_height"], 3.6),
+			"room_height must be declared size.y, got %s"
+			% built["room_height"])
+	_check((built["enemy_spawns"] as Array).size() == 2,
+			"the generator still decides how many enemies, got %d"
+			% (built["enemy_spawns"] as Array).size())
+	root.free()
+
+func _an_authored_shell_that_will_not_load_degrades_instead_of_crashing()\
+		-> void:
+	## `resolve` already refuses a scene that is not on disk. This is the
+	## narrower case the validator cannot see: a file that exists and
+	## fails to load. A zone is being generated with a player in it, so
+	## the answer is the placeholder, not an exception.
+	var registry := _load([
+		_authored_entry({"fallback": "shell_arena_backup"}),
+		_entry({"id": "shell_arena_backup"}),
+	])
+	var chamber := {"id": "c1", "type": "arena", "width": 18.0,
+			"depth": 18.0, "enemies": []}
+	## Availability says no, exactly as a failed load would.
+	var unavailable := func(e: Dictionary) -> bool:
+		return bool(e.get("procedural_fallback", false))
+	_check(registry.resolve("shell_arena_proc", unavailable)
+			== "shell_arena_backup",
+			"a shell that cannot be instantiated must fall through to the "
+			+ "placeholder")
+	var built := ContentInstantiator.build_chamber(chamber, "void_glitch",
+			registry)
+	_check(built.has("root") and built["root"] != null,
+			"a degraded build must still produce a room")
+	(built["root"] as Node3D).free()
+
+func _an_unregistered_chamber_type_still_builds() -> void:
+	## The registry is a routing table, not a gate on generation. A type
+	## with no entry is the generator's default arm, as it always was.
+	var registry := _load([_entry({"id": "shell_unrelated"})])
+	var built := ContentInstantiator.build_chamber(
+			{"id": "c1", "type": "not_a_real_type", "enemies": []},
+			"void_glitch", registry)
+	_check(built.has("root") and built["root"] != null,
+			"an unregistered chamber type must still produce a room")
+	(built["root"] as Node3D).free()
