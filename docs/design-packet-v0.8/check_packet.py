@@ -189,6 +189,11 @@ FOREIGN_UPPER = {
 DOC_NAMES = {d.name for d in HERE.glob("*.md")} | {
     "IMPLEMENTATION_DECISIONS.md", "NEXT_STEPS.md", "IMPLEMENTATION_PLAN",
     "AGENT_FRONTIER.md",
+    # v0.9 documents the v0.8 packet is allowed to point FORWARD at. The
+    # packet is history; a later decision that amends it has to be
+    # reachable from it, or the amendment is a note nobody follows.
+    "OWNER_DECISIONS.md", "OPEN_QUESTIONS.md", "AUTOMATION_LIMITS.md",
+    "ART_ASSET_SPEC.md", "CI.md",
     "README.md", "CommonClient.py", "ModuleUpdate.py", "MultiServer.py",
     "NetUtils.py", "Utils.py", "AutoWorld.py", "archipelago.json",
     "campaign.py", "store.py", "transactions.py", "mock_ap.py",

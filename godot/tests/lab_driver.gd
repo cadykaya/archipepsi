@@ -61,6 +61,8 @@ func _run() -> void:
 	_the_labs_gap_stays_mechanically_meaningful()
 	_the_hub_resolves_every_anchor_its_logic_needs()
 	_an_authored_scene_can_move_an_anchor()
+	await _the_ending_is_a_beat_not_a_wall()
+	_the_two_completion_beats_fire_once_each()
 
 	lab.queue_free()
 	player.queue_free()
@@ -386,3 +388,79 @@ func _an_authored_scene_can_move_an_anchor() -> void:
 	_check(anchors.missing().is_empty(),
 			"partial adoption must still resolve every anchor")
 	scene.queue_free()
+
+
+# --- D3: finished but still alive ------------------------------------------
+
+func _hub_snapshot(mode: String, goal_sent: bool) -> Dictionary:
+	var snapshot := _snapshot()
+	snapshot["hub"] = {"mode": mode, "headline": "H", "goal_sent": goal_sent,
+			"postgame": goal_sent, "ap_online": true}
+	snapshot["ap_connected"] = true
+	return snapshot
+
+func _the_ending_is_a_beat_not_a_wall() -> void:
+	## The decided shape (OWNER_DECISIONS D3): when every Check is claimed
+	## the Hub is FINISHED BUT STILL ALIVE. It is easy to build the first
+	## half of that and forget the second, so both are asserted -- what
+	## must stop, AND what must not.
+	BridgeClient.snapshot = _hub_snapshot("ALL_CHECKS_CLEARED", true)
+	var hub := HubController.new()
+	add_child(hub)
+	await get_tree().process_frame
+	hub.refresh()
+
+	var board: Label3D = hub._sub_board
+	_check(board.text.contains("TRANSMISSION COMPLETE"),
+			"the postgame Hub must say the transmission is complete, got: %s"
+			% board.text)
+	_check(board.text.contains("MULTIWORLD CONNECTION ACTIVE"),
+			"the postgame Hub must say the multiworld is still going -- "
+			+ "in an async game the others usually are. Got: %s" % board.text)
+
+	## What must STOP.
+	_check(hub._shop != null and hub._shop.complete,
+			"the shop must read as complete once there is nothing left "
+			+ "to stock it from")
+	_check(hub._shop.interact_prompt().is_empty(),
+			"a complete shop must not offer to open")
+	_check(not hub._finale_portal.visible,
+			"the finale portal must not be offered after the goal is sent")
+
+	## What must NOT stop. This half is the decision.
+	_check(hub._abandon != null, "the Hub is still inhabited")
+	_check(board.text.contains("LAB AND ARCHIVE REMAIN OPEN"),
+			"the Hub must say the Lab and Archive are still open")
+	## And it must BE open, not merely say so. The first version of this
+	## test only read the board, so closing the Archive alongside the shop
+	## passed cleanly -- a sign advertising a door that is locked.
+	_check(hub._terminal != null and not hub._terminal.complete,
+			"the Archive must stay usable in the postgame; a finished "
+			+ "campaign is still a loadout you can look at")
+	_check(not hub._terminal.interact_prompt().is_empty(),
+			"the Archive must still offer to open")
+	var lab_door := HubAnchors.new()
+	_check(lab_door.has("lab_entrance"),
+			"the way to the Echo Lab must still exist in the postgame")
+	_check(not board.text.to_lower().contains("credits"),
+			"no forced credits: the multiworld is not over")
+
+	hub.queue_free()
+	BridgeClient.snapshot = {}
+
+func _the_two_completion_beats_fire_once_each() -> void:
+	## Edges, not levels. `goal_sent` and ALL_CHECKS_CLEARED both stay
+	## true forever once reached, so a level test would repeat the ending
+	## on every snapshot until the player walked out.
+	var voice := EpsilonVoice.new()
+	for kind: String in ["goal_sent", "campaign_complete"]:
+		_check(not voice.line_for(kind).is_empty(),
+				"'%s' has no line; the beat would be silent" % kind)
+		_check(kind in EpsilonVoice.PRIORITY,
+				"'%s' must outrank ambient barks, or a throttle can "
+				% kind + "silently delete the ending")
+
+	## And the wording is deliberately not locked -- what is pinned is
+	## that the hook EXISTS and is reachable, not what it says.
+	_check(EpsilonVoice.LINES["campaign_complete"].size() >= 2,
+			"a beat with one line repeats the moment it is heard twice")

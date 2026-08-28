@@ -9,7 +9,7 @@ execute.** S1–S10 (Echoes 2.0) are complete and are history below; the
 plan is NOT exhausted.
 
 The governing rule, from `docs/design-packet-v0.8/AUTHORED_CONTENT.md`
-(normative, outranks the v0.9 plan): **humans make the alphabet, Godot
+(normative, outranks the v0.9 plan): **developers author the alphabet, Godot
 enforces the grammar, Epsilon writes sentences.** Epsilon is a composer,
 never an asset generator. Do not manufacture "final art" procedurally to
 claim a stage. Existing primitive geometry and materials are valid

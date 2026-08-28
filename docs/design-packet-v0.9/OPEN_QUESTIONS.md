@@ -1,19 +1,26 @@
 # v0.9 open questions
 
-Decisions that block a stage and that the contracts do not settle. Each
-one names what is already built, what is blocked, and what changes under
-each option — so the answer is a choice, not a design exercise.
+**Q1, Q2 and Q3 were answered on 2026-08-28. The decisions live in
+`OWNER_DECISIONS.md`; the analysis below is kept as the record of what
+was weighed, not as a live question.** One item, `challenge_marker`,
+remains genuinely open and is at the bottom.
 
-Nothing here is guessed at in code. Where a question blocks part of a
-stage, the rest of that stage is finished and the hooks the answer will
-need are in place.
+Each entry names what was already built, what was blocked, and what
+changed under each option — so the answer was a choice, not a design
+exercise. Nothing here was guessed at in code.
 
 ---
 
 ## Q1 — How does an authored room shell honour a generator-chosen size?
 
-**Status:** blocks the "convert existing chamber archetypes to graybox
-shells" half of S15. The connector grammar half is done and shipped.
+**DECIDED 2026-08-28 — `OWNER_DECISIONS.md` D1.** A hybrid of options A
+and C: Epsilon emits spatial/design INTENT (archetype, size class, intent
+tags, a shell id from a legal catalog), the authored shell owns its exact
+measured geometry, and **Godot validates physical truth by measuring the
+instantiated result** rather than trusting the shell's metadata. Size
+variants are a vocabulary, not a mandatory triplication rule. No generic
+stretching of gameplay rooms. The procedural fallback keeps its existing
+continuous-dimension system.
 
 ### The conflict
 
@@ -96,9 +103,13 @@ anyone choosing it, or produce five scenes that get rebuilt.
 
 ## Q2 — What licence covers bundled third-party assets and models?
 
-**Status:** not blocking anything yet. Recorded because the moment it
-blocks something is the moment a decision is needed, and that moment is
-usually "we already committed the file".
+**DECIDED 2026-08-28 — `OWNER_DECISIONS.md` D2.** Development-time
+Claude-authored assets are first-party content once reproducibly
+authored, reviewed, approved, committed and registered; **runtime**
+Epsilon generation stays forbidden. Third-party assets are
+first-party-by-default and need a full licence record before entering the
+repo. The packaging gate becomes "first-party or an approved licence
+record" rather than "no binaries at all".
 
 Nothing third-party is bundled today. `test_packaging.py` fails the
 instant a `.glb`, `.wav`, `.ttf` or similar becomes tracked, and its
@@ -114,10 +125,12 @@ message points here.
    not just a line in the README.
 3. **Fonts.** Almost always separately licensed, and almost always the
    thing that gets missed.
-4. **AI-generated assets**, if any are ever considered: whose, under
-   what terms, and whether that is consistent with
-   `AUTHORED_CONTENT.md` at all -- the answer there is probably "no",
-   since the whole document exists to say humans make the alphabet.
+4. **AI-generated assets** — answered: a *developer's* Claude-authored
+   asset is first-party content once reviewed and registered. This was
+   the item I guessed wrong about: I read `AUTHORED_CONTENT.md` as
+   forbidding it, and the rule was always about RUNTIME generation, not
+   about which tool a developer uses at their desk. Third-party
+   AI-service outputs with unclear terms are still refused.
 
 ### What is already built
 
@@ -130,8 +143,13 @@ message points here.
 
 ## Q3 — What is the ending, and what is the Hub afterwards?
 
-**Status:** blocks S20 (authored campaign spine). Nothing else depends
-on it, so every other v0.9 stage was finished around it.
+**DECIDED 2026-08-28 — `OWNER_DECISIONS.md` D3.** Check 030 produces a
+short authored completion beat, not a cinematic and not forced credits;
+the goal is sent normally and play continues. At `ALL_CHECKS_CLEARED` the
+Hub is **finished but still alive** — portal dormant, shop complete,
+Epsilon acknowledges, Lab and Archive still usable, AP connection active,
+no forced exit. Final wording is not locked. Tiers get a presentation arc
+but no player-facing names (D4).
 
 ### What is already decided, and is not in question
 
@@ -194,3 +212,22 @@ stay open indefinitely without hurting anything.
 
 No ending, no postgame behaviour, no tier names. Writing any of them
 would be inventing a narrative decision the roadmap explicitly reserves.
+
+
+---
+
+## DEFERRED — `challenge_marker` world semantics
+
+**The one genuinely open item.** Reaffirmed deferred on 2026-08-28.
+
+No AP truth or progression may depend on it. The existing hook stays
+dormant and is **not** removed. It is not to be guessed at until all of
+these are defined:
+
+- what starts a challenge
+- what completes or fails it
+- the retry lifecycle
+- what local-only reward or record it creates
+
+A challenge is not an excuse to give Epsilon authored content
+(`AUTHORED_CONTENT.md` §7).

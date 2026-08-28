@@ -18,7 +18,7 @@ Two things at once, and they are the same thing:
 
 ## The governing rule
 
-> **HUMANS MAKE THE ALPHABET. GODOT ENFORCES THE GRAMMAR.
+> **DEVELOPERS AUTHOR THE ALPHABET. GODOT ENFORCES THE GRAMMAR.
 > EPSILON WRITES SENTENCES.**
 
 `docs/design-packet-v0.8/AUTHORED_CONTENT.md` is normative and outranks

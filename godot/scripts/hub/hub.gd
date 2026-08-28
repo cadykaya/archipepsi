@@ -20,6 +20,8 @@ var player: Player
 var _portal: HubPortal
 var _finale_portal: HubPortal
 var _abandon: AbandonConsole
+var _shop: SimpleStation
+var _terminal: SimpleStation
 ## S14: where things go. Logic asks by name; `HubAnchors`
 ## decides where, from the procedural defaults or from an
 ## authored scene's markers.
@@ -61,6 +63,11 @@ var _voice_greeted := false
 var _seen_completed := -1
 var _seen_keys := -1
 var _seen_finale := false
+## D3: the two once-per-campaign beats. Edges, not levels -- `goal_sent`
+## and ALL_CHECKS_CLEARED both stay true forever once reached, so a level
+## test would say them on every snapshot until the player left.
+var _seen_goal_sent := false
+var _seen_complete := false
 
 func _ready() -> void:
 	_build_room()
@@ -107,11 +114,24 @@ func _voice_on_change() -> void:
 	# is "new" on arrival, and greeting the player with three barks at once
 	# would be worse than silence.
 	var first := _seen_completed < 0
+	var hub := BridgeClient.hub()
+	var goal_sent := bool(hub.get("goal_sent", false))
+	var complete := str(hub.get("mode", "")) == "ALL_CHECKS_CLEARED"
 	if not first:
-		if keys > _seen_keys:
+		# D3, and in this order: finishing the campaign outranks sending
+		# the goal, which outranks everything ambient. On the snapshot
+		# where the last Check is also the goal, the player hears the
+		# bigger of the two rather than both at once.
+		if complete and not _seen_complete:
+			hud.say_line("campaign_complete")
+		elif goal_sent and not _seen_goal_sent:
+			hud.say_line("goal_sent")
+		elif keys > _seen_keys:
 			hud.say_line("hub_key_landed")
 		elif finale and not _seen_finale:
 			hud.say_line("hub_finale_ready")
+	_seen_goal_sent = goal_sent
+	_seen_complete = complete
 	_seen_completed = completed
 	_seen_keys = keys
 	_seen_finale = finale
@@ -225,7 +245,9 @@ func _build_room() -> void:
 	add_child(shop)
 	shop.position = _anchors.origin("shop")
 	shop.rotation.y = _anchors.yaw("shop")
+	shop.complete_label = "GOODS EXHAUSTED"
 	shop.used.connect(func() -> void: open_shop_requested.emit())
+	_shop = shop
 
 	# Echo terminal, right wall.
 	var terminal := SimpleStation.new()
@@ -236,6 +258,7 @@ func _build_room() -> void:
 	terminal.position = _anchors.origin("archive_loadout")
 	terminal.rotation.y = _anchors.yaw("archive_loadout")
 	terminal.used.connect(func() -> void: open_inventory_requested.emit())
+	_terminal = terminal
 
 	# Abandon console, next to the portal; the only exit from GENERATING
 	# and ZONE_READY, which have no pause menu to reach.
@@ -333,6 +356,18 @@ func refresh() -> void:
 				int(hub.get("signal_keys_required", 2))])
 	if not snapshot.get("ap_connected", false):
 		lines.append("ARCHIPELAGO OFFLINE")
+
+	# D3: FINISHED BUT STILL ALIVE. Every Archipepsi Check is claimed, so
+	# there are no Zones left to build -- but the player is still here,
+	# and in an async multiworld the others usually are not done. So the
+	# Hub says what has ended and, in the same breath, what has not. No
+	# credits, no forced exit, and the alien computer does not switch off
+	# because it ran out of campaign.
+	if mode == "ALL_CHECKS_CLEARED":
+		lines.append("TRANSMISSION COMPLETE")
+		if snapshot.get("ap_connected", false):
+			lines.append("MULTIWORLD CONNECTION ACTIVE")
+		lines.append("LAB AND ARCHIVE REMAIN OPEN")
 	_sub_board.text = "\n".join(lines)
 
 	_voice_on_change()
@@ -346,6 +381,10 @@ func refresh() -> void:
 	_finale_portal.visible = bool(hub.get("finale_offered", false)) \
 			and goal_missing and mode == "ZONE_AVAILABLE"
 	_finale_portal.refresh(hub, "FINALE_OFFERED")
+	# D3: the shop closes when the campaign does. The Archive beside it
+	# does NOT -- a finished campaign is still a loadout you can look at.
+	if _shop != null:
+		_shop.set_complete(mode == "ALL_CHECKS_CLEARED")
 	_abandon.refresh(mode, BridgeClient.active_zone())
 	_board_pulse = 1.0 - _board_pulse       # slow blink for in-flight cells
 	_refresh_campaign_board(snapshot)
@@ -672,6 +711,19 @@ class SimpleStation extends StaticBody3D:
 	var prompt := ""
 	var station_color := Color.WHITE
 
+	## D3: a station that has nothing left to do. The shop reaches this
+	## when every Check is claimed -- there is no stock because there are
+	## no unclaimed locations to stock it from. It reads as FINISHED
+	## rather than broken: dimmed, relabelled, and it declines to open
+	## instead of showing an empty list.
+	##
+	## The Archive and the Echo Lab never take this state. They stay
+	## usable in the postgame on purpose.
+	var complete := false
+	var complete_label := ""
+	var _sign: MeshInstance3D
+	var _label: Label3D
+
 	func _ready() -> void:
 		var shape := CollisionShape3D.new()
 		var box := BoxShape3D.new()
@@ -695,6 +747,7 @@ class SimpleStation extends StaticBody3D:
 		sign.material_override = ThemeMaterials.glow_material(
 				station_color, 1.2)
 		add_child(sign)
+		_sign = sign
 		var label := Label3D.new()
 		label.text = label_text
 		label.position = Vector3(0, 2.2, 0.1)
@@ -702,11 +755,31 @@ class SimpleStation extends StaticBody3D:
 		label.pixel_size = 0.006
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		add_child(label)
+		_label = label
+		_apply_complete()
+
+	func set_complete(on: bool) -> void:
+		if complete == on:
+			return
+		complete = on
+		_apply_complete()
+
+	func _apply_complete() -> void:
+		if _sign == null or _label == null:
+			return
+		_label.text = complete_label if complete and complete_label != "" \
+				else label_text
+		# Dimmed, not dark: the facility is finished, not switched off.
+		_sign.material_override = ThemeMaterials.glow_material(
+				station_color.darkened(0.5) if complete else station_color,
+				0.35 if complete else 1.2)
 
 	func interact_prompt() -> String:
-		return prompt
+		return "" if complete else prompt
 
 	func interact(_player: Node) -> void:
+		if complete:
+			return
 		used.emit()
 
 

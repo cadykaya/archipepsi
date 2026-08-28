@@ -5,11 +5,18 @@ Blender (or any DCC) and adding it to the game.
 
 **The one rule this document serves** (`docs/design-packet-v0.8/AUTHORED_CONTENT.md`):
 
-> HUMANS MAKE THE ALPHABET. GODOT ENFORCES THE GRAMMAR. EPSILON WRITES SENTENCES.
+> DEVELOPERS AUTHOR THE ALPHABET. GODOT ENFORCES THE GRAMMAR. EPSILON WRITES SENTENCES.
 
 You are making alphabet. Adding an asset is **a scene plus a manifest
 entry**. It is never a change to generator logic, and it never requires
 touching Python, the bridge, or anything Epsilon can see.
+
+An asset a developer builds with Claude at their desk is ordinary
+first-party content once it is reproducibly authored, reviewed, approved,
+committed and registered under a stable id (`OWNER_DECISIONS.md` D2).
+What stays forbidden is **runtime** generation — Epsilon producing a
+mesh, texture, shader, audio clip or resource path while the game runs.
+The boundary is about when and by whom, not about which tool.
 
 Every number below is read from the code, not invented. Where a constant is
 named, that constant is the authority and this document is the description —
