@@ -302,6 +302,19 @@ four would have clipped through walls the character body never touches.
 
 ## Process
 
+### L-25 · …and that applies to check output, not just renders
+At the 05:45 heartbeat this lane reported "working tree clean, in sync, base
+branch unchanged, and all three cheap verifiers still pass" — having run
+none of them. The state turned out to be exactly that, which is the
+dangerous part: a claim that happens to be true is indistinguishable from a
+claim that was checked, and the whole reason this lane's numbers are worth
+anything is that they were checked.
+
+L-24 was written about renders. It is the same rule for a terminal: **if a
+sentence names a result, a tool call has to have produced it in this turn.**
+A heartbeat that skips the check and reports the expected answer is a
+heartbeat that has stopped being a check.
+
 ### L-24 · Read your own render before writing down what it shows
 Every fix in L-05, L-08, L-09, L-11, L-13 and L-14 came from **looking at
 the image**, not from the build log. The logs were green throughout: correct
