@@ -54,7 +54,7 @@ with the approved authored vocabulary come first.
 | --- | --- | --- |
 | 1 | Hub / permanent spaces, and the Epsilon installation | **done for now** — installation locked, Batch 003 built the Hub's eight fixtures and modules, Batch 004 the Lab's seven. Shells themselves remain `hub.gd` / `echo_lab.gd` geometry |
 | 2 | Core interactables | **nearly done** — Batch 005/005-R produced the Check and its four states, Batch 006 the portal's two core states and `door_standard`. What remains is `objective_marker` and `signage_module`, and both are a navigation **language** rather than a fixture — surfaced, not chosen |
-| 3 | Common architecture | 9 modules exist; the kit is not complete |
+| 3 | Common architecture | **in progress** — Batch 007 built the five remaining Pri-A modules (stair, ramp, ledge, straight connector, both corners). 15 of 29; what is left is all Pri B/C |
 | 4 | The enemy production family | 10 roles concepted; production versions to build |
 | 5 | Movement affordances | 2 of 7 fixtures exist |
 | 6 | Universal props | 7 exist |
@@ -64,7 +64,9 @@ with the approved authored vocabulary come first.
 
 **Tooling:** `tools/shoot.sh` runs a JSON shot list through
 `camera_rig.gd` — lenses in millimetres, `frame` solving its own distance,
-grey / silhouette / clay / guides variants. Prefer it over writing a new
+grey / silhouette / clay / guides variants, several models per scene with
+`@x,y,z` offsets and a `#yaw`, and a `backdrop` of `full` / `floor` / `none`
+so a composed scene is not sliced by the bench's own wall. Prefer it over writing a new
 bench script; the six that exist are each a camera nobody could afford to
 move. `docs/art/proposals/photo_mode.gd` is the in-game half, delivered as
 a proposal because it belongs in `godot/`.
@@ -81,9 +83,9 @@ line rather than inventing work.
 | | |
 | --- | --- |
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
-| Phase | **STYLE LOCK PASSED — production.** Batch 004 is `PASS`. Batch 005 is `PASS IN DIRECTION` with one required revision, delivered as 005-R. Batches 005-R and 006 are `PENDING`. |
+| Phase | **STYLE LOCK PASSED — production.** Batch 004 is `PASS`. Batch 005 is `PASS IN DIRECTION`, its one required revision delivered as 005-R. Batches 005-R, 006 and 007 are `PENDING`. |
 | Owner review | Style Lock passed 2026-08-28. Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
-| Next action | **Tier 3: complete the architecture kit** (`ASSET_INVENTORY.md` §6). Tier 2's remaining two rows need an owner decision on a navigation sign language, so they are surfaced and skipped rather than invented. Batch 005-R and Batch 006 are with the owner. |
+| Next action | **Tier 4: the enemy production family.** Ten roles are concepted and passed as a family; none has a production model. Architecture's Pri-A rows are done (Batch 007) and the rest of §6 is Pri B/C, so the roster is the higher-priority independent work. Batches 005-R, 006 and 007 are with the owner. |
 
 ### What the Batch 002 review LOCKED
 
@@ -139,9 +141,9 @@ grow again until Style Lock passes.
 | `python3 tools/blender/palette.py` | PASS |
 | `python3 tools/blender/check_docs_metrics.py` | PASS — every number in ART_REVIEW.md and ASSET_INVENTORY.md matches the build |
 | `tools/sabotage_checks.sh` | see the commit for the run |
-| `python3 tools/blender/sync_inventory.py` | 65 assets written |
+| `python3 tools/blender/sync_inventory.py` | 71 assets written |
 | `tools/check_art_current.sh` | PASS — every asset byte-identical from source |
-| Assets built | 65 models + 16 theme textures + 7 prop skins + review images in `review/batch001` … `batch006` |
+| Assets built | 71 models + 16 theme textures + 7 prop skins + review images in `review/batch001` … `batch007` |
 | Composed room | 3,272 / 12,000 triangles |
 
 ### What a heartbeat cannot see
@@ -161,12 +163,13 @@ should say it cannot rather than guess.
 
 ## Where the review images are
 
-**[`docs/art/review/batch005r/`](review/batch005r/)** · **[`batch006/`](review/batch006/)** — with the owner now
+**[`docs/art/review/batch005r/`](review/batch005r/)** · **[`batch006/`](review/batch006/)** · **[`batch007/`](review/batch007/)** — with the owner now
 
 `batch005r/` is the one required Batch 005 revision: locked against
 confirmed at 39.6 m, measured. Start at `R_state_family_far_inset.png`.
 `batch006/` is the portal's two core states and the standard door; start at
-`P_portal_states.png`.
+`P_portal_states.png`. `batch007/` is the five Pri-A traversal modules;
+start at `T_corner_turn.png`.
 
 **[`docs/art/review/batch005/`](review/batch005/)** — the Check, in full
 
@@ -228,7 +231,7 @@ B=.tools/blender/blender
 for s in materials architecture props concept_epsilon concept_check \
          concept_portal concept_enemy concept_anchor \
          batch002_enemies epsilon_installation hub lab check \
-         ways_out; do
+         ways_out traversal; do
   $B -b --python tools/blender/build_$s.py
 done
 tools/batch001_sheets.sh      # ~12 min: 28 sheets
@@ -238,6 +241,7 @@ tools/shoot.sh <list.json>    # ANY shot, from a JSON list. Start here.
                               #   tools/shots/batch005_check.json
                               #   tools/shots/batch005r_check.json
                               #   tools/shots/batch006_ways_out.json
+                              #   tools/shots/batch007_traversal.json
 tools/pixel_inset.py          # a region of a render, magnified NEAREST
 tools/hub_room.sh             # the Hub, built out of authored assets
 tools/epsilon_views.sh        # the operator / oblique / fusion / value views

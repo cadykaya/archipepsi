@@ -1,0 +1,144 @@
+{
+  "_comment": [
+    "Batch 007 -- the kit that moves you.",
+    "",
+    "Two of these shots carry lab_dummy (1.78 m, near the player's 1.80)",
+    "purely as a SCALE REFERENCE. A traversal module photographed alone is",
+    "a shape; photographed next to something the height of a person it is a",
+    "climb you can judge."
+  ],
+  "defaults": {
+    "size": [
+      1600,
+      900
+    ],
+    "lens": 35,
+    "ambient": 0.2
+  },
+  "shots": [
+    {
+      "name": "T_corridor_run",
+      "scene": "model:batch007/architecture/arch_connector_straight.glb@0,0,0 + batch007/architecture/arch_connector_straight.glb@4,0,0 + batch007/architecture/arch_connector_straight.glb@8,0,0 + batch007/architecture/arch_corner_left.glb@12.4,0,0 + batch007/architecture/arch_connector_straight.glb@12.4,0,-4.4#90 + batch007/architecture/arch_connector_straight.glb@12.4,0,-8.4#90",
+      "size": [
+        1920,
+        1080
+      ],
+      "lens": 35,
+      "caption": "SIX MODULES: THREE STRAIGHTS, A LEFT TURN, TWO MORE",
+      "note": "THE SEAMS ARE THE 4.0 M MODULE GRID. NOTHING IS STRETCHED",
+      "variants": [
+        "grey"
+      ],
+      "look": [
+        [
+          16.0,
+          20.0,
+          20.0
+        ],
+        [
+          -9.0,
+          1.5,
+          2.0
+        ]
+      ],
+      "backdrop": "floor"
+    },
+    {
+      "name": "T_corridor_eye",
+      "scene": "model:batch007/architecture/arch_connector_straight.glb@0,0,0 + batch007/architecture/arch_connector_straight.glb@4,0,0 + batch007/architecture/arch_connector_straight.glb@8,0,0 + batch007/architecture/arch_corner_left.glb@12.4,0,0 + batch007/architecture/arch_connector_straight.glb@12.4,0,-4.4#90 + batch007/architecture/arch_connector_straight.glb@12.4,0,-8.4#90",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        1.0,
+        0,
+        0
+      ],
+      "yaw": 270,
+      "game_lens": true,
+      "caption": "STANDING IN IT, AT THE ENGINE'S OWN LENS",
+      "note": "SERVICES TRAY AT 2.55 M - THE SAME HEIGHT ARCH_PIPE_RUN USES",
+      "backdrop": "floor"
+    },
+    {
+      "name": "T_climb_scale",
+      "scene": "model:batch007/architecture/arch_stair.glb@-2.9,0,0 + batch007/architecture/arch_ramp.glb@2.9,0,0 + batch004/lab/lab_dummy.glb@0,0,3.6",
+      "size": [
+        1920,
+        1080
+      ],
+      "lens": 50,
+      "frame": 0.8,
+      "azimuth": 22,
+      "elevation": 12,
+      "caption": "STAIR 2.00 M AGAINST RAMP 1.333 M - THE DUMMY IS 1.78 M",
+      "note": "TWICE MAX_VERTICAL_STEP, AND EXACTLY JUMP_APEX. NEITHER IS A LOOK",
+      "variants": [
+        "grey",
+        "silhouette"
+      ]
+    },
+    {
+      "name": "T_ledge",
+      "scene": "model:batch007/architecture/arch_ledge.glb@0,3,0 + batch004/lab/lab_dummy.glb@0,0,-2.6",
+      "frame": 0.78,
+      "azimuth": 26,
+      "elevation": 6,
+      "lens": 50,
+      "caption": "LEDGE - 2.5 M DEEP, MIN_PLATFORM_SIZE, AT 3.0 M",
+      "note": "ANCHORED AT THE SURFACE YOU STAND ON, NOT THE BOTTOM OF ITS BRACKETS"
+    },
+    {
+      "name": "T_stair",
+      "scene": "model:batch007/architecture/arch_stair.glb",
+      "frame": 0.78,
+      "azimuth": 28,
+      "elevation": 14,
+      "lens": 50,
+      "caption": "STAIR - EIGHT 0.25 M RISERS, 2.6 M WIDE FOR THE BRUTE LANE"
+    },
+    {
+      "name": "T_ramp",
+      "scene": "model:batch007/architecture/arch_ramp.glb",
+      "frame": 0.78,
+      "azimuth": 28,
+      "elevation": 14,
+      "lens": 50,
+      "caption": "RAMP - KERBS MODELLED, TREAD PATTERN PAINTED",
+      "note": "A KERB IS A SILHOUETTE THAT SAYS DROP. A TREAD PATTERN IS NOT"
+    },
+    {
+      "name": "T_corner_turn",
+      "scene": "model:batch007/architecture/arch_connector_straight.glb@0,0,0 + batch007/architecture/arch_connector_straight.glb@4,0,0 + batch007/architecture/arch_connector_straight.glb@8,0,0 + batch007/architecture/arch_corner_left.glb@12.4,0,0 + batch007/architecture/arch_connector_straight.glb@12.4,0,-4.4#90 + batch007/architecture/arch_connector_straight.glb@12.4,0,-8.4#90",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        -13.9,
+        0,
+        -1.4
+      ],
+      "yaw": 45,
+      "game_lens": true,
+      "caption": "INSIDE THE TURN - BOTH BORES, AT THE ENGINE'S LENS",
+      "note": "THE CHAMFER IS WHY THE BRUTE LANE HAS NO 90 DEGREE PINCH IN IT",
+      "backdrop": "floor"
+    },
+    {
+      "name": "T_corner_left",
+      "scene": "model:batch007/architecture/arch_corner_left.glb",
+      "size": [
+        1600,
+        900
+      ],
+      "lens": 28,
+      "frame": 0.8,
+      "azimuth": 30,
+      "elevation": 16,
+      "caption": "CORNER, OUTSIDE - 4.8 M SQUARE, OPEN ON TWO FACES",
+      "note": "A MIRROR OF ARCH_CORNER_RIGHT, NOT ONE PIECE ROTATED"
+    }
+  ]
+}

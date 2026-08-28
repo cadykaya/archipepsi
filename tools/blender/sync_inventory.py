@@ -52,6 +52,9 @@ ORDER = [
       "check_destination_ring", "check_send_beam"]),
     ("batch006", "portal", ["portal_core_locked", "portal_core_unlocked"]),
     ("batch006", "architecture", ["door_standard"]),
+    ("batch007", "architecture",
+     ["arch_stair", "arch_ramp", "arch_ledge", "arch_connector_straight",
+      "arch_corner_left", "arch_corner_right"]),
 ]
 CAT = {"epsilon": "hero", "check": "hero", "portal": "interactable",
        "door": "module",

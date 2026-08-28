@@ -43,7 +43,8 @@ extends SceneTree
 ##   `void`                a backdrop and lights, nothing else
 ##   `model:<rel path>`    one .glb on the backdrop, floor-anchored at origin
 ##   `model:<a> + <b>`     several, in one frame. Each may carry an
-##                         `@x,y,z` offset: `model:mast.glb + item.glb@0,0,0`
+##                         `@x,y,z` offset and a `#yaw` in degrees:
+##                         `model:hall.glb + hall.glb@4,0,0#90`
 ##
 ## ### Camera, pick ONE of
 ##
@@ -60,6 +61,15 @@ extends SceneTree
 ##   `lens`        35 mm equivalent focal length. Default 24.
 ##   `game_lens`   true to shoot at the engine's own fov instead. Use this
 ##                 for anything claiming to show what the player sees.
+##
+## ### Variants
+##
+## ### Backdrop
+##
+##   `backdrop`  "full" (default) floor and wall, "floor" for the slab
+##               only, "none" for neither. Read from the FIRST shot of each
+##               scene group, like `size` and `ambient`. A composed scene
+##               brings its own walls and the bench's wall cuts through it.
 ##
 ## ### Variants
 ##
@@ -142,7 +152,8 @@ func _run_scene(scene: String, shots: Array) -> void:
 	vp.add_child(cam)
 	var rig := CameraRig.new(cam, size)
 
-	var subject := _build(scene, root, vp)
+	var subject := _build(scene, root, vp,
+			str(_opt(shots[0], "backdrop", "full")))
 
 	for shot in shots:
 		await _take(shot, vp, root, rig, subject)
@@ -152,7 +163,8 @@ func _run_scene(scene: String, shots: Array) -> void:
 
 
 ## Returns the AABB of whatever the shots are about, in world space.
-func _build(scene: String, root: Node3D, vp: SubViewport) -> AABB:
+func _build(scene: String, root: Node3D, vp: SubViewport,
+		backdrop: String = "full") -> AABB:
 	_backdrop.clear()
 	if scene == "hub":
 		HubScene.build(root, _assets)
@@ -169,10 +181,19 @@ func _build(scene: String, root: Node3D, vp: SubViewport) -> AABB:
 	# review distance. At 60 x 40 the floor ended at z -34 and a camera at
 	# -39.6 m stood off the end of it, so the bottom half of the frame was
 	# the underside of the backdrop.
-	_slab(root, Vector3(200, 0.2, 160), Vector3(0, -0.1, -64.0),
-			Color(0.42, 0.43, 0.46))
-	_slab(root, Vector3(200, 44, 0.3), Vector3(0, 22, 1.55),
-			Color(0.56, 0.57, 0.60))
+	# "full" (default) is a floor and a wall behind the subject. "floor"
+	# drops the wall and "none" drops both, and neither is a nicety: a
+	# COMPOSED scene -- a corridor run, a room built from modules -- brings
+	# its own walls, and the bench's wall then stands at z 1.55 slicing
+	# through the middle of it. That is what put a two-storey pale slab in
+	# the centre of the first junction sheet, and it looked like a wall the
+	# module was supposed to have.
+	if backdrop != "none":
+		_slab(root, Vector3(200, 0.2, 160), Vector3(0, -0.1, -64.0),
+				Color(0.42, 0.43, 0.46))
+	if backdrop == "full":
+		_slab(root, Vector3(200, 44, 0.3), Vector3(0, 22, 1.55),
+				Color(0.56, 0.57, 0.60))
 
 	if scene.begins_with("model:"):
 		# One `model:` scene may name SEVERAL glbs, joined by "+", each with
@@ -183,7 +204,15 @@ func _build(scene: String, root: Node3D, vp: SubViewport) -> AABB:
 		var union := AABB()
 		for spec in scene.substr(6).split("+", false):
 			var at := Vector3.ZERO
+			var yaw := 0.0
 			var rel: String = spec.strip_edges()
+			# `<path>[@x,y,z][#yaw]`. The yaw is what makes a corridor kit
+			# photographable at all: a junction module's whole point is the
+			# branch, and a branch runs along the axis the straights do not.
+			if "#" in rel:
+				var turn := rel.split("#")
+				rel = turn[0].strip_edges()
+				yaw = float(turn[1])
 			if "@" in rel:
 				var bits := rel.split("@")
 				rel = bits[0].strip_edges()
@@ -197,7 +226,7 @@ func _build(scene: String, root: Node3D, vp: SubViewport) -> AABB:
 			# Blender +Y to -Z, so a face authored along Blender -Y leaves
 			# the exporter pointing at +Z -- the mistake that made a whole
 			# sheet of Epsilon views pictures of the back of the bank.
-			node.rotation_degrees = Vector3(0, 180, 0)
+			node.rotation_degrees = Vector3(0, 180.0 + yaw, 0)
 			# The offset is expressed in the SAME yawed frame as the model,
 			# so `@-1.2,0,0` means "1.2 m to the VIEWER's left" -- which is
 			# what anyone arranging four models on a shelf means by it. The

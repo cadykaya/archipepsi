@@ -1180,3 +1180,81 @@ DNA, and `ART_FRONTIER.md` says to surface those and continue elsewhere.
 Surfaced; this was elsewhere.
 
 Status: **PENDING** — production work inheriting locked DNA.
+
+---
+
+## Batch 007 — the kit that moves you
+
+Tier 3 opens with the architecture kit: `ASSET_INVENTORY.md` §6 lists
+twenty-nine modules and nine were built. Five of the twenty unbuilt ones are
+**Pri A**, and they are all the same kind of thing — the pieces that get the
+player from one height to another and from one room to the next.
+
+| ID | Tris | Size (m) | Replaces |
+| --- | --- | --- | --- |
+| `arch_stair` | 112 | 3.04 × 4.00 × 2.00 | a stack of boxes |
+| `arch_ramp` | 36 | 2.96 × 4.00 × 1.49 | a stretched box |
+| `arch_ledge` | 48 | 4.00 × 2.50 × 0.87 | a floating slab |
+| `arch_connector_straight` | 108 | 4.00 × 4.80 × 4.40 | `chamber_builders.gd` corridor walls |
+| `arch_corner_left` | 84 | 4.80 × 4.80 × 4.40 | the same, turning |
+| `arch_corner_right` | 84 | 4.80 × 4.80 × 4.40 | its mirror |
+
+Nothing here establishes new visual DNA. Every one is the approved facility
+language on a module the generator already builds out of primitives.
+
+### The heights are the engine's, and they are the whole point
+
+A traversal module whose dimensions were chosen for looks would teach the
+player a lie about their own movement:
+
+- **The stair climbs 2.0 m** — twice `MAX_VERTICAL_STEP` and above
+  `JUMP_APEX`, so it is the first height that is neither walkable nor
+  jumpable. A stair that climbed less would be decoration on a step. Its
+  risers are 0.25 m and it is `BRUTE_LANE` wide (2.6 m), so the largest
+  enemy can use it.
+- **The ramp climbs exactly `JUMP_APEX`, 1.333 m.** That is the sharpest
+  fact about a ramp in this game: the player can jump it, and the things
+  that need it are the things that cannot.
+- **The ledge projects `MIN_PLATFORM_SIZE`, 2.5 m** — the smallest landing
+  the generator will place — and its front edge is what you clear a
+  `SAFE_BASE_JUMP_GAP` of 2.6 m to reach. It is anchored at the surface you
+  stand on rather than the bottom of its brackets, because that is the only
+  height anyone cares about.
+- **The corridor pieces are 4.0 m wide and 3.6 m high inside**,
+  `CORRIDOR_WIDTH_MIN` and `CORRIDOR_HEIGHT`. Built at the minimum on
+  purpose: a module authored at the maximum cannot be used in the narrow
+  case, and the narrow case is the one `zone.py` reaches for most.
+
+`T_climb_scale.png` puts the stair and the ramp beside `lab_dummy`, which is
+1.78 m against the player's 1.80 — the climb is a judgement, not a caption.
+
+### Two corners, not one rotated
+
+`arch_corner_right` is a mirror rather than `arch_corner_left` turned round,
+because rotating one puts the services tray and the skirting seam on the
+wrong side of the corridor. Both carry a chamfer across the inside of the
+turn: a square inner angle is a corner nothing was ever built into, and it
+puts a 90° pinch in the brute lane.
+
+### Where triangles went, and where they did not
+
+The ramp has **no modelled grip battens**. Six of them cost 72 triangles
+against an `architecture_module` ceiling of 250, and a tread pattern is
+exactly the sort of thing `assert_budget` means by *paint it instead*. The
+triangles bought kerbs, which cannot be painted, because a kerb's whole job
+is to be a silhouette that says **this edge is a drop**.
+
+### Evidence
+
+`docs/art/review/batch007/`, from `tools/shots/batch007_traversal.json`.
+
+| Image | What it answers |
+| --- | --- |
+| `T_corner_turn.png` | **start here** — standing in the junction, both bores, at the engine's lens |
+| `T_corridor_eye.png` | standing in a straight run |
+| `T_corridor_run.png` · `_grey` | six modules assembled, from outside — the seams are the 4 m grid |
+| `T_climb_scale.png` · `_grey` · `_silhouette` | stair and ramp against a 1.78 m figure |
+| `T_stair.png` · `T_ramp.png` · `T_ledge.png` | each on its own |
+| `T_corner_left.png` | the junction as an object |
+
+Status: **PENDING** — production work inheriting locked DNA.

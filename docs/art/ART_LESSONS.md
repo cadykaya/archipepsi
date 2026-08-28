@@ -648,6 +648,23 @@ the wrong shutter took an hour.
 > five pixels tall is not a channel.
 
 
+### L-49 · The bench's own backdrop can be inside the thing you are shooting
+Every model shot stands on a floor slab with a wall behind it at z 1.55.
+That is right for a single object and wrong the moment a scene is
+**composed**: a six-module corridor run reaches past 1.55 in Z, so the
+bench's wall stood in the middle of the junction, two storeys tall and
+painted the same institutional grey as everything else.
+
+It did not read as a bug. It read as a wall the module was supposed to
+have, and three camera moves were spent trying to find an angle where the
+junction "opened up".
+
+`backdrop` is now `"full"` / `"floor"` / `"none"` per scene group.
+
+> A prop the bench provides is invisible as an error, because it looks
+> exactly like a prop the asset provides.
+
+
 ## Process
 
 ### L-39 · Four batches to lock a style, and every one of them was cheap

@@ -1,0 +1,68 @@
+{
+  "arch_connector_straight": {
+    "anchor": "floor",
+    "path": "batch007/architecture/arch_connector_straight.glb",
+    "size": [
+      4.0,
+      4.8,
+      4.4
+    ],
+    "texel_density": 32.0,
+    "triangles": 108
+  },
+  "arch_corner_left": {
+    "anchor": "floor",
+    "path": "batch007/architecture/arch_corner_left.glb",
+    "size": [
+      4.8,
+      4.8,
+      4.4
+    ],
+    "texel_density": 32.0,
+    "triangles": 84
+  },
+  "arch_corner_right": {
+    "anchor": "floor",
+    "path": "batch007/architecture/arch_corner_right.glb",
+    "size": [
+      4.8,
+      4.8,
+      4.4
+    ],
+    "texel_density": 32.0,
+    "triangles": 84
+  },
+  "arch_ledge": {
+    "anchor": "ceiling",
+    "path": "batch007/architecture/arch_ledge.glb",
+    "size": [
+      4.0,
+      2.5,
+      0.87
+    ],
+    "texel_density": 32.0,
+    "triangles": 48
+  },
+  "arch_ramp": {
+    "anchor": "floor",
+    "path": "batch007/architecture/arch_ramp.glb",
+    "size": [
+      2.96,
+      4.0,
+      1.493
+    ],
+    "texel_density": 32.0,
+    "triangles": 36
+  },
+  "arch_stair": {
+    "anchor": "floor",
+    "path": "batch007/architecture/arch_stair.glb",
+    "size": [
+      3.04,
+      4.0,
+      2.0
+    ],
+    "texel_density": 32.0,
+    "triangles": 112
+  }
+}

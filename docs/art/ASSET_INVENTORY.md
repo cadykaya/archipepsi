@@ -102,6 +102,12 @@ These are the vocabulary everything after them inherits.
 | `portal_core_locked` | L2 | interactable | 108 | 2.38 × 0.20 × 3.31 | module_floor | B6 | B6 | PEND |
 | `portal_core_unlocked` | L2 | interactable | 108 | 2.38 × 0.17 × 3.29 | module_floor | B6 | B6 | PEND |
 | `door_standard` | L1 | module | 144 | 2.72 × 0.62 × 3.38 | floor | B6 | B6 | PEND |
+| `arch_stair` | L1 | module | 112 | 3.04 × 4.00 × 2.00 | floor | B7 | B7 | PEND |
+| `arch_ramp` | L1 | module | 36 | 2.96 × 4.00 × 1.49 | floor | B7 | B7 | PEND |
+| `arch_ledge` | L1 | module | 48 | 4.00 × 2.50 × 0.87 | ceiling | B7 | B7 | PEND |
+| `arch_connector_straight` | L1 | module | 108 | 4.00 × 4.80 × 4.40 | floor | B7 | B7 | PEND |
+| `arch_corner_left` | L1 | module | 84 | 4.80 × 4.80 × 4.40 | floor | B7 | B7 | PEND |
+| `arch_corner_right` | L1 | module | 84 | 4.80 × 4.80 × 4.40 | floor | B7 | B7 | PEND |
 
 | Theme material | Roles built |
 | --- | --- |
@@ -231,18 +237,21 @@ primitives today. Module grid **4.0 m**; wall thickness **0.40 m**; door
 | `arch_ceiling_beam` | L1 | A | B1 | | `arch_pipe_run` | L1 | A | B1 |
 | `arch_ceiling_plain` | L1 | B | — | | `arch_tunnel_bore` | L1 | B | — |
 | `arch_doorway` | L1 | A | B1 | | `arch_window` | L1 | C | — |
-| `arch_connector_straight` | L1 | A | — | | `arch_trim_rail` | L1 | A | B1 |
-| `arch_corner_left/right` | L1 | A | — | | `arch_trim_ceiling` | L1 | B | — |
+| `arch_connector_straight` | L1 | A | **B7** | | `arch_trim_rail` | L1 | A | B1 |
+| `arch_corner_left/right` | L1 | A | **B7** | | `arch_trim_ceiling` | L1 | B | — |
 | `arch_column` | L1 | B | — | | `arch_light_fixture` | L1 | A | B1 |
 | `arch_beam_span` | L1 | B | — | | `arch_signage_mount` | L0 | B | — |
-| `arch_stair` | L1 | A | — | | `arch_objective_socket` | L1 | B | — |
-| `arch_ramp` | L1 | A | — | | `arch_affordance_socket` | L1 | B | — |
-| `arch_ledge` | L1 | A | — | | `arch_secret_alcove` | L2 | B | — |
+| `arch_stair` | L1 | A | **B7** | | `arch_objective_socket` | L1 | B | — |
+| `arch_ramp` | L1 | A | **B7** | | `arch_affordance_socket` | L1 | B | — |
+| `arch_ledge` | L1 | A | **B7** | | `arch_secret_alcove` | L2 | B | — |
 | | | | | | `arch_vista_socket` | L2 | C | — |
 
 `arch_stair` and `arch_ledge` are **A** because `MAX_VERTICAL_STEP` (1.0 m)
 and `SAFE_BASE_JUMP_GAP` (2.6 m) are the numbers the player's muscle memory
-is built on. `arch_secret_alcove` must respect `SECRET_UNDERSIDE_MIN`
+is built on. Batch 007 built both to those numbers: the stair climbs 2.0 m,
+twice a step and above `JUMP_APEX`, so it is the first height that is
+neither walkable nor jumpable; the ramp climbs exactly `JUMP_APEX`; the
+ledge projects `MIN_PLATFORM_SIZE`. `arch_secret_alcove` must respect `SECRET_UNDERSIDE_MIN`
 (2.75 m) and `SECRET_LIP_MAX` (4.2 m).
 
 ---
