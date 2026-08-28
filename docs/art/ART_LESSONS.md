@@ -866,6 +866,39 @@ diagnosis.
 > checking whether it was guilty a fourth.
 
 
+### L-62 · `frame` cannot miss the subject; a hand-placed camera can
+One review shot took five attempts. A four-model row 17 m wide, framed at
+0.72, came back with every part small and far -- `frame` fits an AABB and a
+long flat subject makes it pick the wrong axis. Staggering the row into two
+rows of two fixed the size and hid the column behind a wall. A hand-computed
+`look` then missed the subject almost entirely and returned a picture of the
+horizon.
+
+What finally worked was two shots of two parts each: small AABBs, nothing
+occluding anything, and a solver with an easy job.
+
+The general rule is about which camera to reach for. `frame` and `orbit`
+solve their own distance from the subject, so the subject is in shot by
+construction; `eye` and `look` are positions someone worked out, and an
+arithmetic slip in either produces a plausible photograph of nothing. Use
+the solving cameras for objects and the placed cameras only when the point
+of the shot IS where the viewer stands.
+
+> Prefer the camera that cannot be wrong to the camera you can reason about.
+
+### L-63 · A part that is a hole cannot be photographed standing on a floor
+`arch_floor_grate` is a recess: bars over a 0.30 m void, anchored
+`module_floor`. Every model shot stands its subject on the bench's floor
+slab, so the recess sank into the slab and three separate sheets showed a
+rim and a few dark scratches. Nothing was wrong with the asset.
+
+`backdrop: "none"` fixed it in one attempt, and the grate is now legible
+enough to count the bars.
+
+> The bench provides a floor. An asset that IS the floor has to be given
+> nothing to stand on.
+
+
 ## Process
 
 ### L-39 · Four batches to lock a style, and every one of them was cheap

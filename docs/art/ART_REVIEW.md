@@ -2566,3 +2566,69 @@ language is deliberately reviewed. Enemy roles stay blocked on the missing
 engineering contracts rather than inventing fake colliders or nodes in the
 art lane. Unplaceable bulk prop production stays deprioritized until there is
 an actual runtime placement path.
+
+---
+
+## Batch 020 — architecture Pri-B, the structural half
+
+Tier 3 has 29 modules. Batch 001 built the Pri-A surfaces and Batch 007 the
+five Pri-A traversal pieces; this takes the seven Pri-B modules that are
+**what a chamber is made of**, and leaves the services and openings to 021.
+
+### These replace geometry that already exists
+
+Every module here has a procedural counterpart in `chamber_builders`, so
+none of the numbers are invented:
+
+| Source | Figure |
+| --- | --- |
+| `_greeble_corridor` rib | 0.22 wide × height × 0.35 deep, at ±(width/2 − 0.13), one every ~6 m |
+| `_greeble_corridor` ceiling beam | width × 0.25 × 0.35, at height − 0.12 |
+| `_greeble_room` corner buttress | 0.50 × height × 0.50 at ±(width/2 − 0.3) |
+
+Where a module has no procedural counterpart — the wall variants, the
+grate — it is built to the kit's own 4.0 m `MODULE` and the engine's 0.40 m
+wall thickness, so it tiles against Batch 001's panels.
+
+| Module | Tris | What it is for |
+| --- | --- | --- |
+| `arch_wall_variant_a` | 72 | a service band at 2.20 m with a recessed field above and below: the wall a corridor has when something runs along it. 2.20 is above `player_eye_height` 1.60 and below `reach_standing` 2.93 |
+| `arch_wall_variant_b` | 60 | a 1.60 × 2.60 recessed bay with a stepped head. 2.60 is `tallest_actor`, so nothing the engine can spawn is taller than the hole it stands in front of |
+| `arch_ceiling_plain` | 60 | the flat 4 m bay Batch 001's coffered ceiling is the alternative to. A kit needs the plain one or the detailed one has nothing to be a change from |
+| `arch_trim_ceiling` | 48 | `_greeble_corridor`'s ceiling beam **with the rib feet that carry it**. The procedural one floats 0.12 m under the ceiling with nothing holding it up; the rib and the beam are one structural bay in the engine's own layout |
+| `arch_floor_grate` | 204 | real bars over a 0.30 m void, on a 0.32 m pitch. `brushkit.grate` exists for this and its docstring is the reason to use it: a grate's job is to be a silhouette you see light and geometry through |
+| `arch_column` | 60 | a freestanding column on the buttress's 0.50 m footprint, base and capital built **to the surfaces they meet** rather than to their own centres (L-55) |
+| `arch_beam_span` | 76 | a beam across a 4 m bay with a haunch at each end. `arch_trim_ceiling` is a beam *under* a ceiling; this one spans a bay that has none |
+
+### The budget did what it is for
+
+The grate came in at **264 triangles against the architecture_module
+ceiling of 250**, and the guard's rule is *delete geometry and paint it
+instead — never optimise the mesh, and never raise the ceiling to fit one
+asset*. So the bar pitch went from 0.24 m to 0.32 m and three bearers
+became one: 204 triangles, and a truer grating besides. Industrial bar
+grating you walk on is nearer 0.32 than the fine mesh a drain cover uses.
+
+### What is not in this batch, and why
+
+`arch_signage_mount` and `arch_objective_socket` are Pri B and stay
+**blocked with the navigation language**. They are mount points for
+`objective_marker` and `signage_module`, and a socket's size and shape
+prejudge what plugs into it — building one now would decide the language
+sideways. `arch_vista_socket` is Pri C with no engine contract to build
+against.
+
+### Evidence
+
+`docs/art/review/batch020/`
+
+| Image | What it answers |
+| --- | --- |
+| `K_bay_in_situ.png` | **start here** — two wall bays, two ceiling bays and the trim, assembled. A kit part is only right if it is right next to another one |
+| `K_walls_pair.png` · `_silhouette` | the two new panels, lit and as shape |
+| `K_structure_pair.png` | column and grate |
+| `K_overhead_family.png` | ceiling bay, trim and beam span from below, which is the only place any of them is seen |
+| `K_wall_a.png` · `K_wall_b.png` | each panel alone |
+| `K_grate.png` | the bars, the void and the bearer |
+
+Status: **PENDING** — not self-marked.
