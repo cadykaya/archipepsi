@@ -64,7 +64,7 @@ def theme_image(role):
 
 
 def finish(obj, name, role, category, relative, tier="architecture",
-           size=ARCH_SIZE, density=ARCH_DENSITY, image=None):
+           size=ARCH_SIZE, density=ARCH_DENSITY, image=None, anchor="floor"):
     """Origin, then UVs, then material, then every assertion, then export.
 
     The order matters and it is the one thing in this file worth memorising:
@@ -73,12 +73,12 @@ def finish(obj, name, role, category, relative, tier="architecture",
     the texture, and two modules that were built at different heights then
     tile against each other with the grain offset.
     """
-    common.set_origin_floor_centre(obj)
+    common.set_origin(obj, anchor)
     common.uv_project_world(obj, density, size)
     common.assign(obj, common.make_textured_material(
         name, image or theme_image(role), roughness=pal.roughness(THEME)))
     return common.export_glb(obj, relative, category, tier=tier,
-                             texture_size=size)
+                             texture_size=size, anchor=anchor)
 
 
 # ----------------------------------------------------------------------
@@ -106,24 +106,30 @@ def floor_slab():
 
 
 def ceiling_beam():
-    """A ceiling bay with a downstand beam across it.
+    """A ceiling bay with a downstand beam hanging into the room.
 
-    The beam is what stops a 4 m ceiling reading as a lid. It is 0.45 m deep,
-    which is under the 3.6 m corridor height by enough that a 1.8 m player
-    never reads it as low, and it is the piece that makes a corridor feel
-    built rather than extruded.
+    Built in NEGATIVE Z, anchored "ceiling": the deck is at 0 and everything
+    else hangs below it. The first version built it upward from 0 and
+    anchored it to its own lowest point, which put the whole bay above the
+    ceiling plane -- the room rendered with a flat white lid and the one
+    piece of structure that exists to stop it reading as a lid was hidden
+    behind it.
+
+    The downstand is 0.45 m deep under a 4 m ceiling, which leaves 3.55 m --
+    just under CORRIDOR_HEIGHT, so a bay is never lower than a corridor and
+    a 1.8 m player never reads it as something to duck under.
     """
     parts = [
         brushkit.block("ceiling_deck", (MODULE, MODULE, 0.25),
-                       (0.0, 0.0, 0.125)),
+                       (0.0, 0.0, -0.125)),
         brushkit.block("ceiling_downstand", (MODULE, 0.5, 0.45),
-                       (0.0, 0.0, -0.225 + 0.25)),
+                       (0.0, 0.0, -0.475)),
     ]
-    # Two haunches turn a beam into a beam that is holding something up.
+    # Haunches: a beam that is holding something up rather than hanging.
     for side in (-1.0, 1.0):
         parts.append(brushkit.wedge(
             "ceiling_haunch_%d" % int(side), (0.5, 0.5, 0.3),
-            (side * (MODULE / 2.0 - 0.25), 0.0, 0.10), axis="y",
+            (side * (MODULE / 2.0 - 0.25), 0.0, -0.40), axis="y",
             rotation_z=0.0 if side > 0 else 180.0))
     return common.join(parts, "ceiling_beam")
 
@@ -261,41 +267,53 @@ def light_fixture():
 # build
 # ----------------------------------------------------------------------
 
+#: (name, builder, paint role, budget category, ANCHOR). The anchor is not
+#: cosmetic: see common.ANCHORS for the room this got wrong.
 MODULES = [
-    ("arch_wall_panel", wall_panel, "wall", "architecture_module"),
-    ("arch_floor_slab", floor_slab, "floor", "architecture_module"),
-    ("arch_ceiling_beam", ceiling_beam, "wall", "architecture_module"),
-    ("arch_doorway", doorway, "wall", "architecture_module"),
-    ("arch_trim_rail", trim_rail, "trim", "architecture_module"),
-    ("arch_railing", railing, "trim", "architecture_module"),
-    ("arch_pipe_run", pipe_run, "accent", "architecture_module"),
+    ("arch_wall_panel", wall_panel, "wall", "architecture_module", "floor"),
+    ("arch_floor_slab", floor_slab, "floor", "architecture_module", "floor"),
+    ("arch_ceiling_beam", ceiling_beam, "wall", "architecture_module",
+     "ceiling"),
+    ("arch_doorway", doorway, "wall", "architecture_module", "floor"),
+    ("arch_trim_rail", trim_rail, "trim", "architecture_module", "floor"),
+    ("arch_railing", railing, "trim", "architecture_module", "floor"),
+    # module_floor: the pipes are at 2.55 m within their bay and that height
+    # is part of what the module IS.
+    ("arch_pipe_run", pipe_run, "accent", "architecture_module",
+     "module_floor"),
 ]
 
 
 def main():
     common.reset_scene()
     report = {}
-    for name, builder, role, category in MODULES:
+    for name, builder, role, category, anchor in MODULES:
         obj = builder()
         report[name] = finish(obj, name, role, category,
-                              "batch001/architecture/%s.glb" % name)
+                              "batch001/architecture/%s.glb" % name,
+                              anchor=anchor)
 
     # The light fixture is two materials: a body and an emissive lens, which
     # is the only place in the kit where a second material earns its slot.
     body, lens = light_fixture()
-    common.set_origin_floor_centre(body)
+    # Do NOT move the body's origin before joining: the lens is positioned
+    # in the same space and shifting one without the other pulls them apart.
+    # The origin is set once, on the joined object, below.
     common.uv_project_world(body, ARCH_DENSITY, ARCH_SIZE)
     common.assign(body, common.make_textured_material(
         "arch_light_fixture", theme_image("trim"), roughness=pal.roughness(THEME)))
     light_hex, energy = pal.light(THEME)
-    common.assign(lens, common.make_material(
-        "arch_light_lens", light_hex, roughness=0.2,
-        emission_hex=light_hex, emission_strength=min(4.0, energy)))
+    # Dark albedo under a bright emission -- see make_signal_material. The
+    # theme's own light_energy scales it, so a neon_transit fixture is
+    # brighter than a gothic_stone one without the art choosing that.
+    common.assign(lens, common.make_signal_material(
+        "arch_light_lens", pal.theme(THEME, "trim", 0), light_hex,
+        strength=min(1.6, energy * 0.4), roughness=0.2))
     fixture = common.join([body, lens], "arch_light_fixture")
-    common.set_origin_floor_centre(fixture)
+    common.set_origin(fixture, "ceiling")
     report["arch_light_fixture"] = common.export_glb(
         fixture, "batch001/architecture/arch_light_fixture.glb",
-        "architecture_module")
+        "architecture_module", anchor="ceiling")
 
     out = os.path.join(common.REPO_ROOT, "assets", "models", "batch001",
                        "architecture", "manifest.json")

@@ -116,6 +116,37 @@ def make_textured_material(name, image, roughness=0.9):
     return mat
 
 
+def make_signal_material(name, dark_hex, bright_hex, strength=0.95,
+                         roughness=0.3):
+    """A lit surface whose COLOUR survives being lit.
+
+    Godot adds `emission * emission_strength` on top of albedo, so an
+    emissive material built the obvious way -- bright albedo, bright
+    emission, strength above 1 -- clips every channel and renders white.
+    Every lit cue in Batch 001 did exactly that on its first render: the
+    enemy's eye, which is the ONE cue on the figure and the thing that says
+    which way it is facing, came out as a white bar with no hue at all.
+
+    So the albedo is the family's DARK step and the emission is its bright
+    one. The sum lands inside range and the hue is still the hue, which is
+    the whole reason the cue is coloured.
+
+    This sandbox renders in Compatibility with glow off, so a lit surface
+    here is only a bright surface. On the owner's Forward+ build these will
+    also bloom; that makes every capture a lower bound, never a flattering
+    one.
+    """
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs["Base Color"].default_value = pal.rgba(dark_hex)
+    bsdf.inputs["Roughness"].default_value = roughness
+    bsdf.inputs["Metallic"].default_value = 0.0
+    bsdf.inputs["Emission Color"].default_value = pal.rgba(bright_hex)
+    bsdf.inputs["Emission Strength"].default_value = strength
+    return mat
+
+
 def assign(obj, material):
     obj.data.materials.clear()
     obj.data.materials.append(material)
@@ -342,25 +373,67 @@ def join(objects, name):
     return joined
 
 
-def set_origin_floor_centre(obj):
-    """Origin at the footprint centre, on the ground plane.
+#: Where an asset's origin sits, and therefore what "place it at y = 0"
+#: means. Declaring this per asset is not bookkeeping -- getting it wrong is
+#: invisible in every turntable shot and catastrophic in a room.
+#:
+#: The first composed room proved it. Every asset went through a single
+#: `set_origin_floor_centre`, which puts the origin at the geometry's own
+#: LOWEST point. For a crate that is right. For a pipe run built at 2.55 m
+#: it dropped the pipe to ankle height; for a ceiling bay it moved the
+#: downstand beams ABOVE the ceiling plane, where they were invisible from
+#: inside the room -- so the room rendered with a flat lid and the one piece
+#: of structure that was supposed to stop it reading as a lid was hidden
+#: behind it. Nothing failed. Every sheet still passed.
+ANCHORS = ("floor", "ceiling", "wall", "module_floor", "centre")
 
-    Every Archipepsi asset stands on a floor, and Godot places it by its
-    feet. An origin anywhere else means an asset that sinks or floats
-    depending on which builder placed it, which is exactly the class of bug
-    that only shows up in the third room a player sees.
+
+def set_origin(obj, anchor="floor"):
+    """Move the geometry so the origin means what `anchor` says it means.
+
+    floor         X/Y centred, lowest point at Z 0.  A crate, a terminal, a
+                  wall panel -- anything that stands on the ground.
+    ceiling       X/Y centred, HIGHEST point at Z 0.  A ceiling bay, a
+                  hanging light, a grapple anchor. The asset occupies
+                  negative Z, so placing it at the ceiling height puts it
+                  where it belongs.
+    wall          X centred, lowest point at Z 0, and the BACK face at Y 0,
+                  so placing it on a wall plane sits it flush.
+    module_floor  X/Y centred, Z LEFT ALONE.  For a module whose height
+                  within its bay is part of what it is -- a pipe run at
+                  2.55 m is at 2.55 m, and re-basing it to its own lowest
+                  point is what put the pipes on the floor.
+    centre        all three centred.
     """
+    if anchor not in ANCHORS:
+        raise ValueError("set_origin: anchor must be one of %s, got '%s'"
+                         % (", ".join(ANCHORS), anchor))
     bbox = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
-    min_x = min(v.x for v in bbox)
-    max_x = max(v.x for v in bbox)
-    min_y = min(v.y for v in bbox)
-    max_y = max(v.y for v in bbox)
-    min_z = min(v.z for v in bbox)
-    centre = Vector(((min_x + max_x) / 2.0, (min_y + max_y) / 2.0, min_z))
+    min_x, max_x = min(v.x for v in bbox), max(v.x for v in bbox)
+    min_y, max_y = min(v.y for v in bbox), max(v.y for v in bbox)
+    min_z, max_z = min(v.z for v in bbox), max(v.z for v in bbox)
+    mid_x, mid_y = (min_x + max_x) / 2.0, (min_y + max_y) / 2.0
+
+    if anchor == "floor":
+        shift = Vector((mid_x, mid_y, min_z))
+    elif anchor == "ceiling":
+        shift = Vector((mid_x, mid_y, max_z))
+    elif anchor == "wall":
+        shift = Vector((mid_x, max_y, min_z))
+    elif anchor == "module_floor":
+        shift = Vector((mid_x, mid_y, 0.0))
+    else:
+        shift = Vector((mid_x, mid_y, (min_z + max_z) / 2.0))
+
     for vertex in obj.data.vertices:
-        vertex.co -= centre
+        vertex.co -= shift
     obj.location = (0.0, 0.0, 0.0)
     return obj
+
+
+def set_origin_floor_centre(obj):
+    """Kept as the common case. Prefer `set_origin(obj, anchor)`."""
+    return set_origin(obj, "floor")
 
 
 def measure(obj):
@@ -394,7 +467,7 @@ def assert_fits(obj, asset_name, max_size, why):
 # ----------------------------------------------------------------------
 
 def export_glb(obj, relative_path, category, tier=None, texture_size=None,
-               check_flat=True):
+               check_flat=True, anchor="floor"):
     """Write a .glb, after every assertion that can be made has been made."""
     name = os.path.basename(relative_path)
     if check_flat:
@@ -430,7 +503,7 @@ def export_glb(obj, relative_path, category, tier=None, texture_size=None,
     else:
         log("%-40s %4d tris  %5.2f x %5.2f x %5.2f m"
             % (relative_path, tris, size[0], size[1], size[2]))
-    return {"path": relative_path, "triangles": tris,
+    return {"path": relative_path, "triangles": tris, "anchor": anchor,
             "size": [round(v, 3) for v in size],
             "texel_density": None if not density else round(density[0], 1)}
 

@@ -1,0 +1,30 @@
+; Archipepsi ART PREVIEW — a standalone Godot project for reviewing assets.
+;
+; Deliberately SEPARATE from godot/. The engineering branch is actively
+; changing content contracts, and an art-review scene living inside its
+; project would be picked up by its import pass, compiled by its CI, and
+; would collide on every merge. This project imports nothing from there; it
+; loads .glb files from an absolute path at runtime and reads its colours
+; from the same generated constants the game reads.
+;
+; Godot 4.5.1 stable (official build f62fdbde1) — the same build godot/
+; pins. tools/check_art_current.sh compares the two.
+
+config_version=5
+
+[application]
+
+config/name="Archipepsi Art Preview"
+config/features=PackedStringArray("4.5")
+run/disable_stdout=false
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+
+[rendering]
+
+; Mirrored from godot/project.godot so a preview cannot flatter an asset
+; with settings the game does not use. Checked by check_art_current.sh.
+textures/canvas_textures/default_texture_filter=0

@@ -1,0 +1,32 @@
+{
+  "enemy_melee_a_stooped": {
+    "path": "batch001/enemy/enemy_melee_a_stooped.glb",
+    "size": [
+      0.77,
+      0.57,
+      1.57
+    ],
+    "texel_density": null,
+    "triangles": 448
+  },
+  "enemy_melee_b_tripod": {
+    "path": "batch001/enemy/enemy_melee_b_tripod.glb",
+    "size": [
+      0.685,
+      0.58,
+      1.582
+    ],
+    "texel_density": null,
+    "triangles": 240
+  },
+  "enemy_melee_c_squat": {
+    "path": "batch001/enemy/enemy_melee_c_squat.glb",
+    "size": [
+      0.786,
+      0.71,
+      1.294
+    ],
+    "texel_density": null,
+    "triangles": 396
+  }
+}

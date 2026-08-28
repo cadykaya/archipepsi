@@ -161,3 +161,158 @@ def placard(theme, name, label="warn"):
     paintkit.edge_wear(canvas, surf, trim[0], surf.texels(0.06), strength=0.8)
     paintkit.grime_pool(canvas, surf, pal.grime(0), strength=0.35)
     return canvas
+
+
+# ----------------------------------------------------------------------
+# hero tier -- the objects AUTHORED_CONTENT.md calls identity
+# ----------------------------------------------------------------------
+
+HERO_DENSITY = pal.budgets()["texel_density"]["hero"]["target"]
+HERO_SIZE = 128
+HERO_METRES = HERO_SIZE / float(HERO_DENSITY)
+
+
+def hero_surface(name):
+    return paintkit.Surface(HERO_SIZE, HERO_METRES, "prop",
+                            floor_edge="bottom",
+                            seed="archipepsi/hero/%s" % name)
+
+
+def hero_shell(theme, name, family, label=None, lit_band=True):
+    """The shared skin every hero object wears, whatever its silhouette.
+
+    `family` is a UNIVERSAL family name -- `signal` for a Check, `identity`
+    for Epsilon, `send` for a transmission surface. Never a theme colour:
+    these are the objects the player learns once and must recognise in all
+    six themes, and a theme-tinted Check is a Check that has to be re-learned
+    in temple_ruin.
+
+    Three concepts of one object share this function on purpose. If the
+    three Check concepts differed in paint as well as in silhouette, the
+    review would be asking two questions at once and could answer neither.
+    """
+    base, accent, trim = _ramps(theme)
+    surf = hero_surface(name)
+    canvas = paintkit.Canvas(HERO_SIZE, trim[1])
+    paintkit.tonal_drift(canvas, surf, amount=0.05, cell_metres=0.4)
+    paintkit.broad_patches(canvas, surf, [trim[0], trim[2]],
+                           cell_metres=0.22, density=0.20, strength=0.30)
+    # Heavy machined casing: deep panel divisions and real bolts. A hero
+    # object has to survive being looked at from 1 m as well as from 40.
+    paintkit.panel_grid(canvas, surf, trim[0], trim[2],
+                        pitch_metres=0.34, vertical_pitch_metres=0.34)
+    surf.seams = tuple(range(0, HERO_SIZE, surf.texels(0.34)))
+    surf.bolt_pitch = surf.texels(0.17)
+    paintkit.bolts(canvas, surf, trim[0], trim[2], inset=3)
+    if lit_band:
+        # THE dominant cue. One band, full width, in the universal family --
+        # everything else on the object is subordinate to it, and nothing
+        # else is allowed to be this bright. If two things compete for the
+        # eye at 35 px, neither wins.
+        top = surf.texels(0.30)
+        height = max(3, surf.texels(0.10))
+        canvas.rect(0, top, HERO_SIZE, height, pal.universal(family, 3))
+        canvas.hline(top - 1, 0, HERO_SIZE - 1, pal.universal("dead", 0))
+        canvas.hline(top + height, 0, HERO_SIZE - 1, pal.universal("dead", 0))
+        # A darker echo of the band below it: the value sandwich the palette
+        # check exists to guarantee. Whichever way a theme's wall goes, one
+        # half of the pair separates from it.
+        canvas.rect(0, top + height + 1, HERO_SIZE, max(2, height // 2),
+                    pal.universal(family, 0))
+    if label:
+        width = paintkit.text_width(label)
+        paintkit.text(canvas, surf, (HERO_SIZE - width) // 2,
+                      surf.texels(0.62), label, pal.universal(family, 2))
+    paintkit.speckle(canvas, surf, trim[0],
+                     paintkit.zone_or(paintkit.near_seams(surf, 0.04),
+                                      paintkit.near_edges(surf, 0.06)),
+                     density=0.14, strength=0.5)
+    paintkit.edge_wear(canvas, surf, base[0], surf.texels(0.06), strength=0.8)
+    paintkit.grime_pool(canvas, surf, pal.grime(0), strength=0.35)
+    return canvas
+
+
+def hero_face(theme, name, family, label):
+    """The interaction face: what the player aims at and presses.
+
+    Deliberately a different texture from the shell. AUTHORED_CONTENT.md
+    requires that "can I use this?" is never a guess, and the cheapest
+    honest answer is that the usable part of an object does not look like
+    the rest of it.
+    """
+    base, accent, trim = _ramps(theme)
+    surf = hero_surface(name + "_face")
+    canvas = paintkit.Canvas(HERO_SIZE, pal.universal("dead", 0))
+    inset = surf.texels(0.06)
+    canvas.rect(inset, inset, HERO_SIZE - 2 * inset, HERO_SIZE - 2 * inset,
+                pal.universal(family, 0))
+    core = surf.texels(0.10)
+    canvas.rect(core, core, HERO_SIZE - 2 * core, HERO_SIZE - 2 * core,
+                pal.universal(family, 2))
+    # Concentric rings, snapped to texels. A target, drawn the way a 1998
+    # texture drew a target.
+    for i in range(3):
+        ring = core + surf.texels(0.05) * (i + 1)
+        canvas.outline(ring, ring, HERO_SIZE - 2 * ring, HERO_SIZE - 2 * ring,
+                       pal.universal(family, 3 if i % 2 else 0))
+    width = paintkit.text_width(label)
+    paintkit.text(canvas, surf, (HERO_SIZE - width) // 2, HERO_SIZE // 2 - 3,
+                  label, pal.universal(family, 0))
+    paintkit.speckle(canvas, surf, trim[0], paintkit.near_edges(surf, 0.05),
+                     density=0.16, strength=0.5)
+    return canvas
+
+
+# ----------------------------------------------------------------------
+# enemies
+# ----------------------------------------------------------------------
+
+def enemy_skin(theme, name, marking="hazard"):
+    """An enemy's skin, and the one rule that decides it.
+
+    > **An enemy never wears its room's colours.**
+
+    The first enemy pass painted all three melee concepts with
+    `painted_metal`, which builds from the THEME accent -- so in
+    concrete_facility they came out institutional steel blue, the same
+    family as the wall panels and the doorway trim behind them. At 18 m and
+    46 px that is camouflage. `ENEMY_AGGRO_RADIUS` is where the player has
+    to see one, and a figure sharing a value and a hue with the architecture
+    is a figure the player finds by being hit.
+
+    So enemies are built from the shared `grime` family, which every theme
+    also uses for dirt, plus the theme's DARKEST base step. That does two
+    things at once: it sits below every theme's wall in value, and it makes
+    an enemy read as something that came out of the building's underside
+    rather than as part of its finish. The only saturated colour on the body
+    is the marking family, and there is very little of it.
+    """
+    base, accent, trim = _ramps(theme)
+    surf = surface(theme, name)
+    canvas = paintkit.Canvas(PROP_SIZE, pal.grime(1))
+    paintkit.tonal_drift(canvas, surf, amount=0.08, cell_metres=0.30)
+    paintkit.broad_patches(canvas, surf, [pal.grime(0), pal.grime(2)],
+                           cell_metres=0.18, density=0.32, strength=0.38)
+    # Plating: tighter than a prop's, because an enemy is a small object seen
+    # close during a fight and far during the approach.
+    paintkit.panel_grid(canvas, surf, pal.grime(0), base[0],
+                        pitch_metres=0.22, vertical_pitch_metres=0.22)
+    surf.seams = tuple(range(0, PROP_SIZE, surf.texels(0.22)))
+    surf.bolt_pitch = surf.texels(0.11)
+    paintkit.bolts(canvas, surf, pal.grime(0), base[1], inset=2)
+    # ONE marking band, narrow. Enough to say "hostile" at close range and
+    # not enough to compete with the eye at long range.
+    top = surf.texels(0.46)
+    height = max(2, surf.texels(0.045))
+    canvas.rect(0, top, PROP_SIZE, height, pal.universal(marking, 1))
+    canvas.hline(top - 1, 0, PROP_SIZE - 1, pal.grime(0))
+    canvas.hline(top + height, 0, PROP_SIZE - 1, pal.grime(0))
+    paintkit.speckle(canvas, surf, pal.grime(0),
+                     paintkit.zone_or(paintkit.near_seams(surf, 0.03),
+                                      paintkit.near_edges(surf, 0.05)),
+                     density=0.18, strength=0.55)
+    # Wear reaches the LIGHT step here rather than the dark one: a scraped
+    # edge on a dark body brightens. Doing it the other way round made the
+    # figure lose its outline entirely.
+    paintkit.edge_wear(canvas, surf, base[1], surf.texels(0.05), strength=0.9)
+    return canvas

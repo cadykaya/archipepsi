@@ -1,0 +1,32 @@
+{
+  "check_a_pedestal": {
+    "path": "batch001/check/check_a_pedestal.glb",
+    "size": [
+      1.22,
+      1.22,
+      2.23
+    ],
+    "texel_density": null,
+    "triangles": 248
+  },
+  "check_b_vault": {
+    "path": "batch001/check/check_b_vault.glb",
+    "size": [
+      1.38,
+      1.367,
+      2.16
+    ],
+    "texel_density": null,
+    "triangles": 232
+  },
+  "check_c_mast": {
+    "path": "batch001/check/check_c_mast.glb",
+    "size": [
+      1.109,
+      1.139,
+      2.22
+    ],
+    "texel_density": null,
+    "triangles": 268
+  }
+}

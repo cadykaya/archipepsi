@@ -30,16 +30,17 @@ DIM = common.DIM
 THEME = "concrete_facility"
 
 
-def _finish(obj, name, canvas, relative, category="prop", bevel=None):
+def _finish(obj, name, canvas, relative, category="prop", bevel=None,
+            anchor="floor"):
     if bevel:
         brushkit.bevel_prop(obj, bevel)
-    common.set_origin_floor_centre(obj)
+    common.set_origin(obj, anchor)
     common.uv_project_world(obj, propkit.PROP_DENSITY, propkit.PROP_SIZE)
     image = canvas.to_blender(name)
     common.assign(obj, common.make_textured_material(
         name, image, roughness=pal.roughness(THEME)))
     info = common.export_glb(obj, relative, category, tier="prop",
-                             texture_size=propkit.PROP_SIZE)
+                             texture_size=propkit.PROP_SIZE, anchor=anchor)
     common.save_texture(image, "batch001/%s.png" % name)
     return info
 
@@ -224,18 +225,23 @@ PROPS = [
         THEME, "machinery_unit", label="p 12", wear=0.18)),
     ("prop_debris", debris_pile, lambda: propkit.bare_metal(
         THEME, "debris", wear=0.3)),
+    # A sign is bolted to a wall, not stood on the floor: anchor "wall" puts
+    # its BACK face at Y 0 so it sits flush against a wall plane.
     ("prop_warning_sign", warning_sign, lambda: propkit.placard(
-        THEME, "warning_sign", label="danger")),
+        THEME, "warning_sign", label="danger"), "wall"),
 ]
 
 
 def main():
     common.reset_scene()
     report = {}
-    for name, builder, painter in PROPS:
+    for entry in PROPS:
+        name, builder, painter = entry[0], entry[1], entry[2]
+        anchor = entry[3] if len(entry) > 3 else "floor"
         obj, bevel = builder()
         report[name] = _finish(obj, name, painter(),
-                               "batch001/props/%s.glb" % name, bevel=bevel)
+                               "batch001/props/%s.glb" % name, bevel=bevel,
+                               anchor=anchor)
     out = os.path.join(common.REPO_ROOT, "assets", "models", "batch001",
                        "props", "manifest.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
