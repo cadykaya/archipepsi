@@ -651,6 +651,73 @@ leaving a generated artifact with no source. Its every channel had
 `regen_per_second` 0, which is exactly why its all-or-nothing cost test
 could not see the refund bug.
 
+## The disposition vocabulary, and the campaign soak
+
+Two findings that came out of building the soak rather than out of a
+review, and one is the more interesting kind of gap.
+
+**Two of the four dispositions were unreachable in play.** S6 completed
+`UPGRADE` / `MODIFY` / `LINK` / `MERGE` in the capability registry, in
+`target_errors` and in the fold — and then nothing emitted half of them.
+No provider in the tree produced a `MODIFY` or a `MERGE`, so ECHOES §3's
+own two examples (*Fire Flower* making the gun's hits apply `burning`,
+*Blue Estus* folded into the `mp` economy) were shapes a unit test could
+construct and a player could never receive. That is worse than a missing
+feature: a bug anywhere in either path was invisible to every integration
+run, and the merge-link bug fixed the same morning is precisely that —
+no amount of playing could have found it.
+
+The fallback now answers all four, trying the most specific claim first:
+
+- **sequel** (`UPGRADE`) — the campaign already owns the item's verb. Was
+  already there, from S6.
+- **enhancement** (`MODIFY`) — the item READS as an element and something
+  owned can be hit with. The status comes from the §15 concept reader
+  (`fire` → `burning`, `cold` → `slowed`, `electricity` → `shocked`,
+  `decay` → `poisoned`), so the disposition is derived from the reading
+  rather than pattern-matched on the item name.
+- **confluence** (`CREATE` + `MERGE`) — the resource budget is spent,
+  which is §16's "over soft budget, ask for MERGE" written down. The new
+  economy is folded into an existing one, so the item is credited in its
+  provenance and the fifteen HUD channels do not fill with flasks.
+
+Each returns `None` when it cannot land, so the ordinary `CREATE` survives
+and none of them can emit an interpretation the fold refuses. What "cannot
+land" means has to be visible in the REQUEST, which is why
+`OwnedComponentSummary` gained `modifiers` alongside `upgradable`: a
+`MODIFY` adding a modifier must not duplicate a type and must not be the
+third one, and a provider that cannot see the target's existing two is
+guessing at exactly the thing it will be refused for. The confluence
+checks the survivor's `max_value` headroom for the same reason (capacity
+`"sum"` re-validates rather than clamping), and checks there is room under
+§2's four-operation ceiling, since the merge is appended.
+
+That append is what makes it work on a multi-op shape, and it is a nice
+demonstration of the morning's fix: the fallback's resource outcome is
+`create action + create resource + link powers`, so the link names the bar
+the merge is about to absorb, and the fold rewrites both endpoints onto
+the survivor. Before `_relink` it would have named a deleted component and
+the Action could never have been activated again.
+
+Five words the concept lexicon should always have had — `ember`, `ash`,
+`venom`, `poison`, `spark`. *Ember* is a real item in a real game and it
+read as an inert "artifact"; with it, `MODIFY` occurs in ordinary mock
+play rather than only under a crafted request.
+
+**`test_campaign_soak.py` — 25 whole campaigns, 25 different seeds.**
+`make godot-integration` plays the campaign once, and always with the same
+seed, because `MockAPBackend` hard-coded `"MockSeed"`. The seed is the only
+input to three different orderings — the track order the Hub offers, the
+shop's stock draw, and the allocator's shuffle — so one seed exercised one
+path through all three. Nothing here needs Godot, so twenty-five full
+playthroughs cost 23 seconds, and each asserts what must hold of EVERY
+campaign rather than of a lucky one: the goal is reached and reported
+exactly once, no location is held by two live Zones, no Check is claimed
+twice, no location yields two Echoes, the allocator never starves (§11.5),
+the save validates after every single transition, and the fold publishes
+no edge naming a component it deleted. One test asserts the vocabulary
+above is not theoretical.
+
 ## Next useful work
 1. **Play-feel pass on real hardware** — the manual checks in
    ACCEPTANCE_TESTS §7 (gap feel, reveal timing, Conference Call comedy)
@@ -669,6 +736,9 @@ could not see the refund bug.
    declined to place it *silently*, which is the worst of both.
 4. ~~Epsilon's voice in the Hub between Zones~~ — **done.**
 5. ~~Adversarial review of S1–S5~~ — **done**, 19 findings fixed.
+6. ~~Adversarial pass over `ap_client.py`~~ — **done**, one finding (a
+   reconnect during generation built the same Zone twice).
+7. ~~The whole disposition vocabulary, and a multi-seed soak~~ — **done.**
 
 ## Known blockers / bugs
 None known. One recorded schema corner: `finale_offered` stays true in
@@ -685,6 +755,7 @@ postgame, so clients also require the goal to be missing
     make godot-lab             # S8: the Echo Lab, and what it must not do
     make godot-affordance      # S9: I4/I12/I13, volumes, local rewards, readouts
     make godot-verbs           # the press/release lifecycle, over a real floor
+    #                            (the 25-seed campaign soak runs inside `make test`)
     make rules-fixture         # regenerate the rule suite's folded snapshot
     make verbs-fixture         # regenerate the verb suite's folded snapshot
     make godot-integration     # the whole game, headlessly

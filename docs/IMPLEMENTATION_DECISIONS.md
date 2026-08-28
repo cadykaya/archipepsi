@@ -1016,3 +1016,66 @@ what ACTIVE means — so the alternative is a refusal that wedges the one
 caller it exists for. The docstring now says so, since the call site could
 not.
 
+## A vocabulary nothing speaks is not a vocabulary
+
+S6 was called complete when `UPGRADE` / `MODIFY` / `LINK` / `MERGE` were
+admitted by the capability registry, checked by `target_errors` and folded
+by `derive_mechanics`. All three were true, and no provider in the tree
+emitted a `MODIFY` or a `MERGE` — so half the vocabulary was reachable
+only from a unit test.
+
+The cost is not the missing feature. It is that **any bug in either path
+was invisible to every integration run**, and the merge-link bug fixed the
+same morning proves it: the fold published links naming a component it had
+deleted, and no amount of playing the game could have found it, because
+nothing in the game ever merged. A stage is not done when its validators
+admit a shape; it is done when something a player uses produces one.
+
+Three rules came out of the fix, and they generalise past this stage:
+
+- **A disposition is derived from the reading, not matched on the name.**
+  The enhancement's status comes from the §15 concept reader — `fire` →
+  `burning`, `cold` → `slowed` — so the same machinery that decides how
+  Epsilon *read* the item decides what the item *does*. Pattern-matching
+  "Fire Flower" would have been shorter and would have made §15's chain
+  decorative for the one provider that runs deterministically.
+
+- **Whatever decides whether an operation can land has to be in the
+  request.** `OwnedComponentSummary` carried `upgradable` because an
+  UPGRADE needs its target's bounds; it did not carry `modifiers`, so a
+  MODIFY could not tell whether the type it was adding was already there
+  or would be a third. A provider is a provider: it sees the request and
+  nothing else, and one that has to guess at the exact thing the fold will
+  refuse it for is one that emits `FoldError`s. The confluence needs the
+  survivor's `max_value` headroom for the same reason.
+
+- **Each disposition returns nothing when it cannot land.** That is what
+  keeps the ordinary CREATE as the floor, so adding a disposition can only
+  make the fallback richer and never invalid — the rule `_as_sequel`
+  established in S6, applied twice more.
+
+The confluence appends its merge rather than replacing the interpretation,
+which is what lets it work on the fallback's real resource shape (`create
+action + create resource + link powers`). The link then names the bar the
+merge absorbs, and the fold rewrites both endpoints onto the survivor —
+the same `_relink` written that morning, exercised end to end by a path
+that ships.
+
+## A soak is the only way to test an ordering
+
+`make godot-integration` plays a whole campaign, and always the same one:
+`MockAPBackend` hard-coded `"MockSeed"`, and the seed is the only input to
+the track order, the shop's stock draw and the allocator's shuffle. Every
+property that run asserts held on exactly one arrangement of thirty
+locations.
+
+`test_campaign_soak.py` plays twenty-five, in 23 seconds, because the
+campaign engine is the whole subject and Godot is not needed to drive it.
+What it asserts is deliberately not "the campaign completes" — it is the
+set of things that must be true of EVERY campaign: one live Zone may hold
+a location, never two; a Check is claimed once; a location yields one
+Echo, ever, because the log is append-only and a duplicate is permanent;
+the allocator never starves while unallocated locations remain; the save
+validates after every transition rather than only where a test looks; and
+the fold publishes no edge naming a component it deleted.
+

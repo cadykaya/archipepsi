@@ -154,6 +154,32 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   race-mode `Get` is sent by `CommonContext.send_connect` (so the scout
   gate cannot hang), and the goal is re-sent on reconnect from
   `on_ap_ready` when `goal_sent` is already persisted.
+- **The whole disposition vocabulary now reaches players.** S6 completed
+  `UPGRADE`/`MODIFY`/`LINK`/`MERGE` in the validators and the fold, and
+  then nothing emitted half of it: no provider in the tree produced a
+  MODIFY or a MERGE, so §3's own two examples were shapes a unit test
+  could build and a player could never receive — and a bug in either was
+  invisible to every integration run (the merge-link bug fixed this
+  morning is exactly that). The fallback now tries the most specific
+  claim first: a **sequel** (UPGRADE) when it owns the verb, an
+  **enhancement** (MODIFY) when the item READS as an element and
+  something owned can be hit with, and a **confluence** (CREATE + MERGE)
+  when the resource budget is spent, which is §16's rule written down.
+  Each returns nothing when it cannot land, so the ordinary CREATE
+  survives. `modifiers` joins `upgradable` on the owned-component
+  summary, because a MODIFY that cannot see the target's existing two is
+  guessing at exactly what it will be refused for. Five words the concept
+  lexicon should always have had (`ember`, `ash`, `venom`, `poison`,
+  `spark`) mean MODIFY now happens in ordinary mock play.
+- **`test_campaign_soak.py`: 25 full campaigns, 25 different seeds.** The
+  integration run plays once, always on `"MockSeed"` — and the seed is the
+  only input to the track order, the shop draw and the allocator's
+  shuffle. Twenty-five playthroughs cost 23 s without Godot, each
+  asserting what must hold of EVERY campaign: the goal reached and
+  reported once, no location in two live Zones, no Check claimed twice, no
+  location yielding two Echoes, the allocator never starving (§11.5), the
+  save validating after every transition, and the fold publishing no edge
+  that names a component it deleted.
 - **Next: the plan is exhausted.** IMPLEMENTATION_PLAN §2.5 ends at S10
   ("Deployables come after S10, if at all"). Per the standing handoff, do
   not stop here — continue developing the game, and stop only where
