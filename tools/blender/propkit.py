@@ -365,42 +365,72 @@ def alien_shell(theme, name):
       intelligence that colour-matched the building would not be foreign.
     * It is the darkest thing in any room it stands in, which is what makes
       the green read as emitted rather than painted.
+
+    HERO surface, hero metres. This skin is projected at `HERO_DENSITY` by
+    every caller, and it was authored against `surface()`, whose metre is the
+    PROP metre -- so every pitch written here came out 64/96 of its stated
+    size on the model. A 0.16 m plate became 0.107 m, and at the 8 m the
+    installation is read from that is under half a pixel. Combined with a
+    warm `grime[2]` plate highlight the whole eruption rendered as a cloud of
+    tan and green confetti with no shape in it at all: the exact "digital
+    camouflage" failure paintkit exists to prevent, arrived at from the other
+    direction.
+
+    So the metric is `hero_surface` now, the plating is coarse enough to
+    survive the distance, and the highlight is a COLD step. Nothing warm goes
+    on Epsilon; warm is the facility's utility lighting and orange is the
+    telegraph.
     """
-    surf = surface(theme, name)
-    canvas = paintkit.Canvas(PROP_SIZE, pal.grime(0))
+    surf = hero_surface(name)
+    # Near-black, and near-black in ITS OWN HUE.
+    #
+    # This was `grime[0]`, #241f1c, a warm brown-black, on the reasoning that
+    # grime is the one family every surface shares. Two things were wrong
+    # with it. Lit and tonemapped, a 0.14 albedo does not render near-black
+    # at all -- the mass came out mid-brown -- and mid-brown is the
+    # rusted_industrial theme's own colour, so in that theme the foreign
+    # intelligence would be colour-matched to the building. `dead[0]` is the
+    # cold near-black the palette keeps for unpowered things, and patches of
+    # `identity[0]` under it pull the whole mass toward its own green so the
+    # seams read as the bright end of one material rather than as paint on
+    # a different one.
+    canvas = paintkit.Canvas(HERO_SIZE, pal.universal("dead", 0))
     paintkit.tonal_drift(canvas, surf, amount=0.07, cell_metres=0.3)
-    paintkit.broad_patches(canvas, surf, [pal.grime(1), pal.universal("dead", 0)],
-                           cell_metres=0.18, density=0.30, strength=0.35)
-    # Dense irregular plating: a much tighter pitch than anything the
-    # facility uses, so it reads as a different manufacture at a glance.
-    paintkit.panel_grid(canvas, surf, pal.grime(0), pal.grime(2),
-                        pitch_metres=0.16, vertical_pitch_metres=0.11)
-    surf.seams = tuple(range(0, PROP_SIZE, surf.texels(0.16)))
+    paintkit.broad_patches(canvas, surf,
+                           [pal.universal("identity", 0), pal.grime(0)],
+                           cell_metres=0.30, density=0.42, strength=0.40)
+    # Plating at a pitch the facility never uses. The facility's panels are
+    # SQUARE, on a 0.5 m grid; these are tall and narrow on a 0.30 x 0.46 m
+    # one, which reads as a different manufacture from across the room and
+    # still holds together at 8 m.
+    paintkit.panel_grid(canvas, surf, pal.grime(0), pal.universal("dead", 1),
+                        pitch_metres=0.30, vertical_pitch_metres=0.46)
+    surf.seams = tuple(range(0, HERO_SIZE, surf.texels(0.46)))
 
     # Green in the SEAMS, not on the faces. Light from inside.
     for seam in surf.seams:
-        for x in range(PROP_SIZE):
+        for x in range(HERO_SIZE):
             roll = surf.hash.breaker("vein", x, seam)
             if roll > 0.42:
                 continue
             canvas.set(x, seam, pal.universal("identity", 1 if roll > 0.2 else 2))
-            if roll < 0.12 and seam + 1 < PROP_SIZE:
+            if roll < 0.12 and seam + 1 < HERO_SIZE:
                 canvas.set(x, seam + 1, pal.universal("identity", 0))
     # A few vertical veins running between the courses, so the glow reads as
     # a network rather than as stripes.
-    step = surf.texels(0.16)
-    for x in range(0, PROP_SIZE, max(2, surf.texels(0.09))):
+    step = surf.texels(0.46)
+    for x in range(0, HERO_SIZE, max(2, surf.texels(0.15))):
         if surf.hash.breaker("vvein", x, 0) > 0.35:
             continue
-        y0 = int(surf.hash.breaker("vy", x, 1) * PROP_SIZE)
-        for y in range(y0, min(PROP_SIZE, y0 + step)):
+        y0 = int(surf.hash.breaker("vy", x, 1) * HERO_SIZE)
+        for y in range(y0, min(HERO_SIZE, y0 + step)):
             canvas.mix(x, y, pal.universal("identity", 1), 0.75)
 
     paintkit.speckle(canvas, surf, pal.grime(0),
                      paintkit.near_edges(surf, 0.05),
                      density=0.20, strength=0.6)
     paintkit.edge_wear(canvas, surf, pal.universal("identity", 0),
-                       surf.texels(0.04), strength=0.7)
+                       surf.texels(0.06), strength=0.7)
     return canvas
 
 
@@ -429,4 +459,133 @@ def facility_host(theme, name):
     paintkit.edge_wear(canvas, surf, pal.grime(0), surf.texels(0.14),
                        strength=1.0)
     paintkit.grime_pool(canvas, surf, pal.grime(0), strength=0.6)
+    return canvas
+
+
+def machine_bank(theme, name, kind="panel"):
+    """Old human facility computer. Cold, dead, institutional.
+
+    Batch 002 direction: Epsilon is not a freestanding shrine, it is a
+    **room-scale computer installation** -- control consoles, panels,
+    housings, conduits, racks, cabinets, bays, old-monitor energy -- with the
+    alien core erupting through it. This is the human half, and it has to be
+    convincingly a machine somebody's institution installed decades ago and
+    then abandoned.
+
+    `kind` picks the face:
+        panel   bolted cabinet skin with louvres and a data plate
+        console raked control surface: switch banks, patch rows, labels
+        screen  a dead CRT bay -- dark glass in a deep bezel, no glow
+        rack    open equipment rack: shelves, cable runs, blank plates
+    """
+    base, accent, trim = _ramps(theme)
+    surf = surface(theme, name)
+    # The TRIM ramp, not the base ramp.
+    #
+    # "Cold, dead, human, institutional" was first read as base[1] and then
+    # as base[0], and both rendered the bank as the palest thing in the
+    # frame -- paler than the wall behind it, and far paler than the green
+    # erupting through it. The base ramp is what the FACILITY is built
+    # from; a machine installed into that facility and left for decades is
+    # darker than its own room, and the trim ramp (#2e3338 up to #788592
+    # here) is where the theme keeps its dark cold greys. The whole bank is
+    # painted from trim and grime now, and nothing on it is allowed above
+    # trim[2]: the intrusion has to be the brightest thing in the room.
+    canvas = paintkit.Canvas(PROP_SIZE, trim[0])
+    paintkit.tonal_drift(canvas, surf, amount=0.05, cell_metres=0.4)
+    paintkit.panel_grid(canvas, surf, pal.grime(0), trim[1],
+                        pitch_metres=0.5, vertical_pitch_metres=0.5)
+    surf.seams = tuple(range(0, PROP_SIZE, surf.texels(0.5)))
+    surf.bolt_pitch = surf.texels(0.16)
+    paintkit.bolts(canvas, surf, pal.grime(0), trim[1], inset=3)
+
+    if kind == "panel":
+        # Louvred vents: this thing was cooled, once.
+        for band in range(2):
+            y0 = surf.texels(0.16 + band * 0.9)
+            for i in range(surf.texels(0.34) // 2):
+                y = y0 + i * 3
+                canvas.rect(surf.texels(0.12), y,
+                            PROP_SIZE - 2 * surf.texels(0.12), 1, pal.grime(0))
+                canvas.rect(surf.texels(0.12), y + 1,
+                            PROP_SIZE - 2 * surf.texels(0.12), 1, trim[1])
+        # A stamped data plate -- REPEATED on the panel pitch, and painted
+        # DOWN in value, not up.
+        #
+        # It was one plate in the corner of the map, filled at base[1]. A bay
+        # face is a ~1.0 x 0.5 m box, so world-planar projection hands it an
+        # arbitrary ~64 x 32 texel window of a 128px map, and the bays whose
+        # window caught the plate rendered it as a pale cream bar across the
+        # front of the bank. That is exactly the failure the `screen` branch
+        # below documents, committed a second time: a localised BRIGHT
+        # feature cannot survive box mapping. Repeating it on the same 0.5 m
+        # grid the panels and bolts already use means every window samples
+        # one, and taking it to the dark trim step keeps the human half
+        # cold and dead -- a stamped plate, never a lit one.
+        cell = surf.texels(0.5)
+        plate_w, plate_h = surf.texels(0.22), surf.texels(0.13)
+        for cx in range(0, PROP_SIZE, cell):
+            for cy in range(0, PROP_SIZE, cell):
+                x, y = cx + cell - plate_w - 4, cy + 6
+                canvas.rect(x, y, plate_w, plate_h, pal.grime(0))
+                canvas.outline(x, y, plate_w, plate_h, trim[1])
+                paintkit.text(canvas, surf, x + 3, y + 2, "ep", trim[2])
+    elif kind == "console":
+        # Switch banks and a patch row. Rows on a grid; a control surface is
+        # the most ordered thing in the room and randomness here reads as a
+        # different object entirely.
+        row_h = surf.texels(0.10)
+        for r in range(4):
+            y = surf.texels(0.10) + r * row_h * 2
+            canvas.rect(surf.texels(0.08), y,
+                        PROP_SIZE - 2 * surf.texels(0.08), row_h, pal.grime(0))
+            for c in range(9):
+                x = surf.texels(0.11) + c * surf.texels(0.09)
+                on = surf.hash.breaker("sw", r, c) > 0.62
+                canvas.rect(x, y + 1, max(2, surf.texels(0.03)), row_h - 2,
+                            trim[2] if on else trim[0])
+        band = surf.texels(0.12)
+        canvas.rect(0, PROP_SIZE - band, PROP_SIZE, band, pal.grime(0))
+    elif kind == "screen":
+        # A DEAD monitor, and the whole tile is glass.
+        #
+        # The first version painted a bezel and a recessed screen INTO the
+        # texture. A monitor face is a 0.60 x 0.52 m box, and world-planar
+        # projection maps it to whichever 38 x 33 texel window of the map its
+        # world position happens to land on -- so half the screens sampled
+        # the bright bezel and rendered as glowing yellow bars across the
+        # front of the bank. That is the cost of box-mapping a small
+        # discrete object, and the fix is not to change the projection (it is
+        # what makes the architecture tile) but to make the texture
+        # UNIFORM: any window of it must read as the same thing.
+        #
+        # The bezel is geometry now -- the screen sits in a recess -- and
+        # this map is nothing but dark glass with a stepped sheen.
+        canvas.rect(0, 0, PROP_SIZE, PROP_SIZE, pal.universal("dead", 0))
+        for y in range(0, PROP_SIZE, max(3, surf.texels(0.05))):
+            canvas.rect(0, y, PROP_SIZE, 1, pal.universal("dead", 1))
+        for y in range(0, PROP_SIZE, max(7, surf.texels(0.14))):
+            canvas.rect(0, y, PROP_SIZE, 1, trim[0])
+        paintkit.speckle(canvas, surf, trim[0], lambda x, y: 1.0,
+                         density=0.03, strength=0.5)
+        paintkit.edge_wear(canvas, surf, trim[0], surf.texels(0.05),
+                           strength=0.5)
+        return canvas
+    else:  # rack
+        shelf = surf.texels(0.24)
+        for i in range(1, 5):
+            y = i * shelf
+            canvas.rect(0, y, PROP_SIZE, 2, pal.grime(0))
+            canvas.rect(0, y + 2, PROP_SIZE, 1, trim[1])
+            for c in range(6):
+                x = surf.texels(0.06) + c * surf.texels(0.15)
+                canvas.rect(x, y + 4, surf.texels(0.11), shelf - 8,
+                            trim[1] if (i + c) % 3 else pal.grime(1))
+
+    paintkit.speckle(canvas, surf, pal.grime(0),
+                     paintkit.zone_or(paintkit.near_seams(surf, 0.05),
+                                      paintkit.near_edges(surf, 0.08)),
+                     density=0.14, strength=0.5)
+    paintkit.edge_wear(canvas, surf, trim[2], surf.texels(0.10), strength=0.85)
+    paintkit.grime_pool(canvas, surf, pal.grime(0), strength=0.55)
     return canvas

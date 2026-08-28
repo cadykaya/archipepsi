@@ -8,12 +8,13 @@ file is the only one that says what to *do next*.
 
 ## THE GATE
 
-> ## BATCH 001-R IS AWAITING OWNER REVIEW.
+> ## BATCH 002 IS AWAITING OWNER REVIEW.
 > ## MASS ASSET PRODUCTION IS STILL BLOCKED.
 
-Batch 001 came back **PASS WITH REVISIONS** and the owner asked for one
-revision batch, not production. 001-R is that batch. The gate has **not**
-moved: after 001-R, stop at the review gate again.
+Batch 001 came back **PASS WITH REVISIONS**; 001-R came back *close, but do
+not unlock mass production yet — do one more style-lock revision pass
+first*. Batch 002 is that pass. The gate has **not** moved and it did not
+move at 001-R either: stop at the review gate again.
 
 **Only the owner turns `PENDING` into `PASS` in
 [`ART_REVIEW.md`](ART_REVIEW.md).** No entry there may be moved by anyone
@@ -50,9 +51,23 @@ file accurate, and end the turn.** Do not invent work to fill a heartbeat.
 | | |
 | --- | --- |
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
-| Phase | **Batch 001-R built and rendered.** Batch 001 reviewed; its verdict and the owner's selections are recorded in `ART_REVIEW.md`. |
-| Owner review | **001-R REQUESTED — not yet received.** Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
+| Phase | **Batch 002 built and rendered.** 001 and 001-R are both reviewed; every verdict is recorded in `ART_REVIEW.md`. |
+| Owner review | **002 REQUESTED — not yet received.** Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
 | Next action | **Wait.** The gate above is the whole of the current instruction. |
+
+### What the Batch 001-R review settled
+
+- **The facility is approved**, with one clarification: the room stays
+  **cold** and warm yellow appears only as **localized utility pools and
+  fixtures** within it. Not a globally warm room.
+- **Both grapple anchors are kept.** A is the ceiling case, B is the
+  wall / side / directional one.
+- **Check A is approved.** The three enemy silhouettes are preserved.
+- **Epsilon had to get bigger**: a room-scale computer installation with the
+  alien core erupting through it, not a pedestal or a shrine.
+- **The enemy roster expands as ORIGINAL designs**, studying what a classic
+  FPS roster covers rather than any specific game's enemies, and flyers are
+  wanted because the grapple creates verticality.
 
 ### What the Batch 001 review settled
 
@@ -70,9 +85,9 @@ file accurate, and end the turn.** Do not invent work to fill a heartbeat.
 | `python3 tools/blender/engine_truth.py` | PASS |
 | `python3 tools/blender/palette.py` | PASS |
 | `python3 tools/blender/check_docs_metrics.py` | PASS — every number in ART_REVIEW.md and ASSET_INVENTORY.md matches the build |
-| `tools/sabotage_checks.sh` | PASS — 19/19 |
+| `tools/sabotage_checks.sh` | see the commit for the run |
 | `tools/check_art_current.sh` | PASS — every asset byte-identical from source |
-| Assets built | 29 models + 16 theme textures + 46 review images |
+| Assets built | 40 models + 16 theme textures + 66 review images |
 | Composed room | 3,272 / 12,000 triangles |
 
 ### What a heartbeat cannot see
@@ -92,7 +107,22 @@ should say it cannot rather than guess.
 
 ## Where the review images are
 
-**[`docs/art/review/batch001/`](review/batch001/)**
+**[`docs/art/review/batch002/`](review/batch002/)** — the current batch
+
+| Prefix | What |
+| --- | --- |
+| `A_epsilon_installation*` | **the room-scale computer installation** — wide sheet, 4 m medium, 2 m close |
+| `A_epsilon_in_room*` | the same object standing in a 12 m room, head-on and oblique |
+| `I_room_utility_pools*` | **cold room, local warm pools** — lit, greyscale, and standing in one |
+| `I_room_warmlight_rejected` | the 001-R globally-warm version, kept and labelled |
+| `C_portal_b2_wound` | **the breach, pushed** — the wall is present now |
+| `D_enemy_family_*` | **ten roles at 18 m**, lit and silhouette, two ranks of five |
+| `E_anchor_{a,b}_use` | **what each anchor is for**, with the jump it has to beat drawn in |
+| `F_style_board*` | the two languages in one frame, lit and greyscale |
+
+Start with `A_epsilon_in_room.png` and `D_enemy_family_silhouette.png`.
+
+**[`docs/art/review/batch001/`](review/batch001/)** — the previous batch
 
 | Prefix | What |
 | --- | --- |
@@ -118,11 +148,15 @@ the pieces make a place, which is the question the other 31 sheets cannot.
 ```sh
 B=.tools/blender/blender
 for s in materials architecture props concept_epsilon concept_check \
-         concept_portal concept_enemy concept_anchor; do
+         concept_portal concept_enemy concept_anchor \
+         batch002_enemies epsilon_installation; do
   $B -b --python tools/blender/build_$s.py
 done
 tools/batch001_sheets.sh      # ~12 min: 28 sheets
-tools/composed_room.sh        # ~1 min: 6 room captures
+tools/composed_room.sh        # ~2 min: 12 room captures, incl. Epsilon in context
+tools/enemy_family.sh         # the ten-role family sheet
+tools/anchor_use.sh           # what each anchor is for
+tools/style_board.sh          # the two languages in one frame
 tools/check_art_current.sh    # includes the document-metric check
 tools/sabotage_checks.sh      # refuses to run against a dirty tree
 ```
@@ -142,9 +176,11 @@ them; each is a thing the art lane will need when contracts settle.
 | --- | --- | --- | --- |
 | 1 | **An asset registry keyed by stable asset ID**, mapping ID → resource path + anchor + footprint + category. Epsilon selects an ID; Godot resolves it. **Epsilon never sees a path.** | An Epsilon that can name a resource path can name any file. | All integration |
 | 2 | **Editor import settings preserving NEAREST with mipmaps.** The bench proves the *runtime* GLTF path keeps the sampler; the *editor* import path is a different code path and is untested. | An authored asset importing with linear filtering makes the authored/procedural seam the most visible thing in the room. | Integration |
-| 3a | **A warm `light_color` for `concrete_facility`.** The owner's facility direction asks for yellow utility lighting; `THEME_MATERIALS` says `#eaf2ff`, a cool white. `I_room_warmlight_proposal.png` shows the difference. Art did not change it — the anchor is engineering's. | The facility reads clinical rather than institutional-warm. | owner decision, then a one-line engine change |
+| 3a | **~~A warm `light_color` for `concrete_facility`~~ — WITHDRAWN at 001-R.** The owner's answer was that the room stays cold and the warmth is local, so `THEME_MATERIALS` does not change. What is needed instead is a **second, short-range warm fixture light** the generator can place — energy well under the theme's own and a range around 2.6 m, so its falloff lands inside the room. `I_room_utility_pools.png` is the proposal; `I_room_warmlight_rejected.png` is what it replaces. | A single per-theme light colour cannot express "cold room, warm pools". | placement of `arch_utility_lamp` |
 | 3 | **A decision on `TEXTURE_SIZE_MAX` for imported assets.** 128 bounds the runtime generator. Batch 001 stays under it so nothing depends on the answer. | The deferred first-person viewmodel tier needs 256. | `viewmodel_*` |
-| 4 | **A footprint contract for the Epsilon presence.** `hub.gd` has a generic 2.0 × 3.0 × 0.8 m terminal and no dedicated fixture. | The three concepts are built inside that envelope on every axis, so whichever contract lands they fit. | `hub_epsilon_presence` |
+| 4 | **A footprint contract for the Epsilon presence, and it is now a big one.** `hub.gd` has a generic 2.0 × 3.0 × 0.8 m terminal and no dedicated fixture. Batch 002's installation is **8.80 × 2.61 × 3.55 m** — roughly a third of one 22 m Hub wall. The 001 concepts fit the old envelope; this one does not, on purpose, because the owner asked for an installation rather than a prop. | An object this size needs a reserved bay, a wall to stand against, and a rule about what may not spawn in front of it. | `hub_epsilon_presence` |
+| 7 | **Collision boxes for seven proposed enemy roles.** `enemy.gd` defines melee, ranged and brute. Batch 002 proposes scuttler, charger, bulwark, artillery, beacon, drifter and diver, each with a declared box and `"engine_box": false` in its manifest, and the two flyers with a proposed hover height. | Nothing past the trio can be placed until its collider exists, and a model built to a box nobody agreed to is a model that will be rebuilt. | every batch002 enemy |
+| 8 | **A wall-mounted grapple anchor.** `affordance_features.gd` only knows the ceiling case. `anchor_b_wall_jib` proposes a 2.6 m plate height. | The directional variant the 001-R review asked to keep cannot be placed without it. | `anchor_b_wall_jib` |
 | 5 | **A larger footprint, or an L2 placement path, for composed clusters.** `PROP_FOOTPRINT` is 1.4 m. | Right for L0, too small for an L2 station or storytelling cluster. | `cluster_*` |
 | 6 | **`challenge_marker` world semantics** (`AGENT_FRONTIER.md` still lists this open). | Its visual cannot be specified until its meaning is. | `local_reward_pickup` |
 

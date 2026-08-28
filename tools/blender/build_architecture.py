@@ -299,6 +299,34 @@ def light_fixture():
     return common.join(parts, "light_fixture"), lens
 
 
+def utility_lamp():
+    """Batch 002: the fixture the LOCAL warm light comes out of.
+
+    The 001-R review's lighting note -- "warm yellow light should appear as
+    localized utility pools / fixtures within a still-cold environment" --
+    needs a fixture as much as it needs a light. A warm pool with no visible
+    source is a coloured stain on a wall; a small bracket lamp at working
+    height is a thing somebody screwed there because they needed to see a
+    valve, which is what makes the pool read as utility rather than as mood.
+
+    Deliberately SMALL and deliberately not the ceiling strip: the strip is
+    1.5 m and general, this is 0.34 m and local, and the difference in size
+    is what says the two lights have different jobs.
+    """
+    parts = [
+        # A bracket off the wall, then the housing canted down at the floor.
+        brushkit.block("ulamp_plate", (0.20, 0.06, 0.26), (0.0, 0.0, 0.0)),
+        brushkit.block("ulamp_arm", (0.07, 0.20, 0.07), (0.0, -0.12, 0.02)),
+    ]
+    hood = brushkit.block("ulamp_hood", (0.34, 0.24, 0.20), (0.0, -0.26, 0.0))
+    parts.append(brushkit.spin(hood, "X", 24.0))
+    parts.append(brushkit.grate("ulamp_cage", (0.28, 0.14, 0.02), 4, 0.03,
+                                (0.0, -0.33, -0.07), axis="x"))
+    lens = brushkit.block("ulamp_lens", (0.26, 0.14, 0.05),
+                          (0.0, -0.31, -0.055))
+    return common.join(parts, "utility_lamp"), lens
+
+
 # ----------------------------------------------------------------------
 # build
 # ----------------------------------------------------------------------
@@ -354,6 +382,37 @@ def main():
     report["arch_light_fixture"] = common.export_glb(
         fixture, "batch001/architecture/arch_light_fixture.glb",
         "architecture_module", anchor="ceiling")
+
+    # --- Batch 002 -----------------------------------------------------
+    # The wall lamp the localized warm pools come out of. It exports to
+    # batch002 because it is a revision deliverable, not part of the kit
+    # the owner has already reviewed.
+    lamp_body, lamp_lens = utility_lamp()
+    common.uv_project_world(lamp_body, ARCH_DENSITY, ARCH_SIZE)
+    common.assign(lamp_body, common.make_textured_material(
+        "arch_utility_lamp", theme_image("trim"),
+        roughness=pal.roughness(THEME)))
+    # The lens is WARM, and it is the only warm thing in the facility.
+    # `hazard` is orange and reserved for telegraphs, `signal` is the
+    # interactable teal and `identity` is Epsilon's green -- none of them may
+    # be spent on a lamp. `send`, the multiworld amber, is the palette's warm
+    # family, and a utility lens is exactly the "somebody's working light"
+    # colour the review asked for. Full saturation: a lamp is allowed to be
+    # the brightest thing in its own small pool.
+    common.assign(lamp_lens, common.make_signal_material(
+        "arch_utility_lamp_lens", pal.theme(THEME, "trim", 0),
+        pal.universal("send", 3), saturation=1.0, roughness=0.2))
+    lamp = common.join([lamp_body, lamp_lens], "arch_utility_lamp")
+    common.set_origin(lamp, "wall")
+    lamp_report = {"arch_utility_lamp": common.export_glb(
+        lamp, "batch002/architecture/arch_utility_lamp.glb",
+        "architecture_module", anchor="wall")}
+    lamp_out = os.path.join(common.REPO_ROOT, "assets", "models", "batch002",
+                            "architecture", "manifest.json")
+    os.makedirs(os.path.dirname(lamp_out), exist_ok=True)
+    with open(lamp_out, "w", encoding="utf-8") as handle:
+        json.dump(lamp_report, handle, indent=2, sort_keys=True)
+        handle.write("\n")
 
     out = os.path.join(common.REPO_ROOT, "assets", "models", "batch001",
                        "architecture", "manifest.json")

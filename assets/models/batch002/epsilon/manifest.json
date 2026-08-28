@@ -1,0 +1,13 @@
+{
+  "epsilon_installation": {
+    "anchor": "floor",
+    "path": "batch002/epsilon/epsilon_installation.glb",
+    "size": [
+      8.8,
+      2.606,
+      3.55
+    ],
+    "texel_density": null,
+    "triangles": 1396
+  }
+}

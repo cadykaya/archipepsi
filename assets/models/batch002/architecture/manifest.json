@@ -1,0 +1,13 @@
+{
+  "arch_utility_lamp": {
+    "anchor": "wall",
+    "path": "batch002/architecture/arch_utility_lamp.glb",
+    "size": [
+      0.34,
+      0.44,
+      0.28
+    ],
+    "texel_density": null,
+    "triangles": 96
+  }
+}

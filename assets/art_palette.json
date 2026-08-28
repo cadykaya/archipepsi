@@ -78,6 +78,11 @@
       "noise": "checker"
     }
   },
+  "lighting": {
+    "max_light_energy": 4.0,
+    "max_ambient_energy": 0.4,
+    "max_irradiance": 4.4
+  },
   "universal": {
     "signal": {
       "means": "you can use this -- the only colour an interactable prompt, rim or reveal face is allowed to be",

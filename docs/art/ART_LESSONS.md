@@ -136,6 +136,72 @@ in the batch where clipping the brightest channel is the intent.
 
 ---
 
+### L-29 · The solve was right and the surface still rendered orange
+`make_signal_material` (L-09) solves the strength so that
+`albedo + strength × emission` lands just under 1.0. The Epsilon
+installation's veins rendered as **yellow-white bars**, measured at
+`(255, 255, 147)` — red and green both clipped, blue not.
+
+That sum is the **unlit** sum. The surface is also lit, and
+`albedo × irradiance` is the term the solve left out. `identity[0]` is
+`#23660c`, whose green channel alone clips under a facility light, so green
+had nowhere left to go, every additional photon went into red, and the hue
+walked from Epsilon's green to the **telegraph orange**. Green says whose
+this is; orange says what is about to happen. A green cue that renders
+orange inverts the one rule the colour language has.
+
+The fix is not a bigger number or a smaller one. The solve now reads
+`engine_truth.lighting()` — the brightest `light_energy` in
+`THEME_MATERIALS` plus the brightest `ambient_light_energy` on the engine's
+environments — scales the albedo down until its lit contribution is at most
+half that budget, and solves the strength against what is left.
+
+> A material that must keep its hue has to be solved against the light it
+> will be under, and the light is not a number art gets to choose.
+
+### L-30 · A solve in the authored space is not a solve in the rendered one
+With L-29 fixed, five bars at saturations 0.94 / 0.60 / 0.40 / 0.25 / 0.12
+still put the green channel at 255 for the top two. The solve guarantees the
+**authored** sum stays under 1.0; the renderer then tonemaps and
+sRGB-encodes on top of that, and both lift.
+
+That lift is a property of the pipeline, not of the palette, so it was
+**measured** rather than modelled: the sweep is one build, one render and a
+pixel count, and it put the clip point between 0.40 and 0.60. Every emissive
+call site now passes 0.45 with the measurement written beside it.
+
+> When a prediction and a render disagree, instrument the render. Five bars
+> in one frame cost less than one more guess.
+
+### L-31 · A texture authored at the wrong metre is authored at the wrong size
+`alien_shell` was built against `surface()`, whose metre is the **prop**
+metre (64 texels/m), and projected by every caller at `HERO_DENSITY`
+(96 texels/m). Every pitch in it therefore came out at ⅔ of its stated size:
+a 0.16 m plate became 0.107 m, which at the 8 m the installation is read
+from is under half a pixel. The eruption rendered as a cloud of tan and
+green confetti with no shape in it — the exact "digital camouflage" failure
+`paintkit` exists to prevent, arrived at from the opposite direction.
+
+> The surface a canvas is authored against and the density it is projected
+> at are the same fact stated twice. If they disagree, nothing in the
+> texture is the size it says.
+
+### L-32 · "Cold, dead, institutional" is a VALUE, and it was read as a hue
+The machine bank was painted from the theme's **base** ramp, first at
+`base[1]` and then at `base[0]`, on the reasoning that base is what the
+facility is made of. Both rendered the bank as the palest thing in the
+frame — paler than the wall behind it, and far paler than the green erupting
+through it, which inverts the whole point of the object.
+
+The base ramp is what the BUILDING is made of. A machine installed into that
+building and abandoned for decades is darker than its own room, and the
+theme already keeps its dark cold greys in the **trim** ramp. Repainting the
+bank from trim and grime, with nothing on it above `trim[2]`, made the
+intrusion the brightest thing in the room without touching the intrusion.
+
+> Before reaching for a colour, ask which ramp the object belongs to. A
+> value problem solved with a hue is still a value problem.
+
 ## Geometry
 
 ### L-10 · `rotation_euler` on a positioned part rotates about the WORLD origin
@@ -329,6 +395,35 @@ corridor `zone.py` permits, and two enemies outside their collision box. All
 four would have clipped through walls the character body never touches.
 
 ---
+
+### L-33 · A verifier scoped to today's directory agrees with tomorrow's mistake
+`check_docs_metrics.py` walked `assets/models/batch001` only. The first
+batch002 asset it met was reported as *"quotes metrics for an asset no
+manifest contains"* — eleven failures, all of them the checker saying the
+document was wrong when the checker was the thing that had not moved.
+
+The danger is not the false alarm. It is the obvious way to silence one: add
+the row to an ignore list, and the check quietly stops covering a whole
+batch. `sync_inventory.py` had the same shape and the same fix — both walk
+every batch now.
+
+> A verifier that has to be edited whenever the work grows is a verifier
+> that will one day be edited into agreeing.
+
+### L-34 · A bench that frames by assumption labels the wrong figure
+The family sheet placed its role labels from each figure's world X using
+`half_extent = distance × tan(fov/2)`. Godot's `Camera3D.fov` is the
+**vertical** angle when `keep_aspect` is KEEP_HEIGHT, which is the default,
+so the horizontal extent is that times the aspect — and every label landed a
+third of a frame from the figure it named. The style board made the same
+mistake in the other axis, putting all six names in a straight line well
+below objects of six different heights.
+
+Both are fixed by asking the camera: `unproject_position` is the only thing
+in the scene that actually knows where something drew.
+
+> A label under the wrong figure is worse than no label. Derive positions
+> from the camera, never from a formula about the camera.
 
 ## Process
 

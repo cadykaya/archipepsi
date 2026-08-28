@@ -45,6 +45,13 @@ GODOT_SOURCES = {
     "TALLEST_ACTOR": "godot/scripts/generation/chamber_builders.gd",
 }
 
+#: Environment ambient is ASSIGNED, not declared `const`, so `_gd_const`
+#: cannot see it. It is still engineering's number and still gets read.
+GODOT_AMBIENT_SOURCES = (
+    "godot/scripts/generation/zone_builder.gd",
+    "godot/scripts/hub/hub.gd",
+)
+
 _CACHE = {}
 
 
@@ -84,6 +91,45 @@ def _gd_const(relpath, name):
         "engine_truth: %s does not define `const %s`. It moved or was "
         "renamed; find its new home rather than typing the number here."
         % (relpath, name))
+
+
+def _gd_assign(relpath, name):
+    """Read `<something>.name = <float>` out of a GDScript file."""
+    path = os.path.join(REPO_ROOT, relpath)
+    needle = ".%s = " % name
+    with open(path, "r", encoding="utf-8") as handle:
+        for line in handle:
+            head, sep, tail = line.strip().partition(needle)
+            if sep and head and " " not in head:
+                return float(tail.split("#")[0].strip())
+    raise RuntimeError(
+        "engine_truth: %s no longer assigns `%s`. It moved or was renamed; "
+        "find its new home rather than typing the number here."
+        % (relpath, name))
+
+
+def lighting():
+    """The brightest irradiance the game can put on one surface.
+
+    A material that has to keep its HUE -- a signal, a core, an eye -- has
+    to survive being lit, and "being lit" is not a number art gets to
+    choose. The engine publishes both halves of it: `light_energy` per
+    theme in `THEME_MATERIALS`, and `ambient_light_energy` on the zone and
+    Hub environments. The worst case is the brightest theme plus the
+    brightest ambient, and it is read, never typed.
+    """
+    if "lighting" not in _CACHE:
+        spec = theme_anchors()
+        _CACHE["lighting"] = {
+            "max_light_energy": max(float(v["light_energy"])
+                                    for v in spec.values()),
+            "max_ambient_energy": max(_gd_assign(path, "ambient_light_energy")
+                                      for path in GODOT_AMBIENT_SOURCES),
+        }
+        _CACHE["lighting"]["max_irradiance"] = (
+            _CACHE["lighting"]["max_light_energy"]
+            + _CACHE["lighting"]["max_ambient_energy"])
+    return _CACHE["lighting"]
 
 
 def godot_dimensions():

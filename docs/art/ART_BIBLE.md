@@ -354,8 +354,31 @@ Batch 001 did this on its first render — including the enemy's eye, which is
 the one cue on the figure and the thing that says which way it is facing.
 
 The rule: **albedo is the family's dark step, emission is its bright step,
-strength ≈ 1.0.** `common.make_signal_material()` is the only sanctioned way
-to build one.
+and the strength is SOLVED, never chosen.**
+`common.make_signal_material()` is the only sanctioned way to build one.
+
+Two corrections Batch 002 paid for, both worth stating as rules:
+
+**Solve against the light, not against nothing.** The first solve balanced
+`albedo + strength × emission` — the *unlit* sum. A lit surface also carries
+`albedo × irradiance`, and `identity[0]` is a green whose albedo alone clips
+its green channel under a facility light. The Epsilon installation's veins
+came out at `(255, 255, 147)`: green pinned, red climbing, the hue walking
+from Epsilon's colour to the **telegraph's**. The solve now reads
+`engine_truth.lighting()` — the brightest `light_energy` in
+`THEME_MATERIALS` plus the brightest `ambient_light_energy` on the engine's
+environments — scales the albedo until its lit share is at most half that
+budget, and solves the strength against the remainder.
+
+**Then measure, because the renderer is not the authored space.** The solve
+bounds what the material *says*; tonemapping and sRGB encoding lift what the
+screen *shows*. A five-bar sweep on the review bench put the clip point
+between saturation 0.40 and 0.60, so cues ship at **0.45**. Fixture lenses
+are the deliberate exception at 1.0: a lamp is allowed to be the brightest
+thing in its own pool.
+
+> A green cue that renders orange inverts the one rule the colour language
+> has. Green says whose this is; orange says what is about to happen.
 
 ---
 
@@ -505,6 +528,34 @@ Simple and graphic, not physical. The game's own rig is the reference:
   at energy 3.0, an ambient of 0.30 and a directional fill, and every wall
   clipped to pure white. The fix was not to darken the palette — it was to
   **sum the light energies before touching anything else.**
+
+### Cold room, warm pools — settled at the Batch 001-R review
+
+The facility direction asks for yellow utility lighting. The 001-R revision
+read that as a colour and turned every ceiling lamp warm; the owner's answer
+was exact:
+
+> Do NOT turn the whole room warm. Warm yellow light should appear as
+> **localized utility pools / fixtures** within a still-cold environment.
+
+So warmth is a **fixture**, not a temperature:
+
+| | General light | Utility pool |
+| --- | --- | --- |
+| Colour | the theme's own `light_color` — cold here | warm amber |
+| Energy | the theme's own — 3.0 in `concrete_facility` | **lower**, ~1.4 |
+| Range | 12, the engine's own — covers the room | **~2.6**, falls off inside it |
+| Height | ceiling | ~2.1 m, at working height |
+| Placement | on the chamber's spacing | wherever somebody needed to see something |
+
+**Range is what makes a pool a pool.** Anything on a range comparable to the
+general light is a second general light no matter what colour it is. And a
+pool must be *dimmer* than the room's own light: a warm pool that out-reads
+the general light inverts the hierarchy, and the room becomes a warm room
+with cold corners — the thing being avoided.
+
+A pool also needs a visible source. `arch_utility_lamp` is that fixture; a
+warm patch with nothing making it is a stain on a wall.
 
 **Standing constraint:** this sandbox can only initialise Godot's
 **Compatibility** renderer. Every screenshot produced here is a *lower

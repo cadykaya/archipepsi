@@ -43,7 +43,7 @@ PORTAL_BOX = (3.6, 1.3, 4.6)
 APERTURE = (2.4, 3.4)
 
 
-def _emissive(name, family="identity", saturation=0.92):
+def _emissive(name, family="identity", saturation=0.45):
     return common.make_signal_material(name, pal.universal(family, 0),
                                        pal.universal(family, 3),
                                        saturation=saturation, roughness=0.35)
@@ -57,6 +57,14 @@ def concept_a_blast():
     at distance, and the one that says most clearly "this was installed
     here", which is what a seam between authored and generated wants.
     """
+    # 0.45, down from the 0.9-plus this was authored at.
+    # `make_signal_material` solves so the AUTHORED sum stays under 1.0; the
+    # renderer then tonemaps and sRGB-encodes on top of that, which lifts
+    # everything. A five-bar sweep through the review bench put the clip
+    # point between 0.40 and 0.60: above it the green channel pins at 255
+    # and the hue walks toward yellow, which is the TELEGRAPH colour. A
+    # green cue that renders orange inverts the rule the whole palette is
+    # built on. See build_epsilon_installation.py for the sweep.
     width, height = APERTURE
     parts = [
         brushkit.frame("cpa_frame", (width + 0.72, height + 0.60), 0.36, 0.72,
@@ -178,9 +186,156 @@ def concept_b_collar():
     return facility, alien, cores
 
 
+def concept_b2_wound():
+    """B-2: THE BREACH, pushed. Batch 002 item 3.
+
+    The 001-R review kept the direction and asked for one thing:
+
+    > Continue pushing the same contrast: human architecture + alien
+    > intrusion.
+
+    B-R had the split as three materials on a broadly symmetric frame. Three
+    things are different here, and each of them is the same idea applied
+    harder:
+
+    **The wall is present.** B-R showed a hole with jambs. You cannot see a
+    breach without seeing what was breached, so B-2 stands in a piece of
+    intact facility wall -- panels, a base course, a bolted architrave, a
+    proper concrete lintel over the opening. The human half is now
+    unmistakably a BUILDING rather than a frame, which is what gives the
+    alien half something to have ruined.
+
+    **The alien half is no longer polite.** In B-R the collar sat around the
+    aperture at an even depth. Here the mass is lopsided: it piles up on one
+    side to over half the aperture's width, crosses the lintel, spills onto
+    the floor, and OCCLUDES part of the opening. A thing that fits neatly
+    around a hole was invited; a thing that covers a third of it was not.
+
+    **The values are inverted against the Epsilon installation, on
+    purpose.** The bank in the Hub is a dark machine with a green intrusion.
+    This is a PALE facility wall with a dark green-black intrusion. Both
+    read the same way -- Epsilon is the thing that does not match -- and
+    the difference is that a wall in this facility is pale and a mainframe
+    left for decades is not. The intrusion never matches; what it fails to
+    match changes.
+
+    Dead-state still holds: with every emissive off, the wall, the ruined
+    opening, the lopsided mass and the spill are all still there.
+    """
+    width, height = APERTURE
+    facility = []
+    # The wall the breach is IN. Two returns either side at full height,
+    # panelled at the architecture pitch, with a base course.
+    for side in (-1.0, 1.0):
+        # 0.24 m out from the aperture edge, not 0.62. PORTAL_BOX caps the
+        # whole object at 3.6 m across -- the narrowest corridor zone.py
+        # permits is 4.0 m and a wider portal clips through its wall -- so
+        # the wall returns are as wide as that budget leaves, which is what
+        # decides how much building is visible either side.
+        facility.append(brushkit.block(
+            "cw_wall_%d" % int(side), (0.62, 0.44, height + 1.05),
+            (side * (width / 2.0 + 0.24), 0.14, (height + 1.05) / 2.0)))
+        facility.append(brushkit.block(
+            "cw_base_%d" % int(side), (0.60, 0.52, 0.30),
+            (side * (width / 2.0 + 0.24), 0.12, 0.15)))
+    # A bolted architrave around the opening: the doorway that used to be
+    # here, and the thing the breach tore through.
+    for side in (-1.0, 1.0):
+        facility.append(brushkit.block(
+            "cw_arch_%d" % int(side), (0.24, 0.30, height + 0.10),
+            (side * (width / 2.0 + 0.12), -0.06, (height + 0.10) / 2.0)))
+    facility.append(brushkit.block("cw_lintel", (width + 0.72, 0.34, 0.34),
+                                   (0.0, -0.06, height + 0.17)))
+    facility.append(brushkit.block("cw_header", (width + 1.16, 0.44, 0.46),
+                                   (0.0, 0.14, height + 0.62)))
+    # Ragged jambs INSIDE the architrave -- the tear itself. Uneven, and
+    # the left side has lost more than the right.
+    steps = ((0.40, 0.0, 1.05, -1.0), (0.22, 1.05, 2.05, -1.0),
+             (0.34, 2.05, 3.10, -1.0), (0.17, 3.10, height, -1.0),
+             (0.26, 0.0, 0.80, 1.0), (0.38, 0.80, 2.20, 1.0),
+             (0.20, 2.20, 3.35, 1.0), (0.31, 3.35, height, 1.0))
+    for i, (thick, z0, z1, side) in enumerate(steps):
+        facility.append(brushkit.block(
+            "cw_jamb_%d" % i, (thick, 0.30, z1 - z0),
+            (side * (width / 2.0 - thick / 2.0 + 0.02), -0.06,
+             (z0 + z1) / 2.0)))
+    facility.append(brushkit.wedge("cw_spall", (width * 0.70, 0.26, 0.30),
+                                   (-0.30, -0.20, height - 0.06), axis="y",
+                                   rotation_z=180.0))
+    # Rubble, weighted to the side the mass came from.
+    for i, (dx, dy, sz, rot) in enumerate(
+            ((-1.60, -0.56, 0.34, 24.0), (-1.16, -0.66, 0.26, -51.0),
+             (-0.74, -0.48, 0.19, 63.0), (1.44, -0.36, 0.17, 12.0),
+             (0.96, -0.60, 0.14, -32.0))):
+        facility.append(brushkit.block("cw_rubble_%d" % i,
+                                       (sz, sz * 0.8, sz * 0.7),
+                                       (dx, dy, sz * 0.35), rotation_z=rot))
+
+    # The alien mass. Everything about it is lopsided.
+    alien = []
+    for i, (z0, z1, w, d, dx) in enumerate((
+            (0.00, 1.15, 0.86, 0.62, -0.10),
+            (1.15, 2.35, 0.66, 0.50, 0.06),
+            (2.35, 3.30, 0.48, 0.42, -0.08),
+            (3.30, height + 0.30, 0.34, 0.34, 0.04))):
+        alien.append(brushkit.block(
+            "cw_mass_%d" % i, (w, d, z1 - z0),
+            (-width / 2.0 + w / 2.0 - 0.06 + dx, -0.34, (z0 + z1) / 2.0)))
+    # It crosses the lintel and comes down the far side, but only part way:
+    # the reach is unequal and that is the whole point.
+    alien.append(brushkit.block("cw_span", (width * 0.86, 0.40, 0.34),
+                                (-0.24, -0.36, height + 0.14)))
+    alien.append(brushkit.block("cw_far", (0.32, 0.36, 1.30),
+                                (width / 2.0 - 0.10, -0.34, height - 0.75)))
+    # Occluding fingers ACROSS the opening. A doorway you have to step
+    # around is a doorway something else owns.
+    for i, (z, ln, ang) in enumerate(((1.05, 1.05, -18.0), (2.42, 0.78, 11.0),
+                                      (3.20, 0.54, -27.0))):
+        f = brushkit.block("cw_finger_%d" % i, (ln, 0.20, 0.18),
+                           (-width / 2.0 + 0.20 + ln / 2.0, -0.40, z))
+        alien.append(brushkit.spin(f, "Y", ang))
+    # Spill onto the floor, out of the opening toward the player.
+    for i, (dx, dy, w, d, h2, rot) in enumerate(
+            # PORTAL_BOX also caps depth at 1.3 m, and a spill that runs
+            # out into the corridor is the first thing to overrun it.
+            ((-1.05, -0.50, 0.70, 0.62, 0.26, 17.0),
+             (-0.42, -0.54, 0.50, 0.54, 0.17, -38.0),
+             (-1.48, -0.50, 0.38, 0.40, 0.13, 54.0))):
+        alien.append(brushkit.block("cw_spill_%d" % i, (w, d, h2),
+                                    (dx, dy, h2 / 2.0), rotation_z=rot))
+    # Spikes driven into the architrave: it is holding on to the building.
+    for i, (sx, z, ln) in enumerate(((-1.0, 1.62, 0.46), (1.0, 2.62, 0.34),
+                                     (-1.0, 3.42, 0.30), (1.0, 1.10, 0.26))):
+        sp = brushkit.block("cw_spike_%d" % i, (ln, 0.14, 0.14),
+                            (sx * (width / 2.0 + 0.16), -0.36, z))
+        alien.append(brushkit.spin(sp, "Y", sx * 16.0))
+
+    # Green ONLY where the two materials touch. Not on the alien mass, not
+    # on the wall: on the join, which is where the story is.
+    cores = []
+    for i, (x, z, w, h2, rz) in enumerate((
+            # Straddling the jamb line, not sitting on the mass: these two
+            # were at +0.34 and +0.26 inside the aperture, which put them
+            # on an alien-to-alien seam and made the claim above false.
+            (-width / 2.0, 1.15, 0.34, 0.09, 0.0),
+            (-width / 2.0, 2.35, 0.28, 0.09, 0.0),
+            (-width / 2.0 - 0.14, 2.05, 0.09, 0.80, 5.0),
+            (width / 2.0 - 0.06, 2.20, 0.09, 0.66, -7.0),
+            (-0.24, height + 0.32, 0.90, 0.10, 0.0))):
+        c = brushkit.block("cw_vein_%d" % i, (w, 0.09, h2), (x, -0.52, z))
+        cores.append(brushkit.spin(c, "Y", rz))
+    return facility, alien, cores
+
+
 CONCEPTS = [
     ("portal_a_blast", concept_a_blast),
     ("portal_b_collar", concept_b_collar),
+]
+
+#: Batch 002 revisions. Separate from CONCEPTS so the 001 outputs stay
+#: byte-identical: nothing the owner has already reviewed is rebuilt here.
+REVISIONS = [
+    ("portal_b2_wound", concept_b2_wound),
 ]
 
 
@@ -189,7 +344,7 @@ def _tex(name, canvas, rough):
         name, canvas.to_blender(name + "_tex"), roughness=rough)
 
 
-def build_one(name, builder):
+def build_one(name, builder, batch="batch001"):
     parts = builder()
     if len(parts) == 2:
         shell_parts, band = parts
@@ -221,8 +376,17 @@ def build_one(name, builder):
     common.assert_fits(obj, name, PORTAL_BOX,
                        "A portal wider than 3.6 m clips the wall of the "
                        "narrowest corridor zone.py permits (4.0 m).")
-    return common.export_glb(obj, "batch001/portal/%s.glb" % name,
+    return common.export_glb(obj, "%s/portal/%s.glb" % (batch, name),
                              "interactable", check_flat=False)
+
+
+def _write(report, batch):
+    out = os.path.join(common.REPO_ROOT, "assets", "models", batch,
+                       "portal", "manifest.json")
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    with open(out, "w", encoding="utf-8") as handle:
+        json.dump(report, handle, indent=2, sort_keys=True)
+        handle.write("\n")
 
 
 def main():
@@ -230,12 +394,11 @@ def main():
     report = {}
     for name, builder in CONCEPTS:
         report[name] = build_one(name, builder)
-    out = os.path.join(common.REPO_ROOT, "assets", "models", "batch001",
-                       "portal", "manifest.json")
-    os.makedirs(os.path.dirname(out), exist_ok=True)
-    with open(out, "w", encoding="utf-8") as handle:
-        json.dump(report, handle, indent=2, sort_keys=True)
-        handle.write("\n")
+    _write(report, "batch001")
+    revised = {}
+    for name, builder in REVISIONS:
+        revised[name] = build_one(name, builder, batch="batch002")
+    _write(revised, "batch002")
 
 
 if __name__ == "__main__":

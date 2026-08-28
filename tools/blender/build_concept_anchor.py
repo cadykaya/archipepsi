@@ -117,13 +117,64 @@ def concept_b_jib():
     return parts, collar, ring
 
 
+def concept_b_wall_jib():
+    """B-W: THE JIB, WALL MOUNTED. Batch 002 item 5.
+
+    The 001-R review kept both anchors and named their jobs:
+
+    > A soffit = ceiling / common. B jib = wall / side / directional
+    > variant.
+
+    B was built ceiling-anchored, which meant the "wall variant" existed
+    only as a sentence. A jib IS a cantilever off a vertical face -- that is
+    what the word means and what the arm's brace is for -- so this is the
+    same arm turned through 90 degrees onto a wall plate, with the brace
+    now doing the job it was always drawn for: taking the arm's moment back
+    into the wall.
+
+    The mechanical difference matters to the player, not just to the model.
+    A ceiling anchor is reached from below and swings in any direction. A
+    wall jib puts the eye OUT from the wall at a chosen height, so the swing
+    it offers has a direction: along the wall, or out across whatever the
+    wall overlooks. That is why the review wanted both kept.
+    """
+    parts = [
+        # The wall plate, in the XZ plane. Y is out from the wall now.
+        brushkit.block("aw_plate", (0.62, 0.14, 0.72), (0.0, 0.07, 0.0)),
+        brushkit.block("aw_arm", (0.20, 1.00, 0.16), (0.0, -0.42, 0.14)),
+        # The brace runs from low on the plate up to the arm: a cantilever
+        # is held by what is UNDER it.
+        brushkit.wedge("aw_brace", (0.16, 0.62, 0.40), (0.0, -0.30, -0.16),
+                       axis="x"),
+        brushkit.block("aw_tip", (0.26, 0.26, 0.28), (0.0, -0.84, 0.06)),
+    ]
+    for sx in (-1.0, 1.0):
+        parts.append(brushkit.block("aw_gusset_%d" % int(sx),
+                                    (0.06, 0.40, 0.24),
+                                    (sx * 0.11, -0.16, 0.08)))
+        parts.append(brushkit.block("aw_stud_%d" % int(sx),
+                                    (0.13, 0.11, 0.13),
+                                    (sx * 0.20, 0.06, -0.26)))
+    collar = brushkit.block("aw_collar", (0.30, 0.06, 0.30),
+                            (0.0, -0.98, 0.06))
+    ring = brushkit.tube("aw_ring", 0.26, 0.17, 0.09, 8, (0.0, -1.06, 0.06),
+                         asset_name="anchor_b_wall")
+    brushkit.spin(ring, "X", 90.0)
+    return parts, collar, ring
+
+
 CONCEPTS = [
     ("anchor_a_soffit", concept_a_soffit),
     ("anchor_b_jib", concept_b_jib),
 ]
 
+#: Batch 002. Kept out of CONCEPTS so nothing the owner has reviewed moves.
+REVISIONS = [
+    ("anchor_b_wall_jib", concept_b_wall_jib),
+]
 
-def build_one(name, builder):
+
+def build_one(name, builder, batch="batch001", anchor="ceiling"):
     parts, collar, ring = builder()
     body = common.join(parts, name + "_body")
     common.uv_project_world(body, propkit.PROP_DENSITY, propkit.PROP_SIZE)
@@ -138,14 +189,14 @@ def build_one(name, builder):
     # Anchored 'ceiling': the plate is at Z 0 and the ring hangs below,
     # so placing the asset at the ceiling height puts it exactly where
     # affordance_features.gd's CEILING_GAP expects it.
-    common.set_origin(obj, "ceiling")
+    common.set_origin(obj, anchor)
     common.assert_fits(obj, name, ANCHOR_BOX,
                        "affordance_features.gd reserves a %.1f x %.1f m "
                        "footprint for a grapple anchor."
                        % (ANCHOR_BOX[0], ANCHOR_BOX[1]))
-    return common.export_glb(obj, "batch001/affordance/%s.glb" % name,
+    return common.export_glb(obj, "%s/affordance/%s.glb" % (batch, name),
                              "interactable", check_flat=False,
-                             anchor="ceiling")
+                             anchor=anchor)
 
 
 def main():
@@ -160,7 +211,28 @@ def main():
         info["plate_below_ceiling_m"] = 0.5
         info["clearance_height_m"] = FOOT["height"]
         report[name] = info
-    out = os.path.join(common.REPO_ROOT, "assets", "models", "batch001",
+    _write(report, "batch001")
+
+    revised = {}
+    for name, builder in REVISIONS:
+        info = build_one(name, builder, batch="batch002", anchor="wall")
+        # The wall jib does NOT hang from a ceiling, and saying so is the
+        # whole point of it existing.
+        info["hangs_from_ceiling"] = False
+        info["mounts_on_wall"] = True
+        # Where a wall jib wants its plate. Not engineering's number:
+        # affordance_features.gd has no wall-mounted anchor, so this is the
+        # art proposal, and ART_FRONTIER carries it as an interface item.
+        # 2.6 m puts the eye a metre above a 1.6 m eyeline, which is a look
+        # UP without being a look straight up.
+        info["proposed_plate_height_m"] = 2.6
+        info["clearance_height_m"] = FOOT["height"]
+        revised[name] = info
+    _write(revised, "batch002")
+
+
+def _write(report, batch):
+    out = os.path.join(common.REPO_ROOT, "assets", "models", batch,
                        "affordance", "manifest.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8") as handle:

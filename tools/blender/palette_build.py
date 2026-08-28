@@ -302,6 +302,10 @@ def build():
         "min_interactable_separation": 0.18,
         "max_families_per_asset": 4,
         "engine_anchors": anchors,
+        # The brightest irradiance the game can put on one surface, read
+        # from engineering. A material that must keep its hue is solved
+        # against this; see `common.make_signal_material`.
+        "lighting": engine_truth.lighting(),
         "universal": {},
         "grime": {
             "means": GRIME["means"],

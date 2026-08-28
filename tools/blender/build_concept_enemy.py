@@ -75,13 +75,21 @@ def _box(kind):
 MELEE, RANGED, BRUTE = _box("melee"), _box("ranged"), _box("brute")
 
 
-def _eye(name, saturation=0.95):
+def _eye(name, saturation=0.45):
     """The one lit cue on the figure, built so its colour survives.
 
     See `common.make_signal_material`: bright albedo plus bright emission
     clipped to white on the first render, and a white eye is a cue that has
     lost the only information it carries.
     """
+    # 0.45, down from the 0.9-plus this was authored at.
+    # `make_signal_material` solves so the AUTHORED sum stays under 1.0; the
+    # renderer then tonemaps and sRGB-encodes on top of that, which lifts
+    # everything. A five-bar sweep through the review bench put the clip
+    # point between 0.40 and 0.60: above it the green channel pins at 255
+    # and the hue walks toward yellow, which is the TELEGRAPH colour. A
+    # green cue that renders orange inverts the rule the whole palette is
+    # built on. See build_epsilon_installation.py for the sweep.
     return common.make_signal_material(name, pal.universal("identity", 0),
                                        pal.universal("identity", 3),
                                        saturation=saturation)

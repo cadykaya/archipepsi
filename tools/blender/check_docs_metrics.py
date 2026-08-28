@@ -33,7 +33,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import engine_truth  # noqa: E402
 
 REPO_ROOT = engine_truth.REPO_ROOT
-MODEL_DIR = os.path.join(REPO_ROOT, "assets", "models", "batch001")
+MODEL_DIR = os.path.join(REPO_ROOT, "assets", "models")
 DOCS = ("docs/art/ART_REVIEW.md", "docs/art/ASSET_INVENTORY.md")
 
 #: `| `asset_id` | 248 | 1.22 × 1.22 × 2.23 | ...`  -- the shape both
@@ -75,14 +75,26 @@ def _id_in(line, built):
 
 
 def manifests():
+    """Every manifest in every batch.
+
+    This walked `batch001` only, and the first batch002 asset it met was
+    reported as "quotes metrics for an asset no manifest contains" -- the
+    checker saying the document was wrong when the checker was the thing
+    that had not moved. A verifier that has to be edited whenever the work
+    grows is a verifier that will one day be edited into agreeing.
+    """
     out = {}
-    for family in sorted(os.listdir(MODEL_DIR)):
-        path = os.path.join(MODEL_DIR, family, "manifest.json")
-        if not os.path.exists(path):
+    for batch in sorted(os.listdir(MODEL_DIR)):
+        batch_dir = os.path.join(MODEL_DIR, batch)
+        if not os.path.isdir(batch_dir):
             continue
-        with open(path, "r", encoding="utf-8") as handle:
-            for asset_id, info in json.load(handle).items():
-                out[asset_id] = info
+        for family in sorted(os.listdir(batch_dir)):
+            path = os.path.join(batch_dir, family, "manifest.json")
+            if not os.path.exists(path):
+                continue
+            with open(path, "r", encoding="utf-8") as handle:
+                for asset_id, info in json.load(handle).items():
+                    out[asset_id] = info
     return out
 
 

@@ -1,0 +1,123 @@
+{
+  "enemy_artillery": {
+    "anchor": "floor",
+    "engine_box": false,
+    "path": "batch002/enemy/enemy_artillery.glb",
+    "proposed_box_m": [
+      1.25,
+      1.25,
+      1.55
+    ],
+    "size": [
+      0.628,
+      0.75,
+      1.518
+    ],
+    "texel_density": null,
+    "triangles": 144
+  },
+  "enemy_beacon": {
+    "anchor": "floor",
+    "engine_box": false,
+    "path": "batch002/enemy/enemy_beacon.glb",
+    "proposed_box_m": [
+      0.62,
+      0.62,
+      2.2
+    ],
+    "size": [
+      0.571,
+      0.613,
+      2.115
+    ],
+    "texel_density": null,
+    "triangles": 152
+  },
+  "enemy_bulwark": {
+    "anchor": "floor",
+    "engine_box": false,
+    "path": "batch002/enemy/enemy_bulwark.glb",
+    "proposed_box_m": [
+      1.45,
+      0.85,
+      2.05
+    ],
+    "size": [
+      1.45,
+      0.835,
+      1.924
+    ],
+    "texel_density": null,
+    "triangles": 280
+  },
+  "enemy_charger": {
+    "anchor": "floor",
+    "engine_box": false,
+    "path": "batch002/enemy/enemy_charger.glb",
+    "proposed_box_m": [
+      0.9,
+      1.9,
+      1.05
+    ],
+    "size": [
+      0.86,
+      1.62,
+      1.026
+    ],
+    "texel_density": null,
+    "triangles": 176
+  },
+  "enemy_diver": {
+    "anchor": "floor",
+    "engine_box": false,
+    "path": "batch002/enemy/enemy_diver.glb",
+    "proposed_box_m": [
+      0.7,
+      1.2,
+      0.5
+    ],
+    "proposed_hover_height_m": 1.9,
+    "size": [
+      0.614,
+      1.046,
+      0.349
+    ],
+    "texel_density": null,
+    "triangles": 84
+  },
+  "enemy_drifter": {
+    "anchor": "floor",
+    "engine_box": false,
+    "path": "batch002/enemy/enemy_drifter.glb",
+    "proposed_box_m": [
+      1.35,
+      1.35,
+      0.95
+    ],
+    "proposed_hover_height_m": 2.55,
+    "size": [
+      1.254,
+      1.24,
+      0.84
+    ],
+    "texel_density": null,
+    "triangles": 208
+  },
+  "enemy_scuttler": {
+    "anchor": "floor",
+    "engine_box": false,
+    "path": "batch002/enemy/enemy_scuttler.glb",
+    "proposed_box_m": [
+      1.3,
+      1.2,
+      0.62
+    ],
+    "size": [
+      1.19,
+      0.59,
+      0.539
+    ],
+    "texel_density": null,
+    "triangles": 212
+  }
+}

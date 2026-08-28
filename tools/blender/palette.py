@@ -130,6 +130,15 @@ def light(name):
     return spec["anchor"], spec["energy"]
 
 
+def lighting():
+    """The lighting budget a hue-critical material has to survive.
+
+    `max_irradiance` is the brightest theme light plus the brightest
+    environment ambient, both read from the engine by `engine_truth`.
+    """
+    return palette()["lighting"]
+
+
 def roughness(name):
     return palette()["themes"][name]["roughness"]
 

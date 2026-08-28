@@ -198,6 +198,13 @@ static func measured_height_px(image: Image) -> int:
 		return 0
 	return bottom - top + 1
 
+## The width `label` will consume, in pixels. Every glyph advances 8 -- 3
+## columns drawn at 2x, plus a 2px gap -- so a caller that needs to CENTRE a
+## label can ask instead of assuming.
+static func text_width(text: String) -> int:
+	return text.length() * 8
+
+
 static func label(image: Image, text: String, at: Vector2i,
 		colour: Color) -> void:
 	## 3x5 stencil, drawn 2x, matching tools/blender/paintkit.py's alphabet so

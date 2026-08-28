@@ -162,20 +162,92 @@ func _initialize() -> void:
 		node.queue_free()
 		await process_frame
 
-	# The warm-light proposal, same room, same camera, relit.
+	# The rejected 001-R proposal, kept for the comparison and labelled as
+	# rejected. Every ceiling lamp turns warm and the whole room goes with
+	# it. Nothing is deleted here: the owner asked to see the difference,
+	# not to have the alternative disappear.
 	warm = true
 	for child in root.get_children():
-		if child is OmniLight3D:
+		if child is OmniLight3D and child.name.begins_with("Lamp"):
 			child.light_color = _light_colour()
 	cam.look_at_from_position(Vector3(0.0, 1.6, -ROOM_D * 0.5 + 1.2),
 			Vector3(0.6, 1.5, ROOM_D * 0.5 - 2.0), Vector3.UP)
 	var warm_shot: Image = await _grab(vp)
-	ArtBench.label(warm_shot, "PROPOSED WARM LIGHT - NOT ENGINE TRUTH",
-			Vector2i(12, 12), Color(1.0, 0.83, 0.36))
-	warm_shot.save_png(_out + "/I_room_warmlight_proposal.png")
+	ArtBench.label(warm_shot, "REJECTED 001-R - WHOLE ROOM WARMED",
+			Vector2i(12, 12), Color(1.0, 0.55, 0.36))
+	warm_shot.save_png(_out + "/I_room_warmlight_rejected.png")
 	warm = false
+	for child in root.get_children():
+		if child is OmniLight3D and child.name.begins_with("Lamp"):
+			child.light_color = _light_colour()
 
-	print("[room] wrote 7 captures to %s" % _out)
+	# The 002 revision: the room stays cold and the warm light is LOCAL.
+	_place_utility_pools(root)
+	cam.look_at_from_position(Vector3(0.0, 1.6, -ROOM_D * 0.5 + 1.2),
+			Vector3(0.6, 1.5, ROOM_D * 0.5 - 2.0), Vector3.UP)
+	var pools: Image = await _grab(vp)
+	ArtBench.label(pools, "COLD ROOM - LOCAL WARM UTILITY POOLS",
+			Vector2i(12, 12), Color(1.0, 0.83, 0.36))
+	pools.save_png(_out + "/I_room_utility_pools.png")
+
+	# And the same thing in greyscale, because the claim being made is about
+	# COLOUR temperature: if the pools only exist as brightness the revision
+	# has not done what the review asked for.
+	var pgrey := Image.create(pools.get_width(), pools.get_height(), false,
+			Image.FORMAT_RGB8)
+	for y in pools.get_height():
+		for x in pools.get_width():
+			var c := pools.get_pixel(x, y)
+			var v: float = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
+			pgrey.set_pixel(x, y, Color(v, v, v))
+	ArtBench.label(pgrey, "UTILITY POOLS - GREYSCALE", Vector2i(12, 12),
+			Color(1, 1, 1))
+	pgrey.save_png(_out + "/I_room_utility_pools_greyscale.png")
+
+	# Standing in one of the pools, which is the only place the warmth is
+	# supposed to be visible on the player's own hands.
+	cam.look_at_from_position(Vector3(-1.6, 1.6, 1.4),
+			Vector3(-half_w_prop(), 1.9, -1.4), Vector3.UP)
+	var inpool: Image = await _grab(vp)
+	ArtBench.label(inpool, "INSIDE ONE POOL", Vector2i(12, 12),
+			Color(1.0, 0.83, 0.36))
+	inpool.save_png(_out + "/I_room_utility_pool_near.png")
+
+	# The Epsilon installation IN A ROOM. Batch 002 item 1 asked for
+	# "context in a Hub-like room if practical", and it is the shot the
+	# object most needs: 8.8 m of machine reads completely differently
+	# against a 12 m wall than it does on a turntable. This room is not the
+	# Hub -- the Hub is 22 x 16 x 5 m and this is 12 x 12 x 4 -- so the
+	# installation is proportionally BIGGER here than it will be there,
+	# and the caption says so rather than letting the shot flatter it.
+	var eps: Node3D = ArtBench.load_glb(
+			"%s/models/batch002/epsilon/epsilon_installation.glb" % _assets)
+	if eps != null:
+		ArtBench.force_nearest(eps)
+		# Against the far wall, floor-anchored, facing the doorway.
+		# 2.61 m deep, and the wall's inner face is half the room minus the
+		# 0.2 m the modules are thick -- so at 0.95 m off the wall centre it
+		# was standing 0.55 m INSIDE the wall.
+		eps.position = Vector3(0.0, 0.0, ROOM_D * 0.5 - 1.55)
+		eps.rotation_degrees = Vector3(0, 180, 0)
+		root.add_child(eps)
+		cam.look_at_from_position(Vector3(0.0, 1.6, -ROOM_D * 0.5 + 1.2),
+				Vector3(0.0, 1.5, ROOM_D * 0.5), Vector3.UP)
+		var ctx: Image = await _grab(vp)
+		ArtBench.label(ctx, "EPSILON INSTALLATION IN A 12 M ROOM",
+				Vector2i(12, 12), Color(1.0, 0.83, 0.36))
+		ArtBench.label(ctx, "THE HUB IS 22 X 16 X 5 M - IT WILL READ SMALLER THERE",
+				Vector2i(12, 34), Color(0.45, 0.72, 0.68))
+		ctx.save_png(_out + "/A_epsilon_in_room.png")
+		# And from across the room, which is where you first see it.
+		cam.look_at_from_position(Vector3(-3.8, 1.6, -1.6),
+				Vector3(0.4, 1.6, ROOM_D * 0.5 - 1.0), Vector3.UP)
+		var ctx2: Image = await _grab(vp)
+		ArtBench.label(ctx2, "SAME INSTALLATION, ACROSS THE ROOM",
+				Vector2i(12, 12), Color(1.0, 0.83, 0.36))
+		ctx2.save_png(_out + "/A_epsilon_in_room_oblique.png")
+
+	print("[room] wrote 12 captures to %s" % _out)
 	quit()
 
 func _grab(vp: SubViewport) -> Image:
@@ -365,3 +437,57 @@ func _place_lights(root: Node3D) -> void:
 	# No directional fill. The game does not have one, and adding one here
 	# would make the bench flatter and prettier than the thing it is
 	# reviewing -- which is the definition of a camera that lies.
+
+
+## The 002 lighting revision, in one rule: **the room does not get warmer,
+## parts of it do.**
+##
+## 001-R read "yellow utility lighting" as a global colour and turned every
+## ceiling lamp warm, and the review's answer was exact: "Do NOT turn the
+## whole room warm... Warm yellow light should appear as localized utility
+## pools / fixtures within a still-cold environment."
+##
+## So the ceiling stays on the engine's own `#eaf2ff` and sets the room's
+## temperature, and the warmth arrives as small fixtures at working height
+## with a SHORT range. Range is what makes a pool a pool: at `omni_range`
+## 12 the two ceiling lamps already cover the whole room, so anything on a
+## comparable range is a second general light no matter what colour it is.
+## These run at 2.6 m, which puts their falloff inside the room, and they
+## sit low -- 2.1 m, under the 3.6 m corridor height -- so the light lands
+## on the floor and the lower wall instead of washing the ceiling.
+##
+## They are also DIMMER than the ceiling, not brighter. A warm pool that
+## out-reads the general light inverts the hierarchy and the room becomes a
+## warm room with cold corners, which is the thing being avoided.
+const POOL_COLOUR := Color(1.0, 0.784, 0.451)
+const POOL_ENERGY := 1.4
+const POOL_RANGE := 2.6
+const POOL_HEIGHT := 2.1
+
+func _place_utility_pools(root: Node3D) -> void:
+	# Three, on the walls, unevenly spaced. Utility lighting is installed
+	# where somebody needed to see something -- a panel, a door, a work
+	# surface -- not on a grid, and an even spacing would read as the
+	# room's general lighting scheme rather than as additions to it.
+	var w := half_w_prop()
+	for spec in [
+			Vector3(-w, POOL_HEIGHT, -1.4),
+			Vector3(w, POOL_HEIGHT, 2.6),
+			Vector3(-w, POOL_HEIGHT, 4.4)]:
+		# The fixture first. A warm pool with no visible source is a stain.
+		# `wall` anchored, so it sits ON the wall plane it is given and
+		# faces -Z; the left wall needs it turned to face into the room.
+		var yaw := 90.0 if spec.x < 0.0 else -90.0
+		_add(root, "batch002/architecture/arch_utility_lamp.glb", spec, yaw)
+		var lamp := OmniLight3D.new()
+		# The light itself sits just off the wall, in front of the lens,
+		# not inside the housing -- a light at the fixture's own origin is
+		# half swallowed by its backplate.
+		lamp.position = spec + Vector3(0.45 if spec.x < 0.0 else -0.45,
+				-0.12, 0.0)
+		lamp.light_energy = POOL_ENERGY
+		lamp.light_color = POOL_COLOUR
+		lamp.omni_range = POOL_RANGE
+		lamp.shadow_enabled = false
+		lamp.name = "Pool%d" % root.get_child_count()
+		root.add_child(lamp)

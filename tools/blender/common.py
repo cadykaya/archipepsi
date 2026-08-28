@@ -133,26 +133,56 @@ def make_signal_material(name, dark_hex, bright_hex, saturation=0.92,
     was happy with, because a hand-picked strength is a guess about a sum
     nobody computed.
 
-    So `saturation` SOLVES for the strength instead. At 1.0 the brightest
-    channel of `albedo + strength * emission` lands exactly at 1.0; below
-    that it stays under, and the hue is whatever the two colours make. No
-    magic numbers, and the same call is correct for a 5 cm eye slit and a
-    half-metre core.
+    So `saturation` SOLVED for the strength instead: at 1.0 the brightest
+    channel of `albedo + strength * emission` lands exactly at 1.0. That
+    still rendered the Epsilon installation's veins as YELLOW BARS, and the
+    reason is the third and last one: **that sum is the unlit sum.** The
+    surface is also lit, and `albedo * irradiance` is the term the solve
+    left out. `identity` is a green whose albedo alone clips its green
+    channel under a facility light, so green had nowhere left to go, every
+    photon of emission went into red, and the hue walked to yellow-white --
+    which in this palette is the telegraph colour. Green says whose this is
+    and orange says what is about to happen; a green that renders orange
+    inverts the one rule the colour language has.
+
+    So the solve now budgets for the light as well, and the light is not a
+    number art gets to choose: `engine_truth.lighting()` reads the
+    brightest `light_energy` in `THEME_MATERIALS` and the brightest
+    `ambient_light_energy` on the engine's environments. Under that
+    irradiance:
+
+    * the albedo is SCALED DOWN until its lit contribution is at most half
+      the budget -- the glow has to be the majority of the surface, or the
+      thing is a painted panel that happens to be near a lamp; and
+    * the strength is then solved against what is left.
+
+    The hue is still the caller's palette colour: scaling darkens the
+    albedo without moving it off its hue, so the unlit read is a near-black
+    tint of the family and the lit read is the family's brightest step.
     """
     dark = pal.rgb(dark_hex)
     bright = pal.rgb(bright_hex)
-    # Solve per channel for where albedo + s*emission reaches 1.0, and take
-    # the tightest -- that is the channel that would clip first and turn the
-    # colour white.
+    lit = pal.lighting()["max_irradiance"]
+
+    # 1. The albedo may spend at most half the budget once lit. This is not
+    #    a taste number: at more than half, `albedo * light` outweighs the
+    #    emission and the surface reads as lit-from-outside.
+    worst = max(d * lit for d in dark)
+    scale = min(1.0, 0.5 / worst) if worst > 1e-6 else 1.0
+    albedo = tuple(d * scale for d in dark)
+
+    # 2. Solve per channel for where `albedo * light + s * emission` reaches
+    #    1.0, and take the tightest -- that is the channel that would clip
+    #    first and turn the colour white.
     headroom = min(
-        ((1.0 - d) / b) if b > 1e-6 else 1e6
-        for d, b in zip(dark, bright))
+        ((1.0 - a * lit) / b) if b > 1e-6 else 1e6
+        for a, b in zip(albedo, bright))
     strength = max(0.05, headroom * saturation)
 
     mat = bpy.data.materials.new(name)
     mat.use_nodes = True
     bsdf = mat.node_tree.nodes["Principled BSDF"]
-    bsdf.inputs["Base Color"].default_value = pal.rgba(dark_hex)
+    bsdf.inputs["Base Color"].default_value = tuple(albedo) + (1.0,)
     bsdf.inputs["Roughness"].default_value = roughness
     bsdf.inputs["Metallic"].default_value = 0.0
     bsdf.inputs["Emission Color"].default_value = pal.rgba(bright_hex)

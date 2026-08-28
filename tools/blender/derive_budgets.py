@@ -423,6 +423,16 @@ def main():
             ],
         }
         payload.update(values)
+        # The engine dimensions the budgets stand on, carried through so the
+        # GODOT-side review benches can read them too. Nothing in
+        # tools/artpreview/ can import engine_truth.py, and a bench that
+        # retypes a corridor height is a bench that will still be showing
+        # 3.6 m after the game moves to 3.8.
+        payload["dimensions"] = {
+            key: value
+            for key, value in sorted(engine_truth.dimensions().items())
+            if isinstance(value, (int, float))
+        }
         with open(BUDGETS_PATH, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, indent=2)
             handle.write("\n")
