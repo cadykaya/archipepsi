@@ -227,11 +227,19 @@ def _spindle(state, radius, height, mid, waist=0.46):
 def state_locked():
     """Nothing is here yet. An empty cradle in an empty cage.
 
-    reward.gd paints locked at emission energy 0.4 -- dim, not dark -- so
-    the plate keeps a faint `dead` glow rather than going matte. A Check
-    that is unlit at range is a Check the player does not know exists.
+    NOT an emitter, and that is measured rather than assumed. Run through
+    `make_signal_material` at saturation 0.22 the cradle rendered
+    (114, 120, 131) against a mast head of (68, 82, 101) -- the deadest
+    thing on the object came out the BRIGHTEST, because that function's job
+    is to make a glow survive being lit and it does that job at every
+    saturation. `dead` states get albedo and nothing else.
+
+    The "a Check must be visible at range" worry is answered by the mast,
+    not the item: `hero_shell` paints a full-width `signal` band that is lit
+    in all four states. The band says *there is a Check here*; the item says
+    *which state*. Those were always two questions.
     """
-    return [_cradle("locked")], "dead", 0, 2, 0.22
+    return [_cradle("locked")], "dead", 0, None, 0.0
 
 
 def state_available():
@@ -271,18 +279,72 @@ def state_sending():
     return parts, "send", 0, 3, 0.92
 
 
-def state_confirmed():
-    """It was here and it is spent. A husk in the cradle.
+#: How far the collapsed husk spreads over the hood. The mast's hood is
+#: 0.64 m across, so 0.88 overhangs it by 120 mm a side -- and that is the
+#: number the whole revision turns on: it takes the HEAD's silhouette from
+#: 10 px to 14 px at 39.6 m. Inside the cage there are only 5 px of height
+#: to work with; outside it there is width, and width survives distance.
+POOL_R = 0.42
 
-    This is the state that has to be distinguishable from `locked` at the
-    same distance, and hue cannot do it -- both are `dead`. Form does:
-    locked is an EMPTY cradle, confirmed is a cradle with something small
-    and dark sitting in it. reward.gd's own energies agree, 0.4 against
-    0.2, so the husk is the dimmer of the two.
+
+def state_confirmed():
+    """It was here and it is spent. The husk has collapsed out of the cage.
+
+    ## 005-R: why this state got wider
+
+    The owner's Batch 005 verdict passed the four-state vocabulary and
+    required one targeted fix. The 39.6 m sheet had found that **locked and
+    confirmed do not separate at distance** -- both are `dead`, both are a
+    small dark thing in a cage -- and the instruction ruled out the easy
+    answers:
+
+    > Do NOT solve this solely by leaning on destination-ring brightness.
+    > The MAST / HEAD ITSELF needs one additional non-hue state cue.
+    > ... floor rings can be partially occluded ... brightness is weaker
+    > than shape ... state recognition should not require colour
+    > perception.
+
+    The first attempt put a shutter inside the cage, and measuring it is
+    what killed it: at 39.6 m the cage interior is **5 px tall**, so every
+    cue that lives inside it is fighting for five pixels. Filling it moved
+    the cage's background fraction from 58% to 48% -- real, and not enough
+    to bet a state read on.
+
+    So the cue moved OUTSIDE the cage, which is the owner's fourth option:
+
+    > the spent husk occupies a deliberately larger / different
+    > negative-space pattern
+
+    The husk has slumped out of its cradle and pooled across the hood,
+    0.88 m against the head's 0.64. The head's silhouette goes from 10 px
+    wide to 14, and a 40% width change is legible where five pixels of
+    interior are not. What is left inside the cage is a stub.
+
+    It also says the right thing. Locked is a Check that has not happened
+    yet: an empty cradle in an open cage. Confirmed is one that has: the
+    thing in it has come apart and run out over the housing. Same family,
+    same mast, same word the owner approved -- *a spent dark husk* -- and
+    now unmistakably spent.
+
+    Every part is rotationally symmetric, which is not decoration either:
+    `reward.gd` spins `ItemVisual` only while locked or available and never
+    resets the angle, so a confirmed item with a front would be left facing
+    wherever the spin happened to stop.
     """
     parts = [_cradle("confirmed")]
-    parts += _spindle("confirmed", CAGE_CLEAR_R * 0.62, 0.16, ITEM_MID)
-    return parts, "dead", 0, 1, 0.14
+    # A mass that has swelled to fill the cage and overflow it. Each stage
+    # is wider than the uprights' nearest corner at 0.240, so the cage is
+    # SWALLOWED rather than filled -- which is the point: locked is an open
+    # lantern you can see daylight through, confirmed is a solid lump.
+    for name, r_lo, r_hi, z0, z1 in (
+            ("pool", POOL_R, POOL_R * 0.86, 1.730, 1.880),
+            ("body", POOL_R * 0.86, POOL_R * 0.70, 1.880, 2.020),
+            ("crown", POOL_R * 0.70, POOL_R * 0.42, 2.020, 2.080)):
+        parts.append(brushkit.prism(
+            "chk_confirmed_%s" % name, r_lo, z1 - z0, 8,
+            (0.0, 0.0, (z0 + z1) / 2.0), top_radius=r_hi,
+            asset_name="check_item_confirmed"))
+    return parts, "dead", 0, None, 0.0
 
 
 STATES = [
@@ -296,9 +358,16 @@ STATES = [
 def build_state(state, builder):
     parts, family, dark, bright, saturation = builder()
     obj = common.join(parts, "check_item_%s" % state)
-    common.assign(obj, common.make_signal_material(
-        "check_item_%s" % state, pal.universal(family, dark),
-        pal.universal(family, bright), saturation=saturation))
+    name = "check_item_%s" % state
+    if bright is None:
+        # A dead state is dead metal, not a dim lamp. See `state_locked`.
+        material = common.make_material(name, pal.universal(family, dark),
+                                        roughness=0.6)
+    else:
+        material = common.make_signal_material(
+            name, pal.universal(family, dark), pal.universal(family, bright),
+            saturation=saturation)
+    common.assign(obj, material)
     # module_floor, not floor: the item's HEIGHT inside the cage is what it
     # is. Re-basing it to its own lowest point is what would drop it on the
     # ground -- the same failure that put a pipe run on the floor in Batch

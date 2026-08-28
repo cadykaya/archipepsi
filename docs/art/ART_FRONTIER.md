@@ -53,7 +53,7 @@ with the approved authored vocabulary come first.
 | # | Tier | State |
 | --- | --- | --- |
 | 1 | Hub / permanent spaces, and the Epsilon installation | **done for now** — installation locked, Batch 003 built the Hub's eight fixtures and modules, Batch 004 the Lab's seven. Shells themselves remain `hub.gd` / `echo_lab.gd` geometry |
-| 2 | Core interactables | **in progress** — Batch 005 produced the Check as seven files along `reward.gd`'s own node boundaries, including its four states. The portal, `door_standard`, `objective_marker` and `signage_module` remain |
+| 2 | Core interactables | **nearly done** — Batch 005/005-R produced the Check and its four states, Batch 006 the portal's two core states and `door_standard`. What remains is `objective_marker` and `signage_module`, and both are a navigation **language** rather than a fixture — surfaced, not chosen |
 | 3 | Common architecture | 9 modules exist; the kit is not complete |
 | 4 | The enemy production family | 10 roles concepted; production versions to build |
 | 5 | Movement affordances | 2 of 7 fixtures exist |
@@ -81,9 +81,9 @@ line rather than inventing work.
 | | |
 | --- | --- |
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
-| Phase | **STYLE LOCK PASSED — production.** Every style batch is reviewed and every verdict recorded in `ART_REVIEW.md`; there are no open `PENDING` entries. |
+| Phase | **STYLE LOCK PASSED — production.** Batch 004 is `PASS`. Batch 005 is `PASS IN DIRECTION` with one required revision, delivered as 005-R. Batches 005-R and 006 are `PENDING`. |
 | Owner review | Style Lock passed 2026-08-28. Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
-| Next action | **Tier 2, continued: the portal.** The Check is produced (Batch 005). `exit_portal.gd` names a `Core` with locked / unlocked states and a remaining-Checks count, and `portal_b2_wound` is still a review model. Then `door_standard` (2.4 × 3.2 m), which every Zone uses. |
+| Next action | **Tier 3: complete the architecture kit** (`ASSET_INVENTORY.md` §6). Tier 2's remaining two rows need an owner decision on a navigation sign language, so they are surfaced and skipped rather than invented. Batch 005-R and Batch 006 are with the owner. |
 
 ### What the Batch 002 review LOCKED
 
@@ -139,9 +139,9 @@ grow again until Style Lock passes.
 | `python3 tools/blender/palette.py` | PASS |
 | `python3 tools/blender/check_docs_metrics.py` | PASS — every number in ART_REVIEW.md and ASSET_INVENTORY.md matches the build |
 | `tools/sabotage_checks.sh` | see the commit for the run |
-| `python3 tools/blender/sync_inventory.py` | 62 assets written |
+| `python3 tools/blender/sync_inventory.py` | 65 assets written |
 | `tools/check_art_current.sh` | PASS — every asset byte-identical from source |
-| Assets built | 62 models + 16 theme textures + 7 prop skins + review images in `review/batch001` … `batch005` |
+| Assets built | 65 models + 16 theme textures + 7 prop skins + review images in `review/batch001` … `batch006` |
 | Composed room | 3,272 / 12,000 triangles |
 
 ### What a heartbeat cannot see
@@ -161,7 +161,14 @@ should say it cannot rather than guess.
 
 ## Where the review images are
 
-**[`docs/art/review/batch005/`](review/batch005/)** — the current batch
+**[`docs/art/review/batch005r/`](review/batch005r/)** · **[`batch006/`](review/batch006/)** — with the owner now
+
+`batch005r/` is the one required Batch 005 revision: locked against
+confirmed at 39.6 m, measured. Start at `R_state_family_far_inset.png`.
+`batch006/` is the portal's two core states and the standard door; start at
+`P_portal_states.png`.
+
+**[`docs/art/review/batch005/`](review/batch005/)** — the Check, in full
 
 | Prefix | What |
 | --- | --- |
@@ -220,7 +227,8 @@ the pieces make a place, which is the question the other 31 sheets cannot.
 B=.tools/blender/blender
 for s in materials architecture props concept_epsilon concept_check \
          concept_portal concept_enemy concept_anchor \
-         batch002_enemies epsilon_installation hub lab check; do
+         batch002_enemies epsilon_installation hub lab check \
+         ways_out; do
   $B -b --python tools/blender/build_$s.py
 done
 tools/batch001_sheets.sh      # ~12 min: 28 sheets
@@ -228,6 +236,8 @@ tools/composed_room.sh        # ~2 min: 12 room captures, incl. Epsilon in conte
 tools/shoot.sh <list.json>    # ANY shot, from a JSON list. Start here.
                               #   tools/shots/batch004_lab.json
                               #   tools/shots/batch005_check.json
+                              #   tools/shots/batch005r_check.json
+                              #   tools/shots/batch006_ways_out.json
 tools/pixel_inset.py          # a region of a render, magnified NEAREST
 tools/hub_room.sh             # the Hub, built out of authored assets
 tools/epsilon_views.sh        # the operator / oblique / fusion / value views
@@ -261,6 +271,7 @@ them; each is a thing the art lane will need when contracts settle.
 | 8 | **A wall-mounted grapple anchor.** `affordance_features.gd` only knows the ceiling case. `anchor_b_wall_jib` proposes a 2.6 m plate height. | The directional variant the 001-R review asked to keep cannot be placed without it. | `anchor_b_wall_jib` |
 | 10 | **A decision on how `reward.gd` shows the Check's state, and two small consequences of it.** Batch 005 authors state as four meshes rather than one repainted one, because state is a closed set of four and a `material_override` replaces the authored surface. Either integration works. Whichever is chosen: `ItemVisual.position` becomes `Vector3.ZERO` — the item is authored at its true height inside the mast's cage, so the engine must not re-place it — and the ±0.12 m bob must go, because the cage interior is 0.37 m and the item fills 0.31 of it. The spin is fine: every part is rotationally symmetric on purpose. | A mesh swap keeps the authored surface in all four states and gives state a FORM channel as well as a hue one. An override keeps one mesh and loses both. | nothing — `check_item_available` works either way |
 | 11 | **The destination ring is load-bearing for the Check's state read at distance, and nothing said so.** At 39.6 m the item is 4 px and locked and confirmed do not separate — `K_state_family_far_inset.png` is the evidence. They separate in the running game only because `reward.gd` drops the ring to 0.35 emission energy when locked and leaves it at 1.5 otherwise, which is 26 px of channel. Also: the ring is 1.90 m across against a 1.4 m collider, so it overhangs by 240 mm a side and a Check cannot sit flush to a wall. | If the ring's locked dimming is ever removed or repurposed, locked and confirmed become the same object across a room, and no test would catch it. | placement of every Check |
+| 12 | **`exit_portal.gd`'s `Core` is placed for a solid box frame, not an authored one.** It is a 2.4 × 3.4 mesh at `y 1.9`, so it spans 0.2 to 3.6 — invisible inside a 4.2 m `BoxMesh` `Frame`, and wrong inside an authored frame whose aperture is a real hole from the floor to a 3.4 m lintel. The authored cores are built at true height and anchored `module_floor`, so `Core.position` becomes `Vector3.ZERO`. Same contract as `check_item_*`. Also: the remaining-Checks count stays engineering's `StateLabel` — it is an unbounded integer, and a pip row that saturated at eight would be lying at nine. | A core placed 200 mm high leaves a gap at the threshold and pokes through the lintel. | `portal_core_*` |
 | 5 | **A larger footprint, or an L2 placement path, for composed clusters.** `PROP_FOOTPRINT` is 1.4 m. | Right for L0, too small for an L2 station or storytelling cluster. | `cluster_*` |
 | 6 | **`challenge_marker` world semantics** (`AGENT_FRONTIER.md` still lists this open). | Its visual cannot be specified until its meaning is. | `local_reward_pickup` |
 

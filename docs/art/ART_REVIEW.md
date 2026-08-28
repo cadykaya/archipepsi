@@ -851,7 +851,23 @@ Shot with the new camera rig from `tools/shots/batch004_lab.json`: `L_*.png`,
 50 mm at three-quarter for the objects, 35 mm square-on for the two
 graduated fixtures — what they are FOR is being read straight.
 
-Status: **PENDING** — production work inheriting locked DNA.
+### Status: PASS — the owner's verdict, recorded 2026-08-28
+
+> The full Batch 004 Echo Lab furniture set is approved. The important
+> thing here is that it reads as FACILITY TEST EQUIPMENT rather than
+> enemies, rewards, or generic sci-fi props.
+
+Kept by name, and not reopened: the height-marker wall language, the
+runway / distance measurement language, the hazard-orange crate as the
+deliberate hazard telegraph, the symmetric non-enemy dummy, the moving
+target's test-fixture identity, the reset pad, the notice-board housing.
+
+And one rule restated as a rule rather than an observation:
+
+> Keep orange rare and semantically tied to hazard / warning rather than
+> letting it become general decoration.
+
+Routine production may continue from this language.
 
 ---
 
@@ -879,7 +895,7 @@ out of that file.
 | `check_item_locked` | 28 | 0.26 × 0.26 × 0.04 | module_floor |
 | `check_item_available` | 84 | 0.28 × 0.28 × 0.28 | module_floor |
 | `check_item_sending` | 112 | 0.26 × 0.26 × 0.31 | module_floor |
-| `check_item_confirmed` | 84 | 0.26 × 0.26 × 0.25 | module_floor |
+| `check_item_confirmed` | 112 | 0.78 × 0.78 × 0.35 | module_floor |
 | `check_destination_ring` | 160 | 1.90 × 1.90 × 0.12 | module_floor |
 | `check_send_beam` | 28 | 0.74 × 0.74 × 40.00 | module_floor |
 
@@ -911,7 +927,7 @@ present in all four because it is the fixture — plus what sits in it.
 | locked | nothing. An empty cradle | `dead` | 0.4 |
 | available | the full spindle, the largest lit area of the four | `signal` | 1.8 |
 | sending | the spindle stretched into a column toward the cap | `send` | 1.2 |
-| confirmed | a small dark husk in the cradle | `dead` | 0.2 |
+| confirmed | a husk that has collapsed and engulfed the cage (005-R) | `dead` | 0.2 |
 
 So four silhouettes, not four hues: `K_item_family_silhouette.png` is the
 sheet that proves it. Locked and confirmed share the `dead` family on
@@ -979,6 +995,188 @@ Shot from `tools/shots/batch005_check.json`.
 | `K_item_family*.png` | the four items alone, lit / grey / silhouette |
 | `K_destination_ring.png` · `K_send_beam.png` | the two the engine tints |
 
-Status: **PENDING** — production work inheriting locked DNA. The state
-language (empty cradle → bright spindle → stretched column → dark husk) is
-the one judgement call in the batch and is yours to confirm or redirect.
+### Status: PASS IN DIRECTION, with one required revision — 2026-08-28
+
+Approved and not reopened: mast proportions, the interaction face, the
+cage/head, the destination ring, the structural base collar, the item
+presentation, the send beam, the overall Archipelago identity, and its
+separation from Epsilon green.
+
+The four-state vocabulary is approved and is to be kept as written:
+
+| State | What it is |
+| --- | --- |
+| locked | empty cradle |
+| available | bright solid item |
+| sending | vertically stretched / transmitting item |
+| confirmed | spent dark husk |
+
+The base collar question is settled too:
+
+> The old concept collar represented SEND because it was doing the job now
+> owned by the much larger engine destination ring. Now that the
+> destination ring is a separate real runtime component, the collar
+> becoming structural is sensible.
+
+One thing was required before the batch is a full `PASS`, and it is what
+the 39.6 m sheet was built to find:
+
+> LOCKED and CONFIRMED do not separate strongly enough at ~39.6 m.
+> Do NOT solve this solely by leaning on destination-ring brightness.
+> The MAST / HEAD ITSELF needs one additional non-hue state cue.
+
+with the reasons given: floor rings can be occluded, distance flattens
+intensity differences, brightness is weaker than shape, and state
+recognition must not require colour perception. See **Batch 005-R** below.
+
+---
+
+## Batch 005-R — the targeted revision. PENDING.
+
+One change, in one file, to one state. Nothing else in Batch 005 was
+touched: the mast is the same 288-triangle mesh, the ring and the beam are
+untouched, and locked, available and sending are what you approved.
+
+### What the measurement said, and why the first attempt was thrown away
+
+The instruction ruled out the ring and ruled out hue, so the cue had to be
+form on the head itself. The first attempt put a **shutter inside the
+cage** — a heavy disc that descends the uprights and rests on the husk.
+It is a good object and it does not work, for a reason that only shows up
+in a number:
+
+> At 39.6 m the mast's cage interior is **5 pixels tall**.
+
+Filling those five pixels moved the cage box from 58% background to 48%.
+Real, and nowhere near enough to hang a state read on. So the cue moved
+**outside** the cage, which is the fourth option in your list:
+
+> the spent husk occupies a deliberately larger / different negative-space
+> pattern
+
+The husk has collapsed. It has swelled out of its cradle, swallowed the
+cage uprights and overflowed the hood — 0.78 m across against the head's
+0.64 — so the head goes from *an open lantern you can see daylight
+through* to *a solid lump*.
+
+### Measured at 39.6 m, on the engine's own lens, at 1080p
+
+Background fraction inside the cage band — the five pixels the cage
+interior occupies. Lower is more solid:
+
+| State | Head width | Background in the cage band |
+| --- | --- | --- |
+| locked | 10 px | **43%** |
+| available | 10 px | 44% |
+| sending | 10 px | 49% |
+| confirmed | 11 px | **16%** |
+
+The three unspent states cluster within six points of each other; confirmed
+sits 27 points clear of locked. That is a luminance-and-occupancy cue: no
+hue, no floor ring, no text, and it holds from any angle because every part
+of the item is rotationally symmetric.
+
+Rotational symmetry is also not decoration. `reward.gd` spins `ItemVisual`
+only while locked or available and never resets the angle, so a confirmed
+item with a front would be left facing wherever the spin happened to stop.
+
+### What it says, which matters as much as whether it reads
+
+Locked is a Check that has not happened yet: an empty cradle in an open
+cage. Confirmed is one that has: the thing in it came apart and ran out
+over the housing. Same family, same mast, same word — *a spent dark husk* —
+and now unmistakably spent.
+
+### One more thing the revision fixed, found by measuring
+
+The `dead` states were built with `make_signal_material`, and that function
+makes a glow survive being lit — at **every** saturation. Measured against
+the mast head at (68, 82, 101), the locked cradle rendered (114, 120, 131)
+and the confirmed husk (102, 109, 121). **The deadest things on the object
+were the brightest.** Both now get albedo and no emission at all, and
+`reward.gd`'s own 0.4 / 0.2 energies can add whatever the engine wants on
+top. Visibility at range was never the item's job: `hero_shell` paints a
+lit `signal` band on the mast that is on in all four states.
+
+### Evidence — the five sheets the verdict asked for
+
+`docs/art/review/batch005r/`
+
+| Image | What it answers |
+| --- | --- |
+| `R_state_family.png` | the four states, one camera, one frame |
+| `R_state_family_silhouette.png` | the same as shape only |
+| `R_state_family_far.png` | 39.6 m on the engine's lens |
+| `R_state_family_far_inset.png` | **those pixels at 4×, unfiltered** |
+| `R_head_compare.png` · `_silhouette` | the two that had to separate, at 85 mm |
+| `R_state_family_grey.png` · `_far_grey` | the value read |
+
+The full Batch 005 set has been re-rendered in place, because the confirmed
+mesh moved and a stale sheet is a sheet that lies.
+
+---
+
+## Batch 006 — the ways out
+
+The two remaining Pri-A rows in `ASSET_INVENTORY.md` §2 that do not need a
+new visual language. Both are openings the player walks through and both
+are still procedural in the engine.
+
+| ID | Tris | Size (m) | Replaces |
+| --- | --- | --- | --- |
+| `portal_core_locked` | 108 | 2.38 × 0.20 × 3.31 | `exit_portal.gd` `Core`, sealed |
+| `portal_core_unlocked` | 108 | 2.38 × 0.17 × 3.29 | the same, open |
+| `door_standard` | 144 | 2.72 × 0.62 × 3.38 | the gap `chamber_builders.gd` cuts — currently nothing at all |
+
+`objective_marker` and `signage_module` are the other two unbuilt rows and
+are **deliberately not here** — see the question at the end.
+
+### The portal frame is already yours, and stays built
+
+`portal_b2_wound` is the approved breach and this batch does not rebuild
+it. `exit_portal.gd` names two meshes and only the `Core` changes at
+runtime, so only the core needed producing.
+
+### What "sealed" looks like, and why it is not a new colour
+
+The engine paints the core green when unlocked and a dark desaturated red
+when sealed. The palette has no red family, and the three that could be
+borrowed all mean something else: `hazard` is *what is about to happen*,
+`dead` is *spent*, `send` is *this leaves for the multiworld*. A sealed
+exit is none of those. It is the same alien wound, shut.
+
+So both states stay in `identity` — the family the approved concept already
+uses here — and the difference is **form**:
+
+- **sealed** — the wound has grown over. A ridged, lopsided, opaque
+  membrane filling the aperture, at the family's darkest step.
+- **open** — the same growth torn back to the edges, with three teeth left
+  pointing inward, and a way through.
+
+Solid against holed reads at any distance, in any tint, and to a player who
+cannot tell the two hues apart — the rule your 005 verdict set.
+
+### The door is structure, and wears structure's paint
+
+`DOOR_WIDTH` 2.4, `DOOR_HEIGHT` 3.2, `WALL_THICKNESS` 0.4, all read from
+the engine. It is the theme's **trim**, painted by the same function the
+architecture kit uses, and not a universal family: a lining in `signal`
+teal would be promising an interaction, and a corridor of doorways would
+then promise seven that do not exist.
+
+No modelled bolt heads. Eight of them cost 96 triangles against an
+`architecture_module` ceiling of 250, and the budget's own message is the
+rule — over budget means delete geometry and paint it instead. What the
+triangles bought instead is a kick plate on each face, because the part of
+a doorway that actually takes damage is the bottom 400 mm.
+
+### The question this batch is surfacing rather than answering
+
+`objective_marker` (three objectives: `reach_reward`, `kill_all`,
+`platform_to_goal`) and `signage_module` ("navigation vocabulary; must read
+the same in all six themes") are both a **language** rather than a fixture.
+A sign system that has to mean one thing across six themes is new visual
+DNA, and `ART_FRONTIER.md` says to surface those and continue elsewhere.
+Surfaced; this was elsewhere.
+
+Status: **PENDING** — production work inheriting locked DNA.

@@ -206,8 +206,19 @@ func _build(scene: String, root: Node3D, vp: SubViewport) -> AABB:
 			# left to right (ART_LESSONS L-41, again).
 			node.position = Vector3(-at.x, at.y, -at.z)
 			root.add_child(node)
-			var box := ArtBench.aabb_of(node)
-			var here := AABB(node.global_position + box.position, box.size)
+			# `node.transform * box`, and NOT `global_position + box.position`.
+			# Two reasons, and the second one cost a wrong sheet:
+			#
+			#  * the node is yawed 180 degrees, so a local AABB's corner is
+			#    not its world corner unless the transform is applied; and
+			#  * `global_position` is ZERO for a node added this frame. The
+			#    root had just been created and never processed, so every
+			#    model after the first reported a box at the origin, the
+			#    union came out one Check wide instead of four, and `frame`
+			#    solved a distance that put half the sheet outside the
+			#    picture -- while looking like a perfectly good photograph
+			#    of two Checks.
+			var here: AABB = node.transform * ArtBench.aabb_of(node)
 			union = here if loaded == 0 else union.merge(here)
 			loaded += 1
 		if loaded == 0:

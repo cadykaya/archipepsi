@@ -235,6 +235,35 @@ where a solid band reads as a slab at most of them.
 > When the engine owns the paint, the composition has to be in the mesh.
 
 
+### L-46 · A "dead" state is dead metal, not a dim lamp
+The Check's locked and confirmed items were built with
+`make_signal_material` at low saturations — 0.22 and 0.14 — on the
+reasoning that `reward.gd` runs them at 0.4 and 0.2 emission energy, so
+they should be dim rather than dark.
+
+Measured against the mast they sit on:
+
+| | rendered | luminance |
+| --- | --- | --- |
+| confirmed husk | (102, 109, 121) | 94 |
+| locked cradle | (114, 120, 131) | 83 |
+| mast head | (68, 82, 101) | 80 |
+| cage upright | (60, 72, 91) | 71 |
+
+**The deadest things on the object were the brightest.** That function's
+entire job is to make a glow survive being lit, and it does that job at
+every saturation — turning the number down scales the emission and leaves a
+self-lit surface that no unlit paint nearby can compete with.
+
+Dead states get albedo and nothing else. The "but it must be visible at
+range" worry belongs to a different part: `hero_shell` paints a lit band on
+the mast that is on in all four states. The band says *there is a Check
+here*; the item says *which state*.
+
+> If a material is meant to be the darkest thing in the frame, do not build
+> it with the function whose purpose is to stop things being dark.
+
+
 ## Geometry
 
 ### L-10 · `rotation_euler` on a positioned part rotates about the WORLD origin
@@ -576,6 +605,47 @@ means what a person arranging four models on a shelf means.
 
 > A convention that is right for the geometry and wrong for the caption is
 > the kind of bug a render cannot show you, because both halves look fine.
+
+
+### L-47 · `global_position` is zero for a node added this frame
+`shoot.gd` sized a multi-model scene with
+`AABB(node.global_position + box.position, box.size)`. For the FIRST scene
+of a run, every model after the first reported a box at the origin: the
+root had just been created and never processed, so the global transform had
+not propagated and `global_position` was still `(0, 0, 0)`.
+
+The union came out one Check wide instead of four, `frame()` solved a
+distance for that, and the sheet was a perfectly well-composed photograph of
+**two** of the four states it was captioned as showing. Nothing errored.
+Nothing looked broken. The second scene in the same run was fine, because by
+then a frame had passed — so the bug was invisible in exactly the shot that
+mattered and absent from the one next to it.
+
+`node.transform * aabb` is the fix, and it is the better call anyway: the
+runner yaws every model 180°, so a local box's corner is not its world
+corner until the transform is applied.
+
+> A value that is correct on the second frame and wrong on the first will
+> be wrong exactly once per run, in whatever you built first.
+
+### L-48 · Measure the channel before designing into it
+Batch 005-R needed one non-hue cue separating the Check's locked state from
+its confirmed one at 39.6 m. The obvious place was inside the mast's caged
+head, so that is where the first attempt went: a shutter descending the
+cage uprights onto the spent husk. Good object, wrong place —
+
+> at 39.6 m the cage interior is **5 pixels tall**.
+
+Filling all five moved the cage box from 58% background to 48%. The second
+attempt put the cue outside the cage, where there is width instead of
+height, and the same measurement gave 43% against 16%.
+
+The whole difference between the two attempts is that the second one asked
+how big the canvas was first. Counting the pixels took one script; building
+the wrong shutter took an hour.
+
+> Before designing a cue, measure the region it has to live in. A channel
+> five pixels tall is not a channel.
 
 
 ## Process

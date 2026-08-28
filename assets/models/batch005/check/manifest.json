@@ -25,12 +25,12 @@
     "anchor": "module_floor",
     "path": "batch005/check/check_item_confirmed.glb",
     "size": [
-      0.259,
-      0.259,
-      0.25
+      0.776,
+      0.776,
+      0.35
     ],
     "texel_density": null,
-    "triangles": 84
+    "triangles": 112
   },
   "check_item_locked": {
     "anchor": "module_floor",

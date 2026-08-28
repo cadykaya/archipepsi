@@ -50,11 +50,15 @@ ORDER = [
      ["check_mast", "check_item_locked", "check_item_available",
       "check_item_sending", "check_item_confirmed",
       "check_destination_ring", "check_send_beam"]),
+    ("batch006", "portal", ["portal_core_locked", "portal_core_unlocked"]),
+    ("batch006", "architecture", ["door_standard"]),
 ]
 CAT = {"epsilon": "hero", "check": "hero", "portal": "interactable",
+       "door": "module",
        "enemy": "enemy", "anchor": "interactable", "arch": "module",
        "prop": "prop", "hub": "fixture", "lab": "fixture"}
 LEVEL = {"epsilon": "L4", "check": "L2", "portal": "L2", "enemy": "L0",
+         "door": "L1",
          "anchor": "L2", "arch": "L1", "prop": "L0", "hub": "L2",
          "lab": "L1"}
 

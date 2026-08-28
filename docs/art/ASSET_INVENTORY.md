@@ -96,9 +96,12 @@ These are the vocabulary everything after them inherits.
 | `check_item_locked` | L2 | hero | 28 | 0.26 × 0.26 × 0.04 | module_floor | B5 | B5 | PEND |
 | `check_item_available` | L2 | hero | 84 | 0.28 × 0.28 × 0.28 | module_floor | B5 | B5 | PEND |
 | `check_item_sending` | L2 | hero | 112 | 0.26 × 0.26 × 0.31 | module_floor | B5 | B5 | PEND |
-| `check_item_confirmed` | L2 | hero | 84 | 0.26 × 0.26 × 0.25 | module_floor | B5 | B5 | PEND |
+| `check_item_confirmed` | L2 | hero | 112 | 0.78 × 0.78 × 0.35 | module_floor | B5 | B5 | PEND |
 | `check_destination_ring` | L2 | hero | 160 | 1.90 × 1.90 × 0.12 | module_floor | B5 | B5 | PEND |
 | `check_send_beam` | L2 | hero | 28 | 0.74 × 0.74 × 40.00 | module_floor | B5 | B5 | PEND |
+| `portal_core_locked` | L2 | interactable | 108 | 2.38 × 0.20 × 3.31 | module_floor | B6 | B6 | PEND |
+| `portal_core_unlocked` | L2 | interactable | 108 | 2.38 × 0.17 × 3.29 | module_floor | B6 | B6 | PEND |
+| `door_standard` | L1 | module | 144 | 2.72 × 0.62 × 3.38 | floor | B6 | B6 | PEND |
 
 | Theme material | Roles built |
 | --- | --- |
@@ -150,15 +153,15 @@ than any Zone and their whole value is being the same every time.
 | `check_destination_ring` | L0 | U | `reward.gd` `DestinationRing` | A | torus, inner 0.86 / outer 1.02. Says *which world receives it*, in `SourceIdentity`'s derived tint — a **different question** from the item's state, so a different channel. Eight pads and a curb, so it reads as a ring under any tint the engine gives it | **B5** |
 | `check_send_beam` | L0 | U | `reward.gd` `SendBeam` | A | node name is asserted by tests; a resumed Zone must fire none. 40 m, tapered 0.40 → 0.18, untextured — a beam is a light, not a surface | **B5** |
 | `portal_*` | L2 | U | `gameplay/exit_portal.gd` | A | 3.0 × 4.0 × 1.0 box; ≤ 3.6 m wide (narrowest corridor) | B1 |
-| `portal_core_states` | L0 | U | `exit_portal.gd` `Core` | A | locked / unlocked, with the remaining-Checks count | — |
+| `portal_core_states` | L0 | U | `exit_portal.gd` `Core` | A | locked / unlocked. The COUNT stays engineering's `StateLabel`: it is an unbounded integer, and a pip row that saturated at eight would lie at nine | **B6** — `portal_core_locked`, `portal_core_unlocked` |
 | `shop_terminal` | L2 | U | `hub/hub.gd` | A | — | B3 as `hub_shop_counter` |
 | `archive_terminal` | L2 | U | `hub/hub.gd` | A | — | B3 as `hub_archive_terminal` |
 | `epsilon_terminal` | L2 | H | none | A | see §1 | B1 |
 | `local_reward_pickup` | L0 | U | `gameplay/local_reward.gd` | B | **six kinds**, and the client must not be able to invent a seventh: `epsilon_note`, `challenge_marker`, `cosmetic_grant`, `hub_decoration`, `lab_fixture`, `flavor_log`. Never confusable with a Check | — |
-| `objective_marker` | L0 | U | `gameplay/zone_controller.gd` | B | three objectives: `reach_reward`, `kill_all`, `platform_to_goal` | — |
-| `door_standard` | L1 | U | `chamber_builders.gd` door gaps | A | 2.4 × 3.2 m | — |
+| `objective_marker` | L0 | U | `gameplay/zone_controller.gd` | B | three objectives: `reach_reward`, `kill_all`, `platform_to_goal`. **Blocked on an owner decision**: a marker set that means one thing in all six themes is a navigation language, which is new visual DNA | — |
+| `door_standard` | L1 | U | `chamber_builders.gd` door gaps | A | 2.4 × 3.2 m in a 0.4 m wall, all three read from the engine. Theme trim, not a universal family — a lining is not an interactable | **B6** |
 | `transition_frame` | L1 | U | connectors | B | — | — |
-| `signage_module` | L0 | U | `chamber_builders.gd` `GRAFFITI` | B | navigation vocabulary; must read the same in all six themes | — |
+| `signage_module` | L0 | U | `chamber_builders.gd` `GRAFFITI` | B | navigation vocabulary; must read the same in all six themes. **Blocked on the same owner decision as `objective_marker`** | — |
 | `generation_presentation` | L2 | H | `ui/` | B | `GENERATING` is a real mode for up to 120 s and must not read as a hang | — |
 | `provider_failure_state` | L2 | H | `ui/` | B | **the moment the player most needs to trust what they see** | — |
 
