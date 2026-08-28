@@ -199,6 +199,18 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   A mock campaign now reaches **all four link kinds, real readouts, 16 of
   28 primitives**. `test_mock_catalog.py` holds both levels: every row of
   the table folds, and a real campaign reaches the systems.
+  Follow-up, from measuring the campaign the growth produced: mock was
+  **accumulating where it should evolve**. The disposition chain was not
+  run on mock's own catalog shapes — justified as "a table shape is a
+  fresh CREATE by construction", which is true about validity and wrong
+  about the game — so ten Zones ended with seventeen unrelated Actions
+  against a soft budget of twelve. `as_disposition` is shared now, with
+  one flag (`enhancement=False`) for a caller that has already made a
+  specific reading: "Ice Beam" reads as both `cold` and `beam`, and the
+  generic enhancement was swallowing the specific shape. Upgrades 8 → 17,
+  merges 1 → 14, resources pinned at exactly the soft budget of six, Mk III
+  chains. **The whole disposition vocabulary now reaches a real campaign**,
+  merge included, rather than only a crafted request.
 - **Next: the plan is exhausted.** IMPLEMENTATION_PLAN §2.5 ends at S10
   ("Deployables come after S10, if at all"). Per the standing handoff, do
   not stop here — continue developing the game, and stop only where

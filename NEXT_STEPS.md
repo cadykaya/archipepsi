@@ -788,6 +788,42 @@ and every player without an API key actually get, so its expressive range
 is true, and both keep the sentence that always was: the fallback can never
 breach a budget, dangle a target, or be the reason a fold fails.
 
+### The follow-up: a wider catalog that accumulated
+
+Measuring the campaign mock's growth actually produced caught a shortcut
+taken and justified in the same change. The disposition chain was not run
+on mock's own catalog shapes, on the grounds that "a table shape is a fresh
+`CREATE` by construction, so there is nothing for a disposition to attach
+to". True about validity, wrong about the game: ten Zones ended with
+**seventeen unrelated Actions against a soft budget of twelve**, and eight
+upgrades where the fallback alone produced thirty-one. A wider catalog made
+the accumulation problem worse rather than better, because every shape was
+a new thing rather than a deeper one — which is exactly what `_as_sequel`
+was written for at S6.
+
+`as_disposition` is lifted out of `fallback_echo` and shared. One flag,
+`enhancement=False`, for a caller that has already made a specific reading
+of the item: "Ice Beam" reads as both `cold` and `beam`, and letting the
+generic enhancement (cold → chill an owned weapon) outrank the specific
+shape (a beam and the charge it burns) swallowed every elemental item and
+put `beam_sustained` back out of reach. Sequel still applies — owning the
+same verb is a fact about identity, not a rival reading — and so does
+confluence, which is about capacity.
+
+Measured across ten campaigns, before → after: upgrades 8 → 17, merges
+1 → 14, resources pinned at **exactly the soft budget of six** in every
+seed (the confluence folding each one past it into an existing bar, which
+is §16 working as designed), and evolution chains reaching Mk III.
+
+The campaign test asserts all of it: the whole disposition vocabulary
+reaching play (`create`, `upgrade`, `modify`, `link` **and** `merge`, in a
+real campaign rather than a crafted request), resources under the hard
+ceiling now that most shapes carry a bar, and fourteen components across
+six campaigns past Mk I. That threshold sits between the two measurements
+— 18 with the chain, 9 without — because the failure it guards is silent:
+a mock that skips the chain still produces a working campaign, just one
+that never gets deeper.
+
 ## Next useful work
 1. **Play-feel pass on real hardware** — the manual checks in
    ACCEPTANCE_TESTS §7 (gap feel, reveal timing, Conference Call comedy)
