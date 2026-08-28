@@ -97,6 +97,21 @@ class ChamberBase(Strict):
     #: change that requires nothing and removes nothing.
     features: tuple[AffordanceFeature, ...] = Field(default=(), max_length=3)
 
+    #: CAMPAIGN_SCALE.md 7: a complex room may carry more than one Check.
+    #:
+    #: Additive for the same reason `features` was — Zones live inside
+    #: saves, so a new REQUIRED field would fail every campaign in
+    #: progress. `reward_location_id` keeps its meaning; this holds the
+    #: rest. Nothing reads either directly: `reward_ids` below is the one
+    #: canonical view, and a test asserts no consumer goes around it.
+    #:
+    #: Bounded low on purpose. Two or three Checks in a genuinely large
+    #: room correspond to distinct activities; fifteen in one room is the
+    #: warehouse of pedestals CAMPAIGN_SCALE.md 5 forbids, and this is
+    #: the cheap structural half of preventing it.
+    additional_reward_location_ids: tuple[int, ...] = Field(
+        default=(), max_length=2)
+
     #: D1: authored-shell selection. Epsilon names INTENT, and may pick a
     #: shell id out of the legal catalog it was handed. It never names
     #: metres for an authored shell, and it never names a path -- the
@@ -114,6 +129,45 @@ class ChamberBase(Strict):
     intent: tuple[Annotated[str, Field(
         min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")], ...] = Field(
         default=(), max_length=4)
+
+    @property
+    def reward_ids(self) -> tuple[int, ...]:
+        """Every AP Check this chamber holds, in a stable order.
+
+        THE canonical view. `reward_location_id` and
+        `additional_reward_location_ids` are storage shapes kept apart so
+        that saves written before multi-Check rooms still load; nothing
+        outside this class should read either one.
+        """
+        first = () if self.reward_location_id is None \
+            else (self.reward_location_id,)
+        return first + tuple(self.additional_reward_location_ids)
+
+    @model_validator(mode="after")
+    def _each_check_is_its_own_check(self):
+        """A Check must be earned once, by one thing.
+
+        Two ids sharing a completion edge would send both the moment
+        either was earned -- which is not a duplicate, it is Archipepsi
+        telling the multiworld a player found an item they never reached.
+        Distinctness is the cheap half; the expensive half is that each
+        needs its own acquisition condition, which is the room builder's.
+        """
+        ids = self.reward_ids
+        if len(set(ids)) != len(ids):
+            raise ValueError(
+                f"chamber '{self.id}' lists Check "
+                f"{sorted(i for i in ids if ids.count(i) > 1)[0]} twice; "
+                "two ids sharing one completion edge would send a Check "
+                "the player never earned")
+        if self.reward_location_id is None and \
+                self.additional_reward_location_ids:
+            raise ValueError(
+                f"chamber '{self.id}' has additional Checks but no first "
+                "one; `reward_location_id` is the primary, so extras "
+                "without it would be invisible to anything reading only "
+                "the original field")
+        return self
 
     @model_validator(mode="after")
     def _features_sit_clear_of_the_walking_lane(self):
@@ -327,8 +381,8 @@ class Zone(Strict):
 
     @property
     def reward_location_ids(self) -> list[int]:
-        return [c.reward_location_id for c in self.chambers
-                if c.reward_location_id is not None]
+        """Every Check in the Zone, across all its rooms."""
+        return [rid for c in self.chambers for rid in c.reward_ids]
 
 
 # ---------------------------------------------------------------------------

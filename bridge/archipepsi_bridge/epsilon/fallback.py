@@ -150,13 +150,19 @@ def _add_features(chambers: list[dict], unlocked: tuple[str, ...],
     """
     if not unlocked:
         return
-    # A corridor is the only chamber type that may carry one: every other
-    # type has a Check or a gating objective. It also has to be wide
-    # enough to hold something beside the walking lane, so widen the ones
-    # that will carry a feature rather than emitting a Zone the validator
-    # would refuse. Widening a connector costs nothing.
+    # Connectors, which the fallback still prefers for features even
+    # though CAMPAIGN_SCALE.md 7 now permits them in reward rooms: the
+    # fallback is not trying to be interesting here, and a corridor is
+    # where a feature is unambiguously off the mandatory route.
+    #
+    # ALL the room's Checks, not just the primary. A room whose only
+    # Checks were "additional" would otherwise read as empty -- which
+    # cannot happen today because extras require a primary, but a rule
+    # that holds only because of another rule is one refactor from being
+    # false.
     plain = [c for c in chambers
              if c.get("reward_location_id") is None
+             and not c.get("additional_reward_location_ids")
              and not c.get("objective")]
     if not plain:
         return

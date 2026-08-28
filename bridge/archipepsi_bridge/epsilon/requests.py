@@ -103,7 +103,7 @@ class ZoneGenerationRequest(Strict):
         "all_locations_must_appear_once": True,
         "critical_path_requires_echo": False,
         "affordances_are_optional_only": (
-            "a chamber holding a reward_location_id may not carry features, "
+            "a chamber may hold Checks AND features, but only where the room is wide enough for the feature to sit clear of the walking lane, "
             "and a feature may never gate an objective or an exit"),
     })
 

@@ -109,10 +109,11 @@ def room_value(chamber) -> int:
     segments = int(getattr(chamber, "segment_count", 0) or 0)
     total += TRAVERSAL_SEGMENT_VALUE * segments
 
-    # A Check adds nothing. Stated as an explicit no-op rather than an
-    # omission, so that deleting it is a visible decision.
-    if getattr(chamber, "reward_location_id", None) is not None:
-        total += CHECK_VALUE
+    # Checks add nothing. Stated as an explicit no-op rather than an
+    # omission, so that deleting it is a visible decision -- and read
+    # through `reward_ids`, so a room with three Checks is worth exactly
+    # as much as the same room with none.
+    total += CHECK_VALUE * len(getattr(chamber, "reward_ids", ()) or ())
 
     # Space last, and never more than the content it contains.
     #

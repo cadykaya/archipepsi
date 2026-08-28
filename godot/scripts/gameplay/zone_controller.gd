@@ -1,5 +1,10 @@
 class_name ZoneController
 extends Node3D
+
+## Metres between two Checks in the same room. Far enough that a player
+## claims one at a time and can see there are two; close enough that a
+## room holding three still reads as one space.
+const REWARD_SPACING := 4.0
 ## Owns one loaded Zone instance: enemies, objective latching, rewards, the
 ## exit portal, and the player. Transient by design — nothing here survives
 ## leaving the Zone, which is why leaving resets objectives (§14.3).
@@ -79,13 +84,38 @@ func setup(zone_dict: Dictionary) -> void:
 			record["enemies"].append(enemy)
 			enemy.enemy_died.connect(_on_enemy_died.bind(record))
 
-		var location: Variant = chamber.get("reward_location_id")
-		if location != null:
-			var reward := RewardObject.create(int(location), zone_id, theme)
+		# Every Check the room holds, each its own pedestal.
+		#
+		# CAMPAIGN_SCALE.md 7 lets a large room carry two or three, and
+		# each must be earned SEPARATELY -- two ids on one pedestal would
+		# be one interaction sending two Checks, which tells the
+		# multiworld a player found an item they never reached. Distinct
+		# positions are what make them distinct completion edges.
+		var locations: Array = []
+		var primary: Variant = chamber.get("reward_location_id")
+		if primary != null:
+			locations.append(int(primary))
+		for extra: Variant in chamber.get(
+				"additional_reward_location_ids", []) as Array:
+			locations.append(int(extra))
+
+		var anchor: Vector3 = result.get("reward_position", Vector3(0, 0, 1))
+		record["rewards"] = []
+		for index in locations.size():
+			var reward := RewardObject.create(
+					int(locations[index]), zone_id, theme)
 			add_child(reward)
-			reward.global_position = xform * result.get(
-					"reward_position", Vector3(0, 0, 1))
-			record["reward"] = reward
+			# Spread along the room's axis, staying on the walking lane
+			# the affordance rule keeps features OFF (see
+			# `affordance_driver._a_check_sits_on_the_lane...`). Offsetting
+			# sideways instead would push a Check into the band a feature
+			# may occupy, and put one behind a rail.
+			var offset := Vector3(
+					0.0, 0.0, float(index) * REWARD_SPACING)
+			reward.global_position = xform * (anchor + offset)
+			record["rewards"].append(reward)
+			if index == 0:
+				record["reward"] = reward
 
 		if record["objective"] == "platform_to_goal":
 			var area := Area3D.new()

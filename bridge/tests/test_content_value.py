@@ -181,3 +181,92 @@ def test_the_budget_check_reads_components_not_claims():
     plain = _zone([_arena()])
     dressed = _zone([_arena(flavor="A cathedral of unimaginable scale.")])
     assert V.zone_value(plain) == V.zone_value(dressed)
+
+
+# --- CS5b: more than one Check in a room ----------------------------------
+
+def test_a_large_room_may_hold_several_checks():
+    """CAMPAIGN_SCALE.md 7. Two or three, corresponding to distinct
+    activities -- not fifteen, which is the warehouse."""
+    zone = _zone([_arena(reward_location_id=89100001,
+                         additional_reward_location_ids=[89100002,
+                                                         89100003])])
+    assert zone.chambers[0].reward_ids == (89100001, 89100002, 89100003)
+    assert zone.reward_location_ids == [89100001, 89100002, 89100003]
+
+
+def test_several_checks_in_a_room_are_still_worth_no_content():
+    """The rule that makes multi-Check rooms safe to allow at all.
+
+    If Checks scored, this feature would BE the exploit: three pedestals
+    in one room would be three times the budget for one room's work.
+    """
+    bare = _zone([_arena()])
+    three = _zone([_arena(reward_location_id=89100001,
+                          additional_reward_location_ids=[89100002,
+                                                          89100003])])
+    assert V.zone_value(three) == V.zone_value(bare)
+
+
+def test_two_ids_may_not_share_one_completion_edge():
+    """A Check must be earned once, by one thing. A duplicate id would
+    send both the moment either was earned -- telling the multiworld a
+    player found an item they never reached."""
+    with pytest.raises(Exception, match="twice"):
+        _zone([_arena(reward_location_id=89100001,
+                      additional_reward_location_ids=[89100001])])
+
+
+def test_extras_without_a_primary_are_refused():
+    """`reward_location_id` is the primary, and anything still reading
+    only that field must not silently see an empty room."""
+    with pytest.raises(Exception, match="no first one"):
+        _zone([_arena(additional_reward_location_ids=[89100002])])
+
+
+def test_a_room_cannot_become_a_pedestal_warehouse():
+    """The structural half of the anti-warehouse rule: the schema simply
+    does not admit a room with many Checks in it."""
+    with pytest.raises(Exception):
+        _zone([_arena(reward_location_id=89100001,
+                      additional_reward_location_ids=[
+                          89100002, 89100003, 89100004, 89100005])])
+
+
+def test_nothing_outside_the_schema_reads_the_raw_reward_fields():
+    """`reward_ids` is the canonical view; the two stored fields are a
+    save-compatibility shape. A consumer reading `reward_location_id`
+    directly would see a three-Check room as a one-Check room."""
+    import inspect
+    from pathlib import Path
+
+    root = Path(inspect.getfile(V)).resolve().parent
+    offenders = []
+    for path in root.rglob("*.py"):
+        if path.name in ("zone.py", "requests.py") \
+                or path.name.startswith("test_"):
+            continue          # the schema itself, prose about it, fixtures
+        lines = path.read_text().splitlines()
+        for number, line in enumerate(lines, 1):
+            if "reward_location_id" not in line \
+                    or "reward_location_ids" in line:
+                continue
+            # Providers WRITE the field when building a Zone; that is the
+            # storage shape and is fine. Only READS see one Check where
+            # there are three, so only reads are the problem.
+            stripped = line.strip()
+            if stripped.startswith(('"reward_location_id":',
+                                    "'reward_location_id':")) \
+                    or "] = " in stripped:
+                continue
+            # Reading BOTH stored fields together is the correct way to
+            # do it without the property -- which a `dict` chamber has to
+            # do, because it is not a model yet. Judged over a small
+            # window, since the two reads land on adjacent lines.
+            window = "\n".join(lines[max(0, number - 3):number + 2])
+            if "additional_reward_location_ids" in window:
+                continue
+            offenders.append(f"{path.name}:{number}: {stripped}")
+    assert not offenders, (
+        "these read a raw reward field instead of `reward_ids`, so they "
+        "see only the first Check in a room: " + "; ".join(offenders))
