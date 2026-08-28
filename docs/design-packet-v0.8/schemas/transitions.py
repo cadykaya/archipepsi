@@ -202,6 +202,14 @@ def release_location(save: CampaignSave, zone_id: str,
     re-send. v0.6 pinned `allocated_location_ids` equal to the accepted
     Zone's rewards for the record's whole life, so the only way out was
     abandoning the Zone and discarding its other unclaimed Checks.
+
+    **Releasing the LAST location abandons the Zone**, by delegating to
+    `abandon_zone`. A Zone record that holds no locations is not a state
+    this schema has -- `holds_locations` is what ACTIVE means -- so the
+    alternative is not "an empty live Zone", it is a refusal that would
+    wedge the one caller this exists for. Said here because the call site
+    cannot see it: `release_location` reads like it always keeps the Zone,
+    and the two tests that pin this behaviour are elsewhere.
     """
     rec = _require_zone(save, zone_id)
     remaining = tuple(i for i in rec.allocated_location_ids if i != location_id)
@@ -376,6 +384,18 @@ def grant_local_reward(
     name a location, an item or a Check, so this transition is incapable
     of the mistake §14.2 forbids rather than merely avoiding it.
     """
+    if (len(save.local_rewards) >= C.MAX_LOCAL_REWARDS
+            and not any(r.reward_id == reward.reward_id
+                        for r in save.local_rewards)):
+        # Refused HERE, as a ValueError, like every other refusal in this
+        # module. Left to `_rebuild`, the 121st reward came back as a
+        # pydantic `ValidationError` raised from inside the rebuild -- a
+        # different exception type from a different place, which a caller
+        # catching this module's refusals does not catch.
+        raise ValueError(
+            f"the campaign already holds {C.MAX_LOCAL_REWARDS} local rewards, "
+            f"which is the limit; '{reward.reward_id}' cannot be added"
+        )
     existing = {r.reward_id: r for r in save.local_rewards}
     previous = existing.get(reward.reward_id)
     if previous is not None:

@@ -86,7 +86,11 @@ class OwnedComponent(Strict):
     identical everywhere.
     """
     component: E.Component
-    #: Mk I on creation, +1 per upgrade or modify that touched it.
+    #: Mk I on creation, +1 per upgrade or modify that touched it -- and
+    #: on a MERGE the survivor ADDS the absorbed component's Mk to its own,
+    #: because provenance is unioned in the same step and a component
+    #: crediting two items' worth of history at Mk I would read as newer
+    #: than it is.
     mk: int = Field(ge=1)
     provenance: tuple[ComponentProvenance, ...] = Field(min_length=1)
 
@@ -105,7 +109,15 @@ class OwnedComponent(Strict):
 
 
 class Mechanics(Strict):
-    """Everything the campaign's interpretations add up to."""
+    """Everything the campaign's interpretations add up to.
+
+    Not round-trippable through `model_dump()`: `channel_order` is a
+    `computed_field`, so it appears in the dump and is rejected on the way
+    back in by `extra="forbid"`. That is deliberate rather than an
+    oversight -- the dump exists to be SENT to a client, which must read
+    channel order and must never reconstruct mechanics -- but it means the
+    only way back is `derive_mechanics` over the log, which is the point.
+    """
     owned: tuple[OwnedComponent, ...] = ()
     #: absorbed id -> surviving id, fully resolved (never a chain).
     aliases: tuple[tuple[str, str], ...] = ()

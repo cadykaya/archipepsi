@@ -478,6 +478,12 @@ BRIDGE_PORT = 38290
 PROVIDER_TIMEOUT_SECONDS = 60.0
 REPAIR_ATTEMPTS = 1
 
+#: Local rewards a campaign may hold. Named rather than inlined because
+#: the bound is enforced in two places: the model, and the transition that
+#: refuses the one after the last so a caller gets a `ValueError` like
+#: every other refusal rather than a `ValidationError` from a rebuild.
+MAX_LOCAL_REWARDS = 120
+
 MAX_TEXT_LEN = 160
 MAX_DESIGNER_NOTE_LEN = 300
 MAX_AP_STRING_LEN = 96

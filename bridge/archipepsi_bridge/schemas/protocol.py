@@ -464,7 +464,7 @@ class CampaignSave(Strict):
     #: happens; never in the fold, because a local reward is not a
     #: mechanic and derives nothing.
     local_rewards: tuple[EarnedLocalReward, ...] = Field(
-        default=(), max_length=120)
+        default=(), max_length=C.MAX_LOCAL_REWARDS)
 
     #: The interpretation log: append-only, ordered by `interpretation_seq`,
     #: and the ONLY persisted form of what the player has earned. Live

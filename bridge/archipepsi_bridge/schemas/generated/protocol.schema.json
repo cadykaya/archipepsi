@@ -2603,7 +2603,7 @@
       },
       "Mechanics": {
         "additionalProperties": false,
-        "description": "Everything the campaign's interpretations add up to.",
+        "description": "Everything the campaign's interpretations add up to.\n\nNot round-trippable through `model_dump()`: `channel_order` is a\n`computed_field`, so it appears in the dump and is rejected on the way\nback in by `extra=\"forbid\"`. That is deliberate rather than an\noversight -- the dump exists to be SENT to a client, which must read\nchannel order and must never reconstruct mechanics -- but it means the\nonly way back is `derive_mechanics` over the log, which is the point.",
         "properties": {
           "owned": {
             "default": [],
@@ -6296,7 +6296,7 @@
       },
       "Mechanics": {
         "additionalProperties": false,
-        "description": "Everything the campaign's interpretations add up to.",
+        "description": "Everything the campaign's interpretations add up to.\n\nNot round-trippable through `model_dump()`: `channel_order` is a\n`computed_field`, so it appears in the dump and is rejected on the way\nback in by `extra=\"forbid\"`. That is deliberate rather than an\noversight -- the dump exists to be SENT to a client, which must read\nchannel order and must never reconstruct mechanics -- but it means the\nonly way back is `derive_mechanics` over the log, which is the point.",
         "properties": {
           "owned": {
             "default": [],

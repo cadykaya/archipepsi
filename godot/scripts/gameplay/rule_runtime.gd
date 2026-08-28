@@ -74,6 +74,9 @@ var _cooldowns: Dictionary = {}
 var _pending: Array[String] = []
 #: rule_id -> true. The per-rule edge latch described above.
 var _armed: Dictionary = {}
+#: Where the next dispatch starts scanning, so a fixed rule order cannot
+#: starve the rules behind the per-tick cap forever.
+var _fair_cursor := 0
 var _watched_fractions: Dictionary = {}
 var _watched_hp := 1.0
 var _watched_status_kinds: Dictionary = {}
@@ -134,7 +137,18 @@ func _dispatch(events: Array[String]) -> void:
 	var snapshot := _snapshot_state()
 	var fired := 0
 	var considered: Dictionary = {}
-	for rule: Dictionary in _rules:
+	# Scanned from a rotating cursor rather than always from the top.
+	# `_rules` is in a fixed fold order, so with more rules on one event
+	# than the per-tick cap allows, the SAME rules won every dispatch and
+	# the ones behind them never fired -- not "skipped this tick" as the
+	# cap's own comment says, but starved for the life of the campaign.
+	# The cursor advances past whoever fired, so the next dispatch starts
+	# with the rules that lost the last one.
+	var count := _rules.size()
+	var start := _fair_cursor
+	var next_start := start
+	for offset in range(count):
+		var rule: Dictionary = _rules[(start + offset) % count]
 		var rule_id := str(rule.get("component_id", ""))
 		if considered.has(rule_id):
 			continue
@@ -147,6 +161,7 @@ func _dispatch(events: Array[String]) -> void:
 			# answered); an armed edge stays armed and retries next tick —
 			# bounded, because an arm is state, not a growing queue.
 			continue
+		next_start = (start + offset + 1) % count
 		if float(_cooldowns.get(rule_id, 0.0)) > 0.0:
 			continue
 		if not _conditions_hold(rule, snapshot):
@@ -159,6 +174,7 @@ func _dispatch(events: Array[String]) -> void:
 		for effect: Dictionary in rule.get("effects", []):
 			_apply_effect(rule_id, effect)
 		rule_fired.emit(rule_id)
+	_fair_cursor = next_start
 
 ## The values conditions may read, frozen at dispatch start (§5.1 rule 4).
 func _snapshot_state() -> Dictionary:
@@ -398,6 +414,7 @@ func reset_for_zone() -> void:
 	_watched_fractions.clear()
 	_watched_status_kinds.clear()
 	_watched_hp = 1.0
+	_fair_cursor = 0
 
 func _derive_edges() -> void:
 	# Both are keyed by event kind and then by SOURCE -- which resource,

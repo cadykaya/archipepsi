@@ -59,6 +59,7 @@ func _ready() -> void:
 	_a_negative_resource_add_arms_the_delay()
 	_an_arm_belongs_to_the_value_that_made_it()
 	_zone_entry_resets_the_latches_and_the_cooldowns()
+	_the_cap_starves_nobody_forever()
 
 	if _runtime != null:
 		_runtime.free()
@@ -411,3 +412,52 @@ func _zone_entry_resets_the_latches_and_the_cooldowns() -> void:
 	_runtime.tick(DT)
 	_check(_fired.is_empty(),
 			"...so the new Zone's first tick fires nothing: %s" % [_fired])
+
+## The cap SKIPS, which the suite above proves. What it did not prove is
+## WHICH rules get skipped, and `_rules` is in a fixed fold order -- so
+## with ten rules on one event and a cap of eight, the same eight won
+## every dispatch and the last two never fired once. Not "skipped this
+## tick", as the cap's own comment says: starved for the life of the
+## campaign, on a rule the player earned and can never see work.
+func _the_cap_starves_nobody_forever() -> void:
+	_fresh()
+	# Park every channel mid-bar and reset, so no resource threshold is
+	# armed: otherwise armed rules fire first and eat cap slots, and the
+	# window into the ten kill rules shifts for a reason that is not a
+	# guarantee about anything.
+	_quiesce()
+	for round_index in range(6):
+		_runtime.notify("kill")
+		_runtime.tick(DT)
+		_check(_runtime._armed.is_empty(),
+				"nothing else is competing for the cap")
+		_drive(int(0.3 / DT))
+	var never_fired: Array[String] = []
+	for i in range(10):
+		if int(_fired.get("rule_cap_%02d" % i, 0)) == 0:
+			never_fired.append("rule_cap_%02d" % i)
+	_check(never_fired.is_empty(),
+			"every rule on the event eventually fires: %s never did"
+			% [never_fired])
+
+	# And the cap still holds within any one tick.
+	_fresh()
+	_quiesce()
+	_runtime.notify("kill")
+	_runtime.tick(DT)
+	var in_one_tick := 0
+	for i in range(10):
+		in_one_tick += int(_fired.get("rule_cap_%02d" % i, 0))
+	_check(in_one_tick == Constants.RULE_FIRINGS_PER_TICK_CAP,
+			"...while one tick still fires at most the cap (%d)"
+			% in_one_tick)
+
+## Every channel parked mid-bar with the latches cleared, so no threshold
+## is at an edge and nothing is armed.
+func _quiesce() -> void:
+	for entry: Dictionary in BridgeClient.owned_components("resource"):
+		var id := str(entry.get("component", {}).get("component_id", ""))
+		_pool.spend(id, _pool.value_of(id) * 0.5)
+	_runtime.reset_for_zone()
+	_runtime.tick(DT)
+	_fired.clear()
