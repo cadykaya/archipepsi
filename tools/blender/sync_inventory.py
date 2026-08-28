@@ -96,11 +96,18 @@ ORDER = [
 #:   batch005             Check, PASS IN DIRECTION then full PASS after 005-R
 #:   batch006 .. batch009 portal/door, traversal, projectiles, affordances
 #:   batch010 .. batch012 dressing, curved rails, the last three themes
+#:   batch003             the Hub, verdicted 2026-08-28 with the queue below
+#:   batch013, batch014   theme dressing; the six-theme light fixture families
+#:   batch015 .. batch019 Tier 7 entire: corridors, arenas, platform paths,
+#:                        towers, treasure rooms and corners
 #:
-#: batch003 (the Hub) has had no verdict of its own and stays PEND.
-APPROVED = ("batch001", "batch002", "batch004", "batch005", "batch006",
-            "batch007", "batch008", "batch009", "batch010", "batch011",
-            "batch012")
+#: The whole queue cleared on 2026-08-28. Nothing is PEND today -- which
+#: means the next entry added here must again be a transcription of a
+#: decision recorded in ART_REVIEW.md, never one this script makes.
+APPROVED = ("batch001", "batch002", "batch003", "batch004", "batch005",
+            "batch006", "batch007", "batch008", "batch009", "batch010",
+            "batch011", "batch012", "batch013", "batch014", "batch015",
+            "batch016", "batch017", "batch018", "batch019")
 
 CAT = {"epsilon": "hero", "check": "hero", "portal": "interactable",
        "door": "module", "breakwall": "interactable",

@@ -2383,3 +2383,186 @@ Status: **PENDING** — not self-marked.
 Nineteen shells across six families: 4 corridors, 4 arenas, 3 platform
 paths, 3 towers, 3 treasure rooms, 2 corners. `ASSET_INVENTORY.md` §7 was
 empty five batches ago.
+
+---
+
+# Owner verdicts — 2026-08-28, the whole pending queue
+
+**003, 013, 014, 015, 016, 017, 018 and 019 are all `PASS`.** The queue is
+clear, and Tier 7's completed room-shell vocabulary is approved production
+vocabulary for Epsilon / Godot integration.
+
+## Batch 003 — the Hub — PASS
+
+Approved: shop counter, archive terminal, abandon station, campaign board
+housing, controls board housing, upper wall / service band, pilaster, Lab
+doorway, and the composed Hub treatment. *The shared institutional
+construction language works.*
+
+Two things confirmed as correct rather than accidental: the boards remaining
+**housings** for runtime data and text, and the **abandon station** being the
+one Hub fixture allowed hazard language — because abandoning a generated Zone
+is an actual destructive action.
+
+### Interface requirement 4 — RESOLVED: Epsilon gets the reserved bay
+
+> The room-scale Epsilon installation is a hero asset and should keep the
+> proposed prominent back-wall presence.
+
+**Do not** shrink Epsilon, move it somewhere visually secondary, or redesign
+it around the abandon station. Production Engineering moves or reserves the
+much smaller abandon console somewhere outside Epsilon's footprint, keeping
+it obvious and reachable near the Zone workflow.
+
+That closes the placement conflict Batch 002 raised, in the installation's
+favour.
+
+## Batch 013 — theme dressing — PASS
+
+Approved: gothic sconce, the separate sconce flame, the neon transit sign
+housing, the tiled temple root section, the temple broken column stump.
+
+Called out as correct: the transit sign staying a **housing** for a runtime
+`Label3D`, the root **tiling** rather than stretching, the stump preserving
+its broken top while its shaft can vary, and the flame using warm / `send`
+family light rather than hazard orange.
+
+### One integration note, not an art blocker
+
+> The flame should receive another visual check inside the real Godot
+> rendering path with its intended glow/bloom. The authoring sandbox cannot
+> fairly judge that effect.
+
+This is L-03 named from the other side: the preview runs Compatibility, which
+has no glow, so nothing rendered on this bench has ever shown one. **Do not
+redesign the flame before that test unless an actual in-engine failure
+appears.** Recorded as interface requirement 21.
+
+## Batch 014 — the six-theme light fixture families — PASS
+
+> The silhouette sheet answers the important question: these are
+> distinguishable by construction / form rather than merely changing emissive
+> colour.
+
+**Locked as the theme fixture families**: concrete facility's existing
+institutional fixtures; rusted industrial's caged installed work light and
+asymmetric portable/clamped fixture; neon transit's infrastructure
+strip/channel and edge-integrated light; gothic stone's suspended iron corona
+and peaked lantern; temple ruin's suspended crafted bowl and architectural
+niche; void glitch's missing-fixture language and broken debug placeholder.
+
+The gameplay light itself stays engineering- and runtime-owned. **Art owns
+the housing and the visual language.**
+
+## Batch 015 — corridor shells — PASS
+
+Approved: narrow / pressure, alternating bays, stepped, gallery. *They
+represent meaningfully different spatial problems rather than simple size
+variants.*
+
+On the bays, which this lane flagged as its own weakest read:
+
+> The bays are subtle from the entrance, but they are still useful as
+> encounter, cover and Check-placement pockets. Do NOT deepen them merely to
+> improve the beauty shot if that sacrifices legal lane width. Lighting /
+> dressing inside a bay may later strengthen its read naturally.
+
+And on the withdrawn claim: *the correction from a false 6.4 m sightline to
+the real 16 m sightline is exactly the right response to review evidence.*
+
+## Batch 016 — arena shells — PASS
+
+Approved: pit, pillar grid, balcony, split. *These create four different
+combat / composition problems.*
+
+> Do not deepen the pit beyond the legal traversal bound merely to make it
+> more dramatic. The shallow pit is acceptable because its geometry is
+> gameplay-valid and its shape becomes clear as the player approaches / rims
+> it.
+
+## Interface requirement 19 — RESOLVED: rooms are enclosed by default
+
+**Normal room shells are enclosed by default** — corridors, arenas, towers,
+treasure rooms and corners alike. The authored arena and tower roofs are
+therefore correct.
+
+Open sky, open roofs, missing ceilings and structural breaches are allowed
+later, but only as **explicit authored or semantic variants** — an open
+courtyard arena, a collapsed-roof arena, an exterior industrial arena, a
+ruined temple chamber, a void-open chamber, a deliberate breach — each with
+proper boundary, collision and navigation treatment.
+
+> A missing ceiling must never accidentally be interpreted as intentional
+> content.
+
+**Platform paths are the existing deliberate exception**: their open vertical
+shaft is part of the traversal design and stays open. Production Engineering
+aligns procedural and fallback chamber construction with this rule.
+
+## Batch 017 — platform paths — PASS
+
+Approved: ascent, stagger, spans. *The overhead sheets clearly demonstrate
+three different routes.*
+
+> Preserve the shared ENGINE TRUTH route validation. The important rule
+> remains: actual consecutive traversal geometry is measured and proven
+> against the base-kit bound. Do not replace that with nominal per-field
+> checks.
+
+The exit carrying its actual vertical offset is confirmed correct.
+
+## Batch 018 — towers — PASS
+
+Approved: collapsed floors, spiral/helix, maintenance gantry. *These
+successfully turn the same tower contract into three different climbs.*
+
+The central column stays: **gameplay grammar, not decoration.**
+
+> The shared routecheck catching the original impossible 3.6 m crossing is
+> excellent evidence that the validation path is doing useful work. Do not
+> weaken that validation.
+
+## Batch 019 — treasure rooms and corners — PASS
+
+Approved: vault (*protected*), cache (*stored*), coffer (*displayed*), and
+both mirrored corners.
+
+> This is exactly what shell variation should accomplish: same envelope, same
+> reward location, different spatial / environmental story.
+
+## Interface requirement 20 — RESOLVED: remove the hazard-orange turn stripe
+
+**Hazard orange remains reserved for hazard / warning semantics. "A corridor
+turns here" is not a hazard.**
+
+The authored corner's form language is sufficient as the default: the opening
+itself, the deep jamb reveal, the stepped/chamfered edge, and the
+skirting/architecture carrying through the turn. Production Engineering stops
+applying `hazard_mat` as a generic navigation marker on normal corners.
+
+If playtesting later shows turns need more wayfinding, it is solved with a
+non-hazard channel — neutral architectural contrast, light placement, a trim
+or value change, or the future approved signage / navigation language.
+
+> Do NOT spend hazard orange on ordinary navigation.
+
+## Tier 7 — the room-shell vocabulary — PASS
+
+All 19 shells across the six families are approved production vocabulary:
+4 corridor, 4 arena, 3 platform path, 3 tower, 3 treasure room, 2 corner.
+
+The rule for what comes next is explicit, and it is not a count:
+
+> The goal going forward is NOT to make arbitrary variants merely to increase
+> the count. Expand shell families when a new variant creates a meaningfully
+> different route, combat problem, vertical relationship, sightline,
+> traversal problem, Check-placement opportunity, or optional-space
+> opportunity.
+
+## Blockers reconfirmed
+
+`objective_marker` and `signage_module` stay blocked until navigation
+language is deliberately reviewed. Enemy roles stay blocked on the missing
+engineering contracts rather than inventing fake colliders or nodes in the
+art lane. Unplaceable bulk prop production stays deprioritized until there is
+an actual runtime placement path.
