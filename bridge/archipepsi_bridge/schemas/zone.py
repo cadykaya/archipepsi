@@ -332,14 +332,25 @@ def validate_zone(
     owned_echo_ids: list[str],
     owned_affordance_tags: tuple[str, ...] = (),
     legal_shell_ids: tuple[str, ...] = (),
+    zone_budget: int | None = None,
 ) -> list[str]:
     """Check a structurally-valid Zone against its request.
 
     Returns [] if acceptable, else concise errors for the repair request.
     Never mutates: v0.5 rejects and repairs rather than clamping, so an
     accepted Zone is always something Epsilon actually chose.
+
+    `zone_budget` is the content the campaign asked for
+    (CAMPAIGN_SCALE.md 5). Pass None to skip the check -- which is what a
+    campaign generated before budgets existed does, and NOT a way for a
+    caller to opt out of it. The value scored is recomputed here from the
+    accepted components; nothing the provider sent is read as a score.
     """
     errors: list[str] = []
+
+    if zone_budget is not None:
+        from ..content_value import budget_errors
+        errors.extend(budget_errors(zone, zone_budget))
 
     # D1: Epsilon may SELECT among the authored shells it was offered,
     # and only those. The catalog is handed to it in the request; a shell
