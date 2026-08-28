@@ -113,10 +113,20 @@ static func _light(parent: Node3D, position: Vector3, theme: String,
 	parent.add_child(light)
 	# The fixture itself: a crude glowing slab.
 	var fixture := MeshInstance3D.new()
+	# Named so a test can find it. Identifying a light fixture by its
+	# size and material is how a check goes quietly wrong when either
+	# changes.
+	fixture.name = "LightFixture"
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(0.8, 0.1, 0.4)
 	fixture.mesh = mesh
-	fixture.position = position + Vector3(0, 0.15, 0)
+	# HANGS BELOW the light, not above it. Callers put lights just under
+	# the ceiling -- an arena's sit at `height - 0.3` -- and a fixture
+	# raised 0.15 above that ended up inside the ceiling slab with its
+	# faces exactly coplanar, which is the shimmer playtest 2 saw along
+	# the ceiling strips. Below, a fixture cannot reach the roof no
+	# matter how tight the caller places the lamp.
+	fixture.position = position + Vector3(0, -0.05, 0)
 	fixture.material_override = ThemeMaterials.glow_material(
 			ThemeMaterials.light_color(theme), 1.4)
 	parent.add_child(fixture)

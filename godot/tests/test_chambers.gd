@@ -33,6 +33,7 @@ func _ready() -> void:
 	_test_treasure_room()
 	_test_exit_portal_appended()
 	await _test_every_chamber_is_sealed()
+	_test_light_fixtures_are_not_buried()
 	if failures == 0:
 		print("GODOT CHAMBER TESTS OK")
 		get_tree().quit(0)
@@ -530,3 +531,51 @@ func _test_every_chamber_is_sealed() -> void:  # test 57
 						% [name, dir, eye_y]
 						+ "the player leaves the level through it")
 	world.queue_free()
+
+## No light fixture may sit inside the geometry it hangs from.
+##
+## The arena puts its lamps at `height - 0.3` and the fixture used to be
+## raised 0.15 ABOVE that, which placed it inside the ceiling slab with
+## its faces exactly coplanar -- the shimmer along the ceiling strips in
+## playtest 2. Coincident faces are the whole of z-fighting: two surfaces
+## at the same depth, and the renderer picking per pixel.
+func _test_light_fixtures_are_not_buried() -> void:  # test 58
+	var cases := {
+		"arena": ChamberBuilders.arena(
+				{"width": 18.0, "depth": 16.0, "wall_height": 5.0},
+				"concrete_facility"),
+		"corridor": ChamberBuilders.corridor(
+				{"length": 16.0, "width": 6.0}, "concrete_facility"),
+		"platform_path": ChamberBuilders.platform_path(
+				{"width": 12.0, "length": 20.0, "gap_size": 1.6,
+				"segment_count": 4, "vertical_step": 0.8},
+				"concrete_facility"),
+		"treasure_room": ChamberBuilders.treasure_room(
+				{}, "concrete_facility"),
+	}
+	var checked := 0
+	for name: String in cases:
+		var result: Dictionary = cases[name]
+		var root: Node3D = result["root"]
+		var solids: Array[AABB] = _collidable_boxes(root)
+		for fixture: MeshInstance3D in _fixtures(root):
+			checked += 1
+			var box := fixture.get_aabb()
+			box.position += fixture.position
+			for solid: AABB in solids:
+				_check(not box.intersects(solid),
+						"%s buries a light fixture at %.2v in geometry "
+						% [name, fixture.position]
+						+ "at %.2v -- coplanar faces shimmer" % solid.position)
+		root.free()
+	_check(checked >= 4,
+			"only %d light fixtures found; this suite would pass on a "
+			% checked + "level with no lights in it")
+
+func _fixtures(node: Node) -> Array[MeshInstance3D]:
+	var out: Array[MeshInstance3D] = []
+	if node is MeshInstance3D and node.name.begins_with("LightFixture"):
+		out.append(node as MeshInstance3D)
+	for child in node.get_children():
+		out.append_array(_fixtures(child))
+	return out

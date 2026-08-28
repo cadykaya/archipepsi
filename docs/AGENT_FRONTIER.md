@@ -165,6 +165,45 @@ What remains needs a person, not more iteration
 5. **Project code licensing** — separate from asset intake, and not
    decided.
 
+## What playtest 2 taught
+
+The game is playable end to end: Hub, portal, Zone, Checks claimed, a
+Check sent to another slot. Everything below was found by a human in
+about an hour, and every one of them had a green suite over it.
+
+The pattern, stated once because it recurred all day: **these bugs are
+correct as state, as geometry and as protocol, and wrong on screen.**
+A backwards sign, a panel whose rect is off-screen, a room with no
+ceiling, a fixture inside a slab — the bounds Dictionary is right, the
+socket is in the right place, the snapshot validates. Nothing that
+asserted on data could see any of it. What found them was standing
+somewhere and looking, so the suites now do that: `godot-legible` builds
+the Hub and reads its walls, `godot-boot` opens each panel and measures
+it, `godot-test` stands inside each chamber and fires rays outward.
+
+Three traps worth remembering, each caught by sabotage rather than by
+review:
+
+- A per-site fix leaves the others. `PRESET_CENTER` was wrong in SIX
+  places; fixing the title screen for playtest 1 left five.
+- A suite can pass on borrowed geometry. Every chamber was built at the
+  origin, so they overlapped, and deleting `platform_path`'s ceiling
+  failed the ARENA. Isolate before asserting.
+- Fixing one half by breaking the other. Seeding the fallback per-run
+  ends the sameness AND ends reproducibility; both halves are pinned.
+
+**The fallback provider is the offline fixture.** It is what a player
+with no `ANTHROPIC_API_KEY` gets, it is what the integration run plays,
+and it was one hardcoded room list — so four Zones in a row were the same
+Zone. It now varies deterministically by zone index. Real variety is the
+Claude provider composing from the vocabulary; this is only about making
+a keyless campaign bearable.
+
+**Open, and the owner's call: Zone LENGTH.** A Zone is about two minutes
+and they want roughly twenty. That is a pacing decision (checks per Zone,
+rooms per Check, the shape of the campaign), not a bug, and it is not
+mine to pick.
+
 ## What playtest 1 taught, and the guard it left behind
 
 Nine headless suites, a whole-campaign integration run and both CI tiers
