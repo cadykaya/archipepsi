@@ -95,6 +95,52 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   in both. A tower that grows one is built 1.5 m taller; five metres over
   the summit left it 0.15 m short of standing room and the builder
   declined silently. Epsilon also speaks in the Hub now.
+- **Adversarial review of S1–S5: done, all 19 findings fixed.** Three
+  passes (the fold/save half, then the runtime engines). Two were
+  campaign-destroying and neither was reachable from any existing test:
+  - **A legal v7 save destroyed the campaign it migrated.** v7 let a
+    passive make you slower (`SPEED_MULT_MIN` 0.9); v8's I3 floor forbids
+    it, and the migration copied the multiplier across, so the models
+    refused the result. `load_save` caught, tried the `.bak` (the same v7
+    file), returned None — and the engine reads None as "no campaign",
+    built an empty one, and the next write moved the real save into the
+    backup slot. Migration clamps now; "unreadable" and "absent" are no
+    longer spelled the same way; the backup is copied rather than renamed
+    (a crash between two renames left NO primary); a non-primary recovery
+    heals the primary immediately.
+  - **A merge left every link pointing at the component it deleted.** The
+    fold rewrote aliases, components, provenance, Mk and order — not
+    `links` — while `echo_runtime.gd` states in as many words that the ids
+    it receives are canonical. A `powers` source merged away reads 0 of 0,
+    so the spend always refuses: the Echo stops working for the rest of
+    the campaign, silently, because aliases are permanent. Edges are
+    rewritten at merge time now, and `powers`/`scales` are enforced
+    at-most-one-per-target, which is what both clients already assumed.
+  - `target_errors` waved through five refusals the fold then raised on
+    (MODIFY had only an existence check; MERGE never asked where
+    `max_value` landed, and `capacity` **defaults** to `"sum"`). A
+    `FoldError` in `append_interpretation` is a crash, not a rejection,
+    and it repeated on every retry, so the Check could never be granted.
+  - Ten in the press/release lifecycle and the pool: a `charge_shot` fired
+    from a key-up with no press; a refused press kept its cost, paid its
+    `fills` link and emitted `action_used`, which made refused presses net
+    resource GENERATION; death ended no hold; a slot swap stranded a hover
+    (an I3 bypass — `hover_gravity_scale` is applied after `clamp_stat`);
+    a failed multi-cost re-armed `regen_delay` sixty times a second and
+    stopped regeneration dead.
+  - Six more in statuses, latches, parries and shields: a magnitude could
+    outlive the duration it came with; `cleanse` stripped the player's own
+    `low_profile` stealth; `apply` had no vocabulary guard; an arm was
+    kept alive by an unrelated channel and survived Zone entry; a burn
+    tick spent the parry window; an absorbed shield froze its timer and
+    inflated the next grant.
+  - And the per-tick firing cap starved the same rules forever, because
+    `_rules` order is fixed.
+  New: `make godot-verbs` (a real player over a real floor, driving the
+  four real runtimes), and both GDScript fixtures now have generators in
+  the tree (`make rules-fixture`, `make verbs-fixture`) with a bridge test
+  that regenerates in memory and compares — the rule snapshot claimed to
+  be a real fold and was, but its generator had not survived.
 - **Next: the plan is exhausted.** IMPLEMENTATION_PLAN §2.5 ends at S10
   ("Deployables come after S10, if at all"). Per the standing handoff, do
   not stop here — continue developing the game, and stop only where
@@ -132,8 +178,9 @@ model, not merely described). Ownership is the default; equipping is the
 modifier. Recorded in `docs/IMPLEMENTATION_DECISIONS.md` (S5).
 
 ## Last full green verification
-At S9 completion (this commit):
-- `make test`: 343 passed
+At the S1–S5 review completion (this commit):
+- `make test`: 362 passed (bridge) + 126 (schemas) + 26 (apworld)
+- (was 343 at S9 completion)
 - `check_packet.py`: green, 10 docs
 - `make godot-test`: GODOT CHAMBER TESTS OK
 - `make godot-blink`: 5125 resolved / 17825 refused; GODOT BLINK TESTS OK
@@ -143,6 +190,9 @@ At S9 completion (this commit):
 - `make godot-lab`: GODOT LAB TESTS OK (fixtures, and no campaign mutation)
 - `make godot-affordance`: GODOT AFFORDANCE TESTS OK (I4 lane sweep, the
   seven built, volumes that cannot trap, readouts that only read)
+- `make godot-verbs`: GODOT VERBS TESTS OK (press/release/cancel/death,
+  the complete refund, hover claims across four slots, parry vs. DoT,
+  shield timers, and rule effects following the highlighted slot)
 - `make godot-integration`: GODOT INTEGRATION OK, full 12-zone campaign;
   every interpretation credited in some provenance chain, components at
   Mk II+, Actions reaching several slots, the Hub's Lab present and inert,

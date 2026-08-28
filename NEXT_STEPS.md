@@ -554,6 +554,103 @@ names the decision.
 **And the import guard now covers the test drivers** — `preload` rather
 than runtime `load`, so `--import` walks them.
 
+## Adversarial review pass over S1–S5
+
+The staged reviews had covered S6–S10; these three passes covered the
+parts that had never had one — the fold and the save on the Python side,
+then the five client runtime engines (`rule_runtime.gd`, `stat_stack.gd`,
+`status_effects.gd`, `echo_runtime.gd`, `resource_pool.gd`). Nineteen
+findings, all fixed and all sabotage-proven, in four commits. The
+reasoning behind each is in `docs/IMPLEMENTATION_DECISIONS.md`; this is
+what changed.
+
+**Two were campaign-destroying, and neither was reachable from any
+existing test.**
+
+*A legal v7 save destroyed the campaign it migrated.* v7 allowed a passive
+that made you slower (`SPEED_MULT_MIN` 0.9); v8 traits are always on and
+stack, so `_traversal_stats_may_only_help` forbids `move_speed` below 1.0
+outright. The migration copied the multiplier straight across, so a save
+holding one legal v7 Echo — anything that read as "heavy" — produced a v8
+save the models refuse. The refusal was not the damage: `load_save` caught
+it, tried the `.bak` (the same v7 file, failing identically), and returned
+None; the engine reads None as "no campaign here", built a fresh empty one,
+and the next write moved the player's real save into the `.bak` slot.
+Fixed in three places — `traversal_multiplier` clamps into v8's floor
+while keeping the Echo, `SaveUnreadable` stops "unreadable" being spelled
+the same way as "absent", and the write path now COPIES the backup rather
+than renaming it aside (a crash between the two renames left no primary at
+all) while healing the primary after any non-primary recovery.
+`test_save_survival.py`.
+
+*A merge left every link pointing at the component it deleted.* The fold
+rewrites aliases, components, provenance, Mk and channel order on a MERGE —
+and never touched `links`. `echo_runtime.gd::_powers_link` says in as many
+words that the ids it receives are canonical, and `_pay_powers_cost`,
+`_apply_fills`, `_gates_open` and `stat_stack`'s `scales` dictionary all
+take that at face value. A bar that no longer exists reads as 0 of 0, so
+the spend always refuses, the gate never opens, the fill writes into
+nothing and the scale pins at zero: the Echo stops working for the rest of
+the campaign, silently, because aliases are permanent. `_relink` rewrites
+both endpoints at merge time. That exposed a second contract nothing
+enforced — `powers` and `scales` are read as at-most-one-per-target by
+both clients, so a second edge was not combined but discarded by fold
+order; `_require_singular_links` makes it unrepresentable, and
+`target_errors` catches it a step earlier so a provider gets a repair
+prompt rather than a crash. `test_merge_links.py`.
+
+**`target_errors` waved through five refusals the fold then raised on.**
+MODIFY had only an existence check; MERGE never asked where `max_value`
+landed, and `capacity` **defaults** to `"sum"`, which makes that the
+likeliest of the five rather than the rarest. A `FoldError` inside
+`append_interpretation` is a crash, not a rejection — no `reconcile()`
+call site has a handler — and it repeated on every retry, so the Check
+could never be granted. `modify_is_legal` and `merge_capacity_is_legal`
+apply the real operation to a copy and report, the way `upgrade_is_legal`
+already did. `test_target_landing.py`.
+
+**Ten in the press/release lifecycle and the pool.** `release()` fired a
+`charge_shot` from a key-up with no press behind it (no cooldown, no gate,
+no cost — one bolt per tap while cooling). `_refund_press` gave back only
+the cooldown, so a refused press kept its `powers` cost, still paid its
+`fills` link and still emitted `action_used`, which made refused presses
+net resource GENERATION. Death ended no hold — `_cancel_held_state`'s
+docstring said "on a slot change and on death" and had exactly one caller.
+A slot swap stranded a hover, which is an I3 bypass, because
+`hover_gravity_scale` multiplies in after `clamp_stat` where the stat
+stack never sees it and `Hover.gravity_multiplier` goes to 0.0. And the
+rule engine's pay-then-refund cost path re-armed `regen_delay` on every
+failed attempt, sixty times a second on an armed edge event, stopping
+regeneration dead on a rule that never fired once. New suite:
+`make godot-verbs`.
+
+**Six in statuses, latches, parries and shields.** A magnitude could
+outlive the duration it came with (the two dimensions were maxed
+independently). `cleanse` was ranked as if aimed at an enemy and could
+strip the player's own `low_profile` stealth. `apply` had no vocabulary
+guard, so a typo produced a status that was inert, uncleansable, and still
+satisfied `status_active` and `status_applied`. Edge latches were computed
+per event KIND across every resource, so an unrelated full bar kept one
+alive — and none of it reset on Zone entry, though I9 resets everything it
+is derived from. A burn tick spent the parry window and emitted `parried`,
+which `main.gd` turns into a free `parry_success` event. An absorbed
+shield froze its timer, and `grant_shield` takes the max, so a rule's
+one-second shield lasted thirty.
+
+**And the per-tick firing cap starved the same rules forever**, because
+`_rules` is in a fixed fold order: with ten rules on one event and a cap of
+eight, the last two never fired once. The scan rotates now.
+
+Two pieces of infrastructure came out of it. `make godot-verbs` boots a
+real player over a real floor and drives the four real runtimes. And both
+GDScript fixtures now have generators in the tree (`make rules-fixture`,
+`make verbs-fixture`) with a bridge test that regenerates in memory and
+compares — the rule snapshot claimed to be "a REAL fold on the Python
+side" and was, but its generator was scratch tooling that had not survived,
+leaving a generated artifact with no source. Its every channel had
+`regen_per_second` 0, which is exactly why its all-or-nothing cost test
+could not see the refund bug.
+
 ## Next useful work
 1. **Play-feel pass on real hardware** — the manual checks in
    ACCEPTANCE_TESTS §7 (gap feel, reveal timing, Conference Call comedy)
@@ -571,6 +668,7 @@ than runtime `load`, so `--import` walks them.
    summit left the alcove 0.15 m short of standing room and the builder
    declined to place it *silently*, which is the worst of both.
 4. ~~Epsilon's voice in the Hub between Zones~~ — **done.**
+5. ~~Adversarial review of S1–S5~~ — **done**, 19 findings fixed.
 
 ## Known blockers / bugs
 None known. One recorded schema corner: `finale_offered` stays true in
@@ -578,7 +676,7 @@ postgame, so clients also require the goal to be missing
 (`docs/IMPLEMENTATION_DECISIONS.md`).
 
 ## Commands
-    make test                  # 343 pytest
+    make test                  # 362 pytest (bridge) + 126 + 26
     make godot-test            # chamber geometry
     make godot-blink           # invariant I14, every builder
     make godot-hud             # S3: palette, glyphs, pressure valve, archive
@@ -586,6 +684,9 @@ postgame, so clients also require the goal to be missing
     make godot-stats           # S5/S7: invariant I3, links, slots
     make godot-lab             # S8: the Echo Lab, and what it must not do
     make godot-affordance      # S9: I4/I12/I13, volumes, local rewards, readouts
+    make godot-verbs           # the press/release lifecycle, over a real floor
+    make rules-fixture         # regenerate the rule suite's folded snapshot
+    make verbs-fixture         # regenerate the verb suite's folded snapshot
     make godot-integration     # the whole game, headlessly
     make replay ARCHIVE=<dir>  # re-validate a generation archive
     make seed-multi && make host && make bridge   # real server play

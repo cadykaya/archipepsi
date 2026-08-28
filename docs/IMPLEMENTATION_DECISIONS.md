@@ -889,3 +889,130 @@ bridge. The findings that changed a design decision rather than a line:
   (no autoloads), and parsing each file's source into a detached
   `GDScript` gives false positives on any cross-file `class_name`
   reference.
+
+## The S1–S5 adversarial review
+
+Three passes over the parts the staged reviews never reached: the fold and
+the save on the Python side, then the five runtime engines on the client.
+Nineteen findings, all fixed, each sabotage-proven. The ones that changed a
+rule rather than a line:
+
+- **A migration must be total in the version it targets, not just in the
+  version it reads.** v7 bounded each Echo alone and let a passive make you
+  slower; v8 traits are always on and stack, so I3's floor forbids it. The
+  migration copied the multiplier across and produced a save v8 refuses —
+  which made the migration a partial function on legal input, and the whole
+  point of calling it "pure and total" was that it is not. `traversal_multiplier`
+  clamps into the floor and keeps the Echo rather than dropping it: the
+  interpretation log is provenance, and a campaign that silently lost an
+  Echo to a version bump would fold differently than it played.
+
+- **"Unreadable" and "absent" must not be spelled the same way.** That is
+  what turned a refused migration into a destroyed campaign: `load_save`
+  returned None for both, the engine reads None as "no campaign here",
+  and the next write moved the player's real save into the backup slot.
+  `SaveUnreadable` separates them. The atomic-write path was wrong in the
+  same direction — the backup was RENAMED aside before the install, so a
+  crash between the two renames left no primary at all. It is copied now,
+  and any non-primary recovery heals the primary immediately, or the next
+  write promotes the wreck.
+
+- **A merge rewrites stored edges; it does not resolve them later.** The
+  alias table catches every later *mention* of an absorbed id, and a link
+  written before the merge is not a mention — it is a stored edge, and it
+  kept naming a component the fold had just deleted. Two ways out existed:
+  teach four call sites in two languages to alias-resolve, or rewrite the
+  edges once at the merge. The second is the only one that makes the
+  client's own comment true, and `stat_stack.gd` could not have done the
+  first anyway — it keys a dictionary by raw id.
+
+- **Enforce what the clients already assume, or they will assume it
+  wrongly.** `echo_runtime.gd::_powers_link` returns the first `powers`
+  edge aimed at an Action and never looks again; `stat_stack.gd` keys
+  `scales` by target. Both are at-most-one-per-target contracts that
+  nothing enforced, so a second edge was discarded by fold order. The fold
+  refuses it now, and `target_errors` refuses it a step earlier, so a
+  provider gets a repair prompt rather than a crash. `fills` and `gates`
+  stay many: both clients iterate, and the graph in ECHOES §4 is meant to
+  express several actions feeding one bar.
+
+- **Every operation kind needs a landing check, not just UPGRADE.**
+  `_upgrade_lands` existed because a `FoldError` inside
+  `append_interpretation` is a crash rather than a repairable rejection,
+  and repeats on every retry so the Check can never be granted. MODIFY had
+  only an existence check and MERGE never asked where `max_value` landed —
+  five reproduced refusals, and `capacity` **defaults** to `"sum"`, which
+  makes the merge case the likeliest rather than the rarest.
+
+- **A refund gives back everything the attempt took, including time.**
+  `spend` arms `regen_delay`; `refill` does not disarm it. So the rule
+  engine's pay-then-refund cost path charged a regeneration window for
+  every FAILED attempt — and an armed edge event dispatches every physics
+  frame, so the window was re-armed sixty times a second and regeneration
+  stopped dead on a rule that never fired. Checking the whole cost list
+  before touching anything (`spend_all`) means a refusal leaves nothing to
+  undo, which is better than undoing it well.
+
+- **A press that did not resolve did not happen.** `_refund_press` gave
+  back the cooldown and nothing else: the `powers` cost stayed spent, the
+  `fills` link still paid out, and `action_used` still fired. A `fills`
+  link therefore printed resource from refused presses with the cooldown
+  handed back each time. The refund is complete now and the whole tail of
+  `activate()` is skipped, because `action_used`'s own documentation calls
+  it "a press that genuinely resolved".
+
+- **Shared player state written by four slots has to be derived, not
+  assigned.** `hover_gravity_scale` was written by whichever runtime spoke
+  last, so one slot's key-up cancelled another's hover while that slot went
+  on paying its drain. It is now the strongest claim among the slots that
+  are actually hovering. This is also an I3 concern: `clamp_stat` floors
+  `gravity_mult`, and `hover_gravity_scale` multiplies in afterwards where
+  the stat stack never sees it, so a hover stranded by a slot swap was
+  permanent zero gravity.
+
+- **Merging two dimensions independently merges neither.** Status
+  re-application takes the max of durations and the max of magnitudes; taken
+  apart, a feeble long application inherited a brutal short one's magnitude
+  for its whole life. The stronger application wins outright and keeps its
+  own duration; a longer weaker one holds only the tail.
+
+- **An edge latch belongs to the value that made it.** `crossed` and
+  `holding` were per event KIND across every resource, so any full bar kept
+  alive a latch armed by a different bar. And none of it reset on Zone
+  entry, though I9 resets everything it is derived from.
+
+- **A "skip" that always skips the same thing is a starve.** The per-tick
+  firing cap is correct; scanning `_rules` from a fixed offset was not, so
+  with more rules on one event than the cap allows, the ones behind the cap
+  never fired once. The scan rotates now.
+
+- **A closed vocabulary the client cannot see is not closed.**
+  `StatusEffects.apply` accepted any string, and an unknown kind was inert
+  yet still satisfied `status_active` conditions and `status_applied`
+  edges — and could never be cleansed, being in no cleanse order. The
+  schema's `STATUS_KINDS` is exported to `constants.gd` like the primitive
+  catalog, and `apply` refuses what is not in it.
+
+- **`cleanse` is aimed at a side, so its severity order is per side.** It
+  is only ever cast on the player, and the order was written as if for an
+  enemy: `stunned` and `marked` spent charges on statuses nothing on the
+  player reads, while outranking `vulnerable`. Worse, `low_profile` was in
+  it at all — `enemy.gd` reads that as the player's stealth.
+
+- **A generated artifact needs its generator in the tree.** The rule
+  suite's snapshot claimed to be "a REAL fold on the Python side" and was —
+  but the generator was scratch tooling that did not survive, leaving a
+  generated file with no source and nothing stopping the next hand-edit.
+  `make rules-fixture` and `make verbs-fixture` build both, and a bridge
+  test regenerates in memory and compares. The old fixture's every channel
+  had `regen_per_second` 0, which is exactly why its all-or-nothing cost
+  test could not see the refund bug.
+
+One note from the review was **not** taken. `release_location` delegating
+to `abandon_zone` on the last location was called a trap for the next
+caller. It is deliberate, two tests pin it by name, and a Zone record
+holding no locations is not a state this schema has — `holds_locations` is
+what ACTIVE means — so the alternative is a refusal that wedges the one
+caller it exists for. The docstring now says so, since the call site could
+not.
+
