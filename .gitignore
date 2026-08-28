@@ -14,3 +14,11 @@ godot-bin/
 
 # Editable installs leave these behind; they are build output, not source.
 *.egg-info/
+
+# --- art lane -------------------------------------------------------------
+# Toolchains fetched per session (Blender, Godot). See docs/art/ASSET_AUTHORING.md.
+/.tools/
+# Art review renders that are regenerated rather than reviewed. Committed
+# review evidence lives in docs/art/review/ and is NOT ignored -- the owner
+# has to be able to see it without running anything.
+/.artpreview/

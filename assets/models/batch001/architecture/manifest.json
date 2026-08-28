@@ -1,0 +1,82 @@
+{
+  "arch_ceiling_beam": {
+    "path": "batch001/architecture/arch_ceiling_beam.glb",
+    "size": [
+      4.0,
+      4.0,
+      0.45
+    ],
+    "texel_density": 32.0,
+    "triangles": 40
+  },
+  "arch_doorway": {
+    "path": "batch001/architecture/arch_doorway.glb",
+    "size": [
+      4.0,
+      0.55,
+      4.0
+    ],
+    "texel_density": 32.0,
+    "triangles": 96
+  },
+  "arch_floor_slab": {
+    "path": "batch001/architecture/arch_floor_slab.glb",
+    "size": [
+      4.0,
+      4.0,
+      0.4
+    ],
+    "texel_density": 32.0,
+    "triangles": 12
+  },
+  "arch_light_fixture": {
+    "path": "batch001/architecture/arch_light_fixture.glb",
+    "size": [
+      1.5,
+      0.39,
+      0.445
+    ],
+    "texel_density": null,
+    "triangles": 144
+  },
+  "arch_pipe_run": {
+    "path": "batch001/architecture/arch_pipe_run.glb",
+    "size": [
+      4.0,
+      0.4,
+      0.62
+    ],
+    "texel_density": 32.0,
+    "triangles": 172
+  },
+  "arch_railing": {
+    "path": "batch001/architecture/arch_railing.glb",
+    "size": [
+      4.0,
+      0.11,
+      1.05
+    ],
+    "texel_density": 32.0,
+    "triangles": 96
+  },
+  "arch_trim_rail": {
+    "path": "batch001/architecture/arch_trim_rail.glb",
+    "size": [
+      4.0,
+      0.12,
+      0.48
+    ],
+    "texel_density": 32.0,
+    "triangles": 20
+  },
+  "arch_wall_panel": {
+    "path": "batch001/architecture/arch_wall_panel.glb",
+    "size": [
+      4.0,
+      0.4,
+      4.0
+    ],
+    "texel_density": 32.0,
+    "triangles": 12
+  }
+}

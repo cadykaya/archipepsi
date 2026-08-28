@@ -1,0 +1,352 @@
+{
+  "_comment": [
+    "Archipepsi art palette. GENERATED -- regenerate with:",
+    "    python3 tools/blender/palette_build.py --write",
+    "",
+    "The four anchor colours per theme are READ from the engine's own",
+    "THEME_MATERIALS (schemas/constants.py) and are recorded here so",
+    "drift is detectable. Art does not get a second opinion about what",
+    "colour concrete_facility is; authored content standing beside",
+    "procedural content in the same room would show the disagreement.",
+    "",
+    "What this file adds is a solved value ramp per role, so a painter",
+    "has dark/mid/light steps instead of one value and a darkened()",
+    "call. Ramps are solved in HSV against a target CIE L*, never",
+    "blended toward white -- that produces pastel.",
+    "",
+    "The `universal` families do NOT vary by theme. That is the most",
+    "important line in this file: AUTHORED_CONTENT.md requires that",
+    "'can I use this?' is never a guess, and a Check tinted to match",
+    "its theme is a Check that vanishes in one theme out of six."
+  ],
+  "min_value_separation": 0.1,
+  "min_interactable_separation": 0.18,
+  "max_families_per_asset": 4,
+  "engine_anchors": {
+    "concrete_facility": {
+      "base_color": "#b9bcb6",
+      "accent_color": "#4f6f8f",
+      "trim_color": "#2e3338",
+      "light_color": "#eaf2ff",
+      "light_energy": 3.0,
+      "roughness": 0.85,
+      "noise": "speckle"
+    },
+    "rusted_industrial": {
+      "base_color": "#8a5a3b",
+      "accent_color": "#c8722c",
+      "trim_color": "#3d2a1e",
+      "light_color": "#ffd9a0",
+      "light_energy": 2.2,
+      "roughness": 0.95,
+      "noise": "rust"
+    },
+    "neon_transit": {
+      "base_color": "#d8d4c8",
+      "accent_color": "#18b7c4",
+      "trim_color": "#1b1d26",
+      "light_color": "#7cf2ff",
+      "light_energy": 4.0,
+      "roughness": 0.35,
+      "noise": "tile"
+    },
+    "gothic_stone": {
+      "base_color": "#6b6560",
+      "accent_color": "#3a3f4a",
+      "trim_color": "#241f1c",
+      "light_color": "#ffb45e",
+      "light_energy": 2.0,
+      "roughness": 0.9,
+      "noise": "brick"
+    },
+    "temple_ruin": {
+      "base_color": "#c2a878",
+      "accent_color": "#5f7a4a",
+      "trim_color": "#7a6034",
+      "light_color": "#ffe9b8",
+      "light_energy": 2.6,
+      "roughness": 0.8,
+      "noise": "sandstone"
+    },
+    "void_glitch": {
+      "base_color": "#2b2b3a",
+      "accent_color": "#ff00e6",
+      "trim_color": "#00ffbf",
+      "light_color": "#ffffff",
+      "light_energy": 3.5,
+      "roughness": 0.5,
+      "noise": "checker"
+    }
+  },
+  "universal": {
+    "signal": {
+      "means": "you can use this -- the only colour an interactable prompt, rim or reveal face is allowed to be",
+      "anchor": "#39d7c8",
+      "ramp": [
+        "#228178",
+        "#2dab9f",
+        "#39d7c8",
+        "#85fff3"
+      ]
+    },
+    "hazard": {
+      "means": "this will hurt you. Never used decoratively, in any theme, for any reason",
+      "anchor": "#e8541f",
+      "ramp": [
+        "#5c210c",
+        "#9f3a15",
+        "#e8541f",
+        "#ff9772"
+      ]
+    },
+    "identity": {
+      "means": "Epsilon. Its presence, its terminal, its voice surfaces and nothing else in the game",
+      "anchor": "#b45cff",
+      "ramp": [
+        "#492567",
+        "#7c3fb0",
+        "#b45cff",
+        "#d3a0ff"
+      ]
+    },
+    "dead": {
+      "means": "unpowered, locked, spent, offline. The value a fixture drops to when it is not for you right now",
+      "anchor": "#4a4f57",
+      "ramp": [
+        "#26292d",
+        "#4a4f57",
+        "#717985",
+        "#9ba5b6"
+      ]
+    },
+    "send": {
+      "means": "this leaves for the multiworld. The Check's transmission beam and destination ring",
+      "anchor": "#ffd45c",
+      "ramp": [
+        "#635224",
+        "#947b35",
+        "#c8a648",
+        "#ffd45c"
+      ]
+    },
+    "glitch": {
+      "means": "Epsilon Static and the missing-world checker. Cosmetic corruption only -- never a mechanic",
+      "anchor": "#ff00e6",
+      "ramp": [
+        "#700065",
+        "#b500a3",
+        "#ff00e6",
+        "#ff96f5"
+      ]
+    }
+  },
+  "grime": {
+    "means": "wear, stain, soot, water streak. Shared by every theme so that six material families can look like one world",
+    "anchor": "#241f1c",
+    "ramp": [
+      "#241f1c",
+      "#4e433c",
+      "#7b6a60"
+    ]
+  },
+  "themes": {
+    "concrete_facility": {
+      "base": {
+        "anchor": "#b9bcb6",
+        "ramp": [
+          "#626360",
+          "#8c8e8a",
+          "#b9bcb6",
+          "#e8ece4"
+        ]
+      },
+      "accent": {
+        "anchor": "#4f6f8f",
+        "ramp": [
+          "#314559",
+          "#4f6f8f",
+          "#6f9cc8"
+        ]
+      },
+      "trim": {
+        "anchor": "#2e3338",
+        "ramp": [
+          "#2e3338",
+          "#525a63",
+          "#788592"
+        ]
+      },
+      "light": {
+        "anchor": "#eaf2ff",
+        "energy": 3.0
+      },
+      "roughness": 0.85,
+      "noise": "speckle"
+    },
+    "rusted_industrial": {
+      "base": {
+        "anchor": "#8a5a3b",
+        "ramp": [
+          "#543724",
+          "#8a5a3b",
+          "#c48054",
+          "#ffaa73"
+        ]
+      },
+      "accent": {
+        "anchor": "#c8722c",
+        "ramp": [
+          "#8a4f1e",
+          "#c8722c",
+          "#ff9d4e"
+        ]
+      },
+      "trim": {
+        "anchor": "#3d2a1e",
+        "ramp": [
+          "#3d2a1e",
+          "#704d37",
+          "#a77352"
+        ]
+      },
+      "light": {
+        "anchor": "#ffd9a0",
+        "energy": 2.2
+      },
+      "roughness": 0.95,
+      "noise": "rust"
+    },
+    "neon_transit": {
+      "base": {
+        "anchor": "#d8d4c8",
+        "ramp": [
+          "#51504b",
+          "#7c7972",
+          "#a9a59c",
+          "#d8d4c8"
+        ]
+      },
+      "accent": {
+        "anchor": "#18b7c4",
+        "ramp": [
+          "#128690",
+          "#18b7c4",
+          "#1feafb"
+        ]
+      },
+      "trim": {
+        "anchor": "#1b1d26",
+        "ramp": [
+          "#1b1d26",
+          "#3d4155",
+          "#62698a"
+        ]
+      },
+      "light": {
+        "anchor": "#7cf2ff",
+        "energy": 4.0
+      },
+      "roughness": 0.35,
+      "noise": "tile"
+    },
+    "gothic_stone": {
+      "base": {
+        "anchor": "#6b6560",
+        "ramp": [
+          "#413d3a",
+          "#6b6560",
+          "#989089",
+          "#c8bdb3"
+        ]
+      },
+      "accent": {
+        "anchor": "#3a3f4a",
+        "ramp": [
+          "#3a3f4a",
+          "#5f6779",
+          "#8792ac"
+        ]
+      },
+      "trim": {
+        "anchor": "#241f1c",
+        "ramp": [
+          "#241f1c",
+          "#4e433c",
+          "#7b6a60"
+        ]
+      },
+      "light": {
+        "anchor": "#ffb45e",
+        "energy": 2.0
+      },
+      "roughness": 0.9,
+      "noise": "brick"
+    },
+    "temple_ruin": {
+      "base": {
+        "anchor": "#c2a878",
+        "ramp": [
+          "#60533b",
+          "#907c59",
+          "#c2a878",
+          "#f7d699"
+        ]
+      },
+      "accent": {
+        "anchor": "#5f7a4a",
+        "ramp": [
+          "#3d4e2f",
+          "#5f7a4a",
+          "#83a966"
+        ]
+      },
+      "trim": {
+        "anchor": "#7a6034",
+        "ramp": [
+          "#493a1f",
+          "#7a6034",
+          "#ae894a"
+        ]
+      },
+      "light": {
+        "anchor": "#ffe9b8",
+        "energy": 2.6
+      },
+      "roughness": 0.8,
+      "noise": "sandstone"
+    },
+    "void_glitch": {
+      "base": {
+        "anchor": "#2b2b3a",
+        "ramp": [
+          "#2b2b3a",
+          "#50506c",
+          "#7979a3",
+          "#a4a4dd"
+        ]
+      },
+      "accent": {
+        "anchor": "#ff00e6",
+        "ramp": [
+          "#b500a3",
+          "#ff00e6",
+          "#ff96f5"
+        ]
+      },
+      "trim": {
+        "anchor": "#00ffbf",
+        "ramp": [
+          "#009771",
+          "#00ca97",
+          "#00ffbf"
+        ]
+      },
+      "light": {
+        "anchor": "#ffffff",
+        "energy": 3.5
+      },
+      "roughness": 0.5,
+      "noise": "checker"
+    }
+  }
+}

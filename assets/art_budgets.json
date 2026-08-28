@@ -1,0 +1,76 @@
+{
+  "_comment": [
+    "Archipepsi art budgets. GENERATED -- regenerate with:",
+    "    python3 tools/blender/derive_budgets.py --write",
+    "",
+    "Every number here is derived in tools/blender/derive_budgets.py,",
+    "which prints the arithmetic and names the visible failure each",
+    "constraint prevents. Nothing was inherited from another project:",
+    "mario-3's ceilings, texture sizes and densities answer questions",
+    "Archipepsi does not ask.",
+    "",
+    "The game dimensions the derivation stands on are read live from",
+    "the engineering branch through tools/blender/engine_truth.py, so",
+    "these numbers move when the game moves."
+  ],
+  "texel_density": {
+    "architecture": {
+      "target": 32,
+      "min": 24,
+      "max": 40
+    },
+    "prop": {
+      "target": 64,
+      "min": 48,
+      "max": 80
+    },
+    "hero": {
+      "target": 96,
+      "min": 80,
+      "max": 128
+    },
+    "viewmodel_deferred": {
+      "target": 256,
+      "min": 192,
+      "max": 320
+    }
+  },
+  "texture_size": {
+    "default": 64,
+    "max_batch001": 128,
+    "min": 32,
+    "allowed": [
+      32,
+      64,
+      128
+    ]
+  },
+  "max_triangles": {
+    "architecture_module": 250,
+    "prop": 300,
+    "interactable": 900,
+    "hero": 1200,
+    "enemy": 700,
+    "landmark": 2500
+  },
+  "max_triangles_room": 12000,
+  "max_radial_segments": 8,
+  "max_radial_segments_large": 12,
+  "large_radius_threshold": 1.5,
+  "max_radial_segments_enemy": 10,
+  "architecture_bevel": 0.0,
+  "prop_bevel_fraction": [
+    0.015,
+    0.03
+  ],
+  "prop_bevel_min_size": 0.5,
+  "min_value_separation": 0.1,
+  "min_interactable_separation": 0.18,
+  "max_families_per_asset": 4,
+  "enemy_review_distance_m": 18.0,
+  "enemy_aggro_px_1080p": 48.0,
+  "check_review_distance_m": 39.6,
+  "check_far_px_1080p": 35.5,
+  "min_feature_fraction": 0.08,
+  "min_feature_screen_px": 2.0
+}

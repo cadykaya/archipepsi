@@ -1,0 +1,74 @@
+{
+  "concrete_facility/accent": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/concrete_facility_accent.png"
+  },
+  "concrete_facility/floor": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/concrete_facility_floor.png"
+  },
+  "concrete_facility/trim": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/concrete_facility_trim.png"
+  },
+  "concrete_facility/wall": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/concrete_facility_wall.png"
+  },
+  "rusted_industrial/accent": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/rusted_industrial_accent.png"
+  },
+  "rusted_industrial/floor": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/rusted_industrial_floor.png"
+  },
+  "rusted_industrial/trim": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/rusted_industrial_trim.png"
+  },
+  "rusted_industrial/wall": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/rusted_industrial_wall.png"
+  },
+  "void_glitch/accent": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/void_glitch_accent.png"
+  },
+  "void_glitch/floor": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/void_glitch_floor.png"
+  },
+  "void_glitch/trim": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/void_glitch_trim.png"
+  },
+  "void_glitch/wall": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/void_glitch_wall.png"
+  }
+}
