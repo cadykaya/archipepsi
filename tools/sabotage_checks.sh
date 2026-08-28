@@ -19,12 +19,35 @@ WORK="$(mktemp -d)"
 FAILED=0
 CASE=0
 
+# Every case here restores with `git checkout --`, which DISCARDS uncommitted
+# work in the files it touches. That is not hypothetical: this script silently
+# reverted a two-line correction to ASSET_INVENTORY.md that had been made and
+# not yet committed, and the next run then failed its own clean-tree baseline
+# on numbers the author had already fixed. Refuse to run rather than eat
+# somebody's edit.
+TOUCHED="godot/scripts/gameplay/player.gd
+godot/scripts/generation/affordance_features.gd
+godot/scripts/enemies/enemy.gd
+assets/art_palette.json
+docs/art/ART_REVIEW.md
+docs/art/ASSET_INVENTORY.md"
+if ! git diff --quiet -- $TOUCHED; then
+  echo "sabotage: REFUSING TO RUN -- these files have uncommitted changes and"
+  echo "  this script restores them with 'git checkout', which would discard"
+  echo "  your edits:"
+  git diff --name-only -- $TOUCHED | sed 's/^/    /'
+  echo "  Commit or stash them first."
+  exit 2
+fi
+
 restore() {
   # Restore anything this script touched, from git, unconditionally.
   git checkout -- godot/scripts/gameplay/player.gd \
                   godot/scripts/generation/affordance_features.gd \
                   godot/scripts/enemies/enemy.gd \
-                  assets/art_palette.json 2>/dev/null || true
+                  assets/art_palette.json \
+                  docs/art/ART_REVIEW.md \
+                  docs/art/ASSET_INVENTORY.md 2>/dev/null || true
   rm -rf "$WORK"
 }
 trap restore EXIT INT TERM
@@ -125,6 +148,18 @@ json.dump(d, open(p, "w"), indent=2)
 PY
 expect_fail "signal colour indistinguishable from a wall" python3 tools/blender/palette.py
 git checkout -- assets/art_palette.json
+
+echo
+echo "sabotage: the owner's ledger -- does a wrong number get caught?"
+expect_pass "document metrics on a clean tree" python3 tools/blender/check_docs_metrics.py
+sed -i 's/| `prop_crate` | 72 |/| `prop_crate` | 71 |/' docs/art/ART_REVIEW.md
+expect_fail "a triangle count mistyped in ART_REVIEW.md" \
+  python3 tools/blender/check_docs_metrics.py
+git checkout -- docs/art/ART_REVIEW.md
+sed -i 's/| `prop_crate` | L0 | U | prop | 72 | 1.04 × 1.04 × 1.01 |/| `prop_crate` | L0 | U | prop | 72 | 1.04 × 1.04 × 1.10 |/' docs/art/ASSET_INVENTORY.md
+expect_fail "a measured size mistyped in ASSET_INVENTORY.md" \
+  python3 tools/blender/check_docs_metrics.py
+git checkout -- docs/art/ASSET_INVENTORY.md
 
 echo
 echo "sabotage: the build-time asserts -- fired from a throwaway script"

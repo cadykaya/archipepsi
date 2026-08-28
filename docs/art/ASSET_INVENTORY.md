@@ -53,10 +53,10 @@ Everything else is `—` and stays `—` until the Style Lock gate opens.
 | `arch_light_fixture` | L1 | U | module | 144 | 1.50 × 0.39 × 0.26 | **ceiling** | B1 | B1 | PEND |
 | `prop_crate` | L0 | U | prop | 72 | 1.04 × 1.04 × 1.01 | floor | B1 | B1 | PEND |
 | `prop_utility_box` | L0 | U | prop | 76 | 0.52 × 0.33 × 1.01 | floor | B1 | B1 | PEND |
-| `prop_terminal` | L0 | U | prop | 68 | 0.86 × 0.62 × 1.40 | floor | B1 | B1 | PEND |
+| `prop_terminal` | L0 | U | prop | 68 | 0.86 × 0.62 × 1.41 | floor | B1 | B1 | PEND |
 | `prop_pipe_cluster` | L0 | U | prop | 284 | 0.77 × 0.52 × 2.20 | floor | B1 | B1 | PEND |
 | `prop_machinery_unit` | L0 | U | prop | 180 | 1.30 × 0.99 × 1.90 | floor | B1 | B1 | PEND |
-| `prop_debris` | L0 | U | prop | 96 | 1.23 × 1.24 × 0.59 | floor | B1 | B1 | PEND |
+| `prop_debris` | L0 | U | prop | 96 | 1.23 × 1.24 × 0.58 | floor | B1 | B1 | PEND |
 | `prop_warning_sign` | L0 | U | prop | 48 | 0.65 × 0.17 × 0.44 | **wall** | B1 | B1 | PEND |
 | `theme_concrete_facility_{wall,floor,trim,accent}` | — | T | material | — | 128px / 4.0 m | — | — | B1 | PEND |
 | `theme_rusted_industrial_{wall,floor,trim,accent}` | — | T | material | — | 128px / 4.0 m | — | — | B1 | PEND |

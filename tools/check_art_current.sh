@@ -21,6 +21,7 @@
 #   * every engineering number the art lane reads is still live
 #   * the palette's anchors still match THEME_MATERIALS, every ramp still
 #     contains its own anchor, and the value sandwich still holds
+#   * the numbers ART_REVIEW.md and ASSET_INVENTORY.md quote match the build
 #   * assets/art_budgets.json still matches its own derivation
 #   * every .glb and .png rebuilds byte-identical from its source
 #   * the preview project's renderer settings still match godot/'s
@@ -57,7 +58,15 @@ python3 tools/blender/palette.py >/dev/null || \
   colour stopped separating from a wall. Run
     python3 tools/blender/palette.py"
 
-# --- 3. budgets still match their own derivation ------------------------
+# --- 3. the documents quote the numbers the build actually produced -----
+say "document metrics match the build..."
+python3 tools/blender/check_docs_metrics.py >/dev/null || \
+  fail "check_docs_metrics: a triangle count or measured size quoted in
+  ART_REVIEW.md or ASSET_INVENTORY.md does not match the manifest. The
+  owner's ledger is the one place a wrong number is invisible. Run
+    python3 tools/blender/check_docs_metrics.py"
+
+# --- 4. budgets still match their own derivation ------------------------
 say "budgets match their derivation..."
 cp assets/art_budgets.json /tmp/art_budgets_committed.json
 python3 tools/blender/derive_budgets.py --write >/dev/null
@@ -69,7 +78,7 @@ if ! cmp -s assets/art_budgets.json /tmp/art_budgets_committed.json; then
   diff -u /tmp/art_budgets_committed.json assets/art_budgets.json | head -30 || true
 fi
 
-# --- 4. the preview project has not drifted from the game ---------------
+# --- 5. the preview project has not drifted from the game ---------------
 say "preview renderer settings match godot/..."
 for setting in "textures/canvas_textures/default_texture_filter=0"; do
   if grep -qF "$setting" godot/project.godot; then
@@ -87,7 +96,7 @@ if ! grep -q "f62fdbde1" tools/artpreview/project.godot; then
   build. The preview and the game must run the same engine."
 fi
 
-# --- 5. everything rebuilds byte-identical ------------------------------
+# --- 6. everything rebuilds byte-identical ------------------------------
 if [ ! -x "$BLENDER" ]; then
   say "SKIPPED rebuild -- no blender at $BLENDER (set BLENDER=...)"
   say "  Everything above still ran."
