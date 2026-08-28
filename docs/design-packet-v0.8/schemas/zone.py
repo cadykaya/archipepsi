@@ -115,6 +115,35 @@ class ChamberBase(Strict):
         min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")], ...] = Field(
         default=(), max_length=4)
 
+    @model_validator(mode="after")
+    def _features_sit_clear_of_the_walking_lane(self):
+        """The geometric proof, now applied to EVERY chamber that can hold
+        a feature rather than only to corridors.
+
+        `FEATURE_MIN_WIDTH` is `2 * (lane + 2 * reach + wall clearance)`
+        per tag: a width covering it is a width with somewhere to put the
+        feature that is neither in the masonry nor across the route. That
+        is the real statement of "an affordance is never on the mandatory
+        path", and it used to run on corridors only -- so every other room
+        type got a blanket ban instead (CAMPAIGN_SCALE.md 7).
+        """
+        width = getattr(self, "width", None)
+        if width is None:
+            width = getattr(self, "side", None)
+        if width is None:
+            return self
+        for feature in self.features:
+            needed = C.FEATURE_MIN_WIDTH.get(
+                feature.tag, C.MIN_FEATURE_CHAMBER_WIDTH)
+            if width < needed:
+                raise ValueError(
+                    f"chamber '{self.id}' is {width}m wide and carries "
+                    f"a '{feature.tag}', which needs {needed}m to sit clear "
+                    "of the walking lane on both sides (ECHOES.md 13.2); "
+                    "widen the room or offer a smaller feature"
+                )
+        return self
+
     @property
     def enemy_total(self) -> int:
         return sum(g.count for g in getattr(self, "enemies", []))
@@ -170,16 +199,6 @@ class CorridorChamber(_WithEnemies):
         builder: a silently discarded feature is a Zone that reads richer
         than it plays, and a refusal is something the repair loop can fix.
         """
-        for feature in self.features:
-            needed = C.FEATURE_MIN_WIDTH.get(
-                feature.tag, C.MIN_FEATURE_CHAMBER_WIDTH)
-            if self.width < needed:
-                raise ValueError(
-                    f"chamber '{self.id}' is {self.width}m wide and carries "
-                    f"a '{feature.tag}', which needs {needed}m to sit clear "
-                    "of the walking lane on both sides (ECHOES.md 13.2); "
-                    "widen the corridor or offer a smaller feature"
-                )
         return self
 
 
@@ -285,33 +304,25 @@ class Zone(Strict):
         if len(set(rewards)) != len(rewards):
             raise ValueError("duplicate reward_location_id")
 
-        # §13.2, the structural half: a chamber that HOLDS an AP reward may
-        # not also host affordance features. Nothing forces the two to
-        # interact, and keeping them in separate rooms is the cheapest
-        # possible proof that no feature sits between the player and a
-        # Check. The semantic half — capability ownership — needs the
-        # campaign and lives in `validate_zone`.
-        for chamber in self.chambers:
-            if chamber.features and chamber.reward_location_id is not None:
-                raise ValueError(
-                    f"chamber '{chamber.id}' holds Check "
-                    f"{chamber.reward_location_id} and an affordance "
-                    f"feature; an affordance may never sit on the path to "
-                    f"an AP reward (ECHOES.md 13.2)"
-                )
-            # A corridor has no `objective` attribute at all, which is
-            # why the default matters more than the allowlist: the
-            # allowlist named `"reach_exit"`, a value no chamber type in
-            # the union can hold, so it never matched anything. Left out
-            # rather than kept "just in case" — a condition that cannot
-            # fire reads as a rule somebody relies on.
-            if chamber.features and getattr(chamber, "objective", None) \
-                    not in (None, "none"):
-                raise ValueError(
-                    f"chamber '{chamber.id}' has objective "
-                    f"'{chamber.objective}' and an affordance feature; an "
-                    f"affordance may never gate an objective"
-                )
+        # §13.2 used to be enforced by keeping affordances and rewards in
+        # SEPARATE ROOMS. That was the cheapest possible proof that no
+        # feature sits between the player and a Check, and it made every
+        # reward room sterile: no rails, no grapple, no bounce pad, in the
+        # rooms most worth having them (CAMPAIGN_SCALE.md 7).
+        #
+        # The invariant is unchanged. The proof moved:
+        #
+        #   - `_features_sit_clear_of_the_walking_lane` (ChamberBase) is
+        #     the geometric half, and now runs on every chamber type
+        #     rather than only corridors.
+        #   - the ownership half stays in `validate_zone`, which has the
+        #     campaign and can ask what the player actually has.
+        #   - the instantiated half is `godot-legible`, which walks the
+        #     built room and checks the reward is reachable with base
+        #     movement while the feature is not on the way.
+        #
+        # Optional capabilities may shortcut, flank and decorate. They may
+        # never be REQUIRED for a Check, an objective or the exit.
         return self
 
     @property

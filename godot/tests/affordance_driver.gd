@@ -46,6 +46,7 @@ func _run() -> void:
 	BridgeClient.sent_intents.clear()
 
 	_features_stay_out_of_the_lane()
+	_a_check_sits_on_the_lane_features_are_kept_off()
 	await _the_seven_are_built()
 	await _a_bounce_pad_beats_a_jump()
 	await _water_slows_you_but_cannot_trap_you()
@@ -755,3 +756,32 @@ func _snapshot() -> Dictionary:
 		"interpretations": [],
 		"checked_location_ids": [],
 	}
+
+## The other half of "an affordance is never on the way to a Check".
+##
+## `_features_stay_out_of_the_lane` proves features clear the lane in
+## every room width, including arena widths. That only protects a Check
+## if the CHECK IS ON THE LANE -- otherwise both could sit off it, on
+## the same side, with the pedestal behind the feature.
+##
+## Until CAMPAIGN_SCALE.md 7, none of this had to hold for rooms: a
+## chamber holding a Check was simply forbidden from holding a feature,
+## and the blanket ban did the work. The ban is gone because it made
+## every reward room sterile, so the conjunction below is now what
+## carries the invariant, and both halves need saying out loud.
+func _a_check_sits_on_the_lane_features_are_kept_off() -> void:
+	var lane := AffordanceFeatures.LANE_HALF_WIDTH
+	var checked := 0
+	for width: float in [5.0, 8.0, 14.0, 20.0, 28.0]:
+		for depth: float in [12.0, 20.0, 28.0]:
+			var reward := ContentInstantiator._objective(
+					{}, Vector3(width, 5.0, depth))
+			checked += 1
+			_check_once(absf(reward.x) < lane,
+					"a Check in a %.0fx%.0f room sits %.2fm off centre, "
+					% [width, depth, absf(reward.x)]
+					+ "outside the walking lane a feature is kept out of "
+					+ "-- so a feature could stand between the player and "
+					+ "it")
+	_check_once(checked >= 15,
+			"only %d reward placements checked" % checked)
