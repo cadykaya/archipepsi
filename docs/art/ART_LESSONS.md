@@ -308,6 +308,24 @@ and a kit shot that omits the edge is testing the wrong thing.
 
 ---
 
+### L-50 · A `centre`-anchored asset at floor level is half a different asset
+The three projectiles are anchored `centre`, because a projectile's origin
+is its middle. Placed in a shot at `y 0`, half of each one is under the
+floor slab — and what is left above it is not "half a spindle", it is a
+**cone**. Three spindles rendered as three traffic cones, and the first
+reading of that sheet was that the geometry was wrong: an hour went into
+rebuilding frusta that were correct all along.
+
+The tell was there and was missed: all three were the same wrong shape, and
+a modelling mistake repeated identically across three independent builders
+is not a modelling mistake.
+
+L-11 said one origin rule for every asset is wrong and invisibly so. This
+is its other half: **the anchor a thing was authored to is part of how it
+must be placed**, and a placement that ignores it fails by looking like a
+different object rather than a misplaced one.
+
+
 ## Lighting
 
 ### L-14 · Flat is not bright — sum the energies first

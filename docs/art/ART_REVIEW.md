@@ -1258,3 +1258,76 @@ is to be a silhouette that says **this edge is a drop**.
 | `T_corner_left.png` | the junction as an object |
 
 Status: **PENDING** — production work inheriting locked DNA.
+
+---
+
+## Batch 008 — the three projectiles
+
+Tier 4 is the enemy production family, and most of it is blocked: seven of
+the ten concepted roles are waiting on colliders (interface requirement 7)
+and the telegraph is waiting on a node that does not exist (requirement 14).
+`enemy_projectile` is the Pri-A row with nothing in its way.
+
+| ID | Tris | Size (m) |
+| --- | --- | --- |
+| `enemy_projectile_straight` | 104 | 0.44 × 0.44 × 0.30 |
+| `enemy_projectile_falling` | 152 | 0.44 × 0.44 × 0.29 |
+| `enemy_projectile_lobbed` | 192 | 0.63 × 0.61 × 0.47 |
+
+### Why three, when the engine draws one
+
+`echo_projectile.gd` describes three shapes as one primitive family, and
+they demand three different reactions:
+
+| Kind | How the engine knows | What the player must do |
+| --- | --- | --- |
+| straight | `gravity_scale` 0 | step sideways |
+| falling | `gravity_scale` > 0 | get out from under it |
+| lobbed | `blast_radius` > 0 | get clear of where it lands |
+
+Today all three are one `SphereMesh`, scaled 1.5× for a lob. So the single
+visual distinction the engine draws is size — the least useful of the three
+— and the two that decide whether the player steps sideways or runs are not
+drawn at all.
+
+### Hue is already spent, so form carries everything
+
+`EchoProjectile.tint` is **the source world's colour**: the projectile is
+painted with whichever multiworld game the Echo came from. That is an open
+set, exactly like the Check's destination ring, so nothing about hue is
+available to say which kind of projectile this is — and each of these is
+one flat material the engine overrides.
+
+- **straight** — a tight spindle with a hard equatorial ring of blades.
+  Wider than it is tall, so it does not read as something that will drop.
+- **falling** — a point at the bottom under a swept skirt. It says *the
+  ground under this is the problem* from any angle.
+- **lobbed** — bulkier, segmented, with a proud fuse band and six studs.
+  Something with an inside, that is going to come apart.
+
+Built at the engine's own 1.5× for the lob rather than relying on the
+multiplier, so the mesh is right either way.
+
+### Not oriented, on purpose
+
+`_ready` builds the visual and never rotates it; `_physics_process`
+integrates a velocity. A dart shape would fly sideways as often as not, so
+each of these reads from any angle around the vertical — and the vertical
+asymmetry is deliberate, because that is the one axis whose orientation the
+engine does keep.
+
+### Evidence
+
+`docs/art/review/batch008/`, from `tools/shots/batch008_projectile.json`.
+
+| Image | What it answers |
+| --- | --- |
+| `X_projectile_family.png` · `_grey` · `_silhouette` | do the three separate by shape alone |
+| `X_projectile_above.png` · `_silhouette` | from overhead — the angle a falling shot is met from |
+| `X_projectile_in_hub.png` · `_grey` | **in the real room at 12 m**, on the engine's lens |
+
+The Hub shot is the trackability test, and it is **one theme of six**. The
+other five are behind the theme-kit gate `ART_FRONTIER.md` already records.
+Saying so beats a sheet that implies the test was done.
+
+Status: **PENDING** — production work inheriting locked DNA.

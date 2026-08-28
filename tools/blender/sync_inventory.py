@@ -55,6 +55,9 @@ ORDER = [
     ("batch007", "architecture",
      ["arch_stair", "arch_ramp", "arch_ledge", "arch_connector_straight",
       "arch_corner_left", "arch_corner_right"]),
+    ("batch008", "enemy",
+     ["enemy_projectile_straight", "enemy_projectile_falling",
+      "enemy_projectile_lobbed"]),
 ]
 CAT = {"epsilon": "hero", "check": "hero", "portal": "interactable",
        "door": "module",

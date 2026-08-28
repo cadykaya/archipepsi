@@ -1,0 +1,35 @@
+{
+  "enemy_projectile_falling": {
+    "anchor": "centre",
+    "path": "batch008/enemy/enemy_projectile_falling.glb",
+    "size": [
+      0.44,
+      0.44,
+      0.29
+    ],
+    "texel_density": null,
+    "triangles": 152
+  },
+  "enemy_projectile_lobbed": {
+    "anchor": "centre",
+    "path": "batch008/enemy/enemy_projectile_lobbed.glb",
+    "size": [
+      0.63,
+      0.61,
+      0.475
+    ],
+    "texel_density": null,
+    "triangles": 192
+  },
+  "enemy_projectile_straight": {
+    "anchor": "centre",
+    "path": "batch008/enemy/enemy_projectile_straight.glb",
+    "size": [
+      0.44,
+      0.44,
+      0.299
+    ],
+    "texel_density": null,
+    "triangles": 104
+  }
+}

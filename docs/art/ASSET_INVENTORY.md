@@ -108,6 +108,9 @@ These are the vocabulary everything after them inherits.
 | `arch_connector_straight` | L1 | module | 108 | 4.00 × 4.80 × 4.40 | floor | B7 | B7 | PEND |
 | `arch_corner_left` | L1 | module | 84 | 4.80 × 4.80 × 4.40 | floor | B7 | B7 | PEND |
 | `arch_corner_right` | L1 | module | 84 | 4.80 × 4.80 × 4.40 | floor | B7 | B7 | PEND |
+| `enemy_projectile_straight` | L0 | enemy | 104 | 0.44 × 0.44 × 0.30 | centre | B8 | B8 | PEND |
+| `enemy_projectile_falling` | L0 | enemy | 152 | 0.44 × 0.44 × 0.29 | centre | B8 | B8 | PEND |
+| `enemy_projectile_lobbed` | L0 | enemy | 192 | 0.63 × 0.61 × 0.47 | centre | B8 | B8 | PEND |
 
 | Theme material | Roles built |
 | --- | --- |
@@ -190,10 +193,10 @@ than any Zone and their whole value is being the same every time.
 | ID | L | Scope | Replaces | Pri | Constraint | Model |
 | --- | --- | --- | --- | --- | --- | --- |
 | `enemy_melee_*` | L0 | U | `enemies/enemy.gd` `_build_melee` | A | 0.8 × 1.6 × 0.8 m; 24 hp, reach 2.0 m, speed 4.0 | B1 |
-| `enemy_ranged_*` | L0 | U | `_build_ranged` | A | 0.7 × 1.4 × 0.7 m; **stationary**, reach 40 m. Silhouette must say "does not close" | — |
-| `enemy_brute_*` | L0 | U | `_build_brute` | A | 1.8 × 2.6 × 1.8 m; max **one per Zone**; needs `BRUTE_LANE` 2.6 m | — |
-| `enemy_telegraph_*` | L0 | U | `enemy.gd` attack windup | A | **a telegraph is a promise.** One per archetype, readable at 18 m | — |
-| `enemy_projectile` | L0 | U | `gameplay/echo_projectile.gd` | A | 14 m/s; must be trackable against six theme backgrounds | — |
+| `enemy_ranged_*` | L0 | U | `_build_ranged` | A | 0.7 × 1.4 × 0.7 m; **stationary**, reach 40 m. Silhouette must say "does not close" | B1 |
+| `enemy_brute_*` | L0 | U | `_build_brute` | A | 1.8 × 2.6 × 1.8 m; max **one per Zone**; needs `BRUTE_LANE` 2.6 m | B1 |
+| `enemy_telegraph_*` | L0 | U | `enemy.gd` attack windup | A | **a telegraph is a promise.** One per archetype, readable at 18 m. **Blocked**: `enemy.gd` has one windup, on the brute, and it is a scale pulse on the whole body — there is no node an authored telegraph could be. See interface requirement 14 | — |
+| `enemy_projectile` | L0 | U | `gameplay/echo_projectile.gd` | A | 14 m/s; must be trackable against six theme backgrounds. Three kinds the engine already distinguishes by data and not by form: straight, falling, lobbed | **B8** |
 | `enemy_hit_death` | L0 | U | `gameplay/damageable.gd` | B | — | — |
 | `enemy_shared_parts` | L0 | U | — | B | the joints, plates and drums all three archetypes are assembled from | — |
 

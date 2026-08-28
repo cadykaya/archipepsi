@@ -40,6 +40,7 @@ extends SceneTree
 ##
 ##   `hub`                 the Hub, from `hub_scene.gd` -- shell, fixtures,
 ##                         lights, all at hub.gd's own numbers
+##   `hub + model:<...>`   the same, with assets standing in it
 ##   `void`                a backdrop and lights, nothing else
 ##   `model:<rel path>`    one .glb on the backdrop, floor-anchored at origin
 ##   `model:<a> + <b>`     several, in one frame. Each may carry an
@@ -166,8 +167,17 @@ func _run_scene(scene: String, shots: Array) -> void:
 func _build(scene: String, root: Node3D, vp: SubViewport,
 		backdrop: String = "full") -> AABB:
 	_backdrop.clear()
-	if scene == "hub":
+	if scene == "hub" or scene.begins_with("hub +"):
 		HubScene.build(root, _assets)
+		# `hub + model:<...>` stands assets in the real room. A prop shot on
+		# the bench's grey slab answers "what shape is it"; the same prop in
+		# the Hub answers "can you see it", which for anything that has to
+		# be TRACKED is the only question that matters.
+		if scene.begins_with("hub +"):
+			var rest := scene.substr(5).strip_edges()
+			if rest.begins_with("model:"):
+				rest = rest.substr(6)
+			return _load_models(rest, root)
 		# The Hub's subject is the room itself: 22 x 16 x 5 at hub.gd's
 		# origin, which is not the room's centre.
 		return AABB(Vector3(-11, 0, 0), Vector3(22, 5, 16))
@@ -196,13 +206,22 @@ func _build(scene: String, root: Node3D, vp: SubViewport,
 				Color(0.56, 0.57, 0.60))
 
 	if scene.begins_with("model:"):
-		# One `model:` scene may name SEVERAL glbs, joined by "+", each with
-		# an optional "@x,y,z" offset. Batch 005 is why: reward.gd builds
-		# the Check out of a mast, an item and a ring as separate nodes, so
-		# a picture of one file is a picture of a third of a Check.
-		var loaded := 0
-		var union := AABB()
-		for spec in scene.substr(6).split("+", false):
+		return _load_models(scene.substr(6), root)
+
+	return AABB(Vector3(-1, 0, -1), Vector3(2, 2, 2))
+
+
+## Load one or more glbs into `root` and return the union of their boxes.
+##
+## The spec is glbs joined by "+", each with an optional "@x,y,z" offset and
+## "#yaw". Batch 005 is why several: reward.gd builds the Check out of a
+## mast, an item and a ring as separate nodes, so a picture of one file is a
+## picture of a third of a Check.
+func _load_models(spec_list: String, root: Node3D) -> AABB:
+	var loaded := 0
+	var union := AABB()
+	if true:
+		for spec in spec_list.split("+", false):
 			var at := Vector3.ZERO
 			var yaw := 0.0
 			var rel: String = spec.strip_edges()
@@ -250,11 +269,9 @@ func _build(scene: String, root: Node3D, vp: SubViewport,
 			var here: AABB = node.transform * ArtBench.aabb_of(node)
 			union = here if loaded == 0 else union.merge(here)
 			loaded += 1
-		if loaded == 0:
-			return AABB(Vector3.ZERO, Vector3.ONE)
-		return union
-
-	return AABB(Vector3(-1, 0, -1), Vector3(2, 2, 2))
+	if loaded == 0:
+		return AABB(Vector3.ZERO, Vector3.ONE)
+	return union
 
 
 func _take(shot: Dictionary, vp: SubViewport, root: Node3D,
