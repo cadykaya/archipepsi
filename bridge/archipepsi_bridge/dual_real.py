@@ -534,7 +534,7 @@ async def prove_reconnect_leaves_the_other_alone(down: Player,
            f"{down.slot}'s Zone records changed across a reconnect")
     _check(len(up.engine.ap.received) >= up_received_before,
            f"{up.slot} LOST received items while {down.slot} reconnected")
-    goal_echo = f"echo_{a.engine.config.goal_location_id}"
+    goal_echo = f"echo_{down.engine.config.goal_location_id}"
     _check(goal_echo not in (down.echo_ids() & up.echo_ids())
            or down.save.slot_id != up.save.slot_id,
            "unreachable")
