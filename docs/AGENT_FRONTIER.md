@@ -156,11 +156,37 @@ What remains needs a person, not more iteration
    placeholders in the established voice and say so in the source. D3
    fixed the structure and left the words open.
 3. **Human playtesting** — every statable invariant has a test. Whether
-   the game is GOOD is not among them.
+   the game is GOOD is not among them. **Playtest 1 ran 2026-08-28 and
+   ended at the title screen**: MOCK CAMPAIGN crashed on a null `world`,
+   the menu panel sat in the bottom-right corner with QUIT off the edge,
+   and the Output panel scrolled 81 warnings. All fixed; see below.
 4. **`challenge_marker`** — deliberately deferred. The hook stays
    dormant and is not removed; a test refuses anything depending on it.
 5. **Project code licensing** — separate from asset intake, and not
    decided.
+
+## What playtest 1 taught, and the guard it left behind
+
+Nine headless suites, a whole-campaign integration run and both CI tiers
+were green while the game could not enter the Hub. Every one of those
+suites is a DRIVER: it takes the dispatch branch in `Main._ready` and
+returns before the real setup, then builds its own world. So the startup
+path had NO coverage at all, and a refactor that deleted the two lines
+assigning `world` and `tones` cost a day.
+
+The general shape, worth carrying into any new test: **a suite that
+substitutes for the code it is meant to protect proves nothing about it.**
+Two structural guards now exist because a comment saying so did not work.
+
+- `make godot-boot` calls the real `Main.boot()` and drives the
+  transition that crashed. It runs FIRST in CI.
+- `test_ci_coverage.py` fails when a Godot suite exists that CI does not
+  run, because a hand-maintained list of tests falls behind the tests.
+
+Godot's GDScript warnings are EDITOR-ONLY. `--import`, `--editor --quit`
+and a SceneTree probe all report zero headlessly, so no CI tier can see
+them and the count drifts silently. The three scratch analyzers used for
+the sweep were not kept; a warning sweep means opening the editor.
 
 Wake-ups are no-ops except for concrete regressions or CI failures. Do
 NOT invent a new roadmap or speculative work to fill a heartbeat.
