@@ -58,13 +58,20 @@ ORDER = [
     ("batch008", "enemy",
      ["enemy_projectile_straight", "enemy_projectile_falling",
       "enemy_projectile_lobbed"]),
+    ("batch009", "affordance",
+     ["breakwall_panel", "water_basin", "rail_beam", "wind_ring",
+      "wind_perch", "bounce_pad", "movplat_deck"]),
 ]
 CAT = {"epsilon": "hero", "check": "hero", "portal": "interactable",
-       "door": "module",
+       "door": "module", "breakwall": "interactable",
+       "water": "interactable", "rail": "interactable",
+       "wind": "interactable", "bounce": "interactable",
+       "movplat": "interactable",
        "enemy": "enemy", "anchor": "interactable", "arch": "module",
        "prop": "prop", "hub": "fixture", "lab": "fixture"}
 LEVEL = {"epsilon": "L4", "check": "L2", "portal": "L2", "enemy": "L0",
-         "door": "L1",
+         "door": "L1", "breakwall": "L2", "water": "L2", "rail": "L2",
+         "wind": "L2", "bounce": "L2", "movplat": "L2",
          "anchor": "L2", "arch": "L1", "prop": "L0", "hub": "L2",
          "lab": "L1"}
 

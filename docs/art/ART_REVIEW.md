@@ -1331,3 +1331,81 @@ other five are behind the theme-kit gate `ART_FRONTIER.md` already records.
 Saying so beats a sheet that implies the test was done.
 
 Status: **PENDING** — production work inheriting locked DNA.
+
+---
+
+## Batch 009 — the six remaining affordances
+
+`ASSET_INVENTORY.md` §5 lists seven affordances and one was built: the
+grapple anchors, which you passed at Style Lock. The other six are all real
+— `affordance_features.gd` places every one of them today out of `BoxMesh`,
+`CylinderMesh` and `TorusMesh`, at footprints that file states.
+
+| ID | Tris | Size (m) | Anchor |
+| --- | --- | --- | --- |
+| `breakwall_panel` | 112 | 0.40 × 2.42 × 2.60 | floor |
+| `water_basin` | 124 | 1.64 × 1.64 × 0.23 | floor |
+| `rail_beam` | 132 | 0.46 × 6.25 × 1.68 | floor |
+| `wind_ring` | 160 | 1.64 × 1.64 × 0.17 | centre |
+| `wind_perch` | 80 | 1.50 × 1.50 × 0.64 | ceiling |
+| `bounce_pad` | 160 | 2.03 × 2.03 × 0.42 | floor |
+| `movplat_deck` | 144 | 2.40 × 2.40 × 0.72 | floor |
+
+### One rule, and it is the inventory's own
+
+> The seven look the same everywhere or they teach nothing.
+
+An affordance is a promise about what the player's body can do, and a
+promise that has to be re-learnt in each of six themes is not one. So all
+seven wear the **`signal`** family — the same one the approved grapple
+anchors wear — and what differs is form:
+
+| | The promise, in shape |
+| --- | --- |
+| breakwall | a fractured panel with a struck face and a fitted frame |
+| water | a lip you can see over, with a modelled step out |
+| rail | a continuous unbroken top face, hard stops at both ends |
+| wind ring | an open ring whose vanes are angled **up** |
+| wind perch | a platform with a catching lip |
+| bounce | a drum under compression, not a disc on the floor |
+| movplat | a deck with treads and a guide slot saying which way |
+
+`A_affordance_family_silhouette.png` is the sheet that tests it: seven
+shapes, no hue, and each still says something different.
+
+### What that conflicts with, surfaced rather than fixed
+
+`affordance_features.gd` tints these six ad hoc today: the breakable wall
+takes the theme's hazard colour, water `(0.35, 0.75, 0.95)`, the rail
+`(0.9, 0.7, 0.95)`, wind `(0.7, 0.95, 0.9)`, and the bounce pad and moving
+platform take the theme's accent and trim.
+
+Four of those are not in `art_palette.json` at all. Two vary per theme — so
+the family does **not** currently look the same everywhere. And the rail's
+violet sits beside `glitch`, which in this palette means *cosmetic
+corruption that means nothing mechanically*: an affordance wearing it tells
+the player the opposite of the truth.
+
+That is engineering's file and this lane does not edit it. Interface
+requirement 15 records it; these are built to the rule the inventory states,
+and the sheets show that rather than today's tints.
+
+### Two things the engine keeps
+
+The breakable panel's **cracks** are the engine's channel — it draws three
+bars and shrinks them as the panel's health drops — so nothing here paints
+any. And `wind_ring` is one mark, not three: the engine stacks three of them
+up the column at 1.2 m intervals, and `A_wind_column.png` shows it that way.
+
+### Evidence
+
+`docs/art/review/batch009/`, from `tools/shots/batch009_affordances.json`.
+
+| Image | What it answers |
+| --- | --- |
+| `A_affordance_family.png` · `_grey` · `_silhouette` | **start here** — one family, seven promises |
+| `A_wind_column.png` | the updraft as the engine stacks it |
+| `A_rail_beam.png` · `A_bounce_pad.png` · `A_breakwall_panel.png` | each on its own |
+| `A_movplat_water.png` | the two that are read from above |
+
+Status: **PENDING** — production work inheriting locked DNA.

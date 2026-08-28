@@ -111,6 +111,13 @@ These are the vocabulary everything after them inherits.
 | `enemy_projectile_straight` | L0 | enemy | 104 | 0.44 × 0.44 × 0.30 | centre | B8 | B8 | PEND |
 | `enemy_projectile_falling` | L0 | enemy | 152 | 0.44 × 0.44 × 0.29 | centre | B8 | B8 | PEND |
 | `enemy_projectile_lobbed` | L0 | enemy | 192 | 0.63 × 0.61 × 0.47 | centre | B8 | B8 | PEND |
+| `breakwall_panel` | L2 | interactable | 112 | 0.40 × 2.42 × 2.60 | floor | B9 | B9 | PEND |
+| `water_basin` | L2 | interactable | 124 | 1.64 × 1.64 × 0.23 | floor | B9 | B9 | PEND |
+| `rail_beam` | L2 | interactable | 132 | 0.46 × 6.25 × 1.68 | floor | B9 | B9 | PEND |
+| `wind_ring` | L2 | interactable | 160 | 1.64 × 1.64 × 0.17 | centre | B9 | B9 | PEND |
+| `wind_perch` | L2 | interactable | 80 | 1.50 × 1.50 × 0.64 | ceiling | B9 | B9 | PEND |
+| `bounce_pad` | L2 | interactable | 160 | 2.03 × 2.03 × 0.42 | floor | B9 | B9 | PEND |
+| `movplat_deck` | L2 | interactable | 144 | 2.40 × 2.40 × 0.72 | floor | B9 | B9 | PEND |
 
 | Theme material | Roles built |
 | --- | --- |
@@ -211,17 +218,24 @@ one is optional (I4) and every one pays for itself with a capability (I12).
 | ID | L | Tag | Footprint (half-w × half-d × h) | Min chamber width | Model |
 | --- | --- | --- | --- | --- | --- |
 | `anchor_*` | L2 | `grapple_anchor` | 0.7 × 0.7 × 5.6 | 7.5 m | B1 |
-| `breakwall_*` | L2 | `breakable_wall` | 0.7 × 1.3 × 3.6 | 7.5 m | — |
-| `water_*` | L2 | `water_volume` | 0.8 × 0.8 × 3.6 | 7.9 m | — |
-| `rail_*` | L2 | `rail` | 0.5 × 3.5 × 3.6 | 6.7 m | — |
-| `wind_*` | L2 | `wind_volume` | 0.8 × 0.8 × 6.0 | 7.9 m | — |
-| `bounce_*` | L2 | `bounce_pad` | 0.6 × 0.6 × 7.0 | 7.1 m | — |
-| `movplat_*` | L2 | `moving_platform` | 0.8 × 0.8 × 5.2 | 7.9 m | — |
+| `breakwall_*` | L2 | `breakable_wall` | 0.7 × 1.3 × 3.6 | 7.5 m | **B9** |
+| `water_*` | L2 | `water_volume` | 0.8 × 0.8 × 3.6 | 7.9 m | **B9** |
+| `rail_*` | L2 | `rail` | 0.5 × 3.5 × 3.6 | 6.7 m | **B9** |
+| `wind_*` | L2 | `wind_volume` | 0.8 × 0.8 × 6.0 | 7.9 m | **B9** |
+| `bounce_*` | L2 | `bounce_pad` | 0.6 × 0.6 × 7.0 | 7.1 m | **B9** |
+| `movplat_*` | L2 | `moving_platform` | 0.8 × 0.8 × 5.2 | 7.9 m | **B9** |
 
 Shared: `THRESHOLD_CLEARANCE` 2.0 m, `CEILING_GAP` 0.5 m,
 `OUT_OF_JUMP_REACH` 2.1 m, lane half-width 2.0 m, wall margin 0.35 m.
 
 > The seven look the same everywhere or they teach nothing.
+
+Batch 009 built the six, all in the `signal` family the approved grapple
+anchors wear, with FORM carrying what each one promises.
+`affordance_features.gd` currently tints them six different ways, four of
+which are not in `art_palette.json` and two of which vary per theme —
+so the family does not currently look the same everywhere. Interface
+requirement 15.
 
 ---
 

@@ -56,7 +56,7 @@ with the approved authored vocabulary come first.
 | 2 | Core interactables | **nearly done** — Batch 005/005-R produced the Check and its four states, Batch 006 the portal's two core states and `door_standard`. What remains is `objective_marker` and `signage_module`, and both are a navigation **language** rather than a fixture — surfaced, not chosen |
 | 3 | Common architecture | **in progress** — Batch 007 built the five remaining Pri-A modules (stair, ramp, ledge, straight connector, both corners). 15 of 29; what is left is all Pri B/C |
 | 4 | The enemy production family | **mostly blocked** — Batch 008 built the three projectiles, the one Pri-A row with nothing in its way. Seven of the ten roles wait on colliders (req 7) and the telegraph on a node that does not exist (req 14) |
-| 5 | Movement affordances | 2 of 7 fixtures exist |
+| 5 | Movement affordances | **done** — Batch 009 built the six remaining fixtures, all in the `signal` family the approved anchors wear |
 | 6 | Universal props | 7 exist |
 | 7 | Room-shell vocabulary | none |
 | 8 | The six theme kits | 3 of 6 material families |
@@ -84,9 +84,9 @@ line rather than inventing work.
 | | |
 | --- | --- |
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
-| Phase | **STYLE LOCK PASSED — production.** Batch 004 is `PASS`. Batch 005 is `PASS IN DIRECTION`, its one required revision delivered as 005-R. Batches 005-R, 006, 007 and 008 are `PENDING`. |
+| Phase | **STYLE LOCK PASSED — production.** Batch 004 is `PASS`. Batch 005 is `PASS IN DIRECTION`, its one required revision delivered as 005-R. Batches 005-R, 006, 007, 008 and 009 are `PENDING`. |
 | Owner review | Style Lock passed 2026-08-28. Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
-| Next action | **Tier 5: movement affordances.** 2 of 7 fixtures exist and `affordance_features.gd` is real. Tier 4 is blocked past the projectiles (reqs 7 and 14) and Tier 3's remainder is Pri B/C. Batches 005-R, 006, 007 and 008 are with the owner. |
+| Next action | **Tier 6: universal props**, then Tier 3's Pri-B architecture. Tiers 1, 2 and 5 are done to their Pri-A rows; Tier 4 is blocked past the projectiles (reqs 7 and 14). Five batches — 005-R, 006, 007, 008, 009 — are with the owner. |
 
 ### What the Batch 002 review LOCKED
 
@@ -142,9 +142,9 @@ grow again until Style Lock passes.
 | `python3 tools/blender/palette.py` | PASS |
 | `python3 tools/blender/check_docs_metrics.py` | PASS — every number in ART_REVIEW.md and ASSET_INVENTORY.md matches the build |
 | `tools/sabotage_checks.sh` | see the commit for the run |
-| `python3 tools/blender/sync_inventory.py` | 74 assets written |
+| `python3 tools/blender/sync_inventory.py` | 81 assets written |
 | `tools/check_art_current.sh` | PASS — every asset byte-identical from source |
-| Assets built | 74 models + 16 theme textures + 7 prop skins + review images in `review/batch001` … `batch008` |
+| Assets built | 81 models + 16 theme textures + 7 prop skins + review images in `review/batch001` … `batch009` |
 | Composed room | 3,272 / 12,000 triangles |
 
 ### What a heartbeat cannot see
@@ -164,14 +164,15 @@ should say it cannot rather than guess.
 
 ## Where the review images are
 
-**[`docs/art/review/batch005r/`](review/batch005r/)** · **[`batch006/`](review/batch006/)** · **[`batch007/`](review/batch007/)** · **[`batch008/`](review/batch008/)** — with the owner now
+**[`docs/art/review/batch005r/`](review/batch005r/)** · **[`batch006/`](review/batch006/)** · **[`batch007/`](review/batch007/)** · **[`batch008/`](review/batch008/)** · **[`batch009/`](review/batch009/)** — with the owner now
 
 `batch005r/` is the one required Batch 005 revision: locked against
 confirmed at 39.6 m, measured. Start at `R_state_family_far_inset.png`.
 `batch006/` is the portal's two core states and the standard door; start at
 `P_portal_states.png`. `batch007/` is the five Pri-A traversal modules;
 start at `T_corner_turn.png`. `batch008/` is the three projectiles; start at
-`X_projectile_family.png`.
+`X_projectile_family.png`. `batch009/` is the six remaining affordances;
+start at `A_affordance_family.png` and its silhouette.
 
 **[`docs/art/review/batch005/`](review/batch005/)** — the Check, in full
 
@@ -233,7 +234,7 @@ B=.tools/blender/blender
 for s in materials architecture props concept_epsilon concept_check \
          concept_portal concept_enemy concept_anchor \
          batch002_enemies epsilon_installation hub lab check \
-         ways_out traversal projectile; do
+         ways_out traversal projectile affordances; do
   $B -b --python tools/blender/build_$s.py
 done
 tools/batch001_sheets.sh      # ~12 min: 28 sheets
@@ -245,6 +246,7 @@ tools/shoot.sh <list.json>    # ANY shot, from a JSON list. Start here.
                               #   tools/shots/batch006_ways_out.json
                               #   tools/shots/batch007_traversal.json
                               #   tools/shots/batch008_projectile.json
+                              #   tools/shots/batch009_affordances.json
 tools/pixel_inset.py          # a region of a render, magnified NEAREST
 tools/hub_room.sh             # the Hub, built out of authored assets
 tools/epsilon_views.sh        # the operator / oblique / fusion / value views
@@ -281,6 +283,7 @@ them; each is a thing the art lane will need when contracts settle.
 | 12 | **`exit_portal.gd`'s `Core` is placed for a solid box frame, not an authored one.** It is a 2.4 × 3.4 mesh at `y 1.9`, so it spans 0.2 to 3.6 — invisible inside a 4.2 m `BoxMesh` `Frame`, and wrong inside an authored frame whose aperture is a real hole from the floor to a 3.4 m lintel. The authored cores are built at true height and anchored `module_floor`, so `Core.position` becomes `Vector3.ZERO`. Same contract as `check_item_*`. Also: the remaining-Checks count stays engineering's `StateLabel` — it is an unbounded integer, and a pip row that saturated at eight would be lying at nine. | A core placed 200 mm high leaves a gap at the threshold and pokes through the lintel. | `portal_core_*` |
 | 13 | **`echo_projectile.gd` picks its visual by nothing.** It builds one `SphereMesh` and scales it 1.5× for a lob, so `gravity_scale` and `blast_radius` — the two facts that decide whether the player steps sideways or runs — are invisible. Batch 008 authors one mesh per kind; selecting between them is a `match` on data the node already holds. | Three reactions, one silhouette. The distinction the engine does draw, size, is the least useful of the three. | `enemy_projectile_*` |
 | 14 | **There is no node an authored enemy telegraph could be.** `ASSET_INVENTORY.md` §4 asks for one telegraph per archetype, readable at 18 m. `enemy.gd` has exactly one windup — the brute's — and it is `scale = Vector3.ONE * (1.0 + 0.12 * sin(...))` on the whole body. Melee and ranged have a cooldown and no windup at all. An authored telegraph needs either a child node the engine shows during windup, or a second body mesh it swaps to. | *A telegraph is a promise* (`AUTHORED_CONTENT.md`). Two of the three archetypes currently make none. | `enemy_telegraph_*` |
+| 15 | **The six affordance tints are six ad-hoc colours and the family rule says they should be one.** `ASSET_INVENTORY.md` §5 states *the seven look the same everywhere or they teach nothing*, and the approved grapple anchors wear `signal`. `affordance_features.gd` gives the breakable wall the theme hazard, water `(0.35, 0.75, 0.95)`, the rail `(0.9, 0.7, 0.95)`, wind `(0.7, 0.95, 0.9)`, and the bounce pad and moving platform the theme accent and trim. Four are absent from `art_palette.json`; two vary per theme; and the rail's violet sits beside `glitch`, which means *cosmetic corruption, no mechanical meaning*. | An affordance is a promise about the player's own body. A promise that has to be re-learnt per theme is not one, and one wearing the glitch family says the opposite of the truth. | every `batch009` asset |
 | 5 | **A larger footprint, or an L2 placement path, for composed clusters.** `PROP_FOOTPRINT` is 1.4 m. | Right for L0, too small for an L2 station or storytelling cluster. | `cluster_*` |
 | 6 | **`challenge_marker` world semantics** (`AGENT_FRONTIER.md` still lists this open). | Its visual cannot be specified until its meaning is. | `local_reward_pickup` |
 
