@@ -118,12 +118,17 @@ These are the vocabulary everything after them inherits.
 | `wind_perch` | L2 | interactable | 80 | 1.50 × 1.50 × 0.64 | ceiling | B9 | B9 | PASS |
 | `bounce_pad` | L2 | interactable | 160 | 2.03 × 2.03 × 0.42 | floor | B9 | B9 | PASS |
 | `movplat_deck` | L2 | interactable | 144 | 2.40 × 2.40 × 0.72 | floor | B9 | B9 | PASS |
-| `prop_wall_plate` | L0 | prop | 84 | 0.90 × 0.10 × 0.62 | wall | B10 | B10 | PEND |
-| `prop_oil_drum` | L0 | prop | 184 | 0.78 × 0.78 × 0.95 | floor | B10 | B10 | PEND |
-| `prop_valve_wheel` | L0 | prop | 176 | 0.62 × 0.23 × 0.62 | wall | B10 | B10 | PEND |
-| `rail_arc_rise` | L2 | interactable | 408 | 0.42 × 6.36 × 2.74 | floor | B11 | B11 | PEND |
-| `rail_arc_launch` | L2 | interactable | 480 | 0.42 × 6.36 × 2.84 | floor | B11 | B11 | PEND |
-| `rail_arc_weave` | L2 | interactable | 480 | 0.89 × 6.36 × 1.54 | floor | B11 | B11 | PEND |
+| `prop_wall_plate` | L0 | prop | 84 | 0.90 × 0.10 × 0.62 | wall | B10 | B10 | PASS |
+| `prop_oil_drum` | L0 | prop | 184 | 0.78 × 0.78 × 0.95 | floor | B10 | B10 | PASS |
+| `prop_valve_wheel` | L0 | prop | 176 | 0.62 × 0.23 × 0.62 | wall | B10 | B10 | PASS |
+| `rail_arc_rise` | L2 | interactable | 408 | 0.42 × 6.36 × 2.74 | floor | B11 | B11 | PASS |
+| `rail_arc_launch` | L2 | interactable | 480 | 0.42 × 6.36 × 2.84 | floor | B11 | B11 | PASS |
+| `rail_arc_weave` | L2 | interactable | 480 | 0.89 × 6.36 × 1.54 | floor | B11 | B11 | PASS |
+| `prop_sconce` | L0 | prop | 84 | 0.24 × 0.38 × 0.49 | wall | B13 | B13 | PEND |
+| `prop_sconce_flame` | L0 | prop | 112 | 0.22 × 0.19 × 0.22 | centre | B13 | B13 | PEND |
+| `prop_transit_sign` | L0 | prop | 96 | 1.62 × 0.16 × 0.69 | ceiling | B13 | B13 | PEND |
+| `prop_root_fall` | L0 | prop | 112 | 0.26 × 0.26 × 1.04 | ceiling | B13 | B13 | PEND |
+| `prop_column_stump` | L0 | prop | 140 | 1.15 × 1.15 × 1.20 | floor | B13 | B13 | PEND |
 
 | Theme material | Roles built |
 | --- | --- |
@@ -332,8 +337,11 @@ stations Epsilon selects whole, not props it arranges itself.
 > (neon_transit), root tendrils or a column stump (temple_ruin), and a
 > `Label3D` reading `prop_missing.mdl` (void_glitch).
 >
-> Those six belong in §9's *signature dressing props* row, and Batch 010
-> built the three whose theme material family exists. The rest of this
+> Those six belong in §9's *signature dressing props* row. Batch 010 built
+> the three whose theme material family existed and Batch 013 built the
+> rest once Batch 012 unblocked them, so **every prop the generator places
+> is now authored** except void_glitch's, which is a text label and stays
+> one. The rest of this
 > section is a library the game does not currently use; it stays inventoried
 > because a placement path for it is a reasonable thing to want, but no
 > more of it should be built before something places it.
@@ -357,7 +365,7 @@ For **each** of `concrete_facility`, `rusted_industrial`, `neon_transit`,
 | accent material | 1 | A | B1 | B1 | B1 | — |
 | hazard / signage treatment | 1 | A | shared | shared | shared | shared |
 | light fixture family | 1–2 | A | — | — | — | — |
-| signature dressing props | 3–8 | B | **B10** | **B10** | engine text, deliberate | — |
+| signature dressing props | 3–8 | B | **B10** | **B10** | engine text, deliberate | **B13** |
 | larger architectural modules | 1–3 | B | — | — | — | — |
 | landmark / hero piece | 1 | B | — | — | — | — |
 | decals: paint, stains, damage | 4–6 | B | — | — | — | — |

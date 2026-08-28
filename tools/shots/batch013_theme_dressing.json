@@ -1,0 +1,92 @@
+{
+  "_comment": [
+    "Batch 013 -- the dressing the other three themes place.",
+    "",
+    "The sconce is shot WITH its flame in place and again without, because",
+    "the two are separate nodes in the engine and the bracket has to read",
+    "as a bracket when the fire is not drawn.",
+    "",
+    "The root is shot as three stacked sections, which is how the engine",
+    "will use it: its length is randomised and the mesh tiles at 1.0 m."
+  ],
+  "defaults": {
+    "size": [
+      1400,
+      900
+    ],
+    "lens": 50,
+    "ambient": 0.2
+  },
+  "shots": [
+    {
+      "name": "G_theme_dressing_family",
+      "scene": "model:batch013/dressing/prop_sconce.glb@-2.2,1.4,0 + batch013/dressing/prop_sconce_flame.glb@-2.2,2.045,0.27 + batch013/dressing/prop_transit_sign.glb@-0.4,2.6,0 + batch013/dressing/prop_root_fall.glb@1.5,2.6,0 + batch013/dressing/prop_column_stump.glb@2.9,0,0",
+      "size": [
+        1920,
+        900
+      ],
+      "lens": 35,
+      "backdrop": "floor",
+      "frame": 0.86,
+      "azimuth": 6,
+      "elevation": 6,
+      "caption": "SCONCE + FLAME / TRANSIT SIGN / ROOT FALL / COLUMN STUMP",
+      "note": "GOTHIC, NEON, TEMPLE - EVERY ONE PLACED BY _THEME_PROPS TODAY",
+      "variants": [
+        "grey",
+        "silhouette"
+      ]
+    },
+    {
+      "name": "G_sconce_pair",
+      "scene": "model:batch013/dressing/prop_sconce.glb@-0.45,1.0,0 + batch013/dressing/prop_sconce_flame.glb@0.45,1.645,0.27 + batch013/dressing/prop_sconce.glb@0.45,1.0,0",
+      "size": [
+        1200,
+        900
+      ],
+      "lens": 85,
+      "frame": 0.72,
+      "azimuth": 22,
+      "elevation": 4,
+      "caption": "BRACKET ALONE, THEN LIT - TWO NODES, NOT ONE",
+      "note": "IT MUST READ AS A BRACKET WHEN THE FIRE IS NOT DRAWN"
+    },
+    {
+      "name": "G_root_stack",
+      "scene": "model:batch013/dressing/prop_root_fall.glb@0,3.0,0 + batch013/dressing/prop_root_fall.glb@0,2.0,0 + batch013/dressing/prop_root_fall.glb@0,1.0,0",
+      "size": [
+        1000,
+        1100
+      ],
+      "lens": 50,
+      "frame": 0.8,
+      "azimuth": 18,
+      "elevation": 4,
+      "caption": "THREE SECTIONS STACKED - THE LENGTH IS THE ENGINE'S",
+      "note": "1.0 M SECTIONS WITH FLAT ENDS BEAT ONE STRETCHED ROOT"
+    },
+    {
+      "name": "G_transit_sign",
+      "scene": "model:batch013/dressing/prop_transit_sign.glb@0,2.6,0",
+      "size": [
+        1600,
+        800
+      ],
+      "lens": 50,
+      "frame": 0.76,
+      "azimuth": 16,
+      "elevation": -6,
+      "caption": "TRANSIT SIGN - A HOUSING. THE MESSAGE IS THE ENGINE'S",
+      "note": "SIX LINES ON A LABEL3D. A BAKED ONE WOULD REPEAT IN EVERY ZONE"
+    },
+    {
+      "name": "G_column_stump",
+      "scene": "model:batch013/dressing/prop_column_stump.glb",
+      "frame": 0.74,
+      "azimuth": 28,
+      "elevation": 14,
+      "caption": "COLUMN STUMP - BROKEN IN THE TOP 0.4 M, PLAIN BELOW",
+      "note": "SO AN INSTANCE THE ENGINE SCALES STILL HAS A BROKEN TOP"
+    }
+  ]
+}

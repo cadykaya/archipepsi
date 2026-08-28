@@ -1563,7 +1563,38 @@ plate is a warning — but it is also the largest single area of orange
 anywhere in the facility, so it is worth your eye against the Batch 004
 rule that orange stays rare.
 
-Status: **PENDING** — production work inheriting locked DNA.
+### Status: PASS AS ASSETS — 2026-08-28
+
+The three dressing assets are approved, and two decisions are kept as rules:
+
+> The 0.95 m drum height / flush bung decision is correct. Preserve engine
+> stacking compatibility rather than adding decorative geometry that causes
+> deterministic intersections.
+>
+> Leaving void_glitch's `prop_missing.mdl` joke unmodeled is also correct.
+> Do not "fix" deliberate missing-content identity.
+
+And the finding is promoted to standing practice:
+
+> **ASSET_INVENTORY must describe assets the runtime can actually place, and
+> assets the runtime actually places must not be absent from the inventory.**
+> Continue finding and correcting discrepancies of that kind.
+
+#### The orange placement rule
+
+The plate is approved and its orange does **not** violate the Batch 004
+semantic, because it genuinely is a warning object. But:
+
+> ORANGE MUST REMAIN WARNING / HAZARD LANGUAGE. Do not allow the warning
+> plate to become generic facility wallpaper simply because it is currently
+> the only facility dressing prop. Do NOT recolor this approved warning
+> plate merely to make it generic. Instead, give generic facility dressing
+> its own neutral assets later.
+
+`_theme_props` does currently place it as the "put decoration here" slot for
+`concrete_facility` — one to two per chamber at a random height and a random
+position along the run, with no notion of whether anything there warrants a
+warning. That is interface requirement 18.
 
 ---
 
@@ -1642,7 +1673,29 @@ not pick them; `rail_arc_launch` is shaped so the question is worth asking.
 | `R_rail_launch.png` | the launch alone — where the low point sits |
 | `R_rail_weave_above.png` | the weave from above: ± 0.27 m is all there is |
 
-Status: **PENDING** — and this one has a question in it as well as a model.
+### Status: PASS — 2026-08-28
+
+The curved rail family is approved: the Batch 009 straight, plus rise,
+launch and weave. *"The vertical variation is especially valuable. These
+already create more interesting traversal opportunities than flat rails."*
+
+The contract is approved as a contract:
+
+> **THE MESH AND THE RIDE PATH COME FROM THE SAME POINT LIST.** Preserve
+> `ride_path` as the authoritative geometric path shared by visual mesh and
+> runtime riding geometry. Do not independently hand-author visual rail and
+> collision/ride path.
+
+One ride volume per straight polyline segment is confirmed as a valid
+integration direction, and the footprint limit is retained as **future
+expansion, not a blocker**: 1.0 m permits the approved weave and not the
+banked turns the owner eventually wants. *"Do not fake a dramatic lateral
+curve inside an invalid footprint."* Broader lateral curves, banked turns
+and longer linked rail compositions come after a wider legal footprint is
+agreed with engineering — requirement 16.
+
+Speed and friction on dips and rises stay engineering's and playtesting's:
+*"Art should provide the path, not silently define movement physics."*
 
 ---
 
@@ -1697,5 +1750,111 @@ approved themes were judged in, with only the material family swapped —
 which is also the runtime model these are built for: **one authored mesh,
 six theme materials, selected by Godot.**
 
-Status: **PENDING** — and this one is cheap to redirect. A texture rebuilds
-in seconds, so if a theme reads wrong, say which and it changes.
+### Status: PASS — locked as BASE MATERIAL FAMILIES, 2026-08-28
+
+All three approved, completing base material coverage for all six themes.
+Neon's glazed tile identity, dark floor and cyan transit language; gothic's
+coursed masonry and darker structural iron, *"readable without relying on
+hue"*; temple's sandstone, root intrusion and warm aged identity, *"clearly
+separates from gothic and facility"*.
+
+> The common probe-room comparison is useful because it demonstrates that
+> the same authored geometry can acquire a meaningfully different identity
+> through theme materials alone.
+
+#### A material family is not a complete theme
+
+Recorded so nothing downstream mistakes one for the other:
+
+> Passing Batch 012 does NOT mean every theme is visually finished. These
+> are the approved material foundations. Later theme identity may
+> additionally come from lighting, theme-specific dressing, architecture
+> variants, landmarks, decals/signage, environmental history, props and
+> local composition.
+
+And specifically about the probe room's own fixture:
+
+> The fluorescent fixture in the probe room is useful as a controlled
+> comparison tool. It does NOT mean final Gothic Stone spaces must look
+> like castles illuminated by office fluorescents.
+
+So the probe stays a **control**: same room, same fixture, same camera, only
+the material family swapped — that is what makes it a comparison. Production
+theme kits develop their own lighting and dressing language separately, and
+a probe render is never evidence about a theme's lighting.
+
+---
+
+## Batch 013 — the dressing the other three themes place
+
+Chosen straight off the owner's steer for Batch 010: *keep expanding
+ACTUALLY PLACEABLE production vocabulary rather than merely increasing an
+inventory number.* Batch 012 unblocked these by building their material
+families; `_theme_props` places every one of them in every Zone of its
+theme today, out of primitives.
+
+| ID | Tris | Size (m) | Theme |
+| --- | --- | --- | --- |
+| `prop_sconce` | 84 | 0.24 × 0.38 × 0.49 | gothic_stone |
+| `prop_sconce_flame` | 112 | 0.22 × 0.19 × 0.22 | gothic_stone |
+| `prop_transit_sign` | 96 | 1.62 × 0.16 × 0.69 | neon_transit |
+| `prop_root_fall` | 112 | 0.26 × 0.26 × 1.04 | temple_ruin |
+| `prop_column_stump` | 140 | 1.15 × 1.15 × 1.20 | temple_ruin |
+
+**Every prop the generator places is now authored** except void_glitch's,
+which is a text label and stays one.
+
+### Three things the engine keeps, and the mesh is built around each
+
+- **The sign's text.** `_theme_props` puts one of six lines on a `Label3D`
+  — "PLATFORM ε", "MIND THE STATIC". The board is a *housing*, exactly like
+  the Hub's campaign board: a baked line would be wrong the first time the
+  list changed and identical on every sign in the Zone.
+- **The root's length**, randomised between 1.2 m and the room height less
+  0.6. So the root is a **1.0 m section with flat ends that tiles**, not one
+  fixed length that would have to be stretched — and stretching smears a
+  texture along its own axis, which is instantly readable as stretching.
+- **The stump's height**, 0.6 to 1.6 m. Authored at 1.20, the midpoint,
+  with all its detail in the **top 0.4 m**, so an instance the engine scales
+  still has a broken top rather than a stretched one.
+
+### The flame is warm light, not hazard
+
+`ART_BIBLE.md` §2 puts warm yellow in the game as *localized utility pools /
+fixtures within a still-cold environment*, and a torch is the purest case of
+that rule: an actual fire, in an actual bracket, lighting a few actual
+metres. It takes the `send` family — the same amber the utility lamps wear —
+and explicitly **not** `hazard`, because Batch 004's verdict reserved orange
+for warning and the Batch 010 verdict restated it. A flame is not a warning.
+
+**The bench cannot judge this one, and that is worth saying rather than
+working around.** `ART_LESSONS` L-03: only the Compatibility renderer starts
+in this sandbox, so there is no glow — and a flame is the most
+glow-dependent object in the project. What the sheet shows is the unbloomed
+mass. It is built squat and wide rather than tall and tapered because that
+is the shape that survives the absence: fire is widest near its source, and
+a cone is a hat at any exposure. Three passes went into that and the third
+is the one to look at.
+
+### The bracket had to come back up in value
+
+Iron is dark, and at both `dark` and `mid` on gothic_stone's base ramp the
+bracket rendered as a single black blob with no form in it — no arm, no
+bowl, no straps. The theme's own value hierarchy already puts the room dark;
+a fixture inside it has to come back up, so the sconce is painted `light`.
+`G_sconce_pair.png` is the bracket with and without its fire, because they
+are two nodes in the engine and it has to read as a bracket when the fire is
+not drawn.
+
+### Evidence
+
+`docs/art/review/batch013/`, from `tools/shots/batch013_theme_dressing.json`.
+
+| Image | What it answers |
+| --- | --- |
+| `G_theme_dressing_family.png` · `_grey` · `_silhouette` | **start here** — all five, three themes |
+| `G_sconce_pair.png` | bracket alone, then lit |
+| `G_root_stack.png` | three sections stacked — the length is the engine's |
+| `G_transit_sign.png` · `G_column_stump.png` | each on its own |
+
+Status: **PENDING** — production work inheriting locked DNA.

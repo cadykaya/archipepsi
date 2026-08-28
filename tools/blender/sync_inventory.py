@@ -65,6 +65,9 @@ ORDER = [
      ["prop_wall_plate", "prop_oil_drum", "prop_valve_wheel"]),
     ("batch011", "affordance",
      ["rail_arc_rise", "rail_arc_launch", "rail_arc_weave"]),
+    ("batch013", "dressing",
+     ["prop_sconce", "prop_sconce_flame", "prop_transit_sign",
+      "prop_root_fall", "prop_column_stump"]),
 ]
 #: Batches the OWNER has passed, by the date of the verdict. This script
 #: may never approve art; every entry here is a transcription of a decision
@@ -74,10 +77,12 @@ ORDER = [
 #:   batch004             Echo Lab, 2026-08-28
 #:   batch005             Check, PASS IN DIRECTION then full PASS after 005-R
 #:   batch006 .. batch009 portal/door, traversal, projectiles, affordances
+#:   batch010 .. batch012 dressing, curved rails, the last three themes
 #:
 #: batch003 (the Hub) has had no verdict of its own and stays PEND.
 APPROVED = ("batch001", "batch002", "batch004", "batch005", "batch006",
-            "batch007", "batch008", "batch009")
+            "batch007", "batch008", "batch009", "batch010", "batch011",
+            "batch012")
 
 CAT = {"epsilon": "hero", "check": "hero", "portal": "interactable",
        "door": "module", "breakwall": "interactable",
