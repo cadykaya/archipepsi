@@ -45,17 +45,49 @@ _FIXTURE: dict[int, tuple[str, int, int]] = {
     6: ("Epsilon Coin", SELF_SLOT, _FILLER),
 }
 
+#: Cycled across the fill locations. The first ten are the original
+#: roster and stay where they are; the rest were added so a mock campaign
+#: actually EXERCISES the systems S2-S6 built, which is what EPSILON_SPEC
+#: §12.2 asks of `--epsilon=mock`.
+#:
+#: Every name here is one the §15 reader already understands — none was
+#: chosen and then taught to the lexicon, which would be bending the
+#: reader to fit a fixture. Ten items across thirty locations meant a mock
+#: campaign saw nine of the twenty-eight primitives, one of the four link
+#: kinds and no Info readout; the reader was never the limit, the roster
+#: was.
 _FILL_CYCLE = [
     ("Boomerang", 3, _PROG),
+    # Metal Cap pairs with the fixture's Wing Cap, and Fresh Rep with its
+    # REP: two verb collisions, so a full campaign EVOLVES rather than only
+    # accumulating. `integration_driver.gd` counts on both.
     ("Metal Cap", 4, _USEFUL),
-    ("Titanite Shard", 5, _FILLER),
     ("Unkempt Harold", 2, _USEFUL),
     ("Fresh Rep", 6, _FILLER),
     ("Bomb Bag", 3, _PROG),
     ("Power Star", 4, _PROG),
     ("Ember", 5, _FILLER),
-    ("Maggie", 2, _USEFUL),
-    ("Boost Charge", 6, _FILLER),
+    # -- held verbs and the bars they burn: the three POWERED_PRIMITIVES
+    #    can only ever arrive as a multi-operation shape, which is why the
+    #    fallback could never reach them.
+    ("Ice Beam", 2, _PROG),
+    ("Tower Shield", 4, _USEFUL),
+    ("Restoration Wine", 5, _FILLER),
+    # -- traversal
+    ("Glider Cape", 3, _PROG),
+    ("Warp Whistle", 6, _PROG),
+    ("Wall Jump Boots", 4, _USEFUL),
+    ("Cloud Boots", 2, _FILLER),
+    ("Hookshot Chain", 5, _USEFUL),
+    # -- close work
+    ("Sledge Hammer", 3, _USEFUL),
+    ("Spear of Justice", 6, _PROG),
+    # -- the two link kinds with no other route into a campaign
+    ("Seal of Authority", 5, _PROG),
+    ("Momentum Core", 2, _USEFUL),
+    # -- the §14.1 readouts, which only an Info component turns on
+    ("Revelation Scroll", 3, _FILLER),
+    ("Clarity Draught", 6, _FILLER),
 ]
 
 #: Locations 007–030 that hold OUR native items (self-recipient).

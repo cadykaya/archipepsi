@@ -221,11 +221,17 @@ Two corrections were made on top of it:
   player without an API key actually get, so its expressive range *is* the
   game for them. S1 hashed an unrecognised item to three outcomes — a gun, a
   dash, or walking faster — which made a 26-Check campaign one verb repeated.
-  It now reaches 20 distinct outcomes across a 30-Check campaign. It is
-  still deterministic and still structurally boring: one `CREATE`, one
-  Action or Trait, mode `literal`, no links or merges. A sword also stopped
-  being a six-metre hitscan, which is what it had to be when melee did not
-  exist.
+  It now reaches 20 distinct outcomes across a 30-Check campaign. A sword
+  also stopped being a six-metre hitscan, which is what it had to be when
+  melee did not exist.
+
+  *(The "one `CREATE`, no links or merges" half of this entry was true when
+  it was written and was superseded four times: S4 added a rule and the
+  resource that feeds it, S6 added `UPGRADE`, S10 added a derived mode, and
+  the disposition pass added `MODIFY` and `MERGE`. Each was deliberate and
+  each rests on the same argument as the paragraph above. What has held
+  throughout is the property that actually mattered — the fallback cannot
+  breach a budget, dangle a target, or be the reason a fold fails.)*
 
 ## S3 — resources, the HUD channels, and the archive
 
