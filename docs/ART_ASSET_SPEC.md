@@ -162,6 +162,29 @@ only.
 | `interactable` | 0–2 | `int_` | `int_check_pedestal` |
 | `room_shell` | 3 | `shell_` | `shell_arena_proc` |
 | `landmark` | 4 | `mark_` | `mark_hub_spire` |
+| `cluster` | 2 | `cluster_` | `cluster_survey_station` |
+
+A **`cluster`** is a composed dressing or storytelling group that reads as
+one thing — bigger than a prop, smaller than a room. It is the one
+category that must declare a `footprint`, because `PROP_FOOTPRINT` is
+1.4 m and an L2 station does not fit in it:
+
+```json
+"footprint": {
+  "anchor": "floor_wall",   // or floor_corner, wall, ceiling
+  "width": 4.0,             // along the wall it hangs on, max 6.0
+  "height": 2.4,            // max 4.0
+  "depth": 1.2,             // out from the wall, max 2.5
+  "mount_height": 0.0       // 0 on the floor; where the underside hangs
+}                           //   otherwise, and at least 2.75
+```
+
+There is no free-standing floor anchor: a cluster in the middle of a room
+sits on the mandatory path. A colliding floor cluster costs
+`depth + 0.4 m` of walking lane and what remains must still admit the
+widest actor, so a cluster legal in an arena may not be legal in a
+corridor — ask `constants.cluster_placement_errors()` before building.
+See `docs/ART_INTEGRATION.md`.
 
 An id is **permanent and globally unique**. It is what a save, a manifest and
 a fallback chain refer to. Renaming one is a breaking change; add a new id

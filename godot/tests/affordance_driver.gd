@@ -838,12 +838,17 @@ func _the_rail_mesh_and_ride_come_from_one_path() -> void:
 		if i >= lanes.size() or i >= beams.size():
 			continue
 		var lane: AffordanceNodes.Volume = lanes[i]
-		var beam: MeshInstance3D = beams[i]
+		# A colliding `_solid` is a StaticBody3D wrapping its mesh, not a
+		# MeshInstance3D. Typing it as one assigns cleanly right up until
+		# it does not, and the suite still prints OK when it does -- the
+		# Makefile's own guard is what caught it, which is why "TESTS OK"
+		# is not the thing to grep for.
+		var beam: Node3D = beams[i]
 		var run: float = runs[i]
 		_check(absf(lane.extents.z - run) < 0.01,
 				"ride volume %d is %.2f long, its path segment is %.2f"
 				% [i, lane.extents.z, run])
-		var box := beam.mesh as BoxMesh
+		var box := _box_mesh_of(beam)
 		_check(box != null and absf(box.size.z - run) < 0.01,
 				"beam segment %d is %.2f long, its path segment is %.2f"
 				% [i, 0.0 if box == null else box.size.z, run])
@@ -865,3 +870,13 @@ func _the_rail_mesh_and_ride_come_from_one_path() -> void:
 				"beam segment %d and its ride volume face different ways"
 				% i)
 	root.queue_free()
+
+## The BoxMesh a `_solid` built, whether it came back as a bare mesh or
+## as a StaticBody3D wrapping one.
+func _box_mesh_of(node: Node3D) -> BoxMesh:
+	if node is MeshInstance3D:
+		return (node as MeshInstance3D).mesh as BoxMesh
+	for child in node.get_children():
+		if child is MeshInstance3D:
+			return (child as MeshInstance3D).mesh as BoxMesh
+	return null

@@ -406,6 +406,166 @@ FINALE_REQUIRED_OTHER_CHECKS = 24     # of the 29 non-goal Checks
 POSTGAME_ENABLED = True
 
 # --------------------------------------------------------------------------
+# Authored cluster placement (art requirement 5)
+# --------------------------------------------------------------------------
+# `PROP_FOOTPRINT` is 1.4 m. That is right for an L0 prop -- a crate, a
+# sconce, a pipe stub -- and far too small for an L2 station or a
+# storytelling cluster, which is a COMPOSED group of pieces that reads as
+# one thing. Art could not author one without guessing how much room the
+# runtime would give it.
+#
+# So this is the legal envelope and the placement grammar, and nothing
+# else. It says how big a cluster may be, what it may hang off, what it
+# must leave clear and how that is checked. It says nothing about what a
+# cluster CONTAINS -- that is art's, and inventing it here would be
+# engineering authoring content.
+
+#: What a cluster hangs off. `floor_wall` and `floor_corner` stand on the
+#: ground against something; `wall` and `ceiling` are mounted and touch no
+#: floor at all.
+#:
+#: There is deliberately no free-standing floor anchor. A cluster in the
+#: middle of a room is a cluster on the mandatory path, and I4 says the
+#: mandatory path is independent of optional content -- so an island
+#: setpiece would either block the route or have to be walked around,
+#: and neither is a thing to discover at runtime.
+CLUSTER_ANCHORS = ("floor_wall", "floor_corner", "wall", "ceiling")
+
+#: Anchors whose cluster rests on the ground, and therefore eats lane.
+CLUSTER_FLOOR_ANCHORS = ("floor_wall", "floor_corner")
+
+#: The largest cluster the placement grammar will admit, in metres
+#: (width across the wall, height, depth out from it).
+#:
+#: Depth is the number that matters and it is the one bounded hardest: a
+#: cluster reaching 2.5 m out of a wall has already taken more room than
+#: two props, and the lane rule below is what actually decides whether it
+#: fits. Width and height are bounded so a "cluster" cannot quietly
+#: become a room shell with no sockets.
+CLUSTER_MAX_WIDTH = 6.0
+CLUSTER_MAX_HEIGHT = 4.0
+CLUSTER_MAX_DEPTH = 2.5
+
+#: Walk-around margin in front of a floor cluster. Not decoration: it is
+#: what stops a player brushing a setpiece they were only walking past.
+CLUSTER_CLEARANCE = 0.4
+
+#: Height a mounted cluster's underside must clear, so a walker passes
+#: beneath it. The tallest ground actor plus the same margin the secret
+#: ledges use.
+CLUSTER_MOUNTED_UNDERSIDE_MIN = 2.75
+
+
+@dataclass(frozen=True)
+class ClusterFootprint:
+    """The envelope an authored cluster declares, and what it needs.
+
+    `collides` is the honest half: a cluster that is pure dressing costs
+    the lane nothing, and one the player can walk into costs it the
+    cluster's depth plus clearance. Declared rather than inferred,
+    because "does this have collision" read off a scene at runtime is
+    exactly the kind of question that gets answered differently by the
+    validator and the builder.
+    """
+    width: float
+    height: float
+    depth: float
+    anchor: str
+    collides: bool = True
+    #: Height of the underside above the floor. Zero for a floor anchor;
+    #: mounted clusters declare where they hang.
+    mount_height: float = 0.0
+
+    def __post_init__(self):
+        if self.anchor not in CLUSTER_ANCHORS:
+            raise ValueError(
+                f"'{self.anchor}' is not a cluster anchor; "
+                f"choose from {CLUSTER_ANCHORS}")
+        for field, value, cap in (("width", self.width, CLUSTER_MAX_WIDTH),
+                                  ("height", self.height, CLUSTER_MAX_HEIGHT),
+                                  ("depth", self.depth, CLUSTER_MAX_DEPTH)):
+            if not 0.1 <= value <= cap:
+                raise ValueError(
+                    f"cluster {field} {value} is outside 0.1..{cap}")
+        if self.anchor in CLUSTER_FLOOR_ANCHORS and self.mount_height != 0.0:
+            raise ValueError(
+                "a floor cluster stands on the floor; mount_height is 0")
+        if self.anchor not in CLUSTER_FLOOR_ANCHORS \
+                and self.mount_height <= 0.0:
+            raise ValueError(
+                f"a '{self.anchor}' cluster is mounted and must declare "
+                "the height its underside hangs at")
+
+    @property
+    def stands_on_the_floor(self) -> bool:
+        return self.anchor in CLUSTER_FLOOR_ANCHORS
+
+    @property
+    def lane_cost(self) -> float:
+        """How much of the room's width this takes out of the walking lane.
+
+        Nothing at all when it does not collide or does not touch the
+        ground -- which is the whole reason the grammar distinguishes
+        them.
+        """
+        if not self.collides or not self.stands_on_the_floor:
+            return 0.0
+        return self.depth + CLUSTER_CLEARANCE
+
+
+def cluster_placement_errors(footprint: ClusterFootprint, wall_run: float,
+                             across: float, room_height: float,
+                             lane: float) -> list[str]:
+    """Why this cluster cannot go on this wall. Empty means it can.
+
+    `wall_run` is the length of the wall it hangs on -- what its WIDTH
+    has to fit inside. `across` is the room's perpendicular span, which
+    its DEPTH eats into and which the walking lane is measured from.
+
+    Named that way rather than `span_x` / `span_z` because a cluster on
+    a side wall runs along z and reaches along x, and one on an end wall
+    does the opposite. Two axis names would mean each caller deciding
+    which was which, and half of them deciding wrong.
+
+    Deterministic and total: the same footprint on the same wall always
+    gets the same answer, and every reason is named. An art lane that
+    cannot ask this question in advance finds out by building something
+    the generator then refuses to place.
+    """
+    out: list[str] = []
+    if footprint.width + 2.0 * CLUSTER_CLEARANCE > wall_run:
+        out.append(
+            f"a {footprint.width}m cluster does not fit along a "
+            f"{wall_run}m wall with {CLUSTER_CLEARANCE}m either side")
+    if footprint.depth + CLUSTER_CLEARANCE > across:
+        out.append(
+            f"a {footprint.depth}m-deep cluster does not fit into a "
+            f"{across}m span")
+    if footprint.stands_on_the_floor:
+        if footprint.height > room_height:
+            out.append(
+                f"a {footprint.height}m cluster does not fit under a "
+                f"{room_height}m ceiling")
+        remaining = across - footprint.lane_cost
+        if remaining < lane:
+            out.append(
+                f"placing it leaves {remaining:.2f}m of walking lane, "
+                f"and the widest actor needs {lane}m")
+    else:
+        if footprint.mount_height < CLUSTER_MOUNTED_UNDERSIDE_MIN:
+            out.append(
+                f"a mounted cluster hanging at {footprint.mount_height}m "
+                f"is below the {CLUSTER_MOUNTED_UNDERSIDE_MIN}m a walker "
+                "needs to pass under it")
+        if footprint.mount_height + footprint.height > room_height:
+            out.append(
+                f"a {footprint.height}m cluster hung at "
+                f"{footprint.mount_height}m reaches through a "
+                f"{room_height}m ceiling")
+    return out
+
+
+# --------------------------------------------------------------------------
 # The affordance signal language (art requirement 15)
 # --------------------------------------------------------------------------
 # Owner ruling, 2026-08-28, in art's favour: every optional traversal

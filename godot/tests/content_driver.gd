@@ -71,6 +71,7 @@ func _run() -> void:
 	_every_theme_can_have_its_own_light_housing()
 	_illumination_stays_engine_owned()
 	_affordances_all_wear_one_signal_colour()
+	_a_cluster_must_declare_a_legal_placement_envelope()
 	_no_visual_anywhere_carries_collision()
 	_a_shell_that_tells_the_truth_is_accepted()
 	_a_shell_that_lies_about_its_geometry_is_refused()
@@ -1445,3 +1446,73 @@ func _affordances_all_wear_one_signal_colour() -> void:
 			"only %d affordance surfaces wear SIGNAL; there are seven "
 			% source.count("Constants.AFFORDANCE_SIGNAL")
 			+ "affordances and they share one identity")
+
+
+## Art requirement 5. `PROP_FOOTPRINT` is 1.4 m -- right for an L0 prop,
+## far too small for an L2 station or a storytelling cluster. Art could
+## not author one without guessing how much room the runtime would give
+## it, so the envelope is published and checked at LOAD: an illegal
+## footprint fails here rather than by the generator declining to place
+## something already built.
+func _a_cluster_must_declare_a_legal_placement_envelope() -> void:
+	var legal := {
+		"id": "cluster_probe", "level": 2, "category": "cluster",
+		"display_name": "Probe", "procedural_fallback": true,
+		"footprint": {"anchor": "floor_wall", "width": 4.0,
+			"height": 2.4, "depth": 1.2},
+	}
+	_check(_cluster_is_accepted(legal),
+			"a legal cluster envelope was refused; a grammar that "
+			+ "refuses everything is indistinguishable from a broken one")
+
+	# Each way it can be wrong, named, because a refusal art cannot act
+	# on is the same as no contract at all.
+	var bad := {
+		"no footprint at all": _without(legal, "footprint"),
+		"a free-standing floor anchor": _with_footprint(legal,
+				{"anchor": "floor", "width": 4.0, "height": 2.4,
+				"depth": 1.2}),
+		"wider than the envelope": _with_footprint(legal,
+				{"anchor": "floor_wall",
+				"width": Constants.CLUSTER_MAX_WIDTH + 1.0,
+				"height": 2.4, "depth": 1.2}),
+		"deeper than the envelope": _with_footprint(legal,
+				{"anchor": "floor_wall", "width": 4.0, "height": 2.4,
+				"depth": Constants.CLUSTER_MAX_DEPTH + 1.0}),
+		"taller than the envelope": _with_footprint(legal,
+				{"anchor": "floor_wall", "width": 4.0,
+				"height": Constants.CLUSTER_MAX_HEIGHT + 1.0,
+				"depth": 1.2}),
+		"on the floor and mounted at once": _with_footprint(legal,
+				{"anchor": "floor_corner", "width": 4.0, "height": 2.4,
+				"depth": 1.2, "mount_height": 2.0}),
+		"mounted too low to walk under": _with_footprint(legal,
+				{"anchor": "ceiling", "width": 4.0, "height": 0.5,
+				"depth": 1.2, "mount_height": 1.5}),
+	}
+	for reason: String in bad:
+		_check(not _cluster_is_accepted(bad[reason]),
+				"a cluster with %s was accepted" % reason)
+
+	# ...and a mounted one that DOES clear a walker is fine, so the rule
+	# is a bound rather than a ban on mounting.
+	_check(_cluster_is_accepted(_with_footprint(legal,
+			{"anchor": "ceiling", "width": 4.0, "height": 0.5,
+			"depth": 1.2,
+			"mount_height": Constants.CLUSTER_MOUNTED_UNDERSIDE_MIN})),
+			"a legally mounted cluster was refused")
+
+func _without(entry: Dictionary, key: String) -> Dictionary:
+	var out := entry.duplicate(true)
+	out.erase(key)
+	return out
+
+func _with_footprint(entry: Dictionary, footprint: Dictionary) -> Dictionary:
+	var out := entry.duplicate(true)
+	out["footprint"] = footprint
+	return out
+
+func _cluster_is_accepted(entry: Dictionary) -> bool:
+	var reg := ContentRegistry.new()
+	reg._accept("probe_pack", entry.duplicate(true))
+	return reg.entries.has(str(entry.get("id", "")))

@@ -279,6 +279,75 @@ installed is a gameplay change arriving as art.
 
 ---
 
+## Authored cluster placement (requirement 5)
+
+**Contract:** `constants.ClusterFootprint` and
+`cluster_placement_errors()`, with the numbers exported to
+`Constants.CLUSTER_*` and enforced by the content registry at load.
+
+`PROP_FOOTPRINT` is 1.4 m — right for an L0 prop, far too small for an
+L2 station or a storytelling cluster, which is a composed group that
+reads as one thing. Art could not author one without guessing how much
+room the runtime would give it, so it did not author one.
+
+### The envelope
+
+| | |
+| --- | --- |
+| `CLUSTER_MAX_WIDTH` | 6.0 m along the wall it hangs on |
+| `CLUSTER_MAX_HEIGHT` | 4.0 m |
+| `CLUSTER_MAX_DEPTH` | 2.5 m out from the wall |
+| `CLUSTER_CLEARANCE` | 0.4 m walk-around margin |
+| `CLUSTER_MOUNTED_UNDERSIDE_MIN` | 2.75 m — a walker passes beneath |
+
+### The anchor grammar
+
+`floor_wall`, `floor_corner`, `wall`, `ceiling`.
+
+**There is deliberately no free-standing floor anchor.** A cluster in the
+middle of a room is a cluster on the mandatory path, and I4 says the
+mandatory path is independent of optional content — an island setpiece
+would either block the route or have to be walked around, and neither is
+a thing to discover at runtime.
+
+### What decides whether it fits
+
+The **walking lane**. A floor cluster that the player can walk into costs
+`depth + clearance` out of the room's span, and what remains must still
+admit the widest actor (`BRUTE_LANE`). A cluster that does not collide,
+or does not touch the ground, costs the lane nothing — declared rather
+than inferred, because "does this have collision", read off a scene at
+runtime, is exactly the question the validator and the builder answer
+differently.
+
+Orientation is explicit: `cluster_placement_errors(footprint, wall_run,
+across, room_height, lane)`. `wall_run` is the wall's length, which the
+width must fit along; `across` is the perpendicular span the depth
+reaches into. Not `span_x` / `span_z`, because a side wall and an end
+wall swap them and half the callers would swap them wrong.
+
+### Deterministic validation
+
+The same footprint on the same wall always gets the same answer, and
+every refusal names its reason. Art asks in advance instead of finding
+out when the generator declines to place something already built.
+
+The registry checks a declared `footprint` at **load**, in the
+`cluster` category (level 2, the same as a fixture), reading the same
+exported numbers — so the art toolchain and the runtime cannot hold
+different opinions about how big a cluster may be.
+
+### What art can now do
+
+Author a cluster against a published envelope, declare its footprint in
+a manifest, and know before building whether it will be placeable in a
+corridor, an arena or neither.
+
+**Not decided here:** what a cluster contains. That is art's, and
+inventing it would be engineering authoring content.
+
+---
+
 ## Still open, and why
 
 | # | Requirement | Status |
@@ -286,4 +355,6 @@ installed is a gameplay change arriving as art.
 | 6 | `challenge_marker` semantics | Owner decision. Deferred, hook dormant |
 | 14 | Telegraphs for melee and ranged | **Combat decision.** The seam exists; those two roles have no windup to attach it to, and adding one changes difficulty |
 | 7 | Behaviour for the seven enveloped roles | **Combat decision.** They can be built and measured; they cannot yet be placed |
+| 22 | `arch_affordance_socket` | **Art decision, and art has not made it.** Does an affordance sit on an authored mount that SHOWS its reserved footprint, or do features stay floor-placed and the row is struck? Engineering can build either; choosing is inventing a visual contract |
+| 18 | Neutral `concrete_facility` dressing | **Art decision.** The one facility dressing prop is a warning plate, and the ruling forbids recolouring it. The fix is neutral vocabulary art has not built, plus a placement rule reserving the plate for warning semantics |
 | — | `objective_marker` / `signage_module` navigation language | Owner decision. Not engineering's to invent |

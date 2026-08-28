@@ -56,6 +56,11 @@ ContentCategory = Literal[
     "connector",        # L1, but its own category: sockets on both ends
     "affordance_visual",  # L2, bound to a §13 tag
     "interactable",     # L0-L2, the repeatedly-seen objects of §2
+    #: L2, a COMPOSED dressing or storytelling group that reads as one
+    #: thing (art requirement 5). Its own category because it is the one
+    #: that must declare a placement envelope: `PROP_FOOTPRINT` is 1.4 m,
+    #: which is right for a crate and far too small for a station.
+    "cluster",          # L2
 ]
 
 #: Which level each category may declare. A mismatch is a manifest that
@@ -69,6 +74,7 @@ _LEVELS: dict[str, tuple[int, ...]] = {
     "interactable": (0, 1, 2),
     "room_shell": (3,),
     "landmark": (4,),
+    "cluster": (2,),
 }
 
 #: Categories that must declare at least one socket, because something

@@ -33,7 +33,14 @@ const LEVELS := {
 	"interactable": [0, 1, 2],
 	"room_shell": [3],
 	"landmark": [4],
+	# An authored dressing or storytelling cluster: a COMPOSED group that
+	# reads as one thing (art requirement 5). Level 2, the same as a
+	# fixture, because that is what an L2 station is.
+	"cluster": [2],
 }
+
+## Categories that must declare a legal placement envelope.
+const NEEDS_FOOTPRINT := ["cluster"]
 
 ## The process-wide registry, loaded once. A static rather than a third
 ## autoload: it needs no scene tree, no load order, and nothing to happen
@@ -125,6 +132,12 @@ func _accept(pack: String, entry: Dictionary) -> void:
 				% category + "socket; nothing could connect to it")
 		return
 
+	if category in NEEDS_FOOTPRINT:
+		var problem := _cluster_footprint_problem(entry)
+		if not problem.is_empty():
+			_fail(id, problem)
+			return
+
 	var procedural: bool = bool(entry.get("procedural_fallback", false))
 	var scene := str(entry.get("scene", ""))
 	if procedural:
@@ -151,6 +164,44 @@ func _accept(pack: String, entry: Dictionary) -> void:
 
 	entry["_pack"] = pack
 	entries[id] = entry
+
+## Whether a cluster declares a placement envelope the runtime can honour
+## (art requirement 5). Returns "" when it does.
+##
+## Checked at LOAD, which is the point: art authors against a published
+## envelope and finds out here rather than by building something the
+## generator later declines to place. The numbers come from
+## `Constants`, so the art toolchain and this validator cannot hold
+## different opinions about how big a cluster may be.
+func _cluster_footprint_problem(entry: Dictionary) -> String:
+	var raw: Variant = entry.get("footprint")
+	if typeof(raw) != TYPE_DICTIONARY:
+		return ("is a cluster and declares no footprint; art cannot "
+				+ "author against an envelope nobody published")
+	var footprint: Dictionary = raw
+	var anchor := str(footprint.get("anchor", ""))
+	if not anchor in Constants.CLUSTER_ANCHORS:
+		return ("declares anchor '%s'; the grammar is %s. There is no "
+				% [anchor, str(Constants.CLUSTER_ANCHORS)]
+				+ "free-standing floor anchor, because an island setpiece "
+				+ "sits on the mandatory path")
+	for field: Array in [["width", Constants.CLUSTER_MAX_WIDTH],
+			["height", Constants.CLUSTER_MAX_HEIGHT],
+			["depth", Constants.CLUSTER_MAX_DEPTH]]:
+		var value := float(footprint.get(field[0], 0.0))
+		if value < 0.1 or value > float(field[1]):
+			return ("declares %s %.2f; the legal range is 0.10 to %.2f"
+					% [field[0], value, float(field[1])])
+	var mount := float(footprint.get("mount_height", 0.0))
+	var on_floor: bool = anchor in Constants.CLUSTER_FLOOR_ANCHORS
+	if on_floor and not is_zero_approx(mount):
+		return "stands on the floor and declares a mount_height"
+	if not on_floor:
+		if mount < Constants.CLUSTER_MOUNTED_UNDERSIDE_MIN:
+			return ("is mounted at %.2f m; a walker needs %.2f m to pass "
+					% [mount, Constants.CLUSTER_MOUNTED_UNDERSIDE_MIN]
+					+ "underneath it")
+	return ""
 
 func _joining_sockets(entry: Dictionary) -> Array:
 	var out: Array = []
