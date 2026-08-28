@@ -117,6 +117,7 @@ jobs:
           make godot-affordance
           make godot-verbs
           make godot-blink
+          make godot-content
 
       - name: Whole campaign, headlessly
         run: make godot-integration

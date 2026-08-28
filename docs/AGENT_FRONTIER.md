@@ -34,8 +34,25 @@ S22  packaging/first-run       ── mostly independent
 S23  release hardening         ── last
 ```
 
-**Stage status:** see the plan document. Nothing started yet beyond this
-handoff.
+**Stage status:**
+
+| Stage | State |
+|---|---|
+| S11 CI | **done** — three tiers green on real runners; `docs/CI.md` |
+| S12 registry + asset contract | **done** — `schemas/content.py`, `content_registry.gd`, `docs/ART_ASSET_SPEC.md`, `make godot-content` |
+| S13 instantiation pipeline | **next** |
+| S14–S23 | not started |
+
+S12 landed the alphabet's shape, not the alphabet: everything in
+`godot/content/registry/legacy_procedural.json` is `procedural_fallback:
+true`, which is the registry stating honestly that it is generated
+geometry. That is the correct state — the game is READY TO RECEIVE
+authored content, and has none yet.
+
+Conventions fixed by the spec but not yet wired (each marked "Not wired
+yet" in `ART_ASSET_SPEC.md`, and each is a later stage's job, not debt):
+material slot names → themed materials (S19), animation clip names →
+interactable contracts (S17), manifest `cost` → a placement budget.
 
 **Heartbeat behaviour:** while v0.9 has unfinished INDEPENDENT stages,
 continue the next real frontier item. Once everything left is blocked on

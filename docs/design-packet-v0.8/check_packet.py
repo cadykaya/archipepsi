@@ -366,28 +366,61 @@ _BRIDGE_SCHEMAS = (
 )
 
 
+#: Every `docs/design-packet-*/schemas/` directory, oldest first. A schema
+#: introduced by a later roadmap belongs to that roadmap's packet: v0.8 is
+#: frozen, and dropping `content.py` into it would have the v0.8 contract
+#: claiming to define something v0.9 invented. The rule the check actually
+#: enforces is unchanged -- every schema the bridge runs has exactly one
+#: packet copy, and that copy is byte-identical -- it just no longer
+#: assumes there is only ever one packet.
+def _packet_schema_dirs() -> list[Path]:
+    packets = Path(__file__).resolve().parents[1]
+
+    def version(d: Path) -> tuple[int, ...]:
+        # Numeric, not lexicographic: "v0.10" sorts BEFORE "v0.4" as a
+        # string, which would silently hand ownership back to an older
+        # packet the first time the tenth roadmap exists.
+        digits = d.parent.name.removeprefix("design-packet-v")
+        return tuple(int(n) for n in re.findall(r"\d+", digits))
+
+    return sorted((d for d in packets.glob("design-packet-*/schemas")
+                   if d.is_dir()), key=version)
+
+
 def check_schema_copies() -> None:
-    packet_dir = Path(__file__).resolve().parent / "schemas"
     if not _BRIDGE_SCHEMAS.is_dir():
         failures.append(
             f"no bridge schema copy at {_BRIDGE_SCHEMAS}; the packet cannot "
             "verify that the binding contract is the code that runs"
         )
         return
-    packet_files = {p.name for p in packet_dir.glob("*.py")}
+
+    #: name -> the packet dirs claiming it
+    claimed: dict[str, list[Path]] = {}
+    for packet_dir in _packet_schema_dirs():
+        for copy in packet_dir.glob("*.py"):
+            claimed.setdefault(copy.name, []).append(packet_dir)
+
     bridge_files = {p.name for p in _BRIDGE_SCHEMAS.glob("*.py")}
-    for missing in sorted(packet_files - bridge_files):
+    for missing in sorted(set(claimed) - bridge_files):
         failures.append(f"schemas/{missing} is in the packet but not the bridge")
-    for extra in sorted(bridge_files - packet_files):
+    for extra in sorted(bridge_files - set(claimed)):
         failures.append(f"schemas/{extra} is in the bridge but not the packet")
-    for name in sorted(packet_files & bridge_files):
-        packet_text = (packet_dir / name).read_text()
+
+    for name in sorted(set(claimed) & bridge_files):
+        # The NEWEST packet claiming a schema owns it. Earlier packets are
+        # frozen historical snapshots: v0.4's `zone.py` is what v0.4 said,
+        # and is supposed to differ from the bridge three roadmaps later.
+        # Comparing against those would make every packet ever written a
+        # constraint on today's code, which is the opposite of freezing.
+        owners = claimed[name]
+        packet_text = (owners[-1] / name).read_text()
         bridge_text = (_BRIDGE_SCHEMAS / name).read_text()
         if packet_text != bridge_text:
             failures.append(
-                f"schemas/{name} differs between the packet and the bridge; "
-                "the packet is the contract, so reconcile toward it "
-                "deliberately rather than letting the copies drift"
+                f"schemas/{name} differs between {owners[-1].parent.name} and "
+                "the bridge; the packet is the contract, so reconcile toward "
+                "it deliberately rather than letting the copies drift"
             )
 
 
