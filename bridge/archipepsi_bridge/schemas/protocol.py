@@ -432,6 +432,39 @@ class EarnedLocalReward(Strict):
     best_seconds: float = Field(default=0.0, ge=0.0, le=36000.0)
 
 
+class CampaignScale(Strict):
+    """The campaign's immutable scale, recorded in the save.
+
+    Defaults to the PROTOTYPE, not the production default, and that is the
+    whole point. A save written before these options existed has no scale
+    block, so it loads as the 30-location / 3-Check campaign it actually
+    was. Defaulting to 450 would invent 420 locations the seed never had
+    and strand every item the multiworld placed on them.
+
+    It also makes the failure direction safe: code that forgets to record
+    the real scale produces a campaign that is too SMALL, which refuses
+    allocations, rather than one that is too large, which hands out
+    locations Archipelago has never heard of.
+
+    Validated through `CampaignConfig`, so the save cannot hold a scale the
+    rest of the system would refuse.
+    """
+    location_count: int = C.PROTOTYPE_CONFIG.location_count
+    zone_target_checks: int = C.PROTOTYPE_CONFIG.zone_target_checks
+    zone_budget: int = C.PROTOTYPE_CONFIG.zone_budget
+
+    @model_validator(mode="after")
+    def _within_the_tested_range(self) -> "CampaignScale":
+        self.config()          # raises if any option is out of bounds
+        return self
+
+    def config(self) -> C.CampaignConfig:
+        return C.CampaignConfig(
+            location_count=self.location_count,
+            zone_target_checks=self.zone_target_checks,
+            zone_budget=self.zone_budget)
+
+
 class CampaignSave(Strict):
     """The on-disk campaign. Written atomically (temp, fsync, os.replace).
 
@@ -450,6 +483,11 @@ class CampaignSave(Strict):
     slot_name: _AP_STR
 
     epsilon_creativity: Literal[0, 1, 2] = 1
+
+    #: Immutable campaign scale (CAMPAIGN_SCALE.md). Absent in every save
+    #: written before the options existed, which is exactly how those
+    #: campaigns keep their prototype shape.
+    scale: CampaignScale = CampaignScale()
 
     track_order: tuple[_AP_STR, ...] = ()
     track_cursor: int = Field(default=0, ge=0)

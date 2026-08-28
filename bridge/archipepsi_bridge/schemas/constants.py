@@ -21,10 +21,204 @@ from __future__ import annotations
 import hashlib
 import math
 import random
+from dataclasses import dataclass
 
 # --------------------------------------------------------------------------
-# Campaign shape
+# Campaign scale — the per-seed options (CAMPAIGN_SCALE.md)
 # --------------------------------------------------------------------------
+# Scale is a PER-CAMPAIGN choice, not a build-time constant. Two players in
+# one multiworld may legitimately pick different sizes, so the numbers below
+# describe the space of legal campaigns; a `CampaignConfig` picks one point
+# in it and everything else is derived from that point.
+#
+# Bounds are tested, not advisory. Small values stay reachable for CI, for
+# development and for short multiworlds; the frontier runs at both ends.
+
+LOCATION_COUNT_MIN = 30
+LOCATION_COUNT_MAX = 600
+ZONE_TARGET_CHECKS_MIN = 1
+ZONE_TARGET_CHECKS_MAX = 30
+ZONE_BUDGET_MIN = 200
+ZONE_BUDGET_MAX = 2000
+
+DEFAULT_LOCATION_COUNT = 450
+DEFAULT_ZONE_TARGET_CHECKS = 15
+DEFAULT_ZONE_BUDGET = 1000
+
+#: The stable id and name universe, fixed at the maximum FOREVER.
+#:
+#: `Archipepsi Check 007` is id 89100007 in every seed ever generated,
+#: whatever anyone chose for `location_count`. A world instantiates a PREFIX
+#: of this universe; it never renumbers an existing location because
+#: somebody picked a different campaign size. Raising this is a deliberate,
+#: versioned change -- every seed generated before the change keeps ids that
+#: must still mean the same Checks.
+LOCATION_UNIVERSE = LOCATION_COUNT_MAX
+
+#: Item-pool proportions, preserved from the prototype's 2 / 10 / 18 of 30.
+#: Signal Keys are fixed by the tier count (N tiers need N-1 unlocks), so
+#: the split applies to what is left. Static takes the remainder, which is
+#: what makes the pool EXACTLY equal the location count at any size rather
+#: than one item short after rounding.
+COIN_SHARE_OF_NON_KEY = 10 / 28
+
+#: The finale opens after a substantial majority of non-goal Checks.
+#:
+#: 0.8 rather than the prototype's literal 24: `ceil(29 * 0.8) == 24`, so
+#: an existing campaign keeps exactly the requirement it was generated
+#: with, and a 450-location campaign gets 360 instead of a number that
+#: stopped meaning "a substantial majority" the moment the campaign grew.
+FINALE_REQUIRED_FRACTION = 0.8
+
+
+@dataclass(frozen=True)
+class CampaignConfig:
+    """One campaign's immutable scale. Chosen at generation, never in play.
+
+    Frozen and dependency-free on purpose: this module is vendored verbatim
+    into the APWorld, which runs inside Archipelago and cannot import
+    pydantic. Validation is therefore hand-written rather than declarative.
+    """
+
+    location_count: int = DEFAULT_LOCATION_COUNT
+    zone_target_checks: int = DEFAULT_ZONE_TARGET_CHECKS
+    zone_budget: int = DEFAULT_ZONE_BUDGET
+
+    def __post_init__(self) -> None:
+        for name, low, high in (
+            ("location_count", LOCATION_COUNT_MIN, LOCATION_COUNT_MAX),
+            ("zone_target_checks", ZONE_TARGET_CHECKS_MIN,
+             ZONE_TARGET_CHECKS_MAX),
+            ("zone_budget", ZONE_BUDGET_MIN, ZONE_BUDGET_MAX),
+        ):
+            value = getattr(self, name)
+            if not isinstance(value, int) or isinstance(value, bool):
+                raise ValueError(f"{name} must be an int, got {value!r}")
+            if not low <= value <= high:
+                raise ValueError(
+                    f"{name}={value} is outside the tested range "
+                    f"[{low}, {high}]. Widening it is a deliberate change "
+                    f"to CAMPAIGN_SCALE.md, not a call site's decision.")
+        # A campaign needs at least one ordinary Check to allocate, or the
+        # only location is the goal and the finale gate can never open.
+        if self.location_count <= 1:
+            raise ValueError("a campaign needs a non-goal Check")
+
+    # -- the active id range ------------------------------------------------
+
+    @property
+    def first_location_id(self) -> int:
+        return LOCATION_ID_BASE + 1
+
+    @property
+    def last_location_id(self) -> int:
+        return LOCATION_ID_BASE + self.location_count
+
+    @property
+    def goal_location_id(self) -> int:
+        """The FINAL ACTIVE location, so it moves with campaign size.
+
+        Every other id is stable across seeds; this one is not, and that is
+        the price of the goal being at the end. The end is what makes "any
+        location except the goal" a closed range expressible in JSON Schema
+        and GDScript instead of only in a Python validator.
+        """
+        return self.last_location_id
+
+    @property
+    def non_goal_count(self) -> int:
+        return self.location_count - 1
+
+    def is_goal_location(self, location_id: int) -> bool:
+        return location_id == self.goal_location_id
+
+    def active_location_ids(self) -> list[int]:
+        return list(range(self.first_location_id, self.last_location_id + 1))
+
+    # -- tiers --------------------------------------------------------------
+
+    def tier_bounds(self) -> tuple[int, ...]:
+        """Half-open bounds; tier N holds [bounds[N], bounds[N + 1]).
+
+        Split as evenly as the count allows, with the remainder going to the
+        earliest tiers. The sum is exact by construction, so no location can
+        fall outside every tier.
+        """
+        base, extra = divmod(self.location_count, TIER_COUNT)
+        bounds = [self.first_location_id]
+        for tier in range(TIER_COUNT):
+            bounds.append(bounds[-1] + base + (1 if tier < extra else 0))
+        return tuple(bounds)
+
+    def tier_of(self, location_id: int) -> int:
+        if not self.first_location_id <= location_id <= self.last_location_id:
+            raise ValueError(f"{location_id} is not an Archipepsi location")
+        bounds = self.tier_bounds()
+        for tier in range(TIER_COUNT):
+            if bounds[tier] <= location_id < bounds[tier + 1]:
+                return tier
+        raise ValueError(f"{location_id} fell outside every tier")
+
+    def locations_in_tier(self, tier: int) -> list[int]:
+        bounds = self.tier_bounds()
+        return list(range(bounds[tier], bounds[tier + 1]))
+
+    def unlocked_location_ids(self, signal_keys: int) -> list[int]:
+        """Everything AP logic considers reachable. INCLUDES the goal."""
+        unlocked = min(signal_keys, TIER_COUNT - 1)
+        return list(range(self.first_location_id,
+                          self.tier_bounds()[unlocked + 1]))
+
+    def eligible_location_ids(self, signal_keys: int) -> list[int]:
+        """Everything an ordinary Zone or the shop may allocate. Never the
+        goal. The single entry point for allocation."""
+        return [i for i in self.unlocked_location_ids(signal_keys)
+                if not self.is_goal_location(i)]
+
+    # -- finale -------------------------------------------------------------
+
+    def finale_required_checks(self) -> int:
+        """Non-goal Checks needed before the finale is offered."""
+        return math.ceil(self.non_goal_count * FINALE_REQUIRED_FRACTION)
+
+    # -- item pool ----------------------------------------------------------
+
+    def item_counts(self) -> dict[str, int]:
+        """Exactly `location_count` items. Static takes the remainder."""
+        keys = min(SIGNAL_KEY_COUNT, self.location_count)
+        rest = self.location_count - keys
+        coins = round(rest * COIN_SHARE_OF_NON_KEY)
+        static = rest - coins
+        counts = {
+            ITEM_NAME_SIGNAL_KEY: keys,
+            ITEM_NAME_EPSILON_COIN: coins,
+            ITEM_NAME_EPSILON_STATIC: static,
+        }
+        assert sum(counts.values()) == self.location_count
+        return counts
+
+
+#: What a campaign generated before these options existed WAS.
+#:
+#: A save or slot with no recorded config migrates to this and never to the
+#: production default. Reinterpreting an old 30-location campaign as 450
+#: would invent 420 locations the seed never had and strand every item the
+#: multiworld placed on them. `zone_budget` is the floor because the
+#: prototype enforced no budget at all; it is a placeholder for a value that
+#: did not exist, not a claim that old Zones were worth 200.
+PROTOTYPE_CONFIG = CampaignConfig(
+    location_count=30, zone_target_checks=3, zone_budget=ZONE_BUDGET_MIN)
+
+DEFAULT_CONFIG = CampaignConfig()
+
+
+# --------------------------------------------------------------------------
+# Campaign shape — PROTOTYPE constants, being migrated to CampaignConfig
+# --------------------------------------------------------------------------
+# These are the prototype campaign's numbers and remain the values the
+# not-yet-migrated call sites use. `test_campaign_config.py` pins every one
+# of them to `PROTOTYPE_CONFIG`, so the two cannot drift while the migration
+# is in progress; they are deleted as their callers move over.
 
 LOCATION_COUNT = 30
 LOCATION_ID_BASE = 89_100_000

@@ -37,7 +37,17 @@ except ImportError:  # pragma: no cover
     from protocol import CampaignSnapshot, ClientMessage, ServerMessage
     from zone import Zone
 
-GD_SKIP = ("ENEMY_STATS", "TIER_BOUNDS")
+#: Deliberately not exported to GDScript.
+#:
+#: The two CampaignConfig instances are objects, but the deeper reason is
+#: that Godot must not HAVE a build-time campaign scale. It consumes the
+#: scale the bridge sends for the campaign actually being played
+#: (CAMPAIGN_SCALE.md 2); a client quietly falling back to a baked default
+#: while the campaign is 450 is a divergence, not a default. The bounds
+#: and the DEFAULT_* numbers still export, because validating a received
+#: value against the tested range is exactly what the client should do.
+GD_SKIP = ("ENEMY_STATS", "TIER_BOUNDS", "DEFAULT_CONFIG",
+           "PROTOTYPE_CONFIG")
 
 
 def _gd_literal(value) -> str:
