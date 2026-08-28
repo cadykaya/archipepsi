@@ -476,6 +476,13 @@ func _test_every_chamber_is_sealed() -> void:  # test 57
 				"concrete_facility"),
 		"treasure_room": ChamberBuilders.treasure_room(
 				{}, "concrete_facility"),
+		# Art requirement 19: normal room shells are ENCLOSED BY DEFAULT,
+		# towers included. The tower was one of the two that used to be
+		# open, and it was missing from this suite -- so the fix held by
+		# luck rather than by test.
+		"tower": ChamberBuilders.tower({"floors": 3}, "concrete_facility"),
+		"tower_tall": ChamberBuilders.tower({"floors": 6},
+				"concrete_facility"),
 		"corner_left": ChamberBuilders.corner(-1, "concrete_facility"),
 		"corner_right": ChamberBuilders.corner(1, "concrete_facility"),
 		# Extremes of the schema, because a wall that seals at the

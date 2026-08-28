@@ -76,6 +76,60 @@ static func build_chamber(chamber: Dictionary, theme: String,
 		return ChamberBuilders.build(chamber, theme)
 	return _from_authored_scene(entry, chamber, theme)
 
+## The HOUSING for a light, per theme (art requirement 3a).
+##
+## Owner ruling: theme-specific authored fixture housings are allowed, and
+## runtime / gameplay illumination stays ENGINE-OWNED. Six themes were
+## sharing one `concrete_facility` slab because the builder had one
+## hardcoded `BoxMesh` and no way to ask for anything else.
+##
+## Returns an instantiated housing, or `null` for "build the procedural
+## slab". It never returns a light: the `OmniLight3D` is built by
+## `ChamberBuilders._light` and an authored housing that carried its own
+## would be art deciding how bright a room is.
+static func light_housing(theme: String,
+		registry: ContentRegistry = null) -> Node3D:
+	var reg := registry if registry != null else ContentRegistry.shared()
+	var wanted := "fixture_light_%s" % theme
+	if not reg.has(wanted):
+		return null
+	var chosen := reg.resolve(wanted)
+	if chosen.is_empty():
+		return null
+	var entry := reg.get_entry(chosen)
+	if bool(entry.get("procedural_fallback", false)):
+		return null
+	# The art-lane gate, same as every other authored asset: a PENDING
+	# housing is one somebody is still deciding about.
+	if not VisualOwnership.is_shippable(entry):
+		push_warning("content: '%s' is pending art review; using the "
+				% chosen + "procedural light fixture until it passes")
+		return null
+	var scene: PackedScene = load(str(entry.get("scene", "")))
+	if scene == null:
+		return null
+	var instance := scene.instantiate()
+	if not (instance is Node3D):
+		instance.free()
+		return null
+	# Illumination is engine-owned, and this is where that is ENFORCED
+	# rather than asked for. A housing that ships its own light would
+	# change how bright a room is by being installed.
+	if _carries_a_light(instance):
+		push_warning("content: '%s' carries its own light; illumination "
+				% chosen + "is engine-owned, so the housing is refused")
+		instance.free()
+		return null
+	return instance as Node3D
+
+static func _carries_a_light(node: Node) -> bool:
+	if node is Light3D:
+		return true
+	for child in node.get_children():
+		if _carries_a_light(child):
+			return true
+	return false
+
 ## Instantiates an authored shell and derives the build contract from its
 ## validated metadata.
 ##

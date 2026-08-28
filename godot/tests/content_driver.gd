@@ -68,6 +68,9 @@ func _run() -> void:
 	await _presentation_can_never_move_the_hitbox()
 	_the_telegraph_attachment_point_is_the_contract()
 	await _a_broken_promise_is_reported_rather_than_timed_out()
+	_every_theme_can_have_its_own_light_housing()
+	_illumination_stays_engine_owned()
+	_affordances_all_wear_one_signal_colour()
 	_no_visual_anywhere_carries_collision()
 	_a_shell_that_tells_the_truth_is_accepted()
 	_a_shell_that_lies_about_its_geometry_is_refused()
@@ -1333,3 +1336,112 @@ func _a_broken_promise_is_reported_rather_than_timed_out() -> void:
 	despawned.free()
 	await get_tree().process_frame
 	enemy.queue_free()
+
+
+## Art requirement 3a. Owner ruling: theme-specific authored fixture
+## housings are allowed, and no theme is required to wear the
+## `concrete_facility` one. Six themes shared one hardcoded BoxMesh
+## because the builder had no way to ask for anything else.
+func _every_theme_can_have_its_own_light_housing() -> void:
+	var reg := ContentRegistry.shared()
+	for theme: String in Constants.THEMES:
+		var id := "fixture_light_%s" % theme
+		_check(reg.has(id),
+				"'%s' has no light housing entry; it would have to wear "
+				% theme + "another theme's fixture")
+		_check(not reg.resolve(id).is_empty(),
+				"'%s' resolves to nothing" % id)
+		var entry := reg.get_entry(reg.resolve(id))
+		_check(str(entry.get("category", "")) == "fixture",
+				"'%s' is a %s, not a fixture"
+				% [id, entry.get("category", "?")])
+
+## ...and the illumination itself is NOT art's. A housing that shipped
+## its own light would change how bright a room is by being installed,
+## which is a gameplay change arriving as a mesh.
+func _illumination_stays_engine_owned() -> void:
+	var built := ChamberBuilders.corridor(
+			{"length": 12.0, "width": 5.0}, "neon_transit")
+	var root: Node3D = built["root"]
+	add_child(root)
+	var lights := 0
+	var housings := 0
+	_count_lights_and_housings(root, [lights, housings])
+	var counted := _count_lights_and_housings(root, [])
+	_check(int(counted[0]) > 0, "a corridor built no light at all")
+	_check(int(counted[1]) > 0, "a corridor built no light housing")
+	# Every light is a direct engine build, and no housing contains one.
+	for housing: Node3D in counted[2]:
+		_check(not ContentInstantiator._carries_a_light(housing),
+				"a light housing carries its own Light3D; illumination "
+				+ "is engine-owned")
+	root.free()
+
+func _count_lights_and_housings(node: Node, _unused: Array) -> Array:
+	var lights := 0
+	var housings := 0
+	var housing_nodes: Array = []
+	var stack: Array = [node]
+	while not stack.is_empty():
+		var current: Node = stack.pop_back()
+		if current is Light3D:
+			lights += 1
+		if current is Node3D and current.name.begins_with("LightFixture"):
+			housings += 1
+			housing_nodes.append(current)
+		for child in current.get_children():
+			stack.append(child)
+	return [lights, housings, housing_nodes]
+
+## Art requirement 15. Owner ruling: every optional traversal affordance
+## wears the approved SIGNAL colour. FORM says which affordance it is;
+## COLOUR says that it IS one. Six ad-hoc tints -- one of them the theme
+## HAZARD colour, one a violet sitting beside `glitch` -- taught the
+## player nothing, because seven things that look different everywhere
+## look like seven unrelated things.
+func _affordances_all_wear_one_signal_colour() -> void:
+	var source := FileAccess.get_file_as_string(
+			"res://scripts/generation/affordance_features.gd")
+	# The six colours that were there, named so putting any of them back
+	# fails rather than merely looking different.
+	var retired := {
+		"Color(0.95, 0.8, 0.4)": "the grapple anchor's amber",
+		"Color(0.35, 0.75, 0.95)": "the water volume's blue",
+		"Color(0.4, 0.8, 1.0)": "the water basin's blue",
+		"Color(0.9, 0.7, 0.95)": "the rail's violet",
+		"Color(0.7, 0.95, 0.9)": "the wind column's mint",
+	}
+	for literal: String in retired:
+		_check(not source.contains(literal),
+				"%s is back in affordance_features.gd" % retired[literal])
+	# Hazard orange is reserved for things that hurt you, and a breakable
+	# wall is an opportunity.
+	_check(not source.contains("ThemeMaterials.hazard_mat"),
+			"an affordance is painted with the theme HAZARD colour; "
+			+ "hazard is reserved for things that hurt you")
+	# ...and theme accent/trim do not get to redefine the semantic either.
+	_check(not source.contains("accent_mat(theme).albedo_color")
+			and not source.contains("trim_mat(theme).albedo_color"),
+			"an affordance takes its identity colour from the theme; "
+			+ "theme does not redefine what SIGNAL means")
+	# Art requirement 20, and its second site. Hazard orange stays
+	# reserved for hazard semantics, so the two places the BUILDER spends
+	# it are counted rather than trusted: a corner turn stripe saying
+	# "the corridor bends" and a threshold strip across every room's
+	# doorway were both decoration in the loudest colour the palette has.
+	var builders := FileAccess.get_file_as_string(
+			"res://scripts/generation/chamber_builders.gd")
+	var hazard_uses := builders.count("ThemeMaterials.hazard_mat")
+	_check(hazard_uses == 2,
+			"chamber_builders.gd spends hazard orange %d times; there "
+			% hazard_uses + "are exactly two legitimate uses -- the "
+			+ "concrete_facility warning plate and the platform_path "
+			+ "kill pit. A corridor turning is not a hazard.")
+	_check(not builders.contains("corner marker: hazard")
+			and not builders.contains("Hazard strip across the entrance"),
+			"a hazard-orange navigation marker is back in the builder")
+
+	_check(source.count("Constants.AFFORDANCE_SIGNAL") >= 7,
+			"only %d affordance surfaces wear SIGNAL; there are seven "
+			% source.count("Constants.AFFORDANCE_SIGNAL")
+			+ "affordances and they share one identity")

@@ -355,6 +355,36 @@ func _the_hub_resolves_every_anchor_its_logic_needs() -> void:
 			"these Hub anchors are outside the room: %s"
 			% str(anchors.outside_room()))
 
+	## Art requirement 4. Epsilon's installation is 8.80 x 2.61 x 3.55 --
+	## roughly a third of one 22 m Hub wall -- and the owner ruled it
+	## keeps that prominent back-wall presence. So the bay is reserved
+	## and everything else moves around it, which is a thing that has to
+	## be CHECKED: the abandon console used to sit squarely inside it.
+	_check(anchors.bay_problem().is_empty(),
+			"Epsilon's reserved bay does not fit: %s" % anchors.bay_problem())
+	_check(anchors.intruders().is_empty(),
+			"these Hub stations stand inside Epsilon's reserved bay: %s"
+			% str(anchors.intruders()))
+
+	## ...and the bay is genuinely the size art declared, not a number
+	## quietly trimmed until the room was easier to lay out.
+	var bay := anchors.epsilon_bay()
+	_check(is_equal_approx(bay.size.x, 8.8)
+			and is_equal_approx(bay.size.z, 2.61)
+			and is_equal_approx(bay.size.y, 3.55),
+			"Epsilon's bay is %.2v, the installation is 8.80 x 3.55 x 2.61"
+			% bay.size)
+
+	## The abandon console is the only exit from GENERATING and
+	## ZONE_READY, so "moved out of the bay" must not have meant "moved
+	## somewhere nobody looks". It stays beside the portal.
+	var console := anchors.origin("generation_loading")
+	var portal := anchors.origin("main_portal")
+	_check(console.distance_to(portal) < 6.0,
+			"the abandon console is %.1f m from the portal; it is the "
+			% console.distance_to(portal)
+			+ "only way out of GENERATING and has to be obvious")
+
 	## The Lab lines up with the Hub through the doorway, not by
 	## coincidence: both read the same Z.
 	_check(is_equal_approx(anchors.origin("lab_entrance").z,

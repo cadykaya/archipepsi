@@ -111,7 +111,20 @@ static func _light(parent: Node3D, position: Vector3, theme: String,
 	light.omni_range = range_override if range_override > 0.0 else 12.0
 	light.shadow_enabled = false
 	parent.add_child(light)
-	# The fixture itself: a crude glowing slab.
+	# The HOUSING. Authored per theme where one exists, procedural where
+	# it does not (art requirement 3a): six themes used to share one
+	# `concrete_facility` slab because this was a hardcoded BoxMesh with
+	# no way to ask for anything else.
+	#
+	# The light above is built either way. Illumination is engine-owned;
+	# a housing is what it hangs in.
+	var authored := ContentInstantiator.light_housing(theme)
+	if authored != null:
+		authored.name = "LightFixture"
+		authored.position = position + Vector3(0, -0.05, 0)
+		parent.add_child(authored)
+		return
+
 	var fixture := MeshInstance3D.new()
 	# Named so a test can find it. Identifying a light fixture by its
 	# size and material is how a check goes quietly wrong when either
@@ -558,9 +571,19 @@ static func _greeble_room(root: Node3D, width: float, depth: float,
 		var crate := _box(root, Vector3(size, size, size), crate_position,
 				accent, true)
 		crate.rotation.y = rng.randf_range(-0.2, 0.2)
-	# Hazard strip across the entrance threshold.
-	_box(root, Vector3(DOOR_WIDTH + 0.8, 0.02, 0.6),
-			Vector3(0, 0.02, 0.6), ThemeMaterials.hazard_mat(theme), false)
+	# There WAS a hazard strip across every room's threshold here.
+	#
+	# Owner ruling 2026-08-28 (art requirement 20): hazard orange is
+	# reserved for hazard and warning semantics. A threshold marking can
+	# be legitimate caution language where there is a step or a lip;
+	# applied to every room unconditionally it was decoration in the
+	# loudest colour the palette has, and spending it on ordinary
+	# architecture is how it stops meaning anything.
+	#
+	# Nothing replaces it. If playtesting shows thresholds need marking,
+	# it is solved with a non-hazard channel -- neutral architectural
+	# contrast, light placement, a trim or value change, or the future
+	# approved signage language -- not by putting the orange back.
 	_theme_props(root, theme, rng, width, depth, height)
 
 # ---------------------------------------------------------------------------
@@ -916,10 +939,14 @@ static func corner(turn: int, theme: String) -> Dictionary:
 	_box(root, Vector3(WALL_THICKNESS, H, S),
 			Vector3(-exit_x, H / 2.0, S / 2.0), wall)
 	_light(root, Vector3(0, H - 0.3, S / 2.0), theme)
-	# A corner marker: hazard stripe on the turn's inner wall.
-	_box(root, Vector3(0.06, 1.0, 2.0),
-			Vector3(-exit_x * 0.92, 1.4, S / 2.0),
-			ThemeMaterials.hazard_mat(theme), false)
+	# There WAS a hazard stripe on the turn's inner wall here, purely to
+	# say "the corridor bends".
+	#
+	# Owner ruling 2026-08-28 (art requirement 20): REMOVE IT. *A corridor
+	# turns here* is not a hazard, and hazard orange stays reserved for
+	# things that hurt you. The turn's own form does the work -- the
+	# opening, the jamb reveal, the light above it -- and if playtesting
+	# shows turns need more wayfinding it gets a non-hazard channel.
 	# Step the cursor a full wall thickness past the exit wall's center
 	# plane: the next chamber's own front wall then butts against this
 	# one's outer face instead of occupying the same slab (coincident

@@ -44,20 +44,53 @@ const W := 22.0
 const D := 16.0
 const H := 5.0
 
+## How far a wall-hugging fixture stands off the wall. One number, so a
+## bay and a station cannot disagree about where the wall is.
+const WALL_CLEARANCE := 0.4
+
+## The portal's doorway, which nothing may stand in front of.
+const PORTAL_DOOR_WIDTH := 3.0
+
 ## The doorway through to the Lab. Shared with `EchoLab.OFFSET`, which is
 ## how the two rooms line up; `lab_driver.gd` pins that they still do.
 const LAB_DOOR_Z := 6.0
 const LAB_DOOR_WIDTH := 3.0
 const LAB_DOOR_HEIGHT := 3.2
 
+## Epsilon's reserved bay (art requirement 4).
+##
+## Owner ruling 2026-08-28, in the installation's favour: *the room-scale
+## Epsilon installation is a hero asset and should keep the proposed
+## prominent back-wall presence.* Do NOT shrink it, move it somewhere
+## visually secondary, or redesign it around the abandon station.
+##
+## So the bay is RESERVED rather than negotiated. These are the art
+## lane's declared installation dimensions, and engineering's job is to
+## keep the space free — `intruders()` says who is standing in it.
+##
+## Authoring order is [width, depth, height]; the room is Y-up, so depth
+## is the z extent and height the y one.
+const EPSILON_BAY_WIDTH := 8.8
+const EPSILON_BAY_DEPTH := 2.61
+const EPSILON_BAY_HEIGHT := 3.55
+
 ## `name -> Transform3D`, in Hub-local space. Rotation is the yaw a thing
 ## placed here should face; a wall station faces into the room.
 static func defaults() -> Dictionary:
 	return {
 		"main_portal": _at(Vector3(0, 0, D - 1.2), 0.0),
-		# Reserved. Beside the portal, facing the room: where a presence
-		# would stand to watch the player leave.
-		"epsilon_presence": _at(Vector3(-3.2, 0, D - 3.2), 0.0),
+		# Epsilon's bay: the back wall, left of the portal, facing the
+		# room. Was (-3.2, D - 3.2), which was fine for the 2.0 x 3.0
+		# terminal that used to stand there and is not fine for an 8.80 m
+		# installation -- centred at -3.2 it spanned x -7.6 to +1.2 and
+		# ran straight through the portal's own doorway.
+		#
+		# Centred so the bay sits between the left wall and the portal
+		# with clearance at both ends. Everything else on this wall moves
+		# around Epsilon, not the other way round (art requirement 4).
+		"epsilon_presence": _at(
+				Vector3(-W / 2.0 + WALL_CLEARANCE + EPSILON_BAY_WIDTH / 2.0,
+					0, D - WALL_CLEARANCE - EPSILON_BAY_DEPTH / 2.0), 0.0),
 		# Forward of the Lab doorway, not across it. At D * 0.45 the
 		# counter spanned z 6.0-8.4 and the doorway spans 4.5-7.5, so
 		# the shop stood in two thirds of the only way into the Echo
@@ -74,7 +107,16 @@ static func defaults() -> Dictionary:
 		# headline as letters buried in a wall.
 		"progression_display": _at(Vector3(0, 4.55, D - 2.2), 0.0),
 		"postgame": _at(Vector3(W / 2.0 - 3.0, 0, D - 1.2), 0.0),
-		"generation_loading": _at(Vector3(-W / 2.0 + 2.4, 0, D - 2.4), 0.0),
+		# The abandon console: the only exit from GENERATING and
+		# ZONE_READY, which have no pause menu to reach. It used to sit
+		# at x = -8.6, inside what is now Epsilon's bay.
+		#
+		# Moved to the OTHER side of the portal rather than shrunk or
+		# tucked away: the ruling asks for it *outside Epsilon's
+		# footprint while keeping it obvious and reachable near the Zone
+		# workflow*, and the portal is the Zone workflow. Clear of the
+		# portal's 3 m doorway on one side and of `postgame` on the other.
+		"generation_loading": _at(Vector3(3.6, 0, D - 2.4), 0.0),
 	}
 
 static func _at(where: Vector3, facing: float) -> Transform3D:
@@ -121,6 +163,59 @@ func missing() -> Array[String]:
 		if not _anchors.has(name):
 			out.append(name)
 	return out
+
+## Epsilon's reserved bay as a world-space box, in Hub-local coordinates.
+##
+## Derived from the `epsilon_presence` anchor, so a scene that moves
+## Epsilon moves its bay with it rather than leaving a reservation
+## floating where the installation used to be.
+func epsilon_bay() -> AABB:
+	var centre := origin("epsilon_presence")
+	var size := Vector3(EPSILON_BAY_WIDTH, EPSILON_BAY_HEIGHT,
+			EPSILON_BAY_DEPTH)
+	return AABB(centre - Vector3(size.x / 2.0, 0.0, size.z / 2.0), size)
+
+## Required anchors standing inside Epsilon's bay (art requirement 4).
+##
+## The ruling is that Epsilon keeps the bay and everything else moves, so
+## this names what has to move rather than suggesting Epsilon shrink. The
+## abandon console was the one that did: at x = -8.6 it sat squarely
+## inside an 8.80 m installation nobody had reserved room for.
+##
+## `epsilon_presence` is exempt, being what the bay is for.
+func intruders() -> Array[String]:
+	var out: Array[String] = []
+	var bay := epsilon_bay()
+	for name: String in REQUIRED:
+		if name == "epsilon_presence" or not _anchors.has(name):
+			continue
+		var p: Vector3 = origin(name)
+		# Ground plan only: a board mounted 4.55 m up clears an
+		# installation 3.55 m tall, and saying otherwise would move
+		# something that is not in the way.
+		if p.y >= EPSILON_BAY_HEIGHT:
+			continue
+		if p.x >= bay.position.x and p.x <= bay.position.x + bay.size.x \
+				and p.z >= bay.position.z \
+				and p.z <= bay.position.z + bay.size.z:
+			out.append(name)
+	return out
+
+## Whether the bay fits in the room and clears the portal's doorway.
+## Returns "" when it does, or what is wrong.
+func bay_problem() -> String:
+	var bay := epsilon_bay()
+	if bay.position.x < -W / 2.0 \
+			or bay.position.x + bay.size.x > W / 2.0:
+		return "Epsilon's bay runs through a side wall"
+	if bay.position.z < 0.0 or bay.position.z + bay.size.z > D:
+		return "Epsilon's bay runs through the back or front wall"
+	var portal := origin("main_portal")
+	var half_door := PORTAL_DOOR_WIDTH / 2.0
+	if bay.position.x + bay.size.x > portal.x - half_door \
+			and bay.position.x < portal.x + half_door:
+		return "Epsilon's bay stands in the portal doorway"
+	return ""
 
 ## Required anchors that are outside the room they are supposed to be in.
 ## A station placed through a wall is reachable by nothing, and the fault

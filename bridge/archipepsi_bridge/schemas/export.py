@@ -124,6 +124,18 @@ def export_constants_gd() -> str:
         "\treturn floor(reach * SAFE_GAP_MARGIN * 10.0) / 10.0",
     ]
 
+    # The one colour every optional traversal affordance wears
+    # (art requirement 15). Emitted as a `Color` so a call site cannot
+    # accidentally pass the tuple somewhere expecting three floats.
+    lines += [
+        "",
+        "# The SIGNAL colour. FORM says which affordance; this says that",
+        "# it IS one. Theme, source-game colour and Epsilon green do not",
+        "# redefine it (art requirement 15).",
+        "const AFFORDANCE_SIGNAL := Color"
+        f"{tuple(round(c, 6) for c in C.AFFORDANCE_SIGNAL_RGB)}",
+    ]
+
     lines += ["", "# Tier bounds: tier N holds [TIER_BOUNDS[N], TIER_BOUNDS[N+1]).",
               f"const TIER_BOUNDS = {_gd_literal(list(C.TIER_BOUNDS))}",
               "", "# Enemy stat block, keyed by archetype.", "const ENEMY_STATS = {"]

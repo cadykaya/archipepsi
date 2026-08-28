@@ -406,6 +406,45 @@ FINALE_REQUIRED_OTHER_CHECKS = 24     # of the 29 non-goal Checks
 POSTGAME_ENABLED = True
 
 # --------------------------------------------------------------------------
+# The affordance signal language (art requirement 15)
+# --------------------------------------------------------------------------
+# Owner ruling, 2026-08-28, in art's favour: every optional traversal
+# affordance wears ONE colour.
+#
+#   FORM tells the player WHICH affordance this is.
+#   COLOUR tells the player THIS IS A CAPABILITY OPPORTUNITY.
+#
+# Theme, source-game colour and Epsilon green each do NOT redefine that
+# semantic. The six affordances used to carry six ad-hoc tints -- the rail
+# a violet that sat beside `glitch` (which means cosmetic corruption, no
+# mechanical meaning), the breakable wall the theme HAZARD colour, and the
+# bounce pad and moving platform whatever the theme's accent and trim
+# happened to be. Seven things that look different everywhere teach the
+# player nothing.
+#
+# The value is the art lane's approved `universal.signal` anchor from
+# `assets/art_palette.json`. Engineering does not get a second opinion
+# about what colour signal is, the same way art does not get one about
+# what colour `concrete_facility` is.
+
+#: sRGB hex of the approved SIGNAL family anchor.
+AFFORDANCE_SIGNAL_HEX = "#39d7c8"
+#: The same colour as linear-ish 0..1 components, for GDScript `Color()`.
+AFFORDANCE_SIGNAL_RGB = (0x39 / 255.0, 0xd7 / 255.0, 0xc8 / 255.0)
+
+#: Channels that stay DYNAMIC and are explicitly preserved by the ruling.
+#: Both are state, not identity, and both ride brightness or count rather
+#: than hue -- so one signal colour costs neither of them anything.
+AFFORDANCE_DYNAMIC_CHANNELS = (
+    #: The breakable wall's damage / crack state, carried by emission
+    #: energy ramping with damage taken.
+    "breakable_wall_damage",
+    #: The wind volume's ring count and stack presentation.
+    "wind_ring_count",
+)
+
+
+# --------------------------------------------------------------------------
 # Zone allocation
 # --------------------------------------------------------------------------
 

@@ -17,7 +17,7 @@ extends RefCounted
 class Volume extends Area3D:
 	var influence: Dictionary = {}
 	var extents := Vector3(3.0, 2.0, 3.0)
-	var tint := Color(0.5, 0.8, 1.0)
+	var tint := Constants.AFFORDANCE_SIGNAL
 	## Water and wind should be visible; a rail's lane is implied by the
 	## rail, and a second translucent box over it just reads as fog.
 	var visible_shell := true
@@ -86,7 +86,7 @@ class BreakablePanel extends StaticBody3D:
 	const MIN_IMPACT := Constants.STATIC_PULSE_DAMAGE * 2.0
 
 	var hp := HP
-	var tint := Color(0.8, 0.45, 0.3)
+	var tint := Constants.AFFORDANCE_SIGNAL
 	var refused := 0
 
 	var _mesh: MeshInstance3D
@@ -161,7 +161,7 @@ class BouncePad extends Area3D:
 	## than a jump without being a launch you cannot read.
 	const LAUNCH := 16.0
 
-	var tint := Color(0.95, 0.85, 0.4)
+	var tint := Constants.AFFORDANCE_SIGNAL
 	var launched := 0
 
 	func _ready() -> void:
@@ -203,7 +203,7 @@ class MovingPlatform extends AnimatableBody3D:
 	const PERIOD := 5.0
 
 	var travel := Vector3(0, 3.0, 0)
-	var tint := Color(0.6, 0.65, 0.7)
+	var tint := Constants.AFFORDANCE_SIGNAL
 	var elapsed := 0.0
 	## Where along `travel` the platform intends to be, 0..1. Reported
 	## separately because `sync_to_physics` makes `position` a read of the

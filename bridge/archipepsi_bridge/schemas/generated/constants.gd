@@ -5,6 +5,9 @@
 # drift from the bounds the Python validator enforces.
 extends Node
 
+const AFFORDANCE_DYNAMIC_CHANNELS = ["breakable_wall_damage", "wind_ring_count"]
+const AFFORDANCE_SIGNAL_HEX = "#39d7c8"
+const AFFORDANCE_SIGNAL_RGB = [0.2235294117647059, 0.8431372549019608, 0.7843137254901961]
 const AIR_CONTROL = 0.4
 const BRIDGE_HOST = "127.0.0.1"
 const BRIDGE_PORT = 38290
@@ -156,6 +159,11 @@ func max_safe_gap(vertical_step: float = 0.0) -> float:
 			* (JUMP_VELOCITY + sqrt(disc)) / g
 	# Floor to one decimal: a safety bound must never round upward.
 	return floor(reach * SAFE_GAP_MARGIN * 10.0) / 10.0
+
+# The SIGNAL colour. FORM says which affordance; this says that
+# it IS one. Theme, source-game colour and Epsilon green do not
+# redefine it (art requirement 15).
+const AFFORDANCE_SIGNAL := Color(0.223529, 0.843137, 0.784314)
 
 # Tier bounds: tier N holds [TIER_BOUNDS[N], TIER_BOUNDS[N+1]).
 const TIER_BOUNDS = [89100001, 89100011, 89100021, 89100031]

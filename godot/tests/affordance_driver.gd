@@ -51,6 +51,7 @@ func _run() -> void:
 	await _a_bounce_pad_beats_a_jump()
 	await _water_slows_you_but_cannot_trap_you()
 	await _a_rail_carries_a_dash_further()
+	await _the_rail_mesh_and_ride_come_from_one_path()
 	await _wind_only_lifts()
 	await _a_volume_freed_under_you_lets_go()
 	await _the_panel_is_reachable_by_a_real_shot()
@@ -785,3 +786,82 @@ func _a_check_sits_on_the_lane_features_are_kept_off() -> void:
 					+ "it")
 	_check_once(checked >= 15,
 			"only %d reward placements checked" % checked)
+
+
+## Art requirement 16. Owner ruling: `ride_path` is the AUTHORITATIVE
+## geometric path shared by the visual mesh and the runtime riding
+## geometry -- *"do not independently hand-author visual rail and
+## collision/ride path."*
+##
+## The beam and the lane used to be two hand-written boxes with different
+## centres and different sizes that happened to share one `length`. Two
+## authorings of one thing drift the moment either is edited, and the
+## drift is invisible: the rail looks right and rides somewhere else.
+##
+## Tested against a MULTI-SEGMENT path on purpose. The footprint only
+## allows a straight rail today, so through `_rail` the whole polyline
+## claim is untestable -- a two-point path has one segment, and a
+## hardcoded length is indistinguishable from a derived one when there is
+## only one of them. Sabotaging the built rail proved exactly that: three
+## hand-authored lengths all passed, because `run` happened to equal the
+## literal. So this drives `build_rail_along` with a bent path of three
+## unequal segments, which is the shape a curved authored rail arrives in.
+func _the_rail_mesh_and_ride_come_from_one_path() -> void:
+	var path := AffordanceFeatures.rail_ride_path(Vector3.ZERO)
+	_check(path.size() >= 2,
+			"a ride path needs at least two points, got %d" % path.size())
+
+	var bent := PackedVector3Array([
+		Vector3(0, 1.1, 0),
+		Vector3(0, 1.1, 4.0),        # 4.0 along z
+		Vector3(3.0, 1.1, 4.0),      # 3.0 along x -- a turn
+		Vector3(3.0, 1.1, 9.5),      # 5.5 along z
+	])
+	var runs := [4.0, 3.0, 5.5]
+
+	var root := Node3D.new()
+	add_child(root)
+	var built: Dictionary = AffordanceFeatures.build_rail_along(root, bent)
+	var beams: Array = built["beams"]
+	var lanes: Array = built["lanes"]
+
+	# One ride volume AND one beam segment per straight segment -- the
+	# shape the ruling confirmed as a valid integration direction.
+	_check(lanes.size() == bent.size() - 1,
+			"a %d-point path built %d ride volumes, expected %d"
+			% [bent.size(), lanes.size(), bent.size() - 1])
+	_check(beams.size() == bent.size() - 1,
+			"a %d-point path built %d beam segments, expected %d"
+			% [bent.size(), beams.size(), bent.size() - 1])
+
+	for i in runs.size():
+		if i >= lanes.size() or i >= beams.size():
+			continue
+		var lane: AffordanceNodes.Volume = lanes[i]
+		var beam: MeshInstance3D = beams[i]
+		var run: float = runs[i]
+		_check(absf(lane.extents.z - run) < 0.01,
+				"ride volume %d is %.2f long, its path segment is %.2f"
+				% [i, lane.extents.z, run])
+		var box := beam.mesh as BoxMesh
+		_check(box != null and absf(box.size.z - run) < 0.01,
+				"beam segment %d is %.2f long, its path segment is %.2f"
+				% [i, 0.0 if box == null else box.size.z, run])
+		# ...and they sit on the same segment, not merely at the same
+		# length. A mesh the right size in the wrong place is the failure
+		# a length check alone cannot see.
+		var midpoint := (bent[i] + bent[i + 1]) * 0.5
+		_check(Vector2(beam.position.x - midpoint.x,
+				beam.position.z - midpoint.z).length() < 0.01,
+				"beam segment %d is centred at %.2v, its segment's "
+				% [i, beam.position] + "midpoint is %.2v" % midpoint)
+		_check(Vector2(lane.position.x - midpoint.x,
+				lane.position.z - midpoint.z).length() < 0.01,
+				"ride volume %d is centred at %.2v, its segment's "
+				% [i, lane.position] + "midpoint is %.2v" % midpoint)
+		# The turn has to reach the geometry: a segment along x that was
+		# not rotated is a rail that rides sideways.
+		_check(absf(beam.rotation.y - lane.rotation.y) < 0.01,
+				"beam segment %d and its ride volume face different ways"
+				% i)
+	root.queue_free()

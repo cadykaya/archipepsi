@@ -176,6 +176,109 @@ telegraph needs an attack to announce.
 
 ---
 
+## The decided rulings, applied
+
+Six owner rulings that had been decided and not yet built.
+
+### The affordance signal language (requirement 15)
+
+**Contract:** `constants.AFFORDANCE_SIGNAL_HEX` / `_RGB`, exported as
+`Constants.AFFORDANCE_SIGNAL`.
+
+> FORM tells the player WHICH affordance. COLOUR tells the player THIS IS
+> A CAPABILITY OPPORTUNITY.
+
+All seven optional traversal affordances now wear the art lane's approved
+`universal.signal` anchor. They used to carry six ad-hoc tints — the rail
+a violet sitting beside `glitch` (which means *cosmetic corruption, no
+mechanical meaning*), the breakable wall the theme **hazard** colour, and
+the bounce pad and moving platform whatever the theme's accent and trim
+happened to be. Seven things that look different everywhere teach
+nothing.
+
+Theme, source-game colour and Epsilon green do not redefine it, and a
+test refuses each retired literal by name.
+
+**The two dynamic channels are preserved**, and neither costs anything,
+because both ride brightness or count rather than hue:
+`breakable_wall_damage` (emission energy ramps with damage taken) and
+`wind_ring_count`.
+
+### Hazard orange (requirement 20)
+
+Two misuses removed: the corner turn stripe that said *a corridor bends
+here*, and a threshold strip `_greeble_room` laid across **every** room's
+doorway unconditionally. Neither is a hazard, and spending the palette's
+loudest colour on ordinary architecture is how it stops meaning anything.
+
+**Nothing replaces them.** If playtesting shows turns or thresholds need
+marking, it gets a non-hazard channel — neutral architectural contrast,
+light placement, a trim or value change, or the future approved signage
+language. A test pins the builder's hazard budget at exactly two: the
+`concrete_facility` warning plate and the `platform_path` kill pit.
+
+### Rails (requirement 16)
+
+**Contract:** `AffordanceFeatures.rail_ride_path()` and
+`build_rail_along()`.
+
+> `ride_path` is the authoritative geometric path shared by visual mesh
+> and runtime riding geometry.
+
+The beam and the ride volume used to be two hand-written boxes with
+different centres and different sizes that happened to share one
+`length`. Both are now swept along one polyline, one beam segment and one
+ride volume per straight segment — the shape the ruling confirmed. A
+curved authored rail arrives as more points and needs no new code.
+
+The wider footprint for banked turns stays recorded as **future
+expansion, not a blocker**, per the ruling.
+
+*Tested against a bent three-segment path on purpose.* Through the
+built rail the polyline claim is untestable — a two-point path has one
+segment, and a hardcoded length is indistinguishable from a derived one
+when there is only one of them. Three sabotages proved that by passing.
+
+### Epsilon's Hub bay (requirement 4)
+
+**Contract:** `HubAnchors.EPSILON_BAY_*`, `epsilon_bay()`,
+`intruders()`, `bay_problem()`.
+
+The installation is 8.80 × 2.61 × 3.55 m and the ruling is that it keeps
+its prominent back-wall presence. The bay is therefore **reserved**, and
+everything else moves around it.
+
+At the old anchor the bay would have spanned x −7.6 to +1.2 — straight
+through the portal's own doorway — and the abandon console sat inside it.
+Epsilon now sits between the left wall and the portal with clearance at
+both ends, and the console moved to the **other side of the portal**:
+outside the footprint, still beside the Zone workflow, still the obvious
+way out of GENERATING. A test refuses a bay that runs through a wall or
+the doorway, names any station standing in it, and fails if the console
+drifts more than 6 m from the portal.
+
+### Room enclosure (requirement 19)
+
+Enclosed by default was already true after playtest 2 — but the **tower
+was missing from the seal suite**, so the fix held by luck rather than by
+test. It is in now, at two heights. Platform paths stay open by design.
+
+### Theme lighting (requirement 3a)
+
+**Contract:** `ContentInstantiator.light_housing(theme)`.
+
+Six themes shared one `concrete_facility` slab because `_light` built a
+hardcoded `BoxMesh` with no way to ask for anything else. Each theme now
+resolves its own housing through the registry, falling back to the
+procedural slab.
+
+**Illumination stays engine-owned, and that is enforced rather than
+asked for:** a housing carrying its own `Light3D` is refused with a
+warning, because a mesh that changes how bright a room is by being
+installed is a gameplay change arriving as art.
+
+---
+
 ## Still open, and why
 
 | # | Requirement | Status |
