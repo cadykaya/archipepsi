@@ -683,6 +683,56 @@ junction "opened up".
 > exactly like a prop the asset provides.
 
 
+### L-51 · A number the render contradicts is worse than no number
+`shell_corridor_bays` shipped with `sightline: 6.4` because the docstring
+argued that alternating recesses make a corridor you weave down. The entry
+render shows all 16 m of floor: a recess in the side of a straight lane is
+**cover, not occlusion**, and the reasoning had never been checked against a
+frame.
+
+The damage was not aesthetic. `sightline` is one of the semantic keys the
+shell manifests exist to give `zone.py`, so a wrong one is a lie the runtime
+would have consumed silently — worse than the empty §7 it replaced, because
+an absent key is obviously absent.
+
+The fix was to redefine the key as something checkable — *how far down the
+run the floor stays visible from the entrance at eye height* — and let the
+asset's justification move to the axes it actually serves. Every shell
+number is now verifiable against its own review image.
+
+> If a manifest key cannot be checked against a render, it is a mood word
+> with a colon after it.
+
+### L-52 · The camera lives in world space; the model does not
+L-45 caught this for model *offsets*. It came back for camera *positions*,
+because the shot runner yaws every loaded model 180° and leaves the camera
+alone: an `eye` copied straight out of a manifest anchor lands mirrored
+through the origin.
+
+Two shells were photographed from out in the void, looking at the corridor
+through its own entrance, under the captions "ON THE GALLERY" and "FROM THE
+HIGH HALF". Both frames were plausible — a small, well-lit corridor in the
+middle of grey — and neither was where it said it was. Any `eye` meant to
+stand *inside* a shell must negate the anchor's x and z.
+
+> The same coordinate flip will keep coming back until every frame that
+> quotes a manifest position does the conversion in one place.
+
+### L-53 · A pocket 1.6 m deep has no interior camera
+Three attempts were spent trying to photograph "standing in a bay, looking
+back down the lane". Every one hit a wall, because the geometry says so: a
+bay 1.6 m deep by 2.8 wide has a view cone out of it barely wider than the
+opening, and a game lens cannot widen it.
+
+That is not a camera failure, it is the shape being true. The shot was
+reframed to the approach — where the pocket reads as a pocket — and the
+narrowness went into the write-up as the family's weakest read instead of
+being hidden behind a fourth camera move.
+
+> When three camera moves fail on the same object, stop moving the camera
+> and write down what the geometry is telling you.
+
+
 ## Process
 
 ### L-39 · Four batches to lock a style, and every one of them was cheap

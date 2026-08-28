@@ -139,6 +139,10 @@ These are the vocabulary everything after them inherits.
 | `light_temple_niche` | L0 | prop | 140 | 0.52 × 0.30 × 0.68 | wall | B14 | B14 | PEND |
 | `light_void_absent` | L0 | prop | 84 | 0.65 × 0.16 × 0.51 | ceiling | B14 | B14 | PEND |
 | `light_void_debug` | L0 | prop | 60 | 0.63 × 0.62 × 0.49 | ceiling | B14 | B14 | PEND |
+| `shell_corridor_narrow` | L3 | room | 132 | 4.80 × 14.00 × 4.50 | entrance | B15 | B15 | PEND |
+| `shell_corridor_bays` | L3 | room | 408 | 9.60 × 16.00 × 4.50 | entrance | B15 | B15 | PEND |
+| `shell_corridor_stepped` | L3 | room | 132 | 5.80 × 16.00 × 5.50 | entrance | B15 | B15 | PEND |
+| `shell_corridor_gallery` | L3 | room | 240 | 8.80 × 20.00 × 5.90 | entrance | B15 | B15 | PEND |
 
 | Theme material | Roles built |
 | --- | --- |
@@ -302,7 +306,7 @@ obviously repeating one room — **but not before Style Lock.**
 
 | ID | Type | Bounds (from `zone.py`) | Target variants | Pri | Model |
 | --- | --- | --- | --- | --- | --- |
-| `shell_corridor_*` | `corridor` | 6–30 m long, 4–10 m wide, 3.6 m high | 4 | A | — |
+| `shell_corridor_*` | `corridor` | 6–30 m long, 4–10 m wide, 3.6 m high | 4 | A | **B15** — `shell_corridor_narrow` / `_bays` / `_stepped` / `_gallery`, four discrete sizes, not one stretched box |
 | `shell_arena_*` | `arena` | 10–28 m square, walls 4–8 m | 4 | A | — |
 | `shell_platform_path_*` | `platform_path` | 3–8 segments, gap ≤ 2.6 m, step ≤ 1.0 m | 3 | A | — |
 | `shell_tower_*` | `tower` | 2–5 floors | 3 | A | — |
@@ -312,6 +316,28 @@ obviously repeating one room — **but not before Style Lock.**
 A Zone is 1–6 chambers chaining linearly along +Z, with the exit portal
 appended automatically. **Epsilon never places the exit and never chooses
 world coordinates.**
+
+A shell is **one glb at one discrete size**. `corridor()` is parametric, so
+no single mesh fits every case, and the owner ruled out stretching one:
+*prefer authored discrete forms / size classes where gameplay geometry
+matters.* Each shell's manifest entry therefore carries the semantics the
+runtime needs in order to place it without opening the file:
+
+| Key | What it is |
+| --- | --- |
+| `exit_offset` | where the next chamber attaches, in Godot metres |
+| `bounds` | the AABB, so `zone.py` can place it without loading it |
+| `interior` | the clear volume inside the walls |
+| `check_anchor` | where a Check stands, if this chamber carries one |
+| `enemy_anchors` | where a fight starts from |
+| `affordance_anchor` | corridors are the only chamber that may carry a feature, so only corridors declare this |
+| `sightline` | how far down the run the **floor** stays visible from the entrance at eye height — measured off the review render |
+
+`sightline` is a claim that is easy to make falsely, so it is defined as
+something a render can be checked against. `shell_corridor_bays` says 16.0,
+the full run: recesses cut into the side of a straight lane are cover, not
+occlusion. It earns its place in the family on routing, encounter and Check
+placement instead.
 
 ---
 

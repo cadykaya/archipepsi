@@ -51,7 +51,8 @@
     "interactable": 900,
     "hero": 1200,
     "enemy": 700,
-    "landmark": 2500
+    "landmark": 2500,
+    "room": 12000
   },
   "max_triangles_room": 12000,
   "max_radial_segments": 8,

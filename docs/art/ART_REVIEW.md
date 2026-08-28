@@ -1944,3 +1944,90 @@ The probe rooms are a direct A/B against Batch 012's: identical rooms, one
 variable changed. Gothic's is the one to compare.
 
 Status: **PENDING** — theme-identity work, not self-marked.
+
+---
+
+## Batch 015 — the corridor shell family
+
+`ASSET_INVENTORY.md` §7 is L3 and had nothing in it. It replaces
+`chamber_builders.build`'s five procedural chamber types, and it is the
+level the owner named as the point of the whole tier: *stop Epsilon from
+visibly repeating one room.*
+
+### What a shell asset IS
+
+`corridor()` is **parametric** — it reads `length`, `width` and a height
+that grows when the chamber carries an affordance — so no single mesh fits
+every case, and the alternative was ruled out:
+
+> Do not stretch collision-critical shells generically just to create
+> variants. Prefer authored discrete forms / size classes where gameplay
+> geometry matters.
+
+So a shell is **one glb at one discrete size**, built from the same
+primitives as every other batch, and its manifest entry carries what the
+runtime needs to place it: `exit_offset`, `bounds`, `interior`,
+`check_anchor`, `enemy_anchors`, `affordance_anchor`, `sightline`. Semantic
+intent, not a resource path.
+
+### The four, and the difference each one is for
+
+| Shell | Size | Tris | Sightline | What it does that the others do not |
+| --- | --- | --- | --- | --- |
+| `shell_corridor_narrow` | 4.0 × 14 m | 132 | 14.0 | `CORRIDOR_WIDTH_MIN`, no cover. `BRUTE_LANE` is 2.60, so a brute leaves 0.70 m either side: the corridor you cannot get past |
+| `shell_corridor_bays` | 6.0 × 16 m | 408 | 16.0 | recesses every 4 m, alternating sides. Cover, a flank, and the only corridor with pockets a Check can sit in off the walking line |
+| `shell_corridor_stepped` | 5.0 × 16 m | 132 | 8.0 | a 1.00 m step mid-run — exactly `MAX_VERTICAL_STEP`, so it is walkable and reads walkable — plus a ledge at 2.60 over the low half |
+| `shell_corridor_gallery` | 8.0 × 20 m | 240 | 20.0 | a walkway at 2.60 m, out of a base jump's reach. Two routes, and the only corridor where something can hold above you |
+
+Every dimension sits inside `zone.py`'s corridor bounds (6–30 m long,
+4–10 m wide) and the ceiling is `CORRIDOR_HEIGHT` except where a feature
+needs more, which is `corridor()`'s own rule. The gallery's stair uses
+`arch_stair`'s 0.325 m riser so the two kits agree. Nothing here is an
+aesthetic guess; the numbers come from `engine_truth`.
+
+Well under the 12000-triangle room budget — a shell is an envelope, and the
+props, fixtures and affordances that dress it come from Batches 009–014.
+
+### One claim withdrawn
+
+The first pass gave `shell_corridor_bays` a `sightline` of **6.4**, on the
+reasoning that alternating recesses make a corridor you have to weave down.
+The entry render disproves it: all 16 m of floor is visible from the mouth.
+A recess in the side of a straight lane is **cover, not occlusion**, and
+`sightline` is a number `zone.py` would have consumed.
+
+So the number is now 16.0 and the family's story changed rather than the
+geometry: bays earn their place on **routing, encounter and Check
+placement**, which are three of the axes named for this tier, and the
+definition of `sightline` is now something a render can be held against —
+*how far down the run the floor stays visible from the entrance at eye
+height* — rather than a mood word. (L-51.)
+
+### What is weakest here, stated rather than hidden
+
+The bays read **quietly** from the entrance. At 1.6 m deep in a 3.6 m
+ceiling, an opening 16 m away is a dark band, and the head over it is
+doing most of the work. `S_bays_approach.png` is the honest frame: the
+pocket reads on approach, not down the length. If that is not enough, the
+fix is more likely a fixture inside each bay (Batch 014 language) than a
+deeper recess, because depth costs lane width the corridor does not have.
+
+### Evidence
+
+`docs/art/review/batch015/`
+
+| Image | What it answers |
+| --- | --- |
+| `S_narrow_entry.png` | the pressure corridor, full sightline, nowhere to go |
+| `S_bays_entry.png` | the lane stays open 16 m — the corrected claim, shown |
+| `S_bays_approach.png` | the pocket as a pocket, from where a player meets it |
+| `S_stepped_entry.png` | the 1.00 m step, and the far floor it hides |
+| `S_stepped_from_high.png` | the same corridor from the high half: nothing hidden the other way |
+| `S_gallery_entry.png` | two routes, the stair, the deck out of reach |
+| `S_gallery_high.png` | the high ground a ranged enemy holds — or you do |
+
+All seven are the engine's own lens at eye height, because a corridor's
+whole design is what you can see when you step into it.
+
+Status: **PENDING** — the family's readability is a judgement, not
+self-marked.

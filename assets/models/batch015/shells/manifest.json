@@ -1,0 +1,246 @@
+{
+  "shell_corridor_bays": {
+    "affordance_anchor": [
+      0.0,
+      0.0,
+      8.0
+    ],
+    "anchor": "entrance",
+    "bay_anchors": [
+      [
+        -3.8,
+        0.0,
+        2.6
+      ],
+      [
+        3.8,
+        0.0,
+        6.2
+      ],
+      [
+        -3.8,
+        0.0,
+        9.8
+      ],
+      [
+        3.8,
+        0.0,
+        13.4
+      ]
+    ],
+    "bounds": [
+      [
+        -3.0,
+        -1.0,
+        0.0
+      ],
+      [
+        6.0,
+        4.6,
+        16.0
+      ]
+    ],
+    "check_anchor": [
+      3.8,
+      0.0,
+      6.2
+    ],
+    "enemy_anchors": [
+      [
+        -3.8,
+        0.0,
+        2.6
+      ],
+      [
+        -3.8,
+        0.0,
+        9.8
+      ]
+    ],
+    "exit_offset": [
+      0.0,
+      0.0,
+      16.0
+    ],
+    "interior": [
+      6.0,
+      3.6,
+      16.0
+    ],
+    "path": "batch015/shells/shell_corridor_bays.glb",
+    "sightline": 16.0,
+    "size": [
+      9.6,
+      16.0,
+      4.5
+    ],
+    "texel_density": 32.0,
+    "triangles": 408
+  },
+  "shell_corridor_gallery": {
+    "affordance_anchor": [
+      -2.7,
+      0.0,
+      10.0
+    ],
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -4.0,
+        -1.0,
+        0.0
+      ],
+      [
+        8.0,
+        6.0,
+        20.0
+      ]
+    ],
+    "check_anchor": [
+      2.7,
+      2.75,
+      15.0
+    ],
+    "enemy_anchors": [
+      [
+        2.7,
+        2.75,
+        12.0
+      ],
+      [
+        -2.7,
+        0.0,
+        8.0
+      ]
+    ],
+    "exit_offset": [
+      0.0,
+      0.0,
+      20.0
+    ],
+    "gallery_height": 2.6,
+    "interior": [
+      8.0,
+      5.0,
+      20.0
+    ],
+    "path": "batch015/shells/shell_corridor_gallery.glb",
+    "sightline": 20.0,
+    "size": [
+      8.8,
+      20.0,
+      5.9
+    ],
+    "texel_density": 32.0,
+    "triangles": 240
+  },
+  "shell_corridor_narrow": {
+    "affordance_anchor": [
+      0.0,
+      0.0,
+      7.0
+    ],
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -2.0,
+        -1.0,
+        0.0
+      ],
+      [
+        4.0,
+        4.6,
+        14.0
+      ]
+    ],
+    "check_anchor": [
+      0.0,
+      0.0,
+      12.0
+    ],
+    "enemy_anchors": [
+      [
+        0.0,
+        0.0,
+        7.700000000000001
+      ]
+    ],
+    "exit_offset": [
+      0.0,
+      0.0,
+      14.0
+    ],
+    "interior": [
+      4.0,
+      3.6,
+      14.0
+    ],
+    "path": "batch015/shells/shell_corridor_narrow.glb",
+    "sightline": 14.0,
+    "size": [
+      4.8,
+      14.0,
+      4.5
+    ],
+    "texel_density": 32.0,
+    "triangles": 132
+  },
+  "shell_corridor_stepped": {
+    "affordance_anchor": [
+      0.0,
+      0.0,
+      7.0
+    ],
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -2.5,
+        -1.0,
+        0.0
+      ],
+      [
+        5.0,
+        5.6,
+        16.0
+      ]
+    ],
+    "check_anchor": [
+      1.4,
+      2.9,
+      6.0
+    ],
+    "enemy_anchors": [
+      [
+        0.0,
+        1.0,
+        13.0
+      ],
+      [
+        0.0,
+        0.0,
+        3.0
+      ]
+    ],
+    "exit_offset": [
+      0.0,
+      0.0,
+      16.0
+    ],
+    "interior": [
+      5.0,
+      4.6,
+      16.0
+    ],
+    "ledge_height": 2.6,
+    "path": "batch015/shells/shell_corridor_stepped.glb",
+    "sightline": 8.0,
+    "size": [
+      5.8,
+      16.0,
+      5.5
+    ],
+    "step_height": 1.0,
+    "texel_density": 32.0,
+    "triangles": 132
+  }
+}

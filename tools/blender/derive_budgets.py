@@ -273,6 +273,15 @@ def derive():
     say("  buying smoothness. It is checked on the composed-room shot, which")
     say("  is the only place the number can be wrong in a way anyone sees.")
     out["max_triangles_room"] = room_budget
+    # And as a CATEGORY, so `common.assert_budget` can check a room shell
+    # against it. Batch 015 authors whole chambers as single assets and
+    # asked for a `room` ceiling; the honest answer was that the ceiling
+    # already existed and was simply not wired to the checker. A new
+    # category is a budget decision -- this one was already decided, four
+    # lines above.
+    out.setdefault("max_triangles", {})["room"] = room_budget
+    say("  %-22s %5d   %s" % ("room", room_budget,
+                              "a whole authored chamber shell, as one asset."))
     say()
 
     # ------------------------------------------------------------------

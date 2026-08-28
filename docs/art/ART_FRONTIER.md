@@ -58,7 +58,7 @@ with the approved authored vocabulary come first.
 | 4 | The enemy production family | **mostly blocked** — Batch 008 built the three projectiles, the one Pri-A row with nothing in its way. Seven of the ten roles wait on colliders (req 7) and the telegraph on a node that does not exist (req 14) |
 | 5 | Movement affordances | **done** — Batch 009 built the six remaining fixtures, all in the `signal` family the approved anchors wear |
 | 6 | Universal props | **done as far as it can go** — **corrected** — §8's 22-prop library is placed by nothing. Batch 010 built the three the generator actually places whose theme family exists; three more wait on their theme kits |
-| 7 | Room-shell vocabulary | none |
+| 7 | Room-shell vocabulary | **in progress** — Batch 015 built the corridor family: four discrete shells (narrow / bays / stepped / gallery), not one box stretched four ways. 4 of ~19; arena, platform-path, tower, treasure room and corner remain |
 | 8 | The six theme kits | **6 of 6 material families, every placed dressing prop authored (Batch 013), and a light fixture family per theme (Batch 014)** — Batch 012 built `neon_transit`, `gothic_stone` and `temple_ruin` to the identity §9 already recorded. Per-theme dressing, light fixtures and landmarks remain |
 | 9 | Presentation / polish | none |
 
@@ -84,11 +84,12 @@ line rather than inventing work.
 | | |
 | --- | --- |
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
-| Phase | **STYLE LOCK PASSED — production.** Batch 004 is `PASS`. Batch 005 is `PASS IN DIRECTION`, its one required revision delivered as 005-R. Batches 001, 002, 004, 005 (incl. 005-R), 006, 007, 008 and 009 are `PASS`. Batches 003, 010, 011 and 012 are `PENDING`. |
+| Phase | **STYLE LOCK PASSED — production.** Batches 001, 002, 004, 005 (incl. 005-R), 006, 007, 008, 009, 010, 011 and 012 are `PASS`. Batches 003, 013, 014 and 015 are `PENDING`. |
 | Owner review | Style Lock passed 2026-08-28. Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
-| Next action | **Tier 7: the room shells** (`ASSET_INVENTORY.md` §7, L3, nothing built) — started immediately, per the owner's instruction not to idle while 014 waits. Six families, all Pri A: corridor, arena, platform-path, tower, treasure room, corner. They inherit engine-truth dimensions and traversal bounds, differ in scale / verticality / sightline / routing / encounter and Check placement rather than in dressing, and must not be generic stretches of one another where gameplay geometry matters. The approved six material families and the Batch 014 fixture language both apply. |
+| Next action | **Tier 7, continued: the remaining shell families** — arena (4), platform-path (3), tower (3), treasure room (3), corner (2), after Batch 015's corridors. Same rules: inherit engine-truth dimensions and traversal bounds, differ in scale / verticality / sightline / routing / encounter and Check placement rather than in dressing, no generic stretches where gameplay geometry matters, and each shell's manifest carries the semantics the runtime places it by. Then architecture Pri-B/C (14 modules), which the owner explicitly permitted. |
+| ~~Superseded~~ | ~~**Tier 7: the room shells** (`ASSET_INVENTORY.md` §7, L3, nothing built) — started immediately, per the owner's instruction not to idle while 014 waits. Six families, all Pri A: corridor, arena, platform-path, tower, treasure room, corner. They inherit engine-truth dimensions and traversal bounds, differ in scale / verticality / sightline / routing / encounter and Check placement rather than in dressing, and must not be generic stretches of one another where gameplay geometry matters. The approved six material families and the Batch 014 fixture language both apply.~~ Corridors done as Batch 015. |
 | ~~Superseded~~ | ~~**Tier 8: the three unbuilt theme material families** (`neon_transit`, `gothic_stone`, `temple_ruin`). It is the highest-leverage unblocked work left — it also unblocks three of the six dressing props §9 needs — and it is routine in the sense that `art_palette.json` already carries all six themes' ramps and `materials.paint()` already builds any of them. **But it is the first look at three themes**, so it wants a review sheet the owner can redirect cheaply, and textures are the cheapest thing in the project to rebuild.~~ Done as Batch 012. |
-| Queue depth | **Three batches pending**: 003 (the Hub, never verdicted on its own), 013 and 014. Everything else is approved. Holding remains a legitimate heartbeat outcome when the queue grows again, and this line is why. |
+| Queue depth | **Four batches pending**: 003 (the Hub, never verdicted on its own), 013, 014 and 015. Everything else is approved. Holding remains a legitimate heartbeat outcome when the queue grows again, and this line is why. |
 
 ### What the Batch 002 review LOCKED
 
@@ -144,9 +145,9 @@ grow again until Style Lock passes.
 | `python3 tools/blender/palette.py` | PASS |
 | `python3 tools/blender/check_docs_metrics.py` | PASS — every number in ART_REVIEW.md and ASSET_INVENTORY.md matches the build |
 | `tools/sabotage_checks.sh` | see the commit for the run |
-| `python3 tools/blender/sync_inventory.py` | 102 assets written |
+| `python3 tools/blender/sync_inventory.py` | 106 assets written |
 | `tools/check_art_current.sh` | PASS — every asset byte-identical from source |
-| Assets built | 102 models + **31 theme textures (six of six families)** + 7 prop skins + review images in `review/batch001` … `batch014` |
+| Assets built | 106 models + **31 theme textures (six of six families)** + 7 prop skins + review images in `review/batch001` … `batch015` |
 | Composed room | 3,272 / 12,000 triangles |
 
 ### What a heartbeat cannot see

@@ -73,6 +73,9 @@ ORDER = [
       "light_neon_edge", "light_gothic_corona", "light_gothic_lantern",
       "light_temple_bowl", "light_temple_niche", "light_void_absent",
       "light_void_debug"]),
+    ("batch015", "shells",
+     ["shell_corridor_narrow", "shell_corridor_bays",
+      "shell_corridor_stepped", "shell_corridor_gallery"]),
 ]
 #: Batches the OWNER has passed, by the date of the verdict. This script
 #: may never approve art; every entry here is a transcription of a decision
@@ -93,13 +96,14 @@ CAT = {"epsilon": "hero", "check": "hero", "portal": "interactable",
        "door": "module", "breakwall": "interactable",
        "water": "interactable", "rail": "interactable",
        "wind": "interactable", "bounce": "interactable",
-       "movplat": "interactable", "light": "prop",
+       "movplat": "interactable", "light": "prop", "shell": "room",
        "enemy": "enemy", "anchor": "interactable", "arch": "module",
        "prop": "prop", "hub": "fixture", "lab": "fixture"}
 LEVEL = {"epsilon": "L4", "check": "L2", "portal": "L2", "enemy": "L0",
          "door": "L1", "breakwall": "L2", "water": "L2", "rail": "L2",
          "wind": "L2", "bounce": "L2", "movplat": "L2", "light": "L0",
          "anchor": "L2", "arch": "L1", "prop": "L0", "hub": "L2",
+         "shell": "L3",
          "lab": "L1"}
 
 
