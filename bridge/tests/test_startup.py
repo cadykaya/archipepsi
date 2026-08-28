@@ -233,3 +233,54 @@ def test_the_requirements_installer_is_not_silently_disabled(monkeypatch):
         "the installer lost PATH; it needs the real environment minus "
         "one variable, not a blank one")
     _ = _subprocess
+
+
+def test_a_second_bridge_says_so_in_words_rather_than_a_traceback(tmp_path):
+    """The most likely error a player will ever hit, and the one Python
+    explains worst.
+
+    Starting the bridge twice -- almost always because the first one is
+    still running in a window they forgot behind the game -- used to end
+    in `OSError: [Errno 98] error while attempting to bind on address
+    ('127.0.0.1', 38290)` under fifteen frames of asyncio. The launcher
+    scripts `pause` on exit specifically so errors do not vanish with the
+    window, which means that wall of red text is what a player sits and
+    reads. It looks like the game is broken; it means "you already have
+    one running".
+    """
+    import subprocess
+    import sys
+
+    port = TEST_PORT + 1
+
+    async def scenario():
+        holder = BridgeServer(_engine(tmp_path), ap_default="mock",
+                              port=port)
+        task = await _serve(holder)
+        try:
+            return subprocess.run(
+                [sys.executable, "-m", "archipepsi_bridge", "--ap=mock",
+                 "--epsilon=fallback", f"--port={port}",
+                 f"--save-dir={tmp_path / 'second'}"],
+                cwd=Path(__file__).resolve().parents[1],
+                capture_output=True, text=True, timeout=60)
+        finally:
+            task.cancel()
+
+    done = run(scenario())
+    output = done.stdout + done.stderr
+
+    assert done.returncode != 0, (
+        "the second bridge bound nothing and still reported success")
+    assert "Traceback" not in output, (
+        "a traceback is what this test exists to prevent:\n" + output)
+    assert "Errno" not in output, (
+        "Python's own wording for the error leaked through:\n" + output)
+    assert str(port) in output, (
+        "the message must name the port, or a player cannot tell which "
+        "of two bridges is the problem:\n" + output)
+    # The message has to say what to DO, not merely what happened.
+    assert "already" in output.lower(), output
+    assert "--port=" in output, (
+        "no way out is offered for someone who genuinely wants two "
+        "bridges:\n" + output)

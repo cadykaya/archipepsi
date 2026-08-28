@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import errno
 import logging
 import os
 from pathlib import Path
@@ -70,7 +71,33 @@ def main() -> None:
                           **({} if args.port is None
                              else {"port": args.port}))
     _announce(engine, server, provider_name, args)
-    asyncio.run(server.serve_forever())
+    try:
+        asyncio.run(server.serve_forever())
+    except OSError as exc:
+        if exc.errno not in (errno.EADDRINUSE, errno.EACCES):
+            raise
+        # The single most likely error a player will ever hit, and the
+        # one a traceback explains worst: a bridge is ALREADY running,
+        # usually in a window they forgot behind the game. Python's own
+        # wording for it is "[Errno 98] error while attempting to bind on
+        # address ('127.0.0.1', 38290)" under fifteen frames of asyncio,
+        # which reads as a crash rather than as "you already have one".
+        raise SystemExit(
+            f"\n  Another program is already using port {server.port}.\n"
+            "\n"
+            "  This is almost always a bridge you started earlier and\n"
+            "  left running -- check for another terminal window. That\n"
+            "  one still works; you do not need this one.\n"
+            "\n"
+            "  If you would rather start fresh, close the other window\n"
+            "  and run this again. To deliberately run a second bridge\n"
+            "  (a second Archipepsi slot on this machine), give it its\n"
+            f"  own port: --port={server.port + 1}\n") from None
+    except KeyboardInterrupt:
+        # Ctrl-C is how a player stops the bridge. It is the documented
+        # way to quit, so it should not print a stack trace as though
+        # something went wrong.
+        raise SystemExit("\n  Bridge stopped.\n") from None
 
 
 def _announce(engine, server, provider_name: str, args) -> None:
