@@ -88,6 +88,18 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 		return ChamberBuilders.build(chamber, theme)
 	var root: Node3D = scene.instantiate()
 
+	# D1: the shell declared its geometry; this is where Godot checks it.
+	# Refusing here rather than at load is deliberate -- the claim can
+	# only be measured against an instantiated scene, and a shell whose
+	# markers contradict its manifest must not become a zone the player
+	# is standing in. Degrade, warn loudly, keep playing.
+	var refusals := ShellValidator.refusals(entry, root)
+	if not refusals.is_empty():
+		push_error("content: refusing authored shell '%s':\n  %s"
+				% [str(entry.get("id", "?")), "\n  ".join(refusals)])
+		root.free()
+		return ChamberBuilders.build(chamber, theme)
+
 	var size := _vector(entry.get("size", []), Vector3(4.0, 3.6, 8.0))
 	var result := {
 		"root": root,

@@ -102,6 +102,49 @@
           "title": "Features",
           "type": "array"
         },
+        "shell_id": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shell Id"
+        },
+        "size_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Class"
+        },
+        "intent": {
+          "default": [],
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Intent",
+          "type": "array"
+        },
         "type": {
           "const": "arena",
           "title": "Type",
@@ -199,6 +242,49 @@
           },
           "maxItems": 3,
           "title": "Features",
+          "type": "array"
+        },
+        "shell_id": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shell Id"
+        },
+        "size_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Class"
+        },
+        "intent": {
+          "default": [],
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Intent",
           "type": "array"
         },
         "type": {
@@ -310,6 +396,49 @@
           "title": "Features",
           "type": "array"
         },
+        "shell_id": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shell Id"
+        },
+        "size_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Class"
+        },
+        "intent": {
+          "default": [],
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Intent",
+          "type": "array"
+        },
         "type": {
           "const": "platform_path",
           "title": "Type",
@@ -406,6 +535,49 @@
           "title": "Features",
           "type": "array"
         },
+        "shell_id": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shell Id"
+        },
+        "size_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Class"
+        },
+        "intent": {
+          "default": [],
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Intent",
+          "type": "array"
+        },
         "type": {
           "const": "tower",
           "title": "Type",
@@ -481,6 +653,49 @@
           },
           "maxItems": 3,
           "title": "Features",
+          "type": "array"
+        },
+        "shell_id": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shell Id"
+        },
+        "size_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Class"
+        },
+        "intent": {
+          "default": [],
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Intent",
           "type": "array"
         },
         "type": {

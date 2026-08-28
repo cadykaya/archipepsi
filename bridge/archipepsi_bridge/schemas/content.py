@@ -23,6 +23,8 @@ that separately.
 
 from __future__ import annotations
 
+import math
+
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -152,6 +154,70 @@ class Socket(Strict):
         return self
 
 
+#: Semantic size, the vocabulary Epsilon uses instead of metres (D1).
+#: Deliberately coarse: "large" is a design intent, and the shell decides
+#: what that measures. NOT a mandatory triplication rule -- a family may
+#: ship one size or five.
+SizeClass = Literal["small", "medium", "large"]
+
+
+class TraversalSegment(Strict):
+    """One movement the player makes inside an authored shell (D1).
+
+    The shell declares these; **Godot measures whether they are true.**
+    That order matters. An art asset is not trusted because its metadata
+    says it is safe -- the metadata is a claim, and `shell_validator.gd`
+    instantiates the scene and checks the claim against the real markers.
+
+    A MANDATORY segment is one on the only route through. Those are held
+    to `max_safe_gap(rise)`, the same bound `platform_path.gap_size` has
+    always been held to, because the reason is the same: a base-kit
+    player must be able to finish, and finding out otherwise happens in a
+    zone they are already standing in.
+
+    Optional segments -- a shortcut over a rail, a perch worth an Echo --
+    are free to exceed it. That is what makes them optional.
+    """
+    name: _TAG
+    kind: Literal["gap", "rise", "drop", "walk"]
+    #: On the only route through. Optional segments may be anything.
+    mandatory: bool = True
+    #: Endpoints in the shell's local space, so the claim is checkable
+    #: against the instantiated scene rather than merely plausible.
+    start: tuple[float, float, float]
+    end: tuple[float, float, float]
+
+    @property
+    def span(self) -> float:
+        """Horizontal distance. The axis a jump has to cover."""
+        return math.hypot(self.end[0] - self.start[0],
+                          self.end[2] - self.start[2])
+
+    @property
+    def rise(self) -> float:
+        """Vertical change; positive is up."""
+        return self.end[1] - self.start[1]
+
+    @model_validator(mode="after")
+    def _a_mandatory_jump_stays_inside_the_base_kit(self):
+        if not self.mandatory:
+            return self
+        if self.kind == "rise" and self.rise > C.MAX_VERTICAL_STEP:
+            raise ValueError(
+                f"traversal '{self.name}' rises {self.rise:.2f} m on the "
+                f"mandatory route; the base kit tops out at "
+                f"{C.MAX_VERTICAL_STEP:.2f} m")
+        if self.kind in ("gap", "rise"):
+            allowed = C.max_safe_gap(max(self.rise, 0.0))
+            if self.span > allowed:
+                raise ValueError(
+                    f"traversal '{self.name}' asks for {self.span:.2f} m "
+                    f"at a {self.rise:.2f} m rise; the base kit's safe "
+                    f"reach there is {allowed:.2f} m. Mark it "
+                    f"mandatory=false if it is meant to need an Echo")
+        return self
+
+
 class Volume(Strict):
     """An axis-aligned box in the content's local space, for the things
     Godot must place safely: where a player may arrive, where an enemy may
@@ -201,6 +267,13 @@ class ContentEntry(Strict):
 
     sockets: tuple[Socket, ...] = ()
     volumes: tuple[Volume, ...] = ()
+
+    #: D1: the semantic size Epsilon asks for, when it asks at all.
+    #: Optional -- a shell that is simply "the corridor" needs no class.
+    size_class: SizeClass | None = None
+    #: D1: every movement the shell claims the player makes. Mandatory
+    #: ones are bounded by the base kit; Godot measures the claim.
+    traversal: tuple[TraversalSegment, ...] = Field(default=(), max_length=32)
 
     #: Action primitives or affordance tags a player must own for this
     #: content to be USABLE. Never a reason to place it on a mandatory

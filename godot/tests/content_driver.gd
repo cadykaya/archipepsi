@@ -63,6 +63,13 @@ func _run() -> void:
 	_a_theme_cannot_move_an_enemy_hitbox()
 	_an_enemy_hitbox_is_a_function_of_its_archetype()
 	_no_visual_anywhere_carries_collision()
+	_a_shell_that_tells_the_truth_is_accepted()
+	_a_shell_that_lies_about_its_geometry_is_refused()
+	_an_unmeasurable_mandatory_route_is_refused()
+	_an_optional_route_may_exceed_the_base_kit()
+	_the_catalog_offers_only_authored_shells_and_is_sorted()
+	_variant_selection_is_deterministic()
+	_a_lying_shell_never_reaches_the_player()
 	_the_base_kit_can_never_be_unbound()
 	_a_hand_edited_config_cannot_unbind_the_base_kit()
 	_settings_are_clamped_on_the_way_in()
@@ -796,3 +803,157 @@ func _the_postgame_has_somewhere_to_attach() -> void:
 	_check(bool(hub_state.get("postgame", false)),
 			"the postgame flag does not survive into a snapshot")
 	BridgeClient.snapshot = {}
+
+
+# --- D1: the shell declares, Godot measures --------------------------------
+
+const HONEST := "res://content/test_fixtures/shell_traversal_honest.tscn"
+const LYING := "res://content/test_fixtures/shell_traversal_lying.tscn"
+
+## The SAME manifest is used for both fixtures. That is the whole point:
+## nothing in the metadata distinguishes the honest shell from the one
+## that ships an unreachable jump, so only measuring can.
+func _traversal_entry(mandatory: bool = true) -> Dictionary:
+	return {
+		"id": "shell_measured", "level": 3, "category": "room_shell",
+		"display_name": "Measured", "procedural_fallback": false,
+		"size_class": "medium",
+		"sockets": [
+			{"name": "entry", "kind": "doorway",
+			 "position": [0.0, 0.0, 0.0], "width": 2.4, "height": 3.2},
+			{"name": "exit", "kind": "doorway",
+			 "position": [0.0, 0.0, 12.0], "width": 2.4, "height": 3.2},
+		],
+		"traversal": [{
+			"name": "hop", "kind": "gap", "mandatory": mandatory,
+			"start": [0.0, 0.0, 4.0], "end": [0.0, 0.8, 5.8],
+		}],
+	}
+
+func _instantiate(path: String) -> Node3D:
+	var scene: PackedScene = load(path)
+	var node: Node3D = scene.instantiate()
+	add_child(node)
+	return node
+
+func _a_shell_that_tells_the_truth_is_accepted() -> void:
+	var instance := _instantiate(HONEST)
+	var refusals := ShellValidator.refusals(_traversal_entry(), instance)
+	_check(refusals.is_empty(),
+			"an honest shell must validate: %s" % "\n".join(refusals))
+	instance.free()
+
+func _a_shell_that_lies_about_its_geometry_is_refused() -> void:
+	## D1's load-bearing sentence: "do not trust an art asset merely
+	## because its metadata claims it is safe." Both fixtures carry the
+	## identical manifest declaring a 1.80 m hop at a 0.80 m rise. The
+	## lying one actually places its far marker 3.40 m away across a
+	## 1.00 m rise, where the base kit reaches 2.00 m.
+	##
+	## Python validated the manifest and was right to. The manifest was
+	## never the problem.
+	var instance := _instantiate(LYING)
+	var refusals := ShellValidator.refusals(_traversal_entry(), instance)
+	_check(not refusals.is_empty(),
+			"a shell whose scene contradicts its manifest must be refused")
+
+	var joined := "\n".join(refusals)
+	_check(joined.contains("as built"),
+			"the refusal must name what was MEASURED, not what was "
+			+ "declared; got: %s" % joined)
+	_check(joined.contains("safe reach"),
+			"the refusal must name the bound it broke; got: %s" % joined)
+	instance.free()
+
+func _an_unmeasurable_mandatory_route_is_refused() -> void:
+	## A shell that declares a mandatory jump and ships no markers cannot
+	## be checked. Unverifiable is not the same as safe, and on the only
+	## route through, the difference is a seed nobody can finish.
+	var bare := Node3D.new()
+	add_child(bare)
+	var refusals := ShellValidator.refusals(_traversal_entry(), bare)
+	_check(not refusals.is_empty(),
+			"a mandatory route with no markers must be refused")
+	_check("\n".join(refusals).contains("cannot be measured"),
+			"the refusal must say WHY it could not be checked: %s"
+			% "\n".join(refusals))
+	bare.free()
+
+func _an_optional_route_may_exceed_the_base_kit() -> void:
+	## The other half, and the reason optional content exists. A perch
+	## worth an Echo is supposed to be out of reach; refusing it would
+	## make every shell base-kit-flat, which is the opposite of the
+	## point.
+	var instance := _instantiate(LYING)
+	var refusals := ShellValidator.refusals(
+			_traversal_entry(false), instance)
+	for refusal: String in refusals:
+		_check(not refusal.contains("safe reach"),
+				"an OPTIONAL route must be allowed to exceed the base "
+				+ "kit; got: %s" % refusal)
+	instance.free()
+
+func _the_catalog_offers_only_authored_shells_and_is_sorted() -> void:
+	## Epsilon selects from what it is offered. The offer must exclude
+	## procedural placeholders -- "pick an authored shell" cannot be
+	## answered with a generator -- and must be stable, because the
+	## catalog goes into a prompt and a prompt that reorders itself
+	## regenerates differently from the same seed.
+	var registry := _load([
+		_authored_entry({"id": "arena_large_01", "size_class": "large"}),
+		_authored_entry({"id": "arena_large_02", "size_class": "large"}),
+		_authored_entry({"id": "arena_small_01", "size_class": "small"}),
+		_entry({"id": "shell_arena_proc"}),
+	])
+	var all: Array[String] = ShellValidator.catalog(registry, "room_shell")
+	_check(not all.has("shell_arena_proc"),
+			"the catalog must not offer a procedural placeholder as an "
+			+ "authored shell; got %s" % str(all))
+	_check(Array(all) == ["arena_large_01", "arena_large_02",
+			"arena_small_01"],
+			"the catalog must be sorted and complete, got %s" % str(all))
+
+	var large: Array[String] = ShellValidator.catalog(
+			registry, "room_shell", "large")
+	_check(Array(large) == ["arena_large_01", "arena_large_02"],
+			"a size class must narrow the offer, got %s" % str(large))
+
+func _variant_selection_is_deterministic() -> void:
+	## "Pick a variant" is exactly where a stray randi() breaks the
+	## promise that one seed lays out one campaign everywhere.
+	var candidates: Array[String] = ["arena_large_02", "arena_large_01",
+			"arena_large_03"]
+	var first := ShellValidator.pick(candidates, "zone_3|arena")
+	for i in 8:
+		_check(ShellValidator.pick(candidates, "zone_3|arena") == first,
+				"the same seed key must pick the same shell every time")
+	## Order of the candidate list must not change the answer either --
+	## a registry that enumerates differently is not a different seed.
+	var shuffled: Array[String] = ["arena_large_03", "arena_large_01",
+			"arena_large_02"]
+	_check(ShellValidator.pick(shuffled, "zone_3|arena") == first,
+			"candidate order must not change the pick")
+	_check(ShellValidator.pick(candidates, "zone_4|arena") != ""
+			, "a different seed key must still pick something")
+
+
+func _a_lying_shell_never_reaches_the_player() -> void:
+	## The validator is only worth having if the build path consults it.
+	## A shell whose scene contradicts its manifest must degrade to the
+	## placeholder rather than becoming a zone with a jump nobody can
+	## make.
+	var lying := _traversal_entry()
+	lying["scene"] = LYING
+	lying["id"] = "shell_arena_proc"      # the id the pipeline asks for
+	var registry := _load([lying, _entry({"id": "shell_arena_backup"})])
+	var chamber := {"id": "c1", "type": "arena", "width": 18.0,
+			"depth": 18.0, "wall_height": 6.0, "enemies": []}
+	var built := ContentInstantiator.build_chamber(chamber, "void_glitch",
+			registry)
+	var root: Node3D = built["root"]
+	_check(root.name != "ShellTraversalLying",
+			"a shell that failed measurement must not be instantiated "
+			+ "into the zone; got '%s'" % root.name)
+	_check(built.has("exit_offset"),
+			"the degraded build must still produce a usable chamber")
+	root.free()

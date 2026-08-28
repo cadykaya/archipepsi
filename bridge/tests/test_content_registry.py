@@ -455,3 +455,121 @@ def test_the_tower_never_asks_for_a_jump_it_would_refuse_from_epsilon():
     assert C.max_safe_gap(step) >= C.MIN_PLATFORM_SIZE - 0.6, (
         f"a {step} m step leaves only {C.max_safe_gap(step)} m of reach, "
         f"which cannot span platforms {C.MIN_PLATFORM_SIZE} m across")
+
+
+# --- 7: D1 — the shell declares, Godot measures ---------------------------
+
+VALIDATOR = ROOT / "godot" / "scripts" / "content" / "shell_validator.gd"
+
+
+def _segment(**over):
+    base = {"name": "hop", "kind": "gap", "mandatory": True,
+            "start": (0.0, 0.0, 0.0), "end": (0.0, 0.0, 2.0)}
+    base.update(over)
+    return base
+
+
+def test_a_mandatory_authored_jump_is_held_to_the_base_kit():
+    """D1 gives the shell authority over geometry. It does not give it
+    authority over whether the player can finish.
+
+    This is the tower bug (S16) as a rule rather than an incident: the
+    schema has always held `platform_path.gap_size` to
+    `max_safe_gap(rise)`, and an authored shell is now held to the same
+    thing before anyone models it.
+    """
+    from archipepsi_bridge.schemas.content import TraversalSegment
+
+    from archipepsi_bridge.schemas import constants as C
+
+    ok = TraversalSegment.model_validate(_segment(end=(0.0, 1.0, 1.9)))
+    assert ok.span == pytest.approx(1.9)
+    assert ok.rise == pytest.approx(1.0)
+
+    # The exact numbers the tower asked for.
+    with pytest.raises(ValidationError, match="safe reach there is"):
+        TraversalSegment.model_validate(_segment(end=(0.0, 1.0, 2.4)))
+
+    with pytest.raises(ValidationError, match="tops out at"):
+        TraversalSegment.model_validate(_segment(
+            kind="rise", end=(0.0, C.MAX_VERTICAL_STEP + 0.5, 0.5)))
+
+
+def test_an_optional_authored_jump_may_exceed_it():
+    """Otherwise every shell is base-kit-flat and there is no reason to
+    own a mobility Echo."""
+    from archipepsi_bridge.schemas.content import TraversalSegment
+
+    reach = TraversalSegment.model_validate(
+        _segment(mandatory=False, end=(0.0, 2.0, 6.0)))
+    assert reach.span == pytest.approx(6.0)
+
+
+def test_epsilon_names_intent_and_never_metres_for_an_authored_shell():
+    """D1's authority line. The semantic fields are charset-constrained
+    so a resource path is unspellable rather than merely discouraged,
+    and `test_epsilon_vocabulary.py` holds that structurally."""
+    from archipepsi_bridge.schemas.zone import CorridorChamber
+
+    picked = CorridorChamber.model_validate({
+        "id": "c1", "type": "corridor", "length": 12.0, "width": 5.0,
+        "shell_id": "arena_large_01", "size_class": "large",
+        "intent": ("ranged_pressure", "vertical")})
+    assert picked.shell_id == "arena_large_01"
+
+    for bad in ("res://x.tscn", "../x", "Arena Large", "a/b"):
+        with pytest.raises(ValidationError):
+            CorridorChamber.model_validate({
+                "id": "c1", "type": "corridor", "length": 12.0,
+                "width": 5.0, "shell_id": bad})
+
+
+def test_a_shell_epsilon_was_not_offered_is_refused():
+    """Selection is agency; invention is not. And an EMPTY catalog means
+    'none were offered', not 'anything goes' -- the second reading would
+    let a hallucinated id through on exactly the runs where nothing was
+    available to pick."""
+    from archipepsi_bridge.schemas.zone import Zone, validate_zone
+
+    def _zone(shell_id):
+        return Zone.model_validate({
+            "schema_version": 7, "zone_id": "zone_1",
+            "display_name": "Z", "target_game": "A Link to the Past",
+            "theme": "temple_ruin",
+            "chambers": [{"id": "c1", "type": "corridor", "length": 12.0,
+                          "width": 5.0, "shell_id": shell_id,
+                          "reward_location_id": 89100001}]})
+
+    common = dict(expected_zone_id="zone_1",
+                  allocated_location_ids=[89100001], owned_echo_ids=[])
+
+    assert not [e for e in validate_zone(
+        _zone("arena_large_01"), legal_shell_ids=("arena_large_01",),
+        **common) if "shell" in e]
+
+    refused = validate_zone(_zone("arena_large_09"),
+                            legal_shell_ids=("arena_large_01",), **common)
+    assert any("was not offered" in e for e in refused), refused
+
+    empty = validate_zone(_zone("arena_large_01"), legal_shell_ids=(),
+                          **common)
+    assert any("no authored shells were offered" in e for e in empty), empty
+
+
+def test_the_godot_validator_measures_rather_than_trusting():
+    """Read the GDScript and hold it to the decision.
+
+    Python refuses a manifest whose DECLARED traversal is unsafe. That is
+    necessary and not sufficient: a manifest is a claim an artist typed,
+    and D1 says an art asset is not trusted because its metadata says it
+    is safe. The Godot half has to derive its numbers from the
+    instantiated markers, so this checks it does.
+    """
+    gd = VALIDATOR.read_text()
+    assert "measured_end.y - measured_start.y" in gd, (
+        "the validator no longer derives rise from the MEASURED markers")
+    assert "Constants.max_safe_gap" in gd, (
+        "the validator no longer consults the shared gap bound")
+    # And the refusal has to be legible: a bare "invalid" tells an artist
+    # nothing they can act on.
+    assert "as built" in gd

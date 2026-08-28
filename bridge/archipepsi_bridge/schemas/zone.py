@@ -97,6 +97,24 @@ class ChamberBase(Strict):
     #: change that requires nothing and removes nothing.
     features: tuple[AffordanceFeature, ...] = Field(default=(), max_length=3)
 
+    #: D1: authored-shell selection. Epsilon names INTENT, and may pick a
+    #: shell id out of the legal catalog it was handed. It never names
+    #: metres for an authored shell, and it never names a path -- the
+    #: charset here makes the second unspellable rather than merely
+    #: discouraged (S19).
+    #:
+    #: All three are optional and additive. A chamber with none of them
+    #: is the procedural path exactly as before, which is why the
+    #: continuous `width`/`length`/`gap_size` fields below are untouched:
+    #: D1 keeps the safe numeric generator for the fallback and layers
+    #: semantic selection on top for authored content.
+    shell_id: str | None = Field(
+        default=None, max_length=48, pattern=r"^[a-z0-9_]+$")
+    size_class: Literal["small", "medium", "large"] | None = None
+    intent: tuple[Annotated[str, Field(
+        min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")], ...] = Field(
+        default=(), max_length=4)
+
     @property
     def enemy_total(self) -> int:
         return sum(g.count for g in getattr(self, "enemies", []))
@@ -313,6 +331,7 @@ def validate_zone(
     allocated_location_ids: list[int],
     owned_echo_ids: list[str],
     owned_affordance_tags: tuple[str, ...] = (),
+    legal_shell_ids: tuple[str, ...] = (),
 ) -> list[str]:
     """Check a structurally-valid Zone against its request.
 
@@ -321,6 +340,27 @@ def validate_zone(
     accepted Zone is always something Epsilon actually chose.
     """
     errors: list[str] = []
+
+    # D1: Epsilon may SELECT among the authored shells it was offered,
+    # and only those. The catalog is handed to it in the request; a shell
+    # id outside it is either a hallucination or a shell this campaign
+    # cannot use, and both produce a zone that cannot be built. Selection
+    # is real agency; invention is not.
+    #
+    # An empty catalog means the campaign offered no authored shells, so
+    # naming any is wrong -- rather than meaning "anything goes", which
+    # is the reading that would let a hallucinated id through on exactly
+    # the runs where nothing was offered.
+    for chamber in zone.chambers:
+        if chamber.shell_id is None:
+            continue
+        if chamber.shell_id not in legal_shell_ids:
+            errors.append(
+                f"chamber '{chamber.id}' selects shell "
+                f"'{chamber.shell_id}', which was not offered; choose "
+                f"from {sorted(legal_shell_ids)}"
+                + ("" if legal_shell_ids
+                   else " (no authored shells were offered for this Zone)"))
 
     # I12: a feature the campaign cannot interact with is set dressing
     # that looks like content, which §13.1 says is worse than nothing.
