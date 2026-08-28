@@ -923,7 +923,8 @@ class EchoInterpretation(Strict):
         default=(), max_length=6
     )
 
-    operations: tuple[Operation, ...] = Field(min_length=1, max_length=4)
+    operations: tuple[Operation, ...] = Field(
+        min_length=1, max_length=C.ECHO_MAX_OPERATIONS)
 
     @model_validator(mode="after")
     def _echo_id_matches_source(self):

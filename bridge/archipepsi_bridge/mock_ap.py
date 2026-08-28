@@ -136,10 +136,15 @@ class MockAPBackend:
     mode = "mock"
 
     def __init__(self, engine, *, confirm_delay: float = 0.0,
-                 server_state: MockServerState | None = None):
+                 server_state: MockServerState | None = None,
+                 seed_name: str = "MockSeed"):
         self.engine = engine
         self.data = APData()
         self.confirm_delay = confirm_delay
+        # The seed is the only input to track order, shop stock and the
+        # allocator's shuffles, so a fixed one exercises exactly one path
+        # through all three. Parameterised so a soak can walk many.
+        self.seed_name = seed_name
         self.placements = _build_placements()
         self.server = server_state or MockServerState()
         self._tasks: set[asyncio.Task] = set()
@@ -191,7 +196,7 @@ class MockAPBackend:
         d = self.data
         d.connected = True
         d.race_mode = False
-        d.seed_name = "MockSeed"
+        d.seed_name = self.seed_name
         d.team = 0
         d.slot_id = SELF_SLOT
         d.slot_name = slot_name or "Skyiah"

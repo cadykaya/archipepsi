@@ -141,6 +141,19 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
   the tree (`make rules-fixture`, `make verbs-fixture`) with a bridge test
   that regenerates in memory and compares — the rule snapshot claimed to
   be a real fold and was, but its generator had not survived.
+- **Adversarial pass over `ap_client.py`** — the top of the correctness
+  order, and it had never had a dedicated one. One finding: `on_ap_ready`
+  runs on every completed sync, RECONNECTS included, and resumes a Zone in
+  `PENDING_GENERATION` — so a socket blip during a provider call built the
+  same Zone twice (a second billed Epsilon request) and the loser died of
+  `ValueError: Zone is GENERATED, not pending` inside a bare task, where
+  nothing surfaces it. Guarded at both ends: no second run for a zone id
+  already in flight, and `_run_generation` re-checks the record state after
+  its await. The rest of the file came back clean — every `_apply` site
+  either has no await before it or re-reads `self.save` after one, the
+  race-mode `Get` is sent by `CommonContext.send_connect` (so the scout
+  gate cannot hang), and the goal is re-sent on reconnect from
+  `on_ap_ready` when `goal_sent` is already persisted.
 - **Next: the plan is exhausted.** IMPLEMENTATION_PLAN §2.5 ends at S10
   ("Deployables come after S10, if at all"). Per the standing handoff, do
   not stop here — continue developing the game, and stop only where

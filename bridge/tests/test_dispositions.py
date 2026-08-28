@@ -30,7 +30,9 @@ from archipepsi_bridge.epsilon.fallback import fallback_echo
 from archipepsi_bridge.epsilon.requests import (
     EchoGenerationRequest, EchoPlayerState, EchoSource)
 from archipepsi_bridge.schemas import mechanics as M
-from archipepsi_bridge.schemas.echo import EchoInterpretation, target_errors
+from archipepsi_bridge.campaign import budget_headroom
+from archipepsi_bridge.schemas.echo import (
+    EchoInterpretation, over_soft_budget, target_errors)
 
 EchoAdapter = TypeAdapter(EchoInterpretation)
 
@@ -267,7 +269,9 @@ def _request(index: int, name: str,
             component_id=o.component_id, kind=o.kind,
             display_name=o.component.display_name, mk=o.mk,
             upgradable=upgradable_field_info(o.component),
-            detail=detail(o.component))
+            detail=detail(o.component),
+            modifiers=tuple(m.type for m in
+                            getattr(o.component, "modifiers", ())))
         for o in mechanics.owned)
     links = () if mechanics is None else tuple(
         OwnedLinkSummary(link=e.link, source=e.source, target=e.target)
@@ -279,7 +283,11 @@ def _request(index: int, name: str,
         player_state=EchoPlayerState(
             owned_components=owned, owned_links=links,
             aliases=() if mechanics is None else tuple(mechanics.aliases)),
-        required_echo_id=f"echo_{89100001 + index}")
+        required_echo_id=f"echo_{89100001 + index}",
+        over_soft_budget=(() if mechanics is None
+                          else over_soft_budget(mechanics)),
+        budget_headroom=({} if mechanics is None
+                         else budget_headroom(mechanics)))
 
 
 def _campaign_of(names: list[str]):
@@ -338,3 +346,197 @@ def test_evolution_is_still_deterministic():
     first, _ = _campaign_of(["Hookshot", "Longshot", "Clawshot"])
     second, _ = _campaign_of(["Hookshot", "Longshot", "Clawshot"])
     assert [e.model_dump() for e in first] == [e.model_dump() for e in second]
+
+
+# --- MODIFY and MERGE: the two dispositions nothing ever emitted ----------
+
+def test_an_elemental_item_modifies_a_weapon_rather_than_adding_one():
+    """ECHOES §3's own MODIFY example, made reachable.
+
+    Before this, the operation vocabulary was complete in the validators
+    and in the fold, and no provider in the tree emitted a `MODIFY` or a
+    `MERGE` — so the two most interesting dispositions in §3 were things a
+    unit test could construct and a player could never receive. A campaign
+    of elemental items was a campaign of unrelated guns.
+    """
+    log, mechanics = _campaign_of(["Boomerang", "Fire Flower"])
+    second = log[1]
+    assert [op.op for op in second.operations] == ["modify"]
+    op = second.operations[0]
+    assert op.add_modifier.type == "apply_status_on_hit"
+    assert op.add_modifier.status == "burning"
+    # It landed on something that can actually be hit with.
+    target = mechanics.by_id(op.target)
+    assert target.kind == "action"
+    assert target.component.primitive.type in (
+        "melee_swing", "melee_thrust", "slam_ground", "hitscan_damage",
+        "projectile_damage", "arc_lob", "burst_fire", "charge_shot",
+        "beam_sustained")
+
+
+@pytest.mark.parametrize("item,status", [
+    ("Fire Flower", "burning"),
+    ("Ice Beam", "slowed"),
+    ("Lightning Rod", "shocked"),
+    ("Venom Blade", "poisoned"),
+])
+def test_the_status_comes_from_the_reading_not_the_name(item, status):
+    """The concept the §15 reader produces decides the status, so the
+    disposition is derived from the reading rather than pattern-matched
+    on the item name."""
+    log, _ = _campaign_of(["Boomerang", item])
+    op = log[1].operations[0]
+    assert op.op == "modify"
+    assert op.add_modifier.status == status
+
+
+def test_a_second_element_does_not_duplicate_the_modifier_type():
+    """`apply_status_on_hit` may appear once per action, and `modifiers`
+    caps at two. The summary carries what the target already has for
+    exactly this reason: emitting a duplicate would be a `FoldError` inside
+    `append_interpretation`, which is a crash rather than a rejection."""
+    log, mechanics = _campaign_of(
+        ["Boomerang", "Fire Flower", "Ice Beam", "Frost Bomb"])
+    modifies = [i for i in log
+                if any(op.op == "modify" for op in i.operations)]
+    hit_by_target: dict[str, list[str]] = {}
+    for interpretation in modifies:
+        op = interpretation.operations[0]
+        hit_by_target.setdefault(op.target, []).append(op.add_modifier.type)
+    for target, types in hit_by_target.items():
+        assert types.count("apply_status_on_hit") <= 1, (
+            f"{target} got two apply_status_on_hit modifiers")
+    # And whatever it did emit still folds.
+    for owned in mechanics.of_kind("action"):
+        assert len(owned.component.modifiers) <= 2
+
+
+def test_an_elemental_item_with_nothing_to_enhance_still_creates():
+    """The disposition returns None when it cannot land, so the ordinary
+    CREATE survives. A first Echo has no weapon to enhance."""
+    log, _ = _campaign_of(["Fire Flower"])
+    assert all(op.op == "create" for op in log[0].operations)
+
+
+def test_a_resource_at_the_budget_merges_instead_of_taking_a_channel():
+    """ECHOES §3's MERGE example — *Blue Estus* folded into the `mp`
+    economy — and §16's rule that over soft budget the request asks for a
+    MERGE. The new economy is created and folded in, so the item is
+    genuinely credited while the channel count does not move."""
+    from archipepsi_bridge.epsilon.fallback import _as_confluence
+
+    # Six resources is the soft budget, so a seventh must not take a
+    # seventh channel.
+    log: list = []
+    for index in range(6):
+        log.append(_interp(index, [_resource(f"res_bar{index}", 200.0)]))
+    mechanics = M.derive_mechanics(log)
+    assert "resource" in over_soft_budget(mechanics)
+
+    request = _request(6, "Blue Estus Flask", mechanics)
+    plain = {"operations": [_resource("res_new", 100.0)]}
+    merged = _as_confluence(plain, request)
+    assert merged is not None, "at the budget, a resource must fold in"
+    assert [op["op"] for op in merged["operations"]] == ["create", "merge"]
+    assert merged["operations"][1]["capacity"] == "sum"
+
+    # And it folds: the survivor grew, the channel count did not.
+    full = log + [_interp(6, merged["operations"])]
+    after = M.derive_mechanics(full)
+    assert len(after.resources) == 6, "the merge kept the channel count"
+    assert len(after.aliases) == 1
+    survivor = after.by_id(merged["operations"][1]["survivor"])
+    assert survivor.component.max_value == 300.0
+    # Both items are credited, which is the whole point of merging rather
+    # than simply refusing the Echo.
+    assert len(survivor.provenance) >= 2
+
+
+def test_a_merge_that_would_not_fit_is_not_proposed():
+    """`capacity="sum"` walks `max_value` up by the absorbed's, and the
+    fold re-validates rather than clamping. A survivor near the 1000
+    ceiling is not a candidate, and the bound is already in the summary."""
+    from archipepsi_bridge.epsilon.fallback import _as_confluence
+
+    log = [_interp(i, [_resource(f"res_bar{i}", 980.0)]) for i in range(6)]
+    mechanics = M.derive_mechanics(log)
+    request = _request(6, "Blue Estus Flask", mechanics)
+    plain = {"operations": [_resource("res_new", 100.0)]}
+    assert _as_confluence(plain, request) is None, (
+        "980 + 100 is past the ceiling; proposing it would be a FoldError")
+
+
+def test_under_budget_a_resource_is_simply_created():
+    """The confluence fires on the budget, not on the item: with channels
+    to spare, a new economy is a new economy."""
+    from archipepsi_bridge.epsilon.fallback import _as_confluence
+
+    log = [_interp(0, [_resource("res_bar0", 200.0)])]
+    mechanics = M.derive_mechanics(log)
+    request = _request(1, "Blue Estus Flask", mechanics)
+    plain = {"operations": [_resource("res_new", 100.0)]}
+    assert _as_confluence(plain, request) is None
+
+
+def test_the_confluence_reaches_a_player_through_fallback_echo():
+    """Not `_as_confluence` in isolation — the whole chain, because the
+    wiring is the part that was missing. No provider in the tree emitted a
+    MERGE, so §3's *Blue Estus* example was something a unit test could
+    construct and a player could never receive.
+
+    This also exercises the merge's edge rewriting end to end. The
+    fallback's resource shape is `create action + create resource + link
+    powers`, so the `powers` link names the bar the merge is about to
+    absorb. Before the fold rewrote stored edges, that link kept pointing
+    at a deleted component and the Action could never be activated again.
+    """
+    log = [_interp(i, [_resource(f"res_bar{i}", 200.0)]) for i in range(6)]
+    mechanics = M.derive_mechanics(log)
+
+    raw = fallback_echo(_request(6, "Magic Meter", mechanics),
+                        mechanics=mechanics)
+    assert [op["op"] for op in raw["operations"]] == [
+        "create", "create", "link", "merge"]
+
+    raw["interpretation_seq"] = 6
+    interpretation = EchoInterpretation.model_validate(raw)
+    assert CAP.validate_stage_support(interpretation) == []
+    assert target_errors(interpretation, mechanics) == []
+
+    after = M.derive_mechanics(log + [interpretation])
+    assert len(after.resources) == 6, "the merge kept the channel count"
+    live = {o.component_id for o in after.owned}
+    dangling = [(l.link, l.source, l.target) for l in after.links
+                if l.source not in live or l.target not in live]
+    assert dangling == [], (
+        f"the merge left an edge naming a deleted component: {dangling}")
+    # The powers link now names the survivor, so the Action can be paid for.
+    powers = [l for l in after.links if l.link == "powers"]
+    assert len(powers) == 1 and powers[0].source in live
+
+
+def test_the_confluence_leaves_room_for_itself():
+    """The merge is APPENDED, so a shape already at §2's four-operation
+    ceiling cannot take one. Refusing is right: the alternative is an
+    interpretation the models reject."""
+    from archipepsi_bridge.epsilon.fallback import _as_confluence
+
+    log = [_interp(i, [_resource(f"res_bar{i}", 200.0)]) for i in range(6)]
+    mechanics = M.derive_mechanics(log)
+    request = _request(6, "Estus Flask", mechanics)
+    four = {"operations": [
+        _resource("res_new", 100.0),
+        {"op": "create", "component": {
+            "kind": "trait", "component_id": "trait_a", "display_name": "A",
+            "description": "x", "stat": "move_speed", "multiplier": 1.1,
+            "scaled_by": None, "requires_equipped": None}},
+        {"op": "create", "component": {
+            "kind": "trait", "component_id": "trait_b", "display_name": "B",
+            "description": "x", "stat": "jump_height", "multiplier": 1.1,
+            "scaled_by": None, "requires_equipped": None}},
+        {"op": "create", "component": {
+            "kind": "trait", "component_id": "trait_c", "display_name": "C",
+            "description": "x", "stat": "air_control", "multiplier": 1.1,
+            "scaled_by": None, "requires_equipped": None}},
+    ]}
+    assert _as_confluence(four, request) is None

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from ..schemas import constants as C
 from ..schemas import migration as MG
+from ..schemas import echo as E
 from ..schemas.echo import COMPLEXITY_BUDGETS
 from .concepts import mode_for_operations, read_concepts
 from .requests import EchoGenerationRequest, ZoneGenerationRequest
@@ -434,6 +435,129 @@ def _as_sequel(interpretation: dict, request: EchoGenerationRequest):
     return None
 
 
+#: A concept the §15 reader produces -> the status an item carrying it
+#: makes a weapon apply. ECHOES §3's own MODIFY example is *Fire Flower*
+#: making the gun's hits apply `burning`, and this is that rule written
+#: down: the concept the item reads as decides the status, so the
+#: disposition is derived from the reading rather than from the name.
+_CONCEPT_STATUS = {
+    "fire": ("burning", 1.2, 3.0),
+    "cold": ("slowed", 0.8, 4.0),
+    "electricity": ("shocked", 1.0, 2.5),
+    "slowness": ("slowed", 0.6, 5.0),
+    "brittleness": ("vulnerable", 0.9, 3.0),
+    "decay": ("poisoned", 1.0, 5.0),
+}
+
+
+def _as_enhancement(interpretation: dict, request: EchoGenerationRequest):
+    """Turn a CREATE into a MODIFY when the item reads as an element and
+    the campaign already owns something that hits — the *Fire Flower*
+    rule, ECHOES §3.
+
+    Like `_as_sequel`, this works from the REQUEST alone and returns None
+    whenever it cannot land, so the caller keeps its ordinary CREATE. The
+    three ways it can fail to land are all visible from the summary: the
+    target must be an action on a damage primitive, it must have room
+    (`modifiers` caps at two), and the type must not already be there.
+
+    Preferring MODIFY over another CREATE is what stops a campaign full of
+    elemental items from being a campaign full of guns.
+    """
+    concepts = read_concepts(request.source.item_name,
+                             request.source.source_game)
+    match = next((c for c in concepts if c in _CONCEPT_STATUS), None)
+    if match is None:
+        return None
+    status, magnitude, duration = _CONCEPT_STATUS[match]
+
+    for owned in request.player_state.owned_components:
+        if owned.kind != "action" or owned.detail not in E.DAMAGE_PRIMITIVES:
+            continue
+        if len(owned.modifiers) >= 2 or "apply_status_on_hit" in owned.modifiers:
+            continue
+        return {
+            **interpretation,
+            "description": _clamp(
+                "%s now leaves %s behind. Mk %d."
+                % (owned.display_name, status, owned.mk + 1),
+                C.MAX_TEXT_LEN),
+            "tags": list(interpretation.get("tags", [])) + ["enhancement"],
+            "operations": [{
+                "op": "modify",
+                "target": owned.component_id,
+                "add_modifier": {
+                    "type": "apply_status_on_hit",
+                    "status": status,
+                    "duration": duration,
+                    "magnitude": magnitude,
+                },
+            }],
+        }
+    return None
+
+
+def _as_confluence(interpretation: dict, request: EchoGenerationRequest):
+    """Turn a resource CREATE into a CREATE + MERGE once the campaign is
+    at its resource budget — the *Blue Estus* rule, ECHOES §3.
+
+    §16 says that over soft budget the request asks for `MERGE`, and this
+    is the shape that answers it: the new economy is created and folded
+    into an existing one, so the item is genuinely credited (provenance
+    unions, Mk sums) while the channel count does not move. Fifteen HUD
+    channels is the hard ceiling, and a campaign that spent them on
+    sixteen flasks would have nowhere left to put the interesting ones.
+
+    Returns None unless the merge would LAND: `capacity="sum"` walks the
+    survivor's `max_value` up by the absorbed's, and the fold re-validates
+    rather than clamping, so a survivor near the 1000 ceiling is not a
+    candidate. That bound is in the summary already, as `upgradable`.
+    """
+    if "resource" not in (request.over_soft_budget or ()):
+        return None
+    operations = list(interpretation.get("operations", []))
+    # The merge is APPENDED, so there has to be room for it under §2's
+    # four-operation ceiling. The fallback's resource shapes are two and
+    # three operations wide (a bar plus what spends it, plus the `powers`
+    # link between them), which is what makes appending the right move:
+    # the link keeps naming the absorbed id, and the fold rewrites both
+    # endpoints onto the survivor when the merge lands.
+    if len(operations) >= C.ECHO_MAX_OPERATIONS:
+        return None
+    created = [op for op in operations
+               if op.get("op") == "create"
+               and op["component"]["kind"] == "resource"]
+    if len(created) != 1:
+        return None
+    component = created[0]["component"]
+    incoming = float(component.get("max_value", 0.0))
+
+    for owned in request.player_state.owned_components:
+        if owned.kind != "resource":
+            continue
+        room = {field: (current, low, high)
+                for field, current, low, high in owned.upgradable}
+        if "max_value" not in room:
+            continue
+        current, low, high = room["max_value"]
+        if not (low <= current + incoming <= high):
+            continue
+        return {
+            **interpretation,
+            "description": _clamp(
+                "Folded into %s rather than adding a sixteenth meter."
+                % owned.display_name, C.MAX_TEXT_LEN),
+            "tags": list(interpretation.get("tags", [])) + ["confluence"],
+            "operations": operations + [
+                {"op": "merge",
+                 "absorbed": component["component_id"],
+                 "survivor": owned.component_id,
+                 "capacity": "sum"},
+            ],
+        }
+    return None
+
+
 def fallback_echo(request: EchoGenerationRequest, *,
                   mechanics=None) -> dict:
     """The §12.2 heuristics, then one question: is this a sequel?
@@ -447,7 +571,16 @@ def fallback_echo(request: EchoGenerationRequest, *,
     something only a fixture ever showed.
     """
     interpretation = _fallback_echo_create(request, mechanics=mechanics)
-    interpretation = _as_sequel(interpretation, request) or interpretation
+    # Tried most-specific first. A sequel is the strongest claim (the
+    # campaign owns this exact verb already); an enhancement is next (it
+    # owns something the element can attach to); a confluence is last,
+    # because it fires on a budget condition rather than on a reading.
+    # Each returns None when it cannot land, so the ordinary CREATE
+    # survives and none of them can make the fallback invalid.
+    interpretation = (_as_sequel(interpretation, request)
+                      or _as_enhancement(interpretation, request)
+                      or _as_confluence(interpretation, request)
+                      or interpretation)
     return _read_and_label(interpretation, request)
 
 

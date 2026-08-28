@@ -92,8 +92,16 @@ LEXICON: dict[str, tuple[str, ...]] = {
     "orb": ("energy", "containment", "roundness"),
     "flame": ("fire", "energy", "spread"),
     "fire": ("fire", "energy"),
+    # An ember is fire that has not gone out, and *Ember* is a real item
+    # in a real game. Missing it made every Dark Souls run's most obviously
+    # elemental item read as an inert "artifact".
+    "ember": ("fire", "energy", "persistence"),
+    "ash": ("fire", "residue", "ending"),
     "ice": ("cold", "stillness", "brittleness"),
     "frost": ("cold", "slowness"),
+    "venom": ("decay", "patience"),
+    "poison": ("decay", "patience", "spread"),
+    "spark": ("electricity", "smallness", "beginning"),
     "storm": ("weather", "violence", "chain"),
     "lightning": ("electricity", "speed", "chain"),
     "shadow": ("concealment", "cold", "absence"),

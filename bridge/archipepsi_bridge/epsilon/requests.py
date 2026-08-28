@@ -144,6 +144,12 @@ class OwnedComponentSummary(Strict):
     #: For an action, its primitive verb; for a trait, its stat; for a
     #: resource, its palette colour. What the component "is", in one word.
     detail: str = Field(default="", max_length=32)
+    #: Modifier types this action already carries. Here for the same
+    #: reason `upgradable` is: a `MODIFY` that adds a modifier must not
+    #: duplicate a type and must not be the third one, and a provider
+    #: that cannot see the existing two is guessing at exactly the thing
+    #: the fold will refuse it for. Empty for every kind but `action`.
+    modifiers: tuple[str, ...] = Field(default=(), max_length=2)
 
 
 class OwnedLinkSummary(Strict):

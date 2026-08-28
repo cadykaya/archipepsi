@@ -482,6 +482,11 @@ REPAIR_ATTEMPTS = 1
 #: the bound is enforced in two places: the model, and the transition that
 #: refuses the one after the last so a caller gets a `ValueError` like
 #: every other refusal rather than a `ValidationError` from a rebuild.
+#: Operations one interpretation may carry (ECHOES §2). Named because a
+#: provider that APPENDS an operation has to know whether there is room,
+#: and hardcoding 4 in a second place is how the two drift.
+ECHO_MAX_OPERATIONS = 4
+
 MAX_LOCAL_REWARDS = 120
 
 MAX_TEXT_LEN = 160

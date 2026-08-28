@@ -572,7 +572,18 @@ totals, not the shape of one Echo in isolation.
 
 Over soft budget, the request asks for `UPGRADE` / `MODIFY` / `LINK` /
 `MERGE`. Over hard budget, `CREATE` is rejected and the existing
-repair-once loop runs. First-try acceptance **will drop**; `make replay`
+repair-once loop runs.
+
+The deterministic fallback answers all four, so the vocabulary is
+something a player receives rather than something only a validator
+admits. It tries the most specific claim first: a `sequel` (`UPGRADE`)
+when the campaign already owns the item's verb, an `enhancement`
+(`MODIFY`) when the item reads as an element and something owned can be
+hit with, and a `confluence` (`CREATE` + `MERGE`) when the resource
+budget is spent — the new economy is folded into an existing one, so the
+item is credited in its provenance and the channel count does not move.
+Each returns nothing when it cannot land, so the ordinary `CREATE`
+survives and none of them can emit an interpretation the fold refuses. First-try acceptance **will drop**; `make replay`
 is what measures it.
 
 # 17. The Echo Lab

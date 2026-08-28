@@ -14,6 +14,7 @@ const ECHO_COOLDOWN_MAX = 15.0
 const ECHO_COOLDOWN_MIN = 0.15
 const ECHO_EFFECTS_MAX = 3
 const ECHO_EFFECTS_MIN = 1
+const ECHO_MAX_OPERATIONS = 4
 const ENEMY_AGGRO_RADIUS = 18.0
 const ENEMY_ARCHETYPES = ["melee", "ranged", "brute"]
 const ENEMY_FALL_KILL_Y = -30.0

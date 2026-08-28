@@ -890,7 +890,10 @@ class CampaignEngine:
                         display_name=owned.component.display_name,
                         mk=owned.mk,
                         upgradable=upgradable_field_info(owned.component),
-                        detail=_component_detail(owned.component))
+                        detail=_component_detail(owned.component),
+                        modifiers=tuple(
+                            m.type for m in
+                            getattr(owned.component, "modifiers", ())))
                     for owned in mechanics.owned),
                 owned_links=tuple(
                     OwnedLinkSummary(link=edge.link, source=edge.source,
