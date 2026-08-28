@@ -39,7 +39,7 @@ fi
 # with no output at all. xvfb + opengl3 is the only combination that renders
 # in this sandbox, and it means every capture is a Compatibility-renderer
 # LOWER BOUND on the owner's Forward+ build.
-xvfb-run -a "$GODOT" --rendering-driver opengl3 --path "$ROOT/tools/artpreview" \
+xvfb-run -a -s "-screen 0 1920x1200x24" "$GODOT" --rendering-driver opengl3 --path "$ROOT/tools/artpreview" \
   -s ReviewSheet.gd -- "$ABS" "$ABSOUT" "$LABEL" "$DIST" 2>&1 \
   | grep -E "^\[sheet\]|ERROR|SCRIPT ERROR" || true
 

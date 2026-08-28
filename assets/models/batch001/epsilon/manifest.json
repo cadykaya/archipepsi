@@ -14,12 +14,12 @@
     "anchor": "floor",
     "path": "batch001/epsilon/epsilon_b_core.glb",
     "size": [
-      1.25,
-      0.983,
-      2.55
+      1.396,
+      1.284,
+      2.63
     ],
     "texel_density": null,
-    "triangles": 136
+    "triangles": 284
   },
   "epsilon_c_aperture": {
     "anchor": "floor",

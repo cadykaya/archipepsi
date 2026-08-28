@@ -101,12 +101,12 @@
     },
     "identity": {
       "means": "Epsilon. Its presence, its terminal, its voice surfaces and nothing else in the game",
-      "anchor": "#b45cff",
+      "anchor": "#57ff1f",
       "ramp": [
-        "#492567",
-        "#7c3fb0",
-        "#b45cff",
-        "#d3a0ff"
+        "#23660c",
+        "#339612",
+        "#45c918",
+        "#57ff1f"
       ]
     },
     "dead": {

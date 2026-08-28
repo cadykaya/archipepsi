@@ -1,35 +1,35 @@
 {
-  "enemy_melee_a_stooped": {
+  "enemy_brute_squat": {
     "anchor": "floor",
-    "path": "batch001/enemy/enemy_melee_a_stooped.glb",
+    "path": "batch001/enemy/enemy_brute_squat.glb",
+    "size": [
+      1.695,
+      1.54,
+      2.496
+    ],
+    "texel_density": null,
+    "triangles": 424
+  },
+  "enemy_melee_stooped": {
+    "anchor": "floor",
+    "path": "batch001/enemy/enemy_melee_stooped.glb",
     "size": [
       0.77,
       0.57,
       1.57
     ],
     "texel_density": null,
-    "triangles": 448
+    "triangles": 460
   },
-  "enemy_melee_b_tripod": {
+  "enemy_ranged_tripod": {
     "anchor": "floor",
-    "path": "batch001/enemy/enemy_melee_b_tripod.glb",
+    "path": "batch001/enemy/enemy_ranged_tripod.glb",
     "size": [
-      0.685,
-      0.58,
-      1.582
+      0.57,
+      0.595,
+      1.378
     ],
     "texel_density": null,
-    "triangles": 240
-  },
-  "enemy_melee_c_squat": {
-    "anchor": "floor",
-    "path": "batch001/enemy/enemy_melee_c_squat.glb",
-    "size": [
-      0.786,
-      0.71,
-      1.294
-    ],
-    "texel_density": null,
-    "triangles": 396
+    "triangles": 368
   }
 }

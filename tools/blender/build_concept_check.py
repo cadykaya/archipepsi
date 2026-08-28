@@ -54,31 +54,62 @@ def _emissive(name, family):
 
 
 def concept_a_pedestal():
-    """A: PEDESTAL AND SUSPENDED CORE.
+    """A-R: SIGNAL MAST. Selected at the Batch 001 review, then revised.
 
-    The nearest evolution of what the game builds procedurally today -- a
-    weighted base with the item held above it. Its silhouette bet is
-    VERTICAL EMPHASIS: a narrow waist under a wide head, which is a shape
-    almost nothing in the architecture kit makes, so it separates from a
-    wall of boxes by outline alone.
+    The review: *"A is decisively the strongest at actual room distance"*,
+    with one note -- slightly more industrial / signal-device, slightly less
+    magical-pedestal.
+
+    What survives: the vertical emphasis and the beacon top. Those are what
+    made it read at 39 px across a 40 m arena and the review named both as
+    must-keeps.
+
+    What changed: the lathe-turned octagonal plinth and the four radiating
+    crown arms were the "magical pedestal" -- a shape from a different genre
+    entirely. They are now a bolted box base with a conduit running out of
+    it into the floor, and a caged emitter head. Same silhouette family,
+    built by an industrial contractor instead of a wizard.
     """
     body = [
-        brushkit.prism("cpa_foot", 0.62, 0.22, 8, (0.0, 0.0, 0.11),
-                       asset_name="check_a"),
-        brushkit.prism("cpa_plinth", 0.46, 0.46, 8, (0.0, 0.0, 0.45),
-                       top_radius=0.34, asset_name="check_a"),
-        brushkit.block("cpa_waist", (0.26, 0.26, 0.66), (0.0, 0.0, 1.01)),
-        brushkit.prism("cpa_head", 0.52, 0.30, 8, (0.0, 0.0, 1.49),
-                       top_radius=0.44, asset_name="check_a"),
+        # A bolted base, not a turned plinth.
+        brushkit.block("cpa_base", (0.86, 0.86, 0.18), (0.0, 0.0, 0.09)),
+        brushkit.block("cpa_riser", (0.62, 0.62, 0.30), (0.0, 0.0, 0.33)),
+        brushkit.wedge("cpa_shoulder", (0.62, 0.62, 0.16), (0.0, 0.0, 0.56),
+                       axis="y"),
+        # The waist stays: it is the vertical emphasis the review kept.
+        brushkit.block("cpa_waist", (0.24, 0.24, 0.70), (0.0, 0.0, 1.02)),
     ]
+    # A conduit leaving the base: a signal device is wired to something.
+    body.append(brushkit.block("cpa_conduit", (0.10, 0.44, 0.10),
+                               (0.20, 0.34, 0.06), rotation_z=22.0))
+    for side in (-1.0, 1.0):
+        body.append(brushkit.block("cpa_stay_%d" % int(side),
+                                   (0.07, 0.07, 0.52),
+                                   (side * 0.20, 0.0, 0.78)))
+        for i in range(2):
+            body.append(brushkit.block("cpa_stud_%d_%d" % (int(side), i),
+                                       (0.10, 0.10, 0.09),
+                                       (side * 0.36, 0.0, 0.20 + i * 0.24)))
+    # A caged emitter head, not a crown.
+    body.append(brushkit.block("cpa_head", (0.56, 0.56, 0.26), (0.0, 0.0, 1.50)))
+    body.append(brushkit.block("cpa_hood", (0.64, 0.64, 0.10), (0.0, 0.0, 1.68)))
     for i in range(4):
         angle = 45.0 + i * 90.0
-        body.append(brushkit.block("cpa_arm_%d" % i, (0.60, 0.10, 0.10),
-                                   (0.0, 0.0, 1.66), rotation_z=angle))
-    face = brushkit.block("cpa_face", (0.44, 0.10, 0.44), (0.0, -0.30, 1.05))
-    core = brushkit.prism("cpa_core", 0.24, 0.42, 8, (0.0, 0.0, 2.02),
-                          top_radius=0.02, asset_name="check_a")
-    ring = brushkit.tube("cpa_ring", 0.66, 0.56, 0.05, 8, (0.0, 0.0, 0.24),
+        body.append(brushkit.block("cpa_cage_%d" % i, (0.05, 0.05, 0.42),
+                                   (0.0, 0.0, 1.94), rotation_z=angle))
+        body[-1].location = (0.0, 0.0, 0.0)
+    # Cage uprights placed on a square, so the lamp is caged rather than crowned.
+    body = body[:-4]
+    for sx in (-1.0, 1.0):
+        for sy in (-1.0, 1.0):
+            body.append(brushkit.block("cpa_cage_%d_%d" % (int(sx), int(sy)),
+                                       (0.06, 0.06, 0.44),
+                                       (sx * 0.20, sy * 0.20, 1.90)))
+    body.append(brushkit.block("cpa_cap", (0.50, 0.50, 0.12), (0.0, 0.0, 2.16)))
+    face = brushkit.block("cpa_face", (0.40, 0.10, 0.40), (0.0, -0.26, 1.02))
+    core = brushkit.block("cpa_core", (0.26, 0.26, 0.34), (0.0, 0.0, 1.90))
+    brushkit.spin(core, "Z", 45.0)
+    ring = brushkit.tube("cpa_ring", 0.52, 0.43, 0.05, 8, (0.0, 0.0, 0.20),
                          asset_name="check_a")
     return body, face, core, ring
 

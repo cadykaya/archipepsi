@@ -197,6 +197,36 @@ lies.**
 
 ---
 
+### L-26 · `Image.blit_rect` does nothing at all when formats differ
+A `SubViewport` hands back RGBA8; every canvas composed by hand here is RGB8.
+`blit_rect` between them copies **nothing** — no error, no warning, an empty
+destination. Three versions of the enemy line-up sheet came out entirely
+black while the render behind them was fine, and two of those versions were
+spent guessing at other causes (the crop position, then an xvfb clamp).
+
+The fix was not the guess, it was measuring: printing the bounding box of
+non-background content proved the render was correct and moved the search
+into the compositor. **When two guesses in a row are wrong, stop guessing and
+instrument.**
+
+### L-27 · A relative output path silently writes somewhere else
+Godot's working directory is not the repo root, so `save_png("docs/art/...")`
+wrote the void_glitch probe into a directory nobody looks in — and reported
+success, because `save_png` returns nothing useful and the script's own
+"wrote 2 captures" line had already been printed. Every render script now
+absolutises its out-dir before passing it in.
+
+### L-28 · The obvious way to make a glowing mass is a lampshade
+The Batch 001 review rejected Epsilon's core as "lamp/cone energy". The
+first revision rebuilt it as a prism with a smaller top radius — which is a
+truncated cone, which is a lampshade. The named failure was reproduced
+immediately, because a taper is the obvious way to make a glowing form and
+the obvious way was the thing being rejected.
+
+It is now hard-edged blocks at unrelated angles, none of them tapering.
+**When a review names a shape as wrong, check the fix against the name, not
+against your intent.**
+
 ## Checks and benches
 
 ### L-15 · A check that passes on a clean tree has proved nothing

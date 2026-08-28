@@ -5,6 +5,12 @@
     "texels_per_metre": 32,
     "texture": "theme/concrete_facility_accent.png"
   },
+  "concrete_facility/ceiling": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/concrete_facility_ceiling.png"
+  },
   "concrete_facility/floor": {
     "covers_m": 4.0,
     "size_px": 128,
@@ -23,11 +29,23 @@
     "texels_per_metre": 32,
     "texture": "theme/concrete_facility_wall.png"
   },
+  "concrete_facility/wall_ribbed": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/concrete_facility_wall_ribbed.png"
+  },
   "rusted_industrial/accent": {
     "covers_m": 4.0,
     "size_px": 128,
     "texels_per_metre": 32,
     "texture": "theme/rusted_industrial_accent.png"
+  },
+  "rusted_industrial/ceiling": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/rusted_industrial_ceiling.png"
   },
   "rusted_industrial/floor": {
     "covers_m": 4.0,
@@ -52,6 +70,12 @@
     "size_px": 128,
     "texels_per_metre": 32,
     "texture": "theme/void_glitch_accent.png"
+  },
+  "void_glitch/ceiling": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/void_glitch_ceiling.png"
   },
   "void_glitch/floor": {
     "covers_m": 4.0,

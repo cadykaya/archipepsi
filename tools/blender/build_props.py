@@ -212,25 +212,29 @@ def warning_sign():
     return common.join(parts, "prop_warning_sign"), None
 
 
+#: Each prop declares its own tone. The point is that a row of props is a
+#: row of DIFFERENT greys with one or two accented things among them, rather
+#: than eight objects in the theme's accent -- which is what the review
+#: found "carrying too much of the scene".
 PROPS = [
     ("prop_crate", crate, lambda: propkit.painted_metal(
-        THEME, "crate", label="04")),
+        THEME, "crate", label="04", band=True, tone="light")),
     ("prop_utility_box", utility_box, lambda: propkit.painted_metal(
-        THEME, "utility_box", label="hv", band=False)),
+        THEME, "utility_box", label="hv", tone="dark")),
+    # The terminal is an INTERACTABLE, so it keeps the signal-teal screen
+    # and is one of the few things that earns an accent band.
     ("prop_terminal", terminal, lambda: propkit.console(
         THEME, "terminal", label="rdy")),
     ("prop_pipe_cluster", pipe_cluster, lambda: propkit.bare_metal(
         THEME, "pipe_cluster")),
     ("prop_machinery_unit", machinery_unit, lambda: propkit.painted_metal(
-        THEME, "machinery_unit", label="p 12", wear=0.18)),
+        THEME, "machinery_unit", label="p 12", wear=0.18, tone="mid",
+        band=True, accent_band=True)),
     ("prop_debris", debris_pile, lambda: propkit.bare_metal(
         THEME, "debris", wear=0.3)),
-    # A sign is bolted to a wall, not stood on the floor: anchor "wall" puts
-    # its BACK face at Y 0 so it sits flush against a wall plane.
     ("prop_warning_sign", warning_sign, lambda: propkit.placard(
         THEME, "warning_sign", label="danger"), "wall"),
 ]
-
 
 def main():
     common.reset_scene()

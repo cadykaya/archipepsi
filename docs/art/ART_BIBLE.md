@@ -44,6 +44,50 @@ half would be out of contract.
 
 ---
 
+## 1a. THE CONTRAST — settled at the Batch 001 review
+
+This is the axis the game leans on, and it governs every decision below it.
+
+| | **Human / facility** | **Epsilon** |
+| --- | --- | --- |
+| What it is | An abandoned research facility | A foreign intelligence inhabiting it |
+| Materials | Cold grey concrete, white and pale-blue paint | Dense near-black plating at a manufacture the building does not use |
+| Light | Yellow utility lighting, from fixtures, onto surfaces | Neon green, from **inside**, out through seams |
+| Construction | Corridors, vents, pipes, rails, catwalks. Grounded, industrial, human | Uncanny, asymmetric, invasive, glowing, humming |
+| Age | Old, institutional, mechanical, abandoned | Active, alive, wrong |
+
+> **Epsilon is not part of the building style. Epsilon is a foreign
+> intelligence inhabiting, infecting and embedding itself into old
+> infrastructure.**
+
+Three rules follow, and they are failable:
+
+1. **Epsilon takes nothing from the theme.** `propkit.alien_shell` uses no
+   theme ramp at all — it is built from the shared `grime` family with
+   `identity` green forced through its seams. Epsilon therefore looks the
+   same in all six themes, which is the point: a foreign intelligence that
+   colour-matched the building would not be foreign.
+2. **Epsilon is embedded, never placed.** Any Epsilon-owned object carries
+   visible *facility host* material — ordinary bolted grey plate — that it
+   has burst out of or grown through. Without something to intrude into,
+   an intrusion is just a dark machine.
+3. **Green means Epsilon. Nothing else may be green.** `identity` is neon
+   `#57ff1f`, leaning yellow so it can never be confused with `void_glitch`
+   cyan or `signal` teal; `palette.verify()` enforces 45° of hue separation
+   between those three.
+
+### The green / orange split
+
+> **Green says whose this is. Orange says what is about to happen.**
+
+An enemy's optic is `identity` green — its family membership card, marking it
+as Epsilon's ecosystem rather than the facility's machinery. `hazard` orange
+is **reserved for telegraphs**, so a windup is the only orange an enemy ever
+shows. Orange trim on an enemy body spends the one colour that has to mean
+"an attack is coming" on decoration.
+
+---
+
 ## 1. The target, stated so it can be failed
 
 > **A local AI was handed a 1998 level editor and told to make a game.**
@@ -163,7 +207,36 @@ piece.
   dimension, on a hand-scale **prop** above 0.5 m that the player walks up
   to. Never on a floor, never on a module edge.
 
-### Value separation
+### Value separation, and the hierarchy it is not enough for
+
+**A room needs a value HIERARCHY, not just legal separation between
+neighbours.** Batch 001's concrete_facility passed every separation check
+and the review still found it "too uniformly pale and clinical" — because
+floor sat at L\* 0.59, wall at 0.76, and the ceiling *borrowed the wall
+texture*, so the three surfaces filling most of the frame spanned 0.17
+between them. 0.17 clears the 0.10 floor comfortably. The check was right
+and the room was wrong.
+
+So a theme declares four separated large-surface values spanning roughly
+half the range, and a ceiling is its own role:
+
+| | target L\* | |
+| --- | --- | --- |
+| trim | ~0.20 | structural, the darkest thing in the room |
+| floor | ~0.42 | walked on, dirtiest, never the mid value |
+| ceiling | ~0.59 | its own texture, ribbed one way — a grid reads as a floor seen from underneath |
+| wall | ~0.76 | the brightest surface, with a dark base course along the bottom |
+
+**The accent is a marking colour, not a fill.** Batch 001 filled every
+painted prop and the whole trim rail with the theme accent, and the review
+found it "carrying too much of the scene". A colour that marks everything
+marks nothing. Props take a *tone* from the base ramp; the accent survives
+as a band on the minority of objects that earn one.
+
+**And a second rhythm beats less structure.** "Every surface exposes the
+same exact 4 m panel rhythm" is fixed by alternating a ribbed bay against a
+plain one — geometry, standing proud, so it shades itself — not by removing
+the panels.
 
 | Rule | Threshold | The failure |
 | --- | --- | --- |

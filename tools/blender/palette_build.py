@@ -81,7 +81,24 @@ UNIVERSAL = {
     "identity": {
         "means": "Epsilon. Its presence, its terminal, its voice surfaces "
                  "and nothing else in the game",
-        "base": "#b45cff",
+        # NEON GREEN, changed from violet #b45cff at the Batch 001 review.
+        #
+        # The owner's direction: Epsilon is not another machine in the
+        # facility, it is a FOREIGN INTELLIGENCE inhabiting old human
+        # infrastructure. The facility is cold grey concrete, pale blue
+        # paint and yellow utility light; Epsilon has to read as an
+        # intrusion into that, not as a fixture within it.
+        #
+        # Violet was a plausible "computer" colour and it sat too
+        # comfortably beside the theme accents -- it read as another
+        # institutional signal rather than as something wrong and alive.
+        #
+        # This green leans YELLOW deliberately, away from
+        # void_glitch's #00ffbf trim and away from `signal`'s teal. Those
+        # are cyan-family and this must not be mistaken for either: glitch
+        # is cosmetic corruption, signal means "you can use this", and
+        # identity means Epsilon itself.
+        "base": "#57ff1f",
     },
     "dead": {
         "means": "unpowered, locked, spent, offline. The value a fixture "

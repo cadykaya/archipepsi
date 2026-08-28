@@ -63,71 +63,152 @@ def _ramps(theme):
 # concrete_facility -- poured panels, institutional hardware
 # ----------------------------------------------------------------------
 
-def _concrete_wall(canvas, surface, theme):
+#: The revised concrete_facility value hierarchy, and the reason it exists.
+#:
+#: Batch 001 read as "too uniformly pale and clinical". The cause was
+#: measurable rather than a matter of taste: floor sat at L* 0.59, wall at
+#: 0.76, and the ceiling borrowed the wall, so the three surfaces filling
+#: most of the frame spanned 0.17 of value between them. The palette check
+#: passed the whole time -- 0.17 clears the 0.10 floor -- which is a good
+#: example of a check telling you the thing matches its description without
+#: telling you the description was worth matching.
+#:
+#: Four separated values now, spanning 0.56 rather than 0.17:
+#:
+#:   trim     L* 0.20   structural, the darkest thing in the room
+#:   floor    L* 0.42   walked on, dirtiest, and no longer the mid value
+#:   ceiling  L* 0.59   between, so it never reads as a wall lying down
+#:   wall     L* 0.76   pale institutional paint -- the brightest surface
+#:
+#: The owner's facility language is "cold gray concrete, white / pale blue
+#: painted walls", so the wall paint carries a slight cool cast toward the
+#: theme accent rather than being neutral grey. That is a TINT, a few
+#: percent, not the accent used as a fill.
+CONCRETE_WALL_TINT = 0.10
+
+
+def _concrete_wall(canvas, surface, theme, ribbed=False):
     base, accent, trim = _ramps(theme)
     canvas.rect(0, 0, surface.size, surface.size, base[2])
+    # Pale blue institutional paint, not neutral grey.
+    for y in range(surface.size):
+        for x in range(surface.size):
+            canvas.mix(x, y, accent[2], CONCRETE_WALL_TINT)
     paintkit.tonal_drift(canvas, surface, amount=0.05, cell_metres=1.1)
-    # Concrete goes in in lifts and the lifts never match. Low strength on
-    # purpose: a pour mark is a shift in value, not a different material.
     paintkit.broad_patches(canvas, surface, [base[1], base[3]],
-                           cell_metres=0.55, density=0.22, strength=0.28)
-    # Real panels: courses at 1.2 m and vertical joints at 2.0 m, which is
-    # a plausible shutter layout and is what stops the tile reading as
-    # horizontal stripes.
-    paintkit.panel_grid(canvas, surface, base[0], base[3],
-                        pitch_metres=1.2, vertical_pitch_metres=2.0)
-    # Form-tie holes ON the courses, at the 0.5 m pitch a real shutter needs.
-    surface.bolt_pitch = surface.texels(0.5)
-    paintkit.bolts(canvas, surface, base[0], base[3])
-    # Water finds the ties and runs. Every streak on this wall starts at a
-    # hole that is actually drawn.
-    for seam in surface.seams:
-        for x in range(surface.bolt_pitch // 2, surface.size,
-                       surface.bolt_pitch):
-            if surface.hash.breaker("weep", x, seam) > 0.22:
-                continue
-            paintkit.streak(canvas, surface, x, seam + 2,
-                            surface.texels(0.7), pal.grime(1), width=2,
-                            strength=0.4)
+                           cell_metres=0.55, density=0.22, strength=0.26)
+
+    if ribbed:
+        # A pilaster variant. The room read as "every surface exposes the
+        # same exact 4 m panel rhythm"; the fix is not less structure, it is
+        # a SECOND structure that alternates with the first.
+        pitch = surface.texels(1.0)
+        for x in range(0, surface.size, pitch):
+            w = surface.texels(0.16)
+            canvas.rect(x, 0, w, surface.size, base[1])
+            canvas.vline(x - 1, 0, surface.size - 1, base[0])
+            canvas.vline(x + w, 0, surface.size - 1, base[0])
+            canvas.vline(x, 0, surface.size - 1, base[3])
+        # No horizontal courses: the ribs ARE the rhythm here.
+    else:
+        paintkit.panel_grid(canvas, surface, base[0], base[3],
+                            pitch_metres=1.2, vertical_pitch_metres=2.0)
+        surface.bolt_pitch = surface.texels(0.5)
+        paintkit.bolts(canvas, surface, base[0], base[3])
+        for seam in surface.seams:
+            for x in range(surface.bolt_pitch // 2, surface.size,
+                           surface.bolt_pitch):
+                if surface.hash.breaker("weep", x, seam) > 0.22:
+                    continue
+                paintkit.streak(canvas, surface, x, seam + 2,
+                                surface.texels(0.7), pal.grime(1), width=2,
+                                strength=0.4)
+
+    # A dark base course along the bottom metre. Real institutional
+    # buildings have one, it grounds a pale wall, and it puts a hard
+    # horizontal value break exactly where the eye meets the floor -- which
+    # is most of what "stronger separation between floor and walls" means in
+    # a room you view from 1.6 m.
+    course = surface.texels(0.85)
+    top = surface.size - course
+    for y in range(top, surface.size):
+        for x in range(surface.size):
+            # Mixed toward the concrete's own dark step, not toward trim.
+            # Mixing toward trim stacked a second blue band on top of the
+            # kick rail and put a ring of colour round the whole room at
+            # exactly eye-to-floor height.
+            canvas.mix(x, y, base[0], 0.80)
+    canvas.hline(top, 0, surface.size - 1, base[3])
+    canvas.hline(top + 1, 0, surface.size - 1, trim[0])
+
     paintkit.speckle(canvas, surface, base[0],
                      paintkit.zone_or(paintkit.near_seams(surface, 0.08),
                                       paintkit.near_floor(surface, 0.5)),
                      density=0.10, strength=0.4)
-    paintkit.grime_pool(canvas, surface, pal.grime(0), strength=0.42)
+    paintkit.grime_pool(canvas, surface, pal.grime(0), strength=0.5)
     paintkit.edge_wear(canvas, surface, base[1], surface.texels(0.10))
     return canvas
 
 
+def _concrete_wall_ribbed(canvas, surface, theme):
+    return _concrete_wall(canvas, surface, theme, ribbed=True)
+
+
 def _concrete_floor(canvas, surface, theme):
     base, accent, trim = _ramps(theme)
-    canvas.rect(0, 0, surface.size, surface.size, base[1])
-    paintkit.tonal_drift(canvas, surface, amount=0.05, cell_metres=1.2)
-    paintkit.broad_patches(canvas, surface, [base[0], base[2]],
+    # base[0], not base[1]. The floor is now the second-darkest large
+    # surface rather than the mid value, which is what stops the room
+    # reading as one continuous pale field.
+    canvas.rect(0, 0, surface.size, surface.size, base[0])
+    paintkit.tonal_drift(canvas, surface, amount=0.06, cell_metres=1.2)
+    paintkit.broad_patches(canvas, surface, [base[1]],
                            cell_metres=0.8, density=0.20, strength=0.25)
-    # Slab joints in both axes at 2 m. A floor is a grid of pours, not a
-    # stack of courses -- reusing the wall's grammar made it read as a wall
-    # lying down.
     step = surface.texels(2.0)
     for i in range(0, surface.size, step):
-        canvas.hline(i, 0, surface.size - 1, base[0])
-        canvas.vline(i, 0, surface.size - 1, base[0])
-    # Grit collects in the joints and nowhere else.
+        canvas.hline(i, 0, surface.size - 1, trim[0])
+        canvas.hline(i + 1, 0, surface.size - 1, base[1])
+        canvas.vline(i, 0, surface.size - 1, trim[0])
+        canvas.vline(i + 1, 0, surface.size - 1, base[1])
+
     def joint_zone(x, y, step=step):
         return 1.0 if (x % step) < 3 or (y % step) < 3 else 0.0
     paintkit.speckle(canvas, surface, base[0], joint_zone,
-                     density=0.30, strength=0.45)
-    paintkit.grime_pool(canvas, surface, pal.grime(0), strength=0.3)
+                     density=0.30, strength=0.5)
+    paintkit.grime_pool(canvas, surface, pal.grime(0), strength=0.35)
+    return canvas
+
+
+def _concrete_ceiling(canvas, surface, theme):
+    """A deck, not a wall lying down.
+
+    Sits at the middle value so it separates from both the pale wall and the
+    dark floor, and its structure runs one way only -- a deck spans, and a
+    surface with a grid on it reads as a floor seen from underneath.
+    """
+    base, accent, trim = _ramps(theme)
+    canvas.rect(0, 0, surface.size, surface.size, base[1])
+    paintkit.tonal_drift(canvas, surface, amount=0.05, cell_metres=1.0)
+    paintkit.broad_patches(canvas, surface, [base[0]],
+                           cell_metres=0.7, density=0.24, strength=0.28)
+    # Ribbed soffit: spanning ribs at 0.6 m, one direction only.
+    pitch = surface.texels(0.6)
+    for y in range(0, surface.size, pitch):
+        canvas.hline(y, 0, surface.size - 1, base[0])
+        canvas.hline(y + 1, 0, surface.size - 1, base[2])
+
+    def rib_zone(x, y, pitch=pitch):
+        return 1.0 if (y % pitch) < 3 else 0.0
+    paintkit.speckle(canvas, surface, base[0], rib_zone,
+                     density=0.22, strength=0.45)
+    paintkit.edge_wear(canvas, surface, base[0], surface.texels(0.12),
+                       strength=0.7)
     return canvas
 
 
 #: Trim runs as a band along a wall, so its texture is a REPEATING STRIP
-#: rather than a picture. The first version painted one safety band at one
-#: height on a 4 m x 4 m tile, which meant a 0.4 m trim piece sampled a
-#: 13-texel window of a 128-texel map and 90% of the paint was never seen --
-#: and which window it got depended on where in the world the piece stood.
-#: A 1998 trim texture was a strip that tiled, and so is this: the design
-#: repeats every 0.5 m vertically, so any window a trim piece samples shows
-#: a complete trim.
+#: rather than a picture -- a 0.4 m trim piece samples only a 13-texel
+#: window of a 128-texel map, and which window depends on where in the world
+#: the piece stands. A 1998 trim texture tiled; so does this.
 TRIM_CYCLE_M = 0.5
 
 
@@ -144,20 +225,19 @@ def _concrete_trim(canvas, surface, theme):
     paintkit.tonal_drift(canvas, surface, amount=0.05, cell_metres=1.0)
 
     def cycle_rows(cv, y0, cycle):
-        # A kick rail: dark channel, painted safety band, lit top lip.
-        cv.rect(0, y0, surface.size, max(1, cycle // 8), trim[0])
-        band_top = y0 + cycle // 8
-        band_h = max(2, cycle // 3)
-        cv.rect(0, band_top, surface.size, band_h, accent[1])
-        cv.hline(band_top - 1, 0, surface.size - 1, trim[0])
-        cv.hline(band_top + band_h, 0, surface.size - 1, trim[0])
-        # The lit lip is what separates trim from wall in harsh flat light.
-        cv.hline(y0 + cycle - 1, 0, surface.size - 1, trim[2])
+        # A kick rail is dark structural metal with a THIN painted stripe --
+        # not a painted rail. The first version gave the accent a third of
+        # every cycle, and since the rail runs round the entire room that
+        # made it the most saturated thing in shot: the review's "accent
+        # carrying too much of the scene", concentrated in one module.
+        cv.rect(0, y0, surface.size, max(1, cycle // 6), trim[0])
+        cv.rect(0, y0 + cycle // 6, surface.size, max(2, cycle // 2), trim[2])
+        stripe_top = y0 + cycle // 6 + max(2, cycle // 2)
+        cv.rect(0, stripe_top, surface.size, max(1, cycle // 10), accent[1])
+        cv.hline(stripe_top - 1, 0, surface.size - 1, trim[0])
+        cv.hline(y0 + cycle - 1, 0, surface.size - 1, trim[0])
 
     _trim_strip(canvas, surface, cycle_rows)
-
-    # Scuffs, all over -- a kick rail is what gets kicked, and here the
-    # whole surface genuinely is the thing being kicked.
     paintkit.speckle(canvas, surface, trim[0], lambda x, y: 1.0,
                      density=0.07, strength=0.5)
     paintkit.edge_wear(canvas, surface, trim[0], surface.texels(0.08),
@@ -166,26 +246,39 @@ def _concrete_trim(canvas, surface, theme):
 
 
 def _concrete_accent(canvas, surface, theme):
+    """The accent, used as a MARKED surface rather than a painted one.
+
+    The review found the accent "carrying too much of the scene" -- nearly
+    every manufactured object in the room came out steel blue, because both
+    this role and the prop skin filled with `accent[1]`. The accent's job is
+    to mark a thing as significant, and a colour that marks everything marks
+    nothing.
+    """
     base, accent, trim = _ramps(theme)
-    canvas.rect(0, 0, surface.size, surface.size, accent[1])
+    canvas.rect(0, 0, surface.size, surface.size, base[1])
     paintkit.tonal_drift(canvas, surface, amount=0.06, cell_metres=1.0)
-    # Painted steel: a bolted plate with a stencil on it.
     inset = surface.texels(0.12)
     canvas.outline(inset, inset, surface.size - 2 * inset,
-                   surface.size - 2 * inset, accent[0])
+                   surface.size - 2 * inset, base[0])
+    # ONE accent band, not an accent fill.
+    band = surface.texels(0.30)
+    top = surface.size // 2 - band // 2
+    canvas.rect(0, top, surface.size, band, accent[1])
+    canvas.hline(top - 1, 0, surface.size - 1, base[3])
+    canvas.hline(top + band, 0, surface.size - 1, base[0])
     surface.bolt_pitch = surface.texels(0.5)
     for x in range(inset + 2, surface.size - inset, surface.bolt_pitch):
         for y in (inset + 2, surface.size - inset - 3):
-            canvas.set(x, y, accent[0])
-            canvas.set(x, y - 1, accent[2])
+            canvas.set(x, y, base[0])
+            canvas.set(x, y - 1, base[3])
     label = "sec 04"
     width = paintkit.text_width(label)
     paintkit.text(canvas, surface, (surface.size - width) // 2,
-                  surface.size // 2 - 3, label, base[3])
-    paintkit.speckle(canvas, surface, accent[0],
+                  top + band // 2 - 2, label, base[3])
+    paintkit.speckle(canvas, surface, base[0],
                      paintkit.near_edges(surface, 0.16),
                      density=0.14, strength=0.45)
-    paintkit.edge_wear(canvas, surface, accent[0], surface.texels(0.09))
+    paintkit.edge_wear(canvas, surface, base[0], surface.texels(0.09))
     paintkit.grime_pool(canvas, surface, pal.grime(0), strength=0.35)
     return canvas
 
@@ -428,14 +521,18 @@ def _void_accent(canvas, surface, theme):
 _TREATMENTS = {
     "concrete_facility": {
         "wall": _concrete_wall, "floor": _concrete_floor,
+        "ceiling": _concrete_ceiling,
         "trim": _concrete_trim, "accent": _concrete_accent,
+        "wall_ribbed": _concrete_wall_ribbed,
     },
     "rusted_industrial": {
         "wall": _rust_wall, "floor": _rust_floor,
+        "ceiling": _rust_floor,
         "trim": _rust_trim, "accent": _rust_accent,
     },
     "void_glitch": {
         "wall": _void_wall, "floor": _void_floor,
+        "ceiling": _void_wall,
         "trim": _void_trim, "accent": _void_accent,
     },
     # neon_transit, gothic_stone and temple_ruin are inventoried and NOT
@@ -443,14 +540,17 @@ _TREATMENTS = {
     # production, and theme production is behind the Style Lock gate.
 }
 
-ROLES = ("wall", "floor", "trim", "accent")
+#: `ceiling` was added at the Batch 001 review. The room read as uniformly
+#: pale because the ceiling borrowed the WALL texture, so three of the four
+#: large surfaces in shot sat at the same value. A ceiling is its own role.
+ROLES = ("wall", "floor", "ceiling", "trim", "accent")
 
 
 def surface_for(role, theme, size=ARCH_SIZE, metres=ARCH_METRES):
     """The `Surface` a role is painted against. Structure, before colour."""
     seams = ()
     floor_edge = None
-    if role in ("wall", "accent"):
+    if role in ("wall", "accent", "wall_ribbed"):
         # Panel courses at 1.2 m, which is a plausible sheet height and puts
         # two seams plus the top edge in a 4 m tile.
         pitch = int(round(size * 1.2 / metres))
@@ -471,13 +571,23 @@ def paint(theme, role, size=ARCH_SIZE, metres=ARCH_METRES):
             "Batch 001: %s. The remaining three are inventoried in "
             "docs/art/ASSET_INVENTORY.md and are behind the Style Lock gate."
             % (theme, ", ".join(sorted(_TREATMENTS))))
-    if role not in ROLES:
-        raise KeyError("materials: role must be one of %s" % (ROLES,))
+    if role not in _TREATMENTS[theme]:
+        raise KeyError(
+            "materials: theme '%s' has no '%s' treatment. It has: %s"
+            % (theme, role, ", ".join(sorted(_TREATMENTS[theme]))))
     surface = surface_for(role, theme, size, metres)
     base = pal.palette()["themes"][theme]["base"]["ramp"][1]
     canvas = paintkit.Canvas(size, base)
     _TREATMENTS[theme][role](canvas, surface, theme)
     return canvas, surface
+
+
+def roles_for(theme):
+    """The roles this theme actually defines, in a stable order."""
+    have = _TREATMENTS[theme]
+    ordered = [r for r in ROLES if r in have]
+    ordered += [r for r in sorted(have) if r not in ordered]
+    return tuple(ordered)
 
 
 def built_themes():

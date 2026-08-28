@@ -85,7 +85,7 @@ def main():
     manifest = {}
     for theme in materials.built_themes():
         canvases = []
-        for role in materials.ROLES:
+        for role in materials.roles_for(theme):
             canvas, surface = materials.paint(theme, role)
             rel = "theme/%s_%s.png" % (theme, role)
             image = canvas.to_blender("%s_%s" % (theme, role))

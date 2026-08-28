@@ -92,6 +92,37 @@ def wall_panel():
                           (0.0, 0.0, MODULE / 2.0))
 
 
+def wall_ribbed():
+    """A wall bay with four pilasters standing 0.22 m proud of the face.
+
+    Added at the Batch 001 review, which found "every surface exposes the
+    same exact 4 m panel rhythm". The fix is not less structure, it is a
+    SECOND structure that alternates with the first -- and it is geometry
+    rather than paint, because the review also asked for more local shadow
+    and a painted rib casts none.
+
+    0.22 m is chosen against the light: shallower than that and the shadow
+    it throws under the room's own omni is too soft to read at 4 m.
+    """
+    parts = [brushkit.block("wr_face", (MODULE, DIM["wall_thickness"], MODULE),
+                            (0.0, 0.0, MODULE / 2.0))]
+    pitch = MODULE / 4.0
+    for i in range(4):
+        x = -MODULE / 2.0 + pitch * (i + 0.5)
+        parts.append(brushkit.block(
+            "wr_pilaster_%d" % i, (0.34, 0.22, MODULE),
+            (x, -(DIM["wall_thickness"] / 2.0 + 0.11), MODULE / 2.0)))
+        # A capital: the pilaster stops, rather than running off the top.
+        parts.append(brushkit.block(
+            "wr_cap_%d" % i, (0.46, 0.28, 0.16),
+            (x, -(DIM["wall_thickness"] / 2.0 + 0.14), MODULE - 0.26)))
+    obj = common.join(parts, "wall_ribbed")
+    common.assert_fits(obj, "arch_wall_ribbed", (MODULE, None, None),
+                       "A module that overruns its 4 m grid pokes through "
+                       "the wall at the end of every corridor.")
+    return obj
+
+
 def floor_slab():
     """A 4 x 4 m floor slab.
 
@@ -122,14 +153,19 @@ def ceiling_beam():
     parts = [
         brushkit.block("ceiling_deck", (MODULE, MODULE, 0.25),
                        (0.0, 0.0, -0.125)),
-        brushkit.block("ceiling_downstand", (MODULE, 0.5, 0.45),
-                       (0.0, 0.0, -0.475)),
+        # 0.60 deep, up from 0.45. The review asked for more structural
+        # depth and local shadow; the downstand is the one piece in the kit
+        # that throws a shadow band across the whole ceiling, and at 0.45 it
+        # was throwing a thin one. 3.4 m of headroom remains under a 4 m
+        # ceiling, still clear of a 1.8 m player and of CORRIDOR_HEIGHT.
+        brushkit.block("ceiling_downstand", (MODULE, 0.56, 0.60),
+                       (0.0, 0.0, -0.55)),
     ]
     # Haunches: a beam that is holding something up rather than hanging.
     for side in (-1.0, 1.0):
         parts.append(brushkit.wedge(
             "ceiling_haunch_%d" % int(side), (0.5, 0.5, 0.3),
-            (side * (MODULE / 2.0 - 0.25), 0.0, -0.40), axis="y",
+            (side * (MODULE / 2.0 - 0.25), 0.0, -0.42), axis="y",
             rotation_z=0.0 if side > 0 else 180.0))
     return common.join(parts, "ceiling_beam")
 
@@ -272,8 +308,10 @@ def light_fixture():
 MODULES = [
     ("arch_wall_panel", wall_panel, "wall", "architecture_module", "floor"),
     ("arch_floor_slab", floor_slab, "floor", "architecture_module", "floor"),
-    ("arch_ceiling_beam", ceiling_beam, "wall", "architecture_module",
+    ("arch_ceiling_beam", ceiling_beam, "ceiling", "architecture_module",
      "ceiling"),
+    ("arch_wall_ribbed", wall_ribbed, "wall_ribbed", "architecture_module",
+     "floor"),
     ("arch_doorway", doorway, "wall", "architecture_module", "floor"),
     ("arch_trim_rail", trim_rail, "trim", "architecture_module", "floor"),
     ("arch_railing", railing, "trim", "architecture_module", "floor"),

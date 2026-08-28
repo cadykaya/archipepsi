@@ -41,11 +41,15 @@ for n in a_blast b_collar; do
   sheet "assets/models/batch001/portal/portal_$n.glb" "C_portal_$n" "portal $n" 30
 done
 
-echo "D -- Melee enemy (3 concepts, judged at 18 m = aggro range)"
-for n in a_stooped b_tripod c_squat; do
-  sheet "assets/models/batch001/enemy/enemy_melee_$n.glb" "D_enemy_melee_$n" \
-    "melee $n" 18
-done
+echo "D -- The three enemy archetypes (judged at 18 m = aggro range)"
+sheet "assets/models/batch001/enemy/enemy_melee_stooped.glb" \
+  "D_enemy_melee_stooped" "melee" 18
+sheet "assets/models/batch001/enemy/enemy_ranged_tripod.glb" \
+  "D_enemy_ranged_tripod" "ranged" 18
+sheet "assets/models/batch001/enemy/enemy_brute_squat.glb" \
+  "D_enemy_brute_squat" "brute" 18
+echo "     ...and all three in one frame:"
+"$ROOT/tools/enemy_lineup.sh" "$OUT" >/dev/null 2>&1 && echo "  D_enemy_lineup_*"
 
 echo "E -- Grapple anchor (2 concepts, judged at 5 m)"
 for n in a_soffit b_jib; do
@@ -54,8 +58,8 @@ for n in a_soffit b_jib; do
 done
 
 echo "F -- Architecture mini-kit (judged at 4 m)"
-for n in wall_panel floor_slab ceiling_beam doorway trim_rail railing \
-         pipe_run light_fixture; do
+for n in wall_panel wall_ribbed floor_slab ceiling_beam doorway trim_rail \
+         railing pipe_run light_fixture; do
   sheet "assets/models/batch001/architecture/arch_$n.glb" "F_arch_$n" \
     "arch $n" 4
 done
@@ -67,7 +71,8 @@ for n in crate utility_box terminal pipe_cluster machinery_unit debris \
 done
 
 echo
-echo "H -- material probes: rebuild with tools/blender/build_materials.py"
+echo "H -- material probes: tools/blender/build_materials.py"
+echo "     in-engine theme probes: tools/composed_room.sh <out> <theme>"
 echo "I -- composed room: tools/composed_room.sh"
 echo
 echo "sheets in docs/art/review/batch001/"

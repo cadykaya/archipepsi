@@ -149,6 +149,19 @@ PY
 expect_fail "signal colour indistinguishable from a wall" python3 tools/blender/palette.py
 git checkout -- assets/art_palette.json
 
+python3 - <<'PYX'
+import json
+p = "assets/art_palette.json"
+d = json.load(open(p))
+# The drift the hue rule exists to catch: Epsilon's green sliding into
+# void_glitch's cyan, where "you can use this", "Epsilon" and "cosmetic
+# corruption" stop being nameable as different colours.
+d["universal"]["identity"]["anchor"] = "#00ffbf"
+json.dump(d, open(p, "w"), indent=2)
+PYX
+expect_fail "Epsilon green drifts into the cyan family" python3 tools/blender/palette.py
+git checkout -- assets/art_palette.json
+
 echo
 echo "sabotage: the owner's ledger -- does a wrong number get caught?"
 expect_pass "document metrics on a clean tree" python3 tools/blender/check_docs_metrics.py

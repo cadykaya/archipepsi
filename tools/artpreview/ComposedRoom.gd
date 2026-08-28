@@ -40,6 +40,23 @@ const WALL_H := 4.0
 var _assets := ""
 var _out := ""
 var _tris := 0
+var _theme := "concrete_facility"
+
+## Which theme texture each module wears. The modules bake concrete_facility
+## in at build time, so re-theming them here means overriding the albedo with
+## the theme sheet for that role -- which is exactly the model the runtime
+## should eventually use: ONE authored mesh, six theme materials, selected by
+## Godot. Proving it works in the bench is worth as much as the probe itself.
+const MODULE_ROLE := {
+	"arch_wall_panel": "wall", "arch_wall_ribbed": "wall_ribbed",
+	"arch_doorway": "wall", "arch_floor_slab": "floor",
+	"arch_ceiling_beam": "ceiling", "arch_trim_rail": "trim",
+	"arch_railing": "trim", "arch_pipe_run": "accent",
+	"prop_crate": "accent", "prop_utility_box": "trim",
+	"prop_machinery_unit": "accent", "prop_pipe_cluster": "trim",
+	"prop_debris": "floor", "prop_terminal": "accent",
+	"prop_warning_sign": "accent",
+}
 
 func _initialize() -> void:
 	var args := OS.get_cmdline_user_args()
@@ -49,6 +66,8 @@ func _initialize() -> void:
 		return
 	_assets = args[0]
 	_out = args[1]
+	if args.size() > 2:
+		_theme = args[2]
 	DirAccess.make_dir_recursive_absolute(_out)
 
 	# Ambient 0.10, not 0.30. The first room render summed three omni lights
@@ -70,7 +89,32 @@ func _initialize() -> void:
 	_build_room(root)
 	_place_props(root)
 	_place_lights(root)
-	print("[room] authored triangles: %d (budget 12000)" % _tris)
+	print("[room] theme %s, authored triangles: %d (budget 12000)"
+			% [_theme, _tris])
+
+	if _theme != "concrete_facility":
+		# A theme probe answers one question -- does this material family
+		# survive being a room rather than a texture sheet -- so it is one
+		# shot from the doorway plus its greyscale, and nothing else.
+		cam.look_at_from_position(Vector3(0.0, 1.6, -ROOM_D * 0.5 + 1.2),
+				Vector3(0.6, 1.5, ROOM_D * 0.5 - 2.0), Vector3.UP)
+		var probe: Image = await _grab(vp)
+		ArtBench.label(probe, "%s - IN ENGINE" % _theme.to_upper().replace("_", " "),
+				Vector2i(12, 12), Color(1.0, 0.83, 0.36))
+		probe.save_png("%s/H_probe_%s_room.png" % [_out, _theme])
+		var g := Image.create(probe.get_width(), probe.get_height(), false,
+				probe.get_format())
+		for y in probe.get_height():
+			for x in probe.get_width():
+				var c := probe.get_pixel(x, y)
+				var v: float = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
+				g.set_pixel(x, y, Color(v, v, v))
+		ArtBench.label(g, "%s - GREYSCALE" % _theme.to_upper().replace("_", " "),
+				Vector2i(12, 12), Color(1, 1, 1))
+		g.save_png("%s/H_probe_%s_greyscale.png" % [_out, _theme])
+		print("[room] wrote 2 probe captures for %s" % _theme)
+		quit()
+		return
 
 	# From the doorway, looking down the room. This is how a player enters.
 	cam.look_at_from_position(Vector3(0.0, 1.6, -ROOM_D * 0.5 + 1.2),
@@ -118,7 +162,20 @@ func _initialize() -> void:
 		node.queue_free()
 		await process_frame
 
-	print("[room] wrote 6 captures to %s" % _out)
+	# The warm-light proposal, same room, same camera, relit.
+	warm = true
+	for child in root.get_children():
+		if child is OmniLight3D:
+			child.light_color = _light_colour()
+	cam.look_at_from_position(Vector3(0.0, 1.6, -ROOM_D * 0.5 + 1.2),
+			Vector3(0.6, 1.5, ROOM_D * 0.5 - 2.0), Vector3.UP)
+	var warm_shot: Image = await _grab(vp)
+	ArtBench.label(warm_shot, "PROPOSED WARM LIGHT - NOT ENGINE TRUTH",
+			Vector2i(12, 12), Color(1.0, 0.83, 0.36))
+	warm_shot.save_png(_out + "/I_room_warmlight_proposal.png")
+	warm = false
+
+	print("[room] wrote 7 captures to %s" % _out)
 	quit()
 
 func _grab(vp: SubViewport) -> Image:
@@ -132,11 +189,29 @@ func _add(root: Node3D, relative: String, at: Vector3,
 	if node == null:
 		return null
 	ArtBench.force_nearest(node)
+	if _theme != "concrete_facility":
+		_retheme(node, relative.get_file().get_basename())
 	node.position = at
 	node.rotation_degrees = Vector3(0, yaw, 0)
 	root.add_child(node)
 	_tris += _count(node)
 	return node
+
+## Swap a module's baked albedo for the same role in another theme.
+func _retheme(node: Node, module: String) -> void:
+	var role: String = MODULE_ROLE.get(module, "wall")
+	var path := "%s/textures/theme/%s_%s.png" % [_assets, _theme, role]
+	if not FileAccess.file_exists(path):
+		path = "%s/textures/theme/%s_wall.png" % [_assets, _theme]
+	var img := Image.load_from_file(path)
+	if img == null:
+		push_error("[room] no theme texture: %s" % path)
+		return
+	var tex := ImageTexture.create_from_image(img)
+	for mat in ArtBench.materials(node):
+		if mat is BaseMaterial3D and mat.albedo_texture != null:
+			mat.albedo_texture = tex
+			mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 
 func _count(node: Node) -> int:
 	var total := 0
@@ -161,15 +236,18 @@ func _build_room(root: Node3D) -> void:
 	for i in 3:
 		var x := -half_w + MODULE * (i + 0.5)
 		var z := -half_d + MODULE * (i + 0.5)
-		var far := "batch001/architecture/arch_doorway.glb" if i == 1 \
-				else "batch001/architecture/arch_wall_panel.glb"
+		# Alternate plain and ribbed bays. The review found the room read
+		# as "every surface exposes the same exact 4 m panel rhythm" -- the
+		# answer is a second rhythm, not the removal of the first. The
+		# ribbed bay also stands 0.22 m proud, so it shades itself even
+		# though the game's own lights cast no shadows.
+		var plain := "batch001/architecture/arch_wall_panel.glb"
+		var ribbed := "batch001/architecture/arch_wall_ribbed.glb"
+		var far := "batch001/architecture/arch_doorway.glb" if i == 1 else plain
 		_add(root, far, Vector3(x, 0, half_d), 0.0)
-		_add(root, "batch001/architecture/arch_wall_panel.glb",
-				Vector3(x, 0, -half_d), 0.0)
-		_add(root, "batch001/architecture/arch_wall_panel.glb",
-				Vector3(-half_w, 0, z), 90.0)
-		_add(root, "batch001/architecture/arch_wall_panel.glb",
-				Vector3(half_w, 0, z), 90.0)
+		_add(root, ribbed if i == 1 else plain, Vector3(x, 0, -half_d), 180.0)
+		_add(root, plain if i == 1 else ribbed, Vector3(-half_w, 0, z), 90.0)
+		_add(root, ribbed if i == 0 else plain, Vector3(half_w, 0, z), -90.0)
 		# Kick rail everywhere the wall meets the floor. Trim is what does
 		# the job a bevel does elsewhere in this project.
 		_add(root, "batch001/architecture/arch_trim_rail.glb",
@@ -232,6 +310,26 @@ func _place_props(root: Node3D) -> void:
 	_add(root, "batch001/props/prop_debris.glb", Vector3(1.4, 0, -4.6), 44.0)
 
 
+## The engine's own light colour for concrete_facility, or the warm one the
+## Batch 001 review asked for.
+##
+## THEME_MATERIALS says `light_color: #eaf2ff` -- a cool white. The owner's
+## facility direction says "yellow utility lighting". Those disagree, and the
+## anchor is ENGINEERING's file, not the art lane's. So the room is rendered
+## in the engine's truth by default and once more in the proposed warm light,
+## and the owner decides whether to ask for the anchor to change. Art does not
+## change an engine colour by rendering as though it already had.
+static var warm := false
+
+func _light_colour() -> Color:
+	if warm:
+		return Color(1.0, 0.855, 0.60)
+	# THEME_MATERIALS light_color, per theme.
+	match _theme:
+		"void_glitch": return Color(1.0, 1.0, 1.0)
+		"rusted_industrial": return Color(1.0, 0.851, 0.627)
+		_: return Color(0.918, 0.949, 1.0)
+
 func half_w_prop() -> float:
 	## The inside face of the left wall: half the room minus the wall's own
 	## thickness, read from the module rather than guessed.
@@ -253,9 +351,16 @@ func _place_lights(root: Node3D) -> void:
 		lamp.position = Vector3(0.0, WALL_H - 1.15, z)
 		# chamber_builders._light: theme energy, range 12, shadows OFF.
 		lamp.light_energy = 3.0
-		lamp.light_color = Color(0.918, 0.949, 1.0)
+		lamp.light_color = _light_colour()
 		lamp.omni_range = 12.0
+		# chamber_builders._light sets shadow_enabled = false, and so does
+		# this. A bench that switched shadows on would be showing depth the
+		# game does not render. The extra depth in this revision comes from
+		# geometry that shades ITSELF -- a 0.22 m pilaster and a 0.60 m
+		# downstand present faces at different angles to the light, which
+		# reads with or without shadow casting.
 		lamp.shadow_enabled = false
+		lamp.name = "Lamp%d" % i
 		root.add_child(lamp)
 	# No directional fill. The game does not have one, and adding one here
 	# would make the bench flatter and prettier than the thing it is

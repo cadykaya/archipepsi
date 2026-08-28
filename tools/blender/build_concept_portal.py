@@ -43,7 +43,7 @@ PORTAL_BOX = (3.6, 1.3, 4.6)
 APERTURE = (2.4, 3.4)
 
 
-def _emissive(name, family="signal", saturation=0.92):
+def _emissive(name, family="identity", saturation=0.92):
     return common.make_signal_material(name, pal.universal(family, 0),
                                        pal.universal(family, 3),
                                        saturation=saturation, roughness=0.35)
@@ -89,44 +89,93 @@ def concept_a_blast():
 
 
 def concept_b_collar():
-    """B: EXCAVATED COLLAR.
+    """B-R: THE BREACH. Selected as the direction at Batch 001, then revised.
 
-    A rough opening cut through structure, lined with a fitted metal collar
-    that clearly arrived after the hole did. Its bet is that the exit is a
-    WOUND IN THE ARCHITECTURE -- less legible as equipment, far more legible
-    as the boundary of the space, and much more at home in a theme like
-    temple_ruin where a blast door would be an intruder.
+    The review: B is the better foundation because it reads as heavier
+    equipment integrated *around* an opening, and the concept should be
+    pushed toward *"something has happened to / opened through the
+    architecture"* rather than *"special doorway frame"*.
+
+    It also has to carry the clarified Epsilon contrast: facility side is
+    cold human structure, the active edge is an alien intrusion forcing
+    itself into old infrastructure.
+
+    So the object is now three materials rather than two, and the split is
+    the concept:
+
+    * **facility** -- the ragged stepped jambs and the spalled head. Cold
+      grey, the theme's own paint, obviously the building.
+    * **alien** -- an irregular collar that has grown around the aperture
+      from the inside, plated at Epsilon's own tighter pitch and veined
+      green. It is not fitted to the hole, it has taken it.
+    * **cores** -- green shards embedded where the two meet, so the seam
+      between them is where the light comes from.
+
+    The dead-state requirement is met by geometry, not by effects: the
+    ragged breach, the asymmetric collar and the four anchor spikes are all
+    still there with every emissive surface off. The review was explicit
+    that future particles must not be relied on for recognition.
     """
     width, height = APERTURE
-    parts = []
-    # Ragged structural jambs: stepped blocks, no two the same width, which
-    # is what stops a cut opening reading as a neatly modelled arch.
+    facility = []
+    # Ragged structural jambs: no two steps the same thickness. This is the
+    # building, broken.
     steps = ((0.46, 0.0, 0.9), (0.34, 0.9, 1.9), (0.50, 1.9, 2.7),
              (0.30, 2.7, 3.5), (0.44, 3.5, height + 0.5))
     for side in (-1.0, 1.0):
         for i, (thick, z0, z1) in enumerate(steps):
-            parts.append(brushkit.block(
+            # Stagger one side against the other: a breach is not symmetric.
+            shift = 0.0 if side < 0 else 0.11
+            facility.append(brushkit.block(
                 "cpb_jamb_%d_%d" % (int(side), i),
-                (thick, 1.00, z1 - z0),
-                (side * (width / 2.0 + thick / 2.0), 0.0, (z0 + z1) / 2.0)))
-    parts.append(brushkit.block("cpb_head", (width + 1.10, 1.00, 0.62),
-                                (0.0, 0.0, height + 0.31)))
-    parts.append(brushkit.wedge("cpb_spall", (width + 0.60, 0.70, 0.34),
-                                (0.0, -0.20, height + 0.79), axis="y"))
-    # The collar: thin, machined, sitting proud of the ragged hole.
-    parts.append(brushkit.frame("cpb_collar", (width + 0.30, height + 0.26),
-                                0.16, 0.30, (0.0, -0.42,
-                                             (height + 0.26) / 2.0)))
+                (thick, 1.00, (z1 - z0) + shift),
+                (side * (width / 2.0 + thick / 2.0), 0.0,
+                 (z0 + z1) / 2.0 + shift * 0.5)))
+    facility.append(brushkit.block("cpb_head", (width + 1.10, 1.00, 0.62),
+                                   (0.0, 0.0, height + 0.31)))
+    facility.append(brushkit.wedge("cpb_spall", (width + 0.60, 0.70, 0.34),
+                                   (0.0, -0.20, height + 0.79), axis="y"))
+    facility.append(brushkit.block("cpb_step", (width + 0.20, 1.10, 0.16),
+                                   (0.0, -0.20, 0.08)))
+    # Rubble at the foot: material came OUT of this wall.
+    for i, (dx, dy, sz, rot) in enumerate(
+            ((-1.42, -0.52, 0.30, 24.0), (1.30, -0.44, 0.24, -51.0),
+             (-1.05, -0.62, 0.19, 63.0), (1.55, -0.30, 0.16, 12.0))):
+        facility.append(brushkit.block("cpb_rubble_%d" % i,
+                                       (sz, sz * 0.8, sz * 0.7),
+                                       (dx, dy, sz * 0.35), rotation_z=rot))
+
+    # The alien collar. Irregular, uneven, gripping the opening.
+    alien = []
+    seg = ((0.28, 0.20), (0.19, 0.34), (0.31, 0.16), (0.22, 0.26))
     for side in (-1.0, 1.0):
-        for i in range(4):
-            parts.append(brushkit.block(
-                "cpb_stud_%d_%d" % (int(side), i), (0.11, 0.14, 0.11),
-                (side * (width / 2.0 + 0.07), -0.56, 0.55 + i * 0.85)))
-    parts.append(brushkit.block("cpb_step", (width + 0.20, 1.10, 0.16),
-                                (0.0, -0.20, 0.08)))
-    band = brushkit.block("cpb_band", (width + 0.10, 0.09, 0.13),
-                          (0.0, -0.56, height + 0.06))
-    return parts, band
+        for i, (w, d) in enumerate(seg):
+            z = 0.55 + i * (height / len(seg))
+            alien.append(brushkit.block(
+                "cpb_grip_%d_%d" % (int(side), i), (w, d, height / len(seg) * 0.82),
+                (side * (width / 2.0 + 0.04), -0.36 - d / 2.0 + 0.10, z)))
+    alien.append(brushkit.block("cpb_lintel_grip", (width * 0.72, 0.30, 0.26),
+                                (-0.14, -0.40, height + 0.02)))
+    alien.append(brushkit.wedge("cpb_tongue", (0.44, 0.52, 0.30),
+                                (0.62, -0.44, height - 0.34), axis="y",
+                                rotation_z=200.0))
+    # Anchor spikes driven into the facility stone: it is holding on.
+    for i, (sx, z, ln) in enumerate(((-1.0, 1.10, 0.40), (1.0, 2.30, 0.34),
+                                     (-1.0, 3.05, 0.30), (1.0, 0.62, 0.28))):
+        sp = brushkit.block("cpb_spike_%d" % i, (ln, 0.13, 0.13),
+                            (sx * (width / 2.0 + 0.30), -0.38, z))
+        alien.append(brushkit.spin(sp, "Y", sx * 14.0))
+
+    # Green where the two materials meet.
+    cores = []
+    for i, (x, z, w, h, rz) in enumerate((
+            (-width / 2.0 - 0.02, 1.55, 0.10, 0.62, 6.0),
+            (width / 2.0 + 0.02, 2.40, 0.10, 0.48, -9.0),
+            (-0.20, height + 0.05, 0.70, 0.11, 0.0),
+            (width / 2.0 + 0.02, 0.95, 0.09, 0.34, 4.0))):
+        c = brushkit.block("cpb_vein_%d" % i, (w, 0.09, h), (x, -0.44, z))
+        cores.append(brushkit.spin(c, "Y", rz))
+    return facility, alien, cores
 
 
 CONCEPTS = [
@@ -135,18 +184,40 @@ CONCEPTS = [
 ]
 
 
+def _tex(name, canvas, rough):
+    return common.make_textured_material(
+        name, canvas.to_blender(name + "_tex"), roughness=rough)
+
+
 def build_one(name, builder):
-    parts, band = builder()
-    shell = common.join(parts, name + "_shell")
-    common.uv_project_world(shell, propkit.HERO_DENSITY, propkit.HERO_SIZE)
-    common.assign(shell, common.make_textured_material(
-        name + "_shell",
-        propkit.hero_shell(THEME, name, "signal", label="out",
-                           lit_band=False).to_blender(name + "_shell_tex"),
-        roughness=pal.roughness(THEME)))
-    common.assign(band, _emissive(name + "_band"))
-    obj = common.join([shell, band], name)
-    common.set_origin_floor_centre(obj)
+    parts = builder()
+    if len(parts) == 2:
+        shell_parts, band = parts
+        shell = common.join(shell_parts, name + "_shell")
+        common.uv_project_world(shell, propkit.HERO_DENSITY, propkit.HERO_SIZE)
+        common.assign(shell, _tex(
+            name + "_shell",
+            propkit.hero_shell(THEME, name, "signal", label="out",
+                               lit_band=False), pal.roughness(THEME)))
+        common.assign(band, _emissive(name + "_band"))
+        obj = common.join([shell, band], name)
+    else:
+        # Facility, alien, and the green where they meet.
+        fac_parts, alien_parts, core_parts = parts
+        fac = common.join(fac_parts, name + "_fac")
+        common.uv_project_world(fac, propkit.PROP_DENSITY, propkit.PROP_SIZE)
+        common.assign(fac, _tex(name + "_fac",
+                                propkit.facility_host(THEME, name),
+                                pal.roughness(THEME)))
+        alien = common.join(alien_parts, name + "_alien")
+        common.uv_project_world(alien, propkit.HERO_DENSITY, propkit.HERO_SIZE)
+        common.assign(alien, _tex(name + "_alien",
+                                  propkit.alien_shell(THEME, name), 0.55))
+        core = common.join(core_parts, name + "_core")
+        common.assign(core, _emissive(name + "_core", family="identity"))
+        obj = common.join([fac, alien, core], name)
+
+    common.set_origin(obj, "floor")
     common.assert_fits(obj, name, PORTAL_BOX,
                        "A portal wider than 3.6 m clips the wall of the "
                        "narrowest corridor zone.py permits (4.0 m).")

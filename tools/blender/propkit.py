@@ -33,46 +33,68 @@ def _ramps(theme):
     return (data["base"]["ramp"], data["accent"]["ramp"], data["trim"]["ramp"])
 
 
-def painted_metal(theme, name, label=None, band=True, wear=0.14):
-    """The default prop skin: painted sheet with a stencil and worn corners.
+#: What a prop is painted FROM, and why this is not just the accent.
+#:
+#: Batch 001 filled every painted prop with `accent[1]`. In
+#: concrete_facility that is #4f6f8f, a steel blue, so crates, boxes,
+#: machinery, rails and utility objects all came out the same blue and the
+#: review found the accent "carrying too much of the scene". The accent's
+#: job is to mark a thing as significant; a colour that marks everything
+#: marks nothing.
+#:
+#: So a prop declares a TONE, and the tone comes from the theme's BASE ramp
+#: -- the cold institutional greys the facility is actually built from. The
+#: accent survives only as a band, on the minority of props that earn one.
+TONES = {
+    # pale institutional paint: crates, lockers, the things people handle
+    "light": 2,
+    # mid grey machine housing: plant, machinery, cabinets
+    "mid": 1,
+    # dark equipment: brackets, frames, structure-adjacent kit
+    "dark": 0,
+}
 
-    One treatment covers most of the kit on purpose. A crate, a utility box
-    and a machinery housing in a 1998 facility were all the same painted
-    steel; giving each its own material would be six asset packs at prop
-    scale, which is the same failure the theme rules exist to prevent one
-    level up.
+
+def painted_metal(theme, name, label=None, band=False, wear=0.14,
+                  tone="mid", accent_band=False):
+    """The default prop skin: painted facility steel, worn at its corners.
+
+    `tone` picks a step of the theme's base ramp. `accent_band` is opt-in and
+    should stay rare -- see TONES for what went wrong when it was not.
     """
     base, accent, trim = _ramps(theme)
+    fill = base[TONES[tone]]
     surf = surface(theme, name)
-    canvas = paintkit.Canvas(PROP_SIZE, accent[1])
+    canvas = paintkit.Canvas(PROP_SIZE, fill)
     paintkit.tonal_drift(canvas, surf, amount=0.06, cell_metres=0.5)
-    paintkit.broad_patches(canvas, surf, [accent[0], accent[2]],
-                           cell_metres=0.28, density=0.22, strength=0.28)
-    # Panel divisions at 0.5 m: a prop-scale seam, not a wall-scale one.
-    paintkit.panel_grid(canvas, surf, trim[0], accent[2],
+    paintkit.broad_patches(canvas, surf,
+                           [base[max(0, TONES[tone] - 1)],
+                            base[min(3, TONES[tone] + 1)]],
+                           cell_metres=0.28, density=0.22, strength=0.26)
+    paintkit.panel_grid(canvas, surf, trim[0], base[3],
                         pitch_metres=0.5, vertical_pitch_metres=0.5)
     surf.seams = tuple(range(0, PROP_SIZE, surf.texels(0.5)))
     surf.bolt_pitch = surf.texels(0.25)
-    paintkit.bolts(canvas, surf, trim[0], accent[2], inset=3)
+    paintkit.bolts(canvas, surf, trim[0], base[3], inset=3)
     if band:
-        # A painted identification band at a fixed height, which is what
-        # makes a row of otherwise-identical boxes read as a row rather than
-        # as one box repeated.
+        # An identification band in the theme's own DARK step, not the
+        # accent. It still makes a row of identical boxes read as a row.
         top = surf.texels(0.62)
         height = surf.texels(0.12)
-        canvas.rect(0, top, PROP_SIZE, height, base[0])
-        canvas.hline(top - 1, 0, PROP_SIZE - 1, accent[2])
+        canvas.rect(0, top, PROP_SIZE, height,
+                    accent[1] if accent_band else trim[1])
+        canvas.hline(top - 1, 0, PROP_SIZE - 1, base[3])
         canvas.hline(top + height, 0, PROP_SIZE - 1, trim[0])
     if label:
         width = paintkit.text_width(label)
         paintkit.text(canvas, surf, (PROP_SIZE - width) // 2,
-                      surf.texels(0.34), label, base[3])
+                      surf.texels(0.34), label, trim[0])
     paintkit.speckle(canvas, surf, trim[0],
                      paintkit.zone_or(paintkit.near_seams(surf, 0.06),
                                       paintkit.near_edges(surf, 0.10)),
                      density=0.16, strength=0.5)
     paintkit.edge_wear(canvas, surf, base[0], surf.texels(wear), strength=0.9)
-    paintkit.grime_pool(canvas, surf, pal.grime(0), strength=0.4)
+    paintkit.grime_pool(canvas, surf, pal.grime(0), strength=0.45)
     return canvas
 
 
@@ -315,4 +337,96 @@ def enemy_skin(theme, name, marking="hazard"):
     # edge on a dark body brightens. Doing it the other way round made the
     # figure lose its outline entirely.
     paintkit.edge_wear(canvas, surf, base[1], surf.texels(0.05), strength=0.9)
+    return canvas
+
+
+# ----------------------------------------------------------------------
+# Epsilon
+# ----------------------------------------------------------------------
+
+def alien_shell(theme, name):
+    """Epsilon's own surface. Deliberately NOT built from the theme.
+
+    The Batch 001 review set the direction: Epsilon is not another machine in
+    the facility, it is a **foreign intelligence inhabiting old human
+    infrastructure**. The facility is cold grey concrete, pale blue paint and
+    utility lighting; Epsilon has to read as an intrusion into that.
+
+    So this skin takes nothing from the theme ramps at all. It is near-black
+    plating in the `grime` family with `identity` green forced through its
+    seams -- something dense and dark with light coming out from *inside* it,
+    which is the opposite of the facility's pale surfaces lit from without.
+
+    Two consequences worth stating, because they are the point rather than a
+    side effect:
+
+    * Epsilon looks the same in all six themes. Every other authored surface
+      wears its theme's paint; this one does not, because a foreign
+      intelligence that colour-matched the building would not be foreign.
+    * It is the darkest thing in any room it stands in, which is what makes
+      the green read as emitted rather than painted.
+    """
+    surf = surface(theme, name)
+    canvas = paintkit.Canvas(PROP_SIZE, pal.grime(0))
+    paintkit.tonal_drift(canvas, surf, amount=0.07, cell_metres=0.3)
+    paintkit.broad_patches(canvas, surf, [pal.grime(1), pal.universal("dead", 0)],
+                           cell_metres=0.18, density=0.30, strength=0.35)
+    # Dense irregular plating: a much tighter pitch than anything the
+    # facility uses, so it reads as a different manufacture at a glance.
+    paintkit.panel_grid(canvas, surf, pal.grime(0), pal.grime(2),
+                        pitch_metres=0.16, vertical_pitch_metres=0.11)
+    surf.seams = tuple(range(0, PROP_SIZE, surf.texels(0.16)))
+
+    # Green in the SEAMS, not on the faces. Light from inside.
+    for seam in surf.seams:
+        for x in range(PROP_SIZE):
+            roll = surf.hash.breaker("vein", x, seam)
+            if roll > 0.42:
+                continue
+            canvas.set(x, seam, pal.universal("identity", 1 if roll > 0.2 else 2))
+            if roll < 0.12 and seam + 1 < PROP_SIZE:
+                canvas.set(x, seam + 1, pal.universal("identity", 0))
+    # A few vertical veins running between the courses, so the glow reads as
+    # a network rather than as stripes.
+    step = surf.texels(0.16)
+    for x in range(0, PROP_SIZE, max(2, surf.texels(0.09))):
+        if surf.hash.breaker("vvein", x, 0) > 0.35:
+            continue
+        y0 = int(surf.hash.breaker("vy", x, 1) * PROP_SIZE)
+        for y in range(y0, min(PROP_SIZE, y0 + step)):
+            canvas.mix(x, y, pal.universal("identity", 1), 0.75)
+
+    paintkit.speckle(canvas, surf, pal.grime(0),
+                     paintkit.near_edges(surf, 0.05),
+                     density=0.20, strength=0.6)
+    paintkit.edge_wear(canvas, surf, pal.universal("identity", 0),
+                       surf.texels(0.04), strength=0.7)
+    return canvas
+
+
+def facility_host(theme, name):
+    """The old human infrastructure Epsilon has grown through.
+
+    Paired with `alien_shell` on the same object. Epsilon reading as an
+    intrusion needs something for it to intrude *into*, and the cheapest
+    honest way to get that is to build the base of the fixture out of the
+    facility's own vocabulary -- ordinary bolted grey plate, at the theme's
+    own value -- and let the alien mass burst out of it.
+    """
+    base, accent, trim = _ramps(theme)
+    surf = surface(theme, name)
+    canvas = paintkit.Canvas(PROP_SIZE, base[1])
+    paintkit.tonal_drift(canvas, surf, amount=0.05, cell_metres=0.4)
+    paintkit.panel_grid(canvas, surf, trim[0], base[3],
+                        pitch_metres=0.5, vertical_pitch_metres=0.5)
+    surf.seams = tuple(range(0, PROP_SIZE, surf.texels(0.5)))
+    surf.bolt_pitch = surf.texels(0.2)
+    paintkit.bolts(canvas, surf, trim[0], base[3], inset=3)
+    # Scorch and staining where the alien mass meets it: the facility did
+    # not survive this being installed.
+    paintkit.speckle(canvas, surf, pal.grime(0), lambda x, y: 1.0,
+                     density=0.10, strength=0.55)
+    paintkit.edge_wear(canvas, surf, pal.grime(0), surf.texels(0.14),
+                       strength=1.0)
+    paintkit.grime_pool(canvas, surf, pal.grime(0), strength=0.6)
     return canvas
