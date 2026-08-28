@@ -733,6 +733,43 @@ being hidden behind a fourth camera move.
 > and write down what the geometry is telling you.
 
 
+### L-54 · A measurable number can still be the wrong measurement
+L-51 replaced an asserted `sightline` with one a render could be checked
+against. The arenas got the same treatment and it still was not enough:
+`open_floor` -- how much of the plate has nothing standing on it -- is
+honest, cheap, sampled off the real footprints, and reads 0.92 to 1.00
+across four rooms that play completely differently. Sixteen columns eat 8%
+of a 22 m arena and change every fight in it.
+
+The fix was not a better number for the same question. It was noticing the
+question was wrong: what matters is not how much plate a shell gives back
+but **how much of it has cover within reach**, at the distance a brute
+closes. That reads 0.000 / 0.338 / 0.521 / 0.786.
+
+`open_floor` stayed, because it is the engine's own rule (*crates hug the
+walls so the arena floor stays fightable*) made checkable, and a number
+that proves a constraint is held is worth keeping even when it does not
+discriminate. It just is not the one that describes the family.
+
+> Verifiable is a floor, not a ceiling. Ask what the number is FOR before
+> being pleased that it is measured.
+
+### L-55 · Build a trim to the surface it trims
+Every column in the arena grid got a base collar centred on 0.30 and a
+capital centred on `height - 0.30`, which left both floating 0.15 m clear
+of the floor and the ceiling. In flat grey at this value range that does
+not read as a gap; it reads as a collar hovering in its own shadow, and
+sixteen of them read as the whole grid being wrong somehow.
+
+The same slip put the pit's rim a step ABOVE grade instead of the pit a
+step below it -- which would have raised both doorways one metre over the
+corridor chaining into them. A chamber that does not meet its neighbour's
+floor is not a chamber.
+
+> A part defined by its centre is defined relative to nothing. Anything
+> that touches a surface should be positioned from that surface.
+
+
 ## Process
 
 ### L-39 · Four batches to lock a style, and every one of them was cheap

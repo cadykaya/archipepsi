@@ -2031,3 +2031,93 @@ whole design is what you can see when you step into it.
 
 Status: **PENDING** — the family's readability is a judgement, not
 self-marked.
+
+---
+
+## Batch 016 — the arena shell family
+
+The second of §7's six families, and the one the game spends its fights in.
+`zone.py`'s `ArenaChamber` is 10–28 m square with walls 4–8 m, carries up to
+four enemy groups, and takes one of two objectives — `kill_all` or
+`reach_reward`. A boss room is an arena holding one brute.
+
+### What makes four arenas four rooms
+
+A corridor differs from a corridor in what you can **see**. An arena differs
+from an arena in what you can **do**, because an arena is a floor plate with
+a fight on it and the real variables are only three: where cover is, what is
+above, and how the plate divides.
+
+So these four are one subtraction, one addition, one storey and one
+division — not one room at four sizes.
+
+| Shell | Size | Tris | Open floor | Cover reach | What it does |
+| --- | --- | --- | --- | --- | --- |
+| `shell_arena_pit` | 18 × 18 × 6 m | 312 | 1.000 | 0.000 | the middle drops exactly `MAX_VERTICAL_STEP`, so the fight is in a bowl and the rim is high ground you can *walk* to. The Check is down in it |
+| `shell_arena_pillars` | 22 × 22 × 5 m | 744 | 0.915 | 0.786 | a 4 × 4 column grid on a 4.4 m pitch. Cover in the middle of the plate, and every 3.2 m aisle clears a 1.8 m brute |
+| `shell_arena_balcony` | 26 × 24 × 8 m | 480 | 0.982 | 0.338 | spans and wall height near `zone.py`'s ceiling, with a walkway at 3.2 m on three sides. One open plate below, ranged ground above |
+| `shell_arena_split` | 20 × 20 × 5 m | 288 | 0.952 | 0.521 | a 1.80 m barrier — above `JUMP_APEX` 1.333, so it must be gone around — with two gaps. Sightline 10 m, and the Check is on the far side |
+
+### Two measured keys instead of one asserted one
+
+Batch 015 learned that a manifest number a render contradicts is worse than
+no number (L-51). Arenas needed the same discipline, and the first attempt
+failed it in a different way: `open_floor` is honest and *does not
+discriminate* — sixteen columns eat 8% of a 22 m plate, so all four scored
+0.92–1.00.
+
+That number is still worth keeping, because it is exactly the engine's own
+rule made checkable: `_greeble_room` hugs its crates to the walls so *the
+arena floor stays fightable*, and these shells put cover in the middle
+without eating the plate. But the number that separates the family is
+**`cover_reach`** — the fraction of the floor within `brute_reach` of
+something to hide behind, because that is the distance a brute closes and
+therefore the distance at which cover is cover. It reads 0.000 / 0.338 /
+0.521 / 0.786, which is the family's actual spread.
+
+Both are sampled on a 0.10 m grid from the footprints the builder records
+as it places them, so neither can drift from the geometry.
+
+### What art did not decide, and is surfacing instead
+
+**Room chambers have no ceiling.** `_perimeter` builds a floor and four
+walls; `_greeble_room` adds corner buttresses and floor crates and nothing
+overhead. Corridors are roofed and arenas are not, so a Zone chaining one
+into the other joins a closed space to an open one at the doorway.
+
+These shells include a ceiling at `wall_height`, because that is the only
+reading in which the chain is continuous — and it is recorded as
+**interface requirement 19** rather than assumed. If open-sky arenas are
+intended for some themes (`void_glitch` and `temple_ruin` both have a case),
+the ceiling comes out and nothing else changes.
+
+Nor does this batch place cover randomly. `arena()`'s three rng boxes and
+`_greeble_room`'s two-to-four crates are the engine's dressing pass and
+still are. What a shell owns is the structure that has to be the same every
+time a Check is placed against it.
+
+### What is weakest here
+
+The pit reads **shallowly head-on**. One metre of drop across twelve is
+about five degrees of visual angle from the entrance, and
+`A_pit_entry.png` needs its near lip in frame to say what the room is;
+`A_pit_rim.png` is where the shape becomes obvious. Deepening it is not
+available — 1.00 m is `MAX_VERTICAL_STEP`, and one centimetre more turns a
+walkable bowl into a trap that needs a ramp. If the read is not enough, the
+fix is a fixture or a rail on the rim, not a deeper hole.
+
+### Evidence
+
+`docs/art/review/batch016/`
+
+| Image | What it answers |
+| --- | --- |
+| `A_pit_entry.png` · `A_pit_rim.png` | the bowl, head-on and from the rim |
+| `A_pillars_entry.png` · `A_pillars_aisle.png` | the grid, down the clear centre aisle and from inside it |
+| `A_balcony_entry.png` · `A_balcony_deck.png` | the boss room, and the ground above it |
+| `A_split_entry.png` · `A_split_gap.png` | the barrier hiding the far floor, and the gap you commit through |
+
+The four `_entry` frames are the comparison: same lens, same eye height,
+same ambient, four different problems.
+
+Status: **PENDING** — not self-marked.
