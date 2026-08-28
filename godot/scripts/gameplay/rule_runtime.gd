@@ -236,21 +236,25 @@ func _conditions_hold(rule: Dictionary, snapshot: Dictionary) -> bool:
 	return true
 
 ## All-or-nothing across the rule's costs too: a two-cost rule that could
-## pay only the first must not fire poorer. Costs are at most two, so pay
-## the first and refund it if the second refuses.
+## pay only the first must not fire poorer.
+##
+## This used to pay the first and refund it if the second refused, which
+## looked equivalent and was not. `spend` arms the channel's `regen_delay`
+## and `refill` does not disarm it, so every failed attempt cost the player
+## a regeneration window -- and a rule whose event stays armed is
+## dispatched every physics frame, so the window was re-armed 60 times a
+## second and regeneration stopped dead on a rule that never fired once.
+##
+## `spend_all` checks the whole list before touching anything, so a
+## refusal leaves no trace to undo.
 func _pay_costs(rule: Dictionary) -> bool:
 	if pool == null:
 		return rule.get("costs", []).is_empty()
-	var paid: Array[Dictionary] = []
+	var costs: Array = []
 	for cost: Dictionary in rule.get("costs", []):
-		var resource_id := _resolve(str(cost.get("resource_id", "")))
-		var amount := float(cost.get("amount", 0.0))
-		if not pool.spend(resource_id, amount):
-			for refund in paid:
-				pool.refill(str(refund["id"]), float(refund["amount"]))
-			return false
-		paid.append({"id": resource_id, "amount": amount})
-	return true
+		costs.append({"id": _resolve(str(cost.get("resource_id", ""))),
+				"amount": float(cost.get("amount", 0.0))})
+	return pool.spend_all(costs)
 
 func _apply_effect(rule_id: String, effect: Dictionary) -> void:
 	effect_log.append({"rule_id": rule_id, "effect": effect})
@@ -260,8 +264,16 @@ func _apply_effect(rule_id: String, effect: Dictionary) -> void:
 	var amount := float(effect.get("amount", 0.0))
 	match str(effect.get("type", "")):
 		"resource_add":
+			# `Effect.amount` allows a negative, and a negative
+			# `resource_add` is a drain by any reading. Sending it through
+			# `refill` took the value out through the one door that does
+			# not arm `regen_delay`, which made the delay decorative for
+			# exactly the effect most likely to be spammed.
 			if pool != null:
-				pool.refill(subject, amount)
+				if amount < 0.0:
+					pool.drain(subject, -amount)
+				else:
+					pool.refill(subject, amount)
 		"refill_resource":
 			if pool != null:
 				var definition: Dictionary = BridgeClient.owned_component(

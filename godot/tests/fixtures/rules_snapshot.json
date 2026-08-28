@@ -1,1 +1,884 @@
-{"type":"campaign_snapshot","interpretations":[],"mechanics":{"owned":[{"component":{"component_id":"res_battery","display_name":"Battery","description":"x","kind":"resource","max_value":130.0,"initial_fraction":0.5,"regen_per_second":0.0,"regen_delay":0.0,"presentation":"bar","pip_count":null,"palette_color":"tide"},"mk":2,"provenance":[{"interpretation_seq":0,"source_location_id":89100001,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"Battery"},{"interpretation_seq":0,"source_location_id":89100001,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"Old Cell"},{"interpretation_seq":7,"source_location_id":89100008,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"merge","note":"absorbed res_old"}]},{"component":{"component_id":"res_osc","display_name":"Osc","description":"x","kind":"resource","max_value":40.0,"initial_fraction":1.0,"regen_per_second":0.0,"regen_delay":0.0,"presentation":"bar","pip_count":null,"palette_color":"tide"},"mk":1,"provenance":[{"interpretation_seq":0,"source_location_id":89100001,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"Osc"}]},{"component":{"component_id":"rule_charge","display_name":"rule_charge","description":"x","kind":"rule","event":"check_claimed","conditions":[],"costs":[],"effects":[{"type":"resource_add","subject":"res_battery","amount":100.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":1,"source_location_id":89100002,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_charge"}]},{"component":{"component_id":"rule_on_full","display_name":"rule_on_full","description":"x","kind":"rule","event":"resource_full","conditions":[],"costs":[],"effects":[{"type":"heal","subject":null,"amount":5.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":1,"source_location_id":89100002,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_on_full"}]},{"component":{"component_id":"rule_fill_on_empty","display_name":"rule_fill_on_empty","description":"x","kind":"rule","event":"resource_empty","conditions":[],"costs":[],"effects":[{"type":"refill_resource","subject":"res_osc","amount":0.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":1,"source_location_id":89100002,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_fill_on_empty"}]},{"component":{"component_id":"rule_drain_on_full","display_name":"rule_drain_on_full","description":"x","kind":"rule","event":"resource_full","conditions":[{"type":"resource_at_least","subject":"res_osc","value":0.999}],"costs":[],"effects":[{"type":"resource_add","subject":"res_osc","amount":-200.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":1,"source_location_id":89100002,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_drain_on_full"}]},{"component":{"component_id":"rule_landing_tax","display_name":"rule_landing_tax","description":"x","kind":"rule","event":"land","conditions":[],"costs":[{"resource_id":"res_battery","amount":30.0}],"effects":[{"type":"heal","subject":null,"amount":2.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":2,"source_location_id":89100003,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_landing_tax"}]},{"component":{"component_id":"rule_dash_reward","display_name":"rule_dash_reward","description":"x","kind":"rule","event":"dash_end","conditions":[{"type":"resource_at_least","subject":"res_battery","value":0.5},{"type":"grounded","subject":null,"value":0.0}],"costs":[],"effects":[{"type":"impulse_self","subject":null,"amount":3.0,"duration":0.0,"radius":0.0,"direction":"up"}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":2,"source_location_id":89100003,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_dash_reward"}]},{"component":{"component_id":"rule_slow_jump","display_name":"rule_slow_jump","description":"x","kind":"rule","event":"jump","conditions":[],"costs":[],"effects":[{"type":"heal","subject":null,"amount":1.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.5},"mk":1,"provenance":[{"interpretation_seq":2,"source_location_id":89100003,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_slow_jump"}]},{"component":{"component_id":"rule_low","display_name":"rule_low","description":"x","kind":"rule","event":"low_health","conditions":[],"costs":[],"effects":[{"type":"grant_shield","subject":null,"amount":10.0,"duration":4.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":2,"source_location_id":89100003,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_low"}]},{"component":{"component_id":"rule_old_cost","display_name":"rule_old_cost","description":"x","kind":"rule","event":"parry_success","conditions":[],"costs":[{"resource_id":"res_old","amount":10.0}],"effects":[{"type":"heal","subject":null,"amount":1.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":3,"source_location_id":89100004,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_old_cost"}]},{"component":{"component_id":"rule_double_cost","display_name":"rule_double_cost","description":"x","kind":"rule","event":"chamber_enter","conditions":[],"costs":[{"resource_id":"res_battery","amount":15.0},{"resource_id":"res_osc","amount":15.0}],"effects":[{"type":"heal","subject":null,"amount":3.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":3,"source_location_id":89100004,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_double_cost"}]},{"component":{"component_id":"rule_cap_00","display_name":"rule_cap_00","description":"x","kind":"rule","event":"kill","conditions":[],"costs":[],"effects":[{"type":"heal","subject":null,"amount":1.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":4,"source_location_id":89100005,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_cap_00"}]},{"component":{"component_id":"rule_cap_01","display_name":"rule_cap_01","description":"x","kind":"rule","event":"kill","conditions":[],"costs":[],"effects":[{"type":"heal","subject":null,"amount":1.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":4,"source_location_id":89100005,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_cap_01"}]},{"component":{"component_id":"rule_cap_02","display_name":"rule_cap_02","description":"x","kind":"rule","event":"kill","conditions":[],"costs":[],"effects":[{"type":"heal","subject":null,"amount":1.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":4,"source_location_id":89100005,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_cap_02"}]},{"component":{"component_id":"rule_cap_03","display_name":"rule_cap_03","description":"x","kind":"rule","event":"kill","conditions":[],"costs":[],"effects":[{"type":"heal","subject":null,"amount":1.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":4,"source_location_id":89100005,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_cap_03"}]},{"component":{"component_id":"rule_cap_04","display_name":"rule_cap_04","description":"x","kind":"rule","event":"kill","conditions":[],"costs":[],"effects":[{"type":"heal","subject":null,"amount":1.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":5,"source_location_id":89100006,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_cap_04"}]},{"component":{"component_id":"rule_cap_05","display_name":"rule_cap_05","description":"x","kind":"rule","event":"kill","conditions":[],"costs":[],"effects":[{"type":"heal","subject":null,"amount":1.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":5,"source_location_id":89100006,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_cap_05"}]},{"component":{"component_id":"rule_cap_06","display_name":"rule_cap_06","description":"x","kind":"rule","event":"kill","conditions":[],"costs":[],"effects":[{"type":"heal","subject":null,"amount":1.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":5,"source_location_id":89100006,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_cap_06"}]},{"component":{"component_id":"rule_cap_07","display_name":"rule_cap_07","description":"x","kind":"rule","event":"kill","conditions":[],"costs":[],"effects":[{"type":"heal","subject":null,"amount":1.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":5,"source_location_id":89100006,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_cap_07"}]},{"component":{"component_id":"rule_cap_08","display_name":"rule_cap_08","description":"x","kind":"rule","event":"kill","conditions":[],"costs":[],"effects":[{"type":"heal","subject":null,"amount":1.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":6,"source_location_id":89100007,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_cap_08"}]},{"component":{"component_id":"rule_cap_09","display_name":"rule_cap_09","description":"x","kind":"rule","event":"kill","conditions":[],"costs":[],"effects":[{"type":"heal","subject":null,"amount":1.0,"duration":0.0,"radius":0.0,"direction":null}],"cooldown":0.1},"mk":1,"provenance":[{"interpretation_seq":6,"source_location_id":89100007,"source_item_name":"Item","source_game":"Some Game","source_recipient_name":"Somebody","operation":"create","note":"rule_cap_09"}]}],"aliases":[["res_old","res_battery"]],"links":[],"channel_order":["res_battery","res_osc"]},"slots":{"echo_a":null,"echo_b":null,"mobility":null,"utility":null}}
+{
+ "type": "campaign_snapshot",
+ "interpretations": [],
+ "mechanics": {
+  "owned": [
+   {
+    "component": {
+     "component_id": "res_battery",
+     "display_name": "Battery",
+     "description": "x",
+     "kind": "resource",
+     "max_value": 130.0,
+     "initial_fraction": 0.5,
+     "regen_per_second": 0.0,
+     "regen_delay": 0.0,
+     "presentation": "bar",
+     "pip_count": null,
+     "palette_color": "tide"
+    },
+    "mk": 2,
+    "provenance": [
+     {
+      "interpretation_seq": 0,
+      "source_location_id": 89100001,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "Battery"
+     },
+     {
+      "interpretation_seq": 0,
+      "source_location_id": 89100001,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "Old Cell"
+     },
+     {
+      "interpretation_seq": 1,
+      "source_location_id": 89100002,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "merge",
+      "note": "absorbed res_old"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "res_osc",
+     "display_name": "Osc",
+     "description": "x",
+     "kind": "resource",
+     "max_value": 40.0,
+     "initial_fraction": 1.0,
+     "regen_per_second": 0.0,
+     "regen_delay": 0.0,
+     "presentation": "bar",
+     "pip_count": null,
+     "palette_color": "tide"
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 2,
+      "source_location_id": 89100003,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "Osc"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "res_bat2",
+     "display_name": "Cell",
+     "description": "x",
+     "kind": "resource",
+     "max_value": 100.0,
+     "initial_fraction": 1.0,
+     "regen_per_second": 25.0,
+     "regen_delay": 5.0,
+     "presentation": "bar",
+     "pip_count": null,
+     "palette_color": "tide"
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 3,
+      "source_location_id": 89100004,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "Cell"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_charge",
+     "display_name": "rule_charge",
+     "description": "x",
+     "kind": "rule",
+     "event": "check_claimed",
+     "conditions": [],
+     "costs": [],
+     "effects": [
+      {
+       "type": "resource_add",
+       "subject": "res_battery",
+       "amount": 100.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 4,
+      "source_location_id": 89100005,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_charge"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_on_full",
+     "display_name": "rule_on_full",
+     "description": "x",
+     "kind": "rule",
+     "event": "resource_full",
+     "conditions": [],
+     "costs": [],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 5.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 5,
+      "source_location_id": 89100006,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_on_full"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_fill_on_empty",
+     "display_name": "rule_fill_on_empty",
+     "description": "x",
+     "kind": "rule",
+     "event": "resource_empty",
+     "conditions": [],
+     "costs": [],
+     "effects": [
+      {
+       "type": "refill_resource",
+       "subject": "res_osc",
+       "amount": 0.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 6,
+      "source_location_id": 89100007,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_fill_on_empty"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_drain_on_full",
+     "display_name": "rule_drain_on_full",
+     "description": "x",
+     "kind": "rule",
+     "event": "resource_full",
+     "conditions": [
+      {
+       "type": "resource_at_least",
+       "subject": "res_osc",
+       "value": 0.999
+      }
+     ],
+     "costs": [],
+     "effects": [
+      {
+       "type": "resource_add",
+       "subject": "res_osc",
+       "amount": -200.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 7,
+      "source_location_id": 89100008,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_drain_on_full"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_landing_tax",
+     "display_name": "rule_landing_tax",
+     "description": "x",
+     "kind": "rule",
+     "event": "land",
+     "conditions": [],
+     "costs": [
+      {
+       "resource_id": "res_battery",
+       "amount": 30.0
+      }
+     ],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 2.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 8,
+      "source_location_id": 89100009,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_landing_tax"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_dash_reward",
+     "display_name": "rule_dash_reward",
+     "description": "x",
+     "kind": "rule",
+     "event": "dash_end",
+     "conditions": [
+      {
+       "type": "resource_at_least",
+       "subject": "res_battery",
+       "value": 0.5
+      },
+      {
+       "type": "grounded",
+       "subject": null,
+       "value": 0.0
+      }
+     ],
+     "costs": [],
+     "effects": [
+      {
+       "type": "impulse_self",
+       "subject": null,
+       "amount": 3.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": "up"
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 9,
+      "source_location_id": 89100010,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_dash_reward"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_slow_jump",
+     "display_name": "rule_slow_jump",
+     "description": "x",
+     "kind": "rule",
+     "event": "jump",
+     "conditions": [],
+     "costs": [],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 1.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.5
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 10,
+      "source_location_id": 89100011,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_slow_jump"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_low",
+     "display_name": "rule_low",
+     "description": "x",
+     "kind": "rule",
+     "event": "low_health",
+     "conditions": [],
+     "costs": [],
+     "effects": [
+      {
+       "type": "grant_shield",
+       "subject": null,
+       "amount": 10.0,
+       "duration": 4.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 11,
+      "source_location_id": 89100012,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_low"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_old_cost",
+     "display_name": "rule_old_cost",
+     "description": "x",
+     "kind": "rule",
+     "event": "parry_success",
+     "conditions": [],
+     "costs": [
+      {
+       "resource_id": "res_old",
+       "amount": 10.0
+      }
+     ],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 1.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 12,
+      "source_location_id": 89100013,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_old_cost"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_double_cost",
+     "display_name": "rule_double_cost",
+     "description": "x",
+     "kind": "rule",
+     "event": "chamber_enter",
+     "conditions": [],
+     "costs": [
+      {
+       "resource_id": "res_battery",
+       "amount": 15.0
+      },
+      {
+       "resource_id": "res_osc",
+       "amount": 15.0
+      }
+     ],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 3.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 13,
+      "source_location_id": 89100014,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_double_cost"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_greedy",
+     "display_name": "rule_greedy",
+     "description": "x",
+     "kind": "rule",
+     "event": "chamber_enter",
+     "conditions": [],
+     "costs": [
+      {
+       "resource_id": "res_bat2",
+       "amount": 1.0
+      },
+      {
+       "resource_id": "res_osc",
+       "amount": 200.0
+      }
+     ],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 3.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 14,
+      "source_location_id": 89100015,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_greedy"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_cap_00",
+     "display_name": "rule_cap_00",
+     "description": "x",
+     "kind": "rule",
+     "event": "kill",
+     "conditions": [],
+     "costs": [],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 1.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 15,
+      "source_location_id": 89100016,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_cap_00"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_cap_01",
+     "display_name": "rule_cap_01",
+     "description": "x",
+     "kind": "rule",
+     "event": "kill",
+     "conditions": [],
+     "costs": [],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 1.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 16,
+      "source_location_id": 89100017,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_cap_01"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_cap_02",
+     "display_name": "rule_cap_02",
+     "description": "x",
+     "kind": "rule",
+     "event": "kill",
+     "conditions": [],
+     "costs": [],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 1.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 17,
+      "source_location_id": 89100018,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_cap_02"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_cap_03",
+     "display_name": "rule_cap_03",
+     "description": "x",
+     "kind": "rule",
+     "event": "kill",
+     "conditions": [],
+     "costs": [],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 1.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 18,
+      "source_location_id": 89100019,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_cap_03"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_cap_04",
+     "display_name": "rule_cap_04",
+     "description": "x",
+     "kind": "rule",
+     "event": "kill",
+     "conditions": [],
+     "costs": [],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 1.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 19,
+      "source_location_id": 89100020,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_cap_04"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_cap_05",
+     "display_name": "rule_cap_05",
+     "description": "x",
+     "kind": "rule",
+     "event": "kill",
+     "conditions": [],
+     "costs": [],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 1.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 20,
+      "source_location_id": 89100021,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_cap_05"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_cap_06",
+     "display_name": "rule_cap_06",
+     "description": "x",
+     "kind": "rule",
+     "event": "kill",
+     "conditions": [],
+     "costs": [],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 1.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 21,
+      "source_location_id": 89100022,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_cap_06"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_cap_07",
+     "display_name": "rule_cap_07",
+     "description": "x",
+     "kind": "rule",
+     "event": "kill",
+     "conditions": [],
+     "costs": [],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 1.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 22,
+      "source_location_id": 89100023,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_cap_07"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_cap_08",
+     "display_name": "rule_cap_08",
+     "description": "x",
+     "kind": "rule",
+     "event": "kill",
+     "conditions": [],
+     "costs": [],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 1.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 23,
+      "source_location_id": 89100024,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_cap_08"
+     }
+    ]
+   },
+   {
+    "component": {
+     "component_id": "rule_cap_09",
+     "display_name": "rule_cap_09",
+     "description": "x",
+     "kind": "rule",
+     "event": "kill",
+     "conditions": [],
+     "costs": [],
+     "effects": [
+      {
+       "type": "heal",
+       "subject": null,
+       "amount": 1.0,
+       "duration": 0.0,
+       "radius": 0.0,
+       "direction": null
+      }
+     ],
+     "cooldown": 0.1
+    },
+    "mk": 1,
+    "provenance": [
+     {
+      "interpretation_seq": 24,
+      "source_location_id": 89100025,
+      "source_item_name": "Item",
+      "source_game": "Some Game",
+      "source_recipient_name": "Somebody",
+      "operation": "create",
+      "note": "rule_cap_09"
+     }
+    ]
+   }
+  ],
+  "aliases": [
+   [
+    "res_old",
+    "res_battery"
+   ]
+  ],
+  "links": [],
+  "channel_order": [
+   "res_battery",
+   "res_osc",
+   "res_bat2"
+  ]
+ },
+ "slots": {
+  "echo_a": null,
+  "echo_b": null,
+  "mobility": null,
+  "utility": null
+ }
+}

@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-integration
+.PHONY: setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-integration
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -30,6 +30,14 @@ test-apworld:
 export:
 	cd bridge/archipepsi_bridge/schemas && $(PY) export.py generated
 	cp bridge/archipepsi_bridge/schemas/generated/constants.gd godot/scripts/autoload/constants.gd
+
+# The rule suite's snapshot is a real fold, and this is the fold that
+# makes it. Regenerate rather than editing the JSON.
+rules-fixture:
+	$(PY) bridge/archipepsi_bridge/fixtures/make_rules_snapshot.py
+
+verbs-fixture:
+	$(PY) bridge/archipepsi_bridge/fixtures/make_verbs_snapshot.py
 
 world-install:                 # symlink so edits are live, no copy step
 	ln -sfn $(CURDIR)/apworld/archipepsi $(AP)/worlds/archipepsi
@@ -172,6 +180,17 @@ godot-affordance: godot-import # world affordances, local rewards, readouts
 # counter climbed forever, "coins were genuinely spent" passed on coins an
 # earlier run had spent, and the shop assertion failed at random.
 INTEGRATION_SAVES := $(CURDIR)/.integration-saves
+
+# The S2/S5 action-runner suite: press, release, cancel and death, with a
+# real player over a real floor.
+godot-verbs: godot-import      # the press and release lifecycle
+	@out=$$($(GODOT) --headless --path godot -- --verbs-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT VERBS TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
 
 godot-integration: godot-import   # full loop through a live mock bridge, fresh state
 	rm -rf $(INTEGRATION_SAVES)

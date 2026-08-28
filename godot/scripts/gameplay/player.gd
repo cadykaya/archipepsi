@@ -589,6 +589,10 @@ func heal(amount: float) -> void:
 
 func _die() -> void:
 	_dead = true
+	# Every runtime, not just the highlighted one: all four keep their own
+	# `_physics_process`, and this branch is where they stop being polled.
+	for runtime: EchoRuntime in runtimes.values():
+		runtime.cancel_holds()
 	died.emit()
 	var timer := get_tree().create_timer(Constants.RESPAWN_DELAY)
 	timer.timeout.connect(_respawn)

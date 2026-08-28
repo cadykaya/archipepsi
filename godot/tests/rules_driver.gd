@@ -55,6 +55,8 @@ func _ready() -> void:
 	_cooldown_holds_a_rule_down()
 	_aliases_resolve_for_costs()
 	_low_health_is_an_edge()
+	_a_refused_payment_leaves_regen_alone()
+	_a_negative_resource_add_arms_the_delay()
 
 	if _runtime != null:
 		_runtime.free()
@@ -263,3 +265,60 @@ func _low_health_is_an_edge() -> void:
 			and str(_runtime.effect_log[-1]["effect"].get("type", ""))
 			== "grant_shield",
 			"the shield effect reached the log both times")
+
+## A rule that can pay its first cost but not its second must leave the
+## channel exactly as it found it -- the VALUE and the regen delay.
+##
+## The old refund path put the value back with `refill` and left the
+## `regen_delay` the `spend` had armed. That is invisible until a channel
+## actually regenerates, and none in the old fixture did. It is not a
+## rounding error: an armed edge event dispatches every physics frame, so
+## the delay was re-armed sixty times a second and regeneration stopped
+## dead -- on a rule that never fired once.
+func _a_refused_payment_leaves_regen_alone() -> void:
+	_fresh()
+	# res_bat2 regenerates 25/s after a 5 s delay. rule_greedy costs 1 of
+	# it and 200 of res_osc, which holds 40 at most.
+	_pool.spend("res_bat2", 80.0)
+	var start := _pool.value_of("res_bat2")
+	_check(is_equal_approx(start, 20.0), "the channel starts drained")
+	# Let the delay from that setup spend itself before measuring.
+	for i in range(int(11.0 / DT)):
+		_pool._process(DT)
+	var recovered := _pool.value_of("res_bat2")
+	_check(recovered > 90.0, "a channel left alone regenerates: %f" % recovered)
+
+	# Now the same window, with the greedy rule retrying every frame.
+	_pool.spend("res_bat2", _pool.value_of("res_bat2") - 20.0)
+	for i in range(int(11.0 / DT)):
+		_pool._process(DT)
+		_runtime.notify("chamber_enter")
+		_runtime.tick(DT)
+	_check(int(_fired.get("rule_greedy", 0)) == 0,
+			"the greedy rule never fires")
+	var after := _pool.value_of("res_bat2")
+	_check(after > 90.0,
+			"...and regeneration is untouched by its attempts: %f" % after)
+
+## `Effect.amount` allows a negative, and a negative `resource_add` is a
+## drain. It used to go through `refill`, the one door that does not arm
+## `regen_delay` -- so the delay was decorative for exactly the effect
+## most likely to be spammed.
+func _a_negative_resource_add_arms_the_delay() -> void:
+	_fresh()
+	var before := _pool.value_of("res_bat2")
+	_runtime._apply_effect("rule_test", {
+		"type": "resource_add", "subject": "res_bat2", "amount": -50.0})
+	_check(is_equal_approx(_pool.value_of("res_bat2"), before - 50.0),
+			"the drain takes what it asked for")
+	# One second of regen must NOT arrive: the delay is 5 s.
+	for i in range(int(1.0 / DT)):
+		_pool._process(DT)
+	_check(is_equal_approx(_pool.value_of("res_bat2"), before - 50.0),
+			"...and the regen delay is armed, as a spend would have armed it")
+	# A drain takes what is there rather than refusing: it is damage to the
+	# bar, not a transaction the player is paying.
+	_runtime._apply_effect("rule_test", {
+		"type": "resource_add", "subject": "res_bat2", "amount": -500.0})
+	_check(is_equal_approx(_pool.value_of("res_bat2"), 0.0),
+			"an oversized drain empties rather than refusing")

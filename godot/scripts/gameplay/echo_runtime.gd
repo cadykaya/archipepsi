@@ -50,6 +50,11 @@ var _gliding := false
 var _parry_window := 0.0
 var _dash_window := 0.0
 var _hover_left := 0.0
+var _hovering := false
+#: This slot's claim on `player.hover_gravity_scale`; 1.0 is no claim.
+var _hover_scale := 1.0
+#: Set by `_refund_press`, read and cleared at the end of `activate()`.
+var _press_refunded := false
 #: Wired by main; null in suites that never activate powered verbs.
 var pool: ResourcePool = null
 
@@ -83,6 +88,17 @@ func set_equipped(action: Dictionary) -> void:
 	_refill_air_budget()
 	_refresh_viewmodel_attachment()
 
+## Public entry to the same cancel `set_equipped` performs. Death is the
+## other moment every hold has to end, and it reaches this from
+## `Player._die` -- `_physics_process` returns early once `_dead` is set,
+## so `release()` is never polled and `set_grounded()` never called, but
+## this node's own `_physics_process` keeps running. A beam went on
+## damaging and draining, a burst went on firing, and `_held` survived the
+## respawn because the key-up edge was consumed by the input branch the
+## dead player skips.
+func cancel_holds() -> void:
+	_cancel_held_state()
+
 ## Everything a held or scheduled Action was in the middle of. Called on a
 ## slot change and on death: a charge still winding up for an Echo you no
 ## longer have would fire the wrong verb at the wrong strength.
@@ -96,6 +112,14 @@ func _cancel_held_state() -> void:
 		_gliding = false
 		player.glide_fall_speed = 0.0
 		player.glide_forward_speed = 0.0
+	# The hover was the dangerous omission. `player.gravity_mult` is
+	# floored by `clamp_stat`, but `hover_gravity_scale` is multiplied in
+	# AFTERWARDS and the stat stack never sees it -- so a hover left
+	# running by a slot swap is an I3 bypass, and `Hover.gravity_multiplier`
+	# goes down to 0.0. Clearing `_held` without ending the hover meant
+	# `_hover_tick` stopped running and `_end_hover` was never reached:
+	# permanent zero gravity, from swapping slots at the wrong moment.
+	_end_hover()
 
 func refresh_viewmodel() -> void:
 	_refresh_viewmodel_attachment()
@@ -305,6 +329,14 @@ func activate() -> void:
 		"scan_mark": _scan_mark(primitive)
 		"pull_pickup": _pull_pickup(primitive)
 
+	if _press_refunded:
+		# A verb that refused after the cooldown was charged -- a blink
+		# with nowhere to land, a swing with nothing to grapple. The press
+		# did not happen, so nothing downstream of it happens either.
+		_press_refunded = false
+		_held = false
+		return
+
 	_apply_modifiers(modifiers, damaged)
 	if _primitive_type() in ["dash", "air_dash"]:
 		# The impulse decays over roughly this window under ground
@@ -313,10 +345,19 @@ func activate() -> void:
 	_apply_fills()
 	action_used.emit()
 
-## The slot's key, released. Only the held verbs care.
+## The slot's key, released. Only the held verbs care -- and only if this
+## slot's press actually resolved.
+##
+## `player.gd` calls this on every key-up, whether or not the matching
+## `activate()` got past the cooldown, the conditions, the gates and the
+## cost. Matching on the primitive alone meant a `charge_shot` fired from
+## the key-up of a press that was refused: no cooldown charged, no gate
+## checked, no cost paid, a `min_damage` bolt every tap, bounded only by
+## how fast the player could press the key.
 func release() -> void:
+	var was_held := _held
 	_held = false
-	if equipped.is_empty():
+	if equipped.is_empty() or not was_held:
 		return
 	match _primitive_type():
 		"charge_shot": _fire_charge_shot(_primitive())
@@ -449,13 +490,36 @@ func _beam_tick(delta: float) -> void:
 	player.muzzle_flash(1.1, source_color())
 
 func _begin_hover(primitive: Dictionary) -> void:
+	_hovering = true
+	_hover_scale = float(primitive.get("gravity_multiplier", 0.5))
 	_hover_left = float(primitive.get("max_duration", 1.0))
-	player.hover_gravity_scale = float(
-			primitive.get("gravity_multiplier", 0.5))
+	_republish_hover()
 
 func _end_hover() -> void:
+	if not _hovering:
+		return
+	_hovering = false
 	_hover_left = 0.0
-	player.hover_gravity_scale = 1.0
+	_hover_scale = 1.0
+	_republish_hover()
+
+## `player.hover_gravity_scale` is ONE value shared by four slots, and it
+## used to be written by whichever slot spoke last: an unguarded
+## `_end_hover` reset a hover another slot was in the middle of, leaving
+## that slot still `_held`, still paying its per-frame drain, and lifting
+## nothing.
+##
+## So it is derived rather than assigned. Every hovering slot states its
+## claim and the strongest one holds, which is also the only sane answer
+## for two hovers at once; a slot that is not hovering claims nothing.
+func _republish_hover() -> void:
+	if player == null:
+		return
+	var scale := 1.0
+	for sibling: EchoRuntime in player.runtimes.values():
+		if sibling._hovering:
+			scale = minf(scale, sibling._hover_scale)
+	player.hover_gravity_scale = scale
 
 func _hover_tick(delta: float) -> void:
 	_hover_left -= delta
@@ -860,11 +924,34 @@ func _blink(primitive: Dictionary) -> void:
 	Tracer.spawn(get_tree().current_scene, before + Vector3.UP * 0.9,
 			landing + Vector3.UP * 0.9, source_color(), 0.16, source_particles())
 
-## A press that could not resolve gives the cooldown back. Charging for a
-## blink that refused to happen is indistinguishable from a broken ability.
+## A press that could not resolve gives back everything it took.
+##
+## It used to give back only the cooldown, which was the smallest of the
+## three things a press costs. The `powers` cost stayed spent, so a blink
+## aimed at a wall drained the bar at input rate for nothing. `_apply_fills`
+## and `action_used` ran afterwards regardless, so a `fills` link PRINTED
+## resource from refused presses with the cooldown refunded each time --
+## aim at the sky, hold the key, generate without bound -- and the rule
+## engine saw a stream of `action_used` events for presses that never
+## happened, which its own documentation calls "a press that genuinely
+## resolved".
+##
+## The flag is read at the bottom of `activate()`, which is the only place
+## that knows the whole press is over.
 func _refund_press() -> void:
-	cooldown_remaining = 0.0
-	cooldown_changed.emit(0.0, float(equipped.get("cooldown", 1.0)))
+	_press_refunded = true
+	var link := _powers_link()
+	if not link.is_empty() and pool != null \
+			and not _primitive_type() in DRAIN_VERBS:
+		pool.refund(str(link.get("source", "")),
+				float(link.get("strength", 1.0)))
+	if cooldown_remaining > 0.0:
+		cooldown_remaining = 0.0
+		cooldown_changed.emit(0.0, float(equipped.get("cooldown", 1.0)))
+		# `reset_cooldown` emits this and this did not, so a rule watching
+		# `action_ready` missed every refunded press -- the one case where
+		# the Action became ready again without any time passing.
+		action_ready.emit()
 
 ## Is there room for the PLAYER here? Asked with the player's own capsule,
 ## because that is the actual question.
