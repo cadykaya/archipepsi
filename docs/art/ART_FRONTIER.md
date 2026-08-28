@@ -62,6 +62,19 @@ file accurate, and end the turn.** Do not invent work to fill a heartbeat.
 | Assets built | 28 models + 12 theme textures + 37 review images |
 | Composed room | 2,888 / 12,000 triangles |
 
+### What a heartbeat cannot see
+
+The hourly routine stores no MCP connectors, so a heartbeat session runs
+**without `mcp__github__*` tools** — and `curl` against the GitHub API is
+unauthenticated in this sandbox and returns an empty check-run list rather
+than an error. A heartbeat therefore **cannot read CI status**, and a poll
+loop built on `curl` would report silence forever, which looks exactly like
+"still running".
+
+So: a heartbeat does not chase CI. PR events wake the interactive session
+directly, and that is where CI is judged. If a heartbeat needs to know, it
+should say it cannot rather than guess.
+
 ---
 
 ## Where the review images are

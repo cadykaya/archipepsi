@@ -40,6 +40,14 @@ candidate explanation and never the first one to reach for.
 `get_node("WorldEnvironment")` silently fails. Name nodes explicitly when
 anything will look them up.
 
+### L-04b · `curl` against the GitHub API is unauthenticated here, and silent
+`GITHUB_TOKEN` is the literal string `proxy-injected`, so a `curl` to
+`/check-runs` returns an empty list rather than a 401. A poll loop built on
+it reports silence forever — which is indistinguishable from "still
+running", and is the same failure as a filter that cannot express failure.
+Use the `mcp__github__*` tools, and note that a scheduled heartbeat session
+does not have them.
+
 ---
 
 ## Painting
