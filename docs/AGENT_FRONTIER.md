@@ -220,6 +220,49 @@ are load bearing and easy to break:
   PROTOTYPE campaign (30 locations), never the current default —
   reinterpreting it would strand every Check it has.
 
+## ART INTEGRATION — five engine contracts landed 2026-08-28
+
+`docs/ART_INTEGRATION.md` is the index of every engine contract the art
+lane consumes. Read it before touching anything the art branch depends
+on. Summary of what is now unblocked, and what is not:
+
+| Art req | Contract | State |
+|---|---|---|
+| 7 | `ENEMY_ENVELOPES` — ten roles, named fields, floor/flying explicit | **cleared** |
+| 14 | `telegraph_started/finished`, `TelegraphOrigin`, `telegraph_progress()` | **cleared for the brute** |
+| 15 | `AFFORDANCE_SIGNAL` — one identity for all seven affordances | **cleared** |
+| 16 | `rail_ride_path()` / `build_rail_along()` — one authoritative polyline | **cleared** |
+| 4 | `HubAnchors.epsilon_bay()` / `intruders()` — the bay is reserved | **cleared** |
+| 19 | Enclosed by default; the tower is in the seal suite now | **cleared** |
+| 20 | Two hazard-orange navigation markers removed, budget pinned at 2 | **cleared** |
+| 3a | `ContentInstantiator.light_housing(theme)` | **cleared** |
+| 5 | `ClusterFootprint` + `cluster_placement_errors()`, registry-enforced | **cleared** |
+| Tier 7 | `shells.shell_catalog()` → request → validator → instantiator | **cleared** |
+
+**Three things they exposed, each worth remembering:**
+
+- **`scale` on a CharacterBody3D scales its collider.** The brute's
+  windup grew its own hitbox 12% and the hit flinch shrank it to 88%.
+  Presentation now lives under a `Visual` container and structurally
+  cannot move a collider.
+- **The room-shell chain had three broken links and every link's own
+  test passed.** `shell_id` was carried, validated and ignored, and
+  nothing ever populated `legal_shell_ids`. A contract nothing connects
+  is not a contract.
+- **`make godot-<suite>` printing "TESTS OK" does not mean it passed.**
+  The Makefile guards also fail on a raised runtime error. Sweep by EXIT
+  CODE; a grep for the OK line hid a red suite for two commits.
+
+**Still blocked, and none of it is engineering's:** telegraphs for melee
+and ranged (they have no windup, and adding one changes difficulty —
+combat decision); behaviour for the seven enveloped roles (same);
+`arch_affordance_socket` (art has not chosen between a visible mount and
+floor placement); neutral `concrete_facility` dressing (req 18);
+`objective_marker` / `signage_module` navigation language;
+`challenge_marker`.
+
+---
+
 **OPEN PACING DECISION — recorded 2026-08-28, do NOT act on it.** The
 owner spotted that the default campaign's goal becomes AVAILABLE well
 before the campaign is finished: `FINALE_REQUIRED_FRACTION = 0.8` needs
