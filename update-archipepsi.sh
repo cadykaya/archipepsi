@@ -38,14 +38,30 @@ echo
 # Warn before pulling rather than after: a pull onto edited files stops
 # halfway with a message about merging, which is hard to undo if you do
 # not already know Git.
-if ! git diff --quiet; then
-	echo "  You have edited files in this folder. Updating could conflict"
-	echo "  with your changes, so nothing has been done."
+#
+# But check for REAL edits first. Godot rewrites godot/project.godot every
+# time it opens the project -- a version stamp, a feature list -- so
+# treating that as "you edited files" would block every update you ever
+# run, for a file you never touched.
+if ! git diff --quiet -- . ':(exclude)godot/project.godot'; then
+	echo "  Some files here differ from the version on GitHub, so nothing"
+	echo "  has been done. If you did not edit these on purpose, tell"
+	echo "  Claude what this says."
 	echo
-	echo "  Edited:"
-	git diff --name-only
+	git diff --stat -- . ':(exclude)godot/project.godot'
 	echo
 	exit 1
+fi
+
+# Only Godot's own churn is left, if anything. Reset it rather than
+# stopping: the repository's copy is the real project definition, and your
+# settings and key bindings are not kept in this file -- they live in
+# Godot's user folder and are untouched by any of this.
+if ! git diff --quiet -- godot/project.godot; then
+	echo "  Godot rewrote godot/project.godot when it opened the project."
+	echo "  That is normal and not something you did; resetting it."
+	echo
+	git checkout -- godot/project.godot
 fi
 
 if ! git pull --ff-only origin "$branch"; then
