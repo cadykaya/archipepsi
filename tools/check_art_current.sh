@@ -110,9 +110,14 @@ if ! git diff --quiet -- $PATHS; then
   exit 2
 fi
 
+# EVERY builder, not the ones that existed when this was written. The
+# batch002 scripts were added and this loop was not, so the newest assets in
+# the tree were the only ones nothing proved could be rebuilt -- the same
+# shape of gap as L-33.
 for script in build_materials build_architecture build_props \
               build_concept_epsilon build_concept_check build_concept_portal \
-              build_concept_enemy build_concept_anchor; do
+              build_concept_enemy build_concept_anchor \
+              build_batch002_enemies build_epsilon_installation; do
   say "rebuilding $script..."
   "$BLENDER" --background --python "tools/blender/$script.py" >/dev/null 2>&1 || \
     fail "$script.py did not complete. Run it directly for the traceback."
