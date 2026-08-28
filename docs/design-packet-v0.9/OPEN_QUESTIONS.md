@@ -125,3 +125,72 @@ message points here.
 - API keys come only from the environment; `.env` is ignored and git
   agrees; a test refuses any tracked file containing a key-shaped
   string.
+
+---
+
+## Q3 — What is the ending, and what is the Hub afterwards?
+
+**Status:** blocks S20 (authored campaign spine). Nothing else depends
+on it, so every other v0.9 stage was finished around it.
+
+### What is already decided, and is not in question
+
+The campaign's **mechanical** spine is complete and tested:
+
+- 30 Checks, three tiers of ten (`TIER_BOUNDS`, `TIER_COUNT`).
+- The goal is Check 030, reachable only through the finale Zone.
+- The finale unlocks at `FINALE_REQUIRED_OTHER_CHECKS`; the Hub already
+  offers a separate finale portal when it does.
+- `goal_sent`, `postgame` and the `ALL_CHECKS_CLEARED` Hub mode all
+  exist, are validated (`postgame` requires `goal_sent`), and reach
+  Godot in the snapshot.
+
+**Epsilon's voice is also decided** and should not be re-litigated: wry,
+proprietorial about the rooms it built, faintly apologetic. "Room clear.
+I will pretend that was the intended route." Whatever the ending says,
+it should sound like that.
+
+### What is NOT decided
+
+Nothing in the packet says what *happens*. Concretely:
+
+1. **Does sending the goal produce an ending sequence?** Today the goal
+   is sent and the Hub carries on. Options: nothing (the AP client's own
+   completion is the ending); a short Epsilon monologue in the Hub; a
+   dedicated scene.
+2. **What is the Hub in the postgame?** `ALL_CHECKS_CLEARED` means
+   nothing is left to play. Options: unchanged; visibly finished (Epsilon
+   stops generating, the portal goes dark); or something that
+   acknowledges the player is still there for the rest of the
+   multiworld — which, in a real async multiworld, is the *common* case,
+   because other players are still going.
+3. **Do the three tiers have identity?** They are currently pure
+   arithmetic. If they have names, moods, or a change in Epsilon's
+   attitude as they progress, that is authored content and needs
+   writing.
+4. **Does Epsilon have a physical presence in the Hub?** S14 reserved an
+   `epsilon_presence` anchor and put nothing in it, because "Epsilon is
+   a voice" is a defensible answer and so is "Epsilon is a terminal in
+   the corner". The anchor is there either way.
+
+### Recommendation
+
+Question 2 is the one worth answering first, and not for narrative
+reasons: in an async multiworld a player reaching `ALL_CHECKS_CLEARED`
+while others are still playing is *normal*, and a Hub that just stops is
+a bug-shaped experience even if every test passes. The other three can
+stay open indefinitely without hurting anything.
+
+### What is already built
+
+- Hub anchors for `postgame`, `epsilon_presence` and `main_portal`,
+  tested to exist so an authored ending attaches rather than plumbs.
+- The state distinctions an ending would fire on, tested to survive into
+  a snapshot.
+- `EpsilonVoice` already has a `finale_open` line pool, so a monologue
+  has a home.
+
+### What is NOT built, deliberately
+
+No ending, no postgame behaviour, no tier names. Writing any of them
+would be inventing a narrative decision the roadmap explicitly reserves.

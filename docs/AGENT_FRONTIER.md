@@ -49,8 +49,8 @@ S23  release hardening         ── last
 | S19 material/VFX/audio/lighting vocabularies | **done** — `test_epsilon_vocabulary.py` |
 | S21 settings/input/a11y | **done** — `player_settings.gd` |
 | S22 packaging/first-run | **done** — `make doctor`, secrets tests |
-| S20 campaign spine | **next** (expect human-decision gates) |
-| S23 release hardening | not started |
+| S20 campaign spine | **hooks built; BLOCKED on Q3** (narrative) |
+| S23 release hardening | **done** — `AUTOMATION_LIMITS.md` |
 
 S22 added `make doctor` (a fresh-clone preflight that separates
 REQUIRED from optional — no API key is reported as fine, because the
@@ -135,11 +135,26 @@ yet" in `ART_ASSET_SPEC.md`, and each is a later stage's job, not debt):
 material slot names → themed materials (S19), animation clip names →
 interactable contracts (S17), manifest `cost` → a placement budget.
 
-**Heartbeat behaviour:** while v0.9 has unfinished INDEPENDENT stages,
-continue the next real frontier item. Once everything left is blocked on
-human-authored assets or design decisions, record the exact remaining
-gates here and make wake-ups no-ops until the user provides feedback or
-assets.
+**Heartbeat behaviour: STOP. Every independently implementable v0.9
+stage is done.** What remains is listed in
+`docs/design-packet-v0.9/AUTOMATION_LIMITS.md` and is blocked on a
+human, not on more iteration:
+
+1. **Authored art/audio/models** — forbidden to generate
+   (`AUTHORED_CONTENT.md`). `docs/ART_ASSET_SPEC.md` is the brief.
+2. **Q1** — how an authored shell honours a generator-chosen size.
+   Blocks graybox archetype shells (the rest of S15 is done). Authoring
+   them first silently picks option C.
+3. **Q2** — asset licensing. Blocks nothing yet; the test fires the
+   moment a binary is committed.
+4. **Q3** — the ending and the postgame Hub. Blocks S20's authored half;
+   its hooks are built and tested.
+5. **Playtesting** — every statable invariant has a test; whether the
+   game is GOOD is not among them.
+
+Wake-ups are no-ops until the user provides playtest feedback, assets,
+or an answer to Q1/Q2/Q3. Do NOT invent speculative work to fill a
+heartbeat.
 
 ---
 

@@ -68,6 +68,7 @@ func _run() -> void:
 	_settings_are_clamped_on_the_way_in()
 	_reduced_motion_actually_reaches_zero()
 	_preferences_never_enter_campaign_truth()
+	_the_postgame_has_somewhere_to_attach()
 	if failures == 0:
 		print("GODOT CONTENT TESTS OK")
 		get_tree().quit(0)
@@ -764,3 +765,34 @@ func _preferences_never_enter_campaign_truth() -> void:
 	## And it must be stored where preferences go.
 	_check(PlayerSettings.PATH.begins_with("user://"),
 			"preferences must live in user://, not beside the save")
+
+
+# --- S20: the hooks an authored ending will need ---------------------------
+
+func _the_postgame_has_somewhere_to_attach() -> void:
+	## S20 is BLOCKED on a narrative decision (Q3): nothing decides what
+	## the ending is, what the Hub becomes afterwards, or whether Epsilon
+	## has a presence there. The roadmap says not to invent those, so
+	## this asserts only that the hooks an authored ending will attach to
+	## exist and are reachable -- so answering Q3 is authoring, not
+	## plumbing.
+	var anchors := HubAnchors.new()
+	for hook: String in ["postgame", "epsilon_presence", "main_portal"]:
+		_check(anchors.has(hook),
+				"the '%s' anchor an authored ending would use is gone"
+				% hook)
+
+	## The state itself must be distinguishable, or an ending has no
+	## moment to fire on. ALL_CHECKS_CLEARED is the bridge's word for
+	## "everything done"; the Hub has to be able to see it.
+	var protocol := FileAccess.get_file_as_string(
+			"res://scripts/autoload/bridge_client.gd")
+	_check(not protocol.is_empty(), "the bridge client is unreadable")
+	BridgeClient.snapshot = {"hub": {"mode": "ALL_CHECKS_CLEARED",
+			"postgame": true, "goal_sent": true}}
+	var hub_state: Dictionary = BridgeClient.snapshot.get("hub", {})
+	_check(str(hub_state.get("mode", "")) == "ALL_CHECKS_CLEARED",
+			"the postgame mode does not survive into a snapshot")
+	_check(bool(hub_state.get("postgame", false)),
+			"the postgame flag does not survive into a snapshot")
+	BridgeClient.snapshot = {}
