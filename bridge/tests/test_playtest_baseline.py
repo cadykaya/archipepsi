@@ -355,6 +355,30 @@ class TestThePlayedZoneIsTheSameZoneEveryTime:
         assert PT.report(tmp_path) == 0
 
 
+def test_a_death_is_reported_as_contamination(tmp_path):
+    """The baseline run had a death and the report said "nothing
+    structurally odd".
+
+    Respawn is at the Zone ENTRANCE, so a death re-walks every room up to
+    where the player fell: elapsed time becomes an upper bound and the
+    dwell of re-crossed rooms is counted twice. That was explained to the
+    owner in conversation and not encoded, which makes the tool quietly
+    disagree with what it was said to mean.
+    """
+    clean = {"elapsed_seconds": 900.0, "deaths": 0, "completed": True,
+             "allocated_checks": 15, "checks_completed": 15,
+             "rooms": [{"index": 0, "seconds": 900.0, "type": "arena",
+                        "value": 10, "holds_check": True}]}
+    assert not any("death" in flag for flag in PT.anomalies(clean))
+
+    died = dict(clean, deaths=1)
+    flags = PT.anomalies(died)
+    assert any("upper bound" in flag for flag in flags), flags
+    assert any("1 death" in flag for flag in flags), flags
+    assert any("2 deaths" in flag for flag in PT.anomalies(dict(clean,
+                                                               deaths=2)))
+
+
 def test_the_recorded_zones_are_not_the_same_zone(baseline):
     """Playtest 2 reported four Zones in a row playing identically. A
     baseline of three copies of one Zone would record the bug rather

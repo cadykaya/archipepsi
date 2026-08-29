@@ -71,6 +71,7 @@ func _run() -> void:
 			% [checked, labels.size()])
 	_the_lab_doorway_is_a_hole_not_a_picture_of_one(hub)
 	_the_lab_corridor_has_walls(hub)
+	_the_hub_board_shows_the_whole_campaign()
 	_the_three_projectiles_read_apart_in_silhouette()
 	_the_silhouette_is_decided_by_flight_not_by_colour()
 	_a_silhouette_cannot_move_a_hitbox()
@@ -157,6 +158,43 @@ func _meshes_under(node: Node) -> Array[MeshInstance3D]:
 	for child in node.get_children():
 		out.append_array(_meshes_under(child))
 	return out
+
+
+## The Hub must describe the campaign it is IN, at any scale.
+##
+## Playtest 2.5 ran 450 locations and the Hub said "CHECKS 15/30" while
+## the wall board showed the first thirty Checks and nothing else --
+## 6.7% of the multiworld, presented as the multiworld. Both numbers were
+## typed in when thirty was the only scale there was, which is the CS8b
+## shape one more time: the options scaled and a consumer did not.
+func _the_hub_board_shows_the_whole_campaign() -> void:
+	var cells := Constants.TIER_COUNT * Constants.TIER_SIZE
+	for total in [30, 120, 450, Constants.LOCATION_COUNT_MAX]:
+		var bucket := HubController.board_bucket_size(total, cells)
+		# Every Check must fall inside some cell. A board that covers less
+		# than the campaign is the bug this replaced.
+		_check(bucket * cells >= total,
+				"a %d-Check campaign needs %d cells at bucket %d, and the "
+				% [total, ceili(float(total) / bucket), bucket]
+				+ "wall has %d: Checks past the end are invisible" % cells)
+		# ...and no more than one cell may be entirely wasted, or the
+		# board is mostly empty space pretending to be content.
+		_check((bucket - 1) * cells < total,
+				"bucket %d over %d cells wastes more than a cell of a "
+				% [bucket, cells] + "%d-Check campaign" % total)
+
+	# The prototype must be untouched: one Check per cell, exactly as
+	# before. That property is why bucketing was a fix and not a redesign.
+	_check(HubController.board_bucket_size(30, cells) == 1,
+			"a thirty-Check campaign no longer puts one Check in a cell, "
+			+ "so this changed the prototype's board as a side effect")
+
+	# And the status line's denominator comes from the snapshot.
+	var snap := {"checked_location_ids": [1, 2, 3],
+			"missing_location_ids": range(447)}
+	_check(HubController.campaign_check_total(snap) == 450,
+			"the Hub counts %d Checks in a 450-Check campaign"
+			% HubController.campaign_check_total(snap))
 
 
 # === Projectiles: the arc is the shape (art requirement 13) ==============

@@ -328,6 +328,20 @@ def anomalies(record: dict) -> list[str]:
     if not record.get("completed"):
         out.append("The Zone was left before it was finished, so the "
                    "elapsed time is not a Zone duration.")
+    # Deaths inflate the clock, and the report said "nothing structurally
+    # odd" about the baseline run with a death on it. Dying returns the
+    # player to the Zone ENTRANCE, so every room between there and where
+    # they fell is walked again: elapsed time is an UPPER BOUND on a clean
+    # duration and per-room dwell double-counts every room re-crossed.
+    # This was explained in conversation and not encoded, which is the
+    # same failure as a comment that says a thing a test does not.
+    deaths = int(record.get("deaths", 0))
+    if deaths:
+        out.append(
+            f"{deaths} death{'' if deaths == 1 else 's'}: respawn is at "
+            "the Zone entrance, so the elapsed time includes re-walking "
+            "everything up to the fall. Treat it as an upper bound, and "
+            "the dwell of re-crossed rooms as double-counted.")
     claimed = record.get("checks_completed", 0)
     allocated = record.get("allocated_checks", 0)
     if allocated and claimed < allocated:

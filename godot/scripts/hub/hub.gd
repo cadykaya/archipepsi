@@ -366,9 +366,11 @@ func refresh() -> void:
 		var note: Variant = last.get("designer_note")
 		if note:
 			lines.append("EPSILON: “%s”" % str(note))
-	lines.append("CHECKS %d/30   KEYS %d/2   COINS %d" % [
+	lines.append("CHECKS %d/%d   KEYS %d/%d   COINS %d" % [
 			snapshot.get("checked_location_ids", []).size(),
+			campaign_check_total(snapshot),
 			int(snapshot.get("signal_keys", 0)),
+			Constants.TIER_COUNT - 1,
 			int(snapshot.get("coins_available", 0))])
 	if hub.get("finale_unlocked", false):
 		lines.append("FINALE UNLOCKED")
@@ -539,6 +541,29 @@ const _WORKING_LINES := [
 	"aligning the corridor with nothing in particular…",
 ]
 
+## How many Checks this campaign actually has.
+##
+## Derived from the snapshot rather than from a constant: the Hub read
+## "CHECKS 15/30" during a 450-location playtest, because 30 was typed in
+## when thirty was the only scale there was. Checked plus missing is
+## every location Archipelago instantiated, whatever the seed chose.
+static func campaign_check_total(snapshot: Dictionary) -> int:
+	return int(snapshot.get("checked_location_ids", []).size()) \
+			+ int(snapshot.get("missing_location_ids", []).size())
+
+
+## How many Checks one board cell stands for.
+##
+## The wall has `TIER_COUNT * TIER_SIZE` cells and a campaign may have 450
+## Checks, so a cell is a BUCKET. At the prototype's thirty this is 1 and
+## the board behaves exactly as it always did -- which is the property
+## that made bucketing the right fix rather than a redesign.
+static func board_bucket_size(total: int, cells: int) -> int:
+	if cells <= 0:
+		return 1
+	return maxi(1, int(ceil(float(total) / float(cells))))
+
+
 func _refresh_campaign_board(snapshot: Dictionary) -> void:
 	if _board_cells.is_empty():
 		return
@@ -566,35 +591,67 @@ func _refresh_campaign_board(snapshot: Dictionary) -> void:
 	var locked := 0
 	var unlocked_tiers := mini(keys, Constants.TIER_COUNT - 1)
 
+	# One cell per BUCKET of Checks. At thirty locations a bucket is one
+	# Check and every branch below is the original per-Check behaviour;
+	# at 450 the wall stops being a picture of the first thirty.
+	var total := campaign_check_total(snapshot)
+	var bucket := board_bucket_size(total, _board_cells.size())
 	for index in _board_cells.size():
-		var location: int = Constants.FIRST_LOCATION_ID + index
-		var game: String = games.get(location, "")
+		var first: int = Constants.FIRST_LOCATION_ID + index * bucket
+		var span := bucket
+		var in_bucket := 0
+		var bucket_done := 0
+		var bucket_pending := 0
+		var bucket_stocked := 0
+		var game := ""
+		for offset in span:
+			var one := first + offset
+			if not (checked.has(one) or games.has(one)
+					or pending.has(one) or stocked.has(one)):
+				# Ids past the end of a short campaign contribute nothing.
+				if one - Constants.FIRST_LOCATION_ID >= total:
+					continue
+			in_bucket += 1
+			if game == "":
+				game = str(games.get(one, ""))
+			if checked.has(one):
+				bucket_done += 1
+			elif pending.has(one):
+				bucket_pending += 1
+			elif stocked.has(one):
+				bucket_stocked += 1
 		var tint: Color = ThemeMaterials.color_for_game(game) if game != "" \
 				else Color(0.4, 0.42, 0.46)
 		var energy := 0.5
-		if checked.has(location):
-			# Confirmed: bright, saturated — this one really happened.
+		var share := float(bucket_done) / float(maxi(in_bucket, 1))
+		if in_bucket > 0 and bucket_done == in_bucket:
+			# Confirmed: bright, saturated — these really happened.
 			energy = 2.0
-			done += 1
-		elif pending.has(location):
+			done += bucket_done
+		elif bucket_pending > 0:
 			tint = Color(1.0, 0.85, 0.35)
 			energy = 1.2 + 0.7 * _board_pulse
-			flight += 1
-		elif stocked.has(location):
+			flight += bucket_pending
+			done += bucket_done
+		elif bucket_stocked > 0:
 			# On the shop counter behind you — purchasable, not in flight.
 			# The schema keeps these disjoint; so does the board.
 			tint = Color(0.55, 0.95, 0.55)
 			energy = 0.9 + 0.4 * _board_pulse
-			for_sale += 1
+			for_sale += bucket_stocked
+			done += bucket_done
 		elif index / Constants.TIER_SIZE > unlocked_tiers:
 			# Behind a Signal Key you do not have yet.
 			tint = tint.darkened(0.82)
 			energy = 0.06
-			locked += 1
+			locked += in_bucket
 		else:
-			tint = tint.darkened(0.45)
-			energy = 0.35
-			open += 1
+			# Part-done buckets glow in proportion, so a 450-Check wall
+			# still shows progress rather than snapping cell to cell.
+			tint = tint.darkened(0.45 - 0.3 * share)
+			energy = 0.35 + 1.2 * share
+			done += bucket_done
+			open += in_bucket - bucket_done
 		var material: StandardMaterial3D = _board_cells[index].material_override
 		material.albedo_color = tint
 		material.emission = tint
