@@ -2743,12 +2743,16 @@ right beside EXIT green at 0.805, and is not a spare value. It does not
 need one: its meaning is the glyph and where it is bolted.
 
 
-| module | tris | size (m) | job |
-|---|---|---|---|
-| `nav_blade` | 60 | 1.17 × 0.30 × 0.52 | perpendicular to the wall, read along a corridor. Runtime text. |
-| `nav_panel` | 60 | 1.04 × 0.23 × 0.55 | flush beside a threshold at eye height. Runtime text. |
-| `nav_chevron` | 68 | 0.51 × 0.21 × 0.36 | direction, as an ink arrowhead on a pale field. |
-| `nav_hanger` | 84 | 1.10 × 0.13 × 0.98 | the ceiling-hung blade, for a junction with no wall. |
+| module | job |
+|---|---|
+| `nav_blade` | perpendicular to the wall, read along a corridor. Runtime text. |
+| `nav_panel` | flush beside a threshold at eye height. Runtime text. |
+| `nav_chevron` | direction, as an ink arrowhead on a pale field. |
+| `nav_hanger` | the ceiling-hung blade, for a junction with no wall. |
+
+Metrics moved to the Batch 022-R section below, where every module is
+listed per theme. Quoting them here as well would mean one number in two
+places, which is how a ledger goes quietly stale.
 
 Direction is deliberately **not** baked into the blade. A blade with an
 arrow in it can only ever mean "right", and which way `STAIR C` lies is a
@@ -2798,4 +2802,132 @@ asset is kept in the inventory against that possibility.
 architecture: `nav_blade`, `nav_panel`, `nav_chevron`, `nav_hanger`.
 Direction remains placement/runtime truth rather than baked into the
 primary sign mesh, and runtime wording remains runtime-owned.
+
+## Batch 020 — PASS
+
+All seven modules PASS (owner, 2026-08-29). No revision requested.
+
+`K_bay_in_situ` demonstrates that the parts compose as one architectural
+construction system rather than seven unrelated props. The wall variants
+are meaningfully different without becoming decorative novelties;
+`arch_trim_ceiling` reads as a supported structural bay rather than a
+floating beam; and the grate reads as actual bars over depth rather than a
+flat "grate" surface.
+
+## Batch 021 — PARTIAL PASS
+
+PASS: `arch_vent`, `arch_catwalk`, `arch_tunnel_bore`, `arch_secret_alcove`,
+`arch_window`.
+
+The horseshoe bore direction is approved and `S_bore_inside` proves the
+sections tile into a coherent tunnel. The 1.60 m catwalk width is accepted
+as the intentional non-brute route. The window opening / reveal / mullion
+language and the secret alcove are approved.
+
+`arch_duct` was held for one reason: the evidence did not show it well
+enough. `S_services_family` renders it edge-on and small, so silhouette,
+construction, attachment and section seams were not reviewable.
+
+### Batch 021-R — the duct evidence
+
+Two sheets, in `docs/art/review/batch021r/`. **The asset is unchanged.**
+
+`R_duct_detail` is a close three-quarter: the flange at both ends and at
+mid-run, two hangers with straps, the 0.62 × 0.46 section hung 0.22 clear
+inside `CEILING_GAP` 0.5. `R_duct_run` chains two sections under two
+`arch_ceiling_plain` bays from below — the duct module is 4.0 m and the
+bay is 4.0 × 4.0, so they share one grid and the seam lands on a flange.
+
+Two errors on the way, both already-written lessons re-earned: a ceiling
+anchored asset given the runner's floor backdrop rendered as a grey plane
+with two specks on it (L-63), and the first run shot was aimed from *above*
+a ceiling, which is a view no player will ever have.
+
+The renders were made to expose a problem if one existed. They did not, so
+the asset was not touched.
+
+## Batch 022-R — the six-theme evidence
+
+The original `D_themes` showed three themes and said the other three were
+behind the Style Lock gate. That was true when written and is not now:
+Style Lock passed, Batch 012 built the remaining treatments, and all six
+carry the `trim` and `wall` roles this family is made of. **The caption was
+stale rather than the claim untested.**
+
+Every module is now **built once per theme** and wears that theme's own
+trim — 4 modules × 6 themes = 24 assets. One concrete sign re-lit six ways
+would have proved nothing. The sheet holds camera, lens, lighting and
+reading distance identical across all six panels, with a neutral backdrop
+held constant so the signage is the only variable.
+
+| module | tris | size (m) | runtime text budget |
+|---|---|---|---|
+| `nav_blade_concrete_facility` | 60 | 1.17 × 0.30 × 0.52 | 15 chars |
+| `nav_blade_rusted_industrial` | 60 | 1.17 × 0.30 × 0.52 | 15 chars |
+| `nav_blade_neon_transit` | 60 | 1.17 × 0.30 × 0.52 | 15 chars |
+| `nav_blade_gothic_stone` | 60 | 1.17 × 0.30 × 0.52 | 15 chars |
+| `nav_blade_temple_ruin` | 60 | 1.17 × 0.30 × 0.52 | 15 chars |
+| `nav_blade_void_glitch` | 60 | 1.17 × 0.30 × 0.52 | 15 chars |
+| `nav_panel_concrete_facility` | 60 | 1.04 × 0.23 × 0.55 | 16 chars |
+| `nav_panel_rusted_industrial` | 60 | 1.04 × 0.23 × 0.55 | 16 chars |
+| `nav_panel_neon_transit` | 60 | 1.04 × 0.23 × 0.55 | 16 chars |
+| `nav_panel_gothic_stone` | 60 | 1.04 × 0.23 × 0.55 | 16 chars |
+| `nav_panel_temple_ruin` | 60 | 1.04 × 0.23 × 0.55 | 16 chars |
+| `nav_panel_void_glitch` | 60 | 1.04 × 0.23 × 0.55 | 16 chars |
+| `nav_chevron_concrete_facility` | 68 | 0.51 × 0.21 × 0.36 | 7 chars |
+| `nav_chevron_rusted_industrial` | 68 | 0.51 × 0.21 × 0.36 | 7 chars |
+| `nav_chevron_neon_transit` | 68 | 0.51 × 0.21 × 0.36 | 7 chars |
+| `nav_chevron_gothic_stone` | 68 | 0.51 × 0.21 × 0.36 | 7 chars |
+| `nav_chevron_temple_ruin` | 68 | 0.51 × 0.21 × 0.36 | 7 chars |
+| `nav_chevron_void_glitch` | 68 | 0.51 × 0.21 × 0.36 | 7 chars |
+| `nav_hanger_concrete_facility` | 84 | 1.10 × 0.13 × 0.98 | 20 chars |
+| `nav_hanger_rusted_industrial` | 84 | 1.10 × 0.13 × 0.98 | 20 chars |
+| `nav_hanger_neon_transit` | 84 | 1.10 × 0.13 × 0.98 | 20 chars |
+| `nav_hanger_gothic_stone` | 84 | 1.10 × 0.13 × 0.98 | 20 chars |
+| `nav_hanger_temple_ruin` | 84 | 1.10 × 0.13 × 0.98 | 20 chars |
+| `nav_hanger_void_glitch` | 84 | 1.10 × 0.13 × 0.98 | 20 chars |
+
+Geometry is identical across the six themes for a given module — only the texture differs, because the theme enters through the trim the sign is made of. The rows are listed in full because the ledger checks every built asset, and an asset the ledger cannot see is one nobody can check.
+
+`text_max_chars_at_22px` is new and is the answer to "does the text fit":
+the builder now measures the pale field and records its centre, its usable
+width, and the character budget that implies.
+
+### Two findings
+
+**The blade's text was mis-centred, and it showed.** `nav_blade`'s bracket
+hangs off −X, so `module_floor` centring leaves the pale field 0.155 m to
+the +X side of the object origin. Every early sheet placed text at the
+object position, so it sat that far left of its own field and overran the
+frame at one end. The builder now records `face_centre_x_m` and the scenes
+apply it. This is L-67 again: a number an asset is designed around belongs
+in its manifest.
+
+**The family inherits hazard striping in one theme — NOT FIXED, owner's
+call.** `materials._rust_trim` paints a *universal* hazard band into the
+`rusted_industrial` trim texture, deliberately and correctly: in that theme
+a walkway edge is the thing most likely to kill you, and it uses
+`pal.universal("hazard")` rather than the theme's own orange so the player
+does not re-learn it per theme.
+
+The navigation family is built from `trim`. So in one of six themes a
+wayfinding sign wears hazard stripes — and the palette's rule for that
+colour is *"this will hurt you. Never used decoratively, in any theme, for
+any reason."* `G_hazard_collision.png` shows it beside a theme whose trim
+carries no band.
+
+This was not fixed unilaterally because the fix touches a locked rule.
+Three options, with a recommendation:
+
+1. **Add a `trim_plain` role** — the same per-theme trim treatment without
+   the walkway-edge safety band, for fixtures that are not walkway edges.
+   Additive: no approved asset changes, the family keeps theme-owned trim,
+   and the collision disappears. **Recommended.**
+2. **Build the family from `wall`** — neutral in all six, but signs would
+   read as building fabric rather than as fixtures.
+3. **Accept it** — rejected here, because it breaks a locked rule.
+
+The four navigation assets stay PENDING on this.
+
+Status: **PENDING** — not self-marked.
 

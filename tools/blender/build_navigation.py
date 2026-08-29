@@ -86,8 +86,16 @@ import common  # noqa: E402
 import materials  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+#: A signage family that exists in one theme is not a six-theme system.
+#: Every module is built once per theme and wears that theme's own trim,
+#: which is the claim the review sheet has to be able to test.
+THEMES = ("concrete_facility", "rusted_industrial", "neon_transit",
+          "gothic_stone", "temple_ruin", "void_glitch")
 OUT = "batch022/navigation"
+
+#: Set per build pass. The module-level default keeps the helpers readable
+#: and every builder below theme-agnostic.
+THEME = THEMES[0]
 
 DIM = common.DIM
 DOOR_W = DIM["door_width"]
@@ -128,16 +136,17 @@ _IMAGES = {}
 
 
 def _image(role):
-    if role not in _IMAGES:
+    key = (THEME, role)
+    if key not in _IMAGES:
         canvas, _ = materials.paint(THEME, role, size=PROP_SIZE,
-                                   metres=PROP_METRES)
-        _IMAGES[role] = canvas.to_blender("nav_%s_%s" % (THEME, role))
-    return _IMAGES[role]
+                                    metres=PROP_METRES)
+        _IMAGES[key] = canvas.to_blender("nav_%s_%s" % (THEME, role))
+    return _IMAGES[key]
 
 
 def _paint(obj, name, role):
     common.assign(obj, common.make_textured_material(
-        "%s_%s" % (name, role), _image(role),
+        "%s_%s_%s" % (name, THEME, role), _image(role),
         roughness=pal.roughness(THEME)))
     return obj
 
@@ -146,7 +155,7 @@ def _ink(obj, name):
     """The dark glyph value: arrowheads, and anything else that must read
     as MARKING rather than as structure."""
     common.assign(obj, common.make_material(
-        "%s_ink" % name, INK_HEX, roughness=0.48))
+        "%s_%s_ink" % (name, THEME), INK_HEX, roughness=0.48))
     return obj
 
 
@@ -158,7 +167,7 @@ def _face(obj, name):
     HUD colours and three universal families.
     """
     common.assign(obj, common.make_material(
-        "%s_face" % name, FACE_HEX, roughness=FACE_ROUGH))
+        "%s_%s_face" % (name, THEME), FACE_HEX, roughness=FACE_ROUGH))
     return obj
 
 
@@ -375,35 +384,97 @@ MODULES = [
 ]
 
 
+#: Label3D advance per character, as a fraction of `font_size * pixel_size`.
+#: Measured from the review renders rather than assumed: it is what turns a
+#: field width in metres into a character budget runtime can respect.
+_CHAR_ADVANCE = 0.62
+
+
+def _face_field(obj):
+    """The pale field's extent, and the character budget it implies.
+
+    Returned as manifest keys so neither a scene nor the runtime has to
+    guess where a sign's text belongs or how long it may be.
+    """
+    face_slots = {i for i, m in enumerate(obj.data.materials)
+                  if m is not None and m.name.endswith("_face")}
+    if not face_slots:
+        return {}
+    xs, zs = [], []
+    for poly in obj.data.polygons:
+        if poly.material_index in face_slots:
+            for vi in poly.vertices:
+                co = obj.matrix_world @ obj.data.vertices[vi].co
+                xs.append(co.x)
+                zs.append(co.z)
+    if not xs:
+        return {}
+    width = max(xs) - min(xs)
+    # 88% of the field, so a glyph keeps the ground around it that L-65 was
+    # written about. The same rule that applies to the arrowhead applies to
+    # a word.
+    usable = width * 0.88
+    return {
+        "face_centre_x_m": round((min(xs) + max(xs)) / 2.0, 3),
+        "face_centre_z_m": round((min(zs) + max(zs)) / 2.0, 3),
+        "face_width_m": round(width, 3),
+        "face_height_m": round(max(zs) - min(zs), 3),
+        "text_usable_width_m": round(usable, 3),
+        # At the review sheets' 0.0032 m pixel size and font size 22.
+        "text_max_chars_at_22px": int(
+            usable / (22 * 0.0032 * _CHAR_ADVANCE)),
+    }
+
+
 def main():
-    common.reset_scene()
+    global THEME
     report = {}
-    for builder, anchor, mount in MODULES:
-        obj = builder()
-        name = obj.name
-        common.set_origin(obj, anchor)
-        common.uv_project_world(obj, PROP_DENSITY, PROP_SIZE)
-        entry = common.export_glb(
-            obj, "%s/%s.glb" % (OUT, name), "prop", tier="prop",
-            texture_size=PROP_SIZE, anchor=anchor,
-            check_flat=False)
-        # The chevron is the one configuration with no text field: it is
-        # pure direction, so there is nothing for runtime to write on it.
-        entry["carries_runtime_label"] = name != "nav_chevron"
-        entry["face_hex"] = FACE_HEX
-        entry["mount_face"] = mount
-        # The authored height, so a scene places the sign by reading this
-        # rather than by repeating a number that lives in the builder.
-        zs = [(obj.matrix_world @ v.co).z for v in obj.data.vertices]
-        entry["authored_top_m"] = round(max(zs), 3)
-        entry["authored_bottom_m"] = round(min(zs), 3)
-        report[name] = entry
+    for theme in THEMES:
+        THEME = theme
+        # Per theme, not once: Blender dedupes object names against what is
+        # already in the scene, so a second pass over the same four builders
+        # exported nav_blade.001.glb ... nav_blade.005.glb. The image cache
+        # holds datablocks the reset frees, so it goes with it.
+        common.reset_scene()
+        _IMAGES.clear()
+        for builder, anchor, mount in MODULES:
+            obj = builder()
+            name = obj.name
+            common.set_origin(obj, anchor)
+            common.uv_project_world(obj, PROP_DENSITY, PROP_SIZE)
+            entry = common.export_glb(
+                obj, "%s/%s/%s.glb" % (OUT, theme, name), "prop",
+                tier="prop", texture_size=PROP_SIZE, anchor=anchor,
+                check_flat=False)
+            # The chevron is the one configuration with no text field: it
+            # is pure direction, so there is nothing for runtime to write.
+            entry["carries_runtime_label"] = name != "nav_chevron"
+            entry["face_hex"] = FACE_HEX
+            entry["mount_face"] = mount
+            entry["theme"] = theme
+            # The authored height, so a scene places the sign by reading
+            # this rather than repeating a number that lives in the builder.
+            zs = [(obj.matrix_world @ v.co).z for v in obj.data.vertices]
+            entry["authored_top_m"] = round(max(zs), 3)
+            entry["authored_bottom_m"] = round(min(zs), 3)
+            # Where the runtime text actually goes, and how much of it
+            # fits. The blade's bracket hangs off -X, so its FACE centre
+            # is not its MESH centre -- the first review sheets placed
+            # text at the mesh centre and it sat 0.2 m left of the field
+            # it was supposed to be inside, overrunning the frame. A
+            # renderer cannot infer this; it belongs in the manifest,
+            # the same way `authored_top_m` does.
+            entry.update(_face_field(obj))
+            # Keyed as a plain identifier, not "<theme>/<name>": the
+            # docs-metrics checker matches manifest keys against ids
+            # quoted in the owner's ledger, and a slash is not one.
+            report["%s_%s" % (name, theme)] = entry
     out = os.path.join(common.REPO_ROOT, "assets", "models", "batch022",
                        "navigation", "manifest.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8") as handle:
         json.dump(report, handle, indent=2, sort_keys=True)
-    print("[art] batch022 manifest -> %s" % out)
+    print("[art] batch022 manifest -> %s (%d entries)" % (out, len(report)))
 
 
 if __name__ == "__main__":

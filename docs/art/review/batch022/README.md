@@ -125,6 +125,49 @@ text is the close confirmation.
 | `B_threshold.png` | what is this place, on a run of doors |
 | `C_hue.png` | every committed colour in one corridor, plus the signage |
 | `C2_hue_desaturated.png` | the same frame with hue removed |
-| `D_themes.png` | the three authored themes. The other three are behind the Style Lock gate and are not faked. |
+| `D_themes.png` | **all six themes.** Each module is built in its own theme and wears that theme's trim — not one concrete sign re-lit six ways. Camera, lens, lighting and distance identical in every panel, on a neutral backdrop held constant so the signage is the only variable. |
 | `E_family.png` | the four modules at reading distance |
 | `F_collapse.png` | the luminance table above |
+| `G_hazard_collision.png` | **a finding.** In `rusted_industrial` the family inherits hazard striping — see below. |
+
+
+## Batch 022-R — what the six-theme sheet changed
+
+The original `D_themes` showed three themes and said the other three were
+behind the Style Lock gate. **That caption was stale, not the claim.**
+Style Lock passed, Batch 012 built the remaining treatments, and all six
+carry the `trim` and `wall` roles this family is made of. Every module is
+now built once per theme — 4 × 6 = 24 assets.
+
+### Finding 1 — the blade's text was mis-centred
+
+`nav_blade`'s bracket hangs off −X, so `module_floor` centring leaves the
+pale field 0.155 m to the +X side of the object origin. Every early sheet
+placed text at the object position, so it sat that far left of its own
+field and overran the frame at one end. The builder now records
+`face_centre_x_m`, `face_width_m`, `text_usable_width_m` and a character
+budget; the scenes read them. L-67 again: a number an asset is designed
+around belongs in its manifest.
+
+### Finding 2 — hazard striping in one theme. NOT FIXED; owner's call.
+
+`materials._rust_trim` paints a **universal** hazard band into the
+`rusted_industrial` trim texture — deliberately and correctly, because in
+that theme a walkway edge is the thing most likely to kill you, and it uses
+`pal.universal("hazard")` so the player does not re-learn it per theme.
+
+The navigation family is built from `trim`, so in one of six themes a
+wayfinding sign wears hazard stripes. The palette's rule for that colour is
+*"this will hurt you. Never used decoratively, in any theme, for any
+reason."* `G_hazard_collision.png` shows it beside a theme whose trim
+carries no band.
+
+Not fixed unilaterally, because the fix touches a locked rule. Options:
+
+1. **Add a `trim_plain` role** — the same per-theme trim without the
+   walkway-edge safety band, for fixtures that are not walkway edges.
+   Additive, no approved asset changes, the family keeps theme-owned trim,
+   collision gone. **Recommended.**
+2. **Build the family from `wall`** — neutral in all six, but the signs
+   would read as building fabric rather than as fixtures.
+3. **Accept it** — rejected here; it breaks a locked rule.

@@ -60,37 +60,37 @@ rewritten, no commits lost). PR #6, opened from it against `main`, is
 **superseded** — it showed the whole stacked project history rather than an
 art diff. Do not maintain two active art branches.
 
-## Art batches awaiting the owner
-**020, 021 and 022 all remain PENDING.** Art does not mark its own work.
-Batch 022's four assets are NOT marked PASS.
+## Art batches — owner review 2026-08-29
 
-Owner decisions recorded 2026-08-29:
+**020 PASS** (all seven). **021 PARTIAL PASS** — five PASS; `arch_duct` was
+held on evidence only, not design. **022 design approved**, assets still
+PENDING on evidence.
 
-- **`objective_marker` — STRUCK.** No *current* objective type requires a
-  world marker: `reach_reward` is marked by the Check, `kill_all` has no
-  destination object, and `platform_to_goal`'s goal area sits ~2 m from
-  `reward_position` and is crossed on the way to the waypointed Check.
-  **Not a permanent prohibition** — a future objective with a destination
-  that is unrepresented, not naturally crossed, and genuinely helped by
-  world-side marking may reopen it. No speculative asset is kept meanwhile.
-- **`signage_module` — architecture accepted** as the four-module family
-  (`nav_blade`, `nav_panel`, `nav_chevron`, `nav_hanger`). Direction stays
-  placement/runtime truth; wording stays runtime-owned. The assets are
-  still pending visual review.
+Cleanup gate delivered:
 
-**Theme landmarks are NOT released yet.** The direction is authorized in
-principle, but Batch 023 does not open until 020/021/022 are reviewed and
-the owner explicitly releases the landmark phase.
+- **021-R** — two `arch_duct` sheets (`docs/art/review/batch021r/`). Asset
+  unchanged; the renders found no problem.
+- **022-R** — the six-theme sheet. The old "other three behind the Style
+  Lock gate" caption was **stale**, not the claim: all six treatments
+  exist. Every module is now built per theme, 4 × 6 = 24 assets.
+- `arch_objective_socket` and `arch_signage_mount` **struck**.
+  `arch_vista_socket` untouched and still blocked on an engine contract.
 
-**Heartbeat may no-op while waiting.** Do not invent filler production.
-Continue only for CI breakage, reproducibility/staleness failures, branch
-or PR bookkeeping, or an objective correctness issue in already-built
-approved work.
+**One thing is back with the owner.** The six-theme sheet found a real
+collision: `materials._rust_trim` paints a universal hazard band into
+`rusted_industrial` trim, so the nav family — built from `trim` — wears
+hazard stripes in one of six themes, against a locked rule. NOT fixed
+unilaterally. Recommended fix is an additive `trim_plain` role. See
+`G_hazard_collision.png` and the Batch 022-R section of `ART_REVIEW.md`.
 
-Resolved 2026-08-28: `arch_affordance_socket` is **struck** (interface req
-22). No universal affordance mount; the footprint stays an engineering
-clearance contract, not geometry shown to the player; each affordance owns
-its own attachment language and is extended if it needs more.
+Earlier decisions still standing: `objective_marker` struck (not a
+permanent prohibition — a genuinely new future objective may reopen it);
+`signage_module` is the four-module family, direction is placement/runtime
+truth, wording runtime-owned; `arch_affordance_socket` struck (req 22).
+
+**Batch 023 / theme landmarks are NOT released.** Nothing opens until the
+owner clears the remaining pending assets and releases that phase.
+Heartbeat may no-op; do not invent filler production.
 
 ## Open decision, deliberately not guessed
 `challenge_marker` (§14.2) and its `challenge_timer` readout (§14.1) have a complete bridge half — grantable, recorded, `best_seconds` improves — and no world half, because neither section says where a run starts, what ends it, or what counts as one. `test_stage_tripwires.py::test_the_challenge_marker_still_has_no_challenge` names the decision and comes due when it is made.

@@ -158,19 +158,19 @@ These are the vocabulary everything after them inherits.
 | `shell_treasure_coffer` | L3 | room | 384 | 8.80 × 8.80 × 6.30 | entrance | B19 | B19 | PASS |
 | `shell_corner_left` | L3 | room | 216 | 6.80 × 6.80 × 4.50 | entrance | B19 | B19 | PASS |
 | `shell_corner_right` | L3 | room | 216 | 6.80 × 6.80 × 4.50 | entrance | B19 | B19 | PASS |
-| `arch_wall_variant_a` | L1 | module | 72 | 4.00 × 0.66 × 4.00 | wall | B20 | B20 | PEND |
-| `arch_wall_variant_b` | L1 | module | 60 | 4.00 × 0.67 × 4.00 | wall | B20 | B20 | PEND |
-| `arch_ceiling_plain` | L1 | module | 60 | 4.00 × 4.00 × 0.41 | ceiling | B20 | B20 | PEND |
-| `arch_trim_ceiling` | L1 | module | 48 | 4.00 × 0.49 × 0.87 | ceiling | B20 | B20 | PEND |
-| `arch_floor_grate` | L1 | module | 204 | 4.00 × 4.00 × 0.36 | module_floor | B20 | B20 | PEND |
-| `arch_column` | L1 | module | 60 | 0.76 × 0.76 × 4.00 | floor | B20 | B20 | PEND |
-| `arch_beam_span` | L1 | module | 76 | 4.00 × 0.44 × 0.80 | ceiling | B20 | B20 | PEND |
-| `arch_vent` | L1 | module | 116 | 0.70 × 0.15 × 1.10 | wall | B21 | B21 | PEND |
-| `arch_duct` | L1 | module | 96 | 0.74 × 4.00 × 0.75 | ceiling | B21 | B21 | PEND |
-| `arch_catwalk` | L1 | module | 220 | 1.60 × 4.00 × 1.64 | floor | B21 | B21 | PEND |
-| `arch_tunnel_bore` | L1 | module | 156 | 4.68 × 4.00 × 4.03 | module_floor | B21 | B21 | PEND |
-| `arch_secret_alcove` | L1 | module | 68 | 1.80 × 2.40 × 1.54 | module_floor | B21 | B21 | PEND |
-| `arch_window` | L1 | module | 108 | 4.00 × 0.62 × 4.00 | wall | B21 | B21 | PEND |
+| `arch_wall_variant_a` | L1 | module | 72 | 4.00 × 0.66 × 4.00 | wall | B20 | B20 | PEND  **PASS 2026-08-29 (Batch 020).** |
+| `arch_wall_variant_b` | L1 | module | 60 | 4.00 × 0.67 × 4.00 | wall | B20 | B20 | PEND  **PASS 2026-08-29 (Batch 020).** |
+| `arch_ceiling_plain` | L1 | module | 60 | 4.00 × 4.00 × 0.41 | ceiling | B20 | B20 | PEND  **PASS 2026-08-29 (Batch 020).** |
+| `arch_trim_ceiling` | L1 | module | 48 | 4.00 × 0.49 × 0.87 | ceiling | B20 | B20 | PEND  **PASS 2026-08-29 (Batch 020).** |
+| `arch_floor_grate` | L1 | module | 204 | 4.00 × 4.00 × 0.36 | module_floor | B20 | B20 | PEND  **PASS 2026-08-29 (Batch 020).** |
+| `arch_column` | L1 | module | 60 | 0.76 × 0.76 × 4.00 | floor | B20 | B20 | PEND  **PASS 2026-08-29 (Batch 020).** |
+| `arch_beam_span` | L1 | module | 76 | 4.00 × 0.44 × 0.80 | ceiling | B20 | B20 | PEND  **PASS 2026-08-29 (Batch 020).** |
+| `arch_vent` | L1 | module | 116 | 0.70 × 0.15 × 1.10 | wall | B21 | B21 | PEND  **PASS 2026-08-29 (Batch 021).** |
+| `arch_duct` | L1 | module | 96 | 0.74 × 4.00 × 0.75 | ceiling | B21 | B21 | PEND  **PENDING — evidence only (Batch 021-R). Asset unchanged; renders found no problem.** |
+| `arch_catwalk` | L1 | module | 220 | 1.60 × 4.00 × 1.64 | floor | B21 | B21 | PEND  **PASS 2026-08-29 (Batch 021).** |
+| `arch_tunnel_bore` | L1 | module | 156 | 4.68 × 4.00 × 4.03 | module_floor | B21 | B21 | PEND  **PASS 2026-08-29 (Batch 021).** |
+| `arch_secret_alcove` | L1 | module | 68 | 1.80 × 2.40 × 1.54 | module_floor | B21 | B21 | PEND  **PASS 2026-08-29 (Batch 021).** |
+| `arch_window` | L1 | module | 108 | 4.00 × 0.62 × 4.00 | wall | B21 | B21 | PEND  **PASS 2026-08-29 (Batch 021).** |
 
 | Theme material | Roles built |
 | --- | --- |
@@ -310,8 +310,8 @@ primitives today. Module grid **4.0 m**; wall thickness **0.40 m**; door
 | `arch_connector_straight` | L1 | A | **B7** | | `arch_trim_rail` | L1 | A | B1 |
 | `arch_corner_left/right` | L1 | A | **B7** | | `arch_trim_ceiling` | L1 | B | **B20** |
 | `arch_column` | L1 | B | **B20** | | `arch_light_fixture` | L1 | A | B1 |
-| `arch_beam_span` | L1 | B | **B20** | | `arch_signage_mount` | L0 | B | **blocked with the navigation language** |
-| `arch_stair` | L1 | A | **B7** | | `arch_objective_socket` | L1 | B | **blocked with the navigation language** |
+| `arch_beam_span` | L1 | B | **B20** | | ~~`arch_signage_mount`~~ | — | — | **STRUCK 2026-08-29 (owner)** — Batch 022's accepted architecture already owns its mounting language: `nav_blade` its wall relationship, `nav_panel` flush at the threshold, `nav_hanger` suspension, `nav_chevron` its directional attachment and standalone placement. A generic architecture-side mount would duplicate that and recreate the universal-socket problem already rejected for affordances (req 22). |
+| `arch_stair` | L1 | A | **B7** | | ~~`arch_objective_socket`~~ | — | — | **STRUCK 2026-08-29 (owner)** — `objective_marker` is struck from the current required vocabulary, so no current object requires an objective socket. Speculative mounting geometry is not retained for a hypothetical future objective; a genuinely new future objective may reopen it deliberately. |
 | `arch_ramp` | L1 | A | **B7** | | ~~`arch_affordance_socket`~~ | — | — | **STRUCK 2026-08-28 (req 22)** — each affordance owns its own mounting language |
 | `arch_ledge` | L1 | A | **B7** | | `arch_secret_alcove` | L2 | B | **B21** |
 | | | | | | `arch_vista_socket` | L2 | C | **no engine contract to build against** |

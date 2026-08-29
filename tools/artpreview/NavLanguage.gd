@@ -42,17 +42,20 @@ func _initialize() -> void:
 	await _themes()
 	await _family()
 	_swatches()
-	print("[nav] 7 shots -> %s" % _out)
+	await _collision()
+	print("[nav] 8 shots -> %s" % _out)
 	quit()
 
 func _num(key: String, fallback: float) -> float:
 	return float(_dim.get(key, fallback))
 
-func _glb(name: String) -> Node3D:
+## Every module is built once per theme and wears that theme's own trim,
+## so a sign is loaded by (theme, name) rather than by name alone.
+func _glb(name: String, theme: String = "concrete_facility") -> Node3D:
 	var n: Node3D = ArtBench.load_glb(
-			"%s/models/%s/%s.glb" % [_assets, MODELS, name])
+			"%s/models/%s/%s/%s.glb" % [_assets, MODELS, theme, name])
 	if n == null:
-		push_error("NavLanguage: missing %s" % name)
+		push_error("NavLanguage: missing %s/%s" % [theme, name])
 		return null
 	ArtBench.force_nearest(n)
 	return n
@@ -127,8 +130,10 @@ func _manifest() -> Dictionary:
 			_mf = JSON.parse_string(f.get_as_text())
 	return _mf
 
-func _top(name: String, fallback: float) -> float:
-	return float(_manifest().get(name, {}).get("authored_top_m", fallback))
+func _top(name: String, fallback: float,
+		theme: String = "concrete_facility") -> float:
+	return float(_manifest().get("%s_%s" % [name, theme], {}).get(
+			"authored_top_m", fallback))
 
 ## Mount a wall sign so its bracket end sits ON the wall plane rather than
 ## inside it. Measured, not guessed: the first pass placed a 1.30 m blade
@@ -143,6 +148,21 @@ func _mount(node: Node3D, wall_x: float, side: float, z: float) -> void:
 	var half := box.size.x * 0.5
 	# Into the corridor, away from the wall it is bolted to.
 	node.position = Vector3(wall_x - side * half, 0, z)
+
+## The world X of a sign's TEXT FIELD centre, which is not its mesh centre.
+##
+## `nav_blade`'s bracket hangs off -X, so `module_floor` centring leaves the
+## pale field 0.155 m to the +X side of the object origin. Every early sheet
+## placed text at the object position and it sat that far left of the field,
+## overrunning the frame at one end -- visible as "the text does not fit".
+## The builder now records `face_centre_x_m`; this applies it, flipping with
+## the yaw when a sign is mounted on the opposite wall.
+func _face_x(node: Node3D, name: String,
+		theme: String = "concrete_facility") -> float:
+	var off := float(_manifest().get("%s_%s" % [name, theme], {}).get(
+			"face_centre_x_m", 0.0))
+	var flipped: bool = absf(fposmod(node.rotation_degrees.y, 360.0) - 180.0) < 1.0
+	return node.position.x + (-off if flipped else off)
 
 ## A -- THE JUNCTION. Which way from here.
 ##
@@ -204,10 +224,10 @@ func _junction() -> void:
 			# The arrowhead is authored pointing +X, so a branch running
 			# left needs it turned over.
 			arrow.rotation_degrees.y = 180.0 if side < 0.0 else 0.0
-		bx[side] = blade.position.x
+		bx[side] = _face_x(blade, "nav_blade")
 	var bt := _top("nav_blade", 2.72) - 0.28
-	_text(root, "WEST WING", Vector3(bx[-1.0] + 0.06, bt, junc - 0.10), 180.0, 20)
-	_text(root, "PUMP HALL", Vector3(bx[1.0] - 0.06, bt, junc - 0.10), 180.0, 20)
+	_text(root, "WEST WING", Vector3(bx[-1.0], bt, junc - 0.10), 180.0, 20)
+	_text(root, "PUMP HALL", Vector3(bx[1.0], bt, junc - 0.10), 180.0, 20)
 
 	# A hanger further back, where the wall blades are still edge-on.
 	var hang := _glb("nav_hanger")
@@ -354,8 +374,8 @@ func _hue() -> void:
 		blade.position = Vector3(rx - 0.02, 0, 7.4)
 		blade.rotation_degrees.y = 180.0
 		root.add_child(blade)
-		_text(root, "STAIR C", Vector3(rx - 0.62, _top("nav_blade", 2.76) - 0.36,
-				7.30), 180.0, 24)
+		_text(root, "STAIR C", Vector3(_face_x(blade, "nav_blade"),
+				_top("nav_blade", 2.72) - 0.28, 7.30), 180.0, 24)
 	var chev := _glb("nav_chevron")
 	if chev != null:
 		chev.position = Vector3(lx + 0.04, 2.05, 9.3)
@@ -401,56 +421,110 @@ func _hue() -> void:
 	vp.queue_free()
 	await process_frame
 
-## D -- THEME SURVIVAL.
+## D -- THEME SURVIVAL, ALL SIX.
 ##
-## The blade against each authored theme wall. Three themes are painted
-## (Batch 001); the other three are behind the Style Lock gate and are not
-## faked here.
+## The original sheet showed three themes and said the other three were
+## behind the Style Lock gate. That was true when it was written and is not
+## now: Style Lock passed, Batch 012 built the remaining treatments, and
+## every one of the six carries the `trim` and `wall` roles this family is
+## made of. So the caption was stale rather than the claim being untested,
+## and this replaces it with the test itself.
 ##
-## The claim under test is narrow: because the sign is made of the theme's
-## own trim and carries one neutral field, it changes MATERIAL with the
-## room and never changes MEANING. Nothing in the read depends on a colour
-## a theme is free to redefine.
+## Each module is BUILT per theme and wears that theme's own trim -- not one
+## concrete sign re-lit six ways, which would prove nothing. Same camera,
+## same lens, same lighting energy, same reading distance across all six
+## panels, because a survival test whose exposure moves between panels is
+## not a test.
+##
+## What has to hold: the material changes with the room and the MEANING does
+## not. The neutral field stays the ground for runtime text, the ink glyph
+## stays the direction, and nothing in the read depends on a hue a theme is
+## free to redefine.
+const THEME_ROW := [
+	["concrete_facility", "CONCRETE FACILITY"],
+	["rusted_industrial", "RUSTED INDUSTRIAL"],
+	["neon_transit", "NEON TRANSIT"],
+	["gothic_stone", "GOTHIC STONE"],
+	["temple_ruin", "TEMPLE RUIN"],
+	["void_glitch", "VOID GLITCH"],
+]
+
 func _themes() -> void:
-	var themes := ["CONCRETE FACILITY", "RUSTED INDUSTRIAL", "VOID GLITCH"]
-	var walls := [Color(0.50, 0.51, 0.55), Color(0.44, 0.32, 0.25),
-			Color(0.18, 0.15, 0.29)]
-	var vp := ArtBench.make_viewport(self, Vector2i(1500, 600), 0.30)
-	var root := Node3D.new()
-	vp.add_child(root)
-	ArtBench.add_lights(root, 1.3)
+	var cell := Vector2i(500, 400)
+	var sheet := Image.create(cell.x * 3, cell.y * 2 + 96, false,
+			Image.FORMAT_RGB8)
+	sheet.fill(Color(0.07, 0.08, 0.10))
 
-	var bt := _top("nav_blade", 2.72) - 0.28
-	for i in 3:
-		var x := (i - 1) * 4.2
-		_slab(root, Vector3(3.9, 0.2, 4), Vector3(x, -0.1, 0), walls[i].darkened(0.3))
-		_slab(root, Vector3(3.9, 3.6, 0.4), Vector3(x, 1.8, 1.4), walls[i])
-		var blade := _glb("nav_blade")
-		if blade == null:
+	for i in THEME_ROW.size():
+		var theme: String = THEME_ROW[i][0]
+		var img: Image = await _theme_panel(theme, cell)
+		if img == null:
 			return
-		blade.position = Vector3(x - 1.55, 0, 1.05)
-		root.add_child(blade)
-		_text(root, "STAIR C", Vector3(x - 1.02, bt, 0.95), 180.0, 20)
+		var at := Vector2i((i % 3) * cell.x, 96 + int(i / 3) * cell.y)
+		sheet.blit_rect(img, Rect2i(Vector2i.ZERO, cell), at)
+		ArtBench.label(sheet, str(THEME_ROW[i][1]),
+				at + Vector2i(10, 10), Color(1.0, 0.86, 0.42))
 
-	var cam := Camera3D.new()
-	cam.fov = 58.0
-	cam.current = true
-	vp.add_child(cam)
-	cam.look_at_from_position(Vector3(0.0, 2.55, -7.4),
-			Vector3(0.0, 2.42, 1.2), Vector3.UP)
-
-	var img: Image = await _capture(vp, "")
 	var gold := Color(1.0, 0.83, 0.36)
 	var pale := Color(0.72, 0.76, 0.80)
-	ArtBench.label(img, "D  THEME SURVIVAL - %s" % " / ".join(themes),
-			Vector2i(12, 12), gold)
-	ArtBench.label(img, "THE THEME'S OWN TRIM PLUS ONE NEUTRAL FIELD: THE MATERIAL CHANGES, THE MEANING DOES NOT",
-			Vector2i(12, 34), pale)
-	ArtBench.label(img, "THE OTHER THREE THEMES ARE UNPAINTED, BEHIND THE STYLE LOCK GATE - NOT FAKED HERE",
-			Vector2i(12, img.get_height() - 24), Color(0.45, 0.72, 0.68))
-	img.save_png("%s/D_themes.png" % _out)
+	ArtBench.label(sheet, "D  THEME SURVIVAL - ALL SIX THEMES",
+			Vector2i(12, 16), gold)
+	ArtBench.label(sheet, "EACH SIGN IS BUILT IN ITS OWN THEME AND WEARS THAT THEME'S TRIM - NOT ONE CONCRETE SIGN RE-LIT SIX WAYS",
+			Vector2i(12, 42), pale)
+	ArtBench.label(sheet, "SAME CAMERA, LENS, LIGHTING AND DISTANCE; NEUTRAL BACKDROP HELD CONSTANT SO THE SIGNAGE IS THE ONLY VARIABLE",
+			Vector2i(12, 66), Color(0.45, 0.72, 0.68))
+	sheet.save_png("%s/D_themes.png" % _out)
+
+## One panel of the survival sheet. Everything that could differ between
+## panels except the theme itself is fixed here on purpose.
+func _theme_panel(theme: String, size: Vector2i) -> Image:
+	var vp := ArtBench.make_viewport(self, size, 0.30)
+	var root := Node3D.new()
+	vp.add_child(root)
+	ArtBench.add_lights(root, 1.25)
+
+	# The backdrop is a NEUTRAL grey held identical in all six panels, and
+	# is deliberately not the theme's own wall. The variable under test is
+	# the signage; a backdrop that changed with it would make every panel
+	# differ for two reasons at once and the sheet would prove nothing.
+	# The theme enters through the sign's own trim, which is the claim.
+	var wall := _glb("nav_blade", theme)
+	if wall == null:
+		vp.queue_free()
+		return null
+	_slab(root, Vector3(6, 0.2, 6), Vector3(0, -0.1, 0), Color(0.30, 0.31, 0.34))
+	_slab(root, Vector3(6, 4.2, 0.4), Vector3(0, 2.1, 1.5), Color(0.42, 0.43, 0.46))
+
+	root.add_child(wall)
+	wall.position = Vector3(-0.62, 0, 1.15)
+	var bt := _top("nav_blade", 2.72, theme) - 0.28
+	_text(root, "STAIR C", Vector3(_face_x(wall, "nav_blade", theme), bt, 1.09),
+			180.0, 22)
+
+	var arrow := _glb("nav_chevron", theme)
+	if arrow != null:
+		root.add_child(arrow)
+		var ab: AABB = ArtBench.aabb_of(arrow)
+		arrow.position = Vector3(-0.62 + 0.585 + ab.size.x * 0.5, bt, 1.15)
+
+	var panel := _glb("nav_panel", theme)
+	if panel != null:
+		root.add_child(panel)
+		panel.position = Vector3(1.32, 0, 1.28)
+		_text(root, "COOLANT", Vector3(1.32, _top("nav_panel", 2.03, theme) - 0.32,
+				1.12), 180.0, 20)
+
+	var cam := Camera3D.new()
+	cam.fov = 40.0
+	cam.current = true
+	vp.add_child(cam)
+	cam.look_at_from_position(Vector3(0.25, 2.30, -3.2),
+			Vector3(0.25, 2.24, 1.3), Vector3.UP)
+
+	var img: Image = await _capture(vp, "")
 	vp.queue_free()
 	await process_frame
+	return img
 
 ## E -- THE FAMILY AT READING DISTANCE.
 ##
@@ -474,8 +548,8 @@ func _family() -> void:
 		return
 	root.add_child(blade)
 	blade.position = Vector3(1.95, 0, 1.15)
-	_text(root, "STAIR C", Vector3(1.95, _top("nav_blade", 2.72) - 0.28, 1.09),
-			180.0, 30)
+	_text(root, "STAIR C", Vector3(_face_x(blade, "nav_blade"),
+			_top("nav_blade", 2.72) - 0.28, 1.09), 180.0, 26)
 	var arrow := _glb("nav_chevron")
 	if arrow != null:
 		root.add_child(arrow)
@@ -589,3 +663,67 @@ func _swatches() -> void:
 	ArtBench.label(img, "IT DOES NOT NEED ONE: ITS MEANING IS THE GLYPH AND WHERE IT IS BOLTED.",
 			Vector2i(14, h - 24), Color(0.45, 0.72, 0.68))
 	img.save_png("%s/F_collapse.png" % _out)
+
+## G -- THE COLLISION THE SIX-THEME SHEET FOUND.
+##
+## `materials._rust_trim` paints a UNIVERSAL hazard band into the
+## `rusted_industrial` trim texture, deliberately and correctly: in that
+## theme a walkway edge is the thing most likely to kill you, and the band
+## uses `pal.universal("hazard")` rather than the theme's own orange so the
+## player does not have to re-learn it per theme.
+##
+## The navigation family is built from `trim`. So in one of six themes a
+## wayfinding sign inherits hazard striping -- and the palette's rule for
+## that colour is "this will hurt you. Never used decoratively, in any
+## theme, for any reason."
+##
+## Shown at reading distance beside the same module in a theme whose trim
+## carries no band, so the difference is the finding rather than an artefact
+## of the crop.
+func _collision() -> void:
+	var pair := [["concrete_facility", "CONCRETE FACILITY - TRIM CARRIES NO BAND"],
+			["rusted_industrial", "RUSTED INDUSTRIAL - TRIM CARRIES THE HAZARD BAND"]]
+	var cell := Vector2i(740, 420)
+	var sheet := Image.create(cell.x * 2, cell.y + 108, false,
+			Image.FORMAT_RGB8)
+	sheet.fill(Color(0.07, 0.08, 0.10))
+
+	for i in pair.size():
+		var vp := ArtBench.make_viewport(self, cell, 0.30)
+		var root := Node3D.new()
+		vp.add_child(root)
+		ArtBench.add_lights(root, 1.3)
+		_slab(root, Vector3(6, 0.2, 6), Vector3(0, -0.1, 0), Color(0.30, 0.31, 0.34))
+		_slab(root, Vector3(6, 4.2, 0.4), Vector3(0, 2.1, 1.5), Color(0.40, 0.41, 0.44))
+		var theme: String = pair[i][0]
+		var blade := _glb("nav_blade", theme)
+		if blade == null:
+			vp.queue_free()
+			return
+		root.add_child(blade)
+		blade.position = Vector3(0, 0, 1.15)
+		_text(root, "STAIR C", Vector3(_face_x(blade, "nav_blade", theme),
+				_top("nav_blade", 2.72, theme) - 0.28, 1.09), 180.0, 24)
+		var cam := Camera3D.new()
+		cam.fov = 22.0
+		cam.current = true
+		vp.add_child(cam)
+		cam.look_at_from_position(Vector3(0.0, 2.48, -3.4),
+				Vector3(0.0, 2.44, 1.2), Vector3.UP)
+		var img: Image = await _capture(vp, "")
+		sheet.blit_rect(img, Rect2i(Vector2i.ZERO, cell),
+				Vector2i(i * cell.x, 108))
+		ArtBench.label(sheet, str(pair[i][1]),
+				Vector2i(i * cell.x + 10, 118), Color(1.0, 0.86, 0.42))
+		vp.queue_free()
+		await process_frame
+
+	ArtBench.label(sheet, "G  FINDING - THE NAVIGATION FAMILY INHERITS HAZARD STRIPING IN ONE THEME",
+			Vector2i(12, 16), Color(1.0, 0.55, 0.30))
+	ArtBench.label(sheet, "materials._rust_trim PAINTS A UNIVERSAL HAZARD BAND INTO rusted_industrial TRIM - CORRECTLY, FOR WALKWAY EDGES",
+			Vector2i(12, 42), Color(0.72, 0.76, 0.80))
+	ArtBench.label(sheet, "THE NAV FAMILY IS BUILT FROM trim, SO IT PICKS THE BAND UP. HAZARD IS 'NEVER DECORATIVE, IN ANY THEME, FOR ANY REASON'.",
+			Vector2i(12, 66), Color(0.72, 0.76, 0.80))
+	ArtBench.label(sheet, "NOT FIXED UNILATERALLY - THE FIX TOUCHES A LOCKED RULE. SEE README.",
+			Vector2i(12, 90), Color(0.45, 0.72, 0.68))
+	sheet.save_png("%s/G_hazard_collision.png" % _out)
