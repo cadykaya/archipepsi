@@ -3180,3 +3180,50 @@ before the geometry was suspected; 002-R had said all along that erupted
 bays have their fronts gone.
 
 Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 025 — PROPOSAL: the Forge, and Questionable Goods
+
+**PENDING.** Physical and presentation identity only — no mechanic is
+designed here. Full working in `review/batch025/README.md`.
+
+**The audit found one of the two already has a home.** `hub_anchors.gd`
+lists `"shop"` in `REQUIRED`, commented `# QUESTIONABLE GOODS`, at
+`(-9.4, 0, 2.4)`. Its comment records a playtest failure: at `D * 0.45` the
+counter overlapped the Lab doorway (z 4.5–7.5) and made the Lab unreachable.
+So `qg_counter` is authored to that contract — 3.0 m of wall run centred on
+z = 2.4, clearing the doorway by 0.6 m — and the builder **asserts** it.
+
+**The Forge has no anchor, no scene, no script and no constant**, only an
+open question in `RESEARCH_MEMO.md` §7. Proposal scale, no placement claim.
+Interface requirement 26.
+
+**`EPSILON_COIN_COUNT` is 10 for a whole campaign**, which is why the Forge
+has one coin socket and not a hopper.
+
+| asset | state | tris | size (m) | reads as |
+|---|---|---|---|---|
+| `forge_bench` | idle | 1036 | 4.25 × 1.17 × 2.19 | process made visible |
+| `forge_bench_working` | working | 1112 | 4.25 × 1.17 × 2.19 | process made visible |
+| `qg_counter` | — | 412 | 3.39 × 1.40 × 2.40 | transaction made opaque |
+
+**Four stations in order** — analysis, destabilisation, reinterpretation,
+reconstruction — with a transfer rail running the whole length that bridges
+the third station on bare rails. The third station is **empty on purpose**:
+there is no machine that decides what something could mean, and drawing one
+would make the Forge a factory. The selector is one seven-position dial, not
+a tree.
+
+### What the renders changed
+
+The operator plate sat directly in front of the reinterpretation void,
+hiding the batch's whole argument behind its least important feature.
+Nothing carried direction of travel until the transfer rail was added — four
+instruments on a table are four instruments on a table. Absence photographs
+exactly like darkness, so the missing bench top needed a lined shaft under it
+to read as a hole. Analysis and destabilisation shared a silhouette and are
+opposite acts. And Questionable Goods first came back as clean pale sheet
+steel — a *new* counter, the opposite of the brief.
+
+Status: **PENDING** — not self-marked.

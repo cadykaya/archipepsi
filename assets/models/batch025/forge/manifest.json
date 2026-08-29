@@ -1,0 +1,128 @@
+{
+  "forge_bench": {
+    "anchor": "floor",
+    "batch": "025",
+    "coin_sockets": 1,
+    "coin_sockets_why": "EPSILON_COIN_COUNT is 10 for a whole campaign; a hopper would misprice it",
+    "emissive_saturation": 0.12,
+    "families": [
+      "ranged",
+      "melee",
+      "grapple",
+      "movement",
+      "defense",
+      "sustain",
+      "utility"
+    ],
+    "hub_anchor": null,
+    "integration_ready": false,
+    "kind": "forge",
+    "path": "batch025/forge/forge_bench.glb",
+    "reads_as": "process made visible",
+    "reinterpretation_is_empty": true,
+    "reinterpretation_why": "the decision is Epsilon thinking; a mechanism there would be a lie about where the work happens",
+    "scale_basis": "proposal scale",
+    "selector": "one seven-position rotary, not a tree",
+    "size": [
+      4.25,
+      1.168,
+      2.19
+    ],
+    "state": "idle",
+    "station_x_m": {
+      "analysis": -1.35,
+      "destabilisation": -0.45,
+      "reconstruction": 1.35,
+      "reinterpretation": 0.45
+    },
+    "stations": [
+      "analysis",
+      "destabilisation",
+      "reinterpretation",
+      "reconstruction"
+    ],
+    "texel_density": null,
+    "triangles": 1036
+  },
+  "forge_bench_working": {
+    "anchor": "floor",
+    "batch": "025",
+    "coin_sockets": 1,
+    "coin_sockets_why": "EPSILON_COIN_COUNT is 10 for a whole campaign; a hopper would misprice it",
+    "emissive_saturation": 0.3,
+    "families": [
+      "ranged",
+      "melee",
+      "grapple",
+      "movement",
+      "defense",
+      "sustain",
+      "utility"
+    ],
+    "hub_anchor": null,
+    "integration_ready": false,
+    "kind": "forge",
+    "path": "batch025/forge/forge_bench_working.glb",
+    "reads_as": "process made visible",
+    "reinterpretation_is_empty": true,
+    "reinterpretation_why": "the decision is Epsilon thinking; a mechanism there would be a lie about where the work happens",
+    "scale_basis": "proposal scale",
+    "selector": "one seven-position rotary, not a tree",
+    "size": [
+      4.25,
+      1.168,
+      2.19
+    ],
+    "state": "working",
+    "station_x_m": {
+      "analysis": -1.35,
+      "destabilisation": -0.45,
+      "reconstruction": 1.35,
+      "reinterpretation": 0.45
+    },
+    "stations": [
+      "analysis",
+      "destabilisation",
+      "reinterpretation",
+      "reconstruction"
+    ],
+    "texel_density": null,
+    "triangles": 1112
+  },
+  "qg_counter": {
+    "anchor": "floor",
+    "batch": "025",
+    "clearance_to_lab_doorway_m": 0.6,
+    "distinct_from_forge_by": "kind, not decoration -- a counter rather than an apparatus, with the process hidden rather than exposed",
+    "emissive_saturation": 0.16,
+    "green_is": "hijacked, not native -- tapped in on scavenged hardware",
+    "hub_anchor": "shop",
+    "hub_anchor_pos_m": [
+      -9.4,
+      0.0,
+      2.4
+    ],
+    "hub_anchor_yaw_deg": -90.0,
+    "integration_ready": false,
+    "kind": "questionable_goods",
+    "lab_doorway_z_m": [
+      4.5,
+      7.5
+    ],
+    "occupies_hub_z_m": [
+      0.8999999999999999,
+      3.9
+    ],
+    "path": "batch025/forge/qg_counter.glb",
+    "reads_as": "transaction made opaque",
+    "scale_basis": "proposal scale",
+    "size": [
+      3.391,
+      1.398,
+      2.4
+    ],
+    "texel_density": null,
+    "triangles": 412,
+    "wall_run_m": 3.0
+  }
+}
