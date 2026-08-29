@@ -3760,3 +3760,98 @@ of the fix; the other half would be a body change, which is out of scope by
 instruction. Recorded, not worked around.
 
 Status: **035-R, 036-R and 037-R are PENDING re-review** — none self-marked.
+
+---
+
+# Owner review — the three revisions (2026-08-29)
+
+Reviewed against the packaged sheets. **All three pass.**
+
+## 035-R — interactable vs decorative. PASS
+
+Two things are locked.
+
+> **If a distinction must survive gameplay distance, the distinguishing
+> feature must affect object-scale SILHOUETTE.**
+
+And the redundant interaction-hardware direction, now the standing rule for
+every operable object:
+
+| channel | question it answers |
+|---|---|
+| silhouette / structure | **what kind of thing** this is |
+| interaction hardware | **yes, this object is operable** |
+| state treatment | **what it is doing now** |
+
+The interaction plate / bezel **may remain** as standardized physical
+hardware, provided it is **not the sole source of truth** and **does not rely
+on hue alone**. The pure-silhouette sheet is **accepted evidence**. Breakable
+vs blind panel is the weakest pair and is still acceptable.
+
+## 036-R — secret cues. PASS
+
+The corrected eight-cue package is accepted. Locked:
+
+- **no universal secret colour;**
+- a secret cue is a **deviation from a learned environmental pattern**;
+- a **smaller reliable vocabulary is preferred over padding the set**;
+- `repeated_motif` **remains deleted**;
+- the current tiering is accepted.
+
+> **Stop revising this system until it has real in-game Zone testing.**
+
+## 037-R — enemy surface role identity. PASS WITH DOCUMENTED CAVEAT
+
+The surface construction rule is accepted:
+
+- **plate** = a proud slab, impact-bearing construction;
+- **mechanism** = recessed, ribbed, rodded — exposed function.
+
+No role colours. Shared enemy-family ancestry is preserved. The close
+comparison sheet demonstrates the system sufficiently.
+
+### The caveat, recorded as ACCEPTED rather than outstanding
+
+Brute vs scuttler surface identity remains weak: the scuttler still reads
+more armoured than its description implies. **Accepted for now.**
+
+> **Do NOT alter the approved scuttler silhouette or body solely to force a
+> stronger surface distinction.** Its silhouette already carries substantial
+> role identity, so surface treatment may remain *supporting* information
+> here.
+
+Revisit only if later gameplay testing shows a real recognition problem, and
+only with gameplay evidence. This is a closed item with a known limit, not an
+open defect.
+
+## The post-030 pass, final state
+
+| batch | verdict |
+|---|---|
+| 031 zone keys | **PASS** |
+| 032 viewmodel + baseline melee | **PASS WITH BOUNDARY** |
+| 033 Zone exit | **PASS AUDIT / BUILD NOTHING** |
+| 034 hard gates | **PASS VISUAL PRINCIPLE** |
+| 035-R recognition | **PASS** |
+| 036-R secret cues | **PASS** |
+| 037-R enemy surfaces | **PASS WITH DOCUMENTED CAVEAT** |
+| boss audit | **ACCEPTED / BUILD NOTHING** |
+
+## The boundary that follows
+
+**The art lane is intentionally idle.** Two systems are being designed by the
+owner and a design collaborator first, each arriving as its own brief:
+**modular Echo visual construction / kitbash**, and **diegetic in-world
+interface**.
+
+Requirement 32 remains **only the architectural seam**. The three existing
+`EchoPart` forms are **proof-of-seam only** and are explicitly not approval
+of seven fixed family models, a final attachment grammar, a final part
+taxonomy, runtime composition rules, family silhouette rules, or provenance /
+source influence rules.
+
+The interaction kit must **not** be independently expanded into menus,
+terminals, Archive UI, Forge UI, Zone-selection UI, or any other large
+physical interface.
+
+**No Batch 038. No heartbeat. No polling. No autonomous expansion.**

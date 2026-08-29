@@ -112,4 +112,8 @@ gate, and as the ragged non-gate it must not be mistaken for:
 The last is explicitly marked as having **no mechanical contract** and is not
 a production asset.
 
-Status: **PENDING OWNER REVIEW.**
+Status: **PASS — the VISUAL PRINCIPLE** (owner, 2026-08-29). Locked: an
+intentional capability route reads as **finished, installed, deliberate**;
+broken geometry reads as **ragged, incomplete, a construction failure**.
+Blink / teleport remains **proposal-only** — no mechanical contract, no
+production asset.

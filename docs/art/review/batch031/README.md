@@ -1,6 +1,11 @@
 # Batch 031 — PROPOSAL: the local Zone key family
 
-**Status: PENDING.** Nothing here decides how many keys a Zone has, whether
+**Status: PASS** (owner, 2026-08-29). Locked: the part the keyway reads is
+**universal**; channel coding is **structural, never colour**; the grip is
+themed; it is a **machined interlock**, not a keycard and not a fantasy
+artefact.
+
+Nothing here decides how many keys a Zone has, whether
 one is consumed or retained, how it persists, or any AP behaviour.
 
 ## The A-vs-B question, answered by the receiver

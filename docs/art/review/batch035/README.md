@@ -1,6 +1,15 @@
 # Batch 035 / 035-R — interactable vs decorative, decided at object scale
 
-**Status: PENDING.** Visual grammar only. Nothing here invents an
+**Status: PASS** (owner, 2026-08-29). Two things are locked: **if a
+distinction must survive gameplay distance, the distinguishing feature must
+affect object-scale silhouette**, and the three-channel redundancy below —
+silhouette says *what kind of thing*, interaction hardware says *yes this one
+is operable*, state treatment says *what it is doing now*. The plate / bezel
+may remain as standardized physical hardware **provided it is not the sole
+source of truth and does not rely on hue alone**. The pure-silhouette sheet is
+accepted evidence. Breakable vs blind is the weakest pair and is acceptable.
+
+Visual grammar only. Nothing here invents an
 interaction, a cost, a cooldown or a rule about what may be used when.
 
 ## The question

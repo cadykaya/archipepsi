@@ -117,12 +117,12 @@ the superseded rule in the meantime.
 | | |
 | --- | --- |
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
-| Phase | **STYLE LOCK PASSED — production.** 001–022 are all `PASS`. **Batch 023 (theme landmarks) is PENDING owner review** and is a PROPOSAL, not production — a landmark CATEGORY exists in Production, but no placement, selection or envelope contract does (req 24, reworded 2026-08-29). **Batches 024–030 are authorised and proceed without waiting on the 023 verdict.** **024-030 delivered and PENDING.** **The post-030 gap pass has been REVIEWED (owner, 2026-08-29): 031, 032, 033 and 034 PASS; 035, 036 and 037 were sent back for revision and have been revised (035-R, 036-R, 037-R) and are PENDING re-review.** The boss audit is accepted and builds nothing. Nothing further is authorised; no Batch 038. |
+| Phase | **STYLE LOCK PASSED — production.** 001–022 are all `PASS`. **Batch 023 (theme landmarks) is PENDING owner review** and is a PROPOSAL, not production — a landmark CATEGORY exists in Production, but no placement, selection or envelope contract does (req 24, reworded 2026-08-29). **Batches 024–030 are authorised and proceed without waiting on the 023 verdict.** **024-030 delivered and PENDING.** **The post-030 gap pass is fully REVIEWED and fully PASSED (owner, 2026-08-29): 031 PASS; 032 PASS WITH BOUNDARY; 033 PASS AUDIT / BUILD NOTHING; 034 PASS VISUAL PRINCIPLE; 035-R PASS; 036-R PASS; 037-R PASS WITH DOCUMENTED CAVEAT; boss audit ACCEPTED / BUILD NOTHING.** **The art lane is now intentionally IDLE.** No Batch 038, and no Echo visual parts and no diegetic interface work until the owner publishes the two design briefs named below. |
 | Owner review | Style Lock passed 2026-08-28. Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
-| Next action | **Stop for review.** The post-030 revisions (035-R object-scale recognition, 036-R eight-cue secret package, 037-R enemy surfaces) are delivered. Batches 023-030 and the three revisions are PENDING. Nothing else is unblocked: req 31 still blocks seven enemy roles from placement and Art has deliberately not routed around it, and the Echo kitbash system req 32 now points at is the owner's to design. Do not invent filler work. No Batch 038, no heartbeat, no polling. |
+| Next action | **NOTHING. The art lane is intentionally idle until the next owner-authored brief.** Every batch in the post-030 pass has passed and the owner has closed the two directions that would otherwise look like obvious next work: the **modular Echo visual construction / kitbash system** and the **diegetic in-world interface system** are both owner-and-collaborator design work, each getting its own brief. Batches 023-030 remain PENDING review. Req 31 still blocks seven enemy roles from placement and Art has deliberately not routed around it. **Do not invent filler work. No Batch 038, no heartbeat, no polling, no autonomous expansion.** |
 | ~~Superseded~~ | ~~**Tier 7: the room shells** (`ASSET_INVENTORY.md` §7, L3, nothing built) — started immediately, per the owner's instruction not to idle while 014 waits. Six families, all Pri A: corridor, arena, platform-path, tower, treasure room, corner. They inherit engine-truth dimensions and traversal bounds, differ in scale / verticality / sightline / routing / encounter and Check placement rather than in dressing, and must not be generic stretches of one another where gameplay geometry matters. The approved six material families and the Batch 014 fixture language both apply.~~ Corridors done as Batch 015. |
 | ~~Superseded~~ | ~~**Tier 8: the three unbuilt theme material families** (`neon_transit`, `gothic_stone`, `temple_ruin`). It is the highest-leverage unblocked work left — it also unblocks three of the six dressing props §9 needs — and it is routine in the sense that `art_palette.json` already carries all six themes' ramps and `materials.paint()` already builds any of them. **But it is the first look at three themes**, so it wants a review sheet the owner can redirect cheaply, and textures are the cheapest thing in the project to rebuild.~~ Done as Batch 012. |
-| Queue depth | **Pending: 023-030, plus 035-R / 036-R / 037-R.** 001-022 are `PASS`; 031-034 are `PASS` as of 2026-08-29. The hourly heartbeat stays **paused** (`trig_01DSWy2dbCpeSefcx2YGS9Ys`, disabled 2026-08-29) and the PR #5 poll is deleted; PR activity still wakes the session on its own. Re-enable the routine when a verdict, a contract or an unblocked tier gives it something to do. |
+| Queue depth | **Pending owner review: 023-030 only.** 001-022 and 031-037 are all `PASS` as of 2026-08-29. The hourly heartbeat stays **paused** (`trig_01DSWy2dbCpeSefcx2YGS9Ys`, disabled 2026-08-29) and the PR #5 poll is deleted; PR activity still wakes the session on its own. **Do not re-enable the routine on an idle lane** — re-enable it only when an owner brief, a verdict or a Production contract gives it something to do. |
 
 ### What the post-030 gap pass review LOCKED (owner, 2026-08-29)
 
@@ -166,6 +166,87 @@ asset.
 **The boss audit is accepted and builds nothing.** Its finding stands as a
 recorded dependency: the missing piece is a **telegraph vocabulary, not a
 body**.
+
+**035-R — interactable vs decorative. PASS.** Two things are locked.
+
+> **If a distinction must survive gameplay distance, the distinguishing
+> feature must affect object-scale SILHOUETTE.**
+
+And the redundancy direction, which is now the standing rule for every
+operable object:
+
+| channel | question it answers |
+|---|---|
+| silhouette / structure | **what kind of thing** this is |
+| interaction hardware | **yes, this object is operable** |
+| state treatment | **what it is doing now** |
+
+The interaction plate / bezel **may remain** as standardized physical
+hardware, on two conditions: it is **not the sole source of truth**, and it
+**does not rely on hue alone**. The pure-silhouette sheet is accepted
+evidence. Breakable vs blind panel is the weakest pair and is still
+acceptable.
+
+**036-R — secret cues. PASS.** The corrected eight-cue package is accepted,
+and five things are locked:
+
+- **no universal secret colour;**
+- a secret cue is a **deviation from a learned environmental pattern**;
+- a **smaller reliable vocabulary is preferred over padding the set**;
+- `repeated_motif` **remains deleted**;
+- the current tiering is accepted.
+
+> **Stop revising this system until it has real in-game Zone testing.**
+
+**037-R — enemy surface role identity. PASS WITH DOCUMENTED CAVEAT.** The
+surface construction rule is accepted:
+
+- **plate** = a proud slab, impact-bearing construction;
+- **mechanism** = recessed, ribbed, rodded — exposed function.
+
+No role colours. Shared enemy-family ancestry is preserved. The close
+comparison sheet demonstrates the system sufficiently.
+
+**The caveat, recorded as accepted rather than outstanding:** brute vs
+scuttler surface identity remains weak — the scuttler still reads more
+armoured than its description implies. **This is accepted for now.**
+
+> **Do NOT alter the approved scuttler silhouette or body solely to force a
+> stronger surface distinction.** Its silhouette already carries substantial
+> role identity, so surface treatment may remain *supporting* information
+> here. Revisit only if later gameplay testing shows a real recognition
+> problem, and only with gameplay evidence.
+
+### THE BOUNDARY — do not start the next art system (owner, 2026-08-29)
+
+The art lane is **intentionally idle**. Two major systems are being designed
+by the owner and a design collaborator first, and each will arrive as its own
+owner-authored brief:
+
+1. **Modular Echo visual construction / kitbash system**
+2. **Diegetic in-world interface system**
+
+**Echo visuals.** Requirement 32 remains **only the architectural seam**: the
+Echo family must be visible through a swappable / composable `EchoPart` seam.
+The three existing ranged / melee / grapple forms are **proof-of-seam only**.
+They are explicitly **not** approval of any of:
+
+- seven fixed family models;
+- a final attachment grammar;
+- a final part taxonomy;
+- runtime composition rules;
+- family silhouette rules;
+- provenance / source influence rules.
+
+All of those will be specified in the future brief. **Do not begin designing
+or mass-producing Echo visual parts.**
+
+**Diegetic interfaces.** Do **not** independently expand the interaction-kit
+work into menus, terminals, Archive UI, Forge UI, Zone-selection UI, or any
+other large physical interface. That system gets its own brief too.
+
+**No Batch 038. No heartbeat. No polling. No autonomous expansion.**
+
 
 ### What the Batch 002 review LOCKED
 
@@ -382,7 +463,7 @@ them; each is a thing the art lane will need when contracts settle.
 | 29 | **The interactable contract exists, and its state vocabulary is the AP Check's.** `godot/scripts/content/interactable_contract.gd` publishes `STATES := ["locked", "available", "sending", "confirmed"]`, `IDENTITY_VISIBLE_IN = "confirmed"`, a `leak()` anti-spoiler check, and `REQUIRED_PARTS := {state_visual: MeshInstance3D, state_label: Label3D}`. That is a contract about an AP moment, not about interaction in general. | **None of Batch 028's nine primitives fits those four states** -- a weight button, a door ram, a fuse indicator and a breakable panel are not `sending`. So the nine have no runtime state vocabulary at all. **`REQUIRED_PARTS` is real, though, and the kit is authored to it**: every primitive carries one identifiable `state_visual` region and reserves a place for a `state_label`, which is why the proposed grammar is 'the plate is the state, everything else is the verb'. What Production would have to decide: whether interaction primitives get their own state vocabulary, or whether each primitive declares its own. Art is not guessing, and no mechanic is designed. | `batch028/interaction/*` |
 | 30 | **A secret has a socket and a score, but no appearance and no difficulty.** This is the batch with the MOST existing contract, not the least. `schemas/content.py` already has `"secret"` as a Socket `kind` alongside doorway / corridor_end / affordance / spawn / objective / vista / presentation, carrying a `position` and a `yaw`; `content_value.SECRET_VALUE = 8` scores each authored secret as "optional, findable, and the reason to look around"; and `secret_ping` already exists as an Echo readout. | So a shell can declare WHERE a secret is today. **What is missing is what one LOOKS like**: no cue vocabulary, no difficulty grading, and no way for a shell to say "this is a learning-tier cue" so a Zone can teach before it tests. Note the `secret_ping` finding matters to art directly -- the game can already TELL a player where a secret is, so the visual language has to be the primary channel and the ping an Echo-granted assist. A cue that only works once you hold the right Echo is not a cue. What Production would have to decide: whether a secret socket can carry a cue kind and a tier. Art is not guessing, and nothing here decides what a secret contains, how it opens or what it is worth. | `batch029/secrets/*` |
 | 31 | **Seven of the ten enemy roles have a body, a collider and a telegraph seat -- and no way to be spawned.** `Constants.ENEMY_ARCHETYPES` is still `("melee", "ranged", "brute")`, and its own neighbour comment is explicit that this is deliberate: *"THIS IS NOT THE LIST OF ENEMIES A ZONE MAY CONTAIN. It is the list of roles that have an agreed physical envelope. `ENEMY_ARCHETYPES` is the placeable set, and it is smaller."* | Batch 030 builds all ten to their published envelopes and asserts the fit, so charger, bulwark, scuttler, artillery, beacon, diver and drifter are art-complete against the contract that exists. What they lack is placement: no Zone can contain one. What Production would have to decide: which roles graduate into `ENEMY_ARCHETYPES`, and what each needs before it can (stats, behaviour, a telegraph kind). **Art is not asking for behaviour and has invented none.** | `batch030/enemies/*` |
-| 32 | **The viewmodel cannot express an Echo's FAMILY, so a reforge is invisible.** `player.gd` builds `$Camera3D/Viewmodel` with named `Device`, `Tip`, `EchoPart` and `EchoTip` children, and `EchoRuntime._refresh_viewmodel_attachment()` paints `EchoPart` with `source_color()` (the world the Echo came FROM) and `EchoTip` with the slot. Both channels are correct and neither changes on a reforge -- same source item, same button. | So a player who spends scarce Epsilon Coins to reinterpret a ranged Echo into a grapple sees **an identical viewmodel**. The one operation the Forge exists to perform is invisible in the view the player looks at all game. The ask is narrow and is NOT hundreds of Echo weapons, and after the 2026-08-29 owner review it is narrower still: **the Echo family must be visible through a swappable / composable `EchoPart` seam.** That is the whole requirement. It is explicitly **not** "build exactly seven fixed `EchoPart` models" -- the owner's ruling on Batch 032 is that the three forms built there **prove the attachment seam and nothing more**, and are not approval of a seven-fixed-forms system. Colour keeps source, the tip keeps slot, and form carries family through whatever occupies the seam. **Art must not expand those three into seven production family models**: the owner will design a modular Echo kitbash system separately, and that system is what the seam is for. | `batch032/viewmodel/*` |
+| 32 | **The viewmodel cannot express an Echo's FAMILY, so a reforge is invisible.** `player.gd` builds `$Camera3D/Viewmodel` with named `Device`, `Tip`, `EchoPart` and `EchoTip` children, and `EchoRuntime._refresh_viewmodel_attachment()` paints `EchoPart` with `source_color()` (the world the Echo came FROM) and `EchoTip` with the slot. Both channels are correct and neither changes on a reforge -- same source item, same button. | So a player who spends scarce Epsilon Coins to reinterpret a ranged Echo into a grapple sees **an identical viewmodel**. The one operation the Forge exists to perform is invisible in the view the player looks at all game. The ask is narrow and is NOT hundreds of Echo weapons, and after the 2026-08-29 owner review it is narrower still: **the Echo family must be visible through a swappable / composable `EchoPart` seam.** That is the whole requirement. It is explicitly **not** "build exactly seven fixed `EchoPart` models" -- the owner's ruling on Batch 032 is that the three forms built there **prove the attachment seam and nothing more**, and are not approval of a seven-fixed-forms system. Colour keeps source, the tip keeps slot, and form carries family through whatever occupies the seam. **Art must not expand those three into seven production family models.** The 2026-08-29 review enumerates what proof-of-seam is explicitly *not* approval of: seven fixed family models, a final attachment grammar, a final part taxonomy, runtime composition rules, family silhouette rules, or provenance / source influence rules. All of those are specified by a future owner-authored brief for the **modular Echo visual construction / kitbash system**. **Do not begin designing or mass-producing Echo visual parts.** | `batch032/viewmodel/*` |
 | 33 | **The Zone exit has a boolean where it needs a state, and its locked colour is in the hazard channel.** `exit_portal.gd` is already the Zone exit -- a themed frame, a recoloured core and a `Label3D` -- with the hook `set_unlocked(value: bool, checks_remaining: int)`. The redesigned lifecycle wants four states (present-not-ready, ready, return-available, cleared) and a boolean cannot carry four. | **Art recommends building no new portal**: the vocabulary exists, is correctly scaled, and is contextually separated from the two Hub portals. Two things are Production's to fix in their own file: the four-state signal, and the locked core's `Color(0.4, 0.2, 0.2)` -- a dark red, in the family whose definition is *"this will hurt you. Never used decoratively, in any theme, for any reason."* A locked exit is not a hazard; it is `dead` (*"unpowered, LOCKED, spent, offline"*). One art note: the `StateLabel` is currently doing all the work, and if four states land the FRAME is where the difference should live. | `review/batch033/README.md` |
 | 34 | **The affordance language says "a capability could be used here" and cannot say "you lack it".** The 2026-08-28 owner ruling gives every optional traversal affordance one colour (`AFFORDANCE_SIGNAL_HEX`, art's own `signal` anchor) with FORM carrying which and COLOUR carrying opportunity -- and all seven contracted families (`grapple_anchor`, `breakable_wall`, `rail`, `bounce_pad`, `moving_platform`, `wind_volume`, `water_volume`) are therefore readable in all six themes and unconfusable with decoration. | Two gaps for hard gates. (1) **No "you lack this" state exists** -- `AFFORDANCE_DYNAMIC_CHANNELS` carries breakable damage and wind ring count, and neither is acquisition. (2) **Form carries family only at close range**; at the distance a gate is first seen, a grapple anchor and a rail terminus are both "a cyan thing on a structure". Batch 034 proposes solving the READ without a new channel: build the gate as finished infrastructure missing exactly one thing, because **broken is ragged and installed is neat**. Blink/teleport gets a proposal only and no production asset, since it has no mechanical contract. | `batch034/gates/*` |
 | 5 | **A larger footprint, or an L2 placement path, for composed clusters.** `PROP_FOOTPRINT` is 1.4 m. | Right for L0, too small for an L2 station or storytelling cluster. | `cluster_*` |

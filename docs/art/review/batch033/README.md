@@ -1,7 +1,14 @@
 # Batch 033 — AUDIT: Zone exit / clear-point readability
 
-**Status: AUDIT COMPLETE. One art defect found. No new portal built, and
-none should be.**
+**Status: PASS — AUDIT ACCEPTED, BUILD NOTHING** (owner, 2026-08-29). The
+recommendation is the outcome. Three things are recorded for Production and
+are Production's to fix in Production's own file: the existing exit portal is
+**sufficient**; the lifecycle needs **more than a boolean visual state**; and
+**locked / dead must not use hazard-red semantics** — a locked exit is not a
+hazard, and `dead` is the family whose own definition contains the word
+*locked*.
+
+One art defect found. No new portal built, and none should be.
 
 ## Question 1 — can the current portal vocabulary serve as the Zone exit?
 

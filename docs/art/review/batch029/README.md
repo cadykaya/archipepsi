@@ -1,6 +1,12 @@
 # Batch 029 / 036-R — the secret clue language
 
-**Status: PENDING.** This document describes the **036 revision**, which is
+**Status: PASS** (owner, 2026-08-29). Locked: no universal secret colour; a
+secret cue is a **deviation from a learned environmental pattern**; a
+**smaller reliable vocabulary is preferred over padding the set**;
+`repeated_motif` remains deleted; the current tiering is accepted.
+**Stop revising this system until it has real in-game Zone testing.**
+
+This document describes the **036 revision**, which is
 what the sheets in this folder now show. The original 029 nine-cue pass and
 its 5-of-9 result are recorded as history at the bottom.
 

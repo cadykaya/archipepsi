@@ -62,44 +62,76 @@ art diff. Do not maintain two active art branches.
 
 ## Art batches — state 2026-08-29
 
-**001–022 all PASS.** Batch 022 (navigation language) passed in all six
-themes after the `trim_plain` correction.
+**THE ART LANE IS INTENTIONALLY IDLE.** Do not start work in it on a
+wake-up. Read this section and stop.
 
-**Batch 023 — theme landmarks — is PENDING.** It is a VISUAL PROPOSAL, not
-production, and the audit is why: `grep -rn landmark` finds three hits and
-none is an engine concept. ~~Today "landmark" means a polygon budget
-tier.~~ **False — see the correction below.**
+**001–022 PASS. 031–037 PASS** (031; 032 *with boundary*; 033 *audit, build
+nothing*; 034 *the visual principle*; 035-R; 036-R; 037-R *with a documented
+caveat*; boss audit *accepted, build nothing*).
 
-**CORRECTED 2026-08-29.** That audit ran against the art lane's base, 73
-commits behind Production, and its conclusion was wrong. Production HAS an
-authored-content pipeline: `ContentRegistry` validates manifests,
-`ContentInstantiator` routes *authored scene -> validated fallback*, and
-`landmark` is a real L4 category. What is missing is narrower — no
-`.glb`->`res://content/` scene step, no `landmark_id` for Epsilon to name one
-in, no placement path, and no landmark envelope (`NEEDS_FOOTPRINT` covers
-`cluster` alone). Interface requirement 24, reworded; working in
-`docs/art/review/batch023/README.md`.
+**PENDING owner review: 023–030 only.** Nothing about them is actionable
+without a verdict.
 
-Six places, one per theme, each a hero structure plus the architecture that
-makes it somewhere you were: a drop-test shaft hall, a collapsed process
-tower, a stacked transit interchange, a bell-breach hall, a collapsed
-ziggurat whose rubble is the route, and a room that intersects itself. None
-is an Epsilon monument. Every entry carries `integration_ready: false`.
+### The boundary — do NOT start the next art system
 
-**Do not expand the landmark family or open Batch 024** — the owner asked to
-stop for review. Do not invent filler production.
+Two systems are being designed by the owner and a design collaborator, each
+arriving as its own owner-authored brief:
+
+1. **Modular Echo visual construction / kitbash system**
+2. **Diegetic in-world interface system**
+
+Until those briefs exist:
+
+- **No Batch 038.**
+- **Do not design or mass-produce Echo visual parts.** Requirement 32 is
+  *only* the architectural seam — the Echo family must be visible through a
+  swappable / composable `EchoPart` seam. The three built ranged / melee /
+  grapple forms are **proof-of-seam only**, and are explicitly not approval
+  of seven fixed family models, a final attachment grammar, a final part
+  taxonomy, runtime composition rules, family silhouette rules, or
+  provenance / source influence rules.
+- **Do not expand the interaction kit** into menus, terminals, Archive UI,
+  Forge UI, Zone-selection UI, or any other large physical interface.
+- **No heartbeat, no polling, no autonomous expansion.**
+
+### Rules locked by the post-030 review, worth carrying forward
+
+- **If a distinction must survive gameplay distance, the distinguishing
+  feature must affect object-scale SILHOUETTE.** Surface is what distance
+  takes away first.
+- Three channels on any operable object: **silhouette/structure** = what
+  kind of thing; **interaction hardware** = yes this one is operable;
+  **state treatment** = what it is doing now. The plate/bezel may stay as
+  standardized hardware only while it is not the sole source of truth and
+  does not rely on hue alone.
+- Secrets: **no universal secret colour**; a cue is a **deviation from a
+  learned environmental pattern**; a smaller reliable vocabulary beats a
+  padded one. **Stop revising secrets until real in-game Zone testing.**
+- Enemy surface: **plate** = proud slab / impact-bearing; **mechanism** =
+  recessed, ribbed, rodded exposed function. No role colours.
+- Accepted caveat: brute vs scuttler surface identity is weak. **Do not
+  alter the approved scuttler silhouette or body to force a stronger
+  surface distinction** — revisit only with gameplay evidence.
+
+**Still blocked, and deliberately not routed around:** requirement 31 —
+`ENEMY_ARCHETYPES` is still `("melee", "ranged", "brute")`, so seven roles
+have a body, a collider, a telegraph seat and a surface, and no way to be
+spawned.
 
 **The art heartbeat is PAUSED** (`trig_01DSWy2dbCpeSefcx2YGS9Ys`, disabled
 2026-08-29) under the owner's rule: pause the routine when there is no work,
-resume it when there is a task. A no-op heartbeat is not free — it reads four
-documents to conclude nothing. PR #5 activity still wakes the session directly,
-so nothing is missed while it sleeps. Re-enable it on the Batch 023 verdict, on
-a landing contract, or on any newly unblocked tier.
+resume it when there is a task. **Do not re-enable it on an idle lane.** PR
+#5 activity still wakes the session directly, so nothing is missed.
 
 Earlier decisions standing: `objective_marker`, `arch_objective_socket`,
 `arch_signage_mount` and `arch_affordance_socket` all struck, each because
 nothing places them. `arch_vista_socket` still blocked on a contract.
-Requirement 23: engine `trim_mat` maps to authored `trim_plain`.
+Requirement 23: engine `trim_mat` maps to authored `trim_plain`. The Batch
+023 landmark audit was corrected on 2026-08-29 — Production **has** an
+authored-content pipeline (`ContentRegistry`, `ContentInstantiator`,
+`landmark` as a real L4 category); what is missing is the `.glb` →
+`res://content/` scene step, a `landmark_id`, a placement path and a landmark
+envelope. Requirement 24, reworded.
 
 ## Open decision, deliberately not guessed
 `challenge_marker` (§14.2) and its `challenge_timer` readout (§14.1) have a complete bridge half — grantable, recorded, `best_seconds` improves — and no world half, because neither section says where a run starts, what ends it, or what counts as one. `test_stage_tripwires.py::test_the_challenge_marker_still_has_no_challenge` names the decision and comes due when it is made.

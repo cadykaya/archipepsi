@@ -1,6 +1,18 @@
 # Batch 030 / 037-R — the ten approved enemy roles, and their surfaces
 
-**Status: PENDING.** Visual treatment only — no attack, AI, health, status
+**Status: PASS WITH DOCUMENTED CAVEAT** (owner, 2026-08-29). The surface
+construction rule is accepted — **plate** = a proud slab, impact-bearing
+construction; **mechanism** = recessed, ribbed, rodded exposed function — with
+no role colours and shared enemy-family ancestry preserved.
+
+> **The caveat, accepted rather than outstanding:** brute vs scuttler surface
+> identity remains weak; the scuttler still reads more armoured than its
+> description implies. **Do NOT alter the approved scuttler silhouette or body
+> solely to force a stronger surface distinction** — its silhouette already
+> carries substantial role identity, so surface may remain *supporting*
+> information here. Revisit only with gameplay evidence.
+
+Visual treatment only — no attack, AI, health, status
 effect, boss behaviour or telegraph timing is invented.
 
 Batch 030 established the ten bodies at their published envelopes. **Batch

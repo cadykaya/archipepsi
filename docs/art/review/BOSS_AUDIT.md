@@ -1,5 +1,9 @@
 # Optional bosses / minibosses — AUDIT ONLY
 
+**Status: ACCEPTED — BUILD NOTHING** (owner, 2026-08-29). The finding stands
+as a recorded dependency: **the missing piece is a telegraph vocabulary, not
+a body.**
+
 **No boss roster built. No boss designed.** The brief is explicit that this
 is an audit and that no boss work happens until Production defines the
 gameplay contract. This records whether the pieces that exist could plausibly

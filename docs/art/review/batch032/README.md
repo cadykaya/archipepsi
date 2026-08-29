@@ -128,4 +128,10 @@ directed *at* the player.
 two postures, at true viewmodel scale, so the difference is a fold rather
 than an appearance. No timing, no damage, no combo, no hit detection.
 
-Status: **PENDING OWNER REVIEW.**
+Status: **PASS WITH BOUNDARY** (owner, 2026-08-29). The baseline melee passes.
+The ranged / melee / grapple `EchoPart` forms are **proof of the attachment
+seam and nothing more** — explicitly *not* approval of seven fixed family
+models, a final attachment grammar, a final part taxonomy, runtime composition
+rules, family silhouette rules, or provenance / source influence rules.
+Requirement 32 is only the seam. **Do not begin designing or mass-producing
+Echo visual parts**; the owner will publish a modular Echo kitbash brief.
