@@ -55,6 +55,46 @@ except the consumer here is Archipelago's own solvability guarantee.
 
 ---
 
+## 0-bis. The invariant is LOGICAL solvability, not base-kit solvability
+
+**Superseded, 2026-08-29, by owner direction.** Earlier drafts of this
+document required the whole mandatory route to be reachable with the
+starting kit. That is no longer the rule and must not be restated.
+
+A local key, a required Check, or **the Zone exit itself** may sit behind
+a hard Echo capability gate — Grapple, Teleport — provided all five hold:
+
+1. the matching AP location logic declares the same prerequisite;
+2. Archipelago proves the capability progression is obtainable;
+3. the physical Zone graph agrees with that AP logic;
+4. the player can safely leave the blocked Zone;
+5. the Zone remains re-enterable.
+
+Explicitly legal in the target design:
+
+```
+GRAPPLE required -> red local key -> red door -> Check 5 -> Zone exit
+```
+
+...provided those AP locations are logically Grapple-gated.
+
+**"NOT YET" is good gameplay.** The thing being protected is that the
+seed is *winnable*, not that every door opens the first time you reach
+it. Hard progression is the feature.
+
+So the failure mode to guard is no longer "a gate exists". It is
+**divergence**: the Zone requiring a capability that AP's logic for those
+locations does not declare. Condition 1 is the one with teeth, and
+conditions 4 and 5 are why `## 0` and design 10 are load-bearing — a gate
+you cannot walk away from, or cannot come back to, converts hard
+progression into a dead run.
+
+Note what this does **not** relax: `max_safe_gap` and the movement floor
+still bound what a gate may ask of the kit you *do* have. A declared
+Grapple gate is legal; an undeclared 3-metre jump is still a bug.
+
+---
+
 ## 1. The 5-of-15 split — required Checks and hidden Checks
 
 **Problem.** "If a level has 15 total checks, let the player finish it
@@ -115,11 +155,36 @@ skippable, **about 59% of the Zone goes with them.** Playtest 2.5
 measured the whole Zone at 8–11 minutes; the required path would be
 **3–4.5 minutes.**
 
-**The budget split is therefore a precondition of this design, not a
-caveat on it.** The ten optional Checks need rooms funded by an
-*additional* allowance — which is design 7 variant 2, spurs — rather
-than carved out of the same 1000. Carving makes the pacing problem
-that prompted this entire redesign roughly twice as bad.
+**Do not read this as "optional Checks need extra spur budget."** That
+is the small half. The measurement's real content is that the generator
+has an accidental identity baked into it:
+
+> one Check ≈ one room ≈ one unit of gameplay
+
+Checks are *rewards placed through gameplay*. They must not be the
+mechanism that causes gameplay rooms to exist. As long as they are, the
+Zone's length is a function of its Check count, which is why 921 content
+points bought 8–11 minutes and why the configurable ceiling of 2000
+cannot reach 40 minutes at any setting.
+
+**So the core route is itself too small, before any Check is hidden.**
+Breaking the identity means funding PLAYER ACTIVITY independently of
+Check count, and the core route needs substantial activity of its own:
+
+- encounters
+- interaction / puzzle clusters
+- key and door structure
+- traversal and verticality
+- exploration, landmarks
+- shortcuts and loops
+
+Optional branches then receive an *additional* activity budget on top of
+that — design 7 variant 2 — rather than the core being hollowed out to
+pay for them.
+
+**No numeric budgets yet. Playtest them.** Picking a number now would be
+retuning against a guess, which is the mistake `CAMPAIGN_SCALE.md` §3
+already records once.
 
 **Depends on: design 10.** See `## 0`.
 
@@ -141,15 +206,21 @@ before accepting the Zone:
 
 - every lock has at least one key reachable without passing that lock
   (no key behind its own door);
-- no *required* Check and no Zone exit sits behind a lock whose key is
-  behind another lock the base kit cannot reach;
-- the whole required set is solvable with the base kit and Zone-local
-  keys alone.
+- the key graph is acyclic — no lock whose key sits behind itself,
+  directly or through a chain;
+- **every capability gate on the way to a key, a required Check or the
+  Zone exit is declared in the matching AP location logic**, so the
+  physical graph and the logical graph agree.
 
-That last rule is the base-kit solvability invariant restated for keys,
-and it is a graph reachability check over a handful of nodes — cheap,
-deterministic, and testable with a sabotage (build a cyclic key graph,
-confirm the validator refuses).
+The last one is the whole of it, and it is `## 0-bis`'s rule applied to
+keys. A key MAY sit behind Grapple. What may not happen is the Zone
+requiring Grapple while AP's logic for those locations does not say so —
+that is the divergence, not the gate.
+
+It stays a graph reachability check over a handful of nodes, cheap and
+deterministic, and it is testable by sabotage: build a cyclic key graph,
+or a gate the AP logic does not declare, and confirm the validator
+refuses both.
 
 **Boundary check.** Clean, and notably it does *not* touch Archipelago
 at all. That is the whole appeal: it buys metroidvania structure inside
@@ -245,17 +316,19 @@ as zero content value, for the same reason and with the same test.
 Echo.
 
 **Mechanism.** One always-available, never-randomised, never-interpreted
-attack. It is *base kit*, which in this codebase is a load-bearing term:
-base-kit solvability is an invariant, and melee joining the base kit
-means every solvability argument may now assume it.
+attack. It is *base kit* — never randomised, never gated, present from
+the first second of the first Zone.
 
-**That cuts both ways and is worth deciding deliberately:**
+**That matters more now, not less.** Under `## 0-bis` a Zone may gate
+content behind Grapple, so the things that are *never* gated are the few
+the player can always fall back on. Melee is the floor beneath the
+gates, not a substitute for them:
 
-- If melee is base kit, a Zone may require melee, which is more design
-  space.
-- If melee is base kit, then `max_safe_gap`-style bounds gain a
-  sibling: whatever a Zone may require melee to *break* must be
-  breakable by melee alone, forever, at every campaign scale.
+- a Zone may require melee anywhere, with no AP declaration needed,
+  precisely because every player has it in every seed;
+- so whatever a Zone may require melee to *break* must stay breakable by
+  melee alone, forever, at every campaign scale — a `max_safe_gap`-style
+  bound, and the reason to add it the same day as the verb.
 
 **Recommendation: base kit, and add the invariant at the same time.**
 Adding the verb without the invariant is how a Zone ends up requiring an
@@ -336,10 +409,9 @@ changes that, which is why 921 content points still felt empty.
 
 **Recommendation: 2 now, 4 as the real target, 3 after.** 2 is a
 week-one change that design 1 *requires* rather than merely benefits
-from — the spur rooms are where the optional Checks' content has to come
-from, because carving it out of the existing budget costs 59% of the
-Zone (design 1); 4 is the one that answers "I
-wanted the maps to be big and interconnected".
+from — spurs are where the optional Checks' activity comes from, on top
+of a core route that has to grow its own (design 1); 4 is the one that
+answers "I wanted the maps to be big and interconnected".
 
 **The hard part, named.** `_overlaps()` proves placements disjoint by
 checking each candidate against every prior bounds. That works because
@@ -377,10 +449,13 @@ a *physical* thing the existing chamber grammar can host.
 
 **Two rules that must hold, and they are the same rule twice:**
 
-1. **Never mandatory behind an Echo.** `ECHOES.md` §13.2 already forbids
-   a mandatory Check behind an affordance; a puzzle requiring a
-   *specific* Echo is the same violation wearing a different hat. A
-   required puzzle must be solvable with the base kit.
+1. **Gate deliberately, and declare it.** `ECHOES.md` §13.2 forbids a
+   mandatory Check behind an *affordance* — an unowned, incidental
+   dependency. A declared capability gate is the opposite of that and is
+   legal under `## 0-bis`: a required puzzle MAY need Grapple, provided
+   the AP logic for that location says so. What stays forbidden is the
+   undeclared version, where the Zone needs an Echo that AP never
+   required the player to have.
 2. **A physics object must not be able to leave the room.** A carryable
    dropped through the geometry, or thrown into the void, can make a
    required puzzle unsolvable — and the player cannot tell that has
@@ -479,8 +554,8 @@ or be openly regenerated, never silently changed.
 9 together, in that dependency order, with `## 0`'s test written
 *first*. They are one change and none of the three is safe alone — and
 design 1 needs design 7 variant 2 underneath it, because 89% of a Zone's
-content is in its Check rooms and hiding ten of fifteen Checks without
-new rooms to put them in costs 59% of the Zone.
+content is in its Check rooms. Before any of it, the core route has to
+stop being one room per Check: fund activity, not pedestals (design 1).
 
 **What not to start with:** design 8's carryables (soft-lock surface
 before the reset rule exists), design 7 variants 3–5 (needs the

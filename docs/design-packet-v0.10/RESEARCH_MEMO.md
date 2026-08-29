@@ -288,13 +288,40 @@ produces is ≥ N, at every configurable scale rather than at the default.
 
 ---
 
+> **Superseded, 2026-08-29:** anywhere this memo assumes the mandatory
+> route must be base-kit reachable, see `SOLUTIONS_CATALOGUE.md` §0-bis.
+> The invariant is LOGICAL solvability. A required Check, a local key or
+> the Zone exit may sit behind a declared capability gate.
+
 ## 7. The Forge, and the capability it might destroy
 
-The append-only fold already solves reference survival: `aliases` map an
-absorbed id to a survivor, "fully resolved (never a chain)"
-(`mechanics.py:122`), honoured in `derive_mechanics` and
-`_check_rule_references`. **Reforge is supersession, and supersession is
-what MERGE already does.** The log is not the hard part.
+MERGE gives us **precedent, not a solution.** `aliases` map an absorbed
+id to a survivor, "fully resolved (never a chain)" (`mechanics.py:122`),
+honoured in `derive_mechanics` and `_check_rule_references`. That is a
+real, working answer to *reference survival*, and reforge will want
+something shaped like it.
+
+It is not the same problem. MERGE absorbs within a structure the fold
+already understands; cross-family reforge changes the primitive type
+underneath, and each of these needs explicit analysis before anyone
+claims the alias mechanism covers it:
+
+- existing links
+- modifiers
+- primitive-specific structure
+- powered / fills relationships
+- Mk and upgrades
+- future targeting
+
+**RETIRE + CREATE stays a first-class candidate**, and may be the
+cleaner one: the old component remains internally valid as a dependency
+and history anchor, its *player-facing expression* becomes retired, and
+a new expression is created in the requested family carrying the same
+source provenance. Nothing is rewritten, so nothing that pointed at the
+old component breaks — which is the property the alias mechanism was
+bought for in the first place.
+
+**Do not choose the implementation yet.**
 
 The hard parts are two:
 
