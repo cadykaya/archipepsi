@@ -2715,3 +2715,60 @@ its own note why it is placed: the point of that shot is where you stand
 (L-62).
 
 Status: **PENDING** — not self-marked.
+
+## Batch 022 — PROPOSAL: the navigation language
+
+Not production. This proposes a language that does not exist yet, and the
+full argument and evidence live in `docs/art/review/batch022/README.md`.
+
+The batch is small because the engine turned out to have already solved
+most of it. `zone_controller._process` drives a HUD waypoint that names
+the nearest actionable Check, ranks `available` over `locked`, states
+`SENDING` / `READY` / locked / `EXIT`, and falls through to the exit
+portal when every Check is confirmed — so **which objective, how far,
+what state** are answered. The two questions left are *which way from
+here* and *what is this place*, and this batch is those and nothing else.
+
+Four modules, one language: `nav_blade` (60 tris), `nav_panel` (60),
+`nav_chevron` (68), `nav_hanger` (84). All prop tier at 64.0 texels/m.
+Faces are blank; wording is runtime data, as `chamber_builders` already
+does for the transit sign.
+
+The family carries no hue, and `F_collapse.png` shows why that is
+arithmetic rather than preference: HUD EXIT and HUD READY are 2% apart in
+luminance, SEND and HUD READY are 0.3% apart. Those distinctions run
+entirely on hue, so the channel is spent. The sheet also declines the
+flattering version of the claim — the signage field at luma 0.806 sits
+right beside EXIT green at 0.805, and is not a spare value. It does not
+need one: its meaning is the glyph and where it is bolted.
+
+
+| module | tris | size (m) | job |
+|---|---|---|---|
+| `nav_blade` | 60 | 1.17 × 0.30 × 0.52 | perpendicular to the wall, read along a corridor. Runtime text. |
+| `nav_panel` | 60 | 1.04 × 0.23 × 0.55 | flush beside a threshold at eye height. Runtime text. |
+| `nav_chevron` | 68 | 0.51 × 0.21 × 0.36 | direction, as an ink arrowhead on a pale field. |
+| `nav_hanger` | 84 | 1.10 × 0.13 × 0.98 | the ceiling-hung blade, for a junction with no wall. |
+
+Direction is deliberately **not** baked into the blade. A blade with an
+arrow in it can only ever mean "right", and which way `STAIR C` lies is a
+fact about the junction, not the mesh.
+
+Recorded honestly rather than fixed: at the 5.4 m gameplay distance of
+`A_junction.png` the arrow carries and the text does not. The signs were
+not enlarged to disguise it.
+
+Two recommendations for the owner, both derived from the engine rather
+than asserted:
+
+- **`objective_marker` — strike it.** `reach_reward` is marked by the
+  Check itself (Batch 005, PASS). `kill_all` has nothing to mark. For
+  `platform_to_goal`, `goal_area_position` `(0, rise + 1.0, total - ledge)`
+  and `reward_position` `(0, rise, total - ledge / 2.0)` are 2.0 m apart on
+  the same top ledge, so a player walking to the waypointed Check crosses
+  the goal area on the way. A marker would sit 2 m from a Check that
+  already reads in four states.
+- **`signage_module` — let it become this four-module family** rather than
+  one object.
+
+Status: **PENDING** — not self-marked.

@@ -227,10 +227,10 @@ than any Zone and their whole value is being the same every time.
 | `archive_terminal` | L2 | U | `hub/hub.gd` | A | — | B3 as `hub_archive_terminal` |
 | `epsilon_terminal` | L2 | H | none | A | see §1 | B1 |
 | `local_reward_pickup` | L0 | U | `gameplay/local_reward.gd` | B | **six kinds**, and the client must not be able to invent a seventh: `epsilon_note`, `challenge_marker`, `cosmetic_grant`, `hub_decoration`, `lab_fixture`, `flavor_log`. Never confusable with a Check | — |
-| `objective_marker` | L0 | U | `gameplay/zone_controller.gd` | B | three objectives: `reach_reward`, `kill_all`, `platform_to_goal`. **Blocked on an owner decision**: a marker set that means one thing in all six themes is a navigation language, which is new visual DNA | — |
+| ~~`objective_marker`~~ | — | — | `gameplay/zone_controller.gd` | — | **RECOMMEND STRIKE 2026-08-29 (Batch 022) — owner decision pending.** All three objectives are already answered without it. `reach_reward`: the Check IS the marker, in four states (Batch 005, PASS). `kill_all`: the enemies are the objective; when they are gone the room says so. `platform_to_goal`: `goal_area_position` is `(0, rise + 1.0, total - ledge)` and `reward_position` is `(0, rise, total - ledge / 2.0)` — **2.0 m apart on the same top ledge**, so a player walking to the HUD-waypointed Check passes through the goal area on the way. A marker there would be a sign 2 m from a Check that already reads in four states and already carries a waypoint. Residual *what is this place* need is covered by `nav_panel`. | — |
 | `door_standard` | L1 | U | `chamber_builders.gd` door gaps | A | 2.4 × 3.2 m in a 0.4 m wall, all three read from the engine. Theme trim, not a universal family — a lining is not an interactable | **B6** |
 | `transition_frame` | L1 | U | connectors | B | — | — |
-| `signage_module` | L0 | U | `chamber_builders.gd` `GRAFFITI` | B | navigation vocabulary; must read the same in all six themes. **Blocked on the same owner decision as `objective_marker`** | — |
+| `signage_module` | L0 | U | `chamber_builders.gd` `GRAFFITI` | B | **SUPERSEDED by Batch 022 (PENDING)** — proposed as a four-module family rather than one object: `nav_blade`, `nav_panel`, `nav_chevron`, `nav_hanger`. Achromatic by arithmetic, not taste: every saturated hue is already committed, and HUD EXIT / HUD READY / SEND sit within 3% luminance of each other. Faces are blank; wording is runtime data. | `docs/art/review/batch022` |
 | `generation_presentation` | L2 | H | `ui/` | B | `GENERATING` is a real mode for up to 120 s and must not read as a hang | — |
 | `provider_failure_state` | L2 | H | `ui/` | B | **the moment the player most needs to trust what they see** | — |
 
@@ -312,7 +312,7 @@ primitives today. Module grid **4.0 m**; wall thickness **0.40 m**; door
 | `arch_column` | L1 | B | **B20** | | `arch_light_fixture` | L1 | A | B1 |
 | `arch_beam_span` | L1 | B | **B20** | | `arch_signage_mount` | L0 | B | **blocked with the navigation language** |
 | `arch_stair` | L1 | A | **B7** | | `arch_objective_socket` | L1 | B | **blocked with the navigation language** |
-| `arch_ramp` | L1 | A | **B7** | | `arch_affordance_socket` | L1 | B | **no placement path — see interface req 22** |
+| `arch_ramp` | L1 | A | **B7** | | ~~`arch_affordance_socket`~~ | — | — | **STRUCK 2026-08-28 (req 22)** — each affordance owns its own mounting language |
 | `arch_ledge` | L1 | A | **B7** | | `arch_secret_alcove` | L2 | B | **B21** |
 | | | | | | `arch_vista_socket` | L2 | C | **no engine contract to build against** |
 

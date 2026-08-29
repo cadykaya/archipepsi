@@ -47,6 +47,25 @@ assets.
 
 ## Completed: v0.8 Echoes 2.0 (S1–S10) and the pre-playtest pass
 
+## Art batches awaiting the owner
+**020, 021 and 022 are all PENDING.** Art does not mark its own work.
+
+Batch 022 is the navigation-language proposal (`docs/art/review/batch022`).
+It carries two decisions for the owner:
+
+- **`objective_marker`: recommend STRIKE.** The HUD already answers which
+  objective, how far, what state, and where the exit is. The one case with
+  an unmarked world position — `platform_to_goal`'s goal area — sits 2.0 m
+  from that chamber's `reward_position` on the same ledge, so a player
+  walking to the waypointed Check crosses it anyway.
+- **`signage_module`: recommend it become the four-module family** in that
+  batch rather than one object.
+
+Resolved 2026-08-28: `arch_affordance_socket` is **struck** (interface req
+22). No universal affordance mount; the footprint stays an engineering
+clearance contract, not geometry shown to the player; each affordance owns
+its own attachment language and is extended if it needs more.
+
 ## Open decision, deliberately not guessed
 `challenge_marker` (§14.2) and its `challenge_timer` readout (§14.1) have a complete bridge half — grantable, recorded, `best_seconds` improves — and no world half, because neither section says where a run starts, what ends it, or what counts as one. `test_stage_tripwires.py::test_the_challenge_marker_still_has_no_challenge` names the decision and comes due when it is made.
 
