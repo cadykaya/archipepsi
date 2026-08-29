@@ -172,6 +172,100 @@ Consequences to accept deliberately:
 
 ---
 
+## 6b. The finale after CLEARED ≠ EXHAUSTED
+
+§6 listed four finale options and deferred them. The owner has since
+directed that finale progression follow **Zone-CLEARED milestones**
+rather than a Check fraction. That is architecture, not tuning, so it is
+researched here. `FINALE_REQUIRED_FRACTION` is NOT changed.
+
+### The reassuring result first
+
+**The finale gate is entirely bridge-side and cannot break the
+multiworld.** Archipelago's completion condition is the Victory event
+placed in Tier 2 (`apworld/archipepsi/__init__.py:118-123`), reachable
+with two Signal Keys. `FINALE_REQUIRED_FRACTION` lives in
+`constants.py:85` and Archipelago has never heard of it. Replacing a
+Check fraction with a Zone milestone is a pure client-side pacing change
+with **zero** effect on AP solvability.
+
+**One exception, and it is §0 again.** The goal Check is a real AP
+location. Archipelago proves it reachable with two keys; the *bridge*
+decides when to offer it. A milestone the player can never satisfy
+strands the goal location and no generation error is raised. So whatever
+the milestone is, **it must be provably satisfiable**, and that proof is
+ours to write because Archipelago will not.
+
+### The 0.8 fraction is already nearly inert
+
+`hub_status()` tests in order: `ALL_CHECKS_CLEARED` → `ZONE_AVAILABLE`
+→ `FINALE_ONLY` (`campaign.py:454-472`). `finale_unlocked` is only
+consulted **when `zone_candidates()` is empty**. The finale is therefore
+offered when no ordinary Zone can be allocated, and the 360-Check
+threshold is a floor the candidate pool usually reaches first.
+
+Worth knowing before anyone reasons from the constant: "70% of secrets
+to see the ending" is what the number says, not what the control flow
+does.
+
+### `holds_locations` is the hinge, and the two directives pull it apart
+
+`_held_location_ids()` counts only Zones where `holds_locations`, which
+is `state not in ("COMPLETE", "ABANDONED")` (`protocol.py:191-193`). **A
+terminal Zone releases its unclaimed Checks back into the candidate
+pool.** Today that never bites, because a Zone only reaches COMPLETE
+when every allocated Check is confirmed.
+
+Under CLEARED ≠ EXHAUSTED, that one predicate decides the whole design:
+
+- **CLEARED is terminal** → the ten unclaimed Checks return to the pool
+  and are re-allocated into a later Zone. §0's accessibility problem
+  solves itself for free — and the metroidvania promise dies with it,
+  because the ledge you could not reach no longer exists; that Check
+  just turns up somewhere else.
+- **CLEARED is NOT terminal** — Zones persist and are revisitable, which
+  is what the owner directed → those Checks are held forever and are
+  obtainable *only* by re-entering that Zone. Re-entry becomes
+  mandatory, exactly as §0 concluded.
+
+These are catalogue design 10's variants 2 and 1, and **the choice is
+made by one existing predicate.** Leaving `holds_locations` alone while
+making CLEARED terminal silently picks the first.
+
+### The Zone count is not a constant
+
+Do not type `30`. `_select_zone_locations()` tops up from other tracks
+when the target track cannot fill `zone_target_checks`
+(`campaign.py:392-403`), and the last Zone takes whatever remains, so
+the number of Zones a campaign yields is not `location_count /
+zone_target_checks` in general. A milestone counting Zones must derive
+its N from the config and tolerate a short final Zone — the
+`max_safe_gap` lesson a second time: a number cannot be asked a
+question.
+
+### Milestone options
+
+| Milestone | Satisfiable? | Note |
+|---|---|---|
+| **N Zones CLEARED** | Yes for N ≤ the count the allocator can actually produce | N = 24 reproduces today's pacing (0.8 × 30) without counting secrets at all |
+| All Zones CLEARED | Yes, but zero slack, and the count moves with top-up | Makes the last Zone mandatory |
+| N CLEARED **+ Signal Keys** | Yes — keys are AP progression, so AP guarantees them | The existing key half of the gate is the only part AP already polices; keep it |
+| N CLEARED + a Check floor | Only if the floor is reachable from required Checks alone (5 × N) | A higher floor re-introduces secret-hunting |
+| Finale as a capability-gated Zone | Yes, and AP polices the capability | **Dangerous:** if the granting Check is optional, the ending sits behind a secret — worse than the fraction |
+
+**Recommendation: N Zones CLEARED, N derived from the config, keeping
+`FINALE_REQUIRED_SIGNAL_KEYS`. No Check floor.** It is the only option
+that expresses the owner's direction without re-introducing the problem
+it was meant to remove.
+
+**The test that has to exist**, and it is the §0 test in another
+costume: the milestone must be satisfiable from required Checks alone.
+`test_production_scale.py` already walks the allocator to exhaustion
+without stranding a Check; the same walk can assert the Zone count it
+produces is ≥ N, at every configurable scale rather than at the default.
+
+---
+
 ## 7. The Forge, and the capability it might destroy
 
 The append-only fold already solves reference survival: `aliases` map an
