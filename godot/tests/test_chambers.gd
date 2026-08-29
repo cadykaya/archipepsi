@@ -26,6 +26,7 @@ func _ready() -> void:
 	_test_chaining_no_overlap()
 	_test_bent_layouts_never_overlap()
 	_test_props_leave_a_walkable_lane()
+	_test_a_brute_fits_through_a_doorway()
 	_test_secrets_are_optional()
 	_test_secrets_reach_the_vertical_chambers()
 	_test_platform_path_bounds()
@@ -33,6 +34,7 @@ func _ready() -> void:
 	_test_treasure_room()
 	_test_exit_portal_appended()
 	await _test_every_chamber_is_sealed()
+	await _test_no_chamber_leaks_off_its_centre_line()
 	_test_light_fixtures_are_not_buried()
 	_test_playtime_measures_what_it_claims()
 	_test_playtime_is_silent_about_a_zone_nobody_played()
@@ -171,6 +173,17 @@ func _test_props_leave_a_walkable_lane() -> void:
 						continue          # ceiling / overhead
 					if absf(box.get_center().x) > width / 2.0 - 0.25:
 						continue          # side wall
+					# ...and neither is a DOORWAY. A corridor gained end
+					# walls when playtest 2.5 found it open at both
+					# mouths, and their jambs sit at |x| = DOOR_WIDTH / 2
+					# -- inside a 2.6 lane, because DOOR_WIDTH is 2.4.
+					# That is not this test choking on a prop, it is the
+					# door every other chamber type has always had; the
+					# next test pins what it costs. This one is about
+					# props, which is why floor, ceiling and side wall
+					# are already exempt.
+					if box.get_center().z <= ChamberBuilders.WALL_THICKNESS 							or box.get_center().z >= 30.0 							- ChamberBuilders.WALL_THICKNESS:
+						continue          # end wall / doorway jamb
 					var intrudes: bool = box.position.x < lane / 2.0 \
 							and box.position.x + box.size.x > -lane / 2.0
 					_check(not intrudes,
@@ -651,3 +664,146 @@ func _test_playtime_is_silent_about_a_zone_nobody_played() -> void:
 	log.note_enemy_died(0)
 	_check(log.to_intent("zone_001", false)["encounter_seconds"].is_empty(),
 			"a fight the player died in was reported as a long encounter")
+
+## The same question as test 57, asked from more than one place.
+##
+## Test 57 probes from the chamber's CENTRE, in three directions. That
+## was enough for the bug it was written for -- a missing ceiling and two
+## missing end walls are visible from anywhere in the room -- and it is a
+## guard shaped exactly like its own fix. A hole that is not on the
+## centre line is invisible to it, and playtest 2.5 walked into one while
+## test 57 was green.
+##
+## So this stands at 81 positions across the floor, at two heights, and
+## looks in all four horizontal directions. Only the doorways are
+## licensed, and licensed narrowly: `_end_wall` raises solid full-height
+## slabs either side of a DOOR_WIDTH gap, so an escape wider than half a
+## door from the door's own centre line is a hole at ANY height, and a
+## sideways escape is one unless that chamber's exit actually goes
+## sideways at that point along its length.
+func _test_no_chamber_leaks_off_its_centre_line() -> void:
+	var world := Node3D.new()
+	add_child(world)
+	var cases := {
+		"corridor": ChamberBuilders.corridor(
+				{"length": 12.0, "width": 5.0}, "concrete_facility"),
+		"corridor_widest": ChamberBuilders.corridor(
+				{"length": 30.0, "width": 10.0}, "concrete_facility"),
+		"corridor_narrowest": ChamberBuilders.corridor(
+				{"length": 6.0, "width": 4.0}, "concrete_facility"),
+		"arena": ChamberBuilders.arena(
+				{"width": 18.0, "depth": 16.0}, "concrete_facility"),
+		"arena_widest": ChamberBuilders.arena(
+				{"width": 28.0, "depth": 28.0}, "concrete_facility"),
+		"platform_path": ChamberBuilders.platform_path(
+				{"width": 12.0, "length": 20.0, "gap_size": 1.6,
+				"platform_count": 4, "vertical_step": 0.8},
+				"concrete_facility"),
+		"treasure_room": ChamberBuilders.treasure_room(
+				{}, "concrete_facility"),
+		"tower": ChamberBuilders.tower({"floors": 3}, "concrete_facility"),
+		"corner_left": ChamberBuilders.corner(-1, "concrete_facility"),
+		"corner_right": ChamberBuilders.corner(1, "concrete_facility"),
+	}
+	# The tower's declared bounds run 2.2 m PAST its shaft: the last of
+	# that is the bridge strip the climb leaves on, which is outside the
+	# back wall by design and open on both sides on purpose. Probing it
+	# would be asking why the outdoors has no walls.
+	var interior_depth := {"tower": 12.0}
+
+	var lane := 0
+	for name: String in cases:
+		var root: Node3D = (cases[name] as Dictionary)["root"]
+		root.position = Vector3(float(lane) * 400.0, 0.0, 0.0)
+		lane += 1
+		world.add_child(root)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+
+	var space := world.get_world_3d().direct_space_state
+	var half_door: float = ChamberBuilders.DOOR_WIDTH / 2.0 + 0.05
+	for name: String in cases:
+		var result: Dictionary = cases[name]
+		var bounds: AABB = result["bounds"]
+		var origin: Vector3 = (result["root"] as Node3D).position
+		var exit_offset: Vector3 = result["exit_offset"]
+		# Inset off the walls, and measured UP FROM THE FLOOR. The AABB
+		# bottom is under the floor slab -- forty metres under it for a
+		# platform_path, whose kill volume is part of its bounds -- so
+		# sampling from `bounds.position.y` stands the probe in dirt and
+		# every ray escapes for the most boring possible reason.
+		var inset := 0.7
+		var x0: float = bounds.position.x + inset
+		var x1: float = bounds.position.x + bounds.size.x - inset
+		var z0: float = bounds.position.z + inset
+		var z1: float = bounds.position.z + float(interior_depth.get(
+				name, bounds.size.z)) - inset
+		var top: float = bounds.position.y + bounds.size.y
+		var escapes := 0
+		var worst := ""
+		for fx in range(0, 9):
+			for fz in range(0, 9):
+				var local := Vector3(
+						lerpf(x0, x1, float(fx) / 8.0), 0.0,
+						lerpf(z0, z1, float(fz) / 8.0))
+				for eye: float in [0.9, 2.4]:
+					local.y = eye
+					if local.y > top - 0.2:
+						continue
+					for dir: Vector3 in [Vector3.LEFT, Vector3.RIGHT,
+							Vector3.FORWARD, Vector3.BACK]:
+						if _is_a_doorway(dir, local, exit_offset, half_door):
+							continue
+						var from := origin + local
+						var probe := PhysicsRayQueryParameters3D.create(
+								from, from + dir * 200.0)
+						if not space.intersect_ray(probe).is_empty():
+							continue
+						escapes += 1
+						if worst == "":
+							worst = "standing at (%.1f, %.1f, %.1f) " \
+									% [local.x, local.y, local.z] \
+									+ "looking %s" % dir
+		_check(escapes == 0,
+				"%s has %d sightlines out of the level that are not "
+				% [name, escapes] + "doorways: %s" % worst)
+	world.queue_free()
+
+## Whether an escape in `dir` from `local` goes out a door rather than
+## through a wall that should be there. The end walls carry their gap at
+## x = 0; a sideways exit carries its gap at the exit's own z.
+func _is_a_doorway(dir: Vector3, local: Vector3, exit_offset: Vector3,
+		half_door: float) -> bool:
+	if absf(dir.z) > 0.5:
+		return absf(local.x) <= half_door
+	if absf(exit_offset.x) < 0.01 or dir.x * exit_offset.x <= 0.0:
+		return false          # nothing leaves sideways here
+	return absf(local.z - exit_offset.z) <= half_door
+
+
+## What a doorway costs, stated rather than assumed.
+##
+## DOOR_WIDTH is 2.4 and BRUTE_LANE is 2.6, so no doorway in this game
+## has ever satisfied the lane budget -- not the arena's, not the
+## tower's, not the treasure room's. Nothing noticed until a corridor
+## grew ends, because the lane test only ever ran on the one chamber type
+## with no doors in it.
+##
+## The resolution is that BRUTE_LANE is a PROP budget (1.8 m brute plus
+## 0.4 of margin either side) and a doorway is a designed narrowing that
+## the brute still passes: 2.4 against 1.8 leaves 0.3 a side. That is the
+## claim, so it is a test. Widen the brute past a door and this fails
+## here, with the reason, instead of failing as a stuck enemy.
+func _test_a_brute_fits_through_a_doorway() -> void:
+	var envelope: Dictionary = Constants.ENEMY_ENVELOPES["brute"]
+	var brute: float = float((envelope["size"] as Vector3).x)
+	var door: float = ChamberBuilders.DOOR_WIDTH
+	_check(brute < door,
+			"the brute is %.1f m wide and a doorway is %.1f: it cannot "
+			% [brute, door] + "leave the room it spawned in")
+	_check(door < ChamberBuilders.BRUTE_LANE,
+			"DOOR_WIDTH %.1f now meets BRUTE_LANE %.1f, so the prop test "
+			% [door, ChamberBuilders.BRUTE_LANE]
+			+ "no longer needs to exempt doorway jambs -- drop the exemption")
+	print("chambers: doorway %.1f m, brute %.1f m, clearance %.2f a side"
+			% [door, brute, (door - brute) / 2.0])

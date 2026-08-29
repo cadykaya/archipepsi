@@ -641,6 +641,25 @@ static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 	_box(root, Vector3(width, WALL_THICKNESS, length),
 			Vector3(0, height, length / 2.0),
 			ThemeMaterials.trim_mat(theme))
+	# Ends, with a doorway through each.
+	#
+	# The playtest-2 fix named the three builders that raise their own
+	# walls and therefore had no ends -- `corridor`, `platform_path`,
+	# `corner` -- and then gave ends to two of them. A corridor stayed
+	# open across its FULL WIDTH at both mouths, which nothing noticed
+	# because a corridor in the middle of a chain has a neighbour parked
+	# against each end. The two places it shows are the two places a
+	# neighbour is narrower or absent: a wide corridor meeting a 4 m
+	# connector leaves metres of open wall either side of the seam, and
+	# the FIRST chamber of a Zone has nothing in front of it at all.
+	# That second one is what playtest 2.5 walked up to.
+	#
+	# Inset by half a wall so the geometry stays inside the bounds this
+	# builder declares. Two pieces then meet back-to-back at the seam
+	# rather than occupying the same slab -- the difference between a
+	# door frame and a z-fight.
+	_end_wall(root, width, height, WALL_THICKNESS / 2.0, wall)
+	_end_wall(root, width, height, length - WALL_THICKNESS / 2.0, wall)
 	# Pipes along one wall: the load-bearing GoldSrc prop.
 	var pipe := MeshInstance3D.new()
 	var cylinder := CylinderMesh.new()
