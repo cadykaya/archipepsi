@@ -1,0 +1,246 @@
+{
+  "zkey_ch1": {
+    "anchor": "floor",
+    "batch": "031",
+    "channel": 1,
+    "code_is": "1 lug(s) on the bit, plus the shoulder notch rotated 1 step(s)",
+    "distinct_from": [
+      "Signal Key (AP, campaign-wide, no art yet)",
+      "Epsilon Coin (disc on edge)",
+      "AP Check (pedestal)",
+      "health / ammo / resources"
+    ],
+    "integration_ready": false,
+    "kind": "local_zone_key",
+    "mates_with": "zkey_receiver_ch1",
+    "path": "batch031/keys/zkey_ch1.glb",
+    "reads_without_colour": true,
+    "scale_basis": "proposal scale",
+    "shank_contract_m": {
+      "length": 0.3,
+      "shoulder_radius": 0.085,
+      "thickness": 0.032,
+      "width": 0.075
+    },
+    "shares_pickup_mat": true,
+    "size": [
+      0.591,
+      0.591,
+      0.189
+    ],
+    "texel_density": null,
+    "theme": "concrete_facility",
+    "themed_parts": [
+      "grip"
+    ],
+    "triangles": 288,
+    "universal_parts": [
+      "shank",
+      "shoulder",
+      "notch",
+      "bit lugs"
+    ]
+  },
+  "zkey_ch1_rusted_industrial": {
+    "anchor": "floor",
+    "batch": "031",
+    "channel": 1,
+    "code_is": "1 lug on the bit, plus the shoulder notch rotated 1 step -- IDENTICAL to zkey_ch1",
+    "integration_ready": false,
+    "kind": "local_zone_key",
+    "path": "batch031/keys/zkey_ch1_rusted_industrial.glb",
+    "reads_without_colour": true,
+    "scale_basis": "proposal scale",
+    "shares_pickup_mat": true,
+    "size": [
+      0.591,
+      0.591,
+      0.189
+    ],
+    "texel_density": null,
+    "theme": "rusted_industrial",
+    "themed_parts": [
+      "grip"
+    ],
+    "triangles": 288,
+    "universal_parts": [
+      "shank",
+      "shoulder",
+      "notch",
+      "bit lugs"
+    ]
+  },
+  "zkey_ch1_void_glitch": {
+    "anchor": "floor",
+    "batch": "031",
+    "channel": 1,
+    "code_is": "1 lug on the bit, plus the shoulder notch rotated 1 step -- IDENTICAL to zkey_ch1",
+    "integration_ready": false,
+    "kind": "local_zone_key",
+    "path": "batch031/keys/zkey_ch1_void_glitch.glb",
+    "reads_without_colour": true,
+    "scale_basis": "proposal scale",
+    "shares_pickup_mat": true,
+    "size": [
+      0.591,
+      0.591,
+      0.189
+    ],
+    "texel_density": null,
+    "theme": "void_glitch",
+    "themed_parts": [
+      "grip"
+    ],
+    "triangles": 288,
+    "universal_parts": [
+      "shank",
+      "shoulder",
+      "notch",
+      "bit lugs"
+    ]
+  },
+  "zkey_ch2": {
+    "anchor": "floor",
+    "batch": "031",
+    "channel": 2,
+    "code_is": "2 lug(s) on the bit, plus the shoulder notch rotated 2 step(s)",
+    "distinct_from": [
+      "Signal Key (AP, campaign-wide, no art yet)",
+      "Epsilon Coin (disc on edge)",
+      "AP Check (pedestal)",
+      "health / ammo / resources"
+    ],
+    "integration_ready": false,
+    "kind": "local_zone_key",
+    "mates_with": "zkey_receiver_ch2",
+    "path": "batch031/keys/zkey_ch2.glb",
+    "reads_without_colour": true,
+    "scale_basis": "proposal scale",
+    "shank_contract_m": {
+      "length": 0.3,
+      "shoulder_radius": 0.085,
+      "thickness": 0.032,
+      "width": 0.075
+    },
+    "shares_pickup_mat": true,
+    "size": [
+      0.591,
+      0.591,
+      0.189
+    ],
+    "texel_density": null,
+    "theme": "concrete_facility",
+    "themed_parts": [
+      "grip"
+    ],
+    "triangles": 300,
+    "universal_parts": [
+      "shank",
+      "shoulder",
+      "notch",
+      "bit lugs"
+    ]
+  },
+  "zkey_ch3": {
+    "anchor": "floor",
+    "batch": "031",
+    "channel": 3,
+    "code_is": "3 lug(s) on the bit, plus the shoulder notch rotated 3 step(s)",
+    "distinct_from": [
+      "Signal Key (AP, campaign-wide, no art yet)",
+      "Epsilon Coin (disc on edge)",
+      "AP Check (pedestal)",
+      "health / ammo / resources"
+    ],
+    "integration_ready": false,
+    "kind": "local_zone_key",
+    "mates_with": "zkey_receiver_ch3",
+    "path": "batch031/keys/zkey_ch3.glb",
+    "reads_without_colour": true,
+    "scale_basis": "proposal scale",
+    "shank_contract_m": {
+      "length": 0.3,
+      "shoulder_radius": 0.085,
+      "thickness": 0.032,
+      "width": 0.075
+    },
+    "shares_pickup_mat": true,
+    "size": [
+      0.591,
+      0.591,
+      0.189
+    ],
+    "texel_density": null,
+    "theme": "concrete_facility",
+    "themed_parts": [
+      "grip"
+    ],
+    "triangles": 312,
+    "universal_parts": [
+      "shank",
+      "shoulder",
+      "notch",
+      "bit lugs"
+    ]
+  },
+  "zkey_receiver_ch1": {
+    "anchor": "floor",
+    "batch": "031",
+    "carries_028_state_plate": true,
+    "channel": 1,
+    "integration_ready": false,
+    "keyway_is": "the negative of zkey_ch1 -- same shank, same shoulder, 1 lug relief(s)",
+    "kind": "local_zone_key_receiver",
+    "mates_with": "zkey_ch1",
+    "path": "batch031/keys/zkey_receiver_ch1.glb",
+    "scale_basis": "proposal scale",
+    "size": [
+      0.42,
+      0.3,
+      1.48
+    ],
+    "texel_density": null,
+    "theme": "concrete_facility",
+    "triangles": 136
+  },
+  "zkey_receiver_ch2": {
+    "anchor": "floor",
+    "batch": "031",
+    "carries_028_state_plate": true,
+    "channel": 2,
+    "integration_ready": false,
+    "keyway_is": "the negative of zkey_ch2 -- same shank, same shoulder, 2 lug relief(s)",
+    "kind": "local_zone_key_receiver",
+    "mates_with": "zkey_ch2",
+    "path": "batch031/keys/zkey_receiver_ch2.glb",
+    "scale_basis": "proposal scale",
+    "size": [
+      0.42,
+      0.3,
+      1.48
+    ],
+    "texel_density": null,
+    "theme": "concrete_facility",
+    "triangles": 148
+  },
+  "zkey_receiver_ch3": {
+    "anchor": "floor",
+    "batch": "031",
+    "carries_028_state_plate": true,
+    "channel": 3,
+    "integration_ready": false,
+    "keyway_is": "the negative of zkey_ch3 -- same shank, same shoulder, 3 lug relief(s)",
+    "kind": "local_zone_key_receiver",
+    "mates_with": "zkey_ch3",
+    "path": "batch031/keys/zkey_receiver_ch3.glb",
+    "scale_basis": "proposal scale",
+    "size": [
+      0.42,
+      0.3,
+      1.48
+    ],
+    "texel_density": null,
+    "theme": "concrete_facility",
+    "triangles": 160
+  }
+}

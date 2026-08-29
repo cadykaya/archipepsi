@@ -191,11 +191,18 @@ def _baseline(odd_bay, cue, k):
 
         # --- light leak -------------------------------------------------
         if cue == "light_leak" and odd:
+            # Wider than 029's hairline, and it SPILLS. A leak that exists
+            # only as a bright edge is a bright edge; a leak that puts light
+            # on the floor in front of it is a door that is not shut.
             cores.append(brushkit.block("leak_%d" % i,
-                                        (0.025 + 0.05 * k, 0.02,
-                                         WALL_H - 0.70),
-                                        (x - BAY_W / 2 + 0.05, -0.165,
+                                        (0.05 + 0.09 * k, 0.02,
+                                         WALL_H - 0.60),
+                                        (x - BAY_W / 2 + 0.05, -0.17,
                                          WALL_H / 2 - 0.02)))
+            cores.append(brushkit.block("spill_%d" % i,
+                                        (0.16 + 0.30 * k, 0.62, 0.012),
+                                        (x - BAY_W / 2 + 0.10, -0.52,
+                                         0.012)))
 
         # --- partial sightline ------------------------------------------
         if cue == "partial_sightline" and odd:
@@ -242,19 +249,51 @@ def _floor(cue, k, odd_bay):
     if cue == "unreachable_space":
         # A ledge you can see the underside and the top of, and cannot get
         # to. The cue is the VISIBLE PLACE, not a marker on it.
+        # 2.62 m put the ledge above the frame at a 1.6 m eye, so this cue
+        # was never tested rather than failed. Lowered to 2.15.
         out += _tag(brushkit.block("ledge", (2.10, 0.90, 0.16),
-                                   (_bay_x(odd_bay), 0.30, 2.62)), "other")
+                                   (_bay_x(odd_bay), 0.30, 2.15)), "other")
         out += _tag(brushkit.block("ledge_rail", (2.10, 0.06, 0.22),
-                                   (_bay_x(odd_bay), -0.10, 2.81)), "trim")
+                                   (_bay_x(odd_bay), -0.10, 2.34)), "trim")
         out += _tag(brushkit.block("ledge_back", (2.10, 0.10, 0.90),
-                                   (_bay_x(odd_bay), 0.72, 3.15)), "other")
+                                   (_bay_x(odd_bay), 0.72, 2.68)), "other")
         cores.append(brushkit.block("ledge_hint",
                                     (0.10 + 0.10 * k, 0.06, 0.10),
-                                    (_bay_x(odd_bay) + 0.70, -0.10, 2.90)))
+                                    (_bay_x(odd_bay) + 0.70, -0.10, 2.43)))
     return out, cores
 
 
 #: cue -> (theme, tier, what the pattern is, what deviates)
+#: cue -> (theme, tier, what the pattern is, what deviates)
+#:
+#: BATCH 036 (029-R). Revised against the evidence, not against taste. The
+#: 029 sheet was built as a test with a pass mark and it returned a verdict
+#: on itself: five of nine read. These are the corrections, and one of them
+#: is a deletion.
+#:
+#: ~~repeated_motif~~ IS GONE. Its premise -- count the marks, one bay has an
+#: extra -- needs the marks to resolve, and at 1998 texel densities and
+#: player distance they do not. That is not a tuning problem; a graphic cue
+#: made of fine surface detail cannot work in this rendering language, and
+#: three more passes at it would have been three passes at the wrong idea.
+#: The builder branch is KEPT below rather than deleted, because a rejected
+#: alternative stays visible in this lane. It is simply not in the set.
+#:
+#: `wear_traffic` MOVED subtle -> learning. It was the clearest cue in the
+#: whole sheet while carrying the hardest tier. The useful reading of that
+#: is not "make it harder" -- it is that WEAR IS A STRONG CHANNEL, so it
+#: should be the thing that TEACHES the grammar.
+#:
+#: `light_leak` was too weak for a learning tier and is strengthened: the
+#: leak is wider and now spills onto the floor, so the light lands somewhere
+#: instead of only existing on an edge.
+#:
+#: `partial_sightline` MOVED neon_transit -> temple_ruin. The cue was
+#: probably fine; the pairing was not. Neon transit's own trim is bright
+#: vertical lines, so a gap between panels competed with the decoration.
+#:
+#: `unreachable_space`'s ledge sat above the frame at a 1.6 m eye, so it was
+#: never actually tested. Lowered into view.
 CUES = {
     "construction_seam": ("concrete_facility", "medium",
                           "joints run vertically in every bay",
@@ -267,22 +306,25 @@ CUES = {
                        "one has real fixings, a handle and a hinge line"),
     "light_leak": ("gothic_stone", "learning",
                    "every panel edge is dark",
-                   "one edge is not"),
-    "repeated_motif": ("temple_ruin", "subtle",
-                       "a three-mark motif repeats down the run",
-                       "one bay carries a fourth mark"),
-    "partial_sightline": ("neon_transit", "medium",
+                   "one edge is not, and the light lands on the floor"),
+    "partial_sightline": ("temple_ruin", "medium",
                           "a solid run of panels",
                           "one gap with real depth behind it"),
-    "wear_traffic": ("concrete_facility", "subtle",
+    "wear_traffic": ("concrete_facility", "learning",
                      "floor wear follows the route",
                      "a worn spur leaves the route and stops at a wall"),
-    "broken_construction": ("rusted_industrial", "learning",
+    "broken_construction": ("rusted_industrial", "subtle",
                             "one coursing and one material throughout",
                             "one bay was built by someone else"),
     "unreachable_space": ("void_glitch", "subtle",
                           "an enclosed room",
                           "a ledge you can see and cannot reach"),
+}
+
+#: Kept, and deliberately not in CUES. See the note above.
+RETIRED_CUES = {
+    "repeated_motif": "counting fine surface marks does not resolve at "
+                      "player distance in this rendering language",
 }
 
 

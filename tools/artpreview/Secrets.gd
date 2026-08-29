@@ -17,11 +17,14 @@ extends SceneTree
 ## is not a cue a player walking down a corridor will ever see.
 
 const MODELS := "batch029/secrets"
+## Batch 036 (029-R): EIGHT, not nine. `secret_repeated_motif` is gone --
+## counting fine surface marks does not resolve at player distance in this
+## rendering language, and that is a premise failure rather than a tuning
+## one. A smaller reliable grammar beats a larger unreliable one.
 const CUES := ["secret_construction_seam", "secret_displaced_panel",
 		"secret_service_access", "secret_light_leak",
-		"secret_repeated_motif", "secret_partial_sightline",
-		"secret_wear_traffic", "secret_broken_construction",
-		"secret_unreachable_space"]
+		"secret_partial_sightline", "secret_wear_traffic",
+		"secret_broken_construction", "secret_unreachable_space"]
 const TIERS := ["secret_tier_learning", "secret_tier_medium",
 		"secret_tier_subtle"]
 
@@ -104,7 +107,7 @@ func _cue_sheet() -> void:
 		var img: Image = await _shoot(name, cell, key)
 		if img == null:
 			continue
-		var at := Vector2i((i % 3) * cell.x, 140 + int(i / 3) * cell.y)
+		var at := Vector2i((i % 4) * cell.x, 140 + int(i / 4) * cell.y)
 		sheet.blit_rect(img, Rect2i(Vector2i.ZERO, cell), at)
 		ArtBench.label(sheet, str(e.get("cue", "")).to_upper().replace("_", " "),
 				at + Vector2i(10, 10), Color(1.0, 0.86, 0.42))
@@ -118,7 +121,7 @@ func _cue_sheet() -> void:
 		ArtBench.label(sheet, "%s  /  %s" % [tier.to_upper(),
 				str(e.get("theme", "")).to_upper()],
 				at + Vector2i(10, cell.y - 26), tone)
-	ArtBench.label(sheet, "A  NINE SECRET CUES -- FIND THE DEVIATION",
+	ArtBench.label(sheet, "A  EIGHT SECRET CUES -- FIND THE DEVIATION",
 			Vector2i(12, 16), Color(1.0, 0.86, 0.42))
 	ArtBench.label(sheet, "A CUE IS NOT A THING, IT IS A DEVIATION FROM A "
 			+ "PATTERN -- SO EVERY PANEL SHOWS THE WHOLE RUN AND THE ONE "

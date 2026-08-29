@@ -3408,12 +3408,12 @@ a label, and a label is the opposite of a thing you notice.
 | `secret_construction_seam` | construction seam | medium | concrete_facility | 540 | 7.20 × 3.82 × 3.40 |
 | `secret_displaced_panel` | displaced panel | learning | concrete_facility | 528 | 7.20 × 3.82 × 3.40 |
 | `secret_service_access` | service access | medium | rusted_industrial | 552 | 7.20 × 3.82 × 3.40 |
-| `secret_light_leak` | light leak | learning | gothic_stone | 540 | 7.20 × 3.82 × 3.40 |
-| `secret_repeated_motif` | repeated motif | subtle | temple_ruin | 756 | 7.20 × 3.82 × 3.40 |
+| `secret_light_leak` | light leak | learning | gothic_stone | 552 | 7.20 × 3.82 × 3.40 |
+| ~~`secret_repeated_motif`~~ | ~~repeated motif~~ | ~~subtle~~ | ~~temple_ruin~~ | — | **DELETED in 036** — counting fine surface marks does not resolve at player distance in this rendering language. A premise failure, not a tuning one. |
 | `secret_partial_sightline` | partial sightline | medium | neon_transit | 552 | 7.20 × 4.07 × 3.40 |
 | `secret_wear_traffic` | wear and traffic | subtle | concrete_facility | 552 | 7.20 × 3.82 × 3.40 |
 | `secret_broken_construction` | broken construction | learning | rusted_industrial | 600 | 7.20 × 3.82 × 3.40 |
-| `secret_unreachable_space` | unreachable space | subtle | void_glitch | 576 | 7.20 × 4.47 × 3.80 |
+| `secret_unreachable_space` | unreachable space | subtle | void_glitch | 576 | 7.20 × 4.47 × 3.40 |
 | `secret_tier_learning` | displaced panel | learning | concrete_facility | 528 | 7.20 × 3.82 × 3.40 |
 | `secret_tier_medium` | displaced panel | medium | concrete_facility | 528 | 7.20 × 3.82 × 3.40 |
 | `secret_tier_subtle` | displaced panel | subtle | concrete_facility | 528 | 7.20 × 3.82 × 3.40 |
@@ -3472,16 +3472,16 @@ agreed collider and a telegraph seat, and no way to be spawned.
 
 | asset | tris | built (m) | envelope (m) | placeable |
 |---|---|---|---|---|
-| `enemy_role_melee` | 124 | 0.78 × 0.68 × 1.55 | 0.80 × 1.60 × 0.80 | yes |
-| `enemy_role_ranged` | 140 | 0.56 × 0.66 × 1.37 | 0.70 × 1.40 × 0.70 | yes |
-| `enemy_role_brute` | 136 | 1.80 × 1.60 × 2.40 | 1.80 × 2.60 × 1.80 | yes |
-| `enemy_role_charger` | 180 | 0.90 × 1.84 × 0.84 | 0.90 × 1.05 × 1.90 | **no** |
-| `enemy_role_bulwark` | 160 | 1.45 × 0.82 × 1.99 | 1.45 × 2.05 × 0.85 | **no** |
-| `enemy_role_scuttler` | 176 | 1.24 × 1.16 × 0.34 | 1.30 × 0.62 × 1.20 | **no** |
-| `enemy_role_artillery` | 176 | 1.18 × 1.25 × 1.50 | 1.25 × 1.55 × 1.25 | **no** |
-| `enemy_role_beacon` | 232 | 0.55 × 0.55 × 2.20 | 0.62 × 2.20 × 0.62 | **no** |
-| `enemy_role_diver` | 108 | 0.70 × 1.13 × 0.40 | 0.70 × 0.50 × 1.20 | **no** |
-| `enemy_role_drifter` | 204 | 1.25 × 1.25 × 0.78 | 1.35 × 0.95 × 1.35 | **no** |
+| `enemy_role_melee` | 184 | 0.78 × 0.69 × 1.55 | 0.80 × 1.60 × 0.80 | yes |
+| `enemy_role_ranged` | 176 | 0.57 × 0.66 × 1.37 | 0.70 × 1.40 × 0.70 | yes |
+| `enemy_role_brute` | 184 | 1.80 × 1.66 × 2.40 | 1.80 × 2.60 × 1.80 | yes |
+| `enemy_role_charger` | 240 | 0.90 × 1.88 × 0.84 | 0.90 × 1.05 × 1.90 | **no** |
+| `enemy_role_bulwark` | 208 | 1.45 × 0.82 × 1.99 | 1.45 × 2.05 × 0.85 | **no** |
+| `enemy_role_scuttler` | 236 | 1.24 × 1.16 × 0.34 | 1.30 × 0.62 × 1.20 | **no** |
+| `enemy_role_artillery` | 212 | 1.18 × 1.25 × 1.50 | 1.25 × 1.55 × 1.25 | **no** |
+| `enemy_role_beacon` | 268 | 0.55 × 0.55 × 2.20 | 0.62 × 2.20 × 0.62 | **no** |
+| `enemy_role_diver` | 132 | 0.70 × 1.13 × 0.40 | 0.70 × 0.50 × 1.20 | **no** |
+| `enemy_role_drifter` | 264 | 1.25 × 1.25 × 0.81 | 1.35 × 0.95 × 1.35 | **no** |
 
 Variety comes from proportion rather than size, because the box is fixed: the
 threat end is the heavy end, every role carries a telegraph seat at
@@ -3502,3 +3502,129 @@ be verified against a contract and does not pretend the material half is
 finished.
 
 Status: **PENDING** — not self-marked.
+
+
+---
+
+## Gap pass 031–037 — post-030 targeted work
+
+**All PENDING.** Full working in each batch's `review/batchNNN/README.md`,
+plus `review/BOSS_AUDIT.md`.
+
+### 031 — the local Zone key family
+
+The A-vs-B question is settled by the receiver: a keyway is a picture of its
+key, so **the part the receiver reads must be universal and everything else
+may be themed.** Shank, shoulder and bit are identical everywhere; only the
+grip is themed. Channels are **counted, never coloured** — N lugs plus the
+shoulder notch rotated N steps, two redundant carriers of one fact. Not a
+keycard, not a fantasy key: a machined interlock blank. Sits on Batch 027's
+pickup mat unchanged.
+
+| asset | channel / theme | tris | size (m) |
+|---|---|---|---|
+| `zkey_ch1` | 1 | 288 | 0.59 × 0.59 × 0.19 |
+| `zkey_ch1_rusted_industrial` | 1 | 288 | 0.59 × 0.59 × 0.19 |
+| `zkey_ch1_void_glitch` | 1 | 288 | 0.59 × 0.59 × 0.19 |
+| `zkey_ch2` | 2 | 300 | 0.59 × 0.59 × 0.19 |
+| `zkey_ch3` | 3 | 312 | 0.59 × 0.59 × 0.19 |
+| `zkey_receiver_ch1` | 1 | 136 | 0.42 × 0.30 × 1.48 |
+| `zkey_receiver_ch2` | 2 | 148 | 0.42 × 0.30 × 1.48 |
+| `zkey_receiver_ch3` | 3 | 160 | 0.42 × 0.30 × 1.48 |
+
+### 032 — baseline melee and the viewmodel seam
+
+**A viewmodel contract already exists** — `$Camera3D/Viewmodel` with named
+`Device`, `Tip`, `EchoPart`, `EchoTip` children, and `EchoRuntime` already
+paints `EchoPart` with the Echo's **source world** and `EchoTip` with the
+**slot**. Everything here is built to those exact dimensions.
+
+**The Forge finding (requirement 32):** a reforge from ranged to grapple
+changes **nothing** on the viewmodel — same source, so the same body colour;
+same button, so the same tip. The one operation the Forge exists to perform
+is invisible in the view the player looks at all game. The fix is not
+hundreds of Echo weapons: it is **one node made swappable by family**, with
+form carrying family while colour keeps source and the tip keeps slot. Three
+of seven forms built as evidence; the deliverable is the seam, not the roster.
+
+The baseline melee is the Static Pulse device's own **discharge fork** — a
+facility grounding prong, swung because it is what is in your hand. Not a
+sword, not a crowbar, not a knife, and **not Epsilon-modified**: the Static
+Pulse is the one thing in the game that is yours.
+
+| asset | binds to | tris | size (m) |
+|---|---|---|---|
+| `vm_device_melee` | $Camera3D/Viewmodel/Device | 96 | 0.15 × 0.68 × 0.18 |
+| `vm_device_stowed` | $Camera3D/Viewmodel/Device | 96 | 0.15 × 0.45 × 0.23 |
+| `vm_echopart_grapple` | $Camera3D/Viewmodel/EchoPart | 76 | 0.10 × 0.06 × 0.25 |
+| `vm_echopart_melee` | $Camera3D/Viewmodel/EchoPart | 44 | 0.10 × 0.07 × 0.23 |
+| `vm_echopart_ranged` | $Camera3D/Viewmodel/EchoPart | 64 | 0.10 × 0.08 × 0.28 |
+
+### 034 — hard progression gates
+
+**The tell is finish quality, not signage.** Broken is ragged; installed is
+neat. Each gate is built twice — finished, and as the ragged non-gate it must
+not be confused with — because that pair *is* the evidence. `gate_blink_*` is
+a proposal only and carries `has_mechanical_contract: false`.
+
+| asset | family | tris | size (m) |
+|---|---|---|---|
+| `gate_blink_proposal` | None | 352 | 8.00 × 5.00 × 5.50 |
+| `gate_blink_proposal_ragged` | None | 96 | 8.00 × 5.00 × 5.50 |
+| `gate_break` | breakable_wall | 228 | 8.00 × 5.00 × 5.50 |
+| `gate_break_ragged` | breakable_wall | 120 | 8.00 × 5.00 × 5.50 |
+| `gate_grapple` | grapple_anchor | 260 | 8.00 × 5.00 × 5.50 |
+| `gate_grapple_ragged` | grapple_anchor | 84 | 8.00 × 5.00 × 5.50 |
+| `gate_launch` | bounce_pad | 152 | 8.00 × 5.00 × 5.50 |
+| `gate_launch_ragged` | bounce_pad | 92 | 8.00 × 5.00 × 5.50 |
+
+### 035 — interactable vs decorative
+
+Six decoys, each a near-miss of a Batch 028 primitive. **Sheet D failed as a
+test** — solvable by spotting cyan — so sheet E suppresses the state plate,
+and that is the result. Three pairs read, one is weak, and **two fail**:
+carryable vs fixed crate, and key receiver vs welded hatch.
+
+**The finding: the structural grammar is distance-limited by the size of the
+tell.** Object-scale differences (lever, rack, rail, travel) carry at 4.5 m;
+hand-scale ones (a grip, a keyway) do not. That means the state plate is not
+a status indicator on small interactables — **it is the only affordance cue
+that survives the distance.**
+
+| asset | shadows | tris | size (m) |
+|---|---|---|---|
+| `dec_bulkhead` | int_door_mechanism | 72 | 1.30 × 0.33 × 2.30 |
+| `dec_console_dead` | int_wall_switch | 108 | 0.39 × 0.27 × 1.51 |
+| `dec_crate_fixed` | int_carryable | 84 | 0.58 × 0.50 × 0.42 |
+| `dec_hatch_welded` | int_key_receiver | 68 | 0.42 × 0.30 × 1.48 |
+| `dec_panel_blind` | int_breakable | 84 | 1.14 × 0.20 × 1.90 |
+| `dec_pipe_fixed` | int_machinery | 88 | 1.11 × 0.68 × 0.97 |
+
+### 036 (029-R) — secret cues
+
+`repeated_motif` **deleted** — a premise failure, not a tuning one.
+`wear_traffic` re-tiered subtle → learning (it was the clearest cue carrying
+the hardest tier, which says wear is a strong channel).
+`broken_construction` learning → subtle. `light_leak` strengthened and now
+spills onto the floor. `partial_sightline` moved off `neon_transit`, whose own
+trim competed with it. `unreachable_space`'s ledge lowered into frame — it had
+never actually been tested. **Eight cues, not nine.**
+
+### 037 (030-R) — enemy surface role identity
+
+Silhouettes and envelopes **unchanged**. One rule: **armour goes where the
+role takes or deals impact; mechanism shows where it does not.** Three
+treatments — `plate` matte, `mech` oily, `body` — and armour is told from
+mechanism by **material property, not hue**, so L-08 still holds and nothing
+shifts with the room. Not ten colours.
+
+### Boss audit — audit only, nothing built
+
+Arenas and landmarks can plausibly host an elite; `EnemyEnvelope` already
+permits up to 6 m without a contract change; the budget table already has
+tiers above `enemy`, and the ten roles use under 40% of theirs. **The missing
+piece is a telegraph vocabulary, not a body** — `enemy.gd` publishes the
+signals and Batch 030 reserved the seats, but nothing is authored for any
+`kind` and no `kind` vocabulary exists. Recorded as a dependency; not started.
+
+Status: **all PENDING** — none self-marked.

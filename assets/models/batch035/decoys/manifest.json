@@ -1,0 +1,116 @@
+{
+  "dec_bulkhead": {
+    "anchor": "floor",
+    "batch": "035",
+    "carries_state_plate": false,
+    "integration_ready": false,
+    "kind": "decorative_decoy",
+    "palette_family": "none -- a decoy may never wear `signal`",
+    "path": "batch035/decoys/dec_bulkhead.glb",
+    "scale_basis": "proposal scale",
+    "shadows": "int_door_mechanism",
+    "size": [
+      1.3,
+      0.33,
+      2.3
+    ],
+    "texel_density": null,
+    "triangles": 72,
+    "why_it_is_a_fair_test": "a door-sized recess with no jamb, no rack, no ram"
+  },
+  "dec_console_dead": {
+    "anchor": "floor",
+    "batch": "035",
+    "carries_state_plate": false,
+    "integration_ready": false,
+    "kind": "decorative_decoy",
+    "palette_family": "none -- a decoy may never wear `signal`",
+    "path": "batch035/decoys/dec_console_dead.glb",
+    "scale_basis": "proposal scale",
+    "shadows": "int_wall_switch",
+    "size": [
+      0.39,
+      0.27,
+      1.51
+    ],
+    "texel_density": null,
+    "triangles": 108,
+    "why_it_is_a_fair_test": "a control face with blanked bosses where a lever would be"
+  },
+  "dec_crate_fixed": {
+    "anchor": "floor",
+    "batch": "035",
+    "carries_state_plate": false,
+    "integration_ready": false,
+    "kind": "decorative_decoy",
+    "palette_family": "none -- a decoy may never wear `signal`",
+    "path": "batch035/decoys/dec_crate_fixed.glb",
+    "scale_basis": "proposal scale",
+    "shadows": "int_carryable",
+    "size": [
+      0.58,
+      0.5,
+      0.42
+    ],
+    "texel_density": null,
+    "triangles": 84,
+    "why_it_is_a_fair_test": "same box and ribs, but the handles are MOULDINGS with no gap, and it is filleted to the deck"
+  },
+  "dec_hatch_welded": {
+    "anchor": "floor",
+    "batch": "035",
+    "carries_state_plate": false,
+    "integration_ready": false,
+    "kind": "decorative_decoy",
+    "palette_family": "none -- a decoy may never wear `signal`",
+    "path": "batch035/decoys/dec_hatch_welded.glb",
+    "scale_basis": "proposal scale",
+    "shadows": "int_key_receiver",
+    "size": [
+      0.42,
+      0.3,
+      1.48
+    ],
+    "texel_density": null,
+    "triangles": 68,
+    "why_it_is_a_fair_test": "a hatch outline with its fixings welded over"
+  },
+  "dec_panel_blind": {
+    "anchor": "floor",
+    "batch": "035",
+    "carries_state_plate": false,
+    "integration_ready": false,
+    "kind": "decorative_decoy",
+    "palette_family": "none -- a decoy may never wear `signal`",
+    "path": "batch035/decoys/dec_panel_blind.glb",
+    "scale_basis": "proposal scale",
+    "shadows": "int_breakable",
+    "size": [
+      1.14,
+      0.2,
+      1.9
+    ],
+    "texel_density": null,
+    "triangles": 84,
+    "why_it_is_a_fair_test": "the same framed panel, coursed as one piece; scribed lines instead of a fracture grid"
+  },
+  "dec_pipe_fixed": {
+    "anchor": "floor",
+    "batch": "035",
+    "carries_state_plate": false,
+    "integration_ready": false,
+    "kind": "decorative_decoy",
+    "palette_family": "none -- a decoy may never wear `signal`",
+    "path": "batch035/decoys/dec_pipe_fixed.glb",
+    "scale_basis": "proposal scale",
+    "shadows": "int_machinery",
+    "size": [
+      1.11,
+      0.68,
+      0.97
+    ],
+    "texel_density": null,
+    "triangles": 88,
+    "why_it_is_a_fair_test": "machinery-scale plant with no travel, no carriage, no rail"
+  }
+}

@@ -328,6 +328,166 @@ def _drifter(w, h, d):
     return out
 
 
+
+# ----------------------------------------------------------------------
+# Batch 030-R (037): ROLE IDENTITY IN THE SURFACE
+#
+# The 030 review found the honest limit of that pass: all ten wore one skin,
+# so at distance the family read as ten brown panelled masses of different
+# shapes. Silhouette did all the work and surface did none.
+#
+# The bodies and the envelopes are NOT touched. What is added is a system,
+# and it is one rule rather than ten decorations:
+#
+#     ARMOUR GOES WHERE THE ROLE TAKES OR DEALS IMPACT.
+#     MECHANISM SHOWS WHERE IT DOES NOT.
+#
+# That is functional rather than arbitrary, which is what keeps ten roles
+# looking like one ecosystem: every member is the same machine underneath,
+# plated differently because it does a different job. A brute is armoured
+# everywhere because everything hits it; a scuttler is barely armoured
+# because its answer to being hit is not to be there; a bulwark's front is
+# one uninterrupted plate and its back is all drive.
+#
+# Explicitly NOT ten colours. Three surface treatments carry it:
+#
+#     plate  -- armour. Clean, thick, unbroken.
+#     mech   -- exposed working: drives, linkages, feed. Darker, greasier.
+#     body   -- the shared chassis every role is built on.
+#
+# `hazard` stays reserved for the beacon's band and for real danger
+# telegraphing. No role gets a colour of its own.
+# ----------------------------------------------------------------------
+
+def _surface(role, w, h, d):
+    """Role-specific armour and exposed mechanism, inside the envelope."""
+    out = []
+
+    def plate(name, size, at, rot=0.0):
+        out.append((brushkit.block(name, size, at, rotation_z=rot), "plate"))
+
+    def mech(name, size, at, rot=0.0):
+        out.append((brushkit.block(name, size, at, rotation_z=rot), "mech"))
+
+    if role == "melee":
+        # Light. Armour only on the leading forearms; the shoulders are open
+        # linkage, because speed is its answer to being hit.
+        for sx in (-1.0, 1.0):
+            plate("bracer_%d" % int(sx), (w * 0.14, d * 0.30, h * 0.13),
+                  (sx * w * 0.39, -d * 0.34, h * 0.58))
+            mech("shoulder_%d" % int(sx), (w * 0.11, d * 0.16, h * 0.09),
+                 (sx * w * 0.30, d * 0.06, h * 0.72))
+        mech("spine_link", (w * 0.16, d * 0.12, h * 0.20),
+             (0.0, d * 0.24, h * 0.58))
+
+    elif role == "ranged":
+        # A housing over the emitter, and a sensor block on the head: it
+        # aims, so the protected things are the barrel and the eye.
+        plate("emitter_housing", (w * 0.38, d * 0.34, h * 0.20),
+              (w * 0.26, -d * 0.06, h * 0.62))
+        plate("sensor", (w * 0.26, d * 0.16, h * 0.07),
+              (0.0, -d * 0.16, h * 0.92))
+        mech("feed", (w * 0.14, d * 0.20, h * 0.16),
+             (-w * 0.24, d * 0.14, h * 0.60))
+
+    elif role == "brute":
+        # Armoured EVERYWHERE and nothing exposed. Mass is the whole idea,
+        # so interrupting the plating would argue against it.
+        plate("pauldron_l", (w * 0.34, d * 0.44, h * 0.12),
+              (-w * 0.33, 0.0, h * 0.76))
+        plate("pauldron_r", (w * 0.34, d * 0.44, h * 0.12),
+              (w * 0.33, 0.0, h * 0.76))
+        plate("chest", (w * 0.52, d * 0.10, h * 0.22),
+              (0.0, -d * 0.44, h * 0.64))
+        plate("belt", (w * 0.72, d * 0.14, h * 0.07),
+              (0.0, -d * 0.36, h * 0.46))
+
+    elif role == "charger":
+        # Armour on the FRONT THIRD only; the rear is open drive. The one
+        # role whose plating distribution is a sentence about its attack.
+        plate("prow_plate", (w * 0.86, d * 0.10, h * 0.44),
+              (0.0, -d * 0.46, h * 0.44))
+        plate("cheek_l", (w * 0.12, d * 0.22, h * 0.30),
+              (-w * 0.40, -d * 0.30, h * 0.42))
+        plate("cheek_r", (w * 0.12, d * 0.22, h * 0.30),
+              (w * 0.40, -d * 0.30, h * 0.42))
+        for i, y in enumerate((0.16, 0.32)):
+            mech("drive_%d" % i, (w * 0.44, d * 0.09, h * 0.20),
+                 (0.0, d * y, h * 0.50))
+
+    elif role == "bulwark":
+        # The face is ONE uninterrupted plate -- that is what a shield is --
+        # and everything behind it is mechanism.
+        plate("face", (w * 0.92, d * 0.09, h * 0.60),
+              (0.0, -d * 0.47, h * 0.54))
+        for i, z in enumerate((0.30, 0.52)):
+            mech("actuator_%d" % i, (w * 0.30, d * 0.20, h * 0.10),
+                 (0.0, d * 0.34, h * z))
+        mech("hinge", (w * 0.10, d * 0.30, h * 0.46),
+             (w * 0.30, d * 0.10, h * 0.50))
+
+    elif role == "scuttler":
+        # Barely armoured: a carapace cap and nothing else. Its legs are all
+        # exposed drive, which is also what makes it read as skittering.
+        plate("cap", (w * 0.34, d * 0.34, h * 0.10),
+              (0.0, 0.0, h * 0.62))
+        for i in range(4):
+            mech("hip_%d" % i, (w * 0.13, d * 0.11, h * 0.13),
+                 (0.0, 0.0, h * 0.34), rot=45.0 + i * 90.0)
+
+    elif role == "artillery":
+        # Heavy housing low, open breech high: it is a served weapon, and
+        # the part that is worked on is the part left open.
+        plate("apron", (w * 0.88, d * 0.88, h * 0.10),
+              (0.0, 0.0, h * 0.22))
+        mech("breech", (w * 0.30, d * 0.26, h * 0.18),
+             (0.0, d * 0.24, h * 0.70))
+        mech("elevator", (w * 0.12, d * 0.16, h * 0.24),
+             (w * 0.26, d * 0.10, h * 0.62))
+
+    elif role == "beacon":
+        # NO armour at all. It is a fixture that took sides, so it wears
+        # service hardware instead: a conduit and two junctions up the mast.
+        for i, z in enumerate((0.36, 0.62)):
+            mech("junction_%d" % i, (w * 0.26, d * 0.22, h * 0.07),
+                 (0.0, -d * 0.16, h * z))
+        mech("conduit", (w * 0.10, d * 0.10, h * 0.56),
+             (0.0, -d * 0.20, h * 0.52))
+
+    elif role == "diver":
+        # The nose takes the impact and is solid; the tail is open.
+        plate("nose_cap", (w * 0.62, d * 0.22, h * 0.44),
+              (0.0, -d * 0.36, h * 0.02))
+        mech("tail", (w * 0.30, d * 0.18, h * 0.30),
+             (0.0, d * 0.36, h * 0.06))
+
+    elif role == "drifter":
+        # A plated crown and an entirely mechanical skirt. It hangs, so the
+        # protection is above and the working is below.
+        plate("crown", (w * 0.52, d * 0.52, h * 0.12),
+              (0.0, 0.0, h * 0.34))
+        for i in range(4):
+            mech("winch_%d" % i, (w * 0.10, d * 0.10, h * 0.16),
+                 (0.0, 0.0, -h * 0.16), rot=i * 90.0)
+
+    return out
+
+
+#: What each role's plating distribution says. Recorded per asset so the
+#: sheet can be read without the builder.
+SURFACE_STORY = {
+    "melee": "bracers only -- speed is its answer to being hit",
+    "ranged": "the barrel and the eye are housed; the feed is open",
+    "brute": "plated everywhere, nothing exposed -- mass is the argument",
+    "charger": "armour on the FRONT THIRD, open drive behind it",
+    "bulwark": "one uninterrupted face plate; all mechanism behind",
+    "scuttler": "a carapace cap and four exposed hip drives",
+    "artillery": "heavy apron low, open breech high -- a served weapon",
+    "beacon": "no armour at all; service conduit and junctions",
+    "diver": "solid nose cap, open tail",
+    "drifter": "plated crown, entirely mechanical skirt",
+}
+
 ROLES = {
     "melee": (_melee, "upright, forward-weighted; the arms are the threat"),
     "ranged": (_ranged, "recessed body, one carried emitter -- read the muzzle"),
@@ -355,7 +515,7 @@ def main():
         # check_docs_metrics caught it reading THIS build's numbers
         # against Batch 002's approved rows.
         name = "enemy_role_%s" % role
-        parts = builder(w, h, d)
+        parts = builder(w, h, d) + _surface(role, w, h, d)
         centre_z = hover if hover else h / 2.0
         parts += _seat(centre_z - (hover if hover else 0.0))
 
@@ -363,8 +523,15 @@ def main():
         for obj, r in parts:
             buckets.setdefault(r, []).append(obj)
         painted = []
-        for r, marking in (("body", "dead"), ("plate", "dead"),
-                           ("mark", "dead"), ("warn", "hazard")):
+        # Exposed mechanism is told from armour by MATERIAL, not by colour:
+        # armour is matte and mechanism is oily. Both keep `enemy_skin`, so
+        # neither shifts with the room -- L-08's rule that an enemy never
+        # wears its room's colours applies to the working parts too.
+        for r, marking, rough in (("body", "dead", None),
+                                  ("plate", "dead", None),
+                                  ("mech", "dead", 0.42),
+                                  ("mark", "dead", None),
+                                  ("warn", "hazard", None)):
             got = buckets.get(r)
             if not got:
                 continue
@@ -376,7 +543,8 @@ def main():
                 propkit.enemy_skin(THEME, "%s_%s" % (name, r),
                                    marking=marking).to_blender(
                     "%s_%s_t" % (name, r)),
-                roughness=pal.roughness(THEME)))
+                roughness=pal.roughness(THEME) if rough is None
+                else rough))
             painted.append(obj)
 
         obj = common.join(painted, name)
@@ -394,6 +562,8 @@ def main():
             "kind": "enemy_role",
             "role": role,
             "reads_as": reads_as,
+            "surface_story": SURFACE_STORY[role],
+            "surface_rule": "armour goes where the role takes or deals impact; mechanism shows where it does not",
             "envelope_w_h_d_m": [w, h, d],
             "hover_height_m": hover,
             "is_flying": hover > 0.0,
