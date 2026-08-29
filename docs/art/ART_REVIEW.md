@@ -3275,3 +3275,52 @@ families, so it is evidence about the hues and not about the Check or the
 Epsilon installation as built. Whether it matters is the owner's call.
 
 Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 027 — PROPOSAL: pickups, loot and resource readability
+
+**PENDING.** Visual proposals only — no resource mechanic or denomination is
+decided. Full working in `review/batch027/README.md`.
+
+**The audit changed the batch's shape.** Of the five requested pickups, two
+are backed by a real Production item (`ITEM_NAME_EPSILON_COIN`, count 10;
+`ITEM_NAME_EPSILON_STATIC`, count 18) and **health and ammo are backed by
+nothing at all** — no item, no constant, no entity. `LOW_HEALTH_FRACTION`
+says the player *has* health; nothing says health is a thing you pick up. And
+`local_reward.gd`'s `KINDS` catalog is **closed** by design, with no
+container kind in it, so a loot container is not a seventh kind art may add.
+Interface requirement 28.
+
+**Colour is licensed, not chosen.** `glitch` is used for Epsilon Static
+because that family is literally defined as Epsilon Static; `identity` appears
+on the coin as a *mark*, not a material. `send`, `signal` and `hazard` are all
+refused: a coin is not a transmission beam, a pickup is not an interactable
+prompt, and hazard is never decorative. Health and ammo therefore get **no hue
+at all**, which is why the silhouette sheet is the load-bearing evidence.
+
+| asset | represents | tris | size (m) | real item |
+|---|---|---|---|---|
+| `pickup_coin` | Epsilon Coin | 212 | 0.59 × 0.59 × 0.48 | yes |
+| `pickup_health` | health | 184 | 0.59 × 0.59 × 0.39 | **no** |
+| `pickup_resource` | combat resource / ammo | 176 | 0.59 × 0.59 × 0.22 | **no** |
+| `pickup_special` | Epsilon Static | 188 | 0.59 × 0.59 × 0.47 | yes |
+| `pickup_cache` | secret cache / container | 160 | 0.66 × 0.59 × 0.55 | **no** |
+
+All five share one hexagonal mat — learned once it means *you can take
+this*, so the object above it is free to be only about which thing it is. The
+coin is the only object in the game presented as valuable: a thick milled
+disc on edge in a cradle, at hand scale, its desirability a specular story
+rather than an emissive one, because brightness is how the Check, Epsilon and
+hazard already speak.
+
+### What the silhouette sheet caught
+
+`pickup_resource` and `pickup_special` first read as the same object — two
+blocks of similar proportion on identical mats, which is doubly wrong because
+the special is the corrupted one. They are now separated on both axes, and
+the slug gained a third lobe at an unrelated angle: two lobes still read as a
+taper, three read as something that grew wrong. A lit hero shot would not
+have found this, and neither would a triangle count.
+
+Status: **PENDING** — not self-marked.
