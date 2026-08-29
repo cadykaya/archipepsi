@@ -952,6 +952,38 @@ height is part of what it is.
 > A number an asset is designed AROUND belongs in its manifest. A
 > dimension nobody records is a dimension nobody can check.
 
+### L-68 · A content field's centre is not the object's centre
+`nav_blade` carries its bracket on -X, so `set_origin(module_floor)` centres
+the whole mesh and leaves the pale text field 0.155 m to the +X side of the
+origin. Every review sheet placed the runtime `Label3D` at the object
+position, which put the word 0.155 m left of the field it was supposed to
+sit inside -- overrunning the frame at one end.
+
+It survived several passes because it never looked like a bug. It looked
+like the text was slightly too big for the sign, which sent the first
+instinct after font size instead of after position.
+
+The builder now measures the vertices carrying the face material and
+records `face_centre_x_m`, `face_width_m`, `text_usable_width_m` and a
+character budget.
+
+> An asset that hosts CONTENT owes the content a frame of reference. Where
+> the field is, how wide it is, and how much fits are facts about the mesh,
+> and a renderer that has to infer them will infer them wrong.
+
+### L-69 · Shoot an asset from the side the player meets it from
+The first `R_duct_run` was aimed at +10 degrees elevation and rendered the
+TOP of two ceiling bays, with the ducts hidden underneath. Every number was
+right: the models loaded, the grid lined up, the camera framed its subject.
+It was a photograph of the one side of a ceiling nobody will ever stand on.
+
+L-63 is the neighbouring rule -- do not give a floor to a thing that is not
+on a floor -- and this is the other half of it. Getting the backdrop right
+does not save a camera that is on the wrong side.
+
+> Before framing, ask where the player is standing. A ceiling service is
+> seen from below, a floor grate from above, a doorway from the approach.
+
 ## Process
 
 ### L-39 · Four batches to lock a style, and every one of them was cheap
