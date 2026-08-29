@@ -39,6 +39,12 @@ rules-fixture:
 verbs-fixture:
 	$(PY) bridge/archipepsi_bridge/fixtures/make_verbs_snapshot.py
 
+# The PRE-ART playtest baseline. Regenerate DELIBERATELY and in its own
+# commit: retaking it means the playtest before it and the playtest after
+# it are no longer measuring the same game. See docs/PLAYTEST_BASELINE.md.
+baseline:
+	$(PY) bridge/archipepsi_bridge/fixtures/make_playtest_baseline.py
+
 # Two Archipepsi slots in ONE real multiworld: a real MultiServer, two
 # bridges, two saves, checking each other's locations. Needs a generated
 # seed (`make seed-multi`); the harness starts and stops its own server.

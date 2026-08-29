@@ -1,0 +1,2939 @@
+{
+  "echoes": [
+    {
+      "echo": {
+        "concepts": [
+          "reach",
+          "tension",
+          "traversal"
+        ],
+        "description": "Latch onto geometry and get yanked there.",
+        "display_name": "Hookshot",
+        "echo_id": "echo_89100001",
+        "interpretation_seq": 0,
+        "mode": "literal",
+        "operations": [
+          {
+            "component": {
+              "component_id": "act_l89100001",
+              "cooldown": 2.0,
+              "description": "Latch onto geometry and get yanked there.",
+              "display_name": "Hookshot",
+              "kind": "action",
+              "modifiers": [],
+              "primitive": {
+                "pull_force": 15.0,
+                "range": 25.0,
+                "type": "grapple_to_surface"
+              },
+              "slot": "mobility"
+            },
+            "op": "create"
+          }
+        ],
+        "schema_version": 8,
+        "source_game": "Ocarina of Time",
+        "source_item_name": "Hookshot",
+        "source_location_id": 89100001,
+        "source_recipient_name": "Zelda",
+        "tags": [
+          "grapple",
+          "mobility"
+        ]
+      },
+      "interpretation_seq": 0,
+      "request": {
+        "allowed": {
+          "action_primitives": [
+            "melee_swing",
+            "melee_thrust",
+            "slam_ground",
+            "hitscan_damage",
+            "projectile_damage",
+            "arc_lob",
+            "burst_fire",
+            "charge_shot",
+            "beam_sustained",
+            "dash",
+            "air_dash",
+            "double_jump",
+            "wall_kick",
+            "hover",
+            "glide",
+            "blink",
+            "grapple_to_surface",
+            "grapple_pull_target",
+            "grapple_swing",
+            "shield",
+            "block",
+            "parry",
+            "heal_self",
+            "cleanse",
+            "scan_mark",
+            "restore_resource",
+            "pull_pickup",
+            "place_marker"
+          ],
+          "component_kinds": [
+            "action",
+            "trait",
+            "resource",
+            "rule",
+            "status",
+            "affordance",
+            "info"
+          ],
+          "modes": [
+            "literal",
+            "mechanical",
+            "conceptual",
+            "systemic"
+          ],
+          "modifiers": [
+            "recoil_self",
+            "knockback_target",
+            "apply_status_on_hit"
+          ],
+          "operations": [
+            "create",
+            "upgrade",
+            "modify",
+            "link",
+            "merge"
+          ],
+          "rule_conditions": [
+            "resource_at_least",
+            "resource_at_most",
+            "hp_below",
+            "hp_above",
+            "moving_backward",
+            "airborne",
+            "grounded",
+            "speed_above",
+            "enemy_within",
+            "slot_is",
+            "zone_is_finale",
+            "status_active"
+          ],
+          "rule_effects": [
+            "resource_add",
+            "heal",
+            "grant_shield",
+            "impulse_self",
+            "damage_around",
+            "fire_projectile",
+            "reset_action_cooldown",
+            "refill_resource",
+            "apply_status",
+            "trait_pulse",
+            "grant_local_reward"
+          ],
+          "rule_events": [
+            "zone_enter",
+            "chamber_enter",
+            "jump",
+            "land",
+            "dash_end",
+            "kill",
+            "damage_dealt",
+            "damage_taken",
+            "action_used",
+            "action_ready",
+            "parry_success",
+            "check_claimed",
+            "tick_1hz",
+            "resource_full",
+            "resource_empty",
+            "low_health",
+            "status_applied"
+          ],
+          "slots": [
+            "echo_a",
+            "echo_b",
+            "mobility",
+            "utility"
+          ],
+          "trait_stats": [
+            "move_speed",
+            "jump_height",
+            "gravity",
+            "air_control",
+            "ground_friction",
+            "damage_dealt",
+            "damage_taken",
+            "knockback_resist",
+            "regen"
+          ]
+        },
+        "balance_limits": {
+          "cooldown": [
+            0.15,
+            15.0
+          ],
+          "damage": [
+            1,
+            25
+          ],
+          "gravity_multiplier": [
+            0.35,
+            1.0
+          ],
+          "pellets": [
+            1,
+            16
+          ],
+          "speed_multiplier": [
+            0.9,
+            1.6
+          ]
+        },
+        "budget_headroom": {},
+        "composition_rules": [
+          "an interpretation carries 1-4 operations",
+          "a create operation's component id must start with its kind prefix (act_, trait_, res_, rule_, status_, aff_, info_)",
+          "an action has exactly one primitive plus 0-2 modifiers",
+          "modifiers require a damage primitive in the same action",
+          "a rule's costs, resource conditions and resource effects must name a resource the campaign owns (creating one in the same interpretation, before the rule, counts)",
+          "a move_speed, jump_height or air_control trait may never fall below 1.0, and a gravity trait may never exceed 1.0",
+          "an upgrade, modify or merge must name a component_id from player_state.owned_components (or one this interpretation creates before it); an absorbed id resolves to its survivor",
+          "only resources may merge, and never into themselves"
+        ],
+        "over_soft_budget": [],
+        "player_state": {
+          "aliases": [],
+          "coins_available": 0,
+          "echo_history": {},
+          "existing_echoes": [],
+          "owned_components": [],
+          "owned_links": [],
+          "signal_keys": 0
+        },
+        "preferred_modes": [],
+        "relevance_hint": "",
+        "required_echo_id": "echo_89100001",
+        "schema_version": 8,
+        "source": {
+          "item_flags": 0,
+          "item_name": "Hookshot",
+          "location_id": 89100001,
+          "recipient_name": "Zelda",
+          "source_game": "Ocarina of Time"
+        },
+        "suggested_concepts": []
+      }
+    },
+    {
+      "echo": {
+        "concepts": [
+          "estus",
+          "flask"
+        ],
+        "description": "Drink the interpretation of a drink. One drinks itself.",
+        "display_name": "Estus Flask",
+        "echo_id": "echo_89100002",
+        "interpretation_seq": 0,
+        "mode": "systemic",
+        "operations": [
+          {
+            "component": {
+              "component_id": "res_l89100002",
+              "description": "Charges of somebody's recovery item.",
+              "display_name": "FLASK",
+              "initial_fraction": 1.0,
+              "kind": "resource",
+              "max_value": 3.0,
+              "palette_color": "ember",
+              "pip_count": 3,
+              "presentation": "pips"
+            },
+            "op": "create"
+          },
+          {
+            "component": {
+              "component_id": "rule_l89100002",
+              "conditions": [],
+              "cooldown": 5.0,
+              "costs": [
+                {
+                  "amount": 1.0,
+                  "resource_id": "res_l89100002"
+                }
+              ],
+              "description": "Falling low uncorks one on its own.",
+              "display_name": "Reflex Sip",
+              "effects": [
+                {
+                  "amount": 25.0,
+                  "type": "heal"
+                }
+              ],
+              "event": "low_health",
+              "kind": "rule"
+            },
+            "op": "create"
+          },
+          {
+            "component": {
+              "component_id": "act_l89100002",
+              "cooldown": 10.0,
+              "description": "Drink the interpretation of a drink.",
+              "display_name": "Estus Flask",
+              "kind": "action",
+              "modifiers": [],
+              "primitive": {
+                "amount": 30.0,
+                "type": "heal_self"
+              },
+              "slot": "utility"
+            },
+            "op": "create"
+          },
+          {
+            "link": "powers",
+            "op": "link",
+            "source": "res_l89100002",
+            "strength": 1.0,
+            "target": "act_l89100002"
+          }
+        ],
+        "schema_version": 8,
+        "source_game": "Dark Souls III",
+        "source_item_name": "Estus Flask",
+        "source_location_id": 89100002,
+        "source_recipient_name": "Ashen One",
+        "tags": [
+          "heal",
+          "resource",
+          "rule"
+        ]
+      },
+      "interpretation_seq": 1,
+      "request": {
+        "allowed": {
+          "action_primitives": [
+            "melee_swing",
+            "melee_thrust",
+            "slam_ground",
+            "hitscan_damage",
+            "projectile_damage",
+            "arc_lob",
+            "burst_fire",
+            "charge_shot",
+            "beam_sustained",
+            "dash",
+            "air_dash",
+            "double_jump",
+            "wall_kick",
+            "hover",
+            "glide",
+            "blink",
+            "grapple_to_surface",
+            "grapple_pull_target",
+            "grapple_swing",
+            "shield",
+            "block",
+            "parry",
+            "heal_self",
+            "cleanse",
+            "scan_mark",
+            "restore_resource",
+            "pull_pickup",
+            "place_marker"
+          ],
+          "component_kinds": [
+            "action",
+            "trait",
+            "resource",
+            "rule",
+            "status",
+            "affordance",
+            "info"
+          ],
+          "modes": [
+            "literal",
+            "mechanical",
+            "conceptual",
+            "systemic"
+          ],
+          "modifiers": [
+            "recoil_self",
+            "knockback_target",
+            "apply_status_on_hit"
+          ],
+          "operations": [
+            "create",
+            "upgrade",
+            "modify",
+            "link",
+            "merge"
+          ],
+          "rule_conditions": [
+            "resource_at_least",
+            "resource_at_most",
+            "hp_below",
+            "hp_above",
+            "moving_backward",
+            "airborne",
+            "grounded",
+            "speed_above",
+            "enemy_within",
+            "slot_is",
+            "zone_is_finale",
+            "status_active"
+          ],
+          "rule_effects": [
+            "resource_add",
+            "heal",
+            "grant_shield",
+            "impulse_self",
+            "damage_around",
+            "fire_projectile",
+            "reset_action_cooldown",
+            "refill_resource",
+            "apply_status",
+            "trait_pulse",
+            "grant_local_reward"
+          ],
+          "rule_events": [
+            "zone_enter",
+            "chamber_enter",
+            "jump",
+            "land",
+            "dash_end",
+            "kill",
+            "damage_dealt",
+            "damage_taken",
+            "action_used",
+            "action_ready",
+            "parry_success",
+            "check_claimed",
+            "tick_1hz",
+            "resource_full",
+            "resource_empty",
+            "low_health",
+            "status_applied"
+          ],
+          "slots": [
+            "echo_a",
+            "echo_b",
+            "mobility",
+            "utility"
+          ],
+          "trait_stats": [
+            "move_speed",
+            "jump_height",
+            "gravity",
+            "air_control",
+            "ground_friction",
+            "damage_dealt",
+            "damage_taken",
+            "knockback_resist",
+            "regen"
+          ]
+        },
+        "balance_limits": {
+          "cooldown": [
+            0.15,
+            15.0
+          ],
+          "damage": [
+            1,
+            25
+          ],
+          "gravity_multiplier": [
+            0.35,
+            1.0
+          ],
+          "pellets": [
+            1,
+            16
+          ],
+          "speed_multiplier": [
+            0.9,
+            1.6
+          ]
+        },
+        "budget_headroom": {},
+        "composition_rules": [
+          "an interpretation carries 1-4 operations",
+          "a create operation's component id must start with its kind prefix (act_, trait_, res_, rule_, status_, aff_, info_)",
+          "an action has exactly one primitive plus 0-2 modifiers",
+          "modifiers require a damage primitive in the same action",
+          "a rule's costs, resource conditions and resource effects must name a resource the campaign owns (creating one in the same interpretation, before the rule, counts)",
+          "a move_speed, jump_height or air_control trait may never fall below 1.0, and a gravity trait may never exceed 1.0",
+          "an upgrade, modify or merge must name a component_id from player_state.owned_components (or one this interpretation creates before it); an absorbed id resolves to its survivor",
+          "only resources may merge, and never into themselves"
+        ],
+        "over_soft_budget": [],
+        "player_state": {
+          "aliases": [],
+          "coins_available": 0,
+          "echo_history": {},
+          "existing_echoes": [],
+          "owned_components": [],
+          "owned_links": [],
+          "signal_keys": 0
+        },
+        "preferred_modes": [],
+        "relevance_hint": "",
+        "required_echo_id": "echo_89100002",
+        "schema_version": 8,
+        "source": {
+          "item_flags": 0,
+          "item_name": "Estus Flask",
+          "location_id": 89100002,
+          "recipient_name": "Ashen One",
+          "source_game": "Dark Souls III"
+        },
+        "suggested_concepts": []
+      }
+    },
+    {
+      "echo": {
+        "concepts": [
+          "morph",
+          "ball"
+        ],
+        "description": "Epsilon could not place it, so it moved you instead.",
+        "display_name": "Morph Ball",
+        "echo_id": "echo_89100003",
+        "interpretation_seq": 0,
+        "mode": "literal",
+        "operations": [
+          {
+            "component": {
+              "component_id": "act_l89100003",
+              "cooldown": 3.0,
+              "description": "Epsilon could not place it, so it moved you instead.",
+              "display_name": "Morph Ball",
+              "kind": "action",
+              "modifiers": [],
+              "primitive": {
+                "clearance": 0.4,
+                "range": 11.0,
+                "type": "blink"
+              },
+              "slot": "mobility"
+            },
+            "op": "create"
+          }
+        ],
+        "schema_version": 8,
+        "source_game": "Super Metroid",
+        "source_item_name": "Morph Ball",
+        "source_location_id": 89100003,
+        "source_recipient_name": "Samus",
+        "tags": [
+          "blink",
+          "mobility"
+        ]
+      },
+      "interpretation_seq": 2,
+      "request": {
+        "allowed": {
+          "action_primitives": [
+            "melee_swing",
+            "melee_thrust",
+            "slam_ground",
+            "hitscan_damage",
+            "projectile_damage",
+            "arc_lob",
+            "burst_fire",
+            "charge_shot",
+            "beam_sustained",
+            "dash",
+            "air_dash",
+            "double_jump",
+            "wall_kick",
+            "hover",
+            "glide",
+            "blink",
+            "grapple_to_surface",
+            "grapple_pull_target",
+            "grapple_swing",
+            "shield",
+            "block",
+            "parry",
+            "heal_self",
+            "cleanse",
+            "scan_mark",
+            "restore_resource",
+            "pull_pickup",
+            "place_marker"
+          ],
+          "component_kinds": [
+            "action",
+            "trait",
+            "resource",
+            "rule",
+            "status",
+            "affordance",
+            "info"
+          ],
+          "modes": [
+            "literal",
+            "mechanical",
+            "conceptual",
+            "systemic"
+          ],
+          "modifiers": [
+            "recoil_self",
+            "knockback_target",
+            "apply_status_on_hit"
+          ],
+          "operations": [
+            "create",
+            "upgrade",
+            "modify",
+            "link",
+            "merge"
+          ],
+          "rule_conditions": [
+            "resource_at_least",
+            "resource_at_most",
+            "hp_below",
+            "hp_above",
+            "moving_backward",
+            "airborne",
+            "grounded",
+            "speed_above",
+            "enemy_within",
+            "slot_is",
+            "zone_is_finale",
+            "status_active"
+          ],
+          "rule_effects": [
+            "resource_add",
+            "heal",
+            "grant_shield",
+            "impulse_self",
+            "damage_around",
+            "fire_projectile",
+            "reset_action_cooldown",
+            "refill_resource",
+            "apply_status",
+            "trait_pulse",
+            "grant_local_reward"
+          ],
+          "rule_events": [
+            "zone_enter",
+            "chamber_enter",
+            "jump",
+            "land",
+            "dash_end",
+            "kill",
+            "damage_dealt",
+            "damage_taken",
+            "action_used",
+            "action_ready",
+            "parry_success",
+            "check_claimed",
+            "tick_1hz",
+            "resource_full",
+            "resource_empty",
+            "low_health",
+            "status_applied"
+          ],
+          "slots": [
+            "echo_a",
+            "echo_b",
+            "mobility",
+            "utility"
+          ],
+          "trait_stats": [
+            "move_speed",
+            "jump_height",
+            "gravity",
+            "air_control",
+            "ground_friction",
+            "damage_dealt",
+            "damage_taken",
+            "knockback_resist",
+            "regen"
+          ]
+        },
+        "balance_limits": {
+          "cooldown": [
+            0.15,
+            15.0
+          ],
+          "damage": [
+            1,
+            25
+          ],
+          "gravity_multiplier": [
+            0.35,
+            1.0
+          ],
+          "pellets": [
+            1,
+            16
+          ],
+          "speed_multiplier": [
+            0.9,
+            1.6
+          ]
+        },
+        "budget_headroom": {},
+        "composition_rules": [
+          "an interpretation carries 1-4 operations",
+          "a create operation's component id must start with its kind prefix (act_, trait_, res_, rule_, status_, aff_, info_)",
+          "an action has exactly one primitive plus 0-2 modifiers",
+          "modifiers require a damage primitive in the same action",
+          "a rule's costs, resource conditions and resource effects must name a resource the campaign owns (creating one in the same interpretation, before the rule, counts)",
+          "a move_speed, jump_height or air_control trait may never fall below 1.0, and a gravity trait may never exceed 1.0",
+          "an upgrade, modify or merge must name a component_id from player_state.owned_components (or one this interpretation creates before it); an absorbed id resolves to its survivor",
+          "only resources may merge, and never into themselves"
+        ],
+        "over_soft_budget": [],
+        "player_state": {
+          "aliases": [],
+          "coins_available": 0,
+          "echo_history": {},
+          "existing_echoes": [],
+          "owned_components": [],
+          "owned_links": [],
+          "signal_keys": 0
+        },
+        "preferred_modes": [],
+        "relevance_hint": "",
+        "required_echo_id": "echo_89100003",
+        "schema_version": 8,
+        "source": {
+          "item_flags": 0,
+          "item_name": "Morph Ball",
+          "location_id": 89100003,
+          "recipient_name": "Samus",
+          "source_game": "Super Metroid"
+        },
+        "suggested_concepts": []
+      }
+    },
+    {
+      "echo": {
+        "concepts": [
+          "footing",
+          "traversal"
+        ],
+        "description": "A burst of borrowed momentum.",
+        "display_name": "Boost Boots",
+        "echo_id": "echo_89100004",
+        "interpretation_seq": 0,
+        "mode": "literal",
+        "operations": [
+          {
+            "component": {
+              "component_id": "act_l89100004",
+              "cooldown": 2.0,
+              "description": "A burst of borrowed momentum.",
+              "display_name": "Boost Boots",
+              "kind": "action",
+              "modifiers": [],
+              "primitive": {
+                "force": 12.0,
+                "type": "dash"
+              },
+              "slot": "mobility"
+            },
+            "op": "create"
+          }
+        ],
+        "schema_version": 8,
+        "source_game": "Bomb Rush Cyberfunk",
+        "source_item_name": "Boost Boots",
+        "source_location_id": 89100004,
+        "source_recipient_name": "Red",
+        "tags": [
+          "dash",
+          "mobility"
+        ]
+      },
+      "interpretation_seq": 3,
+      "request": {
+        "allowed": {
+          "action_primitives": [
+            "melee_swing",
+            "melee_thrust",
+            "slam_ground",
+            "hitscan_damage",
+            "projectile_damage",
+            "arc_lob",
+            "burst_fire",
+            "charge_shot",
+            "beam_sustained",
+            "dash",
+            "air_dash",
+            "double_jump",
+            "wall_kick",
+            "hover",
+            "glide",
+            "blink",
+            "grapple_to_surface",
+            "grapple_pull_target",
+            "grapple_swing",
+            "shield",
+            "block",
+            "parry",
+            "heal_self",
+            "cleanse",
+            "scan_mark",
+            "restore_resource",
+            "pull_pickup",
+            "place_marker"
+          ],
+          "component_kinds": [
+            "action",
+            "trait",
+            "resource",
+            "rule",
+            "status",
+            "affordance",
+            "info"
+          ],
+          "modes": [
+            "literal",
+            "mechanical",
+            "conceptual",
+            "systemic"
+          ],
+          "modifiers": [
+            "recoil_self",
+            "knockback_target",
+            "apply_status_on_hit"
+          ],
+          "operations": [
+            "create",
+            "upgrade",
+            "modify",
+            "link",
+            "merge"
+          ],
+          "rule_conditions": [
+            "resource_at_least",
+            "resource_at_most",
+            "hp_below",
+            "hp_above",
+            "moving_backward",
+            "airborne",
+            "grounded",
+            "speed_above",
+            "enemy_within",
+            "slot_is",
+            "zone_is_finale",
+            "status_active"
+          ],
+          "rule_effects": [
+            "resource_add",
+            "heal",
+            "grant_shield",
+            "impulse_self",
+            "damage_around",
+            "fire_projectile",
+            "reset_action_cooldown",
+            "refill_resource",
+            "apply_status",
+            "trait_pulse",
+            "grant_local_reward"
+          ],
+          "rule_events": [
+            "zone_enter",
+            "chamber_enter",
+            "jump",
+            "land",
+            "dash_end",
+            "kill",
+            "damage_dealt",
+            "damage_taken",
+            "action_used",
+            "action_ready",
+            "parry_success",
+            "check_claimed",
+            "tick_1hz",
+            "resource_full",
+            "resource_empty",
+            "low_health",
+            "status_applied"
+          ],
+          "slots": [
+            "echo_a",
+            "echo_b",
+            "mobility",
+            "utility"
+          ],
+          "trait_stats": [
+            "move_speed",
+            "jump_height",
+            "gravity",
+            "air_control",
+            "ground_friction",
+            "damage_dealt",
+            "damage_taken",
+            "knockback_resist",
+            "regen"
+          ]
+        },
+        "balance_limits": {
+          "cooldown": [
+            0.15,
+            15.0
+          ],
+          "damage": [
+            1,
+            25
+          ],
+          "gravity_multiplier": [
+            0.35,
+            1.0
+          ],
+          "pellets": [
+            1,
+            16
+          ],
+          "speed_multiplier": [
+            0.9,
+            1.6
+          ]
+        },
+        "budget_headroom": {},
+        "composition_rules": [
+          "an interpretation carries 1-4 operations",
+          "a create operation's component id must start with its kind prefix (act_, trait_, res_, rule_, status_, aff_, info_)",
+          "an action has exactly one primitive plus 0-2 modifiers",
+          "modifiers require a damage primitive in the same action",
+          "a rule's costs, resource conditions and resource effects must name a resource the campaign owns (creating one in the same interpretation, before the rule, counts)",
+          "a move_speed, jump_height or air_control trait may never fall below 1.0, and a gravity trait may never exceed 1.0",
+          "an upgrade, modify or merge must name a component_id from player_state.owned_components (or one this interpretation creates before it); an absorbed id resolves to its survivor",
+          "only resources may merge, and never into themselves"
+        ],
+        "over_soft_budget": [],
+        "player_state": {
+          "aliases": [],
+          "coins_available": 0,
+          "echo_history": {},
+          "existing_echoes": [],
+          "owned_components": [],
+          "owned_links": [],
+          "signal_keys": 0
+        },
+        "preferred_modes": [],
+        "relevance_hint": "",
+        "required_echo_id": "echo_89100004",
+        "schema_version": 8,
+        "source": {
+          "item_flags": 0,
+          "item_name": "Boost Boots",
+          "location_id": 89100004,
+          "recipient_name": "Red",
+          "source_game": "Bomb Rush Cyberfunk"
+        },
+        "suggested_concepts": []
+      }
+    }
+  ],
+  "generated_by": "make baseline",
+  "label": "playtest_2_5",
+  "provider": "fallback",
+  "purpose": "The last measurement before authored art. A later run is compared against this one, so both have to have walked the same logical Zone.",
+  "scale": {
+    "check_value": 0,
+    "finale_required_checks": 360,
+    "finale_required_fraction": 0.8,
+    "location_count": 450,
+    "max_enemies_spawned_cap": 240,
+    "zone_budget": 1000,
+    "zone_target_checks": 15
+  },
+  "zones": [
+    {
+      "measured": {
+        "chamber_types": [
+          "arena",
+          "corridor",
+          "platform_path"
+        ],
+        "chambers": 23,
+        "checks": 15,
+        "content_value": 910,
+        "enemy_total": 41,
+        "rooms_holding_no_check": 8
+      },
+      "request": {
+        "campaign": {
+          "completed_zone_summaries": [],
+          "is_finale": false,
+          "seed_name": "ArchipepsiBaseline",
+          "slot_id": 1,
+          "slot_name": "Playtester",
+          "static_glitch_units": 0,
+          "target_game": "Ocarina of Time",
+          "team": 0,
+          "zone_budget": 1000,
+          "zone_index": 1
+        },
+        "catalog": {
+          "chamber_types": [
+            "corridor",
+            "arena",
+            "platform_path",
+            "tower",
+            "treasure_room"
+          ],
+          "enemy_archetypes": [
+            "melee",
+            "ranged",
+            "brute"
+          ],
+          "objectives": [
+            "reach_reward",
+            "kill_all",
+            "platform_to_goal"
+          ],
+          "room_shells": {},
+          "themes": [
+            "concrete_facility",
+            "rusted_industrial",
+            "neon_transit",
+            "gothic_stone",
+            "temple_ruin",
+            "void_glitch"
+          ]
+        },
+        "constraints": {
+          "activity_kinds": [
+            "switch_sequence",
+            "timed_run",
+            "target_challenge",
+            "pressure_routing"
+          ],
+          "affordances_are_optional_only": "a chamber may hold Checks AND features, but only where the room is wide enough for the feature to sit clear of the walking lane, and a feature may never gate an objective or an exit",
+          "all_locations_must_appear_once": true,
+          "budget_tolerance": 0.1,
+          "content_is_scored_by_the_engine": "room value is recomputed from what a room actually contains; a Check on its own is worth nothing",
+          "critical_path_requires_echo": false,
+          "gap_bound": "gap_size <= max_safe_gap(vertical_step); 2.6 flat, 2.0 at a 1.0m step",
+          "max_brutes": 5,
+          "max_chambers": 40,
+          "max_enemies_per_chamber": 12,
+          "max_enemies_total": 70,
+          "max_vertical_step": 1.0,
+          "rooms_suggested": [
+            10,
+            20
+          ],
+          "zone_budget": 1000
+        },
+        "generation_id": "baseline-zone-1",
+        "locations": [
+          {
+            "item_flags": 0,
+            "item_name": "Hookshot",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100001,
+            "location_name": "Archipepsi Check 000",
+            "recipient_game": "Ocarina of Time",
+            "recipient_name": "Zelda"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Estus Flask",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100002,
+            "location_name": "Archipepsi Check 001",
+            "recipient_game": "Dark Souls III",
+            "recipient_name": "Ashen One"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Morph Ball",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100003,
+            "location_name": "Archipepsi Check 002",
+            "recipient_game": "Super Metroid",
+            "recipient_name": "Samus"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Boost Boots",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100004,
+            "location_name": "Archipepsi Check 003",
+            "recipient_game": "Bomb Rush Cyberfunk",
+            "recipient_name": "Red"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Hookshot",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100005,
+            "location_name": "Archipepsi Check 004",
+            "recipient_game": "Ocarina of Time",
+            "recipient_name": "Zelda"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Estus Flask",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100006,
+            "location_name": "Archipepsi Check 005",
+            "recipient_game": "Dark Souls III",
+            "recipient_name": "Ashen One"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Morph Ball",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100007,
+            "location_name": "Archipepsi Check 006",
+            "recipient_game": "Super Metroid",
+            "recipient_name": "Samus"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Boost Boots",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100008,
+            "location_name": "Archipepsi Check 007",
+            "recipient_game": "Bomb Rush Cyberfunk",
+            "recipient_name": "Red"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Hookshot",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100009,
+            "location_name": "Archipepsi Check 008",
+            "recipient_game": "Ocarina of Time",
+            "recipient_name": "Zelda"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Estus Flask",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100010,
+            "location_name": "Archipepsi Check 009",
+            "recipient_game": "Dark Souls III",
+            "recipient_name": "Ashen One"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Morph Ball",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100011,
+            "location_name": "Archipepsi Check 010",
+            "recipient_game": "Super Metroid",
+            "recipient_name": "Samus"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Boost Boots",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100012,
+            "location_name": "Archipepsi Check 011",
+            "recipient_game": "Bomb Rush Cyberfunk",
+            "recipient_name": "Red"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Hookshot",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100013,
+            "location_name": "Archipepsi Check 012",
+            "recipient_game": "Ocarina of Time",
+            "recipient_name": "Zelda"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Estus Flask",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100014,
+            "location_name": "Archipepsi Check 013",
+            "recipient_game": "Dark Souls III",
+            "recipient_name": "Ashen One"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Morph Ball",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100015,
+            "location_name": "Archipepsi Check 014",
+            "recipient_game": "Super Metroid",
+            "recipient_name": "Samus"
+          }
+        ],
+        "player": {
+          "coins_available": 0,
+          "echo_history": {},
+          "echoes": [],
+          "signal_keys": 0
+        },
+        "schema_version": 7,
+        "unlocked_affordances": [],
+        "zone_id": "zone_001"
+      },
+      "zone": {
+        "chambers": [
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "timed_run"
+              }
+            ],
+            "id": "c001",
+            "length": 15.0,
+            "type": "corridor",
+            "width": 6.0
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "target_challenge"
+              },
+              {
+                "element_count": 2,
+                "kind": "target_challenge"
+              }
+            ],
+            "depth": 15.8,
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 4
+              }
+            ],
+            "id": "c002",
+            "objective": "kill_all",
+            "reward_location_id": 89100001,
+            "type": "arena",
+            "wall_height": 4.9,
+            "width": 13.8
+          },
+          {
+            "activities": [
+              {
+                "element_count": 4,
+                "kind": "pressure_routing"
+              },
+              {
+                "element_count": 2,
+                "kind": "pressure_routing"
+              }
+            ],
+            "gap_size": 2.15,
+            "id": "c003",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100002,
+            "segment_count": 3,
+            "type": "platform_path",
+            "vertical_step": 0.51
+          },
+          {
+            "id": "c004",
+            "length": 15.0,
+            "type": "corridor",
+            "width": 6.9
+          },
+          {
+            "activities": [
+              {
+                "element_count": 4,
+                "kind": "switch_sequence"
+              },
+              {
+                "element_count": 2,
+                "kind": "switch_sequence"
+              }
+            ],
+            "depth": 14.1,
+            "enemies": [
+              {
+                "archetype": "ranged",
+                "count": 5
+              }
+            ],
+            "id": "c005",
+            "objective": "kill_all",
+            "reward_location_id": 89100003,
+            "type": "arena",
+            "wall_height": 5.7,
+            "width": 12.4
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "target_challenge"
+              },
+              {
+                "element_count": 5,
+                "kind": "target_challenge"
+              }
+            ],
+            "depth": 13.5,
+            "enemies": [
+              {
+                "archetype": "ranged",
+                "count": 1
+              }
+            ],
+            "id": "c006",
+            "objective": "kill_all",
+            "reward_location_id": 89100004,
+            "type": "arena",
+            "wall_height": 5.6,
+            "width": 23.8
+          },
+          {
+            "id": "c007",
+            "length": 10.7,
+            "type": "corridor",
+            "width": 7.3
+          },
+          {
+            "activities": [
+              {
+                "element_count": 4,
+                "kind": "timed_run"
+              },
+              {
+                "element_count": 2,
+                "kind": "timed_run"
+              }
+            ],
+            "gap_size": 2.25,
+            "id": "c008",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100005,
+            "segment_count": 4,
+            "type": "platform_path",
+            "vertical_step": 0.51
+          },
+          {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "switch_sequence"
+              },
+              {
+                "element_count": 2,
+                "kind": "switch_sequence"
+              }
+            ],
+            "depth": 18.7,
+            "enemies": [
+              {
+                "archetype": "ranged",
+                "count": 5
+              }
+            ],
+            "id": "c009",
+            "objective": "kill_all",
+            "reward_location_id": 89100006,
+            "type": "arena",
+            "wall_height": 6.1,
+            "width": 20.5
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "target_challenge"
+              }
+            ],
+            "id": "c010",
+            "length": 9.5,
+            "type": "corridor",
+            "width": 7.2
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "pressure_routing"
+              },
+              {
+                "element_count": 2,
+                "kind": "pressure_routing"
+              }
+            ],
+            "depth": 12.6,
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 1
+              }
+            ],
+            "id": "c011",
+            "objective": "kill_all",
+            "reward_location_id": 89100007,
+            "type": "arena",
+            "wall_height": 5.7,
+            "width": 12.5
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "timed_run"
+              },
+              {
+                "element_count": 5,
+                "kind": "timed_run"
+              }
+            ],
+            "gap_size": 1.47,
+            "id": "c012",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100008,
+            "segment_count": 5,
+            "type": "platform_path",
+            "vertical_step": 0.51
+          },
+          {
+            "id": "c013",
+            "length": 10.5,
+            "type": "corridor",
+            "width": 7.5
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "switch_sequence"
+              },
+              {
+                "element_count": 4,
+                "kind": "target_challenge"
+              },
+              {
+                "element_count": 4,
+                "kind": "timed_run"
+              }
+            ],
+            "depth": 24.0,
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 7
+              },
+              {
+                "archetype": "brute",
+                "count": 1
+              },
+              {
+                "archetype": "ranged",
+                "count": 4
+              }
+            ],
+            "id": "c014",
+            "objective": "kill_all",
+            "reward_location_id": 89100009,
+            "type": "arena",
+            "wall_height": 7.0,
+            "width": 26.0
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "pressure_routing"
+              },
+              {
+                "element_count": 5,
+                "kind": "pressure_routing"
+              }
+            ],
+            "depth": 21.1,
+            "enemies": [
+              {
+                "archetype": "ranged",
+                "count": 5
+              }
+            ],
+            "id": "c015",
+            "objective": "kill_all",
+            "reward_location_id": 89100010,
+            "type": "arena",
+            "wall_height": 4.6,
+            "width": 18.7
+          },
+          {
+            "activities": [
+              {
+                "element_count": 4,
+                "kind": "pressure_routing"
+              }
+            ],
+            "id": "c016",
+            "length": 10.9,
+            "type": "corridor",
+            "width": 5.1
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "switch_sequence"
+              },
+              {
+                "element_count": 4,
+                "kind": "switch_sequence"
+              }
+            ],
+            "gap_size": 1.81,
+            "id": "c017",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100011,
+            "segment_count": 6,
+            "type": "platform_path",
+            "vertical_step": 0.51
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "target_challenge"
+              },
+              {
+                "element_count": 3,
+                "kind": "target_challenge"
+              }
+            ],
+            "depth": 14.4,
+            "enemies": [
+              {
+                "archetype": "ranged",
+                "count": 5
+              }
+            ],
+            "id": "c018",
+            "objective": "kill_all",
+            "reward_location_id": 89100012,
+            "type": "arena",
+            "wall_height": 5.8,
+            "width": 18.9
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "pressure_routing"
+              }
+            ],
+            "id": "c019",
+            "length": 13.7,
+            "type": "corridor",
+            "width": 6.7
+          },
+          {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "timed_run"
+              }
+            ],
+            "depth": 11.4,
+            "enemies": [
+              {
+                "archetype": "ranged",
+                "count": 1
+              }
+            ],
+            "id": "c020",
+            "objective": "kill_all",
+            "reward_location_id": 89100013,
+            "type": "arena",
+            "wall_height": 6.7,
+            "width": 19.5
+          },
+          {
+            "activities": [
+              {
+                "element_count": 4,
+                "kind": "switch_sequence"
+              }
+            ],
+            "gap_size": 2.38,
+            "id": "c021",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100014,
+            "segment_count": 5,
+            "type": "platform_path",
+            "vertical_step": 0.51
+          },
+          {
+            "id": "c022",
+            "length": 8.1,
+            "type": "corridor",
+            "width": 5.1
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "pressure_routing"
+              }
+            ],
+            "depth": 13.1,
+            "enemies": [
+              {
+                "archetype": "ranged",
+                "count": 2
+              }
+            ],
+            "id": "c023",
+            "objective": "kill_all",
+            "reward_location_id": 89100015,
+            "type": "arena",
+            "wall_height": 5.1,
+            "width": 15.9
+          }
+        ],
+        "designer_note": "Deterministic fallback zone.",
+        "display_name": "Relay 001: Ocarina of Time",
+        "schema_version": 7,
+        "target_game": "Ocarina of Time",
+        "theme": "temple_ruin",
+        "zone_id": "zone_001"
+      },
+      "zone_index": 1
+    },
+    {
+      "measured": {
+        "chamber_types": [
+          "arena",
+          "corridor",
+          "platform_path"
+        ],
+        "chambers": 23,
+        "checks": 15,
+        "content_value": 911,
+        "enemy_total": 34,
+        "rooms_holding_no_check": 8
+      },
+      "request": {
+        "campaign": {
+          "completed_zone_summaries": [],
+          "is_finale": false,
+          "seed_name": "ArchipepsiBaseline",
+          "slot_id": 1,
+          "slot_name": "Playtester",
+          "static_glitch_units": 0,
+          "target_game": "Ocarina of Time",
+          "team": 0,
+          "zone_budget": 1000,
+          "zone_index": 2
+        },
+        "catalog": {
+          "chamber_types": [
+            "corridor",
+            "arena",
+            "platform_path",
+            "tower",
+            "treasure_room"
+          ],
+          "enemy_archetypes": [
+            "melee",
+            "ranged",
+            "brute"
+          ],
+          "objectives": [
+            "reach_reward",
+            "kill_all",
+            "platform_to_goal"
+          ],
+          "room_shells": {},
+          "themes": [
+            "concrete_facility",
+            "rusted_industrial",
+            "neon_transit",
+            "gothic_stone",
+            "temple_ruin",
+            "void_glitch"
+          ]
+        },
+        "constraints": {
+          "activity_kinds": [
+            "switch_sequence",
+            "timed_run",
+            "target_challenge",
+            "pressure_routing"
+          ],
+          "affordances_are_optional_only": "a chamber may hold Checks AND features, but only where the room is wide enough for the feature to sit clear of the walking lane, and a feature may never gate an objective or an exit",
+          "all_locations_must_appear_once": true,
+          "budget_tolerance": 0.1,
+          "content_is_scored_by_the_engine": "room value is recomputed from what a room actually contains; a Check on its own is worth nothing",
+          "critical_path_requires_echo": false,
+          "gap_bound": "gap_size <= max_safe_gap(vertical_step); 2.6 flat, 2.0 at a 1.0m step",
+          "max_brutes": 5,
+          "max_chambers": 40,
+          "max_enemies_per_chamber": 12,
+          "max_enemies_total": 70,
+          "max_vertical_step": 1.0,
+          "rooms_suggested": [
+            10,
+            20
+          ],
+          "zone_budget": 1000
+        },
+        "generation_id": "baseline-zone-2",
+        "locations": [
+          {
+            "item_flags": 0,
+            "item_name": "Hookshot",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100101,
+            "location_name": "Archipepsi Check 100",
+            "recipient_game": "Ocarina of Time",
+            "recipient_name": "Zelda"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Estus Flask",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100102,
+            "location_name": "Archipepsi Check 101",
+            "recipient_game": "Dark Souls III",
+            "recipient_name": "Ashen One"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Morph Ball",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100103,
+            "location_name": "Archipepsi Check 102",
+            "recipient_game": "Super Metroid",
+            "recipient_name": "Samus"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Boost Boots",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100104,
+            "location_name": "Archipepsi Check 103",
+            "recipient_game": "Bomb Rush Cyberfunk",
+            "recipient_name": "Red"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Hookshot",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100105,
+            "location_name": "Archipepsi Check 104",
+            "recipient_game": "Ocarina of Time",
+            "recipient_name": "Zelda"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Estus Flask",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100106,
+            "location_name": "Archipepsi Check 105",
+            "recipient_game": "Dark Souls III",
+            "recipient_name": "Ashen One"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Morph Ball",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100107,
+            "location_name": "Archipepsi Check 106",
+            "recipient_game": "Super Metroid",
+            "recipient_name": "Samus"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Boost Boots",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100108,
+            "location_name": "Archipepsi Check 107",
+            "recipient_game": "Bomb Rush Cyberfunk",
+            "recipient_name": "Red"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Hookshot",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100109,
+            "location_name": "Archipepsi Check 108",
+            "recipient_game": "Ocarina of Time",
+            "recipient_name": "Zelda"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Estus Flask",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100110,
+            "location_name": "Archipepsi Check 109",
+            "recipient_game": "Dark Souls III",
+            "recipient_name": "Ashen One"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Morph Ball",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100111,
+            "location_name": "Archipepsi Check 110",
+            "recipient_game": "Super Metroid",
+            "recipient_name": "Samus"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Boost Boots",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100112,
+            "location_name": "Archipepsi Check 111",
+            "recipient_game": "Bomb Rush Cyberfunk",
+            "recipient_name": "Red"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Hookshot",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100113,
+            "location_name": "Archipepsi Check 112",
+            "recipient_game": "Ocarina of Time",
+            "recipient_name": "Zelda"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Estus Flask",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100114,
+            "location_name": "Archipepsi Check 113",
+            "recipient_game": "Dark Souls III",
+            "recipient_name": "Ashen One"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Morph Ball",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100115,
+            "location_name": "Archipepsi Check 114",
+            "recipient_game": "Super Metroid",
+            "recipient_name": "Samus"
+          }
+        ],
+        "player": {
+          "coins_available": 0,
+          "echo_history": {},
+          "echoes": [],
+          "signal_keys": 0
+        },
+        "schema_version": 7,
+        "unlocked_affordances": [],
+        "zone_id": "zone_002"
+      },
+      "zone": {
+        "chambers": [
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "timed_run"
+              }
+            ],
+            "id": "c001",
+            "length": 11.1,
+            "type": "corridor",
+            "width": 6.3
+          },
+          {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "target_challenge"
+              },
+              {
+                "element_count": 5,
+                "kind": "target_challenge"
+              }
+            ],
+            "depth": 20.9,
+            "enemies": [
+              {
+                "archetype": "ranged",
+                "count": 2
+              }
+            ],
+            "id": "c002",
+            "objective": "kill_all",
+            "reward_location_id": 89100101,
+            "type": "arena",
+            "wall_height": 5.0,
+            "width": 20.3
+          },
+          {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "pressure_routing"
+              },
+              {
+                "element_count": 5,
+                "kind": "pressure_routing"
+              }
+            ],
+            "gap_size": 1.46,
+            "id": "c003",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100102,
+            "segment_count": 3,
+            "type": "platform_path",
+            "vertical_step": 0.77
+          },
+          {
+            "activities": [
+              {
+                "element_count": 4,
+                "kind": "timed_run"
+              }
+            ],
+            "id": "c004",
+            "length": 8.4,
+            "type": "corridor",
+            "width": 7.4
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "switch_sequence"
+              },
+              {
+                "element_count": 3,
+                "kind": "switch_sequence"
+              }
+            ],
+            "depth": 13.7,
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 2
+              }
+            ],
+            "id": "c005",
+            "objective": "kill_all",
+            "reward_location_id": 89100103,
+            "type": "arena",
+            "wall_height": 5.8,
+            "width": 12.9
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "target_challenge"
+              },
+              {
+                "element_count": 2,
+                "kind": "target_challenge"
+              }
+            ],
+            "depth": 16.3,
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 2
+              }
+            ],
+            "id": "c006",
+            "objective": "kill_all",
+            "reward_location_id": 89100104,
+            "type": "arena",
+            "wall_height": 5.7,
+            "width": 19.5
+          },
+          {
+            "activities": [
+              {
+                "element_count": 4,
+                "kind": "target_challenge"
+              }
+            ],
+            "id": "c007",
+            "length": 10.7,
+            "type": "corridor",
+            "width": 5.4
+          },
+          {
+            "activities": [
+              {
+                "element_count": 4,
+                "kind": "timed_run"
+              },
+              {
+                "element_count": 3,
+                "kind": "timed_run"
+              }
+            ],
+            "gap_size": 1.93,
+            "id": "c008",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100105,
+            "segment_count": 3,
+            "type": "platform_path",
+            "vertical_step": 0.77
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "switch_sequence"
+              },
+              {
+                "element_count": 4,
+                "kind": "switch_sequence"
+              }
+            ],
+            "depth": 10.9,
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 4
+              }
+            ],
+            "id": "c009",
+            "objective": "kill_all",
+            "reward_location_id": 89100106,
+            "type": "arena",
+            "wall_height": 6.7,
+            "width": 12.7
+          },
+          {
+            "activities": [
+              {
+                "element_count": 4,
+                "kind": "target_challenge"
+              }
+            ],
+            "id": "c010",
+            "length": 12.1,
+            "type": "corridor",
+            "width": 6.2
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "pressure_routing"
+              },
+              {
+                "element_count": 2,
+                "kind": "pressure_routing"
+              }
+            ],
+            "depth": 18.9,
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 5
+              }
+            ],
+            "id": "c011",
+            "objective": "kill_all",
+            "reward_location_id": 89100107,
+            "type": "arena",
+            "wall_height": 5.7,
+            "width": 24.0
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "timed_run"
+              },
+              {
+                "element_count": 4,
+                "kind": "timed_run"
+              }
+            ],
+            "gap_size": 1.96,
+            "id": "c012",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100108,
+            "segment_count": 5,
+            "type": "platform_path",
+            "vertical_step": 0.77
+          },
+          {
+            "activities": [
+              {
+                "element_count": 4,
+                "kind": "switch_sequence"
+              },
+              {
+                "element_count": 2,
+                "kind": "switch_sequence"
+              }
+            ],
+            "id": "c013",
+            "length": 13.4,
+            "type": "corridor",
+            "width": 7.0
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "switch_sequence"
+              },
+              {
+                "element_count": 4,
+                "kind": "target_challenge"
+              },
+              {
+                "element_count": 5,
+                "kind": "timed_run"
+              }
+            ],
+            "depth": 24.0,
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 7
+              },
+              {
+                "archetype": "brute",
+                "count": 1
+              },
+              {
+                "archetype": "ranged",
+                "count": 2
+              }
+            ],
+            "id": "c014",
+            "objective": "kill_all",
+            "reward_location_id": 89100109,
+            "type": "arena",
+            "wall_height": 7.0,
+            "width": 26.0
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "pressure_routing"
+              },
+              {
+                "element_count": 5,
+                "kind": "pressure_routing"
+              }
+            ],
+            "depth": 16.3,
+            "enemies": [
+              {
+                "archetype": "ranged",
+                "count": 2
+              }
+            ],
+            "id": "c015",
+            "objective": "kill_all",
+            "reward_location_id": 89100110,
+            "type": "arena",
+            "wall_height": 5.6,
+            "width": 14.3
+          },
+          {
+            "id": "c016",
+            "length": 13.9,
+            "type": "corridor",
+            "width": 5.6
+          },
+          {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "switch_sequence"
+              }
+            ],
+            "gap_size": 1.67,
+            "id": "c017",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100111,
+            "segment_count": 5,
+            "type": "platform_path",
+            "vertical_step": 0.77
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "target_challenge"
+              }
+            ],
+            "depth": 21.5,
+            "enemies": [
+              {
+                "archetype": "ranged",
+                "count": 4
+              }
+            ],
+            "id": "c018",
+            "objective": "kill_all",
+            "reward_location_id": 89100112,
+            "type": "arena",
+            "wall_height": 4.6,
+            "width": 20.4
+          },
+          {
+            "id": "c019",
+            "length": 13.4,
+            "type": "corridor",
+            "width": 7.2
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "timed_run"
+              }
+            ],
+            "depth": 14.2,
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 1
+              }
+            ],
+            "id": "c020",
+            "objective": "kill_all",
+            "reward_location_id": 89100113,
+            "type": "arena",
+            "wall_height": 6.1,
+            "width": 22.5
+          },
+          {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "switch_sequence"
+              }
+            ],
+            "gap_size": 1.47,
+            "id": "c021",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100114,
+            "segment_count": 4,
+            "type": "platform_path",
+            "vertical_step": 0.77
+          },
+          {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "target_challenge"
+              }
+            ],
+            "id": "c022",
+            "length": 13.8,
+            "type": "corridor",
+            "width": 7.8
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "pressure_routing"
+              }
+            ],
+            "depth": 20.9,
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 2
+              }
+            ],
+            "id": "c023",
+            "objective": "kill_all",
+            "reward_location_id": 89100115,
+            "type": "arena",
+            "wall_height": 6.4,
+            "width": 22.6
+          }
+        ],
+        "designer_note": "Deterministic fallback zone.",
+        "display_name": "Relay 002: Ocarina of Time",
+        "schema_version": 7,
+        "target_game": "Ocarina of Time",
+        "theme": "temple_ruin",
+        "zone_id": "zone_002"
+      },
+      "zone_index": 2
+    },
+    {
+      "measured": {
+        "chamber_types": [
+          "arena",
+          "corridor",
+          "platform_path"
+        ],
+        "chambers": 23,
+        "checks": 15,
+        "content_value": 912,
+        "enemy_total": 32,
+        "rooms_holding_no_check": 8
+      },
+      "request": {
+        "campaign": {
+          "completed_zone_summaries": [],
+          "is_finale": false,
+          "seed_name": "ArchipepsiBaseline",
+          "slot_id": 1,
+          "slot_name": "Playtester",
+          "static_glitch_units": 0,
+          "target_game": "Ocarina of Time",
+          "team": 0,
+          "zone_budget": 1000,
+          "zone_index": 3
+        },
+        "catalog": {
+          "chamber_types": [
+            "corridor",
+            "arena",
+            "platform_path",
+            "tower",
+            "treasure_room"
+          ],
+          "enemy_archetypes": [
+            "melee",
+            "ranged",
+            "brute"
+          ],
+          "objectives": [
+            "reach_reward",
+            "kill_all",
+            "platform_to_goal"
+          ],
+          "room_shells": {},
+          "themes": [
+            "concrete_facility",
+            "rusted_industrial",
+            "neon_transit",
+            "gothic_stone",
+            "temple_ruin",
+            "void_glitch"
+          ]
+        },
+        "constraints": {
+          "activity_kinds": [
+            "switch_sequence",
+            "timed_run",
+            "target_challenge",
+            "pressure_routing"
+          ],
+          "affordances_are_optional_only": "a chamber may hold Checks AND features, but only where the room is wide enough for the feature to sit clear of the walking lane, and a feature may never gate an objective or an exit",
+          "all_locations_must_appear_once": true,
+          "budget_tolerance": 0.1,
+          "content_is_scored_by_the_engine": "room value is recomputed from what a room actually contains; a Check on its own is worth nothing",
+          "critical_path_requires_echo": false,
+          "gap_bound": "gap_size <= max_safe_gap(vertical_step); 2.6 flat, 2.0 at a 1.0m step",
+          "max_brutes": 5,
+          "max_chambers": 40,
+          "max_enemies_per_chamber": 12,
+          "max_enemies_total": 70,
+          "max_vertical_step": 1.0,
+          "rooms_suggested": [
+            10,
+            20
+          ],
+          "zone_budget": 1000
+        },
+        "generation_id": "baseline-zone-3",
+        "locations": [
+          {
+            "item_flags": 0,
+            "item_name": "Hookshot",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100201,
+            "location_name": "Archipepsi Check 200",
+            "recipient_game": "Ocarina of Time",
+            "recipient_name": "Zelda"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Estus Flask",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100202,
+            "location_name": "Archipepsi Check 201",
+            "recipient_game": "Dark Souls III",
+            "recipient_name": "Ashen One"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Morph Ball",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100203,
+            "location_name": "Archipepsi Check 202",
+            "recipient_game": "Super Metroid",
+            "recipient_name": "Samus"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Boost Boots",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100204,
+            "location_name": "Archipepsi Check 203",
+            "recipient_game": "Bomb Rush Cyberfunk",
+            "recipient_name": "Red"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Hookshot",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100205,
+            "location_name": "Archipepsi Check 204",
+            "recipient_game": "Ocarina of Time",
+            "recipient_name": "Zelda"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Estus Flask",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100206,
+            "location_name": "Archipepsi Check 205",
+            "recipient_game": "Dark Souls III",
+            "recipient_name": "Ashen One"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Morph Ball",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100207,
+            "location_name": "Archipepsi Check 206",
+            "recipient_game": "Super Metroid",
+            "recipient_name": "Samus"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Boost Boots",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100208,
+            "location_name": "Archipepsi Check 207",
+            "recipient_game": "Bomb Rush Cyberfunk",
+            "recipient_name": "Red"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Hookshot",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100209,
+            "location_name": "Archipepsi Check 208",
+            "recipient_game": "Ocarina of Time",
+            "recipient_name": "Zelda"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Estus Flask",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100210,
+            "location_name": "Archipepsi Check 209",
+            "recipient_game": "Dark Souls III",
+            "recipient_name": "Ashen One"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Morph Ball",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100211,
+            "location_name": "Archipepsi Check 210",
+            "recipient_game": "Super Metroid",
+            "recipient_name": "Samus"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Boost Boots",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100212,
+            "location_name": "Archipepsi Check 211",
+            "recipient_game": "Bomb Rush Cyberfunk",
+            "recipient_name": "Red"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Hookshot",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100213,
+            "location_name": "Archipepsi Check 212",
+            "recipient_game": "Ocarina of Time",
+            "recipient_name": "Zelda"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Estus Flask",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100214,
+            "location_name": "Archipepsi Check 213",
+            "recipient_game": "Dark Souls III",
+            "recipient_name": "Ashen One"
+          },
+          {
+            "item_flags": 0,
+            "item_name": "Morph Ball",
+            "item_name_may_appear_in_player_text": false,
+            "location_id": 89100215,
+            "location_name": "Archipepsi Check 214",
+            "recipient_game": "Super Metroid",
+            "recipient_name": "Samus"
+          }
+        ],
+        "player": {
+          "coins_available": 0,
+          "echo_history": {},
+          "echoes": [],
+          "signal_keys": 0
+        },
+        "schema_version": 7,
+        "unlocked_affordances": [],
+        "zone_id": "zone_003"
+      },
+      "zone": {
+        "chambers": [
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "timed_run"
+              }
+            ],
+            "id": "c001",
+            "length": 16.7,
+            "type": "corridor",
+            "width": 5.6
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "target_challenge"
+              },
+              {
+                "element_count": 2,
+                "kind": "target_challenge"
+              }
+            ],
+            "depth": 10.1,
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 1
+              }
+            ],
+            "id": "c002",
+            "objective": "kill_all",
+            "reward_location_id": 89100201,
+            "type": "arena",
+            "wall_height": 6.4,
+            "width": 19.6
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "pressure_routing"
+              },
+              {
+                "element_count": 3,
+                "kind": "pressure_routing"
+              }
+            ],
+            "gap_size": 2.01,
+            "id": "c003",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100202,
+            "segment_count": 3,
+            "type": "platform_path",
+            "vertical_step": 0.65
+          },
+          {
+            "activities": [
+              {
+                "element_count": 4,
+                "kind": "pressure_routing"
+              }
+            ],
+            "id": "c004",
+            "length": 13.5,
+            "type": "corridor",
+            "width": 7.8
+          },
+          {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "switch_sequence"
+              },
+              {
+                "element_count": 2,
+                "kind": "switch_sequence"
+              }
+            ],
+            "depth": 14.2,
+            "enemies": [
+              {
+                "archetype": "ranged",
+                "count": 3
+              }
+            ],
+            "id": "c005",
+            "objective": "kill_all",
+            "reward_location_id": 89100203,
+            "type": "arena",
+            "wall_height": 6.4,
+            "width": 12.6
+          },
+          {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "target_challenge"
+              },
+              {
+                "element_count": 3,
+                "kind": "target_challenge"
+              }
+            ],
+            "depth": 10.3,
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 1
+              }
+            ],
+            "id": "c006",
+            "objective": "kill_all",
+            "reward_location_id": 89100204,
+            "type": "arena",
+            "wall_height": 5.0,
+            "width": 13.4
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "pressure_routing"
+              }
+            ],
+            "id": "c007",
+            "length": 14.0,
+            "type": "corridor",
+            "width": 5.4
+          },
+          {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "timed_run"
+              },
+              {
+                "element_count": 2,
+                "kind": "timed_run"
+              }
+            ],
+            "gap_size": 2.2,
+            "id": "c008",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100205,
+            "segment_count": 6,
+            "type": "platform_path",
+            "vertical_step": 0.65
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "switch_sequence"
+              },
+              {
+                "element_count": 2,
+                "kind": "switch_sequence"
+              }
+            ],
+            "depth": 19.1,
+            "enemies": [
+              {
+                "archetype": "ranged",
+                "count": 5
+              }
+            ],
+            "id": "c009",
+            "objective": "kill_all",
+            "reward_location_id": 89100206,
+            "type": "arena",
+            "wall_height": 5.3,
+            "width": 13.8
+          },
+          {
+            "id": "c010",
+            "length": 13.5,
+            "type": "corridor",
+            "width": 5.3
+          },
+          {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "pressure_routing"
+              },
+              {
+                "element_count": 4,
+                "kind": "pressure_routing"
+              }
+            ],
+            "depth": 15.9,
+            "enemies": [
+              {
+                "archetype": "ranged",
+                "count": 1
+              }
+            ],
+            "id": "c011",
+            "objective": "kill_all",
+            "reward_location_id": 89100207,
+            "type": "arena",
+            "wall_height": 6.5,
+            "width": 15.1
+          },
+          {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "timed_run"
+              },
+              {
+                "element_count": 4,
+                "kind": "timed_run"
+              }
+            ],
+            "gap_size": 2.27,
+            "id": "c012",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100208,
+            "segment_count": 5,
+            "type": "platform_path",
+            "vertical_step": 0.65
+          },
+          {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "timed_run"
+              }
+            ],
+            "id": "c013",
+            "length": 15.0,
+            "type": "corridor",
+            "width": 7.8
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "switch_sequence"
+              },
+              {
+                "element_count": 4,
+                "kind": "target_challenge"
+              },
+              {
+                "element_count": 4,
+                "kind": "timed_run"
+              }
+            ],
+            "depth": 24.0,
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 7
+              },
+              {
+                "archetype": "brute",
+                "count": 1
+              },
+              {
+                "archetype": "ranged",
+                "count": 2
+              }
+            ],
+            "id": "c014",
+            "objective": "kill_all",
+            "reward_location_id": 89100209,
+            "type": "arena",
+            "wall_height": 7.0,
+            "width": 26.0
+          },
+          {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "pressure_routing"
+              },
+              {
+                "element_count": 5,
+                "kind": "pressure_routing"
+              }
+            ],
+            "depth": 19.7,
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 1
+              }
+            ],
+            "id": "c015",
+            "objective": "kill_all",
+            "reward_location_id": 89100210,
+            "type": "arena",
+            "wall_height": 5.3,
+            "width": 15.7
+          },
+          {
+            "id": "c016",
+            "length": 12.9,
+            "type": "corridor",
+            "width": 7.4
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "switch_sequence"
+              },
+              {
+                "element_count": 4,
+                "kind": "switch_sequence"
+              }
+            ],
+            "gap_size": 1.62,
+            "id": "c017",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100211,
+            "segment_count": 5,
+            "type": "platform_path",
+            "vertical_step": 0.65
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "target_challenge"
+              },
+              {
+                "element_count": 4,
+                "kind": "target_challenge"
+              }
+            ],
+            "depth": 11.7,
+            "enemies": [
+              {
+                "archetype": "ranged",
+                "count": 3
+              }
+            ],
+            "id": "c018",
+            "objective": "kill_all",
+            "reward_location_id": 89100212,
+            "type": "arena",
+            "wall_height": 6.7,
+            "width": 13.8
+          },
+          {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "pressure_routing"
+              },
+              {
+                "element_count": 4,
+                "kind": "pressure_routing"
+              }
+            ],
+            "id": "c019",
+            "length": 8.8,
+            "type": "corridor",
+            "width": 6.3
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "timed_run"
+              },
+              {
+                "element_count": 2,
+                "kind": "timed_run"
+              }
+            ],
+            "depth": 12.1,
+            "enemies": [
+              {
+                "archetype": "ranged",
+                "count": 2
+              }
+            ],
+            "id": "c020",
+            "objective": "kill_all",
+            "reward_location_id": 89100213,
+            "type": "arena",
+            "wall_height": 6.8,
+            "width": 21.2
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "switch_sequence"
+              },
+              {
+                "element_count": 3,
+                "kind": "switch_sequence"
+              }
+            ],
+            "gap_size": 1.87,
+            "id": "c021",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100214,
+            "segment_count": 6,
+            "type": "platform_path",
+            "vertical_step": 0.65
+          },
+          {
+            "id": "c022",
+            "length": 13.3,
+            "type": "corridor",
+            "width": 6.3
+          },
+          {
+            "activities": [
+              {
+                "element_count": 4,
+                "kind": "pressure_routing"
+              }
+            ],
+            "depth": 15.8,
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 5
+              }
+            ],
+            "id": "c023",
+            "objective": "kill_all",
+            "reward_location_id": 89100215,
+            "type": "arena",
+            "wall_height": 6.2,
+            "width": 13.1
+          }
+        ],
+        "designer_note": "Deterministic fallback zone.",
+        "display_name": "Relay 003: Ocarina of Time",
+        "schema_version": 7,
+        "target_game": "Ocarina of Time",
+        "theme": "temple_ruin",
+        "zone_id": "zone_003"
+      },
+      "zone_index": 3
+    }
+  ]
+}

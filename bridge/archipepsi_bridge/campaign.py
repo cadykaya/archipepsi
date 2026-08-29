@@ -215,6 +215,22 @@ class CampaignEngine:
     def ap(self) -> APData:
         return self.backend.data if self.backend else APData()
 
+    def _build_metadata(self) -> dict:
+        """What this build is, resolved once per process.
+
+        Stamped on every playtime record so a run before authored art and
+        a run after it can be told apart -- which is the only thing that
+        makes the pre-art baseline comparable to anything. Cached because
+        it shells out to git and a Zone ending is not the moment for that.
+        """
+        if CampaignEngine._build_cache is None:
+            from .version import build_metadata
+            CampaignEngine._build_cache = build_metadata()
+        return CampaignEngine._build_cache
+
+    #: Process-wide: the build does not change while the bridge runs.
+    _build_cache: dict | None = None
+
     @property
     def config(self) -> C.CampaignConfig:
         """This campaign's scale — the single place the engine asks.
@@ -857,7 +873,8 @@ class CampaignEngine:
         """
         if self.save is None:
             return
-        record = instrumentation.build_record(self.save, timing)
+        record = instrumentation.build_record(self.save, timing,
+                                              self._build_metadata())
         if record is not None:
             instrumentation.append_record(self.save_dir, record)
 

@@ -344,6 +344,40 @@ Two things worth carrying forward:
   archive looks short only while it is short. `BridgeClient` now watches
   every snapshot for a log that went backwards within one campaign.
 
+## PLAYTEST 2.5 — the pre-art baseline, ready 2026-08-29
+
+`docs/PLAYTEST_BASELINE.md` is the operator's page: what to run, what it
+measures, and the one instruction that matters — **change nothing to
+make the numbers better.**
+
+The comparison after authored art is about art only if everything else
+held still, so the baseline's job is to hold everything else still and
+be loud when it does not. `docs/baselines/playtest_2_5.json` records
+three consecutive Zones (request and accepted output, verbatim), four
+Echoes, and the campaign scale they were taken at; `make baseline`
+regenerates it from source and it is never hand-edited.
+
+Four tripwires, each sabotage-proven:
+
+- the committed baseline no longer matches its generator — the engine
+  builds a different Zone than anyone walked;
+- a recorded Zone or Echo no longer replays from its own request, or no
+  longer validates against today's schemas;
+- **the campaign scale moved** — budget, Checks per Zone, location count,
+  `CHECK_VALUE`, finale fraction, enemy cap. This is the owner's "do not
+  retune" as a test, and it defends the COMPARISON rather than any of
+  those numbers;
+- someone retuned AND regenerated the baseline to match, which is the
+  quiet version of the same thing. The 24-vs-30 Zone pacing figures are
+  pinned separately for exactly that case.
+
+Playtime records now stamp the **build** (commit, branch, tree clean or
+not), because a measurement that cannot say which side of authored art
+it is on cannot be compared to anything. It is handed in by the engine
+rather than looked up: `instrumentation.py` imports nothing that could
+reach anywhere and touches one file, and `version.build_metadata()`
+shells out to git.
+
 ---
 
 **OPEN PACING DECISION — recorded 2026-08-28, do NOT act on it.** The

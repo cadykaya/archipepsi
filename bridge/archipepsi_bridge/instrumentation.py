@@ -50,7 +50,8 @@ def playtime_path(save_dir: Path) -> Path:
     return Path(save_dir) / PLAYTIME_FILENAME
 
 
-def build_record(save: CampaignSave, timing: ZoneTiming) -> dict | None:
+def build_record(save: CampaignSave, timing: ZoneTiming,
+                 build: dict | None = None) -> dict | None:
     """The joined record, or None if the Zone is not one we can describe.
 
     Returns a plain dict rather than a model: this is a log line, not
@@ -80,6 +81,17 @@ def build_record(save: CampaignSave, timing: ZoneTiming) -> dict | None:
     asked_for = config.zone_budget_for(allocated)
     return {
         "recorded_at": round(time.time(), 3),
+        # WHICH BUILD played this. The pre-art baseline
+        # (`docs/baselines/playtest_2_5.json`) exists so a run after
+        # authored art can be compared to one before it, and a line that
+        # cannot say which side of that it is on cannot be compared to
+        # anything.
+        #
+        # HANDED IN rather than looked up. `version.build_metadata()`
+        # shells out to git, and this module's whole guarantee is that it
+        # imports nothing that could reach anywhere and touches exactly
+        # one file. The engine knows the build already.
+        "build": dict(build or {}),
         "seed_name": save.seed_name,
         "slot_id": save.slot_id,
         "zone_id": timing.zone_id,
