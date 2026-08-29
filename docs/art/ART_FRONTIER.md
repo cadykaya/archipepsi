@@ -77,8 +77,20 @@ a proposal because it belongs in `godot/`.
 
 **Heartbeats now do production work** in this order, one coherent batch at a
 time, and stop for review only where the table above says a review sheet is
-needed. A heartbeat with nothing productive available still says so in one
-line rather than inventing work.
+needed.
+
+**The heartbeat is paused while the queue is empty** (owner's rule, 2026-08-29).
+A heartbeat that would be a no-op is not a cheap no-op -- it is a paid wake-up
+that reads four documents to conclude nothing. So when the last unblocked task
+is delivered and everything remaining is waiting on the owner, DISABLE the
+hourly routine rather than letting it fire into a hold, and say so in the
+report. Resume it the moment a task exists: an owner verdict that releases a
+batch, a contract that lands, an unblocked tier. Nothing is lost by pausing --
+PR events still wake the interactive session directly (see below), and this
+file is the state a resumed heartbeat reads.
+
+A heartbeat that is running and finds nothing productive still says so in one
+line rather than inventing work, and then pauses itself.
 
 ---
 
@@ -92,7 +104,7 @@ line rather than inventing work.
 | Next action | **Stop for review.** The owner released Batch 023, it has been built and delivered, and the instruction was to stop before expanding the landmark family. Nothing else is unblocked: the enemy roles still wait on colliders (req 7) and the telegraph node (req 14), §8's prop library is placed by nothing, and Tier 9 presentation/polish has never been scoped. Do not invent filler work while 023 waits. |
 | ~~Superseded~~ | ~~**Tier 7: the room shells** (`ASSET_INVENTORY.md` §7, L3, nothing built) — started immediately, per the owner's instruction not to idle while 014 waits. Six families, all Pri A: corridor, arena, platform-path, tower, treasure room, corner. They inherit engine-truth dimensions and traversal bounds, differ in scale / verticality / sightline / routing / encounter and Check placement rather than in dressing, and must not be generic stretches of one another where gameplay geometry matters. The approved six material families and the Batch 014 fixture language both apply.~~ Corridors done as Batch 015. |
 | ~~Superseded~~ | ~~**Tier 8: the three unbuilt theme material families** (`neon_transit`, `gothic_stone`, `temple_ruin`). It is the highest-leverage unblocked work left — it also unblocks three of the six dressing props §9 needs — and it is routine in the sense that `art_palette.json` already carries all six themes' ramps and `materials.paint()` already builds any of them. **But it is the first look at three themes**, so it wants a review sheet the owner can redirect cheaply, and textures are the cheapest thing in the project to rebuild.~~ Done as Batch 012. |
-| Queue depth | **Two batches pending**: 020 and 021. Everything from 001 to 019 is `PASS` — the eight-batch queue cleared on 2026-08-28 with no revisions asked for. Holding remains a legitimate heartbeat outcome the next time it grows. Holding remains a legitimate heartbeat outcome when the queue grows again, and this line is why. |
+| Queue depth | **One batch pending: 023.** Everything from 001 to 022 is `PASS`. With nothing unblocked behind it, the hourly heartbeat is **paused** (`trig_01DSWy2dbCpeSefcx2YGS9Ys`, disabled 2026-08-29) and the PR #5 poll is deleted; PR activity still wakes the session on its own. Re-enable the routine when a verdict, a contract or an unblocked tier gives it something to do. |
 
 ### What the Batch 002 review LOCKED
 

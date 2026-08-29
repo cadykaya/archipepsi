@@ -84,7 +84,14 @@ ziggurat whose rubble is the route, and a room that intersects itself. None
 is an Epsilon monument. Every entry carries `integration_ready: false`.
 
 **Do not expand the landmark family or open Batch 024** — the owner asked to
-stop for review. Heartbeat may no-op; do not invent filler production.
+stop for review. Do not invent filler production.
+
+**The art heartbeat is PAUSED** (`trig_01DSWy2dbCpeSefcx2YGS9Ys`, disabled
+2026-08-29) under the owner's rule: pause the routine when there is no work,
+resume it when there is a task. A no-op heartbeat is not free — it reads four
+documents to conclude nothing. PR #5 activity still wakes the session directly,
+so nothing is missed while it sleeps. Re-enable it on the Batch 023 verdict, on
+a landing contract, or on any newly unblocked tier.
 
 Earlier decisions standing: `objective_marker`, `arch_objective_socket`,
 `arch_signage_mount` and `arch_affordance_socket` all struck, each because
