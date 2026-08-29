@@ -3108,3 +3108,75 @@ which is an OBJECT budget. These are places. The numbers fit; the definition
 does not.
 
 Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 024 — PROPOSAL: Epsilon presentation states and the presentation arc
+
+**PENDING.** Presentation only. Nothing invents a gameplay effect, a
+corruption mechanic or a progression rule. Full working in
+`review/batch024/README.md`.
+
+Uses the already-`PASS` 002-R giant-computer DNA, unchanged. Audited
+read-only against `claude/archipepsi-echoes-continuation-b1adno` — the
+current Production head, and this time the right branch (L-72).
+
+**The audit finding.** `godot/scripts/ui/epsilon_voice.gd` is the only
+Epsilon presentation code that exists, and it is a BARK SELECTOR: 18 event
+kinds, a PRIORITY order, a 6 s cooldown, a 4 s dwell. It answers *what
+Epsilon says*, not *what the installation looks like while it says it*.
+There is no presentation-state enum and no binding from a bark to a
+material. Of the six states below, exactly **one — `speaking` — has a
+runtime signal today**; `thinking`, `interpreted` and `refusal` exist
+bridge-side but are never surfaced to the scene, and `focus` does not exist
+at all. Interface requirement 25.
+
+**Two inherited rules, not reopened.** Nothing on the human half glows — a
+state that lit the console would say the facility came back on. And emissive
+saturation **0.40 is the ceiling**, measured by 002-R's own sweep: the green
+channel pins at 255 between 0.40 and 0.60. So the states modulate below it.
+
+**One hue, six states.** `identity` green is all Epsilon gets, so the
+language is value, extent, rhythm, aperture and orientation — the same
+arithmetic Batch 022 ran for navigation.
+
+| asset | state | tris | size (m) | emissive | runtime signal |
+|---|---|---|---|---|---|
+| `eps_state_dormant` | listening; present, not working | 392 | 2.46 × 1.42 × 2.90 | 0.10 | no |
+| `eps_state_thinking` | generating; the work is interior | 428 | 2.46 × 1.42 × 2.90 | 0.22 | no |
+| `eps_state_speaking` | a line is airing, broad and undirected | 420 | 2.46 × 1.42 × 2.90 | 0.34 | **yes** |
+| `eps_state_interpreted` | it finished — read from CLOSURE, not level | 480 | 2.46 × 1.42 × 2.90 | 0.28 | no |
+| `eps_state_refusal` | it declined; dropout to `dead`, not `glitch` | 380 | 2.46 × 1.42 × 2.90 | 0.06 | no |
+| `eps_state_focus` | attending to YOU; one narrow bore that points | 448 | 2.46 × 1.42 × 2.90 | 0.34 | no |
+
+All six share an identical footprint on purpose: a comparison sheet whose
+panels differ in two ways proves nothing about either.
+
+**The arc is EXTENT, not brightness.** Emission is held at 0.24 across all
+three stages, so the comparison cannot be won by turning the light up.
+
+| asset | stage | tris | size (m) | fronts gone |
+|---|---|---|---|---|
+| `eps_arc_early` | localized, tentative | 240 | 4.90 × 1.71 × 2.90 | bay 3 |
+| `eps_arc_middle` | established, confident | 288 | 4.90 × 1.71 × 2.90 | bays 2, 3 |
+| `eps_arc_late` | deeply embedded, proprietorial | 516 | 5.29 × 1.71 × 3.89 | bays 1, 2, 3 |
+
+### Stated rather than hidden
+
+`speaking` and `focus` sit at the same 0.34 and are the tightest pair in the
+set — told apart only by breadth and direction. They are distinguishable on
+the sheet, and they are the pair most at risk if the language is pushed.
+
+### What the renders changed
+
+The first rig lit the human console brighter than the intrusion: the raked
+control panel caught the key broadside and read as a LIT control surface,
+breaking 002-R's one rule as completely as an emission would. The first
+framing cropped to the mass alone, turning a state language that lives on an
+operator console into six pictures of a lump. And the arc sheet showed no
+intrusion at all in EARLY — because `_bank()` built a cabinet front on every
+bay and sealed the mass behind it. Two camera revisions were spent nudging
+before the geometry was suspected; 002-R had said all along that erupted
+bays have their fronts gone.
+
+Status: **PENDING** — not self-marked.
