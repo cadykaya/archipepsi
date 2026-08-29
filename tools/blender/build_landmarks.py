@@ -57,12 +57,34 @@ identity of a memorable place.
 The six take deliberately different spatial jobs, because six variations on
 "big object in the middle of the room" would not punctuate a 20-room Zone:
 
-    concrete_facility   a shaft            reads UP, across two elevations
-    rusted_industrial   a curved mass      the only curve in a boxy theme
-    neon_transit        a level link       vertical circulation you can use
-    gothic_stone        an upper frame     occupies the volume overhead
-    temple_ruin         a cut void         reads DOWN -- negative, not mass
-    void_glitch         a broken construct the theme admitting it is built
+    concrete_facility   drop-test shaft hall     loop around a central void
+    rusted_industrial   collapsed process tower  spiral route up a leaning mass
+    neon_transit        stacked interchange      two platforms around a void
+    gothic_stone        bell breach hall         three levels, one event
+    temple_ruin         collapsed ziggurat       the ruin IS the route
+    void_glitch         self-intersecting room   space that lies about itself
+
+## Places, not props
+
+The first pass built six OBJECTS -- a ladle, a bell frame, a shaft -- each
+standing alone in an empty room. They were decent objects and they were the
+wrong deliverable: a landmark you walk around is a prop at landmark scale,
+and the target is "the Zone with the giant ___", which is a memory of a
+PLACE.
+
+So each of these six is a hero structure PLUS the architecture that makes it
+a place: a route at ground level, a route above it, something to look down
+from, and in most cases something visible you cannot reach. The support
+architecture is not dressing -- it is what turns a shape into somewhere you
+were.
+
+## Art provides affordance; the engine owns mechanics
+
+The routes below are SHAPES, not rules. Nothing here invents grapple,
+teleport, boss, Check-placement, local-key, checkpoint or reachability
+behaviour, and no landmark requires an unapproved capability to traverse.
+Where a ledge is unreachable it is unreachable by being high, which is a
+fact about geometry rather than a claim about movement.
 """
 
 from __future__ import annotations
@@ -104,450 +126,570 @@ def _paint(obj, role):
     return obj
 
 
-def lm_freight_shaft():
-    """concrete_facility -- a freight lift stalled between floors.
-
-    What was built here: a facility that had to move heavy things
-    vertically. What happened here: it stopped mid-job.
-
-    The spatial job is UP. A shaft is the cheapest honest way to make a room
-    read at two elevations at once -- you see the cage from below and the
-    same cage from the floor above, so "the room with the stuck lift" is one
-    place rather than two. The open sides are what make it a landmark and
-    not a box: a closed shaft is a column.
-
-    Supports, without requiring: the stalled cage is a platform, the
-    counterweight is a second one at a different height, and the open shaft
-    is a sightline between floors.
-    """
-    shaft, height = 4.2, 9.0
-    wall = 0.34
-    parts = []
-    # Two solid sides, two open -- the openings are the whole point.
-    for side in (-1.0, 1.0):
-        parts.append(_paint(brushkit.block(
-            "shaft_wall_%d" % int(side), (wall, shaft, height),
-            (side * (shaft / 2.0 - wall / 2.0), 0.0, height / 2.0)), "wall"))
-    # Guide rails up the open faces, so the openings still read structural.
-    for x in (-shaft / 2.0 + 0.5, shaft / 2.0 - 0.5):
-        for y in (-shaft / 2.0 + 0.18, shaft / 2.0 - 0.18):
-            parts.append(_paint(brushkit.block(
-                "shaft_rail_%d_%d" % (int(x * 10), int(y * 10)),
-                (0.16, 0.16, height), (x, y, height / 2.0)), "trim"))
-    # Floor plates the shaft passes through: this is what says TWO storeys.
-    for z in (4.3, 8.6):
-        for side in (-1.0, 1.0):
-            parts.append(_paint(brushkit.block(
-                "shaft_deck_%d_%d" % (int(z * 10), int(side)),
-                (2.6, shaft + 1.2, 0.36),
-                (side * (shaft / 2.0 + 1.3), 0.0, z)), "floor"))
-    # The cage, stopped between them.
-    cage_z = 6.1
-    parts.append(_paint(brushkit.block(
-        "cage_floor", (shaft - 0.9, shaft - 0.9, 0.22),
-        (0.0, 0.0, cage_z)), "trim"))
-    parts.append(_paint(brushkit.block(
-        "cage_roof", (shaft - 0.9, shaft - 0.9, 0.18),
-        (0.0, 0.0, cage_z + 2.5)), "trim"))
-    for cx in (-(shaft - 1.0) / 2.0, (shaft - 1.0) / 2.0):
-        for cy in (-(shaft - 1.0) / 2.0, (shaft - 1.0) / 2.0):
-            parts.append(_paint(brushkit.block(
-                "cage_post_%d_%d" % (int(cx * 10), int(cy * 10)),
-                (0.14, 0.14, 2.5), (cx, cy, cage_z + 1.25)), "trim"))
-    parts.append(_paint(brushkit.grate(
-        "cage_back", (shaft - 0.9, 2.3, 0.08), 7, 0.06,
-        (0.0, -(shaft - 0.9) / 2.0, cage_z + 1.3), axis="x"), "trim"))
-    # The counterweight, hanging at the height the cage is not.
-    parts.append(_paint(brushkit.block(
-        "counterweight", (0.7, 0.7, 1.9),
-        (shaft / 2.0 - 0.5, 0.0, 3.2)), "trim"))
-    # Head frame and sheave: the silhouette that tops the whole thing.
-    parts.append(_paint(brushkit.block(
-        "head_beam", (shaft + 1.0, 0.5, 0.5), (0.0, 0.0, height + 0.25)),
-        "trim"))
-    parts.append(_paint(brushkit.prism(
-        "sheave", 0.85, 0.24, 8, (0.0, 0.0, height + 0.95),
-        asset_name="lm_freight_shaft"), "trim"))
-    return common.join(parts, "lm_freight_shaft")
 
 
-def lm_pour_ladle():
-    """rusted_industrial -- a tapped ladle, frozen mid-pour.
+# ----------------------------------------------------------------------
+# Place-building helpers
+#
+# A landmark here is a hero structure plus the architecture that makes it a
+# place, so these are the parts that keep recurring: a gallery you look down
+# from, a run of catwalk, a rail that says an edge is walkable.
+# ----------------------------------------------------------------------
 
-    What was built here: a plant that moved molten metal. What happened
-    here: a pour that never finished, and the spill set where it fell.
-
-    The spatial job is MASS, and specifically a CURVE. Every other module in
-    this project is a box or a box with one face clipped, so a two-metre
-    barrel on a trunnion ring is the only round silhouette a player will
-    meet all game -- which is most of why the room is memorable.
-
-    Supports, without requiring: the hardened flow is a ramp onto the
-    ladle's shoulder, the body is hard cover mid-room, and the tilt aims the
-    whole composition at one corner.
-    """
-    parts = []
-    body_z = 3.4
-    # The vessel. A frustum, so it is not a parallel-sided drum.
-    parts.append(_paint(brushkit.prism(
-        "ladle_body", 1.95, 3.1, 12, (0.0, 0.0, body_z), top_radius=1.62,
-        asset_name="lm_pour_ladle"), "accent"))
-    parts.append(_paint(brushkit.tube(
-        "ladle_lip", 2.05, 1.72, 0.34, 12, (0.0, 0.0, body_z + 1.72),
-        asset_name="lm_pour_ladle"), "trim"))
-    # The trunnion ring and its two bearing towers -- what lets it tilt, and
-    # what stops it reading as a drum somebody left there.
-    parts.append(_paint(brushkit.tube(
-        "trunnion_ring", 2.25, 1.98, 0.5, 12, (0.0, 0.0, body_z + 0.2),
-        asset_name="lm_pour_ladle"), "trim"))
-    for side in (-1.0, 1.0):
-        parts.append(_paint(brushkit.block(
-            "bearing_%d" % int(side), (0.66, 0.9, 0.9),
-            (side * 2.5, 0.0, body_z + 0.2)), "trim"))
-        parts.append(_paint(brushkit.block(
-            "tower_%d" % int(side), (0.9, 1.1, body_z + 0.2),
-            (side * 2.5, 0.0, (body_z + 0.2) / 2.0)), "wall"))
-        parts.append(_paint(brushkit.wedge(
-            "brace_%d" % int(side), (0.7, 1.6, 1.7),
-            (side * 3.1, 0.0, 0.85), rotation_z=0.0 if side < 0 else 180.0,
-            axis="x"), "wall"))
-    # The pour: a spout, then the flow hardened into a ramp on the floor.
-    parts.append(_paint(brushkit.wedge(
-        "spout", (0.9, 1.0, 0.7), (0.0, -1.9, body_z + 1.5), axis="y"),
-        "trim"))
-    flow = [(0.0, -2.3, 0.10), (0.0, -3.6, 0.34), (0.6, -5.2, 0.62),
-            (1.1, -6.6, 0.30), (1.3, -7.8, 0.12)]
-    for i, (x, y, h) in enumerate(flow):
-        parts.append(_paint(brushkit.block(
-            "flow_%d" % i, (2.4 - i * 0.18, 1.6, h), (x, y, h / 2.0)),
-            "accent"))
-    return common.join(parts, "lm_pour_ladle")
-
-
-def lm_escalator_bank():
-    """neon_transit -- a dead escalator bank under a departure board.
-
-    What was built here: public infrastructure for moving crowds between
-    levels. What happened here: it stopped, and the board still holds a
-    destination.
-
-    The spatial job is a LEVEL LINK. This is the one landmark whose whole
-    reason to exist is circulation, and it is also the one that ties to
-    approved work: the board is a housing for runtime wording, exactly as
-    Batch 022's signage is, so the theme's memory of where you could go is
-    written by the game and not baked into a mesh.
-
-    One of the three flights is collapsed into a ramp -- so the composition
-    reads as three states of the same object, which is what stops a bank of
-    identical escalators reading as wallpaper.
-    """
-    parts = []
-    rise, run, width = 4.4, 7.6, 1.5
-    for i, x in enumerate((-2.1, 0.0, 2.1)):
-        if i == 1:
-            # The collapsed flight: a clean slope where the steps used to be.
-            parts.append(_paint(brushkit.wedge(
-                "flight_ramp", (width, run, rise), (x, 0.0, rise / 2.0),
-                axis="y"), "trim"))
-        else:
-            # Per-step, not total: 14 treads of run/14 by rise/14, which
-            # keeps every step under MAX_VERTICAL_STEP by construction
-            # rather than by hoping.
-            parts.append(_paint(brushkit.stair(
-                "flight_%d" % i, run / 14.0, rise / 14.0, width, 14,
-                (x, 0.0, 0.0)), "trim"))
-        # Balustrades give the bank its stripes at distance.
-        for side in (-1.0, 1.0):
-            # Trim, not accent. neon_transit's accent is a saturated cyan
-            # and at balustrade size it filled the whole flight, so the bank
-            # read as one glowing slab with the steps -- the entire point of
-            # an escalator -- hidden behind it.
-            parts.append(_paint(brushkit.wedge(
-                "balus_%d_%d" % (i, int(side)),
-                (0.14, run, rise + 0.95),
-                (x + side * (width / 2.0 + 0.07), 0.0, (rise + 0.95) / 2.0),
-                axis="y"), "trim"))
-    # The upper deck the bank arrives at.
-    parts.append(_paint(brushkit.block(
-        "upper_deck", (7.6, 3.0, 0.42), (0.0, run / 2.0 + 1.5, rise + 0.21)),
-        "floor"))
-    # The board: a housing, blank. Runtime owns the wording (Batch 022).
-    board_z = rise + 1.95
-    parts.append(_paint(brushkit.block(
-        "board_back", (6.4, 0.30, 2.0), (0.0, run / 2.0 + 1.2, board_z)),
-        "wall"))
-    parts.append(_paint(brushkit.block(
-        "board_field", (6.0, 0.12, 1.65),
-        (0.0, run / 2.0 + 1.0, board_z)), "accent"))
-    parts.append(_paint(brushkit.block(
-        "board_hood", (6.7, 0.62, 0.24),
-        (0.0, run / 2.0 + 1.05, board_z + 1.12)), "trim"))
-    # Hangers reaching UP to a soffit, short enough that the board reads as
-    # belonging to the deck below it. At 3.5 m they made it a separate
-    # object floating in the room.
-    for side in (-1.0, 1.0):
-        parts.append(_paint(brushkit.block(
-            "board_hanger_%d" % int(side), (0.14, 0.14, 1.1),
-            (side * 2.6, run / 2.0 + 1.2, board_z + 1.6)), "trim"))
-    return common.join(parts, "lm_escalator_bank")
-
-
-def lm_bell_frame():
-    """gothic_stone -- a bell frame, and the bell on the floor below it.
-
-    What was built here: a stone and iron headstock heavy enough to swing a
-    tonne of bronze. What happened here: the bell came down.
-
-    The spatial job is the VOLUME OVERHEAD. Every other landmark here stands
-    on the floor and is read against a wall; this one occupies the air above
-    the player's head, so the room's memorable feature is something you walk
-    UNDER. The fallen bell puts the other half of the same event at floor
-    level, which is what makes it one story told at two heights rather than
-    two props.
-
-    Supports, without requiring: the frame beams are a high route, the bell
-    is cover, and the gap the bell fell through is a sightline.
-    """
-    parts = []
-    span, head = 6.4, 6.2
-    # Two stone piers carrying the frame.
-    for side in (-1.0, 1.0):
-        parts.append(_paint(brushkit.block(
-            "pier_%d" % int(side), (1.25, 1.25, head),
-            (side * span / 2.0, 0.0, head / 2.0)), "wall"))
-        parts.append(_paint(brushkit.block(
-            "pier_cap_%d" % int(side), (1.55, 1.55, 0.4),
-            (side * span / 2.0, 0.0, head + 0.2)), "trim"))
-        # A raking buttress, so the piers read as carrying a load.
-        parts.append(_paint(brushkit.wedge(
-            "buttress_%d" % int(side), (0.9, 1.9, 3.4),
-            (side * (span / 2.0 + 1.0), 0.0, 1.7),
-            rotation_z=180.0 if side < 0 else 0.0, axis="x"), "wall"))
-    # The headstock frame itself: iron over stone.
-    parts.append(_paint(brushkit.block(
-        "headstock", (span + 1.6, 0.85, 0.85), (0.0, 0.0, head + 0.75)),
-        "trim"))
-    for y in (-0.62, 0.62):
-        parts.append(_paint(brushkit.block(
-            "frame_rail_%d" % int(y * 10), (span + 0.4, 0.3, 0.34),
-            (0.0, y, head - 0.5)), "trim"))
-    for i, x in enumerate((-1.9, 0.0, 1.9)):
-        parts.append(_paint(brushkit.block(
-            "frame_strut_%d" % i, (0.26, 1.5, 1.3), (x, 0.0, head + 0.05)),
-            "trim"))
-    # The empty gudgeons -- the bell's absence, made specific.
-    for side in (-1.0, 1.0):
-        parts.append(_paint(brushkit.tube(
-            "gudgeon_%d" % int(side), 0.34, 0.19, 0.3, 8,
-            (side * 1.05, 0.0, head + 0.75),
-            asset_name="lm_bell_frame"), "accent"))
-    # The bell, down, tilted, part-buried where it struck.
-    # Bronze, not the theme accent -- gothic_stone's accent is a cold blue
-    # and a blue bell reads as a slab. And it needs a MOUTH: a truncated
-    # cone on its side is a wedge, so the flared rim is what says "bell".
-    bell = brushkit.prism("bell", 1.72, 2.2, 12, (0.9, 2.9, 0.75),
-                          top_radius=0.95, asset_name="lm_bell_frame")
-    brushkit.spin(bell, "x", 78.0)
-    parts.append(_paint(bell, "trim"))
-    mouth = brushkit.tube("bell_mouth", 1.80, 1.48, 0.34, 12,
-                          (0.9, 2.9, 0.75), asset_name="lm_bell_frame")
-    brushkit.spin(mouth, "x", 78.0)
-    for v in mouth.data.vertices:
-        v.co.y -= 1.02
-        v.co.z += 0.22
-    parts.append(_paint(mouth, "trim"))
-    # The crown it hung from, now on the floor beside its own frame.
-    crown = brushkit.block("bell_crown", (0.5, 0.5, 0.6), (0.9, 4.55, 1.35))
-    parts.append(_paint(crown, "accent"))
-    parts.append(_paint(brushkit.block(
-        "impact_slab", (3.4, 3.0, 0.3), (0.9, 2.9, 0.15)), "floor"))
-    return common.join(parts, "lm_bell_frame")
-
-
-def _ring(name, outer, thickness, height, at):
-    """A flat rectangular ring lying in the XY plane.
+def _ring(name, outer, thickness, height, at, parts=None):
+    """A flat rectangular ring in the XY plane -- a gallery, a rim, a court.
 
     `brushkit.frame` looks like this and is not: it stands in the XZ plane,
-    because it was written for doorways and portals. Used for a terrace it
-    builds a nine-metre wall on end, which is exactly what the first cistern
-    build did -- a 4 m pit that measured 10.6 m tall.
-
-    Four blocks, so the middle stays open and the terrace reads as cut away
-    rather than stacked up.
+    because it was written for doorways. Used as a gallery it builds a wall
+    on end.
     """
     half = outer / 2.0
     inner = outer - thickness * 2.0
-    parts = []
+    out = []
     for side in (-1.0, 1.0):
-        parts.append(brushkit.block(
+        out.append(brushkit.block(
             "%s_x%d" % (name, int(side)), (thickness, outer, height),
-            (side * (half - thickness / 2.0), 0.0, 0.0)))
-        parts.append(brushkit.block(
+            (at[0] + side * (half - thickness / 2.0), at[1], at[2])))
+        out.append(brushkit.block(
             "%s_y%d" % (name, int(side)), (inner, thickness, height),
-            (0.0, side * (half - thickness / 2.0), 0.0)))
-    obj = common.join(parts, name)
-    for vertex in obj.data.vertices:
-        vertex.co += Vector(at)
-    return obj
+            (at[0], at[1] + side * (half - thickness / 2.0), at[2])))
+    return out
 
 
-def lm_stepped_cistern():
-    """temple_ruin -- a dry stepped cistern, cut down into the floor.
+def _rail(name, outer, at, height=1.05, post=0.09):
+    """A guard rail round a ring. What tells the player an edge is a route
+    rather than a drop -- and, on an overlook, what says you may stand there."""
+    out = []
+    half = outer / 2.0
+    for side in (-1.0, 1.0):
+        out.append(brushkit.block(
+            "%s_top_x%d" % (name, int(side)), (post, outer, 0.08),
+            (at[0] + side * half, at[1], at[2] + height)))
+        out.append(brushkit.block(
+            "%s_top_y%d" % (name, int(side)), (outer, post, 0.08),
+            (at[0], at[1] + side * half, at[2] + height)))
+    for sx in (-1.0, 1.0):
+        for sy in (-1.0, 1.0):
+            out.append(brushkit.block(
+                "%s_post_%d%d" % (name, int(sx), int(sy)),
+                (post, post, height),
+                (at[0] + sx * half, at[1] + sy * half, at[2] + height / 2.0)))
+    return out
 
-    What was built here: a tank that stored water and let people walk down
-    to whatever level it had reached. What happened here: it went dry, and
-    roots came in through the joints.
 
-    The spatial job is DOWN, and it is the only one of the six that is a
-    VOID rather than a mass. That matters more than any individual shape:
-    five set pieces you walk around plus one you walk into is a set with
-    range; six masses is a set with one idea. It also gives a room a
-    sightline nothing else here can -- from the rim you see the entire
-    geometry and everything standing in it at once.
+def _catwalk(name, length, width, at, axis="y"):
+    """A deck with a kick rail each side. The support route that turns a
+    hero structure into something you can be above."""
+    size = (width, length, 0.14) if axis == "y" else (length, width, 0.14)
+    out = [brushkit.block("%s_deck" % name, size, at)]
+    for side in (-1.0, 1.0):
+        if axis == "y":
+            out.append(brushkit.block(
+                "%s_rail%d" % (name, int(side)), (0.09, length, 0.95),
+                (at[0] + side * width / 2.0, at[1], at[2] + 0.54)))
+        else:
+            out.append(brushkit.block(
+                "%s_rail%d" % (name, int(side)), (length, 0.09, 0.95),
+                (at[0], at[1] + side * width / 2.0, at[2] + 0.54)))
+    return out
 
-    Supports, without requiring: a legible descent, a bowl to fight down
-    into, and a floor whose lowest point is visible from its highest.
+
+def _tag(objs, role):
+    """Pair geometry with the theme role it is painted from.
+
+    Every landmark returns a flat list of these, so a place built from
+    thirty blocks still says which parts are structure, which are walked on
+    and which are the machinery the room was built around.
     """
-    parts = []
-    rim, depth, steps = 9.0, 4.0, 5
-    tread = (rim / 2.0 - 1.1) / steps
-    riser = depth / steps
-    # Terraces down. Each ring is a frame, so the middle stays open and the
-    # whole thing reads as cut away rather than stacked up.
+    if not isinstance(objs, list):
+        objs = [objs]
+    return [(o, role) for o in objs]
+
+
+def lm_drop_test_hall():
+    """concrete_facility -- the drop-test shaft, and the hall built to watch it.
+
+    WHAT WAS THIS PLACE FOR: dropping things down a deep shaft and measuring
+    what happened. Everything here exists to observe that -- the gallery
+    rings the void so you can look down into it, the gantry crosses it so
+    you could lower into it, and the booth hangs over it so somebody could
+    watch without standing at the edge.
+
+    THE PLACE, not the shaft: a rim you walk at floor level, a gallery loop
+    above it to look down from, a gantry bridging the void, and a control
+    booth cantilevered over the drop that you can see into and never enter.
+    """
+    out = []
+    shaft, depth = 9.0, 7.0
+    for i, z in enumerate((-1.6, -3.4, -5.2)):
+        out += _tag(_ring("liner_%d" % i, shaft + 1.4 - i * 0.5, 0.7, 1.7,
+                          (0.0, 0.0, z)), "wall")
+    out += _tag(brushkit.block("shaft_floor", (shaft - 1.0, shaft - 1.0, 0.4),
+                               (0.0, 0.0, -depth)), "floor")
+    out += _tag(brushkit.block("impact_table", (3.4, 3.4, 0.55),
+                               (0.0, 0.0, -depth + 0.45)), "trim")
+    for sx in (-1.0, 1.0):
+        for sy in (-1.0, 1.0):
+            out += _tag(brushkit.block(
+                "table_leg_%d%d" % (int(sx), int(sy)), (0.3, 0.3, 0.9),
+                (sx * 1.4, sy * 1.4, -depth + 0.45)), "trim")
+    out += _tag(_ring("rim", shaft + 3.0, 1.5, 0.4, (0.0, 0.0, -0.2)), "floor")
+    out += _tag(_rail("rim_rail", shaft + 0.2, (0.0, 0.0, 0.0)), "trim")
+
+    gz = 4.4
+    out += _tag(_ring("gallery", shaft + 6.2, 2.2, 0.42, (0.0, 0.0, gz)),
+                "floor")
+    out += _tag(_rail("gallery_rail", shaft + 1.9, (0.0, 0.0, gz + 0.21)),
+                "trim")
+    for side in (-1.0, 1.0):
+        out += _tag(brushkit.block(
+            "gallery_leg_%d" % int(side), (0.5, 0.5, gz),
+            (side * (shaft / 2.0 + 3.4), side * (shaft / 2.0 + 3.4),
+             gz / 2.0)), "wall")
+
+    out += _tag(_catwalk("gantry", shaft + 6.4, 2.0, (0.0, 0.0, gz + 0.9)),
+                "trim")
+    out += _tag(brushkit.block("hoist_beam", (1.1, shaft + 6.4, 0.55),
+                               (0.0, 0.0, gz + 2.3)), "trim")
+    out += _tag(brushkit.block("hoist_block", (0.9, 1.2, 1.0),
+                               (0.0, -1.2, gz + 1.5)), "accent")
+
+    bz = gz + 3.6
+    out += _tag(brushkit.block("booth_floor", (4.2, 3.2, 0.34),
+                               (shaft / 2.0 + 0.4, 0.0, bz)), "trim")
+    out += _tag(brushkit.block("booth_roof", (4.4, 3.4, 0.3),
+                               (shaft / 2.0 + 0.4, 0.0, bz + 2.6)), "trim")
+    out += _tag(brushkit.block("booth_back", (0.3, 3.2, 2.6),
+                               (shaft / 2.0 + 2.4, 0.0, bz + 1.3)), "wall")
+    out += _tag(brushkit.block("booth_glass", (0.12, 3.0, 1.5),
+                               (shaft / 2.0 - 1.6, 0.0, bz + 1.5)), "accent")
+    out += _tag(brushkit.wedge("booth_brace", (1.6, 2.4, 2.2),
+                               (shaft / 2.0 + 1.6, 0.0, bz - 1.1),
+                               axis="x"), "wall")
+    return out
+
+
+def lm_process_tower():
+    """rusted_industrial -- a distillation column that came down into its
+    own support frame, and the service spiral still wrapped round it.
+
+    WHAT HAPPENED HERE: the column sheared above its fourth stage and
+    settled into the frame instead of falling clear. The plant kept the
+    lower stages standing, so the access spiral that served them is still
+    there and still walkable.
+
+    THE PLACE: a spill basin at the bottom you drop into or walk round, a
+    spiral of catwalk stages climbing the standing part, and the sheared
+    upper column resting overhead at an angle -- visible from everywhere,
+    reachable from nowhere.
+    """
+    out = []
+    # The basin: the ground-level route, and the reason the floor is not flat.
+    out += _tag(_ring("basin", 13.0, 1.4, 1.1, (0.0, 0.0, -0.55)), "wall")
+    out += _tag(brushkit.block("basin_floor", (10.2, 10.2, 0.3),
+                               (0.0, 0.0, -1.05)), "floor")
+    # Four standing stages of the column.
+    for i in range(4):
+        z = 1.5 + i * 2.6
+        out += _tag(brushkit.prism(
+            "stage_%d" % i, 2.3 - i * 0.12, 2.4, 12, (0.0, 0.0, z),
+            asset_name="lm_process_tower"), "accent")
+        out += _tag(brushkit.tube(
+            "stage_band_%d" % i, 2.45 - i * 0.12, 2.15 - i * 0.12, 0.36, 12,
+            (0.0, 0.0, z + 1.2), asset_name="lm_process_tower"), "trim")
+    # The support frame that caught it.
+    for sx in (-1.0, 1.0):
+        for sy in (-1.0, 1.0):
+            out += _tag(brushkit.block(
+                "frame_col_%d%d" % (int(sx), int(sy)), (0.42, 0.42, 12.0),
+                (sx * 4.1, sy * 4.1, 6.0)), "trim")
+    for i, z in enumerate((3.6, 7.4, 11.2)):
+        out += _tag(_ring("frame_belt_%d" % i, 8.6, 0.3, 0.34,
+                          (0.0, 0.0, z)), "trim")
+    # The service spiral: four quarter-runs climbing the standing stages.
+    # This is the route that makes the tower a place rather than a shape.
+    for i in range(4):
+        z = 1.9 + i * 2.6
+        ang = i * 90.0
+        rad = 5.4
+        import math as _m
+        a = _m.radians(ang)
+        out += _tag(_catwalk("spiral_%d" % i, 7.4, 1.5,
+                             (_m.cos(a) * rad, _m.sin(a) * rad, z),
+                             axis="y" if i % 2 == 0 else "x"), "trim")
+        out += _tag(brushkit.stair(
+            "spiral_step_%d" % i, 0.36, 0.32, 1.4, 8,
+            (_m.cos(a) * rad * 0.72, _m.sin(a) * rad * 0.72, z - 2.6)), "trim")
+    # The sheared upper column, resting across the frame at an angle.
+    upper = brushkit.prism("upper_column", 1.85, 7.6, 12, (0.0, 0.0, 0.0),
+                           top_radius=1.6, asset_name="lm_process_tower")
+    brushkit.spin(upper, "x", 66.0)
+    upper.location = (1.2, -3.4, 12.9)
+    out += _tag(upper, "accent")
+    out += _tag(brushkit.block("shear_lip", (3.9, 3.9, 0.5),
+                               (0.0, 0.0, 11.9)), "trim")
+    return out
+
+
+def lm_stacked_interchange():
+    """neon_transit -- two platform levels stacked round an open stair void,
+    with a car stopped half out of the tunnel mouth.
+
+    WHAT WAS THIS PLACE FOR: changing trains. The whole geometry is an
+    interchange -- lower platform, upper platform, and the void between them
+    that let people see which way to go before committing to a stair.
+
+    THE PLACE: a lower platform you arrive on, a mezzanine ring round the
+    void, an upper platform above that, and the stopped car -- the one
+    object that says this was not always still.
+    """
+    out = []
+    span = 20.0
+    # Lower platform and its track trench.
+    out += _tag(brushkit.block("lower_deck", (7.0, span, 0.5),
+                               (-4.6, 0.0, -0.25)), "floor")
+    out += _tag(brushkit.block("trench_floor", (5.2, span, 0.3),
+                               (2.2, 0.0, -1.35)), "floor")
+    for side in (-1.0, 1.0):
+        out += _tag(brushkit.block(
+            "rail_%d" % int(side), (0.16, span, 0.16),
+            (2.2 + side * 1.5, 0.0, -1.12)), "trim")
+    # Platform edge strip: transit's own safety language, and it is TRIM,
+    # not hazard -- a platform edge is where you stand, not a warning.
+    out += _tag(brushkit.block("edge_strip", (0.5, span, 0.06),
+                               (-1.35, 0.0, 0.03)), "accent")
+    # The void: the hole between the levels that makes this an interchange
+    # rather than two corridors stacked by accident.
+    mz = 5.0
+    out += _tag(_ring("mezz", 15.0, 2.6, 0.45, (-3.0, 0.0, mz)), "floor")
+    out += _tag(_rail("mezz_rail", 9.4, (-3.0, 0.0, mz + 0.22)), "trim")
+    for sx in (-1.0, 1.0):
+        for sy in (-1.0, 1.0):
+            out += _tag(brushkit.block(
+                "mezz_col_%d%d" % (int(sx), int(sy)), (0.55, 0.55, mz),
+                (-3.0 + sx * 6.6, sy * 6.6, mz / 2.0)), "wall")
+    # Stair down into the void, and the escalator run beside it.
+    out += _tag(brushkit.stair("void_stair", 0.42, 0.36, 2.2, 13,
+                               (-3.0, -3.2, 0.0)), "trim")
+    out += _tag(brushkit.wedge("escalator", (2.0, 6.2, mz),
+                               (-3.0, 3.4, mz / 2.0), axis="y"), "trim")
+    # Upper platform, reached from the mezzanine.
+    uz = 9.2
+    out += _tag(brushkit.block("upper_deck", (6.0, span * 0.7, 0.45),
+                               (-7.2, 0.0, uz)), "floor")
+    out += _tag(_rail("upper_rail", 5.4, (-7.2, 0.0, uz + 0.22)), "trim")
+    # Tiled wall behind the upper platform: public architecture, not utility.
+    out += _tag(brushkit.block("tile_wall", (0.4, span * 0.7, 4.2),
+                               (-10.0, 0.0, uz + 2.1)), "wall")
+    # The tunnel mouth and the car stopped half inside it.
+    out += _tag(brushkit.block("portal_head", (6.2, 0.7, 1.1),
+                               (2.2, span / 2.0, 2.6)), "wall")
+    for side in (-1.0, 1.0):
+        out += _tag(brushkit.block(
+            "portal_jamb_%d" % int(side), (0.8, 0.7, 3.2),
+            (2.2 + side * 2.7, span / 2.0, 1.6)), "wall")
+    out += _tag(brushkit.block("car_body", (2.9, 9.0, 2.6),
+                               (2.2, span / 2.0 - 3.4, 0.5)), "accent")
+    out += _tag(brushkit.block("car_skirt", (3.1, 9.0, 0.4),
+                               (2.2, span / 2.0 - 3.4, -0.9)), "trim")
+    for i in range(3):
+        out += _tag(brushkit.block(
+            "car_window_%d" % i, (0.1, 1.8, 0.9),
+            (0.72, span / 2.0 - 6.4 + i * 2.6, 1.1)), "trim")
+    return out
+
+
+def lm_bell_breach():
+    """gothic_stone -- the hall the bell fell through.
+
+    WHAT HAPPENED HERE: the bell came out of its frame, went through the
+    gallery floor, and stopped in the undercroft. One event, and it is
+    legible at three heights at once -- which is the whole reason this is a
+    hall and not a bell.
+
+    THE PLACE: an undercroft with the bell in it, a gallery above with a
+    ragged hole punched through, the empty frame above THAT, and a
+    monumental stair up one side connecting them. You can look down the hole
+    from the gallery and up through it from below.
+    """
+    out = []
+    span = 16.0
+    # Undercroft: the lowest route, where the bell ended up.
+    out += _tag(brushkit.block("undercroft_floor", (span, span, 0.4),
+                               (0.0, 0.0, -0.2)), "floor")
+    for side in (-1.0, 1.0):
+        out += _tag(brushkit.block(
+            "nave_wall_%d" % int(side), (0.9, span, 13.0),
+            (side * span / 2.0, 0.0, 6.5)), "wall")
+        # Engaged piers: the vertical rhythm gothic runs on.
+        for i in range(4):
+            out += _tag(brushkit.block(
+                "pier_%d_%d" % (int(side), i), (1.0, 1.2, 11.0),
+                (side * (span / 2.0 - 0.9), -6.0 + i * 4.0, 5.5)), "wall")
+    # The gallery floor, with a hole in it. Built as four slabs round the
+    # breach rather than one slab, because the hole IS the landmark.
+    gz = 6.2
+    hole = 5.0
+    arm = (span - hole) / 2.0
+    for sx in (-1.0, 1.0):
+        out += _tag(brushkit.block(
+            "gallery_x%d" % int(sx), (arm, span, 0.5),
+            (sx * (hole + arm) / 2.0, 0.0, gz)), "floor")
+        out += _tag(brushkit.block(
+            "gallery_y%d" % int(sx), (hole, arm, 0.5),
+            (0.0, sx * (hole + arm) / 2.0, gz)), "floor")
+    # Broken slab edges hanging into the breach.
+    for i, (x, y) in enumerate(((-2.1, 1.4), (1.8, -2.0), (2.3, 1.9))):
+        out += _tag(brushkit.wedge(
+            "breach_shard_%d" % i, (1.5, 1.3, 0.7), (x, y, gz - 0.3),
+            rotation_z=i * 40.0, axis="x"), "floor")
+    out += _tag(_rail("breach_rail", hole + 0.6, (0.0, 0.0, gz + 0.25)),
+                "trim")
+    # The bell frame above, empty.
+    fz = 11.4
+    out += _tag(brushkit.block("headstock", (9.0, 0.9, 0.9),
+                               (0.0, 0.0, fz)), "trim")
+    for side in (-1.0, 1.0):
+        out += _tag(brushkit.block(
+            "frame_post_%d" % int(side), (1.0, 1.0, 4.4),
+            (side * 3.6, 0.0, fz - 2.6)), "wall")
+        out += _tag(brushkit.tube(
+            "gudgeon_%d" % int(side), 0.36, 0.2, 0.32, 8,
+            (side * 1.1, 0.0, fz - 0.55),
+            asset_name="lm_bell_breach"), "accent")
+    # The bell itself, in the undercroft under the hole it made.
+    bell = brushkit.prism("bell", 1.9, 2.5, 12, (0.0, 0.0, 0.0),
+                          top_radius=1.05, asset_name="lm_bell_breach")
+    brushkit.spin(bell, "x", 74.0)
+    bell.location = (0.7, 1.1, 1.25)
+    out += _tag(bell, "trim")
+    mouth = brushkit.tube("bell_mouth", 2.0, 1.65, 0.34, 12, (0.0, 0.0, 0.0),
+                          asset_name="lm_bell_breach")
+    brushkit.spin(mouth, "x", 74.0)
+    mouth.location = (0.7, -0.05, 1.55)
+    out += _tag(mouth, "trim")
+    # The monumental stair connecting undercroft to gallery.
+    out += _tag(brushkit.stair("great_stair", 0.44, 0.42, 3.0, 15,
+                               (-span / 2.0 + 2.6, -2.0, 0.0)), "wall")
+    out += _tag(brushkit.block("stair_wall", (0.7, 7.0, 7.4),
+                               (-span / 2.0 + 0.9, -2.0, 3.7)), "wall")
+    return out
+
+
+def lm_collapsed_ziggurat():
+    """temple_ruin -- a stepped monument whose collapse became the way up.
+
+    WHAT WAS THIS PLACE FOR: a stepped ceremonial platform, climbed on
+    ritual occasions by a stair nobody uses now. WHAT HAPPENED HERE: one
+    corner gave way, and the rubble of the fall is a slope -- so the ruin
+    is more climbable than the monument was.
+
+    THE PLACE, and the reason it is in this set: the collapse IS the route.
+    A sunken court at the base, the intact stepped face on one side, the
+    fallen corner as a rubble ramp on the other, and a surviving upper
+    platform you reach by the failure rather than by the stair.
+    """
+    out = []
+    base, steps, rise = 18.0, 5, 1.7
+    tread = 1.5
+    # The court the monument stands in -- sunken, so the mass reads taller.
+    out += _tag(_ring("court", base + 7.0, 2.0, 1.0, (0.0, 0.0, -0.5)),
+                "wall")
+    out += _tag(brushkit.block("court_floor", (base + 4.0, base + 4.0, 0.3),
+                               (0.0, 0.0, -1.05)), "floor")
+    # The monument: five terraces. The +X half of the top two is missing.
     for i in range(steps):
-        outer = rim - i * tread * 2.0
-        z = -i * riser
-        parts.append(_paint(_ring(
-            "terrace_%d" % i, outer, tread, riser,
-            (0.0, 0.0, z - riser / 2.0)), "wall"))
-    floor_side = rim - steps * tread * 2.0
-    parts.append(_paint(brushkit.block(
-        "cistern_floor", (floor_side, floor_side, 0.3),
-        (0.0, 0.0, -depth - 0.15)), "floor"))
-    # The rim course: what you see first, standing on the room floor.
-    parts.append(_paint(_ring(
-        "rim_course", rim + 1.1, 0.55, 0.34, (0.0, 0.0, 0.17)), "trim"))
-    # One stair cutting the terraces, so the descent is a route and not a
-    # scramble -- and so the symmetry is broken on exactly one side.
-    treads = 8
-    parts.append(_paint(brushkit.stair(
-        "descent", (rim / 2.0 - 0.6) / treads, depth / treads, 1.8, treads,
-        (0.0, -rim / 4.0 - 0.3, -depth)), "trim"))
-    # Root intrusion at the joints: the reclaiming, not decoration.
-    roots = [(-3.4, 3.1, -0.9, 2.2), (3.9, -2.2, -1.9, 2.8),
-             (-4.1, -3.6, -2.7, 1.9), (2.6, 3.8, -0.4, 1.6)]
-    for i, (x, y, z, h) in enumerate(roots):
-        parts.append(_paint(brushkit.block(
-            "root_%d" % i, (0.34, 0.30, h), (x, y, z)), "accent"))
-        parts.append(_paint(brushkit.block(
-            "rootlet_%d" % i, (0.9, 0.20, 0.20), (x + 0.3, y, z - h / 2.0)),
-            "accent"))
-    return common.join(parts, "lm_stepped_cistern")
+        side = base - i * tread * 2.0
+        z = -0.9 + i * rise
+        if i < 3:
+            out += _tag(brushkit.block(
+                "terrace_%d" % i, (side, side, rise), (0.0, 0.0, z + rise / 2.0)),
+                "wall")
+        else:
+            # Sheared: only the -X part of the upper terraces survives.
+            keep = side * 0.55
+            out += _tag(brushkit.block(
+                "terrace_%d" % i, (keep, side, rise),
+                (-(side - keep) / 2.0, 0.0, z + rise / 2.0)), "wall")
+    # The surviving upper platform, and its shrine stub.
+    top_z = -0.9 + steps * rise
+    out += _tag(brushkit.block("summit", (5.4, 8.0, 0.4),
+                               (-2.6, 0.0, top_z + 0.2)), "floor")
+    out += _tag(brushkit.block("shrine", (2.2, 2.2, 2.6),
+                               (-3.4, 0.0, top_z + 1.5)), "trim")
+    out += _tag(brushkit.wedge("shrine_lintel", (2.6, 2.6, 0.9),
+                               (-3.4, 0.0, top_z + 3.2), axis="y"), "trim")
+    # The ceremonial stair on the intact face -- steep, formal, and no
+    # longer the easiest way up, which is the point.
+    out += _tag(brushkit.stair("ritual_stair", 0.5, 0.62, 3.4, 13,
+                               (-base / 2.0 - 1.2, 0.0, -0.9)), "trim")
+    # The collapse: rubble stepping from the court up to the shear face.
+    rubble = [(5.2, -1.4, 0.9, 4.6), (6.4, 2.1, 1.9, 3.8),
+              (4.1, 3.4, 3.1, 3.2), (5.9, -3.6, 2.6, 3.0),
+              (3.2, 0.6, 4.6, 2.8), (4.4, -0.9, 6.1, 2.4)]
+    for i, (x, y, z, sz) in enumerate(rubble):
+        out += _tag(brushkit.block(
+            "rubble_%d" % i, (sz, sz * 0.8, sz * 0.6), (x, y, z),
+            rotation_z=i * 23.0), "wall")
+    # Roots binding the ruin -- the reclaiming, structural not decorative.
+    for i, (x, y, z, h) in enumerate(((-7.4, 5.2, 2.0, 5.0),
+                                      (7.8, -4.4, 1.4, 4.2),
+                                      (-2.2, -8.1, 1.0, 3.4))):
+        out += _tag(brushkit.block("root_%d" % i, (0.5, 0.44, h), (x, y, z)),
+                    "accent")
+        out += _tag(brushkit.block("root_arm_%d" % i, (2.6, 0.36, 0.36),
+                                   (x + 1.2, y, z + h / 2.0 - 0.4)), "accent")
+    return out
 
 
-def lm_unfinished_room():
-    """void_glitch -- a room that failed to finish loading.
+def lm_reentrant_room():
+    """void_glitch -- a room that intersects itself.
 
-    Nothing was built here. That is the point, and it is the one honest
-    answer this theme can give to "what happened HERE": the world admitting
-    it is a construct.
+    NOTHING WAS BUILT HERE, and that is this theme's only honest answer.
+    The other five places have a history; this one has a FAULT. The same
+    chamber has been instanced three times at a rotating offset and the
+    copies were never resolved against each other, so the room passes
+    through itself and a doorway opens onto its own exterior.
 
-    A fragment of another theme's architecture intersects at the wrong scale
-    and the wrong angle, held up by a scaffold of untextured shells, with
-    one form stamped several times as though a loop never terminated.
-
-    The spatial job is WRONGNESS, and it is memorable for the reason the
-    other five are not: every other landmark answers its theme's history,
-    and this one refuses to have a history. It also earns its place as the
-    sixth by quoting the other five -- a fragment here can be any of their
-    languages, arriving at a scale that does not belong.
-
-    Deliberately NOT Epsilon. Epsilon green is Epsilon's identity, and a
-    room that failed to load is not an intrusion by anything -- it is the
-    substrate showing through, which is this theme's own material.
+    THE PLACE: the intersections are the route. Where two copies overlap you
+    can cross between them, which makes a shortcut that the room's own
+    topology says should not exist -- space that lies about itself. Not
+    Epsilon: Epsilon is a thing that arrives, and this is the substrate
+    failing to finish.
     """
-    parts = []
-    # The stamp: one form repeated with a drifting offset, like a loop that
-    # never terminated. Reads instantly as machine error, not decay.
+    out = []
+    room, height = 11.0, 5.4
+    for i in range(3):
+        yaw = i * 24.0
+        dx, dy, dz = i * 3.1, i * -2.2, i * 1.7
+        # Floor and two walls per copy -- an incomplete room, three times.
+        out += _tag(brushkit.block(
+            "copy%d_floor" % i, (room, room, 0.4), (dx, dy, dz),
+            rotation_z=yaw), "floor")
+        out += _tag(brushkit.block(
+            "copy%d_wall_a" % i, (room, 0.5, height),
+            (dx, dy + room / 2.0, dz + height / 2.0), rotation_z=yaw), "wall")
+        out += _tag(brushkit.block(
+            "copy%d_wall_b" % i, (0.5, room, height),
+            (dx - room / 2.0, dy, dz + height / 2.0), rotation_z=yaw), "wall")
+        # A doorway in each copy -- which, offset, opens onto the outside of
+        # the next one. The specific wrongness worth building.
+        out += _tag(brushkit.frame(
+            "copy%d_door" % i, (2.6, 3.4), 0.45, 0.6,
+            (dx + room / 2.0 - 0.3, dy - 1.4, dz + 1.7)), "trim")
+    # A floor that continues at an angle it should not, ending in air.
+    ramp = brushkit.block("null_floor", (7.4, 5.0, 0.32), (0.0, 0.0, 0.0))
+    brushkit.spin(ramp, "y", 21.0)
+    ramp.location = (-6.6, 4.2, 7.6)
+    out += _tag(ramp, "floor")
+    # The column that should carry it, stopping short of the underside.
+    out += _tag(brushkit.block("short_column", (0.9, 0.9, 4.2),
+                               (-6.6, 4.2, 2.1)), "wall")
+    # A stamped form: one shape repeated with a drifting offset, like a loop
+    # that never terminated. Reads as machine error rather than as decay.
     for i in range(5):
-        parts.append(_paint(brushkit.block(
-            "stamp_%d" % i, (3.0, 0.7, 2.4),
-            (i * 0.55 - 1.1, i * 0.42, 1.2 + i * 0.62),
-            rotation_z=i * 3.5), "wall"))
-    # A fragment at the wrong scale and angle: an arch that belongs to
-    # gothic_stone, arriving four times too small and rotated off every axis.
-    frag = brushkit.frame("fragment", (3.4, 3.4), 0.62, 0.7, (0.0, 0.0, 0.0))
-    brushkit.spin(frag, "x", 24.0)
-    brushkit.spin(frag, "y", 38.0)
-    frag.location = (3.4, -2.6, 4.1)
-    parts.append(_paint(frag, "trim"))
-    # Scaffold shells holding it: untextured checkerboard is this theme's
-    # own material, so the support is provisional too.
-    struts = [((3.4, -2.6, 2.0), (0.22, 0.22, 4.0)),
-              ((2.3, -1.7, 1.6), (0.22, 0.22, 3.2)),
-              ((4.4, -3.4, 1.4), (0.22, 0.22, 2.8))]
-    for i, (at, size) in enumerate(struts):
-        parts.append(_paint(brushkit.block(
-            "strut_%d" % i, size, at), "accent"))
-    # A floor plane that stops mid-air, edge-on, going nowhere.
-    slab = brushkit.block("null_slab", (5.6, 4.2, 0.24), (0.0, 0.0, 0.0))
-    brushkit.spin(slab, "y", 17.0)
-    slab.location = (-3.2, 2.4, 3.0)
-    parts.append(_paint(slab, "floor"))
-    # And the column that should have carried it, ending 1.2 m short.
-    parts.append(_paint(brushkit.block(
-        "short_column", (0.8, 0.8, 1.8), (-3.2, 2.4, 0.9)), "wall"))
-    return common.join(parts, "lm_unfinished_room")
+        out += _tag(brushkit.block(
+            "stamp_%d" % i, (3.2, 0.75, 2.5),
+            (7.4 + i * 0.5, -5.0 + i * 0.44, 1.4 + i * 0.66),
+            rotation_z=i * 4.0), "accent")
+    # Provisional scaffold holding the impossible parts up.
+    for i, (x, y, h) in enumerate(((-4.0, 2.4, 6.0), (-8.4, 5.6, 5.2),
+                                   (5.6, -3.0, 4.4))):
+        out += _tag(brushkit.block("strut_%d" % i, (0.26, 0.26, h),
+                                   (x, y, h / 2.0)), "trim")
+    return out
 
 
-#: Each landmark with the theme it belongs to and the spatial job it does.
-#: The job is recorded in the manifest because it is the reason the asset
-#: exists -- a landmark that cannot name its job is a large prop.
+#: Each place with its theme, its spatial job, and what the routes are.
+#: The routes are SHAPES the engine may or may not use -- art provides
+#: affordance, production owns mechanics.
 LANDMARKS = [
-    (lm_freight_shaft, "concrete_facility", "vertical shaft, reads at two elevations"),
-    (lm_pour_ladle, "rusted_industrial", "curved mass, ramp and mid-room cover"),
-    (lm_escalator_bank, "neon_transit", "level link, circulation between floors"),
-    (lm_bell_frame, "gothic_stone", "overhead volume, one story at two heights"),
-    (lm_stepped_cistern, "temple_ruin", "cut void, descends -- negative not mass"),
-    (lm_unfinished_room, "void_glitch", "broken construct, the theme admitting it is built"),
+    (lm_drop_test_hall, "concrete_facility",
+     "loop around a central void",
+     "rim loop at floor level, gallery loop above it, gantry across the void, "
+     "control booth visible and unreachable",
+     (-7.6, -7.2, 1.6), (0.0, 0.0, -3.0)),
+    (lm_process_tower, "rusted_industrial",
+     "spiral route up a leaning mass",
+     "basin floor below, spiral of catwalk stages climbing the standing "
+     "column, sheared upper column overhead and unreachable",
+     (0.5, -9.4, 0.6), (0.5, 1.0, 11.5)),
+    (lm_stacked_interchange, "neon_transit",
+     "two platforms around a void",
+     "lower platform, mezzanine ring round the stair void, upper platform "
+     "above it, stopped car at the tunnel mouth",
+     (-5.4, -8.6, 1.6), (1.4, 5.0, 5.2)),
+    (lm_bell_breach, "gothic_stone",
+     "three levels, one event",
+     "undercroft with the bell, gallery above with the breach punched "
+     "through it, empty frame above that, great stair connecting them",
+     (-4.8, -6.4, 1.6), (0.7, 1.6, 7.4)),
+    (lm_collapsed_ziggurat, "temple_ruin",
+     "the ruin IS the route",
+     "sunken court, formal stair up the intact face, rubble ramp up the "
+     "collapsed corner, surviving summit platform",
+     (12.0, -10.5, 1.0), (0.0, 0.0, 7.0)),
+    (lm_reentrant_room, "void_glitch",
+     "space that lies about itself",
+     "three offset copies of one room whose overlaps are crossable, a floor "
+     "continuing at a wrong angle, a door opening onto its own exterior",
+     (-13.5, -12.0, 1.6), (2.5, -1.0, 3.4)),
 ]
+
+#: The last two tuple entries are `eye_from` and `eye_at`, in the builder's
+#: own coordinates, before the glTF axis swap.
+#:
+#: They exist because the first review sheet photographed six INTERIORS from
+#: outside their own walls: a hall, an interchange and an undercroft each
+#: rendered as a box with a wall facing camera, and the place -- which is
+#: the entire deliverable -- was on the other side of it. The builder is the
+#: only thing that knows where the hero feature is and therefore where a
+#: player would stand to see it, so it says so here rather than leaving a
+#: renderer to guess.
 
 
 def main():
     global _THEME
     report = {}
-    for builder, theme, job in LANDMARKS:
+    for builder, theme, job, routes, eye_from, eye_at in LANDMARKS:
         _THEME = theme
         common.reset_scene()
         _IMAGES.clear()
-        obj = builder()
-        name = obj.name
+        tagged = builder()
+        for obj, role in tagged:
+            _paint(obj, role)
+        name = builder.__name__
+        obj = common.join([o for o, _ in tagged], name)
         common.set_origin(obj, "module_floor")
-        common.uv_project_world(obj, materials.ARCH_DENSITY, materials.ARCH_SIZE)
+        common.uv_project_world(obj, materials.ARCH_DENSITY,
+                                materials.ARCH_SIZE)
         entry = common.export_glb(
             obj, "%s/%s.glb" % (OUT, name), "landmark", tier="architecture",
             texture_size=materials.ARCH_SIZE, anchor="module_floor",
             check_flat=False)
         entry["theme"] = theme
         entry["spatial_job"] = job
-        # Said on every entry, not once in a README: there is no landmark
-        # placement contract in the engine, so nothing here may be treated
-        # as ready to place. See interface requirement 24.
-        # A landmark that is a VOID needs the room floor opened for it.
-        # Recorded so a scene does not have to know which of the six is a
-        # hole -- the first review sheet laid one slab over everything and
-        # sealed the cistern's four terraces under it.
-        if name == "lm_stepped_cistern":
-            entry["cuts_floor"] = 10.1
+        entry["routes"] = routes
+        # Blender (x, y, z) -> Godot (x, z, -y), matching the glTF export.
+        entry["eye_from"] = [eye_from[0], eye_from[2], -eye_from[1]]
+        entry["eye_at"] = [eye_at[0], eye_at[2], -eye_at[1]]
+        # PROPOSAL SCALE, not runtime truth. There is no landmark placement
+        # contract in the engine -- godot/scripts reads no .glb and no
+        # manifest at all -- so these dimensions say how big the proposal
+        # is, never what it is allowed to own. Interface requirement 24.
         entry["integration_ready"] = False
+        entry["scale_basis"] = "proposal scale -- not a reserved footprint"
         entry["placement_contract"] = "none -- see ART_FRONTIER interface req 24"
+        zs = [(obj.matrix_world @ v.co).z for v in obj.data.vertices]
+        entry["descends_to_m"] = round(min(zs), 2)
+        entry["rises_to_m"] = round(max(zs), 2)
         report[name] = entry
     out = os.path.join(common.REPO_ROOT, "assets", "models", "batch023",
                        "landmarks", "manifest.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8") as handle:
         json.dump(report, handle, indent=2, sort_keys=True)
-    print("[art] batch023 manifest -> %s (%d landmarks)" % (out, len(report)))
+    print("[art] batch023 manifest -> %s (%d places)" % (out, len(report)))
 
 
 if __name__ == "__main__":

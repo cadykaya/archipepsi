@@ -3022,50 +3022,74 @@ rusted-industrial fixtures.
 
 ## Batch 023 — PROPOSAL: theme landmark language
 
-**PENDING, and deliberately not integration-ready.** Full write-up and the
+**PENDING. Proposal scale, not runtime truth.** Full write-up and the
 contract audit: `docs/art/review/batch023/README.md`.
 
-The audit came before any modelling, and it changed the batch. `grep -rn
-landmark` over `godot/`, `bridge/` and `assets/` returns three hits and
-none is an engine concept — `max_triangles.landmark = 2500` and one asset
-exporting under that tier. **Today "landmark" means a polygon ceiling.**
-Epsilon cannot select one, the room shells carry no landmark anchor, and
-nothing reserves a footprint.
+### The audit, before any modelling
 
-The wider finding matters more than the landmark one: **`godot/scripts/`
-references no `.glb` and reads no manifest.** `chamber_builders.gd` builds
-every room from `BoxMesh` primitives, so the entire authored pipeline is
-unwired and the approved room shells sit in exactly the same position as
-these landmarks. Recorded as interface requirement 24; every manifest entry
-carries `integration_ready: false`, and the footprints on the sheets are
-measured rather than reserved.
+`grep -rn landmark` over `godot/`, `bridge/` and `assets/` returns three
+hits and none is an engine concept — `max_triangles.landmark = 2500` and one
+asset exporting under that tier. **Today "landmark" means a polygon
+ceiling.** Epsilon cannot select one, the room shells carry no landmark
+anchor among their check / enemy / affordance / bay anchors, and nothing
+reserves a footprint.
 
-| landmark | theme | tris | size (m) | spatial job |
+The wider finding matters more: **`godot/scripts/` references no `.glb` and
+reads no manifest.** `chamber_builders.gd` builds every room from `BoxMesh`
+primitives, so the entire authored pipeline is unwired and the approved room
+shells sit in exactly the same position as these landmarks. Interface
+requirement 24. Every entry carries `integration_ready: false`.
+
+### Places, not props
+
+The first pass built six OBJECTS — a ladle, a bell frame, a shaft — each
+alone in an empty room. They were the wrong deliverable: a landmark you walk
+around is a prop at landmark scale, and the target is *"the Zone with the
+giant ___"*, which is a memory of a place. Each of these is a hero structure
+plus the architecture that makes it somewhere you were — a ground route, a
+route above it, something to look down from, and usually something visible
+and unreachable.
+
+| place | theme | tris | size (m) | spatial job |
 |---|---|---|---|---|
-| `lm_freight_shaft` | concrete_facility | 328 | 9.40 × 5.50 × 10.07 | vertical shaft, reads at two elevations |
-| `lm_pour_ladle` | rusted_industrial | 368 | 6.90 × 10.77 × 5.29 | curved mass, ramp and mid-room cover |
-| `lm_escalator_bank` | neon_transit | 464 | 7.60 × 10.60 × 8.50 | level link, circulation between floors |
-| `lm_bell_frame` | gothic_stone | 428 | 9.30 × 5.75 × 8.48 | overhead volume, one story at two heights |
-| `lm_stepped_cistern` | temple_ruin | 492 | 10.10 × 10.10 × 4.70 | cut void, descends -- negative not mass |
-| `lm_unfinished_room` | void_glitch | 168 | 11.70 × 8.11 × 6.48 | broken construct, the theme admitting it is built |
+| `lm_drop_test_hall` | concrete_facility | 644 | 16.30 × 16.30 × 17.95 | loop around a central void |
+| `lm_process_tower` | rusted_industrial | 1396 | 13.00 × 14.00 × 17.06 | spiral route up a leaning mass |
+| `lm_stacked_interchange` | neon_transit | 632 | 15.80 × 21.10 × 14.90 | two platforms around a void |
+| `lm_bell_breach` | gothic_stone | 796 | 16.90 × 16.00 × 13.86 | three levels, one event |
+| `lm_collapsed_ziggurat` | temple_ruin | 452 | 25.00 × 25.00 × 12.45 | the ruin IS the route |
+| `lm_reentrant_room` | void_glitch | 372 | 24.08 × 18.87 × 9.28 | space that lies about itself |
 
-Each answers *what was built HERE* from its own theme's history, and none
-is an Epsilon monument. The spatial jobs differ on purpose: six variations
-on "big object in the middle of the room" would not punctuate a 20-room
-Zone, so the set runs shaft / curved mass / level link / overhead volume /
-cut void / broken construct — including exactly one that is a hole rather
-than a mass.
+The spatial jobs differ deliberately: a loop around a void, a spiral up a
+leaning mass, two platforms stacked around a void, three levels telling one
+event, a ruin whose collapse IS the route, and a room that intersects
+itself. Six variations on "big object in the middle of the room" would not
+punctuate a 20-room Zone.
 
-Six errors the renders caught, all recorded in the batch README: the
-cistern's terraces sealed under the room floor so the one descending
-proposal read as flat; `brushkit.frame` standing in the XZ plane and
-building a 4 m pit 10.6 m tall; `brushkit.stair` taking per-step rather
-than total rise; a `variants` key written singular so six lit frames
-shipped captioned SILHOUETTE; neon_transit's accent burying the escalator
-steps; and a blue bell that read as a slab.
+**Art provides affordance; the engine owns mechanics.** The routes are
+shapes, not rules — nothing invents grapple, teleport, boss, Check
+placement, local-key, checkpoint or reachability behaviour, and no landmark
+requires an unapproved capability for mandatory traversal.
 
-No mechanics were invented, nothing gates progression, and no Check,
-hitbox, affordance or objective truth was moved for a composition.
+**No Epsilon monuments.** Each answers what its place was for or what
+happened there, from its own construction history. Epsilon is what arrives
+later; these have to read without it.
+
+### What the renders changed
+
+Six interiors were photographed from outside their own walls, so a hall, an
+interchange and an undercroft each rendered as a box with a wall facing
+camera. The builder now records `eye_from` / `eye_at`, because it is the
+only thing that knows where the hero feature is. The human reference was
+offset from the camera blindly and landed behind it. An interior lit by a
+rig meant for an object on a backdrop came out half-black. And the void
+room's viewpoint sat inside one of its own copies, hiding the intersection
+that is its entire idea.
+
+### Budget note, surfaced not hidden
+
+All six fit the 2500-triangle `landmark` tier (372–1396), but that tier is
+defined as *"an L4 set piece — one per room at most, seen from across it"*,
+which is an OBJECT budget. These are places. The numbers fit; the definition
+does not.
 
 Status: **PENDING** — not self-marked.
-

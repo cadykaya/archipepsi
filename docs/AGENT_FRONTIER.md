@@ -60,37 +60,36 @@ rewritten, no commits lost). PR #6, opened from it against `main`, is
 **superseded** — it showed the whole stacked project history rather than an
 art diff. Do not maintain two active art branches.
 
-## Art batches — owner review 2026-08-29
+## Art batches — state 2026-08-29
 
-**020 PASS** (all seven). **021 PARTIAL PASS** — five PASS; `arch_duct` was
-held on evidence only, not design. **022 design approved**, assets still
-PENDING on evidence.
+**001–022 all PASS.** Batch 022 (navigation language) passed in all six
+themes after the `trim_plain` correction.
 
-Cleanup gate delivered:
+**Batch 023 — theme landmarks — is PENDING.** It is a VISUAL PROPOSAL, not
+production, and the audit is why: `grep -rn landmark` finds three hits and
+none is an engine concept. Today "landmark" means a polygon budget tier.
+Epsilon cannot select one; the room shells carry no landmark anchor; nothing
+reserves a footprint.
 
-- **021-R** — two `arch_duct` sheets (`docs/art/review/batch021r/`). Asset
-  unchanged; the renders found no problem.
-- **022-R** — the six-theme sheet. The old "other three behind the Style
-  Lock gate" caption was **stale**, not the claim: all six treatments
-  exist. Every module is now built per theme, 4 × 6 = 24 assets.
-- `arch_objective_socket` and `arch_signage_mount` **struck**.
-  `arch_vista_socket` untouched and still blocked on an engine contract.
+**The finding that outlives the batch: `godot/scripts/` references no `.glb`
+and reads no manifest.** Every room is `BoxMesh` primitives from
+`chamber_builders.gd`. The whole authored pipeline is unwired — the approved
+room shells are in exactly the same position as these landmarks. Interface
+requirement 24.
 
-**One thing is back with the owner.** The six-theme sheet found a real
-collision: `materials._rust_trim` paints a universal hazard band into
-`rusted_industrial` trim, so the nav family — built from `trim` — wears
-hazard stripes in one of six themes, against a locked rule. NOT fixed
-unilaterally. Recommended fix is an additive `trim_plain` role. See
-`G_hazard_collision.png` and the Batch 022-R section of `ART_REVIEW.md`.
+Six places, one per theme, each a hero structure plus the architecture that
+makes it somewhere you were: a drop-test shaft hall, a collapsed process
+tower, a stacked transit interchange, a bell-breach hall, a collapsed
+ziggurat whose rubble is the route, and a room that intersects itself. None
+is an Epsilon monument. Every entry carries `integration_ready: false`.
 
-Earlier decisions still standing: `objective_marker` struck (not a
-permanent prohibition — a genuinely new future objective may reopen it);
-`signage_module` is the four-module family, direction is placement/runtime
-truth, wording runtime-owned; `arch_affordance_socket` struck (req 22).
+**Do not expand the landmark family or open Batch 024** — the owner asked to
+stop for review. Heartbeat may no-op; do not invent filler production.
 
-**Batch 023 / theme landmarks are NOT released.** Nothing opens until the
-owner clears the remaining pending assets and releases that phase.
-Heartbeat may no-op; do not invent filler production.
+Earlier decisions standing: `objective_marker`, `arch_objective_socket`,
+`arch_signage_mount` and `arch_affordance_socket` all struck, each because
+nothing places them. `arch_vista_socket` still blocked on a contract.
+Requirement 23: engine `trim_mat` maps to authored `trim_plain`.
 
 ## Open decision, deliberately not guessed
 `challenge_marker` (§14.2) and its `challenge_timer` readout (§14.1) have a complete bridge half — grantable, recorded, `best_seconds` improves — and no world half, because neither section says where a run starts, what ends it, or what counts as one. `test_stage_tripwires.py::test_the_challenge_marker_still_has_no_challenge` names the decision and comes due when it is made.

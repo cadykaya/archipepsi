@@ -1,93 +1,176 @@
 {
-  "lm_bell_frame": {
+  "lm_bell_breach": {
     "anchor": "module_floor",
-    "integration_ready": false,
-    "path": "batch023/landmarks/lm_bell_frame.glb",
-    "placement_contract": "none -- see ART_FRONTIER interface req 24",
-    "size": [
-      9.3,
-      5.75,
-      8.479
+    "descends_to_m": -0.86,
+    "eye_at": [
+      0.7,
+      7.4,
+      -1.6
     ],
-    "spatial_job": "overhead volume, one story at two heights",
+    "eye_from": [
+      -4.8,
+      1.6,
+      6.4
+    ],
+    "integration_ready": false,
+    "path": "batch023/landmarks/lm_bell_breach.glb",
+    "placement_contract": "none -- see ART_FRONTIER interface req 24",
+    "rises_to_m": 13.0,
+    "routes": "undercroft with the bell, gallery above with the breach punched through it, empty frame above that, great stair connecting them",
+    "scale_basis": "proposal scale -- not a reserved footprint",
+    "size": [
+      16.9,
+      16.0,
+      13.859
+    ],
+    "spatial_job": "three levels, one event",
     "texel_density": 32.0,
     "theme": "gothic_stone",
-    "triangles": 428
+    "triangles": 796
   },
-  "lm_escalator_bank": {
+  "lm_collapsed_ziggurat": {
     "anchor": "module_floor",
-    "integration_ready": false,
-    "path": "batch023/landmarks/lm_escalator_bank.glb",
-    "placement_contract": "none -- see ART_FRONTIER interface req 24",
-    "size": [
-      7.6,
-      10.6,
-      8.5
+    "descends_to_m": -1.2,
+    "eye_at": [
+      0.0,
+      7.0,
+      -0.0
     ],
-    "spatial_job": "level link, circulation between floors",
-    "texel_density": 32.0,
-    "theme": "neon_transit",
-    "triangles": 464
-  },
-  "lm_freight_shaft": {
-    "anchor": "module_floor",
-    "integration_ready": false,
-    "path": "batch023/landmarks/lm_freight_shaft.glb",
-    "placement_contract": "none -- see ART_FRONTIER interface req 24",
-    "size": [
-      9.4,
-      5.5,
-      10.07
+    "eye_from": [
+      12.0,
+      1.0,
+      10.5
     ],
-    "spatial_job": "vertical shaft, reads at two elevations",
-    "texel_density": 32.0,
-    "theme": "concrete_facility",
-    "triangles": 328
-  },
-  "lm_pour_ladle": {
-    "anchor": "module_floor",
     "integration_ready": false,
-    "path": "batch023/landmarks/lm_pour_ladle.glb",
+    "path": "batch023/landmarks/lm_collapsed_ziggurat.glb",
     "placement_contract": "none -- see ART_FRONTIER interface req 24",
+    "rises_to_m": 11.25,
+    "routes": "sunken court, formal stair up the intact face, rubble ramp up the collapsed corner, surviving summit platform",
+    "scale_basis": "proposal scale -- not a reserved footprint",
     "size": [
-      6.9,
-      10.773,
-      5.29
+      25.0,
+      25.0,
+      12.45
     ],
-    "spatial_job": "curved mass, ramp and mid-room cover",
-    "texel_density": 32.0,
-    "theme": "rusted_industrial",
-    "triangles": 368
-  },
-  "lm_stepped_cistern": {
-    "anchor": "module_floor",
-    "cuts_floor": 10.1,
-    "integration_ready": false,
-    "path": "batch023/landmarks/lm_stepped_cistern.glb",
-    "placement_contract": "none -- see ART_FRONTIER interface req 24",
-    "size": [
-      10.1,
-      10.1,
-      4.7
-    ],
-    "spatial_job": "cut void, descends -- negative not mass",
+    "spatial_job": "the ruin IS the route",
     "texel_density": 32.0,
     "theme": "temple_ruin",
-    "triangles": 492
+    "triangles": 452
   },
-  "lm_unfinished_room": {
+  "lm_drop_test_hall": {
     "anchor": "module_floor",
-    "integration_ready": false,
-    "path": "batch023/landmarks/lm_unfinished_room.glb",
-    "placement_contract": "none -- see ART_FRONTIER interface req 24",
-    "size": [
-      11.696,
-      8.111,
-      6.483
+    "descends_to_m": -7.2,
+    "eye_at": [
+      0.0,
+      -3.0,
+      -0.0
     ],
-    "spatial_job": "broken construct, the theme admitting it is built",
+    "eye_from": [
+      -7.6,
+      1.6,
+      7.2
+    ],
+    "integration_ready": false,
+    "path": "batch023/landmarks/lm_drop_test_hall.glb",
+    "placement_contract": "none -- see ART_FRONTIER interface req 24",
+    "rises_to_m": 10.75,
+    "routes": "rim loop at floor level, gallery loop above it, gantry across the void, control booth visible and unreachable",
+    "scale_basis": "proposal scale -- not a reserved footprint",
+    "size": [
+      16.3,
+      16.3,
+      17.95
+    ],
+    "spatial_job": "loop around a central void",
+    "texel_density": 32.0,
+    "theme": "concrete_facility",
+    "triangles": 644
+  },
+  "lm_process_tower": {
+    "anchor": "module_floor",
+    "descends_to_m": -1.2,
+    "eye_at": [
+      0.5,
+      11.5,
+      -1.0
+    ],
+    "eye_from": [
+      0.5,
+      0.6,
+      9.4
+    ],
+    "integration_ready": false,
+    "path": "batch023/landmarks/lm_process_tower.glb",
+    "placement_contract": "none -- see ART_FRONTIER interface req 24",
+    "rises_to_m": 15.86,
+    "routes": "basin floor below, spiral of catwalk stages climbing the standing column, sheared upper column overhead and unreachable",
+    "scale_basis": "proposal scale -- not a reserved footprint",
+    "size": [
+      13.0,
+      14.0,
+      17.057
+    ],
+    "spatial_job": "spiral route up a leaning mass",
+    "texel_density": 32.0,
+    "theme": "rusted_industrial",
+    "triangles": 1396
+  },
+  "lm_reentrant_room": {
+    "anchor": "module_floor",
+    "descends_to_m": -0.2,
+    "eye_at": [
+      2.5,
+      3.4,
+      1.0
+    ],
+    "eye_from": [
+      -13.5,
+      1.6,
+      12.0
+    ],
+    "integration_ready": false,
+    "path": "batch023/landmarks/lm_reentrant_room.glb",
+    "placement_contract": "none -- see ART_FRONTIER interface req 24",
+    "rises_to_m": 9.08,
+    "routes": "three offset copies of one room whose overlaps are crossable, a floor continuing at a wrong angle, a door opening onto its own exterior",
+    "scale_basis": "proposal scale -- not a reserved footprint",
+    "size": [
+      24.079,
+      18.868,
+      9.275
+    ],
+    "spatial_job": "space that lies about itself",
     "texel_density": 32.0,
     "theme": "void_glitch",
-    "triangles": 168
+    "triangles": 372
+  },
+  "lm_stacked_interchange": {
+    "anchor": "module_floor",
+    "descends_to_m": -1.5,
+    "eye_at": [
+      1.4,
+      5.2,
+      -5.0
+    ],
+    "eye_from": [
+      -5.4,
+      1.6,
+      8.6
+    ],
+    "integration_ready": false,
+    "path": "batch023/landmarks/lm_stacked_interchange.glb",
+    "placement_contract": "none -- see ART_FRONTIER interface req 24",
+    "rises_to_m": 13.4,
+    "routes": "lower platform, mezzanine ring round the stair void, upper platform above it, stopped car at the tunnel mouth",
+    "scale_basis": "proposal scale -- not a reserved footprint",
+    "size": [
+      15.8,
+      21.1,
+      14.9
+    ],
+    "spatial_job": "two platforms around a void",
+    "texel_density": 32.0,
+    "theme": "neon_transit",
+    "triangles": 632
   }
 }

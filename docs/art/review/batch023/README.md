@@ -1,11 +1,11 @@
 # Batch 023 — PROPOSAL: theme landmark language
 
-**Status: PENDING. Nothing here is integration-ready.**
+**Status: PENDING. Proposal scale, not runtime truth. Nothing is integration-ready.**
 
-## The contract audit came first, and it changed the batch
+## The contract audit came first
 
-The instruction was to find the contract rather than invent one. There
-isn't one, and the search is short enough to reproduce:
+The instruction was to find the contract rather than invent one. There isn't
+one, and the search is short enough to reproduce:
 
 ```
 grep -rn "landmark" godot/ bridge/ assets/ tools/
@@ -17,100 +17,91 @@ exporting under that tier. **Today "landmark" means a polygon ceiling.**
 
 | Question | Answer |
 |---|---|
-| What does the game mean by "landmark"? | A triangle budget tier — "an L4 set piece, one per room at most, seen from across it". Nothing else. |
-| Does Epsilon select a landmark ID? | **No.** `AUTHORED_CONTENT.md` lists *Reusable landmarks and hero props* as a category it would select from; no schema field or vocabulary entry implements it. |
-| Is there a placement / footprint / anchor contract? | **Not for landmarks.** Room shells carry `check_anchor`, `enemy_anchors`, `affordance_anchor`, `bay_anchors`, `bounds`, `interior`, `sightline`, `exit_offset` — and no landmark anchor. |
-| Room property, object, shell feature, or composition idea? | Only the last, plus the budget tier. |
-| What bounds may landmark geometry legally own? | Nothing reserves any. The only hard numbers are the 2500-tri landmark ceiling and the 12000-tri room budget. |
+| Does "landmark" have a runtime semantic contract? | **No.** A budget tier only. |
+| Can Epsilon select one? | **No.** `AUTHORED_CONTENT.md` lists *Reusable landmarks and hero props* as a category it would select from; nothing implements it. |
+| Placement bounds / anchors / footprints? | **None.** Room shells carry `check_anchor`, `enemy_anchors`, `affordance_anchor`, `bay_anchors`, `bounds`, `interior`, `sightline` — and no landmark anchor. |
+| Standalone object, shell feature, chamber property, or art concept? | **Art/design concept only.** |
 | Does Godot have an integration seam? | **No — and not only for landmarks.** `godot/scripts/` references no `.glb` and reads no manifest; `chamber_builders.gd` builds every room from `BoxMesh`. The whole authored pipeline is unwired, and the approved room shells sit in the same position. |
 
-So this is a **visual-language proposal**. The missing seam is interface
-requirement 24. Every manifest entry carries `integration_ready: false`,
-and the footprints on the sheets are **measured, not reserved** — they say
-how big the proposal is, not what it is allowed to own.
+Recorded as **interface requirement 24**. Every manifest entry carries
+`integration_ready: false` and `scale_basis: "proposal scale"`.
 
-## The six
+## Places, not props
 
-Each answers *what was built HERE* from its own theme's construction
-history. **None is an Epsilon monument** — Epsilon may arrive later as an
-event, and Epsilon green stays Epsilon's identity rather than becoming the
-generic "important place" colour.
+The first pass built six OBJECTS — a ladle, a bell frame, a shaft — each
+standing alone in an empty room. They were decent objects and they were the
+wrong deliverable: **a landmark you walk around is a prop at landmark
+scale.** The target is *"the Zone with the giant ___"*, which is a memory of
+a place.
 
-They take deliberately different **spatial jobs**, because six variations
-on "big object in the middle of the room" would not punctuate a 20-room
-Zone:
+So each of these is a hero structure **plus the architecture that makes it
+somewhere you were**: a route at ground level, a route above it, something
+to look down from, and usually something visible you cannot reach.
 
-| landmark | theme | tris | measured (m) | spatial job |
+| place | theme | tris | size (m) | spatial job |
 |---|---|---|---|---|
-| `lm_freight_shaft` | concrete_facility | 328 | 9.4 × 5.5 × 10.1 | vertical shaft, reads at two elevations |
-| `lm_pour_ladle` | rusted_industrial | 368 | 6.9 × 10.8 × 5.3 | curved mass, ramp and mid-room cover |
-| `lm_escalator_bank` | neon_transit | 464 | 7.6 × 10.6 × 8.5 | level link, circulation between floors |
-| `lm_bell_frame` | gothic_stone | 428 | 9.3 × 5.8 × 8.5 | overhead volume, one story at two heights |
-| `lm_stepped_cistern` | temple_ruin | 492 | 10.1 × 10.1 × 4.7 | cut void, descends -- negative not mass |
-| `lm_unfinished_room` | void_glitch | 168 | 11.7 × 8.1 × 6.5 | broken construct, the theme admitting it is built |
+| `lm_drop_test_hall` | concrete_facility | 644 | 16.30 × 16.30 × 17.95 | loop around a central void |
+| `lm_process_tower` | rusted_industrial | 1396 | 13.00 × 14.00 × 17.06 | spiral route up a leaning mass |
+| `lm_stacked_interchange` | neon_transit | 632 | 15.80 × 21.10 × 14.90 | two platforms around a void |
+| `lm_bell_breach` | gothic_stone | 796 | 16.90 × 16.00 × 13.86 | three levels, one event |
+| `lm_collapsed_ziggurat` | temple_ruin | 452 | 25.00 × 25.00 × 12.45 | the ruin IS the route |
+| `lm_reentrant_room` | void_glitch | 372 | 24.08 × 18.87 × 9.28 | space that lies about itself |
 
-- **Freight shaft** (concrete_facility) — a lift stalled between floors.
-  Built to move heavy things vertically; stopped mid-job. Open on two sides
-  so it reads *up*: the same cage seen from below and from the floor above
-  makes one place, not two. Supports a platform, a second one at a
-  different height, and a sightline between storeys.
-- **Pour ladle** (rusted_industrial) — a tapped ladle frozen mid-pour, the
-  spill hardened where it fell. The only **curve** in a project built from
-  boxes, which is most of why the room is memorable. Supports a ramp onto
-  the shoulder and hard cover mid-room.
-- **Escalator bank** (neon_transit) — three flights under a departure
-  board, one collapsed into a ramp. The one landmark whose reason to exist
-  is **circulation**, and it ties to approved work: the board is a housing
-  for runtime wording exactly as Batch 022's signage is.
-- **Bell frame** (gothic_stone) — the headstock, and the bell on the floor
-  below it. Occupies the **volume overhead**, so the memorable thing is
-  something you walk under; the fallen bell puts the other half of the same
-  event at floor level. One story at two heights.
-- **Stepped cistern** (temple_ruin) — a dry stepped tank cut into the
-  floor, roots through the joints. The only **void** in the set. Five
-  masses plus one hole is a set with range; six masses is one idea. From
-  the rim you see the whole geometry and everything standing in it.
-- **Unfinished room** (void_glitch) — a room that failed to load. Nothing
-  was built here, which is this theme's only honest answer: a fragment at
-  the wrong scale and angle, a scaffold of provisional shells, one form
-  stamped several times like a loop that never terminated. Deliberately not
-  Epsilon: this is the substrate showing through, not an intrusion.
+- **Drop Test Hall** (concrete_facility) — loop around a central void
+  *Routes:* rim loop at floor level, gallery loop above it, gantry across the void, control booth visible and unreachable
+- **Process Tower** (rusted_industrial) — spiral route up a leaning mass
+  *Routes:* basin floor below, spiral of catwalk stages climbing the standing column, sheared upper column overhead and unreachable
+- **Stacked Interchange** (neon_transit) — two platforms around a void
+  *Routes:* lower platform, mezzanine ring round the stair void, upper platform above it, stopped car at the tunnel mouth
+- **Bell Breach** (gothic_stone) — three levels, one event
+  *Routes:* undercroft with the bell, gallery above with the breach punched through it, empty frame above that, great stair connecting them
+- **Collapsed Ziggurat** (temple_ruin) — the ruin IS the route
+  *Routes:* sunken court, formal stair up the intact face, rubble ramp up the collapsed corner, surviving summit platform
+- **Reentrant Room** (void_glitch) — space that lies about itself
+  *Routes:* three offset copies of one room whose overlaps are crossable, a floor continuing at a wrong angle, a door opening onto its own exterior
+
+## Art provides affordance; the engine owns mechanics
+
+The routes above are **shapes, not rules.** Nothing here invents grapple,
+teleport, boss, Check-placement, local-key, checkpoint or reachability
+behaviour, and no landmark needs an unapproved capability for mandatory
+traversal. Where a ledge is unreachable it is unreachable *by being high* —
+a fact about geometry, not a claim about movement.
+
+## Epsilon is absent on purpose
+
+None of the six is an Epsilon monument. Each answers *what was this place
+for* or *what happened here* from its own construction history. Epsilon is
+an intrusion that arrives; these are the places it would arrive into, and
+they have to read without it. Epsilon green appears nowhere as importance,
+navigation or landmark colour.
 
 ## Sheets
 
 | | |
 |---|---|
-| `A_landmarks_player_scale.png` | all six, same camera, same room, same 1.8 m human reference, with `corridor_height` 3.6 m marked on the back wall |
-| `L_*_silhouette.png` | the shape read — the harder test |
-| `L_*.png` | each landmark lit, three-quarter |
+| `A_landmarks_eye.png` | all six at the game's own 90° FOV from a 1.6 m eye, **standing inside** each place, with a 1.8 m human reference in frame |
+| `B_landmarks_long.png` | the same six at distance, where each is a shape |
 
 ## What the renders changed
 
-- **The cistern's whole idea was invisible.** The first sheet laid one 30 m
-  floor slab over everything, sealing the four terraces underneath, so the
-  one proposal whose point is that it *descends* rendered as a flat frame
-  lying on the ground. The panel now opens the floor around a landmark that
-  declares `cuts_floor`.
-- **`brushkit.frame` stands in the XZ plane.** Used for a horizontal
-  terrace it builds a nine-metre wall on end — a 4 m pit that measured
-  10.6 m tall. The cistern needed a flat-ring helper of its own.
-- **`brushkit.stair` takes per-step run and rise**, not totals. Passing a
-  4.4 m total rise asked for a 4.4 m step and the builder refused it, which
-  is the check doing its job.
-- **A caption claimed a test that had not run.** The shot key is `variants`
-  (an array); written singular it was silently ignored, and six lit frames
-  shipped labelled SILHOUETTE.
-- **The escalator read as one glowing slab.** neon_transit's accent at
-  balustrade size filled the whole flight and hid the steps — the entire
-  point of an escalator. Balustrades are `trim` now.
-- **A blue bell reads as a slab.** The bell wore the theme accent, which in
-  gothic_stone is a cold blue, and a truncated cone on its side has no
-  mouth. It is bronze-valued trim now, with a flared rim.
+- **Six interiors were photographed from outside their own walls.** A hall,
+  an interchange and an undercroft each rendered as a box with a wall facing
+  camera, and the place — the entire deliverable — was behind it. The
+  builder now records `eye_from` / `eye_at` per landmark, because it is the
+  only thing that knows where the hero feature is.
+- **The human reference was offset from the camera blindly** and landed
+  behind it in most panels. It is now placed along the view direction.
+- **A rig lit for an object on a backdrop leaves an interior half-black.**
+  The inside views run more ambient and a stronger key; the long views keep
+  the standard rig, because there the place is a silhouette.
+- **The void room's viewpoint was inside one of its own copies**, so a wall
+  filled the frame instead of the intersection that is the whole idea.
 
-## What art did not do
+## Budget note
 
-No mechanics were invented. Nothing here gates progression, none of it
-requires an unapproved movement capability for mandatory traversal, and no
-Check, hitbox, affordance or objective truth was moved to make a
-composition work. The jobs listed above are things a landmark could
-**support** if the engine chose to — the engine remains the authority.
+All six fit the 2500-triangle `landmark` tier (372–1396), but that tier is
+described as *"an L4 set piece — one per room at most, seen from across
+it"*, which is an OBJECT budget. These are places. The numbers happen to
+fit; the definition does not, and if landmarks become production the tier
+probably wants restating.

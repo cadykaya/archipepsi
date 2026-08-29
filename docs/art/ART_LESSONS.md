@@ -984,6 +984,41 @@ does not save a camera that is on the wrong side.
 > Before framing, ask where the player is standing. A ceiling service is
 > seen from below, a floor grate from above, a doorway from the approach.
 
+### L-70 · The builder knows where to stand; say so in the manifest
+Batch 023's six landmarks are places -- a hall, an interchange, an
+undercroft. The review sheet framed each from outside, solving a camera from
+the asset's bounding box, and rendered six boxes with a wall facing camera.
+Every one was correct: right model, right scale, right lens. The place was
+behind the wall.
+
+A bounding box cannot say where the hero feature is or which way a player
+would face when they met it. The builder can, because it just placed it. It
+now records `eye_from` and `eye_at` per landmark, converted to Godot axes,
+and the sheets read them.
+
+This is L-67 and L-68 again at a larger scale -- the mount height, then the
+text field centre, now the viewpoint. The pattern is worth naming:
+
+> Anything a renderer would otherwise have to GUESS about an asset is a fact
+> the builder already knew and threw away. Put it in the manifest.
+
+### L-71 · A landmark you walk around is a prop at landmark scale
+The first Batch 023 pass built six large objects, each standing alone on a
+floor: a ladle, a bell frame, a shaft. They were reasonable objects, they
+passed every check, and they were the wrong deliverable. The brief was
+"the Zone with the giant ___", and that sentence is a memory of a PLACE.
+
+What was missing was not size. It was the architecture around the object --
+a route at ground level, a route above it, somewhere to look down from, and
+something visible you cannot reach. The second pass kept most of the hero
+shapes and built the place around them, and the difference is not subtle:
+the first sheet reads as a product catalogue, the second as somewhere you
+have been.
+
+> A hero shape plus a floor is an object. A hero shape plus the routes that
+> let you be above, below and around it is a place. Only the second is
+> remembered as a location.
+
 ## Process
 
 ### L-39 · Four batches to lock a style, and every one of them was cheap
