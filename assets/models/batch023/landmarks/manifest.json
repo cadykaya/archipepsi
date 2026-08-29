@@ -1,0 +1,93 @@
+{
+  "lm_bell_frame": {
+    "anchor": "module_floor",
+    "integration_ready": false,
+    "path": "batch023/landmarks/lm_bell_frame.glb",
+    "placement_contract": "none -- see ART_FRONTIER interface req 24",
+    "size": [
+      9.3,
+      5.75,
+      8.479
+    ],
+    "spatial_job": "overhead volume, one story at two heights",
+    "texel_density": 32.0,
+    "theme": "gothic_stone",
+    "triangles": 428
+  },
+  "lm_escalator_bank": {
+    "anchor": "module_floor",
+    "integration_ready": false,
+    "path": "batch023/landmarks/lm_escalator_bank.glb",
+    "placement_contract": "none -- see ART_FRONTIER interface req 24",
+    "size": [
+      7.6,
+      10.6,
+      8.5
+    ],
+    "spatial_job": "level link, circulation between floors",
+    "texel_density": 32.0,
+    "theme": "neon_transit",
+    "triangles": 464
+  },
+  "lm_freight_shaft": {
+    "anchor": "module_floor",
+    "integration_ready": false,
+    "path": "batch023/landmarks/lm_freight_shaft.glb",
+    "placement_contract": "none -- see ART_FRONTIER interface req 24",
+    "size": [
+      9.4,
+      5.5,
+      10.07
+    ],
+    "spatial_job": "vertical shaft, reads at two elevations",
+    "texel_density": 32.0,
+    "theme": "concrete_facility",
+    "triangles": 328
+  },
+  "lm_pour_ladle": {
+    "anchor": "module_floor",
+    "integration_ready": false,
+    "path": "batch023/landmarks/lm_pour_ladle.glb",
+    "placement_contract": "none -- see ART_FRONTIER interface req 24",
+    "size": [
+      6.9,
+      10.773,
+      5.29
+    ],
+    "spatial_job": "curved mass, ramp and mid-room cover",
+    "texel_density": 32.0,
+    "theme": "rusted_industrial",
+    "triangles": 368
+  },
+  "lm_stepped_cistern": {
+    "anchor": "module_floor",
+    "cuts_floor": 10.1,
+    "integration_ready": false,
+    "path": "batch023/landmarks/lm_stepped_cistern.glb",
+    "placement_contract": "none -- see ART_FRONTIER interface req 24",
+    "size": [
+      10.1,
+      10.1,
+      4.7
+    ],
+    "spatial_job": "cut void, descends -- negative not mass",
+    "texel_density": 32.0,
+    "theme": "temple_ruin",
+    "triangles": 492
+  },
+  "lm_unfinished_room": {
+    "anchor": "module_floor",
+    "integration_ready": false,
+    "path": "batch023/landmarks/lm_unfinished_room.glb",
+    "placement_contract": "none -- see ART_FRONTIER interface req 24",
+    "size": [
+      11.696,
+      8.111,
+      6.483
+    ],
+    "spatial_job": "broken construct, the theme admitting it is built",
+    "texel_density": 32.0,
+    "theme": "void_glitch",
+    "triangles": 168
+  }
+}

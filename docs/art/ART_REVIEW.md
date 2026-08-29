@@ -3000,3 +3000,72 @@ The four navigation assets remain **PENDING** the owner's verdict on this
 correction. Nothing in the signage family was redesigned: this is a
 material-semantic correction only.
 
+## Batch 022 — PASS
+
+All four navigation assets approved (owner, 2026-08-29): `nav_blade`,
+`nav_panel`, `nav_chevron`, `nav_hanger`, in all six themes.
+
+The corrected `rusted_industrial` treatment satisfied both halves: the
+universal hazard language is gone from ordinary navigation, and the
+fixtures still unmistakably belong to the theme. The regenerated six-theme
+sheet passed — the family survives all six while preserving the intended
+semantic hierarchy: **neutral field, glyph / form, placement / orientation,
+runtime-owned wording.** Theme treatment remains construction language, not
+navigation meaning.
+
+Interface requirement 23 stands as recorded: engine `trim_mat` maps to
+authored `trim_plain`, engine `hazard_mat` maps to the authored
+hazard-bearing treatment, no Production Engineering change is required
+today, and the warning is preserved that a naive authored-art migration
+mapping `trim` to `trim` would incorrectly put hazard striping on ordinary
+rusted-industrial fixtures.
+
+## Batch 023 — PROPOSAL: theme landmark language
+
+**PENDING, and deliberately not integration-ready.** Full write-up and the
+contract audit: `docs/art/review/batch023/README.md`.
+
+The audit came before any modelling, and it changed the batch. `grep -rn
+landmark` over `godot/`, `bridge/` and `assets/` returns three hits and
+none is an engine concept — `max_triangles.landmark = 2500` and one asset
+exporting under that tier. **Today "landmark" means a polygon ceiling.**
+Epsilon cannot select one, the room shells carry no landmark anchor, and
+nothing reserves a footprint.
+
+The wider finding matters more than the landmark one: **`godot/scripts/`
+references no `.glb` and reads no manifest.** `chamber_builders.gd` builds
+every room from `BoxMesh` primitives, so the entire authored pipeline is
+unwired and the approved room shells sit in exactly the same position as
+these landmarks. Recorded as interface requirement 24; every manifest entry
+carries `integration_ready: false`, and the footprints on the sheets are
+measured rather than reserved.
+
+| landmark | theme | tris | size (m) | spatial job |
+|---|---|---|---|---|
+| `lm_freight_shaft` | concrete_facility | 328 | 9.40 × 5.50 × 10.07 | vertical shaft, reads at two elevations |
+| `lm_pour_ladle` | rusted_industrial | 368 | 6.90 × 10.77 × 5.29 | curved mass, ramp and mid-room cover |
+| `lm_escalator_bank` | neon_transit | 464 | 7.60 × 10.60 × 8.50 | level link, circulation between floors |
+| `lm_bell_frame` | gothic_stone | 428 | 9.30 × 5.75 × 8.48 | overhead volume, one story at two heights |
+| `lm_stepped_cistern` | temple_ruin | 492 | 10.10 × 10.10 × 4.70 | cut void, descends -- negative not mass |
+| `lm_unfinished_room` | void_glitch | 168 | 11.70 × 8.11 × 6.48 | broken construct, the theme admitting it is built |
+
+Each answers *what was built HERE* from its own theme's history, and none
+is an Epsilon monument. The spatial jobs differ on purpose: six variations
+on "big object in the middle of the room" would not punctuate a 20-room
+Zone, so the set runs shaft / curved mass / level link / overhead volume /
+cut void / broken construct — including exactly one that is a hole rather
+than a mass.
+
+Six errors the renders caught, all recorded in the batch README: the
+cistern's terraces sealed under the room floor so the one descending
+proposal read as flat; `brushkit.frame` standing in the XZ plane and
+building a 4 m pit 10.6 m tall; `brushkit.stair` taking per-step rather
+than total rise; a `variants` key written singular so six lit frames
+shipped captioned SILHOUETTE; neon_transit's accent burying the escalator
+steps; and a blue bell that read as a slab.
+
+No mechanics were invented, nothing gates progression, and no Check,
+hitbox, affordance or objective truth was moved for a composition.
+
+Status: **PENDING** — not self-marked.
+
