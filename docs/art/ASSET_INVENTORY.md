@@ -166,7 +166,7 @@ These are the vocabulary everything after them inherits.
 | `arch_column` | L1 | module | 60 | 0.76 × 0.76 × 4.00 | floor | B20 | B20 | PEND  **PASS 2026-08-29 (Batch 020).** |
 | `arch_beam_span` | L1 | module | 76 | 4.00 × 0.44 × 0.80 | ceiling | B20 | B20 | PEND  **PASS 2026-08-29 (Batch 020).** |
 | `arch_vent` | L1 | module | 116 | 0.70 × 0.15 × 1.10 | wall | B21 | B21 | PEND  **PASS 2026-08-29 (Batch 021).** |
-| `arch_duct` | L1 | module | 96 | 0.74 × 4.00 × 0.75 | ceiling | B21 | B21 | PEND  **PENDING — evidence only (Batch 021-R). Asset unchanged; renders found no problem.** |
+| `arch_duct` | L1 | module | 96 | 0.74 × 4.00 × 0.75 | ceiling | B21 | B21 | PEND  **PASS 2026-08-29 (Batch 021-R).** The new evidence resolved the hold; no redesign requested. Batch 021 is now fully PASS. |
 | `arch_catwalk` | L1 | module | 220 | 1.60 × 4.00 × 1.64 | floor | B21 | B21 | PEND  **PASS 2026-08-29 (Batch 021).** |
 | `arch_tunnel_bore` | L1 | module | 156 | 4.68 × 4.00 × 4.03 | module_floor | B21 | B21 | PEND  **PASS 2026-08-29 (Batch 021).** |
 | `arch_secret_alcove` | L1 | module | 68 | 1.80 × 2.40 × 1.54 | module_floor | B21 | B21 | PEND  **PASS 2026-08-29 (Batch 021).** |

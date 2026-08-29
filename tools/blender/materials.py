@@ -378,23 +378,42 @@ def _rust_floor(canvas, surface, theme):
     return canvas
 
 
-def _rust_trim(canvas, surface, theme):
+def _rust_trim_common(canvas, surface, theme, hazard):
+    """Rusted industrial trim, with the hazard band as a parameter.
+
+    `hazard=True` is the approved treatment and is unchanged: it is correct
+    wherever the geometry really is a walkway edge, a machinery boundary, a
+    drop or a warning surface.
+
+    `hazard=False` backs the `trim_plain` role. One material role was
+    carrying two meanings -- "rusted industrial structural trim" AND
+    "danger" -- and Batch 022's six-theme sheet showed what that costs: a
+    navigation sign built from `trim` wore hazard striping in this theme,
+    against the rule that the colour is never decorative in any theme for
+    any reason. Splitting the meanings is the fix; removing the band from
+    real hazards would have been the bug.
+    """
     base, accent, trim = _ramps(theme)
     canvas.rect(0, 0, surface.size, surface.size, trim[1])
     paintkit.tonal_drift(canvas, surface, amount=0.05, cell_metres=1.0)
 
     def cycle_rows(cv, y0, cycle):
-        # A hazard band, because this is the theme where a walkway edge is
-        # the thing most likely to kill you. UNIVERSAL hazard colours, never
-        # the theme's own orange -- a theme-tinted hazard stripe is one the
-        # player has to re-learn in every theme, which is the guess
-        # AUTHORED_CONTENT.md forbids.
+        # UNIVERSAL hazard colours, never the theme's own orange -- a
+        # theme-tinted hazard stripe is one the player has to re-learn in
+        # every theme, which is the guess AUTHORED_CONTENT.md forbids.
         band_h = max(3, cycle // 2)
         band_top = y0 + cycle // 6
-        paintkit.hazard_stripes(cv, 0, band_top, surface.size, band_h,
-                                pal.universal("hazard", 0),
-                                pal.universal("hazard", 3),
-                                pitch=max(3, surface.texels(0.1)))
+        if hazard:
+            paintkit.hazard_stripes(cv, 0, band_top, surface.size, band_h,
+                                    pal.universal("hazard", 0),
+                                    pal.universal("hazard", 3),
+                                    pitch=max(3, surface.texels(0.1)))
+        else:
+            # The same recessed band, in the theme's own darkest trim. The
+            # construction survives -- a plain fixture still reads as this
+            # theme's ironwork -- and only the SEMANTIC marking is gone.
+            cv.rect(0, band_top, surface.size, band_h, trim[0])
+            paintkit.tonal_drift(cv, surface, amount=0.04, cell_metres=0.5)
         cv.hline(band_top - 1, 0, surface.size - 1, trim[0])
         cv.hline(band_top + band_h, 0, surface.size - 1, trim[0])
         cv.hline(y0 + cycle - 1, 0, surface.size - 1, trim[2])
@@ -405,6 +424,14 @@ def _rust_trim(canvas, surface, theme):
     paintkit.edge_wear(canvas, surface, accent[0], surface.texels(0.09),
                        strength=0.95)
     return canvas
+
+
+def _rust_trim(canvas, surface, theme):
+    return _rust_trim_common(canvas, surface, theme, hazard=True)
+
+
+def _rust_trim_plain(canvas, surface, theme):
+    return _rust_trim_common(canvas, surface, theme, hazard=False)
 
 
 def _rust_accent(canvas, surface, theme):
@@ -917,19 +944,40 @@ def _temple_accent(canvas, surface, theme):
     return canvas
 
 
+#: `trim_plain` is theme-owned trim WITHOUT hazard semantics.
+#:
+#: One role was carrying two meanings. `rusted_industrial`'s trim paints a
+#: universal hazard band -- correct wherever the geometry really is a
+#: walkway edge, a machinery boundary, a drop or a warning surface -- and
+#: Batch 022's six-theme sheet showed the cost: a navigation sign built
+#: from `trim` wore hazard striping, against the rule that the colour is
+#: never decorative in any theme for any reason.
+#:
+#: So the meanings split rather than the band being removed. For five
+#: themes `trim_plain` IS the trim treatment, because their trim never
+#: carried hazard semantics in the first place; only `rusted_industrial`
+#: needed a second function. It is not a new colour and not a new semantic
+#: channel: it is trim, minus danger.
+#:
+#: Use it where an object needs theme-owned trim but is not communicating
+#: danger. Approved assets that correctly use the hazard-bearing treatment
+#: are unchanged.
 _TREATMENTS = {
     "concrete_facility": {
+        "trim_plain": _concrete_trim,
         "wall": _concrete_wall, "floor": _concrete_floor,
         "ceiling": _concrete_ceiling,
         "trim": _concrete_trim, "accent": _concrete_accent,
         "wall_ribbed": _concrete_wall_ribbed,
     },
     "rusted_industrial": {
+        "trim_plain": _rust_trim_plain,
         "wall": _rust_wall, "floor": _rust_floor,
         "ceiling": _rust_floor,
         "trim": _rust_trim, "accent": _rust_accent,
     },
     "void_glitch": {
+        "trim_plain": _void_trim,
         "wall": _void_wall, "floor": _void_floor,
         "ceiling": _void_wall,
         "trim": _void_trim, "accent": _void_accent,
@@ -938,16 +986,19 @@ _TREATMENTS = {
     # opened. Each follows the identity §9 of ASSET_INVENTORY.md already
     # recorded for it, rather than one invented here.
     "neon_transit": {
+        "trim_plain": _neon_trim,
         "wall": _neon_wall, "floor": _neon_floor,
         "ceiling": _neon_ceiling,
         "trim": _neon_trim, "accent": _neon_accent,
     },
     "gothic_stone": {
+        "trim_plain": _gothic_trim,
         "wall": _gothic_wall, "floor": _gothic_floor,
         "ceiling": _gothic_ceiling,
         "trim": _gothic_trim, "accent": _gothic_accent,
     },
     "temple_ruin": {
+        "trim_plain": _temple_trim,
         "wall": _temple_wall, "floor": _temple_floor,
         "ceiling": _temple_ceiling,
         "trim": _temple_trim, "accent": _temple_accent,

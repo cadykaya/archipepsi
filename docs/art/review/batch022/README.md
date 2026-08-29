@@ -128,7 +128,7 @@ text is the close confirmation.
 | `D_themes.png` | **all six themes.** Each module is built in its own theme and wears that theme's trim — not one concrete sign re-lit six ways. Camera, lens, lighting and distance identical in every panel, on a neutral backdrop held constant so the signage is the only variable. |
 | `E_family.png` | the four modules at reading distance |
 | `F_collapse.png` | the luminance table above |
-| `G_hazard_collision.png` | **a finding.** In `rusted_industrial` the family inherits hazard striping — see below. |
+| `G_hazard_corrected.png` | **before / after** of the hazard correction in `rusted_industrial`. |
 
 
 ## Batch 022-R — what the six-theme sheet changed
@@ -149,25 +149,60 @@ field and overran the frame at one end. The builder now records
 budget; the scenes read them. L-67 again: a number an asset is designed
 around belongs in its manifest.
 
-### Finding 2 — hazard striping in one theme. NOT FIXED; owner's call.
+### Finding 2 — hazard striping in one theme. CORRECTED.
 
 `materials._rust_trim` paints a **universal** hazard band into the
 `rusted_industrial` trim texture — deliberately and correctly, because in
-that theme a walkway edge is the thing most likely to kill you, and it uses
-`pal.universal("hazard")` so the player does not re-learn it per theme.
+that theme a walkway edge is the thing most likely to kill you. The
+navigation family was built from `trim`, so a sign reading `STAIR C` wore
+striping that means *"this will hurt you"*.
 
-The navigation family is built from `trim`, so in one of six themes a
-wayfinding sign wears hazard stripes. The palette's rule for that colour is
-*"this will hurt you. Never used decoratively, in any theme, for any
-reason."* `G_hazard_collision.png` shows it beside a theme whose trim
-carries no band.
+The owner's ruling: separate the meanings, do **not** remove the band from
+real hazards. `trim_plain` is now a theme-owned trim treatment without
+hazard semantics.
 
-Not fixed unilaterally, because the fix touches a locked rule. Options:
+- For `rusted_industrial`, `_rust_trim_common(..., hazard=False)` keeps the
+  recessed band but paints it in the theme's own darkest trim, so the
+  ironwork, wear and value relationships survive and only the semantic
+  marking is gone.
+- For the other five themes `trim_plain` **is** their existing trim
+  function — their trim never carried hazard semantics.
+- It is not a new colour and not a new semantic channel. It is theme trim,
+  minus danger.
+- The hazard-bearing treatment is unchanged, and approved assets that use
+  it correctly were not touched.
 
-1. **Add a `trim_plain` role** — the same per-theme trim without the
-   walkway-edge safety band, for fixtures that are not walkway edges.
-   Additive, no approved asset changes, the family keeps theme-owned trim,
-   collision gone. **Recommended.**
-2. **Build the family from `wall`** — neutral in all six, but the signs
-   would read as building fabric rather than as fixtures.
-3. **Accept it** — rejected here; it breaks a locked rule.
+`G_hazard_corrected.png` is the before/after. The "before" panel is read
+out of git rather than reconstructed, so the comparison is against the
+asset that actually shipped.
+
+**Regenerating that panel.** A hazard-trim navigation sign is a rejected
+variant and is deliberately not shipped as an asset, so the before half is
+staged from git when the sheet is rebuilt:
+
+```
+mkdir -p assets/models/batch022/navigation/_before
+git show 89b6184:assets/models/batch022/navigation/rusted_industrial/nav_blade.glb \
+  > assets/models/batch022/navigation/_before/nav_blade.glb
+git show 89b6184:assets/models/batch022/navigation/rusted_industrial/nav_chevron.glb \
+  > assets/models/batch022/navigation/_before/nav_chevron.glb
+tools/nav_language.sh
+rm -rf assets/models/batch022/navigation/_before
+```
+
+Without the staging the sheet still renders, minus that half, rather than
+the tool breaking on a fresh checkout.
+
+### The integration seam
+
+Checking the engine before assuming a contract change was needed turned up
+the reverse of the expected problem. `generation/theme_materials.gd`
+**already** separates them: `trim_mat` is `("trim", "panel")` and
+`hazard_mat` is `("accent", "hazard")`. The runtime's `trim` never carried
+a hazard band; the conflation was art-side only.
+
+No engine change was made and none is needed today. The seam matters at
+migration, because the role names do not map one to one: engine `trim_mat`
+corresponds to art **`trim_plain`**. A migration mapping `trim` to `trim`
+would put hazard striping on every rusted-industrial fixture. Recorded as
+interface requirement 23.

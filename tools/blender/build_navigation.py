@@ -105,6 +105,13 @@ DOOR_H = DIM["door_height"]
 #: architecture's 4 m tile and simply samples it twice as finely: same
 #: world scale, prop tier. Changing the tile instead would break tiling
 #: against the wall the sign is bolted to.
+#: Theme-owned trim WITHOUT hazard semantics. The family is a wayfinding
+#: fixture, not a walkway edge, and `rusted_industrial`'s hazard-bearing
+#: trim made it wear stripes that mean "this will hurt you" -- the one
+#: thing a sign saying STAIR C must not say. `materials.trim_plain` keeps
+#: the theme's ironwork and drops only the semantic marking.
+TRIM_ROLE = "trim_plain"
+
 PROP_DENSITY = pal.budgets()["texel_density"]["prop"]["target"]
 PROP_SIZE = 256
 PROP_METRES = PROP_SIZE / float(PROP_DENSITY)
@@ -233,17 +240,17 @@ def nav_blade():
                              (0.0, 0.0, mid)), name),
         _paint(brushkit.block("%s_cap" % name,
                               (span + 0.08, PLATE + 0.06, 0.07),
-                              (0.0, 0.0, head - 0.035)), name, "trim"),
+                              (0.0, 0.0, head - 0.035)), name, TRIM_ROLE),
         _paint(brushkit.block("%s_sill" % name,
                               (span + 0.08, PLATE + 0.06, 0.07),
                               (0.0, 0.0, head - height + 0.035)),
-               name, "trim"),
+               name, TRIM_ROLE),
         _paint(brushkit.block("%s_arm" % name, (0.34, 0.16, 0.16),
                               (-(span / 2.0 + 0.17), 0.0, head + 0.08)),
-               name, "trim"),
+               name, TRIM_ROLE),
         _paint(brushkit.block("%s_boss" % name, (0.14, 0.30, 0.30),
                               (-(span / 2.0 + 0.28), 0.0, mid)),
-               name, "trim"),
+               name, TRIM_ROLE),
     ]
     return common.join(parts, "nav_blade")
 
@@ -266,7 +273,7 @@ def nav_panel():
     z = 1.78
     parts = [
         _paint(brushkit.block("%s_back" % name, (width, PLATE, height),
-                              (0.0, 0.0, z)), name, "trim"),
+                              (0.0, 0.0, z)), name, TRIM_ROLE),
         _face(brushkit.block("%s_field" % name,
                              (width - 0.13, 0.10, height - 0.13),
                              (0.0, PLATE / 2.0 + 0.05, z)), name),
@@ -275,10 +282,10 @@ def nav_panel():
         parts.append(_paint(brushkit.block(
             "%s_stile_%d" % (name, int(side)),
             (0.07, 0.13, height + 0.12),
-            (side * (width / 2.0 - 0.035), 0.0, z)), name, "trim"))
+            (side * (width / 2.0 - 0.035), 0.0, z)), name, TRIM_ROLE))
     parts.append(_paint(brushkit.block(
         "%s_hood" % name, (width + 0.10, 0.19, 0.07),
-        (0.0, 0.0, z + height / 2.0 + 0.035)), name, "trim"))
+        (0.0, 0.0, z + height / 2.0 + 0.035)), name, TRIM_ROLE))
     return common.join(parts, "nav_panel")
 
 
@@ -313,16 +320,16 @@ def nav_chevron():
     width, height = 0.44, 0.36
     parts = [
         _paint(brushkit.block("%s_plate" % name, (width, PLATE, height),
-                              (0.0, 0.0, 0.0)), name, "trim"),
+                              (0.0, 0.0, 0.0)), name, TRIM_ROLE),
         _face(brushkit.block("%s_field" % name,
                              (width - 0.08, 0.09, height - 0.10),
                              (0.0, PLATE / 2.0 + 0.045, 0.0)), name),
         _paint(brushkit.block("%s_cap" % name,
                               (width + 0.07, PLATE + 0.05, 0.06),
-                              (0.0, 0.0, height / 2.0 - 0.03)), name, "trim"),
+                              (0.0, 0.0, height / 2.0 - 0.03)), name, TRIM_ROLE),
         _paint(brushkit.block("%s_sill" % name,
                               (width + 0.07, PLATE + 0.05, 0.06),
-                              (0.0, 0.0, -height / 2.0 + 0.03)), name, "trim"),
+                              (0.0, 0.0, -height / 2.0 + 0.03)), name, TRIM_ROLE),
     ]
     parts += [_ink(p, name) for p in _arrow(
         "%s_ar" % name, (0.0, PLATE / 2.0 + 0.10, 0.0), span=0.22,
@@ -349,20 +356,20 @@ def nav_hanger():
                              (0.0, 0.0, mid)), name),
         _paint(brushkit.block("%s_cap" % name,
                               (span + 0.08, PLATE + 0.06, 0.07),
-                              (0.0, 0.0, top - 0.035)), name, "trim"),
+                              (0.0, 0.0, top - 0.035)), name, TRIM_ROLE),
         _paint(brushkit.block("%s_sill" % name,
                               (span + 0.08, PLATE + 0.06, 0.07),
                               (0.0, 0.0, top - height + 0.035)),
-               name, "trim"),
+               name, TRIM_ROLE),
     ]
     for side in (-1.0, 1.0):
         x = side * (span / 2.0 - 0.22)
         parts.append(_paint(brushkit.block(
             "%s_rod_%d" % (name, int(side)), (0.05, 0.05, 0.62),
-            (x, 0.0, top + 0.31)), name, "trim"))
+            (x, 0.0, top + 0.31)), name, TRIM_ROLE))
         parts.append(_paint(brushkit.block(
             "%s_boss_%d" % (name, int(side)), (0.13, 0.13, 0.10),
-            (x, 0.0, top + 0.05)), name, "trim"))
+            (x, 0.0, top + 0.05)), name, TRIM_ROLE))
     return common.join(parts, "nav_hanger")
 
 

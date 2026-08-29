@@ -2931,3 +2931,72 @@ The four navigation assets stay PENDING on this.
 
 Status: **PENDING** — not self-marked.
 
+## Batch 021-R — PASS, and Batch 021 is now fully PASS
+
+`arch_duct` PASS (owner, 2026-08-29). The new evidence resolved the hold.
+`R_duct_detail` demonstrates the rectangular service-duct silhouette, the
+end and mid-run flanges, the hangers and straps, and the ceiling-service
+construction language; `R_duct_run` demonstrates that repeated 4.0 m
+sections compose cleanly on the shared ceiling grid, that the join lands on
+a flange rather than a gap, and that the attachment reads from the player's
+side. No redesign requested, and the asset was never changed.
+
+## Batch 022-R — six-theme evidence accepted; the hazard correction
+
+The six-theme requirement is **satisfied**: the family survives all six,
+the neutral field and glyph remain the semantic carrier, each theme still
+contributes structural treatment, and the corrected text centring reads.
+
+The `rusted_industrial` render exposed one real semantic collision, and the
+owner ruled on it.
+
+### `trim_plain` — theme trim without hazard semantics
+
+One material role was carrying two meanings: *rusted industrial structural
+trim* and *danger*. `materials._rust_trim` paints a universal hazard band,
+which is correct wherever the geometry really is a walkway edge, a
+machinery boundary, a drop or a warning surface — and wrong on a sign that
+says `STAIR C`.
+
+The fix separates the meanings rather than removing the band.
+`_rust_trim_common(..., hazard)` now backs two roles: `trim` keeps the band
+and is **unchanged**, and `trim_plain` replaces it with the same recessed
+band in the theme's own darkest trim, so the construction, wear and value
+relationships survive and only the semantic marking is gone.
+
+For the other five themes `trim_plain` **is** their existing trim function,
+because their trim never carried hazard semantics in the first place. Only
+`rusted_industrial` needed a second treatment.
+
+It is not a new navigation colour and not a new semantic gameplay channel.
+It is theme trim, minus danger. Approved assets that correctly use the
+hazard-bearing treatment are untouched.
+
+`G_hazard_corrected.png` is the before/after, with the "before" read out of
+git so the comparison is the shipped asset rather than a reconstruction.
+Both halves of the requirement hold: the hazard language is gone, and the
+fixture still reads as rusted industrial rather than as a generic sign that
+lost its theme.
+
+### The integration seam, recorded rather than resolved
+
+Checking the engine before assuming a contract change was needed turned up
+the reverse of the expected problem. `generation/theme_materials.gd`
+**already** separates the two: `trim_mat(theme)` is
+`_material(theme, "trim", "panel")` and `hazard_mat(theme)` is
+`_material(theme, "accent", "hazard")`. The runtime's `trim` has never
+carried a hazard band — the conflation was art-side only.
+
+So no engine change was made and none is needed today; `trim_plain` lives
+entirely in the art authoring pipeline. The seam matters when the authored
+materials replace the procedural ones, because the role names do not map
+one to one: engine `trim_mat` corresponds to art **`trim_plain`**, and
+art's hazard-bearing `trim` corresponds to where the engine would call
+`hazard_mat`. A migration that maps `trim` to `trim` will put hazard
+striping on every rusted-industrial fixture. Recorded as interface
+requirement 23 for Production Engineering.
+
+The four navigation assets remain **PENDING** the owner's verdict on this
+correction. Nothing in the signage family was redesigned: this is a
+material-semantic correction only.
+

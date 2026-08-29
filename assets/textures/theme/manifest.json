@@ -23,6 +23,12 @@
     "texels_per_metre": 32,
     "texture": "theme/concrete_facility_trim.png"
   },
+  "concrete_facility/trim_plain": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/concrete_facility_trim_plain.png"
+  },
   "concrete_facility/wall": {
     "covers_m": 4.0,
     "size_px": 128,
@@ -59,6 +65,12 @@
     "texels_per_metre": 32,
     "texture": "theme/gothic_stone_trim.png"
   },
+  "gothic_stone/trim_plain": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/gothic_stone_trim_plain.png"
+  },
   "gothic_stone/wall": {
     "covers_m": 4.0,
     "size_px": 128,
@@ -88,6 +100,12 @@
     "size_px": 128,
     "texels_per_metre": 32,
     "texture": "theme/neon_transit_trim.png"
+  },
+  "neon_transit/trim_plain": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/neon_transit_trim_plain.png"
   },
   "neon_transit/wall": {
     "covers_m": 4.0,
@@ -119,6 +137,12 @@
     "texels_per_metre": 32,
     "texture": "theme/rusted_industrial_trim.png"
   },
+  "rusted_industrial/trim_plain": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/rusted_industrial_trim_plain.png"
+  },
   "rusted_industrial/wall": {
     "covers_m": 4.0,
     "size_px": 128,
@@ -149,6 +173,12 @@
     "texels_per_metre": 32,
     "texture": "theme/temple_ruin_trim.png"
   },
+  "temple_ruin/trim_plain": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/temple_ruin_trim_plain.png"
+  },
   "temple_ruin/wall": {
     "covers_m": 4.0,
     "size_px": 128,
@@ -178,6 +208,12 @@
     "size_px": 128,
     "texels_per_metre": 32,
     "texture": "theme/void_glitch_trim.png"
+  },
+  "void_glitch/trim_plain": {
+    "covers_m": 4.0,
+    "size_px": 128,
+    "texels_per_metre": 32,
+    "texture": "theme/void_glitch_trim_plain.png"
   },
   "void_glitch/wall": {
     "covers_m": 4.0,

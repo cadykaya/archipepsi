@@ -664,66 +664,95 @@ func _swatches() -> void:
 			Vector2i(14, h - 24), Color(0.45, 0.72, 0.68))
 	img.save_png("%s/F_collapse.png" % _out)
 
-## G -- THE COLLISION THE SIX-THEME SHEET FOUND.
+## G -- THE HAZARD CORRECTION, BEFORE AND AFTER.
 ##
-## `materials._rust_trim` paints a UNIVERSAL hazard band into the
-## `rusted_industrial` trim texture, deliberately and correctly: in that
-## theme a walkway edge is the thing most likely to kill you, and the band
-## uses `pal.universal("hazard")` rather than the theme's own orange so the
-## player does not have to re-learn it per theme.
+## The six-theme sheet found a real collision. `materials._rust_trim` paints
+## a UNIVERSAL hazard band into the `rusted_industrial` trim texture --
+## correctly, because in that theme a walkway edge is the thing most likely
+## to kill you. But the navigation family was built from `trim`, so a sign
+## reading STAIR C wore striping that means "this will hurt you".
 ##
-## The navigation family is built from `trim`. So in one of six themes a
-## wayfinding sign inherits hazard striping -- and the palette's rule for
-## that colour is "this will hurt you. Never used decoratively, in any
-## theme, for any reason."
+## The fix splits the meanings rather than removing the band: `trim_plain`
+## is theme-owned trim WITHOUT hazard semantics, and the hazard-bearing
+## treatment is untouched for the walkway edges, machinery boundaries,
+## drops and warning surfaces where it is correct.
 ##
-## Shown at reading distance beside the same module in a theme whose trim
-## carries no band, so the difference is the finding rather than an artefact
-## of the crop.
+## Left is the shipped asset before the fix, read out of git so the
+## comparison is the real thing rather than a reconstruction. Right is the
+## same module on `trim_plain`. What has to be true of the right-hand panel
+## is BOTH halves of the owner's requirement: the hazard language is gone,
+## and the fixture still reads as rusted industrial rather than as a
+## generic grey sign that lost its theme.
 func _collision() -> void:
-	var pair := [["concrete_facility", "CONCRETE FACILITY - TRIM CARRIES NO BAND"],
-			["rusted_industrial", "RUSTED INDUSTRIAL - TRIM CARRIES THE HAZARD BAND"]]
-	var cell := Vector2i(740, 420)
+	var cell := Vector2i(740, 430)
 	var sheet := Image.create(cell.x * 2, cell.y + 108, false,
 			Image.FORMAT_RGB8)
 	sheet.fill(Color(0.07, 0.08, 0.10))
 
-	for i in pair.size():
+	var panels := [
+		["_before", "BEFORE - trim - HAZARD BAND ON A WAYFINDING SIGN"],
+		["rusted_industrial", "AFTER - trim_plain - STILL RUSTED INDUSTRIAL, NO HAZARD LANGUAGE"],
+	]
+	for i in panels.size():
 		var vp := ArtBench.make_viewport(self, cell, 0.30)
 		var root := Node3D.new()
 		vp.add_child(root)
 		ArtBench.add_lights(root, 1.3)
 		_slab(root, Vector3(6, 0.2, 6), Vector3(0, -0.1, 0), Color(0.30, 0.31, 0.34))
 		_slab(root, Vector3(6, 4.2, 0.4), Vector3(0, 2.1, 1.5), Color(0.40, 0.41, 0.44))
-		var theme: String = pair[i][0]
+		var theme: String = panels[i][0]
 		var blade := _glb("nav_blade", theme)
 		if blade == null:
+			# The BEFORE panel is a hazard-trim sign, which is a REJECTED
+			# variant and is deliberately not shipped as an asset. It is
+			# staged from git when this sheet is regenerated:
+			#   git show <pre-fix commit>:assets/models/batch022/navigation/
+			#     rusted_industrial/nav_blade.glb > .../_before/nav_blade.glb
+			# Without it the sheet still renders, minus that half, rather
+			# than the tool breaking on a fresh checkout.
+			ArtBench.label(sheet, "BEFORE PANEL NOT STAGED - SEE README FOR HOW TO REGENERATE",
+					Vector2i(i * cell.x + 10, 108 + cell.y / 2), Color(0.85, 0.6, 0.4))
 			vp.queue_free()
-			return
+			await process_frame
+			continue
 		root.add_child(blade)
-		blade.position = Vector3(0, 0, 1.15)
-		_text(root, "STAIR C", Vector3(_face_x(blade, "nav_blade", theme),
-				_top("nav_blade", 2.72, theme) - 0.28, 1.09), 180.0, 24)
+		blade.position = Vector3(-0.30, 0, 1.15)
+		# The pre-fix copy has no manifest entry of its own; its geometry is
+		# identical, so the corrected module's field offset applies to both.
+		var bt := _top("nav_blade", 2.72, "rusted_industrial") - 0.28
+		_text(root, "STAIR C",
+				Vector3(-0.30 + _face_offset(), bt, 1.09), 180.0, 24)
+		var arrow := _glb("nav_chevron", theme)
+		if arrow != null:
+			root.add_child(arrow)
+			var ab: AABB = ArtBench.aabb_of(arrow)
+			arrow.position = Vector3(-0.30 + 0.585 + ab.size.x * 0.5, bt, 1.15)
 		var cam := Camera3D.new()
-		cam.fov = 22.0
+		cam.fov = 26.0
 		cam.current = true
 		vp.add_child(cam)
-		cam.look_at_from_position(Vector3(0.0, 2.48, -3.4),
-				Vector3(0.0, 2.44, 1.2), Vector3.UP)
+		cam.look_at_from_position(Vector3(0.1, 2.46, -3.6),
+				Vector3(0.1, 2.42, 1.2), Vector3.UP)
 		var img: Image = await _capture(vp, "")
 		sheet.blit_rect(img, Rect2i(Vector2i.ZERO, cell),
 				Vector2i(i * cell.x, 108))
-		ArtBench.label(sheet, str(pair[i][1]),
-				Vector2i(i * cell.x + 10, 118), Color(1.0, 0.86, 0.42))
+		ArtBench.label(sheet, str(panels[i][1]),
+				Vector2i(i * cell.x + 10, 118),
+				Color(1.0, 0.55, 0.30) if i == 0 else Color(0.55, 0.95, 0.65))
 		vp.queue_free()
 		await process_frame
 
-	ArtBench.label(sheet, "G  FINDING - THE NAVIGATION FAMILY INHERITS HAZARD STRIPING IN ONE THEME",
-			Vector2i(12, 16), Color(1.0, 0.55, 0.30))
-	ArtBench.label(sheet, "materials._rust_trim PAINTS A UNIVERSAL HAZARD BAND INTO rusted_industrial TRIM - CORRECTLY, FOR WALKWAY EDGES",
+	ArtBench.label(sheet, "G  HAZARD CORRECTION - trim_plain APPLIED TO THE NAVIGATION FAMILY",
+			Vector2i(12, 16), Color(1.0, 0.83, 0.36))
+	ArtBench.label(sheet, "ONE ROLE CARRIED TWO MEANINGS: RUSTED INDUSTRIAL STRUCTURAL TRIM, AND DANGER. THEY ARE NOW SEPARABLE.",
 			Vector2i(12, 42), Color(0.72, 0.76, 0.80))
-	ArtBench.label(sheet, "THE NAV FAMILY IS BUILT FROM trim, SO IT PICKS THE BAND UP. HAZARD IS 'NEVER DECORATIVE, IN ANY THEME, FOR ANY REASON'.",
+	ArtBench.label(sheet, "THE HAZARD-BEARING TREATMENT IS UNCHANGED FOR WALKWAY EDGES, MACHINERY BOUNDS, DROPS AND WARNING SURFACES.",
 			Vector2i(12, 66), Color(0.72, 0.76, 0.80))
-	ArtBench.label(sheet, "NOT FIXED UNILATERALLY - THE FIX TOUCHES A LOCKED RULE. SEE README.",
+	ArtBench.label(sheet, "NOT A NEW COLOUR AND NOT A NEW SEMANTIC CHANNEL - IT IS THEME TRIM, MINUS DANGER.",
 			Vector2i(12, 90), Color(0.45, 0.72, 0.68))
-	sheet.save_png("%s/G_hazard_collision.png" % _out)
+	sheet.save_png("%s/G_hazard_corrected.png" % _out)
+
+## The blade's text field offset, shared by the before/after panels.
+func _face_offset() -> float:
+	return float(_manifest().get("nav_blade_rusted_industrial", {}).get(
+			"face_centre_x_m", 0.0))
