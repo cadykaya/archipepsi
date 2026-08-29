@@ -3227,3 +3227,51 @@ opposite acts. And Questionable Goods first came back as clean pale sheet
 steel — a *new* counter, the opposite of the brief.
 
 Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 026 — PROPOSAL: the checkpoint / re-entry station
+
+**PENDING.** Visual language only — no spawn, healing, fast-travel or save
+rule is decided. Full working in `review/batch026/README.md`.
+
+**The audit.** `player.gd` carries `var _spawn_transform: Transform3D` and
+`func set_spawn(xform)`, plus `RESPAWN_DELAY = 1.5` and a SIGNAL LOST
+overlay. That is one slot holding one transform **with no identity**: no
+checkpoint entity, no state, and nowhere to record which station is current.
+Of the three states below, **zero have a runtime representation today.**
+Interface requirement 27.
+
+**The colour answer is no colour.** The brief forbids confusion with Check
+cyan, Epsilon green and hazard orange; every saturated family in the palette
+is already spoken for, and Batch 022 settled that the answer is not to spend
+a new one. So the checkpoint is **the one important object in the room that
+does not glow** — read by posture first, then value, never hue.
+
+| asset | state | tris | size (m) | emits |
+|---|---|---|---|---|
+| `checkpoint_inactive` | folded flat into the pad, dark | 200 | 2.51 × 2.51 × 0.41 | no |
+| `checkpoint_activated` | raised, cross-arms out, bands high | 308 | 2.51 × 2.51 × 3.08 | no |
+| `checkpoint_anchor` | canopy deployed, one lamp under it | 448 | 2.51 × 2.51 × 3.08 | one achromatic lamp |
+
+Bands are **horizontal** because hazard marking is diagonal: the two must
+differ in geometry, not only hue, so they stay distinct in grey scale. The
+pad rim also rises with the state, so a player looking at their feet gets an
+answer. Universal rather than themed — system furniture like the Check.
+
+Exported at the `interactable` tier (900), not `prop` (300), after the first
+build failed the prop ceiling at 308. The rule to delete geometry rather than
+raise a ceiling applies to an asset already in the right tier; a 2.5 m
+station the player activates is an interactable, and trimming a survey mast
+to a hand-prop budget would have fixed a labelling mistake with the wrong
+tool.
+
+### What sheet B found that it was not looking for
+
+The luma row shows **Check cyan and Epsilon green collapsing to nearly the
+same value**, hazard orange only slightly darker. Stated as an observation,
+not a finding: those neighbours are crude lit boxes standing in for the three
+families, so it is evidence about the hues and not about the Check or the
+Epsilon installation as built. Whether it matters is the owner's call.
+
+Status: **PENDING** — not self-marked.
