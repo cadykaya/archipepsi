@@ -208,13 +208,35 @@ Worth knowing before anyone reasons from the constant: "70% of secrets
 to see the ending" is what the number says, not what the control flow
 does.
 
-### `holds_locations` is the hinge, and the two directives pull it apart
+### `holds_locations` is the hinge — measured, not read
 
 `_held_location_ids()` counts only Zones where `holds_locations`, which
-is `state not in ("COMPLETE", "ABANDONED")` (`protocol.py:191-193`). **A
-terminal Zone releases its unclaimed Checks back into the candidate
-pool.** Today that never bites, because a Zone only reaches COMPLETE
-when every allocated Check is confirmed.
+is `state not in ("COMPLETE", "ABANDONED")` (`protocol.py:191-193`).
+Reading that, a terminal Zone should release its unclaimed Checks back
+into the candidate pool. A disposable proof generated a **real** Zone
+through the normal path at production scale and flipped its state:
+
+| State | `holds_locations` | Unclaimed Checks back in the pool |
+| --- | --- | --- |
+| `ACTIVE` | True | **0 of 15** |
+| `COMPLETE` | False | **15 of 15** |
+
+(`zone_001`, 23 chambers, 15 Checks, none claimed. `ABANDONED` behaves
+as `COMPLETE`.) So it is confirmed: **a terminal Zone hands every
+unclaimed Check straight back to the allocator.** Today that never bites,
+because a Zone only reaches COMPLETE when every allocated Check is
+confirmed.
+
+Two things the proof turned up on the way, both load-bearing for this
+design:
+
+- **`ZoneRecord` has no per-Zone confirmation field at all.** "5 of 15
+  claimed *in this Zone*" is not a representable fact today; it is
+  derivable as `set(allocated) & ap.checked`. That is the right shape and
+  matches §6 — EXHAUSTED wants to be a query, and a query is what exists.
+- **`CampaignSave` is frozen**, so none of this can change except through
+  a validated transition. The boundary is doing its job; the experiment
+  had to swap a copy in.
 
 Under CLEARED ≠ EXHAUSTED, that one predicate decides the whole design:
 

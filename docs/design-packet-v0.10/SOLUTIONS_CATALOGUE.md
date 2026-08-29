@@ -414,9 +414,14 @@ and deserves its own sabotage proof.
    sounds and keeps the archive as the single source of truth.
    **Recommended.**
 2. **Zones dissolve; Checks return.** Leaving an unfinished Zone returns
-   its unclaimed ids to the allocator pool. Cheapest, fully satisfies
-   `## 0`, and loses the metroidvania promise entirely — the ledge you
-   could not reach does not exist any more.
+   its unclaimed ids to the allocator pool. **This is not something to
+   build — it is what the allocator already does**: a disposable proof
+   generated a real Zone and flipped its state, and a terminal Zone hands
+   back 15 of 15 unclaimed Checks while a non-terminal one hands back 0
+   (`RESEARCH_MEMO.md` §6b). So this variant is "make CLEARED terminal"
+   and nothing else. Cheapest, fully satisfies `## 0`, and loses the
+   metroidvania promise entirely — the ledge you could not reach does not
+   exist any more; that Check simply turns up in a later Zone.
 3. **Zones persist only while unfinished.** A hybrid: a Zone stays
    re-enterable until exhausted, then dissolves. Bounded storage,
    keeps the promise. **Good fallback if 1's storage is a problem.**
