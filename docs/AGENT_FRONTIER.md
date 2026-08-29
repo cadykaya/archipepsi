@@ -47,19 +47,45 @@ assets.
 
 ## Completed: v0.8 Echoes 2.0 (S1–S10) and the pre-playtest pass
 
+## Art branch — canonical
+
+The single authoritative art lane is **`claude/archipepsi-art`**, and
+**PR #5** (base `claude/archipepsi-build-inzshp`) is its canonical PR —
+that base is what keeps the art diff properly scoped.
+
+`claude/archipepsi-art-setup-9qsbss` was a temporary setup branch. It was a
+clean linear continuation and has been **fast-forwarded into
+`claude/archipepsi-art`** (merge base 649a6cc, no force, no history
+rewritten, no commits lost). PR #6, opened from it against `main`, is
+**superseded** — it showed the whole stacked project history rather than an
+art diff. Do not maintain two active art branches.
+
 ## Art batches awaiting the owner
-**020, 021 and 022 are all PENDING.** Art does not mark its own work.
+**020, 021 and 022 all remain PENDING.** Art does not mark its own work.
+Batch 022's four assets are NOT marked PASS.
 
-Batch 022 is the navigation-language proposal (`docs/art/review/batch022`).
-It carries two decisions for the owner:
+Owner decisions recorded 2026-08-29:
 
-- **`objective_marker`: recommend STRIKE.** The HUD already answers which
-  objective, how far, what state, and where the exit is. The one case with
-  an unmarked world position — `platform_to_goal`'s goal area — sits 2.0 m
-  from that chamber's `reward_position` on the same ledge, so a player
-  walking to the waypointed Check crosses it anyway.
-- **`signage_module`: recommend it become the four-module family** in that
-  batch rather than one object.
+- **`objective_marker` — STRUCK.** No *current* objective type requires a
+  world marker: `reach_reward` is marked by the Check, `kill_all` has no
+  destination object, and `platform_to_goal`'s goal area sits ~2 m from
+  `reward_position` and is crossed on the way to the waypointed Check.
+  **Not a permanent prohibition** — a future objective with a destination
+  that is unrepresented, not naturally crossed, and genuinely helped by
+  world-side marking may reopen it. No speculative asset is kept meanwhile.
+- **`signage_module` — architecture accepted** as the four-module family
+  (`nav_blade`, `nav_panel`, `nav_chevron`, `nav_hanger`). Direction stays
+  placement/runtime truth; wording stays runtime-owned. The assets are
+  still pending visual review.
+
+**Theme landmarks are NOT released yet.** The direction is authorized in
+principle, but Batch 023 does not open until 020/021/022 are reviewed and
+the owner explicitly releases the landmark phase.
+
+**Heartbeat may no-op while waiting.** Do not invent filler production.
+Continue only for CI breakage, reproducibility/staleness failures, branch
+or PR bookkeeping, or an objective correctness issue in already-built
+approved work.
 
 Resolved 2026-08-28: `arch_affordance_socket` is **struck** (interface req
 22). No universal affordance mount; the footprint stays an engineering

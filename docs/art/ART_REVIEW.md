@@ -2772,3 +2772,30 @@ than asserted:
   one object.
 
 Status: **PENDING** — not self-marked.
+
+### Owner decisions on the two structural questions, 2026-08-29
+
+Both recommendations were accepted. The **assets themselves are still
+PENDING** and are not marked PASS; what follows settles the vocabulary, not
+the visual review.
+
+**`objective_marker` — STRUCK from the current required art vocabulary.**
+The reasoning was accepted as given: the Check is already the world marker
+for `reach_reward`, `kill_all` has no destination object to mark, and
+`platform_to_goal`'s goal area is crossed naturally on the approach to the
+waypointed Check about 2 m away. A separate marker would duplicate the HUD
+waypoint, the Check, or both.
+
+The scope matters and is recorded so it is not over-read later: **this is
+not a permanent prohibition on world objective markers.** It says no
+*current* objective type requires one. A future objective introducing a
+destination that is not represented by an existing world object, not
+naturally crossed while following the HUD, and genuinely improved by
+world-side marking may reopen the question deliberately. No speculative
+asset is kept in the inventory against that possibility.
+
+**`signage_module` — the four-module family is accepted** as the
+architecture: `nav_blade`, `nav_panel`, `nav_chevron`, `nav_hanger`.
+Direction remains placement/runtime truth rather than baked into the
+primary sign mesh, and runtime wording remains runtime-owned.
+
