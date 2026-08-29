@@ -11,6 +11,8 @@ On autonomous wake/heartbeat:
 
 Do **not** reread all of `NEXT_STEPS.md`, `IMPLEMENTATION_DECISIONS.md`, or the full design packet on every wake-up. Read those only when the current task needs a specific fact or section.
 
+**Pause the heartbeat when there is no work; resume it when there is a task.** A heartbeat is for carrying work across a gap, not for proving the session is alive. Once the authorised list is done and CI is green, pause the trigger rather than re-arming it into another no-op — and say so, so the next task starts by turning it back on. Re-arm while work is genuinely outstanding: unfinished frontier items, a red PR, something waiting on an external result.
+
 ## Token discipline
 - Search first (`rg -n ...`), then read only relevant line ranges.
 - Do not dump whole source files, documents, diffs, or logs into context unless genuinely necessary.
