@@ -2,29 +2,70 @@
 
 **Status: PENDING. Proposal scale, not runtime truth. Nothing is integration-ready.**
 
-## The contract audit came first
+## The contract audit — CORRECTED 2026-08-29
 
-The instruction was to find the contract rather than invent one. There isn't
-one, and the search is short enough to reproduce:
+> **The first version of this audit was run against the wrong branch.** It
+> searched `claude/archipepsi-build-inzshp`, which is the art lane's base and
+> is 73 commits behind Production. Production had already built the authored
+> content pipeline. The original wording is struck below; the corrected
+> finding is narrower and more useful.
 
-```
-grep -rn "landmark" godot/ bridge/ assets/ tools/
-```
+~~Three hits, none an engine concept. Today "landmark" means a polygon
+ceiling. `godot/scripts/` references no `.glb` and reads no manifest; the
+whole authored pipeline is unwired.~~ **All four of those statements are
+false.** Audited read-only against
+`claude/archipepsi-echoes-continuation-b1adno`:
 
-Three hits, none an engine concept: `max_triangles.landmark = 2500` in the
-derived budgets, the same number in `art_budgets.json`, and one asset
-exporting under that tier. **Today "landmark" means a polygon ceiling.**
+`ContentRegistry` (321 lines) loads JSON manifests from
+`res://content/registry/`, and validates category, level, sockets,
+footprints, scene existence, fallback chains and cycles.
+`ContentInstantiator` routes every chamber build as *authored scene if
+available -> validated fallback*, reading the `shell_id` Epsilon chose.
+`schemas/content.py` (489 lines) is the shape authority. **`landmark` is a
+real registered category at L4** in both languages, pinned together by
+`test_content_registry.py`.
 
-| Question | Answer |
-|---|---|
-| Does "landmark" have a runtime semantic contract? | **No.** A budget tier only. |
-| Can Epsilon select one? | **No.** `AUTHORED_CONTENT.md` lists *Reusable landmarks and hero props* as a category it would select from; nothing implements it. |
-| Placement bounds / anchors / footprints? | **None.** Room shells carry `check_anchor`, `enemy_anchors`, `affordance_anchor`, `bay_anchors`, `bounds`, `interior`, `sightline` — and no landmark anchor. |
-| Standalone object, shell feature, chamber property, or art concept? | **Art/design concept only.** |
-| Does Godot have an integration seam? | **No — and not only for landmarks.** `godot/scripts/` references no `.glb` and reads no manifest; `chamber_builders.gd` builds every room from `BoxMesh`. The whole authored pipeline is unwired, and the approved room shells sit in the same position. |
+### One name, two unrelated meanings
 
-Recorded as **interface requirement 24**. Every manifest entry carries
-`integration_ready: false` and `scale_basis: "proposal scale"`.
+Worth naming before anything else, because it makes a `grep` misleading:
+
+| sense | where | what it means |
+|---|---|---|
+| **A — asset category** | `ContentCategory "landmark"`, L4 | a registry entry for an authored thing |
+| **B — composition metric** | `composition.LANDMARK_RATIO = 1.8`, `epsilon/fallback.py` | *the biggest room in a Zone*, by content value — `landmark["width"] = 26.0` |
+
+19 of Production's 26 "landmark" mentions are **sense B**, which has nothing
+to do with an asset.
+
+### The six questions, answered against current Production
+
+| # | Question | Answer |
+|---|---|---|
+| 1 | Is there a landmark **category**? | **Yes.** L4, in `content.py` `_LEVELS` and `content_registry.gd` `LEVELS`. Not a budget tier — a validated category. |
+| 2 | Can Epsilon **select** one? | **The query exists; the offer does not.** `ids_of_category("landmark")` and `ids_with_tags(tags, "landmark")` would answer. But the only id Epsilon is offered and that is read back is `chamber.shell_id`. There is no `landmark_id` on the chamber schema, so there is no field in which to name one. |
+| 3 | Can runtime **place** one? | **No.** `ContentInstantiator` has exactly two placement routes: `SHELL_FOR_TYPE` (room_shell) and `fixture_light_%s` (fixture). Nothing queries category `landmark`. The registry today carries 12 entries — 5 room shells, 6 light fixtures, 1 connector — all `procedural_fallback: true`, and **zero landmarks**. |
+| 4 | Is there a **footprint / bounds / anchor** contract? | **No, and this is the sharpest gap.** `NEEDS_FOOTPRINT := ["cluster"]` excludes landmark; `NEEDS_SOCKETS := ["room_shell", "connector"]` excludes it too. `Constants` publishes `CLUSTER_ANCHORS`, `CLUSTER_MAX_WIDTH/HEIGHT/DEPTH`, `CLUSTER_CLEARANCE`, `CLUSTER_MOUNTED_UNDERSIDE_MIN` — and **no `LANDMARK_` equivalent**. A landmark entry would load carrying no envelope at all, which is the exact thing `cluster` was given a validator to prevent. |
+| 5 | Is the gap **merely Art→registry asset integration**? | **No — that understates it by three steps.** See the chain below. |
+| 6 | What of old req 24 survives? | The *landmark* half, reworded. The *pipeline* half is deleted outright. |
+
+### The real seam, in four steps
+
+| # | step | state |
+|---|---|---|
+| 1 | approved `.glb` → Godot-importable scene under `res://content/` | **MISSING.** Art writes `assets/models/**.glb`; the Godot project contains **zero** `.glb` and does not include `assets/` at all. The registry hard-refuses any scene not under `res://content/`. |
+| 2 | → content-registry entry | **POSSIBLE TODAY.** The category exists and a well-formed manifest entry would load. |
+| 3 | → selection | **MISSING.** No `landmark_id` on the chamber schema; nothing offers landmark ids to Epsilon. |
+| 4 | → placement | **MISSING.** No instantiation path, and no envelope to place against (see 4 above). |
+
+Step 2 works. Steps 1, 3 and 4 do not. Every manifest entry still carries
+`integration_ready: false` and `scale_basis: "proposal scale"` — the reason
+is now step 1, 3 and 4, not "there is no pipeline".
+
+### What Art should NOT ask for
+
+Production has already built manifest loading, semantic ids, authored scene
+loading, the shippability gate, shell validation, procedural fallback and the
+L4 category. None of that needs requesting again.
 
 ## Places, not props
 

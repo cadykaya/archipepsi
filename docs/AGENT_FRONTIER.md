@@ -67,15 +67,18 @@ themes after the `trim_plain` correction.
 
 **Batch 023 — theme landmarks — is PENDING.** It is a VISUAL PROPOSAL, not
 production, and the audit is why: `grep -rn landmark` finds three hits and
-none is an engine concept. Today "landmark" means a polygon budget tier.
-Epsilon cannot select one; the room shells carry no landmark anchor; nothing
-reserves a footprint.
+none is an engine concept. ~~Today "landmark" means a polygon budget
+tier.~~ **False — see the correction below.**
 
-**The finding that outlives the batch: `godot/scripts/` references no `.glb`
-and reads no manifest.** Every room is `BoxMesh` primitives from
-`chamber_builders.gd`. The whole authored pipeline is unwired — the approved
-room shells are in exactly the same position as these landmarks. Interface
-requirement 24.
+**CORRECTED 2026-08-29.** That audit ran against the art lane's base, 73
+commits behind Production, and its conclusion was wrong. Production HAS an
+authored-content pipeline: `ContentRegistry` validates manifests,
+`ContentInstantiator` routes *authored scene -> validated fallback*, and
+`landmark` is a real L4 category. What is missing is narrower — no
+`.glb`->`res://content/` scene step, no `landmark_id` for Epsilon to name one
+in, no placement path, and no landmark envelope (`NEEDS_FOOTPRINT` covers
+`cluster` alone). Interface requirement 24, reworded; working in
+`docs/art/review/batch023/README.md`.
 
 Six places, one per theme, each a hero structure plus the architecture that
 makes it somewhere you were: a drop-test shaft hall, a collapsed process

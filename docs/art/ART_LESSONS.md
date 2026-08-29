@@ -1015,6 +1015,37 @@ shapes and built the place around them, and the difference is not subtle:
 the first sheet reads as a product catalogue, the second as somewhere you
 have been.
 
+### L-72 · An audit is only as current as the branch it ran against
+Batch 023's contract audit was the most rigorous thing in the batch. It
+searched before modelling, published its `grep`, refused to invent a
+contract, and reached a confident conclusion: *"`godot/scripts/` references
+no `.glb` and reads no manifest; the entire authored pipeline is unwired."*
+
+Every clause was false. The search ran against `claude/archipepsi-build-inzshp`
+-- the art lane's BASE -- which was 73 commits behind Production. Production
+had already built `ContentRegistry`, `ContentInstantiator`, the shape
+authority in `schemas/content.py`, and a registered L4 `landmark` category.
+The audit was reproducible, honest, well-documented and pointed at the past.
+
+Worse than being wrong, it was wrong in the direction that costs most: it
+told Production to build something it had already built, and it flattened a
+real, narrow, actionable gap (no `.glb`->`res://content/` step, no
+`landmark_id`, no landmark envelope) into a vague large one.
+
+> The art lane's base branch is not the project. Before publishing any
+> finding about what the engine does or does not have, audit the CURRENT
+> Production head by name, and say in the finding which ref you read.
+
+### L-73 · Two systems can use the same word for different things
+`grep -rn "landmark"` over Production returns 26 hits. Nineteen of them are
+`composition.LANDMARK_RATIO` and `epsilon/fallback.py`, where "landmark"
+means **the biggest ROOM in a Zone by content value** -- `landmark["width"]
+= 26.0`. That has nothing to do with the L4 asset category of the same name.
+
+Counting hits made the asset category look better-supported than it is, and
+would equally have hidden it among noise. A word is not a contract; the
+declaration is.
+
 > A hero shape plus a floor is an object. A hero shape plus the routes that
 > let you be above, below and around it is a place. Only the second is
 > remembered as a location.

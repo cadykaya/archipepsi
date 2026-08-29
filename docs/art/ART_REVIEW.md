@@ -3034,11 +3034,26 @@ ceiling.** Epsilon cannot select one, the room shells carry no landmark
 anchor among their check / enemy / affordance / bay anchors, and nothing
 reserves a footprint.
 
-The wider finding matters more: **`godot/scripts/` references no `.glb` and
-reads no manifest.** `chamber_builders.gd` builds every room from `BoxMesh`
-primitives, so the entire authored pipeline is unwired and the approved room
-shells sit in exactly the same position as these landmarks. Interface
-requirement 24. Every entry carries `integration_ready: false`.
+**CORRECTED 2026-08-29 — the paragraph above was audited against the wrong
+branch.** It searched the art lane's base, 73 commits behind Production.
+Re-audited read-only against `claude/archipepsi-echoes-continuation-b1adno`,
+all four of its claims are false: `ContentRegistry` loads and validates JSON
+manifests, `ContentInstantiator` routes *authored scene -> validated
+fallback*, and **`landmark` is a real L4 category** in both `content.py` and
+`content_registry.gd`. It is not a polygon tier. `LANDMARK_RATIO` in
+`composition.py` is a DIFFERENT sense of the word — the biggest room in a
+Zone — and accounts for most of Production's mentions.
+
+What is actually missing is narrower, and is four steps of which only the
+second works today: (1) approved `.glb` -> importable scene under
+`res://content/` — MISSING, the Godot project holds zero `.glb` and excludes
+`assets/`; (2) registry entry — POSSIBLE NOW; (3) selection — MISSING, no
+`landmark_id` on the chamber schema; (4) placement — MISSING, no
+instantiation path and **no envelope**: `NEEDS_FOOTPRINT` covers `cluster`
+only, and `Constants` publishes `CLUSTER_MAX_*` with no `LANDMARK_`
+equivalent. Interface requirement 24, reworded. Every entry still carries
+`integration_ready: false` — now for those three reasons rather than for a
+missing pipeline. Full working in `review/batch023/README.md`.
 
 ### Places, not props
 
