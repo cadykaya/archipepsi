@@ -403,10 +403,18 @@ static func _theme_props(root: Node3D, theme: String,
 				sign_label.pixel_size = 0.004
 				sign_label.modulate = Color(0.08, 0.09, 0.12)
 				sign_label.position = Vector3(sign_x, height - 0.7, z - 0.05)
-				# Faces the way in. A chamber is entered at z=0, so the
-				# sign is readable while you walk toward it -- and, like a
-				# real sign, backwards once you have gone by.
-				face_label(sign_label, Vector3.BACK)
+				# `face_label` takes a vector pointing TOWARD THE VIEWER
+				# -- that is how the Hub calls it. A chamber is entered at
+				# z = 0 and walked toward +z, so the viewer is always on
+				# the sign's -Z side, which is `Vector3.FORWARD`.
+				#
+				# This passed `Vector3.BACK` and rendered every transit
+				# sign as its own reflection. Playtest 1 found exactly
+				# this in the Hub and it was fixed there; the guard was
+				# then built around the Hub, so the Zone kept the bug for
+				# two more playtests. `godot-legible` walks a built
+				# chamber now as well as the Hub.
+				face_label(sign_label, Vector3.FORWARD)
 				root.add_child(sign_label)
 			"temple_ruin":
 				# Root tendrils crawling down the wall, or a column stump.

@@ -72,6 +72,7 @@ func _run() -> void:
 	_the_lab_doorway_is_a_hole_not_a_picture_of_one(hub)
 	_the_lab_corridor_has_walls(hub)
 	_the_hub_board_shows_the_whole_campaign()
+	_zone_signage_faces_the_player_too()
 	_the_three_projectiles_read_apart_in_silhouette()
 	_the_silhouette_is_decided_by_flight_not_by_colour()
 	_a_silhouette_cannot_move_a_hitbox()
@@ -158,6 +159,52 @@ func _meshes_under(node: Node) -> Array[MeshInstance3D]:
 	for child in node.get_children():
 		out.append_array(_meshes_under(child))
 	return out
+
+
+## The same mirrored-text bug, in the place this suite never looked.
+##
+## Playtest 1 found every Hub sign rendering as its own reflection, and
+## this suite was built to stop that. It builds `HubController` and walks
+## ITS labels -- so the fix went into the Hub, the guard was drawn around
+## the Hub, and the hanging signage inside a ZONE was never in scope.
+## Playtest 2.5 photographed "PLATFORM ε" backwards in the first corridor.
+##
+## A per-site fix leaves the others; this time the GUARD had the same
+## blind spot as the original fix, which is the more expensive version of
+## the same mistake.
+func _zone_signage_faces_the_player_too() -> void:
+	# neon_transit is the theme that hangs transit signage.
+	var built := ChamberBuilders.build({
+		"id": "c001", "type": "corridor", "length": 15.0, "width": 7.9,
+		"enemies": [], "activities": [], "features": [],
+	}, "neon_transit")
+	var root: Node3D = built["root"]
+	add_child(root)
+	var labels: Array[Label3D] = []
+	_collect(root, labels)
+	_check(not labels.is_empty(),
+			"a neon_transit corridor hung no signage, so this suite would "
+			+ "pass by finding nothing to check")
+
+	# A chamber is entered at z = 0 and walked toward +z, so the player is
+	# always on a sign's -Z side. A Label3D reads from its local +Z side.
+	var eye := Vector3(0.0, 1.6, -2.0)
+	for label: Label3D in labels:
+		if label.billboard != BaseMaterial3D.BILLBOARD_DISABLED:
+			continue
+		if label.text.strip_edges() == "":
+			continue
+		var facing := label.global_transform.basis.z.normalized()
+		var to_player := (eye - label.global_position)
+		to_player.y = 0.0
+		if to_player.length() < 0.01:
+			continue
+		var alignment := facing.dot(to_player.normalized())
+		_check(alignment > 0.0,
+				"the Zone sign \"%s\" renders MIRRORED to a player walking "
+				% label.text.split("\n")[0].substr(0, 28)
+				+ "in (facing %.2v, dot %.2f)" % [facing, alignment])
+	root.free()
 
 
 ## The Hub must describe the campaign it is IN, at any scale.
