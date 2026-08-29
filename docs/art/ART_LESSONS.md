@@ -326,6 +326,41 @@ must be placed**, and a placement that ignores it fails by looking like a
 different object rather than a misplaced one.
 
 
+### L-64 · Blender −Y is Godot +Z, so an inset face lands on the BACK
+Batch 022's four signage modules each had a pale recessed field for runtime
+text, and the arrowhead sat proud of one. All of them were authored at
+negative Blender Y — the intuitive "toward the viewer" in the Blender
+viewport. The glTF export maps Blender +Y to Godot **−Z**, so every field
+and the glyph on it came out facing the wall the sign is bolted to.
+
+Nothing failed. Triangle counts, texel density and the flat-shading
+assertion all passed, and the turntable-style detail sheet looked plausible
+because the modules were small. In the room shots the chevrons read as
+plain trim blocks: their ground and their arrow were both on the far side.
+
+> An asset with a FRONT has to declare which way that is, and the axis
+> flip belongs in the builder, not in the reader's head.
+
+### L-65 · A glyph needs margin as much as it needs contrast
+The same batch's arrowhead was first painted in its own plate's trim
+material — same value, same texture — and read as a dark lump. Repainting
+it in the text ink fixed the contrast and it *still* read as a solid block,
+for a duller reason: a 0.20 m arrow on a 0.22 m field leaves a 10 mm pale
+margin, and at any real distance the margin disappears and the glyph
+becomes its own bounding box.
+
+> A mark is legible because of the ground around it, not only the value
+> against it. Widen the plate before shrinking the mark.
+
+### L-66 · A form that must mean "left" cannot be symmetrical
+The first directional element was two wedges meeting in a shallow V, on the
+theory that the shadow in the fold would carry the direction. At eye height
+in a corridor it read as a peak — a mountain, or the letter A.
+
+> A shape can only encode an axis it is not symmetrical about. "It will
+> read because of the lighting" is a bet on the one thing a theme, a
+> render mode and a dark room are each free to take away.
+
 ## Lighting
 
 ### L-14 · Flat is not bright — sum the energies first
@@ -898,6 +933,24 @@ enough to count the bars.
 > The bench provides a floor. An asset that IS the floor has to be given
 > nothing to stand on.
 
+
+### L-67 · Put the mount height in the manifest, and the fit failure shows up
+Batch 022's panel was authored above its doorway. `common.measure` says
+nothing about where an asset sits, so the builder was changed to record
+`authored_top_m` and `authored_bottom_m` — and the manifest immediately
+read 4.03 m for a module that has to live under `corridor_height` 3.60.
+`door_height` is 3.20, which leaves 0.40 m of wall above a doorway: not
+enough for any legible plate. The panel moved beside the jamb.
+
+The related trap in the same batch: exporting those signs with the `wall`
+anchor silently re-bases Z to the geometry's lowest point, so an authored
+2.60 m head became 0.00 and the whole family rendered on the floor. That is
+L-19's ceiling-bay failure again in a new costume, and the fix is the same
+one `set_origin` already documents — `module_floor` for anything whose
+height is part of what it is.
+
+> A number an asset is designed AROUND belongs in its manifest. A
+> dimension nobody records is a dimension nobody can check.
 
 ## Process
 
