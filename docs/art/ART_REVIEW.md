@@ -3324,3 +3324,58 @@ taper, three read as something that grew wrong. A lit hero shot would not
 have found this, and neither would a triangle count.
 
 Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 028 — PROPOSAL: the interaction primitive kit
+
+**PENDING.** Visual language only — mechanics are Production's. Full working
+in `review/batch028/README.md`.
+
+**The audit.** `interactable_contract.gd` exists but is about the **AP Check
+specifically**: `STATES := ["locked", "available", "sending", "confirmed"]`
+plus an anti-spoiler `leak()` check. That vocabulary fits none of the nine
+primitives — a weight button is not *sending*. Interface requirement 29.
+Its `REQUIRED_PARTS` (`state_visual`, `state_label`) **is** real, however, and
+this kit is authored to it: every primitive carries one identifiable
+`state_visual` region.
+
+**The grammar is the deliverable, not the nine objects.** *The plate is the
+state; everything else is the verb.* One recessed `signal`-cyan plate, in the
+same relation to each object's own affordance, so all nine answer *what is
+this doing right now* in the same place — which frees the rest of each object
+to be entirely about what it does. Cause and effect follows without a wire: a
+switch and the thing it drives carry the same plate, and one plate on three
+doors says one switch drives three.
+
+`signal` is licensed here — "the only colour an interactable prompt, rim or
+reveal face is allowed to be" — and Batch 026's checkpoint deliberately does
+not take it, because a checkpoint is walked onto rather than operated.
+
+| asset | verb the shape must say | tris | size (m) |
+|---|---|---|---|
+| `int_carryable` | GRIP HERE | 120 | 0.64 × 0.47 × 0.45 |
+| `int_weight_button` | THIS GOES DOWN | 96 | 0.96 × 1.04 × 0.23 |
+| `int_wall_switch` | THROW THIS | 104 | 0.39 × 0.55 × 1.54 |
+| `int_door_mechanism` | THIS DRIVES THAT | 180 | 1.20 × 0.54 × 2.30 |
+| `int_logic_indicator` | THIS IS COUNTING | 144 | 0.30 × 0.23 × 1.73 |
+| `int_launcher` | IT THROWS YOU, THAT WAY | 140 | 0.90 × 0.95 × 0.62 |
+| `int_breakable` | THIS ONE FAILS | 204 | 1.14 × 0.23 × 1.90 |
+| `int_key_receiver` | SOMETHING GOES IN HERE | 96 | 0.42 × 0.30 × 1.48 |
+| `int_machinery` | IT IS PART WAY | 196 | 1.16 × 0.78 × 1.25 |
+
+Not Portal, deliberately: the carryable is a handled industrial crate rather
+than a symbol-faced cube, and the button is a rectangular floor pad with a
+skirt rather than a round dish with a beam. Nothing is round-and-glowing,
+nothing is a companion, no primitive is coloured as a pair.
+
+### Read with the captions covered — two verbs failed
+
+`int_wall_switch` did not say THROW THIS: a 0.07 m lever vanished into its
+own housing and the object read as a post with a box on top. `int_machinery`
+did not say IT IS PART WAY: a 0.16 m carriage was lost among rotor, housing
+and bed — the travel indicator was a detail *on* the machine when it needed
+to be the loudest thing on it. Both rebuilt. Both the same failure: a verb
+present in the design and absent from the silhouette.
+
+Status: **PENDING** — not self-marked.
