@@ -69,6 +69,7 @@ func _run() -> void:
 			% checked + "all-billboard this suite stopped proving anything")
 	print("legibility: checked %d fixed labels of %d total"
 			% [checked, labels.size()])
+	_no_hub_sign_is_wider_than_the_board_it_is_on(labels)
 	_the_lab_doorway_is_a_hole_not_a_picture_of_one(hub)
 	_the_lab_corridor_has_walls(hub)
 	_the_hub_board_shows_the_whole_campaign()
@@ -159,6 +160,41 @@ func _meshes_under(node: Node) -> Array[MeshInstance3D]:
 	for child in node.get_children():
 		out.append_array(_meshes_under(child))
 	return out
+
+
+## Text must fit the thing it is written on.
+##
+## Measured, because I first reported this as "every Label3D auto-sizes
+## past its panel" and that was wrong twice over: `width` defaults to 500
+## rather than being unset, and it does nothing anyway because
+## `autowrap_mode` defaults to OFF. The Hub's signs DO currently fit --
+## the procedure body is 2.73 units on a 4.0 board.
+##
+## So this is a guard, not a fix. The widest board in the Hub is 5.2 and
+## the widest sign is the free-floating status line at 4.84; anything
+## that grows past the board it hangs on has started rendering into the
+## wall, and a longer string is all that would take.
+const _WIDEST_HUB_BOARD := 5.2
+
+func _no_hub_sign_is_wider_than_the_board_it_is_on(
+		labels: Array[Label3D]) -> void:
+	var widest := 0.0
+	var worst := ""
+	for label: Label3D in labels:
+		if label.text.strip_edges() == "":
+			continue
+		if label.billboard != BaseMaterial3D.BILLBOARD_DISABLED:
+			continue                      # turns to camera; not on a board
+		var width := label.get_aabb().size.x
+		if width > widest:
+			widest = width
+			worst = label.text.split("\n")[0].substr(0, 34)
+		_check(width <= _WIDEST_HUB_BOARD,
+				"the sign \"%s\" renders %.2f units wide against a %.1f "
+				% [label.text.split("\n")[0].substr(0, 30), width,
+				_WIDEST_HUB_BOARD] + "unit board: it is in the wall")
+	print("legibility: widest Hub sign %.2f units (\"%s\"), board %.1f"
+			% [widest, worst, _WIDEST_HUB_BOARD])
 
 
 ## The same mirrored-text bug, in the place this suite never looked.
