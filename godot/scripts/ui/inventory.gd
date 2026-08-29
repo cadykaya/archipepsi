@@ -68,7 +68,7 @@ func close() -> void:
 func rebuild() -> void:
 	for child in _list.get_children():
 		child.queue_free()
-	var echoes: Array = BridgeClient.snapshot.get("interpretations", [])
+	var echoes: Array = BridgeClient.interpretations()
 	if echoes.is_empty():
 		var empty := Label.new()
 		empty.text = "No Echoes yet. Send another player their item first."

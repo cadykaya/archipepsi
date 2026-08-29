@@ -261,6 +261,65 @@ floor placement); neutral `concrete_facility` dressing (req 18);
 `objective_marker` / `signage_module` navigation language;
 `challenge_marker`.
 
+## ECHO SCALE — the log outgrew its consumers, 2026-08-29
+
+Same shape as CS8b, third time now: **the campaign scaled and a consumer
+did not.** The interpretation log is complete local truth and stays
+complete — nothing here truncates it, discards from it, or changes the
+fold. What changed is who is handed all of it.
+
+| Consumer | Was | Now |
+|---|---|---|
+| `PlayerContext.echoes` (Zone request) | every interpretation ever made | ≤12 examples + a whole-history aggregate |
+| `EchoGenerationRequest.existing_echoes` | same, separately | the same projection, same code path |
+| `CampaignSnapshot.interpretations` | whole log on every state change | only when it changed |
+
+**The provider view is in `bridge/archipepsi_bridge/echo_projection.py`,
+and it is the only one.** Three parts, all deterministic: the complete
+folded capability set, an `accumulated_influence` aggregate counted over
+the WHOLE log (top-N source games, recurring concepts, tags,
+interpretation modes — bounded by the top-N, not by a window), and ≤12
+detail examples chosen as the six most recent plus an evenly spaced walk
+back through everything before them. The examples are FLAVOUR. Nothing
+mechanical is read from them, so a Zone 28 request still knows about a
+Zone 2 capability and a Zone 2 influence, which is the point: accumulated
+world influence is intentional and a detail window would have thrown it
+away. Both provider paths call `history_view()`; there is no second one
+to forget. Measured at 449 Echoes: **89,585 → 3,520 characters**
+(~22,400 → ~880 tokens), and 20× more history costs 18 characters.
+
+**`derive()` is still not cached, and now says why with numbers.** The
+old justification was "the log is at most 30 entries", true of the
+prototype and false of a 450-location campaign. Measured: ~8 µs per
+interpretation, linear — 0.2 ms at 30, 3.5 ms at 449, 5.0 ms at 600, on
+an event-driven path that runs per intent, inside a message that spends
+more than that on serialisation. A cache would be a second truth for the
+one thing that has to be identical everywhere, bought for nothing.
+
+**Snapshots stop re-sending the lifetime log.** `broadcast_snapshot()`
+omits `interpretations` and sets `interpretations_complete: false` when
+the log has not changed; the client puts its cached copy back before
+anything reads the snapshot, so every consumer still just reads
+`interpretations`. Back-compat is the DEFAULT: the flag defaults true, an
+elided log is sent empty (never partial — the model refuses), and connect
+and `hello` always answer complete, which is the whole correctness
+argument. A real 30-Check campaign elides 74 times and the log arrives
+gapless.
+
+Two things worth carrying forward:
+
+- **`mechanics` is now the big field, deliberately.** It is 97% of an
+  elided late snapshot (~268 KB at 449). It is current derived state
+  rather than history, and `CampaignSnapshot` validates `slots` against
+  the `mechanics` it is sending — a v0.6 guard that eliding would switch
+  off. Eliding it is a real option later; `TestTheFoldIsStillSentWhole`
+  records the cost so the choice stays visible.
+- **A test that only reads the end state cannot see this bug.** The first
+  Godot sabotage — client never reattaches — PASSED, because the last
+  snapshot before the driver's assertion happened to carry the log. The
+  archive looks short only while it is short. `BridgeClient` now watches
+  every snapshot for a log that went backwards within one campaign.
+
 ---
 
 **OPEN PACING DECISION — recorded 2026-08-28, do NOT act on it.** The

@@ -657,10 +657,24 @@ class CampaignSave(Strict):
         )
 
     def derive(self) -> Mechanics:
-        """The live mechanics. Cheap enough to call freely (linear in the
-        log, which is at most 30 entries), and deliberately not cached on
-        the model: a cached fold is a second source of truth waiting to go
-        stale."""
+        """The live mechanics, and deliberately not cached on the model:
+        a cached fold is a second source of truth waiting to go stale.
+
+        This used to justify itself with "the log is at most 30
+        entries", which was true of the prototype's thirty locations and
+        is not true of a 450-location campaign — a full one accumulates
+        ~449 interpretations, and the ceiling is ~599. The justification
+        was re-EARNED rather than re-worded.
+
+        Measured (`test_provider_input_size.py`): the fold is linear at
+        roughly 8 microseconds per interpretation — about 0.2 ms at 30,
+        3.5 ms at 449, 5.0 ms at 600 — on an event-driven path that runs
+        per intent rather than per frame. Cheap enough to keep simple. A
+        cache would buy single-digit milliseconds and cost invalidation
+        correctness on the one value that must be identical everywhere,
+        and the snapshot it rides in spends far more than that on
+        serialisation.
+        """
         return derive_mechanics(self.interpretations)
 
     @property
@@ -923,7 +937,28 @@ class CampaignSnapshot(Strict):
     #: FOLD, computed by the bridge, because re-implementing it in GDScript
     #: would be a second source of truth for the one thing that has to be
     #: identical everywhere.
+    #:
+    #: The log is LIFETIME history. At the prototype's thirty locations it
+    #: was ~25 KiB; a 450-location campaign ends around 449 entries and
+    #: ~390 KiB, and every one of the dozen-odd `broadcast_snapshot()`
+    #: calls re-sent all of it, for a list that only ever grows at the
+    #: end. So a snapshot MAY omit it — see `interpretations_complete`.
     interpretations: tuple[EchoInterpretation, ...] = ()
+    #: True when `interpretations` above is the whole log. False when the
+    #: sender elided it because the receiver already has this exact log,
+    #: and the receiver should keep the last complete one it was given.
+    #:
+    #: BACK-COMPAT, deliberately: the default is True and an elided log is
+    #: sent as the empty tuple, so a snapshot built without thinking about
+    #: any of this — a test, a tool, `smoke.py` — means exactly what it
+    #: always meant, and a client that ignores the flag entirely sees an
+    #: empty archive rather than a wrong one. Every connect and every
+    #: `hello` is answered with a complete snapshot, so no client can be
+    #: joined to the stream without a full log to cache first.
+    interpretations_complete: bool = True
+    #: The lifetime length of the log, sent whether or not the log is, so
+    #: a count-only consumer never has to know which kind it received.
+    interpretation_count: int = Field(default=0, ge=0)
     mechanics: Mechanics = Field(default_factory=lambda: Mechanics())
     slots: SlotAssignment = Field(default_factory=lambda: SlotAssignment())
     #: What the player has found that Archipelago does not care about
@@ -962,6 +997,21 @@ class CampaignSnapshot(Strict):
             (self.active_zone,) if self.active_zone else ())
         _reject_underfunded_ledger(self.coins_spent, self.pending_checks)
         _reject_duplicate_ids(self.interpretations, "echo_id", "echo_id")
+        # An elided log is elided, not truncated. The two legal shapes are
+        # the whole log with its own length, or nothing at all carrying the
+        # length it would have had; a third shape -- SOME of the log -- is a
+        # silently wrong archive, so it cannot be constructed at all.
+        if self.interpretations_complete:
+            if self.interpretation_count != len(self.interpretations):
+                raise ValueError(
+                    f"interpretation_count {self.interpretation_count} "
+                    f"disagrees with the {len(self.interpretations)} "
+                    "interpretations sent alongside it")
+        elif self.interpretations:
+            raise ValueError(
+                f"{len(self.interpretations)} interpretations were sent "
+                "with interpretations_complete=False; an elided log is sent "
+                "empty, never partially")
         # Against the mechanics actually sent, not a re-fold: if the two
         # ever disagreed, the client would render one and validate the other.
         _reject_unslottable(self.slots, self.mechanics)

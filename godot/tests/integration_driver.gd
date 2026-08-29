@@ -135,6 +135,21 @@ func _run() -> void:
 		expected_seqs.append(i)
 	_check(seqs == expected_seqs,
 			"interpretation_seq is unique and gapless across the campaign")
+	# The two halves of the snapshot elision, checked together on a real
+	# campaign rather than on a mock: the bridge DID stop re-sending the
+	# lifetime Echo log (or this counter is zero and the checks above are
+	# proving nothing), and the log this client holds is still whole (or
+	# the checks above have already failed).
+	_check(BridgeClient.elided_snapshot_count > 0,
+			"the bridge elided the unchanged Echo log %d times"
+			% BridgeClient.elided_snapshot_count)
+	# Checked continuously rather than here: the log is whole again on
+	# every snapshot that carries it, so a reattach that never happened is
+	# invisible by the end of the campaign. Only a client watching each
+	# snapshot as it lands can see the archive go briefly empty.
+	_check(not BridgeClient.echo_log_shrank,
+			"the Echo log never went backwards across %d snapshots"
+			% BridgeClient.elided_snapshot_count)
 	# NOT "a component per interpretation" any more: since S6 an
 	# interpretation may EVOLVE what is owned instead of adding to it, so
 	# counting components would fail exactly when dispositions work. The

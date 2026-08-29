@@ -65,6 +65,10 @@ class BridgeServer:
         try:
             await self._send(ws, BridgeReady(type="bridge_ready",
                                              bridge_version=BRIDGE_VERSION))
+            # `engine.snapshot()` is always COMPLETE; only
+            # `broadcast_snapshot()` elides the Echo log. That is the whole
+            # correctness argument for eliding it: no client is ever joined
+            # to the broadcast stream without a full log to cache first.
             await self._send(ws, self.engine.snapshot())
             async for raw in ws:
                 await self.dispatch(ws, raw)
@@ -98,6 +102,8 @@ class BridgeServer:
     async def _route(self, ws, m) -> None:
         engine = self.engine
         if m.type == "hello":
+            # Complete, as on connect: `hello` is how a client that lost
+            # track of the Echo log asks for all of it again.
             await self._send(ws, engine.snapshot())
         elif m.type == "ap_connect":
             await self._connect_ap(m.server, m.slot_name, m.password)

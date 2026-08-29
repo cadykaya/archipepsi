@@ -1559,6 +1559,17 @@
             "title": "Interpretations",
             "type": "array"
           },
+          "interpretations_complete": {
+            "default": true,
+            "title": "Interpretations Complete",
+            "type": "boolean"
+          },
+          "interpretation_count": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Interpretation Count",
+            "type": "integer"
+          },
           "mechanics": {
             "$ref": "#/$defs/Mechanics"
           },
@@ -8958,6 +8969,17 @@
         },
         "title": "Interpretations",
         "type": "array"
+      },
+      "interpretations_complete": {
+        "default": true,
+        "title": "Interpretations Complete",
+        "type": "boolean"
+      },
+      "interpretation_count": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Interpretation Count",
+        "type": "integer"
       },
       "mechanics": {
         "$ref": "#/$defs/Mechanics"

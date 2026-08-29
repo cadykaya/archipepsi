@@ -409,12 +409,10 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	# is the premise, and it was previously invisible.
 	var featured: Array = zone_dict.get("featured_echo_ids", [])
 	if not featured.is_empty():
-		for echo: Dictionary in BridgeClient.snapshot.get(
-				"interpretations", []):
-			if echo.get("echo_id") == featured[0]:
-				note = "Built with your %s in mind. %s" % [
-						echo.get("display_name", "Echo"), note]
-				break
+		var echo := BridgeClient.echo_by_id(str(featured[0]))
+		if not echo.is_empty():
+			note = "Built with your %s in mind. %s" % [
+					echo.get("display_name", "Echo"), note]
 	hud.show_zone_title(index_text, str(zone_dict.get("display_name", "")),
 			note.strip_edges(),
 			Color(ThemeMaterials.spec(theme)["accent_color"]).lightened(0.25))

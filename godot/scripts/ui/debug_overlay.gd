@@ -52,7 +52,7 @@ func refresh() -> void:
 			hub.get("finale_offered"), hub.get("finale_progress", 0),
 			hub.get("finale_required", 24)],
 		"echoes %d equipped %s | zones done %d | provider %s" % [
-			s.get("interpretations", []).size(),
+			BridgeClient.interpretations().size(),
 			s.get("slots", {}).get("echo_a"),
 			s.get("completed_zone_count", 0), s.get("epsilon_provider", "?")],
 		"last gen error: %s" % [s.get("last_generation_error")],

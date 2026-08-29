@@ -12,6 +12,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .. import content_value as V
+from .. import echo_projection as P
 from ..schemas import constants as C
 from ..schemas import echo as E
 from ..schemas import zone as Z
@@ -87,7 +88,21 @@ class CampaignContext(Strict):
 class PlayerContext(Strict):
     signal_keys: int = Field(ge=0)
     coins_available: int = Field(ge=0)
-    echoes: tuple[EchoSummary, ...] = ()
+    #: BOUNDED detail examples, never the whole log.
+    #:
+    #: This was unbounded, and at the prototype's ~29 Echoes nobody
+    #: noticed. At the 450-location default a campaign accumulates ~449
+    #: and this field alone reached 96 KB -- roughly 24,000 tokens in
+    #: front of every Zone prompt. The whole history still crosses, as
+    #: `echo_history` below; only the DETAIL is a sample.
+    echoes: tuple[EchoSummary, ...] = Field(
+        default=(), max_length=P.MAX_DETAIL_EXAMPLES)
+    #: The complete history, bounded: derived capabilities from the fold
+    #: over the WHOLE log, plus a deterministic accumulated-influence
+    #: aggregate. Nothing is forgotten -- an early Echo's capability is
+    #: in `capabilities` and its source world is in `influence` however
+    #: long ago it arrived.
+    echo_history: dict = Field(default_factory=dict)
 
 
 class RequestLocation(Strict):
@@ -222,7 +237,12 @@ class OwnedLinkSummary(Strict):
 
 
 class EchoPlayerState(Strict):
-    existing_echoes: tuple[EchoSummary, ...] = ()
+    #: The same bound, for the same reason. This is the path that stayed
+    #: unbounded when the Zone path was noticed, which is what happens
+    #: when two places build the same summary separately.
+    existing_echoes: tuple[EchoSummary, ...] = Field(
+        default=(), max_length=P.MAX_DETAIL_EXAMPLES)
+    echo_history: dict = Field(default_factory=dict)
     signal_keys: int = Field(default=0, ge=0)
     coins_available: int = Field(default=0, ge=0)
     #: The graph an interpretation may answer (S6). Empty for every

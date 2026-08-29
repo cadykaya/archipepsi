@@ -126,12 +126,10 @@ func _show_next() -> void:
 	# card and the inventory describe it identically.
 	var echo_id: Variant = note.get("echo_id")
 	if echo_id != null:
-		for echo: Dictionary in BridgeClient.snapshot.get(
-				"interpretations", []):
-			if echo.get("echo_id") == echo_id:
-				echo_lines.append("")
-				echo_lines.append_array(EffectSummary.lines(echo))
-				break
+		var echo := BridgeClient.echo_by_id(str(echo_id))
+		if not echo.is_empty():
+			echo_lines.append("")
+			echo_lines.append_array(EffectSummary.lines(echo))
 	_body.text = "\n".join(sent_lines)
 	_echo_body.text = "\n".join(echo_lines)
 	# No Echo half means no rule to divide: a self-recipient check gets one

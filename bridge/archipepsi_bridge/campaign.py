@@ -36,6 +36,7 @@ from .schemas.protocol import (
     Notification, ScoutedLocation, ShopState, SlotAssignment, ZoneReady,
     ZoneRecord,
 )
+from .echo_projection import detail_examples, history_view
 from . import instrumentation
 from . import store
 
@@ -201,6 +202,10 @@ class CampaignEngine:
         #: Which Zone `_generation_task` is building, so a resume can tell
         #: "already running" from "a different Zone".
         self._generating_zone_id: str | None = None
+        #: Identity of the Echo log every connected client already holds,
+        #: so a broadcast can elide a log nobody's copy of is stale for.
+        #: See `_log_identity` for why it is a tuple and not a length.
+        self._broadcast_log_identity: tuple | None = None
 
     # ------------------------------------------------------------------
     # Plumbing
@@ -250,8 +255,47 @@ class CampaignEngine:
         if self.emit is not None:
             await self.emit(message)
 
+    def _log_identity(self) -> tuple | None:
+        """What identifies the Echo log a client is holding.
+
+        Not its length: `self.save` is replaced wholesale — a different
+        campaign, a reload, a switch to `None` — and two different logs
+        can be the same length. The campaign key pins WHICH campaign and
+        `next_interpretation_seq` pins how far it has been written, and
+        that counter is monotone within a campaign and never reused, so
+        equality here really does mean "the same log, unchanged".
+        """
+        save = self.save
+        if save is None:
+            return None
+        return (save.seed_name, save.team, save.slot_id,
+                save.next_interpretation_seq, len(save.interpretations))
+
     async def broadcast_snapshot(self) -> None:
-        await self._emit(self.snapshot())
+        """One snapshot to every client, with the lifetime Echo log left
+        out when it has not changed since the last one.
+
+        A late campaign's log is ~390 KiB of a ~400 KiB snapshot, and a
+        snapshot goes out on every state change — a Check, a Zone
+        transition, a coin. The log only ever grows at the end, so re-
+        sending all of it to say "a coin was spent" was the single
+        largest thing on the wire and the least informative.
+
+        Correctness rests on two facts and nothing else: every client is
+        sent a COMPLETE snapshot the moment it connects (`server.py`) and
+        again for every `hello`, and elision requires the log identity to
+        be exactly equal to the one at the last complete broadcast. Any
+        change at all — an appended Echo, a different campaign, a
+        campaign cleared — is inequality, and inequality sends the log.
+        """
+        snap = self.snapshot()
+        identity = self._log_identity()
+        if identity is not None and identity == self._broadcast_log_identity:
+            snap = snap.model_copy(update={
+                "interpretations": (), "interpretations_complete": False})
+        else:
+            self._broadcast_log_identity = identity
+        await self._emit(snap)
 
     async def _notify(self, kind: str, title: str, lines=(),
                       location_id=None, echo_id=None) -> None:
@@ -470,6 +514,7 @@ class CampaignEngine:
             static_glitch_units=ap.static_received
             * C.STATIC_GLITCH_UNITS_PER_ITEM,
             interpretations=save.interpretations if save else (),
+            interpretation_count=len(save.interpretations) if save else 0,
             # Folded here, once, and sent. The client never folds: a second
             # implementation of this is a second source of truth for the one
             # thing that has to be identical everywhere.
@@ -625,6 +670,23 @@ class CampaignEngine:
     # Zone generation
     # ------------------------------------------------------------------
 
+    def _echo_summaries(self) -> tuple:
+        """The BOUNDED detail examples, as `EchoSummary`.
+
+        One helper, used by both provider paths. They used to build the
+        same summary twice, over the whole log, in two places -- which is
+        how one of them (`existing_echoes`) stayed unbounded after the
+        other was noticed.
+        """
+        save = self.save
+        return tuple(
+            EchoSummary(
+                echo_id=e.echo_id, display_name=e.display_name,
+                kinds=tuple(sorted({op.component.kind for op in e.operations
+                                    if op.op == "create"})),
+                tags=tuple(e.tags), description=e.description)
+            for e in detail_examples(save.interpretations))
+
     def _zone_request(self, record: ZoneRecord) -> ZoneGenerationRequest:
         save = self.save
         ap = self.ap
@@ -650,13 +712,14 @@ class CampaignEngine:
                 summaries.append(ZoneSummary(
                     name=z.zone.display_name, theme=z.zone.theme,
                     target_game=z.target_game))
-        echoes = tuple(
-            EchoSummary(
-                echo_id=e.echo_id, display_name=e.display_name,
-                kinds=tuple(sorted({op.component.kind for op in e.operations
-                                    if op.op == "create"})),
-                tags=tuple(e.tags), description=e.description)
-            for e in save.interpretations)
+        # BOUNDED. This used to be every interpretation: ~29 at the
+        # prototype's thirty locations and ~449 at the 450 default, which
+        # is 96 KB and roughly 24,000 tokens of Echo summaries in front
+        # of every Zone prompt. The complete history still reaches the
+        # provider -- as derived state and an accumulated-influence
+        # aggregate, in `echo_history` below -- so nothing is forgotten;
+        # only the DETAIL is a sample.
+        echoes = self._echo_summaries()
         return ZoneGenerationRequest(
             zone_id=record.zone_id,
             generation_id=(f"{save.seed_name}-{save.team}-{save.slot_id}-"
@@ -679,7 +742,12 @@ class CampaignEngine:
             player=PlayerContext(
                 signal_keys=ap.signal_keys,
                 coins_available=max(0, ap.coins_received - save.coins_spent),
-                echoes=echoes),
+                echoes=echoes,
+                # The whole history, bounded. `echoes` above is a dozen
+                # examples; this is what stops a late Zone composing as
+                # though the first four hundred never happened.
+                echo_history=history_view(save.interpretations,
+                                          save.derive())),
             locations=tuple(locations),
             # §13: only what this campaign can actually interact with.
             # Over OWNED mechanics, never the loadout — a Zone whose
@@ -969,14 +1037,11 @@ class CampaignEngine:
                 recipient_name=_clamp_ap_string(s.recipient_name),
                 item_flags=s.flags),
             player_state=EchoPlayerState(
-                existing_echoes=tuple(
-                    EchoSummary(
-                        echo_id=e.echo_id, display_name=e.display_name,
-                        kinds=tuple(sorted({op.component.kind
-                                            for op in e.operations
-                                            if op.op == "create"})),
-                        tags=tuple(e.tags), description=e.description)
-                    for e in save.interpretations),
+                # The SAME bounded projection the Zone path uses. Two
+                # subtly different summaries is how one of them stays
+                # unbounded after the other is fixed.
+                existing_echoes=self._echo_summaries(),
+                echo_history=history_view(save.interpretations, mechanics),
                 signal_keys=self.ap.signal_keys,
                 coins_available=max(
                     0, self.ap.coins_received - save.coins_spent),
