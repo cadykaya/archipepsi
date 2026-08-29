@@ -3379,3 +3379,67 @@ to be the loudest thing on it. Both rebuilt. Both the same failure: a verb
 present in the design and absent from the silhouette.
 
 Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 029 — PROPOSAL: the secret clue language
+
+**PENDING.** Visual language only. Full working in
+`review/batch029/README.md`.
+
+**This batch had the most contract to work with.** `"secret"` is a real
+socket kind in `schemas/content.py` — `Literal[..., "secret", "vista",
+"presentation"]` with a position and yaw — and `content_value.SECRET_VALUE`
+is 8. There is even an assist already: `secret_ping` is an Echo readout,
+which means the visual language must be the **primary** channel with the ping
+as an Echo-granted extra. A cue that only works once you have the right Echo
+is not a cue. What is missing is narrow: the socket says *where*, nothing
+says what a cue *looks like*, and no tier can be declared so a Zone teaches
+before it tests. Interface requirement 30.
+
+**A secret cue is not a thing; it is a deviation from a pattern.** So every
+asset is a whole wall-and-floor section carrying both the repeating baseline
+and the one place it fails, and the sheet is a game with a pass mark: if you
+cannot find it, that tier is wrong. No secret colour, no beacon — a colour is
+a label, and a label is the opposite of a thing you notice.
+
+| asset | cue | tier | theme | tris | size (m) |
+|---|---|---|---|---|---|
+| `secret_construction_seam` | construction seam | medium | concrete_facility | 540 | 7.20 × 3.82 × 3.40 |
+| `secret_displaced_panel` | displaced panel | learning | concrete_facility | 528 | 7.20 × 3.82 × 3.40 |
+| `secret_service_access` | service access | medium | rusted_industrial | 552 | 7.20 × 3.82 × 3.40 |
+| `secret_light_leak` | light leak | learning | gothic_stone | 540 | 7.20 × 3.82 × 3.40 |
+| `secret_repeated_motif` | repeated motif | subtle | temple_ruin | 756 | 7.20 × 3.82 × 3.40 |
+| `secret_partial_sightline` | partial sightline | medium | neon_transit | 552 | 7.20 × 4.07 × 3.40 |
+| `secret_wear_traffic` | wear and traffic | subtle | concrete_facility | 552 | 7.20 × 3.82 × 3.40 |
+| `secret_broken_construction` | broken construction | learning | rusted_industrial | 600 | 7.20 × 3.82 × 3.40 |
+| `secret_unreachable_space` | unreachable space | subtle | void_glitch | 576 | 7.20 × 4.47 × 3.80 |
+| `secret_tier_learning` | displaced panel | learning | concrete_facility | 528 | 7.20 × 3.82 × 3.40 |
+| `secret_tier_medium` | displaced panel | medium | concrete_facility | 528 | 7.20 × 3.82 × 3.40 |
+| `secret_tier_subtle` | displaced panel | subtle | concrete_facility | 528 | 7.20 × 3.82 × 3.40 |
+
+### The sheet's verdict on itself — five of nine
+
+Read cold, with the captions naming only the pattern and the tier:
+`construction_seam`, `displaced_panel`, `broken_construction` and
+`wear_traffic` **read**; `service_access` reads weakly; `light_leak` is **too
+weak for a learning tier**; `repeated_motif` **fails** — the marks do not
+resolve at player distance, so counting may be the wrong kind of cue for this
+engine; `partial_sightline` is **ambiguous in `neon_transit`**, whose own
+trim is bright vertical lines competing with the cue; and
+`unreachable_space` was **not testable**, its ledge sitting above the frame
+at a 1.6 m eye.
+
+`wear_traffic` is the most useful failure: it is the clearest cue in the set
+while carrying the hardest tier, so it is **mis-tiered** — which says wear is
+a strong channel worth using more, not less.
+
+### What the renders changed
+
+Square-on is the worst possible angle for these cues: a panel 14 cm proud has
+no silhouette and casts no visible shadow face-on — and it is not even the
+representative angle, since a player walks *along* a corridor. The rig now
+rakes. And the deviation sat mid-run, where a 90° FOV shrinks the middle bays
+hard; it is now at the near end, where a player actually passes it.
+
+Status: **PENDING** — not self-marked.
