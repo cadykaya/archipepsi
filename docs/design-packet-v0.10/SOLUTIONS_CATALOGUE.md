@@ -92,12 +92,34 @@ kind. **Epsilon does not choose the split**; it composes around it.
 save through a validated transition, and nothing derived is separately
 persisted. Clean.
 
-**Risk.** The `room_value` budget currently buys rooms without knowing
-which are optional. A Zone that spends 900 of its 1000 points on rooms
-the player never has to enter is an 8-minute Zone again, wearing a
-40-minute costume. **The budget must be split with the Checks** — a
-required fraction and an optional fraction, measured separately — or
-this design makes the pacing problem worse rather than better.
+**Risk, and it is measured, not feared.** The `room_value` budget buys
+rooms without knowing which are optional. Six real Zones at the
+production default:
+
+| Zone | Rooms | Rooms holding a Check | Total value | In Check rooms |
+| --- | --- | --- | --- | --- |
+| zone_001 | 23 | 15 | 921 | 832 (90%) |
+| zone_002 | 23 | 15 | 922 | 783 (85%) |
+| zone_003 | 23 | 15 | 922 | 814 (88%) |
+| zone_004 | 20 | 15 | 917 | 799 (87%) |
+| zone_005 | 20 | 15 | 923 | 828 (90%) |
+| zone_006 | 19 | 15 | 920 | 847 (92%) |
+
+**89% of a Zone's content value sits in rooms that hold a Check**
+(85–92%). Rooms holding no Check carry about 104 points between them.
+The generator is building roughly one room per Check plus connectors,
+which is also why the Zone reads as a corridor of pedestals.
+
+So if ten of fifteen Checks become optional and their rooms become
+skippable, **about 59% of the Zone goes with them.** Playtest 2.5
+measured the whole Zone at 8–11 minutes; the required path would be
+**3–4.5 minutes.**
+
+**The budget split is therefore a precondition of this design, not a
+caveat on it.** The ten optional Checks need rooms funded by an
+*additional* allowance — which is design 7 variant 2, spurs — rather
+than carved out of the same 1000. Carving makes the pacing problem
+that prompted this entire redesign roughly twice as bad.
 
 **Depends on: design 10.** See `## 0`.
 
@@ -313,7 +335,10 @@ changes that, which is why 921 content points still felt empty.
    a graph problem. Not a v0.10 target.
 
 **Recommendation: 2 now, 4 as the real target, 3 after.** 2 is a
-week-one change that unlocks design 1; 4 is the one that answers "I
+week-one change that design 1 *requires* rather than merely benefits
+from — the spur rooms are where the optional Checks' content has to come
+from, because carving it out of the existing budget costs 59% of the
+Zone (design 1); 4 is the one that answers "I
 wanted the maps to be big and interconnected".
 
 **The hard part, named.** `_overlaps()` proves placements disjoint by
@@ -452,7 +477,10 @@ or be openly regenerated, never silently changed.
 
 **If you want the redesign the brief is really about:** designs 1 + 10 +
 9 together, in that dependency order, with `## 0`'s test written
-*first*. They are one change and none of the three is safe alone.
+*first*. They are one change and none of the three is safe alone — and
+design 1 needs design 7 variant 2 underneath it, because 89% of a Zone's
+content is in its Check rooms and hiding ten of fifteen Checks without
+new rooms to put them in costs 59% of the Zone.
 
 **What not to start with:** design 8's carryables (soft-lock surface
 before the reset rule exists), design 7 variants 3–5 (needs the
