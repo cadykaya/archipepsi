@@ -31,6 +31,10 @@ var _portal_was_locked := true
 var _quiet_time := 0.0
 var _last_claimed := -1
 var _current_chamber := -1
+## Which chamber the in-flight encounter is being timed for, latched on
+## the first blow so walking next door does not retarget the count. -1
+## when no fight is running.
+var _encounter_chamber := -1
 ## Union of every chamber and connector AABB the builder placed.
 ## `blink` tests its landing point against this: outside it is
 ## outside the level, wall or no wall (invariant I14).
@@ -67,9 +71,10 @@ func setup(zone_dict: Dictionary) -> void:
 	# thirty-second one.
 	player.died.connect(func() -> void: playtime.note_death())
 	player.hit_confirmed.connect(func(_killed: bool) -> void:
-		playtime.note_engagement(_live_enemy_count()))
+		_note_engagement())
 	player.damaged_from.connect(func(_source: Vector3) -> void:
-		playtime.note_engagement(_live_enemy_count()))
+		_note_engagement())
+	player.died.connect(func() -> void: _encounter_chamber = -1)
 
 	# Optional ledges (DESIGN §19). Walked, not searched: nothing is
 	# reported anywhere, so reaching one only ever earns a remark.
@@ -158,8 +163,19 @@ func _objective_of(chamber: Dictionary) -> String:
 	# reach_reward. treasure_room defaults reach_reward too.
 	return str(chamber.get("objective", "reach_reward"))
 
+## The first blow of a fight latches which room it is about; every later
+## blow in the same fight leaves that alone.
+func _note_engagement() -> void:
+	if _encounter_chamber < 0:
+		_encounter_chamber = _current_chamber
+	playtime.note_engagement(_live_enemy_count())
+
+
 func _on_enemy_died(enemy: Enemy, record: Dictionary) -> void:
-	playtime.note_enemy_died(_live_enemy_count())
+	var remaining := _live_enemy_count()
+	playtime.note_enemy_died(remaining)
+	if remaining <= 0:
+		_encounter_chamber = -1
 	if tones != null:
 		tones.play("hit")
 	_quiet_time = 0.0                # a fight is not a quiet stretch
@@ -210,15 +226,28 @@ func _on_goal_area_entered(body: Node3D, record: Dictionary) -> void:
 		record["satisfied"] = true          # latches for this instance
 		_push_objective_state(record)
 
-## Enemies still standing anywhere in the Zone. An encounter ends when
-## this reaches zero, which is also how a fight that spilled between two
-## rooms counts as one fight rather than two halves.
+## Enemies still standing in the room this fight is ABOUT.
+##
+## Zone-wide until playtest 2.5, on the theory that a fight spilling
+## between two rooms should count once. The whole Zone is built at once,
+## so a Zone-wide count only reaches zero when the LAST enemy anywhere
+## dies -- which means exactly one encounter could ever close, at the end
+## of the Zone. The 23-room baseline run has ten arenas and recorded ONE
+## encounter of 105 seconds: nine fights happened and none were timed.
+##
+## Scoped to the chamber the fight started in instead. Leaving the room
+## and coming back still resolves it when the room is finally cleared,
+## which keeps the spilling case the old comment wanted; what it no
+## longer does is wait for a room at the other end of the Zone.
 func _live_enemy_count() -> int:
+	var index := _encounter_chamber if _encounter_chamber >= 0 \
+			else _current_chamber
+	if index < 0 or index >= _chambers.size():
+		return 0
 	var alive := 0
-	for record: Dictionary in _chambers:
-		for enemy in record["enemies"]:
-			if is_instance_valid(enemy) and not enemy._dead:
-				alive += 1
+	for enemy in (_chambers[index]["enemies"] as Array):
+		if is_instance_valid(enemy) and not enemy._dead:
+			alive += 1
 	return alive
 
 func _evaluate_objectives() -> void:

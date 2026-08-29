@@ -140,6 +140,38 @@ func _run() -> void:
 	# lifetime Echo log (or this counter is zero and the checks above are
 	# proving nothing), and the log this client holds is still whole (or
 	# the checks above have already failed).
+	# Combat timing, measured rather than assumed. Playtest 2.5's Zone had
+	# ten arenas and reported ONE encounter, because the live-enemy count
+	# an encounter closes on was ZONE-wide: it could only reach zero when
+	# the last enemy anywhere died, so nine fights were never timed.
+	var timings: Array = []
+	for intent: Dictionary in BridgeClient.sent_intents:
+		if intent.get("type", "") == "zone_timing":
+			timings.append(intent)
+	var fights := 0
+	var hoggers := 0
+	for t: Dictionary in timings:
+		var seconds: Array = t.get("encounter_seconds", [])
+		fights += seconds.size()
+		for one in seconds:
+			# The old bug's signature: a single "encounter" covering most
+			# of the Zone, because it started at the first blow and could
+			# not close until the Zone ran out of enemies.
+			if float(one) > float(t.get("elapsed_seconds", 0.0)) * 0.8:
+				hoggers += 1
+	print("integration: %d zone timings, %d encounters, %d Zone-spanning"
+			% [timings.size(), fights, hoggers])
+	_check(timings.size() > 0, "no zone_timing intent was ever sent")
+	# NOT asserted: `fights > 0`. This driver clears Zones without the
+	# player ever landing a blow, so no encounter is ever started and the
+	# count is honestly zero. Encounter TIMING therefore still has no
+	# automated coverage -- recorded here as a known gap rather than
+	# asserted as a pass. What is covered is the shape below, which is
+	# what the Zone-wide-count bug produced.
+	_check(hoggers == 0,
+			"%d encounter(s) covered over 80%% of their Zone; that is the "
+			% hoggers + "Zone-wide live-enemy count reappearing")
+
 	_check(BridgeClient.elided_snapshot_count > 0,
 			"the bridge elided the unchanged Echo log %d times"
 			% BridgeClient.elided_snapshot_count)
@@ -698,6 +730,16 @@ func _play_one_zone(detailed: bool) -> bool:
 				_check(not (str(entry.get("component", {}).get(
 						"component_id", "")) in BridgeClient.slots().values()),
 						"a trait never occupies a slot")
+	# What `main.gd::_on_exit_zone` does when a Zone ends, and the reason
+	# this is here: the driver builds its own ZoneController and never
+	# takes the real exit path, so CS10's timing intent had NO automated
+	# coverage at all. Playtest 2.5 is the only thing that has ever
+	# exercised it -- the same shape as the playtest-1 boot crash, where a
+	# suite substituted for the code it was meant to protect.
+	var timing: Dictionary = controller.playtime.to_intent(
+			str(zone_dict.get("zone_id", "")), true)
+	if not timing.is_empty():
+		BridgeClient.send_intent(timing)
 	controller.queue_free()
 	await get_tree().process_frame
 	return true
