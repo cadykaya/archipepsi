@@ -429,6 +429,59 @@ Two things this needed that did not exist:
   generated level, so the post-art run is PROVED to be the same level
   rather than assumed to be.
 
+## What playtest 2.5 taught, 2026-08-29
+
+The human played Zone 1 of the default-scale mock campaign and the
+verdict was about CONTENT, not correctness: 23 rooms, 921 content
+points, 32 activities across 19 rooms, and "nothing to do except shoot a
+couple enemies or jump up a path". That indictment is the subject of
+`docs/design-packet-v0.10/` and is NOT a bug list.
+
+The bugs it did find are fixed, and three of the four are one shape:
+**a guard inherits the blind spot of the fix it was built to protect.**
+
+- Encounter timing was cancelled by `note_death()` and never scoped to a
+  chamber, so 9 of 10 fights went untimed.
+- The Hub described a thirty-Check game to a 450-Check player: the board
+  and the denominators were pinned to the prototype. Fourth instance of
+  "the options scaled and a consumer did not".
+- **Zone signage rendered mirrored.** Playtest 1 found this in the Hub,
+  it was fixed in the Hub, and the guard was built around the Hub -- so
+  the Zone kept the bug through two more playtests.
+- **A corridor had no end walls.** The playtest-2 comment names the three
+  builders that had no ends; two of them got ends. Test 57 probes from
+  the chamber's CENTRE only, so it was green the whole time. The seal
+  suite now stands at 81 floor positions and looks four ways, and a
+  sabotage proves test 57 cannot see an off-centre hole.
+
+That last one also surfaced a contradiction nothing had ever hit:
+`DOOR_WIDTH` 2.4 < `BRUTE_LANE` 2.6, so no doorway in this game has ever
+met the lane budget. Resolved as stated design (a doorway is a narrowing
+the 1.8 m brute passes with 0.3 a side) and pinned by a test rather than
+left implicit.
+
+One correction worth keeping: I reported that 24 of 25 `Label3D` sites
+overflow their panels. **That was wrong on both mechanism and fact** --
+`width` defaults to 500 and does nothing anyway because `autowrap_mode`
+defaults OFF, and measurement shows every Hub sign fits. There was
+nothing to fix, so `godot-legible` now measures the margin instead.
+
+## v0.10 RESEARCH — hard progression, delivered 2026-08-29
+
+`docs/design-packet-v0.10/RESEARCH_MEMO.md`. **Architecture D is proven,
+not argued**: a disposable patch gated locations behind a capability
+event and ran real `Generate.py` -- solo and multiworld generate clean,
+and the negative control (same gate, event removed) FAILS generation.
+So an unsatisfiable capability gate is a seed-generation error rather
+than a dead seed discovered at hour twenty. **Archipelago polices this
+for us.** The patch was reverted.
+
+The owner's rule that governs the redesign: the multiworld must be
+logically solvable; it is NOT that every room must be solvable with the
+starting kit. Zone CLEARED (5 Checks + exit) is not Zone EXHAUSTED (15).
+
+**No structural redesign is implemented and none is authorised.**
+
 ---
 
 **OPEN PACING DECISION — recorded 2026-08-28, do NOT act on it.** The
