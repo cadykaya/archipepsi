@@ -189,8 +189,16 @@ class TestTheFoldIsStillSentWhole:
 
     This test exists so the decision is visible and costed rather than
     forgotten. It records what the fold costs; it does not defend the
-    number. Eliding it later is a real option — this fails when someone
-    takes it, and they should then say so here instead of deleting it.
+    number.
+
+    **FROZEN FOR THE ART A/B.** Eliding this is a real option and a good
+    one, and it is NOT to be taken until the post-art run of the same
+    Zone 1 is complete (`docs/PLAYTEST_BASELINE.md`, "THE A/B FREEZE").
+    The authored-art integration is the variable that comparison is of;
+    a transport change landing in the middle of it makes the result
+    measure two things at once and neither cleanly. Afterwards this
+    returns to the frontier — take it then, and rewrite this docstring
+    rather than deleting the test.
     """
 
     def test_the_remaining_cost_is_the_fold_and_it_is_recorded(

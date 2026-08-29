@@ -955,6 +955,11 @@ class CampaignSnapshot(Strict):
     #: empty archive rather than a wrong one. Every connect and every
     #: `hello` is answered with a complete snapshot, so no client can be
     #: joined to the stream without a full log to cache first.
+    #:
+    #: FROZEN FOR THE ART A/B: `mechanics` below could be elided on this
+    #: same key and is ~97% of what remains, but no transport change
+    #: lands between the pre-art and post-art runs of the same Zone 1.
+    #: See `docs/PLAYTEST_BASELINE.md`, "THE A/B FREEZE".
     interpretations_complete: bool = True
     #: The lifetime length of the log, sent whether or not the log is, so
     #: a count-only consumer never has to know which kind it received.

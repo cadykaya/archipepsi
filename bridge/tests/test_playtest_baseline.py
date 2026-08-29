@@ -14,8 +14,10 @@ thing that happened.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 from pathlib import Path
+from unittest import mock
 
 import pytest
 from pydantic import TypeAdapter
@@ -24,11 +26,14 @@ from archipepsi_bridge import content_value as V
 from archipepsi_bridge.epsilon.fallback import fallback_echo, fallback_zone
 from archipepsi_bridge.epsilon.requests import (EchoGenerationRequest,
                                                 ZoneGenerationRequest)
+from archipepsi_bridge import playtest as PT
 from archipepsi_bridge.fixtures import make_playtest_baseline as B
 from archipepsi_bridge.schemas import constants as C
 from archipepsi_bridge.schemas import zone as Z
 from archipepsi_bridge.schemas.echo import (EchoInterpretation,
                                             validate_interpretation)
+
+from .conftest import drain, run
 
 _ZONE = TypeAdapter(Z.Zone)
 _ECHO = TypeAdapter(EchoInterpretation)
@@ -207,6 +212,147 @@ def test_a_playtime_record_says_which_build_played_it(tmp_path):
     assert "version" not in imported, (
         "instrumentation imports version, which shells out to git; the "
         "build is handed in so this module keeps touching one file")
+
+
+# ---------------------------------------------------------------------------
+# The launcher's own guard
+
+
+class TestTheLauncherGuardIsAsStrongAsThisSuite:
+    """`Playtest 2.5 (Windows).bat` cannot run pytest.
+
+    A player's machine has pydantic and websockets and nothing else, and
+    a traceback is not an error message. So the guard lives in
+    `playtest.preflight_problems()` as plain sentences — and these are
+    the sabotages proving it refuses everything this file refuses. One
+    implementation, one proof, and neither can quietly get weaker than
+    the other.
+    """
+
+    def test_it_passes_on_the_committed_baseline(self):
+        assert PT.preflight_problems() == []
+
+    def test_it_refuses_a_retuned_campaign_scale(self, monkeypatch):
+        retuned = dataclasses.replace(C.DEFAULT_CONFIG, zone_budget=1200)
+        monkeypatch.setattr(C, "DEFAULT_CONFIG", retuned)
+        monkeypatch.setattr(PT, "PLAYTEST_CONFIG", retuned)
+        problems = PT.preflight_problems()
+        assert any("scale moved" in p for p in problems), problems
+
+    def test_it_refuses_a_hand_edited_baseline(self, tmp_path, baseline):
+        edited = json.loads(json.dumps(baseline))
+        edited["zones"][0]["measured"]["content_value"] = 1234
+        path = tmp_path / "playtest_2_5.json"
+        path.write_text(json.dumps(edited))
+        with mock.patch.object(PT, "BASELINE_PATH", path):
+            problems = PT.preflight_problems()
+        assert any("no longer builds" in p for p in problems), problems
+
+    def test_it_refuses_a_missing_baseline(self, tmp_path):
+        with mock.patch.object(PT, "BASELINE_PATH",
+                               tmp_path / "absent.json"):
+            problems = PT.preflight_problems()
+        assert problems and "missing" in problems[0]
+
+    def test_it_never_writes_the_baseline(self, baseline):
+        """The one thing it must not do. A launcher that regenerated the
+        file would repair the drift it exists to report, and the
+        playtest after authored art would be compared against a baseline
+        nobody walked."""
+        before = PT.BASELINE_PATH.read_bytes()
+        PT.preflight_problems()
+        PT._check(None)
+        assert PT.BASELINE_PATH.read_bytes() == before
+
+
+class TestThePlayedZoneIsTheSameZoneEveryTime:
+    """What the art A/B actually rests on.
+
+    The corpus is a generator fingerprint that nobody plays. The Zone a
+    human WALKS is the mock campaign's Zone 1 at the playtest scale, and
+    the before-and-after comparison is only about art if that Zone is
+    identical both times. It is: the mock seed is fixed and the scale is
+    fixed, so two independent engines build the same level.
+    """
+
+    def test_two_independent_runs_build_the_same_zone(self):
+        first = PT.played_zone_digest()
+        second = PT.played_zone_digest()
+        assert first and first == second
+
+    def test_it_is_a_production_scale_zone_not_a_prototype_one(self):
+        played = PT.played_zone_digest()
+        assert played["checks"] == C.DEFAULT_CONFIG.zone_target_checks
+        assert played["rooms"] > 10, (
+            f"the played Zone has {played['rooms']} rooms; a prototype "
+            "Zone would mean --mock-scale is not reaching the backend")
+
+    def test_the_played_zone_is_not_assumed_to_be_the_corpus_zone(
+            self, baseline):
+        """Stated as a test because it is the mistake this nearly made.
+
+        A launcher that printed the CORPUS Zone's numbers as "what you
+        are about to play" would be confidently wrong: the corpus is
+        built from a fixed synthetic request and the played Zone from
+        the mock seed's own placements, so they differ in theme, in
+        corridor widths and in affordance features.
+
+        They are the same SHAPE — the same rooms in the same order with
+        the same enemy counts — which is why the corpus is a meaningful
+        fingerprint of the generator. They are not the same level, and
+        nothing may quietly treat one as the other.
+        """
+        played = PT.played_zone_digest()
+        corpus = PT.zone_entry(baseline, PT.REQUIRED_ZONE_INDEX)
+        assert played["rooms"] == corpus["measured"]["chambers"]
+        assert played["enemies"] == corpus["measured"]["enemy_total"]
+        assert played["theme"] != corpus["zone"]["theme"], (
+            "the played Zone and the corpus Zone now share a theme; if "
+            "they have genuinely converged, say so deliberately rather "
+            "than letting this test go quiet")
+
+    def test_the_played_zone_is_recorded_with_what_was_played(self,
+                                                              tmp_path):
+        """The digest reaches the playtime record, so a post-art run is
+        checked against a number rather than against a memory."""
+        from archipepsi_bridge import instrumentation as I
+        from archipepsi_bridge.campaign import CampaignEngine
+        from archipepsi_bridge.epsilon import FallbackEpsilonProvider
+        from archipepsi_bridge.mock_ap import MockAPBackend
+        from archipepsi_bridge.schemas.protocol import (ChamberDwell,
+                                                        ZoneTiming)
+
+        import asyncio
+
+        async def scenario():
+            engine = CampaignEngine(provider=FallbackEpsilonProvider(),
+                                    provider_name="fallback",
+                                    save_dir=tmp_path)
+            engine.backend = MockAPBackend(engine,
+                                           config=PT.PLAYTEST_CONFIG)
+            await engine.backend.connect("", "Skyiah", "")
+            await drain()
+            await engine.handle_request_next_zone(False)
+            for _ in range(600):
+                await asyncio.sleep(0)
+                active = engine.save.active_zone if engine.save else None
+                if active is not None and active.zone is not None:
+                    break
+            await engine.handle_enter_zone(active.zone_id)
+            await drain()
+            engine.record_zone_timing(ZoneTiming(
+                type="zone_timing", zone_id=active.zone_id,
+                elapsed_seconds=2400.0, deaths=1, checks_completed=15,
+                completed=True, encounter_seconds=(30.0,),
+                dwell=(ChamberDwell(chamber_index=0, seconds=30.0),)))
+            await drain()
+
+        run(scenario())
+        records = I.read_records(tmp_path)
+        assert len(records) == 1
+        assert records[0]["zone_digest"] == PT.played_zone_digest()["digest"]
+        # And the report renders it without raising on a real record.
+        assert PT.report(tmp_path) == 0
 
 
 def test_the_recorded_zones_are_not_the_same_zone(baseline):

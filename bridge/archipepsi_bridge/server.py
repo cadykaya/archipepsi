@@ -27,9 +27,20 @@ _CLIENT_ADAPTER = TypeAdapter(ClientMessage)
 
 class BridgeServer:
     def __init__(self, engine: CampaignEngine, *, ap_default: str = "real",
-                 host: str = C.BRIDGE_HOST, port: int = C.BRIDGE_PORT):
+                 host: str = C.BRIDGE_HOST, port: int = C.BRIDGE_PORT,
+                 mock_config: C.CampaignConfig | None = None):
         self.engine = engine
         self.ap_default = ap_default
+        #: The scale a MOCK campaign is created at. `None` keeps the
+        #: prototype's thirty locations, which is what every existing
+        #: caller gets and what MOCK CAMPAIGN has always meant.
+        #:
+        #: Overridable because the pre-art playtest baseline is taken at
+        #: the 450-location default, and a human pressing MOCK CAMPAIGN
+        #: would otherwise walk a prototype Zone 1 and compare it to a
+        #: baseline Zone 1 that does not exist in their campaign. Real AP
+        #: is unaffected: there the seed decides, as it must.
+        self.mock_config = mock_config
         # The generated constants stay the default, so nothing that does not
         # ask changes behaviour. Overridable because two Archipepsi slots in
         # one multiworld is a supported way to play, and on one development
@@ -148,7 +159,7 @@ class BridgeServer:
             await engine.backend.disconnect()
             engine.backend = None
         if engine.backend is None:
-            engine.backend = MockAPBackend(engine)
+            engine.backend = MockAPBackend(engine, config=self.mock_config)
         await engine.backend.connect("", "Skyiah", "")
 
     async def _connect_ap(self, server: str, slot_name: str,

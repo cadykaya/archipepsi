@@ -45,6 +45,16 @@ verbs-fixture:
 baseline:
 	$(PY) bridge/archipepsi_bridge/fixtures/make_playtest_baseline.py
 
+# The launcher's own guard and report, from a terminal. Same code the
+# Windows launcher runs, so a green `playtest-check` here means the
+# launcher will start.
+playtest-check:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest check
+
+playtest-report:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest report \
+	  --save-dir $(or $(SAVES),../playtest-2.5)
+
 # Two Archipepsi slots in ONE real multiworld: a real MultiServer, two
 # bridges, two saves, checking each other's locations. Needs a generated
 # seed (`make seed-multi`); the harness starts and stops its own server.

@@ -26,6 +26,7 @@ tool for a file this size.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import time
@@ -107,6 +108,12 @@ def build_record(save: CampaignSave, timing: ZoneTiming,
         "zone_budget_asked_for": asked_for,
         # ...what the Zone actually holds...
         "zone_value": V.zone_value(zone),
+        # WHICH LEVEL this was, in sixteen characters. Two records
+        # carrying the same id walked the same generated Zone, which is
+        # the whole premise of the pre-art / post-art art comparison:
+        # the level is the constant and the art is the variable.
+        "zone_digest": hashlib.sha256(
+            zone.model_dump_json().encode("utf-8")).hexdigest()[:16],
         "chamber_count": len(zone.chambers),
         "allocated_checks": allocated,
         "rooms": rooms,

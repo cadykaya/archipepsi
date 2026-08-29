@@ -378,6 +378,57 @@ rather than looked up: `instrumentation.py` imports nothing that could
 reach anywhere and touches one file, and `version.build_metadata()`
 shells out to git.
 
+## THE ART A/B FREEZE — in force from 2026-08-29
+
+**Between the pre-art human run of Zone 1 and the post-art run of the
+SAME Zone 1, no unrelated runtime, gameplay or protocol optimization
+lands.** The authored-art integration is the variable; anything else
+changing at the same time makes the comparison measure two things at
+once and neither cleanly.
+
+Known, deliberately frozen, and to be picked up the moment the A/B is
+done: **the `mechanics` websocket payload.** It is ~97% of an elided
+late snapshot (~268 KB at 449 Echoes), re-sent on every state change,
+and it could be elided on exactly the key the Echo log already uses.
+Three places say so where someone would trip over them —
+`TestTheFoldIsStillSentWhole`, the `interpretations_complete` field
+comment, and `docs/PLAYTEST_BASELINE.md`.
+
+## PLAYTEST 2.5 — one double-click, one Zone
+
+`Playtest 2.5 (Windows).bat`. The human plays **Zone 1 only**; Zone 2 is
+optional (if Zone 1 looks anomalous, or for a second structural sample),
+Zone 3 is not required and stays frozen in the corpus. The A/B uses the
+same Zone 1 twice.
+
+The launcher runs `archipepsi_bridge.playtest check`, refuses on drift
+without ever repairing it, starts the bridge at the baseline scale,
+keeps the run in `playtest-2.5/` away from real saves, and prints and
+files the summary when the bridge stops. No pytest, no JSON hunting.
+`make playtest-check` / `make playtest-report` are the same code from a
+terminal.
+
+**Two artifacts, and they are not the same Zone — this is the thing to
+get right.** `docs/baselines/playtest_2_5.json` is a GENERATOR
+FINGERPRINT built from fixed synthetic requests; nobody plays it. The
+PLAYED Zone is the mock campaign's Zone 1 at the default scale, whose
+request comes from the mock seed's own placements — same 23 rooms in the
+same order with the same enemy counts, different theme, widths and
+features. Printing the corpus Zone's numbers as "what you are about to
+play" would have been confidently wrong, and a test now refuses to let
+either quietly become the other.
+
+Two things this needed that did not exist:
+
+- **`--mock-scale`.** MOCK CAMPAIGN was the prototype's thirty locations
+  and nothing could ask for anything else, so a human "playing the
+  baseline" would have walked Zone 1 of a thirty-location campaign. The
+  default is unchanged; the launcher passes `default`.
+- **A level id on every playtime record** — sixteen characters of the
+  Zone's own hash. Two records with the same id walked the same
+  generated level, so the post-art run is PROVED to be the same level
+  rather than assumed to be.
+
 ---
 
 **OPEN PACING DECISION — recorded 2026-08-28, do NOT act on it.** The

@@ -18,7 +18,17 @@ from pathlib import Path
 from .campaign import CampaignEngine
 from .epsilon import make_provider
 from . import BRIDGE_VERSION
+from .schemas import constants as C
 from .server import BridgeServer
+
+#: Named scales a mock campaign can be created at. Named rather than
+#: numeric on purpose: these are the two configurations the project
+#: actually supports and tests, and a free `--locations=137` would invite
+#: a campaign nothing has ever been measured at.
+MOCK_SCALES = {
+    "prototype": C.PROTOTYPE_CONFIG,
+    "default": C.DEFAULT_CONFIG,
+}
 
 
 def resolve_provider_name(requested: str) -> str:
@@ -44,6 +54,14 @@ def main() -> None:
     parser.add_argument(
         "--epsilon", choices=("claude", "mock", "fallback"),
         default=os.environ.get("EPSILON_PROVIDER", "fallback"))
+    parser.add_argument(
+        "--mock-scale", choices=tuple(MOCK_SCALES), default="prototype",
+        help="the campaign scale a MOCK campaign is created at. The "
+             "prototype's thirty locations by default, which is what "
+             "MOCK CAMPAIGN has always meant. `default` is the "
+             "450-location production scale, and is what the pre-art "
+             "playtest baseline was taken at. Ignored for real AP, "
+             "where the seed decides.")
     parser.add_argument("--save-dir", type=Path, default=None)
     parser.add_argument("--archive-dir", type=Path, default=None,
                         help="save every generation for the benchmark archive")
@@ -68,6 +86,7 @@ def main() -> None:
         save_dir=args.save_dir,
         archive_dir=args.archive_dir)
     server = BridgeServer(engine, ap_default=args.ap,
+                          mock_config=MOCK_SCALES[args.mock_scale],
                           **({} if args.port is None
                              else {"port": args.port}))
     _announce(engine, server, provider_name, args)
@@ -100,6 +119,26 @@ def main() -> None:
         raise SystemExit("\n  Bridge stopped.\n") from None
 
 
+def _ap_line(args) -> str:
+    """The AP line of the banner, with the mock's SCALE on it.
+
+    A mock campaign at thirty locations and one at 450 are different
+    games, and the difference is invisible until Zone 4 arrives with
+    three Checks in it. The playtest baseline is taken at 450, so the
+    one thing a playtester must be able to see at a glance is which of
+    the two they are about to walk.
+    """
+    if args.ap == "real":
+        return "real server"
+    config = MOCK_SCALES[args.mock_scale]
+    # ASCII: this prints into a console the launcher did not `chcp`,
+    # because `start` gives the bridge a fresh window with the system
+    # default code page.
+    return (f"MOCK - offline fixture campaign, {args.mock_scale} scale "
+            f"({config.location_count} locations, "
+            f"{config.zone_target_checks} Checks per Zone)")
+
+
 def _announce(engine, server, provider_name: str, args) -> None:
     """Four lines, before the event loop starts.
 
@@ -129,7 +168,7 @@ def _announce(engine, server, provider_name: str, args) -> None:
         f"  ({build['commit']}{'*' if build['tree'] == 'dirty' else ''})\n"
         f"    listening   ws://{server.host}:{server.port}"
         f"   (Godot connects here)\n"
-        f"    archipelago {'real server' if args.ap == 'real' else 'MOCK — offline fixture campaign'}\n"
+        f"    archipelago {_ap_line(args)}\n"
         f"    epsilon     {epsilon}\n"
         f"    saves       {save_dir}\n",
         flush=True)
