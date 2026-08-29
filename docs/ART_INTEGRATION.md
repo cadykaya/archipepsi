@@ -422,6 +422,111 @@ deliverable; the assets arrive when the branches are reconciled.
 
 ---
 
+## Projectile silhouettes (requirement 13)
+
+**Contract:** `ProjectileSilhouette` (`FAMILY`, `for_behaviour`,
+`content_id`, `build`, `profile`, `reads_apart`), the `projectile_visual`
+registry category, and `ContentInstantiator.projectile_visual`.
+
+One primitive family flies three ways, and until now it looked one way:
+a sphere, scaled 1.5x for a lob. The three facts a player has to read
+before the shot lands were not on screen at all.
+
+| Silhouette | Worn when | Says |
+| --- | --- | --- |
+| `straight` | no gravity, no blast | goes where you pointed |
+| `falling` | `gravity_scale > 0` | it drops; lead the shot up |
+| `lobbed` | `blast_radius > 0` | fused, and it explodes |
+
+`blast_radius` is tested first on purpose: an `arc_lob` is ALSO fully
+gravity-affected, so a selector that asked about gravity first would show
+every grenade as a falling bolt.
+
+### Colour is not available for this
+
+An Echo is tinted by the SOURCE WORLD whose item it reinterprets, so
+colour already means provenance. Spending it on behaviour would overwrite
+identity with mechanics and lose both. The difference has to survive
+greyscale, so it is shape:
+
+```
+straight   0.64 x 0.13 m   elongation 4.92   balance 0.59
+falling    0.66 x 0.30 m   elongation 2.20   balance 0.23
+lobbed     0.34 x 0.46 m   elongation 0.74   balance 0.50
+```
+
+`elongation` is length over width; `balance` is where the widest part
+sits along the travel axis, 0 at the nose and 1 at the tail. Two
+silhouettes read apart when elongation differs by 1.8x or balance by
+0.15. Part count is deliberately not a measure — at distance a shape
+built from three meshes and the same shape built from one look
+identical. `make godot-legible` checks every pair, with all three built
+in ONE colour so a pair that only separates by hue fails there.
+
+### What art can now do
+
+Author three meshes, register them as `projectile_visual` under
+`projectile_straight` / `projectile_falling` / `projectile_lobbed`, and
+they are used with no code change. Two rules are enforced rather than
+asked for:
+
+- **A projectile mesh carries no collision.** The hitbox is one 0.25 m
+  sphere on the body for all three, and a mesh shipping its own is
+  refused at instantiation — installing it would otherwise make the
+  lobbed shot a different weapon from the straight one.
+- **Presentation lives under a `Visual` container** and is what gets
+  rotated to face the arc. Same rule and same reason as the enemy
+  telegraph: `scale` on a body scales its collider.
+
+Meshes were deliberately NOT copied from the art lane. The selection and
+the intake seam are the deliverable; batch 008 arrives when the branches
+are reconciled.
+
+---
+
+## Check state legibility (requirement 11)
+
+**Contract:** `RewardObject.STATE_FORM_NAME`, `state_profile()`,
+`forms_read_apart()`.
+
+**The invariant is not "the destination ring exists".** It is that a
+player across a room can tell a Check they have not opened from one they
+already sent. Two channels were carrying that and neither reaches across
+a room: the label, which is words, and the item's tint, which went from
+`(0.35, 0.35, 0.4)` to `(0.25, 0.3, 0.28)` — two greys a fraction of a
+shade apart, and the same grey to anyone who does not separate those
+hues.
+
+So state is carried by FORM, in the 005-R language:
+
+| State | Form | Measured |
+| --- | --- | --- |
+| `locked` | an open cradle around the item — held, not yours yet | top 2.51 m, height 1.45 |
+| `available` | the item alone, free, spinning fast | top 2.05 m, height 0.70 |
+| `confirmed` | a collapsed chunky spent mass on the cap | top 1.28 m, height 0.28 |
+
+`sending` is a sub-second transient between two of these and is not one
+of the forms a player reads at distance.
+
+Two states read apart when their tops differ by 0.35 m or one is 1.8x
+taller. The gap is wider than twice the item's 0.12 m idle bob on
+purpose: two states separated by less than the idle animation would
+cross each other every second.
+
+The measurement reads GEOMETRY and never a material, and the suite
+proves it by repainting every state one flat colour at one emission and
+re-measuring. The destination ring is the DESTINATION channel and is not
+load bearing for state — art may move, replace or drop it without taking
+the state read with it.
+
+### What art can now do
+
+Author a cradle and a spent mass. Any pair answers the measurement the
+same way the placeholders do; nothing in the suite pins a particular
+mesh, only that the forms differ.
+
+---
+
 ## Still open, and why
 
 | # | Requirement | Status |

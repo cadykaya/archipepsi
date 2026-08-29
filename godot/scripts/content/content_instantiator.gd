@@ -142,6 +142,57 @@ static func light_housing(theme: String,
 		return null
 	return instance as Node3D
 
+## The VISUAL for a projectile silhouette (art requirement 13).
+##
+## Same shape as `light_housing` and for the same reason: the engine
+## decides WHICH silhouette from the shot's own flight fields, art
+## decides what that silhouette looks like, and neither can reach into
+## the other. Always returns something -- a projectile with no visual is
+## an invisible shot, so the placeholder is the floor rather than a
+## warning.
+##
+## An authored mesh that carries collision is REFUSED. A projectile's
+## hitbox is one 0.25 m sphere on the body for all three silhouettes; a
+## mesh shipping its own would make the lobbed shot a different weapon
+## from the straight one by being installed.
+static func projectile_visual(silhouette: String, tint: Color,
+		registry: ContentRegistry = null) -> Node3D:
+	var authored := _authored_projectile(silhouette, registry)
+	if authored != null:
+		return authored
+	return ProjectileSilhouette.build(silhouette, tint)
+
+static func _authored_projectile(silhouette: String,
+		registry: ContentRegistry) -> Node3D:
+	var reg := registry if registry != null else ContentRegistry.shared()
+	var wanted := ProjectileSilhouette.content_id(silhouette)
+	if not reg.has(wanted):
+		return null
+	var chosen := reg.resolve(wanted)
+	if chosen.is_empty():
+		return null
+	var entry := reg.get_entry(chosen)
+	if bool(entry.get("procedural_fallback", false)):
+		return null
+	if not VisualOwnership.is_shippable(entry):
+		push_warning("content: '%s' is pending art review; using the "
+				% chosen + "placeholder projectile silhouette")
+		return null
+	var scene: PackedScene = load(str(entry.get("scene", "")))
+	if scene == null:
+		return null
+	var instance := scene.instantiate()
+	if not (instance is Node3D):
+		instance.free()
+		return null
+	var carried := VisualInterface.collision_profile(instance as Node3D)
+	if not carried.is_empty():
+		push_warning("content: '%s' carries collision; a projectile's "
+				% chosen + "hitbox is engine-owned, so the mesh is refused")
+		instance.free()
+		return null
+	return instance as Node3D
+
 static func _carries_a_light(node: Node) -> bool:
 	if node is Light3D:
 		return true

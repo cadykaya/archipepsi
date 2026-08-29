@@ -163,6 +163,7 @@ only.
 | `room_shell` | 3 | `shell_` | `shell_arena_proc` |
 | `landmark` | 4 | `mark_` | `mark_hub_spire` |
 | `cluster` | 2 | `cluster_` | `cluster_survey_station` |
+| `projectile_visual` | 0 | `projectile_` | `projectile_lobbed` |
 
 A **`cluster`** is a composed dressing or storytelling group that reads as
 one thing — bigger than a prop, smaller than a room. It is the one
@@ -178,6 +179,28 @@ category that must declare a `footprint`, because `PROP_FOOTPRINT` is
   "mount_height": 0.0       // 0 on the floor; where the underside hangs
 }                           //   otherwise, and at least 2.75
 ```
+
+A **`projectile_visual`** is one member of a CLOSED family of exactly
+three, and the id is not a name an artist chooses — the engine picks it
+from a shot's own flight fields (art requirement 13):
+
+| Id | Worn by | What it has to say |
+|---|---|---|
+| `projectile_straight` | no gravity, no blast | goes where you pointed |
+| `projectile_falling` | gravity-affected | it drops; lead the shot up |
+| `projectile_lobbed` | has a blast radius | fused, and it explodes |
+
+Two rules, both testable and both easy to break:
+
+- **The difference is SHAPE, not hue.** Colour belongs to the source
+  world — an Echo is tinted by the game whose item it reinterprets — so
+  tinting by behaviour would overwrite identity with mechanics and lose
+  both. The three must read apart in silhouette, in greyscale, at
+  distance. `ProjectileSilhouette.reads_apart()` is the measure.
+- **A projectile mesh carries no collision.** The hitbox is one 0.25 m
+  sphere on the body for all three. A mesh shipping its own would make
+  the lobbed shot a different weapon from the straight one by being
+  installed, and it is refused at instantiation.
 
 There is no free-standing floor anchor: a cluster in the middle of a room
 sits on the mandatory path. A colliding floor cluster costs

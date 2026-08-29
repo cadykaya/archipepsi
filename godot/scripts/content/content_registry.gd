@@ -37,6 +37,9 @@ const LEVELS := {
 	# reads as one thing (art requirement 5). Level 2, the same as a
 	# fixture, because that is what an L2 station is.
 	"cluster": [2],
+	# One member of the closed projectile silhouette family (art
+	# requirement 13). Level 0: a single object, no sockets, no volumes.
+	"projectile_visual": [0],
 }
 
 ## Categories that must declare a legal placement envelope.

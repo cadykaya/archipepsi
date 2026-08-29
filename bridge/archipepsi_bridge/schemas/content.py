@@ -61,6 +61,12 @@ ContentCategory = Literal[
     #: that must declare a placement envelope: `PROP_FOOTPRINT` is 1.4 m,
     #: which is right for a crate and far too small for a station.
     "cluster",          # L2
+    #: L0, one member of the closed projectile silhouette family (art
+    #: requirement 13). Its own category rather than a prop because the
+    #: id is not decorative: the engine picks it from a shot's flight
+    #: fields, so a mesh registered here is answering a question the
+    #: engine asked.
+    "projectile_visual",  # L0
 ]
 
 #: Which level each category may declare. A mismatch is a manifest that
@@ -72,6 +78,7 @@ _LEVELS: dict[str, tuple[int, ...]] = {
     "fixture": (2,),
     "affordance_visual": (2,),
     "interactable": (0, 1, 2),
+    "projectile_visual": (0,),
     "room_shell": (3,),
     "landmark": (4,),
     "cluster": (2,),

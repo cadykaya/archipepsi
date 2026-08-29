@@ -238,6 +238,8 @@ on. Summary of what is now unblocked, and what is not:
 | 3a | `ContentInstantiator.light_housing(theme)` | **cleared** |
 | 5 | `ClusterFootprint` + `cluster_placement_errors()`, registry-enforced | **cleared** |
 | Tier 7 | `shells.shell_catalog()` → request → validator → instantiator | **cleared** |
+| 13 | `ProjectileSilhouette` — straight / falling / lobbed, by SHAPE | **cleared** |
+| 11 | `RewardObject.state_profile()` — LOCKED and CONFIRMED are different FORMS | **cleared** |
 
 **Three things they exposed, each worth remembering:**
 
@@ -252,6 +254,28 @@ on. Summary of what is now unblocked, and what is not:
 - **`make godot-<suite>` printing "TESTS OK" does not mean it passed.**
   The Makefile guards also fail on a raised runtime error. Sweep by EXIT
   CODE; a grep for the OK line hid a red suite for two commits.
+
+**Two more, landed 2026-08-29, and both are the same lesson:** a state
+the engine knows and the player cannot see is not a state the player has.
+
+- **Requirement 13.** One primitive family flies three ways and looked
+  one way — a sphere, scaled 1.5x for a lob. Now `straight`, `falling`
+  and `lobbed` are different SHAPES, selected from the shot's own flight
+  fields, because colour is not available: an Echo is tinted by the
+  source world whose item it reinterprets, so spending hue on behaviour
+  would overwrite identity with mechanics and lose both. `blast_radius`
+  is tested before `gravity_scale` — a lob is also fully gravity-affected
+  and would otherwise read as a falling bolt.
+- **Requirement 11.** LOCKED and CONFIRMED were two greys eight percent
+  of a shade apart plus a word, and a word is unreadable across a room.
+  Now they are an open cradle and a collapsed spent mass. **The invariant
+  is NOT that the destination ring exists** — it is that the forms
+  differ, measured from geometry, with every state repainted one flat
+  colour to prove the material is not what is talking.
+
+Both intake seams exist and **no art-lane meshes were copied.** Register
+a `projectile_visual`, or author a cradle, and it is used with no code
+change.
 
 **Still blocked, and none of it is engineering's:** telegraphs for melee
 and ranged (they have no windup, and adding one changes difficulty —
