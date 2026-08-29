@@ -157,7 +157,42 @@ func _every_panel_opens_in_the_middle() -> void:
 		_check(absf(offset.x) < 2.0 and absf(offset.y) < 2.0,
 				"the %s opens %s off centre -- rect %s on a %s screen"
 				% [label, offset, rect, screen])
+
+		# A panel you READ has to be opaque. Godot's default
+		# PanelContainer theme is translucent, so a panel that does not
+		# say otherwise has the game showing through its own small grey
+		# text. Only the reveal card ever set a background; the two
+		# panels full of text did not. Same shape as the centring bug --
+		# one wrong default, copied everywhere it mattered.
+		var style := panel.get_theme_stylebox("panel")
+		var flat := style as StyleBoxFlat
+		_check(flat != null,
+				"the %s has no StyleBoxFlat, so it is on Godot's " % label
+				+ "translucent default and the world shows through it")
+		if flat != null:
+			_check(flat.bg_color.a > 0.9,
+					"the %s is %.2f opaque; its text is unreadable "
+					% [label, flat.bg_color.a] + "against a bright wall")
+
+		# And nothing inside may be wider than the panel. A
+		# ScrollContainer with horizontal overflow hands the mouse wheel
+		# to the horizontal bar, so the wheel pans sideways and the list
+		# cannot be scrolled down at all.
+		for scroll in _scrolls_under(ui):
+			_check(scroll.horizontal_scroll_mode
+					== ScrollContainer.SCROLL_MODE_DISABLED,
+					("the %s can scroll sideways; content wider than "
+					+ "the panel takes the mouse wheel and the list "
+					+ "stops scrolling down") % label)
 		ui.queue_free()
+
+func _scrolls_under(node: Node) -> Array[ScrollContainer]:
+	var out: Array[ScrollContainer] = []
+	if node is ScrollContainer:
+		out.append(node as ScrollContainer)
+	for child in node.get_children():
+		out.append_array(_scrolls_under(child))
+	return out
 
 func _first_panel(node: Node) -> Control:
 	if node is PanelContainer:

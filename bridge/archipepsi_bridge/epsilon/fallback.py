@@ -736,6 +736,32 @@ def _budget_room(mechanics, *, resources: int = 0, rules: int = 0,
 #: Deltas are deliberately modest — a Mk II should read as "the same thing,
 #: better", not as a replacement — and every one is checked against the
 #: target's own bounds before it is emitted.
+#: How an upgraded field is DESCRIBED, one word per field.
+#:
+#: This used to be `"sharper" if delta >= 0 else "quicker"` -- two words
+#: for eleven fields, and since ten of the eleven deltas are positive,
+#: almost everything in the game was "sharper". A Warp Whistle that
+#: gained +6 range read "The same Warp Whistle, sharper", which is not
+#: what happened to it: sharpness is not a property a teleport has.
+#:
+#: The word follows the FIELD, because the field is what changed. A
+#: census, not a default -- `test_fallback_variety.py` fails on a ladder
+#: entry with no word, so adding an upgradable field means saying what
+#: improving it feels like rather than inheriting "sharper".
+_UPGRADE_WORD = {
+    "damage": "heavier",
+    "damage_per_second": "fiercer",
+    "range": "farther",
+    "reach": "longer",
+    "radius": "wider",
+    "pull_force": "stronger",
+    "force": "stronger",
+    "amount": "deeper",
+    "max_value": "deeper",
+    "multiplier": "steeper",
+    "cooldown": "quicker",
+}
+
 _UPGRADE_LADDER = (
     ("damage", 4.0),
     ("damage_per_second", 6.0),
@@ -804,8 +830,8 @@ def _as_sequel(interpretation: dict, request: EchoGenerationRequest):
                 **interpretation,
                 "description": _clamp(
                     "The same %s, %s. Mk %d."
-                    % (owned.display_name,
-                       "sharper" if delta >= 0 else "quicker", owned.mk + 1),
+                    % (owned.display_name, _UPGRADE_WORD[field],
+                       owned.mk + 1),
                     C.MAX_TEXT_LEN),
                 "tags": list(interpretation.get("tags", [])) + ["evolution"],
                 "operations": [{

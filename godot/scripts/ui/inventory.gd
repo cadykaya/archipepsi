@@ -32,8 +32,7 @@ var _scroll: ScrollContainer
 func _ready() -> void:
 	layer = 8
 	visible = false
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(680, 520)
+	var panel := UILayout.reading_panel(Vector2(720, 560))
 	UILayout.centred(self, panel)
 	var box := VBoxContainer.new()
 	panel.add_child(box)
@@ -42,9 +41,7 @@ func _ready() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 26)
 	box.add_child(title)
-	_scroll = ScrollContainer.new()
-	_scroll.custom_minimum_size = Vector2(660, 420)
-	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_scroll = UILayout.reading_scroll(Vector2(680, 430))
 	box.add_child(_scroll)
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -125,6 +122,7 @@ func _row(echo: Dictionary, slotted: Array) -> Control:
 			kinds.append(str(operation.get("op", "")))
 	name_label.text = "%s   [%s]" % [echo.get("display_name", "?"),
 			" + ".join(kinds).to_upper()]
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_label.add_theme_font_size_override("font_size", 20)
 	name_label.modulate = Color(0.95, 0.9, 0.5) if is_equipped \
 			else Color.WHITE
@@ -135,6 +133,7 @@ func _row(echo: Dictionary, slotted: Array) -> Control:
 			location % 1000, echo.get("source_item_name", "?"),
 			echo.get("source_recipient_name", "?"),
 			echo.get("source_game", "?")]
+	source.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	source.modulate = Color(0.65, 0.75, 0.8)
 	source.add_theme_font_size_override("font_size", 15)
 	text_box.add_child(source)
@@ -160,12 +159,14 @@ func _row(echo: Dictionary, slotted: Array) -> Control:
 		# from the item to get here.
 		var mode := str(echo.get("mode", "literal"))
 		read.text = "read %s: %s" % [mode, " / ".join(words)]
+		read.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		read.modulate = _MODE_TINT.get(mode, Color(0.75, 0.65, 0.9))
 		read.add_theme_font_size_override("font_size", 13)
 		text_box.add_child(read)
 
 	var effects := Label.new()
 	effects.text = " · ".join(EffectSummary.lines(echo))
+	effects.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	effects.modulate = Color(0.6, 0.95, 0.85)
 	effects.add_theme_font_size_override("font_size", 15)
 	text_box.add_child(effects)
