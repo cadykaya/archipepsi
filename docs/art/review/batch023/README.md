@@ -83,6 +83,17 @@ navigation or landmark colour.
 | `A_landmarks_eye.png` | all six at the game's own 90° FOV from a 1.6 m eye, **standing inside** each place, with a 1.8 m human reference in frame |
 | `B_landmarks_long.png` | the same six at distance, where each is a shape |
 
+`LandmarkGallery.gd` renders the same twelve views as individual files for
+presentation surfaces that set their own typography. It calls `Landmarks.gd`'s
+own `_panel()` rather than reimplementing the rig, so a gallery panel and its
+sheet cell cannot drift; only the packaging differs. It writes nothing into the
+repository -- pass it an output directory:
+
+```
+xvfb-run -a -s "-screen 0 1920x1200x24" .tools/godot --rendering-driver opengl3 \
+    --path tools/artpreview -s LandmarkGallery.gd -- "$PWD/assets" <out_dir>
+```
+
 ## What the renders changed
 
 - **Six interiors were photographed from outside their own walls.** A hall,
