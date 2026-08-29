@@ -1046,6 +1046,40 @@ Counting hits made the asset category look better-supported than it is, and
 would equally have hidden it among noise. A word is not a contract; the
 declaration is.
 
+### L-74 · An id is the ledger's key, so reusing one redefines approved work
+Batch 030 built ten enemy roles and named them `enemy_charger`,
+`enemy_bulwark`, `enemy_scuttler` and so on -- the obvious names. Seven of
+those ids were already owned by Batch 002, and Batch 002 is `PASS`.
+
+Nothing overwrote anything on disk: the files went to
+`batch030/enemies/` and Batch 002's are in `batch002/enemy/`. But
+`check_docs_metrics` matches on the ID, not the path, so it read the new
+build's numbers against the approved rows and reported the approved assets
+as wrong. A silent version of that would have been worse: the ledger would
+have quietly started describing a different object under a name the owner
+had already signed off.
+
+> Before naming an asset, check whether the id exists. Directories do not
+> namespace a ledger keyed on ids, and an approved id is not a free name.
+
+Renamed to `enemy_role_*`, which also says what they are: built to the
+published `ENEMY_ENVELOPES` box rather than to a concept sheet.
+
+### L-75 · Verify a blocker before repeating it
+`ART_FRONTIER.md` said seven of the ten enemy roles "wait on colliders
+(req 7)" and the telegraph waited "on a node that does not exist (req 14)".
+Both had been true. Both were false by the time Batch 030 read them:
+`ENEMY_ENVELOPES` publishes all ten envelopes, and `enemy.gd` carries
+`telegraph_started` / `telegraph_finished` / `telegraph_progress()` and a
+`telegraph_origin` marker.
+
+The frontier is the file that exists so a wake-up does not have to re-derive
+the state -- which is exactly what makes a stale entry in it expensive. A
+blocker recorded once and never re-checked stops being a fact and becomes a
+habit. This is L-72 again from the other end: that lesson was about auditing
+the wrong branch, this one is about not auditing at all because the answer
+was already written down.
+
 > A hero shape plus a floor is an object. A hero shape plus the routes that
 > let you be above, below and around it is a place. Only the second is
 > remembered as a location.

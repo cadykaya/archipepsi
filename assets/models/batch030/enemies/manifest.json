@@ -1,0 +1,302 @@
+{
+  "enemy_role_artillery": {
+    "anchor": "floor",
+    "batch": "030",
+    "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
+    "envelope_w_h_d_m": [
+      1.25,
+      1.55,
+      1.25
+    ],
+    "hover_height_m": 0.0,
+    "integration_ready": false,
+    "invents_no_behaviour": true,
+    "is_flying": false,
+    "kind": "enemy_role",
+    "path": "batch030/enemies/enemy_role_artillery.glb",
+    "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
+    "placeable_today": false,
+    "reads_as": "a seated mortar: braced base, elevated barrel",
+    "role": "artillery",
+    "scale_basis": "authored to the published envelope",
+    "size": [
+      1.175,
+      1.25,
+      1.502
+    ],
+    "telegraph_seat_at_centre_y_m": 0.775,
+    "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
+    "texel_density": null,
+    "triangles": 176
+  },
+  "enemy_role_beacon": {
+    "anchor": "floor",
+    "batch": "030",
+    "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
+    "envelope_w_h_d_m": [
+      0.62,
+      2.2,
+      0.62
+    ],
+    "hover_height_m": 0.0,
+    "integration_ready": false,
+    "invents_no_behaviour": true,
+    "is_flying": false,
+    "kind": "enemy_role",
+    "path": "batch030/enemies/enemy_role_beacon.glb",
+    "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
+    "placeable_today": false,
+    "reads_as": "a mast, not a creature -- a fixture that took sides",
+    "role": "beacon",
+    "scale_basis": "authored to the published envelope",
+    "size": [
+      0.55,
+      0.55,
+      2.2
+    ],
+    "telegraph_seat_at_centre_y_m": 1.1,
+    "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
+    "texel_density": null,
+    "triangles": 232
+  },
+  "enemy_role_brute": {
+    "anchor": "floor",
+    "batch": "030",
+    "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
+    "envelope_w_h_d_m": [
+      1.8,
+      2.6,
+      1.8
+    ],
+    "hover_height_m": 0.0,
+    "integration_ready": false,
+    "invents_no_behaviour": true,
+    "is_flying": false,
+    "kind": "enemy_role",
+    "path": "batch030/enemies/enemy_role_brute.glb",
+    "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
+    "placeable_today": true,
+    "reads_as": "mass over reach: a slab of shoulders, a small head",
+    "role": "brute",
+    "scale_basis": "authored to the published envelope",
+    "size": [
+      1.8,
+      1.602,
+      2.405
+    ],
+    "telegraph_seat_at_centre_y_m": 1.3,
+    "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
+    "texel_density": null,
+    "triangles": 136
+  },
+  "enemy_role_bulwark": {
+    "anchor": "floor",
+    "batch": "030",
+    "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
+    "envelope_w_h_d_m": [
+      1.45,
+      2.05,
+      0.85
+    ],
+    "hover_height_m": 0.0,
+    "integration_ready": false,
+    "invents_no_behaviour": true,
+    "is_flying": false,
+    "kind": "enemy_role",
+    "path": "batch030/enemies/enemy_role_bulwark.glb",
+    "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
+    "placeable_today": false,
+    "reads_as": "a wall that walks: broad face, almost no depth",
+    "role": "bulwark",
+    "scale_basis": "authored to the published envelope",
+    "size": [
+      1.45,
+      0.816,
+      1.988
+    ],
+    "telegraph_seat_at_centre_y_m": 1.025,
+    "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
+    "texel_density": null,
+    "triangles": 160
+  },
+  "enemy_role_charger": {
+    "anchor": "floor",
+    "batch": "030",
+    "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
+    "envelope_w_h_d_m": [
+      0.9,
+      1.05,
+      1.9
+    ],
+    "hover_height_m": 0.0,
+    "integration_ready": false,
+    "invents_no_behaviour": true,
+    "is_flying": false,
+    "kind": "enemy_role",
+    "path": "batch030/enemies/enemy_role_charger.glb",
+    "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
+    "placeable_today": false,
+    "reads_as": "a battering ram -- the long axis IS the attack",
+    "role": "charger",
+    "scale_basis": "authored to the published envelope",
+    "size": [
+      0.9,
+      1.843,
+      0.84
+    ],
+    "telegraph_seat_at_centre_y_m": 0.525,
+    "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
+    "texel_density": null,
+    "triangles": 180
+  },
+  "enemy_role_diver": {
+    "anchor": "floor",
+    "batch": "030",
+    "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
+    "envelope_w_h_d_m": [
+      0.7,
+      0.5,
+      1.2
+    ],
+    "hover_height_m": 1.9,
+    "integration_ready": false,
+    "invents_no_behaviour": true,
+    "is_flying": true,
+    "kind": "enemy_role",
+    "path": "batch030/enemies/enemy_role_diver.glb",
+    "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
+    "placeable_today": false,
+    "reads_as": "nose down; committed to a direction even at rest",
+    "role": "diver",
+    "scale_basis": "authored to the published envelope",
+    "size": [
+      0.7,
+      1.128,
+      0.4
+    ],
+    "telegraph_seat_at_centre_y_m": 1.9,
+    "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
+    "texel_density": null,
+    "triangles": 108
+  },
+  "enemy_role_drifter": {
+    "anchor": "floor",
+    "batch": "030",
+    "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
+    "envelope_w_h_d_m": [
+      1.35,
+      0.95,
+      1.35
+    ],
+    "hover_height_m": 2.55,
+    "integration_ready": false,
+    "invents_no_behaviour": true,
+    "is_flying": true,
+    "kind": "enemy_role",
+    "path": "batch030/enemies/enemy_role_drifter.glb",
+    "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
+    "placeable_today": false,
+    "reads_as": "a hanging bell -- deliberately gives away no facing",
+    "role": "drifter",
+    "scale_basis": "authored to the published envelope",
+    "size": [
+      1.247,
+      1.247,
+      0.779
+    ],
+    "telegraph_seat_at_centre_y_m": 2.55,
+    "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
+    "texel_density": null,
+    "triangles": 204
+  },
+  "enemy_role_melee": {
+    "anchor": "floor",
+    "batch": "030",
+    "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
+    "envelope_w_h_d_m": [
+      0.8,
+      1.6,
+      0.8
+    ],
+    "hover_height_m": 0.0,
+    "integration_ready": false,
+    "invents_no_behaviour": true,
+    "is_flying": false,
+    "kind": "enemy_role",
+    "path": "batch030/enemies/enemy_role_melee.glb",
+    "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
+    "placeable_today": true,
+    "reads_as": "upright, forward-weighted; the arms are the threat",
+    "role": "melee",
+    "scale_basis": "authored to the published envelope",
+    "size": [
+      0.784,
+      0.682,
+      1.552
+    ],
+    "telegraph_seat_at_centre_y_m": 0.8,
+    "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
+    "texel_density": null,
+    "triangles": 124
+  },
+  "enemy_role_ranged": {
+    "anchor": "floor",
+    "batch": "030",
+    "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
+    "envelope_w_h_d_m": [
+      0.7,
+      1.4,
+      0.7
+    ],
+    "hover_height_m": 0.0,
+    "integration_ready": false,
+    "invents_no_behaviour": true,
+    "is_flying": false,
+    "kind": "enemy_role",
+    "path": "batch030/enemies/enemy_role_ranged.glb",
+    "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
+    "placeable_today": true,
+    "reads_as": "recessed body, one carried emitter -- read the muzzle",
+    "role": "ranged",
+    "scale_basis": "authored to the published envelope",
+    "size": [
+      0.56,
+      0.663,
+      1.372
+    ],
+    "telegraph_seat_at_centre_y_m": 0.7,
+    "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
+    "texel_density": null,
+    "triangles": 140
+  },
+  "enemy_role_scuttler": {
+    "anchor": "floor",
+    "batch": "030",
+    "envelope_source": "Constants.ENEMY_ENVELOPES -- read, never redefined by art",
+    "envelope_w_h_d_m": [
+      1.3,
+      0.62,
+      1.2
+    ],
+    "hover_height_m": 0.0,
+    "integration_ready": false,
+    "invents_no_behaviour": true,
+    "is_flying": false,
+    "kind": "enemy_role",
+    "path": "batch030/enemies/enemy_role_scuttler.glb",
+    "placeable_source": "Constants.ENEMY_ARCHETYPES is still ('melee', 'ranged', 'brute')",
+    "placeable_today": false,
+    "reads_as": "flat and splayed, legs out, body low",
+    "role": "scuttler",
+    "scale_basis": "authored to the published envelope",
+    "size": [
+      1.237,
+      1.163,
+      0.341
+    ],
+    "telegraph_seat_at_centre_y_m": 0.31,
+    "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
+    "texel_density": null,
+    "triangles": 176
+  }
+}

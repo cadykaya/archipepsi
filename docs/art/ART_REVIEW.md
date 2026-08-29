@@ -523,13 +523,13 @@ is drawn from a remembered picture.
 
 | ID | Role | Tris | Size |
 | --- | --- | --- | --- |
-| `enemy_scuttler` | SCUTTLER — costs attention | 212 | 1.19 × 0.59 × 0.54 m |
-| `enemy_charger` | CHARGER — one telegraphed rush | 176 | 0.86 × 1.62 × 1.03 m |
-| `enemy_bulwark` | BULWARK — cannot be fought frontally | 280 | 1.45 × 0.83 × 1.92 m |
-| `enemy_artillery` | ARTILLERY — indirect, denies ground | 144 | 0.63 × 0.75 × 1.52 m |
-| `enemy_beacon` | BEACON — makes everything near it worse | 152 | 0.57 × 0.61 × 2.12 m |
-| `enemy_drifter` | DRIFTER (flyer) — owns the ceiling | 208 | 1.25 × 1.24 × 0.84 m |
-| `enemy_diver` | DIVER (flyer) — contests the grapple arc | 84 | 0.61 × 1.05 × 0.35 m |
+| `enemy_role_scuttler` | SCUTTLER — costs attention | 212 | 1.19 × 0.59 × 0.54 m |
+| `enemy_role_charger` | CHARGER — one telegraphed rush | 176 | 0.86 × 1.62 × 1.03 m |
+| `enemy_role_bulwark` | BULWARK — cannot be fought frontally | 280 | 1.45 × 0.83 × 1.92 m |
+| `enemy_role_artillery` | ARTILLERY — indirect, denies ground | 144 | 0.63 × 0.75 × 1.52 m |
+| `enemy_role_beacon` | BEACON — makes everything near it worse | 152 | 0.57 × 0.61 × 2.12 m |
+| `enemy_role_drifter` | DRIFTER (flyer) — owns the ceiling | 208 | 1.25 × 1.24 × 0.84 m |
+| `enemy_role_diver` | DIVER (flyer) — contests the grapple arc | 84 | 0.61 × 1.05 × 0.35 m |
 
 The three approved archetypes are untouched. Ten roles is a lot to tell
 apart in the 48 px a 1.6 m enemy occupies at `ENEMY_AGGRO_RADIUS`, so no two
@@ -3441,5 +3441,64 @@ no silhouette and casts no visible shadow face-on — and it is not even the
 representative angle, since a player walks *along* a corridor. The rig now
 rakes. And the deviation sat mid-run, where a 90° FOV shrinks the middle bays
 hard; it is now at the near end, where a player actually passes it.
+
+Status: **PENDING** — not self-marked.
+
+---
+
+## Batch 030 — the ten approved enemy roles, at their published envelopes
+
+**PENDING.** Visual treatment only — no attack, AI, health, status effect,
+boss behaviour or telegraph timing is invented. Full working in
+`review/batch030/README.md`.
+
+**The audit corrects this lane's own frontier.** Requirement 7 is
+**RESOLVED**: `ENEMY_ENVELOPES` publishes all ten roles, with the reason
+stated in Production's own comment — *"the envelope is the box the art lane
+declared for the role, so a model and a collider cannot be built to different
+numbers."* Requirement 14 is **RESOLVED** too: `enemy.gd` carries
+`telegraph_started` / `telegraph_finished` / `telegraph_progress()` and a
+`telegraph_origin: Marker3D` at the collider centre, outside the `visual`
+container so a flinch cannot drag it.
+
+So this is not a proposal in the way 023–029 were. Every model is authored to
+its role's exact published envelope and **the builder asserts the fit** —
+four roles' limbs had to be pulled in during the build, which is the
+assertion working.
+
+**Requirement 31 is what remains:** `ENEMY_ARCHETYPES` is still
+`("melee", "ranged", "brute")`. Seven of the ten have an agreed body, an
+agreed collider and a telegraph seat, and no way to be spawned.
+
+| asset | tris | built (m) | envelope (m) | placeable |
+|---|---|---|---|---|
+| `enemy_role_melee` | 124 | 0.78 × 0.68 × 1.55 | 0.80 × 1.60 × 0.80 | yes |
+| `enemy_role_ranged` | 140 | 0.56 × 0.66 × 1.37 | 0.70 × 1.40 × 0.70 | yes |
+| `enemy_role_brute` | 136 | 1.80 × 1.60 × 2.40 | 1.80 × 2.60 × 1.80 | yes |
+| `enemy_role_charger` | 180 | 0.90 × 1.84 × 0.84 | 0.90 × 1.05 × 1.90 | **no** |
+| `enemy_role_bulwark` | 160 | 1.45 × 0.82 × 1.99 | 1.45 × 2.05 × 0.85 | **no** |
+| `enemy_role_scuttler` | 176 | 1.24 × 1.16 × 0.34 | 1.30 × 0.62 × 1.20 | **no** |
+| `enemy_role_artillery` | 176 | 1.18 × 1.25 × 1.50 | 1.25 × 1.55 × 1.25 | **no** |
+| `enemy_role_beacon` | 232 | 0.55 × 0.55 × 2.20 | 0.62 × 2.20 × 0.62 | **no** |
+| `enemy_role_diver` | 108 | 0.70 × 1.13 × 0.40 | 0.70 × 0.50 × 1.20 | **no** |
+| `enemy_role_drifter` | 204 | 1.25 × 1.25 × 0.78 | 1.35 × 0.95 × 1.35 | **no** |
+
+Variety comes from proportion rather than size, because the box is fixed: the
+threat end is the heavy end, every role carries a telegraph seat at
+`centre_y` (reserved geometry, not a telegraph, and it does not animate), and
+flyers are modelled around their collider centre at the published
+`hover_height` rather than standing. `hazard` appears only on the beacon, the
+one role whose envelope is a fixture rather than a body, and there as a band
+rather than a wash.
+
+### What this batch did NOT achieve
+
+**All ten wear the same skin.** Surface treatment does no work to separate
+roles — at distance the family reads as ten brown panelled masses of
+different shapes. Silhouette and envelope compliance are done; **role
+identity in the surface is not**, and that is the obvious next revision. The
+brief asked for stronger visual treatment; this delivers the half that could
+be verified against a contract and does not pretend the material half is
+finished.
 
 Status: **PENDING** — not self-marked.
