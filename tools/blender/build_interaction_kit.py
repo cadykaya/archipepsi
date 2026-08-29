@@ -84,6 +84,7 @@ from __future__ import annotations
 
 import json
 import os
+import math
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -107,11 +108,37 @@ def _tag(objs, role):
 
 
 def _plate(at, rot=0.0):
-    """The `state_visual`. One per primitive, always the same object."""
+    """The `state_visual`. One per primitive, always the same object.
+
+    035-R. The owner's ruling is that this plate is a REDUNDANT cue -- never
+    the only thing that says a object is operable, and never something that
+    needs colour vision to find. Emissive cyan satisfies neither on its own,
+    so the plate is now a piece of identifiable HARDWARE: a recess, a raised
+    bezel round it, and the lit face inset behind the bezel. Desaturate the
+    whole image and it still reads as a fitted device rather than as a
+    moulding, because a bezel casts a shadow and a moulding does not.
+    """
     out = []
     out += _tag(brushkit.block("plate_recess",
                                (PLATE_W + 0.05, PLATE_D + 0.02, PLATE_H + 0.05),
                                at, rotation_z=rot), "body")
+    # The bezel: four rails standing proud of the recess. This is the part
+    # that survives greyscale.
+    bez = 0.028
+    for nm, size, off in (
+            ("bezel_t", (PLATE_W + 0.05, PLATE_D + 0.03, bez),
+             (0.0, -0.008, (PLATE_H + 0.05) * 0.5 - bez * 0.5)),
+            ("bezel_b", (PLATE_W + 0.05, PLATE_D + 0.03, bez),
+             (0.0, -0.008, -(PLATE_H + 0.05) * 0.5 + bez * 0.5)),
+            ("bezel_l", (bez, PLATE_D + 0.03, PLATE_H + 0.05),
+             (-(PLATE_W + 0.05) * 0.5 + bez * 0.5, -0.008, 0.0)),
+            ("bezel_r", (bez, PLATE_D + 0.03, PLATE_H + 0.05),
+             ((PLATE_W + 0.05) * 0.5 - bez * 0.5, -0.008, 0.0))):
+        c, s_, z = math.cos(math.radians(rot)), math.sin(math.radians(rot)), off[2]
+        px = at[0] + off[0] * c - off[1] * s_
+        py = at[1] + off[0] * s_ + off[1] * c
+        out += _tag(brushkit.block(nm, size, (px, py, at[2] + z),
+                                   rotation_z=rot), "body")
     cores = [brushkit.block("plate", (PLATE_W, PLATE_D, PLATE_H),
                             (at[0], at[1] - 0.012, at[2]), rotation_z=rot)]
     return out, cores
@@ -119,22 +146,52 @@ def _plate(at, rot=0.0):
 
 def _carryable():
     """A handled industrial crate. Grip-first, and deliberately NOT a cube
-    with a symbol on every face."""
+    with a symbol on every face.
+
+    035-R -- THE OBJECT-SCALE REVISION. The 4.5 m recognition test could not
+    tell this from `dec_crate_fixed`, and the reason was measurable: the two
+    differed only by 6 cm grips against 3 cm mouldings. That passes the
+    derived floor (`min_feature_fraction` 0.08 of a 0.42 m body is 3.4 cm,
+    and 6 cm is ~7 screen px at 4.5 m) and STILL failed, because 2 px is
+    enough to see that a form exists and nowhere near enough to tell a grip
+    from a moulding.
+
+    The rule that replaces it: a tell that has to survive gameplay distance
+    must change the object's SILHOUETTE, not its surface. So this crate now
+    carries a BAIL over the top and stands on FEET -- an outline you can read
+    against the wall behind it, and a gap of light under it. The recessed
+    grips stay as the close-range confirmation.
+    """
     out = []
+    # Feet first: the body is LIFTED, so there is daylight underneath. A
+    # thing bolted to the deck never has that.
+    for sx in (-1.0, 1.0):
+        for sy in (-1.0, 1.0):
+            out += _tag(brushkit.block("foot_%d_%d" % (int(sx), int(sy)),
+                                       (0.09, 0.09, 0.07),
+                                       (sx * 0.19, sy * 0.15, 0.035)), "body")
     out += _tag(brushkit.block("body", (0.52, 0.44, 0.42),
-                               (0.0, 0.0, 0.21)), "body")
+                               (0.0, 0.0, 0.28)), "body")
+    # The bail: an arch standing 0.15 m clear of the lid. This is the whole
+    # object-scale affordance -- it breaks the box outline, so it reads at
+    # any distance the crate itself reads at.
+    for sx in (-1.0, 1.0):
+        out += _tag(brushkit.block("bail_%d" % int(sx), (0.05, 0.06, 0.19),
+                                   (sx * 0.19, 0.0, 0.56)), "accent")
+    out += _tag(brushkit.block("bail_bar", (0.43, 0.06, 0.05),
+                               (0.0, 0.0, 0.63)), "accent")
     # The handles are the whole affordance: recessed, hand width, on the two
     # faces you would actually pick it up by.
     for sx in (-1.0, 1.0):
         out += _tag(brushkit.block("grip_%d" % int(sx), (0.06, 0.26, 0.07),
-                                   (sx * 0.29, 0.0, 0.30)), "accent")
+                                   (sx * 0.29, 0.0, 0.37)), "accent")
         out += _tag(brushkit.block("grip_back_%d" % int(sx),
                                    (0.04, 0.30, 0.13),
-                                   (sx * 0.25, 0.0, 0.30)), "body")
+                                   (sx * 0.25, 0.0, 0.37)), "body")
     for i in range(3):
         out += _tag(brushkit.block("rib_%d" % i, (0.54, 0.04, 0.04),
-                                   (0.0, -0.22, 0.10 + i * 0.13)), "accent")
-    p, cores = _plate((0.0, -0.225, 0.36))
+                                   (0.0, -0.22, 0.17 + i * 0.13)), "accent")
+    p, cores = _plate((0.0, -0.225, 0.43))
     return out + p, cores
 
 
@@ -257,21 +314,58 @@ def _breakable():
                                (0.0, 0.0, 1.84)), "body")
     # The fracture grid: shallow blocks with gaps, so it reads as ALREADY
     # divided into the pieces it will become.
+    #
+    # 035-R. The grid was coplanar, which made it a drawing of a fracture
+    # rather than a fracture. Each shard now sits at its OWN depth -- centre
+    # shards pushed proud, edges pulled back -- so the panel is broken in
+    # RELIEF and throws its own shadow lines. Against `dec_panel_blind`,
+    # which is one flat coursed field, that is a silhouette-grazing
+    # difference instead of a surface one. This pair read weakly rather than
+    # failing outright, and this is what "strengthen if needed" came to.
     for r in range(4):
         for c in range(3):
+            bulge = 0.055 - 0.048 * abs(c - 1) - 0.020 * abs(r - 1.5) / 1.5
             out += _tag(brushkit.block("shard_%d_%d" % (r, c),
                                        (0.30, 0.09, 0.40),
-                                       (-0.32 + c * 0.32, 0.0,
+                                       (-0.32 + c * 0.32, -bulge,
                                         0.30 + r * 0.44)), "accent")
     p, cores = _plate((0.0, -0.10, 1.68))
     return out + p, cores
 
 
 def _key_receiver():
-    """An empty keyway, shaped. The hole says what fits before you have it."""
+    """An empty keyway, shaped. The hole says what fits before you have it.
+
+    035-R -- THE OBJECT-SCALE REVISION. At 4.5 m this was indistinguishable
+    from `dec_hatch_welded`, because the only difference was a 9 cm keyway
+    against a scribed outline: both are surface, and surface is what
+    distance takes away first.
+
+    So the housing is now an OPEN THROAT -- two cheeks with a 0.22 m mouth
+    between them and a recessed back, which reads as a dark hole in the
+    silhouette from as far away as the object reads at all. The welded hatch
+    it is tested against is flush by construction and can never show one.
+
+    The shaped keyway inside is unchanged and is still the close-range
+    truth -- it is the same shank/shoulder/keyway relationship Batch 031
+    locked, at the size a hand works at. Object scale says WHERE to look;
+    hand scale says WHICH key.
+    """
     out = []
-    out += _tag(brushkit.block("housing", (0.42, 0.26, 0.56),
-                               (0.0, 0.0, 1.20)), "body")
+    # The throat: two cheeks standing proud with the top OPEN between them,
+    # and a recessed back only part way up so the mouth is genuinely a gap.
+    #
+    # The first 035-R attempt closed the top with a lintel, and the
+    # silhouette sheet caught it immediately: a cavity in a front face does
+    # not break an outline, so from any angle where you cannot see INTO it
+    # the receiver and the welded hatch were the same dark slab. Opening the
+    # top turns the head into a FORK -- a notch in the outline itself, which
+    # is the only kind of hole a silhouette can carry.
+    for sx in (-1.0, 1.0):
+        out += _tag(brushkit.block("cheek_%d" % int(sx), (0.13, 0.32, 0.62),
+                                   (sx * 0.175, -0.02, 1.25)), "body")
+    out += _tag(brushkit.block("throat_back", (0.24, 0.10, 0.40),
+                               (0.0, 0.11, 1.14)), "body")
     out += _tag(brushkit.block("post", (0.16, 0.16, 0.94),
                                (0.0, 0.02, 0.47)), "body")
     # The keyway: a slot with a shoulder, so the shape is specific rather

@@ -113,6 +113,46 @@ func _suppress_plates(node: Node) -> void:
 	for child in node.get_children():
 		_suppress_plates(child)
 
+## Sheet F. The strictest form of the test, and the one that answers the
+## owner's "must NOT require colour vision to identify interactivity"
+## without asking the reader to take anything on trust.
+##
+## Sheet E suppresses the plate's EMISSION, but 035-R gave the plate a bezel
+## -- body geometry, deliberately, so the cue survives greyscale -- and body
+## geometry cannot be suppressed at render time. That leaves sheet E with the
+## same shape of defect it was built to fix: every decoy carries no plate at
+## all, so a reader who sorts by "has a bezel" scores 12/12 and learns
+## nothing about the structural grammar.
+##
+## A silhouette has no bezel, no emission, no material and no colour. If the
+## pairs separate here, the tell is object-scale. If they do not, it is not,
+## whatever the other two sheets appear to show.
+func _silhouette(node: Node) -> void:
+	if node is MeshInstance3D:
+		var flat := StandardMaterial3D.new()
+		flat.albedo_color = Color(0.04, 0.04, 0.05)
+		flat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		(node as MeshInstance3D).material_override = flat
+	for child in node.get_children():
+		_silhouette(child)
+
+## A lit backdrop for the silhouette sheet: the subject must be the dark
+## thing, so the ground and wall have to be the bright ones.
+func _backdrop(root: Node3D, span: float) -> void:
+	for spec in [[Vector3(span, 0.3, span), Vector3(0, -0.15, 0)],
+			[Vector3(span, 9.0, 0.3), Vector3(0, 4.5, -3.0)]]:
+		var m := MeshInstance3D.new()
+		var b := BoxMesh.new()
+		b.size = spec[0]
+		m.mesh = b
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(0.74, 0.76, 0.79)
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.mesh = b
+		m.position = spec[1]
+		m.material_override = mat
+		root.add_child(m)
+
 func _out(batch: String) -> String:
 	var d := "%s/batch%s" % [_root, batch]
 	DirAccess.make_dir_recursive_absolute(d)
@@ -313,7 +353,10 @@ func _recognition_sheet() -> void:
 		["batch028/interaction", "int_door_mechanism", true],
 		["batch035/decoys", "dec_hatch_welded", false],
 	]
-	for suppressed in [false, true]:
+	# 0 = plate lit, 1 = plate emission suppressed, 2 = pure silhouette.
+	for mode in [0, 1, 2]:
+		var suppressed: bool = mode == 1
+		var solid: bool = mode == 2
 		var cell := Vector2i(520, 560)
 		var sheet := Image.create(cell.x * 6, cell.y * 2 + 168, false,
 				Image.FORMAT_RGB8)
@@ -323,28 +366,49 @@ func _recognition_sheet() -> void:
 			# 4.5 m: representative gameplay distance, not inspection.
 			var img: Image = await _shoot(cell,
 					Vector3(2.30, 1.60, 3.60), Vector3(0.0, 0.95, 0.0),
-					48.0, 0.24, 0.70,
+					48.0, 0.24 if not solid else 1.0, 0.70 if not solid else 0.0,
 					func(root: Node3D) -> void:
-						_ground(root, 16.0, true)
+						if solid:
+							_backdrop(root, 16.0)
+						else:
+							_ground(root, 16.0, true)
 						var n := _load(root, str(row[0]), str(row[1]),
 								Vector3.ZERO)
-						if suppressed and n != null:
-							_suppress_plates(n))
+						if n == null:
+							return
+						if suppressed:
+							_suppress_plates(n)
+						elif solid:
+							_silhouette(n))
 			if img == null:
 				continue
 			var at := Vector2i((i % 6) * cell.x, 168 + int(i / 6) * cell.y)
 			sheet.blit_rect(img, Rect2i(Vector2i.ZERO, cell), at)
 			# NUMBER ONLY. No name, no verdict.
 			ArtBench.label(sheet, "%d" % (i + 1), at + Vector2i(12, 12),
-					Color(1.0, 0.86, 0.42))
-		var letter := "E" if suppressed else "D"
+					Color(1.0, 0.86, 0.42) if not solid
+					else Color(0.20, 0.16, 0.06))
+		var letter: String = ["D", "E", "F"][mode]
 		ArtBench.label(sheet, "%s  INTERACTIVE OR DECORATIVE? SORT THEM FIRST"
 				% letter, Vector2i(12, 16), Color(1.0, 0.86, 0.42))
 		ArtBench.label(sheet, "TWELVE OBJECTS AT 4.5 M -- REPRESENTATIVE "
 				+ "GAMEPLAY DISTANCE, NOT INSPECTION DISTANCE. SIX CAN BE "
 				+ "USED AND SIX CANNOT.", Vector2i(12, 42),
 				Color(0.72, 0.76, 0.80))
-		if suppressed:
+		if solid:
+			ArtBench.label(sheet, "SILHOUETTE ONLY. NO MATERIAL, NO "
+					+ "EMISSION, NO BEZEL, NO COLOUR -- THE STRICTEST FORM "
+					+ "OF THE TEST AND THE ONE THAT DECIDES 035.",
+					Vector2i(12, 68), Color(0.91, 0.33, 0.12))
+			ArtBench.label(sheet, "SHEET E STILL LEAKED: THE PLATE'S BEZEL "
+					+ "IS BODY GEOMETRY AND NO DECOY HAS ONE, SO 'FIND THE "
+					+ "BEZEL' SOLVED IT WITHOUT USING THE GRAMMAR.",
+					Vector2i(12, 94), Color(0.94, 0.62, 0.42))
+			ArtBench.label(sheet, "1 vs 6: A GAP UNDER IT AND A HOLE THROUGH "
+					+ "THE BAIL.   7 vs 12: A MOUTH IN IT.   5 vs 2: BROKEN "
+					+ "IN RELIEF. OBJECT SCALE, NOT HAND SCALE.",
+					Vector2i(12, 120), Color(0.60, 0.64, 0.68))
+		elif suppressed:
 			ArtBench.label(sheet, "THE STATE PLATE IS SUPPRESSED IN THIS "
 					+ "SHEET. THIS IS THE REAL TEST: SHEET D WAS SOLVABLE "
 					+ "BY SPOTTING CYAN, WHICH PROVES NOTHING.",
@@ -364,6 +428,6 @@ func _recognition_sheet() -> void:
 		ArtBench.label(sheet, "ANSWER KEY, READ LAST: ODD NUMBERS ARE "
 				+ "INTERACTIVE, EVEN ARE DECORATIVE.",
 				Vector2i(12, cell.y * 2 + 148), Color(0.40, 0.44, 0.50))
-		sheet.save_png("%s/%s_recognition%s.png" % [_out("035"),
-				"B" if suppressed else "A",
-				"_no_plate" if suppressed else ""])
+		sheet.save_png("%s/%s.png" % [_out("035"),
+				["A_recognition", "B_recognition_no_plate",
+				"C_recognition_silhouette"][mode]])

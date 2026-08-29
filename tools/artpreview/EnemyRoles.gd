@@ -38,7 +38,8 @@ func _initialize() -> void:
 		_mf = JSON.parse_string(mf.get_as_text())
 	await _lineup_sheet()
 	await _envelope_sheet()
-	print("[enemies030] 2 sheets -> %s" % _out)
+	await _surface_sheet()
+	print("[enemies030] 3 sheets -> %s" % _out)
 	quit()
 
 func _rod(root: Node3D, at: Vector3) -> void:
@@ -211,3 +212,158 @@ func _envelope_sheet() -> void:
 			+ "HEALTH OR TIMING IS INVENTED HERE.", Vector2i(12, 68),
 			Color(0.94, 0.62, 0.42))
 	sheet.save_png("%s/B_enemy_envelopes.png" % _out)
+
+## Batch 037: the surface argument, at a distance where surface exists.
+##
+## Sheet A shoots the whole roster from 11 m, which is the right view for
+## "are ten silhouettes distinct" and the WRONG one for "does surface do any
+## work" -- at that range every role is a brown mass whatever is painted on
+## it. So this is a third sheet, and it is the one that has to carry 037.
+##
+## Roles are shot in PAIRS chosen so each pair is an argument rather than a
+## line-up: the two members sit at opposite ends of one surface decision, in
+## the same frame, under one rig. If the pair does not separate, the rule
+## does not work, and no caption will save it.
+const SURFACE_PAIRS := [
+	["brute", "scuttler",
+		"ARMOURED EVERYWHERE  vs  BARELY ARMOURED AT ALL",
+		"the two extremes of the rule: everything hits a brute, and a "
+		+ "scuttler's answer to being hit is not to be there"],
+	["charger", "diver",
+		"ARMOUR WHERE THE IMPACT LANDS",
+		"both put their plate at the leading end and leave the rear open. "
+		+ "The long axis IS the attack, so the long axis is what is plated"],
+	["bulwark", "artillery",
+		"ONE UNINTERRUPTED FACE  vs  AN OPEN WORKING",
+		"a shield may not be interrupted; a served weapon leaves the part "
+		+ "that is worked on exposed"],
+	["ranged", "beacon",
+		"A HOUSED INSTRUMENT  vs  NO ARMOUR AT ALL",
+		"the barrel and the eye are the things worth protecting. The beacon "
+		+ "is a fixture that took sides and wears service hardware instead"],
+	["melee", "drifter",
+		"BRACERS ONLY  vs  A PLATED CROWN OVER A MECHANICAL SKIRT",
+		"light armour where the blow is delivered, and protection above "
+		+ "the working on a thing that hangs"],
+]
+
+## One lens, one three-quarter azimuth, level. Fixed for every pair panel.
+const SURFACE_FOV := 46.0
+const SURFACE_DIR := Vector2(0.2873, 0.9578)
+const PAIR_GAP := 0.55
+
+## The top of the volume a role actually occupies.
+func _crown(e: Dictionary) -> float:
+	var env: Array = e.get("envelope_w_h_d_m", [1.0, 1.0, 1.0])
+	var hover := float(e.get("hover_height_m", 0.0))
+	return (hover + float(env[1]) * 0.5) if hover > 0.0 else float(env[1])
+
+## The width a role takes ACROSS THE FRAME. Not its envelope width: the
+## camera stands at a three-quarter azimuth, so a body's depth is turned
+## partly sideways and counts toward how much of the frame it eats. Using
+## width alone let a 1.8 x 1.8 m brute -- 2.24 m wide on screen -- run off
+## the left edge of its own panel.
+func _span(role: String) -> float:
+	var e: Dictionary = _mf.get("enemy_role_%s" % role, {})
+	var env: Array = e.get("envelope_w_h_d_m", [1.0, 1.0, 1.0])
+	return float(env[0]) * SURFACE_DIR.y + float(env[2]) * SURFACE_DIR.x
+
+func _surface_sheet() -> void:
+	var cell := Vector2i(1180, 760)
+	var sheet := Image.create(cell.x * 2, cell.y * 3 + 140, false,
+			Image.FORMAT_RGB8)
+	sheet.fill(Color(0.07, 0.08, 0.10))
+	# ONE camera for all five pairs: one lens, one distance, one azimuth,
+	# level. Only the height it is set at changes, and only as far as the
+	# tallest thing in that panel forces.
+	#
+	# The pass before this had a standoff that scaled with the crown, which
+	# fixed a clipped drifter and quietly broke the sheet: a surface
+	# comparison whose panels are shot from six different distances is not a
+	# comparison, because distance IS the variable a surface test measures.
+	# The correct fix is a fixed distance chosen so the WIDEST pair fits,
+	# and a vertical pan for the tall ones.
+	var half_v_tan := tan(deg_to_rad(SURFACE_FOV * 0.5))
+	var aspect := float(cell.x) / float(cell.y)
+	var dist := 0.0
+	for pair in SURFACE_PAIRS:
+		var w: float = _span(pair[0]) + PAIR_GAP + _span(pair[1])
+		dist = maxf(dist, (w * 0.5 + 0.45) / (half_v_tan * aspect))
+	var half_v: float = dist * half_v_tan
+	for i in SURFACE_PAIRS.size():
+		var pair: Array = SURFACE_PAIRS[i]
+		var a: String = pair[0]
+		var b: String = pair[1]
+		var wa := _span(a)
+		var wb := _span(b)
+		# Laid out edge to edge with a fixed gap, so the pair is centred and
+		# the frame is used. Two roles parked at a hard-coded +/-1.1 m left
+		# a third of every panel as floor.
+		var w: float = wa + PAIR_GAP + wb
+		var xa: float = -w * 0.5 + wa * 0.5
+		var xb: float = w * 0.5 - wb * 0.5
+		# A flyer's crown is hover + half its height, not its height. Framing
+		# on envelope height alone put the drifter -- hovering at 2.55 m --
+		# above the picture. Same family of mistake as L-70.
+		var crown: float = maxf(_crown(_mf.get("enemy_role_%s" % a, {})),
+				_crown(_mf.get("enemy_role_%s" % b, {})))
+		# Centre on the content when it fits; otherwise hold the TOP and let
+		# the floor go. On the melee/drifter panel the drifter's plated crown
+		# is the entire caption and the melee's feet are not, so when
+		# something has to leave the frame it is the floor.
+		var cy: float = maxf(crown * 0.5, crown - half_v + 0.06)
+		var img: Image = await _shoot(cell,
+				Vector3(SURFACE_DIR.x * dist, cy, SURFACE_DIR.y * dist),
+				Vector3(0.0, cy, 0.0), SURFACE_FOV,
+				func(root: Node3D) -> void:
+					_ground(root, 18.0)
+					_load(root, a, Vector3(xa, 0, 0))
+					_load(root, b, Vector3(xb, 0, 0)))
+		if img == null:
+			continue
+		var at := Vector2i((i % 2) * cell.x, 140 + int(i / 2) * cell.y)
+		sheet.blit_rect(img, Rect2i(Vector2i.ZERO, cell), at)
+		ArtBench.label(sheet, str(pair[2]), at + Vector2i(10, 10),
+				Color(1.0, 0.86, 0.42))
+		ArtBench.label(sheet, str(pair[3]), at + Vector2i(10, 32),
+				Color(0.72, 0.76, 0.80))
+		ArtBench.label(sheet, "%s   /   %s" % [a.to_upper(), b.to_upper()],
+				at + Vector2i(10, cell.y - 26), Color(0.60, 0.64, 0.68))
+	# The sixth cell: one role as close as it goes, so plate-versus-mechanism
+	# is legible at maximum size. A grid with an empty cell in it is a grid
+	# that ran out, and this is the panel that says what the other five are
+	# asking the reader to look for.
+	var det: Image = await _shoot(cell, Vector3(1.30, 1.70, 2.05),
+			Vector3(0.0, 1.30, 0.0), 46.0,
+			func(root: Node3D) -> void:
+				_ground(root, 12.0)
+				_load(root, "brute", Vector3.ZERO))
+	if det != null:
+		var dat := Vector2i(cell.x, 140 + 2 * cell.y)
+		sheet.blit_rect(det, Rect2i(Vector2i.ZERO, cell), dat)
+		ArtBench.label(sheet, "DETAIL  --  PLATE vs MECHANISM",
+				dat + Vector2i(10, 10), Color(1.0, 0.86, 0.42))
+		ArtBench.label(sheet, "PLATE IS A SLAB SEATED PROUD OF A RECESS. "
+				+ "MECHANISM IS RIBBED AND RODDED. THE DIFFERENCE IS HOW "
+				+ "THEY ARE BUILT, NOT WHAT COLOUR THEY ARE.",
+				dat + Vector2i(10, 32), Color(0.72, 0.76, 0.80))
+		ArtBench.label(sheet, "BRUTE", dat + Vector2i(10, cell.y - 26),
+				Color(0.60, 0.64, 0.68))
+	ArtBench.label(sheet, "C  THE SURFACE ARGUMENT, IN PAIRS, AT %.1f M" % dist,
+			Vector2i(12, 16), Color(1.0, 0.86, 0.42))
+	ArtBench.label(sheet, "ARMOUR GOES WHERE THE ROLE TAKES OR DEALS "
+			+ "IMPACT. MECHANISM SHOWS WHERE IT DOES NOT. ONE RULE, NOT "
+			+ "TEN DECORATIONS -- AND NOT TEN COLOURS.",
+			Vector2i(12, 42), Color(0.72, 0.76, 0.80))
+	ArtBench.label(sheet, "ARMOUR IS TOLD FROM MECHANISM BY MATERIAL, NOT "
+			+ "HUE: PLATE IS MATTE, MECHANISM IS OILY. BOTH KEEP ENEMY_SKIN, "
+			+ "SO NEITHER SHIFTS WITH THE ROOM.", Vector2i(12, 68),
+			Color(0.94, 0.62, 0.42))
+	ArtBench.label(sheet, "ONE CAMERA FOR ALL FIVE PAIRS -- ONE LENS, ONE "
+			+ "DISTANCE, ONE AZIMUTH, LEVEL. THE DISTANCE IS SET BY THE "
+			+ "WIDEST PAIR SO ALL FIVE STAY COMPARABLE.",
+			Vector2i(12, 94), Color(0.60, 0.64, 0.68))
+	ArtBench.label(sheet, "SHEET A IS SHOT AT 11 M, WHERE SURFACE CANNOT "
+			+ "DO ANY WORK. THIS IS THE VIEW THAT HAS TO CARRY 037.",
+			Vector2i(12, 118), Color(0.60, 0.64, 0.68))
+	sheet.save_png("%s/C_enemy_surfaces.png" % _out)

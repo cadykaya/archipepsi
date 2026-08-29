@@ -1,85 +1,139 @@
-# Batch 035 — interactable vs decorative readability
+# Batch 035 / 035-R — interactable vs decorative, decided at object scale
 
-**Status: PENDING. The test returned a mixed result, and the mixed part is
-the useful part.**
+**Status: PENDING.** Visual grammar only. Nothing here invents an
+interaction, a cost, a cooldown or a rule about what may be used when.
 
-## What was built
+## The question
 
-Six **decoys** — the nearest plausible non-functional twin of a Batch 028
-primitive, built from the same kit at the same scale. A decoy that is easy to
-reject proves nothing, so each differs from its twin in one or two structural
-features and nothing else:
+A player at gameplay distance must be able to tell *"I can use that"* from
+*"that is scenery"* **before** walking up to it. The test is twelve objects at
+4.5 m: six real interaction primitives from Batch 028 and six decoys built as
+their nearest plausible non-functional twins. Numbered only. Sort them, then
+read the key.
 
-| decoy | shadows | the difference |
+A decoy that is easy to reject proves nothing, so every decoy is one feature
+away from a real one and built from the same kit at the same scale.
+
+## What the first pass found, and why it was the right finding
+
+Sheet A showed every interactable wearing a cyan state plate and every decoy
+wearing none. **It was solvable by spotting cyan**, which proves nothing about
+structure — and the builder's own docstring had named that risk before the
+render happened. Sheet B suppressed the plate's emission, and that was the
+real result: three pairs read, one was weak, and **two failed outright** —
+carryable vs fixed crate, and key receiver vs welded hatch.
+
+The failures had one cause. Both pairs differed only by a **hand-scale**
+feature: 6 cm grips against 3 cm mouldings, a 9 cm keyway against a scribed
+outline. Both of those are *legal* under the derived floor —
+`min_feature_fraction` 0.08 of a 0.42 m crate is 3.4 cm, and 6 cm is about
+seven screen pixels at 4.5 m — and both still failed.
+
+> **That is the lesson.** The derived floor answers *can you see that a form
+> exists*. It does not answer *can you tell which form it is*. Two screen
+> pixels is enough for the first and nowhere near enough for the second.
+
+## The rule 035-R adopts
+
+> **A tell that has to survive gameplay distance must change the object's
+> SILHOUETTE, not its surface.**
+
+Surface is what distance takes away first. An outline is the last thing to go.
+
+## What changed
+
+| pair | was | is |
 |---|---|---|
-| `dec_crate_fixed` | `int_carryable` | handles are **mouldings** with no gap; filleted to the deck |
-| `dec_panel_blind` | `int_breakable` | coursed as one piece; scribed lines, no fracture grid |
-| `dec_console_dead` | `int_wall_switch` | blanked bosses where a lever would be |
-| `dec_bulkhead` | `int_door_mechanism` | a door-sized recess, no jamb, no rack, no ram |
-| `dec_hatch_welded` | `int_key_receiver` | a hatch outline with its fixings welded over |
-| `dec_pipe_fixed` | `int_machinery` | plant with no travel, no carriage, no rail |
+| `int_carryable` vs `dec_crate_fixed` | 6 cm grips vs 3 cm mouldings | a **bail arch** with a hole through it over **feet** with daylight under them, against a **solid lifting boss** on a crate sitting flush in a welded fillet |
+| `int_key_receiver` vs `dec_hatch_welded` | a 9 cm keyway vs a scribed outline | an **open throat** — two cheeks with the top open between them, a fork in the outline — against a **flush slab** with the beads run over the seam |
+| `int_breakable` vs `dec_panel_blind` | a coplanar fracture grid | shards at **their own depths**, centre proud and edges pulled back, so the panel is broken in relief and throws its own shadow lines, against one flat coursed field |
 
-## The test, and how it initially failed
+The hand-scale detail is all still there. Object scale says **where to look**;
+hand scale says **which one it is**. On the key receiver specifically, the
+shaped keyway inside the throat is unchanged — it is the same
+shank/shoulder/keyway relationship Batch 031 locked, at the size a hand works
+at.
 
-Twelve objects, interleaved, captioned **by number only**, at 4.5 m —
-representative gameplay distance rather than inspection distance.
+## The state plate is now redundant hardware, not a colour
 
-**Sheet D failed as a test.** Every interactable showed the `signal` state
-plate and every decoy did not, so it was solvable by spotting cyan, which
-proves nothing about the structural grammar it was built to check. The
-builder's own docstring had named that exact risk and the sheet was rendered
-without guarding against it.
+The owner's ruling: the plate must be kept as a learned cue, must **not** be
+the sole source of truth, and must **not** require colour vision.
 
-**Sheet E is the real test:** the same twelve with every emissive surface
-suppressed. What is left is grip, mounting hardware, mechanical joints, and
-somewhere for the thing to go.
+Emissive cyan fails the last two on its own. So the plate is now a piece of
+identifiable **hardware**: a recess, a raised **bezel** around it, and the lit
+face inset behind the bezel. Desaturate the whole image and it still reads as
+a fitted device rather than as a moulding, because a bezel casts a shadow and
+a moulding does not.
 
-## The result — sorted cold, from sheet E
+That leaves three independent channels, which is what the owner asked for:
 
-| pair | verdict |
+| channel | question it answers |
 |---|---|
-| **3 vs 10** — wall switch vs dead console | **reads.** A lever proud of a housing is unmistakable against blanked bosses |
-| **11 vs 8** — door mechanism vs bulkhead | **reads.** Rack, ram and jamb against a smooth recess |
-| **9 vs 4** — machinery vs bulkhead | **reads**, though these two are not really near-twins at this angle |
-| **5 vs 2** — breakable vs blind panel | **weak.** The fracture grid is visible but the scribed seams are close |
-| **1 vs 6** — carryable vs fixed crate | **FAILS.** Both are small crates. The grips do not survive 4.5 m from this angle |
-| **7 vs 12** — key receiver vs welded hatch | **FAILS.** Both are a box on a post; the keyway and the welds are the same size as each other and both are too small |
+| silhouette and construction | **what kind of thing** is this |
+| interaction hardware (bezel + recess) | **yes, this one is operable** |
+| state treatment (the lit face) | **what it is doing now** |
 
-## The finding, which is not what the batch set out to prove
+## Three sheets, and why there are three
 
-> **The structural grammar is distance-limited, and the limit is the size of
-> the tell.**
+`A_recognition.png` — the plate lit. **Not a valid test**, kept because the
+failure is part of the record.
 
-Where the difference is **object-scale** — a lever, a rack, a rail, a
-carriage, a travel gap — it carries at gameplay distance on its own. Where
-the difference is **hand-scale** — a grip on a crate, a keyway on a post —
-it does not, and at 4.5 m the two objects are the same object.
+`B_recognition_no_plate.png` — the plate's emission suppressed. Better, and
+still leaky: 035-R gave the plate a bezel, the bezel is *body* geometry so it
+cannot be suppressed at render time, and no decoy has one. A reader who sorts
+by "find the bezel" scores 12/12 and learns nothing about the grammar — the
+same shape of defect as sheet A, in greyscale.
 
-That reframes the state plate. Batch 028 presented it as the answer to *what
-is this doing right now*, with the structural tells doing the work of *can I
-use this at all*. Sheet E says that is only true for large objects. **For
-small ones the plate is not a status indicator — it is the only affordance
-cue that survives the distance**, and suppressing it makes them genuinely
-unsortable.
+`C_recognition_silhouette.png` — **the sheet that decides it.** Flat black
+against a lit backdrop: no material, no emission, no bezel, no colour. If the
+pairs separate here the tell is object-scale; if they do not, it is not,
+whatever the other two appear to show.
 
-Two ways forward, and this is an owner decision rather than an art one:
+### The silhouette sheet caught one more failure
 
-1. **Accept it.** The plate is load-bearing for hand-scale interactables, and
-   that is a legitimate design position — but it means a player who cannot
-   separate cyan has no fallback on those objects.
-2. **Raise the tell to object scale.** A carryable gets a grip that breaks
-   its silhouette rather than one recessed into its face; a receiver gets a
-   housing whose shape differs from a blank post. That costs a revision of
-   two Batch 028 primitives, which are PENDING and not yet approved.
+The first 035-R receiver closed the top of its throat with a lintel. Sheet C
+showed immediately that this changes nothing: **a cavity in a front face does
+not break an outline**, so from any angle where you cannot see into it the
+receiver and the welded hatch were the same dark slab. Opening the top turned
+the head into a fork — a notch in the outline itself, which is the only kind
+of hole a silhouette can carry.
 
-Art recommends **2**, and has not done it: Batch 028 is awaiting review and
-changing it now would reopen a concept the owner has not ruled on.
+## Result
 
-## Sheets
+**All six pairs now separate in pure silhouette.** Honest ranking, strongest
+first:
 
-| | |
+| pair | separates on |
 |---|---|
-| `A_recognition.png` | as lit — **not a valid test**, kept to show why |
-| `B_recognition_no_plate.png` | the state plate suppressed. This is the result |
+| `int_door_mechanism` / `dec_bulkhead` | an articulated edge of brackets and rack against a plain slab |
+| `int_carryable` / `dec_crate_fixed` | a hole through the bail, and a gap under the body |
+| `int_key_receiver` / `dec_hatch_welded` | a fork against a slab |
+| `int_machinery` / `dec_pipe_fixed` | a carriage on a rail against a fixed mass |
+| `int_wall_switch` / `dec_console_dead` | a stepped lever head against a plain block |
+| `int_breakable` / `dec_panel_blind` | **weakest.** The relief reads as thin gaps between courses rather than as an outline change. It passes, but it is the one to watch |
 
-Answer key is on both sheets, at the bottom, deliberately last.
+## Metrics
+
+Everything is far inside the 900-triangle `interactable` tier; the object-scale
+revision cost triangles the budget had spare.
+
+| asset | tris | built size (m) |
+|---|---|---|
+| `int_breakable` | 252 | 1.14 × 0.24 × 1.90 |
+| `int_carryable` | 252 | 0.64 × 0.48 × 0.66 |
+| `int_door_mechanism` | 228 | 1.20 × 0.55 × 2.30 |
+| `int_key_receiver` | 168 | 0.48 × 0.34 × 1.56 |
+| `int_launcher` | 188 | 0.90 × 0.96 × 0.62 |
+| `int_logic_indicator` | 192 | 0.30 × 0.23 × 1.73 |
+| `int_machinery` | 244 | 1.16 × 0.78 × 1.25 |
+| `int_wall_switch` | 152 | 0.39 × 0.55 × 1.54 |
+| `int_weight_button` | 144 | 0.96 × 1.05 × 0.23 |
+| `dec_bulkhead` | 72 | 1.30 × 0.33 × 2.30 |
+| `dec_console_dead` | 108 | 0.39 × 0.27 × 1.51 |
+| `dec_crate_fixed` | 120 | 0.58 × 0.50 × 0.51 |
+| `dec_hatch_welded` | 68 | 0.48 × 0.34 × 1.58 |
+| `dec_panel_blind` | 84 | 1.14 × 0.20 × 1.90 |
+| `dec_pipe_fixed` | 88 | 1.11 × 0.68 × 0.97 |
+
+No decoy carries a state plate. That is the one thing the decoys and the
+primitives may never share.

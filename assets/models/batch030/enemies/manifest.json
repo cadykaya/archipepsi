@@ -29,7 +29,7 @@
     "telegraph_seat_at_centre_y_m": 0.775,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 212
+    "triangles": 296
   },
   "enemy_role_beacon": {
     "anchor": "floor",
@@ -61,7 +61,7 @@
     "telegraph_seat_at_centre_y_m": 1.1,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 268
+    "triangles": 376
   },
   "enemy_role_brute": {
     "anchor": "floor",
@@ -93,7 +93,7 @@
     "telegraph_seat_at_centre_y_m": 1.3,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 184
+    "triangles": 232
   },
   "enemy_role_bulwark": {
     "anchor": "floor",
@@ -125,7 +125,7 @@
     "telegraph_seat_at_centre_y_m": 1.025,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 208
+    "triangles": 328
   },
   "enemy_role_charger": {
     "anchor": "floor",
@@ -157,7 +157,7 @@
     "telegraph_seat_at_centre_y_m": 0.525,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 240
+    "triangles": 348
   },
   "enemy_role_diver": {
     "anchor": "floor",
@@ -181,7 +181,7 @@
     "scale_basis": "authored to the published envelope",
     "size": [
       0.7,
-      1.128,
+      1.13,
       0.4
     ],
     "surface_rule": "armour goes where the role takes or deals impact; mechanism shows where it does not",
@@ -189,7 +189,7 @@
     "telegraph_seat_at_centre_y_m": 1.9,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 132
+    "triangles": 180
   },
   "enemy_role_drifter": {
     "anchor": "floor",
@@ -214,14 +214,14 @@
     "size": [
       1.247,
       1.247,
-      0.808
+      0.817
     ],
     "surface_rule": "armour goes where the role takes or deals impact; mechanism shows where it does not",
     "surface_story": "plated crown, entirely mechanical skirt",
     "telegraph_seat_at_centre_y_m": 2.55,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 264
+    "triangles": 420
   },
   "enemy_role_melee": {
     "anchor": "floor",
@@ -253,7 +253,7 @@
     "telegraph_seat_at_centre_y_m": 0.8,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 184
+    "triangles": 316
   },
   "enemy_role_ranged": {
     "anchor": "floor",
@@ -285,7 +285,7 @@
     "telegraph_seat_at_centre_y_m": 0.7,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 176
+    "triangles": 236
   },
   "enemy_role_scuttler": {
     "anchor": "floor",
@@ -317,6 +317,6 @@
     "telegraph_seat_at_centre_y_m": 0.31,
     "telegraph_seat_is": "reserved geometry matching enemy.gd's telegraph_origin Marker3D. NOT a telegraph and it does not animate",
     "texel_density": null,
-    "triangles": 236
+    "triangles": 392
   }
 }

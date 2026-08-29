@@ -83,7 +83,20 @@ def _tag(objs, role):
 
 def _crate_fixed():
     """`int_carryable` with no grips. One feature apart, and that feature is
-    the entire affordance."""
+    the entire affordance.
+
+    035-R. It stays a near-miss -- same body, same ribs, same mouldings where
+    the grips would be -- but the pair is now decided at OBJECT scale, which
+    is where the 4.5 m test said it has to be decided:
+
+        carryable   bail arch over the lid, daylight under it on four feet
+        fixed       a SOLID lifting boss, no gap through it, sitting flush
+                    on the deck inside a welded fillet
+
+    Both have something on top and something at the corners. Only one of
+    them has a hole you could get a hand through and a shadow you could see
+    under. That is a silhouette difference, so distance does not take it.
+    """
     out = []
     out += _tag(brushkit.block("body", (0.52, 0.44, 0.42),
                                (0.0, 0.0, 0.21)), "body")
@@ -96,8 +109,16 @@ def _crate_fixed():
         out += _tag(brushkit.block("moulding_%d" % int(sx),
                                    (0.03, 0.24, 0.05),
                                    (sx * 0.26, 0.0, 0.30)), "body")
+    # The lifting boss: the same footprint as the carryable's bail and none
+    # of its clearance. Cast in, not fitted on.
+    out += _tag(brushkit.block("boss", (0.43, 0.10, 0.09),
+                               (0.0, 0.0, 0.46)), "body")
+    for sx in (-1.0, 1.0):
+        out += _tag(brushkit.block("boss_root_%d" % int(sx),
+                                   (0.06, 0.10, 0.07),
+                                   (sx * 0.19, 0.0, 0.44)), "body")
     # Welded to the deck. A crate that could be carried does not have a
-    # fillet round its base.
+    # fillet round its base -- and has daylight under it, which this has not.
     out += _tag(brushkit.block("fillet", (0.58, 0.50, 0.04),
                                (0.0, 0.0, 0.02)), "body")
     return out
@@ -154,18 +175,34 @@ def _bulkhead():
 
 
 def _hatch_welded():
-    """A hatch outline whose fixings are welded over. It WAS an opening."""
+    """A hatch outline whose fixings are welded over. It WAS an opening.
+
+    035-R. Against the receiver's new open throat this is now decided by
+    construction rather than by a scribed line: the hatch is FLUSH. Its face
+    is one uninterrupted slab across the full width the receiver spends on a
+    mouth, and the weld beads run over the outline rather than round it.
+
+    It is still the harder half of the pair on purpose -- it is the same
+    size, the same post, the same family -- but a filled face and an open
+    throat separate at every distance, and a scribed rectangle and a keyway
+    separate at none.
+    """
     out = []
     out += _tag(brushkit.block("post", (0.16, 0.16, 0.94),
                                (0.0, 0.02, 0.47)), "body")
-    out += _tag(brushkit.block("housing", (0.42, 0.26, 0.56),
-                               (0.0, 0.0, 1.20)), "body")
-    out += _tag(brushkit.block("outline", (0.30, 0.04, 0.40),
-                               (0.0, -0.12, 1.22)), "accent")
+    # One slab, the same 0.48 m across as the receiver's cheeks-and-mouth,
+    # and no cavity anywhere in it.
+    out += _tag(brushkit.block("face", (0.48, 0.30, 0.66),
+                               (0.0, 0.0, 1.25)), "body")
+    # The outline is SCRIBED INTO the flush face, not stood off it.
+    out += _tag(brushkit.block("outline", (0.30, 0.03, 0.40),
+                               (0.0, -0.146, 1.24)), "accent")
+    # Beads across the seam, running over the outline: the fixings were
+    # covered, so the thing that used to open cannot.
     for i in range(4):
-        out += _tag(brushkit.wedge("weld_%d" % i, (0.14, 0.06, 0.06),
-                                   (-0.10 + (i % 2) * 0.20, -0.14,
-                                    1.08 + int(i / 2) * 0.28), axis="y"),
+        out += _tag(brushkit.wedge("weld_%d" % i, (0.20, 0.06, 0.06),
+                                   (-0.10 + (i % 2) * 0.20, -0.16,
+                                    1.10 + int(i / 2) * 0.30), axis="y"),
                     "body")
     return out
 

@@ -523,13 +523,13 @@ is drawn from a remembered picture.
 
 | ID | Role | Tris | Size |
 | --- | --- | --- | --- |
-| `enemy_role_scuttler` | SCUTTLER — costs attention | 212 | 1.19 × 0.59 × 0.54 m |
-| `enemy_role_charger` | CHARGER — one telegraphed rush | 176 | 0.86 × 1.62 × 1.03 m |
-| `enemy_role_bulwark` | BULWARK — cannot be fought frontally | 280 | 1.45 × 0.83 × 1.92 m |
-| `enemy_role_artillery` | ARTILLERY — indirect, denies ground | 144 | 0.63 × 0.75 × 1.52 m |
-| `enemy_role_beacon` | BEACON — makes everything near it worse | 152 | 0.57 × 0.61 × 2.12 m |
-| `enemy_role_drifter` | DRIFTER (flyer) — owns the ceiling | 208 | 1.25 × 1.24 × 0.84 m |
-| `enemy_role_diver` | DIVER (flyer) — contests the grapple arc | 84 | 0.61 × 1.05 × 0.35 m |
+| `enemy_scuttler` | SCUTTLER — costs attention | 212 | 1.19 × 0.59 × 0.54 m |
+| `enemy_charger` | CHARGER — one telegraphed rush | 176 | 0.86 × 1.62 × 1.03 m |
+| `enemy_bulwark` | BULWARK — cannot be fought frontally | 280 | 1.45 × 0.83 × 1.92 m |
+| `enemy_artillery` | ARTILLERY — indirect, denies ground | 144 | 0.63 × 0.75 × 1.52 m |
+| `enemy_beacon` | BEACON — makes everything near it worse | 152 | 0.57 × 0.61 × 2.12 m |
+| `enemy_drifter` | DRIFTER (flyer) — owns the ceiling | 208 | 1.25 × 1.24 × 0.84 m |
+| `enemy_diver` | DIVER (flyer) — contests the grapple arc | 84 | 0.61 × 1.05 × 0.35 m |
 
 The three approved archetypes are untouched. Ten roles is a lot to tell
 apart in the 48 px a 1.6 m enemy occupies at `ENEMY_AGGRO_RADIUS`, so no two
@@ -3354,15 +3354,15 @@ not take it, because a checkpoint is walked onto rather than operated.
 
 | asset | verb the shape must say | tris | size (m) |
 |---|---|---|---|
-| `int_carryable` | GRIP HERE | 120 | 0.64 × 0.47 × 0.45 |
-| `int_weight_button` | THIS GOES DOWN | 96 | 0.96 × 1.04 × 0.23 |
-| `int_wall_switch` | THROW THIS | 104 | 0.39 × 0.55 × 1.54 |
-| `int_door_mechanism` | THIS DRIVES THAT | 180 | 1.20 × 0.54 × 2.30 |
-| `int_logic_indicator` | THIS IS COUNTING | 144 | 0.30 × 0.23 × 1.73 |
-| `int_launcher` | IT THROWS YOU, THAT WAY | 140 | 0.90 × 0.95 × 0.62 |
-| `int_breakable` | THIS ONE FAILS | 204 | 1.14 × 0.23 × 1.90 |
-| `int_key_receiver` | SOMETHING GOES IN HERE | 96 | 0.42 × 0.30 × 1.48 |
-| `int_machinery` | IT IS PART WAY | 196 | 1.16 × 0.78 × 1.25 |
+| `int_carryable` | GRIP HERE | 252 | 0.64 × 0.48 × 0.66 |
+| `int_weight_button` | THIS GOES DOWN | 144 | 0.96 × 1.05 × 0.23 |
+| `int_wall_switch` | THROW THIS | 152 | 0.39 × 0.55 × 1.54 |
+| `int_door_mechanism` | THIS DRIVES THAT | 228 | 1.20 × 0.55 × 2.30 |
+| `int_logic_indicator` | THIS IS COUNTING | 192 | 0.30 × 0.23 × 1.73 |
+| `int_launcher` | IT THROWS YOU, THAT WAY | 188 | 0.90 × 0.96 × 0.62 |
+| `int_breakable` | THIS ONE FAILS | 252 | 1.14 × 0.24 × 1.90 |
+| `int_key_receiver` | SOMETHING GOES IN HERE | 168 | 0.48 × 0.34 × 1.56 |
+| `int_machinery` | IT IS PART WAY | 244 | 1.16 × 0.78 × 1.25 |
 
 Not Portal, deliberately: the carryable is a handled industrial crate rather
 than a symbol-faced cube, and the button is a rectangular floor pad with a
@@ -3472,16 +3472,16 @@ agreed collider and a telegraph seat, and no way to be spawned.
 
 | asset | tris | built (m) | envelope (m) | placeable |
 |---|---|---|---|---|
-| `enemy_role_melee` | 184 | 0.78 × 0.69 × 1.55 | 0.80 × 1.60 × 0.80 | yes |
-| `enemy_role_ranged` | 176 | 0.57 × 0.66 × 1.37 | 0.70 × 1.40 × 0.70 | yes |
-| `enemy_role_brute` | 184 | 1.80 × 1.66 × 2.40 | 1.80 × 2.60 × 1.80 | yes |
-| `enemy_role_charger` | 240 | 0.90 × 1.88 × 0.84 | 0.90 × 1.05 × 1.90 | **no** |
-| `enemy_role_bulwark` | 208 | 1.45 × 0.82 × 1.99 | 1.45 × 2.05 × 0.85 | **no** |
-| `enemy_role_scuttler` | 236 | 1.24 × 1.16 × 0.34 | 1.30 × 0.62 × 1.20 | **no** |
-| `enemy_role_artillery` | 212 | 1.18 × 1.25 × 1.50 | 1.25 × 1.55 × 1.25 | **no** |
-| `enemy_role_beacon` | 268 | 0.55 × 0.55 × 2.20 | 0.62 × 2.20 × 0.62 | **no** |
-| `enemy_role_diver` | 132 | 0.70 × 1.13 × 0.40 | 0.70 × 0.50 × 1.20 | **no** |
-| `enemy_role_drifter` | 264 | 1.25 × 1.25 × 0.81 | 1.35 × 0.95 × 1.35 | **no** |
+| `enemy_role_melee` | 316 | 0.78 × 0.69 × 1.55 | 0.80 × 1.60 × 0.80 | yes |
+| `enemy_role_ranged` | 236 | 0.57 × 0.66 × 1.37 | 0.70 × 1.40 × 0.70 | yes |
+| `enemy_role_brute` | 232 | 1.80 × 1.66 × 2.40 | 1.80 × 2.60 × 1.80 | yes |
+| `enemy_role_charger` | 348 | 0.90 × 1.88 × 0.84 | 0.90 × 1.05 × 1.90 | **no** |
+| `enemy_role_bulwark` | 328 | 1.45 × 0.82 × 1.99 | 1.45 × 2.05 × 0.85 | **no** |
+| `enemy_role_scuttler` | 392 | 1.24 × 1.16 × 0.34 | 1.30 × 0.62 × 1.20 | **no** |
+| `enemy_role_artillery` | 296 | 1.18 × 1.25 × 1.50 | 1.25 × 1.55 × 1.25 | **no** |
+| `enemy_role_beacon` | 376 | 0.55 × 0.55 × 2.20 | 0.62 × 2.20 × 0.62 | **no** |
+| `enemy_role_diver` | 180 | 0.70 × 1.13 × 0.40 | 0.70 × 0.50 × 1.20 | **no** |
+| `enemy_role_drifter` | 420 | 1.25 × 1.25 × 0.82 | 1.35 × 0.95 × 1.35 | **no** |
 
 Variety comes from proportion rather than size, because the box is fixed: the
 threat end is the heavy end, every role carries a telegraph seat at
@@ -3595,8 +3595,8 @@ that survives the distance.**
 |---|---|---|---|
 | `dec_bulkhead` | int_door_mechanism | 72 | 1.30 × 0.33 × 2.30 |
 | `dec_console_dead` | int_wall_switch | 108 | 0.39 × 0.27 × 1.51 |
-| `dec_crate_fixed` | int_carryable | 84 | 0.58 × 0.50 × 0.42 |
-| `dec_hatch_welded` | int_key_receiver | 68 | 0.42 × 0.30 × 1.48 |
+| `dec_crate_fixed` | int_carryable | 120 | 0.58 × 0.50 × 0.51 |
+| `dec_hatch_welded` | int_key_receiver | 68 | 0.48 × 0.34 × 1.58 |
 | `dec_panel_blind` | int_breakable | 84 | 1.14 × 0.20 × 1.90 |
 | `dec_pipe_fixed` | int_machinery | 88 | 1.11 × 0.68 × 0.97 |
 
@@ -3628,3 +3628,135 @@ signals and Batch 030 reserved the seats, but nothing is authored for any
 `kind` and no `kind` vocabulary exists. Recorded as a dependency; not started.
 
 Status: **all PENDING** — none self-marked.
+
+---
+
+# Owner review — the post-030 gap pass (2026-08-29)
+
+## 031 zone keys — PASS
+
+Four things are locked and are not open again:
+
+- **the part the keyway reads is UNIVERSAL** — one shank, one shoulder, one
+  keyway relationship, shared by every key and every receiver;
+- **channel coding is STRUCTURAL, never colour** — channel N is N lugs and a
+  notch rotated N × 40°, so a player counts rather than matching a hue;
+- **the grip is themed** — that is where a key belongs to a world;
+- **it is a machined interlock**, not a keycard and not a fantasy artefact.
+
+## 032 the baseline melee — PASS, with a boundary
+
+The melee device passes. The ranged / melee / grapple `EchoPart` forms built
+beside it are **proof of the attachment seam and nothing more** — explicitly
+*not* approval of a final seven-fixed-forms system, and Art must **not**
+expand them into seven production family models.
+
+Interface requirement 32 is reworded accordingly: *"the Echo family must be
+visible through a swappable / composable `EchoPart` seam."* **The owner will
+design a modular Echo kitbash system separately**; the seam exists to receive
+it.
+
+## 033 the Zone exit AUDIT — PASS, and BUILD NOTHING
+
+The audit's recommendation is the outcome. Three things are recorded for
+Production and are Production's to fix in Production's own file:
+
+1. the **existing exit portal is sufficient** — no new portal asset;
+2. the lifecycle needs **more than a boolean visual state**;
+3. **locked / dead must not use hazard-red semantics.** A locked exit is not
+   a hazard; `dead` is the family whose own definition contains the word
+   *locked*.
+
+## 034 hard gates — the VISUAL PRINCIPLE passes
+
+Locked: an intentional capability route reads as **finished, installed,
+deliberate**; broken geometry reads as **ragged, incomplete, a construction
+failure**. Blink / teleport stays **proposal-only** — no mechanical contract,
+so no production asset.
+
+## Boss audit — accepted, builds nothing
+
+The finding stands as a recorded dependency: **the missing piece is a
+telegraph vocabulary, not a body.**
+
+---
+
+# The three revisions the owner sent back (delivered, PENDING re-review)
+
+## 035-R — object scale, and the plate as redundant hardware
+
+The owner's ruling was **do both**: raise the hand-scale structural tells to
+object scale *and* keep the standardized interaction hardware as a
+**redundant** learned cue — never the sole source of truth, never something
+that needs colour vision.
+
+**The rule adopted: a tell that has to survive gameplay distance must change
+the object's SILHOUETTE, not its surface.** Both failing pairs differed only
+by a hand-scale feature (6 cm grips vs 3 cm mouldings; a 9 cm keyway vs a
+scribed outline). Both were *legal* under the derived floor —
+`min_feature_fraction` 0.08 of a 0.42 m crate is 3.4 cm and 6 cm is about
+seven screen pixels at 4.5 m — and both still failed, because **two screen
+pixels is enough to see that a form exists and nowhere near enough to tell
+which form it is.**
+
+| pair | now separates on |
+|---|---|
+| carryable vs fixed crate | a bail arch with a hole through it over feet with daylight under them, against a solid lifting boss on a crate sitting flush in a welded fillet |
+| key receiver vs welded hatch | an open throat — two cheeks with the top open between them, a **fork** in the outline — against a flush slab with the beads run over the seam |
+| breakable vs blind panel | shards at their own depths, broken in relief, against one flat coursed field |
+
+The state plate is now **hardware**: a recess, a raised **bezel**, and the
+lit face inset behind it, so it survives greyscale. Three independent
+channels result — silhouette says *what kind of thing*, interaction hardware
+says *yes this one is operable*, state treatment says *what it is doing now*.
+
+A third sheet was added because the second was still leaky: the bezel is body
+geometry and no decoy has one, so "find the bezel" solved sheet B without
+using the grammar. **`C_recognition_silhouette.png` is flat black on a lit
+backdrop** — no material, no emission, no bezel, no colour. It immediately
+caught one more failure: the first revised receiver closed its throat with a
+lintel, and **a cavity in a front face does not break an outline**. Opening
+the top turned the head into a fork. **All six pairs now separate in pure
+silhouette**, weakest being breakable vs blind.
+
+## 036-R — the secret cue package
+
+No redesign; the artifact was the problem. `A_secret_cues.png` said EIGHT and
+visibly contained six, because the panel index was moved to four columns
+while the sheet WIDTH stayed at three — cues 4 and 8 were blitted off the
+right edge, and the sheet was re-rendered and not looked at. Fixed, verified
+by reading the image (2800 × 1080, eight cues), and `batch029/README.md`
+rewritten to the current eight-cue state with the history preserved.
+
+## 037-R — enemy surfaces
+
+Bodies and silhouettes **unchanged**, per instruction. The first pass told
+armour from mechanism by *roughness*, which at mid range reads as shadow
+rather than as a different kind of thing. **The difference is now carried by
+construction:** `plate` is a slab seated proud of a recess (the face shrinks
+to 88%, the backing keeps the declared extent); `mech` is ribbed and rodded.
+No role colours.
+
+Two roles were also **mislabelled and are retagged**: the scuttler's carapace
+and the beacon's head were tagged `plate` — the largest mass on the two roles
+captioned *"barely armoured at all"* and *"no armour at all"*. Both are now
+`body`. Materially a no-op, since `body` and `plate` share a material, but a
+label should not contradict the rule the sheet exists to prove.
+
+`C_enemy_surfaces.png` is the evidence: five role pairs at **4.0 m** on **one
+camera** — one lens, one distance, one azimuth, level — plus a maximum-size
+detail. It took three passes to become valid. A fixed 3.4 m standoff put the
+hovering drifter above the frame; a standoff that *scaled* with the crown
+fixed that and broke the sheet, because a surface comparison shot from five
+different distances is not a comparison. The final version sizes one distance
+from the widest pair, and had to count **depth** in that width: at a
+three-quarter azimuth a 1.8 × 1.8 m brute is 2.24 m wide on screen and ran
+off its own left edge.
+
+**Honest result: it reads in four of five pairs and in the detail.** The weak
+pair is brute / scuttler — the caption claims "barely armoured at all" and
+the scuttler still reads as a fairly solid dome. The retag is the honest half
+of the fix; the other half would be a body change, which is out of scope by
+instruction. Recorded, not worked around.
+
+Status: **035-R, 036-R and 037-R are PENDING re-review** — none self-marked.

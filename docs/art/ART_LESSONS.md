@@ -1124,6 +1124,81 @@ sentence names a result, a tool call has to have produced it in this turn.**
 A heartbeat that skips the check and reports the expected answer is a
 heartbeat that has stopped being a check.
 
+### L-76 · A visibility floor is not a recognition floor
+
+`min_feature_fraction` (0.08 of the object) and `min_feature_screen_px` (2 px
+at the judging distance) are derived, reasoned numbers, and both were
+satisfied by the 6 cm grips that made `int_carryable` indistinguishable from
+`dec_crate_fixed` at 4.5 m — 6 cm is about **seven** screen pixels there.
+
+> Two pixels is enough to see **that a form exists**. It is nowhere near
+> enough to tell **which form it is**.
+
+Those are different questions and they need different floors. The rule that
+answers the second one is not a size at all:
+
+> **A tell that has to survive gameplay distance must change the object's
+> SILHOUETTE, not its surface.**
+
+Surface is what distance takes away first. An outline is the last thing to
+go. A grip on a face is surface; a bail you can see through, and a gap of
+light under a crate, are silhouette.
+
+And its corollary, which the silhouette sheet caught within one render of
+being written: **a cavity in a front face is not a hole.** The first revised
+key receiver had an open throat closed by a lintel, and from any angle where
+you could not see *into* it, it and the welded hatch were the same dark slab.
+Opening the top turned the head into a fork — a notch in the outline itself,
+which is the only kind of hole a silhouette can carry.
+
+### L-77 · The camera is part of the experiment, not part of the plumbing
+
+Sheet C of 037-R clipped a hovering drifter out of frame. The fix — scale the
+standoff with the tallest thing in the panel — worked, and silently destroyed
+the sheet: **a surface comparison shot from five different distances is not a
+comparison**, because distance is the exact variable a surface test measures.
+
+The same mistake is available in any evidence sheet: fixing a framing bug by
+changing the thing being controlled for. Fix framing by changing what the
+framing is *sized from* (here, one distance derived from the widest pair,
+with a vertical pan for the tall ones), never by letting the control vary.
+
+A second, smaller trap in the same fix: **at a three-quarter azimuth an
+object's screen width includes its depth.** Sizing the frame from envelope
+width alone ran a 1.8 × 1.8 m brute — 2.24 m wide on screen — off its own
+left edge.
+
+### L-78 · A suppression test leaks wherever the suppressed cue has geometry
+
+Sheet A of 035 was solvable by spotting cyan. Sheet B suppressed the plate's
+emission and was the real test — until 035-R gave the plate a **bezel** so it
+would survive greyscale, as the owner required. The bezel is *body* geometry,
+it cannot be suppressed at render time, and no decoy has one, so sheet B
+became solvable by "find the bezel": the same defect, one layer down.
+
+> Suppressing a channel only tests the remaining channels if the suppressed
+> cue leaves **nothing** behind.
+
+The complete suppression is a **silhouette**: flat black on a lit backdrop
+has no material, no emission, no bezel and no colour. If a distinction
+survives that, it is structural. If it does not, no amount of suppressing
+individual channels will prove it was.
+
+### L-79 · A rename travels further than the thing being renamed
+
+L-74 renamed Batch 030's enemy ids to `enemy_role_*` to stop them redefining
+Batch 002's approved assets. The rename also swept a table in the **Batch 002**
+section, leaving Batch 002's measurements sitting under Batch 030's ids —
+seven rows that described one set of assets while naming another.
+
+Nothing caught it for a whole review cycle, because `check_docs_metrics`
+accepts a match *anywhere*: the correct Batch 030 ledger satisfied the check,
+so the wrong table was never consulted. A verifier that passes on the first
+match cannot tell you the second one is a lie.
+
+> After a bulk rename, grep the **old** name and the **new** one, and read
+> every section the new one landed in.
+
 ### L-24 · Read your own render before writing down what it shows
 Every fix in L-05, L-08, L-09, L-11, L-13 and L-14 came from **looking at
 the image**, not from the build log. The logs were green throughout: correct

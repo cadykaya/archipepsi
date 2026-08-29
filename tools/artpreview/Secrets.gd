@@ -92,7 +92,13 @@ func _shoot(name: String, size: Vector2i, key: float) -> Image:
 
 func _cue_sheet() -> void:
 	var cell := Vector2i(700, 470)
-	var sheet := Image.create(cell.x * 3, cell.y * 3 + 140, false,
+	# FOUR columns, two rows -- eight cues. This line and the `at` below
+	# must agree, and once they did not: the index was moved to four
+	# columns while the WIDTH stayed at three, so cues 4 and 8 were blitted
+	# at x = 3 * cell.x, off the right edge, and the sheet silently showed
+	# six of eight with a blank third row. It was re-rendered and not
+	# looked at, which is L-24 exactly.
+	var sheet := Image.create(cell.x * 4, cell.y * 2 + 140, false,
 			Image.FORMAT_RGB8)
 	sheet.fill(Color(0.07, 0.08, 0.10))
 	for i in CUES.size():

@@ -237,9 +237,14 @@ def _bulwark(w, h, d):
 def _scuttler(w, h, d):
     out = []
     # Flat and splayed: 0.62 m tall over a 1.3 m span. Legs OUT, body low.
+    # `body`, NOT `plate`. The surface pass captions this role "barely
+    # armoured at all" and then adds one small cap -- so tagging its single
+    # largest mass as armour made the sheet contradict the rule it exists to
+    # prove. Armour is what the surface pass BOLTS ON; the chassis under it
+    # is chassis.
     out += _tag(brushkit.prism("carapace", w * 0.34, h * 0.52, 8,
                                (0.0, 0.0, h * 0.42), top_radius=w * 0.22,
-                               organic=True), "plate")
+                               organic=True), "body")
     for i in range(6):
         a = -60.0 + i * 24.0
         sx = -1.0 if i % 2 == 0 else 1.0
@@ -287,8 +292,10 @@ def _beacon(w, h, d):
         out += _tag(brushkit.block("collar_%d" % i,
                                    (w * 0.52, d * 0.52, h * 0.05),
                                    (0.0, 0.0, h * z)), "body")
+    # `body` for the same reason as the scuttler's carapace: the beacon is
+    # captioned "no armour at all" and wears service hardware instead.
     out += _tag(brushkit.prism("head", w * 0.44, h * 0.20, 8,
-                               (0.0, 0.0, h * 0.90), organic=True), "plate")
+                               (0.0, 0.0, h * 0.90), organic=True), "body")
     # The band. Marked, never a wash.
     out += _tag(brushkit.tube("band", w * 0.48, w * 0.40, h * 0.07, 8,
                               (0.0, 0.0, h * 0.80)), "warn")
@@ -363,11 +370,46 @@ def _surface(role, w, h, d):
     """Role-specific armour and exposed mechanism, inside the envelope."""
     out = []
 
+    # 037-R. The first surface pass told armour from mechanism by ROUGHNESS
+    # alone, and at 3.4 m that reads as shadow rather than as a different
+    # kind of thing. Roughness is kept, but the difference is now carried by
+    # CONSTRUCTION -- which is what the owner asked for and is also what
+    # actually survives a mid-range look:
+    #
+    #   plate -> a slab with a PROUD LIP round it, so armour reads as
+    #            something bolted ON rather than as more body
+    #   mech  -> RIBBED: three slats and a rod, so mechanism reads as
+    #            machinery rather than as a dark box
+    #
+    # No role colours. The two treatments differ in how they are BUILT.
     def plate(name, size, at, rot=0.0):
-        out.append((brushkit.block(name, size, at, rotation_z=rot), "plate"))
+        # The plate SHRINKS and the backing keeps the declared extent, so
+        # the pair reads as armour seated in a recess without the footprint
+        # growing. The first attempt grew the lip instead and pushed the
+        # brute's pauldrons 6 cm outside ENEMY_ENVELOPES -- the assertion
+        # caught it, which is what it is for.
+        face = (size[0] * 0.88, size[1] * 0.88, size[2] * 1.16)
+        out.append((brushkit.block(name, face, at, rotation_z=rot), "plate"))
+        out.append((brushkit.block(name + "_seat", size, at, rotation_z=rot),
+                    "body"))
 
     def mech(name, size, at, rot=0.0):
-        out.append((brushkit.block(name, size, at, rotation_z=rot), "mech"))
+        # Ribbing along the longest horizontal axis, plus a rod through it.
+        span = max(size[0], size[1])
+        thin = min(size[0], size[1])
+        wide = size[0] >= size[1]
+        for j in range(3):
+            off = -span * 0.30 + j * span * 0.30
+            rib = ((span * 0.20, thin, size[2]) if wide
+                   else (thin, span * 0.20, size[2]))
+            pos = ((at[0] + off, at[1], at[2]) if wide
+                   else (at[0], at[1] + off, at[2]))
+            out.append((brushkit.block("%s_rib%d" % (name, j), rib, pos,
+                                       rotation_z=rot), "mech"))
+        rod = ((span * 1.02, thin * 0.34, thin * 0.34) if wide
+               else (thin * 0.34, span * 1.02, thin * 0.34))
+        out.append((brushkit.block(name + "_rod", rod, at, rotation_z=rot),
+                    "mech"))
 
     if role == "melee":
         # Light. Armour only on the leading forearms; the shoulders are open

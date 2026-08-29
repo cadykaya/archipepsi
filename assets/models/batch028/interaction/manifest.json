@@ -15,12 +15,12 @@
     "scale_basis": "proposal scale",
     "size": [
       1.14,
-      0.227,
+      0.238,
       1.9
     ],
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
-    "triangles": 204,
+    "triangles": 252,
     "verb_the_shape_says": "THIS ONE FAILS"
   },
   "int_carryable": {
@@ -39,12 +39,12 @@
     "scale_basis": "proposal scale",
     "size": [
       0.64,
-      0.472,
-      0.445
+      0.483,
+      0.655
     ],
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
-    "triangles": 120,
+    "triangles": 252,
     "verb_the_shape_says": "GRIP HERE"
   },
   "int_door_mechanism": {
@@ -63,12 +63,12 @@
     "scale_basis": "proposal scale",
     "size": [
       1.195,
-      0.537,
+      0.548,
       2.3
     ],
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
-    "triangles": 180,
+    "triangles": 228,
     "verb_the_shape_says": "THIS DRIVES THAT"
   },
   "int_key_receiver": {
@@ -86,13 +86,13 @@
     "runtime_states_exist": false,
     "scale_basis": "proposal scale",
     "size": [
-      0.42,
-      0.3,
-      1.48
+      0.48,
+      0.34,
+      1.56
     ],
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
-    "triangles": 96,
+    "triangles": 168,
     "verb_the_shape_says": "SOMETHING GOES IN HERE"
   },
   "int_launcher": {
@@ -111,12 +111,12 @@
     "scale_basis": "proposal scale",
     "size": [
       0.9,
-      0.947,
+      0.958,
       0.623
     ],
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
-    "triangles": 140,
+    "triangles": 188,
     "verb_the_shape_says": "IT THROWS YOU, THAT WAY"
   },
   "int_logic_indicator": {
@@ -140,7 +140,7 @@
     ],
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
-    "triangles": 144,
+    "triangles": 192,
     "verb_the_shape_says": "THIS IS COUNTING"
   },
   "int_machinery": {
@@ -164,7 +164,7 @@
     ],
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
-    "triangles": 196,
+    "triangles": 244,
     "verb_the_shape_says": "IT IS PART WAY"
   },
   "int_wall_switch": {
@@ -188,7 +188,7 @@
     ],
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
-    "triangles": 104,
+    "triangles": 152,
     "verb_the_shape_says": "THROW THIS"
   },
   "int_weight_button": {
@@ -207,12 +207,12 @@
     "scale_basis": "proposal scale",
     "size": [
       0.96,
-      1.037,
+      1.048,
       0.23
     ],
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
-    "triangles": 96,
+    "triangles": 144,
     "verb_the_shape_says": "THIS GOES DOWN"
   }
 }
