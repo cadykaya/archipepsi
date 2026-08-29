@@ -30,6 +30,17 @@ func _ready() -> void:
 
 func _open() -> void:
 	_socket = WebSocketPeer.new()
+	# Before `connect_to_url`, which is when the buffer is allocated.
+	#
+	# The default is 64 KiB and an oversized message is NOT truncated:
+	# the peer closes with 1009 "message too big", reconnects, receives
+	# the same snapshot, and closes again forever while the game says
+	# BRIDGE OFFLINE. A 450-location campaign's connect snapshot is
+	# 110 KB -- 105 KB of it the 450 scouted locations -- so production
+	# scale could not connect at all, while the prototype's 8.5 KB
+	# always fitted. `test_snapshot_size.py` measures the worst case
+	# against this number so the next growth fails a test instead.
+	_socket.inbound_buffer_size = Constants.WS_INBOUND_BUFFER_BYTES
 	var url := "ws://%s:%d" % [Constants.BRIDGE_HOST, Constants.BRIDGE_PORT]
 	var err := _socket.connect_to_url(url)
 	_was_connecting = err == OK

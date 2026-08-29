@@ -233,6 +233,93 @@ class TestTheFoldIsStillSentWhole:
                 "is made of; this test's premise needs rewriting")
 
 
+class TestTheClientCanActuallyRECEIVEWhatWeSend:
+    """The half nobody measured, and it cost a playtest.
+
+    Every measurement in this file is of what the bridge SENDS. Godot's
+    `WebSocketPeer` has an inbound buffer that defaults to 64 KiB, and a
+    message over it is not truncated -- the peer closes the connection
+    with 1009 "message too big". The client reconnects, gets the same
+    snapshot, closes again, forever, while the game says BRIDGE OFFLINE.
+
+    A 450-location campaign's CONNECT snapshot is 110 KB before a single
+    Check is claimed, of which 105 KB is 450 `ScoutedLocation` entries.
+    So production scale could not connect at all. It went unnoticed
+    because the Godot integration suite runs a thirty-location campaign,
+    whose connect snapshot is 8.5 KB -- the third time in this project
+    that the options scaled and a consumer did not.
+
+    These measure the worst case against the buffer the CLIENT declares,
+    on both sides of the language boundary.
+    """
+
+    def test_the_connect_snapshot_fits_at_every_scale(self, tmp_path):
+        """Empty campaign, every scale. This is the exact message
+        `server.py` sends the moment a client connects, and the one that
+        failed."""
+        async def go():
+            out = {}
+            for name, config in (("prototype", C.PROTOTYPE_CONFIG),
+                                 ("default", C.DEFAULT_CONFIG)):
+                engine, _ = await connected_engine(tmp_path, config=config)
+                out[name] = len(engine.snapshot().model_dump_json())
+            return out
+
+        sizes = run(go())
+        print("\n  connect snapshot, empty campaign")
+        for name, size in sizes.items():
+            print(f"  {name:<10} {size:>9,} bytes")
+        assert sizes["default"] > 100_000, (
+            "the 110 KB connect snapshot stopped reproducing; if it "
+            "genuinely shrank, say so rather than letting this go quiet")
+        for name, size in sizes.items():
+            assert size < C.WS_INBOUND_BUFFER_BYTES, (
+                f"a {name} campaign cannot connect: {size:,} bytes "
+                f"against a {C.WS_INBOUND_BUFFER_BYTES:,} byte buffer")
+
+    def test_the_worst_snapshot_this_project_can_build_still_fits(
+            self, tmp_path):
+        """Largest configurable campaign, late, whole Echo log, and the
+        scouting for every location. Nothing bigger is reachable."""
+        async def go():
+            size = C.LOCATION_COUNT_MAX - 1
+            engine, _ = await connected_engine(tmp_path,
+                                               config=C.DEFAULT_CONFIG)
+            engine.save = _with_log(engine.save, _log(size))
+            return len(engine.snapshot().model_dump_json())
+
+        worst = run(go())
+        print(f"\n  worst reachable snapshot {worst:,} bytes against a "
+              f"{C.WS_INBOUND_BUFFER_BYTES:,} byte buffer "
+              f"({C.WS_INBOUND_BUFFER_BYTES / worst:.1f}x headroom)")
+        assert worst < C.WS_INBOUND_BUFFER_BYTES / 2, (
+            f"the worst snapshot is {worst:,} bytes and the client's "
+            f"buffer is {C.WS_INBOUND_BUFFER_BYTES:,}; that is under 2x "
+            "headroom, and a client that cannot receive a snapshot "
+            "cannot connect at all")
+
+    def test_the_client_raises_the_buffer_before_it_connects(self):
+        """Order matters: the buffer is allocated by `connect_to_url`,
+        so setting it afterwards sets it for the NEXT socket and not
+        this one."""
+        from pathlib import Path
+        root = Path(__file__).resolve().parents[2]
+        src = (root / "godot/scripts/autoload/bridge_client.gd").read_text(
+            encoding="utf-8")
+        assert "inbound_buffer_size = Constants.WS_INBOUND_BUFFER_BYTES" \
+            in src, ("the client is back on Godot's 64 KiB default, which "
+                     "a production-scale campaign cannot connect through")
+        # CODE lines only. The comment above the assignment names
+        # `connect_to_url` to explain why the order matters, and a raw
+        # string search finds the prose before it finds the call.
+        code = "\n".join(line for line in src.split("\n")
+                         if not line.strip().startswith("#"))
+        assert code.index("inbound_buffer_size") < code.index(
+            "connect_to_url"), (
+            "the buffer is set after connect_to_url, which allocates it; "
+            "that sets the size for the NEXT socket, not this one")
+
+
 # ===========================================================================
 # Eliding is not losing
 # ===========================================================================

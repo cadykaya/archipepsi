@@ -1201,6 +1201,28 @@ TEXTURE_SIZE_DEFAULT = 64
 BRIDGE_HOST = "127.0.0.1"
 BRIDGE_PORT = 38290
 
+#: How large a single bridge message the CLIENT must be able to receive.
+#:
+#: Godot's `WebSocketPeer.inbound_buffer_size` defaults to 64 KiB and a
+#: message over it is not truncated -- the peer closes the connection
+#: with code 1009 "message too big". The client then reconnects, gets the
+#: same oversized snapshot, and closes again, forever, while the game
+#: says BRIDGE OFFLINE.
+#:
+#: Which is exactly what a 450-location campaign did the first time a
+#: human tried to play one. The prototype's connect snapshot is 8.5 KB
+#: and fits; the default scale's is 110 KB, of which 105 KB is 450
+#: `ScoutedLocation` entries. Nothing caught it because the Godot
+#: integration suite runs at thirty locations, so no test had ever put a
+#: production-scale snapshot through a real WebSocket.
+#:
+#: Sized against the measured worst case rather than guessed: the
+#: largest configurable campaign, late, with its whole Echo log, is
+#: about 1 MB. `test_snapshot_size.py` measures that and fails if it
+#: ever approaches this, so the next growth is a red test rather than a
+#: player whose game will not connect.
+WS_INBOUND_BUFFER_BYTES = 8 * 1024 * 1024
+
 PROVIDER_TIMEOUT_SECONDS = 60.0
 REPAIR_ATTEMPTS = 1
 
