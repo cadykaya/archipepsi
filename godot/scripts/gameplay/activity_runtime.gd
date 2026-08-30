@@ -122,14 +122,31 @@ func adopt(built: Array[ActivityElement]) -> void:
 	_build_label()
 	_refresh_capability_state()
 
+## The clock and the progress count get a HOME, on the activity itself.
+##
+## It used to sit 2.6 m above the runtime's own origin, which for a
+## `timed_run` spread across a whole room is a point in mid-air belonging
+## to nothing. It now rides the element the run STARTS from -- the gate
+## for a roles family, the first element otherwise -- so the reading and
+## the thing being read are in the same place.
 func _build_label() -> void:
 	_label = Label3D.new()
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.pixel_size = 0.005
-	_label.position = Vector3(0, 2.6, 0)
-	_label.modulate = Color(0.75, 0.9, 1.0)
+	_label.modulate = Color(0.85, 0.88, 0.92)
+	_label.outline_size = 10
 	_label.visible = false
+	var home := _label_home()
+	_label.position = home + Vector3(0.0, 2.6, 0.0)
 	add_child(_label)
+
+func _label_home() -> Vector3:
+	for element in elements:
+		if element.role == ActivityElement.ROLE_START:
+			return element.position
+	if not elements.is_empty():
+		return elements[0].position
+	return Vector3.ZERO
 
 ## A NOT YET is deliberate, legible and honest.
 ##

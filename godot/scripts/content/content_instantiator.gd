@@ -39,6 +39,12 @@ const SHELL_FOR_TYPE := {
 ## with like.
 const FLOOR_ALLOWANCE := 1.0
 
+## A mesh at least this wide on both floor axes is architecture -- a
+## floor slab, a ceiling, a wall -- not furniture. Activities are placed
+## INSIDE the room, so treating the room itself as an obstacle would
+## leave the solver with nowhere legal to go.
+const ROOM_SCALE_SOLID := 6.0
+
 ## Builds one chamber. Signature-compatible with `ChamberBuilders.build`,
 ## which is what it falls back to, so `ZoneBuilder` did not have to learn
 ## anything new.
@@ -77,6 +83,13 @@ static func _build_activities(result: Dictionary, chamber: Dictionary,
 	var width := maxf(bounds.size.x, 1.0)
 	var depth := maxf(bounds.size.z, 1.0)
 	var room_id := str(chamber.get("id", ""))
+	# WHAT IS ALREADY IN THE ROOM. Read off the built room rather than
+	# handed down from the builder: activities go in after the shell, so
+	# the props are real nodes by now and their actual boxes are better
+	# evidence than a list somebody remembered to maintain.
+	var occupied: Array[AABB] = []
+	for child in root.get_children():
+		_collect_occupancy(child, Transform3D.IDENTITY, occupied)
 	var activities: Array = []
 	var index := 0
 	for activity: Variant in chamber.get("activities", []) as Array:
@@ -84,11 +97,46 @@ static func _build_activities(result: Dictionary, chamber: Dictionary,
 			# The id is the room plus the position in the room's own list,
 			# so it is stable across a rebuild after a reconnect and the
 			# local reward a solved activity grants is the same note.
-			activities.append(Activities.build(
+			var built := Activities.build(
 					root, activity, theme, width, depth, room_id,
-					"%s_%d" % [room_id, index]))
+					"%s_%d" % [room_id, index], occupied)
+			# Each activity claims its space before the next is placed,
+			# which is what stops two of the same kind and size landing
+			# on top of each other.
+			# The footprints the SOLVER claimed, not ones re-derived
+			# from the scene: it computed them in room space already,
+			# and two derivations of one fact is how they disagree.
+			for claimed: Variant in (built as Dictionary).get(
+					"footprints", []) as Array:
+				occupied.append(claimed as AABB)
+			activities.append(built)
 			index += 1
 	return activities
+
+## Every solid box in `node`, in the ROOM's local space.
+##
+## Floors, ceilings and walls are skipped by size: a room-sized slab
+## overlaps everything and would leave the solver nowhere to stand. What
+## is wanted is the furniture -- crates, drums, sconces, signage -- which
+## is what an activity can actually be buried inside.
+##
+## THE TRANSFORM IS ACCUMULATED BY HAND, and it has to be. The first
+## version used `mesh.global_transform`, which for a node OUTSIDE THE
+## SCENE TREE does not accumulate -- and a chamber is built detached and
+## added later, so every prop came back at its own local offset near the
+## origin. The boxes looked plausible, intersected nothing, and the
+## solver silently did nothing at all.
+static func _collect_occupancy(node: Node, xform: Transform3D,
+		out: Array[AABB]) -> void:
+	var here := xform
+	if node is Node3D:
+		here = xform * (node as Node3D).transform
+	if node is MeshInstance3D:
+		var box: AABB = here * (node as MeshInstance3D).get_aabb()
+		if box.size.x < ROOM_SCALE_SOLID and box.size.z < ROOM_SCALE_SOLID:
+			out.append(box)
+	for child in node.get_children():
+		_collect_occupancy(child, here, out)
 
 ## WHICH ROOM to build. Every return here is a room; none of them is a
 ## finished chamber, because the chamber's content is added by the caller.
@@ -105,7 +153,15 @@ static func _shell(chamber: Dictionary, theme: String,
 	# The id is a key into the registry and never a path: an Epsilon that
 	# could name a path could name any file, which is why the catalog it
 	# is offered carries ids alone.
-	var chosen_by_epsilon := str(chamber.get("shell_id", ""))
+	# NOT `str(chamber.get("shell_id", ""))`. `shell_id` is nullable in
+	# the schema and arrives over the wire as JSON null, and `str(null)`
+	# in GDScript is the six-character string "<null>" -- which is not
+	# empty, so every chamber in every Zone took the "Epsilon chose a
+	# shell" branch with garbage in hand and fell out of it with a
+	# warning. A default only applies to a MISSING key, never to a
+	# present null.
+	var declared: Variant = chamber.get("shell_id")
+	var chosen_by_epsilon := str(declared) if declared is String else ""
 	var wanted: String = SHELL_FOR_TYPE.get(type, "")
 	if not chosen_by_epsilon.is_empty():
 		if reg.has(chosen_by_epsilon):

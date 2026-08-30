@@ -105,6 +105,25 @@ func _run() -> void:
 				room_bounds.get(runtime.room_id, AABB()))
 		shot += 1
 
+	# CLOSE-UPS of one element per family, plus a run's START and GOAL
+	# side by side. A wide shot of a 14 m activity is the wrong tool for
+	# judging a silhouette -- the question "are these two the same
+	# object" needs them big enough to answer.
+	var closed := {}
+	for runtime in runtimes:
+		for element in runtime.elements:
+			var label := runtime.kind
+			if element.role != ActivityElement.ROLE_ELEMENT:
+				label = "%s_%s" % [runtime.kind, element.role]
+			elif runtime.kind == "timed_run":
+				label = "timed_run_waypoint"
+			if closed.has(label):
+				continue
+			closed[label] = true
+			await _close_up(camera, element, "close_%s" % label,
+					room_bounds.get(runtime.room_id, AABB()))
+			shot += 1
+
 	print("  wrote %d shots to %s"
 			% [shot, ProjectSettings.globalize_path(OUT_DIR)])
 	print("GODOT ZONE SHOTS OK")
@@ -143,9 +162,14 @@ func _shoot(camera: Camera3D, runtime: ActivityRuntime, name: String,
 	if room.size != Vector3.ZERO:
 		var inner := room.grow(-CAMERA_MARGIN)
 		if inner.size.x > 0.0 and inner.size.y > 0.0 and inner.size.z > 0.0:
+			# The FLOOR of the clamp is the subject, not the room. A
+			# `platform_path`'s bounds reach forty metres down, so
+			# clamping y into them dropped the camera under the platforms
+			# and photographed the underside of the level.
+			var lowest := minf(centre.y - 1.0, inner.end.y)
 			eye = Vector3(
 				clampf(eye.x, inner.position.x, inner.end.x),
-				clampf(eye.y, inner.position.y, inner.end.y),
+				clampf(eye.y, maxf(inner.position.y, lowest), inner.end.y),
 				clampf(eye.z, inner.position.z, inner.end.z))
 	camera.global_position = eye
 	camera.look_at(centre, Vector3.UP)
@@ -156,6 +180,44 @@ func _shoot(camera: Camera3D, runtime: ActivityRuntime, name: String,
 	print("    %s  (%d elements, subject %.1fm, camera %.1fm out)"
 			% [name, runtime.elements.size(), radius * 2.0,
 			camera.global_position.distance_to(centre)])
+
+## One element, close enough to judge its outline.
+func _close_up(camera: Camera3D, element: ActivityElement, name: String,
+		room: AABB) -> void:
+	var box := AABB()
+	var started := false
+	for child in element.get_children():
+		if not (child is MeshInstance3D):
+			continue
+		var mesh := child as MeshInstance3D
+		var world: AABB = mesh.global_transform * mesh.get_aabb()
+		if not started:
+			box = world
+			started = true
+		else:
+			box = box.merge(world)
+	if not started:
+		return
+	var centre := box.get_center()
+	var radius := maxf(box.size.length() * 0.5, 0.6)
+	var distance := radius / maxf(tan(deg_to_rad(FOV * 0.5)) * 0.4, 0.01)
+	var direction := Vector3(0.5, 0.22, 1.0).normalized()
+	var eye := centre + direction * distance
+	if room.size != Vector3.ZERO:
+		var inner := room.grow(-CAMERA_MARGIN)
+		if inner.size.x > 0.0 and inner.size.z > 0.0:
+			var lowest := minf(centre.y - 0.5, inner.end.y)
+			eye = Vector3(
+				clampf(eye.x, inner.position.x, inner.end.x),
+				clampf(eye.y, maxf(inner.position.y, lowest), inner.end.y),
+				clampf(eye.z, inner.position.z, inner.end.z))
+	camera.global_position = eye
+	camera.look_at(centre, Vector3.UP)
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	image.save_png(ProjectSettings.globalize_path(
+			"%s/%s.png" % [OUT_DIR, name]))
+	print("    %s  (%.1fm tall)" % [name, box.size.y])
 
 ## The activity's own extent: every element's mesh, unioned.
 func _extent(runtime: ActivityRuntime) -> AABB:

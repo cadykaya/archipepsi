@@ -46,7 +46,37 @@ the first element, not COMPLETE at N−1, COMPLETE at N.
 
 ---
 
-## 2. Findings — placement, NOT reported as failures
+## 1-bis. Second run, after the playtest-readiness batch
+
+Same Zone, same digest `1bdf42f800c5637e`. **30 activities audited, 0
+structural failures, 0 placement notes.** Everything in section 2 below
+is fixed; it is kept as the record of what was wrong and how it was
+found.
+
+| | before | after |
+|---|---:|---:|
+| Activities stacked on another activity | 14 elements | **0** |
+| Elements overlapping props | 4 | **0** |
+| Elements with no line from the walking lane | 2 | **0** |
+| Kinds completable in the assembled Zone | 4 of 4 | 4 of 4 |
+
+The fix was one idea: the row solver knew the room's DIMENSIONS and
+nothing about its CONTENTS. It is now handed every box already spoken
+for — the room's own props, then each activity as it is placed — and
+walks a deterministic search for the nearest free spot inside the same
+lane and wall clearances. No prop was moved or deleted and no element
+left its chamber.
+
+One thing that made it take two attempts, recorded because it will
+happen again: `mesh.global_transform` **does not accumulate for a node
+outside the scene tree**, and a chamber is built detached and added
+later. The first occupancy pass therefore collected every prop at its own
+local offset near the origin, intersected nothing, and the solver
+silently did nothing while looking entirely correct.
+
+---
+
+## 2. Findings — placement, FIXED in the readiness batch
 
 These are recorded, printed as `NOTE`, and deliberately do not fail
 `godot-zone-audit`. They were found the evening before a playtest the
@@ -94,7 +124,39 @@ the prop, not merely beside it.
 
 ---
 
-## 3. Readability risks — diagnosis only
+## 3. Readability risks — diagnosed here, provisionally treated
+
+The treatment is graybox, not final art. Structure first, state second,
+colour never the only cue.
+
+| Family | Was | Now |
+|---|---|---|
+| `switch_sequence` | a pale box | head on a post, on a dark mount; **countable lugs** when the activity is ordered, and none when it is not |
+| `target_challenge` | a pale box | a ring around a recessed face on a wall stalk — aim-at-the-middle, with no breakage cue |
+| `pressure_routing` | a pale rectangle on a pale floor | pad in a heavy kerb, **joined pad-to-pad by a conduit** so the simultaneity rule is visible |
+| `timed_run` | pixel-identical to `switch_sequence` | START is an **open gate** you run through; GOAL is a **closed beacon** with a wide lit head; waypoints are neither |
+
+The clock and progress count now ride the element the run STARTS from
+rather than floating above the activity's centroid, which for a 14 m run
+was a point in mid-air belonging to nothing.
+
+**Semantic separation.** `neon_transit`'s light is `#7cf2ff`, **0.17**
+from `CHECK_SIGNAL` against the project's own `MIN_LAYER_SEPARATION` of
+0.45 — so in the Zone the owner plays, every switch and target was
+wearing Archipelago's colour. `VisualOwnership.separated_from_reserved`
+pushes a theme's colour clear of Checks and Epsilon and leaves it alone
+otherwise: five of six themes are unchanged, `neon_transit` moves to
+0.47. It is not a universal activity colour — the theme still reads as
+itself, and structure carries identity first.
+
+**Props vs activities.** No prop was changed. Activities gained dark
+matte mounting hardware, which is what props do not have: a player
+scanning a room can now find the operable things by looking for the
+hardware rather than by shooting cyan boxes.
+
+---
+
+## 3-bis. The original diagnosis, for the record
 
 From the frames `make zone-shots` produced. **Nothing has been
 redesigned.**

@@ -76,6 +76,48 @@ static func collision(a_name: String, a: Color,
 static func _distance(a: Color, b: Color) -> float:
 	return Vector3(a.r - b.r, a.g - b.g, a.b - b.b).length()
 
+## Every signal an activity must not be mistaken for.
+##
+## Checks and Epsilon only. The facility's utility yellow is deliberately
+## NOT here: activity hardware IS facility equipment, so reading as part
+## of the building is correct rather than a collision.
+const RESERVED_FOR_OTHERS: Array[Color] = [CHECK_SIGNAL, EPSILON_SIGNAL]
+
+## A theme's own colour, pushed clear of the layers it must not
+## impersonate.
+##
+## NOT a universal "activity colour". A Zone's theme is a real identity
+## and this keeps it: `concrete_facility` stays pale, `gothic_stone`
+## stays warm. What it refuses is the case measured on 2026-08-30 --
+## `neon_transit`'s light is `#7cf2ff`, which sits **0.17** from
+## `CHECK_SIGNAL` against a floor of 0.45, so in the Zone the owner
+## actually plays every switch and target was wearing Archipelago's
+## colour.
+##
+## Structure carries identity FIRST; this only stops the secondary cue
+## from lying. The push is along value and saturation rather than hue,
+## so the theme still reads as itself.
+static func separated_from_reserved(color: Color) -> Color:
+	var out := color
+	for _attempt in 8:
+		var worst := ""
+		for reserved in RESERVED_FOR_OTHERS:
+			if _distance(out, reserved) < MIN_LAYER_SEPARATION:
+				worst = "collides"
+				break
+		if worst == "":
+			return out
+		# Toward the facility's own utility warmth and away from the
+		# cyan/green signal band, a step at a time. Deterministic: the
+		# same theme always lands on the same colour, so two runs of the
+		# same Zone look identical.
+		out = Color(
+			minf(1.0, out.r + 0.12),
+			maxf(0.0, out.g - 0.06),
+			maxf(0.0, out.b - 0.14),
+			color.a)
+	return out
+
 
 # --- D4: the tier presentation arc -----------------------------------------
 

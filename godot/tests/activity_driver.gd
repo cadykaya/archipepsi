@@ -70,6 +70,14 @@ func _run() -> void:
 	await _test_a_zone_built_activity_is_drivable()
 	await _test_no_element_is_buried_in_a_wall()
 	await _test_every_shell_route_still_populates_the_chamber()
+	await _test_two_activities_never_share_a_transform()
+	await _test_an_activity_avoids_what_is_already_in_the_room()
+	await _test_each_family_has_its_own_silhouette()
+	await _test_start_and_goal_are_not_the_same_object()
+	await _test_order_is_countable_before_you_fail()
+	await _test_routing_pads_are_physically_linked()
+	await _test_activity_tint_never_impersonates_a_reserved_layer()
+	await _test_a_null_shell_id_is_not_a_shell_id()
 
 	_check(activities_built >= 10,
 			"the suite built %d activities; it is not exercising the "
@@ -602,6 +610,254 @@ func _registry(entries: Dictionary) -> ContentRegistry:
 	var reg := ContentRegistry.new()
 	reg.entries = entries
 	return reg
+
+# --- placement ----------------------------------------------------------
+
+func _positions(runtime: ActivityRuntime) -> Array:
+	var out: Array = []
+	for element in runtime.elements:
+		out.append(element.position)
+	return out
+
+func _test_two_activities_never_share_a_transform() -> void:
+	"""Distinct elements must occupy distinct places.
+
+	MEASURED, not hypothetical: c002 and c006 of Zone 1 each held two
+	`target_challenge`s of identical size, and the row solver -- which
+	knew the room's DIMENSIONS and nothing about its CONTENTS -- gave
+	both the same coordinates, so each room showed half the targets it
+	contained.
+
+	A property over the whole vocabulary rather than a check on those two
+	rooms: any two activities of one kind in one room, at any size the
+	schema admits.
+	"""
+	for kind: String in ActivityRuntime.RULES:
+		for count in [2, 5]:
+			var host := Node3D.new()
+			add_child(host)
+			var claimed: Array[AABB] = []
+			var seen: Array = []
+			for pass_index in 2:
+				var built := Activities.build(host, {
+					"kind": kind, "element_count": count,
+				}, "concrete_facility", 24.0, 22.0, "c1",
+					"%s_%d" % [kind, pass_index], claimed)
+				for box: Variant in (built as Dictionary).get(
+						"footprints", []) as Array:
+					claimed.append(box as AABB)
+				seen.append(_positions(
+						(built as Dictionary)["runtime"] as ActivityRuntime))
+			for a: Vector3 in seen[0]:
+				for b: Vector3 in seen[1]:
+					_check(a.distance_to(b) > 0.001,
+							"two %s activities put elements at the same "
+							% kind + "transform %s" % a)
+			host.queue_free()
+			await get_tree().process_frame
+
+func _test_an_activity_avoids_what_is_already_in_the_room() -> void:
+	"""The other half: props, not just other activities.
+
+	Driven with a claimed box straddling the ideal spot, so the check
+	fails if the solver ignores its occupancy argument entirely.
+	"""
+	var host := Node3D.new()
+	add_child(host)
+	var bare := Activities.build(host, {
+		"kind": "switch_sequence", "element_count": 3,
+	}, "concrete_facility", 24.0, 22.0, "c1", "bare")
+	var ideal := _positions((bare as Dictionary)["runtime"] as ActivityRuntime)
+
+	var blocked: Array[AABB] = []
+	for spot: Vector3 in ideal:
+		blocked.append(AABB(spot - Vector3.ONE, Vector3.ONE * 2.0))
+	var moved := Activities.build(host, {
+		"kind": "switch_sequence", "element_count": 3,
+	}, "concrete_facility", 24.0, 22.0, "c1", "moved", blocked)
+	var after := _positions((moved as Dictionary)["runtime"] as ActivityRuntime)
+	for i in after.size():
+		var clear := true
+		for box: AABB in blocked:
+			if box.has_point(after[i]):
+				clear = false
+		_check(clear, "element %d stayed inside occupied space at %s"
+				% [i, after[i]])
+	host.queue_free()
+	await get_tree().process_frame
+
+# --- readability, structurally ------------------------------------------
+
+func _silhouette(runtime: ActivityRuntime, index := 0) -> AABB:
+	var box := AABB()
+	var started := false
+	var element := runtime.elements[index]
+	for child in element.get_children():
+		if not (child is MeshInstance3D):
+			continue
+		var mesh := child as MeshInstance3D
+		var world: AABB = mesh.transform * mesh.get_aabb()
+		if not started:
+			box = world
+			started = true
+		else:
+			box = box.merge(world)
+	return box
+
+func _test_each_family_has_its_own_silhouette() -> void:
+	"""`switch_sequence` and `timed_run` were pixel-identical: one box,
+	one size, one material. Structure has to say which family this is
+	before colour says anything at all."""
+	var shapes := {}
+	for kind: String in ActivityRuntime.RULES:
+		var host := Node3D.new()
+		add_child(host)
+		var built := Activities.build(host, {
+			"kind": kind, "element_count": 3,
+		}, "concrete_facility", 24.0, 22.0, "c1", "%s_s" % kind)
+		var runtime := (built as Dictionary)["runtime"] as ActivityRuntime
+		var box := _silhouette(runtime)
+		shapes[kind] = box
+		_check(box.size.length() > 0.5, "%s has no silhouette" % kind)
+		host.queue_free()
+		await get_tree().process_frame
+	var kinds: Array = shapes.keys()
+	for i in kinds.size():
+		for j in range(i + 1, kinds.size()):
+			var a: AABB = shapes[kinds[i]]
+			var b: AABB = shapes[kinds[j]]
+			_check((a.size - b.size).length() > 0.25,
+					"'%s' and '%s' have the same outline (%s vs %s); one "
+					% [kinds[i], kinds[j], a.size, b.size]
+					+ "of them is telling the player nothing")
+
+func _test_start_and_goal_are_not_the_same_object() -> void:
+	var host := Node3D.new()
+	add_child(host)
+	var built := Activities.build(host, {
+		"kind": "timed_run", "element_count": 4,
+	}, "concrete_facility", 24.0, 22.0, "c1", "run")
+	var runtime := (built as Dictionary)["runtime"] as ActivityRuntime
+	var start := -1
+	var goal := -1
+	for i in runtime.elements.size():
+		if runtime.elements[i].role == ActivityElement.ROLE_START:
+			start = i
+		elif runtime.elements[i].role == ActivityElement.ROLE_GOAL:
+			goal = i
+	_check(start >= 0 and goal >= 0, "the run has no start or no goal")
+	if start >= 0 and goal >= 0:
+		var a := _silhouette(runtime, start)
+		var b := _silhouette(runtime, goal)
+		_check((a.size - b.size).length() > 0.5,
+				"START and GOAL are the same shape (%s vs %s)"
+				% [a.size, b.size])
+		# And a waypoint must not masquerade as either.
+		for i in runtime.elements.size():
+			if i == start or i == goal:
+				continue
+			var mid := _silhouette(runtime, i)
+			_check((mid.size - b.size).length() > 0.5,
+					"a waypoint has the GOAL's outline")
+	host.queue_free()
+	await get_tree().process_frame
+
+func _test_order_is_countable_before_you_fail() -> void:
+	"""An ordered sequence shows its order as countable structure, and an
+	UNORDERED one must not: a counter on a puzzle with no order would be
+	telling the player about a rule that does not exist."""
+	for ordered in [true, false]:
+		var host := Node3D.new()
+		add_child(host)
+		var built := Activities.build(host, {
+			"kind": "switch_sequence", "element_count": 4,
+			"ordered": ordered, "time_limit": 24.0 if ordered else 0.0,
+		}, "concrete_facility", 24.0, 22.0, "c1", "seq_%s" % ordered)
+		var runtime := (built as Dictionary)["runtime"] as ActivityRuntime
+		var counts: Array[int] = []
+		for element in runtime.elements:
+			var lugs := 0
+			for child in element.get_children():
+				if child is MeshInstance3D \
+						and (child as MeshInstance3D).mesh is BoxMesh \
+						and ((child as MeshInstance3D).mesh as BoxMesh) \
+							.size.is_equal_approx(Vector3.ONE * 0.1):
+					lugs += 1
+			counts.append(lugs)
+		if ordered:
+			_check(counts == [1, 2, 3, 4],
+					"an ordered sequence's order is not countable: %s"
+					% [counts])
+		else:
+			_check(counts == [0, 0, 0, 0],
+					"an unordered sequence implies an order it does not "
+					+ "have: %s" % [counts])
+		host.queue_free()
+		await get_tree().process_frame
+
+func _test_routing_pads_are_physically_linked() -> void:
+	"""The simultaneity rule is invisible without one. A conduit says
+	"these are one system" with no legend and no hue."""
+	var host := Node3D.new()
+	add_child(host)
+	var built := Activities.build(host, {
+		"kind": "pressure_routing", "element_count": 4,
+	}, "concrete_facility", 24.0, 22.0, "c1", "route")
+	var runtime := (built as Dictionary)["runtime"] as ActivityRuntime
+	var conduits := 0
+	for child in runtime.get_children():
+		if child.name.begins_with("Conduit"):
+			conduits += 1
+	_check(conduits == runtime.elements.size() - 1,
+			"%d pads are joined by %d conduits"
+			% [runtime.elements.size(), conduits])
+	# And no other family grows them: a latching switch row is not a bus.
+	var other := Activities.build(host, {
+		"kind": "switch_sequence", "element_count": 4,
+	}, "concrete_facility", 24.0, 22.0, "c1", "not_route")
+	var stray := 0
+	for child in ((other as Dictionary)["runtime"] as Node).get_children():
+		if child.name.begins_with("Conduit"):
+			stray += 1
+	_check(stray == 0, "a switch_sequence grew %d conduits" % stray)
+	host.queue_free()
+	await get_tree().process_frame
+
+func _test_activity_tint_never_impersonates_a_reserved_layer() -> void:
+	"""MEASURED: `neon_transit`'s light is #7cf2ff, 0.17 from
+	CHECK_SIGNAL against a floor of 0.45 -- so in the Zone the owner
+	actually plays, every switch and target wore Archipelago's colour.
+
+	Swept over every theme, and the separation is asserted against the
+	SHIPPED constant rather than a number retyped here.
+	"""
+	for theme: String in Constants.THEMES:
+		var raw := ThemeMaterials.light_color(theme)
+		var used := VisualOwnership.separated_from_reserved(raw)
+		for reserved: Color in VisualOwnership.RESERVED_FOR_OTHERS:
+			var apart := Vector3(used.r - reserved.r, used.g - reserved.g,
+					used.b - reserved.b).length()
+			_check(apart >= VisualOwnership.MIN_LAYER_SEPARATION,
+					"'%s' activity tint %s sits %.2f from a reserved "
+					% [theme, used, apart] + "signal; the floor is %.2f"
+					% VisualOwnership.MIN_LAYER_SEPARATION)
+
+func _test_a_null_shell_id_is_not_a_shell_id() -> void:
+	"""`shell_id` is nullable and arrives as JSON null. `str(null)` is
+	the six-character string "<null>", which is not empty -- so every
+	chamber took the "Epsilon chose a shell" branch with garbage."""
+	var chamber := {
+		"id": "c1", "type": "arena", "width": 22.0, "depth": 20.0,
+		"wall_height": 6.0, "objective": "kill_all", "shell_id": null,
+		"activities": [{"kind": "switch_sequence", "element_count": 2}]}
+	var result := ContentInstantiator.build_chamber(
+			chamber, "concrete_facility", _registry({}))
+	_check((result.get("activities", []) as Array).size() == 1,
+			"a null shell_id broke the chamber")
+	var root := result.get("root") as Node3D
+	if root != null:
+		root.queue_free()
+	await get_tree().process_frame
 
 # --- fixture -------------------------------------------------------------
 
