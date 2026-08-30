@@ -96,19 +96,66 @@ loadable scene under `res://content/`; the art lane builds `.glb` into
 imports it, and **Godot writes the `.tscn`** rather than me hand-authoring a
 file format.
 
-**E2. Nothing proved an authored entry would survive Production's validator.
-FIXED.** `tools/verify_content_pack.sh` runs **Production's own
-`content_registry.gd` and `visual_ownership.gd`**, fetched from the gameplay
-branch at run time, against the exported pack — and simulates the other half
-of the handoff so the whole post-handoff state is exercised. Current result:
+**E2. The pack was verified against only ONE of two validators. FIXED, and
+this one reached Production.**
+
+This is a **dual-language contract** and the two halves do not police the same
+things:
+
+| validator | what it checks |
+|---|---|
+| `schemas/content.py` | a strict pydantic model — `extra="forbid"`, `MAX_TEXT_LEN` 160 |
+| `content_registry.gd` | does the scene EXIST, does the fallback chain terminate |
+
+The first pack passed the GDScript half, was declared ready, and Production's
+Python gate rejected it on three counts:
+
+1. the pack `description` was **231 characters** against a 160 limit;
+2. every entry carried **`source_asset`**, which `ContentEntry` forbids;
+3. every entry carried **`source_batch_review`**, likewise.
+
+Prod stopped correctly. **Verifying one side of a two-sided contract is
+verifying nothing**, and the handoff said "verified" on that basis.
+
+Three things changed:
+
+- **The exporter emits only schema fields.** `source_asset` and
+  `source_batch_review` are gone from the manifest, and the description is
+  133 characters.
+- **The provenance moved rather than being dropped.** It lives in
+  `godot/content/SCENE_PLAN.json`, which is not a manifest and is not under
+  `res://content/registry/`, so the registry never reads it — alongside the
+  approval table in section D above.
+- **`_check()` in the exporter refuses to write a manifest Production would
+  reject**, so the defect fails at export rather than at Prod's gate. It
+  mirrors `ContentEntry`'s field set deliberately and is deliberately dumb;
+  it is a fast guard, not the authority.
+
+`tools/verify_content_pack.sh` now runs **both** validators in one command,
+both of them Production's own files fetched read-only at run time, and it
+simulates the other half of the handoff so the whole post-handoff state is
+exercised:
 
 ```
+[verify] --- Production's Python ContentManifest ---
+[pyverify]   ok  authored_art.json        9 entries, description 133/160 chars
+[pyverify]   ok  legacy_procedural.json   12 entries, description 107/160 chars
+[pyverify]   ok  build_registry accepted 21 ids
+[pyverify] PASS -- Production's ContentManifest accepts the pack
+[verify] --- Production's GDScript ContentRegistry ---
 [verify] load_all -> true
 [verify]   ok  fixture_light_neon_transit    authored, 1 mesh, 0 lights, 0 colliders
      ... all nine entries ...
 [verify]   ok  all five room shells still resolve to the procedural builder
 [verify] PASS
 ```
+
+**A second, quieter defect surfaced while fixing the first.** The GDScript
+check had been passing because a stale `.godot` global class cache still held
+a registration for a harness copy that no longer declared it; the next
+`--import` rebuilt the cache and the script stopped compiling. It now
+preloads Production's files **by path**, which does not depend on the cache
+at all. A verifier that passes because of a cache is not a verifier.
 
 Nothing from the gameplay branch is committed here; the harness is deleted on
 exit.
@@ -272,5 +319,7 @@ same energy, same position. Only the housing changes.
 
 ```
 tools/export_content_pack.sh     # regenerate godot/content/ from approved art
-tools/verify_content_pack.sh     # check it with PRODUCTION'S OWN registry
+tools/verify_content_pack.sh     # check it with BOTH of Production's validators
+                                 #   - schemas/content.py     (pydantic, strict)
+                                 #   - content_registry.gd    (scenes, fallbacks)
 ```

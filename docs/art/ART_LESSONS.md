@@ -1199,6 +1199,39 @@ match cannot tell you the second one is a lie.
 > After a bulk rename, grep the **old** name and the **new** one, and read
 > every section the new one landed in.
 
+### L-80 · Verify every side of a contract that has more than one
+
+The authored-content manifest is policed by two files in two languages, and
+they do not police the same things. `content_registry.gd` asks whether a
+scene exists and whether a fallback chain terminates. `schemas/content.py` is
+a strict pydantic model: `extra="forbid"`, and `MAX_TEXT_LEN` is 160.
+
+The first content pack was checked against the GDScript half, reported as
+verified, and handed over. Production's Python gate rejected it on three
+counts — a 231-character description, and two fields (`source_asset`,
+`source_batch_review`) that `ContentEntry` forbids outright — and the
+integration stopped.
+
+> **Verifying one side of a two-sided contract is verifying nothing**, and it
+> is worse than not verifying, because it produces the word "verified".
+
+The rule is not "run more checks". It is: **before claiming a generated
+artifact conforms, enumerate every consumer that validates it, and run all of
+them in one command** — so a future pack cannot be handed over having
+satisfied only the convenient half.
+
+The narrower lesson, which cost the same defect twice: **provenance is not
+part of a contract.** `source_asset` and `source_batch_review` were useful
+art-lane bookkeeping smuggled into a schema that had no field for them. The
+schema was right to refuse. Bookkeeping goes in a document beside the
+artifact, not inside a contract that something else validates.
+
+And a third, found while fixing the second: **the GDScript check had been
+passing for the wrong reason.** It resolved `ContentRegistry` through a stale
+`.godot` class cache holding a registration from an earlier harness copy; the
+next `--import` rebuilt the cache and it stopped compiling. A green check that
+depends on a cache is not evidence. It preloads by path now.
+
 ### L-24 · Read your own render before writing down what it shows
 Every fix in L-05, L-08, L-09, L-11, L-13 and L-14 came from **looking at
 the image**, not from the build log. The logs were green throughout: correct

@@ -1,12 +1,24 @@
 extends SceneTree
 ## Runs PRODUCTION'S OWN ContentRegistry against the exported pack, plus the
-## two refusals the instantiator applies before it will use an authored asset.
-## Nothing here is my re-implementation of the rules: the validator is
-## Production's file, copied in unmodified for the length of this run.
+## two refusals `ContentInstantiator` applies before it will use an authored
+## asset: a housing may carry no `Light3D`, a projectile no collision.
+##
+## Nothing here re-implements a rule. The validator is Production's file; the
+## two mechanical adaptations the copy needs, and why they are safe, are
+## documented at the transform in `tools/verify_content_pack.sh`.
+##
+## Preloaded BY PATH rather than by `class_name`. Godot's global class cache
+## does not register a script dropped into the project between runs, and an
+## earlier version of this file referenced the globals and passed only
+## because a stale cache still held a registration from a previous copy. A
+## verifier that passes because of a cache is not a verifier.
+const Registry := preload("res://_harness/content_registry.gd")
+const Ownership := preload("res://_harness/visual_ownership.gd")
+
 func _initialize() -> void:
 	var fails := 0
-	var reg := ContentRegistry.new()
-	var ok := reg.load_all("res://content/registry")
+	var reg: Object = Registry.new()
+	var ok: bool = reg.load_all("res://content/registry")
 	print("[verify] load_all -> %s" % ok)
 	for problem in reg.errors:
 		print("[verify]   PROBLEM: %s" % problem)
@@ -20,10 +32,10 @@ func _initialize() -> void:
 	for id in wanted:
 		if not reg.has(id):
 			print("[verify]   FAIL: registry has no '%s'" % id); fails += 1; continue
-		var chosen := reg.resolve(id)
-		var entry := reg.get_entry(chosen)
+		var chosen: String = reg.resolve(id)
+		var entry: Dictionary = reg.get_entry(chosen)
 		var authored := not bool(entry.get("procedural_fallback", false))
-		var shippable := VisualOwnership.is_shippable(entry)
+		var shippable: bool = Ownership.is_shippable(entry)
 		if chosen != id or not authored or not shippable:
 			print("[verify]   FAIL: '%s' resolved to '%s' authored=%s shippable=%s"
 					% [id, chosen, authored, shippable]); fails += 1
@@ -64,7 +76,7 @@ func _initialize() -> void:
 	#    dimension-bearing seam during the A/B.
 	for id in ["shell_corridor_proc", "shell_arena_proc", "shell_tower_proc",
 			"shell_platform_path_proc", "shell_treasure_room_proc"]:
-		var e := reg.get_entry(reg.resolve(id))
+		var e: Dictionary = reg.get_entry(reg.resolve(id))
 		if not bool(e.get("procedural_fallback", false)):
 			print("[verify]   FAIL: '%s' resolves to authored geometry" % id); fails += 1
 	print("[verify]   ok  all five room shells still resolve to the procedural builder")

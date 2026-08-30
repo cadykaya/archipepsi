@@ -10,7 +10,11 @@ extends SceneTree
 ## copy to keep in sync. An instance is a reference; that is the point of one.
 func _initialize() -> void:
 	var text := FileAccess.get_file_as_string("res://content/SCENE_PLAN.json")
-	var plan: Array = JSON.parse_string(text)
+	# SCENE_PLAN.json carries two things now: the `scenes` this step builds,
+	# and the art-side `provenance` that used to ride illegally in the
+	# registry manifest. Read the half that is ours.
+	var doc: Dictionary = JSON.parse_string(text)
+	var plan: Array = doc.get("scenes", [])
 	var made := 0
 	for raw in plan:
 		var row: Dictionary = raw
