@@ -55,15 +55,28 @@ static func _row(root: Node3D, kind: String, count: int, size: Vector3,
 		theme: String, width: float, depth: float, height: float,
 		trigger: String, roles: bool) -> Array[ActivityElement]:
 	var built: Array[ActivityElement] = []
-	var usable := maxf(1.0, width - 2.0 * AffordanceFeatures.LANE_HALF_WIDTH
-			- size.x)
 	var tint := ThemeMaterials.light_color(theme)
+	# The element's near EDGE clears the walking lane and its far EDGE
+	# clears the wall -- the same rule `AffordanceFeatures._placement`
+	# already solves, and for the same reason it had to: checking the
+	# ORIGIN is what let a 4-metre row of switches reach 0.7 m through
+	# the wall of a 12 m room. Every element of every family did, at
+	# every room size, and it read as shapes stuck in the geometry.
+	var half := size.x / 2.0
+	var inner := AffordanceFeatures.LANE_HALF_WIDTH + half
+	var outer := width / 2.0 - AffordanceFeatures.WALL_MARGIN - half
+	# A room too narrow to hold the row at all keeps the lane clear and
+	# gives up the wall margin, rather than the other way round: standing
+	# in the doorway is worse than touching the wall.
+	outer = maxf(inner, outer)
+	var near := AffordanceFeatures.THRESHOLD_CLEARANCE + size.z / 2.0
+	var far := maxf(near, depth - AffordanceFeatures.THRESHOLD_CLEARANCE
+			- size.z / 2.0)
 	for i in count:
 		var t := 0.5 if count == 1 else float(i) / float(count - 1)
 		var side := -1.0 if i % 2 == 0 else 1.0
-		var x := side * (AffordanceFeatures.LANE_HALF_WIDTH + size.x / 2.0
-				+ usable * 0.5 * t)
-		var z := depth * (0.25 + 0.5 * t)
+		var x := side * (inner + (outer - inner) * t)
+		var z := near + (far - near) * t
 		var role := ActivityElement.ROLE_ELEMENT
 		if roles:
 			if i == 0:

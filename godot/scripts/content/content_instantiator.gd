@@ -42,7 +42,57 @@ const FLOOR_ALLOWANCE := 1.0
 ## Builds one chamber. Signature-compatible with `ChamberBuilders.build`,
 ## which is what it falls back to, so `ZoneBuilder` did not have to learn
 ## anything new.
+##
+## Two steps, and the split is the whole point. `_shell` decides WHICH
+## ROOM to build -- authored scene, or procedural -- and has four early
+## returns. Then the chamber's own content goes in, on whichever room came
+## back.
+##
+## The activity loop used to live at the bottom of `_from_authored_scene`,
+## which is one of the routes `_shell` can take and not the one anything
+## takes: every shell in the registry is `procedural_fallback`, so
+## `build_chamber` returned before that loop EVERY TIME. Activities were
+## never built in a single room of a single Zone. Not inert -- absent.
+## `godot/tests/activity_driver.gd` never caught it because every test in
+## it called `Activities.build` itself, so the suite proved the runtime
+## works and proved nothing about whether the game reaches it.
 static func build_chamber(chamber: Dictionary, theme: String,
+		registry: ContentRegistry = null) -> Dictionary:
+	var result := _shell(chamber, theme, registry)
+	result["activities"] = _build_activities(result, chamber, theme)
+	return result
+
+## The chamber's own content, added to whatever room `_shell` produced.
+##
+## CAMPAIGN_SCALE.md 9. Built, not described: a Zone that names a puzzle
+## and produces an empty room is the exact thing the vocabulary-to-builder
+## pin exists to prevent, and building them HERE -- on every route rather
+## than on one of them -- is the other half of that.
+static func _build_activities(result: Dictionary, chamber: Dictionary,
+		theme: String) -> Array:
+	var root := result.get("root") as Node3D
+	if root == null:
+		return []
+	var bounds: AABB = result.get("bounds", AABB())
+	var width := maxf(bounds.size.x, 1.0)
+	var depth := maxf(bounds.size.z, 1.0)
+	var room_id := str(chamber.get("id", ""))
+	var activities: Array = []
+	var index := 0
+	for activity: Variant in chamber.get("activities", []) as Array:
+		if typeof(activity) == TYPE_DICTIONARY:
+			# The id is the room plus the position in the room's own list,
+			# so it is stable across a rebuild after a reconnect and the
+			# local reward a solved activity grants is the same note.
+			activities.append(Activities.build(
+					root, activity, theme, width, depth, room_id,
+					"%s_%d" % [room_id, index]))
+			index += 1
+	return activities
+
+## WHICH ROOM to build. Every return here is a room; none of them is a
+## finished chamber, because the chamber's content is added by the caller.
+static func _shell(chamber: Dictionary, theme: String,
 		registry: ContentRegistry = null) -> Dictionary:
 	var reg := registry if registry != null else ContentRegistry.shared()
 	var type := str(chamber.get("type", ""))
@@ -245,23 +295,6 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 	}
 	result["features"] = AffordanceFeatures.place_all(
 			root, chamber, theme, size.x, size.z, size.y)
-	# CAMPAIGN_SCALE.md 9. Built, not described: a Zone that names a
-	# puzzle and produces an empty room is the exact thing the
-	# vocabulary-to-builder pin exists to prevent, and building them here
-	# is the other half of that.
-	var activities: Array = []
-	var room_id := str(chamber.get("id", ""))
-	var index := 0
-	for activity: Variant in chamber.get("activities", []) as Array:
-		if typeof(activity) == TYPE_DICTIONARY:
-			# The id is the room plus the position in the room's own list,
-			# so it is stable across a rebuild after a reconnect and the
-			# local reward a solved activity grants is the same note.
-			activities.append(Activities.build(
-					root, activity, theme, size.x, size.z, room_id,
-					"%s_%d" % [room_id, index]))
-			index += 1
-	result["activities"] = activities
 	return result
 
 ## Where the next room's entry goes, taken from the socket the artist

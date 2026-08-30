@@ -66,6 +66,9 @@ func _run() -> void:
 	await _test_a_capability_you_have_equipped_is_playable()
 	await _test_a_touch_element_is_reached_by_a_real_player_body()
 	await _test_a_shot_element_is_reached_by_a_real_weapon()
+	await _test_the_real_zone_builder_actually_builds_activities()
+	await _test_a_zone_built_activity_is_drivable()
+	await _test_no_element_is_buried_in_a_wall()
 
 	_check(activities_built >= 10,
 			"the suite built %d activities; it is not exercising the "
@@ -426,6 +429,128 @@ func _test_a_shot_element_is_reached_by_a_real_weapon() -> void:
 	player.queue_free()
 	runtime.get_parent().queue_free()
 	await get_tree().process_frame
+
+# --- the game reaches them at all ---------------------------------------
+
+## A Zone with one activity in one ordinary procedural room.
+func _zone_with_activities() -> Dictionary:
+	return {
+		"schema_version": 7, "zone_id": "zone_001",
+		"display_name": "Relay", "target_game": "Game",
+		"theme": "concrete_facility",
+		"chambers": [{
+			"id": "c1", "type": "arena", "width": 22.0, "depth": 20.0,
+			"wall_height": 6.0, "objective": "kill_all",
+			"reward_location_id": 89100001,
+			"enemies": [{"archetype": "melee", "count": 2}],
+			"activities": [
+				{"kind": "switch_sequence", "element_count": 3},
+				{"kind": "target_challenge", "element_count": 2}]}]}
+
+func _runtimes_under(node: Node) -> Array[ActivityRuntime]:
+	var out: Array[ActivityRuntime] = []
+	if node is ActivityRuntime:
+		out.append(node as ActivityRuntime)
+	for child in node.get_children():
+		out.append_array(_runtimes_under(child))
+	return out
+
+func _test_the_real_zone_builder_actually_builds_activities() -> void:
+	"""THE TEST THAT WAS MISSING, and the reason the first version of
+	this batch shipped doing nothing.
+
+	Every other test in this file calls `Activities.build` itself. So
+	they proved the runtime works and proved NOTHING about whether the
+	game ever calls it -- and it did not: the activity loop sat at the
+	bottom of `_from_authored_scene`, `build_chamber` returned before it
+	on every route the registry actually takes, and a whole Zone was
+	built with zero activities in it while this suite was green.
+
+	This one goes through `ZoneBuilder.build`, which is what the game
+	calls, and counts what came out.
+	"""
+	var build := ZoneBuilder.build(_zone_with_activities())
+	var root: Node3D = build["root"]
+	add_child(root)
+	await get_tree().process_frame
+	var runtimes := _runtimes_under(root)
+	_check(runtimes.size() == 2,
+			"ZoneBuilder produced %d activity runtimes for a Zone that "
+			% runtimes.size() + "asked for 2; the game does not reach the "
+			+ "builder")
+	var elements := 0
+	for runtime in runtimes:
+		elements += runtime.elements.size()
+	_check(elements == 5,
+			"the built activities hold %d elements, not the 5 the Zone "
+			% elements + "asked for")
+	root.queue_free()
+	await get_tree().process_frame
+
+func _test_a_zone_built_activity_is_drivable() -> void:
+	"""And the one the game built can be finished.
+
+	Separate from the count above on purpose: "two runtimes exist" and
+	"a player can solve one" are different claims, and the whole lesson
+	here is that the cheaper claim is the one that passes while the game
+	does nothing.
+	"""
+	var build := ZoneBuilder.build(_zone_with_activities())
+	var root: Node3D = build["root"]
+	add_child(root)
+	await get_tree().process_frame
+	var runtimes := _runtimes_under(root)
+	if runtimes.is_empty():
+		_check(false, "nothing to drive: ZoneBuilder built no activities")
+		root.queue_free()
+		return
+	activities_built += runtimes.size()
+	var runtime := runtimes[0]
+	await _solve(runtime)
+	_check(runtime.state == ActivityRuntime.State.COMPLETE,
+			"an activity the REAL zone builder placed could not be "
+			+ "solved (state %d)" % runtime.state)
+	if runtime.state == ActivityRuntime.State.COMPLETE:
+		completions_seen += 1
+	root.queue_free()
+	await get_tree().process_frame
+
+func _test_no_element_is_buried_in_a_wall() -> void:
+	"""An element half inside a wall is not a puzzle piece, it is a
+	meaningless shape stuck in the geometry -- which is exactly what the
+	owner reported seeing before any of this worked.
+
+	Swept over a range of room sizes rather than spot-checked: the bad
+	case is the WIDEST element in the NARROWEST room, and a single
+	fixture size would miss it.
+	"""
+	for width: float in [8.0, 12.0, 20.0, 30.0]:
+		for kind: String in ActivityRuntime.RULES:
+			var host := Node3D.new()
+			add_child(host)
+			var built := Activities.build(host, {
+				"kind": kind, "element_count": 4,
+			}, "concrete_facility", width, 18.0, "c1", "%s_probe" % kind)
+			var runtime := built["runtime"] as ActivityRuntime
+			for element in runtime.elements:
+				var half: float = _element_half_width(element)
+				var edge: float = absf(element.position.x) + half
+				_check(edge <= width / 2.0 + 0.001,
+						"a %s element in a %.0fm room reaches %.2fm from "
+						% [kind, width, edge] + "the centre line, past the "
+						+ "%.2fm wall" % (width / 2.0))
+				_check(element.position.z >= 0.0
+						and element.position.z <= 18.0,
+						"a %s element sits at z=%.2f, outside the room"
+						% [kind, element.position.z])
+			host.queue_free()
+			await get_tree().process_frame
+
+func _element_half_width(element: ActivityElement) -> float:
+	for child in element.get_children():
+		if child is MeshInstance3D:
+			return (child as MeshInstance3D).get_aabb().size.x / 2.0
+	return 0.0
 
 # --- fixture -------------------------------------------------------------
 
