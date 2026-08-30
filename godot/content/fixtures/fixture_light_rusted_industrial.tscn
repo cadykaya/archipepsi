@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://content/fixtures/light_rusted_cage.glb" id="1_l16wm"]
+
+[node name="fixture_light_rusted_industrial" type="Node3D"]
+
+[node name="Mesh" type="Node3D" parent="." instance=ExtResource("1_l16wm")]

@@ -391,7 +391,7 @@
    "cost": 3
   },
   {
-   "id": "fixture_light_concrete_facility",
+   "id": "fixture_light_concrete_facility_proc",
    "level": 2,
    "category": "fixture",
    "display_name": "Light housing (concrete_facility, procedural)",
@@ -407,7 +407,7 @@
    ]
   },
   {
-   "id": "fixture_light_rusted_industrial",
+   "id": "fixture_light_rusted_industrial_proc",
    "level": 2,
    "category": "fixture",
    "display_name": "Light housing (rusted_industrial, procedural)",
@@ -423,7 +423,7 @@
    ]
   },
   {
-   "id": "fixture_light_neon_transit",
+   "id": "fixture_light_neon_transit_proc",
    "level": 2,
    "category": "fixture",
    "display_name": "Light housing (neon_transit, procedural)",
@@ -439,7 +439,7 @@
    ]
   },
   {
-   "id": "fixture_light_gothic_stone",
+   "id": "fixture_light_gothic_stone_proc",
    "level": 2,
    "category": "fixture",
    "display_name": "Light housing (gothic_stone, procedural)",
@@ -455,7 +455,7 @@
    ]
   },
   {
-   "id": "fixture_light_temple_ruin",
+   "id": "fixture_light_temple_ruin_proc",
    "level": 2,
    "category": "fixture",
    "display_name": "Light housing (temple_ruin, procedural)",
@@ -471,7 +471,7 @@
    ]
   },
   {
-   "id": "fixture_light_void_glitch",
+   "id": "fixture_light_void_glitch_proc",
    "level": 2,
    "category": "fixture",
    "display_name": "Light housing (void_glitch, procedural)",
