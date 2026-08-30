@@ -535,6 +535,44 @@ green suite over it, because the suite ran at prototype scale. The mock
 backend now takes a `CampaignConfig` and
 `bridge/tests/test_production_scale.py` runs the real engine at 450.
 
+## THE ROOM IS THE GAMEPLAY — proposed 2026-08-30, awaiting owner review
+
+`docs/proposals/ROOM_FIRST_GAMEPLAY.md`. **Nothing built. Do not start it
+without approval.**
+
+Owner ruling after playing Zone 1: the problem is not the activity
+families, it is that **the rooms are miserable**. "There's more stuff to
+do, but it does nothing and it's not fun." A breakable crate with
+something in it beats four buttons that do nothing.
+
+The measurement that explains it: **a room's entire shape is three
+numbers.** `ArenaChamber` is width, depth, wall_height. There is no field
+in which a balcony, a pit, an alcove or a side branch could be described,
+so 23 of 23 rooms are rectangles and all eight corridors are the same
+7.9 m width. The flatness is not the generator doing badly — it is the
+generator faithfully building everything the schema can say.
+
+Consequences measured in the played Zone: elevation exists in exactly one
+chamber type (`platform_path`, the special-case minigame, and the one
+where all 23 floating activity elements are); 28 of 41 enemies are ranged
+with nowhere to be ranged from; 9 of 10 combat rooms hold a single enemy
+group; 7–11 inert props per arena against 2 affordance features in the
+whole Zone.
+
+The proposal's load-bearing idea is SOCKETS — the room declares where
+things may go. Every placement bug this month was one bug, "the builder
+knows things the composer does not", and each was fixed by handing the
+composer more information afterwards. Sockets end the class.
+
+**F3 is answered by this, not deferred by taste.** Art's own handoff
+measured that an authored shell replaces per-chamber dimensions with one
+fixed size per registry entry, so integrating it today makes rooms MORE
+uniform. The fix Art names — a shell that declares what sizes it can be —
+is the socket contract. Grammar first, then authored rooms.
+
+Smallest slice proposed: one elevation band in an arena, ranged enemies
+on it, and crates that break into something. No new subsystem.
+
 ## ACTIVITY CONVERSION — LANDED 2026-08-30
 
 The batch proposed below was approved and is built. `531 of 921` content
