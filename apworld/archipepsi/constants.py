@@ -1010,6 +1010,27 @@ SECONDS_PER_ACTIVITY_ELEMENT = 4.0
 #: Ordered puzzles cost more time because a mistake means going back.
 ORDERED_ACTIVITY_TIME_MULTIPLIER = 1.5
 
+#: How long a pressure plate stays held after the player steps off it.
+#:
+#: This is what makes `pressure_routing` a routing puzzle rather than an
+#: impossible one: one player cannot stand on eight plates at once, so
+#: success is "every plate held AT THE SAME TIME" only if a plate keeps
+#: holding for long enough to reach the next. Set to
+#: `SECONDS_PER_ACTIVITY_ELEMENT` exactly, and not to a second number
+#: that means the same thing -- that constant already IS "long enough to
+#: cross a mid-size room and interact, generously", which is the same
+#: question this asks.
+PLATE_HOLD_SECONDS = SECONDS_PER_ACTIVITY_ELEMENT
+
+#: How long a completed or failed activity shows its result before it
+#: resets and can be attempted again. Feedback, not difficulty.
+ACTIVITY_RESULT_SECONDS = 2.0
+
+#: Radius within which a `touch` or `stand` activity element notices the
+#: player. Comfortably larger than the element itself so a switch is
+#: pressed by walking into it rather than by pixel-hunting.
+ACTIVITY_TOUCH_RADIUS = 1.1
+
 MAX_ENEMIES_PER_ENCOUNTER = 10
 MAX_BRUTES_PER_ENCOUNTER = 1
 

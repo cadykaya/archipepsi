@@ -25,6 +25,102 @@
         "title": "AbandonZone",
         "type": "object"
       },
+      "ActivityOutcome": {
+        "additionalProperties": false,
+        "description": "What one activity did while the player was in the room with it.\n\nThe questions the next playtest has to be able to answer, and the\nfield that answers each:\n\n  Did they notice it?      `entered`\n  Did they try it?         `attempts`\n  Did they understand it?  `attempts` against `completed`\n  Did they finish it?      `completed`\n  How long did it hold them? `active_seconds`\n  Did a gate behave?       `not_yet`\n\n`entered` and `attempts` are deliberately separate. \"Walked past it\"\nand \"had a go and gave up\" are different findings, and a single\nengagement flag would have collapsed them into one number that could\nnot distinguish a legibility problem from a difficulty one.",
+        "properties": {
+          "activity_id": {
+            "maxLength": 64,
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "switch_sequence",
+              "timed_run",
+              "target_challenge",
+              "pressure_routing"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 64,
+            "title": "Room Id",
+            "type": "string"
+          },
+          "element_count": {
+            "maximum": 8,
+            "minimum": 1,
+            "title": "Element Count",
+            "type": "integer"
+          },
+          "time_limit": {
+            "default": 0.0,
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Time Limit",
+            "type": "number"
+          },
+          "ordered": {
+            "default": false,
+            "title": "Ordered",
+            "type": "boolean"
+          },
+          "requires": {
+            "default": [],
+            "items": {
+              "enum": [
+                "blink",
+                "cross_long_gap",
+                "grapple",
+                "ranged_hit"
+              ],
+              "type": "string"
+            },
+            "maxItems": 2,
+            "title": "Requires",
+            "type": "array"
+          },
+          "entered": {
+            "default": false,
+            "title": "Entered",
+            "type": "boolean"
+          },
+          "attempts": {
+            "default": 0,
+            "maximum": 9999,
+            "minimum": 0,
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "completed": {
+            "default": false,
+            "title": "Completed",
+            "type": "boolean"
+          },
+          "not_yet": {
+            "default": false,
+            "title": "Not Yet",
+            "type": "boolean"
+          },
+          "active_seconds": {
+            "default": 0.0,
+            "maximum": 36000.0,
+            "minimum": 0.0,
+            "title": "Active Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "activity_id",
+          "kind",
+          "room_id",
+          "element_count"
+        ],
+        "title": "ActivityOutcome",
+        "type": "object"
+      },
       "ApConnect": {
         "additionalProperties": false,
         "properties": {
@@ -489,6 +585,15 @@
             "default": false,
             "title": "Completed",
             "type": "boolean"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityOutcome"
+            },
+            "maxItems": 120,
+            "title": "Activities",
+            "type": "array"
           }
         },
         "required": [
@@ -812,6 +917,21 @@
             "default": false,
             "title": "Ordered",
             "type": "boolean"
+          },
+          "requires": {
+            "default": [],
+            "items": {
+              "enum": [
+                "blink",
+                "cross_long_gap",
+                "grapple",
+                "ranged_hit"
+              ],
+              "type": "string"
+            },
+            "maxItems": 2,
+            "title": "Requires",
+            "type": "array"
           }
         },
         "required": [
@@ -1628,6 +1748,15 @@
             "default": null,
             "title": "Last Generation Error"
           },
+          "available_capabilities": {
+            "description": "What the player can do RIGHT NOW, over what is equipped.\n\nDerived here rather than in GDScript, for the reason the fold is:\nre-implementing \"can this campaign grapple\" in the client would\nbe a second answer to a question that has exactly one.\n\nDistinct from the OWNED set generation reasons over. A Zone is\nbuilt against what the campaign owns; the player walks into it\nwith whatever they slotted, so the difference between the two is\nwhat a NOT YET gate is FOR \u2014 and it is why that gate is a\nreachable state rather than dead code.",
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true,
+            "title": "Available Capabilities",
+            "type": "array"
+          },
           "coins_available": {
             "description": "Derived, never stored \u2014 `DESIGN.md` \u00a712 said so and v0.6 shipped it\nas a free integer that could read 9999 against zero received.",
             "readOnly": true,
@@ -1641,6 +1770,7 @@
           "ap_mode",
           "epsilon_provider",
           "hub",
+          "available_capabilities",
           "coins_available"
         ],
         "title": "CampaignSnapshot",
@@ -5152,6 +5282,21 @@
             "default": false,
             "title": "Ordered",
             "type": "boolean"
+          },
+          "requires": {
+            "default": [],
+            "items": {
+              "enum": [
+                "blink",
+                "cross_long_gap",
+                "grapple",
+                "ranged_hit"
+              ],
+              "type": "string"
+            },
+            "maxItems": 2,
+            "title": "Requires",
+            "type": "array"
           }
         },
         "required": [
@@ -9039,6 +9184,15 @@
         "default": null,
         "title": "Last Generation Error"
       },
+      "available_capabilities": {
+        "description": "What the player can do RIGHT NOW, over what is equipped.\n\nDerived here rather than in GDScript, for the reason the fold is:\nre-implementing \"can this campaign grapple\" in the client would\nbe a second answer to a question that has exactly one.\n\nDistinct from the OWNED set generation reasons over. A Zone is\nbuilt against what the campaign owns; the player walks into it\nwith whatever they slotted, so the difference between the two is\nwhat a NOT YET gate is FOR \u2014 and it is why that gate is a\nreachable state rather than dead code.",
+        "items": {
+          "type": "string"
+        },
+        "readOnly": true,
+        "title": "Available Capabilities",
+        "type": "array"
+      },
       "coins_available": {
         "description": "Derived, never stored \u2014 `DESIGN.md` \u00a712 said so and v0.6 shipped it\nas a free integer that could read 9999 against zero received.",
         "readOnly": true,
@@ -9052,6 +9206,7 @@
       "ap_mode",
       "epsilon_provider",
       "hub",
+      "available_capabilities",
       "coins_available"
     ],
     "title": "CampaignSnapshot",

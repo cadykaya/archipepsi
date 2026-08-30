@@ -49,13 +49,15 @@ from pydantic import (
 try:
     from . import constants as C
     from .echo import EchoInterpretation, SlotName
+    from . import mechanics as M
     from .mechanics import Mechanics, derive_mechanics
-    from .zone import Zone
+    from .zone import ActivityCapability, ActivityKind, Zone
 except ImportError:  # pragma: no cover
     import constants as C
     from echo import EchoInterpretation, SlotName
+    import mechanics as M
     from mechanics import Mechanics, derive_mechanics
-    from zone import Zone
+    from zone import ActivityCapability, ActivityKind, Zone
 
 PROTOCOL_VERSION = 8
 
@@ -983,6 +985,23 @@ class CampaignSnapshot(Strict):
 
     @computed_field
     @property
+    def available_capabilities(self) -> tuple[str, ...]:
+        """What the player can do RIGHT NOW, over what is equipped.
+
+        Derived here rather than in GDScript, for the reason the fold is:
+        re-implementing "can this campaign grapple" in the client would
+        be a second answer to a question that has exactly one.
+
+        Distinct from the OWNED set generation reasons over. A Zone is
+        built against what the campaign owns; the player walks into it
+        with whatever they slotted, so the difference between the two is
+        what a NOT YET gate is FOR — and it is why that gate is a
+        reachable state rather than dead code.
+        """
+        return M.available_capabilities(self.mechanics, self.slots)
+
+    @computed_field
+    @property
     def coins_available(self) -> int:
         """Derived, never stored — `DESIGN.md` §12 said so and v0.6 shipped it
         as a free integer that could read 9999 against zero received."""
@@ -1225,6 +1244,45 @@ class ChamberDwell(Strict):
     seconds: float = Field(ge=0.0, le=36000.0)
 
 
+class ActivityOutcome(Strict):
+    """What one activity did while the player was in the room with it.
+
+    The questions the next playtest has to be able to answer, and the
+    field that answers each:
+
+      Did they notice it?      `entered`
+      Did they try it?         `attempts`
+      Did they understand it?  `attempts` against `completed`
+      Did they finish it?      `completed`
+      How long did it hold them? `active_seconds`
+      Did a gate behave?       `not_yet`
+
+    `entered` and `attempts` are deliberately separate. "Walked past it"
+    and "had a go and gave up" are different findings, and a single
+    engagement flag would have collapsed them into one number that could
+    not distinguish a legibility problem from a difficulty one.
+    """
+    activity_id: str = Field(max_length=64)
+    kind: ActivityKind
+    room_id: str = Field(max_length=64)
+    element_count: int = Field(ge=1, le=8)
+    time_limit: float = Field(default=0.0, ge=0.0, le=120.0)
+    ordered: bool = False
+    #: The semantic capabilities it asked for, so a playtest can tell a
+    #: gate that behaved from one nobody ever met.
+    requires: tuple[ActivityCapability, ...] = Field(default=(),
+                                                     max_length=2)
+    #: The player came within reach of it at all.
+    entered: bool = False
+    #: Attempts started. Zero with `entered` true is "walked past it".
+    attempts: int = Field(default=0, ge=0, le=9999)
+    completed: bool = False
+    #: Refused for a capability the player did not have equipped.
+    not_yet: bool = False
+    #: Seconds spent with an attempt actually running.
+    active_seconds: float = Field(default=0.0, ge=0.0, le=36000.0)
+
+
 class ZoneTiming(Strict):
     """What the Zone actually cost the player, measured (CAMPAIGN_SCALE.md 13).
 
@@ -1257,12 +1315,20 @@ class ZoneTiming(Strict):
     #: True when the player left through the portal rather than bailing
     #: to the Hub -- an abandoned Zone's elapsed time is not a Zone length.
     completed: bool = False
+    #: One entry per activity the Zone built. Bounded by the most a Zone
+    #: can hold: `ZONE_MAX_CHAMBERS` rooms times the schema's three
+    #: activities each.
+    activities: tuple[ActivityOutcome, ...] = Field(
+        default=(), max_length=C.ZONE_MAX_CHAMBERS * 3)
 
     @model_validator(mode="after")
     def _one_entry_per_chamber(self):
         indices = [d.chamber_index for d in self.dwell]
         if len(set(indices)) != len(indices):
             raise ValueError("a chamber appears twice in the dwell record")
+        ids = [a.activity_id for a in self.activities]
+        if len(set(ids)) != len(ids):
+            raise ValueError("an activity appears twice in the timing record")
         return self
 
 

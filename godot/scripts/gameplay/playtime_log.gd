@@ -29,6 +29,10 @@ var _encounter_start := -1.0
 var _live_enemies := 0
 var _checks := 0
 var _chamber_count := 0
+## Every activity the Zone built, in build order. Held as references
+## rather than as snapshots so a Zone that ends mid-attempt reports the
+## attempt honestly instead of reporting the last state anybody polled.
+var _activities: Array[ActivityRuntime] = []
 
 
 func begin(chamber_count: int) -> void:
@@ -41,6 +45,26 @@ func begin(chamber_count: int) -> void:
 	_live_enemies = 0
 	_checks = 0
 	_chamber_count = chamber_count
+	_activities.clear()
+
+
+## Register an activity the Zone built. Measurement only: nothing here
+## reaches back into the runtime, and a Zone plays identically with the
+## whole log removed.
+func watch_activity(runtime: ActivityRuntime) -> void:
+	if runtime != null:
+		_activities.append(runtime)
+
+
+func enter_chamber_activities(index: int) -> void:
+	"""Mark every activity in the room the player just walked into.
+
+	"Did they notice it" and "did they try it" are different findings,
+	and only the room they are standing in can answer the first.
+	"""
+	for runtime in _activities:
+		if is_instance_valid(runtime) and runtime.room_index == index:
+			runtime.mark_entered()
 
 
 func tick(delta: float) -> void:
@@ -103,4 +127,13 @@ func to_intent(zone_id: String, completed: bool) -> Dictionary:
 		"dwell": dwell,
 		"encounter_seconds": encounters,
 		"completed": completed,
+		"activities": _activity_reports(),
 	}
+
+
+func _activity_reports() -> Array:
+	var out: Array = []
+	for runtime in _activities:
+		if is_instance_valid(runtime):
+			out.append(runtime.report())
+	return out

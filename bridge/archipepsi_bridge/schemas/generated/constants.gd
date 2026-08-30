@@ -5,6 +5,8 @@
 # drift from the bounds the Python validator enforces.
 extends Node
 
+const ACTIVITY_RESULT_SECONDS = 2.0
+const ACTIVITY_TOUCH_RADIUS = 1.1
 const AFFORDANCE_DYNAMIC_CHANNELS = ["breakable_wall_damage", "wind_ring_count"]
 const AFFORDANCE_SIGNAL_HEX = "#39d7c8"
 const AFFORDANCE_SIGNAL_RGB = [0.2235294117647059, 0.8431372549019608, 0.7843137254901961]
@@ -89,6 +91,7 @@ const MIN_FEATURE_CHAMBER_WIDTH = 6.7
 const MIN_PLATFORM_SIZE = 2.5
 const OBJECTIVES = ["reach_reward", "kill_all", "platform_to_goal"]
 const ORDERED_ACTIVITY_TIME_MULTIPLIER = 1.5
+const PLATE_HOLD_SECONDS = 4.0
 const PLAYER_EYE_HEIGHT = 1.6
 const PLAYER_HEIGHT = 1.8
 const PLAYER_MAX_HP = 100.0

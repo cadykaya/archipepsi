@@ -57,6 +57,7 @@ const DRIVERS := {
 	"--boot-test": preload("res://tests/boot_driver.gd"),
 	"--legibility-test": preload("res://tests/legibility_driver.gd"),
 	"--content-test": preload("res://tests/content_driver.gd"),
+	"--activity-test": preload("res://tests/activity_driver.gd"),
 }
 
 func _ready() -> void:

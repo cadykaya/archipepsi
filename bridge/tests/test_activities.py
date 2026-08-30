@@ -41,12 +41,81 @@ def _room(**over) -> dict:
 
 def test_a_puzzle_cannot_be_described_only_named():
     """There is no prose field. Epsilon picks a family and dials the
-    numbers; it cannot write "a fiendish riddle" and be believed."""
+    numbers; it cannot write "a fiendish riddle" and be believed.
+
+    `requires` joined the set on 2026-08-30 and is held to the same
+    standard rather than exempted from it: it is a CLOSED vocabulary,
+    proven below, so the field set is still "no field a provider can
+    fill with whatever it likes".
+    """
     fields = set(Z.ActivityPrimitive.model_fields)
-    assert fields == {"kind", "element_count", "time_limit", "ordered"}, fields
+    assert fields == {"kind", "element_count", "time_limit", "ordered",
+                      "requires"}, fields
     with pytest.raises(ValidationError):
         Z.ActivityPrimitive(kind="switch_sequence",
                             description="a fiendish riddle")
+    with pytest.raises(ValidationError):
+        Z.ActivityPrimitive(kind="switch_sequence",
+                            requires=("a fiendish riddle",))
+
+
+def test_the_capability_literal_and_the_capability_table_are_one_thing():
+    """Two spellings of the vocabulary, pinned to each other.
+
+    `ActivityCapability` is a Literal so the closure is visible to static
+    inspection; `ACTIVITY_CAPABILITIES` holds what each one MEANS. A
+    capability in one and not the other is either a gate nothing can
+    satisfy or a capability nothing can ask for, and both look like
+    working code.
+    """
+    import typing
+    from archipepsi_bridge.schemas import mechanics as M
+    assert (set(typing.get_args(Z.ActivityCapability))
+            == set(M.ACTIVITY_CAPABILITIES))
+
+
+def test_a_capability_requirement_is_semantic_not_an_item_name():
+    """The owner ruling, as a property of the table.
+
+    Every capability is satisfied by a SET of primitives, so no
+    requirement can mean "the canonical Echo X". A capability satisfied
+    by exactly one primitive is legal -- `blink` is -- but it still names
+    a primitive that any Echo may carry, never a component id.
+    """
+    from archipepsi_bridge.schemas import mechanics as M
+    from archipepsi_bridge.schemas import echo as E
+    for capability, requirement in M.ACTIVITY_CAPABILITIES.items():
+        primitives = requirement.get("primitives", ())
+        stats = requirement.get("stats", ())
+        assert primitives or stats, capability
+        for primitive in primitives:
+            assert primitive in E.ACTION_PRIMITIVES, (capability, primitive)
+
+
+def test_a_capability_can_never_be_a_damage_number():
+    """Raw combat power is BALANCE, never LOGIC (owner ruling, 2026-08-30).
+
+    Two halves, and the second is the one that bites.
+
+    A requirement carries NO NUMBER: `requires` is a tuple of names and
+    the table maps each to sets of names. There is nowhere to put 400, so
+    "enter only if your build does 400 DPS" is unspellable rather than
+    discouraged.
+
+    And no capability may be keyed on a damage stat. The trait vocabulary
+    DOES contain `damage_dealt` and `damage_taken`, so a capability
+    defined over one of them would be legal by the first half and would
+    still turn combat power into progression logic through the back door.
+    """
+    from archipepsi_bridge.schemas import mechanics as M
+    damage_stats = {"damage_dealt", "damage_taken"}
+    for capability, requirement in M.ACTIVITY_CAPABILITIES.items():
+        assert set(requirement) <= {"primitives", "stats"}, requirement
+        for value in requirement.values():
+            assert all(isinstance(v, str) for v in value), capability
+        assert not damage_stats & set(requirement.get("stats", ())), (
+            f"'{capability}' is gated on combat power, which is balance, "
+            "not logic")
 
 
 def test_an_unknown_activity_kind_is_refused():

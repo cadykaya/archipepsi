@@ -123,6 +123,21 @@ def build_record(save: CampaignSave, timing: ZoneTiming,
         "checks_completed": timing.checks_completed,
         "encounter_seconds": [round(s, 2) for s in timing.encounter_seconds],
         "completed": timing.completed,
+        # WHAT THE PLAYER ACTUALLY DID, per activity. The Zone that led
+        # to this batch spent 531 of its 921 content points on activities
+        # and could not say whether a single one had been touched,
+        # because they could not be. `entered` and `attempts` are kept
+        # apart so "walked past it" and "tried it and gave up" stay
+        # different findings.
+        "activities": [a.model_dump() for a in timing.activities],
+        "activities_built": len(timing.activities),
+        "activities_entered": sum(1 for a in timing.activities if a.entered),
+        "activities_attempted": sum(
+            1 for a in timing.activities if a.attempts > 0),
+        "activities_completed": sum(
+            1 for a in timing.activities if a.completed),
+        "activity_seconds": round(
+            sum(a.active_seconds for a in timing.activities), 2),
         # The number the whole redesign is a bet on. Recorded rather than
         # asserted: a Zone worth 1000 points that takes four minutes means
         # the budget is wrong, and that is exactly what this is for.

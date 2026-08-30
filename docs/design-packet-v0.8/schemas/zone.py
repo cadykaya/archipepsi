@@ -17,12 +17,15 @@ from __future__ import annotations
 
 from typing import Annotated, Literal, Union
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    BaseModel, ConfigDict, Field, field_validator, model_validator)
 
 try:  # works standalone and when copied into a package
     from . import constants as C
+    from . import mechanics as M
 except ImportError:  # pragma: no cover
     import constants as C
+    import mechanics as M
 
 SCHEMA_VERSION = 7
 
@@ -60,10 +63,18 @@ AffordanceTag = Literal[
 #: elements, how generous the timing, how far apart -- rather than from a
 #: separate hand-made puzzle per flavour.
 #:
-#: Every one is solvable with base movement and Static Pulse alone. A
-#: switch is touched, a target is shot, a plate is stood on, a timed run
-#: is run; nothing here needs an Echo, and nothing may be added that
-#: does.
+#: Every one is solvable with base movement and Static Pulse alone WHEN
+#: IT ASKS FOR NOTHING ELSE -- a switch is touched, a target is shot, a
+#: plate is stood on, a timed run is run.
+#:
+#: SUPERSEDED 2026-08-30 (owner ruling): this file used to end that
+#: sentence "nothing here needs an Echo, and nothing may be added that
+#: does". Activities MAY now require an Echo capability, through
+#: `ActivityPrimitive.requires`, and the restriction that replaces it is
+#: narrower and stronger: **no requirement before guarantee.** What a
+#: capability is, is semantic -- "can the player grapple", never "does
+#: the player hold the Grapple Echo" -- so an Echo the player built
+#: themselves satisfies it identically.
 #:
 #: `switch_sequence`  N switches, optionally in a required order.
 #: `timed_run`        activate, then reach the target before it lapses.
@@ -71,6 +82,17 @@ AffordanceTag = Literal[
 #: `pressure_routing` hold plates / route power to open the way.
 ActivityKind = Literal[
     "switch_sequence", "timed_run", "target_challenge", "pressure_routing",
+]
+
+#: The semantic capabilities an activity may require (owner ruling,
+#: 2026-08-30). Spelled out as a Literal rather than derived from
+#: `mechanics.ACTIVITY_CAPABILITIES` at import time, so the closure is
+#: STRUCTURAL: `test_epsilon_vocabulary` proves a string field Epsilon
+#: can fill is a closed vocabulary by reading the annotation, and a
+#: vocabulary assembled at runtime is one it cannot see. The two are
+#: pinned to each other by a test rather than by a comment.
+ActivityCapability = Literal[
+    "blink", "cross_long_gap", "grapple", "ranged_hit",
 ]
 
 
@@ -96,6 +118,31 @@ class ActivityPrimitive(Strict):
     #: own; expensive combined with a clock, which is the composition the
     #: difficulty is supposed to come from.
     ordered: bool = False
+
+    #: SEMANTIC capability requirements (owner ruling, 2026-08-30). Names
+    #: from `mechanics.ACTIVITY_CAPABILITIES`, every one of which is
+    #: satisfied by ANY primitive in its family.
+    #:
+    #: Conjunctive: all of them, and each satisfied by any member. That
+    #: is the shape that lets a Zone say "you need a way to grapple"
+    #: without saying "you need the canonical Grapple Echo".
+    #:
+    #: What may NOT go here, and cannot, because the vocabulary has no
+    #: word for it: raw damage, DPS, a health threshold, a crit figure.
+    #: Numeric combat power is BALANCE. It is never LOGIC, so a Zone can
+    #: never mean "enter only if your build does 400 DPS".
+    #:
+    #: Empty is the norm and stays the norm. `validate_zone` refuses any
+    #: entry whose guarantee the generator cannot prove.
+    requires: tuple[ActivityCapability, ...] = Field(
+        default=(), max_length=2)
+
+    @field_validator("requires")
+    @classmethod
+    def _no_capability_is_asked_for_twice(cls, value):
+        if len(set(value)) != len(value):
+            raise ValueError(f"duplicate capability in {list(value)}")
+        return value
 
     @model_validator(mode="after")
     def _a_timed_puzzle_stays_base_kit_solvable(self):
@@ -481,6 +528,7 @@ def validate_zone(
     allocated_location_ids: list[int],
     owned_echo_ids: list[str],
     owned_affordance_tags: tuple[str, ...] = (),
+    guaranteed_capabilities: tuple[str, ...] = M.BASELINE_CAPABILITIES,
     legal_shell_ids: tuple[str, ...] = (),
     zone_budget: int | None = None,
 ) -> list[str]:
@@ -562,6 +610,29 @@ def validate_zone(
                     f"which this campaign has no capability to use; "
                     f"offer one of {sorted(owned_affordance_tags)} or none"
                 )
+
+    # NO REQUIREMENT BEFORE GUARANTEE (owner ruling, 2026-08-30).
+    #
+    # An activity may require a semantic capability. It may not require
+    # one the generator cannot PROVE the player can get, because the
+    # proof is the whole difference between a deliberate NOT YET and a
+    # Zone that assumed an ordinary shuffled Check would contain a
+    # grapple. Archipelago decides what is in that Check; this validator
+    # reasons from guarantees and never from what would be convenient.
+    #
+    # `guaranteed_capabilities` defaults to the permanent baseline rather
+    # than to the empty tuple: a caller that forgets to pass it then
+    # refuses MORE than it should, never less.
+    for chamber in zone.chambers:
+        for activity in chamber.activities:
+            missing = [c for c in activity.requires
+                       if c not in guaranteed_capabilities]
+            if missing:
+                errors.append(
+                    f"chamber '{chamber.id}' has a {activity.kind} requiring "
+                    f"{missing}, which this campaign is not guaranteed to be "
+                    f"able to do; guaranteed here is "
+                    f"{sorted(guaranteed_capabilities)}")
 
     if zone.zone_id != expected_zone_id:
         errors.append(

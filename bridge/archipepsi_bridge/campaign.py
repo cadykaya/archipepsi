@@ -26,7 +26,7 @@ from .epsilon.requests import (
 from .schemas import constants as C
 from .schemas import transitions as T
 from .schemas.mechanics import (
-    Mechanics, derive_mechanics, owned_affordance_tags)
+    Mechanics, derive_mechanics, owned_affordance_tags, owned_capabilities)
 from .epsilon.concepts import preferred_modes, read_concepts
 from .schemas.echo import (
     COMPLEXITY_BUDGETS, over_soft_budget, upgradable_field_info)
@@ -769,7 +769,15 @@ class CampaignEngine:
             # Over OWNED mechanics, never the loadout — a Zone whose
             # contents depended on the slots at generation time would lie
             # about itself the moment the player changed them.
-            unlocked_affordances=owned_affordance_tags(save.derive()))
+            unlocked_affordances=owned_affordance_tags(save.derive()),
+            # NO REQUIREMENT BEFORE GUARANTEE (owner ruling 2026-08-30).
+            # Computed here, from the fold, because this is where the
+            # authoritative campaign state lives. Case C -- a capability
+            # the Zone itself establishes before the requirement -- has
+            # no producer yet, so nothing is passed for it and the
+            # guarantee rests on the permanent baseline and what the
+            # campaign already owns.
+            guaranteed_capabilities=owned_capabilities(save.derive()))
 
     def _start_generation_task(self, zone_id: str) -> None:
         """Start the provider call for `zone_id`, unless one is in flight.

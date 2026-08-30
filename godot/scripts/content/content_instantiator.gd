@@ -250,10 +250,17 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 	# vocabulary-to-builder pin exists to prevent, and building them here
 	# is the other half of that.
 	var activities: Array = []
+	var room_id := str(chamber.get("id", ""))
+	var index := 0
 	for activity: Variant in chamber.get("activities", []) as Array:
 		if typeof(activity) == TYPE_DICTIONARY:
+			# The id is the room plus the position in the room's own list,
+			# so it is stable across a rebuild after a reconnect and the
+			# local reward a solved activity grants is the same note.
 			activities.append(Activities.build(
-					root, activity, theme, size.x, size.z))
+					root, activity, theme, size.x, size.z, room_id,
+					"%s_%d" % [room_id, index]))
+			index += 1
 	result["activities"] = activities
 	return result
 

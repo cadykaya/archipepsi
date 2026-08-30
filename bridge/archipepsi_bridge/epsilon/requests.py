@@ -16,6 +16,7 @@ from .. import echo_projection as P
 from ..schemas import constants as C
 from ..schemas import echo as E
 from ..schemas import zone as Z
+from ..schemas import mechanics as M
 from . import capabilities as CAP
 
 _AP_STR = Annotated[str, Field(max_length=C.MAX_AP_STRING_LEN)]
@@ -131,6 +132,15 @@ class ZoneGenerationRequest(Strict):
     #: and nothing else — a water volume in a run with no way to move
     #: through water is set dressing that looks like content.
     unlocked_affordances: tuple[str, ...] = ()
+    #: The semantic capabilities the generator can PROVE this campaign
+    #: will be able to use (owner ruling, 2026-08-30). An activity may
+    #: name one of these in `requires`; naming anything else is refused
+    #: by `validate_zone`, because a requirement the generator cannot
+    #: prove is a wish, not a gate.
+    #:
+    #: Defaults to the permanent baseline rather than to empty, so a
+    #: caller that forgets it refuses more than it should, never less.
+    guaranteed_capabilities: tuple[str, ...] = M.BASELINE_CAPABILITIES
     catalog: dict = Field(default_factory=lambda: {
         "themes": list(C.THEMES),
         "chamber_types": list(C.CHAMBER_TYPES),

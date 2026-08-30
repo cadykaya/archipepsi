@@ -219,6 +219,7 @@ def preflight_problems() -> list[str]:
                                 for loc in request.locations],
         owned_echo_ids=[],
         owned_affordance_tags=request.unlocked_affordances,
+        guaranteed_capabilities=request.guaranteed_capabilities,
         zone_budget=request.campaign.zone_budget)
     if errors:
         problems.append(
@@ -296,6 +297,15 @@ def _rows(record: dict) -> list[str]:
     else:
         out.append("  Encounters      none recorded")
 
+    built = int(record.get("activities_built", 0) or 0)
+    if built:
+        out.append(
+            f"  Activities      {built}"
+            f"   noticed {record.get('activities_entered', 0)}"
+            f"   tried {record.get('activities_attempted', 0)}"
+            f"   solved {record.get('activities_completed', 0)}"
+            f"   {float(record.get('activity_seconds', 0.0)):.0f} s")
+
     out += ["", "  Per-room dwell", "",
             "    #   type            value   seconds   check"]
     for room in rooms:
@@ -303,6 +313,25 @@ def _rows(record: dict) -> list[str]:
             f"    {room.get('index', 0):<3} {room.get('type', '?'):<15}"
             f" {room.get('value', 0):>5}   {room.get('seconds', 0.0):>7}"
             f"   {'yes' if room.get('holds_check') else '-'}")
+
+    activities = record.get("activities", [])
+    if activities:
+        out += ["", "  Per-activity", "",
+                "    room       kind              n   noticed  tries  "
+                "solved  seconds  needs"]
+        for activity in activities:
+            needs = ", ".join(activity.get("requires", []) or [])
+            if activity.get("not_yet"):
+                needs = f"NOT YET ({needs})" if needs else "NOT YET"
+            out.append(
+                f"    {str(activity.get('room_id', '?')):<10}"
+                f" {str(activity.get('kind', '?')):<17}"
+                f" {activity.get('element_count', 0):>1}"
+                f"   {'yes' if activity.get('entered') else '-':<7}"
+                f"  {activity.get('attempts', 0):>5}"
+                f"  {'yes' if activity.get('completed') else '-':>6}"
+                f"  {float(activity.get('active_seconds', 0.0)):>7.1f}"
+                f"  {needs}")
     return out
 
 

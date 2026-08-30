@@ -535,10 +535,77 @@ green suite over it, because the suite ran at prototype scale. The mock
 backend now takes a `CampaignConfig` and
 `bridge/tests/test_production_scale.py` runs the real engine at 450.
 
-## NEXT BATCH — PROPOSED, AWAITING OWNER REVIEW, 2026-08-30
+## ACTIVITY CONVERSION — LANDED 2026-08-30
 
-`docs/proposals/NEXT_BATCH_ACTIVITY_CONVERSION.md`. **Nothing in it is
-built. Do not start it without owner approval.**
+The batch proposed below was approved and is built. `531 of 921` content
+points stopped being glowing boxes: `ActivityRuntime` owns one state
+machine (`NOT_YET / IDLE / ACTIVE / COMPLETE`) with the four families
+configured in one `RULES` table, and `ActivityElement` is one class with
+three trigger modes (`touch` latching, `shot` through `Damageable`,
+`stand` momentary with a `PLATE_HOLD_SECONDS` window).
+
+**The owner correction that shaped it: activities are NOT restricted to
+the permanent baseline kit.** Prerequisites are SEMANTIC CAPABILITY
+SATISFACTION — "can the player grapple", never "does the player hold the
+Grapple Echo" — expressed over the primitive vocabulary the fold already
+produces (`mechanics.ACTIVITY_CAPABILITIES`, four capabilities, same
+shape as `AFFORDANCE_REQUIREMENTS`).
+
+**NO REQUIREMENT BEFORE GUARANTEE.** `capability_guarantee()` answers
+with the cheapest proof that holds: A `permanent_baseline`, B
+`already_possessed` (over the fold, not the loadout), C
+`established_in_zone` (a parameter with no producer yet — the seam a
+capability-establishment construct plugs into), D `forge_constructible`
+(named, unreachable, deferred). `validate_zone` refuses any activity
+requirement outside the guaranteed set, and the default is the permanent
+baseline so a caller that forgets refuses MORE than it should.
+
+Raw damage can never be logic: a requirement carries no number at all,
+and a capability may not be keyed on `damage_dealt`/`damage_taken`
+(`test_a_capability_can_never_be_a_damage_number`).
+
+NOT YET is reachable rather than theoretical: generation reasons over
+what the campaign OWNS, `snapshot.available_capabilities` says what is
+EQUIPPED, and the gap is the gate. It never fakes an interaction and
+never downgrades to a base-kit substitute.
+
+`make godot-activity` drives every family to completion AND to failure
+through real physics and the real damage path. Sabotage-proven: inert
+elements → 17 failures, always-complete → 8, unchecked ordering → 2.
+
+Two defects fixed on the way. `make_playtest_baseline.py` hardcoded
+`unlocked_affordances=()`, so the archive held zero features where the
+played Zone held two — evidence that under-reports is worse than none.
+And the fallback emitted seven `timed_run`s with `time_limit = 0`; the
+clock is now derived from the schema's own floor, never chosen.
+
+`challenge_marker` stays deferred: completion grants a `flavor_log`, and
+a test fails if `activity_runtime.gd` ever names the marker.
+
+Zone digest moved `98e08663ce6b3b7a` -> `1bdf42f800c5637e`. Same 23
+rooms, 15 Checks, 41 enemies; the value moved 921 -> 916 because seven
+runs now earn `ACTIVITY_TIMED_BONUS` and the top-up loop lands
+differently. **The A/B is closed, so the digest was free to move.**
+
+## AVAILABLE, NOT ADOPTED: the Art lane's camera bench
+
+Art surfaced an existing render toolchain on `claude/archipepsi-art`
+(`docs/art/CAMERA_BENCH.md`, `tools/artpreview/`, `tools/shots/*.json`,
+and a finished `docs/art/proposals/photo_mode.gd`). **Awareness only —
+no owner mandate to adopt any of it, and nothing here depends on it.**
+
+Worth knowing because it names a real gap: Production has no
+screenshot/render capture path at all, so a visual regression can exist
+with every logic suite green. That is what the mirrored Hub sign and the
+one-slab light fixture were. If a future batch wants golden shots of
+REAL generated Zones, read `CAMERA_BENCH.md` first — `--headless`
+selects the dummy driver and an awaited SubViewport capture hangs with
+no output, which is an hour nobody needs to spend twice.
+
+## THE BATCH THAT BECAME THE ABOVE — proposed 2026-08-30, approved
+
+`docs/proposals/NEXT_BATCH_ACTIVITY_CONVERSION.md`. **Built and landed;
+kept for the reasoning, not as a to-do.**
 
 The owner's stated priority is PLAYER ACTIVITY MUST BE FUNDED
 INDEPENDENTLY OF CHECK COUNT. Measuring the played Zone sharpened it:

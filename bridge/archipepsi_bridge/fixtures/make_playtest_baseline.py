@@ -44,6 +44,8 @@ from archipepsi_bridge.epsilon.requests import (              # noqa: E402
     PlayerContext, RequestLocation, ZoneGenerationRequest)
 from archipepsi_bridge.schemas import constants as C          # noqa: E402
 from archipepsi_bridge.schemas import zone as Z               # noqa: E402
+from archipepsi_bridge.schemas.mechanics import (             # noqa: E402
+    Mechanics, owned_affordance_tags, owned_capabilities)
 from archipepsi_bridge.schemas.echo import EchoInterpretation  # noqa: E402
 
 OUT = (Path(__file__).resolve().parents[3]
@@ -69,6 +71,11 @@ BASELINE_ITEMS = [
 ]
 
 
+#: A campaign that has interpreted nothing, which is what the baseline
+#: describes: zone 1, no Echoes, no Signal Keys, no Coins.
+_FRESH_CAMPAIGN = Mechanics()
+
+
 def _zone_request(index: int) -> ZoneGenerationRequest:
     config = C.DEFAULT_CONFIG
     locations = tuple(
@@ -88,7 +95,23 @@ def _zone_request(index: int) -> ZoneGenerationRequest:
             is_finale=False, static_glitch_units=0,
             zone_budget=config.zone_budget),
         player=PlayerContext(signal_keys=0, coins_available=0),
-        locations=locations, unlocked_affordances=())
+        locations=locations,
+        # WHAT THE CAMPAIGN CAN USE, derived rather than hardcoded.
+        #
+        # This read `unlocked_affordances=()` and `guaranteed_capabilities`
+        # would have been next. It was wrong in the way that is hardest to
+        # see: the archived baseline then held ZERO affordance features
+        # while the Zone the human actually played held two, because the
+        # live path (`campaign.py`) computes both from the fold and this
+        # fixture typed a constant instead. Evidence that under-reports
+        # what was played is worse than no evidence, because it is
+        # believed.
+        #
+        # A fresh campaign is `Mechanics()` -- nothing interpreted yet --
+        # and the two functions below answer honestly for it: two base-kit
+        # affordance tags, and the permanent-baseline capability.
+        unlocked_affordances=owned_affordance_tags(_FRESH_CAMPAIGN),
+        guaranteed_capabilities=owned_capabilities(_FRESH_CAMPAIGN))
 
 
 def _echo_request(seq: int) -> EchoGenerationRequest:
@@ -127,6 +150,7 @@ def build() -> dict:
                                     for loc in request.locations],
             owned_echo_ids=[],
             owned_affordance_tags=request.unlocked_affordances,
+            guaranteed_capabilities=request.guaranteed_capabilities,
             zone_budget=request.campaign.zone_budget)
         if errors:                       # a bug in our own generator
             raise SystemExit(

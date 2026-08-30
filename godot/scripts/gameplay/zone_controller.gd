@@ -98,6 +98,18 @@ func setup(zone_dict: Dictionary) -> void:
 					xform.basis.get_euler().y).grow(1.0),
 		}
 
+		# The activities this room built, registered for measurement only
+		# (CAMPAIGN_SCALE.md 13). The log never reaches back into a
+		# runtime, so a Zone plays identically with the whole of it gone.
+		for built: Variant in result.get("activities", []):
+			if typeof(built) != TYPE_DICTIONARY:
+				continue
+			var runtime := (built as Dictionary).get("runtime") as \
+					ActivityRuntime
+			if runtime != null:
+				runtime.room_index = _chambers.size()
+				playtime.watch_activity(runtime)
+
 		for spawn: Dictionary in result.get("enemy_spawns", []):
 			var enemy := Enemy.create(spawn["archetype"], theme)
 			add_child(enemy)
@@ -307,6 +319,7 @@ func _track_chamber() -> void:
 			if index != _current_chamber:
 				_current_chamber = index
 				playtime.enter_chamber(index)
+				playtime.enter_chamber_activities(index)
 				chamber_entered.emit(index)
 			return
 

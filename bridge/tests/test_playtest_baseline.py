@@ -164,6 +164,58 @@ def test_the_open_pacing_decision_has_not_been_quietly_acted_on(baseline):
 # The baseline is not itself a toy
 
 
+def test_the_archive_records_the_capability_input_it_really_used(baseline):
+    """Evidence that under-reports what was played is worse than none.
+
+    THE DEFECT, found closing the art A/B: `make_playtest_baseline.py`
+    typed `unlocked_affordances=()` while the live path
+    (`campaign.py`) derives it from the fold. So the archived baseline
+    held ZERO affordance features and the Zone the human actually walked
+    held two, and every reading taken off the archive quietly understated
+    the optional content in the level.
+
+    The fix is not "put the right constant in". It is that the fixture
+    asks the same functions the game asks, so this pins the ANSWERS to
+    those functions rather than to the two tags they happen to return
+    today: a third base-kit affordance would move both sides together.
+    """
+    from archipepsi_bridge.schemas.mechanics import (
+        Mechanics, owned_affordance_tags, owned_capabilities)
+
+    fresh = Mechanics()
+    expected_tags = list(owned_affordance_tags(fresh))
+    expected_capabilities = list(owned_capabilities(fresh))
+    assert expected_tags, "the fixture would pass against an empty answer"
+
+    for entry in baseline["zones"]:
+        request = entry["request"]
+        assert list(request["unlocked_affordances"]) == expected_tags, (
+            f"zone {entry['zone_index']} was generated against "
+            f"{request['unlocked_affordances']}, but a campaign that has "
+            f"interpreted nothing can use {expected_tags}")
+        assert (list(request.get("guaranteed_capabilities", []))
+                == expected_capabilities), (
+            f"zone {entry['zone_index']} was generated against "
+            f"{request.get('guaranteed_capabilities')}, not the "
+            f"{expected_capabilities} a fresh campaign is guaranteed")
+
+
+def test_the_archive_actually_contains_the_optional_content(baseline):
+    """The consequence of the test above, stated as the thing a reader
+    of the archive cares about: are the features THERE.
+
+    Separate from the input check on purpose. The input could be right
+    and the fallback could still place nothing, and "the request was
+    correct" is not the claim anyone takes off this file.
+    """
+    for entry in baseline["zones"]:
+        features = [f["tag"] for c in entry["zone"]["chambers"]
+                    for f in (c.get("features") or ())]
+        assert features, (
+            f"zone {entry['zone_index']} archived no affordance features "
+            "at all, which is what the hardcoded-input defect looked like")
+
+
 def test_the_baseline_is_a_production_scale_campaign(baseline):
     """A baseline taken at prototype scale would be a baseline for a
     game nobody plays."""

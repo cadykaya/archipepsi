@@ -953,7 +953,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 910,
+        "content_value": 916,
         "enemy_total": 41,
         "rooms_holding_no_check": 8
       },
@@ -1023,6 +1023,9 @@
           "zone_budget": 1000
         },
         "generation_id": "baseline-zone-1",
+        "guaranteed_capabilities": [
+          "ranged_hit"
+        ],
         "locations": [
           {
             "item_flags": 0,
@@ -1167,7 +1170,10 @@
           "signal_keys": 0
         },
         "schema_version": 7,
-        "unlocked_affordances": [],
+        "unlocked_affordances": [
+          "bounce_pad",
+          "moving_platform"
+        ],
         "zone_id": "zone_001"
       },
       "zone": {
@@ -1176,13 +1182,23 @@
             "activities": [
               {
                 "element_count": 5,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 20.0
+              }
+            ],
+            "features": [
+              {
+                "at": [
+                  0.18,
+                  0.3
+                ],
+                "tag": "moving_platform"
               }
             ],
             "id": "c001",
             "length": 15.0,
             "type": "corridor",
-            "width": 6.0
+            "width": 7.9
           },
           {
             "activities": [
@@ -1229,10 +1245,19 @@
             "vertical_step": 0.51
           },
           {
+            "features": [
+              {
+                "at": [
+                  0.82,
+                  0.3
+                ],
+                "tag": "bounce_pad"
+              }
+            ],
             "id": "c004",
             "length": 15.0,
             "type": "corridor",
-            "width": 6.9
+            "width": 7.9
           },
           {
             "activities": [
@@ -1288,17 +1313,19 @@
             "id": "c007",
             "length": 10.7,
             "type": "corridor",
-            "width": 7.3
+            "width": 7.9
           },
           {
             "activities": [
               {
                 "element_count": 4,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 16.0
               },
               {
                 "element_count": 2,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 8.0
               }
             ],
             "gap_size": 2.25,
@@ -1344,7 +1371,7 @@
             "id": "c010",
             "length": 9.5,
             "type": "corridor",
-            "width": 7.2
+            "width": 7.9
           },
           {
             "activities": [
@@ -1375,11 +1402,13 @@
             "activities": [
               {
                 "element_count": 5,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 20.0
               },
               {
                 "element_count": 5,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 20.0
               }
             ],
             "gap_size": 1.47,
@@ -1394,7 +1423,7 @@
             "id": "c013",
             "length": 10.5,
             "type": "corridor",
-            "width": 7.5
+            "width": 7.9
           },
           {
             "activities": [
@@ -1408,7 +1437,8 @@
               },
               {
                 "element_count": 4,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 16.0
               }
             ],
             "depth": 24.0,
@@ -1468,16 +1498,12 @@
             "id": "c016",
             "length": 10.9,
             "type": "corridor",
-            "width": 5.1
+            "width": 7.9
           },
           {
             "activities": [
               {
                 "element_count": 5,
-                "kind": "switch_sequence"
-              },
-              {
-                "element_count": 4,
                 "kind": "switch_sequence"
               }
             ],
@@ -1493,10 +1519,6 @@
             "activities": [
               {
                 "element_count": 2,
-                "kind": "target_challenge"
-              },
-              {
-                "element_count": 3,
                 "kind": "target_challenge"
               }
             ],
@@ -1524,13 +1546,14 @@
             "id": "c019",
             "length": 13.7,
             "type": "corridor",
-            "width": 6.7
+            "width": 7.9
           },
           {
             "activities": [
               {
                 "element_count": 3,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 12.0
               }
             ],
             "depth": 11.4,
@@ -1566,7 +1589,7 @@
             "id": "c022",
             "length": 8.1,
             "type": "corridor",
-            "width": 5.1
+            "width": 7.9
           },
           {
             "activities": [
@@ -1608,8 +1631,8 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 911,
-        "enemy_total": 34,
+        "content_value": 913,
+        "enemy_total": 32,
         "rooms_holding_no_check": 8
       },
       "request": {
@@ -1678,6 +1701,9 @@
           "zone_budget": 1000
         },
         "generation_id": "baseline-zone-2",
+        "guaranteed_capabilities": [
+          "ranged_hit"
+        ],
         "locations": [
           {
             "item_flags": 0,
@@ -1822,7 +1848,10 @@
           "signal_keys": 0
         },
         "schema_version": 7,
-        "unlocked_affordances": [],
+        "unlocked_affordances": [
+          "bounce_pad",
+          "moving_platform"
+        ],
         "zone_id": "zone_002"
       },
       "zone": {
@@ -1831,13 +1860,23 @@
             "activities": [
               {
                 "element_count": 5,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 20.0
+              }
+            ],
+            "features": [
+              {
+                "at": [
+                  0.18,
+                  0.3
+                ],
+                "tag": "bounce_pad"
               }
             ],
             "id": "c001",
             "length": 11.1,
             "type": "corridor",
-            "width": 6.3
+            "width": 7.9
           },
           {
             "activities": [
@@ -1887,13 +1926,23 @@
             "activities": [
               {
                 "element_count": 4,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 16.0
+              }
+            ],
+            "features": [
+              {
+                "at": [
+                  0.82,
+                  0.3
+                ],
+                "tag": "moving_platform"
               }
             ],
             "id": "c004",
             "length": 8.4,
             "type": "corridor",
-            "width": 7.4
+            "width": 7.9
           },
           {
             "activities": [
@@ -1955,17 +2004,19 @@
             "id": "c007",
             "length": 10.7,
             "type": "corridor",
-            "width": 5.4
+            "width": 7.9
           },
           {
             "activities": [
               {
                 "element_count": 4,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 16.0
               },
               {
                 "element_count": 3,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 12.0
               }
             ],
             "gap_size": 1.93,
@@ -2011,7 +2062,7 @@
             "id": "c010",
             "length": 12.1,
             "type": "corridor",
-            "width": 6.2
+            "width": 7.9
           },
           {
             "activities": [
@@ -2042,11 +2093,13 @@
             "activities": [
               {
                 "element_count": 5,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 20.0
               },
               {
                 "element_count": 4,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 16.0
               }
             ],
             "gap_size": 1.96,
@@ -2062,16 +2115,12 @@
               {
                 "element_count": 4,
                 "kind": "switch_sequence"
-              },
-              {
-                "element_count": 2,
-                "kind": "switch_sequence"
               }
             ],
             "id": "c013",
             "length": 13.4,
             "type": "corridor",
-            "width": 7.0
+            "width": 7.9
           },
           {
             "activities": [
@@ -2085,7 +2134,8 @@
               },
               {
                 "element_count": 5,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 20.0
               }
             ],
             "depth": 24.0,
@@ -2097,10 +2147,6 @@
               {
                 "archetype": "brute",
                 "count": 1
-              },
-              {
-                "archetype": "ranged",
-                "count": 2
               }
             ],
             "id": "c014",
@@ -2114,10 +2160,6 @@
             "activities": [
               {
                 "element_count": 2,
-                "kind": "pressure_routing"
-              },
-              {
-                "element_count": 5,
                 "kind": "pressure_routing"
               }
             ],
@@ -2139,7 +2181,7 @@
             "id": "c016",
             "length": 13.9,
             "type": "corridor",
-            "width": 5.6
+            "width": 7.9
           },
           {
             "activities": [
@@ -2181,13 +2223,14 @@
             "id": "c019",
             "length": 13.4,
             "type": "corridor",
-            "width": 7.2
+            "width": 7.9
           },
           {
             "activities": [
               {
                 "element_count": 2,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 8.0
               }
             ],
             "depth": 14.2,
@@ -2229,7 +2272,7 @@
             "id": "c022",
             "length": 13.8,
             "type": "corridor",
-            "width": 7.8
+            "width": 7.9
           },
           {
             "activities": [
@@ -2271,7 +2314,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 912,
+        "content_value": 927,
         "enemy_total": 32,
         "rooms_holding_no_check": 8
       },
@@ -2341,6 +2384,9 @@
           "zone_budget": 1000
         },
         "generation_id": "baseline-zone-3",
+        "guaranteed_capabilities": [
+          "ranged_hit"
+        ],
         "locations": [
           {
             "item_flags": 0,
@@ -2485,7 +2531,10 @@
           "signal_keys": 0
         },
         "schema_version": 7,
-        "unlocked_affordances": [],
+        "unlocked_affordances": [
+          "bounce_pad",
+          "moving_platform"
+        ],
         "zone_id": "zone_003"
       },
       "zone": {
@@ -2494,13 +2543,23 @@
             "activities": [
               {
                 "element_count": 2,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 8.0
+              }
+            ],
+            "features": [
+              {
+                "at": [
+                  0.18,
+                  0.3
+                ],
+                "tag": "moving_platform"
               }
             ],
             "id": "c001",
             "length": 16.7,
             "type": "corridor",
-            "width": 5.6
+            "width": 7.9
           },
           {
             "activities": [
@@ -2553,10 +2612,19 @@
                 "kind": "pressure_routing"
               }
             ],
+            "features": [
+              {
+                "at": [
+                  0.82,
+                  0.3
+                ],
+                "tag": "bounce_pad"
+              }
+            ],
             "id": "c004",
             "length": 13.5,
             "type": "corridor",
-            "width": 7.8
+            "width": 7.9
           },
           {
             "activities": [
@@ -2618,17 +2686,19 @@
             "id": "c007",
             "length": 14.0,
             "type": "corridor",
-            "width": 5.4
+            "width": 7.9
           },
           {
             "activities": [
               {
                 "element_count": 3,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 12.0
               },
               {
                 "element_count": 2,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 8.0
               }
             ],
             "gap_size": 2.2,
@@ -2668,7 +2738,7 @@
             "id": "c010",
             "length": 13.5,
             "type": "corridor",
-            "width": 5.3
+            "width": 7.9
           },
           {
             "activities": [
@@ -2699,11 +2769,13 @@
             "activities": [
               {
                 "element_count": 3,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 12.0
               },
               {
                 "element_count": 4,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 16.0
               }
             ],
             "gap_size": 2.27,
@@ -2718,13 +2790,14 @@
             "activities": [
               {
                 "element_count": 3,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 12.0
               }
             ],
             "id": "c013",
             "length": 15.0,
             "type": "corridor",
-            "width": 7.8
+            "width": 7.9
           },
           {
             "activities": [
@@ -2738,7 +2811,8 @@
               },
               {
                 "element_count": 4,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 16.0
               }
             ],
             "depth": 24.0,
@@ -2792,7 +2866,7 @@
             "id": "c016",
             "length": 12.9,
             "type": "corridor",
-            "width": 7.4
+            "width": 7.9
           },
           {
             "activities": [
@@ -2852,17 +2926,14 @@
             "id": "c019",
             "length": 8.8,
             "type": "corridor",
-            "width": 6.3
+            "width": 7.9
           },
           {
             "activities": [
               {
                 "element_count": 2,
-                "kind": "timed_run"
-              },
-              {
-                "element_count": 2,
-                "kind": "timed_run"
+                "kind": "timed_run",
+                "time_limit": 8.0
               }
             ],
             "depth": 12.1,
@@ -2884,10 +2955,6 @@
               {
                 "element_count": 5,
                 "kind": "switch_sequence"
-              },
-              {
-                "element_count": 3,
-                "kind": "switch_sequence"
               }
             ],
             "gap_size": 1.87,
@@ -2902,7 +2969,7 @@
             "id": "c022",
             "length": 13.3,
             "type": "corridor",
-            "width": 6.3
+            "width": 7.9
           },
           {
             "activities": [

@@ -3,73 +3,75 @@ class_name Activities
 ##
 ## Four composable families, built from primitives the base kit can
 ## already beat: a switch is touched, a target is shot with Static Pulse,
-## a plate is stood on, a timed run is run. Nothing here needs an Echo,
-## and nothing may be added that does.
+## a plate is stood on, a timed run is run.
 ##
-## This file is the reason a "puzzle" can score. `test_activity_coverage`
-## reads it and refuses any kind in the schema that has no branch here,
-## so a vocabulary Epsilon can name but the engine cannot build is a
-## failing test rather than a Zone that reads richer than it plays.
-
-const SWITCH_SIZE := Vector3(0.6, 1.2, 0.3)
-const TARGET_SIZE := Vector3(0.9, 0.9, 0.2)
-const PLATE_SIZE := Vector3(1.4, 0.15, 1.4)
+## This file used to place a row of `StaticBody3D` boxes and stop. It was
+## honest graybox GEOMETRY and it was not gameplay: nothing anywhere in
+## the client read the four kinds, so 57.7% of the played Zone's content
+## value was glowing scenery. It now builds `ActivityElement`s and hands
+## them to one `ActivityRuntime`, which owns every rule.
+##
+## `test_activity_coverage` reads this file and refuses any kind in the
+## schema with no branch here. That test proves a branch EXISTS; it cannot
+## see whether the branch produces something inert, which is exactly how
+## the inert version survived. `godot/tests/test_activities.gd` is the
+## half that drives each family to completion.
+##
+## An activity may now REQUIRE a semantic capability (owner ruling,
+## 2026-08-30) — but nothing here decides that. The bridge has already
+## refused any requirement it could not prove the campaign can satisfy,
+## and `ActivityRuntime` renders what is left.
 
 ## Build one activity into `root`, returning what it made.
+##
+## `activity_id` is stable per Zone so a completed activity's local reward
+## is the same note however many times it is solved.
 static func build(root: Node3D, activity: Dictionary, theme: String,
-		width: float, depth: float) -> Dictionary:
+		width: float, depth: float, room_id := "",
+		activity_id := "") -> Dictionary:
 	var kind := str(activity.get("kind", ""))
-	var count := int(activity.get("element_count", 1))
-	match kind:
-		"switch_sequence":
-			return _row(root, kind, count, SWITCH_SIZE, theme, width, depth,
-					1.0)
-		"target_challenge":
-			return _row(root, kind, count, TARGET_SIZE, theme, width, depth,
-					2.2)
-		"pressure_routing":
-			return _row(root, kind, count, PLATE_SIZE, theme, width, depth,
-					0.08)
-		"timed_run":
-			# One start element and one goal, however many waypoints the
-			# count asks for between them.
-			return _row(root, kind, maxi(2, count), SWITCH_SIZE, theme,
-					width, depth, 1.0)
-		_:
-			push_error("no builder for activity kind '%s'" % kind)
-			return {"kind": kind, "elements": []}
+	if not ActivityRuntime.RULES.has(kind):
+		push_error("no builder for activity kind '%s'" % kind)
+		return {"kind": kind, "elements": [], "runtime": null}
+
+	var runtime := ActivityRuntime.create(
+			activity, room_id,
+			activity_id if activity_id != "" else "%s_%s" % [room_id, kind])
+	root.add_child(runtime)
+
+	var rules := runtime.rules()
+	var built := _row(runtime, runtime.kind, runtime.placed_count(),
+			rules["size"] as Vector3, theme, width, depth,
+			float(rules["height"]), str(rules["trigger"]),
+			bool(rules["roles"]))
+	runtime.adopt(built)
+	return {"kind": kind, "elements": built, "runtime": runtime}
 
 ## Elements spread across the room's width, clear of the walking lane at
 ## both ends -- the same lane an affordance is kept out of, for the same
 ## reason: an activity element standing in the doorway is an activity
 ## element the player walks into on the way past.
 static func _row(root: Node3D, kind: String, count: int, size: Vector3,
-		theme: String, width: float, depth: float,
-		height: float) -> Dictionary:
-	var elements: Array = []
+		theme: String, width: float, depth: float, height: float,
+		trigger: String, roles: bool) -> Array[ActivityElement]:
+	var built: Array[ActivityElement] = []
 	var usable := maxf(1.0, width - 2.0 * AffordanceFeatures.LANE_HALF_WIDTH
 			- size.x)
+	var tint := ThemeMaterials.light_color(theme)
 	for i in count:
 		var t := 0.5 if count == 1 else float(i) / float(count - 1)
 		var side := -1.0 if i % 2 == 0 else 1.0
 		var x := side * (AffordanceFeatures.LANE_HALF_WIDTH + size.x / 2.0
 				+ usable * 0.5 * t)
 		var z := depth * (0.25 + 0.5 * t)
-		var body := StaticBody3D.new()
-		var mesh := MeshInstance3D.new()
-		var box := BoxMesh.new()
-		box.size = size
-		mesh.mesh = box
-		mesh.material_override = ThemeMaterials.glow_material(
-				ThemeMaterials.light_color(theme), 1.6)
-		body.add_child(mesh)
-		var shape := CollisionShape3D.new()
-		var collider := BoxShape3D.new()
-		collider.size = size
-		shape.shape = collider
-		body.add_child(shape)
-		body.name = "%s_%d" % [kind, i]
-		root.add_child(body)
-		body.position = Vector3(x, height, z)
-		elements.append(body)
-	return {"kind": kind, "elements": elements}
+		var role := ActivityElement.ROLE_ELEMENT
+		if roles:
+			if i == 0:
+				role = ActivityElement.ROLE_START
+			elif i == count - 1:
+				role = ActivityElement.ROLE_GOAL
+		var element := ActivityElement.create(trigger, i, size, tint, role)
+		root.add_child(element)
+		element.position = Vector3(x, height, z)
+		built.append(element)
+	return built

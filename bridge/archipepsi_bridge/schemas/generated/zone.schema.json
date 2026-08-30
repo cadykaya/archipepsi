@@ -32,6 +32,21 @@
           "default": false,
           "title": "Ordered",
           "type": "boolean"
+        },
+        "requires": {
+          "default": [],
+          "items": {
+            "enum": [
+              "blink",
+              "cross_long_gap",
+              "grapple",
+              "ranged_hit"
+            ],
+            "type": "string"
+          },
+          "maxItems": 2,
+          "title": "Requires",
+          "type": "array"
         }
       },
       "required": [

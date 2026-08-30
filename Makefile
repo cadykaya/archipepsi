@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-boot godot-legible godot-integration
+.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-activity godot-boot godot-legible godot-integration
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -136,6 +136,22 @@ godot-test: godot-import       # headless builder tests (no bridge needed)
 	@out=$$($(GODOT) --headless --path godot -- --chamber-test 2>&1); \
 	printf '%s\n' "$$out"; \
 	printf '%s\n' "$$out" | grep -q "GODOT CHAMBER TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# The activity vocabulary, driven rather than grepped.
+#
+# `test_runner_coverage.py` proves each schema kind has a MATCH BRANCH in
+# activities.gd. It cannot see that a branch builds an inert box, which is
+# what four of them did. This target drives each family to completion, and
+# each family to failure, through the real physics and the real damage
+# path -- so the two guards together mean "exists AND behaves".
+godot-activity: godot-import
+	@out=$$($(GODOT) --headless --path godot -- --activity-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT ACTIVITY TESTS OK" || exit 1; \
 	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
 	  echo "-- a script error was raised: the suite cannot vouch for itself"; \
 	  exit 1; \

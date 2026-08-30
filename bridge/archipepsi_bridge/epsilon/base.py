@@ -163,6 +163,7 @@ async def generate_zone_validated(
             # I12, from the request the provider was given: what it was
             # told it could place is exactly what it is held to.
             owned_affordance_tags=request.unlocked_affordances,
+            guaranteed_capabilities=request.guaranteed_capabilities,
             # The shells this request OFFERED, so a Zone naming one that
             # was not on the menu is refused. Taken from the request
             # rather than recomputed, for the same reason the affordance

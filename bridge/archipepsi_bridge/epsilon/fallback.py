@@ -46,6 +46,7 @@ def _rule_errors(zone, request, budget: int) -> list[str]:
                                 for loc in request.locations],
         owned_echo_ids=[],
         owned_affordance_tags=request.unlocked_affordances,
+        guaranteed_capabilities=request.guaranteed_capabilities,
         zone_budget=budget)
 
 
@@ -280,8 +281,8 @@ def _build_to_budget(rng, locations, budget, unlocked) -> list[dict]:
             {"archetype": "brute", "count": 1}]
         if not lean:
             landmark["activities"] = [
-                {"kind": "switch_sequence", "element_count": 5},
-                {"kind": "target_challenge", "element_count": 4}]
+                _activity("switch_sequence", 5),
+                _activity("target_challenge", 4)]
 
     # Now top up to the band with activities and enemies, cheapest lever
     # first, never past a cap.
@@ -338,10 +339,17 @@ def _build_to_budget(rng, locations, budget, unlocked) -> list[dict]:
                 return False
         acts = target.setdefault("activities", [])
         elements = rng.randint(2, 5)
-        if len(acts) < 3 and would_fit(V.ACTIVITY_BASE_VALUE
-                                       + V.ACTIVITY_PER_ELEMENT * elements):
-            kind = kinds[(guard + len(acts)) % len(kinds)]
-            acts.append({"kind": kind, "element_count": elements})
+        kind = kinds[(guard + len(acts)) % len(kinds)]
+        # Scored from the activity that will actually be appended, not
+        # from a base-plus-elements guess: a `timed_run` now carries a
+        # clock, which is worth `ACTIVITY_TIMED_BONUS` more, and a fit
+        # check that under-counts by four is a fit check that can walk
+        # the Zone out of its band at small budgets.
+        candidate = _activity(kind, elements)
+        if len(acts) < 3 and would_fit(V.room_value(_AsChamber(
+                {"type": "arena", "width": 0.0, "depth": 0.0,
+                 "activities": [candidate]}))):
+            acts.append(candidate)
             return True
         enemies, _ = totals()
         groups = target.setdefault("enemies", [])
@@ -405,8 +413,8 @@ def _build_to_budget(rng, locations, budget, unlocked) -> list[dict]:
                 break
             acts = landmark.setdefault("activities", [])
             if len(acts) < 3:
-                acts.append({"kind": "switch_sequence",
-                             "element_count": rng.randint(3, 6)})
+                acts.append(_activity("switch_sequence",
+                                      rng.randint(3, 6)))
                 continue
             enemies, _ = totals()
             groups = landmark.setdefault("enemies", [])
@@ -471,6 +479,31 @@ class _Activity:
 #: Widening past it would make a Zone the validator refuses, which is the
 #: opposite of what the widening is for.
 MAX_CORRIDOR_WIDTH = 10.0
+
+
+def _activity(kind: str, elements: int, ordered: bool = False) -> dict:
+    """One activity, with the clock its family needs.
+
+    A `timed_run` with no clock is a contradiction: activate, then reach
+    the target BEFORE IT LAPSES, with nothing that can lapse. The played
+    Zone contained seven of them and every one had `time_limit = 0`, so
+    the one dial that can make the family fail was never set.
+
+    The number is DERIVED, not chosen. `ActivityPrimitive` already
+    computes the minimum a clock may be -- the walk at base movement
+    speed, generously -- and this asks for exactly that floor, which is
+    the most forgiving legal value. Tuning it is a playtest's job, not a
+    fallback's.
+    """
+    activity = {"kind": kind, "element_count": elements}
+    if ordered:
+        activity["ordered"] = True
+    if kind == "timed_run":
+        needed = elements * C.SECONDS_PER_ACTIVITY_ELEMENT
+        if ordered:
+            needed *= C.ORDERED_ACTIVITY_TIME_MULTIPLIER
+        activity["time_limit"] = round(needed, 1)
+    return activity
 
 
 def _add_features(chambers: list[dict], unlocked: tuple[str, ...],

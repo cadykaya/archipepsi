@@ -99,6 +99,10 @@ def test_binding_a_player_clears_the_previous_world_s_prompt():
 
 ACTIVITIES_GD = (Path(__file__).resolve().parents[2] / "godot" / "scripts"
                  / "generation" / "activities.gd")
+ACTIVITY_RUNTIME_GD = (Path(__file__).resolve().parents[2] / "godot"
+                       / "scripts" / "gameplay" / "activity_runtime.gd")
+ACTIVITY_DRIVER_GD = (Path(__file__).resolve().parents[2] / "godot" / "tests"
+                      / "activity_driver.gd")
 
 
 def _activity_kinds() -> list[str]:
@@ -107,45 +111,76 @@ def _activity_kinds() -> list[str]:
     return list(ActivityKind.__args__)
 
 
+def _rule_kinds() -> set[str]:
+    """The kinds `ActivityRuntime.RULES` configures, read from source."""
+    source = ACTIVITY_RUNTIME_GD.read_text()
+    body = source[source.index("const RULES :="):]
+    body = body[:body.index("\n}")]
+    return set(re.findall(r'^\t"([a-z_]+)"\s*:', body, re.MULTILINE))
+
+
 def test_the_engine_builds_every_activity_the_schema_admits():
     """"Do not count an unimplemented puzzle tag toward room_value."
 
-    The strongest form of that is not a check at scoring time -- it is
-    making an unbuildable kind impossible to name. So the schema's
-    vocabulary and the builder's `match` are pinned to each other, the
-    same way `IMPLEMENTED_PRIMITIVES` is pinned to the action runner.
+    WHAT THIS TEST USED TO BE, and why it moved. It read
+    `activities.gd` as TEXT and asserted every schema kind appeared in
+    it, which proved a `match` branch existed. That was the right
+    question while the seam was geometry. It was not the right question
+    once the branch could build an inert box and return, which is what
+    all four branches did: the guard was green over a Zone where 57.7%
+    of the content value was scenery, and its NAME read as though it
+    guarded the puzzle.
 
-    Source-level, with the same honest limitation as the runner pin: it
-    proves a branch EXISTS, not that the branch is right. What it catches
-    is the failure that rots silently -- widening the vocabulary on the
-    Python side and leaving the engine unable to build the thing Epsilon
-    now confidently designs with.
+    So the source-level half now pins the schema to the RULES TABLE,
+    which is where a family's behaviour is configured, and
+    `test_every_activity_kind_is_driven_to_completion_somewhere` below
+    is the half that costs something to fake.
     """
-    source = ACTIVITIES_GD.read_text()
-    missing = [k for k in _activity_kinds() if f'"{k}"' not in source]
+    missing = sorted(set(_activity_kinds()) - _rule_kinds())
     assert not missing, (
-        "the schema admits activity kinds the engine cannot build, so a "
-        "Zone could name one and score for it while the room comes out "
+        "the schema admits activity kinds the engine has no rules for, so "
+        "a Zone could name one and score for it while the room comes out "
         "empty: " + ", ".join(missing))
 
 
 def test_the_engine_does_not_build_an_activity_the_schema_refuses():
-    """The mirror. A branch for a kind nobody can request is dead code
+    """The mirror. A rule for a kind nobody can request is dead code
     that reads as a supported feature."""
-    source = ACTIVITIES_GD.read_text()
-    quoted = set(re.findall(r'"([a-z_]+)"\s*:', source))
-    known = set(_activity_kinds())
-    stray = {q for q in quoted if q.endswith(("_sequence", "_run",
-                                              "_challenge", "_routing"))}
-    assert stray <= known, (
-        "the engine builds activities the schema cannot express: "
-        + ", ".join(sorted(stray - known)))
+    stray = sorted(_rule_kinds() - set(_activity_kinds()))
+    assert not stray, (
+        "the engine configures activities the schema cannot express: "
+        + ", ".join(stray))
+
+
+def test_every_activity_kind_is_driven_to_completion_somewhere():
+    """The half the source-grep could not do.
+
+    Still a source-level check -- Python cannot run Godot -- but it pins
+    a DIFFERENT thing: that the behavioural suite iterates the whole
+    rules table rather than spot-checking one family, and that CI runs
+    it. `make godot-activity` is what actually drives each family to
+    completion and to failure; this is what stops that suite from
+    quietly narrowing to the one kind somebody was debugging.
+    """
+    driver = ACTIVITY_DRIVER_GD.read_text()
+    assert "for kind: String in ActivityRuntime.RULES" in driver, (
+        "the activity suite no longer sweeps the whole rules table, so a "
+        "family could stop working without failing anything")
+    for expected in ("_test_every_kind_can_actually_be_finished",
+                     "_test_an_untouched_activity_never_completes",
+                     "_test_n_minus_one_is_not_n"):
+        assert expected in driver, f"{expected} is gone from the suite"
 
 
 def test_the_activity_pin_can_actually_see_the_builder():
     """Vacuity guard: an empty file would satisfy the mirror above and a
     missing file would make the first test pass for the wrong reason."""
     assert ACTIVITIES_GD.is_file(), ACTIVITIES_GD
-    source = ACTIVITIES_GD.read_text()
-    assert "match kind:" in source, "the builder no longer dispatches on kind"
+    assert ACTIVITY_RUNTIME_GD.is_file(), ACTIVITY_RUNTIME_GD
+    assert ACTIVITY_DRIVER_GD.is_file(), ACTIVITY_DRIVER_GD
+    assert len(_rule_kinds()) >= 4, "the rules table shrank unnoticed"
     assert len(_activity_kinds()) >= 4, "the vocabulary shrank unnoticed"
+    # The builder still has to reach the runtime, or the rules table is a
+    # table nothing consults.
+    assert "ActivityRuntime.create" in ACTIVITIES_GD.read_text(), (
+        "the builder no longer creates a runtime")

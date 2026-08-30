@@ -122,6 +122,7 @@ jobs:
           make godot-verbs
           make godot-blink
           make godot-content
+          make godot-activity
           make godot-legible
 
       - name: Whole campaign, headlessly
