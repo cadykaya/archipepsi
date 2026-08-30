@@ -1,0 +1,56 @@
+[
+ {
+  "content_id": "fixture_light_concrete_facility",
+  "kind": "fixtures",
+  "asset": "arch_light_fixture",
+  "glb": "res://content/fixtures/arch_light_fixture.glb"
+ },
+ {
+  "content_id": "fixture_light_gothic_stone",
+  "kind": "fixtures",
+  "asset": "light_gothic_corona",
+  "glb": "res://content/fixtures/light_gothic_corona.glb"
+ },
+ {
+  "content_id": "fixture_light_neon_transit",
+  "kind": "fixtures",
+  "asset": "light_neon_channel",
+  "glb": "res://content/fixtures/light_neon_channel.glb"
+ },
+ {
+  "content_id": "fixture_light_rusted_industrial",
+  "kind": "fixtures",
+  "asset": "light_rusted_cage",
+  "glb": "res://content/fixtures/light_rusted_cage.glb"
+ },
+ {
+  "content_id": "fixture_light_temple_ruin",
+  "kind": "fixtures",
+  "asset": "light_temple_bowl",
+  "glb": "res://content/fixtures/light_temple_bowl.glb"
+ },
+ {
+  "content_id": "fixture_light_void_glitch",
+  "kind": "fixtures",
+  "asset": "light_void_absent",
+  "glb": "res://content/fixtures/light_void_absent.glb"
+ },
+ {
+  "content_id": "projectile_falling",
+  "kind": "projectiles",
+  "asset": "enemy_projectile_falling",
+  "glb": "res://content/projectiles/enemy_projectile_falling.glb"
+ },
+ {
+  "content_id": "projectile_lobbed",
+  "kind": "projectiles",
+  "asset": "enemy_projectile_lobbed",
+  "glb": "res://content/projectiles/enemy_projectile_lobbed.glb"
+ },
+ {
+  "content_id": "projectile_straight",
+  "kind": "projectiles",
+  "asset": "enemy_projectile_straight",
+  "glb": "res://content/projectiles/enemy_projectile_straight.glb"
+ }
+]
