@@ -580,27 +580,54 @@ func _test_light_fixtures_are_not_buried() -> void:  # test 58
 		var result: Dictionary = cases[name]
 		var root: Node3D = result["root"]
 		var solids: Array[AABB] = _collidable_boxes(root)
-		for fixture: MeshInstance3D in _fixtures(root):
+		for box: AABB in _fixture_boxes(root):
 			checked += 1
-			var box := fixture.get_aabb()
-			box.position += fixture.position
 			for solid: AABB in solids:
 				_check(not box.intersects(solid),
 						"%s buries a light fixture at %.2v in geometry "
-						% [name, fixture.position]
+						% [name, box.get_center()]
 						+ "at %.2v -- coplanar faces shimmer" % solid.position)
 		root.free()
 	_check(checked >= 4,
 			"only %d light fixtures found; this suite would pass on a "
 			% checked + "level with no lights in it")
 
-func _fixtures(node: Node) -> Array[MeshInstance3D]:
-	var out: Array[MeshInstance3D] = []
-	if node is MeshInstance3D and node.name.begins_with("LightFixture"):
-		out.append(node as MeshInstance3D)
-	for child in node.get_children():
-		out.append_array(_fixtures(child))
+## Every light fixture's mesh, as an AABB in the chamber's own space.
+##
+## `_light` names the housing "LightFixture" whether it built the
+## procedural box itself or instantiated an authored scene. The two are
+## not the same SHAPE of node: the procedural fixture IS a
+## MeshInstance3D, and an authored housing is a Node3D whose meshes are
+## children of it.
+##
+## So a detector that demanded `is MeshInstance3D` on the named node
+## found the procedural fixture and, the moment real art arrived through
+## the seam, silently found NOTHING -- and a buried-fixture test that
+## inspects zero fixtures passes every time. That is exactly what the
+## `checked >= 4` guard below is for, and it is what caught this.
+##
+## Descending also means the check now covers the AUTHORED housings,
+## which is the version that matters: they are larger than the 0.8 x 0.1
+## x 0.4 slab they replace, so they have more room to reach the ceiling.
+func _fixture_boxes(root: Node3D) -> Array[AABB]:
+	var out: Array[AABB] = []
+	for child in root.get_children():
+		if not (child is Node3D):
+			continue
+		if not child.name.begins_with("LightFixture"):
+			continue
+		var node := child as Node3D
+		_collect_fixture_meshes(node, node.transform, out)
 	return out
+
+func _collect_fixture_meshes(node: Node3D, xform: Transform3D,
+		out: Array[AABB]) -> void:
+	if node is MeshInstance3D:
+		out.append(xform * (node as MeshInstance3D).get_aabb())
+	for sub in node.get_children():
+		if sub is Node3D:
+			var child := sub as Node3D
+			_collect_fixture_meshes(child, xform * child.transform, out)
 
 
 ## CAMPAIGN_SCALE.md 13. The forty-minute Zone is a TARGET; this is the
