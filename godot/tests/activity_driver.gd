@@ -69,6 +69,7 @@ func _run() -> void:
 	await _test_the_real_zone_builder_actually_builds_activities()
 	await _test_a_zone_built_activity_is_drivable()
 	await _test_no_element_is_buried_in_a_wall()
+	await _test_every_shell_route_still_populates_the_chamber()
 
 	_check(activities_built >= 10,
 			"the suite built %d activities; it is not exercising the "
@@ -551,6 +552,56 @@ func _element_half_width(element: ActivityElement) -> float:
 		if child is MeshInstance3D:
 			return (child as MeshInstance3D).get_aabb().size.x / 2.0
 	return 0.0
+
+func _test_every_shell_route_still_populates_the_chamber() -> void:
+	"""Chamber content survives whichever room `_shell` chose.
+
+	The bug this batch shipped with was a ROUTING bug: the population
+	step lived at the bottom of one of `_shell`'s four exits, and the
+	game takes a different one. So the property worth pinning is not "the
+	procedural route works" -- it is that the route CANNOT MATTER,
+	because population happens after the route has finished.
+
+	Driven through `build_chamber` with registries that force different
+	branches, rather than by reading the source: a comment saying the
+	steps are separate is what the last version effectively had.
+	"""
+	var chamber := {
+		"id": "c1", "type": "arena", "width": 22.0, "depth": 20.0,
+		"wall_height": 6.0, "objective": "kill_all",
+		"activities": [{"kind": "switch_sequence", "element_count": 3}]}
+
+	var routes := {
+		"registry as shipped": ContentRegistry.shared(),
+		"nothing registered": _registry({}),
+		"shell id unknown to the registry": _registry({"other": {
+			"id": "other", "category": "room_shell"}}),
+		"shell present, procedural fallback": _registry({
+			"shell_arena_proc": {"id": "shell_arena_proc",
+				"category": "room_shell", "procedural_fallback": true}}),
+	}
+	for label: String in routes:
+		var result := ContentInstantiator.build_chamber(
+				chamber, "concrete_facility", routes[label])
+		var built: Array = result.get("activities", []) as Array
+		_check(built.size() == 1,
+				"route '%s' produced %d activities for a chamber that "
+				% [label, built.size()] + "declares 1: the shell route can "
+				+ "still drop chamber content")
+		if built.size() == 1:
+			var runtime := (built[0] as Dictionary).get("runtime") \
+					as ActivityRuntime
+			_check(runtime != null and runtime.elements.size() == 3,
+					"route '%s' built an activity with no elements" % label)
+		var root := result.get("root") as Node3D
+		if root != null:
+			root.queue_free()
+		await get_tree().process_frame
+
+func _registry(entries: Dictionary) -> ContentRegistry:
+	var reg := ContentRegistry.new()
+	reg.entries = entries
+	return reg
 
 # --- fixture -------------------------------------------------------------
 

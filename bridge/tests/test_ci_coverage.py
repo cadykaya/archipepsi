@@ -28,15 +28,23 @@ WORKFLOW = REPO / ".github" / "workflows" / "integration.yml"
 NOT_A_SUITE = {"godot-import", "godot-integration"}
 
 
+#: HYPHENS INCLUDED. This read `godot-[a-z]+`, which stops dead at the
+#: first hyphen -- so `godot-zone-audit` was invisible to the Makefile
+#: side and showed up as a phantom on the CI side, and a suite named with
+#: two words would have been silently unguarded. The pattern the guard
+#: uses has to match the names people actually write.
+_TARGET = r"godot-[a-z][a-z-]*"
+
+
 def _makefile_suites() -> set[str]:
     targets = set(
-        re.findall(r"^(godot-[a-z]+):", MAKEFILE.read_text(), re.MULTILINE)
+        re.findall(rf"^({_TARGET}):", MAKEFILE.read_text(), re.MULTILINE)
     )
     return targets - NOT_A_SUITE
 
 
 def _suites_ci_runs() -> set[str]:
-    return set(re.findall(r"make (godot-[a-z]+)", WORKFLOW.read_text()))
+    return set(re.findall(rf"make ({_TARGET})", WORKFLOW.read_text()))
 
 
 def test_ci_runs_every_godot_suite_the_makefile_defines():

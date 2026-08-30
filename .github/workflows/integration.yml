@@ -123,6 +123,7 @@ jobs:
           make godot-blink
           make godot-content
           make godot-activity
+          make godot-zone-audit
           make godot-legible
 
       - name: Whole campaign, headlessly

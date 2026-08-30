@@ -497,6 +497,29 @@ def _check(argv) -> int:
     return 0
 
 
+def _dump(args) -> int:
+    """Write the Zone a baseline playtest walks, as JSON.
+
+    DIAGNOSTIC ONLY. Nothing in the game reads this, and writing it
+    changes nothing: it is `played_zone()` serialised, so a Godot-side
+    audit can build the SAME Zone the player gets rather than a fixture
+    that resembles it. A tool that audits a lookalike proves nothing
+    about the level anybody walks -- which is the whole reason the
+    activity defect survived a green suite.
+    """
+    zone = played_zone()
+    if zone is None:
+        print("could not build the played Zone", file=sys.stderr)
+        return 1
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(zone.model_dump_json(indent=1), encoding="utf-8")
+    digest = played_zone_digest()
+    print(f"wrote {args.out}  ({digest['rooms']} rooms, "
+          f"{digest['checks']} Checks, {digest['value']} points, "
+          f"id {digest['digest']})")
+    return 0
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m archipepsi_bridge.playtest",
@@ -505,9 +528,15 @@ def main(argv=None) -> int:
     sub.add_parser("check", help="refuse if the baseline has drifted")
     reporter = sub.add_parser("report", help="summarise what was played")
     reporter.add_argument("--save-dir", type=Path, default=None)
+    dumper = sub.add_parser(
+        "dump", help="write the played Zone as JSON, for the Godot audit")
+    dumper.add_argument("--out", type=Path,
+                        default=Path("godot/tests/fixtures/played_zone.json"))
     args = parser.parse_args(argv)
     if args.command == "check":
         return _check(args)
+    if args.command == "dump":
+        return _dump(args)
     return report(args.save_dir)
 
 

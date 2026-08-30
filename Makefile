@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-activity godot-boot godot-legible godot-integration
+.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-activity godot-zone-audit zone-shots godot-boot godot-legible godot-integration
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -156,6 +156,49 @@ godot-activity: godot-import
 	  echo "-- a script error was raised: the suite cannot vouch for itself"; \
 	  exit 1; \
 	fi
+
+# The REAL Zone 1, audited through the real builder.
+#
+# `godot-activity` drives activities it builds itself. That is what let a
+# whole batch ship with the game building none: the suite proved the
+# runtime works and nothing about whether anything reaches it. This target
+# loads the JSON of the Zone a baseline playtest actually walks, hands it
+# to `ZoneBuilder.build`, and measures the assembled scene with physics.
+#
+# It fails on STRUCTURE -- a declared activity with no runtime, a wrong
+# element count, a kind that cannot be completed in the assembled Zone.
+# Placement findings print as NOTEs and do not fail: they are written down
+# in `docs/ZONE_ACTIVITY_AUDIT.md` and a target that goes red on a known
+# open defect is a target people learn to ignore.
+godot-zone-audit: godot-import
+	@out=$$($(GODOT) --headless --path godot -- --zone-audit 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT ZONE AUDIT OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: the audit cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# The first deterministic screenshots of a REAL generated Zone.
+#
+# NOT `--headless`: that selects the dummy renderer and an awaited capture
+# hangs forever with no output (`docs/art/CAMERA_BENCH.md`, gotcha 1, on
+# the art branch). Xvfb plus the GL driver, and the screen must be at
+# least as large as the viewport or the frame comes back part black with
+# no error anywhere.
+#
+# Diagnostic, and not in CI: it asserts nothing, it needs a display, and
+# `godot-zone-audit` is what makes the claims. Output is gitignored --
+# these are for looking at, not for diffing.
+zone-shots: godot-import
+	@xvfb-run -a -s "-screen 0 1600x1000x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --zone-shots 2>&1 \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
+# The audit's fixture, regenerated from the engine rather than edited.
+zone-fixture:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest dump \
+	  --out ../godot/tests/fixtures/played_zone.json
 
 # Invariant I14 (ACCEPTANCE_TESTS 5.7). Boots the real project rather than
 # using `--script`: a SceneTree script never instantiates the autoloads, so

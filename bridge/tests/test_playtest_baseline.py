@@ -438,3 +438,48 @@ def test_the_recorded_zones_are_not_the_same_zone(baseline):
     shapes = {json.dumps(e["zone"]["chambers"], sort_keys=True)
               for e in baseline["zones"]}
     assert len(shapes) == len(baseline["zones"])
+
+
+# --- the Godot audit's fixture is the Zone, not a lookalike -------------
+
+def test_the_zone_audit_fixture_is_the_zone_that_gets_played():
+    """`godot-zone-audit` builds `godot/tests/fixtures/played_zone.json`
+    through the real ZoneBuilder and measures what came out.
+
+    That proves something about the level a player walks only while the
+    fixture IS that level. A stale copy would keep passing, in a suite
+    whose whole purpose is catching the case where a subsystem is green
+    over a game that does something else. Regenerate with
+    `make zone-fixture`.
+    """
+    import json
+
+    from archipepsi_bridge.playtest import played_zone, played_zone_digest
+
+    fixture = (Path(__file__).resolve().parents[2] / "godot" / "tests"
+               / "fixtures" / "played_zone.json")
+    assert fixture.is_file(), f"{fixture} is missing; run `make zone-fixture`"
+
+    live = played_zone()
+    assert live is not None
+    recorded = json.loads(fixture.read_text(encoding="utf-8"))
+    assert recorded == json.loads(live.model_dump_json()), (
+        "the zone-audit fixture is not the Zone the engine now builds "
+        f"(live digest {played_zone_digest()['digest']}); regenerate it "
+        "with `make zone-fixture`")
+
+
+def test_the_zone_audit_fixture_actually_holds_activities():
+    """Vacuity guard. An empty Zone would satisfy every structural
+    assertion the audit makes, and the audit would report nothing wrong
+    about a level with nothing in it."""
+    import json
+
+    fixture = (Path(__file__).resolve().parents[2] / "godot" / "tests"
+               / "fixtures" / "played_zone.json")
+    zone = json.loads(fixture.read_text(encoding="utf-8"))
+    kinds = {a["kind"] for c in zone["chambers"]
+             for a in (c.get("activities") or [])}
+    assert len(kinds) == 4, (
+        f"the audit fixture exercises only {sorted(kinds)}; a kind with no "
+        "instance in it is a kind the real-Zone audit cannot vouch for")

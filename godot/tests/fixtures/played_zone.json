@@ -1,0 +1,691 @@
+{
+ "schema_version": 7,
+ "zone_id": "zone_001",
+ "display_name": "Relay 001: Bomb Rush Cyberfunk",
+ "target_game": "Bomb Rush Cyberfunk",
+ "theme": "neon_transit",
+ "designer_note": "Deterministic fallback zone.",
+ "featured_echo_ids": [],
+ "chambers": [
+  {
+   "id": "c001",
+   "flavor": null,
+   "reward_location_id": null,
+   "features": [
+    {
+     "tag": "moving_platform",
+     "at": [
+      0.18,
+      0.3
+     ],
+     "note": null
+    }
+   ],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "timed_run",
+     "element_count": 5,
+     "time_limit": 20.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "corridor",
+   "length": 15.0,
+   "width": 7.9,
+   "enemies": []
+  },
+  {
+   "id": "c002",
+   "flavor": null,
+   "reward_location_id": 89100076,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "target_challenge",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "target_challenge",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 13.8,
+   "depth": 15.8,
+   "wall_height": 4.9,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "melee",
+     "count": 4
+    }
+   ]
+  },
+  {
+   "id": "c003",
+   "flavor": null,
+   "reward_location_id": 89100089,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "pressure_routing",
+     "element_count": 4,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "pressure_routing",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "platform_path",
+   "segment_count": 3,
+   "gap_size": 2.15,
+   "vertical_step": 0.51,
+   "objective": "platform_to_goal",
+   "enemies": []
+  },
+  {
+   "id": "c004",
+   "flavor": null,
+   "reward_location_id": null,
+   "features": [
+    {
+     "tag": "bounce_pad",
+     "at": [
+      0.82,
+      0.3
+     ],
+     "note": null
+    }
+   ],
+   "additional_reward_location_ids": [],
+   "activities": [],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "corridor",
+   "length": 15.0,
+   "width": 7.9,
+   "enemies": []
+  },
+  {
+   "id": "c005",
+   "flavor": null,
+   "reward_location_id": 89100019,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "switch_sequence",
+     "element_count": 4,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "switch_sequence",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 12.4,
+   "depth": 14.1,
+   "wall_height": 5.7,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "ranged",
+     "count": 5
+    }
+   ]
+  },
+  {
+   "id": "c006",
+   "flavor": null,
+   "reward_location_id": 89100042,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "target_challenge",
+     "element_count": 5,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "target_challenge",
+     "element_count": 5,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 23.8,
+   "depth": 13.5,
+   "wall_height": 5.6,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "ranged",
+     "count": 1
+    }
+   ]
+  },
+  {
+   "id": "c007",
+   "flavor": null,
+   "reward_location_id": null,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "corridor",
+   "length": 10.7,
+   "width": 7.9,
+   "enemies": []
+  },
+  {
+   "id": "c008",
+   "flavor": null,
+   "reward_location_id": 89100147,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "timed_run",
+     "element_count": 4,
+     "time_limit": 16.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "timed_run",
+     "element_count": 2,
+     "time_limit": 8.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "platform_path",
+   "segment_count": 4,
+   "gap_size": 2.25,
+   "vertical_step": 0.51,
+   "objective": "platform_to_goal",
+   "enemies": []
+  },
+  {
+   "id": "c009",
+   "flavor": null,
+   "reward_location_id": 89100093,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "switch_sequence",
+     "element_count": 3,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "switch_sequence",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 20.5,
+   "depth": 18.7,
+   "wall_height": 6.1,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "ranged",
+     "count": 5
+    }
+   ]
+  },
+  {
+   "id": "c010",
+   "flavor": null,
+   "reward_location_id": null,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "target_challenge",
+     "element_count": 5,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "corridor",
+   "length": 9.5,
+   "width": 7.9,
+   "enemies": []
+  },
+  {
+   "id": "c011",
+   "flavor": null,
+   "reward_location_id": 89100110,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "pressure_routing",
+     "element_count": 5,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "pressure_routing",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 12.5,
+   "depth": 12.6,
+   "wall_height": 5.7,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "melee",
+     "count": 1
+    }
+   ]
+  },
+  {
+   "id": "c012",
+   "flavor": null,
+   "reward_location_id": 89100139,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "timed_run",
+     "element_count": 5,
+     "time_limit": 20.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "timed_run",
+     "element_count": 5,
+     "time_limit": 20.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "platform_path",
+   "segment_count": 5,
+   "gap_size": 1.47,
+   "vertical_step": 0.51,
+   "objective": "platform_to_goal",
+   "enemies": []
+  },
+  {
+   "id": "c013",
+   "flavor": null,
+   "reward_location_id": null,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "corridor",
+   "length": 10.5,
+   "width": 7.9,
+   "enemies": []
+  },
+  {
+   "id": "c014",
+   "flavor": null,
+   "reward_location_id": 89100097,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "switch_sequence",
+     "element_count": 5,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "target_challenge",
+     "element_count": 4,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "timed_run",
+     "element_count": 4,
+     "time_limit": 16.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 26.0,
+   "depth": 24.0,
+   "wall_height": 7.0,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "melee",
+     "count": 7
+    },
+    {
+     "archetype": "brute",
+     "count": 1
+    },
+    {
+     "archetype": "ranged",
+     "count": 4
+    }
+   ]
+  },
+  {
+   "id": "c015",
+   "flavor": null,
+   "reward_location_id": 89100055,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "pressure_routing",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "pressure_routing",
+     "element_count": 5,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 18.7,
+   "depth": 21.1,
+   "wall_height": 4.6,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "ranged",
+     "count": 5
+    }
+   ]
+  },
+  {
+   "id": "c016",
+   "flavor": null,
+   "reward_location_id": null,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "pressure_routing",
+     "element_count": 4,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "corridor",
+   "length": 10.9,
+   "width": 7.9,
+   "enemies": []
+  },
+  {
+   "id": "c017",
+   "flavor": null,
+   "reward_location_id": 89100051,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "switch_sequence",
+     "element_count": 5,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "platform_path",
+   "segment_count": 6,
+   "gap_size": 1.81,
+   "vertical_step": 0.51,
+   "objective": "platform_to_goal",
+   "enemies": []
+  },
+  {
+   "id": "c018",
+   "flavor": null,
+   "reward_location_id": 89100005,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "target_challenge",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 18.9,
+   "depth": 14.4,
+   "wall_height": 5.8,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "ranged",
+     "count": 5
+    }
+   ]
+  },
+  {
+   "id": "c019",
+   "flavor": null,
+   "reward_location_id": null,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "pressure_routing",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "corridor",
+   "length": 13.7,
+   "width": 7.9,
+   "enemies": []
+  },
+  {
+   "id": "c020",
+   "flavor": null,
+   "reward_location_id": 89100025,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "timed_run",
+     "element_count": 3,
+     "time_limit": 12.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 19.5,
+   "depth": 11.4,
+   "wall_height": 6.7,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "ranged",
+     "count": 1
+    }
+   ]
+  },
+  {
+   "id": "c021",
+   "flavor": null,
+   "reward_location_id": 89100126,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "switch_sequence",
+     "element_count": 4,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "platform_path",
+   "segment_count": 5,
+   "gap_size": 2.38,
+   "vertical_step": 0.51,
+   "objective": "platform_to_goal",
+   "enemies": []
+  },
+  {
+   "id": "c022",
+   "flavor": null,
+   "reward_location_id": null,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "corridor",
+   "length": 8.1,
+   "width": 7.9,
+   "enemies": []
+  },
+  {
+   "id": "c023",
+   "flavor": null,
+   "reward_location_id": 89100068,
+   "features": [],
+   "additional_reward_location_ids": [],
+   "activities": [
+    {
+     "kind": "pressure_routing",
+     "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    }
+   ],
+   "shell_id": null,
+   "size_class": null,
+   "intent": [],
+   "type": "arena",
+   "width": 15.9,
+   "depth": 13.1,
+   "wall_height": 5.1,
+   "objective": "kill_all",
+   "enemies": [
+    {
+     "archetype": "ranged",
+     "count": 2
+    }
+   ]
+  }
+ ]
+}
