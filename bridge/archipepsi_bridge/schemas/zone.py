@@ -168,6 +168,62 @@ class ActivityPrimitive(Strict):
         return self
 
 
+#: How much clear air a player needs above a walkable surface. Below
+#: this a "gallery" is a shelf you cannot stand on.
+#:
+#: Public because a generator has to know it BEFORE it proposes a band.
+#: The fallback used to derive the same number itself, and the two
+#: derivations disagreed by five millimetres of rounding -- which is one
+#: more instance of the fact this whole batch has been about.
+HEADROOM = C.PLAYER_HEIGHT + 0.6
+
+
+class ElevationBand(Strict):
+    """A second walkable height inside an ORDINARY room (ROOM_GRAMMAR v0).
+
+    The measured finding this exists for: a room's entire shape was three
+    numbers. `ArenaChamber` was width, depth and wall_height, so every one
+    of the twenty-three rooms in the played Zone was a flat rectangle and
+    the twenty-eight ranged enemies in them had nowhere to be ranged
+    FROM. Nothing was wrong with the generator; there was no field in
+    which a raised area could be described.
+
+    Deliberately ONE band, and deliberately not a `platform_path`. This
+    is a property an ordinary room may have, not a room type -- the whole
+    point is that verticality stops being a special minigame.
+
+    Every field is a Literal or a bounded float so the vocabulary can
+    GROW without becoming free-form: `kind` gains `catwalk` and `alcove`,
+    `access` gains `drop` and `capability:<name>`, `side` gains `front`.
+    A dead-end one-off would have been a boolean called `has_ledge`.
+    """
+
+    #: Raised shelf along a wall, or a sunken area in the floor.
+    kind: Literal["gallery", "pit"]
+
+    #: Metres above the floor (gallery) or below it (pit).
+    #:
+    #: Floored at `MAX_VERTICAL_STEP` so a band is never something you
+    #: step onto by accident -- a 30 cm rise is a trip hazard, not a
+    #: decision. Capped so a pit stays a place rather than a well.
+    rise: float = Field(ge=C.MAX_VERTICAL_STEP, le=4.0)
+
+    #: Fraction of the room's DEPTH the band spans.
+    #:
+    #: Bounded well under 1.0 on purpose: a band covering the whole room
+    #: is a room at a different height, which is not a spatial decision.
+    coverage: float = Field(ge=0.2, le=0.55)
+
+    #: Which wall it hugs.
+    side: Literal["left", "right", "back"]
+
+    #: How the player gets on and off it. Both are base-kit traversal --
+    #: NO REQUIREMENT BEFORE GUARANTEE applies to geometry exactly as it
+    #: applies to activities, and a band holding anything required must
+    #: be reachable by movement the campaign is guaranteed to have.
+    access: Literal["ramp", "stair"] = "ramp"
+
+
 class EnemyGroup(Strict):
     archetype: Archetype
     #: One group is one encounter, so this is the encounter cap rather
@@ -391,6 +447,31 @@ class ArenaChamber(_WithEnemies):
     wall_height: float = Field(ge=4, le=8)
     objective: Literal["kill_all", "reach_reward"]
     enemies: tuple[EnemyGroup, ...] = Field(default=(), max_length=4)
+
+    #: ROOM_GRAMMAR v0. Additive and optional, for the reason `features`
+    #: and `activities` were: a Zone inside a save that predates the
+    #: grammar is still a valid Zone, and a new REQUIRED field would fail
+    #: every campaign in progress.
+    elevation: ElevationBand | None = None
+
+    @model_validator(mode="after")
+    def _a_band_leaves_room_to_stand(self):
+        """A gallery you cannot stand up on is a shelf.
+
+        Checked here rather than in the builder because it is a property
+        of the DESCRIPTION -- a Zone naming a 4 m gallery under a 5 m
+        ceiling is describing somewhere the player cannot go, and the
+        engine should never be handed one to build.
+        """
+        if self.elevation is None or self.elevation.kind != "gallery":
+            return self
+        clear = self.wall_height - self.elevation.rise
+        if clear < HEADROOM:
+            raise ValueError(
+                f"a {self.elevation.rise:.1f}m gallery under a "
+                f"{self.wall_height:.1f}m ceiling leaves {clear:.1f}m of "
+                f"headroom; a player needs {HEADROOM:.1f}m to stand")
+        return self
 
 
 class PlatformPathChamber(_WithEnemies):

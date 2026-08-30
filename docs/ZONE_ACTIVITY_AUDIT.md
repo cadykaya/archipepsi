@@ -2,6 +2,9 @@
 
 Run against Production head `9a1d78f`, on the Zone a baseline playtest
 walks: `zone_digest 1bdf42f800c5637e`, 23 rooms, 15 Checks, 916 points.
+**Section 1-ter re-runs it after ROOM GRAMMAR v0, on
+`zone_digest 6e8d83d0f3ec088b` — 23 rooms, 15 Checks, 922 points — and
+that is the current state.**
 
 **Why this exists.** `godot-activity` drives activities it builds itself.
 That is what let a whole batch ship while the game built zero activities
@@ -73,6 +76,62 @@ outside the scene tree**, and a chamber is built detached and added
 later. The first occupancy pass therefore collected every prop at its own
 local offset near the origin, intersected nothing, and the solver
 silently did nothing while looking entirely correct.
+
+---
+
+## 1-ter. Third run, after ROOM GRAMMAR v0
+
+New Zone: `zone_digest 6e8d83d0f3ec088b`, 23 rooms, 15 Checks, 922
+points. The digest moved because `ElevationBand` is a new schema field
+and the fallback consumes RNG to decide it, which shifts every room's
+dimensions downstream. **29 activities audited, 0 structural failures,
+10 placement notes.**
+
+The comparison that matters is not before-vs-after on two different
+Zones. It is the SAME Zone through two engines:
+
+| Engine | Zone | Result |
+|---|---|---|
+| pre-batch (`a032b03`) | old (`1bdf42f8…`) | 30 audited, 0 failures, 8 notes |
+| pre-batch (`a032b03`) | **new** (`6e8d83d0…`) | 29 audited, 0 failures, **10 notes** |
+| this batch | **new** (`6e8d83d0…`) | 29 audited, 0 failures, **10 notes** |
+
+The last two rows are identical, note for note. Every placement change
+between the 8 and the 10 comes from the Zone's own room dimensions
+moving, not from anything this batch did to the engine — and all ten
+notes are in `platform_path` rooms (section 4, still open). **No arena
+carries a placement note, banded or not.**
+
+New in this run: `_audit_bands` measures every declared band in the
+assembled Zone — a ray onto the deck's own `reserved` socket, compared
+against the rise the Zone declared. It is a STRUCTURAL check, not a
+note: a band is a claim about geometry and the way that claim fails is
+silently. 5 bands measured, 5 correct.
+
+Three defects it found, all the same shape — **the builder knew a
+physical fact and nothing else did**:
+
+- The access ramp is `3 × rise` long, so at 6.8 m it is wider than
+  `ROOM_SCALE_SOLID` and occupancy classified it as architecture. It
+  became the only obstacle in the room nobody could see, and two
+  elements of one arena were inside it. Fixed by DECLARING it as a
+  `reserved` socket.
+- Ground sockets for crates and barrels were offered at six fixed
+  points with nothing checked. Three of six landed inside the room's own
+  props or inside a gallery's solid mass. The builder now vouches for
+  them against its own geometry.
+- **A pit was a sealed basement.** The recess was dug and the arena's
+  floor slab was still laid across the whole room, so the pit had a lid.
+  Every unit test passed: the bounds dropped, the sockets sat below
+  zero, and a ray from inside the recess found its deck. Nothing asked
+  what a ray from ABOVE hits first. `arena` now builds its floor as up
+  to four slabs around the hole, from the same `band_rect` the band
+  itself is built from.
+
+The last one is the batch's own instance of the recurring shape: the
+test that missed it is called `_test_a_pit_is_a_hole_not_a_painted_floor`
+and its docstring cites `_carve_gap` never removing the base slab. **A
+guard inherits the blind spot of the fix it was built to protect.**
 
 ---
 
@@ -277,6 +336,21 @@ traps both bit on the way:
 2. Framing solved from the subject's AABB alone puts the camera outside
    the room, and the first eight frames were photographs of chamber
    exteriors. The camera is now clamped inside the room's own bounds.
+
+ROOM GRAMMAR v0 added a room pass: one frame per chamber that DECLARES
+an elevation band, named `NN_room_<id>_<kind>_<side>.png`. The subjects
+are chosen by asking the Zone which chambers have a band — never by
+naming one that looked good, which is how a generator gets judged on its
+best output — and each is aimed at the deck's own `reserved` socket, so
+the photograph and the builder cannot disagree about where the band is.
+The camera goes to the high corner FURTHEST from the band; solving a
+distance for a subject the size of the room puts it outside the room
+again, and the clamp then lands it inside the furniture. On the
+committed Zone that is 5 frames of 23 chambers.
+
+The pit screenshot is why the band audit exists. It showed an unbroken
+floor where the Zone declared a pit, which is what sent the probe
+looking, and the probe found the lid.
 
 ---
 

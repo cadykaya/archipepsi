@@ -535,10 +535,42 @@ green suite over it, because the suite ran at prototype scale. The mock
 backend now takes a `CampaignConfig` and
 `bridge/tests/test_production_scale.py` runs the real engine at 450.
 
-## THE ROOM IS THE GAMEPLAY — proposed 2026-08-30, awaiting owner review
+## ROOM GRAMMAR v0 — landed 2026-08-30
 
-`docs/proposals/ROOM_FIRST_GAMEPLAY.md`. **Nothing built. Do not start it
-without approval.**
+The first bounded slice of `docs/proposals/ROOM_FIRST_GAMEPLAY.md`,
+approved in direction by the owner. **The rest of that proposal is still
+unbuilt and still needs approval per slice.**
+
+What exists now. `ArenaChamber.elevation` is an optional `ElevationBand`
+(gallery or pit, one per room, bounded rise/coverage/side/access), so a
+room can say it has a second height — the field that did not exist. The
+arena builder builds it as ordinary composition: deck, lip, and a ramp
+whose run is three times its rise, so base movement always reaches it
+(NO REQUIREMENT BEFORE GUARANTEE, applied to geometry). Ranged enemies
+take the deck. Two environmental objects exist and answer when hit —
+`DestructibleCover` (pays in space, not loot) and `ReactiveBarrel`
+(hazard orange honestly spent) — placed only into builder-vouched
+sockets. `make godot-room` is the suite; `make godot-zone-audit` now
+measures every declared band in the real assembled Zone.
+
+The socket contract is the load-bearing part: **the builder emits points
+it vouches for, and regions of architecture that content must avoid are
+DECLARED as `reserved` sockets rather than inferred.** Three defects in
+this batch were all one shape — the ramp is 6.8 m long so occupancy
+classified it as architecture and it became the one invisible obstacle
+in the room; ground sockets were offered blind and landed inside crates
+and inside the gallery's own mass; and the pit was dug under an intact
+floor slab, a sealed basement that every unit test passed.
+
+Measured, not tuned: 5 of 23 chambers in the played Zone declare a band
+(4 galleries, 1 pit) on the deterministic seed. On the same Zone, this
+batch's engine changes produce byte-identical audit results to the
+pre-batch engine — 0 structural failures, 10 placement notes, every one
+of them in a `platform_path` room and none in an arena.
+
+`ENVIRONMENT_OBJECT_VALUE` was written and then deleted: how many objects
+a room can hold is a fact about its built geometry, and Python pricing it
+would be the same builder-knows-what-the-composer-does-not failure.
 
 Owner ruling after playing Zone 1: the problem is not the activity
 families, it is that **the rooms are miserable**. "There's more stuff to

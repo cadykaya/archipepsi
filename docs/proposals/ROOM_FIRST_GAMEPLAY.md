@@ -1,7 +1,15 @@
 # Proposal: the room is the gameplay
 
-**Status: PROPOSED, NOT IMPLEMENTED.** Nothing here is built. Written
-after the 2026-08-30 playtest of Zone 1 at `d5beedd`.
+**Status: SLICE 1 LANDED; the rest is PROPOSED, NOT IMPLEMENTED.**
+Written after the 2026-08-30 playtest of Zone 1 at `d5beedd`.
+
+ROOM GRAMMAR v0 — one elevation band per arena, the socket placement
+contract, elevated ranged enemies, destructible cover and a reactive
+barrel — was approved in direction and built. See `NEXT_STEPS.md` and
+`docs/ZONE_ACTIVITY_AUDIT.md` §1-ter. **Every other section below is
+still a proposal and needs its own approval; do not start one without
+it.** In particular there is still no loot economy, no side branches or
+alcoves, and no second band per room.
 
 The owner's finding, which supersedes "the activity families need work":
 

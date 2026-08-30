@@ -51,7 +51,31 @@ OBJECTIVE_VALUE = {
 TRAVERSAL_SEGMENT_VALUE = 3
 
 #: Per authored secret. Optional, findable, and the reason to look around.
+#:
+#: DEFINED AND UNUSED. `room_value` never reads it and no chamber field
+#: can produce one, so a Zone cannot contain a scored secret. Recorded in
+#: `docs/proposals/NEXT_BATCH_ACTIVITY_CONVERSION.md` as a thing to wire
+#: or delete; left alone here because this batch is about rooms.
 SECRET_VALUE = 8
+
+#: An elevation band (ROOM_GRAMMAR v0). A second walkable height is not
+#: decoration: it is somewhere else to stand, shoot from and be shot at
+#: from, and it changes how the room below it plays.
+#:
+#: Priced between an affordance and a brute. Higher than an activity's
+#: base, because the measured finding was that a room's SHAPE bought
+#: nothing at all while thirty-two inert puzzle rows bought 531 points.
+ELEVATION_BAND_VALUE = 14
+
+#: Environmental objects are NOT priced, deliberately.
+#:
+#: A room's crates and barrels come from the sockets its BUILDER emits,
+#: and how many a room can hold is a fact about its geometry -- where the
+#: props went, where the band's mass is, where the ramp runs. Python does
+#: not know any of that and must not pretend to: a price here would be a
+#: number the engine could not honour, which is the same
+#: builder-knows-what-the-composer-does-not failure this batch spent its
+#: time repairing. The band, which the composer DOES declare, is priced.
 
 #: Activities (CAMPAIGN_SCALE.md 9). A base for existing at all, plus the
 #: composition that makes one harder than another -- elements, a clock,
@@ -138,6 +162,9 @@ def room_value(chamber) -> int:
     # through `reward_ids`, so a room with three Checks is worth exactly
     # as much as the same room with none.
     total += CHECK_VALUE * len(getattr(chamber, "reward_ids", ()) or ())
+
+    if getattr(chamber, "elevation", None) is not None:
+        total += ELEVATION_BAND_VALUE
 
     # Space last, and never more than the content it contains.
     #

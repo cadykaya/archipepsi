@@ -21,6 +21,125 @@ const CORRIDOR_HEIGHT := 3.6
 const PROP_FOOTPRINT := 1.4
 const BRUTE_LANE := 2.6
 
+## A mesh at least this wide on both floor axes is architecture -- a
+## floor slab, a ceiling, a wall, a band's deck -- not furniture. Room
+## content is placed INSIDE the room, so treating the room itself as an
+## obstacle would leave every solver with nowhere legal to go. Regions of
+## architecture that content must nonetheless avoid are declared as
+## `reserved` sockets instead.
+const ROOM_SCALE_SOLID := 6.0
+
+## Every piece of furniture-scale solid geometry under `node`, in that
+## node's own space.
+##
+## ONE derivation, called by the builder to vouch for its sockets and by
+## `ContentInstantiator` to place activities. Two derivations of one fact
+## is how they disagree, and this project has already paid for a builder
+## that knew a physical fact its composer did not.
+##
+## THE TRANSFORM IS ACCUMULATED BY HAND, and it has to be. The obvious
+## version uses `mesh.global_transform`, which for a node OUTSIDE THE
+## SCENE TREE does not accumulate -- and a chamber is built detached and
+## added later, so every prop came back at its own local offset near the
+## origin. The boxes looked plausible, intersected nothing, and the
+## solver silently did nothing at all.
+static func solid_boxes(node: Node,
+		xform := Transform3D.IDENTITY) -> Array[AABB]:
+	var out: Array[AABB] = []
+	_gather_solids(node, xform, out)
+	return out
+
+static func _gather_solids(node: Node, xform: Transform3D,
+		out: Array[AABB]) -> void:
+	var here := xform
+	if node is Node3D:
+		here = xform * (node as Node3D).transform
+	if node is MeshInstance3D:
+		var box: AABB = here * (node as MeshInstance3D).get_aabb()
+		if box.size.x < ROOM_SCALE_SOLID and box.size.z < ROOM_SCALE_SOLID:
+			out.append(box)
+	for child in node.get_children():
+		_gather_solids(child, here, out)
+
+## The floor rectangle a band occupies, in room space (x, z).
+##
+## ONE derivation. `arena` has to carve its floor slab where a PIT goes
+## and `_elevation_band` has to build the recess there, and the two
+## computing the same rectangle separately is how a pit came to be a
+## sealed basement under an intact floor: the recess was dug and the slab
+## above it was never opened, so the real-Zone audit measured the pit's
+## surface at 0.00 m in a room that declared it at -1.66 m.
+static func band_rect(band: Dictionary, width: float,
+		depth: float) -> Rect2:
+	var coverage := clampf(float(band.get("coverage", 0.35)), 0.2, 0.55)
+	var side := str(band.get("side", "left"))
+	# The band occupies a strip against one wall. `back` runs the room's
+	# width at the far end; `left`/`right` run its depth.
+	var span_z := depth * coverage if side == "back" else depth
+	var span_x := width if side == "back" else width * coverage
+	var centre_x := 0.0
+	var centre_z := depth / 2.0
+	match side:
+		"left":
+			centre_x = -(width - span_x) / 2.0
+		"right":
+			centre_x = (width - span_x) / 2.0
+		_:
+			centre_z = depth - span_z / 2.0
+	return Rect2(centre_x - span_x / 2.0, centre_z - span_z / 2.0,
+			span_x, span_z)
+
+## The room's floor slab, with a rectangle left OPEN where a pit goes.
+##
+## Built as up to four slabs around the hole rather than one slab and a
+## hope. `_carve_gap` never removed the base slab and the Echo Lab has no
+## gap because of it; a pit under an intact floor is that bug wearing a
+## different name, and it shipped in this batch until the audit measured
+## the surface instead of trusting the description.
+static func _floor_with_hole(root: Node3D, width: float, depth: float,
+		mat: Material, hole: Variant) -> void:
+	var full := Vector3(width, 0.5, depth)
+	var at := Vector3(0, -0.25, depth / 2.0)
+	if hole == null:
+		_box(root, full, at, mat)
+		return
+	var rect: Rect2 = hole
+	var left := -width / 2.0
+	var right := width / 2.0
+	# Front and back strips run the full width; the side strips fill what
+	# is left beside the hole. A zero-width strip is simply not built.
+	for strip: Array in [
+			[left, right, 0.0, rect.position.y],
+			[left, right, rect.end.y, depth],
+			[left, rect.position.x, rect.position.y, rect.end.y],
+			[rect.end.x, right, rect.position.y, rect.end.y]]:
+		var sx: float = strip[1] - strip[0]
+		var sz: float = strip[3] - strip[2]
+		if sx <= 0.01 or sz <= 0.01:
+			continue
+		_box(root, Vector3(sx, 0.5, sz),
+				Vector3(strip[0] + sx / 2.0, -0.25, strip[2] + sz / 2.0),
+				mat)
+
+## The footprint a ground socket vouches for.
+##
+## Read off the objects themselves rather than restated here, so making a
+## crate bigger moves the sockets instead of quietly invalidating them.
+static func _ground_socket_size(kind: String) -> Vector3:
+	match kind:
+		"cover":
+			return DestructibleCover.SIZE
+		"reactive":
+			return ReactiveBarrel.SIZE
+	return Vector3.ONE
+
+## Does `box` share space with anything in `boxes`?
+static func box_hits(box: AABB, boxes: Array[AABB]) -> bool:
+	for other in boxes:
+		if box.intersects(other):
+			return true
+	return false
+
 ## Point a Label3D so its READABLE face looks toward `toward`.
 ##
 ## The one convention for world-space text. A Label3D draws on its local
@@ -63,10 +182,19 @@ static func _box(parent: Node3D, size: Vector3, position: Vector3,
 	return mesh_instance
 
 static func _wedge(parent: Node3D, size: Vector3, position: Vector3,
-		material: Material, y_rotation := 0.0) -> MeshInstance3D:
+		material: Material, y_rotation := 0.0,
+		apex_at := 0.5) -> MeshInstance3D:
 	## A PrismMesh ramp, collidable via ConvexPolygonShape.
+	##
+	## `apex_at` is `PrismMesh.left_to_right`. The default 0.5 is a
+	## SYMMETRIC RIDGE -- it climbs and then descends -- which is what
+	## every existing caller wants from a wedge-shaped prop. A RAMP needs
+	## 0.0 or 1.0, and the first version of the elevation band did not
+	## say so: the band's "ramp" was a ridge whose far face was a 2.2 m
+	## wall, and the reachability probe measured exactly that.
 	var mesh_instance := MeshInstance3D.new()
 	var prism := PrismMesh.new()
+	prism.left_to_right = apex_at
 	prism.size = size
 	mesh_instance.mesh = prism
 	mesh_instance.position = position
@@ -692,13 +820,164 @@ static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 			"room_height": height,
 			"reward_position": Vector3(0, 0, length / 2.0)}
 
+## ROOM GRAMMAR v0: a second walkable height inside an ordinary room.
+##
+## Returns the SOCKETS it created -- positions on real surfaces that
+## composition may place things onto.
+##
+## Sockets are the answer to the bug class this project keeps paying for:
+## THE BUILDER KNOWS PHYSICAL FACTS THE COMPOSER DOES NOT. Activities
+## landed inside props, in mid-air and on top of each other, and each was
+## fixed afterwards by handing the composer more information. A socket is
+## a point the builder VOUCHES FOR, so anything placed on one is
+## supported and clear by construction rather than by a later audit.
+static func _elevation_band(root: Node3D, band: Dictionary, width: float,
+		depth: float, theme: String) -> Array:
+	var kind := str(band.get("kind", "gallery"))
+	var rise := float(band.get("rise", 2.0))
+	var coverage := clampf(float(band.get("coverage", 0.35)), 0.2, 0.55)
+	var side := str(band.get("side", "left"))
+	var access := str(band.get("access", "ramp"))
+	var deck := ThemeMaterials.floor_mat(theme)
+	var trim := ThemeMaterials.trim_mat(theme)
+	var sockets: Array = []
+
+	var rect := band_rect(band, width, depth)
+	var span_x := rect.size.x
+	var span_z := rect.size.y
+	var centre_x := rect.get_center().x
+	var centre_z := rect.get_center().y
+
+	var surface := rise if kind == "gallery" else -rise
+	if kind == "gallery":
+		# The deck, and a lip so the edge reads from below rather than
+		# being a texture change you notice by falling off it.
+		_box(root, Vector3(span_x, 0.4, span_z),
+				Vector3(centre_x, rise - 0.2, centre_z), deck)
+		var lip_x := span_x if side == "back" else 0.25
+		var lip_z := 0.25 if side == "back" else span_z
+		var edge_x := centre_x + (span_x / 2.0 - 0.12) * (
+				1.0 if side == "left" else -1.0)
+		var edge_z := centre_z - span_z / 2.0 + 0.12
+		_box(root, Vector3(lip_x, 0.35, lip_z),
+				Vector3(centre_x if side == "back" else edge_x,
+					rise + 0.17,
+					edge_z if side == "back" else centre_z), trim)
+	else:
+		# A pit is a hole, so the floor slab is not carved -- the walls
+		# of the recess are built and the deck is dropped. Carving the
+		# base slab is what `_carve_gap` never actually did, and a pit
+		# with a floor across it is not a pit.
+		_box(root, Vector3(span_x, 0.4, span_z),
+				Vector3(centre_x, -rise - 0.2, centre_z), deck)
+		for wall: Array in [
+				[Vector3(0.3, rise, span_z), Vector3(
+					centre_x + span_x / 2.0, -rise / 2.0, centre_z)],
+				[Vector3(0.3, rise, span_z), Vector3(
+					centre_x - span_x / 2.0, -rise / 2.0, centre_z)],
+				[Vector3(span_x, rise, 0.3), Vector3(
+					centre_x, -rise / 2.0, centre_z - span_z / 2.0)]]:
+			_box(root, wall[0] as Vector3, wall[1] as Vector3, trim)
+
+	# ACCESS. A ramp is base-kit traversal in both directions, which is
+	# what keeps NO REQUIREMENT BEFORE GUARANTEE true of geometry: a band
+	# holding anything required must be reachable by movement the
+	# campaign is guaranteed to have, and walking always is.
+	#
+	# The run is three times the rise, so the slope is the same gentle
+	# angle whatever the band's height -- a fixed-length ramp gets
+	# steeper as the band rises, and there is no reason to make the tall
+	# ones the hard ones.
+	var run := maxf(3.0, absf(rise) * 3.0)
+	var width_of_ramp := 2.6
+	# The prism's slope runs along its X and its apex sits at -X, so the
+	# apex end is placed against the deck's inner edge and the ramp is
+	# turned to face it.
+	var ramp_at := Vector3.ZERO
+	var turn := 0.0
+	match side:
+		"left":
+			ramp_at = Vector3(centre_x + span_x / 2.0 + run / 2.0,
+					surface / 2.0, centre_z)
+		"right":
+			ramp_at = Vector3(centre_x - span_x / 2.0 - run / 2.0,
+					surface / 2.0, centre_z)
+			turn = PI
+		_:
+			ramp_at = Vector3(centre_x,
+					surface / 2.0, centre_z - span_z / 2.0 - run / 2.0)
+			turn = -PI / 2.0
+	var size := Vector3(run, absf(rise), width_of_ramp)
+	# A pit's ramp descends, so its high end faces the ROOM rather than
+	# the deck: the same wedge, turned the other way.
+	if kind == "pit":
+		turn += PI
+	_wedge(root, size, ramp_at, deck, turn, 0.0)
+	# WHERE THE WAY UP IS. Emitted as a socket so nothing has to rederive
+	# it: a test walking "toward the band" found the gallery's edge and
+	# reported a 2.2 m step, which is a correct measurement of the wrong
+	# surface. The builder knows where the ramp is; saying so is cheaper
+	# than every caller guessing.
+	sockets.append({"kind": "access",
+			"position": Vector3(ramp_at.x, 0.0, ramp_at.z),
+			"along": "z" if side == "back" else "x",
+			"length": run})
+	# AND THE RAMP IS SPOKEN FOR TOO. A 3-to-1 ramp is over six metres
+	# long, which is exactly the size at which `solid_boxes` stops
+	# calling something furniture and starts calling it architecture --
+	# so the one obstacle in the room nobody could see was the way up.
+	# Two activity elements of the played Zone's c015 were inside it.
+	# Architecture that content must avoid is DECLARED, never inferred.
+	var ramp_span := Vector3(run, 0.0, width_of_ramp)
+	if side == "back":
+		ramp_span = Vector3(width_of_ramp, 0.0, run)
+	ramp_span.y = maxf(absf(rise), 2.4) * 2.0
+	sockets.append({"kind": "reserved",
+			"position": Vector3(ramp_at.x, 0.0, ramp_at.z),
+			"extent": ramp_span})
+
+	# Sockets ON the band's deck, inset so nothing sits on the lip.
+	var inset := 1.1
+	for t: float in [0.3, 0.7]:
+		var socket_x := centre_x
+		var socket_z := centre_z
+		if side == "back":
+			socket_x = -span_x / 2.0 + inset + (span_x - inset * 2.0) * t
+		else:
+			socket_z = centre_z - span_z / 2.0 + inset \
+					+ (span_z - inset * 2.0) * t
+		sockets.append({"kind": "enemy_high",
+				"position": Vector3(socket_x, surface + 0.2, socket_z)})
+	sockets.append({"kind": "cover",
+			"position": Vector3(centre_x, surface + 0.4,
+				centre_z + span_z * 0.18 * (1.0 if side == "back" else 1.0))})
+	# THE FOOTPRINT IS SPOKEN FOR at ground level. A gallery's deck is a
+	# floor when you are on it and a ceiling when you are under it, and
+	# ground-level composition has to treat it as neither: the space
+	# below it belongs to the band. Said here rather than inferred,
+	# because "the builder knows physical facts the composer does not" is
+	# the bug class this whole contract exists to end -- the first run
+	# with bands put six activity elements inside a deck.
+	sockets.append({"kind": "reserved",
+			"position": Vector3(centre_x, 0.0, centre_z),
+			"extent": Vector3(span_x, maxf(absf(rise), 2.4) * 2.0, span_z)})
+	return sockets
+
 static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 	var width := float(chamber.get("width", 16.0))
 	var depth := float(chamber.get("depth", 16.0))
 	var wall_height := float(chamber.get("wall_height", 5.0))
 	var root := Node3D.new()
-	_box(root, Vector3(width, 0.5, depth),
-			Vector3(0, -0.25, depth / 2.0), ThemeMaterials.floor_mat(theme))
+	# The floor goes down FIRST and has to know about a pit already: the
+	# recess is dug later, and a slab laid across the whole room before
+	# that is a lid.
+	var declared: Variant = chamber.get("elevation")
+	var hole: Variant = null
+	if typeof(declared) == TYPE_DICTIONARY \
+			and str((declared as Dictionary).get("kind", "")) == "pit":
+		hole = band_rect(declared as Dictionary, width, depth)
+	_floor_with_hole(root, width, depth, ThemeMaterials.floor_mat(theme),
+			hole)
 	_perimeter(root, width, depth, wall_height, theme)
 	# Crude cover: a few boxes and a wedge.
 	var rng := RandomNumberGenerator.new()
@@ -726,19 +1005,80 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 				-1.0 if greeble_rng.randf() < 0.5 else 1.0, width / 2.0,
 				greeble_rng.randf_range(3.0, maxf(3.2, depth - 3.0)),
 				wall_height, greeble_rng)
+	# ROOM GRAMMAR v0. Built before the enemies, because where they stand
+	# is now a property of the room rather than a circle around its
+	# middle.
+	var sockets: Array = []
+	var band: Variant = chamber.get("elevation")
+	if typeof(band) == TYPE_DICTIONARY:
+		sockets = _elevation_band(root, band as Dictionary, width, depth,
+				theme)
+	var lowest := -1.0
+	if typeof(band) == TYPE_DICTIONARY \
+			and str((band as Dictionary).get("kind", "")) == "pit":
+		lowest = -float((band as Dictionary).get("rise", 2.0)) - 1.0
+
+	# Ground sockets, for the things a room stands on its floor. Kept out
+	# of the walking lane the same way affordances and activities are --
+	# and, unlike the first version of this loop, VOUCHED FOR.
+	#
+	# A socket is a promise that the point is on real floor and clear of
+	# what is already there. Offering six fixed spots and hoping was the
+	# same mistake the pressure plates made: three of the six landed
+	# inside the room's own crates and, in a room with a gallery, inside
+	# the gallery's solid mass. The builder knows where it put those, so
+	# the builder is the one that can answer.
+	var solids := solid_boxes(root)
+	var reserved: Array[AABB] = []
+	for socket: Dictionary in sockets:
+		if str(socket.get("kind", "")) == "reserved":
+			var at: Vector3 = socket["position"]
+			var extent: Vector3 = socket["extent"]
+			reserved.append(AABB(at - extent * 0.5, extent))
+	for t: float in [0.28, 0.52, 0.76]:
+		for side: float in [-1.0, 1.0]:
+			var kind := "cover" if t > 0.4 else "reactive"
+			var size := _ground_socket_size(kind)
+			var foot := Vector3(side * width * 0.32, 0.0, depth * t)
+			# Padded, so an object does not merely graze a crate.
+			var claim := AABB(foot - Vector3(size.x / 2.0 + 0.25, 0.0,
+					size.z / 2.0 + 0.25),
+					Vector3(size.x + 0.5, size.y, size.z + 0.5))
+			if box_hits(claim, solids) or box_hits(claim, reserved):
+				continue
+			sockets.append({"kind": kind, "position": foot,
+					"extent": size})
+			solids.append(claim)
+
 	var spawns: Array = []
 	var index := 0
+	# RANGED UNITS TAKE THE HIGH GROUND. The measured problem: twenty-eight
+	# of the played Zone's forty-one enemies were ranged, in flat boxes,
+	# with no height to shoot from -- which makes a ranged enemy a melee
+	# enemy that misses. This is placement, not AI: the archetypes and
+	# their behaviour are untouched.
+	var high: Array = []
+	for socket: Dictionary in sockets:
+		if str(socket.get("kind", "")) == "enemy_high":
+			high.append(socket["position"])
+	var taken_high := 0
 	for group: Dictionary in chamber.get("enemies", []):
 		for i in int(group.get("count", 0)):
-			var angle := TAU * float(index) / 8.0
-			spawns.append({"archetype": group["archetype"],
-					"position": Vector3(cos(angle) * width * 0.3, 0.2,
-							depth / 2.0 + sin(angle) * depth * 0.3)})
+			var at: Vector3
+			if str(group["archetype"]) == "ranged" and taken_high < high.size():
+				at = high[taken_high]
+				taken_high += 1
+			else:
+				var angle := TAU * float(index) / 8.0
+				at = Vector3(cos(angle) * width * 0.3, 0.2,
+						depth / 2.0 + sin(angle) * depth * 0.3)
+			spawns.append({"archetype": group["archetype"], "position": at})
 			index += 1
 	return {"root": root, "exit_offset": Vector3(0, 0, depth),
-			"bounds": AABB(Vector3(-width / 2.0, -1, 0),
-					Vector3(width, wall_height + 1, depth)),
+			"bounds": AABB(Vector3(-width / 2.0, lowest, 0),
+					Vector3(width, wall_height - lowest, depth)),
 			"enemy_spawns": spawns,
+			"sockets": sockets,
 			"room_height": wall_height,
 			"reward_position": Vector3(0, 0, depth * 0.72)}
 

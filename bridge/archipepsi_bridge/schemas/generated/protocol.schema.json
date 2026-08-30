@@ -1310,6 +1310,17 @@
             "maxItems": 4,
             "title": "Enemies",
             "type": "array"
+          },
+          "elevation": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ElevationBand"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           }
         },
         "required": [
@@ -2471,6 +2482,58 @@
           "type"
         ],
         "title": "Effect",
+        "type": "object"
+      },
+      "ElevationBand": {
+        "additionalProperties": false,
+        "description": "A second walkable height inside an ORDINARY room (ROOM_GRAMMAR v0).\n\nThe measured finding this exists for: a room's entire shape was three\nnumbers. `ArenaChamber` was width, depth and wall_height, so every one\nof the twenty-three rooms in the played Zone was a flat rectangle and\nthe twenty-eight ranged enemies in them had nowhere to be ranged\nFROM. Nothing was wrong with the generator; there was no field in\nwhich a raised area could be described.\n\nDeliberately ONE band, and deliberately not a `platform_path`. This\nis a property an ordinary room may have, not a room type -- the whole\npoint is that verticality stops being a special minigame.\n\nEvery field is a Literal or a bounded float so the vocabulary can\nGROW without becoming free-form: `kind` gains `catwalk` and `alcove`,\n`access` gains `drop` and `capability:<name>`, `side` gains `front`.\nA dead-end one-off would have been a boolean called `has_ledge`.",
+        "properties": {
+          "kind": {
+            "enum": [
+              "gallery",
+              "pit"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "rise": {
+            "maximum": 4.0,
+            "minimum": 1.0,
+            "title": "Rise",
+            "type": "number"
+          },
+          "coverage": {
+            "maximum": 0.55,
+            "minimum": 0.2,
+            "title": "Coverage",
+            "type": "number"
+          },
+          "side": {
+            "enum": [
+              "left",
+              "right",
+              "back"
+            ],
+            "title": "Side",
+            "type": "string"
+          },
+          "access": {
+            "default": "ramp",
+            "enum": [
+              "ramp",
+              "stair"
+            ],
+            "title": "Access",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "rise",
+          "coverage",
+          "side"
+        ],
+        "title": "ElevationBand",
         "type": "object"
       },
       "EnemyGroup": {
@@ -5675,6 +5738,17 @@
             "maxItems": 4,
             "title": "Enemies",
             "type": "array"
+          },
+          "elevation": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ElevationBand"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           }
         },
         "required": [
@@ -6529,6 +6603,58 @@
           "type"
         ],
         "title": "Effect",
+        "type": "object"
+      },
+      "ElevationBand": {
+        "additionalProperties": false,
+        "description": "A second walkable height inside an ORDINARY room (ROOM_GRAMMAR v0).\n\nThe measured finding this exists for: a room's entire shape was three\nnumbers. `ArenaChamber` was width, depth and wall_height, so every one\nof the twenty-three rooms in the played Zone was a flat rectangle and\nthe twenty-eight ranged enemies in them had nowhere to be ranged\nFROM. Nothing was wrong with the generator; there was no field in\nwhich a raised area could be described.\n\nDeliberately ONE band, and deliberately not a `platform_path`. This\nis a property an ordinary room may have, not a room type -- the whole\npoint is that verticality stops being a special minigame.\n\nEvery field is a Literal or a bounded float so the vocabulary can\nGROW without becoming free-form: `kind` gains `catwalk` and `alcove`,\n`access` gains `drop` and `capability:<name>`, `side` gains `front`.\nA dead-end one-off would have been a boolean called `has_ledge`.",
+        "properties": {
+          "kind": {
+            "enum": [
+              "gallery",
+              "pit"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "rise": {
+            "maximum": 4.0,
+            "minimum": 1.0,
+            "title": "Rise",
+            "type": "number"
+          },
+          "coverage": {
+            "maximum": 0.55,
+            "minimum": 0.2,
+            "title": "Coverage",
+            "type": "number"
+          },
+          "side": {
+            "enum": [
+              "left",
+              "right",
+              "back"
+            ],
+            "title": "Side",
+            "type": "string"
+          },
+          "access": {
+            "default": "ramp",
+            "enum": [
+              "ramp",
+              "stair"
+            ],
+            "title": "Access",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "rise",
+          "coverage",
+          "side"
+        ],
+        "title": "ElevationBand",
         "type": "object"
       },
       "EnemyGroup": {

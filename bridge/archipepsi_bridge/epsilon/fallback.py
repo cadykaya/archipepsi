@@ -7,6 +7,7 @@ validators as model output — no exceptions.
 
 from __future__ import annotations
 
+import math
 import random
 
 from pydantic import TypeAdapter
@@ -14,7 +15,7 @@ from pydantic import TypeAdapter
 from .. import composition as X
 from .. import content_value as V
 from ..schemas import constants as C
-from ..schemas.zone import Zone as _Zone
+from ..schemas.zone import HEADROOM, Zone as _Zone
 from ..schemas import migration as MG
 from ..schemas import echo as E
 from ..schemas.echo import COMPLEXITY_BUDGETS
@@ -176,9 +177,7 @@ def _content_room(rng, index: int, lean: bool, step: float,
         # Zone already at its enemy ceiling gets a traversal room here.
         return {
             "id": f"c{index:03d}", "type": "arena",
-            "width": round(rng.uniform(12.0, 18.0 if lean else 22.0), 1),
-            "depth": round(rng.uniform(10.0, 16.0 if lean else 20.0), 1),
-            "wall_height": round(rng.uniform(4.5, 7.0), 1),
+            **_arena_shape(rng, lean),
             "objective": "kill_all",
             "enemies": [{"archetype": rng.choice(["melee", "ranged"]),
                          "count": count}]}
@@ -242,9 +241,7 @@ def _build_to_budget(rng, locations, budget, unlocked) -> list[dict]:
         if kind == "arena":
             chambers.append({
                 "id": f"c{len(chambers) + 1:03d}", "type": "arena",
-                "width": round(rng.uniform(12.0, 18.0 if lean else 24.0), 1),
-                "depth": round(rng.uniform(10.0, 16.0 if lean else 22.0), 1),
-                "wall_height": round(rng.uniform(4.5, 7.0), 1),
+                **_arena_shape(rng, lean),
                 "objective": "kill_all",
                 "enemies": [{"archetype": rng.choice(["melee", "ranged"]),
                              "count": rng.randint(1, 2 if lean else 5)}],
@@ -446,6 +443,9 @@ class _AsChamber:
             _Tagged(f) for f in data.get("features", []) or ())
         self.activities = tuple(
             _Activity(a) for a in data.get("activities", []) or ())
+        # Presence is all `room_value` asks about, so the dict itself is
+        # a good enough stand-in for the model.
+        self.elevation = data.get("elevation")
 
     def __getattr__(self, name):
         if name == "reward_ids":
@@ -479,6 +479,72 @@ class _Activity:
 #: Widening past it would make a Zone the validator refuses, which is the
 #: opposite of what the widening is for.
 MAX_CORRIDOR_WIDTH = 10.0
+
+
+#: How often an arena gets a second walkable height (ROOM_GRAMMAR v0).
+#:
+#: PROVISIONAL, and the number the next playtest sets. Not 1.0: a raised
+#: area in every arena is the flat rectangle again with a step in it, and
+#: the variety is in some rooms having one and some not. Not low either,
+#: because a feature the owner meets twice in a Zone cannot be judged.
+BAND_CHANCE = 0.55
+
+
+def _arena_shape(rng, lean: bool) -> dict:
+    """An arena's dimensions and its band, decided together.
+
+    Together because they constrain each other: a gallery's rise is
+    bounded by the ceiling it sits under, so rolling the wall height
+    first and the band second is the only order that cannot produce a
+    room the validator has to refuse.
+    """
+    width = round(rng.uniform(12.0, 18.0 if lean else 24.0), 1)
+    depth = round(rng.uniform(10.0, 16.0 if lean else 22.0), 1)
+    wall_height = round(rng.uniform(4.5, 7.0), 1)
+    shape = {"width": width, "depth": depth, "wall_height": wall_height}
+    band = _band(rng, width, depth, wall_height)
+    if band is not None:
+        shape["elevation"] = band
+    return shape
+
+
+def _band(rng, width: float, depth: float, wall_height: float) -> dict | None:
+    """An elevation band for an arena, or None (ROOM_GRAMMAR v0).
+
+    NOT every room. A raised area in every arena is the flat rectangle
+    again with an extra step in it -- the variety is in some rooms having
+    one and some not, and in which wall it hugs.
+
+    The rise is bounded by the CEILING as well as by the schema: a
+    gallery must leave a player room to stand up on it, which
+    `ArenaChamber._a_band_leaves_room_to_stand` refuses at validation.
+    Computing it here rather than rolling and retrying keeps the
+    fallback's "valid on the first attempt" property, which is measured.
+    """
+    if rng.random() > BAND_CHANCE:
+        return None
+    # A pit needs floor to spare; a narrow room gets a gallery instead.
+    kind = "pit" if (min(width, depth) >= 16.0 and rng.random() < 0.3) \
+        else "gallery"
+    if kind == "gallery":
+        highest = wall_height - HEADROOM
+        if highest < C.MAX_VERTICAL_STEP:
+            return None
+        # FLOORED, not rounded. `round` can move a number UP by half a
+        # centimetre, which is enough to push a rise that exactly fitted
+        # under the ceiling back through the schema's headroom check --
+        # and the fallback is measured on getting it right at salt 0, so
+        # a five-millimetre error costs a reroll rather than a warning.
+        rise = math.floor(min(rng.uniform(1.6, 2.6), highest) * 100) / 100
+    else:
+        rise = round(rng.uniform(1.2, 2.0), 2)
+    return {
+        "kind": kind,
+        "rise": rise,
+        "coverage": round(rng.uniform(0.25, 0.45), 2),
+        "side": rng.choice(["left", "right", "back"]),
+        "access": "ramp",
+    }
 
 
 def _activity(kind: str, elements: int, ordered: bool = False) -> dict:

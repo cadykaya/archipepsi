@@ -953,8 +953,8 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 916,
-        "enemy_total": 41,
+        "content_value": 922,
+        "enemy_total": 35,
         "rooms_holding_no_check": 8
       },
       "request": {
@@ -1181,9 +1181,9 @@
           {
             "activities": [
               {
-                "element_count": 5,
+                "element_count": 2,
                 "kind": "timed_run",
-                "time_limit": 20.0
+                "time_limit": 8.0
               }
             ],
             "features": [
@@ -1203,7 +1203,7 @@
           {
             "activities": [
               {
-                "element_count": 2,
+                "element_count": 5,
                 "kind": "target_challenge"
               },
               {
@@ -1212,10 +1212,17 @@
               }
             ],
             "depth": 15.8,
+            "elevation": {
+              "access": "ramp",
+              "coverage": 0.27,
+              "kind": "gallery",
+              "rise": 2.01,
+              "side": "left"
+            },
             "enemies": [
               {
-                "archetype": "melee",
-                "count": 4
+                "archetype": "ranged",
+                "count": 5
               }
             ],
             "id": "c002",
@@ -1228,15 +1235,15 @@
           {
             "activities": [
               {
-                "element_count": 4,
+                "element_count": 2,
                 "kind": "pressure_routing"
               },
               {
-                "element_count": 2,
+                "element_count": 4,
                 "kind": "pressure_routing"
               }
             ],
-            "gap_size": 2.15,
+            "gap_size": 2.31,
             "id": "c003",
             "objective": "platform_to_goal",
             "reward_location_id": 89100002,
@@ -1245,6 +1252,18 @@
             "vertical_step": 0.51
           },
           {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "timed_run",
+                "time_limit": 12.0
+              },
+              {
+                "element_count": 4,
+                "kind": "timed_run",
+                "time_limit": 16.0
+              }
+            ],
             "features": [
               {
                 "at": [
@@ -1255,86 +1274,9 @@
               }
             ],
             "id": "c004",
-            "length": 15.0,
+            "length": 14.4,
             "type": "corridor",
             "width": 7.9
-          },
-          {
-            "activities": [
-              {
-                "element_count": 4,
-                "kind": "switch_sequence"
-              },
-              {
-                "element_count": 2,
-                "kind": "switch_sequence"
-              }
-            ],
-            "depth": 14.1,
-            "enemies": [
-              {
-                "archetype": "ranged",
-                "count": 5
-              }
-            ],
-            "id": "c005",
-            "objective": "kill_all",
-            "reward_location_id": 89100003,
-            "type": "arena",
-            "wall_height": 5.7,
-            "width": 12.4
-          },
-          {
-            "activities": [
-              {
-                "element_count": 5,
-                "kind": "target_challenge"
-              },
-              {
-                "element_count": 5,
-                "kind": "target_challenge"
-              }
-            ],
-            "depth": 13.5,
-            "enemies": [
-              {
-                "archetype": "ranged",
-                "count": 1
-              }
-            ],
-            "id": "c006",
-            "objective": "kill_all",
-            "reward_location_id": 89100004,
-            "type": "arena",
-            "wall_height": 5.6,
-            "width": 23.8
-          },
-          {
-            "id": "c007",
-            "length": 10.7,
-            "type": "corridor",
-            "width": 7.9
-          },
-          {
-            "activities": [
-              {
-                "element_count": 4,
-                "kind": "timed_run",
-                "time_limit": 16.0
-              },
-              {
-                "element_count": 2,
-                "kind": "timed_run",
-                "time_limit": 8.0
-              }
-            ],
-            "gap_size": 2.25,
-            "id": "c008",
-            "objective": "platform_to_goal",
-            "reward_location_id": 89100005,
-            "segment_count": 4,
-            "type": "platform_path",
-            "vertical_step": 0.51
           },
           {
             "activities": [
@@ -1347,56 +1289,150 @@
                 "kind": "switch_sequence"
               }
             ],
-            "depth": 18.7,
+            "depth": 17.0,
+            "elevation": {
+              "access": "ramp",
+              "coverage": 0.32,
+              "kind": "pit",
+              "rise": 1.66,
+              "side": "left"
+            },
             "enemies": [
               {
-                "archetype": "ranged",
-                "count": 5
+                "archetype": "melee",
+                "count": 2
               }
             ],
-            "id": "c009",
+            "id": "c005",
             "objective": "kill_all",
-            "reward_location_id": 89100006,
+            "reward_location_id": 89100003,
             "type": "arena",
-            "wall_height": 6.1,
-            "width": 20.5
+            "wall_height": 6.0,
+            "width": 19.3
           },
           {
             "activities": [
               {
-                "element_count": 5,
+                "element_count": 2,
+                "kind": "target_challenge"
+              },
+              {
+                "element_count": 4,
                 "kind": "target_challenge"
               }
             ],
-            "id": "c010",
-            "length": 9.5,
-            "type": "corridor",
-            "width": 7.9
-          },
-          {
-            "activities": [
-              {
-                "element_count": 5,
-                "kind": "pressure_routing"
-              },
-              {
-                "element_count": 2,
-                "kind": "pressure_routing"
-              }
-            ],
-            "depth": 12.6,
+            "depth": 13.1,
             "enemies": [
               {
                 "archetype": "melee",
                 "count": 1
               }
             ],
+            "id": "c006",
+            "objective": "kill_all",
+            "reward_location_id": 89100004,
+            "type": "arena",
+            "wall_height": 5.9,
+            "width": 19.8
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "target_challenge"
+              }
+            ],
+            "id": "c007",
+            "length": 14.7,
+            "type": "corridor",
+            "width": 7.9
+          },
+          {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "timed_run",
+                "time_limit": 12.0
+              },
+              {
+                "element_count": 4,
+                "kind": "timed_run",
+                "time_limit": 16.0
+              }
+            ],
+            "gap_size": 2.08,
+            "id": "c008",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100005,
+            "segment_count": 4,
+            "type": "platform_path",
+            "vertical_step": 0.51
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "switch_sequence"
+              },
+              {
+                "element_count": 3,
+                "kind": "switch_sequence"
+              }
+            ],
+            "depth": 20.4,
+            "elevation": {
+              "access": "ramp",
+              "coverage": 0.39,
+              "kind": "gallery",
+              "rise": 2.19,
+              "side": "left"
+            },
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 1
+              }
+            ],
+            "id": "c009",
+            "objective": "kill_all",
+            "reward_location_id": 89100006,
+            "type": "arena",
+            "wall_height": 4.6,
+            "width": 15.6
+          },
+          {
+            "id": "c010",
+            "length": 12.5,
+            "type": "corridor",
+            "width": 7.9
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "pressure_routing"
+              }
+            ],
+            "depth": 21.5,
+            "elevation": {
+              "access": "ramp",
+              "coverage": 0.34,
+              "kind": "gallery",
+              "rise": 1.64,
+              "side": "left"
+            },
+            "enemies": [
+              {
+                "archetype": "ranged",
+                "count": 5
+              }
+            ],
             "id": "c011",
             "objective": "kill_all",
             "reward_location_id": 89100007,
             "type": "arena",
-            "wall_height": 5.7,
-            "width": 12.5
+            "wall_height": 5.5,
+            "width": 12.4
           },
           {
             "activities": [
@@ -1404,24 +1440,19 @@
                 "element_count": 5,
                 "kind": "timed_run",
                 "time_limit": 20.0
-              },
-              {
-                "element_count": 5,
-                "kind": "timed_run",
-                "time_limit": 20.0
               }
             ],
-            "gap_size": 1.47,
+            "gap_size": 1.73,
             "id": "c012",
             "objective": "platform_to_goal",
             "reward_location_id": 89100008,
-            "segment_count": 5,
+            "segment_count": 3,
             "type": "platform_path",
             "vertical_step": 0.51
           },
           {
             "id": "c013",
-            "length": 10.5,
+            "length": 13.0,
             "type": "corridor",
             "width": 7.9
           },
@@ -1450,10 +1481,6 @@
               {
                 "archetype": "brute",
                 "count": 1
-              },
-              {
-                "archetype": "ranged",
-                "count": 4
               }
             ],
             "id": "c014",
@@ -1466,19 +1493,22 @@
           {
             "activities": [
               {
-                "element_count": 2,
-                "kind": "pressure_routing"
-              },
-              {
-                "element_count": 5,
+                "element_count": 4,
                 "kind": "pressure_routing"
               }
             ],
-            "depth": 21.1,
+            "depth": 10.1,
+            "elevation": {
+              "access": "ramp",
+              "coverage": 0.3,
+              "kind": "gallery",
+              "rise": 1.86,
+              "side": "back"
+            },
             "enemies": [
               {
                 "archetype": "ranged",
-                "count": 5
+                "count": 2
               }
             ],
             "id": "c015",
@@ -1486,65 +1516,60 @@
             "reward_location_id": 89100010,
             "type": "arena",
             "wall_height": 4.6,
-            "width": 18.7
+            "width": 23.7
           },
           {
             "activities": [
               {
                 "element_count": 4,
-                "kind": "pressure_routing"
+                "kind": "timed_run",
+                "time_limit": 16.0
               }
             ],
             "id": "c016",
-            "length": 10.9,
+            "length": 8.5,
             "type": "corridor",
             "width": 7.9
           },
           {
             "activities": [
               {
-                "element_count": 5,
+                "element_count": 4,
                 "kind": "switch_sequence"
               }
             ],
-            "gap_size": 1.81,
+            "gap_size": 1.73,
             "id": "c017",
             "objective": "platform_to_goal",
             "reward_location_id": 89100011,
-            "segment_count": 6,
+            "segment_count": 3,
             "type": "platform_path",
             "vertical_step": 0.51
           },
           {
             "activities": [
               {
-                "element_count": 2,
+                "element_count": 3,
                 "kind": "target_challenge"
               }
             ],
-            "depth": 14.4,
+            "depth": 14.7,
             "enemies": [
               {
                 "archetype": "ranged",
-                "count": 5
+                "count": 4
               }
             ],
             "id": "c018",
             "objective": "kill_all",
             "reward_location_id": 89100012,
             "type": "arena",
-            "wall_height": 5.8,
-            "width": 18.9
+            "wall_height": 5.2,
+            "width": 17.9
           },
           {
-            "activities": [
-              {
-                "element_count": 2,
-                "kind": "pressure_routing"
-              }
-            ],
             "id": "c019",
-            "length": 13.7,
+            "length": 13.3,
             "type": "corridor",
             "width": 7.9
           },
@@ -1556,19 +1581,19 @@
                 "time_limit": 12.0
               }
             ],
-            "depth": 11.4,
+            "depth": 20.4,
             "enemies": [
               {
-                "archetype": "ranged",
-                "count": 1
+                "archetype": "melee",
+                "count": 4
               }
             ],
             "id": "c020",
             "objective": "kill_all",
             "reward_location_id": 89100013,
             "type": "arena",
-            "wall_height": 6.7,
-            "width": 19.5
+            "wall_height": 5.8,
+            "width": 18.2
           },
           {
             "activities": [
@@ -1577,40 +1602,46 @@
                 "kind": "switch_sequence"
               }
             ],
-            "gap_size": 2.38,
+            "gap_size": 2.03,
             "id": "c021",
             "objective": "platform_to_goal",
             "reward_location_id": 89100014,
-            "segment_count": 5,
+            "segment_count": 3,
             "type": "platform_path",
             "vertical_step": 0.51
           },
           {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "target_challenge"
+              }
+            ],
             "id": "c022",
-            "length": 8.1,
+            "length": 14.4,
             "type": "corridor",
             "width": 7.9
           },
           {
             "activities": [
               {
-                "element_count": 2,
+                "element_count": 5,
                 "kind": "pressure_routing"
               }
             ],
-            "depth": 13.1,
+            "depth": 18.3,
             "enemies": [
               {
-                "archetype": "ranged",
-                "count": 2
+                "archetype": "melee",
+                "count": 3
               }
             ],
             "id": "c023",
             "objective": "kill_all",
             "reward_location_id": 89100015,
             "type": "arena",
-            "wall_height": 5.1,
-            "width": 15.9
+            "wall_height": 5.4,
+            "width": 18.4
           }
         ],
         "designer_note": "Deterministic fallback zone.",
@@ -1631,8 +1662,8 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 913,
-        "enemy_total": 32,
+        "content_value": 912,
+        "enemy_total": 26,
         "rooms_holding_no_check": 8
       },
       "request": {
@@ -1857,13 +1888,6 @@
       "zone": {
         "chambers": [
           {
-            "activities": [
-              {
-                "element_count": 5,
-                "kind": "timed_run",
-                "time_limit": 20.0
-              }
-            ],
             "features": [
               {
                 "at": [
@@ -1881,7 +1905,7 @@
           {
             "activities": [
               {
-                "element_count": 3,
+                "element_count": 5,
                 "kind": "target_challenge"
               },
               {
@@ -1890,10 +1914,17 @@
               }
             ],
             "depth": 20.9,
+            "elevation": {
+              "access": "ramp",
+              "coverage": 0.26,
+              "kind": "pit",
+              "rise": 1.8,
+              "side": "left"
+            },
             "enemies": [
               {
-                "archetype": "ranged",
-                "count": 2
+                "archetype": "melee",
+                "count": 1
               }
             ],
             "id": "c002",
@@ -1906,28 +1937,33 @@
           {
             "activities": [
               {
-                "element_count": 3,
+                "element_count": 2,
                 "kind": "pressure_routing"
               },
               {
-                "element_count": 5,
+                "element_count": 3,
                 "kind": "pressure_routing"
               }
             ],
-            "gap_size": 1.46,
+            "gap_size": 2.2,
             "id": "c003",
             "objective": "platform_to_goal",
             "reward_location_id": 89100102,
-            "segment_count": 3,
+            "segment_count": 5,
             "type": "platform_path",
             "vertical_step": 0.77
           },
           {
             "activities": [
               {
-                "element_count": 4,
+                "element_count": 3,
                 "kind": "timed_run",
-                "time_limit": 16.0
+                "time_limit": 12.0
+              },
+              {
+                "element_count": 2,
+                "kind": "timed_run",
+                "time_limit": 8.0
               }
             ],
             "features": [
@@ -1940,154 +1976,71 @@
               }
             ],
             "id": "c004",
-            "length": 8.4,
+            "length": 14.7,
             "type": "corridor",
             "width": 7.9
           },
           {
             "activities": [
               {
-                "element_count": 2,
+                "element_count": 5,
                 "kind": "switch_sequence"
               },
               {
-                "element_count": 3,
+                "element_count": 5,
                 "kind": "switch_sequence"
               }
             ],
-            "depth": 13.7,
+            "depth": 11.6,
             "enemies": [
               {
                 "archetype": "melee",
-                "count": 2
+                "count": 3
               }
             ],
             "id": "c005",
             "objective": "kill_all",
             "reward_location_id": 89100103,
             "type": "arena",
-            "wall_height": 5.8,
-            "width": 12.9
+            "wall_height": 6.4,
+            "width": 16.4
           },
           {
             "activities": [
               {
-                "element_count": 5,
+                "element_count": 3,
                 "kind": "target_challenge"
               },
               {
-                "element_count": 2,
+                "element_count": 4,
                 "kind": "target_challenge"
               }
             ],
-            "depth": 16.3,
+            "depth": 19.2,
             "enemies": [
               {
                 "archetype": "melee",
-                "count": 2
+                "count": 1
               }
             ],
             "id": "c006",
             "objective": "kill_all",
             "reward_location_id": 89100104,
             "type": "arena",
-            "wall_height": 5.7,
-            "width": 19.5
-          },
-          {
-            "activities": [
-              {
-                "element_count": 4,
-                "kind": "target_challenge"
-              }
-            ],
-            "id": "c007",
-            "length": 10.7,
-            "type": "corridor",
-            "width": 7.9
-          },
-          {
-            "activities": [
-              {
-                "element_count": 4,
-                "kind": "timed_run",
-                "time_limit": 16.0
-              },
-              {
-                "element_count": 3,
-                "kind": "timed_run",
-                "time_limit": 12.0
-              }
-            ],
-            "gap_size": 1.93,
-            "id": "c008",
-            "objective": "platform_to_goal",
-            "reward_location_id": 89100105,
-            "segment_count": 3,
-            "type": "platform_path",
-            "vertical_step": 0.77
-          },
-          {
-            "activities": [
-              {
-                "element_count": 2,
-                "kind": "switch_sequence"
-              },
-              {
-                "element_count": 4,
-                "kind": "switch_sequence"
-              }
-            ],
-            "depth": 10.9,
-            "enemies": [
-              {
-                "archetype": "melee",
-                "count": 4
-              }
-            ],
-            "id": "c009",
-            "objective": "kill_all",
-            "reward_location_id": 89100106,
-            "type": "arena",
-            "wall_height": 6.7,
-            "width": 12.7
-          },
-          {
-            "activities": [
-              {
-                "element_count": 4,
-                "kind": "target_challenge"
-              }
-            ],
-            "id": "c010",
-            "length": 12.1,
-            "type": "corridor",
-            "width": 7.9
+            "wall_height": 4.7,
+            "width": 21.7
           },
           {
             "activities": [
               {
                 "element_count": 5,
-                "kind": "pressure_routing"
-              },
-              {
-                "element_count": 2,
-                "kind": "pressure_routing"
+                "kind": "target_challenge"
               }
             ],
-            "depth": 18.9,
-            "enemies": [
-              {
-                "archetype": "melee",
-                "count": 5
-              }
-            ],
-            "id": "c011",
-            "objective": "kill_all",
-            "reward_location_id": 89100107,
-            "type": "arena",
-            "wall_height": 5.7,
-            "width": 24.0
+            "id": "c007",
+            "length": 14.7,
+            "type": "corridor",
+            "width": 7.9
           },
           {
             "activities": [
@@ -2102,7 +2055,99 @@
                 "time_limit": 16.0
               }
             ],
-            "gap_size": 1.96,
+            "gap_size": 1.91,
+            "id": "c008",
+            "objective": "platform_to_goal",
+            "reward_location_id": 89100105,
+            "segment_count": 6,
+            "type": "platform_path",
+            "vertical_step": 0.77
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "switch_sequence"
+              },
+              {
+                "element_count": 3,
+                "kind": "switch_sequence"
+              }
+            ],
+            "depth": 22.0,
+            "elevation": {
+              "access": "ramp",
+              "coverage": 0.3,
+              "kind": "pit",
+              "rise": 1.44,
+              "side": "left"
+            },
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 2
+              }
+            ],
+            "id": "c009",
+            "objective": "kill_all",
+            "reward_location_id": 89100106,
+            "type": "arena",
+            "wall_height": 6.3,
+            "width": 16.9
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "target_challenge"
+              }
+            ],
+            "id": "c010",
+            "length": 9.1,
+            "type": "corridor",
+            "width": 7.9
+          },
+          {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "pressure_routing"
+              },
+              {
+                "element_count": 4,
+                "kind": "pressure_routing"
+              }
+            ],
+            "depth": 16.0,
+            "elevation": {
+              "access": "ramp",
+              "coverage": 0.42,
+              "kind": "gallery",
+              "rise": 1.85,
+              "side": "back"
+            },
+            "enemies": [
+              {
+                "archetype": "melee",
+                "count": 2
+              }
+            ],
+            "id": "c011",
+            "objective": "kill_all",
+            "reward_location_id": 89100107,
+            "type": "arena",
+            "wall_height": 5.0,
+            "width": 21.3
+          },
+          {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "timed_run",
+                "time_limit": 8.0
+              }
+            ],
+            "gap_size": 1.67,
             "id": "c012",
             "objective": "platform_to_goal",
             "reward_location_id": 89100108,
@@ -2111,14 +2156,8 @@
             "vertical_step": 0.77
           },
           {
-            "activities": [
-              {
-                "element_count": 4,
-                "kind": "switch_sequence"
-              }
-            ],
             "id": "c013",
-            "length": 13.4,
+            "length": 13.6,
             "type": "corridor",
             "width": 7.9
           },
@@ -2133,9 +2172,9 @@
                 "kind": "target_challenge"
               },
               {
-                "element_count": 5,
+                "element_count": 4,
                 "kind": "timed_run",
-                "time_limit": 20.0
+                "time_limit": 16.0
               }
             ],
             "depth": 24.0,
@@ -2159,69 +2198,69 @@
           {
             "activities": [
               {
-                "element_count": 2,
+                "element_count": 3,
                 "kind": "pressure_routing"
               }
             ],
-            "depth": 16.3,
+            "depth": 17.9,
             "enemies": [
               {
-                "archetype": "ranged",
-                "count": 2
+                "archetype": "melee",
+                "count": 1
               }
             ],
             "id": "c015",
             "objective": "kill_all",
             "reward_location_id": 89100110,
             "type": "arena",
-            "wall_height": 5.6,
-            "width": 14.3
+            "wall_height": 4.6,
+            "width": 16.2
           },
           {
             "id": "c016",
-            "length": 13.9,
+            "length": 13.6,
             "type": "corridor",
             "width": 7.9
           },
           {
             "activities": [
               {
-                "element_count": 3,
+                "element_count": 5,
                 "kind": "switch_sequence"
               }
             ],
-            "gap_size": 1.67,
+            "gap_size": 2.2,
             "id": "c017",
             "objective": "platform_to_goal",
             "reward_location_id": 89100111,
-            "segment_count": 5,
+            "segment_count": 4,
             "type": "platform_path",
             "vertical_step": 0.77
           },
           {
             "activities": [
               {
-                "element_count": 5,
+                "element_count": 2,
                 "kind": "target_challenge"
               }
             ],
-            "depth": 21.5,
+            "depth": 19.0,
             "enemies": [
               {
-                "archetype": "ranged",
-                "count": 4
+                "archetype": "melee",
+                "count": 2
               }
             ],
             "id": "c018",
             "objective": "kill_all",
             "reward_location_id": 89100112,
             "type": "arena",
-            "wall_height": 4.6,
-            "width": 20.4
+            "wall_height": 6.1,
+            "width": 22.9
           },
           {
             "id": "c019",
-            "length": 13.4,
+            "length": 15.2,
             "type": "corridor",
             "width": 7.9
           },
@@ -2233,32 +2272,32 @@
                 "time_limit": 8.0
               }
             ],
-            "depth": 14.2,
+            "depth": 20.0,
             "enemies": [
               {
                 "archetype": "melee",
-                "count": 1
+                "count": 3
               }
             ],
             "id": "c020",
             "objective": "kill_all",
             "reward_location_id": 89100113,
             "type": "arena",
-            "wall_height": 6.1,
-            "width": 22.5
+            "wall_height": 5.9,
+            "width": 17.5
           },
           {
             "activities": [
               {
-                "element_count": 3,
+                "element_count": 2,
                 "kind": "switch_sequence"
               }
             ],
-            "gap_size": 1.47,
+            "gap_size": 1.82,
             "id": "c021",
             "objective": "platform_to_goal",
             "reward_location_id": 89100114,
-            "segment_count": 4,
+            "segment_count": 6,
             "type": "platform_path",
             "vertical_step": 0.77
           },
@@ -2270,30 +2309,30 @@
               }
             ],
             "id": "c022",
-            "length": 13.8,
+            "length": 8.6,
             "type": "corridor",
             "width": 7.9
           },
           {
             "activities": [
               {
-                "element_count": 5,
+                "element_count": 3,
                 "kind": "pressure_routing"
               }
             ],
-            "depth": 20.9,
+            "depth": 10.2,
             "enemies": [
               {
-                "archetype": "melee",
-                "count": 2
+                "archetype": "ranged",
+                "count": 3
               }
             ],
             "id": "c023",
             "objective": "kill_all",
             "reward_location_id": 89100115,
             "type": "arena",
-            "wall_height": 6.4,
-            "width": 22.6
+            "wall_height": 4.8,
+            "width": 17.0
           }
         ],
         "designer_note": "Deterministic fallback zone.",
@@ -2314,7 +2353,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 927,
+        "content_value": 913,
         "enemy_total": 32,
         "rooms_holding_no_check": 8
       },
@@ -2564,19 +2603,26 @@
           {
             "activities": [
               {
-                "element_count": 5,
+                "element_count": 4,
                 "kind": "target_challenge"
               },
               {
-                "element_count": 2,
+                "element_count": 3,
                 "kind": "target_challenge"
               }
             ],
             "depth": 10.1,
+            "elevation": {
+              "access": "ramp",
+              "coverage": 0.34,
+              "kind": "gallery",
+              "rise": 1.63,
+              "side": "left"
+            },
             "enemies": [
               {
                 "archetype": "melee",
-                "count": 1
+                "count": 3
               }
             ],
             "id": "c002",
@@ -2593,25 +2639,19 @@
                 "kind": "pressure_routing"
               },
               {
-                "element_count": 3,
+                "element_count": 5,
                 "kind": "pressure_routing"
               }
             ],
-            "gap_size": 2.01,
+            "gap_size": 2.15,
             "id": "c003",
             "objective": "platform_to_goal",
             "reward_location_id": 89100202,
-            "segment_count": 3,
+            "segment_count": 6,
             "type": "platform_path",
             "vertical_step": 0.65
           },
           {
-            "activities": [
-              {
-                "element_count": 4,
-                "kind": "pressure_routing"
-              }
-            ],
             "features": [
               {
                 "at": [
@@ -2622,39 +2662,39 @@
               }
             ],
             "id": "c004",
-            "length": 13.5,
+            "length": 11.0,
             "type": "corridor",
             "width": 7.9
           },
           {
             "activities": [
               {
-                "element_count": 3,
+                "element_count": 2,
                 "kind": "switch_sequence"
               },
               {
-                "element_count": 2,
+                "element_count": 4,
                 "kind": "switch_sequence"
               }
             ],
-            "depth": 14.2,
+            "depth": 12.6,
             "enemies": [
               {
-                "archetype": "ranged",
-                "count": 3
+                "archetype": "melee",
+                "count": 4
               }
             ],
             "id": "c005",
             "objective": "kill_all",
             "reward_location_id": 89100203,
             "type": "arena",
-            "wall_height": 6.4,
-            "width": 12.6
+            "wall_height": 4.9,
+            "width": 12.3
           },
           {
             "activities": [
               {
-                "element_count": 3,
+                "element_count": 2,
                 "kind": "target_challenge"
               },
               {
@@ -2662,46 +2702,47 @@
                 "kind": "target_challenge"
               }
             ],
-            "depth": 10.3,
+            "depth": 11.8,
+            "elevation": {
+              "access": "ramp",
+              "coverage": 0.31,
+              "kind": "gallery",
+              "rise": 2.31,
+              "side": "back"
+            },
             "enemies": [
               {
                 "archetype": "melee",
-                "count": 1
+                "count": 3
               }
             ],
             "id": "c006",
             "objective": "kill_all",
             "reward_location_id": 89100204,
             "type": "arena",
-            "wall_height": 5.0,
-            "width": 13.4
+            "wall_height": 6.4,
+            "width": 21.6
           },
           {
-            "activities": [
-              {
-                "element_count": 2,
-                "kind": "pressure_routing"
-              }
-            ],
             "id": "c007",
-            "length": 14.0,
+            "length": 10.0,
             "type": "corridor",
             "width": 7.9
           },
           {
             "activities": [
               {
-                "element_count": 3,
+                "element_count": 4,
                 "kind": "timed_run",
-                "time_limit": 12.0
+                "time_limit": 16.0
               },
               {
-                "element_count": 2,
+                "element_count": 5,
                 "kind": "timed_run",
-                "time_limit": 8.0
+                "time_limit": 20.0
               }
             ],
-            "gap_size": 2.2,
+            "gap_size": 1.48,
             "id": "c008",
             "objective": "platform_to_goal",
             "reward_location_id": 89100205,
@@ -2712,58 +2753,70 @@
           {
             "activities": [
               {
-                "element_count": 5,
-                "kind": "switch_sequence"
-              },
-              {
-                "element_count": 2,
+                "element_count": 4,
                 "kind": "switch_sequence"
               }
             ],
-            "depth": 19.1,
+            "depth": 13.4,
+            "elevation": {
+              "access": "ramp",
+              "coverage": 0.26,
+              "kind": "gallery",
+              "rise": 2.23,
+              "side": "left"
+            },
             "enemies": [
               {
-                "archetype": "ranged",
-                "count": 5
+                "archetype": "melee",
+                "count": 2
               }
             ],
             "id": "c009",
             "objective": "kill_all",
             "reward_location_id": 89100206,
             "type": "arena",
-            "wall_height": 5.3,
-            "width": 13.8
+            "wall_height": 6.8,
+            "width": 18.0
           },
           {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "target_challenge"
+              }
+            ],
             "id": "c010",
-            "length": 13.5,
+            "length": 14.5,
             "type": "corridor",
             "width": 7.9
           },
           {
             "activities": [
               {
-                "element_count": 3,
-                "kind": "pressure_routing"
-              },
-              {
-                "element_count": 4,
+                "element_count": 5,
                 "kind": "pressure_routing"
               }
             ],
-            "depth": 15.9,
+            "depth": 13.8,
+            "elevation": {
+              "access": "ramp",
+              "coverage": 0.41,
+              "kind": "gallery",
+              "rise": 2.12,
+              "side": "left"
+            },
             "enemies": [
               {
-                "archetype": "ranged",
-                "count": 1
+                "archetype": "melee",
+                "count": 3
               }
             ],
             "id": "c011",
             "objective": "kill_all",
             "reward_location_id": 89100207,
             "type": "arena",
-            "wall_height": 6.5,
-            "width": 15.1
+            "wall_height": 5.1,
+            "width": 21.7
           },
           {
             "activities": [
@@ -2771,31 +2824,19 @@
                 "element_count": 3,
                 "kind": "timed_run",
                 "time_limit": 12.0
-              },
-              {
-                "element_count": 4,
-                "kind": "timed_run",
-                "time_limit": 16.0
               }
             ],
-            "gap_size": 2.27,
+            "gap_size": 2.03,
             "id": "c012",
             "objective": "platform_to_goal",
             "reward_location_id": 89100208,
-            "segment_count": 5,
+            "segment_count": 4,
             "type": "platform_path",
             "vertical_step": 0.65
           },
           {
-            "activities": [
-              {
-                "element_count": 3,
-                "kind": "timed_run",
-                "time_limit": 12.0
-              }
-            ],
             "id": "c013",
-            "length": 15.0,
+            "length": 10.5,
             "type": "corridor",
             "width": 7.9
           },
@@ -2810,12 +2851,19 @@
                 "kind": "target_challenge"
               },
               {
-                "element_count": 4,
+                "element_count": 3,
                 "kind": "timed_run",
-                "time_limit": 16.0
+                "time_limit": 12.0
               }
             ],
             "depth": 24.0,
+            "elevation": {
+              "access": "ramp",
+              "coverage": 0.32,
+              "kind": "gallery",
+              "rise": 2.53,
+              "side": "right"
+            },
             "enemies": [
               {
                 "archetype": "melee",
@@ -2824,10 +2872,6 @@
               {
                 "archetype": "brute",
                 "count": 1
-              },
-              {
-                "archetype": "ranged",
-                "count": 2
               }
             ],
             "id": "c014",
@@ -2840,18 +2884,21 @@
           {
             "activities": [
               {
-                "element_count": 3,
-                "kind": "pressure_routing"
-              },
-              {
-                "element_count": 5,
+                "element_count": 4,
                 "kind": "pressure_routing"
               }
             ],
-            "depth": 19.7,
+            "depth": 15.2,
+            "elevation": {
+              "access": "ramp",
+              "coverage": 0.45,
+              "kind": "gallery",
+              "rise": 2.27,
+              "side": "back"
+            },
             "enemies": [
               {
-                "archetype": "melee",
+                "archetype": "ranged",
                 "count": 1
               }
             ],
@@ -2859,96 +2906,85 @@
             "objective": "kill_all",
             "reward_location_id": 89100210,
             "type": "arena",
-            "wall_height": 5.3,
-            "width": 15.7
+            "wall_height": 4.7,
+            "width": 20.0
           },
           {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "timed_run",
+                "time_limit": 12.0
+              }
+            ],
             "id": "c016",
-            "length": 12.9,
+            "length": 11.7,
             "type": "corridor",
             "width": 7.9
           },
           {
             "activities": [
               {
-                "element_count": 2,
-                "kind": "switch_sequence"
-              },
-              {
                 "element_count": 4,
                 "kind": "switch_sequence"
               }
             ],
-            "gap_size": 1.62,
+            "gap_size": 1.96,
             "id": "c017",
             "objective": "platform_to_goal",
             "reward_location_id": 89100211,
-            "segment_count": 5,
+            "segment_count": 4,
             "type": "platform_path",
             "vertical_step": 0.65
           },
           {
             "activities": [
               {
-                "element_count": 5,
-                "kind": "target_challenge"
-              },
-              {
-                "element_count": 4,
+                "element_count": 2,
                 "kind": "target_challenge"
               }
             ],
-            "depth": 11.7,
+            "depth": 16.7,
             "enemies": [
               {
                 "archetype": "ranged",
-                "count": 3
+                "count": 4
               }
             ],
             "id": "c018",
             "objective": "kill_all",
             "reward_location_id": 89100212,
             "type": "arena",
-            "wall_height": 6.7,
-            "width": 13.8
+            "wall_height": 6.1,
+            "width": 13.5
           },
           {
-            "activities": [
-              {
-                "element_count": 3,
-                "kind": "pressure_routing"
-              },
-              {
-                "element_count": 4,
-                "kind": "pressure_routing"
-              }
-            ],
             "id": "c019",
-            "length": 8.8,
+            "length": 14.6,
             "type": "corridor",
             "width": 7.9
           },
           {
             "activities": [
               {
-                "element_count": 2,
+                "element_count": 5,
                 "kind": "timed_run",
-                "time_limit": 8.0
+                "time_limit": 20.0
               }
             ],
-            "depth": 12.1,
+            "depth": 21.0,
             "enemies": [
               {
-                "archetype": "ranged",
-                "count": 2
+                "archetype": "melee",
+                "count": 3
               }
             ],
             "id": "c020",
             "objective": "kill_all",
             "reward_location_id": 89100213,
             "type": "arena",
-            "wall_height": 6.8,
-            "width": 21.2
+            "wall_height": 4.9,
+            "width": 23.2
           },
           {
             "activities": [
@@ -2957,40 +2993,53 @@
                 "kind": "switch_sequence"
               }
             ],
-            "gap_size": 1.87,
+            "gap_size": 1.43,
             "id": "c021",
             "objective": "platform_to_goal",
             "reward_location_id": 89100214,
-            "segment_count": 6,
+            "segment_count": 4,
             "type": "platform_path",
             "vertical_step": 0.65
           },
           {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "target_challenge"
+              }
+            ],
             "id": "c022",
-            "length": 13.3,
+            "length": 15.9,
             "type": "corridor",
             "width": 7.9
           },
           {
             "activities": [
               {
-                "element_count": 4,
+                "element_count": 3,
                 "kind": "pressure_routing"
               }
             ],
-            "depth": 15.8,
+            "depth": 20.7,
+            "elevation": {
+              "access": "ramp",
+              "coverage": 0.4,
+              "kind": "gallery",
+              "rise": 2.48,
+              "side": "left"
+            },
             "enemies": [
               {
                 "archetype": "melee",
-                "count": 5
+                "count": 1
               }
             ],
             "id": "c023",
             "objective": "kill_all",
             "reward_location_id": 89100215,
             "type": "arena",
-            "wall_height": 6.2,
-            "width": 13.1
+            "wall_height": 5.6,
+            "width": 14.8
           }
         ],
         "designer_note": "Deterministic fallback zone.",

@@ -30,6 +30,75 @@ Proof the loop is real:
   reveal cards, zone title cards, inventory, pause, F3 overlay,
   procedural textures/audio.
 
+## Latest session: ROOM GRAMMAR v0
+
+The first approved slice of `docs/proposals/ROOM_FIRST_GAMEPLAY.md`. The
+owner's finding after playing Zone 1 was not "the activity families are
+weak" but "**the rooms are miserable**" — more stuff to do, none of it
+doing anything. The measurement behind it: a room's entire shape was
+three numbers (`width`, `depth`, `wall_height`), so 23 of 23 rooms were
+rectangles and 28 of 41 ranged enemies had nowhere to be ranged from.
+The flatness was the generator faithfully building everything the schema
+could say.
+
+What landed:
+
+- **`ArenaChamber.elevation`** — an optional `ElevationBand`: `gallery`
+  or `pit`, one per room, with bounded `rise` / `coverage` / `side` /
+  `access`. A property an ORDINARY room may have, not a room type; the
+  point is that verticality stops being the `platform_path` minigame.
+  A schema validator refuses a gallery that leaves less than
+  `HEADROOM` of clear air, and `HEADROOM` is public so the generator
+  can ask before proposing rather than discovering it by failing.
+- **The band as ordinary arena composition** — deck, lip, and a ramp
+  whose run is three times its rise, so the angle is the same whatever
+  the height and base movement always reaches the deck. That is NO
+  REQUIREMENT BEFORE GUARANTEE applied to geometry.
+- **Ranged enemies take the high ground.** Placement only; no AI change.
+- **Two environmental objects with verbs.** `DestructibleCover` pays in
+  SPACE, not loot — it removes itself, which is a real consequence that
+  needs no economy and leaves the loot question open rather than
+  answering it badly. `ReactiveBarrel` is hazard orange honestly spent
+  and hurts the player too. Both reach `Damageable`, so every weapon
+  including the permanent Static Pulse floor works on them, and a test
+  reads their source to prove neither reaches for Archipelago truth.
+- **The socket contract**, which is the load-bearing part: the builder
+  emits points it VOUCHES for, and architecture that content must avoid
+  is DECLARED as a `reserved` socket rather than inferred from size.
+
+Everything that went wrong in the batch was one shape — the builder knew
+a physical fact and nothing else did:
+
+- The access ramp is 6.8 m long, past the threshold at which occupancy
+  calls something architecture, so the way up became the one invisible
+  obstacle in the room and two activity elements ended up inside it.
+- Ground sockets were offered blind at six fixed points; three of six
+  landed inside the room's own crates or inside a gallery's solid mass.
+- **A pit was a sealed basement.** The recess was dug under an intact
+  floor slab. The unit test passed — bounds dropped, sockets below zero,
+  a ray from inside the recess found the deck — because nothing asked
+  what a ray from ABOVE hits first. The test that missed it is called
+  `_test_a_pit_is_a_hole_not_a_painted_floor`.
+
+`ChamberBuilders.solid_boxes` is now the single derivation of "what is
+solid in this room", called by the builder to vouch for its sockets and
+by `ContentInstantiator` to place activities.
+
+Measured on the deterministic seed and reported as found, not tuned: 5
+of 23 chambers declare a band (4 galleries, 1 pit); `zone_digest` moved
+`1bdf42f800c5637e` → `6e8d83d0f3ec088b`, 916 → 922 points. On the SAME
+Zone, this batch's engine produces byte-identical audit results to the
+pre-batch engine.
+
+`ENVIRONMENT_OBJECT_VALUE` was written and then deleted. How many
+objects a room can hold is a fact about its built geometry; Python
+pricing it would be the same failure this batch spent its time fixing.
+
+Deliberately NOT done, and still open: no loot economy (Coins are an
+Archipelago item and cannot be minted locally), no side branches or
+alcoves, no second band per room, and the `platform_path` floating-element
+defect from `docs/ZONE_ACTIVITY_AUDIT.md` §4 is untouched.
+
 ## Post-POC work so far
 - **Two adversarial review passes**, all findings fixed with regression
   tests. Notable: an externally-confirmed goal never set `goal_sent`;

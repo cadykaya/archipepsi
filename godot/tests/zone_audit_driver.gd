@@ -266,6 +266,66 @@ func _audit(build: Dictionary, declared: Array) -> void:
 		audited += 1
 
 	_check(audited > 0, "the audit examined nothing")
+	_audit_bands(build, space)
+
+## Every elevation band the ZONE DECLARES, measured in the assembled
+## scene (ROOM_GRAMMAR v0).
+##
+## A structural check, not a placement note. A band is a claim about
+## geometry -- "there is a second height here, and you can walk to it" --
+## and the way that claim fails is silently: the deck is described, the
+## room is built flat, and nothing anywhere disagrees. That is exactly
+## how thirty activities came to be described and none built.
+##
+## The probe drops onto the deck's own `reserved` socket, which is the
+## builder's answer to "where is the band", so the audit and the builder
+## cannot drift apart on where to look.
+func _audit_bands(build: Dictionary, space: PhysicsDirectSpaceState3D) -> void:
+	var bands := 0
+	for entry: Dictionary in build["chambers"]:
+		var chamber: Dictionary = entry["chamber"]
+		var band: Variant = chamber.get("elevation")
+		if typeof(band) != TYPE_DICTIONARY:
+			continue
+		bands += 1
+		var id := str(chamber.get("id", ""))
+		var kind := str((band as Dictionary).get("kind", "gallery"))
+		var rise := float((band as Dictionary).get("rise", 2.0))
+		var xform: Transform3D = entry["xform"]
+		var sockets: Array = (entry["build"] as Dictionary).get(
+				"sockets", []) as Array
+		var deck: Variant = null
+		for socket: Variant in sockets:
+			if typeof(socket) == TYPE_DICTIONARY and str(
+					(socket as Dictionary).get("kind", "")) == "reserved":
+				deck = (socket as Dictionary)["position"]
+		if deck == null:
+			_check(false, "room '%s' declares a %s band and the builder "
+					% [id, kind] + "emitted no socket for it")
+			continue
+		var at: Vector3 = xform * (deck as Vector3)
+		# Above the deck and BELOW THE CEILING. "Well above" was the
+		# first version and it measured every band at five metres,
+		# because a ray that starts outside the room stops on the roof --
+		# the same wrong-reference mistake this file's `EYE` constant
+		# already carries a paragraph about.
+		var wall := float(chamber.get("wall_height", 6.0))
+		var from := at + Vector3.UP * minf(absf(rise) + 2.0, wall - 0.3)
+		var query := PhysicsRayQueryParameters3D.create(
+				from, at + Vector3.DOWN * (absf(rise) + 4.0))
+		query.collide_with_areas = false
+		var hit := space.intersect_ray(query)
+		if hit.is_empty():
+			_check(false, "room '%s': nothing to stand on where its %s "
+					% [id, kind] + "band is declared")
+			continue
+		var surface: float = (hit["position"] as Vector3).y - at.y
+		var want := rise if kind == "gallery" else -rise
+		_check(absf(surface - want) < 0.75,
+				"room '%s': its %s band is declared at %.2f m and the "
+				% [id, kind, want]
+				+ "assembled room has a surface at %.2f m" % surface)
+	print("  %d elevation band(s) measured in the assembled Zone" % bands)
 
 ## Does the element's whole box sit inside the room it belongs to?
 func _inside(bounds: AABB, element: ActivityElement) -> bool:

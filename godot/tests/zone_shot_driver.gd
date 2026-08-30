@@ -81,21 +81,66 @@ func _run() -> void:
 
 	# Each activity's own room, so the camera can be kept INSIDE it.
 	var room_bounds := {}
+	# A chamber is placed with a yaw, so "the band is on the left" is a
+	# statement in ROOM space and the camera works in world space.
+	var entry_rotation := {}
+	var band_centre := {}
 	for entry: Dictionary in build["chambers"]:
 		var chamber: Dictionary = entry["chamber"]
 		var xform: Transform3D = entry["xform"]
 		var local: AABB = (entry["build"] as Dictionary).get("bounds", AABB())
 		room_bounds[str(chamber.get("id", ""))] = ZoneBuilder._world_aabb(
 				local, xform.origin, xform.basis.get_euler().y)
+		entry_rotation[str(chamber.get("id", ""))] = \
+				xform.basis.get_euler().y
+		# WHERE THE BAND IS, asked of the builder rather than recomputed
+		# from `side` and `coverage`. The builder emits the deck as a
+		# `reserved` socket; deriving the same rectangle a second time
+		# here is how the photograph ends up aimed at a different place
+		# than the one the room actually built.
+		var deck: Variant = null
+		for socket: Variant in (entry["build"] as Dictionary).get(
+				"sockets", []) as Array:
+			if typeof(socket) == TYPE_DICTIONARY \
+					and str((socket as Dictionary).get("kind", "")) \
+						== "reserved":
+				deck = (socket as Dictionary)["position"]
+		if deck != null:
+			band_centre[str(chamber.get("id", ""))] = xform * (
+					deck as Vector3)
 
+	# ROOMS FIRST (ROOM_GRAMMAR v0). The batch's claim is about the
+	# rooms, so the rooms are what has to be photographed -- and the
+	# subjects are chosen by ASKING THE ZONE which chambers declare an
+	# elevation band, never by naming one that looked good. A hand-picked
+	# showcase id is how a generator gets judged on its best output.
 	var shot := 0
+	var banded: Array = []
+	for entry: Dictionary in build["chambers"]:
+		var chamber: Dictionary = entry["chamber"]
+		if typeof(chamber.get("elevation")) != TYPE_DICTIONARY:
+			continue
+		banded.append(chamber)
+	print("  %d of %d chambers declare an elevation band"
+			% [banded.size(), (build["chambers"] as Array).size()])
+	for chamber: Dictionary in banded:
+		var id := str(chamber.get("id", ""))
+		var band: Dictionary = chamber["elevation"]
+		var room: AABB = room_bounds.get(id, AABB())
+		var aim: Vector3 = band_centre.get(id, room.get_center())
+		await _shoot_room(camera, "%02d_room_%s_%s_%s" % [shot, id,
+				str(band.get("kind", "")), str(band.get("side", ""))],
+				room, str(band.get("side", "left")),
+				float(entry_rotation.get(id, 0.0)), aim)
+		shot += 1
+
 	var seen := {}
 	for runtime in runtimes:
 		# One clean example of each kind, plus every activity the audit
-		# flagged. Not all thirty: the point is evidence a person can
-		# look at, and thirty near-identical frames is not that.
+		# currently notes. Not all thirty: the point is evidence a person
+		# can look at, and thirty near-identical frames is not that.
 		var flagged := runtime.activity_id in [
-			"c002_0", "c006_0", "c011_0", "c014_2", "c020_0"]
+			"c003_0", "c008_0", "c012_0", "c015_0", "c017_0", "c021_0"]
 		if seen.has(runtime.kind) and not flagged:
 			continue
 		seen[runtime.kind] = true
@@ -134,6 +179,61 @@ func _runtimes_under(node: Node, out: Array[ActivityRuntime]) -> void:
 		out.append(node as ActivityRuntime)
 	for child in node.get_children():
 		_runtimes_under(child, out)
+
+## The whole room, from the high corner FURTHEST FROM THE BAND.
+##
+## Not a solved distance. `_shoot` frames a subject by backing the camera
+## off until it fits, which for a subject the size of the room itself
+## puts the camera outside it -- and the clamp that pulls it back in
+## lands it in the middle of the furniture, which is what the first
+## version of this produced: five photographs of the inside of a row of
+## targets. A room shot is a corner shot, and the corner is chosen by
+## where the band ISN'T so the deck and its ramp are both in frame.
+##
+## The side is named in ROOM space; the chamber is placed with a yaw, so
+## the direction is rotated into the world before it is used.
+func _shoot_room(camera: Camera3D, name: String, room: AABB,
+		side: String, yaw: float, aim: Vector3) -> void:
+	if room.size == Vector3.ZERO:
+		return
+	# AIMED AT THE BAND, which is the subject, and at head height above
+	# the room's floor rather than at the middle of its bounds: the slab
+	# allowance sits below the floor and a pit's bounds reach further
+	# down still, so the bounds' centre points the camera at concrete.
+	var centre := Vector3(aim.x, room.position.y
+			+ minf(room.size.y * 0.4, 1.6), aim.z)
+	# Away from the band: a gallery on the left is photographed from the
+	# right, and a band across the back from the front.
+	var away := Vector3(1.0, 0.0, 0.0)
+	match side:
+		"left":
+			away = Vector3(1.0, 0.0, -0.55)
+		"right":
+			away = Vector3(-1.0, 0.0, -0.55)
+		_:
+			away = Vector3(0.35, 0.0, -1.0)
+	away = Vector3(Vector2(away.x, away.z).rotated(yaw).x, 0.0,
+			Vector2(away.x, away.z).rotated(yaw).y).normalized()
+	var inner := room.grow(-CAMERA_MARGIN)
+	if inner.size.x <= 0.0 or inner.size.z <= 0.0:
+		inner = room
+	var eye := room.get_center() \
+			+ away * Vector2(room.size.x, room.size.z).length()
+	eye = Vector3(
+		clampf(eye.x, inner.position.x, inner.end.x),
+		# High: at eye level a room is a wall of furniture, and the thing
+		# being judged is the FLOOR PLAN -- where the deck is, where the
+		# ramp lands, whether the crates are anywhere useful.
+		room.position.y + room.size.y * 0.78,
+		clampf(eye.z, inner.position.z, inner.end.z))
+	camera.global_position = eye
+	camera.look_at(centre, Vector3.UP)
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	image.save_png(ProjectSettings.globalize_path(
+			"%s/%s.png" % [OUT_DIR, name]))
+	print("    %s  (room %.1f x %.1f m, band on the %s)"
+			% [name, room.size.x, room.size.z, side])
 
 ## Frame the activity from its own extent.
 ##

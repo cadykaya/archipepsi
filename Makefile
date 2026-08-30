@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-activity godot-zone-audit zone-shots godot-boot godot-legible godot-integration
+.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-activity godot-room godot-zone-audit zone-shots godot-boot godot-legible godot-integration
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -152,6 +152,21 @@ godot-activity: godot-import
 	@out=$$($(GODOT) --headless --path godot -- --activity-test 2>&1); \
 	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
 	printf '%s\n' "$$out" | grep -q "GODOT ACTIVITY TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# ROOM GRAMMAR v0: elevation bands, sockets and environmental objects.
+#
+# Every test goes through `ZoneBuilder.build` or
+# `ContentInstantiator.build_chamber`, and none constructs its own room.
+# This project has been burned three times by a subsystem passing its own
+# tests while the real composition path never reached it.
+godot-room: godot-import
+	@out=$$($(GODOT) --headless --path godot -- --room-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT ROOM TESTS OK" || exit 1; \
 	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
 	  echo "-- a script error was raised: the suite cannot vouch for itself"; \
 	  exit 1; \

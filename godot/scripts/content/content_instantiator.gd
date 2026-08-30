@@ -39,12 +39,6 @@ const SHELL_FOR_TYPE := {
 ## with like.
 const FLOOR_ALLOWANCE := 1.0
 
-## A mesh at least this wide on both floor axes is architecture -- a
-## floor slab, a ceiling, a wall -- not furniture. Activities are placed
-## INSIDE the room, so treating the room itself as an obstacle would
-## leave the solver with nowhere legal to go.
-const ROOM_SCALE_SOLID := 6.0
-
 ## Builds one chamber. Signature-compatible with `ChamberBuilders.build`,
 ## which is what it falls back to, so `ZoneBuilder` did not have to learn
 ## anything new.
@@ -65,8 +59,94 @@ const ROOM_SCALE_SOLID := 6.0
 static func build_chamber(chamber: Dictionary, theme: String,
 		registry: ContentRegistry = null) -> Dictionary:
 	var result := _shell(chamber, theme, registry)
-	result["activities"] = _build_activities(result, chamber, theme)
+	# WHAT IS ALREADY IN THE ROOM, computed once and then added to as
+	# things go in.
+	#
+	# ACTIVITIES FIRST, and that is a precedence rule rather than a
+	# measurement: an activity carries a room's local reward and is the
+	# structure the campaign describes, a crate is composition. Whichever
+	# goes LAST is the one that can be squeezed, because
+	# `Activities._free_spot` deliberately accepts a crowded spot rather
+	# than dropping an element -- a missing puzzle element is worse than
+	# a tight one. So the thing that yields should be the crate.
+	#
+	# Measured honestly: on the played Zone, swapping this order changes
+	# nothing (8 placement notes either way). What DID cause the five
+	# buried elements the audit found was two builders that could not see
+	# their own geometry -- see `ChamberBuilders.solid_boxes` and the
+	# ramp's `reserved` socket.
+	var occupied := _room_occupancy(result)
+	result["activities"] = _build_activities(result, chamber, theme, occupied)
+	result["environment"] = _build_environment(result, theme, occupied)
 	return result
+
+## Everything the built shell already occupies, in the room's own space.
+static func _room_occupancy(result: Dictionary) -> Array[AABB]:
+	var occupied: Array[AABB] = []
+	var root := result.get("root") as Node3D
+	if root == null:
+		return occupied
+	occupied.append_array(ChamberBuilders.solid_boxes(root))
+	# Regions the BUILDER reserved, which occupancy-by-mesh cannot see: a
+	# band's deck is room-scale, so it is skipped as architecture, and
+	# the space under it then looked free to anything placed at floor
+	# level.
+	for socket: Variant in result.get("sockets", []) as Array:
+		if typeof(socket) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = socket
+		if str(entry.get("kind", "")) != "reserved":
+			continue
+		var at: Vector3 = entry.get("position", Vector3.ZERO)
+		var extent: Vector3 = entry.get("extent", Vector3.ONE)
+		occupied.append(AABB(at - extent * 0.5, extent))
+	return occupied
+
+## Things the room offers that answer when you hit them.
+##
+## Placed ONLY into sockets the builder vouched for. That is the whole
+## contract: a socket is a point on a real surface, clear of the walking
+## lane, so an environmental object cannot land in a void, inside a prop
+## or on top of another one. Every placement bug this project has paid
+## for came from a composer guessing where it was safe to put something.
+static func _build_environment(result: Dictionary, theme: String,
+		occupied: Array[AABB]) -> Array:
+	var root := result.get("root") as Node3D
+	if root == null:
+		return []
+	var built: Array = []
+	for socket: Variant in result.get("sockets", []) as Array:
+		if typeof(socket) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = socket
+		var at: Vector3 = entry.get("position", Vector3.ZERO)
+		var size := Vector3.ZERO
+		var node: Node3D = null
+		match str(entry.get("kind", "")):
+			"cover":
+				node = DestructibleCover.create(theme)
+				size = DestructibleCover.SIZE
+			"reactive":
+				node = ReactiveBarrel.create(theme)
+				size = ReactiveBarrel.SIZE
+			_:
+				continue
+		at.y += size.y / 2.0
+		# A SOCKET IS AN OFFER, NOT AN ORDER. The builder vouches that
+		# the point is on real, clear geometry; it cannot know what the
+		# activity solver did afterwards. So an object whose box now
+		# lands on something is dropped rather than placed on top of it:
+		# one fewer crate is a room that is slightly plainer, and a crate
+		# sitting on a Check is a room the player cannot finish.
+		var box := AABB(at - size * 0.5, size)
+		if ChamberBuilders.box_hits(box, occupied):
+			node.free()
+			continue
+		root.add_child(node)
+		node.position = at
+		occupied.append(box)
+		built.append(node)
+	return built
 
 ## The chamber's own content, added to whatever room `_shell` produced.
 ##
@@ -75,7 +155,7 @@ static func build_chamber(chamber: Dictionary, theme: String,
 ## pin exists to prevent, and building them HERE -- on every route rather
 ## than on one of them -- is the other half of that.
 static func _build_activities(result: Dictionary, chamber: Dictionary,
-		theme: String) -> Array:
+		theme: String, occupied: Array[AABB]) -> Array:
 	var root := result.get("root") as Node3D
 	if root == null:
 		return []
@@ -83,13 +163,6 @@ static func _build_activities(result: Dictionary, chamber: Dictionary,
 	var width := maxf(bounds.size.x, 1.0)
 	var depth := maxf(bounds.size.z, 1.0)
 	var room_id := str(chamber.get("id", ""))
-	# WHAT IS ALREADY IN THE ROOM. Read off the built room rather than
-	# handed down from the builder: activities go in after the shell, so
-	# the props are real nodes by now and their actual boxes are better
-	# evidence than a list somebody remembered to maintain.
-	var occupied: Array[AABB] = []
-	for child in root.get_children():
-		_collect_occupancy(child, Transform3D.IDENTITY, occupied)
 	var activities: Array = []
 	var index := 0
 	for activity: Variant in chamber.get("activities", []) as Array:
@@ -112,31 +185,6 @@ static func _build_activities(result: Dictionary, chamber: Dictionary,
 			activities.append(built)
 			index += 1
 	return activities
-
-## Every solid box in `node`, in the ROOM's local space.
-##
-## Floors, ceilings and walls are skipped by size: a room-sized slab
-## overlaps everything and would leave the solver nowhere to stand. What
-## is wanted is the furniture -- crates, drums, sconces, signage -- which
-## is what an activity can actually be buried inside.
-##
-## THE TRANSFORM IS ACCUMULATED BY HAND, and it has to be. The first
-## version used `mesh.global_transform`, which for a node OUTSIDE THE
-## SCENE TREE does not accumulate -- and a chamber is built detached and
-## added later, so every prop came back at its own local offset near the
-## origin. The boxes looked plausible, intersected nothing, and the
-## solver silently did nothing at all.
-static func _collect_occupancy(node: Node, xform: Transform3D,
-		out: Array[AABB]) -> void:
-	var here := xform
-	if node is Node3D:
-		here = xform * (node as Node3D).transform
-	if node is MeshInstance3D:
-		var box: AABB = here * (node as MeshInstance3D).get_aabb()
-		if box.size.x < ROOM_SCALE_SOLID and box.size.z < ROOM_SCALE_SOLID:
-			out.append(box)
-	for child in node.get_children():
-		_collect_occupancy(child, here, out)
 
 ## WHICH ROOM to build. Every return here is a room; none of them is a
 ## finished chamber, because the chamber's content is added by the caller.
