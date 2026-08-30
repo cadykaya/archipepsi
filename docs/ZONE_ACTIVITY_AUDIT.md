@@ -174,6 +174,60 @@ A crutch, and named as one. It comes out when interaction art lands.
 
 ---
 
+## 4. OPEN: activities in a `platform_path` have nothing to stand on
+
+Found by the owner in play, on `d5beedd`, reported as "some of these
+pressure pads are not on the ground, and they have no collision, and 2 of
+them are under the shelf". All three observations are one bug.
+
+**A `platform_path` has no floor.** It is discrete platforms rising over
+a void — `y = step * (i + 1)`, with `gap_size` of nothing between them.
+The activity solver places elements on a flat plane at the room's nominal
+floor height and knows nothing about where the platforms are, so an
+element lands either in a gap (floating; the sensors are deliberately
+non-solid, which is right on a floor and useless in mid-air) or beneath a
+raised platform, which is the shelf.
+
+| Room | Activities | Elements with no ground |
+|---|---|---:|
+| c003 | pressure_routing x2 | 4 of 6 |
+| c008 | timed_run x2 | 4 of 6 |
+| c012 | timed_run x2 | 8 of 10 |
+| c017 | switch_sequence | 4 of 5 |
+| c021 | switch_sequence | 3 of 4 |
+
+**23 elements, every `platform_path` in Zone 1, every kind that lands in
+one.** Arenas and corridors are unaffected — they have a real floor.
+
+### Why the audit was green over it
+
+A pad floating in a void is inside its chamber, overlaps nothing, and is
+perfectly visible from the walking line. Every check this file had
+passed it. **Nothing asked whether there was anything to stand on**, and
+that is the check that now exists (`_has_ground`) and produced the table
+above. Fifth time in this project that a guard has inherited the blind
+spot of the thing it protects.
+
+### Also open, from the same session
+
+- **`c015_1` is mathematically unsolvable.** Five pads whose best
+  possible route is 4.8 s at full walk speed in a straight line with zero
+  reaction time, against a 4.0 s hold window. Nothing checks that a
+  routing puzzle's circuit fits inside `PLATE_HOLD_SECONDS`. `c003_0` at
+  3.6 s of a 4.0 s budget is technically possible and brutal.
+- **The `pressure_routing` label describes something impossible.** "Hold
+  all N pads at once" is not what the mechanic asks for — pads stay live
+  for a hold window and the player runs a circuit.
+- **Labels clip and overlap.** Two activities in one small room both
+  render at `pixel_size 0.012`; the owner's screenshots show
+  `RESSURE ROUTING`, `d all 2 pads at once`, `RESET — a plate re`. Sized
+  from a wide screenshot, never checked from eye height in a corridor.
+
+None of the four is fixed. They are recorded here so the next batch
+starts from evidence.
+
+---
+
 ## 3-bis. The original diagnosis, for the record
 
 From the frames `make zone-shots` produced. **Nothing has been

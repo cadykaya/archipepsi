@@ -215,6 +215,7 @@ func _audit(build: Dictionary, declared: Array) -> void:
 		var in_level := 0
 		var in_other_activity := 0
 		var unreachable := 0
+		var no_ground := 0
 		var blockers: Array = []
 		for element in runtime.elements:
 			var p := element.global_position
@@ -229,6 +230,8 @@ func _audit(build: Dictionary, declared: Array) -> void:
 					in_other_activity += 1
 				else:
 					in_level += 1
+			if not _has_ground(space, element, runtime):
+				no_ground += 1
 			if not _is_reachable(space, element, bounds, runtime):
 				unreachable += 1
 				var who := _blocker(space, element, bounds, runtime)
@@ -239,6 +242,7 @@ func _audit(build: Dictionary, declared: Array) -> void:
 		record["embedded_in_level"] = in_level
 		record["overlapping_another_activity"] = in_other_activity
 		record["unreachable"] = unreachable
+		record["no_ground_under"] = no_ground
 		record["blocked_by"] = blockers
 		record["state"] = runtime.state
 
@@ -251,6 +255,9 @@ func _audit(build: Dictionary, declared: Array) -> void:
 		_note(in_other_activity == 0,
 				"activity '%s': %d element overlap(s) with ANOTHER "
 				% [id, in_other_activity] + "activity's elements")
+		_note(no_ground == 0,
+				"activity '%s': %d element(s) have nothing to stand on "
+				% [id, no_ground] + "within reach below them")
 		_note(unreachable == 0,
 				"activity '%s': %d element(s) cannot be seen from the "
 				% [id, unreachable] + "room's walking space (blocked by %s)"
@@ -347,6 +354,28 @@ func _blocker(space: PhysicsDirectSpaceState3D, element: ActivityElement,
 func _floor_under(element: ActivityElement,
 		runtime: ActivityRuntime) -> float:
 	return element.global_position.y - float(runtime.rules()["height"])
+
+## How far below an element there must be something solid.
+##
+## An element is placed at a known height above the plane the builder
+## measured from -- but a `platform_path` HAS NO SUCH PLANE. It is
+## discrete platforms rising over a void, so "the floor plus 8 cm" is a
+## point in mid-air between two platforms, or a point underneath one.
+## The audit was blind to it: a pad floating in a gap is inside its
+## chamber, overlaps nothing, and is perfectly visible from the walking
+## line, so every other check passed.
+const GROUND_REACH := 1.2
+
+## Is there anything solid under this element?
+func _has_ground(space: PhysicsDirectSpaceState3D,
+		element: ActivityElement, runtime: ActivityRuntime) -> bool:
+	var from := _world_box(element).get_center()
+	var to := from - Vector3(0.0, GROUND_REACH + float(
+			runtime.rules()["height"]), 0.0)
+	var query := PhysicsRayQueryParameters3D.create(from, to)
+	query.collide_with_areas = false
+	query.exclude = _all_activity_rids
+	return not space.intersect_ray(query).is_empty()
 
 ## How many points along the walking lane the reachability probe tries.
 const PROBE_STEPS := 9
