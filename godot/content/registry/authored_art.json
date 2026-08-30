@@ -123,7 +123,7 @@
    "category": "projectile_visual",
    "display_name": "Projectile silhouette (falling)",
    "scene": "res://content/projectiles/projectile_falling.tscn",
-   "review": "pass",
+   "review": "pending",
    "semantic_tags": [
     "projectile",
     "falling"
@@ -140,7 +140,7 @@
    "category": "projectile_visual",
    "display_name": "Projectile silhouette (lobbed)",
    "scene": "res://content/projectiles/projectile_lobbed.tscn",
-   "review": "pass",
+   "review": "pending",
    "semantic_tags": [
     "projectile",
     "lobbed"
@@ -157,7 +157,7 @@
    "category": "projectile_visual",
    "display_name": "Projectile silhouette (straight)",
    "scene": "res://content/projectiles/projectile_straight.tscn",
-   "review": "pass",
+   "review": "pending",
    "semantic_tags": [
     "projectile",
     "straight"
