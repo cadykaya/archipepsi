@@ -154,6 +154,24 @@ matte mounting hardware, which is what props do not have: a player
 scanning a room can now find the operable things by looking for the
 hardware rather than by shooting cyan boxes.
 
+### Playtest labelling (F4)
+
+Every activity names itself at rest, before it is touched: the family,
+and what you do to it — `SWITCH SEQUENCE / walk into all 4`,
+`PRESSURE ROUTING / hold all 4 pads at once`. A `timed_run` also tags its
+`START` and `GOAL`. Once an attempt is running the same label carries the
+progress count and the clock; back at rest it returns to the identity
+line rather than going blank.
+
+**F4 turns them off**, and that is the point of them having a switch. The
+graybox silhouettes are supposed to carry family identity on their own,
+so a label nobody can hide would make "can you tell these apart"
+permanently unanswerable. It starts ON because a playtester who cannot
+tell a pressure pad from a floor tile is testing the placeholder rather
+than the mechanics.
+
+A crutch, and named as one. It comes out when interaction art lands.
+
 ---
 
 ## 3-bis. The original diagnosis, for the record

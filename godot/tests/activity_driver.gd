@@ -78,6 +78,8 @@ func _run() -> void:
 	await _test_routing_pads_are_physically_linked()
 	await _test_activity_tint_never_impersonates_a_reserved_layer()
 	await _test_a_null_shell_id_is_not_a_shell_id()
+	await _test_every_activity_says_what_it_is_before_you_touch_it()
+	await _test_the_labels_can_be_turned_off()
 
 	_check(activities_built >= 10,
 			"the suite built %d activities; it is not exercising the "
@@ -857,6 +859,64 @@ func _test_a_null_shell_id_is_not_a_shell_id() -> void:
 	var root := result.get("root") as Node3D
 	if root != null:
 		root.queue_free()
+	await get_tree().process_frame
+
+# --- playtest labelling -------------------------------------------------
+
+func _labels_of(runtime: ActivityRuntime) -> Array[Label3D]:
+	var out: Array[Label3D] = []
+	for child in runtime.get_children():
+		if child is Label3D:
+			out.append(child as Label3D)
+	return out
+
+func _test_every_activity_says_what_it_is_before_you_touch_it() -> void:
+	"""The label is a playtest crutch and it has to be there when it is
+	needed: BEFORE the first attempt, when the player is deciding whether
+	this object is gameplay at all. It used to appear only once an
+	attempt had started, which is after the question."""
+	for kind: String in ActivityRuntime.RULES:
+		var host := Node3D.new()
+		add_child(host)
+		var built := Activities.build(host, {
+			"kind": kind, "element_count": 3,
+		}, "concrete_facility", 24.0, 22.0, "c1", "%s_lab" % kind)
+		var runtime := (built as Dictionary)["runtime"] as ActivityRuntime
+		var shown := ""
+		for label in _labels_of(runtime):
+			if label.visible:
+				shown += label.text
+		_check(shown != "", "a '%s' says nothing at rest" % kind)
+		_check(shown.to_upper().contains(
+				kind.replace("_", " ").to_upper()),
+				"a '%s' does not name its family: '%s'" % [kind, shown])
+		if kind == "timed_run":
+			_check(shown.contains("START") and shown.contains("GOAL"),
+					"a timed_run does not tag its start and goal: '%s'"
+					% shown)
+		host.queue_free()
+		await get_tree().process_frame
+
+func _test_the_labels_can_be_turned_off() -> void:
+	"""And they must come off. The graybox silhouettes are supposed to
+	carry family identity on their own, so a label nobody can hide makes
+	"can you tell these apart" permanently unanswerable."""
+	var host := Node3D.new()
+	add_child(host)
+	var built := Activities.build(host, {
+		"kind": "timed_run", "element_count": 3,
+	}, "concrete_facility", 24.0, 22.0, "c1", "toggle")
+	var runtime := (built as Dictionary)["runtime"] as ActivityRuntime
+	runtime.set_labels_visible(false)
+	for label in _labels_of(runtime):
+		_check(not label.visible, "a label survived being switched off")
+	runtime.set_labels_visible(true)
+	var back := 0
+	for label in _labels_of(runtime):
+		if label.visible:
+			back += 1
+	_check(back > 0, "labels did not come back on")
+	host.queue_free()
 	await get_tree().process_frame
 
 # --- fixture -------------------------------------------------------------

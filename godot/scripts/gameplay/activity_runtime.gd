@@ -53,6 +53,29 @@ const RULES := {
 	},
 }
 
+## Playtest labelling: every activity says what it IS and what to do,
+## before you touch it.
+##
+## A crutch, deliberately, and one with a switch. The graybox forms are
+## supposed to carry family identity on their own -- that is what the
+## silhouette work was for -- so a label that could not be turned off
+## would make the question "can you tell these apart" permanently
+## unanswerable. F4 toggles it; it starts ON because a playtester who
+## cannot tell a plate from a floor tile is not testing the mechanics.
+static var labels_visible := true
+
+## Every live activity, so the toggle can reach them without a search.
+const GROUP := "activities"
+
+## What each family is, and what you do to it. Two lines: the name, then
+## the verb, because "SWITCH SEQUENCE" alone does not say to walk into it.
+const IDENTITY := {
+	"switch_sequence": ["SWITCH SEQUENCE", "walk into all %d"],
+	"target_challenge": ["TARGET CHALLENGE", "shoot all %d"],
+	"pressure_routing": ["PRESSURE ROUTING", "hold all %d pads at once"],
+	"timed_run": ["TIMED RUN", "start, then reach the goal"],
+}
+
 signal completed(activity_id: String, seconds: float, attempts: int)
 signal failed(activity_id: String, reason: String)
 signal state_changed(state: State)
@@ -97,6 +120,7 @@ static func create(activity: Dictionary, room_id_in: String,
 	for capability: Variant in activity.get("requires", []) as Array:
 		runtime.requires.append(str(capability))
 	runtime.name = "Activity_" + activity_id_in
+	runtime.add_to_group(GROUP)
 	return runtime
 
 func rules() -> Dictionary:
@@ -120,6 +144,7 @@ func adopt(built: Array[ActivityElement]) -> void:
 		element.triggered.connect(_on_triggered)
 		element.released.connect(_on_released)
 	_build_label()
+	_tag_elements()
 	_refresh_capability_state()
 
 ## The clock and the progress count get a HOME, on the activity itself.
@@ -132,13 +157,49 @@ func adopt(built: Array[ActivityElement]) -> void:
 func _build_label() -> void:
 	_label = Label3D.new()
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.pixel_size = 0.005
+	_label.pixel_size = 0.012
 	_label.modulate = Color(0.85, 0.88, 0.92)
-	_label.outline_size = 10
+	_label.outline_size = 16
 	_label.visible = false
 	var home := _label_home()
-	_label.position = home + Vector3(0.0, 2.6, 0.0)
+	_label.position = home + Vector3(0.0, 3.1, 0.0)
 	add_child(_label)
+	_show_identity()
+
+## The idle line: what this is and what to do with it.
+func _show_identity() -> void:
+	var entry: Array = IDENTITY.get(kind, ["ACTIVITY", "%d parts"])
+	var verb: String = str(entry[1])
+	if verb.contains("%d"):
+		verb = verb % placed_count()
+	if ordered:
+		verb += " IN ORDER"
+	if time_limit > 0.0:
+		verb += "   %.0fs" % time_limit
+	_say("%s\n%s" % [entry[0], verb])
+
+## Per-element tags, for the one family whose parts have different jobs.
+## `timed_run` is it: a start, a goal and waypoints look different now,
+## but "different" and "which is which" are not the same question.
+func _tag_elements() -> void:
+	for element in elements:
+		var text := ""
+		if element.role == ActivityElement.ROLE_START:
+			text = "START"
+		elif element.role == ActivityElement.ROLE_GOAL:
+			text = "GOAL"
+		if text == "":
+			continue
+		var tag := Label3D.new()
+		tag.text = text
+		tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		tag.pixel_size = 0.016
+		tag.outline_size = 18
+		tag.modulate = Color(0.9, 0.93, 0.97)
+		tag.position = element.position + Vector3(0.0, 2.0, 0.0)
+		tag.visible = labels_visible
+		tag.name = "Tag_%s" % text
+		add_child(tag)
 
 func _label_home() -> Vector3:
 	for element in elements:
@@ -243,7 +304,7 @@ func _process(delta: float) -> void:
 	if _result_left > 0.0:
 		_result_left -= delta
 		if _result_left <= 0.0 and state == State.IDLE:
-			_say("")
+			_show_identity()
 		return
 	if state != State.ACTIVE:
 		return
@@ -314,7 +375,15 @@ func _say(text: String) -> void:
 	if _label == null:
 		return
 	_label.text = text
-	_label.visible = text != ""
+	_label.visible = text != "" and labels_visible
+
+## Show or hide every label this activity owns. Called by `Main` on F4.
+func set_labels_visible(shown: bool) -> void:
+	if _label != null:
+		_label.visible = shown and _label.text != ""
+	for child in get_children():
+		if child is Label3D and child != _label:
+			(child as Label3D).visible = shown
 
 ## What the instrumentation records. Read rather than pushed, so a Zone
 ## that ends mid-attempt still reports the attempt honestly instead of

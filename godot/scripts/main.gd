@@ -458,11 +458,29 @@ func _on_abandon() -> void:
 		BridgeClient.send_intent({"type": "abandon_zone",
 				"zone_id": zone.zone_id})
 
+## F4: name every activity, or stop naming them.
+##
+## ON by default. The graybox silhouettes are meant to carry family
+## identity by themselves, so a label that could not be turned off would
+## make "can you tell these apart" a question nobody could answer again
+## -- but a playtester who cannot tell a pressure pad from a floor tile
+## is not testing the mechanics, they are testing the placeholder.
+func _toggle_activity_labels() -> void:
+	ActivityRuntime.labels_visible = not ActivityRuntime.labels_visible
+	for runtime in get_tree().get_nodes_in_group(ActivityRuntime.GROUP):
+		(runtime as ActivityRuntime).set_labels_visible(
+				ActivityRuntime.labels_visible)
+	hud.toast("Activity labels %s"
+			% ("ON" if ActivityRuntime.labels_visible else "OFF"),
+			Color(0.85, 0.88, 0.92))
+
 # -- global input -----------------------------------------------------------
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("debug_overlay"):
 		debug.toggle()
+	if event.is_action_pressed("activity_labels"):
+		_toggle_activity_labels()
 	if view == View.MENU:
 		return
 	if event.is_action_pressed("pause"):
