@@ -119,6 +119,37 @@ def main() -> None:
         raise SystemExit("\n  Bridge stopped.\n") from None
 
 
+def _zone_line(args, provider_name: str) -> str:
+    """The id of the Zone this configuration builds, on the window that
+    STAYS OPEN.
+
+    `playtest check` already prints it, in the launcher window, thirty
+    lines above the instructions -- so by the time anyone is playing it
+    has scrolled away, which is exactly when they want it. The bridge
+    window is up for the whole run and has room for one more line.
+
+    Only for a MOCK campaign on the deterministic provider. Against a
+    real server the Zone is a function of the seed, and against a live
+    Epsilon it is a function of what the model said; in both cases an id
+    computed here would describe a Zone nobody is going to walk.
+
+    Never fatal. This is a convenience on a banner, and a banner that
+    can stop the bridge starting is a worse trade than a missing line.
+    """
+    if args.ap == "real" or provider_name != "fallback":
+        return ""
+    try:
+        from .playtest import played_zone_digest
+        played = played_zone_digest()
+    except Exception:                                    # pragma: no cover
+        return ""
+    if not played:
+        return ""
+    return (f"    zone 1      {played['digest']}"
+            f"   ({played['rooms']} rooms, {played['checks']} Checks, "
+            f"{played['value']} points)\n")
+
+
 def _ap_line(args) -> str:
     """The AP line of the banner, with the mock's SCALE on it.
 
@@ -170,7 +201,8 @@ def _announce(engine, server, provider_name: str, args) -> None:
         f"   (Godot connects here)\n"
         f"    archipelago {_ap_line(args)}\n"
         f"    epsilon     {epsilon}\n"
-        f"    saves       {save_dir}\n",
+        f"    saves       {save_dir}\n"
+        f"{_zone_line(args, provider_name)}",
         flush=True)
     if not save_dir.exists():
         print(f"    (no campaign there yet; it is created on first "

@@ -284,3 +284,79 @@ def test_a_second_bridge_says_so_in_words_rather_than_a_traceback(tmp_path):
     assert "--port=" in output, (
         "no way out is offered for someone who genuinely wants two "
         "bridges:\n" + output)
+
+import types
+
+
+# --- the banner says WHICH LEVEL, on the window that stays open ---------
+
+class _Args:
+    def __init__(self, ap="mock", mock_scale="default", epsilon="fallback"):
+        self.ap = ap
+        self.mock_scale = mock_scale
+        self.epsilon = epsilon
+
+
+class _FakeServer:
+    host = "127.0.0.1"
+    port = 38290
+
+
+def _banner(args, provider_name, capsys, tmp_path) -> str:
+    """What the bridge window ACTUALLY prints."""
+    from archipepsi_bridge.__main__ import _announce
+
+    engine = types.SimpleNamespace(save_dir=tmp_path)
+    _announce(engine, _FakeServer(), provider_name, args)
+    return capsys.readouterr().out
+
+
+def test_the_banner_carries_the_zone_id_for_a_baseline_run(capsys, tmp_path):
+    """`playtest check` prints the id too, in the LAUNCHER window,
+    thirty lines above the instructions -- so it has scrolled away by
+    the time anyone is playing, which is when they want it. The bridge
+    window is up for the whole run.
+
+    Asserted against the PRINTED BANNER, not against `_zone_line`.
+    Testing the helper would pass with the call deleted from the banner,
+    which is the whole failure this file keeps finding elsewhere: a
+    guard that checks the part rather than the thing anybody sees.
+    """
+    from archipepsi_bridge.playtest import played_zone_digest
+
+    out = _banner(_Args(), "fallback", capsys, tmp_path)
+    assert played_zone_digest()["digest"] in out, out
+
+
+def test_the_zone_id_is_absent_from_the_banner_when_it_would_be_a_lie(
+        capsys, tmp_path):
+    """The same assertion from the other side, and also on the banner."""
+    from archipepsi_bridge.playtest import played_zone_digest
+
+    digest = played_zone_digest()["digest"]
+    assert digest not in _banner(_Args(ap="real"), "fallback", capsys,
+                                 tmp_path)
+    assert digest not in _banner(_Args(), "claude", capsys, tmp_path)
+
+
+def test_the_banner_stays_quiet_when_the_id_would_be_a_lie():
+    """Against a real server the Zone is a function of the seed, and
+    against a live Epsilon of what the model said. An id computed here
+    would describe a Zone nobody is going to walk, and a confident wrong
+    id is worse than no id."""
+    from archipepsi_bridge.__main__ import _zone_line
+
+    assert _zone_line(_Args(ap="real"), "fallback") == ""
+    assert _zone_line(_Args(), "claude") == ""
+
+
+def test_the_banner_never_stops_the_bridge_starting(monkeypatch):
+    """A convenience on a banner that can refuse to start the bridge is
+    a worse trade than a missing line."""
+    from archipepsi_bridge import __main__ as M
+
+    def boom():
+        raise RuntimeError("generation exploded")
+
+    monkeypatch.setattr("archipepsi_bridge.playtest.played_zone_digest", boom)
+    assert M._zone_line(_Args(), "fallback") == ""

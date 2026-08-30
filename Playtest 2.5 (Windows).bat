@@ -112,7 +112,9 @@ echo.
 echo     Zone 2 is OPTIONAL - only if Zone 1 looked odd, or you want a
 echo     second sample. Zone 3 is not needed.
 echo.
-echo   The bridge opens in a SECOND window. Leave that one alone.
+echo   The bridge opens in a SECOND window. Leave that one alone -
+echo   its top line carries the ZONE ID, so the level you are walking
+echo   is on screen the whole time. It is in the playtime record too.
 echo   Come back to THIS window when you have finished Zone 1.
 echo.
 echo   -------------------------------------------------------------
