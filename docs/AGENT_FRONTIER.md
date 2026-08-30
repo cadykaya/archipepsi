@@ -378,16 +378,27 @@ rather than looked up: `instrumentation.py` imports nothing that could
 reach anywhere and touches one file, and `version.build_metadata()`
 shells out to git.
 
-## THE ART A/B FREEZE — in force from 2026-08-29
+## THE ART A/B — CLOSED 2026-08-30, FREEZE LIFTED
 
-**Between the pre-art human run of Zone 1 and the post-art run of the
-SAME Zone 1, no unrelated runtime, gameplay or protocol optimization
-lands.** The authored-art integration is the variable; anything else
-changing at the same time makes the comparison measure two things at
-once and neither cleanly.
+**The A/B is decided and the gameplay freeze is lifted.** The result is
+`docs/PLAYTEST_2_5_RESULT.md`; measured facts and interpretation are kept
+apart there. Owner verdict: control valid, pipeline PASS, fixtures KEEP,
+authored projectiles REJECT FOR NOW (reverted at `5f1435f` by moving the
+three `projectile_*` registry entries back to `review: "pending"` — the
+source art is preserved for redesign, and the art lane must export them
+as pending or the next regeneration silently re-enables them), F3
+DEFER.
 
-Known, deliberately frozen, and to be picked up the moment the A/B is
-done: **the `mechanics` websocket payload.** It is ~97% of an elided
+The freeze text below is kept because it says what the freeze was for:
+
+> Between the pre-art human run of Zone 1 and the post-art run of the
+> SAME Zone 1, no unrelated runtime, gameplay or protocol optimization
+> lands. The authored-art integration is the variable; anything else
+> changing at the same time makes the comparison measure two things at
+> once and neither cleanly.
+
+Now unfrozen and available to pick up: **the `mechanics` websocket
+payload.** It is ~97% of an elided
 late snapshot (~268 KB at 449 Echoes), re-sent on every state change,
 and it could be elided on exactly the key the Echo log already uses.
 Three places say so where someone would trip over them —
@@ -523,6 +534,34 @@ time, and ended itself when Check 030 confirmed. Every one of those had a
 green suite over it, because the suite ran at prototype scale. The mock
 backend now takes a `CampaignConfig` and
 `bridge/tests/test_production_scale.py` runs the real engine at 450.
+
+## NEXT BATCH — PROPOSED, AWAITING OWNER REVIEW, 2026-08-30
+
+`docs/proposals/NEXT_BATCH_ACTIVITY_CONVERSION.md`. **Nothing in it is
+built. Do not start it without owner approval.**
+
+The owner's stated priority is PLAYER ACTIVITY MUST BE FUNDED
+INDEPENDENTLY OF CHECK COUNT. Measuring the played Zone sharpened it:
+531 of its 921 content points (57.7%) are already activities, and
+`Activities._row()` builds a `StaticBody3D` with a mesh and a collider
+and nothing else. No `Area3D`, no signal, no completion; nothing outside
+`activities.gd` reads the four kinds at all. So the budget already flows
+away from Checks and none of it becomes gameplay — the binding
+constraint is conversion, not funding, and adding rooms first would
+scale a conversion rate of zero.
+
+Why it was invisible: `test_the_engine_builds_every_activity_the_schema_admits`
+reads `activities.gd` as TEXT and proves a `match` branch exists. Right
+question when the seam was geometry; it cannot see that the branch
+produces something inert. The same shape as the mirrored sign, the
+centre-only seal probe and the fixture detector: **a guard inherits the
+blind spot of the fix it was built to protect.**
+
+Two smaller finds recorded there: `SECRET_VALUE` is priced in
+`content_value.py:54` and no chamber field can produce one, and
+`make_playtest_baseline.py:91` hardcodes `unlocked_affordances=()` so the
+archived baseline under-reports optional content against the Zone that
+was actually played (2 features).
 
 ## What playtest 1 taught, and the guard it left behind
 
