@@ -20,6 +20,8 @@
       "assets/models/",
       "assets/textures/",
       "docs/art/review/",
+      "godot/content/fixtures/",
+      "godot/content/projectiles/",
       "godot/content/test_fixtures/",
       "tools/artpreview/"
     ]
