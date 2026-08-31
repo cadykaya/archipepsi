@@ -572,6 +572,19 @@ of them in a `platform_path` room and none in an arena.
 a room can hold is a fact about its built geometry, and Python pricing it
 would be the same builder-knows-what-the-composer-does-not failure.
 
+**Playtest-hygiene follow-up, same contract, one kind wider.** The
+`platform_path` defect from `docs/ZONE_ACTIVITY_AUDIT.md` §4 is closed.
+The row solver reads a room's width and depth, and a `platform_path` has
+no floor across them — its bounds reach forty metres into a kill pit, so
+19 elements were standing on nothing. `platform_path` now emits a
+`stand` socket per surface it builds (start ledge, each island, end
+ledge) and the solver places onto one chosen surface per activity.
+Islands are refused by measurement, not by name: what is left beside an
+element must be at least `BRUTE_LANE`, and 2.5 m of mandatory route over
+a pit cannot give it. The real-Zone audit is **0 failures, 0 notes**,
+`no_ground_under` is now a structural failure rather than a note, and
+every arena element is byte-identical to `2699805`.
+
 Owner ruling after playing Zone 1: the problem is not the activity
 families, it is that **the rooms are miserable**. "There's more stuff to
 do, but it does nothing and it's not fun." A breakable crate with

@@ -1094,9 +1094,23 @@ static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 	var wall_height := rise + 6.0
 	var root := Node3D.new()
 	var floor_mat := ThemeMaterials.floor_mat(theme)
+	# WHERE THE FLOOR ACTUALLY IS, said out loud as it is built.
+	#
+	# A `platform_path` has no floor. It has a start ledge, a handful of
+	# rising islands and an end ledge, with a kill pit under everything
+	# else -- and every consumer that treated its BOUNDS as a room laid
+	# content out over the void. Twenty-three activity elements across
+	# five rooms were standing on nothing, which is the defect this
+	# vocabulary exists to end: the builder knows which square metres
+	# hold weight, so the builder is what says so.
+	var stands: Array = []
+	var ledge_span := width - WALL_THICKNESS * 2.0
 	# Start ledge.
 	_box(root, Vector3(width, 0.5, ledge),
 			Vector3(0, -0.25, ledge / 2.0), floor_mat)
+	stands.append({"kind": "stand",
+			"position": Vector3(0, 0.0, ledge / 2.0),
+			"extent": Vector3(ledge_span, 0.0, ledge)})
 	# Platforms, rising by `step` each. Crude prism feet make them read as
 	# brushwork rather than floating tiles.
 	for i in segments:
@@ -1106,9 +1120,21 @@ static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 				Vector3(0, y - 0.3, z), floor_mat)
 		_wedge(root, Vector3(platform * 0.7, 0.5, platform * 0.7),
 				Vector3(0, y - 0.75, z), ThemeMaterials.trim_mat(theme))
+		# Offered like any other surface, and refused by the same rule
+		# that refuses a crate in a doorway: a 2.5 m island cannot keep
+		# BRUTE_LANE clear beside anything, and it is the MANDATORY
+		# ROUTE over a kill pit. Said as a measurement rather than as a
+		# special case, so the day a builder makes a wide platform, the
+		# wide platform is usable.
+		stands.append({"kind": "stand",
+				"position": Vector3(0, y, z),
+				"extent": Vector3(platform, 0.0, platform)})
 	# End ledge at full rise.
 	_box(root, Vector3(width, 0.5, ledge),
 			Vector3(0, rise - 0.25, total - ledge / 2.0), floor_mat)
+	stands.append({"kind": "stand",
+			"position": Vector3(0, rise, total - ledge / 2.0),
+			"extent": Vector3(ledge_span, 0.0, ledge)})
 	# The pit: deep enough that a fall passes FALL_KILL_Y.
 	_box(root, Vector3(width, 0.5, total),
 			Vector3(0, Constants.FALL_KILL_Y - 6.0, total / 2.0),
@@ -1160,6 +1186,7 @@ static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 			"bounds": AABB(Vector3(-width / 2.0, -40, 0),
 					Vector3(width, wall_height + 41.0, total)),
 			"enemy_spawns": spawns,
+			"sockets": stands,
 			"room_height": wall_height,
 			"reward_position": Vector3(0, rise, total - ledge / 2.0),
 			"goal_area_position": Vector3(0, rise + 1.0, total - ledge)}

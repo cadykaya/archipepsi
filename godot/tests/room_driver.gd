@@ -50,6 +50,7 @@ func _run() -> void:
 	await _test_a_barrel_hurts_what_is_near_it()
 	await _test_a_barrel_is_never_required()
 	await _test_neither_shell_route_drops_room_content()
+	await _test_a_platform_path_activity_stands_on_something()
 	await _test_a_room_feature_cannot_be_silently_dropped()
 
 	_check(bands_built >= 4,
@@ -478,6 +479,115 @@ func _test_a_barrel_is_never_required() -> void:
 			_check(not text.contains(forbidden),
 					"an environmental object names '%s'; it is reaching "
 					% forbidden + "for Archipelago truth")
+
+func _test_a_platform_path_activity_stands_on_something() -> void:
+	"""A `platform_path` has no floor, and content was laid out over the
+	void for five rooms of the played Zone.
+
+	The row solver reads the room's WIDTH and DEPTH, which presumes a
+	floor across them. True of an arena. False here: the space between
+	the islands is a kill pit and the bounds reach forty metres down, so
+	twenty-three elements were placed where nothing holds weight.
+
+	Built through `ContentInstantiator.build_chamber` -- the route the
+	game takes -- and then measured with a ray, because a coordinate
+	that looks reasonable is exactly what the old placement produced."""
+	var chamber := {
+		"id": "pp1", "type": "platform_path", "segment_count": 4,
+		"gap_size": 2.1, "vertical_step": 0.51,
+		"enemies": [{"archetype": "melee", "count": 2}],
+		"activities": [
+			{"kind": "pressure_routing", "element_count": 4,
+				"ordered": false, "requires": []},
+			{"kind": "switch_sequence", "element_count": 3,
+				"ordered": true, "requires": []}]}
+	var result := _built(chamber)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+
+	var stands := 0
+	for socket: Variant in result.get("sockets", []) as Array:
+		if str((socket as Dictionary).get("kind", "")) == "stand":
+			stands += 1
+	_check(stands == 6, "a 4-segment platform path vouched for %d "
+			% stands + "standable surfaces; two ledges and four islands "
+			+ "is six")
+
+	var elements: Array[Node3D] = []
+	for activity: Variant in result.get("activities", []) as Array:
+		for element: Variant in (activity as Dictionary).get(
+				"elements", []) as Array:
+			elements.append(element as Node3D)
+	_check(elements.size() == 7,
+			"expected 7 activity elements, built %d" % elements.size())
+
+	var space := _space()
+	for element in elements:
+		var at := element.global_position
+		# Straight down from just under the element. `GROUND_REACH` is
+		# the audit's own number for "within reach below"; a kill pit
+		# floor sits FALL_KILL_Y - 6 down, so nothing here can pass by
+		# finding the bottom of the world.
+		var query := PhysicsRayQueryParameters3D.create(
+				at + Vector3.DOWN * 0.05,
+				at + Vector3.DOWN * 1.25)
+		query.collide_with_areas = false
+		var hit := space.intersect_ray(query)
+		_check(not hit.is_empty(),
+				"an activity element at %v has nothing under it; a "
+				% at + "platform path is islands over a kill pit")
+		if hit.is_empty():
+			continue
+		# And it is standing ON the surface, not embedded in one.
+		var drop: float = at.y - (hit["position"] as Vector3).y
+		_check(drop >= -0.01,
+				"an activity element at %v is INSIDE the surface under "
+				% at + "it")
+
+	(result["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+	# AND THE ROUTE STAYS CLEAR, at the largest room the schema admits:
+	# three activities of eight. The ledges hold about six plates each,
+	# so twenty-four is past their capacity and the islands are the next
+	# thing a placer would reach for -- and an island is 2.5 m of the
+	# MANDATORY ROUTE over a kill pit, with no way past a plate on one.
+	var packed := chamber.duplicate()
+	packed["id"] = "pp2"
+	packed["activities"] = [
+		{"kind": "pressure_routing", "element_count": 8,
+			"ordered": false, "requires": []},
+		{"kind": "pressure_routing", "element_count": 8,
+			"ordered": false, "requires": []},
+		{"kind": "pressure_routing", "element_count": 8,
+			"ordered": false, "requires": []}]
+	var full := _built(packed)
+	await get_tree().physics_frame
+	var islands: Array[Rect2] = []
+	for socket: Variant in full.get("sockets", []) as Array:
+		var entry: Dictionary = socket
+		if str(entry.get("kind", "")) != "stand":
+			continue
+		var extent: Vector3 = entry["extent"]
+		if extent.x > Constants.MIN_PLATFORM_SIZE:
+			continue
+		var at: Vector3 = entry["position"]
+		islands.append(Rect2(at.x - extent.x / 2.0, at.z - extent.z / 2.0,
+				extent.x, extent.z))
+	_check(islands.size() == 4, "expected 4 islands, found %d"
+			% islands.size())
+	var on_island := 0
+	for activity: Variant in full.get("activities", []) as Array:
+		for element: Variant in (activity as Dictionary).get(
+				"elements", []) as Array:
+			var at := (element as Node3D).position
+			for island in islands:
+				if island.has_point(Vector2(at.x, at.z)):
+					on_island += 1
+	_check(on_island == 0, "%d activity element(s) sit on a platform "
+			% on_island + "path's mandatory islands")
+	(full["root"] as Node3D).queue_free()
+	await get_tree().process_frame
 
 # --- routing -------------------------------------------------------------
 

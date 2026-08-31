@@ -35,7 +35,8 @@ class_name Activities
 ## special-cases a room.
 static func build(root: Node3D, activity: Dictionary, theme: String,
 		width: float, depth: float, room_id := "",
-		activity_id := "", occupied: Array[AABB] = []) -> Dictionary:
+		activity_id := "", occupied: Array[AABB] = [],
+		surfaces: Array = []) -> Dictionary:
 	var kind := str(activity.get("kind", ""))
 	if not ActivityRuntime.RULES.has(kind):
 		push_error("no builder for activity kind '%s'" % kind)
@@ -50,7 +51,7 @@ static func build(root: Node3D, activity: Dictionary, theme: String,
 	var built := _row(runtime, runtime.kind, runtime.placed_count(),
 			rules["size"] as Vector3, theme, width, depth,
 			float(rules["height"]), str(rules["trigger"]),
-			bool(rules["roles"]), occupied, runtime.ordered)
+			bool(rules["roles"]), occupied, runtime.ordered, surfaces)
 	if bool(rules["simultaneous"]):
 		_link(runtime, built, theme)
 	runtime.adopt(built)
@@ -97,7 +98,7 @@ const GRID_STEPS := 9
 static func _row(root: Node3D, kind: String, count: int, size: Vector3,
 		theme: String, width: float, depth: float, height: float,
 		trigger: String, roles: bool, occupied: Array[AABB],
-		ordered: bool) -> Array[ActivityElement]:
+		ordered: bool, surfaces: Array = []) -> Array[ActivityElement]:
 	var built: Array[ActivityElement] = []
 	var tint := VisualOwnership.separated_from_reserved(
 			ThemeMaterials.light_color(theme))
@@ -117,6 +118,15 @@ static func _row(root: Node3D, kind: String, count: int, size: Vector3,
 	var far := maxf(near, depth - AffordanceFeatures.THRESHOLD_CLEARANCE
 			- size.z / 2.0)
 	var taken: Array[AABB] = occupied.duplicate()
+	# WHERE THERE IS FLOOR, when the builder has said. Everything above
+	# solves against the room's WIDTH and DEPTH, which presumes a room
+	# has a floor across them -- true of an arena and false of a
+	# `platform_path`, where the space between the islands is a kill pit
+	# and the bounds reach forty metres down. Chosen ONCE for the whole
+	# activity, so a routing circuit stays on one island rather than
+	# being split across a jump course nobody can cross inside the hold
+	# window.
+	var surface := _best_surface(surfaces, size, taken)
 	for i in count:
 		var t := 0.5 if count == 1 else float(i) / float(count - 1)
 		var side := -1.0 if i % 2 == 0 else 1.0
@@ -130,6 +140,8 @@ static func _row(root: Node3D, kind: String, count: int, size: Vector3,
 				side * (inner + (outer - inner) * t),
 				near + (far - near) * t,
 				height, size, inner, outer, near, far, taken)
+		if not surface.is_empty():
+			spot = _spot_on_surface(surface, surfaces, size, height, taken)
 		var element := ActivityElement.create(
 				trigger, i, size, tint, role, i + 1 if ordered else 0)
 		root.add_child(element)
@@ -137,6 +149,125 @@ static func _row(root: Node3D, kind: String, count: int, size: Vector3,
 		taken.append(_footprint(spot, size))
 		built.append(element)
 	return built
+
+## The vouched surface with the most room left on it, or {} if the room
+## offered none this element can legally sit on.
+##
+## "Legally" is a measurement, not a list: what is left beside the
+## element on its better axis has to be at least `BRUTE_LANE`, the width
+## the game already uses for "the widest actor still gets past". It says
+## what a `platform_path`'s 2.5 m islands are -- the MANDATORY ROUTE over
+## a kill pit, with no way past a plate on one -- without naming
+## platforms anywhere, so a builder that one day makes a wide island gets
+## a usable one.
+##
+## DEFENCE IN DEPTH, recorded as such rather than dressed up. Sabotaging
+## this test alone does not put an element on an island: the surface with
+## the most room wins, and a ledge always has more than an island, right
+## down to the crowded last resort. What is load bearing is that
+## preference plus the room suite's assertion that nothing sits on an
+## island at the largest room the schema admits. This is what keeps the
+## rule true if that ordering is ever changed.
+static func _best_surface(surfaces: Array, size: Vector3,
+		taken: Array[AABB]) -> Dictionary:
+	var best := {}
+	var best_free := -1
+	for entry: Variant in surfaces:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var patch: Dictionary = entry
+		if str(patch.get("kind", "")) != "stand":
+			continue
+		var extent: Vector3 = patch.get("extent", Vector3.ZERO)
+		var spare_x := extent.x - size.x
+		var spare_z := extent.z - size.z
+		if spare_x < 0.0 or spare_z < 0.0:
+			continue
+		if maxf(spare_x, spare_z) < ChamberBuilders.BRUTE_LANE:
+			continue
+		# How much of it is actually free right now, sampled on the same
+		# grid the placement search uses so the count means what it says.
+		var free := 0
+		for xi in GRID_STEPS:
+			for zi in GRID_STEPS:
+				if not _collides(_surface_candidate(patch, size, 0.0, xi, zi),
+						size, taken):
+					free += 1
+		if free > best_free:
+			best_free = free
+			best = patch
+	return {} if best_free <= 0 else best
+
+## One grid candidate on a surface, in room space.
+static func _surface_candidate(patch: Dictionary, size: Vector3,
+		height: float, xi: int, zi: int) -> Vector3:
+	var at: Vector3 = patch.get("position", Vector3.ZERO)
+	var extent: Vector3 = patch.get("extent", Vector3.ZERO)
+	# The element's whole footprint stays on the surface: checking the
+	# ORIGIN is what put a row of switches through a wall once already.
+	var span_x := maxf(extent.x - size.x, 0.0)
+	var span_z := maxf(extent.z - size.z, 0.0)
+	var u := 0.5 if GRID_STEPS < 2 else float(xi) / float(GRID_STEPS - 1)
+	var v := 0.5 if GRID_STEPS < 2 else float(zi) / float(GRID_STEPS - 1)
+	return Vector3(at.x - span_x / 2.0 + span_x * u,
+			at.y + height,
+			at.z - span_z / 2.0 + span_z * v)
+
+## A free spot on `surface`, falling through to the other vouched
+## surfaces before it gives up.
+##
+## Preference, in order: away from the surface's near and far EDGES,
+## which for a ledge is where its doorway is, and then out to the sides,
+## off the middle where the mandatory route runs. That is the same lane
+## discipline the flat solve applies, expressed as a preference rather
+## than a bound -- a 4 m ledge cannot give up 2 m at each end and still
+## hold anything, and a crowded plate on real floor beats a tidy one
+## over a pit.
+static func _spot_on_surface(surface: Dictionary, surfaces: Array,
+		size: Vector3, height: float, taken: Array[AABB]) -> Vector3:
+	var order: Array = [surface]
+	for entry: Variant in surfaces:
+		if typeof(entry) == TYPE_DICTIONARY and entry != surface \
+				and str((entry as Dictionary).get("kind", "")) == "stand":
+			order.append(entry)
+	var fallback := Vector3.ZERO
+	var have_fallback := false
+	for entry: Variant in order:
+		var patch: Dictionary = entry
+		var extent: Vector3 = patch.get("extent", Vector3.ZERO)
+		if extent.x - size.x < 0.0 or extent.z - size.z < 0.0:
+			continue
+		if maxf(extent.x - size.x, extent.z - size.z) \
+				< ChamberBuilders.BRUTE_LANE:
+			continue
+		var best := Vector3.ZERO
+		var best_score := -INF
+		var found := false
+		for xi in GRID_STEPS:
+			for zi in GRID_STEPS:
+				var candidate := _surface_candidate(patch, size, height,
+						xi, zi)
+				if not have_fallback:
+					fallback = candidate
+					have_fallback = true
+				if _collides(candidate, size, taken):
+					continue
+				var from_edge := minf(
+						absf(candidate.z - (patch["position"] as Vector3).z
+							+ extent.z / 2.0),
+						absf((patch["position"] as Vector3).z + extent.z / 2.0
+							- candidate.z))
+				var score := from_edge * 10.0 + absf(candidate.x)
+				if score > best_score:
+					best_score = score
+					best = candidate
+					found = true
+		if found:
+			return best
+	# Every vouched surface is full. Crowded, and still ON one: the flat
+	# solve makes the same choice for the same reason, because a missing
+	# element is a puzzle nobody can finish.
+	return fallback if have_fallback else Vector3(0.0, height, 0.0)
 
 ## The first spot at or near the ideal one that nothing else has claimed.
 ##

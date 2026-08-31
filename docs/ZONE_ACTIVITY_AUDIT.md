@@ -3,8 +3,9 @@
 Run against Production head `9a1d78f`, on the Zone a baseline playtest
 walks: `zone_digest 1bdf42f800c5637e`, 23 rooms, 15 Checks, 916 points.
 **Section 1-ter re-runs it after ROOM GRAMMAR v0, on
-`zone_digest 6e8d83d0f3ec088b` — 23 rooms, 15 Checks, 922 points — and
-that is the current state.**
+`zone_digest 6e8d83d0f3ec088b` — 23 rooms, 15 Checks, 922 points.
+Section 1-quater closes the `platform_path` defect on that same Zone and
+is the current state: 0 structural failures, 0 placement notes.**
 
 **Why this exists.** `godot-activity` drives activities it builds itself.
 That is what let a whole batch ship while the game built zero activities
@@ -135,6 +136,52 @@ guard inherits the blind spot of the fix it was built to protect.**
 
 ---
 
+## 1-quater. Fourth run: the `platform_path` defect is closed
+
+Same Zone, `zone_digest 6e8d83d0f3ec088b`. **29 activities audited, 0
+structural failures, 0 placement notes.** Section 4 below is closed and
+kept as the record.
+
+| | before (`2699805`) | after |
+|---|---:|---:|
+| Elements with nothing under them | 19 | **0** |
+| Elements embedded in level geometry | 3 | **0** |
+| Elements on another activity | 0 | 0 |
+| Elements with no line from the walking lane | 0 | 0 |
+| Elements outside their chamber | 0 | 0 |
+
+The root cause was one sentence long: **the row solver reads the room's
+WIDTH and DEPTH, and a `platform_path` has no floor across them.** Its
+bounds reach forty metres down into a kill pit, and the space between
+its islands is that pit. Every coordinate the solver produced was inside
+the room and most of them were over nothing.
+
+The fix is the socket contract the elevation-band batch established,
+extended by one kind. `platform_path` now emits a `stand` socket for
+each surface it builds — the start ledge, each island, the end ledge —
+carrying the surface's top height and its extent. `Activities._row`,
+when a room offers them, chooses ONE surface for the whole activity (the
+one with the most room free at the time, so a routing circuit is not
+split across a jump course nobody can cross inside the hold window) and
+solves within it. When a room offers none, nothing changes: the arena
+path is the flat solve, untouched.
+
+Islands are excluded by a measurement rather than by name: what is left
+beside an element on its better axis must be at least `BRUTE_LANE`, and
+2.5 m of mandatory route over a kill pit cannot give that. The day a
+builder makes a wide island, the wide island is usable.
+
+**Nothing else moved.** Comparing the audit's recorded element positions
+at `2699805` against this run: all seven `platform_path` activities
+moved, and every one of the other twenty-two — including all five rooms
+with an elevation band — is byte-identical.
+
+`no_ground_under` is now a STRUCTURAL FAILURE rather than a note. It was
+a note because it was a known open defect, and the point of writing a
+defect down is being able to promote its check the day it is closed.
+
+---
+
 ## 2. Findings — placement, FIXED in the readiness batch
 
 These are recorded, printed as `NOTE`, and deliberately do not fail
@@ -233,7 +280,10 @@ A crutch, and named as one. It comes out when interaction art lands.
 
 ---
 
-## 4. OPEN: activities in a `platform_path` have nothing to stand on
+## 4. CLOSED: activities in a `platform_path` had nothing to stand on
+
+**Fixed; see section 1-quater.** Kept as the record of the defect and
+how it was found.
 
 Found by the owner in play, on `d5beedd`, reported as "some of these
 pressure pads are not on the ground, and they have no collision, and 2 of

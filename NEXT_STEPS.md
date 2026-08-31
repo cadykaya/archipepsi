@@ -96,8 +96,37 @@ pricing it would be the same failure this batch spent its time fixing.
 
 Deliberately NOT done, and still open: no loot economy (Coins are an
 Archipelago item and cannot be minted locally), no side branches or
-alcoves, no second band per room, and the `platform_path` floating-element
-defect from `docs/ZONE_ACTIVITY_AUDIT.md` §4 is untouched.
+alcoves, no second band per room.
+
+**Then one playtest-hygiene fix, on the same contract.** The
+`platform_path` floating-element defect (`docs/ZONE_ACTIVITY_AUDIT.md`
+§4) is closed rather than carried into the playtest. Root cause in one
+sentence: the row solver reads a room's WIDTH and DEPTH, and a
+`platform_path` has no floor across them — the space between its islands
+is a kill pit and its bounds reach forty metres down, so 19 elements
+across five rooms stood on nothing and 3 more were inside platform
+geometry.
+
+The fix reuses the socket contract rather than reconstructing platform
+geometry anywhere: `platform_path` emits a `stand` socket for each
+surface it builds — start ledge, each island, end ledge — with the
+surface's top height and extent, and `Activities._row` places onto one
+chosen surface per activity when a room offers them. One surface per
+activity, because a routing circuit split across a jump course is a
+circuit nobody can complete inside the hold window. Islands are excluded
+by measurement, never by name: what is left beside an element on its
+better axis must be at least `BRUTE_LANE`, and 2.5 m of mandatory route
+over a kill pit cannot give that, so the day a builder makes a wide
+island the wide island is usable.
+
+Rooms offering no surfaces are untouched — the arena keeps the flat
+solve. Proved rather than asserted: comparing recorded element positions
+at `2699805` against after, all seven `platform_path` activities moved
+and every one of the other twenty-two, including all five banded rooms,
+is byte-identical. The audit is 0 structural failures and 0 placement
+notes, and `no_ground_under` is now a structural failure rather than a
+note — the point of writing a defect down is being able to promote its
+check the day it closes.
 
 ## Post-POC work so far
 - **Two adversarial review passes**, all findings fixed with regression

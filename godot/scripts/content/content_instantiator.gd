@@ -172,7 +172,8 @@ static func _build_activities(result: Dictionary, chamber: Dictionary,
 			# local reward a solved activity grants is the same note.
 			var built := Activities.build(
 					root, activity, theme, width, depth, room_id,
-					"%s_%d" % [room_id, index], occupied)
+					"%s_%d" % [room_id, index], occupied,
+					result.get("sockets", []) as Array)
 			# Each activity claims its space before the next is placed,
 			# which is what stops two of the same kind and size landing
 			# on top of each other.

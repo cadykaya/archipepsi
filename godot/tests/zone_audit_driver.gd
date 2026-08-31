@@ -43,8 +43,12 @@ var failures := 0
 ##
 ## What DOES fail: structure. A declared activity with no runtime, a
 ## runtime with the wrong element count, a kind that cannot be completed
-## in the assembled Zone. Those are the claims this batch exists to make,
-## and none of them may quietly stop being true.
+## in the assembled Zone, a declared elevation band that is not there,
+## and an element with NOTHING UNDER IT. Those are the claims this
+## apparatus exists to make, and none of them may quietly stop being
+## true. The last one was a note until the defect behind it was fixed;
+## the whole point of writing a defect down is being able to promote its
+## check the day it is closed.
 var notes := 0
 var audited := 0
 var rows: Array = []
@@ -255,7 +259,16 @@ func _audit(build: Dictionary, declared: Array) -> void:
 		_note(in_other_activity == 0,
 				"activity '%s': %d element overlap(s) with ANOTHER "
 				% [id, in_other_activity] + "activity's elements")
-		_note(no_ground == 0,
+		# A FAILURE, not a note, and it earned the promotion. Twenty-three
+		# elements across five `platform_path` rooms were standing on
+		# nothing, because the row solver read the room's width and depth
+		# and a `platform_path` has no floor across them -- its bounds
+		# reach forty metres down into a kill pit. That is fixed: the
+		# builder now DECLARES its walkable surfaces and the solver
+		# places onto them. Nothing about an element hanging in a void is
+		# ever acceptable, and this is the check that goes red if the
+		# nominal-floor placement comes back.
+		_check(no_ground == 0,
 				"activity '%s': %d element(s) have nothing to stand on "
 				% [id, no_ground] + "within reach below them")
 		_note(unreachable == 0,
