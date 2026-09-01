@@ -58,6 +58,31 @@ const EDGE_INSET := 0.15
 ## the thing they protect.
 const HEADROOM := Constants.PLAYER_HEIGHT + 0.6
 
+## How far a MEASURED movement may exceed a movement law before it is a
+## different movement (P2).
+##
+## A measurement is not a declaration. A rise or a span is read off two
+## ray hits against imported vertex data, and a .glb stores positions as
+## quantised floats -- so a step an artist modelled at exactly 1.0 m
+## measures 1.000039 m, and `1.000039 > 1.0` refuses a step the movement
+## law explicitly permits. `MAX_VERTICAL_STEP` means the player CAN take
+## a 1.0 m step; an audit that refuses the step at the limit is refusing
+## the law it exists to enforce.
+##
+## ONE SLACK, TWO COMPARISONS. The span check has always carried a bare
+## `+ 0.01` and the rise check carried nothing, so the same function held
+## two views of how exact a measurement is -- which is how the eight
+## authored shells produced a rise finding on the two stairs whose
+## vertices happened to round up and none on the twenty-eight identical
+## ones that rounded down. Naming it once is the point.
+##
+## 1 cm, and it stays 1 cm: the authored vocabulary steps in whole
+## metres and the procedural one in `MAX_VERTICAL_STEP` units, so no
+## real over-step in this project is anywhere near this small. A rise
+## that genuinely exceeds the base kit exceeds it by tens of
+## centimetres, and is still refused.
+const AS_BUILT_SLACK := 0.01
+
 ## Every way the room's geometry contradicts the room's claims.
 ##
 ## `space` must belong to a world the room is actually inside.
@@ -323,14 +348,15 @@ static func _traversal_is_true(room: Dictionary, to_world: Transform3D,
 			continue
 		var span := Vector2(end.x - start.x, end.z - start.z).length()
 		var rise: float = float(landed["end"]) - float(landed["start"])
-		if kind == "rise" and rise > Constants.MAX_VERTICAL_STEP:
+		if kind == "rise" \
+				and rise > Constants.MAX_VERTICAL_STEP + AS_BUILT_SLACK:
 			out.append("%s: traversal '%s' rises %.2f m as built on the "
 					% [who, name, rise] + "mandatory route; the base kit "
 					+ "tops out at %.2f" % Constants.MAX_VERTICAL_STEP)
 		if not ["gap", "rise"].has(kind):
 			continue
 		var allowed := Constants.max_safe_gap(maxf(rise, 0.0))
-		if span > allowed + 0.01:
+		if span > allowed + AS_BUILT_SLACK:
 			out.append("%s: traversal '%s' spans %.2f m as built at a "
 					% [who, name, span] + "%.2f m rise; the safe reach "
 					% rise + "there is %.2f" % allowed)

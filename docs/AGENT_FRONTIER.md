@@ -572,6 +572,52 @@ of them in a `platform_path` room and none in an arena.
 a room can hold is a fact about its built geometry, and Python pricing it
 would be the same builder-knows-what-the-composer-does-not failure.
 
+## P2 PHYSICAL VERDICT — the shells are measurable, and measured —
+## landed 2026-09-01
+
+Art `a798b2c` brings collision: **1 render mesh + 10-33 convex hulls per
+shell**, no trimesh, no drawn collision mesh, and the player's own
+capsule passes every entry and exit plane. The audit's answer is no
+longer "not measurable".
+
+**75 findings, and they are three different things.** Full record with
+every number: `docs/audit/P2_SHELL_PHYSICAL_VERDICT.md`.
+
+The probe that separated them: sweep each declared rect 15x15, inset by
+the player's diameter, and ask whether a 0.4 x 1.8 m capsule fits
+standing at the declared height. Legitimate surfaces measure 40-100 %
+usable; the defects measure **0 %**. Nothing sits near the boundary.
+
+* **A — real geometry defect (27).** The last rungs of the *collapsed*
+  and *spiral* climbs run under the top deck: 1.50 m and 0.50 m of
+  clearance on a `mandatory: true` route. Art's.
+* **B — metadata derivation defect (28).** Treasure `step_low` is a
+  0.40 m riser whose exposed ring is 0.40 m wide against a 0.80 m
+  player: 0/225 usable, declared a Surface. Collapsed socket `high_3`
+  sits 0.2 m inside the stone above it. Geometry correct in both;
+  the claim is not.
+* **C — contract semantic mismatch (20), NOT implemented.** A `stand`
+  rect that is the mesh's true top face, part of it under a stair or a
+  dais. **The tower stones ARE general-purpose stand surfaces** — 2.6 m
+  square with 40-100 % clear — so demoting them to traversal-only would
+  throw away real space. But the contract cannot say WHICH PART of a
+  face is clear, and measurement does not settle who should: Art
+  declares only clear rects, or the audit measures usable area and
+  `Activities` checks clearance where it places. **Owner decision, on
+  record, not guessed at.**
+
+Whichever way C goes, the rule that catches A and B is unchanged: a
+`stand` surface with zero usable area is refused.
+
+**One audit defect fixed.** Two 1.00 m rises measured **1.000039101** —
+`.glb` float quantisation — and were refused, while the span check three
+lines below had always carried `+ 0.01`. `RoomAudit.AS_BUILT_SLACK`
+names the tolerance once for both. Pinned from both sides: 4 mm over is
+the same step, 15 cm over is still refused.
+
+All eight stay `review: "pending"`. Catalog empty, digest unchanged,
+every chamber still builds procedurally.
+
 ## P2 FINAL — the eight shells are in the catalog, and refused by the
 ## audit — landed 2026-09-01
 

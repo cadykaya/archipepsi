@@ -69,6 +69,7 @@ func _run() -> void:
 	await _test_a_shell_that_overflows_its_envelope_is_refused()
 	await _test_the_contract_refuses_a_malformed_room()
 	await _test_a_jump_is_measured_the_same_for_both_producers()
+	await _test_a_measurement_at_the_limit_is_still_the_legal_move()
 	await _test_a_declared_turn_steers_the_chain()
 	await _test_a_tower_shell_built_for_other_floor_counts_is_not_used()
 	await _test_a_check_never_stands_inside_the_room()
@@ -940,6 +941,121 @@ func _test_the_contract_refuses_a_malformed_room() -> void:
 	probes_expected_to_fail += 1
 	(result["root"] as Node3D).queue_free()
 	await get_tree().process_frame
+
+
+## --- a measurement is not a declaration (P2) -------------------------------
+
+## How far over the limit the "still the same step" rung sits, and the
+## "different step" one. The first must be inside `AS_BUILT_SLACK` and
+## comfortably bigger than the float noise that caused the defect
+## (39 micrometres, measured on Art's P2 stairs); the second must be
+## outside it by a margin no rounding could invent.
+const A_HAIR_OVER := 0.004
+const PLAINLY_OVER := 0.15
+
+func _test_a_measurement_at_the_limit_is_still_the_legal_move() -> void:
+	"""A step modelled AT the base kit's limit is a step the kit allows.
+
+	THE DEFECT THIS PINS. The audit compared a MEASURED rise against
+	`MAX_VERTICAL_STEP` with no tolerance, while the span check three
+	lines below it had always carried `+ 0.01`. A .glb stores vertex
+	positions as quantised floats, so of the thirty authored stairs
+	modelled at exactly 1.0 m, the two whose vertices rounded UP measured
+	1.000039 m and were reported as beyond the player's reach -- and the
+	twenty-eight that rounded down were not. That is not a room failing
+	an audit; that is an audit reading its own float noise, and it read
+	it differently in two comparisons that describe one idea.
+
+	So the rung heights here are the whole test: at `A_HAIR_OVER` the
+	movement law still permits the step, at `PLAINLY_OVER` it does not,
+	and both are measured off real colliders by real rays."""
+	var result := _build(_procedural_chambers()[0])
+	await get_tree().physics_frame
+	var root := result["root"] as Node3D
+	var low := _rung(root, Vector3(0.0, 0.0, 0.0))
+	var lip := Constants.MAX_VERTICAL_STEP + A_HAIR_OVER
+	var high := _rung(root, Vector3(0.0, lip, 2.0))
+	var base := _rung(root, Vector3(4.0, 0.0, 0.0))
+	var over := _rung(root, Vector3(4.0, Constants.MAX_VERTICAL_STEP
+			+ PLAINLY_OVER, 2.0))
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+
+	var legal := {"root": root, "bounds": result["bounds"],
+			"exit_offset": result["exit_offset"],
+			"room_height": result["room_height"], "enemy_spawns": [],
+			"reward_position": result["reward_position"],
+			"traversal": [{"name": "at_the_limit", "kind": "rise",
+				"mandatory": true, "start": Vector3(0.0, 0.0, 0.0),
+				"end": Vector3(0.0, lip, 2.0)}]}
+	# NOT VACUOUS. `_traversal_is_true` reports an endpoint it could not
+	# stand on under the same segment name, so silence here means both
+	# rungs were found AND the rise between them was allowed -- the two
+	# ways this test could pass without measuring anything are the two
+	# things an empty list rules out.
+	var quiet := _findings_for(legal, "at_the_limit")
+	_check(quiet.is_empty(),
+			"a step measured %.6f m over a %.2f m limit is the same step; "
+			% [A_HAIR_OVER, Constants.MAX_VERTICAL_STEP]
+			+ "the audit called it: %s" % "; ".join(quiet))
+
+	# THE SABOTAGE. One rung, 15 cm higher, nothing else changed. If the
+	# slack ever grows to swallow this, the tolerance has stopped being a
+	# measurement tolerance and started being a way to pass.
+	var cheating := legal.duplicate()
+	cheating["traversal"] = [{"name": "plainly_over", "kind": "rise",
+			"mandatory": true, "start": Vector3(4.0, 0.0, 0.0),
+			"end": Vector3(4.0, Constants.MAX_VERTICAL_STEP + PLAINLY_OVER,
+				2.0)}]
+	var caught := _findings_for(cheating, "plainly_over")
+	_check(not caught.is_empty(),
+			"a step %.2f m past the base kit's reach was not measured"
+			% PLAINLY_OVER)
+	# NAMED, not merely present: a 1.15 m rise over a 2.0 m span also
+	# strains `max_safe_gap`, and a test that accepted "some finding
+	# mentioning what was built" would pass on the wrong one.
+	_check("; ".join(caught).contains("rises")
+			and "; ".join(caught).contains("as built"),
+			"the finding must field the RISE that was MEASURED: %s"
+			% "; ".join(caught))
+
+	# ONE SLACK, BOTH COMPARISONS. The span check reads the same constant,
+	# so the two can no longer disagree about how exact a ray is.
+	_check(RoomAudit.AS_BUILT_SLACK > A_HAIR_OVER
+			and RoomAudit.AS_BUILT_SLACK < PLAINLY_OVER,
+			"the as-built slack (%.3f) must sit between a rounding error "
+			% RoomAudit.AS_BUILT_SLACK + "and a real over-step")
+
+	rooms_checked += 1
+	probes_expected_to_fail += 1
+	low.queue_free()
+	high.queue_free()
+	base.queue_free()
+	over.queue_free()
+	root.queue_free()
+	await get_tree().process_frame
+
+## Everything the audit said about ONE segment -- including that it could
+## not find an end of it. The room itself says plenty this test is not
+## about; the segment name is what separates them.
+func _findings_for(room: Dictionary, segment: String) -> Array[String]:
+	var out: Array[String] = []
+	for finding: String in RoomAudit.findings(room, _space(), "rungs"):
+		if finding.contains(segment):
+			out.append(finding)
+	return out
+
+## A real collider with a real top face, at a real height.
+func _rung(root: Node3D, top: Vector3) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(2.0, 0.4, 2.0)
+	shape.shape = box
+	body.add_child(shape)
+	body.position = top - Vector3(0.0, 0.2, 0.0)
+	root.add_child(body)
+	return body
 
 func _test_a_jump_is_measured_the_same_for_both_producers() -> void:
 	"""One movement law, one measurement, whoever declared the jump.
