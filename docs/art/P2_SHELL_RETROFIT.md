@@ -12,7 +12,14 @@ to the procedural builder. They are also unreachable regardless, because
 Production integrates them, the P1 audit accepts them, and the owner reviews
 the result.
 
-## One blocker, and it is Production's to decide
+## One blocker, and it is Production's to decide — CLOSED at `eda4fd9`
+
+> **Resolved upstream, and the diagnosis held.** Production replaced both
+> producers' private opinions with one shared `RoomContract.WALL_ALLOWANCE`,
+> pointed `RoomAudit` at every mesh rather than only furniture-scale ones,
+> and had `ShellValidator` delegate to the same rule. Zero envelope
+> violations across the eight. The section below is kept as written because
+> the reasoning is the reason it was fixed rather than worked around.
 
 > **`ShellValidator._check_envelope` refuses all eight**, for one reason,
 > identically: the entry door wall occupies z ∈ [−0.40, 0], and the envelope
@@ -197,6 +204,134 @@ Recorded because the brief said to target the implementation:
    `_exit_offset`, and it means the NEXT ROOM'S ORIGIN rather than a door
    face. The eight declare it accordingly.
 
+## P2-C — collision, and the three fields Production supplied by hand
+
+`eda4fd9` integrated all eight and could measure **none** of them. Every
+shell imported with one `MeshInstance3D` and zero colliders, so all 625
+audit findings were of the "nothing is there" class and the verdict was NOT
+MEASURABLE rather than measured-and-safe. Structural violations: zero. The
+metadata was well formed and describing a room that was not physically
+present.
+
+### Collision is derived, not authored eight times
+
+`tools/blender/roomcollision.py`. Two facts about the shells make this a
+derivation rather than eight hand-built colliders:
+
+1. **Every piece of all eight is a `brushkit.block`** — verified, the two
+   builders call no other primitive. So a collider is a COPY of a piece,
+   and its convex hull is that box exactly. "Simpler than the visual mesh
+   and never larger than it" holds by construction, not by tolerance.
+2. **Every piece is already painted with one of four roles**, and that
+   choice is the author's statement about what the piece IS:
+
+   | role | the player | collides |
+   | --- | --- | --- |
+   | `floor` | walks on it | yes |
+   | `wall` | stops at it | yes |
+   | `ceiling` | does not pass it | yes |
+   | `trim` | looks at it | **no** |
+
+**Trim is excluded on the spec's authority, not for convenience.** A
+platform nose is 0.14 m wider than the slab it skirts and sits under its
+top face; colliding it would make every platform wider than the `Surface`
+the manifest declares — a visual change that moves a reachability, which
+is exactly what S18 forbids.
+
+### `-convcolonly`, and why that suffix
+
+Verified empirically against this repo's own Godot rather than from memory,
+by importing a probe `.glb` carrying all four suffixes:
+
+| suffix | result |
+| --- | --- |
+| `-convcolonly` | `StaticBody3D` + `CollisionShape3D`(**Convex**), no mesh |
+| `-colonly` | `StaticBody3D` + `CollisionShape3D`(Concave), no mesh |
+| `-col` | `MeshInstance3D` + body + Concave |
+| `-convcol` | `MeshInstance3D` + body + Convex |
+
+Convex, because §3 allows trimesh only for decorative geometry the player
+cannot stand on and these are floors. `only`, for two reasons: the collider
+must not render, **and** `RoomAudit`'s envelope check reads `MeshInstance3D`
+nodes — a collider that imported as a mesh would enter that arithmetic and
+could refuse a room for geometry nobody can see.
+
+### Colliders per shell
+
+| shell | colliders | surface samples probed |
+| --- | ---: | ---: |
+| `shell_tower_gantry` | 33 | 207 |
+| `shell_tower_spiral` | 22 | 108 |
+| `shell_tower_collapsed` | 21 | 99 |
+| `shell_treasure_coffer` | 20 | 27 |
+| `shell_treasure_cache` | 16 | 27 |
+| `shell_treasure_vault` | 12 | 27 |
+| `shell_corner_left` | 10 | 9 |
+| `shell_corner_right` | 10 | 9 |
+
+All convex, zero concave, one visible mesh each — unchanged.
+
+### The three fields, each from its own source
+
+| field | value | where it came from |
+| --- | --- | --- |
+| `size_class` | towers `medium`, treasure `small`, corners `small` | **owner design assignment**, tabled in `_SIZE_CLASS` with its provenance. NOT derived from metres — a treasure room is 8.8 m and a corner 6.8 m and both are "small". |
+| `exit_yaw` | `corner_left` +90, `corner_right` −90 | the builder's own `turn × 90`, **copied**. Production proved the sign end to end; there is no second opinion about which way a corner turns. |
+| `fits_floors` | `[2]` / `[3]` / `[5]` | the `floors` variable the tower builder was given. Not parsed from the id, not counted off the platforms. |
+
+The drift check is independent evidence these are right: it compares field
+for field against Production's landed pack and flags **nothing** on these
+three, because Art now emits exactly what Production applied by hand.
+
+### The corners are corridors
+
+`corner` is not a chamber type — `zone.py` has `corridor`, `arena`, `tower`,
+`treasure_room` and never had a fifth — so the old tag meant the two corner
+shells could never be offered to anything even once approved. Chamber type
+is now `corridor`; `corner` survives as a **shape tag** beside it, which
+describes the room without claiming to be a type. The turn itself travels in
+`exit_yaw` and in the authored form.
+
+This is the one change to a field Production already carries, so it is named
+in `verify_manifest.DECLARED_HANDOFF` with its reason. Everything not on
+that list still fails the drift check.
+
+### The visible art did not change
+
+`python3 tools/content/diff_shell_glb.py <ref>` reads both revisions of every
+shell `.glb` and compares **accessor payloads byte for byte**: POSITION,
+NORMAL, TEXCOORD_0, indices, the material JSON, and the embedded PNGs. All
+eight: visible mesh identical, textures identical, colliders added. The
+eleven unpacked F3 shells: byte-identical, not rebuilt.
+
+### Two findings, both reported and neither corrected
+
+**`step_low`** (req 35). The three treasure rooms declare it as a walkable
+`Surface` and `_plinth`'s upper step stands on it: nine of nine samples
+measure 0.80 where 0.40 is declared. The plinth is the approved F3 geometry
+and `reward_position` is the engine's, so nothing was remodelled — and the
+declaration was not quietly dropped either.
+
+**Headroom** (req 36). 47 findings, which is exactly the count the P2
+preflight predicted and could not confirm while the rooms had no collision:
+27 in `shell_tower_collapsed`, 15 in `shell_tower_spiral`, 2 in
+`shell_tower_gantry`, 1 in each treasure room. Tightest 0.50 m against
+`RoomAudit.HEADROOM` 2.40. The towers climb on 1.00 m footholds that
+`routecheck` validated as a chain; a `Surface` says a player can stand, and
+a rung is not that. The vocabulary has no word for a foothold yet.
+
+### What the collision check refused first
+
+`verify_pack.gd` failed all eight the moment they had collision:
+*"carries N collision object; hitboxes are engine-owned"*, applied to all
+seventeen entries. Production says no such thing — `ContentInstantiator`
+refuses a light on a **light housing** and collision on a **projectile
+visual**, two scoped rules in two functions, neither about room shells,
+whose collision `RoomAudit` requires. It was the third place the prop rule
+had been written as if it were the lane's rule. The check now asserts the
+scoped version, including the inverse for shells: a room shell with no
+collision is a failure.
+
 ## Rebuild and re-verify
 
 ```
@@ -205,4 +340,9 @@ Recorded because the brief said to target the implementation:
 tools/export_content_pack.sh                    # regenerate godot/content/
 tools/verify_content_pack.sh                    # BOTH Production validators
 python3 tools/content/preflight_shells.py 99379e5
+python3 tools/content/diff_shell_glb.py <ref>   # visible art unchanged
+xvfb-run -a .tools/godot --headless --path godot -s _verify_collision.gd
 ```
+
+`verify_collision.gd` is copied into `godot/` for the run and deleted after,
+like the other harness scripts. It reports and never declares a PASS.

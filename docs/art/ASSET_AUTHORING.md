@@ -148,11 +148,17 @@ UVs are a world-scale projection and moving them breaks tiling.
 
 ## 5. Collision
 
-**The art lane does not author collision.** Godot owns collision and
-traversal truth, and `AUTHORED_CONTENT.md` §5 is explicit about it.
+**A PROP does not author collision. A ROOM SHELL does.** The two halves
+of that sentence used to be one half, and the missing half cost a whole
+integration.
 
-What the art lane owes is an asset that **fits the collider the engine
-already has**, asserted at build time:
+### 5a. Props: fit the collider the engine already has
+
+Godot owns collision and traversal truth for everything the engine
+places, and `AUTHORED_CONTENT.md` §5 is explicit about it. A light
+housing, a check, a portal, a prop: the engine has a collider for it
+already, and what the art lane owes is an asset that fits inside,
+asserted at build time:
 
 ```python
 common.assert_fits(obj, name, max_size, why)
@@ -173,6 +179,42 @@ This guard has already caught four real overruns during Batch 001. When it
 fires: **shrink the asset, never the clearance.** A ledge that is 1.4 m in
 one Zone and 1.9 m in another has not added variety, it has made the jump
 untrustworthy.
+
+### 5b. Room shells: author it, because nobody else can
+
+A room shell is not placed inside a room. It **is** the room, and there
+is no engine collider waiting for it to fit into. `ART_ASSET_SPEC.md` §3
+has always said so -- author collision, never auto-trimesh anything a
+player touches, walkable surfaces get convex or box shapes, and the
+`-col` / `-convcol` / `-colonly` name suffixes are the route -- and §5a
+above was read as if it overrode that. It does not. It is about props.
+
+The cost of the gap, measured: Production integrated the eight shells at
+`eda4fd9` and could not measure one of them. Every shell imported with a
+single MeshInstance3D and zero colliders; the audit fired 625 probes into
+rooms that were not there and reported "nothing is under this" 625 times.
+Not a wrong answer -- **no** answer, which is the failure mode the audit
+refuses to call a pass.
+
+`tools/blender/roomcollision.py` is the rule as code, and it is a
+DERIVATION rather than eight hand-built colliders:
+
+| what | how |
+| --- | --- |
+| which pieces collide | the `role` already passed to `_paint`: `floor`, `wall`, `ceiling` collide, `trim` does not |
+| what shape | a copy of the piece -- every shell part is a `brushkit.block`, so its convex hull is the box exactly |
+| how it imports | `-convcolonly`, so it is convex, invisible, and leaves no MeshInstance3D for the envelope check to trip on |
+| what proves it | `verify_collision.gd` loads the shipped `.tscn` and counts real `CollisionShape3D`s |
+
+**Trim does not collide, and that is the spec's rule, not a shortcut.**
+Collision is never larger than the visual mesh. A platform nose is 0.14 m
+wider than the slab it skirts; colliding it would make every platform
+wider than the `Surface` the manifest declares, which is the S18 rule
+broken by an art change -- a visual that moved a reachability.
+
+A ninth shell inherits all of this by being built the way the eight are.
+If you add a new painted role, `roomcollision.ROLES` refuses it until it
+has decided whether it is structure or decoration.
 
 ---
 

@@ -54,22 +54,41 @@ mkdir -p "$H"
 #
 # Every rule that RUNS -- `_load_manifest`, `_accept`, `resolve`,
 # `_check_cross_references` -- is Production's, unedited.
+#      P2-C ADDED A SECOND AUTOLOAD REFERENCE. `eda4fd9` validates
+#      `fits_floors` against `Constants.TOWER_MIN_FLOORS/MAX_FLOORS`, and
+#      the harness broke on it -- a compile error, not a failed rule, so
+#      it would have read as "the validator is unhappy" if the log had
+#      not been looked at. The inlined constants are now READ FROM
+#      PRODUCTION'S OWN `constants.gd` rather than retyped, so the next
+#      one to move cannot silently make this harness test a different
+#      number than the game does.
+git show "$PROD:godot/scripts/autoload/constants.gd" > "$H/prod_constants.gd"
 git show "$PROD:godot/scripts/content/content_registry.gd" | python3 -c '
-import sys
+import re, sys
 s = sys.stdin.read()
+with open(sys.argv[1]) as fh:
+    src = fh.read()
+wanted = sorted(set(re.findall(r"Constants\.([A-Z][A-Z0-9_]*)", s)))
+inlined = []
+for name in wanted:
+    hit = re.search(r"^const %s\s*(?::\s*\w+\s*)?:?=\s*(.+)$" % name,
+                    src, re.M)
+    if hit is None:
+        raise SystemExit(
+            "verify-content: Production references Constants.%s and its "
+            "own constants.gd does not define it" % name)
+    inlined.append("const %s = %s" % (name, hit.group(1).split("#")[0].strip()))
 s = s.replace("class_name ContentRegistry\n", "")
-s = s.replace("extends RefCounted", "extends RefCounted\n"
-    "const CLUSTER_ANCHORS = [\"floor_wall\", \"floor_corner\", \"wall\", \"ceiling\"]\n"
-    "const CLUSTER_FLOOR_ANCHORS = [\"floor_wall\", \"floor_corner\"]\n"
-    "const CLUSTER_MAX_DEPTH = 2.5\nconst CLUSTER_MAX_HEIGHT = 4.0\n"
-    "const CLUSTER_MAX_WIDTH = 6.0\nconst CLUSTER_MOUNTED_UNDERSIDE_MIN = 2.75\n", 1)
-s = s.replace("Constants.CLUSTER_", "CLUSTER_")
+s = s.replace("extends RefCounted",
+              "extends RefCounted\n" + "\n".join(inlined) + "\n", 1)
+s = s.replace("Constants.", "")
 s = s.replace("static var _shared: ContentRegistry = null", "static var _shared = null")
 s = s.replace("static func shared() -> ContentRegistry:", "static func shared() -> Object:")
 s = s.replace("_shared = ContentRegistry.new()",
               "_shared = (load(\"res://_harness/content_registry.gd\") as GDScript).new()")
 assert "ContentRegistry" not in s, "a self-reference survived the transform"
-sys.stdout.write(s)' > "$H/content_registry.gd"
+assert "Constants." not in s, "an autoload reference survived the transform"
+sys.stdout.write(s)' "$H/prod_constants.gd" > "$H/content_registry.gd"
 
 # No self-references, so only the class_name line goes.
 git show "$PROD:godot/scripts/content/visual_ownership.gd" \
@@ -97,3 +116,14 @@ echo "[verify] --- Production's GDScript ContentRegistry ---"
 cp "$ROOT/tools/content/verify_pack.gd" "$H/verify.gd"
 xvfb-run -a -s "-screen 0 1280x800x24" "$GODOT" --headless --path "$ROOT/godot" \
   -s _harness/verify.gd 2>&1 | grep -E "^\[verify\]|SCRIPT ERROR" || true
+
+# 3. COLLISION. Not Production's validator -- ours, and the reason it
+# exists is that neither of theirs can catch this. A shell with perfect
+# metadata and no colliders passes both checks above and then measures as
+# 625 findings of "nothing is there", which is what happened at eda4fd9.
+# Loads the real shipped .tscn, counts real CollisionShape3Ds, and fires
+# RoomAudit's own probe at every declared surface. Reports; never PASSes.
+echo "[verify] --- collision in the shipped scenes (art-side evidence) ---"
+cp "$ROOT/tools/content/verify_collision.gd" "$H/collision.gd"
+xvfb-run -a -s "-screen 0 1280x800x24" "$GODOT" --headless --path "$ROOT/godot" \
+  -s _harness/collision.gd 2>&1 | grep -E "^\[collision\]|SCRIPT ERROR" || true

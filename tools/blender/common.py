@@ -510,8 +510,16 @@ def assert_fits(obj, asset_name, max_size, why):
 # ----------------------------------------------------------------------
 
 def export_glb(obj, relative_path, category, tier=None, texture_size=None,
-               check_flat=True, anchor="floor"):
-    """Write a .glb, after every assertion that can be made has been made."""
+               check_flat=True, anchor="floor", collision=()):
+    """Write a .glb, after every assertion that can be made has been made.
+
+    `collision` is the collision-only twins from `roomcollision.build`.
+    They ride along in the export and are excluded from EVERY assertion
+    and from `measure`, because a collider is not part of the asset's
+    triangle budget, its texel density or its declared size -- and the
+    manifest that Production reads is built from those numbers. Rooms
+    that gained collision must not appear to have changed shape.
+    """
     name = os.path.basename(relative_path)
     if check_flat:
         assert_flat(obj, name)
@@ -525,6 +533,8 @@ def export_glb(obj, relative_path, category, tier=None, texture_size=None,
 
     bpy.ops.object.select_all(action="DESELECT")
     obj.select_set(True)
+    for collider in collision:
+        collider.select_set(True)
     bpy.context.view_layer.objects.active = obj
     bpy.ops.export_scene.gltf(
         filepath=out_path,
@@ -540,15 +550,23 @@ def export_glb(obj, relative_path, category, tier=None, texture_size=None,
     size = measure(obj)
     if density:
         log("%-40s %4d tris  %5.2f x %5.2f x %5.2f m  %5.1f texels/m "
-            "(spread %.1f-%.1f)"
+            "(spread %.1f-%.1f)%s"
             % (relative_path, tris, size[0], size[1], size[2],
-               density[0], density[1], density[2]))
+               density[0], density[1], density[2],
+               "" if not collision else "  +%d colliders" % len(collision)))
     else:
-        log("%-40s %4d tris  %5.2f x %5.2f x %5.2f m"
-            % (relative_path, tris, size[0], size[1], size[2]))
-    return {"path": relative_path, "triangles": tris, "anchor": anchor,
-            "size": [round(v, 3) for v in size],
-            "texel_density": None if not density else round(density[0], 1)}
+        log("%-40s %4d tris  %5.2f x %5.2f x %5.2f m%s"
+            % (relative_path, tris, size[0], size[1], size[2],
+               "" if not collision
+               else "  +%d colliders" % len(collision)))
+    entry = {"path": relative_path, "triangles": tris, "anchor": anchor,
+             "size": [round(v, 3) for v in size],
+             "texel_density": None if not density else round(density[0], 1)}
+    if collision:
+        # Recorded only when there IS collision, so every asset that
+        # never had any keeps the manifest entry it already had.
+        entry["colliders"] = len(collision)
+    return entry
 
 
 def save_texture(image, relative_path):

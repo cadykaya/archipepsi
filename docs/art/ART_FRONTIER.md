@@ -281,8 +281,58 @@ player-selectable.
   the envelope starts at z = 0 with 0.15 m of slack. **Production's own
   procedural rooms would fail the same check by 0.05 m** — their front wall
   is centred on z = 0. No mesh was modified to work around it.
+  **CLOSED at `eda4fd9`:** Production replaced both opinions with one
+  shared `RoomContract.WALL_ALLOWANCE` and now runs the check on both
+  producers. Zero envelope violations across the eight.
 - **Not emitted, deliberately:** `size_class` (P1 made it optional; a guess
   would dress taste as geometry), `cost`, intent tags.
+  **`size_class` is now emitted** — see P2-C below; the owner decided, so
+  it is no longer a guess.
+
+### P2-C — collision, and the three fields (2026-09-01)
+
+Production integrated all eight at `eda4fd9` and could measure **none** of
+them: every shell imported with one `MeshInstance3D` and zero colliders, so
+the audit's 625 probes all reported "nothing is there". Structural
+violations were zero — the metadata was well formed and describing a room
+that, physically, was not present.
+
+Still `review: "pending"`. Nothing here approves anything.
+
+- **Collision is authored now, and derived.** `tools/blender/roomcollision.py`
+  turns each structural `brushkit.block` into a collision-only twin — the
+  same eight vertices, so the convex hull IS the box. The role already
+  passed to `_paint` decides: `floor`/`wall`/`ceiling` collide, `trim` does
+  not. A ninth shell inherits it by being built the way the eight are.
+- **`-convcolonly`**, verified against this repo's own Godot rather than
+  from memory. Convex because the spec allows trimesh only for decorative
+  geometry; `only` because the collider must not render *and* because
+  `RoomAudit`'s envelope check reads `MeshInstance3D`s, which this suffix
+  leaves none of.
+- **The visible art did not change.** `tools/content/diff_shell_glb.py`
+  compares accessor payloads byte for byte across the rebuild: same
+  vertices, normals, UVs, indices, materials and PNGs in all eight, and the
+  eleven unpacked F3 shells byte-identical.
+- **Three fields learned.** `size_class` (owner assignment, tabled with its
+  provenance and explicitly NOT derived from metres), `exit_yaw` (the
+  builder's own `turn × 90`, copied not recomputed), `fits_floors` (the
+  authored floor count 2/3/5).
+- **The corners are corridors.** `corner` is not a chamber type, so the old
+  tag meant they could never be offered. Chamber type is now `corridor`;
+  `corner` survives as a shape tag beside it.
+- **TWO FINDINGS, both reported and neither corrected.** (1) The three
+  treasure rooms declare a `step_low` surface that the plinth's own upper
+  step stands on — req 35. (2) The 47 headroom notes P2 could only PREDICT
+  are now 47 the engine MEASURES, because a tower's climb is a chain of
+  1.00 m footholds and a `Surface` claims you can stand — req 36. Both are
+  about what the manifest CLAIMS, not about the approved geometry, and
+  neither was quietly dropped to get eight greens.
+- **The prop rule was written down a third time, in our own checker.**
+  `verify_pack.gd` asserted "hitboxes are engine-owned" against all
+  seventeen entries and refused the eight shells the moment they got the
+  collision they were missing. Production refuses a light on a light
+  housing and collision on a projectile visual — two scoped rules, neither
+  about room shells. Found by running the checker, not by reading it.
 
 ### THE BOUNDARY — do not start the next art system (owner, 2026-08-29)
 
@@ -533,6 +583,8 @@ them; each is a thing the art lane will need when contracts settle.
 | 32 | **The viewmodel cannot express an Echo's FAMILY, so a reforge is invisible.** `player.gd` builds `$Camera3D/Viewmodel` with named `Device`, `Tip`, `EchoPart` and `EchoTip` children, and `EchoRuntime._refresh_viewmodel_attachment()` paints `EchoPart` with `source_color()` (the world the Echo came FROM) and `EchoTip` with the slot. Both channels are correct and neither changes on a reforge -- same source item, same button. | So a player who spends scarce Epsilon Coins to reinterpret a ranged Echo into a grapple sees **an identical viewmodel**. The one operation the Forge exists to perform is invisible in the view the player looks at all game. The ask is narrow and is NOT hundreds of Echo weapons, and after the 2026-08-29 owner review it is narrower still: **the Echo family must be visible through a swappable / composable `EchoPart` seam.** That is the whole requirement. It is explicitly **not** "build exactly seven fixed `EchoPart` models" -- the owner's ruling on Batch 032 is that the three forms built there **prove the attachment seam and nothing more**, and are not approval of a seven-fixed-forms system. Colour keeps source, the tip keeps slot, and form carries family through whatever occupies the seam. **Art must not expand those three into seven production family models.** The 2026-08-29 review enumerates what proof-of-seam is explicitly *not* approval of: seven fixed family models, a final attachment grammar, a final part taxonomy, runtime composition rules, family silhouette rules, or provenance / source influence rules. All of those are specified by a future owner-authored brief for the **modular Echo visual construction / kitbash system**. **Do not begin designing or mass-producing Echo visual parts.** | `batch032/viewmodel/*` |
 | 33 | **The Zone exit has a boolean where it needs a state, and its locked colour is in the hazard channel.** `exit_portal.gd` is already the Zone exit -- a themed frame, a recoloured core and a `Label3D` -- with the hook `set_unlocked(value: bool, checks_remaining: int)`. The redesigned lifecycle wants four states (present-not-ready, ready, return-available, cleared) and a boolean cannot carry four. | **Art recommends building no new portal**: the vocabulary exists, is correctly scaled, and is contextually separated from the two Hub portals. Two things are Production's to fix in their own file: the four-state signal, and the locked core's `Color(0.4, 0.2, 0.2)` -- a dark red, in the family whose definition is *"this will hurt you. Never used decoratively, in any theme, for any reason."* A locked exit is not a hazard; it is `dead` (*"unpowered, LOCKED, spent, offline"*). One art note: the `StateLabel` is currently doing all the work, and if four states land the FRAME is where the difference should live. | `review/batch033/README.md` |
 | 34 | **The affordance language says "a capability could be used here" and cannot say "you lack it".** The 2026-08-28 owner ruling gives every optional traversal affordance one colour (`AFFORDANCE_SIGNAL_HEX`, art's own `signal` anchor) with FORM carrying which and COLOUR carrying opportunity -- and all seven contracted families (`grapple_anchor`, `breakable_wall`, `rail`, `bounce_pad`, `moving_platform`, `wind_volume`, `water_volume`) are therefore readable in all six themes and unconfusable with decoration. | Two gaps for hard gates. (1) **No "you lack this" state exists** -- `AFFORDANCE_DYNAMIC_CHANNELS` carries breakable damage and wind ring count, and neither is acquisition. (2) **Form carries family only at close range**; at the distance a gate is first seen, a grapple anchor and a rail terminus are both "a cyan thing on a structure". Batch 034 proposes solving the READ without a new channel: build the gate as finished infrastructure missing exactly one thing, because **broken is ragged and installed is neat**. Blink/teleport gets a proposal only and no production asset, since it has no mechanical contract. | `batch034/gates/*` |
+| 35 | **A two-tier plinth cannot declare both tiers walkable, and three shipped shells do.** With collision authored (P2-C), Production's own probe measures `step_low` at 0.80 in all nine samples where the manifest declares 0.40, in `shell_treasure_vault`, `shell_treasure_cache` and `shell_treasure_coffer`. Cause: `_plinth`'s two steps are concentric — 3.0 m at 0.40, 2.2 m at 0.80 — so `step_low`'s remaining tread is a 0.40 m ring against a 0.80 m player. **REPORTED, NOT CORRECTED.** The geometry is the approved F3 plinth and `reward_position` is the engine's, so art did not remodel it, and art did not quietly drop the declaration either: which of those two a two-tier plinth should be is a decision about what the room OFFERS, not a rendering fix. | Two ways out, both cheap, neither art's to pick alone: (a) **stop declaring `step_low` a `Surface`** — it becomes plinth structure, the traversal chain becomes one 0.80 m rise from floor to `step_high`, and the room offers exactly what a player can use; or (b) **keep it and widen the lower step** to leave a full-capsule tread, which changes an owner-approved silhouette and is therefore a review, not a patch. A third option worth naming so it is visibly rejected: leaving the claim as it is would make the manifest say a thing the room does not do, which is the exact failure P1 exists to prevent. | `shell_treasure_vault`, `shell_treasure_cache`, `shell_treasure_coffer` |
+| 36 | **The towers climb on footholds, and P1's `Surface` can only describe a floor you stand on.** With collision authored, the 47 headroom notes the P2 preflight PREDICTED are now 47 things the engine MEASURES -- 27 in `shell_tower_collapsed`, 15 in `shell_tower_spiral`, 2 in `shell_tower_gantry`, 1 in each treasure room. The tightest are 0.50-0.60 m against the 2.40 m `RoomAudit.HEADROOM`. This is not a modelling slip: `STEP` is **1.00 m** and `routecheck.assert_reachable` validated the whole chain at that spacing, so a rubble slab 1.00 m under the next one is the climb working exactly as designed. What a player does there is **pass through**, not stand. | The declaration is what over-claims, and Art cannot fix it alone because the vocabulary has no word for it: a `Surface` asserts you can stand somewhere, and `RoomAudit` correctly probes 2.40 m of clearance above every one. A foothold in a climb is a different thing. Three ways this could resolve, all Production's: (a) a **landing** or **foothold** surface kind that carries a reachability claim without a standing-headroom claim; (b) headroom probed against the traversal that crosses a surface rather than against the surface itself; or (c) the towers declare only the surfaces a player genuinely stands on -- ground, the wide floors, the deck, the bridge -- and the intermediate holds live purely in `traversal`. Art did not pick one, and did not quietly stop declaring them: option (c) is an Art change and would silently drop 40-odd rungs from what the room says it offers. | all three `shell_tower_*` |
 | 5 | **A larger footprint, or an L2 placement path, for composed clusters.** `PROP_FOOTPRINT` is 1.4 m. | Right for L0, too small for an L2 station or storytelling cluster. | `cluster_*` |
 | 6 | **`challenge_marker` world semantics** (`AGENT_FRONTIER.md` still lists this open). | Its visual cannot be specified until its meaning is. | `local_reward_pickup` |
 
@@ -544,6 +596,30 @@ truth remain Godot's.
 
 ## Known gaps, stated plainly
 
+- **The three treasure rooms declare a surface a player cannot stand on,
+  and it is ours.** `_plinth` builds two concentric steps — 3.0 m square
+  with its top at 0.40, and 2.2 m square with its top at 0.80 — and the
+  P2 retrofit declared BOTH as walkable `Surface`s. The upper step stands
+  on the lower one, so what is left of `step_low` is a **0.40 m ring**
+  against a player 0.80 m wide: half a capsule. Measured, not inferred —
+  with collision present, all nine of `step_low`'s audit samples measure
+  0.80 where 0.40 is declared, in `shell_treasure_vault`, `_cache` and
+  `_coffer` alike.
+  **The plinth is not wrong; the claim about it is.** The geometry is the
+  owner-approved F3 shape and `reward_position` is the engine's, so
+  nothing was remodelled and nothing was quietly deleted. The surface
+  minimum in `roomcontract.surface` did not catch it because it measures
+  the declared rectangle (3.0 ≥ 0.8, fine) and not the part of it left
+  uncovered by whatever sits on top. See req 35.
+- **The towers' climb is footholds, and a `Surface` says "stand here".**
+  The P2 preflight PREDICTED 47 headroom notes; with collision authored,
+  the engine MEASURES exactly 47 — 27 in `shell_tower_collapsed`, 15 in
+  `shell_tower_spiral`, 2 in `shell_tower_gantry`, 1 in each treasure
+  room. The tightest are 0.50–0.60 m against a 2.40 m requirement. The
+  geometry is right: `STEP` is 1.00 m and `routecheck.assert_reachable`
+  validated the whole chain at that spacing, so a slab 1.00 m under the
+  next one is the climb working as designed. What is wrong is calling
+  every rung a place a player stands. See req 36.
 - **void_glitch may be too loud.** The in-engine probe is the evidence. My
   read: the floor works, the walls and ceiling at full-saturation magenta do
   not. Flagged in `ART_REVIEW.md` with a proposed fix; the owner decides.

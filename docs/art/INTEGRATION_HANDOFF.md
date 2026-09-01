@@ -17,8 +17,11 @@ committed on top of it.
 
 ## B. Gameplay branch head, read-only
 
-`claude/archipepsi-echoes-continuation-b1adno` — **`9ac6aad`** ("Batch 1: no
-active unclaimed location may be orphaned by lifecycle state").
+`claude/archipepsi-echoes-continuation-b1adno` — **`eda4fd9`** ("The eight
+shells are in the catalog, and the audit says they are not there") as of the
+P2-C collision pass. The section below was written against **`9ac6aad`**
+("Batch 1: no active unclaimed location may be orphaned by lifecycle state")
+and its statements about that head still hold.
 
 **It has moved since the art lane last audited it** (`b1adno`'s head was
 `7565485` at the previous audit). Nothing on that branch was modified, and no
@@ -169,6 +172,70 @@ shipping collision would make the lobbed shot a different weapon from the
 straight one.
 
 ## F. Integration handoff for Production
+
+### F0. P2-C — the eight shells are now measurable (2026-09-01)
+
+**Take `godot/content/` again.** Nothing else changed and no code change is
+needed for any of it.
+
+| | |
+|---|---|
+| what | the eight room-shell `.glb`s, their `.tscn` wrappers, and `registry/authored_art.json` |
+| why | at `eda4fd9` all eight imported with zero colliders, so the audit's 625 findings were all "nothing is there" |
+| now | 10–33 convex colliders each, `StaticBody3D` + `CollisionShape3D`, via `-convcolonly` |
+| review state | **still `pending`, all eight.** Nothing here approves anything |
+| gameplay risk | **none.** No generator logic, no constant, no script |
+
+**What to expect when you re-run the audit — measured here, so it is not a
+surprise.** The two corners come back clean. The rest will report, and both
+kinds of finding are about what the manifest CLAIMS rather than about the
+approved geometry:
+
+| shell | colliders | findings the probe measured |
+| --- | ---: | --- |
+| `shell_corner_left` | 10 | none |
+| `shell_corner_right` | 10 | none |
+| `shell_tower_gantry` | 33 | 2 headroom (`ground`, tightest 0.60 m) |
+| `shell_tower_spiral` | 22 | 15 headroom (tightest 0.50 m) |
+| `shell_tower_collapsed` | 21 | 27 headroom (tightest 0.50 m) |
+| `shell_treasure_vault` | 12 | 9 on `step_low`, 1 headroom |
+| `shell_treasure_cache` | 16 | 9 on `step_low`, 1 headroom |
+| `shell_treasure_coffer` | 20 | 9 on `step_low`, 1 headroom |
+
+**`step_low` (req 35).** All nine of its samples measure 0.80 where 0.40 is
+declared. `_plinth`'s two steps are concentric — 3.0 m at 0.40, 2.2 m at
+0.80 — so `step_low`'s remaining tread is a 0.40 m ring against a 0.80 m
+player. Art's, and **reported rather than corrected**: the plinth is the
+owner-approved F3 geometry and `reward_position` is yours.
+
+**Headroom (req 36).** 47 in total, which is exactly the number the P2
+preflight predicted and nothing could confirm while the rooms had no
+collision. The cause is structural and it is a vocabulary problem, not a
+modelling one: `STEP` is 1.00 m and `routecheck.assert_reachable` validated
+the towers' whole climb at that spacing, so a foothold 1.00 m under the next
+one is the design working. A P1 `Surface` asserts a player can STAND
+somewhere, and `RoomAudit` therefore probes 2.40 m of clearance over every
+one. A rung you pass through is a different thing, and there is no word for
+it yet. Req 36 states three possible resolutions; Art picked none, because
+two of them are yours and the third would silently drop 40-odd rungs from
+what the towers say they offer.
+
+**The three fields you applied by hand are now emitted.** `size_class`,
+`exit_yaw` and `fits_floors` come out of the exporter with the same values
+you set, which the drift check confirms field for field. `size_class` is
+recorded as an **owner assignment** in `provenance.json`, not as something
+derived from metres, so nobody later "corrects" it against `size`.
+
+**The corners are tagged `corridor` now**, with `corner` kept beside it as a
+shape tag — the change you asked for at `eda4fd9`. It is the one field on a
+shared id that Art deliberately moved, and it is named in
+`verify_manifest.DECLARED_HANDOFF` so the drift check reports it as an
+intended handoff instead of failing.
+
+**Nothing about the rooms' appearance changed.**
+`tools/content/diff_shell_glb.py` compares accessor payloads byte for byte
+across the rebuild — same vertices, normals, UVs, indices, materials, PNGs
+in all eight.
 
 ### F1. Drop in the content pack — **no code change**
 

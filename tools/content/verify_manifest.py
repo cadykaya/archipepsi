@@ -87,6 +87,25 @@ def main(argv):
                   % failed)
             return 1
 
+        # A CHANGE THE ART LANE MEANS, ENUMERATED ONE FIELD AT A TIME.
+        #
+        # The drift check exists because a field quietly disagreeing with
+        # the landed pack is how the projectile review went stale, so it
+        # is not softened into "changes are fine". Every intended change
+        # to a field Production already carries is named here with the
+        # reason, and everything NOT named still fails. The list is meant
+        # to be emptied by the next integration, not to grow.
+        DECLARED_HANDOFF = {
+            ("shell_corner_left", "semantic_tags"):
+                "corners offered as CORRIDOR, the request Production "
+                "recorded at eda4fd9 ('corner is not a chamber type'); "
+                "the corner shape survives as a tag beside it",
+            ("shell_corner_right", "semantic_tags"):
+                "corners offered as CORRIDOR, the request Production "
+                "recorded at eda4fd9 ('corner is not a chamber type'); "
+                "the corner shape survives as a tag beside it",
+        }
+
         # DRIFT. The bug this catches happened: the art exporter kept
         # emitting `review: "pass"` for the three projectiles after
         # Production had reverted them to "pending", so any regeneration
@@ -113,6 +132,7 @@ def main(argv):
                 if doc.get("pack") == "authored_art":
                     ours = {e["id"]: e for e in doc["entries"]}
             drift = []
+            declared = []
             pending_handoff = []
             for cid in sorted(set(ours) | set(theirs)):
                 a, b = ours.get(cid), theirs.get(cid)
@@ -131,6 +151,12 @@ def main(argv):
                     keys = sorted(k for k in set(a) | set(b)
                                   if a.get(k) != b.get(k))
                     for k in keys:
+                        if (cid, k) in DECLARED_HANDOFF:
+                            declared.append(
+                                "%s.%s: art=%r prod=%r -- %s"
+                                % (cid, k, a.get(k), b.get(k),
+                                   DECLARED_HANDOFF[(cid, k)]))
+                            continue
                         drift.append("%s.%s: art=%r prod=%r"
                                      % (cid, k, a.get(k), b.get(k)))
             if pending_handoff:
@@ -139,6 +165,11 @@ def main(argv):
                       % (len(pending_handoff),
                          "y" if len(pending_handoff) == 1 else "ies",
                          ", ".join(pending_handoff)))
+            if declared:
+                print("[pyverify]   ok  %d DECLARED change(s) to a shared "
+                      "field, awaiting handoff:" % len(declared))
+                for line in declared:
+                    print("[pyverify]     %s" % line)
             if drift:
                 print("[pyverify]   DRIFT from Production's landed pack:")
                 for line in drift:

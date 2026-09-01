@@ -79,17 +79,38 @@ func _initialize() -> void:
 		var lights := _count(inst, "Light3D")
 		var colliders := _count(inst, "CollisionObject3D")
 		var meshes := _count(inst, "MeshInstance3D")
+		# THE TWO REFUSALS ARE SCOPED, AND THIS USED TO IGNORE THAT.
+		#
+		# `ContentInstantiator` refuses a light on a LIGHT HOUSING and
+		# refuses collision on a PROJECTILE VISUAL, each in its own
+		# function, each with its own reason: a housing that ships a
+		# light changes how bright a room is by being installed, and a
+		# projectile's hitbox is the engine's because gameplay depends
+		# on it. Neither is a statement about room shells, which take a
+		# different path entirely and whose collision `RoomAudit`
+		# REQUIRES.
+		#
+		# This check applied both rules to all seventeen and so refused
+		# the eight shells the moment they were given the collision they
+		# were missing. It was the third place the prop rule had been
+		# written down as if it were the lane's rule -- after
+		# ASSET_AUTHORING section 5 and the shells themselves.
+		var is_shell: bool = str(entry.get("category", "")) == "room_shell"
 		if lights > 0:
 			print("[verify]   FAIL: '%s' carries %d Light3D; illumination is engine-owned"
 					% [id, lights]); fails += 1
-		if colliders > 0:
+		if colliders > 0 and not is_shell:
 			print("[verify]   FAIL: '%s' carries %d collision object; hitboxes are engine-owned"
 					% [id, colliders]); fails += 1
+		if colliders == 0 and is_shell:
+			print("[verify]   FAIL: '%s' is a room shell with NO collision; "
+					% id + "the audit can only report that nothing is there"); fails += 1
 		if meshes == 0:
 			print("[verify]   FAIL: '%s' has no mesh -- an invisible asset" % id); fails += 1
-		if lights == 0 and colliders == 0 and meshes > 0:
-			print("[verify]   ok  %-32s authored, %d mesh, 0 lights, 0 colliders, %s"
-					% [id, meshes, "SHIPS" if want_shippable else "held PENDING"])
+		if lights == 0 and meshes > 0 and (colliders > 0) == is_shell:
+			print("[verify]   ok  %-32s authored, %d mesh, 0 lights, %d colliders, %s"
+					% [id, meshes, colliders,
+						"SHIPS" if want_shippable else "held PENDING"])
 		inst.free()
 
 	# 3. The procedural entries are still reachable as the fallback.

@@ -146,6 +146,7 @@
       10.0
     ],
     "climb": "collapse",
+    "colliders": 21,
     "core": "riven",
     "enemy_anchors": [
       [
@@ -881,6 +882,7 @@
       10.0
     ],
     "climb": "gantry",
+    "colliders": 33,
     "core": "banded",
     "enemy_anchors": [
       [
@@ -1856,6 +1858,7 @@
       10.0
     ],
     "climb": "spiral",
+    "colliders": 22,
     "core": "capital",
     "enemy_anchors": [
       [

@@ -949,7 +949,17 @@
     "traversal": 0,
     "volumes": 1,
     "sockets": 2,
-    "exit_yaw": 90.0
+    "exit_yaw": 90.0,
+    "size_class": "small",
+    "size_class_source": "owner design assignment applied at Production eda4fd9; NOT derived from geometry",
+    "fits_floors": [],
+    "chamber_type": "corridor",
+    "shape_tags": [
+     "corner",
+     "turn_left"
+    ],
+    "collision": 10,
+    "surface_probe": []
    },
    "triangles": 216
   },
@@ -963,7 +973,17 @@
     "traversal": 0,
     "volumes": 1,
     "sockets": 2,
-    "exit_yaw": -90.0
+    "exit_yaw": -90.0,
+    "size_class": "small",
+    "size_class_source": "owner design assignment applied at Production eda4fd9; NOT derived from geometry",
+    "fits_floors": [],
+    "chamber_type": "corridor",
+    "shape_tags": [
+     "corner",
+     "turn_right"
+    ],
+    "collision": 10,
+    "surface_probe": []
    },
    "triangles": 216
   },
@@ -977,7 +997,18 @@
     "traversal": 9,
     "volumes": 3,
     "sockets": 6,
-    "exit_yaw": null
+    "exit_yaw": null,
+    "size_class": "medium",
+    "size_class_source": "owner design assignment applied at Production eda4fd9; NOT derived from geometry",
+    "fits_floors": [
+     2
+    ],
+    "chamber_type": "tower",
+    "shape_tags": [
+     "collapse"
+    ],
+    "collision": 21,
+    "surface_probe": []
    },
    "triangles": 528
   },
@@ -991,7 +1022,18 @@
     "traversal": 21,
     "volumes": 3,
     "sockets": 6,
-    "exit_yaw": null
+    "exit_yaw": null,
+    "size_class": "medium",
+    "size_class_source": "owner design assignment applied at Production eda4fd9; NOT derived from geometry",
+    "fits_floors": [
+     5
+    ],
+    "chamber_type": "tower",
+    "shape_tags": [
+     "gantry"
+    ],
+    "collision": 33,
+    "surface_probe": []
    },
    "triangles": 852
   },
@@ -1005,7 +1047,18 @@
     "traversal": 10,
     "volumes": 3,
     "sockets": 6,
-    "exit_yaw": null
+    "exit_yaw": null,
+    "size_class": "medium",
+    "size_class_source": "owner design assignment applied at Production eda4fd9; NOT derived from geometry",
+    "fits_floors": [
+     3
+    ],
+    "chamber_type": "tower",
+    "shape_tags": [
+     "spiral"
+    ],
+    "collision": 22,
+    "surface_probe": []
    },
    "triangles": 636
   },
@@ -1019,7 +1072,33 @@
     "traversal": 2,
     "volumes": 3,
     "sockets": 2,
-    "exit_yaw": null
+    "exit_yaw": null,
+    "size_class": "small",
+    "size_class_source": "owner design assignment applied at Production eda4fd9; NOT derived from geometry",
+    "fits_floors": [],
+    "chamber_type": "treasure_room",
+    "shape_tags": [
+     "stored"
+    ],
+    "collision": 16,
+    "surface_probe": [
+     {
+      "declared": 0.0,
+      "grazing": true,
+      "measured": 0.4,
+      "of": 9,
+      "samples": 1,
+      "surface": "floor"
+     },
+     {
+      "declared": 0.4,
+      "grazing": true,
+      "measured": 0.8,
+      "of": 9,
+      "samples": 9,
+      "surface": "step_low"
+     }
+    ]
    },
    "triangles": 456
   },
@@ -1033,7 +1112,33 @@
     "traversal": 2,
     "volumes": 3,
     "sockets": 2,
-    "exit_yaw": null
+    "exit_yaw": null,
+    "size_class": "small",
+    "size_class_source": "owner design assignment applied at Production eda4fd9; NOT derived from geometry",
+    "fits_floors": [],
+    "chamber_type": "treasure_room",
+    "shape_tags": [
+     "displayed"
+    ],
+    "collision": 20,
+    "surface_probe": [
+     {
+      "declared": 0.0,
+      "grazing": true,
+      "measured": 0.4,
+      "of": 9,
+      "samples": 1,
+      "surface": "floor"
+     },
+     {
+      "declared": 0.4,
+      "grazing": true,
+      "measured": 0.8,
+      "of": 9,
+      "samples": 9,
+      "surface": "step_low"
+     }
+    ]
    },
    "triangles": 384
   },
@@ -1047,7 +1152,33 @@
     "traversal": 2,
     "volumes": 3,
     "sockets": 2,
-    "exit_yaw": null
+    "exit_yaw": null,
+    "size_class": "small",
+    "size_class_source": "owner design assignment applied at Production eda4fd9; NOT derived from geometry",
+    "fits_floors": [],
+    "chamber_type": "treasure_room",
+    "shape_tags": [
+     "protected"
+    ],
+    "collision": 12,
+    "surface_probe": [
+     {
+      "declared": 0.0,
+      "grazing": true,
+      "measured": 0.4,
+      "of": 9,
+      "samples": 1,
+      "surface": "floor"
+     },
+     {
+      "declared": 0.4,
+      "grazing": true,
+      "measured": 0.8,
+      "of": 9,
+      "samples": 9,
+      "surface": "step_low"
+     }
+    ]
    },
    "triangles": 360
   }

@@ -177,6 +177,7 @@
    "review": "pending",
    "fallback": "shell_corridor_proc",
    "semantic_tags": [
+    "corridor",
     "corner",
     "turn_left"
    ],
@@ -242,7 +243,9 @@
       2.0
      ]
     }
-   ]
+   ],
+   "size_class": "small",
+   "exit_yaw": 90.0
   },
   {
    "id": "shell_corner_right",
@@ -253,6 +256,7 @@
    "review": "pending",
    "fallback": "shell_corridor_proc",
    "semantic_tags": [
+    "corridor",
     "corner",
     "turn_right"
    ],
@@ -318,7 +322,9 @@
       2.0
      ]
     }
-   ]
+   ],
+   "size_class": "small",
+   "exit_yaw": -90.0
   },
   {
    "id": "shell_tower_collapsed",
@@ -723,6 +729,10 @@
       7.2
      ]
     }
+   ],
+   "size_class": "medium",
+   "fits_floors": [
+    2
    ]
   },
   {
@@ -1452,6 +1462,10 @@
       10.6
      ]
     }
+   ],
+   "size_class": "medium",
+   "fits_floors": [
+    5
    ]
   },
   {
@@ -1884,6 +1898,10 @@
       6.3
      ]
     }
+   ],
+   "size_class": "medium",
+   "fits_floors": [
+    3
    ]
   },
   {
@@ -2044,7 +2062,8 @@
       2.8
      ]
     }
-   ]
+   ],
+   "size_class": "small"
   },
   {
    "id": "shell_treasure_coffer",
@@ -2204,7 +2223,8 @@
       2.8
      ]
     }
-   ]
+   ],
+   "size_class": "small"
   },
   {
    "id": "shell_treasure_vault",
@@ -2364,7 +2384,8 @@
       2.8
      ]
     }
-   ]
+   ],
+   "size_class": "small"
   }
  ]
 }

@@ -70,14 +70,35 @@ PROJECTILE_REVIEW = "pending"
 
 #: Each authored shell falls back to the procedural entry for its chamber
 #: type, so a missing scene degrades to the builder rather than to nothing.
-#: Corners have no procedural counterpart -- `corner()` is a corridor with
-#: a turn and the Zone schema has never carried one -- so they chain to the
-#: corridor shell.
 _SHELL_FALLBACK = {
     "tower": "shell_tower_proc",
     "treasure_room": "shell_treasure_room_proc",
-    "corner": "shell_corridor_proc",
+    "corridor": "shell_corridor_proc",
 }
+
+#: THE SEMANTIC SIZE, AND WHERE IT COMES FROM.
+#:
+#: This is an OWNER DESIGN ASSIGNMENT applied at Production's `eda4fd9`,
+#: and it is written out as a table on purpose: none of it is derived
+#: from the geometry and no future maintainer should reach for `size` to
+#: "check" it. A treasure room is 8.8 m across and a corner 6.8 m, and
+#: both are "small"; a tower is 12.8 m across and 20.5 m tall and is
+#: "medium", not "large". `SizeClass` is the vocabulary Epsilon asks in,
+#: and what it means is a prototype decision about the ROLE these rooms
+#: play, not a measurement of them. Deriving it from metres would quietly
+#: turn taste into arithmetic and get a different answer.
+#:
+#: P1 made the field optional (`SizeClass | None = None`), so P2 shipped
+#: nothing rather than a guess. The guess is no longer needed: the owner
+#: has decided, so the decision is recorded here and its provenance
+#: travels with it in `provenance.json`.
+_SIZE_CLASS = {
+    "tower": "medium",
+    "treasure_room": "small",
+    "corridor": "small",
+}
+_SIZE_CLASS_SOURCE = ("owner design assignment applied at Production "
+                      "eda4fd9; NOT derived from geometry")
 
 #: theme -> (source manifest dir, asset id). The CEILING fixture in each
 #: theme, because `ChamberBuilders._light` hangs the housing under a lamp
@@ -101,15 +122,36 @@ FIXTURES = {
 #: room-architecture study is explicit that the owner flips per entry, and
 #: the projectile reversal is the proof that per-entry review is the
 #: working kill switch.
+#: id -> (source manifest dir, CHAMBER TYPE, shape tags).
+#:
+#: THE CORNERS ARE CORRIDORS. Production measured the consequence of the
+#: old table at `eda4fd9`: the two corner shells were tagged `corner`,
+#: which is not a chamber type -- `zone.py` has `corridor`, `arena`,
+#: `tower`, `treasure_room` and has never had a fifth -- so even once
+#: approved they could never be offered to anything. A tag no selector
+#: can ask for is not metadata, it is a shell that never ships.
+#:
+#: `corner()` was always a corridor that turns. What makes it a corner is
+#: authored spatial form plus `exit_yaw`, and both of those now travel in
+#: the entry itself. So the chamber type is `corridor` -- that is the
+#: progression truth, the thing a selector matches and the chain rotates
+#: through -- and `corner` survives as a SHAPE TAG beside it, describing
+#: the room without claiming to be a type. Nothing here approves them;
+#: they stay `review: "pending"` and the owner still decides.
 SHELLS = {
-    "shell_tower_collapsed": ("batch018/shells", "tower", "collapse"),
-    "shell_tower_spiral":    ("batch018/shells", "tower", "spiral"),
-    "shell_tower_gantry":    ("batch018/shells", "tower", "gantry"),
-    "shell_treasure_vault":  ("batch019/shells", "treasure_room", "protected"),
-    "shell_treasure_cache":  ("batch019/shells", "treasure_room", "stored"),
-    "shell_treasure_coffer": ("batch019/shells", "treasure_room", "displayed"),
-    "shell_corner_left":     ("batch019/shells", "corner", "turn_left"),
-    "shell_corner_right":    ("batch019/shells", "corner", "turn_right"),
+    "shell_tower_collapsed": ("batch018/shells", "tower", ("collapse",)),
+    "shell_tower_spiral":    ("batch018/shells", "tower", ("spiral",)),
+    "shell_tower_gantry":    ("batch018/shells", "tower", ("gantry",)),
+    "shell_treasure_vault":  ("batch019/shells", "treasure_room",
+                              ("protected",)),
+    "shell_treasure_cache":  ("batch019/shells", "treasure_room",
+                              ("stored",)),
+    "shell_treasure_coffer": ("batch019/shells", "treasure_room",
+                              ("displayed",)),
+    "shell_corner_left":     ("batch019/shells", "corridor",
+                              ("corner", "turn_left")),
+    "shell_corner_right":    ("batch019/shells", "corridor",
+                              ("corner", "turn_right")),
 }
 
 SHELL_REVIEW = "pending"
@@ -135,12 +177,16 @@ PROJECTILES = {
 #: `source_batch_review` -- fields the Python schema forbids outright, since
 #: `Strict` sets `extra="forbid"` -- and a 231-character pack description
 #: against a 160-character limit. Prod's integration stopped on all three.
+#:
+#: Resynced from `ContentEntry.model_fields` at `eda4fd9`, which added
+#: `exit_yaw` and `fits_floors` -- the two P2-C fields Production had to
+#: apply by hand because this exporter did not emit them.
 ENTRY_FIELDS = frozenset({
     "affordance_tag", "category", "clearances", "cost", "display_name",
-    "fallback", "id", "level", "procedural_fallback",
-    "requires_capabilities", "review", "scene", "semantic_tags", "size",
-    "size_class", "sockets", "surfaces", "theme_tags", "traversal",
-    "variants", "volumes",
+    "exit_yaw", "fallback", "fits_floors", "id", "level",
+    "procedural_fallback", "requires_capabilities", "review", "scene",
+    "semantic_tags", "size", "size_class", "sockets", "surfaces",
+    "theme_tags", "traversal", "variants", "volumes",
 })
 
 #: `C.MAX_TEXT_LEN` in Production. Applies to the pack `description` and to
@@ -255,7 +301,7 @@ def main():
                          "own ProjectileSilhouette in the A/B",
                      "triangles": m.get("triangles")})
 
-    for cid, (rel, family, descriptor) in sorted(SHELLS.items()):
+    for cid, (rel, family, shape_tags) in sorted(SHELLS.items()):
         m = _metrics(rel, cid)
         _copy(rel, cid, "shells")
         plan.append((cid, "shells", cid,
@@ -268,9 +314,10 @@ def main():
             "scene": "res://content/shells/%s.tscn" % cid,
             "review": SHELL_REVIEW,
             "fallback": _SHELL_FALLBACK[family],
-            # DERIVED: the family from the id, the descriptor from the
-            # builder's own meta. No intent tag is invented here.
-            "semantic_tags": [family, descriptor],
+            # The CHAMBER TYPE first -- that is what a selector asks
+            # for -- then the shape tags that describe the room without
+            # claiming to be a type. No intent tag is invented here.
+            "semantic_tags": [family] + list(shape_tags),
             # GODOT ORDER, and this is the axis trap: the art manifest's
             # `size` is Blender-ordered [outer_width, LENGTH, outer_height]
             # and `ShellValidator._check_envelope` reads this field as a
@@ -287,10 +334,31 @@ def main():
                 {"name": "%s_%s" % (seg["name"], end),
                  "position": seg[end]}
                 for seg in m["traversal"] for end in ("start", "end")]
-        # NOT emitted, deliberately: `size_class` is a DESIGN assignment
-        # and P1 made it optional (`SizeClass | None = None`), so shipping
-        # a guess would dress taste as geometry. `cost` keeps the schema
-        # default for the same reason.
+        # --- the three P2-C fields, each from its own source ---------
+        #
+        # `size_class` is the owner's assignment (see `_SIZE_CLASS`), not
+        # a reading of `size`.
+        entry["size_class"] = _SIZE_CLASS[family]
+
+        # `exit_yaw` is the builder's own `turn * 90`, carried through
+        # verbatim. Production proved the sign end to end at `eda4fd9` --
+        # a two-room Zone measures the second room rotated +90 for
+        # shell_corner_left -- so it is COPIED, never recomputed. There
+        # is no second opinion about which way a corner turns.
+        if m.get("exit_yaw") is not None:
+            entry["exit_yaw"] = float(m["exit_yaw"])
+
+        # `fits_floors` is the tower's authored floor count, read from
+        # the value the builder used to lay out the climb. Not parsed
+        # from the id, not counted off the platforms: `floors` is the
+        # variable `_spiral`/`_gantry`/`_collapsed` were given. A room
+        # that does not depend on the parameter emits nothing, which is
+        # the schema's own "does not care" (empty tuple).
+        if m.get("floors") is not None:
+            entry["fits_floors"] = [int(m["floors"])]
+
+        # `cost` still keeps the schema default: it is a balance number
+        # and nobody has decided it.
         entries.append(entry)
         prov.append({"content_id": cid, "source_asset": "%s/%s" % (rel, cid),
                      "source_batch_review": "PASS",
@@ -301,6 +369,17 @@ def main():
                          "volumes": len(m["volumes"]),
                          "sockets": len(m["sockets"]),
                          "exit_yaw": m.get("exit_yaw"),
+                         "size_class": _SIZE_CLASS[family],
+                         "size_class_source": _SIZE_CLASS_SOURCE,
+                         "fits_floors": entry.get("fits_floors", []),
+                         "chamber_type": family,
+                         "shape_tags": list(shape_tags),
+                         "collision": m.get("colliders"),
+                         # Where the source-side probe mirror disagrees
+                         # with what the shell declares. Provenance, not
+                         # a schema field: `ContentEntry` forbids extras
+                         # and this is evidence for review, not content.
+                         "surface_probe": m.get("surface_probe", []),
                      },
                      "triangles": m.get("triangles")})
 

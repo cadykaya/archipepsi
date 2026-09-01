@@ -1254,6 +1254,72 @@ The general form, and the reason this was cheap to fix and would have been
 expensive to ship: the contract and the checker have to agree on what a
 number MEANS, not merely on where it comes from.
 
+### L-82 · A rule written for props was read as a rule about everything
+
+`docs/art/ASSET_AUTHORING.md` §5 opened with **"The art lane does not author
+collision."** It was true, and it was about props: the engine already has a
+collider for a light housing, and what the art lane owes is an asset that
+fits inside it.
+
+Room shells are not placed inside a room. They ARE the room, and there is no
+engine collider waiting for them. `ART_ASSET_SPEC.md` §3 had always said so
+in the opposite direction — author collision, never auto-trimesh anything a
+player touches — and the two sentences sat in two files for the whole of the
+F3 shell work without ever being read side by side.
+
+The bill arrived at Production's `eda4fd9`: eight shells integrated, all
+eight NOT MEASURABLE, 625 audit findings, every one of the "nothing is there"
+class. Zero structural violations — the metadata was immaculate and
+describing a room that physically was not present.
+
+> **A rule that names a category ("props") gets applied to the lane.** When
+> the lane later builds something from a different category, nobody rereads
+> the rule, because it does not feel like a rule that could stop applying.
+
+**It had been written down three times, and fixing two of them was not
+enough.** After the doc and the shells themselves came `verify_pack.gd`,
+which asserted *"carries N collision object; hitboxes are engine-owned"*
+against all seventeen entries and refused the eight shells the moment they
+were given the collision they had been missing. Production's own
+`ContentInstantiator` had never said that: it refuses a light on a **light
+housing** and refuses collision on a **projectile visual**, in two separate
+functions with two separate reasons, and says nothing of the kind about
+room shells. The art-side check had generalised both into one lane-wide
+law. The third site was found by running the checker, not by reading it —
+which is the argument for having one.
+
+What made it cheap to fix is the part worth copying. Every piece of all eight
+shells is a `brushkit.block` and every piece is already painted with one of
+four roles, so the collider is a COPY of the piece and the role decides
+whether it gets one. Nothing new had to be declared per shell, and the
+answer cannot drift from the geometry because it reads the same argument
+that chose the texture.
+
+### L-83 · The engine is the authority even when your own arithmetic is right
+
+The source-side probe mirror in `roomcollision.measure_probe` reproduces
+`RoomAudit`'s downward ray as arithmetic on boxes the build script placed.
+Twice it disagreed with the real engine, and both disagreements were
+instructive rather than embarrassing.
+
+**First it under-reported, silently.** Blender stores coordinates as float32,
+so a face built at exactly 0.80 reads back as 0.80000001 — a hair ABOVE the
+ray's start point, which emptied the probe window and reported three plinths
+clean while Godot was finding all nine samples on them. A tolerance three
+orders of magnitude below `HEIGHT_TOLERANCE` fixed it.
+
+**Then it over-reported, honestly.** With the tolerance in, a treasure room's
+`floor` centre sample grazes the plinth's lower step — the occluder's top
+face exactly level with where the ray begins. Godot does not register that
+contact. One tier up, `step_low` against the upper step, the same
+relationship, Godot DOES. No arithmetic reproduces that; it is the engine's
+own grazing behaviour.
+
+> **When a source-side check and the engine disagree about a coincident
+> face, do not tune the check until they match.** Label the case, report it,
+> and let the engine decide. Over-reporting a graze is the safe way to be
+> wrong; under-reporting is what left eight shells unmeasurable.
+
 ### L-24 · Read your own render before writing down what it shows
 Every fix in L-05, L-08, L-09, L-11, L-13 and L-14 came from **looking at
 the image**, not from the build log. The logs were green throughout: correct

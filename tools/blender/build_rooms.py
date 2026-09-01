@@ -64,6 +64,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import brushkit  # noqa: E402
 import common  # noqa: E402
 import materials
+import roomcollision
 import roomcontract  # noqa: E402
 import palette as pal  # noqa: E402
 
@@ -91,9 +92,16 @@ def _image(role):
 
 
 def _paint(obj, name, role):
+    """Texture a part, and record what that role means for the player.
+
+    The role argument already decides the treatment; `roomcollision` reads
+    the same argument to decide whether the piece is structure the player
+    stands on and stops at, or trim they only look at. One statement, made
+    once, at the point where the part is placed.
+    """
     common.assign(obj, common.make_textured_material(
         "%s_%s" % (name, role), _image(role), roughness=pal.roughness(THEME)))
-    return obj
+    return roomcollision.paint_role(obj, role)
 
 
 def _door_wall(name, tag, axis, at, span, height):
@@ -431,14 +439,64 @@ def main():
     report = {}
     for builder in SHELLS:
         name, parts, side, height, meta = builder()
+
+        # --- collision, before the join ------------------------------
+        #
+        # Taken while `parts` is still a list of boxes: `common.join`
+        # fuses them and one convex hull of the result would be a solid
+        # block with both doorways filled in. The walkable list is the
+        # SAME literals the surfaces are declared from below -- the
+        # treasure floor and `_plinth`'s two steps, or the corner's one
+        # floor -- so a surface with no collider under it fails here
+        # rather than in Production's audit.
+        # ONE list, in Blender terms, read twice: once to check that
+        # collision is under every surface, and once to DECLARE those
+        # surfaces further down. Writing the plinth's literals in two
+        # places is how a manifest and a collider drift apart -- and
+        # this file already has the shape `routecheck` and the towers
+        # use, `((centre_x, centre_y), (extent_x, extent_y))`.
+        mid = -side / 2.0
+        if name.startswith("shell_treasure"):
+            # Three surfaces, not one. `_plinth` is the same in all three
+            # shells because the reward position is the engine's.
+            walkable = [
+                (((0.0, mid), (side, side)), 0.0, "floor"),
+                (((0.0, mid), (3.0, 3.0)), 0.40, "step_low"),
+                (((0.0, mid), (2.2, 2.2)), 0.80, "step_high"),
+            ]
+        else:
+            walkable = [(((0.0, mid), (side, side)), 0.0, "floor")]
+        colliders = roomcollision.build(parts, name)
+        roomcollision.assert_exact(name, parts, colliders)
+        roomcollision.assert_supports(
+            name, colliders, [w[0] for w in walkable],
+            [w[1] for w in walkable], [w[2] for w in walkable])
+        probe = roomcollision.measure_probe(
+            colliders, [w[0] for w in walkable], [w[1] for w in walkable],
+            [w[2] for w in walkable])
+
         obj = common.join(parts, name)
         common.uv_project_world(obj, materials.ARCH_DENSITY,
                                 materials.ARCH_SIZE)
         entry = common.export_glb(obj, "%s/%s.glb" % (OUT, name), "room",
                                   tier="architecture",
                                   texture_size=materials.ARCH_SIZE,
-                                  anchor="entrance", check_flat=False)
+                                  anchor="entrance", check_flat=False,
+                                  collision=colliders)
         entry.update(meta)
+        if probe:
+            # RECORDED, not corrected and not hidden. A surface that
+            # measures something other than what it declares is a design
+            # fact; it travels with the asset so Production reads it in
+            # provenance rather than rediscovering it in the audit.
+            entry["surface_probe"] = probe
+            for f in probe:
+                common.log("%s: surface '%s' declared %.2f measures %.2f "
+                           "at %d of %d samples%s"
+                           % (name, f["surface"], f["declared"],
+                              f["measured"], f["samples"], f["of"],
+                              "  (grazing -- ask the engine)"
+                              if f.get("grazing") else ""))
         if name.startswith("shell_treasure"):
             # treasure_room()'s own numbers, none of them art's to move.
             entry["exit_offset"] = [0.0, 0.0, side]
@@ -457,15 +515,10 @@ def main():
         # Derived from the same literals that placed the geometry:
         # `_treasure_shell`'s T_SIDE floor, `_plinth`'s two steps, and
         # `_corner`'s single 6 m floor and turning exit.
-        mid = -side / 2.0
+        entry["surfaces"] = [
+            roomcontract.surface(sname, centre, extent, top)
+            for (centre, extent), top, sname in walkable]
         if name.startswith("shell_treasure"):
-            # Three surfaces, not one. `_plinth` is the same in all three
-            # shells because the reward position is the engine's.
-            entry["surfaces"] = [
-                roomcontract.surface("floor", (0.0, mid), (side, side), 0.0),
-                roomcontract.surface("step_low", (0.0, mid), (3.0, 3.0), 0.40),
-                roomcontract.surface("step_high", (0.0, mid), (2.2, 2.2), 0.80),
-            ]
             # A flat room: every rise is `_plinth`'s 0.40 m against a
             # 1.00 m step. Declared rather than omitted, so the contract
             # says "nothing to cross" instead of saying nothing.

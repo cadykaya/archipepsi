@@ -58,6 +58,72 @@ def glb_bbox(path):
     return lo, hi
 
 
+def wall_allowance(ref):
+    """Production's `RoomContract.WALL_ALLOWANCE`, read rather than copied.
+
+    This used to be a hard-coded 0.15 -- `ShellValidator`'s own
+    `POSITION_TOLERANCE` at the time -- and it refused all eight shells
+    for a rule Production's procedural rooms broke too. At `eda4fd9`
+    both producers were put on one shared allowance: a boundary wall
+    belongs to the room, so a room may reach one wall thickness plus the
+    old tolerance outside its declared box. Reading it means the next
+    change to that number arrives here for free instead of turning this
+    check into a second opinion again.
+    """
+    expr = _gd_const(ref, "godot/scripts/content/room_contract.gd",
+                     "WALL_ALLOWANCE")
+    if expr is None:
+        # Older Production, before the shared rule landed.
+        return POSITION_TOLERANCE
+    # It is written `ChamberBuilders.WALL_THICKNESS + 0.15` -- one named
+    # constant plus one literal. Resolved rather than assumed, so a room
+    # is never refused against a number nobody uses.
+    total = 0.0
+    for term in expr.split("+"):
+        term = term.strip()
+        try:
+            total += float(term)
+            continue
+        except ValueError:
+            pass
+        if term.startswith("ChamberBuilders."):
+            inner = _gd_const(ref, "godot/scripts/generation/"
+                                   "chamber_builders.gd",
+                              term.split(".", 1)[1])
+            if inner is not None:
+                try:
+                    total += float(inner)
+                    continue
+                except ValueError:
+                    pass
+        raise SystemExit(
+            "[preflight] cannot resolve WALL_ALLOWANCE term %r at %s. "
+            "Refusing to guess: an envelope check against an invented "
+            "allowance is how eight shells were refused for a rule "
+            "nobody kept." % (term, ref))
+    return total
+
+
+def _gd_const(ref, path, name):
+    """The right-hand side of `const <name> ... = ...`, or None."""
+    src = subprocess.run(["git", "show", "%s:%s" % (ref, path)],
+                         cwd=ROOT, capture_output=True, text=True).stdout
+    for line in src.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("const %s" % name):
+            continue
+        head, _, rhs = stripped.partition("=")
+        if not head.startswith("const %s" % name):
+            continue
+        if head.strip() not in ("const %s" % name, "const %s :" % name,
+                                "const %s:" % name):
+            # A longer name that merely starts the same way.
+            if not head.replace(":", "").strip().endswith(name):
+                continue
+        return rhs.split("#")[0].strip()
+    return None
+
+
 def max_safe_gap(rise, ref):
     """Production's own `Constants.max_safe_gap`, read rather than copied."""
     src = subprocess.run(
@@ -88,6 +154,9 @@ def main(argv):
         print("[preflight] no room shells in the pack")
         return 0
 
+    slack = wall_allowance(ref)
+    print("[preflight] envelope allowance %.2f m, read from %s"
+          % (slack, ref))
     problems = 0
     predictions = 0
     for e in sorted(entries, key=lambda x: x["id"]):
@@ -97,11 +166,10 @@ def main(argv):
         sx, sy, sz = e["size"]
 
         notes = []
-        # 1. ShellValidator._check_envelope, exactly.
-        env = ((-sx / 2.0 - POSITION_TOLERANCE, -FLOOR_ALLOWANCE - POSITION_TOLERANCE,
-                -POSITION_TOLERANCE),
-               (sx / 2.0 + POSITION_TOLERANCE, sy + POSITION_TOLERANCE,
-                sz + POSITION_TOLERANCE))
+        # 1. ShellValidator._check_envelope, exactly -- with the
+        #    allowance read from the ref rather than assumed.
+        env = ((-sx / 2.0 - slack, -FLOOR_ALLOWANCE - slack, -slack),
+               (sx / 2.0 + slack, sy + slack, sz + slack))
         for i, axis in enumerate("xyz"):
             if lo[i] < env[0][i] - 1e-9:
                 notes.append("REFUSED envelope: %s-min %.2f < %.2f"

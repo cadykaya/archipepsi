@@ -58,6 +58,7 @@ import brushkit  # noqa: E402
 import common  # noqa: E402
 import materials  # noqa: E402
 import palette as pal  # noqa: E402
+import roomcollision
 import roomcontract
 import routecheck  # noqa: E402
 
@@ -95,9 +96,16 @@ def _image(role):
 
 
 def _paint(obj, name, role):
+    """Texture a part, and record what that role means for the player.
+
+    The role argument already decides the treatment; `roomcollision` reads
+    the same argument to decide whether the piece is structure the player
+    stands on and stops at, or trim they only look at. One statement, made
+    once, at the point where the part is placed.
+    """
     common.assign(obj, common.make_textured_material(
         "%s_%s" % (name, role), _image(role), roughness=pal.roughness(THEME)))
-    return obj
+    return roomcollision.paint_role(obj, role)
 
 
 def _shaft(name, height, summit):
@@ -430,14 +438,50 @@ def main():
             raise AssertionError(
                 "%s: %d floors is outside zone.py's %d-%d."
                 % (name, floors, F_MIN, F_MAX))
+        # --- collision, before the join ------------------------------
+        #
+        # `common.join` fuses `parts` into one mesh and the individual
+        # boxes stop existing. Each collider is a copy of one box, so the
+        # twins are taken while there are still boxes to copy; a convex
+        # hull of the joined tower would be a solid lump with the doorway
+        # and the whole shaft filled in.
+        #
+        # The support check walks the surfaces this shell is about to
+        # declare -- `stones` plus the bridge that `_deck` builds -- and
+        # refuses to ship a manifest claiming a floor with no collider
+        # under it. That is the defect `eda4fd9` measured, checked here
+        # where it is cheap.
+        walkable = list(zip(meta["_stones"], meta["_heights"],
+                            meta["_snames"]))
+        walkable.append((((0.0, -SIDE - 1.0), (3.0, 2.4)), rise, "bridge"))
+        colliders = roomcollision.build(parts, name)
+        roomcollision.assert_exact(name, parts, colliders)
+        roomcollision.assert_supports(
+            name, colliders, [w[0] for w in walkable],
+            [w[1] for w in walkable], [w[2] for w in walkable])
+        probe = roomcollision.measure_probe(
+            colliders, [w[0] for w in walkable], [w[1] for w in walkable],
+            [w[2] for w in walkable])
+
         obj = common.join(parts, name)
         common.uv_project_world(obj, materials.ARCH_DENSITY,
                                 materials.ARCH_SIZE)
         entry = common.export_glb(obj, "%s/%s.glb" % (OUT, name), "room",
                                   tier="architecture",
                                   texture_size=materials.ARCH_SIZE,
-                                  anchor="entrance", check_flat=False)
+                                  anchor="entrance", check_flat=False,
+                                  collision=colliders)
         entry.update(meta)
+        if probe:
+            # RECORDED, not corrected and not hidden -- see build_rooms.
+            entry["surface_probe"] = probe
+            for f in probe:
+                common.log("%s: surface '%s' declared %.2f measures %.2f "
+                           "at %d of %d samples%s"
+                           % (name, f["surface"], f["declared"],
+                              f["measured"], f["samples"], f["of"],
+                              "  (grazing -- ask the engine)"
+                              if f.get("grazing") else ""))
         # `tower()` exits through the BACK WALL at summit height, 2.2 m
         # beyond the shaft -- the bridge strip's far end.
         entry["exit_offset"] = [0.0, round(rise, 2), round(SIDE + 2.2, 2)]
