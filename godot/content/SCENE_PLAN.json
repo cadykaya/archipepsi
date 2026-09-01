@@ -70,54 +70,66 @@
    "content_id": "fixture_light_concrete_facility",
    "source_asset": "batch001/architecture/arch_light_fixture",
    "source_batch_review": "PASS",
+   "runtime_substitution": "pass",
    "triangles": 144
   },
   {
    "content_id": "fixture_light_gothic_stone",
    "source_asset": "batch014/lights/light_gothic_corona",
    "source_batch_review": "PASS",
+   "runtime_substitution": "pass",
    "triangles": 256
   },
   {
    "content_id": "fixture_light_neon_transit",
    "source_asset": "batch014/lights/light_neon_channel",
    "source_batch_review": "PASS",
+   "runtime_substitution": "pass",
    "triangles": 72
   },
   {
    "content_id": "fixture_light_rusted_industrial",
    "source_asset": "batch014/lights/light_rusted_cage",
    "source_batch_review": "PASS",
+   "runtime_substitution": "pass",
    "triangles": 240
   },
   {
    "content_id": "fixture_light_temple_ruin",
    "source_asset": "batch014/lights/light_temple_bowl",
    "source_batch_review": "PASS",
+   "runtime_substitution": "pass",
    "triangles": 212
   },
   {
    "content_id": "fixture_light_void_glitch",
    "source_asset": "batch014/lights/light_void_absent",
    "source_batch_review": "PASS",
+   "runtime_substitution": "pass",
    "triangles": 84
   },
   {
    "content_id": "projectile_falling",
    "source_asset": "batch008/enemy/enemy_projectile_falling",
    "source_batch_review": "PASS",
+   "runtime_substitution": "pending",
+   "runtime_reverted_reason": "silhouette and tint regressed against the engine's own ProjectileSilhouette in the A/B",
    "triangles": 152
   },
   {
    "content_id": "projectile_lobbed",
    "source_asset": "batch008/enemy/enemy_projectile_lobbed",
    "source_batch_review": "PASS",
+   "runtime_substitution": "pending",
+   "runtime_reverted_reason": "silhouette and tint regressed against the engine's own ProjectileSilhouette in the A/B",
    "triangles": 192
   },
   {
    "content_id": "projectile_straight",
    "source_asset": "batch008/enemy/enemy_projectile_straight",
    "source_batch_review": "PASS",
+   "runtime_substitution": "pending",
+   "runtime_reverted_reason": "silhouette and tint regressed against the engine's own ProjectileSilhouette in the A/B",
    "triangles": 104
   }
  ]

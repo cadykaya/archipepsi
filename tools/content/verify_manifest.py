@@ -87,6 +87,54 @@ def main(argv):
                   % failed)
             return 1
 
+        # DRIFT. The bug this catches happened: the art exporter kept
+        # emitting `review: "pass"` for the three projectiles after
+        # Production had reverted them to "pending", so any regeneration
+        # would have silently re-enabled a substitution the owner turned
+        # off. Nothing compared the two copies, because nothing knew there
+        # were two.
+        #
+        # Production's pack is the LANDED state. Ours is the source that
+        # generates it. They must agree, field for field, or one of them is
+        # about to overwrite a decision.
+        try:
+            landed = subprocess.run(
+                ["git", "show", "%s:godot/content/registry/authored_art.json" % ref],
+                cwd=ROOT, capture_output=True, check=True).stdout
+        except subprocess.CalledProcessError:
+            print("[pyverify]   note: Production carries no authored_art.json "
+                  "yet, so there is nothing to drift from")
+        else:
+            theirs = {e["id"]: e for e in json.loads(landed)["entries"]}
+            ours = {}
+            for path in manifests:
+                with open(path) as fh:
+                    doc = json.load(fh)
+                if doc.get("pack") == "authored_art":
+                    ours = {e["id"]: e for e in doc["entries"]}
+            drift = []
+            for cid in sorted(set(ours) | set(theirs)):
+                a, b = ours.get(cid), theirs.get(cid)
+                if a is None:
+                    drift.append("%s: only Production has it" % cid)
+                elif b is None:
+                    drift.append("%s: only the art export has it" % cid)
+                elif a != b:
+                    keys = sorted(k for k in set(a) | set(b)
+                                  if a.get(k) != b.get(k))
+                    for k in keys:
+                        drift.append("%s.%s: art=%r prod=%r"
+                                     % (cid, k, a.get(k), b.get(k)))
+            if drift:
+                print("[pyverify]   DRIFT from Production's landed pack:")
+                for line in drift:
+                    print("[pyverify]     %s" % line)
+                print("[pyverify] FAIL -- the art export and the landed pack "
+                      "disagree")
+                return 1
+            print("[pyverify]   ok  no drift from Production's landed pack "
+                  "(%d ids, field for field)" % len(ours))
+
         # The union check, which no single manifest can answer: colliding
         # ids, a fallback naming nothing, a fallback that loops.
         try:

@@ -75,15 +75,16 @@ sys.stdout.write(s)' > "$H/content_registry.gd"
 git show "$PROD:godot/scripts/content/visual_ownership.gd" \
   | sed 's/^class_name VisualOwnership$//' > "$H/visual_ownership.gd"
 
-# The post-handoff state of Production's own manifest.
-git show "$PROD:godot/content/registry/legacy_procedural.json" | python3 -c '
-import json, sys
-d = json.load(sys.stdin)
-for e in d["entries"]:
-    if e["id"].startswith("fixture_light_"):
-        e["id"] += "_proc"
-json.dump(d, open(sys.argv[1], "w"), indent=1)
-' "$ROOT/godot/content/registry/legacy_procedural.json"
+# Production's own manifest, VERBATIM.
+#
+# This used to simulate the other half of the handoff by renaming the six
+# procedural `fixture_light_<theme>` ids to `<id>_proc`. That simulation is
+# retired: Production has LANDED the rename, so its manifest already carries
+# the `_proc` ids and renaming again produced `_proc_proc` -- a fallback
+# chain pointing at ids no pack defines. A simulation of a state that has
+# since become real is not a simulation, it is a second, wrong copy.
+git show "$PROD:godot/content/registry/legacy_procedural.json" \
+  > "$ROOT/godot/content/registry/legacy_procedural.json"
 
 # 1. PYTHON. First, because it is the cheaper gate and the one that was
 #    missing. Both manifests are present, so `build_registry` also checks the

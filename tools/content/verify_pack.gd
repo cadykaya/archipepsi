@@ -25,20 +25,35 @@ func _initialize() -> void:
 		fails += 1
 
 	# 1. Every id the runtime asks for resolves to the AUTHORED entry.
-	var wanted := ["fixture_light_concrete_facility", "fixture_light_rusted_industrial",
-			"fixture_light_neon_transit", "fixture_light_gothic_stone",
-			"fixture_light_temple_ruin", "fixture_light_void_glitch",
-			"projectile_straight", "projectile_falling", "projectile_lobbed"]
+	# id -> must it pass the shippable gate?
+	#
+	# NOT "everything is shippable". Production reverted the authored
+	# projectile substitutions after the A/B, so `pending` is the CORRECT
+	# state for those three and a verifier that demanded `pass` would block
+	# the very fix that records the reversal. What matters is that each
+	# family exports the state the owner actually decided.
+	var wanted := {
+		"fixture_light_concrete_facility": true,
+		"fixture_light_rusted_industrial": true,
+		"fixture_light_neon_transit": true,
+		"fixture_light_gothic_stone": true,
+		"fixture_light_temple_ruin": true,
+		"fixture_light_void_glitch": true,
+		"projectile_straight": false,
+		"projectile_falling": false,
+		"projectile_lobbed": false,
+	}
 	for id in wanted:
+		var want_shippable: bool = wanted[id]
 		if not reg.has(id):
 			print("[verify]   FAIL: registry has no '%s'" % id); fails += 1; continue
 		var chosen: String = reg.resolve(id)
 		var entry: Dictionary = reg.get_entry(chosen)
 		var authored := not bool(entry.get("procedural_fallback", false))
 		var shippable: bool = Ownership.is_shippable(entry)
-		if chosen != id or not authored or not shippable:
-			print("[verify]   FAIL: '%s' resolved to '%s' authored=%s shippable=%s"
-					% [id, chosen, authored, shippable]); fails += 1
+		if chosen != id or not authored or shippable != want_shippable:
+			print("[verify]   FAIL: '%s' resolved to '%s' authored=%s shippable=%s (wanted %s)"
+					% [id, chosen, authored, shippable, want_shippable]); fails += 1
 			continue
 		# 2. The scene loads, is a Node3D, and carries neither of the two
 		#    things the instantiator refuses.
@@ -61,8 +76,8 @@ func _initialize() -> void:
 		if meshes == 0:
 			print("[verify]   FAIL: '%s' has no mesh -- an invisible asset" % id); fails += 1
 		if lights == 0 and colliders == 0 and meshes > 0:
-			print("[verify]   ok  %-32s authored, %d mesh, 0 lights, 0 colliders"
-					% [id, meshes])
+			print("[verify]   ok  %-32s authored, %d mesh, 0 lights, 0 colliders, %s"
+					% [id, meshes, "SHIPS" if want_shippable else "held PENDING"])
 		inst.free()
 
 	# 3. The procedural entries are still reachable as the fallback.
