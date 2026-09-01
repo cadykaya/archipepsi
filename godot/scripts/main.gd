@@ -61,6 +61,7 @@ const DRIVERS := {
 	"--zone-audit": preload("res://tests/zone_audit_driver.gd"),
 	"--zone-shots": preload("res://tests/zone_shot_driver.gd"),
 	"--room-test": preload("res://tests/room_driver.gd"),
+	"--room-contract": preload("res://tests/room_contract_driver.gd"),
 }
 
 func _ready() -> void:

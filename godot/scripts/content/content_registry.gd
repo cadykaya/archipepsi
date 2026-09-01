@@ -135,6 +135,11 @@ func _accept(pack: String, entry: Dictionary) -> void:
 				% category + "socket; nothing could connect to it")
 		return
 
+	var surface_problem := _surface_problem(entry)
+	if not surface_problem.is_empty():
+		_fail(id, surface_problem)
+		return
+
 	if category in NEEDS_FOOTPRINT:
 		var problem := _cluster_footprint_problem(entry)
 		if not problem.is_empty():
@@ -167,6 +172,55 @@ func _accept(pack: String, entry: Dictionary) -> void:
 
 	entry["_pack"] = pack
 	entries[id] = entry
+
+## P1: does this entry say where its floor is, and do its sockets stand
+## on floors it declared? Returns "" when it does.
+##
+## THE MIRROR OF `content.py`, and it has to exist. Verifying one side of
+## a two-sided contract is verifying nothing: Python refuses a manifest
+## the art lane exports, and this refuses the same manifest as the game
+## loads it. A rule that lives in one language is a rule the other
+## language will eventually disagree with.
+func _surface_problem(entry: Dictionary) -> String:
+	var raw: Variant = entry.get("surfaces", [])
+	if typeof(raw) != TYPE_ARRAY:
+		return "declares a 'surfaces' field that is not a list"
+	var surfaces: Array = raw
+	var procedural := bool(entry.get("procedural_fallback", false))
+	if str(entry.get("category", "")) == "room_shell" and not procedural 			and surfaces.is_empty():
+		return ("is an authored room shell and declares no surfaces; "
+				+ "nothing downstream would know where its floor is")
+	var span := Constants.PLAYER_RADIUS * 2.0
+	var names := {}
+	for item: Variant in surfaces:
+		if typeof(item) != TYPE_DICTIONARY:
+			return "declares a surface that is not an object"
+		var surface: Dictionary = item
+		var name := str(surface.get("name", ""))
+		if name.is_empty():
+			return "declares a surface with no name"
+		if names.has(name):
+			return ("declares two surfaces named '%s'; a socket naming "
+					% name + "one could mean either")
+		names[name] = true
+		var extent: Variant = surface.get("extent", [])
+		if typeof(extent) != TYPE_ARRAY or (extent as Array).size() < 2:
+			return ("surface '%s' declares no (x, z) extent" % name)
+		for axis: Variant in (extent as Array).slice(0, 2):
+			if float(axis) < span:
+				return ("surface '%s' is %.2f m across and the player's "
+						% [name, float(axis)] + "own capsule is %.2f"
+						% span)
+	for item: Variant in entry.get("sockets", []):
+		if typeof(item) != TYPE_DICTIONARY:
+			continue
+		var socket: Dictionary = item
+		var on := str(socket.get("surface_id", ""))
+		if not on.is_empty() and not names.has(on):
+			return ("socket '%s' stands on surface '%s', which this "
+					% [str(socket.get("name", "?")), on]
+					+ "entry does not declare")
+	return ""
 
 ## Whether a cluster declares a placement envelope the runtime can honour
 ## (art requirement 5). Returns "" when it does.

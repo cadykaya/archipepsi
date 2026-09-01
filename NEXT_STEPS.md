@@ -30,6 +30,97 @@ Proof the loop is real:
   reveal cards, zone title cards, inventory, pause, F3 overlay,
   procedural textures/audio.
 
+## Latest session: P1 — room contract parity + the geometric audit
+
+The first slice of the adopted ROOM_ARCHITECTURE_STUDY hybrid (PR #7,
+`a63220f`), approved P1-only. Contract and validator; **no content
+conversion, no F3, no P2/P3.**
+
+The asymmetry. `ChamberBuilders` and `_from_authored_scene` both answer
+"build me this chamber", and until now the authored one answered with
+strictly less truth: it returned **no `sockets` key at all**, so an
+authored room had no cover points, no barrel points, no reserved
+regions and no walkable surfaces, and `Activities` flat-solved against
+its bounding box. That is exactly the defect `552469d` closed for
+`platform_path`, sitting in the one path no Zone takes yet — and it
+would have been found in a Zone the player was standing in.
+
+**The contract** is not a new language; it is the dictionary both
+producers already return, written down. `room_contract.gd` names the
+required keys (`root`, `bounds`, `exit_offset`, `room_height`,
+`enemy_spawns`, `reward_position`) and a CLOSED socket vocabulary —
+`stand`, `reserved`, `cover`, `reactive`, `enemy_high`, `access` — each
+tied to a consumer that runs today. Nothing speculative: a kind with no
+consumer is a kind nobody can be held to. `traversal` is optional and
+carries `TraversalSegment`'s own shape, so an authored jump and a
+`platform_path` jump are measured by the same code against the same
+`max_safe_gap`.
+
+**The audit** (`room_audit.gd`) measures those claims with real probes:
+support and headroom sampled across every declared surface; ground and
+burial under every placement point; the player's capsule at every
+arrival and in every doorway; endpoints, span and rise of every declared
+traversal; and geometry that reaches outside the room's own bounds. It
+REFUSES to report a clean sheet for a room outside the scene tree,
+because a probe with nothing to hit comes back clean, and that is the
+most dangerous possible pass.
+
+Two probe designs were tried and dropped for stated reasons, both worth
+carrying:
+
+- A separate "reachable from above" ray, on the theory that the sealed
+  pit was about lids. It was not: what makes a deck 1.66 m under a slab
+  unwalkable is that a 1.8 m player does not fit. **The headroom ray IS
+  the pit check**, and the extra one refused perfectly good mezzanines.
+- `cast_motion` through a doorway, which quietly returns "travelled all
+  of it" for a shape that starts clear and ends clear either side of a
+  0.4 m jamb. Asking "does the player FIT here" has one answer.
+
+And one real contract subtlety, found by a false positive: **`exit_offset`
+is not the doorway.** It is where the next room's ORIGIN goes, which a
+tower deliberately puts 2.2 m past its own back face. The audit probes
+the room's +Z boundary instead. A tower's landing slab is also 0.5 m
+thick and CENTRED on the height `exit_offset` names, so the probe finds
+the floor by ray before standing on it.
+
+**The suite** (`make godot-room-contract`, in CI) is ONE suite keyed to
+the contract, run over seven procedural rooms and three authored
+fixtures that carry the identical manifest — an honest room, one with a
+slab over its declared balcony, one whose exit was modelled and never
+cut. A per-producer suite proves that producer is self-consistent; this
+project has watched that inherit-the-blind-spot failure three times.
+
+**Schema**, mirrored into `content_registry.gd` in the same commit
+because verifying one side of a two-sided contract is verifying nothing:
+a `Surface` model and `ContentEntry.surfaces`; `Socket.kind` gains
+`cover`/`reactive`/`enemy_high`, promoted from the runtime vocabulary
+the builders already emit; `Socket.surface_id`. An authored room shell
+declaring no surfaces is refused. A `procedural_fallback` entry is
+exempt — it describes code that already knows where it laid the floor,
+and the procedural route stays permanently legal.
+
+`ShellValidator` also now keeps a promise `content.py` has made in prose
+since S12 and nothing kept: measured mesh AABBs against the declared
+`size` envelope. Rooms chain by butting declared envelopes together, so
+a shell bigger than its manifest reaches into the next room — and the
+overlap guard that would catch it is fed the very number being lied
+about.
+
+**Zero player-facing change, verified rather than asserted**:
+`zone_digest 6e8d83d0f3ec088b` unchanged, the real-Zone audit unchanged
+at 0 structural failures and 0 placement notes, and no committed
+registry entry, Zone fixture or baseline touched.
+
+**One defect the audit found and P1 does not fix.** An arena scatters
+three "crude cover" boxes at random through the middle half of the room,
+and `reward_position` is the fixed point `depth * 0.72` on the centre
+line. Nothing has ever stopped one landing on the other, so a Check
+pedestal can stand inside a crate — `zone_controller.gd:150` places
+`RewardObject` at that anchor with no clearance test. Two of the four
+arenas in the suite do it. Reported and PINNED so it cannot grow;
+fixing it means moving props or the anchor, which is a player-facing
+change and P1's acceptance forbids one.
+
 ## Latest session: ROOM GRAMMAR v0
 
 The first approved slice of `docs/proposals/ROOM_FIRST_GAMEPLAY.md`. The

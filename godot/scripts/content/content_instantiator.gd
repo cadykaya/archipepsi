@@ -359,11 +359,25 @@ static func _carries_a_light(node: Node) -> bool:
 ## Instantiates an authored shell and derives the build contract from its
 ## validated metadata.
 ##
-## Nothing here reads the scene's geometry to decide anything. The
+## Nothing here reads the scene's geometry to DECIDE anything. The
 ## metadata is the contract: it is what both languages validated, what a
 ## test can check without a renderer, and what an artist declared on
 ## purpose. Measuring the mesh instead would mean a stray decorative
 ## overhang could silently move a room's exit.
+##
+## That is not the same as trusting it. `ShellValidator` refuses a shell
+## whose scene contradicts its manifest before any of this runs, and
+## `RoomAudit` measures the emitted contract against the instantiated
+## geometry with real probes. Declared decides; measured vetoes.
+##
+## P1: THIS PATH USED TO RETURN NO `sockets` KEY AT ALL. An authored room
+## therefore got no cover, no barrels, no reserved regions and no
+## walkable surfaces, and `Activities` flat-solved against its bounds --
+## the exact defect `552469d` closed for `platform_path`, sitting in the
+## one path no Zone takes yet. Producing it here means an authored room
+## and a procedural room are the same kind of thing to everything
+## downstream, which is what makes the room grammar a contract rather
+## than a description of one producer.
 static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 		theme: String) -> Dictionary:
 	var scene: PackedScene = load(str(entry.get("scene", "")))
@@ -397,10 +411,81 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 		"enemy_spawns": _enemy_spawns(entry, chamber),
 		"room_height": size.y,
 		"reward_position": _objective(entry, size),
+		"sockets": _authored_sockets(entry),
+		"traversal": _authored_traversal(entry),
 	}
 	result["features"] = AffordanceFeatures.place_all(
 			root, chamber, theme, size.x, size.z, size.y)
 	return result
+
+## The authored shell's physical truths, in the one vocabulary every
+## consumer already reads (`room_contract.gd`).
+##
+## A straight translation, deliberately: a `surface` becomes the `stand`
+## socket `Activities` solves against, a `no_build` volume becomes the
+## `reserved` region occupancy already understands, and the gameplay
+## sockets keep their names. Nothing is invented and nothing is inferred
+## -- an authored room offers exactly what its author declared, and the
+## audit decides whether the author was right.
+static func _authored_sockets(entry: Dictionary) -> Array:
+	var out: Array = []
+	for raw: Variant in entry.get("surfaces", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var surface: Dictionary = raw
+		var extent := _pair(surface.get("extent", []))
+		out.append({
+			"kind": "stand",
+			"name": str(surface.get("name", "")),
+			"position": _vector(surface.get("center", []), Vector3.ZERO),
+			# Surfaces are top faces, so the contract's extent is flat:
+			# the y a consumer needs is the position's, not a thickness.
+			"extent": Vector3(extent.x, 0.0, extent.y),
+		})
+	for raw: Variant in entry.get("sockets", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var socket: Dictionary = raw
+		var kind := str(socket.get("kind", ""))
+		if not RoomContract.POINT_KINDS.has(kind):
+			continue
+		out.append({
+			"kind": kind,
+			"name": str(socket.get("name", "")),
+			"position": _vector(socket.get("position", []), Vector3.ZERO),
+			"surface_id": str(socket.get("surface_id", "")),
+		})
+	for raw: Variant in entry.get("volumes", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var volume: Dictionary = raw
+		if str(volume.get("kind", "")) != "no_build":
+			continue
+		out.append({
+			"kind": "reserved",
+			"name": str(volume.get("name", "")),
+			"position": _vector(volume.get("center", []), Vector3.ZERO),
+			"extent": _vector(volume.get("size", []), Vector3.ONE),
+		})
+	return out
+
+## What the shell says the player does inside it, carried through in the
+## contract's shape so the audit measures an authored jump and a
+## `platform_path` jump with the same code and the same `max_safe_gap`.
+static func _authored_traversal(entry: Dictionary) -> Array:
+	var out: Array = []
+	for raw: Variant in entry.get("traversal", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var segment: Dictionary = raw
+		out.append({
+			"name": str(segment.get("name", "")),
+			"kind": str(segment.get("kind", "walk")),
+			"mandatory": bool(segment.get("mandatory", true)),
+			"start": _vector(segment.get("start", []), Vector3.ZERO),
+			"end": _vector(segment.get("end", []), Vector3.ZERO),
+		})
+	return out
 
 ## Where the next room's entry goes, taken from the socket the artist
 ## declared. Falls back to the room's own depth: a shell with no exit
@@ -457,6 +542,15 @@ static func _objective(entry: Dictionary, size: Vector3) -> Vector3:
 		if str(v.get("kind", "")) == "objective":
 			return _vector(v.get("center", []), Vector3(0, 0, size.z / 2.0))
 	return Vector3(0, 0, size.z / 2.0)
+
+## A surface's extent is its FLOOR footprint, so the manifest declares
+## two numbers and not three: a top face has no thickness, and a third
+## number here would be a thickness somebody would eventually believe.
+static func _pair(raw: Variant) -> Vector2:
+	if typeof(raw) != TYPE_ARRAY or (raw as Array).size() < 2:
+		return Vector2.ZERO
+	var a: Array = raw
+	return Vector2(float(a[0]), float(a[1]))
 
 static func _vector(raw: Variant, fallback: Vector3) -> Vector3:
 	if typeof(raw) != TYPE_ARRAY or (raw as Array).size() < 3:

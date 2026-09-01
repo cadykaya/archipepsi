@@ -111,6 +111,47 @@ MIN_PASSABLE_WIDTH = C.PLAYER_RADIUS * 2.0 + SIDE_CLEARANCE
 MIN_PASSABLE_HEIGHT = C.PLAYER_HEIGHT + HEAD_CLEARANCE
 
 
+class Surface(Strict):
+    """A patch of floor the content VOUCHES you can stand on (P1).
+
+    The room contract's `stand` socket, in manifest form. A procedural
+    builder has always known which square metres of its room hold
+    weight -- it just laid them -- and until P1 an authored shell had no
+    way to say the same thing, so `Activities` flat-solved against its
+    bounding box. That is the defect `552469d` closed for
+    `platform_path`, waiting in the one path no Zone takes yet.
+
+    `center` is a point on the TOP FACE, which is why `extent` is two
+    numbers and not three: a walkable surface has no thickness, and a
+    third number here would be one somebody eventually believed.
+
+    Godot measures it. A surface with nothing under it, a surface that
+    measures at a different height, or a surface with a slab over it is
+    refused by `room_audit.gd` whatever this file says.
+    """
+    name: _TAG
+    center: tuple[float, float, float]
+    #: Footprint on the floor plane, (x, z) in metres.
+    extent: tuple[float, float]
+
+    @model_validator(mode="after")
+    def _you_can_actually_stand_on_it(self):
+        if any(e <= 0.0 for e in self.extent):
+            raise ValueError(
+                f"surface '{self.name}' has extent {self.extent}; a "
+                f"walkable patch with no area is not one")
+        # The player has to fit. A surface narrower than the capsule is a
+        # ledge nobody can be on, and declaring it invites a composer to
+        # put a Check there.
+        span = C.PLAYER_RADIUS * 2.0
+        if self.extent[0] < span or self.extent[1] < span:
+            raise ValueError(
+                f"surface '{self.name}' is {self.extent[0]:.2f} x "
+                f"{self.extent[1]:.2f} m; the player's own capsule is "
+                f"{span:.2f} m across")
+        return self
+
+
 class Socket(Strict):
     """A named attachment point in the content's own local space.
 
@@ -121,13 +162,28 @@ class Socket(Strict):
     without loading Godot.
     """
     name: _TAG
+    #: P1: `cover`, `reactive` and `enemy_high` are PROMOTED from the
+    #: runtime vocabulary the procedural builders already emit
+    #: (`room_contract.gd`), because an authored shell that cannot say
+    #: them is a room the composer can put nothing in. Each names a
+    #: consumer that runs today -- DestructibleCover, ReactiveBarrel, and
+    #: the ranged-enemy placement loop -- and a kind with no consumer is
+    #: a kind nobody can be held to, so nothing speculative was added
+    #: alongside them.
     kind: Literal["doorway", "corridor_end", "affordance", "spawn",
-                  "objective", "secret", "vista", "presentation"]
+                  "objective", "secret", "vista", "presentation",
+                  "cover", "reactive", "enemy_high"]
     position: tuple[float, float, float]
     yaw: float = Field(default=0.0, ge=-360.0, le=360.0)
     #: Clear opening, for the two kinds that join to another socket.
     width: float = Field(default=0.0, ge=0.0, le=32.0)
     height: float = Field(default=0.0, ge=0.0, le=32.0)
+    #: Which declared `Surface` this one stands on, when it stands on
+    #: one. Optional, and checked by measurement rather than believed:
+    #: naming a surface is how an author says "this crate is on the
+    #: balcony, not on the floor under it", and the audit rays down to
+    #: find out whether that is where it landed.
+    surface_id: str = Field(default="", max_length=48)
 
     @model_validator(mode="after")
     def _joining_sockets_have_an_opening(self):
@@ -280,6 +336,8 @@ class ContentEntry(Strict):
 
     sockets: tuple[Socket, ...] = ()
     volumes: tuple[Volume, ...] = ()
+    #: P1: where the floor is. See `Surface`.
+    surfaces: tuple[Surface, ...] = Field(default=(), max_length=32)
 
     #: Art-lane review state. `pending` means someone is still deciding
     #: whether this asset is right, and shipping it would decide for
@@ -334,6 +392,57 @@ class ContentEntry(Strict):
             raise ValueError(
                 f"'{self.id}' is an affordance_visual and names no "
                 f"affordance_tag; it renders nothing in particular")
+        return self
+
+    @model_validator(mode="after")
+    def _an_authored_room_says_where_its_floor_is(self):
+        """P1: parity is not optional for the producer that needs it.
+
+        A procedural builder cannot omit this -- it lays the floor, so it
+        knows. An authored shell can, and one that does hands the
+        composer a room with nowhere to stand, which is how activity
+        elements ended up over a kill pit in five `platform_path` rooms.
+
+        Only real authored ROOM SHELLS are held to it. A
+        `procedural_fallback` entry describes code that already answers
+        the question, and a prop is not a room.
+        """
+        if self.category != "room_shell" or self.procedural_fallback:
+            return self
+        if not self.surfaces:
+            raise ValueError(
+                f"'{self.id}' is an authored room shell and declares no "
+                f"surfaces; nothing downstream would know where its "
+                f"floor is, and a composer would place against its "
+                f"bounding box")
+        return self
+
+    @model_validator(mode="after")
+    def _a_socket_stands_on_a_surface_that_exists(self):
+        """A named surface that is not there is a claim about nothing.
+
+        The audit measures whether the socket really landed on it. This
+        only refuses the typo, which is cheaper to catch here.
+        """
+        known = {surface.name for surface in self.surfaces}
+        for socket in self.sockets:
+            if socket.surface_id and socket.surface_id not in known:
+                raise ValueError(
+                    f"socket '{socket.name}' of '{self.id}' stands on "
+                    f"surface '{socket.surface_id}', which this entry "
+                    f"does not declare")
+        return self
+
+    @model_validator(mode="after")
+    def _surface_names_are_unique(self):
+        seen: set[str] = set()
+        for surface in self.surfaces:
+            if surface.name in seen:
+                raise ValueError(
+                    f"'{self.id}' declares two surfaces named "
+                    f"'{surface.name}'; a socket naming one could mean "
+                    f"either")
+            seen.add(surface.name)
         return self
 
     @model_validator(mode="after")

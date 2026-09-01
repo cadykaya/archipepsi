@@ -572,6 +572,58 @@ of them in a `platform_path` room and none in an arena.
 a room can hold is a fact about its built geometry, and Python pricing it
 would be the same builder-knows-what-the-composer-does-not failure.
 
+## P1 — ROOM CONTRACT PARITY + THE GEOMETRIC AUDIT — landed 2026-09-01
+
+The first slice of the adopted ROOM_ARCHITECTURE_STUDY hybrid (PR #7,
+`a63220f`). SMALL/MEDIUM/LARGE is the active size vocabulary;
+MICRO/MASSIVE are deferred, not retired; F3 is NOT integrated. **P2 and
+P3 are not started and need their own approval.**
+
+The asymmetry it closes: `ChamberBuilders` and `_from_authored_scene`
+both answer "build me this chamber", and the authored one answered with
+**no `sockets` key at all** — no cover, no barrels, no reserved regions,
+nowhere to stand — so `Activities` flat-solved against its bounding box.
+That is the defect `552469d` closed for `platform_path`, waiting in the
+one path no Zone takes yet.
+
+Three pieces:
+
+* **`room_contract.gd`** — the room OUTPUT written down. Required keys,
+  a CLOSED socket vocabulary (`stand`, `reserved`, `cover`, `reactive`,
+  `enemy_high`, `access`), each tied to a consumer that runs today, plus
+  optional `traversal` in `TraversalSegment`'s own shape. Structure only.
+* **`room_audit.gd`** — the same claims measured with rays, boxes and
+  the player's own capsule. **Author-declared metadata is a claim;
+  Godot measurement is authority.** It refuses to report a clean sheet
+  for a room outside the scene tree, because a probe with nothing to hit
+  comes back clean.
+* **`make godot-room-contract`** — ONE suite over both producers, in CI.
+  Per-producer suites inherit the blind spot of the fix they protect;
+  this project has watched that happen three times.
+
+Schema (mirrored into `content_registry.gd` the same commit): a
+`Surface` model and `ContentEntry.surfaces`; `Socket.kind` gains the
+three runtime kinds `cover`/`reactive`/`enemy_high`; `Socket.surface_id`.
+An authored room shell that declares no surfaces is refused; a
+`procedural_fallback` entry is exempt, and the procedural route stays
+permanently legal.
+
+`ShellValidator` now keeps a promise `content.py` has always made in
+prose and nothing kept: measured mesh AABBs against the declared `size`
+envelope.
+
+**Zero player-facing change, verified**: `zone_digest 6e8d83d0f3ec088b`
+and the real-Zone audit are unchanged (0 failures, 0 notes), and no
+committed registry entry, fixture or baseline moved.
+
+One defect the audit FOUND and P1 does not fix: an arena scatters three
+cover boxes at random through the middle half of the room and
+`reward_position` is a fixed point on the centre line, so a Check
+pedestal can stand inside a crate (2 of 4 arenas in the suite).
+`zone_controller.gd:150` places it with no clearance test. Reported,
+pinned so it cannot grow, not fixed — moving either would be a
+player-facing change.
+
 **Playtest-hygiene follow-up, same contract, one kind wider.** The
 `platform_path` defect from `docs/ZONE_ACTIVITY_AUDIT.md` §4 is closed.
 The row solver reads a room's width and depth, and a `platform_path` has

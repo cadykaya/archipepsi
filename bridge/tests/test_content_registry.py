@@ -39,6 +39,13 @@ def _manifests() -> list[ContentManifest]:
             for p in sorted(REGISTRY_DIR.glob("*.json"))]
 
 
+#: P1: an authored room shell must say where its floor is. Tests about
+#: OTHER rules carry one, so they reach the rule they are about instead
+#: of tripping this one on the way.
+FLOOR = [{"name": "floor", "center": [0.0, 0.0, 4.0],
+          "extent": [4.0, 8.0]}]
+
+
 def _entry(**over) -> dict:
     base = {
         "id": "shell_test", "level": 3, "category": "room_shell",
@@ -107,7 +114,7 @@ def test_a_doorway_with_no_opening_is_refused():
 def test_an_entry_describing_nothing_is_refused():
     with pytest.raises(ValidationError, match="names no scene"):
         ContentEntry.model_validate(
-            _entry(procedural_fallback=False, scene=""))
+            _entry(procedural_fallback=False, scene="", surfaces=FLOOR))
 
 
 def test_a_scene_path_outside_the_content_root_is_refused():
@@ -159,7 +166,8 @@ def test_a_variant_of_a_different_category_is_refused():
 def test_resolution_prefers_authored_and_falls_back_when_it_cannot():
     manifest = ContentManifest.model_validate({"pack": "test", "entries": [
         _entry(id="shell_authored", procedural_fallback=False,
-               scene="res://content/shells/x.tscn", fallback="shell_proc"),
+               scene="res://content/shells/x.tscn", fallback="shell_proc",
+               surfaces=FLOOR),
         _entry(id="shell_proc"),
     ]})
     registry = build_registry([manifest])
@@ -638,3 +646,80 @@ def test_every_awaiting_driver_test_is_awaited_by_its_caller():
     assert not offenders, (
         "these driver tests return before asserting anything:\n  "
         + "\n  ".join(offenders))
+
+
+# --- P1: the room contract, on both sides of the language line ------------
+
+def test_an_authored_room_shell_must_say_where_its_floor_is():
+    """P1's whole point, stated as a refusal.
+
+    Before this, an authored shell came out of `_from_authored_scene`
+    with no `sockets` key at all -- no cover, no barrels, no reserved
+    regions, nowhere to stand -- and `Activities` flat-solved against its
+    bounding box. That is the defect `552469d` closed for
+    `platform_path`, waiting in the one path no Zone takes yet. A shell
+    that cannot say where its floor is cannot be held to the contract.
+    """
+    with pytest.raises(ValidationError, match="declares no surfaces"):
+        ContentEntry.model_validate(_entry(
+            procedural_fallback=False, scene="res://content/x.tscn"))
+
+
+def test_a_procedural_placeholder_needs_no_surfaces():
+    """The other half, or the rule would delete the fallback route. A
+    `procedural_fallback` entry describes code that already knows where
+    it laid the floor, and the fallback is permanently legal."""
+    entry = ContentEntry.model_validate(_entry())
+    assert entry.surfaces == ()
+
+
+def test_a_socket_may_not_stand_on_a_surface_that_is_not_there():
+    with pytest.raises(ValidationError, match="does not declare"):
+        ContentEntry.model_validate(_entry(
+            procedural_fallback=False, scene="res://content/x.tscn",
+            surfaces=[{"name": "floor", "center": [0, 0, 4],
+                       "extent": [8.0, 8.0]}],
+            sockets=[
+                {"name": "entry", "kind": "doorway",
+                 "position": [0.0, 0.0, 0.0], "width": 2.4, "height": 3.2},
+                {"name": "crate", "kind": "cover",
+                 "position": [1.0, 0.0, 2.0], "surface_id": "balcony"}]))
+
+
+def test_a_surface_smaller_than_the_player_is_refused():
+    """Declaring a ledge nobody fits on invites a composer to put a Check
+    on it. The bound is the player's own capsule, so it cannot drift
+    from the thing it protects."""
+    with pytest.raises(ValidationError, match="capsule"):
+        ContentEntry.model_validate(_entry(
+            procedural_fallback=False, scene="res://content/x.tscn",
+            surfaces=[{"name": "ledge", "center": [0, 0, 4],
+                       "extent": [8.0, 0.3]}]))
+
+
+def test_the_two_validators_agree_that_an_authored_shell_needs_a_floor():
+    """Dual-language law. Verifying one side of a two-sided contract is
+    verifying nothing: Python refuses the manifest the art lane exports
+    and the GDScript refuses the same manifest as the game loads it."""
+    text = GDSCRIPT.read_text()
+    assert "_surface_problem" in text, (
+        "content_registry.gd does not mirror the surfaces rule; a rule "
+        "in one language is a rule the other will disagree with")
+    assert "declares no surfaces" in text
+    assert "does not declare" in text
+
+
+def test_the_runtime_socket_kinds_exist_in_the_schema():
+    """`room_contract.gd` names the kinds every consumer reads. A kind
+    the runtime emits and the schema cannot spell is a kind an authored
+    shell can never offer, which is the asymmetry P1 closes."""
+    contract = (ROOT / "godot" / "scripts" / "content"
+                / "room_contract.gd").read_text()
+    block = re.search(r'const POINT_KINDS := \[(.*?)\]', contract, re.S)
+    assert block, "POINT_KINDS not found in room_contract.gd"
+    kinds = set(re.findall(r'"([a-z_]+)"', block.group(1)))
+    schema = set(ContentEntry.model_fields["sockets"].annotation
+                 .__args__[0].model_fields["kind"].annotation.__args__)
+    assert kinds <= schema, (
+        f"the runtime emits {sorted(kinds - schema)}, which no manifest "
+        f"can declare")

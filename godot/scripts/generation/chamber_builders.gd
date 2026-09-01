@@ -1104,6 +1104,7 @@ static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 	# vocabulary exists to end: the builder knows which square metres
 	# hold weight, so the builder is what says so.
 	var stands: Array = []
+	var stands_traversal: Array = []
 	var ledge_span := width - WALL_THICKNESS * 2.0
 	# Start ledge.
 	_box(root, Vector3(width, 0.5, ledge),
@@ -1135,6 +1136,27 @@ static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 	stands.append({"kind": "stand",
 			"position": Vector3(0, rise, total - ledge / 2.0),
 			"extent": Vector3(ledge_span, 0.0, ledge)})
+	# AND THE JUMPS, in the contract's own words.
+	#
+	# This room has always had mandatory jumps and has never said so out
+	# loud: `gap_size` is bounded by `max_safe_gap(vertical_step)` in the
+	# schema, and nothing downstream could see that a jump existed. An
+	# authored shell declares its traversal, so the procedural producer
+	# that actually HAS traversal should declare it too -- otherwise the
+	# audit measures the movement law on one producer and takes the
+	# other's word for it, which is the asymmetry the contract exists to
+	# end. Endpoints are the real edges, so the span the audit measures
+	# is the gap itself and not the gap plus an inset.
+	for i in segments + 1:
+		var from_z := ledge + (gap + platform) * float(i)
+		stands_traversal.append({
+			"name": "hop_%d" % i,
+			"kind": "gap",
+			"mandatory": true,
+			"start": Vector3(0, step * float(i), from_z),
+			"end": Vector3(0, step * float(mini(i + 1, segments)),
+					from_z + gap),
+		})
 	# The pit: deep enough that a fall passes FALL_KILL_Y.
 	_box(root, Vector3(width, 0.5, total),
 			Vector3(0, Constants.FALL_KILL_Y - 6.0, total / 2.0),
@@ -1187,6 +1209,7 @@ static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 					Vector3(width, wall_height + 41.0, total)),
 			"enemy_spawns": spawns,
 			"sockets": stands,
+			"traversal": stands_traversal,
 			"room_height": wall_height,
 			"reward_position": Vector3(0, rise, total - ledge / 2.0),
 			"goal_area_position": Vector3(0, rise + 1.0, total - ledge)}

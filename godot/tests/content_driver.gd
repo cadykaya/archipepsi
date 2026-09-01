@@ -109,6 +109,14 @@ func _entry(over: Dictionary = {}) -> Dictionary:
 		"id": "shell_test", "level": 3, "category": "room_shell",
 		"display_name": "Test", "procedural_fallback": true,
 		"sockets": [_socket()],
+		# Carried even by the procedural default, which does not need it:
+		# these entries get flipped to `procedural_fallback: false` by
+		# tests about OTHER rules, and a fixture that trips the surfaces
+		# rule on the way to the rule under test proves neither.
+		"surfaces": [
+			{"name": "floor", "center": [0.0, 0.0, 4.0],
+			 "extent": [4.0, 8.0]},
+		],
 	}
 	base.merge(over, true)
 	return base
@@ -293,6 +301,13 @@ func _authored_entry(over: Dictionary = {}) -> Dictionary:
 			_socket("entry"),
 			{"name": "exit", "kind": "doorway",
 			 "position": [0.0, 0.0, 9.0], "width": 2.4, "height": 3.2},
+		],
+		# P1: an authored room shell says where its floor is. A room that
+		# cannot answer that hands the composer its bounding box, which
+		# is how activity elements ended up over a kill pit.
+		"surfaces": [
+			{"name": "floor", "center": [0.0, 0.0, 5.0],
+			 "extent": [5.6, 9.6]},
 		],
 	}
 	base.merge(over, true)

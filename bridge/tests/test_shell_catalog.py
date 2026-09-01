@@ -36,6 +36,11 @@ def _entry(**over) -> ContentEntry:
                          {"name": "exit", "kind": "doorway",
                           "position": [0.0, 0.0, 16.0], "yaw": 0.0,
                           "width": 2.4, "height": 3.2}],
+                # P1: an authored room shell says where its floor is.
+                # These tests are about the OFFER, not about surfaces --
+                # carrying one keeps them reaching the rule they are for.
+                surfaces=[{"name": "floor", "center": [0.0, 0.0, 8.0],
+                           "extent": [17.2, 15.2]}],
                 size=[18.0, 6.0, 16.0])
     base.update(over)
     return ContentEntry.model_validate(base)
@@ -64,7 +69,12 @@ class TestOnlyShippableAuthoredShellsAreOffered:
                                     "position": [0.0, 0.0, 16.0],
                                     "yaw": 0.0, "width": 2.4,
                                     "height": 3.2}],
-                          size=[18.0, 6.0, 16.0])
+                          # P1: an authored room shell says where its floor is.
+                # These tests are about the OFFER, not about surfaces --
+                # carrying one keeps them reaching the rule they are for.
+                surfaces=[{"name": "floor", "center": [0.0, 0.0, 8.0],
+                           "extent": [17.2, 15.2]}],
+                size=[18.0, 6.0, 16.0])
         assert not shells.is_offerable(
             ContentEntry.model_validate(procedural))
 

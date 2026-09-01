@@ -49,6 +49,7 @@ static func refusals(entry: Dictionary, instance: Node3D) -> Array[String]:
 		out.append_array(_check_segment(id, segment, instance))
 
 	out.append_array(_check_sockets(id, entry, instance))
+	out.append_array(_check_envelope(id, entry, instance))
 	return out
 
 static func _check_segment(id: String, segment: Dictionary,
@@ -106,6 +107,66 @@ static func _check_segment(id: String, segment: Dictionary,
 				% [id, name, span, rise]
 				+ "rise as built; the base kit's safe reach there is "
 				+ "%.2f m" % allowed)
+	return out
+
+## Does the shell fit in the box it claims? (P1)
+##
+## `content.py` has always documented `size` as "Godot re-derives this
+## from the real scene and refuses a manifest that lies about it", and
+## nothing kept that promise. Rooms are chained by butting their declared
+## envelopes together, so a shell whose geometry reaches past its own
+## `size` reaches into the next room -- and the overlap guard that would
+## have caught it is fed the DECLARED bounds, which is exactly the number
+## being lied about.
+##
+## Measured from mesh AABBs, unfiltered: `solid_boxes` skips room-scale
+## geometry because a floor slab overlaps everything a composer might
+## place, and here the floor slab is the point.
+static func _check_envelope(id: String, entry: Dictionary,
+		instance: Node3D) -> Array[String]:
+	var out: Array[String] = []
+	var raw: Variant = entry.get("size", [])
+	if typeof(raw) != TYPE_ARRAY or (raw as Array).size() < 3:
+		return out
+	var size := _vector(raw)
+	if size.x <= 0.0 or size.y <= 0.0 or size.z <= 0.0:
+		return out
+	var envelope := AABB(
+			Vector3(-size.x / 2.0, -ContentInstantiator.FLOOR_ALLOWANCE,
+					0.0),
+			Vector3(size.x, size.y + ContentInstantiator.FLOOR_ALLOWANCE,
+					size.z)).grow(POSITION_TOLERANCE)
+	var worst := 0.0
+	var count := 0
+	for box in _mesh_boxes(instance, Transform3D.IDENTITY):
+		if envelope.encloses(box):
+			continue
+		count += 1
+		for axis in 3:
+			worst = maxf(worst, maxf(
+					envelope.position[axis] - box.position[axis],
+					box.end[axis] - envelope.end[axis]))
+	if count > 0:
+		out.append("%s: %d mesh(es) reach up to %.2f m outside the "
+				% [id, count, worst] + "%.1f x %.1f x %.1f m envelope "
+				% [size.x, size.y, size.z] + "the manifest declares")
+	return out
+
+## Every mesh AABB under `node`, in the shell's own space.
+##
+## The transform is accumulated BY HAND. `global_transform` does not
+## accumulate for a node outside the scene tree, and a shell is measured
+## before it is added to one -- the mistake that once made every prop in
+## a chamber come back stacked near the origin.
+static func _mesh_boxes(node: Node, xform: Transform3D) -> Array[AABB]:
+	var out: Array[AABB] = []
+	var here := xform
+	if node is Node3D:
+		here = xform * (node as Node3D).transform
+	if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
+		out.append(here * (node as MeshInstance3D).get_aabb())
+	for child in node.get_children():
+		out.append_array(_mesh_boxes(child, here))
 	return out
 
 ## Sockets are the other half of the claim: a doorway the manifest says
