@@ -141,55 +141,91 @@ stone's centre sits 0.2 m inside the shadow of the stone above it. An
 enemy placed there stands in rock. Deriving the socket from the stone's
 *clear* area rather than its centre fixes it.
 
-## C. CONTRACT SEMANTIC MISMATCH — 20 findings, and an OWNER DECISION
+## C. CONTRACT SEMANTIC MISMATCH — RESOLVED: the owner chose C(ii)
 
-The remaining 20 findings are one shape, on five shells: **a `stand`
-Surface whose declared rect is the mesh's true top face, part of which
-is under other geometry.** A ground floor under its own staircase
-(collapsed 1, gantry 2, spiral 1). A rubble stone under the next stone
-(collapsed 6, spiral 5). A treasure floor under its dais (3).
-Measured usable area: 90/225 to 188/225. None is zero; none is full.
+The remaining 20 findings were one shape, on five shells: **a `stand`
+Surface whose declared rect is the mesh's true top face, part of which is
+under other geometry.** A ground floor under its own staircase (collapsed
+1, gantry 2, spiral 1). A rubble stone under the next stone (collapsed 6,
+spiral 5). A treasure floor under its dais (3). Measured usable area:
+90/225 to 188/225. None zero; none full.
 
 **The tower stones are legitimate general-purpose stand surfaces, not
 traversal-only footholds.** That was the specific question, and the
-measurement answers it: they are 2.6 m x 2.6 m to 3.0 m x 2.6 m
-platforms with 40–100 % of their player-inset area clear. Removing their
-`Surface` declarations would throw away real, usable, fightable space and
-would tell the composer a tower has nowhere to put anything. So the
-answer is *not* "demote them to TraversalSegments plus collision".
+measurement answers it: 2.6 m x 2.6 m to 3.0 m x 2.6 m platforms with
+40-100 % of their player-inset area clear. Removing their `Surface`
+declarations would throw away real, fightable space.
 
-What the contract cannot currently say is which PART of a face is clear.
-`RoomAudit._surfaces_hold_weight` samples nine points across the rect and
-reports any that fails, which reads `stand` as **"every point of this
-rect is standable"**. Under that reading no room whose floor passes under
-a staircase may declare that floor at all. The procedural producer never
-had to answer this — nothing it builds overhangs a `stand` socket — which
-is the same "the contract was written for one producer" shape as the
-envelope defect, and this time **measurement does not settle it**,
-because the consumer decides:
+### The ruling
 
-`Activities._best_surface` / `_spot_on_surface` pick a POINT on a stand
-surface and put an element there. So one of these must be true:
+> A `stand` Surface does NOT mean every point of its rectangular extent
+> is guaranteed clear. It means: this bounded region is OFFERED to a
+> placement consumer, and Production can find a physically valid
+> placement somewhere within it.
 
-* **(i) A `stand` rect is wholly usable.** Art declares only the clear
-  part. An annulus or an L then needs more than one rect per face, or a
-  new "clear region" notion in the manifest. The audit and the composer
-  are unchanged, and the strictness that caught the pit is preserved
-  exactly.
-* **(ii) A `stand` rect is where standing is OFFERED.** The audit
-  measures usable area instead of every point, and `Activities` gains a
-  clearance check at the point it picks — without that, a Check console
-  can be placed under a staircase, which is the same class of defect as
-  laying activities against a nominal floor over a kill pit.
+Deliberately the same shape as **a socket is an offer, not an order**.
+The room contract is an API for usable space, not a decomposition of
+every mesh top face into maximally clear rectangles.
 
-(i) moves the work to Art and keeps the audit strict. (ii) keeps Art's
-derivation and moves the work to the engine and the composer. Both are
-defensible. The choice defines what `Surface` means for every shell after
-these eight, so it is the owner's, and **it is not implemented here.**
+A Surface with **zero** valid placements is invalid, and stays invalid.
 
-Whichever way it goes, one rule survives unchanged and is what catches
-every defect in sections A and B: **a `stand` surface with zero usable
-area is refused.**
+### What it does NOT promise
+
+Not that every point is clear. Not that the centre is clear. Not that
+every player-sized point is clear. Not that the producer tessellated
+around the stairs, pillars and daises standing on it.
+
+### Validity is geometric, not a percentage
+
+The 15 x 15 usable-area sweep is evidence and reporting. **No
+percentage is encoded anywhere as a threshold.** The rule is: there
+exists a footprint that fits. That is what separates a 40 %-usable
+rubble stone from a 0 %-usable one, and it would still separate them if
+every good room in the project measured 5 %.
+
+### One solver, two consumers
+
+`godot/scripts/content/placement.gd` owns the candidate set, the order it
+is walked, the footprint rule and the verdict.
+
+* `RoomAudit._surfaces_hold_weight` asks **can this Surface keep its
+  promise?** with a standing player's footprint.
+* `Activities._best_surface` / `_spot_on_surface` ask **where is the
+  valid point?** with the element's own footprint.
+
+Both call `Placement.find` over the same candidates in the same order.
+The EVIDENCE differs and cannot not differ: the audit runs on a room in
+the tree and measures with rays and shape queries; `Activities` runs
+inside `build_chamber` on a root that is still detached and must use the
+box derivation. So each passes a `clear` Callable, and the suite pins
+their verdicts against each other on every producer -- the composer may
+be stricter (a convex hull's AABB is bigger than the hull) but may never
+be looser.
+
+For the composer to see an authored room at all,
+`ChamberBuilders.all_solid_boxes` now reads **collision shapes** as well
+as meshes: an authored shell is one merged `MeshInstance3D`, so mesh
+AABBs describe nothing inside it, and without its hulls the composer was
+placing against a room it could not see.
+
+### Findings after the ruling
+
+| shell | before | after | what survives |
+|---|---:|---:|---|
+| `shell_corner_left` | 0 | **0** | — |
+| `shell_corner_right` | 0 | **0** | — |
+| `shell_tower_collapsed` | 28 | **3** | `rubble_1_0`, `rubble_1_1` (A); socket `high_3` (B) |
+| `shell_tower_gantry` | 2 | **0** | — |
+| `shell_tower_spiral` | 15 | **1** | `platform_6` (A) |
+| `shell_treasure_cache` | 10 | **1** | `step_low` (B) |
+| `shell_treasure_coffer` | 10 | **1** | `step_low` (B) |
+| `shell_treasure_vault` | 10 | **1** | `step_low` (B) |
+| **total** | **75** | **7** | 27 A + 28 B collapse into 3 A + 4 B surfaces |
+
+**All 20 C findings disappeared and no A or B finding did.** The count
+also changes shape: a finding is now one broken promise per surface
+rather than one per failing sample point, so the 18 collapsed-rubble
+findings became two, and the 27 `step_low` findings became three.
 
 ## FIXED: a measurement is not a declaration
 

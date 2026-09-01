@@ -115,20 +115,38 @@ static func findings(result: Variant, space: PhysicsDirectSpaceState3D,
 
 # --- 1. a declared walkable surface holds weight ---------------------------
 
-## Support at the declared height, and clear air above it.
+## CAN THIS SURFACE KEEP ITS PROMISE? (owner ruling C(ii))
 ##
-## THE SEALED PIT IS THE HEADROOM CHECK. The first draft of this had a
-## separate "is it reachable from above" probe, on the reasoning that the
-## pit lesson was about lids. It is not: the pit's deck sat 1.66 m under
-## an intact floor slab, and what makes that unwalkable is that a 1.8 m
-## player does not fit in 1.66 m. A ray fired down from the ceiling adds
-## nothing the headroom ray does not already say, and it refuses a
-## perfectly good mezzanine -- so it was dropped rather than kept as a
-## second opinion that disagrees.
+## A `stand` Surface offers a bounded region and promises that a valid
+## placement can be FOUND somewhere in it -- not that every point of it
+## is clear. So this asks `Placement.find` for one, with the footprint of
+## the consumer a `stand` surface exists for: a player, standing.
 ##
-## HEADROOM is the number `ElevationBand` already validates at parse, so
-## the schema and the probe cannot hold different views of what standing
-## up requires.
+## WHAT CHANGED, AND WHAT DID NOT. The previous version sampled nine
+## points and reported every one that failed, which reads `stand` as
+## "every point is standable". Measured against the eight authored
+## shells, that refused a ground floor for passing under its own
+## staircase and a rubble stone for being overhung by the next stone --
+## real architecture, 40 to 100 per cent usable. It ALSO refused three
+## surfaces with nothing usable anywhere, and those must keep failing.
+## Asking for ONE placement instead of demanding all of them separates
+## exactly those two, and does it geometrically: there is a footprint
+## that fits, or there is not. No percentage is a law here.
+##
+## THE SEALED PIT IS STILL THE HEADROOM CHECK. The pit's deck sat 1.66 m
+## under an intact floor slab, and what makes that unwalkable is that a
+## 1.8 m player does not fit in 1.66 m. Under the new reading the pit
+## fails for the same reason it always did: there is nowhere in it a
+## player fits. HEADROOM is the number `ElevationBand` validates at
+## parse, so the schema and the probe cannot hold different views of what
+## standing up requires.
+##
+## ONE SEARCH, TWO CONSUMERS. `Activities` calls the same
+## `Placement.find` over the same candidates in the same order, with its
+## own element footprint and its own evidence. If these two ever answer
+## differently about the same region the contract is broken, and
+## `_test_the_audit_and_the_composer_agree_about_a_surface` is what says
+## so out loud.
 static func _surfaces_hold_weight(surfaces: Array,
 		to_world: Transform3D, space: PhysicsDirectSpaceState3D,
 		who: String) -> Array[String]:
@@ -137,35 +155,84 @@ static func _surfaces_hold_weight(surfaces: Array,
 		var patch: Dictionary = socket
 		var at: Vector3 = patch["position"]
 		var extent: Vector3 = patch.get("extent", Vector3.ONE)
-		# Sampled across the rect rather than at its centre. A surface is
-		# a claim about an AREA, and the centre-only probe is how a wall
-		# check once passed a room with a hole in the corner.
-		for u: float in [0.2, 0.5, 0.8]:
-			for v: float in [0.2, 0.5, 0.8]:
-				var local := at + Vector3(
-						(u - 0.5) * extent.x, 0.0, (v - 0.5) * extent.z)
-				var world := to_world * local
-				var down := _ray(space, world + Vector3.UP * 0.4,
-						world + Vector3.DOWN * GROUND_REACH)
-				if down.is_empty():
-					out.append("%s: a declared walkable surface at %v "
-							% [who, local] + "has no geometry under it")
-					continue
-				var drop: float = world.y - (down["position"] as Vector3).y
-				if absf(drop) > HEIGHT_TOLERANCE:
-					out.append("%s: a walkable surface declared at "
-							% who + "y=%.2f measures %.2f"
-							% [local.y, local.y - drop])
-					continue
-				var up := _ray(space, world + Vector3.UP * 0.1,
-						world + Vector3.UP * HEADROOM)
-				if not up.is_empty():
-					out.append("%s: a walkable surface at %v has %.2f m "
-							% [who, local,
-								(up["position"] as Vector3).y - world.y]
-							+ "of headroom; a player needs %.2f"
-							% HEADROOM)
+		var named := str(patch.get("name", "?"))
+		var stands := func(spot: Vector3) -> bool:
+			return player_stands_here(spot, to_world, space)
+		var verdict := Placement.find(at, extent, STANCE, 0.0, stands, true)
+		if bool(verdict.get("fits", false)):
+			continue
+		if str(verdict.get("reason", "")) == "too_small":
+			out.append("%s: walkable surface '%s' is %.2f x %.2f, and a "
+					% [who, named, extent.x, extent.z]
+					+ "player is %.2f across" % STANCE.x)
+			continue
+		out.append("%s: walkable surface '%s' at %v offers nowhere a "
+				% [who, named, at] + "player can stand: %s"
+				% _why_not(at, extent, to_world, space))
 	return out
+
+## The box a standing player claims: their own capsule, squared off.
+const STANCE := Vector3(Constants.PLAYER_RADIUS * 2.0,
+		Constants.PLAYER_HEIGHT, Constants.PLAYER_RADIUS * 2.0)
+
+## Support at the declared height, and room to stand up on it.
+##
+## PUBLIC because `Activities.can_place` is its opposite number and the
+## suite has to be able to ask them both the same question about the same
+## spot. The two see differently -- rays here, boxes there -- and that is
+## survivable; answering differently is not.
+static func player_stands_here(spot: Vector3, to_world: Transform3D,
+		space: PhysicsDirectSpaceState3D) -> bool:
+	var world := to_world * spot
+	var down := _ray(space, world + Vector3.UP * 0.4,
+			world + Vector3.DOWN * GROUND_REACH)
+	if down.is_empty():
+		return false
+	if absf(world.y - (down["position"] as Vector3).y) > HEIGHT_TOLERANCE:
+		return false
+	var query := PhysicsShapeQueryParameters3D.new()
+	var shape := BoxShape3D.new()
+	var box := Placement.clearance(spot, STANCE, HEADROOM)
+	shape.size = box.size
+	query.shape = shape
+	query.transform = Transform3D(to_world.basis,
+			to_world * (box.position + box.size * 0.5))
+	query.collide_with_areas = false
+	return space.intersect_shape(query, 1).is_empty()
+
+## WHY a surface offered nothing, for the person who has to fix it.
+##
+## Diagnostic only -- it changes no verdict. The finding above is already
+## decided; this says whether the region was empty air, at the wrong
+## height, or roofed, because "offers nowhere to stand" sends an artist
+## looking at three different things.
+static func _why_not(at: Vector3, extent: Vector3, to_world: Transform3D,
+		space: PhysicsDirectSpaceState3D) -> String:
+	var missing := 0
+	var wrong := 0.0
+	var wrong_n := 0
+	var roofed := 0
+	var spots := Placement.candidates(at, extent, STANCE)
+	for spot: Vector3 in spots:
+		var world := to_world * spot
+		var down := _ray(space, world + Vector3.UP * 0.4,
+				world + Vector3.DOWN * GROUND_REACH)
+		if down.is_empty():
+			missing += 1
+			continue
+		var measured: float = (down["position"] as Vector3).y
+		if absf(world.y - measured) > HEIGHT_TOLERANCE:
+			wrong += measured
+			wrong_n += 1
+			continue
+		roofed += 1
+	if missing == spots.size():
+		return "there is nothing under it"
+	if wrong_n == spots.size():
+		return "it measures y=%.2f, not the y=%.2f it declares" \
+				% [wrong / float(wrong_n), at.y]
+	return "%d of %d spots sit at the right height and none has %.2f m " \
+			% [roofed, spots.size(), HEADROOM] + "of headroom"
 
 # --- 2. a placement point has something to place onto ----------------------
 

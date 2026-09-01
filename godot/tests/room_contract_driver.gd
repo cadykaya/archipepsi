@@ -70,6 +70,10 @@ func _run() -> void:
 	await _test_the_contract_refuses_a_malformed_room()
 	await _test_a_jump_is_measured_the_same_for_both_producers()
 	await _test_a_measurement_at_the_limit_is_still_the_legal_move()
+	await _test_the_audit_and_the_composer_agree_about_a_surface()
+	await _test_a_partly_roofed_surface_is_still_a_valid_offer()
+	await _test_a_surface_with_nowhere_to_stand_is_still_refused()
+	await _test_one_room_composes_the_same_way_twice()
 	await _test_a_declared_turn_steers_the_chain()
 	await _test_a_tower_shell_built_for_other_floor_counts_is_not_used()
 	await _test_a_check_never_stands_inside_the_room()
@@ -681,23 +685,13 @@ func _test_every_authored_shell_in_the_registry_is_measured() -> void:
 					(result.get("sockets", []) as Array).size()]
 				+ "structural=%d measured=%d"
 				% [structural.size(), measured.size()])
-		# Grouped by KIND rather than listed. Eight shells sharing one
-		# root cause produce six hundred sentences saying it, and the
-		# thing a reviewer needs is which CLASSES of claim failed.
-		var classes := {}
+		# LISTED, not grouped. Under the old "every point must be clear"
+		# reading one root cause produced twenty-seven sentences saying
+		# it and only the CLASSES were worth printing; a finding is now
+		# one broken promise per surface, so the list is the evidence a
+		# reviewer actually needs.
 		for finding: String in structural + measured:
-			var label := "other"
-			for probe: String in ["has no geometry under it",
-					"of headroom", "has nothing under it",
-					"is sealed", "no floor beneath it",
-					"inside solid geometry", "as built",
-					"nothing to stand on", "outside the room's own bounds",
-					"declared a gap"]:
-				if finding.contains(probe):
-					label = probe
-			classes[label] = int(classes.get(label, 0)) + 1
-		for label: String in classes:
-			print("      %-32s x%d" % [label, classes[label]])
+			print("      %s" % finding)
 		# THE REVIEW GATE IS THE AUDIT GATE. A `pending` shell is content
 		# nobody has approved and nothing can select, so its findings are
 		# EVIDENCE FOR THAT REVIEW rather than a broken build. The moment
@@ -1056,6 +1050,315 @@ func _rung(root: Node3D, top: Vector3) -> StaticBody3D:
 	body.position = top - Vector3(0.0, 0.2, 0.0)
 	root.add_child(body)
 	return body
+
+
+## --- a Surface is an offer, and one search answers for it (P2, C(ii)) -----
+
+## The height a roof is put at to take a surface away: under HEADROOM, so
+## a player does not fit, and over a step so nothing else refuses it
+## first.
+const ROOF_AT := 1.4
+
+func _test_the_audit_and_the_composer_agree_about_a_surface() -> void:
+	"""One search, two consumers, and they must not disagree.
+
+	`RoomAudit` measures with rays and shape queries, because it runs on
+	a room that is in the tree. `Activities` runs inside `build_chamber`
+	on a root that is still detached, so it has no physics space and
+	must use the box derivation. That split is real and cannot be
+	wished away -- what would be fatal is if it became a DISAGREEMENT:
+	the audit passing a surface and the composer putting a puzzle
+	element under the staircase on it.
+
+	So both are handed the same `Placement.find`, over the same
+	candidates in the same order, with the same footprint, and asked the
+	same question. The composer may be STRICTER -- a convex hull's AABB
+	is bigger than the hull -- and that is safe. It must never be
+	looser."""
+	var seen := 0
+	# ONE AT A TIME. Every chamber is built at the origin, so holding
+	# seven of them in the tree at once means measuring seven rooms
+	# stacked inside each other -- the borrowed-geometry trap this suite
+	# was bitten by once already, and it reads as a contract failure.
+	var built: Array = _procedural_chambers()
+	built.append(null)
+	for spec: Variant in built:
+		var room: Dictionary = _authored_room(AUTHORED_ROOM) \
+				if spec == null else _build(spec as Dictionary)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var root := room["root"] as Node3D
+		var solids := ChamberBuilders.all_solid_boxes(root)
+		for socket: Variant in RoomContract.sockets_of(room, "stand"):
+			var patch: Dictionary = socket
+			var at: Vector3 = patch["position"]
+			var extent: Vector3 = patch.get("extent", Vector3.ONE)
+			var to_world := root.global_transform
+			var space := _space()
+			var stands := func(spot: Vector3) -> bool:
+				return RoomAudit.player_stands_here(spot, to_world, space)
+			var fits := func(spot: Vector3) -> bool:
+				return Activities.can_place(spot, RoomAudit.STANCE, 0.0,
+						[], solids)
+			var measured := Placement.find(at, extent, RoomAudit.STANCE,
+					0.0, stands)
+			var composed := Placement.find(at, extent, RoomAudit.STANCE,
+					0.0, fits)
+			seen += 1
+			if bool(measured.get("fits", false)):
+				continue
+			_check(not bool(composed.get("fits", false)),
+					"the audit measured no stance anywhere on '%s' and "
+					% str(patch.get("name", "?"))
+					+ "the composer would have placed at %v anyway"
+					% composed.get("position", Vector3.ZERO))
+		rooms_checked += 1
+		root.queue_free()
+		await get_tree().process_frame
+	_check(seen >= 4,
+			"only %d surfaces were cross-examined; the two verdicts are "
+			% seen + "not actually being compared")
+	authored_checked += 1
+
+func _test_a_partly_roofed_surface_is_still_a_valid_offer() -> void:
+	"""PRODUCER INDEPENDENT, and proven on the producer that never had
+	the problem.
+
+	The eight authored shells are full of surfaces whose rect passes
+	under a stair or a dais, and no procedural builder makes one -- a
+	`platform_path` island has open sky over it -- which is exactly why
+	the contract had never been asked what a partly occluded region
+	means. A rule settled only where it was discovered is a rule for
+	that producer.
+
+	So the same occlusion is built over a REAL procedural island, in
+	three steps: none, part, all. The verdict has to follow the
+	geometry, not the producer."""
+	var result := _build(_procedural_chambers()[4])
+	await get_tree().physics_frame
+	var root := result["root"] as Node3D
+	var stands := RoomContract.sockets_of(result, "stand")
+	_check(stands.size() >= 1,
+			"a platform path declared no stand surfaces, so this test "
+			+ "has nothing to occlude")
+	var patch: Dictionary = stands[0]
+	var at: Vector3 = patch["position"]
+	var extent: Vector3 = patch.get("extent", Vector3.ONE)
+
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(_stance_exists(result, patch),
+			"an open island offers nowhere to stand before anything is "
+			+ "even built over it")
+
+	# HALF OF IT, on one side. A player can still stand on the other.
+	var half := _roof(root, Vector3(at.x - extent.x * 0.25,
+			at.y + ROOF_AT, at.z),
+			Vector3(extent.x * 0.5, 0.4, extent.z + 1.0))
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(_stance_exists(result, patch),
+			"half an island was roofed and the whole offer was refused; "
+			+ "a Surface is a region, not a guarantee about every point")
+	_check(_composer_agrees(result, patch),
+			"the composer would place where the audit says a player "
+			+ "cannot stand, on a half-roofed island")
+
+	# ALL of it. Now there is nowhere, and the offer is void.
+	var rest := _roof(root, Vector3(at.x + extent.x * 0.25,
+			at.y + ROOF_AT, at.z),
+			Vector3(extent.x * 0.5 + 1.0, 0.4, extent.z + 1.0))
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(not _stance_exists(result, patch),
+			"an island roofed end to end at %.2f m still measured as a "
+			% ROOF_AT + "place a %.2f m player can stand"
+			% Constants.PLAYER_HEIGHT)
+	_check(_composer_agrees(result, patch),
+			"the composer would place under a roof the audit refused")
+	rooms_checked += 1
+	probes_expected_to_fail += 1
+	half.queue_free()
+	rest.queue_free()
+	root.queue_free()
+	await get_tree().process_frame
+
+## How narrow a rim gets before nobody can use it: half the player's
+## width, which is the treasure dais's rim to the centimetre.
+const A_RIM_TOO_NARROW := Constants.PLAYER_RADIUS
+
+func _test_a_surface_with_nowhere_to_stand_is_still_refused() -> void:
+	"""THE SABOTAGE. C(ii) must not have made a zero-usable surface pass.
+
+	Two shapes, because the eight shells produced two. A region roofed
+	end to end -- the collapsed tower's rubble under its own deck. And a
+	region whose floor really is where it says, at the height it says,
+	with a rim around the thing standing on it too NARROW for anybody to
+	use -- the treasure dais, whose 0.40 m ring is exactly half a
+	player wide.
+
+	Built rather than named. Pinning `rubble_1_0` and `step_low` by name
+	would be a test that goes red the day Art fixes them, and these are
+	the geometric shapes, which outlive any particular shell."""
+	var result := _build(_procedural_chambers()[1] as Dictionary)
+	await get_tree().physics_frame
+	var root := result["root"] as Node3D
+
+	# A perfectly good floor, and a lid over all of it.
+	var deck := _roof(root, Vector3(-6.0, 0.4, 6.0), Vector3(4.0, 0.8, 4.0))
+	var lid := _roof(root, Vector3(-6.0, 0.8 + ROOF_AT, 6.0),
+			Vector3(5.0, 0.4, 5.0))
+	# A wider tier with a narrower one on it: real floor, right height,
+	# and a rim nobody fits on.
+	var wide := _roof(root, Vector3(6.0, 0.4, 6.0),
+			Vector3(3.0 + A_RIM_TOO_NARROW * 2.0, 0.8,
+				3.0 + A_RIM_TOO_NARROW * 2.0))
+	var narrow := _roof(root, Vector3(6.0, 1.2, 6.0),
+			Vector3(3.0, 0.8, 3.0))
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+
+	var roofed := {"kind": "stand", "name": "roofed",
+			"position": Vector3(-6.0, 0.8, 6.0),
+			"extent": Vector3(4.0, 0.0, 4.0)}
+	var rimmed := {"kind": "stand", "name": "rimmed",
+			"position": Vector3(6.0, 0.8, 6.0),
+			"extent": Vector3(3.0 + A_RIM_TOO_NARROW * 2.0, 0.0,
+				3.0 + A_RIM_TOO_NARROW * 2.0)}
+	# THROUGH THE REAL REPORTING PATH, not just the solver. A verdict
+	# nothing surfaces is a verdict nobody acts on, so the probes are
+	# hung on the room and `RoomAudit.findings` is asked -- the same call
+	# the shell suite and CI make.
+	var probed := result.duplicate()
+	var sockets: Array = (result.get("sockets", []) as Array).duplicate()
+	sockets.append(roofed)
+	sockets.append(rimmed)
+	probed["sockets"] = sockets
+	var said := "; ".join(RoomAudit.findings(probed, _space(), "sabotage"))
+	for probe: Dictionary in [roofed, rimmed]:
+		var named := str(probe["name"])
+		_check(said.contains("'%s'" % named),
+				"surface '%s' has nowhere a player fits and the audit "
+				% named + "did not report it: %s" % said)
+		_check(not _stance_exists(result, probe),
+				"surface '%s' has nowhere a player fits and the solver "
+				% named + "found one")
+		_check(_composer_agrees(result, probe),
+				"the composer would place on '%s', which the audit "
+				% named + "refused")
+
+	# AND THE CONTROL. Widen the rim to a full player and it is a
+	# surface again -- so what was measured is the geometry, not a
+	# percentage and not the mere presence of something on top.
+	narrow.queue_free()
+	await get_tree().process_frame
+	var slimmer := _roof(root, Vector3(6.0, 1.2, 6.0),
+			Vector3(3.0 - Constants.PLAYER_RADIUS * 4.0, 0.8,
+				3.0 - Constants.PLAYER_RADIUS * 4.0))
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var after := "; ".join(RoomAudit.findings(probed, _space(), "sabotage"))
+	_check(_stance_exists(result, rimmed),
+			"a rim two players wide is somewhere to stand, and was "
+			+ "refused")
+	_check(not after.contains("'rimmed'"),
+			"a rim two players wide is a valid offer and the audit still "
+			+ "refused it: %s" % after)
+	_check(after.contains("'roofed'"),
+			"widening one probe's rim must not have excused the other, "
+			+ "which is still roofed end to end: %s" % after)
+	rooms_checked += 1
+	probes_expected_to_fail += 2
+	deck.queue_free()
+	lid.queue_free()
+	wide.queue_free()
+	slimmer.queue_free()
+	root.queue_free()
+	await get_tree().process_frame
+
+func _test_one_room_composes_the_same_way_twice() -> void:
+	"""DETERMINISM. The solver sweeps; it never rolls.
+
+	A Zone is a digest, so a placement that varied between two builds of
+	the same chamber would make the campaign unreproducible -- and the
+	temptation when a search fails is always to retry it somewhere
+	random. There is no RNG in `Placement`: a fixed grid, walked row
+	major, first valid candidate wins."""
+	var chamber: Dictionary = _procedural_chambers()[4] as Dictionary
+	chamber = chamber.duplicate(true)
+	chamber["activities"] = [
+		{"kind": "switch_sequence", "element_count": 3}]
+	var first := _build(chamber)
+	var second := _build(chamber)
+	await get_tree().physics_frame
+	var here := _element_positions(first)
+	var there := _element_positions(second)
+	_check(here.size() >= 1,
+			"no activity elements were placed, so nothing was compared")
+	_check(here == there,
+			"the same chamber composed differently twice: %s vs %s"
+			% [str(here), str(there)])
+	var order := Placement.candidates(Vector3(1.0, 2.0, 3.0),
+			Vector3(4.0, 0.0, 4.0), Vector3(1.0, 1.0, 1.0))
+	_check(order == Placement.candidates(Vector3(1.0, 2.0, 3.0),
+			Vector3(4.0, 0.0, 4.0), Vector3(1.0, 1.0, 1.0)),
+			"the candidate sweep is not stable between two calls")
+	_check(order.size() == Placement.GRID * Placement.GRID,
+			"the sweep offered %d candidates, not the %d it sweeps"
+			% [order.size(), Placement.GRID * Placement.GRID])
+	rooms_checked += 2
+	(first["root"] as Node3D).queue_free()
+	(second["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+# --- shared probes --------------------------------------------------------
+
+## Does the audit measure a place a player can stand in this region?
+func _stance_exists(room: Dictionary, patch: Dictionary) -> bool:
+	var root := room["root"] as Node3D
+	var to_world := root.global_transform
+	var space := _space()
+	var stands := func(spot: Vector3) -> bool:
+		return RoomAudit.player_stands_here(spot, to_world, space)
+	var verdict := Placement.find(patch["position"] as Vector3,
+			patch.get("extent", Vector3.ONE) as Vector3,
+			RoomAudit.STANCE, 0.0, stands)
+	return bool(verdict.get("fits", false))
+
+## Does the composer refuse whatever the audit refused?
+##
+## One-directional on purpose. The composer sees convex hulls as their
+## AABBs and is therefore allowed to be STRICTER than the world; what it
+## may never be is looser, because that is an element inside geometry.
+func _composer_agrees(room: Dictionary, patch: Dictionary) -> bool:
+	var solids := ChamberBuilders.all_solid_boxes(room["root"] as Node3D)
+	var fits := func(spot: Vector3) -> bool:
+		return Activities.can_place(spot, RoomAudit.STANCE, 0.0, [], solids)
+	var composed := Placement.find(patch["position"] as Vector3,
+			patch.get("extent", Vector3.ONE) as Vector3,
+			RoomAudit.STANCE, 0.0, fits)
+	if _stance_exists(room, patch):
+		return true
+	return not bool(composed.get("fits", false))
+
+## A real collider, in the room, where the test says.
+func _roof(root: Node3D, at: Vector3, size: Vector3) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = size
+	shape.shape = box
+	body.add_child(shape)
+	body.position = at
+	root.add_child(body)
+	return body
+
+func _element_positions(room: Dictionary) -> Array:
+	var out: Array = []
+	for entry: Variant in room.get("activities", []) as Array:
+		for element: Variant in (entry as Dictionary).get("elements", []):
+			out.append((element as Node3D).position)
+	return out
 
 func _test_a_jump_is_measured_the_same_for_both_producers() -> void:
 	"""One movement law, one measurement, whoever declared the jump.

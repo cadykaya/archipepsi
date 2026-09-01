@@ -572,6 +572,45 @@ of them in a `platform_path` room and none in an arena.
 a room can hold is a fact about its built geometry, and Python pricing it
 would be the same builder-knows-what-the-composer-does-not failure.
 
+## P2 SURFACE SEMANTICS — a Surface is an offer — landed 2026-09-01
+
+**Owner ruling C(ii).** A `stand` Surface does not promise every point of
+its rect is clear. It promises **a valid placement can be FOUND somewhere
+in it** -- the same shape as "a socket is an offer, not an order". A
+Surface with ZERO valid placements is still invalid.
+
+**One solver**: `scripts/content/placement.gd`. It owns the candidates,
+their order, the footprint rule and the verdict. `RoomAudit` asks "can
+this keep its promise?"; `Activities` asks "where is the point?". Both
+call `Placement.find`. Evidence necessarily differs -- the audit measures
+a room in the tree, the composer runs on a detached root -- so each
+passes a `clear` Callable and the suite pins the two verdicts against
+each other on every producer.
+
+**`Activities` stopped choosing blind.** Its last-resort spot used to be
+the first candidate whatever was there; it is now the first the ROOM
+allows, so only crowding is traded away, never geometry. A surface that
+cannot hold an element is declined and the flat solve stands.
+`ChamberBuilders.all_solid_boxes` reads collision shapes too, because an
+authored shell is one merged mesh and the composer could not otherwise
+see inside it.
+
+**No percentage is law.** Validity is geometric: a footprint fits, or it
+does not.
+
+**Findings 75 -> 7.** Every C finding gone, every A and B finding kept:
+collapsed `rubble_1_0`/`rubble_1_1` + socket `high_3`, spiral
+`platform_6`, treasure `step_low` x3. Those stay Art's.
+
+**Proven, not asserted.** Four sabotages, each caught: restore "every
+point must be clear" (fails on the PROCEDURAL producer too), make the
+audit never refuse, make the composer skip geometry, stop reading
+colliders. Determinism: same chamber composed twice, identical
+positions; no RNG in the solver. Producer independence: a real
+procedural island roofed in three steps -- none, half, all -- and the
+verdict follows the geometry. Real-Zone proof: the 23-chamber activity
+audit JSON is **byte-identical** to `940211e`.
+
 ## P2 PHYSICAL VERDICT — the shells are measurable, and measured —
 ## landed 2026-09-01
 

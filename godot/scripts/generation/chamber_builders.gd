@@ -46,20 +46,56 @@ const ROOM_SCALE_SOLID := 6.0
 static func solid_boxes(node: Node,
 		xform := Transform3D.IDENTITY) -> Array[AABB]:
 	var out: Array[AABB] = []
-	_gather_solids(node, xform, out)
+	_gather_solids(node, xform, out, false)
+	return out
+
+## EVERYTHING solid under `node`, unfiltered, meshes AND colliders.
+##
+## The same traversal and the same hand-accumulated transform as
+## `solid_boxes` -- one derivation of where solid geometry is, with the
+## caller saying which subset of it their question needs. Two gathers
+## would be two chances to disagree.
+##
+## TWO THINGS THE FILTERED LIST CANNOT ANSWER, and both are the
+## clearance question:
+##
+##   * ROOM-SCALE geometry is architecture to an occupancy solver -- a
+##     room that counted its own floor as an obstacle would leave
+##     content nowhere legal to go -- but a deck 2.0 m over a walkway is
+##     room-scale AND is exactly what stops a player standing under it.
+##     A clearance volume is bounded ABOVE the surface, so the floor is
+##     excluded by geometry rather than by a size rule.
+##   * an AUTHORED shell is one merged `MeshInstance3D` for the whole
+##     room, so mesh AABBs describe nothing inside it. Its interior is
+##     described by its collision hulls, which is why they are read
+##     here: without them the composer places against an authored room
+##     it cannot see, which is the "the builder knows a physical fact
+##     the composer does not" defect this project has now paid for four
+##     times.
+static func all_solid_boxes(node: Node,
+		xform := Transform3D.IDENTITY) -> Array[AABB]:
+	var out: Array[AABB] = []
+	_gather_solids(node, xform, out, true)
 	return out
 
 static func _gather_solids(node: Node, xform: Transform3D,
-		out: Array[AABB]) -> void:
+		out: Array[AABB], everything: bool) -> void:
 	var here := xform
 	if node is Node3D:
 		here = xform * (node as Node3D).transform
 	if node is MeshInstance3D:
 		var box: AABB = here * (node as MeshInstance3D).get_aabb()
-		if box.size.x < ROOM_SCALE_SOLID and box.size.z < ROOM_SCALE_SOLID:
+		if everything or (box.size.x < ROOM_SCALE_SOLID
+				and box.size.z < ROOM_SCALE_SOLID):
 			out.append(box)
+	if everything and node is CollisionShape3D:
+		var shape := (node as CollisionShape3D).shape
+		if shape != null:
+			var mesh := shape.get_debug_mesh()
+			if mesh != null:
+				out.append(here * mesh.get_aabb())
 	for child in node.get_children():
-		_gather_solids(child, here, out)
+		_gather_solids(child, here, out, everything)
 
 ## The floor rectangle a band occupies, in room space (x, z).
 ##

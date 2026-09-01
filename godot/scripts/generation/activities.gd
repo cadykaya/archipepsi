@@ -48,10 +48,23 @@ static func build(root: Node3D, activity: Dictionary, theme: String,
 	root.add_child(runtime)
 
 	var rules := runtime.rules()
+	# WHAT IS PHYSICALLY THERE, derived once from the chamber root these
+	# elements are about to join. `occupied` is the OCCUPANCY question --
+	# furniture-scale solids plus the builder's reserved regions -- and it
+	# deliberately cannot see room-scale architecture. Clearance is a
+	# different question about the same room: what is OVER the spot. A
+	# deck 2.0 m above a walkway is invisible to one and decisive to the
+	# other.
+	#
+	# Derived HERE rather than passed in, because a caller that forgets an
+	# argument gets a composer that places blind, and this is the argument
+	# every existing caller would have forgotten.
+	var solids := ChamberBuilders.all_solid_boxes(root)
 	var built := _row(runtime, runtime.kind, runtime.placed_count(),
 			rules["size"] as Vector3, theme, width, depth,
 			float(rules["height"]), str(rules["trigger"]),
-			bool(rules["roles"]), occupied, runtime.ordered, surfaces)
+			bool(rules["roles"]), occupied, runtime.ordered, surfaces,
+			solids)
 	if bool(rules["simultaneous"]):
 		_link(runtime, built, theme)
 	runtime.adopt(built)
@@ -98,7 +111,8 @@ const GRID_STEPS := 9
 static func _row(root: Node3D, kind: String, count: int, size: Vector3,
 		theme: String, width: float, depth: float, height: float,
 		trigger: String, roles: bool, occupied: Array[AABB],
-		ordered: bool, surfaces: Array = []) -> Array[ActivityElement]:
+		ordered: bool, surfaces: Array = [],
+		solids: Array[AABB] = []) -> Array[ActivityElement]:
 	var built: Array[ActivityElement] = []
 	var tint := VisualOwnership.separated_from_reserved(
 			ThemeMaterials.light_color(theme))
@@ -126,7 +140,7 @@ static func _row(root: Node3D, kind: String, count: int, size: Vector3,
 	# activity, so a routing circuit stays on one island rather than
 	# being split across a jump course nobody can cross inside the hold
 	# window.
-	var surface := _best_surface(surfaces, size, taken)
+	var surface := _best_surface(surfaces, size, height, taken, solids)
 	for i in count:
 		var t := 0.5 if count == 1 else float(i) / float(count - 1)
 		var side := -1.0 if i % 2 == 0 else 1.0
@@ -141,7 +155,14 @@ static func _row(root: Node3D, kind: String, count: int, size: Vector3,
 				near + (far - near) * t,
 				height, size, inner, outer, near, far, taken)
 		if not surface.is_empty():
-			spot = _spot_on_surface(surface, surfaces, size, height, taken)
+			# THE OFFER MAY BE DECLINED. A surface that cannot produce a
+			# physically valid point for THIS element is not used for it,
+			# and the flat solve stands -- an element is never forced into
+			# geometry to honour an offer.
+			var on := _spot_on_surface(surface, surfaces, size, height,
+					taken, solids)
+			if bool(on.get("found", false)):
+				spot = on["position"]
 		var element := ActivityElement.create(
 				trigger, i, size, tint, role, i + 1 if ordered else 0)
 		root.add_child(element)
@@ -168,10 +189,10 @@ static func _row(root: Node3D, kind: String, count: int, size: Vector3,
 ## preference plus the room suite's assertion that nothing sits on an
 ## island at the largest room the schema admits. This is what keeps the
 ## rule true if that ordering is ever changed.
-static func _best_surface(surfaces: Array, size: Vector3,
-		taken: Array[AABB]) -> Dictionary:
+static func _best_surface(surfaces: Array, size: Vector3, height: float,
+		taken: Array[AABB], solids: Array[AABB]) -> Dictionary:
 	var best := {}
-	var best_free := -1
+	var best_free := 0
 	for entry: Variant in surfaces:
 		if typeof(entry) != TYPE_DICTIONARY:
 			continue
@@ -179,39 +200,63 @@ static func _best_surface(surfaces: Array, size: Vector3,
 		if str(patch.get("kind", "")) != "stand":
 			continue
 		var extent: Vector3 = patch.get("extent", Vector3.ZERO)
-		var spare_x := extent.x - size.x
-		var spare_z := extent.z - size.z
-		if spare_x < 0.0 or spare_z < 0.0:
+		if maxf(extent.x - size.x, extent.z - size.z) \
+				< ChamberBuilders.BRUTE_LANE:
 			continue
-		if maxf(spare_x, spare_z) < ChamberBuilders.BRUTE_LANE:
-			continue
-		# How much of it is actually free right now, sampled on the same
-		# grid the placement search uses so the count means what it says.
-		var free := 0
-		for xi in GRID_STEPS:
-			for zi in GRID_STEPS:
-				if not _collides(_surface_candidate(patch, size, 0.0, xi, zi),
-						size, taken):
-					free += 1
+		# THE SAME SEARCH THE AUDIT RUNS, over the same candidates in the
+		# same order, with this element's footprint and this composer's
+		# evidence. `census` counts every valid spot rather than stopping
+		# at the first, because the surface with the most room wins.
+		var fits := func(spot: Vector3) -> bool:
+			return can_place(spot, size, height, taken, solids)
+		var verdict := Placement.find(
+				patch.get("position", Vector3.ZERO), extent, size, height,
+				fits, true)
+		var free := int(verdict.get("usable", 0))
 		if free > best_free:
 			best_free = free
 			best = patch
-	return {} if best_free <= 0 else best
+	return best
 
-## One grid candidate on a surface, in room space.
-static func _surface_candidate(patch: Dictionary, size: Vector3,
-		height: float, xi: int, zi: int) -> Vector3:
-	var at: Vector3 = patch.get("position", Vector3.ZERO)
-	var extent: Vector3 = patch.get("extent", Vector3.ZERO)
-	# The element's whole footprint stays on the surface: checking the
-	# ORIGIN is what put a row of switches through a wall once already.
-	var span_x := maxf(extent.x - size.x, 0.0)
-	var span_z := maxf(extent.z - size.z, 0.0)
-	var u := 0.5 if GRID_STEPS < 2 else float(xi) / float(GRID_STEPS - 1)
-	var v := 0.5 if GRID_STEPS < 2 else float(zi) / float(GRID_STEPS - 1)
-	return Vector3(at.x - span_x / 2.0 + span_x * u,
-			at.y + height,
-			at.z - span_z / 2.0 + span_z * v)
+## Is this spot one an element can actually occupy?
+##
+## PUBLIC, and the composer's half of the contract: `RoomAudit`'s
+## `player_stands_here` is the other half. Both are handed to the same
+## `Placement.find`, and the suite asks them the same question about the
+## same regions to prove they have not drifted apart.
+##
+## TWO QUESTIONS, and they are not the same one. `taken` is what is
+## already claimed -- other elements, props, the builder's reserved
+## regions -- and crowding it is a trade-off the composer is allowed to
+## make. `solids` is the room's real geometry, and there is no trade-off
+## available: an element inside a staircase is inside a staircase.
+static func can_place(spot: Vector3, size: Vector3, height: float,
+		taken: Array[AABB], solids: Array[AABB]) -> bool:
+	return _clear_of_geometry(spot, size, height, solids) \
+			and not _collides(spot, size, taken)
+
+## Nothing of the room is in the volume this element needs.
+##
+## `RoomAudit` asks the same question of the same volume with a shape
+## query, because it has a physics space and this does not: a chamber is
+## composed while its root is still DETACHED, so there is nothing to
+## query. One search, one definition of the volume, two kinds of evidence
+## -- and the suite pins the two verdicts against each other.
+##
+## FROM THE SURFACE, not from the element. `height` is how far above the
+## surface the rules park this element, so `spot.y - height` is the
+## walking plane, and the volume that matters runs from there -- a player
+## has to stand at the thing to press it. `RoomAudit.HEADROOM` rather
+## than a number of its own: the composer builds to exactly what the
+## audit measures, or one of them is wrong.
+static func _clear_of_geometry(spot: Vector3, size: Vector3,
+		height: float, solids: Array[AABB]) -> bool:
+	if solids.is_empty():
+		return true
+	var box := Placement.clearance(
+			Vector3(spot.x, spot.y - height, spot.z), size,
+			RoomAudit.HEADROOM)
+	return not ChamberBuilders.box_hits(box, solids)
 
 ## A free spot on `surface`, falling through to the other vouched
 ## surfaces before it gives up.
@@ -224,7 +269,8 @@ static func _surface_candidate(patch: Dictionary, size: Vector3,
 ## hold anything, and a crowded plate on real floor beats a tidy one
 ## over a pit.
 static func _spot_on_surface(surface: Dictionary, surfaces: Array,
-		size: Vector3, height: float, taken: Array[AABB]) -> Vector3:
+		size: Vector3, height: float, taken: Array[AABB],
+		solids: Array[AABB]) -> Dictionary:
 	var order: Array = [surface]
 	for entry: Variant in surfaces:
 		if typeof(entry) == TYPE_DICTIONARY and entry != surface \
@@ -234,8 +280,9 @@ static func _spot_on_surface(surface: Dictionary, surfaces: Array,
 	var have_fallback := false
 	for entry: Variant in order:
 		var patch: Dictionary = entry
+		var at: Vector3 = patch.get("position", Vector3.ZERO)
 		var extent: Vector3 = patch.get("extent", Vector3.ZERO)
-		if extent.x - size.x < 0.0 or extent.z - size.z < 0.0:
+		if not Placement.holds(extent, size):
 			continue
 		if maxf(extent.x - size.x, extent.z - size.z) \
 				< ChamberBuilders.BRUTE_LANE:
@@ -243,41 +290,40 @@ static func _spot_on_surface(surface: Dictionary, surfaces: Array,
 		var best := Vector3.ZERO
 		var best_score := -INF
 		var found := false
-		for xi in GRID_STEPS:
-			for zi in GRID_STEPS:
-				var candidate := _surface_candidate(patch, size, height,
-						xi, zi)
-				if not have_fallback:
-					fallback = candidate
-					have_fallback = true
-				if _collides(candidate, size, taken):
-					continue
-				var from_edge := minf(
-						absf(candidate.z - (patch["position"] as Vector3).z
-							+ extent.z / 2.0),
-						absf((patch["position"] as Vector3).z + extent.z / 2.0
-							- candidate.z))
-				var score := from_edge * 10.0 + absf(candidate.x)
-				if score > best_score:
-					best_score = score
-					best = candidate
-					found = true
+		for candidate: Vector3 in Placement.candidates(
+				at, extent, size, height):
+			# THE LAST RESORT IS STILL A REAL SPOT. The old fallback took
+			# the first candidate whatever was there; it now takes the
+			# first one the ROOM allows, and only CROWDING is traded away.
+			# A missing element is worse than a tight one; an element
+			# inside a staircase is worse than both.
+			if not _clear_of_geometry(candidate, size, height, solids):
+				continue
+			if not have_fallback:
+				fallback = candidate
+				have_fallback = true
+			if _collides(candidate, size, taken):
+				continue
+			var from_edge := minf(
+					absf(candidate.z - at.z + extent.z / 2.0),
+					absf(at.z + extent.z / 2.0 - candidate.z))
+			var score := from_edge * 10.0 + absf(candidate.x)
+			if score > best_score:
+				best_score = score
+				best = candidate
+				found = true
 		if found:
-			return best
+			return {"found": true, "position": best}
 	# Every vouched surface is full. Crowded, and still ON one: the flat
 	# solve makes the same choice for the same reason, because a missing
 	# element is a puzzle nobody can finish.
-	return fallback if have_fallback else Vector3(0.0, height, 0.0)
+	if have_fallback:
+		return {"found": true, "position": fallback}
+	# NOTHING the room offered can hold this element. The offer is
+	# declined and the caller keeps its flat solve, rather than an element
+	# being pushed into the one place the room said not to.
+	return {"found": false}
 
-## The first spot at or near the ideal one that nothing else has claimed.
-##
-## Deterministic: the alternates are walked in a fixed order with no RNG,
-## so the same Zone lays out identically every time it is built -- which
-## the whole reproducible-baseline apparatus depends on.
-##
-## If every alternate is taken it returns the IDEAL spot rather than
-## dropping the element. A crowded activity is a finding the real-Zone
-## audit reports; a missing one is a puzzle that cannot be solved.
 static func _free_spot(ideal_x: float, ideal_z: float, height: float,
 		size: Vector3, inner: float, outer: float, near: float,
 		far: float, taken: Array[AABB]) -> Vector3:
