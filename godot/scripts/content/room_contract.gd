@@ -95,6 +95,38 @@ const TRAVERSAL_KINDS := ["gap", "rise", "drop", "walk"]
 ## angle is the topology slice's problem, not a corner shell's.
 const EXIT_YAWS := [-90.0, 0.0, 90.0]
 
+## THE ROOM ENVELOPE: how far outside its declared bounds a room's own
+## geometry may physically reach.
+##
+## ONE WALL THICKNESS, and it is a measurement rather than a courtesy.
+## A room's boundary wall belongs to the room, and where a producer puts
+## that wall's centreline relative to its declared box is that producer's
+## own convention -- both of the ones in this project differ:
+##
+##   * `ChamberBuilders._perimeter` CENTRES its walls on the boundary, so
+##     every procedural room overhangs by WALL_THICKNESS / 2 = 0.20 m on
+##     all four sides. Measured, not assumed: corridor, arena,
+##     platform_path, tower and treasure room all do it.
+##   * the authored shells put their walls entirely INSIDE the box on
+##     three sides and entirely BEHIND the origin on the fourth, so their
+##     entry wall occupies z in [-0.40, 0] -- a full WALL_THICKNESS.
+##
+## Both are self-consistent and both chain correctly. What must never
+## happen is geometry a whole wall PAST the boundary, because that is
+## inside the neighbour's interior rather than inside the shared wall
+## plane.
+##
+## THIS WAS A REAL DEFECT. `ShellValidator._check_envelope` allowed
+## 0.15 m and ran on the AUTHORED PATH ALONE, so it refused all eight P2
+## shells while every procedural room broke the same rule by 0.05 m and
+## was never asked. A convention that describes neither producer is not
+## a convention; a check that only one producer takes is not a contract.
+const WALL_ALLOWANCE := ChamberBuilders.WALL_THICKNESS + 0.15
+
+## The box a room's geometry must fit inside, from the box it declares.
+static func envelope(bounds: AABB) -> AABB:
+	return bounds.grow(WALL_ALLOWANCE)
+
 ## Every way this room output is malformed. Empty is the contract.
 ##
 ## Structure only, and it says so twice because the temptation is to let

@@ -131,14 +131,18 @@ static func _check_envelope(id: String, entry: Dictionary,
 	var size := _vector(raw)
 	if size.x <= 0.0 or size.y <= 0.0 or size.z <= 0.0:
 		return out
-	var envelope := AABB(
+	# THE SHARED CONVENTION, not this file's own. `RoomContract.envelope`
+	# is what the producer-agnostic audit applies to every room, and a
+	# second opinion here is how this check came to refuse eight authored
+	# shells for breaking a rule every procedural room broke too.
+	var envelope := RoomContract.envelope(AABB(
 			Vector3(-size.x / 2.0, -ContentInstantiator.FLOOR_ALLOWANCE,
 					0.0),
 			Vector3(size.x, size.y + ContentInstantiator.FLOOR_ALLOWANCE,
-					size.z)).grow(POSITION_TOLERANCE)
+					size.z)))
 	var worst := 0.0
 	var count := 0
-	for box in _mesh_boxes(instance, Transform3D.IDENTITY):
+	for box in mesh_boxes(instance, Transform3D.IDENTITY):
 		if envelope.encloses(box):
 			continue
 		count += 1
@@ -149,7 +153,8 @@ static func _check_envelope(id: String, entry: Dictionary,
 	if count > 0:
 		out.append("%s: %d mesh(es) reach up to %.2f m outside the "
 				% [id, count, worst] + "%.1f x %.1f x %.1f m envelope "
-				% [size.x, size.y, size.z] + "the manifest declares")
+				% [size.x, size.y, size.z] + "the manifest declares "
+				+ "(a wall's worth is %.2f)" % RoomContract.WALL_ALLOWANCE)
 	return out
 
 ## Every mesh AABB under `node`, in the shell's own space.
@@ -158,7 +163,7 @@ static func _check_envelope(id: String, entry: Dictionary,
 ## accumulate for a node outside the scene tree, and a shell is measured
 ## before it is added to one -- the mistake that once made every prop in
 ## a chamber come back stacked near the origin.
-static func _mesh_boxes(node: Node, xform: Transform3D) -> Array[AABB]:
+static func mesh_boxes(node: Node, xform: Transform3D) -> Array[AABB]:
 	var out: Array[AABB] = []
 	var here := xform
 	if node is Node3D:
@@ -166,7 +171,7 @@ static func _mesh_boxes(node: Node, xform: Transform3D) -> Array[AABB]:
 	if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
 		out.append(here * (node as MeshInstance3D).get_aabb())
 	for child in node.get_children():
-		out.append_array(_mesh_boxes(child, here))
+		out.append_array(mesh_boxes(child, here))
 	return out
 
 ## Sockets are the other half of the claim: a doorway the manifest says

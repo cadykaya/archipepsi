@@ -54,11 +54,6 @@ const GROUND_REACH := 1.2
 ## boundary of a collider is a coin toss.
 const EDGE_INSET := 0.15
 
-## How far outside its declared bounds a room's own geometry may reach
-## before it is somebody else's room. Rooms are chained by butting their
-## bounds together, so a mesh past this is a mesh inside the neighbour.
-const BOUNDS_TOLERANCE := 0.35
-
 ## Probe sizes, from the player's real capsule so they cannot drift from
 ## the thing they protect.
 const HEADROOM := Constants.PLAYER_HEIGHT + 0.6
@@ -344,17 +339,27 @@ static func _traversal_is_true(room: Dictionary, to_world: Transform3D,
 # --- 6. the room fits in the box it reserved ------------------------------
 
 ## Rooms are chained by butting their bounds together, so geometry
-## outside them is geometry inside the neighbour. `solid_boxes` is the
-## project's one derivation of what counts as furniture-scale solid; this
-## reuses it rather than deriving a second answer.
+## outside them is geometry inside the neighbour.
+##
+## EVERY mesh, not just the furniture-scale ones. The first version
+## reused `solid_boxes`, which SKIPS room-scale geometry so a placement
+## solver has somewhere to stand -- and a room's walls are exactly the
+## geometry that can reach into the neighbour, so the check that mattered
+## was the one being skipped. The authored-only `_check_envelope` looked
+## at all of them and was therefore the only thing measuring this at all,
+## which is how it came to refuse eight authored shells for a rule no
+## procedural room obeyed either.
+##
+## The allowance is `RoomContract.WALL_ALLOWANCE` -- one shared number,
+## one shared convention, both producers.
 static func _geometry_stays_inside_its_bounds(room: Dictionary,
 		root: Node3D, who: String) -> Array[String]:
 	var out: Array[String] = []
 	var bounds: AABB = room["bounds"]
-	var roomy := bounds.grow(BOUNDS_TOLERANCE)
+	var roomy := RoomContract.envelope(bounds)
 	var worst := 0.0
 	var count := 0
-	for box in ChamberBuilders.solid_boxes(root):
+	for box in ShellValidator.mesh_boxes(root, Transform3D.IDENTITY):
 		if roomy.encloses(box):
 			continue
 		count += 1
@@ -364,7 +369,8 @@ static func _geometry_stays_inside_its_bounds(room: Dictionary,
 					box.end[axis] - roomy.end[axis]))
 	if count > 0:
 		out.append("%s: %d piece(s) of geometry reach up to %.2f m "
-				% [who, count, worst] + "outside the room's own bounds")
+				% [who, count, worst] + "outside the room's own bounds "
+				+ "(a wall's worth is %.2f)" % RoomContract.WALL_ALLOWANCE)
 	return out
 
 # --- probes ---------------------------------------------------------------

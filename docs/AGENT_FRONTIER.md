@@ -572,6 +572,35 @@ of them in a `platform_path` room and none in an arena.
 a room can hold is a fact about its built geometry, and Python pricing it
 would be the same builder-knows-what-the-composer-does-not failure.
 
+## P2 FINAL — the eight shells are in the catalog, and refused by the
+## audit — landed 2026-09-01
+
+All eight are IN the registry (29 entries load), carry the owner's size
+classes, and are `review: pending` — nothing can select them, the
+catalog offered to Epsilon is empty, and the digest is unchanged.
+
+**None of them measures true, and the reason is one thing: the imported
+meshes carry NO COLLISION.** One `MeshInstance3D`, zero
+`CollisionObject3D`, zero `CollisionShape3D`, in every shell. So the
+audit's verdict is **"not measurable"**, not "measured and safe":
+Art's 47 predicted headroom notes are neither confirmed nor refuted,
+and neither are the doors or the jumps. `ART_ASSET_SPEC.md` §3 is
+explicit that collision is authored (`-col` / `-convcol` / `-colonly`),
+so this is an export gap, reported and not worked around. No mesh
+repaired, no contract weakened, no metadata flipped.
+
+**The envelope defect was real and shared.** `_check_envelope` allowed
+0.15 m and ran on the AUTHORED PATH ALONE. Measured: procedural rooms
+overhang their own bounds by **0.20 m** (`_perimeter` centres its walls
+on the boundary), authored shells by **0.40 m** (their entry wall sits
+at z ∈ [−0.40, 0]). One shared `RoomContract.WALL_ALLOWANCE` = one wall
+thickness + tolerance now binds both, the audit reads EVERY mesh rather
+than furniture only, and `ShellValidator` delegates to the same rule.
+
+**Review is now the audit gate.** A `pending` shell's findings are
+evidence for review; a shell marked `pass` that fails the contract turns
+the suite red. Flipping one to `pass` today is caught immediately.
+
 ## P2 PREP — ready to accept the eight shells — landed 2026-09-01
 
 Engineering only. **No authored room landed; Art's exporter has not run

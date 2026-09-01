@@ -33,6 +33,9 @@ var failures := 0
 var rooms_checked := 0
 var authored_checked := 0
 var probes_expected_to_fail := 0
+## Authored shells that are `review: pending` AND do not yet measure
+## true. Reported, never fatal: nothing can select them.
+var shells_awaiting_review := 0
 
 func _check(condition: bool, message: String) -> void:
 	if not condition:
@@ -69,6 +72,9 @@ func _run() -> void:
 	await _test_a_declared_turn_steers_the_chain()
 	await _test_a_tower_shell_built_for_other_floor_counts_is_not_used()
 	await _test_a_check_never_stands_inside_the_room()
+	await _test_one_envelope_convention_binds_both_producers()
+	await _test_every_authored_shell_in_the_registry_is_measured()
+	await _test_a_pending_shell_never_reaches_a_zone()
 
 	_check(rooms_checked >= 8,
 			"only %d rooms went through the contract; the suite is not "
@@ -80,6 +86,11 @@ func _run() -> void:
 			"only %d deliberately broken rooms were caught; a suite that "
 			% probes_expected_to_fail + "never sees a failure is a suite "
 			+ "nobody can trust")
+
+	if shells_awaiting_review > 0:
+		print("  %d pending shell(s) do not yet measure true; they are "
+				% shells_awaiting_review
+				+ "not selectable and are the owner's to review")
 
 	if failures == 0:
 		print("GODOT ROOM CONTRACT TESTS OK")
@@ -343,6 +354,36 @@ func _test_a_declared_turn_steers_the_chain() -> void:
 		_check(absf(straight_yaws[1] - straight_yaws[0]) < 0.001,
 				"a shell declaring no turn must leave the chain straight")
 	(back["root"] as Node3D).queue_free()
+	# AND THE REAL CORNERS. The fixture proves the mechanism; these are
+	# the shells the turn exists for, with the sign the art lane derived.
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	for pair: Array in [["shell_corner_left", 90.0],
+			["shell_corner_right", -90.0]]:
+		var entry := registry.get_entry(str(pair[0]))
+		_check(not entry.is_empty(), "%s is not in the registry"
+				% str(pair[0]))
+		if entry.is_empty():
+			continue
+		_check(float(entry.get("exit_yaw", 0.0)) == float(pair[1]),
+				"%s declares exit_yaw %.1f; the art lane derived %.0f "
+				% [str(pair[0]), float(entry.get("exit_yaw", 0.0)),
+					float(pair[1])]
+				+ "and that sign was expensive")
+		var lifted := entry.duplicate(true)
+		lifted["review"] = "pass"
+		var private := ContentRegistry.new()
+		private.entries[str(pair[0])] = lifted
+		var built: Dictionary = ContentInstantiator.build_chamber(
+				_chamber_for(lifted), "concrete_facility", private)
+		add_child(built["root"] as Node3D)
+		await get_tree().physics_frame
+		_check(float(built.get("exit_yaw", 0.0)) == float(pair[1]),
+				"%s: the turn did not reach the room contract"
+				% str(pair[0]))
+		rooms_checked += 1
+		authored_checked += 1
+		(built["root"] as Node3D).queue_free()
 	probes_expected_to_fail += 1
 	await get_tree().process_frame
 
@@ -409,6 +450,48 @@ func _test_a_tower_shell_built_for_other_floor_counts_is_not_used() -> void:
 					"tower4")
 		rooms_checked += 1
 		(result["root"] as Node3D).queue_free()
+	# AND THE REAL TOWERS. 2, 3 and 5 exist; the generator may ask for 4.
+	var shipped := ContentRegistry.new()
+	shipped.load_all()
+	var declared := {}
+	for id: String in ["shell_tower_collapsed", "shell_tower_spiral",
+			"shell_tower_gantry"]:
+		var real := shipped.get_entry(id)
+		_check(not real.is_empty(), "%s is not in the registry" % id)
+		if real.is_empty():
+			continue
+		var fits: Array = real.get("fits_floors", [])
+		_check(fits.size() == 1, "%s declares %d floor counts; each art "
+				% [id, fits.size()] + "tower was built for exactly one")
+		if not fits.is_empty():
+			declared[int(fits[0])] = id
+	_check(declared.keys().size() == 3,
+			"the three art towers cover %d distinct floor counts"
+			% declared.keys().size())
+	_check(not declared.has(4),
+			"a tower shell claims to fit 4 floors; the art lane built "
+			+ "2, 3 and 5")
+	# The request the catalog cannot serve.
+	var four := shipped.get_entry("shell_tower_spiral").duplicate(true)
+	four["review"] = "pass"
+	var only_spiral := ContentRegistry.new()
+	only_spiral.entries["shell_tower_spiral"] = four
+	var fallback: Dictionary = ContentInstantiator.build_chamber(
+			{"id": "t4", "type": "tower", "floors": 4, "enemies": [],
+				"shell_id": "shell_tower_spiral"},
+			"concrete_facility", only_spiral)
+	add_child(fallback["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check((fallback.get("traversal", []) as Array).is_empty(),
+			"a 4-floor tower was served by a 3-floor authored shell")
+	_check(RoomContract.violations(fallback, "tower4real").is_empty(),
+			"the procedural room a 4-floor tower falls back to must be "
+			+ "a valid room")
+	_judge(RoomAudit.findings(fallback, _space(), "tower4real"),
+			"tower4real")
+	rooms_checked += 1
+	(fallback["root"] as Node3D).queue_free()
 	probes_expected_to_fail += 1
 	await get_tree().process_frame
 
@@ -454,6 +537,241 @@ func _test_a_check_never_stands_inside_the_room() -> void:
 	_check(buried == 0,
 			"%d of 16 arenas stand a Check inside their own geometry"
 			% buried)
+
+func _test_one_envelope_convention_binds_both_producers() -> void:
+	"""THE P2 ENVELOPE DEFECT, and the asymmetry that hid it.
+
+	`ShellValidator._check_envelope` allowed 0.15 m outside a room's
+	declared box and ran on the AUTHORED PATH ALONE. It refused all
+	eight P2 shells, whose entry wall sits at z in [-0.40, 0] -- and
+	every procedural room breaks the same rule by 0.05 m, because
+	`_perimeter` CENTRES its walls on the boundary and overhangs by
+	WALL_THICKNESS / 2 on all four sides. A convention that describes
+	neither producer is not a convention, and a check only one producer
+	takes is not a contract.
+
+	Measured, not argued: this walks both producers and reports the real
+	overhang, then proves the shared rule still bites."""
+	var worst_procedural := 0.0
+	for chamber: Dictionary in _procedural_chambers():
+		var result := _build(chamber)
+		await get_tree().physics_frame
+		var bounds: AABB = result["bounds"]
+		for box in ShellValidator.mesh_boxes(
+				result["root"] as Node3D, Transform3D.IDENTITY):
+			for axis in 3:
+				worst_procedural = maxf(worst_procedural, maxf(
+						bounds.position[axis] - box.position[axis],
+						box.end[axis] - bounds.end[axis]))
+		rooms_checked += 1
+		(result["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	print("  procedural rooms overhang their bounds by up to %.2f m"
+			% worst_procedural)
+	_check(worst_procedural > 0.15,
+			"no procedural room overhangs by more than the old 0.15 m "
+			+ "allowance, so this test is not measuring the defect")
+	_check(worst_procedural <= RoomContract.WALL_ALLOWANCE,
+			"a procedural room reaches %.2f m outside its bounds, past "
+			% worst_procedural + "the shared allowance of %.2f"
+			% RoomContract.WALL_ALLOWANCE)
+
+	# The authored side of the same rule, at its real worst.
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var worst_authored := 0.0
+	var seen := 0
+	for id: String in registry.ids_of_category("room_shell"):
+		var entry := registry.get_entry(id)
+		if bool(entry.get("procedural_fallback", false)):
+			continue
+		var size: Array = entry.get("size", [])
+		if size.size() < 3:
+			continue
+		var node: Node3D = (load(str(entry["scene"])) as PackedScene
+				).instantiate()
+		var declared := AABB(
+				Vector3(-float(size[0]) / 2.0,
+					-ContentInstantiator.FLOOR_ALLOWANCE, 0.0),
+				Vector3(float(size[0]),
+					float(size[1]) + ContentInstantiator.FLOOR_ALLOWANCE,
+					float(size[2])))
+		for box in ShellValidator.mesh_boxes(node, Transform3D.IDENTITY):
+			for axis in 3:
+				worst_authored = maxf(worst_authored, maxf(
+						declared.position[axis] - box.position[axis],
+						box.end[axis] - declared.end[axis]))
+		seen += 1
+		node.free()
+	print("  authored shells overhang their envelope by up to %.2f m "
+			% worst_authored + "(%d measured)" % seen)
+	_check(seen >= 8, "only %d authored shells were measured" % seen)
+	_check(worst_authored > 0.15,
+			"no authored shell overhangs by more than the old 0.15 m "
+			+ "allowance, so this test is not measuring the defect")
+	_check(worst_authored <= RoomContract.WALL_ALLOWANCE,
+			"an authored shell reaches %.2f m outside its envelope, past "
+			% worst_authored + "the shared allowance of %.2f"
+			% RoomContract.WALL_ALLOWANCE)
+
+	# AND IT STILL BITES. A shared convention that accepts everything is
+	# not a convention either.
+	_check(RoomContract.WALL_ALLOWANCE < ChamberBuilders.WALL_THICKNESS * 2.0,
+			"the allowance is two walls wide; geometry that far out is "
+			+ "inside the neighbour's interior")
+
+## Which chamber the art lane built each family for. Read off the entry's
+## own `semantic_tags`, so a shell that renames itself is audited as
+## whatever it now says it is rather than as whatever this list
+## remembers.
+const FAMILY_TYPE := {
+	"tower": "tower", "treasure_room": "treasure_room",
+	# The corners are tagged `corner`, which is NOT a chamber type -- see
+	# the note in the test. Audited as the corridor-shaped room they are.
+	"corner": "corridor",
+}
+
+func _test_every_authored_shell_in_the_registry_is_measured() -> void:
+	"""EVERY authored room shell the registry carries, through the SAME
+	contract and the SAME probes a procedural room gets.
+
+	No F3-specific exemption exists and none may: the audit takes a room
+	output and a physics space and cannot tell who produced it. The one
+	thing lifted here is the art-lane REVIEW GATE, because that is
+	exactly the question being asked -- would this asset be safe if
+	somebody promoted it? Everything else is the live path: the same
+	`build_chamber`, the same `ShellValidator`, the same fallback chain.
+	"""
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var shells: Array[String] = []
+	for id: String in registry.ids_of_category("room_shell"):
+		if not bool(registry.get_entry(id).get("procedural_fallback", false)):
+			shells.append(id)
+	shells.sort()
+	_check(shells.size() >= 8,
+			"the registry carries %d authored room shells; the P2 pack "
+			% shells.size() + "is eight")
+
+	for id in shells:
+		var entry: Dictionary = registry.get_entry(id).duplicate(true)
+		# The review gate, and ONLY the review gate.
+		entry["review"] = "pass"
+		var chamber := _chamber_for(entry)
+		var private := ContentRegistry.new()
+		private.entries[id] = entry
+		var result: Dictionary = ContentInstantiator.build_chamber(
+				chamber, "concrete_facility", private)
+		add_child(result["root"] as Node3D)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+
+		var authored := not (result.get("sockets", []) as Array).is_empty()
+		_check(authored, "%s: the authored scene was refused and the "
+				% id + "procedural builder answered instead")
+		var structural := RoomContract.violations(result, id)
+		var measured := RoomAudit.findings(result, _space(), id)
+		var pending := str(registry.get_entry(id).get("review", "")) \
+				== "pending"
+		print("  %-24s %-8s surfaces=%-2d traversal=%-2d sockets=%-2d "
+				% [id, "PENDING" if pending else "PASS",
+					RoomContract.sockets_of(result, "stand").size(),
+					(result.get("traversal", []) as Array).size(),
+					(result.get("sockets", []) as Array).size()]
+				+ "structural=%d measured=%d"
+				% [structural.size(), measured.size()])
+		# Grouped by KIND rather than listed. Eight shells sharing one
+		# root cause produce six hundred sentences saying it, and the
+		# thing a reviewer needs is which CLASSES of claim failed.
+		var classes := {}
+		for finding: String in structural + measured:
+			var label := "other"
+			for probe: String in ["has no geometry under it",
+					"of headroom", "has nothing under it",
+					"is sealed", "no floor beneath it",
+					"inside solid geometry", "as built",
+					"nothing to stand on", "outside the room's own bounds",
+					"declared a gap"]:
+				if finding.contains(probe):
+					label = probe
+			classes[label] = int(classes.get(label, 0)) + 1
+		for label: String in classes:
+			print("      %-32s x%d" % [label, classes[label]])
+		# THE REVIEW GATE IS THE AUDIT GATE. A `pending` shell is content
+		# nobody has approved and nothing can select, so its findings are
+		# EVIDENCE FOR THAT REVIEW rather than a broken build. The moment
+		# somebody flips one to `pass`, this line starts demanding it be
+		# clean -- which is the property that makes promotion safe rather
+		# than a decision taken by whoever edits a JSON field.
+		if not pending:
+			_check(structural.is_empty() and measured.is_empty(),
+					"%s is approved content and fails the room contract"
+					% id)
+		elif not (structural.is_empty() and measured.is_empty()):
+			shells_awaiting_review += 1
+		rooms_checked += 1
+		authored_checked += 1
+		(result["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+
+## The chamber a shell was built to be, with the parameters it declares.
+func _chamber_for(entry: Dictionary) -> Dictionary:
+	var type := "arena"
+	for tag: Variant in entry.get("semantic_tags", []):
+		if FAMILY_TYPE.has(str(tag)):
+			type = str(FAMILY_TYPE[str(tag)])
+	var size: Array = entry.get("size", [12.0, 6.0, 12.0])
+	var chamber := {"id": "audit", "type": type,
+			"shell_id": str(entry["id"]), "enemies": []}
+	match type:
+		"tower":
+			var fits: Array = entry.get("fits_floors", [])
+			chamber["floors"] = int(fits[0]) if not fits.is_empty() else 3
+		"corridor":
+			chamber["length"] = float(size[2])
+			chamber["width"] = float(size[0])
+		"treasure_room":
+			pass
+		_:
+			chamber["width"] = float(size[0])
+			chamber["depth"] = float(size[2])
+			chamber["wall_height"] = float(size[1])
+			chamber["objective"] = "reach_exit"
+	return chamber
+
+func _test_a_pending_shell_never_reaches_a_zone() -> void:
+	"""The art lane's gate, measured rather than trusted.
+
+	A file existing in the tree is not approval, and an asset that
+	validates is not an asset somebody decided to ship. The eight P2
+	shells are `review: pending`, so the room a player would walk into is
+	the procedural one -- and it is a real room, not a refusal."""
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var pending := 0
+	for id: String in registry.ids_of_category("room_shell"):
+		var entry := registry.get_entry(id)
+		if str(entry.get("review", "")) != "pending":
+			continue
+		pending += 1
+		var result: Dictionary = ContentInstantiator.build_chamber(
+				_chamber_for(entry), "concrete_facility", registry)
+		add_child(result["root"] as Node3D)
+		await get_tree().physics_frame
+		_check((result.get("sockets", []) as Array).is_empty()
+				or not (result.get("traversal", []) as Array).is_empty()
+					== false,
+				"%s is pending and its authored scene was built anyway"
+				% id)
+		_check(RoomContract.violations(result, id).is_empty(),
+				"%s: the room a player gets instead must be a valid one"
+				% id)
+		(result["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	_check(pending >= 8,
+			"only %d shells are pending; the P2 pack is eight and none "
+			% pending + "of them may be player-selectable yet")
+	probes_expected_to_fail += 1
 
 # --- the audit catches what a description cannot --------------------------
 

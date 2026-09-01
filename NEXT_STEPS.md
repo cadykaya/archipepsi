@@ -30,6 +30,130 @@ Proof the loop is real:
   reveal cards, zone title cards, inventory, pause, F3 overlay,
   procedural textures/audio.
 
+## Latest session: P2 final — the eight shells, measured
+
+Art's export (`cd8e9c7`) integrated verbatim. Owner size decision
+applied. **All eight are in the catalog, held `review: pending`, and
+none of them measures true** — for one reason, reported rather than
+worked around.
+
+### 1. The envelope defect was real, and it was shared
+
+`ShellValidator._check_envelope` allowed 0.15 m outside a room's
+declared box and ran on the AUTHORED PATH ALONE. It refused all eight
+shells. Art's preflight said Production's own rooms break the same rule
+— they were right, and the numbers are worth writing down because they
+are two different conventions, both self-consistent:
+
+| producer | wall convention | measured overhang |
+|---|---|---:|
+| `ChamberBuilders._perimeter` | walls CENTRED on the boundary | **0.20 m** all four sides |
+| the eight authored shells | walls inside on three sides, entry wall at z ∈ [−0.40, 0] | **0.40 m** |
+| the P1 test fixtures | walls entirely inside `size` | 0.00 m |
+
+A convention that describes neither real producer is not a convention,
+and a check only one producer takes is not a contract. The shared rule
+is now `RoomContract.WALL_ALLOWANCE` — **one wall thickness plus the
+existing tolerance** — because a room's boundary wall belongs to the
+room, and where a producer puts that wall's centreline relative to its
+declared box is that producer's own business. What must never happen is
+geometry a whole wall PAST the boundary: that is inside the neighbour's
+interior rather than inside the shared wall plane.
+
+Three changes make it one rule for everyone:
+
+- `RoomAudit._geometry_stays_inside_its_bounds` reads **every** mesh,
+  not just furniture-scale ones. It used to reuse `solid_boxes`, which
+  SKIPS room-scale geometry so a placement solver has somewhere to
+  stand — and a room's walls are exactly the geometry that can reach
+  into the neighbour, so the check that mattered was the one being
+  skipped.
+- `ShellValidator._check_envelope` delegates to `RoomContract.envelope`.
+- The conformance suite measures the worst overhang of BOTH producers
+  and asserts each is inside the shared allowance and outside the old
+  one — so the asymmetry cannot come back by anyone editing a number.
+
+Sabotage: putting the allowance back to 0.15 turns the suite red on
+procedural corridors and arenas at 0.05 m over — the exact failure Art
+predicted for Production's own rooms.
+
+### 2. The eight shells: measured, and refused
+
+| shell | class | surfaces | traversal | sockets | structural | measured |
+|---|---|---:|---:|---:|---:|---:|
+| `shell_corner_left` | small | 1 | 0 | 1 | 0 | 10 |
+| `shell_corner_right` | small | 1 | 0 | 1 | 0 | 10 |
+| `shell_treasure_vault` | small | 3 | 2 | 4 | 0 | 32 |
+| `shell_treasure_cache` | small | 3 | 2 | 4 | 0 | 32 |
+| `shell_treasure_coffer` | small | 3 | 2 | 4 | 0 | 32 |
+| `shell_tower_collapsed` | medium | 11 | 9 | 16 | 0 | 122 |
+| `shell_tower_spiral` | medium | 12 | 10 | 17 | 0 | 133 |
+| `shell_tower_gantry` | medium | 23 | 21 | 28 | 0 | 254 |
+
+**Structural = 0 across the board.** Art's metadata is well formed: the
+contract accepts every surface, socket, volume and traversal segment.
+
+**Every measured finding is a "nothing is there" finding.** Grouped by
+probe, the classes are `has no geometry under it`, `has nothing under
+it`, `no floor beneath it` and `nothing to stand on`. Zero headroom
+findings, zero sealed doors, zero traversal-law violations, zero
+envelope violations.
+
+The cause, measured directly: **the imported shells carry no
+collision.** One `MeshInstance3D`, zero `CollisionObject3D`, zero
+`CollisionShape3D`, in every one. `ART_ASSET_SPEC.md` §3 is explicit —
+*"Author collision. Never rely on an auto-generated trimesh for
+anything a player touches"* — with `-col` / `-convcol` / `-colonly`
+named as the least error-prone route. None of the eight uses them and
+the `.glb.import` files request no physics.
+
+So the audit's verdict is **NOT MEASURABLE**, not "measured and safe".
+Art's 47 predicted headroom notes are neither confirmed nor refuted;
+neither are the doors, and neither is the corrected edge-to-edge
+traversal export. A probe against a room with no colliders reports
+nothing, which is the failure mode `RoomAudit` refuses to dress up as a
+pass.
+
+Nothing was repaired, weakened or flipped.
+
+### 3. Review is now the audit gate
+
+A `pending` shell's findings are EVIDENCE FOR THAT REVIEW and do not
+fail the build — nothing can select it. A shell marked `pass` that
+fails the contract turns the suite red. Sabotage: flipping
+`shell_treasure_vault` to `pass` fails immediately with *"is approved
+content and fails the room contract"*. That is what makes promotion a
+measured decision rather than a JSON edit.
+
+### 4. What is proven working
+
+- **Corners turn.** `shell_corner_left` carries `exit_yaw` +90 and
+  `shell_corner_right` −90 (Art's own sidecar `turn` × 90, sign not
+  re-derived), both reach the room contract, and a two-room Zone built
+  through `ZoneBuilder.build` measures the second room rotated +90.
+- **Towers gate on floors.** The three declare `fits_floors` [2], [3],
+  [5] — covering three distinct counts, none of them 4. A `floors=4`
+  request against `shell_tower_spiral` falls back to the procedural
+  builder, and that room passes the contract and the audit.
+- **Nothing is selectable.** 29 registry entries load; the catalog
+  offered to Epsilon is `{}`; `all_legal_shell_ids()` is empty; all
+  eight are non-offerable.
+- **Zero real-Zone change.** `zone_digest 6e8d83d0f3ec088b`, unchanged.
+
+### 5. Two findings for the next slice, not fixed here
+
+- **The corners are tagged `corner`, which is not a chamber type.** Even
+  approved, `shells_for_type` would never offer them, because the
+  catalog matches `semantic_tags` against `CHAMBER_TYPES`. They are
+  reachable only by an explicit `shell_id`. Whether a corner is a
+  corridor-shaped room or a corner CONNECTOR is a design call.
+- **Three fields are Production-side and Art's exporter does not emit
+  them:** `size_class` (owner taste), `exit_yaw` and `fits_floors`
+  (both landed at `089547e`, after Art cut its export against
+  `99379e5`). They were applied here from the owner decision and from
+  Art's own sidecar `turn` / `floors`. A regenerated export would drop
+  them until the exporter learns the three.
+
 ## Latest session: P2 prep — ready to accept the eight shells
 
 Engineering and integration prep only. **No authored room landed.** Art's
