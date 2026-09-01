@@ -280,6 +280,61 @@ func _audit(build: Dictionary, declared: Array) -> void:
 
 	_check(audited > 0, "the audit examined nothing")
 	_audit_bands(build, space)
+	_audit_rewards(build, space)
+
+## Every Check the Zone actually allocates, measured where
+## `ZoneController` will really put its pedestal (P2-A).
+##
+## THE BUG. `reward_position` was a fixed point on an arena's centre
+## line and the room's cover boxes were scattered independently, so a
+## Check pedestal could stand inside a crate -- and `ZoneController`
+## places `RewardObject` at that anchor with no clearance test at all.
+## Two of four arenas in the P1 conformance suite did it.
+##
+## This is the assembled-path half of the regression. The conformance
+## suite builds rooms; this one walks the Zone a baseline playtest walks,
+## reads the SAME `reward_location_id` and `additional_reward_location_ids`
+## the controller reads, applies the SAME `REWARD_SPACING`, and puts a
+## pedestal-sized box where each one will stand. A structural failure,
+## because a Check the player cannot reach is a Zone that cannot be
+## finished.
+func _audit_rewards(build: Dictionary, space: PhysicsDirectSpaceState3D) -> void:
+	var checks := 0
+	for entry: Dictionary in build["chambers"]:
+		var chamber: Dictionary = entry["chamber"]
+		var xform: Transform3D = entry["xform"]
+		var anchor: Vector3 = (entry["build"] as Dictionary).get(
+				"reward_position", Vector3.ZERO)
+		var ids: Array = []
+		if chamber.get("reward_location_id") != null:
+			ids.append(chamber["reward_location_id"])
+		ids.append_array(chamber.get(
+				"additional_reward_location_ids", []) as Array)
+		for index in ids.size():
+			checks += 1
+			var at: Vector3 = xform * (anchor + Vector3(
+					0.0, 0.0, float(index) * ZoneController.REWARD_SPACING))
+			var query := PhysicsShapeQueryParameters3D.new()
+			var shape := BoxShape3D.new()
+			# The pedestal itself, not the space around it: this asks
+			# whether the Check is INSIDE something, and a crate one metre
+			# away is cover doing its job.
+			shape.size = Vector3(ChamberBuilders.REWARD_PEDESTAL,
+					ChamberBuilders.REWARD_PEDESTAL_HEIGHT - 0.4,
+					ChamberBuilders.REWARD_PEDESTAL)
+			query.shape = shape
+			# Lifted clear of the floor it stands ON. A pedestal resting
+			# on the ground touches the ground, and touching is not
+			# being buried.
+			query.transform = Transform3D(Basis(), at + Vector3.UP
+					* (ChamberBuilders.REWARD_PEDESTAL_HEIGHT / 2.0 + 0.2))
+			query.collide_with_areas = false
+			_check(space.intersect_shape(query, 1).is_empty(),
+					"Check %s in room '%s' stands inside the room's own "
+					% [str(ids[index]), str(chamber.get("id", "?"))]
+					+ "geometry")
+	_check(checks > 0, "the Zone allocates no Checks to measure")
+	print("  %d Check pedestal(s) measured where they will stand" % checks)
 
 ## Every elevation band the ZONE DECLARES, measured in the assembled
 ## scene (ROOM_GRAMMAR v0).
@@ -307,10 +362,15 @@ func _audit_bands(build: Dictionary, space: PhysicsDirectSpaceState3D) -> void:
 		var xform: Transform3D = entry["xform"]
 		var sockets: Array = (entry["build"] as Dictionary).get(
 				"sockets", []) as Array
+		# BY NAME. The first version took the LAST `reserved` socket,
+		# which worked exactly until a room reserved something else --
+		# the Check's own space, added in P2 -- and every band in the
+		# Zone suddenly measured at the reward anchor's height.
 		var deck: Variant = null
 		for socket: Variant in sockets:
-			if typeof(socket) == TYPE_DICTIONARY and str(
-					(socket as Dictionary).get("kind", "")) == "reserved":
+			if typeof(socket) != TYPE_DICTIONARY:
+				continue
+			if str((socket as Dictionary).get("name", "")) == "band_deck":
 				deck = (socket as Dictionary)["position"]
 		if deck == null:
 			_check(false, "room '%s' declares a %s band and the builder "

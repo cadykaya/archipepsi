@@ -45,6 +45,11 @@ const LEVELS := {
 ## Categories that must declare a legal placement envelope.
 const NEEDS_FOOTPRINT := ["cluster"]
 
+## The quarter turns a room's exit may make (P2-B). Mirrors
+## `content.py`'s EXIT_YAWS; the chain's overlap guard and connector
+## grammar are written for 90-degree turns and nothing else.
+const EXIT_YAWS := [-90.0, 0.0, 90.0]
+
 ## The process-wide registry, loaded once. A static rather than a third
 ## autoload: it needs no scene tree, no load order, and nothing to happen
 ## before it is first asked a question. `reset_shared()` exists for tests
@@ -135,6 +140,17 @@ func _accept(pack: String, entry: Dictionary) -> void:
 				% category + "socket; nothing could connect to it")
 		return
 
+	var yaw := float(entry.get("exit_yaw", 0.0))
+	if not EXIT_YAWS.has(yaw):
+		_fail(id, "declares exit_yaw %.1f; the chain is built for "
+				% yaw + "quarter turns")
+		return
+
+	var floors_problem := _fits_floors_problem(entry)
+	if not floors_problem.is_empty():
+		_fail(id, floors_problem)
+		return
+
 	var surface_problem := _surface_problem(entry)
 	if not surface_problem.is_empty():
 		_fail(id, surface_problem)
@@ -172,6 +188,24 @@ func _accept(pack: String, entry: Dictionary) -> void:
 
 	entry["_pack"] = pack
 	entries[id] = entry
+
+## P2-C: are the declared tower floor counts ones a tower can have?
+##
+## The bounds come from `Constants`, mirroring `content.py`'s read of
+## `TowerChamber.floors`, so the two languages cannot come to hold
+## different opinions about how tall a tower gets.
+func _fits_floors_problem(entry: Dictionary) -> String:
+	var raw: Variant = entry.get("fits_floors", [])
+	if typeof(raw) != TYPE_ARRAY:
+		return "declares a 'fits_floors' field that is not a list"
+	for value: Variant in raw as Array:
+		var floors := int(value)
+		if floors < Constants.TOWER_MIN_FLOORS \
+				or floors > Constants.TOWER_MAX_FLOORS:
+			return ("says it fits a %d-floor tower; the schema builds "
+					% floors + "%d to %d" % [Constants.TOWER_MIN_FLOORS,
+						Constants.TOWER_MAX_FLOORS])
+	return ""
 
 ## P1: does this entry say where its floor is, and do its sockets stand
 ## on floors it declared? Returns "" when it does.

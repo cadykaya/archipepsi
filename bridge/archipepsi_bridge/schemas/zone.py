@@ -504,7 +504,7 @@ class PlatformPathChamber(_WithEnemies):
 class TowerChamber(_WithEnemies):
     """Vertical traversal. The template always emits a base-movement route."""
     type: Literal["tower"]
-    floors: int = Field(ge=2, le=5)
+    floors: int = Field(ge=C.TOWER_MIN_FLOORS, le=C.TOWER_MAX_FLOORS)
     objective: Literal["reach_reward", "kill_all"]
     enemies: tuple[EnemyGroup, ...] = Field(default=(), max_length=4)
 

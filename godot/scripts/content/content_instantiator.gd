@@ -242,6 +242,19 @@ static func _shell(chamber: Dictionary, theme: String,
 	var entry := reg.get_entry(chosen)
 	if bool(entry.get("procedural_fallback", false)):
 		return ChamberBuilders.build(chamber, theme)
+	# P2-C: DOES THIS SHELL FIT THIS ROOM?
+	#
+	# An authored shell has fixed geometry. The art lane's towers are 2,
+	# 3 and 5 floors and the generator may ask for 4, so something has
+	# to answer "there is no shell for that" -- and the answer is the
+	# permanent procedural builder, not a 3-floor tower pretending. That
+	# is the fallback working as designed, which is why it is a warning
+	# and not an error.
+	var misfit := _misfit(entry, chamber)
+	if not misfit.is_empty():
+		push_warning("content: '%s' %s; using the procedural builder"
+				% [chosen, misfit])
+		return ChamberBuilders.build(chamber, theme)
 	# The art-lane gate. A PENDING asset is one somebody is still
 	# deciding about; putting it in a zone decides for them, and the
 	# decision was explicit that files existing is not approval.
@@ -413,6 +426,10 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 		"reward_position": _objective(entry, size),
 		"sockets": _authored_sockets(entry),
 		"traversal": _authored_traversal(entry),
+		# P2-B. Degrees, matching `Socket.yaw` and the manifest; the
+		# chain converts once. A shell that does not declare one goes
+		# straight through, which is what every room has always done.
+		"exit_yaw": float(entry.get("exit_yaw", 0.0)),
 	}
 	result["features"] = AffordanceFeatures.place_all(
 			root, chamber, theme, size.x, size.z, size.y)
@@ -500,6 +517,31 @@ static func _exit_offset(entry: Dictionary, size: Vector3) -> Vector3:
 		if str(s.get("name", "")) in ["exit", "end_b"]:
 			return _vector(s.get("position", []), Vector3(0, 0, size.z))
 	return Vector3(0, 0, size.z)
+
+## Why this shell cannot build this chamber, or "" when it can.
+##
+## One rule today, and deliberately only one: a shell that names the
+## tower floor counts it was BUILT for may not be used for another. The
+## general form -- every chamber parameter an authored shell fixes --
+## arrives with the shells that need it; inventing the whole taxonomy
+## now would be inventing rules with no content to hold them.
+##
+## NOT A STRETCH POINT. There is no arm here that scales, retimes or
+## reinterprets a shell to make it fit; the only outcomes are "use it"
+## and "use the builder".
+static func _misfit(entry: Dictionary, chamber: Dictionary) -> String:
+	var fits: Variant = entry.get("fits_floors", [])
+	if typeof(fits) != TYPE_ARRAY or (fits as Array).is_empty():
+		return ""
+	if not chamber.has("floors"):
+		return ""
+	var floors := int(chamber["floors"])
+	for allowed: Variant in fits as Array:
+		if int(allowed) == floors:
+			return ""
+	return "is built for %s floors and this tower has %d" % [
+			", ".join((fits as Array).map(
+				func(f: Variant) -> String: return str(int(f)))), floors]
 
 ## Enemy placement stays the generator's decision; the shell only says
 ## WHERE it is safe to put one. An authored shell with no `enemy_spawn`

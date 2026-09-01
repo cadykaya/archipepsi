@@ -223,6 +223,17 @@ class Socket(Strict):
         return self
 
 
+#: The quarter turns a room's exit may make (P2-B).
+#:
+#: NOT an arbitrary angle. `ZoneBuilder` chains rooms on a cursor-and-yaw
+#: walk whose overlap guard, connector grammar and never-revisit proof
+#: are all written for 90-degree turns; a 37-degree exit is a different
+#: piece of engineering and arrives with the topology slice, not with a
+#: corner shell. 180 is absent on purpose -- a room that exits back the
+#: way it came walks the chain into its own previous arm.
+EXIT_YAWS = (-90.0, 0.0, 90.0)
+
+
 #: Semantic size, the vocabulary Epsilon uses instead of metres (D1).
 #: Deliberately coarse: "large" is a design intent, and the shell decides
 #: what that measures. NOT a mandatory triplication rule -- a family may
@@ -347,6 +358,31 @@ class ContentEntry(Strict):
     #: were never art-reviewed.
     review: Literal["pending", "pass"] | None = None
 
+    #: P2-B: how far the room turns the chain on its way out, in degrees
+    #: about +Y. Zero -- the default, and what every room has always
+    #: done -- is straight through.
+    #:
+    #: THE SIGN IS ESTABLISHED AND WAS EXPENSIVE. `ZoneBuilder` rotates
+    #: by `Basis(Vector3.UP, yaw)` and adds the turn, so a shell whose
+    #: exit leaves through its +X wall turns the chain by +90 and is the
+    #: LEFT corner. An earlier version of the art builders had the two
+    #: names swapped and it was caught by a render disagreeing with its
+    #: own caption; do not re-derive it.
+    exit_yaw: float = 0.0
+
+    #: P2-C: the tower floor counts this shell is BUILT for. Empty means
+    #: the shell does not depend on the parameter.
+    #:
+    #: An authored shell has fixed geometry. The art lane's three towers
+    #: are 2, 3 and 5 floors, and the generator may ask for 4 -- so
+    #: something has to say "there is no shell for that" rather than
+    #: hand back a 3-floor tower and let the room be a floor short. It is
+    #: NOT a licence to stretch: a shell either was built for the count
+    #: or it was not, and when none was, the permanent procedural
+    #: builder makes the room. That fallback is the design, not a
+    #: degradation.
+    fits_floors: tuple[int, ...] = Field(default=(), max_length=8)
+
     #: D1: the semantic size Epsilon asks for, when it asks at all.
     #: Optional -- a shell that is simply "the corridor" needs no class.
     size_class: SizeClass | None = None
@@ -392,6 +428,28 @@ class ContentEntry(Strict):
             raise ValueError(
                 f"'{self.id}' is an affordance_visual and names no "
                 f"affordance_tag; it renders nothing in particular")
+        return self
+
+    @model_validator(mode="after")
+    def _a_declared_floor_count_is_one_a_tower_can_have(self):
+        # Bounds from `constants.py`, which is also where `TowerChamber`
+        # reads them and where the exporter takes GDScript's copy from.
+        # One source, three consumers, no drift.
+        for floors in self.fits_floors:
+            if not (C.TOWER_MIN_FLOORS <= floors <= C.TOWER_MAX_FLOORS):
+                raise ValueError(
+                    f"'{self.id}' says it fits a {floors}-floor tower; "
+                    f"the schema builds {C.TOWER_MIN_FLOORS} to "
+                    f"{C.TOWER_MAX_FLOORS}")
+        return self
+
+    @model_validator(mode="after")
+    def _the_exit_turns_by_a_quarter_or_not_at_all(self):
+        if self.exit_yaw not in EXIT_YAWS:
+            raise ValueError(
+                f"'{self.id}' declares exit_yaw {self.exit_yaw}; the "
+                f"chain is built for quarter turns and accepts "
+                f"{', '.join(f'{y:g}' for y in EXIT_YAWS)}")
         return self
 
     @model_validator(mode="after")

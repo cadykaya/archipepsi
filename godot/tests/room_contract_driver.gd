@@ -27,23 +27,7 @@ const AUTHORED_ROOM := "res://content/test_fixtures/shell_room_honest.tscn"
 const AUTHORED_LID := "res://content/test_fixtures/shell_room_lid.tscn"
 const AUTHORED_SEALED := "res://content/test_fixtures/shell_room_sealed.tscn"
 
-## THE ONE KNOWN OPEN DEFECT this audit found and P1 does not fix.
-##
-## An arena scatters three "crude cover" boxes at random inside the
-## middle half of the room, and `reward_position` is the fixed point
-## `depth * 0.72` on the centre line. Nothing has ever stopped one
-## landing on the other, so a Check pedestal can stand inside a crate --
-## `zone_controller.gd:150` places `RewardObject` at that anchor with no
-## clearance test at all.
-##
-## It is REPORTED and not fixed, deliberately: moving either the props or
-## the anchor moves what the player sees, and P1's own acceptance is zero
-## player-facing change. It is recorded here rather than filtered away
-## silently, and the count is pinned so it cannot grow unnoticed.
-const KNOWN_OPEN := "the reward position"
-
 var failures := 0
-var notes := 0
 ## Vacuity guards. Every "nothing was wrong" assertion is worth nothing
 ## if no room was built and no probe was fired.
 var rooms_checked := 0
@@ -56,19 +40,14 @@ func _check(condition: bool, message: String) -> void:
 		push_error("FAIL: " + message)
 		print("FAIL: " + message)
 
-## Audit findings, split into what this slice is accountable for and the
-## one pre-existing defect it merely discovered.
+## P1 reported the reward-inside-a-crate finding as a pinned NOTE, since
+## fixing it meant moving what the player sees. P2 fixed it -- the arena
+## reserves the Check's space before it scatters anything -- so there is
+## nothing left to excuse and every finding is a failure again.
 func _judge(found: Array[String], who: String) -> void:
-	var real: Array[String] = []
-	for finding in found:
-		if finding.contains(KNOWN_OPEN):
-			notes += 1
-			print("  NOTE: %s" % finding)
-		else:
-			real.append(finding)
-	_check(real.is_empty(),
+	_check(found.is_empty(),
 			"%s does not match its own geometry: %s"
-			% [who, "; ".join(real)])
+			% [who, "; ".join(found)])
 
 func _ready() -> void:
 	await _run()
@@ -87,6 +66,9 @@ func _run() -> void:
 	await _test_a_shell_that_overflows_its_envelope_is_refused()
 	await _test_the_contract_refuses_a_malformed_room()
 	await _test_a_jump_is_measured_the_same_for_both_producers()
+	await _test_a_declared_turn_steers_the_chain()
+	await _test_a_tower_shell_built_for_other_floor_counts_is_not_used()
+	await _test_a_check_never_stands_inside_the_room()
 
 	_check(rooms_checked >= 8,
 			"only %d rooms went through the contract; the suite is not "
@@ -98,14 +80,6 @@ func _run() -> void:
 			"only %d deliberately broken rooms were caught; a suite that "
 			% probes_expected_to_fail + "never sees a failure is a suite "
 			+ "nobody can trust")
-	# PINNED. Two of the four arenas built here drop a Check pedestal
-	# inside one of their own crates. That is the defect this audit
-	# found and P1 does not fix; what P1 owes is that it cannot get
-	# quietly worse.
-	_check(notes <= 2,
-			"%d rooms now put their reward inside their own geometry; "
-			% notes + "the recorded number is 2 and it may not grow")
-	print("  %d known open defect(s) reported" % notes)
 
 	if failures == 0:
 		print("GODOT ROOM CONTRACT TESTS OK")
@@ -309,6 +283,177 @@ func _test_both_producers_offer_the_same_vocabulary() -> void:
 	for room in rooms:
 		room.queue_free()
 	await get_tree().process_frame
+
+func _test_a_declared_turn_steers_the_chain() -> void:
+	"""P2-B. The corner shells are the whole reason: their geometry
+	always assumed a turning exit, which is why `exit_offset` already
+	carries it, and until now nothing downstream could act on that.
+
+	The sign is established and was expensive -- `ZoneBuilder` rotates by
+	`Basis(Vector3.UP, yaw)` and ADDS the turn, so a shell leaving
+	through its +X wall turns the chain +90 and is the LEFT corner. An
+	earlier version of the art builders had the two names swapped and it
+	was caught by a render disagreeing with its own caption."""
+	var straight := _authored_room(AUTHORED_ROOM)
+	await get_tree().physics_frame
+	_check(float(straight.get("exit_yaw", 0.0)) == 0.0,
+			"a shell that declares no turn must go straight through")
+	(straight["root"] as Node3D).queue_free()
+
+	for turn: float in [90.0, -90.0]:
+		var entry := _authored_entry(AUTHORED_ROOM)
+		entry["exit_yaw"] = turn
+		var registry := _registry_for(entry)
+		var result: Dictionary = ContentInstantiator.build_chamber(
+				{"id": "turn", "type": "arena", "width": 12.0,
+					"depth": 16.0, "wall_height": 6.0,
+					"objective": "reach_exit", "enemies": [],
+					"shell_id": str(entry["id"])},
+				"concrete_facility", registry)
+		add_child(result["root"] as Node3D)
+		await get_tree().physics_frame
+		_check(float(result.get("exit_yaw", 0.0)) == turn,
+				"a shell declaring %.0f must carry it into the contract"
+				% turn)
+		_check(RoomContract.violations(result, "turn").is_empty(),
+				"a quarter turn must satisfy the contract")
+		rooms_checked += 1
+		authored_checked += 1
+		(result["root"] as Node3D).queue_free()
+
+	# And the chain actually turns. Measured on the built Zone rather
+	# than asserted about the number: two rooms whose exits both turn
+	# +90 must leave the second one facing across the first.
+	var zone := _turning_zone(90.0)
+	await get_tree().physics_frame
+	var yaws := _chamber_yaws(zone)
+	_check(yaws.size() >= 2, "the turning Zone built %d rooms"
+			% yaws.size())
+	if yaws.size() >= 2:
+		var delta: float = rad_to_deg(yaws[1] - yaws[0])
+		_check(absf(delta - 90.0) < 1.0,
+				"a +90 exit must turn the chain +90; it turned %.1f"
+				% delta)
+	(zone["root"] as Node3D).queue_free()
+
+	var back := _turning_zone(0.0)
+	await get_tree().physics_frame
+	var straight_yaws := _chamber_yaws(back)
+	if straight_yaws.size() >= 2:
+		_check(absf(straight_yaws[1] - straight_yaws[0]) < 0.001,
+				"a shell declaring no turn must leave the chain straight")
+	(back["root"] as Node3D).queue_free()
+	probes_expected_to_fail += 1
+	await get_tree().process_frame
+
+## A two-room Zone whose rooms are the authored fixture, turning by
+## `turn`. Built through `ZoneBuilder.build`, which is the only place
+## chaining happens.
+func _turning_zone(turn: float) -> Dictionary:
+	var entry := _authored_entry(AUTHORED_ROOM)
+	entry["exit_yaw"] = turn
+	# `ZoneBuilder` reaches the SHARED registry, which is the whole
+	# point: this has to be the chaining the game does, not a private
+	# copy of it. Lend the shared one the fixture and hand it back.
+	ContentRegistry.shared().entries[str(entry["id"])] = entry
+	var chambers: Array = []
+	for i in 2:
+		chambers.append({"id": "t%d" % i, "type": "arena", "width": 12.0,
+				"depth": 16.0, "wall_height": 6.0,
+				"objective": "reach_exit", "enemies": [],
+				"shell_id": str(entry["id"])})
+	var zone := ZoneBuilder.build({"zone_id": "zt", "theme":
+			"concrete_facility", "chambers": chambers})
+	ContentRegistry.reset_shared()
+	add_child(zone["root"] as Node3D)
+	return zone
+
+func _chamber_yaws(zone: Dictionary) -> Array[float]:
+	var out: Array[float] = []
+	for entry: Dictionary in zone["chambers"]:
+		out.append((entry["xform"] as Transform3D).basis.get_euler().y)
+	return out
+
+func _test_a_tower_shell_built_for_other_floor_counts_is_not_used() -> void:
+	"""P2-C. The art lane's towers are 2, 3 and 5 floors; the generator
+	may ask for 4. A shell either was built for the count or it was not,
+	and when none was, the permanent procedural builder makes the room.
+
+	Do not stretch a 3-floor tower into a 4-floor one: the climb is
+	geometry, and a floor that is not there is a route the player cannot
+	finish."""
+	var entry := _authored_entry(AUTHORED_ROOM)
+	entry["id"] = "shell_tower_test"
+	entry["fits_floors"] = [3]
+	var registry := _registry_for(entry)
+	for floors: int in [3, 4]:
+		var result: Dictionary = ContentInstantiator.build_chamber(
+				{"id": "tw", "type": "tower", "floors": floors,
+					"enemies": [], "shell_id": str(entry["id"])},
+				"concrete_facility", registry)
+		add_child(result["root"] as Node3D)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var authored := not (result.get("sockets", []) as Array).is_empty()
+		if floors == 3:
+			_check(authored, "a tower shell built for 3 floors must be "
+					+ "used for a 3-floor tower")
+		else:
+			_check(not authored,
+					"a tower shell built for 3 floors was used for a "
+					+ "4-floor tower")
+			# And what came back is a real room, not a refusal.
+			_check(RoomContract.violations(result, "tower4").is_empty(),
+					"the procedural fallback must still be a valid room")
+			_judge(RoomAudit.findings(result, _space(), "tower4"),
+					"tower4")
+		rooms_checked += 1
+		(result["root"] as Node3D).queue_free()
+	probes_expected_to_fail += 1
+	await get_tree().process_frame
+
+func _test_a_check_never_stands_inside_the_room() -> void:
+	"""P2-A, at the scale the bug lived at.
+
+	Two of four arenas in the P1 suite dropped a Check pedestal inside
+	one of their own crates. Sixteen arenas here, each with a Check
+	declared, each measured where `ZoneController` will really put the
+	pedestal -- because one arena passing is how the original bug hid."""
+	var buried := 0
+	for i in 16:
+		var chamber := {
+			"id": "rw%d" % i, "type": "arena",
+			"width": 12.0 + float(i % 5) * 2.5,
+			"depth": 10.0 + float(i % 4) * 3.0,
+			"wall_height": 6.0, "objective": "kill_all",
+			"reward_location_id": 89100001 + i,
+			"enemies": [{"archetype": "melee", "count": 2}]}
+		if i % 3 == 0:
+			chamber["elevation"] = {"kind": "gallery", "rise": 2.2,
+					"coverage": 0.45,
+					"side": ["left", "right", "back"][i % 3],
+					"access": "ramp"}
+		var result := _build(chamber)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var at: Vector3 = result["reward_position"]
+		var query := PhysicsShapeQueryParameters3D.new()
+		var shape := BoxShape3D.new()
+		shape.size = Vector3(ChamberBuilders.REWARD_PEDESTAL,
+				ChamberBuilders.REWARD_PEDESTAL_HEIGHT - 0.4,
+				ChamberBuilders.REWARD_PEDESTAL)
+		query.shape = shape
+		query.transform = Transform3D(Basis(), at + Vector3.UP
+				* (ChamberBuilders.REWARD_PEDESTAL_HEIGHT / 2.0 + 0.2))
+		query.collide_with_areas = false
+		if not (result["root"] as Node3D).get_world_3d() 				.direct_space_state.intersect_shape(query, 1).is_empty():
+			buried += 1
+		rooms_checked += 1
+		(result["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	_check(buried == 0,
+			"%d of 16 arenas stand a Check inside their own geometry"
+			% buried)
 
 # --- the audit catches what a description cannot --------------------------
 

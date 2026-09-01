@@ -572,6 +572,47 @@ of them in a `platform_path` room and none in an arena.
 a room can hold is a fact about its built geometry, and Python pricing it
 would be the same builder-knows-what-the-composer-does-not failure.
 
+## P2 PREP — ready to accept the eight shells — landed 2026-09-01
+
+Engineering only. **No authored room landed; Art's exporter has not run
+yet** (see "what remains" below). P3 is not started.
+
+**A. The Check/cover collision is fixed.** P1 found a Check pedestal
+standing inside a crate in 2 of 4 arenas. The arena now decides where
+its Checks go BEFORE it scatters anything, declares that space as a
+`reserved` region — so activities and barrels avoid it too — and its
+props take the first free spot near the one they rolled. The rng stream
+is untouched, so a room with no conflict is byte-identical to before.
+The band is built first for the same reason: `_elevation_band` already
+DECLARES its deck and its ramp, so the anchor is chosen against those
+rather than against a second derivation of where the band is.
+`make godot-zone-audit` now measures all 15 Check pedestals of the real
+Zone where `ZoneController` will really put them.
+
+**B. `exit_yaw`.** `ContentEntry.exit_yaw`, `{-90, 0, +90}` only,
+mirrored in `content_registry.gd` and `room_contract.gd`, emitted by
+`_from_authored_scene`, consumed by `ZoneBuilder` AFTER the room is
+placed and overlap-guarded — so the turn steers only what comes next.
+Absent or 0 is straight through, which is what every room did before.
+**The sign is Art's and was expensive: a shell leaving through its +X
+wall turns the chain +90 and is the LEFT corner.**
+
+**C. `floors=4`.** `ContentEntry.fits_floors` names the tower floor
+counts a shell was BUILT for; empty means it does not care. A shell that
+does not fit is not used and the permanent procedural builder makes the
+room — there is no arm anywhere that stretches one. Bounds come from
+`constants.TOWER_MIN_FLOORS/MAX`, which the schema, both validators and
+GDScript all read.
+
+**D. Size/intent.** No thresholds were invented. `size_class` steers
+WHICH shell is offered and nothing else; `intent` is read by nothing;
+`cost` never reaches `room_value`. A source-reading test keeps all three
+that way. **One owner taste call remains open** — see NEXT_STEPS.
+
+**E.** `spawn`/`objective`/`secret`/`vista`/`presentation` socket kinds
+still have no live consumer. Untouched, recorded as deferred cleanup:
+the eight shells do not need them.
+
 ## P1 — ROOM CONTRACT PARITY + THE GEOMETRIC AUDIT — landed 2026-09-01
 
 The first slice of the adopted ROOM_ARCHITECTURE_STUDY hybrid (PR #7,

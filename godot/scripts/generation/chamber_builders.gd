@@ -121,6 +121,146 @@ static func _floor_with_hole(root: Node3D, width: float, depth: float,
 				Vector3(strip[0] + sx / 2.0, -0.25, strip[2] + sz / 2.0),
 				mat)
 
+## How much room a Check needs, and why it is not a taste number.
+##
+## `Reward` builds a 1.4 m interaction box over a 0.75 m-radius pedestal,
+## and the player has to be able to stand at it and shoot it. So the
+## clearance is the pedestal plus the player's own capsule on each side,
+## derived from both rather than typed -- if either grows, this grows.
+const REWARD_PEDESTAL := 1.5
+const REWARD_PEDESTAL_HEIGHT := 2.6
+
+## How far apart `ZoneController` spaces a room's Checks along +Z. One
+## derivation: a room with three Checks reserves room for three.
+const REWARD_ROW_SPACING := 4.0
+
+## The volume a room's Checks and the space to use them occupy.
+##
+## THE BUG THIS EXISTS FOR. An arena scattered three cover boxes at
+## random through the middle half of the room and `reward_position` was a
+## fixed point on the centre line, so nothing ever stopped one landing on
+## the other -- and `ZoneController` places the pedestal at that anchor
+## with no clearance test at all. Two of four arenas in the P1
+## conformance suite spawned a Check inside a crate.
+##
+## Declared as a `reserved` region rather than fixed by moving one prop,
+## because that makes it true for everything downstream at once: the
+## builder's own props avoid it here, and occupancy keeps activities and
+## environmental objects out of it for free.
+static func reward_clearance(chamber: Dictionary, at: Vector3) -> AABB:
+	var count := 1 if chamber.get("reward_location_id") != null else 0
+	count += (chamber.get("additional_reward_location_ids", []) as Array
+			).size()
+	# AT LEAST ONE, always. `reward_position` is the room's promise about
+	# where a Check goes, and a room does not get to assume the campaign
+	# will not give it one -- the allocator decides that, later, and by
+	# then the crate is built. A room that ends up with no Check has paid
+	# three square metres for a promise it kept.
+	count = maxi(count, 1)
+	var span := REWARD_PEDESTAL + Constants.PLAYER_RADIUS * 4.0
+	var along := REWARD_ROW_SPACING * float(count - 1) + span
+	return AABB(
+			Vector3(at.x - span / 2.0, at.y, at.z - span / 2.0),
+			Vector3(span, REWARD_PEDESTAL_HEIGHT, along))
+
+## The room's first choice for a prop, or the nearest free spot to it.
+##
+## No randomness: the caller has already rolled where it WANTS the prop,
+## and a room with nothing in the way gets exactly that. The sweep only
+## runs when the first choice would bury something the room reserved,
+## and it returns the ideal when the room genuinely has no space --
+## a missing prop is a room that quietly got emptier, and the Zone audit
+## reports a buried Check either way.
+static func _free_prop_spot(ideal: Vector3, size: Vector3, width: float,
+		depth: float, taken: Array[AABB]) -> Vector3:
+	if not box_hits(AABB(ideal - size / 2.0, size), taken):
+		return ideal
+	var lo_x := -width / 2.0 + 2.5
+	var hi_x := width / 2.0 - 2.5
+	var lo_z := depth * 0.25
+	var hi_z := depth * 0.75
+	var best := ideal
+	var best_away := INF
+	for xi in 9:
+		for zi in 9:
+			var at := Vector3(
+					lerpf(lo_x, hi_x, float(xi) / 8.0), size.y / 2.0,
+					lerpf(lo_z, hi_z, float(zi) / 8.0))
+			if box_hits(AABB(at - size / 2.0, size), taken):
+				continue
+			var away := at.distance_to(ideal)
+			if away < best_away:
+				best_away = away
+				best = at
+	return best
+
+## Where an arena's Checks go, out of the way of its own band.
+##
+## The default is the point the room has always used. It moves only when
+## something the room already RESERVED is standing there -- a `back`
+## gallery at 0.41 coverage reaches z = 0.59..1.0 of the room and its
+## access ramp reaches most of the rest, and the pedestal anchor sat in
+## both. That is the same bug as the crate, one room feature further
+## out, and the same answer: the builder knows where it put the band, so
+## the builder is what moves the anchor.
+##
+## `taken` is what `_elevation_band` DECLARED, handed in rather than
+## recomputed here. The first version re-derived `band_rect` and missed
+## the ramp entirely, which is the second derivation this project keeps
+## paying for.
+##
+## Deterministic and ordered, never random: the same Zone must lay out
+## the same room on every machine, and a Check that wanders is a Check
+## the replay cannot find.
+static func _reward_anchor(chamber: Dictionary, width: float,
+		depth: float, taken: Array[AABB]) -> Vector3:
+	var ideal := Vector3(0, 0, depth * 0.72)
+	if taken.is_empty():
+		return ideal
+	var span := REWARD_PEDESTAL + Constants.PLAYER_RADIUS * 4.0
+	# Down the middle first, then out to either side: a Check on the
+	# centre line is the room's own convention and worth keeping when it
+	# can be kept.
+	var reach := maxf(width / 2.0 - WALL_THICKNESS - span / 2.0, 0.0)
+	for at: Vector3 in [ideal,
+			Vector3(0, 0, depth * 0.45),
+			Vector3(-reach * 0.65, 0, depth * 0.72),
+			Vector3(reach * 0.65, 0, depth * 0.72),
+			Vector3(-reach * 0.65, 0, depth * 0.45),
+			Vector3(reach * 0.65, 0, depth * 0.45),
+			Vector3(0, 0, depth * 0.28)]:
+		var claim := AABB(
+				Vector3(at.x - span / 2.0, 0.0, at.z - span / 2.0),
+				Vector3(span, REWARD_PEDESTAL_HEIGHT, span))
+		if not box_hits(claim, taken):
+			return at
+	# Then a deterministic sweep of the whole legal floor, nearest to the
+	# ideal first. The seven candidates above are the room's preferences
+	# and they run out: a 12 x 10 arena with a 0.45-coverage band and its
+	# ramp has none of them free, and a Check has to go SOMEWHERE it
+	# fits. Same shape as `Activities._free_spot` -- ideal, then a grid,
+	# and the ideal again only if the room really is full.
+	var lo_x := -reach
+	var hi_x := reach
+	var lo_z := span / 2.0 + WALL_THICKNESS
+	var hi_z := maxf(lo_z, depth - span / 2.0 - WALL_THICKNESS)
+	var best := ideal
+	var best_away := INF
+	for xi in 9:
+		for zi in 9:
+			var at := Vector3(lerpf(lo_x, hi_x, float(xi) / 8.0), 0.0,
+					lerpf(lo_z, hi_z, float(zi) / 8.0))
+			var claim := AABB(
+					Vector3(at.x - span / 2.0, 0.0, at.z - span / 2.0),
+					Vector3(span, REWARD_PEDESTAL_HEIGHT, span))
+			if box_hits(claim, taken):
+				continue
+			var away := at.distance_to(ideal)
+			if away < best_away:
+				best_away = away
+				best = at
+	return best
+
 ## The footprint a ground socket vouches for.
 ##
 ## Read off the objects themselves rather than restated here, so making a
@@ -932,7 +1072,7 @@ static func _elevation_band(root: Node3D, band: Dictionary, width: float,
 	if side == "back":
 		ramp_span = Vector3(width_of_ramp, 0.0, run)
 	ramp_span.y = maxf(absf(rise), 2.4) * 2.0
-	sockets.append({"kind": "reserved",
+	sockets.append({"kind": "reserved", "name": "band_ramp",
 			"position": Vector3(ramp_at.x, 0.0, ramp_at.z),
 			"extent": ramp_span})
 
@@ -958,7 +1098,7 @@ static func _elevation_band(root: Node3D, band: Dictionary, width: float,
 	# because "the builder knows physical facts the composer does not" is
 	# the bug class this whole contract exists to end -- the first run
 	# with bands put six activity elements inside a deck.
-	sockets.append({"kind": "reserved",
+	sockets.append({"kind": "reserved", "name": "band_deck",
 			"position": Vector3(centre_x, 0.0, centre_z),
 			"extent": Vector3(span_x, maxf(absf(rise), 2.4) * 2.0, span_z)})
 	return sockets
@@ -979,19 +1119,75 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 	_floor_with_hole(root, width, depth, ThemeMaterials.floor_mat(theme),
 			hole)
 	_perimeter(root, width, depth, wall_height, theme)
+	# ROOM GRAMMAR v0's band, built BEFORE anything is scattered.
+	#
+	# It used to go in near the end, which was fine while nothing else
+	# needed to know where it was. The Check's space does: a `back`
+	# gallery at 0.41 coverage reaches z = 0.59..1.0 of the room and its
+	# access ramp reaches most of the rest, and the pedestal anchor sat
+	# in both. Reordering rather than recomputing the band's footprint
+	# somewhere else is the point -- `_elevation_band` already DECLARES
+	# its deck and its ramp as `reserved`, and a second derivation of a
+	# fact one function already owns is how the two come to disagree.
+	# Nothing here consumes randomness, so the room is unchanged by the
+	# move.
+	var sockets: Array = []
+	var band: Variant = chamber.get("elevation")
+	if typeof(band) == TYPE_DICTIONARY:
+		sockets = _elevation_band(root, band as Dictionary, width, depth,
+				theme)
+
+	# WHERE THE CHECKS GO, decided before anything is scattered.
+	#
+	# The room's own props used to be placed first and the reward anchor
+	# announced afterwards, so a crate could stand exactly where the
+	# pedestal was going to. Computing the anchor first and refusing to
+	# build a prop inside it is the same move the ground sockets make:
+	# the builder knows both facts, so the builder is what reconciles
+	# them.
+	var claimed: Array[AABB] = []
+	for socket: Dictionary in sockets:
+		if str(socket.get("kind", "")) == "reserved":
+			var at: Vector3 = socket["position"]
+			var extent: Vector3 = socket["extent"]
+			claimed.append(AABB(at - extent * 0.5, extent))
+	var reward_at := _reward_anchor(chamber, width, depth, claimed)
+	var reward_box := reward_clearance(chamber, reward_at)
+	if reward_box.size != Vector3.ZERO:
+		claimed.append(reward_box)
 	# Crude cover: a few boxes and a wedge.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(str(chamber.get("id", "c")) + theme)
 	for i in 3:
 		var size := Vector3(rng.randf_range(1.2, 2.4), rng.randf_range(0.8, 2.0),
 				rng.randf_range(1.2, 2.4))
-		_box(root, size, Vector3(
+		# ONE roll, then a deterministic sweep. Rolling alternates was
+		# the obvious fix and the wrong one: it moves the rng stream, so
+		# every prop in every room without a conflict would have shifted
+		# too. Taking the room's own first choice and then searching
+		# WITHOUT randomness leaves an unconflicted room byte-identical
+		# to what it was, and it is the same shape as
+		# `Activities._free_spot` -- ideal, then a grid, and the ideal
+		# again only if the room really is full.
+		#
+		# Cover is not deleted near a Check. It is placed where a Check
+		# is not.
+		var ideal := Vector3(
 				rng.randf_range(-width / 2.0 + 2.5, width / 2.0 - 2.5),
 				size.y / 2.0,
-				rng.randf_range(depth * 0.25, depth * 0.75)),
-				ThemeMaterials.accent_mat(theme))
-	_wedge(root, Vector3(2.2, 1.2, 2.2), Vector3(width * 0.25, 0.6, depth * 0.6),
-			ThemeMaterials.floor_mat(theme), rng.randf_range(0.0, TAU))
+				rng.randf_range(depth * 0.25, depth * 0.75))
+		var at := _free_prop_spot(ideal, size, width, depth, claimed)
+		_box(root, size, at, ThemeMaterials.accent_mat(theme))
+		claimed.append(AABB(at - size / 2.0, size))
+	var wedge_at := Vector3(width * 0.25, 0.6, depth * 0.6)
+	var wedge_size := Vector3(2.2, 1.2, 2.2)
+	# The wedge has one home and no alternates; when that home is inside
+	# the Check's space the wedge is the thing that yields.
+	if not box_hits(AABB(wedge_at - wedge_size / 2.0, wedge_size), claimed):
+		_wedge(root, wedge_size, wedge_at,
+				ThemeMaterials.floor_mat(theme), rng.randf_range(0.0, TAU))
+	else:
+		rng.randf_range(0.0, TAU)   # keep the stream identical either way
 	for corner in [Vector3(-width / 2.0 + 2, wall_height - 0.5, 2),
 			Vector3(width / 2.0 - 2, wall_height - 0.5, depth - 2)]:
 		_light(root, corner, theme, 16.0)
@@ -1005,18 +1201,19 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 				-1.0 if greeble_rng.randf() < 0.5 else 1.0, width / 2.0,
 				greeble_rng.randf_range(3.0, maxf(3.2, depth - 3.0)),
 				wall_height, greeble_rng)
-	# ROOM GRAMMAR v0. Built before the enemies, because where they stand
-	# is now a property of the room rather than a circle around its
-	# middle.
-	var sockets: Array = []
-	var band: Variant = chamber.get("elevation")
-	if typeof(band) == TYPE_DICTIONARY:
-		sockets = _elevation_band(root, band as Dictionary, width, depth,
-				theme)
 	var lowest := -1.0
 	if typeof(band) == TYPE_DICTIONARY \
 			and str((band as Dictionary).get("kind", "")) == "pit":
 		lowest = -float((band as Dictionary).get("rise", 2.0)) - 1.0
+
+	# The Check's space, said out loud. Declaring it rather than merely
+	# avoiding it is what makes it true for the composer as well: nothing
+	# reads `reward_position`, so an activity element or a barrel could
+	# stand on the pedestal and no rule anywhere would object.
+	if reward_box.size != Vector3.ZERO:
+		sockets.append({"kind": "reserved", "name": "reward_lane",
+				"position": reward_box.get_center(),
+				"extent": reward_box.size})
 
 	# Ground sockets, for the things a room stands on its floor. Kept out
 	# of the walking lane the same way affordances and activities are --
@@ -1080,7 +1277,7 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 			"enemy_spawns": spawns,
 			"sockets": sockets,
 			"room_height": wall_height,
-			"reward_position": Vector3(0, 0, depth * 0.72)}
+			"reward_position": reward_at}
 
 static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 	var segments := int(chamber.get("segment_count", 4))

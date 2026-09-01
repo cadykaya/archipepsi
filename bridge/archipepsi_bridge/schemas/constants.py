@@ -800,6 +800,13 @@ MAX_VERTICAL_STEP = _floor1(
 )
 MIN_PLATFORM_SIZE = 2.5
 
+#: How many floors a tower may have. Here rather than typed into
+#: `TowerChamber` because P2 needs an authored shell to declare which
+#: counts it was BUILT for, and the shell validator, the registry and
+#: the schema must not come to hold three opinions about the range.
+TOWER_MIN_FLOORS = 2
+TOWER_MAX_FLOORS = 5
+
 # --------------------------------------------------------------------------
 # Combat
 # --------------------------------------------------------------------------

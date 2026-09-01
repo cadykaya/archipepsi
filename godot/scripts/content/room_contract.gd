@@ -85,6 +85,16 @@ const BOUNDS_SLACK := 0.35
 ## `max_safe_gap`, which is the whole point of writing one contract.
 const TRAVERSAL_KINDS := ["gap", "rise", "drop", "walk"]
 
+## OPTIONAL, and in DEGREES: how far the room turns the chain on its way
+## out (P2-B). Absent or 0 is straight through, which is what every
+## producer has always done.
+##
+## The closed set is not fussiness. `ZoneBuilder` walks a cursor and a
+## yaw, and its overlap guard, its connector grammar and its
+## never-revisit proof are all written for quarter turns; an arbitrary
+## angle is the topology slice's problem, not a corner shell's.
+const EXIT_YAWS := [-90.0, 0.0, 90.0]
+
 ## Every way this room output is malformed. Empty is the contract.
 ##
 ## Structure only, and it says so twice because the temptation is to let
@@ -135,6 +145,13 @@ static func violations(result: Variant, who := "room") -> Array[String]:
 		elif not _finite(s["position"]):
 			out.append("%s: enemy spawn '%s' has no finite position"
 					% [who, str(s["archetype"])])
+
+	if room.has("exit_yaw"):
+		var yaw := float(room["exit_yaw"])
+		if not EXIT_YAWS.has(yaw):
+			out.append("%s: exit_yaw %.1f is not a quarter turn (%s)"
+					% [who, yaw, ", ".join(EXIT_YAWS.map(
+						func(y: float) -> String: return "%.0f" % y))])
 
 	out.append_array(_socket_violations(room, bounds, who))
 	out.append_array(_traversal_violations(room, who))

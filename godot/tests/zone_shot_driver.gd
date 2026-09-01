@@ -102,8 +102,8 @@ func _run() -> void:
 		for socket: Variant in (entry["build"] as Dictionary).get(
 				"sockets", []) as Array:
 			if typeof(socket) == TYPE_DICTIONARY \
-					and str((socket as Dictionary).get("kind", "")) \
-						== "reserved":
+					and str((socket as Dictionary).get("name", "")) \
+						== "band_deck":
 				deck = (socket as Dictionary)["position"]
 		if deck != null:
 			band_centre[str(chamber.get("id", ""))] = xform * (

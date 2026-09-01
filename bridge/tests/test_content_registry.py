@@ -723,3 +723,92 @@ def test_the_runtime_socket_kinds_exist_in_the_schema():
     assert kinds <= schema, (
         f"the runtime emits {sorted(kinds - schema)}, which no manifest "
         f"can declare")
+
+
+# --- P2: the turn, the floor fit, and the labels that must stay labels -----
+
+def test_a_room_may_turn_the_chain_only_by_a_quarter():
+    """P2-B. `ZoneBuilder` walks a cursor and a yaw, and its overlap
+    guard, its connector grammar and its never-revisit proof are all
+    written for quarter turns. An arbitrary angle is the topology
+    slice's problem, not a corner shell's."""
+    for yaw in (-90.0, 0.0, 90.0):
+        assert ContentEntry.model_validate(_entry(exit_yaw=yaw)).exit_yaw == yaw
+    for bad in (45.0, 180.0, 91.0, -1.0):
+        with pytest.raises(ValidationError, match="quarter turns"):
+            ContentEntry.model_validate(_entry(exit_yaw=bad))
+
+
+def test_a_shell_declares_the_floor_counts_it_was_built_for():
+    """P2-C. The art lane's towers are 2, 3 and 5 floors and the
+    generator may ask for 4. A shell either was built for the count or
+    it was not; when none was, the permanent procedural builder makes
+    the room. There is no stretching arm."""
+    assert ContentEntry.model_validate(
+        _entry(fits_floors=(3,))).fits_floors == (3,)
+    assert ContentEntry.model_validate(_entry()).fits_floors == ()
+    for bad in ((1,), (6,), (0,)):
+        with pytest.raises(ValidationError, match="floor tower"):
+            ContentEntry.model_validate(_entry(fits_floors=bad))
+
+
+def test_the_tower_floor_range_has_one_source():
+    """The schema, the shell rule and GDScript all read `constants.py`.
+    A bound retyped into a second file is a bound that drifts, and this
+    one is the difference between offering a shell and refusing it."""
+    from archipepsi_bridge.schemas import constants as C
+    from archipepsi_bridge.schemas.zone import TowerChamber
+
+    field = TowerChamber.model_fields["floors"]
+    lo = next(m.ge for m in field.metadata if hasattr(m, "ge"))
+    hi = next(m.le for m in field.metadata if hasattr(m, "le"))
+    assert (lo, hi) == (C.TOWER_MIN_FLOORS, C.TOWER_MAX_FLOORS)
+    gd = (ROOT / "godot" / "scripts" / "autoload" / "constants.gd").read_text()
+    assert f"const TOWER_MIN_FLOORS = {C.TOWER_MIN_FLOORS}" in gd
+    assert f"const TOWER_MAX_FLOORS = {C.TOWER_MAX_FLOORS}" in gd
+
+
+def test_the_two_validators_agree_about_turns_and_floor_fit():
+    """Dual-language law, for the two fields P2 adds."""
+    text = GDSCRIPT.read_text()
+    block = re.search(r'const EXIT_YAWS := \[(.*?)\]', text, re.S)
+    assert block, "EXIT_YAWS not found in content_registry.gd"
+    from archipepsi_bridge.schemas.content import EXIT_YAWS
+    gd = sorted(float(v) for v in re.findall(r'-?\d+\.?\d*', block.group(1)))
+    assert gd == sorted(EXIT_YAWS), (
+        "content.py and content_registry.gd disagree about which turns "
+        "a room may make")
+    assert "_fits_floors_problem" in text, (
+        "content_registry.gd does not mirror the fits_floors rule")
+
+
+def test_size_class_intent_and_cost_never_become_logic():
+    """P2-D. A taste label may steer WHICH shell is offered and may
+    never decide whether a player can finish.
+
+    `size_class` is a capacity certificate the owner has not yet locked
+    to metre bands, `intent` is a composition hint, and `cost` is an
+    economy number a provider writes about its own content -- so a
+    provider that could spend `cost` would be grading its own homework,
+    which is the rule `room_value` exists to enforce by recomputing.
+
+    Read off the source, in the style of the tier-arc guard, because a
+    comment saying so has not worked before.
+    """
+    engine = ROOT / "bridge" / "archipepsi_bridge"
+    value = (engine / "content_value.py").read_text()
+    for label in ("size_class", "intent", "cost"):
+        assert label not in value, (
+            f"`{label}` reaches room_value; the engine recomputes a "
+            f"Zone's worth precisely so a provider cannot declare it")
+
+    # Selection may read `size_class`. Nothing else may.
+    allowed = {"shells.py", "content.py", "zone.py", "export.py",
+               "requests.py", "prompts.py", "claude_provider.py",
+               "fallback.py"}
+    for path in engine.rglob("*.py"):
+        if path.name in allowed or "generated" in path.parts:
+            continue
+        assert "size_class" not in path.read_text(), (
+            f"{path.name} reads size_class; a taste label steering "
+            f"anything but the offer is progression truth in disguise")

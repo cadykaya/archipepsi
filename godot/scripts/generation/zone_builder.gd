@@ -136,6 +136,22 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 			"xform": Transform3D(Basis(Vector3.UP, yaw), cursor),
 		})
 		cursor += _rot(yaw, result["exit_offset"])
+		# P2-B: A ROOM MAY TURN THE CHAIN. Applied after the room is
+		# placed and its cursor advanced, so the room itself is still
+		# measured and overlap-guarded at the yaw it was built for, and
+		# the turn only steers what comes next. Absent or zero is
+		# straight through -- what every room did before this existed.
+		#
+		# The connector after the turn is emitted at the NEW yaw, which
+		# is what makes the corner a corner rather than a room with a
+		# rotated doorway.
+		var turn := float(result.get("exit_yaw", 0.0))
+		if RoomContract.EXIT_YAWS.has(turn):
+			yaw += deg_to_rad(turn)
+		else:
+			push_warning("zone: chamber '%s' asks to turn %.1f degrees; "
+					% [str(chamber.get("id", "?")), turn]
+					+ "the chain turns by quarters, so it goes straight")
 		cursor = _emit_connector(root, theme, cursor, yaw, placed,
 				bounds_list)
 		first = false
