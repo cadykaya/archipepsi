@@ -202,13 +202,13 @@ approved geometry:
 | `shell_treasure_cache` | 16 | 9 on `step_low`, 1 headroom |
 | `shell_treasure_coffer` | 20 | 9 on `step_low`, 1 headroom |
 
-**`step_low` (req 35).** All nine of its samples measure 0.80 where 0.40 is
+**`step_low` (req 38).** All nine of its samples measure 0.80 where 0.40 is
 declared. `_plinth`'s two steps are concentric — 3.0 m at 0.40, 2.2 m at
 0.80 — so `step_low`'s remaining tread is a 0.40 m ring against a 0.80 m
 player. Art's, and **reported rather than corrected**: the plinth is the
 owner-approved F3 geometry and `reward_position` is yours.
 
-**Headroom (req 36).** 47 in total, which is exactly the number the P2
+**Headroom (req 39).** 47 in total, which is exactly the number the P2
 preflight predicted and nothing could confirm while the rooms had no
 collision. The cause is structural and it is a vocabulary problem, not a
 modelling one: `STEP` is 1.00 m and `routecheck.assert_reachable` validated
@@ -216,7 +216,7 @@ the towers' whole climb at that spacing, so a foothold 1.00 m under the next
 one is the design working. A P1 `Surface` asserts a player can STAND
 somewhere, and `RoomAudit` therefore probes 2.40 m of clearance over every
 one. A rung you pass through is a different thing, and there is no word for
-it yet. Req 36 states three possible resolutions; Art picked none, because
+it yet. Req 39 states three possible resolutions; Art picked none, because
 two of them are yours and the third would silently drop 40-odd rungs from
 what the towers say they offer.
 

@@ -306,13 +306,13 @@ eleven unpacked F3 shells: byte-identical, not rebuilt.
 
 ### Two findings, both reported and neither corrected
 
-**`step_low`** (req 35). The three treasure rooms declare it as a walkable
+**`step_low`** (req 38). The three treasure rooms declare it as a walkable
 `Surface` and `_plinth`'s upper step stands on it: nine of nine samples
 measure 0.80 where 0.40 is declared. The plinth is the approved F3 geometry
 and `reward_position` is the engine's, so nothing was remodelled — and the
 declaration was not quietly dropped either.
 
-**Headroom** (req 36). 47 findings, which is exactly the count the P2
+**Headroom** (req 39). 47 findings, which is exactly the count the P2
 preflight predicted and could not confirm while the rooms had no collision:
 27 in `shell_tower_collapsed`, 15 in `shell_tower_spiral`, 2 in
 `shell_tower_gantry`, 1 in each treasure room. Tightest 0.50 m against
