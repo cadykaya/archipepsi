@@ -258,6 +258,32 @@ Production needs.
 
 The boundary below is unchanged by this work.
 
+### P2 — the eight dimensionless shells, retrofitted (2026-09-01)
+
+**Not a batch, not Batch 038, not live.** Source-side retrofit of the eight
+already-approved F3 shells to Production's landed P1 room contract
+(`99379e5`). All eight export `review: "pending"`; nothing is
+player-selectable.
+
+`docs/art/P2_SHELL_RETROFIT.md` is the record. In short:
+
+- **Every field derived** from the variable that placed the geometry.
+  `stones` — routecheck's own ordered list, computed, validated against
+  `max_safe_gap`, then discarded — is now the towers' `surfaces` AND their
+  `traversal`.
+- **Zero mesh changes.** Every `.glb`, and every texture, is byte-identical.
+  Traversal `Marker3D`s live in the `.tscn` wrapper the exporter generates.
+- **The axis conversion is explicit and guarded.** `roomcontract.py` holds
+  the one Blender→Godot transform, and `assert_axis_order` states an
+  invariant rather than a tolerance.
+- **ONE BLOCKER, and it is Production's.** `ShellValidator._check_envelope`
+  refuses all eight because the entry door wall sits at z ∈ [−0.4, 0] and
+  the envelope starts at z = 0 with 0.15 m of slack. **Production's own
+  procedural rooms would fail the same check by 0.05 m** — their front wall
+  is centred on z = 0. No mesh was modified to work around it.
+- **Not emitted, deliberately:** `size_class` (P1 made it optional; a guess
+  would dress taste as geometry), `cost`, intent tags.
+
 ### THE BOUNDARY — do not start the next art system (owner, 2026-08-29)
 
 The art lane is **intentionally idle**. Two major systems are being designed

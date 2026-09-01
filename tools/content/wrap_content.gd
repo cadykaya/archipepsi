@@ -31,6 +31,25 @@ func _initialize() -> void:
 		root.name = str(row["content_id"])
 		root.add_child(inner)
 		inner.owner = root
+		# Traversal markers. `ShellValidator` measures a mandatory segment
+		# from `<name>_start` / `<name>_end` Marker3D nodes and refuses a
+		# segment it cannot measure. The approved GLBs carry none and are
+		# not being remodelled, so they are built HERE, in the wrapper,
+		# from the same manifest values the segment was declared from.
+		#
+		# Worth Production knowing: for a script-generated shell the
+		# marker and the manifest share one ancestor, so the drift check
+		# between them is tautological. What still bites is the measured
+		# rise and span against `max_safe_gap`, which is real.
+		for raw_marker in row.get("markers", []):
+			var mk: Dictionary = raw_marker
+			var marker := Marker3D.new()
+			marker.name = str(mk["name"])
+			var p: Array = mk["position"]
+			marker.position = Vector3(float(p[0]), float(p[1]), float(p[2]))
+			root.add_child(marker)
+			marker.owner = root
+
 		var packed := PackedScene.new()
 		if packed.pack(root) != OK:
 			push_error("wrap: cannot pack %s" % out)

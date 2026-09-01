@@ -113,18 +113,32 @@ def main(argv):
                 if doc.get("pack") == "authored_art":
                     ours = {e["id"]: e for e in doc["entries"]}
             drift = []
+            pending_handoff = []
             for cid in sorted(set(ours) | set(theirs)):
                 a, b = ours.get(cid), theirs.get(cid)
                 if a is None:
+                    # Production carries an entry the art export does not.
+                    # That is real drift in the dangerous direction: the
+                    # next regeneration would DELETE it.
                     drift.append("%s: only Production has it" % cid)
                 elif b is None:
-                    drift.append("%s: only the art export has it" % cid)
+                    # The art export carries an entry Production has not
+                    # taken yet. That is a HANDOFF, not drift -- new work
+                    # always looks like this for exactly as long as it
+                    # takes them to integrate it.
+                    pending_handoff.append(cid)
                 elif a != b:
                     keys = sorted(k for k in set(a) | set(b)
                                   if a.get(k) != b.get(k))
                     for k in keys:
                         drift.append("%s.%s: art=%r prod=%r"
                                      % (cid, k, a.get(k), b.get(k)))
+            if pending_handoff:
+                print("[pyverify]   ok  %d entr%s awaiting handoff (in the "
+                      "art export, not yet in Production's pack): %s"
+                      % (len(pending_handoff),
+                         "y" if len(pending_handoff) == 1 else "ies",
+                         ", ".join(pending_handoff)))
             if drift:
                 print("[pyverify]   DRIFT from Production's landed pack:")
                 for line in drift:
@@ -132,8 +146,9 @@ def main(argv):
                 print("[pyverify] FAIL -- the art export and the landed pack "
                       "disagree")
                 return 1
-            print("[pyverify]   ok  no drift from Production's landed pack "
-                  "(%d ids, field for field)" % len(ours))
+            shared = len(set(ours) & set(theirs))
+            print("[pyverify]   ok  no drift on the %d shared id(s), field "
+                  "for field" % shared)
 
         # The union check, which no single manifest can answer: colliding
         # ids, a fallback naming nothing, a fallback that loops.

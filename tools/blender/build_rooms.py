@@ -63,7 +63,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import brushkit  # noqa: E402
 import common  # noqa: E402
-import materials  # noqa: E402
+import materials
+import roomcontract  # noqa: E402
 import palette as pal  # noqa: E402
 
 THEME = "concrete_facility"
@@ -450,6 +451,85 @@ def main():
         entry["bounds"] = [[-side / 2.0, -1.0, 0.0], [side, height + 1.0,
                                                       side]]
         entry["interior"] = [side, height, side]
+
+        # --- P1 room contract (Production 99379e5) ---------------------
+        #
+        # Derived from the same literals that placed the geometry:
+        # `_treasure_shell`'s T_SIDE floor, `_plinth`'s two steps, and
+        # `_corner`'s single 6 m floor and turning exit.
+        mid = -side / 2.0
+        if name.startswith("shell_treasure"):
+            # Three surfaces, not one. `_plinth` is the same in all three
+            # shells because the reward position is the engine's.
+            entry["surfaces"] = [
+                roomcontract.surface("floor", (0.0, mid), (side, side), 0.0),
+                roomcontract.surface("step_low", (0.0, mid), (3.0, 3.0), 0.40),
+                roomcontract.surface("step_high", (0.0, mid), (2.2, 2.2), 0.80),
+            ]
+            # A flat room: every rise is `_plinth`'s 0.40 m against a
+            # 1.00 m step. Declared rather than omitted, so the contract
+            # says "nothing to cross" instead of saying nothing.
+            entry["traversal"] = [
+                {"name": "floor_to_step_low", "kind": "rise",
+                 "mandatory": False,
+                 "start": roomcontract.godot(0.0, mid + 2.0, 0.0),
+                 "end": roomcontract.godot(0.0, mid + 1.2, 0.40)},
+                {"name": "step_low_to_step_high", "kind": "rise",
+                 "mandatory": False,
+                 "start": roomcontract.godot(0.0, mid + 1.2, 0.40),
+                 "end": roomcontract.godot(0.0, mid, 0.80)},
+            ]
+            entry["volumes"] = [
+                # The plinth mass. Under ROOM_SCALE_SOLID 6.0, so
+                # `solid_boxes` would see it anyway; declaring it removes
+                # the ambiguity rather than relying on that.
+                roomcontract.volume("plinth", "no_build",
+                                    (0.0, mid, 0.40), (3.0, 3.0, 0.80)),
+                roomcontract.volume("arrival", "player_entry",
+                                    (0.0, -1.6, 1.0), (DOOR_W, 2.0, 2.0)),
+                roomcontract.volume("reward", "objective",
+                                    (0.0, mid, 1.4), (2.2, 2.2, 1.2)),
+            ]
+            entry["sockets"] = [
+                roomcontract.socket("entry", "doorway", (0.0, 0.0, 0.0),
+                                    yaw=180.0, width=DOOR_W, height=DOOR_H,
+                                    surface_id="floor"),
+                roomcontract.socket("exit", "doorway", (0.0, -side, 0.0),
+                                    yaw=0.0, width=DOOR_W, height=DOOR_H,
+                                    surface_id="floor"),
+            ]
+        else:
+            turn = meta["turn"]
+            entry["surfaces"] = [
+                roomcontract.surface("floor", (0.0, mid), (side, side), 0.0),
+            ]
+            entry["traversal"] = []
+            entry["volumes"] = [
+                roomcontract.volume("arrival", "player_entry",
+                                    (0.0, -1.6, 1.0), (DOOR_W, 2.0, 2.0)),
+            ]
+            # THE TURN. `exit_yaw` is `turn * 90`, and the sign is NOT
+            # re-derived here: `shell_corner_left`'s docstring works it
+            # out from `zone_builder._rot` and a Godot basis, and an
+            # earlier version of this file had the two swapped until a
+            # render disagreed with its own caption (L-61).
+            entry["exit_yaw"] = round(turn * 90.0, 1)
+            entry["sockets"] = [
+                roomcontract.socket("entry", "doorway", (0.0, 0.0, 0.0),
+                                    yaw=180.0, width=DOOR_W, height=DOOR_H,
+                                    surface_id="floor"),
+                roomcontract.socket(
+                    "exit", "doorway",
+                    (meta["exit_offset"][0], -meta["exit_offset"][2], 0.0),
+                    yaw=entry["exit_yaw"], width=DOOR_W, height=DOOR_H,
+                    surface_id="floor"),
+            ]
+        entry["size_godot"] = [round(entry["size"][0], 3),
+                               round(entry["size"][2], 3),
+                               round(entry["size"][1], 3)]
+        roomcontract.assert_axis_order(name, entry["size"],
+                                       entry["interior"],
+                                       entry["size_godot"])
         report[name] = entry
     out = os.path.join(common.REPO_ROOT, "assets", "models", "batch019",
                        "shells", "manifest.json")

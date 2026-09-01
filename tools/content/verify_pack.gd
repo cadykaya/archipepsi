@@ -42,6 +42,18 @@ func _initialize() -> void:
 		"projectile_straight": false,
 		"projectile_falling": false,
 		"projectile_lobbed": false,
+		# P2: the eight dimensionless F3 shells. Held PENDING per the
+		# room-architecture study's §16 -- the owner flips per entry, and
+		# they are not player-selectable regardless because
+		# `SHELL_FOR_TYPE` still names the `_proc` ids.
+		"shell_tower_collapsed": false,
+		"shell_tower_spiral": false,
+		"shell_tower_gantry": false,
+		"shell_treasure_vault": false,
+		"shell_treasure_cache": false,
+		"shell_treasure_coffer": false,
+		"shell_corner_left": false,
+		"shell_corner_right": false,
 	}
 	for id in wanted:
 		var want_shippable: bool = wanted[id]

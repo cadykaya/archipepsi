@@ -58,6 +58,7 @@ import brushkit  # noqa: E402
 import common  # noqa: E402
 import materials  # noqa: E402
 import palette as pal  # noqa: E402
+import roomcontract
 import routecheck  # noqa: E402
 
 THEME = "concrete_facility"
@@ -250,7 +251,11 @@ def shell_tower_spiral():
     height = rise + 5.0
     name = "ts"
     parts = _shaft(name, height, rise) + _core(name, rise, "capital")
+    # `stones` is routecheck's own ordered list. P1 needs the SAME list as
+    # Surfaces and TraversalSegments, so the height and the name of each
+    # stone are tracked beside it rather than re-derived later.
     stones, anchors = [_GROUND], []
+    heights, snames = [0.0], ["ground"]
     for i, (x, y, z) in enumerate(_spiral(name, rise, STEP)):
         parts += _slab(name, str(i), x, y, z, (PLAT, PLAT))
         # Two brackets into the nearest wall, so the slab is carried.
@@ -260,14 +265,20 @@ def shell_tower_spiral():
                 "ts_br_%d_%d" % (i, j), (abs(wall_x - x) + 0.2, 0.20, 0.42),
                 ((wall_x + x) / 2.0, y + dy, z - 0.55)), name, "trim"))
         stones.append(((x, y), (PLAT, PLAT)))
+        heights.append(z)
+        snames.append("platform_%d" % i)
         anchors.append([round(x, 2), round(z, 2), round(-y, 2)])
     parts += _deck(name, rise)
     stones.append(((0.0, -SIDE + 2.0), (SIDE, 4.0)))
+    heights.append(rise)
+    snames.append("deck")
     worst, allowed = routecheck.assert_reachable(
         "shell_tower_spiral", stones, STEP, require_gap=False)
     meta = {"floors": floors, "climb": "spiral", "core": "capital",
             "worst_jump": worst, "max_safe_gap_at_step": allowed,
-            "platform_anchors": anchors}
+            "platform_anchors": anchors,
+            "_stones": stones, "_heights": heights, "_snames": snames,
+            "_rise": rise}
     return "shell_tower_spiral", parts, floors, rise, height, meta
 
 
@@ -290,6 +301,7 @@ def shell_tower_gantry():
     name = "tg"
     parts = _shaft(name, height, rise) + _core(name, rise, "banded")
     stones, anchors, landings = [_GROUND], [], []
+    heights, snames = [0.0], ["ground"]
     run, depth = 4.2, 2.8
     for level in range(floors):
         z = PER_FLOOR * (level + 1)
@@ -302,6 +314,8 @@ def shell_tower_gantry():
             parts += _slab(name, "%d_%d" % (level, k), sx, sy, sz,
                            (PLAT, PLAT))
             stones.append(((sx, sy), (PLAT, PLAT)))
+            heights.append(sz)
+            snames.append("step_%d_%d" % (level, k))
         ly = -SIDE + depth / 2.0 if side < 0 else -depth / 2.0
         parts += _slab(name, "L%d" % level, 0.0, ly, z, (run * 2.0, depth),
                        thickness=0.50)
@@ -310,15 +324,21 @@ def shell_tower_gantry():
                 "tg_post_%d_%d" % (level, j), (0.26, 0.26, PER_FLOOR - 0.5),
                 (sx, ly, z - 0.25 - (PER_FLOOR - 0.5) / 2.0)), name, "trim"))
         stones.append(((0.0, ly), (run * 2.0, depth)))
+        heights.append(z)
+        snames.append("landing_%d" % level)
         landings.append([0.0, round(z, 2), round(-ly, 2)])
         anchors.append([0.0, round(z, 2), round(-ly, 2)])
     parts += _deck(name, rise)
     stones.append(((0.0, -SIDE + 2.0), (SIDE, 4.0)))
+    heights.append(rise)
+    snames.append("deck")
     worst, allowed = routecheck.assert_reachable(
         "shell_tower_gantry", stones, STEP, require_gap=False)
     meta = {"floors": floors, "climb": "gantry", "core": "banded",
             "worst_jump": worst, "max_safe_gap_at_step": allowed,
-            "platform_anchors": anchors, "landing_anchors": landings}
+            "platform_anchors": anchors, "landing_anchors": landings,
+            "_stones": stones, "_heights": heights, "_snames": snames,
+            "_rise": rise}
     return "shell_tower_gantry", parts, floors, rise, height, meta
 
 
@@ -349,6 +369,7 @@ def shell_tower_collapsed():
     name = "tc"
     parts = _shaft(name, height, rise) + _core(name, rise, "riven")
     stones, anchors = [_GROUND], []
+    heights, snames = [0.0], ["ground"]
     span, depth = SIDE - 1.2, 6.6
     for level in range(floors):
         z = PER_FLOOR * (level + 1)
@@ -369,7 +390,11 @@ def shell_tower_collapsed():
             parts += _slab(name, "R%d_%d" % (level, k), rx, ry, rz,
                            (PLAT + 0.4, PLAT), thickness=0.5)
             stones.append(((rx, ry), (PLAT + 0.4, PLAT)))
+            heights.append(rz)
+            snames.append("rubble_%d_%d" % (level, k))
         stones.append(((0.0, cy), (span, depth)))
+        heights.append(z)
+        snames.append("floor_%d" % level)
         # The tear: a run of stubs along the edge the rest of the slab went
         # over, uneven because nothing that fell is uniform.
         edge_y = cy + (depth / 2.0 if far else -depth / 2.0)
@@ -381,11 +406,15 @@ def shell_tower_collapsed():
         anchors.append([0.0, round(z, 2), round(-cy, 2)])
     parts += _deck(name, rise)
     stones.append(((0.0, -SIDE + 2.0), (SIDE, 4.0)))
+    heights.append(rise)
+    snames.append("deck")
     worst, allowed = routecheck.assert_reachable(
         "shell_tower_collapsed", stones, STEP, require_gap=False)
     meta = {"floors": floors, "climb": "collapse", "core": "riven",
             "worst_jump": worst, "max_safe_gap_at_step": allowed,
-            "platform_anchors": anchors, "half_floor": [span, depth]}
+            "platform_anchors": anchors, "half_floor": [span, depth],
+            "_stones": stones, "_heights": heights, "_snames": snames,
+            "_rise": rise}
     return "shell_tower_collapsed", parts, floors, rise, height, meta
 
 
@@ -419,6 +448,69 @@ def main():
                            [SIDE, height + 1.0, SIDE + 2.2]]
         entry["interior"] = [SIDE, height, SIDE]
         entry["total_rise"] = rise
+
+        # --- P1 room contract (Production 99379e5) ---------------------
+        #
+        # Every value below comes from the variable that PLACED the
+        # geometry. `stones` is routecheck's own ordered list: it was
+        # computed, validated against `max_safe_gap`, and then thrown
+        # away. P1 is what finally reads it.
+        stones = meta.pop("_stones")
+        heights = meta.pop("_heights")
+        snames = meta.pop("_snames")
+        meta.pop("_rise")
+        entry["surfaces"] = roomcontract.surfaces_from_stones(
+            stones, heights, snames)
+        # The bridge is walked, so it is a surface like any other; it is
+        # built by `_deck` and is not in `stones` because the climb ends
+        # at the deck.
+        entry["surfaces"].append(roomcontract.surface(
+            "bridge", (0.0, -SIDE - 1.0), (3.0, 2.4), rise))
+        entry["traversal"] = roomcontract.traversal_from_stones(
+            stones, heights, snames, STEP)
+        # `_core` is the central column `tower()` requires. CORE square,
+        # rise + 2.0 tall, centred on the shaft -- the one interior mass
+        # in the family, and nothing may be placed inside it.
+        core_h = rise + 2.0
+        entry["volumes"] = [
+            roomcontract.volume("core", "no_build",
+                                (0.0, -SIDE / 2.0, core_h / 2.0 - 0.5),
+                                (CORE, CORE, core_h)),
+            roomcontract.volume("arrival", "player_entry",
+                                (0.0, -1.6, 1.0), (DOOR_W, 2.0, 2.0)),
+            roomcontract.volume("reward", "objective",
+                                (-2.0, -(SIDE - 2.0), rise + 1.0),
+                                (2.0, 2.0, 2.0)),
+        ]
+        entry["sockets"] = [
+            roomcontract.socket("entry", "doorway", (0.0, 0.0, 0.0),
+                                yaw=180.0, width=DOOR_W, height=DOOR_H,
+                                surface_id="ground"),
+            # `exit` IS the next room's origin: `_exit_offset` reads this
+            # socket's position, not a door face.
+            roomcontract.socket("exit", "doorway",
+                                (0.0, -(SIDE + 2.2), rise),
+                                yaw=0.0, width=DOOR_W, height=DOOR_H,
+                                surface_id="bridge"),
+        ]
+        # An elevated ranged stance on the four widest raised surfaces,
+        # derived from `stones` so each one NAMES the surface it stands
+        # on. Taking them from `platform_anchors` instead would tie the
+        # socket to a parallel list that means a different thing in each
+        # of the three shells.
+        raised = [(sn, st, h) for sn, st, h
+                  in zip(snames, stones, heights) if h > 0.5]
+        raised.sort(key=lambda r: -(r[1][1][0] * r[1][1][1]))
+        for i, (sn, (centre, _extent), h) in enumerate(raised[:4]):
+            entry["sockets"].append(roomcontract.socket(
+                "high_%d" % i, "enemy_high",
+                (centre[0], centre[1], h + 0.3), surface_id=sn))
+        entry["size_godot"] = [round(entry["size"][0], 3),
+                               round(entry["size"][2], 3),
+                               round(entry["size"][1], 3)]
+        roomcontract.assert_axis_order(name, entry["size"],
+                                       entry["interior"],
+                                       entry["size_godot"])
         report[name] = entry
     out = os.path.join(common.REPO_ROOT, "assets", "models", "batch018",
                        "shells", "manifest.json")

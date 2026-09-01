@@ -1,0 +1,61 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://content/shells/shell_tower_collapsed.glb" id="1_cahhw"]
+
+[node name="shell_tower_collapsed" type="Node3D"]
+
+[node name="Mesh" type="Node3D" parent="." instance=ExtResource("1_cahhw")]
+
+[node name="ground_to_rubble_0_0_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.8, 0, 2)
+
+[node name="ground_to_rubble_0_0_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.8, 1, 2)
+
+[node name="rubble_0_0_to_rubble_0_1_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.55, 1, 2.75)
+
+[node name="rubble_0_0_to_rubble_0_1_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.55, 2, 2.75)
+
+[node name="rubble_0_1_to_rubble_0_2_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.05, 2, 4.25)
+
+[node name="rubble_0_1_to_rubble_0_2_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.05, 3, 4.25)
+
+[node name="rubble_0_2_to_floor_0_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 3, 5.55)
+
+[node name="rubble_0_2_to_floor_0_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 3, 5.55)
+
+[node name="floor_0_to_rubble_1_0_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.8, 3, 10)
+
+[node name="floor_0_to_rubble_1_0_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.8, 4, 10)
+
+[node name="rubble_1_0_to_rubble_1_1_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.55, 4, 9.25)
+
+[node name="rubble_1_0_to_rubble_1_1_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.55, 5, 9.25)
+
+[node name="rubble_1_1_to_rubble_1_2_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.05, 5, 7.75)
+
+[node name="rubble_1_1_to_rubble_1_2_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.05, 6, 7.75)
+
+[node name="rubble_1_2_to_floor_1_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 6, 6.45)
+
+[node name="rubble_1_2_to_floor_1_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 6, 6.45)
+
+[node name="floor_1_to_deck_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 7.2)
+
+[node name="floor_1_to_deck_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 8)

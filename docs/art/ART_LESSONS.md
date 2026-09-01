@@ -1232,6 +1232,28 @@ passing for the wrong reason.** It resolved `ContentRegistry` through a stale
 next `--import` rebuilt the cache and it stopped compiling. A green check that
 depends on a cache is not evidence. It preloads by path now.
 
+### L-81 · Declare the movement that was measured, not the one that is easy
+
+The P2 retrofit derived each tower's traversal segments from `stones`, the
+same list `routecheck.assert_reachable` had already validated. It then wrote
+the segment endpoints at the surface **centres**, because that is the number
+sitting in the variable.
+
+`routecheck.jump_distance` measures **edge to edge**. The preflight caught it
+at once: a spiral's last platform to its deck came out as a 6.59 m jump
+against a 2.60 m base-kit reach, when the two footprints overlap and the
+crossing is a step. Every tower would have shipped a mandatory route
+declaring a movement no player could make — and `ShellValidator` measures
+marker to marker, so it would have refused all three.
+
+> **Deriving a field from the right variable is not the same as deriving it
+> the right way.** If a validator already measures the thing, use its measure,
+> not a different one over the same data.
+
+The general form, and the reason this was cheap to fix and would have been
+expensive to ship: the contract and the checker have to agree on what a
+number MEANS, not merely on where it comes from.
+
 ### L-24 · Read your own render before writing down what it shows
 Every fix in L-05, L-08, L-09, L-11, L-13 and L-14 came from **looking at
 the image**, not from the build log. The logs were green throughout: correct

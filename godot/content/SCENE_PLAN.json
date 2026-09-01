@@ -14,55 +14,862 @@
    "content_id": "fixture_light_concrete_facility",
    "kind": "fixtures",
    "asset": "arch_light_fixture",
-   "glb": "res://content/fixtures/arch_light_fixture.glb"
+   "glb": "res://content/fixtures/arch_light_fixture.glb",
+   "markers": []
   },
   {
    "content_id": "fixture_light_gothic_stone",
    "kind": "fixtures",
    "asset": "light_gothic_corona",
-   "glb": "res://content/fixtures/light_gothic_corona.glb"
+   "glb": "res://content/fixtures/light_gothic_corona.glb",
+   "markers": []
   },
   {
    "content_id": "fixture_light_neon_transit",
    "kind": "fixtures",
    "asset": "light_neon_channel",
-   "glb": "res://content/fixtures/light_neon_channel.glb"
+   "glb": "res://content/fixtures/light_neon_channel.glb",
+   "markers": []
   },
   {
    "content_id": "fixture_light_rusted_industrial",
    "kind": "fixtures",
    "asset": "light_rusted_cage",
-   "glb": "res://content/fixtures/light_rusted_cage.glb"
+   "glb": "res://content/fixtures/light_rusted_cage.glb",
+   "markers": []
   },
   {
    "content_id": "fixture_light_temple_ruin",
    "kind": "fixtures",
    "asset": "light_temple_bowl",
-   "glb": "res://content/fixtures/light_temple_bowl.glb"
+   "glb": "res://content/fixtures/light_temple_bowl.glb",
+   "markers": []
   },
   {
    "content_id": "fixture_light_void_glitch",
    "kind": "fixtures",
    "asset": "light_void_absent",
-   "glb": "res://content/fixtures/light_void_absent.glb"
+   "glb": "res://content/fixtures/light_void_absent.glb",
+   "markers": []
   },
   {
    "content_id": "projectile_falling",
    "kind": "projectiles",
    "asset": "enemy_projectile_falling",
-   "glb": "res://content/projectiles/enemy_projectile_falling.glb"
+   "glb": "res://content/projectiles/enemy_projectile_falling.glb",
+   "markers": []
   },
   {
    "content_id": "projectile_lobbed",
    "kind": "projectiles",
    "asset": "enemy_projectile_lobbed",
-   "glb": "res://content/projectiles/enemy_projectile_lobbed.glb"
+   "glb": "res://content/projectiles/enemy_projectile_lobbed.glb",
+   "markers": []
   },
   {
    "content_id": "projectile_straight",
    "kind": "projectiles",
    "asset": "enemy_projectile_straight",
-   "glb": "res://content/projectiles/enemy_projectile_straight.glb"
+   "glb": "res://content/projectiles/enemy_projectile_straight.glb",
+   "markers": []
+  },
+  {
+   "content_id": "shell_corner_left",
+   "kind": "shells",
+   "asset": "shell_corner_left",
+   "glb": "res://content/shells/shell_corner_left.glb",
+   "markers": []
+  },
+  {
+   "content_id": "shell_corner_right",
+   "kind": "shells",
+   "asset": "shell_corner_right",
+   "glb": "res://content/shells/shell_corner_right.glb",
+   "markers": []
+  },
+  {
+   "content_id": "shell_tower_collapsed",
+   "kind": "shells",
+   "asset": "shell_tower_collapsed",
+   "glb": "res://content/shells/shell_tower_collapsed.glb",
+   "markers": [
+    {
+     "name": "ground_to_rubble_0_0_start",
+     "position": [
+      3.8,
+      0.0,
+      2.0
+     ]
+    },
+    {
+     "name": "ground_to_rubble_0_0_end",
+     "position": [
+      3.8,
+      1.0,
+      2.0
+     ]
+    },
+    {
+     "name": "rubble_0_0_to_rubble_0_1_start",
+     "position": [
+      3.55,
+      1.0,
+      2.75
+     ]
+    },
+    {
+     "name": "rubble_0_0_to_rubble_0_1_end",
+     "position": [
+      3.55,
+      2.0,
+      2.75
+     ]
+    },
+    {
+     "name": "rubble_0_1_to_rubble_0_2_start",
+     "position": [
+      3.05,
+      2.0,
+      4.25
+     ]
+    },
+    {
+     "name": "rubble_0_1_to_rubble_0_2_end",
+     "position": [
+      3.05,
+      3.0,
+      4.25
+     ]
+    },
+    {
+     "name": "rubble_0_2_to_floor_0_start",
+     "position": [
+      2.8,
+      3.0,
+      5.55
+     ]
+    },
+    {
+     "name": "rubble_0_2_to_floor_0_end",
+     "position": [
+      2.8,
+      3.0,
+      5.55
+     ]
+    },
+    {
+     "name": "floor_0_to_rubble_1_0_start",
+     "position": [
+      -3.8,
+      3.0,
+      10.0
+     ]
+    },
+    {
+     "name": "floor_0_to_rubble_1_0_end",
+     "position": [
+      -3.8,
+      4.0,
+      10.0
+     ]
+    },
+    {
+     "name": "rubble_1_0_to_rubble_1_1_start",
+     "position": [
+      -3.55,
+      4.0,
+      9.25
+     ]
+    },
+    {
+     "name": "rubble_1_0_to_rubble_1_1_end",
+     "position": [
+      -3.55,
+      5.0,
+      9.25
+     ]
+    },
+    {
+     "name": "rubble_1_1_to_rubble_1_2_start",
+     "position": [
+      -3.05,
+      5.0,
+      7.75
+     ]
+    },
+    {
+     "name": "rubble_1_1_to_rubble_1_2_end",
+     "position": [
+      -3.05,
+      6.0,
+      7.75
+     ]
+    },
+    {
+     "name": "rubble_1_2_to_floor_1_start",
+     "position": [
+      -2.8,
+      6.0,
+      6.45
+     ]
+    },
+    {
+     "name": "rubble_1_2_to_floor_1_end",
+     "position": [
+      -2.8,
+      6.0,
+      6.45
+     ]
+    },
+    {
+     "name": "floor_1_to_deck_start",
+     "position": [
+      0.0,
+      6.0,
+      7.2
+     ]
+    },
+    {
+     "name": "floor_1_to_deck_end",
+     "position": [
+      0.0,
+      6.0,
+      8.0
+     ]
+    }
+   ]
+  },
+  {
+   "content_id": "shell_tower_gantry",
+   "kind": "shells",
+   "asset": "shell_tower_gantry",
+   "glb": "res://content/shells/shell_tower_gantry.glb",
+   "markers": [
+    {
+     "name": "ground_to_step_0_0_start",
+     "position": [
+      -4.4,
+      0.0,
+      3.0
+     ]
+    },
+    {
+     "name": "ground_to_step_0_0_end",
+     "position": [
+      -4.4,
+      1.0,
+      3.0
+     ]
+    },
+    {
+     "name": "step_0_0_to_step_0_1_start",
+     "position": [
+      -4.4,
+      1.0,
+      4.2
+     ]
+    },
+    {
+     "name": "step_0_0_to_step_0_1_end",
+     "position": [
+      -4.4,
+      2.0,
+      4.2
+     ]
+    },
+    {
+     "name": "step_0_1_to_step_0_2_start",
+     "position": [
+      -4.4,
+      2.0,
+      6.6
+     ]
+    },
+    {
+     "name": "step_0_1_to_step_0_2_end",
+     "position": [
+      -4.4,
+      3.0,
+      6.6
+     ]
+    },
+    {
+     "name": "step_0_2_to_landing_0_start",
+     "position": [
+      -3.65,
+      3.0,
+      9.1
+     ]
+    },
+    {
+     "name": "step_0_2_to_landing_0_end",
+     "position": [
+      -3.65,
+      3.0,
+      9.2
+     ]
+    },
+    {
+     "name": "landing_0_to_step_1_0_start",
+     "position": [
+      3.65,
+      3.0,
+      9.75
+     ]
+    },
+    {
+     "name": "landing_0_to_step_1_0_end",
+     "position": [
+      3.65,
+      4.0,
+      9.75
+     ]
+    },
+    {
+     "name": "step_1_0_to_step_1_1_start",
+     "position": [
+      4.4,
+      4.0,
+      7.8
+     ]
+    },
+    {
+     "name": "step_1_0_to_step_1_1_end",
+     "position": [
+      4.4,
+      5.0,
+      7.8
+     ]
+    },
+    {
+     "name": "step_1_1_to_step_1_2_start",
+     "position": [
+      4.4,
+      5.0,
+      5.4
+     ]
+    },
+    {
+     "name": "step_1_1_to_step_1_2_end",
+     "position": [
+      4.4,
+      6.0,
+      5.4
+     ]
+    },
+    {
+     "name": "step_1_2_to_landing_1_start",
+     "position": [
+      3.65,
+      6.0,
+      2.9
+     ]
+    },
+    {
+     "name": "step_1_2_to_landing_1_end",
+     "position": [
+      3.65,
+      6.0,
+      2.8
+     ]
+    },
+    {
+     "name": "landing_1_to_step_2_0_start",
+     "position": [
+      -3.65,
+      6.0,
+      2.25
+     ]
+    },
+    {
+     "name": "landing_1_to_step_2_0_end",
+     "position": [
+      -3.65,
+      7.0,
+      2.25
+     ]
+    },
+    {
+     "name": "step_2_0_to_step_2_1_start",
+     "position": [
+      -4.4,
+      7.0,
+      4.2
+     ]
+    },
+    {
+     "name": "step_2_0_to_step_2_1_end",
+     "position": [
+      -4.4,
+      8.0,
+      4.2
+     ]
+    },
+    {
+     "name": "step_2_1_to_step_2_2_start",
+     "position": [
+      -4.4,
+      8.0,
+      6.6
+     ]
+    },
+    {
+     "name": "step_2_1_to_step_2_2_end",
+     "position": [
+      -4.4,
+      9.0,
+      6.6
+     ]
+    },
+    {
+     "name": "step_2_2_to_landing_2_start",
+     "position": [
+      -3.65,
+      9.0,
+      9.1
+     ]
+    },
+    {
+     "name": "step_2_2_to_landing_2_end",
+     "position": [
+      -3.65,
+      9.0,
+      9.2
+     ]
+    },
+    {
+     "name": "landing_2_to_step_3_0_start",
+     "position": [
+      3.65,
+      9.0,
+      9.75
+     ]
+    },
+    {
+     "name": "landing_2_to_step_3_0_end",
+     "position": [
+      3.65,
+      10.0,
+      9.75
+     ]
+    },
+    {
+     "name": "step_3_0_to_step_3_1_start",
+     "position": [
+      4.4,
+      10.0,
+      7.8
+     ]
+    },
+    {
+     "name": "step_3_0_to_step_3_1_end",
+     "position": [
+      4.4,
+      11.0,
+      7.8
+     ]
+    },
+    {
+     "name": "step_3_1_to_step_3_2_start",
+     "position": [
+      4.4,
+      11.0,
+      5.4
+     ]
+    },
+    {
+     "name": "step_3_1_to_step_3_2_end",
+     "position": [
+      4.4,
+      12.0,
+      5.4
+     ]
+    },
+    {
+     "name": "step_3_2_to_landing_3_start",
+     "position": [
+      3.65,
+      12.0,
+      2.9
+     ]
+    },
+    {
+     "name": "step_3_2_to_landing_3_end",
+     "position": [
+      3.65,
+      12.0,
+      2.8
+     ]
+    },
+    {
+     "name": "landing_3_to_step_4_0_start",
+     "position": [
+      -3.65,
+      12.0,
+      2.25
+     ]
+    },
+    {
+     "name": "landing_3_to_step_4_0_end",
+     "position": [
+      -3.65,
+      13.0,
+      2.25
+     ]
+    },
+    {
+     "name": "step_4_0_to_step_4_1_start",
+     "position": [
+      -4.4,
+      13.0,
+      4.2
+     ]
+    },
+    {
+     "name": "step_4_0_to_step_4_1_end",
+     "position": [
+      -4.4,
+      14.0,
+      4.2
+     ]
+    },
+    {
+     "name": "step_4_1_to_step_4_2_start",
+     "position": [
+      -4.4,
+      14.0,
+      6.6
+     ]
+    },
+    {
+     "name": "step_4_1_to_step_4_2_end",
+     "position": [
+      -4.4,
+      15.0,
+      6.6
+     ]
+    },
+    {
+     "name": "step_4_2_to_landing_4_start",
+     "position": [
+      -3.65,
+      15.0,
+      9.1
+     ]
+    },
+    {
+     "name": "step_4_2_to_landing_4_end",
+     "position": [
+      -3.65,
+      15.0,
+      9.2
+     ]
+    },
+    {
+     "name": "landing_4_to_deck_start",
+     "position": [
+      0.0,
+      15.0,
+      10.6
+     ]
+    },
+    {
+     "name": "landing_4_to_deck_end",
+     "position": [
+      0.0,
+      15.0,
+      10.6
+     ]
+    }
+   ]
+  },
+  {
+   "content_id": "shell_tower_spiral",
+   "kind": "shells",
+   "asset": "shell_tower_spiral",
+   "glb": "res://content/shells/shell_tower_spiral.glb",
+   "markers": [
+    {
+     "name": "ground_to_platform_0_start",
+     "position": [
+      -4.3,
+      0.0,
+      4.4
+     ]
+    },
+    {
+     "name": "ground_to_platform_0_end",
+     "position": [
+      -4.3,
+      1.0,
+      4.4
+     ]
+    },
+    {
+     "name": "platform_0_to_platform_1_start",
+     "position": [
+      -4.3,
+      1.0,
+      5.6
+     ]
+    },
+    {
+     "name": "platform_0_to_platform_1_end",
+     "position": [
+      -4.3,
+      2.0,
+      5.6
+     ]
+    },
+    {
+     "name": "platform_1_to_platform_2_start",
+     "position": [
+      -4.3,
+      2.0,
+      8.0
+     ]
+    },
+    {
+     "name": "platform_1_to_platform_2_end",
+     "position": [
+      -4.3,
+      3.0,
+      8.0
+     ]
+    },
+    {
+     "name": "platform_2_to_platform_3_start",
+     "position": [
+      -3.5,
+      3.0,
+      9.6
+     ]
+    },
+    {
+     "name": "platform_2_to_platform_3_end",
+     "position": [
+      -3.5,
+      4.0,
+      9.6
+     ]
+    },
+    {
+     "name": "platform_3_to_platform_4_start",
+     "position": [
+      -1.5,
+      4.0,
+      10.0
+     ]
+    },
+    {
+     "name": "platform_3_to_platform_4_end",
+     "position": [
+      -1.5,
+      5.0,
+      10.0
+     ]
+    },
+    {
+     "name": "platform_4_to_platform_5_start",
+     "position": [
+      0.9,
+      5.0,
+      10.0
+     ]
+    },
+    {
+     "name": "platform_4_to_platform_5_end",
+     "position": [
+      0.9,
+      6.0,
+      10.0
+     ]
+    },
+    {
+     "name": "platform_5_to_platform_6_start",
+     "position": [
+      3.2,
+      6.0,
+      9.9
+     ]
+    },
+    {
+     "name": "platform_5_to_platform_6_end",
+     "position": [
+      3.2,
+      7.0,
+      9.9
+     ]
+    },
+    {
+     "name": "platform_6_to_platform_7_start",
+     "position": [
+      4.3,
+      7.0,
+      8.6
+     ]
+    },
+    {
+     "name": "platform_6_to_platform_7_end",
+     "position": [
+      4.3,
+      8.0,
+      8.6
+     ]
+    },
+    {
+     "name": "platform_7_to_platform_8_start",
+     "position": [
+      4.3,
+      8.0,
+      6.2
+     ]
+    },
+    {
+     "name": "platform_7_to_platform_8_end",
+     "position": [
+      4.3,
+      9.0,
+      6.2
+     ]
+    },
+    {
+     "name": "platform_8_to_deck_start",
+     "position": [
+      4.3,
+      9.0,
+      6.3
+     ]
+    },
+    {
+     "name": "platform_8_to_deck_end",
+     "position": [
+      4.3,
+      9.0,
+      8.0
+     ]
+    }
+   ]
+  },
+  {
+   "content_id": "shell_treasure_cache",
+   "kind": "shells",
+   "asset": "shell_treasure_cache",
+   "glb": "res://content/shells/shell_treasure_cache.glb",
+   "markers": [
+    {
+     "name": "floor_to_step_low_start",
+     "position": [
+      0.0,
+      0.0,
+      2.0
+     ]
+    },
+    {
+     "name": "floor_to_step_low_end",
+     "position": [
+      0.0,
+      0.4,
+      2.8
+     ]
+    },
+    {
+     "name": "step_low_to_step_high_start",
+     "position": [
+      0.0,
+      0.4,
+      2.8
+     ]
+    },
+    {
+     "name": "step_low_to_step_high_end",
+     "position": [
+      0.0,
+      0.8,
+      4.0
+     ]
+    }
+   ]
+  },
+  {
+   "content_id": "shell_treasure_coffer",
+   "kind": "shells",
+   "asset": "shell_treasure_coffer",
+   "glb": "res://content/shells/shell_treasure_coffer.glb",
+   "markers": [
+    {
+     "name": "floor_to_step_low_start",
+     "position": [
+      0.0,
+      0.0,
+      2.0
+     ]
+    },
+    {
+     "name": "floor_to_step_low_end",
+     "position": [
+      0.0,
+      0.4,
+      2.8
+     ]
+    },
+    {
+     "name": "step_low_to_step_high_start",
+     "position": [
+      0.0,
+      0.4,
+      2.8
+     ]
+    },
+    {
+     "name": "step_low_to_step_high_end",
+     "position": [
+      0.0,
+      0.8,
+      4.0
+     ]
+    }
+   ]
+  },
+  {
+   "content_id": "shell_treasure_vault",
+   "kind": "shells",
+   "asset": "shell_treasure_vault",
+   "glb": "res://content/shells/shell_treasure_vault.glb",
+   "markers": [
+    {
+     "name": "floor_to_step_low_start",
+     "position": [
+      0.0,
+      0.0,
+      2.0
+     ]
+    },
+    {
+     "name": "floor_to_step_low_end",
+     "position": [
+      0.0,
+      0.4,
+      2.8
+     ]
+    },
+    {
+     "name": "step_low_to_step_high_start",
+     "position": [
+      0.0,
+      0.4,
+      2.8
+     ]
+    },
+    {
+     "name": "step_low_to_step_high_end",
+     "position": [
+      0.0,
+      0.8,
+      4.0
+     ]
+    }
+   ]
   }
  ],
  "provenance": [
@@ -131,6 +938,118 @@
    "runtime_substitution": "pending",
    "runtime_reverted_reason": "silhouette and tint regressed against the engine's own ProjectileSilhouette in the A/B",
    "triangles": 104
+  },
+  {
+   "content_id": "shell_corner_left",
+   "source_asset": "batch019/shells/shell_corner_left",
+   "source_batch_review": "PASS",
+   "runtime_substitution": "pending",
+   "p1_contract": {
+    "surfaces": 1,
+    "traversal": 0,
+    "volumes": 1,
+    "sockets": 2,
+    "exit_yaw": 90.0
+   },
+   "triangles": 216
+  },
+  {
+   "content_id": "shell_corner_right",
+   "source_asset": "batch019/shells/shell_corner_right",
+   "source_batch_review": "PASS",
+   "runtime_substitution": "pending",
+   "p1_contract": {
+    "surfaces": 1,
+    "traversal": 0,
+    "volumes": 1,
+    "sockets": 2,
+    "exit_yaw": -90.0
+   },
+   "triangles": 216
+  },
+  {
+   "content_id": "shell_tower_collapsed",
+   "source_asset": "batch018/shells/shell_tower_collapsed",
+   "source_batch_review": "PASS",
+   "runtime_substitution": "pending",
+   "p1_contract": {
+    "surfaces": 11,
+    "traversal": 9,
+    "volumes": 3,
+    "sockets": 6,
+    "exit_yaw": null
+   },
+   "triangles": 528
+  },
+  {
+   "content_id": "shell_tower_gantry",
+   "source_asset": "batch018/shells/shell_tower_gantry",
+   "source_batch_review": "PASS",
+   "runtime_substitution": "pending",
+   "p1_contract": {
+    "surfaces": 23,
+    "traversal": 21,
+    "volumes": 3,
+    "sockets": 6,
+    "exit_yaw": null
+   },
+   "triangles": 852
+  },
+  {
+   "content_id": "shell_tower_spiral",
+   "source_asset": "batch018/shells/shell_tower_spiral",
+   "source_batch_review": "PASS",
+   "runtime_substitution": "pending",
+   "p1_contract": {
+    "surfaces": 12,
+    "traversal": 10,
+    "volumes": 3,
+    "sockets": 6,
+    "exit_yaw": null
+   },
+   "triangles": 636
+  },
+  {
+   "content_id": "shell_treasure_cache",
+   "source_asset": "batch019/shells/shell_treasure_cache",
+   "source_batch_review": "PASS",
+   "runtime_substitution": "pending",
+   "p1_contract": {
+    "surfaces": 3,
+    "traversal": 2,
+    "volumes": 3,
+    "sockets": 2,
+    "exit_yaw": null
+   },
+   "triangles": 456
+  },
+  {
+   "content_id": "shell_treasure_coffer",
+   "source_asset": "batch019/shells/shell_treasure_coffer",
+   "source_batch_review": "PASS",
+   "runtime_substitution": "pending",
+   "p1_contract": {
+    "surfaces": 3,
+    "traversal": 2,
+    "volumes": 3,
+    "sockets": 2,
+    "exit_yaw": null
+   },
+   "triangles": 384
+  },
+  {
+   "content_id": "shell_treasure_vault",
+   "source_asset": "batch019/shells/shell_treasure_vault",
+   "source_batch_review": "PASS",
+   "runtime_substitution": "pending",
+   "p1_contract": {
+    "surfaces": 3,
+    "traversal": 2,
+    "volumes": 3,
+    "sockets": 2,
+    "exit_yaw": null
+   },
+   "triangles": 360
   }
  ]
 }

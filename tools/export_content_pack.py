@@ -68,6 +68,17 @@ CONTENT = os.path.join(ROOT, "godot", "content")
 FIXTURE_REVIEW = "pass"
 PROJECTILE_REVIEW = "pending"
 
+#: Each authored shell falls back to the procedural entry for its chamber
+#: type, so a missing scene degrades to the builder rather than to nothing.
+#: Corners have no procedural counterpart -- `corner()` is a corridor with
+#: a turn and the Zone schema has never carried one -- so they chain to the
+#: corridor shell.
+_SHELL_FALLBACK = {
+    "tower": "shell_tower_proc",
+    "treasure_room": "shell_treasure_room_proc",
+    "corner": "shell_corridor_proc",
+}
+
 #: theme -> (source manifest dir, asset id). The CEILING fixture in each
 #: theme, because `ChamberBuilders._light` hangs the housing under a lamp
 #: placed just below the ceiling. The wall variants in batch014 are approved
@@ -81,6 +92,28 @@ FIXTURES = {
     "void_glitch":       ("batch014/lights", "light_void_absent"),
 }
 
+#: The eight DIMENSIONLESS F3 shells (P2). Retrofitted to Production's P1
+#: room contract at `99379e5` from the variables that built them --
+#: `stones` for the towers, `_plinth`'s literals for the treasure rooms,
+#: `_corner`'s turn for the corners. No GLB is remodelled.
+#:
+#: They export `review: "pending"` like everything else new: §16 of the
+#: room-architecture study is explicit that the owner flips per entry, and
+#: the projectile reversal is the proof that per-entry review is the
+#: working kill switch.
+SHELLS = {
+    "shell_tower_collapsed": ("batch018/shells", "tower", "collapse"),
+    "shell_tower_spiral":    ("batch018/shells", "tower", "spiral"),
+    "shell_tower_gantry":    ("batch018/shells", "tower", "gantry"),
+    "shell_treasure_vault":  ("batch019/shells", "treasure_room", "protected"),
+    "shell_treasure_cache":  ("batch019/shells", "treasure_room", "stored"),
+    "shell_treasure_coffer": ("batch019/shells", "treasure_room", "displayed"),
+    "shell_corner_left":     ("batch019/shells", "corner", "turn_left"),
+    "shell_corner_right":    ("batch019/shells", "corner", "turn_right"),
+}
+
+SHELL_REVIEW = "pending"
+
 #: silhouette -> asset id. `ProjectileSilhouette.content_id()` is
 #: "projectile_%s", and the family is closed at these three.
 PROJECTILES = {
@@ -90,7 +123,8 @@ PROJECTILES = {
 }
 
 
-#: Mirrors `ContentEntry` in Production's `schemas/content.py`. Duplicated
+#: Mirrors `ContentEntry` in Production's `schemas/content.py` AS OF
+#: P1 (99379e5), which added `surfaces`. Duplicated
 #: deliberately and kept deliberately dumb: this is a FAST guard so a bad
 #: field fails here instead of at Production's gate, and it is NOT the
 #: authority. The authority is Production's own model, run by
@@ -102,10 +136,11 @@ PROJECTILES = {
 #: `Strict` sets `extra="forbid"` -- and a 231-character pack description
 #: against a 160-character limit. Prod's integration stopped on all three.
 ENTRY_FIELDS = frozenset({
-    "id", "level", "category", "display_name", "scene", "procedural_fallback",
-    "theme_tags", "semantic_tags", "size", "clearances", "sockets", "volumes",
-    "review", "size_class", "traversal", "requires_capabilities",
-    "affordance_tag", "cost", "variants", "fallback",
+    "affordance_tag", "category", "clearances", "cost", "display_name",
+    "fallback", "id", "level", "procedural_fallback",
+    "requires_capabilities", "review", "scene", "semantic_tags", "size",
+    "size_class", "sockets", "surfaces", "theme_tags", "traversal",
+    "variants", "volumes",
 })
 
 #: `C.MAX_TEXT_LEN` in Production. Applies to the pack `description` and to
@@ -153,6 +188,13 @@ def main():
     entries = []
     plan = []
     prov = []
+    # Traversal markers, per content id. `ShellValidator._check_segment`
+    # refuses a MANDATORY segment with no `<name>_start` / `<name>_end`
+    # Marker3D in the scene -- an unverifiable mandatory route is refused
+    # rather than assumed good. The eight GLBs carry no markers and are
+    # not being remodelled, so the markers go in the .tscn WRAPPER, which
+    # this exporter generates. The mesh stays byte-identical.
+    _markers = {}
 
     for theme, (rel, asset) in sorted(FIXTURES.items()):
         m = _metrics(rel, asset)
@@ -213,6 +255,55 @@ def main():
                          "own ProjectileSilhouette in the A/B",
                      "triangles": m.get("triangles")})
 
+    for cid, (rel, family, descriptor) in sorted(SHELLS.items()):
+        m = _metrics(rel, cid)
+        _copy(rel, cid, "shells")
+        plan.append((cid, "shells", cid,
+                     "res://content/shells/%s.glb" % cid))
+        entry = {
+            "id": cid,
+            "level": 3,
+            "category": "room_shell",
+            "display_name": cid.replace("shell_", "").replace("_", " "),
+            "scene": "res://content/shells/%s.tscn" % cid,
+            "review": SHELL_REVIEW,
+            "fallback": _SHELL_FALLBACK[family],
+            # DERIVED: the family from the id, the descriptor from the
+            # builder's own meta. No intent tag is invented here.
+            "semantic_tags": [family, descriptor],
+            # GODOT ORDER, and this is the axis trap: the art manifest's
+            # `size` is Blender-ordered [outer_width, LENGTH, outer_height]
+            # and `ShellValidator._check_envelope` reads this field as a
+            # Godot Vector3. `roomcontract.assert_axis_order` proves the
+            # swap at build time.
+            "size": m["size_godot"],
+            "surfaces": m["surfaces"],
+            "sockets": m["sockets"],
+            "volumes": m["volumes"],
+        }
+        if m.get("traversal"):
+            entry["traversal"] = m["traversal"]
+            _markers[cid] = [
+                {"name": "%s_%s" % (seg["name"], end),
+                 "position": seg[end]}
+                for seg in m["traversal"] for end in ("start", "end")]
+        # NOT emitted, deliberately: `size_class` is a DESIGN assignment
+        # and P1 made it optional (`SizeClass | None = None`), so shipping
+        # a guess would dress taste as geometry. `cost` keeps the schema
+        # default for the same reason.
+        entries.append(entry)
+        prov.append({"content_id": cid, "source_asset": "%s/%s" % (rel, cid),
+                     "source_batch_review": "PASS",
+                     "runtime_substitution": SHELL_REVIEW,
+                     "p1_contract": {
+                         "surfaces": len(m["surfaces"]),
+                         "traversal": len(m.get("traversal", [])),
+                         "volumes": len(m["volumes"]),
+                         "sockets": len(m["sockets"]),
+                         "exit_yaw": m.get("exit_yaw"),
+                     },
+                     "triangles": m.get("triangles")})
+
     manifest = {
         "schema_version": 1,
         "pack": "authored_art",
@@ -248,7 +339,8 @@ def main():
                 "history is art-lane bookkeeping rather than a content",
                 "contract.",
             ],
-            "scenes": [{"content_id": c, "kind": k, "asset": a, "glb": g}
+            "scenes": [{"content_id": c, "kind": k, "asset": a, "glb": g,
+                        "markers": _markers.get(c, [])}
                        for c, k, a, g in plan],
             "provenance": [by_id[c] for c, _, _, _ in plan],
         }, fh, indent=1)

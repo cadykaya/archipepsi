@@ -167,6 +167,2204 @@
     0.44,
     0.299
    ]
+  },
+  {
+   "id": "shell_corner_left",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "corner left",
+   "scene": "res://content/shells/shell_corner_left.tscn",
+   "review": "pending",
+   "fallback": "shell_corridor_proc",
+   "semantic_tags": [
+    "corner",
+    "turn_left"
+   ],
+   "size": [
+    6.8,
+    4.5,
+    6.8
+   ],
+   "surfaces": [
+    {
+     "center": [
+      0.0,
+      0.0,
+      3.0
+     ],
+     "extent": [
+      6.0,
+      6.0
+     ],
+     "name": "floor"
+    }
+   ],
+   "sockets": [
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "entry",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "surface_id": "floor",
+     "width": 2.4,
+     "yaw": 180.0
+    },
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "exit",
+     "position": [
+      3.4,
+      0.0,
+      3.0
+     ],
+     "surface_id": "floor",
+     "width": 2.4,
+     "yaw": 90.0
+    }
+   ],
+   "volumes": [
+    {
+     "center": [
+      0.0,
+      1.0,
+      1.6
+     ],
+     "kind": "player_entry",
+     "name": "arrival",
+     "size": [
+      2.4,
+      2.0,
+      2.0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "shell_corner_right",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "corner right",
+   "scene": "res://content/shells/shell_corner_right.tscn",
+   "review": "pending",
+   "fallback": "shell_corridor_proc",
+   "semantic_tags": [
+    "corner",
+    "turn_right"
+   ],
+   "size": [
+    6.8,
+    4.5,
+    6.8
+   ],
+   "surfaces": [
+    {
+     "center": [
+      0.0,
+      0.0,
+      3.0
+     ],
+     "extent": [
+      6.0,
+      6.0
+     ],
+     "name": "floor"
+    }
+   ],
+   "sockets": [
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "entry",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "surface_id": "floor",
+     "width": 2.4,
+     "yaw": 180.0
+    },
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "exit",
+     "position": [
+      -3.4,
+      0.0,
+      3.0
+     ],
+     "surface_id": "floor",
+     "width": 2.4,
+     "yaw": -90.0
+    }
+   ],
+   "volumes": [
+    {
+     "center": [
+      0.0,
+      1.0,
+      1.6
+     ],
+     "kind": "player_entry",
+     "name": "arrival",
+     "size": [
+      2.4,
+      2.0,
+      2.0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "shell_tower_collapsed",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "tower collapsed",
+   "scene": "res://content/shells/shell_tower_collapsed.tscn",
+   "review": "pending",
+   "fallback": "shell_tower_proc",
+   "semantic_tags": [
+    "tower",
+    "collapse"
+   ],
+   "size": [
+    12.8,
+    11.5,
+    14.6
+   ],
+   "surfaces": [
+    {
+     "center": [
+      0.0,
+      0.0,
+      6.0
+     ],
+     "extent": [
+      12.0,
+      12.0
+     ],
+     "name": "ground"
+    },
+    {
+     "center": [
+      3.8,
+      1.0,
+      2.0
+     ],
+     "extent": [
+      3.0,
+      2.6
+     ],
+     "name": "rubble_0_0"
+    },
+    {
+     "center": [
+      3.3,
+      2.0,
+      3.5
+     ],
+     "extent": [
+      3.0,
+      2.6
+     ],
+     "name": "rubble_0_1"
+    },
+    {
+     "center": [
+      2.8,
+      3.0,
+      5.0
+     ],
+     "extent": [
+      3.0,
+      2.6
+     ],
+     "name": "rubble_0_2"
+    },
+    {
+     "center": [
+      0.0,
+      3.0,
+      8.1
+     ],
+     "extent": [
+      10.8,
+      6.6
+     ],
+     "name": "floor_0"
+    },
+    {
+     "center": [
+      -3.8,
+      4.0,
+      10.0
+     ],
+     "extent": [
+      3.0,
+      2.6
+     ],
+     "name": "rubble_1_0"
+    },
+    {
+     "center": [
+      -3.3,
+      5.0,
+      8.5
+     ],
+     "extent": [
+      3.0,
+      2.6
+     ],
+     "name": "rubble_1_1"
+    },
+    {
+     "center": [
+      -2.8,
+      6.0,
+      7.0
+     ],
+     "extent": [
+      3.0,
+      2.6
+     ],
+     "name": "rubble_1_2"
+    },
+    {
+     "center": [
+      0.0,
+      6.0,
+      3.9
+     ],
+     "extent": [
+      10.8,
+      6.6
+     ],
+     "name": "floor_1"
+    },
+    {
+     "center": [
+      0.0,
+      6.0,
+      10.0
+     ],
+     "extent": [
+      12.0,
+      4.0
+     ],
+     "name": "deck"
+    },
+    {
+     "center": [
+      0.0,
+      6.0,
+      13.0
+     ],
+     "extent": [
+      3.0,
+      2.4
+     ],
+     "name": "bridge"
+    }
+   ],
+   "sockets": [
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "entry",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "surface_id": "ground",
+     "width": 2.4,
+     "yaw": 180.0
+    },
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "exit",
+     "position": [
+      0.0,
+      6.0,
+      14.2
+     ],
+     "surface_id": "bridge",
+     "width": 2.4,
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_0",
+     "position": [
+      0.0,
+      3.3,
+      8.1
+     ],
+     "surface_id": "floor_0",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_1",
+     "position": [
+      0.0,
+      6.3,
+      3.9
+     ],
+     "surface_id": "floor_1",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_2",
+     "position": [
+      0.0,
+      6.3,
+      10.0
+     ],
+     "surface_id": "deck",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_3",
+     "position": [
+      3.8,
+      1.3,
+      2.0
+     ],
+     "surface_id": "rubble_0_0",
+     "yaw": 0.0
+    }
+   ],
+   "volumes": [
+    {
+     "center": [
+      0.0,
+      3.5,
+      6.0
+     ],
+     "kind": "no_build",
+     "name": "core",
+     "size": [
+      2.2,
+      8.0,
+      2.2
+     ]
+    },
+    {
+     "center": [
+      0.0,
+      1.0,
+      1.6
+     ],
+     "kind": "player_entry",
+     "name": "arrival",
+     "size": [
+      2.4,
+      2.0,
+      2.0
+     ]
+    },
+    {
+     "center": [
+      -2.0,
+      7.0,
+      10.0
+     ],
+     "kind": "objective",
+     "name": "reward",
+     "size": [
+      2.0,
+      2.0,
+      2.0
+     ]
+    }
+   ],
+   "traversal": [
+    {
+     "end": [
+      3.8,
+      1.0,
+      2.0
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "ground_to_rubble_0_0",
+     "start": [
+      3.8,
+      0.0,
+      2.0
+     ]
+    },
+    {
+     "end": [
+      3.55,
+      2.0,
+      2.75
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "rubble_0_0_to_rubble_0_1",
+     "start": [
+      3.55,
+      1.0,
+      2.75
+     ]
+    },
+    {
+     "end": [
+      3.05,
+      3.0,
+      4.25
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "rubble_0_1_to_rubble_0_2",
+     "start": [
+      3.05,
+      2.0,
+      4.25
+     ]
+    },
+    {
+     "end": [
+      2.8,
+      3.0,
+      5.55
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "rubble_0_2_to_floor_0",
+     "start": [
+      2.8,
+      3.0,
+      5.55
+     ]
+    },
+    {
+     "end": [
+      -3.8,
+      4.0,
+      10.0
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "floor_0_to_rubble_1_0",
+     "start": [
+      -3.8,
+      3.0,
+      10.0
+     ]
+    },
+    {
+     "end": [
+      -3.55,
+      5.0,
+      9.25
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "rubble_1_0_to_rubble_1_1",
+     "start": [
+      -3.55,
+      4.0,
+      9.25
+     ]
+    },
+    {
+     "end": [
+      -3.05,
+      6.0,
+      7.75
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "rubble_1_1_to_rubble_1_2",
+     "start": [
+      -3.05,
+      5.0,
+      7.75
+     ]
+    },
+    {
+     "end": [
+      -2.8,
+      6.0,
+      6.45
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "rubble_1_2_to_floor_1",
+     "start": [
+      -2.8,
+      6.0,
+      6.45
+     ]
+    },
+    {
+     "end": [
+      0.0,
+      6.0,
+      8.0
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "floor_1_to_deck",
+     "start": [
+      0.0,
+      6.0,
+      7.2
+     ]
+    }
+   ]
+  },
+  {
+   "id": "shell_tower_gantry",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "tower gantry",
+   "scene": "res://content/shells/shell_tower_gantry.tscn",
+   "review": "pending",
+   "fallback": "shell_tower_proc",
+   "semantic_tags": [
+    "tower",
+    "gantry"
+   ],
+   "size": [
+    12.8,
+    20.5,
+    14.6
+   ],
+   "surfaces": [
+    {
+     "center": [
+      0.0,
+      0.0,
+      6.0
+     ],
+     "extent": [
+      12.0,
+      12.0
+     ],
+     "name": "ground"
+    },
+    {
+     "center": [
+      -4.4,
+      1.0,
+      3.0
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "step_0_0"
+    },
+    {
+     "center": [
+      -4.4,
+      2.0,
+      5.4
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "step_0_1"
+    },
+    {
+     "center": [
+      -4.4,
+      3.0,
+      7.8
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "step_0_2"
+    },
+    {
+     "center": [
+      0.0,
+      3.0,
+      10.6
+     ],
+     "extent": [
+      8.4,
+      2.8
+     ],
+     "name": "landing_0"
+    },
+    {
+     "center": [
+      4.4,
+      4.0,
+      9.0
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "step_1_0"
+    },
+    {
+     "center": [
+      4.4,
+      5.0,
+      6.6
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "step_1_1"
+    },
+    {
+     "center": [
+      4.4,
+      6.0,
+      4.2
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "step_1_2"
+    },
+    {
+     "center": [
+      0.0,
+      6.0,
+      1.4
+     ],
+     "extent": [
+      8.4,
+      2.8
+     ],
+     "name": "landing_1"
+    },
+    {
+     "center": [
+      -4.4,
+      7.0,
+      3.0
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "step_2_0"
+    },
+    {
+     "center": [
+      -4.4,
+      8.0,
+      5.4
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "step_2_1"
+    },
+    {
+     "center": [
+      -4.4,
+      9.0,
+      7.8
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "step_2_2"
+    },
+    {
+     "center": [
+      0.0,
+      9.0,
+      10.6
+     ],
+     "extent": [
+      8.4,
+      2.8
+     ],
+     "name": "landing_2"
+    },
+    {
+     "center": [
+      4.4,
+      10.0,
+      9.0
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "step_3_0"
+    },
+    {
+     "center": [
+      4.4,
+      11.0,
+      6.6
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "step_3_1"
+    },
+    {
+     "center": [
+      4.4,
+      12.0,
+      4.2
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "step_3_2"
+    },
+    {
+     "center": [
+      0.0,
+      12.0,
+      1.4
+     ],
+     "extent": [
+      8.4,
+      2.8
+     ],
+     "name": "landing_3"
+    },
+    {
+     "center": [
+      -4.4,
+      13.0,
+      3.0
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "step_4_0"
+    },
+    {
+     "center": [
+      -4.4,
+      14.0,
+      5.4
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "step_4_1"
+    },
+    {
+     "center": [
+      -4.4,
+      15.0,
+      7.8
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "step_4_2"
+    },
+    {
+     "center": [
+      0.0,
+      15.0,
+      10.6
+     ],
+     "extent": [
+      8.4,
+      2.8
+     ],
+     "name": "landing_4"
+    },
+    {
+     "center": [
+      0.0,
+      15.0,
+      10.0
+     ],
+     "extent": [
+      12.0,
+      4.0
+     ],
+     "name": "deck"
+    },
+    {
+     "center": [
+      0.0,
+      15.0,
+      13.0
+     ],
+     "extent": [
+      3.0,
+      2.4
+     ],
+     "name": "bridge"
+    }
+   ],
+   "sockets": [
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "entry",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "surface_id": "ground",
+     "width": 2.4,
+     "yaw": 180.0
+    },
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "exit",
+     "position": [
+      0.0,
+      15.0,
+      14.2
+     ],
+     "surface_id": "bridge",
+     "width": 2.4,
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_0",
+     "position": [
+      0.0,
+      15.3,
+      10.0
+     ],
+     "surface_id": "deck",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_1",
+     "position": [
+      0.0,
+      3.3,
+      10.6
+     ],
+     "surface_id": "landing_0",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_2",
+     "position": [
+      0.0,
+      6.3,
+      1.4
+     ],
+     "surface_id": "landing_1",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_3",
+     "position": [
+      0.0,
+      9.3,
+      10.6
+     ],
+     "surface_id": "landing_2",
+     "yaw": 0.0
+    }
+   ],
+   "volumes": [
+    {
+     "center": [
+      0.0,
+      8.0,
+      6.0
+     ],
+     "kind": "no_build",
+     "name": "core",
+     "size": [
+      2.2,
+      17.0,
+      2.2
+     ]
+    },
+    {
+     "center": [
+      0.0,
+      1.0,
+      1.6
+     ],
+     "kind": "player_entry",
+     "name": "arrival",
+     "size": [
+      2.4,
+      2.0,
+      2.0
+     ]
+    },
+    {
+     "center": [
+      -2.0,
+      16.0,
+      10.0
+     ],
+     "kind": "objective",
+     "name": "reward",
+     "size": [
+      2.0,
+      2.0,
+      2.0
+     ]
+    }
+   ],
+   "traversal": [
+    {
+     "end": [
+      -4.4,
+      1.0,
+      3.0
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "ground_to_step_0_0",
+     "start": [
+      -4.4,
+      0.0,
+      3.0
+     ]
+    },
+    {
+     "end": [
+      -4.4,
+      2.0,
+      4.2
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "step_0_0_to_step_0_1",
+     "start": [
+      -4.4,
+      1.0,
+      4.2
+     ]
+    },
+    {
+     "end": [
+      -4.4,
+      3.0,
+      6.6
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "step_0_1_to_step_0_2",
+     "start": [
+      -4.4,
+      2.0,
+      6.6
+     ]
+    },
+    {
+     "end": [
+      -3.65,
+      3.0,
+      9.2
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "step_0_2_to_landing_0",
+     "start": [
+      -3.65,
+      3.0,
+      9.1
+     ]
+    },
+    {
+     "end": [
+      3.65,
+      4.0,
+      9.75
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "landing_0_to_step_1_0",
+     "start": [
+      3.65,
+      3.0,
+      9.75
+     ]
+    },
+    {
+     "end": [
+      4.4,
+      5.0,
+      7.8
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "step_1_0_to_step_1_1",
+     "start": [
+      4.4,
+      4.0,
+      7.8
+     ]
+    },
+    {
+     "end": [
+      4.4,
+      6.0,
+      5.4
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "step_1_1_to_step_1_2",
+     "start": [
+      4.4,
+      5.0,
+      5.4
+     ]
+    },
+    {
+     "end": [
+      3.65,
+      6.0,
+      2.8
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "step_1_2_to_landing_1",
+     "start": [
+      3.65,
+      6.0,
+      2.9
+     ]
+    },
+    {
+     "end": [
+      -3.65,
+      7.0,
+      2.25
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "landing_1_to_step_2_0",
+     "start": [
+      -3.65,
+      6.0,
+      2.25
+     ]
+    },
+    {
+     "end": [
+      -4.4,
+      8.0,
+      4.2
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "step_2_0_to_step_2_1",
+     "start": [
+      -4.4,
+      7.0,
+      4.2
+     ]
+    },
+    {
+     "end": [
+      -4.4,
+      9.0,
+      6.6
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "step_2_1_to_step_2_2",
+     "start": [
+      -4.4,
+      8.0,
+      6.6
+     ]
+    },
+    {
+     "end": [
+      -3.65,
+      9.0,
+      9.2
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "step_2_2_to_landing_2",
+     "start": [
+      -3.65,
+      9.0,
+      9.1
+     ]
+    },
+    {
+     "end": [
+      3.65,
+      10.0,
+      9.75
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "landing_2_to_step_3_0",
+     "start": [
+      3.65,
+      9.0,
+      9.75
+     ]
+    },
+    {
+     "end": [
+      4.4,
+      11.0,
+      7.8
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "step_3_0_to_step_3_1",
+     "start": [
+      4.4,
+      10.0,
+      7.8
+     ]
+    },
+    {
+     "end": [
+      4.4,
+      12.0,
+      5.4
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "step_3_1_to_step_3_2",
+     "start": [
+      4.4,
+      11.0,
+      5.4
+     ]
+    },
+    {
+     "end": [
+      3.65,
+      12.0,
+      2.8
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "step_3_2_to_landing_3",
+     "start": [
+      3.65,
+      12.0,
+      2.9
+     ]
+    },
+    {
+     "end": [
+      -3.65,
+      13.0,
+      2.25
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "landing_3_to_step_4_0",
+     "start": [
+      -3.65,
+      12.0,
+      2.25
+     ]
+    },
+    {
+     "end": [
+      -4.4,
+      14.0,
+      4.2
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "step_4_0_to_step_4_1",
+     "start": [
+      -4.4,
+      13.0,
+      4.2
+     ]
+    },
+    {
+     "end": [
+      -4.4,
+      15.0,
+      6.6
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "step_4_1_to_step_4_2",
+     "start": [
+      -4.4,
+      14.0,
+      6.6
+     ]
+    },
+    {
+     "end": [
+      -3.65,
+      15.0,
+      9.2
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "step_4_2_to_landing_4",
+     "start": [
+      -3.65,
+      15.0,
+      9.1
+     ]
+    },
+    {
+     "end": [
+      0.0,
+      15.0,
+      10.6
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "landing_4_to_deck",
+     "start": [
+      0.0,
+      15.0,
+      10.6
+     ]
+    }
+   ]
+  },
+  {
+   "id": "shell_tower_spiral",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "tower spiral",
+   "scene": "res://content/shells/shell_tower_spiral.tscn",
+   "review": "pending",
+   "fallback": "shell_tower_proc",
+   "semantic_tags": [
+    "tower",
+    "spiral"
+   ],
+   "size": [
+    12.8,
+    14.5,
+    14.6
+   ],
+   "surfaces": [
+    {
+     "center": [
+      0.0,
+      0.0,
+      6.0
+     ],
+     "extent": [
+      12.0,
+      12.0
+     ],
+     "name": "ground"
+    },
+    {
+     "center": [
+      -4.3,
+      1.0,
+      4.4
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "platform_0"
+    },
+    {
+     "center": [
+      -4.3,
+      2.0,
+      6.8
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "platform_1"
+    },
+    {
+     "center": [
+      -4.3,
+      3.0,
+      9.2
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "platform_2"
+    },
+    {
+     "center": [
+      -2.7,
+      4.0,
+      10.0
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "platform_3"
+    },
+    {
+     "center": [
+      -0.3,
+      5.0,
+      10.0
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "platform_4"
+    },
+    {
+     "center": [
+      2.1,
+      6.0,
+      10.0
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "platform_5"
+    },
+    {
+     "center": [
+      4.3,
+      7.0,
+      9.8
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "platform_6"
+    },
+    {
+     "center": [
+      4.3,
+      8.0,
+      7.4
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "platform_7"
+    },
+    {
+     "center": [
+      4.3,
+      9.0,
+      5.0
+     ],
+     "extent": [
+      2.6,
+      2.6
+     ],
+     "name": "platform_8"
+    },
+    {
+     "center": [
+      0.0,
+      9.0,
+      10.0
+     ],
+     "extent": [
+      12.0,
+      4.0
+     ],
+     "name": "deck"
+    },
+    {
+     "center": [
+      0.0,
+      9.0,
+      13.0
+     ],
+     "extent": [
+      3.0,
+      2.4
+     ],
+     "name": "bridge"
+    }
+   ],
+   "sockets": [
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "entry",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "surface_id": "ground",
+     "width": 2.4,
+     "yaw": 180.0
+    },
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "exit",
+     "position": [
+      0.0,
+      9.0,
+      14.2
+     ],
+     "surface_id": "bridge",
+     "width": 2.4,
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_0",
+     "position": [
+      0.0,
+      9.3,
+      10.0
+     ],
+     "surface_id": "deck",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_1",
+     "position": [
+      -4.3,
+      1.3,
+      4.4
+     ],
+     "surface_id": "platform_0",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_2",
+     "position": [
+      -4.3,
+      2.3,
+      6.8
+     ],
+     "surface_id": "platform_1",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_3",
+     "position": [
+      -4.3,
+      3.3,
+      9.2
+     ],
+     "surface_id": "platform_2",
+     "yaw": 0.0
+    }
+   ],
+   "volumes": [
+    {
+     "center": [
+      0.0,
+      5.0,
+      6.0
+     ],
+     "kind": "no_build",
+     "name": "core",
+     "size": [
+      2.2,
+      11.0,
+      2.2
+     ]
+    },
+    {
+     "center": [
+      0.0,
+      1.0,
+      1.6
+     ],
+     "kind": "player_entry",
+     "name": "arrival",
+     "size": [
+      2.4,
+      2.0,
+      2.0
+     ]
+    },
+    {
+     "center": [
+      -2.0,
+      10.0,
+      10.0
+     ],
+     "kind": "objective",
+     "name": "reward",
+     "size": [
+      2.0,
+      2.0,
+      2.0
+     ]
+    }
+   ],
+   "traversal": [
+    {
+     "end": [
+      -4.3,
+      1.0,
+      4.4
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "ground_to_platform_0",
+     "start": [
+      -4.3,
+      0.0,
+      4.4
+     ]
+    },
+    {
+     "end": [
+      -4.3,
+      2.0,
+      5.6
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "platform_0_to_platform_1",
+     "start": [
+      -4.3,
+      1.0,
+      5.6
+     ]
+    },
+    {
+     "end": [
+      -4.3,
+      3.0,
+      8.0
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "platform_1_to_platform_2",
+     "start": [
+      -4.3,
+      2.0,
+      8.0
+     ]
+    },
+    {
+     "end": [
+      -3.5,
+      4.0,
+      9.6
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "platform_2_to_platform_3",
+     "start": [
+      -3.5,
+      3.0,
+      9.6
+     ]
+    },
+    {
+     "end": [
+      -1.5,
+      5.0,
+      10.0
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "platform_3_to_platform_4",
+     "start": [
+      -1.5,
+      4.0,
+      10.0
+     ]
+    },
+    {
+     "end": [
+      0.9,
+      6.0,
+      10.0
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "platform_4_to_platform_5",
+     "start": [
+      0.9,
+      5.0,
+      10.0
+     ]
+    },
+    {
+     "end": [
+      3.2,
+      7.0,
+      9.9
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "platform_5_to_platform_6",
+     "start": [
+      3.2,
+      6.0,
+      9.9
+     ]
+    },
+    {
+     "end": [
+      4.3,
+      8.0,
+      8.6
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "platform_6_to_platform_7",
+     "start": [
+      4.3,
+      7.0,
+      8.6
+     ]
+    },
+    {
+     "end": [
+      4.3,
+      9.0,
+      6.2
+     ],
+     "kind": "rise",
+     "mandatory": true,
+     "name": "platform_7_to_platform_8",
+     "start": [
+      4.3,
+      8.0,
+      6.2
+     ]
+    },
+    {
+     "end": [
+      4.3,
+      9.0,
+      8.0
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "platform_8_to_deck",
+     "start": [
+      4.3,
+      9.0,
+      6.3
+     ]
+    }
+   ]
+  },
+  {
+   "id": "shell_treasure_cache",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "treasure cache",
+   "scene": "res://content/shells/shell_treasure_cache.tscn",
+   "review": "pending",
+   "fallback": "shell_treasure_room_proc",
+   "semantic_tags": [
+    "treasure_room",
+    "stored"
+   ],
+   "size": [
+    8.8,
+    5.4,
+    8.8
+   ],
+   "surfaces": [
+    {
+     "center": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "extent": [
+      8.0,
+      8.0
+     ],
+     "name": "floor"
+    },
+    {
+     "center": [
+      0.0,
+      0.4,
+      4.0
+     ],
+     "extent": [
+      3.0,
+      3.0
+     ],
+     "name": "step_low"
+    },
+    {
+     "center": [
+      0.0,
+      0.8,
+      4.0
+     ],
+     "extent": [
+      2.2,
+      2.2
+     ],
+     "name": "step_high"
+    }
+   ],
+   "sockets": [
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "entry",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "surface_id": "floor",
+     "width": 2.4,
+     "yaw": 180.0
+    },
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "exit",
+     "position": [
+      0.0,
+      0.0,
+      8.0
+     ],
+     "surface_id": "floor",
+     "width": 2.4,
+     "yaw": 0.0
+    }
+   ],
+   "volumes": [
+    {
+     "center": [
+      0.0,
+      0.4,
+      4.0
+     ],
+     "kind": "no_build",
+     "name": "plinth",
+     "size": [
+      3.0,
+      0.8,
+      3.0
+     ]
+    },
+    {
+     "center": [
+      0.0,
+      1.0,
+      1.6
+     ],
+     "kind": "player_entry",
+     "name": "arrival",
+     "size": [
+      2.4,
+      2.0,
+      2.0
+     ]
+    },
+    {
+     "center": [
+      0.0,
+      1.4,
+      4.0
+     ],
+     "kind": "objective",
+     "name": "reward",
+     "size": [
+      2.2,
+      1.2,
+      2.2
+     ]
+    }
+   ],
+   "traversal": [
+    {
+     "end": [
+      0.0,
+      0.4,
+      2.8
+     ],
+     "kind": "rise",
+     "mandatory": false,
+     "name": "floor_to_step_low",
+     "start": [
+      0.0,
+      0.0,
+      2.0
+     ]
+    },
+    {
+     "end": [
+      0.0,
+      0.8,
+      4.0
+     ],
+     "kind": "rise",
+     "mandatory": false,
+     "name": "step_low_to_step_high",
+     "start": [
+      0.0,
+      0.4,
+      2.8
+     ]
+    }
+   ]
+  },
+  {
+   "id": "shell_treasure_coffer",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "treasure coffer",
+   "scene": "res://content/shells/shell_treasure_coffer.tscn",
+   "review": "pending",
+   "fallback": "shell_treasure_room_proc",
+   "semantic_tags": [
+    "treasure_room",
+    "displayed"
+   ],
+   "size": [
+    8.8,
+    6.3,
+    8.8
+   ],
+   "surfaces": [
+    {
+     "center": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "extent": [
+      8.0,
+      8.0
+     ],
+     "name": "floor"
+    },
+    {
+     "center": [
+      0.0,
+      0.4,
+      4.0
+     ],
+     "extent": [
+      3.0,
+      3.0
+     ],
+     "name": "step_low"
+    },
+    {
+     "center": [
+      0.0,
+      0.8,
+      4.0
+     ],
+     "extent": [
+      2.2,
+      2.2
+     ],
+     "name": "step_high"
+    }
+   ],
+   "sockets": [
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "entry",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "surface_id": "floor",
+     "width": 2.4,
+     "yaw": 180.0
+    },
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "exit",
+     "position": [
+      0.0,
+      0.0,
+      8.0
+     ],
+     "surface_id": "floor",
+     "width": 2.4,
+     "yaw": 0.0
+    }
+   ],
+   "volumes": [
+    {
+     "center": [
+      0.0,
+      0.4,
+      4.0
+     ],
+     "kind": "no_build",
+     "name": "plinth",
+     "size": [
+      3.0,
+      0.8,
+      3.0
+     ]
+    },
+    {
+     "center": [
+      0.0,
+      1.0,
+      1.6
+     ],
+     "kind": "player_entry",
+     "name": "arrival",
+     "size": [
+      2.4,
+      2.0,
+      2.0
+     ]
+    },
+    {
+     "center": [
+      0.0,
+      1.4,
+      4.0
+     ],
+     "kind": "objective",
+     "name": "reward",
+     "size": [
+      2.2,
+      1.2,
+      2.2
+     ]
+    }
+   ],
+   "traversal": [
+    {
+     "end": [
+      0.0,
+      0.4,
+      2.8
+     ],
+     "kind": "rise",
+     "mandatory": false,
+     "name": "floor_to_step_low",
+     "start": [
+      0.0,
+      0.0,
+      2.0
+     ]
+    },
+    {
+     "end": [
+      0.0,
+      0.8,
+      4.0
+     ],
+     "kind": "rise",
+     "mandatory": false,
+     "name": "step_low_to_step_high",
+     "start": [
+      0.0,
+      0.4,
+      2.8
+     ]
+    }
+   ]
+  },
+  {
+   "id": "shell_treasure_vault",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "treasure vault",
+   "scene": "res://content/shells/shell_treasure_vault.tscn",
+   "review": "pending",
+   "fallback": "shell_treasure_room_proc",
+   "semantic_tags": [
+    "treasure_room",
+    "protected"
+   ],
+   "size": [
+    8.8,
+    5.4,
+    8.8
+   ],
+   "surfaces": [
+    {
+     "center": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "extent": [
+      8.0,
+      8.0
+     ],
+     "name": "floor"
+    },
+    {
+     "center": [
+      0.0,
+      0.4,
+      4.0
+     ],
+     "extent": [
+      3.0,
+      3.0
+     ],
+     "name": "step_low"
+    },
+    {
+     "center": [
+      0.0,
+      0.8,
+      4.0
+     ],
+     "extent": [
+      2.2,
+      2.2
+     ],
+     "name": "step_high"
+    }
+   ],
+   "sockets": [
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "entry",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "surface_id": "floor",
+     "width": 2.4,
+     "yaw": 180.0
+    },
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "exit",
+     "position": [
+      0.0,
+      0.0,
+      8.0
+     ],
+     "surface_id": "floor",
+     "width": 2.4,
+     "yaw": 0.0
+    }
+   ],
+   "volumes": [
+    {
+     "center": [
+      0.0,
+      0.4,
+      4.0
+     ],
+     "kind": "no_build",
+     "name": "plinth",
+     "size": [
+      3.0,
+      0.8,
+      3.0
+     ]
+    },
+    {
+     "center": [
+      0.0,
+      1.0,
+      1.6
+     ],
+     "kind": "player_entry",
+     "name": "arrival",
+     "size": [
+      2.4,
+      2.0,
+      2.0
+     ]
+    },
+    {
+     "center": [
+      0.0,
+      1.4,
+      4.0
+     ],
+     "kind": "objective",
+     "name": "reward",
+     "size": [
+      2.2,
+      1.2,
+      2.2
+     ]
+    }
+   ],
+   "traversal": [
+    {
+     "end": [
+      0.0,
+      0.4,
+      2.8
+     ],
+     "kind": "rise",
+     "mandatory": false,
+     "name": "floor_to_step_low",
+     "start": [
+      0.0,
+      0.0,
+      2.0
+     ]
+    },
+    {
+     "end": [
+      0.0,
+      0.8,
+      4.0
+     ],
+     "kind": "rise",
+     "mandatory": false,
+     "name": "step_low_to_step_high",
+     "start": [
+      0.0,
+      0.4,
+      2.8
+     ]
+    }
+   ]
   }
  ]
 }
