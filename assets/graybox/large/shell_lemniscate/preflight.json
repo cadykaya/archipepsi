@@ -1,0 +1,63 @@
+{
+  "errors": [],
+  "info": {
+    "counts": {
+      "colliders": 70,
+      "offers": 7,
+      "parts": 73,
+      "sockets": 12,
+      "surfaces": 12,
+      "traversal": 12,
+      "volumes": 4
+    },
+    "declared_size_m": [
+      45.2,
+      40.6,
+      74.0
+    ],
+    "interior_m": [
+      44.0,
+      40.0,
+      72.0
+    ],
+    "interior_volume_m3": 126720,
+    "launches": {
+      "launch_basin": {
+        "apex_y": 10.5,
+        "flight_s": 1.48,
+        "span_m": 17.3
+      },
+      "launch_island_a": {
+        "apex_y": 17.5,
+        "flight_s": 1.48,
+        "span_m": 29.3
+      }
+    },
+    "lowest_floor_y": 0.0,
+    "outer_size_m": [
+      45.2,
+      41.6,
+      72.6
+    ],
+    "rails": {
+      "rail_lemniscate": {
+        "baked_samples": 808,
+        "control_points": 13,
+        "height_range_m": 18.5,
+        "length_m": 162.9,
+        "worst_pitch_deg": 22.6
+      }
+    },
+    "sightlines": {
+      "entry_to_exit_portal": 70.3,
+      "island_a_to_island_b": 28.8
+    },
+    "thin_surfaces": {
+      "stair_e": 8,
+      "stair_n": 8,
+      "stair_w": 8
+    },
+    "walks_unproven_at_import": []
+  },
+  "warnings": []
+}
