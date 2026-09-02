@@ -616,6 +616,41 @@ the eight. Measured: nine changed leaves, ALL under
 developer's call, not yours", so it was not retaken. `make baseline`
 fixes it, and `test-bridge` is red on those two tests until it is run.
 
+## P3.5A — the walk proof is physical — landed 2026-09-02
+
+**The owner found a real unsoundness and it is fixed.** P3.5 used
+declared `stand` rects AS the proof of connectivity: two ends inside one
+Surface passed unconditionally, and two rects overlapping in the
+manifest were taken as an edge. Under C(ii) a Surface promises only that
+a valid placement can be FOUND in it, so one valid Surface may span a
+chasm -- and that chasm was being called walkable.
+
+**Rects now BOUND the search; geometry proves it.** A bounded flood over
+player-radius samples: a node exists only where the evidence finds
+support at a walkable height and the player's body fits above step
+height, and an edge exists only between neighbours within one
+`MAX_VERTICAL_STEP`. Rings, switchbacks and long ramps flood; chasms do
+not. The cap FAILS CLOSED.
+
+Evidence: `ShellValidator` floods collision hulls (support only -- an
+AABB body test at surface EDGES false-refuses every P2 shell, measured);
+`RoomAudit` floods with the real capsule and is the final authority.
+
+Two engine bugs surfaced on the way: the audit's ground ray reached only
+0.8 m below its reference and so could not SEE a legal 1.0 m step down,
+and a one-player-width lattice anchored on the start sampled only the
+riser column of a step.
+
+S1-S6 all pass and both sabotages are caught.
+
+**ONE OUTSTANDING, and it is Art data, not the law**: `shell_tower_spiral`
+`platform_8_to_deck` is declared `walk` and crosses a **0.8 m void** at
+x=3.0 between two decks (probed: floor at 9.00 for x<=2.6, nothing at
+x=3.0, 8.00 for x>=3.4). That is a legal hop, not a walk. The shell is
+`review: pass`, so the gate turns `godot-room-contract` RED -- working
+as designed. One word in Art's manifest (`walk` -> `gap`) clears it, and
+Production must not make that edit.
+
 ## P3.5 — LARGE-room traversal semantics — landed 2026-09-02
 
 Art `28c5a99` integrated. **`shell_hall_transit` stays `review: pending`:

@@ -427,17 +427,46 @@ static func _traversal_is_true(room: Dictionary, to_world: Transform3D,
 		# boxes. One statement of what each kind claims; two ways of
 		# seeing. A walk is measured as GROUND CONTINUITY rather than as
 		# a jump between its endpoints, which is what a walk is.
+		# THE RAY MUST REACH A LEGAL STEP DOWN. At 2.0 m total it looked
+		# from 1.2 m above the reference to 0.8 m below it, so a floor
+		# exactly one `MAX_VERTICAL_STEP` lower -- a step the base kit
+		# takes every day -- was out of its reach and read as a void.
+		# That is what made `shell_tower_spiral`'s deck walk look
+		# disconnected across a strip 1.0 m below it.
 		var ground := func(at: Vector3) -> float:
 			var world := to_world * at
 			var hit := _ray(space, world + Vector3.UP * 1.2,
-					world + Vector3.DOWN * 2.0)
+					world + Vector3.DOWN
+						* (Constants.MAX_VERTICAL_STEP + 0.4))
 			if hit.is_empty():
 				return -INF
 			return (to_world.affine_inverse()
 					* (hit["position"] as Vector3)).y
+		# THE PLAYER'S OWN BODY, not just a floor ray (P3.5A). This is
+		# the final authority: real physics, real capsule, and a witness
+		# node only where a player could actually stand.
+		# ONLY THE BODY ABOVE STEP HEIGHT. A ledge under
+		# `MAX_VERTICAL_STEP` is something the player steps onto; testing
+		# the whole capsule would refuse every node within a radius of
+		# every riser, and a lattice needs a node either side of one to
+		# cross it. What is left is the real question: is there room
+		# where a step cannot help.
+		var above := Constants.PLAYER_HEIGHT - Constants.MAX_VERTICAL_STEP
+		var fits := func(at_floor: Vector3) -> bool:
+			var query := PhysicsShapeQueryParameters3D.new()
+			var shape := CapsuleShape3D.new()
+			shape.radius = Constants.PLAYER_RADIUS
+			shape.height = above
+			query.shape = shape
+			query.transform = Transform3D(to_world.basis, to_world
+					* (at_floor + Vector3.UP
+						* (Constants.MAX_VERTICAL_STEP + 0.05
+							+ above / 2.0)))
+			query.collide_with_areas = false
+			return space.intersect_shape(query, 1).is_empty()
 		for problem: String in TraversalLaw.violations(kind, built_start,
 				built_end, ground, "%s: traversal '%s'" % [who, name],
-				RoomContract.sockets_of(room, "stand")):
+				RoomContract.sockets_of(room, "stand"), fits):
 			out.append(problem)
 	return out
 

@@ -136,6 +136,14 @@ static func _check_segment(id: String, segment: Dictionary,
 	var boxes := ChamberBuilders.all_solid_boxes(instance)
 	var ground := func(at: Vector3) -> float:
 		return TraversalLaw.mesh_ground(boxes, at)
+	# SUPPORT-ONLY EVIDENCE HERE, deliberately, and it is the weaker half
+	# of the pair rather than a pretence (P3.5A). A convex hull's AABB is
+	# bigger than the hull, and a walk's endpoints sit at surface EDGES
+	# by nature, so a body test against boxes refuses real walkways on
+	# every P2 shell -- measured, not guessed. What this path must do is
+	# flood PHYSICAL support rather than believe overlapping rectangles,
+	# and it does. Whether a body fits the route is `RoomAudit`'s, which
+	# has the real capsule and is the final authority.
 	for problem: String in TraversalLaw.violations(
 			str(segment.get("kind", "walk")), measured_start, measured_end,
 			ground, "%s: mandatory traversal '%s'" % [id, name],

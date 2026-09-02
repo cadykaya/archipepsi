@@ -29,6 +29,7 @@ func _run() -> void:
 	_test_a_rail_is_smooth_and_not_a_chain_of_corners()
 	_test_a_smoothed_curve_may_not_leave_the_room()
 	_test_a_grapple_point_must_be_somewhere_you_could_hang()
+	_test_a_walk_is_proven_by_geometry_not_by_rectangles()
 	_test_a_rider_enters_only_on_terms_and_leaves_when_it_asks()
 	_test_a_launch_crosses_horizontal_and_vertical_distance()
 	_test_a_launch_refuses_an_obstructed_arc()
@@ -448,6 +449,131 @@ func _test_a_grapple_point_must_be_somewhere_you_could_hang() -> void:
 			"an anchor over a bottomless void was offered")
 	refusals += 1
 	root.queue_free()
+
+
+## --- a walk is proven by geometry, never by rectangles (P3.5A) ---------
+
+## A room built from boxes, so the evidence is exact and the fixture says
+## what it means. Ground is the top of whichever slab covers the column;
+## a player fits wherever nothing is in the way above step height.
+class Slabs:
+	var boxes: Array[AABB] = []
+
+	func add(centre: Vector3, size: Vector3) -> void:
+		boxes.append(AABB(centre - size / 2.0, size))
+
+	func ground() -> Callable:
+		var mine := boxes
+		return func(at: Vector3) -> float:
+			return TraversalLaw.mesh_ground(mine, at)
+
+	func fits() -> Callable:
+		var mine := boxes
+		return func(at_floor: Vector3) -> bool:
+			return TraversalLaw.boxes_fit(mine, at_floor)
+
+func _walk(start: Vector3, end: Vector3, slabs: Slabs,
+		surfaces: Array) -> Array[String]:
+	return TraversalLaw.violations("walk", start, end, slabs.ground(),
+			"probe", surfaces, slabs.fits())
+
+func _test_a_walk_is_proven_by_geometry_not_by_rectangles() -> void:
+	"""DECLARED SURFACES BOUND THE SEARCH; THEY DO NOT PROVE IT.
+
+	Owner ruling C(ii) says a `stand` Surface promises a valid placement
+	can be FOUND inside it -- never that its whole rect is ground. So a
+	single perfectly valid Surface may span a chasm, and the version of
+	this law that passed a walk the moment both ends landed in the same
+	Surface called that chasm walkable. These are the cases that catches."""
+
+	# S1 -- SAME-SURFACE CHASM. One C(ii)-valid Surface over two slabs
+	# with six metres of nothing between them.
+	var chasm := Slabs.new()
+	chasm.add(Vector3(-4, 0, 0), Vector3(4, 1, 6))
+	chasm.add(Vector3(5, 0, 0), Vector3(4, 1, 6))
+	var one_big := [{"name": "hall", "position": Vector3(0.5, 0.5, 0),
+			"extent": Vector3(13, 0, 6)}]
+	var s1 := _walk(Vector3(-4, 0.5, 0), Vector3(5, 0.5, 0), chasm,
+			one_big)
+	_check(not s1.is_empty(),
+			"S1: a walk across a 6 m chasm passed because both ends were "
+			+ "inside one declared Surface")
+	refusals += 1
+
+	# S2 -- DECLARED RECTS THAT TOUCH OVER A VOID. Two Surfaces whose
+	# metadata overlaps; the geometry under them does not meet.
+	var split := [
+		{"name": "west", "position": Vector3(-4, 0.5, 0),
+			"extent": Vector3(11, 0, 6)},
+		{"name": "east", "position": Vector3(5, 0.5, 0),
+			"extent": Vector3(11, 0, 6)}]
+	_check(split[0]["position"].x + (split[0]["extent"] as Vector3).x / 2.0
+				> split[1]["position"].x
+					- (split[1]["extent"] as Vector3).x / 2.0,
+			"S2: the fixture's two rects must OVERLAP in declaration "
+			+ "space or it is not testing the defect")
+	var s2 := _walk(Vector3(-4, 0.5, 0), Vector3(5, 0.5, 0), chasm, split)
+	_check(not s2.is_empty(),
+			"S2: two rects that overlap in the manifest were taken as "
+			+ "proof of a route over a void")
+	refusals += 1
+
+	# S3 -- A RING. No straight chord across the middle, a continuous
+	# route around it. This is the case a chord test can never pass.
+	var ring := Slabs.new()
+	ring.add(Vector3(0, 0, 6), Vector3(14, 1, 3))
+	ring.add(Vector3(0, 0, -6), Vector3(14, 1, 3))
+	ring.add(Vector3(-6, 0, 0), Vector3(3, 1, 14))
+	ring.add(Vector3(6, 0, 0), Vector3(3, 1, 14))
+	var collar := [{"name": "collar", "position": Vector3(0, 0.5, 0),
+			"extent": Vector3(16, 0, 16)}]
+	var s3 := _walk(Vector3(0, 0.5, 6), Vector3(0, 0.5, -6), ring, collar)
+	_check(s3.is_empty(),
+			"S3: a continuous ring walk was refused: %s" % "; ".join(s3))
+	# And the chord across the middle really is empty, so S3 is the case
+	# it claims to be.
+	_check(ring.ground().call(Vector3(0, 0.5, 0)) == -INF,
+			"S3: the middle of the ring has floor, so this is not a ring")
+
+	# S4 -- A LONG RAMP whose endpoint span is far past any jump.
+	var ramp := Slabs.new()
+	for i in 30:
+		ramp.add(Vector3(0, float(i) * 0.4, -12.0 + float(i) * 0.8),
+				Vector3(4, 0.5, 1.0))
+	var slope := [{"name": "ramp", "position": Vector3(0, 6, -0.4),
+			"extent": Vector3(4, 0, 26)}]
+	var s4 := _walk(Vector3(0, 0.25, -12.0), Vector3(0, 11.85, 11.2),
+			ramp, slope)
+	_check(s4.is_empty(),
+			"S4: a continuous 23 m ramp was refused as a walk: %s"
+			% "; ".join(s4))
+	var reach := Constants.max_safe_gap(11.6)
+	_check(23.2 > reach,
+			"S4: the ramp's span %.1f m must exceed the %.1f m jump "
+			% [23.2, reach] + "reach or it proves nothing")
+
+	# S5 -- A JUMP RELABELLED. The same chasm, no surfaces declared at
+	# all, so nothing bounds it but the corridor -- and it still fails.
+	var s5 := _walk(Vector3(-4, 0.5, 0), Vector3(5, 0.5, 0), chasm, [])
+	_check(not s5.is_empty(),
+			"S5: a 9 m jump relabelled `walk` was accepted")
+	refusals += 1
+
+	# S6 -- A PINCH. Continuous floor, and the only way through is a
+	# slot too low for a player. Support alone would flood it.
+	var pinch := Slabs.new()
+	pinch.add(Vector3(0, 0, 0), Vector3(4, 1, 20))
+	pinch.add(Vector3(0, 1.4, 0), Vector3(4, 1, 3))
+	var tube := [{"name": "tube", "position": Vector3(0, 0.5, 0),
+			"extent": Vector3(4, 0, 20)}]
+	_check(pinch.ground().call(Vector3(0, 0.5, 0)) > -INF,
+			"S6: the pinch must have continuous FLOOR, or it is testing "
+			+ "a hole instead of a ceiling")
+	var s6 := _walk(Vector3(0, 0.5, -9), Vector3(0, 0.5, 9), pinch, tube)
+	_check(not s6.is_empty(),
+			"S6: a route whose only link is too low for a player was "
+			+ "accepted")
+	refusals += 1
 
 func _test_a_rider_enters_only_on_terms_and_leaves_when_it_asks() -> void:
 	"""Catching is conditional, and letting go is always available."""
