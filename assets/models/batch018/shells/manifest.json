@@ -2314,7 +2314,7 @@
           9.0,
           8.0
         ],
-        "kind": "walk",
+        "kind": "gap",
         "mandatory": true,
         "name": "platform_8_to_deck",
         "start": [

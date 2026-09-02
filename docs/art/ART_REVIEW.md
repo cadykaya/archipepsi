@@ -3915,7 +3915,7 @@ triangles, 41 convex colliders, three movement offers against Production's
 
 | Shell | Metrics | Layers | Landmark |
 | --- | --- | --- | --- |
-| `shell_hall_transit` | 552 tris · 41.20 × 60.00 × 39.60 m · 32.0 texels/m | basin 0, west gallery 11, ring/landing/gantry 21, exit platform 28 | a machine armature — four 4 m columns and three collar rings around a 12 m open shaft, topping out at 30 m |
+| `shell_hall_transit` | 792 tris · 41.20 × 60.00 × 39.60 m · 32.0 texels/m | basin 0, west gallery 11, ring/landing/gantry 21, exit platform 28 | a machine armature — four 4 m columns and three collar rings around a 12 m open shaft, topping out at 30 m |
 
 The declared envelope is 40 × 38 × 60 m interior; the measured box is
 41.20 × 60.00 × 39.60 in the art manifest's Blender order (width, length,

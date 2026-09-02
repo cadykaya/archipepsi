@@ -59,6 +59,7 @@ import common  # noqa: E402
 import materials  # noqa: E402
 import palette as pal  # noqa: E402
 import roomcollision
+import traversallaw  # noqa: E402
 import roomcontract
 import routecheck  # noqa: E402
 
@@ -86,6 +87,31 @@ CORE = 2.2                                   # tower()'s central column
 PLAT = 2.6                                   # tower()'s spiral platform
 
 _IMAGES = {}
+
+
+#: Corrections Art CANNOT derive, because the evidence Art has cannot
+#: see them. Each one is a measurement Production made with the
+#: authority, recorded here with its citation rather than guessed.
+#:
+#: `platform_8_to_deck` is the whole reason this table exists.
+#: `traversallaw.reclassify` PROVES that crossing walkable -- there is
+#: floor at 8.00 between two decks at 9.00, a metre down and a metre
+#: back up, both inside `MAX_VERTICAL_STEP` -- and it is wrong, because
+#: the box evidence is support-only and a player's BODY does not fit in
+#: a 0.4 m slot. That is Production's S6 "pinch" case exactly:
+#: `ShellValidator` floods it and `RoomAudit`'s capsule does not.
+#: Production probed it at `b37fe07` and reported the void; the span is
+#: 1.75 m against a 2.60 m reach, so it is an ordinary hop.
+#:
+#: A mirror that is honestly weaker than the authority must SAY where it
+#: is weaker instead of quietly overruling it. Deriving this one would
+#: mean deriving the wrong answer.
+MEASURED_BY_PRODUCTION = {
+    "platform_8_to_deck": (
+        "gap",
+        "Production b37fe07 probed a real void between the two decks; "
+        "the support-only box evidence Art has cannot see the pinch"),
+}
 
 
 def _image(role):
@@ -603,6 +629,19 @@ def main():
             "bridge", (0.0, -SIDE - 1.0), (3.0, 2.4), rise))
         entry["traversal"] = roomcontract.traversal_from_stones(
             stones, heights, snames, STEP)
+        # THE KIND COMES FROM THE RISE, AND THE RISE DOES NOT KNOW ABOUT
+        # VOIDS. Asking the evidence corrects that for every tower and
+        # every future shell, rather than editing one word in one
+        # manifest.
+        for note in traversallaw.reclassify(colliders, entry,
+                                            roomcollision._world_box, name):
+            common.log(note)
+        for seg in entry["traversal"]:
+            if seg["name"] in MEASURED_BY_PRODUCTION:
+                was = seg["kind"]
+                seg["kind"], why = MEASURED_BY_PRODUCTION[seg["name"]]
+                common.log("%s: '%s' %s -> %s -- %s"
+                           % (name, seg["name"], was, seg["kind"], why))
         # `_core` is the central column `tower()` requires. CORE square,
         # rise + 2.0 tall, centred on the shaft -- the one interior mass
         # in the family, and nothing may be placed inside it.

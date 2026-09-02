@@ -8,96 +8,76 @@ one room with different dressing.
 
 ---
 
-## 0. What changed under us, and what it costs
+## 0. Reconciled against the FINAL walk law (`b37fe07`)
 
-**Production's walk correction has LANDED**, at `93ddc60` — "A walk is
-not a jump, and a rail is not a chain of corners". It is not in motion
-any more, so the slate below is designed against the real rule rather
-than around a gap.
+**The Surface-budget conclusion in the first draft of this document was
+wrong, and it is retracted.** It was read off the intermediate rule at
+`93ddc60`. Production advanced past it, and the final law says the
+opposite of what that draft inferred.
 
-### `TraversalLaw`, in one paragraph
+### What `b37fe07` actually says
 
-Each traversal kind is held to what it *claims*. `gap` and `rise` keep
-their base-kit bounds unchanged. `drop` is bounded by nothing — falling
-is always possible. **`walk` is checked as CONNECTIVITY over the room's
-own declared `surfaces`**: each endpoint must land on one, and the two
-must be joined by a chain of surfaces that touch in plan (within
-`PLAYER_RADIUS * 2` = 0.8 m) and step by no more than
-`MAX_VERTICAL_STEP` = 1.0 m. Production's own note records that they
-tried a straight-line ground sample first and discarded it for the same
-reason Art discarded one at L-88: a ring collar and a chasm crossing are
-identical along the chord.
+The owner found a real unsoundness in the intermediate rule: it accepted
+a walk the moment both endpoints landed on the SAME declared Surface,
+and built edges between different Surfaces by comparing declared rects.
+Under C(ii) a Surface promises only that a placement can be FOUND
+somewhere inside it, so one valid Surface may span a six-metre chasm --
+and that chasm was being certified walkable.
 
-This is the right rule and it is strictly better than what it replaced.
+> **The declared rectangles bound the search and prove nothing.**
 
-### The arithmetic it implies, measured
+A walk is now proven by a bounded flood over player-radius samples: a
+node exists only where the evidence finds support at a walkable height
+and the player's body fits, and an edge exists only between neighbours
+within one `MAX_VERTICAL_STEP`. A ring, a switchback and a 23 m ramp all
+flood. A chasm does not, because no node exists over it.
 
-A `Surface` is `{name, center, extent(2)}` — **a flat rect at one
-height**. There is no slope, and `extent` has no y. So a ramp cannot be
-one Surface: `_surface_under` only matches a point within 1.0 m
-vertically of the surface's own height.
+### The four questions, measured
 
-**A mandatory on-foot climb therefore costs about one declared Surface
-per metre of rise.** Against `surfaces` max_length = 32, that makes the
-surface cap a *climb budget*.
+Art now mirrors that flood source-side in `tools/blender/traversallaw.py`.
+It reproduced all three of Production's `shell_hall_transit` findings,
+verbatim and by name, before a line of the hall changed -- which is the
+only reason anything below is trusted.
 
-Measured on the shipped hall:
+**1. Does a ramp need ~1 Surface per metre?** **No.** Production's own
+23 m sabotage ramp is declared with **one** Surface. Measured on the
+hall: adding a Surface over the west climb's footprint changed the
+flood's node count from 2268 to 2268 -- *exactly zero difference*. The
+rects bound; they do not prove.
 
-```
-declared surfaces today:            14
-  basin_to_gallery       climbs 11.00 m -> 10 intermediate surface(s)
-  gallery_to_landing     climbs 10.00 m ->  9 intermediate surface(s)
-  gantry_to_exit         climbs  7.00 m ->  6 intermediate surface(s)
-intermediate surfaces required:     25
-total to satisfy TraversalLaw:      39   (cap is 32)
-over cap by:                         7
-```
+**2. What is the minimum truthful declaration for a large ramp?** One
+Surface whose rect covers the flight's plan footprint, and often none at
+all -- the decks at either end usually already cover it, and the domain
+is grown by `DOMAIN_MARGIN` 1.5 m besides. **But the binding constraint
+turned out to be geometric, not declarative.** `ShellValidator` floods
+the collision hulls' axis-aligned boxes, and a ramp modelled as ONE
+wedge is one box whose top is the high end: the evidence sees a cliff
+wherever the ramp is. Measured on the hall before the fix, the box
+evidence along the west climb returned 0.00 or 11.00 at every sample and
+nothing between. So a climb is built as a chain of wedge sections each
+rising no more than `roomkit.FLIGHT_RISE` (0.9 m) -- collinear, faces
+meeting, visually the same ramp, and now presenting the intermediate
+tops the evidence needs. Production's 23 m proof is thirty stacked slabs
+for precisely this reason.
 
-`shell_hall_transit` **cannot be made compliant as designed.** That is a
-finding about the hall, not a complaint about the law — and it is the
-single most important input to this slate.
+**3. Does the 32-Surface cap materially constrain the slate?** **No.**
+Nothing in the library is near it. The hall itself needs 14 surfaces,
+not 39. The cap constrains how many distinct *usable regions* a room
+declares, which is a design budget rather than a height tax.
 
-### What the slate does about it
+**4. Did the intermediate assumption suppress vertical ascent?** **Yes,
+and that is now reversed.** The first draft deliberately kept mandatory
+climbs small because ascent looked like it cost a Surface per metre.
+Ascent is free. Four rooms have had their climbs restored to what their
+spatial thesis actually wants -- see the slate below, where the changed
+figures are marked.
 
-**Descent is free. Ascent is not.** So most of these rooms spend their
-height on descent, spectacle and *optional* ascent, and keep the
-mandatory on-foot climb small. Only two of the ten spend real climb
-budget, and both are under 14 m.
+### What did not change
 
-That is not a workaround; it is a better spread. The P2 towers are
-already the "climb a shaft" room. A library where every LARGE room is
-also a climb would be the convergence the brief warns about.
-
-### The one contract question worth asking later
-
-A **slope-aware Surface** (a second height, or a `ramp` kind whose
-connectivity is proven by ground continuity along the declared segment
-path rather than by a surface chain) would let a room have a 30 m
-walkable ascent. Nothing in this slate needs it. **Not requested now** —
-raising it before any room needs it would be asking Production to build
-for a hypothetical. Recorded so that when a room does need it, the
-question already has a shape.
-
-### Also landed, and useful
-
-- **Rails are smooth.** Catmull-Rom with Bezier handles; the curve passes
-  through the points an artist drew. **Art must NOT hand-author dense
-  points to fake smoothness.** Pitch and envelope containment are
-  measured on the *baked* curve, so a route whose control points all sit
-  legally can still fail by bowing — the source-side check has to bake
-  too.
-- **`grapple_point` joined `OFFER_KINDS`** — a place, not a mechanic.
-  Validated as: anchor clear, ≥ 4.0 m clear air beneath (`SWING_ROOM`),
-  and ground within 30 m below (`GRAPPLE_DROP`). Never built.
-- **`_from_authored_scene` now emits `offers`** — the P3.0 seam was
-  unconnected on the authored path until this commit, so the hall's three
-  offers were being dropped between manifest and composer.
-- **The hall stays PENDING with three findings**, all in its declarations
-  rather than its geometry. Two are trivial (`gallery_to_landing` and
-  `gantry_to_exit` begin 1.0 m past the platforms they leave from, in
-  air). The third is the surface chain above.
-
----
+C(ii) is intact. `gap` and `rise` keep their bounds. Rails are still
+sparse authored control points and Production still supplies the smooth
+Catmull-Rom spline. `grapple_point` is still a place rather than a
+mechanic. The ten concepts and their silhouettes are unchanged.
 
 ## 1. The slate
 
@@ -113,7 +93,7 @@ which is what the surface budget buys.
 
 | | |
 |---|---|
-| size | 34 × 46 × 34 · **climb 3 m** (exit is 40 m *below* entry) |
+| size | 34 × 52 × 34 · **climb 3 m** (exit is 46 m *below* entry) |
 | type | `arena` |
 | landmark | a colossal intake cone at the bottom, mouth 14 m across |
 | regions | entry balcony y=40; four terraced ledges spiralling down the walls at 30 / 21 / 12 / 5; the cone floor at 0 |
@@ -152,7 +132,7 @@ which is what the surface budget buys.
 
 | | |
 |---|---|
-| size | 55 × 34 × 55 · **climb 6 m** |
+| size | 60 × 40 × 60 · **climb 16 m** (restored) |
 | type | `arena` |
 | landmark | a fallen slab bridging two terraces, 22 m long, tilted |
 | regions | seven irregular terraces at 0 / 4 / 7 / 11 / 14 / 18 / 22, none rectangular, none concentric; a flooded floor pan |
@@ -204,7 +184,7 @@ which is what the surface budget buys.
 
 | | |
 |---|---|
-| size | 42 × 44 × 42 · **climb 8 m** |
+| size | 46 × 56 × 46 · **climb 24 m** (restored) |
 | type | `arena` |
 | landmark | the hanging cluster: eleven platforms on rods from the ceiling, at nine different heights |
 | regions | the suspended platforms; three catwalk spurs from the walls; the true floor at y=0, present, walkable and deliberately plain — the recovery space |
@@ -217,7 +197,7 @@ which is what the surface budget buys.
 
 | | |
 |---|---|
-| size | 26 × 40 × 120 · **climb 12 m** |
+| size | 26 × 44 × 130 · **climb 20 m** (restored) |
 | type | `arena` |
 | landmark | the far portal, elevated and lit, visible from the entry across 120 m |
 | regions | a processional floor rising gently along its whole length; flanking colonnade aisles at y=0; a clerestory gallery at y=22 above the aisles |
@@ -230,7 +210,7 @@ which is what the surface budget buys.
 
 | | |
 |---|---|
-| size | 52 × 36 × 52 · **climb 13 m** |
+| size | 56 × 44 × 56 · **climb 26 m** (restored) |
 | type | `arena` |
 | landmark | the tangle itself — four walkway decks crossing at four different angles over one void |
 | regions | decks at 0 / 7 / 14 / 21, none parallel to another; a central void they all pass over; four wall landings joining them |
@@ -249,27 +229,21 @@ which is what the surface budget buys.
 | best-served offer | rail (5, 1) · launch (6, 2) · grapple (8, 4) · none-needed (3, 7, 9) |
 | gameplay lean | combat territory (6, 2) · puzzle (7, 10, 3) · platforming (8, 1, 5) · spectacle/quiet (9, 4) |
 
-### The surface budget, checked before anything is built
+### The surface budget, revisited under the final rule
 
-Platform counts are estimates read off each room's region list, so this
-is a sanity check rather than a measurement — `T4` re-runs it per room
-from the real build. The point is that no room in the slate is designed
-into the wall the hall walked into.
+The first draft's table counted "ramp bands" that do not exist. Under
+`b37fe07` a climb costs **zero** intermediate Surfaces, so a room's
+surface count is simply its distinct usable regions -- 6 to 17 across the
+slate, against a cap of 32. The cap is a design budget for how many
+regions a room declares, not a tax on height, and **nothing in the
+library is close to it.**
 
-| room | climb (m) | platforms | ramp bands | total | cap |
-|---|---|---|---|---|---|
-| `sump_descent` | 3 | 6 | 2 | **8** | 32 |
-| `span_basin` | 0 | 8 | 0 | **8** | 32 |
-| `crossing_galleries` | 0 | 9 | 0 | **9** | 32 |
-| `cavern_stepped` | 6 | 10 | 5 | **15** | 32 |
-| `plenum_helix` | 0 | 7 | 0 | **7** | 32 |
-| `yard_gantry` | 0 | 11 | 0 | **11** | 32 |
-| `split_works` | 4 | 12 | 3 | **15** | 32 |
-| `suspended_lattice` | 8 | 17 | 7 | **24** | 32 |
-| `approach_long` | 12 | 9 | 11 | **20** | 32 |
-| `junction_levels` | 13 | 12 | 12 | **24** | 32 |
-
-Worst case 24 of 32. The hall, by the same arithmetic, needs 39.
+Four rooms have had their climbs restored to what their spatial thesis
+wanted before the retracted rule pushed them down: the quarry contours
+16 m instead of 6, the lattice climbs 24 instead of 8, the processional
+rises 20 over 130 m instead of 12 over 120, and the interchange stacks
+26 m of decks instead of 13. The sump also grew, because a pit that
+commits you downward is better at 46 m than 40.
 
 **None of them is "big rectangular hall + central tower + rail around
 tower."** The closest is 5, and it differs by being a pure descent at a

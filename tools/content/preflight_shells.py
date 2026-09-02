@@ -171,10 +171,6 @@ def main(argv):
           % (slack, ref))
     problems = 0
     predictions = 0
-    #: Refusals that come ONLY from `ShellValidator`'s kind-blind reading
-    #: of a `walk` or `drop`. Counted apart from `problems` so the exit
-    #: code stays a statement about Art's work. See req 40.
-    splits = 0
     for e in sorted(entries, key=lambda x: x["id"]):
         cid = e["id"]
         glb = os.path.join(ROOT, "godot", "content", "shells", "%s.glb" % cid)
@@ -227,53 +223,30 @@ def main(argv):
                 span = math.dist(
                     (seg["start"][0], seg["start"][2]),
                     (seg["end"][0], seg["end"][2]))
-                # THE BOUND IS A JUMP BOUND, AND THE TWO HALVES OF
-                # PRODUCTION'S CONTRACT DISAGREE ABOUT THAT.
+                # A KIND IS A CLAIM, AND ONLY TWO KINDS CLAIM A JUMP.
+                # `TraversalLaw` at b37fe07 bounds `gap` and `rise` by
+                # the base kit and proves a `walk` by a bounded physical
+                # flood instead -- so applying the reach bound to a walk
+                # is not a "contract split" to report, it is simply the
+                # wrong question. This tool used to report both readings
+                # while Production's two halves disagreed; they agree
+                # now, and carrying the old framing forward would leave
+                # Art tooling encoding a superseded rule.
                 #
-                # `TraversalSegment._a_mandatory_jump_stays_inside_the_
-                # base_kit` tests `self.kind` and applies
-                # MAX_VERTICAL_STEP / max_safe_gap only to `rise` and
-                # `gap`. `ShellValidator._check_segment` does not read
-                # `kind` and applies them to everything, `walk`
-                # included -- so it refuses a flat 3.20 m walk along a
-                # continuous collar.
-                #
-                # This tool used to have the kind-blind opinion too, by
-                # copying the GDScript. It now reports BOTH, labelled,
-                # because an art-side preflight whose job is "find it
-                # before the handoff" must not quietly pick a side of a
-                # question Production has not answered. See req 40 in
-                # ART_FRONTIER.md and L-87. A `walk`/`drop` refusal is
-                # counted separately and does not fail the run.
-                blind = seg.get("kind") not in ("rise", "gap")
+                # The flood itself is NOT mirrored here. It needs the
+                # collision hulls, which exist at build time and not in
+                # a manifest, and `tools/blender/traversallaw.py` runs
+                # it there as an export gate.
+                if seg.get("kind") not in ("rise", "gap"):
+                    continue
+                if rise > MAX_VERTICAL_STEP + 1e-3 and seg["kind"] == "rise":
+                    notes.append("REFUSED traversal: '%s' rises %.2f m"
+                                 % (seg["name"], rise))
+                    problems += 1
                 allowed = max_safe_gap(max(rise, 0.0), ref)
-                if blind and (rise > MAX_VERTICAL_STEP + 1e-3
-                              or span > allowed + 1e-3):
-                    # Only where the two readings actually DIFFER. A
-                    # `walk` inside the jump bound is not a split; it is
-                    # a segment both halves accept.
-                    notes.append("CONTRACT SPLIT: '%s' is a '%s' -- the "
-                                 "Python schema does not bound it; "
-                                 "ShellValidator does" % (seg["name"],
-                                                          seg.get("kind")))
-                if rise > MAX_VERTICAL_STEP + 1e-3:
-                    notes.append("%s traversal: '%s' rises %.2f m"
-                                 % ("[walk/drop] REFUSED" if blind
-                                    else "REFUSED", seg["name"], rise))
-                    if blind:
-                        splits += 1
-                    else:
-                        problems += 1
                 if span > allowed + 1e-3:
-                    if blind:
-                        splits += 1
-                        notes.append("[walk/drop] REFUSED traversal: '%s' "
-                                     "spans %.2f m at a %.2f m rise; base "
-                                     "kit reaches %.2f"
-                                     % (seg["name"], span, rise, allowed))
-                        continue
-                    notes.append("REFUSED traversal: '%s' spans %.2f m at a "
-                                 "%.2f m rise; base kit reaches %.2f"
+                    notes.append("REFUSED traversal: '%s' spans %.2f m at "
+                                 "a %.2f m rise; base kit reaches %.2f"
                                  % (seg["name"], span, rise, allowed))
                     problems += 1
 
@@ -309,15 +282,8 @@ def main(argv):
             for n in notes:
                 print("[preflight]        %s" % n)
 
-    print("[preflight] %d structural refusal(s), %d overhang(s), "
-          "%d contract-split refusal(s)"
-          % (problems, predictions, splits))
-    if splits:
-        print("[preflight] A [walk/drop] refusal is `ShellValidator` "
-              "applying a JUMP bound to continuous ground. The Python "
-              "half of the same contract does not. Art has not altered "
-              "any shell to route around it -- see req 40 in "
-              "ART_FRONTIER.md.")
+    print("[preflight] %d structural refusal(s), %d overhang(s)"
+          % (problems, predictions))
     print("[preflight] An overhang is CONTEXT under owner ruling C(ii), "
           "not a finding: a Surface promises one valid placement, not a "
           "clear rect.")

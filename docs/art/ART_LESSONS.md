@@ -1512,3 +1512,82 @@ points at where the parser was, not at anything wrong.
 The dangerous version is the one that does not crash — an offset that
 lands on a valid token gives a run that skips or repeats work and reports
 success. Wait for the run, or edit a copy.
+
+### L-90 · The rule you built against can be superseded while you build
+
+Art measured the intermediate walk rule at `93ddc60` carefully, arrived
+at "a mandatory climb costs about one declared Surface per metre", proved
+`shell_hall_transit` needed 39 surfaces against a cap of 32, and designed
+a whole ten-room slate around spending height on descent because ascent
+looked expensive.
+
+Every step of that was sound. The conclusion was wrong within a day,
+because the owner read Production's implementation and found a real
+unsoundness in it: the intermediate rule accepted a walk the moment both
+endpoints resolved to the same declared Surface, so one valid Surface
+spanning a chasm certified the chasm walkable. `b37fe07` replaced it
+with a bounded physical flood and inverted the authoring consequence:
+
+> **The declared rectangles bound the search and prove nothing.**
+
+Measured under the new rule: adding a Surface over the hall's west climb
+changed the flood's node count from 2268 to 2268. Exactly zero.
+
+> **A conclusion measured against a moving contract carries the date of
+> the contract, not the quality of the measurement.** The defence is not
+> to measure less confidently; it is to write the ref into the
+> conclusion, so that "39 of 32, at `93ddc60`" is retractable in one line
+> and "a climb costs a surface a metre" is not a fact anybody inherits.
+
+The slate had already suppressed vertical ascent in four rooms to fit a
+budget that turned out not to exist. They were restored.
+
+### L-91 · A mirror that is weaker than the authority must say where
+
+`traversallaw.py` mirrors `ShellValidator`'s flood over collision hulls.
+It reproduced all three of Production's `shell_hall_transit` findings by
+name before anything was changed, which is what made it trustworthy
+enough to gate a build. It then immediately disagreed with Production
+about a fourth.
+
+`shell_tower_spiral`'s `platform_8_to_deck` crosses what Production
+probed as a real void. The mirror PROVES it walkable in 32 nodes, and is
+not lying: there genuinely is floor a metre below, between the two decks,
+and stepping down and up is two legal `MAX_VERTICAL_STEP` moves. What
+the mirror cannot see is that a player's BODY does not fit in a 0.4 m
+slot — because `ShellValidator`'s evidence is support-only, deliberately,
+and `RoomAudit`'s capsule is the authority. Production's own S6 sabotage
+is exactly this case.
+
+The temptation was to widen the mirror until it agreed. That would have
+been inventing a body test out of boxes and calling the result authority.
+
+> **Where a mirror is weaker than the thing it mirrors, the honest move
+> is to record the authority's measurement as a measurement — cited,
+> narrow, and marked as underivable — rather than to derive the wrong
+> answer or to quietly overrule the authority with the cheaper evidence.**
+
+`MEASURED_BY_PRODUCTION` in `build_towers.py` is one entry long and says
+which evidence saw what, so the next person can tell a fact Art cannot
+compute from a fact Art has not bothered to.
+
+### L-92 · Two of three ramps were built backwards and nothing saw it
+
+The hall's west climb rose *away* from the gallery it serves; so did the
+climb to the exit platform. A `flip` argument was wrong twice. The shell
+passed its build asserts, passed the collision probe, passed Production's
+P3 integration, was photographed from eight angles, and was approved by
+the owner on form.
+
+A backwards ramp is a perfectly ordinary-looking ramp. Nothing in a
+render distinguishes a slope that climbs from one that descends when
+both ends are out of frame, and no check Art had asked the question
+"does this route actually reach the deck it names".
+
+`traversallaw` found both in its first run, because a flood cannot walk
+up a ramp that goes the other way.
+
+> **A geometric mistake that produces plausible pictures survives every
+> review that only looks at pictures.** The route checks are not
+> bureaucracy around the art; for anything with circulation they are the
+> only reviewer that can see the mistake at all.

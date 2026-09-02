@@ -127,13 +127,35 @@ def main(argv):
         _CORNER = ("corners offered as CORRIDOR, the request Production "
                    "recorded at eda4fd9 ('corner is not a chamber type'); "
                    "the corner shape survives as a tag beside it")
+        _HOP = ("`platform_8_to_deck` is a `gap`, not a `walk`. "
+                "Production probed the real geometry at b37fe07 and found "
+                "a void between the two decks; crossing it is a 1.75 m "
+                "hop against a 2.60 m reach. Art's own box-evidence "
+                "mirror PROVES that crossing walkable and is wrong to -- "
+                "there is floor 1 m down between them, and a player's "
+                "body does not fit in the slot. The support-only evidence "
+                "cannot see a pinch, so this correction is recorded from "
+                "Production's measurement rather than derived")
+        _FLIGHT = ("the three climbs are chains of <=0.9 m wedge sections "
+                   "instead of one wedge each, and two of them were built "
+                   "REVERSED -- high end away from the deck they serve. "
+                   "One wedge is one collision hull whose box tops out at "
+                   "the high end, so the import-time flood at b37fe07 saw "
+                   "an 11 m cliff wherever the ramp was; measured, the "
+                   "box evidence returned 0.00 or 11.00 along the west "
+                   "climb and nothing between. The sections are collinear "
+                   "and the room looks the same. `gallery_to_landing` and "
+                   "`gantry_to_exit` also start 1.5 m back, onto the "
+                   "decks they actually leave from rather than 1.0 m past "
+                   "their ends, in air")
         DECLARED_HANDOFF = {}
         for _cid, _fields, _why in (
                 ("shell_corner_left", ("semantic_tags",), _CORNER),
                 ("shell_corner_right", ("semantic_tags",), _CORNER),
                 ("shell_tower_collapsed",
                  ("surfaces", "traversal", "volumes"), _WELL),
-                ("shell_tower_spiral", ("surfaces", "traversal"), _WELL),
+                ("shell_tower_spiral", ("surfaces", "traversal"),
+                 _WELL + "; and " + _HOP),
                 ("shell_tower_collapsed", ("sockets",),
                  _WELL + "; and " + _SOCKET),
                 ("shell_tower_spiral", ("sockets",),
@@ -151,7 +173,8 @@ def main(argv):
                 ("shell_treasure_cache", ("review",), _PASS),
                 ("shell_treasure_coffer", ("review",), _PASS),
                 ("shell_corner_left", ("review",), _PASS),
-                ("shell_corner_right", ("review",), _PASS)):
+                ("shell_corner_right", ("review",), _PASS),
+                ("shell_hall_transit", ("traversal", "size"), _FLIGHT)):
             for _field in _fields:
                 DECLARED_HANDOFF[(_cid, _field)] = _why
 

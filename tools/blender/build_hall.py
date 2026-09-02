@@ -49,14 +49,29 @@ The rings also do the occlusion work the brief asks for: from the door
 you cannot see the west gallery behind the core, and the room keeps
 revealing subspaces as you cross it.
 
-## Circulation is ramps, not stones
+## Circulation is flights, not stones, and not one long wedge
 
-A 28 m climb in 1.00 m stones is 28 surfaces and 28 traversal segments,
-against a schema that caps both at 32. It would also be a bad staircase.
-The route is four ramps and two bridges instead, declared as `walk`
-segments -- which is what they are, and what the contract's `walk` kind
-is for. `rise` and `gap` carry the base-kit bounds; `walk` carries the
-claim that there is continuous ground.
+The route is three climbs and two bridges, declared as `walk` segments --
+which is what they are, and what the contract's `walk` kind is for.
+`rise` and `gap` carry the base-kit reach bounds; `walk` carries the
+claim that there is continuous ground, and at `b37fe07` that claim is
+PROVEN by a bounded flood over the collision hulls rather than assumed
+from a label.
+
+Each climb is therefore a chain of wedge sections rising no more than
+`roomkit.FLIGHT_RISE` apiece, and NOT one wedge spanning the whole rise.
+A single wedge is a single convex hull whose axis-aligned box tops out
+at the high end, so the import-time evidence sees an eleven-metre cliff
+wherever the ramp is. Measured before the fix: the box evidence along
+the west climb returned 0.00 or 11.00 at every sample and nothing in
+between. The sections are collinear and their faces meet, so the room
+looks the same; what changes is that the evidence can see the slope.
+
+An earlier note here claimed a climb costs one declared Surface per
+metre. That was read off the intermediate rule at `93ddc60` and is
+wrong: the declared rectangles bound the search and prove nothing.
+Adding a Surface over the west climb changed the flood's node count by
+exactly zero.
 
 The route is: vestibule, basin, west gallery (11), north landing (21) by
 a ramp along the back wall, the core's own collar ring, the east gantry,
@@ -85,6 +100,8 @@ import brushkit  # noqa: E402
 import common  # noqa: E402
 import materials  # noqa: E402
 import roomcollision
+import roomkit  # noqa: E402
+import traversallaw  # noqa: E402
 import roomcontract  # noqa: E402
 import palette as pal  # noqa: E402
 
@@ -143,15 +160,6 @@ def _slab(parts, name, tag, x0, x1, z0, z1, top, thick=0.70, role="floor"):
         ((x0 + x1) / 2.0, _y((z0 + z1) / 2.0), top - thick / 2.0)),
         name, role))
     return ((( x0 + x1) / 2.0, _y((z0 + z1) / 2.0)), (x1 - x0, z1 - z0))
-
-
-def _ramp(parts, name, tag, x0, x1, z0, z1, low, high, axis, flip):
-    """A walkable slope. `low` is at the (z0, x0) end."""
-    sx, sy = x1 - x0, z1 - z0
-    parts.append(_paint(brushkit.wedge(
-        "%s_%s" % (name, tag), (sx, sy, high - low),
-        ((x0 + x1) / 2.0, _y((z0 + z1) / 2.0), (low + high) / 2.0),
-        rotation_z=180.0 if flip else 0.0, axis=axis), name, "floor"))
 
 
 def build():
@@ -237,11 +245,17 @@ def build():
 
     # --- west gallery, and the ramp to it -----------------------------
     surface("west_gallery", -half + WALL, -12.0, 32.0, 52.0, Y_GALLERY)
-    _ramp(parts, name, "ramp1", -half + WALL, -13.0, 14.0, 32.0,
-          0.0, Y_GALLERY, "y", True)
+    # NOT flipped. The west gallery is at z 32..52, so the climb's HIGH
+    # end belongs at z=32. It was built flipped -- high at z=14, rising
+    # away from the deck it serves -- and neither the P3 build gates nor
+    # the owner's form review could see it, because a backwards ramp is
+    # a perfectly ordinary-looking ramp. `traversallaw` saw it in one
+    # run: the box evidence descended from 11.00 to 0.85 as z increased.
+    roomkit.flight(parts, _paint, name, "ramp1", -half + WALL, -13.0,
+                   14.0, 32.0, 0.0, Y_GALLERY, "y", False)
     # --- back-wall ramp to the north landing --------------------------
-    _ramp(parts, name, "ramp2", -16.0, -2.0, 52.0, 58.0,
-          Y_GALLERY, Y_MID, "x", False)
+    roomkit.flight(parts, _paint, name, "ramp2", -16.0, -2.0, 52.0, 58.0,
+                   Y_GALLERY, Y_MID, "x", False)
     for j, cx in enumerate((-13.0, -5.0)):
         parts.append(_paint(brushkit.block(
             "%s_r2leg_%d" % (name, j), (1.0, 1.0, Y_GALLERY),
@@ -252,8 +266,11 @@ def build():
     # --- east gantry, its bridge, and the ramp out --------------------
     surface("east_gantry", 13.0, 19.0, 16.0, 38.0, Y_MID, 0.5)
     surface("bridge_e", 9.0, 13.0, 30.0, 34.0, Y_MID)
-    _ramp(parts, name, "ramp3", 13.0, 19.0, 38.0, 54.0,
-          Y_MID, Y_EXIT, "y", True)
+    # Also not flipped, and for the same reason: the gantry it leaves is
+    # at z 16..38 and the exit platform it reaches is at z 54, so the low
+    # end belongs at z=38.
+    roomkit.flight(parts, _paint, name, "ramp3", 13.0, 19.0, 38.0, 54.0,
+                   Y_MID, Y_EXIT, "y", False)
     for j, cz in enumerate((22.0, 32.0)):
         parts.append(_paint(brushkit.block(
             "%s_gleg_%d" % (name, j), (0.9, 0.9, Y_MID),
@@ -329,55 +346,6 @@ def _assert_sightline(colliders, eye, look, who):
     return math.dist(eye, look)
 
 
-def _assert_walk_ground(colliders, segments, name):
-    """A `walk` link must have structure under the whole chord, at a
-    height between its two ends.
-
-    WHAT THIS IS AND IS NOT. `walk` is the claim that a link is
-    CONTINUOUS GROUND rather than a jump -- it is why a 28 m ramped
-    climb is four links instead of thirty-odd steps, and it is the
-    claim this room leans on hardest. So it gets checked.
-
-    It is checked in PLAN, against collider boxes, with touching
-    counting as covered. It is deliberately not checked by dropping
-    rays along the chord: a traversal endpoint is declared at a
-    surface's EDGE, two abutting decks leave a hair-wide seam between
-    their inset rectangles, and a ray aimed into that seam reports a
-    hole that no player could fall through. That version of this check
-    was written first and reported a break in seven of the eight P2
-    shells, every one of them a seam. A test that fires on correct
-    geometry is worse than no test.
-
-    The height window is what stops a WALL counting as ground: a
-    collider covering the chord in plan must also have its top face
-    between the endpoints' heights, so a ramp's box (top at the high
-    end) qualifies and a 38 m wall does not.
-    """
-    boxes = [roomcollision._world_box(c) for c in colliders]
-    for seg in segments:
-        if seg["kind"] != "walk" or not seg.get("mandatory", True):
-            continue
-        # Godot (x, y, z) back to Blender plan (x, y) and height.
-        a = (seg["start"][0], _y(seg["start"][2]), seg["start"][1])
-        b = (seg["end"][0], _y(seg["end"][2]), seg["end"][1])
-        lo, hi = min(a[2], b[2]), max(a[2], b[2])
-        steps = max(2, int(math.dist(a[:2], b[:2]) / 0.25) + 1)
-        for i in range(steps + 1):
-            t = i / steps
-            px = a[0] + (b[0] - a[0]) * t
-            py = a[1] + (b[1] - a[1]) * t
-            if not any(
-                    lo - 0.2 <= box[1][2] <= hi + 0.2
-                    and roomcollision._overlaps(px, px, box[0][0], box[1][0])
-                    and roomcollision._overlaps(py, py, box[0][1], box[1][1])
-                    for box in boxes):
-                raise AssertionError(
-                    "%s: walk '%s' claims continuous ground and has none "
-                    "at (%.2f, %.2f), %.0f%% along, between heights "
-                    "%.2f and %.2f" % (name, seg["name"], px, py,
-                                       t * 100.0, lo, hi))
-
-
 def main():
     common.reset_scene()
     name, parts, stones, heights, snames = build()
@@ -437,7 +405,7 @@ def main():
         seg("vestibule_to_basin", "walk", (0, 0, 8.5), (0, 0, 9.5)),
         seg("basin_to_gallery", "walk", (-16.5, 0, 15.0),
             (-16.5, Y_GALLERY, 33.0)),
-        seg("gallery_to_landing", "walk", (-15.0, Y_GALLERY, 53.0),
+        seg("gallery_to_landing", "walk", (-15.0, Y_GALLERY, 51.5),
             (-3.0, Y_MID, 53.0)),
         seg("landing_to_bridge_n", "walk", (4, Y_MID, 49.0),
             (4, Y_MID, 47.0)),
@@ -449,7 +417,7 @@ def main():
             (10.0, Y_MID, 32.0)),
         seg("bridge_e_to_gantry", "walk", (12.0, Y_MID, 32.0),
             (14.0, Y_MID, 32.0)),
-        seg("gantry_to_exit", "walk", (16.0, Y_MID, 39.0),
+        seg("gantry_to_exit", "walk", (16.0, Y_MID, 37.5),
             (16.0, Y_EXIT, 53.0)),
         seg("ring_n_to_ring_w", "walk", (-5.0, Y_MID, 41.0),
             (-7.5, Y_MID, 39.0), False),
@@ -460,8 +428,6 @@ def main():
         seg("basin_to_plinth_east", "rise", (10.0, 0, 43.0),
             (10.0, Y_PLINTH, 44.5), False),
     ]
-
-    _assert_walk_ground(colliders, entry["traversal"], cid)
 
     entry["volumes"] = [
         roomcontract.volume("core", "no_build",
@@ -526,6 +492,16 @@ def main():
     entry["rail_span"] = round(sum(
         math.dist(rail[i], rail[i + 1]) for i in range(len(rail) - 1)), 2)
     entry["launch_span"] = round(span, 2)
+
+    # THE LAW, MIRRORED, AS A GATE. `ShellValidator` floods collision
+    # hulls to prove a `walk`, and this runs the same flood over the
+    # boxes the build just placed. It reproduced all three of the
+    # findings Production reported at `b37fe07` before a line was
+    # changed, which is the only reason it is trusted enough to stop a
+    # build. It is the WEAKER of Production's two evidences -- `RoomAudit`
+    # floods with a real capsule and remains the authority.
+    traversallaw.assert_declared(colliders, entry, cid,
+                                 roomcollision._world_box)
 
     entry["size_godot"] = [round(entry["size"][0], 3),
                            round(entry["size"][2], 3),
