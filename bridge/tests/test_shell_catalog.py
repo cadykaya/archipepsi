@@ -83,17 +83,41 @@ class TestOnlyShippableAuthoredShellsAreOffered:
             _entry(category="fixture", level=2, sockets=[], size=[1, 1, 1]))
 
     def test_the_committed_registry_offers_exactly_what_it_has(self):
-        """Today: nothing, because every entry is procedural. That is the
-        honest state, and this test says so rather than pretending."""
+        """The owner passed the eight P2 shells, so they are offered.
+
+        This test used to assert the catalog was EMPTY, and said in its
+        own failure message that the day authored shells arrived it
+        should start asserting they are offered rather than that none
+        are. That day is 2026-09-02. What it asserts now is stricter
+        than what it replaced: not merely that something is offered, but
+        that the offered set is exactly the shippable authored shells --
+        no procedural entry, no pending asset, nothing extra.
+        """
         registry = shells.load_registry()
         assert registry, "the registry did not load at all"
         offered = shells.shell_catalog(registry)
         procedural = [e for e in registry.values()
                       if e.category == "room_shell" and e.procedural_fallback]
         assert procedural, "the procedural shells vanished"
-        assert offered == {}, (
-            "the registry now carries authored shells; this test should "
-            "start asserting they are offered rather than that none are")
+
+        flat = {shell for ids in offered.values() for shell in ids}
+        shippable = {
+            e.id for e in registry.values()
+            if e.category == "room_shell" and not e.procedural_fallback
+            and shells.is_offerable(e)}
+        assert flat == shippable, (
+            "the catalog offers something other than exactly the "
+            "shippable authored shells")
+        assert flat, (
+            "no authored shell is offered; if the pack went back to "
+            "pending this should say so rather than pass empty")
+        assert not any(e.procedural_fallback for e in registry.values()
+                       if e.id in flat), (
+            "a procedural entry is being offered; naming it lets Epsilon "
+            "'choose' the thing it gets by choosing nothing")
+        assert not any(registry[shell].review != "pass" for shell in flat), (
+            "an unapproved asset is being offered, which decides for "
+            "whoever is still deciding")
 
 
 class TestTheCatalogIsIdsAndNeverPaths:

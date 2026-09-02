@@ -82,6 +82,7 @@ func _run() -> void:
 	await _test_one_envelope_convention_binds_both_producers()
 	await _test_every_authored_shell_in_the_registry_is_measured()
 	await _test_a_pending_shell_never_reaches_a_zone()
+	_test_an_approved_shell_is_held_to_the_contract()
 
 	_check(rooms_checked >= 8,
 			"only %d rooms went through the contract; the suite is not "
@@ -750,24 +751,41 @@ func _test_a_pending_shell_never_reaches_a_zone() -> void:
 	"""The art lane's gate, measured rather than trusted.
 
 	A file existing in the tree is not approval, and an asset that
-	validates is not an asset somebody decided to ship. The eight P2
-	shells are `review: pending`, so the room a player would walk into is
-	the procedural one -- and it is a real room, not a refusal."""
+	validates is not an asset somebody decided to ship. A `pending` shell
+	must be refused by the instantiator, and the room the player gets
+	instead must be a REAL room rather than a hole.
+
+	CONSTRUCTED, NOT BORROWED. This used to walk the registry for
+	whatever happened to be pending and assert it found at least eight --
+	which was true while the P2 pack awaited review and became false the
+	moment the owner passed it. A gate that only works while something
+	unapproved happens to be lying around is a gate that quietly stops
+	testing on the day everything is approved, which is exactly the day
+	it matters most. So the pending shell is now MADE: a real registered
+	shell, copied and marked pending in a private registry, so the
+	refusal is exercised whatever the real pack's review state is."""
 	var registry := ContentRegistry.new()
 	registry.load_all()
-	var pending := 0
+	var tried := 0
 	for id: String in registry.ids_of_category("room_shell"):
 		var entry := registry.get_entry(id)
-		if str(entry.get("review", "")) != "pending":
+		if bool(entry.get("procedural_fallback", false)):
 			continue
-		pending += 1
+		var held := entry.duplicate(true)
+		held["review"] = "pending"
+		var private := ContentRegistry.new()
+		private.entries[id] = held
+		# The fallback the entry names has to be reachable, or this
+		# would prove "a broken registry builds nothing" instead.
+		for other: String in registry.ids_of_category("room_shell"):
+			if other != id:
+				private.entries[other] = registry.get_entry(other)
+		tried += 1
 		var result: Dictionary = ContentInstantiator.build_chamber(
-				_chamber_for(entry), "concrete_facility", registry)
+				_chamber_for(held), "concrete_facility", private)
 		add_child(result["root"] as Node3D)
 		await get_tree().physics_frame
-		_check((result.get("sockets", []) as Array).is_empty()
-				or not (result.get("traversal", []) as Array).is_empty()
-					== false,
+		_check((result.get("sockets", []) as Array).is_empty(),
 				"%s is pending and its authored scene was built anyway"
 				% id)
 		_check(RoomContract.violations(result, id).is_empty(),
@@ -775,10 +793,39 @@ func _test_a_pending_shell_never_reaches_a_zone() -> void:
 				% id)
 		(result["root"] as Node3D).queue_free()
 		await get_tree().process_frame
-	_check(pending >= 8,
-			"only %d shells are pending; the P2 pack is eight and none "
-			% pending + "of them may be player-selectable yet")
+	_check(tried >= 8,
+			"only %d shells were held back and rebuilt; the refusal is "
+			% tried + "not being exercised across the pack")
 	probes_expected_to_fail += 1
+
+func _test_an_approved_shell_is_held_to_the_contract() -> void:
+	"""What approval CHANGED, stated as an assertion rather than assumed.
+
+	The owner passed all eight, so `review` is no longer a reason the
+	suite may report a finding instead of failing on it: an approved
+	shell that does not measure true turns this suite red. That is the
+	property that makes promotion safe, and it is worth one line saying
+	the pack really is in the state where it applies."""
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var approved := 0
+	var waiting := 0
+	for id: String in registry.ids_of_category("room_shell"):
+		var entry := registry.get_entry(id)
+		if bool(entry.get("procedural_fallback", false)):
+			continue
+		if str(entry.get("review", "")) == "pass":
+			approved += 1
+		else:
+			waiting += 1
+	_check(approved + waiting >= 8,
+			"the registry carries %d authored shells, not the eight the "
+			% (approved + waiting) + "P2 pack shipped")
+	_check(shells_awaiting_review == 0,
+			"%d shell(s) are approved AND fail the contract; approval "
+			% shells_awaiting_review + "does not lower the bar")
+	print("  authored shells: %d approved, %d awaiting review"
+			% [approved, waiting])
 
 # --- the audit catches what a description cannot --------------------------
 

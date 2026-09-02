@@ -174,7 +174,7 @@
    "category": "room_shell",
    "display_name": "corner left",
    "scene": "res://content/shells/shell_corner_left.tscn",
-   "review": "pending",
+   "review": "pass",
    "fallback": "shell_corridor_proc",
    "semantic_tags": [
     "corridor",
@@ -253,7 +253,7 @@
    "category": "room_shell",
    "display_name": "corner right",
    "scene": "res://content/shells/shell_corner_right.tscn",
-   "review": "pending",
+   "review": "pass",
    "fallback": "shell_corridor_proc",
    "semantic_tags": [
     "corridor",
@@ -332,7 +332,7 @@
    "category": "room_shell",
    "display_name": "tower collapsed",
    "scene": "res://content/shells/shell_tower_collapsed.tscn",
-   "review": "pending",
+   "review": "pass",
    "fallback": "shell_tower_proc",
    "semantic_tags": [
     "tower",
@@ -741,7 +741,7 @@
    "category": "room_shell",
    "display_name": "tower gantry",
    "scene": "res://content/shells/shell_tower_gantry.tscn",
-   "review": "pending",
+   "review": "pass",
    "fallback": "shell_tower_proc",
    "semantic_tags": [
     "tower",
@@ -1474,7 +1474,7 @@
    "category": "room_shell",
    "display_name": "tower spiral",
    "scene": "res://content/shells/shell_tower_spiral.tscn",
-   "review": "pending",
+   "review": "pass",
    "fallback": "shell_tower_proc",
    "semantic_tags": [
     "tower",
@@ -1910,7 +1910,7 @@
    "category": "room_shell",
    "display_name": "treasure cache",
    "scene": "res://content/shells/shell_treasure_cache.tscn",
-   "review": "pending",
+   "review": "pass",
    "fallback": "shell_treasure_room_proc",
    "semantic_tags": [
     "treasure_room",
@@ -2044,7 +2044,7 @@
    "category": "room_shell",
    "display_name": "treasure coffer",
    "scene": "res://content/shells/shell_treasure_coffer.tscn",
-   "review": "pending",
+   "review": "pass",
    "fallback": "shell_treasure_room_proc",
    "semantic_tags": [
     "treasure_room",
@@ -2178,7 +2178,7 @@
    "category": "room_shell",
    "display_name": "treasure vault",
    "scene": "res://content/shells/shell_treasure_vault.tscn",
-   "review": "pending",
+   "review": "pass",
    "fallback": "shell_treasure_room_proc",
    "semantic_tags": [
     "treasure_room",

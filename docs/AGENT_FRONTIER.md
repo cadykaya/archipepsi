@@ -572,6 +572,50 @@ of them in a `platform_path` room and none in an arena.
 a room can hold is a fact about its built geometry, and Python pricing it
 would be the same builder-knows-what-the-composer-does-not failure.
 
+## P2 OWNER APPROVAL ABSORBED — the eight shells ship — landed 2026-09-02
+
+Art `5998ef8`, integrated verbatim. **Exactly one field moved**:
+`review` "pending" -> "pass" on the eight room shells, plus the matching
+`runtime_substitution` in `SCENE_PLAN.json`. Every other field on every
+entry is byte-identical -- geometry, collision, sockets, surfaces,
+traversal, volumes, size_class, exit_yaw, fits_floors, cameras. The three
+projectile visuals stay pending.
+
+**The catalog is no longer empty, and that is what approval MEANS.**
+`shell_catalog()` now offers all eight under corridor / tower /
+treasure_room, because a passed shell is shippable and therefore
+offerable. `SHELL_FOR_TYPE` is untouched and still names only procedural
+ids, so the DEFAULT route is unchanged and the fallback provider names no
+shell at all (all 23 played rooms carry `shell_id: null`). But a live
+Epsilon provider is now shown them and may name one -- so "unavailable to
+ordinary Zone composition" is true of the default and the fallback, not
+of the live path.
+
+Zone digest `6e8d83d0f3ec088b` unchanged; the played Zone is identical.
+
+**Review is now a HARD gate.** An approved shell that fails the contract
+turns the suite red rather than reporting a note. All eight measure
+`structural=0 measured=0`, so the gate binds and passes.
+
+Two suite guards were re-anchored, both to something stronger:
+`_test_a_pending_shell_never_reaches_a_zone` used to walk the registry
+for whatever happened to be pending and assert it found eight -- a gate
+that stops testing on the day everything is approved, which is the day it
+matters most. It now MAKES a pending shell from a real one, so the
+refusal is exercised whatever the pack's review state is (sabotage-proven
+against `is_shippable`). And `test_the_committed_registry_offers_exactly
+_what_it_has` said in its own failure message that when authored shells
+arrived it should start asserting they ARE offered; it now asserts the
+offered set is exactly the shippable authored shells.
+
+**OUTSTANDING, and NOT mine to take**: the Playtest 2.5 baseline no
+longer matches, because the request catalog Epsilon is shown now contains
+the eight. Measured: nine changed leaves, ALL under
+`zones[*].request.catalog.room_shells`, ZERO under any zone output.
+`preflight_problems()` says in as many words that retaking it is "a
+developer's call, not yours", so it was not retaken. `make baseline`
+fixes it, and `test-bridge` is red on those two tests until it is run.
+
 ## P3.0 — LARGE-ROOM MOVEMENT FOUNDATION — landed 2026-09-02
 
 Contract only. **No LARGE room was authored**, and none of the eight P2
