@@ -121,7 +121,7 @@ VEST_W, VEST_D, VEST_H = 10.0, 9.0, 5.5
 #: slot.
 CORE_Z = 34.0
 CORE_OUT, CORE_IN = 18.0, 12.0
-COL = 4.0
+COL = 3.0
 RING_TOPS = (11.0, 21.0, 29.0)
 RING_T = 1.8
 CORE_TOP = 30.0
@@ -222,9 +222,22 @@ def build():
     # --- the armature -------------------------------------------------
     co = CORE_OUT / 2.0
     ci = CORE_IN / 2.0
+    # THE COLUMNS STOOD IN THE WALKABLE BAND. At 4.0 m square on
+    # (+/-7, CORE_Z +/-7) each one spanned x 5..9 against a collar band
+    # of x 6..9 -- so it filled the band's full width at all four
+    # corners and the collar was four disconnected arcs, not a ring.
+    # `ring_n_to_ring_e` is the mandatory route across one of those
+    # corners, and Production's capsule found its start standing inside
+    # a column (measured here too: a solid from y=0 to y=30 at the
+    # declared start).
+    #
+    # They move INSIDE the shaft, to its corners, and shrink to 3.0. The
+    # band is then clear all the way round, the columns still frame the
+    # opening, and the centre stays clear for the entry sightline --
+    # which `_assert_sightline` re-checks rather than assumes.
     for sx in (-1.0, 1.0):
         for sz in (-1.0, 1.0):
-            cx, cz = sx * 7.0, CORE_Z + sz * 7.0
+            cx, cz = sx * 4.5, CORE_Z + sz * 4.0
             parts.append(_paint(brushkit.block(
                 "%s_col_%d_%d" % (name, int(sx), int(sz)),
                 (COL, COL, CORE_TOP), (cx, _y(cz), CORE_TOP / 2.0)),
@@ -403,30 +416,53 @@ def main():
     # none needs the base-kit reach bound that `rise` and `gap` carry.
     entry["traversal"] = [
         seg("vestibule_to_basin", "walk", (0, 0, 8.5), (0, 0, 9.5)),
-        seg("basin_to_gallery", "walk", (-16.5, 0, 15.0),
-            (-16.5, Y_GALLERY, 33.0)),
-        seg("gallery_to_landing", "walk", (-15.0, Y_GALLERY, 51.5),
-            (-3.0, Y_MID, 53.0)),
+        # Both ends moved off the slope and onto flat deck: the old
+        # start sat one metre up the flight, where a body standing on
+        # one wedge section overlaps the next.
+        seg("basin_to_gallery", "walk", (-16.5, 0, 12.0),
+            (-16.0, Y_GALLERY, 35.0)),
+        # `ramp2` climbs along x from x=-16, so it is already 1.4 m
+        # above the gallery by x=-14: the gallery meets it only at its
+        # WEST END. The old start left the gallery before reaching the
+        # ramp and crossed the void between them, and the old end sat on
+        # the ramp's last section under the landing's lip -- which is
+        # the y=20.29 arrival Production measured.
+        seg("gallery_to_landing", "walk", (-15.5, Y_GALLERY, 51.0),
+            (0.0, Y_MID, 52.0)),
         seg("landing_to_bridge_n", "walk", (4, Y_MID, 49.0),
             (4, Y_MID, 47.0)),
         seg("bridge_n_to_ring_n", "walk", (4, Y_MID, 44.0),
             (4, Y_MID, 42.0)),
-        seg("ring_n_to_ring_e", "walk", (5.0, Y_MID, 41.0),
-            (7.5, Y_MID, 39.0)),
+        # Was declared inside the north-east column. Now band centre to
+        # band centre, with the columns moved clear.
+        seg("ring_n_to_ring_e", "walk", (0.0, Y_MID, 41.5),
+            (7.5, Y_MID, 34.0)),
         seg("ring_e_to_bridge_e", "walk", (8.0, Y_MID, 32.0),
             (10.0, Y_MID, 32.0)),
         seg("bridge_e_to_gantry", "walk", (12.0, Y_MID, 32.0),
             (14.0, Y_MID, 32.0)),
-        seg("gantry_to_exit", "walk", (16.0, Y_MID, 37.5),
-            (16.0, Y_EXIT, 53.0)),
+        # Ends ON the exit platform (z 54..59.4) rather than 1 m short
+        # of it on the flight's last section.
+        seg("gantry_to_exit", "walk", (16.0, Y_MID, 34.0),
+            (16.0, Y_EXIT, 56.0)),
         seg("ring_n_to_ring_w", "walk", (-5.0, Y_MID, 41.0),
             (-7.5, Y_MID, 39.0), False),
         seg("ring_w_to_ring_s", "walk", (-7.5, Y_MID, 29.0),
             (-5.0, Y_MID, 27.0), False),
-        seg("basin_to_plinth_west", "rise", (-4.0, 0, 21.0),
-            (-4.0, Y_PLINTH, 19.5), False),
-        seg("basin_to_plinth_east", "rise", (10.0, 0, 43.0),
-            (10.0, Y_PLINTH, 44.5), False),
+        # THE TWO PLINTH SEGMENTS ARE GONE, and removing them is the
+        # truthful repair rather than a retreat. Both ended 0.5 m OUTSIDE
+        # the plinth they named, in air -- but moving them onto the
+        # plinth would not have saved them, because a plinth is 4.00 m
+        # tall and the base kit steps 1.00 m and jumps `max_safe_gap`,
+        # which at a 4 m rise is zero. There is no honest kind for a
+        # 4 m step up: it is not a `rise`, and calling it a `gap` claims
+        # a jump nobody can make.
+        #
+        # The plinths stay declared `stand` Surfaces, which is a
+        # different claim and a true one -- something can stand up
+        # there, arriving by launch, by grapple, or by being placed. A
+        # Surface has never promised base-kit reachability, and the
+        # traversal list is where that promise would have lived.
     ]
 
     entry["volumes"] = [

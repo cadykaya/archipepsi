@@ -114,31 +114,31 @@
      "position": [
       -16.5,
       0.0,
-      15.0
+      12.0
      ]
     },
     {
      "name": "basin_to_gallery_end",
      "position": [
-      -16.5,
+      -16.0,
       11.0,
-      33.0
+      35.0
      ]
     },
     {
      "name": "gallery_to_landing_start",
      "position": [
-      -15.0,
+      -15.5,
       11.0,
-      51.5
+      51.0
      ]
     },
     {
      "name": "gallery_to_landing_end",
      "position": [
-      -3.0,
+      0.0,
       21.0,
-      53.0
+      52.0
      ]
     },
     {
@@ -176,9 +176,9 @@
     {
      "name": "ring_n_to_ring_e_start",
      "position": [
-      5.0,
+      0.0,
       21.0,
-      41.0
+      41.5
      ]
     },
     {
@@ -186,7 +186,7 @@
      "position": [
       7.5,
       21.0,
-      39.0
+      34.0
      ]
     },
     {
@@ -226,7 +226,7 @@
      "position": [
       16.0,
       21.0,
-      37.5
+      34.0
      ]
     },
     {
@@ -234,7 +234,7 @@
      "position": [
       16.0,
       28.0,
-      53.0
+      56.0
      ]
     },
     {
@@ -267,38 +267,6 @@
       -5.0,
       21.0,
       27.0
-     ]
-    },
-    {
-     "name": "basin_to_plinth_west_start",
-     "position": [
-      -4.0,
-      0.0,
-      21.0
-     ]
-    },
-    {
-     "name": "basin_to_plinth_west_end",
-     "position": [
-      -4.0,
-      4.0,
-      19.5
-     ]
-    },
-    {
-     "name": "basin_to_plinth_east_start",
-     "position": [
-      10.0,
-      0.0,
-      43.0
-     ]
-    },
-    {
-     "name": "basin_to_plinth_east_end",
-     "position": [
-      10.0,
-      4.0,
-      44.5
      ]
     }
    ]
@@ -1588,7 +1556,7 @@
    "runtime_substitution": "pending",
    "p1_contract": {
     "surfaces": 14,
-    "traversal": 13,
+    "traversal": 11,
     "volumes": 3,
     "sockets": 10,
     "exit_yaw": 0.0,
