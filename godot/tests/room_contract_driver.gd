@@ -74,6 +74,8 @@ func _run() -> void:
 	await _test_a_partly_roofed_surface_is_still_a_valid_offer()
 	await _test_a_surface_with_nowhere_to_stand_is_still_refused()
 	await _test_one_room_composes_the_same_way_twice()
+	await _test_a_mandatory_route_is_a_route_a_player_can_take()
+	await _test_an_elevated_stance_has_room_for_what_stands_there()
 	await _test_a_declared_turn_steers_the_chain()
 	await _test_a_tower_shell_built_for_other_floor_counts_is_not_used()
 	await _test_a_check_never_stands_inside_the_room()
@@ -678,13 +680,23 @@ func _test_every_authored_shell_in_the_registry_is_measured() -> void:
 		var measured := RoomAudit.findings(result, _space(), id)
 		var pending := str(registry.get_entry(id).get("review", "")) \
 				== "pending"
-		print("  %-24s %-8s surfaces=%-2d traversal=%-2d sockets=%-2d "
+		# WHAT EACH PROBE CLASS LOOKED AT, not only what it found. A
+		# clean sheet is only worth reading next to the number of things
+		# that were examined to produce it -- zero findings over zero
+		# probes is the most dangerous line a suite can print.
+		var hulls := 0
+		var meshes := ShellValidator.mesh_boxes(
+				result["root"] as Node3D, Transform3D.IDENTITY).size()
+		for node: Node in (result["root"] as Node3D).find_children(
+				"*", "CollisionShape3D", true, false):
+			hulls += 1
+		print("  %-24s %-8s surf=%-2d trav=%-2d sock=%-2d doors=2 "
 				% [id, "PENDING" if pending else "PASS",
 					RoomContract.sockets_of(result, "stand").size(),
 					(result.get("traversal", []) as Array).size(),
 					(result.get("sockets", []) as Array).size()]
-				+ "structural=%d measured=%d"
-				% [structural.size(), measured.size()])
+				+ "mesh=%-2d hull=%-2d structural=%d measured=%d"
+				% [meshes, hulls, structural.size(), measured.size()])
 		# LISTED, not grouped. Under the old "every point must be clear"
 		# reading one root cause produced twenty-seven sentences saying
 		# it and only the CLASSES were worth printing; a finding is now
@@ -1359,6 +1371,217 @@ func _element_positions(room: Dictionary) -> Array:
 		for element: Variant in (entry as Dictionary).get("elements", []):
 			out.append((element as Node3D).position)
 	return out
+
+
+## --- P2 certification: the route and the stance are physical -------------
+
+## Waypoints sampled along a mandatory segment, endpoints included.
+const ALONG_THE_WAY := 5
+
+func _test_a_mandatory_route_is_a_route_a_player_can_take() -> void:
+	"""A declared route that arrives nowhere a player fits is not a route.
+
+	`RoomAudit` already measures that a mandatory rise is inside the base
+	kit\'s reach and that its endpoints have floor. Neither of those asks
+	the question a DECK SLAB OVER A CLIMB raises: is there room for the
+	player\'s BODY where the route arrives. A deck 0.5 m over a rubble
+	stone passes "there is floor at both ends" and stops a 1.8 m player
+	dead -- which is exactly what `rubble_1_1` and `platform_6` did.
+
+	AN OFFER, NOT A CENTRELINE. A traversal segment describes a movement,
+	not a spawn point: its endpoints are where the rise is MEASURED, and
+	the player lands wherever they land on a 2.6 m stone. So this asks
+	the same thing a Surface is asked -- is there SOMEWHERE along the
+	arrival that a standing player fits -- rather than demanding the
+	declared point itself be clear, which would be a stricter rule than
+	the contract holds and would refuse legal architecture.
+
+	CERTIFICATION, NOT CONTRACT. This measures rooms against rules
+	`RoomAudit` already holds; it does not add a rule to the audit, which
+	would change what the eight shells are being certified against
+	half-way through certifying them."""
+	var seen := 0
+	var walked := 0
+	var specs: Array = _procedural_chambers()
+	var ids: Array = _shell_ids()
+	for i in specs.size() + ids.size():
+		var room: Dictionary = _build(specs[i] as Dictionary) \
+				if i < specs.size() \
+				else _shell_room(str(ids[i - specs.size()]))
+		if room.is_empty():
+			continue
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var root := room["root"] as Node3D
+		var to_world := root.global_transform
+		var who := str(room.get("audit_id", "room"))
+		seen += 1
+		for entry: Variant in room.get("traversal", []) as Array:
+			var seg: Dictionary = entry
+			if not bool(seg.get("mandatory", true)):
+				continue
+			var start: Vector3 = seg["start"]
+			var end: Vector3 = seg["end"]
+			var arrival := _floor_at(end, to_world)
+			if arrival == -INF:
+				continue
+			walked += 1
+			# WHERE IT ARRIVES, and that is a REGION. A pure vertical
+			# rise has no "along" to sample -- start and end share an x
+			# and a z -- so sampling the segment would ask about one
+			# point, and one point is never what a Surface promises. So
+			# the arrival is resolved to the declared `stand` region it
+			# lands in and that region is asked, with the same
+			# `Placement.find` the audit uses. A route arrives somewhere
+			# a player can be, or it does not arrive.
+			var region := _region_under(room, end, arrival)
+			var room_for_a_body := false
+			if not region.is_empty():
+				room_for_a_body = _stance_exists(room, region)
+			else:
+				for n in ALONG_THE_WAY:
+					var t := 1.0 if ALONG_THE_WAY < 2 \
+							else float(n) / float(ALONG_THE_WAY - 1)
+					var here := start.lerp(end, t)
+					here.y = arrival
+					if absf(_floor_at(here, to_world) - arrival) > 0.15:
+						continue
+					if not _body_blocked(here, to_world):
+						room_for_a_body = true
+						break
+			_check(room_for_a_body,
+					"%s: mandatory '%s' arrives at y=%.2f on %s, with "
+					% [who, str(seg.get("name", "?")), arrival,
+						"'%s'" % str(region.get("name", "?")) \
+							if not region.is_empty() else "open floor"]
+					+ "nowhere a %.2f m player fits"
+					% Constants.PLAYER_HEIGHT)
+		(room["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	_check(seen >= 8 and walked >= 20,
+			"only %d rooms and %d mandatory segments were walked; the "
+			% [seen, walked] + "route certification is not exercising "
+			+ "the producers")
+	rooms_checked += seen
+
+func _test_an_elevated_stance_has_room_for_what_stands_there() -> void:
+	"""An `enemy_high` socket offers a stance, so something has to fit.
+
+	The audit's `_points_have_ground` asks whether the point is buried,
+	with a 0.5 m box -- enough to catch a socket inside a wall and not
+	enough to say an ENEMY fits. The smallest truthful existing statement
+	of how much room one takes is `ENEMY_ENVELOPES`, and the role an
+	elevated stance is for is `ranged`, so that is the box used.
+
+	A socket that moved is not a defect; a socket nothing fits in is."""
+	var seen := 0
+	for id: String in _shell_ids():
+		var room := _shell_room(id)
+		if room.is_empty():
+			continue
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var to_world := (room["root"] as Node3D).global_transform
+		var envelope: Dictionary = Constants.ENEMY_ENVELOPES["ranged"]
+		var size: Vector3 = envelope["size"]
+		for socket: Variant in RoomContract.sockets_of(room, "enemy_high"):
+			var patch: Dictionary = socket
+			var at: Vector3 = patch["position"]
+			seen += 1
+			var ground := _floor_at(at, to_world)
+			_check(ground > -INF,
+					"%s: elevated stance '%s' at %v has no floor under it"
+					% [id, str(patch.get("name", "?")), at])
+			if ground == -INF:
+				continue
+			# `centre_y` is measured FROM THE FLOOR, and the socket marker
+			# sits a little above it -- so the envelope is stood on the
+			# ground that was measured, not hung off the marker.
+			var centre := Vector3(at.x,
+					ground + float(envelope["centre_y"]) + 0.02, at.z)
+			_check(not _box_blocked(centre, size, to_world),
+					"%s: elevated stance '%s' at %v has no room for the "
+					% [id, str(patch.get("name", "?")), at]
+					+ "%v it offers" % size)
+		(room["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	_check(seen >= 8,
+			"only %d elevated stances were measured across the shells"
+			% seen)
+
+# --- certification probes -------------------------------------------------
+
+func _shell_ids() -> Array:
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var out: Array = []
+	for id: String in registry.ids_of_category("room_shell"):
+		if not bool(registry.get_entry(id).get("procedural_fallback", false)):
+			out.append(id)
+	return out
+
+## One authored shell, review gate lifted, in the tree and measurable.
+func _shell_room(id: String) -> Dictionary:
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var entry := registry.get_entry(id).duplicate(true)
+	if entry.is_empty():
+		return {}
+	entry["review"] = "pass"
+	var private := ContentRegistry.new()
+	private.entries[id] = entry
+	var room: Dictionary = ContentInstantiator.build_chamber(
+			_chamber_for(entry), "concrete_facility", private)
+	if room.get("root") == null:
+		return {}
+	room["audit_id"] = id
+	add_child(room["root"] as Node3D)
+	return room
+
+## The declared `stand` region a point at this height lands in, if any.
+func _region_under(room: Dictionary, at: Vector3, height: float) -> Dictionary:
+	for socket: Variant in RoomContract.sockets_of(room, "stand"):
+		var patch: Dictionary = socket
+		var here: Vector3 = patch["position"]
+		if absf(here.y - height) > 0.15:
+			continue
+		var extent: Vector3 = patch.get("extent", Vector3.ZERO)
+		if absf(at.x - here.x) <= extent.x / 2.0 \
+				and absf(at.z - here.z) <= extent.z / 2.0:
+			return patch
+	return {}
+
+func _floor_at(local: Vector3, to_world: Transform3D) -> float:
+	var world := to_world * local
+	var query := PhysicsRayQueryParameters3D.create(
+			world + Vector3.UP * 0.6, world + Vector3.DOWN * 1.4)
+	query.collide_with_areas = false
+	var hit := _space().intersect_ray(query)
+	if hit.is_empty():
+		return -INF
+	return (to_world.affine_inverse() * (hit["position"] as Vector3)).y
+
+## Does the player's own body fit standing on the floor at this point?
+func _body_blocked(at_floor: Vector3, to_world: Transform3D) -> bool:
+	var query := PhysicsShapeQueryParameters3D.new()
+	var shape := CapsuleShape3D.new()
+	shape.radius = Constants.PLAYER_RADIUS
+	shape.height = Constants.PLAYER_HEIGHT
+	query.shape = shape
+	query.transform = Transform3D(to_world.basis, to_world * (at_floor
+			+ Vector3.UP * (Constants.PLAYER_HEIGHT / 2.0 + 0.05)))
+	query.collide_with_areas = false
+	return not _space().intersect_shape(query, 1).is_empty()
+
+func _box_blocked(centre: Vector3, size: Vector3,
+		to_world: Transform3D) -> bool:
+	var query := PhysicsShapeQueryParameters3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+	query.shape = shape
+	query.transform = Transform3D(to_world.basis, to_world * centre)
+	query.collide_with_areas = false
+	return not _space().intersect_shape(query, 1).is_empty()
 
 func _test_a_jump_is_measured_the_same_for_both_producers() -> void:
 	"""One movement law, one measurement, whoever declared the jump.

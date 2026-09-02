@@ -261,3 +261,101 @@ unchanged.
 | `shell_tower_spiral` | **P2-A + P2-C.** `platform_6` is unusable under the deck. | Art, then owner |
 | `shell_tower_collapsed` | **P2-A + P2-B + P2-C.** `rubble_1_0` and `rubble_1_1` unusable under the deck; socket `high_3` in rock. | Art, then owner |
 | `shell_treasure_*` (3) | **P2-B + P2-C.** `step_low` is a riser declared as a Surface. Geometry is correct and must not be changed. | Art, then owner |
+
+---
+
+# P2 TECHNICAL CERTIFICATION — the eight shells satisfy the room contract
+
+Art head `1d22cef`, integrated verbatim: every Production-tracked content
+file is **byte-identical** to Art's (`SCENE_PLAN.json`,
+`authored_art.json`, and all eight `.glb` + `.tscn`). Nothing was
+reproduced by hand.
+
+**All eight shells: 0 structural findings, 0 physical findings.**
+
+| shell | surf | trav | sock | doors | mesh | hull | structural | measured |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| `shell_corner_left` | 1 | 0 | 1 | 2 | 1 | 10 | **0** | **0** |
+| `shell_corner_right` | 1 | 0 | 1 | 2 | 1 | 10 | **0** | **0** |
+| `shell_tower_collapsed` | 11 | 9 | 16 | 2 | 1 | 21 | **0** | **0** |
+| `shell_tower_gantry` | 23 | 21 | 28 | 2 | 1 | 33 | **0** | **0** |
+| `shell_tower_spiral` | 12 | 10 | 17 | 2 | 1 | 22 | **0** | **0** |
+| `shell_treasure_cache` | 2 | 1 | 3 | 2 | 1 | 16 | **0** | **0** |
+| `shell_treasure_coffer` | 2 | 1 | 3 | 2 | 1 | 20 | **0** | **0** |
+| `shell_treasure_vault` | 2 | 1 | 3 | 2 | 1 | 12 | **0** | **0** |
+
+The counts are the point. Zero findings over zero probes is the most
+dangerous line a suite can print, so the report now says what each class
+examined: stand Surfaces, traversal segments, sockets, the two doorway
+planes, the mesh AABBs the envelope check reads, and the collision hulls.
+
+## The seven old findings, closed
+
+Proven by running **the same certification probes against the old pack**
+in a worktree at `1648fa9` — they fail there and pass here, so a pass is
+evidence rather than an absence of measurement.
+
+| finding | class | old pack | new pack |
+|---|---|---|---|
+| collapsed `rubble_1_0` | A | route arrives with nowhere a 1.80 m player fits | **passes** |
+| collapsed `rubble_1_1` | A | route arrives with nowhere a 1.80 m player fits | **passes** |
+| spiral `platform_6` | A | route arrives with nowhere a 1.80 m player fits | **passes** |
+| collapsed `high_3` | B | no room for the `ranged` envelope | **passes** |
+| cache / coffer / vault `step_low` | B | 0/225 usable, declared a Surface | **no longer declared**; geometry unchanged |
+
+The old pack additionally fails **spiral `high_3`**, which the previous
+contract did not flag: `_points_have_ground` uses a 0.5 m buried-box and
+that socket cleared it by ~0.05 m. Measuring the actual `ranged` envelope
+(0.7 x 1.4 x 0.7) shows it never had room. That is an independent
+confirmation of the owner's approved judgment call 2 — a socket is an
+offer, and one nothing fits in is not an offer.
+
+## Deck-well secondary effects
+
+Measured from the resulting room, not from the helper that cut it.
+
+| checked | how | result |
+|---|---|---|
+| Check / reward anchor on valid support | `_arrivals_are_standable` + `_test_a_check_never_stands_inside_the_room` | clean |
+| deck sockets physically valid | `_points_have_ground` + the `ranged` envelope probe | clean |
+| no new fall-through or unreachable area | every `stand` Surface keeps its promise under `Placement.find` | clean, all 54 declared surfaces |
+| no doorway or open-envelope issue | `_openings_are_holes` (player capsule, both planes, two stances) + `_geometry_stays_inside_its_bounds` | clean |
+| route continuous, climb reaches the upper area | mandatory-route probe on all 40 authored mandatory segments | clean |
+| no collider spans the new opening | implied and measured: a player standing on `rubble_1_1` (y=5.00) occupies to y=6.80, through the old deck plane at y=6.00 | clean |
+| player cannot be trapped in the well | the well contains the climb, and every mandatory arrival admits a standing player, so there is no enclosed pocket | clean |
+| no new traversal violates movement law | `_traversal_is_true` with `AS_BUILT_SLACK` | clean |
+
+Collision hull counts are unchanged (21 collapsed, 22 spiral): the deck
+was reshaped, not split, so the well is a hole in one hull rather than a
+new set of pieces.
+
+## The moved `high_3` sockets
+
+Both are supported (a floor ray finds ground beneath them), not buried,
+and hold the full `ENEMY_ENVELOPES["ranged"]` box rather than merely
+clearing a 0.5 m probe. Determinism is covered by the existing
+same-chamber-twice test and by the whole pack being source-derived.
+
+Neither is at its historical coordinate, and neither needs to be: the
+contract is physical validity, not coordinate preservation.
+
+## Gate state
+
+* All eight remain `review: "pending"`. **Not promoted.**
+* `shell_catalog()` offered to Epsilon: **0 entries.**
+* Real-Zone digest **`6e8d83d0f3ec088b`** — 23 rooms, 15 Checks, 922
+  points, 35 enemies. The 23-chamber activity audit JSON is
+  **byte-identical** to `1648fa9`.
+* Procedural fallback unchanged; no authored shell appears in ordinary
+  generation.
+* No Production code writes `size_class`, `exit_yaw`, `fits_floors`,
+  corner tags or repaired surface/traversal/socket metadata. Every
+  reference is a reader or a validator, so a fresh Art regeneration is
+  consumable with no patch to reapply.
+
+## P2 TECHNICALLY COMPLETE
+
+**The eight authored shells satisfy the room contract.**
+
+This is not owner approval for player-facing use. `review` stays
+`pending` on all eight.

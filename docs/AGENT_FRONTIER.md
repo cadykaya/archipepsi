@@ -572,6 +572,41 @@ of them in a `platform_path` room and none in an arena.
 a room can hold is a fact about its built geometry, and Python pricing it
 would be the same builder-knows-what-the-composer-does-not failure.
 
+## P2 TECHNICALLY COMPLETE — the eight shells satisfy the room
+## contract — landed 2026-09-02
+
+Art `1d22cef` integrated verbatim (every Production content file
+byte-identical to Art's). **All eight shells: 0 structural, 0 physical
+findings**, with the probe census printed beside them so a clean sheet
+cannot be a clean sheet over nothing.
+
+Repairs: a deck well over the collapsed and spiral climbs (the deck was
+the obstruction, so the deck moved, not the validated climbs), both
+`high_3` sockets re-derived by `stance_spot`, and treasure `step_low`
+withdrawn as a Surface with its geometry untouched.
+
+**The seven old findings are closed, proven by running the same
+certification probes against the old pack in a worktree** -- they fail
+there and pass here. The old pack also fails **spiral `high_3`**, which
+the previous contract missed because `_points_have_ground` uses a 0.5 m
+box and that socket cleared it by ~0.05 m; measuring the real `ranged`
+envelope shows it never had room. Independent confirmation of the
+owner's judgment call.
+
+Two certification probes added, both producer-independent and both
+measuring against rules the audit ALREADY holds rather than adding new
+ones mid-certification: a mandatory route must arrive somewhere a
+standing player fits (resolved to the declared region, because a
+traversal endpoint is where a rise is measured, not a spawn point), and
+an `enemy_high` socket must hold the envelope of what stands there.
+
+`review: "pending"` on all eight -- NOT promoted. Catalog empty, digest
+`6e8d83d0f3ec088b`, Zone audit JSON byte-identical to `1648fa9`. No
+Production code writes any field Art emits, so the next regeneration
+needs no patch reapplied.
+
+Full record: `docs/audit/P2_SHELL_PHYSICAL_VERDICT.md`.
+
 ## P2 SURFACE SEMANTICS — a Surface is an offer — landed 2026-09-01
 
 **Owner ruling C(ii).** A `stand` Surface does not promise every point of

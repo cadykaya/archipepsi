@@ -55,7 +55,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 6, 6.45)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 6, 6.45)
 
 [node name="floor_1_to_deck_start" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 7.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 6, 7.2)
 
 [node name="floor_1_to_deck_end" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 6, 8)
