@@ -14,13 +14,12 @@
 | lowest floor | y -0.0 (floor_depth 0; net rise 9) |
 | glb bytes | 432856 |
 
-- rail `rail_spine`: 138.6 m, worst baked pitch 55.0 deg, height range 16.3 m, 7 control points
+- rail `rail_spine`: 80.1 m, worst baked pitch 38.5 deg, height range 16.0 m, 7 control points
 - launch `launch_w2`: 17.5 m span, 1.56 s flight, apex y 12.5
 - sightline `entry_to_exit_portal`: clear across 78.1 m
 - sightline `entry_to_far_keystone`: clear across 74.8 m
 
-## Preflight: 1 error(s), 0 warning(s)
-- ERROR rail 'rail_spine': 31 of 668 baked samples pass within 0.7 m of geometry (first at 4.7, 16.7, 26.6)
+## Preflight: 0 error(s), 0 warning(s)
 - note  Cross-flights are 18 thin 0.5 m treads (surface=False) plus one declared surface each; Room.stair would have walled the nave with its solid flank.
 - note  Decks at +18 stand under rib blocks whose soffit is y 20: 0.15 m over the body test's head.
 - note  Recovery is by the floor: any miss lands at y 0 and walks back to stair_w1 (or takes launch_w2).

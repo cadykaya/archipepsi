@@ -115,8 +115,11 @@ def build():
     # the spine rail: caught 2.5 m over west_1, swoops over east_1, rises to the spine,
     # dips to west_2, over east_2, and lands 2.5 m over the apse.  East points sit in the
     # bays between ribs so the baked curve keeps 0.7 m from the leaning blocks.
-    r.rail("rail_spine", [(-14.0, 11.5, 12.0), (14.0, 20.5, 36.0), (0.0, 27.5, 44.0),
-                          (-14.0, 11.5, 52.0), (14.0, 20.5, 60.0), (9.0, 20.0, 68.0),
+    # The rail crosses the nave only in the bays where no cross-flight hangs (the
+    # flights occupy x -12..12 at z 26-30, 34-38, 50-54, 66-70 and top out at 18), and
+    # runs the spine at 24+ everywhere else, so the baked curve keeps its 0.7 m.
+    r.rail("rail_spine", [(-14.0, 11.5, 14.0), (-6.0, 18.0, 20.0), (0.0, 24.0, 30.0),
+                          (0.0, 27.5, 44.0), (0.0, 24.0, 58.0), (-6.0, 18.0, 70.0),
                           (0.0, 11.5, 76.0)])
     r.launch("launch_w2", (0.0, 0.0, 44.0), "land_west_2", radius=2.5)
     r.landing("land_west_2", (-15.0, 9.0, 44.0), radius=2.5)

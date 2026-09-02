@@ -1,0 +1,63 @@
+{
+  "errors": [],
+  "info": {
+    "counts": {
+      "colliders": 75,
+      "offers": 5,
+      "parts": 76,
+      "sockets": 10,
+      "surfaces": 22,
+      "traversal": 20,
+      "volumes": 3
+    },
+    "declared_size_m": [
+      65.2,
+      30.6,
+      66.0
+    ],
+    "floor_depth": 0.0,
+    "interior_m": [
+      64.0,
+      30.0,
+      64.0
+    ],
+    "interior_volume_m3": 122880,
+    "launches": {
+      "launch_stage": {
+        "apex_y": 18.5,
+        "flight_s": 1.78,
+        "span_m": 29.2
+      }
+    },
+    "lowest_floor_y": -0.0,
+    "net_rise": 20.0,
+    "outer_size_m": [
+      65.2,
+      31.6,
+      64.6
+    ],
+    "rails": {
+      "rail_chord_x": {
+        "baked_samples": 259,
+        "control_points": 3,
+        "height_range_m": 1.0,
+        "length_m": 51.5,
+        "worst_pitch_deg": 3.0
+      },
+      "rail_chord_z": {
+        "baked_samples": 203,
+        "control_points": 3,
+        "height_range_m": 1.0,
+        "length_m": 40.1,
+        "worst_pitch_deg": 3.8
+      }
+    },
+    "sightlines": {
+      "stage_to_top_ring": 34.5,
+      "top_ring_to_stage": 36.7,
+      "tunnel_to_exit": 48.4
+    },
+    "walks_unproven_at_import": []
+  },
+  "warnings": []
+}

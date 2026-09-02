@@ -1,7 +1,5 @@
 {
-  "errors": [
-    "rail 'rail_spine': 31 of 668 baked samples pass within 0.7 m of geometry (first at 4.7, 16.7, 26.6)"
-  ],
+  "errors": [],
   "info": {
     "counts": {
       "colliders": 209,
@@ -40,11 +38,11 @@
     ],
     "rails": {
       "rail_spine": {
-        "baked_samples": 668,
+        "baked_samples": 401,
         "control_points": 7,
-        "height_range_m": 16.3,
-        "length_m": 138.6,
-        "worst_pitch_deg": 55.0
+        "height_range_m": 16.0,
+        "length_m": 80.1,
+        "worst_pitch_deg": 38.5
       }
     },
     "sightlines": {

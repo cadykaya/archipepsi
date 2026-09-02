@@ -46,7 +46,7 @@ the contract sees. Movement numbers are the pinned set in
   that would report PASS on a real walk failure.
 - **Wave 2** (§11): `shell_bascule`, `shell_stack` (the descending room),
   `shell_beast`, `shell_cascade`, grayboxed the same way.
-- **Lessons for the remaining seven** (§9).
+- **Lessons** for the wave after each: §10 after Wave 1, §11.5 after Wave 2.
 
 ---
 
@@ -113,7 +113,7 @@ constraint).
 Field order for each: thesis · dimensions · first read · landmark · local spaces
 and elevations · circulation (what is mandatory, what is optional) · rail / launch
 / grapple · three-plus package readings · empty-room reason · unlike the other
-nine. Wave 1 rooms are marked ★ and described as built in §6.
+nine. Built rooms are marked ★: Wave 1 is described as built in §6, Wave 2 in §11.
 
 ### 3.1 ★ `shell_lemniscate` — "the room where the rail crosses itself"
 
@@ -222,7 +222,7 @@ nine. Wave 1 rooms are marked ★ and described as built in §6.
 - **Unlike the others.** The only non-rectangular plan; the narrowest; the only
   room whose mandatory route is a climb rather than a walk; the exit yaw is 90.
 
-### 3.4 `shell_bascule` — "the room that hides itself behind its own floor"
+### 3.4 ★ `shell_bascule` — "the room that hides itself behind its own floor"
 
 - **Thesis.** Two lifted leaves: the floor rises away from the door, and only
   from its crest do you see the second leaf, the gap between, and the exit down
@@ -256,7 +256,7 @@ nine. Wave 1 rooms are marked ★ and described as built in §6.
   and the leaves are half as tall; kept level for Wave 2 because withholding,
   not depth, is the thesis.
 
-### 3.5 `shell_stack` — "the room you fall through"
+### 3.5 ★ `shell_stack` — "the room you fall through"
 
 - **Thesis.** Three full plates 12 m apart, each with a well cut in a different
   place, so the room shows its own section from anywhere inside it. Rewritten
@@ -288,7 +288,7 @@ nine. Wave 1 rooms are marked ★ and described as built in §6.
 - **Unlike the others.** The only room with full floor plates above the floor;
   the only one where "up" is visible as a stack rather than a void.
 
-### 3.6 `shell_beast` — "the ribcage"
+### 3.6 ★ `shell_beast` — "the ribcage"
 
 - **Thesis.** A long nave under an arched section: ribs every 8 m meet at a
   spine 30 m up, and vertebra-decks alternate left and right so the walk zigzags
@@ -315,7 +315,7 @@ nine. Wave 1 rooms are marked ★ and described as built in §6.
 - **Unlike the others.** The only arched section; the longest; the only rail
   that is straight by design.
 
-### 3.7 `shell_cascade` — "the bowl you climb out of"
+### 3.7 ★ `shell_cascade` — "the bowl you climb out of"
 
 - **Thesis.** Concentric terraces rise away from the door like a cavea; the
   player enters on the stage at the bottom and the exit is on the top ring.
@@ -822,7 +822,7 @@ suspicion.
 
 ---
 
-## 10. Lessons that should change the remaining seven
+## 10. Lessons from Wave 1
 
 1. **Stairs, not ramps**, for every mandatory climb (§7.1). Use 0.5 m risers on
    1.0 m treads; a 12 m rise is 24 slabs and reads as a stair from any distance.
@@ -855,15 +855,229 @@ suspicion.
 
 ---
 
-## 11. Paths
+## 11. Wave 2 as built
+
+Four more rooms, built the same way and to the same standard: the spec is intent,
+the kit derives the geometry, the manifest, the drawings and the preflight from
+it, and nothing ships that the preflight refuses. All four carry `graybox: true`
+and `review: pending`. Production's capsule `RoomAudit` remains the final
+physical authority; the kit mirrors the weaker import-time evidence.
+
+**Why these four.** They are ranked 4, 5, 6 and 7 in §6.1, and together they
+extend Wave 1 along every axis it left thin: a room whose landmark is its own
+floor, the slate's first descending room, the only arched section, and the only
+concentric plan. The two rooms left out of Wave 2 (`shell_overpass`,
+`shell_face`) are the two that fail the strip test in §4.1, and `shell_oculus`
+is held back as the most conventional. Nothing was chosen to be easy: the beast
+is the largest part count in the library and the cascade the largest footprint.
+
+| | bascule | stack | beast | cascade |
+|---|---|---|---|---|
+| interior W × H × D | 36 × 36 × 68 | 36 × 14 × 44 (+24 below) | 40 × 34 × 80 | 64 × 30 × 64 |
+| declared size | 37.2 × 36.6 × 70.0 | 37.2 × 14.6 × 46.0 | 41.2 × 34.6 × 82.0 | 65.2 × 30.6 × 66.0 |
+| exit | y 0, yaw 0 | **y −24**, yaw 0 | y 9, yaw 0 | y 20, yaw 0 |
+| parts / colliders / tris | 112 / 111 / 1344 | 76 / 76 / 912 | 210 / 209 / 2520 | 76 / 75 / 912 |
+| surfaces / traversal / offers / sockets | 11 / 13 / 4 / 9 | 16 / 10 / 5 / 10 | 13 / 21 / 5 / 13 | 22 / 20 / 5 / 10 |
+| mandatory route | 11 walks, 131 m | 3 walks + **2 drops**, 39 m | 13 walks, 189 m | 18 walks, 286 m |
+| preflight | 0 err, 0 warn | 0 err, **1 expected warn** | 0 err, 0 warn | 0 err, 0 warn |
+
+### 11.1 `shell_bascule` — the room that hides itself behind its own floor
+
+**Spatial thesis.** The floor is the landmark. Two lifted leaves rise away from
+the entry to crests 12 m up, and only from the first crest do you see the second
+leaf, the pit between them and the exit down the far slope. Net rise zero.
+
+**First read.** An 8 × 4 × 4 m porch opens on a slope climbing away to a crest
+12 m up and 22 m off, which blocks everything beyond it; the roof is 36 m up, so
+the room is plainly much bigger than what can be seen. The asserted sightline
+from the entry is 27 m and stops at the crest, not at the exit: withholding is
+the design, so the far half is proven hidden rather than hoped hidden.
+
+**Plan and section logic.** Plan is a plain 36 m rectangle; all the information
+is in the section. Leaf A climbs z 4→26 as 24 stepped treads, crest A caps it at
+12, the pit floor sits at y 0 for 12 m of z, crest B and leaf B mirror them, and
+an apron at y 0 carries the exit. The two pocket stairs that link crest to pit
+run across the room in x rather than z, so the descent into the pit is a corner
+turned, not a slide continued.
+
+**Mandatory circulation.** Porch → leaf A → crest A → west pocket stair down →
+pit → east pocket stair up → crest B → leaf B → apron → exit. Eleven straight
+walks, 131 m in plan, no diagonals. Leaf B is a walked descent, legal since
+301374d and proven here by ground continuity, not by the drop between its ends.
+
+**Offers.** `rail_dive` is 61.8 m of one big dip: caught over leaf A, into the
+pit and out over crest B, ending 2 m over the apron; worst baked pitch 60.7°,
+the steepest in the library and deliberately so. `launch_crest` crosses the pit
+crest to crest in 14 m. `grapple_pit` hangs from the ceiling truss over the pit.
+
+**Package readings.** Pit fight (the pit is the arena, both crests are held);
+crest duel (enemies on crest B only, the launch is the assault); retreat (reward
+on the pit floor, enemies arrive over leaf B behind you and the rail is the way
+out); empty (two slopes and a gap).
+
+**Strip test.** Passes. Two slopes, a pit, and a second half you cannot see
+until you have earned the crest.
+
+**Recovery geography.** Everything falls to y 0, which is the pit floor or a
+leaf. The pit has two stairs out, one per side, so a fall costs the climb and
+never the level; there is no fall damage.
+
+### 11.2 `shell_stack` — the room you fall through
+
+**Spatial thesis.** Three full plates 12 m apart with wells cut in different
+places, entered at the top and left at the bottom: the room shows its own
+section from anywhere inside it, and the mandatory route is two sheer drops.
+This is the slate's descending room, rewritten after Production 301374d.
+
+**First read.** A plate underfoot and two more below it: through well A in front
+of you, the underside of plate 1 with its own well further back, and through
+that, plate 2 twenty-four metres down. The asserted sightline runs 42.5 m
+through both wells.
+
+**Plan and section logic.** Plan is the same 36 × 44 rectangle three times over
+with the well moved: A at the front of plate 0, B at the back of plate 1, so the
+two are never in line and nobody falls the whole way by accident. The section is
+the room. `floor_depth` 24 is what lets the shell declare it (§7.2).
+
+**Mandatory circulation.** Plate 0 walk → **drop** through well A → plate 1 walk
+→ **drop** through well B → plate 2 walk to the exit. Three walks and two drops,
+39 m in plan, the shortest mandatory route in the library, because the room's
+length is vertical. The east-pocket switchback flights are the optional way back
+up, and are proven walks under both evidences.
+
+**Offers.** `rail_wells` threads both wells in 55.2 m, from 2 m over plate 0 to
+1.5 m over plate 2. `launch_up` throws you from plate 2 back up through well B
+to plate 1: the one offer in the library that undoes the mandatory route rather
+than shortening it. Two grapples hang under the plates.
+
+**Package readings.** Floor by floor (each plate is a held room, enemies rain
+through the wells); snipers' stack (enemy_high on four well rims, the player runs
+the bottom under two rings of fire); descent chase (reward on plate 2, enemies
+above, the wells are the fast way down); empty (a building with its floors cut
+open).
+
+**Strip test.** Passes, and most cheaply of the four: a section made walkable.
+
+**Recovery geography.** A miss lands on the plate below, which is closer to the
+exit, so falling is never a loss — that is what makes the drops legible as a
+route rather than a hazard. The switchback returns you to any plate. The
+room's 24 m of descent must sit after at least 24 m of rise in the chain, since
+the kill plane is world-absolute (§7.2).
+
+### 11.3 `shell_beast` — the ribcage
+
+**Spatial thesis.** A long nave under an arched section: nine ribs spring from
+wall pilasters and meet at a spine 30 m up, and decks alternate left at +9 and
+right at +18, so the route zigzags across the nave while the rail runs the spine.
+
+**First read.** A tunnel of arches receding 80 m with the exit visible through
+them at +9 (asserted, 78.1 m clear), decks jutting from alternate sides like
+teeth. The porch is the small term again: 8 × 4 × 4 before 40 × 34 × 80.
+
+**Plan and section logic.** Plan is a long rectangle whose only events are five
+decks; the arch is the room. The four cross-flights that carry the route between
+decks are built from thin slabs rather than solid stairs, so the nave keeps its
+long sightline underneath them — a solid stair flank would have walled the room
+in half.
+
+**Mandatory circulation.** Porch → nave → the one solid floor stair to west 1 →
+cross-flight → east 1 → cross-flight → west 2 → cross-flight → east 2 →
+cross-flight → apse → exit. Thirteen straight walks, 189 m, the longest route in
+the library. The nave floor itself is optional: the fast lane nobody is made to
+take.
+
+**Offers.** `rail_spine` runs 80.1 m under the spine, crossing the nave only in
+the bays where no cross-flight hangs, worst baked pitch 38.5°. `launch_w2`
+throws from the nave floor to west 2. Two grapples hang from the spine.
+
+**Package readings.** Gauntlet (enemies on every deck, the player runs the floor);
+swallowed (the apse is gated until the reward at east 2 is taken, enemies arrive
+from behind); spine ride (the rail is the one quiet way through); empty (a nave).
+
+**Strip test.** Passes, though it leans on rhythm more than the others: nine
+arches, five decks and the fact that the tallest point in the room is the centre
+line you walk beneath.
+
+**Recovery geography.** Any fall lands on the nave floor at y 0 and walks back to
+the single floor stair; the launch is the shortcut back for a player who has it.
+
+### 11.4 `shell_cascade` — the bowl you climb out of
+
+**Spatial thesis.** Four concentric terraces rising around a stage: the one room
+in the library where every part of the room looks at the same place.
+
+**First read.** A 4 × 4 m tunnel driven 21 m under the front of every terrace
+opens at the foot of the bowl; the terraces step up and back 5 m at a time and
+the exit portal sits in the topmost one, 20 m up and in line with the tunnel
+(asserted, 48.4 m clear). The tunnel is the small term, and it is the most
+compressed in the library.
+
+**Plan and section logic.** Plan is concentric and the section is a staircase of
+5 m risers; every terrace is a solid mass, so the bowl has no underside and
+nothing in the room is hollow. The four ring stairs alternate east and west, so
+the climb walks most of every terrace and the stage is behind you at a different
+angle each time.
+
+**Mandatory circulation.** Tunnel → stage → stair 1 → ring 1 → stair 2 → ring 2
+→ stair 3 → ring 3 → stair 4 → ring 4 → exit. Eighteen straight walks, 286 m in
+plan: the longest walked distance in the library, and every segment axis-aligned
+and under 30 m, because a bowl is exactly the shape that tempts a diagonal.
+
+**Offers.** Two straight chord rails cross at right angles 5 m apart over the
+stage rather than spiralling the bowl, which is the move the shape invites and
+the one the library already has elsewhere. `launch_stage` throws from the stage
+to ring 3 west in 29.2 m. `grapple_stage` hangs from the truss 27 m over the stage.
+
+**Package readings.** The mob above (enemies on rings 2 to 4, the player climbs
+into fire); stage fight (enemies on the stage, the rings are the player's high
+ground); the public reward (the objective on the stage under every eye, the rail
+the way out over their heads); empty (an amphitheatre).
+
+**Strip test.** Passes. Four terraces, a stage and a tunnel: the climb is a slow
+reveal of how far down you started.
+
+**Recovery geography.** No terrace overhangs and nothing is below y 0, so a miss
+lands on the ring below or on the stage; each ring's own stair rejoins the route.
+Two optional drops are declared so the composer knows the shortcut down exists.
+
+### 11.5 What Wave 2 changes for the final three
+
+1. **Descent is a budget, not a permission.** A descending room is legal and
+   `shell_stack` proves it, but its 24 m has to be paid for by prior rise in the
+   chain. The library should hold at most one or two descending rooms, and they
+   should say in their notes what they cost. `shell_overpass`, `shell_face` and
+   `shell_oculus` all rise.
+2. **A solid stair is a wall.** The beast's cross-flights had to be thin slabs
+   because `Room.stair`'s solid flank would have divided the nave. The rule for
+   the final three: use a solid stair when you want the mass, thin treads when
+   you want to see through it, and declare either as one surface.
+3. **Rails cross a room where nothing hangs.** The beast's first rail failed on
+   31 baked samples because it crossed the nave exactly where the flights are;
+   re-routing it to the empty bays fixed it without changing a single point's
+   purpose. Plan a rail against the room's occupied volumes, not its plan.
+4. **Concentric and radial plans are surface-hungry.** The cascade spends 22 of
+   32 surfaces on four terraces alone. `shell_oculus` is radial and will spend
+   more; budget its galleries as four strips per level, not eight.
+5. **The strip test is the ranking.** The two rooms Wave 2 skipped are exactly
+   the two that were marginal in §4.1, and skipping them cost the slate nothing.
+   Either strengthen `shell_overpass` and `shell_face` before they are built or
+   replace them; the last wave should not be the weak wave.
+6. **Withholding is a design, and it must be asserted.** The bascule's entry
+   sightline is deliberately short, so it is declared and proven short. A room
+   that hides something should say so in its sightlines rather than leave the
+   reader to assume the drawing failed.
+
+---
+
+## 12. Paths
 
 | what | where |
 |---|---|
 | this slate | `docs/art/LARGE_ROOM_SLATE_B.md` |
 | kit | `tools/graybox/gbkit.py`, `tools/graybox/build.py`, `tools/graybox/verify_dims.py`, `tools/graybox/engine_dims.json` |
-| room specs | `tools/graybox/rooms/shell_lemniscate.py`, `shell_hypostyle.py`, `shell_cleft.py` |
+| room specs | `tools/graybox/rooms/`: `shell_lemniscate.py`, `shell_hypostyle.py`, `shell_cleft.py` (Wave 1); `shell_bascule.py`, `shell_stack.py`, `shell_beast.py`, `shell_cascade.py` (Wave 2) |
 | grayboxes | `assets/graybox/large/<id>/{<id>.glb, manifest.json, plan.svg, section_z.svg, section_x.svg, preflight.json, README.md}` |
-| rebuild | `python3 tools/graybox/build.py tools/graybox/rooms/shell_lemniscate.py tools/graybox/rooms/shell_hypostyle.py tools/graybox/rooms/shell_cleft.py` |
+| rebuild all seven | `python3 tools/graybox/build.py tools/graybox/rooms/*.py` |
 | dims drift | `python3 tools/graybox/verify_dims.py <art-worktree>` |
 
 Nothing under `assets/graybox/` is in a batch, the export pack, or the catalog,
