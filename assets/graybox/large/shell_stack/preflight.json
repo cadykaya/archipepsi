@@ -1,0 +1,59 @@
+{
+  "errors": [],
+  "info": {
+    "counts": {
+      "colliders": 76,
+      "offers": 5,
+      "parts": 76,
+      "sockets": 10,
+      "surfaces": 16,
+      "traversal": 10,
+      "volumes": 4
+    },
+    "declared_size_m": [
+      37.2,
+      14.6,
+      46.0
+    ],
+    "descent_note": "exit 24.0 m below the entry; FALL_KILL_Y is WORLD y -30 (player.gd), so a chain's cumulative descent below the zone origin must stay above it",
+    "floor_depth": 24.0,
+    "interior_m": [
+      36.0,
+      14.0,
+      44.0
+    ],
+    "interior_volume_m3": 22176,
+    "launches": {
+      "launch_up": {
+        "apex_y": -8.5,
+        "flight_s": 1.68,
+        "span_m": 15.6
+      }
+    },
+    "lowest_floor_y": -24.0,
+    "net_rise": -24.0,
+    "outer_size_m": [
+      37.2,
+      39.6,
+      44.6
+    ],
+    "rails": {
+      "rail_wells": {
+        "baked_samples": 277,
+        "control_points": 6,
+        "height_range_m": 24.7,
+        "length_m": 55.2,
+        "worst_pitch_deg": 59.9
+      }
+    },
+    "sightlines": {
+      "entry_through_well_a": 42.5,
+      "lip_through_both_wells": 42.9,
+      "plate_1_down_well_b": 19.2
+    },
+    "walks_unproven_at_import": []
+  },
+  "warnings": [
+    "descends: geometry reaches 25.0 m below the entry plane and is inside the envelope only through `floor_depth` 24.0, a field Production does not read at 301374d (content_instantiator.gd _from_authored_scene bounds; shell_validator.gd _check_envelope, which measures the VISIBLE mesh only); at import ShellValidator refuses any visible mesh below -1.55 until that field exists"
+  ]
+}

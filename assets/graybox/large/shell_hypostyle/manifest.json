@@ -1,0 +1,695 @@
+{
+  "shell_hypostyle": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -28.6,
+        -1.0,
+        0.0
+      ],
+      [
+        57.2,
+        19.6,
+        58.0
+      ]
+    ],
+    "colliders": 79,
+    "exit_offset": [
+      0.0,
+      8.0,
+      58.0
+    ],
+    "exit_yaw": 0.0,
+    "floor_depth": 0.0,
+    "graybox": true,
+    "interior": [
+      56.0,
+      18.0,
+      56.0
+    ],
+    "measured_box": [
+      57.2,
+      19.6,
+      56.6
+    ],
+    "offers": [
+      {
+        "kind": "rail_route",
+        "name": "rail_avenue_e",
+        "points": [
+          [
+            24.0,
+            9.5,
+            6.0
+          ],
+          [
+            24.0,
+            9.5,
+            50.0
+          ]
+        ]
+      },
+      {
+        "kind": "rail_route",
+        "name": "rail_avenue_w",
+        "points": [
+          [
+            -24.0,
+            9.5,
+            50.0
+          ],
+          [
+            -24.0,
+            6.5,
+            34.0
+          ],
+          [
+            -24.0,
+            3.5,
+            20.0
+          ],
+          [
+            -22.0,
+            1.8,
+            8.0
+          ]
+        ]
+      },
+      {
+        "kind": "launch_source",
+        "name": "launch_floor",
+        "position": [
+          -25.0,
+          0.0,
+          12.0
+        ],
+        "radius": 2.5,
+        "target": "land_lattice"
+      },
+      {
+        "kind": "launch_target",
+        "name": "land_lattice",
+        "position": [
+          -18.0,
+          8.0,
+          12.0
+        ],
+        "radius": 2.5
+      },
+      {
+        "kind": "grapple_point",
+        "name": "grapple_canopy_e",
+        "position": [
+          16.0,
+          16.0,
+          28.0
+        ],
+        "radius": 1.5
+      },
+      {
+        "kind": "grapple_point",
+        "name": "grapple_canopy_w",
+        "position": [
+          -16.0,
+          16.0,
+          28.0
+        ],
+        "radius": 1.5
+      }
+    ],
+    "path": "assets/graybox/large/shell_hypostyle/shell_hypostyle.glb",
+    "rail_span": 86.88,
+    "review": "pending",
+    "semantic_tags": [
+      "arena",
+      "large",
+      "wide",
+      "low",
+      "columns",
+      "lattice",
+      "overwatch"
+    ],
+    "size": [
+      57.2,
+      58.0,
+      18.6
+    ],
+    "size_class": "large",
+    "size_godot": [
+      57.2,
+      18.6,
+      58.0
+    ],
+    "sockets": [
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "entry",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "surface_id": "floor",
+        "width": 2.4,
+        "yaw": 180.0
+      },
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "exit",
+        "position": [
+          0.0,
+          8.0,
+          58.0
+        ],
+        "surface_id": "landing_exit",
+        "width": 2.4,
+        "yaw": 0.0
+      },
+      {
+        "kind": "enemy_high",
+        "name": "high_0",
+        "position": [
+          -8.0,
+          8.3,
+          12.0
+        ],
+        "surface_id": "walk_x0",
+        "yaw": 0.0
+      },
+      {
+        "kind": "enemy_high",
+        "name": "high_1",
+        "position": [
+          8.0,
+          8.3,
+          20.0
+        ],
+        "surface_id": "walk_x1",
+        "yaw": 0.0
+      },
+      {
+        "kind": "enemy_high",
+        "name": "high_2",
+        "position": [
+          -16.0,
+          8.3,
+          36.0
+        ],
+        "surface_id": "walk_x3_a",
+        "yaw": 0.0
+      },
+      {
+        "kind": "enemy_high",
+        "name": "high_3",
+        "position": [
+          16.0,
+          8.3,
+          44.0
+        ],
+        "surface_id": "walk_x4",
+        "yaw": 0.0
+      },
+      {
+        "kind": "enemy_high",
+        "name": "high_4",
+        "position": [
+          16.0,
+          8.3,
+          30.0
+        ],
+        "surface_id": "walk_z3",
+        "yaw": 0.0
+      },
+      {
+        "kind": "cover",
+        "name": "cover_0",
+        "position": [
+          -8.0,
+          0.3,
+          28.0
+        ],
+        "surface_id": "floor",
+        "yaw": 0.0
+      },
+      {
+        "kind": "cover",
+        "name": "cover_1",
+        "position": [
+          8.0,
+          0.3,
+          36.0
+        ],
+        "surface_id": "floor",
+        "yaw": 0.0
+      },
+      {
+        "kind": "cover",
+        "name": "cover_2",
+        "position": [
+          -16.0,
+          0.3,
+          44.0
+        ],
+        "surface_id": "floor",
+        "yaw": 0.0
+      },
+      {
+        "kind": "cover",
+        "name": "cover_3",
+        "position": [
+          16.0,
+          0.3,
+          12.0
+        ],
+        "surface_id": "floor",
+        "yaw": 0.0
+      },
+      {
+        "kind": "reactive",
+        "name": "reactive_0",
+        "position": [
+          8.0,
+          0.3,
+          12.0
+        ],
+        "surface_id": "floor",
+        "yaw": 0.0
+      },
+      {
+        "kind": "reactive",
+        "name": "reactive_1",
+        "position": [
+          -8.0,
+          0.3,
+          44.0
+        ],
+        "surface_id": "floor",
+        "yaw": 0.0
+      }
+    ],
+    "surfaces": [
+      {
+        "center": [
+          0.0,
+          0.0,
+          28.0
+        ],
+        "extent": [
+          56.0,
+          56.0
+        ],
+        "name": "floor"
+      },
+      {
+        "center": [
+          0.0,
+          8.0,
+          12.0
+        ],
+        "extent": [
+          44.0,
+          3.0
+        ],
+        "name": "walk_x0"
+      },
+      {
+        "center": [
+          0.0,
+          8.0,
+          20.0
+        ],
+        "extent": [
+          44.0,
+          3.0
+        ],
+        "name": "walk_x1"
+      },
+      {
+        "center": [
+          -16.0,
+          8.0,
+          28.0
+        ],
+        "extent": [
+          12.0,
+          3.0
+        ],
+        "name": "walk_x2_a"
+      },
+      {
+        "center": [
+          -5.3,
+          8.0,
+          28.0
+        ],
+        "extent": [
+          4.6,
+          3.0
+        ],
+        "name": "walk_x2_b"
+      },
+      {
+        "center": [
+          6.5,
+          8.0,
+          28.0
+        ],
+        "extent": [
+          7.0,
+          3.0
+        ],
+        "name": "walk_x2_c"
+      },
+      {
+        "center": [
+          17.2,
+          8.0,
+          28.0
+        ],
+        "extent": [
+          9.6,
+          3.0
+        ],
+        "name": "walk_x2_d"
+      },
+      {
+        "center": [
+          -12.5,
+          8.0,
+          36.0
+        ],
+        "extent": [
+          19.0,
+          3.0
+        ],
+        "name": "walk_x3_a"
+      },
+      {
+        "center": [
+          12.5,
+          8.0,
+          36.0
+        ],
+        "extent": [
+          19.0,
+          3.0
+        ],
+        "name": "walk_x3_b"
+      },
+      {
+        "center": [
+          0.0,
+          8.0,
+          44.0
+        ],
+        "extent": [
+          44.0,
+          3.0
+        ],
+        "name": "walk_x4"
+      },
+      {
+        "center": [
+          -16.0,
+          8.0,
+          28.0
+        ],
+        "extent": [
+          3.0,
+          48.0
+        ],
+        "name": "walk_z0"
+      },
+      {
+        "center": [
+          -8.0,
+          8.0,
+          28.0
+        ],
+        "extent": [
+          3.0,
+          48.0
+        ],
+        "name": "walk_z1"
+      },
+      {
+        "center": [
+          8.0,
+          8.0,
+          28.0
+        ],
+        "extent": [
+          3.0,
+          48.0
+        ],
+        "name": "walk_z2"
+      },
+      {
+        "center": [
+          16.0,
+          8.0,
+          28.0
+        ],
+        "extent": [
+          3.0,
+          48.0
+        ],
+        "name": "walk_z3"
+      },
+      {
+        "center": [
+          0.0,
+          8.0,
+          13.0
+        ],
+        "extent": [
+          3.0,
+          18.0
+        ],
+        "name": "walk_z_s"
+      },
+      {
+        "center": [
+          0.0,
+          8.0,
+          45.0
+        ],
+        "extent": [
+          3.0,
+          14.0
+        ],
+        "name": "walk_z_n"
+      },
+      {
+        "center": [
+          0.0,
+          8.0,
+          30.0
+        ],
+        "extent": [
+          3.0,
+          16.0
+        ],
+        "name": "stair_c"
+      },
+      {
+        "center": [
+          0.0,
+          8.0,
+          54.0
+        ],
+        "extent": [
+          12.0,
+          4.0
+        ],
+        "name": "landing_exit"
+      }
+    ],
+    "texel_density": null,
+    "total_rise": 8.0,
+    "traversal": [
+      {
+        "end": [
+          0.0,
+          0.0,
+          21.0
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "entry_to_stair",
+        "start": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "end": [
+          0.0,
+          8.0,
+          37.5
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "stair_c",
+        "start": [
+          0.0,
+          0.0,
+          22.5
+        ]
+      },
+      {
+        "end": [
+          0.0,
+          8.0,
+          51.5
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "spine_n",
+        "start": [
+          0.0,
+          8.0,
+          38.5
+        ]
+      },
+      {
+        "end": [
+          0.0,
+          8.0,
+          55.0
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "landing_to_exit",
+        "start": [
+          0.0,
+          8.0,
+          52.5
+        ]
+      },
+      {
+        "end": [
+          -7.6,
+          8.0,
+          28.0
+        ],
+        "kind": "gap",
+        "mandatory": false,
+        "name": "avenue_gap_w",
+        "start": [
+          -10.0,
+          8.0,
+          28.0
+        ]
+      },
+      {
+        "end": [
+          12.4,
+          8.0,
+          28.0
+        ],
+        "kind": "gap",
+        "mandatory": false,
+        "name": "avenue_gap_e",
+        "start": [
+          10.0,
+          8.0,
+          28.0
+        ]
+      },
+      {
+        "end": [
+          -16.0,
+          8.0,
+          51.0
+        ],
+        "kind": "walk",
+        "mandatory": false,
+        "name": "lattice_w",
+        "start": [
+          -16.0,
+          8.0,
+          5.0
+        ]
+      },
+      {
+        "end": [
+          21.0,
+          8.0,
+          20.0
+        ],
+        "kind": "walk",
+        "mandatory": false,
+        "name": "lattice_x1",
+        "start": [
+          -21.0,
+          8.0,
+          20.0
+        ]
+      },
+      {
+        "end": [
+          -16.0,
+          0.0,
+          10.0
+        ],
+        "kind": "drop",
+        "mandatory": false,
+        "name": "lattice_drop",
+        "start": [
+          -16.0,
+          8.0,
+          12.0
+        ]
+      }
+    ],
+    "triangles": 996,
+    "volumes": [
+      {
+        "center": [
+          0.0,
+          1.0,
+          2.2
+        ],
+        "kind": "player_entry",
+        "name": "arrival",
+        "size": [
+          2.4,
+          2.0,
+          2.4
+        ]
+      },
+      {
+        "center": [
+          0.0,
+          9.0,
+          54.0
+        ],
+        "kind": "objective",
+        "name": "reward",
+        "size": [
+          2.4,
+          2.0,
+          2.4
+        ]
+      },
+      {
+        "center": [
+          0.0,
+          4.0,
+          30.0
+        ],
+        "kind": "no_build",
+        "name": "stair_well",
+        "size": [
+          3.0,
+          8.0,
+          16.0
+        ]
+      }
+    ]
+  }
+}

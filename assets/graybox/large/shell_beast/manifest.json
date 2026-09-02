@@ -1,0 +1,815 @@
+{
+  "shell_beast": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -20.6,
+        -1.0,
+        0.0
+      ],
+      [
+        41.2,
+        35.6,
+        82.0
+      ]
+    ],
+    "colliders": 209,
+    "exit_offset": [
+      0.0,
+      9.0,
+      82.0
+    ],
+    "exit_yaw": 0.0,
+    "floor_depth": 0.0,
+    "graybox": true,
+    "interior": [
+      40.0,
+      34.0,
+      80.0
+    ],
+    "measured_box": [
+      41.2,
+      35.6,
+      80.6
+    ],
+    "offers": [
+      {
+        "kind": "rail_route",
+        "name": "rail_spine",
+        "points": [
+          [
+            -14.0,
+            11.5,
+            14.0
+          ],
+          [
+            -6.0,
+            18.0,
+            20.0
+          ],
+          [
+            0.0,
+            24.0,
+            30.0
+          ],
+          [
+            0.0,
+            27.5,
+            44.0
+          ],
+          [
+            0.0,
+            24.0,
+            58.0
+          ],
+          [
+            -6.0,
+            18.0,
+            70.0
+          ],
+          [
+            0.0,
+            11.5,
+            76.0
+          ]
+        ]
+      },
+      {
+        "kind": "launch_source",
+        "name": "launch_w2",
+        "position": [
+          0.0,
+          0.0,
+          44.0
+        ],
+        "radius": 2.5,
+        "target": "land_west_2"
+      },
+      {
+        "kind": "launch_target",
+        "name": "land_west_2",
+        "position": [
+          -15.0,
+          9.0,
+          44.0
+        ],
+        "radius": 2.5
+      },
+      {
+        "kind": "grapple_point",
+        "name": "grapple_spine_a",
+        "position": [
+          0.0,
+          28.5,
+          20.0
+        ],
+        "radius": 1.5
+      },
+      {
+        "kind": "grapple_point",
+        "name": "grapple_spine_b",
+        "position": [
+          0.0,
+          28.5,
+          60.0
+        ],
+        "radius": 1.5
+      }
+    ],
+    "path": "assets/graybox/large/shell_beast/shell_beast.glb",
+    "rail_span": 79.289,
+    "review": "pending",
+    "semantic_tags": [
+      "arena",
+      "large",
+      "long",
+      "arched",
+      "nave",
+      "ribs",
+      "zigzag",
+      "spine_rail"
+    ],
+    "size": [
+      41.2,
+      82.0,
+      34.6
+    ],
+    "size_class": "large",
+    "size_godot": [
+      41.2,
+      34.6,
+      82.0
+    ],
+    "sockets": [
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "entry",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "surface_id": "porch",
+        "width": 2.4,
+        "yaw": 180.0
+      },
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "exit",
+        "position": [
+          0.0,
+          9.0,
+          82.0
+        ],
+        "surface_id": "apse",
+        "width": 2.4,
+        "yaw": 0.0
+      },
+      {
+        "kind": "enemy_high",
+        "name": "high_0",
+        "position": [
+          -15.5,
+          9.3,
+          24.0
+        ],
+        "surface_id": "west_1",
+        "yaw": 0.0
+      },
+      {
+        "kind": "enemy_high",
+        "name": "high_1",
+        "position": [
+          15.5,
+          18.3,
+          36.0
+        ],
+        "surface_id": "east_1",
+        "yaw": 0.0
+      },
+      {
+        "kind": "enemy_high",
+        "name": "high_2",
+        "position": [
+          -15.5,
+          9.3,
+          45.0
+        ],
+        "surface_id": "west_2",
+        "yaw": 0.0
+      },
+      {
+        "kind": "enemy_high",
+        "name": "high_3",
+        "position": [
+          15.5,
+          18.3,
+          59.0
+        ],
+        "surface_id": "east_2",
+        "yaw": 0.0
+      },
+      {
+        "kind": "enemy_high",
+        "name": "high_4",
+        "position": [
+          10.0,
+          9.3,
+          75.0
+        ],
+        "surface_id": "apse",
+        "yaw": 0.0
+      },
+      {
+        "kind": "cover",
+        "name": "cover_0",
+        "position": [
+          -18.5,
+          0.3,
+          24.0
+        ],
+        "surface_id": "nave",
+        "yaw": 0.0
+      },
+      {
+        "kind": "cover",
+        "name": "cover_1",
+        "position": [
+          18.5,
+          0.3,
+          16.0
+        ],
+        "surface_id": "nave",
+        "yaw": 0.0
+      },
+      {
+        "kind": "cover",
+        "name": "cover_2",
+        "position": [
+          -18.5,
+          0.3,
+          64.0
+        ],
+        "surface_id": "nave",
+        "yaw": 0.0
+      },
+      {
+        "kind": "cover",
+        "name": "cover_3",
+        "position": [
+          18.5,
+          0.3,
+          48.0
+        ],
+        "surface_id": "nave",
+        "yaw": 0.0
+      },
+      {
+        "kind": "reactive",
+        "name": "reactive_0",
+        "position": [
+          6.0,
+          0.3,
+          20.0
+        ],
+        "surface_id": "nave",
+        "yaw": 0.0
+      },
+      {
+        "kind": "reactive",
+        "name": "reactive_1",
+        "position": [
+          -6.0,
+          0.3,
+          60.0
+        ],
+        "surface_id": "nave",
+        "yaw": 0.0
+      }
+    ],
+    "surfaces": [
+      {
+        "center": [
+          0.0,
+          0.0,
+          2.3
+        ],
+        "extent": [
+          8.0,
+          3.4
+        ],
+        "name": "porch"
+      },
+      {
+        "center": [
+          0.0,
+          0.0,
+          42.0
+        ],
+        "extent": [
+          40.0,
+          76.0
+        ],
+        "name": "nave"
+      },
+      {
+        "center": [
+          -13.5,
+          9.0,
+          12.75
+        ],
+        "extent": [
+          3.0,
+          9.5
+        ],
+        "name": "west_1_strip"
+      },
+      {
+        "center": [
+          -15.5,
+          9.0,
+          23.75
+        ],
+        "extent": [
+          7.0,
+          12.5
+        ],
+        "name": "west_1"
+      },
+      {
+        "center": [
+          15.5,
+          18.0,
+          32.0
+        ],
+        "extent": [
+          7.0,
+          16.0
+        ],
+        "name": "east_1"
+      },
+      {
+        "center": [
+          -15.5,
+          9.0,
+          45.0
+        ],
+        "extent": [
+          7.0,
+          22.0
+        ],
+        "name": "west_2"
+      },
+      {
+        "center": [
+          15.5,
+          18.0,
+          59.0
+        ],
+        "extent": [
+          7.0,
+          18.0
+        ],
+        "name": "east_2"
+      },
+      {
+        "center": [
+          0.0,
+          9.0,
+          75.0
+        ],
+        "extent": [
+          38.0,
+          10.0
+        ],
+        "name": "apse"
+      },
+      {
+        "center": [
+          -17.0,
+          9.0,
+          10.75
+        ],
+        "extent": [
+          4.0,
+          13.5
+        ],
+        "name": "stair_w1"
+      },
+      {
+        "center": [
+          0.0,
+          18.0,
+          28.0
+        ],
+        "extent": [
+          24.0,
+          4.0
+        ],
+        "name": "cross_1"
+      },
+      {
+        "center": [
+          0.0,
+          18.0,
+          36.0
+        ],
+        "extent": [
+          24.0,
+          4.0
+        ],
+        "name": "cross_2"
+      },
+      {
+        "center": [
+          0.0,
+          18.0,
+          52.0
+        ],
+        "extent": [
+          24.0,
+          4.0
+        ],
+        "name": "cross_3"
+      },
+      {
+        "center": [
+          0.0,
+          18.0,
+          68.0
+        ],
+        "extent": [
+          24.0,
+          4.0
+        ],
+        "name": "cross_4"
+      }
+    ],
+    "texel_density": null,
+    "total_rise": 9.0,
+    "traversal": [
+      {
+        "end": [
+          0.0,
+          0.0,
+          3.5
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "porch",
+        "start": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      {
+        "end": [
+          -17.0,
+          0.0,
+          4.5
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "floor_w",
+        "start": [
+          0.0,
+          0.0,
+          4.5
+        ]
+      },
+      {
+        "end": [
+          -17.0,
+          9.0,
+          17.0
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "stair_w1",
+        "start": [
+          -17.0,
+          0.0,
+          5.0
+        ]
+      },
+      {
+        "end": [
+          -14.0,
+          9.0,
+          27.5
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "west_1",
+        "start": [
+          -14.0,
+          9.0,
+          18.0
+        ]
+      },
+      {
+        "end": [
+          11.5,
+          18.0,
+          28.0
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "cross_1",
+        "start": [
+          -11.5,
+          9.0,
+          28.0
+        ]
+      },
+      {
+        "end": [
+          14.0,
+          18.0,
+          35.5
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "east_1",
+        "start": [
+          14.0,
+          18.0,
+          29.0
+        ]
+      },
+      {
+        "end": [
+          -11.5,
+          9.0,
+          36.0
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "cross_2",
+        "start": [
+          11.5,
+          18.0,
+          36.0
+        ]
+      },
+      {
+        "end": [
+          -14.0,
+          9.0,
+          51.5
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "west_2",
+        "start": [
+          -14.0,
+          9.0,
+          37.0
+        ]
+      },
+      {
+        "end": [
+          11.5,
+          18.0,
+          52.0
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "cross_3",
+        "start": [
+          -11.5,
+          9.0,
+          52.0
+        ]
+      },
+      {
+        "end": [
+          14.0,
+          18.0,
+          67.5
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "east_2",
+        "start": [
+          14.0,
+          18.0,
+          53.0
+        ]
+      },
+      {
+        "end": [
+          -11.5,
+          9.0,
+          69.0
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "cross_4",
+        "start": [
+          11.5,
+          18.0,
+          68.0
+        ]
+      },
+      {
+        "end": [
+          0.0,
+          9.0,
+          71.0
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "apse",
+        "start": [
+          -11.5,
+          9.0,
+          71.0
+        ]
+      },
+      {
+        "end": [
+          0.0,
+          9.0,
+          79.5
+        ],
+        "kind": "walk",
+        "mandatory": true,
+        "name": "exit",
+        "start": [
+          0.0,
+          9.0,
+          71.0
+        ]
+      },
+      {
+        "end": [
+          0.0,
+          0.0,
+          32.0
+        ],
+        "kind": "walk",
+        "mandatory": false,
+        "name": "nave_a",
+        "start": [
+          0.0,
+          0.0,
+          5.0
+        ]
+      },
+      {
+        "end": [
+          0.0,
+          0.0,
+          60.0
+        ],
+        "kind": "walk",
+        "mandatory": false,
+        "name": "nave_b",
+        "start": [
+          0.0,
+          0.0,
+          32.0
+        ]
+      },
+      {
+        "end": [
+          0.0,
+          0.0,
+          79.0
+        ],
+        "kind": "walk",
+        "mandatory": false,
+        "name": "nave_c",
+        "start": [
+          0.0,
+          0.0,
+          60.0
+        ]
+      },
+      {
+        "end": [
+          -10.0,
+          0.0,
+          22.0
+        ],
+        "kind": "drop",
+        "mandatory": false,
+        "name": "drop_west_1",
+        "start": [
+          -13.0,
+          9.0,
+          22.0
+        ]
+      },
+      {
+        "end": [
+          10.0,
+          0.0,
+          34.0
+        ],
+        "kind": "drop",
+        "mandatory": false,
+        "name": "drop_east_1",
+        "start": [
+          13.0,
+          18.0,
+          34.0
+        ]
+      },
+      {
+        "end": [
+          -10.0,
+          0.0,
+          44.0
+        ],
+        "kind": "drop",
+        "mandatory": false,
+        "name": "drop_west_2",
+        "start": [
+          -13.0,
+          9.0,
+          44.0
+        ]
+      },
+      {
+        "end": [
+          10.0,
+          0.0,
+          58.0
+        ],
+        "kind": "drop",
+        "mandatory": false,
+        "name": "drop_east_2",
+        "start": [
+          13.0,
+          18.0,
+          58.0
+        ]
+      },
+      {
+        "end": [
+          0.0,
+          0.0,
+          68.0
+        ],
+        "kind": "drop",
+        "mandatory": false,
+        "name": "drop_apse",
+        "start": [
+          0.0,
+          9.0,
+          71.0
+        ]
+      }
+    ],
+    "triangles": 2520,
+    "volumes": [
+      {
+        "center": [
+          0.0,
+          1.0,
+          2.2
+        ],
+        "kind": "player_entry",
+        "name": "arrival",
+        "size": [
+          2.4,
+          2.0,
+          2.4
+        ]
+      },
+      {
+        "center": [
+          0.0,
+          10.0,
+          76.0
+        ],
+        "kind": "objective",
+        "name": "reward",
+        "size": [
+          2.4,
+          2.0,
+          2.4
+        ]
+      },
+      {
+        "center": [
+          0.0,
+          26.0,
+          42.0
+        ],
+        "kind": "no_build",
+        "name": "spine_air",
+        "size": [
+          10.0,
+          10.0,
+          72.0
+        ]
+      }
+    ]
+  }
+}
