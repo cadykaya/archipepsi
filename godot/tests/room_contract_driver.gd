@@ -674,9 +674,17 @@ func _test_every_authored_shell_in_the_registry_is_measured() -> void:
 		await get_tree().physics_frame
 		await get_tree().physics_frame
 
-		var authored := not (result.get("sockets", []) as Array).is_empty()
-		_check(authored, "%s: the authored scene was refused and the "
-				% id + "procedural builder answered instead")
+		# WHICH BUILDER ANSWERED -- asked of the builder, not guessed
+		# from the answer. `not sockets.is_empty()` reads like this
+		# question and is not one: a refusal falls back to the
+		# PROCEDURAL builder, and a procedural room has sockets, meshes
+		# and hulls like any other. So a shell whose manifest
+		# contradicted its own scene was refused, silently replaced by
+		# an arena, and then measured -- and the arena is clean, so this
+		# census printed `structural=0 measured=0` for a room that never
+		# built. Zero findings over zero probes, which is the one line
+		# the census exists to make unprintable.
+		var authored := str(result.get("authored_shell", "")) == id
 		var structural := RoomContract.violations(result, id)
 		var measured := RoomAudit.findings(result, _space(), id)
 		var pending := str(registry.get_entry(id).get("review", "")) \
@@ -691,6 +699,30 @@ func _test_every_authored_shell_in_the_registry_is_measured() -> void:
 		for node: Node in (result["root"] as Node3D).find_children(
 				"*", "CollisionShape3D", true, false):
 			hulls += 1
+		# A REFUSED SHELL GETS NO CENSUS LINE. The numbers would all be
+		# the substitute room's, and a reviewer reading `sock=7
+		# structural=0` has no way to tell it is not this shell's. It
+		# reports what actually happened and why, and stops.
+		if not authored:
+			print("  %-24s %-8s REFUSED  the authored scene was rejected; "
+					% [id, "PENDING" if pending else "PASS"]
+					+ "a procedural room answered, so NOTHING here was "
+					+ "measured on this shell")
+			for reason: String in _why_refused(entry):
+				print("      %s" % reason)
+			# The review gate, applied exactly as it is to findings: a
+			# refusal of PENDING content is evidence for the review that
+			# has not happened yet, and a refusal of APPROVED content is
+			# a broken build.
+			_check(pending, "%s is approved content and its authored "
+					% id + "scene was refused")
+			if pending:
+				shells_awaiting_review += 1
+			rooms_checked += 1
+			authored_checked += 1
+			(result["root"] as Node3D).queue_free()
+			await get_tree().process_frame
+			continue
 		print("  %-24s %-8s surf=%-2d trav=%-2d sock=%-2d doors=2 "
 				% [id, "PENDING" if pending else "PASS",
 					RoomContract.sockets_of(result, "stand").size(),
@@ -721,6 +753,22 @@ func _test_every_authored_shell_in_the_registry_is_measured() -> void:
 		authored_checked += 1
 		(result["root"] as Node3D).queue_free()
 		await get_tree().process_frame
+
+## WHY a shell was refused, in the reviewer's output.
+##
+## `ContentInstantiator` already says this -- through `push_error`, which
+## `make godot-room-contract` filters out along with every other engine
+## error, so the one reader who needs it is the one who cannot see it.
+## Asking `ShellValidator` again costs one instantiation and puts the
+## reasons next to the shell they belong to.
+func _why_refused(entry: Dictionary) -> Array[String]:
+	var scene: PackedScene = load(str(entry.get("scene", "")))
+	if scene == null:
+		return ["the scene did not load"] as Array[String]
+	var probe: Node3D = scene.instantiate()
+	var reasons := ShellValidator.refusals(entry, probe)
+	probe.free()
+	return reasons
 
 ## The chamber a shell was built to be, with the parameters it declares.
 func _chamber_for(entry: Dictionary) -> Dictionary:

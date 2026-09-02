@@ -417,6 +417,16 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 	var size := _vector(entry.get("size", []), Vector3(4.0, 3.6, 8.0))
 	var result := {
 		"root": root,
+		# WHICH SHELL ACTUALLY ANSWERED, stamped by the only code that
+		# knows. Every `return ChamberBuilders.build(...)` above is a
+		# refusal or a degrade, and the procedural room it returns is a
+		# perfectly ordinary room -- it has sockets, meshes and hulls,
+		# so nothing about its SHAPE distinguishes it from an authored
+		# one. A consumer that wants to know whether the authored scene
+		# was used has to be told; inferring it from the answer is how
+		# `room_contract_driver` came to print a clean audit sheet for a
+		# shell that never built.
+		"authored_shell": str(entry.get("id", "")),
 		"exit_offset": _exit_offset(entry, size),
 		"bounds": AABB(
 			Vector3(-size.x / 2.0, -FLOOR_ALLOWANCE, 0.0),

@@ -535,6 +535,52 @@ green suite over it, because the suite ran at prototype scale. The mock
 backend now takes a `CampaignConfig` and
 `bridge/tests/test_production_scale.py` runs the real engine at 450.
 
+## HALL RECERTIFICATION — REFUSED, and the guard that hid it — 2026-09-02
+
+Art `3b7bb02` is integrated verbatim (`SCENE_PLAN.json`,
+`registry/authored_art.json`, `content/shells/`), including the three
+Wave-1 LARGE rooms at `review: pending`. **`shell_hall_transit` DOES NOT
+CERTIFY: it does not build.**
+
+`ShellValidator` refuses it because Art's manifest and Art's own
+`shell_hall_transit.tscn` disagree about where four traversals start and
+end — eight endpoints, 0.71 m to 5.02 m apart. The refusal is real and
+Production is right to make it.
+
+WHICH HALF IS STALE, measured rather than assumed. Against the previous
+manifest the scene's markers were exact (0 mismatches, all 26). Against
+Art's new mesh, ALL 22 declared endpoints in the new manifest are
+supported — every one finds ground within a legal step. So the manifest
+is right about the geometry Art shipped and the `Marker3D` nodes are the
+half that did not get regenerated. **The fix is Art's and it is one
+file:** re-export `shell_hall_transit.tscn` from the source that
+produced the manifest. Production did not hand-edit either artifact.
+
+THE GUARD THAT HID IT, and this is the more durable lesson. The census
+asked "did the authored scene answer?" as `not sockets.is_empty()` — and
+a refusal falls back to the PROCEDURAL builder, whose rooms have sockets,
+meshes and hulls like any other. So the hall was refused, silently
+replaced by an arena, measured, and reported `structural=0 measured=0`:
+a clean sheet for a room that never built, over a room nobody asked
+about. The suite was GREEN while looking at the wrong geometry.
+
+`ContentInstantiator` now stamps `authored_shell` on the result it
+builds from a scene, because the builder is the only code that knows
+which branch it took, and the driver asks it instead of inferring.
+A refused shell gets no census line at all — it prints REFUSED and the
+validator's reasons — since every number on that line would have been
+the substitute room's. Sabotage: flipping the hall to `review: pass`
+turns the suite red (exit 2, "approved content and its authored scene
+was refused"); pending keeps it evidence, the same gate findings use.
+
+The three Wave-1 rooms are INERT, proven at the seam rather than
+asserted: all four pending shells load into the registry, `is_offerable`
+refuses each, and `shell_catalog` is exactly the eight approved P2
+shells. `SHELL_FOR_TYPE` still names the five procedural ids. Digest
+`6e8d83d0f3ec088b`, 23 rooms, 15 Checks, 922 points, 35 enemies,
+baseline byte-identical. Eight P2 shells still `structural=0
+measured=0`.
+
 ## ROOM GRAMMAR v0 — landed 2026-08-30
 
 The first bounded slice of `docs/proposals/ROOM_FIRST_GAMEPLAY.md`,
