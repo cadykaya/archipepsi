@@ -1320,6 +1320,65 @@ own grazing behaviour.
 > and let the engine decide. Over-reporting a graze is the safe way to be
 > wrong; under-reporting is what left eight shells unmeasurable.
 
+### L-84 · Repair the piece that has no external claim on it
+
+Production measured three "geometry defects" across two towers:
+`shell_tower_collapsed`'s last two rubble rungs and `shell_tower_spiral`'s
+`platform_6`, each offering nowhere a player could stand. Three findings,
+two shells, two apparently unrelated climbs.
+
+One cause. The top deck is a 0.50 m slab at `rise` across the back 4 m of
+every tower, and both climbs pass under it on their way up. A rung below
+it has `rise - 0.50 - h` metres of headroom and no more.
+
+The instinct is to move the climb, because the climb is what failed. The
+climb is the one thing that could not move:
+
+* the spiral's `inset`, `margin` and `spacing` are `tower()`'s OWN
+  numbers, chosen so an authored spiral climbs the same helix a
+  procedural one does and a Check placed against either lands in the same
+  place. Art does not own them.
+* the collapsed tower's alternating half-floors ARE that shell -- and an
+  earlier version that alternated left/right was refused by `routecheck`
+  for a 3.60 m crossing, so the current arrangement is already the
+  answer to a measured question.
+
+The deck was neither. It was art's own slab, added by a shared helper
+without regard to which half of the shaft the top climb used. So the
+repair went there: `_deck_well` cuts the deck out of the column the climb
+comes up, derived from the same `stones` and `heights` that become the
+Surfaces.
+
+> **When two things collide, look for the one with no external claim on
+> it.** Engine-mirrored constants, an owner-approved silhouette and a
+> `routecheck` verdict are all claims. A helper nobody has ruled on is
+> where the give is, and it is usually where the mistake was.
+
+It also turned out to be the better room. A deck that stops short of the
+shaft is what a stairwell opening and a collapsed floor both actually
+look like; the fix reads as more intentional than what it replaced.
+
+### L-85 · A derived position still has to ask what is already there
+
+`shell_tower_collapsed`'s `high_3` enemy socket was the centre of the
+surface it names -- derived from the same variable that placed the
+geometry, which is the rule this lane wrote down after the axis trap and
+believed it had internalised.
+
+Consecutive rubble stones overlap in plan. The centre of `rubble_0_0` is
+0.05 m inside the slab of `rubble_0_1` above it, so the socket was buried
+in the next stone up, and no amount of deriving it from the right
+variable was going to notice.
+
+> **Deriving a value from the right source is necessary and not
+> sufficient.** A POSITION also has to be checked against the geometry
+> that is already there, by the same search the consumer will use.
+
+The fix is `stance_spot`, which runs `Placement`'s own candidate search
+and returns the clear spot NEAREST THE CENTRE -- so every socket whose
+centre is already fine does not move at all, and the ones that move are
+exactly the ones that were wrong. Two sockets moved, both by 0.225 m.
+
 ### L-24 · Read your own render before writing down what it shows
 Every fix in L-05, L-08, L-09, L-11, L-13 and L-14 came from **looking at
 the image**, not from the build log. The logs were green throughout: correct

@@ -186,19 +186,92 @@ def _core(name, rise, treatment):
     return parts
 
 
-def _deck(name, top_y):
-    """The top deck across the back, and the bridge out through the wall."""
-    return [
-        _paint(brushkit.block("%s_deck" % name, (SIDE, 4.0, 0.50),
-                              (0.0, -SIDE + 2.0, top_y - 0.25)),
-               name, "floor"),
-        _paint(brushkit.block("%s_decknose" % name, (SIDE, 0.24, 0.20),
-                              (0.0, -SIDE + 4.0, top_y - 0.10)),
-               name, "trim"),
-        _paint(brushkit.block("%s_bridge" % name, (3.0, 2.4, 0.50),
-                              (0.0, -SIDE - 1.0, top_y - 0.25)),
-               name, "floor"),
-    ]
+#: The deck's depth and thickness, named because the well arithmetic
+#: below needs both and a literal 4.0 in three places is how they drift.
+DECK_DEPTH = 4.0
+DECK_THICK = 0.50
+
+
+def _deck_well(stones, heights, rise, margin=0.4):
+    """The x-band the deck must NOT roof, or None.
+
+    THE DEFECT THIS EXISTS TO PREVENT, measured by Production at
+    `1648fa9`: `shell_tower_collapsed`'s last two rubble rungs and
+    `shell_tower_spiral`'s `platform_6` each offered NOWHERE a player
+    could stand, all three for one reason -- the deck was directly over
+    them. A rung under a deck has `rise - DECK_THICK - h` metres of
+    headroom and no more, so any rung above `rise - DECK_THICK -
+    HEADROOM` is crushed by a slab 0.5 m thick.
+
+    The fix is not to move the climb. The spiral's helix is the ENGINE's
+    -- `inset`, `margin` and `spacing` are `tower()`'s own numbers so an
+    authored spiral climbs where a procedural one does -- and the
+    collapsed tower's alternating half-floors are what that shell IS. It
+    is the deck that is in the wrong place, and a deck that stops short
+    of the column the climb comes up is what both a stairwell opening
+    and a collapsed floor actually look like.
+
+    So: find the rungs the deck would roof, and cut the deck out of
+    their x-band. Derived from `stones` and `heights` -- the same two
+    lists that become the Surfaces -- rather than named per shell, so a
+    ninth tower gets the same treatment without being told.
+    """
+    crushed = rise - DECK_THICK - roomcollision.HEADROOM
+    lo, hi = None, None
+    for (centre, extent), h in zip(stones, heights):
+        if h <= crushed or h >= rise:
+            continue
+        y0, y1 = centre[1] - extent[1] / 2.0, centre[1] + extent[1] / 2.0
+        if y1 <= -SIDE or y0 >= -SIDE + DECK_DEPTH:
+            continue                      # not under the deck's footprint
+        x0, x1 = centre[0] - extent[0] / 2.0, centre[0] + extent[0] / 2.0
+        lo = x0 if lo is None else min(lo, x0)
+        hi = x1 if hi is None else max(hi, x1)
+    if lo is None:
+        return None
+    lo, hi = lo - margin, hi + margin
+    # A sliver of deck narrower than a player is not a deck. When the
+    # well comes that close to a wall, it takes the rest.
+    edge = SIDE / 2.0
+    if lo + edge < roomcollision.STANCE_XZ:
+        lo = -edge
+    if edge - hi < roomcollision.STANCE_XZ:
+        hi = edge
+    return (max(lo, -edge), min(hi, edge))
+
+
+def _deck(name, top_y, well=None):
+    """The top deck across the back, and the bridge out through the wall.
+
+    `well` is an (x_min, x_max) band the deck does not cover -- the
+    column the climb comes up through. Returns the parts AND the deck's
+    real rect, because with a well the deck is no longer `SIDE` wide and
+    the Surface, the routecheck stone and the sockets on it all have to
+    be the rect that was actually built.
+    """
+    edge = SIDE / 2.0
+    spans = [(-edge, edge)] if well is None else [
+        span for span in ((-edge, well[0]), (well[1], edge))
+        if span[1] - span[0] > 0.01]
+    parts = []
+    for i, (x0, x1) in enumerate(spans):
+        width = x1 - x0
+        mid = (x0 + x1) / 2.0
+        parts.append(_paint(brushkit.block(
+            "%s_deck%d" % (name, i), (width, DECK_DEPTH, DECK_THICK),
+            (mid, -SIDE + DECK_DEPTH / 2.0, top_y - DECK_THICK / 2.0)),
+            name, "floor"))
+        parts.append(_paint(brushkit.block(
+            "%s_decknose%d" % (name, i), (width, 0.24, 0.20),
+            (mid, -SIDE + DECK_DEPTH, top_y - 0.10)), name, "trim"))
+    parts.append(_paint(brushkit.block(
+        "%s_bridge" % name, (3.0, 2.4, DECK_THICK),
+        (0.0, -SIDE - 1.0, top_y - DECK_THICK / 2.0)), name, "floor"))
+    # The rect the CLIMB arrives on: the widest span, which is the one
+    # the bridge and the exit are reached across.
+    x0, x1 = max(spans, key=lambda s: s[1] - s[0])
+    return parts, ((x0 + x1) / 2.0, -SIDE + DECK_DEPTH / 2.0), \
+        (x1 - x0, DECK_DEPTH)
 
 
 def _slab(name, tag, x, y, z, size, thickness=0.40):
@@ -276,8 +349,10 @@ def shell_tower_spiral():
         heights.append(z)
         snames.append("platform_%d" % i)
         anchors.append([round(x, 2), round(z, 2), round(-y, 2)])
-    parts += _deck(name, rise)
-    stones.append(((0.0, -SIDE + 2.0), (SIDE, 4.0)))
+    deck_parts, deck_at, deck_size = _deck(
+        name, rise, _deck_well(stones, heights, rise))
+    parts += deck_parts
+    stones.append((deck_at, deck_size))
     heights.append(rise)
     snames.append("deck")
     worst, allowed = routecheck.assert_reachable(
@@ -336,8 +411,10 @@ def shell_tower_gantry():
         snames.append("landing_%d" % level)
         landings.append([0.0, round(z, 2), round(-ly, 2)])
         anchors.append([0.0, round(z, 2), round(-ly, 2)])
-    parts += _deck(name, rise)
-    stones.append(((0.0, -SIDE + 2.0), (SIDE, 4.0)))
+    deck_parts, deck_at, deck_size = _deck(
+        name, rise, _deck_well(stones, heights, rise))
+    parts += deck_parts
+    stones.append((deck_at, deck_size))
     heights.append(rise)
     snames.append("deck")
     worst, allowed = routecheck.assert_reachable(
@@ -412,8 +489,10 @@ def shell_tower_collapsed():
                 (1.4, 0.55 + 0.18 * (k % 3), 0.55),
                 (-4.4 + k * 2.2, edge_y, z - 0.28)), name, "trim"))
         anchors.append([0.0, round(z, 2), round(-cy, 2)])
-    parts += _deck(name, rise)
-    stones.append(((0.0, -SIDE + 2.0), (SIDE, 4.0)))
+    deck_parts, deck_at, deck_size = _deck(
+        name, rise, _deck_well(stones, heights, rise))
+    parts += deck_parts
+    stones.append((deck_at, deck_size))
     heights.append(rise)
     snames.append("deck")
     worst, allowed = routecheck.assert_reachable(
@@ -462,6 +541,9 @@ def main():
         probe = roomcollision.measure_probe(
             colliders, [w[0] for w in walkable], [w[1] for w in walkable],
             [w[2] for w in walkable])
+        roomcollision.assert_standable(
+            name, colliders, [w[0] for w in walkable],
+            [w[1] for w in walkable], [w[2] for w in walkable])
 
         obj = common.join(parts, name)
         common.uv_project_world(obj, materials.ARCH_DENSITY,
@@ -485,7 +567,16 @@ def main():
         # `tower()` exits through the BACK WALL at summit height, 2.2 m
         # beyond the shaft -- the bridge strip's far end.
         entry["exit_offset"] = [0.0, round(rise, 2), round(SIDE + 2.2, 2)]
-        entry["check_anchor"] = [-2.0, round(rise, 2), round(SIDE - 2.0, 2)]
+        # The Check and its reward volume sit ON the deck, so they are
+        # derived from the deck rect rather than from a literal that was
+        # true only while the deck was the full width. `_deck_well` cuts
+        # the collapsed tower's deck back to x >= -1.4, and x = -2.0 was
+        # then a Check hanging in the opening.
+        (deck_cx, _deck_cy), (deck_w, _deck_d) = meta["_stones"][-1]
+        reward_x = min(max(-2.0, deck_cx - deck_w / 2.0 + 1.0),
+                       deck_cx + deck_w / 2.0 - 1.0)
+        entry["check_anchor"] = [round(reward_x, 2), round(rise, 2),
+                                 round(SIDE - 2.0, 2)]
         entry["enemy_anchors"] = [[round(a[0] * 0.6, 2), round(a[1] + 0.3, 2),
                                    a[2]] for a in meta["platform_anchors"][:4]]
         entry["bounds"] = [[-SIDE / 2.0, -1.0, 0.0],
@@ -523,7 +614,7 @@ def main():
             roomcontract.volume("arrival", "player_entry",
                                 (0.0, -1.6, 1.0), (DOOR_W, 2.0, 2.0)),
             roomcontract.volume("reward", "objective",
-                                (-2.0, -(SIDE - 2.0), rise + 1.0),
+                                (reward_x, -(SIDE - 2.0), rise + 1.0),
                                 (2.0, 2.0, 2.0)),
         ]
         entry["sockets"] = [
@@ -545,10 +636,25 @@ def main():
         raised = [(sn, st, h) for sn, st, h
                   in zip(snames, stones, heights) if h > 0.5]
         raised.sort(key=lambda r: -(r[1][1][0] * r[1][1][1]))
-        for i, (sn, (centre, _extent), h) in enumerate(raised[:4]):
+        for i, (sn, stone, h) in enumerate(raised[:4]):
+            # WHERE ON the surface, not merely which surface. Taking the
+            # centre put `shell_tower_collapsed`'s `high_3` 0.05 m inside
+            # the next rubble stone up, because consecutive rungs overlap
+            # in plan and the socket was never asked whether anything was
+            # already there. `first_stance` keeps the centre when the
+            # centre is clear -- which it is for every socket but that
+            # one -- and otherwise returns a spot a player fits in, which
+            # is stricter than the audit's "not buried" and cannot be
+            # looser.
+            spot = roomcollision.stance_spot(colliders, stone, h)
+            if spot is None:
+                raise AssertionError(
+                    "%s: surface '%s' carries an 'enemy_high' socket and "
+                    "has nowhere anything fits; the surface itself is the "
+                    "defect" % (name, sn))
             entry["sockets"].append(roomcontract.socket(
                 "high_%d" % i, "enemy_high",
-                (centre[0], centre[1], h + 0.3), surface_id=sn))
+                (spot[0], spot[1], h + 0.3), surface_id=sn))
         entry["size_godot"] = [round(entry["size"][0], 3),
                                round(entry["size"][2], 3),
                                round(entry["size"][1], 3)]

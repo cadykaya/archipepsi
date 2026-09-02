@@ -224,7 +224,7 @@
     {
      "name": "floor_1_to_deck_start",
      "position": [
-      0.0,
+      2.0,
       6.0,
       7.2
      ]
@@ -232,7 +232,7 @@
     {
      "name": "floor_1_to_deck_end",
      "position": [
-      0.0,
+      2.0,
       6.0,
       8.0
      ]
@@ -736,7 +736,7 @@
     {
      "name": "platform_8_to_deck_start",
      "position": [
-      4.3,
+      3.0,
       9.0,
       6.3
      ]
@@ -744,7 +744,7 @@
     {
      "name": "platform_8_to_deck_end",
      "position": [
-      4.3,
+      2.6,
       9.0,
       8.0
      ]
@@ -758,7 +758,7 @@
    "glb": "res://content/shells/shell_treasure_cache.glb",
    "markers": [
     {
-     "name": "floor_to_step_low_start",
+     "name": "floor_to_step_high_start",
      "position": [
       0.0,
       0.0,
@@ -766,27 +766,11 @@
      ]
     },
     {
-     "name": "floor_to_step_low_end",
-     "position": [
-      0.0,
-      0.4,
-      2.8
-     ]
-    },
-    {
-     "name": "step_low_to_step_high_start",
-     "position": [
-      0.0,
-      0.4,
-      2.8
-     ]
-    },
-    {
-     "name": "step_low_to_step_high_end",
+     "name": "floor_to_step_high_end",
      "position": [
       0.0,
       0.8,
-      4.0
+      2.9
      ]
     }
    ]
@@ -798,7 +782,7 @@
    "glb": "res://content/shells/shell_treasure_coffer.glb",
    "markers": [
     {
-     "name": "floor_to_step_low_start",
+     "name": "floor_to_step_high_start",
      "position": [
       0.0,
       0.0,
@@ -806,27 +790,11 @@
      ]
     },
     {
-     "name": "floor_to_step_low_end",
-     "position": [
-      0.0,
-      0.4,
-      2.8
-     ]
-    },
-    {
-     "name": "step_low_to_step_high_start",
-     "position": [
-      0.0,
-      0.4,
-      2.8
-     ]
-    },
-    {
-     "name": "step_low_to_step_high_end",
+     "name": "floor_to_step_high_end",
      "position": [
       0.0,
       0.8,
-      4.0
+      2.9
      ]
     }
    ]
@@ -838,7 +806,7 @@
    "glb": "res://content/shells/shell_treasure_vault.glb",
    "markers": [
     {
-     "name": "floor_to_step_low_start",
+     "name": "floor_to_step_high_start",
      "position": [
       0.0,
       0.0,
@@ -846,27 +814,11 @@
      ]
     },
     {
-     "name": "floor_to_step_low_end",
-     "position": [
-      0.0,
-      0.4,
-      2.8
-     ]
-    },
-    {
-     "name": "step_low_to_step_high_start",
-     "position": [
-      0.0,
-      0.4,
-      2.8
-     ]
-    },
-    {
-     "name": "step_low_to_step_high_end",
+     "name": "floor_to_step_high_end",
      "position": [
       0.0,
       0.8,
-      4.0
+      2.9
      ]
     }
    ]
@@ -1068,8 +1020,8 @@
    "source_batch_review": "PASS",
    "runtime_substitution": "pending",
    "p1_contract": {
-    "surfaces": 3,
-    "traversal": 2,
+    "surfaces": 2,
+    "traversal": 1,
     "volumes": 3,
     "sockets": 2,
     "exit_yaw": null,
@@ -1089,14 +1041,6 @@
       "of": 9,
       "samples": 1,
       "surface": "floor"
-     },
-     {
-      "declared": 0.4,
-      "grazing": true,
-      "measured": 0.8,
-      "of": 9,
-      "samples": 9,
-      "surface": "step_low"
      }
     ]
    },
@@ -1108,8 +1052,8 @@
    "source_batch_review": "PASS",
    "runtime_substitution": "pending",
    "p1_contract": {
-    "surfaces": 3,
-    "traversal": 2,
+    "surfaces": 2,
+    "traversal": 1,
     "volumes": 3,
     "sockets": 2,
     "exit_yaw": null,
@@ -1129,14 +1073,6 @@
       "of": 9,
       "samples": 1,
       "surface": "floor"
-     },
-     {
-      "declared": 0.4,
-      "grazing": true,
-      "measured": 0.8,
-      "of": 9,
-      "samples": 9,
-      "surface": "step_low"
      }
     ]
    },
@@ -1148,8 +1084,8 @@
    "source_batch_review": "PASS",
    "runtime_substitution": "pending",
    "p1_contract": {
-    "surfaces": 3,
-    "traversal": 2,
+    "surfaces": 2,
+    "traversal": 1,
     "volumes": 3,
     "sockets": 2,
     "exit_yaw": null,
@@ -1169,14 +1105,6 @@
       "of": 9,
       "samples": 1,
       "surface": "floor"
-     },
-     {
-      "declared": 0.4,
-      "grazing": true,
-      "measured": 0.8,
-      "of": 9,
-      "samples": 9,
-      "surface": "step_low"
      }
     ]
    },

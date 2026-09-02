@@ -457,11 +457,22 @@ def main():
         # use, `((centre_x, centre_y), (extent_x, extent_y))`.
         mid = -side / 2.0
         if name.startswith("shell_treasure"):
-            # Three surfaces, not one. `_plinth` is the same in all three
-            # shells because the reward position is the engine's.
+            # TWO surfaces, not three. `_plinth`'s lower step was
+            # declared walkable and is not: its 3.0 m square carries the
+            # 2.2 m square of the upper step, so what is left of it is a
+            # 0.40 m ring against a player 0.80 m across. Production
+            # measured ZERO valid placements on it in all three shells.
+            #
+            # The GEOMETRY is right and is untouched. A 0.40 m riser is a
+            # legitimate architectural step, it is well inside
+            # `MAX_VERTICAL_STEP`, and it still collides -- `_plinth`
+            # paints both steps `floor`, so both are solid. What was
+            # wrong is the CLAIM that a player can stand on it, and the
+            # claim is what changed. The mass is still declared, as the
+            # `plinth` no_build volume below, which is what a pedestal
+            # step actually is to a composer.
             walkable = [
                 (((0.0, mid), (side, side)), 0.0, "floor"),
-                (((0.0, mid), (3.0, 3.0)), 0.40, "step_low"),
                 (((0.0, mid), (2.2, 2.2)), 0.80, "step_high"),
             ]
         else:
@@ -474,6 +485,9 @@ def main():
         probe = roomcollision.measure_probe(
             colliders, [w[0] for w in walkable], [w[1] for w in walkable],
             [w[2] for w in walkable])
+        roomcollision.assert_standable(
+            name, colliders, [w[0] for w in walkable],
+            [w[1] for w in walkable], [w[2] for w in walkable])
 
         obj = common.join(parts, name)
         common.uv_project_world(obj, materials.ARCH_DENSITY,
@@ -519,18 +533,21 @@ def main():
             roomcontract.surface(sname, centre, extent, top)
             for (centre, extent), top, sname in walkable]
         if name.startswith("shell_treasure"):
-            # A flat room: every rise is `_plinth`'s 0.40 m against a
-            # 1.00 m step. Declared rather than omitted, so the contract
-            # says "nothing to cross" instead of saying nothing.
+            # A flat room, and ONE rise now rather than two. The step
+            # the player used to be told they could stop on is a riser
+            # they go over, so what is declared is the movement they
+            # actually make: floor to the top of the plinth, 0.80 m,
+            # inside `MAX_VERTICAL_STEP`'s 1.00 m. Declared rather than
+            # omitted, so the contract says "one step up" instead of
+            # saying nothing.
+            #
+            # Endpoints are EDGE to EDGE (L-81): 0.5 m clear of the
+            # plinth on the floor, and the near edge of the top step.
             entry["traversal"] = [
-                {"name": "floor_to_step_low", "kind": "rise",
+                {"name": "floor_to_step_high", "kind": "rise",
                  "mandatory": False,
                  "start": roomcontract.godot(0.0, mid + 2.0, 0.0),
-                 "end": roomcontract.godot(0.0, mid + 1.2, 0.40)},
-                {"name": "step_low_to_step_high", "kind": "rise",
-                 "mandatory": False,
-                 "start": roomcontract.godot(0.0, mid + 1.2, 0.40),
-                 "end": roomcontract.godot(0.0, mid, 0.80)},
+                 "end": roomcontract.godot(0.0, mid + 1.1, 0.80)},
             ]
             entry["volumes"] = [
                 # The plinth mass. Under ROOM_SCALE_SOLID 6.0, so

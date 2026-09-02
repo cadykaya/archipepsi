@@ -304,7 +304,103 @@ NORMAL, TEXCOORD_0, indices, the material JSON, and the embedded PNGs. All
 eight: visible mesh identical, textures identical, colliders added. The
 eleven unpacked F3 shells: byte-identical, not rebuilt.
 
-### Two findings, both reported and neither corrected
+## P2-D — the seven that survived C(ii), repaired at the source
+
+Production settled the Surface contract at `1648fa9`: a `stand` Surface
+promises that a valid placement can be FOUND somewhere in it, not that
+every point of its rect is clear. Findings on the eight shells went
+**75 to 7**, and all seven that survived were Art's.
+
+### The check came first, and it reproduced all six before anything moved
+
+`roomcollision.measure_stances` mirrors `Placement.find` over
+`RoomAudit.player_stands_here` -- the same 9 x 9 candidate grid, the same
+rule that the whole 0.8 m footprint stays inside the region, the same
+2.4 m clearance volume lifted 0.02 m off the surface -- against the
+collider boxes the build script placed.
+
+Run against the unrepaired shells it returned **exactly** Production's
+six surface findings, with the numbers the engine measured:
+
+| shell | surface | headroom, predicted | measured by Production |
+| --- | --- | ---: | ---: |
+| `shell_tower_collapsed` | `rubble_1_0` | 1.50 | 1.50 |
+| `shell_tower_collapsed` | `rubble_1_1` | 0.50 | 0.50 |
+| `shell_tower_spiral` | `platform_6` | 1.50 | 1.50 |
+| `shell_treasure_*` (x3) | `step_low` | 0.00 | zero placements |
+
+Reproducing the known-bad set before touching anything is what makes the
+tool worth trusting afterwards. It is now `assert_standable` and it stops
+the build.
+
+### A — the two towers: the deck was over the climb
+
+One cause for all three. The deck is a 0.50 m slab at `rise` across the
+back 4 m, and both climbs pass under it: a rung below it has
+`rise - 0.50 - h` metres and no more.
+
+Neither climb could move. The spiral's `inset`, `margin` and `spacing`
+are `tower()`'s own, so an authored spiral climbs where a procedural one
+does; the collapsed tower's alternating half-floors are what that shell
+is, and an earlier left/right version was already refused by `routecheck`
+for a 3.60 m crossing. The deck was art's own slab and had no such claim
+on it -- see L-84.
+
+`_deck_well` cuts the deck out of the column the climb comes up, derived
+from `stones` and `heights`: any rung above `rise - DECK_THICK -
+HEADROOM` whose plan falls under the deck contributes its x-band, plus a
+margin, and a leftover sliver narrower than a player is given to the well
+rather than left as deck.
+
+| shell | deck before | deck after | why |
+| --- | --- | --- | --- |
+| `shell_tower_collapsed` | 12.0 x 4.0 | **7.4 x 4.0**, x from -1.4 | the level-1 rubble climbs at -x |
+| `shell_tower_spiral` | 12.0 x 4.0 | **8.6 x 4.0**, x to +2.6 | the helix's last turn is at +x |
+| `shell_tower_gantry` | 12.0 x 4.0 | **unchanged** | nothing of its climb is under the deck |
+
+The deck rect, its routecheck stone, the sockets standing on it, the
+Check anchor and the reward volume all move with it, because all five are
+now read from the rect that was actually built. `routecheck` re-run:
+worst jumps 0.80 / 1.75 / 0.10 m against 2.00 allowed.
+
+### B — the three treasure rooms: `step_low` was never standable
+
+`_plinth`'s 3.0 m lower step carries its 2.2 m upper step, so what is
+left of it is a **0.40 m ring against a 0.80 m player**. Zero valid
+placements, in all three shells.
+
+**The geometry is right and is untouched** -- mesh and collision both,
+proven byte-identical. A 0.40 m riser is legitimate architecture, well
+inside `MAX_VERTICAL_STEP`, and it still collides because `_plinth`
+paints both steps `floor`. What was wrong is the CLAIM. `step_low` is no
+longer declared a stand Surface, the two 0.40 m rises become the one
+0.80 m rise a player actually makes, and the mass stays declared as the
+`plinth` `no_build` volume -- which is what a pedestal step is to a
+composer.
+
+### C — `high_3` was the centre of a stone with another stone on it
+
+Consecutive rubble stones overlap in plan, and the socket was the
+surface's centre, which put it 0.05 m inside the slab above. `stance_spot`
+now runs `Placement`'s candidate search and returns the clear spot
+NEAREST THE CENTRE, so a socket whose centre is already fine does not
+move. Two moved, both by 0.225 m: collapsed's `high_3` in depth, and
+spiral's `high_3` in width -- the second was not a Production finding and
+had 0.05 m of margin against the audit's own `_buried` box. See L-85.
+
+### What the engine says now
+
+`verify_collision.gd`, rewritten to C(ii) and run on the shipped `.tscn`
+files: **eight shells, zero needing attention.** Every declared Surface
+offers a placement; the tightest still offers 32 per cent of its spots.
+Still evidence and not a verdict -- `room_audit.gd` is the authority.
+
+### Two findings, both reported and neither corrected — SUPERSEDED
+
+Kept as written, because what happened to them is the point: one was
+answered by Production changing the contract and the other by Art
+changing the claim, and neither was answered by the shell being
+redesigned. Both are repaired above.
 
 **`step_low`** (req 38). The three treasure rooms declare it as a walkable
 `Surface` and `_plinth`'s upper step stands on it: nine of nine samples

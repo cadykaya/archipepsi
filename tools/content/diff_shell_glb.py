@@ -8,13 +8,20 @@ which "trust me, only the collision changed" is worth nothing. This reads
 both revisions of each file and says which of the two possible changes
 actually happened:
 
-    the visible mesh, its materials, its textures      MUST NOT change
-    collision-only nodes, and the bytes they add       may appear
+    SAME    the bytes did not move at all
+    COLL    the visible mesh and textures are byte-identical, and only
+            collision-only nodes changed
+    VISUAL  the visible mesh or a texture really did change
 
-A shell whose bytes did not move at all is reported as such and not
-examined further, which is how the second half of the claim -- that the
-rebuild reached the eight packed shells and nothing else -- is evidence
-rather than assertion.
+VISUAL is not a verdict. The first P2 slice added collision and nothing
+else, so every rebuilt shell had to come back COLL; the second repaired
+real geometry defects Production measured, so three towers had to come
+back VISUAL and the five rooms had to stay SAME. What this tool owes the
+reader either way is WHICH files moved and how, so that an intended list
+can be checked against a measured one instead of asserted.
+
+FAIL is reserved for a shell that is malformed however it got that way:
+no collision at all, or more than one visible mesh.
 
 The check is on the glTF itself rather than on the Blender script,
 because the script is not what Godot imports. Accessor payloads are
@@ -151,32 +158,39 @@ def main(argv):
             continue
         old, new = describe(old_blob.stdout), describe(new_blob)
         problems = []
-        if set(old["visible"]) != set(new["visible"]):
-            problems.append("visible nodes changed: %s -> %s"
-                            % (sorted(old["visible"]), sorted(new["visible"])))
-        for node, fingerprint in old["visible"].items():
-            if new["visible"].get(node) != fingerprint:
-                problems.append("visible mesh '%s' CHANGED" % node)
-        if old["images"] != new["images"]:
-            problems.append("textures changed: %s -> %s"
-                            % (old["images"], new["images"]))
-        if old["colliders"]:
-            problems.append("the old revision already had colliders: %s"
-                            % old["colliders"])
         if not new["colliders"]:
-            problems.append("no collision-only nodes were added")
+            problems.append("no collision-only nodes at all -- the audit "
+                            "can only report that nothing is there")
+        if len(new["visible"]) != 1:
+            problems.append("%d visible nodes; a shell is one merged mesh"
+                            % len(new["visible"]))
+        visual = (set(old["visible"]) != set(new["visible"])
+                  or any(new["visible"].get(n) != f
+                         for n, f in old["visible"].items()))
+        textures = old["images"] != new["images"]
         grew = new["bytes"] - old["bytes"]
+        moved = len(new["colliders"]) - len(old["colliders"])
         if problems:
             bad += 1
             print("[diff] FAIL %-34s" % name)
             for problem in problems:
                 print("[diff]      %s" % problem)
+            continue
+        if visual or textures:
+            # NOT a failure. The second P2 slice changed tower geometry
+            # on purpose, and a tool that calls every visible change a
+            # problem is a tool nobody can use twice. What it owes the
+            # reader is WHICH files moved, so an intended list can be
+            # checked against a measured one.
+            print("[diff] VISUAL %-32s visible mesh%s CHANGED, "
+                  % (name, " and textures" if textures else "")
+                  + "%d colliders (%+d), %+d bytes"
+                  % (len(new["colliders"]), moved, grew))
         else:
-            print("[diff] OK   %-34s visible mesh identical (%d node, "
-                  "%d texture), +%d colliders, +%d bytes"
-                  % (name, len(new["visible"]), len(new["images"]),
-                     len(new["colliders"]), grew))
-    print("[diff] %d file(s), %d problem(s)" % (len(paths), bad))
+            print("[diff] COLL %-34s visible mesh and textures identical, "
+                  % name + "%d colliders (%+d), %+d bytes"
+                  % (len(new["colliders"]), moved, grew))
+    print("[diff] %d file(s), %d malformed" % (len(paths), bad))
     return 1 if bad else 0
 
 

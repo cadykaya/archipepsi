@@ -95,16 +95,52 @@ def main(argv):
         # to a field Production already carries is named here with the
         # reason, and everything NOT named still fails. The list is meant
         # to be emptied by the next integration, not to grow.
-        DECLARED_HANDOFF = {
-            ("shell_corner_left", "semantic_tags"):
-                "corners offered as CORRIDOR, the request Production "
-                "recorded at eda4fd9 ('corner is not a chamber type'); "
-                "the corner shape survives as a tag beside it",
-            ("shell_corner_right", "semantic_tags"):
-                "corners offered as CORRIDOR, the request Production "
-                "recorded at eda4fd9 ('corner is not a chamber type'); "
-                "the corner shape survives as a tag beside it",
-        }
+        # THE REPAIRS PRODUCTION ASKED FOR, ENUMERATED FIELD BY FIELD.
+        #
+        # The drift check exists because a field quietly disagreeing with
+        # the landed pack is how the projectile review went stale, so it
+        # is not softened into "changes are fine". Every intended change
+        # to a field Production already carries is named here with the
+        # reason, and everything NOT named still fails. The list is meant
+        # to be emptied by the next integration, not to grow.
+        _WELL = ("the deck no longer roofs the climb (`_deck_well`). "
+                 "Production measured collapsed rubble_1_0/rubble_1_1 and "
+                 "spiral platform_6 with zero valid placements at 1648fa9, "
+                 "all three because a 0.5 m deck slab sat over them. The "
+                 "deck rect, the routecheck stone, the sockets on it and "
+                 "the reward volume all move with it")
+        _STEP_LOW = ("`step_low` is no longer declared a stand Surface. "
+                     "Its 3.0 m square carries the 2.2 m upper step, so "
+                     "what is left is a 0.40 m ring against a 0.80 m "
+                     "player -- zero valid placements, measured. The "
+                     "plinth mesh and its collision are unchanged; the "
+                     "two rises become the one 0.80 m rise a player "
+                     "actually makes")
+        _SOCKET = ("`enemy_high` sockets are placed WHERE something fits "
+                   "on their surface, not at its centre. The centre put "
+                   "collapsed's high_3 0.05 m inside the stone above it")
+        _CORNER = ("corners offered as CORRIDOR, the request Production "
+                   "recorded at eda4fd9 ('corner is not a chamber type'); "
+                   "the corner shape survives as a tag beside it")
+        DECLARED_HANDOFF = {}
+        for _cid, _fields, _why in (
+                ("shell_corner_left", ("semantic_tags",), _CORNER),
+                ("shell_corner_right", ("semantic_tags",), _CORNER),
+                ("shell_tower_collapsed",
+                 ("surfaces", "traversal", "volumes"), _WELL),
+                ("shell_tower_spiral", ("surfaces", "traversal"), _WELL),
+                ("shell_tower_collapsed", ("sockets",),
+                 _WELL + "; and " + _SOCKET),
+                ("shell_tower_spiral", ("sockets",),
+                 _WELL + "; and " + _SOCKET),
+                ("shell_treasure_vault", ("surfaces", "traversal"),
+                 _STEP_LOW),
+                ("shell_treasure_cache", ("surfaces", "traversal"),
+                 _STEP_LOW),
+                ("shell_treasure_coffer", ("surfaces", "traversal"),
+                 _STEP_LOW)):
+            for _field in _fields:
+                DECLARED_HANDOFF[(_cid, _field)] = _why
 
         # DRIFT. The bug this catches happened: the art exporter kept
         # emitting `review: "pass"` for the three projectiles after

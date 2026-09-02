@@ -290,14 +290,6 @@
         "of": 9,
         "samples": 1,
         "surface": "floor"
-      },
-      {
-        "declared": 0.4,
-        "grazing": true,
-        "measured": 0.8,
-        "of": 9,
-        "samples": 9,
-        "surface": "step_low"
       }
     ],
     "surfaces": [
@@ -312,18 +304,6 @@
           8.0
         ],
         "name": "floor"
-      },
-      {
-        "center": [
-          0.0,
-          0.4,
-          4.0
-        ],
-        "extent": [
-          3.0,
-          3.0
-        ],
-        "name": "step_low"
       },
       {
         "center": [
@@ -343,31 +323,16 @@
       {
         "end": [
           0.0,
-          0.4,
-          2.8
+          0.8,
+          2.9
         ],
         "kind": "rise",
         "mandatory": false,
-        "name": "floor_to_step_low",
+        "name": "floor_to_step_high",
         "start": [
           0.0,
           0.0,
           2.0
-        ]
-      },
-      {
-        "end": [
-          0.0,
-          0.8,
-          4.0
-        ],
-        "kind": "rise",
-        "mandatory": false,
-        "name": "step_low_to_step_high",
-        "start": [
-          0.0,
-          0.4,
-          2.8
         ]
       }
     ],
@@ -502,14 +467,6 @@
         "of": 9,
         "samples": 1,
         "surface": "floor"
-      },
-      {
-        "declared": 0.4,
-        "grazing": true,
-        "measured": 0.8,
-        "of": 9,
-        "samples": 9,
-        "surface": "step_low"
       }
     ],
     "surfaces": [
@@ -524,18 +481,6 @@
           8.0
         ],
         "name": "floor"
-      },
-      {
-        "center": [
-          0.0,
-          0.4,
-          4.0
-        ],
-        "extent": [
-          3.0,
-          3.0
-        ],
-        "name": "step_low"
       },
       {
         "center": [
@@ -555,31 +500,16 @@
       {
         "end": [
           0.0,
-          0.4,
-          2.8
+          0.8,
+          2.9
         ],
         "kind": "rise",
         "mandatory": false,
-        "name": "floor_to_step_low",
+        "name": "floor_to_step_high",
         "start": [
           0.0,
           0.0,
           2.0
-        ]
-      },
-      {
-        "end": [
-          0.0,
-          0.8,
-          4.0
-        ],
-        "kind": "rise",
-        "mandatory": false,
-        "name": "step_low_to_step_high",
-        "start": [
-          0.0,
-          0.4,
-          2.8
         ]
       }
     ],
@@ -713,14 +643,6 @@
         "of": 9,
         "samples": 1,
         "surface": "floor"
-      },
-      {
-        "declared": 0.4,
-        "grazing": true,
-        "measured": 0.8,
-        "of": 9,
-        "samples": 9,
-        "surface": "step_low"
       }
     ],
     "surfaces": [
@@ -735,18 +657,6 @@
           8.0
         ],
         "name": "floor"
-      },
-      {
-        "center": [
-          0.0,
-          0.4,
-          4.0
-        ],
-        "extent": [
-          3.0,
-          3.0
-        ],
-        "name": "step_low"
       },
       {
         "center": [
@@ -766,31 +676,16 @@
       {
         "end": [
           0.0,
-          0.4,
-          2.8
+          0.8,
+          2.9
         ],
         "kind": "rise",
         "mandatory": false,
-        "name": "floor_to_step_low",
+        "name": "floor_to_step_high",
         "start": [
           0.0,
           0.0,
           2.0
-        ]
-      },
-      {
-        "end": [
-          0.0,
-          0.8,
-          4.0
-        ],
-        "kind": "rise",
-        "mandatory": false,
-        "name": "step_low_to_step_high",
-        "start": [
-          0.0,
-          0.4,
-          2.8
         ]
       }
     ],

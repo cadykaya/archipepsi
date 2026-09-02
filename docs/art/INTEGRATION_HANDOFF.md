@@ -186,9 +186,13 @@ needed for any of it.
 | review state | **still `pending`, all eight.** Nothing here approves anything |
 | gameplay risk | **none.** No generator logic, no constant, no script |
 
-**What to expect when you re-run the audit — measured here, so it is not a
-surprise.** The two corners come back clean. The rest will report, and both
-kinds of finding are about what the manifest CLAIMS rather than about the
+**SUPERSEDED by F0b below.** Both kinds of finding named here are now
+repaired at the source; the table is kept because it is the measurement
+the repair was made against.
+
+**What the audit reported before the repair — measured here, so it was not
+a surprise.** The two corners came back clean. The rest reported, and both
+kinds of finding were about what the manifest CLAIMED rather than about the
 approved geometry:
 
 | shell | colliders | findings the probe measured |
@@ -236,6 +240,56 @@ intended handoff instead of failing.
 `tools/content/diff_shell_glb.py` compares accessor payloads byte for byte
 across the rebuild — same vertices, normals, UVs, indices, materials, PNGs
 in all eight.
+
+### F0b. P2-D — the seven findings that survived C(ii) are repaired
+
+**Take `godot/content/` again.** No code change, and all eight are still
+`review: "pending"`.
+
+Your ruling at `1648fa9` took the eight shells from 75 findings to 7. All
+seven were ours and all seven are fixed at the source.
+
+| finding | what it was | what changed |
+| --- | --- | --- |
+| collapsed `rubble_1_0`, `rubble_1_1` | 1.50 m and 0.50 m under the deck | the deck no longer roofs the climb |
+| spiral `platform_6` | 1.50 m under the deck | same, same helper |
+| treasure `step_low` (x3) | a 0.40 m ring against a 0.80 m player | no longer declared a stand Surface |
+| collapsed socket `high_3` | 0.05 m inside the stone above it | sockets are placed where something fits |
+
+**The deck was the defect, not the climbs.** A 0.50 m slab at `rise`
+across the back 4 m sat over the last rungs of two different climbs.
+Neither climb could move -- the spiral's `inset`/`margin`/`spacing` are
+`tower()`'s own so an authored spiral climbs where a procedural one does,
+and the collapsed tower's alternating half-floors were already the answer
+to a `routecheck` refusal. `_deck_well` cuts the deck out of the column
+the climb comes up, derived from the same `stones` and `heights` that
+become the Surfaces. Collapsed's deck is now 7.4 x 4.0 and spiral's
+8.6 x 4.0; **gantry's is unchanged**, because nothing of its climb is
+under it. `routecheck` re-run: worst jumps 0.80 / 1.75 / 0.10 m against
+2.00 allowed.
+
+**The plinths are untouched.** Mesh and collision both, and the three
+treasure `.glb` files are byte-identical to the previous head. The 0.40 m
+riser is legitimate architecture inside `MAX_VERTICAL_STEP` and it still
+collides; only the claim that a player can stand on it is gone. The mass
+stays declared as the `plinth` `no_build` volume.
+
+**One socket you did not flag also moved.** Spiral's `high_3` sat 0.05 m
+clear of the platform above it -- inside your `_buried` box, so it passed,
+but that is not a margin. The same derivation that fixed collapsed's
+`high_3` moved it 0.225 m. Both moves increase clearance; no socket whose
+centre was already clear moved at all.
+
+**Expect a clean audit.** `verify_collision.gd` now asks your own C(ii)
+question -- `Placement`'s 9 x 9 grid, the 0.8 m footprint inside the rect,
+2.4 m of clearance -- against the shipped `.tscn` files, and reports
+**eight shells, zero needing attention**, tightest surface still offering
+32 per cent of its spots. That is a prediction of your audit, not a
+substitute for it.
+
+**Thirteen fields disagree with your landed pack on purpose.** Each is
+named in `verify_manifest.DECLARED_HANDOFF` with its reason; anything not
+on that list still fails the drift check.
 
 ### F1. Drop in the content pack — **no code change**
 

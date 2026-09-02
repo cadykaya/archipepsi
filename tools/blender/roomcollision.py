@@ -79,6 +79,8 @@ from __future__ import annotations
 
 import bpy
 
+import roomcontract
+
 #: The three roles that are structure, and the one that is decoration.
 #: `materials.paint` raises on anything else, so this set is total.
 SOLID_ROLES = frozenset({"floor", "wall", "ceiling"})
@@ -322,3 +324,197 @@ def measure_probe(colliders, stones, heights, snames):
                 finding["grazing"] = True
             findings.append(finding)
     return findings
+
+
+# --- owner ruling C(ii): a Surface is an OFFER --------------------------
+
+#: `RoomAudit.STANCE` -- the box a standing player claims, their capsule
+#: squared off -- and `RoomAudit.HEADROOM`, the volume they need above the
+#: thing they stand on. Both come through `roomcontract`, which already
+#: reads them from `art_budgets.json`, so no second copy of how big a
+#: player is can drift from the first.
+STANCE_XZ = roomcontract.MIN_SURFACE_SPAN
+HEADROOM = roomcontract.HEADROOM
+
+#: `Placement.GRID` and `Placement.LIFT`. Nine per axis, because that is
+#: what the composer has always swept and the solver replaced that sweep
+#: rather than adding a second one beside it.
+GRID = 9
+LIFT = 0.02
+
+
+def _overlaps(a0, a1, b0, b1):
+    """Do two intervals share more than a touching face?
+
+    TOUCHING COUNTS AS OVERLAP. Godot's shape query reports a contact for
+    exactly coincident faces -- measured, not assumed: the collapsed
+    tower's `rubble_1_1` has one candidate whose footprint lands exactly
+    in the 0.80 m slot between a floor slab and the deck, touching both,
+    and Production's audit counted zero valid placements there. So this
+    refuses the same spot rather than being one hair more generous than
+    the authority it exists to predict.
+    """
+    return a0 < b1 + _EPS and a1 > b0 - _EPS
+
+
+def measure_stances(colliders, stones, heights, snames):
+    """Can each declared Surface keep its C(ii) promise?
+
+    Production resolved the Surface contract at `1648fa9`: a `stand`
+    Surface does not promise that every point of its rect is clear, only
+    that a valid placement can be FOUND somewhere in it. A Surface with
+    ZERO valid placements is still invalid.
+
+    This mirrors `Placement.find` over `RoomAudit.player_stands_here` --
+    the same 9 x 9 grid, the same rule that the whole 0.8 m footprint
+    stays inside the region, the same clearance volume lifted `LIFT` off
+    the surface and `HEADROOM` tall -- against the boxes this script
+    placed rather than rays into a scene. It is a PREDICTION of the audit
+    and never a verdict. What it buys is that a shell which cannot keep
+    its promise fails at the BUILD, where the geometry that caused it is
+    still a local variable.
+
+    Everything here is Blender-ordered: a box is (x, y, z) with y the
+    depth the room runs along and z the height.
+    """
+    boxes = [(lo[0], hi[0], lo[1], hi[1], lo[2], hi[2])
+             for lo, hi in (_world_box(c) for c in colliders)]
+    findings = []
+    for stone, top_z, sname in zip(stones, heights, snames):
+        (cx, cy), (ex, ey) = stone
+        if ex < STANCE_XZ - _EPS or ey < STANCE_XZ - _EPS:
+            findings.append({"surface": sname, "reason": "too_small",
+                             "extent": [round(ex, 3), round(ey, 3)]})
+            continue
+        span_x = max(ex - STANCE_XZ, 0.0)
+        span_y = max(ey - STANCE_XZ, 0.0)
+        half = STANCE_XZ / 2.0
+        usable = 0
+        headroom = 0.0
+        for xi in range(GRID):
+            u = 0.5 if GRID < 2 else xi / float(GRID - 1)
+            px = cx - span_x / 2.0 + span_x * u
+            for yi in range(GRID):
+                v = 0.5 if GRID < 2 else yi / float(GRID - 1)
+                py = cy - span_y / 2.0 + span_y * v
+                # 1. support at the declared height, by the same window
+                #    the downward probe uses.
+                seen = [z1 for x0, x1, y0, y1, _z0, z1 in boxes
+                        if x0 - _EPS <= px <= x1 + _EPS
+                        and y0 - _EPS <= py <= y1 + _EPS
+                        and top_z - GROUND_REACH - _EPS <= z1
+                        <= top_z + PROBE_LIFT + _EPS]
+                if not seen or abs(max(seen) - top_z) > HEIGHT_TOLERANCE:
+                    continue
+                # 2. room to stand up on it.
+                floor = top_z + LIFT
+                ceiling = top_z + HEADROOM
+                over = [z0 for x0, x1, y0, y1, z0, z1 in boxes
+                        if _overlaps(px - half, px + half, x0, x1)
+                        and _overlaps(py - half, py + half, y0, y1)
+                        and _overlaps(floor, ceiling, z0, z1)]
+                if over:
+                    headroom = max(headroom, min(over) - top_z)
+                    continue
+                usable += 1
+        if usable == 0:
+            findings.append({"surface": sname, "reason": "occluded",
+                             "declared": round(top_z, 3),
+                             "best_headroom": round(headroom, 3),
+                             "needs": HEADROOM, "of": GRID * GRID})
+    return findings
+
+
+def stance_spot(colliders, stone, top_z):
+    """The safest point on this Surface where a player fits, or None.
+
+    `Placement`'s candidate set in Blender coordinates, but NOT its
+    verdict order. The solver returns the FIRST clear candidate because
+    it wants any spot and wants it cheaply; a socket is written down
+    once and read forever, so this returns the clear candidate NEAREST
+    THE RECT CENTRE instead.
+
+    Two reasons, and the first is the one that matters. A socket derived
+    from the search order lands against a rect edge -- measured, on
+    `shell_tower_collapsed`'s `high_3`, 0.03 m from the stone above it,
+    which is inside the audit's tolerance but is not a margin. Nearest to
+    centre puts it where there is room on every side. The second is
+    stability: the centre is what the socket used to be, so every socket
+    whose centre is already clear does not move at all, and the ones that
+    do move are exactly the ones that were wrong.
+    """
+    (cx, cy), (ex, ey) = stone
+    if ex < STANCE_XZ - _EPS or ey < STANCE_XZ - _EPS:
+        return None
+    boxes = [(lo[0], hi[0], lo[1], hi[1], lo[2], hi[2])
+             for lo, hi in (_world_box(c) for c in colliders)]
+    half = STANCE_XZ / 2.0
+
+    def ok(px, py):
+        seen = [z1 for x0, x1, y0, y1, _z0, z1 in boxes
+                if x0 - _EPS <= px <= x1 + _EPS
+                and y0 - _EPS <= py <= y1 + _EPS
+                and top_z - GROUND_REACH - _EPS <= z1
+                <= top_z + PROBE_LIFT + _EPS]
+        if not seen or abs(max(seen) - top_z) > HEIGHT_TOLERANCE:
+            return False
+        return not any(
+            _overlaps(px - half, px + half, x0, x1)
+            and _overlaps(py - half, py + half, y0, y1)
+            and _overlaps(top_z + LIFT, top_z + HEADROOM, z0, z1)
+            for x0, x1, y0, y1, z0, z1 in boxes)
+
+    if ok(cx, cy):
+        return (cx, cy)
+    span_x = max(ex - STANCE_XZ, 0.0)
+    span_y = max(ey - STANCE_XZ, 0.0)
+    best = None
+    for xi in range(GRID):
+        u = 0.5 if GRID < 2 else xi / float(GRID - 1)
+        px = cx - span_x / 2.0 + span_x * u
+        for yi in range(GRID):
+            v = 0.5 if GRID < 2 else yi / float(GRID - 1)
+            py = cy - span_y / 2.0 + span_y * v
+            if not ok(px, py):
+                continue
+            # Row-major order breaks ties, so the answer is the same on
+            # every machine and every run.
+            far = (px - cx) ** 2 + (py - cy) ** 2
+            if best is None or far < best[0] - _EPS:
+                best = (far, px, py)
+    return None if best is None else (best[1], best[2])
+
+
+def assert_standable(name, colliders, stones, heights, snames):
+    """Refuse a shell that declares a Surface nobody can stand on.
+
+    The build gate for owner ruling C(ii). `measure_stances` reports;
+    this refuses, because a Surface with zero valid placements is not a
+    marginal room, it is a false statement in the manifest -- and
+    Production's audit will say so with the shell already integrated.
+
+    It reproduced all six of `1648fa9`'s surface findings before any of
+    them was fixed, with the same numbers the engine measured (1.50,
+    0.50, 1.50 m of headroom on the three towers; nothing at all on the
+    three plinths). That is why it is trusted enough to stop a build --
+    and it is still a PREDICTION. `room_audit.gd` measures the real
+    thing, and remains the only physical authority.
+    """
+    findings = measure_stances(colliders, stones, heights, snames)
+    if not findings:
+        return len(stones)
+    lines = []
+    for f in findings:
+        if f["reason"] == "too_small":
+            lines.append("'%s' is %.2f x %.2f m and a player is %.2f across"
+                         % (f["surface"], f["extent"][0], f["extent"][1],
+                            STANCE_XZ))
+        else:
+            lines.append("'%s' declared at %.2f offers nowhere to stand: "
+                         "the best of %d spots has %.2f m of headroom and "
+                         "a player needs %.2f"
+                         % (f["surface"], f["declared"], f["of"],
+                            f["best_headroom"], f["needs"]))
+    raise AssertionError(
+        "%s: %d surface(s) cannot keep the promise a `stand` Surface "
+        "makes -- %s" % (name, len(findings), "; ".join(lines)))

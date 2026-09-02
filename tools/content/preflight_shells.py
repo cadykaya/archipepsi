@@ -16,9 +16,21 @@ that can be reproduced here and none of it is attempted. Godot remains the
 physical authority; this only catches the failures that are decidable from
 numbers, so they are found before a handoff rather than after one.
 
-The headroom column is explicitly a PREDICTION and says so: it compares
+The overhang column is explicitly a PREDICTION and says so: it compares
 declared surfaces against each other, which is not the same as measuring
 what is actually overhead.
+
+AND SINCE OWNER RULING C(ii) IT IS NO LONGER A DEFECT REPORT. A `stand`
+Surface promises that a valid placement can be FOUND somewhere in it, not
+that every point of it is clear, so one surface hanging over part of
+another is ordinary architecture -- a ground floor under its own
+staircase, a rubble stone under the next stone. What IS a defect is a
+surface with nowhere at all, and that is decided by
+`roomcollision.assert_standable`, which runs `Placement`'s search over
+the real collider boxes at BUILD time and stops the build. These lines
+stay because "what is over this surface" is still the first question
+asked when the gate does fire; they are context, not a count of
+problems.
 """
 from __future__ import annotations
 
@@ -240,7 +252,7 @@ def main(argv):
                       - max(a["center"][2] - a["extent"][1] / 2,
                             b["center"][2] - b["extent"][1] / 2))
                 if ox > 0.01 and oz > 0.01:
-                    notes.append("predict headroom: '%s' has '%s' %.2f m "
+                    notes.append("overhang: '%s' has '%s' %.2f m "
                                  "overhead across %.2f x %.2f m"
                                  % (a["name"], b["name"], dy, ox, oz))
                     predictions += 1
@@ -254,8 +266,13 @@ def main(argv):
             for n in notes:
                 print("[preflight]        %s" % n)
 
-    print("[preflight] %d structural refusal(s), %d headroom prediction(s)"
+    print("[preflight] %d structural refusal(s), %d overhang(s)"
           % (problems, predictions))
+    print("[preflight] An overhang is CONTEXT under owner ruling C(ii), "
+          "not a finding: a Surface promises one valid placement, not a "
+          "clear rect.")
+    print("[preflight] `roomcollision.assert_standable` is the gate, and "
+          "it runs at build time over the real collider boxes.")
     print("[preflight] Godot's room_audit.gd remains the physical authority; "
           "nothing here substitutes for it.")
     return 1 if problems else 0
