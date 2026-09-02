@@ -60,10 +60,28 @@ rewritten, no commits lost). PR #6, opened from it against `main`, is
 **superseded** — it showed the whole stacked project history rather than an
 art diff. Do not maintain two active art branches.
 
-## Art batches — state 2026-08-29
+## Art batches — state 2026-09-02
 
-**THE ART LANE IS INTENTIONALLY IDLE.** Do not start work in it on a
-wake-up. Read this section and stop.
+**THE ART LANE IS WAITING ON AN OWNER VERDICT, NOT IDLE-WITH-WORK-TO-DO.**
+Do not start work in it on a wake-up. Read this section and stop.
+
+**P2 IS COMPLETE — all eight authored shells PASS** (owner, 2026-09-02),
+after Production certified them physically at `6640d86`.
+
+**P3 delivered ONE LARGE room and stopped there.** `shell_hall_transit`
+(40 x 38 x 60 m, ~91,000 m3 — about 40x the largest P2 room) is authored
+to Production's movement contract at `af620d8`, exports
+`review: "pending"`, and the pack verifier asserts it is NOT shipped.
+Review package: `docs/art/review/p3_owner/`. **Do not author a second
+LARGE room, a family, or any follow-on. Do not promote it.**
+
+**One thing needs PRODUCTION, not the owner: req 40 in
+`docs/art/ART_FRONTIER.md`.** `ShellValidator._check_segment` applies the
+base-kit reach bounds to every mandatory traversal segment without
+reading `kind`, while `TraversalSegment` in `schemas/content.py` bounds
+only `rise` and `gap`. It refuses any ramped climb in any LARGE room —
+and refuses a 3.20 m FLAT walk along a continuous collar. Art has not
+altered the shell to route around it.
 
 **001–022 PASS. 031–037 PASS** (031; 032 *with boundary*; 033 *audit, build
 nothing*; 034 *the visual principle*; 035-R; 036-R; 037-R *with a documented

@@ -88,6 +88,222 @@
    "markers": []
   },
   {
+   "content_id": "shell_hall_transit",
+   "kind": "shells",
+   "asset": "shell_hall_transit",
+   "glb": "res://content/shells/shell_hall_transit.glb",
+   "markers": [
+    {
+     "name": "vestibule_to_basin_start",
+     "position": [
+      0.0,
+      0.0,
+      8.5
+     ]
+    },
+    {
+     "name": "vestibule_to_basin_end",
+     "position": [
+      0.0,
+      0.0,
+      9.5
+     ]
+    },
+    {
+     "name": "basin_to_gallery_start",
+     "position": [
+      -16.5,
+      0.0,
+      15.0
+     ]
+    },
+    {
+     "name": "basin_to_gallery_end",
+     "position": [
+      -16.5,
+      11.0,
+      33.0
+     ]
+    },
+    {
+     "name": "gallery_to_landing_start",
+     "position": [
+      -15.0,
+      11.0,
+      53.0
+     ]
+    },
+    {
+     "name": "gallery_to_landing_end",
+     "position": [
+      -3.0,
+      21.0,
+      53.0
+     ]
+    },
+    {
+     "name": "landing_to_bridge_n_start",
+     "position": [
+      4.0,
+      21.0,
+      49.0
+     ]
+    },
+    {
+     "name": "landing_to_bridge_n_end",
+     "position": [
+      4.0,
+      21.0,
+      47.0
+     ]
+    },
+    {
+     "name": "bridge_n_to_ring_n_start",
+     "position": [
+      4.0,
+      21.0,
+      44.0
+     ]
+    },
+    {
+     "name": "bridge_n_to_ring_n_end",
+     "position": [
+      4.0,
+      21.0,
+      42.0
+     ]
+    },
+    {
+     "name": "ring_n_to_ring_e_start",
+     "position": [
+      5.0,
+      21.0,
+      41.0
+     ]
+    },
+    {
+     "name": "ring_n_to_ring_e_end",
+     "position": [
+      7.5,
+      21.0,
+      39.0
+     ]
+    },
+    {
+     "name": "ring_e_to_bridge_e_start",
+     "position": [
+      8.0,
+      21.0,
+      32.0
+     ]
+    },
+    {
+     "name": "ring_e_to_bridge_e_end",
+     "position": [
+      10.0,
+      21.0,
+      32.0
+     ]
+    },
+    {
+     "name": "bridge_e_to_gantry_start",
+     "position": [
+      12.0,
+      21.0,
+      32.0
+     ]
+    },
+    {
+     "name": "bridge_e_to_gantry_end",
+     "position": [
+      14.0,
+      21.0,
+      32.0
+     ]
+    },
+    {
+     "name": "gantry_to_exit_start",
+     "position": [
+      16.0,
+      21.0,
+      39.0
+     ]
+    },
+    {
+     "name": "gantry_to_exit_end",
+     "position": [
+      16.0,
+      28.0,
+      53.0
+     ]
+    },
+    {
+     "name": "ring_n_to_ring_w_start",
+     "position": [
+      -5.0,
+      21.0,
+      41.0
+     ]
+    },
+    {
+     "name": "ring_n_to_ring_w_end",
+     "position": [
+      -7.5,
+      21.0,
+      39.0
+     ]
+    },
+    {
+     "name": "ring_w_to_ring_s_start",
+     "position": [
+      -7.5,
+      21.0,
+      29.0
+     ]
+    },
+    {
+     "name": "ring_w_to_ring_s_end",
+     "position": [
+      -5.0,
+      21.0,
+      27.0
+     ]
+    },
+    {
+     "name": "basin_to_plinth_west_start",
+     "position": [
+      -4.0,
+      0.0,
+      21.0
+     ]
+    },
+    {
+     "name": "basin_to_plinth_west_end",
+     "position": [
+      -4.0,
+      4.0,
+      19.5
+     ]
+    },
+    {
+     "name": "basin_to_plinth_east_start",
+     "position": [
+      10.0,
+      0.0,
+      43.0
+     ]
+    },
+    {
+     "name": "basin_to_plinth_east_end",
+     "position": [
+      10.0,
+      4.0,
+      44.5
+     ]
+    }
+   ]
+  },
+  {
    "content_id": "shell_tower_collapsed",
    "kind": "shells",
    "asset": "shell_tower_collapsed",
@@ -911,6 +1127,7 @@
      "turn_left"
     ],
     "collision": 10,
+    "offers": [],
     "surface_probe": []
    },
    "triangles": 216
@@ -935,9 +1152,54 @@
      "turn_right"
     ],
     "collision": 10,
+    "offers": [],
     "surface_probe": []
    },
    "triangles": 216
+  },
+  {
+   "content_id": "shell_hall_transit",
+   "source_asset": "batch039/shells/shell_hall_transit",
+   "source_batch_review": "PASS",
+   "runtime_substitution": "pending",
+   "p1_contract": {
+    "surfaces": 14,
+    "traversal": 13,
+    "volumes": 3,
+    "sockets": 10,
+    "exit_yaw": 0.0,
+    "size_class": "large",
+    "size_class_source": "owner P3 direction: one LARGE authored room; NOT derived from geometry",
+    "fits_floors": [],
+    "chamber_type": "arena",
+    "shape_tags": [
+     "transit",
+     "vertical"
+    ],
+    "collision": 41,
+    "offers": [
+     {
+      "name": "rail_helix",
+      "kind": "rail_route",
+      "points": 11,
+      "target": null
+     },
+     {
+      "name": "launch_basin",
+      "kind": "launch_source",
+      "points": 0,
+      "target": "launch_gantry"
+     },
+     {
+      "name": "launch_gantry",
+      "kind": "launch_target",
+      "points": 0,
+      "target": null
+     }
+    ],
+    "surface_probe": []
+   },
+   "triangles": 552
   },
   {
    "content_id": "shell_tower_collapsed",
@@ -960,6 +1222,7 @@
      "collapse"
     ],
     "collision": 21,
+    "offers": [],
     "surface_probe": []
    },
    "triangles": 528
@@ -985,6 +1248,7 @@
      "gantry"
     ],
     "collision": 33,
+    "offers": [],
     "surface_probe": []
    },
    "triangles": 852
@@ -1010,6 +1274,7 @@
      "spiral"
     ],
     "collision": 22,
+    "offers": [],
     "surface_probe": []
    },
    "triangles": 636
@@ -1033,6 +1298,7 @@
      "stored"
     ],
     "collision": 16,
+    "offers": [],
     "surface_probe": [
      {
       "declared": 0.0,
@@ -1065,6 +1331,7 @@
      "displayed"
     ],
     "collision": 20,
+    "offers": [],
     "surface_probe": [
      {
       "declared": 0.0,
@@ -1097,6 +1364,7 @@
      "protected"
     ],
     "collision": 12,
+    "offers": [],
     "surface_probe": [
      {
       "declared": 0.0,

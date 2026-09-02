@@ -59,6 +59,12 @@ func _initialize() -> void:
 		"shell_treasure_coffer": true,
 		"shell_corner_left": true,
 		"shell_corner_right": true,
+		# P3: the first LARGE authored room, PENDING and expected to be
+		# PENDING. `false` is the assertion that the pack does NOT ship
+		# an unreviewed shell -- the same gate the projectiles prove in
+		# the other direction. When the owner passes it this flips to
+		# `true`, and not before.
+		"shell_hall_transit": false,
 	}
 	for id in wanted:
 		var want_shippable: bool = wanted[id]

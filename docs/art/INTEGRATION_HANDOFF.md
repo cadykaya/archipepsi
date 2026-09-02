@@ -457,6 +457,28 @@ projectiles, not the walls.
 If the owner wants the walls in the comparison, that is the F3 decision, and
 it is a gameplay/runtime design question rather than an art one.
 
+## I. P3 addendum — one LARGE shell, and one thing Production must decide
+
+Everything above is the P2 handoff and is unchanged by this. Added since:
+
+* **`shell_hall_transit`** — the first LARGE authored room, 40 x 38 x 60 m,
+  in `batch039/shells`, exported into the pack at `review: "pending"`.
+  Authored to the movement seam at `af620d8`; declares one `rail_route`
+  and one `launch_source`/`launch_target` pair. **Not for integration
+  until the owner passes the form.** Package:
+  `docs/art/review/p3_owner/`.
+* **The exporter carries review state per entry now.** `SHELL_REVIEW` is a
+  dict keyed by content id, so the eight PASSED P2 shells and the pending
+  hall coexist and a new shell cannot inherit an approval.
+* **PRODUCTION DECISION NEEDED — the traversal contract disagrees with
+  itself.** `ShellValidator._check_segment` applies the base-kit reach
+  bounds to every mandatory segment without reading `kind`;
+  `TraversalSegment` in `schemas/content.py` bounds only `rise` and `gap`.
+  This refuses any ramped climb in any LARGE room, and refuses a 3.20 m
+  FLAT walk along a continuous collar. Art has not altered the shell to
+  route around it. Full statement: **req 40** in `ART_FRONTIER.md`, and
+  `tools/verify_content_pack.sh` stage 4 prints the refusals on every run.
+
 ## Evidence
 
 `docs/art/review/integration/A_content_pack_delta.png` — row A is what

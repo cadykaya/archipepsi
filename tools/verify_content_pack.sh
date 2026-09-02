@@ -127,3 +127,105 @@ echo "[verify] --- collision in the shipped scenes (art-side evidence) ---"
 cp "$ROOT/tools/content/verify_collision.gd" "$H/collision.gd"
 xvfb-run -a -s "-screen 0 1280x800x24" "$GODOT" --headless --path "$ROOT/godot" \
   -s _harness/collision.gd 2>&1 | grep -E "^\[collision\]|SCRIPT ERROR" || true
+
+# 4. SHELL VALIDATOR. Production's, and the rule that matters here is
+# `_check_segment`: a mandatory traversal is measured from its markers in
+# the scene against `Constants.max_safe_gap`, and one with no markers is
+# refused rather than assumed good. Stages 1-3 never reach it -- the
+# Python schema checks the DECLARED numbers, the registry checks loading,
+# the collision stage checks surfaces -- so a shell could pass all three
+# and be refused the moment Production instantiated it. P2's eight never
+# exercised it because every mandatory segment in them was a 1.0 m stone.
+#
+# Transformed like `content_registry.gd` above and no further:
+#
+#   1. `class_name` stripped, loaded by path.
+#   2. `Constants` becomes an INSTANCE of Production's own constants.gd
+#      (it `extends Node`, and `max_safe_gap` is a plain method), so the
+#      numbers and the function are theirs, not retyped.
+#   3. `RoomContract.envelope(x)` is substituted with its own one-line
+#      body, `x.grow(WALL_ALLOWANCE)`, and `WALL_ALLOWANCE` /
+#      `FLOOR_ALLOWANCE` are READ from Production's `room_contract.gd`,
+#      `chamber_builders.gd` and `content_instantiator.gd`. Loading
+#      `room_contract.gd` itself would pull in `ChamberBuilders` at
+#      const-init, and that chain is three files deep for two floats.
+#   4. `catalog()`'s `ContentRegistry` parameter type becomes `Object`.
+#      That function is selection, not validation, and nothing here calls
+#      it; it only has to compile.
+#
+# Every rule that RUNS -- `refusals`, `_check_segment`, `_check_sockets`,
+# `_check_envelope`, `mesh_boxes` -- is Production's, unedited.
+echo "[verify] --- Production's ShellValidator on the shipped scenes ---"
+git show "$PROD:godot/scripts/content/room_contract.gd" > "$H/prod_room_contract.gd"
+git show "$PROD:godot/scripts/generation/chamber_builders.gd" > "$H/prod_chambers.gd"
+git show "$PROD:godot/scripts/content/content_instantiator.gd" > "$H/prod_instantiator.gd"
+git show "$PROD:godot/scripts/content/shell_validator.gd" | python3 -c '
+import re, sys
+s = sys.stdin.read()
+
+
+def const(path, name):
+    with open(path) as fh:
+        hit = re.search(r"^const %s\s*(?::\s*\w+\s*)?:?=\s*(.+)$" % name,
+                        fh.read(), re.M)
+    if hit is None:
+        raise SystemExit("verify-content: %s does not define %s"
+                         % (path, name))
+    return hit.group(1).split("#")[0].strip()
+
+
+# RoomContract.WALL_ALLOWANCE is `ChamberBuilders.WALL_THICKNESS + 0.15`,
+# so it is COMPOSED from Production the same way Production composes it.
+expr = const(sys.argv[1], "WALL_ALLOWANCE")
+wall = expr.replace("ChamberBuilders.WALL_THICKNESS",
+                    const(sys.argv[2], "WALL_THICKNESS"))
+if re.search(r"[A-Za-z_]", wall):
+    raise SystemExit("verify-content: WALL_ALLOWANCE still references "
+                     "something this harness has not resolved: %s" % wall)
+floor = const(sys.argv[3], "FLOOR_ALLOWANCE")
+
+s = s.replace("class_name ShellValidator\n", "")
+s = s.replace("extends RefCounted",
+              "extends RefCounted\n"
+              "const WALL_ALLOWANCE = %s\n" % wall
+              + "const FLOOR_ALLOWANCE = %s\n" % floor
+              + "static var Constants = "
+                "(load(\"res://_harness/prod_constants.gd\") "
+                "as GDScript).new()\n", 1)
+s = s.replace("ContentInstantiator.FLOOR_ALLOWANCE", "FLOOR_ALLOWANCE")
+s = s.replace("RoomContract.WALL_ALLOWANCE", "WALL_ALLOWANCE")
+# `RoomContract.envelope` is one line -- `return bounds.grow(WALL_ALLOWANCE)`
+# -- and it is copied as that line rather than spliced into the call site,
+# so the substitution does not depend on how the argument is wrapped.
+s = s.replace("RoomContract.envelope(", "_envelope(")
+s += """
+
+static func _envelope(bounds: AABB) -> AABB:
+\treturn bounds.grow(WALL_ALLOWANCE)
+"""
+s = s.replace("registry: ContentRegistry", "registry: Object")
+# Two type inferences that only break BECAUSE of the substitutions
+# above, widened to the declared types Production already gives them.
+# `max_safe_gap` returns float and `get_entry` returns Dictionary in
+# Production; here they come off an untyped `Object`, so `:=` has
+# nothing to infer from. Nothing else about either line changes, and
+# both are asserted below so a rename cannot make this a silent no-op.
+for was, now in [
+        ("\tvar allowed := Constants.max_safe_gap(",
+         "\tvar allowed: float = Constants.max_safe_gap("),
+        ("\t\tvar entry := registry.get_entry(id)",
+         "\t\tvar entry: Dictionary = registry.get_entry(id)")]:
+    if was not in s:
+        raise SystemExit("verify-content: the ShellValidator transform "
+                         "expected to widen %r and did not find it" % was)
+    s = s.replace(was, now)
+code = "\n".join(ln.split("#")[0] for ln in s.splitlines())
+for gone in ["RoomContract", "ContentInstantiator", "ContentRegistry"]:
+    if gone in code:
+        raise SystemExit("verify-content: %s survived the ShellValidator "
+                         "transform" % gone)
+sys.stdout.write(s)' "$H/prod_room_contract.gd" "$H/prod_chambers.gd" \
+  "$H/prod_instantiator.gd" > "$H/shell_validator.gd"
+cp "$ROOT/tools/content/verify_shells.gd" "$H/shells.gd"
+xvfb-run -a -s "-screen 0 1280x800x24" "$GODOT" --headless --path "$ROOT/godot" \
+  -s _harness/shells.gd 2>&1 | grep -E "^\[shells\]|SCRIPT ERROR" || true

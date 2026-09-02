@@ -117,9 +117,9 @@ the superseded rule in the meantime.
 | | |
 | --- | --- |
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
-| Phase | **STYLE LOCK PASSED — production.** 001–022 are all `PASS`. **Batch 023 (theme landmarks) is PENDING owner review** and is a PROPOSAL, not production — a landmark CATEGORY exists in Production, but no placement, selection or envelope contract does (req 24, reworded 2026-08-29). **Batches 024–030 are authorised and proceed without waiting on the 023 verdict.** **024-030 delivered and PENDING.** **The post-030 gap pass is fully REVIEWED and fully PASSED (owner, 2026-08-29): 031 PASS; 032 PASS WITH BOUNDARY; 033 PASS AUDIT / BUILD NOTHING; 034 PASS VISUAL PRINCIPLE; 035-R PASS; 036-R PASS; 037-R PASS WITH DOCUMENTED CAVEAT; boss audit ACCEPTED / BUILD NOTHING.** **The art lane is now intentionally IDLE.** No Batch 038, and no Echo visual parts and no diegetic interface work until the owner publishes the two design briefs named below. |
+| Phase | **P3 — ONE LARGE ROOM DELIVERED, PENDING.** `shell_hall_transit` (40 x 38 x 60 m, ~91,000 m3, about 40x the largest P2 room) is authored to Production's movement contract at `af620d8` and awaiting the owner's form review; package in `docs/art/review/p3_owner/`. **P2 IS COMPLETE — all eight shells PASS.** **STYLE LOCK PASSED — production.** 001–022 are all `PASS`. **Batch 023 (theme landmarks) is PENDING owner review** and is a PROPOSAL, not production — a landmark CATEGORY exists in Production, but no placement, selection or envelope contract does (req 24, reworded 2026-08-29). **Batches 024–030 are authorised and proceed without waiting on the 023 verdict.** **024-030 delivered and PENDING.** **The post-030 gap pass is fully REVIEWED and fully PASSED (owner, 2026-08-29): 031 PASS; 032 PASS WITH BOUNDARY; 033 PASS AUDIT / BUILD NOTHING; 034 PASS VISUAL PRINCIPLE; 035-R PASS; 036-R PASS; 037-R PASS WITH DOCUMENTED CAVEAT; boss audit ACCEPTED / BUILD NOTHING.** **The art lane is now intentionally IDLE.** No Batch 038, and no Echo visual parts and no diegetic interface work until the owner publishes the two design briefs named below. |
 | Owner review | Style Lock passed 2026-08-28. Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
-| Next action | **NOTHING. The art lane is intentionally idle until the next owner-authored brief.** Every batch in the post-030 pass has passed and the owner has closed the two directions that would otherwise look like obvious next work: the **modular Echo visual construction / kitbash system** and the **diegetic in-world interface system** are both owner-and-collaborator design work, each getting its own brief. Batches 023-030 remain PENDING review. Req 31 still blocks seven enemy roles from placement and Art has deliberately not routed around it. **Do not invent filler work. No Batch 038, no heartbeat, no polling, no autonomous expansion.** |
+| Next action | **NOTHING. Wait for the P3 owner verdict on `shell_hall_transit`.** The P3 brief asked for ONE large room and one was delivered; it exports `review: "pending"` and Art does not promote it. Everything else the lane could reach for is still closed: no second LARGE room, no family, no Batch 038, no Echo visual parts, no diegetic interface work until the owner publishes those two briefs. Batches 023-030 remain PENDING review. Req 31 still blocks seven enemy roles and Art has deliberately not routed around it. **One item genuinely needs Production, not the owner: req 40 below.** **Do not invent filler work. No heartbeat, no polling, no autonomous expansion.** |
 | ~~Superseded~~ | ~~**Tier 7: the room shells** (`ASSET_INVENTORY.md` §7, L3, nothing built) — started immediately, per the owner's instruction not to idle while 014 waits. Six families, all Pri A: corridor, arena, platform-path, tower, treasure room, corner. They inherit engine-truth dimensions and traversal bounds, differ in scale / verticality / sightline / routing / encounter and Check placement rather than in dressing, and must not be generic stretches of one another where gameplay geometry matters. The approved six material families and the Batch 014 fixture language both apply.~~ Corridors done as Batch 015. |
 | ~~Superseded~~ | ~~**Tier 8: the three unbuilt theme material families** (`neon_transit`, `gothic_stone`, `temple_ruin`). It is the highest-leverage unblocked work left — it also unblocks three of the six dressing props §9 needs — and it is routine in the sense that `art_palette.json` already carries all six themes' ramps and `materials.paint()` already builds any of them. **But it is the first look at three themes**, so it wants a review sheet the owner can redirect cheaply, and textures are the cheapest thing in the project to rebuild.~~ Done as Batch 012. |
 | Queue depth | **Pending owner review: 023-030 only.** 001-022 and 031-037 are all `PASS` as of 2026-08-29. The hourly heartbeat stays **paused** (`trig_01DSWy2dbCpeSefcx2YGS9Ys`, disabled 2026-08-29) and the PR #5 poll is deleted; PR activity still wakes the session on its own. **Do not re-enable the routine on an idle lane** — re-enable it only when an owner brief, a verdict or a Production contract gives it something to do. |
@@ -591,9 +591,93 @@ them; each is a thing the art lane will need when contracts settle.
 | 5 | **A larger footprint, or an L2 placement path, for composed clusters.** `PROP_FOOTPRINT` is 1.4 m. | Right for L0, too small for an L2 station or storytelling cluster. | `cluster_*` |
 | 6 | **`challenge_marker` world semantics** (`AGENT_FRONTIER.md` still lists this open). | Its visual cannot be specified until its meaning is. | `local_reward_pickup` |
 
+### Req 40 — the traversal contract disagrees with itself (OPEN, Production's)
+
+**`ShellValidator._check_segment` does not read `kind`.** It applies
+`Constants.MAX_VERTICAL_STEP` and `Constants.max_safe_gap` to EVERY
+mandatory traversal segment. `schemas/content.py`'s `TraversalSegment`
+tests `self.kind` and bounds only `rise` and `gap`; `walk` (continuous
+ground) and `drop` are deliberately unbounded there.
+
+P2 could not see it: every mandatory segment in the eight was a 1.00 m
+`rise`, inside both readings. `shell_hall_transit` is refused on four
+segments, the clearest being `ring_n_to_ring_e` — **3.20 m, flat**, along
+a continuous walkable collar, refused because 3.20 > `max_safe_gap(0)` =
+2.60. There is floor under every centimetre of it.
+
+**This blocks vertical circulation in any LARGE room, not just this one.**
+A 28 m climb is `walk` if it is ramps and 28+ segments if it is 1 m steps,
+against a schema cap of 32. There is no honest third declaration.
+
+Art has NOT changed the shell to route around it. The route is declared
+as what it is; `tools/verify_content_pack.sh` stage 4 runs Production's
+own `ShellValidator` on the shipped scenes and prints every refusal,
+marked `[walk/drop]`, on every run. Art's own side of the claim is checked
+at build time by `_assert_walk_ground` in `build_hall.py`: continuous
+collider structure under the whole chord of every mandatory `walk`, at a
+height between its two ends, so a wall does not count. Which half of the
+contract is authoritative is Production's decision. See L-87.
+
 **Do not edit gameplay logic to make an asset convenient. Do not alter a
 mechanical dimension to make an asset prettier.** Collision and traversal
 truth remain Godot's.
+
+---
+
+## P3 — the first LARGE authored room (2026-09-02, PENDING)
+
+`shell_hall_transit`, a vertical transit hall. **ONE shell. Not a family,
+not a batch, and it does not promote itself.**
+
+| | |
+| --- | --- |
+| source | `tools/blender/build_hall.py` -> `batch039/shells` |
+| contract | Production's movement seam at `af620d8` |
+| type / class | `arena` (tags `transit`, `vertical`) / `large` |
+| size | 40 W x 38 H x 60 D m, ~91,000 m3 (vs `shell_tower_gantry` at 2,160) |
+| budget | 552 tris, 32.0 texels/m, 41 convex colliders |
+| contract data | 14 surfaces, 13 traversal, 10 sockets, 3 volumes, **3 offers** |
+| review | **`pending`.** `verify_pack.gd` asserts the pack does NOT ship it. |
+| package | `docs/art/review/p3_owner/` — 8 views, 6 overlays, README |
+
+**The exporter now carries review state PER ENTRY.** `SHELL_REVIEW` was a
+single constant while every shell shared one verdict; it is a dict keyed
+by content id now, so a new shell cannot inherit somebody else's approval
+by being added to a table.
+
+**Offers, and what Art did not author.** `OFFER_KINDS` is closed at
+`rail_route`, `launch_source`, `launch_target`; `grapple_anchor`,
+`platform_route` and `wind_column` are Production's named next arrivals
+and no grammar was invented for them. The hall declares `rail_helix`
+(11 points, 143.9 m, twice around the landmark, every segment inside
+`RailPath`'s 0.5-60 m and 75-degree bounds, asserted at build time) and
+the pair `launch_basin` -> `launch_gantry` (24.5 m, inside
+`LaunchSolver`'s 0.5-80 m, target radius 3.5 over its 2.5 m minimum).
+**No velocity, direction or arc anywhere** — the review overlay draws the
+two pads and deliberately nothing between them.
+
+**The sightline is asserted, not hoped for.** `_assert_sightline` walks
+400 samples from the entry eye to the top of the exit portal, 64.7 m
+away, against every collider. That is why the landmark is a frame — four
+columns and three collar rings around a 12 m open shaft — rather than a
+solid core: the one thing the player must see from the door sits exactly
+where a solid core would be.
+
+**Nothing falls forever.** The basin is one continuous floor at y=0 under
+the entire hall, shaft included. A missed rail or launch costs height and
+a walk back, never the level. No enemies placed, no encounter authored,
+no checkpoint or respawn behaviour, no rail mesh in the shell.
+
+**The eight P2 shells were not touched.** `diff_shell_glb.py` reports all
+nineteen shell GLBs byte-identical.
+
+**Two new verification stages** came out of this and stay:
+`verify_content_pack.sh` stage 4 runs Production's own `ShellValidator`
+against the shipped scenes (see req 40), and `_assert_walk_ground` proves
+Art's `walk` declarations at build time. A third was written, fired on
+seven of the eight certified P2 shells, was found to be measuring the
+chord between edge-declared endpoints rather than the path, and was
+deleted rather than tuned. See L-88.
 
 ---
 

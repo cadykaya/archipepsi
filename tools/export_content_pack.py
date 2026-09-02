@@ -83,6 +83,10 @@ _SHELL_FALLBACK = {
     "tower": "shell_tower_proc",
     "treasure_room": "shell_treasure_room_proc",
     "corridor": "shell_corridor_proc",
+    # `content_instantiator.gd` maps "arena" -> "shell_arena_proc" and
+    # `legacy_procedural.json` defines it. Checked, not assumed: a
+    # fallback naming an id no pack defines is a hard registry failure.
+    "arena": "shell_arena_proc",
 }
 
 #: THE SEMANTIC SIZE, AND WHERE IT COMES FROM.
@@ -101,13 +105,27 @@ _SHELL_FALLBACK = {
 #: nothing rather than a guess. The guess is no longer needed: the owner
 #: has decided, so the decision is recorded here and its provenance
 #: travels with it in `provenance.json`.
+#: chamber type -> (SizeClass, where that decision came from). The
+#: provenance travels WITH the decision because the two arrivals are
+#: different decisions by different people at different times, and a
+#: single shared source string would have made the second one look like
+#: it was covered by the first.
 _SIZE_CLASS = {
-    "tower": "medium",
-    "treasure_room": "small",
-    "corridor": "small",
+    "tower": ("medium", "owner design assignment applied at Production "
+                        "eda4fd9; NOT derived from geometry"),
+    "treasure_room": ("small", "owner design assignment applied at "
+                               "Production eda4fd9; NOT derived from "
+                               "geometry"),
+    "corridor": ("small", "owner design assignment applied at Production "
+                          "eda4fd9; NOT derived from geometry"),
+    # P3. "large" is the BRIEF, not a reading of the metres: the owner
+    # asked for one big open area to prove Archipepsi can have one, and
+    # this shell is that room. It is still not arithmetic -- a room does
+    # not become large by being 40 m wide, it becomes large by being the
+    # room the game opens up in.
+    "arena": ("large", "owner P3 direction: one LARGE authored room; NOT "
+                       "derived from geometry"),
 }
-_SIZE_CLASS_SOURCE = ("owner design assignment applied at Production "
-                      "eda4fd9; NOT derived from geometry")
 
 #: theme -> (source manifest dir, asset id). The CEILING fixture in each
 #: theme, because `ChamberBuilders._light` hangs the housing under a lamp
@@ -162,13 +180,39 @@ SHELLS = {
                               ("corner", "turn_left")),
     "shell_corner_right":    ("batch019/shells", "corridor",
                               ("corner", "turn_right")),
+    # P3, and the first shell here that is not one of the eight. ARENA
+    # is the chamber type because that is what a selector can ask for --
+    # `zone.py` has corridor/arena/tower/treasure_room and the hall is
+    # the open one -- and "transit" and "vertical" describe the room
+    # beside it without claiming to be types.
+    "shell_hall_transit":    ("batch039/shells", "arena",
+                              ("transit", "vertical")),
 }
 
-#: PASSED at the P2 owner form review. Production certified the eight
-#: physically at `6640d86`; the owner reviewed the rendered form and
-#: approved all eight as part of the authored room library. Flipping this
-#: back is an owner decision, exactly as flipping it forward was.
-SHELL_REVIEW = "pass"
+#: REVIEW STATE, PER SHELL. This was one shared constant while every
+#: shell shared one verdict, and P3 ended that: the eight P2 shells were
+#: PASSED at the owner form review (Production certified them physically
+#: at `6640d86`; the owner reviewed the rendered form and approved all
+#: eight), and the hall has not been reviewed by anybody.
+#:
+#: Per entry, so that a new shell CANNOT inherit somebody else's
+#: approval by being added to a table. Flipping one back is an owner
+#: decision, exactly as flipping it forward was; Art never writes "pass"
+#: here on its own account.
+SHELL_REVIEW = {
+    "shell_tower_collapsed": "pass",
+    "shell_tower_spiral":    "pass",
+    "shell_tower_gantry":    "pass",
+    "shell_treasure_vault":  "pass",
+    "shell_treasure_cache":  "pass",
+    "shell_treasure_coffer": "pass",
+    "shell_corner_left":     "pass",
+    "shell_corner_right":    "pass",
+    # P3, authored to the movement contract at `af620d8` and awaiting the
+    # owner's form review. PENDING is the honest state and the brief says
+    # so outright: "Do not promote it yourself."
+    "shell_hall_transit":    "pending",
+}
 
 #: silhouette -> asset id. `ProjectileSilhouette.content_id()` is
 #: "projectile_%s", and the family is closed at these three.
@@ -194,12 +238,15 @@ PROJECTILES = {
 #:
 #: Resynced from `ContentEntry.model_fields` at `eda4fd9`, which added
 #: `exit_yaw` and `fits_floors` -- the two P2-C fields Production had to
-#: apply by hand because this exporter did not emit them.
+#: apply by hand because this exporter did not emit them. Resynced again
+#: at `af620d8`, which added `offers`: what a LARGE room offers a
+#: movement package. That is the only field that arrived, and it is the
+#: only one added here.
 ENTRY_FIELDS = frozenset({
     "affordance_tag", "category", "clearances", "cost", "display_name",
     "exit_yaw", "fallback", "fits_floors", "id", "level",
-    "procedural_fallback", "requires_capabilities", "review", "scene",
-    "semantic_tags", "size", "size_class", "sockets", "surfaces",
+    "offers", "procedural_fallback", "requires_capabilities", "review",
+    "scene", "semantic_tags", "size", "size_class", "sockets", "surfaces",
     "theme_tags", "traversal", "variants", "volumes",
 })
 
@@ -326,7 +373,7 @@ def main():
             "category": "room_shell",
             "display_name": cid.replace("shell_", "").replace("_", " "),
             "scene": "res://content/shells/%s.tscn" % cid,
-            "review": SHELL_REVIEW,
+            "review": SHELL_REVIEW[cid],
             "fallback": _SHELL_FALLBACK[family],
             # The CHAMBER TYPE first -- that is what a selector asks
             # for -- then the shape tags that describe the room without
@@ -352,7 +399,8 @@ def main():
         #
         # `size_class` is the owner's assignment (see `_SIZE_CLASS`), not
         # a reading of `size`.
-        entry["size_class"] = _SIZE_CLASS[family]
+        size_class, size_class_source = _SIZE_CLASS[family]
+        entry["size_class"] = size_class
 
         # `exit_yaw` is the builder's own `turn * 90`, carried through
         # verbatim. Production proved the sign end to end at `eda4fd9` --
@@ -371,24 +419,44 @@ def main():
         if m.get("floors") is not None:
             entry["fits_floors"] = [int(m["floors"])]
 
+        # `offers` is what this room lets a movement package BUILD, and
+        # it is a claim about space, not a mechanic. Art declares where a
+        # rail could run and which two regions a launch connects;
+        # `RailPath` decides whether the route is a shape a rider can
+        # hold and `LaunchSolver` derives the trajectory. No velocity,
+        # direction or arc is authored here -- there is nowhere in the
+        # schema to put one, on purpose.
+        if m.get("offers"):
+            entry["offers"] = m["offers"]
+
         # `cost` still keeps the schema default: it is a balance number
         # and nobody has decided it.
         entries.append(entry)
         prov.append({"content_id": cid, "source_asset": "%s/%s" % (rel, cid),
+                     # The BATCH the art was built under. Not the shell
+                     # review: `runtime_substitution` is that, per entry.
                      "source_batch_review": "PASS",
-                     "runtime_substitution": SHELL_REVIEW,
+                     "runtime_substitution": SHELL_REVIEW[cid],
                      "p1_contract": {
                          "surfaces": len(m["surfaces"]),
                          "traversal": len(m.get("traversal", [])),
                          "volumes": len(m["volumes"]),
                          "sockets": len(m["sockets"]),
                          "exit_yaw": m.get("exit_yaw"),
-                         "size_class": _SIZE_CLASS[family],
-                         "size_class_source": _SIZE_CLASS_SOURCE,
+                         "size_class": size_class,
+                         "size_class_source": size_class_source,
                          "fits_floors": entry.get("fits_floors", []),
                          "chamber_type": family,
                          "shape_tags": list(shape_tags),
                          "collision": m.get("colliders"),
+                         # P3.0. What each offer reserves, so a reviewer
+                         # can see the movement claims without opening
+                         # the manifest.
+                         "offers": [
+                             {"name": o["name"], "kind": o["kind"],
+                              "points": len(o.get("points", [])),
+                              "target": o.get("target")}
+                             for o in m.get("offers", [])],
                          # Where the source-side probe mirror disagrees
                          # with what the shell declares. Provenance, not
                          # a schema field: `ContentEntry` forbids extras

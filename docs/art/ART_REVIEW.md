@@ -3886,3 +3886,42 @@ terminals, Archive UI, Forge UI, Zone-selection UI, or any other large
 physical interface.
 
 **No Batch 038. No heartbeat. No polling. No autonomous expansion.**
+
+---
+
+## P2 — the eight authored shells. PASS (owner, 2026-09-02)
+
+Recorded in full in `ART_FRONTIER.md`. `shell_tower_collapsed`,
+`shell_tower_spiral`, `shell_tower_gantry`, `shell_treasure_vault`,
+`shell_treasure_cache`, `shell_treasure_coffer`, `shell_corner_left`,
+`shell_corner_right` — all eight PASS on spatial FORM, after Production
+certified them physically at `6640d86` with zero room-contract findings.
+Package: `docs/art/review/p2_owner/`.
+
+The PASS is of form, not of dressing. The non-blocking notes stand:
+collapsed and spiral deck wells may take lip / frame / railing / support
+language later; the gantry's `landing_4` / deck coplanar z-fight is
+cleanup; the vault's "protected" identity wants props, barriers, sound and
+lighting rather than shell redesign.
+
+## P3 — `shell_hall_transit`, the first LARGE room. PENDING
+
+**Not reviewed by anybody. Art does not write `pass`.**
+
+`docs/art/review/p3_owner/` — eight views and six overlays, with a README
+that answers the P3 brief item by item. 40 × 38 × 60 m, ~91,000 m³, 552
+triangles, 41 convex colliders, three movement offers against Production's
+`af620d8` contract.
+
+What the owner is being asked, precisely: **is this the big open area the
+P3 direction asked for** — one volume holding several local gameplay
+spaces around a dominant landmark, with a visible distant destination, and
+compatible with rail, launch and future vertical movement without being
+any of their dedicated rooms.
+
+One item in the package is a question rather than a claim: `O5_overhead`
+marks the structure a grapple anchor would hang from. `grapple_anchor` is
+not in `OFFER_KINDS`, so no offer was invented for it.
+
+**Nothing follows this shell.** No second LARGE room, no family, no Batch
+038. **No heartbeat. No polling. No autonomous expansion.**

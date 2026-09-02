@@ -1419,3 +1419,96 @@ were behind the ceiling and the room was blown out, and not one number said
 so.
 
 > Technical validity is not the same as the thing being right.
+
+### L-87 · A contract with two halves can disagree, and only new work finds it
+
+The first LARGE room needed a 28 m climb. Declared as ramps it is four
+`walk` links; declared as 1.00 m steps it is 28 surfaces and 28 traversal
+segments against a schema that caps both at 32. So: ramps, `walk`, which
+is what `walk` is for — `rise` and `gap` carry the base-kit reach bounds
+and `walk` carries the claim that there is continuous ground.
+
+Both halves of Production's contract were read before writing a line, and
+the Python half agrees:
+`TraversalSegment._a_mandatory_jump_stays_inside_the_base_kit` tests
+`self.kind` and bounds only `rise` and `gap`.
+
+`ShellValidator._check_segment` does not read `kind` at all. It applies
+`MAX_VERTICAL_STEP` and `max_safe_gap` to every mandatory segment, and it
+refused the hall on four of them — including `ring_n_to_ring_e`, a
+**3.20 m flat walk along a continuous collar**, because 3.20 exceeds
+`max_safe_gap(0)` = 2.60. There is floor under every centimetre of it.
+
+P2 could not have found this. Every mandatory segment in the eight shells
+was a 1.00 m `rise`, comfortably inside both readings, so the two halves
+had never been asked the same question.
+
+> **Reading both halves of a dual-language contract is not the same as
+> running both halves.** L-80 said verify every side; this is the sharper
+> version — a rule you have read is a rule you have understood, and a rule
+> you have run is a rule you have measured. The disagreement was in plain
+> sight in two files and survived being read.
+
+What found it was adding a stage that runs Production's own
+`ShellValidator` against the shipped scenes, art-side. Stages 1–3 all
+passed: the Python schema accepts the manifest, the registry loads the
+scene, the collision probe finds a placement on all fourteen surfaces.
+The shell would have been refused the moment Production instantiated it.
+
+The shell was **not** changed to get past it. There is no honest
+declaration that satisfies the kind-blind rule — mark the ramps optional
+and the room claims no mandatory route to its own exit; sub-divide them
+and it needs 56 segments against a cap of 32 — so the route is declared
+as what it is, the stage prints every refusal marked `[walk/drop]` on
+every run, and which half is authoritative is Production's call.
+
+### L-88 · The test that fires on correct geometry is worse than no test
+
+Having claimed `walk` means continuous ground, the claim wanted checking.
+The first version dropped rays along the straight line between a
+segment's endpoints, in Godot, against the real convex shapes. It
+reported a break in **seven of the eight P2 shells** — shells Production
+had already certified with zero findings.
+
+Every one was a seam. A traversal endpoint is declared at a surface's
+EDGE, surface rectangles are inset from the slabs that carry them, and
+two abutting decks therefore leave a hair of declared-but-uncovered
+ground between them. `step_0_2_to_landing_0` is 0.10 m long and the check
+sampled its midpoint, 0.05 m into a gap no player could fall through.
+
+The chord between two edge-declared endpoints **is not the path**. That
+is not a subtlety about the shells; it is what the declaration means, and
+the check had assumed something the contract never said.
+
+> **When a new check fires on work that is already known good, the check
+> is the suspect.** Nine of nine was not a discovery, it was a bug with a
+> loud voice. The temptation is to add a tolerance until the number goes
+> down, and the tolerance that silences a seam also silences a real hole.
+
+It was deleted rather than tuned, and replaced with a version that
+measures something the declaration actually claims: in the build, in
+plan, against collider boxes with touching counting as covered, requiring
+a collider under the whole chord whose top lies between the two end
+heights — so a ramp qualifies and a 38 m wall does not. Then it was
+proved to bite by declaring a link across the open shaft and watching the
+build refuse it.
+
+### L-89 · Do not edit a shell script while bash is reading it
+
+`check_art_current.sh` was running — a twenty-minute pass that rebuilds
+every batch — when the hall's two new builders were added to its script
+list. It died 130 lines later on `syntax error near unexpected token '('`,
+at a line that is syntactically fine and had not been touched.
+
+Bash reads a script **incrementally**, keeping a byte offset into the open
+file. Inserting 28 characters on line 123 moved every later byte, and the
+interpreter resumed at an offset that now landed mid-token. The error
+points at where the parser was, not at anything wrong.
+
+> **A long-running shell script is holding your file open. Editing it
+> mid-run does not queue the change for next time; it corrupts this run,
+> and the failure names an innocent line.**
+
+The dangerous version is the one that does not crash — an offset that
+lands on a valid token gives a run that skips or repeats work and reports
+success. Wait for the run, or edit a copy.
