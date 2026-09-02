@@ -241,6 +241,85 @@ EXIT_YAWS = (-90.0, 0.0, 90.0)
 SizeClass = Literal["small", "medium", "large"]
 
 
+#: What a LARGE authored room may OFFER a movement package (P3.0).
+#:
+#: Closed, and short, for the reason the socket vocabulary is: a kind
+#: with no consumer is a kind nobody can be held to. `grapple_anchor`,
+#: `platform_route` and `wind_column` are the named next arrivals and are
+#: deliberately absent -- they arrive through this same field with the
+#: packages that read them, needing no new grammar.
+OFFER_KINDS = ("rail_route", "launch_source", "launch_target")
+
+
+class Offer(Strict):
+    """A bounded region or route a movement package MAY build in (P3.0).
+
+    AN OFFER IS NOT AN ORDER, and that is the whole point of the field.
+    A shell declaring a `rail_route` has not built a rail; it has said a
+    rail could run here. A package consumes the kinds it understands,
+    validates whatever it builds, and may decline every one -- the same
+    shell has to play as ordinary combat space with no traversal
+    mechanic in it at all.
+
+    WHY NOT A SOCKET. A socket answers "where may a thing be PUT" and
+    carries a point and a rect. A rail is an ordered PATH, and no socket
+    has ever been able to hold one. Overloading them would have made
+    every socket consumer read a field that means nothing to it.
+
+    Like every other authored claim, this is a CLAIM: `RailPath` decides
+    whether a declared route is a shape a rider can hold, and `RoomAudit`
+    decides whether the geometry is really there.
+    """
+    name: _TAG
+    kind: Literal["rail_route", "launch_source", "launch_target"]
+    #: A route's ordered control points, in the shell's local space.
+    #: Empty for region offers.
+    points: tuple[tuple[float, float, float], ...] = Field(
+        default=(), max_length=64)
+    #: A region's centre, and how far the consumer may work from it.
+    position: tuple[float, float, float] | None = None
+    radius: float = 0.0
+    #: A `launch_source` names the `launch_target` it is aimed at. The
+    #: trajectory itself is SOLVED from the two, never authored: a
+    #: literal velocity would be a second authoring of the destination
+    #: that stops agreeing the first time either end moves.
+    target: str | None = None
+
+    @model_validator(mode="after")
+    def _a_route_is_an_ordered_path(self) -> "Offer":
+        if self.kind == "rail_route":
+            if len(self.points) < 2:
+                raise ValueError(
+                    f"offer '{self.name}' is a route and declares "
+                    f"{len(self.points)} point(s); a route needs at "
+                    f"least two")
+        elif self.points:
+            raise ValueError(
+                f"offer '{self.name}' is a region and carries points; "
+                f"a region is a position and a radius")
+        return self
+
+    @model_validator(mode="after")
+    def _a_region_reserves_something(self) -> "Offer":
+        if self.kind in ("launch_source", "launch_target"):
+            if self.position is None:
+                raise ValueError(
+                    f"offer '{self.name}' is a region and has no "
+                    f"position")
+            if self.radius <= 0.0:
+                raise ValueError(
+                    f"offer '{self.name}' reserves no region")
+        return self
+
+    @model_validator(mode="after")
+    def _a_launch_is_aimed_somewhere(self) -> "Offer":
+        if self.kind == "launch_source" and not self.target:
+            raise ValueError(
+                f"offer '{self.name}' fires at nothing; a launch pad's "
+                f"destination is half its contract")
+        return self
+
+
 class TraversalSegment(Strict):
     """One movement the player makes inside an authored shell (D1).
 
@@ -389,6 +468,10 @@ class ContentEntry(Strict):
     #: D1: every movement the shell claims the player makes. Mandatory
     #: ones are bounded by the base kit; Godot measures the claim.
     traversal: tuple[TraversalSegment, ...] = Field(default=(), max_length=32)
+    #: What this shell offers a movement package (P3.0). Optional, and
+    #: empty for every shell that ships today: the eight P2 rooms are
+    #: small enclosed spaces with nothing to offer a rail.
+    offers: tuple[Offer, ...] = Field(default=(), max_length=32)
 
     #: Action primitives or affordance tags a player must own for this
     #: content to be USABLE. Never a reason to place it on a mandatory

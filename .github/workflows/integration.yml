@@ -125,6 +125,7 @@ jobs:
           make godot-activity
           make godot-room
           make godot-room-contract
+          make godot-movement
           make godot-zone-audit
           make godot-legible
 

@@ -572,6 +572,52 @@ of them in a `platform_path` room and none in an arena.
 a room can hold is a fact about its built geometry, and Python pricing it
 would be the same builder-knows-what-the-composer-does-not failure.
 
+## P3.0 — LARGE-ROOM MOVEMENT FOUNDATION — landed 2026-09-02
+
+Contract only. **No LARGE room was authored**, and none of the eight P2
+shells was touched. Full record: `docs/LARGE_ROOM_MOVEMENT.md`.
+
+**What the rail was**: two points on one axis and an `Area3D` that
+lowered friction while the player fell through it under normal gravity.
+Not path following, no entry, no jump-off, corridors only. Calling it a
+spline grinder would have been a lie, so the audit says so plainly.
+
+**`RailPath`** owns a `Curve3D` with an explicit 0.2 m bake interval and
+is the single authority for beam, ride volume, runtime and validation.
+Curves, climbs, descents and helices are legal; past 75 degrees is
+refused, and so is a degenerate path -- at build time, not under a rider.
+
+**`RailRider`** is pure state, so the whole ride is driven frame-exact
+headlessly. Entry needs proximity AND motion along the path; direction
+comes from the sign of that motion; exit is the endpoint or jump, never a
+dead stop. **The rail DRIVES** -- a target pace shifted by slope, with
+arrival momentum riding on top and bleeding away. That is progression,
+not taste: a map-provided route may be mandatory, so the base kit must
+finish it, and the first ballistic draft stalled a walking player a third
+of the way up a 6 m climb.
+
+**`LaunchSolver`** derives the trajectory from source, destination and
+gravity -- no authored velocity anywhere, so moving either end moves the
+arc. A chosen apex rather than minimum time makes it readable AND unique,
+which is what makes it deterministic. Refuses an obstructed arc, an
+unsupported landing, a landing with no room, and a landing smaller than
+a player can aim at. `bounce_pad` stays: different offer.
+
+**The offer seam**: `offers` on the room output and in the manifest,
+closed to `rail_route`, `launch_source`, `launch_target` -- the three
+with consumers. `grapple_anchor`, `platform_route` and `wind_column`
+arrive through the same key with the packages that read them.
+`MovementPackage` is the minimum harness proving an offer can be
+consumed, validated, and DECLINED, with the room still a room.
+
+Ten engineering fixtures, all ugly boxes and bare paths. Four sabotages
+run; three caught. The fourth found that the "too few points" branch is
+redundant with the length rule -- recorded as defence in depth rather
+than dressed up, and the missing coverage added anyway.
+
+Digest `6e8d83d0f3ec088b` unchanged, catalog empty, all eight P2 shells
+still `review: "pending"`.
+
 ## P2 TECHNICALLY COMPLETE — the eight shells satisfy the room
 ## contract — landed 2026-09-02
 

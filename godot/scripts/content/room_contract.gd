@@ -95,6 +95,43 @@ const TRAVERSAL_KINDS := ["gap", "rise", "drop", "walk"]
 ## angle is the topology slice's problem, not a corner shell's.
 const EXIT_YAWS := [-90.0, 0.0, 90.0]
 
+## WHAT A LARGE ROOM OFFERS A MOVEMENT PACKAGE (P3.0).
+##
+## `sockets` answers "where may a thing be PUT" -- a point or a rect, for
+## a composer placing one object. A large open volume has a different
+## thing to say: here is a ROUTE, or a region a traversal mechanic may be
+## built from. A rail is an ordered path, and no socket has ever carried
+## one.
+##
+## AN OFFER IS NOT AN ORDER, and that is the whole seam. A shell that
+## declares a rail route has not built a rail; it has said a rail could
+## go here. A package may consume the offers it understands, must
+## validate whatever it builds, and may decline every one of them -- the
+## same room has to work as ordinary combat space with no traversal
+## mechanic in it at all. Nothing about the mechanic is baked into the
+## shell.
+##
+## CLOSED, AND SHORT, for the reason `SOCKET_KINDS` is: a kind with no
+## consumer is a kind nobody can be held to. Three kinds ship here
+## because three consumers ship here.
+##
+##   rail_route     an ordered 3D path a rail may be built along
+##   launch_source  a place a directed launch may fire FROM
+##   launch_target  a landing region a launch may be aimed AT
+##
+## `grapple_anchor`, `platform_route` and `wind_column` are the named
+## next arrivals and are deliberately ABSENT: they arrive with the
+## packages that read them, through this same key, needing no new
+## grammar. That is what makes this a seam rather than a taxonomy.
+const OFFER_KINDS := ["rail_route", "launch_source", "launch_target"]
+
+## Offers that are a ROUTE: an ordered `points` array, two or more.
+const ROUTE_OFFERS := ["rail_route"]
+
+## Offers that are a REGION: a `position` and a `radius` the consumer
+## must fit inside.
+const REGION_OFFERS := ["launch_source", "launch_target"]
+
 ## THE ROOM ENVELOPE: how far outside its declared bounds a room's own
 ## geometry may physically reach.
 ##
@@ -187,6 +224,7 @@ static func violations(result: Variant, who := "room") -> Array[String]:
 
 	out.append_array(_socket_violations(room, bounds, who))
 	out.append_array(_traversal_violations(room, who))
+	out.append_array(_offer_violations(room, who))
 	return out
 
 static func _socket_violations(room: Dictionary, bounds: AABB,
@@ -237,6 +275,49 @@ static func _socket_violations(room: Dictionary, bounds: AABB,
 				out.append("%s: an 'access' socket has no length" % who)
 	return out
 
+## An offer that is malformed is an offer no package can act on.
+##
+## STRUCTURE ONLY, like everything else here. That a declared rail route
+## is a shape a rider can hold is `RailPath.violations`, and that its
+## geometry is really there is `RoomAudit` -- three checks, because a
+## route can be well formed, legal AND hanging in a wall.
+static func _offer_violations(room: Dictionary,
+		who: String) -> Array[String]:
+	var out: Array[String] = []
+	var declared: Variant = room.get("offers", [])
+	if typeof(declared) != TYPE_ARRAY:
+		out.append("%s: 'offers' is present and is not an Array" % who)
+		return out
+	for entry: Variant in declared as Array:
+		if typeof(entry) != TYPE_DICTIONARY:
+			out.append("%s: an offer is not a dictionary" % who)
+			continue
+		var offer: Dictionary = entry
+		var kind := str(offer.get("kind", ""))
+		if not OFFER_KINDS.has(kind):
+			out.append("%s: offer kind '%s' is not in the contract (%s)"
+					% [who, kind, ", ".join(OFFER_KINDS)])
+			continue
+		if ROUTE_OFFERS.has(kind):
+			var points: Variant = offer.get("points")
+			if typeof(points) != TYPE_PACKED_VECTOR3_ARRAY \
+					and typeof(points) != TYPE_ARRAY:
+				out.append("%s: a '%s' offer carries no points; a route "
+						% [who, kind] + "is an ordered path")
+				continue
+			if (points as Array).size() < 2:
+				out.append("%s: a '%s' offer has %d point(s); a route "
+						% [who, kind, (points as Array).size()]
+						+ "needs at least two")
+		if REGION_OFFERS.has(kind):
+			if not _finite(offer.get("position")):
+				out.append("%s: a '%s' offer has no finite position"
+						% [who, kind])
+			if float(offer.get("radius", 0.0)) <= 0.0:
+				out.append("%s: a '%s' offer reserves no region"
+						% [who, kind])
+	return out
+
 static func _traversal_violations(room: Dictionary,
 		who: String) -> Array[String]:
 	var out: Array[String] = []
@@ -262,6 +343,18 @@ static func _finite(raw: Variant) -> bool:
 		return false
 	var v: Vector3 = raw
 	return is_finite(v.x) and is_finite(v.y) and is_finite(v.z)
+
+## The offers of one kind, for the package that consumes that kind.
+##
+## A package asks for what it understands and ignores the rest, which is
+## how one shell serves rails, launches and neither.
+static func offers_of(result: Dictionary, kind: String) -> Array:
+	var out: Array = []
+	for offer: Variant in result.get("offers", []) as Array:
+		if typeof(offer) == TYPE_DICTIONARY \
+				and str((offer as Dictionary).get("kind", "")) == kind:
+			out.append(offer)
+	return out
 
 ## The sockets of one kind, for a consumer that wants only its own.
 static func sockets_of(result: Dictionary, kind: String) -> Array:

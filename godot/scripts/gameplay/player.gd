@@ -159,6 +159,46 @@ var _volumes: Dictionary = {}
 ## Called by an affordance volume's own Area3D on overlap. Keyed by the
 ## node so overlapping volumes cannot leave a stale influence behind when
 ## one of them is freed mid-overlap.
+## Riding a rail, or null. The whole ride lives in `RailRider`, which
+## owns no node and reads no input, so it can be driven frame-exact in a
+## headless test instead of only by a human on a controller.
+var _rider: RailRider = null
+
+## A rail lane offering itself as the player passes through it.
+##
+## AN OFFER, NOT AN ORDER: `RailRider.catch` decides, and it refuses a
+## player who is too far off the path, below it, already past its end, or
+## not moving along it. Walking sideways into a rail does nothing, which
+## is what stops the room shoving people down it.
+func offer_rail(rail: RailPath) -> void:
+	if _rider != null or _dead:
+		return
+	var caught := RailRider.catch(rail, global_position, velocity)
+	if caught.is_empty():
+		return
+	_rider = caught["rider"]
+	global_position = _rider.body_position()
+
+func riding_rail() -> bool:
+	return _rider != null
+
+## One step of a grind. Position comes from the path, velocity is what
+## the player leaves with, and `move_and_slide` is deliberately NOT
+## called: while riding, the rail is the collision.
+func _ride(delta: float) -> void:
+	var jump := not input_frozen \
+			and Input.is_action_just_pressed("jump")
+	var step: Dictionary = _rider.advance(delta, jump)
+	global_position = step["position"]
+	velocity = step["velocity"]
+	if not bool(step["riding"]):
+		_rider = null
+		# Off a rail is airborne, and a coyote frame here would give a
+		# free second jump to anyone who let go near the ground.
+		_coyote = 0.0
+		_jump_buffer = 0.0
+	_update_camera_feel(delta)
+
 func enter_volume(volume: Node, influence: Dictionary) -> void:
 	_volumes[volume] = influence
 
@@ -361,6 +401,15 @@ func _physics_process(delta: float) -> void:
 	if _dead:
 		return
 	_refresh_derived_stats(delta)
+
+	# ON A RAIL, the rail moves you (P3.0). Not a cutscene: the speed is
+	# the speed you brought, gravity still acts along the path so a climb
+	# costs and a drop pays, and jump gets you off whenever you like. It
+	# returns EARLY because a grind that also ran the walk solve would be
+	# two things steering one body.
+	if _rider != null:
+		_ride(delta)
+		return
 
 	var env := environment_influence()
 	var gravity := Constants.GRAVITY * gravity_mult * hover_gravity_scale \

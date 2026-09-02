@@ -353,14 +353,25 @@ const RAIL_BEAM_THICKNESS := 0.35
 ## points and needs no new code — only the wider footprint, which is
 ## recorded as future expansion rather than a blocker.
 static func rail_ride_path(origin: Vector3) -> PackedVector3Array:
+	return rail_path(origin).segments()
+
+## THE rail, as the one path object everything reads (P3.0).
+##
+## `rail_ride_path` above is kept and now DERIVES from this, so the
+## corridor rail's shape is stated once and every existing caller gets
+## the same two points it always got. What changed is that those points
+## are no longer the only shape expressible: `RailPath` holds a
+## `Curve3D`, and an authored `rail_route` offer arrives as more control
+## points through `RailPath.from_points` with no new code here.
+static func rail_path(origin: Vector3) -> RailPath:
 	# Bounded by the footprint's own half_depth, so the beam cannot reach
 	# past a doorway that `resolve_position` kept its origin clear of.
 	var length := 2.0 * float(FOOTPRINT["rail"]["half_depth"]) - 1.0
 	var half := length / 2.0
-	return PackedVector3Array([
+	return RailPath.from_points(PackedVector3Array([
 		origin + Vector3(0, RAIL_BEAM_Y, -half),
 		origin + Vector3(0, RAIL_BEAM_Y, half),
-	])
+	]))
 
 ## A grind rail: a beam with a low-friction lane over it, so a dash along
 ## it carries much further than a dash on the floor. Both are swept along
@@ -400,8 +411,28 @@ static func _rail(root: Node3D, theme: String, origin: Vector3,
 ## per segment.
 static func build_rail_along(root: Node3D,
 		path: PackedVector3Array) -> Dictionary:
+	return build_rail(root, RailPath.from_points(path))
+
+## Sweep a rail's mesh and its ride volumes along THE path object (P3.0).
+##
+## `build_rail_along` above is kept for the callers that hold a polyline
+## and now delegates here, so there is still exactly one sweep. What this
+## adds is that every lane it builds CARRIES the path: the player catches
+## the authoritative curve rather than the box that approximates it, and
+## a rail that curves is ridden along the curve rather than along the
+## chord of whichever box they happened to touch.
+##
+## A DEGENERATE PATH IS REFUSED HERE. Building a rail nobody can ride and
+## discovering it when a player touches it is the shape of defect this
+## project keeps paying for, so the shape is checked where it is built.
+static func build_rail(root: Node3D, rail: RailPath) -> Dictionary:
 	var beams: Array = []
 	var lanes: Array = []
+	var refusals := rail.violations("rail")
+	if not refusals.is_empty():
+		push_warning("rail refused: %s" % "; ".join(refusals))
+		return {"beams": beams, "lanes": lanes, "refused": refusals}
+	var path := rail.segments()
 	for i in path.size() - 1:
 		var a: Vector3 = path[i]
 		var b: Vector3 = path[i + 1]
@@ -428,6 +459,8 @@ static func build_rail_along(root: Node3D,
 		lane.extents = Vector3(1.1, 1.4, run)
 		lane.tint = Constants.AFFORDANCE_SIGNAL
 		lane.visible_shell = false
+		# THE path, not a copy of its numbers.
+		lane.rail = rail
 		lane.position = midpoint + Vector3(0, RAIL_RIDE_Y - RAIL_BEAM_Y, 0)
 		root.add_child(lane)
 		_aim_along(lane, a, b)

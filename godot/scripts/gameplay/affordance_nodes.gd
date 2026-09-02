@@ -16,6 +16,10 @@ extends RefCounted
 ## it (`Player.environment_influence`).
 class Volume extends Area3D:
 	var influence: Dictionary = {}
+	## A rail lane carries the authoritative path it was swept along, so
+	## the player catches THE path rather than a box that approximates
+	## it. Null on water, wind and every other volume (P3.0).
+	var rail: RailPath = null
 	var extents := Vector3(3.0, 2.0, 3.0)
 	var tint := Constants.AFFORDANCE_SIGNAL
 	## Water and wind should be visible; a rail's lane is implied by the
@@ -55,6 +59,8 @@ class Volume extends Area3D:
 		if body is Player:
 			_inside.append(body)
 			(body as Player).enter_volume(self, influence)
+			if rail != null:
+				(body as Player).offer_rail(rail)
 
 	func _on_exited(body: Node3D) -> void:
 		if body is Player:
@@ -156,6 +162,85 @@ class BreakablePanel extends StaticBody3D:
 ## Launches whoever stands on it. Base-kit usable by design (§13.1): no
 ## owned capability is required, so it is the one affordance that can
 ## appear in a campaign that has interpreted nothing yet.
+## A DIRECTED launch: source and destination are both the contract.
+##
+## Beside `BouncePad`, not instead of it, because they are different
+## offers. A bounce pad is a local vertical opportunity -- up you go,
+## where you land is your problem. A launch pad is a traversal EDGE: it
+## exists to cross a specific distance to a specific place, and if it
+## cannot, it should not have been built.
+##
+## NO HAND-AUTHORED VELOCITY. `target` is set; the velocity is solved by
+## `LaunchSolver` from the two endpoints and gravity. Move the pad and
+## the arc follows, which is the entire point -- a literal vector would
+## be a second authoring of the destination that stops agreeing the first
+## time anything moves.
+##
+## BASE KIT, like the bounce pad: the map provides this movement, so it
+## fires whoever stands on it and asks for no Echo.
+class LaunchPad extends Area3D:
+	## Where this pad throws the player, in the same space as its own
+	## position.
+	var target := Vector3.ZERO
+	var tint := Constants.AFFORDANCE_SIGNAL
+	var launched := 0
+
+	func _ready() -> void:
+		monitoring = true
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = Vector3(2.4, 0.5, 2.4)
+		shape.shape = box
+		shape.position = Vector3(0, 0.25, 0)
+		add_child(shape)
+		var mesh_node := MeshInstance3D.new()
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(2.4, 0.25, 2.4)
+		mesh_node.mesh = mesh
+		mesh_node.position = Vector3(0, 0.12, 0)
+		mesh_node.material_override = ThemeMaterials.glow_material(tint, 1.8)
+		add_child(mesh_node)
+		# WHICH WAY IT SENDS YOU, drawn from the solved arc rather than
+		# from a decorative arrow somebody aimed by hand. A directed pad
+		# the player cannot read the direction of is a trap.
+		var shot := solve()
+		if bool(shot.get("ok", false)):
+			var points := LaunchSolver.arc(global_position_or_local(),
+					shot["velocity"] as Vector3, float(shot["time"]))
+			for i in points.size():
+				if i % 6 != 0 or i == 0:
+					continue
+				var pip := MeshInstance3D.new()
+				var dot := SphereMesh.new()
+				dot.radius = 0.12
+				dot.height = 0.24
+				pip.mesh = dot
+				pip.position = points[i] - position
+				pip.material_override = ThemeMaterials.glow_material(
+						tint, 0.9)
+				add_child(pip)
+		body_entered.connect(_on_entered)
+
+	## The pad's own place, whether or not it is in the tree yet.
+	func global_position_or_local() -> Vector3:
+		return global_position if is_inside_tree() else position
+
+	func solve() -> Dictionary:
+		return LaunchSolver.solve(global_position_or_local(), target)
+
+	func _on_entered(body: Node3D) -> void:
+		if body is Player:
+			launch(body as Player)
+
+	## Public so the suite can fire it without staging an overlap.
+	func launch(player: Player) -> void:
+		var shot := solve()
+		if not bool(shot.get("ok", false)):
+			return
+		player.velocity = shot["velocity"]
+		launched += 1
+
+
 class BouncePad extends Area3D:
 	## Chosen against `JUMP_VELOCITY` (8.0) so the pad is unmistakably more
 	## than a jump without being a launch you cannot read.
