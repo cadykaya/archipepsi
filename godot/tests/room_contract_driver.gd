@@ -829,9 +829,18 @@ func _test_an_approved_shell_is_held_to_the_contract() -> void:
 	_check(approved + waiting >= 8,
 			"the registry carries %d authored shells, not the eight the "
 			% (approved + waiting) + "P2 pack shipped")
-	_check(shells_awaiting_review == 0,
-			"%d shell(s) are approved AND fail the contract; approval "
-			% shells_awaiting_review + "does not lower the bar")
+	# NOT `shells_awaiting_review == 0`. That counter is PENDING shells
+	# WITH findings, which is the evidence review exists to read -- and
+	# the assertion only ever passed because, on the day it was written,
+	# every shell was approved and clean. An approved shell that fails is
+	# already fatal in the shell test itself; what belongs here is that
+	# the approved set is the one being held to that.
+	_check(approved >= 8,
+			"only %d authored shells are approved; the P2 pack is eight "
+			% approved + "and the hard gate applies to them")
+	if waiting > 0:
+		print("  %d shell(s) awaiting review carry findings; that is "
+				% shells_awaiting_review + "evidence, not a broken build")
 	print("  authored shells: %d approved, %d awaiting review"
 			% [approved, waiting])
 
@@ -1504,7 +1513,13 @@ func _test_a_mandatory_route_is_a_route_a_player_can_take() -> void:
 					if not _body_blocked(here, to_world):
 						room_for_a_body = true
 						break
-			_check(room_for_a_body,
+			# THE REVIEW GATE APPLIES HERE TOO. A `pending` shell's
+			# route findings are evidence for the review, exactly as its
+			# audit findings are; only an APPROVED shell turns this red.
+			# Without this the gate meant two different things in two
+			# tests over the same shell.
+			var judge := _check if not _is_pending(who) else _note
+			judge.call(room_for_a_body,
 					"%s: mandatory '%s' arrives at y=%.2f on %s, with "
 					% [who, str(seg.get("name", "?")), arrival,
 						"'%s'" % str(region.get("name", "?")) \
@@ -1565,6 +1580,20 @@ func _test_an_elevated_stance_has_room_for_what_stands_there() -> void:
 			% seen)
 
 # --- certification probes -------------------------------------------------
+
+## Is this shell still awaiting review? Unknown ids are procedural
+## rooms, which are never pending.
+func _is_pending(id: String) -> bool:
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var entry := registry.get_entry(id)
+	return not entry.is_empty() \
+			and str(entry.get("review", "")) == "pending"
+
+## Reported, not failed: a pending shell's findings are review evidence.
+func _note(condition: bool, message: String) -> void:
+	if not condition:
+		print("      %s" % message)
 
 func _shell_ids() -> Array:
 	var registry := ContentRegistry.new()

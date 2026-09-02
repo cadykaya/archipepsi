@@ -130,7 +130,7 @@
      "position": [
       -15.0,
       11.0,
-      53.0
+      51.5
      ]
     },
     {
@@ -226,7 +226,7 @@
      "position": [
       16.0,
       21.0,
-      39.0
+      37.5
      ]
     },
     {
@@ -1176,7 +1176,7 @@
      "transit",
      "vertical"
     ],
-    "collision": 41,
+    "collision": 71,
     "offers": [
      {
       "name": "rail_helix",
@@ -1199,7 +1199,7 @@
     ],
     "surface_probe": []
    },
-   "triangles": 552
+   "triangles": 792
   },
   {
    "content_id": "shell_tower_collapsed",

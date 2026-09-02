@@ -30,6 +30,7 @@ func _run() -> void:
 	_test_a_smoothed_curve_may_not_leave_the_room()
 	_test_a_grapple_point_must_be_somewhere_you_could_hang()
 	_test_a_walk_is_proven_by_geometry_not_by_rectangles()
+	_test_a_room_may_descend_from_entry_to_exit()
 	_test_a_rider_enters_only_on_terms_and_leaves_when_it_asks()
 	_test_a_launch_crosses_horizontal_and_vertical_distance()
 	_test_a_launch_refuses_an_obstructed_arc()
@@ -574,6 +575,68 @@ func _test_a_walk_is_proven_by_geometry_not_by_rectangles() -> void:
 			"S6: a route whose only link is too low for a player was "
 			+ "accepted")
 	refusals += 1
+
+
+func _test_a_room_may_descend_from_entry_to_exit() -> void:
+	"""NET DESCENT IS DECLARABLE. Adjudicated, then pinned.
+
+	Two LARGE-room producers read the contract differently on this, so
+	the answer is measured against the real law rather than argued: a
+	mandatory route whose exit is below its entry is legal, and these are
+	the declarations that make it so."""
+	var far := Constants.max_safe_gap(0.0)
+
+	# `drop` is the kind that EXISTS for descent. It is bounded only by
+	# having to go down -- gravity does the rest whatever anyone
+	# declares, and how far is a damage question, not a legality one.
+	var deep := TraversalLaw.violations("drop", Vector3(0, 40, 0),
+			Vector3(0, 4, 3), Callable(), "deep")
+	_check(deep.is_empty(),
+			"a 36 m drop was refused: %s" % "; ".join(deep))
+	var upward := TraversalLaw.violations("drop", Vector3(0, 4, 0),
+			Vector3(0, 40, 3), Callable(), "upward")
+	_check(not upward.is_empty(),
+			"a `drop` that RISES was accepted, so the kind means nothing")
+	refusals += 1
+
+	# A descending WALK -- a ramp or a stair -- is bounded by ground
+	# continuity, not by the drop between its ends. Sampled on a real
+	# descending ramp, and the endpoints are 12 m apart vertically.
+	var ramp := Slabs.new()
+	for i in 30:
+		ramp.add(Vector3(0, 11.6 - float(i) * 0.4,
+				-12.0 + float(i) * 0.8), Vector3(4, 0.5, 1.0))
+	var down := [{"name": "ramp", "position": Vector3(0, 6, -0.4),
+			"extent": Vector3(4, 0, 26)}]
+	var walked := _walk(Vector3(0, 11.85, -12.0), Vector3(0, 0.25, 11.2),
+			ramp, down)
+	_check(walked.is_empty(),
+			"a continuous DESCENDING ramp was refused as a walk: %s"
+			% "; ".join(walked))
+
+	# A descending GAP gets the FLAT reach, never a bonus for falling:
+	# `max_safe_gap` is fed `maxf(rise, 0)`, so jumping down is held to
+	# the same span as jumping level.
+	var hop := TraversalLaw.violations("gap", Vector3(0, 20, 0),
+			Vector3(0, 14, far - 0.2), Callable(), "hop")
+	_check(hop.is_empty(),
+			"a downward hop inside the flat reach was refused: %s"
+			% "; ".join(hop))
+	var lunge := TraversalLaw.violations("gap", Vector3(0, 20, 0),
+			Vector3(0, 14, far + 2.0), Callable(), "lunge")
+	_check(not lunge.is_empty(),
+			"a downward gap %.1f m past the flat reach was accepted; "
+			% 2.0 + "falling is not extra range")
+	refusals += 1
+
+	# AND THE CHAIN CARRIES IT. `ZoneBuilder` adds the whole
+	# `exit_offset` vector to its cursor, Y included, so a room whose
+	# exit sits below its entry moves the next room down with it.
+	var chain := FileAccess.get_file_as_string(
+			"res://scripts/generation/zone_builder.gd")
+	_check(chain.contains("cursor += _rot(yaw, result[\"exit_offset\"])"),
+			"the chain no longer adds the exit offset as a vector, so "
+			+ "this ruling would need remeasuring")
 
 func _test_a_rider_enters_only_on_terms_and_leaves_when_it_asks() -> void:
 	"""Catching is conditional, and letting go is always available."""
