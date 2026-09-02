@@ -1,0 +1,481 @@
+{
+  "_comment": [
+    "P2 OWNER REVIEW -- the eight certified shells, as they ship at 1d22cef.",
+    "",
+    "Production certified them at 6640d86: all eight satisfy the room",
+    "contract with ZERO physical findings. This package is for the OTHER",
+    "question -- spatial quality, readability, and whether each room looks",
+    "intentionally designed. Nothing here changes a review state.",
+    "",
+    "CAMERA FRAME (L-52): every point is a manifest anchor with x and z",
+    "negated, so a camera is read off the shipped registry rather than",
+    "guessed, and yaw/pitch are COMPUTED from two such points rather than",
+    "eyeballed. LIGHTING (L-56): towers get key 0.70 and ambient 0.24",
+    "because they have no roof; the roofed rooms get the bench standard.",
+    "",
+    "The entry and climb cameras are the F3 review's own, unchanged, so a",
+    "frame here can be held against the frame the owner passed."
+  ],
+  "defaults": {
+    "size": [
+      1600,
+      900
+    ],
+    "backdrop": "none",
+    "game_lens": true
+  },
+  "shots": [
+    {
+      "name": "T_collapsed_entry",
+      "scene": "model:batch018/shells/shell_tower_collapsed.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -2.5
+      ],
+      "yaw": 180,
+      "pitch": 14,
+      "ambient": 0.24,
+      "key_energy": 0.7,
+      "caption": "COLLAPSED - ENTRY, FROM THE DOOR",
+      "note": "THE QUESTION A TOWER ASKS IS ANSWERED LOOKING UP"
+    },
+    {
+      "name": "T_collapsed_over",
+      "scene": "model:batch018/shells/shell_tower_collapsed.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        17.0,
+        -6.0
+      ],
+      "yaw": 180,
+      "pitch": -72,
+      "ambient": 0.24,
+      "key_energy": 0.7,
+      "caption": "COLLAPSED - THE WHOLE ROUTE, INTO THE SHAFT FROM ABOVE",
+      "note": "PRIMARY SPATIAL READ - THE DECK PLAN IS VISIBLE HERE"
+    },
+    {
+      "name": "T_collapsed_exit",
+      "scene": "model:batch018/shells/shell_tower_collapsed.glb",
+      "eye": [
+        -2.3,
+        6.0,
+        -10.0
+      ],
+      "yaw": 151.3,
+      "pitch": 0.0,
+      "ambient": 0.24,
+      "key_energy": 0.7,
+      "caption": "COLLAPSED - FROM THE DECK, OUT TO THE BRIDGE",
+      "note": "THE EXIT IS THROUGH THE BACK WALL AT SUMMIT HEIGHT"
+    },
+    {
+      "name": "T_collapsed_climb",
+      "eye": [
+        0,
+        6.0,
+        -3.9
+      ],
+      "yaw": 180,
+      "pitch": -10,
+      "caption": "COLLAPSED - ON THE UPPER HALF-FLOOR, OVER THE TEAR",
+      "note": "THE CLIMB HAPPENS ON THE SLAB BELOW IT",
+      "scene": "model:batch018/shells/shell_tower_collapsed.glb",
+      "ambient": 0.24,
+      "key_energy": 0.7
+    },
+    {
+      "name": "T_spiral_entry",
+      "scene": "model:batch018/shells/shell_tower_spiral.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -2.5
+      ],
+      "yaw": 180,
+      "pitch": 16,
+      "ambient": 0.24,
+      "key_energy": 0.7,
+      "caption": "SPIRAL - ENTRY, FROM THE DOOR",
+      "note": "THE QUESTION A TOWER ASKS IS ANSWERED LOOKING UP"
+    },
+    {
+      "name": "T_spiral_over",
+      "scene": "model:batch018/shells/shell_tower_spiral.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        20.0,
+        -6.0
+      ],
+      "yaw": 180,
+      "pitch": -72,
+      "ambient": 0.24,
+      "key_energy": 0.7,
+      "caption": "SPIRAL - THE WHOLE ROUTE, INTO THE SHAFT FROM ABOVE",
+      "note": "PRIMARY SPATIAL READ - THE DECK PLAN IS VISIBLE HERE"
+    },
+    {
+      "name": "T_spiral_exit",
+      "scene": "model:batch018/shells/shell_tower_spiral.glb",
+      "eye": [
+        1.7,
+        9.0,
+        -10.0
+      ],
+      "yaw": 202.0,
+      "pitch": 0.0,
+      "ambient": 0.24,
+      "key_energy": 0.7,
+      "caption": "SPIRAL - FROM THE DECK, OUT TO THE BRIDGE",
+      "note": "THE EXIT IS THROUGH THE BACK WALL AT SUMMIT HEIGHT"
+    },
+    {
+      "name": "T_spiral_climb",
+      "eye": [
+        4.3,
+        3.0,
+        -9.2
+      ],
+      "yaw": 130,
+      "pitch": 8,
+      "caption": "SPIRAL - PART WAY UP, WHERE THE HELIX TURNS",
+      "note": "EVERY SLAB IS CARRIED BY TWO BRACKETS INTO THE WALL",
+      "scene": "model:batch018/shells/shell_tower_spiral.glb",
+      "ambient": 0.24,
+      "key_energy": 0.7
+    },
+    {
+      "name": "T_gantry_entry",
+      "scene": "model:batch018/shells/shell_tower_gantry.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -2.5
+      ],
+      "yaw": 180,
+      "pitch": 22,
+      "ambient": 0.24,
+      "key_energy": 0.7,
+      "caption": "GANTRY - ENTRY, FROM THE DOOR",
+      "note": "THE QUESTION A TOWER ASKS IS ANSWERED LOOKING UP"
+    },
+    {
+      "name": "T_gantry_over",
+      "scene": "model:batch018/shells/shell_tower_gantry.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        26.0,
+        -6.0
+      ],
+      "yaw": 180,
+      "pitch": -72,
+      "ambient": 0.24,
+      "key_energy": 0.7,
+      "caption": "GANTRY - THE WHOLE ROUTE, INTO THE SHAFT FROM ABOVE",
+      "note": "PRIMARY SPATIAL READ - THE DECK PLAN IS VISIBLE HERE"
+    },
+    {
+      "name": "T_gantry_exit",
+      "scene": "model:batch018/shells/shell_tower_gantry.glb",
+      "eye": [
+        0.0,
+        15.0,
+        -10.0
+      ],
+      "yaw": 180.0,
+      "pitch": 0.0,
+      "ambient": 0.24,
+      "key_energy": 0.7,
+      "caption": "GANTRY - FROM THE DECK, OUT TO THE BRIDGE",
+      "note": "THE EXIT IS THROUGH THE BACK WALL AT SUMMIT HEIGHT"
+    },
+    {
+      "name": "T_gantry_climb",
+      "eye": [
+        0,
+        9.0,
+        -10.6
+      ],
+      "yaw": 0,
+      "pitch": -8,
+      "caption": "GANTRY - ON THE THIRD LANDING, TWO STOREYS UP",
+      "note": "A FULL LANDING EVERY 3.0 M - SOMEWHERE TO STAND AND FIGHT",
+      "scene": "model:batch018/shells/shell_tower_gantry.glb",
+      "ambient": 0.24,
+      "key_energy": 0.7
+    },
+    {
+      "name": "R_vault_entry",
+      "scene": "model:batch019/shells/shell_treasure_vault.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -1.4
+      ],
+      "yaw": 180,
+      "pitch": -2,
+      "ambient": 0.16,
+      "caption": "VAULT - ENTRY. THIS WAS PROTECTED",
+      "note": "8.0 M SQUARE, REWARD AT THE CENTRE - THE ENGINE'S OWN"
+    },
+    {
+      "name": "R_vault_interior",
+      "scene": "model:batch019/shells/shell_treasure_vault.glb",
+      "eye": [
+        -3.0,
+        0.0,
+        -1.5
+      ],
+      "yaw": 129.8,
+      "pitch": -8.7,
+      "ambient": 0.16,
+      "caption": "VAULT - THE PLINTH, ACROSS THE ROOM",
+      "note": "ONE STANDABLE TIER AT 0.80 M - THE 0.40 M RISER IS A STEP"
+    },
+    {
+      "name": "R_vault_exit",
+      "scene": "model:batch019/shells/shell_treasure_vault.glb",
+      "eye": [
+        0.0,
+        0.0,
+        -6.8
+      ],
+      "yaw": 0.0,
+      "pitch": 0.0,
+      "ambient": 0.16,
+      "caption": "VAULT - FROM THE BACK WALL, LOOKING AT THE DOOR",
+      "note": "THE REVERSE READ - THE ROOM ON THE WAY OUT"
+    },
+    {
+      "name": "R_cache_entry",
+      "scene": "model:batch019/shells/shell_treasure_cache.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -1.4
+      ],
+      "yaw": 180,
+      "pitch": -2,
+      "ambient": 0.16,
+      "caption": "CACHE - ENTRY. THIS WAS STORED",
+      "note": "8.0 M SQUARE, REWARD AT THE CENTRE - THE ENGINE'S OWN"
+    },
+    {
+      "name": "R_cache_interior",
+      "scene": "model:batch019/shells/shell_treasure_cache.glb",
+      "eye": [
+        -3.0,
+        0.0,
+        -1.5
+      ],
+      "yaw": 129.8,
+      "pitch": -8.7,
+      "ambient": 0.16,
+      "caption": "CACHE - THE PLINTH, ACROSS THE ROOM",
+      "note": "ONE STANDABLE TIER AT 0.80 M - THE 0.40 M RISER IS A STEP"
+    },
+    {
+      "name": "R_cache_exit",
+      "scene": "model:batch019/shells/shell_treasure_cache.glb",
+      "eye": [
+        0.0,
+        0.0,
+        -6.8
+      ],
+      "yaw": 0.0,
+      "pitch": 0.0,
+      "ambient": 0.16,
+      "caption": "CACHE - FROM THE BACK WALL, LOOKING AT THE DOOR",
+      "note": "THE REVERSE READ - THE ROOM ON THE WAY OUT"
+    },
+    {
+      "name": "R_coffer_entry",
+      "scene": "model:batch019/shells/shell_treasure_coffer.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -1.4
+      ],
+      "yaw": 180,
+      "pitch": 4,
+      "ambient": 0.16,
+      "caption": "COFFER - ENTRY. THIS WAS DISPLAYED",
+      "note": "8.0 M SQUARE, REWARD AT THE CENTRE - THE ENGINE'S OWN"
+    },
+    {
+      "name": "R_coffer_interior",
+      "scene": "model:batch019/shells/shell_treasure_coffer.glb",
+      "eye": [
+        -3.0,
+        0.0,
+        -1.5
+      ],
+      "yaw": 129.8,
+      "pitch": -8.7,
+      "ambient": 0.16,
+      "caption": "COFFER - THE PLINTH, ACROSS THE ROOM",
+      "note": "ONE STANDABLE TIER AT 0.80 M - THE 0.40 M RISER IS A STEP"
+    },
+    {
+      "name": "R_coffer_exit",
+      "scene": "model:batch019/shells/shell_treasure_coffer.glb",
+      "eye": [
+        0.0,
+        0.0,
+        -6.8
+      ],
+      "yaw": 0.0,
+      "pitch": 0.0,
+      "ambient": 0.16,
+      "caption": "COFFER - FROM THE BACK WALL, LOOKING AT THE DOOR",
+      "note": "THE REVERSE READ - THE ROOM ON THE WAY OUT"
+    },
+    {
+      "name": "C_left_entry",
+      "scene": "model:batch019/shells/shell_corner_left.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -1.2
+      ],
+      "yaw": 180,
+      "pitch": 0,
+      "ambient": 0.16,
+      "caption": "CORNER LEFT - ARRIVING. THE TURN IS MARKED BY FORM",
+      "note": "A CORRIDOR THAT TURNS - exit_yaw +90"
+    },
+    {
+      "name": "C_left_turn",
+      "scene": "model:batch019/shells/shell_corner_left.glb",
+      "eye": [
+        0,
+        0,
+        -3.0
+      ],
+      "yaw": 250,
+      "pitch": 0,
+      "ambient": 0.16,
+      "caption": "CORNER LEFT - MID-TURN, FACING THE EXIT",
+      "note": "THE OPENING ITSELF IS THE CUE - NO HAZARD ORANGE"
+    },
+    {
+      "name": "C_left_back",
+      "scene": "model:batch019/shells/shell_corner_left.glb",
+      "eye": [
+        -2.108,
+        0.0,
+        -3.0
+      ],
+      "yaw": 38.0,
+      "pitch": 0.0,
+      "ambient": 0.16,
+      "caption": "CORNER LEFT - FROM THE EXIT, LOOKING BACK IN",
+      "note": "THE REVERSE READ - A CONNECTOR, NOT A DESTINATION"
+    },
+    {
+      "name": "C_right_entry",
+      "scene": "model:batch019/shells/shell_corner_right.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -1.2
+      ],
+      "yaw": 180,
+      "pitch": 0,
+      "ambient": 0.16,
+      "caption": "CORNER RIGHT - ARRIVING. THE TURN IS MARKED BY FORM",
+      "note": "A CORRIDOR THAT TURNS - exit_yaw -90"
+    },
+    {
+      "name": "C_right_turn",
+      "scene": "model:batch019/shells/shell_corner_right.glb",
+      "eye": [
+        0,
+        0,
+        -3.0
+      ],
+      "yaw": 110,
+      "pitch": 0,
+      "ambient": 0.16,
+      "caption": "CORNER RIGHT - MID-TURN, FACING THE EXIT",
+      "note": "THE OPENING ITSELF IS THE CUE - NO HAZARD ORANGE"
+    },
+    {
+      "name": "C_right_back",
+      "scene": "model:batch019/shells/shell_corner_right.glb",
+      "eye": [
+        2.108,
+        0.0,
+        -3.0
+      ],
+      "yaw": 322.0,
+      "pitch": 0.0,
+      "ambient": 0.16,
+      "caption": "CORNER RIGHT - FROM THE EXIT, LOOKING BACK IN",
+      "note": "THE REVERSE READ - A CONNECTOR, NOT A DESTINATION"
+    },
+    {
+      "name": "C_chain_context",
+      "size": [
+        1920,
+        1080
+      ],
+      "ambient": 0.16,
+      "scene": "model:batch019/shells/shell_corner_left.glb + batch015/shells/shell_corridor_narrow.glb@0,0,-14",
+      "eye": [
+        0,
+        0,
+        7.0
+      ],
+      "yaw": 180,
+      "pitch": 0,
+      "caption": "THE CORNER AS A CONNECTOR - APPROACHED DOWN A CORRIDOR",
+      "note": "CONTEXT ONLY. THE CORRIDOR SHELL IS APPROVED, NOT EXPORTED"
+    }
+  ]
+}

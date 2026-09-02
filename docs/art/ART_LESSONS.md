@@ -1379,6 +1379,37 @@ and returns the clear spot NEAREST THE CENTRE -- so every socket whose
 centre is already fine does not move at all, and the ones that move are
 exactly the ones that were wrong. Two sockets moved, both by 0.225 m.
 
+### L-86 · The bench is not the importer, and it had been lying for a slice
+
+Every shell frame rendered after P2-C came back blown out and untextured.
+The first reading was that the new cameras were wrong — they were pointing
+at walls, or the lighting was tuned for the F3 shots and not for
+interiors. Two rounds of camera arithmetic went into that reading and none
+of it helped.
+
+The cameras were fine. `ArtBench.load_glb` calls
+`GLTFDocument.append_from_file`, which is **not** Godot's scene importer.
+The importer reads a node named `foo-convcolonly` and turns it into a
+`StaticBody3D` with no mesh. A raw glTF load gets a plain, material-less
+`MeshInstance3D` sitting exactly on top of the geometry it was copied
+from. Measured: `shell_tower_collapsed` loaded as 22 `MeshInstance3D`s —
+one real mesh and **twenty-one untextured white duplicates**.
+
+The bench had been photographing the colliders.
+
+> **A pipeline that loads an asset by a different route than the game does
+> is a second importer, and it owes the same contract.** Anything the real
+> importer strips, renames or converts, the loader has to strip, rename or
+> convert too — or the review sheet is of a different object than the one
+> that ships.
+
+What made it findable was re-rendering the OLD shot list and diffing
+against the committed images. A shot list that has already shipped is a
+regression test for the bench, and it cost one command to run. After the
+fix, all eight `batch019` captures reproduce **byte-identical** to the
+images committed at F3 — which is also, for free, the proof that the
+treasure rooms and corners are visually untouched.
+
 ### L-24 · Read your own render before writing down what it shows
 Every fix in L-05, L-08, L-09, L-11, L-13 and L-14 came from **looking at
 the image**, not from the build log. The logs were green throughout: correct

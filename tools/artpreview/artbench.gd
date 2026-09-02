@@ -42,7 +42,45 @@ static func load_glb(absolute_path: String) -> Node3D:
 	if scene == null:
 		push_error("[bench] GLTF produced no scene: %s" % absolute_path)
 		return null
+	_drop_import_hints(scene)
 	return scene
+
+
+## Godot's IMPORT-HINT suffixes, and why the bench has to know them.
+##
+## `GLTFDocument.append_from_file` is not the scene importer. The importer
+## reads a node called `foo-convcolonly` and turns it into a StaticBody3D
+## with no mesh; this loads the same file and gets a plain, MATERIAL-LESS
+## MeshInstance3D sitting exactly on top of the geometry it was copied
+## from.
+##
+## Measured, and it is why this exists: after P2-C gave the eight room
+## shells authored collision, `shell_tower_collapsed` loaded here as 22
+## MeshInstance3Ds -- one real mesh and TWENTY-ONE untextured white
+## duplicates. Every shell frame the bench rendered came back blown out
+## and untextured, and the first reading of that was "the camera is
+## wrong". The camera was fine. The bench was photographing the
+## colliders.
+##
+## So the bench applies the part of the import contract that matters to a
+## renderer: a `*only` hint is collision INSTEAD of a mesh and is removed,
+## and the other hints keep their mesh, because that is what the importer
+## does with them.
+const COLLISION_ONLY_HINTS := ["-colonly", "-convcolonly", "-navmesh",
+		"-occonly", "-noimp"]
+
+
+static func _drop_import_hints(node: Node) -> int:
+	var dropped := 0
+	for child in node.get_children():
+		dropped += _drop_import_hints(child)
+		for hint: String in COLLISION_ONLY_HINTS:
+			if str(child.name).ends_with(hint):
+				child.get_parent().remove_child(child)
+				child.queue_free()
+				dropped += 1
+				break
+	return dropped
 
 ## Every StandardMaterial3D in the tree, so filtering can be reported and
 ## enforced rather than hoped for.

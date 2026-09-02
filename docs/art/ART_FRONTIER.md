@@ -597,6 +597,26 @@ truth remain Godot's.
 
 ---
 
+## P2 owner review — the package is out, the verdicts are not in
+
+`docs/art/review/p2_owner/` (36 frames + README) is the owner-review
+package for the eight certified shells. Production certified them at
+`6640d86`: the room contract is satisfied with **zero physical findings**.
+That settles technical validity and settles nothing else — all eight are
+still `review: "pending"` and the owner decides PASS / KEEP PENDING /
+REVISE per shell from the actual P2 form.
+
+Two shells carry an intentional visible P2 repair (`shell_tower_collapsed`
+and `shell_tower_spiral`, the deck well); the other six are byte-identical
+to their F3 build, proven at the glTF accessor level and again by
+re-rendering the F3 shot list.
+
+**The bench was photographing the colliders.** `ArtBench.load_glb` is a
+raw glTF load, not Godot's importer, so the `-convcolonly` twins P2-C
+added rendered as untextured white duplicates on top of the real geometry
+— every shell frame since P2-C was wrong. Fixed in `artbench.gd`; the F3
+captures now reproduce byte-identical. See L-86.
+
 ## Known gaps, stated plainly
 
 - **The three treasure rooms declare a surface a player cannot stand on,
