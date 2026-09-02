@@ -117,9 +117,9 @@ the superseded rule in the meantime.
 | | |
 | --- | --- |
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
-| Phase | **P3 — ONE LARGE ROOM DELIVERED, PENDING.** `shell_hall_transit` (40 x 38 x 60 m, ~91,000 m3, about 40x the largest P2 room) is authored to Production's movement contract at `af620d8` and awaiting the owner's form review; package in `docs/art/review/p3_owner/`. **P2 IS COMPLETE — all eight shells PASS.** **STYLE LOCK PASSED — production.** 001–022 are all `PASS`. **Batch 023 (theme landmarks) is PENDING owner review** and is a PROPOSAL, not production — a landmark CATEGORY exists in Production, but no placement, selection or envelope contract does (req 24, reworded 2026-08-29). **Batches 024–030 are authorised and proceed without waiting on the 023 verdict.** **024-030 delivered and PENDING.** **The post-030 gap pass is fully REVIEWED and fully PASSED (owner, 2026-08-29): 031 PASS; 032 PASS WITH BOUNDARY; 033 PASS AUDIT / BUILD NOTHING; 034 PASS VISUAL PRINCIPLE; 035-R PASS; 036-R PASS; 037-R PASS WITH DOCUMENTED CAVEAT; boss audit ACCEPTED / BUILD NOTHING.** **The art lane is now intentionally IDLE.** No Batch 038, and no Echo visual parts and no diegetic interface work until the owner publishes the two design briefs named below. |
+| Phase | **LARGE ROOM LIBRARY — WAVE 1 DELIVERED, PENDING.** The ten-room slate (`docs/art/LARGE_ROOM_SLATE.md`) is approved and reconciled to Production's final `TraversalLaw` at `b37fe07`. **Wave 1 is three shells** — `shell_plenum_helix` (20 x 72 x 20, a shaft), `shell_yard_gantry` (84 x 16 x 52, a field) and `shell_span_basin` (30 x 22 x 90, a span) — deliberately not three of the same room; package in `docs/art/review/wave1/`. **Wave 2 has NOT started.** `shell_hall_transit` (40 x 38 x 60 m, ~91,000 m3) was authored to `af620d8`, repaired at `3b7bb02` against the `301374d` audit and had its scene regenerated at `058ec8b` against the `94d562d` audit; its P3 package in `docs/art/review/p3_owner/` is the PRE-REPAIR record and is annotated as such. **P2 IS COMPLETE — all eight shells PASS.** **STYLE LOCK PASSED — production.** 001–022 are all `PASS`. **Batch 023 (theme landmarks) is PENDING owner review** and is a PROPOSAL, not production — a landmark CATEGORY exists in Production, but no placement, selection or envelope contract does (req 24, reworded 2026-08-29). **Batches 024–030 are authorised and proceed without waiting on the 023 verdict.** **024-030 delivered and PENDING.** **The post-030 gap pass is fully REVIEWED and fully PASSED (owner, 2026-08-29): 031 PASS; 032 PASS WITH BOUNDARY; 033 PASS AUDIT / BUILD NOTHING; 034 PASS VISUAL PRINCIPLE; 035-R PASS; 036-R PASS; 037-R PASS WITH DOCUMENTED CAVEAT; boss audit ACCEPTED / BUILD NOTHING.** **The art lane is now intentionally IDLE.** No Batch 038, and no Echo visual parts and no diegetic interface work until the owner publishes the two design briefs named below. |
 | Owner review | Style Lock passed 2026-08-28. Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
-| Next action | **NOTHING. Wait for the P3 owner verdict on `shell_hall_transit`.** The P3 brief asked for ONE large room and one was delivered; it exports `review: "pending"` and Art does not promote it. Everything else the lane could reach for is still closed: no second LARGE room, no family, no Batch 038, no Echo visual parts, no diegetic interface work until the owner publishes those two briefs. Batches 023-030 remain PENDING review. Req 31 still blocks seven enemy roles and Art has deliberately not routed around it. **One item genuinely needs Production, not the owner: req 40 below.** **Do not invent filler work. No heartbeat, no polling, no autonomous expansion.** |
+| Next action | **NOTHING. Wait for two verdicts.** (1) The owner's form verdict on **Wave 1** — `shell_plenum_helix`, `shell_yard_gantry`, `shell_span_basin`; review package in `docs/art/review/wave1/`. All three export `review: "pending"` and Art does not promote them. **Do not start Wave 2** — the owner deferred it explicitly pending that verdict. (2) Production's recertification of `shell_hall_transit` at `058ec8b`, which regenerated the scene the audit at `94d562d` found stale. Everything else the lane could reach for is still closed: no Batch 038, no Echo visual parts, no diegetic interface work until the owner publishes those two briefs. Batches 023-030 remain PENDING review. Req 31 still blocks seven enemy roles and Art has deliberately not routed around it. **Do not invent filler work. No heartbeat, no polling, no autonomous expansion.** |
 | ~~Superseded~~ | ~~**Tier 7: the room shells** (`ASSET_INVENTORY.md` §7, L3, nothing built) — started immediately, per the owner's instruction not to idle while 014 waits. Six families, all Pri A: corridor, arena, platform-path, tower, treasure room, corner. They inherit engine-truth dimensions and traversal bounds, differ in scale / verticality / sightline / routing / encounter and Check placement rather than in dressing, and must not be generic stretches of one another where gameplay geometry matters. The approved six material families and the Batch 014 fixture language both apply.~~ Corridors done as Batch 015. |
 | ~~Superseded~~ | ~~**Tier 8: the three unbuilt theme material families** (`neon_transit`, `gothic_stone`, `temple_ruin`). It is the highest-leverage unblocked work left — it also unblocks three of the six dressing props §9 needs — and it is routine in the sense that `art_palette.json` already carries all six themes' ramps and `materials.paint()` already builds any of them. **But it is the first look at three themes**, so it wants a review sheet the owner can redirect cheaply, and textures are the cheapest thing in the project to rebuild.~~ Done as Batch 012. |
 | Queue depth | **Pending owner review: 023-030 only.** 001-022 and 031-037 are all `PASS` as of 2026-08-29. The hourly heartbeat stays **paused** (`trig_01DSWy2dbCpeSefcx2YGS9Ys`, disabled 2026-08-29) and the PR #5 poll is deleted; PR activity still wakes the session on its own. **Do not re-enable the routine on an idle lane** — re-enable it only when an owner brief, a verdict or a Production contract gives it something to do. |
@@ -708,13 +708,26 @@ no checkpoint or respawn behaviour, no rail mesh in the shell.
 **The eight P2 shells were not touched.** `diff_shell_glb.py` reports all
 nineteen shell GLBs byte-identical.
 
-**Two new verification stages** came out of this and stay:
-`verify_content_pack.sh` stage 4 runs Production's own `ShellValidator`
-against the shipped scenes (see req 40), and `_assert_walk_ground` proves
-Art's `walk` declarations at build time. A third was written, fired on
-seven of the eight certified P2 shells, was found to be measuring the
-chord between edge-declared endpoints rather than the path, and was
-deleted rather than tuned. See L-88.
+**Two new verification stages** came out of this and stay — though both
+have since been replaced, and the replacements are what runs now:
+
+  * `verify_content_pack.sh` stage 4 ran Production's own `ShellValidator`
+    against the shipped scenes. `b37fe07` rewrote `shell_validator.gd` and
+    the mechanical transform no longer reached; the stage is retired, and
+    stage 4 is now `tools/content/verify_markers.py`, which holds every
+    scene's `Marker3D` origins against the manifest declaration they came
+    from. See L-93.
+  * `_assert_walk_ground` proved Art's `walk` declarations at build time by
+    testing the chord between endpoints. It was wrong for the same reason
+    the deleted third check was wrong — **the chord is not the route; the
+    flood goes around** — and it is gone. `tools/blender/traversallaw.py`
+    replaced it: a source-side mirror of Production's `b37fe07` bounded
+    physical flood, run as a build gate. See L-88 and L-92.
+
+A third check was written, fired on seven of the eight certified P2
+shells, was found to be measuring the chord between edge-declared
+endpoints rather than the path, and was deleted rather than tuned. See
+L-88. Req 40 is CLOSED: `b37fe07` is Production's answer to it.
 
 ---
 

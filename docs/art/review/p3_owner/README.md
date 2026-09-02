@@ -78,6 +78,16 @@ west gallery 11, the ring / landing / gantry band at 21, exit platform
 28 — and fourteen named stand surfaces among them. `O1_regions` is the
 direct answer to "several local gameplay spaces or one big rectangle".
 
+> **These figures are the pre-repair record.** They show the hall as it
+> stood when this review was requested, which is the point of them. Two
+> of the fourteen surfaces above — `plinth_west` and `plinth_east` — were
+> demoted to plain geometry at `058ec8b` after the owner ruled on the
+> `301374d` audit, so the shipped shell declares twelve. `O1_regions`
+> still draws fourteen plates. It has deliberately **not** been
+> re-rendered: re-rendering it would erase what was actually reviewed.
+> The current state is the manifest — the plinths remain as geometry and
+> are simply no longer declared standable.
+
 **A visible distant destination.** The exit portal, 60 m away and 28 m
 up, legible from the door. `H1_entry`, and again from the other end in
 `H7_reverse`.
