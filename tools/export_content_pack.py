@@ -79,6 +79,12 @@ PROJECTILE_REVIEW = "pending"
 
 #: Each authored shell falls back to the procedural entry for its chamber
 #: type, so a missing scene degrades to the builder rather than to nothing.
+#: Where a size-class decision came from. Two, because they were made by
+#: different people at different times and a shared string would make the
+#: second look covered by the first.
+_EDA = "owner design assignment applied at Production eda4fd9; NOT derived from geometry"
+_P3 = "owner P3/LARGE-library direction; NOT derived from geometry"
+
 _SHELL_FALLBACK = {
     "tower": "shell_tower_proc",
     "treasure_room": "shell_treasure_room_proc",
@@ -111,20 +117,18 @@ _SHELL_FALLBACK = {
 #: single shared source string would have made the second one look like
 #: it was covered by the first.
 _SIZE_CLASS = {
-    "tower": ("medium", "owner design assignment applied at Production "
-                        "eda4fd9; NOT derived from geometry"),
-    "treasure_room": ("small", "owner design assignment applied at "
-                               "Production eda4fd9; NOT derived from "
-                               "geometry"),
-    "corridor": ("small", "owner design assignment applied at Production "
-                          "eda4fd9; NOT derived from geometry"),
-    # P3. "large" is the BRIEF, not a reading of the metres: the owner
-    # asked for one big open area to prove Archipepsi can have one, and
-    # this shell is that room. It is still not arithmetic -- a room does
-    # not become large by being 40 m wide, it becomes large by being the
-    # room the game opens up in.
-    "arena": ("large", "owner P3 direction: one LARGE authored room; NOT "
-                       "derived from geometry"),
+    "shell_tower_collapsed": ("medium", _EDA),
+    "shell_tower_spiral":    ("medium", _EDA),
+    "shell_tower_gantry":    ("medium", _EDA),
+    "shell_treasure_vault":  ("small", _EDA),
+    "shell_treasure_cache":  ("small", _EDA),
+    "shell_treasure_coffer": ("small", _EDA),
+    "shell_corner_left":     ("small", _EDA),
+    "shell_corner_right":    ("small", _EDA),
+    "shell_hall_transit":    ("large", _P3),
+    "shell_plenum_helix":    ("large", _P3),
+    "shell_yard_gantry":     ("large", _P3),
+    "shell_span_basin":      ("large", _P3),
 }
 
 #: theme -> (source manifest dir, asset id). The CEILING fixture in each
@@ -187,6 +191,14 @@ SHELLS = {
     # beside it without claiming to be types.
     "shell_hall_transit":    ("batch039/shells", "arena",
                               ("transit", "vertical")),
+    # Wave 1 of the LARGE room library. Three deliberately different
+    # proportions: a 1:3.6 shaft, an 84 m wide yard and a 90 m span.
+    "shell_plenum_helix":    ("batch040/shells", "tower",
+                              ("shaft", "descent", "rail")),
+    "shell_yard_gantry":     ("batch040/shells", "arena",
+                              ("yard", "ranged", "wide")),
+    "shell_span_basin":      ("batch040/shells", "arena",
+                              ("span", "bridge", "two_level")),
 }
 
 #: REVIEW STATE, PER SHELL. This was one shared constant while every
@@ -212,6 +224,10 @@ SHELL_REVIEW = {
     # owner's form review. PENDING is the honest state and the brief says
     # so outright: "Do not promote it yourself."
     "shell_hall_transit":    "pending",
+    # Wave 1, authored to b37fe07 and not reviewed by anybody.
+    "shell_plenum_helix":    "pending",
+    "shell_yard_gantry":     "pending",
+    "shell_span_basin":      "pending",
 }
 
 #: silhouette -> asset id. `ProjectileSilhouette.content_id()` is
@@ -399,7 +415,11 @@ def main():
         #
         # `size_class` is the owner's assignment (see `_SIZE_CLASS`), not
         # a reading of `size`.
-        size_class, size_class_source = _SIZE_CLASS[family]
+        # PER ENTRY, not per family. `shell_plenum_helix` is a `tower`
+        # and it is LARGE, while the three P2 towers are medium -- a
+        # family-keyed table cannot hold both, and would have silently
+        # shipped a 72 m shaft labelled the same size as a 15 m one.
+        size_class, size_class_source = _SIZE_CLASS[cid]
         entry["size_class"] = size_class
 
         # `exit_yaw` is the builder's own `turn * 90`, carried through

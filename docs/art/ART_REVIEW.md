@@ -3935,3 +3935,27 @@ not in `OFFER_KINDS`, so no offer was invented for it.
 
 **Nothing follows this shell.** No second LARGE room, no family, no Batch
 038. **No heartbeat. No polling. No autonomous expansion.**
+
+
+## Wave 1 of the LARGE room library — three shells. PENDING
+
+`docs/art/review/wave1/` — four views each, and a README that answers the
+brief room by room. All three are `review: "pending"`; Art does not write
+`pass`.
+
+| Shell | Metrics | Proportion | Landmark |
+| --- | --- | --- | --- |
+| `shell_plenum_helix` | 1320 tris · 21.20 × 20.00 × 73.60 m · 32.0 texels/m | 1 : 3.6 tall | a machine column hung from the roof, never founded, with three walkable collars |
+| `shell_yard_gantry` | 444 tris · 85.20 × 52.00 × 17.60 m · 32.0 texels/m | 5.3 : 1 wide | an 84 m gantry crane spanning the full width at 12 m |
+| `shell_span_basin` | 544 tris · 31.20 × 90.00 × 23.60 m · 32.0 texels/m | 3 : 1 long | one 90 m deck on two pylons, with a walkable basin under all of it |
+
+Measured boxes are Blender-ordered (width, length, height) and include
+the 0.60 m boundary wall on each face; the pack carries `size_godot`.
+
+The question Wave 1 was built to answer: **does LARGE work at proportions
+other than the hall's?** The three were chosen to be as unlike each other
+as the slate allows rather than to be the three best ideas, so that a
+wrong answer costs three rooms instead of ten.
+
+**Nothing follows until the owner reviews these.** Wave 2 is four rooms
+and Wave 3 is three; neither starts on a wake-up.

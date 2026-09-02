@@ -120,7 +120,7 @@ for script in build_materials build_architecture build_props \
               build_batch002_enemies build_epsilon_installation \
               build_hub build_lab build_check build_ways_out build_traversal build_projectile \
               build_affordances build_dressing build_rails \
-              build_theme_dressing build_lights build_shells build_arenas build_paths build_towers build_rooms build_hall build_hall_overlay build_arch_kit build_arch_services build_navigation build_landmarks build_epsilon_states build_forge build_checkpoint build_pickups build_interaction_kit build_secrets build_enemy_roles build_zone_keys build_viewmodel build_gates build_decoys; do
+              build_theme_dressing build_lights build_shells build_arenas build_paths build_towers build_rooms build_hall build_hall_overlay build_plenum build_yard build_span build_arch_kit build_arch_services build_navigation build_landmarks build_epsilon_states build_forge build_checkpoint build_pickups build_interaction_kit build_secrets build_enemy_roles build_zone_keys build_viewmodel build_gates build_decoys; do
   say "rebuilding $script..."
   "$BLENDER" --background --python "tools/blender/$script.py" >/dev/null 2>&1 || \
     fail "$script.py did not complete. Run it directly for the traceback."

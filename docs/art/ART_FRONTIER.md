@@ -624,6 +624,43 @@ truth remain Godot's.
 
 ---
 
+## LARGE ROOM LIBRARY — Wave 1 (2026-09-02, PENDING)
+
+The owner approved the ten-room slate (`docs/art/LARGE_ROOM_SLATE.md`)
+and the 3 / 4 / 3 wave plan. **Wave 1 is built and pending; Wave 2 does
+NOT start on a wake-up.**
+
+| shell | interior | tris | rail | launch | type / class |
+| --- | --- | --- | --- | --- | --- |
+| `shell_plenum_helix` | 20 x 72 x 20 | 1320 | **129.4 m** | 28.1 m | `tower` / large |
+| `shell_yard_gantry` | 84 x 16 x 52 | 444 | 72.0 m | **63.1 m** | `arena` / large |
+| `shell_span_basin` | 30 x 22 x 90 | 544 | 82.9 m | 22.5 m | `arena` / large |
+
+Wave 1 was chosen to stress PROPORTION, not to be the three best ideas:
+1 : 3.6 tall, 5.3 : 1 wide, 3 : 1 long. If LARGE only worked at the
+hall's proportions it would have cost three rooms to find out.
+
+**`_SIZE_CLASS` is per ENTRY now, not per family.** `shell_plenum_helix`
+is a `tower` and it is LARGE while the three P2 towers are medium; a
+family-keyed table would have shipped a 72 m shaft labelled the same size
+as a 15 m one.
+
+**Shared tooling landed with the repair**: `roomkit` (the axis
+convention, a deck by its edges, and `flight()`), and `traversallaw.py`,
+which mirrors Production's walk flood over the collision hulls and gates
+every export.
+
+## Req 40 — CLOSED at Production `b37fe07`
+
+`ShellValidator` no longer applies jump bounds to a `walk`. `TraversalLaw`
+holds each kind to what it claims and proves a walk by a bounded physical
+flood over the geometry. **The declared rectangles bound the search and
+prove nothing** -- so a climb costs zero declared Surfaces, and Art's
+"one Surface per metre" conclusion from the intermediate rule at
+`93ddc60` is retracted. See L-90.
+
+---
+
 ## P3 — the first LARGE authored room (2026-09-02, PENDING)
 
 `shell_hall_transit`, a vertical transit hall. **ONE shell. Not a family,

@@ -65,6 +65,11 @@ func _initialize() -> void:
 		# the other direction. When the owner passes it this flips to
 		# `true`, and not before.
 		"shell_hall_transit": false,
+		# Wave 1 of the LARGE library. PENDING and expected to be, for
+		# the same reason and by the same gate.
+		"shell_plenum_helix": false,
+		"shell_yard_gantry": false,
+		"shell_span_basin": false,
 	}
 	for id in wanted:
 		var want_shippable: bool = wanted[id]

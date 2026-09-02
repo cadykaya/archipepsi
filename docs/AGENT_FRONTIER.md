@@ -68,12 +68,19 @@ Do not start work in it on a wake-up. Read this section and stop.
 **P2 IS COMPLETE — all eight authored shells PASS** (owner, 2026-09-02),
 after Production certified them physically at `6640d86`.
 
-**P3 delivered ONE LARGE room and stopped there.** `shell_hall_transit`
-(40 x 38 x 60 m, ~91,000 m3 — about 40x the largest P2 room) is authored
-to Production's movement contract at `af620d8`, exports
-`review: "pending"`, and the pack verifier asserts it is NOT shipped.
-Review package: `docs/art/review/p3_owner/`. **Do not author a second
-LARGE room, a family, or any follow-on. Do not promote it.**
+**THE LARGE ROOM LIBRARY IS APPROVED AND WAVE 1 IS BUILT.** The owner
+approved the ten-room slate (`docs/art/LARGE_ROOM_SLATE.md`) and the
+3 / 4 / 3 wave plan. Wave 1 -- `shell_plenum_helix` (20x72x20, a 129 m
+rail), `shell_yard_gantry` (84x16x52) and `shell_span_basin` (30x22x90)
+-- is authored, verified and `review: "pending"`. Package:
+`docs/art/review/wave1/`. **Wave 2 is four rooms and does NOT start on a
+wake-up; it waits on the owner's Wave 1 verdict.**
+
+**`shell_hall_transit` is repaired** against Production's final walk law
+at `b37fe07`: two of its three climbs were built backwards, and all three
+were single wedges the import-time flood could not see through.
+`shell_tower_spiral`'s `platform_8_to_deck` is a `gap`, from Production's
+own probe.
 
 **One thing needs PRODUCTION, not the owner: req 40 in
 `docs/art/ART_FRONTIER.md`.** `ShellValidator._check_segment` applies the

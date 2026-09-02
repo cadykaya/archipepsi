@@ -959,6 +959,1187 @@
    ]
   },
   {
+   "id": "shell_plenum_helix",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "plenum helix",
+   "scene": "res://content/shells/shell_plenum_helix.tscn",
+   "review": "pending",
+   "fallback": "shell_tower_proc",
+   "semantic_tags": [
+    "tower",
+    "shaft",
+    "descent",
+    "rail"
+   ],
+   "size": [
+    21.2,
+    73.6,
+    20.0
+   ],
+   "surfaces": [
+    {
+     "center": [
+      0.0,
+      0.0,
+      10.0
+     ],
+     "extent": [
+      18.8,
+      18.8
+     ],
+     "name": "floor"
+    },
+    {
+     "center": [
+      -7.9,
+      68.0,
+      2.1
+     ],
+     "extent": [
+      3.0,
+      3.0
+     ],
+     "name": "landing_0"
+    },
+    {
+     "center": [
+      7.9,
+      62.333,
+      2.1
+     ],
+     "extent": [
+      3.0,
+      3.0
+     ],
+     "name": "landing_1"
+    },
+    {
+     "center": [
+      7.9,
+      56.667,
+      17.9
+     ],
+     "extent": [
+      3.0,
+      3.0
+     ],
+     "name": "landing_2"
+    },
+    {
+     "center": [
+      -7.9,
+      51.0,
+      17.9
+     ],
+     "extent": [
+      3.0,
+      3.0
+     ],
+     "name": "landing_3"
+    },
+    {
+     "center": [
+      -7.9,
+      45.333,
+      2.1
+     ],
+     "extent": [
+      3.0,
+      3.0
+     ],
+     "name": "landing_4"
+    },
+    {
+     "center": [
+      7.9,
+      39.667,
+      2.1
+     ],
+     "extent": [
+      3.0,
+      3.0
+     ],
+     "name": "landing_5"
+    },
+    {
+     "center": [
+      7.9,
+      34.0,
+      17.9
+     ],
+     "extent": [
+      3.0,
+      3.0
+     ],
+     "name": "landing_6"
+    },
+    {
+     "center": [
+      -7.9,
+      28.333,
+      17.9
+     ],
+     "extent": [
+      3.0,
+      3.0
+     ],
+     "name": "landing_7"
+    },
+    {
+     "center": [
+      -7.9,
+      22.667,
+      2.1
+     ],
+     "extent": [
+      3.0,
+      3.0
+     ],
+     "name": "landing_8"
+    },
+    {
+     "center": [
+      7.9,
+      17.0,
+      2.1
+     ],
+     "extent": [
+      3.0,
+      3.0
+     ],
+     "name": "landing_9"
+    },
+    {
+     "center": [
+      7.9,
+      11.333,
+      17.9
+     ],
+     "extent": [
+      3.0,
+      3.0
+     ],
+     "name": "landing_10"
+    },
+    {
+     "center": [
+      -7.9,
+      5.667,
+      17.9
+     ],
+     "extent": [
+      3.0,
+      3.0
+     ],
+     "name": "landing_11"
+    },
+    {
+     "center": [
+      -7.9,
+      0.0,
+      2.1
+     ],
+     "extent": [
+      3.0,
+      3.0
+     ],
+     "name": "landing_12"
+    },
+    {
+     "center": [
+      0.0,
+      45.333,
+      2.675
+     ],
+     "extent": [
+      2.4,
+      1.15
+     ],
+     "name": "bridge_0"
+    },
+    {
+     "center": [
+      5.26,
+      45.333,
+      10.0
+     ],
+     "extent": [
+      1.92,
+      1.92
+     ],
+     "name": "collar_0"
+    },
+    {
+     "center": [
+      -7.325,
+      28.333,
+      10.0
+     ],
+     "extent": [
+      1.15,
+      2.4
+     ],
+     "name": "bridge_1"
+    },
+    {
+     "center": [
+      5.26,
+      28.333,
+      10.0
+     ],
+     "extent": [
+      1.92,
+      1.92
+     ],
+     "name": "collar_1"
+    },
+    {
+     "center": [
+      7.325,
+      11.333,
+      10.0
+     ],
+     "extent": [
+      1.15,
+      2.4
+     ],
+     "name": "bridge_2"
+    },
+    {
+     "center": [
+      5.26,
+      11.333,
+      10.0
+     ],
+     "extent": [
+      1.92,
+      1.92
+     ],
+     "name": "collar_2"
+    }
+   ],
+   "sockets": [
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "entry",
+     "position": [
+      0.0,
+      68.0,
+      0.0
+     ],
+     "surface_id": "landing_0",
+     "width": 2.4,
+     "yaw": 180.0
+    },
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "exit",
+     "position": [
+      0.0,
+      0.0,
+      22.0
+     ],
+     "surface_id": "floor",
+     "width": 2.4,
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_0",
+     "position": [
+      5.26,
+      45.633,
+      10.0
+     ],
+     "surface_id": "collar_0",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_1",
+     "position": [
+      5.26,
+      28.633,
+      10.0
+     ],
+     "surface_id": "collar_1",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_2",
+     "position": [
+      5.26,
+      11.633,
+      10.0
+     ],
+     "surface_id": "collar_2",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_3",
+     "position": [
+      7.9,
+      56.967,
+      17.9
+     ],
+     "surface_id": "landing_2",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_4",
+     "position": [
+      7.9,
+      17.3,
+      2.1
+     ],
+     "surface_id": "landing_9",
+     "yaw": 0.0
+    },
+    {
+     "kind": "cover",
+     "name": "cover_0",
+     "position": [
+      -5.0,
+      0.3,
+      5.0
+     ],
+     "surface_id": "floor",
+     "yaw": 0.0
+    },
+    {
+     "kind": "cover",
+     "name": "cover_1",
+     "position": [
+      5.0,
+      0.3,
+      15.0
+     ],
+     "surface_id": "floor",
+     "yaw": 0.0
+    }
+   ],
+   "volumes": [
+    {
+     "center": [
+      0.0,
+      40.0,
+      10.0
+     ],
+     "kind": "no_build",
+     "name": "machine",
+     "size": [
+      8.0,
+      56.0,
+      8.0
+     ]
+    },
+    {
+     "center": [
+      -7.9,
+      69.0,
+      2.1
+     ],
+     "kind": "player_entry",
+     "name": "arrival",
+     "size": [
+      2.4,
+      2.0,
+      2.4
+     ]
+    },
+    {
+     "center": [
+      0.0,
+      29.333,
+      10.0
+     ],
+     "kind": "objective",
+     "name": "reward",
+     "size": [
+      2.4,
+      2.0,
+      2.4
+     ]
+    }
+   ],
+   "traversal": [
+    {
+     "end": [
+      7.9,
+      62.333333333333336,
+      2.1
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "landing_0_to_1",
+     "start": [
+      -7.9,
+      68.0,
+      2.1
+     ]
+    },
+    {
+     "end": [
+      7.9,
+      56.666666666666664,
+      17.9
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "landing_1_to_2",
+     "start": [
+      7.9,
+      62.333333333333336,
+      2.1
+     ]
+    },
+    {
+     "end": [
+      -7.9,
+      51.0,
+      17.9
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "landing_2_to_3",
+     "start": [
+      7.9,
+      56.666666666666664,
+      17.9
+     ]
+    },
+    {
+     "end": [
+      -7.9,
+      45.33333333333333,
+      2.1
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "landing_3_to_4",
+     "start": [
+      -7.9,
+      51.0,
+      17.9
+     ]
+    },
+    {
+     "end": [
+      7.9,
+      39.666666666666664,
+      2.1
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "landing_4_to_5",
+     "start": [
+      -7.9,
+      45.33333333333333,
+      2.1
+     ]
+    },
+    {
+     "end": [
+      7.9,
+      34.0,
+      17.9
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "landing_5_to_6",
+     "start": [
+      7.9,
+      39.666666666666664,
+      2.1
+     ]
+    },
+    {
+     "end": [
+      -7.9,
+      28.33333333333333,
+      17.9
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "landing_6_to_7",
+     "start": [
+      7.9,
+      34.0,
+      17.9
+     ]
+    },
+    {
+     "end": [
+      -7.9,
+      22.666666666666664,
+      2.1
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "landing_7_to_8",
+     "start": [
+      -7.9,
+      28.33333333333333,
+      17.9
+     ]
+    },
+    {
+     "end": [
+      7.9,
+      17.0,
+      2.1
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "landing_8_to_9",
+     "start": [
+      -7.9,
+      22.666666666666664,
+      2.1
+     ]
+    },
+    {
+     "end": [
+      7.9,
+      11.333333333333329,
+      17.9
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "landing_9_to_10",
+     "start": [
+      7.9,
+      17.0,
+      2.1
+     ]
+    },
+    {
+     "end": [
+      -7.9,
+      5.666666666666664,
+      17.9
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "landing_10_to_11",
+     "start": [
+      7.9,
+      11.333333333333329,
+      17.9
+     ]
+    },
+    {
+     "end": [
+      -7.9,
+      0.0,
+      2.1
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "landing_11_to_12",
+     "start": [
+      -7.9,
+      5.666666666666664,
+      17.9
+     ]
+    },
+    {
+     "end": [
+      0.0,
+      45.33333333333333,
+      10.0
+     ],
+     "kind": "walk",
+     "mandatory": false,
+     "name": "landing_4_to_collar_0",
+     "start": [
+      -7.9,
+      45.33333333333333,
+      2.1
+     ]
+    },
+    {
+     "end": [
+      0.0,
+      28.33333333333333,
+      10.0
+     ],
+     "kind": "walk",
+     "mandatory": false,
+     "name": "landing_7_to_collar_1",
+     "start": [
+      -7.9,
+      28.33333333333333,
+      17.9
+     ]
+    },
+    {
+     "end": [
+      0.0,
+      11.333333333333329,
+      10.0
+     ],
+     "kind": "walk",
+     "mandatory": false,
+     "name": "landing_10_to_collar_2",
+     "start": [
+      7.9,
+      11.333333333333329,
+      17.9
+     ]
+    }
+   ],
+   "size_class": "large",
+   "exit_yaw": 0.0,
+   "offers": [
+    {
+     "kind": "rail_route",
+     "name": "rail_descent",
+     "points": [
+      [
+       -4.8,
+       66.4,
+       5.2
+      ],
+      [
+       4.8,
+       60.733333333333334,
+       5.2
+      ],
+      [
+       4.8,
+       55.06666666666666,
+       14.8
+      ],
+      [
+       -4.8,
+       49.4,
+       14.8
+      ],
+      [
+       -4.8,
+       43.73333333333333,
+       5.2
+      ],
+      [
+       4.8,
+       38.06666666666666,
+       5.2
+      ],
+      [
+       4.8,
+       32.4,
+       14.8
+      ],
+      [
+       -4.8,
+       26.733333333333327,
+       14.8
+      ],
+      [
+       -4.8,
+       21.066666666666663,
+       5.2
+      ],
+      [
+       4.8,
+       15.4,
+       5.2
+      ],
+      [
+       4.8,
+       9.733333333333329,
+       14.8
+      ],
+      [
+       -4.8,
+       4.066666666666665,
+       14.8
+      ],
+      [
+       0.0,
+       4.0,
+       10.0
+      ]
+     ]
+    },
+    {
+     "kind": "launch_source",
+     "name": "launch_floor",
+     "position": [
+      0.0,
+      0.5,
+      6.0
+     ],
+     "radius": 3.0,
+     "target": "launch_collar"
+    },
+    {
+     "kind": "launch_target",
+     "name": "launch_collar",
+     "position": [
+      0.0,
+      28.33333333333333,
+      10.0
+     ],
+     "radius": 3.5
+    },
+    {
+     "kind": "grapple_point",
+     "name": "grapple_0",
+     "position": [
+      -7.0,
+      20.0,
+      10.0
+     ],
+     "radius": 1.5
+    },
+    {
+     "kind": "grapple_point",
+     "name": "grapple_1",
+     "position": [
+      7.0,
+      38.0,
+      10.0
+     ],
+     "radius": 1.5
+    },
+    {
+     "kind": "grapple_point",
+     "name": "grapple_2",
+     "position": [
+      -7.0,
+      56.0,
+      10.0
+     ],
+     "radius": 1.5
+    }
+   ]
+  },
+  {
+   "id": "shell_span_basin",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "span basin",
+   "scene": "res://content/shells/shell_span_basin.tscn",
+   "review": "pending",
+   "fallback": "shell_arena_proc",
+   "semantic_tags": [
+    "arena",
+    "span",
+    "bridge",
+    "two_level"
+   ],
+   "size": [
+    31.2,
+    23.6,
+    90.0
+   ],
+   "surfaces": [
+    {
+     "center": [
+      0.0,
+      0.0,
+      45.0
+     ],
+     "extent": [
+      28.8,
+      88.8
+     ],
+     "name": "basin"
+    },
+    {
+     "center": [
+      0.0,
+      14.0,
+      45.0
+     ],
+     "extent": [
+      7.0,
+      88.8
+     ],
+     "name": "deck"
+    },
+    {
+     "center": [
+      0.0,
+      7.0,
+      27.0
+     ],
+     "extent": [
+      8.0,
+      8.0
+     ],
+     "name": "shoulder_0"
+    },
+    {
+     "center": [
+      0.0,
+      7.0,
+      63.0
+     ],
+     "extent": [
+      8.0,
+      8.0
+     ],
+     "name": "shoulder_1"
+    },
+    {
+     "center": [
+      5.45,
+      14.0,
+      16.1
+     ],
+     "extent": [
+      17.9,
+      3.0
+     ],
+     "name": "landing_0"
+    },
+    {
+     "center": [
+      5.45,
+      14.0,
+      73.9
+     ],
+     "extent": [
+      17.9,
+      3.0
+     ],
+     "name": "landing_1"
+    }
+   ],
+   "sockets": [
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "entry",
+     "position": [
+      0.0,
+      14.0,
+      0.0
+     ],
+     "surface_id": "deck",
+     "width": 2.4,
+     "yaw": 180.0
+    },
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "exit",
+     "position": [
+      0.0,
+      14.0,
+      92.0
+     ],
+     "surface_id": "deck",
+     "width": 2.4,
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_0",
+     "position": [
+      0.0,
+      14.3,
+      45.0
+     ],
+     "surface_id": "deck",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_1",
+     "position": [
+      -2.7,
+      7.3,
+      27.0
+     ],
+     "surface_id": "shoulder_0",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_2",
+     "position": [
+      -2.7,
+      7.3,
+      63.0
+     ],
+     "surface_id": "shoulder_1",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_3",
+     "position": [
+      5.45,
+      14.3,
+      16.1
+     ],
+     "surface_id": "landing_0",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_4",
+     "position": [
+      5.45,
+      14.3,
+      73.9
+     ],
+     "surface_id": "landing_1",
+     "yaw": 0.0
+    },
+    {
+     "kind": "cover",
+     "name": "cover_0",
+     "position": [
+      -9.0,
+      0.3,
+      22.0
+     ],
+     "surface_id": "basin",
+     "yaw": 0.0
+    },
+    {
+     "kind": "cover",
+     "name": "cover_1",
+     "position": [
+      8.0,
+      0.3,
+      44.0
+     ],
+     "surface_id": "basin",
+     "yaw": 0.0
+    },
+    {
+     "kind": "cover",
+     "name": "cover_2",
+     "position": [
+      -7.0,
+      0.3,
+      66.0
+     ],
+     "surface_id": "basin",
+     "yaw": 0.0
+    }
+   ],
+   "volumes": [
+    {
+     "center": [
+      0.0,
+      6.55,
+      27.0
+     ],
+     "kind": "no_build",
+     "name": "pylon_s",
+     "size": [
+      4.0,
+      13.1,
+      4.0
+     ]
+    },
+    {
+     "center": [
+      0.0,
+      15.0,
+      2.2
+     ],
+     "kind": "player_entry",
+     "name": "arrival",
+     "size": [
+      2.4,
+      2.0,
+      2.4
+     ]
+    },
+    {
+     "center": [
+      0.0,
+      1.0,
+      45.0
+     ],
+     "kind": "objective",
+     "name": "reward",
+     "size": [
+      2.4,
+      2.0,
+      2.4
+     ]
+    }
+   ],
+   "traversal": [
+    {
+     "end": [
+      0.0,
+      14.0,
+      45.0
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "entry_to_deck",
+     "start": [
+      0.0,
+      14.0,
+      1.6
+     ]
+    },
+    {
+     "end": [
+      0.0,
+      14.0,
+      88.4
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "deck_to_exit",
+     "start": [
+      0.0,
+      14.0,
+      45.0
+     ]
+    },
+    {
+     "end": [
+      11.9,
+      14.0,
+      16.6
+     ],
+     "kind": "walk",
+     "mandatory": false,
+     "name": "basin_south_to_deck",
+     "start": [
+      11.9,
+      0.0,
+      2.6
+     ]
+    },
+    {
+     "end": [
+      11.9,
+      14.0,
+      73.4
+     ],
+     "kind": "walk",
+     "mandatory": false,
+     "name": "basin_north_to_deck",
+     "start": [
+      11.9,
+      0.0,
+      87.4
+     ]
+    },
+    {
+     "end": [
+      6.0,
+      0.0,
+      45.0
+     ],
+     "kind": "drop",
+     "mandatory": false,
+     "name": "deck_to_basin",
+     "start": [
+      2.0,
+      14.0,
+      45.0
+     ]
+    }
+   ],
+   "size_class": "large",
+   "exit_yaw": 0.0,
+   "offers": [
+    {
+     "kind": "rail_route",
+     "name": "rail_underdeck",
+     "points": [
+      [
+       0.0,
+       2.5,
+       4.6
+      ],
+      [
+       0.0,
+       8.6,
+       22.0
+      ],
+      [
+       0.0,
+       9.4,
+       45.0
+      ],
+      [
+       0.0,
+       8.6,
+       68.0
+      ],
+      [
+       0.0,
+       2.5,
+       85.4
+      ]
+     ]
+    },
+    {
+     "kind": "launch_source",
+     "name": "launch_basin",
+     "position": [
+      0.0,
+      0.5,
+      45.0
+     ],
+     "radius": 3.0,
+     "target": "launch_deck"
+    },
+    {
+     "kind": "launch_target",
+     "name": "launch_deck",
+     "position": [
+      0.0,
+      14.0,
+      62.99999999999999
+     ],
+     "radius": 3.5
+    },
+    {
+     "kind": "grapple_point",
+     "name": "grapple_0",
+     "position": [
+      0.0,
+      11.4,
+      18.0
+     ],
+     "radius": 1.5
+    },
+    {
+     "kind": "grapple_point",
+     "name": "grapple_1",
+     "position": [
+      0.0,
+      11.4,
+      45.0
+     ],
+     "radius": 1.5
+    },
+    {
+     "kind": "grapple_point",
+     "name": "grapple_2",
+     "position": [
+      0.0,
+      11.4,
+      72.0
+     ],
+     "radius": 1.5
+    }
+   ]
+  },
+  {
    "id": "shell_tower_collapsed",
    "level": 3,
    "category": "room_shell",
@@ -2937,6 +4118,429 @@
     }
    ],
    "size_class": "small"
+  },
+  {
+   "id": "shell_yard_gantry",
+   "level": 3,
+   "category": "room_shell",
+   "display_name": "yard gantry",
+   "scene": "res://content/shells/shell_yard_gantry.tscn",
+   "review": "pending",
+   "fallback": "shell_arena_proc",
+   "semantic_tags": [
+    "arena",
+    "yard",
+    "ranged",
+    "wide"
+   ],
+   "size": [
+    85.2,
+    17.6,
+    52.0
+   ],
+   "surfaces": [
+    {
+     "center": [
+      0.0,
+      0.0,
+      26.0
+     ],
+     "extent": [
+      82.8,
+      50.8
+     ],
+     "name": "floor"
+    },
+    {
+     "center": [
+      0.0,
+      13.2,
+      26.0
+     ],
+     "extent": [
+      78.0,
+      3.2
+     ],
+     "name": "crane_bridge"
+    },
+    {
+     "center": [
+      0.0,
+      8.0,
+      2.3
+     ],
+     "extent": [
+      82.8,
+      3.4
+     ],
+     "name": "catwalk_s"
+    },
+    {
+     "center": [
+      0.0,
+      8.0,
+      49.7
+     ],
+     "extent": [
+      82.8,
+      3.4
+     ],
+     "name": "catwalk_n"
+    },
+    {
+     "center": [
+      -39.7,
+      8.0,
+      26.0
+     ],
+     "extent": [
+      3.4,
+      50.8
+     ],
+     "name": "catwalk_w"
+    },
+    {
+     "center": [
+      39.7,
+      8.0,
+      26.0
+     ],
+     "extent": [
+      3.4,
+      50.8
+     ],
+     "name": "catwalk_e"
+    }
+   ],
+   "sockets": [
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "entry",
+     "position": [
+      -43.0,
+      0.0,
+      26.0
+     ],
+     "surface_id": "floor",
+     "width": 2.4,
+     "yaw": -90.0
+    },
+    {
+     "height": 3.2,
+     "kind": "doorway",
+     "name": "exit",
+     "position": [
+      43.0,
+      0.0,
+      26.0
+     ],
+     "surface_id": "floor",
+     "width": 2.4,
+     "yaw": 90.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_0",
+     "position": [
+      0.0,
+      8.3,
+      2.3
+     ],
+     "surface_id": "catwalk_s",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_1",
+     "position": [
+      0.0,
+      8.3,
+      49.7
+     ],
+     "surface_id": "catwalk_n",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_2",
+     "position": [
+      -39.7,
+      8.3,
+      26.0
+     ],
+     "surface_id": "catwalk_w",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_3",
+     "position": [
+      39.7,
+      8.3,
+      26.0
+     ],
+     "surface_id": "catwalk_e",
+     "yaw": 0.0
+    },
+    {
+     "kind": "enemy_high",
+     "name": "high_4",
+     "position": [
+      0.0,
+      13.5,
+      26.0
+     ],
+     "surface_id": "crane_bridge",
+     "yaw": 0.0
+    },
+    {
+     "kind": "cover",
+     "name": "cover_0",
+     "position": [
+      -26.0,
+      0.3,
+      16.0
+     ],
+     "surface_id": "floor",
+     "yaw": 0.0
+    },
+    {
+     "kind": "cover",
+     "name": "cover_1",
+     "position": [
+      -9.0,
+      0.3,
+      34.0
+     ],
+     "surface_id": "floor",
+     "yaw": 0.0
+    },
+    {
+     "kind": "cover",
+     "name": "cover_2",
+     "position": [
+      11.0,
+      0.3,
+      15.0
+     ],
+     "surface_id": "floor",
+     "yaw": 0.0
+    },
+    {
+     "kind": "cover",
+     "name": "cover_3",
+     "position": [
+      27.0,
+      0.3,
+      33.0
+     ],
+     "surface_id": "floor",
+     "yaw": 0.0
+    }
+   ],
+   "volumes": [
+    {
+     "center": [
+      0.0,
+      12.0,
+      26.0
+     ],
+     "kind": "no_build",
+     "name": "crane",
+     "size": [
+      78.0,
+      3.0,
+      4.4
+     ]
+    },
+    {
+     "center": [
+      -40.2,
+      1.0,
+      26.0
+     ],
+     "kind": "player_entry",
+     "name": "arrival",
+     "size": [
+      2.4,
+      2.0,
+      2.4
+     ]
+    },
+    {
+     "center": [
+      0.0,
+      1.0,
+      26.0
+     ],
+     "kind": "objective",
+     "name": "reward",
+     "size": [
+      2.4,
+      2.0,
+      2.4
+     ]
+    }
+   ],
+   "traversal": [
+    {
+     "end": [
+      0.0,
+      0.0,
+      26.0
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "entry_to_middle",
+     "start": [
+      -40.4,
+      0.0,
+      26.0
+     ]
+    },
+    {
+     "end": [
+      40.4,
+      0.0,
+      26.0
+     ],
+     "kind": "walk",
+     "mandatory": true,
+     "name": "middle_to_exit",
+     "start": [
+      0.0,
+      0.0,
+      26.0
+     ]
+    },
+    {
+     "end": [
+      -40.4,
+      8.0,
+      3.5
+     ],
+     "kind": "walk",
+     "mandatory": false,
+     "name": "floor_to_catwalk_w",
+     "start": [
+      -37.0,
+      0.0,
+      5.5
+     ]
+    },
+    {
+     "end": [
+      40.4,
+      8.0,
+      48.5
+     ],
+     "kind": "walk",
+     "mandatory": false,
+     "name": "floor_to_catwalk_e",
+     "start": [
+      37.0,
+      0.0,
+      46.5
+     ]
+    },
+    {
+     "end": [
+      -40.4,
+      8.0,
+      26.0
+     ],
+     "kind": "walk",
+     "mandatory": false,
+     "name": "catwalk_s_to_w",
+     "start": [
+      -40.4,
+      8.0,
+      1.6
+     ]
+    }
+   ],
+   "size_class": "large",
+   "exit_yaw": 90.0,
+   "offers": [
+    {
+     "kind": "rail_route",
+     "name": "rail_crane",
+     "points": [
+      [
+       -36.0,
+       14.4,
+       26.0
+      ],
+      [
+       -12.0,
+       15.0,
+       26.0
+      ],
+      [
+       12.0,
+       15.0,
+       26.0
+      ],
+      [
+       36.0,
+       14.4,
+       26.0
+      ]
+     ]
+    },
+    {
+     "kind": "launch_source",
+     "name": "launch_west",
+     "position": [
+      -28.0,
+      0.5,
+      26.0
+     ],
+     "radius": 3.0,
+     "target": "launch_catwalk"
+    },
+    {
+     "kind": "launch_target",
+     "name": "launch_catwalk",
+     "position": [
+      30.0,
+      8.0,
+      49.699999999999996
+     ],
+     "radius": 3.5
+    },
+    {
+     "kind": "grapple_point",
+     "name": "grapple_0",
+     "position": [
+      -20.0,
+      10.6,
+      26.0
+     ],
+     "radius": 1.5
+    },
+    {
+     "kind": "grapple_point",
+     "name": "grapple_1",
+     "position": [
+      0.0,
+      10.6,
+      26.0
+     ],
+     "radius": 1.5
+    },
+    {
+     "kind": "grapple_point",
+     "name": "grapple_2",
+     "position": [
+      20.0,
+      10.6,
+      26.0
+     ],
+     "radius": 1.5
+    }
+   ]
   }
  ]
 }
