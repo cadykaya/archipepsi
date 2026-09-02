@@ -1,5 +1,30 @@
 # P2 — the eight dimensionless shells, retrofitted to the P1 contract
 
+> ## P2 IS COMPLETE. ALL EIGHT SHELLS PASS. (owner, 2026-09-02)
+>
+> Two gates, both cleared. Production certified all eight physically at
+> `6640d86` — room contract satisfied, **zero findings** — and the owner
+> reviewed the actual P2 form from `docs/art/review/p2_owner/` and
+> approved all eight as part of the authored room library. They export
+> `review: "pass"`.
+>
+> **What was approved is spatial FORM:** identity, scale, route and read,
+> composition usefulness, and the collapsed/spiral deck-well repairs.
+> **It is not a claim that dressing is finished.** Three non-blocking
+> notes stand, and none is a reason to reopen a shell:
+>
+> - the collapsed and spiral **deck wells may later receive lip / frame /
+>   railing / support language** during dressing;
+> - `shell_tower_gantry`'s **`landing_4`/deck coplanar z-fight is
+>   cleanup**, not a shell defect — pre-existing F3 geometry;
+> - `shell_treasure_vault`'s **"protected" identity should be
+>   strengthened with props, barriers, sound and lighting**, *not* by
+>   redesigning the shell.
+>
+> Approval opens the seam; it does not use it. `SHELL_FOR_TYPE` still
+> names the `_proc` ids, so nothing reaches a Zone until Production
+> points it at the authored ids.
+
 Source-side retrofit against Production's landed P1 at **`99379e5`**
 ("A valid room means the same thing whoever produced it"). Targets the real
 implementation, not the study's proposal — three places they differ are

@@ -42,18 +42,23 @@ func _initialize() -> void:
 		"projectile_straight": false,
 		"projectile_falling": false,
 		"projectile_lobbed": false,
-		# P2: the eight dimensionless F3 shells. Held PENDING per the
-		# room-architecture study's §16 -- the owner flips per entry, and
-		# they are not player-selectable regardless because
-		# `SHELL_FOR_TYPE` still names the `_proc` ids.
-		"shell_tower_collapsed": false,
-		"shell_tower_spiral": false,
-		"shell_tower_gantry": false,
-		"shell_treasure_vault": false,
-		"shell_treasure_cache": false,
-		"shell_treasure_coffer": false,
-		"shell_corner_left": false,
-		"shell_corner_right": false,
+		# P2: the eight authored shells, PASSED at the owner's form
+		# review after Production certified them physically at 6640d86.
+		# Two gates, both now cleared -- the contract measures true and
+		# the owner accepts the form.
+		#
+		# `true` here means only that `is_shippable()` no longer refuses
+		# them. Whether one actually appears in a Zone is Production's:
+		# `SHELL_FOR_TYPE` still names the `_proc` ids, so the seam is
+		# open and unused until they wire it.
+		"shell_tower_collapsed": true,
+		"shell_tower_spiral": true,
+		"shell_tower_gantry": true,
+		"shell_treasure_vault": true,
+		"shell_treasure_cache": true,
+		"shell_treasure_coffer": true,
+		"shell_corner_left": true,
+		"shell_corner_right": true,
 	}
 	for id in wanted:
 		var want_shippable: bool = wanted[id]

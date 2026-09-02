@@ -2530,6 +2530,37 @@ both mirrored corners.
 > This is exactly what shell variation should accomplish: same envelope, same
 > reward location, different spatial / environmental story.
 
+## P2 owner form review — ALL EIGHT SHELLS PASS (2026-09-02)
+
+The F3 verdicts above passed these shells **as art**. This is the separate
+verdict on the **P2 form** — the version carrying the P1 room contract,
+authored collision, and the collapsed/spiral deck-well repairs — reviewed
+from `docs/art/review/p2_owner/` (36 frames).
+
+Production certified them physically at `6640d86`: room contract
+satisfied, **zero findings**. The owner then approved all eight.
+
+| family | shells | verdict |
+| --- | --- | --- |
+| corridor (corner-shaped) | `shell_corner_left`, `shell_corner_right` | **PASS** |
+| treasure_room | `shell_treasure_vault`, `_cache`, `_coffer` | **PASS** |
+| tower | `shell_tower_collapsed`, `_spiral`, `_gantry` | **PASS** |
+
+They export `review: "pass"`; `is_shippable()` no longer refuses them.
+
+**Approved: spatial FORM** — identity, scale, route and read, composition
+usefulness, and the two deck-well repairs. **Not a claim that dressing is
+complete.** Three notes carried forward as NON-BLOCKING:
+
+- the collapsed and spiral **deck wells may receive lip / frame / railing
+  / support language** during later dressing;
+- gantry's **`landing_4`/deck coplanar z-fight is cleanup**, on
+  pre-existing F3 geometry, not a shell defect;
+- the vault's **"protected" identity is to be strengthened with props,
+  barriers, sound and lighting — not by redesigning the shell.**
+
+The three projectile visuals are untouched by this and remain `pending`.
+
 ## Interface requirement 20 — RESOLVED: remove the hazard-orange turn stripe
 
 **Hazard orange remains reserved for hazard / warning semantics. "A corridor

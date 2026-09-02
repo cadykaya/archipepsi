@@ -291,6 +291,35 @@ substitute for it.
 named in `verify_manifest.DECLARED_HANDOFF` with its reason; anything not
 on that list still fails the drift check.
 
+### F0c. The eight shells are APPROVED and now export `review: "pass"`
+
+**Take `godot/content/` again.** The diff against your landed pack is
+**eight `review` fields and nothing else** — no geometry, no collision, no
+room metadata, no cameras, no other entry. Measured field by field, not
+asserted.
+
+The owner completed the P2 form review on 2026-09-02 and passed all eight.
+Your certification at `6640d86` was the physical gate; this was the other
+one.
+
+**What this changes for you:** `VisualOwnership.is_shippable()` stops
+refusing them, so `ContentInstantiator` will use the authored scene
+instead of falling back. **Nothing appears in a Zone until you wire it** —
+`SHELL_FOR_TYPE` still names the `_proc` ids, so the seam is open and
+unused, and the digest should not move until you point it at the authored
+ids. The corners are `corridor`-typed with `corner` as a shape tag and
+`exit_yaw` ±90, so they can legally be offered to corridor-compatible
+selection.
+
+**The projectiles are untouched and still `pending`** — that reversal
+stands, and this approval does not reach it.
+
+Three dressing notes travel with the approval as NON-BLOCKING: the
+collapsed/spiral deck wells may later gain lip/frame/railing language;
+gantry's `landing_4`/deck coplanar z-fight is cleanup on pre-existing F3
+geometry; and the vault's "protected" identity is to be strengthened with
+props, barriers, sound and lighting rather than by redesigning the shell.
+
 ### F1. Drop in the content pack — **no code change**
 
 | | |

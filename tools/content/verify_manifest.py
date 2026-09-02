@@ -119,6 +119,11 @@ def main(argv):
         _SOCKET = ("`enemy_high` sockets are placed WHERE something fits "
                    "on their surface, not at its centre. The centre put "
                    "collapsed's high_3 0.05 m inside the stone above it")
+        _PASS = ("PASSED at the P2 owner form review. Production certified "
+                 "all eight physically at 6640d86 (room contract, zero "
+                 "findings) and the owner then approved the rendered form "
+                 "from docs/art/review/p2_owner/. Production's landed pack "
+                 "still carries the pre-review 'pending'")
         _CORNER = ("corners offered as CORRIDOR, the request Production "
                    "recorded at eda4fd9 ('corner is not a chamber type'); "
                    "the corner shape survives as a tag beside it")
@@ -138,7 +143,15 @@ def main(argv):
                 ("shell_treasure_cache", ("surfaces", "traversal"),
                  _STEP_LOW),
                 ("shell_treasure_coffer", ("surfaces", "traversal"),
-                 _STEP_LOW)):
+                 _STEP_LOW),
+                ("shell_tower_collapsed", ("review",), _PASS),
+                ("shell_tower_spiral", ("review",), _PASS),
+                ("shell_tower_gantry", ("review",), _PASS),
+                ("shell_treasure_vault", ("review",), _PASS),
+                ("shell_treasure_cache", ("review",), _PASS),
+                ("shell_treasure_coffer", ("review",), _PASS),
+                ("shell_corner_left", ("review",), _PASS),
+                ("shell_corner_right", ("review",), _PASS)):
             for _field in _fields:
                 DECLARED_HANDOFF[(_cid, _field)] = _why
 

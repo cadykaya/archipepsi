@@ -895,7 +895,7 @@
    "content_id": "shell_corner_left",
    "source_asset": "batch019/shells/shell_corner_left",
    "source_batch_review": "PASS",
-   "runtime_substitution": "pending",
+   "runtime_substitution": "pass",
    "p1_contract": {
     "surfaces": 1,
     "traversal": 0,
@@ -919,7 +919,7 @@
    "content_id": "shell_corner_right",
    "source_asset": "batch019/shells/shell_corner_right",
    "source_batch_review": "PASS",
-   "runtime_substitution": "pending",
+   "runtime_substitution": "pass",
    "p1_contract": {
     "surfaces": 1,
     "traversal": 0,
@@ -943,7 +943,7 @@
    "content_id": "shell_tower_collapsed",
    "source_asset": "batch018/shells/shell_tower_collapsed",
    "source_batch_review": "PASS",
-   "runtime_substitution": "pending",
+   "runtime_substitution": "pass",
    "p1_contract": {
     "surfaces": 11,
     "traversal": 9,
@@ -968,7 +968,7 @@
    "content_id": "shell_tower_gantry",
    "source_asset": "batch018/shells/shell_tower_gantry",
    "source_batch_review": "PASS",
-   "runtime_substitution": "pending",
+   "runtime_substitution": "pass",
    "p1_contract": {
     "surfaces": 23,
     "traversal": 21,
@@ -993,7 +993,7 @@
    "content_id": "shell_tower_spiral",
    "source_asset": "batch018/shells/shell_tower_spiral",
    "source_batch_review": "PASS",
-   "runtime_substitution": "pending",
+   "runtime_substitution": "pass",
    "p1_contract": {
     "surfaces": 12,
     "traversal": 10,
@@ -1018,7 +1018,7 @@
    "content_id": "shell_treasure_cache",
    "source_asset": "batch019/shells/shell_treasure_cache",
    "source_batch_review": "PASS",
-   "runtime_substitution": "pending",
+   "runtime_substitution": "pass",
    "p1_contract": {
     "surfaces": 2,
     "traversal": 1,
@@ -1050,7 +1050,7 @@
    "content_id": "shell_treasure_coffer",
    "source_asset": "batch019/shells/shell_treasure_coffer",
    "source_batch_review": "PASS",
-   "runtime_substitution": "pending",
+   "runtime_substitution": "pass",
    "p1_contract": {
     "surfaces": 2,
     "traversal": 1,
@@ -1082,7 +1082,7 @@
    "content_id": "shell_treasure_vault",
    "source_asset": "batch019/shells/shell_treasure_vault",
    "source_batch_review": "PASS",
-   "runtime_substitution": "pending",
+   "runtime_substitution": "pass",
    "p1_contract": {
     "surfaces": 2,
     "traversal": 1,

@@ -597,14 +597,41 @@ truth remain Godot's.
 
 ---
 
-## P2 owner review — the package is out, the verdicts are not in
+## P2 IS COMPLETE — all eight shells PASS (owner, 2026-09-02)
 
-`docs/art/review/p2_owner/` (36 frames + README) is the owner-review
-package for the eight certified shells. Production certified them at
-`6640d86`: the room contract is satisfied with **zero physical findings**.
-That settles technical validity and settles nothing else — all eight are
-still `review: "pending"` and the owner decides PASS / KEEP PENDING /
-REVISE per shell from the actual P2 form.
+> ### THE AUTHORED ROOM LIBRARY HAS ITS FIRST EIGHT MEMBERS.
+
+Both gates are cleared. Production certified the eight physically at
+`6640d86` — room contract satisfied, **zero findings** — and the owner
+then reviewed the actual P2 form from `docs/art/review/p2_owner/` (36
+frames) and **approved all eight**:
+
+| family | shells |
+| --- | --- |
+| corridor (corner-shaped) | `shell_corner_left`, `shell_corner_right` |
+| treasure_room | `shell_treasure_vault`, `_cache`, `_coffer` |
+| tower | `shell_tower_collapsed`, `_spiral`, `_gantry` |
+
+They export `review: "pass"` from `SHELL_REVIEW` in
+`tools/export_content_pack.py`, which is the art source of truth for that
+switch. `is_shippable()` no longer refuses them.
+
+**What was approved is spatial FORM** — identity, scale, route and read,
+composition usefulness, and the collapsed/spiral deck-well repairs. It is
+**not** a claim that dressing is finished. Three non-blocking notes stand,
+and none of them is a reason to reopen a shell:
+
+- the collapsed and spiral deck wells may later receive lip / frame /
+  railing / support language during dressing;
+- `shell_tower_gantry`'s `landing_4`/deck coplanar z-fight is cleanup, not
+  a shell defect — it is pre-existing F3 geometry (see the P2 review
+  package README);
+- `shell_treasure_vault`'s "protected" identity should be strengthened
+  with props, barriers, sound and lighting **rather than shell redesign**.
+
+**Still Production's to wire.** Approval opens the seam; it does not use
+it. `SHELL_FOR_TYPE` still names the `_proc` ids, so nothing appears in a
+Zone until Production points it at the authored ids.
 
 Two shells carry an intentional visible P2 repair (`shell_tower_collapsed`
 and `shell_tower_spiral`, the deck well); the other six are byte-identical

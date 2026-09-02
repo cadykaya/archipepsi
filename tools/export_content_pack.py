@@ -55,6 +55,15 @@ CONTENT = os.path.join(ROOT, "godot", "content")
 #:
 #: FIXTURES: "pass". The A/B kept them.
 #:
+#: ROOM SHELLS: "pass" since the P2 owner form review. All eight were
+#: certified physically by Production at `6640d86` -- the room contract
+#: satisfied with zero findings -- and the owner then reviewed the actual
+#: P2 FORM from `docs/art/review/p2_owner/` and approved all eight. Those
+#: are two separate gates and both are now passed. The approval is of
+#: identity, scale, route and composition usefulness; it is NOT a claim
+#: that dressing is finished, and the open dressing notes are recorded in
+#: `P2_SHELL_RETROFIT.md` rather than being treated as blockers.
+#:
 #: PROJECTILES: "pending". Production deliberately reverted the authored
 #: projectile substitutions after the A/B because the silhouettes and tint
 #: regressed against the engine's own `ProjectileSilhouette`. The source art
@@ -118,10 +127,11 @@ FIXTURES = {
 #: `stones` for the towers, `_plinth`'s literals for the treasure rooms,
 #: `_corner`'s turn for the corners. No GLB is remodelled.
 #:
-#: They export `review: "pending"` like everything else new: §16 of the
-#: room-architecture study is explicit that the owner flips per entry, and
-#: the projectile reversal is the proof that per-entry review is the
-#: working kill switch.
+#: They exported `review: "pending"` from the first slice to the owner's
+#: form review, which is what §16 of the room-architecture study asks for:
+#: the owner flips per entry. That flip has now happened for all eight --
+#: see `SHELL_REVIEW`. The projectile reversal below stays as the proof
+#: that per-entry review is a working kill switch in both directions.
 #: id -> (source manifest dir, CHAMBER TYPE, shape tags).
 #:
 #: THE CORNERS ARE CORRIDORS. Production measured the consequence of the
@@ -136,8 +146,8 @@ FIXTURES = {
 #: the entry itself. So the chamber type is `corridor` -- that is the
 #: progression truth, the thing a selector matches and the chain rotates
 #: through -- and `corner` survives as a SHAPE TAG beside it, describing
-#: the room without claiming to be a type. Nothing here approves them;
-#: they stay `review: "pending"` and the owner still decides.
+#: the room without claiming to be a type. That is what lets an approved
+#: corner actually be offered to corridor-compatible selection.
 SHELLS = {
     "shell_tower_collapsed": ("batch018/shells", "tower", ("collapse",)),
     "shell_tower_spiral":    ("batch018/shells", "tower", ("spiral",)),
@@ -154,7 +164,11 @@ SHELLS = {
                               ("corner", "turn_right")),
 }
 
-SHELL_REVIEW = "pending"
+#: PASSED at the P2 owner form review. Production certified the eight
+#: physically at `6640d86`; the owner reviewed the rendered form and
+#: approved all eight as part of the authored room library. Flipping this
+#: back is an owner decision, exactly as flipping it forward was.
+SHELL_REVIEW = "pass"
 
 #: silhouette -> asset id. `ProjectileSilhouette.content_id()` is
 #: "projectile_%s", and the family is closed at these three.
