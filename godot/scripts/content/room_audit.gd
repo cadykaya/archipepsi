@@ -81,7 +81,11 @@ const HEADROOM := Constants.PLAYER_HEIGHT + 0.6
 ## real over-step in this project is anywhere near this small. A rise
 ## that genuinely exceeds the base kit exceeds it by tens of
 ## centimetres, and is still refused.
-const AS_BUILT_SLACK := 0.01
+## ONE NUMBER, wherever it is read. The tolerance moved into
+## `TraversalLaw` with the movement law it belongs to; this stays as its
+## name here because the suite and the comments above reach for it, and
+## two constants holding one idea is how they come to disagree.
+const AS_BUILT_SLACK := TraversalLaw.AS_BUILT_SLACK
 
 ## Every way the room's geometry contradicts the room's claims.
 ##
@@ -413,20 +417,28 @@ static func _traversal_is_true(room: Dictionary, to_world: Transform3D,
 						% [who, name] + "has floor across it")
 		if not bool(seg.get("mandatory", true)) or landed.size() < 2:
 			continue
-		var span := Vector2(end.x - start.x, end.z - start.z).length()
-		var rise: float = float(landed["end"]) - float(landed["start"])
-		if kind == "rise" \
-				and rise > Constants.MAX_VERTICAL_STEP + AS_BUILT_SLACK:
-			out.append("%s: traversal '%s' rises %.2f m as built on the "
-					% [who, name, rise] + "mandatory route; the base kit "
-					+ "tops out at %.2f" % Constants.MAX_VERTICAL_STEP)
-		if not ["gap", "rise"].has(kind):
-			continue
-		var allowed := Constants.max_safe_gap(maxf(rise, 0.0))
-		if span > allowed + AS_BUILT_SLACK:
-			out.append("%s: traversal '%s' spans %.2f m as built at a "
-					% [who, name, span] + "%.2f m rise; the safe reach "
-					% rise + "there is %.2f" % allowed)
+		# MEASURED ENDPOINTS, not declared ones. The heights come from
+		# the rays above, so a manifest that lies within the drift
+		# tolerance is still judged on what was actually built -- the
+		# property that caught two stairs measuring 1.000039 m.
+		var built_start := Vector3(start.x, float(landed["start"]), start.z)
+		var built_end := Vector3(end.x, float(landed["end"]), end.z)
+		# THE SAME LAW `ShellValidator` RUNS, with rays instead of mesh
+		# boxes. One statement of what each kind claims; two ways of
+		# seeing. A walk is measured as GROUND CONTINUITY rather than as
+		# a jump between its endpoints, which is what a walk is.
+		var ground := func(at: Vector3) -> float:
+			var world := to_world * at
+			var hit := _ray(space, world + Vector3.UP * 1.2,
+					world + Vector3.DOWN * 2.0)
+			if hit.is_empty():
+				return -INF
+			return (to_world.affine_inverse()
+					* (hit["position"] as Vector3)).y
+		for problem: String in TraversalLaw.violations(kind, built_start,
+				built_end, ground, "%s: traversal '%s'" % [who, name],
+				RoomContract.sockets_of(room, "stand")):
+			out.append(problem)
 	return out
 
 # --- 6. the room fits in the box it reserved ------------------------------

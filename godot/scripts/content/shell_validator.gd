@@ -46,14 +46,34 @@ static func refusals(entry: Dictionary, instance: Node3D) -> Array[String]:
 		if typeof(segment) != TYPE_DICTIONARY:
 			out.append("%s: a traversal entry is not an object" % id)
 			continue
-		out.append_array(_check_segment(id, segment, instance))
+		out.append_array(_check_segment(id, segment, instance, entry))
 
 	out.append_array(_check_sockets(id, entry, instance))
 	out.append_array(_check_envelope(id, entry, instance))
 	return out
 
+## The shell's declared surfaces, in the shape `TraversalLaw` reads.
+static func _surface_rects(entry: Dictionary) -> Array:
+	var out: Array = []
+	for raw: Variant in entry.get("surfaces", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var patch: Dictionary = raw
+		var centre: Variant = patch.get("center", patch.get("position"))
+		var extent: Variant = patch.get("extent", [])
+		if typeof(centre) != TYPE_ARRAY or (centre as Array).size() < 3:
+			continue
+		if typeof(extent) != TYPE_ARRAY or (extent as Array).size() < 2:
+			continue
+		out.append({"name": str(patch.get("name", "?")),
+				"position": Vector3(float(centre[0]), float(centre[1]),
+					float(centre[2])),
+				"extent": Vector3(float(extent[0]), 0.0,
+					float(extent[1]))})
+	return out
+
 static func _check_segment(id: String, segment: Dictionary,
-		instance: Node3D) -> Array[String]:
+		instance: Node3D, entry: Dictionary) -> Array[String]:
 	var out: Array[String] = []
 	var name := str(segment.get("name", "?"))
 	var mandatory: bool = bool(segment.get("mandatory", true))
@@ -90,23 +110,37 @@ static func _check_segment(id: String, segment: Dictionary,
 	if not mandatory:
 		return out
 
-	# 2. Is the MEASURED movement inside the base kit? Measured, not
-	#    declared -- a manifest that lies in a direction the drift check
-	#    tolerates must still not produce an impossible jump.
-	var rise: float = measured_end.y - measured_start.y
-	var span := Vector2(measured_end.x - measured_start.x,
-			measured_end.z - measured_start.z).length()
-	if rise > Constants.MAX_VERTICAL_STEP + 0.001:
-		out.append("%s: mandatory traversal '%s' rises %.2f m as built; "
-				% [id, name, rise]
-				+ "the base kit tops out at %.2f m"
-				% Constants.MAX_VERTICAL_STEP)
-	var allowed := Constants.max_safe_gap(maxf(rise, 0.0))
-	if span > allowed + 0.001:
-		out.append("%s: mandatory traversal '%s' spans %.2f m at a %.2f m "
-				% [id, name, span, rise]
-				+ "rise as built; the base kit's safe reach there is "
-				+ "%.2f m" % allowed)
+	# 2. Is the MEASURED movement inside what its KIND claims? Measured,
+	#    not declared -- a manifest that lies in a direction the drift
+	#    check tolerates must still not produce an impossible movement.
+	#
+	#    KIND-AWARE since P3.5, and the fix is not an exemption. This used
+	#    to score every mandatory segment against the JUMP bounds, so a
+	#    continuous walk across connected ground was read as a jump
+	#    between its endpoints -- `shell_hall_transit` failed on a 3.20 m
+	#    collar, an 18 m ramp and a 14 m stair, none of which is a jump.
+	#    `TraversalLaw` holds each kind to what it CLAIMS: a gap is still
+	#    bounded by `max_safe_gap`, a rise by `MAX_VERTICAL_STEP`, and a
+	#    walk has to prove there is ground all the way along it. A jump
+	#    relabelled `walk` fails on the void it crosses.
+	#
+	#    THE EVIDENCE IS COLLISION HULLS because this runs at IMPORT, on
+	#    a scene that is not in any tree and therefore has no physics
+	#    space to cast into. NOT mesh AABBs: an authored shell is a
+	#    single merged `MeshInstance3D`, so its one box spans the whole
+	#    room and describes no floor inside it -- asking it where the
+	#    ground is returns the ceiling or nothing. The hulls are
+	#    per-piece and are what the player actually stands on.
+	#    `RoomAudit` runs the same law against real rays once the room is
+	#    in the world.
+	var boxes := ChamberBuilders.all_solid_boxes(instance)
+	var ground := func(at: Vector3) -> float:
+		return TraversalLaw.mesh_ground(boxes, at)
+	for problem: String in TraversalLaw.violations(
+			str(segment.get("kind", "walk")), measured_start, measured_end,
+			ground, "%s: mandatory traversal '%s'" % [id, name],
+			_surface_rects(entry)):
+		out.append(problem)
 	return out
 
 ## Does the shell fit in the box it claims? (P1)

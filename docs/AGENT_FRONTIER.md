@@ -616,6 +616,43 @@ the eight. Measured: nine changed leaves, ALL under
 developer's call, not yours", so it was not retaken. `make baseline`
 fixes it, and `test-bridge` is red on those two tests until it is run.
 
+## P3.5 — LARGE-room traversal semantics — landed 2026-09-02
+
+Art `28c5a99` integrated. **`shell_hall_transit` stays `review: pending`:
+approval does not override the gate, and it does not pass yet.** Three
+precise findings, all its own declarations rather than its geometry —
+`basin_to_gallery` declares a mandatory walk from the basin to a gallery
+11 m up with no declared surface chain between them, and
+`gallery_to_landing` / `gantry_to_exit` start 1.0 m past the end of the
+platforms they leave from, in air with no geometry under them.
+
+**Traversal kinds are claims, not exemptions.** `TraversalLaw` states the
+law once; `ShellValidator` runs it on collision hulls at import,
+`RoomAudit` on rays in the tree. `gap` and `rise` keep their bounds
+untouched; a `walk` is checked as CONNECTIVITY over the room's declared
+surfaces. My first draft used a straight-line ground sample, which is
+wrong and worth remembering: a ring collar and a chasm crossing are
+identical along the chord, so no chord test can separate them.
+
+**Rails are smooth.** Catmull-Rom handles from the authored points, which
+the curve passes exactly through. Measured on the shipped `rail_helix`:
+worst baked turn **1.68 deg** over 735 samples versus **62.4 deg** per
+corner as segments. Pitch and envelope containment are measured on the
+BAKED curve, because points can be legal while the curve between them is
+not. An invented max-bow constant was deleted rather than tuned.
+
+**`grapple_point` is a place, not a mechanic.** A region offer, validated
+(anchor clear, room to swing, ground below) and never built — Epsilon
+picks the verb, or declines.
+
+**Offers were never reaching the room**: `_from_authored_scene` did not
+emit the key at all, so the P3.0 seam was unconnected on the authored
+path. Fixed.
+
+Four sabotages, all caught. Digest `6e8d83d0f3ec088b`, catalog 8 (the
+hall is not in it), eight P2 shells unchanged at `structural=0
+measured=0`.
+
 ## P3.0 — LARGE-ROOM MOVEMENT FOUNDATION — landed 2026-09-02
 
 Contract only. **No LARGE room was authored**, and none of the eight P2

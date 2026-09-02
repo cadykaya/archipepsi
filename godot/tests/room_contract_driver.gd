@@ -785,7 +785,15 @@ func _test_a_pending_shell_never_reaches_a_zone() -> void:
 				_chamber_for(held), "concrete_facility", private)
 		add_child(result["root"] as Node3D)
 		await get_tree().physics_frame
-		_check((result.get("sockets", []) as Array).is_empty(),
+		# THE AUTHORED SCENE, BY NAME. "no sockets" was the old proxy
+		# and it is wrong for any shell whose fallback is an ARENA: a
+		# procedural arena emits sockets of its own, so an empty list
+		# proves nothing and a full one accuses the wrong thing. The
+		# merged mesh an authored shell instantiates carries the shell's
+		# id as its node name, and the procedural builders never make a
+		# node called that.
+		_check((result["root"] as Node3D).find_child(id, true, false)
+					== null,
 				"%s is pending and its authored scene was built anyway"
 				% id)
 		_check(RoomContract.violations(result, id).is_empty(),

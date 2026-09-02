@@ -578,13 +578,30 @@ def test_the_godot_validator_measures_rather_than_trusting():
     instantiated markers, so this checks it does.
     """
     gd = VALIDATOR.read_text()
-    assert "measured_end.y - measured_start.y" in gd, (
-        "the validator no longer derives rise from the MEASURED markers")
-    assert "Constants.max_safe_gap" in gd, (
-        "the validator no longer consults the shared gap bound")
+    # P3.5 moved the arithmetic into `TraversalLaw`, so that one law is
+    # stated once and run by the import gate against mesh boxes and by
+    # `RoomAudit` against rays. The DECISION this test exists for is
+    # unchanged and is checked in the two halves it now lives in: the
+    # validator must hand the law the MEASURED markers, and the law must
+    # derive its numbers from what it was handed.
+    assert "TraversalLaw.violations(" in gd, (
+        "the validator no longer runs the shared traversal law")
+    assert "measured_start, measured_end" in gd, (
+        "the validator no longer hands the law the MEASURED markers; a "
+        "manifest is a claim an artist typed, and D1 says an art asset "
+        "is not trusted because its metadata says it is safe")
+    assert "declared_start, declared_end" not in gd, (
+        "the validator is measuring the DECLARED positions, which is the "
+        "thing this test exists to prevent")
+
+    law = (VALIDATOR.parent.parent / "content" / "traversal_law.gd").read_text()
+    assert "end.y - start.y" in law, (
+        "the traversal law no longer derives rise from its endpoints")
+    assert "Constants.max_safe_gap" in law, (
+        "the traversal law no longer consults the shared gap bound")
     # And the refusal has to be legible: a bare "invalid" tells an artist
     # nothing they can act on.
-    assert "as built" in gd
+    assert "as built" in law
 
 
 # --- 8: the suites must actually run their own tests ----------------------

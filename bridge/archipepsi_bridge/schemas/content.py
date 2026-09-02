@@ -248,7 +248,8 @@ SizeClass = Literal["small", "medium", "large"]
 #: `platform_route` and `wind_column` are the named next arrivals and are
 #: deliberately absent -- they arrive through this same field with the
 #: packages that read them, needing no new grammar.
-OFFER_KINDS = ("rail_route", "launch_source", "launch_target")
+OFFER_KINDS = ("rail_route", "launch_source", "launch_target",
+               "grapple_point")
 
 
 class Offer(Strict):
@@ -271,7 +272,8 @@ class Offer(Strict):
     decides whether the geometry is really there.
     """
     name: _TAG
-    kind: Literal["rail_route", "launch_source", "launch_target"]
+    kind: Literal["rail_route", "launch_source", "launch_target",
+                  "grapple_point"]
     #: A route's ordered control points, in the shell's local space.
     #: Empty for region offers.
     points: tuple[tuple[float, float, float], ...] = Field(
@@ -279,6 +281,12 @@ class Offer(Strict):
     #: A region's centre, and how far the consumer may work from it.
     position: tuple[float, float, float] | None = None
     radius: float = 0.0
+    #: A `grapple_point` is a PLACE, not a mechanic: the shell says
+    #: reaching up and across is spatially appropriate here, and Epsilon
+    #: decides whether the generated game has a hookshot, a tether, a
+    #: swing, or nothing that fits. It is never required for the room to
+    #: work.
+    #:
     #: A `launch_source` names the `launch_target` it is aimed at. The
     #: trajectory itself is SOLVED from the two, never authored: a
     #: literal velocity would be a second authoring of the destination
@@ -301,7 +309,8 @@ class Offer(Strict):
 
     @model_validator(mode="after")
     def _a_region_reserves_something(self) -> "Offer":
-        if self.kind in ("launch_source", "launch_target"):
+        if self.kind in ("launch_source", "launch_target",
+                         "grapple_point"):
             if self.position is None:
                 raise ValueError(
                     f"offer '{self.name}' is a region and has no "

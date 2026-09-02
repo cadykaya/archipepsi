@@ -426,6 +426,13 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 		"reward_position": _objective(entry, size),
 		"sockets": _authored_sockets(entry),
 		"traversal": _authored_traversal(entry),
+		# WHAT THE ROOM OFFERS a movement package (P3.5). The seam was
+		# built in P3.0 and the authored path never emitted the key, so
+		# a shell could declare a rail route and `MovementPackage` would
+		# find nothing -- the offers were dropped between the manifest
+		# and the room. `shell_hall_transit` is the first shell that
+		# declares any, and is where that showed.
+		"offers": _authored_offers(entry),
 		# P2-B. Degrees, matching `Socket.yaw` and the manifest; the
 		# chain converts once. A shell that does not declare one goes
 		# straight through, which is what every room has always done.
@@ -502,6 +509,37 @@ static func _authored_traversal(entry: Dictionary) -> Array:
 			"start": _vector(segment.get("start", []), Vector3.ZERO),
 			"end": _vector(segment.get("end", []), Vector3.ZERO),
 		})
+	return out
+
+## The shell's offers, in the room-output vocabulary.
+##
+## The manifest is JSON, so a route's points arrive as ARRAYS of numbers
+## and every consumer downstream wants `Vector3`. Converted once, here,
+## for the same reason `_authored_traversal` converts once: a consumer
+## that has to remember to cast is a consumer that one day does not.
+static func _authored_offers(entry: Dictionary) -> Array:
+	var out: Array = []
+	for raw: Variant in entry.get("offers", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var offer: Dictionary = raw
+		var made := {
+			"kind": str(offer.get("kind", "")),
+			"name": str(offer.get("name", "")),
+		}
+		var points := PackedVector3Array()
+		for point: Variant in offer.get("points", []):
+			points.append(_vector(point, Vector3.ZERO))
+		if not points.is_empty():
+			made["points"] = points
+		if offer.has("position"):
+			made["position"] = _vector(offer.get("position", []),
+					Vector3.ZERO)
+		if offer.has("radius"):
+			made["radius"] = float(offer.get("radius", 0.0))
+		if offer.has("target"):
+			made["target"] = str(offer.get("target", ""))
+		out.append(made)
 	return out
 
 ## Where the next room's entry goes, taken from the socket the artist

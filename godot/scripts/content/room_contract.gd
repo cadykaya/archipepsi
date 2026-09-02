@@ -118,19 +118,34 @@ const EXIT_YAWS := [-90.0, 0.0, 90.0]
 ##   rail_route     an ordered 3D path a rail may be built along
 ##   launch_source  a place a directed launch may fire FROM
 ##   launch_target  a landing region a launch may be aimed AT
+##   grapple_point  a place where reaching UP and ACROSS is spatially
+##                  appropriate (P3.5)
 ##
-## `grapple_anchor`, `platform_route` and `wind_column` are the named
-## next arrivals and are deliberately ABSENT: they arrive with the
-## packages that read them, through this same key, needing no new
-## grammar. That is what makes this a seam rather than a taxonomy.
-const OFFER_KINDS := ["rail_route", "launch_source", "launch_target"]
+## `platform_route` and `wind_column` are the named next arrivals and
+## are deliberately ABSENT: they arrive with the packages that read
+## them, through this same key, needing no new grammar. That is what
+## makes this a seam rather than a taxonomy.
+##
+## WHY `grapple_point` IS A PLACE AND NOT A MECHANIC. The shell says
+## "somebody could get up there from down here"; it does not say
+## hookshot, or tether, or swing, or grapple, because it does not know
+## what game it is in. The same anchor is a Zelda hookshot target, a
+## swing point, a pull-to anchor, or nothing at all -- and Epsilon
+## decides that from the vocabulary the generated game actually has.
+## What the contract owes in exchange is enough geometry to prove the
+## opportunity is REAL: an anchor in clear air, room under it to hang or
+## swing, and ground within reach to leave from or arrive at. A place
+## nobody could use is not an opportunity, whatever it is called.
+const OFFER_KINDS := ["rail_route", "launch_source", "launch_target",
+		"grapple_point"]
 
 ## Offers that are a ROUTE: an ordered `points` array, two or more.
 const ROUTE_OFFERS := ["rail_route"]
 
 ## Offers that are a REGION: a `position` and a `radius` the consumer
 ## must fit inside.
-const REGION_OFFERS := ["launch_source", "launch_target"]
+const REGION_OFFERS := ["launch_source", "launch_target",
+		"grapple_point"]
 
 ## THE ROOM ENVELOPE: how far outside its declared bounds a room's own
 ## geometry may physically reach.

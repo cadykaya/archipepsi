@@ -212,3 +212,107 @@ arrive somewhere a player fits.
 * do not author a launch velocity or arc;
 * do not assume a package will consume any offer — the room must read as
   a room with none of them built.
+
+
+---
+
+# P3.5 — what changed after the first LARGE room
+
+## Traversal kinds are claims, not exemptions
+
+`ShellValidator._check_segment` applied the base-kit JUMP bounds to every
+mandatory segment whatever its `kind`, so a continuous walk was scored as
+a jump between its endpoints. On `shell_hall_transit` that refused a
+3.20 m collar, an 18 m ramp and a 14 m stair — none of them jumps.
+
+`TraversalLaw` now states each kind once and both validators run it:
+
+| kind | what it claims | how it is checked |
+|---|---|---|
+| `gap` | the player leaves the ground and lands | `max_safe_gap(rise)` — unchanged |
+| `rise` | the player steps up | `MAX_VERTICAL_STEP` — unchanged |
+| `drop` | the player falls | only that it does not go up |
+| `walk` | the player never leaves the ground | **connectedness**, not span |
+
+**A walk is checked as connectivity over the room's own declared
+surfaces**: each endpoint must land on one, and the two must be joined by
+a chain of surfaces that touch within a player's width and step by no
+more than `MAX_VERTICAL_STEP`.
+
+The first draft of this checked a straight-line ground sample instead,
+and that is wrong in a way worth recording: **a ring collar and a chasm
+crossing are geometrically identical along the chord** — solid at both
+ends, open air between — so no chord test can tell a legitimate curved
+walk from a jump wearing a walk's label. Connectivity can: a route that
+curves, switches back or rings a shaft is connected; a chasm is not.
+
+Where a producer declares no surfaces the straight-line sample remains as
+the only evidence available, and the finding says which case it is in.
+
+**One law, two evidences.** `ShellValidator` runs at import on a detached
+scene and reads collision hulls (not mesh AABBs — an authored shell is
+one merged mesh whose single box describes no floor inside it).
+`RoomAudit` runs the same law against rays once the room is in the tree,
+on measured endpoints.
+
+## Rails are smooth
+
+`RailPath` gives every control point Bézier handles derived from its
+neighbours — the standard Catmull-Rom construction, tangent
+`(P[i+1] − P[i−1]) / 2`, handles a third of it either side, `TENSION` 1.0.
+The curve passes exactly **through** every authored point, so the route
+an artist drew is the route; the interpolation only fills in between.
+
+Art is **not** asked to hand-author dense points. Eleven points describe
+`rail_helix`; the curve is the engine's job.
+
+**Measured on the shipped `rail_helix`:** worst turn between two baked
+samples **1.68°** across 735 samples, against **62.4°** per corner for
+the same points as straight segments — a 37× reduction in peak turning,
+which is what "smooth" means when it is measured rather than eyeballed.
+The curve bows 1.77 m off its control polyline; deterministic, byte-equal
+across bakes.
+
+**Validation is on the actual route.** Pitch is measured along the baked
+curve, not between control points: a pair of points can sit at a legal
+angle while the curve between them rears past vertical. Containment is
+measured on the baked samples against `RoomContract.envelope` — a route
+whose points all sit safely inside can still bow outside, and that is the
+failure interpolation introduces. `MovementPackage` additionally walks
+the smoothed curve against room geometry before building it.
+
+An invented "maximum bow" constant was removed rather than tuned: the
+requirement is that the curve stays in the room and clear of geometry,
+and those are measurable directly.
+
+## Grapple opportunities
+
+`grapple_point` joins the offer vocabulary as a **region** offer
+(`position` + `radius`).
+
+**A place, not a mechanic.** The shell says "somebody could get up there
+from down here"; it does not say hookshot, tether, swing or pull, because
+it does not know what game it is in. The same anchor is a Zelda hookshot
+target, a swing point, or nothing at all — Epsilon decides from the verbs
+the generated game actually has, and may decline.
+
+What the contract owes in exchange is enough geometry to prove the
+opportunity is real. `MovementPackage` **validates and never builds** —
+there is no grapple mechanic in this engine, and inventing one here would
+be exactly the baking-in the contract forbids:
+
+* the anchor is not inside solid geometry;
+* there is `SWING_ROOM` (4.0 m) of clear air beneath it to hang or swing;
+* there is ground within `GRAPPLE_DROP` (30 m) below to leave from or
+  arrive at.
+
+Each is proven alone, so removing any one of them fails a test.
+
+## Offers reach the room
+
+`_from_authored_scene` never emitted `offers`, so a shell could declare a
+rail route and `MovementPackage` would find nothing — the seam built in
+P3.0 was not connected to the authored path. `shell_hall_transit` is the
+first shell that declares any, and is where that showed. Manifest offers
+are now converted once (JSON arrays to `Vector3`) alongside sockets and
+traversal.

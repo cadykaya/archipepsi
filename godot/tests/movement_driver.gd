@@ -26,6 +26,9 @@ func _run() -> void:
 	_test_a_rail_climbs_and_the_climb_costs_speed()
 	_test_a_rail_descends_and_the_drop_pays_it_back()
 	_test_a_rail_wraps_an_obstacle_through_several_levels()
+	_test_a_rail_is_smooth_and_not_a_chain_of_corners()
+	_test_a_smoothed_curve_may_not_leave_the_room()
+	_test_a_grapple_point_must_be_somewhere_you_could_hang()
 	_test_a_rider_enters_only_on_terms_and_leaves_when_it_asks()
 	_test_a_launch_crosses_horizontal_and_vertical_distance()
 	_test_a_launch_refuses_an_obstructed_arc()
@@ -61,8 +64,12 @@ func _test_a_rail_curves_in_plan_without_the_path_drifting() -> void:
 	_check(rail.violations().is_empty(),
 			"a right-angle rail was refused: %s"
 			% "; ".join(rail.violations()))
-	_check(absf(rail.length() - 20.0) < 0.3,
-			"a 10 + 10 m rail measured %.2f m" % rail.length())
+	# LONGER THAN THE CHORDS, and it must be: rounding a corner is a
+	# longer path than turning on a point. Bounded above so "smooth"
+	# can never quietly become "wanders".
+	_check(rail.length() > 20.0 and rail.length() < 22.0,
+			"a 10 + 10 m rail rounded to %.2f m; a smooth corner is a "
+			% rail.length() + "little longer than 20 m, not much")
 	# Ridden, and every step checked against the PATH rather than against
 	# the chord: a rider that cut the corner would leave the polyline.
 	var rider := _ride_from(rail, Vector3(0, 2, 0), Vector3(0, 0, 9.0))
@@ -71,14 +78,24 @@ func _test_a_rail_curves_in_plan_without_the_path_drifting() -> void:
 		var step := rider.advance(1.0 / 60.0)
 		var body: Vector3 = step["position"]
 		var foot := body - Vector3.UP * RailRider.STAND_OFFSET
-		wandered = maxf(wandered, _off_polyline(foot, rail.segments()))
+		wandered = maxf(wandered, _off_polyline(foot, rail.polyline()))
 		if not bool(step["riding"]):
 			break
 	_check(wandered < AffordanceFeatures.RAIL_BEAM_THICKNESS / 2.0,
-			"the ride drifted %.3f m off the control polyline, past the "
-			% wandered + "%.3f m half-thickness of the beam it is "
-			% (AffordanceFeatures.RAIL_BEAM_THICKNESS / 2.0)
-			+ "supposed to be on")
+			"the ride drifted %.3f m off the BAKED curve the beam is "
+			% wandered + "swept along, past its %.3f m half-thickness"
+			% (AffordanceFeatures.RAIL_BEAM_THICKNESS / 2.0))
+	# AND IT IS A CURVE. A right angle taken smoothly has to leave the
+	# chord; zero here would mean two straight legs and a corner, which
+	# is the thing P3.5 was asked to fix.
+	var bowed := 0.0
+	for point: Vector3 in rail.polyline():
+		bowed = maxf(bowed, _off_polyline(point, rail.segments()))
+	_check(bowed > 0.2,
+			"the rail bows only %.3f m off its control polyline; a "
+			% bowed + "right-angle turn taken smoothly cannot hug the "
+			+ "corner that closely")
+
 	rides += 1
 
 # --- 2 and 3. climbing and descending -------------------------------------
@@ -206,24 +223,231 @@ func _test_a_rail_wraps_an_obstacle_through_several_levels() -> void:
 		var step := rider.advance(1.0 / 60.0)
 		var foot := (step["position"] as Vector3) \
 				- Vector3.UP * RailRider.STAND_OFFSET
-		wandered = maxf(wandered, _off_polyline(foot, rail.segments()))
+		wandered = maxf(wandered, _off_polyline(foot, rail.polyline()))
 		climbed = maxf(climbed, foot.y)
 		if not bool(step["riding"]):
 			break
-	# A corner is baked across at `BAKE_INTERVAL`, so a polyline with a
-	# turn every few metres is cut by a few millimetres at each one. The
-	# claim is not "zero" -- it is that the rider is never off the beam
-	# the player can see, which is the only version of this a player
-	# could ever notice.
+	# The rider is never off the beam the player can see, which is the
+	# only version of this a player could ever notice.
 	_check(wandered < AffordanceFeatures.RAIL_BEAM_THICKNESS / 2.0,
-			"the helix ride drifted %.3f m off the control polyline, "
-			% wandered + "past the %.3f m half-thickness of its beam"
+			"the helix ride drifted %.3f m off the baked curve, past "
+			% wandered + "the %.3f m half-thickness of its beam"
 			% (AffordanceFeatures.RAIL_BEAM_THICKNESS / 2.0))
 	_check(climbed > 4.0,
 			"wrapping the column reached only y=%.2f" % climbed)
 	rides += 1
 
 # --- 5. entry and exit ----------------------------------------------------
+
+
+## --- the rail is a curve, measured rather than eyeballed (P3.5) --------
+
+## The most a smooth rail may turn between two baked samples. A polyline
+## turns its whole corner in one step and goes perfectly straight in
+## between; a curve spreads the same turning over every sample.
+const A_SMOOTH_STEP := 6.0
+
+func _test_a_rail_is_smooth_and_not_a_chain_of_corners() -> void:
+	"""SMOOTH, proven by WHERE the turning is rather than by how it looks.
+
+	The distinction that matters is not "does the route bend" -- a
+	polyline bends -- but "does it bend all at once". So the measurement
+	is the angle between consecutive baked tangents: on a chain of
+	straight segments that is a few huge spikes among zeros, and on a
+	spline it is small and everywhere. A rail faked smooth by dense
+	hand-authoring would still show the spikes.
+
+	Run on `rail_helix`\'s own control points, read out of the shipped
+	manifest, so what is proven is the route Art actually authored rather
+	than a fixture chosen to flatter the implementation."""
+	var points := _helix_control_points()
+	# LOUD, not a silent return: an early exit here is how this test
+	# spent its first run proving nothing at all.
+	_check(points.size() >= 3,
+			"the hall's rail_route gave %d control points; there is "
+			% points.size() + "nothing to measure")
+	if points.size() < 3:
+		return
+	var rail := RailPath.from_points(points)
+	_check(rail.violations().is_empty(),
+			"the authored helix route was refused: %s"
+			% "; ".join(rail.violations()))
+
+	var walked := rail.polyline()
+	var worst := 0.0
+	var total := 0.0
+	var spikes := 0
+	for i in walked.size() - 2:
+		var a := (walked[i + 1] - walked[i]).normalized()
+		var b := (walked[i + 2] - walked[i + 1]).normalized()
+		var turn := rad_to_deg(a.angle_to(b))
+		worst = maxf(worst, turn)
+		total += turn
+		if turn > A_SMOOTH_STEP:
+			spikes += 1
+	# THE BEFORE PICTURE: the same points as straight segments, which is
+	# what this rail used to be. It has to fail the test the curve
+	# passes, or the test is measuring nothing.
+	var chord_worst := 0.0
+	for i in points.size() - 2:
+		var a := (points[i + 1] - points[i]).normalized()
+		var b := (points[i + 2] - points[i + 1]).normalized()
+		chord_worst = maxf(chord_worst, rad_to_deg(a.angle_to(b)))
+	print("   rail_helix: worst baked turn %.2f deg over %d samples; the "
+			% [worst, walked.size()]
+			+ "same points as segments turn %.1f deg per corner"
+			% chord_worst)
+	_check(worst <= A_SMOOTH_STEP,
+			"the sharpest turn between two baked samples is %.1f deg; a "
+			% worst + "curve spreads its turning (%d sample(s) over %.0f)"
+			% [spikes, A_SMOOTH_STEP])
+	_check(total > 200.0,
+			"the route turns only %.0f deg in total, so this fixture is "
+			% total + "not exercising a helix")
+	_check(chord_worst > A_SMOOTH_STEP * 3.0,
+			"the control polyline turns at most %.1f deg per corner, so "
+			% chord_worst + "it was already smooth and this proves "
+			+ "nothing")
+
+	# The curve leaves the chord -- that IS the smoothing -- but never by
+	# more than the contract allows, which keeps a smoothed rail inside
+	# the corridor its author cleared for it.
+	var bowed := 0.0
+	for point: Vector3 in walked:
+		bowed = maxf(bowed, _off_polyline(point, points))
+	_check(bowed > 0.05,
+			"the helix sits %.3f m from its control polyline; it has "
+			% bowed + "not been smoothed at all")
+	print('   rail_helix bows %.2f m off its control polyline' % bowed)
+
+	# DETERMINISTIC: the same points bake the same curve, every time.
+	var again := RailPath.from_points(points).polyline()
+	_check(walked.size() == again.size(),
+			"the same route baked %d samples once and %d the next time"
+			% [walked.size(), again.size()])
+	var moved := 0.0
+	for i in mini(walked.size(), again.size()):
+		moved = maxf(moved, walked[i].distance_to(again[i]))
+	_check(moved == 0.0,
+			"the same route baked to a different curve, by %.6f m" % moved)
+
+## `rail_helix` as `shell_hall_transit` declares it.
+func _helix_control_points() -> PackedVector3Array:
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var entry := registry.get_entry("shell_hall_transit")
+	for raw: Variant in entry.get("offers", []):
+		var offer: Dictionary = raw
+		if str(offer.get("kind", "")) != "rail_route":
+			continue
+		# THE MANIFEST IS JSON: a route's points arrive as arrays of
+		# numbers, and casting one to Vector3 fails silently enough that
+		# this whole test returned an empty list and passed on nothing
+		# until it was caught.
+		var out := PackedVector3Array()
+		for point: Variant in offer.get("points", []):
+			var xyz: Array = point
+			out.append(Vector3(float(xyz[0]), float(xyz[1]),
+					float(xyz[2])))
+		return out
+	_check(false, "the hall declares no rail_route to measure")
+	return PackedVector3Array()
+
+
+func _test_a_smoothed_curve_may_not_leave_the_room() -> void:
+	"""Smoothing is not a licence to bow through a wall.
+
+	Catmull-Rom overshoots on a sharp turn, so a route whose control
+	points all sit safely inside the room can produce a CURVE that does
+	not. That is the failure interpolation introduces and the reason
+	containment is measured on the baked samples rather than on the
+	points -- validating the points while letting the curve go anywhere
+	is exactly the hole this closes."""
+	# Control points just inside the envelope, and a zig-zag sharp enough
+	# that the smoothing overshoots past it.
+	var hugging := PackedVector3Array([
+		Vector3(-5.4, 2, -5.4), Vector3(5.4, 2, -5.4),
+		Vector3(-5.4, 2, 5.4), Vector3(5.4, 2, 5.4)])
+	var rail := RailPath.from_points(hugging)
+	var room := AABB(Vector3(-5.5, 0, -5.5), Vector3(11, 8, 11))
+	_check(rail.violations("shape").is_empty(),
+			"the zig-zag is a legal SHAPE and was refused on shape: %s"
+			% "; ".join(rail.violations("shape")))
+	var caged := rail.violations("caged", room)
+	_check(not caged.is_empty(),
+			"a curve that bows %.2f m off a route hugging the wall "
+			% rail.bow() + "stayed inside a %v room" % room.size)
+	_check("; ".join(caged).contains("envelope"),
+			"the refusal must name the envelope: %s" % "; ".join(caged))
+	refusals += 1
+	# THE CONTROL POINTS ARE ALL INSIDE, which is the whole point: the
+	# old shape-only check would have passed this.
+	for point: Vector3 in hugging:
+		_check(RoomContract.envelope(room).has_point(point),
+				"the fixture's own control point %v is outside the room, "
+				% point + "so this proves nothing about smoothing")
+	# A gentler route through the same room is not refused.
+	var inside := RailPath.from_points(PackedVector3Array([
+		Vector3(-2, 2, -2), Vector3(0, 2, 0), Vector3(2, 2, 2)]))
+	_check(inside.violations("inside", room).is_empty(),
+			"a curve well inside the room was refused: %s"
+			% "; ".join(inside.violations("inside", room)))
+
+func _test_a_grapple_point_must_be_somewhere_you_could_hang() -> void:
+	"""An anchor inside a slab is not an opportunity.
+
+	Three separate ways a grapple point is not real, each proven alone so
+	that no one of them can be removed and hide behind another: the
+	anchor is inside geometry, there is no room to swing beneath it, or
+	there is no ground under it to leave from or arrive at."""
+	var anchor := Vector3(0, 18, 0)
+	var yes := func(_at: Vector3) -> bool: return true
+	var root := Node3D.new()
+	add_child(root)
+	var offer := {"kind": "grapple_point", "name": "hook",
+			"position": anchor, "radius": 2.5}
+	var room := {"offers": [offer]}
+
+	var good := MovementPackage.consume(root, room, yes, yes,
+			["grapple_point"])
+	_check((good["built"] as Array).size() == 1,
+			"a clear anchor over solid ground was not accepted: %s"
+			% str(good["declined"]))
+
+	# ONLY the anchor is solid: the space below is open, so this can only
+	# be caught by the anchor test itself.
+	var anchor_is_solid := func(at: Vector3) -> bool:
+		return absf(at.y - anchor.y) > 0.5
+	var buried := MovementPackage.consume(root, room, anchor_is_solid, yes,
+			["grapple_point"])
+	_check((buried["built"] as Array).is_empty(),
+			"an anchor inside solid geometry was offered as a grapple "
+			+ "opportunity")
+	_check(str(buried["declined"]).contains("inside solid"),
+			"the refusal must say the anchor is buried: %s"
+			% str(buried["declined"]))
+	refusals += 1
+
+	# ONLY the swing space is solid.
+	var no_swing := func(at: Vector3) -> bool:
+		return absf(at.y - (anchor.y - MovementPackage.SWING_ROOM)) > 0.5
+	var cramped := MovementPackage.consume(root, room, no_swing, yes,
+			["grapple_point"])
+	_check((cramped["built"] as Array).is_empty(),
+			"an anchor with no room to swing under it was offered")
+	_check(str(cramped["declined"]).contains("hang or swing"),
+			"the refusal must say there is no room: %s"
+			% str(cramped["declined"]))
+	refusals += 1
+
+	# Clear all the way down, and nothing to land on.
+	var no := func(_at: Vector3) -> bool: return false
+	var over_a_void := MovementPackage.consume(root, room, yes, no,
+			["grapple_point"])
+	_check((over_a_void["built"] as Array).is_empty(),
+			"an anchor over a bottomless void was offered")
+	refusals += 1
+	root.queue_free()
 
 func _test_a_rider_enters_only_on_terms_and_leaves_when_it_asks() -> void:
 	"""Catching is conditional, and letting go is always available."""
@@ -400,6 +624,10 @@ func _test_a_package_may_decline_every_offer() -> void:
 			"target": "nowhere"},
 		{"kind": "launch_target", "name": "ledge",
 			"position": Vector3(20, 6, 0), "radius": 4.0},
+		{"kind": "grapple_point", "name": "hook_open",
+			"position": Vector3(0, 14, 0), "radius": 2.5},
+		{"kind": "grapple_point", "name": "hook_buried",
+			"position": Vector3(60, 14, 0), "radius": 2.5},
 	]}
 	_check(RoomContract.violations(_as_room(room)).is_empty(),
 			"the offer fixture is not a structurally valid room: %s"
@@ -407,13 +635,23 @@ func _test_a_package_may_decline_every_offer() -> void:
 	var yes := func(_at: Vector3) -> bool: return true
 	var root := Node3D.new()
 	add_child(root)
-	var all := MovementPackage.consume(root, room, yes, yes)
-	_check((all["built"] as Array).size() == 2,
-			"a package that wants everything built %d of 3 usable offers"
-			% (all["built"] as Array).size())
-	_check((all["declined"] as Array).size() == 2,
-			"the malformed rail and the orphan launch were not both "
-			+ "declined: %s" % str(all["declined"]))
+	# `hook_buried` sits where nothing is clear, so it is declined; every
+	# other offer here is usable.
+	var solid_at_60 := func(at: Vector3) -> bool: return at.x < 50.0
+	var all := MovementPackage.consume(root, room, solid_at_60, yes)
+	_check((all["built"] as Array).size() == 3,
+			"a package that wants everything took %d of the 4 usable "
+			% (all["built"] as Array).size() + "offers")
+	var grappled := 0
+	for entry: Variant in all["built"] as Array:
+		if str((entry as Dictionary)["kind"]) == "grapple_point":
+			grappled += 1
+	_check(grappled == 1,
+			"%d grapple opportunities were validated, not the 1 that is "
+			% grappled + "geometrically real")
+	_check((all["declined"] as Array).size() == 3,
+			"the malformed rail, the orphan launch and the buried "
+			+ "grapple were not all declined: %s" % str(all["declined"]))
 	var why := ""
 	for entry: Variant in all["declined"] as Array:
 		why += str((entry as Dictionary)["why"]) + " "
@@ -422,6 +660,14 @@ func _test_a_package_may_decline_every_offer() -> void:
 	refusals += 1
 
 	# ONE KIND ONLY: a rail package ignores launches entirely.
+	# A GRAPPLE-ONLY PACKAGE: a Zelda-like reads the anchors and ignores
+	# the rail and the launch entirely, which is the whole point of the
+	# seam -- one shell, whichever verbs the generated game has.
+	var hooks_only := MovementPackage.consume(root, room, solid_at_60, yes,
+			["grapple_point"])
+	_check((hooks_only["built"] as Array).size() == 1,
+			"a grapple-only package took %d offers"
+			% (hooks_only["built"] as Array).size())
 	var rails_only := MovementPackage.consume(root, room, yes, yes,
 			["rail_route"])
 	_check((rails_only["built"] as Array).size() == 1,

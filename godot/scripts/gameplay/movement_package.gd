@@ -41,16 +41,70 @@ static func consume(root: Node3D, room: Dictionary, clear: Callable,
 	var built: Array = []
 	var declined: Array = []
 	if _wants("rail_route", only):
-		_rails(root, room, built, declined)
+		_rails(root, room, built, declined, clear)
 	if _wants("launch_source", only):
 		_launches(root, room, clear, supported, built, declined)
+	if _wants("grapple_point", only):
+		_grapples(room, clear, supported, built, declined)
 	return {"built": built, "declined": declined}
+
+## How much clear air a grapple point needs under it. A player's own
+## height plus their reach: whatever the verb turns out to be, something
+## has to hang, swing or be pulled through the space below the anchor,
+## and an anchor with a slab 0.5 m beneath it offers none of that.
+const SWING_ROOM := 4.0
+
+## How far below an anchor the ground may be and still be the thing you
+## leave from or arrive at. Past this the anchor is over a void and the
+## opportunity is a fall.
+const GRAPPLE_DROP := 30.0
+
+## A grapple point is VALIDATED and never BUILT.
+##
+## There is no grapple mechanic in this engine to construct, and
+## inventing one here would be exactly the "bake a mechanic into the
+## shell" the contract forbids. What a package can do -- and what makes
+## `grapple_point` a kind with a real consumer rather than a word in a
+## list -- is decide whether the opportunity is geometrically true, so
+## that what reaches Epsilon is an offer somebody could actually take.
+static func _grapples(room: Dictionary, clear: Callable,
+		supported: Callable, built: Array, declined: Array) -> void:
+	for offer: Variant in RoomContract.offers_of(room, "grapple_point"):
+		var entry: Dictionary = offer
+		var named := str(entry.get("name", "grapple"))
+		var at: Vector3 = entry["position"]
+		var why := ""
+		if not bool(clear.call(at)):
+			why = "the anchor at %v is inside solid geometry" % at
+		elif not bool(clear.call(at - Vector3.UP * SWING_ROOM)):
+			why = ("there is no room to hang or swing under the anchor "
+					+ "at %v" % at)
+		else:
+			var floor_found := false
+			var drop := SWING_ROOM
+			while drop <= GRAPPLE_DROP:
+				if bool(supported.call(at - Vector3.UP * drop)):
+					floor_found = true
+					break
+				drop += 2.0
+			if not floor_found:
+				why = ("nothing within %.0f m under the anchor at %v is "
+						% [GRAPPLE_DROP, at] + "ground to leave from or "
+						+ "arrive at")
+		if why != "":
+			declined.append({"name": named, "kind": "grapple_point",
+					"why": why})
+			continue
+		# AVAILABLE, not built. The verb is Epsilon's to choose.
+		built.append({"name": named, "kind": "grapple_point",
+				"position": at,
+				"radius": float(entry.get("radius", 0.0))})
 
 static func _wants(kind: String, only: Array) -> bool:
 	return only.is_empty() or only.has(kind)
 
 static func _rails(root: Node3D, room: Dictionary, built: Array,
-		declined: Array) -> void:
+		declined: Array, clear := Callable()) -> void:
 	for offer: Variant in RoomContract.offers_of(room, "rail_route"):
 		var entry: Dictionary = offer
 		var named := str(entry.get("name", "rail"))
@@ -58,7 +112,18 @@ static func _rails(root: Node3D, room: Dictionary, built: Array,
 		for raw: Variant in entry.get("points", []) as Array:
 			points.append(raw as Vector3)
 		var rail := RailPath.from_points(points)
-		var refusals := rail.violations(named)
+		var refusals := rail.violations(named,
+				room.get("bounds", AABB()) as AABB)
+		# THE SMOOTHED ROUTE, against the room it runs through. Control
+		# points can each sit in clear air while the curve between them
+		# bows into a pillar, so what is checked is what is built.
+		if refusals.is_empty() and clear.is_valid():
+			for point: Vector3 in rail.polyline():
+				if bool(clear.call(point)):
+					continue
+				refusals.append("%s: the smoothed curve passes through "
+						% named + "geometry at %v" % point)
+				break
 		if not refusals.is_empty():
 			declined.append({"name": named, "kind": "rail_route",
 					"why": "; ".join(refusals)})
