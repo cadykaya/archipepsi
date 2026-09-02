@@ -3913,6 +3913,16 @@ that answers the P3 brief item by item. 40 × 38 × 60 m, ~91,000 m³, 552
 triangles, 41 convex colliders, three movement offers against Production's
 `af620d8` contract.
 
+| Shell | Metrics | Layers | Landmark |
+| --- | --- | --- | --- |
+| `shell_hall_transit` | 552 tris · 41.20 × 60.00 × 39.60 m · 32.0 texels/m | basin 0, west gallery 11, ring/landing/gantry 21, exit platform 28 | a machine armature — four 4 m columns and three collar rings around a 12 m open shaft, topping out at 30 m |
+
+The declared envelope is 40 × 38 × 60 m interior; the measured box is
+41.20 × 60.00 × 39.60 in the art manifest's Blender order (width, length,
+height), which is the 0.60 m boundary wall on each face. `size_godot` is
+what the pack carries and `assert_axis_order` proves the swap at build
+time.
+
 What the owner is being asked, precisely: **is this the big open area the
 P3 direction asked for** — one volume holding several local gameplay
 spaces around a dominant landmark, with a visible distant destination, and
