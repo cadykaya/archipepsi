@@ -136,9 +136,20 @@ class Room:
     """Everything a shell declares, accumulated by the spec."""
 
     def __init__(self, cid, width, height, depth, wall=0.6,
-                 size_class="large", theme="concrete_facility", intent=()):
+                 size_class="large", theme="concrete_facility", intent=(),
+                 floor_depth=0.0):
+        """`height` is the roof height ABOVE the entry walking plane (y 0).
+        `floor_depth` is how far the room's lowest floor lies BELOW that
+        plane: 0 for a room entered at its bottom (every authored shell
+        Production can import at 301374d), > 0 for a room that descends.
+        A descending room is legal under the traversal law and the chain
+        (Production 301374d) but its geometry sits below the envelope
+        `_from_authored_scene` / `_check_envelope` build from `size`
+        alone; `floor_depth` is the one field that would let them build
+        it, and the preflight names that dependency."""
         self.cid = cid
         self.W, self.H, self.D = float(width), float(height), float(depth)
+        self.floor_depth = float(floor_depth)
         self.wall = float(wall)
         self.size_class = size_class
         self.theme = theme
@@ -293,7 +304,7 @@ class Room:
         """`RoomContract.envelope` of the bounds this room will declare."""
         sx, sy, sz = self.declared_size()
         a = DIM["wall_allowance"]
-        lo = (-sx / 2 - a, -DIM["floor_allowance"] - a, -a)
+        lo = (-sx / 2 - a, -DIM["floor_allowance"] - self.floor_depth - a, -a)
         hi = (sx / 2 + a, sy + a, sz + a)
         return lo, hi
 
@@ -312,11 +323,12 @@ class Room:
         eh = DIM["door_height"] if entry_h is None else entry_h
         sill = self.exit_y if exit_sill is None else exit_sill
         H = self.H
+        fd = self.floor_depth
         # THE FRONT FACE SITS INSIDE z >= 0 (hall convention): the envelope
         # `_check_envelope` grows is anchored at z = 0, so a wall in front
         # of the origin reaches 0.05 m outside it.
         if floor:
-            self.block("floor_slab", "floor", (x0 - w, -1.0, z0), (x1 + w, 0.0, z1 + w))
+            self.block("floor_slab", "floor", (x0 - w, -1.0 - fd, z0), (x1 + w, -fd, z1 + w))
         if roof:
             self.block("roof", "ceiling", (x0 - w, H, z0), (x1 + w, H + w, z1 + w))
         self._wall_with_hole("front", (x0 - w, x1 + w), (z0, z0 + w), 0.0, ew, 0.0, eh, axis="x")
@@ -324,15 +336,15 @@ class Room:
         ex, ez = self.exit_xz
         if self.exit_yaw == 0.0:
             self._wall_with_hole("back", (x0 - w, x1 + w), (z1, z1 + w), ex, exit_w, sill, sill + exit_h, axis="x")
-            self.block("wall_w", "wall", (x0 - w, 0.0, z0), (x0, H, z1 + w))
-            self.block("wall_e", "wall", (x1, 0.0, z0), (x1 + w, H, z1 + w))
+            self.block("wall_w", "wall", (x0 - w, -fd, z0), (x0, H, z1 + w))
+            self.block("wall_e", "wall", (x1, -fd, z0), (x1 + w, H, z1 + w))
         elif self.exit_yaw == 90.0:
-            self.block("back", "wall", (x0 - w, 0.0, z1), (x1 + w, H, z1 + w))
-            self.block("wall_w", "wall", (x0 - w, 0.0, z0), (x0, H, z1 + w))
+            self.block("back", "wall", (x0 - w, -fd, z1), (x1 + w, H, z1 + w))
+            self.block("wall_w", "wall", (x0 - w, -fd, z0), (x0, H, z1 + w))
             self._wall_with_hole("wall_e", (z0, z1 + w), (x1, x1 + w), ez, exit_w, sill, sill + exit_h, axis="z")
         else:
-            self.block("back", "wall", (x0 - w, 0.0, z1), (x1 + w, H, z1 + w))
-            self.block("wall_e", "wall", (x1, 0.0, z0), (x1 + w, H, z1 + w))
+            self.block("back", "wall", (x0 - w, -fd, z1), (x1 + w, H, z1 + w))
+            self.block("wall_e", "wall", (x1, -fd, z0), (x1 + w, H, z1 + w))
             self._wall_with_hole("wall_w", (z0, z1 + w), (x0 - w, x0), ez, exit_w, sill, sill + exit_h, axis="z")
 
     def _wall_with_hole(self, name, along, thick, hole_c, hole_w, hole_lo, hole_hi, axis):
@@ -340,6 +352,7 @@ class Room:
         full height, with a hole centred at `hole_c` from `hole_lo` to
         `hole_hi`: two side pieces, a sill piece and a head piece."""
         H = self.H
+        y0 = -self.floor_depth
         a0, a1 = along
         t0, t1 = thick
         h0, h1 = hole_c - hole_w / 2, hole_c + hole_w / 2
@@ -351,10 +364,10 @@ class Room:
                 self.block("%s_%s" % (name, tag), "wall", (u0, y0, t0), (u1, y1, t1))
             else:
                 self.block("%s_%s" % (name, tag), "wall", (t0, y0, u0), (t1, y1, u1))
-        box("a", a0, h0, 0.0, H)
-        box("b", h1, a1, 0.0, H)
-        if hole_lo > 0.0:
-            box("sill", h0, h1, 0.0, hole_lo)
+        box("a", a0, h0, y0, H)
+        box("b", h1, a1, y0, H)
+        if hole_lo > y0 + 0.01:
+            box("sill", h0, h1, y0, hole_lo)
         box("head", h0, h1, hole_hi, H)
 
 
@@ -744,8 +757,29 @@ def preflight(room):
             worst = max(worst, over)
     if count:
         err("%d part(s) reach up to %.2f m outside the envelope" % (count, worst))
-    if any(p.lo[1] < -DIM["floor_allowance"] - EPS for p in room.parts):
+    deepest = min(p.lo[1] for p in room.parts) if room.parts else 0.0
+    F["info"]["floor_depth"] = round(room.floor_depth, 2)
+    F["info"]["net_rise"] = round(room.exit_y, 2)
+    if room.floor_depth > EPS:
+        # NET DESCENT IS DECLARABLE (Production 301374d): `drop` exists for
+        # it, a descending stair is a walk, the chain carries exit_offset.y.
+        # What 301374d did not touch is the AUTHORED envelope:
+        # `_from_authored_scene` (content_instantiator.gd) and
+        # `_check_envelope` (shell_validator.gd) build bounds from `size`
+        # with the floor at -FLOOR_ALLOWANCE below the entry plane, so this
+        # geometry is refused at import until a field like `floor_depth`
+        # moves that floor.  Procedural builders return their own bounds.
+        warn("descends: geometry reaches %.1f m below the entry plane and is inside the envelope "
+             "only through `floor_depth` %.1f, a field Production does not read at 301374d "
+             "(content_instantiator.gd _from_authored_scene bounds; shell_validator.gd _check_envelope, "
+             "which measures the VISIBLE mesh only); at import ShellValidator refuses any visible mesh "
+             "below -1.55 until that field exists" % (-deepest, room.floor_depth))
+    elif deepest < -DIM["floor_allowance"] - EPS:
         warn("geometry below -%.1f m: legal only inside the wall allowance" % DIM["floor_allowance"])
+    if room.exit_y < -EPS:
+        F["info"]["descent_note"] = ("exit %.1f m below the entry; FALL_KILL_Y is WORLD y %.0f (player.gd), so a chain's "
+                                     "cumulative descent below the zone origin must stay above it" % (
+                                         -room.exit_y, DIM["fall_kill_y"]))
 
     # surfaces: span, support, C(ii) stances
     stance = DIM["player_radius"] * 2.0
@@ -881,8 +915,9 @@ def manifest(room, glb_rel):
         "size_godot": [r3(size[0]), r3(size[1]), r3(size[2])],
         "measured_box": [r3(v) for v in outer],
         "interior": [r3(room.W), r3(room.H), r3(room.D)],
-        "bounds": [[r3(-size[0] / 2), -1.0, 0.0],
-                   [r3(size[0]), r3(size[1] + 1.0), r3(size[2])]],
+        "bounds": [[r3(-size[0] / 2), r3(-1.0 - room.floor_depth), 0.0],
+                   [r3(size[0]), r3(size[1] + 1.0 + room.floor_depth), r3(size[2])]],
+        "floor_depth": r3(room.floor_depth),
         "exit_offset": [r3(room.exit_xz[0]), r3(room.exit_y), r3(room.exit_xz[1])],
         "exit_yaw": r3(room.exit_yaw),
         "total_rise": r3(room.exit_y),
@@ -1125,7 +1160,7 @@ def write_section_svg(room, path, axis="z", scale=6.0):
                 pts, _, _ = launch_arc(tuple(o["position"]), tuple(tgt["position"]))
                 d = " ".join("%.1f,%.1f" % (sa(p[2] if axis == "z" else p[0]), sy(p[1])) for p in pts)
                 out.append('<polyline points="%s" fill="none" stroke="#f0a020" stroke-width="2" stroke-dasharray="5 3"/>' % d)
-    for y in range(0, int(hi[1]) + 1, 5):
+    for y in range(int(math.floor(lo[1] / 5.0)) * 5, int(hi[1]) + 1, 5):
         out.append('<line x1="%d" y1="%.1f" x2="%d" y2="%.1f" stroke="#999" stroke-width="0.5" stroke-dasharray="2 4"/>' % (pad, sy(y), W - pad, sy(y)))
         out.append('<text x="4" y="%.1f" font-size="9" fill="#666">%d</text>' % (sy(y) + 3, y))
     out.append("</svg>")

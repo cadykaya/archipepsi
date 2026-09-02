@@ -66,7 +66,7 @@ def main(argv):
                   "| surfaces / traversal / offers / sockets | %d / %d / %d / %d (caps 32/32/32) |" % (
                       info["counts"]["surfaces"], info["counts"]["traversal"], info["counts"]["offers"], info["counts"]["sockets"]),
                   "| exit | y %g, yaw %g |" % (room.exit_y, room.exit_yaw),
-                  "| lowest floor | y %s (nothing falls forever iff >= -1.0) |" % info["lowest_floor_y"],
+                  "| lowest floor | y %s (floor_depth %g; net rise %g) |" % (info["lowest_floor_y"], info.get("floor_depth", 0.0), info.get("net_rise", room.exit_y)),
                   "| glb bytes | %d |" % size, ""]
         for name, st in info.get("rails", {}).items():
             lines.append("- rail `%s`: %s m, worst baked pitch %s deg, height range %s m, %s control points" % (

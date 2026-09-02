@@ -11,8 +11,8 @@
 | parts / colliders | 73 / 70 |
 | surfaces / traversal / offers / sockets | 12 / 12 / 7 / 12 (caps 32/32/32) |
 | exit | y 14, yaw 0 |
-| lowest floor | y 0.0 (nothing falls forever iff >= -1.0) |
-| glb bytes | 148072 |
+| lowest floor | y -0.0 (floor_depth 0; net rise 14) |
+| glb bytes | 148080 |
 
 - rail `rail_lemniscate`: 162.9 m, worst baked pitch 22.6 deg, height range 18.5 m, 13 control points
 - launch `launch_island_a`: 29.3 m span, 1.48 s flight, apex y 17.5

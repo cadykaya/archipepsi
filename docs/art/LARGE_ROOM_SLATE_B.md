@@ -8,7 +8,7 @@ to stay away from, not as input.
 
 | consumed | head | how |
 |---|---|---|
-| Production `claude/archipepsi-echoes-continuation-b1adno` | `b37fe07` | read-only worktree; contract, validators, movement numbers, hall integration |
+| Production `claude/archipepsi-echoes-continuation-b1adno` | `b37fe07`, then `301374d` (descent ruling, §7.2) | read-only worktree; contract, validators, movement numbers, hall integration |
 | Art `claude/archipepsi-art` | `f510fd1` | read-only worktree; `build_hall.py`, `roomcollision.py`, `roomcontract.py`, `export_content_pack.py`, manifest batch039 |
 | this branch | `claude/archipepsi-room-architecture-h3woci` | everything below |
 
@@ -37,11 +37,15 @@ the contract sees. Movement numbers are the pinned set in
   and section SVGs, a README and a preflight report. It mirrors the walk flood,
   stance search, rail bake, launch arc and grapple checks. It is ~1.1 k lines and
   is not the product; a room spec is ~100 lines of intent.
-- **Contract findings** (§7): four things every LARGE author must know that are
-  not written anywhere else: wedge ramps are unprovable at import; there is no
-  net-descent room; the declared size is x-symmetric about the entry axis; the
-  8000-node witness cap makes wide diagonal walks fail closed. Plus two stale Art
-  tools that would report PASS on a real walk failure.
+- **Contract findings** (§7): wedge ramps are unprovable at import; net descent
+  IS declarable (Production 301374d; an earlier draft of this document said the
+  opposite and §7.2 carries the correction) but the authored envelope still pins
+  the visible mesh to the entry plane and the world kill plane caps a chain's
+  descent; the declared size is x-symmetric about the entry axis; the 8000-node
+  witness cap makes wide diagonal walks fail closed. Plus two stale Art tools
+  that would report PASS on a real walk failure.
+- **Wave 2** (§11): `shell_bascule`, `shell_stack` (the descending room),
+  `shell_beast`, `shell_cascade`, grayboxed the same way.
 - **Lessons for the remaining seven** (§9).
 
 ---
@@ -247,12 +251,20 @@ nine. Wave 1 rooms are marked ★ and described as built in §6.
 - **Empty.** The room withholds its second half until you earn the crest.
 - **Unlike the others.** The only room whose floor is the landmark; the only
   one you cannot see across from the door; net rise zero.
+- **Descent variant (after 301374d).** With `floor_depth` the pit can lie 12 m
+  below the entry plane instead of at it, so the crest looks DOWN into a chasm
+  and the leaves are half as tall; kept level for Wave 2 because withholding,
+  not depth, is the thesis.
 
-### 3.5 `shell_stack` — "three rooms on top of each other"
+### 3.5 `shell_stack` — "the room you fall through"
 
-- **Thesis.** Three full plates stacked 14 m apart, each with a well cut in a
-  different place, so the room shows its own section from anywhere inside it.
-- **Dimensions.** 36 × 42 × 42; declared 37.2 × 42.6 × 44.0.
+- **Thesis.** Three full plates 12 m apart, each with a well cut in a different
+  place, so the room shows its own section from anywhere inside it. Rewritten
+  after 301374d as the slate's descending room: you enter on the TOP plate and
+  the mandatory route is two sheer drops through the offset wells; the exit is
+  on the bottom plate; switchback flights are the optional way back up.
+- **Dimensions.** 36 × 14 × 44 above the entry plane with `floor_depth` 24
+  (plates at 0, −12, −24); declared 37.2 × 14.6 × 46.0 over a 39.6 m box.
 - **First read.** A ceiling 14 m up with a 14 × 14 hole in its front half;
   through the hole, the underside of a second ceiling with its hole further back;
   through that, the roof at 42. Enemies (or nothing) at the hole edges.
@@ -326,6 +338,9 @@ nine. Wave 1 rooms are marked ★ and described as built in §6.
 - **Empty.** The one room where the whole room looks at one place.
 - **Unlike the others.** The only concentric plan; the only room where the exit
   is the highest point of a continuous rise.
+- **Descent variant (after 301374d).** Entered from the top ring and descended
+  to a stage exit is the way a real cavea is entered; kept rising for Wave 2 so
+  the slate spends its descent budget on the stack.
 
 ### 3.8 `shell_overpass` — "the crossroads in section"
 
@@ -538,13 +553,52 @@ whatever the surfaces declare; every mandatory climb in this slate is stairs,
 kit's `stair()` builds them; the kit checks every mandatory walk under box
 evidence *and* ray evidence and reports the difference.
 
-### 7.2 There is no net-descent room
+### 7.2 Net descent is declarable (correction)
 
-The envelope is `AABB((-w/2, -1.0, 0), size)`; nothing may sit below −1.55 m,
-and there is no `descends` or `sill` field. A room whose exit is lower than its
-entry cannot be declared. The slate is written to that rule (bascule is the
-net-zero case). **Request:** a `sill` (exit height relative to entry) or a
-`descends` flag on `ContentEntry`, so a library of tall rooms can also go down.
+An earlier version of this section said "no net-descent room is declarable".
+That was wrong, and Production 301374d adjudicated it against the real law:
+
+- `drop` exists for sheer descent and is bounded only by having to go down;
+  how far is a damage question, and there is no fall damage in the game
+  (`player.gd` takes damage only from the kill plane and from DoT).
+- A descending stair or ramp is a `walk`, proven by ground continuity, not by
+  the fall between its ends (a 12 m descending ramp passes the flood).
+- A downward `gap` is held to the FLAT reach: `max_safe_gap` is fed
+  `maxf(rise, 0)`, so falling buys no range.
+- `ZoneBuilder` adds the whole `exit_offset` vector to its cursor, y included,
+  so a room whose exit sits below its entry moves the next room down with it.
+  Nothing in the schema bounds a socket's height or an exit's elevation.
+
+What still constrains an AUTHORED shell, read at 301374d and verified by three
+independent readers of the tree:
+
+1. **The envelope pins the visible mesh, not the route.** `_from_authored_scene`
+   builds `bounds` from `size` alone with the floor at −1.0 below the entry
+   plane, and `ShellValidator._check_envelope` refuses at import any
+   `MeshInstance3D` box outside that envelope grown 0.55. Collision hulls
+   (`-convcolonly` nodes, which is how every shipped shell carries its floors)
+   are never envelope-tested, and `RoomAudit` runs only in the test suite. So a
+   shell whose VISIBLE mesh reaches below −1.55 m is refused; a shell that hid
+   its lower floors in hulls alone would pass, which is a loophole, not a
+   design path. The honest fix is one optional field (`floor_depth`, metres the
+   room's lowest floor lies below its entry plane, default 0) added to the
+   bounds floor in those two places; the kit declares it in the manifest and
+   warns once when a room uses it (§8).
+2. **The entry plane is local y 0 by chaining**, not by convention: the shell's
+   origin is placed at the previous room's exit floor and nothing subtracts the
+   entry socket. A shell cannot be entered at the top of its box by declaring a
+   high entry socket.
+3. **The kill plane is world-absolute.** `FALL_KILL_Y = −30` is compared with
+   the player's world y (feet), the zone root sits at the world origin and the
+   builder's cursor starts at zero. A chain's cumulative descent below the zone
+   origin, net of ascents, must stay above −30 m or the floor itself kills and
+   the player respawns at chamber 1. A 24 m descending room is therefore usable
+   only after at least 24 m of prior rise (the hall gives 28, the cleft 24).
+
+**Consequence for this slate:** descent is a real option, priced in prior rise.
+`shell_stack` is rebuilt as the descending room (§3.5, §11); `shell_bascule`
+and `shell_cascade` keep their rising/level forms and record their descending
+variants (§3.4, §3.7).
 
 ### 7.3 The declared size is x-symmetric about the entry axis
 
@@ -789,8 +843,9 @@ suspicion.
    sample inside the block; aim at the visible top edge or 0.5 m above it.
 8. **Symmetric plans unless asymmetry is the thesis** (§7.3); the composer pays
    for the mirror image.
-9. **No room goes down** (§7.2) until the contract has a sill. Bascule is the
-   net-zero pattern; stack, beast, cascade and oculus all rise.
+9. **Rooms may go down** (§7.2): declare `drop` for sheer descent, stairs for
+   walked descent, a negative exit y, and `floor_depth` for the envelope; spend
+   descent only where the chain has risen first (world kill plane at −30).
 10. **Stack needs plates with wells**; cascade needs many parts; beast needs
     stepped arches. Add one kit helper per need when the room is authored, not
     before.

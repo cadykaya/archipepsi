@@ -20,6 +20,7 @@
       46.0
     ],
     "exit_yaw": 90.0,
+    "floor_depth": 0.0,
     "graybox": true,
     "interior": [
       40.0,

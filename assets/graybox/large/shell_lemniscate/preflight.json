@@ -15,6 +15,7 @@
       40.6,
       74.0
     ],
+    "floor_depth": 0.0,
     "interior_m": [
       44.0,
       40.0,
@@ -33,7 +34,8 @@
         "span_m": 29.3
       }
     },
-    "lowest_floor_y": 0.0,
+    "lowest_floor_y": -0.0,
+    "net_rise": 14.0,
     "outer_size_m": [
       45.2,
       41.6,

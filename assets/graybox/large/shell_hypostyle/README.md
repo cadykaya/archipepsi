@@ -11,8 +11,8 @@
 | parts / colliders | 83 / 79 |
 | surfaces / traversal / offers / sockets | 18 / 9 / 6 / 13 (caps 32/32/32) |
 | exit | y 8, yaw 0 |
-| lowest floor | y 0.0 (nothing falls forever iff >= -1.0) |
-| glb bytes | 166804 |
+| lowest floor | y -0.0 (floor_depth 0; net rise 8) |
+| glb bytes | 166816 |
 
 - rail `rail_avenue_e`: 44.0 m, worst baked pitch 0.0 deg, height range 0.0 m, 2 control points
 - rail `rail_avenue_w`: 42.9 m, worst baked pitch 12.7 deg, height range 7.7 m, 4 control points

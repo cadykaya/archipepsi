@@ -11,8 +11,8 @@
 | parts / colliders | 66 / 65 |
 | surfaces / traversal / offers / sockets | 16 / 19 / 5 / 10 (caps 32/32/32) |
 | exit | y 24, yaw 90 |
-| lowest floor | y 0.0 (nothing falls forever iff >= -1.0) |
-| glb bytes | 136288 |
+| lowest floor | y 0.0 (floor_depth 0; net rise 24) |
+| glb bytes | 136292 |
 
 - rail `rail_face_w`: 81.0 m, worst baked pitch 21.8 deg, height range 23.6 m, 9 control points
 - launch `launch_floor`: 19.4 m span, 1.73 s flight, apex y 17.0
