@@ -137,26 +137,30 @@ def main(argv):
                 "cannot see a pinch, so this correction is recorded from "
                 "Production's measurement rather than derived")
         _FLIGHT = ("the hall's six RoomAudit findings at 301374d, "
-                   "repaired at the source. Four were declarations "
+                   "repaired at the source, plus the plinth Surface "
+                   "decision at 94d562d. Four findings were declarations "
                    "pointing at geometry that is not there: two plinth "
-                   "segments ending 0.5 m off the plinth in air (and "
-                   "removed outright -- a 4.00 m plinth is not a `rise` "
-                   "at 1.00 m nor a `gap` at zero reach, and the plinths "
-                   "stay declared `stand` Surfaces, which is a different "
-                   "and true claim), `gantry_to_exit` ending on the "
-                   "flight rather than the exit platform, and "
-                   "`gallery_to_landing` crossing the void between the "
-                   "gallery and a ramp that only meets it at its west "
-                   "end. Two were geometry: `ring_n_to_ring_e` started "
-                   "INSIDE an armature column, because 4.0 m columns on "
-                   "+/-7 filled a 3 m collar band at all four corners "
-                   "and the ring was four arcs rather than a loop -- the "
-                   "columns move into the shaft corners at 3.0 m, which "
-                   "clears the band and keeps the entry sightline "
-                   "(re-asserted, 64.7 m). `basin_to_gallery` started a "
-                   "metre up the flight where a body on one wedge "
-                   "section overlaps the next; both its ends are on flat "
-                   "deck now")
+                   "segments ending 0.5 m off the plinth in air, "
+                   "`gantry_to_exit` ending on the flight rather than the "
+                   "exit platform, and `gallery_to_landing` crossing the "
+                   "void between the gallery and a ramp that meets it "
+                   "only at its west end. Two were geometry: "
+                   "`ring_n_to_ring_e` started INSIDE an armature column, "
+                   "because 4.0 m columns on +/-7 filled a 3 m collar "
+                   "band at all four corners and the ring was four arcs "
+                   "rather than a loop -- the columns move into the shaft "
+                   "corners at 3.0 m, which clears the band and keeps the "
+                   "entry sightline (re-asserted, 64.7 m). "
+                   "`basin_to_gallery` started a metre up the flight "
+                   "where a body on one wedge section overlaps the next. "
+                   "AND THE PLINTHS ARE NO LONGER `stand` SURFACES: the "
+                   "owner's decision at 94d562d, because under C(ii) a "
+                   "`stand` Surface advertises usable placement space and "
+                   "no traversal and no offer in this shell reaches "
+                   "either plinth. The 4 m masses stay in the room "
+                   "exactly as they were; only the claim goes, and a "
+                   "later package that brings its own arrival can expose "
+                   "them")
         DECLARED_HANDOFF = {}
         for _cid, _fields, _why in (
                 ("shell_corner_left", ("semantic_tags",), _CORNER),
@@ -183,7 +187,8 @@ def main(argv):
                 ("shell_treasure_coffer", ("review",), _PASS),
                 ("shell_corner_left", ("review",), _PASS),
                 ("shell_corner_right", ("review",), _PASS),
-                ("shell_hall_transit", ("traversal", "size"), _FLIGHT)):
+                ("shell_hall_transit",
+                 ("traversal", "surfaces", "size"), _FLIGHT)):
             for _field in _fields:
                 DECLARED_HANDOFF[(_cid, _field)] = _why
 

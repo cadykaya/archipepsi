@@ -297,8 +297,22 @@ def build():
         (0.0, _y(54.0), Y_EXIT - 0.25)), name, "trim"))
 
     # --- basin cover, so the lower floor is a fight and not a field ---
-    surface("plinth_west", -7.0, -1.0, 13.0, 19.0, Y_PLINTH)
-    surface("plinth_east", 7.0, 13.0, 45.0, 51.0, Y_PLINTH)
+    # THE PLINTHS ARE GEOMETRY, NOT `stand` SURFACES. Owner decision:
+    # under C(ii) a `stand` Surface advertises usable placement space,
+    # and nothing in this shell reaches either plinth -- no traversal
+    # (the two false segments went at 3b7bb02) and no offer. Advertising
+    # a placement nobody can arrive at is the same class of claim the
+    # deleted traversal made, one field over.
+    #
+    # `roomkit.slab` rather than `surface`, so the 4 m masses stay in the
+    # room exactly as they are and only the declaration goes. A later
+    # gameplay package that brings its own launch, grapple or machinery
+    # arrival can expose them; a permanent movement offer added merely to
+    # justify them would be inventing a mechanic to rescue a claim.
+    roomkit.slab(parts, _paint, name, "plinth_west", -7.0, -1.0,
+                 13.0, 19.0, Y_PLINTH)
+    roomkit.slab(parts, _paint, name, "plinth_east", 7.0, 13.0,
+                 45.0, 51.0, Y_PLINTH)
 
     return name, parts, stones, heights, snames
 
@@ -458,11 +472,10 @@ def main():
         # 4 m step up: it is not a `rise`, and calling it a `gap` claims
         # a jump nobody can make.
         #
-        # The plinths stay declared `stand` Surfaces, which is a
-        # different claim and a true one -- something can stand up
-        # there, arriving by launch, by grapple, or by being placed. A
-        # Surface has never promised base-kit reachability, and the
-        # traversal list is where that promise would have lived.
+        # The plinths are no longer declared `stand` Surfaces either --
+        # see the geometry above. The traversal claim went first because
+        # it was false about the base kit; the Surface claim followed
+        # because nothing in this shell reaches them at all.
     ]
 
     entry["volumes"] = [

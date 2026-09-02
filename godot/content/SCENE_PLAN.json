@@ -1555,7 +1555,7 @@
    "source_batch_review": "PASS",
    "runtime_substitution": "pending",
    "p1_contract": {
-    "surfaces": 14,
+    "surfaces": 12,
     "traversal": 11,
     "volumes": 3,
     "sockets": 10,

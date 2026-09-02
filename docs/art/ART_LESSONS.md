@@ -1591,3 +1591,63 @@ up a ramp that goes the other way.
 > review that only looks at pictures.** The route checks are not
 > bureaucracy around the art; for anything with circulation they are the
 > only reviewer that can see the mistake at all.
+
+### L-93 · A two-command export makes forgetting the second one free
+
+`shell_hall_transit` was repaired at `3b7bb02`. The mesh, the collision
+and the manifest all agreed and every gate passed. The `.tscn` did not
+agree with any of them, because `export_content_pack.py` writes the
+manifest and `export_content_pack.sh` is what *also* runs
+`wrap_content.gd` to write the scenes — and only the first was run.
+
+Production found it at `94d562d`: four traversal declarations differing
+from their scene markers, eight endpoints in all.
+
+What makes this worse than an ordinary stale artefact is where the
+markers are read. `ShellValidator._check_segment` measures a segment from
+its **Marker3Ds**, not from the manifest. So a stale scene does not fail
+loudly — it silently certifies the room that used to exist. Every gate
+Art ran was looking at the manifest and the geometry, which were correct,
+and the one file that disagreed was the one the validator actually reads.
+
+> **When a generated artefact has two producers, the cheaper one will be
+> run alone eventually. The fix is not to remember harder; it is a check
+> that compares the two outputs, because "did you run both" is exactly
+> the question a script can answer and a person cannot.**
+
+`tools/content/verify_markers.py` is that comparison, and it reproduced
+Production's finding — the same four declarations, the same eight
+endpoints — before anything was regenerated. It runs as a stage of
+`verify_content_pack.sh` now, so the half-done export fails on the art
+side rather than at an integration.
+
+The alternative fix, folding the wrap into the Python exporter, was not
+taken: the wrap needs Godot and the manifest step does not, and collapsing
+them would make every manifest regeneration pay for an engine launch.
+Two producers is the right shape; the missing piece was the check.
+
+### L-94 · The pack was not the only thing derived from that manifest
+
+The same repair had a second stale artefact, and L-93's own check could
+not see it. `verify_content_pack.sh` compares the scene against the
+manifest — both live in the content pack. But `hall_ov_regions.glb` is
+*also* derived from `assets/models/batch039/shells/manifest.json`: it
+draws one plate per `stand` Surface. Demoting the two plinths took the
+hall from 14 surfaces to 12, so the diagram that answers the owner's
+"several local spaces, or one big rectangle?" was still drawing two
+gameplay spaces that no longer exist.
+
+Nothing in the content-pack verifiers looks at the review figures,
+because they are not content. What caught it was `check_art_current.sh`,
+which rebuilds *everything* from source and diffs — the overlay came
+back 2,456 bytes smaller and refused to match the tree.
+
+> **A verifier scoped to one consumer of a source file will not notice
+> the other consumers. Only the sweep that rebuilds every artefact from
+> source can, which is why it is not optional at a repair boundary.**
+
+`build_hall_overlay.py` predicted this in its own docstring — *"If the
+shell changes and the diagram is not rebuilt, the diagram is missing,
+not wrong."* Knowing the failure mode and writing it down is not the
+same as having a gate for it; the gate already existed, and the actual
+mistake was reporting a repair complete before the sweep finished.

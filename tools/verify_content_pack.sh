@@ -128,7 +128,20 @@ cp "$ROOT/tools/content/verify_collision.gd" "$H/collision.gd"
 xvfb-run -a -s "-screen 0 1280x800x24" "$GODOT" --headless --path "$ROOT/godot" \
   -s _harness/collision.gd 2>&1 | grep -E "^\[collision\]|SCRIPT ERROR" || true
 
-# 4. RETIRED. `ShellValidator` used to be run here against the shipped
+# 4. SCENE / MANIFEST PARITY. The generated `.tscn` carries the traversal
+# markers `ShellValidator` measures a segment FROM, so a scene that was
+# not regenerated after a manifest change quietly certifies the room that
+# used to exist rather than failing. That happened: the hall was repaired
+# at `3b7bb02`, `export_content_pack.py` wrote the manifest, nobody ran
+# `export_content_pack.sh` to wrap the scenes, and Production found four
+# declarations disagreeing with their markers at `94d562d`.
+#
+# Cheap, and it runs here so the two-command export cannot silently be
+# half-done again.
+echo "[verify] --- scene markers against the manifest ---"
+python3 "$ROOT/tools/content/verify_markers.py"
+
+# 5. RETIRED. `ShellValidator` used to be run here against the shipped
 # scenes, transformed out of Production's source. `b37fe07` rewrote that
 # file -- it now reaches `ChamberBuilders.all_solid_boxes` and
 # `TraversalLaw` as well as `RoomContract`, `ContentInstantiator` and
