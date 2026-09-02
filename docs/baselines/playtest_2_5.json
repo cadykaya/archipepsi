@@ -988,7 +988,22 @@
             "kill_all",
             "platform_to_goal"
           ],
-          "room_shells": {},
+          "room_shells": {
+            "corridor": [
+              "shell_corner_left",
+              "shell_corner_right"
+            ],
+            "tower": [
+              "shell_tower_collapsed",
+              "shell_tower_gantry",
+              "shell_tower_spiral"
+            ],
+            "treasure_room": [
+              "shell_treasure_cache",
+              "shell_treasure_coffer",
+              "shell_treasure_vault"
+            ]
+          },
           "themes": [
             "concrete_facility",
             "rusted_industrial",
@@ -1697,7 +1712,22 @@
             "kill_all",
             "platform_to_goal"
           ],
-          "room_shells": {},
+          "room_shells": {
+            "corridor": [
+              "shell_corner_left",
+              "shell_corner_right"
+            ],
+            "tower": [
+              "shell_tower_collapsed",
+              "shell_tower_gantry",
+              "shell_tower_spiral"
+            ],
+            "treasure_room": [
+              "shell_treasure_cache",
+              "shell_treasure_coffer",
+              "shell_treasure_vault"
+            ]
+          },
           "themes": [
             "concrete_facility",
             "rusted_industrial",
@@ -2388,7 +2418,22 @@
             "kill_all",
             "platform_to_goal"
           ],
-          "room_shells": {},
+          "room_shells": {
+            "corridor": [
+              "shell_corner_left",
+              "shell_corner_right"
+            ],
+            "tower": [
+              "shell_tower_collapsed",
+              "shell_tower_gantry",
+              "shell_tower_spiral"
+            ],
+            "treasure_room": [
+              "shell_treasure_cache",
+              "shell_treasure_coffer",
+              "shell_treasure_vault"
+            ]
+          },
           "themes": [
             "concrete_facility",
             "rusted_industrial",
