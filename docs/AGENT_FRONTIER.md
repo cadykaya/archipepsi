@@ -573,6 +573,20 @@ the substitute room's. Sabotage: flipping the hall to `review: pass`
 turns the suite red (exit 2, "approved content and its authored scene
 was refused"); pending keeps it evidence, the same gate findings use.
 
+SECOND FINDING, from the two plinth traversals Art deleted. The nine
+MANDATORY traversals still chain unbroken vestibule -> basin -> gallery
+-> landing -> bridge_n -> ring_n -> ring_e -> bridge_e -> gantry ->
+exit, and the two optional ones close the ring westward, so base-kit
+circulation survives the deletion. But `plinth_west` and `plinth_east`
+are still declared `stand` surfaces, 6x6 m at y=4.0, and NOTHING
+declared reaches them any more: no traversal, and no offer either — the
+rail route passes nowhere near them and `launch_gantry` is the gantry at
+(16, 21, 30). Under C(ii) a `stand` surface is a region OFFERED to a
+placement consumer, so the hall now offers two standing regions that are
+not behind a capability gate but behind nothing at all. Either the
+plinths stop being surfaces or something declared reaches them. Owner /
+Art decision; not repaired here.
+
 The three Wave-1 rooms are INERT, proven at the seam rather than
 asserted: all four pending shells load into the registry, `is_offerable`
 refuses each, and `shell_catalog` is exactly the eight approved P2
