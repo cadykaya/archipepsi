@@ -178,6 +178,43 @@ def assert_walkable(name, tag, low, made):
         previous = top
 
 
+#: How much clear floor a cover stance keeps between itself and the block
+#: it hides behind.
+#:
+#: `RoomAudit._points_have_ground` calls a socket buried if a sphere of
+#: radius 0.5, centred 0.45 m above the point, touches anything solid.
+#: 1.1 m from the block's FACE therefore leaves 0.6 m of slack -- enough
+#: that a cover block growing by half a metre does not silently bury its
+#: own stance again.
+COVER_STANCE_CLEAR = 1.1
+
+
+def cover_stance(cx, cz, sx, sz, axis, away_from):
+    """Where a player crouches to USE a block of cover, in Godot metres.
+
+    THE STANCE IS NOT THE COVER. Both Wave 1 rooms declared their `cover`
+    sockets at the centre of the cover block itself, which put every one
+    of them inside 1.9 m of solid concrete -- seven of the eight findings
+    Production measured across the yard and the span. A socket is an
+    OFFER of somewhere to be, and the middle of a crate is not somewhere
+    to be.
+
+    The stance sits beside the block, on the far side from `away_from`
+    along `axis`, so the block is between the player and the open middle
+    of the room. That is what cover is FOR: a crate you stand in front of
+    is scenery.
+
+    Derived from the block's own centre and size rather than written out
+    a second time, because the two lists drifting apart is exactly how
+    this happened -- the blocks moved and the sockets kept the old
+    numbers.
+    """
+    half = (sz if axis == "z" else sx) / 2.0
+    here = cz if axis == "z" else cx
+    step = (half + COVER_STANCE_CLEAR) * (1.0 if here >= away_from else -1.0)
+    return (cx, cz + step) if axis == "z" else (cx + step, cz)
+
+
 def flight_footprint(x0, x1, z0, z1, low, high, name="flight"):
     """The one Surface a flight needs, as a `roomcontract.surface` triple.
 

@@ -1762,3 +1762,43 @@ plainly visible in the render. Its colour thresholds were too tight. A
 throwaway probe, not a committed gate — but the same shape as L-88 and
 L-95, and the third time this session a check of mine has been the thing
 that was wrong.
+
+### L-97 · Eight findings, three rooms, one mistake: the centre is not the place
+
+Production measured eleven findings across Wave 1. Three were the audit
+assuming a room's entry is its local origin and are the owner's to rule
+on; the other eight were Art's, and every one of them was the same
+sentence written three different ways: **a declared point carrying the
+CENTRE of the thing it names.**
+
+Seven `cover` sockets sat at the centre of their own cover block, buried
+in 1.9 m of concrete. One `reward` volume sat at the centre of a collar,
+which is the centre of eight metres of solid machine. In each case the
+number was copied from the thing's own definition, and in each case that
+made it the one position the point could not occupy.
+
+> **When a socket names a thing, the useful position is almost never that
+> thing's centre — it is beside it, on it, or under it. A crate you stand
+> inside is not cover; a pedestal at the middle of a machine is inside the
+> machine. "Where the thing is" and "where you can be" are different
+> questions, and a copied centre answers the wrong one.**
+
+The mechanism was duplication. Both rooms held the cover clusters twice —
+once as `(cx, cz, sx, sz)` for the geometry, once as `(cx, cz)` for the
+sockets — and the second list could only ever be right by coincidence.
+The repair is one list, with `roomkit.cover_stance` deriving the stance
+from the block, so the two cannot disagree again.
+
+**What made the classification cheap was running the authority itself.**
+Production's `RoomAudit` was run unmodified in a detached read-only
+worktree, against Art's own content pack, and reproduced all eleven
+findings verbatim before anything moved — then reported exactly three
+after. Guessing which findings were the origin convention and which were
+real, from the text of a report, would have been guessing.
+
+The one runner detail worth keeping: `room_contract_driver.gd` touches
+the `BridgeClient` autoload on its first line, and autoloads are not
+registered for a script run with `-s`. A four-line scene that makes the
+probe the main scene fixes it — and modifying Production's driver to get
+around it would have meant measuring against something Production does
+not run.

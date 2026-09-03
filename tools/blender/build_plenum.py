@@ -113,6 +113,29 @@ def _paint(obj, name, role):
     return roomcollision.paint_role(obj, role)
 
 
+#: Where on a collar band the reward stands, measured from the machine's
+#: axis. The band runs from the machine face (MACH/2 = 4.0) out to
+#: COLLAR_OUT 6.75; 5.25 is its middle, and far enough from both edges
+#: that the audit's 0.5 m buried-probe sphere touches neither.
+REWARD_RADIUS = 5.25
+
+
+def _reward_spot(top, corner):
+    """The reward's Blender placement on the collar at height `top`.
+
+    OPPOSITE THE BRIDGE. `_build` runs the spur to a collar along
+    whichever axis is longer, so the far side of the band is the other
+    end of that same axis -- which makes the objective something you
+    walk the collar to reach rather than something you step onto.
+    """
+    cx, cz = corner
+    if abs(cx) > abs(cz - D / 2.0):
+        far = -REWARD_RADIUS if cx > 0 else REWARD_RADIUS
+        return (far, roomkit.y(D / 2.0), top + 1.0)
+    far = D / 2.0 + (-REWARD_RADIUS if cz > D / 2.0 else REWARD_RADIUS)
+    return (0.0, roomkit.y(far), top + 1.0)
+
+
 def _corner(i):
     """The plan centre of landing `i`, going anticlockwise from SW.
 
@@ -333,8 +356,15 @@ def main():
         roomcontract.volume("arrival", "player_entry",
                             (_corner(0)[0], roomkit.y(_corner(0)[1]),
                              TOP + 1.0), (DOOR_W, 2.4, 2.0)),
+        # ON THE COLLAR BAND, not on the machine's axis. This was
+        # declared at (0, D/2) -- the centre of the collar, which is the
+        # centre of EIGHT METRES OF SOLID MACHINE -- so the reward the
+        # game puts here was inside it. Production measured it. The
+        # collar is an annulus from the machine's face at 4.0 m out to
+        # 6.75, and this sits on the band at 5.25, on the far side from
+        # the bridge so reaching it means walking the collar.
         roomcontract.volume("reward", "objective",
-                            (0.0, roomkit.y(D / 2.0), land_y[7] + 1.0),
+                            _reward_spot(land_y[7], _corner(7)),
                             (2.4, 2.4, 2.0)),
     ]
 

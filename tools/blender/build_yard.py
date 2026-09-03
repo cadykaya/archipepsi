@@ -73,6 +73,13 @@ DOCK_W, DOCK_D = 10.0, 5.0
 _IMAGES = {}
 
 
+#: The cover clusters: (centre x, centre z, size x, size z) in Godot
+#: metres. ONE list, read by both the geometry and the socket
+#: declaration -- they were two lists and they drifted.
+COVER = ((-26.0, 16.0, 5.0, 3.0), (-9.0, 34.0, 4.0, 4.0),
+         (11.0, 15.0, 6.0, 3.0), (27.0, 33.0, 4.0, 5.0))
+
+
 def _image(role):
     if role not in _IMAGES:
         canvas, _ = materials.paint(THEME, role)
@@ -158,9 +165,7 @@ def build():
                    0.0, CAT_Y, "x", True)
 
     # --- cover, and the two docks -------------------------------------
-    for j, (cx, cz, sx, sz) in enumerate((
-            (-26.0, 16.0, 5.0, 3.0), (-9.0, 34.0, 4.0, 4.0),
-            (11.0, 15.0, 6.0, 3.0), (27.0, 33.0, 4.0, 5.0))):
+    for j, (cx, cz, sx, sz) in enumerate(COVER):
         parts.append(_paint(brushkit.block(
             "%s_cover_%d" % (name, j), (sx, sz, 1.9),
             (cx, roomkit.y(cz), 0.95)), name, "wall"))
@@ -256,10 +261,14 @@ def main():
         entry["sockets"].append(roomcontract.socket(
             "high_%d" % i, "enemy_high", (spot[0], spot[1], heights[k] + 0.3),
             surface_id=sname))
-    for i, (cx, cz) in enumerate(((-26.0, 16.0), (-9.0, 34.0),
-                                  (11.0, 15.0), (27.0, 33.0))):
+    # BESIDE the block, not inside it. Production measured all four of
+    # these buried in 1.9 m of concrete, because the socket carried the
+    # cover block's own centre. `roomkit.cover_stance` derives the
+    # stance from the block, so the two cannot drift apart again.
+    for i, (cx, cz, sx, sz) in enumerate(COVER):
+        sxp, szp = roomkit.cover_stance(cx, cz, sx, sz, "z", D / 2.0)
         entry["sockets"].append(roomcontract.socket(
-            "cover_%d" % i, "cover", (cx, roomkit.y(cz), 0.3),
+            "cover_%d" % i, "cover", (sxp, roomkit.y(szp), 0.3),
             surface_id="floor"))
 
     # --- offers -------------------------------------------------------

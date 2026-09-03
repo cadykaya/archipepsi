@@ -184,6 +184,33 @@ def main(argv):
                    "identical and the entry sightline is untouched, and "
                    "the base walking route is still complete with no "
                    "package installed")
+        _WAVE1 = ("the Wave 1 findings Production measured before its "
+                  "own correction pass, repaired at the source under the "
+                  "owner's authored-entry ruling. Eleven findings were "
+                  "reported across the three rooms; THREE are the audit "
+                  "assuming a room's entry is its local origin, and those "
+                  "are Production's and are deliberately untouched -- the "
+                  "plenum enters at y=68 because it is a shaft you "
+                  "descend, the yard at x=-43 because it is 84 m wide, "
+                  "the span at y=14 because its entry is on the deck. "
+                  "The other EIGHT were Art's and were all one mistake "
+                  "made three times: a declared point carrying the CENTRE "
+                  "of the thing it names. Seven `cover` sockets sat at "
+                  "the centre of their own cover block, buried in 1.9 m "
+                  "of concrete; they move beside the block, on the far "
+                  "side from the room's centre line, so the block is "
+                  "between the player and the open middle -- which is "
+                  "what cover is for. The plenum's `reward` volume sat at "
+                  "the centre of the collar, which is the centre of eight "
+                  "metres of solid machine; it moves onto the collar band "
+                  "at radius 5.25, opposite the bridge. NO GEOMETRY "
+                  "MOVED: all three shells export the same triangle and "
+                  "collider counts, and surfaces, traversal, size and "
+                  "offers are unchanged in every one. Both stances are "
+                  "derived from the block or the collar rather than "
+                  "written out a second time, because two lists drifting "
+                  "apart is how this happened")
+
         DECLARED_HANDOFF = {}
         for _cid, _fields, _why in (
                 ("shell_corner_left", ("semantic_tags",), _CORNER),
@@ -211,7 +238,10 @@ def main(argv):
                 ("shell_corner_left", ("review",), _PASS),
                 ("shell_corner_right", ("review",), _PASS),
                 ("shell_hall_transit",
-                 ("traversal", "surfaces", "size", "offers"), _FLIGHT)):
+                 ("traversal", "surfaces", "size", "offers"), _FLIGHT),
+                ("shell_plenum_helix", ("volumes",), _WAVE1),
+                ("shell_yard_gantry", ("sockets",), _WAVE1),
+                ("shell_span_basin", ("sockets",), _WAVE1)):
             for _field in _fields:
                 DECLARED_HANDOFF[(_cid, _field)] = _why
 
