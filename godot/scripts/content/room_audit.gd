@@ -113,6 +113,7 @@ static func findings(result: Variant, space: PhysicsDirectSpaceState3D,
 			who))
 	out.append_array(_arrivals_are_standable(room, to_world, space, who))
 	out.append_array(_openings_are_holes(room, to_world, space, who))
+	out.append_array(_arrival_is_safe(room, to_world, space, who))
 	out.append_array(_traversal_is_true(room, to_world, space, who))
 	out.append_array(_geometry_stays_inside_its_bounds(room, root, who))
 	return out
@@ -333,12 +334,29 @@ static func _openings_are_holes(room: Dictionary, to_world: Transform3D,
 	# producer-agnostic statement is the room's own +Z boundary at the
 	# height the exit leaves from.
 	#
-	# The walking plane at a room's entry is local y=0 for every producer
-	# here: procedural builders put their floor top there, and an
-	# authored shell's bounds start `FLOOR_ALLOWANCE` below it.
+	# THE ENTRY IS WHERE THE ROOM SAYS IT IS (owner ruling, 2026-09-03).
+	# This read `Vector3(0, 0, bounds.position.z)` -- the origin -- for
+	# every room, because every room that existed when it was written
+	# happened to be entered there. A room entered at its top or along
+	# its side measured as having a sealed door in a solid wall, and the
+	# message blamed the geometry for an assumption in the probe.
+	#
+	# NO FLOOR IS REQUIRED UNDER A CONNECTOR. It is an attachment
+	# transform on the envelope and may sit slightly outside it -- the
+	# yard's is 0.4 m past its own west wall -- so the ground ray below
+	# stays a CONVENIENCE that recentres the stance on a thick slab, and
+	# its absence is not a finding. Whether the player's body is safe
+	# where it arrives is `player_entry`'s question, asked separately in
+	# `_arrival_is_safe`.
+	var entry_at: Vector3 = room.get("entry_offset",
+			RoomContract.LEGACY_ENTRY)
+	# OUTWARD FROM THE ROOM, for both doors and by the same rule: a
+	# connector's aperture is tested on the side the neighbour arrives
+	# from. Stated as "away from the middle of the room" rather than as a
+	# fixed axis, which is what made it wrong for a side entry -- and for
+	# a room entered at its origin this is exactly the -Z it always was.
 	for door: Array in [
-			["the entry", Vector3(0.0, 0.0, bounds.position.z),
-				Vector3.FORWARD],
+			["the entry", entry_at, _outward(entry_at, bounds)],
 			["the exit", Vector3(exit_at.x, exit_at.y, bounds.end.z),
 				Vector3.BACK]]:
 		var at: Vector3 = door[1]
@@ -552,6 +570,56 @@ static func _is_placed_content(collider: Variant) -> bool:
 ## when it is BLOCKED, which is the finding.
 ## Does the player's own capsule fail to fit here? Returns true when it
 ## is BLOCKED, which is the finding.
+## Away from the middle of the room, horizontally.
+##
+## A connector sits on a wall, so "outside" is the direction that leaves
+## the room through it. Derived rather than declared because a room may
+## be entered on any face and an artist should not have to also state
+## which way is out.
+static func _outward(at: Vector3, bounds: AABB) -> Vector3:
+	var away := at - bounds.get_center()
+	away.y = 0.0
+	return away.normalized() if away.length() > 0.001 else Vector3.FORWARD
+
+## IS THE ARRIVAL SAFE? (owner ruling, 2026-09-03)
+##
+## The connector says where the rooms join; this says where the PLAYER
+## ends up, and they are different questions -- the connector may be
+## outside the envelope, and the body may not.
+##
+## `player_entry` has been a legal volume kind since S12 with no
+## consumer at all, so three rooms declared an arrival region that
+## nothing ever looked at. A room that declares one is held to it: the
+## player's own capsule must fit standing there, and there must be
+## something under it to stand on. A room that declares none is not
+## required to -- the nine shells that predate the ruling do not.
+static func _arrival_is_safe(room: Dictionary, to_world: Transform3D,
+		space: PhysicsDirectSpaceState3D, who: String) -> Array[String]:
+	var out: Array[String] = []
+	var region: Dictionary = room.get("player_entry", {})
+	if region.is_empty():
+		return out
+	var at: Vector3 = region.get("position", Vector3.ZERO)
+	var world := to_world * at
+	# The declared centre is the middle of a standing box, so the floor
+	# is half its height down rather than at the centre itself.
+	var half: float = (region.get("extent", Vector3.ONE) as Vector3).y / 2.0
+	var down := _ray(space, world + Vector3.UP * half,
+			world + Vector3.DOWN * (half + Constants.MAX_VERTICAL_STEP))
+	if down.is_empty():
+		out.append("%s: the player_entry region at %v has no floor "
+				% [who, at] + "under it")
+		return out
+	var floor_y: float = (to_world.affine_inverse()
+			* (down["position"] as Vector3)).y
+	var stance := Vector3(at.x, floor_y, at.z) \
+			+ Vector3.UP * (Constants.PLAYER_HEIGHT / 2.0 + 0.05)
+	if _blocked(space, to_world * stance):
+		out.append("%s: the player_entry region at %v is blocked; the "
+				% [who, at] + "player's own capsule does not fit where "
+				+ "the room says they arrive")
+	return out
+
 static func _blocked(space: PhysicsDirectSpaceState3D,
 		at: Vector3) -> bool:
 	var capsule := CapsuleShape3D.new()

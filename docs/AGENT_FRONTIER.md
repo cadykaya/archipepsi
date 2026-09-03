@@ -535,6 +535,69 @@ green suite over it, because the suite ran at prototype scale. The mock
 backend now takes a `CampaignConfig` and
 `bridge/tests/test_production_scale.py` runs the real engine at 450.
 
+## THE ENTRY IS WHERE THE ROOM SAYS IT IS — 2026-09-03
+
+Owner ruling: `(0, 0, 0)` has no semantic meaning as the universal room
+entrance. It was the value every shell happened to have, read by nobody,
+and believed by `ZoneBuilder` and `RoomAudit` as though it were a
+contract — so three LARGE rooms entered at their top or along their side
+measured as having a sealed door in a solid wall, and the message blamed
+the geometry for an assumption in the probe.
+
+TWO CONCEPTS, KEPT APART. The **entry connector** (`doorway` socket
+`entry`/`end_a`) is the room-to-room attachment transform; it sits on the
+envelope and may sit slightly outside it — the yard's is 0.4 m past its
+own west wall — so **no standing floor is required under it**. The
+**`player_entry` volume** is the interior region the body arrives into,
+and that is where capsule safety is proven. `player_entry` had been a
+legal kind in `schemas/content.py` since S12 and was read by NOTHING: a
+vocabulary word with no consumer, which is how three rooms declared an
+arrival region no probe ever looked at.
+
+`ZoneBuilder` now places a room so its entry connector lands on the
+previous room's exit, `origin_for(join, yaw, entry)` and
+`exit_cursor(origin, yaw, exit)`, both public so a test measures the seam
+instead of reimplementing the subtraction. Vertical offset and yaw come
+free: both connectors are room-local vectors turned by the room's own
+yaw. The legacy fallback is `RoomContract.LEGACY_ENTRY` — named, not
+assumed, because the old behaviour was identical AND invisible.
+
+Seven proofs, each sabotage-checked. Reverting the audit to the origin
+turns E1/E2 red with the exact old symptom; stubbing the arrival check
+turns E5/E6 red; making `origin_for` return the join turns E3/E4/E7 red.
+
+ONE STALE GUARD CORRECTED, not weakened. `movement_driver` pinned the
+net-descent ruling by grepping `zone_builder.gd` for the literal
+`cursor += _rot(yaw, result["exit_offset"])`. That line is gone, so the
+guard pinned the SPELLING rather than the ruling; it now asserts the seam
+itself — a room whose exit sits 6 m below its entry moves the chain down.
+
+RESULT. Eight P2 shells unchanged at 0/0. The three entry findings
+vanished — plenum 2 -> 1, span 4 -> 3, yard 5 -> 4 — and every declared
+`player_entry` passes capsule safety on the first run, which is
+independent evidence Art's arrival regions were right all along.
+
+## HALL CERTIFIED — 2026-09-03
+
+Art `0ed2292`: three `grapple_point` offers and one optional collar
+`ring_s_to_ring_e`, no geometry change. 12 surfaces, 12 traversals (9
+mandatory / 3 optional), 6 offers, 73 colliders, marker parity 12 scenes
+/ 160 markers / 0 disagreements. **structural=0 measured=0.**
+
+THE COLLAR IS OPTIONAL, AND `_traversal_is_true` SKIPS OPTIONAL
+SEGMENTS, so `measured=0` did not prove it. Forced mandatory in a
+throwaway manifest edit, the audit's own flood proved it and the room
+still measured 0. That is the proof; the clean sheet alone was not one.
+
+All three grapple offers BUILD through `MovementPackage`. But the same
+offers DECLINE under a narrower `supported` probe, and the difference is
+arithmetic rather than geometry: `_grapples` walks down in 2 m strides,
+so a probe window narrower than the stride falls BETWEEN floors and
+reports a 60 m hall as having no ground in it. **`MovementPackage` has
+no production caller and Production has no canonical `clear`/`supported`
+implementation** — the rules exist, their binding to real geometry does
+not. Whoever writes that caller inherits this. Flagged, not fixed.
+
 ## shell_hall_transit IS TECHNICALLY CLEAN — 2026-09-03
 
 Art `8fbb916` synced. The mirrored delta is five files: `SCENE_PLAN.json`

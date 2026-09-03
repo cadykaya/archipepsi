@@ -268,6 +268,22 @@
       21.0,
       27.0
      ]
+    },
+    {
+     "name": "ring_s_to_ring_e_start",
+     "position": [
+      5.0,
+      21.0,
+      27.0
+     ]
+    },
+    {
+     "name": "ring_s_to_ring_e_end",
+     "position": [
+      7.5,
+      21.0,
+      29.0
+     ]
     }
    ]
   },
@@ -1556,7 +1572,7 @@
    "runtime_substitution": "pending",
    "p1_contract": {
     "surfaces": 12,
-    "traversal": 11,
+    "traversal": 12,
     "volumes": 3,
     "sockets": 10,
     "exit_yaw": 0.0,
@@ -1585,6 +1601,24 @@
      {
       "name": "launch_gantry",
       "kind": "launch_target",
+      "points": 0,
+      "target": null
+     },
+     {
+      "name": "grapple_0",
+      "kind": "grapple_point",
+      "points": 0,
+      "target": null
+     },
+     {
+      "name": "grapple_1",
+      "kind": "grapple_point",
+      "points": 0,
+      "target": null
+     },
+     {
+      "name": "grapple_2",
+      "kind": "grapple_point",
       "points": 0,
       "target": null
      }

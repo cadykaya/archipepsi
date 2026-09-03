@@ -173,6 +173,22 @@ const REGION_OFFERS := ["launch_source", "launch_target",
 ## shells while every procedural room broke the same rule by 0.05 m and
 ## was never asked. A convention that describes neither producer is not
 ## a convention; a check that only one producer takes is not a contract.
+## WHERE A ROOM ATTACHES WHEN IT DOES NOT SAY (owner ruling, 2026-09-03).
+##
+## `(0, 0, 0)` never meant anything about a room. It was the value every
+## shell happened to have, read by nobody, and believed by `ZoneBuilder`
+## and `RoomAudit` as though it were a contract -- so a room entered at
+## its top, or halfway along its side, had no way to say so and measured
+## as having a sealed door in a wall.
+##
+## The room-to-room attachment point is now the room's declared ENTRY
+## CONNECTOR. This constant is the fallback for a room that declares
+## none, which is every procedural builder and the nine shells that
+## predate the ruling. It is a NAMED fallback on purpose: the old
+## behaviour was identical and invisible, and an assumption nobody can
+## see is one nobody can check.
+const LEGACY_ENTRY := Vector3.ZERO
+
 const WALL_ALLOWANCE := ChamberBuilders.WALL_THICKNESS + 0.15
 
 ## The box a room's geometry must fit inside, from the box it declares.

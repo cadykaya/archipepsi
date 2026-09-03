@@ -81,6 +81,7 @@ func _run() -> void:
 	await _test_a_check_never_stands_inside_the_room()
 	await _test_one_envelope_convention_binds_both_producers()
 	await _test_every_authored_shell_in_the_registry_is_measured()
+	await _test_a_room_is_entered_where_it_says_it_is()
 	await _test_a_pending_shell_never_reaches_a_zone()
 	_test_an_approved_shell_is_held_to_the_contract()
 
@@ -106,6 +107,178 @@ func _run() -> void:
 	else:
 		print("GODOT ROOM CONTRACT TESTS: %d failures" % failures)
 		get_tree().quit(1)
+
+# --- the entry contract (owner ruling, 2026-09-03) -------------------------
+
+## A room made of boxes, so a connector can be declared anywhere and an
+## arrival region can be made deliberately unsafe. Hand-built rather than
+## instantiated because the point is to vary the ONE thing the ruling is
+## about, and no authored scene lets me move its own doorway.
+func _slab_room(boxes: Array, entry_at: Vector3, size: Vector3,
+		arrival: Variant) -> Dictionary:
+	var root := Node3D.new()
+	for b: Array in boxes:
+		var body := StaticBody3D.new()
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = b[1]
+		shape.shape = box
+		body.add_child(shape)
+		body.position = b[0]
+		root.add_child(body)
+	var room := {
+		"root": root,
+		"bounds": AABB(Vector3(-size.x / 2.0, -1.0, 0.0),
+				Vector3(size.x, size.y + 1.0, size.z)),
+		"entry_offset": entry_at,
+		"exit_offset": Vector3(0.0, 0.0, size.z),
+		"sockets": [], "traversal": [], "enemy_spawns": [],
+		"offers": [], "room_height": size.y,
+		"reward_position": Vector3(0.0, 0.0, size.z / 2.0),
+	}
+	if arrival is Vector3:
+		room["player_entry"] = {"position": arrival as Vector3,
+				"extent": Vector3(2.4, 2.0, 2.4)}
+	return room
+
+func _audit_slabs(room: Dictionary, who: String) -> String:
+	add_child(room["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var found := RoomAudit.findings(room, _space(), who)
+	(room["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+	return "; ".join(found)
+
+func _test_a_room_is_entered_where_it_says_it_is() -> void:
+	"""`(0, 0, 0)` WAS NEVER A STATEMENT ABOUT A ROOM.
+
+	It was the value every shell happened to have, read by nobody, and
+	believed by `ZoneBuilder` and `RoomAudit` as though it were a
+	contract. Three LARGE rooms entered at their top, or along their
+	side, therefore measured as having a sealed door in a solid wall --
+	and the message blamed the geometry for an assumption in the probe.
+
+	The room-to-room attachment point is now the room's DECLARED entry
+	connector, and where the player's body lands is the separate
+	question `player_entry` answers."""
+
+	# A room whose only floor is 14 m up, with the origin walled off the
+	# way `sp_south_sill` walls off the span's. The pair is the proof:
+	# the same geometry passes when the room says where its door is and
+	# fails when it is assumed to be at the origin.
+	var walled := [
+		[Vector3(0.0, 14.0, 10.0), Vector3(20.0, 1.0, 20.0)],
+		[Vector3(0.0, 1.0, 0.0), Vector3(20.0, 4.0, 2.0)],
+	]
+
+	# E1 -- ENTRY AT LOCAL Y > 0.
+	var high := _slab_room(walled, Vector3(0.0, 14.5, 0.0),
+			Vector3(20.0, 20.0, 20.0), Vector3(0.0, 14.5, 3.0))
+	var high_says: String = await _audit_slabs(high, "high_entry")
+	_check(not high_says.contains("sealed"),
+			"a room entered 14 m up was called sealed: %s" % high_says)
+
+	# ... and the legacy assumption on the SAME geometry is the failure
+	# it always was, which is what makes the line above a measurement
+	# rather than a room with nothing in it.
+	var assumed := _slab_room(walled, RoomContract.LEGACY_ENTRY,
+			Vector3(20.0, 20.0, 20.0), Vector3(0.0, 14.5, 3.0))
+	var assumed_says: String = await _audit_slabs(assumed, "assumed_entry")
+	_check(assumed_says.contains("sealed"),
+			"the origin of this room is walled, so assuming the entry is "
+			+ "there must still fail: %s" % assumed_says)
+	probes_expected_to_fail += 1
+
+	# E2 -- ENTRY AT A NONZERO HORIZONTAL POSITION, the yard's shape: a
+	# door in the west wall, halfway along, with the origin walled.
+	var side := _slab_room([
+			[Vector3(0.0, -0.5, 13.0), Vector3(40.0, 1.0, 26.0)],
+			[Vector3(0.0, 2.0, 0.0), Vector3(40.0, 4.0, 2.0)],
+		], Vector3(-20.0, 0.0, 13.0), Vector3(40.0, 12.0, 26.0),
+		Vector3(-17.0, 0.0, 13.0))
+	var side_says: String = await _audit_slabs(side, "side_entry")
+	_check(not side_says.contains("sealed"),
+			"a room entered through its west wall was called sealed: %s"
+			% side_says)
+
+	# E5 -- THE ARRIVAL REGION IS CAPSULE-SAFE. Both rooms above declare
+	# one and neither is reported, which is the passing half.
+	_check(not high_says.contains("player_entry")
+			and not side_says.contains("player_entry"),
+			"a safe arrival region was reported unsafe: %s | %s"
+			% [high_says, side_says])
+
+	# E6 -- A BLOCKED ARRIVAL IS REFUSED. Same floor, same declared
+	# connector, one solid block where the room says the player lands.
+	var blocked := _slab_room([
+			[Vector3(0.0, -0.5, 13.0), Vector3(40.0, 1.0, 26.0)],
+			[Vector3(0.0, 1.5, 3.0), Vector3(4.0, 3.0, 4.0)],
+		], Vector3(0.0, 0.0, 0.0), Vector3(40.0, 12.0, 26.0),
+		Vector3(0.0, 0.0, 3.0))
+	var blocked_says: String = await _audit_slabs(blocked, "blocked_arrival")
+	_check(blocked_says.contains("player_entry")
+			and blocked_says.contains("blocked"),
+			"a player_entry region filled with solid geometry was "
+			+ "accepted: %s" % blocked_says)
+	probes_expected_to_fail += 1
+
+	# ... and an arrival over a void is refused for the other reason.
+	var floating := _slab_room([
+			[Vector3(0.0, -0.5, 13.0), Vector3(40.0, 1.0, 26.0)],
+		], Vector3(0.0, 0.0, 0.0), Vector3(40.0, 12.0, 26.0),
+		Vector3(0.0, 40.0, 13.0))
+	var floating_says: String = await _audit_slabs(floating, "void_arrival")
+	_check(floating_says.contains("player_entry")
+			and floating_says.contains("no floor"),
+			"a player_entry region in mid-air was accepted: %s"
+			% floating_says)
+	probes_expected_to_fail += 1
+
+	# E3 -- TOP ENTRY, BOTTOM EXIT. The plenum's form: joined 60 m up,
+	# leaving at its own floor, so the room hangs BELOW the seam and the
+	# next room starts lower than the one before it.
+	var join := Vector3(0.0, 100.0, 5.0)
+	var top_origin := ZoneBuilder.origin_for(join, 0.0,
+			Vector3(0.0, 60.0, 0.0))
+	_check(top_origin.is_equal_approx(Vector3(0.0, 40.0, 5.0)),
+			"a room entered 60 m above its origin must hang below the "
+			+ "seam; got %v" % top_origin)
+	var below := ZoneBuilder.exit_cursor(top_origin, 0.0,
+			Vector3(0.0, 0.0, 20.0))
+	_check(below.is_equal_approx(Vector3(0.0, 40.0, 25.0)),
+			"a bottom exit must leave the chain 60 m lower; got %v" % below)
+
+	# E4 -- THE SEAM IS THE INVARIANT: room A's exit connector and room
+	# B's entry connector are the SAME world point, at any yaw.
+	for yaw: float in [0.0, PI / 2.0, PI]:
+		var a_origin := ZoneBuilder.origin_for(Vector3.ZERO, yaw,
+				Vector3(1.0, 2.0, 0.0))
+		var seam := ZoneBuilder.exit_cursor(a_origin, yaw,
+				Vector3(-1.0, 10.0, 30.0))
+		var b_entry := Vector3(3.0, 3.0, 0.0)
+		var b_origin := ZoneBuilder.origin_for(seam, yaw, b_entry)
+		var b_world := b_origin + Basis(Vector3.UP, yaw) * b_entry
+		_check(b_world.is_equal_approx(seam),
+				"at yaw %.2f the next room's entry connector landed at "
+				% yaw + "%v, not on the seam %v" % [b_world, seam])
+
+	# E7 -- THE CONNECTORS ARE THE CONNECTION, not the origin. Re-express
+	# a room about a different origin, moving both connectors with it,
+	# and the seam it hands on must not move -- otherwise "where the
+	# rooms meet" would depend on where an artist happened to put 0.
+	var e := Vector3(0.0, 14.0, 0.0)
+	var x := Vector3(0.0, 14.0, 92.0)
+	for shift: Vector3 in [Vector3.ZERO, Vector3(7.0, -14.0, 3.0),
+			Vector3(-2.5, 40.0, -11.0)]:
+		var o := ZoneBuilder.origin_for(join, 0.4, e + shift)
+		var moved := ZoneBuilder.exit_cursor(o, 0.4, x + shift)
+		var base := ZoneBuilder.exit_cursor(
+				ZoneBuilder.origin_for(join, 0.4, e), 0.4, x)
+		_check(moved.is_equal_approx(base),
+				"shifting a room's origin by %v moved its seam from %v "
+				% [shift, base] + "to %v" % moved)
+	rooms_checked += 3
 
 # --- fixtures -------------------------------------------------------------
 

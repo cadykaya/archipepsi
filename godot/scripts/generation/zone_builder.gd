@@ -17,6 +17,25 @@ const TURN_CHANCE := 0.45
 static func _rot(yaw: float, v: Vector3) -> Vector3:
 	return Basis(Vector3.UP, yaw) * v
 
+## WHERE A ROOM'S ORIGIN GOES so that its entry connector lands on
+## `join` (owner ruling, 2026-09-03).
+##
+## Public, and public deliberately: the alternative is a test that
+## reimplements this subtraction and then agrees with itself. The two
+## halves of the seam -- where a room is put, and where the next one is
+## joined -- are the two functions below and nothing else computes them.
+static func origin_for(join: Vector3, yaw: float,
+		entry_offset: Vector3) -> Vector3:
+	return join - _rot(yaw, entry_offset)
+
+## Where the NEXT room's entry connector must land, given this one's
+## placed origin. Vertical offset and yaw come along for free: both
+## connectors are room-local vectors turned by the room's own yaw, so a
+## room that leaves 28 m up leaves the next one 28 m up.
+static func exit_cursor(origin: Vector3, yaw: float,
+		exit_offset: Vector3) -> Vector3:
+	return origin + _rot(yaw, exit_offset)
+
 static func _world_aabb(local: AABB, position: Vector3, yaw: float) -> AABB:
 	var out: AABB
 	for i in 8:
@@ -88,6 +107,15 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 		# entry is still a declared placeholder; the routing is what lets an
 		# authored shell replace one without touching this file.
 		var result := ContentInstantiator.build_chamber(chamber, theme)
+		# THE CURSOR IS WHERE THE ROOMS MEET, NOT WHERE THIS ONE STARTS
+		# (owner ruling, 2026-09-03). A room is placed so that its
+		# declared ENTRY CONNECTOR lands on the previous room's exit;
+		# where its origin ends up is then arithmetic rather than an
+		# assumption. Every pre-ruling room declares `LEGACY_ENTRY`, so
+		# `origin` and `cursor` coincide and nothing about the played
+		# Zone moves.
+		var entry_at: Vector3 = result.get("entry_offset",
+				RoomContract.LEGACY_ENTRY)
 
 		# Maybe take a corner first. Turns alternate direction, and both the
 		# corner and the chamber beyond it must clear every prior arm.
@@ -98,7 +126,7 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 			var cursor_after: Vector3 = cursor \
 					+ _rot(yaw, corner["exit_offset"])
 			var chamber_world: AABB = _world_aabb(result["bounds"],
-					cursor_after, yaw_after)
+					origin_for(cursor_after, yaw_after, entry_at), yaw_after)
 			if not _overlaps(placed, corner_world) \
 					and not _overlaps(placed, chamber_world):
 				var corner_node: Node3D = corner["root"]
@@ -117,25 +145,26 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 		# Straight clearance: a wide chamber after a bend can reach back
 		# toward an earlier arm; push forward until it clears.
 		var attempts := 0
-		while _overlaps(placed, _world_aabb(result["bounds"], cursor, yaw)) \
-				and attempts < 6:
+		while _overlaps(placed, _world_aabb(result["bounds"],
+				origin_for(cursor, yaw, entry_at), yaw)) and attempts < 6:
 			cursor = _emit_connector(root, theme, cursor, yaw, placed,
 					bounds_list)
 			attempts += 1
 
+		var origin := origin_for(cursor, yaw, entry_at)
 		var node: Node3D = result["root"]
 		node.name = "Chamber_%s" % chamber.get("id", "c")
-		node.position = cursor
+		node.position = origin
 		node.rotation.y = yaw
 		root.add_child(node)
-		var world_bounds: AABB = _world_aabb(result["bounds"], cursor, yaw)
+		var world_bounds: AABB = _world_aabb(result["bounds"], origin, yaw)
 		placed.append(world_bounds)
 		bounds_list.append(world_bounds)
 		built_chambers.append({
 			"chamber": chamber, "node": node, "build": result,
-			"xform": Transform3D(Basis(Vector3.UP, yaw), cursor),
+			"xform": Transform3D(Basis(Vector3.UP, yaw), origin),
 		})
-		cursor += _rot(yaw, result["exit_offset"])
+		cursor = exit_cursor(origin, yaw, result["exit_offset"])
 		# P2-B: A ROOM MAY TURN THE CHAIN. Applied after the room is
 		# placed and its cursor advanced, so the room itself is still
 		# measured and overlap-guarded at the yaw it was built for, and

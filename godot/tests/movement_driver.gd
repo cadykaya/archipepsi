@@ -629,14 +629,21 @@ func _test_a_room_may_descend_from_entry_to_exit() -> void:
 			% 2.0 + "falling is not extra range")
 	refusals += 1
 
-	# AND THE CHAIN CARRIES IT. `ZoneBuilder` adds the whole
-	# `exit_offset` vector to its cursor, Y included, so a room whose
-	# exit sits below its entry moves the next room down with it.
-	var chain := FileAccess.get_file_as_string(
-			"res://scripts/generation/zone_builder.gd")
-	_check(chain.contains("cursor += _rot(yaw, result[\"exit_offset\"])"),
-			"the chain no longer adds the exit offset as a vector, so "
-			+ "this ruling would need remeasuring")
+	# AND THE CHAIN CARRIES IT: a room whose exit sits below its entry
+	# moves the next room down with it. ASSERTED ON THE SEAM, not on the text of the line that computes
+	# it. This used to grep `zone_builder.gd` for
+	# `cursor += _rot(yaw, result["exit_offset"])`, which was true until
+	# the entry contract landed and then pinned the SPELLING rather than
+	# the ruling. Both connectors are room-local vectors turned by the
+	# room's own yaw, so the Y a room descends is still carried whole --
+	# and now that is measured instead of read.
+	var seam_origin := ZoneBuilder.origin_for(Vector3(0.0, 30.0, 0.0),
+			0.0, Vector3(0.0, 8.0, 0.0))
+	var seam_next := ZoneBuilder.exit_cursor(seam_origin, 0.0,
+			Vector3(0.0, 2.0, 12.0))
+	_check(seam_next.is_equal_approx(Vector3(0.0, 24.0, 12.0)),
+			"a room whose exit sits 6 m below its entry must move the "
+			+ "chain down with it; the next seam landed at %v" % seam_next)
 
 func _test_a_rider_enters_only_on_terms_and_leaves_when_it_asks() -> void:
 	"""Catching is conditional, and letting go is always available."""

@@ -427,6 +427,16 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 		# `room_contract_driver` came to print a clean audit sheet for a
 		# shell that never built.
 		"authored_shell": str(entry.get("id", "")),
+		# WHERE THIS ROOM ATTACHES, both ends, declared rather than
+		# assumed (owner ruling, 2026-09-03). `exit_offset` has read the
+		# declared exit socket since S15; the entry had no equivalent and
+		# was taken to be the origin by everything downstream.
+		"entry_offset": _entry_offset(entry),
+		# WHERE THE PLAYER'S BODY ARRIVES, which is a different question
+		# from where the rooms join. The connector is a transform on the
+		# envelope and may sit outside it; this is the interior region
+		# the arrival has to be safe in.
+		"player_entry": _player_entry(entry),
 		"exit_offset": _exit_offset(entry, size),
 		"bounds": AABB(
 			Vector3(-size.x / 2.0, -FLOOR_ALLOWANCE, 0.0),
@@ -557,6 +567,43 @@ static func _authored_offers(entry: Dictionary) -> Array:
 ## socket cannot have reached here (the validator refuses one with no
 ## joining socket at all), but a shell whose only socket is named `entry`
 ## can, and it should chain rather than stack every room at the origin.
+## WHERE THE PREVIOUS ROOM'S EXIT MEETS THIS ONE (owner ruling).
+##
+## The mirror of `_exit_offset`, and named `end_a` for the same reason
+## `exit` accepts `end_b`: a connector grammar that calls its two ends
+## `a` and `b` should not have to learn a second vocabulary here.
+##
+## A room that declares no entry connector attaches at
+## `RoomContract.LEGACY_ENTRY`, which is the origin and is what every
+## procedural builder and every pre-ruling shell does.
+static func _entry_offset(entry: Dictionary) -> Vector3:
+	for socket: Variant in entry.get("sockets", []):
+		if typeof(socket) != TYPE_DICTIONARY:
+			continue
+		var s: Dictionary = socket
+		if str(s.get("name", "")) in ["entry", "end_a"]:
+			return _vector(s.get("position", []),
+					RoomContract.LEGACY_ENTRY)
+	return RoomContract.LEGACY_ENTRY
+
+## The interior region the player arrives into, or empty if none.
+##
+## `player_entry` has been a legal volume kind in `schemas/content.py`
+## since S12 and was read by NOTHING -- a vocabulary word with no
+## consumer, which is how three rooms came to declare an arrival region
+## that no probe ever looked at.
+static func _player_entry(entry: Dictionary) -> Dictionary:
+	for volume: Variant in entry.get("volumes", []):
+		if typeof(volume) != TYPE_DICTIONARY:
+			continue
+		var v: Dictionary = volume
+		if str(v.get("kind", "")) == "player_entry":
+			return {
+				"position": _vector(v.get("center", []), Vector3.ZERO),
+				"extent": _vector(v.get("size", []), Vector3.ONE),
+			}
+	return {}
+
 static func _exit_offset(entry: Dictionary, size: Vector3) -> Vector3:
 	for socket: Variant in entry.get("sockets", []):
 		if typeof(socket) != TYPE_DICTIONARY:
