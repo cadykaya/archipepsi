@@ -87,7 +87,7 @@ plenum's pad had before this week. A launch source is a foot-contact
 point like the landing it aims at. The hall's pad has always been on its
 basin's face and the plenum's is now, so all three agree.
 
-Launch spans: hall 24.53 → **25.18 m**, span 23.29 → **23.85 m**. Both
+Launch spans: hall 24.52 → **25.18 m**, span 22.50 → **23.85 m**. Both
 well inside `MAX_RANGE`.
 
 ## What this does to the two rooms
