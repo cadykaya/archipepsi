@@ -300,6 +300,19 @@ class Offer(Strict):
     #:
     #: The asymmetry is deliberate: where you leave from is exact,
     #: where you arrive is a region.
+    #:
+    #: BOTH POSITIONS ARE CONTACT POINTS, AND THAT IS ENFORCED AS
+    #: CONTACT. "Foot-contact centre" means the point lies ON the top
+    #: face of the surface beneath it, not within reach of it: Production
+    #: compares the declared world height with the height its downward
+    #: probe actually hits and allows only `SpaceProbe.CONTACT_EPS`
+    #: (0.001 m), the on-face allowance that makes an exact contact
+    #: answer the same way twice. The gate used to ask for ground within
+    #: `MAX_VERTICAL_STEP` -- a metre of permitted daylight under a point
+    #: this text calls contact -- and one authored pad hovered 0.5 m over
+    #: its floor through every check in the project as a result. A body
+    #: pose is DERIVED from the contact point; it is never the authored
+    #: value.
     position: tuple[float, float, float] | None = None
     radius: float = 0.0
     #: A `grapple_point` is a PLACE, not a mechanic: the shell says

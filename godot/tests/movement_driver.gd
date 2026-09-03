@@ -485,12 +485,12 @@ func _test_a_placed_room_offers_exactly_what_it_offered_at_the_origin(
 		var place: Transform3D = entry[1]
 		var yes: Dictionary = await _offer_verdict(real, [floor_box],
 				["grapple_point"], place)
-		_check((yes["built"] as Array).size() == 1,
+		_check((yes["accepted"] as Array).size() == 1,
 				"at %s a real anchor was declined: %s"
 				% [named, str(yes["declined"])])
 		var no: Dictionary = await _offer_verdict(bad,
 				[floor_box, ledge], ["grapple_point"], place)
-		_check((no["built"] as Array).is_empty(),
+		_check((no["accepted"] as Array).is_empty(),
 				"at %s an anchor with a ledge in its swing column was "
 				% named + "accepted")
 		# THE DIAGNOSTIC STILL NAMES THE ROOM'S OWN COLLIDER. A reason
@@ -527,7 +527,7 @@ func _test_a_placed_room_offers_exactly_what_it_offered_at_the_origin(
 	await get_tree().physics_frame
 	var nested := OfferBinding.validate(inner, real, "nested",
 			["grapple_point"])
-	_check((nested["built"] as Array).size() == 1,
+	_check((nested["accepted"] as Array).size() == 1,
 			"under a nested transformed parent a real anchor was "
 			+ "declined: %s" % str(nested["declined"]))
 	outer.queue_free()
@@ -781,9 +781,15 @@ func _test_a_blocked_launch_origin_is_refused() -> void:
 	var says := LaunchSolver.violations(Vector3.ZERO, Vector3(20, 0, 0),
 			3.0, OfferBinding.space_of(rig["room"] as Node3D),
 			Transform3D.IDENTITY, "blocked", 3.0)
-	_check("; ".join(says).contains("launch source"),
-			"the validator accepted a source nobody can stand on: %s"
-			% "; ".join(says))
+	# THE SPECIFIC REASON, NOT A SHARED SUBSTRING. "launch source" also
+	# appears in the not-in-contact refusal, so an assertion on it would
+	# have passed on the wrong finding. The lid is real geometry with a
+	# name: the refusal has to be the BODY not fitting, and it has to
+	# say what it is inside.
+	_check("; ".join(says).contains("does not fit")
+			and "; ".join(says).contains("lid"),
+			"the validator accepted a source nobody can stand on, or "
+			+ "refused it for the wrong reason: %s" % "; ".join(says))
 	refusals += 1
 	(rig["room"] as Node3D).queue_free()
 	player.queue_free()
@@ -854,7 +860,7 @@ func _test_the_offer_binding_measures_real_geometry() -> void:
 			Vector3(-7, 11.4, 66), "radius": 1.5},
 	]}
 	var span: Dictionary = await _offer_verdict(span_room, [floor_box])
-	_check((span["built"] as Array).size() == 3,
+	_check((span["accepted"] as Array).size() == 3,
 			"V1: three real anchors 11.4 m over a floor were not all "
 			+ "accepted: %s" % str(span["declined"]))
 	_check(_stride_would_refuse(11.4, 0.0),
@@ -876,7 +882,7 @@ func _test_the_offer_binding_measures_real_geometry() -> void:
 				Vector3(0, 27.2 + lift, 39.2), "radius": 1.5},
 		]}
 		var moved: Dictionary = await _offer_verdict(lifted, [floor_box])
-		_check((moved["built"] as Array).size() == 3,
+		_check((moved["accepted"] as Array).size() == 3,
 				"V2: lifting the anchors by %+.2f m declined %d of 3"
 				% [lift, (moved["declined"] as Array).size()])
 
@@ -891,7 +897,7 @@ func _test_the_offer_binding_measures_real_geometry() -> void:
 	# the basin floor and only a SWEEP of the column can see this.
 	var shelf := [Vector3(0.6, 15.5, 0), Vector3(1.0, 1.0, 6), "shelf"]
 	var swept: Dictionary = await _offer_verdict(mid, [floor_box, shelf])
-	_check((swept["built"] as Array).is_empty(),
+	_check((swept["accepted"] as Array).is_empty(),
 			"V3: a ledge inside the swing column was not seen, so the "
 			+ "column is being sampled at its ends rather than swept")
 	_check(str(swept["declined"]).contains("shelf"),
@@ -917,7 +923,7 @@ func _test_the_offer_binding_measures_real_geometry() -> void:
 	var tread := [Vector3(0, 16.5, 0), Vector3(6, 1, 6), "tread"]
 	var cramped: Dictionary = await _offer_verdict(shallow,
 			[floor_box, tread])
-	_check((cramped["built"] as Array).is_empty(),
+	_check((cramped["accepted"] as Array).is_empty(),
 			"V4: an anchor with 0.762 m of hang space was accepted")
 	_check(str(cramped["declined"]).contains("hang or swing")
 			and not str(cramped["declined"]).contains("inside solid"),
@@ -931,7 +937,7 @@ func _test_the_offer_binding_measures_real_geometry() -> void:
 	var deep := {"offers": [{"kind": "grapple_point", "name": "deep",
 			"position": Vector3(0, 31, 0), "radius": 1.5}]}
 	var far_floor: Dictionary = await _offer_verdict(deep, [floor_box])
-	_check((far_floor["built"] as Array).is_empty(),
+	_check((far_floor["accepted"] as Array).is_empty(),
 			"V5: an anchor whose first ground is 31 m down was accepted")
 	_check(str(far_floor["declined"]).contains("past the 30 m"),
 			"V5: the refusal must name the limit it exceeded: %s"
@@ -942,7 +948,7 @@ func _test_the_offer_binding_measures_real_geometry() -> void:
 	var edge := {"offers": [{"kind": "grapple_point", "name": "edge",
 			"position": Vector3(0, 30, 0), "radius": 1.5}]}
 	var at_limit: Dictionary = await _offer_verdict(edge, [floor_box])
-	_check((at_limit["built"] as Array).size() == 1,
+	_check((at_limit["accepted"] as Array).size() == 1,
 			"V5: an anchor exactly %.0f m up was refused: %s"
 			% [MovementPackage.GRAPPLE_DROP, str(at_limit["declined"])])
 
@@ -976,8 +982,8 @@ func _test_the_offer_binding_measures_real_geometry() -> void:
 	# V7 -- VACUITY GUARD. A binding that silently stopped measuring
 	# would read as green, so the suite must have both outcomes on real
 	# geometry.
-	_check((span["built"] as Array).size() > 0,
-			"V7: no real-geometry offer was BUILT, so a binding that "
+	_check((span["accepted"] as Array).size() > 0,
+			"V7: no real-geometry offer was ACCEPTED, so a binding that "
 			+ "stopped measuring would read as green")
 	_check((cramped["declined"] as Array).size() > 0,
 			"V7: no real-geometry offer was DECLINED, so a binding that "
@@ -1062,7 +1068,7 @@ func _test_a_grapple_point_must_be_somewhere_you_could_hang() -> void:
 	# which is exactly how the rules and the geometry came to disagree.
 	var good: Dictionary = await _offer_verdict(room, [
 			[Vector3(0, -0.5, 0), Vector3(20, 1, 20)]])
-	_check((good["built"] as Array).size() == 1,
+	_check((good["accepted"] as Array).size() == 1,
 			"a clear anchor over solid ground was not accepted: %s"
 			% str(good["declined"]))
 
@@ -1070,7 +1076,7 @@ func _test_a_grapple_point_must_be_somewhere_you_could_hang() -> void:
 	var buried: Dictionary = await _offer_verdict(room, [
 			[Vector3(0, -0.5, 0), Vector3(20, 1, 20)],
 			[Vector3(0, 18, 0), Vector3(2, 2, 2)]])
-	_check((buried["built"] as Array).is_empty(),
+	_check((buried["accepted"] as Array).is_empty(),
 			"an anchor inside solid geometry was offered as a grapple "
 			+ "opportunity")
 	_check(str(buried["declined"]).contains("inside solid"),
@@ -1082,7 +1088,7 @@ func _test_a_grapple_point_must_be_somewhere_you_could_hang() -> void:
 	var cramped: Dictionary = await _offer_verdict(room, [
 			[Vector3(0, -0.5, 0), Vector3(20, 1, 20)],
 			[Vector3(0, 15.5, 0), Vector3(6, 1, 6)]])
-	_check((cramped["built"] as Array).is_empty(),
+	_check((cramped["accepted"] as Array).is_empty(),
 			"an anchor with no room to swing under it was offered")
 	_check(str(cramped["declined"]).contains("hang or swing"),
 			"the refusal must say there is no room: %s"
@@ -1091,7 +1097,7 @@ func _test_a_grapple_point_must_be_somewhere_you_could_hang() -> void:
 
 	# Clear all the way down, and nothing to land on.
 	var over_a_void: Dictionary = await _offer_verdict(room, [])
-	_check((over_a_void["built"] as Array).is_empty(),
+	_check((over_a_void["accepted"] as Array).is_empty(),
 			"an anchor over a bottomless void was offered")
 	_check(str(over_a_void["declined"]).contains("ground to leave from"),
 			"the refusal must say there is no ground: %s"
@@ -1460,7 +1466,11 @@ func _test_a_launch_refuses_a_landing_it_cannot_land_on() -> void:
 
 	var void_landing: Array = await _launch_verdict(source, target, 3.0,
 			pad_only)
-	_check("; ".join(void_landing).contains("not on a surface"),
+	# NAMED PRECISELY. "no surface at all" is the void case and nothing
+	# else says it -- a landing that merely FLOATS over a real deck is
+	# refused by the same check with a different sentence, and an
+	# assertion that could not tell them apart would pass on either.
+	_check("; ".join(void_landing).contains("no surface at all"),
 			"a landing over a void was accepted: %s"
 			% "; ".join(void_landing))
 	refusals += 1
@@ -1530,11 +1540,11 @@ func _test_a_package_may_decline_every_offer() -> void:
 		[Vector3(60, 14, 0), Vector3(4, 4, 4), "buried_block"],
 	]
 	var all: Dictionary = await _offer_verdict(room, world, [])
-	_check((all["built"] as Array).size() == 3,
+	_check((all["accepted"] as Array).size() == 3,
 			"a package that wants everything took %d of the 4 usable "
-			% (all["built"] as Array).size() + "offers")
+			% (all["accepted"] as Array).size() + "offers")
 	var grappled := 0
-	for entry: Variant in all["built"] as Array:
+	for entry: Variant in all["accepted"] as Array:
 		if str((entry as Dictionary)["kind"]) == "grapple_point":
 			grappled += 1
 	_check(grappled == 1,
@@ -1556,18 +1566,18 @@ func _test_a_package_may_decline_every_offer() -> void:
 	# seam -- one shell, whichever verbs the generated game has.
 	var hooks_only: Dictionary = await _offer_verdict(room, world,
 			["grapple_point"])
-	_check((hooks_only["built"] as Array).size() == 1,
+	_check((hooks_only["accepted"] as Array).size() == 1,
 			"a grapple-only package took %d offers"
-			% (hooks_only["built"] as Array).size())
+			% (hooks_only["accepted"] as Array).size())
 	var rails_only: Dictionary = await _offer_verdict(room, world,
 			["rail_route"])
-	_check((rails_only["built"] as Array).size() == 1,
-			"a rail-only package built %d things"
-			% (rails_only["built"] as Array).size())
+	_check((rails_only["accepted"] as Array).size() == 1,
+			"a rail-only package accepted %d offers"
+			% (rails_only["accepted"] as Array).size())
 
 	# NOBODY: the room still stands, with no traversal mechanic in it.
 	var none: Dictionary = await _offer_verdict(room, world, ["wind"])
-	_check((none["built"] as Array).is_empty()
+	_check((none["accepted"] as Array).is_empty()
 			and (none["declined"] as Array).is_empty(),
 			"a package that wants nothing still touched the room")
 

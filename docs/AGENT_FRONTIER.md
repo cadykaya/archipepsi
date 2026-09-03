@@ -165,6 +165,73 @@ What remains needs a person, not more iteration
 5. **Project code licensing** — separate from asset intake, and not
    decided.
 
+## WAVE-1 PRE-PROMOTION GUARD CLOSURE — landed 2026-09-03
+
+The four Wave-1 rooms are **promotion-ready and still `review: pending`**.
+Nothing was promoted; that is the owner's call.
+
+**Art sync `466fd4e`** (mirrored, no Art branch history merged): one value
+in `godot/content/registry/authored_art.json` —
+`shell_yard_gantry / launch_west` `(-28.0, 0.5, 26.0) → (-28.0, 0.0, 26.0)`.
+Its x, z, 3.0 radius, `launch_catwalk` target, and every other field of the
+Yard entry are byte-identical. Art's head has since moved to `f2b920a`
+(a report only).
+
+**Six audit findings closed** (independent audit `f97545f`):
+
+* **F-1 — a launch endpoint is a CONTACT point.** `LaunchSolver` asked
+  `ground_below(..., MAX_VERTICAL_STEP)` for both endpoints: a metre of
+  permitted daylight under a point `content.py` calls the foot-contact
+  centre. Replaced with `LaunchSolver.off_surface`, which compares the
+  declared world height against the height the probe actually hits and
+  allows only `SpaceProbe.CONTACT_EPS`. Body-fit checks are unchanged and
+  independent.
+* **F-2 — the four repaired Art launch positions are a standing fixture.**
+  `REPAIRED_LAUNCHES` puts each old value back into the room the art lane
+  shipped and requires its specific physical refusal, including the
+  plenum landing that sat 4.0 m inside `pl_machine`.
+* **F-3 — order independence is a behavioural test.** A verdict on one
+  offer must not depend on which other offers were asked about, in either
+  request order or manifest order, and pure validation must add zero
+  nodes.
+* **F-4 — VALIDATION MUST NOT CONSTRUCT GAMEPLAY (owner ruling).**
+  `MovementPackage` now has two entry points: `judge` reports
+  `accepted / declined / refused` and builds nothing; `consume` builds and
+  reports `built`. `OfferBinding.validate` is the pure one and is what
+  `ZoneController` calls; `OfferBinding.construct` is the explicit one and
+  **nothing shipped calls it**. A second construction into one root is
+  refused by name. Nothing is called "built" unless a node was made, so a
+  grapple point is accepted and never built.
+* **F-5 — the two extra Hall colliders are identified by class,** and
+  doing so corrected the previous report: both are `DestructibleCover`
+  (3 cover sockets, one dropped for landing on occupied space), not "a
+  cover and an activity element". Zero `ReactiveBarrel`, zero
+  `ActivityElement`, zero `Player`.
+* **F-6 — test counts are quoted with their environment.** This container
+  (`make setup` complete) collects **1140, all passing, 627 subtests**.
+  The audit's 1100/1094+6 reconciles exactly: without an Archipelago
+  checkout the suite is 1103 (1098 + 5 skips), and without `anthropic`
+  too it is 1100.
+
+**Offer census, two scopes, both named.** DECLARED 24 (6 per room);
+JUDGED 20 (a launch pair is one verdict measuring two authored points);
+CONSTRUCTED 8 (4 rails + 4 pads; 12 grapple points construct nothing);
+DECLINED 0.
+
+**Recertified:** 12/12 shells structural 0 / measured 0; 17/17 Godot
+suites exit 0; Python 1140/0/0; packet gate clean; `make baseline`
+byte-identical; played Zone `6e8d83d0f3ec088b` unchanged (23 rooms,
+15 Checks, 922 points, 35 enemies); 14 `pass` / 7 `pending` review states
+unchanged.
+
+**Guards proven by sabotage, not by inspection.** Widening the contact
+tolerance back to a step: 11 red. Putting the repaired value in the F-2
+fixture: red. Recombining judging with construction: 11 red, including
+"six pure validations changed the hall from 174 nodes to 224". Making
+`validate` return `consume` again: 17 red. Dropping the once-per-root
+guard: red, and the second construction declined both offers against
+beams the first one built.
+
 ## What playtest 2 taught
 
 The game is playable end to end: Hub, portal, Zone, Checks claimed, a

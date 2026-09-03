@@ -179,10 +179,15 @@ func setup(zone_dict: Dictionary) -> void:
 
 ## Report what the Zone's rooms offer and what was refused.
 ##
-## VALIDATION ONLY: nothing is repaired and no room is rejected. A rail
-## that cannot be built is a rail the room plays without, and saying so
-## in the log is the whole point -- "a large room whose traversal quietly
-## did not appear is the worst version of this failure".
+## MEASUREMENT ONLY: nothing is repaired, no room is rejected, and NO
+## GAMEPLAY IS CONSTRUCTED. `OfferBinding.validate_zone` reports what the
+## rooms would support and builds none of it -- when this returned
+## `consume`, looking at a Zone put a pad and a beam into every room that
+## offered one, so promoting a room would have activated its offers by
+## accident. A rail that cannot be built is a rail the room plays
+## without, and saying so in the log is the whole point -- "a large room
+## whose traversal quietly did not appear is the worst version of this
+## failure".
 func _validate_offers(chambers: Array) -> void:
 	await get_tree().physics_frame
 	for report: Variant in OfferBinding.validate_zone(chambers):

@@ -47,6 +47,18 @@ const MAX_RANGE := 80.0
 ## stop steering.
 const MIN_LANDING_RADIUS := 2.5
 
+## How far below a declared endpoint a refusal looks for the surface it
+## MISSED.
+##
+## The contact test itself is `SpaceProbe.CONTACT_EPS` and nothing else.
+## This distance exists only so the message can say WHICH surface the
+## point floats over and by how much -- "no ground within 1.0 m" sent
+## whoever had to fix it looking for a missing floor when the floor was
+## right there, half a metre down. Deeper than any room in the library is
+## tall, so a point over a real floor always names it; a point over
+## nothing at all is reported as exactly that.
+const CONTACT_REPORT_REACH := 40.0
+
 ## Solve the launch from `source` to `target`.
 ##
 ## Returns `{velocity, time, apex, ok}`; `ok` false with a `reason` when
@@ -87,6 +99,44 @@ static func arc(source: Vector3, velocity: Vector3, time: float,
 		out.append(source + velocity * t
 				+ Vector3.DOWN * (0.5 * gravity * t * t))
 	return out
+
+## Why this declared foot-contact point is not touching the surface under
+## it, or "" when it is.
+##
+## A CONTACT TEST, NOT A STEP TEST (F-1, 2026-09-03). `content.py` says
+## both `launch_source.position` and `launch_target.position` ARE the
+## foot-contact centre. The check that guarded them asked for ground
+## within `Constants.MAX_VERTICAL_STEP` -- a full metre of permitted
+## daylight under a point the schema calls contact. The schema and the
+## probe held two views of one word, and the yard's pad hovered 0.5 m
+## over `yd_floor` through every gate in the project: its trigger box
+## started at knee height, its mesh floated, and the capture teleported
+## the player half a metre into the air before firing.
+##
+## So the tolerance is `SpaceProbe.CONTACT_EPS` -- the same on-face
+## allowance the probe already uses so that a ray landing exactly on a
+## face answers the same way twice -- and the test is a COMPARISON: the
+## declared world height against the height actually hit. Not a range, not
+## a step, and no second meaning of the word.
+##
+## `at` is already in WORLD space. This measures the ground and nothing
+## else: whether a body fits where the point implies one stands is a
+## separate question, asked separately, so a buried endpoint is refused
+## by the check that can name the solid it is buried in.
+static func off_surface(space: PhysicsDirectSpaceState3D,
+		at: Vector3) -> String:
+	var hit := SpaceProbe.ground_below(space, at, CONTACT_REPORT_REACH)
+	if hit == SpaceProbe.NO_GROUND:
+		return ("there is no surface at all within %.0f m under it"
+				% CONTACT_REPORT_REACH)
+	var gap := at.y - hit
+	if absf(gap) <= SpaceProbe.CONTACT_EPS:
+		return ""
+	var floor_node := SpaceProbe.ground_collider(space, at,
+			CONTACT_REPORT_REACH)
+	return "it floats %.4f m over %s" % [gap,
+			("the surface below" if floor_node == null
+				else floor_node.name)]
 
 ## Every way this launch is not usable. Empty is a pad that may be built.
 ##
@@ -142,12 +192,10 @@ static func violations(source_foot: Vector3, target_foot: Vector3,
 	# checked it: the arc skips its own first sample by design, so the
 	# one place the source was ever looked at was the place it was
 	# excluded from.
-	var under := SpaceProbe.ground_below(space, to_world * source_foot,
-			Constants.MAX_VERTICAL_STEP)
-	if under == SpaceProbe.NO_GROUND:
-		out.append("%s: the launch source at %v is not on a surface; "
-				% [who, source_foot] + "there is no ground within %.1f m "
-				% Constants.MAX_VERTICAL_STEP + "under it")
+	var under := off_surface(space, to_world * source_foot)
+	if under != "":
+		out.append("%s: the launch source at %v is not a foot-contact "
+				% [who, source_foot] + "point: %s" % under)
 	var on_pad := SpaceProbe.obstruction(space, source)
 	if on_pad != null:
 		out.append("%s: a player standing on the launch source at %v "
@@ -182,14 +230,13 @@ static func violations(source_foot: Vector3, target_foot: Vector3,
 	if landed.distance_to(target) > 0.05:
 		out.append("%s: the solved arc ends at %v, not the %v it "
 				% [who, landed, target] + "was aimed at")
-	# THE AUTHORED POINT MUST BE FLOOR. Within a step, because a landing
-	# surface is a surface and not a region hanging over one.
-	var ground := SpaceProbe.ground_below(space, to_world * target_foot,
-			Constants.MAX_VERTICAL_STEP)
-	if ground == SpaceProbe.NO_GROUND:
-		out.append("%s: the landing point at %v is not on a surface; "
-				% [who, target_foot] + "there is no ground within %.1f m "
-				% Constants.MAX_VERTICAL_STEP + "under it")
+	# THE AUTHORED POINT MUST BE THE FLOOR ITSELF, not a point hovering
+	# over one -- same test as the source, because the schema gives both
+	# words the same meaning.
+	var ground := off_surface(space, to_world * target_foot)
+	if ground != "":
+		out.append("%s: the landing point at %v is not a foot-contact "
+				% [who, target_foot] + "point: %s" % ground)
 	# AND THE BODY THAT STANDS ON IT MUST FIT. This is what refuses a
 	# target buried inside a slab: its derived stance is inside the slab
 	# too, and no lift rescues it.

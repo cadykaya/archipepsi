@@ -87,6 +87,10 @@ func _run() -> void:
 	await _test_a_traversal_destination_must_hold_a_player()
 	await _test_a_chained_chamber_offers_what_it_offered_at_the_origin()
 	await _test_a_launch_source_must_be_standable()
+	await _test_every_launch_endpoint_touches_the_surface_under_it()
+	await _test_the_repaired_launch_positions_are_still_refused()
+	await _test_an_offer_is_judged_without_the_others_being_built()
+	await _test_validating_a_live_room_builds_nothing_in_it()
 	await _test_the_two_collider_counts_measure_different_things()
 	_test_an_approved_shell_is_held_to_the_contract()
 
@@ -976,6 +980,27 @@ func _test_the_two_collider_counts_measure_different_things() -> void:
 	var placed := 0
 	var duplicates := 0
 	var seen: Dictionary = {}
+	# WHAT THE TWO EXTRAS ACTUALLY ARE. The independent audit's F-5: the
+	# test BOUNDED them -- two colliders, both "placed content" -- and
+	# the previous Production report NAMED them, "a destructible cover"
+	# and "an activity element". Bounded is not identified, and asking
+	# the class showed the report's second half was simply wrong.
+	#
+	# BOTH are `DestructibleCover`. The hall declares THREE `cover`
+	# sockets and no `reactive` one; `_build_environment` places a cover
+	# per socket and drops any whose box lands on something already
+	# occupied, so three sockets become two crates. No activity element
+	# is placed in this chamber at all. That is the number's cause, and
+	# asserting the cause is what stops 2 from being a magic constant.
+	#
+	# `is_placed_content` also admits a `Player`, so a body standing in
+	# the room during a measurement would have been counted into the
+	# room's own total. Zero is asserted rather than assumed.
+	var covers := 0
+	var barrels := 0
+	var elements := 0
+	var bodies := 0
+	var unattributed: Array[String] = []
 	for n: Node in root.find_children("*", "CollisionShape3D",
 			true, false):
 		var owner_scene := "<added at runtime>"
@@ -993,6 +1018,26 @@ func _test_the_two_collider_counts_measure_different_things() -> void:
 					"a collider outside the authored mesh is not placed "
 					+ "content either: %s under %s"
 					% [n.name, n.get_parent().name])
+			var host: Node = n.get_parent()
+			var named := ""
+			while host != null and host != root and named == "":
+				if host is Player:
+					bodies += 1
+					named = "Player"
+				elif host is DestructibleCover:
+					covers += 1
+					named = "DestructibleCover"
+				elif host is ReactiveBarrel:
+					barrels += 1
+					named = "ReactiveBarrel"
+				elif host is ActivityElement:
+					elements += 1
+					named = "ActivityElement"
+				else:
+					host = host.get_parent()
+			if named == "":
+				unattributed.append("%s under %s"
+						% [n.name, n.get_parent().name])
 		# KEYED ON THE BODY, NOT THE SHAPE NODE. Every collider the
 		# importer builds is an auto-named `CollisionShape3D` under a
 		# body that carries the authored piece's name, and the geometry
@@ -1018,6 +1063,38 @@ func _test_the_two_collider_counts_measure_different_things() -> void:
 	_check(duplicates == 0,
 			"%d colliders share a name and a position; one of the two "
 			% duplicates + "counts was concealing duplicate geometry")
+	# THE TWO EXTRAS, BY CLASS.
+	print("  hall placed colliders: DestructibleCover=%d ReactiveBarrel=%d"
+			% [covers, barrels] + " ActivityElement=%d Player=%d"
+			% [elements, bodies])
+	var cover_sockets := RoomContract.sockets_of(result, "cover").size()
+	var reactive_sockets := RoomContract.sockets_of(result,
+			"reactive").size()
+	_check(cover_sockets == 3 and reactive_sockets == 0,
+			"the hall declares %d cover and %d reactive socket(s); the "
+			% [cover_sockets, reactive_sockets] + "two placed colliders "
+			+ "are explained by 3 and 0")
+	_check(covers == 2,
+			"the hall's composer colliders include %d DestructibleCover, "
+			% covers + "not the 2 its three cover sockets place (one is "
+			+ "dropped for landing on occupied space)")
+	_check(barrels == 0,
+			"%d ReactiveBarrel collider(s) were counted; the hall "
+			% barrels + "declares no reactive socket")
+	_check(elements == 0,
+			"%d ActivityElement collider(s) were counted; the hall's "
+			% elements + "chamber places none, and the previous "
+			+ "Production report named one")
+	_check(bodies == 0,
+			"%d Player collider(s) were counted into the hall's chamber "
+			% bodies + "total; a body standing in a room is not part of "
+			+ "the room")
+	_check(unattributed.is_empty(),
+			"%d placed collider(s) belong to no known class: %s"
+			% [unattributed.size(), "; ".join(unattributed)])
+	_check(covers + barrels + elements + bodies == placed,
+			"%d placed collider(s) were counted but %d were identified"
+			% [placed, covers + barrels + elements + bodies])
 	root.queue_free()
 	await get_tree().process_frame
 	rooms_checked += 1
@@ -1078,15 +1155,15 @@ func _test_a_chained_chamber_offers_what_it_offered_at_the_origin(
 	await get_tree().physics_frame
 	var at_origin := OfferBinding.validate(alone["root"] as Node3D,
 			alone, "origin", ["grapple_point"])
-	_check((chained["built"] as Array).size()
-			== (at_origin["built"] as Array).size()
+	_check((chained["accepted"] as Array).size()
+			== (at_origin["accepted"] as Array).size()
 			and (chained["declined"] as Array).size()
 			== (at_origin["declined"] as Array).size(),
 			"the same offer measured %d/%d in a placed chamber and "
-			% [(chained["built"] as Array).size(),
+			% [(chained["accepted"] as Array).size(),
 				(chained["declined"] as Array).size()]
 			+ "%d/%d at the origin"
-			% [(at_origin["built"] as Array).size(),
+			% [(at_origin["accepted"] as Array).size(),
 				(at_origin["declined"] as Array).size()])
 	(alone["root"] as Node3D).queue_free()
 	(zone["root"] as Node3D).queue_free()
@@ -1131,7 +1208,7 @@ func _test_a_launch_source_must_be_standable() -> void:
 	floating["offers"] = pair
 	var air_says: String = await _offer_says(floating, "air_source")
 	_check(air_says.contains("launch source at")
-			and air_says.contains("not on a surface"),
+			and air_says.contains("no surface at all"),
 			"a pad hanging in mid-air was accepted: %s" % air_says)
 	probes_expected_to_fail += 1
 	rooms_checked += 3
@@ -1161,6 +1238,592 @@ func _offer_says(room: Dictionary, who: String) -> String:
 ## OPTIONAL SEGMENTS INCLUDED. The endpoint loop always ran on every
 ## segment -- the `mandatory` skip happens after it -- and an optional
 ## destination is still a claim about where a player can get to.
+# --- F-1 / F-2: a launch endpoint is a CONTACT point ----------------------
+
+## The shells that declare offers, as registry entries ready to build.
+func _shells_with_offers() -> Array:
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var out: Array = []
+	for id: String in registry.ids_of_category("room_shell"):
+		var entry: Dictionary = registry.get_entry(id).duplicate(true)
+		if bool(entry.get("procedural_fallback", false)):
+			continue
+		if (entry.get("offers", []) as Array).is_empty():
+			continue
+		entry["review"] = "pass"
+		out.append(entry)
+	return out
+
+## ONE shell, live in the tree, under a host that can be moved.
+##
+## ONE AT A TIME, and this is not an optimisation. Four large shells
+## staged together all sit at the origin and overlap: the first draft of
+## this test refused the hall's arc on `yd_roof` and the plenum's landing
+## on `sp_roof`, which are colliders from other rooms. A fixture sharing
+## a physics space with a room it is not about measures the wrong room.
+##
+## The HOST is what moves. Rebuilding a 400 kB GLB seven times to test
+## seven placements measures the importer; moving one room measures the
+## frame handling, which is the thing that was wrong.
+func _live_shell(entry: Dictionary) -> Dictionary:
+	var private := ContentRegistry.new()
+	private.entries[str(entry["id"])] = entry
+	var build: Dictionary = ContentInstantiator.build_chamber(
+			_chamber_for(entry), "concrete_facility", private)
+	var host := Node3D.new()
+	add_child(host)
+	host.add_child(build["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	return {"id": str(entry["id"]), "host": host,
+			"root": build["root"], "build": build}
+
+## Every `launch_source` and `launch_target` a room declares, by name.
+##
+## Read off the registry rather than listed here, so a room the art lane
+## adds is measured without anyone remembering to add it.
+func _launch_points(build: Dictionary) -> Array:
+	var out: Array = []
+	for kind: String in ["launch_source", "launch_target"]:
+		for raw: Variant in RoomContract.offers_of(build, kind):
+			var offer: Dictionary = raw
+			out.append({"kind": kind, "name": str(offer.get("name", "?")),
+					"position": offer["position"] as Vector3})
+	return out
+
+## The placements a chamber actually gets, plus identity.
+##
+## `ZoneBuilder` translates every chamber, lifts the plenum's origin
+## below its own seam and yaws many of them -- and identity is the ONE
+## placement that cannot detect a frame error, because there the room's
+## frame and the world's coincide.
+const LAUNCH_PLACEMENTS := [
+	["at the origin", Vector3.ZERO, 0.0],
+	["translated", Vector3(137.0, 0.0, -84.0), 0.0],
+	["lifted", Vector3(0.0, 61.0, 0.0), 0.0],
+	["yawed 90", Vector3.ZERO, PI / 2.0],
+	["yawed 180", Vector3.ZERO, PI],
+	["yawed 270", Vector3.ZERO, 3.0 * PI / 2.0],
+	["placed and yawed", Vector3(-213.0, -37.0, 96.0), PI / 3.0],
+]
+
+func _test_every_launch_endpoint_touches_the_surface_under_it() -> void:
+	"""F-1. `launch_source.position` and `launch_target.position` ARE the
+	foot-contact centre -- `content.py` says so, in the same commit that
+	moved three of them onto their floors.
+
+	The gate did not say so. It asked `ground_below(..., MAX_VERTICAL_STEP)`
+	-- ground within a metre -- which is a step check wearing a contact
+	check's name, and the yard's pad hovered 0.5 m over `yd_floor` through
+	every gate in the project because of it: a trigger box starting at knee
+	height, a mesh floating half a metre up, and a capture that teleported
+	the player into the air before firing.
+
+	So this compares the DECLARED height against the height the probe
+	actually hits, at `SpaceProbe.CONTACT_EPS`, over every launch endpoint
+	in the library. It measures each one repeatedly, because an exact
+	contact on a collider face is the case the engine is entitled to answer
+	either way -- that determinism is what the epsilon buys, and it is
+	worth nothing untested. And it lifts each one by the half metre the old
+	check allowed, because a guard nobody has watched refuse is a guard
+	nobody has tested."""
+	var shells: Array = await _shells_with_offers()
+	_check(shells.size() >= 4,
+			"only %d shells with offers were reachable; the four LARGE "
+			% shells.size() + "rooms all declare launch endpoints")
+	var endpoints := 0
+	var lifted_sources := 0
+	var lifted_targets := 0
+	var yard_seen := false
+	for raw_entry: Variant in shells:
+		var record: Dictionary = await _live_shell(raw_entry as Dictionary)
+		var id: String = record["id"]
+		var root: Node3D = record["root"]
+		var host: Node3D = record["host"]
+		var build: Dictionary = record["build"]
+		var points: Array = _launch_points(build)
+		for place: Array in LAUNCH_PLACEMENTS:
+			host.transform = Transform3D(
+					Basis(Vector3.UP, place[2] as float),
+					place[1] as Vector3)
+			await get_tree().physics_frame
+			await get_tree().physics_frame
+			var space := OfferBinding.space_of(root)
+			_check(space != null, "%s has no physics space" % id)
+			for raw: Variant in points:
+				var point: Dictionary = raw
+				var world: Vector3 = root.global_transform \
+						* (point["position"] as Vector3)
+				var said := LaunchSolver.off_surface(space, world)
+				_check(said == "", "%s / %s (%s) at %v is not a "
+						% [id, point["name"], point["kind"],
+							point["position"]] + "foot-contact point "
+						+ "%s: %s" % [place[0], said])
+				# THE SAME QUESTION, SIXTEEN TIMES. A point resting
+				# exactly on a face is a coin toss without the epsilon,
+				# and a coin toss that came up heads once is not a pass.
+				for _i in 16:
+					_check(LaunchSolver.off_surface(space, world) == said,
+							"%s / %s answered its own contact question "
+							% [id, point["name"]] + "two different ways "
+							+ "on identical input")
+				if str(place[0]) == "at the origin":
+					endpoints += 1
+
+		# NESTED, because a chamber's root is a child of a Zone root and a
+		# transform only ever read one level up works until it is nested.
+		var wrapper := Node3D.new()
+		wrapper.transform = Transform3D(Basis(Vector3.UP, PI / 5.0),
+				Vector3(44.0, 12.0, -7.0))
+		add_child(wrapper)
+		remove_child(host)
+		wrapper.add_child(host)
+		host.transform = Transform3D(Basis(Vector3.UP, PI / 2.0),
+				Vector3(60.0, -5.0, 30.0))
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var nested_space := OfferBinding.space_of(root)
+		for raw: Variant in points:
+			var point: Dictionary = raw
+			var said := LaunchSolver.off_surface(nested_space,
+					root.global_transform * (point["position"] as Vector3))
+			_check(said == "", "%s / %s touches its surface at the origin "
+					% [id, point["name"]]
+					+ "but not under a nested transform: %s" % said)
+
+		# AND THE GUARD BITES. Lift a point that is genuinely in contact
+		# and the same call must refuse it -- by half a metre, the exact
+		# distance the yard's pad hovered and the old within-a-step check
+		# allowed.
+		for raw: Variant in points:
+			var point: Dictionary = raw
+			var up: Vector3 = (point["position"] as Vector3) \
+					+ Vector3.UP * 0.5
+			var said := LaunchSolver.off_surface(nested_space,
+					root.global_transform * up)
+			_check(said.contains("floats 0.5000 m over"),
+					"%s / %s lifted half a metre off its floor was "
+					% [id, point["name"]] + "accepted as a foot-contact "
+					+ "point: '%s'" % said)
+			if str(point["kind"]) == "launch_source":
+				lifted_sources += 1
+			else:
+				lifted_targets += 1
+			probes_expected_to_fail += 1
+
+		# THE YARD'S OWN OLD VALUE, by name. `launch_west` sat at y = 0.5
+		# over a floor whose top is 0.0 and passed every gate this project
+		# had, in the room it was authored for.
+		if id == "shell_yard_gantry":
+			var was := Vector3(-28.0, 0.5, 26.0)
+			var said := LaunchSolver.off_surface(nested_space,
+					root.global_transform * was)
+			_check(said.contains("floats 0.5000 m over")
+					and said.contains("yd_floor"),
+					"the yard's pre-repair launch_west at %v was accepted, "
+					% was + "or refused without naming the floor it "
+					+ "hovered over: '%s'" % said)
+			probes_expected_to_fail += 1
+			yard_seen = true
+		wrapper.queue_free()
+		await get_tree().process_frame
+		rooms_checked += 1
+	_check(endpoints == 8,
+			"%d launch endpoints were measured for contact; the four "
+			% endpoints + "LARGE rooms declare 8 between them")
+	_check(lifted_sources == 4 and lifted_targets == 4,
+			"the lift sabotage covered %d sources and %d targets; both "
+			% [lifted_sources, lifted_targets] + "halves of the contract "
+			+ "must be guarded, not just the one that was wrong")
+	_check(yard_seen, "shell_yard_gantry was never measured, so the "
+			+ "position F-1 was raised about is unguarded")
+
+## The four launch positions the art lane repaired, and the physical
+## refusal each one must still earn.
+##
+## F-2. The previous report's row 10 -- "old Art launch positions
+## reproduce their refusal" -- recorded something Production DID, once, by
+## hand. Nothing in the repository held those four numbers, so all four
+## defects could return and every suite would stay green. A manual
+## observation is not a guard.
+##
+## `why` is what the refusal must SAY. Each names a specific physical
+## fact rather than "something failed": the surface a point floats over,
+## or the collider a body is inside.
+const REPAIRED_LAUNCHES := [
+	{"shell": "shell_hall_transit", "offer": "launch_basin",
+		"kind": "launch_source", "was": Vector3(12.0, 0.0, 18.0),
+		"why": "the arc is obstructed"},
+	{"shell": "shell_plenum_helix", "offer": "launch_floor",
+		"kind": "launch_source", "was": Vector3(0.0, 0.5, 6.0),
+		"why": "floats 0.5000 m over pl_floor"},
+	{"shell": "shell_plenum_helix", "offer": "launch_collar",
+		"kind": "launch_target",
+		"was": Vector3(0.0, 28.333333333333332, 10.0),
+		"why": "is inside pl_machine"},
+	{"shell": "shell_span_basin", "offer": "launch_basin",
+		"kind": "launch_source", "was": Vector3(0.0, 0.5, 45.0),
+		"why": "floats 0.5000 m over sp_basin"},
+]
+
+func _test_the_repaired_launch_positions_are_still_refused() -> void:
+	"""F-2, and it is the standing version of a table row.
+
+	Each of these four was authored, shipped, and measured true by every
+	gate this project had, because no gate had ever put the offer rules and
+	the geometry in the same room. Putting the old number back must produce
+	the same physical refusal it produced when it was found -- including
+	the plenum's landing point, which sat 4.0 m inside `pl_machine`.
+
+	The room is the room as the art lane shipped it, with ONE value put
+	back, so what is measured is the position and not a fixture."""
+	var reproduced := 0
+	for raw_entry: Variant in await _shells_with_offers():
+		var entry: Dictionary = raw_entry
+		var wanted: Array = []
+		for raw: Variant in REPAIRED_LAUNCHES:
+			if str((raw as Dictionary)["shell"]) == str(entry["id"]):
+				wanted.append(raw)
+		if wanted.is_empty():
+			continue
+		var record: Dictionary = await _live_shell(entry)
+		var root: Node3D = record["root"]
+		for raw: Variant in wanted:
+			var this_case: Dictionary = raw
+			var build: Dictionary = \
+					(record["build"] as Dictionary).duplicate()
+			var offers: Array = []
+			for item: Variant in build.get("offers", []) as Array:
+				var offer: Dictionary = (item as Dictionary).duplicate(true)
+				if str(offer.get("name", "")) == str(this_case["offer"]) \
+						and str(offer.get("kind", "")) \
+							== str(this_case["kind"]):
+					offer["position"] = this_case["was"]
+				offers.append(offer)
+			build["offers"] = offers
+			var verdict := OfferBinding.validate(root, build,
+					str(entry["id"]), ["launch_source"])
+			_check(not bool(verdict.get("refused", false)),
+					"%s could not be measured with the old %s in place"
+					% [entry["id"], this_case["offer"]])
+			var why := ""
+			for item: Variant in verdict["declined"] as Array:
+				why += str((item as Dictionary)["why"]) + " "
+			print("  F-2 %-20s %-14s %v %s"
+					% [entry["id"], this_case["offer"], this_case["was"],
+						("REFUSED" if why != "" else "ACCEPTED")])
+			_check(why != "", "%s / %s put back at %v was ACCEPTED; the "
+					% [entry["id"], this_case["offer"], this_case["was"]]
+					+ "defect the art lane repaired can return without a "
+					+ "single test going red")
+			_check(why.contains(str(this_case["why"])),
+					"%s / %s was refused, but not for the physical reason "
+					% [entry["id"], this_case["offer"]] + "it was found "
+					+ "for ('%s'): %s" % [str(this_case["why"]), why])
+			probes_expected_to_fail += 1
+			reproduced += 1
+		(record["host"] as Node3D).queue_free()
+		await get_tree().process_frame
+		rooms_checked += 1
+	_check(reproduced == 4,
+			"only %d of the 4 repaired launch positions were reproduced"
+			% reproduced)
+
+# --- F-3 / F-4: judging is not building ------------------------------------
+
+## Every node under `root`, so "did anything appear" is a number.
+func _descendants(root: Node) -> int:
+	var n := root.get_child_count()
+	for child: Node in root.get_children():
+		n += _descendants(child)
+	return n
+
+## Every collider under `root`, which is what a probe would actually hit.
+func _colliders(root: Node) -> int:
+	var n := 1 if root is CollisionShape3D else 0
+	for child: Node in root.get_children():
+		n += _colliders(child)
+	return n
+
+## Anything a movement package would have constructed, by class.
+##
+## A `LaunchPad`, a rail `Volume` carrying a `RailPath`, or a beam --
+## every one of which is gameplay geometry a player can touch.
+func _offer_nodes(root: Node) -> int:
+	var n := 0
+	if root is AffordanceNodes.LaunchPad:
+		n += 1
+	elif root is AffordanceNodes.Volume \
+			and (root as AffordanceNodes.Volume).rail != null:
+		n += 1
+	for child: Node in root.get_children():
+		n += _offer_nodes(child)
+	return n
+
+## The `(kind, name)` pairs of a verdict array, as a sorted signature.
+func _signature(entries: Array) -> String:
+	var parts: Array[String] = []
+	for raw: Variant in entries:
+		var item: Dictionary = raw
+		parts.append("%s/%s" % [str(item.get("kind", "?")),
+				str(item.get("name", "?"))])
+	parts.sort()
+	return ", ".join(parts)
+
+func _test_an_offer_is_judged_without_the_others_being_built() -> void:
+	"""F-3, behaviourally.
+
+	The defect this pins was real and it was mine: `consume` used to judge
+	and construct in one pass, so the hall's rail beam existed by the time
+	the hall's launch arc was measured -- and that arc grazes the beam by
+	0.35 m. The launch was declined in company and accepted alone, and the
+	answer depended on which kind the loop happened to visit first.
+
+	So the property is not "the code has two loops". It is: A VERDICT ON
+	ONE OFFER DOES NOT DEPEND ON WHICH OTHER OFFERS WERE ASKED ABOUT. That
+	holds or it does not, whatever the source looks like, and recombining
+	judgment with construction makes it fail here rather than in a
+	playtest."""
+	var subject := "shell_hall_transit"
+	var found := false
+	for raw_entry: Variant in await _shells_with_offers():
+		var entry: Dictionary = raw_entry
+		if str(entry["id"]) != subject:
+			continue
+		found = true
+		var record: Dictionary = await _live_shell(entry)
+		var root: Node3D = record["root"]
+		var build: Dictionary = record["build"]
+		var before := _descendants(root)
+
+		# ALONE, then IN COMPANY, then in the other order. The hall's rail
+		# and its launch are the pair that collided.
+		var rail_alone := OfferBinding.validate(root, build, subject,
+				["rail_route"])
+		var launch_alone := OfferBinding.validate(root, build, subject,
+				["launch_source"])
+		var rail_first := OfferBinding.validate(root, build, subject,
+				["rail_route", "launch_source"])
+		var launch_first := OfferBinding.validate(root, build, subject,
+				["launch_source", "rail_route"])
+		for verdict: Dictionary in [rail_alone, launch_alone, rail_first,
+				launch_first]:
+			_check(not bool(verdict.get("refused", false)),
+					"%s could not be measured: %s"
+					% [subject, str(verdict["declined"])])
+
+		# THE COMBINATION SAYS WHAT THE PARTS SAID.
+		_check(_signature(rail_first["accepted"] as Array)
+				== _signature(launch_first["accepted"] as Array)
+				and _signature(rail_first["declined"] as Array)
+				== _signature(launch_first["declined"] as Array),
+				"asking for the same two kinds in the other order changed "
+				+ "the verdict: [%s] vs [%s]"
+				% [_signature(rail_first["accepted"] as Array),
+					_signature(launch_first["accepted"] as Array)])
+		var apart := _signature((rail_alone["accepted"] as Array)
+				+ (launch_alone["accepted"] as Array))
+		_check(apart == _signature(rail_first["accepted"] as Array),
+				"the hall's rail and launch were accepted [%s] when asked "
+				% apart + "about separately and [%s] when asked about "
+				% _signature(rail_first["accepted"] as Array)
+				+ "together; a verdict that depends on its company is not "
+				+ "a fact about the room")
+		_check(not _signature(rail_first["accepted"] as Array).is_empty(),
+				"the hall accepted nothing at all, so this compares two "
+				+ "empty answers and would pass on any code")
+
+		# AND THE MANIFEST'S OWN ORDER. Reversing the authored `offers`
+		# array must not move a verdict either -- a room does not mean
+		# something different because the art lane listed it backwards.
+		var flipped: Dictionary = build.duplicate()
+		var reversed_offers: Array = (build.get("offers", []) as Array) \
+				.duplicate()
+		reversed_offers.reverse()
+		flipped["offers"] = reversed_offers
+		var backwards := OfferBinding.validate(root, flipped, subject)
+		var forwards := OfferBinding.validate(root, build, subject)
+		_check(_signature(backwards["accepted"] as Array)
+				== _signature(forwards["accepted"] as Array)
+				and _signature(backwards["declined"] as Array)
+				== _signature(forwards["declined"] as Array),
+				"the hall judged its offers differently with the manifest "
+				+ "reversed: [%s] vs [%s]"
+				% [_signature(backwards["accepted"] as Array),
+					_signature(forwards["accepted"] as Array)])
+
+		# AND NONE OF THAT BUILT ANYTHING. Six measurements, zero nodes:
+		# the room they were all judged against is the room as authored.
+		_check(_descendants(root) == before,
+				"six pure validations changed the hall from %d nodes to "
+				% before + "%d; they were judged against each other's "
+				% _descendants(root) + "output, not against the room")
+		_check(_offer_nodes(root) == 0,
+				"%d pad or rail node(s) appeared during validation"
+				% _offer_nodes(root))
+		(record["host"] as Node3D).queue_free()
+		await get_tree().process_frame
+		rooms_checked += 1
+	_check(found, "%s was not reachable, so the room whose rail and arc "
+			% subject + "actually collided is unguarded")
+
+func _test_validating_a_live_room_builds_nothing_in_it() -> void:
+	"""F-4, and the owner's ruling: VALIDATION MUST NOT CONSTRUCT GAMEPLAY.
+
+	`OfferBinding.validate` returned `MovementPackage.consume`, which
+	builds. So the one thing `ZoneController` did with a live Zone -- check
+	it -- put a launch pad and a rail beam into every room that offered
+	one, as a side effect of something named validation. Promoting a room
+	would have activated its offers by accident, and a second `validate`
+	would have judged them against the first call's output.
+
+	Three separate facts, and each is worth its own assertion: measuring
+	changes NOTHING; measuring twice says the SAME THING; and the explicit
+	construction path still works and refuses to run twice into one room."""
+	var measured := 0
+	var declared_total := 0
+	var landings_total := 0
+	var anchors_total := 0
+	var accepted_total := 0
+	var built_total := 0
+	var declined_total := 0
+	for raw_entry: Variant in await _shells_with_offers():
+		var entry: Dictionary = raw_entry
+		var subject := str(entry["id"])
+		var record: Dictionary = await _live_shell(entry)
+		var root: Node3D = record["root"]
+		var build: Dictionary = record["build"]
+		var nodes := _descendants(root)
+		var shapes := _colliders(root)
+
+		var once := OfferBinding.validate(root, build, subject)
+		_check(_descendants(root) == nodes and _colliders(root) == shapes,
+				"validating once took the hall from %d nodes / %d "
+				% [nodes, shapes] + "colliders to %d / %d"
+				% [_descendants(root), _colliders(root)])
+		_check(_offer_nodes(root) == 0,
+				"validating built %d pad or rail node(s); the ruling is "
+				% _offer_nodes(root) + "that it must build none")
+
+		var twice := OfferBinding.validate(root, build, subject)
+		_check(_signature(once["accepted"] as Array)
+				== _signature(twice["accepted"] as Array)
+				and _signature(once["declined"] as Array)
+				== _signature(twice["declined"] as Array),
+				"validating the same live room twice gave [%s] then [%s]"
+				% [_signature(once["accepted"] as Array),
+					_signature(twice["accepted"] as Array)])
+		_check(_descendants(root) == nodes and _colliders(root) == shapes,
+				"validating twice took the hall from %d nodes / %d "
+				% [nodes, shapes] + "colliders to %d / %d"
+				% [_descendants(root), _colliders(root)])
+		_check(not (once["accepted"] as Array).is_empty(),
+				"the hall accepted nothing, so this compares two empty "
+				+ "answers and would pass on any code")
+
+		# THE EXPLICIT PATH STILL BUILDS, and it is a different word.
+		# Nothing shipped calls it -- the consuming gameplay package is a
+		# Playtest-3 milestone -- so this is the only place the offers of
+		# a real room are ever constructed.
+		var made := OfferBinding.construct(root, build, subject)
+		_check(not bool(made.get("refused", false)),
+				"the explicit construction path refused a room its own "
+				+ "validation accepted: %s" % str(made["declined"]))
+		_check((made["built"] as Array).size() > 0,
+				"construct() reported nothing built in a room with %d "
+				% (once["accepted"] as Array).size() + "accepted offers")
+		_check(_offer_nodes(root) > 0,
+				"construct() said it built %d offer(s) and no pad or rail "
+				% (made["built"] as Array).size() + "node exists")
+		# BUILT AND ACCEPTED ARE DIFFERENT FACTS. Every grapple point in
+		# the hall is accepted and none is built, because there is no
+		# grapple mechanic to construct -- and calling one "built" would
+		# be a claim that something was made.
+		_check((made["built"] as Array).size()
+				< (made["accepted"] as Array).size(),
+				"construct() reported %d built out of %d accepted; the "
+				% [(made["built"] as Array).size(),
+					(made["accepted"] as Array).size()]
+				+ "grapple points are accepted and construct nothing, so "
+				+ "the two counts must differ")
+		for raw: Variant in made["built"] as Array:
+			_check(str((raw as Dictionary)["kind"]) != "grapple_point",
+					"a grapple point was reported as BUILT; nothing was "
+					+ "constructed for it")
+		var after_build := _descendants(root)
+
+		# AND IT REFUSES TO RUN TWICE. A second construction into one root
+		# would duplicate every pad and beam and judge the new ones
+		# against the old.
+		var again := OfferBinding.construct(root, build, subject)
+		_check(bool(again.get("refused", false)),
+				"a second construction into the same root was allowed; "
+				+ "it built %d more offer(s)"
+				% (again["built"] as Array).size())
+		_check(str(again["declined"]).contains("already constructed"),
+				"the second construction was refused without saying why: "
+				+ "%s" % str(again["declined"]))
+		_check((again["built"] as Array).is_empty()
+				and _descendants(root) == after_build,
+				"the refused second construction still changed the hall "
+				+ "from %d nodes to %d" % [after_build, _descendants(root)])
+		probes_expected_to_fail += 1
+
+		# VALIDATION STILL WORKS ON A BUILT ROOM, and it is now measuring
+		# a room with a rail in it -- which is exactly why it must never
+		# have been what a gate called.
+		var after := OfferBinding.validate(root, build, subject)
+		_check(not bool(after.get("refused", false)),
+				"validation refused a room it had just built into")
+
+		# THE TWO SCOPES, NAMED. `offers` is what the manifest DECLARES;
+		# `accepted` is what the binding JUDGES. They differ by four in
+		# this library and the difference is not a discrepancy: a launch
+		# PAIR is one judgement that measures two authored points, so
+		# four `launch_target` entries are declared and judged without
+		# appearing as verdicts of their own. Reporting one number for
+		# both scopes is how two counts of one thing start disagreeing.
+		var declared := (build.get("offers", []) as Array).size()
+		declared_total += declared
+		landings_total += RoomContract.offers_of(build,
+				"launch_target").size()
+		anchors_total += RoomContract.offers_of(build,
+				"grapple_point").size()
+		accepted_total += (made["accepted"] as Array).size()
+		built_total += (made["built"] as Array).size()
+		declined_total += (made["declined"] as Array).size()
+		print("  %-24s declared=%d accepted=%d built=%d declined=%d"
+				% [subject, declared, (made["accepted"] as Array).size(),
+					(made["built"] as Array).size(),
+					(made["declined"] as Array).size()])
+		measured += 1
+		(record["host"] as Node3D).queue_free()
+		await get_tree().process_frame
+		rooms_checked += 1
+	print("  offer census: declared=%d judged=%d constructed=%d declined=%d"
+			% [declared_total, accepted_total, built_total, declined_total])
+	_check(measured >= 4,
+			"only %d shell(s) went through the validate/construct split"
+			% measured)
+	_check(declined_total == 0,
+			"%d offer(s) were declined by the explicit construction path"
+			% declined_total)
+	_check(declared_total == accepted_total + landings_total,
+			"the library declares %d offers and judges %d, with %d "
+			% [declared_total, accepted_total, landings_total]
+			+ "launch target(s); declared must be judged plus the "
+			+ "targets, which are measured inside their source's verdict "
+			+ "rather than as verdicts of their own")
+	# CONSTRUCTED IS SMALLER STILL, and for a reason worth asserting: a
+	# grapple point is accepted and never built, because there is no
+	# grapple mechanic in this engine to construct. So "24 offers" and
+	# "8 nodes" are both true and neither is the other.
+	_check(built_total == accepted_total - anchors_total,
+			"the library constructed %d node-bearing offers out of %d "
+			% [built_total, accepted_total] + "judged, with %d grapple "
+			% anchors_total + "point(s) that construct nothing")
+
 func _test_a_traversal_destination_must_hold_a_player() -> void:
 	var floor_box := [Vector3(0.0, -0.5, 5.0), Vector3(20.0, 1.0, 20.0)]
 	var trip := [{"name": "hop", "kind": "walk", "mandatory": false,
@@ -1228,7 +1891,7 @@ func _test_a_traversal_destination_must_hold_a_player() -> void:
 func _test_every_declared_offer_is_true_against_real_geometry() -> void:
 	var registry := ContentRegistry.new()
 	registry.load_all()
-	var built_total := 0
+	var accepted_total := 0
 	var declined_total := 0
 	var measured := 0
 	for id: String in registry.ids_of_category("room_shell"):
@@ -1254,14 +1917,14 @@ func _test_every_declared_offer_is_true_against_real_geometry() -> void:
 		_check(not bool(verdict.get("refused", false)),
 				"%s: its offers could not be measured at all: %s"
 				% [id, str(verdict["declined"])])
-		var ok := (verdict["built"] as Array).size()
+		var ok := (verdict["accepted"] as Array).size()
 		var no := (verdict["declined"] as Array).size()
-		built_total += ok
+		accepted_total += ok
 		declined_total += no
 		measured += 1
-		print("  %-24s offers %s  built=%d declined=%d"
+		print("  %-24s offers %s  accepted=%d declined=%d"
 				% [id, "PENDING" if pending else "PASS", ok, no])
-		for raw: Variant in verdict["built"]:
+		for raw: Variant in verdict["accepted"]:
 			print("      + %-14s %s" % [str((raw as Dictionary)["kind"]),
 					str((raw as Dictionary).get("name", "?"))])
 		for raw: Variant in verdict["declined"]:
@@ -1297,10 +1960,10 @@ func _test_every_declared_offer_is_true_against_real_geometry() -> void:
 		_check(not bool(elsewhere.get("refused", false)),
 				"%s: placed away from the origin its offers could not "
 				% id + "be measured: %s" % str(elsewhere["declined"]))
-		_check((elsewhere["built"] as Array).size() == ok
+		_check((elsewhere["accepted"] as Array).size() == ok
 				and (elsewhere["declined"] as Array).size() == no,
 				"%s offers %d/%d at the origin but %d/%d when placed "
-				% [id, ok, no, (elsewhere["built"] as Array).size(),
+				% [id, ok, no, (elsewhere["accepted"] as Array).size(),
 					(elsewhere["declined"] as Array).size()]
 				+ "and yawed; placement changed what the room offers")
 		host.queue_free()
@@ -1340,21 +2003,31 @@ func _test_every_declared_offer_is_true_against_real_geometry() -> void:
 	var walked := OfferBinding.validate_zone([{
 		"chamber": {"id": "hall"}, "node": live["root"],
 		"build": noisy}])
+	# AND NEITHER CALL BUILT ANYTHING. This is the exact shape
+	# `ZoneController._validate_offers` hands the binding one physics
+	# frame after a Zone goes live, so this is where "no shipped path
+	# constructs an authored offer" is a measurement rather than a
+	# claim about who calls what. It used to build a pad and a beam in
+	# every room that offered one.
+	_check(_offer_nodes(live["root"] as Node3D) == 0,
+			"validate_zone built %d pad or rail node(s) into a live "
+			% _offer_nodes(live["root"] as Node3D) + "chamber; the Zone "
+			+ "path must measure and construct nothing")
 	_check(walked.size() == 1,
 			"validate_zone reported %d chambers for one with a declined "
 			% walked.size() + "offer; the Zone-level wrapper is not "
 			+ "reaching the room")
 	var line := OfferBinding.summarise("hall",
 			(walked[0] as Dictionary)["verdict"] as Dictionary)
-	_check(line.contains("built") and line.contains("declined"),
+	_check(line.contains("accepted") and line.contains("declined"),
 			"the Zone-level summary says nothing useful: %s" % line)
 	print("  validate_zone: %s" % line)
 	(live["root"] as Node3D).queue_free()
 	await get_tree().process_frame
 	# VACUITY GUARD. A binding that silently stopped measuring, or one
 	# that accepted everything, would both read as green without this.
-	_check(built_total > 0,
-			"no declared offer was BUILT against real geometry, so a "
+	_check(accepted_total > 0,
+			"no declared offer was ACCEPTED against real geometry, so a "
 			+ "binding that had stopped measuring would read as green")
 	# THE REFUSING HALF OF THE GUARD. Every declared offer in the library
 	# now builds, which is the outcome the repairs were for -- so the
@@ -1381,9 +2054,9 @@ func _test_every_declared_offer_is_true_against_real_geometry() -> void:
 	var refused := OfferBinding.validate(subject["root"] as Node3D,
 			subject, "canary", ["grapple_point"])
 	_check((refused["declined"] as Array).size() == 2
-			and (refused["built"] as Array).is_empty(),
-			"two knowingly false offers measured %d built / %d declined "
-			% [(refused["built"] as Array).size(),
+			and (refused["accepted"] as Array).is_empty(),
+			"two knowingly false offers measured %d accepted / %d declined "
+			% [(refused["accepted"] as Array).size(),
 				(refused["declined"] as Array).size()]
 			+ "against real geometry; a binding that accepted everything "
 			+ "would read as green")

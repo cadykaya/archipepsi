@@ -19,17 +19,54 @@ extends RefCounted
 ## binding is offered here as an explicit post-instantiation stage and
 ## called by `ZoneController` once the Zone is live.
 ##
+## VALIDATION MUST NOT CONSTRUCT GAMEPLAY (owner ruling, 2026-09-03).
+##
+## `validate` used to return `MovementPackage.consume`, which BUILDS. So
+## the one thing `ZoneController` did with a live Zone -- check it -- put
+## a launch pad and a rail beam into every room that offered one, as a
+## side effect of something named validation. Two consequences, and the
+## second is worse than the first: promoting a room would have silently
+## activated every offer in it, and a second `validate` on the same root
+## would have judged those offers against the geometry the first call
+## created.
+##
+## So the two are separate here and they use separate words:
+##
+##   * `validate` MEASURES and reports `accepted` / `declined` /
+##     `refused`. It adds no node and changes nothing, which is what
+##     makes it safe to call twice, or on every Zone, or in a gate.
+##   * `construct` BUILDS and reports `built` / `declined` / `refused`,
+##     and only ever builds what was judged valid first. Its name says
+##     so, calling it is a deliberate act, and a second construction into
+##     the same root is refused rather than silently doubled.
+##
+## Nothing shipped calls `construct` today. The consuming gameplay
+## package is a Playtest-3 milestone and inventing one here would put
+## traversal into rooms nobody has reviewed.
+##
 ## VALIDATION, NEVER REPAIR. A declined offer is reported and the room
 ## plays without it, exactly as `MovementPackage` always intended: an
 ## offer is an opportunity, and a room that loses one is still a room.
 ## Nothing here edits content, and nothing here is allowed to decide a
 ## room is fine because it could not measure it.
 
-## Validate one live room's offers. `room` is a `build_chamber` result
-## and `root` must already be in the scene tree.
+## MEASURE one live room's offers. Builds nothing.
+##
+## `room` is a `build_chamber` result and `root` must already be in the
+## scene tree. Returns `{accepted, declined, refused}`.
 static func validate(root: Node3D, room: Dictionary,
 		who := "offers", only: Array = []) -> Dictionary:
-	return MovementPackage.consume(root, room, space_of(root), only)
+	return MovementPackage.judge(root, room, space_of(root), only, who)
+
+## BUILD one live room's accepted offers into it. Judges first.
+##
+## Returns `{built, accepted, declined, refused}`. Separate from
+## `validate` because construction is a decision: a caller has to name
+## this function to get gameplay geometry, and a caller that only wanted
+## to know cannot get it by accident.
+static func construct(root: Node3D, room: Dictionary,
+		who := "offers", only: Array = []) -> Dictionary:
+	return MovementPackage.consume(root, room, space_of(root), only, who)
 
 ## The physics space a live room sits in, or null.
 ##
@@ -43,12 +80,13 @@ static func space_of(root: Node3D) -> PhysicsDirectSpaceState3D:
 		return null
 	return world.direct_space_state
 
-## Validate every chamber of a live Zone and report what was declined.
+## MEASURE every chamber of a live Zone and report what was declined.
 ##
-## Returns one entry per chamber that had something to say, so a caller
-## can log or surface it. A REFUSAL is carried through as a refusal --
-## `refused` is true when the room could not be measured at all, and a
-## caller must never read that as "no problems found".
+## Builds nothing in any of them. Returns one entry per chamber that had
+## something to say, so a caller can log or surface it. A REFUSAL is
+## carried through as a refusal -- `refused` is true when the room could
+## not be measured at all, and a caller must never read that as "no
+## problems found".
 static func validate_zone(chambers: Array) -> Array:
 	var out: Array = []
 	for entry: Variant in chambers:
@@ -65,7 +103,11 @@ static func validate_zone(chambers: Array) -> Array:
 			out.append({"chamber": named, "verdict": verdict})
 	return out
 
-## The one-line summary a log wants, for a `validate` result.
+## The one-line summary a log wants, for either verdict shape.
+##
+## Says "accepted" for a measurement and "built" for a construction,
+## because they are different facts and a log that blurs them is how a
+## room got credit for a pad nobody made.
 static func summarise(named: String, verdict: Dictionary) -> String:
 	if bool(verdict.get("refused", false)):
 		var first: Dictionary = (verdict["declined"] as Array)[0]
@@ -75,7 +117,9 @@ static func summarise(named: String, verdict: Dictionary) -> String:
 		var item: Dictionary = raw
 		parts.append("%s (%s): %s" % [str(item.get("name", "?")),
 				str(item.get("kind", "?")), str(item.get("why", "?"))])
-	return "%s: %d offer(s) built, %d declined%s" % [named,
-			(verdict["built"] as Array).size(),
+	var word := "built" if verdict.has("built") else "accepted"
+	var count: int = ((verdict["built"] if verdict.has("built")
+			else verdict["accepted"]) as Array).size()
+	return "%s: %d offer(s) %s, %d declined%s" % [named, count, word,
 			(verdict["declined"] as Array).size(),
 			("" if parts.is_empty() else " -- " + "; ".join(parts))]

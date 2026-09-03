@@ -9,29 +9,45 @@ extends RefCounted
 ## content. It exists so the offer vocabulary has a consumer, because a
 ## kind with no consumer is a kind nobody can be held to.
 ##
-## AN OFFER IS NOT AN ORDER. Three things follow, and each is tested:
+## TWO ENTRY POINTS, AND THEY DO DIFFERENT THINGS (owner ruling,
+## 2026-09-03).
 ##
-##   * a package may DECLINE. `only` restricts what it will look at, and
-##     a package that consumes nothing must leave a working room -- the
-##     same shell has to play as ordinary combat space with no traversal
-##     mechanic in it at all.
-##   * a package must VALIDATE what it builds. A declared rail route
-##     that is not a shape a rider can hold is refused here, not
-##     discovered under a player. A launch whose arc is blocked, whose
-##     landing has no floor, or whose landing is a pinpoint is refused
-##     the same way.
-##   * a refusal is REPORTED, never silent. `declined` carries the
-##     offer's name and the reason, because a large room whose traversal
-##     quietly did not appear is the worst version of this failure.
+##   * `judge` MEASURES. It reports `accepted` / `declined` / `refused`
+##     and constructs nothing, mutates nothing and is safe to call as
+##     often as anyone likes. Every gate, audit and Zone-time check uses
+##     this one.
+##   * `consume` BUILDS. It judges first, then constructs what was
+##     accepted, and reports `built` for the things a node now exists
+##     for. Calling it is a decision, not a side effect of looking.
+##
+## The distinction is not decoration. `OfferBinding.validate` used to
+## return `consume`, so the act of checking a Zone put pads and rails
+## into every room in it -- validation that constructs gameplay, and a
+## second look that judged the offers against the first look's output.
+## Nothing is called "built" here unless a node was made.
 ##
 ## NOT BAKED IN. The shell says a rail COULD run here; it does not
 ## contain a rail. The identical shell handed to a launch package builds
 ## launch pads and no rail, and handed to nothing builds neither.
 
-## Consume this room's offers into `root`.
+## JUDGE this room's offers. Nothing is constructed and nothing is
+## touched (owner ruling, 2026-09-03).
 ##
-## `only` is the package's own appetite -- an array of offer kinds, or
-## empty for everything it understands.
+## Returns `{accepted, declined, refused}`. `accepted` is every offer
+## that measured true against the live room -- a judgement, not a thing
+## that exists. Building any of them is `consume`'s job and is a separate
+## decision somebody has to make on purpose.
+##
+## `only` is the caller's own appetite -- an array of offer kinds, or
+## empty for everything this understands.
+##
+## OBSERVATION ONLY, AND SAFE TO REPEAT. This adds no node, mutates no
+## dictionary and leaves the room exactly as it found it, so calling it
+## twice gives the same answer for the same reason: both calls looked at
+## the same room. That is the whole point of the split -- what used to be
+## called `validate` returned `MovementPackage.consume`, so the second
+## look judged the offers against pads and rails the first look had put
+## there.
 ##
 ## THE EVIDENCE IS A PHYSICS SPACE, NOT TWO CALLABLES (owner ruling,
 ## 2026-09-03). This took `clear` and `supported` from its caller, and
@@ -45,13 +61,14 @@ extends RefCounted
 ## every probe with "nothing there", so it is refused by name here and
 ## `refused` is set -- the same guard `RoomAudit.findings` carries, for
 ## the same reason.
-static func consume(root: Node3D, room: Dictionary,
-		space: PhysicsDirectSpaceState3D, only: Array = []) -> Dictionary:
-	var built: Array = []
+static func judge(root: Node3D, room: Dictionary,
+		space: PhysicsDirectSpaceState3D, only: Array = [],
+		who := "offers") -> Dictionary:
+	var accepted: Array = []
 	var declined: Array = []
-	var why := SpaceProbe.refusal(root, space, "offers")
+	var why := SpaceProbe.refusal(root, space, who)
 	if why != "":
-		return {"built": built, "refused": true,
+		return {"accepted": accepted, "refused": true,
 				"declined": [{"name": "*", "kind": "*", "why": why}]}
 	# THE ONE ROOM-LOCAL -> WORLD TRANSFORM, derived from the live root
 	# and derived ONCE.
@@ -70,32 +87,86 @@ static func consume(root: Node3D, room: Dictionary,
 	# into world coordinates would make a room mean something different
 	# depending on where it was placed. Only the QUERIES move.
 	var to_world := root.global_transform
-	# JUDGE EVERY OFFER AGAINST THE ROOM AS AUTHORED, THEN BUILD.
+	# EVERY OFFER IS A CLAIM ABOUT THE ROOM AS AUTHORED.
 	#
 	# These used to validate and construct in one pass, so a rail built
 	# early became geometry the launch validated after it collided with
 	# -- and the hall's arc grazes its own rail beam by 0.35 m. The
-	# verdict then depended on which kind `consume` happened to visit
-	# first: run launches before rails and the launch passes and the rail
-	# might fail instead. An answer that changes with iteration order is
-	# not an answer.
+	# verdict then depended on which kind was visited first: run launches
+	# before rails and the launch passes and the rail might fail instead.
+	# An answer that changes with iteration order is not an answer.
 	#
-	# An offer is a claim about the ROOM. What another package chose to
-	# build in it is not part of that claim, so nothing is constructed
-	# until every verdict is in.
-	var plan: Array = []
+	# What another package chose to build in the room is not part of the
+	# claim, which is why judging is now a whole pass of its own and no
+	# offer geometry exists while it runs.
 	if _wants("rail_route", only):
-		_rails(room, space, to_world, plan, declined)
+		_rails(room, space, to_world, accepted, declined)
 	if _wants("launch_source", only):
-		_launches(room, space, to_world, plan, declined)
+		_launches(room, space, to_world, accepted, declined)
 	if _wants("grapple_point", only):
-		_grapples(room, space, to_world, built, declined)
-	for item: Variant in plan:
-		_construct(root, item as Dictionary, built)
-	return {"built": built, "declined": declined, "refused": false}
+		_grapples(room, space, to_world, accepted, declined)
+	return {"accepted": accepted, "declined": declined, "refused": false}
 
-## Build one approved offer. Separated from the judging above so that no
-## offer is ever measured against something another offer put there.
+## The mark a root carries once offers have been constructed into it.
+##
+## Set by `consume` and read by `consume`. Judging never looks at it,
+## because judging never earns it.
+const BUILT_MARK := "movement_offers_constructed"
+
+## CONSTRUCT the offers this room offers, into `root`.
+##
+## Returns `{built, accepted, declined, refused}`, and the two arrays say
+## different things on purpose: `accepted` is every offer that measured
+## true, `built` is every offer that a NODE now exists for. They differ
+## by design -- a `grapple_point` is validated and never built, because
+## there is no grapple mechanic in this engine to construct and inventing
+## one here would be exactly the "bake a mechanic into the shell" the
+## contract forbids. Reporting a grapple as `built` would be a claim that
+## something was made, and nothing was.
+##
+## AN OFFER IS NOT AN ORDER. Three things follow, and each is tested:
+##
+##   * a package may DECLINE. `only` restricts what it will look at, and
+##     a package that consumes nothing must leave a working room -- the
+##     same shell has to play as ordinary combat space with no traversal
+##     mechanic in it at all.
+##   * a package must VALIDATE what it builds. Everything here is judged
+##     by `judge` first, against the room BEFORE any of it exists.
+##   * a refusal is REPORTED, never silent. `declined` carries the
+##     offer's name and the reason, because a large room whose traversal
+##     quietly did not appear is the worst version of this failure.
+##
+## ONCE PER ROOM, AND IT SAYS SO. A second construction into the same
+## root would duplicate every pad and beam and judge nothing, so it is
+## refused by name rather than quietly doubling the room. Judging stays
+## available and stays free.
+static func consume(root: Node3D, room: Dictionary,
+		space: PhysicsDirectSpaceState3D, only: Array = [],
+		who := "offers") -> Dictionary:
+	var verdict := judge(root, room, space, only, who)
+	if bool(verdict["refused"]):
+		return {"built": [], "accepted": [], "refused": true,
+				"declined": verdict["declined"]}
+	if root.has_meta(BUILT_MARK):
+		return {"built": [], "accepted": verdict["accepted"],
+				"refused": true, "declined": [{"name": "*", "kind": "*",
+					"why": "offers were already constructed into %s; a "
+						% root.name + "second construction would duplicate "
+						+ "every pad and beam and judge the new ones "
+						+ "against the old"}]}
+	root.set_meta(BUILT_MARK, true)
+	var built: Array = []
+	for item: Variant in verdict["accepted"] as Array:
+		_construct(root, item as Dictionary, built)
+	return {"built": built, "accepted": verdict["accepted"],
+			"declined": verdict["declined"], "refused": false}
+
+## Build one accepted offer, when there is something to build.
+##
+## Separated from judging so that no offer is ever measured against
+## something another offer put there. A `grapple_point` matches nothing
+## and appends nothing: it was accepted, and accepting is all this engine
+## can honestly do with it.
 static func _construct(root: Node3D, item: Dictionary,
 		built: Array) -> void:
 	match str(item["kind"]):
@@ -153,7 +224,7 @@ const GRAPPLE_DROP := 30.0
 ## floor at 34 m has to be FOUND to be reported as too deep, and a probe
 ## that stops at 30 m cannot tell "past the limit" from "a void".
 static func _grapples(room: Dictionary, space: PhysicsDirectSpaceState3D,
-		to_world: Transform3D, built: Array, declined: Array) -> void:
+		to_world: Transform3D, accepted: Array, declined: Array) -> void:
 	for offer: Variant in RoomContract.offers_of(room, "grapple_point"):
 		var entry: Dictionary = offer
 		var named := str(entry.get("name", "grapple"))
@@ -218,8 +289,9 @@ static func _grapples(room: Dictionary, space: PhysicsDirectSpaceState3D,
 			declined.append({"name": named, "kind": "grapple_point",
 					"why": why})
 			continue
-		# AVAILABLE, not built. The verb is Epsilon's to choose.
-		built.append({"name": named, "kind": "grapple_point",
+		# AVAILABLE, not built. The verb is Epsilon's to choose, and
+		# nothing is constructed for it in either path.
+		accepted.append({"name": named, "kind": "grapple_point",
 				"position": at,
 				"radius": float(entry.get("radius", 0.0))})
 
@@ -237,7 +309,7 @@ static func _wants(kind: String, only: Array) -> bool:
 ## and passes routes it does not.
 static func _rails(room: Dictionary,
 		space: PhysicsDirectSpaceState3D, to_world: Transform3D,
-		plan: Array, declined: Array) -> void:
+		accepted: Array, declined: Array) -> void:
 	for offer: Variant in RoomContract.offers_of(room, "rail_route"):
 		var entry: Dictionary = offer
 		var named := str(entry.get("name", "rail"))
@@ -270,14 +342,15 @@ static func _rails(room: Dictionary,
 			declined.append({"name": named, "kind": "rail_route",
 					"why": "; ".join(refusals)})
 			continue
-		plan.append({"kind": "rail_route", "name": named, "rail": rail})
+		accepted.append({"kind": "rail_route", "name": named,
+				"rail": rail})
 
 ## A launch pad is a PAIR: a source to fire from and a target to land in.
 ## An unpaired half of either is an offer nobody can act on, and saying so
 ## is more use than building half a traversal.
 static func _launches(room: Dictionary,
 		space: PhysicsDirectSpaceState3D, to_world: Transform3D,
-		plan: Array, declined: Array) -> void:
+		accepted: Array, declined: Array) -> void:
 	var targets := RoomContract.offers_of(room, "launch_target")
 	for offer: Variant in RoomContract.offers_of(room, "launch_source"):
 		var entry: Dictionary = offer
@@ -301,5 +374,5 @@ static func _launches(room: Dictionary,
 			declined.append({"name": named, "kind": "launch_source",
 					"why": "; ".join(refusals)})
 			continue
-		plan.append({"kind": "launch_source", "name": named,
+		accepted.append({"kind": "launch_source", "name": named,
 				"source": source, "target": target})
