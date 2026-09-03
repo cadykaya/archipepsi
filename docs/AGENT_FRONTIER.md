@@ -535,6 +535,61 @@ green suite over it, because the suite ran at prototype scale. The mock
 backend now takes a `CampaignConfig` and
 `bridge/tests/test_production_scale.py` runs the real engine at 450.
 
+## shell_hall_transit IS TECHNICALLY CLEAN — 2026-09-03
+
+Art `8fbb916` synced. The mirrored delta is five files: `SCENE_PLAN.json`
+and four `.glb` meshes. The manifest and every `.tscn` are UNCHANGED, so
+this is a pure geometry repair and marker parity could not have moved.
+
+**THE HALL CERTIFIES: structural=0 measured=0**, over 12 surfaces and 11
+traversals — not over zero probes, and not over a substitute room.
+
+INSTANTIATED AUTHORED, proven four ways rather than inferred from the
+absence of a REFUSED line: the builder's own stamp reads
+`authored_shell=shell_hall_transit` (a fallback leaves it empty); the
+instantiated root's `scene_file_path` is
+`res://content/shells/shell_hall_transit.tscn`; that path is the one the
+manifest declares; and the census surf/trav of 12/11 are exactly the
+manifest's declared counts, which no procedural arena can produce.
+
+THE SAWTOOTH IS GONE, measured with the real capsule's own ray at 0.10 m
+along each segment. `basin_to_gallery`: 256 samples, 0 missing ground,
+**max upward step +0.846 m**, max downward 0.000 — monotonic.
+`gantry_to_exit`: 231 samples, 0 missing, **max upward step +0.875 m**,
+max downward 0.000. Before the repair the same lines stepped ~1.40 m.
+Both are inside `MAX_VERTICAL_STEP` = 1.0, and Art's own figure across 19
+flights (0.89 m) sits just above Production's two measurements, which is
+the right direction for a handoff claim to be wrong in.
+
+A CAUTION ABOUT MY OWN PROBE, recorded because it nearly became a false
+finding. The same straight-chord sampling reports max_up +21.000 for
+`gallery_to_landing` and `ring_n_to_ring_e`. Those are not defects: the
+chord between two ring surfaces cuts across the ring's open middle and
+the ray falls to the basin floor and back. It is the collar-versus-chasm
+trap again, from the other side — a chord probe is fine for a flight and
+worthless for a loop. The authoritative flood passed both.
+
+Nine mandatory segments chain unbroken vestibule -> basin -> gallery ->
+landing -> bridge_n -> ring_n -> ring_e -> bridge_e -> gantry ->
+exit_platform; `ring_s` and `ring_w` sit on the two optional segments by
+design. Marker parity exact: 12 scenes, 158 markers, 0 disagreements.
+Plinths keep their geometry and are not `stand` Surfaces; no plinth
+traversal claims remain.
+
+**Actual instantiated collider count: 73 `CollisionShape3D` (73
+`StaticBody3D`, 3 `MeshInstance3D`).** Art's prose says 71. Not
+reconciled, and deliberately not explained away — `all_solid_boxes`
+returns 76 over the same root, so the three counts measure three
+different things and only the 73 is what Godot instantiates.
+
+Verdict: **TECHNICALLY CLEAN / OWNER REVIEW PENDING.** Still
+`review: pending`, still out of the catalog, no owner pass assigned.
+
+The refusal guard still bites: with the hall no longer refused, the
+sabotage was recreated (review flipped to `pass` AND one traversal start
+dragged 5 m off its marker) and the suite went red, exit 2, "approved
+content and its authored scene was refused".
+
 ## HALL BUILDS; THE TWO CLIMBS DO NOT WALK — 2026-09-03
 
 Art `6232a27` synced (`SCENE_PLAN.json`, `registry/authored_art.json`,
