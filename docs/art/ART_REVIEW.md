@@ -3974,6 +3974,25 @@ not in `OFFER_KINDS`, so no offer was invented for it.
 >
 > No geometry changed for any of these. All three still export
 > `review: "pending"`.
+>
+> ### TECHNICAL REPAIR under the authored-entry ruling
+>
+> Production measured **plenum 2, yard 5, span 4** before its own
+> correction pass. All eleven were reproduced by running Production's
+> unmodified `RoomAudit` in a detached read-only worktree at `fc2cc41`.
+>
+> * **Three** are the audit assuming a room's entry is its local origin
+>   — plenum enters at y=68, yard at x=−43, span at y=14. Superseded by
+>   the ruling; **Production's, and untouched.**
+> * **Eight** were Art's, and all eight were one mistake: a declared
+>   point carrying the *centre* of the thing it names. Seven `cover`
+>   sockets sat inside their own cover block; the plenum's `reward` sat
+>   inside the machine. All eight repaired at the source.
+>
+> **No geometry moved** — same triangles, same colliders, same surfaces,
+> traversal, size and offers. Re-running the same audit: plenum 0/1,
+> yard 0/1, span 0/1, the remainder being the entry finding in each.
+> Evidence: `docs/art/review/wave1_repair/`.
 
 `docs/art/review/wave1/` — four views each, and a README that answers the
 brief room by room. All three are `review: "pending"`; Art does not write
