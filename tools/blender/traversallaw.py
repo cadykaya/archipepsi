@@ -143,6 +143,125 @@ def mesh_ground(boxes, at, reach=GROUND_REACH):
     return best
 
 
+
+# ----------------------------------------------------------------- grapple
+
+_GRAPPLE: dict[str, float] = {}
+
+#: The step `MovementPackage._grapples` walks the drop in. Not a constant
+#: in Production's file -- it is the literal `drop += 2.0` in the loop --
+#: so it is the one number here that IS retyped, and it is named rather
+#: than inlined so that fact is visible.
+GRAPPLE_PROBE = 2.0
+
+
+def _grapple_rule() -> dict[str, float]:
+    """`SWING_ROOM` and `GRAPPLE_DROP`, from Production's own file."""
+    if _GRAPPLE:
+        return _GRAPPLE
+    try:
+        src = subprocess.run(
+            ["git", "show",
+             "%s:godot/scripts/gameplay/movement_package.gd" % PROD_REF],
+            capture_output=True, text=True, check=True,
+            cwd=os.path.dirname(os.path.abspath(__file__))).stdout
+    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+        raise AssertionError(
+            "traversallaw: cannot read Production's movement_package.gd from "
+            "%s, so the grapple rule is unknown. Set PROD_REF or fetch the "
+            "branch." % PROD_REF) from exc
+    for name in ("SWING_ROOM", "GRAPPLE_DROP"):
+        hit = re.search(r"^const %s\s*(?::\s*\w+\s*)?:?=\s*([-0-9.eE]+)"
+                        % name, src, re.M)
+        if hit is None:
+            raise AssertionError(
+                "traversallaw: movement_package.gd does not define %s" % name)
+        _GRAPPLE[name] = float(hit.group(1))
+    return _GRAPPLE
+
+
+def _clear(boxes, at):
+    """`MovementPackage`'s `clear`: nothing solid at this point.
+
+    Production passes `clear` in as a Callable and the only caller so far
+    is its own test driver, which stubs it -- so what the real probe will
+    be is not yet decided. This is the strongest thing Art can say from
+    the boxes it placed: the point is not inside one.
+    """
+    x, y, z = at
+    for lo, hi in boxes:
+        if (lo[0] <= x <= hi[0] and lo[1] <= y <= hi[1]
+                and lo[2] <= z <= hi[2]):
+            return False
+    return True
+
+
+def grapple_refusal(boxes, offer):
+    """`MovementPackage._grapples`, mirrored. None means the offer holds.
+
+    A `grapple_point` is a PLACE, not a mechanic. Three things make the
+    place true, and they are checked in Production's own order so the
+    reason Art reports is the reason Production would report:
+
+      1. the anchor is not inside solid geometry;
+      2. there is `SWING_ROOM` of clear air beneath it, because something
+         has to hang, swing or be pulled through that space;
+      3. there is ground within `GRAPPLE_DROP` below it to leave from or
+         arrive at -- past that the anchor is over a void and the
+         opportunity is a fall.
+
+    NOT THE AUTHORITY. Production supplies the real `clear` and
+    `supported` probes and decides; this refuses an offer Art can already
+    see is untrue, at build time, which is cheaper than finding out at an
+    integration.
+    """
+    rule = _grapple_rule()
+    at = tuple(float(v) for v in offer["position"])
+    if not _clear(boxes, at):
+        return "the anchor is inside solid geometry"
+    under = (at[0], at[1] - rule["SWING_ROOM"], at[2])
+    if not _clear(boxes, under):
+        return ("there is no room to hang or swing under it -- solid "
+                "%.1f m below" % rule["SWING_ROOM"])
+    drop = rule["SWING_ROOM"]
+    while drop <= rule["GRAPPLE_DROP"] + 1e-9:
+        if mesh_ground(boxes, (at[0], at[1] - drop, at[2])) > -math.inf:
+            return None
+        drop += GRAPPLE_PROBE
+    return ("nothing within %.0f m under it is ground to leave from or "
+            "arrive at" % rule["GRAPPLE_DROP"])
+
+
+def grapple_headroom(boxes, at):
+    """How far the first ground under an anchor actually is, for reporting."""
+    rule = _grapple_rule()
+    drop = rule["SWING_ROOM"]
+    while drop <= rule["GRAPPLE_DROP"] + 1e-9:
+        found = mesh_ground(boxes, (at[0], at[1] - drop, at[2]))
+        if found > -math.inf:
+            return at[1] - found
+        drop += GRAPPLE_PROBE
+    return None
+
+
+def assert_grapples(colliders, entry, cid, world_box):
+    """Stop the build if any declared `grapple_point` is not a real place."""
+    boxes = godot_boxes(colliders, world_box)
+    bad = []
+    for offer in entry.get("offers", []):
+        if offer.get("kind") != "grapple_point":
+            continue
+        why = grapple_refusal(boxes, offer)
+        if why is not None:
+            bad.append("%s at %s: %s"
+                       % (offer.get("name", "grapple"),
+                          [round(v, 2) for v in offer["position"]], why))
+    if bad:
+        raise AssertionError(
+            "%s: %d grapple offer(s) are not places a player could use:\n  %s"
+            % (cid, len(bad), "\n  ".join(bad)))
+
+
 # -------------------------------------------------------------------- walk
 
 def _stand_at(boxes, x, z, reference):

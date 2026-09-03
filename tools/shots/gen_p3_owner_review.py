@@ -181,11 +181,23 @@ overlay("O4_launch", "launch", R(-9.0, 25.0, 9.0), R(14.0, 12.0, 26.0),
         "D  OFFER: LAUNCH PAIR - BASIN TO GANTRY, 24.5 M APART",
         "NO ARC IS DRAWN. LAUNCHSOLVER OWNS THE TRAJECTORY, NOT ART")
 
-# E. THE GRAPPLE QUESTION. Not an offer: `grapple_anchor` is not in
-#    OFFER_KINDS. This is the structure a future anchor would hang from.
-overlay("O5_overhead", "overhead", R(-15.0, 1.0, 34.0), R(2.0, 25.0, 34.0),
-        "E  OVERHEAD STRUCTURE - THE GRAPPLE QUESTION, NOT AN OFFER",
-        "GRAPPLE_ANCHOR IS NOT IN OFFER_KINDS. THIS IS WHAT IT WOULD USE")
+# E. THE GRAPPLE POINTS. This figure asked a question until the owner
+#    answered it on the library review; the three anchors are declared
+#    now, and they hang from the three rings it already marked.
+#    THE CAMERA MOVED, and it had to. It used to stand outside the core
+#    at x=15 -- a metre from the east gantry, whose 0.4 m underside plate
+#    filled a third of the frame -- which was tolerable while the figure
+#    only had to say "there is structure up there". It is not tolerable
+#    now that the figure's whole job is three specific anchors: from that
+#    position none of them was visible. Neither was a camera ABOVE the
+#    rings, and that one taught something: an anchor hanging under a
+#    solid band is hidden BY the band from every angle except beneath
+#    it -- which is why the anchors moved to the rings' inner lips. From
+#    the basin, inside the shaft, looking straight up, all three are in
+#    frame at their real heights and the rings read as rings.
+overlay("O5_overhead", "overhead", R(0.0, 1.5, 33.0), R(1.2, 22.0, 34.5),
+        "E  OVERHEAD STRUCTURE, AND THE THREE GRAPPLE POINTS ON IT",
+        "ONE UNDER EACH COLLAR RING. A PLACE, NOT A REACH")
 
 # F. THE VERTICAL MOVEMENT COLUMN.
 overlay("O6_shaft", "shaft", R(0.0, 0.0, 31.0), R(0.0, 37.0, 35.0),

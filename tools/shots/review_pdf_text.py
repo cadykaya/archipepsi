@@ -22,16 +22,21 @@ COVER = {
          "<b>Yard</b>, an 84 m field; <b>Span</b>, a 90 m bridge over a "
          "walkable basin. Three proportions on purpose -- tall, wide, long "
          "-- so the library cannot become one room built three times."),
-        ("WHAT I AM NOT ASKING FOR",
-         "None of these promote themselves. All four ship as "
-         "<i>review: pending</i> and Art never writes <i>pass</i>. This is "
-         "a request for your read on form, plus four decisions I have "
-         "flagged and cannot make alone."),
+        ("WHERE THIS STANDS",
+         "<b>All four rooms now have your form verdict</b>, and the two "
+         "changes you asked for on the Hall have landed. This edition "
+         "records what was decided and what it changed. All four still "
+         "ship as <i>review: pending</i> and Art never writes "
+         "<i>pass</i> -- a form verdict is not a review state, and "
+         "Production has still to recertify the Hall's changed "
+         "contract."),
         ("STATE",
-         "Built and measured at commit 8fbb916 on branch "
-         "claude/archipepsi-art. The hall's three staircases were rebuilt "
-         "yesterday after Production's capsule audit refused two of them; "
-         "that repair is pages S1 to S4."),
+         "Built and measured on branch claude/archipepsi-art. The Hall's "
+         "three staircases were rebuilt after Production's capsule audit "
+         "refused two of them -- pages S1 to S4 -- and Production then "
+         "certified that geometry at <b>fc2cc41</b>: structural 0, "
+         "measured 0, mandatory circulation clean. Your two changes went "
+         "in after that."),
     ],
 }
 
@@ -69,9 +74,9 @@ HOWTO = {
 DECISIONS = [
     {
         "kicker": "THE SHORT VERSION",
-        "title": "What I would approve",
+        "title": "What you passed",
         "items": [
-            ("approve", "ALL FOUR ROOM SHAPES",
+            ("approve", "ALL FOUR ROOM SHAPES -- PASSED",
              "The three Wave 1 proportions are genuinely different rooms "
              "and not one idea stretched three ways: you arrive at the top "
              "of the Plenum and the whole room is the way down; you cross "
@@ -79,7 +84,7 @@ DECISIONS = [
              "twice at two heights. Strip out every enemy, pickup and "
              "decoration and you would still know which is which from the "
              "silhouette alone. The Hall still reads as it did at P3."),
-            ("approve", "THE STAIRCASE REPAIR",
+            ("approve", "THE STAIRCASE REPAIR -- CERTIFIED AT fc2cc41",
              "Production refused two of the Hall's three climbs on the real "
              "player capsule. The cause was one missing coordinate "
              "conversion in the shared helper, so the Wave 1 rooms had it "
@@ -87,54 +92,62 @@ DECISIONS = [
              "real step of 0.89 m against a 1.00 m limit, taken from the "
              "collision triangles rather than from bounding boxes. The "
              "Hall's declared contract did not change by a single field."),
-            ("approve", "THE OFFER GRAMMAR IN WAVE 1",
+            ("approve", "THE OFFER GRAMMAR -- NOW IN ALL FOUR ROOMS",
              "Each Wave 1 room declares one rail, one launch pair and three "
-             "grapple anchors -- the same three-part vocabulary in three "
-             "very different spaces. I would keep that as the house pattern "
-             "for the remaining six rooms."),
+             "grapple anchors. The Hall was the odd one out and is not any "
+             "more: it has the same three-part vocabulary now. That is the "
+             "house pattern for the remaining six rooms."),
+            ("approve", "TWO PROPORTION DECISIONS, ON THE RECORD",
+             "<b>The Yard keeps its ~16 m height</b> -- the horizontal "
+             "contrast is wanted, and Wave 2 may lean on it. <b>The Span "
+             "keeps its one-way mid-span drop</b> -- free descent, costly "
+             "ascent, deliberate. Both were questions I could not answer "
+             "alone and both are now settled."),
         ],
     },
     {
         "kicker": "THE SHORT VERSION",
-        "title": "What I want changed or decided",
+        "title": "The two Hall changes, and what they did",
         "items": [
-            ("change", "1. GIVE THE HALL GRAPPLE POINTS",
-             "The Hall is the only one of these four rooms with none, and "
-             "not for a design reason: it was authored before grapple "
-             "points existed in the contract. Its own overlay (page O5) already "
-             "marks the overhead structure an anchor would hang from. I "
-             "would add three, on the three collar rings. Small, contained, "
-             "and it stops the Hall being the odd one out. <b>My "
-             "recommendation: do it.</b>"),
-            ("change", "2. CLOSE THE HALL'S COLLAR RING",
-             "The walkway around the landmark is a C, not an O. From the "
-             "north collar you can go east toward the exit or west to the "
-             "south collar, and then you have to come back the way you "
-             "came. One more segment would let you circle the landmark. In "
-             "a fight around a thing that breaks line of sight, being able "
-             "to keep going round is worth a lot. <b>My recommendation: "
-             "close it.</b>"),
-            ("change", "3. CONFIRM THE SPAN'S ONE-WAY DROP",
-             "The Span is the only room with a <i>drop</i> segment: from "
-             "the middle of the deck you can commit down to the basin, and "
-             "getting back up costs a walk to either end. I think that is "
-             "exactly right -- it makes the choice cost something -- but it "
-             "is a design decision rather than a build detail, so it should "
-             "be yours. <b>My recommendation: keep it, but say so out "
-             "loud.</b>"),
-            ("change", "4. DECIDE THE YARD'S HEIGHT NOW",
-             "The Yard is 84 m across and only 16 m tall, so it is the one "
-             "room where climbing is optional and the crane and catwalk do "
-             "all the vertical work. That may be exactly the contrast the "
-             "library wants. If it is not, the fix is a height change, and "
-             "it is far cheaper before Wave 2 copies the proportion than "
-             "after. <b>My recommendation: leave it, but look at pages B1 "
-             "and B2 and tell me if you disagree.</b>"),
-            ("hold", "AND TWO THINGS THAT ARE NOT DECISIONS",
-             "All four rooms stay <i>pending</i> until you say otherwise, "
-             "and Production still has to re-certify the Hall against the "
-             "rebuilt staircases. Wave 2 has not started and will not until "
-             "you have given a verdict on these four."),
+            ("approve", "1. THREE GRAPPLE POINTS -- DONE",
+             "One at the inner lip of each collar ring, at heights 9.2, "
+             "19.2 and 27.2, each with the basin as its ground. They make "
+             "a ladder up the landmark. <b>They moved once during the "
+             "work and the reason is worth keeping:</b> tucked under a "
+             "band they were legal and completely invisible, because a "
+             "solid band hides what hangs beneath it from every angle but "
+             "one. A grapple point the player cannot see is not an "
+             "opportunity. At the lip they read from the floor, from the "
+             "collar and from across the shaft -- page O5."),
+            ("approve", "2. THE COLLAR LOOP -- CLOSED",
+             "One optional walking segment, from 5.0, 21.0, 27.0 to 7.5, "
+             "21.0, 29.0. <b>It needed no geometry at all.</b> The band "
+             "was never a C -- the east band already spanned the "
+             "south-east corner -- so only the declaration was missing. "
+             "You can circle the landmark now. Page O2."),
+            ("hold", "WHAT THE HALL KEPT",
+             "Everything the verdict asked to preserve: the flat-tread "
+             "flights, the plinths as geometry rather than stand "
+             "surfaces, the rail, the launch pair, the open central "
+             "vertical reservation. <b>The shell exported "
+             "byte-identical</b> -- both changes are declarations, so no "
+             "geometry moved and the entry sightline still measures "
+             "64.7 m. Twelve stand surfaces, unchanged; traversal 11 to "
+             "12; offers 3 to 6; 71 collision pieces, unchanged."),
+            ("hold", "AND HOW THE ANCHORS WERE CHECKED",
+             "Art now mirrors Production's grapple rule at build time -- "
+             "anchor clear, four metres of air beneath it, ground within "
+             "thirty below -- reading both constants from Production's own "
+             "file rather than retyping them. It was calibrated before it "
+             "was trusted: all nine of Wave 1's already-certified anchors "
+             "pass, and it refuses an anchor buried in the Yard's crane, "
+             "one a metre over the floor, and one outside the room. "
+             "<b>RoomAudit remains the authority.</b>"),
+            ("hold", "WHAT IS STILL OPEN",
+             "All four rooms stay <i>pending</i>, and Production has still "
+             "to recertify the Hall against the changed contract -- three "
+             "new offers and one new segment. <b>Wave 2 has not started</b> "
+             "and is not authorised by these verdicts."),
         ],
     },
 ]
@@ -175,13 +188,18 @@ HALL = {
         "landmark. A launch pair that skips the whole middle of the route: "
         "a pad on the basin floor aimed at the east gantry 24.5 m away, so "
         "a player with the launch package trades the two stairs and the "
-        "collar walk for one jump. No grapple anchors -- see my note.",
+        "collar walk for one jump. And three grapple anchors, added on "
+        "the owner's verdict -- one at the inner lip of each collar ring, "
+        "at 9.2, 19.2 and 27.2, with the basin as the ground under all "
+        "three.",
     "verdict":
-        "Change, in two small ways. The shape is right and I would approve "
-        "it as it stands: keep the frame landmark, the four heights and the "
-        "route. But give it grapple anchors on the collar rings, and close "
-        "the collar ring so you can circle the landmark instead of "
-        "doubling back. Neither touches the geometry you already reviewed.",
+        "Approve -- and both changes are in. Production certified the "
+        "repaired geometry at fc2cc41, the owner passed the form subject "
+        "to two changes, and both have landed as declarations: three "
+        "grapple anchors on the collar rings, and one optional segment "
+        "closing the collar walk from a C into a loop. The shell exported "
+        "byte-identical, so nothing you reviewed has moved. It stays "
+        "review: pending until Production recertifies the new contract.",
     "shots": [
         {"file": "H1_entry.png", "kicker": "HALL / VIEW 1 OF 18",
          "title": "Inside the door",
@@ -328,24 +346,26 @@ HALL = {
               "under the limit of thirty-two, and they are different sizes "
               "at four different heights rather than one floor chopped up."),
          ]},
-        {"file": "O2_route.png", "kicker": "HALL / DIAGRAM B OF 6",
+        {"file": "../hall_owner_verdict/O2_route.png", "kicker": "HALL / DIAGRAM B OF 6",
          "title": "The route on foot",
          "notes": [
              ("WHERE YOU ARE", "Overhead diagram."),
              ("WHAT YOU ARE LOOKING AT", "The eleven declared route "
               "segments that get you from the door to the exit with no "
               "movement package installed at all."),
-             ("THE ROUTE", "Every one of the eleven is a <i>walk</i> -- "
-              "continuous ground the whole way. There is no point in this "
-              "room where the only way forward is a mechanic you might not "
-              "have."),
+             ("THE ROUTE", "Every one of the twelve is a <i>walk</i> -- "
+              "continuous ground the whole way. Nine are mandatory; three "
+              "are optional circulation around the landmark. There is no "
+              "point in this room where the only way forward is a mechanic "
+              "you might not have."),
              ("OFFERS", "Nothing here is an offer. That is the point of "
               "this diagram."),
-             ("MY CALL", "Change. Look at the walkway around the landmark: "
-              "it is a C, not an O. From the north collar you can go east "
-              "to the gantry or west to the south collar, and the south "
-              "collar is a dead end. One more segment closes the loop and "
-              "lets you circle the landmark. I would add it."),
+             ("MY CALL", "Approve -- this is the updated figure. The "
+              "walkway around the landmark used to be a C: the south "
+              "collar was a dead end you doubled back out of. "
+              "<b>ring_s_to_ring_e closes it</b>, and it needed no "
+              "geometry, because the east band already covered the "
+              "south-east corner and only the declaration was missing."),
          ]},
         {"file": "O3_rail.png", "kicker": "HALL / DIAGRAM C OF 6",
          "title": "The rail",
@@ -380,24 +400,26 @@ HALL = {
               "remember."),
              ("MY CALL", "Approve."),
          ]},
-        {"file": "O5_overhead.png", "kicker": "HALL / DIAGRAM E OF 6",
+        {"file": "../hall_owner_verdict/O5_overhead.png", "kicker": "HALL / DIAGRAM E OF 6",
          "title": "What a grapple would hang from",
          "notes": [
              ("WHERE YOU ARE", "Looking up from the basin floor."),
-             ("WHAT YOU ARE LOOKING AT", "The overhead structure marked "
-              "out: the three collar rings, and the undersides of the "
-              "gallery, gantry and landing."),
-             ("THE ROUTE", "Not a route. This is the figure that asked a "
-              "question."),
-             ("OFFERS", "When this room was built, grapple anchors did not "
-              "exist in the contract, so this diagram marks candidate "
-              "structure and says in its own caption that it is a question, "
-              "not an offer."),
-             ("MY CALL", "Change -- and this is my main recommendation. "
-              "Grapple anchors landed in the contract afterwards, and all "
-              "three Wave 1 rooms declare three each. The Hall declares "
-              "none, purely because of when it was built. I would add three "
-              "on the rings marked here."),
+             ("WHAT YOU ARE LOOKING AT", "The three grapple anchors, in "
+              "orange, at the inner lip of each collar ring -- 9.2, 19.2 "
+              "and 27.2 m up. The yellow marks overhead structure. The "
+              "camera stands on the basin inside the landmark and looks "
+              "straight up, which is the one view that shows all three."),
+             ("THE ROUTE", "Not a route. Every one of these is optional; "
+              "the walk from door to exit does not use them."),
+             ("OFFERS", "A place, not a reach. How far a player can throw "
+              "or swing from one is Production's to decide -- drawing a "
+              "circle of reach here would be the same mistake as drawing "
+              "a launch arc."),
+             ("MY CALL", "Approve -- this is the updated figure, and the "
+              "question it used to ask has been answered. The anchors "
+              "moved once during the work: tucked under the bands they "
+              "were legal and invisible, because a solid band hides what "
+              "hangs beneath it. At the lip they read from the floor."),
          ]},
         {"file": "O6_shaft.png", "kicker": "HALL / DIAGRAM F OF 6",
          "title": "The vertical movement volume",

@@ -3904,9 +3904,33 @@ language later; the gantry's `landing_4` / deck coplanar z-fight is
 cleanup; the vault's "protected" identity wants props, barriers, sound and
 lighting rather than shell redesign.
 
-## P3 — `shell_hall_transit`, the first LARGE room. PENDING
+## P3 — `shell_hall_transit`, the first LARGE room
 
-**Not reviewed by anybody. Art does not write `pass`.**
+> ### OWNER VERDICT: **FORM PASS WITH TWO CHANGES**, on the library review.
+>
+> Production certified the repaired geometry at `fc2cc41` — authored path
+> confirmed, structural 0, measured 0, mandatory circulation clean — and
+> the owner then passed the room's form subject to two changes, both of
+> which have landed:
+>
+> 1. **Three `grapple_point` offers** on the collar rings, at
+>    `0.0, 9.2, 28.8`, `5.2, 19.2, 34.0` and `0.0, 27.2, 39.2`. Optional
+>    movement; the base walking route is complete without them.
+> 2. **`ring_s_to_ring_e`** closes the collar walk from a C into a loop —
+>    one optional `walk` over geometry that was already there.
+>
+> Everything else is preserved: the flat-tread flights, the plinths as
+> geometry rather than stand surfaces, the rail, the launch pair, the
+> open central vertical reservation. Contract now **12 surfaces, 12
+> traversal (9 mandatory), 10 sockets, 6 offers, 71 collision pieces**.
+> Evidence: `docs/art/review/hall_owner_verdict/`.
+>
+> **The shell still exports `review: "pending"`.** A form verdict is not
+> a review state Art may write, and Production has not yet recertified
+> the changed contract.
+
+**The figures below are the P3 record, from before both repairs and the
+verdict.** They are deliberately not re-rendered.
 
 `docs/art/review/p3_owner/` — eight views and six overlays, with a README
 that answers the P3 brief item by item. 40 × 38 × 60 m, ~91,000 m³, 552
@@ -3937,7 +3961,19 @@ not in `OFFER_KINDS`, so no offer was invented for it.
 038. **No heartbeat. No polling. No autonomous expansion.**
 
 
-## Wave 1 of the LARGE room library — three shells. PENDING
+## Wave 1 of the LARGE room library — three shells
+
+> ### OWNER VERDICT: **FORM PASS, all three.**
+>
+> * **Plenum** — PASS.
+> * **Yard** — PASS, and **keep its current ~16 m height**. The question
+>   Art raised about the proportion is settled: the horizontal contrast
+>   is wanted.
+> * **Span** — PASS, and **keep the intentional one-way mid-span drop**.
+>   Free descent, costly ascent, on the record as deliberate.
+>
+> No geometry changed for any of these. All three still export
+> `review: "pending"`.
 
 `docs/art/review/wave1/` — four views each, and a README that answers the
 brief room by room. All three are `review: "pending"`; Art does not write

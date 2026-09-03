@@ -160,7 +160,30 @@ def main(argv):
                    "either plinth. The 4 m masses stay in the room "
                    "exactly as they were; only the claim goes, and a "
                    "later package that brings its own arrival can expose "
-                   "them")
+                   "them. AND THE OWNER'S TWO CHANGES ON THE LIBRARY "
+                   "REVIEW, after Production certified the repaired "
+                   "geometry at fc2cc41. (1) `ring_s_to_ring_e` closes "
+                   "the collar: the walkable ring was declared as a C -- "
+                   "north to east one way, north to west to south the "
+                   "other, and the south band a dead end -- while the "
+                   "BAND was always a full loop, the east one spanning "
+                   "z 25..43 and so already covering the south-east "
+                   "corner. So the closure is one optional `walk` "
+                   "declaration over geometry that was already there, "
+                   "proved by the same flood as every other walk, and no "
+                   "mandatory segment and no Surface moved. (2) Three "
+                   "`grapple_point` offers, one 0.2 m under the inner lip "
+                   "of each collar ring, forming a ladder up the "
+                   "landmark: the basin is the ground under the low one "
+                   "(9.0 m), the low ring under the middle (8.0 m), the "
+                   "walkable collar under the high (6.0 m). They were "
+                   "absent only because `grapple_point` was not in "
+                   "OFFER_KINDS when this room was authored; Wave 1 "
+                   "declares three in every room. An offer reserves a "
+                   "place and adds NO geometry, so the shell is byte-"
+                   "identical and the entry sightline is untouched, and "
+                   "the base walking route is still complete with no "
+                   "package installed")
         DECLARED_HANDOFF = {}
         for _cid, _fields, _why in (
                 ("shell_corner_left", ("semantic_tags",), _CORNER),
@@ -188,7 +211,7 @@ def main(argv):
                 ("shell_corner_left", ("review",), _PASS),
                 ("shell_corner_right", ("review",), _PASS),
                 ("shell_hall_transit",
-                 ("traversal", "surfaces", "size"), _FLIGHT)):
+                 ("traversal", "surfaces", "size", "offers"), _FLIGHT)):
             for _field in _fields:
                 DECLARED_HANDOFF[(_cid, _field)] = _why
 

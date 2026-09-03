@@ -1,4 +1,4 @@
-"""Review overlays for the hall — five diagrams, DERIVED from its manifest.
+"""Review overlays for the hall — six diagrams, DERIVED from its manifest.
 
     .tools/blender/blender -b --python tools/blender/build_hall_overlay.py
 
@@ -22,11 +22,11 @@ WHAT IS DELIBERATELY NOT DRAWN.
     picture -- and the first time the solver disagreed, the picture
     would be the thing everybody remembered. The two regions are drawn
     at their declared radii and nothing joins them.
-  * NO GRAPPLE OFFER. `OFFER_KINDS` is closed at rail_route,
-    launch_source and launch_target; `grapple_anchor` is deliberately
-    absent. The grapple figure marks the OVERHEAD STRUCTURE this room
-    already has -- what an anchor would have to hang from -- and says so
-    in its own name. It is a question for the owner, not a claim.
+  * NO GRAPPLE REACH. `grapple_point` IS in `OFFER_KINDS` now, and the
+    hall declares three, so the overhead figure draws them -- but only
+    as places. How far a player can throw or swing from one is
+    Production's to decide, and a circle of reach drawn here would be
+    the same mistake as a drawn launch arc.
 """
 
 from __future__ import annotations
@@ -55,7 +55,8 @@ INK = {
     "launch":  "#ff4f7a",   # the launch pair
     "region":  "#7de08a",   # a named stand surface
     "high":    "#c58cff",   # an enemy_high socket
-    "struct":  "#ffe066",   # overhead structure (grapple question)
+    "struct":  "#ffe066",   # overhead structure a grapple hangs from
+    "grapple": "#ff5a1f",   # a declared grapple_point
     "shaft":   "#66f0d8",   # the open vertical column
 }
 
@@ -230,14 +231,25 @@ def fig_launch(m):
 
 
 def fig_overhead(m):
-    """OVERHEAD STRUCTURE -- the grapple question, not a grapple offer.
+    """OVERHEAD STRUCTURE, and the three grapple points that hang from it.
 
-    `grapple_anchor` is not in `OFFER_KINDS`. What the room can honestly
-    show is where solid structure already spans above open floor: the
-    armature's three collar rings, and the underside of the two upper
-    decks. If a grapple package ever arrives, these are the surfaces it
-    would have to hang from, and the owner can say now whether that is
-    the room they want.
+    THIS FIGURE USED TO ASK A QUESTION. When the hall was authored
+    `grapple_point` was not in `OFFER_KINDS`, so all this could honestly
+    draw was where solid structure spans above open floor -- the
+    armature's three collar rings and the undersides of the upper decks
+    -- and its own caption said it was a question, not an offer.
+
+    The owner answered it on the library review: three anchors, on the
+    three rings this figure already marked. So the structure is still
+    drawn, and now the anchors are drawn ON it, each as a small marker at
+    its declared radius under the ring it hangs from. They are read from
+    the shipped offers, so this figure cannot show an anchor the room
+    does not declare.
+
+    NO ARC AND NO REACH. Same rule as the launch figure: a
+    `grapple_point` is a PLACE, and how far a player can throw or swing
+    from it is Production's to decide. Drawing a radius of reach here
+    would be authoring a mechanic in a picture.
 
     The rings are read from the `core` no_build volume, which is the
     armature's own declared footprint -- not retyped from the builder.
@@ -259,6 +271,15 @@ def fig_overhead(m):
         _add(parts, brushkit.block("oh_%s" % name,
                                    (s["extent"][0], s["extent"][1], 0.4),
                                    (x, y, z - 0.9)), "struct")
+    for offer in m.get("offers", []):
+        if offer["kind"] != "grapple_point":
+            continue
+        # Its OWN ink, not the enemy-socket violet: two different things
+        # drawn the same colour in one package is how a reader learns the
+        # wrong legend.
+        _add(parts, brushkit.prism(
+            "oh_%s" % offer["name"], offer["radius"], 1.2, 8,
+            _blender(offer["position"])), "grapple")
     _export(parts, "hall_ov_overhead")
 
 

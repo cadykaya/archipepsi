@@ -463,6 +463,16 @@ def main():
             (-7.5, Y_MID, 39.0), False),
         seg("ring_w_to_ring_s", "walk", (-7.5, Y_MID, 29.0),
             (-5.0, Y_MID, 27.0), False),
+        # CLOSES THE COLLAR (owner verdict on the library review). The
+        # walkable ring was declared as a C: north to east one way, north
+        # to west to south the other, and the south band a dead end you
+        # had to double back out of. The BAND was never a C -- the east
+        # band spans z 25..43 and so already covers the south-east
+        # corner, which is why closing the loop needs no geometry, only
+        # the declaration that was missing. Mirrors `ring_w_to_ring_s`
+        # in x, and the flood proves it like any other `walk`.
+        seg("ring_s_to_ring_e", "walk", (5.0, Y_MID, 27.0),
+            (7.5, Y_MID, 29.0), False),
         # THE TWO PLINTH SEGMENTS ARE GONE, and removing them is the
         # truthful repair rather than a retreat. Both ended 0.5 m OUTSIDE
         # the plinth they named, in air -- but moving them onto the
@@ -538,6 +548,41 @@ def main():
          "position": roomcontract.godot(dst[0], _y(dst[2]), dst[1]),
          "radius": 3.5},
     ]
+    # THREE GRAPPLE POINTS, ONE UNDER EACH COLLAR RING (owner verdict on
+    # the library review). `O5_overhead` marked this structure as the
+    # thing an anchor would hang from and said, in its own caption, that
+    # it was a question rather than an offer -- because when the hall was
+    # authored `grapple_point` was not yet in `OFFER_KINDS`. It is now,
+    # and Wave 1 declares three in every room.
+    #
+    # A `grapple_point` is a PLACE, not a mechanic. Each hangs at the
+    # INNER LIP of one ring -- level with that ring's underside, 0.8 m
+    # into the shaft opening -- so the three form a ladder up the
+    # landmark with the basin under all of them.
+    #
+    # THEY WERE FIRST PUT 0.5 m INSIDE THE BAND FOOTPRINT, and that was
+    # wrong for a reason a review figure made obvious: an anchor tucked
+    # under a solid band is invisible from every angle except directly
+    # beneath it. A grapple point the player cannot see is not an
+    # opportunity, it is trivia. At the lip they read from the basin
+    # floor, from the walkable collar, and from across the shaft.
+    #
+    # Nothing is modelled for them -- an offer reserves a place and adds
+    # no geometry -- so the shell is unchanged and the entry sightline
+    # through the shaft is untouched (`_assert_sightline` re-checks it
+    # rather than assuming).
+    #
+    # THE WALKING ROUTE DOES NOT DEPEND ON THEM. Every metre from door to
+    # exit is still `walk` with no package installed; these only shorten
+    # it.
+    lip = CORE_IN / 2.0 - 0.8
+    for k, anchor in enumerate((
+            (0.0, RING_TOPS[0] - RING_T, CORE_Z - lip),
+            (lip, RING_TOPS[1] - RING_T, CORE_Z),
+            (0.0, RING_TOPS[2] - RING_T, CORE_Z + lip))):
+        entry["offers"].append(
+            {"name": "grapple_%d" % k, "kind": "grapple_point",
+             "position": [round(v, 3) for v in anchor], "radius": 1.5})
     entry["rail_span"] = round(sum(
         math.dist(rail[i], rail[i + 1]) for i in range(len(rail) - 1)), 2)
     entry["launch_span"] = round(span, 2)
@@ -550,6 +595,13 @@ def main():
     # build. It is the WEAKER of Production's two evidences -- `RoomAudit`
     # floods with a real capsule and remains the authority.
     traversallaw.assert_declared(colliders, entry, cid,
+                                 roomcollision._world_box)
+    # The same posture for the grapple offers: Production's rule, run
+    # over the boxes this build just placed. Calibrated against Wave 1's
+    # nine Production-certified anchors -- all nine pass -- and proved to
+    # refuse an anchor buried in geometry and one with no ground under
+    # it, before it was allowed to stop a build.
+    traversallaw.assert_grapples(colliders, entry, cid,
                                  roomcollision._world_box)
 
     entry["size_godot"] = [round(entry["size"][0], 3),

@@ -1718,3 +1718,47 @@ then swept up the treasure rooms' two-tier plinths. The narrowing was
 only allowed because the narrowed check still refuses the old geometry on
 exactly the two flights Production named. See L-88: a tool that hunts for
 a defect must not invent ones of its own.
+
+### L-96 · The rule said the anchor was fine; the picture said nobody could see it
+
+The owner's verdict added three `grapple_point` offers to the hall, on
+the collar rings. The first placement put each one 0.2 m under a ring
+band, half a metre inside the band's footprint. Production's rule was
+satisfied — anchor clear, four metres of air beneath, ground within
+thirty below — and the new Art-side mirror of that rule passed all three.
+
+Then the review figure rendered, and there were no anchors in it. Not
+badly framed: **zero pixels**. A solid band hides what hangs beneath it
+from every angle except directly underneath, and no single camera can
+stand underneath three anchors on three different sides of a shaft.
+
+The first instinct was to move the camera. That was wrong, and the
+second camera proved it — from above, the bands hide the anchors by
+construction, and no framing recovers that.
+
+> **A movement offer that satisfies the geometric rule can still be
+> useless, because the rule asks whether the place exists and not
+> whether the player can find it. "Legal" and "an opportunity" are
+> different claims, and only one of them has a checker.**
+
+The anchors moved to the rings' inner lips — same heights, 0.8 m into
+the shaft opening — where they read from the basin floor, from the
+walkable collar, and from across the shaft. All three still pass the
+rule, and now all three have the basin as their ground rather than a
+ring two metres down, which is a better opportunity as well as a visible
+one.
+
+**The figure was the checker.** Nothing else in the pipeline could have
+caught this: the manifest was valid, the mirror passed, the flood was
+untouched, and the room was byte-identical either way. It is the second
+time a review render has found something no verifier was looking for,
+and it is worth saying why that keeps happening — every gate in this
+lane asks whether a claim is TRUE, and none of them asks whether it is
+LEGIBLE.
+
+A footnote on the hunt itself: the probe written to count anchor-coloured
+pixels reported zero a second time, after the anchors were moved and were
+plainly visible in the render. Its colour thresholds were too tight. A
+throwaway probe, not a committed gate — but the same shape as L-88 and
+L-95, and the third time this session a check of mine has been the thing
+that was wrong.
