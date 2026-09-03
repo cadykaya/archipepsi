@@ -85,6 +85,8 @@ func _run() -> void:
 	await _test_a_pending_shell_never_reaches_a_zone()
 	await _test_every_declared_offer_is_true_against_real_geometry()
 	await _test_a_traversal_destination_must_hold_a_player()
+	await _test_a_chained_chamber_offers_what_it_offered_at_the_origin()
+	await _test_a_launch_source_must_be_standable()
 	_test_an_approved_shell_is_held_to_the_contract()
 
 	_check(rooms_checked >= 8,
@@ -929,6 +931,134 @@ func _test_every_authored_shell_in_the_registry_is_measured() -> void:
 		(result["root"] as Node3D).queue_free()
 		await get_tree().process_frame
 
+## THE CHAIN THE GAME ACTUALLY BUILDS, not a fixture at the origin.
+##
+## `ZoneBuilder` translates every chamber and yaws the ones after a turn,
+## and offer coordinates stay room-local. The first binding handed those
+## local points to a world physics query, and it was invisible because
+## every authored-shell test placed its root at identity -- the one
+## transform where the two frames agree.
+##
+## So this takes a REAL two-chamber chain with a declared 90-degree turn,
+## proves the second chamber is genuinely translated and rotated, and
+## then asks whether the same offer gets the same verdict there as at the
+## origin.
+func _test_a_chained_chamber_offers_what_it_offered_at_the_origin(
+		) -> void:
+	var zone := _turning_zone(90.0)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var chambers: Array = zone["chambers"]
+	_check(chambers.size() == 2,
+			"the chain fixture built %d chambers, not 2" % chambers.size())
+	var second: Dictionary = chambers[1]
+	var node := second["node"] as Node3D
+	var placed := node.global_transform
+	# THE FIXTURE MUST ACTUALLY BE SOMEWHERE ELSE, or this proves nothing.
+	_check(placed.origin.length() > 1.0,
+			"the second chamber sits at %v; a chain test at the origin "
+			% placed.origin + "cannot detect a frame error")
+	_check(absf(node.rotation.y) > 0.01,
+			"the second chamber is not rotated (yaw %.3f), so the yaw "
+			% node.rotation.y + "half of the seam is untested")
+
+	# One anchor, well inside the chamber, over its own floor. The build
+	# result is a real procedural room, so its floor is the one being
+	# measured -- what is injected is only the OFFER.
+	var build: Dictionary = second["build"]
+	var bounds: AABB = build["bounds"]
+	var mid := bounds.get_center()
+	var anchor := Vector3(mid.x, 6.0, mid.z)
+	build["offers"] = [{"kind": "grapple_point", "name": "chained",
+			"position": anchor, "radius": 1.5}]
+	var chained := OfferBinding.validate(node, build, "chained",
+			["grapple_point"])
+	_check(not bool(chained.get("refused", false)),
+			"a live chained chamber could not be measured: %s"
+			% str(chained["declined"]))
+
+	# THE SAME ROOM AT THE ORIGIN, for comparison. Identical offer,
+	# identical geometry, placement the only difference.
+	var alone: Dictionary = ContentInstantiator.build_chamber(
+			second["chamber"] as Dictionary, "concrete_facility")
+	alone["offers"] = build["offers"]
+	add_child(alone["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var at_origin := OfferBinding.validate(alone["root"] as Node3D,
+			alone, "origin", ["grapple_point"])
+	_check((chained["built"] as Array).size()
+			== (at_origin["built"] as Array).size()
+			and (chained["declined"] as Array).size()
+			== (at_origin["declined"] as Array).size(),
+			"the same offer measured %d/%d in a placed chamber and "
+			% [(chained["built"] as Array).size(),
+				(chained["declined"] as Array).size()]
+			+ "%d/%d at the origin"
+			% [(at_origin["built"] as Array).size(),
+				(at_origin["declined"] as Array).size()])
+	(alone["root"] as Node3D).queue_free()
+	(zone["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+	rooms_checked += 1
+
+## A LAUNCH SOURCE IS A PLACE TOO.
+##
+## Nothing ever checked the pad itself: the arc deliberately skips its own
+## first sample, so the one place the source was looked at was the place
+## it was excluded from. A pad inside a slab or hanging in mid-air is a
+## pad nobody can step onto.
+func _test_a_launch_source_must_be_standable() -> void:
+	var deck := [Vector3(10.0, -0.5, 0.0), Vector3(60.0, 1.0, 12.0)]
+	var pair := [{"kind": "launch_source", "name": "pad",
+			"position": Vector3(0.0, 0.0, 0.0), "radius": 3.0,
+			"target": "deck"},
+		{"kind": "launch_target", "name": "deck",
+			"position": Vector3(20.0, 0.0, 0.0), "radius": 3.0}]
+
+	var good := _slab_room([deck], Vector3.ZERO,
+			Vector3(60.0, 20.0, 20.0), null)
+	good["offers"] = pair
+	var good_says: String = await _offer_says(good, "good_source")
+	_check(not good_says.contains("launch source"),
+			"a pad on a clean deck was refused: %s" % good_says)
+
+	# BURIED: the pad's own standing pose inside a block.
+	var buried := _slab_room([deck,
+			[Vector3(0.0, 1.0, 0.0), Vector3(4.0, 3.0, 4.0)]],
+			Vector3.ZERO, Vector3(60.0, 20.0, 20.0), null)
+	buried["offers"] = pair
+	var buried_says: String = await _offer_says(buried, "buried_source")
+	_check(buried_says.contains("standing on the launch source"),
+			"a pad buried in a slab was accepted: %s" % buried_says)
+	probes_expected_to_fail += 1
+
+	# MID-AIR: floor for the landing, nothing under the pad.
+	var floating := _slab_room([
+			[Vector3(20.0, -0.5, 0.0), Vector3(16.0, 1.0, 12.0)]],
+			Vector3.ZERO, Vector3(60.0, 20.0, 20.0), null)
+	floating["offers"] = pair
+	var air_says: String = await _offer_says(floating, "air_source")
+	_check(air_says.contains("launch source at")
+			and air_says.contains("not on a surface"),
+			"a pad hanging in mid-air was accepted: %s" % air_says)
+	probes_expected_to_fail += 1
+	rooms_checked += 3
+
+## The declined reasons a slab room's offers produce, as one string.
+func _offer_says(room: Dictionary, who: String) -> String:
+	add_child(room["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var verdict := OfferBinding.validate(room["root"] as Node3D, room,
+			who, ["launch_source"])
+	var out := ""
+	for raw: Variant in verdict["declined"] as Array:
+		out += str((raw as Dictionary)["why"]) + " "
+	(room["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+	return out
+
 ## A DESTINATION MUST BE STANDABLE, NOT MERELY OVER SOMETHING.
 ##
 ## The independent audit's A-2: the plenum declares three optional collar
@@ -1054,6 +1184,35 @@ func _test_every_declared_offer_is_true_against_real_geometry() -> void:
 		elif no > 0:
 			shells_awaiting_review += 1
 		(result["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+
+		# THE SAME SHELL, SOMEWHERE ELSE. `ZoneBuilder` translates every
+		# chamber and yaws many of them, and offers stay room-local -- so
+		# a placed room must offer exactly what it offered at the origin.
+		# This includes the plenum, whose entry is 68 m up: under the
+		# entry-connector contract its origin lands BELOW the seam, which
+		# is the largest placement any room in the library gets.
+		var moved: Dictionary = ContentInstantiator.build_chamber(
+				_chamber_for(entry), "concrete_facility", private)
+		var host := Node3D.new()
+		host.transform = Transform3D(Basis(Vector3.UP, PI / 2.0),
+				Vector3(213.0, -37.0, -96.0))
+		add_child(host)
+		host.add_child(moved["root"] as Node3D)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var elsewhere := OfferBinding.validate(
+				moved["root"] as Node3D, moved, id)
+		_check(not bool(elsewhere.get("refused", false)),
+				"%s: placed away from the origin its offers could not "
+				% id + "be measured: %s" % str(elsewhere["declined"]))
+		_check((elsewhere["built"] as Array).size() == ok
+				and (elsewhere["declined"] as Array).size() == no,
+				"%s offers %d/%d at the origin but %d/%d when placed "
+				% [id, ok, no, (elsewhere["built"] as Array).size(),
+					(elsewhere["declined"] as Array).size()]
+				+ "and yawed; placement changed what the room offers")
+		host.queue_free()
 		await get_tree().process_frame
 	_check(measured >= 4,
 			"only %d shells with offers were measured against real "

@@ -60,7 +60,19 @@ class Volume extends Area3D:
 			_inside.append(body)
 			(body as Player).enter_volume(self, influence)
 			if rail != null:
-				(body as Player).offer_rail(rail)
+				# THE ROOM'S FRAME, DERIVED FROM THIS LANE. The path is
+				# room-local and the player is in world; the lane is
+				# parented into the room, so its own parent is the
+				# transform between them and no second copy is authored.
+				(body as Player).offer_rail(rail, _room_to_world())
+
+	## The transform from this lane's authored frame into world space.
+	func _room_to_world() -> Transform3D:
+		if not is_inside_tree():
+			return Transform3D.IDENTITY
+		var host := get_parent() as Node3D
+		return Transform3D.IDENTITY if host == null \
+				else host.global_transform
 
 	func _on_exited(body: Node3D) -> void:
 		if body is Player:
@@ -205,8 +217,15 @@ class LaunchPad extends Area3D:
 		# the player cannot read the direction of is a trap.
 		var shot := solve()
 		if bool(shot.get("ok", false)):
-			var points := LaunchSolver.arc(global_position_or_local(),
+			# THE SAME TRAJECTORY THE PAD ACTUALLY FIRES, drawn from it.
+			# `solve` works in world space, so the pips are world points
+			# and have to come back through this pad's own transform to
+			# be parented to it -- subtracting `position`, which is
+			# room-local, only worked while the room sat at the origin.
+			var points := LaunchSolver.arc(_body_pose(),
 					shot["velocity"] as Vector3, float(shot["time"]))
+			var into_pad := global_transform.affine_inverse() \
+					if is_inside_tree() else Transform3D.IDENTITY
 			for i in points.size():
 				if i % 6 != 0 or i == 0:
 					continue
@@ -215,7 +234,7 @@ class LaunchPad extends Area3D:
 				dot.radius = 0.12
 				dot.height = 0.24
 				pip.mesh = dot
-				pip.position = points[i] - position
+				pip.position = into_pad * (points[i] as Vector3)
 				pip.material_override = ThemeMaterials.glow_material(
 						tint, 0.9)
 				add_child(pip)
@@ -225,8 +244,32 @@ class LaunchPad extends Area3D:
 	func global_position_or_local() -> Vector3:
 		return global_position if is_inside_tree() else position
 
+	## THE ROOM'S OWN FRAME, derived rather than authored.
+	##
+	## `target` is room-local by contract, and this pad is parented into
+	## the room -- so the room's transform is the parent's, and the pad
+	## needs no second copy of it. Identity before the pad is in a tree,
+	## which is the only state where local and world coincide anyway.
+	func room_to_world() -> Transform3D:
+		if not is_inside_tree():
+			return Transform3D.IDENTITY
+		var host := get_parent() as Node3D
+		return Transform3D.IDENTITY if host == null \
+				else host.global_transform
+
+	## Where the launched BODY is, in world space.
+	func _body_pose() -> Vector3:
+		return SpaceProbe.stand_pose(global_position_or_local())
+
+	## Where the launched body is AIMED, in world space.
+	func world_target() -> Vector3:
+		return SpaceProbe.stand_pose(room_to_world() * target)
+
+	## SOLVED IN WORLD SPACE, BODY POSE TO BODY POSE. This mixed the two
+	## frames: a global source and a room-local target, which aimed every
+	## pad in a placed Zone at a point the room does not contain.
 	func solve() -> Dictionary:
-		return LaunchSolver.solve(global_position_or_local(), target)
+		return LaunchSolver.solve(_body_pose(), world_target())
 
 	func _on_entered(body: Node3D) -> void:
 		if body is Player:

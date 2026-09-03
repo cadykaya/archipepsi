@@ -38,6 +38,9 @@ func _run() -> void:
 	await _test_a_package_may_decline_every_offer()
 	await _test_the_offer_binding_measures_real_geometry()
 	await _test_a_launch_target_is_a_floor_point_not_a_body_point()
+	await _test_a_placed_room_offers_exactly_what_it_offered_at_the_origin()
+	await _test_a_placed_launch_lands_where_it_was_aimed()
+	await _test_a_placed_rail_is_the_same_rail()
 	await _test_the_corridor_rail_is_the_shape_it_always_was()
 	_test_the_base_kit_alone_can_use_both()
 
@@ -407,8 +410,10 @@ func _test_a_smoothed_curve_may_not_leave_the_room() -> void:
 ## `ZoneController` uses, so what these tests exercise is production
 ## code rather than a harness that resembles it.
 func _offer_verdict(room: Dictionary, boxes: Array,
-		only: Array = ["grapple_point"]) -> Dictionary:
+		only: Array = ["grapple_point"],
+		place := Transform3D.IDENTITY) -> Dictionary:
 	var root := Node3D.new()
+	root.transform = place
 	for b: Array in boxes:
 		var body := StaticBody3D.new()
 		var shape := CollisionShape3D.new()
@@ -429,6 +434,214 @@ func _offer_verdict(room: Dictionary, boxes: Array,
 	return verdict
 
 # --- the real-geometry offer binding (owner ruling, 2026-09-03) ------------
+
+# --- the room-local / world seam (owner ruling, 2026-09-03) ----------------
+
+## THE PLACEMENTS a room actually gets. `ZoneBuilder` translates every
+## chamber and yaws many of them, so identity is the ONE case that cannot
+## detect a frame error -- and it was the only case the first binding was
+## ever tested at.
+func _placements() -> Array:
+	return [
+		["identity", Transform3D.IDENTITY],
+		["translated X/Z", Transform3D(Basis(),
+			Vector3(137.0, 0.0, -84.0))],
+		["translated Y", Transform3D(Basis(), Vector3(0.0, 61.0, 0.0))],
+		["yaw 90", Transform3D(Basis(Vector3.UP, PI / 2.0),
+			Vector3(12.0, 3.0, -40.0))],
+		["yaw 180", Transform3D(Basis(Vector3.UP, PI),
+			Vector3(-55.0, -7.0, 18.0))],
+		["yaw 270", Transform3D(Basis(Vector3.UP, 3.0 * PI / 2.0),
+			Vector3(9.0, 22.0, 71.0))],
+	]
+
+func _test_a_placed_room_offers_exactly_what_it_offered_at_the_origin(
+		) -> void:
+	"""AUTHORED LOCAL, PHYSICS WORLD, AND THE TWO ARE NOT THE SAME PLACE.
+
+	`ZoneBuilder` keeps offer coordinates room-local and then places each
+	chamber at a nonzero translation and yaw; `PhysicsDirectSpaceState3D`
+	is world space. The first binding handed local points straight to the
+	probe, and every authored-shell test placed its root at identity --
+	the one transform where the two frames coincide. A fixture at the
+	origin cannot see an origin bug.
+
+	Translating or rotating a room may not change what it offers."""
+	var floor_box := [Vector3(0, -0.5, 0), Vector3(60, 1, 60), "basin"]
+	var ledge := [Vector3(0, 15.5, 0), Vector3(6, 1, 6), "shelf"]
+	var real := {"offers": [{"kind": "grapple_point", "name": "good",
+			"position": Vector3(4, 9, -6), "radius": 1.5}]}
+	# The same anchor with a ledge in its swing column: a DECLINE has to
+	# survive placement too, or a frame error could hide a real defect
+	# instead of inventing one.
+	var bad := {"offers": [{"kind": "grapple_point", "name": "cramped",
+			"position": Vector3(0, 18, 0), "radius": 1.5}]}
+
+	for entry: Array in _placements():
+		var named: String = entry[0]
+		var place: Transform3D = entry[1]
+		var yes: Dictionary = await _offer_verdict(real, [floor_box],
+				["grapple_point"], place)
+		_check((yes["built"] as Array).size() == 1,
+				"at %s a real anchor was declined: %s"
+				% [named, str(yes["declined"])])
+		var no: Dictionary = await _offer_verdict(bad,
+				[floor_box, ledge], ["grapple_point"], place)
+		_check((no["built"] as Array).is_empty(),
+				"at %s an anchor with a ledge in its swing column was "
+				% named + "accepted")
+		# THE DIAGNOSTIC STILL NAMES THE ROOM'S OWN COLLIDER. A reason
+		# that cannot name what blocked it sends whoever fixes it
+		# looking, and a world coordinate in a local room is worse than
+		# no coordinate at all.
+		_check(str(no["declined"]).contains("shelf"),
+				"at %s the refusal stopped naming the blocking collider: "
+				% named + "%s" % str(no["declined"]))
+	refusals += 1
+
+	# A NESTED TRANSFORMED PARENT: `global_transform` is the whole chain,
+	# not this node's own `transform`, and reading the wrong one is the
+	# same bug one level up.
+	var outer := Node3D.new()
+	outer.transform = Transform3D(Basis(Vector3.UP, PI / 3.0),
+			Vector3(-22.0, 14.0, 33.0))
+	add_child(outer)
+	var inner := Node3D.new()
+	inner.transform = Transform3D(Basis(Vector3.UP, PI / 6.0),
+			Vector3(5.0, -2.0, 8.0))
+	outer.add_child(inner)
+	for b: Array in [floor_box]:
+		var body := StaticBody3D.new()
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = b[1]
+		shape.shape = box
+		body.add_child(shape)
+		body.position = b[0]
+		body.name = str(b[2])
+		inner.add_child(body)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var nested := OfferBinding.validate(inner, real, "nested",
+			["grapple_point"])
+	_check((nested["built"] as Array).size() == 1,
+			"under a nested transformed parent a real anchor was "
+			+ "declined: %s" % str(nested["declined"]))
+	outer.queue_free()
+	await get_tree().process_frame
+
+func _test_a_placed_launch_lands_where_it_was_aimed() -> void:
+	"""The pad solved from a GLOBAL source to a ROOM-LOCAL target, so
+	every pad in a placed Zone aimed at a point its room does not
+	contain. Both ends are authored local; the trajectory is world."""
+	var place := Transform3D(Basis(Vector3.UP, PI / 2.0),
+			Vector3(40.0, 6.0, -18.0))
+	var room := Node3D.new()
+	room.transform = place
+	add_child(room)
+	var deck := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(60, 1, 12)
+	shape.shape = box
+	deck.add_child(shape)
+	deck.position = Vector3(10, -0.5, 0)
+	deck.name = "deck"
+	room.add_child(deck)
+	var pad := AffordanceNodes.LaunchPad.new()
+	pad.position = Vector3(0, 0, 0)
+	pad.target = Vector3(20, 0, 0)
+	room.add_child(pad)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+
+	var shot := pad.solve()
+	_check(bool(shot.get("ok", false)),
+			"a placed pad could not solve its own launch")
+	# THE WORLD VELOCITY MUST REACH THE WORLD TARGET. Integrated through
+	# the same arc the pips draw, so the picture and the physics cannot
+	# disagree either.
+	var flight := LaunchSolver.arc(SpaceProbe.stand_pose(
+			pad.global_position), shot["velocity"] as Vector3,
+			float(shot["time"]))
+	var landed: Vector3 = flight[flight.size() - 1]
+	# COMPUTED HERE, NOT ASKED OF THE PAD. If the assertion read
+	# `pad.world_target()` it would agree with a pad that transforms
+	# nothing, because both sides would be wrong together.
+	var wanted := SpaceProbe.stand_pose(place * pad.target)
+	_check(landed.distance_to(wanted) < 0.05,
+			"a placed launch ends at %v, not the %v its target "
+			% [landed, wanted] + "transforms to (out by %.2f m)"
+			% landed.distance_to(wanted))
+	_check(pad.world_target().distance_to(wanted) < 0.001,
+			"the pad's own world target is %v, not the %v its room "
+			% [pad.world_target(), wanted] + "places it at")
+	# ... and the target really did move, or this proves nothing.
+	_check(wanted.distance_to(SpaceProbe.stand_pose(pad.target)) > 1.0,
+			"the fixture's placement does not move the target, so this "
+			+ "case cannot detect an untransformed one")
+	# The pips are parented to the pad, so they must be pad-local.
+	var pips := 0
+	for child in pad.get_children():
+		if child is MeshInstance3D and child.name.begins_with("@"):
+			pips += 1
+	_check(pips > 0, "a solvable placed pad drew no arc pips")
+	room.queue_free()
+	await get_tree().process_frame
+
+func _test_a_placed_rail_is_the_same_rail() -> void:
+	"""The rider compared the player's WORLD position against a
+	room-local path and then handed local path positions back as world
+	player positions -- so a placed rail was catchable from across the
+	map and teleported whoever caught it.
+
+	One authored path. A derived transform. Same semantic rail."""
+	var rail := RailPath.from_points(PackedVector3Array([
+		Vector3(0, 2, 0), Vector3(0, 2, 6), Vector3(0, 2, 12)]))
+	_check(rail.violations().is_empty(),
+			"the rail fixture is not a valid path: %s"
+			% "; ".join(rail.violations()))
+	for entry: Array in _placements():
+		var named: String = entry[0]
+		var place: Transform3D = entry[1]
+		# The player arrives in WORLD, on the placed curve, moving along
+		# the placed tangent.
+		var local_at := Vector3(0, 2, 4)
+		var world_at := place * local_at
+		var world_go := place.basis * Vector3(0, 0, 8)
+		var caught := RailRider.catch(rail, world_at, world_go, place)
+		_check(not caught.is_empty(),
+				"at %s a rider on the placed curve could not catch it"
+				% named)
+		if caught.is_empty():
+			continue
+		var rider: RailRider = caught["rider"]
+		# WORLD OUT. The body sits over the placed curve, not over the
+		# authored one.
+		var body := rider.body_position()
+		var expect := place * (rail.at(rider.offset)
+				+ Vector3.UP * RailRider.STAND_OFFSET)
+		_check(body.distance_to(expect) < 0.001,
+				"at %s the rider's body came back at %v, not the %v "
+				% [named, body, expect] + "the placed curve puts it at")
+		# And the ride advances along the PLACED direction.
+		var step := rider.advance(0.1)
+		var went: Vector3 = step["velocity"]
+		var want_dir := (place.basis * Vector3(0, 0, 1)).normalized()
+		_check(went.normalized().dot(want_dir) > 0.99,
+				"at %s the ride pushed %v, which is not along the "
+				% [named, went.normalized()] + "placed rail %v"
+				% want_dir)
+		# A rider standing where the AUTHORED curve is, rather than where
+		# the placed one is, must NOT catch it -- otherwise the frame is
+		# still being ignored.
+		if named != "identity":
+			var wrong := RailRider.catch(rail, local_at,
+					Vector3(0, 0, 8), place)
+			_check(wrong.is_empty(),
+					"at %s a rider at the AUTHORED coordinates caught a "
+					% named + "rail that is no longer there")
+	refusals += 1
 
 ## THE SEVEN SABOTAGES the independent audit required, each of which must
 ## fail if the guard it names is removed.
@@ -1009,8 +1222,14 @@ func _test_a_launch_crosses_horizontal_and_vertical_distance() -> void:
 ## not tell a landing ON a deck from one four metres inside a machine,
 ## which is the distinction the owner's floor-contact ruling turns on.
 func _launch_verdict(source_foot: Vector3, target_foot: Vector3,
-		radius: float, boxes: Array) -> Array:
+		radius: float, boxes: Array,
+		place := Transform3D.IDENTITY) -> Array:
 	var root := Node3D.new()
+	# THE ROOM MAY BE ANYWHERE. `boxes` are room-local like the feet, so
+	# placing the root moves the geometry and the offer together -- which
+	# is the whole point: a correct binding gives the same verdict, and
+	# the version that handed local points to a world probe did not.
+	root.transform = place
 	for b: Array in boxes:
 		var body := StaticBody3D.new()
 		var shape := CollisionShape3D.new()
@@ -1026,7 +1245,7 @@ func _launch_verdict(source_foot: Vector3, target_foot: Vector3,
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	var out := LaunchSolver.violations(source_foot, target_foot, radius,
-			OfferBinding.space_of(root), "probe")
+			OfferBinding.space_of(root), root.global_transform, "probe")
 	root.queue_free()
 	await get_tree().process_frame
 	return out

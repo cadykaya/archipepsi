@@ -72,6 +72,20 @@ var speed := 0.0
 ## +1 rides toward the far end, -1 back toward the start.
 var heading := 1
 
+## THE ROOM'S OWN FRAME. ONE authored path, one derived transform.
+##
+## The path is room-local, because it is the authored offer and it is
+## what gets parented into the room. The player's position and velocity
+## are world. This compared the two directly and then handed local path
+## positions back as world player positions -- so in a placed Zone a rail
+## could be caught from across the map and, once caught, teleported the
+## player to wherever the room's local coordinates happened to point.
+##
+## A DERIVED TRANSFORM, NEVER A SECOND PATH. Translating or rotating a
+## room may not change which rail it is: the semantic rail is the
+## authored one, and this is only how to look at it from outside.
+var to_world := Transform3D.IDENTITY
+
 ## Can this player catch this rail right now, and where?
 ##
 ## THREE CONDITIONS, and each is a real failure it prevents. Near enough
@@ -83,27 +97,35 @@ var heading := 1
 ## Returns `{}` when the rail cannot be caught, so the caller has one
 ## thing to test rather than a bool plus out-parameters.
 static func catch(rail: RailPath, position: Vector3,
-		velocity: Vector3) -> Dictionary:
+		velocity: Vector3, to_world := Transform3D.IDENTITY) -> Dictionary:
 	if rail == null or not rail.violations().is_empty():
 		return {}
 	var span := rail.length()
 	if span <= 0.0:
 		return {}
-	var here := rail.nearest_offset(position)
+	# ONE FRAME FOR THE COMPARISON. The player arrives in world; the path
+	# lives in the room. Both are brought into the room's frame here --
+	# rather than the path into the world -- so the offsets, tangents and
+	# arc lengths below stay the authored ones.
+	var into_room := to_world.affine_inverse()
+	var local_at := into_room * position
+	var local_go := into_room.basis * velocity
+	var here := rail.nearest_offset(local_at)
 	var on_path := rail.at(here)
-	var gap := Vector2(position.x - on_path.x,
-			position.z - on_path.z).length()
+	var gap := Vector2(local_at.x - on_path.x,
+			local_at.z - on_path.z).length()
 	if gap > CATCH_RADIUS:
 		return {}
-	var drop := on_path.y - position.y
+	var drop := on_path.y - local_at.y
 	if drop > CATCH_BELOW or drop < -CATCH_BELOW:
 		return {}
 	var along := rail.tangent(here)
-	var pace := velocity.dot(along)
+	var pace := local_go.dot(along)
 	if absf(pace) < 0.5:
 		return {}
 	var rider := RailRider.new()
 	rider.path = rail
+	rider.to_world = to_world
 	rider.offset = here
 	rider.heading = 1 if pace > 0.0 else -1
 	rider.speed = clampf(maxf(absf(pace) * ENTRY_KEEP, DRIVE_SPEED),
@@ -116,13 +138,20 @@ static func catch(rail: RailPath, position: Vector3,
 	return {"rider": rider, "offset": here, "speed": rider.speed,
 			"heading": rider.heading}
 
-## Where the rider's body goes for this offset.
+## Where the rider's body goes for this offset, IN WORLD SPACE -- which
+## is the frame the player's own position is in.
 func body_position() -> Vector3:
-	return path.at(offset) + Vector3.UP * STAND_OFFSET
+	return to_world * (path.at(offset) + Vector3.UP * STAND_OFFSET)
 
-## Which way the ride is travelling, as a unit vector.
+## Which way the ride is travelling, as a WORLD unit vector.
+##
+## The basis is a rotation, so this preserves length and the speeds below
+## mean the same thing in either frame; what it does fix is the direction
+## the player is actually pushed, which a yawed room otherwise sent off
+## by exactly that yaw.
 func facing() -> Vector3:
-	return path.tangent(offset) * float(heading)
+	return to_world.basis * (path.tangent(offset) * float(heading))
+
 
 ## One physics step of the ride.
 ##
@@ -154,7 +183,8 @@ func advance(delta: float, jump := false) -> Dictionary:
 	offset = clampf(offset + speed * float(heading) * delta, 0.0, span)
 	if offset <= 0.0 or offset >= span:
 		# Off the end, still moving the way the rail pointed.
-		return _leave(path.tangent(offset) * float(heading) * speed,
+		return _leave(to_world.basis
+				* (path.tangent(offset) * float(heading)) * speed,
 				"end")
 	return {"position": body_position(), "velocity": along * speed,
 			"riding": true, "reason": ""}

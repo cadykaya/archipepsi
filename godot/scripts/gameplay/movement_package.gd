@@ -53,12 +53,29 @@ static func consume(root: Node3D, room: Dictionary,
 	if why != "":
 		return {"built": built, "refused": true,
 				"declined": [{"name": "*", "kind": "*", "why": why}]}
+	# THE ONE ROOM-LOCAL -> WORLD TRANSFORM, derived from the live root
+	# and derived ONCE.
+	#
+	# THE SEAM THIS CLOSES. Authored offers are room-local, `ZoneBuilder`
+	# places each chamber at a nonzero translation and yaw, and
+	# `PhysicsDirectSpaceState3D` queries are WORLD space. So the first
+	# version of this binding handed local coordinates straight to the
+	# probe and measured a point somewhere else entirely -- and every
+	# authored-shell test placed its root at identity, where the two
+	# frames coincide, so nothing caught it. A test whose fixture sits at
+	# the origin cannot see an origin bug.
+	#
+	# Authored dictionaries and the nodes parented into the room STAY
+	# LOCAL: the content contract is local by definition and turning it
+	# into world coordinates would make a room mean something different
+	# depending on where it was placed. Only the QUERIES move.
+	var to_world := root.global_transform
 	if _wants("rail_route", only):
-		_rails(root, room, space, built, declined)
+		_rails(root, room, space, to_world, built, declined)
 	if _wants("launch_source", only):
-		_launches(root, room, space, built, declined)
+		_launches(root, room, space, to_world, built, declined)
 	if _wants("grapple_point", only):
-		_grapples(room, space, built, declined)
+		_grapples(room, space, to_world, built, declined)
 	return {"built": built, "declined": declined, "refused": false}
 
 ## How much clear air a grapple point needs under it. A player's own
@@ -100,17 +117,21 @@ const GRAPPLE_DROP := 30.0
 ## floor at 34 m has to be FOUND to be reported as too deep, and a probe
 ## that stops at 30 m cannot tell "past the limit" from "a void".
 static func _grapples(room: Dictionary, space: PhysicsDirectSpaceState3D,
-		built: Array, declined: Array) -> void:
+		to_world: Transform3D, built: Array, declined: Array) -> void:
 	for offer: Variant in RoomContract.offers_of(room, "grapple_point"):
 		var entry: Dictionary = offer
 		var named := str(entry.get("name", "grapple"))
+		# `at` stays the AUTHORED point, because that is what a message
+		# has to name for anyone to find it. `world` is what the physics
+		# is asked about. The two are the same only at identity.
 		var at: Vector3 = entry["position"]
+		var world := to_world * at
 		var why := ""
-		var blocker := SpaceProbe.obstruction(space, at)
-		var ground := SpaceProbe.ground_below(space, at,
+		var blocker := SpaceProbe.obstruction(space, world)
+		var ground := SpaceProbe.ground_below(space, world,
 				GRAPPLE_DROP + SWING_ROOM)
 		if blocker != null and ground != SpaceProbe.NO_GROUND \
-				and at.y - ground < SWING_ROOM:
+				and world.y - ground < SWING_ROOM:
 			# THE RIGHT DIAGNOSIS OF THE SAME GEOMETRY. An anchor sitting
 			# less than a body's clearance above its own floor is blocked
 			# BY that floor, and calling it "inside solid geometry" sends
@@ -118,7 +139,7 @@ static func _grapples(room: Dictionary, space: PhysicsDirectSpaceState3D,
 			# `grapple_1` is 0.762 m over a tread: too close, not buried.
 			why = ("there is no room to hang or swing under the anchor "
 					+ "at %v: the ground (%s) is %.2f m down and %.1f m "
-					% [at, blocker.name, at.y - ground, SWING_ROOM]
+					% [at, blocker.name, world.y - ground, SWING_ROOM]
 					+ "is the minimum")
 		elif blocker != null:
 			why = ("the anchor at %v is inside solid geometry (%s)"
@@ -127,24 +148,35 @@ static func _grapples(room: Dictionary, space: PhysicsDirectSpaceState3D,
 			why = ("nothing within %.0f m under the anchor at %v is "
 					% [GRAPPLE_DROP, at] + "ground to leave from or "
 					+ "arrive at")
-		elif at.y - ground < SWING_ROOM:
+		elif world.y - ground < SWING_ROOM:
+			# NAMING THE FLOOR THAT IS TOO CLOSE. Same ray as the height,
+			# so the number and the thing that produced it cannot come
+			# from two different queries.
+			var under := SpaceProbe.ground_collider(space, world,
+					GRAPPLE_DROP + SWING_ROOM)
 			why = ("there is no room to hang or swing under the anchor "
-					+ "at %v: the ground is %.2f m down and %.1f m is "
-					% [at, at.y - ground, SWING_ROOM] + "the minimum")
-		elif at.y - ground > GRAPPLE_DROP:
+					+ "at %v: the ground (%s) is %.2f m down and %.1f m "
+					% [at, ("?" if under == null else under.name),
+						world.y - ground, SWING_ROOM] + "is the minimum")
+		elif world.y - ground > GRAPPLE_DROP:
 			why = ("the ground under the anchor at %v is %.2f m down, "
-					% [at, at.y - ground] + "past the %.0f m that is "
+					% [at, world.y - ground] + "past the %.0f m that is "
 					% GRAPPLE_DROP + "still something to leave from")
 		else:
 			# THE WHOLE COLUMN, swept. Two endpoint samples say nothing
 			# about the middle, and the middle is where a beam crosses.
-			var hit: Variant = SpaceProbe.first_block_point(space, at,
-					at - Vector3.UP * SWING_ROOM)
+			var hit: Variant = SpaceProbe.first_block_point(space,
+					world, world - Vector3.UP * SWING_ROOM)
 			if hit != null:
 				var named_by := SpaceProbe.blocker_name(space,
 						hit as Vector3)
+				# Reported back in the room's own frame: an artist who
+				# reads a world coordinate has to undo the placement to
+				# find the metre it names.
+				var local_hit: Vector3 = to_world.affine_inverse() \
+						* (hit as Vector3)
 				why = ("there is no room to hang or swing under the "
-						+ "anchor at %v: blocked at %v" % [at, hit]
+						+ "anchor at %v: blocked at %v" % [at, local_hit]
 						+ ("" if named_by == "" else " by %s" % named_by))
 		if why != "":
 			declined.append({"name": named, "kind": "grapple_point",
@@ -168,8 +200,8 @@ static func _wants(kind: String, only: Array) -> bool:
 ## thick: asking the player's own capsule refuses routes a beam threads
 ## and passes routes it does not.
 static func _rails(root: Node3D, room: Dictionary,
-		space: PhysicsDirectSpaceState3D, built: Array,
-		declined: Array) -> void:
+		space: PhysicsDirectSpaceState3D, to_world: Transform3D,
+		built: Array, declined: Array) -> void:
 	for offer: Variant in RoomContract.offers_of(room, "rail_route"):
 		var entry: Dictionary = offer
 		var named := str(entry.get("name", "rail"))
@@ -186,8 +218,12 @@ static func _rails(root: Node3D, room: Dictionary,
 		if refusals.is_empty():
 			var half := AffordanceFeatures.RAIL_BEAM_THICKNESS / 2.0
 			for point: Vector3 in rail.polyline():
-				var blocker := SpaceProbe.sphere_obstruction(space, point,
-						half)
+				# THE BAKED POINT IS LOCAL; THE PROBE IS WORLD. The rail
+				# object stays in the room's frame -- it is what gets
+				# parented into the room and ridden -- and only the query
+				# crosses over.
+				var blocker := SpaceProbe.sphere_obstruction(space,
+						to_world * point, half)
 				if blocker == null:
 					continue
 				refusals.append("%s: the smoothed curve puts the beam "
@@ -206,8 +242,8 @@ static func _rails(root: Node3D, room: Dictionary,
 ## An unpaired half of either is an offer nobody can act on, and saying so
 ## is more use than building half a traversal.
 static func _launches(root: Node3D, room: Dictionary,
-		space: PhysicsDirectSpaceState3D, built: Array,
-		declined: Array) -> void:
+		space: PhysicsDirectSpaceState3D, to_world: Transform3D,
+		built: Array, declined: Array) -> void:
 	var targets := RoomContract.offers_of(room, "launch_target")
 	for offer: Variant in RoomContract.offers_of(room, "launch_source"):
 		var entry: Dictionary = offer
@@ -225,7 +261,8 @@ static func _launches(root: Node3D, room: Dictionary,
 		var source: Vector3 = entry["position"]
 		var target: Vector3 = landing["position"]
 		var refusals := LaunchSolver.violations(source, target,
-				float(landing.get("radius", 0.0)), space, named)
+				float(landing.get("radius", 0.0)), space, to_world,
+				named)
 		if not refusals.is_empty():
 			declined.append({"name": named, "kind": "launch_source",
 					"why": "; ".join(refusals)})

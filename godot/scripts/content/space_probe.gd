@@ -105,6 +105,20 @@ static func ground_below(space: PhysicsDirectSpaceState3D, at: Vector3,
 		return NO_GROUND
 	return (hit["position"] as Vector3).y
 
+## The collider the downward probe landed on, or null.
+##
+## Same ray as `ground_below`, so the height and the thing that provided
+## it can never come from two different queries.
+static func ground_collider(space: PhysicsDirectSpaceState3D, at: Vector3,
+		reach: float) -> Node:
+	if space == null:
+		return null
+	var query := PhysicsRayQueryParameters3D.create(
+			at + Vector3.UP * CONTACT_EPS, at + Vector3.DOWN * reach)
+	query.collide_with_areas = false
+	var hit := space.intersect_ray(query)
+	return null if hit.is_empty() else hit.get("collider") as Node
+
 ## Does the player's own capsule fit, centred here?
 ##
 ## Slightly slimmer than the player for the same reason

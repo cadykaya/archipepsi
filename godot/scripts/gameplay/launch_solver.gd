@@ -114,12 +114,34 @@ static func arc(source: Vector3, velocity: Vector3, time: float,
 ## THE ORDER MATTERS. An unsolvable pair is reported as unsolvable rather
 ## than as an obstructed arc, because they send whoever has to fix it to
 ## different places.
+## AUTHORED LOCAL IN, WORLD PHYSICS OUT. Both feet are room-local
+## floor-contact points; `to_world` is the live room's own transform, and
+## every probe and the whole trajectory happen on the far side of it.
+## Messages name the LOCAL point, because that is the number an artist
+## can find.
 static func violations(source_foot: Vector3, target_foot: Vector3,
 		landing_radius: float, space: PhysicsDirectSpaceState3D,
+		to_world := Transform3D.IDENTITY,
 		who := "launch_pad") -> Array[String]:
 	var out: Array[String] = []
-	var source := SpaceProbe.stand_pose(source_foot)
-	var target := SpaceProbe.stand_pose(target_foot)
+	var source := SpaceProbe.stand_pose(to_world * source_foot)
+	var target := SpaceProbe.stand_pose(to_world * target_foot)
+	# THE PAD ITSELF MUST BE STANDABLE. A source buried in a slab or
+	# hanging in mid-air is a pad nobody can step onto, and nothing
+	# checked it: the arc skips its own first sample by design, so the
+	# one place the source was ever looked at was the place it was
+	# excluded from.
+	var under := SpaceProbe.ground_below(space, to_world * source_foot,
+			Constants.MAX_VERTICAL_STEP)
+	if under == SpaceProbe.NO_GROUND:
+		out.append("%s: the launch source at %v is not on a surface; "
+				% [who, source_foot] + "there is no ground within %.1f m "
+				% Constants.MAX_VERTICAL_STEP + "under it")
+	var on_pad := SpaceProbe.obstruction(space, source)
+	if on_pad != null:
+		out.append("%s: a player standing on the launch source at %v "
+				% [who, source_foot] + "does not fit; their body is "
+				+ "inside %s" % on_pad.name)
 	var shot := solve(source, target)
 	if not bool(shot.get("ok", false)):
 		out.append("%s: cannot be solved: %s"
@@ -141,7 +163,9 @@ static func violations(source_foot: Vector3, target_foot: Vector3,
 		if blocker != null:
 			out.append("%s: the arc is obstructed %.0f%% of the way "
 					% [who, 100.0 * float(i) / float(points.size() - 1)]
-					+ "along it, at %v (%s)" % [points[i], blocker.name])
+					+ "along it, at %v (%s)"
+					% [to_world.affine_inverse() * (points[i] as Vector3),
+						blocker.name])
 			break
 	var landed: Vector3 = points[points.size() - 1]
 	if landed.distance_to(target) > 0.05:
@@ -149,7 +173,7 @@ static func violations(source_foot: Vector3, target_foot: Vector3,
 				% [who, landed, target] + "was aimed at")
 	# THE AUTHORED POINT MUST BE FLOOR. Within a step, because a landing
 	# surface is a surface and not a region hanging over one.
-	var ground := SpaceProbe.ground_below(space, target_foot,
+	var ground := SpaceProbe.ground_below(space, to_world * target_foot,
 			Constants.MAX_VERTICAL_STEP)
 	if ground == SpaceProbe.NO_GROUND:
 		out.append("%s: the landing point at %v is not on a surface; "
@@ -162,5 +186,6 @@ static func violations(source_foot: Vector3, target_foot: Vector3,
 	if standing != null:
 		out.append("%s: a player standing on the landing point at %v "
 				% [who, target_foot] + "does not fit; their body at %v "
-				% target + "is inside %s" % standing.name)
+				% (to_world.affine_inverse() * target)
+				+ "is inside %s" % standing.name)
 	return out

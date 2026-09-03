@@ -535,6 +535,57 @@ green suite over it, because the suite ran at prototype scale. The mock
 backend now takes a `CampaignConfig` and
 `bridge/tests/test_production_scale.py` runs the real engine at 450.
 
+## AUTHORED LOCAL, PHYSICS WORLD — 2026-09-03
+
+The binding at `50018d1` handed room-local offer coordinates straight to
+a world-space `PhysicsDirectSpaceState3D`. `ZoneBuilder` places every
+chamber at a nonzero translation and yaws many of them, so those are two
+different points -- and **every authored-shell test placed its root at
+identity, the one transform where the two frames coincide.** A fixture
+at the origin cannot see an origin bug. Owner-reported, confirmed, fixed.
+
+**THE CONTRACT.** Authored offer data and the nodes parented into a room
+stay ROOM-LOCAL -- the content contract is local by definition, and
+turning it into world coordinates would make a room mean something
+different depending on where it was placed. Real-physics queries and
+player motion are WORLD. One transform, `root.global_transform`, derived
+once per `consume` and threaded to every probe. Diagnostics report the
+LOCAL coordinate, because that is the number an artist can find.
+
+**TWO RUNTIME CONSUMERS CARRIED THE SAME MISMATCH**, and both are
+corrected. `LaunchPad.solve` used a global source and a room-local
+target, so every pad in a placed Zone aimed at a point its room does not
+contain; it now solves world body-pose to world body-pose, and the arc
+pips come back through the pad's own transform instead of subtracting a
+local `position`. `RailRider` compared the player's world position and
+velocity against a local `RailPath` and then returned local path
+positions as world player positions -- catchable from across the map,
+and a teleport on catch. It now brings the player into the room's frame
+for the comparison and returns world positions and world velocities, off
+ONE authored path and a derived transform.
+
+**A LAUNCH SOURCE IS A PLACE TOO.** Nothing ever checked the pad itself:
+the arc skips its own first sample by design, so the one place the source
+was looked at was the place it was excluded from. Support and a standing
+body pose are now proven at the source as well as the target.
+
+PROVEN AT SEVEN PLACEMENTS -- identity, translated X/Z, translated Y, yaw
+90, 180, 270, and a nested transformed parent -- plus a REAL two-chamber
+`ZoneBuilder` chain whose second chamber is 90 degrees rotated and away
+from the origin, and all four LARGE shells measured at identity and again
+at a placed-and-yawed transform. Identical verdicts everywhere.
+
+Three sabotages, each red: leaving the launch target untransformed lands
+a placed pad 43.36 m from its aim; returning local rider positions puts
+the body at `(0, 3, 4)` where the placed curve is at `(137, 3, -80)`;
+querying grapples in local coordinates reports a 60 m room as having no
+ground in it.
+
+The verdicts themselves did not move -- the previous pass measured at
+identity, where the frames agree -- so `50018d1`'s findings stand and are
+now true for a placed room as well. One diagnostic gained a subject: a
+floor too close under an anchor names the collider that is too close.
+
 ## THE OFFER RULES AND THE GEOMETRY ARE IN THE SAME ROOM — 2026-09-03
 
 Independent audit `802732d`, `docs/audit/2026-09-03-physical-truth-adjudication.md`.
@@ -599,8 +650,14 @@ REAL-GEOMETRY VERDICTS, first ever recorded:
 | span | 3 (all grapples) | rail into `sp_pylon_0`; launch arc into `sp_deck` |
 | yard | 5 (everything) | none |
 
-Every one corroborates the audit, including the span's three grapples the
-old stride refused. Yard is clean on offers. Eight approved P2 shells,
+The span's three grapples confirm the audit's false-refusal finding. But
+**the Hall's and the Span's launch-arc collisions were NEWLY DISCOVERED
+here, not corroborations** -- Vera's B-4 isolated the landing-point
+CONVENTION and read all three top-face targets as correctly authored,
+which they are. What the corrected body-pose arc then found is a
+different fact: the arc between two body poses clips `hl_east_gantry` at
+38% and `sp_deck` at 29%. Neither appears in the audit. Yard is clean on
+offers. Eight approved P2 shells,
 hall, span and yard all remain `structural=0 measured=0`; the plenum
 carries the three collar endpoints as pending evidence.
 

@@ -170,10 +170,13 @@ var _rider: RailRider = null
 ## player who is too far off the path, below it, already past its end, or
 ## not moving along it. Walking sideways into a rail does nothing, which
 ## is what stops the room shoving people down it.
-func offer_rail(rail: RailPath) -> void:
+## `to_world` is the room's own transform: the path is authored local and
+## the player is in world, and comparing the two directly is how a rail
+## in a placed Zone came to be catchable from across the map.
+func offer_rail(rail: RailPath, to_world := Transform3D.IDENTITY) -> void:
 	if _rider != null or _dead:
 		return
-	var caught := RailRider.catch(rail, global_position, velocity)
+	var caught := RailRider.catch(rail, global_position, velocity, to_world)
 	if caught.is_empty():
 		return
 	_rider = caught["rider"]
