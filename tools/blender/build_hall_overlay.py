@@ -42,6 +42,10 @@ import bpy  # noqa: E402
 import brushkit  # noqa: E402
 import common  # noqa: E402
 
+sys.path.insert(0, os.path.join(common.REPO_ROOT, "tools", "content"))
+
+import measure_offers  # noqa: E402
+
 MANIFEST = os.path.join(common.REPO_ROOT, "assets", "models", "batch039",
                         "shells", "manifest.json")
 OUT = "batch039/overlays"
@@ -186,17 +190,32 @@ def _far(a, b, eps=0.05):
 
 
 def fig_rail(m):
-    """The `rail_route` offer, swept along its own control points.
+    """The `rail_route` offer, swept along the curve it BAKES INTO.
 
     A rail is an ordered path, so this is the one figure where the shape
     matters as much as the place: it should read as a route that USES
     the room's whole height and goes around the landmark, not a handrail
     stuck to a wall.
+
+    THE CONTROL POINTS ARE NOT THE RIDE, and this figure used to draw
+    them. `RailPath.from_points` interpolates a Catmull-Rom, which cuts
+    its corners -- so a picture of the polyline can show a rail sailing
+    clear of a wall while the ride goes through it. That is not a
+    hypothetical: the plenum's twelve points all sat 3.8 cm OUTSIDE the
+    collar rings while the curve sagged 0.1668 m inside all three, and
+    this room's own rail was 0.249 m inside the east gantry while its
+    polyline was nowhere near it.
+    So the sweep follows `measure_offers.baked`, which is Production's
+    own `from_points` maths reading Production's own `TENSION`. The
+    small markers stay on the control points, because where a route was
+    AUTHORED is worth seeing next to where it goes.
     """
     parts = []
     offer = _offer(m, "rail_route")
     pts = [_blender(p) for p in offer["points"]]
-    _add(parts, brushkit.sweep("rail", pts, 0.55, 0.55), "rail")
+    ride = [_blender(p) for p in measure_offers.baked(
+        [tuple(p) for p in offer["points"]], step=0.6)]
+    _add(parts, brushkit.sweep("rail", ride, 0.55, 0.55), "rail")
     for i, p in enumerate(pts):
         _add(parts, brushkit.prism("rail_pt_%d" % i, 0.55, 0.55, 8, p),
              "rail")

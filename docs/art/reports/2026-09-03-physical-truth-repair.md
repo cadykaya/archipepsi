@@ -188,12 +188,12 @@ west of the gantry, south of the north landing, under ramp3's third
 tread. It arrives there already at 22 m, so the whole eastern sweep is a
 **flyover** of the east gantry rather than a pass through it: the walkway
 goes by two metres beneath the ride. The western leg came in from x −15
-and −17 to −11.5, the middle of the 3.4 m corridor between ramp1 and the
-ring.
+and −17 to −11.5 — the beam's centre line has 3.35 m to work in between
+ramp1 and the ring, and −11.5 keeps 1.175 m off the ramp.
 
-Two control points changed plan position, two changed height, and the
-route's shape — two laps around the armature, entry level to the exit —
-is the same. Rail length 143.93 → 143.22 m. Tightest point on the new
+Four of eleven control points moved: two in plan on the west leg, one in
+height and one in both on the east. The route's shape — two laps around
+the armature, entry level to the exit — is the same. Rail length 143.93 → 143.22 m. Tightest point on the new
 ride: **0.494 m** from `ramp3_tread1`, against 0.325 needed.
 
 ### 7 · The span rail ran down the middle of both pylons
@@ -322,6 +322,26 @@ Every case substitutes its bug **in memory**. The rest of
 wrong for these two — the declarations under test live in the pack's
 generated manifests, and a script that checks out a manifest can eat an
 export somebody has not committed yet.
+
+### The rail overlay was drawing the polyline
+
+`build_hall_overlay.fig_rail` swept the rail's **control points**, which
+is the picture that could not have shown any of this: a Catmull-Rom cuts
+its corners, so a figure of the polyline shows a rail sailing clear of a
+wall while the ride goes through it. It sweeps `measure_offers.baked`
+now — Production's own `from_points` maths, reading Production's own
+`TENSION` — and the small markers stay on the control points, because
+where a route was *authored* is worth seeing next to where it *goes*.
+
+The figure was also **stale**, and `check_art_current.sh` is what said
+so: the hall's rail changed and `hall_ov_rail.glb` is derived from the
+hall's manifest. That is L-94's pattern exactly, caught by the check
+L-94 produced.
+
+The dated review PNGs under `docs/art/review/p3_owner/` are **not**
+re-rendered. They are evidence of what was actually reviewed, and the
+owner's standing rule is to add current-state views rather than
+overwrite them.
 
 ---
 

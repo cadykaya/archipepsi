@@ -346,8 +346,9 @@ def _rail_points():
 
     The western leg moved for the same kind of reason and a smaller
     one: at x -15 and -17 it was inside `ramp1`'s flight (x -19.4..-13),
-    the curve sagging 0.389 m into tread 4. The corridor between that
-    ramp and the ring is x -12.7 to -9.3, and -11.5 is the middle of it.
+    the curve sagging 0.389 m into tread 4. The beam's centre line has
+    x -12.675 to -9.325 to work in between that ramp and the ring --
+    3.35 m -- and -11.5 sits in it with 1.175 m to the ramp.
 
     Every number here is measured against the shipped collider
     triangles by `tools/content/measure_offers.py`, which reproduced
