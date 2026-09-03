@@ -535,6 +535,55 @@ green suite over it, because the suite ran at prototype scale. The mock
 backend now takes a `CampaignConfig` and
 `bridge/tests/test_production_scale.py` runs the real engine at 450.
 
+## EVERY AUTHORED SHELL MEASURES TRUE — 2026-09-03
+
+Art `26a2914` (repair `4441ea5`) synced. The mirrored delta is ONE file,
+`registry/authored_art.json`, and eight declared points inside it. No
+`.glb`, no `.tscn`, no `SCENE_PLAN.json`, no geometry, no traversal, no
+entry connector. Art's independent reproduction agreed with Production's
+eleven findings and with which three of them the entry ruling had already
+superseded.
+
+The eight points, each moved laterally off the block it was named inside:
+
+* plenum `reward` volume `(0, 29.333, 10)` -> `(5.25, 29.333, 10)`
+* yard `cover_0..3` z `16 -> 13.4`, `34 -> 37.1`, `15 -> 12.4`,
+  `33 -> 36.6`
+* span `cover_0..2` x `-9 -> -12.1`, `8 -> 10.6`, `-7 -> -10.6`
+
+**ALL TWELVE AUTHORED SHELLS NOW MEASURE structural=0 measured=0** — the
+eight approved P2 shells, the hall, and all three Wave-1 LARGE rooms.
+First time the whole registry has been clean.
+
+PROVEN AUTHORED, not inferred from a quiet census. Each of the three
+carries `authored_shell` equal to the id requested, instantiates from its
+own `.tscn` (`root.scene_file_path`), and presents exactly the counts its
+manifest declares — plenum 20/15, yard 6/5, span 6/5. A procedural arena
+produces none of those.
+
+The arrival check is not vacuous either: all three declare a
+`player_entry`, all three report `[]`, and moving the plenum's into its
+own machine volume produces the finding immediately.
+
+FORM PRESERVED, measured: plenum entry `(0, 68, 0)` / exit `(0, 0, 22)`,
+73.60 m of geometry, top-entry and bottom-exit intact. Yard 17.60 m tall,
+entered at `(-43, 0, 26)` and left at `(+43, 0, 26)`. Span keeps
+`deck_to_basin`, a `drop` from y=14 to y=0, one way. Marker parity 12
+scenes / 160 markers / 0 disagreements.
+
+TWO CAVEATS CARRIED FORWARD UNRESOLVED, by instruction, and neither is
+explained away here:
+
+1. The plenum's annular collar imports as a CONVEX COLLISION DISC. A
+   ring whose hole is filled by its own collision hull is a floor where
+   the room shows a void, and nothing in this pass looked at it.
+2. There is still no canonical real-geometry `supported` caller for
+   grapple validation. `MovementPackage` has no production caller at all,
+   so the same three hall anchors build or decline depending on whether
+   the probe window covers `_grapples`' own 2 m stride.
+
+An independent audit owns both. Neither was touched.
+
 ## THE ENTRY IS WHERE THE ROOM SAYS IT IS — 2026-09-03
 
 Owner ruling: `(0, 0, 0)` has no semantic meaning as the universal room
