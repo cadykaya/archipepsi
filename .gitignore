@@ -22,3 +22,6 @@ godot-bin/
 # review evidence lives in docs/art/review/ and is NOT ignored -- the owner
 # has to be able to see it without running anything.
 /.artpreview/
+
+# Scratch JPEGs for tools/shots/make_review_pdf.py, rebuilt on demand.
+.pdfcache/
