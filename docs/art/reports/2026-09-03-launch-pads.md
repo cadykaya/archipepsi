@@ -31,6 +31,9 @@ them, and 8 cm was only where they entered. The repair is the same one
 either way, and the ruling stands unchanged; the number in the previous
 report was just the wrong one to quote.
 
+**The tool now reports the worst sample rather than the first**, so this
+particular understatement cannot be made again. Recorded as **L-99**.
+
 ---
 
 ## Why neither could be fixed by a smaller move

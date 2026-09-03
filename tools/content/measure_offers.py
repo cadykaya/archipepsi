@@ -435,6 +435,27 @@ def landing_truth(hs, at, rules_=None):
     return None
 
 
+def body_depth(hs, foot, rules_=None):
+    """How far the worst part of a standing body is inside anything.
+
+    Positive means overlapping, and the magnitude is the deepest of the
+    swept spheres. Negative is the clearance of the tightest one.
+    """
+    r = rules_ or rules()
+    radius, height = r["PLAYER_RADIUS"], r["PLAYER_HEIGHT"]
+    n = max(2, int(math.ceil((height - 2.0 * radius) / radius)) + 1)
+    worst, who = -1e9, None
+    for i in range(n):
+        c = (foot[0],
+             foot[1] + radius + (height - 2.0 * radius) * i / (n - 1),
+             foot[2])
+        for h in hs:
+            over = h.depth(c) + radius
+            if over > worst:
+                worst, who = over, h.name
+    return worst, who
+
+
 def launch_conflicts(hs, source, target, dense=240):
     """Every arc sample where the player's body would not fit.
 
@@ -442,6 +463,15 @@ def launch_conflicts(hs, source, target, dense=240):
     tested as a stance rather than as a bare point -- which is what makes
     the first and last samples (feet on the pad, feet on the landing)
     pass instead of reading as buried.
+
+    THE SAMPLE REPORTED IS THE DEEPEST, NOT THE FIRST. It used to be the
+    first, and that is a different question with a much smaller answer:
+    both of the launch findings this file raised on 2026-09-03 were
+    reported at 0.08 m, which is where the body TOUCHES the platform it
+    lands on. Swept over the whole flight they were 0.643 m and 0.806 m
+    in -- those arcs did not graze anything, they went through it, and
+    the number that reached a report said otherwise. Where a collision
+    starts is not how bad it is.
     """
     shot, why = solve(source, target)
     if shot is None:
@@ -452,9 +482,11 @@ def launch_conflicts(hs, source, target, dense=240):
         if body_fits(hs, p):
             continue
         who = buried(hs, (p[0], p[1] + 0.9, p[2])) or clearance(hs, p)[1]
-        if who not in hits:
-            hits[who] = p
-    return (vel, time, apex), "", sorted(hits.items())
+        deep = body_depth(hs, p)[0]
+        if who not in hits or deep > hits[who][1]:
+            hits[who] = (p, deep)
+    return (vel, time, apex), "", sorted(
+        (who, p, deep) for who, (p, deep) in hits.items())
 
 
 # --------------------------------------------------------------------
@@ -567,14 +599,14 @@ def main(argv):
                     problems.append("%s/%s at %s: %s"
                                     % (cid, tgt["name"], list(dst), bad_pad))
                 raised = RAISED.get((cid, name))
-                blame = tuple(who for who, _ in hits)
+                blame = tuple(who for who, _, _ in hits)
                 if raised is not None and blame == raised:
-                    for who, p in hits:
+                    for who, p, deep in hits:
                         raised_notes.append(
-                            "%s/%s: RAISED, not repaired -- the body does "
-                            "not fit on the solved arc at (%.2f, %.2f, "
-                            "%.2f), against '%s'"
-                            % (cid, name, p[0], p[1], p[2], who))
+                            "%s/%s: RAISED, not repaired -- the body is "
+                            "%.3f m inside '%s' at its deepest, with its "
+                            "feet at (%.2f, %.2f, %.2f)"
+                            % (cid, name, deep, who, p[0], p[1], p[2]))
                 elif raised is not None:
                     problems.append(
                         "%s/%s: the raised finding has CHANGED -- it was "
@@ -582,11 +614,12 @@ def main(argv):
                         "do not edit the ledger to match."
                         % (cid, name, list(raised), list(blame) or "clean"))
                 else:
-                    for who, p in hits:
+                    for who, p, deep in hits:
                         problems.append(
-                            "%s/%s: the body does not fit on the solved arc "
-                            "at (%.2f, %.2f, %.2f), against '%s'"
-                            % (cid, name, p[0], p[1], p[2], who))
+                            "%s/%s: the body goes %.3f m inside '%s' on the "
+                            "solved arc, deepest with its feet at (%.2f, "
+                            "%.2f, %.2f)"
+                            % (cid, name, deep, who, p[0], p[1], p[2]))
                 ok = bad_pad is None and not hits
                 print("    %-16s %s  apex %.1f m, flight %.2f s"
                       % (name, "ok      " if ok else

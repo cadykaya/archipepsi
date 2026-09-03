@@ -1857,3 +1857,34 @@ so the launch serves the low collar now.
 > **"The point is now legal" and "the move is now possible" are different
 > claims. Fixing the first can leave the second false, and only the
 > second is what the player has.**
+
+### L-99 · Where a collision starts is not how bad it is
+
+Two launch arcs were raised as clipping the platform they land on "by
+**0.08 m**", and the owner's ruling quoted the number back: *move the
+pads just enough to eliminate the little 8 cm collision.* The number was
+mine and it was the wrong one. `launch_conflicts` reported the **first**
+arc sample at which the body stopped fitting, and 0.08 m is where the
+player's head touches the underside. Swept across the whole flight the
+hall's body went **0.643 m** into the east gantry and the span's **0.806
+m** into the deck.
+
+> **A check that reports the first failing sample is answering "where
+> does this go wrong", which reads like an answer to "how wrong is it".
+> Report the worst, or the report will understate every finding it makes
+> — and the person acting on it will scale their decision to your
+> smallest number.**
+
+Nothing about the repair changed: the fix for a flight that grazes a
+platform and a flight that passes through it is the same fix. What
+changed is that the owner ruled on a 8 cm problem that was actually a
+64 cm one, and that is not a position to put a reader in.
+
+`launch_conflicts` keeps the deepest sample per collider now. The related
+habit is worth naming too: the pads moved to where the body clears by
+**0.325 m** — the margin a rail beam is already required to keep in this
+pack — rather than to where it stops touching, which was 0.010 m and
+0.108 m away.
+
+> **"It no longer fails" and "it now has room" are a hand's width apart
+> and one of them survives a rebuild.**
