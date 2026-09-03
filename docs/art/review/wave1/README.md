@@ -1,5 +1,16 @@
 # Wave 1 — three LARGE rooms, three proportions
 
+> **Re-rendered at `67add07`.** The shared `roomkit.flight` helper was
+> repaired — sloped wedges that sawtoothed underfoot became flat treads —
+> and all three of these rooms build their climbs with it, so every view
+> here and every phone sheet was regenerated against the new geometry
+> rather than left stale. The rooms themselves are otherwise unchanged
+> and all three remain `review: "pending"`. Triangle counts moved:
+> plenum 1320 → 1656, yard 444 → 516, span 544 → 672, which is the cost
+> of boxes over wedges. See `docs/art/review/hall_67add07/` and L-95.
+>
+> Sheets are rebuilt by `bash tools/shots/make_sheets.sh`.
+
 **All three are `review: "pending"`.** Art does not write `pass`.
 `verify_pack.gd` asserts the pack does *not* ship them, which is the same
 gate the projectile visuals prove in the other direction.

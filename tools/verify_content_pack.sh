@@ -141,7 +141,23 @@ xvfb-run -a -s "-screen 0 1280x800x24" "$GODOT" --headless --path "$ROOT/godot" 
 echo "[verify] --- scene markers against the manifest ---"
 python3 "$ROOT/tools/content/verify_markers.py"
 
-# 5. RETIRED. `ShellValidator` used to be run here against the shipped
+# 5. THE FLIGHT SURFACES, MEASURED FROM THEIR TRIANGLES. Every other
+# check in this file -- and every gate in the build -- reads collider
+# AABBs, and the AABB of a sloped wedge is the box it was cut from. So a
+# chain of wedges sloping the WRONG WAY presented exactly the boxes a
+# flood wants, one per 0.9 m, while the surface underfoot sawtoothed:
+# down 0.35-0.70 m between apparent treads, then up about 1.40 against a
+# `MAX_VERTICAL_STEP` of 1.0. Art passed it; Production put a real
+# capsule on it at `67add07` and it did not survive.
+#
+# An AABB cannot see a slope. This reads the collider TRIANGLES out of
+# the shipped `.glb` and drops a 0.10 m grid of downward rays through
+# them, which is four times finer than the player radius, so a dip
+# cannot hide between two samples.
+echo "[verify] --- flight surfaces, from the collider triangles ---"
+python3 "$ROOT/tools/content/measure_flights.py"
+
+# 6. RETIRED. `ShellValidator` used to be run here against the shipped
 # scenes, transformed out of Production's source. `b37fe07` rewrote that
 # file -- it now reaches `ChamberBuilders.all_solid_boxes` and
 # `TraversalLaw` as well as `RoomContract`, `ContentInstantiator` and

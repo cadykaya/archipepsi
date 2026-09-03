@@ -3915,7 +3915,7 @@ triangles, 41 convex colliders, three movement offers against Production's
 
 | Shell | Metrics | Layers | Landmark |
 | --- | --- | --- | --- |
-| `shell_hall_transit` | 792 tris · 41.20 × 60.00 × 39.60 m · 32.0 texels/m | basin 0, west gallery 11, ring/landing/gantry 21, exit platform 28 | a machine armature — four 4 m columns and three collar rings around a 12 m open shaft, topping out at 30 m |
+| `shell_hall_transit` | 924 tris · 41.20 × 60.00 × 39.60 m · 32.0 texels/m | basin 0, west gallery 11, ring/landing/gantry 21, exit platform 28 | a machine armature — four 4 m columns and three collar rings around a 12 m open shaft, topping out at 30 m |
 
 The declared envelope is 40 × 38 × 60 m interior; the measured box is
 41.20 × 60.00 × 39.60 in the art manifest's Blender order (width, length,
@@ -3945,9 +3945,9 @@ brief room by room. All three are `review: "pending"`; Art does not write
 
 | Shell | Metrics | Proportion | Landmark |
 | --- | --- | --- | --- |
-| `shell_plenum_helix` | 1320 tris · 21.20 × 20.00 × 73.60 m · 32.0 texels/m | 1 : 3.6 tall | a machine column hung from the roof, never founded, with three walkable collars |
-| `shell_yard_gantry` | 444 tris · 85.20 × 52.00 × 17.60 m · 32.0 texels/m | 5.3 : 1 wide | an 84 m gantry crane spanning the full width at 12 m |
-| `shell_span_basin` | 544 tris · 31.20 × 90.00 × 23.60 m · 32.0 texels/m | 3 : 1 long | one 90 m deck on two pylons, with a walkable basin under all of it |
+| `shell_plenum_helix` | 1656 tris · 21.20 × 20.00 × 73.60 m · 32.0 texels/m | 1 : 3.6 tall | a machine column hung from the roof, never founded, with three walkable collars |
+| `shell_yard_gantry` | 516 tris · 85.20 × 52.00 × 17.60 m · 32.0 texels/m | 5.3 : 1 wide | an 84 m gantry crane spanning the full width at 12 m |
+| `shell_span_basin` | 672 tris · 31.20 × 90.00 × 23.60 m · 32.0 texels/m | 3 : 1 long | one 90 m deck on two pylons, with a walkable basin under all of it |
 
 Measured boxes are Blender-ordered (width, length, height) and include
 the 0.60 m boundary wall on each face; the pack carries `size_godot`.

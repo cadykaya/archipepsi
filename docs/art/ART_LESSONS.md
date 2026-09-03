@@ -1651,3 +1651,62 @@ shell changes and the diagram is not rebuilt, the diagram is missing,
 not wrong."* Knowing the failure mode and writing it down is not the
 same as having a gate for it; the gate already existed, and the actual
 mistake was reporting a repair complete before the sweep finished.
+
+### L-95 · An AABB cannot see a slope, and every gate we had read AABBs
+
+`shell_hall_transit` shipped two mandatory climbs whose collision surface
+sawtoothed: walking up, the ground fell away 0.35–0.70 m underfoot and
+then demanded about 1.40 m against a `MAX_VERTICAL_STEP` of 1.0. Every
+Art gate passed them. Production put a real capsule on them at `67add07`
+and neither was walkable.
+
+**The cause was one missing coordinate conversion.** `roomkit.flight`
+built a climb as a chain of `brushkit.wedge` sections and passed its
+`axis` argument straight through. A wedge slopes along a **Blender**
+axis. The library plans in **Godot** coordinates, where the run direction
+`"y"` means Godot z — and Godot z is *minus* Blender y. So for every
+flight with `axis="y"`, each section sloped against the direction its own
+chain climbed: down 0.85 m across the section, then up 1.70 m at the
+seam to the next one. `axis="x"` was correct, because Blender x and
+Godot x are the same axis. The hall's three flights are two `"y"` and
+one `"x"`, and Production refused exactly the two.
+
+**Why nothing caught it is the part worth keeping.** `FLIGHT_RISE = 0.9`
+existed precisely so a climb would be provable, and its comment reasoned
+entirely about what the import-time flood would SEE: collider AABBs, one
+per 0.9 m of rise. A chain of backwards wedges produces exactly those
+AABBs. The evidence was satisfied by geometry that was wrong, because
+the AABB of a wedge is the box it was cut from — the box says "flat tread
+at 11.00 m" and the triangle underfoot says something else.
+
+> **A helper written to satisfy a checker will satisfy the checker.
+> `FLIGHT_RISE` was tuned to what the evidence could see rather than to
+> what the surface does, and the two came apart silently the moment the
+> geometry was wrong in a way the evidence is blind to.**
+
+The repair is not a better wedge. Treads are **flat boxes** now: a box
+has no slope and therefore no handedness, so there is no orientation left
+to get wrong. Each tread is exactly one riser tall, so a flight occupies
+precisely the volume the ramp occupied and no room lost headroom to the
+fix — `shell_plenum_helix` refused the build the one time a 0.30 m soffit
+was tried, because `bridge_2` had 2.43 m of clearance against the 2.40 a
+player needs, and that 3 cm margin is its own lesson.
+
+`tools/content/measure_flights.py` is the gate that was missing: it reads
+the collider **triangles** out of the shipped `.glb` and drops a 0.10 m
+grid of downward rays through them. It reproduced Production's finding on
+the old geometry — ramp1 1.63 m, ramp3 1.71 m, ramp2 clean — before
+anything was repaired, and it is stage 5 of `verify_content_pack.sh` now.
+
+**It also had to be narrowed twice, and both times the check was the
+suspect rather than the geometry.** Sampling every collider in the room
+refused eight Wave 1 flights that were ordinary staircases whose bounding
+box happened to contain a *neighbouring* deck at another height — the
+yard's catwalk at y=8 abuts the foot of an 8 m stair, so two samples
+0.1 m apart read 0.89 and 8.00. That is a floor beside a wall. Matching
+tread names by any trailing number swept up the hall's ramp support legs
+and reported an 11 m "step" up the side of a column; matching `_step<i>`
+then swept up the treasure rooms' two-tier plinths. The narrowing was
+only allowed because the narrowed check still refuses the old geometry on
+exactly the two flights Production named. See L-88: a tool that hunts for
+a defect must not invent ones of its own.
