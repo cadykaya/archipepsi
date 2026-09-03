@@ -83,6 +83,8 @@ func _run() -> void:
 	await _test_every_authored_shell_in_the_registry_is_measured()
 	await _test_a_room_is_entered_where_it_says_it_is()
 	await _test_a_pending_shell_never_reaches_a_zone()
+	await _test_every_declared_offer_is_true_against_real_geometry()
+	await _test_a_traversal_destination_must_hold_a_player()
 	_test_an_approved_shell_is_held_to_the_contract()
 
 	_check(rooms_checked >= 8,
@@ -926,6 +928,173 @@ func _test_every_authored_shell_in_the_registry_is_measured() -> void:
 		authored_checked += 1
 		(result["root"] as Node3D).queue_free()
 		await get_tree().process_frame
+
+## A DESTINATION MUST BE STANDABLE, NOT MERELY OVER SOMETHING.
+##
+## The independent audit's A-2: the plenum declares three optional collar
+## endpoints on the axis of eight metres of hanging machine, and they
+## measured clean because a ray at the declared height was answered by
+## the collar's own collision. A ray says "is there a surface below". A
+## destination is a place a body can be.
+##
+## OPTIONAL SEGMENTS INCLUDED. The endpoint loop always ran on every
+## segment -- the `mandatory` skip happens after it -- and an optional
+## destination is still a claim about where a player can get to.
+func _test_a_traversal_destination_must_hold_a_player() -> void:
+	var floor_box := [Vector3(0.0, -0.5, 5.0), Vector3(20.0, 1.0, 20.0)]
+	var trip := [{"name": "hop", "kind": "walk", "mandatory": false,
+			"start": Vector3(0.0, 0.0, 2.0),
+			"end": Vector3(0.0, 0.0, 8.0)}]
+
+	# Clean: floor under both ends, nothing above them.
+	var open_room := _slab_room([floor_box], Vector3.ZERO,
+			Vector3(20.0, 10.0, 20.0), null)
+	open_room["traversal"] = trip
+	var open_says: String = await _audit_slabs(open_room, "open_trip")
+	_check(not open_says.contains("nowhere within a step"),
+			"an ordinary destination was called unstandable: %s"
+			% open_says)
+
+	# THE SABOTAGE: the same floor, the same declaration, and a solid
+	# filling the destination's whole neighbourhood above step height.
+	# A downward ray still lands on the floor, so only a body probe can
+	# tell this from the room above.
+	var lidded := _slab_room([floor_box,
+			[Vector3(0.0, 2.0, 8.0), Vector3(6.0, 2.0, 6.0)]],
+			Vector3.ZERO, Vector3(20.0, 10.0, 20.0), null)
+	lidded["traversal"] = trip
+	var lidded_says: String = await _audit_slabs(lidded, "lidded_trip")
+	_check(lidded_says.contains("nowhere within a step"),
+			"a destination with a player's body inside solid geometry "
+			+ "was accepted because a ray found the floor: %s"
+			% lidded_says)
+	probes_expected_to_fail += 1
+
+	# AND THE NEIGHBOURHOOD TOLERANCE IS REAL, not a loophole. An
+	# endpoint overhung on ONE side keeps its destination -- that is the
+	# rubble stone under the next stone, which owner ruling C(ii) calls
+	# architecture. Offset so the endpoint's own column is covered and a
+	# neighbour one cell aside is not.
+	var overhung := _slab_room([floor_box,
+			[Vector3(0.0, 2.0, 9.0), Vector3(6.0, 2.0, 1.0)]],
+			Vector3.ZERO, Vector3(20.0, 10.0, 20.0), null)
+	overhung["traversal"] = trip
+	var overhung_says: String = await _audit_slabs(overhung, "overhung")
+	_check(not overhung_says.contains("nowhere within a step"),
+			"an endpoint overhung on one side was refused, which would "
+			+ "refuse every rubble stone in the library: %s"
+			% overhung_says)
+	rooms_checked += 3
+
+## EVERY DECLARED OFFER, AGAINST THE ROOM IT IS DECLARED IN.
+##
+## The gap this closes, in the independent audit's words: the offer rules
+## lived only in `MovementPackage`, `MovementPackage` had never been shown
+## a collider, and `RoomAudit` does not read `offers` at all -- so the
+## rules and the geometry had never been in the same room. Three of four
+## LARGE rails and one of four launch targets turned out to be false
+## against real collision, and nothing in the project could see it.
+##
+## This runs the PRODUCTION caller -- the same `OfferBinding.validate`
+## `ZoneController` uses one physics frame after a Zone goes live -- over
+## every authored shell that declares an offer.
+##
+## PENDING ROOMS REPORT, APPROVED ROOMS GATE. A pending shell's offer
+## findings are evidence for the review that has not happened yet, and
+## they print in full. An APPROVED shell whose declared offer is false
+## against its own geometry is a broken build. No room is exempted by
+## name and nothing is waived.
+func _test_every_declared_offer_is_true_against_real_geometry() -> void:
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var built_total := 0
+	var declined_total := 0
+	var measured := 0
+	for id: String in registry.ids_of_category("room_shell"):
+		var entry: Dictionary = registry.get_entry(id).duplicate(true)
+		if bool(entry.get("procedural_fallback", false)):
+			continue
+		if (entry.get("offers", []) as Array).is_empty():
+			continue
+		var pending := str(entry.get("review", "")) == "pending"
+		entry["review"] = "pass"
+		var private := ContentRegistry.new()
+		private.entries[id] = entry
+		var result: Dictionary = ContentInstantiator.build_chamber(
+				_chamber_for(entry), "concrete_facility", private)
+		add_child(result["root"] as Node3D)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		# THE PRODUCTION PATH. If this ever reports `refused` the room was
+		# not measured, and that is a failure whatever the review state:
+		# a probe with nowhere to go comes back clean.
+		var verdict := OfferBinding.validate(
+				result["root"] as Node3D, result, id)
+		_check(not bool(verdict.get("refused", false)),
+				"%s: its offers could not be measured at all: %s"
+				% [id, str(verdict["declined"])])
+		var ok := (verdict["built"] as Array).size()
+		var no := (verdict["declined"] as Array).size()
+		built_total += ok
+		declined_total += no
+		measured += 1
+		print("  %-24s offers %s  built=%d declined=%d"
+				% [id, "PENDING" if pending else "PASS", ok, no])
+		for raw: Variant in verdict["built"]:
+			print("      + %-14s %s" % [str((raw as Dictionary)["kind"]),
+					str((raw as Dictionary).get("name", "?"))])
+		for raw: Variant in verdict["declined"]:
+			var item: Dictionary = raw
+			print("      - %-14s %s: %s" % [str(item["kind"]),
+					str(item.get("name", "?")), str(item["why"])])
+		if not pending:
+			_check(no == 0, "%s is approved content and declares an "
+					% id + "offer that is false against its own "
+					+ "geometry: %s" % str(verdict["declined"]))
+		elif no > 0:
+			shells_awaiting_review += 1
+		(result["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	_check(measured >= 4,
+			"only %d shells with offers were measured against real "
+			% measured + "geometry; the four LARGE rooms all declare some")
+	# THE WRAPPER `ZoneController` ACTUALLY CALLS. `validate` is what the
+	# loop above exercises; `validate_zone` is the shape a live Zone
+	# hands it, and untested glue between a tested function and its only
+	# production caller is exactly where a binding goes quiet.
+	var one: Dictionary = registry.get_entry(
+			"shell_hall_transit").duplicate(true)
+	one["review"] = "pass"
+	var only := ContentRegistry.new()
+	only.entries["shell_hall_transit"] = one
+	var live: Dictionary = ContentInstantiator.build_chamber(
+			_chamber_for(one), "concrete_facility", only)
+	add_child(live["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var walked := OfferBinding.validate_zone([{
+		"chamber": {"id": "hall"}, "node": live["root"],
+		"build": live}])
+	_check(walked.size() == 1,
+			"validate_zone reported %d chambers for one with declined "
+			% walked.size() + "offers; the Zone-level wrapper is not "
+			+ "reaching the room")
+	var line := OfferBinding.summarise("hall",
+			(walked[0] as Dictionary)["verdict"] as Dictionary)
+	_check(line.contains("built") and line.contains("declined"),
+			"the Zone-level summary says nothing useful: %s" % line)
+	print("  validate_zone: %s" % line)
+	(live["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+	# VACUITY GUARD. A binding that silently stopped measuring, or one
+	# that accepted everything, would both read as green without this.
+	_check(built_total > 0,
+			"no declared offer was BUILT against real geometry, so a "
+			+ "binding that had stopped measuring would read as green")
+	_check(declined_total > 0,
+			"no declared offer was DECLINED against real geometry, so a "
+			+ "binding that accepted everything would read as green")
+	rooms_checked += measured
 
 ## WHY a shell was refused, in the reviewer's output.
 ##

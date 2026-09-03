@@ -535,6 +535,80 @@ green suite over it, because the suite ran at prototype scale. The mock
 backend now takes a `CampaignConfig` and
 `bridge/tests/test_production_scale.py` runs the real engine at 450.
 
+## THE OFFER RULES AND THE GEOMETRY ARE IN THE SAME ROOM — 2026-09-03
+
+Independent audit `802732d`, `docs/audit/2026-09-03-physical-truth-adjudication.md`.
+Vera's B-1 in one line: `MovementPackage` had eight call sites, all in
+one test file, and every one passed a constant or a half-space predicate
+over a bare box. `PhysicsDirectSpaceState3D` never appeared in the file
+that called it. The offer rules and the geometry they were written to
+judge had never met, and `RoomAudit` does not read `offers` at all.
+
+**`SpaceProbe` is the one canonical real-geometry query.**
+`ground_below` (first ground at or below a point, exact reach, no
+window), `body_fits` / `stance_fits` (the whole capsule, and the body
+above step height), `column_is_clear` / `first_block_point` (swept, not
+sampled at the ends), `stand_pose` (`SUPPORT_LIFT`), and `refusal` --
+which makes a detached root or a null space an explicit REFUSAL rather
+than the clean pass a probe with nowhere to go always returns. `RoomAudit`
+and the offer validators now share one implementation of "is that a
+crate", so they cannot come to disagree about the same crate.
+
+**The stride is deleted, not tuned.** `_grapples` walked down in 2 m
+steps asking a 1.5 m window at each. Two errors, different causes: a
+window narrower than the stride leaves a blind band per step, which
+refused three real span anchors because the floor at y=0 fell between
+the samples at 1.4 and -0.6; and a window reaches past both bounds, which
+accepted hang space under `SWING_ROOM` and ground past `GRAPPLE_DROP`.
+Widening fixes the first and worsens the second. Now: one measured drop,
+compared against both bounds, and a swept hang column.
+
+**A LAUNCH TARGET NAMES THE FLOOR** (owner ruling). Support is proven at
+the authored point, the body pose is derived with `stand_pose`, the
+capsule is proven at that pose, and the arc is flown between poses.
+Sabotaged: without the lift, a landing on a clean deck face is refused
+"96% along its own arc" -- the three false findings the audit predicted a
+new caller would manufacture on its first run.
+
+**A destination must hold a player.** Traversal endpoints, optional ones
+included, are now capsule-standable rather than merely above a ray hit.
+Calibrated twice on the way: the full capsule at the marker refused every
+endpoint beside a riser, and re-reading `TraversalLaw`'s own lesson gave
+the body-above-step-height test; then the exact point alone refused the
+rubble stones owner ruling C(ii) calls architecture, so the check now
+searches the endpoint's neighbourhood exactly as `TraversalLaw._seed`
+does. **It still catches what it was added for**: the plenum's three
+collar endpoints, `pl_machine` named, without waiting on Art's collar
+repair. That is the Production half of the shared A-2 handoff.
+
+**A real production caller.** `OfferBinding` is the post-instantiation
+stage, and `ZoneController` calls it one deferred physics frame after the
+Zone root enters the tree. `ContentInstantiator` cannot own that moment:
+`build_chamber` returns a DETACHED root, so no collider is registered and
+`get_world_3d()` is null -- every probe would answer "nothing there".
+`MovementPackage.consume` now takes the space itself rather than two
+callables, so a lambda cannot be handed to it, and all eight former stub
+call sites were rebuilt on real colliders.
+
+REAL-GEOMETRY VERDICTS, first ever recorded:
+
+| room | built | declined |
+| --- | --- | --- |
+| hall | 3 (all grapples) | rail into `hl_ramp1_tread3`; launch arc into `hl_east_gantry` |
+| plenum | 2 grapples | rail into `pl_collar_0`; launch body inside `pl_machine`; `grapple_1` 0.76 m of hang space |
+| span | 3 (all grapples) | rail into `sp_pylon_0`; launch arc into `sp_deck` |
+| yard | 5 (everything) | none |
+
+Every one corroborates the audit, including the span's three grapples the
+old stride refused. Yard is clean on offers. Eight approved P2 shells,
+hall, span and yard all remain `structural=0 measured=0`; the plenum
+carries the three collar endpoints as pending evidence.
+
+TWO CAVEATS STILL OPEN and owned elsewhere: the plenum's collar annuli
+importing as filled convex hulls (Art, A-1), and the rail/launch routes
+that intersect real geometry in three of four rooms (Art, A-4/B-4).
+Nothing here repaired content.
+
 ## EVERY AUTHORED SHELL MEASURES TRUE — 2026-09-03
 
 Art `26a2914` (repair `4441ea5`) synced. The mirrored delta is ONE file,

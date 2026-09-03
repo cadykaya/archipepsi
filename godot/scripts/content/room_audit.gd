@@ -423,6 +423,25 @@ static func _traversal_is_true(room: Dictionary, to_world: Transform3D,
 				out.append("%s: traversal '%s' %ss where there is "
 						% [who, name, label] + "nothing to stand on")
 			else:
+				var floor_y: float = (to_world.affine_inverse()
+						* (down["position"] as Vector3)).y
+				# STANDABLE, NOT MERELY OVER SOMETHING (owner ruling,
+				# 2026-09-03). A ray answers "is there a surface below",
+				# and a surface below is not a destination -- the plenum
+				# declares three collar endpoints on the axis of eight
+				# metres of hanging machine, and a ray at the declared
+				# height is answered by the collar while the player's
+				# body has nowhere to be. This runs on EVERY segment,
+				# optional ones included: an optional destination is
+				# still a claim about where a player can get to.
+				var in_the_way := _nowhere_to_stand(space, to_world,
+						ends[label] as Vector3, floor_y)
+				if in_the_way != "":
+					out.append("%s: traversal '%s' %ss at %v, where "
+							% [who, name, label, ends[label]]
+							+ "the ground holds but there is nowhere "
+							+ "within a step of it the player's own "
+							+ "body fits (%s)" % in_the_way)
 				landed[label] = (down["position"] as Vector3).y
 		if kind == "gap" and landed.size() == 2:
 			# A gap you can walk across is not a gap, and a room that
@@ -556,20 +575,62 @@ static func _buried(space: PhysicsDirectSpaceState3D, at: Vector3,
 	return false
 
 ## Something the composer PUT in the room, rather than the room itself.
+##
+## One implementation, in `SpaceProbe`, because the offer validators ask
+## the same question and two answers to it is how they would come to
+## disagree about the same crate.
 static func _is_placed_content(collider: Variant) -> bool:
-	var node := collider as Node
-	while node != null:
-		if node is ActivityElement:
-			return true
-		if node.is_in_group(DestructibleCover.GROUP):
-			return true
-		node = node.get_parent()
-	return false
+	return SpaceProbe.is_placed_content(collider)
 
 ## Does the player's own capsule get from `from` to `to`? Returns true
 ## when it is BLOCKED, which is the finding.
 ## Does the player's own capsule fail to fit here? Returns true when it
 ## is BLOCKED, which is the finding.
+## Is there NOWHERE within a step of this endpoint a player fits? The
+## blocking collider's name when so, "" when the endpoint is usable.
+##
+## THE MARKER IS WHERE THE MOVEMENT IS MEASURED, not where the player
+## must stand -- the same rule `TraversalLaw._seed` states and for the
+## same reason. An endpoint sits at the lip of the surface it leaves, and
+## under owner ruling C(ii) that surface is a REGION in which a valid
+## placement can be found. So a rubble stone overhung by the next stone
+## keeps its endpoint, which is real architecture rather than a defect,
+## and only an endpoint with no standable spot anywhere in its own
+## neighbourhood is a false destination.
+##
+## What this still catches is the case it was added for: the plenum
+## declares three collar endpoints on the axis of eight metres of hanging
+## machine, where the whole neighbourhood is inside the machine and a ray
+## at the declared height is answered by the collar's own collision.
+static func _nowhere_to_stand(space: PhysicsDirectSpaceState3D,
+		to_world: Transform3D, at: Vector3, floor_y: float) -> String:
+	var step := Constants.PLAYER_RADIUS
+	var named := ""
+	for dx in [0, -1, 1]:
+		for dz in [0, -1, 1]:
+			var probe := Vector3(at.x + float(dx) * step, floor_y,
+					at.z + float(dz) * step)
+			# Re-grounded per neighbour: a spot one cell aside may be a
+			# step down, and testing it at this endpoint's height would
+			# ask about mid-air.
+			if dx != 0 or dz != 0:
+				var under := _ray(space,
+						to_world * (probe + Vector3.UP
+							* Constants.MAX_VERTICAL_STEP),
+						to_world * (probe + Vector3.DOWN
+							* Constants.MAX_VERTICAL_STEP))
+				if under.is_empty():
+					continue
+				probe.y = (to_world.affine_inverse()
+						* (under["position"] as Vector3)).y
+			var blocked := SpaceProbe.stance_obstruction(space,
+					to_world * probe)
+			if blocked == null:
+				return ""
+			if named == "":
+				named = blocked.name
+	return named if named != "" else "nothing to stand on"
+
 ## Away from the middle of the room, horizontally.
 ##
 ## A connector sits on a wall, so "outside" is the direction that leaves

@@ -58,6 +58,13 @@ func setup(zone_dict: Dictionary) -> void:
 				else _world_bounds.merge(box)
 		_has_bounds = true
 	playtime.begin(build["chambers"].size())
+	# THE OFFER BINDING (owner ruling, 2026-09-03). The Zone's root is in
+	# the tree now, so its colliders are about to be real -- one physics
+	# frame from here. Deferred to that frame rather than run inline,
+	# because a probe against a body the physics server has not yet
+	# registered answers "nothing there", and this stage exists precisely
+	# so no movement offer is ever blessed by geometry nobody could see.
+	_validate_offers.call_deferred(build["chambers"])
 	_exit_portal.exit_requested.connect(func() -> void: exit_requested.emit())
 
 	player = Player.create()
@@ -169,6 +176,19 @@ func setup(zone_dict: Dictionary) -> void:
 	refresh()
 	if is_finale and hud != null:
 		hud.say_line("finale_open")
+
+## Report what the Zone's rooms offer and what was refused.
+##
+## VALIDATION ONLY: nothing is repaired and no room is rejected. A rail
+## that cannot be built is a rail the room plays without, and saying so
+## in the log is the whole point -- "a large room whose traversal quietly
+## did not appear is the worst version of this failure".
+func _validate_offers(chambers: Array) -> void:
+	await get_tree().physics_frame
+	for report: Variant in OfferBinding.validate_zone(chambers):
+		var record: Dictionary = report
+		push_warning("offers: %s" % OfferBinding.summarise(
+				str(record["chamber"]), record["verdict"] as Dictionary))
 
 func _objective_of(chamber: Dictionary) -> String:
 	# A corridor has no objective; a reward inside one is implicitly

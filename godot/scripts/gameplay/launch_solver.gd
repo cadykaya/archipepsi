@@ -90,18 +90,36 @@ static func arc(source: Vector3, velocity: Vector3, time: float,
 
 ## Every way this launch is not usable. Empty is a pad that may be built.
 ##
-## `clear` answers "does the player's body fit at this point" and is the
-## caller's, for the same reason `Placement.find` takes one: the audit
-## has a physics space and a composer building a detached chamber does
-## not. `supported` answers "is there ground under the landing".
+## A LAUNCH TARGET NAMES THE FLOOR, NOT THE BODY (owner ruling,
+## 2026-09-03).
+##
+## This is the convention that was missing, and its absence was about to
+## manufacture three false findings. A `launch_target` is an authored
+## LANDING SURFACE -- a foot-contact point, sitting exactly on the top
+## face of a deck, a gantry or a catwalk. `clear` was documented as "does
+## the player's body fit at this point", and a body centred on a floor
+## point is half buried in that floor, so every correctly authored
+## landing in the library would have been refused for having no room in
+## it. Sabotaged and confirmed: dropping the lift refuses a landing on a
+## clean deck face at 96% along its own arc.
+##
+## So the floor point is proven to BE floor, the body pose is derived
+## from it with `SpaceProbe.stand_pose`, and the arc is flown between
+## body poses -- because an arc is the path of a body, and a trajectory
+## that starts and ends at ankle height clips the very surfaces it leaves
+## from and arrives at. A target buried in the interior of a solid still
+## fails, and fails on the body pose, which is the case this must keep
+## refusing.
 ##
 ## THE ORDER MATTERS. An unsolvable pair is reported as unsolvable rather
 ## than as an obstructed arc, because they send whoever has to fix it to
 ## different places.
-static func violations(source: Vector3, target: Vector3,
-		landing_radius: float, clear: Callable, supported: Callable,
+static func violations(source_foot: Vector3, target_foot: Vector3,
+		landing_radius: float, space: PhysicsDirectSpaceState3D,
 		who := "launch_pad") -> Array[String]:
 	var out: Array[String] = []
+	var source := SpaceProbe.stand_pose(source_foot)
+	var target := SpaceProbe.stand_pose(target_foot)
 	var shot := solve(source, target)
 	if not bool(shot.get("ok", false)):
 		out.append("%s: cannot be solved: %s"
@@ -119,19 +137,30 @@ static func violations(source: Vector3, target: Vector3,
 	for i in points.size():
 		if i == 0:
 			continue
-		if not bool(clear.call(points[i] as Vector3)):
+		var blocker := SpaceProbe.obstruction(space, points[i] as Vector3)
+		if blocker != null:
 			out.append("%s: the arc is obstructed %.0f%% of the way "
 					% [who, 100.0 * float(i) / float(points.size() - 1)]
-					+ "along it, at %v" % points[i])
+					+ "along it, at %v (%s)" % [points[i], blocker.name])
 			break
 	var landed: Vector3 = points[points.size() - 1]
 	if landed.distance_to(target) > 0.05:
 		out.append("%s: the solved arc ends at %v, not the %v it "
 				% [who, landed, target] + "was aimed at")
-	if not bool(clear.call(target)):
-		out.append("%s: the landing region at %v has no room for the "
-				% [who, target] + "player")
-	if not bool(supported.call(target)):
-		out.append("%s: the landing region at %v has nothing under it"
-				% [who, target])
+	# THE AUTHORED POINT MUST BE FLOOR. Within a step, because a landing
+	# surface is a surface and not a region hanging over one.
+	var ground := SpaceProbe.ground_below(space, target_foot,
+			Constants.MAX_VERTICAL_STEP)
+	if ground == SpaceProbe.NO_GROUND:
+		out.append("%s: the landing point at %v is not on a surface; "
+				% [who, target_foot] + "there is no ground within %.1f m "
+				% Constants.MAX_VERTICAL_STEP + "under it")
+	# AND THE BODY THAT STANDS ON IT MUST FIT. This is what refuses a
+	# target buried inside a slab: its derived stance is inside the slab
+	# too, and no lift rescues it.
+	var standing := SpaceProbe.obstruction(space, target)
+	if standing != null:
+		out.append("%s: a player standing on the landing point at %v "
+				% [who, target_foot] + "does not fit; their body at %v "
+				% target + "is inside %s" % standing.name)
 	return out

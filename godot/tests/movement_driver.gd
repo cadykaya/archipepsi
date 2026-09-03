@@ -28,14 +28,16 @@ func _run() -> void:
 	_test_a_rail_wraps_an_obstacle_through_several_levels()
 	_test_a_rail_is_smooth_and_not_a_chain_of_corners()
 	_test_a_smoothed_curve_may_not_leave_the_room()
-	_test_a_grapple_point_must_be_somewhere_you_could_hang()
+	await _test_a_grapple_point_must_be_somewhere_you_could_hang()
 	_test_a_walk_is_proven_by_geometry_not_by_rectangles()
 	_test_a_room_may_descend_from_entry_to_exit()
 	_test_a_rider_enters_only_on_terms_and_leaves_when_it_asks()
 	_test_a_launch_crosses_horizontal_and_vertical_distance()
-	_test_a_launch_refuses_an_obstructed_arc()
-	_test_a_launch_refuses_a_landing_it_cannot_land_on()
-	_test_a_package_may_decline_every_offer()
+	await _test_a_launch_refuses_an_obstructed_arc()
+	await _test_a_launch_refuses_a_landing_it_cannot_land_on()
+	await _test_a_package_may_decline_every_offer()
+	await _test_the_offer_binding_measures_real_geometry()
+	await _test_a_launch_target_is_a_floor_point_not_a_body_point()
 	await _test_the_corridor_rail_is_the_shape_it_always_was()
 	_test_the_base_kit_alone_can_use_both()
 
@@ -395,6 +397,258 @@ func _test_a_smoothed_curve_may_not_leave_the_room() -> void:
 			"a curve well inside the room was refused: %s"
 			% "; ".join(inside.violations("inside", room)))
 
+## A room of real colliders, validated through the PRODUCTION caller.
+##
+## `boxes` is `[[centre, size], ...]`. The root goes into the tree and a
+## physics frame is awaited before anything is asked, because a body the
+## physics server has not registered yet answers every probe with
+## "nothing there" -- the vacuous pass this whole binding exists to
+## remove. `OfferBinding.validate` is the same entry point
+## `ZoneController` uses, so what these tests exercise is production
+## code rather than a harness that resembles it.
+func _offer_verdict(room: Dictionary, boxes: Array,
+		only: Array = ["grapple_point"]) -> Dictionary:
+	var root := Node3D.new()
+	for b: Array in boxes:
+		var body := StaticBody3D.new()
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = b[1]
+		shape.shape = box
+		body.add_child(shape)
+		body.position = b[0]
+		if b.size() > 2:
+			body.name = str(b[2])
+		root.add_child(body)
+	add_child(root)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var verdict := OfferBinding.validate(root, room, "probe", only)
+	root.queue_free()
+	await get_tree().process_frame
+	return verdict
+
+# --- the real-geometry offer binding (owner ruling, 2026-09-03) ------------
+
+## THE SEVEN SABOTAGES the independent audit required, each of which must
+## fail if the guard it names is removed.
+##
+## Vera's finding in one sentence: `MovementPackage` had eight call sites
+## and every one passed a constant, so no offer verdict on record had
+## ever seen a collider. Two consequences followed from the 2 m stride,
+## and they had different causes -- 186 false refusals from blind bands
+## between samples, and 49 to 81 false acceptances from windows reaching
+## past both bounds. These pin the fix in both directions.
+func _test_the_offer_binding_measures_real_geometry() -> void:
+	"""Every case here is a collider, not a predicate."""
+	var floor_box := [Vector3(0, -0.5, 0), Vector3(200, 1, 200), "basin"]
+
+	# V1 -- THE OLD STRIDE FALSELY REFUSED REAL ANCHORS. The span's three
+	# anchors sit at y=11.4 over a basin floor at y=0. The stride sampled
+	# at drop 4, 6, 8, 10, 12 -- query heights 7.4, 5.4, 3.4, 1.4, -0.6 --
+	# and a 1.5 m window at 1.4 sees [0.20, 1.70] while the next sees
+	# [-1.80, -0.30]. The floor at 0.000 fell in the gap. Replayed here
+	# against real geometry: the stride refuses, the continuous
+	# measurement accepts.
+	var span_room := {"offers": [
+		{"kind": "grapple_point", "name": "a", "position":
+			Vector3(-9, 11.4, 22), "radius": 1.5},
+		{"kind": "grapple_point", "name": "b", "position":
+			Vector3(8, 11.4, 44), "radius": 1.5},
+		{"kind": "grapple_point", "name": "c", "position":
+			Vector3(-7, 11.4, 66), "radius": 1.5},
+	]}
+	var span: Dictionary = await _offer_verdict(span_room, [floor_box])
+	_check((span["built"] as Array).size() == 3,
+			"V1: three real anchors 11.4 m over a floor were not all "
+			+ "accepted: %s" % str(span["declined"]))
+	_check(_stride_would_refuse(11.4, 0.0),
+			"V1: the fixture no longer reproduces the blind band, so "
+			+ "this case has stopped testing anything")
+
+	# V2 -- A ONE-CENTIMETRE LIFT MUST NOT MATTER. The Hall's anchors sat
+	# at y = 1.2 (mod 2) over a floor at 0, so the decisive sample landed
+	# exactly on the window's lower limit: clearance 0.000 m, three
+	# times, and +0.01 m flipped all three to declined. A continuous
+	# measurement has no such boundary.
+	for lift: float in [0.0, 0.01, 0.05, -0.01]:
+		var lifted := {"offers": [
+			{"kind": "grapple_point", "name": "g0", "position":
+				Vector3(0, 9.2 + lift, 28.8), "radius": 1.5},
+			{"kind": "grapple_point", "name": "g1", "position":
+				Vector3(5.2, 19.2 + lift, 34.0), "radius": 1.5},
+			{"kind": "grapple_point", "name": "g2", "position":
+				Vector3(0, 27.2 + lift, 39.2), "radius": 1.5},
+		]}
+		var moved: Dictionary = await _offer_verdict(lifted, [floor_box])
+		_check((moved["built"] as Array).size() == 3,
+				"V2: lifting the anchors by %+.2f m declined %d of 3"
+				% [lift, (moved["declined"] as Array).size()])
+
+	# V3 -- CHECKING ONLY THE COLUMN'S ENDPOINTS FALSELY ACCEPTS. A ledge
+	# halfway down the swing column is invisible to two endpoint samples
+	# and caught by a sweep.
+	var mid := {"offers": [{"kind": "grapple_point", "name": "mid",
+			"position": Vector3(0, 18, 0), "radius": 1.5}]}
+	# OFFSET so the anchor's own downward ray misses it entirely: the
+	# slab spans x 0.1 to 1.1, and a ray at x=0 passes beside it while
+	# the player's 0.38 m body does not. So the drop measurement reports
+	# the basin floor and only a SWEEP of the column can see this.
+	var shelf := [Vector3(0.6, 15.5, 0), Vector3(1.0, 1.0, 6), "shelf"]
+	var swept: Dictionary = await _offer_verdict(mid, [floor_box, shelf])
+	_check((swept["built"] as Array).is_empty(),
+			"V3: a ledge inside the swing column was not seen, so the "
+			+ "column is being sampled at its ends rather than swept")
+	_check(str(swept["declined"]).contains("shelf"),
+			"V3: the refusal must name the blocking collider: %s"
+			% str(swept["declined"]))
+	refusals += 1
+	# ... and the two endpoints alone really are clear, which is what
+	# makes this a sweep test rather than a restatement of V1.
+	var probe := _space_of_boxes([floor_box, shelf])
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(SpaceProbe.body_fits(probe["space"], Vector3(0, 18, 0))
+			and SpaceProbe.body_fits(probe["space"], Vector3(0, 14, 0)),
+			"V3: the fixture must be clear at BOTH ends of the swing "
+			+ "column, or it is not testing the middle")
+	(probe["root"] as Node3D).queue_free()
+
+	# V4 -- INSUFFICIENT HANG SPACE IS ITS OWN REASON. The plenum's
+	# `grapple_1` sits 0.762 m above a tread: the anchor itself is clear,
+	# so a refusal that says "buried" would be the wrong diagnosis.
+	var shallow := {"offers": [{"kind": "grapple_point", "name": "g1",
+			"position": Vector3(0, 18, 0), "radius": 1.5}]}
+	var tread := [Vector3(0, 16.5, 0), Vector3(6, 1, 6), "tread"]
+	var cramped: Dictionary = await _offer_verdict(shallow,
+			[floor_box, tread])
+	_check((cramped["built"] as Array).is_empty(),
+			"V4: an anchor with 0.762 m of hang space was accepted")
+	_check(str(cramped["declined"]).contains("hang or swing")
+			and not str(cramped["declined"]).contains("inside solid"),
+			"V4: it must be refused for hang space, not for a buried "
+			+ "anchor: %s" % str(cramped["declined"]))
+	refusals += 1
+
+	# V5 -- GROUND PAST `GRAPPLE_DROP` IS REFUSED. The old 4.0 m window
+	# at drop 30 could see ground as deep as 34 m and call it an
+	# opportunity. 31 m is past the limit and must be refused as such.
+	var deep := {"offers": [{"kind": "grapple_point", "name": "deep",
+			"position": Vector3(0, 31, 0), "radius": 1.5}]}
+	var far_floor: Dictionary = await _offer_verdict(deep, [floor_box])
+	_check((far_floor["built"] as Array).is_empty(),
+			"V5: an anchor whose first ground is 31 m down was accepted")
+	_check(str(far_floor["declined"]).contains("past the 30 m"),
+			"V5: the refusal must name the limit it exceeded: %s"
+			% str(far_floor["declined"]))
+	refusals += 1
+	# 30 m exactly is inside the limit, so the bound is a bound and not
+	# an off-by-one.
+	var edge := {"offers": [{"kind": "grapple_point", "name": "edge",
+			"position": Vector3(0, 30, 0), "radius": 1.5}]}
+	var at_limit: Dictionary = await _offer_verdict(edge, [floor_box])
+	_check((at_limit["built"] as Array).size() == 1,
+			"V5: an anchor exactly %.0f m up was refused: %s"
+			% [MovementPackage.GRAPPLE_DROP, str(at_limit["declined"])])
+
+	# V6 -- NO PHYSICS SPACE MUST REFUSE, NOT PASS. A probe with nowhere
+	# to go comes back clean, and that is the most dangerous answer a
+	# validator can give.
+	var detached := Node3D.new()
+	var nowhere := MovementPackage.consume(detached, mid, null)
+	_check(bool(nowhere.get("refused", false))
+			and (nowhere["built"] as Array).is_empty(),
+			"V6: a null physics space was answered instead of refused")
+	_check(str(nowhere["declined"]).contains("no physics space"),
+			"V6: the refusal must say why: %s" % str(nowhere["declined"]))
+	# A REAL space handed a DETACHED root. Passing the detached node's
+	# own space would be null and answered by the branch above, so this
+	# borrows a live one -- which is exactly the mistake a caller makes.
+	var live := _space_of_boxes([floor_box])
+	await get_tree().physics_frame
+	var loose := MovementPackage.consume(detached, mid,
+			live["space"] as PhysicsDirectSpaceState3D)
+	(live["root"] as Node3D).queue_free()
+	_check(bool(loose.get("refused", false)),
+			"V6: a room outside the scene tree was answered instead of "
+			+ "refused")
+	_check(str(loose["declined"]).contains("scene tree"),
+			"V6: the refusal must say the room is detached: %s"
+			% str(loose["declined"]))
+	detached.free()
+	refusals += 2
+
+	# V7 -- VACUITY GUARD. A binding that silently stopped measuring
+	# would read as green, so the suite must have both outcomes on real
+	# geometry.
+	_check((span["built"] as Array).size() > 0,
+			"V7: no real-geometry offer was BUILT, so a binding that "
+			+ "stopped measuring would read as green")
+	_check((cramped["declined"] as Array).size() > 0,
+			"V7: no real-geometry offer was DECLINED, so a binding that "
+			+ "accepted everything would read as green")
+
+## The old stride's verdict, kept only so V1 can prove its own fixture
+## still reproduces the blind band. Never used to decide anything.
+func _stride_would_refuse(anchor_y: float, floor_y: float) -> bool:
+	var drop := MovementPackage.SWING_ROOM
+	while drop <= MovementPackage.GRAPPLE_DROP:
+		var query := anchor_y - drop
+		# `_points_have_ground`'s window: 0.3 up, 1.2 down.
+		if floor_y <= query + 0.3 and floor_y >= query - 1.2:
+			return false
+		drop += 2.0
+	return true
+
+## A live root of boxes plus its space, for a probe that needs the space
+## itself rather than a verdict.
+func _space_of_boxes(boxes: Array) -> Dictionary:
+	var root := Node3D.new()
+	for b: Array in boxes:
+		var body := StaticBody3D.new()
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = b[1]
+		shape.shape = box
+		body.add_child(shape)
+		body.position = b[0]
+		if b.size() > 2:
+			body.name = str(b[2])
+		root.add_child(body)
+	add_child(root)
+	return {"root": root, "space": OfferBinding.space_of(root)}
+
+## A LAUNCH TARGET NAMES THE FLOOR. The convention the audit warned would
+## otherwise manufacture three false findings on its first run.
+func _test_a_launch_target_is_a_floor_point_not_a_body_point() -> void:
+	"""Three of the four LARGE shells author their landing exactly on a
+	top face, at penetration depth 0.0000 m. A body centred there never
+	fits, so reading the point as a body pose would refuse all three
+	correct rooms and accept nothing extra."""
+	var deck := [[Vector3(10, -0.5, 0), Vector3(60, 1, 12), "deck"]]
+	# ON the face: the authored convention, and it must be accepted.
+	var on_face: Array = await _launch_verdict(Vector3(0, 0, 0),
+			Vector3(20, 0, 0), 3.0, deck)
+	_check(on_face.is_empty(),
+			"a landing point exactly on a floor face was refused: %s"
+			% "; ".join(on_face))
+	# ONE METRE INSIDE a slab: the case that must stay refused, and the
+	# one the old convention could not tell from the case above.
+	var inside: Array = await _launch_verdict(Vector3(0, 0, 0),
+			Vector3(20, 0, 0), 3.0,
+			deck + [[Vector3(20, -0.5, 0), Vector3(6, 6, 6), "slab"]])
+	_check(not inside.is_empty()
+			and "; ".join(inside).contains("does not fit"),
+			"a landing buried inside a slab was accepted: %s"
+			% "; ".join(inside))
+	refusals += 1
+	# And the derived pose is the canonical one, not a local guess.
+	_check(SpaceProbe.stand_pose(Vector3(0, 21, 0))
+			.is_equal_approx(Vector3(0, 21, 0)
+				+ Vector3.UP * SpaceProbe.SUPPORT_LIFT),
+			"the launch convention is not using the canonical support "
+			+ "offset")
+
 func _test_a_grapple_point_must_be_somewhere_you_could_hang() -> void:
 	"""An anchor inside a slab is not an opportunity.
 
@@ -403,25 +657,24 @@ func _test_a_grapple_point_must_be_somewhere_you_could_hang() -> void:
 	anchor is inside geometry, there is no room to swing beneath it, or
 	there is no ground under it to leave from or arrive at."""
 	var anchor := Vector3(0, 18, 0)
-	var yes := func(_at: Vector3) -> bool: return true
-	var root := Node3D.new()
-	add_child(root)
 	var offer := {"kind": "grapple_point", "name": "hook",
 			"position": anchor, "radius": 2.5}
 	var room := {"offers": [offer]}
 
-	var good := MovementPackage.consume(root, room, yes, yes,
-			["grapple_point"])
+	# REAL GEOMETRY, NOT A PREDICATE (owner ruling, 2026-09-03). Every
+	# case below used to be a lambda: `yes` accepted, `no` refused, and a
+	# half-space stood in for a slab. None of them was ever a collider,
+	# which is exactly how the rules and the geometry came to disagree.
+	var good: Dictionary = await _offer_verdict(room, [
+			[Vector3(0, -0.5, 0), Vector3(20, 1, 20)]])
 	_check((good["built"] as Array).size() == 1,
 			"a clear anchor over solid ground was not accepted: %s"
 			% str(good["declined"]))
 
-	# ONLY the anchor is solid: the space below is open, so this can only
-	# be caught by the anchor test itself.
-	var anchor_is_solid := func(at: Vector3) -> bool:
-		return absf(at.y - anchor.y) > 0.5
-	var buried := MovementPackage.consume(root, room, anchor_is_solid, yes,
-			["grapple_point"])
+	# The anchor itself inside a block, with the hang column open below.
+	var buried: Dictionary = await _offer_verdict(room, [
+			[Vector3(0, -0.5, 0), Vector3(20, 1, 20)],
+			[Vector3(0, 18, 0), Vector3(2, 2, 2)]])
 	_check((buried["built"] as Array).is_empty(),
 			"an anchor inside solid geometry was offered as a grapple "
 			+ "opportunity")
@@ -430,11 +683,10 @@ func _test_a_grapple_point_must_be_somewhere_you_could_hang() -> void:
 			% str(buried["declined"]))
 	refusals += 1
 
-	# ONLY the swing space is solid.
-	var no_swing := func(at: Vector3) -> bool:
-		return absf(at.y - (anchor.y - MovementPackage.SWING_ROOM)) > 0.5
-	var cramped := MovementPackage.consume(root, room, no_swing, yes,
-			["grapple_point"])
+	# A ledge in the swing column, clear of the anchor itself.
+	var cramped: Dictionary = await _offer_verdict(room, [
+			[Vector3(0, -0.5, 0), Vector3(20, 1, 20)],
+			[Vector3(0, 15.5, 0), Vector3(6, 1, 6)]])
 	_check((cramped["built"] as Array).is_empty(),
 			"an anchor with no room to swing under it was offered")
 	_check(str(cramped["declined"]).contains("hang or swing"),
@@ -443,13 +695,13 @@ func _test_a_grapple_point_must_be_somewhere_you_could_hang() -> void:
 	refusals += 1
 
 	# Clear all the way down, and nothing to land on.
-	var no := func(_at: Vector3) -> bool: return false
-	var over_a_void := MovementPackage.consume(root, room, yes, no,
-			["grapple_point"])
+	var over_a_void: Dictionary = await _offer_verdict(room, [])
 	_check((over_a_void["built"] as Array).is_empty(),
 			"an anchor over a bottomless void was offered")
+	_check(str(over_a_void["declined"]).contains("ground to leave from"),
+			"the refusal must say there is no ground: %s"
+			% str(over_a_void["declined"]))
 	refusals += 1
-	root.queue_free()
 
 
 ## --- a walk is proven by geometry, never by rectangles (P3.5A) ---------
@@ -751,20 +1003,45 @@ func _test_a_launch_crosses_horizontal_and_vertical_distance() -> void:
 			.is_equal_approx(shot["velocity"] as Vector3),
 			"the same launch solved differently twice")
 
+## A launch pair judged against real colliders through the real solver.
+##
+## `boxes` is `[[centre, size], ...]`. The lambdas this replaces could
+## not tell a landing ON a deck from one four metres inside a machine,
+## which is the distinction the owner's floor-contact ruling turns on.
+func _launch_verdict(source_foot: Vector3, target_foot: Vector3,
+		radius: float, boxes: Array) -> Array:
+	var root := Node3D.new()
+	for b: Array in boxes:
+		var body := StaticBody3D.new()
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = b[1]
+		shape.shape = box
+		body.add_child(shape)
+		body.position = b[0]
+		if b.size() > 2:
+			body.name = str(b[2])
+		root.add_child(body)
+	add_child(root)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var out := LaunchSolver.violations(source_foot, target_foot, radius,
+			OfferBinding.space_of(root), "probe")
+	root.queue_free()
+	await get_tree().process_frame
+	return out
+
 func _test_a_launch_refuses_an_obstructed_arc() -> void:
 	"""A wall through the middle of the flight is a pad that must not be
 	built. Refused at build time, not discovered by a player's face."""
 	var source := Vector3(0, 0, 0)
 	var target := Vector3(24, 0, 0)
-	var wall := func(at: Vector3) -> bool:
-		return absf(at.x - 12.0) > 1.5 or at.y > 14.0
-	var clean := LaunchSolver.violations(source, target, 3.0,
-			func(_at: Vector3) -> bool: return true,
-			func(_at: Vector3) -> bool: return true)
+	var deck := [[Vector3(10, -0.5, 0), Vector3(60, 1, 12)]]
+	var clean: Array = await _launch_verdict(source, target, 3.0, deck)
 	_check(clean.is_empty(),
 			"an unobstructed launch was refused: %s" % "; ".join(clean))
-	var blocked := LaunchSolver.violations(source, target, 3.0, wall,
-			func(_at: Vector3) -> bool: return true)
+	var blocked: Array = await _launch_verdict(source, target, 3.0,
+			deck + [[Vector3(12, 6.0, 0), Vector3(3, 12, 12)]])
 	_check(not blocked.is_empty(),
 			"an arc straight through a wall was accepted")
 	_check("; ".join(blocked).contains("obstructed"),
@@ -775,27 +1052,35 @@ func _test_a_launch_refuses_an_obstructed_arc() -> void:
 func _test_a_launch_refuses_a_landing_it_cannot_land_on() -> void:
 	"""Three ways a destination is not a destination."""
 	var source := Vector3(0, 0, 0)
-	var yes := func(_at: Vector3) -> bool: return true
-	var no := func(_at: Vector3) -> bool: return false
-	var void_landing := LaunchSolver.violations(source, Vector3(20, 0, 0),
-			3.0, yes, no)
-	_check("; ".join(void_landing).contains("nothing under it"),
+	var target := Vector3(20, 0, 0)
+	# A pad to leave from, and nothing where the landing is declared.
+	var pad_only := [[Vector3(0, -0.5, 0), Vector3(8, 1, 8)]]
+	var full := [[Vector3(10, -0.5, 0), Vector3(60, 1, 12)]]
+
+	var void_landing: Array = await _launch_verdict(source, target, 3.0,
+			pad_only)
+	_check("; ".join(void_landing).contains("not on a surface"),
 			"a landing over a void was accepted: %s"
 			% "; ".join(void_landing))
 	refusals += 1
-	var solid_landing := LaunchSolver.violations(source,
-			Vector3(20, 0, 0), 3.0, no, yes)
+	# THE LANDING POINT IS FLOOR, SO WHAT REFUSES IT IS THE BODY. A slab
+	# filling the space a player would stand in is the case the old
+	# lambda pair could not tell from a good deck.
+	var solid_landing: Array = await _launch_verdict(source, target, 3.0,
+			full + [[Vector3(20, 1.0, 0), Vector3(4, 3, 4)]])
 	_check(not solid_landing.is_empty(),
 			"a landing with no room for the player was accepted")
+	_check("; ".join(solid_landing).contains("does not fit"),
+			"the refusal must say the body does not fit: %s"
+			% "; ".join(solid_landing))
 	refusals += 1
-	var pinpoint := LaunchSolver.violations(source, Vector3(20, 0, 0),
-			0.4, yes, yes)
+	var pinpoint: Array = await _launch_verdict(source, target, 0.4, full)
 	_check("; ".join(pinpoint).contains("trusted to hit"),
 			"a landing smaller than a player can aim at was accepted: %s"
 			% "; ".join(pinpoint))
 	refusals += 1
-	var nowhere := LaunchSolver.violations(source, Vector3(200, 0, 0),
-			3.0, yes, yes)
+	var nowhere: Array = await _launch_verdict(source, Vector3(200, 0, 0),
+			3.0, full)
 	_check("; ".join(nowhere).contains("cannot be solved"),
 			"a 200 m launch was accepted: %s" % "; ".join(nowhere))
 	refusals += 1
@@ -828,13 +1113,19 @@ func _test_a_package_may_decline_every_offer() -> void:
 	_check(RoomContract.violations(_as_room(room)).is_empty(),
 			"the offer fixture is not a structurally valid room: %s"
 			% "; ".join(RoomContract.violations(_as_room(room))))
-	var yes := func(_at: Vector3) -> bool: return true
-	var root := Node3D.new()
-	add_child(root)
-	# `hook_buried` sits where nothing is clear, so it is declined; every
-	# other offer here is usable.
-	var solid_at_60 := func(at: Vector3) -> bool: return at.x < 50.0
-	var all := MovementPackage.consume(root, room, solid_at_60, yes)
+	# REAL COLLIDERS. A floor under everything, plus a block around
+	# `hook_buried` at x=60 so it is declined for a reason a collider
+	# gives rather than a predicate. The floor is wide enough to be the
+	# ground every other offer needs.
+	var world := [
+		[Vector3(0, -0.5, 0), Vector3(200, 1, 200), "floor"],
+		# The ledge the launch names, so its target is a real top face --
+		# under the owner's floor-contact ruling a landing point must BE
+		# a surface, and this fixture used to declare one in mid-air.
+		[Vector3(20, 5.5, 0), Vector3(10, 1, 10), "ledge"],
+		[Vector3(60, 14, 0), Vector3(4, 4, 4), "buried_block"],
+	]
+	var all: Dictionary = await _offer_verdict(room, world, [])
 	_check((all["built"] as Array).size() == 3,
 			"a package that wants everything took %d of the 4 usable "
 			% (all["built"] as Array).size() + "offers")
@@ -859,23 +1150,22 @@ func _test_a_package_may_decline_every_offer() -> void:
 	# A GRAPPLE-ONLY PACKAGE: a Zelda-like reads the anchors and ignores
 	# the rail and the launch entirely, which is the whole point of the
 	# seam -- one shell, whichever verbs the generated game has.
-	var hooks_only := MovementPackage.consume(root, room, solid_at_60, yes,
+	var hooks_only: Dictionary = await _offer_verdict(room, world,
 			["grapple_point"])
 	_check((hooks_only["built"] as Array).size() == 1,
 			"a grapple-only package took %d offers"
 			% (hooks_only["built"] as Array).size())
-	var rails_only := MovementPackage.consume(root, room, yes, yes,
+	var rails_only: Dictionary = await _offer_verdict(room, world,
 			["rail_route"])
 	_check((rails_only["built"] as Array).size() == 1,
 			"a rail-only package built %d things"
 			% (rails_only["built"] as Array).size())
 
 	# NOBODY: the room still stands, with no traversal mechanic in it.
-	var none := MovementPackage.consume(root, room, yes, yes, ["wind"])
+	var none: Dictionary = await _offer_verdict(room, world, ["wind"])
 	_check((none["built"] as Array).is_empty()
 			and (none["declined"] as Array).is_empty(),
 			"a package that wants nothing still touched the room")
-	root.queue_free()
 
 # --- 10. the corridor rail did not move -----------------------------------
 

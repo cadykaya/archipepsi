@@ -31,22 +31,35 @@ extends RefCounted
 ## Consume this room's offers into `root`.
 ##
 ## `only` is the package's own appetite -- an array of offer kinds, or
-## empty for everything it understands. `clear` and `supported` are the
-## caller's physical evidence, exactly as `Placement.find` takes them:
-## the audit has a physics space, a composer building a detached chamber
-## does not, and pretending otherwise is how a validator comes to bless
-## geometry it cannot see.
-static func consume(root: Node3D, room: Dictionary, clear: Callable,
-		supported: Callable, only: Array = []) -> Dictionary:
+## empty for everything it understands.
+##
+## THE EVIDENCE IS A PHYSICS SPACE, NOT TWO CALLABLES (owner ruling,
+## 2026-09-03). This took `clear` and `supported` from its caller, and
+## every one of the eight callers in this repository passed a constant or
+## a half-space predicate over a bare box. The rules and the geometry
+## they judge had never met. A space cannot be faked by a lambda that
+## says `true`, which is the whole reason the signature changed rather
+## than the callers being asked to behave.
+##
+## A REFUSAL IS NOT A CLEAN PASS. A detached root or a null space answers
+## every probe with "nothing there", so it is refused by name here and
+## `refused` is set -- the same guard `RoomAudit.findings` carries, for
+## the same reason.
+static func consume(root: Node3D, room: Dictionary,
+		space: PhysicsDirectSpaceState3D, only: Array = []) -> Dictionary:
 	var built: Array = []
 	var declined: Array = []
+	var why := SpaceProbe.refusal(root, space, "offers")
+	if why != "":
+		return {"built": built, "refused": true,
+				"declined": [{"name": "*", "kind": "*", "why": why}]}
 	if _wants("rail_route", only):
-		_rails(root, room, built, declined, clear)
+		_rails(root, room, space, built, declined)
 	if _wants("launch_source", only):
-		_launches(root, room, clear, supported, built, declined)
+		_launches(root, room, space, built, declined)
 	if _wants("grapple_point", only):
-		_grapples(room, clear, supported, built, declined)
-	return {"built": built, "declined": declined}
+		_grapples(room, space, built, declined)
+	return {"built": built, "declined": declined, "refused": false}
 
 ## How much clear air a grapple point needs under it. A player's own
 ## height plus their reach: whatever the verb turns out to be, something
@@ -67,30 +80,72 @@ const GRAPPLE_DROP := 30.0
 ## `grapple_point` a kind with a real consumer rather than a word in a
 ## list -- is decide whether the opportunity is geometrically true, so
 ## that what reaches Epsilon is an offer somebody could actually take.
-static func _grapples(room: Dictionary, clear: Callable,
-		supported: Callable, built: Array, declined: Array) -> void:
+## CONTINUOUS, WITH NO STRIDE (owner ruling, 2026-09-03).
+##
+## What was here walked down in 2 m steps asking a window at each one,
+## and was wrong in BOTH directions from two different causes. A window
+## narrower than the stride leaves a blind band per step: three real
+## anchors over a basin floor at y=0 were refused because the floor fell
+## between the samples at 1.4 and -0.6. And a window reaches past the
+## thing it asks about at both ends, so the same loop accepted hang space
+## shallower than `SWING_ROOM` and ground deeper than `GRAPPLE_DROP`.
+## Widening the window fixes the first and worsens the second. No width
+## is right, because it was never a window question.
+##
+## So: ONE measured distance, compared against BOTH bounds, and a SWEPT
+## hang column instead of two endpoint samples. The stride is deleted
+## rather than tuned.
+##
+## The reach looks `SWING_ROOM` further than the limit on purpose -- a
+## floor at 34 m has to be FOUND to be reported as too deep, and a probe
+## that stops at 30 m cannot tell "past the limit" from "a void".
+static func _grapples(room: Dictionary, space: PhysicsDirectSpaceState3D,
+		built: Array, declined: Array) -> void:
 	for offer: Variant in RoomContract.offers_of(room, "grapple_point"):
 		var entry: Dictionary = offer
 		var named := str(entry.get("name", "grapple"))
 		var at: Vector3 = entry["position"]
 		var why := ""
-		if not bool(clear.call(at)):
-			why = "the anchor at %v is inside solid geometry" % at
-		elif not bool(clear.call(at - Vector3.UP * SWING_ROOM)):
+		var blocker := SpaceProbe.obstruction(space, at)
+		var ground := SpaceProbe.ground_below(space, at,
+				GRAPPLE_DROP + SWING_ROOM)
+		if blocker != null and ground != SpaceProbe.NO_GROUND \
+				and at.y - ground < SWING_ROOM:
+			# THE RIGHT DIAGNOSIS OF THE SAME GEOMETRY. An anchor sitting
+			# less than a body's clearance above its own floor is blocked
+			# BY that floor, and calling it "inside solid geometry" sends
+			# whoever has to fix it looking for a wall. The plenum's
+			# `grapple_1` is 0.762 m over a tread: too close, not buried.
 			why = ("there is no room to hang or swing under the anchor "
-					+ "at %v" % at)
+					+ "at %v: the ground (%s) is %.2f m down and %.1f m "
+					% [at, blocker.name, at.y - ground, SWING_ROOM]
+					+ "is the minimum")
+		elif blocker != null:
+			why = ("the anchor at %v is inside solid geometry (%s)"
+					% [at, blocker.name])
+		elif ground == SpaceProbe.NO_GROUND:
+			why = ("nothing within %.0f m under the anchor at %v is "
+					% [GRAPPLE_DROP, at] + "ground to leave from or "
+					+ "arrive at")
+		elif at.y - ground < SWING_ROOM:
+			why = ("there is no room to hang or swing under the anchor "
+					+ "at %v: the ground is %.2f m down and %.1f m is "
+					% [at, at.y - ground, SWING_ROOM] + "the minimum")
+		elif at.y - ground > GRAPPLE_DROP:
+			why = ("the ground under the anchor at %v is %.2f m down, "
+					% [at, at.y - ground] + "past the %.0f m that is "
+					% GRAPPLE_DROP + "still something to leave from")
 		else:
-			var floor_found := false
-			var drop := SWING_ROOM
-			while drop <= GRAPPLE_DROP:
-				if bool(supported.call(at - Vector3.UP * drop)):
-					floor_found = true
-					break
-				drop += 2.0
-			if not floor_found:
-				why = ("nothing within %.0f m under the anchor at %v is "
-						% [GRAPPLE_DROP, at] + "ground to leave from or "
-						+ "arrive at")
+			# THE WHOLE COLUMN, swept. Two endpoint samples say nothing
+			# about the middle, and the middle is where a beam crosses.
+			var hit: Variant = SpaceProbe.first_block_point(space, at,
+					at - Vector3.UP * SWING_ROOM)
+			if hit != null:
+				var named_by := SpaceProbe.blocker_name(space,
+						hit as Vector3)
+				why = ("there is no room to hang or swing under the "
+						+ "anchor at %v: blocked at %v" % [at, hit]
+						+ ("" if named_by == "" else " by %s" % named_by))
 		if why != "":
 			declined.append({"name": named, "kind": "grapple_point",
 					"why": why})
@@ -103,8 +158,18 @@ static func _grapples(room: Dictionary, clear: Callable,
 static func _wants(kind: String, only: Array) -> bool:
 	return only.is_empty() or only.has(kind)
 
-static func _rails(root: Node3D, room: Dictionary, built: Array,
-		declined: Array, clear := Callable()) -> void:
+## THE BAKED CURVE AND THE BEAM ON IT (owner ruling, 2026-09-03).
+##
+## Two things were wrong with checking the centreline against a player
+## capsule. The route that gets built is the SMOOTHED curve, not the
+## control polyline -- a Catmull-Rom cuts its corners, and a rail whose
+## twelve control points all sit 3.8 cm outside a ring dips 45 cm inside
+## it between them. And what has to fit is the BEAM, which is 0.35 m
+## thick: asking the player's own capsule refuses routes a beam threads
+## and passes routes it does not.
+static func _rails(root: Node3D, room: Dictionary,
+		space: PhysicsDirectSpaceState3D, built: Array,
+		declined: Array) -> void:
 	for offer: Variant in RoomContract.offers_of(room, "rail_route"):
 		var entry: Dictionary = offer
 		var named := str(entry.get("name", "rail"))
@@ -114,15 +179,20 @@ static func _rails(root: Node3D, room: Dictionary, built: Array,
 		var rail := RailPath.from_points(points)
 		var refusals := rail.violations(named,
 				room.get("bounds", AABB()) as AABB)
-		# THE SMOOTHED ROUTE, against the room it runs through. Control
-		# points can each sit in clear air while the curve between them
-		# bows into a pillar, so what is checked is what is built.
-		if refusals.is_empty() and clear.is_valid():
+		# THE SMOOTHED ROUTE, against the room it runs through, at the
+		# beam's own half-thickness. Control points can each sit in clear
+		# air while the curve between them bows into a pillar, so what is
+		# checked is what is built.
+		if refusals.is_empty():
+			var half := AffordanceFeatures.RAIL_BEAM_THICKNESS / 2.0
 			for point: Vector3 in rail.polyline():
-				if bool(clear.call(point)):
+				var blocker := SpaceProbe.sphere_obstruction(space, point,
+						half)
+				if blocker == null:
 					continue
-				refusals.append("%s: the smoothed curve passes through "
-						% named + "geometry at %v" % point)
+				refusals.append("%s: the smoothed curve puts the beam "
+						% named + "through geometry at %v (%s)"
+						% [point, blocker.name])
 				break
 		if not refusals.is_empty():
 			declined.append({"name": named, "kind": "rail_route",
@@ -135,8 +205,9 @@ static func _rails(root: Node3D, room: Dictionary, built: Array,
 ## A launch pad is a PAIR: a source to fire from and a target to land in.
 ## An unpaired half of either is an offer nobody can act on, and saying so
 ## is more use than building half a traversal.
-static func _launches(root: Node3D, room: Dictionary, clear: Callable,
-		supported: Callable, built: Array, declined: Array) -> void:
+static func _launches(root: Node3D, room: Dictionary,
+		space: PhysicsDirectSpaceState3D, built: Array,
+		declined: Array) -> void:
 	var targets := RoomContract.offers_of(room, "launch_target")
 	for offer: Variant in RoomContract.offers_of(room, "launch_source"):
 		var entry: Dictionary = offer
@@ -154,7 +225,7 @@ static func _launches(root: Node3D, room: Dictionary, clear: Callable,
 		var source: Vector3 = entry["position"]
 		var target: Vector3 = landing["position"]
 		var refusals := LaunchSolver.violations(source, target,
-				float(landing.get("radius", 0.0)), clear, supported, named)
+				float(landing.get("radius", 0.0)), space, named)
 		if not refusals.is_empty():
 			declined.append({"name": named, "kind": "launch_source",
 					"why": "; ".join(refusals)})
