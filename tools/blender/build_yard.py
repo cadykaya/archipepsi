@@ -277,7 +277,17 @@ def main():
     # wide enough to hold one. Floor to the far catwalk, 62 m across --
     # well inside LaunchSolver's 80 and impossible in any other Wave 1
     # shell.
-    src = (-28.0, 0.5, D / 2.0)
+    # ON THE FLOOR'S FACE, per the owner's ruling of 2026-09-03:
+    # `launch_source.position` is the exact room-local FOOT-CONTACT
+    # CENTRE the constructed launch fires from. This was y = 0.5, half a
+    # metre of nothing under the player, over a `yd_floor` whose top is
+    # 0.00 -- the same untruth the plenum's and the span's pads carried
+    # until the same ruling reached them. All three read 0.0 now, and so
+    # has the hall's from the day it was authored.
+    #
+    # x and z are untouched: the audit found this room structurally and
+    # physically clean, and this is a contact height and not a place.
+    src = (-28.0, 0.0, D / 2.0)
     dst = (30.0, CAT_Y, D - WALL - CAT_W / 2.0)
     span = math.dist(src, dst)
     if not 0.5 <= span <= 80.0:

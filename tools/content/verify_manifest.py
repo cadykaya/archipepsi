@@ -281,7 +281,21 @@ def main(argv):
                   " 0.363 and 0.329 -- rather than the 2.20 m and 6.52 m "
                   "at which they merely stop touching. Targets, "
                   "landings, routes and radii are unchanged, and "
-                  "`measure_offers.RAISED` is empty again")
+                  "`measure_offers.RAISED` is empty again. (7) AND THE "
+                  "YARD'S PAD, on the finalized launch-source contract: "
+                  "`launch_source.position` is the exact room-local "
+                  "FOOT-CONTACT CENTRE the constructed launch fires "
+                  "from, and `launch_west` was at y = 0.5 over a "
+                  "`yd_floor` whose top is 0.00 -- half a metre of "
+                  "nothing under the player. It reads (-28.0, 0.0, "
+                  "26.0) now. x, z, the 3.0 radius, the "
+                  "`launch_catwalk` target, the yard's geometry, its "
+                  "16 m height, its rail and grapple offers and its "
+                  "traversals are all untouched; the room was found "
+                  "structurally and physically clean and this is a "
+                  "contact height rather than a place. All four Wave 1 "
+                  "pads read a floor face now, as the hall's always "
+                  "did")
 
         DECLARED_HANDOFF = {}
         for _cid, _fields, _why in (
@@ -315,6 +329,7 @@ def main(argv):
                  _FLIGHT + "; and " + _TRUTH),
                 ("shell_plenum_helix", ("volumes",), _WAVE1),
                 ("shell_yard_gantry", ("sockets",), _WAVE1),
+                ("shell_yard_gantry", ("offers",), _TRUTH),
                 ("shell_span_basin", ("sockets",), _WAVE1),
                 ("shell_plenum_helix",
                  ("offers", "traversal", "colliders", "check_anchor",
