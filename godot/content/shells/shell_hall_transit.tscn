@@ -13,16 +13,16 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 8.5)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 9.5)
 
 [node name="basin_to_gallery_start" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 0, 15)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 0, 12)
 
 [node name="basin_to_gallery_end" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 11, 33)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 11, 35)
 
 [node name="gallery_to_landing_start" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 11, 51.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.5, 11, 51)
 
 [node name="gallery_to_landing_end" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 21, 53)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 21, 52)
 
 [node name="landing_to_bridge_n_start" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 21, 49)
@@ -37,10 +37,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 21, 44)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 21, 42)
 
 [node name="ring_n_to_ring_e_start" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 21, 41)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 21, 41.5)
 
 [node name="ring_n_to_ring_e_end" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 21, 39)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 21, 34)
 
 [node name="ring_e_to_bridge_e_start" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 21, 32)
@@ -55,10 +55,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 21, 32)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 21, 32)
 
 [node name="gantry_to_exit_start" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 21, 37.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 21, 34)
 
 [node name="gantry_to_exit_end" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 28, 53)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 28, 56)
 
 [node name="ring_n_to_ring_w_start" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 21, 41)
@@ -71,15 +71,3 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 21, 29)
 
 [node name="ring_w_to_ring_s_end" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 21, 27)
-
-[node name="basin_to_plinth_west_start" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 21)
-
-[node name="basin_to_plinth_west_end" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 4, 19.5)
-
-[node name="basin_to_plinth_east_start" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 43)
-
-[node name="basin_to_plinth_east_end" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 4, 44.5)

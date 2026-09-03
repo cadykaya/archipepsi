@@ -535,6 +535,58 @@ green suite over it, because the suite ran at prototype scale. The mock
 backend now takes a `CampaignConfig` and
 `bridge/tests/test_production_scale.py` runs the real engine at 450.
 
+## HALL BUILDS; THE TWO CLIMBS DO NOT WALK — 2026-09-03
+
+Art `6232a27` synced (`SCENE_PLAN.json`, `registry/authored_art.json`,
+`shells/shell_hall_transit.tscn` — the `.glb` did NOT change, which is
+itself the confirmation that only the markers were ever stale).
+
+**THE STALE-SCENE DEFECT IS CLOSED.** Verified independently rather than
+from Art's report: 12 scenes, 158 `Marker3D` nodes, **0 scene/manifest
+disagreements**. `shell_hall_transit` now instantiates as AUTHORED —
+surf=12, trav=11, sock=21, hull=73, **structural=0**. Surfaces 14 -> 12;
+the plinths keep their geometry and stop being `stand` Surfaces, which
+answers the 2026-09-02 finding.
+
+**IT STILL DOES NOT CERTIFY: measured=2.** Both mandatory climbs —
+`basin_to_gallery` (0 -> 11 m) and `gantry_to_exit` (21 -> 28 m) — fail
+the walk-connectivity proof.
+
+WHAT THE FINDING MEANS, measured rather than guessed. Sampled along each
+flight, the AABB evidence and the physics evidence disagree, and they
+disagree the way the recurring defect always does — two derivations of
+one fact. `mesh_ground` over collision AABBs (what `ShellValidator` reads,
+hence structural=0) sees clean monotonic treads: 21.00, 21.88, 22.75,
+23.62, 24.50, 25.38, 26.25, 27.12, 28.00 — every rise 0.87. The physics
+ray (what `RoomAudit` reads, and the final authority) sees a SAWTOOTH on
+the same line: it reaches a tread top, descends 0.35-0.70 m before the
+next tread, and the climb out is then **~1.40 m every time** —
+21.17->22.57, 22.23->23.62, 22.92->24.32, 23.97->25.38, 24.68->26.07,
+25.73->27.12, 26.43->27.82. `MAX_VERTICAL_STEP` is 1.0.
+
+This is NOT a single-line sampling artifact, and the flood is what rules
+that out: it is 8-connected at 0.4 m over the whole declared corridor and
+visited 2312 cells of roughly 2848 available in the basin alone without
+ever climbing. If any lane up either flight had rises within a step, the
+search covered the width to find it.
+
+So: a REAL geometry property, not a metadata defect and not a law that
+needs relaxing. The real collision surface of both flights does not rise
+monotonically, so a player walking up meets ~1.4 m rises. Art's to
+remodel so the walking surface climbs in <=1.0 m increments, or the
+owner's to re-declare these as something other than `walk`. Not repaired
+here, and the law was not touched: `MAX_VERTICAL_STEP` stays 1.0 and no
+tolerance was widened to make the room pass.
+
+Small discrepancy worth a look: Production counts **73** CollisionShape3D
+nodes in the hall; Art's handoff says 71.
+
+Wave-1 unchanged and still inert — all four pending shells load,
+`is_offerable` refuses each, catalog is exactly the eight approved P2
+shells. Digest `6e8d83d0f3ec088b`, 23 rooms / 15 Checks / 922 points / 35
+enemies, baseline byte-identical, 17/17 Godot suites and 1140 Python
+tests green.
+
 ## HALL RECERTIFICATION — REFUSED, and the guard that hid it — 2026-09-02
 
 Art `3b7bb02` is integrated verbatim (`SCENE_PLAN.json`,
