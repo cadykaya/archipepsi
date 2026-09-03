@@ -270,8 +270,21 @@ def main():
     # THE RAIL IS SLUNG UNDER THE DECK. Basin to basin at about 9 m, so
     # it is a third height and a third route, and it is the line the
     # player only finds by leaving the obvious one.
-    rail = [(0.0, 2.5, WALL + 4.0), (0.0, 8.6, 22.0), (0.0, 9.4, 45.0),
-            (0.0, 8.6, 68.0), (0.0, 2.5, D - WALL - 4.0)]
+    #
+    # UNDER THE EAST STRINGER, NOT DOWN THE CENTRE LINE. At x = 0 the
+    # rail ran through both pylons -- 4 m square, x -2..2, floor to
+    # deck -- and the audit measured the ride 1.9911 m inside each of
+    # them. There is no vertical way past: the pylons run from the
+    # basin floor to the deck soffit with no gap, so the fix is
+    # lateral, and 3.1 is where the deck's own stringer is. The beam
+    # rides under structure instead of through it, still wholly beneath
+    # a deck that is 7 m wide, and clears each pylon by 1.100 m against
+    # the 0.325 it needs. A constant offset on purpose: give the
+    # control points different x and the Catmull-Rom overshoots
+    # sideways between them, and the overshoot is what put the beam
+    # past the deck edge in the versions that wove around the pylons.
+    rail = [(3.1, 2.5, WALL + 4.0), (3.1, 8.6, 22.0), (3.1, 9.4, 45.0),
+            (3.1, 8.6, 68.0), (3.1, 2.5, D - WALL - 4.0)]
     for a, b in zip(rail, rail[1:]):
         run = math.dist(a, b)
         if not 0.5 <= run <= 60.0:

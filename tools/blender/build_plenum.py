@@ -120,20 +120,57 @@ def _paint(obj, name, role):
 REWARD_RADIUS = 5.25
 
 
-def _reward_spot(top, corner):
-    """The reward's Blender placement on the collar at height `top`.
+def _collar_axis(corner):
+    """Which way the bridge to this collar runs, as (axis, sign).
 
-    OPPOSITE THE BRIDGE. `_build` runs the spur to a collar along
-    whichever axis is longer, so the far side of the band is the other
-    end of that same axis -- which makes the objective something you
-    walk the collar to reach rather than something you step onto.
+    ONE DECISION, READ TWICE. `_build` spurs the bridge along this axis
+    and `_collar_point` puts every declared collar point on it, and they
+    used to reach that conclusion through two copies of the same
+    expression. They agreed -- and only because the copies were
+    character-identical, which is the exact shape of the defect L-97 was
+    written about.
+
+    IT IS A TIE, AND THE TIE IS NOT REAL. The landings sit on the
+    diagonal: `abs(cx)` and `abs(cz - D/2)` are 7.9 and 7.9. In exact
+    arithmetic the "shorter axis" test has no answer here, and what
+    actually decides it is that `D - WALL - LAND/2` lands one ulp under
+    `IN - LAND/2`. Left as it is on purpose -- the bridges built from it
+    are what the owner reviewed -- but named, so the next reader learns
+    it from a comment rather than from a manifest that moved.
     """
     cx, cz = corner
     if abs(cx) > abs(cz - D / 2.0):
-        far = -REWARD_RADIUS if cx > 0 else REWARD_RADIUS
-        return (far, roomkit.y(D / 2.0), top + 1.0)
-    far = D / 2.0 + (-REWARD_RADIUS if cz > D / 2.0 else REWARD_RADIUS)
-    return (0.0, roomkit.y(far), top + 1.0)
+        return "x", (1.0 if cx > 0 else -1.0)
+    return "z", (1.0 if cz > D / 2.0 else -1.0)
+
+
+def _collar_point(top, corner, near):
+    """A point ON the collar band at `REWARD_RADIUS`, in GODOT metres.
+
+    THE BAND, NEVER THE AXIS. The collar is an annulus from the
+    machine's face at 4.0 m out to 6.75; its centre is the centre of
+    eight metres of hanging steel. Every point this room declares on a
+    collar goes through here, because the axis is exactly where nine of
+    them ended up -- the `reward`, three `landing_N_to_collar_K`
+    endpoints, three `enemy_anchors`, the `check_anchor` and the launch
+    target -- and it is standable in none of them.
+
+    `near` puts the point on the side the bridge arrives from -- a
+    destination you can actually be walked to. `near=False` puts it
+    opposite, which is what makes the objective something you walk the
+    collar to reach rather than something you step onto.
+    """
+    axis, sign = _collar_axis(corner)
+    off = (sign if near else -sign) * REWARD_RADIUS
+    if axis == "x":
+        return (off, top, D / 2.0)
+    return (0.0, top, D / 2.0 + off)
+
+
+def _reward_spot(top, corner):
+    """The reward's Blender placement, a metre above the far band."""
+    x, _, z = _collar_point(top, corner, near=False)
+    return (x, roomkit.y(z), top + 1.0)
 
 
 def _corner(i):
@@ -241,8 +278,9 @@ def build():
         cx, cz = _corner(li)
         # A spur from the landing to the collar. Along whichever axis is
         # shorter, so the bridge crosses open air rather than skimming a
-        # wall.
-        if abs(cx) > abs(cz - D / 2.0):
+        # wall -- `_collar_axis` decides, and every point this room
+        # declares on a collar is placed from the same call.
+        if _collar_axis((cx, cz))[0] == "x":
             x0, x1 = (cx, -COLLAR_OUT) if cx < 0 else (COLLAR_OUT, cx)
             surface("bridge_%d" % k, min(x0, x1), max(x0, x1),
                     D / 2.0 - 1.2, D / 2.0 + 1.2, top, 0.4)
@@ -273,6 +311,33 @@ def build():
     return name, parts, stones, heights, snames, land_y, collars
 
 
+#: The helix's plan half-width where it passes a collar, and where it
+#: does not. Two numbers, and the difference between them is the whole
+#: A-4 repair.
+#:
+#: THE CONTROL POINTS WERE NEVER THE PROBLEM. All twelve sat at radius
+#: 6.788 -- 3.8 cm OUTSIDE the rings' 6.75 -- and the audit at `802732d`
+#: still measured the ride 0.1668 m INSIDE all three, because a
+#: Catmull-Rom cuts the corner and the curve sags to 6.30 between its
+#: points. `build_plenum` checked segment length and pitch on the
+#: polyline and never asked where the curve went.
+#:
+#: One ring cannot satisfy both ends of this shaft: the collars need the
+#: sag pushed past 7.075 (6.75 plus half a beam plus margin), and the
+#: stair runs come inward to 6.452, so a uniformly wider helix trades
+#: three ring strikes for four tread strikes. Measured, not guessed --
+#: `in=4.8 out=6.0` and every wider uniform ring were tried and refused.
+#: So only the six points that BRACKET a collar are pushed out; the rest
+#: keep the route the owner passed.
+RAIL_NEAR = 4.8
+RAIL_WIDE = 5.8
+
+#: Rail point `i` hangs 1.6 m under landing `i`, and the collars top out
+#: at `land_y[4]`, `land_y[7]` and `land_y[10]` -- so each collar is
+#: crossed on the span between these pairs.
+RAIL_AT_COLLAR = frozenset((3, 4, 6, 7, 9, 10))
+
+
 def _rail_points(land_y):
     """One route, three turns, top to bottom, spiralling the machine.
 
@@ -281,10 +346,14 @@ def _rail_points(land_y):
     smoothness would be authoring the spline Production supplies. Twelve
     points for seventy metres of descent: one per run, offset inward from
     the walkway so the ride is over the void rather than over the stair.
+
+    The plan radius is not constant -- see `RAIL_NEAR` / `RAIL_WIDE`.
     """
-    ring = [(-4.8, 5.2), (4.8, 5.2), (4.8, 14.8), (-4.8, 14.8)]
     pts = []
     for i in range(RUNS):
+        a = RAIL_WIDE if i in RAIL_AT_COLLAR else RAIL_NEAR
+        ring = [(-a, D / 2.0 - a), (a, D / 2.0 - a),
+                (a, D / 2.0 + a), (-a, D / 2.0 + a)]
         x, z = ring[i % 4]
         pts.append((x, land_y[i] - 1.6, z))
     pts.append((0.0, 4.0, D / 2.0))
@@ -314,8 +383,29 @@ def main():
 
     entry["exit_offset"] = [0.0, 0.0, round(D + 2.0, 2)]
     entry["exit_yaw"] = 0.0
-    entry["check_anchor"] = [0.0, land_y[7], D / 2.0]
-    entry["enemy_anchors"] = [[0.0, t, D / 2.0] for t, _ in collars]
+    # THE MIDDLE COLLAR, AT THE BRIDGE END OF IT. This was
+    # `[0, land_y[7], D/2]` -- the machine's axis at collar height, four
+    # metres inside eight metres of steel, the same false destination as
+    # the three traversal endpoints and the three enemy anchors. It is
+    # not among the reported findings because nothing measures it, and
+    # that is the whole argument for moving it: the collars now ship
+    # with a real hole through them, so an axis point that used to be
+    # merely inside a filled hull is now inside the machine and over
+    # thin air, and shipping the decomposition while keeping it would be
+    # keeping a defect because nobody looks.
+    #
+    # `near` rather than `far`: the reward is on the far side of this
+    # same band, so the check meets you where the bridge lands and the
+    # objective is the walk around.
+    entry["check_anchor"] = list(_collar_point(land_y[7], _corner(7),
+                                               near=True))
+    # ON THE BAND, for the same reason as everything else here. Nothing
+    # in Production reads `enemy_anchors` -- it is an art-side hint --
+    # so this was not among the audited findings, and leaving three
+    # more axis points in a manifest whose neighbours were just moved
+    # off it would be keeping a defect because nobody measures it.
+    entry["enemy_anchors"] = [list(_collar_point(t, _corner(li), near=False))
+                              for t, li in collars]
     entry["bounds"] = [[-W / 2.0, -1.0, 0.0], [W, H + 1.0, D + 2.0]]
     entry["interior"] = [W, H, D]
     entry["total_rise"] = 0.0
@@ -346,7 +436,7 @@ def main():
         cx, cz = _corner(li)
         entry["traversal"].append(seg(
             "landing_%d_to_collar_%d" % (li, k), "walk",
-            (cx, top, cz), (0.0, top, D / 2.0), False))
+            (cx, top, cz), _collar_point(top, (cx, cz), near=True), False))
 
     entry["volumes"] = [
         roomcontract.volume("machine", "no_build",
@@ -404,8 +494,50 @@ def main():
         if pitch > 75.0:
             raise AssertionError("%s: rail pitch %.1f deg exceeds 75"
                                  % (cid, pitch))
-    src = (0.0, 0.5, 6.0)
-    dst = (0.0, land_y[7], D / 2.0)
+    # THE PAD IS ON THE FLOOR, AND ON THE FLOOR IT IS A FOOT POINT. It
+    # used to be `(0, 0.5, 6.0)`: half a metre of nothing under the
+    # player, which is neither a stance nor a surface. The hall's pad
+    # has always been at its basin's top face and this one is now too.
+    #
+    # (-6.5, 2.0) is the bottom landing, where the helix ends -- so the
+    # pad is where you arrive if you walk the whole shaft down and where
+    # you can see it from if you fell. Measured, not chosen: of 4537
+    # floor stances on a 0.25 m grid, 141 give a clear arc to this
+    # collar, and this one sits in the widest clear disc of them (1.0 m,
+    # bounded by the south wall rather than by anything in the way).
+    src = (-6.5, 0.0, 2.0)
+    # ON THE BAND, AND AT ITS TOP FACE. Audited at `802732d`: this was
+    # `(0, land_y[7], D/2)` -- 4.000 m inside the machine, with the
+    # solved arc obstructed 17 % along. It survived the Wave 1 repair by
+    # one line, because the `reward` volume beside it was moved and this
+    # was not.
+    #
+    # The owner's ruling settles the height: a `launch_target` names the
+    # LANDING SURFACE, the player's foot-contact point, and Production
+    # converts it to the standing pose. So this is the collar's top face
+    # exactly -- not a body centre floating a metre above it.
+    #
+    # IT IS THE LOW COLLAR NOW, NOT THE MIDDLE ONE, and that is a change
+    # to the room rather than to a number. Moving the target onto
+    # collar_1's band made it a real landing surface and left the FLIGHT
+    # impossible: the arc to 28.333 m has to pass collar_2's ring on the
+    # way, and there is no floor it can leave from that misses it. That
+    # is measured over the whole floor, not argued -- 4537 stances on a
+    # 0.25 m grid against all four band points of each collar:
+    #
+    #     collar_0  45.333    0 of 4537 stances clear, on any point
+    #     collar_1  28.333    5, all in one 0.2 x 0.5 m pocket in the
+    #                         SW corner, and none of them on the +x
+    #                         point this room's bridge axis declares
+    #     collar_2  11.333    141 on the declared point, in a 1.0 m disc
+    #
+    # A launch that works from five square decimetres of a 400 m2 floor
+    # is not an offer. The low collar is: it is the first thing above
+    # the floor, its bridge puts you back on the helix, and the room's
+    # own reason for having a floor pad -- "the walk back is a choice
+    # rather than a punishment" -- is served by the first landing back,
+    # not by the middle of the shaft. The reward stays on collar_1.
+    dst = _collar_point(land_y[10], _corner(10), near=False)
     span = math.dist(src, dst)
     if not 0.5 <= span <= 80.0:
         raise AssertionError("%s: launch pair spans %.2f m" % (cid, span))
@@ -422,8 +554,20 @@ def main():
     # or arrive at. Each sits over a helix run rather than over the
     # floor, which is what keeps the drop inside GRAPPLE_DROP in a 72 m
     # shaft.
+    # `grapple_1` IS 6.0 AND THE OTHERS ARE 7.0, deliberately. Audited at
+    # `802732d`: at x=7 it hung 0.762 m over `pl_run_5_tread3` -- the
+    # player's body did not fit at the anchor and there was nowhere near
+    # `SWING_ROOM` beneath it. This module's own comment claimed each
+    # anchor "sits over a helix run ... which keeps the drop inside
+    # GRAPPLE_DROP", and it checked the MAXIMUM drop and never the
+    # minimum. A metre inward clears the run: the collar is 9.67 m below.
+    #
+    # The other two measure 16.76 m and 7.43 m and are left alone. All
+    # three would be valid at 6.0 -- an even 8.67 / 9.67 / 10.67 ladder,
+    # which is the better room -- but that is a change to two offers
+    # nothing is wrong with, and it is the owner's to ask for.
     for k, (ax, ay, az) in enumerate(((-7.0, 20.0, 10.0),
-                                      (7.0, 38.0, 10.0),
+                                      (6.0, 38.0, 10.0),
                                       (-7.0, 56.0, 10.0))):
         entry["offers"].append({"name": "grapple_%d" % k,
                                 "kind": "grapple_point",
@@ -444,8 +588,21 @@ def main():
     out = os.path.join(common.REPO_ROOT, "assets", "models", "batch040",
                        "shells", "manifest.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
+    # MERGE, LIKE THE OTHER TWO. This wrote `{cid: entry}` over the
+    # whole file, so building the plenum on its own DELETED the yard and
+    # the span from the batch040 manifest -- and the pack only ever
+    # looked right because `check_art_current.sh` happens to run the
+    # plenum before both of them. `build_yard` and `build_span` read the
+    # file first; this one did not, and a generated artifact whose
+    # contents depend on the order its generators ran in is not
+    # regenerable.
+    existing = {}
+    if os.path.exists(out):
+        with open(out, encoding="utf-8") as handle:
+            existing = json.load(handle)
+    existing[cid] = entry
     with open(out, "w", encoding="utf-8") as handle:
-        json.dump({cid: entry}, handle, indent=2, sort_keys=True)
+        json.dump(existing, handle, indent=2, sort_keys=True)
     common.log("%s: %d runs, %.1f m of descent, rail %.1f m"
                % (cid, RUNS, TOP, entry["rail_span"]))
     print("[art] batch040 manifest -> %s" % out)

@@ -264,6 +264,19 @@ else:
 fi
 
 echo
+echo "sabotage: the offer gate -- can it refuse the art it was built from?"
+# IN-PROCESS, NOT IN-TREE. Every other case here edits a source file and
+# puts it back with `git checkout`, which is right for a guard that reads
+# source and wrong for this one: the declarations under test live in the
+# pack's generated manifests, and a script that checks out a manifest can
+# eat an export somebody has not committed. `sabotage_offers.py`
+# substitutes each bug in memory, so nothing is written and nothing is
+# restored. It reports its own cases; this only asks whether they all
+# behaved.
+expect_pass "every offer-gate negative control" \
+  python3 tools/content/sabotage_offers.py
+
+echo
 if [ "$FAILED" -gt 0 ]; then
   echo "sabotage: FAIL -- $FAILED of $CASE case(s) did not behave. A guard that"
   echo "  cannot fail is not a guard, and one that fails a clean tree is"

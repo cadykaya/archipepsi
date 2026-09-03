@@ -82,6 +82,44 @@ were single wedges the import-time flood could not see through.
 `shell_tower_spiral`'s `platform_8_to_deck` is a `gap`, from Production's
 own probe.
 
+**PHYSICAL-TRUTH REPAIR LANDED (2026-09-03).** The seven items of the
+plenum/hall/span brief are done and measured:
+
+* the three plenum collars ship as **12 convex sectors each** (117 -> 150
+  colliders, same 1656 triangles). `roomcollision.assert_convex` now
+  refuses ANY non-convex collider at build time, in every shell — a
+  `-convcolonly` node imports as the convex HULL of its vertices, so an
+  annulus was shipping as a filled disc.
+* every collar destination is on the band and none on the machine axis:
+  three `landing_N_to_collar_K` endpoints, three `enemy_anchors`, the
+  `check_anchor`, the `reward` and the launch target, all through one
+  `_collar_point`, which now shares `_collar_axis` with the bridge that
+  builds the spur.
+* **`shell_plenum_helix`'s launch serves the LOW collar now, not the
+  middle one.** Measured over 4537 floor stances on a 0.25 m grid: the
+  top collar is reachable from none, the middle from five, the low from
+  141. The reward stays on the middle collar.
+* the plenum rail, the hall rail and the span rail were all rerouted off
+  geometry their BAKED curve was inside; the plenum's grapple_1 moved a
+  metre inward for its swing room.
+
+New gates, both in `tools/verify_content_pack.sh`:
+`tools/content/measure_offers.py` measures every declared rail, launch
+and grapple against the shipped collider triangles, and
+`tools/content/replay_audited.py` replays the pre-repair pack out of git
+and FAILS unless every audited finding still comes back.
+`tools/content/sabotage_offers.py` is their negative-control suite and
+runs from `tools/sabotage_checks.sh`.
+
+**TWO FINDINGS ARE RAISED AND NOT REPAIRED, AND THEY NEED THE OWNER.**
+The hall's and span's launch ARCS clip the underside of the very
+platform they land on, by 0.08 m. Neither was in the audit this repair
+answers and neither is one of its items; repairing either means moving a
+launch pad in a room whose form the owner has passed. They are carried
+in `measure_offers.RAISED`, which is not a skip — the gate fails if
+either finding changes, disappears, or loses its offer. Report:
+`docs/art/reports/2026-09-03-physical-truth-repair.md`.
+
 **One thing needs PRODUCTION, not the owner: req 40 in
 `docs/art/ART_FRONTIER.md`.** `ShellValidator._check_segment` applies the
 base-kit reach bounds to every mandatory traversal segment without

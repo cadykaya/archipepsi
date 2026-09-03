@@ -321,11 +321,43 @@ def _rail_points():
     """One route, twice around the armature, entry level to the exit.
 
     Bounded by `RailPath`: every segment 0.5-60 m, no pitch past 75
-    degrees, at least two points. Asserted below rather than trusted.
+    degrees, at least two points. `_assert_rail` below checks all of
+    that -- and none of it is where the ride GOES. Length and pitch are
+    properties of the polyline; the beam follows a Catmull-Rom through
+    those points, and this route used to run through two solid things
+    that no polyline check could have seen. `measure_offers.py` bakes
+    the curve and measures it against the shipped collider triangles;
+    it runs in `verify_content_pack.sh`, and it is what these numbers
+    were chosen against.
+
+    THE HALL HAS A DECK LEVEL, AND A RAIL MUST CROSS IT THROUGH A HOLE.
+    At y = 20.3-21 the plan is nearly floored: the ring (x -9..9), the
+    two bridges, the north landing, and the east gantry from x 13 to 19.
+    Above the gantry, ramp3 carries on from 21 up to 28. The rail
+    climbs from 2 m to 31.5, so it has to pass that level exactly once,
+    and the old route passed it at (17, 21, 33) -- on the gantry deck,
+    measured 0.249 m inside it.
+
+    So the route now threads the one real gap: (10, 45), east of the
+    ring, west of the gantry, south of the north landing, under
+    ramp3's third tread. It arrives there already at 22 m and the whole
+    eastern sweep is a FLYOVER of the east gantry rather than a pass
+    through it -- the walkway goes by two metres beneath the ride.
+
+    The western leg moved for the same kind of reason and a smaller
+    one: at x -15 and -17 it was inside `ramp1`'s flight (x -19.4..-13),
+    the curve sagging 0.389 m into tread 4. The corridor between that
+    ramp and the ring is x -12.7 to -9.3, and -11.5 is the middle of it.
+
+    Every number here is measured against the shipped collider
+    triangles by `tools/content/measure_offers.py`, which reproduced
+    both original findings before either was touched. The tightest
+    point on the new ride is 0.494 m from `ramp3_tread1`, against a
+    beam that needs 0.325.
     """
     return [
-        (-15.0, 2.0, 12.0), (-17.0, 5.0, 26.0), (-13.0, 9.0, 40.0),
-        (-2.0, 13.0, 49.0), (10.0, 17.0, 45.0), (17.0, 21.0, 33.0),
+        (-11.5, 2.0, 12.0), (-11.5, 5.0, 26.0), (-13.0, 9.0, 40.0),
+        (-2.0, 13.0, 49.0), (10.0, 22.0, 45.0), (15.0, 24.0, 33.0),
         (13.0, 25.0, 21.0), (2.0, 28.0, 17.0), (-9.0, 30.0, 25.0),
         (-6.0, 31.0, 45.0), (0.0, 31.5, 56.0),
     ]

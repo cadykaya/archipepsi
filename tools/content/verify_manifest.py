@@ -210,6 +210,63 @@ def main(argv):
                   "derived from the block or the collar rather than "
                   "written out a second time, because two lists drifting "
                   "apart is how this happened")
+        _TRUTH = ("the physical-truth repair of 2026-09-03, seven items "
+                  "measured against the collision the rooms actually "
+                  "ship. (1) A `-convcolonly` node imports as the CONVEX "
+                  "HULL of its vertices, and each plenum collar is an "
+                  "annulus 4.00 to 6.75 -- so the hole the art draws was "
+                  "shipping filled. Each collar is now twelve convex "
+                  "trapezoidal prisms sharing the tube's own angles: 117 "
+                  "colliders to 150, the same 1656 triangles, the same "
+                  "21.20 x 20.00 x 73.60 m, and the pieces are asserted "
+                  "to reassemble the ring to 1 mm3. `assert_convex` now "
+                  "refuses any non-convex collider in any shell at build "
+                  "time. (2) Every declaration that named a collar "
+                  "carried the ring's CENTRE, which is the centre of "
+                  "eight metres of hanging steel -- three "
+                  "`landing_N_to_collar_K` endpoints, three enemy "
+                  "anchors, the check anchor and the launch target. All "
+                  "are on the band at radius 5.25 now, through one "
+                  "`_collar_point` that shares its axis decision with "
+                  "the bridge builder instead of copying the expression. "
+                  "(1) and (2) are ONE change: the decomposition opens a "
+                  "real hole, so an axis declaration would go from being "
+                  "inside a filled hull to being in mid air. (3) THE "
+                  "PLENUM'S LAUNCH SERVES THE LOW COLLAR NOW, not the "
+                  "middle one, and that is a design change rather than a "
+                  "correction. Putting the target on the band made it a "
+                  "real landing surface and left the FLIGHT impossible: "
+                  "an arc to 28.333 m has to pass the low collar's ring "
+                  "on the way up. Measured over 4537 floor stances on a "
+                  "0.25 m grid against all four band points of each "
+                  "collar -- the top collar is reachable from none of "
+                  "them, the middle from five (all in one 0.2 x 0.5 m "
+                  "pocket, none on the declared point), the low from "
+                  "141. The pad moved to the bottom landing and onto the "
+                  "floor's face, and the reward stays on the middle "
+                  "collar. (4) Three rails were rerouted off geometry "
+                  "their BAKED curve was inside while their control "
+                  "points were legal: the plenum's ride sagged 0.1668 m "
+                  "into all three collar bands from points 3.8 cm "
+                  "outside them, the hall's ran 0.249 m inside the east "
+                  "gantry and 0.389 m inside a west ramp tread, the "
+                  "span's ran 1.9911 m inside BOTH pylons. (5) The "
+                  "plenum's `grapple_1` hung 0.762 m over a helix run "
+                  "with no swing room; a metre inward makes it 9.67 m. "
+                  "NO VISIBLE GEOMETRY MOVED in any of the three rooms: "
+                  "same triangles, same size, same entry, exit, "
+                  "connectors, surfaces and sockets, and the yard was "
+                  "not touched at all. Measured by "
+                  "`tools/content/measure_offers.py`, which reproduced "
+                  "every audited finding before a builder changed, and "
+                  "held by `tools/content/replay_audited.py`, which "
+                  "replays the pre-repair pack out of git and fails "
+                  "unless all twelve findings still come back. TWO "
+                  "FINDINGS ARE RAISED AND NOT REPAIRED and are waiting "
+                  "on the owner: the hall's and the span's launch ARCS "
+                  "each clip the underside of the platform they land on "
+                  "by 0.08 m. Both are carried in `measure_offers.RAISED`"
+                  ", which fails if either changes or disappears")
 
         DECLARED_HANDOFF = {}
         for _cid, _fields, _why in (
@@ -238,10 +295,16 @@ def main(argv):
                 ("shell_corner_left", ("review",), _PASS),
                 ("shell_corner_right", ("review",), _PASS),
                 ("shell_hall_transit",
-                 ("traversal", "surfaces", "size", "offers"), _FLIGHT),
+                 ("traversal", "surfaces", "size"), _FLIGHT),
+                ("shell_hall_transit", ("offers",),
+                 _FLIGHT + "; and " + _TRUTH),
                 ("shell_plenum_helix", ("volumes",), _WAVE1),
                 ("shell_yard_gantry", ("sockets",), _WAVE1),
-                ("shell_span_basin", ("sockets",), _WAVE1)):
+                ("shell_span_basin", ("sockets",), _WAVE1),
+                ("shell_plenum_helix",
+                 ("offers", "traversal", "colliders", "check_anchor",
+                  "enemy_anchors"), _TRUTH),
+                ("shell_span_basin", ("offers",), _TRUTH)):
             for _field in _fields:
                 DECLARED_HANDOFF[(_cid, _field)] = _why
 

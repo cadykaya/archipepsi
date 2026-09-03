@@ -82,16 +82,16 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 0, 2.1)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 45.333332, 2.1)
 
 [node name="landing_4_to_collar_0_end" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 45.333332, 10)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 45.333332, 4.75)
 
 [node name="landing_7_to_collar_1_start" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 28.333334, 17.9)
 
 [node name="landing_7_to_collar_1_end" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 28.333334, 10)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.25, 28.333334, 10)
 
 [node name="landing_10_to_collar_2_start" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 11.333333, 17.9)
 
 [node name="landing_10_to_collar_2_end" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 11.333333, 10)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.25, 11.333333, 10)

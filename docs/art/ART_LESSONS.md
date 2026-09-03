@@ -1802,3 +1802,58 @@ registered for a script run with `-s`. A four-line scene that makes the
 probe the main scene fixes it — and modifying Production's driver to get
 around it would have meant measuring against something Production does
 not run.
+
+### L-98 · A convex-hull import turns a ring into a disc, and the audit agreed with the art
+
+Every plenum collar is a real annulus: a twelve-sided ring from the
+machine's face at 4.00 m out to 6.75, with an open middle you can see the
+shaft through. Godot imports a `-convcolonly` node as a
+`ConvexPolygonShape3D`, which is **the convex hull of the node's
+vertices** — so the shipped collision for each collar was a solid disc,
+and the hole the art draws was filled from edge to edge.
+
+> **A `-convcolonly` collider is a promise that the mesh IS its own
+> convex hull. Nothing was checking, so three colliders shipped larger
+> than the art they came from, and the extra was in exactly the place a
+> player would try to fall through.**
+
+The part that is worth remembering is not the importer rule. It is that
+**both sides of the audit agreed, and both were wrong in the same
+direction.** Art's traversal law floods collider AABBs; Production's
+`RoomAudit` drops a capsule into the imported shapes. The three
+`landing_N_to_collar_K` segments ended on the machine's axis — inside a
+hole the art has and the engine does not — and neither measurement
+objected, because in the AABB the axis is inside the collar's box and in
+the engine the axis is inside the filled hull. The declaration was false
+in the art and true in the build, which is the one combination no
+existing check could see.
+
+`roomcollision.assert_convex` now refuses any collider whose own mesh has
+a vertex outside one of its own face planes, at build time, for every
+shell. The collars are built as twelve convex trapezoidal prisms sharing
+the tube's own angles, and `_assert_annulus_pieces` proves the pieces
+reassemble the ring it replaced — same bounding box, same total volume to
+1 mm³ — so the decomposition cannot quietly become a different shape.
+
+**And the repair is what made the room measurable.** Only once the
+collars were convex could anything ask where the rail actually rides;
+the answer was 0.1668 m inside all three bands, on a route whose control
+points were all 3.8 cm OUTSIDE them. A Catmull-Rom cuts its corners, and
+the builder checked segment length and pitch on the polyline — both
+properties the curve does not have.
+
+> **Measure the baked curve, not the control polygon. A rail's points are
+> not the ride.**
+
+The same reading fixed a launch. `launch_collar` was moved off the axis
+onto the collar band, which made the target a real landing surface — and
+the flight was still impossible, because the arc to the middle collar has
+to pass the low collar's ring on the way up. Measured over the whole
+floor, 4537 stances on a 0.25 m grid: the top collar is reachable from
+none of them, the middle from five, the low collar from 141. An offer
+that works from five square decimetres of a 400 m² floor is not an offer,
+so the launch serves the low collar now.
+
+> **"The point is now legal" and "the move is now possible" are different
+> claims. Fixing the first can leave the second false, and only the
+> second is what the player has.**

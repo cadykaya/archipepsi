@@ -180,3 +180,29 @@ python3 "$ROOT/tools/content/measure_flights.py"
 #
 # A check that runs in the build beats a check that runs after the
 # export, because it is the one that can stop the mistake.
+
+# 7. THE OFFERS, MEASURED AGAINST THE COLLISION THEY LIVE IN. Rails,
+# launches and grapple points are DECLARATIONS -- three points and a
+# name -- and until this existed nothing checked that the room they name
+# would let a player use them. It does not: the audit at `802732d` found
+# a rail riding 1.99 m inside a pylon, three collar bands with the ride
+# 0.17 m inside them, a launch target four metres inside a machine and a
+# grapple anchor with 0.76 m of air under it.
+#
+# Rails are measured on the BAKED CURVE, not the control polygon --
+# every one of those rails had legal control points and a Catmull-Rom
+# that cut the corner. Launch arcs are measured as the FOOT's path, per
+# the owner's ruling, so a target on a floor face reads as the landing
+# surface it is rather than as a buried point. Production's own
+# constants are read out of its source rather than retyped.
+echo "[verify] --- declared offers against real collision ---"
+python3 "$ROOT/tools/content/measure_offers.py"
+
+# 8. AND THE SAME GATE, RUN AGAINST THE ART IT WAS BUILT FROM. A gate
+# that has only ever seen art that passes it has not been shown to do
+# anything. This replays the audited pack out of git and FAILS unless
+# every one of those findings comes back, by collider name and to the
+# centimetre -- so the seven repairs cannot be quietly undone, and the
+# gate cannot quietly stop measuring.
+echo "[verify] --- the audited pack, replayed ---"
+python3 "$ROOT/tools/content/replay_audited.py"

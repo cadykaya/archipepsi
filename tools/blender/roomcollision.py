@@ -79,6 +79,8 @@ from __future__ import annotations
 
 import bpy
 
+import brushkit
+
 import roomcontract
 
 #: The three roles that are structure, and the one that is decoration.
@@ -159,6 +161,10 @@ def build(parts, name):
     for part in parts:
         if role_of(part) not in SOLID_ROLES:
             continue
+        annulus = part.get(brushkit.ANNULUS_KEY)
+        if annulus is not None:
+            out.extend(_annulus_twins(part, annulus))
+            continue
         twin = part.copy()
         twin.data = part.data.copy()
         # A collider has no appearance. Dropping the material also keeps
@@ -177,6 +183,146 @@ def build(parts, name):
     return out
 
 
+#: Separates an annulus part's name from its sector index. A twin called
+#: `pl_collar_0_sec03-convcolonly` belongs to the part `pl_collar_0`.
+SECTOR_SEP = "_sec"
+
+#: How far a vertex may sit outside one of its own mesh's face planes
+#: before the mesh is called non-convex. Four orders of magnitude below
+#: the 10.38 m the audit measured on a collar, and far above the float32
+#: round-trip.
+CONVEX_TOLERANCE = 1e-4
+
+
+def _annulus_twins(part, annulus):
+    """One convex sector per side, in place of one hull-filling twin.
+
+    THE HULL IS THE PROBLEM, not the mesh. `-convcolonly` hands the
+    node's vertex set to Godot's convex hull builder, and the hull of a
+    ring is a disc -- so an annulus imports with its bore filled. The
+    sectors tile the same ring and each is convex, so every one of them
+    survives hulling unchanged and the bore stays open.
+    """
+    outer, inner, height, sides, ax, ay, az = annulus
+    sides = int(sides)
+    out = []
+    for i in range(sides):
+        twin = brushkit.annulus_sector(
+            "%s%s%02d%s" % (part.name, SECTOR_SEP, i, SUFFIX),
+            outer, inner, height, sides, i, (ax, ay, az))
+        twin.data.materials.clear()
+        twin[ROLE_KEY] = role_of(part)
+        out.append(twin)
+    return out
+
+
+def _origin_name(twin_name):
+    """The visual part a collider twin came from."""
+    stem = twin_name[:-len(SUFFIX)] if twin_name.endswith(SUFFIX) \
+        else twin_name
+    cut = stem.rfind(SECTOR_SEP)
+    if cut != -1 and stem[cut + len(SECTOR_SEP):].isdigit():
+        return stem[:cut]
+    return stem
+
+
+def mesh_volume(obj):
+    """Signed volume of a closed triangle mesh, in world metres cubed."""
+    mesh = obj.data
+    mesh.calc_loop_triangles()
+    total = 0.0
+    matrix = obj.matrix_world
+    for tri in mesh.loop_triangles:
+        a, b, c = (matrix @ mesh.vertices[i].co for i in tri.vertices)
+        total += a.dot(b.cross(c))
+    return abs(total) / 6.0
+
+
+def _assert_annulus_pieces(name, parts, colliders, by_name):
+    """A decomposed part's sectors must BE the part -- union and volume.
+
+    Two claims, because either alone is weak. The union of the sector
+    AABBs must equal the part's AABB, which catches a missing or
+    displaced sector. And the sector volumes must sum to the part's own
+    mesh volume, which catches the failure that matters here: a
+    decomposition that quietly fills the bore would keep the AABB
+    exactly and gain 28.800 m^3.
+    """
+    groups = {}
+    for twin in colliders:
+        origin = _origin_name(twin.name)
+        if by_name.get(origin) is not None \
+                and by_name[origin].get(brushkit.ANNULUS_KEY) is not None:
+            groups.setdefault(origin, []).append(twin)
+    for origin, pieces in sorted(groups.items()):
+        part = by_name[origin]
+        sides = int(part[brushkit.ANNULUS_KEY][3])
+        if len(pieces) != sides:
+            raise AssertionError(
+                "%s: '%s' is a %d-sided annulus but %d sectors were built"
+                % (name, origin, sides, len(pieces)))
+        lo_a, hi_a = _world_box(part)
+        boxes = [_world_box(t) for t in pieces]
+        lo_b = tuple(min(b[0][i] for b in boxes) for i in range(3))
+        hi_b = tuple(max(b[1][i] for b in boxes) for i in range(3))
+        for i, axis in enumerate("xyz"):
+            if abs(lo_a[i] - lo_b[i]) > 1e-6 or abs(hi_a[i] - hi_b[i]) > 1e-6:
+                raise AssertionError(
+                    "%s: the sectors of '%s' do not span it on %s "
+                    "(%.4f..%.4f vs %.4f..%.4f)"
+                    % (name, origin, axis, lo_b[i], hi_b[i], lo_a[i], hi_a[i]))
+        want = mesh_volume(part)
+        got = sum(mesh_volume(t) for t in pieces)
+        if abs(want - got) > 1e-3:
+            raise AssertionError(
+                "%s: '%s' encloses %.4f m3 but its sectors enclose %.4f m3 "
+                "(%.4f m3 apart). A decomposition that gains volume has "
+                "filled something the art leaves open."
+                % (name, origin, want, got, abs(want - got)))
+
+
+def assert_convex(name, colliders):
+    """Every collider mesh must already BE its own convex hull.
+
+    THIS IS THE EXACT CONDITION THE IMPORTER IMPOSES. Godot routes
+    `-convcolonly` to `Mesh::create_convex_shape()`, which hulls the
+    node's vertices; the shape it produces equals the authored mesh if
+    and only if that mesh is convex. Anywhere else, the engine's
+    collision is quietly LARGER than the art -- and larger collision is
+    invisible floor, which is worse than missing floor because it
+    answers probes.
+
+    For a closed mesh, convex iff every face plane supports the whole
+    vertex set. That is what is checked, per face, per vertex.
+
+    Audited at `802732d`: 3 of 425 collider nodes failed this, all three
+    the plenum's collars, each carrying 28.800 m^3 of collision with
+    nothing to see. Nothing detected it, because every art-side probe
+    models a collider as its AABB -- and an annulus and its hull share an
+    AABB exactly.
+    """
+    for twin in colliders:
+        mesh = twin.data
+        matrix = twin.matrix_world
+        verts = [matrix @ v.co for v in mesh.vertices]
+        for poly in mesh.polygons:
+            normal = (matrix.to_3x3() @ poly.normal).normalized()
+            if normal.length_squared < 0.5:
+                continue                      # a degenerate face has no plane
+            plane = matrix @ mesh.vertices[poly.vertices[0]].co
+            worst = max((v - plane).dot(normal) for v in verts)
+            if worst > CONVEX_TOLERANCE:
+                raise AssertionError(
+                    "%s: collider '%s' is NOT CONVEX -- a vertex lies "
+                    "%.4f m outside one of its own face planes. Godot "
+                    "imports `%s` as the CONVEX HULL of these vertices, "
+                    "so the shipped collision would be larger than the "
+                    "mesh and the difference would be invisible. Emit "
+                    "convex pieces instead (see `_annulus_twins`)."
+                    % (name, twin.name, worst, SUFFIX))
+    return len(colliders)
+
+
 def assert_exact(name, parts, colliders):
     """Every collider is its part, and no part of trim became one.
 
@@ -185,18 +331,27 @@ def assert_exact(name, parts, colliders):
     changing under someone.
     """
     by_name = {p.name: p for p in parts}
-    solid = sum(1 for p in parts if role_of(p) in SOLID_ROLES)
-    if len(colliders) != solid:
+    # An annulus part is represented by one convex sector per side, so
+    # the count is per PART and not per collider.
+    expect = 0
+    for part in parts:
+        if role_of(part) not in SOLID_ROLES:
+            continue
+        annulus = part.get(brushkit.ANNULUS_KEY)
+        expect += int(annulus[3]) if annulus is not None else 1
+    if len(colliders) != expect:
         raise AssertionError(
-            "%s: %d structural parts but %d colliders"
-            % (name, solid, len(colliders)))
+            "%s: structural parts want %d colliders but %d were built"
+            % (name, expect, len(colliders)))
+    assert_convex(name, colliders)
+    _assert_annulus_pieces(name, parts, colliders, by_name)
     for twin in colliders:
         if not twin.name.endswith(SUFFIX):
             raise AssertionError(
                 "%s: collider '%s' does not carry the import suffix '%s', "
                 "so Godot will import it as a visible mesh"
                 % (name, twin.name, SUFFIX))
-        origin = by_name.get(twin.name[:-len(SUFFIX)])
+        origin = by_name.get(_origin_name(twin.name))
         if origin is None:
             raise AssertionError(
                 "%s: collider '%s' has no visual part behind it; a "
@@ -206,6 +361,8 @@ def assert_exact(name, parts, colliders):
             raise AssertionError(
                 "%s: '%s' is painted '%s' and must not collide"
                 % (name, origin.name, role_of(origin)))
+        if origin.get(brushkit.ANNULUS_KEY) is not None:
+            continue          # checked as a group by `_assert_annulus_pieces`
         lo_a, hi_a = _world_box(origin)
         lo_b, hi_b = _world_box(twin)
         for i, axis in enumerate("xyz"):

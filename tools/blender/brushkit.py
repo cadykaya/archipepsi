@@ -125,6 +125,10 @@ def prism(name, radius, height, sides, at=(0.0, 0.0, 0.0), rotation_z=0.0,
     return common.shade_flat(obj)
 
 
+#: Where `tube` records its own construction, for `roomcollision`.
+ANNULUS_KEY = "arch_annulus"
+
+
 def tube(name, outer, inner, height, sides, at=(0.0, 0.0, 0.0),
          asset_name=None):
     """An open ring: a pipe mouth, a vent bore, a portal aperture."""
@@ -149,6 +153,59 @@ def tube(name, outer, inner, height, sides, at=(0.0, 0.0, 0.0),
                       rings[("in", "hi")][j], rings[("in", "hi")][i]))
         bm.faces.new((rings[("in", "lo")][i], rings[("in", "lo")][j],
                       rings[("out", "lo")][j], rings[("out", "lo")][i]))
+    bmesh.ops.translate(bm, vec=Vector(at), verts=bm.verts)
+    obj = common.mesh_from_bmesh(bm, name)
+    # A TUBE IS THE ONE PRIMITIVE HERE THAT IS NOT CONVEX, and Godot's
+    # `-convcolonly` import takes the CONVEX HULL of a collider's vertex
+    # set -- which fills the bore. Audited at `802732d`: each plenum
+    # collar imported as a solid 12-gon prism carrying 28.800 m^3 of
+    # collision with nothing to see, and that invisible floor was the
+    # evidence three false traversal claims were passing on.
+    #
+    # So a tube records what it is, and `roomcollision` emits one convex
+    # sector per side instead of one hull-filling twin. The tag is the
+    # honest way round: the primitive knows its own shape, and the
+    # collision module should not have to infer an annulus from a mesh.
+    obj[ANNULUS_KEY] = [float(outer), float(inner), float(height),
+                        int(sides), float(at[0]), float(at[1]), float(at[2])]
+    return common.shade_flat(obj)
+
+
+def annulus_sector(name, outer, inner, height, sides, index,
+                   at=(0.0, 0.0, 0.0)):
+    """One convex wedge of a `tube`: the piece between two of its sides.
+
+    Eight vertices -- a trapezoid at the bottom, the same trapezoid at
+    the top -- so the solid is a trapezoidal prism and every face plane
+    supports the whole vertex set. `sides` of these tile the annulus
+    exactly, sharing its vertices, so the union is the tube to the last
+    float and the bore stays open.
+
+    The angles are `tube`'s own, `(i + 0.5) * 2pi / sides`, because a
+    sector that did not land on the tube's vertices would be a different
+    ring wearing its name.
+    """
+    step = 2.0 * math.pi / sides
+    a0 = (index + 0.5) * step
+    a1 = (index + 1.5) * step
+    bm = bmesh.new()
+    ring = {}
+    for label, radius in (("out", outer), ("in", inner)):
+        for level, z in (("lo", -height / 2.0), ("hi", height / 2.0)):
+            ring[(label, level)] = [
+                bm.verts.new((radius * math.cos(a), radius * math.sin(a), z))
+                for a in (a0, a1)]
+    bm.verts.ensure_lookup_table()
+    lo = [ring[("out", "lo")][0], ring[("out", "lo")][1],
+          ring[("in", "lo")][1], ring[("in", "lo")][0]]
+    hi = [ring[("out", "hi")][0], ring[("out", "hi")][1],
+          ring[("in", "hi")][1], ring[("in", "hi")][0]]
+    bm.faces.new(lo[::-1])
+    bm.faces.new(hi)
+    for k in range(4):
+        m = (k + 1) % 4
+        bm.faces.new((lo[k], lo[m], hi[m], hi[k]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     bmesh.ops.translate(bm, vec=Vector(at), verts=bm.verts)
     obj = common.mesh_from_bmesh(bm, name)
     return common.shade_flat(obj)
