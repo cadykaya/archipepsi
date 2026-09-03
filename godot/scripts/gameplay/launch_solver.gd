@@ -122,8 +122,19 @@ static func arc(source: Vector3, velocity: Vector3, time: float,
 static func violations(source_foot: Vector3, target_foot: Vector3,
 		landing_radius: float, space: PhysicsDirectSpaceState3D,
 		to_world := Transform3D.IDENTITY,
-		who := "launch_pad") -> Array[String]:
+		who := "launch_pad", source_radius := 0.0) -> Array[String]:
 	var out: Array[String] = []
+	# THE RESERVATION MUST HOLD THE MECHANISM. `launch_source.radius` is
+	# the floor set aside for the consuming package to build in -- so the
+	# one thing it has to be big enough for is the thing that gets built.
+	# It is NOT a set of places the flight may begin from: exactly one
+	# trajectory is validated, from `position`, and the runtime captures
+	# the player to it.
+	if source_radius > 0.0 \
+			and source_radius < AffordanceNodes.LaunchPad.PAD_REACH:
+		out.append("%s: a %.2f m reservation cannot hold the launch pad, "
+				% [who, source_radius] + "which reaches %.2f m from its "
+				% AffordanceNodes.LaunchPad.PAD_REACH + "centre")
 	var source := SpaceProbe.stand_pose(to_world * source_foot)
 	var target := SpaceProbe.stand_pose(to_world * target_foot)
 	# THE PAD ITSELF MUST BE STANDABLE. A source buried in a slab or

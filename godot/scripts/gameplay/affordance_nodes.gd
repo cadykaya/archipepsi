@@ -191,23 +191,54 @@ class BreakablePanel extends StaticBody3D:
 ## BASE KIT, like the bounce pad: the map provides this movement, so it
 ## fires whoever stands on it and asks for no Echo.
 class LaunchPad extends Area3D:
-	## Where this pad throws the player, in the same space as its own
-	## position.
+	## WHAT A `launch_source` RESERVES, AND WHAT IT DOES NOT (owner
+	## ruling, 2026-09-03).
+	##
+	## `launch_source.position` is THE canonical room-local foot-contact
+	## centre the constructed launch fires from -- one point, not a
+	## choice of points. `launch_source.radius` is the REGION RESERVED
+	## for the consuming movement package to build its mechanism in: it
+	## says "this much floor is yours", never "the player may begin the
+	## flight anywhere in here". Production therefore validates ONE
+	## trajectory, from the canonical origin, and the pad's own footprint
+	## has to fit inside the reservation.
+	##
+	## `launch_target.position` is the authored foot-contact AIM and
+	## `launch_target.radius` is the acceptable landing region -- the
+	## asymmetry is deliberate: where you leave from is exact, where you
+	## arrive is a region a player can be trusted to hit.
+	##
+	## THE SEAM THIS CLOSES. `solve()` has always derived its velocity
+	## from the pad centre, and `launch()` applied that velocity to
+	## whoever happened to be overlapping the trigger -- so a player
+	## clipping the edge of a 2.4 m pad flew a trajectory that began up
+	## to 1.2 m from the one Production validated, and landed somewhere
+	## nobody checked. The runtime launch must BE the validated launch,
+	## so the player is captured to the canonical origin first.
 	var target := Vector3.ZERO
 	var tint := Constants.AFFORDANCE_SIGNAL
 	var launched := 0
+
+	## The mechanism's own footprint. Named so the validator can ask
+	## whether it fits the reservation instead of assuming it does.
+	const PAD_SIZE := Vector3(2.4, 0.5, 2.4)
+
+	## How far the pad reaches from its centre, in plan -- the half
+	## diagonal, because a square corner is further out than a square
+	## edge and the reservation is a circle.
+	const PAD_REACH := 1.697056
 
 	func _ready() -> void:
 		monitoring = true
 		var shape := CollisionShape3D.new()
 		var box := BoxShape3D.new()
-		box.size = Vector3(2.4, 0.5, 2.4)
+		box.size = PAD_SIZE
 		shape.shape = box
 		shape.position = Vector3(0, 0.25, 0)
 		add_child(shape)
 		var mesh_node := MeshInstance3D.new()
 		var mesh := BoxMesh.new()
-		mesh.size = Vector3(2.4, 0.25, 2.4)
+		mesh.size = Vector3(PAD_SIZE.x, 0.25, PAD_SIZE.z)
 		mesh_node.mesh = mesh
 		mesh_node.position = Vector3(0, 0.12, 0)
 		mesh_node.material_override = ThemeMaterials.glow_material(tint, 1.8)
@@ -275,11 +306,40 @@ class LaunchPad extends Area3D:
 		if body is Player:
 			launch(body as Player)
 
+	## Whether the canonical origin can hold a player right now.
+	##
+	## COLLISION-SAFE CAPTURE. Recentring is a teleport, and a teleport
+	## into geometry is worse than the offset trajectory it replaces. The
+	## validator already proved this pose fits when the offer was
+	## accepted, so a refusal here means something moved since -- and
+	## refusing to fire is the safe answer.
+	func origin_is_clear(rider: Player = null) -> bool:
+		if not is_inside_tree():
+			return true
+		var world := get_world_3d()
+		if world == null:
+			return true
+		# The rider is standing ON the pad, so their own body is not an
+		# obstruction to their own launch.
+		var skip: Array[RID] = []
+		if rider != null:
+			skip.append(rider.get_rid())
+		return SpaceProbe.body_fits(world.direct_space_state,
+				_body_pose(), skip)
+
 	## Public so the suite can fire it without staging an overlap.
+	##
+	## CAPTURED, THEN LAUNCHED. The player is moved to the canonical
+	## source body pose before the solved velocity is applied, so the
+	## flight that happens is the flight that was validated -- entering
+	## at an edge, a corner or dead centre all produce the same arc.
 	func launch(player: Player) -> void:
 		var shot := solve()
 		if not bool(shot.get("ok", false)):
 			return
+		if not origin_is_clear(player):
+			return
+		player.global_position = _body_pose()
 		player.velocity = shot["velocity"]
 		launched += 1
 

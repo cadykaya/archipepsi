@@ -535,6 +535,57 @@ green suite over it, because the suite ran at prototype scale. The mock
 backend now takes a `CampaignConfig` and
 `bridge/tests/test_production_scale.py` runs the real engine at 450.
 
+## WAVE 1 MEASURES TRUE, OFFERS INCLUDED — 2026-09-03
+
+Art `468125e` synced: plenum collars decomposed into convex ring wedges,
+collar traversal/reward/launch/rail/grapple corrections, hall and span
+rail corrections, and both launch pads moved off the platforms they were
+flying through. Four mirrored files, byte-identical to Art.
+
+**ALL FOUR LARGE ROOMS: structural=0 measured=0, 5 offers built and 0
+declined each.** Twenty offers built plus the four `launch_target`s
+validated inside their pairs = **24 measured, 0 refused**, which is
+exactly what the Art lane predicted and Production now proves with its
+own runtime geometry binding. The plenum's three collar endpoints -- the
+Production half of the audit's A-2 handoff, detected here before Art's
+repair landed -- are gone.
+
+**A LAUNCH SOURCE IS ONE ORIGIN, NOT A DISC** (owner ruling).
+`launch_source.position` is THE canonical foot-contact centre the
+constructed launch fires from; `launch_source.radius` is the region
+RESERVED for the consuming package to build its mechanism in, and the one
+thing it must be big enough for is the pad. `launch_target.position` is
+the authored aim and its `radius` is the acceptable LANDING region: where
+you leave from is exact, where you arrive is a region. Written into
+`schemas/content.py` so it cannot go ambiguous again.
+
+`LaunchPad.launch` derived its velocity from the pad centre and applied
+it to whoever was overlapping the trigger, so a player clipping the edge
+of a 2.4 m pad flew a trajectory beginning up to 1.2 m from the validated
+one. The player is now CAPTURED to the canonical body pose first, and a
+canonical origin that cannot hold a body refuses to fire rather than
+teleporting somebody into a wall. Sabotaged: without the capture an edge
+entry lands 1.63 m off target.
+
+**AN OFFER IS A CLAIM ABOUT THE ROOM, NOT ABOUT OTHER OFFERS.** This pass
+found `consume` validating and constructing in one pass, so the rail was
+built before the launch was judged and the hall's arc collided with its
+own new beam -- a refusal that flipped to a pass on a freshly built room.
+The verdict depended on which kind was visited first. Judging is now a
+separate phase from building, and nothing is constructed until every
+verdict is in.
+
+**71 vs 73 RECONCILED, and they were never the same question.** 71 is the
+AUTHORED SHELL COLLIDERS -- the `-convcolonly` twins the importer builds
+from the `.glb`, which is what an art-side gate can see. 73 is the
+INSTANTIATED CHAMBER COLLIDERS, which additionally includes the two the
+COMPOSER placed: a `DestructibleCover` and one activity element. No
+duplicates in either scope, nothing importer-invented. Both counts are
+now asserted by name, so neither can drift into the other.
+
+The player is also no longer room geometry: a probe that reported "their
+body is inside Player" was true and useless.
+
 ## AUTHORED LOCAL, PHYSICS WORLD — 2026-09-03
 
 The binding at `50018d1` handed room-local offer coordinates straight to

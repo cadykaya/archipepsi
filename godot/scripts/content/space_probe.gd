@@ -126,9 +126,12 @@ static func ground_collider(space: PhysicsDirectSpaceState3D, at: Vector3,
 ## not be refused by float error. Content the composer PLACED is ignored
 ## -- a crate is furniture, and a room is not wrong because something was
 ## put in it.
-static func body_fits(space: PhysicsDirectSpaceState3D,
-		at: Vector3) -> bool:
-	return _obstruction(space, at) == null
+## `exclude` is the RIDs of bodies the question is NOT about -- the
+## player being launched is standing on the pad, and asking whether a
+## body fits where a body already is has one answer and it is useless.
+static func body_fits(space: PhysicsDirectSpaceState3D, at: Vector3,
+		exclude: Array[RID] = []) -> bool:
+	return _obstruction(space, at, exclude) == null
 
 ## Does the player fit STANDING ON `foot`, allowing for the step they
 ## are taking onto it?
@@ -241,14 +244,14 @@ static func sphere_obstruction(space: PhysicsDirectSpaceState3D,
 		at: Vector3, radius: float) -> Node:
 	return _sphere_obstruction(space, at, radius)
 
-static func _obstruction(space: PhysicsDirectSpaceState3D,
-		at: Vector3) -> Node:
+static func _obstruction(space: PhysicsDirectSpaceState3D, at: Vector3,
+		exclude: Array[RID] = []) -> Node:
 	if space == null:
 		return null
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = Constants.PLAYER_RADIUS - 0.02
 	capsule.height = Constants.PLAYER_HEIGHT - 0.04
-	return _shape_obstruction(space, capsule, at)
+	return _shape_obstruction(space, capsule, at, exclude)
 
 static func _sphere_obstruction(space: PhysicsDirectSpaceState3D,
 		at: Vector3, radius: float) -> Node:
@@ -259,11 +262,13 @@ static func _sphere_obstruction(space: PhysicsDirectSpaceState3D,
 	return _shape_obstruction(space, sphere, at)
 
 static func _shape_obstruction(space: PhysicsDirectSpaceState3D,
-		shape: Shape3D, at: Vector3) -> Node:
+		shape: Shape3D, at: Vector3,
+		exclude: Array[RID] = []) -> Node:
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = shape
 	query.transform = Transform3D(Basis(), at)
 	query.collide_with_areas = false
+	query.exclude = exclude
 	for hit: Dictionary in space.intersect_shape(query, 8):
 		var node := hit.get("collider") as Node
 		if not is_placed_content(node):
@@ -279,6 +284,14 @@ static func is_placed_content(collider: Variant) -> bool:
 	var node := collider as Node
 	while node != null:
 		if node is ActivityElement:
+			return true
+		# THE PLAYER IS NOT THE ROOM. A room is not wrong because
+		# somebody is standing in it, and every one of these probes asks
+		# about the SHELL -- so a body that walked in must not answer for
+		# it. Without this the validator reports "a player standing on
+		# the launch source does not fit; their body is inside Player",
+		# which is true and useless.
+		if node is Player:
 			return true
 		if node.is_in_group(DestructibleCover.GROUP):
 			return true

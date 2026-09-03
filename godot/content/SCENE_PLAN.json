@@ -498,7 +498,7 @@
      "position": [
       0.0,
       45.33333333333333,
-      10.0
+      4.75
      ]
     },
     {
@@ -512,7 +512,7 @@
     {
      "name": "landing_7_to_collar_1_end",
      "position": [
-      0.0,
+      -5.25,
       28.33333333333333,
       10.0
      ]
@@ -528,7 +528,7 @@
     {
      "name": "landing_10_to_collar_2_end",
      "position": [
-      0.0,
+      5.25,
       11.333333333333329,
       10.0
      ]
@@ -1647,7 +1647,7 @@
      "descent",
      "rail"
     ],
-    "collision": 117,
+    "collision": 150,
     "offers": [
      {
       "name": "rail_descent",

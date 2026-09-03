@@ -279,6 +279,27 @@ class Offer(Strict):
     points: tuple[tuple[float, float, float], ...] = Field(
         default=(), max_length=64)
     #: A region's centre, and how far the consumer may work from it.
+    #:
+    #: WHAT `radius` MEANS FOR A LAUNCH PAIR (owner ruling, 2026-09-03),
+    #: because the two ends do NOT mean the same thing and the ambiguity
+    #: cost a real defect:
+    #:
+    #: * `launch_source.position` is THE canonical foot-contact centre
+    #:   the constructed launch fires from -- one point, not a choice of
+    #:   points. `launch_source.radius` is the region RESERVED for the
+    #:   consuming movement package to build its mechanism in. It is not
+    #:   a disc of ballistic starting positions, so Production validates
+    #:   one trajectory rather than a family of them, and what must fit
+    #:   inside the reservation is the pad's own footprint. A player who
+    #:   enters the trigger off-centre is captured to the canonical
+    #:   origin before launch, so the flight that happens is the flight
+    #:   that was validated.
+    #: * `launch_target.position` is the authored foot-contact AIM and
+    #:   `launch_target.radius` is the acceptable LANDING region -- the
+    #:   area a player can be trusted to hit.
+    #:
+    #: The asymmetry is deliberate: where you leave from is exact,
+    #: where you arrive is a region.
     position: tuple[float, float, float] | None = None
     radius: float = 0.0
     #: A `grapple_point` is a PLACE, not a mechanic: the shell says

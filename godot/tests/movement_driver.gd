@@ -41,6 +41,9 @@ func _run() -> void:
 	await _test_a_placed_room_offers_exactly_what_it_offered_at_the_origin()
 	await _test_a_placed_launch_lands_where_it_was_aimed()
 	await _test_a_placed_rail_is_the_same_rail()
+	await _test_a_launch_source_is_one_origin_not_a_disc()
+	await _test_a_blocked_launch_origin_is_refused()
+	await _test_a_placed_launch_captures_and_lands()
 	await _test_the_corridor_rail_is_the_shape_it_always_was()
 	_test_the_base_kit_alone_can_use_both()
 
@@ -642,6 +645,185 @@ func _test_a_placed_rail_is_the_same_rail() -> void:
 					"at %s a rider at the AUTHORED coordinates caught a "
 					% named + "rail that is no longer there")
 	refusals += 1
+
+# --- the launch-source contract (owner ruling, 2026-09-03) -----------------
+
+## A live pad over real floor, with a real Player, in a placed room.
+func _launch_rig(place := Transform3D.IDENTITY,
+		source := Vector3.ZERO, aim := Vector3(20, 0, 0),
+		extra: Array = []) -> Dictionary:
+	var room := Node3D.new()
+	room.transform = place
+	add_child(room)
+	for b: Array in ([[Vector3(10, -0.5, 0), Vector3(60, 1, 12), "deck"]]
+			+ extra):
+		var body := StaticBody3D.new()
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = b[1]
+		shape.shape = box
+		body.add_child(shape)
+		body.position = b[0]
+		body.name = str(b[2])
+		room.add_child(body)
+	var pad := AffordanceNodes.LaunchPad.new()
+	pad.position = source
+	pad.target = aim
+	room.add_child(pad)
+	var player := Player.create()
+	player.input_frozen = true
+	add_child(player)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	return {"room": room, "pad": pad, "player": player}
+
+## Where a ballistic launch from `pad` actually ends up.
+func _flight_end(pad: AffordanceNodes.LaunchPad, from: Vector3,
+		shot: Dictionary) -> Vector3:
+	var points := LaunchSolver.arc(from, shot["velocity"] as Vector3,
+			float(shot["time"]))
+	return points[points.size() - 1]
+
+func _test_a_launch_source_is_one_origin_not_a_disc() -> void:
+	"""`launch_source.position` IS the launch origin; `radius` is the
+	floor RESERVED for the mechanism.
+
+	The runtime derived its velocity from the pad centre and applied it
+	to whoever was overlapping the trigger, so a player clipping the edge
+	of a 2.4 m pad flew a trajectory beginning up to 1.2 m from the one
+	Production validated -- and landed somewhere nobody checked. The
+	runtime launch has to BE the validated launch."""
+	var rig: Dictionary = await _launch_rig()
+	var pad: AffordanceNodes.LaunchPad = rig["pad"]
+	var player: Player = rig["player"]
+	var shot := pad.solve()
+	_check(bool(shot.get("ok", false)), "the rig's pad cannot solve")
+
+	# 1 + 4 -- THE CANONICAL ORIGIN, and the centre case flying it.
+	var canonical := SpaceProbe.stand_pose(pad.global_position)
+	# COUNTED AS A DELTA. The player is created at the origin, which is
+	# inside the pad's own trigger, so `body_entered` has already fired
+	# one launch before the test does anything -- and an assertion that
+	# assumes a count of zero is measuring the fixture, not the pad.
+	player.global_position = canonical
+	var fired := pad.launched
+	pad.launch(player)
+	_check(pad.launched == fired + 1, "a centred player was not launched")
+	var centred := _flight_end(pad, canonical, shot)
+	_check(centred.distance_to(pad.world_target()) < 0.05,
+			"a centred launch ended at %v, not its target %v"
+			% [centred, pad.world_target()])
+
+	# 5 -- EVERY EDGE AND CORNER OF THE PAD, captured to the same origin.
+	var half: float = AffordanceNodes.LaunchPad.PAD_SIZE.x / 2.0 - 0.05
+	var offsets: Array = []
+	for dx: float in [-half, 0.0, half]:
+		for dz: float in [-half, 0.0, half]:
+			offsets.append(Vector3(dx, 0.0, dz))
+	for off: Vector3 in offsets:
+		player.global_position = canonical + off
+		var before := pad.launched
+		pad.launch(player)
+		_check(pad.launched == before + 1,
+				"a player entering at %v was not launched" % off)
+		# CAPTURED: the body is at the canonical origin, whatever edge it
+		# came in from.
+		_check(player.global_position.distance_to(canonical) < 0.001,
+				"a player entering at %v launched from %v, not the "
+				% [off, player.global_position]
+				+ "canonical origin %v" % canonical)
+		# ... and therefore flies the validated arc and lands on target.
+		var landed := _flight_end(pad, player.global_position,
+				{"velocity": player.velocity, "time": shot["time"]})
+		_check(landed.distance_to(pad.world_target()) < 0.05,
+				"entering at %v landed at %v, not the target %v"
+				% [off, landed, pad.world_target()])
+
+	# 2 -- THE RADIUS IS NOT A FAMILY OF ORIGINS. Exactly one trajectory
+	# is validated, and it is the one from `position`.
+	var probe := OfferBinding.space_of(rig["room"] as Node3D)
+	var one := LaunchSolver.violations(Vector3.ZERO, Vector3(20, 0, 0),
+			3.0, probe, (rig["room"] as Node3D).global_transform,
+			"reservation", 3.0)
+	_check(one.is_empty(),
+			"the canonical pair was refused: %s" % "; ".join(one))
+	# 3 -- and the reservation must hold what gets built in it.
+	var cramped := LaunchSolver.violations(Vector3.ZERO,
+			Vector3(20, 0, 0), 3.0, probe,
+			(rig["room"] as Node3D).global_transform, "cramped", 1.0)
+	_check("; ".join(cramped).contains("cannot hold the launch pad"),
+			"a reservation too small for its own pad was accepted: %s"
+			% "; ".join(cramped))
+	refusals += 1
+	(rig["room"] as Node3D).queue_free()
+	player.queue_free()
+	await get_tree().process_frame
+
+func _test_a_blocked_launch_origin_is_refused() -> void:
+	"""7 -- capture is a teleport, and a teleport into geometry is worse
+	than the offset it replaces. A canonical origin that cannot hold a
+	body refuses to fire rather than burying the player in a wall."""
+	# A block filling the pad's own standing pose.
+	var rig: Dictionary = await _launch_rig(Transform3D.IDENTITY,
+			Vector3.ZERO, Vector3(20, 0, 0),
+			[[Vector3(0, 1.2, 0), Vector3(3, 2, 3), "lid"]])
+	var pad: AffordanceNodes.LaunchPad = rig["pad"]
+	var player: Player = rig["player"]
+	_check(not pad.origin_is_clear(player),
+			"a canonical origin filled with solid geometry reported "
+			+ "itself clear")
+	player.global_position = Vector3(0, 6, 0)
+	var fired := pad.launched
+	pad.launch(player)
+	_check(pad.launched == fired,
+			"a pad whose origin cannot hold a body still fired")
+	# And the validator refuses the same pair, for the same reason.
+	var says := LaunchSolver.violations(Vector3.ZERO, Vector3(20, 0, 0),
+			3.0, OfferBinding.space_of(rig["room"] as Node3D),
+			Transform3D.IDENTITY, "blocked", 3.0)
+	_check("; ".join(says).contains("launch source"),
+			"the validator accepted a source nobody can stand on: %s"
+			% "; ".join(says))
+	refusals += 1
+	(rig["room"] as Node3D).queue_free()
+	player.queue_free()
+	await get_tree().process_frame
+
+func _test_a_placed_launch_captures_and_lands() -> void:
+	"""8 -- source and target stay correct under translation, vertical
+	translation, yaw, and a nested transform. The runtime capture uses
+	the same world poses the validator did."""
+	var places: Array = _placements() + [["nested", Transform3D(
+		Basis(Vector3.UP, PI / 3.0), Vector3(-30.0, 11.0, 44.0))]]
+	for entry: Array in places:
+		var named: String = entry[0]
+		var place: Transform3D = entry[1]
+		var rig: Dictionary = await _launch_rig(place)
+		var pad: AffordanceNodes.LaunchPad = rig["pad"]
+		var player: Player = rig["player"]
+		var shot := pad.solve()
+		_check(bool(shot.get("ok", false)),
+				"at %s a placed pad could not solve" % named)
+		# The player arrives off-centre, in world.
+		player.global_position = SpaceProbe.stand_pose(pad.global_position) \
+				+ place.basis * Vector3(1.1, 0.0, 1.1)
+		var fired := pad.launched
+		pad.launch(player)
+		_check(pad.launched == fired + 1,
+				"at %s a placed pad did not fire" % named)
+		var canonical := SpaceProbe.stand_pose(pad.global_position)
+		_check(player.global_position.distance_to(canonical) < 0.001,
+				"at %s the player launched from %v, not the canonical "
+				% [named, player.global_position] + "%v" % canonical)
+		var wanted := SpaceProbe.stand_pose(place * pad.target)
+		var landed := _flight_end(pad, player.global_position,
+				{"velocity": player.velocity, "time": shot["time"]})
+		_check(landed.distance_to(wanted) < 0.05,
+				"at %s the flight ended at %v, not the %v its target "
+				% [named, landed, wanted] + "transforms to")
+		(rig["room"] as Node3D).queue_free()
+		player.queue_free()
+		await get_tree().process_frame
 
 ## THE SEVEN SABOTAGES the independent audit required, each of which must
 ## fail if the guard it names is removed.
@@ -1317,8 +1499,11 @@ func _test_a_package_may_decline_every_offer() -> void:
 			Vector3(0, 4, 0), Vector3(0, 6, 14), Vector3(10, 8, 20)]},
 		{"kind": "rail_route", "name": "stub", "points": [
 			Vector3(0, 1, 0), Vector3(0, 1, 0.1)]},
+		# A reservation big enough for the pad that gets built in it --
+		# `radius` is the floor set aside for the mechanism, and 1.0 m
+		# cannot hold a pad reaching 1.70 m from its centre.
 		{"kind": "launch_source", "name": "up", "position": Vector3.ZERO,
-			"radius": 1.0, "target": "ledge"},
+			"radius": 3.0, "target": "ledge"},
 		{"kind": "launch_source", "name": "orphan",
 			"position": Vector3(4, 0, 0), "radius": 1.0,
 			"target": "nowhere"},

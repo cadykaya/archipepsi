@@ -70,13 +70,49 @@ static func consume(root: Node3D, room: Dictionary,
 	# into world coordinates would make a room mean something different
 	# depending on where it was placed. Only the QUERIES move.
 	var to_world := root.global_transform
+	# JUDGE EVERY OFFER AGAINST THE ROOM AS AUTHORED, THEN BUILD.
+	#
+	# These used to validate and construct in one pass, so a rail built
+	# early became geometry the launch validated after it collided with
+	# -- and the hall's arc grazes its own rail beam by 0.35 m. The
+	# verdict then depended on which kind `consume` happened to visit
+	# first: run launches before rails and the launch passes and the rail
+	# might fail instead. An answer that changes with iteration order is
+	# not an answer.
+	#
+	# An offer is a claim about the ROOM. What another package chose to
+	# build in it is not part of that claim, so nothing is constructed
+	# until every verdict is in.
+	var plan: Array = []
 	if _wants("rail_route", only):
-		_rails(root, room, space, to_world, built, declined)
+		_rails(room, space, to_world, plan, declined)
 	if _wants("launch_source", only):
-		_launches(root, room, space, to_world, built, declined)
+		_launches(room, space, to_world, plan, declined)
 	if _wants("grapple_point", only):
 		_grapples(room, space, to_world, built, declined)
+	for item: Variant in plan:
+		_construct(root, item as Dictionary, built)
 	return {"built": built, "declined": declined, "refused": false}
+
+## Build one approved offer. Separated from the judging above so that no
+## offer is ever measured against something another offer put there.
+static func _construct(root: Node3D, item: Dictionary,
+		built: Array) -> void:
+	match str(item["kind"]):
+		"rail_route":
+			var rail: RailPath = item["rail"]
+			var made := AffordanceFeatures.build_rail(root, rail)
+			built.append({"name": item["name"], "kind": "rail_route",
+					"rail": rail, "lanes": made["lanes"],
+					"beams": made["beams"]})
+		"launch_source":
+			var pad := AffordanceNodes.LaunchPad.new()
+			pad.position = item["source"]
+			pad.target = item["target"]
+			root.add_child(pad)
+			built.append({"name": item["name"],
+					"kind": "launch_source", "pad": pad,
+					"target": item["target"]})
 
 ## How much clear air a grapple point needs under it. A player's own
 ## height plus their reach: whatever the verb turns out to be, something
@@ -199,9 +235,9 @@ static func _wants(kind: String, only: Array) -> bool:
 ## it between them. And what has to fit is the BEAM, which is 0.35 m
 ## thick: asking the player's own capsule refuses routes a beam threads
 ## and passes routes it does not.
-static func _rails(root: Node3D, room: Dictionary,
+static func _rails(room: Dictionary,
 		space: PhysicsDirectSpaceState3D, to_world: Transform3D,
-		built: Array, declined: Array) -> void:
+		plan: Array, declined: Array) -> void:
 	for offer: Variant in RoomContract.offers_of(room, "rail_route"):
 		var entry: Dictionary = offer
 		var named := str(entry.get("name", "rail"))
@@ -234,16 +270,14 @@ static func _rails(root: Node3D, room: Dictionary,
 			declined.append({"name": named, "kind": "rail_route",
 					"why": "; ".join(refusals)})
 			continue
-		var made := AffordanceFeatures.build_rail(root, rail)
-		built.append({"name": named, "kind": "rail_route", "rail": rail,
-				"lanes": made["lanes"], "beams": made["beams"]})
+		plan.append({"kind": "rail_route", "name": named, "rail": rail})
 
 ## A launch pad is a PAIR: a source to fire from and a target to land in.
 ## An unpaired half of either is an offer nobody can act on, and saying so
 ## is more use than building half a traversal.
-static func _launches(root: Node3D, room: Dictionary,
+static func _launches(room: Dictionary,
 		space: PhysicsDirectSpaceState3D, to_world: Transform3D,
-		built: Array, declined: Array) -> void:
+		plan: Array, declined: Array) -> void:
 	var targets := RoomContract.offers_of(room, "launch_target")
 	for offer: Variant in RoomContract.offers_of(room, "launch_source"):
 		var entry: Dictionary = offer
@@ -262,14 +296,10 @@ static func _launches(root: Node3D, room: Dictionary,
 		var target: Vector3 = landing["position"]
 		var refusals := LaunchSolver.violations(source, target,
 				float(landing.get("radius", 0.0)), space, to_world,
-				named)
+				named, float(entry.get("radius", 0.0)))
 		if not refusals.is_empty():
 			declined.append({"name": named, "kind": "launch_source",
 					"why": "; ".join(refusals)})
 			continue
-		var pad := AffordanceNodes.LaunchPad.new()
-		pad.position = source
-		pad.target = target
-		root.add_child(pad)
-		built.append({"name": named, "kind": "launch_source", "pad": pad,
-				"target": target})
+		plan.append({"kind": "launch_source", "name": named,
+				"source": source, "target": target})

@@ -87,6 +87,7 @@ func _run() -> void:
 	await _test_a_traversal_destination_must_hold_a_player()
 	await _test_a_chained_chamber_offers_what_it_offered_at_the_origin()
 	await _test_a_launch_source_must_be_standable()
+	await _test_the_two_collider_counts_measure_different_things()
 	_test_an_approved_shell_is_held_to_the_contract()
 
 	_check(rooms_checked >= 8,
@@ -118,6 +119,9 @@ func _run() -> void:
 ## arrival region can be made deliberately unsafe. Hand-built rather than
 ## instantiated because the point is to vary the ONE thing the ruling is
 ## about, and no authored scene lets me move its own doorway.
+## Where hand-built fixtures stand, clear of every staged room.
+const FIXTURE_ISLAND := Vector3(5000.0, 0.0, 5000.0)
+
 func _slab_room(boxes: Array, entry_at: Vector3, size: Vector3,
 		arrival: Variant) -> Dictionary:
 	var root := Node3D.new()
@@ -130,6 +134,13 @@ func _slab_room(boxes: Array, entry_at: Vector3, size: Vector3,
 		body.add_child(shape)
 		body.position = b[0]
 		root.add_child(body)
+	# FAR FROM EVERYTHING ELSE. Every fixture in this driver is added to
+	# the same tree and therefore the same physics space, so a slab room
+	# built at the origin is measured against whatever else is still
+	# staged there -- a hall wall answered one of these probes. The seam
+	# is transform-correct now, so standing the fixture a kilometre away
+	# costs nothing and cannot be contaminated.
+	root.position = FIXTURE_ISLAND
 	var room := {
 		"root": root,
 		"bounds": AABB(Vector3(-size.x / 2.0, -1.0, 0.0),
@@ -931,6 +942,86 @@ func _test_every_authored_shell_in_the_registry_is_measured() -> void:
 		(result["root"] as Node3D).queue_free()
 		await get_tree().process_frame
 
+## TWO COLLIDER COUNTS, TWO SCOPES, BOTH CORRECT.
+##
+## Art measured 71 for the hall and Production reported 73, and the gap
+## sat unreconciled across three passes. They are not the same question:
+##
+##   * AUTHORED SHELL COLLIDERS -- the `-convcolonly` twins the importer
+##     builds from the `.glb`. This is the shape the artist shipped, and
+##     it is what an art-side gate can see.
+##   * INSTANTIATED CHAMBER COLLIDERS -- everything in the room after
+##     `build_chamber` returns, which additionally includes whatever the
+##     COMPOSER placed in it: cover, activity elements, crates.
+##
+## Forcing them equal would be wrong in both directions -- it would
+## either hide placed content from the room or attribute it to the
+## artist. So each is named, each is asserted, and the difference is
+## required to be exactly the placed content.
+func _test_the_two_collider_counts_measure_different_things() -> void:
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var entry: Dictionary = registry.get_entry(
+			"shell_hall_transit").duplicate(true)
+	entry["review"] = "pass"
+	var private := ContentRegistry.new()
+	private.entries["shell_hall_transit"] = entry
+	var result: Dictionary = ContentInstantiator.build_chamber(
+			_chamber_for(entry), "concrete_facility", private)
+	var root := result["root"] as Node3D
+	add_child(root)
+	await get_tree().physics_frame
+
+	var authored := 0
+	var placed := 0
+	var duplicates := 0
+	var seen: Dictionary = {}
+	for n: Node in root.find_children("*", "CollisionShape3D",
+			true, false):
+		var owner_scene := "<added at runtime>"
+		var walk: Node = n
+		while walk != null:
+			if walk.scene_file_path != "":
+				owner_scene = walk.scene_file_path
+				break
+			walk = walk.get_parent()
+		if owner_scene.ends_with(".glb"):
+			authored += 1
+		else:
+			placed += 1
+			_check(SpaceProbe.is_placed_content(n.get_parent()),
+					"a collider outside the authored mesh is not placed "
+					+ "content either: %s under %s"
+					% [n.name, n.get_parent().name])
+		# KEYED ON THE BODY, NOT THE SHAPE NODE. Every collider the
+		# importer builds is an auto-named `CollisionShape3D` under a
+		# body that carries the authored piece's name, and the geometry
+		# is baked into the shape rather than expressed as a transform --
+		# so a position key says "all 71 are at the origin" and a name
+		# key says "all 71 are called CollisionShape3D". The body's name
+		# is the one thing that identifies the authored piece.
+		var body := n.get_parent()
+		var key := "%s|%s" % [body.get_class(), body.name]
+		if seen.has(key):
+			duplicates += 1
+		seen[key] = true
+
+	print("  hall colliders: authored(shell mesh)=%d placed(composer)=%d "
+			% [authored, placed] + "instantiated(total)=%d"
+			% [authored + placed])
+	_check(authored == 71,
+			"the hall's AUTHORED shell collider count is %d, not the 71 "
+			% authored + "the art lane measures")
+	_check(authored + placed == 73,
+			"the hall's INSTANTIATED chamber collider count is %d, not "
+			% (authored + placed) + "the 73 Production measures")
+	_check(duplicates == 0,
+			"%d colliders share a name and a position; one of the two "
+			% duplicates + "counts was concealing duplicate geometry")
+	root.queue_free()
+	await get_tree().process_frame
+	rooms_checked += 1
+
 ## THE CHAIN THE GAME ACTUALLY BUILDS, not a fixture at the origin.
 ##
 ## `ZoneBuilder` translates every chamber and yaws the ones after a turn,
@@ -1231,12 +1322,27 @@ func _test_every_declared_offer_is_true_against_real_geometry() -> void:
 	add_child(live["root"] as Node3D)
 	await get_tree().physics_frame
 	await get_tree().physics_frame
-	var walked := OfferBinding.validate_zone([{
+	# A CLEAN ROOM REPORTS NOTHING, which is the wrapper's contract: it
+	# returns only chambers with something to say.
+	var quiet := OfferBinding.validate_zone([{
 		"chamber": {"id": "hall"}, "node": live["root"],
 		"build": live}])
+	_check(quiet.is_empty(),
+			"validate_zone reported %d chambers for a room whose offers "
+			% quiet.size() + "all build; it must stay silent when there "
+			+ "is nothing to say")
+	# ... and a room that DOES decline is reached and summarised. An
+	# anchor in the middle of the hall's own machine-free air, 200 m up,
+	# has no ground under it.
+	var noisy: Dictionary = live.duplicate()
+	noisy["offers"] = [{"kind": "grapple_point", "name": "impossible",
+			"position": Vector3(0.0, 200.0, 30.0), "radius": 1.5}]
+	var walked := OfferBinding.validate_zone([{
+		"chamber": {"id": "hall"}, "node": live["root"],
+		"build": noisy}])
 	_check(walked.size() == 1,
-			"validate_zone reported %d chambers for one with declined "
-			% walked.size() + "offers; the Zone-level wrapper is not "
+			"validate_zone reported %d chambers for one with a declined "
+			% walked.size() + "offer; the Zone-level wrapper is not "
 			+ "reaching the room")
 	var line := OfferBinding.summarise("hall",
 			(walked[0] as Dictionary)["verdict"] as Dictionary)
@@ -1250,9 +1356,44 @@ func _test_every_declared_offer_is_true_against_real_geometry() -> void:
 	_check(built_total > 0,
 			"no declared offer was BUILT against real geometry, so a "
 			+ "binding that had stopped measuring would read as green")
-	_check(declined_total > 0,
-			"no declared offer was DECLINED against real geometry, so a "
-			+ "binding that accepted everything would read as green")
+	# THE REFUSING HALF OF THE GUARD. Every declared offer in the library
+	# now builds, which is the outcome the repairs were for -- so the
+	# proof that this binding can still REFUSE has to come from an offer
+	# authored to be false, not from a defect nobody has fixed yet. A
+	# guard that needs the content to stay broken is a guard that argues
+	# against its own repairs.
+	var canary: Dictionary = registry.get_entry(
+			"shell_hall_transit").duplicate(true)
+	canary["review"] = "pass"
+	var canary_reg := ContentRegistry.new()
+	canary_reg.entries["shell_hall_transit"] = canary
+	var subject: Dictionary = ContentInstantiator.build_chamber(
+			_chamber_for(canary), "concrete_facility", canary_reg)
+	subject["offers"] = [
+		{"kind": "grapple_point", "name": "over_nothing",
+			"position": Vector3(0.0, 200.0, 30.0), "radius": 1.5},
+		{"kind": "grapple_point", "name": "in_the_floor",
+			"position": Vector3(0.0, 0.2, 30.0), "radius": 1.5},
+	]
+	add_child(subject["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var refused := OfferBinding.validate(subject["root"] as Node3D,
+			subject, "canary", ["grapple_point"])
+	_check((refused["declined"] as Array).size() == 2
+			and (refused["built"] as Array).is_empty(),
+			"two knowingly false offers measured %d built / %d declined "
+			% [(refused["built"] as Array).size(),
+				(refused["declined"] as Array).size()]
+			+ "against real geometry; a binding that accepted everything "
+			+ "would read as green")
+	probes_expected_to_fail += 1
+	(subject["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+	_check(declined_total == 0,
+			"%d declared offer(s) in the library are false against their "
+			% declined_total + "own geometry; they are evidence for "
+			+ "review and are listed above")
 	rooms_checked += measured
 
 ## WHY a shell was refused, in the reviewer's output.
