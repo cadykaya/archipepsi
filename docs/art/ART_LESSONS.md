@@ -1698,6 +1698,14 @@ grid of downward rays through them. It reproduced Production's finding on
 the old geometry — ramp1 1.63 m, ramp3 1.71 m, ramp2 clean — before
 anything was repaired, and it is stage 5 of `verify_content_pack.sh` now.
 
+**And measuring steps was not enough on its own.** `worst_step` only
+compares neighbouring samples that BOTH found ground, so a flight with a
+tread simply missing sails through it — deleting tread 6 of `ramp1` in
+memory leaves the worst step at 0.85 m and perfectly clean. The tool
+counts samples over the flight's own footprint that find nothing under
+them as well; that same deletion produces 780 of them. A check that
+measures the surface must also check there IS one.
+
 **It also had to be narrowed twice, and both times the check was the
 suspect rather than the geometry.** Sampling every collider in the room
 refused eight Wave 1 flights that were ordinary staircases whose bounding

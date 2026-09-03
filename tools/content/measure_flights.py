@@ -325,18 +325,30 @@ def main(argv):
             x0, x1, z0, z1, _, top = bounds(meshes)
             grid, nx, nz = profile(field, x0, x1, z0, z1, top + 1e-6)
             step, where = worst_step(grid, nx, nz)
+            # A HOLE IS INVISIBLE TO `worst_step`, which only compares
+            # neighbours that BOTH found ground -- so a flight missing a
+            # tread would sail through it. The treads tile their own
+            # footprint by construction (`FLIGHT_OVERLAP` reaches each
+            # one into the next), and this is what holds them to it.
+            holes = sum(1 for v in grid.values() if v is NO_GROUND)
             seen += 1
-            ok = step <= MAX_VERTICAL_STEP + AS_BUILT_SLACK
+            ok = step <= MAX_VERTICAL_STEP + AS_BUILT_SLACK and not holes
             # The TREAD TOPS, not the meshes' vertical extent: a tread
             # hangs below its own top by the soffit, and reporting that
             # as the climb would overstate every flight in the room.
             tops = sorted(max(p[1] for tri in mesh for p in tri)
                           for mesh in meshes)
             print("[flight] %-30s %2d treads  tops %6.2f -> %6.2f m  "
-                  "worst step %5.2f m  %s"
-                  % (tag, len(meshes), tops[0], tops[-1], step,
+                  "worst step %5.2f m  %d hole(s)  %s"
+                  % (tag, len(meshes), tops[0], tops[-1], step, holes,
                      "ok" if ok else "REFUSED"))
-            if not ok:
+            if holes:
+                bad.append(
+                    "%s/%s: %d of %d samples over the flight's own "
+                    "footprint find no tread under them. A staircase with "
+                    "a hole in it is not a staircase."
+                    % (cid, tag, holes, len(grid)))
+            if step > MAX_VERTICAL_STEP + AS_BUILT_SLACK:
                 i, j, di, dj, here, there = where
                 bad.append(
                     "%s/%s: the real surface steps %.2f m between samples "

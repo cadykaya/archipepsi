@@ -54,11 +54,23 @@ the collision hulls' axis-aligned boxes, and a ramp modelled as ONE
 wedge is one box whose top is the high end: the evidence sees a cliff
 wherever the ramp is. Measured on the hall before the fix, the box
 evidence along the west climb returned 0.00 or 11.00 at every sample and
-nothing between. So a climb is built as a chain of wedge sections each
-rising no more than `roomkit.FLIGHT_RISE` (0.9 m) -- collinear, faces
-meeting, visually the same ramp, and now presenting the intermediate
+nothing between. So a climb is built as a chain of sections each rising
+no more than `roomkit.FLIGHT_RISE` (0.9 m), presenting the intermediate
 tops the evidence needs. Production's 23 m proof is thirty stacked slabs
 for precisely this reason.
+
+**CORRECTED AT `67add07`, and the correction is the important half.**
+Those sections were sloped WEDGES until Production's capsule audit
+refused two of the hall's three climbs. A wedge slopes along a *Blender*
+axis and this library plans in *Godot* coordinates, where a run declared
+`"y"` is Godot z -- minus Blender y -- so every section of a `"y"` flight
+sloped against the direction its own chain climbed. The AABBs were
+exactly the ones the flood wanted; the surface underfoot sawtoothed. The
+sections are FLAT TREADS now, because a box has no slope and therefore no
+handedness. **The lesson is not about wedges: a helper written to satisfy
+a checker will satisfy the checker, and `FLIGHT_RISE` had been reasoned
+about entirely in terms of what the evidence could see.** See L-95, and
+`tools/content/measure_flights.py`, which measures the triangles.
 
 **3. Does the 32-Surface cap materially constrain the slate?** **No.**
 Nothing in the library is near it. The hall itself needs 14 surfaces,
