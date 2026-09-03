@@ -87,7 +87,8 @@ plenum/hall/span brief are done and measured:
 
 * the three plenum collars ship as **12 convex sectors each** (117 -> 150
   colliders, same 1656 triangles). `roomcollision.assert_convex` now
-  refuses ANY non-convex collider at build time, in every shell — a
+  refuses ANY non-convex collider at build time, in all six builders
+  that author collision — a
   `-convcolonly` node imports as the convex HULL of its vertices, so an
   annulus was shipping as a filled disc.
 * every collar destination is on the band and none on the machine axis:

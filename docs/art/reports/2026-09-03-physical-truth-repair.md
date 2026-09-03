@@ -42,8 +42,9 @@ draws was filled, edge to edge, in every build.
 
 Each collar is now **twelve convex trapezoidal prisms** sharing the
 tube's own angles, and `roomcollision.assert_convex` refuses any collider
-whose own mesh has a vertex outside one of its own face planes — for
-every shell in the pack, at build time, from now on.
+whose own mesh has a vertex outside one of its own face planes, at build
+time, in all six builders that author collision — which is every shell
+in the pack that has any.
 
 | | before | after |
 | --- | --- | --- |
@@ -380,6 +381,24 @@ ran in is not regenerable. It merges now, like its two siblings.
 
 24 offers measured, 0 refused, 2 raised.
 
+| check | result |
+| --- | --- |
+| `tools/check_art_current.sh` | **PASS** — every generated asset rebuilds byte-identical |
+| `check_docs_metrics.py` | **PASS — 245 / 245** |
+| `verify_manifest.py` (Production's `ContentManifest`) | **PASS** — 4 declared handoff changes, no other drift |
+| `content_registry.gd` (Production's) | **PASS** — 21 entries load, the four Wave 1 shells held PENDING |
+| `verify_collision.gd` | 12 shells, **0 needing attention** |
+| Scene / manifest marker parity | **PASS** — 160 markers, 12 scenes, 0 disagreements |
+| Flight surfaces, 0.10 m grid | 19 flights, **0 refused** |
+| `measure_offers.py` | **PASS** — 24 offers, 0 refused, 2 raised |
+| `replay_audited.py` | **PASS** — 12 audited findings all still found |
+| `sabotage_offers.py` | **PASS** — 15 of 15 negative controls behaved |
+| `preflight_shells.py` | **0 structural refusals**, 37 overhangs (context under C(ii)) |
+| `diff_shell_glb.py` vs `accdd2e` | 22 of 23 shells byte-identical, 1 collision-only |
+
+`check_art_current.sh` caught something on its first run, which is the
+reason it exists: `hall_ov_rail.glb` was stale. See below.
+
 ---
 
 ## What did not change
@@ -397,9 +416,39 @@ form are all exactly as approved. **The yard was not touched at all** —
 Vera found its rail and grapples physically truthful, and nothing here
 disagrees.
 
-No shell `.glb` changed except the plenum's, and that one changed only
-in its collision node count. Nothing was promoted; all four Wave 1 rooms
-remain `review: "pending"`.
+Proved rather than asserted — `diff_shell_glb.py` against `accdd2e`
+reads both revisions of all 23 shell `.glb` files and says which of the
+two possible changes happened to each:
+
+```
+[diff] COLL shell_plenum_helix.glb   visible mesh and textures identical,
+                                     150 colliders (+33), +31092 bytes
+[diff] SAME  the other 22, byte-identical, not rebuilt
+[diff] 23 file(s), 0 malformed
+```
+
+One file moved, and only its collision. The hall, the span, the yard and
+all eight P2 shells are byte-identical. Nothing was promoted; all four
+Wave 1 rooms remain `review: "pending"`.
+
+---
+
+## Files changed
+
+**Source** — `brushkit.py` (`annulus_sector`, and `tube` recording what
+it is), `roomcollision.py` (`assert_convex`, `_annulus_twins`,
+`mesh_volume`, `_assert_annulus_pieces`), `build_plenum.py`,
+`build_hall.py`, `build_span.py`, `build_hall_overlay.py`,
+`verify_manifest.py`, `verify_content_pack.sh`, `sabotage_checks.sh`,
+plus new `measure_offers.py`, `replay_audited.py`, `sabotage_offers.py`.
+
+**Derived** — `batch039/shells/manifest.json`,
+`batch040/shells/manifest.json`, `shell_plenum_helix.glb`,
+`hall_ov_rail.glb`, the content pack (`authored_art.json`,
+`SCENE_PLAN.json`, the plenum's `.glb` and `.tscn`).
+
+**Documents** — this report, `ART_LESSONS.md` (L-98),
+`AGENT_FRONTIER.md`.
 
 ---
 

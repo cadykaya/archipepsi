@@ -1829,8 +1829,8 @@ in the art and true in the build, which is the one combination no
 existing check could see.
 
 `roomcollision.assert_convex` now refuses any collider whose own mesh has
-a vertex outside one of its own face planes, at build time, for every
-shell. The collars are built as twelve convex trapezoidal prisms sharing
+a vertex outside one of its own face planes, at build time, in all six
+builders that author collision. The collars are built as twelve convex trapezoidal prisms sharing
 the tube's own angles, and `_assert_annulus_pieces` proves the pieces
 reassemble the ring it replaced — same bounding box, same total volume to
 1 mm³ — so the decomposition cannot quietly become a different shape.
