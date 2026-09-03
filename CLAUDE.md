@@ -25,4 +25,7 @@ Never weaken a test merely to pass it. Generated artifacts are regenerated from 
 
 When the frontier changes, update `docs/AGENT_FRONTIER.md` immediately and keep `NEXT_STEPS.md` as the detailed historical/project handoff.
 
+## Art lane: sign the reports
+Every end-of-work Markdown the art lane writes -- the reports under `docs/art/reports/`, review-package READMEs, anything meant to be shared -- is signed **Arty** at the top, under the title. The art lane has a name; a report that arrives unsigned reads like it came from nowhere.
+
 <!-- Token-discipline bootstrap authored by ChatGPT / GPT-5.6 Sol, OpenAI. -->
