@@ -214,6 +214,10 @@ pylons.
 
 ## Two findings raised and NOT repaired — these need the owner
 
+> **Superseded the same day.** The owner ruled: keep both launches, move both pads the least that clears them. Both are repaired in
+> `docs/art/reports/2026-09-03-launch-pads.md`, which also corrects the 0.08 m below — that is where the body first touches, and the
+> flights went 0.643 m and 0.806 m deep at their worst. Left standing here as the record of what was raised.
+
 The measurement found two more, in rooms whose form has passed review.
 Neither is in Vera's audit and neither is one of the seven items.
 

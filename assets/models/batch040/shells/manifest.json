@@ -854,7 +854,7 @@
       22.0,
       90.0
     ],
-    "launch_span": 22.5,
+    "launch_span": 23.85,
     "offers": [
       {
         "kind": "rail_route",
@@ -891,8 +891,8 @@
         "kind": "launch_source",
         "name": "launch_basin",
         "position": [
+          -7.0,
           0.0,
-          0.5,
           45.0
         ],
         "radius": 3.0,

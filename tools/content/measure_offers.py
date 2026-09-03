@@ -122,31 +122,29 @@ RAIL_MARGIN = 0.15
 #: Launch arcs this branch has MEASURED, RAISED and deliberately NOT
 #: repaired, with the colliders each one fails against.
 #:
-#: THIS IS NOT A SILENCER, AND IT IS NOT A SKIP. An entry here must
-#: still be found, and found to be exactly this, or the gate fails. A
-#: listed arc that comes back clean fails it too: the ledger has gone
-#: stale and somebody needs to remove the line rather than inherit it.
-#: So the only state that passes is the state that was raised.
+#: EMPTY, AND THAT IS THE POINT OF KEEPING IT. It carried two entries
+#: for one day: the hall's and the span's flights each clipped the
+#: underside of the platform they land on, by 0.08 m, and neither was in
+#: the audit that repair answered. The owner's ruling was to keep both
+#: launches and move both pads the least that clears them, so both were
+#: repaired and both lines came out. A ledger nobody empties is a list
+#: of things nobody is going to fix.
 #:
-#: WHY THEY ARE HERE. Both are the same shape -- the flight clips the
-#: underside of the very platform it lands on, by 0.08 m, one sample
-#: before it clears the edge:
+#: THIS IS NOT A SILENCER, AND IT IS NOT A SKIP. An entry must still be
+#: found, and found to be exactly what it says, or the gate fails. A
+#: listed arc that comes back clean fails it too -- that is the state
+#: this file just went through, and taking the lines out is what a
+#: repair looks like from here. A listed offer that no longer exists
+#: fails it as well, because a finding waiting on a ruling has to still
+#: have a subject.
 #:
-#:   hall  the pad is under the east gantry's west edge, so the player
-#:         goes up past a walkway they are aiming for the top of
-#:   span  the pad is directly under a 7 m deck, and the target is that
-#:         deck's top face
-#:
-#: Neither was in the audit this repair answers, and neither is one of
-#: its seven items. Both are real, and repairing either means moving a
-#: launch pad in a room whose form the owner has passed -- for the span,
-#: moving the pad out from under the deck changes how the basin gets
-#: back up, which is a route decision and not an art one. Raised in
-#: `docs/art/reports/`, and the owner rules.
-RAISED = {
-    ("shell_hall_transit", "launch_basin"): ("hl_east_gantry-convcolonly",),
-    ("shell_span_basin", "launch_basin"): ("sp_deck-convcolonly",),
-}
+#: What belongs here: a measured finding that is REAL, outside the brief
+#: being worked, and whose repair is somebody else's call -- moving art
+#: the owner has passed, or a decision about a route. Not a finding that
+#: is merely inconvenient. `tools/content/sabotage_offers.py` proves all
+#: four behaviours against a finding it synthesises, so the mechanism
+#: stays tested while the ledger is empty.
+RAISED = {}
 
 
 # --------------------------------------------------------------------

@@ -111,6 +111,29 @@ def with_audited_offers(only=None):
     return fake
 
 
+#: The finding the ledger cases are proved against. The span's launch
+#: pad used to sit at x = 0, under a 7 m deck, aimed at the top of that
+#: same deck -- so the flight went through `sp_deck`. It is repaired,
+#: `RAISED` is empty, and the mechanism still has to be tested: these
+#: cases put THAT pad back and drive the ledger against a finding that
+#: is real, reproducible and no longer in the pack.
+SPAN_LAUNCH = ("shell_span_basin", "launch_basin")
+SPAN_BLAME = ("sp_deck-convcolonly",)
+
+
+def with_old_span_pad():
+    """Today's manifests, with the span's pre-repair launch pad."""
+    live = M.manifests()
+
+    def fake():
+        out = json.loads(json.dumps(live))
+        for off in out["shell_span_basin"]["offers"]:
+            if off["name"] == "launch_basin":
+                off["position"] = [0.0, 0.5, 45.0]
+        return out
+    return fake
+
+
 def main():
     print("sabotage-offers: the gate, against the declarations it replaced")
     for cid, label in (("shell_hall_transit", "hall rail through the gantry "
@@ -129,22 +152,31 @@ def main():
     case("the whole shipped pack", gate(), "pass")
 
     print()
-    print("sabotage-offers: the raised ledger cannot rot")
-    with patched(RAISED={}):
-        case("an emptied ledger stops excusing anything",
-             gate("hall", "span"), "fail")
-    with patched(RAISED=with_ledger(("shell_hall_transit", "launch_basin"),
-                                    ("hl_roof-convcolonly",))):
+    print("sabotage-offers: the raised ledger, against a real finding")
+    if M.RAISED:
+        BAD.append("RAISED is not empty")
+        print("  %-54s %s" % ("the shipped ledger is empty", "NOT EMPTY"))
+        print("      %s" % sorted(M.RAISED))
+    else:
+        CASES.append("the shipped ledger is empty")
+        print("  %-54s %s" % ("the shipped ledger is empty", "clean"))
+    with patched(manifests=with_old_span_pad(), RAISED={}):
+        case("an unlisted finding is refused", gate("span"), "fail")
+    with patched(manifests=with_old_span_pad(),
+                 RAISED={SPAN_LAUNCH: SPAN_BLAME}):
+        case("the same finding, listed exactly, is excused",
+             gate("span"), "pass")
+    with patched(manifests=with_old_span_pad(),
+                 RAISED=with_ledger(SPAN_LAUNCH, ("sp_roof-convcolonly",))):
         case("a ledger entry blaming the wrong collider",
-             gate("hall", "span"), "fail", "has CHANGED")
-    with patched(RAISED=with_ledger(("shell_yard_gantry", "launch_west"),
-                                    ("yd_crane-convcolonly",))):
+             gate("span"), "fail", "has CHANGED")
+    with patched(RAISED=with_ledger(SPAN_LAUNCH, SPAN_BLAME)):
         case("a ledger entry for an offer that is fine",
-             gate("hall", "span", "yard"), "fail", "has CHANGED")
-    with patched(RAISED=with_ledger(("shell_yard_gantry", "launch_nowhere"),
-                                    ("yd_crane-convcolonly",))):
+             gate("span"), "fail", "has CHANGED")
+    with patched(RAISED=with_ledger(("shell_span_basin", "launch_nowhere"),
+                                    SPAN_BLAME)):
         case("a ledger entry whose offer no longer exists",
-             gate("hall", "span", "yard"), "fail", "no longer has a subject")
+             gate("span"), "fail", "no longer has a subject")
 
     print()
     print("sabotage-offers: the replay of the audited pack")

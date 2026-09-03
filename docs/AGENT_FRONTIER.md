@@ -112,14 +112,24 @@ and FAILS unless every audited finding still comes back.
 `tools/content/sabotage_offers.py` is their negative-control suite and
 runs from `tools/sabotage_checks.sh`.
 
-**TWO FINDINGS ARE RAISED AND NOT REPAIRED, AND THEY NEED THE OWNER.**
-The hall's and span's launch ARCS clip the underside of the very
-platform they land on, by 0.08 m. Neither was in the audit this repair
-answers and neither is one of its items; repairing either means moving a
-launch pad in a room whose form the owner has passed. They are carried
-in `measure_offers.RAISED`, which is not a skip — the gate fails if
-either finding changes, disappears, or loses its offer. Report:
-`docs/art/reports/2026-09-03-physical-truth-repair.md`.
+**AND THE TWO LAUNCH PADS, on the owner's ruling of the same day:** keep
+both launches, move both pads the least that clears them. The hall's and
+the span's flights each went through the platform they land on — 0.08 m
+at first contact, 0.643 m and 0.806 m at their worst. An arc's shape is
+fixed by its two heights, so neither could be dodged along z: the hall's
+pad goes **3.00 m west to (9, 0, 18)** and the span's **7.02 m to
+(−7, 0, 45)**, out from under the deck, and onto the basin's face. Both
+are the nearest round metre that leaves a flying body the 0.325 m a rail
+beam must keep. Targets, landings, routes and radii unchanged, and
+`measure_offers.RAISED` is empty again. Reports:
+`docs/art/reports/2026-09-03-physical-truth-repair.md` and
+`docs/art/reports/2026-09-03-launch-pads.md`.
+
+**One question is open and is PRODUCTION's, not the owner's:** what a
+`launch_source`'s `radius` means to the solver. If it launches from the
+declared point, both pads are correct; if from anywhere in the 3 m disc,
+both need a much larger move (hall x ≤ 6.8, span x = −9.5). Not guessed
+at.
 
 **One thing needs PRODUCTION, not the owner: req 40 in
 `docs/art/ART_FRONTIER.md`.** `ShellValidator._check_segment` applies the

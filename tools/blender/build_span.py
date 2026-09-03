@@ -293,7 +293,28 @@ def main():
         flat = math.hypot(b[0] - a[0], b[2] - a[2])
         if math.degrees(math.atan2(abs(b[1] - a[1]), flat)) > 75.0:
             raise AssertionError("%s: rail pitch exceeds 75" % cid)
-    src = (0.0, 0.5, D / 2.0)
+    # OUT FROM UNDER THE DECK, AND ONTO THE BASIN'S FACE. The pad was
+    # at x = 0 -- directly beneath a 7 m deck -- aimed at the top of
+    # that same deck, so the flight had to pass through it and did:
+    # `sp_deck` clipped at (0.00, 11.38, 49.95), head 0.08 m into the
+    # underside. There is no smaller fix than a lateral one. The deck
+    # runs the whole 90 m, so no z helps; the arc's shape is fixed by
+    # its two heights, so the body straddles the deck slab between 27 %
+    # and 38 % of the flight wherever the pad is; and at 38 % the arc is
+    # 62 % of the way in from the pad, which puts the least |x| that
+    # clears the deck edge (3.5 plus a body radius) at 6.5 m out.
+    #
+    # WEST, because east is where `cover_1` is: the 3 x 5 m block at
+    # (8, 44) starts at x 6.5 and a body does not fit between it and the
+    # deck. 7.0 rather than 6.5 for the same reason as the hall's pad --
+    # 6.5 leaves 0.108 m of in-flight clearance and 7.0 leaves 0.329,
+    # against the 0.325 a rail beam must keep.
+    #
+    # y 0.0 rather than 0.5: a launch source is a foot-contact point
+    # like the landing it aims at, and half a metre of nothing under the
+    # player was never a stance. The hall's pad has always been on its
+    # basin's face and the plenum's is now.
+    src = (-7.0, 0.0, D / 2.0)
     dst = (0.0, DECK_Y, D * 0.7)
     span = math.dist(src, dst)
     if not 0.5 <= span <= 80.0:

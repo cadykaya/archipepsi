@@ -261,12 +261,27 @@ def main(argv):
                   "every audited finding before a builder changed, and "
                   "held by `tools/content/replay_audited.py`, which "
                   "replays the pre-repair pack out of git and fails "
-                  "unless all twelve findings still come back. TWO "
-                  "FINDINGS ARE RAISED AND NOT REPAIRED and are waiting "
-                  "on the owner: the hall's and the span's launch ARCS "
-                  "each clip the underside of the platform they land on "
-                  "by 0.08 m. Both are carried in `measure_offers.RAISED`"
-                  ", which fails if either changes or disappears")
+                  "unless all twelve findings still come back. (6) AND "
+                  "THE TWO LAUNCH PADS, on the owner's ruling of the "
+                  "same day: keep both launches, move both pads the "
+                  "least that clears them. The measurement found the "
+                  "hall's and the span's flights each clipping the "
+                  "underside of the platform they land on by 0.08 m -- "
+                  "the hall's pad sat a metre off the east gantry's west "
+                  "edge and inside its z range, the span's sat directly "
+                  "beneath a 7 m deck aimed at the top of that same "
+                  "deck. An arc's shape is fixed by its two heights, so "
+                  "neither could be dodged along z: the hall's pad goes "
+                  "3.00 m west to (9, 0, 18) and the span's 7.02 m to "
+                  "(-7, 0, 45), west because `cover_1` is in the way to "
+                  "the east, and onto the basin's face because a launch "
+                  "source is a foot-contact point like the landing it "
+                  "aims at. Both are the nearest round metre that leaves "
+                  "a body in flight the 0.325 m a rail beam must keep --"
+                  " 0.363 and 0.329 -- rather than the 2.20 m and 6.52 m "
+                  "at which they merely stop touching. Targets, "
+                  "landings, routes and radii are unchanged, and "
+                  "`measure_offers.RAISED` is empty again")
 
         DECLARED_HANDOFF = {}
         for _cid, _fields, _why in (

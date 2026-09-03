@@ -565,7 +565,29 @@ def main():
     # is described in the review package instead.
     rail = _rail_points()
     _assert_rail(rail)
-    src = (12.0, 0.0, 18.0)
+    # THE PAD MOVED WEST, THE LANDING DID NOT. At x = 12 the pad sat a
+    # metre off the east gantry's west edge (x 13..19) and inside its z
+    # range, so the player rose past a walkway they were aiming for the
+    # TOP of: the flight clipped `hl_east_gantry` at (13.50, 18.78,
+    # 22.50), head 0.08 m into the underside, one sample before it
+    # cleared the edge. The launch itself is unchanged -- same target,
+    # same landing on the gantry.
+    #
+    # THE ARC'S SHAPE IS FIXED BY ITS TWO HEIGHTS, so the window is not
+    # something a pad can dodge by moving along z. `LaunchSolver` puts
+    # the apex 3.5 m over the higher end, which makes the body straddle
+    # the gantry's slab between 37 % and 45 % of the flight whatever the
+    # plan positions are; the only question is where the arc IS at that
+    # moment. Clearing to the south instead would need z <= 3.7, a 14 m
+    # move, because the gantry runs z 16..38.
+    #
+    # 9.0 rather than 9.8, which is where it stops touching. Measured
+    # in-flight body clearance against the gantry: 9.8 gives 0.010 m,
+    # 9.5 gives 0.148, 9.0 gives 0.363 -- and 0.325 is what a rail beam
+    # is required to keep in this pack, so this is the nearest round
+    # metre that holds a body to the same standard as a rail. A 1 cm
+    # margin is the same coin toss in a different place.
+    src = (9.0, 0.0, 18.0)
     dst = (16.0, Y_MID, 30.0)
     span = math.dist(src, dst)
     if not 0.5 <= span <= 80.0:
