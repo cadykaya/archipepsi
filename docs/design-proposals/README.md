@@ -33,6 +33,6 @@ Where those two documents state an architectural law, every proposal inherits it
 | 00 — Standard | Complete |
 | 01 — Reliable Core | **Complete** — ~33.7k words, audited, 142/142 authority tests traced |
 | 02 — Physics Is The Game | **Complete** — ~23k words, audited, 142/142 authority tests traced |
-| 03 — The Dungeon Is One Machine | Not started |
+| 03 — The Dungeon Is One Machine | **Complete** — ~16.5k words, audited, 142/142 authority tests traced |
 | 04 — Epsilon Is The Content | Not started |
 | 05 — Status As Grammar | Not started |
