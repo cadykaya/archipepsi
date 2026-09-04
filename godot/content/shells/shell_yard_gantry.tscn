@@ -1,0 +1,37 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://content/shells/shell_yard_gantry.glb" id="1_7j5jj"]
+
+[node name="shell_yard_gantry" type="Node3D"]
+
+[node name="Mesh" type="Node3D" parent="." instance=ExtResource("1_7j5jj")]
+
+[node name="entry_to_middle_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40.4, 0, 26)
+
+[node name="entry_to_middle_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 26)
+
+[node name="middle_to_exit_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 26)
+
+[node name="middle_to_exit_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40.4, 0, 26)
+
+[node name="floor_to_catwalk_w_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -37, 0, 5.5)
+
+[node name="floor_to_catwalk_w_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40.4, 8, 3.5)
+
+[node name="floor_to_catwalk_e_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 37, 0, 46.5)
+
+[node name="floor_to_catwalk_e_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40.4, 8, 48.5)
+
+[node name="catwalk_s_to_w_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40.4, 8, 1.6)
+
+[node name="catwalk_s_to_w_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40.4, 8, 26)

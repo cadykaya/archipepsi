@@ -1,0 +1,57 @@
+{
+  "prop_column_stump": {
+    "anchor": "floor",
+    "path": "batch013/dressing/prop_column_stump.glb",
+    "size": [
+      1.146,
+      1.146,
+      1.2
+    ],
+    "texel_density": null,
+    "triangles": 140
+  },
+  "prop_root_fall": {
+    "anchor": "ceiling",
+    "path": "batch013/dressing/prop_root_fall.glb",
+    "size": [
+      0.259,
+      0.259,
+      1.039
+    ],
+    "texel_density": null,
+    "triangles": 112
+  },
+  "prop_sconce": {
+    "anchor": "wall",
+    "path": "batch013/dressing/prop_sconce.glb",
+    "size": [
+      0.24,
+      0.38,
+      0.49
+    ],
+    "texel_density": null,
+    "triangles": 84
+  },
+  "prop_sconce_flame": {
+    "anchor": "centre",
+    "path": "batch013/dressing/prop_sconce_flame.glb",
+    "size": [
+      0.221,
+      0.194,
+      0.217
+    ],
+    "texel_density": null,
+    "triangles": 112
+  },
+  "prop_transit_sign": {
+    "anchor": "ceiling",
+    "path": "batch013/dressing/prop_transit_sign.glb",
+    "size": [
+      1.62,
+      0.16,
+      0.692
+    ],
+    "texel_density": null,
+    "triangles": 96
+  }
+}

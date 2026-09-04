@@ -1,0 +1,738 @@
+{
+  "shell_corner_left": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -3.0,
+        -1.0,
+        0.0
+      ],
+      [
+        6.0,
+        4.6,
+        6.0
+      ]
+    ],
+    "check_anchor": null,
+    "colliders": 10,
+    "enemy_anchors": [],
+    "exit_offset": [
+      3.4,
+      0.0,
+      3.0
+    ],
+    "exit_yaw": 90.0,
+    "interior": [
+      6.0,
+      3.6,
+      6.0
+    ],
+    "marker": "form",
+    "path": "batch019/shells/shell_corner_left.glb",
+    "size": [
+      6.8,
+      6.8,
+      4.5
+    ],
+    "size_godot": [
+      6.8,
+      4.5,
+      6.8
+    ],
+    "sockets": [
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "entry",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "surface_id": "floor",
+        "width": 2.4,
+        "yaw": 180.0
+      },
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "exit",
+        "position": [
+          3.4,
+          0.0,
+          3.0
+        ],
+        "surface_id": "floor",
+        "width": 2.4,
+        "yaw": 90.0
+      }
+    ],
+    "surfaces": [
+      {
+        "center": [
+          0.0,
+          0.0,
+          3.0
+        ],
+        "extent": [
+          6.0,
+          6.0
+        ],
+        "name": "floor"
+      }
+    ],
+    "texel_density": 32.0,
+    "traversal": [],
+    "triangles": 216,
+    "turn": 1,
+    "volumes": [
+      {
+        "center": [
+          0.0,
+          1.0,
+          1.6
+        ],
+        "kind": "player_entry",
+        "name": "arrival",
+        "size": [
+          2.4,
+          2.0,
+          2.0
+        ]
+      }
+    ]
+  },
+  "shell_corner_right": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -3.0,
+        -1.0,
+        0.0
+      ],
+      [
+        6.0,
+        4.6,
+        6.0
+      ]
+    ],
+    "check_anchor": null,
+    "colliders": 10,
+    "enemy_anchors": [],
+    "exit_offset": [
+      -3.4,
+      0.0,
+      3.0
+    ],
+    "exit_yaw": -90.0,
+    "interior": [
+      6.0,
+      3.6,
+      6.0
+    ],
+    "marker": "form",
+    "path": "batch019/shells/shell_corner_right.glb",
+    "size": [
+      6.8,
+      6.8,
+      4.5
+    ],
+    "size_godot": [
+      6.8,
+      4.5,
+      6.8
+    ],
+    "sockets": [
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "entry",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "surface_id": "floor",
+        "width": 2.4,
+        "yaw": 180.0
+      },
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "exit",
+        "position": [
+          -3.4,
+          0.0,
+          3.0
+        ],
+        "surface_id": "floor",
+        "width": 2.4,
+        "yaw": -90.0
+      }
+    ],
+    "surfaces": [
+      {
+        "center": [
+          0.0,
+          0.0,
+          3.0
+        ],
+        "extent": [
+          6.0,
+          6.0
+        ],
+        "name": "floor"
+      }
+    ],
+    "texel_density": 32.0,
+    "traversal": [],
+    "triangles": 216,
+    "turn": -1,
+    "volumes": [
+      {
+        "center": [
+          0.0,
+          1.0,
+          1.6
+        ],
+        "kind": "player_entry",
+        "name": "arrival",
+        "size": [
+          2.4,
+          2.0,
+          2.0
+        ]
+      }
+    ]
+  },
+  "shell_treasure_cache": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -4.0,
+        -1.0,
+        0.0
+      ],
+      [
+        8.0,
+        5.5,
+        8.0
+      ]
+    ],
+    "ceiling": "flat",
+    "check_anchor": [
+      0.0,
+      1.0,
+      4.0
+    ],
+    "colliders": 16,
+    "enemy_anchors": [],
+    "exit_offset": [
+      0.0,
+      0.0,
+      8.0
+    ],
+    "interior": [
+      8.0,
+      4.5,
+      8.0
+    ],
+    "objective": [
+      "reach_reward"
+    ],
+    "path": "batch019/shells/shell_treasure_cache.glb",
+    "plinth": "pallet",
+    "shelf_depth": 0.55,
+    "size": [
+      8.8,
+      8.8,
+      5.4
+    ],
+    "size_godot": [
+      8.8,
+      5.4,
+      8.8
+    ],
+    "sockets": [
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "entry",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "surface_id": "floor",
+        "width": 2.4,
+        "yaw": 180.0
+      },
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "exit",
+        "position": [
+          0.0,
+          0.0,
+          8.0
+        ],
+        "surface_id": "floor",
+        "width": 2.4,
+        "yaw": 0.0
+      }
+    ],
+    "story": "stored",
+    "surface_probe": [
+      {
+        "declared": 0.0,
+        "grazing": true,
+        "measured": 0.4,
+        "of": 9,
+        "samples": 1,
+        "surface": "floor"
+      }
+    ],
+    "surfaces": [
+      {
+        "center": [
+          0.0,
+          0.0,
+          4.0
+        ],
+        "extent": [
+          8.0,
+          8.0
+        ],
+        "name": "floor"
+      },
+      {
+        "center": [
+          0.0,
+          0.8,
+          4.0
+        ],
+        "extent": [
+          2.2,
+          2.2
+        ],
+        "name": "step_high"
+      }
+    ],
+    "texel_density": 32.0,
+    "traversal": [
+      {
+        "end": [
+          0.0,
+          0.8,
+          2.9
+        ],
+        "kind": "rise",
+        "mandatory": false,
+        "name": "floor_to_step_high",
+        "start": [
+          0.0,
+          0.0,
+          2.0
+        ]
+      }
+    ],
+    "triangles": 456,
+    "volumes": [
+      {
+        "center": [
+          0.0,
+          0.4,
+          4.0
+        ],
+        "kind": "no_build",
+        "name": "plinth",
+        "size": [
+          3.0,
+          0.8,
+          3.0
+        ]
+      },
+      {
+        "center": [
+          0.0,
+          1.0,
+          1.6
+        ],
+        "kind": "player_entry",
+        "name": "arrival",
+        "size": [
+          2.4,
+          2.0,
+          2.0
+        ]
+      },
+      {
+        "center": [
+          0.0,
+          1.4,
+          4.0
+        ],
+        "kind": "objective",
+        "name": "reward",
+        "size": [
+          2.2,
+          1.2,
+          2.2
+        ]
+      }
+    ]
+  },
+  "shell_treasure_coffer": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -4.0,
+        -1.0,
+        0.0
+      ],
+      [
+        8.0,
+        5.5,
+        8.0
+      ]
+    ],
+    "ceiling": "coffer",
+    "check_anchor": [
+      0.0,
+      1.0,
+      4.0
+    ],
+    "coffer_depth": 0.9,
+    "colliders": 20,
+    "enemy_anchors": [],
+    "exit_offset": [
+      0.0,
+      0.0,
+      8.0
+    ],
+    "interior": [
+      8.0,
+      4.5,
+      8.0
+    ],
+    "objective": [
+      "reach_reward"
+    ],
+    "path": "batch019/shells/shell_treasure_coffer.glb",
+    "plinth": "riser",
+    "size": [
+      8.8,
+      8.8,
+      6.3
+    ],
+    "size_godot": [
+      8.8,
+      6.3,
+      8.8
+    ],
+    "sockets": [
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "entry",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "surface_id": "floor",
+        "width": 2.4,
+        "yaw": 180.0
+      },
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "exit",
+        "position": [
+          0.0,
+          0.0,
+          8.0
+        ],
+        "surface_id": "floor",
+        "width": 2.4,
+        "yaw": 0.0
+      }
+    ],
+    "story": "displayed",
+    "surface_probe": [
+      {
+        "declared": 0.0,
+        "grazing": true,
+        "measured": 0.4,
+        "of": 9,
+        "samples": 1,
+        "surface": "floor"
+      }
+    ],
+    "surfaces": [
+      {
+        "center": [
+          0.0,
+          0.0,
+          4.0
+        ],
+        "extent": [
+          8.0,
+          8.0
+        ],
+        "name": "floor"
+      },
+      {
+        "center": [
+          0.0,
+          0.8,
+          4.0
+        ],
+        "extent": [
+          2.2,
+          2.2
+        ],
+        "name": "step_high"
+      }
+    ],
+    "texel_density": 32.0,
+    "traversal": [
+      {
+        "end": [
+          0.0,
+          0.8,
+          2.9
+        ],
+        "kind": "rise",
+        "mandatory": false,
+        "name": "floor_to_step_high",
+        "start": [
+          0.0,
+          0.0,
+          2.0
+        ]
+      }
+    ],
+    "triangles": 384,
+    "volumes": [
+      {
+        "center": [
+          0.0,
+          0.4,
+          4.0
+        ],
+        "kind": "no_build",
+        "name": "plinth",
+        "size": [
+          3.0,
+          0.8,
+          3.0
+        ]
+      },
+      {
+        "center": [
+          0.0,
+          1.0,
+          1.6
+        ],
+        "kind": "player_entry",
+        "name": "arrival",
+        "size": [
+          2.4,
+          2.0,
+          2.0
+        ]
+      },
+      {
+        "center": [
+          0.0,
+          1.4,
+          4.0
+        ],
+        "kind": "objective",
+        "name": "reward",
+        "size": [
+          2.2,
+          1.2,
+          2.2
+        ]
+      }
+    ]
+  },
+  "shell_treasure_vault": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -4.0,
+        -1.0,
+        0.0
+      ],
+      [
+        8.0,
+        5.5,
+        8.0
+      ]
+    ],
+    "ceiling": "coffered",
+    "check_anchor": [
+      0.0,
+      1.0,
+      4.0
+    ],
+    "colliders": 12,
+    "enemy_anchors": [],
+    "exit_offset": [
+      0.0,
+      0.0,
+      8.0
+    ],
+    "interior": [
+      8.0,
+      4.5,
+      8.0
+    ],
+    "objective": [
+      "reach_reward"
+    ],
+    "path": "batch019/shells/shell_treasure_vault.glb",
+    "plinth": "curb",
+    "size": [
+      8.8,
+      8.8,
+      5.4
+    ],
+    "size_godot": [
+      8.8,
+      5.4,
+      8.8
+    ],
+    "sockets": [
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "entry",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "surface_id": "floor",
+        "width": 2.4,
+        "yaw": 180.0
+      },
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "exit",
+        "position": [
+          0.0,
+          0.0,
+          8.0
+        ],
+        "surface_id": "floor",
+        "width": 2.4,
+        "yaw": 0.0
+      }
+    ],
+    "story": "protected",
+    "surface_probe": [
+      {
+        "declared": 0.0,
+        "grazing": true,
+        "measured": 0.4,
+        "of": 9,
+        "samples": 1,
+        "surface": "floor"
+      }
+    ],
+    "surfaces": [
+      {
+        "center": [
+          0.0,
+          0.0,
+          4.0
+        ],
+        "extent": [
+          8.0,
+          8.0
+        ],
+        "name": "floor"
+      },
+      {
+        "center": [
+          0.0,
+          0.8,
+          4.0
+        ],
+        "extent": [
+          2.2,
+          2.2
+        ],
+        "name": "step_high"
+      }
+    ],
+    "texel_density": 32.0,
+    "traversal": [
+      {
+        "end": [
+          0.0,
+          0.8,
+          2.9
+        ],
+        "kind": "rise",
+        "mandatory": false,
+        "name": "floor_to_step_high",
+        "start": [
+          0.0,
+          0.0,
+          2.0
+        ]
+      }
+    ],
+    "triangles": 360,
+    "volumes": [
+      {
+        "center": [
+          0.0,
+          0.4,
+          4.0
+        ],
+        "kind": "no_build",
+        "name": "plinth",
+        "size": [
+          3.0,
+          0.8,
+          3.0
+        ]
+      },
+      {
+        "center": [
+          0.0,
+          1.0,
+          1.6
+        ],
+        "kind": "player_entry",
+        "name": "arrival",
+        "size": [
+          2.4,
+          2.0,
+          2.0
+        ]
+      },
+      {
+        "center": [
+          0.0,
+          1.4,
+          4.0
+        ],
+        "kind": "objective",
+        "name": "reward",
+        "size": [
+          2.2,
+          1.2,
+          2.2
+        ]
+      }
+    ]
+  }
+}

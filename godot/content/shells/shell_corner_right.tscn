@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://content/shells/shell_corner_right.glb" id="1_2fvq6"]
+
+[node name="shell_corner_right" type="Node3D"]
+
+[node name="Mesh" type="Node3D" parent="." instance=ExtResource("1_2fvq6")]

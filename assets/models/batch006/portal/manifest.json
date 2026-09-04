@@ -1,0 +1,24 @@
+{
+  "portal_core_locked": {
+    "anchor": "module_floor",
+    "path": "batch006/portal/portal_core_locked.glb",
+    "size": [
+      2.38,
+      0.2,
+      3.314
+    ],
+    "texel_density": null,
+    "triangles": 108
+  },
+  "portal_core_unlocked": {
+    "anchor": "module_floor",
+    "path": "batch006/portal/portal_core_unlocked.glb",
+    "size": [
+      2.383,
+      0.171,
+      3.289
+    ],
+    "texel_density": null,
+    "triangles": 108
+  }
+}

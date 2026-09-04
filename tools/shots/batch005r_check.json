@@ -1,0 +1,83 @@
+{
+  "_comment": [
+    "Batch 005-R -- the targeted revision the owner required.",
+    "",
+    "LOCKED and CONFIRMED did not separate at 39.6 m. The fix is one cue on",
+    "the head itself, not on the floor ring: the cage's NEGATIVE SPACE.",
+    "Locked leaves it open, confirmed fills it -- the husk slumps across",
+    "the cradle and a shutter descends the uprights onto it.",
+    "",
+    "Only the five sheets the verdict asked for. Nothing else changed, so",
+    "nothing else is re-shot here; the full batch005 set is re-rendered in",
+    "place because the confirmed mesh moved."
+  ],
+  "defaults": {
+    "size": [
+      1920,
+      1080
+    ],
+    "lens": 35,
+    "ambient": 0.18
+  },
+  "shots": [
+    {
+      "name": "R_state_family",
+      "scene": "model:batch005/check/check_mast.glb@-3.60,0,0 + batch005/check/check_item_locked.glb@-3.60,0,0 + batch005/check/check_destination_ring.glb@-3.60,0,0 + batch005/check/check_mast.glb@-1.20,0,0 + batch005/check/check_item_available.glb@-1.20,0,0 + batch005/check/check_destination_ring.glb@-1.20,0,0 + batch005/check/check_mast.glb@1.20,0,0 + batch005/check/check_item_sending.glb@1.20,0,0 + batch005/check/check_destination_ring.glb@1.20,0,0 + batch005/check/check_mast.glb@3.60,0,0 + batch005/check/check_item_confirmed.glb@3.60,0,0 + batch005/check/check_destination_ring.glb@3.60,0,0",
+      "frame": 0.9,
+      "azimuth": 0,
+      "elevation": 4,
+      "caption": "005-R - LOCKED / AVAILABLE / SENDING / CONFIRMED",
+      "note": "CONFIRMED: THE HUSK HAS COLLAPSED AND ENGULFED THE CAGE",
+      "variants": [
+        "grey",
+        "silhouette"
+      ]
+    },
+    {
+      "name": "R_state_family_far",
+      "scene": "model:batch005/check/check_mast.glb@-9.00,0,0 + batch005/check/check_item_locked.glb@-9.00,0,0 + batch005/check/check_destination_ring.glb@-9.00,0,0 + batch005/check/check_mast.glb@-3.00,0,0 + batch005/check/check_item_available.glb@-3.00,0,0 + batch005/check/check_destination_ring.glb@-3.00,0,0 + batch005/check/check_mast.glb@3.00,0,0 + batch005/check/check_item_sending.glb@3.00,0,0 + batch005/check/check_destination_ring.glb@3.00,0,0 + batch005/check/check_mast.glb@9.00,0,0 + batch005/check/check_item_confirmed.glb@9.00,0,0 + batch005/check/check_destination_ring.glb@9.00,0,0",
+      "look": [
+        [
+          0,
+          1.6,
+          -39.6
+        ],
+        [
+          0,
+          1.6,
+          0
+        ]
+      ],
+      "game_lens": true,
+      "caption": "005-R AT 39.6 M - OPEN CAGE AGAINST SHUT CAGE",
+      "note": "NO HUE, NO FLOOR RING, NO TEXT. THE CUE IS NEGATIVE SPACE",
+      "variants": [
+        "grey"
+      ]
+    },
+    {
+      "name": "R_head_compare",
+      "scene": "model:batch005/check/check_mast.glb@-0.75,0,0 + batch005/check/check_item_locked.glb@-0.75,0,0 + batch005/check/check_mast.glb@0.75,0,0 + batch005/check/check_item_confirmed.glb@0.75,0,0",
+      "size": [
+        1600,
+        900
+      ],
+      "lens": 85,
+      "orbit": [
+        6.4,
+        12,
+        4
+      ],
+      "target": [
+        0,
+        1.9,
+        0
+      ],
+      "caption": "THE TWO THAT HAD TO SEPARATE - LOCKED, THEN CONFIRMED",
+      "note": "SAME MAST. SAME FAMILY. THE CAGE IS OPEN, THEN IT IS NOT",
+      "variants": [
+        "silhouette"
+      ]
+    }
+  ]
+}

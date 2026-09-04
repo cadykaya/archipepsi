@@ -1,0 +1,79 @@
+{
+  "bounce_pad": {
+    "anchor": "floor",
+    "path": "batch009/affordance/bounce_pad.glb",
+    "size": [
+      2.033,
+      2.033,
+      0.42
+    ],
+    "texel_density": null,
+    "triangles": 160
+  },
+  "breakwall_panel": {
+    "anchor": "floor",
+    "path": "batch009/affordance/breakwall_panel.glb",
+    "size": [
+      0.4,
+      2.42,
+      2.6
+    ],
+    "texel_density": null,
+    "triangles": 112
+  },
+  "movplat_deck": {
+    "anchor": "floor",
+    "path": "batch009/affordance/movplat_deck.glb",
+    "size": [
+      2.4,
+      2.4,
+      0.72
+    ],
+    "texel_density": null,
+    "triangles": 144
+  },
+  "rail_beam": {
+    "anchor": "floor",
+    "path": "batch009/affordance/rail_beam.glb",
+    "size": [
+      0.46,
+      6.25,
+      1.68
+    ],
+    "texel_density": null,
+    "triangles": 132
+  },
+  "water_basin": {
+    "anchor": "floor",
+    "path": "batch009/affordance/water_basin.glb",
+    "size": [
+      1.64,
+      1.64,
+      0.225
+    ],
+    "texel_density": null,
+    "triangles": 124
+  },
+  "wind_perch": {
+    "anchor": "ceiling",
+    "path": "batch009/affordance/wind_perch.glb",
+    "size": [
+      1.5,
+      1.5,
+      0.64
+    ],
+    "texel_density": null,
+    "triangles": 80
+  },
+  "wind_ring": {
+    "anchor": "centre",
+    "path": "batch009/affordance/wind_ring.glb",
+    "size": [
+      1.64,
+      1.64,
+      0.165
+    ],
+    "texel_density": null,
+    "triangles": 160
+  }
+}

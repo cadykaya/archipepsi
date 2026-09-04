@@ -1,0 +1,30 @@
+{
+  "anchor_a_soffit": {
+    "anchor": "ceiling",
+    "clearance_height_m": 5.6,
+    "hangs_from_ceiling": true,
+    "path": "batch001/affordance/anchor_a_soffit.glb",
+    "plate_below_ceiling_m": 0.5,
+    "size": [
+      1.1,
+      1.1,
+      0.997
+    ],
+    "texel_density": null,
+    "triangles": 160
+  },
+  "anchor_b_jib": {
+    "anchor": "ceiling",
+    "clearance_height_m": 5.6,
+    "hangs_from_ceiling": true,
+    "path": "batch001/affordance/anchor_b_jib.glb",
+    "plate_below_ceiling_m": 0.5,
+    "size": [
+      1.15,
+      0.6,
+      1.02
+    ],
+    "texel_density": null,
+    "triangles": 168
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "pickup_cache": {
+    "anchor": "floor",
+    "backed_by_production_item": false,
+    "batch": "027",
+    "integration_ready": false,
+    "kind": "pickup",
+    "palette_family": "none -- silhouette and value only",
+    "path": "batch027/pickups/pickup_cache.glb",
+    "production_backing": "LocalReward exists, but its KINDS catalog is CLOSED and holds no container kind",
+    "represents": "secret cache / loot container",
+    "scale_basis": "proposal scale",
+    "shares_mat_grammar": true,
+    "silhouette": "a closed box with a lid seam and a hasp",
+    "size": [
+      0.66,
+      0.591,
+      0.55
+    ],
+    "texel_density": null,
+    "triangles": 160
+  },
+  "pickup_coin": {
+    "anchor": "floor",
+    "backed_by_production_item": true,
+    "batch": "027",
+    "integration_ready": false,
+    "kind": "pickup",
+    "palette_family": "identity mark only",
+    "path": "batch027/pickups/pickup_coin.glb",
+    "production_backing": "ITEM_NAME_EPSILON_COIN, EPSILON_COIN_COUNT = 10",
+    "represents": "Epsilon Coin",
+    "scale_basis": "proposal scale",
+    "shares_mat_grammar": true,
+    "silhouette": "a thick milled disc, on edge in a cradle",
+    "size": [
+      0.591,
+      0.591,
+      0.48
+    ],
+    "texel_density": null,
+    "triangles": 212
+  },
+  "pickup_health": {
+    "anchor": "floor",
+    "backed_by_production_item": false,
+    "batch": "027",
+    "integration_ready": false,
+    "kind": "pickup",
+    "palette_family": "none -- silhouette and value only",
+    "path": "batch027/pickups/pickup_health.glb",
+    "production_backing": null,
+    "represents": "health",
+    "scale_basis": "proposal scale",
+    "shares_mat_grammar": true,
+    "silhouette": "an ampoule in a steel yoke",
+    "size": [
+      0.591,
+      0.591,
+      0.385
+    ],
+    "texel_density": null,
+    "triangles": 184
+  },
+  "pickup_resource": {
+    "anchor": "floor",
+    "backed_by_production_item": false,
+    "batch": "027",
+    "integration_ready": false,
+    "kind": "pickup",
+    "palette_family": "none -- silhouette and value only",
+    "path": "batch027/pickups/pickup_resource.glb",
+    "production_backing": null,
+    "represents": "combat resource / ammo",
+    "scale_basis": "proposal scale",
+    "shares_mat_grammar": true,
+    "silhouette": "a wide, low ribbed cell block",
+    "size": [
+      0.591,
+      0.591,
+      0.22
+    ],
+    "texel_density": null,
+    "triangles": 176
+  },
+  "pickup_special": {
+    "anchor": "floor",
+    "backed_by_production_item": true,
+    "batch": "027",
+    "integration_ready": false,
+    "kind": "pickup",
+    "palette_family": "glitch",
+    "path": "batch027/pickups/pickup_special.glb",
+    "production_backing": "ITEM_NAME_EPSILON_STATIC, EPSILON_STATIC_COUNT = 18",
+    "represents": "Epsilon Static",
+    "scale_basis": "proposal scale",
+    "shares_mat_grammar": true,
+    "silhouette": "a tall asymmetric three-lobed slug",
+    "size": [
+      0.591,
+      0.591,
+      0.475
+    ],
+    "texel_density": null,
+    "triangles": 188
+  }
+}

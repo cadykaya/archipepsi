@@ -1,0 +1,112 @@
+{
+  "light_gothic_corona": {
+    "anchor": "ceiling",
+    "path": "batch014/lights/light_gothic_corona.glb",
+    "size": [
+      0.665,
+      0.73,
+      0.515
+    ],
+    "texel_density": null,
+    "triangles": 256
+  },
+  "light_gothic_lantern": {
+    "anchor": "wall",
+    "path": "batch014/lights/light_gothic_lantern.glb",
+    "size": [
+      0.296,
+      0.338,
+      0.44
+    ],
+    "texel_density": null,
+    "triangles": 184
+  },
+  "light_neon_channel": {
+    "anchor": "ceiling",
+    "path": "batch014/lights/light_neon_channel.glb",
+    "size": [
+      1.62,
+      0.28,
+      0.15
+    ],
+    "texel_density": null,
+    "triangles": 72
+  },
+  "light_neon_edge": {
+    "anchor": "wall",
+    "path": "batch014/lights/light_neon_edge.glb",
+    "size": [
+      1.25,
+      0.14,
+      0.2
+    ],
+    "texel_density": null,
+    "triangles": 60
+  },
+  "light_rusted_cage": {
+    "anchor": "ceiling",
+    "path": "batch014/lights/light_rusted_cage.glb",
+    "size": [
+      0.46,
+      0.37,
+      0.725
+    ],
+    "texel_density": null,
+    "triangles": 240
+  },
+  "light_rusted_clamp": {
+    "anchor": "wall",
+    "path": "batch014/lights/light_rusted_clamp.glb",
+    "size": [
+      0.314,
+      0.417,
+      0.384
+    ],
+    "texel_density": null,
+    "triangles": 104
+  },
+  "light_temple_bowl": {
+    "anchor": "ceiling",
+    "path": "batch014/lights/light_temple_bowl.glb",
+    "size": [
+      0.536,
+      0.536,
+      0.625
+    ],
+    "texel_density": null,
+    "triangles": 212
+  },
+  "light_temple_niche": {
+    "anchor": "wall",
+    "path": "batch014/lights/light_temple_niche.glb",
+    "size": [
+      0.52,
+      0.296,
+      0.68
+    ],
+    "texel_density": null,
+    "triangles": 140
+  },
+  "light_void_absent": {
+    "anchor": "ceiling",
+    "path": "batch014/lights/light_void_absent.glb",
+    "size": [
+      0.65,
+      0.16,
+      0.51
+    ],
+    "texel_density": null,
+    "triangles": 84
+  },
+  "light_void_debug": {
+    "anchor": "ceiling",
+    "path": "batch014/lights/light_void_debug.glb",
+    "size": [
+      0.63,
+      0.622,
+      0.491
+    ],
+    "texel_density": null,
+    "triangles": 60
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "hub_abandon_station": {
+    "anchor": "floor",
+    "path": "batch003/hub/hub_abandon_station.glb",
+    "size": [
+      1.12,
+      1.0,
+      1.274
+    ],
+    "texel_density": null,
+    "triangles": 92
+  },
+  "hub_archive_terminal": {
+    "anchor": "floor",
+    "path": "batch003/hub/hub_archive_terminal.glb",
+    "size": [
+      2.54,
+      1.0,
+      2.45
+    ],
+    "texel_density": null,
+    "triangles": 460
+  },
+  "hub_campaign_board": {
+    "anchor": "centre",
+    "path": "batch003/hub/hub_campaign_board.glb",
+    "size": [
+      5.48,
+      0.37,
+      3.18
+    ],
+    "texel_density": null,
+    "triangles": 104
+  },
+  "hub_controls_board": {
+    "anchor": "centre",
+    "path": "batch003/hub/hub_controls_board.glb",
+    "size": [
+      4.28,
+      0.37,
+      2.98
+    ],
+    "texel_density": null,
+    "triangles": 104
+  },
+  "hub_shop_counter": {
+    "anchor": "floor",
+    "path": "batch003/hub/hub_shop_counter.glb",
+    "size": [
+      2.6,
+      1.0,
+      2.45
+    ],
+    "texel_density": null,
+    "triangles": 332
+  }
+}

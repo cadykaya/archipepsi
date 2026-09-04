@@ -1,0 +1,255 @@
+{
+  "_comment": [
+    "Batch 005 -- the Check, produced, and its four states.",
+    "",
+    "The four state shots share ONE camera on purpose: an orbit at a fixed",
+    "target and radius, not `frame`, because `frame` solves its distance",
+    "from the subject's own box and four subjects of four sizes would each",
+    "get a different lens-to-subject distance. A comparison sheet whose",
+    "frames were taken from four distances compares the distances.",
+    "",
+    "The far read is 1920x1080 because `art_budgets.json` states the",
+    "Check's 35 px at 39.6 m against a 1080p screen. Shot at 810 lines it",
+    "would be 26 px and the sheet would be quietly answering a different",
+    "question."
+  ],
+  "defaults": {
+    "size": [
+      1280,
+      900
+    ],
+    "lens": 50,
+    "ambient": 0.18
+  },
+  "shots": [
+    {
+      "name": "K_check_assembled",
+      "scene": "model:batch005/check/check_mast.glb + batch005/check/check_item_available.glb + batch005/check/check_destination_ring.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "lens": 35,
+      "frame": 0.78,
+      "azimuth": 26,
+      "elevation": 8,
+      "caption": "THE CHECK, ASSEMBLED - MAST, ITEM, DESTINATION RING",
+      "note": "THREE SEPARATE GLBS. REWARD.GD DRIVES ITEM AND RING APART",
+      "variants": [
+        "grey",
+        "silhouette",
+        "clay"
+      ]
+    },
+    {
+      "name": "K_check_operator",
+      "scene": "model:batch005/check/check_mast.glb + batch005/check/check_item_available.glb + batch005/check/check_destination_ring.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -2.2
+      ],
+      "yaw": 0,
+      "game_lens": true,
+      "caption": "WALK-UP - THE INTERACTION FACE AT EYE HEIGHT, ENGINE LENS",
+      "note": "THE FACE IS A DIFFERENT TEXTURE FROM THE SHELL, ON PURPOSE"
+    },
+    {
+      "name": "K_check_far_read",
+      "scene": "model:batch005/check/check_mast.glb + batch005/check/check_item_available.glb + batch005/check/check_destination_ring.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "look": [
+        [
+          0,
+          1.6,
+          -39.6
+        ],
+        [
+          0,
+          1.6,
+          0
+        ]
+      ],
+      "game_lens": true,
+      "caption": "39.6 M - THE LARGEST ARENA DIAGONAL, AT THE ENGINE'S OWN LENS",
+      "note": "MAST 35 PX - RING 30 PX - ITEM 4 PX. THE RING IS THE DISTANCE CHANNEL",
+      "variants": [
+        "grey"
+      ]
+    },
+    {
+      "name": "K_state_family",
+      "scene": "model:batch005/check/check_mast.glb@-3.60,0,0 + batch005/check/check_item_locked.glb@-3.60,0,0 + batch005/check/check_destination_ring.glb@-3.60,0,0 + batch005/check/check_mast.glb@-1.20,0,0 + batch005/check/check_item_available.glb@-1.20,0,0 + batch005/check/check_destination_ring.glb@-1.20,0,0 + batch005/check/check_mast.glb@1.20,0,0 + batch005/check/check_item_sending.glb@1.20,0,0 + batch005/check/check_destination_ring.glb@1.20,0,0 + batch005/check/check_mast.glb@3.60,0,0 + batch005/check/check_item_confirmed.glb@3.60,0,0 + batch005/check/check_destination_ring.glb@3.60,0,0",
+      "size": [
+        1920,
+        1080
+      ],
+      "lens": 35,
+      "frame": 0.9,
+      "azimuth": 0,
+      "elevation": 4,
+      "caption": "THE FOUR STATES ON THE MAST - LOCKED / AVAILABLE / SENDING / CONFIRMED",
+      "note": "ONE CAMERA, ONE FRAME. THE COMPARISON THE SHEET EXISTS FOR",
+      "variants": [
+        "grey",
+        "silhouette"
+      ]
+    },
+    {
+      "name": "K_state_family_far",
+      "scene": "model:batch005/check/check_mast.glb@-9.00,0,0 + batch005/check/check_item_locked.glb@-9.00,0,0 + batch005/check/check_destination_ring.glb@-9.00,0,0 + batch005/check/check_mast.glb@-3.00,0,0 + batch005/check/check_item_available.glb@-3.00,0,0 + batch005/check/check_destination_ring.glb@-3.00,0,0 + batch005/check/check_mast.glb@3.00,0,0 + batch005/check/check_item_sending.glb@3.00,0,0 + batch005/check/check_destination_ring.glb@3.00,0,0 + batch005/check/check_mast.glb@9.00,0,0 + batch005/check/check_item_confirmed.glb@9.00,0,0 + batch005/check/check_destination_ring.glb@9.00,0,0",
+      "size": [
+        1920,
+        1080
+      ],
+      "look": [
+        [
+          0,
+          1.6,
+          -39.6
+        ],
+        [
+          0,
+          1.6,
+          0
+        ]
+      ],
+      "game_lens": true,
+      "caption": "THE SAME FOUR AT 39.6 M ON THE ENGINE'S LENS - 6 M APART",
+      "note": "DOES STATE READ ACROSS THE LARGEST ARENA? THE SHEET ANSWERS, NOT THE BUILDER",
+      "variants": [
+        "grey"
+      ]
+    },
+    {
+      "name": "K_state_locked",
+      "scene": "model:batch005/check/check_mast.glb + batch005/check/check_item_locked.glb + batch005/check/check_destination_ring.glb",
+      "orbit": [
+        3.4,
+        22,
+        8
+      ],
+      "target": [
+        0,
+        1.5,
+        0
+      ],
+      "lens": 50,
+      "caption": "LOCKED - THE CRADLE IS EMPTY",
+      "note": "REWARD.GD: OBJECTIVE NOT SATISFIED. RING AT 0.35 ENERGY"
+    },
+    {
+      "name": "K_state_available",
+      "scene": "model:batch005/check/check_mast.glb + batch005/check/check_item_available.glb + batch005/check/check_destination_ring.glb",
+      "orbit": [
+        3.4,
+        22,
+        8
+      ],
+      "target": [
+        0,
+        1.5,
+        0
+      ],
+      "lens": 50,
+      "caption": "AVAILABLE - THE ONE BRIGHT STATE, IN SIGNAL TEAL",
+      "note": "THE LARGEST LIT AREA OF THE FOUR. NOTHING ELSE COMPETES"
+    },
+    {
+      "name": "K_state_sending",
+      "scene": "model:batch005/check/check_mast.glb + batch005/check/check_item_sending.glb + batch005/check/check_destination_ring.glb",
+      "orbit": [
+        3.4,
+        22,
+        8
+      ],
+      "target": [
+        0,
+        1.5,
+        0
+      ],
+      "lens": 50,
+      "caption": "SENDING - STRETCHED TOWARD THE CAP, IN SEND AMBER",
+      "note": "SAME FAMILY AS THE RING AND THE BEAM: THIS LEAVES THE ROOM"
+    },
+    {
+      "name": "K_state_confirmed",
+      "scene": "model:batch005/check/check_mast.glb + batch005/check/check_item_confirmed.glb + batch005/check/check_destination_ring.glb",
+      "orbit": [
+        3.4,
+        22,
+        8
+      ],
+      "target": [
+        0,
+        1.5,
+        0
+      ],
+      "lens": 50,
+      "caption": "CONFIRMED - A SMALL DARK HUSK IN THE CRADLE",
+      "note": "NOT CONFUSABLE WITH LOCKED: LOCKED IS EMPTY, THIS IS OCCUPIED"
+    },
+    {
+      "name": "K_check_cage_detail",
+      "scene": "model:batch005/check/check_mast.glb + batch005/check/check_item_available.glb",
+      "orbit": [
+        1.15,
+        20,
+        6
+      ],
+      "target": [
+        0,
+        1.9,
+        0
+      ],
+      "lens": 85,
+      "caption": "THE CAGED HEAD - 20 MM CLEARANCE EACH SIDE, SO IT CAN SPIN",
+      "note": "EIGHT SIDES, NOT A SPUN DIAMOND: A DIAMOND SWEEPS ITS DIAGONAL"
+    },
+    {
+      "name": "K_item_family",
+      "scene": "model:batch005/check/check_item_locked.glb@-1.2,0,0 + batch005/check/check_item_available.glb@-0.4,0,0 + batch005/check/check_item_sending.glb@0.4,0,0 + batch005/check/check_item_confirmed.glb@1.2,0,0",
+      "size": [
+        1600,
+        700
+      ],
+      "lens": 85,
+      "frame": 0.72,
+      "azimuth": 0,
+      "elevation": 2,
+      "caption": "THE FOUR STATES ALONE - LOCKED / AVAILABLE / SENDING / CONFIRMED",
+      "note": "FOUR SILHOUETTES, NOT FOUR HUES. HUE IS THE CHANNEL A PLAYER MAY NOT HAVE",
+      "variants": [
+        "grey",
+        "silhouette"
+      ]
+    },
+    {
+      "name": "K_destination_ring",
+      "scene": "model:batch005/check/check_destination_ring.glb",
+      "frame": 0.7,
+      "azimuth": 14,
+      "elevation": 26,
+      "lens": 35,
+      "caption": "DESTINATION RING - REWARD.GD'S OWN RADII, 0.86 TO 1.02",
+      "note": "ONE FLAT MATERIAL: THE ENGINE TINTS IT PER RECIPIENT WORLD"
+    },
+    {
+      "name": "K_send_beam",
+      "scene": "model:batch005/check/check_send_beam.glb",
+      "frame": 0.86,
+      "azimuth": 18,
+      "elevation": 12,
+      "lens": 24,
+      "caption": "SEND BEAM - 40 M, TAPERED 0.40 TO 0.18, EIGHT SIDES",
+      "note": "UNTEXTURED: 40 M AT 32 TEXELS/M WOULD WANT A 1280 MAP"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "portal_b2_wound": {
+    "anchor": "floor",
+    "path": "batch002/portal/portal_b2_wound.glb",
+    "size": [
+      3.591,
+      1.287,
+      4.45
+    ],
+    "texel_density": null,
+    "triangles": 512
+  }
+}

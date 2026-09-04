@@ -1,0 +1,65 @@
+{
+  "_comment": [
+    "Batch 021-R -- arch_duct evidence only.",
+    "",
+    "The owner passed five of the six 021 modules and held arch_duct for",
+    "one reason: S_services_family renders it edge-on and small beside the",
+    "vent, so silhouette, construction, attachment and section seams were",
+    "not actually reviewable. This is that evidence and nothing else --",
+    "the asset is unchanged.",
+    "",
+    "Two shots, matching the two things that could not be judged:",
+    "",
+    "  R_duct_detail    close three-quarter. The flange at each end and at",
+    "                   mid-run is what stops a 4 m run reading as a long",
+    "                   box, and it is the part the family shot lost.",
+    "  R_duct_run       three sections chained under two ceiling bays. The",
+    "                   duct module is 4.0 m and arch_ceiling_plain is",
+    "                   4.0 x 4.0, so sections and bays share one grid --",
+    "                   which is the claim a repeated-section shot has to",
+    "                   test. It also shows the hangers meeting the ceiling",
+    "                   they hang from, which is the attachment question.",
+    "",
+    "Both are `frame` cameras, which solve their own distance from the",
+    "subject AABB and cannot miss it (L-62).",
+    "",
+    "Both shots use backdrop 'none'. arch_duct and arch_ceiling_plain are CEILING anchored -- their geometry hangs below the origin -- so the runner's default floor slab sits on top of them and the first attempt rendered a tilted grey plane with two dark specks on it. That is L-63 again: an asset that is not an object standing on a floor must not be given a floor to stand on.",
+    "R_duct_run is shot from BELOW (negative elevation). The first attempt used +10 and rendered the top face of the ceiling bays with the ducts hidden underneath -- a view no player will ever have of a ceiling service."
+  ],
+  "defaults": {
+    "size": [
+      1600,
+      900
+    ],
+    "ambient": 0.16,
+    "lens": 35
+  },
+  "shots": [
+    {
+      "name": "R_duct_detail",
+      "scene": "model:batch021/architecture/arch_duct.glb",
+      "frame": 0.8,
+      "azimuth": -38,
+      "elevation": 16,
+      "caption": "ARCH_DUCT - CLOSE THREE-QUARTER",
+      "note": "FLANGE AT BOTH ENDS AND MID-RUN. TWO HANGERS AND STRAPS. 0.62 X 0.46 SECTION HUNG 0.22 CLEAR, INSIDE CEILING_GAP 0.5",
+      "backdrop": "none"
+    },
+    {
+      "name": "R_duct_run",
+      "scene": "model:batch020/architecture/arch_ceiling_plain.glb + batch020/architecture/arch_ceiling_plain.glb@0,0,4 + batch021/architecture/arch_duct.glb@0,0,0 + batch021/architecture/arch_duct.glb@0,0,4",
+      "size": [
+        1920,
+        1080
+      ],
+      "frame": 0.86,
+      "azimuth": -36,
+      "elevation": -26,
+      "backdrop": "none",
+      "caption": "TWO SECTIONS CHAINED UNDER TWO CEILING BAYS",
+      "note": "DUCT MODULE 4.0 M AND ARCH_CEILING_PLAIN 4.0 X 4.0 SHARE ONE GRID. SEEN FROM BELOW, WHERE A PLAYER MEETS IT - THE SEAM IS THE FLANGE, NOT A GAP",
+      "key_energy": 1.6,
+      "ambient": 0.24
+    }
+  ]
+}

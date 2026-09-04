@@ -1,0 +1,13 @@
+{
+  "door_standard": {
+    "anchor": "floor",
+    "path": "batch006/architecture/door_standard.glb",
+    "size": [
+      2.72,
+      0.62,
+      3.38
+    ],
+    "texel_density": 32.0,
+    "triangles": 144
+  }
+}

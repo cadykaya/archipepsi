@@ -1,0 +1,35 @@
+{
+  "arch_pilaster": {
+    "anchor": "floor",
+    "path": "batch003/architecture/arch_pilaster.glb",
+    "size": [
+      0.6,
+      0.35,
+      5.0
+    ],
+    "texel_density": null,
+    "triangles": 60
+  },
+  "arch_wall_upper": {
+    "anchor": "floor",
+    "path": "batch003/architecture/arch_wall_upper.glb",
+    "size": [
+      4.0,
+      0.8,
+      1.0
+    ],
+    "texel_density": null,
+    "triangles": 172
+  },
+  "hub_lab_doorway": {
+    "anchor": "floor",
+    "path": "batch003/architecture/hub_lab_doorway.glb",
+    "size": [
+      3.94,
+      0.74,
+      3.66
+    ],
+    "texel_density": null,
+    "triangles": 84
+  }
+}

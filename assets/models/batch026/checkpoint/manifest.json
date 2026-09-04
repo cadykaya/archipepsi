@@ -1,0 +1,80 @@
+{
+  "checkpoint_activated": {
+    "anchor": "floor",
+    "band_orientation": "horizontal",
+    "band_orientation_why": "hazard marking is diagonal; the two must differ in GEOMETRY, not only hue, so they stay distinct in grey scale",
+    "batch": "026",
+    "emissive_is": "achromatic -- deliberately not a palette family",
+    "emits": false,
+    "integration_ready": false,
+    "kind": "checkpoint_station",
+    "means": "activated. Raised, cross-arms out, bands at high value.",
+    "path": "batch026/checkpoint/checkpoint_activated.glb",
+    "read_by": "posture, then value. Never hue.",
+    "runtime_seam": "player.gd set_spawn(Transform3D) is one slot with no identity; nothing records WHICH station is current (req 27)",
+    "runtime_state_exists": false,
+    "scale_basis": "proposal scale",
+    "size": [
+      2.513,
+      2.513,
+      3.08
+    ],
+    "state": "activated",
+    "texel_density": null,
+    "triangles": 308,
+    "universal": true,
+    "universal_why": "system furniture like the Check -- 'can I come back here' must not depend on which Zone you are standing in"
+  },
+  "checkpoint_anchor": {
+    "anchor": "floor",
+    "band_orientation": "horizontal",
+    "band_orientation_why": "hazard marking is diagonal; the two must differ in GEOMETRY, not only hue, so they stay distinct in grey scale",
+    "batch": "026",
+    "emissive_is": "achromatic -- deliberately not a palette family",
+    "emits": true,
+    "integration_ready": false,
+    "kind": "checkpoint_station",
+    "means": "the current re-entry anchor. Canopy deployed, one lamp lit.",
+    "path": "batch026/checkpoint/checkpoint_anchor.glb",
+    "read_by": "posture, then value. Never hue.",
+    "runtime_seam": "player.gd set_spawn(Transform3D) is one slot with no identity; nothing records WHICH station is current (req 27)",
+    "runtime_state_exists": false,
+    "scale_basis": "proposal scale",
+    "size": [
+      2.513,
+      2.513,
+      3.08
+    ],
+    "state": "anchor",
+    "texel_density": null,
+    "triangles": 448,
+    "universal": true,
+    "universal_why": "system furniture like the Check -- 'can I come back here' must not depend on which Zone you are standing in"
+  },
+  "checkpoint_inactive": {
+    "anchor": "floor",
+    "band_orientation": "horizontal",
+    "band_orientation_why": "hazard marking is diagonal; the two must differ in GEOMETRY, not only hue, so they stay distinct in grey scale",
+    "batch": "026",
+    "emissive_is": "achromatic -- deliberately not a palette family",
+    "emits": false,
+    "integration_ready": false,
+    "kind": "checkpoint_station",
+    "means": "not yet activated. Folded, dark, and it does not glow.",
+    "path": "batch026/checkpoint/checkpoint_inactive.glb",
+    "read_by": "posture, then value. Never hue.",
+    "runtime_seam": "player.gd set_spawn(Transform3D) is one slot with no identity; nothing records WHICH station is current (req 27)",
+    "runtime_state_exists": false,
+    "scale_basis": "proposal scale",
+    "size": [
+      2.513,
+      2.513,
+      0.415
+    ],
+    "state": "inactive",
+    "texel_density": null,
+    "triangles": 200,
+    "universal": true,
+    "universal_why": "system furniture like the Check -- 'can I come back here' must not depend on which Zone you are standing in"
+  }
+}

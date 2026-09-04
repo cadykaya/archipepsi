@@ -1,0 +1,140 @@
+{
+  "_comment": [
+    "Batch 016 -- the arena shell family.",
+    "",
+    "Two frames each: one from just inside the entrance, which is the",
+    "frame that has to make four arenas four rooms, and one from the place",
+    "the shell exists for -- the rim, an aisle, the deck, a gap.",
+    "",
+    "CAMERA FRAME (L-52): the runner yaws the MODEL 180 degrees and leaves",
+    "the camera in world space, so every `eye` here is the manifest anchor",
+    "with x and z negated. An eye copied straight out of the manifest",
+    "stands outside the room looking in through its own door."
+  ],
+  "defaults": {
+    "size": [
+      1600,
+      900
+    ],
+    "ambient": 0.16,
+    "backdrop": "none",
+    "game_lens": true
+  },
+  "shots": [
+    {
+      "name": "A_pit_entry",
+      "scene": "model:batch016/shells/shell_arena_pit.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -0.8
+      ],
+      "yaw": 180,
+      "caption": "PIT - 18 X 18, THE MIDDLE DOWN EXACTLY 1.00 M",
+      "note": "1.00 M ACROSS 12 M IS A SHALLOW READ HEAD-ON. SEE A_PIT_RIM",
+      "pitch": -7
+    },
+    {
+      "name": "A_pit_rim",
+      "scene": "model:batch016/shells/shell_arena_pit.glb",
+      "eye": [
+        7.5,
+        0,
+        -1.5
+      ],
+      "yaw": 225,
+      "pitch": -8,
+      "caption": "ON THE RIM, ACROSS THE BOWL",
+      "note": "THE HIGH GROUND YOU CAN WALK TO. THE CHECK IS DOWN THERE"
+    },
+    {
+      "name": "A_pillars_entry",
+      "scene": "model:batch016/shells/shell_arena_pillars.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -1.5
+      ],
+      "yaw": 180,
+      "caption": "PILLARS - 22 X 22, A 4 X 4 GRID ON A 4.4 M PITCH",
+      "note": "COVER IN THE MIDDLE OF THE PLATE, NOT HUGGED TO THE WALLS"
+    },
+    {
+      "name": "A_pillars_aisle",
+      "scene": "model:batch016/shells/shell_arena_pillars.glb",
+      "eye": [
+        0,
+        0,
+        -8.0
+      ],
+      "yaw": 205,
+      "caption": "INSIDE THE GRID, ACROSS THE AISLES",
+      "note": "EVERY AISLE IS 3.2 M - A 1.8 M BRUTE FITS THROUGH ALL OF THEM"
+    },
+    {
+      "name": "A_balcony_entry",
+      "scene": "model:batch016/shells/shell_arena_balcony.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -2.0
+      ],
+      "yaw": 180,
+      "caption": "BALCONY - 26 X 24 X 8, THE BOSS ROOM",
+      "note": "ONE OPEN PLATE BELOW, A WALKWAY AT 3.20 ON THREE SIDES"
+    },
+    {
+      "name": "A_balcony_deck",
+      "scene": "model:batch016/shells/shell_arena_balcony.glb",
+      "eye": [
+        -11.8,
+        3.2,
+        -8.0
+      ],
+      "yaw": 200,
+      "pitch": -12,
+      "caption": "ON THE WALKWAY, LOOKING DOWN AT THE PLATE",
+      "note": "3.20 M IS ABOVE SAFE_BASE_JUMP_GAP - STAIR OR GRAPPLE ONLY"
+    },
+    {
+      "name": "A_split_entry",
+      "scene": "model:batch016/shells/shell_arena_split.glb",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        -2.0
+      ],
+      "yaw": 180,
+      "caption": "SPLIT - A 1.80 M BARRIER ACROSS THE MIDDLE",
+      "note": "ABOVE JUMP_APEX 1.33. THE FAR FLOOR IS HIDDEN; SIGHTLINE 10 M"
+    },
+    {
+      "name": "A_split_gap",
+      "scene": "model:batch016/shells/shell_arena_split.glb",
+      "eye": [
+        -5.0,
+        0,
+        -7.0
+      ],
+      "yaw": 180,
+      "caption": "AT A GAP, LOOKING INTO THE FAR HALF",
+      "note": "THE CHECK IS BEHIND THE BARRIER - REACH_REWARD MEANS COMMITTING"
+    }
+  ]
+}

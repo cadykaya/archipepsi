@@ -1,0 +1,170 @@
+{
+  "gate_blink_proposal": {
+    "anchor": "floor",
+    "batch": "034",
+    "capability_family": null,
+    "finished": true,
+    "has_mechanical_contract": false,
+    "integration_ready": false,
+    "kind": "progression_gate",
+    "path": "batch034/gates/gate_blink_proposal.glb",
+    "reads_as": "a matched pair of finished terminals with an empty gap between them",
+    "scale_basis": "proposal scale",
+    "size": [
+      8.0,
+      5.0,
+      5.5
+    ],
+    "texel_density": null,
+    "the_tell": "finish quality. Broken is ragged; installed is neat. No colour carries this read.",
+    "triangles": 352,
+    "uses_hazard": false
+  },
+  "gate_blink_proposal_ragged": {
+    "anchor": "floor",
+    "batch": "034",
+    "capability_family": null,
+    "finished": false,
+    "has_mechanical_contract": false,
+    "integration_ready": false,
+    "kind": "ragged_control",
+    "path": "batch034/gates/gate_blink_proposal_ragged.glb",
+    "reads_as": "the same route, unfinished -- the reading this must NOT be confused with",
+    "scale_basis": "proposal scale",
+    "size": [
+      8.0,
+      5.0,
+      5.5
+    ],
+    "texel_density": null,
+    "the_tell": "finish quality. Broken is ragged; installed is neat. No colour carries this read.",
+    "triangles": 96,
+    "uses_hazard": false
+  },
+  "gate_break": {
+    "anchor": "floor",
+    "batch": "034",
+    "capability_family": "breakable_wall",
+    "finished": true,
+    "has_mechanical_contract": true,
+    "integration_ready": false,
+    "kind": "progression_gate",
+    "path": "batch034/gates/gate_break.glb",
+    "reads_as": "an intact frame with a panel of a different construction in it",
+    "scale_basis": "proposal scale",
+    "size": [
+      8.0,
+      5.0,
+      5.5
+    ],
+    "texel_density": null,
+    "the_tell": "finish quality. Broken is ragged; installed is neat. No colour carries this read.",
+    "triangles": 228,
+    "uses_hazard": false
+  },
+  "gate_break_ragged": {
+    "anchor": "floor",
+    "batch": "034",
+    "capability_family": "breakable_wall",
+    "finished": false,
+    "has_mechanical_contract": true,
+    "integration_ready": false,
+    "kind": "ragged_control",
+    "path": "batch034/gates/gate_break_ragged.glb",
+    "reads_as": "the same route, unfinished -- the reading this must NOT be confused with",
+    "scale_basis": "proposal scale",
+    "size": [
+      8.0,
+      5.0,
+      5.5
+    ],
+    "texel_density": null,
+    "the_tell": "finish quality. Broken is ragged; installed is neat. No colour carries this read.",
+    "triangles": 120,
+    "uses_hazard": false
+  },
+  "gate_grapple": {
+    "anchor": "floor",
+    "batch": "034",
+    "capability_family": "grapple_anchor",
+    "finished": true,
+    "has_mechanical_contract": true,
+    "integration_ready": false,
+    "kind": "progression_gate",
+    "path": "batch034/gates/gate_grapple.glb",
+    "reads_as": "a railed, decked, lit landing with an anchor on a fixed bracket, and no floor route to either",
+    "scale_basis": "proposal scale",
+    "size": [
+      8.0,
+      5.0,
+      5.5
+    ],
+    "texel_density": null,
+    "the_tell": "finish quality. Broken is ragged; installed is neat. No colour carries this read.",
+    "triangles": 260,
+    "uses_hazard": false
+  },
+  "gate_grapple_ragged": {
+    "anchor": "floor",
+    "batch": "034",
+    "capability_family": "grapple_anchor",
+    "finished": false,
+    "has_mechanical_contract": true,
+    "integration_ready": false,
+    "kind": "ragged_control",
+    "path": "batch034/gates/gate_grapple_ragged.glb",
+    "reads_as": "the same route, unfinished -- the reading this must NOT be confused with",
+    "scale_basis": "proposal scale",
+    "size": [
+      8.0,
+      5.0,
+      5.5
+    ],
+    "texel_density": null,
+    "the_tell": "finish quality. Broken is ragged; installed is neat. No colour carries this read.",
+    "triangles": 84,
+    "uses_hazard": false
+  },
+  "gate_launch": {
+    "anchor": "floor",
+    "batch": "034",
+    "capability_family": "bounce_pad",
+    "finished": true,
+    "has_mechanical_contract": true,
+    "integration_ready": false,
+    "kind": "progression_gate",
+    "path": "batch034/gates/gate_launch.glb",
+    "reads_as": "a complete pad on a complete plinth, aimed at a finished landing",
+    "scale_basis": "proposal scale",
+    "size": [
+      8.0,
+      5.0,
+      5.5
+    ],
+    "texel_density": null,
+    "the_tell": "finish quality. Broken is ragged; installed is neat. No colour carries this read.",
+    "triangles": 152,
+    "uses_hazard": false
+  },
+  "gate_launch_ragged": {
+    "anchor": "floor",
+    "batch": "034",
+    "capability_family": "bounce_pad",
+    "finished": false,
+    "has_mechanical_contract": true,
+    "integration_ready": false,
+    "kind": "ragged_control",
+    "path": "batch034/gates/gate_launch_ragged.glb",
+    "reads_as": "the same route, unfinished -- the reading this must NOT be confused with",
+    "scale_basis": "proposal scale",
+    "size": [
+      8.0,
+      5.0,
+      5.5
+    ],
+    "texel_density": null,
+    "the_tell": "finish quality. Broken is ragged; installed is neat. No colour carries this read.",
+    "triangles": 92,
+    "uses_hazard": false
+  }
+}

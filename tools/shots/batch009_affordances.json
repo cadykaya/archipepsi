@@ -1,0 +1,101 @@
+{
+  "_comment": [
+    "Batch 009 -- the six remaining affordances.",
+    "",
+    "All seven wear the SAME family, because ASSET_INVENTORY section 5",
+    "says 'the seven look the same everywhere or they teach nothing'. The",
+    "silhouette sheet is therefore the important one: if they do not read",
+    "as seven different promises without hue, the family is too uniform.",
+    "",
+    "wind_ring is `centre` anchored and wind_perch is `ceiling` anchored,",
+    "so both carry a y in their offset. Placing either at floor level is",
+    "L-50 all over again."
+  ],
+  "defaults": {
+    "size": [
+      1600,
+      900
+    ],
+    "lens": 35,
+    "ambient": 0.2
+  },
+  "shots": [
+    {
+      "name": "A_affordance_family",
+      "scene": "model:batch009/affordance/breakwall_panel.glb@-5.40,0.00,-2.60 + batch009/affordance/water_basin.glb@-1.80,0.00,-2.60 + batch009/affordance/rail_beam.glb@1.80,0.00,-2.60 + batch009/affordance/movplat_deck.glb@5.40,0.00,-2.60 + batch009/affordance/wind_ring.glb@-3.20,1.20,2.20 + batch009/affordance/wind_perch.glb@-3.20,2.90,2.20 + batch009/affordance/bounce_pad.glb@1.60,0.00,2.20",
+      "size": [
+        1920,
+        1080
+      ],
+      "lens": 28,
+      "backdrop": "floor",
+      "frame": 0.88,
+      "azimuth": 8,
+      "elevation": 12,
+      "caption": "THE SEVEN AFFORDANCES - ONE FAMILY, SEVEN PROMISES",
+      "note": "SIGNAL TEAL THROUGHOUT. WHAT DIFFERS IS FORM, NEVER HUE",
+      "variants": [
+        "grey",
+        "silhouette"
+      ]
+    },
+    {
+      "name": "A_wind_column",
+      "scene": "model:batch009/affordance/wind_ring.glb@0.00,1.20,0.00 + batch009/affordance/wind_ring.glb@0.00,2.40,0.00 + batch009/affordance/wind_ring.glb@0.00,3.60,0.00 + batch009/affordance/wind_perch.glb@0.00,4.40,0.00",
+      "size": [
+        1200,
+        1000
+      ],
+      "lens": 35,
+      "frame": 0.82,
+      "azimuth": 16,
+      "elevation": 8,
+      "caption": "THE UPDRAFT AS THE ENGINE STACKS IT - THREE RINGS AND A PERCH",
+      "note": "VANES ANGLED UP: A FLAT RING SAYS NOTHING ABOUT DIRECTION"
+    },
+    {
+      "name": "A_rail_beam",
+      "scene": "model:batch009/affordance/rail_beam.glb",
+      "lens": 35,
+      "frame": 0.84,
+      "azimuth": 24,
+      "elevation": 10,
+      "caption": "GRIND RAIL - 6.0 M, HARD STOPS AT BOTH ENDS",
+      "note": "THE TOP FACE IS THE ONE UNBROKEN LINE ON THE OBJECT"
+    },
+    {
+      "name": "A_bounce_pad",
+      "scene": "model:batch009/affordance/bounce_pad.glb",
+      "lens": 50,
+      "frame": 0.7,
+      "azimuth": 26,
+      "elevation": 22,
+      "caption": "BOUNCE PAD - LAUNCH 16 M/S, APEX 5.33 M",
+      "note": "A STACK THAT HAS BEEN SQUASHED, NOT A DISC ON THE FLOOR"
+    },
+    {
+      "name": "A_breakwall_panel",
+      "scene": "model:batch009/affordance/breakwall_panel.glb",
+      "lens": 35,
+      "frame": 0.78,
+      "azimuth": 30,
+      "elevation": 6,
+      "caption": "BREAKABLE PANEL - A STRUCK FACE AND A FITTED FRAME",
+      "note": "THE CRACKS ARE THE ENGINE'S CHANNEL. NOTHING HERE PAINTS ANY"
+    },
+    {
+      "name": "A_movplat_water",
+      "scene": "model:batch009/affordance/movplat_deck.glb@-1.6,0,0 + batch009/affordance/water_basin.glb@1.6,0,0",
+      "size": [
+        1600,
+        800
+      ],
+      "lens": 50,
+      "frame": 0.76,
+      "azimuth": 18,
+      "elevation": 26,
+      "caption": "MOVING DECK AND WATER LIP - BOTH READ FROM ABOVE",
+      "note": "THE DECK'S SLOT SAYS WHICH WAY. THE BASIN'S STEP SAYS HOW YOU GET OUT"
+    }
+  ]
+}

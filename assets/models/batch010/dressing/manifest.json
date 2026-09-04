@@ -1,0 +1,35 @@
+{
+  "prop_oil_drum": {
+    "anchor": "floor",
+    "path": "batch010/dressing/prop_oil_drum.glb",
+    "size": [
+      0.776,
+      0.776,
+      0.95
+    ],
+    "texel_density": 64.0,
+    "triangles": 184
+  },
+  "prop_valve_wheel": {
+    "anchor": "wall",
+    "path": "batch010/dressing/prop_valve_wheel.glb",
+    "size": [
+      0.62,
+      0.225,
+      0.62
+    ],
+    "texel_density": 64.0,
+    "triangles": 176
+  },
+  "prop_wall_plate": {
+    "anchor": "wall",
+    "path": "batch010/dressing/prop_wall_plate.glb",
+    "size": [
+      0.9,
+      0.1,
+      0.62
+    ],
+    "texel_density": 64.0,
+    "triangles": 84
+  }
+}

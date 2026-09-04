@@ -1,0 +1,3 @@
+# Review packages are already-committed PNGs and .glb files rezipped for the
+# owner; they are binary and must never be line-ending mangled or diffed.
+docs/art/packages/*.zip binary

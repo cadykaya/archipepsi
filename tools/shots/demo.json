@@ -1,0 +1,55 @@
+{
+  "_comment": [
+    "A worked example of the shot-list format. Every field is optional",
+    "except `name` and `scene`; see tools/artpreview/shoot.gd for the",
+    "schema and tools/artpreview/camera_rig.gd for what the camera does.",
+    "",
+    "Run it with:  tools/shoot.sh tools/shots/demo.json"
+  ],
+
+  "defaults": { "size": [1440, 810], "lens": 24, "ambient": 0.10 },
+
+  "shots": [
+    {
+      "name": "demo_hub_spawn",
+      "scene": "hub",
+      "eye": [0, 0, 3.0], "yaw": 0,
+      "game_lens": true,
+      "caption": "HUB FROM SPAWN - THE GAME'S OWN 90 DEG LENS",
+      "note": "EYE HEIGHT 1.6 M, WHERE HUB.GD SPAWNS THE PLAYER",
+      "variants": ["guides"]
+    },
+    {
+      "name": "demo_hub_50mm",
+      "scene": "hub",
+      "eye": [4.0, 0, 4.0], "yaw": -28, "pitch": -2,
+      "lens": 50,
+      "caption": "THE SAME ROOM ON A 50 MM LENS",
+      "note": "A LENS IS A CHOICE. THE GAME'S 90 DEG IS NOT ONE."
+    },
+    {
+      "name": "demo_epsilon",
+      "scene": "model:batch002/epsilon/epsilon_installation.glb",
+      "frame": 0.72, "azimuth": 18, "elevation": 6,
+      "lens": 35,
+      "caption": "EPSILON - FRAMED TO 72% OF FRAME HEIGHT",
+      "note": "DISTANCE SOLVED, NOT GUESSED",
+      "variants": ["grey", "silhouette"]
+    },
+    {
+      "name": "demo_epsilon_operator",
+      "scene": "model:batch002/epsilon/epsilon_installation.glb",
+      "eye": [0, 0, -3.05], "yaw": 2, "pitch": 0,
+      "game_lens": true,
+      "caption": "THE SAME OBJECT FROM WHERE A PERSON STANDS"
+    },
+    {
+      "name": "demo_bulwark",
+      "scene": "model:batch002/enemy/enemy_bulwark.glb",
+      "frame": 0.6, "azimuth": 24, "elevation": 8,
+      "lens": 50,
+      "caption": "BULWARK - 50 MM, THREE QUARTER",
+      "variants": ["clay"]
+    }
+  ]
+}

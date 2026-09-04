@@ -1,0 +1,35 @@
+{
+  "check_a_pedestal": {
+    "anchor": "floor",
+    "path": "batch001/check/check_a_pedestal.glb",
+    "size": [
+      0.961,
+      1.043,
+      2.22
+    ],
+    "texel_density": null,
+    "triangles": 300
+  },
+  "check_b_vault": {
+    "anchor": "floor",
+    "path": "batch001/check/check_b_vault.glb",
+    "size": [
+      1.38,
+      1.367,
+      2.16
+    ],
+    "texel_density": null,
+    "triangles": 232
+  },
+  "check_c_mast": {
+    "anchor": "floor",
+    "path": "batch001/check/check_c_mast.glb",
+    "size": [
+      1.109,
+      1.139,
+      2.22
+    ],
+    "texel_density": null,
+    "triangles": 268
+  }
+}

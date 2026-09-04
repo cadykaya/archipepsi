@@ -1,0 +1,86 @@
+{
+  "_comment": [
+    "Batch 008 -- the three projectiles.",
+    "",
+    "The trackability shots stand them IN THE HUB rather than on the",
+    "bench's grey slab, because `enemy_projectile`'s constraint is 'must be",
+    "trackable against six theme backgrounds' and a prop photographed",
+    "against a flat backdrop answers a different question.",
+    "",
+    "Only concrete_facility exists as a built theme, so this is one of six.",
+    "The other five are behind the theme-kit gate ART_FRONTIER already",
+    "records; saying so beats a sheet that implies the test was done."
+  ],
+  "defaults": {
+    "size": [
+      1600,
+      900
+    ],
+    "lens": 50,
+    "ambient": 0.18
+  },
+  "shots": [
+    {
+      "name": "X_projectile_family",
+      "scene": "model:batch008/enemy/enemy_projectile_straight.glb@-0.7,0.55,0 + batch008/enemy/enemy_projectile_falling.glb@0,0.55,0 + batch008/enemy/enemy_projectile_lobbed.glb@0.75,0.55,0",
+      "size": [
+        1920,
+        800
+      ],
+      "lens": 85,
+      "frame": 0.74,
+      "azimuth": 0,
+      "elevation": 4,
+      "caption": "STRAIGHT / FALLING / LOBBED - STEP ASIDE, GET OUT FROM UNDER, GET CLEAR",
+      "note": "THE ENGINE DRAWS ONE SPHERE FOR ALL THREE, AT 1.5X FOR THE LOB",
+      "variants": [
+        "grey",
+        "silhouette"
+      ]
+    },
+    {
+      "name": "X_projectile_above",
+      "scene": "model:batch008/enemy/enemy_projectile_straight.glb@-0.7,0.55,0 + batch008/enemy/enemy_projectile_falling.glb@0,0.55,0 + batch008/enemy/enemy_projectile_lobbed.glb@0.75,0.55,0",
+      "size": [
+        1920,
+        800
+      ],
+      "lens": 85,
+      "orbit": [
+        2.6,
+        0,
+        52
+      ],
+      "target": [
+        0,
+        0.55,
+        0
+      ],
+      "caption": "FROM ABOVE - THE ANGLE A FALLING SHOT IS SEEN FROM",
+      "note": "BLADES NOT A RING: A RING IS A SILHOUETTE FROM THE SIDE AND NOTHING FROM HERE",
+      "variants": [
+        "silhouette"
+      ]
+    },
+    {
+      "name": "X_projectile_in_hub",
+      "scene": "hub + model:batch008/enemy/enemy_projectile_straight.glb@-1.4,1.5,-9.0 + batch008/enemy/enemy_projectile_falling.glb@0,2.3,-9.0 + batch008/enemy/enemy_projectile_lobbed.glb@1.5,1.4,-9.0",
+      "size": [
+        1920,
+        1080
+      ],
+      "eye": [
+        0,
+        0,
+        3.0
+      ],
+      "yaw": 0,
+      "game_lens": true,
+      "caption": "IN THE HUB AT 12 M, ON THE ENGINE'S LENS - CAN YOU TRACK THEM?",
+      "note": "ONE THEME OF SIX. THE OTHER FIVE ARE BEHIND THE THEME-KIT GATE",
+      "variants": [
+        "grey"
+      ]
+    }
+  ]
+}

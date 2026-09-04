@@ -1,0 +1,137 @@
+{
+  "vm_device_melee": {
+    "anchor": "floor",
+    "batch": "032",
+    "binds_to": "$Camera3D/Viewmodel/Device",
+    "device_contract_m": [
+      0.14,
+      0.16,
+      0.4
+    ],
+    "epsilon_modified": false,
+    "epsilon_modified_why": "the Static Pulse is the one thing in the game that is yours",
+    "integration_ready": false,
+    "invents_no_timing": true,
+    "kind": "viewmodel_device",
+    "path": "batch032/viewmodel/vm_device_melee.glb",
+    "scale_basis": "player.gd's own viewmodel dimensions",
+    "size": [
+      0.152,
+      0.68,
+      0.178
+    ],
+    "state": "melee deployed",
+    "texel_density": null,
+    "triangles": 96,
+    "uses_hazard": false,
+    "what_it_is": "the Static Pulse transmitter's own discharge fork -- a facility grounding prong, swung because it is what is in your hand"
+  },
+  "vm_device_stowed": {
+    "anchor": "floor",
+    "batch": "032",
+    "binds_to": "$Camera3D/Viewmodel/Device",
+    "device_contract_m": [
+      0.14,
+      0.16,
+      0.4
+    ],
+    "epsilon_modified": false,
+    "epsilon_modified_why": "the Static Pulse is the one thing in the game that is yours",
+    "integration_ready": false,
+    "invents_no_timing": true,
+    "kind": "viewmodel_device",
+    "path": "batch032/viewmodel/vm_device_stowed.glb",
+    "scale_basis": "player.gd's own viewmodel dimensions",
+    "size": [
+      0.152,
+      0.449,
+      0.23
+    ],
+    "state": "stowed",
+    "texel_density": null,
+    "triangles": 96,
+    "uses_hazard": false,
+    "what_it_is": "the Static Pulse transmitter's own discharge fork -- a facility grounding prong, swung because it is what is in your hand"
+  },
+  "vm_echopart_grapple": {
+    "anchor": "floor",
+    "batch": "032",
+    "binds_to": "$Camera3D/Viewmodel/EchoPart",
+    "channel_proposal": "FORM carries family; COLOUR still carries source (unchanged); the tip still carries the slot (unchanged)",
+    "echopart_contract_m": [
+      0.1,
+      0.08,
+      0.26
+    ],
+    "families_built_here": 3,
+    "families_built_here_why": "the deliverable is the seam, not the roster",
+    "families_total": 7,
+    "family": "grapple",
+    "integration_ready": false,
+    "kind": "viewmodel_echopart",
+    "path": "batch032/viewmodel/vm_echopart_grapple.glb",
+    "scale_basis": "player.gd's own EchoPart dimensions",
+    "size": [
+      0.098,
+      0.064,
+      0.247
+    ],
+    "texel_density": null,
+    "triangles": 76,
+    "why": "a reforge from ranged to grapple currently changes nothing on the viewmodel -- same source, same slot"
+  },
+  "vm_echopart_melee": {
+    "anchor": "floor",
+    "batch": "032",
+    "binds_to": "$Camera3D/Viewmodel/EchoPart",
+    "channel_proposal": "FORM carries family; COLOUR still carries source (unchanged); the tip still carries the slot (unchanged)",
+    "echopart_contract_m": [
+      0.1,
+      0.08,
+      0.26
+    ],
+    "families_built_here": 3,
+    "families_built_here_why": "the deliverable is the seam, not the roster",
+    "families_total": 7,
+    "family": "melee",
+    "integration_ready": false,
+    "kind": "viewmodel_echopart",
+    "path": "batch032/viewmodel/vm_echopart_melee.glb",
+    "scale_basis": "player.gd's own EchoPart dimensions",
+    "size": [
+      0.105,
+      0.068,
+      0.231
+    ],
+    "texel_density": null,
+    "triangles": 44,
+    "why": "a reforge from ranged to grapple currently changes nothing on the viewmodel -- same source, same slot"
+  },
+  "vm_echopart_ranged": {
+    "anchor": "floor",
+    "batch": "032",
+    "binds_to": "$Camera3D/Viewmodel/EchoPart",
+    "channel_proposal": "FORM carries family; COLOUR still carries source (unchanged); the tip still carries the slot (unchanged)",
+    "echopart_contract_m": [
+      0.1,
+      0.08,
+      0.26
+    ],
+    "families_built_here": 3,
+    "families_built_here_why": "the deliverable is the seam, not the roster",
+    "families_total": 7,
+    "family": "ranged",
+    "integration_ready": false,
+    "kind": "viewmodel_echopart",
+    "path": "batch032/viewmodel/vm_echopart_ranged.glb",
+    "scale_basis": "player.gd's own EchoPart dimensions",
+    "size": [
+      0.1,
+      0.08,
+      0.285
+    ],
+    "texel_density": null,
+    "triangles": 64,
+    "why": "a reforge from ranged to grapple currently changes nothing on the viewmodel -- same source, same slot"
+  }
+}
