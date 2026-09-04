@@ -2,6 +2,8 @@
 
 This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS.md` for the detailed project/history handoff and the v0.8 packet for authoritative contract details.
 
+**A packet version is not a product milestone.** `design-packet-v0.4 / v0.7 / v0.8 / v0.9 / v0.10` are document revisions; **Playable 0.3** is the product milestone, frozen in `docs/ROAD_TO_PLAYABLE_0_3.md`. Packet v0.10 does not mean Playable 0.10, and Playable 0.3 has nothing to do with the superseded packet v0.3 — always write the full name.
+
 ## THE ACTIVE FRONTIER: v0.9 — production and the authored-content transition
 
 **`docs/design-packet-v0.9/IMPLEMENTATION_PLAN.md` is what wake-ups
@@ -209,11 +211,26 @@ open are historical and are marked superseded in place.
 **WAVE 2 IS UNSTARTED.** No Wave-2 room exists, is authored, or is planned
 in code.
 
-**THE NEXT GAMEPLAY BLOCKER IS PLAYER-FACING MOVEMENT-PACKAGE
-CONSUMPTION.** No shipped consumer builds an authored rail or launch pad in
-a played Zone, so no player has ridden one. That is a Playtest-3 gameplay
-milestone and it is the only thing between the offer vocabulary and a
-player meeting it. It does not block any room shell.
+**THE NEXT MILESTONE IS 3A + 3B, JOINTLY** -- frozen in
+`docs/ROAD_TO_PLAYABLE_0_3.md`, which is the acceptance contract for the
+Playable 0.3 product milestone and takes precedence over any stage order
+implied elsewhere in this file.
+
+*3A, live movement integration:* no shipped consumer builds an authored
+rail or launch pad in a played Zone, so no player has ridden one.
+
+*3B, authored composition:* **no authored room has ever appeared in a
+played Zone.** All 23 chambers of the played Zone carry `shell_id: null`,
+and `SHELL_FOR_TYPE` maps every chamber type to a `*_proc` id, so every
+room a player walks through is procedural. The reading side is complete --
+`shell_id` is on the schema, refused if unoffered, and resolved by
+`ContentInstantiator` -- but nothing writes it. Twelve approved shells are
+selectable in principle and selected by nobody.
+
+They are joint-first because neither is meaningful alone: a real Zone has
+no authored rooms and therefore no authored offers, so 3A has nothing in a
+real Zone to bind to. Room Wave 2 is OFF the Playable 0.3 critical path.
+Neither blocks any room shell.
 
 ## WAVE-1 PRE-PROMOTION GUARD CLOSURE — landed 2026-09-03
 
