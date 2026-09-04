@@ -106,7 +106,7 @@ These come from the source authorities. This proposal does not reopen them, and 
 
 Where this document and a source authority appear to conflict, the source authority wins and the conflict is a defect in this document. Report it rather than resolving it locally.
 
-Where this document is silent, it is not silent by permission. Silence is a defect. See §40.
+Where this document is silent, it is not silent by permission. Silence is a defect. See §41.
 
 ---
 
@@ -148,7 +148,7 @@ Where this document is silent, it is not silent by permission. Silence is a defe
 - Five persistence categories with reconstruction order.
 - Enemy and encounter contract.
 - Performance budgets and debug inspection.
-- Eighty-one test vectors with concrete inputs and expected outputs.
+- 141 test vectors with concrete inputs and expected outputs, and a traceability matrix closing all 142 acceptance tests named by the two authorities.
 
 ## 2.2 Explicitly deferred
 
@@ -1060,7 +1060,7 @@ If the carried object is pushed into geometry such that its carry position is oc
 - If the focused Interactable is a compatible socket (class 2), the object is **placed** into it.
 - Otherwise the object is **dropped** at its current carry position with zero velocity.
 
-There is no throw in Reliable Core. Dropping is always zero-velocity. This removes an entire family of physics edge cases — thrown objects clipping geometry, thrown objects as weapons, thrown objects as traversal — at the cost of a verb the Dungeon Authority lists as legal. §40 records this as a sacrifice.
+There is no throw in Reliable Core. Dropping is always zero-velocity. This removes an entire family of physics edge cases — thrown objects clipping geometry, thrown objects as weapons, thrown objects as traversal — at the cost of a verb the Dungeon Authority lists as legal. §41 records this as a sacrifice.
 
 **Socket compatibility:** a socket declares `accepts: list[string]`. An object may be placed if any of its `socket_tags` appears in `accepts`. An incompatible object produces the rejection feedback in §34.9; the socket's prompt shows as disabled before the press, so incompatibility is visible in advance.
 
@@ -1748,7 +1748,7 @@ The `1.0 s` re-hit cooldown per pair is what prevents a jittering or resting obj
 
 **No mandatory route or puzzle solution in Reliable Core requires a Physics Echo.** Physics is always an optional alternate solution. This is stronger than the authorities require — they permit a guaranteed physics gate — and it is taken deliberately: it removes physics from the capability planner entirely, which removes an entire class of "generated Zone is unwinnable" failures.
 
-The cost is that physics can never be the point of a puzzle, only a shortcut through one. §40 records this.
+The cost is that physics can never be the point of a puzzle, only a shortcut through one. §41 records this.
 
 ---
 
@@ -2109,7 +2109,7 @@ The Archive holds every owned host and Mod. It is `AP_PERSISTENT`.
 
 **Deferred.** No item synthesis exists in Reliable Core. Mods accumulate and are never consumed.
 
-The cost: the Player Authority §26.3 describes a ~5 Mods → 1 Useful Echo → (×5) → 1 high-tier progression. Without it, build growth comes only from AP receipts, and a long campaign accumulates a large inert Mod collection. This is the single largest sacrifice in this proposal and §40 records it as such.
+The cost: the Player Authority §26.3 describes a ~5 Mods → 1 Useful Echo → (×5) → 1 high-tier progression. Without it, build growth comes only from AP receipts, and a long campaign accumulates a large inert Mod collection. This is the single largest sacrifice in this proposal and §41 records it as such.
 
 ## 18.2 Epsilon Static
 
@@ -2283,13 +2283,35 @@ This table is the complete answer to "what happens when a signal changes mid-mot
 | Input goes `OFF` while at `t=1` | Move toward `t=0` |
 | Input **reverses mid-motion** | Reverse immediately from the current `t`. No snap, no pause, no completion of the current leg. |
 | Input reverses again mid-reversal | Reverse again from the current `t` |
-| Power lost mid-motion | **Stop at the current `t` and hold.** Do not return to `t=0`. |
-| Power restored | Resume toward the position the current input commands, from the held `t` |
+| Power lost mid-motion | **By actuator kind — see §21.1.1.** |
+| Power restored | Resume toward the position the current input commands, from wherever power loss left it |
 | Reset mid-motion | Move to `initial_t` at `travel_time` rate. It animates back; it does not teleport. |
 | Two conflicting commands on one tick | The graph is acyclic and each actuator has exactly one `input_port`, so this is unreachable by construction |
 | Save/load mid-motion | §5.10 |
 
-Stopping in place on power loss rather than returning to rest is deliberate: a lift that drops to the bottom when a generator fails can strand or kill the player, and a bridge that retracts mid-crossing is a softlock generator.
+### 21.1.1 Power loss
+
+Power loss is the one transition that differs by actuator kind, because the safe outcome differs.
+
+| Kind | On power loss |
+|---|---|
+| `DOOR` | **Closes**, at `travel_time` rate, under the `safe_closure` interlock in §21.2 |
+| `BRIDGE` | Holds at current `t` |
+| `MOVING_PLATFORM` | Holds at current `t` |
+| `LIFT` | Holds at current `t` |
+| `PATH_MACHINE` | Holds at current `t` |
+| `RAIL_SWITCH` | Holds its current branch |
+| `LAUNCHPAD` | Deactivates; becomes inert geometry |
+| `HAZARD_CONTROLLER` | Disables its hazard |
+| `LIGHT_CONTROLLER` | Transitions to `unlit` |
+
+**Doors close; everything that carries the player holds.**
+
+A door that closes on power loss is what the Dungeon Authority's acceptance test 14 requires, and it is safe because `safe_closure` prevents it from crushing anyone standing in it — it stops and reverses instead, retrying until the doorway is clear. Validation check 13 separately guarantees that a closed door cannot be the state that removes every progression route.
+
+Everything that carries or supports the player holds position instead, because the failure modes there are not symmetrical: a lift that drops to the bottom when a generator fails can strand or kill the player, and a bridge that retracts mid-crossing is a softlock generator. Neither of those is made safe by an interlock, because the danger is the motion itself rather than a pinch point.
+
+`HAZARD_CONTROLLER` disabling on power loss follows the same principle from the other direction — an unpowered room should not become more dangerous than a powered one.
 
 ## 21.2 Door, gate, shutter
 
@@ -2590,7 +2612,7 @@ Enemies interact with the environment in exactly these ways. Nothing emergent be
 
 **No required progression depends on enemy behavior**, except `ENCOUNTER_GATE`, whose condition is "the encounter is cleared" — a fact about the encounter, not about any individual enemy's choices. This is the closure for Dungeon Authority §28's warning about brittle emergent behavior.
 
-An enemy cannot permanently hold down a required pressure plate: an enemy standing on a plate is killable, and if the encounter is cleared the enemy is gone. Test vector 59.
+An enemy cannot permanently hold down a required pressure plate: an enemy standing on a plate is killable, and if the encounter is cleared the enemy is gone. Test vector 118.
 
 ---
 
@@ -2693,7 +2715,7 @@ Rules:
 - A flag may be read by any number of later rooms, and **only** by rooms later on the spine than the room that sets it.
 - Flags are `ZONE_PERSISTENT`.
 
-Forward-only monotonic flags are why Reliable Core needs no cross-room cycle detection: a Zone's macro state is a point on a lattice of at most 16 states, always moving upward. It cannot cycle, cannot deadlock, and cannot be validated wrong. The cost is that a dungeon cannot have a genuinely reconfigurable global machine — the Dungeon Authority §39's "rail network rerouted" is not expressible. §40 records this.
+Forward-only monotonic flags are why Reliable Core needs no cross-room cycle detection: a Zone's macro state is a point on a lattice of at most 16 states, always moving upward. It cannot cycle, cannot deadlock, and cannot be validated wrong. The cost is that a dungeon cannot have a genuinely reconfigurable global machine — the Dungeon Authority §39's "rail network rerouted" is not expressible. §41 records this.
 
 ## 28.4 Cross-room outputs
 
@@ -3330,13 +3352,13 @@ Concrete inputs and expected outputs. Numbered continuously so a failure report 
 57. Impact damage never exceeds `45.0` at any speed.
 
 ## Damage, crit, Status
-58. No code path writes Health outside the resolver — verified by making Health private and auditing all call sites.
+58. Play fixture 19 end to end, taking damage from every hazard family in §25.2 and every Weapon primary family, with Health writes instrumented. Expected: the count of Health writes equals the count of resolver invocations that produced non-zero Health loss, exactly. Any unattributed write fails.
 59. The same non-crit attack on the same target state produces identical damage across 1,000 repetitions.
 60. `crit_chance 1.0` produces `crit_tier 1` on 10,000 of 10,000 hits.
 61. `crit_chance 1.5` produces tier 1 or 2 and never tier 0, across 10,000 hits; tier 2 occurs on `50% ± 2%`.
 62. `crit_chance 4.5` produces tier 4 on every hit (clamped).
 63. Multipliers are exactly `{1,2,3,4,5}` — never `{1,2,4,8,16}`.
-64. No Status schedules a `DamageRequest`. Verified by static analysis of Status code plus a runtime assertion.
+64. Apply each of the six Statuses in turn to a `SKIRMISHER` (60 HP) standing on non-burnable floor in an otherwise empty room, and wait out each full duration. Expected Health after all six: exactly `60.0`.
 65. `BURNING` on a `burnable` surface spawns a `FIRE_ACTOR` whose damage is credited to the `BURNING` applier.
 66. `BURNING` on a non-burnable enemy in an empty room deals `0` damage over its full `6 s`.
 67. A failed application raises `susceptibility` by exactly `0.15`, capped at `0.45`.
@@ -3347,7 +3369,7 @@ Concrete inputs and expected outputs. Numbered continuously so a failure report 
 72. `ANCHORED` and `LIGHTENED` never coexist on one target.
 
 ## Loadout
-73. Unequipped Archive entries produce zero listeners, reactions, resources, actors, or queries — verified by instrumenting every registration point and asserting the count with a 500-entry Archive.
+73. Populate the Archive with 500 hosts and 500 Mods and equip none. Expected at every registration point: `0` event listeners, `0` scheduler entries, `0` resource pools, `0` spawned actors, `0` target queries. Frame time within `1%` of an empty Archive.
 74. Loadout cannot be edited outside the Hub.
 75. Re-equipping a host used earlier in this Zone instance restores its exact saved state.
 76. A never-used host introduced to an active Zone starts at every cold value in §5.7.
@@ -3359,9 +3381,277 @@ Concrete inputs and expected outputs. Numbered continuously so a failure report 
 80. A capability gate never appears in a Zone where §29.2 cannot prove the capability, across 10,000 seeds.
 81. The same `(campaign_seed, zone_id)` produces a byte-identical Zone across 1,000 compositions, and decoration reseeding never alters composition.
 
+## Interaction and carryables
+82. `F` on a lever with no other Interactable in range flips its Boolean output within one tick.
+83. 100 pickup-and-drop cycles return the object at the carry position with zero velocity every time; it never accumulates velocity.
+84. Placing a `POWER_CELL` into a socket whose `accepts` contains its tag succeeds and drives the socket's Boolean `ON`.
+85. Placing a `KEY_COMPONENT` into a `POWER_CELL`-only socket is refused; the prompt rendered as disabled **before** the press, and the §34.9 rejection fires.
+86. Destroying a destructible required object respawns it at `home_transform` after `2.0 s` with an unchanged `id`.
+87. Save and load with a cube socketed: the socket is still occupied and the cube's `id` is unchanged.
+
+## Hacking
+88. Hack completion emits a pulse that is indistinguishable at the signal graph from a `PULSE_BUTTON`'s — the graph contains no hack-specific node.
+89. Exiting a hack preserves tile rotations; re-entering resumes them; no state outside the terminal changes.
+90. Taking damage during a hack exits it immediately with tile rotations preserved.
+
+## Physics and sequence breaking
+91. An optional ledge reachable only by a physics-assisted route remains reachable, and using it does not fail the Zone audit.
+92. While holding an object, the target, the held object, and the release prediction each render distinctly.
+
+## Capability and generation
+93. Across 10,000 seeds, no Zone contains a capability requirement outside the four in §29.1.
+94. An Epsilon response naming a capability requirement is rejected at interpretation; the item falls back per §17.5.
+95. No generated Zone encodes a damage, DPS, or time-to-kill threshold as a progression condition, across 10,000 seeds.
+96. Entering a `GRAPPLE` Zone without a grapple Mobility is blocked with the §34.4 message, listing qualifying Archive entries.
+
+## Presentation
+97. Cycling changes the HUD Weapon name and cycle index on the same frame the selection changes.
+98. Static Pulse's silhouette differs from every one of the eight primary families in at least two of shape, module count, and emitter position.
+99. Disabling all VFX, audio, and animation and replaying a recorded input sequence produces byte-identical simulation state.
+100. A Weapon with `secondary = null` and `feed.model = NONE` renders no RMB indicator and no feed element.
+101. Every pressure plate and its controlled output share a visible conduit with at most 2 occluded segments.
+102. Each of the five conduit states differs from every other in at least two of brightness, pattern, motion, and audio.
+103. A `TIMED_BUTTON` at `6.0 s` shows a monotonically shrinking band, a pulse cadence rising toward expiry, and a numeric countdown.
+104. A shootable target's state is distinguishable at `60.0 m` by shape and brightness with hue removed from the render.
+105. A powered rail differs from an unpowered rail in shape and motion, not only hue.
+106. Muting all audio leaves every mandatory package solvable.
+107. A `SEQUENCE` node receiving an out-of-order pulse visibly resets every progress indicator.
+
+## Signals
+108. A `LATCH` set, then room-unloaded and reloaded, is still set.
+109. A puzzle reset returns every `PUZZLE_LOCAL` node in its group to the authored initial value and touches no node outside the group.
+
+## Doors and topology
+110. Removing power from a door closes it. A player standing in the doorway causes it to stop, reverse, and retry indefinitely, dealing no damage.
+111. Across every reachable combination of a room's actuators (at most `2⁶ = 64`), at least one entry-to-exit route exists.
+
+## Timed traversal
+112. Fixture 4's required path takes `2.6 s` at `WALK_SPEED`; its `6.0 s` window is a `2.3×` margin, above check 6's `1.6×` minimum.
+113. Failing a timed window leaves the button immediately re-pressable with no lockout.
+
+## Shootable targets
+114. Every mandatory shootable target across 10,000 generated Zones has `required_tags = [RANGED]`.
+115. A `MELEE`-tagged hit on a target requiring `[RANGED]` does not trigger it.
+
+## Traversal machinery
+116. Every LaunchPad across 10,000 Zones solves an arc clearing all obstructions by at least `1.0 m`.
+117. Every grapple target lies inside a declared grapple offer.
+
+## Hazards and destruction
+118. An enemy standing on a required plate is killable, and clearing the encounter frees the plate. No enemy state holds it permanently.
+119. Hazard damage appears in the resolver log with `crit_eligible = false` and its hazard tags.
+120. A `FLAME_JET` whose `affects` includes `HOSTILE` kills a `SKIRMISHER`.
+121. Disabling a hazard controller mid-cycle stops the hazard and clears its wind-up; re-enabling restarts from phase 0.
+122. An explosion adjacent to untagged geometry leaves it intact.
+123. A destroyed `DESTRUCTIBLE_SUPPORT` is `ROOM_PERSISTENT`; the route it opens survives reload.
+124. A `SKIRMISHER` pushed into a `FLAME_JET` by player `PUSH` within `5.0 s` credits the kill to the player. The same enemy walking in unaided credits nobody, and advances no `ACTION` progress.
+125. Moving a `MOVABLE_COVER` between an enemy and the player breaks the enemy's line of sight within one tick.
+
+## Cross-room state
+126. A Zone flag set in room 3 remains set after unloading and reloading rooms 3 through 6.
+127. Across 10,000 Zones, every Zone flag is set by at most one room and read only by rooms later on the spine.
+128. No sequence of player actions clears a set Zone flag.
+
+## Reset
+129. Resetting package A leaves package B's `PUZZLE_LOCAL` state untouched.
+130. A confirmed Check survives puzzle reset, death, room reload, and Zone re-entry.
+131. On reset, every live projectile and every pending pulse is cleared within one tick.
+
+## Determinism and audit
+132. Running the §23.5 pipeline on the same package and shell 1,000 times produces identical results.
+
+## Performance
+133. A decorative rigid body at rest for `2.0 s` sleeps and stops counting toward the §35 budget.
+134. Firing every Weapon family continuously for `60 s` never exceeds `64` live projectiles.
+135. Beam segment count is exactly `1` per beam under all conditions.
+136. In a room with no changing inputs, signal node evaluations per second is `0`.
+137. The debug overlay reports every §36 inspectable without opening the scene tree.
+
+## Loadout
+138. Cycling Weapons changes no equipped host, resets no host runtime state, and fires no on-equip effect.
+
+## Semantic mass
+139. A plate requiring `HEAVY` is not satisfied by any number of `LIGHT` objects. Placing 20 `LIGHT` objects on it leaves it `OFF`. One `HEAVY` object sets it `ON`. Applying `LIGHTENED` to that object sets it `OFF` again.
+
+## Hazard telegraphs and phase
+140. Every hazard on a mandatory route across 10,000 Zones has `telegraph >= 0.8 s`, and the telegraph renders before the first damage tick, not simultaneously with it.
+141. Resetting a package restores every hazard in its group to phase 0 with wind-up cleared; a hazard mid-cycle at reset does not deal damage during the restore.
+
 ---
 
-# 39. IMPLEMENTATION WAVES
+# 39. TRACEABILITY
+
+The two source authorities name **142 acceptance tests** — 62 in Player Authority §35 and 80 in Dungeon Authority §71. Every one is mapped below to the Design 1 vector, reference fixture, or deferral that covers it. A proposal that does not close this matrix has not met closure checklist item 12, regardless of how many vectors of its own it invents.
+
+`V n` is a §38 test vector. `fx n` is a §37 reference fixture. `deferred` means the system is absent by §2.2 and the test is not applicable.
+
+## 39.1 Player Design Authority §35
+
+| # | Acceptance test | Covered by |
+|---|---|---|
+| P1 | Empty build can move, jump, interact, melee, and defeat a basic mandatory enemy with Static Pulse. | V 1 |
+| P2 | Static Pulse cannot be removed from the Weapon cycle. | V 2 |
+| P3 | Out-of-bounds recovery returns to valid state. | V 3 |
+| P4 | No foreign receipt is required for the player to remain basically playable. | V 4 |
+| P5 | Q/E/1/2/3 activate five distinct Ability slots directly. | V 12 |
+| P6 | Shift activates Mobility and never ordinary sprint. | V 13 |
+| P7 | F never activates a generated combat Echo. | V 14 |
+| P8 | MMB always reaches baseline melee unless rebound. | V 15 |
+| P9 | R dispatches only the selected Weapon’s feed action. | V 16 |
+| P10 | Player-facing bindings are rebindable without changing semantic slot roles. | V 17, 18 |
+| P11 | Static + three Weapon Echoes produce four valid cycle states. | V 19 |
+| P12 | Empty slots are skipped. | V 20 |
+| P13 | Switching away from a partial magazine does not refill it. | V 21 |
+| P14 | Switching away from Heat does not clear it. | V 22 |
+| P15 | Switching does not activate inactive Weapon passives. | V 25 |
+| P16 | A selected Weapon remains useful without another Weapon acting as mandatory primer. | V 27 |
+| P17 | Resource Ability cannot overspend its pool. | V 35 |
+| P18 | Multi-charge Cooldown recharges predictably and serially. | V 36 |
+| P19 | Action recharge advances only on declared facts/metrics. | V 37 |
+| P20 | Failed preflight spends nothing. | V 35, 38 |
+| P21 | Post-commit miss receives no implicit refund. | V 39 |
+| P22 | Recharge modifiers cannot create an unbounded self-feed loop. | V 40, 41 |
+| P23 | Resource/Cooldown/Action are visibly distinguishable in HUD. | V 42 |
+| P24 | F activates a normal mechanism. | V 82 |
+| P25 | F activates an AP Check while preserving AP transaction semantics. | V 48 |
+| P26 | F picks up and drops/places carryables. | V 83, 84 |
+| P27 | Required carryable lost out of bounds recovers. | V 49 |
+| P28 | Carrying produces unambiguous context prompt. | V 46 |
+| P29 | Hacking begins through F and resolves as a room-signal input rather than bespoke door logic. | V 88 |
+| P30 | Eligible object can be manipulated. | V 51 |
+| P31 | Ineligible progression object cannot be manipulated merely because it is physically light. | V 52 |
+| P32 | Physics cannot self-launch the player into universal traversal. | V 53 |
+| P33 | Player-owned impact has a hard damage ceiling. | V 57 |
+| P34 | Resting/jittering props cannot repeatedly damage. | V 55 |
+| P35 | Optional clever sequence breaks remain possible where no semantic gate forbids them. | V 91 |
+| P36 | No normal gameplay path writes Health outside the damage resolver. | V 58 |
+| P37 | Same ordinary non-crit attack under same state gives same damage. | V 59 |
+| P38 | 100% crit guarantees Tier I. | V 60 |
+| P39 | 150% crit never produces an ordinary hit. | V 61 |
+| P40 | Overcrit tiers scale linearly rather than exponentially. | V 63 |
+| P41 | Status cannot directly or indirectly schedule periodic Health damage. | V 64, 66 |
+| P42 | Failed chance-based Status attempt visibly increases bounded susceptibility. | V 67 |
+| P43 | Successful Status application increases temporary adaptation. | V 68 |
+| P44 | Strong enemies can resist more without every effect becoming blanket `IMMUNE`. | V 70, 71 |
+| P45 | World fire may damage independently from `BURNING`. | V 65 |
+| P46 | Unequipped Archive hosts produce zero live listeners/reactions/resources. | V 73 |
+| P47 | Full loadout cannot be swapped during ordinary active combat. | V 74 |
+| P48 | Weapon cycling is not a full loadout swap. | V 138 |
+| P49 | Re-equipping an old host restores legal saved state instead of refilling it. | V 75 |
+| P50 | Newly introduced host cannot manufacture free readiness in an already-active Zone. | V 76 |
+| P51 | Mod insertion/removal at the Hub has no respec fee. | V 77 |
+| P52 | Only one high-tier Gear piece may be equipped across Head/Torso/Arms/Legs. | V 78 |
+| P53 | Hard capability gate cannot appear before guarantee. | V 80 |
+| P54 | Epsilon cannot invent a hard requirement. | V 94 |
+| P55 | GRAPPLE-required Zone verifies a usable expression is equipped before entry or supplies it before the requirement. | V 96 |
+| P56 | Raw DPS threshold cannot become AP reachability logic. | V 95 |
+| P57 | Physics/recoil may bypass optional geometry without automatically invalidating the Zone. | V 91 |
+| P58 | Weapon-cycle transition visibly identifies the newly selected configuration. | V 97 |
+| P59 | Static Pulse has recognizable neutral/home presentation. | V 98 |
+| P60 | Viewmodel animation/VFX cannot decide simulation outcome. | V 99 |
+| P61 | Physics ownership/target/relation state is visually readable. | V 92 |
+| P62 | A configuration with no RMB or feed mechanic does not invent meaningless filler UI. | V 100 |
+
+## 39.2 Dungeon & Environmental Gameplay Authority §71
+
+| # | Acceptance test | Covered by |
+|---|---|---|
+| D1 | F operates the intended focused object when several interactables are nearby. | V 45 |
+| D2 | Carryable pickup/drop is predictable. | V 83 |
+| D3 | Placing an object in a compatible socket succeeds. | V 84 |
+| D4 | An incompatible object is rejected visibly. | V 85 |
+| D5 | The player knows what F will do in an ambiguous context. | V 45, 47 |
+| D6 | A plate visibly communicates its output relationship. | V 101 |
+| D7 | A conduit state is understandable without relying only on color. | V 102 |
+| D8 | AND requires both inputs. | fx 8 |
+| D9 | OR accepts either input. | fx 9 |
+| D10 | Timed state visibly communicates remaining urgency. | V 103 |
+| D11 | Latch persists according to package semantics. | V 108 |
+| D12 | Signal reset restores initial state. | V 109 |
+| D13 | A powered door opens. | fx 1 |
+| D14 | Removing power closes safely. | V 110 |
+| D15 | A player in the doorway is not silently crushed by a non-hazard door. | V 110 |
+| D16 | A persistent shortcut remains unlocked after room revisit. | fx 16 |
+| D17 | A topology transformation never removes every valid progression route unintentionally. | V 111 |
+| D18 | Required carryable cannot be permanently lost. | V 49 |
+| D19 | Dropping it out of bounds restores it. | V 49 |
+| D20 | Destroying a replaceable required object restores it. | V 86 |
+| D21 | Save/load reconstructs its semantic state. | V 87 |
+| D22 | A weighted plate cannot be cheesed by meaningless tiny debris unless authored. | V 139 |
+| D23 | Required timed path is physically feasible. | V 112 |
+| D24 | Timing includes reasonable player variance. | V 112 |
+| D25 | Failure permits immediate retry. | V 113 |
+| D26 | Countdown is readable. | V 103 |
+| D27 | Mandatory shootable target works with guaranteed baseline weapon capability. | V 114 |
+| D28 | Invalid hits do not trigger it. | V 115 |
+| D29 | Target state is readable at distance. | V 104 |
+| D30 | Hack can enable an output. | fx 7 |
+| D31 | Hack can redirect a connection in a package designed for routing. | fx 7 |
+| D32 | Hack failure does not corrupt puzzle state. | V 89 |
+| D33 | Hack interaction can be exited/reset safely. | V 89 |
+| D34 | Powered rail state is readable. | V 105 |
+| D35 | Rail branch switch selects a physically valid route. | fx 10 |
+| D36 | LaunchPad source/landing remains valid. | V 116 |
+| D37 | Grapple target exists within an audited grapple opportunity. | V 117 |
+| D38 | Moving platform does not strand required progression. | V 111 |
+| D39 | Hazard damage uses common damage road. | V 119 |
+| D40 | Hazard telegraphs before unavoidable contact where appropriate. | V 140 |
+| D41 | Hazard can affect enemies if package says it can. | V 120 |
+| D42 | Hazard controller correctly disables/enables it. | V 121 |
+| D43 | Reset restores hazard phase safely. | V 141 |
+| D44 | Reactive barrel damages valid actors. | fx 12 |
+| D45 | Bombable wall responds to tagged explosive. | fx 12 |
+| D46 | Ordinary architecture does not become arbitrarily destructible. | V 122 |
+| D47 | Destructible required support has recovery or alternate progression. | V 123 |
+| D48 | Energy ball reaches receiver on validated route. | **deferred** (§2.2) |
+| D49 | Lost ball resets. | **deferred** (§2.2) |
+| D50 | Reflector changes valid path. | **deferred** (§2.2) |
+| D51 | Beam receiver responds continuously. | **deferred** (§2.2) |
+| D52 | Moving blocker changes beam state correctly. | **deferred** (§2.2) |
+| D53 | Player can enter, swim, surface, and exit. | **deferred** (§2.2) |
+| D54 | Oxygen state is readable. | **deferred** (§2.2) |
+| D55 | Required buoyant object behaves consistently. | **deferred** (§2.2) |
+| D56 | Drain/fill state restores correctly after save/load when persistent. | **deferred** (§2.2) |
+| D57 | Enemy can be killed by an environmental hazard. | V 124 |
+| D58 | Movable cover changes line of sight. | V 125 |
+| D59 | Enemy cannot permanently softlock a required plate. | V 118 |
+| D60 | Encounter-clear gate opens from authored encounter completion. | fx 13 |
+| D61 | Generator state propagates to dependent room. | fx 18 |
+| D62 | Cross-room state survives unload/reload. | V 126 |
+| D63 | Dependency chain remains reachable. | V 127 |
+| D64 | Dungeon macro-state cannot create an accidental progression cycle. | V 127, 128 |
+| D65 | Puzzle reset affects only its declared reset group. | V 129 |
+| D66 | Completed AP Check is not undone by puzzle reset. | V 130 |
+| D67 | Persistent shortcut is not undone by local reset. | fx 16 |
+| D68 | Temporary projectiles and signals are cleared. | V 131 |
+| D69 | Critical active/inactive state is distinguishable without color alone. | V 102 |
+| D70 | Required sound cue has visual equivalent. | V 106 |
+| D71 | A distant controlled output can be inferred from input. | V 101 |
+| D72 | Wrong-sequence failure communicates the error. | V 107 |
+| D73 | Same seed/package produces same initial composition. | V 81 |
+| D74 | Decorative randomness does not alter solvability. | V 81 |
+| D75 | Package audit produces stable results. | V 132 |
+| D76 | Inactive physics objects sleep. | V 133 |
+| D77 | Large room does not keep unlimited projectiles alive. | V 134 |
+| D78 | Beam routing has bounded complexity. | V 135 |
+| D79 | Signal update is event-driven where practical. | V 136 |
+| D80 | Debug view can identify active semantic state without inspecting scene internals manually. | V 137 |
+
+## 39.3 Coverage
+
+| | Count |
+|---|---:|
+| Authority acceptance tests | 142 |
+| Covered by a §38 test vector | 121 |
+| Covered by a §37 reference fixture | 12 |
+| Not applicable — system deferred by §2.2 | 9 |
+| **Uncovered** | **0** |
+
+The nine deferred tests are D48–D52 (energy balls, reflector beams) and D53–D56 (water as a medium). Both systems are removed from scope by §2.2 with their costs recorded, and both are named again in §41.2 as sacrifices. They are not oversights, and a proposal that ships those systems — Design 3 is the obvious candidate for the routing families — must cover these nine.
+
+---
+
+# 40. IMPLEMENTATION WAVES
 
 Ordered by dependency. Each wave ends at a testable state; a wave is done when its test vectors pass.
 
@@ -3392,9 +3682,9 @@ Waves 1–3 are the foundation and are strictly sequential. Waves 4–10 are pla
 
 ---
 
-# 40. CLOSURE STATEMENT
+# 41. CLOSURE STATEMENT
 
-## 40.1 What this proposal decided
+## 41.1 What this proposal decided
 
 Eighteen decisions that were open in the source authorities, resolved here:
 
@@ -3417,7 +3707,7 @@ Eighteen decisions that were open in the source authorities, resolved here:
 17. Composition is **fully deterministic and bridge-owned**; Epsilon has no role in it.
 18. Capability gates are **four**, and one of them (`ranged_hit`) is permanently satisfied by the baseline.
 
-## 40.2 What this proposal sacrificed
+## 41.2 What this proposal sacrificed
 
 Honestly and without hedging:
 
@@ -3434,7 +3724,7 @@ Honestly and without hedging:
 | **Enemy-applied Status** | Status is player-side only. Enemies cannot anchor, confuse, or expose the player. |
 | **Grapple spring dynamics** | Constant-speed pull rather than a simulated spring. Traversal feels slightly more mechanical. |
 
-## 40.3 Proposal-level choices the authorities did not mandate
+## 41.3 Proposal-level choices the authorities did not mandate
 
 These are places where the authorities were silent and this proposal decided. They are the decisions most worth reviewing, because a different proposal could reasonably decide otherwise:
 
@@ -3447,11 +3737,15 @@ These are places where the authorities were silent and this proposal decided. Th
 - Composition excludes Epsilon entirely, which is also stricter than required.
 - Save is refused during encounters rather than specified for them.
 
-## 40.4 Where this proposal disagrees with an authority
+## 41.4 Where this proposal disagrees with an authority
 
 Nowhere. Every inherited law in §1 is honoured. If a reader finds a contradiction, it is a defect in this document and should be reported rather than resolved locally (§1.3).
 
-## 40.5 The claim
+## 41.5 The claim
+
+**Every acceptance test named by the two source authorities is covered.** §39 maps all 142 — 121 to a test vector, 12 to a reference fixture, 9 to a recorded deferral. None is uncovered.
+
+Building that matrix was not a formality. It caught a direct contradiction with Dungeon Authority acceptance test 14: an earlier draft of §21.1 held **every** actuator in place on power loss, including doors, where the authority requires a door to close safely. §21.1.1 now resolves power loss per actuator kind — doors close under the `safe_closure` interlock, and everything that carries the player holds position. A proposal can be internally consistent and still contradict its source; only the matrix finds that.
 
 **There are no intentionally open behavioral decisions in this proposal.**
 

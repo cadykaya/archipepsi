@@ -1,7 +1,7 @@
 # ARCHIPEPSI — THE ZERO-GUESSWORK STANDARD
 
 **Status:** Process authority for `docs/design-proposals/`
-**Version:** 1.0
+**Version:** 1.1
 **Applies to:** All five Complete Design proposals, and any document that claims to be implementable without further design input.
 
 ---
@@ -159,6 +159,20 @@ These phrasings transfer a decision to the implementer. A proposal containing th
 
 Silent inheritance is the subtlest failure because it reads as diligence. It is the reason a proposal can be 17,000 words and still not be implementable: every unpinned inheritance is a decision the implementer must reconstruct from code that may have changed.
 
+## 2.5 A method instead of an outcome
+
+Specific to test vectors, and easy to miss because it reads as rigour.
+
+| Forbidden | Why | Required instead |
+|---|---|---|
+| "verified by static analysis" | Names a technique, not a result | The input, and the value expected |
+| "audit all call sites" | An instruction to a person | An observable assertion |
+| "confirm the system behaves correctly" | Restates the requirement | A number |
+
+A test vector is `given <exact input>, expect <exact output>`. "Verified by instrumenting every registration point" describes how you might find out; it does not say what you should find. Write the assertion, and let the implementer choose the instrument.
+
+The tell: if a vector could not fail, because it does not predict anything, it is not a vector.
+
 ---
 
 # 3. THE CLOSURE CHECKLIST
@@ -176,7 +190,7 @@ Every proposal must close all twelve areas. A proposal that defers an area must 
 9. **Concrete fixtures** — at least one fully specified, runnable reference instance per puzzle family, with real measurements, plus a certified fallback Zone.
 10. **Player-facing flow** — starting state, first-run experience, every menu transition, every invalid-state screen, and exact failure messaging.
 11. **External contract pinning** — every system described as existing or unchanged must be referenced precisely enough to implement against without reading it and guessing.
-12. **Test vectors** — every named acceptance test must have concrete inputs and expected outputs.
+12. **Test vectors and traceability** — every named acceptance test must have concrete inputs and expected outputs, and §39 must map all 142 authority acceptance tests to a vector, a fixture, or a recorded deferral, with no uncovered rows.
 
 ---
 
@@ -209,7 +223,13 @@ Sample deliberately from the boring parts. The exciting systems get written care
 
 Follow every failure path to a terminal state. A failure path that ends in an unspecified state, or loops back to a condition that can fail the same way, is not closed. Pay particular attention to generation: a search that can exhaust must name what happens when it does, and that outcome must itself be certified valid.
 
-## 4.5 The completeness question
+## 4.5 Traceability sweep
+
+Build the §39 matrix and resolve every one of the 142 rows. This is the only pass that checks the proposal against something outside itself, and it is therefore the only one that can catch a proposal that is internally perfect and externally wrong.
+
+Expect it to generate work rather than confirm it. On Design 1 it produced 60 new test vectors and found two defects the four preceding passes had missed: a contradiction with Dungeon Authority test 14, and a cross-reference pointing at the wrong vector number.
+
+## 4.6 The completeness question
 
 Not "did I cover every system?" but: **is there any moment of play where the player does something and this document does not say what happens?**
 
@@ -261,11 +281,26 @@ All five proposals use the same top-level structure so they can be compared sect
 36. Debugging and inspection
 37. Reference fixtures
 38. Test vectors
-39. Implementation waves
-40. Closure statement
+39. Traceability
+40. Implementation waves
+41. Closure statement
 ```
 
-Section 40 is mandatory and is the proposal's own claim about itself: what it decided, what it sacrificed, what it deferred, and an explicit statement that no behavioral decision inside it is intentionally left open. A proposal that cannot honestly write §40 is not finished.
+**Section 39 is mandatory.** It maps every acceptance test named by the two source authorities — 62 in Player Authority §35, 80 in Dungeon Authority §71, **142 total** — to the vector, fixture, or recorded deferral that covers it. Every row must resolve to one of exactly three outcomes:
+
+| Outcome | Meaning |
+|---|---|
+| A §38 test vector | Covered directly |
+| A §37 reference fixture | Covered by a runnable scene |
+| A deferral recorded in §2.2 | The system is out of scope; the test is not applicable |
+
+Anything else is an uncovered row, and a proposal with an uncovered row is not finished.
+
+This section exists because a proposal can be entirely self-consistent and still contradict its source. Design 1's matrix caught exactly that: its actuator rules held every machine in place on power loss, which reads as a sensible anti-softlock policy and directly contradicts Dungeon Authority test 14, where a door must close safely. No amount of internal auditing finds that. Only mapping against the authority's own tests does.
+
+Build the matrix **before** declaring the proposal complete, not after. It reliably generates new test vectors, and vectors written to close a matrix row tend to be sharper than vectors written from memory of the systems.
+
+**Section 41** is the proposal's own claim about itself: what it decided, what it sacrificed, what it deferred, which choices were proposal-level rather than inherited, and an explicit statement that no behavioral decision inside it is intentionally left open. A proposal that cannot honestly write §41 is not finished.
 
 ## 5.1 The proposal profile
 
@@ -280,6 +315,45 @@ Each proposal opens with the same axes, rated 1–5, so the five can be compared
 | Implementation risk | How likely it is to go wrong in production (higher = riskier) |
 | Procedural validation difficulty | How hard it is to prove a generated Zone is valid |
 | Reuse of current repo foundations | How much existing work survives |
+
+## 5.2 The generated-content pattern
+
+Every proposal must answer one question: **how does a language model produce content without balancing the game?**
+
+Design 1 answered it with a mechanism general enough that the others should inherit it rather than reinvent it:
+
+> **The model selects a named profile. It never emits a number.**
+
+A profile is an authored, pre-balanced bundle of every parameter a family needs, addressed by ID. The model's output is a set of selections from enumerated lists — category, family, profile, and a small number of three-valued magnitude enums. A deterministic resolver expands those selections into the full parameter set.
+
+This buys four things at once:
+
+1. **The model cannot unbalance the game**, because it cannot express a number.
+2. **Validation is trivial** — every field is checked against a list it must appear in.
+3. **The offline fallback is free.** Hash the item's provenance, index into the same lists modulo their length, and the result is valid by construction and reproducible forever. The game is fully playable with the model unavailable, losing only the thematic interpretation.
+4. **The creative surface stays real.** Choosing that a foreign item becomes a charge-release beam weapon with a guard secondary and a `LIGHTENED` applicator is a genuine interpretation. It just is not a balance decision.
+
+A proposal may reject this pattern — Design 4 in particular exists to push generation much further — but it must then say explicitly what replaces it, and how a Zone stays valid when the model is unavailable or returns nonsense.
+
+## 5.3 Authoring order
+
+Write the sections in dependency order, not document order. Specifically: **decide content before serializing it.**
+
+Design 1 was written schemas-first, so §4 forward-references profiles that are not defined until §11–14. That is painful to write and worse to read, and it invites schema fields that no system turns out to need. The order that works:
+
+1. Scope — what ships, what is deferred, what each deferral costs.
+2. The content catalogs — families, profiles, behaviors, with their numbers.
+3. The schemas, derived from what the catalogs actually need.
+4. Lifecycle and persistence, derived from what the schemas hold.
+5. Composition and validation, derived from all of the above.
+6. Fixtures, then vectors, then the traceability matrix.
+7. The closure statement, written last, honestly.
+
+Present them in the §5.1 order. Write them in this one.
+
+## 5.4 Fixture depth
+
+A reference fixture described as runnable must be runnable. A table row is a summary, not a fixture. Each one needs, at minimum: real coordinates, real measurements, the exact solution path, the expected `PUZZLE_LOCAL` state after solving, and the expected state after reset. A fixture whose post-reset state differs from its initial state by even one field is a failing fixture, and that is only checkable if both states are written down.
 
 ---
 
