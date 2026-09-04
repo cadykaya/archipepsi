@@ -35,4 +35,4 @@ Where those two documents state an architectural law, every proposal inherits it
 | 02 — Physics Is The Game | **Complete** — ~23k words, audited, 142/142 authority tests traced |
 | 03 — The Dungeon Is One Machine | **Complete** — ~16.5k words, audited, 142/142 authority tests traced |
 | 04 — Epsilon Is The Content | **Complete** — ~15.4k words, audited, 142/142 authority tests traced |
-| 05 — Status As Grammar | Not started |
+| 05 — Status As Grammar | **Complete** — ~11.5k words, audited, 142/142 authority tests traced |
