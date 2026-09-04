@@ -66,7 +66,9 @@ Design 1's `status:core:exposed` sets a target's Defense to `0.0` **and** adds `
 
 Defense-to-zero is a rule change and survives. The crit bonus is a damage modifier and does not.
 
-**`exposed` ships here with its Defense effect and without its crit clause.** That is the only content in all five proposals this union does not take, it is one clause of one Status, and it is flagged here rather than buried because "no cuts" was the instruction and this is the exception to it. An owner who prefers Design 1's version can restore the crit clause by striking §15.3's actor rule — it costs the no-damage-modification invariant and nothing else.
+**`exposed` ships here with its Defense effect and without its crit clause.** That is the only content in all five proposals this union does not take, it is one clause of one Status, and it is flagged here rather than buried because "no cuts" was the instruction and this is the exception to it.
+
+One other thing is *deduplicated* without being cut. §11.7.1 drops three of Design 4's `effect` atoms — `status`, `physics`, and `field` — because the union ships discriminator-carrying atoms doing the same jobs, and two atoms meaning the same thing is a defect rather than a superset. Each remaps deterministically at the same tier and loses no behaviour, and it happens during authoring rather than after ship, so Design 4 §17.7's append-only rule is untouched. That is a deduplication, not a loss of content, which is why it is recorded here in its own paragraph rather than counted against the one cut above. An owner who prefers Design 1's version can restore the crit clause by striking §15.3's actor rule — it costs the no-damage-modification invariant and nothing else.
 
 ## 0.5 How this document pins
 
@@ -82,6 +84,8 @@ Where a pinned section itself pins onward — Design 5 §13 pins to Design 1 §1
 | Design 3 §30.6 (the model check) | §30.6 | Two properties added; physics and capability integrated |
 | Design 4 §4.5 (the atom) | §11.7 | The alphabet absorbs physics, signal, and Status atoms |
 | Design 5 §15.2 (`exposed` absent) | §15.2 | `exposed` is restored, less its crit clause (§0.4) |
+| Design 4 §12.2 (the `effect` dimension) | §11.7.1 | Three atoms superseded by discriminator-carrying equivalents; four `HIGH` atoms added |
+| Design 2 §29.3 (the `manipulate` contract) | §29.3 | The least-capable *profile* becomes a floor on every granting *composition* |
 | Design 1 §35 (budgets) | §35 | Rewritten entirely; five proposals' budgets cannot coexist unchanged |
 
 ---
@@ -422,19 +426,64 @@ Two atom additions to the `payload` dimension, carrying Design 2's and Design 3'
 
 Design 4's alphabet covered Weapons, Abilities, Gear, and Mods. The union must also express Design 2's twelve physics verbs, Design 3's five signal verbs, and Design 5's four Status delivery families.
 
-They enter through the **`effect` dimension** of the Ability grammar, as seven new atoms, each carrying a **non-costed discriminator** exactly as Design 4 §4.4 already does for `physics_primitive`:
+They enter through the **`effect` dimension** of the Ability grammar, each carrying a **non-costed discriminator** exactly as Design 4 §4.4 already does for `physics_primitive`:
 
-| Atom | Cost | Discriminator | Legal values |
-|---|---:|---|---|
-| `effect_physics_basic` | `24` | `physics_verb` | `PUSH`, `PULL`, `ALIGN`, `SETTLE` |
-| `effect_physics_hold` | `30` | `physics_verb` | `HOLD`, `ROTATE`, `PIN`, `TETHER` |
-| `effect_physics_structural` | `34` | `physics_verb` | `ATTACH`, `DETACH` |
-| `effect_mass_field` | `32` | `field_verb` | `LIGHTEN_FIELD`, `ANCHOR_FIELD` |
-| `effect_signal_read` | `16` | `signal_verb` | `PROBE` |
-| `effect_signal_write` | `26` | `signal_verb` | `BRIDGE`, `INVERT`, `HOLD_SIGNAL`, `CUT` |
-| `effect_status` | `22` | `status_verb` | `APPLY`, `FIELD`, `TRANSFER`, `SELF` |
+| Atom | Cost | `tier_min` | Discriminator | Legal values |
+|---|---:|---|---|---|
+| `effect_physics_basic` | `24` | — | `physics_verb` | `PUSH`, `PULL`, `ALIGN`, `SETTLE` |
+| `effect_physics_hold` | `30` | — | `physics_verb` | `HOLD`, `ROTATE`, `PIN`, `TETHER` |
+| `effect_physics_structural` | `34` | — | `physics_verb` | `ATTACH`, `DETACH` |
+| `effect_mass_field` | `32` | — | `field_verb` | `LIGHTEN_FIELD`, `ANCHOR_FIELD` |
+| `effect_signal_read` | `16` | — | `signal_verb` | `PROBE` |
+| `effect_signal_write` | `26` | — | `signal_verb` | `BRIDGE`, `INVERT`, `HOLD_SIGNAL`, `CUT` |
+| `effect_status` | `22` | — | `status_verb` | `APPLY`, `FIELD`, `TRANSFER`, `SELF` |
+| **`effect_physics_master`** | **`62`** | **`HIGH`** | `physics_verb` | **all twelve** |
+| **`effect_mass_master`** | **`62`** | **`HIGH`** | `field_verb` | both, at `HIGH` magnitudes |
+| **`effect_signal_master`** | **`62`** | **`HIGH`** | `signal_verb` | **all five** |
+| **`effect_status_master`** | **`62`** | **`HIGH`** | `status_verb` | all four, plus compound-aware application |
 
 Discriminators are free because verbs within one atom are priced equivalently; the atom carries the cost. Splitting physics across three atoms rather than one is what makes `HOLD` cost more than `PUSH` without pricing twelve verbs individually.
+
+### 11.7.1 Three of Design 4's atoms are superseded, not duplicated
+
+Design 4's `effect` dimension already contains `status` (`22`), `physics` (`28`), and `field` (`32`). The seven above do the same jobs with discriminators attached, so shipping both would put two atoms in the catalog meaning the same thing — a defect, not a superset.
+
+**`effect:status`, `effect:physics`, and `effect:field` do not appear in the union's shipped catalog.** Each is superseded by its discriminator-carrying equivalent: `physics` → `effect_physics_basic` with `physics_verb = PUSH`, `field` → `effect_mass_field` with `field_verb = LIGHTEN_FIELD`, `status` → `effect_status` with `status_verb = APPLY`. Each remap preserves the item's tier and its resolved numbers.
+
+**This does not breach Design 4 §17.7's append-only rule, and the distinction is exact.** That rule reads *"removing an atom is forbidden once shipped"* and *"the atom catalog is append-only **after ship**"*. It binds from ship forward, because its whole purpose is that a saved `composition` must resolve forever. The union's catalog is settled during authoring, before any save exists, so the three never ship and no save can reference them.
+
+Two rules keep that true rather than merely stated:
+
+1. **The three ids are permanently reserved and never reissued.** An `effect:physics` id encountered after ship resolves to the §11.7 remap above and is flagged `Legacy` for Forge, exactly as Design 4 §17.7 handles a repriced atom. It never binds to a different atom.
+2. **From ship, the union's `110`-atom catalog is append-only**, with no exception. §11.7.1 is the last removal this design permits, and it happens before the rule starts.
+
+The `effect` dimension therefore holds **`17`** atoms: Design 4's nine, less three, plus eleven. The whole catalog is **`110`** atoms against Design 4's `102`.
+
+### 11.7.2 Why the four `HIGH` atoms are not optional
+
+Without them the union does not work, and the arithmetic says so plainly.
+
+The `HIGH` band is `[165, 180]`. The most expensive base composable without a `tier_min = HIGH` effect atom is `174` — but the mask rejects it, and in practice **the highest reachable total using any non-`HIGH` effect atom falls below the band floor for every effect family except `heal`.** Design 4 shipped `48` in-band `HIGH` bases and `47` of them use `transform*`; §12.5 of that document called the number thin and was right.
+
+Design 4 could live with that because nothing in Design 4 depended on a particular effect family reaching `HIGH`. **The union cannot**, because §29.1 makes `capability:core:manipulate` a progression gate granted by a physics Ability, and a capability with no high-tier expression is a capability the Forge can never elevate into.
+
+Pricing the four at `62` — the price Design 4 already assigns its own high-tier effect atom, `transform*`, rather than a new price point — lifts `HIGH` in-band bases from `48` to `138` and gives every effect family at least one:
+
+| Family | `USEFUL` in-band bases | `HIGH` in-band bases |
+|---|---:|---:|
+| Physics | `385` | `9` |
+| Damage | `217` | — |
+| Signal | `194` | `31` |
+| Status | `162` | `41` |
+| Mark | `64` | — |
+| Mass field | `63` | `9` |
+| Deployable | `31` | — |
+| Barrier | `27` | — |
+| Heal | `23` | `1` |
+| `transform*` | — | `47` |
+| **Total** | **`1,166`** | **`138`** |
+
+`damage`, `mark`, `deployable`, and `barrier` still have no `HIGH` base. That is inherited from Design 4 unchanged and is acceptable, because none of them gates progression — a high-tier damage Ability is `transform*` or a heavily-claused `USEFUL` one, which is the trade Design 4 already made and documented. **The four families that ship a `HIGH` atom here are exactly the four the union added, and exactly the four that a capability, a puzzle, or a Zone predicate can depend on.**
 
 `effect_status` additionally requires `status_applied`, naming one of the thirteen in §15.2, except when `status_verb = TRANSFER`.
 
@@ -448,7 +497,7 @@ Every profile in Designs 1, 2, 3, and 5 is a fixed composition, and all of them 
 |---|---:|---|
 | Design 1 §11.1 Weapon profiles | `14` | `cadence_standard` → `frame_standard + delivery_hitscan + cadence_standard + payload_direct + feed_magazine_standard + secondary_none` |
 | Design 1 §12.1 Ability profiles | `14` | `ab_barrier_small` → `form_press + effect_barrier + target_self + recharge_cooldown_short + scaling_flat` |
-| Design 2 §12.1 physics profiles | `3` | `ab_physics_standard` → `form_press + effect_physics_basic + target_actor + recharge_cooldown_short + scaling_flat`, `physics_verb = PUSH` |
+| Design 2 §12.1 physics profiles | `3` | `ab_physics_light` → `form_press + effect_physics_basic + target_actor + recharge_cooldown_short + scaling_flat`, `physics_verb = PUSH`. This is the composition §29.3's floor is defined as. |
 | Design 3 §12.1 signal profiles | `3` | `sig_brief` → `form_press + effect_signal_write + target_actor + recharge_cooldown_short + scaling_flat` |
 | Design 5 §12.2–12.3 Status profiles | `3` | `field_brief` → `form_press + effect_status + target_area + recharge_cooldown_short + scaling_flat`, `status_verb = FIELD` |
 
@@ -456,7 +505,14 @@ Named compositions serve three purposes: they are the offline composer's preferr
 
 ## 11.9 The space
 
-Computed exhaustively at catalog load and asserted in CI, per §37.4. The widened alphabet's figures are in §12.7.
+**Weapons are unaffected by the widened alphabet.** §11.7 touches only the Ability `effect` dimension, so Design 4's Weapon figures carry over exactly:
+
+| | `USEFUL` | `HIGH` |
+|---|---:|---|
+| **Distinct legal Weapons** | *Pinned: identical to Design 4 §11.6* | |
+| **Total** | **`175,155,080`** | |
+
+Recomputed against the union's catalog rather than cited: the figure is unchanged, because no Weapon dimension gained or lost an atom. Ability figures are in §12.7.
 
 ---
 
@@ -511,7 +567,29 @@ Contribution cap, loop prevention, and the no-hidden-second-tax rule — *pinned
 
 ## 12.7 The space
 
-Computed in §37.4 and asserted in CI.
+Computed over the `17`-atom `effect` dimension of §11.7, the masks of §12.2, and the trigger allowances of §4.6.
+
+| | `USEFUL` | `HIGH` |
+|---|---:|---:|
+| Unconstrained slot combinations | `6,000` | `18,360` |
+| Mask-legal | `2,405` | `8,268` |
+| **In budget band** | **`1,166`** | **`138`** |
+| Clause-sets available | `479` | `116,145` |
+| **Distinct legal Abilities** | **`558,514`** | **`16,028,010`** |
+
+**Total: `16,586,524` distinct legal Abilities**, against Design 4's `5,941,874`.
+
+The `2.8×` increase comes almost entirely from the `HIGH` tier, where in-band bases go from `48` to `138` for the reason §11.7.2 gives. `USEFUL` grows more modestly, from `766` bases to `1,166`, because the union added seven ordinary-tier effect atoms to a tier that already had plenty.
+
+**CI asserts three floors**, and each is a regression test rather than a tuning value:
+
+| Assertion | Floor | Why |
+|---|---:|---|
+| `HIGH` in-band bases, all families | `138` | Design 4 §12.5's `48` was already thin |
+| `HIGH` in-band bases with a physics effect | `9` | Below this, `capability:core:manipulate` has no high-tier expression and Forge cannot elevate into it (§18) |
+| `HIGH` in-band bases with a Status effect | `41` | Below this, Design 5's verb layer has no high-tier expression |
+
+A mask change or a reprice that drops any of the three is a regression, not a balance choice.
 
 ## 12.8 Mobility
 
@@ -960,9 +1038,33 @@ Twenty-four offer types. Every shell in the library declares which it provides, 
 
 *Pinned: identical to Design 2 §29.1.* Design 1's four, plus `capability:core:manipulate`, granted only by a `PUSH`, `PULL`, or `HOLD` verb and never by the other nine.
 
-## 29.2 Proof, contract, entry, optional routes
+## 29.2 Proof, entry, optional routes
 
-*Pinned: identical to Design 2 §29.2, §29.3, §29.4, §29.5* — proof before requirement with no in-Zone acquisition, the `700 N` / `20.0 m` / `120 kg` least-capable-profile contract for mandatory manipulation, entry validation that blocks and explains, and optional routes that may require anything.
+*Pinned: identical to Design 2 §29.2, §29.4, §29.5* — proof before requirement with no in-Zone capability acquisition, entry validation that blocks and explains with the §34.4 message, and optional routes that may require anything and are never validated for reachability.
+
+## 29.3 The `manipulate` contract — modifies Design 2 §29.3
+
+Design 2 validates every mandatory manipulation against **the least capable granting profile**, `ab_physics_light`: `700 N`, `20.0 m` range, `120 kg` verb mass limit. That sentence is well-defined in Design 2 because its profiles are a closed, hand-authored set of three.
+
+**Under composition it is not well-defined, and this is the sharpest seam in the union.** Design 4 §11.4 resolves an Ability's numbers from its atoms and its scaling atom, so Epsilon can compose a `PUSH` Ability that grants `manipulate` and is *weaker* than `ab_physics_light`. A player holding only that Ability passes §29.4's entry check — the capability Boolean is true — walks into a Zone whose mandatory puzzle was validated at `700 N`, and cannot move the crate. §30.6 cannot see it, because the verifier treats `manipulate` as a Boolean and never reasons about newtons.
+
+That is a softlock class the model check is structurally blind to, and it exists only because two proposals were merged. The union closes it with a floor rather than by making the verifier numeric:
+
+> **Every composition that grants `capability:core:manipulate` delivers at least `700 N`, `20.0 m` of range, and a `120 kg` verb mass limit.**
+
+Three rules implement it, and together they make "the least capable granting composition" a computable constant rather than a search:
+
+1. **The granting atoms carry the floor.** `effect_physics_basic` with `physics_verb` in `{PUSH, PULL, HOLD}` resolves to exactly `700 N` / `20.0 m` / `120 kg` — `ab_physics_light`'s numbers, by construction. `effect_physics_hold` and `effect_physics_master` resolve at or above it.
+2. **No `scaling` atom reduces a granting parameter.** Design 4's five scaling atoms may raise force, range, or mass limit and may never lower any of the three. A scaling atom that would is rejected by the §12.2 mask.
+3. **No Gear or Mod modifier reduces one below the floor.** Design 1 §16.2's runtime clamps already bound modifier output; `dom_physics` and `dom_relation_count` clamp at the floor rather than at zero.
+
+With all three, the least capable granting composition **is** `ab_physics_light`, so Design 2 §29.3's contract holds verbatim and the `700 N` on a `120 kg` object envelope — `5.83 m/s` of impulse, several metres on a flat floor — is what every mandatory manipulation is authored against.
+
+**Why a floor rather than a numeric capability.** Making `manipulate` carry a magnitude would put a continuous quantity into the state vector, which §4.10 exists to prevent and which would make §30.6 intractable for the same reason Status is excluded. A floor keeps the capability Boolean, keeps the verifier unchanged, and moves the entire problem to composition time where it costs one mask rule.
+
+## 29.4 Entry validation
+
+*Pinned: identical to Design 1 §29.3 and Design 2 §29.4.* Requirements are shown before entry and block it, with the §34.4 message listing qualifying Archive entries.
 
 ## 29.5 Capabilities inside the verifier
 
@@ -1533,7 +1635,7 @@ Eight fixtures that exist only here, because each exercises a seam no single pro
 | U4 | `fx_power_loss_gantry` | Room `B` holds a `WINCH` on a `ROPE` suspending a `CART` (`180 kg`), a `BRAKE` on a `SEESAW`, and a `DRIVER` on a drawbridge hinge paired with a second `BRAKE`. Control terminal in `D` can `POWER_OFF` room `B` | With the player standing on the cart, `POWER_OFF` is **deferred**, the terminal reports `waiting — someone is on the gantry`, and the persistent notice renders. On the player stepping off, power drops: the winch holds its length, both brakes engage, the drawbridge hinge locks at its current value. **Nothing moves.** |
 | U5 | `fx_vector_ceiling` | Three macro variables of four states, two local keys, four vector latches — the §4.10 worked allocation, exactly `4,096` | Structural check 12 passes at the boundary. The model check reports `R` and `E` sizes and all eight property outcomes. Adding a fifth latch fails check 16 at composition, not at runtime |
 | U6 | `fx_status_budget_refusal` | One room, `24` non-sleeping bodies, each carrying two Statuses — `48` entries. The player applies further Statuses one at a time | Entries `49` and `50` apply. The application that would make `61` is **refused** with the §34 Status rejection feedback and the cost is not spent. Applying to a sleeping body wakes it if under the `24` cap and is refused if not |
-| U7 | `fx_composed_physics_ability` | Epsilon composes an Ability with `effect: eff_manipulate`, discriminator `PUSH`, at tier `HIGH`, with one trigger clause | The composition resolves in band `[165, 180]` with the trigger allowance separate. The resulting Ability grants `capability:core:manipulate` per §29.1. The composition line reads in player language per §33.7 |
+| U7 | `fx_composed_physics_ability` | Epsilon composes an Ability with `effect_physics_master` (`62`), `physics_verb = PUSH`, at tier `HIGH`, with two trigger clauses | The composition resolves in band `[165, 180]` with the `38`-point trigger allowance counted separately. It is one of the `9` in-band `HIGH` physics bases (§12.7). The resulting Ability grants `capability:core:manipulate` and resolves at or above §29.3's floor. The composition line reads in player language per §33.7 |
 | U8 | `fx_hud_density` | One room, `40` Status-carrying targets across `24` bodies and `16` surfaces, an active encounter, a constraint at `95%` stress, and an off-screen deferred `POWER_OFF` | The nearest `12` targets render full markers with sentences; the rest render single glyphs; the sort is stable across frames. The persistent tier is never overlapped. The `95%` constraint renders at screen edge. Holding `Tab` suspends the proximate tier entirely |
 
 Every fixture ships an expected-state assertion file. U1, U2, U4, and U5 additionally ship their **recorded model-check result** — the sizes of `R` and `E` and all eight property outcomes — so a verifier regression is caught by a diff rather than by a playthrough.
@@ -1571,6 +1673,24 @@ Every Design 1, 2, 3, 4, and 5 vector applies wherever this document pins to tha
 1. Every vector from Designs 1 through 5 covering a section this document pins passes unchanged. Where two proposals both cover a system, both vector sets pass.
 2. Every pin in this document names a section that exists in the named proposal, and that section's text is the contract. No pin resolves to a section that does not exist.
 3. Every entry in §0.5's pin/modifier table names a section of this document that does modify the pinned section, and no section modifies a pin not listed there.
+
+## The alphabet and the item space
+
+3a. The `effect` dimension contains exactly `17` atoms and the whole catalog exactly `110`. No two atoms in any dimension resolve to the same behaviour.
+3b. The shipped catalog contains no atom with id `effect:status`, `effect:physics`, or `effect:field`, and no composition emitted by Epsilon references one.
+3c. An Archive item carrying one of those three ids resolves to its §11.7.1 equivalent at the same tier on load, is flagged `Legacy`, and keeps working. The id never resolves to any other atom.
+3d. After ship, no atom id is removed from the catalog and no id is reissued.
+3e. Exhaustive enumeration over the catalog yields `1,166` in-band `USEFUL` Ability bases and `138` in-band `HIGH` bases.
+3f. At least `9` in-band `HIGH` Ability bases carry a physics effect atom, and at least `41` carry a Status effect atom.
+3g. Exhaustive enumeration yields `175,155,080` distinct legal Weapons, unchanged from Design 4.
+3h. Every effect family that a capability, a puzzle, or a topology predicate can depend on — physics, mass field, signal, Status — has at least one in-band `HIGH` base.
+
+## The manipulation floor
+
+3i. Every composition granting `capability:core:manipulate` resolves to at least `700 N` of force, `20.0 m` of range, and a `120 kg` verb mass limit.
+3j. No `scaling` atom applied to a granting composition lowers any of those three values.
+3k. No combination of Gear and Mod modifiers lowers any of those three below the floor; the §16 clamps bind at the floor rather than at zero.
+3l. A mandatory manipulation puzzle authored at `700 N` / `20.0 m` / `120 kg` is solvable by every composition that passes §29.4's entry check.
 
 ## The one cut
 
@@ -1950,6 +2070,8 @@ Waves 1–14 are a complete, shippable game: Design 3, essentially. Waves 15–2
 | What happens on power loss? | Per actuator kind. Doors close, load-bearing machinery holds, and no simulated mass is set in motion |
 | Who resolves a conflict between a latch, a sensor, and a signal verb? | §19.3's step-1 order: sensors, then latches, then verbs |
 | What fits on the screen? | §33.10's three tiers, with two elements promoted for safety |
+| Do the physics, signal, and Status verbs get high-tier expressions? | Yes. Four `HIGH` effect atoms at `62`, lifting in-band `HIGH` bases from `48` to `138` |
+| What stops a composed manipulation Ability being too weak for a puzzle validated against a profile? | §29.3's floor on every granting composition, rather than a numeric capability |
 
 ## 41.2 What this proposal sacrificed
 
@@ -1995,7 +2117,7 @@ Five proposals, one union, one clause cut.
 
 The union works because four of its six apparent forks were superset relationships rather than contradictions, and the fifth — Forge — was purely additive. Only the sixth needed new machinery, and the machinery it needed already existed in another proposal: **Design 2's latches are monotone Booleans, which is exactly the shape Design 3's verifier already searched.** That single observation is what turns "physics may gate progression" from an unprovable claim into a state-vector component, and it is why this document exists at all.
 
-What it buys is `66` system pairs against a best-of-inputs `36`, `34` puzzle families against `18`, thirteen Statuses, twelve manipulation verbs, eight constraint kinds, reversible macro state, `175,155,080` composable Weapons, and Forge — with one verifier proving, over all of it simultaneously, that no reachable configuration is a dead one.
+What it buys is `66` system pairs against a best-of-inputs `36`, `34` puzzle families against `18`, thirteen Statuses, twelve manipulation verbs, eight constraint kinds, reversible macro state, `175,155,080` composable Weapons and `16,586,524` composable Abilities against Design 4's `5,941,874`, and Forge — with one verifier proving, over all of it simultaneously, that no reachable configuration is a dead one.
 
 What it costs is `28` seconds of composition, three validators, two rooms per Zone, and thirty-four waves of build.
 
