@@ -119,7 +119,7 @@ Where this document is silent, it is not silent by permission. Silence is a defe
 - Full final control grammar and rebinding.
 - Base movement with the exact constants in §6.
 - Static Pulse and baseline melee.
-- Eight Weapon primary families, six secondary families, four feed models.
+- Eight Weapon primary families, five secondary kinds, four feed models.
 - Twelve Ability families across four activation forms and three recharge identities.
 - Five Mobility families.
 - Four Physics primitives: `PUSH`, `PULL`, `HOLD`, `ALIGN`.
@@ -254,7 +254,7 @@ Validation runs at three points with three different outcomes.
 | Point | On failure |
 |---|---|
 | Interpretation (bridge, per item) | Definition is rejected. The item becomes the deterministic fallback for its category (§17.5). The rejection is logged with the failing rule. The player is never shown an error. |
-| Zone composition (bridge, per Zone) | Composition retries per §30.7. On exhaustion, the certified fallback Zone (§37.19) is used. |
+| Zone composition (bridge, per Zone) | Composition retries per §30.7. On exhaustion, the certified fallback Zone (§37 fixture 19) is used. |
 | Load (client, per definition) | Hard error. The client refuses to enter the Zone and reports which ID failed which rule. This is a bug, not a gameplay state. |
 
 A definition never partially loads. There is no "load what works" path.
@@ -564,6 +564,8 @@ On a Zone's **first** activation — the first time the player enters a given Zo
 | `magazine_rounds` | profile's `magazine_capacity` |
 | `heat_current` | `0.0` |
 | `introduced_cold` | `false` |
+
+Both this table and the cold table in §5.7 apply **only to fields that are present** for the host, per the `present iff` conditions in §5.6. A `NONE`-feed Weapon has no `magazine_rounds` field to set; a `COOLDOWN` Ability has no `resource_current`. Setting an absent field is a hard error, not a no-op.
 
 `action_progress` starts at zero even on a fresh Zone. An `ACTION` ability's readiness is earned by doing its verb; there is no free first use. This is deliberate and is the one asymmetry between the three identities — `RESOURCE` and `COOLDOWN` start full because their recharge is passive, `ACTION` starts empty because its recharge is the gameplay.
 
@@ -1402,7 +1404,23 @@ Representative profiles (the full catalog is an authored data file; these are th
 | `PRESS` | Fires once on press. Ignores hold. |
 | `HOLD` | Effect active while held. Ends on release or when cost can no longer be paid. |
 | `CHARGE_RELEASE` | Builds `0.0`→`1.0` over `cast_time` while held; releasing applies `magnitude × charge`. Below `0.25` charge, cancels free. |
-| `CHANNEL` | Repeating discrete samples at `0.5 s` intervals while held. Each sample pays its own cost. |
+| `CHANNEL` | Repeating discrete samples at `0.5 s` intervals while held. Each sample pays its own cost. Bounded per §12.2.1. |
+
+### 12.2.1 Channel bounds
+
+For a `CHANNEL` ability, `duration` is the **maximum total channel time**, not an effect lifetime. A channel ends at the first of:
+
+1. The input is released.
+2. `duration` has elapsed since the channel began.
+3. The next sample's preflight fails — insufficient resource, or the effect has nothing left to do.
+4. The player takes any damage. Channels are interruptible by damage; this is what keeps a heal channel from being a free heal under fire.
+5. Death, room unload, Zone exit, hack entry, or picking up a carryable.
+
+The first sample fires immediately on commit, at `t = 0`, not after `0.5 s`. A channel of `duration 3.0 s` therefore fires samples at `t = 0.0, 0.5, 1.0, 1.5, 2.0, 2.5` — **six** samples — and ends at `3.0 s` before a seventh.
+
+`ab_channel_heal` (`duration 3.0`, `magnitude 18.0`) therefore restores at most `6 × (18.0 × 0.5) = 54.0` Health for six sample costs. This is the complete bound; there is no path by which a channel exceeds it.
+
+A channel cannot be restarted until its recharge permits a fresh activation. Releasing early and re-pressing is a new activation with a new preflight, not a resumption.
 
 ## 12.3 Preflight and commit
 
@@ -1635,7 +1653,22 @@ The destination is then snapped down to the floor if a floor exists within `3.0 
 
 A route is mandatory if removing it disconnects the Zone spine. A mandatory route may require at most one capability, and that capability must be one of the four in §29.1.
 
-Mandatory routes are validated against the movement law in §6.2 **plus** the granting Mobility's parameters, using the least capable profile that grants the capability. A route requiring `capability:core:long_gap` must be crossable with `mob_dash_short`'s `7.0 m`, not merely with `mob_dash_long`'s `11.0 m`.
+Mandatory routes are validated against the movement law in §6.2 **plus** the least capable profile that actually grants the required capability. "Least capable that grants" matters: `mob_dash_short` at `7.0 m` is below the `8.0 m` threshold and therefore grants nothing, so it is never the validation basis.
+
+The granting profiles per capability, and the resulting validation contract:
+
+| Capability | Granting profiles | Mandatory route must satisfy |
+|---|---|---|
+| `capability:core:grapple` | `mob_grapple_standard` (`30.0 m`), `mob_grapple_long` | Anchor within `30.0 m` of a reachable standing position, with line of sight |
+| `capability:core:blink` | `mob_blink_short` (`12.0 m`), `mob_blink_long` | Destination within `12.0 m`, unobstructed, with a floor within `3.0 m` below |
+| `capability:core:long_gap` | `mob_dash_long` (`11.0 m`), `mob_burst_high` (`11.0 m/s`) | Horizontal gap at most `9.0 m`, with the landing surface no higher than `MAX_SAFE_STEP_UP` (`1.145 m`) above the launch surface |
+
+**`long_gap` is a horizontal capability only.** This matters, because its two granting profiles have different shapes and a mandatory route must be crossable by **both**:
+
+- `mob_dash_long` displaces `11.0 m` horizontally and adds no height. A player jumps, reaches the `1.245 m` apex, dashes `11.0 m`, and lands. It clears `9.0 m` horizontal with `2.0 m` of margin, but it cannot gain height beyond the base jump.
+- `mob_burst_high` adds `11.0 m/s` vertical at the apex, for an extra `2.75 m` of height and roughly `12.6 m` of horizontal reach at `WALK_SPEED` over the resulting airtime. It clears both bounds comfortably.
+
+The binding constraint is therefore `mob_dash_long`'s lack of vertical gain, which is why the landing surface may be no higher than a plain base jump could already reach. A route needing both extra distance **and** extra height is not expressible as a `long_gap` requirement, and the planner must not emit one.
 
 ---
 
@@ -2040,7 +2073,7 @@ The current executable's four-slot Echo model does not map onto the new host cat
 1. Every existing Echo becomes an Archive entry with `interpretation_by = FALLBACK` and its original provenance preserved.
 2. Its mechanical content is **discarded** and regenerated deterministically per §17.5 from its provenance.
 3. The entry's `@rev` is incremented.
-4. The player's committed Loadout is cleared. On next Hub visit they are shown the migration notice in §34.10 and must commit a new Loadout.
+4. The player's committed Loadout is cleared. On next Hub visit they are shown the migration notice in §34.12 and must commit a new Loadout.
 5. All Zone state is discarded. Zones regenerate from their seeds under the new composition rules.
 6. AP truth — Checks, received items, Coins — is untouched.
 
@@ -2095,3 +2128,1342 @@ Pinned to the existing implementation. This proposal does not redefine them. The
 An implementer must read the existing shop and key implementation for their exact interfaces. What this document pins is that Reliable Core adds no new consumer of either.
 
 ---
+
+# 19. SIGNAL GRAPH
+
+## 19.1 Ports
+
+| Form | Meaning |
+|---|---|
+| `OFF` | Boolean false |
+| `ON` | Boolean true |
+| `PULSE` | A single-tick event, not a state |
+| `VALUE` | An integer in `[0, 15]` |
+
+A port is one form. A node's input port accepts only its declared form; a graph connecting mismatched forms fails validation at composition, never at runtime.
+
+`PULSE` is not a one-tick `ON`. A node reading a Boolean port sees `OFF` when a `PULSE` occurred; a node reading a pulse port sees the event. The distinction is why `LATCH` needs pulses and `AND` needs Booleans.
+
+## 19.2 Node types
+
+Eleven. This is the complete set.
+
+| Node | Inputs | Output | Behavior |
+|---|---|---|---|
+| `DIRECT` | 1 Boolean | Boolean | Passes through |
+| `AND` | 2–4 Boolean | Boolean | `ON` when all inputs `ON` |
+| `OR` | 2–4 Boolean | Boolean | `ON` when any input `ON` |
+| `NOT` | 1 Boolean | Boolean | Inverts |
+| `TIMER` | 1 Pulse | Boolean | `ON` for `duration` after a pulse; a new pulse restarts it |
+| `LATCH` | 2 Pulse (`set`, `reset`) | Boolean | `ON` after `set`, `OFF` after `reset`; `set` wins on the same tick |
+| `SEQUENCE` | `n` Pulse (2–6) | Boolean | `ON` when inputs pulse in index order with no out-of-order pulse; any out-of-order pulse resets progress to zero |
+| `COUNTER` | 1 Pulse, 1 Pulse (`reset`) | Boolean | `ON` when pulse count reaches `target`; `reset` zeroes the count |
+| `SELECTOR` | 1 Value | `n` Boolean | Output `i` is `ON` when input equals `i`, all others `OFF` |
+| `DELAY` | 1 Boolean | Boolean | Mirrors input after `duration`, tracking both edges |
+| `THRESHOLD` | 1 Value | Boolean | `ON` when input `>= threshold` |
+
+## 19.3 Evaluation
+
+The graph is a **directed acyclic graph**. Cycles are rejected at composition (§23.5) and can never exist at runtime.
+
+Evaluation, once per simulation tick:
+
+1. Sensors write their outputs.
+2. Nodes evaluate in topological order, computed once at room load and cached.
+3. Actuators read their inputs and update.
+
+Because evaluation is topological and the graph is acyclic, a full propagation completes within one tick. There is no multi-tick settling, no oscillation, and no order dependence between sibling nodes.
+
+**Pulses live for exactly one tick.** A pulse written in step 1 is visible to every node in step 2 of the same tick and is gone at the start of the next.
+
+## 19.4 Latency and presentation
+
+Logical state propagates instantly. The visible conduit pulse travelling along a wire is presentation and lags the logic; it never gates it.
+
+A package needing genuine delay uses a `DELAY` node. Its `duration` is mechanical, and its conduit renders in a visually distinct "charging" style so the player can tell a mechanical delay from a cosmetic travel animation. This is the resolution of the Dungeon Authority §6.3 requirement.
+
+## 19.5 Conduits
+
+Conduits are presentation. They are **never destructible** and never carry state. Their states:
+
+| State | Visual channels |
+|---|---|
+| `inactive` | dim, static, no audio |
+| `active` | bright, steady flow animation, low hum |
+| `pulse_travelling` | bright travelling band, directional, click on arrival |
+| `blocked` | dim with a broken-segment pattern, no audio |
+| `delayed` | filling-band animation showing remaining time, rising pitch |
+
+Every state differs in **at least two** of brightness, pattern, motion, and audio. None is distinguished by hue alone, per Dungeon Authority §50.
+
+## 19.6 Persistence
+
+| Node | Category | What persists |
+|---|---|---|
+| `LATCH` | `PUZZLE_LOCAL` | Its Boolean state |
+| `COUNTER` | `PUZZLE_LOCAL` | Its count |
+| `SEQUENCE` | `PUZZLE_LOCAL` | Its progress index |
+| `TIMER` | `EPHEMERAL` | Nothing; rebuilds as `OFF` |
+| `DELAY` | `EPHEMERAL` | Nothing; rebuilds mirroring its input |
+| All others | stateless | Nothing |
+
+On reset, `PUZZLE_LOCAL` nodes return to their authored initial state.
+
+---
+
+# 20. INPUTS AND SENSORS
+
+Nine types.
+
+| Type | Output | Key parameters |
+|---|---|---|
+| `PRESSURE_PLATE` | Boolean | `accepts: list[MassClass]`, `min_mass_class` |
+| `PULSE_BUTTON` | Pulse | — |
+| `TIMED_BUTTON` | Boolean | `duration` |
+| `LEVER` | Boolean | `initial_state` |
+| `SHOOTABLE_TARGET` | Pulse or Boolean | `mode: PULSE \| TOGGLE`, `required_tags: list[DamageTag]` |
+| `OBJECT_SOCKET` | Boolean | `accepts: list[string]`, `removable: bool` |
+| `PROXIMITY_SENSOR` | Boolean | `filter: PLAYER \| ENEMY \| OBJECT_CLASS \| ANY`, `volume` |
+| `ENCOUNTER_CLEAR` | Boolean | `encounter_id` |
+| `HACK_TERMINAL` | Pulse or Value | `mode: PULSE \| VALUE`, `difficulty: 1..3` |
+
+## 20.1 Pressure plate
+
+`ON` while the total qualifying mass on the plate meets `min_mass_class`. Qualifying actors are those whose mass class appears in `accepts`.
+
+**Mass is semantic, not summed physics mass.** A plate requiring `HEAVY` is satisfied by one `HEAVY` object or by the player if `PLAYER` mass class `MEDIUM` appears in `accepts` and `min_mass_class` is `MEDIUM` or below. It is **never** satisfied by accumulating light debris — three `LIGHT` objects do not make a `MEDIUM`. This is the closure for Dungeon Authority test 22 and it is a rule, not a tuning value.
+
+A `LIGHTENED` object's reduced class is what the plate reads. A `LIGHTENED` heavy cube stops holding a `HEAVY` plate down. This is an intentional interaction and packages using both must account for it; the validator flags a package whose only solution uses a `HEAVY` plate and whose room contains a Status source capable of `LIGHTENED` only as a warning, not an error, since the player caused it and recovery exists.
+
+## 20.2 Shootable target
+
+A hit qualifies if the `DamageRequest`'s `tags` include at least one of `required_tags`. Default `required_tags` is `[RANGED]`, satisfied by Static Pulse.
+
+**Every mandatory shootable target has `required_tags = [RANGED]`.** No mandatory target may require a tag Static Pulse does not produce. Optional targets may require `EXPLOSIVE` or `MELEE`.
+
+Target state is readable at `60.0 m` — the Static Pulse range — through a shape and brightness change, not a hue change.
+
+## 20.3 Hack terminal
+
+See §22.
+
+## 20.4 Deferred sensors
+
+Not implemented: trip beam, sound sensor, water-level sensor, light-sensitive receiver as a *puzzle input* (light still affects `BURNING` visibility). Their absence removes stealth-adjacent packages and beam-blocking puzzles, consistent with the §2.2 deferral of routed beams.
+
+---
+
+# 21. ACTUATORS AND MACHINERY
+
+## 21.1 Common contract
+
+Every actuator has:
+
+```
+Actuator:
+  id                : Id
+  kind              : enum { DOOR, BRIDGE, MOVING_PLATFORM, LIFT, PATH_MACHINE,
+                             RAIL_SWITCH, LAUNCHPAD, HAZARD_CONTROLLER, LIGHT_CONTROLLER }
+  input_port        : Id
+  travel_time       : Seconds
+  initial_t         : float in [0.0, 1.0]
+  path              : list[transform], length >= 2      # kinematic waypoints
+  safe_closure      : bool = true
+```
+
+All machinery is **kinematic**: it moves along `path` by interpolating `t`, and is never physics-simulated. It pushes actors it collides with rather than being blocked by them, except as §21.2 constrains.
+
+### Transition rules
+
+This table is the complete answer to "what happens when a signal changes mid-motion", and it applies to every actuator kind.
+
+| Event | Behavior |
+|---|---|
+| Input goes `ON` while at `t=0` | Move toward `t=1` at `1/travel_time` per second |
+| Input goes `OFF` while at `t=1` | Move toward `t=0` |
+| Input **reverses mid-motion** | Reverse immediately from the current `t`. No snap, no pause, no completion of the current leg. |
+| Input reverses again mid-reversal | Reverse again from the current `t` |
+| Power lost mid-motion | **Stop at the current `t` and hold.** Do not return to `t=0`. |
+| Power restored | Resume toward the position the current input commands, from the held `t` |
+| Reset mid-motion | Move to `initial_t` at `travel_time` rate. It animates back; it does not teleport. |
+| Two conflicting commands on one tick | The graph is acyclic and each actuator has exactly one `input_port`, so this is unreachable by construction |
+| Save/load mid-motion | §5.10 |
+
+Stopping in place on power loss rather than returning to rest is deliberate: a lift that drops to the bottom when a generator fails can strand or kill the player, and a bridge that retracts mid-crossing is a softlock generator.
+
+## 21.2 Door, gate, shutter
+
+`safe_closure = true` (the default) means: if closing would intersect the player or any `required = true` object, the door stops and reverses to fully open, then retries after `1.0 s`. It repeats indefinitely. It never crushes.
+
+`safe_closure = false` marks the door as an authored hazard. It deals `HAZARD` damage per §25.1 and does not reverse. Only a package explicitly declaring a crusher hazard may set it false, and the validator rejects `safe_closure = false` on any door on a mandatory route.
+
+## 21.3 Bridge, moving platform
+
+Actors standing on a moving platform inherit its velocity. On leaving the platform, the player retains that velocity. Platform velocity is added to, not substituted for, player input velocity.
+
+A platform that moves into geometry with an actor on it pushes the actor along until the actor is crushed against static geometry; at that point the actor takes `HAZARD` damage. Validators reject any mandatory-route platform whose path can crush.
+
+## 21.4 Lift
+
+A `LIFT` uses a `VALUE` input port and a `SELECTOR`, with `path` entries as stops. It travels to the stop indexed by its input. Changing the input mid-travel redirects immediately from the current position — it does not complete its current leg first.
+
+## 21.5 Path machine
+
+The general kinematic mover: cranes, rotating machinery, pistons, moving walls. Identical rules to §21.1 with no special cases. A crane is a `PATH_MACHINE` whose `path` describes the hook position; suspended cargo is a child transform, not a simulated rope (§2.2).
+
+## 21.6 Rail switch
+
+Changes which branch a rail follows. The change takes effect **only when no actor is on the rail within `10.0 m` of the junction**; otherwise it is queued and applies when the rail clears. This prevents a player being switched onto an invalid route mid-ride, which is otherwise the most reliable way to produce an unrecoverable state on a rail.
+
+## 21.7 LaunchPad and bounce pad
+
+A `LAUNCHPAD` declares `source_region` and `landing_region`. The **runtime solves the arc** from the movement law in §6.2; authors never specify a velocity vector.
+
+Solve: given source centre `S`, landing centre `L`, and `GRAVITY`, choose the launch velocity with the minimum speed that reaches `L` and whose apex clears every obstruction between them by at least `1.0 m`. If no such velocity exists, the LaunchPad fails validation and the package is rejected at composition.
+
+A `BOUNCE_PAD` applies a fixed vertical impulse of `13.0 m/s` and is not a directional solver.
+
+## 21.8 Hazard controller
+
+Enables and disables a hazard actor. The hazard owns its damage and collision; the controller owns only whether it is running. Disabling mid-cycle stops the hazard in place per §21.1 and clears any wind-up.
+
+## 21.9 Light controller
+
+Sets a room's lighting between authored `lit` and `unlit` states over `travel_time`. Lighting never gates progression: no mandatory route requires a specific lighting state, and no clue required for a mandatory route is visible only under one lighting condition. Per Dungeon Authority §21, darkness may hide optional content only.
+
+---
+
+# 22. HACKING
+
+One reusable minigame. Not one bespoke puzzle per hackable door.
+
+## 22.1 Entry and controls
+
+`F` on a `HACK_TERMINAL` enters the hack. During a hack:
+
+- The camera locks to the terminal. Player movement is disabled.
+- `Esc` or `F` exits with no effect on puzzle state.
+- Weapons, Abilities, Mobility, and melee are blocked.
+- The player is **not** invulnerable. Taking any damage exits the hack immediately with no effect.
+- Terminals are non-interactable while an encounter in the room is active, with `disabled_reason = "Interference detected"`.
+
+## 22.2 The puzzle
+
+**Route connection.** A grid of `4×4` (difficulty 1), `5×5` (2), or `6×6` (3) tiles. Each tile carries a pipe segment. Clicking a tile rotates it `90°`. The hack completes when a continuous route connects the source tile to the sink tile.
+
+| Difficulty | Grid | Target time | Minimum rotations from initial state |
+|---|---|---:|---:|
+| 1 | `4×4` | `5 s` | `4` |
+| 2 | `5×5` | `10 s` | `7` |
+| 3 | `6×6` | `15 s` | `11` |
+
+Generation guarantees a solution exists and that the initial state is exactly `minimum rotations` away from a solved state, so difficulty is genuine rather than incidental.
+
+There is **no timer and no failure state.** A hack cannot be failed, only abandoned. Abandoning preserves tile rotations, so returning resumes where the player left off. This closes Dungeon Authority tests 32 and 33: hack failure cannot corrupt puzzle state because hack failure does not exist.
+
+## 22.3 Output
+
+| Mode | Emits |
+|---|---|
+| `PULSE` | A single pulse on completion |
+| `VALUE` | Cycles its output value `(v + 1) mod n` on each completion, where `n` is the connected `SELECTOR`'s output count |
+
+`VALUE` mode is how hacking redirects a route rather than merely enabling an output — the Dungeon Authority §5.7 requirement that a hack be more than a button with extra animation.
+
+A completed `PULSE` terminal is re-hackable, producing another pulse. A completed `VALUE` terminal is re-hackable, advancing the value again. Neither is consumed.
+
+---
+
+# 23. PUZZLE-PACKAGE CONTRACT
+
+## 23.1 Manifest
+
+```
+PackageManifest:
+  id                  : Id
+  family              : one of the eighteen in §24
+  required_offers     : list[OfferRequirement]
+  objects             : list[ObjectPlacement]
+  nodes               : list[NodePlacement]
+  actuators           : list[ActuatorPlacement]
+  reset_group         : Id
+  persistence         : enum { PUZZLE_LOCAL, ROOM_PERSISTENT }
+  capability_required : Id? = null       # one of §29.1, or null
+  physics_permitted   : bool = false     # may Physics move this package's required objects
+  optional_solutions  : list[enum { PHYSICS, MOBILITY, COMBAT, ALTERNATE_INPUT }] = []
+  timing_window       : Seconds? = null  # null when the package has no timed element
+  budget              : PackageBudget
+  audit_criteria      : list[string]
+
+OfferRequirement:
+  offer_type          : one of the offer types in §28.7
+  count               : int >= 1
+  min_volume          : vec3? = null
+  min_separation      : Meters = 0.0
+
+PackageBudget:
+  max_rigid_bodies    : int <= 12
+  max_actuators       : int <= 6
+  max_nodes           : int <= 20
+  max_signal_updates  : int <= 40        # per second, steady state
+```
+
+## 23.2 Room offers
+
+A package instantiates only into an authored shell that exposes the offers it requires. The generator never places a package into space the shell has not declared available. This is what keeps rooms places rather than circuit diagrams.
+
+## 23.3 Completion and AP
+
+A package's completion drives a signal. It never directly awards AP. A Check placed inside a package's gated area is reached because the package opened the way, and the Check's own transaction (§9.4) is what awards anything.
+
+A package is never itself a Check.
+
+## 23.4 Reset
+
+A reset restores every member of the package's `reset_group` in this fixed order:
+
+1. Actuators move to `initial_t`.
+2. `PUZZLE_LOCAL` nodes return to authored initial state.
+3. Carryables respawn at `home_transform`.
+4. Sockets empty.
+5. Destructibles respawn.
+6. Hazards return to their initial phase.
+
+Reset never touches: confirmed Checks, `ROOM_PERSISTENT` flags, opened one-way shortcuts, Zone flags, or encounter cleared-flags.
+
+Reset triggers: player death in the room, an explicit reset control, or room reload after unload.
+
+## 23.5 Validation pipeline
+
+A composed package must pass every check. Failure rejects the placement and the generator retries per §30.7.
+
+| # | Check |
+|---|---|
+| 1 | Every required interaction point is reachable from the room's entry using base movement plus any capability the package declares |
+| 2 | The player capsule fits at every interaction point with `MIN_HEADROOM` clearance |
+| 3 | A carry path exists from every required object's spawn to every socket it must reach, with `MIN_HEADROOM` along it |
+| 4 | Every required object has a valid `home_transform` inside `allowed_volume`, and no two required objects share one |
+| 5 | Every required object is recoverable by at least one §10.4 trigger |
+| 6 | `timing_window`, if non-null, is at least `1.6 ×` the computed traversal time for the required path at `WALK_SPEED` |
+| 7 | Every LaunchPad arc solves per §21.7 |
+| 8 | Every rail route is physically continuous and its switch cannot strand |
+| 9 | Every grapple target lies inside a declared grapple offer |
+| 10 | The signal graph is acyclic |
+| 11 | Every port form matches its connection |
+| 12 | Any declared capability is proven available before this room by §29.2 |
+| 13 | No actuator state reachable from the initial state removes every progression path |
+| 14 | Every `PUZZLE_LOCAL` object reconstructs from its serialized form |
+| 15 | Reset restores the initial state exactly |
+| 16 | Every hazard on a mandatory route has a telegraph of at least `0.8 s` |
+| 17 | The package's budget is within §23.1 limits |
+| 18 | No door on a mandatory route has `safe_closure = false` |
+
+Check 13 is exhaustive over the package's reachable actuator states. Because `max_actuators` is 6 and each has two rest states, the worst case is 64 combinations — cheap enough to check completely rather than heuristically.
+
+## 23.6 Deterministic failure
+
+If a package fails validation during composition, the failure is logged with the package ID, the shell ID, the failing check number, and the seed. The generator retries per §30.7. The player never sees a partially placed package.
+
+---
+
+# 24. THE EIGHTEEN PUZZLE FAMILIES
+
+Each has a runnable reference fixture in §37.
+
+| # | Family | Shape |
+|---|---|---|
+| 1 | `CARRY_TO_PLATE` | Weighted object → pressure plate → output |
+| 2 | `INSERT_COMPONENT` | Carryable component → socket → output |
+| 3 | `PULSE_REMOTE` | Button → output |
+| 4 | `TIMED_TRAVERSE` | Timed button → temporary route → validated traversal window |
+| 5 | `SHOOT_TARGET` | Shootable target → output |
+| 6 | `TOGGLE_ROOM_STATE` | Lever → persistent room transformation |
+| 7 | `HACK_OVERRIDE` | Terminal → signal or route change |
+| 8 | `DUAL_INPUT` | Two inputs → `AND` → output |
+| 9 | `ALTERNATE_INPUT` | Two inputs → `OR` → output |
+| 10 | `ROUTE_SWITCH` | Input → rail or conveyor route change |
+| 11 | `MOVING_MACHINE` | Input → path machine changes geometry |
+| 12 | `BOMB_BARRIER` | Recoverable explosive → tagged bombable target |
+| 13 | `ENCOUNTER_GATE` | Encounter-clear → output |
+| 14 | `OBSERVATION_TARGET` | Spatial clue → correct mechanism among several |
+| 15 | `A_B_STATE` | Switch toggles linked architecture between two validated states |
+| 16 | `LOCAL_KEY_LOOP` | Find local key → return → open gate → shortcut |
+| 17 | `MULTI_STAGE_MACHINE` | Validated sequence of three mechanisms |
+| 18 | `DUNGEON_STATE_CHANGE` | Room action sets a Zone flag affecting validated later rooms |
+
+**Not shipped:** `ENERGY_ROUTE` and `BEAM_RECEIVER`, per §2.2. The Dungeon Authority names twenty families; Reliable Core ships eighteen.
+
+---
+
+# 25. HAZARDS AND DESTRUCTION
+
+## 25.0 Material traits
+
+Six. Deliberately small, and each is used by more than one system.
+
+| Trait | Used by |
+|---|---|
+| `breakable` | Melee, all damage, `MOD_*` |
+| `bombable` | Explosive damage only |
+| `burnable` | `BURNING` Status, Fire Actors |
+| `grapple_compatible` | `GRAPPLE` Mobility |
+| `rail_compatible` | Player rails |
+| `signal_blocking` | Line of sight for interaction, proximity sensors, and grapple |
+
+Untagged geometry is indestructible. An explosion does not damage arbitrary level geometry.
+
+## 25.1 Hazard contract
+
+```
+Hazard:
+  id                : Id
+  family            : one of §25.2
+  damage            : Damage
+  tick_interval     : Seconds        # 0.0 for single-contact
+  telegraph         : Seconds        # warning before first damage
+  affects           : list[Faction]
+  crit_eligible     : false          # always
+```
+
+All hazard damage goes through the §8 damage resolver. Hazards affect every faction in `affects`, including enemies — this is what makes "hazards as tools" real rather than aspirational.
+
+Any hazard on a mandatory route has `telegraph >= 0.8 s`, enforced by validation check 16.
+
+## 25.2 Families
+
+| Family | `damage` | `tick_interval` | `telegraph` | Notes |
+|---|---:|---:|---:|---|
+| `FLAME_JET` | `12.0` | `0.25` | `1.0` | Ignites `burnable`; applies `BURNING` at `0.5` |
+| `ELECTRIC_FIELD` | `18.0` | `0.50` | `0.8` | |
+| `CRUSHER` | `100.0` | `0.0` | `1.2` | Instant on contact; a door with `safe_closure = false` |
+| `BLADE` | `35.0` | `0.0` | `0.8` | Moving `PATH_MACHINE` with a damage volume |
+| `FALLING_DEBRIS` | `45.0` | `0.0` | `1.5` | Single event, triggered by signal |
+| `FIRE_ACTOR` | `8.0` | `0.40` | `0.0` | Spawned by `BURNING` on `burnable` material; lifetime `10.0 s`; spreads to adjacent `burnable` within `2.0 m` once |
+
+The Fire Actor is the mechanism by which `BURNING` produces damage **without the Status dealing damage**. It is a world object, it damages anything standing in it including the player and the enemy that spawned it, and its provenance is the actor who applied the `BURNING`.
+
+Fire spreads exactly once per Actor, to at most three adjacent burnable surfaces. This bound is what keeps a room from becoming an unbounded fire simulation.
+
+## 25.3 Destructible classes
+
+| Class | Health | On destruction |
+|---|---:|---|
+| `CRATE` | `30.0` | Drops per its `drop_table`; debris despawns after `4.0 s` |
+| `BARRIER_PANEL` | `80.0` | Opens a passage; `PUZZLE_LOCAL` |
+| `REACTIVE_BARREL` | `20.0` | Explodes: `70.0` damage, `5.0 m` radius, `EXPLOSIVE` tag, impulse `14.0 m/s`; chains to barrels within radius after `0.15 s` |
+| `DESTRUCTIBLE_SUPPORT` | `120.0` | Drops its attached load as a `FALLING_DEBRIS` hazard; `ROOM_PERSISTENT` |
+
+Drop tables:
+
+| Table | Contents |
+|---|---|
+| `drop_none` | nothing |
+| `drop_health` | one `HEALTH_PICKUP` restoring `25.0` |
+| `drop_puzzle` | the package's declared object |
+
+Barrel chaining is bounded: a chain reaction propagates at most `5` links from the initial detonation. This is a hard cap, not a probability.
+
+## 25.4 Environmental kill credit
+
+A kill by a hazard, explosion, crusher, or falling debris credits the player if and only if **the player caused the hazard to act on this target within the last `5.0 s`**, by:
+
+- shooting the reactive barrel or destructible support;
+- activating the signal that enabled the hazard;
+- applying `LIGHTENED` or an impulse that moved the target into the hazard;
+- placing a bomb object.
+
+Otherwise the kill is uncredited (§8.8). An enemy that patrols into an always-on flame jet is nobody's kill and advances no `ACTION` progress.
+
+## 25.5 Enemy participation
+
+Enemies interact with the environment in exactly these ways. Nothing emergent beyond this list is relied upon by any package.
+
+| Interaction | Rule |
+|---|---|
+| Pressure plates | Only if the plate's `accepts` includes the enemy's mass class |
+| Doors | Enemies never operate doors |
+| Hazards | Enemies take hazard damage and their pathfinding avoids active hazards |
+| Conveyors and wind | Affected per their mass class |
+| Moving platforms | Ride them; pathfinding treats them as their current position |
+| Physics | Pushed and pulled per §14.2 |
+| Local keys | Enemies never carry them |
+
+**No required progression depends on enemy behavior**, except `ENCOUNTER_GATE`, whose condition is "the encounter is cleared" — a fact about the encounter, not about any individual enemy's choices. This is the closure for Dungeon Authority §28's warning about brittle emergent behavior.
+
+An enemy cannot permanently hold down a required pressure plate: an enemy standing on a plate is killable, and if the encounter is cleared the enemy is gone. Test vector 59.
+
+---
+
+# 26. ROUTING, FORCES, AND CONSTRAINTS
+
+## 26.1 Power
+
+Power is an ordinary Boolean signal named `power`. There is no electrical simulation. A generator is a `LATCH` whose set input is a socket holding a power cell. Machinery declaring `requires_power` treats its `power` input as an additional `AND` term.
+
+## 26.2 Wind
+
+A wind volume applies a constant acceleration in a direction to actors and objects by mass class:
+
+| Mass class | Response |
+|---|---|
+| `LIGHT` | Full acceleration |
+| `MEDIUM` | `40%` |
+| `HEAVY` | `0%` |
+| `FIXED` | `0%` |
+
+The player is `MEDIUM`, so wind moves the player at `40%`. A player under `RULE_MASS_LIGHT` (§12.10) takes full acceleration, which is the intended interaction.
+
+Wind affects projectiles only if the projectile's family is `PROJECTILE_LOB`. Direct projectiles, hitscan, and beams are unaffected. This is a compatibility decision, not physics.
+
+## 26.3 Conveyors and cargo
+
+A conveyor applies a constant velocity along its surface to anything touching it, by the same mass-class table as wind. Direction is signal-controlled and reverses instantly, with no ramp.
+
+`CART` objects are constrained to an authored floor path and move only along it.
+
+## 26.4 Player rails
+
+A rail is a spline tagged `rail_compatible`. The player mounts by contacting it while airborne, or by `F` at a mount point.
+
+| Property | Value |
+|---|---|
+| Ride speed | `14.0 m/s` base, modified by `INT_RAIL_CONTROL` |
+| Dismount | `jump` — leaves at ride speed plus `JUMP_VELOCITY` vertical |
+| Forced dismount | At a rail end, retaining ride velocity |
+| Control while riding | Look freely; Weapons and Abilities usable; Mobility blocked |
+| Damage while riding | Normal; taking damage does not dismount |
+
+Rail switching per §21.6.
+
+## 26.5 Constraints
+
+**Deferred.** No hinges, ropes, chains, pulleys, counterweights, seesaws, or pendulums. Anything the Dungeon Authority §11 describes as constrained motion is implemented as a kinematic `PATH_MACHINE` following an authored path.
+
+A crane looks like a crane and moves like a crane. It is not simulated as one, and its cargo cannot swing.
+
+---
+
+# 27. MEDIA
+
+## 27.1 Water
+
+**Deferred as a swimmable medium.** Shallow water exists as a movement volume: `WALK_SPEED × 0.7` while inside, no swimming, no oxygen, no buoyancy, no fill or drain. Its depth never exceeds `1.0 m`, enforced at shell authoring.
+
+There is no drowning in Reliable Core. Water deep enough to drown in does not exist.
+
+## 27.2 Light
+
+Lighting is presentation with two mechanical hooks: `BURNING` emits light, and `LIGHT_CONTROLLER` changes room lighting state. No puzzle input reads light level.
+
+## 27.3 Sound
+
+Every mechanically required cue has a visual equivalent, per Dungeon Authority §22 and §50. Sound alone never carries required information. There is no sound sensor.
+
+## 27.4 Deferred media
+
+Gases, smoke, steam, pressure, temperature, vacuum, acid, and coolant do not exist.
+
+---
+
+# 28. ROOM AND ZONE TOPOLOGY
+
+## 28.1 Room-local transformations
+
+A room may change state through its packages: doors, bridges, platforms, lifts, lights, hazard state, and destructible passages. Every transformation is driven by the signal graph and is `PUZZLE_LOCAL` or `ROOM_PERSISTENT` per its package manifest.
+
+## 28.2 One-way connections and shortcuts
+
+A shortcut opened from the far side is `ROOM_PERSISTENT` and is never re-closed by any reset. Drop-downs and one-way vents are geometry, not machinery, and need no state.
+
+## 28.3 Zone flags
+
+Dungeon-scale state is exactly **four forward-only Boolean flags** per Zone:
+
+| Flag | Set by | Affects |
+|---|---|---|
+| `power_restored` | A `DUNGEON_STATE_CHANGE` package | Machinery with `requires_power` in later rooms |
+| `security_disabled` | A `DUNGEON_STATE_CHANGE` package | Hazard controllers in later rooms |
+| `main_route_open` | A `DUNGEON_STATE_CHANGE` package | Doors on the spine in later rooms |
+| `auxiliary_open` | A `DUNGEON_STATE_CHANGE` package | Optional-branch doors in later rooms |
+
+Rules:
+
+- Flags are **forward-only**. Once set, never cleared, by any mechanism including death, reset, and reload.
+- A flag may be set by at most one package in a Zone.
+- A flag may be read by any number of later rooms, and **only** by rooms later on the spine than the room that sets it.
+- Flags are `ZONE_PERSISTENT`.
+
+Forward-only monotonic flags are why Reliable Core needs no cross-room cycle detection: a Zone's macro state is a point on a lattice of at most 16 states, always moving upward. It cannot cycle, cannot deadlock, and cannot be validated wrong. The cost is that a dungeon cannot have a genuinely reconfigurable global machine — the Dungeon Authority §39's "rail network rerouted" is not expressible. §40 records this.
+
+## 28.4 Cross-room outputs
+
+A signal never crosses a room boundary directly. Cross-room effect happens only through Zone flags. This means the "generator in Room A powers lift in Room C" pattern works, and "valve upstream continuously modulates water downstream" does not — the second requires a continuous cross-room value, which Reliable Core does not have.
+
+## 28.5 Local keys
+
+A local key is a `KEY_COMPONENT` carryable. Its collected-flag is `ROOM_PERSISTENT`. Local keys are never AP items and never cross a Zone boundary — a key taken to the Hub is destroyed and respawns at its `home_transform`.
+
+## 28.6 Secrets
+
+A secret is an optional area behind a `breakable` or `bombable` surface, an optional grapple route, or an unmarked passage. Its discovered-flag is `ROOM_PERSISTENT`. Secrets never contain progression-mandatory content, and no mandatory route passes through one.
+
+## 28.7 Offer types
+
+A shell declares the offers packages may bind to. Exhaustive:
+
+`stand_region`, `cover`, `reactive`, `enemy_high`, `access`, `rail`, `launch`, `grapple`, `machinery_input`, `machinery_output`, `conduit_route`, `carryable_spawn`, `carry_path`, `platform_corridor`, `path_machine_envelope`, `hazard_lane`, `secret_opportunity`, `alternate_route`, `reset_station`, `zone_state_control`.
+
+---
+
+# 29. CAPABILITY PROGRESSION
+
+## 29.1 The four capabilities
+
+| Capability | Satisfied by | Guaranteed |
+|---|---|---|
+| `capability:core:ranged_hit` | Static Pulse | **Always.** Permanent baseline. |
+| `capability:core:grapple` | Any `GRAPPLE` Mobility | Only by proof |
+| `capability:core:blink` | Any `BLINK` Mobility | Only by proof |
+| `capability:core:long_gap` | `DASH` with `distance >= 8.0`, or `BURST_JUMP` with `impulse >= 9.0` | Only by proof |
+
+No other capability exists. Physics grants none (§14.5), Weapons grant none beyond `ranged_hit`, and Gear grants none.
+
+## 29.2 Proof
+
+The bridge's planner may place a requirement for capability `C` in room `n` only if:
+
+1. The player's committed Loadout contains a host granting `C`; **or**
+2. AP logic guarantees a host granting `C` is received before this Zone becomes accessible.
+
+Route 2 requires the AP world definition to place a `C`-granting item in a sphere strictly earlier than this Zone's access. Reliable Core does **not** implement in-Zone capability acquisition — there is no "find the grapple in room 3 to use it in room 7" — because that requires the planner to reason about within-Zone item placement, and Hub-only loadout editing means the player could not equip it anyway.
+
+## 29.3 Entry validation
+
+Before Zone entry, the UI shows every capability the Zone requires. If the committed Loadout lacks a required capability, entry is blocked with the message in §34.4.
+
+This is the practical meaning of `NO REQUIREMENT BEFORE GUARANTEE` under Hub-only editing: requirements are checked at the boundary where the player can still act on them.
+
+## 29.4 Optional routes
+
+An optional route may require anything, including capabilities the player does not have, physics tricks, and precise execution. Optional routes are never validated for reachability and never counted by the planner.
+
+Sequence-breaking an optional obstacle is welcome and is not defended against.
+
+---
+
+# 30. PROCEDURAL COMPOSITION
+
+## 30.1 What Epsilon chooses
+
+Nothing in Zone composition. Composition is entirely deterministic and bridge-owned. Epsilon's only role in the game is item interpretation (§17.2).
+
+This is a Reliable Core position, and a strong one: it means a Zone's validity never depends on a model response, and a Zone is byte-identically reproducible from its seed forever.
+
+## 30.2 Zone shape
+
+A Zone is a **linear spine** of 8 to 16 rooms with optional dead-end branches.
+
+```
+entry → r1 → r2 → ... → rN → exit
+              ↳ branch (1-2 rooms, dead end)
+```
+
+| Property | Value |
+|---|---|
+| Spine length | `8` to `16` rooms, drawn from the Zone seed |
+| Branches | `0` to `3`, each `1` or `2` rooms, each attached to a distinct spine room |
+| Branch content | Optional Checks, secrets, and rewards only. Never spine-mandatory. |
+| Loops | None. The graph is a tree. |
+
+A tree has no cycles, so cross-room dependency cycles are impossible by construction, not by validation.
+
+## 30.3 Composition algorithm
+
+Fully deterministic given `(zone_seed, progression_state, ap_catalog)`.
+
+```
+ 1. rng = seeded(zone_seed)
+ 2. spine_length = 8 + rng.int(0, 8)
+ 3. For i in 0..spine_length-1:
+      purpose[i] = PURPOSE_ROTATION[i mod len(PURPOSE_ROTATION)]
+ 4. For i in 0..spine_length-1:
+      candidates = shells whose declared purposes include purpose[i]
+                   and whose offers can host at least one legal package
+      shell[i] = candidates[rng.int(0, len(candidates))]
+      If candidates is empty: FAIL_SHELL
+ 5. check_count = clamp(spine_length / 2, 4, 8)
+    Distribute Checks across rooms at indices
+      round(spine_length * (k + 0.5) / check_count) for k in 0..check_count-1
+ 6. For each room i:
+      package_count = PACKAGE_DENSITY[purpose[i]]
+      For j in 0..package_count-1:
+        Try up to 12 candidate packages, in rng order, from families
+          legal for purpose[i] and hostable by shell[i]'s free offers
+        Accept the first passing all 18 checks in §23.5
+        If none passes: reduce package_count by 1 and continue
+      If room i ends with 0 packages and purpose[i] requires one: FAIL_ROOM
+ 7. capability_gate:
+      If the planner proves a capability C available (§29.2), place at most
+      one gate requiring C, at spine index >= ceil(spine_length / 2)
+ 8. encounter_budget[i] = ENCOUNTER_BUDGET[purpose[i]]
+    Populate encounters per §32.5
+ 9. checkpoints at spine indices 0, and every 3rd room thereafter, and at
+    the room preceding any capability gate
+10. branches: for b in 0..branch_count-1, attach to a distinct spine room
+    at index >= 2, using the same room composition, marked optional
+11. Run the whole-Zone audit in §30.4. On failure: FAIL_ZONE
+```
+
+`PURPOSE_ROTATION` = `[traversal, arena, environmental_puzzle, traversal, ranged_arena, physical_puzzle, junction, holdout, observation_puzzle, traversal, timing_challenge, arena, routing_puzzle, vertical_ascent, gauntlet, boss_arena]`.
+
+`PACKAGE_DENSITY`: puzzle purposes `2`, junction `2`, traversal `1`, arena purposes `1`, boss arena `0`.
+
+`ENCOUNTER_BUDGET`: arena `3`, ranged arena `3`, holdout `4`, gauntlet `5`, boss arena `1` (the boss), all others `0` to `1`.
+
+## 30.4 Whole-Zone audit
+
+| # | Check |
+|---|---|
+| 1 | Entry reaches exit using base movement plus proven capabilities |
+| 2 | Every Check is reachable |
+| 3 | Every branch is reachable and is a dead end |
+| 4 | At most one capability gate, and it is proven |
+| 5 | Every Zone flag is set by at most one room and read only by later rooms |
+| 6 | Checkpoint spacing never exceeds 3 rooms |
+| 7 | Total rigid bodies across loaded rooms is within §35 budgets |
+| 8 | No two required objects in a room share a `home_transform` |
+
+## 30.5 Determinism
+
+Three independent RNG streams, each seeded separately, so that consuming from one never shifts another:
+
+| Stream | Seed | Consumed by |
+|---|---|---|
+| Composition | `hash(campaign_seed, zone_id)` | Everything in §30.3 |
+| Decoration | `hash(campaign_seed, zone_id, "decor")` | Purely visual variation |
+| Combat | `hash(campaign_seed, zone_id, room_index, encounter_index)` | Crit rolls, Status rolls, AI |
+
+The same campaign seed and Zone ID always produce a byte-identical Zone. Decoration draws from its own stream, so decorative changes can never alter composition. Combat randomness is re-seeded per encounter, so a retried encounter is not identical but the Zone around it is.
+
+## 30.6 Checkpoints
+
+Placed per §30.3 step 9. A checkpoint activates on the player entering its trigger volume, and only when no encounter in the room is active. Activating writes a save.
+
+## 30.7 Retry and fallback
+
+| Failure | Response |
+|---|---|
+| `FAIL_SHELL` | Retry room `i` with the next `purpose` in rotation, up to 3 times |
+| `FAIL_ROOM` | Retry the whole room with a different shell, up to 3 times |
+| `FAIL_ZONE` | Retry the whole Zone with `zone_seed + 1`, up to 5 times |
+| All retries exhausted | Use the certified fallback Zone (§37 fixture 19) |
+
+The fallback Zone is an authored, hand-validated 8-room linear Zone with fixed content. It is not generated, is checked into the repo, and passes every audit by construction. It exists so that composition failure is a degraded experience rather than a broken campaign.
+
+## 30.8 Physical authority
+
+If the composition claims a route is traversable and the runtime geometry disagrees, the geometry wins. The room fails its audit at load, and the client reports it. Reliable Core never ships a room whose logical and physical truth disagree — it refuses to load it.
+
+---
+
+# 31. CROSS-SYSTEM COMPATIBILITY
+
+The complete matrix. An interaction not listed here does not occur.
+
+| A × B | Result |
+|---|---|
+| Explosion × `bombable` | Destroys |
+| Explosion × `breakable` | Destroys |
+| Explosion × untagged geometry | No effect |
+| Explosion × `REACTIVE_BARREL` | Chains, max 5 links |
+| Melee × `breakable` | Destroys |
+| Melee × `bombable` | No effect |
+| Any damage × `breakable` | Destroys |
+| `BURNING` × `burnable` | Spawns `FIRE_ACTOR` |
+| `FIRE_ACTOR` × `burnable` | Spreads once, max 3 targets |
+| `FIRE_ACTOR` × any actor | Damages, all factions |
+| Wind × `LIGHT` | Full acceleration |
+| Wind × `MEDIUM` | 40% |
+| Wind × `HEAVY`, `FIXED` | No effect |
+| Wind × `PROJECTILE_LOB` | Affects |
+| Wind × hitscan, beam, direct projectile | No effect |
+| Conveyor × object | By mass class, as wind |
+| Physics × `required` object | Only if `physics_permitted` |
+| Physics × enemy | `PUSH`, `PULL` only |
+| Physics × boss | No effect |
+| Physics × player | No effect, ever |
+| `LIGHTENED` × pressure plate | Plate reads the reduced class |
+| `ANCHORED` × wind, conveyor, impulse, Physics | No effect on the target |
+| Enemy × pressure plate | Only if `accepts` includes its mass class |
+| Enemy × hazard | Damages; pathfinding avoids |
+| Rail × `RAIL_SWITCH` | Queued while occupied within 10 m |
+| Water × anything | Movement slow only |
+| Light × puzzle input | No interaction |
+| Sound × puzzle input | No interaction |
+
+---
+
+# 32. ENEMIES AND ENCOUNTERS
+
+## 32.1 Minimum enemy contract
+
+Every enemy implements exactly this interface. Nothing in the game reads more than this.
+
+```
+Enemy:
+  id                : Id
+  archetype         : one of §32.2
+  health            : Damage
+  defense           : float
+  faction           : Faction              # HOSTILE by default
+  mass_class        : MassClass
+  status_resistance : float in [0.0, 0.40]
+  statuses          : list[active Status]
+  ai_state          : enum { IDLE, ENGAGED, PANIC, STUNNED, DEAD }
+  target            : Id?
+```
+
+Enemies deal damage through the §8 resolver like everything else. Enemy attacks never apply Status to the player — Status is a player-side verb in Reliable Core. This is a deliberate asymmetry: it removes an entire category of "the player is anchored and cannot act" frustration, and it means §15's six Statuses only ever need to be defined against enemies and objects.
+
+## 32.2 Archetypes
+
+Six. Enough to compose encounters, few enough to balance.
+
+| Archetype | Health | Defense | Mass | Status resist | Behavior |
+|---|---:|---:|---|---:|---|
+| `SKIRMISHER` | `60` | `0` | `MEDIUM` | `0.00` | Closes to `8 m`, hitscan bursts |
+| `BRUISER` | `180` | `0` | `HEAVY` | `0.15` | Closes to melee, high contact damage |
+| `ARMORED` | `140` | `100` | `HEAVY` | `0.20` | Slow advance, sustained fire |
+| `FLYER` | `45` | `0` | `LIGHT` | `0.00` | Hovers at `6 m` altitude, dives |
+| `TURRET` | `90` | `50` | `FIXED` | `0.40` | Immobile, `40 m` range, telegraphed shots |
+| `BOSS` | `1800` | `150` | `FIXED` | `0.40` | Authored per encounter; three phases |
+
+`FLYER` exists so `AIRBORNE_KILL` (§12.6) is reliably achievable. An `ACTION` recharge whose fact can never occur is a dead build, and encounter budgets guarantee at least one `FLYER` in every arena purpose.
+
+## 32.3 Faction behavior
+
+| Situation | Behavior |
+|---|---|
+| `HOSTILE` default | Targets the player |
+| `TURNCOAT` applied | `faction = PLAYER`; targets nearest `HOSTILE` |
+| Turncoat expires | Reverts to `HOSTILE` at current Health, retargets the player |
+| `CONFUSED` applied | Targets nearest actor of any faction, re-evaluated every `1.0 s` |
+| Enemy damages enemy | Full damage, no retaliation state change |
+
+## 32.4 Status-compatible AI
+
+Every archetype responds to every Status:
+
+| Status | AI response |
+|---|---|
+| `BURNING` | `ai_state = PANIC` for the duration; no attacks, randomized movement |
+| `LIGHTENED` | No AI change; physical response only |
+| `ANCHORED` | Movement `0`; attacks continue if in range |
+| `CONFUSED` | Retarget per §32.3 |
+| `TURNCOAT` | Faction switch per §32.3 |
+| `EXPOSED` | No AI change |
+
+A `TURRET` under `PANIC` stops firing. A `BOSS` never enters `PANIC` — it substitutes to `EXPOSED` at half duration per §15.4.
+
+## 32.5 Encounters
+
+```
+Encounter:
+  id                : Id
+  waves             : list[Wave], length 1..3
+  clear_condition   : enum { ALL_DEAD, SURVIVE_DURATION }
+  duration          : Seconds?          # required iff SURVIVE_DURATION
+  cleared           : bool              # ROOM_PERSISTENT
+
+Wave:
+  spawns            : list[(archetype, count)]
+  trigger           : enum { ENCOUNTER_START, PREVIOUS_WAVE_CLEARED, DELAY }
+  delay             : Seconds?          # required iff trigger == DELAY
+```
+
+Encounter budget from §30.3 is the total spawn count across all waves. Composition fills the budget from archetypes legal for the room's purpose, always including at least one `FLYER` in arena purposes.
+
+An encounter starts when the player enters its trigger volume. It cannot restart once `cleared`.
+
+## 32.6 Death, drops, and respawn
+
+- On an enemy's death, its remaining-count decrements. At zero for the final wave, `cleared` is set.
+- Enemies drop nothing by default. A `drop_health` table on the encounter drops one `HEALTH_PICKUP` from the last enemy of the final wave.
+- **Enemies never respawn.** A cleared encounter stays cleared through death, reload, and revisit. An uncleared encounter's enemies are destroyed on player death and respawn in full when the player re-enters the trigger volume.
+- Enemies killed by environmental hazards count identically toward clear conditions. Kill credit for `ACTION` progress follows §25.4 separately.
+
+## 32.7 Boss encounters
+
+A `BOSS` has three phases at `100%`, `66%`, and `33%` Health. Phase transitions grant `2.0 s` invulnerability and reposition the boss. A boss is `FIXED` mass, is immune to `ANCHORED` and `TURNCOAT` with the substitutions in §15.4, and is never Physics-eligible.
+
+A boss arena has one encounter, no packages, and a checkpoint immediately before entry.
+
+---
+
+# 33. HUD AND PRESENTATION
+
+## 33.1 Always visible
+
+| Element | Content |
+|---|---|
+| Health | Numeric and bar |
+| Barrier | Numeric and bar, shown only when `> 0` |
+| Selected Weapon | Name and cycle position (e.g. `2 / 4`) |
+| Weapon feed | Per §33.2 |
+| Ability row | Five entries, Q E 1 2 3 |
+| Mobility | One entry |
+| Interaction prompt | When an Interactable is focused |
+| Active Statuses on the player | Icon row |
+
+## 33.2 Feed display by model
+
+| Model | Display |
+|---|---|
+| `MAGAZINE` | `rounds / capacity`; reload shows a progress arc |
+| `HEAT` | A bar filling toward `heat_max`; lockout shown as a distinct crosshatch fill with a countdown |
+| `CHARGE` | A radial fill; the `min_charge_fraction` threshold marked |
+| `NONE` | **Nothing.** No bar, no counter, no placeholder. |
+
+## 33.3 Recharge display by identity
+
+The three identities must look different. Five identical radial timers is explicitly forbidden by Player Authority §27.2.
+
+| Identity | Display | Example |
+|---|---|---|
+| `RESOURCE` | Numeric current over max, with a fill bar | `Q  62 / 100` |
+| `COOLDOWN` | Charge pips plus remaining time on the recharging pip | `E  ●●○  1.4s` |
+| `ACTION` | The verb and progress toward threshold | `1  MELEE HITS 2 / 3` |
+| Ready | The word `READY` | `SHIFT  READY` |
+
+## 33.4 Device presentation
+
+- The Epsilon device is assembled from `3` to `6` authored modules per `view_modules`.
+- Cycling plays a `0.25 s` reconfiguration animation. The Weapon is usable immediately; the animation never gates the simulation.
+- Static Pulse has a distinct neutral silhouette recognizable without reading text.
+- Presentation never decides an outcome. Every visual is a report of a simulation result that already happened.
+
+## 33.5 Causality feedback
+
+Every build relationship produces visible feedback at the moment it fires:
+
+| Event | Feedback |
+|---|---|
+| Overcrit advances an Ability | The Ability's progress element flashes and the responsible Gear or Mod icon pulses |
+| A `TRIGGER` Mod fires | Its icon pulses |
+| Status fails | Per §15.5 |
+| Heat reaches lockout | The bar switches to crosshatch with an audio cue |
+| A hybrid reduces a cooldown | The pip's remaining time visibly jumps |
+
+## 33.6 Color
+
+Color is never the only channel. Reserved meanings: provenance accents, hazard orange, Check cyan, Epsilon identity. Readiness, telegraphs, and machinery state use shape, motion, rhythm, intensity, position, and audio in addition.
+
+---
+
+# 34. PLAYER-FACING FLOW
+
+## 34.1 First run
+
+1. The player begins at the Hub with an empty Archive.
+2. The starting Loadout is: no Weapons, no Abilities, no Mobility, no Gear. Static Pulse and melee are available because they are baseline.
+3. The first Zone requires no capability, per §29.2 — a Zone requiring one cannot be the first, since nothing is proven yet.
+4. The Archive tutorial prompt appears on the first host receipt, not before.
+
+The game is fully playable at step 2. This is what the permanent baseline is for.
+
+## 34.2 The Hub
+
+Available at the Hub and nowhere else: loadout editing, Mod installation and removal, shops, and Zone selection.
+
+## 34.3 Receiving an item
+
+1. A receipt banner names the item, its source game, and its source player.
+2. The item enters the Archive marked new.
+3. **Nothing auto-equips.** The player chooses. An item arriving mid-excursion is banked and appears in the Archive at the next Hub visit.
+
+Auto-equip is rejected: it would silently change a committed build mid-excursion and would make the cold-introduction rules (§5.7) player-visible in a confusing way.
+
+## 34.4 Zone entry
+
+The Zone selection screen shows, per Zone: name, Signal Key cost, Check count, and required capabilities.
+
+If the committed Loadout lacks a required capability, entry is blocked and the screen shows:
+
+> **Cannot enter.** This Zone requires GRAPPLE. Equip a Mobility Echo that provides it.
+
+with the qualifying Archive entries listed directly beneath. The player is never told to go find something they already own without being shown it.
+
+## 34.5 Archive and equip
+
+The Archive lists hosts by category and Mods separately. Each entry shows display name, provenance, tier, and mechanical summary.
+
+Equipping is drag or select-to-slot. An illegal equip is refused with the specific rule from §4.7, not a generic error.
+
+## 34.6 Invalid loadout messages
+
+| Rule violated | Message |
+|---|---|
+| Duplicate host | `Already equipped in another slot.` |
+| Wrong Gear territory | `<Name> is <Territory> gear. It cannot go in the <Slot> slot.` |
+| Second high-tier Gear | `Only one high-tier Gear piece may be equipped. Unequip <Name> first.` |
+| Mod capacity exceeded | `<Host> has <n> Mod slots and they are full.` |
+| Mod host mismatch | `<Mod> cannot attach to a <Category>.` |
+| `MOD_LINK` target unequipped | `<Mod> links to <Target>, which is not equipped.` |
+
+## 34.7 Manual save refused
+
+> **Cannot save right now.** Finish the encounter first.
+
+## 34.8 Binding conflict
+
+> **<Key> is already bound to <Role>.** Unbind it first, or choose another key.
+
+## 34.9 Rejection feedback
+
+Every refused action produces feedback naming the reason. Silence is forbidden.
+
+| Refusal | Feedback |
+|---|---|
+| Ability not ready | The HUD entry flashes; audio "unavailable"; the readiness element highlights |
+| Resource insufficient | The resource number flashes red-shifted **and** the bar pulses |
+| No valid Physics target | Crosshair shows a rejection mark |
+| No valid Mobility destination | Same, with the attempted destination outlined for `0.4 s` |
+| Weapon empty | Empty-click audio; the magazine counter flashes |
+| Weapon in lockout | The heat bar pulses; countdown emphasized |
+| Socket incompatible | The socket flashes; audio rejection; the prompt was already showing as disabled |
+| Interactable disabled | The prompt shows `disabled_reason` |
+
+## 34.10 Leaving a Zone
+
+Two exits, and only two.
+
+**Completing it.** The exit room contains an `ACTIVATE_CHECK`-priority Interactable with `verb = OPEN` labelled `[F] Return to Hub`. Activating it writes a save and returns the player to the Hub. It is disabled while an encounter in the exit room is active.
+
+**Abandoning it.** The pause menu offers `Return to Hub`, available whenever a manual save would be (§34.7) — that is, not during an active encounter. It presents:
+
+> **Return to the Hub?** Puzzle progress in this Zone will reset. Checks you have activated, shortcuts you have opened, encounters you have cleared, and Zone-wide changes will be kept.
+
+That warning is exactly the §5.2 category table stated in player language: `PUZZLE_LOCAL` is discarded on Zone exit, and `ROOM_PERSISTENT`, `ZONE_PERSISTENT`, and `AP_PERSISTENT` survive.
+
+**Re-entering** a Zone already in progress restores its `ROOM_PERSISTENT` and `ZONE_PERSISTENT` state and rebuilds every `PUZZLE_LOCAL` puzzle from its initial state. The player restarts at the Zone entry, not at their last checkpoint — checkpoints are within-excursion recovery, not a Zone bookmark.
+
+There is no death-triggered ejection. Dying returns the player to a checkpoint (§5.4), never to the Hub.
+
+## 34.11 The Archive during an excursion
+
+`Tab` opens the Archive anywhere, including mid-Zone. Inside a Zone it is **read-only**: the player can inspect everything they own, including items received during this excursion, and can change nothing. Every equip control is shown disabled with:
+
+> Loadout can only be changed at the Hub.
+
+Showing the Archive but disabling its controls is deliberate. Hiding it would leave a player unable to check what a Mod on their equipped Weapon actually does, which is information they need and which changing nothing.
+
+## 34.12 Migration notice
+
+> **Your build has been reset.** Archipepsi's loadout system has changed: the Epsilon device now holds three Weapon configurations, five Abilities, one Mobility Echo, and four pieces of Gear. Everything you have received is still in your Archive, reinterpreted for the new system. Open the Archive to build a new loadout.
+
+---
+
+# 35. PERFORMANCE BUDGETS
+
+Numeric and enforced, not aspirational. Exceeding a budget is a validation failure at composition, not a runtime slowdown.
+
+| Quantity | Budget |
+|---|---:|
+| Active rigid bodies per loaded room | `12` |
+| Active rigid bodies across all loaded rooms | `36` |
+| Loaded rooms | `3` (current plus immediate neighbours) |
+| Live projectiles, all sources | `64` |
+| Live projectiles per Weapon | `24` |
+| Beam segments | `1` per beam; no bouncing |
+| Actuators per room | `6` |
+| Signal nodes per room | `20` |
+| Signal updates per second per room | `40` |
+| Active enemies | `12` |
+| Active hazard volumes per room | `8` |
+| Fire Actors per room | `6` |
+| Deployables per player | `2` (oldest despawns) |
+| Physics relations held | `2` (per `max_relations`) |
+
+Rules:
+
+- Signal evaluation is **event-driven**. A node evaluates only when an input changes. The `40/s` budget bounds worst-case churn, not steady state.
+- Decorative rigid bodies sleep after `2.0 s` at rest and do not count toward the budget while asleep.
+- Required semantic objects never sleep and always count.
+- Projectiles despawn at `lifetime` unconditionally. There is no path by which a projectile persists indefinitely.
+
+---
+
+# 36. DEBUGGING AND INSPECTION
+
+A debug overlay, toggled by a developer-only input never present in the player control grammar, exposes:
+
+| Inspectable | Content |
+|---|---|
+| Signal graph | Nodes, current values, edges, topological order, last-changed tick |
+| Interaction | Current focus candidate list with priority class, angle, distance, and the sort result |
+| Reset groups | Membership and each member's current versus initial state |
+| Persistence | Every object's category and its current serialized form |
+| Capability | Required, proven, equipped, and the proof route |
+| Packages | Active package IDs, their manifests, and which offers they bound to |
+| Objects | Semantic ID, mass class, `physics_eligible`, `required`, distance from `home_transform` |
+| Routes | LaunchPad solved arcs, rail splines, grapple regions |
+| Timing | Every timed window and its computed feasibility margin |
+| Zone flags | All four, set or unset, and which room set each |
+| Audit | Every §23.5 and §30.4 check result for the current Zone |
+| Host runtime | Every equipped host's full `HostRuntimeState` |
+| Status | Per-actor active Statuses, susceptibility, and adaptation per family |
+| Budgets | Live counts against every §35 budget |
+
+Debug inputs are never part of the player control grammar and are compiled out of release builds.
+
+---
+
+# 37. REFERENCE FIXTURES
+
+One runnable fixture per puzzle family, plus the certified fallback Zone. Each is a real, measured, checked-in scene that passes every §23.5 check. They are the acceptance target: an implementation is correct when it runs these.
+
+All fixtures use a `20 × 20 × 6 m` test shell with the entry at `(0, 0, 0)` unless stated. Coordinates are metres, `+Y` up.
+
+| # | Fixture | Layout | Solution | Reset |
+|---|---|---|---|---|
+| 1 | `fx_carry_to_plate` | `WEIGHTED` cube at `(4, 0, 2)`; plate `2×2 m` at `(12, 0, 8)` accepting `HEAVY`; door at `(18, 0, 10)` | Carry cube to plate; door opens while held down | Cube to `(4,0,2)`; door closed |
+| 2 | `fx_insert_component` | `POWER_CELL` at `(3, 0, 3)`; socket at `(15, 2, 9)` on a `2.0 m` ledge, which exceeds `MAX_SAFE_STEP_UP` (`1.145 m`), so a ramp rises from `(13, 0, 9)` to `(15, 2, 9)` at `28°` | Carry cell up the ramp, insert | Cell to spawn; socket empty; door closed |
+| 3 | `fx_pulse_remote` | Button at `(5, 0, 5)`; `TIMER` `4.0 s`; bridge at `(10, 0, 10)` spanning a `3.5 m` gap | Press, cross within `4 s` (traversal `2.1 s`, margin `1.9×`) | Bridge retracted |
+| 4 | `fx_timed_traverse` | `TIMED_BUTTON` `6.0 s` at `(2, 0, 2)`; three platforms rising at `(6,0,6)`, `(10,0,10)`, `(14,0,14)`; exit at `(18,3,18)` | Press, traverse. Path is `17.0 m` at `WALK_SPEED` = `2.6 s`; window `6.0 s` = `2.3×` margin | Platforms lowered |
+| 5 | `fx_shoot_target` | Target at `(18, 4, 18)`, `25.4 m` from entry, well inside Static Pulse range; `required_tags [RANGED]`; gate at `(18,0,14)` | Shoot it | Target unlit; gate closed |
+| 6 | `fx_toggle_room_state` | Lever at `(4,0,4)`; two bridge groups A at `(8,0,*)` and B at `(12,0,*)`; exit reachable only via one | Toggle to the needed state; `ROOM_PERSISTENT` | Not reset — persists by design |
+| 7 | `fx_hack_override` | `HACK_TERMINAL` difficulty 2, `VALUE` mode at `(6,0,6)`; `SELECTOR` with 3 outputs; three doors | Hack repeatedly to select the door needed | Value to `0`; doors closed |
+| 8 | `fx_dual_input` | Plate at `(6,0,4)` accepting `HEAVY`; `WEIGHTED` cube at `(3,0,3)`; `LEVER` at `(14,0,4)`; `AND` → door | Cube on plate, then throw lever | Cube to spawn; lever off; door closed |
+| 9 | `fx_alternate_input` | Shootable target at `(16,5,16)`; button at `(4,0,12)`; `OR` → door | Either | Both reset; door closed |
+| 10 | `fx_route_switch` | Rail from `(2,4,2)` to a junction at `(10,4,10)`, branching to `(18,6,14)` and `(18,1,6)`; `SHOOTABLE_TARGET` sets the switch | Shoot to select the branch, then ride | Switch to branch 0 |
+| 11 | `fx_moving_machine` | `PATH_MACHINE` crane, hook path `(6,5,6)`→`(14,5,14)`, `travel_time 5.0 s`, carrying a `4×4 m` platform; lever controls it | Ride the platform across a `9 m` gap | Crane to `t=0` |
+| 12 | `fx_bomb_barrier` | `REACTIVE_BARREL` at `(5,0,5)`, respawning; `bombable` wall at `(9,0,5)`, `3.5 m` away — inside the `5 m` blast | Push or shoot the barrel near the wall | Barrel respawned; wall restored |
+| 13 | `fx_encounter_gate` | Encounter: 2 `SKIRMISHER`, 1 `FLYER`, one wave; `ENCOUNTER_CLEAR` → door | Clear it | Not reset — `cleared` is `ROOM_PERSISTENT` |
+| 14 | `fx_observation_target` | Three identical buttons at `(4,0,16)`, `(10,0,16)`, `(16,0,16)`; a wall marking visible only from `(10,0,2)` indicates which; wrong presses visibly reset | Observe, then press the right one | Marking unchanged; door closed |
+| 15 | `fx_a_b_state` | Lever toggles platform group A raised / B lowered and the inverse; exit needs one of each traversed | Toggle mid-route | Group A raised |
+| 16 | `fx_local_key_loop` | `KEY_COMPONENT` at `(17,3,3)` behind a `1.0 m` step; keyed gate at `(2,0,18)`; opening it opens a one-way shortcut back to entry | Fetch, return, open | Key to spawn; gate closed; **shortcut stays open** |
+| 17 | `fx_multi_stage_machine` | Stage 1: power cell → socket. Stage 2: `power_restored` enables a lift. Stage 3: lift reaches a terminal that opens the exit | Three stages in order | All three to initial |
+| 18 | `fx_dungeon_state_change` | A `DUNGEON_STATE_CHANGE` package setting `power_restored`; a later room's lift requires it | Set the flag | **Never reset** — forward-only |
+| 19 | `fx_fallback_zone` | The certified fallback: 8 rooms, linear, one package each drawn from families 1, 3, 5, 8, 9, 13, 15, 16; 4 Checks at rooms 2, 4, 6, 8; checkpoints at 1, 4, 7; no capability gate; no branches | — | Per package |
+
+Fixture 19 is checked into the repo as authored content and is never generated. It is the guaranteed-valid Zone of §30.7.
+
+Every fixture ships with an expected-state assertion file: the exact serialized `PUZZLE_LOCAL` state after solving, and after resetting. A fixture whose post-reset state differs from its initial state by even one field fails.
+
+---
+
+# 38. TEST VECTORS
+
+Concrete inputs and expected outputs. Numbered continuously so a failure report names one number.
+
+## Baseline
+1. Empty Loadout: player moves, jumps, interacts, melees, and kills a `SKIRMISHER` (60 HP) with Static Pulse in 10 shots over `3.5 s`.
+2. Static Pulse cannot be removed from the cycle by any input, Loadout, or Mod.
+3. Player at `(0, −50, 0)` — below `oob_volume` — returns to the last checkpoint with Health `max(current, 25)`, no death.
+4. With zero AP receipts, the player completes fixture 19 end to end.
+
+## Movement
+5. Jump from flat ground reaches exactly `1.245 m` apex within `0.001 m`.
+6. Horizontal jump distance at `WALK_SPEED` is `4.373 m` ± `0.01`.
+7. A `3.923 m` gap (`MAX_SAFE_GAP`) is crossable; a `4.5 m` gap is not.
+8. Leaving a ledge and jumping within `0.12 s` succeeds; at `0.13 s` it fails.
+9. Jump pressed `0.15 s` before landing executes on landing; at `0.16 s` it does not.
+10. Air-strafing for `10 s` never exceeds `6.5 m/s` horizontal from input alone.
+11. A `20 m/s` LaunchPad impulse is not clamped down by air control.
+
+## Controls
+12. Q, E, 1, 2, 3 activate five distinct hosts.
+13. `Shift` activates Mobility and never changes base speed.
+14. `F` never activates any generated combat content, across all 12 Ability families.
+15. `MMB` reaches baseline melee with any Weapon selected and during a reload.
+16. `R` affects only the selected Weapon's feed.
+17. Rebinding `ability_e` to `G` leaves slot E's contents unchanged.
+18. Binding `G` to `ability_e` when `G` is bound to `jump` is refused; `jump` keeps `G`.
+
+## Weapon cycle
+19. Static plus three Weapons yields exactly 4 cycle states.
+20. With Weapons in slots 0 and 2 only, the cycle is 3 states and skips slot 1 with no input cost.
+21. Fire 5 of 30 rounds, cycle away, cycle back: `magazine_rounds == 25`.
+22. Heat to `60`, cycle away for `2.0 s` at `inactive_cool_rate 12.0`: heat is `36.0`.
+23. Cycle away during a reload at `1.0 s` of `1.8 s`, cycle back: reload is not in progress and rounds are unchanged.
+24. Reach `heat_max`, cycle away, cycle back at `1.0 s`: still in lockout, heat is `60.0` (linear drain over `2.5 s`).
+25. An unselected Weapon's `TRIGGER` Mods do not fire on any event.
+26. A `PROJECTILE_LOB` in flight when its Weapon is cycled away still detonates and credits that Weapon.
+27. Every Weapon in the catalog kills a `SKIRMISHER` unassisted with no other Weapon equipped.
+
+## Feeds
+28. Firing at `magazine_rounds = 0` produces no shot, no cost, and no auto-reload.
+29. Reload from `0` yields exactly `magazine_capacity` at exactly `reload_duration`.
+30. A vent interrupted at `50%` leaves heat unchanged.
+31. Releasing a charge at `0.20` with `min_charge_fraction 0.25` fires nothing and costs nothing.
+32. A charge at `1.0` held for `hold_max` auto-releases at full damage.
+33. `CHARGE_RELEASE_SHOT` at charge `0.5` on `charge_lance` deals exactly `57.5` (`20 + 0.5 × 75`).
+34. Primary and `ALT_FIRE` cannot both be mid-action on any tick, across 10,000 randomized input sequences.
+
+## Ability recharge
+35. A `RESOURCE` ability at `20` resource with `cost 25` fails preflight and spends nothing.
+36. `cd_double` recharges serially: two spent charges return at `10 s` and `20 s`, never both at `10 s`.
+37. `act_melee_three` advances only on melee hits that dealt Health damage — not on hits fully absorbed by Barrier.
+38. A `PHYSICS_VERB` with no eligible target in range spends nothing.
+39. A committed projectile that misses receives no refund.
+40. `OVERCRIT_GENERATES_RESOURCE` on an ability whose own damage overcrits generates `0` from that overcrit.
+41. Recharge reduction from all sources never exceeds `60%`: `cd_single_long` never recharges faster than `7.2 s`.
+42. `RESOURCE`, `COOLDOWN`, and `ACTION` render with three visually distinct HUD treatments.
+43. Loading a `(family, activation, recharge)` triple absent from §12.9 is a hard error naming the triple.
+44. A `HEAL_CHANNEL` sample at full Health restores `0` and still pays full cost; the channel then ends.
+
+## Interaction
+45. `F` with a terminal at `12°` and a cube at `4°` from centre activates the **terminal** (priority class 1 beats class 3).
+46. While carrying, `F` with a compatible socket at `20°` and a lever at `2°` **places into the socket** (class 2 beats class 4).
+47. Two interactables at identical angle and distance resolve identically across 1,000 runs.
+48. `F` activates a Check; the Check confirms and is never undone by death, reset, or reload.
+49. A required carryable dropped outside `oob_volume` respawns at `home_transform` with the same `id`.
+50. A Check in a room with an active encounter shows `Area not secure` and cannot be activated.
+
+## Physics
+51. A `LIGHT` object within range is moved by `PUSH`.
+52. A `required` object with `physics_permitted = false` is not manipulable despite being `LIGHT`.
+53. No sequence of Physics inputs moves the player, across 10,000 randomized attempts.
+54. Player-owned object impact on the player deals exactly `0`.
+55. An object resting on an enemy deals damage at most once per `1.0 s`.
+56. Physics-imparted vertical velocity never exceeds `12.0 m/s`.
+57. Impact damage never exceeds `45.0` at any speed.
+
+## Damage, crit, Status
+58. No code path writes Health outside the resolver — verified by making Health private and auditing all call sites.
+59. The same non-crit attack on the same target state produces identical damage across 1,000 repetitions.
+60. `crit_chance 1.0` produces `crit_tier 1` on 10,000 of 10,000 hits.
+61. `crit_chance 1.5` produces tier 1 or 2 and never tier 0, across 10,000 hits; tier 2 occurs on `50% ± 2%`.
+62. `crit_chance 4.5` produces tier 4 on every hit (clamped).
+63. Multipliers are exactly `{1,2,3,4,5}` — never `{1,2,4,8,16}`.
+64. No Status schedules a `DamageRequest`. Verified by static analysis of Status code plus a runtime assertion.
+65. `BURNING` on a `burnable` surface spawns a `FIRE_ACTOR` whose damage is credited to the `BURNING` applier.
+66. `BURNING` on a non-burnable enemy in an empty room deals `0` damage over its full `6 s`.
+67. A failed application raises `susceptibility` by exactly `0.15`, capped at `0.45`.
+68. A success zeroes susceptibility and raises `adaptation` by `0.20`, capped at `0.50`.
+69. Adaptation decays at `0.05/s` with no attempts and floors at `0.0`.
+70. A boss takes `CONFUSED` when `TURNCOAT` is applied, at the same duration.
+71. Effective chance is never below `0.05` or above `0.95` across all archetype and modifier combinations.
+72. `ANCHORED` and `LIGHTENED` never coexist on one target.
+
+## Loadout
+73. Unequipped Archive entries produce zero listeners, reactions, resources, actors, or queries — verified by instrumenting every registration point and asserting the count with a 500-entry Archive.
+74. Loadout cannot be edited outside the Hub.
+75. Re-equipping a host used earlier in this Zone instance restores its exact saved state.
+76. A never-used host introduced to an active Zone starts at every cold value in §5.7.
+77. Installing and removing Mods at the Hub costs nothing.
+78. Equipping a second `HIGH` Gear piece is refused with the §34.6 message.
+79. Dying with an empty resource pool respawns with the pool still empty.
+
+## Capability and generation
+80. A capability gate never appears in a Zone where §29.2 cannot prove the capability, across 10,000 seeds.
+81. The same `(campaign_seed, zone_id)` produces a byte-identical Zone across 1,000 compositions, and decoration reseeding never alters composition.
+
+---
+
+# 39. IMPLEMENTATION WAVES
+
+Ordered by dependency. Each wave ends at a testable state; a wave is done when its test vectors pass.
+
+| Wave | Contents | Tests |
+|---|---|---|
+| 1 | Input roles, rebinding, base movement law, out-of-bounds recovery | 5–11, 17, 18 |
+| 2 | Damage road, Defense, Barrier, crit, death, Static Pulse, baseline melee | 1–3, 58–63 |
+| 3 | Host schemas, Archive, Loadout validation, active projection | 73, 74, 78 |
+| 4 | Weapon cycle, the eight primaries, six secondaries, four feeds | 19–34 |
+| 5 | Abilities, the three recharge identities, hybrids, the compatibility matrix | 35–44 |
+| 6 | Mobility families, movement safety, collision recovery | 12, 13 |
+| 7 | Interaction resolver, carryables, sockets, recovery | 45–50 |
+| 8 | Physics primitives and impact damage | 51–57 |
+| 9 | Status, application, pity, adaptation, substitution | 64–72 |
+| 10 | Gear, Mods, modifier order, runtime clamps | 14–16, 77 |
+| 11 | Signal graph, sensors, actuators, transition rules | fixtures 1, 3, 8, 9 |
+| 12 | Hacking | fixture 7 |
+| 13 | Puzzle-package contract, validation pipeline, reset groups | fixtures 1–18 |
+| 14 | Hazards, destructibles, environmental kill credit | fixture 12 |
+| 15 | Enemies, archetypes, encounters, waves | fixture 13 |
+| 16 | Persistence: all five categories, reconstruction order, mid-transition | 75, 76, 79 |
+| 17 | Zone composition, audit, retry, fallback Zone | 4, 80, 81, fixture 19 |
+| 18 | Capability planner and entry validation | 80 |
+| 19 | HUD, device presentation, causality feedback | 42 |
+| 20 | Player-facing flow, migration, all messaging | — |
+
+Waves 1–3 are the foundation and are strictly sequential. Waves 4–10 are player systems and may proceed in parallel once 3 is complete. Waves 11–15 are dungeon systems and may proceed in parallel with 4–10. Waves 16–20 integrate and must come last.
+
+---
+
+# 40. CLOSURE STATEMENT
+
+## 40.1 What this proposal decided
+
+Eighteen decisions that were open in the source authorities, resolved here:
+
+1. Static Pulse is **hitscan**, `6.0` damage at `0.35 s`, `60 m`, no falloff, no spread.
+2. Weapons draw from **eight closed primary families and five secondary kinds**; Epsilon selects a profile ID and never a number.
+3. Abilities draw from **twelve families** governed by an explicit `(family, activation, recharge)` compatibility matrix.
+4. Mobility draws from **five families**, with ground and air legality specified per family.
+5. Physics is **four primitives** — `PUSH`, `PULL`, `HOLD`, `ALIGN` — that cannot move the player and are never required for progression.
+6. Status is **six non-DoT effects** in three families, with pity and adaptation tracked per family rather than per Status.
+7. `BURNING` produces damage only through a separate **Fire Actor**, closing the no-DoT law against circumvention.
+8. Defense is a **hyperbolic curve with no cap**, self-limiting and unable to reach full mitigation.
+9. Barrier grants **sum into one pool** with independent expiries; the worked example in §8.4 is the contract.
+10. Death **preserves all host runtime state** and restores only Health.
+11. Cold introduction is **fully specified** and reachable only through Hub re-entry.
+12. There is **no throw**; dropping is always zero-velocity.
+13. The signal graph is an **acyclic DAG with eleven node types** evaluated in topological order within a single tick.
+14. Machinery is **kinematic** and **holds position on power loss** rather than returning to rest.
+15. Dungeon macro-state is **four forward-only Boolean flags**, making cross-room cycles impossible by construction.
+16. Zone shape is a **linear spine of 8–16 rooms with dead-end branches** — a tree, so composition cannot cycle.
+17. Composition is **fully deterministic and bridge-owned**; Epsilon has no role in it.
+18. Capability gates are **four**, and one of them (`ranged_hit`) is permanently satisfied by the baseline.
+
+## 40.2 What this proposal sacrificed
+
+Honestly and without hedging:
+
+| Sacrifice | What is lost |
+|---|---|
+| **Forge** | The entire item-synthesis economy. Mods accumulate inertly; Epsilon Static has no sink. This is the largest single loss, and it means long campaigns have a growing pile of items with no use. |
+| **Energy balls and reflector beams** | Two of the twenty puzzle families the Dungeon Authority names, and the most spatially interesting routing puzzles available. |
+| **Water as a medium** | Swimming, buoyancy, oxygen, fill and drain, and every puzzle built on changing water level. |
+| **Dynamic joints** | Ropes, pulleys, counterweights, pendulums. A crane cannot swing its load. Physical puzzles lose their most tactile family. |
+| **Throwing** | A verb the Dungeon Authority explicitly lists. Carryables can only be walked into position. |
+| **Physics as a puzzle requirement** | Physics can shortcut a puzzle but never be the point of one. This is a real loss of expressive range, taken to eliminate a class of unwinnable-seed failures. |
+| **Reconfigurable global machinery** | Forward-only flags mean a dungeon can turn on but never be rerouted. The Dungeon Authority's "rail network rerouted" macro state is inexpressible. |
+| **Branching Zone topology** | A tree spine means no loops, no shortcuts back to earlier rooms except one-way drops, and no genuinely non-linear dungeon. |
+| **Enemy-applied Status** | Status is player-side only. Enemies cannot anchor, confuse, or expose the player. |
+| **Grapple spring dynamics** | Constant-speed pull rather than a simulated spring. Traversal feels slightly more mechanical. |
+
+## 40.3 Proposal-level choices the authorities did not mandate
+
+These are places where the authorities were silent and this proposal decided. They are the decisions most worth reviewing, because a different proposal could reasonably decide otherwise:
+
+- No fall damage.
+- Enemies never apply Status to the player.
+- Death preserves everything except Health.
+- Auto-equip does not exist.
+- Hacking cannot be failed.
+- Physics never gates progression, which is stricter than the authorities require.
+- Composition excludes Epsilon entirely, which is also stricter than required.
+- Save is refused during encounters rather than specified for them.
+
+## 40.4 Where this proposal disagrees with an authority
+
+Nowhere. Every inherited law in §1 is honoured. If a reader finds a contradiction, it is a defect in this document and should be reported rather than resolved locally (§1.3).
+
+## 40.5 The claim
+
+**There are no intentionally open behavioral decisions in this proposal.**
+
+Anything not described here is one of:
+
+- inherited unchanged from the two source authorities, and listed in §1;
+- rejected by a closed schema in §4, which makes it unrepresentable;
+- explicitly deferred in §2.2, with its cost stated;
+- an engineering decision that belongs to the implementer per §0.
+
+If an implementer encounters a moment of play where this document does not say what happens, that is a defect in this document. It is not permission to decide.
+
+---
+
+**End of Complete Design 1: Reliable Core**

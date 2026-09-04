@@ -31,7 +31,7 @@ Where those two documents state an architectural law, every proposal inherits it
 | Proposal | State |
 |---|---|
 | 00 — Standard | Complete |
-| 01 — Reliable Core | Not started |
+| 01 — Reliable Core | **Complete** — ~29.6k words, audited |
 | 02 — Physics Is The Game | Not started |
 | 03 — The Dungeon Is One Machine | Not started |
 | 04 — Epsilon Is The Content | Not started |
