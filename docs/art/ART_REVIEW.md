@@ -4014,3 +4014,46 @@ wrong answer costs three rooms instead of ten.
 
 **Nothing follows until the owner reviews these.** Wave 2 is four rooms
 and Wave 3 is three; neither starts on a wake-up.
+
+---
+
+## Wave 1 and the hall — OWNER PROMOTION, 2026-09-04
+
+**All four large shells are `review: "pass"`.** Three authorities had to
+agree, and they answer three different questions:
+
+| | |
+| --- | --- |
+| owner form approval | the rendered form of each room, with conditions named below |
+| Production technical certification | `7e13f44` — real capsules in the shipped collision |
+| independent audit | `f97545f` — structurally and physically clean, one authored value raised |
+
+| Shell | Form verdict | Condition, and its state |
+| --- | --- | --- |
+| `shell_hall_transit` | **FORM PASS** | three `grapple_point` offers on the collar rings, and the collar walking loop closed — **both completed**, and the mandatory route is still walkable with no package |
+| `shell_plenum_helix` | **FORM PASS** | preserve top-entry / bottom-exit — **entry still at y = 68**, exit at the floor |
+| `shell_yard_gantry` | **FORM PASS** | preserve the approved ~16 m height — **still 84.0 × 16.0 × 52.0 m** |
+| `shell_span_basin` | **FORM PASS** | preserve the intentional one-way drop — **unchanged**, the mid-span fall is still a route and still one-way |
+
+The audit's one finding was the yard's launch pad at y = 0.5 over a floor
+whose top is 0.00, corrected at `466fd4e` before this flip.
+
+**The physical-truth work did not reopen the review.** Between the form
+verdicts and this promotion, collision and movement-offer *data* were
+corrected — collars decomposed into convex sectors, nine declared points
+moved off the machine axis, three rails rerouted off geometry their baked
+curves were inside, four launch pads put on a real surface. No approved
+architectural form was redesigned: every shell `.glb` came out of that
+work byte-identical except the plenum's, and that changed only in its
+collision node count.
+
+> **`pass` is not "the movement offers work yet."** It says the shell is
+> approved and shippable as a room. Its `rail_route`, `launch_source` /
+> `launch_target` and `grapple_point` offers are declarations reserved
+> against a **player-facing movement-package consumer that is not
+> implemented**. A passing shell can be placed, entered and walked end to
+> end today; nobody can ride its rail. Two readinesses, and reading one
+> as the other is the conflation the projectile note was written about.
+
+The three projectile substitutions **remain `pending`**, and every other
+content review state is unchanged. **Wave 2 has still not started.**

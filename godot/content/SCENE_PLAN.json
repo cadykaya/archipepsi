@@ -1569,7 +1569,7 @@
    "content_id": "shell_hall_transit",
    "source_asset": "batch039/shells/shell_hall_transit",
    "source_batch_review": "PASS",
-   "runtime_substitution": "pending",
+   "runtime_substitution": "pass",
    "p1_contract": {
     "surfaces": 12,
     "traversal": 12,
@@ -1631,7 +1631,7 @@
    "content_id": "shell_plenum_helix",
    "source_asset": "batch040/shells/shell_plenum_helix",
    "source_batch_review": "PASS",
-   "runtime_substitution": "pending",
+   "runtime_substitution": "pass",
    "p1_contract": {
     "surfaces": 20,
     "traversal": 15,
@@ -1694,7 +1694,7 @@
    "content_id": "shell_span_basin",
    "source_asset": "batch040/shells/shell_span_basin",
    "source_batch_review": "PASS",
-   "runtime_substitution": "pending",
+   "runtime_substitution": "pass",
    "p1_contract": {
     "surfaces": 6,
     "traversal": 5,
@@ -1934,7 +1934,7 @@
    "content_id": "shell_yard_gantry",
    "source_asset": "batch040/shells/shell_yard_gantry",
    "source_batch_review": "PASS",
-   "runtime_substitution": "pending",
+   "runtime_substitution": "pass",
    "p1_contract": {
     "surfaces": 6,
     "traversal": 5,

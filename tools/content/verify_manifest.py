@@ -124,6 +124,33 @@ def main(argv):
                  "findings) and the owner then approved the rendered form "
                  "from docs/art/review/p2_owner/. Production's landed pack "
                  "still carries the pre-review 'pending'")
+        _PROMOTED = ("PROMOTED by the owner on 2026-09-04, on three "
+                     "authorities that answer three different questions: "
+                     "OWNER FORM APPROVAL of each rendered room (hall, "
+                     "with the three collar `grapple_point` offers and "
+                     "the closed collar walking loop it asked for, both "
+                     "completed; plenum, preserving top-entry / "
+                     "bottom-exit; yard, preserving its ~16 m height; "
+                     "span, preserving its intentional one-way drop); "
+                     "PRODUCTION'S TECHNICAL CERTIFICATION at 7e13f44; "
+                     "and an INDEPENDENT AUDIT at f97545f that found all "
+                     "four structurally and physically clean and raised "
+                     "one authored value, the yard's launch pad at "
+                     "y = 0.5 over a floor whose top is 0.00, corrected "
+                     "at 466fd4e before the flip. The physical-truth work "
+                     "between the form verdicts and this promotion "
+                     "corrected collision and movement-offer DATA and "
+                     "redesigned no approved form -- every shell .glb "
+                     "came out of it byte-identical except the plenum's, "
+                     "which changed only in its collider count. NOTE "
+                     "WHAT THIS DOES NOT SAY: the four carry rail, launch "
+                     "and grapple offers that are declarations reserved "
+                     "against a player-facing movement-package consumer "
+                     "which is NOT implemented. A passing shell can be "
+                     "placed, entered and walked end to end with no "
+                     "package installed; nobody can ride its rail. "
+                     "Production's landed pack still carries the "
+                     "pre-promotion 'pending'")
         _CORNER = ("corners offered as CORRIDOR, the request Production "
                    "recorded at eda4fd9 ('corner is not a chamber type'); "
                    "the corner shape survives as a tag beside it")
@@ -323,6 +350,10 @@ def main(argv):
                 ("shell_treasure_coffer", ("review",), _PASS),
                 ("shell_corner_left", ("review",), _PASS),
                 ("shell_corner_right", ("review",), _PASS),
+                ("shell_hall_transit", ("review",), _PROMOTED),
+                ("shell_plenum_helix", ("review",), _PROMOTED),
+                ("shell_yard_gantry", ("review",), _PROMOTED),
+                ("shell_span_basin", ("review",), _PROMOTED),
                 ("shell_hall_transit",
                  ("traversal", "surfaces", "size"), _FLIGHT),
                 ("shell_hall_transit", ("offers",),

@@ -479,6 +479,44 @@ Everything above is the P2 handoff and is unchanged by this. Added since:
   route around it. Full statement: **req 40** in `ART_FRONTIER.md`, and
   `tools/verify_content_pack.sh` stage 4 prints the refusals on every run.
 
+## I2. All twelve shells are `pass` — 2026-09-04
+
+**Take `godot/content/` again.** No code change on your side, and no asset
+changed: the delta is **eight fields** — four `review` values in
+`authored_art.json` and the four matching `runtime_substitution` values in
+`SCENE_PLAN.json`, each `pending` → `pass`.
+
+| shell | was | now |
+| --- | --- | --- |
+| `shell_hall_transit` | `pending` | **`pass`** |
+| `shell_plenum_helix` | `pending` | **`pass`** |
+| `shell_yard_gantry` | `pending` | **`pass`** |
+| `shell_span_basin` | `pending` | **`pass`** |
+
+Owner form approval, your technical certification at **`7e13f44`**, and the
+independent audit at **`f97545f`** all agree. `VisualOwnership.is_shippable()`
+now accepts all twelve room shells.
+
+**What this does NOT say.** These four carry `rail_route`, `launch_source` /
+`launch_target` and `grapple_point` offers, and those are declarations
+reserved against a **player-facing movement-package consumer that is not
+implemented**. A passing shell can be placed, entered and walked end to end
+with no package installed — that is the condition the offers were allowed to
+exist under and it still holds. Nobody can ride the rail yet. Please do not
+read shippable-as-a-room as offers-are-live.
+
+**Still unresolved and still yours: req 40.** `ShellValidator._check_segment`
+applies the base-kit reach bounds to every mandatory traversal segment without
+reading `kind`. It refuses ramped circulation in every one of these four
+rooms. The promotion does not settle it, and Art has not routed around it.
+
+**Also open, and smaller:** what `launch_source.radius` (3.0) means to
+`LaunchSolver`. If it fires from the declared point, all four pads measure
+clean. If it fires from anywhere in the disc, three of them want a larger
+move. Art has not guessed.
+
+The three projectile substitutions **remain `pending`**.
+
 ## Evidence
 
 `docs/art/review/integration/A_content_pack_delta.png` — row A is what

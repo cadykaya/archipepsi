@@ -205,12 +205,60 @@ SHELLS = {
 #: shell shared one verdict, and P3 ended that: the eight P2 shells were
 #: PASSED at the owner form review (Production certified them physically
 #: at `6640d86`; the owner reviewed the rendered form and approved all
-#: eight), and the hall has not been reviewed by anybody.
+#: eight).
 #:
 #: Per entry, so that a new shell CANNOT inherit somebody else's
 #: approval by being added to a table. Flipping one back is an owner
 #: decision, exactly as flipping it forward was; Art never writes "pass"
 #: here on its own account.
+#:
+#: ALL TWELVE ARE "pass" AS OF 2026-09-04, and what that took is worth
+#: recording, because three separate authorities had to agree and they
+#: answer three different questions.
+#:
+#:   OWNER FORM APPROVAL. Each of the four large rooms was reviewed on
+#:   its rendered form and passed, three of them with a condition the
+#:   owner named and Art then met or preserved:
+#:     hall    FORM PASS with three `grapple_point` offers on the collar
+#:             rings and the collar walking loop closed. Both were
+#:             completed before this promotion; the mandatory route is
+#:             still walkable with no package installed.
+#:     plenum  FORM PASS -- preserve its top-entry / bottom-exit
+#:             identity. Its entry doorway is still at y = 68 and its
+#:             exit at the floor.
+#:     yard    FORM PASS -- preserve its approved ~16 m height. Still
+#:             84.0 x 16.0 x 52.0 m.
+#:     span    FORM PASS -- preserve its intentional one-way drop. The
+#:             mid-span fall is still a route to the other half of the
+#:             room and still one-way.
+#:
+#:   PRODUCTION TECHNICAL CERTIFICATION at `7e13f44`, which is the
+#:   physical half: real capsules in the shipped collision, not art's
+#:   reading of its own boxes.
+#:
+#:   INDEPENDENT AUDIT at `f97545f`, which found all four structurally
+#:   and physically clean and raised exactly one authored value against
+#:   the finalized launch-source contract -- the yard's pad at y = 0.5
+#:   over a floor whose top is 0.00. Corrected at `466fd4e` before this
+#:   flip.
+#:
+#: THE PHYSICAL-TRUTH WORK DID NOT REOPEN THE REVIEW. Between the form
+#: verdicts and this promotion, collision and movement-offer DATA were
+#: corrected -- the collars decomposed into convex sectors, nine declared
+#: points moved off the machine axis, three rails rerouted off geometry
+#: their baked curves were inside, four launch pads put on a real
+#: surface. None of it redesigned an approved architectural form: every
+#: shell `.glb` came out of that work byte-identical except the plenum's,
+#: and that one changed only in its collision node count.
+#:
+#: "pass" HERE IS NOT "THE MOVEMENT OFFERS WORK YET." It says the shell
+#: is approved and shippable as a room. The `rail_route`,
+#: `launch_source`/`launch_target` and `grapple_point` offers it carries
+#: are DECLARATIONS reserved against a player-facing movement-package
+#: consumer that is not implemented -- so a passing shell can be placed,
+#: entered and walked end to end today, and nobody can ride its rail.
+#: Those are separate readinesses, and reading one as the other is the
+#: same conflation the projectile note below was written about.
 SHELL_REVIEW = {
     "shell_tower_collapsed": "pass",
     "shell_tower_spiral":    "pass",
@@ -220,14 +268,14 @@ SHELL_REVIEW = {
     "shell_treasure_coffer": "pass",
     "shell_corner_left":     "pass",
     "shell_corner_right":    "pass",
-    # P3, authored to the movement contract at `af620d8` and awaiting the
-    # owner's form review. PENDING is the honest state and the brief says
-    # so outright: "Do not promote it yourself."
-    "shell_hall_transit":    "pending",
-    # Wave 1, authored to b37fe07 and not reviewed by anybody.
-    "shell_plenum_helix":    "pending",
-    "shell_yard_gantry":     "pending",
-    "shell_span_basin":      "pending",
+    # P3. Owner FORM PASS with the three grapples and the collar loop,
+    # both completed; certified at `7e13f44`, audited at `f97545f`.
+    "shell_hall_transit":    "pass",
+    # Wave 1, same three authorities. Each carries a preserved identity:
+    # the shaft you descend, the wide yard, the one-way drop.
+    "shell_plenum_helix":    "pass",
+    "shell_yard_gantry":     "pass",
+    "shell_span_basin":      "pass",
 }
 
 #: silhouette -> asset id. `ProjectileSilhouette.content_id()` is

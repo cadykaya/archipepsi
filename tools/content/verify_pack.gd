@@ -59,18 +59,30 @@ func _initialize() -> void:
 		"shell_treasure_coffer": true,
 		"shell_corner_left": true,
 		"shell_corner_right": true,
-		# P3: the first LARGE authored room, PENDING and expected to be
-		# PENDING. `false` is the assertion that the pack does NOT ship
-		# an unreviewed shell -- the same gate the projectiles prove in
-		# the other direction. When the owner passes it this flips to
-		# `true`, and not before.
-		"shell_hall_transit": false,
-		# Wave 1 of the LARGE library. PENDING and expected to be, for
-		# the same reason and by the same gate.
-		"shell_plenum_helix": false,
-		"shell_yard_gantry": false,
-		"shell_span_basin": false,
+		# P3 and Wave 1. These read `false` from the day they were
+		# authored, and the comment beside them said "when the owner
+		# passes it this flips to `true`, and not before." The owner
+		# passed all four on 2026-09-04, on form approval plus
+		# Production's technical certification at 7e13f44 plus the
+		# independent audit at f97545f -- so they flip now, and this
+		# line is the record that they did not flip earlier.
+		#
+		# `true` still means only that `is_shippable()` no longer
+		# refuses them. Whether one appears in a Zone is Production's
+		# wiring, and whether a player can USE the rail, launch and
+		# grapple offers they carry is a movement-package consumer that
+		# does not exist yet. Shippable as a room; the offers are
+		# reservations.
+		"shell_hall_transit": true,
+		"shell_plenum_helix": true,
+		"shell_yard_gantry": true,
+		"shell_span_basin": true,
 	}
+	# THE NEGATIVE DIRECTION IS STILL PROVEN. With all twelve shells
+	# `true`, the three projectiles above are the only entries asserting
+	# that the gate REFUSES something -- so they are what keeps this from
+	# degrading into "everything ships", which would pass against a pack
+	# that had lost its review states entirely.
 	for id in wanted:
 		var want_shippable: bool = wanted[id]
 		if not reg.has(id):

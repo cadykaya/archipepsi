@@ -65,16 +65,30 @@ art diff. Do not maintain two active art branches.
 **THE ART LANE IS WAITING ON AN OWNER VERDICT, NOT IDLE-WITH-WORK-TO-DO.**
 Do not start work in it on a wake-up. Read this section and stop.
 
-**P2 IS COMPLETE — all eight authored shells PASS** (owner, 2026-09-02),
-after Production certified them physically at `6640d86`.
+**ALL TWELVE AUTHORED ROOM SHELLS PASS** (owner, 2026-09-04). The eight
+P2 shells passed on 2026-09-02 after Production certified them at
+`6640d86`; the hall and the three Wave 1 rooms were promoted on
+2026-09-04 with owner form approval, Production's technical certification
+at `7e13f44` and an independent audit at `f97545f` all agreeing. Nothing
+in the pack is `pending` except the three projectile substitutions.
+
+**`pass` DOES NOT MEAN THE MOVEMENT OFFERS ARE LIVE.** The four large
+rooms carry `rail_route`, `launch_source`/`launch_target` and
+`grapple_point` declarations reserved against a player-facing
+movement-package consumer that is **not implemented**. A passing shell
+can be placed, entered and walked end to end today; nobody can ride its
+rail. Report:
+`docs/art/reports/2026-09-04-wave1-promotion.md`.
 
 **THE LARGE ROOM LIBRARY IS APPROVED AND WAVE 1 IS BUILT.** The owner
 approved the ten-room slate (`docs/art/LARGE_ROOM_SLATE.md`) and the
 3 / 4 / 3 wave plan. Wave 1 -- `shell_plenum_helix` (20x72x20, a 129 m
 rail), `shell_yard_gantry` (84x16x52) and `shell_span_basin` (30x22x90)
--- is authored, verified and `review: "pending"`. Package:
-`docs/art/review/wave1/`. **Wave 2 is four rooms and does NOT start on a
-wake-up; it waits on the owner's Wave 1 verdict.**
+-- is authored, verified and, since 2026-09-04, `review: "pass"`.
+Package: `docs/art/review/wave1/`. **Wave 2 is four rooms and does NOT
+start on a wake-up.** The Wave 1 verdict it was waiting on has arrived
+and is a promotion, not an instruction to continue: Wave 2 needs its own
+owner brief.
 
 **`shell_hall_transit` is repaired** against Production's final walk law
 at `b37fe07`: two of its three climbs were built backwards, and all three
