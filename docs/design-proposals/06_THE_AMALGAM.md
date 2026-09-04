@@ -19,7 +19,9 @@
 | System interaction depth | 5 / 5 |
 | Implementation risk | **5 / 5** |
 | Procedural validation difficulty | **5 / 5** |
-| Reuse of current repo foundations | 3 / 5 |
+| Reuse of current repo foundations | **1 / 5** |
+
+> **Engine status, added after the fact.** This document was written against the two source authorities and never against the code. It has since been checked: see [`07_ENGINE_RECONCILIATION.md`](07_ENGINE_RECONCILIATION.md). Three of its systems are blocked at the substrate — the engine has no rigid-body physics, refuses `manipulate` as a capability by name, and has no channel between §30.6 and Archipelago's own solvability logic. §41.6 records this. Read the reconciliation before treating any of §14, §21.10, §26, or §29 as buildable.
 
 **Principal tradeoff:** there isn't one, in content. This proposal takes everything from all five, and §0.4 records the single clause it could not take. The tradeoff is entirely in **cost**: it is the most complex document in the repository, its composition-time validation is three validators stacked, and its performance budgets required a full rewrite to coexist. §41.2 is unusually blunt about where that risk sits, because a proposal that sacrifices nothing has to be honest about what it costs instead.
 
@@ -1048,19 +1050,23 @@ Design 2 validates every mandatory manipulation against **the least capable gran
 
 **Under composition it is not well-defined, and this is the sharpest seam in the union.** Design 4 §11.4 resolves an Ability's numbers from its atoms and its scaling atom, so Epsilon can compose a `PUSH` Ability that grants `manipulate` and is *weaker* than `ab_physics_light`. A player holding only that Ability passes §29.4's entry check — the capability Boolean is true — walks into a Zone whose mandatory puzzle was validated at `700 N`, and cannot move the crate. §30.6 cannot see it, because the verifier treats `manipulate` as a Boolean and never reasons about newtons.
 
-That is a softlock class the model check is structurally blind to, and it exists only because two proposals were merged. The union closes it with a floor rather than by making the verifier numeric:
+That is a softlock class the model check is structurally blind to, and it exists only because two proposals were merged. The union closes it by removing the axis the softlock lives on:
 
-> **Every composition that grants `capability:core:manipulate` delivers at least `700 N`, `20.0 m` of range, and a `120 kg` verb mass limit.**
+> **A capability is satisfied by set membership over verbs, never by a magnitude. No mandatory puzzle is authored against a force, a range, or a mass number.**
 
-Three rules implement it, and together they make "the least capable granting composition" a computable constant rather than a search:
+An earlier revision of this section closed the defect the other way, with a numeric floor: *every granting composition delivers at least `700 N`, `20.0 m`, `120 kg`.* **That was withdrawn**, because checking against the engine showed it is the one shape the capability model structurally cannot hold. `schemas/zone.py:132` states the rule and the reason:
 
-1. **The granting atoms carry the floor.** `effect_physics_basic` with `physics_verb` in `{PUSH, PULL, HOLD}` resolves to exactly `700 N` / `20.0 m` / `120 kg` — `ab_physics_light`'s numbers, by construction. `effect_physics_hold` and `effect_physics_master` resolve at or above it.
-2. **No `scaling` atom reduces a granting parameter.** Design 4's five scaling atoms may raise force, range, or mass limit and may never lower any of the three. A scaling atom that would is rejected by the §12.2 mask.
-3. **No Gear or Mod modifier reduces one below the floor.** Design 1 §16.2's runtime clamps already bound modifier output; `dom_physics` and `dom_relation_count` clamp at the floor rather than at zero.
+> *"What may NOT go here, and cannot, because the vocabulary has no word for it: raw damage, DPS, a health threshold, a crit figure. Numeric combat power is BALANCE. It is never LOGIC."*
 
-With all three, the least capable granting composition **is** `ab_physics_light`, so Design 2 §29.3's contract holds verbatim and the `700 N` on a `120 kg` object envelope — `5.83 m/s` of impulse, several metres on a flat floor — is what every mandatory manipulation is authored against.
+Newtons are not DPS, but they are the same kind of thing in the same place, and a capability vocabulary with no magnitude axis has nowhere to put either. Three rules implement the set-membership form instead:
 
-**Why a floor rather than a numeric capability.** Making `manipulate` carry a magnitude would put a continuous quantity into the state vector, which §4.10 exists to prevent and which would make §30.6 intractable for the same reason Status is excluded. A floor keeps the capability Boolean, keeps the verifier unchanged, and moves the entire problem to composition time where it costs one mask rule.
+1. **`manipulate` is satisfied by any composition whose `physics_verb` is `PUSH`, `PULL`, or `HOLD`** — membership in a verb set, exactly as the engine satisfies `grapple` by membership in a primitive family. An Ability the player composed themselves satisfies it identically to a named one.
+2. **A mandatory manipulation puzzle is authored against a verb, not a number.** *"This crate must be moved by a `PUSH`"* is expressible; *"this crate needs `700 N`"* is not, and §23.5 check 20's replay validates the former by replaying a reference solution rather than by comparing magnitudes.
+3. **Force, range, and mass limit remain balance values.** They vary across compositions, Gear scales them, and no route's legality reads them. Design 2 §29.3's `700 N` / `20.0 m` / `120 kg` envelope becomes guidance for authoring puzzle geometry, not a contract the verifier enforces.
+
+**Why this is better than the floor and not merely required.** A floor makes "the least capable granting composition" a number that every future atom, scaling rule, and Gear domain must be checked against forever. Set membership makes the question disappear: there is no weak-versus-strong axis for a puzzle to be authored across, so a composed Ability cannot be *too weak* to satisfy a gate — only present or absent.
+
+It also keeps §4.10 intact for the original reason. A magnitude in the capability would be a continuous quantity adjacent to the state vector; a verb set is finite and constant, which is what §29.5's monotonicity argument needs.
 
 ## 29.4 Entry validation
 
@@ -1687,10 +1693,10 @@ Every Design 1, 2, 3, 4, and 5 vector applies wherever this document pins to tha
 
 ## The manipulation floor
 
-3i. Every composition granting `capability:core:manipulate` resolves to at least `700 N` of force, `20.0 m` of range, and a `120 kg` verb mass limit.
-3j. No `scaling` atom applied to a granting composition lowers any of those three values.
-3k. No combination of Gear and Mod modifiers lowers any of those three below the floor; the §16 clamps bind at the floor rather than at zero.
-3l. A mandatory manipulation puzzle authored at `700 N` / `20.0 m` / `120 kg` is solvable by every composition that passes §29.4's entry check.
+3i. `capability:core:manipulate` is satisfied by exactly those compositions whose `physics_verb` is `PUSH`, `PULL`, or `HOLD`, and by no other property of the composition.
+3j. No capability in the five is satisfied or refused on the basis of a force, range, mass, damage, or duration value.
+3k. No mandatory route's legality reads a magnitude. A composed Zone in which any edge predicate, activity requirement, or latch condition compares a numeric build value is rejected at composition.
+3l. Every composition passing §29.4's entry check solves every mandatory manipulation puzzle in the Zone, verified by §23.5 check 20's replay rather than by magnitude comparison.
 
 ## The one cut
 
@@ -2094,7 +2100,11 @@ It cut one clause of one Status (§0.4). Everything else it gave up is cost, not
 | Wave 31 | Designs 2, 3, and 5 | Composed items and Forge; items remain profile-selected |
 | Wave 34 | This document | Water (§2.2), and nothing else any proposal shipped |
 
-**6. The single largest technical risk, named plainly.** It is not the model check — that is a BFS over `49,152` configurations and it is milliseconds. It is **§23.5 check 20**: a headless physics replay whose three runs must all agree, in an engine whose determinism across platforms is an assumption rather than a proof. If Godot 4.5's solver produces different results on different hardware at fixed iteration counts, check 20 becomes a source of false rejections that vary by machine, and the fix is to move replay validation to the bridge as a build-time artefact shipped with the Zone rather than recomputed. That is a real architectural change and it is worth knowing before wave 20 rather than after.
+**6. The single largest technical risk, named plainly — corrected.** This section originally named §23.5 check 20's solver determinism as the top risk: a headless replay whose three runs must agree, in an engine whose cross-platform determinism is assumed rather than proven.
+
+**That was the wrong risk, and checking against the engine showed why.** There is no solver in the project to be non-deterministic — zero `RigidBody3D`, zero joints, and a physics section in `project.godot` containing one line. The real risk is one order more basic: **the entire physical layer this proposal is half-built on does not exist**, and the engine's own note says the physics capabilities *"wait on the v9 physics tool."* §40's waves 15 through 24 are ten waves of building a subsystem from nothing before any of Design 2's content appears.
+
+Solver determinism becomes the top risk again once that subsystem exists, and the mitigation stated above — move replay validation to the bridge as a build-time artefact shipped with the Zone — still applies then. It is simply not the first thing that will go wrong.
 
 ## 41.3 Proposal-level choices the authorities did not mandate
 
@@ -2111,7 +2121,21 @@ Nowhere. Every one of the 48 inherited laws holds (§1), and §39 traces all `13
 
 The three laws closest to breaking, and what holds each, are named in §1 rather than hidden here: Law 20 by Design 2's §14.4 limits and §31.2's arithmetic, Law 27 by Design 5's structural rule and §0.4's one cut, and Law 34 by §30.6 proving `NO REQUIREMENT BEFORE GUARANTEE` over six kinds of state at once.
 
-## 41.5 The claim
+## 41.5 Engine status — where this document is not buildable as written
+
+Added after [`07_ENGINE_RECONCILIATION.md`](07_ENGINE_RECONCILIATION.md) checked all six proposals against `claude/archipepsi-echoes-continuation-b1adno`. Three findings are engine-blocking and belong in the closure statement rather than in a separate document nobody reads.
+
+| # | Finding | What it blocks |
+|---|---|---|
+| **1** | **No rigid-body physics exists.** Zero `RigidBody3D`, zero joints, in 140 GDScript files. The engine is static geometry, areas, and character bodies | §14 (twelve verbs), §21.10 (`WINCH`/`BRAKE`/`DRIVER`), §26 (eight constraint kinds), §23.5 check 20, and `4.0 ms` of §35.0's frame budget |
+| **2** | **The engine refuses `manipulate` as a capability, by name.** `mechanics.py:269`: the physics capabilities *"are not here because nothing can satisfy them yet: they wait on the v9 physics tool, and a capability nothing can satisfy is a gate nothing opens"* | §29.1's fifth capability, and therefore §0.3's fork 6 — the one fork this document claims required new machinery |
+| **3** | **§30.6 has no channel to Archipelago's solvability logic.** The apworld's complete access-rule set is three regions gated on Signal Key counts (`apworld/archipepsi/__init__.py:109`). It declares no capability prerequisite, does not know Zones exist, and defaults to `Accessibility: full` | Every capability gate in this document. The model check proves a property Archipelago never consumes, and Archipelago proves a property the model check never sees |
+
+**Finding 3 is the one that matters most and is the least about physics.** It applies to Design 1's three capabilities on a tree topology exactly as much as to this document's five. Two independent solvability models, neither aware of the other, and the one that decides whether a seed is winnable is the one this document never touches. The reconciliation's recommendation 6 is the decision that has to be made before any proposal is promoted: either the apworld learns to declare capability prerequisites, or Zone composition may not place an allocated Check behind one.
+
+**What survives all three.** The Epsilon architecture (§3.3, §11.7, §17) matches the engine's normative *"developers author the alphabet, Godot enforces the grammar, Epsilon writes sentences"*. The guarantee model (§30.6 property 5) matches `CapabilityGuarantee`'s four cases. And the engine left case C — `established_in_zone` — as an unimplemented parameter with the note that *"when a capability-establishment construct exists it plugs in here"*. **§30.6 is that construct.** The socket was left open; what is missing is the wiring in finding 3.
+
+## 41.6 The claim
 
 Five proposals, one union, one clause cut.
 

@@ -15,6 +15,7 @@ Proposals 1 through 5 are mutually exclusive. Proposal 6 is their union — it t
 | `04_EPSILON_IS_THE_CONTENT.md` | Design 4. Generated Weapons, Abilities, Gear, and Mods are the game; everything else is a substrate for showing them off. |
 | `05_STATUS_AS_GRAMMAR.md` | Design 5. Status is a rule-changing language rather than a damage tax, and the whole combat system is built on it. |
 | `06_THE_AMALGAM.md` | Design 6. The union of all five, forced to work together. Design 3's model check at the centre, extended to prove physics and Status safe. The most expensive of the six by a wide margin. |
+| [`07_ENGINE_RECONCILIATION.md`](07_ENGINE_RECONCILIATION.md) | **Findings, not a proposal.** All six checked against the live engine branch. Read it before treating any proposal as buildable — three of Design 6's systems are blocked at the substrate, and one finding applies to all six. |
 
 ## Source material
 
@@ -35,6 +36,7 @@ Where those two documents state an architectural law, every proposal inherits it
 | Generated items as the content, with Forge | 04 |
 | Status as a language the player speaks | 05 |
 | All of it, and the build time that costs | 06 |
+| To know what any of them would actually cost against the code that exists | **07 first** |
 
 ## Reference
 
@@ -50,4 +52,5 @@ Where those two documents state an architectural law, every proposal inherits it
 | 03 — The Dungeon Is One Machine | **Complete** — ~16.5k words, audited, 142/142 authority tests traced |
 | 04 — Epsilon Is The Content | **Complete** — ~15.4k words, audited, 142/142 authority tests traced |
 | 05 — Status As Grammar | **Complete** — ~13.7k words, audited, 142/142 authority tests traced |
-| 06 — The Amalgam | **Complete** — ~26.4k words, audited, 142/142 authority tests traced |
+| 06 — The Amalgam | **Complete** — ~27.4k words, audited, 142/142 authority tests traced |
+| 07 — Engine Reconciliation | **Complete** — the six checked against `claude/archipepsi-echoes-continuation-b1adno` at `df2bb58` |
