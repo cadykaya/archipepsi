@@ -147,13 +147,37 @@ verdict was read as a shipping decision. The doctrine comment above
 `SHELL_REVIEW`, this report, the handoff and the frontier all now say so
 in the same words.
 
-## Two things still open, and both are Production's
+## Corrected the same day — both of these are resolved
 
-* **req 40** — `ShellValidator._check_segment` applies base-kit reach
-  bounds to every mandatory traversal segment without reading `kind`, so
-  it refuses ramped circulation in all four of these rooms. The promotion
-  does not settle it and Art has not routed around it.
-* **`launch_source.radius`** — whether `LaunchSolver` fires from the
-  declared point or from anywhere in the 3 m disc. All four pads measure
-  clean on the first reading; three want a larger move on the second.
-  Not guessed at.
+This section originally listed req 40 and `launch_source.radius` as open.
+**Both were already settled**, and so was a third thing this lane had
+raised. Corrected here rather than left standing, because a report that
+names a resolved question as a blocker is how a blocker gets inherited.
+
+* **Req 40 — RESOLVED.** `ShellValidator` is kind-aware through
+  `TraversalLaw`: it no longer applies jump bounds to continuous walks or
+  to ramps. Implemented **before** the promotion, so none of these four
+  rooms was ever refused by it at the point they passed.
+* **`launch_source.radius` — RESOLVED**, settled at Production `833fe80`
+  and guarded at `7e13f44`. `launch_source.position` is the exact
+  foot-contact launch origin; `radius` **reserves space for the
+  constructed pad**; it is **not** a disc of possible ballistic origins.
+  So the reading Art measured against is the correct one and all four
+  pads are right as authored — the larger moves the disc reading would
+  have wanted are not needed, and not doing them on a guess was the right
+  call.
+* **The plenum collar convex-disc defect — RESOLVED.** Each collar ships
+  as twelve convex ring sectors, the holes are physically open, and the
+  independent audit verified the decomposition.
+
+## The one milestone that remains, and it is intentional
+
+**The player-facing movement-package consumer**, which is Production's.
+Shell promotion does not implement rails, launches or grapples in
+ordinary gameplay. Every one of the twelve shells can be placed, entered
+and walked end to end today with nothing installed; the `rail_route`,
+`launch_source` / `launch_target` and `grapple_point` offers are
+reservations against that consumer. That is the state they were authored
+under and it is not a defect.
+
+**There is no Art-side blocker.**

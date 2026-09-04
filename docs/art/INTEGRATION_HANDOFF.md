@@ -183,7 +183,7 @@ needed for any of it.
 | what | the eight room-shell `.glb`s, their `.tscn` wrappers, and `registry/authored_art.json` |
 | why | at `eda4fd9` all eight imported with zero colliders, so the audit's 625 findings were all "nothing is there" |
 | now | 10–33 convex colliders each, `StaticBody3D` + `CollisionShape3D`, via `-convcolonly` |
-| review state | **still `pending`, all eight.** Nothing here approves anything |
+| review state | **still `pending`, all eight** at the time of writing. Nothing here approves anything. *(state at the time; all twelve shells are `pass` as of 2026-09-04 — see I2.)* |
 | gameplay risk | **none.** No generator logic, no constant, no script |
 
 **SUPERSEDED by F0b below.** Both kinds of finding named here are now
@@ -244,7 +244,7 @@ in all eight.
 ### F0b. P2-D — the seven findings that survived C(ii) are repaired
 
 **Take `godot/content/` again.** No code change, and all eight are still
-`review: "pending"`.
+`review: "pending"`. *(state at the time; all twelve shells are `pass` as of 2026-09-04 — see I2.)*
 
 Your ruling at `1648fa9` took the eight shells from 75 findings to 7. All
 seven were ours and all seven are fixed at the source.
@@ -462,22 +462,21 @@ it is a gameplay/runtime design question rather than an art one.
 Everything above is the P2 handoff and is unchanged by this. Added since:
 
 * **`shell_hall_transit`** — the first LARGE authored room, 40 x 38 x 60 m,
-  in `batch039/shells`, exported into the pack at `review: "pending"`.
+  in `batch039/shells`, exported into the pack at `review: "pending"`. *(state at the time; all twelve shells are `pass` as of 2026-09-04 — see I2.)*
   Authored to the movement seam at `af620d8`; declares one `rail_route`
   and one `launch_source`/`launch_target` pair. **Not for integration
   until the owner passes the form.** Package:
   `docs/art/review/p3_owner/`.
 * **The exporter carries review state per entry now.** `SHELL_REVIEW` is a
-  dict keyed by content id, so the eight PASSED P2 shells and the pending
-  hall coexist and a new shell cannot inherit an approval.
-* **PRODUCTION DECISION NEEDED — the traversal contract disagrees with
-  itself.** `ShellValidator._check_segment` applies the base-kit reach
-  bounds to every mandatory segment without reading `kind`;
-  `TraversalSegment` in `schemas/content.py` bounds only `rise` and `gap`.
-  This refuses any ramped climb in any LARGE room, and refuses a 3.20 m
-  FLAT walk along a continuous collar. Art has not altered the shell to
-  route around it. Full statement: **req 40** in `ART_FRONTIER.md`, and
-  `tools/verify_content_pack.sh` stage 4 prints the refusals on every run.
+  dict keyed by content id, so a new shell cannot inherit an approval.
+  (Written when the hall was pending; all twelve are `pass` as of
+  2026-09-04 — see I2.)
+* ~~**PRODUCTION DECISION NEEDED — the traversal contract disagrees with
+  itself.**~~ **RESOLVED, and not a current blocker.** `ShellValidator` is
+  kind-aware through `TraversalLaw`: it no longer applies jump bounds to
+  continuous walks or to ramps, so no ramped circulation in any large room
+  is refused. This was implemented before the 2026-09-04 promotion. The
+  reasoning is kept as history under **req 40** in `ART_FRONTIER.md`.
 
 ## I2. All twelve shells are `pass` — 2026-09-04
 
@@ -505,15 +504,28 @@ with no package installed — that is the condition the offers were allowed to
 exist under and it still holds. Nobody can ride the rail yet. Please do not
 read shippable-as-a-room as offers-are-live.
 
-**Still unresolved and still yours: req 40.** `ShellValidator._check_segment`
-applies the base-kit reach bounds to every mandatory traversal segment without
-reading `kind`. It refuses ramped circulation in every one of these four
-rooms. The promotion does not settle it, and Art has not routed around it.
+### Nothing here is waiting on you except one milestone
 
-**Also open, and smaller:** what `launch_source.radius` (3.0) means to
-`LaunchSolver`. If it fires from the declared point, all four pads measure
-clean. If it fires from anywhere in the disc, three of them want a larger
-move. Art has not guessed.
+The three technical questions this section used to carry are all closed:
+
+* **Req 40 — RESOLVED.** `ShellValidator` is kind-aware through
+  `TraversalLaw` and no longer applies jump bounds to continuous walks or
+  ramps. Implemented before the promotion; none of these four rooms is
+  refused by it.
+* **`launch_source.radius` — RESOLVED** at `833fe80`, guarded at
+  `7e13f44`. `position` is the exact foot-contact launch origin; `radius`
+  reserves space for the constructed pad; it is **not** a disc of possible
+  ballistic origins. All four pads are correct as authored, and Art's
+  earlier question about the disc reading is answered.
+* **The plenum's collar convex-disc defect — RESOLVED.** Twelve convex
+  ring sectors per collar, holes physically open, decomposition verified
+  by the independent audit.
+
+**The one milestone left is yours and it is intentional: the
+player-facing movement-package consumer.** Shell promotion does not
+implement rails, launches or grapples in ordinary gameplay. Until that
+consumer exists, the offers these rooms carry are reservations — which is
+the state they were authored under and is not a defect.
 
 The three projectile substitutions **remain `pending`**.
 

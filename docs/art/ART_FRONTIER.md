@@ -112,14 +112,55 @@ the superseded rule in the meantime.
 
 ---
 
+## CURRENT STATE — 2026-09-04
+
+Read this before any section below. Where an older section disagrees, it
+is history and this is the state.
+
+1. **All twelve authored room shells are `review: "pass"`.** Nothing in
+   the content pack is `pending` except the three projectile
+   substitutions.
+2. **Hall, Plenum, Yard and Span were promoted by the owner on
+   2026-09-04**, after Production's technical certification at
+   **`7e13f44`** and the independent audit at **`f97545f`**. Promotion
+   commit `ab74f5e`.
+3. **Wave 1 is COMPLETE. Wave 2 has NOT started** and requires its own
+   owner brief. The Wave 1 verdict is a promotion, not an instruction to
+   continue.
+4. **Req 40 is RESOLVED.** `ShellValidator` is kind-aware through
+   `TraversalLaw`; it no longer applies jump bounds to continuous walks
+   or to ramps. Implemented before the promotion, so no room in the
+   library is refused by it. The "OPEN" section further down is
+   superseded history.
+5. **`launch_source.radius` is RESOLVED**, settled at Production
+   `833fe80` and guarded at `7e13f44`:
+   * `launch_source.position` is the exact foot-contact launch origin;
+   * `launch_source.radius` reserves space for the constructed pad;
+   * it is **not** a disc of possible ballistic origins.
+   All four large-room pads are correct as authored. Art's earlier
+   question about the disc reading is answered and closed.
+6. **The plenum collar convex-disc defect is RESOLVED.** Each collar is
+   decomposed into twelve convex ring sectors, the holes are physically
+   open, and the independent audit verified the decomposition.
+7. **The one remaining milestone is Production's, and it is
+   intentional: the player-facing movement-package consumer.** Shell
+   promotion does not implement rails, launches or grapples in ordinary
+   gameplay. A passing shell can be placed, entered and walked end to end
+   today with nothing installed; the offers it carries are reservations.
+
+**There is no Art-side blocker.** The lane is idle by intent, not by
+obstruction.
+
+---
+
 ## Status
 
 | | |
 | --- | --- |
 | Branch | `claude/archipepsi-art`, based on `claude/archipepsi-build-inzshp` |
-| Phase | **LARGE ROOM LIBRARY — ALL FOUR ROOMS HAVE THE OWNER'S FORM VERDICT.** Plenum PASS, Yard PASS, Span PASS, Hall PASS WITH TWO CHANGES (landed). Every one still exports `review: "pending"` — a form verdict is not a review state Art may write, and the hall's changed contract is Production's to recertify. **WAVE 1 DELIVERED, PENDING.** The ten-room slate (`docs/art/LARGE_ROOM_SLATE.md`) is approved and reconciled to Production's final `TraversalLaw` at `b37fe07`. **Wave 1 is three shells** — `shell_plenum_helix` (20 x 72 x 20, a shaft), `shell_yard_gantry` (84 x 16 x 52, a field) and `shell_span_basin` (30 x 22 x 90, a span) — deliberately not three of the same room; package in `docs/art/review/wave1/`. **Wave 2 has NOT started.** `shell_hall_transit` (40 x 38 x 60 m, ~91,000 m3) was authored to `af620d8`, repaired at `3b7bb02` against the `301374d` audit and had its scene regenerated at `058ec8b` against the `94d562d` audit, its three flights rebuilt as flat treads at `a8ad913` against the `67add07` audit, and the owner's two changes landed after Production certified that geometry at `fc2cc41`; its P3 package in `docs/art/review/p3_owner/` is the PRE-REPAIR record and is annotated as such. **P2 IS COMPLETE — all eight shells PASS.** **STYLE LOCK PASSED — production.** 001–022 are all `PASS`. **Batch 023 (theme landmarks) is PENDING owner review** and is a PROPOSAL, not production — a landmark CATEGORY exists in Production, but no placement, selection or envelope contract does (req 24, reworded 2026-08-29). **Batches 024–030 are authorised and proceed without waiting on the 023 verdict.** **024-030 delivered and PENDING.** **The post-030 gap pass is fully REVIEWED and fully PASSED (owner, 2026-08-29): 031 PASS; 032 PASS WITH BOUNDARY; 033 PASS AUDIT / BUILD NOTHING; 034 PASS VISUAL PRINCIPLE; 035-R PASS; 036-R PASS; 037-R PASS WITH DOCUMENTED CAVEAT; boss audit ACCEPTED / BUILD NOTHING.** **The art lane is now intentionally IDLE.** No Batch 038, and no Echo visual parts and no diegetic interface work until the owner publishes the two design briefs named below. |
+| Phase | **THE AUTHORED ROOM LIBRARY IS COMPLETE THROUGH WAVE 1 AND ALL TWELVE SHELLS ARE `review: "pass"`.** The eight P2 shells passed on 2026-09-02; `shell_hall_transit`, `shell_plenum_helix`, `shell_yard_gantry` and `shell_span_basin` were promoted by the owner on **2026-09-04**, after Production's technical certification at **`7e13f44`** and an independent audit at **`f97545f`**. Nothing in the content pack is `pending` except the three projectile substitutions, which are Production's reversal and stay as they are. **Wave 1 is COMPLETE. Wave 2 has NOT started and requires its own owner brief.** **STYLE LOCK PASSED.** 001-022 and 031-037 are all `PASS`; **023-030 remain PENDING owner review**, and Batch 023 is a PROPOSAL rather than production. **The art lane is intentionally IDLE.** No Batch 038, no Echo visual parts and no diegetic interface work until the owner publishes the two design briefs named below. |
 | Owner review | Style Lock passed 2026-08-28. Draft PR [#5](https://github.com/cadykaya/archipepsi/pull/5). |
-| Next action | **NOTHING. Wait for Production to recertify the hall's changed contract.** The owner's form verdicts are all IN: **Plenum PASS, Yard PASS (keep the ~16 m height), Span PASS (keep the one-way mid-span drop), Hall PASS WITH TWO CHANGES** — three `grapple_point` offers on the collar rings and one optional `walk` closing the collar loop, both landed. All four still export `review: "pending"`; Art does not write `pass`. **Wave 2 has NOT started and is not authorised by these verdicts.** Wave 1's technical repair is done: of the eleven findings Production measured, three are the entry-at-origin assumption and are Production's under the owner's authored-entry ruling, and the eight that were Art's — seven `cover` sockets and one `reward` volume, each declared at the centre of the thing it named — are repaired at the source with no geometry moved. See L-97 and `docs/art/review/wave1_repair/`. One thing is RAISED AND NOT CHANGED: each plenum collar's collider is an annulus that Godot imports as a convex hull, which fills its hole, and the three landing-to-collar segments end on the machine axis inside that fill. Superseded: (2) Production's recertification of `shell_hall_transit` at `a8ad913`, which rebuilt all three of its climbs as flat treads. `67add07` refused `basin_to_gallery` and `gantry_to_exit` on the real capsule: `roomkit.flight` chained sloped wedges, a wedge slopes along a BLENDER axis, and a run declared `"y"` is Godot z -- minus Blender y -- so every section of a `"y"` flight sloped against the direction its chain climbed. Systemic to the helper; Wave 1 was rebuilt from it too and its evidence regenerated. Measured worst real step across the library is now 0.89 m against a bound of 1.00. See L-95. Everything else the lane could reach for is still closed: no Batch 038, no Echo visual parts, no diegetic interface work until the owner publishes those two briefs. Batches 023-030 remain PENDING review. Req 31 still blocks seven enemy roles and Art has deliberately not routed around it. **Do not invent filler work. No heartbeat, no polling, no autonomous expansion.** |
+| Next action | **NOTHING. There is no Art-side blocker and no Art-side work queued.** The three technical questions this lane was carrying are all resolved and none of them is a current blocker: **req 40** — `ShellValidator` is kind-aware through `TraversalLaw` and no longer applies jump bounds to continuous walks or ramps, implemented before the promotion; **`launch_source.radius`** — settled at Production `833fe80` and guarded at `7e13f44`: `position` is the exact foot-contact launch origin and `radius` reserves space for the constructed pad, NOT a disc of possible ballistic origins, so all four pads are correct as authored; **the plenum collar convex-disc defect** — each collar ships as twelve convex ring sectors, the holes are physically open, and the independent audit verified the decomposition. **The one real remaining milestone is Production's, and it is intentional: the player-facing movement-package consumer.** Shell promotion does not implement rails, launches or grapples in ordinary gameplay — the twelve shells can be placed, entered and walked end to end today, and the `rail_route`, `launch_source` / `launch_target` and `grapple_point` offers they carry are reservations against a consumer that does not exist yet. Everything else the lane could reach for is still closed: no Batch 038, no Echo visual parts, no diegetic interface work until the owner publishes those two briefs; 023-030 remain PENDING review; req 31 still blocks seven enemy roles and Art has deliberately not routed around it. **Do not invent filler work. No heartbeat, no polling, no autonomous expansion.** |
 | ~~Superseded~~ | ~~**Tier 7: the room shells** (`ASSET_INVENTORY.md` §7, L3, nothing built) — started immediately, per the owner's instruction not to idle while 014 waits. Six families, all Pri A: corridor, arena, platform-path, tower, treasure room, corner. They inherit engine-truth dimensions and traversal bounds, differ in scale / verticality / sightline / routing / encounter and Check placement rather than in dressing, and must not be generic stretches of one another where gameplay geometry matters. The approved six material families and the Batch 014 fixture language both apply.~~ Corridors done as Batch 015. |
 | ~~Superseded~~ | ~~**Tier 8: the three unbuilt theme material families** (`neon_transit`, `gothic_stone`, `temple_ruin`). It is the highest-leverage unblocked work left — it also unblocks three of the six dressing props §9 needs — and it is routine in the sense that `art_palette.json` already carries all six themes' ramps and `materials.paint()` already builds any of them. **But it is the first look at three themes**, so it wants a review sheet the owner can redirect cheaply, and textures are the cheapest thing in the project to rebuild.~~ Done as Batch 012. |
 | Queue depth | **Pending owner review: 023-030 only.** 001-022 and 031-037 are all `PASS` as of 2026-08-29. The hourly heartbeat stays **paused** (`trig_01DSWy2dbCpeSefcx2YGS9Ys`, disabled 2026-08-29) and the PR #5 poll is deleted; PR activity still wakes the session on its own. **Do not re-enable the routine on an idle lane** — re-enable it only when an owner brief, a verdict or a Production contract gives it something to do. |
@@ -591,7 +632,9 @@ them; each is a thing the art lane will need when contracts settle.
 | 5 | **A larger footprint, or an L2 placement path, for composed clusters.** `PROP_FOOTPRINT` is 1.4 m. | Right for L0, too small for an L2 station or storytelling cluster. | `cluster_*` |
 | 6 | **`challenge_marker` world semantics** (`AGENT_FRONTIER.md` still lists this open). | Its visual cannot be specified until its meaning is. | `local_reward_pickup` |
 
-### Req 40 — the traversal contract disagrees with itself (OPEN, Production's)
+### ~~Req 40 — the traversal contract disagrees with itself~~ — SUPERSEDED HISTORY
+
+> **RESOLVED. Not a current blocker, and not open.** `ShellValidator` is kind-aware through `TraversalLaw`: it no longer applies jump bounds to continuous `walk`s or to ramps. That was already implemented before the 2026-09-04 promotion, so no room in the library is refused by it. Everything below is the record of the question as it stood, kept because the reasoning is what produced `traversallaw.py`.
 
 **`ShellValidator._check_segment` does not read `kind`.** It applies
 `Constants.MAX_VERTICAL_STEP` and `Constants.max_safe_gap` to EVERY
@@ -627,11 +670,14 @@ truth remain Godot's.
 
 ---
 
-## LARGE ROOM LIBRARY — Wave 1 (2026-09-02, PENDING)
+## LARGE ROOM LIBRARY — Wave 1 (COMPLETE; PASS, owner 2026-09-04)
 
 The owner approved the ten-room slate (`docs/art/LARGE_ROOM_SLATE.md`)
-and the 3 / 4 / 3 wave plan. **Wave 1 is built and pending; Wave 2 does
-NOT start on a wake-up.**
+and the 3 / 4 / 3 wave plan. **Wave 1 is COMPLETE and all three shells
+are `review: "pass"`** (owner, 2026-09-04, after Production's technical
+certification at `7e13f44` and the independent audit at `f97545f`).
+**Wave 2 has not started and requires its own owner brief** — the Wave 1
+verdict is a promotion, not an instruction to continue.
 
 | shell | interior | tris | rail | launch | type / class |
 | --- | --- | --- | --- | --- | --- |
@@ -664,7 +710,7 @@ prove nothing** -- so a climb costs zero declared Surfaces, and Art's
 
 ---
 
-## P3 — the first LARGE authored room (2026-09-02, PENDING)
+## P3 — the first LARGE authored room (PASS, owner 2026-09-04)
 
 `shell_hall_transit`, a vertical transit hall. **ONE shell. Not a family,
 not a batch, and it does not promote itself.**
@@ -677,7 +723,7 @@ not a batch, and it does not promote itself.**
 | size | 40 W x 38 H x 60 D m, ~91,000 m3 (vs `shell_tower_gantry` at 2,160) |
 | budget | 552 tris, 32.0 texels/m, 41 convex colliders |
 | contract data | 14 surfaces, 13 traversal, 10 sockets, 3 volumes, **3 offers** |
-| review | **`pending`.** `verify_pack.gd` asserts the pack does NOT ship it. |
+| review | **`pass`** (owner, 2026-09-04), with the three collar `grapple_point` offers and the closed collar walking loop it asked for, both landed. `verify_pack.gd` now asserts the pack DOES ship it. |
 | package | `docs/art/review/p3_owner/` — 8 views, 6 overlays, README |
 
 **The exporter now carries review state PER ENTRY.** `SHELL_REVIEW` was a
