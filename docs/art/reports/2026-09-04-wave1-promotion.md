@@ -125,7 +125,9 @@ continue. Wave 2 needs its own owner brief.
 
 ## 10 · Art promotion commit
 
-**`7dbaa02`** — pushed to `claude/archipepsi-art`.
+**`ab74f5e`** — *All twelve room shells are pass* — pushed to
+`claude/archipepsi-art`. (This report names it after the fact; the
+number above is the real one.)
 
 ---
 
