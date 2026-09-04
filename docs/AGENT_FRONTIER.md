@@ -165,6 +165,56 @@ What remains needs a person, not more iteration
 5. **Project code licensing** — separate from asset intake, and not
    decided.
 
+## WAVE 1 COMPLETE — all twelve room shells pass, 2026-09-04
+
+**CURRENT STATE. Nothing in this section is outstanding.**
+
+The owner promoted the four Wave-1 shells at Art `ab74f5e`; Production
+integrated the generated mirrors from Art `7ecd3fe`. Owner form verdict,
+Production certification (`7e13f44`) and the independent audit (`f97545f`)
+are all complete, and no review gate remains for any room shell.
+
+**THE APPROVED AUTHORED CATALOG IS TWELVE.**
+
+| chamber type | count | ids |
+| --- | --- | --- |
+| `arena` | 3 | `shell_hall_transit`, `shell_span_basin`, `shell_yard_gantry` |
+| `tower` | 4 | `shell_plenum_helix`, `shell_tower_collapsed`, `shell_tower_gantry`, `shell_tower_spiral` |
+| `corridor` | 2 | `shell_corner_left`, `shell_corner_right` |
+| `treasure_room` | 3 | `shell_treasure_cache`, `shell_treasure_coffer`, `shell_treasure_vault` |
+
+Wave 1 added the whole `arena` row plus `shell_plenum_helix`; the corridor,
+tower and treasure-room entries the P2 review approved are untouched. The
+registry is 18 `pass` / 3 `pending`, and the three pending are the
+projectile substitutions, deliberately held as the standing proof that
+per-entry review is a kill switch in both directions.
+
+**PROMOTION MADE THEM SELECTABLE AND NOTHING ELSE.** The `7e13f44` ruling
+holds: `OfferBinding.validate` is pure, Zone validation constructs zero
+rails and zero launch pads, and no shipped path builds an authored offer.
+The four promoted rooms measure `structural=0 measured=0`, declare 24
+offers, produce 20 judgments and 0 declines, and mandatory routes work with
+zero offer geometry. Promotion did not activate a single movement offer.
+
+**RESOLVED, so that nothing below is read as current:** the plenum's
+annular collar (twelve convex ring sectors per collar, holes physically
+open, volume and topology audited, zero non-convex collider nodes in any
+shell); the absent canonical real-geometry query (`SpaceProbe`, with the
+2 m stride deleted rather than widened); and launch-source radius
+semantics (`position` is the canonical foot-contact origin, `radius` is
+the reservation the mechanism must fit inside — written into
+`schemas/content.py`). Earlier dated sections that list any of these as
+open are historical and are marked superseded in place.
+
+**WAVE 2 IS UNSTARTED.** No Wave-2 room exists, is authored, or is planned
+in code.
+
+**THE NEXT GAMEPLAY BLOCKER IS PLAYER-FACING MOVEMENT-PACKAGE
+CONSUMPTION.** No shipped consumer builds an authored rail or launch pad in
+a played Zone, so no player has ridden one. That is a Playtest-3 gameplay
+milestone and it is the only thing between the offer vocabulary and a
+player meeting it. It does not block any room shell.
+
 ## WAVE-1 PRE-PROMOTION GUARD CLOSURE — landed 2026-09-03
 
 The four Wave-1 rooms are **promotion-ready and still `review: pending`**.
@@ -779,10 +829,13 @@ offers. Eight approved P2 shells,
 hall, span and yard all remain `structural=0 measured=0`; the plenum
 carries the three collar endpoints as pending evidence.
 
-TWO CAVEATS STILL OPEN and owned elsewhere: the plenum's collar annuli
-importing as filled convex hulls (Art, A-1), and the rail/launch routes
-that intersect real geometry in three of four rooms (Art, A-4/B-4).
-Nothing here repaired content.
+TWO CAVEATS, OPEN AT THE TIME AND **BOTH SUPERSEDED** (see WAVE 1
+COMPLETE, 2026-09-04): the plenum's collar annuli importing as filled
+convex hulls (Art, A-1), and the rail/launch routes that intersect real
+geometry in three of four rooms (Art, A-4/B-4). Art `468125e` decomposed
+every collar into twelve convex ring sectors and moved the routes; the
+independent audit at `f97545f` measured both closed. Nothing here
+repaired content.
 
 ## EVERY AUTHORED SHELL MEASURES TRUE — 2026-09-03
 
@@ -820,18 +873,25 @@ entered at `(-43, 0, 26)` and left at `(+43, 0, 26)`. Span keeps
 `deck_to_basin`, a `drop` from y=14 to y=0, one way. Marker parity 12
 scenes / 160 markers / 0 disagreements.
 
-TWO CAVEATS CARRIED FORWARD UNRESOLVED, by instruction, and neither is
-explained away here:
+TWO CAVEATS CARRIED FORWARD UNRESOLVED at the time, by instruction.
+**BOTH ARE NOW SUPERSEDED** -- see WAVE 1 COMPLETE, 2026-09-04. They are
+kept here because the record of what a pass did NOT look at is worth
+more than a tidy history:
 
 1. The plenum's annular collar imports as a CONVEX COLLISION DISC. A
    ring whose hole is filled by its own collision hull is a floor where
    the room shows a void, and nothing in this pass looked at it.
+   *SUPERSEDED:* Art `468125e` rebuilt each collar as twelve convex ring
+   sectors, and `f97545f` verified mesh volume equals the sum of the
+   sector hulls and the analytic annulus to 0.0001 m³. Zero non-convex
+   collider nodes remain in any of the twelve shells.
 2. There is still no canonical real-geometry `supported` caller for
    grapple validation. `MovementPackage` has no production caller at all,
    so the same three hall anchors build or decline depending on whether
    the probe window covers `_grapples`' own 2 m stride.
-
-An independent audit owns both. Neither was touched.
+   *SUPERSEDED:* `SpaceProbe` (`50018d1`) is that one canonical query,
+   the 2 m stride was deleted rather than widened, and `OfferBinding` is
+   a committed Production caller.
 
 ## THE ENTRY IS WHERE THE ROOM SAYS IT IS — 2026-09-03
 

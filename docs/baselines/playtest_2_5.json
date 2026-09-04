@@ -989,11 +989,17 @@
             "platform_to_goal"
           ],
           "room_shells": {
+            "arena": [
+              "shell_hall_transit",
+              "shell_span_basin",
+              "shell_yard_gantry"
+            ],
             "corridor": [
               "shell_corner_left",
               "shell_corner_right"
             ],
             "tower": [
+              "shell_plenum_helix",
               "shell_tower_collapsed",
               "shell_tower_gantry",
               "shell_tower_spiral"
@@ -1713,11 +1719,17 @@
             "platform_to_goal"
           ],
           "room_shells": {
+            "arena": [
+              "shell_hall_transit",
+              "shell_span_basin",
+              "shell_yard_gantry"
+            ],
             "corridor": [
               "shell_corner_left",
               "shell_corner_right"
             ],
             "tower": [
+              "shell_plenum_helix",
               "shell_tower_collapsed",
               "shell_tower_gantry",
               "shell_tower_spiral"
@@ -2419,11 +2431,17 @@
             "platform_to_goal"
           ],
           "room_shells": {
+            "arena": [
+              "shell_hall_transit",
+              "shell_span_basin",
+              "shell_yard_gantry"
+            ],
             "corridor": [
               "shell_corner_left",
               "shell_corner_right"
             ],
             "tower": [
+              "shell_plenum_helix",
               "shell_tower_collapsed",
               "shell_tower_gantry",
               "shell_tower_spiral"

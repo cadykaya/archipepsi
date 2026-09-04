@@ -332,7 +332,7 @@
    "category": "room_shell",
    "display_name": "hall transit",
    "scene": "res://content/shells/shell_hall_transit.tscn",
-   "review": "pending",
+   "review": "pass",
    "fallback": "shell_arena_proc",
    "semantic_tags": [
     "arena",
@@ -955,7 +955,7 @@
    "category": "room_shell",
    "display_name": "plenum helix",
    "scene": "res://content/shells/shell_plenum_helix.tscn",
-   "review": "pending",
+   "review": "pass",
    "fallback": "shell_tower_proc",
    "semantic_tags": [
     "tower",
@@ -1719,7 +1719,7 @@
    "category": "room_shell",
    "display_name": "span basin",
    "scene": "res://content/shells/shell_span_basin.tscn",
-   "review": "pending",
+   "review": "pass",
    "fallback": "shell_arena_proc",
    "semantic_tags": [
     "arena",
@@ -4116,7 +4116,7 @@
    "category": "room_shell",
    "display_name": "yard gantry",
    "scene": "res://content/shells/shell_yard_gantry.tscn",
-   "review": "pending",
+   "review": "pass",
    "fallback": "shell_arena_proc",
    "semantic_tags": [
     "arena",

@@ -269,8 +269,18 @@ authored rail or stood on an authored pad. That blocks the Playtest-3
 gameplay milestone; it does not block the shells, whose mandatory routes
 work with zero offer geometry.
 
-Non-scope, still recorded as unresolved: the Plenum's annular collar convex
-disc, and Wave 2.
+Non-scope: Wave 2, unstarted.
+
+> **Correction, 2026-09-04.** An earlier draft of this line also recorded the
+> Plenum's annular collar convex disc as unresolved. That was stale when it
+> was written. Art `468125e` decomposed all three collars into twelve convex
+> ring sectors each; the independent audit at `f97545f` verified the volume
+> and the topology — mesh 53.2124 m³ per collar equals the sum of its pieces'
+> hulls and the analytic annulus to 0.0001 m³, downward rays on the machine
+> axis and at r = 2.0 and r = 3.5 find nothing at all three collar heights,
+> and 458 collider nodes across all twelve shells contain **zero non-convex**
+> geometry. The holes are physically open. Nothing about the collar is
+> outstanding.
 
 *No heartbeat is armed. The Wave-1 guard list is closed and CI is green, so
 the next task should start by turning the trigger back on.*
