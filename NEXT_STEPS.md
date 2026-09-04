@@ -30,6 +30,450 @@ Proof the loop is real:
   reveal cards, zone title cards, inventory, pause, F3 overlay,
   procedural textures/audio.
 
+## Latest session: P2 final — the eight shells, measured
+
+Art's export (`cd8e9c7`) integrated verbatim. Owner size decision
+applied. **All eight are in the catalog, held `review: pending`, and
+none of them measures true** — for one reason, reported rather than
+worked around.
+
+### 1. The envelope defect was real, and it was shared
+
+`ShellValidator._check_envelope` allowed 0.15 m outside a room's
+declared box and ran on the AUTHORED PATH ALONE. It refused all eight
+shells. Art's preflight said Production's own rooms break the same rule
+— they were right, and the numbers are worth writing down because they
+are two different conventions, both self-consistent:
+
+| producer | wall convention | measured overhang |
+|---|---|---:|
+| `ChamberBuilders._perimeter` | walls CENTRED on the boundary | **0.20 m** all four sides |
+| the eight authored shells | walls inside on three sides, entry wall at z ∈ [−0.40, 0] | **0.40 m** |
+| the P1 test fixtures | walls entirely inside `size` | 0.00 m |
+
+A convention that describes neither real producer is not a convention,
+and a check only one producer takes is not a contract. The shared rule
+is now `RoomContract.WALL_ALLOWANCE` — **one wall thickness plus the
+existing tolerance** — because a room's boundary wall belongs to the
+room, and where a producer puts that wall's centreline relative to its
+declared box is that producer's own business. What must never happen is
+geometry a whole wall PAST the boundary: that is inside the neighbour's
+interior rather than inside the shared wall plane.
+
+Three changes make it one rule for everyone:
+
+- `RoomAudit._geometry_stays_inside_its_bounds` reads **every** mesh,
+  not just furniture-scale ones. It used to reuse `solid_boxes`, which
+  SKIPS room-scale geometry so a placement solver has somewhere to
+  stand — and a room's walls are exactly the geometry that can reach
+  into the neighbour, so the check that mattered was the one being
+  skipped.
+- `ShellValidator._check_envelope` delegates to `RoomContract.envelope`.
+- The conformance suite measures the worst overhang of BOTH producers
+  and asserts each is inside the shared allowance and outside the old
+  one — so the asymmetry cannot come back by anyone editing a number.
+
+Sabotage: putting the allowance back to 0.15 turns the suite red on
+procedural corridors and arenas at 0.05 m over — the exact failure Art
+predicted for Production's own rooms.
+
+### 2. The eight shells: measured, and refused
+
+| shell | class | surfaces | traversal | sockets | structural | measured |
+|---|---|---:|---:|---:|---:|---:|
+| `shell_corner_left` | small | 1 | 0 | 1 | 0 | 10 |
+| `shell_corner_right` | small | 1 | 0 | 1 | 0 | 10 |
+| `shell_treasure_vault` | small | 3 | 2 | 4 | 0 | 32 |
+| `shell_treasure_cache` | small | 3 | 2 | 4 | 0 | 32 |
+| `shell_treasure_coffer` | small | 3 | 2 | 4 | 0 | 32 |
+| `shell_tower_collapsed` | medium | 11 | 9 | 16 | 0 | 122 |
+| `shell_tower_spiral` | medium | 12 | 10 | 17 | 0 | 133 |
+| `shell_tower_gantry` | medium | 23 | 21 | 28 | 0 | 254 |
+
+**Structural = 0 across the board.** Art's metadata is well formed: the
+contract accepts every surface, socket, volume and traversal segment.
+
+**Every measured finding is a "nothing is there" finding.** Grouped by
+probe, the classes are `has no geometry under it`, `has nothing under
+it`, `no floor beneath it` and `nothing to stand on`. Zero headroom
+findings, zero sealed doors, zero traversal-law violations, zero
+envelope violations.
+
+The cause, measured directly: **the imported shells carry no
+collision.** One `MeshInstance3D`, zero `CollisionObject3D`, zero
+`CollisionShape3D`, in every one. `ART_ASSET_SPEC.md` §3 is explicit —
+*"Author collision. Never rely on an auto-generated trimesh for
+anything a player touches"* — with `-col` / `-convcol` / `-colonly`
+named as the least error-prone route. None of the eight uses them and
+the `.glb.import` files request no physics.
+
+So the audit's verdict is **NOT MEASURABLE**, not "measured and safe".
+Art's 47 predicted headroom notes are neither confirmed nor refuted;
+neither are the doors, and neither is the corrected edge-to-edge
+traversal export. A probe against a room with no colliders reports
+nothing, which is the failure mode `RoomAudit` refuses to dress up as a
+pass.
+
+Nothing was repaired, weakened or flipped.
+
+### 3. Review is now the audit gate
+
+A `pending` shell's findings are EVIDENCE FOR THAT REVIEW and do not
+fail the build — nothing can select it. A shell marked `pass` that
+fails the contract turns the suite red. Sabotage: flipping
+`shell_treasure_vault` to `pass` fails immediately with *"is approved
+content and fails the room contract"*. That is what makes promotion a
+measured decision rather than a JSON edit.
+
+### 4. What is proven working
+
+- **Corners turn.** `shell_corner_left` carries `exit_yaw` +90 and
+  `shell_corner_right` −90 (Art's own sidecar `turn` × 90, sign not
+  re-derived), both reach the room contract, and a two-room Zone built
+  through `ZoneBuilder.build` measures the second room rotated +90.
+- **Towers gate on floors.** The three declare `fits_floors` [2], [3],
+  [5] — covering three distinct counts, none of them 4. A `floors=4`
+  request against `shell_tower_spiral` falls back to the procedural
+  builder, and that room passes the contract and the audit.
+- **Nothing is selectable.** 29 registry entries load; the catalog
+  offered to Epsilon is `{}`; `all_legal_shell_ids()` is empty; all
+  eight are non-offerable.
+- **Zero real-Zone change.** `zone_digest 6e8d83d0f3ec088b`, unchanged.
+
+### 5. Two findings for the next slice, not fixed here
+
+- **The corners are tagged `corner`, which is not a chamber type.** Even
+  approved, `shells_for_type` would never offer them, because the
+  catalog matches `semantic_tags` against `CHAMBER_TYPES`. They are
+  reachable only by an explicit `shell_id`. Whether a corner is a
+  corridor-shaped room or a corner CONNECTOR is a design call.
+- **Three fields are Production-side and Art's exporter does not emit
+  them:** `size_class` (owner taste), `exit_yaw` and `fits_floors`
+  (both landed at `089547e`, after Art cut its export against
+  `99379e5`). They were applied here from the owner decision and from
+  Art's own sidecar `turn` / `floors`. A regenerated export would drop
+  them until the exporter learns the three.
+
+## Latest session: P2 prep — ready to accept the eight shells
+
+Engineering and integration prep only. **No authored room landed.** Art's
+`cab2512` is a source-side audit (`docs/art/P2_SHELL_PREP.md`); its
+exporter has not run, so no `ContentEntry` manifest for the eight
+candidates exists yet. P3 is not started.
+
+### A. The Check/cover collision, fixed generically
+
+P1 found it: `reward_position` was a fixed point on an arena's centre
+line, the room's cover boxes were scattered independently, and
+`ZoneController` places `RewardObject` at that anchor with no clearance
+test. 2 of 4 arenas buried a Check.
+
+Three changes, all in the direction ROOM GRAMMAR v0 and P1 established:
+
+- **The room decides where its Checks go before it scatters anything**,
+  and declares that space as a `reserved` region. Declaring rather than
+  merely avoiding is what makes it true for the composer as well —
+  nothing reads `reward_position`, so an activity element or a barrel
+  could have stood on the pedestal and no rule anywhere would have
+  objected.
+- **The band is built first.** A `back` gallery at 0.41 coverage reaches
+  z = 0.59..1.0 of the room and its access ramp reaches most of the
+  rest, and the anchor sat in both. `_elevation_band` already DECLARES
+  its deck and its ramp as `reserved`, so the anchor is chosen against
+  what the band said rather than against a second derivation of where
+  the band is — the first attempt re-derived `band_rect` and missed the
+  ramp entirely, which is the mistake this project keeps paying for.
+- **Props take the nearest free spot to the one they rolled.** Rolling
+  alternates was the obvious fix and the wrong one: it moves the rng
+  stream, so every prop in every unconflicted room would have shifted
+  too. One roll then a deterministic sweep leaves those rooms
+  byte-identical. Cover is not deleted near a Check; it is placed where
+  a Check is not.
+
+Two regression tests, both on the assembled path: 16 arenas of varying
+size, half with bands, each measured where the pedestal will really
+stand; and `make godot-zone-audit` now measures all 15 Check pedestals
+of the real Zone, reading the same `reward_location_id` and
+`REWARD_SPACING` the controller reads. Sabotage: disabling the prop
+sweep gives 3 suite failures and 1 real-Zone failure; disabling the
+anchor's band-avoidance gives 1 real-Zone failure.
+
+Real-Zone effect: 15 of 15 Checks now clear (2 were buried), and one
+activity element gained a blocked sightline where a prop moved — a NOTE,
+not a failure, and a good trade for two unreachable Checks.
+
+### B. `exit_yaw`
+
+`ContentEntry.exit_yaw`, restricted to `{-90, 0, +90}` and refused
+otherwise. `ZoneBuilder` walks a cursor and a yaw, and its overlap
+guard, its connector grammar and its never-revisit proof are all written
+for quarter turns; an arbitrary angle is the topology slice's problem,
+not a corner shell's. 180 is absent on purpose — a room that exits back
+the way it came walks the chain into its own previous arm.
+
+Mirrored in `content_registry.gd` and `room_contract.gd`, emitted by
+`_from_authored_scene`, consumed by `ZoneBuilder` **after** the room is
+placed and overlap-guarded, so the room is still measured at the yaw it
+was built for and the turn only steers what comes next. Absent or 0 is
+straight through. Proven by building a two-room Zone through
+`ZoneBuilder.build` and measuring the second room's yaw.
+
+**The sign is Art's and was expensive.** `ZoneBuilder` rotates by
+`Basis(Vector3.UP, yaw)` and ADDS the turn, so a shell leaving through
+its +X wall turns the chain +90 and is the LEFT corner. An earlier
+version of the art builders had the two names swapped and it was caught
+by a render disagreeing with its own caption. It is written down in
+`P2_SHELL_PREP.md` and must not be re-derived.
+
+### C. `floors=4`
+
+`ContentEntry.fits_floors` names the tower floor counts a shell was
+BUILT for; empty means the shell does not depend on the parameter. A
+shell that does not fit is not used, and the permanent procedural
+builder makes the room. There is no arm anywhere that scales, retimes or
+reinterprets a shell to make it fit — the only outcomes are "use it" and
+"use the builder", and the fallback is the design rather than a
+degradation.
+
+`TOWER_MIN_FLOORS`/`TOWER_MAX_FLOORS` moved into `constants.py`, which
+`TowerChamber`, the shell rule, the registry mirror and GDScript all
+read. Art's tower sidecars already carry `floors`, so `fits_floors` is
+mechanical for the exporter.
+
+### D. Size and intent — one owner call remains
+
+No thresholds were invented, and the study says not to invent them:
+§4's own line is *"do not lock exact metre bands until the prototype's
+playtest; the capacity column, not the metre column, is the contract."*
+
+Production does not need thresholds to SELECT: `size_class` matches by
+string between what Epsilon asks for and what a shell declares. What it
+cannot do today is police the label — nothing checks that a 6 × 6 corner
+calling itself `large` is capable of what `large` certifies.
+
+A structural test now fences all three labels: `size_class` is read only
+by the shell offer, `intent` is read by nothing, and `cost` never
+reaches `room_value` (the engine recomputes a Zone's worth precisely so
+a provider cannot declare it).
+
+**THE OPEN CALL, and it is small:** which `size_class` do the three
+families carry? Footprints are 6 × 6 (corners), 8 × 8 (treasure) and
+12 × 12 (towers), and §4's bands are `small ≲ 10 m`, `medium ~10-20 m`,
+`large ~20-28 m`. Reading the metre column gives corners and treasure
+`small` and towers `medium`. Reading the CAPACITY column — which §4 says
+is the contract — a corner hosts no encounter at all and a treasure room
+hosts one reward moment, which is `small`; a 12 × 12 tower hosts a climb
+and a couple of ranged stances, which is arguably either. **The one
+thing Production cannot decide is whether `shell_tower_*` is `small` or
+`medium`.** Everything else follows.
+
+### E. Dead socket kinds
+
+`spawn`, `objective`, `secret`, `vista` and `presentation` still have no
+live room-contract consumer and `Volume` owns much of that space.
+Untouched: none of the eight shells needs them. Recorded as deferred
+cleanup for a slice that has a reason to open `content.py` anyway.
+
+### What Art still owes before P2 can be declared complete
+
+Their exporter has not run. `assets/models/batch018|019/shells/manifest.json`
+are BUILD SIDECARS (`anchor`, `bounds`, `platform_anchors`, `stones`
+inputs) — not `ContentEntry` manifests. No `surfaces`, no `sockets` in
+the contract shape, no `review`, no `exit_yaw`, no `fits_floors`.
+
+Everything those manifests need now exists on the Production side. The
+remaining work is theirs, in `tools/blender/`, and their own §"what
+becomes mechanical" lists it.
+
+## Latest session: P1 — room contract parity + the geometric audit
+
+The first slice of the adopted ROOM_ARCHITECTURE_STUDY hybrid (PR #7,
+`a63220f`), approved P1-only. Contract and validator; **no content
+conversion, no F3, no P2/P3.**
+
+The asymmetry. `ChamberBuilders` and `_from_authored_scene` both answer
+"build me this chamber", and until now the authored one answered with
+strictly less truth: it returned **no `sockets` key at all**, so an
+authored room had no cover points, no barrel points, no reserved
+regions and no walkable surfaces, and `Activities` flat-solved against
+its bounding box. That is exactly the defect `552469d` closed for
+`platform_path`, sitting in the one path no Zone takes yet — and it
+would have been found in a Zone the player was standing in.
+
+**The contract** is not a new language; it is the dictionary both
+producers already return, written down. `room_contract.gd` names the
+required keys (`root`, `bounds`, `exit_offset`, `room_height`,
+`enemy_spawns`, `reward_position`) and a CLOSED socket vocabulary —
+`stand`, `reserved`, `cover`, `reactive`, `enemy_high`, `access` — each
+tied to a consumer that runs today. Nothing speculative: a kind with no
+consumer is a kind nobody can be held to. `traversal` is optional and
+carries `TraversalSegment`'s own shape, so an authored jump and a
+`platform_path` jump are measured by the same code against the same
+`max_safe_gap`.
+
+**The audit** (`room_audit.gd`) measures those claims with real probes:
+support and headroom sampled across every declared surface; ground and
+burial under every placement point; the player's capsule at every
+arrival and in every doorway; endpoints, span and rise of every declared
+traversal; and geometry that reaches outside the room's own bounds. It
+REFUSES to report a clean sheet for a room outside the scene tree,
+because a probe with nothing to hit comes back clean, and that is the
+most dangerous possible pass.
+
+Two probe designs were tried and dropped for stated reasons, both worth
+carrying:
+
+- A separate "reachable from above" ray, on the theory that the sealed
+  pit was about lids. It was not: what makes a deck 1.66 m under a slab
+  unwalkable is that a 1.8 m player does not fit. **The headroom ray IS
+  the pit check**, and the extra one refused perfectly good mezzanines.
+- `cast_motion` through a doorway, which quietly returns "travelled all
+  of it" for a shape that starts clear and ends clear either side of a
+  0.4 m jamb. Asking "does the player FIT here" has one answer.
+
+And one real contract subtlety, found by a false positive: **`exit_offset`
+is not the doorway.** It is where the next room's ORIGIN goes, which a
+tower deliberately puts 2.2 m past its own back face. The audit probes
+the room's +Z boundary instead. A tower's landing slab is also 0.5 m
+thick and CENTRED on the height `exit_offset` names, so the probe finds
+the floor by ray before standing on it.
+
+**The suite** (`make godot-room-contract`, in CI) is ONE suite keyed to
+the contract, run over seven procedural rooms and three authored
+fixtures that carry the identical manifest — an honest room, one with a
+slab over its declared balcony, one whose exit was modelled and never
+cut. A per-producer suite proves that producer is self-consistent; this
+project has watched that inherit-the-blind-spot failure three times.
+
+**Schema**, mirrored into `content_registry.gd` in the same commit
+because verifying one side of a two-sided contract is verifying nothing:
+a `Surface` model and `ContentEntry.surfaces`; `Socket.kind` gains
+`cover`/`reactive`/`enemy_high`, promoted from the runtime vocabulary
+the builders already emit; `Socket.surface_id`. An authored room shell
+declaring no surfaces is refused. A `procedural_fallback` entry is
+exempt — it describes code that already knows where it laid the floor,
+and the procedural route stays permanently legal.
+
+`ShellValidator` also now keeps a promise `content.py` has made in prose
+since S12 and nothing kept: measured mesh AABBs against the declared
+`size` envelope. Rooms chain by butting declared envelopes together, so
+a shell bigger than its manifest reaches into the next room — and the
+overlap guard that would catch it is fed the very number being lied
+about.
+
+**Zero player-facing change, verified rather than asserted**:
+`zone_digest 6e8d83d0f3ec088b` unchanged, the real-Zone audit unchanged
+at 0 structural failures and 0 placement notes, and no committed
+registry entry, Zone fixture or baseline touched.
+
+**One defect the audit found and P1 does not fix.** An arena scatters
+three "crude cover" boxes at random through the middle half of the room,
+and `reward_position` is the fixed point `depth * 0.72` on the centre
+line. Nothing has ever stopped one landing on the other, so a Check
+pedestal can stand inside a crate — `zone_controller.gd:150` places
+`RewardObject` at that anchor with no clearance test. Two of the four
+arenas in the suite do it. Reported and PINNED so it cannot grow;
+fixing it means moving props or the anchor, which is a player-facing
+change and P1's acceptance forbids one.
+
+## Latest session: ROOM GRAMMAR v0
+
+The first approved slice of `docs/proposals/ROOM_FIRST_GAMEPLAY.md`. The
+owner's finding after playing Zone 1 was not "the activity families are
+weak" but "**the rooms are miserable**" — more stuff to do, none of it
+doing anything. The measurement behind it: a room's entire shape was
+three numbers (`width`, `depth`, `wall_height`), so 23 of 23 rooms were
+rectangles and 28 of 41 ranged enemies had nowhere to be ranged from.
+The flatness was the generator faithfully building everything the schema
+could say.
+
+What landed:
+
+- **`ArenaChamber.elevation`** — an optional `ElevationBand`: `gallery`
+  or `pit`, one per room, with bounded `rise` / `coverage` / `side` /
+  `access`. A property an ORDINARY room may have, not a room type; the
+  point is that verticality stops being the `platform_path` minigame.
+  A schema validator refuses a gallery that leaves less than
+  `HEADROOM` of clear air, and `HEADROOM` is public so the generator
+  can ask before proposing rather than discovering it by failing.
+- **The band as ordinary arena composition** — deck, lip, and a ramp
+  whose run is three times its rise, so the angle is the same whatever
+  the height and base movement always reaches the deck. That is NO
+  REQUIREMENT BEFORE GUARANTEE applied to geometry.
+- **Ranged enemies take the high ground.** Placement only; no AI change.
+- **Two environmental objects with verbs.** `DestructibleCover` pays in
+  SPACE, not loot — it removes itself, which is a real consequence that
+  needs no economy and leaves the loot question open rather than
+  answering it badly. `ReactiveBarrel` is hazard orange honestly spent
+  and hurts the player too. Both reach `Damageable`, so every weapon
+  including the permanent Static Pulse floor works on them, and a test
+  reads their source to prove neither reaches for Archipelago truth.
+- **The socket contract**, which is the load-bearing part: the builder
+  emits points it VOUCHES for, and architecture that content must avoid
+  is DECLARED as a `reserved` socket rather than inferred from size.
+
+Everything that went wrong in the batch was one shape — the builder knew
+a physical fact and nothing else did:
+
+- The access ramp is 6.8 m long, past the threshold at which occupancy
+  calls something architecture, so the way up became the one invisible
+  obstacle in the room and two activity elements ended up inside it.
+- Ground sockets were offered blind at six fixed points; three of six
+  landed inside the room's own crates or inside a gallery's solid mass.
+- **A pit was a sealed basement.** The recess was dug under an intact
+  floor slab. The unit test passed — bounds dropped, sockets below zero,
+  a ray from inside the recess found the deck — because nothing asked
+  what a ray from ABOVE hits first. The test that missed it is called
+  `_test_a_pit_is_a_hole_not_a_painted_floor`.
+
+`ChamberBuilders.solid_boxes` is now the single derivation of "what is
+solid in this room", called by the builder to vouch for its sockets and
+by `ContentInstantiator` to place activities.
+
+Measured on the deterministic seed and reported as found, not tuned: 5
+of 23 chambers declare a band (4 galleries, 1 pit); `zone_digest` moved
+`1bdf42f800c5637e` → `6e8d83d0f3ec088b`, 916 → 922 points. On the SAME
+Zone, this batch's engine produces byte-identical audit results to the
+pre-batch engine.
+
+`ENVIRONMENT_OBJECT_VALUE` was written and then deleted. How many
+objects a room can hold is a fact about its built geometry; Python
+pricing it would be the same failure this batch spent its time fixing.
+
+Deliberately NOT done, and still open: no loot economy (Coins are an
+Archipelago item and cannot be minted locally), no side branches or
+alcoves, no second band per room.
+
+**Then one playtest-hygiene fix, on the same contract.** The
+`platform_path` floating-element defect (`docs/ZONE_ACTIVITY_AUDIT.md`
+§4) is closed rather than carried into the playtest. Root cause in one
+sentence: the row solver reads a room's WIDTH and DEPTH, and a
+`platform_path` has no floor across them — the space between its islands
+is a kill pit and its bounds reach forty metres down, so 19 elements
+across five rooms stood on nothing and 3 more were inside platform
+geometry.
+
+The fix reuses the socket contract rather than reconstructing platform
+geometry anywhere: `platform_path` emits a `stand` socket for each
+surface it builds — start ledge, each island, end ledge — with the
+surface's top height and extent, and `Activities._row` places onto one
+chosen surface per activity when a room offers them. One surface per
+activity, because a routing circuit split across a jump course is a
+circuit nobody can complete inside the hold window. Islands are excluded
+by measurement, never by name: what is left beside an element on its
+better axis must be at least `BRUTE_LANE`, and 2.5 m of mandatory route
+over a kill pit cannot give that, so the day a builder makes a wide
+island the wide island is usable.
+
+Rooms offering no surfaces are untouched — the arena keeps the flat
+solve. Proved rather than asserted: comparing recorded element positions
+at `2699805` against after, all seven `platform_path` activities moved
+and every one of the other twenty-two, including all five banded rooms,
+is byte-identical. The audit is 0 structural failures and 0 placement
+notes, and `no_ground_under` is now a structural failure rather than a
+note — the point of writing a defect down is being able to promote its
+check the day it closes.
+
 ## Post-POC work so far
 - **Two adversarial review passes**, all findings fixed with regression
   tests. Notable: an externally-confirmed goal never set `goal_sent`;

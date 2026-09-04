@@ -27,9 +27,20 @@ _CLIENT_ADAPTER = TypeAdapter(ClientMessage)
 
 class BridgeServer:
     def __init__(self, engine: CampaignEngine, *, ap_default: str = "real",
-                 host: str = C.BRIDGE_HOST, port: int = C.BRIDGE_PORT):
+                 host: str = C.BRIDGE_HOST, port: int = C.BRIDGE_PORT,
+                 mock_config: C.CampaignConfig | None = None):
         self.engine = engine
         self.ap_default = ap_default
+        #: The scale a MOCK campaign is created at. `None` keeps the
+        #: prototype's thirty locations, which is what every existing
+        #: caller gets and what MOCK CAMPAIGN has always meant.
+        #:
+        #: Overridable because the pre-art playtest baseline is taken at
+        #: the 450-location default, and a human pressing MOCK CAMPAIGN
+        #: would otherwise walk a prototype Zone 1 and compare it to a
+        #: baseline Zone 1 that does not exist in their campaign. Real AP
+        #: is unaffected: there the seed decides, as it must.
+        self.mock_config = mock_config
         # The generated constants stay the default, so nothing that does not
         # ask changes behaviour. Overridable because two Archipepsi slots in
         # one multiworld is a supported way to play, and on one development
@@ -65,6 +76,10 @@ class BridgeServer:
         try:
             await self._send(ws, BridgeReady(type="bridge_ready",
                                              bridge_version=BRIDGE_VERSION))
+            # `engine.snapshot()` is always COMPLETE; only
+            # `broadcast_snapshot()` elides the Echo log. That is the whole
+            # correctness argument for eliding it: no client is ever joined
+            # to the broadcast stream without a full log to cache first.
             await self._send(ws, self.engine.snapshot())
             async for raw in ws:
                 await self.dispatch(ws, raw)
@@ -98,6 +113,8 @@ class BridgeServer:
     async def _route(self, ws, m) -> None:
         engine = self.engine
         if m.type == "hello":
+            # Complete, as on connect: `hello` is how a client that lost
+            # track of the Echo log asks for all of it again.
             await self._send(ws, engine.snapshot())
         elif m.type == "ap_connect":
             await self._connect_ap(m.server, m.slot_name, m.password)
@@ -125,6 +142,8 @@ class BridgeServer:
             await engine.handle_slot_action(m.slot, m.component_id)
         elif m.type == "grant_local_reward":
             await engine.handle_grant_local_reward(m)
+        elif m.type == "zone_timing":
+            engine.record_zone_timing(m)
         elif m.type == "set_creativity":
             await engine.handle_set_creativity(m.value)
         elif m.type == "debug_command":
@@ -140,7 +159,7 @@ class BridgeServer:
             await engine.backend.disconnect()
             engine.backend = None
         if engine.backend is None:
-            engine.backend = MockAPBackend(engine)
+            engine.backend = MockAPBackend(engine, config=self.mock_config)
         await engine.backend.connect("", "Skyiah", "")
 
     async def _connect_ap(self, server: str, slot_name: str,

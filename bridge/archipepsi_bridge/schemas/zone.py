@@ -17,12 +17,15 @@ from __future__ import annotations
 
 from typing import Annotated, Literal, Union
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    BaseModel, ConfigDict, Field, field_validator, model_validator)
 
 try:  # works standalone and when copied into a package
     from . import constants as C
+    from . import mechanics as M
 except ImportError:  # pragma: no cover
     import constants as C
+    import mechanics as M
 
 SCHEMA_VERSION = 7
 
@@ -53,9 +56,180 @@ AffordanceTag = Literal[
 ]
 
 
+#: The activity vocabulary (CAMPAIGN_SCALE.md 9).
+#:
+#: Four composable families, not fifteen bespoke minigames. Each is a
+#: system whose difficulty comes from BOUNDED COMPOSITION -- how many
+#: elements, how generous the timing, how far apart -- rather than from a
+#: separate hand-made puzzle per flavour.
+#:
+#: Every one is solvable with base movement and Static Pulse alone WHEN
+#: IT ASKS FOR NOTHING ELSE -- a switch is touched, a target is shot, a
+#: plate is stood on, a timed run is run.
+#:
+#: SUPERSEDED 2026-08-30 (owner ruling): this file used to end that
+#: sentence "nothing here needs an Echo, and nothing may be added that
+#: does". Activities MAY now require an Echo capability, through
+#: `ActivityPrimitive.requires`, and the restriction that replaces it is
+#: narrower and stronger: **no requirement before guarantee.** What a
+#: capability is, is semantic -- "can the player grapple", never "does
+#: the player hold the Grapple Echo" -- so an Echo the player built
+#: themselves satisfies it identically.
+#:
+#: `switch_sequence`  N switches, optionally in a required order.
+#: `timed_run`        activate, then reach the target before it lapses.
+#: `target_challenge` shoot N targets, optionally against a clock.
+#: `pressure_routing` hold plates / route power to open the way.
+ActivityKind = Literal[
+    "switch_sequence", "timed_run", "target_challenge", "pressure_routing",
+]
+
+#: The semantic capabilities an activity may require (owner ruling,
+#: 2026-08-30). Spelled out as a Literal rather than derived from
+#: `mechanics.ACTIVITY_CAPABILITIES` at import time, so the closure is
+#: STRUCTURAL: `test_epsilon_vocabulary` proves a string field Epsilon
+#: can fill is a closed vocabulary by reading the annotation, and a
+#: vocabulary assembled at runtime is one it cannot see. The two are
+#: pinned to each other by a test rather than by a comment.
+ActivityCapability = Literal[
+    "blink", "cross_long_gap", "grapple", "ranged_hit",
+]
+
+
+class ActivityPrimitive(Strict):
+    """One instance of an activity family, with its difficulty dialled in.
+
+    Epsilon picks the family and the numbers. It does not describe the
+    puzzle in prose, because prose cannot be built and cannot be scored:
+    an unimplemented tag counts for nothing (CAMPAIGN_SCALE.md 9), and
+    the way to guarantee that is to have no field it could put prose in.
+    """
+
+    kind: ActivityKind
+
+    #: Switches, targets or plates. The primary difficulty dial.
+    element_count: int = Field(default=1, ge=1, le=8)
+
+    #: Seconds allowed, or 0 for untimed. Bounded below so a timed run is
+    #: never a reflex test the base kit cannot pass.
+    time_limit: float = Field(default=0.0, ge=0.0, le=120.0)
+
+    #: Whether the elements must be used in a specific order. Free on its
+    #: own; expensive combined with a clock, which is the composition the
+    #: difficulty is supposed to come from.
+    ordered: bool = False
+
+    #: SEMANTIC capability requirements (owner ruling, 2026-08-30). Names
+    #: from `mechanics.ACTIVITY_CAPABILITIES`, every one of which is
+    #: satisfied by ANY primitive in its family.
+    #:
+    #: Conjunctive: all of them, and each satisfied by any member. That
+    #: is the shape that lets a Zone say "you need a way to grapple"
+    #: without saying "you need the canonical Grapple Echo".
+    #:
+    #: What may NOT go here, and cannot, because the vocabulary has no
+    #: word for it: raw damage, DPS, a health threshold, a crit figure.
+    #: Numeric combat power is BALANCE. It is never LOGIC, so a Zone can
+    #: never mean "enter only if your build does 400 DPS".
+    #:
+    #: Empty is the norm and stays the norm. `validate_zone` refuses any
+    #: entry whose guarantee the generator cannot prove.
+    requires: tuple[ActivityCapability, ...] = Field(
+        default=(), max_length=2)
+
+    @field_validator("requires")
+    @classmethod
+    def _no_capability_is_asked_for_twice(cls, value):
+        if len(set(value)) != len(value):
+            raise ValueError(f"duplicate capability in {list(value)}")
+        return value
+
+    @model_validator(mode="after")
+    def _a_timed_puzzle_stays_base_kit_solvable(self):
+        """Base-kit solvability is absolute (CAMPAIGN_SCALE.md 9).
+
+        A clock is the one dial here that can make an activity
+        IMPOSSIBLE rather than merely hard, so it is the one with a
+        floor: each element needs time to reach at base movement speed.
+        Without this a provider could ask for eight ordered switches in
+        three seconds, which validates as a puzzle and plays as a wall.
+        """
+        if self.time_limit == 0.0:
+            return self
+        needed = self.element_count * C.SECONDS_PER_ACTIVITY_ELEMENT
+        if self.ordered:
+            needed *= C.ORDERED_ACTIVITY_TIME_MULTIPLIER
+        if self.time_limit < needed:
+            raise ValueError(
+                f"a {self.kind} with {self.element_count} elements"
+                f"{' in order' if self.ordered else ''} needs at least "
+                f"{needed:.0f}s at base movement speed, not "
+                f"{self.time_limit:.0f}s")
+        return self
+
+
+#: How much clear air a player needs above a walkable surface. Below
+#: this a "gallery" is a shelf you cannot stand on.
+#:
+#: Public because a generator has to know it BEFORE it proposes a band.
+#: The fallback used to derive the same number itself, and the two
+#: derivations disagreed by five millimetres of rounding -- which is one
+#: more instance of the fact this whole batch has been about.
+HEADROOM = C.PLAYER_HEIGHT + 0.6
+
+
+class ElevationBand(Strict):
+    """A second walkable height inside an ORDINARY room (ROOM_GRAMMAR v0).
+
+    The measured finding this exists for: a room's entire shape was three
+    numbers. `ArenaChamber` was width, depth and wall_height, so every one
+    of the twenty-three rooms in the played Zone was a flat rectangle and
+    the twenty-eight ranged enemies in them had nowhere to be ranged
+    FROM. Nothing was wrong with the generator; there was no field in
+    which a raised area could be described.
+
+    Deliberately ONE band, and deliberately not a `platform_path`. This
+    is a property an ordinary room may have, not a room type -- the whole
+    point is that verticality stops being a special minigame.
+
+    Every field is a Literal or a bounded float so the vocabulary can
+    GROW without becoming free-form: `kind` gains `catwalk` and `alcove`,
+    `access` gains `drop` and `capability:<name>`, `side` gains `front`.
+    A dead-end one-off would have been a boolean called `has_ledge`.
+    """
+
+    #: Raised shelf along a wall, or a sunken area in the floor.
+    kind: Literal["gallery", "pit"]
+
+    #: Metres above the floor (gallery) or below it (pit).
+    #:
+    #: Floored at `MAX_VERTICAL_STEP` so a band is never something you
+    #: step onto by accident -- a 30 cm rise is a trip hazard, not a
+    #: decision. Capped so a pit stays a place rather than a well.
+    rise: float = Field(ge=C.MAX_VERTICAL_STEP, le=4.0)
+
+    #: Fraction of the room's DEPTH the band spans.
+    #:
+    #: Bounded well under 1.0 on purpose: a band covering the whole room
+    #: is a room at a different height, which is not a spatial decision.
+    coverage: float = Field(ge=0.2, le=0.55)
+
+    #: Which wall it hugs.
+    side: Literal["left", "right", "back"]
+
+    #: How the player gets on and off it. Both are base-kit traversal --
+    #: NO REQUIREMENT BEFORE GUARANTEE applies to geometry exactly as it
+    #: applies to activities, and a band holding anything required must
+    #: be reachable by movement the campaign is guaranteed to have.
+    access: Literal["ramp", "stair"] = "ramp"
+
+
 class EnemyGroup(Strict):
     archetype: Archetype
-    count: int = Field(ge=1, le=C.MAX_ENEMIES_PER_CHAMBER)
+    #: One group is one encounter, so this is the encounter cap rather
+    #: than the room's: a room may hold two or three waves, but the
+    #: player fights them one at a time.
+    count: int = Field(ge=1, le=C.MAX_ENEMIES_PER_ENCOUNTER)
 
 
 class AffordanceFeature(Strict):
@@ -89,13 +263,123 @@ class ChamberBase(Strict):
     id: str = _ID
     flavor: str | None = Field(default=None, max_length=C.MAX_TEXT_LEN)
     reward_location_id: int | None = Field(
-        default=None, ge=C.FIRST_LOCATION_ID, le=C.LAST_LOCATION_ID
+        # The stable 600-id universe, not one campaign's range: a
+        # Zone carries whichever Checks its own seed allocated, and
+        # the campaign's range is checked where the scale is known
+        # (CAMPAIGN_SCALE.md 3).
+        default=None, ge=C.FIRST_LOCATION_ID, le=C.LAST_UNIVERSE_ID
     )
     #: S9. Additive and optional: a Zone generated before affordances
     #: existed is still a valid Zone, which is why `schema_version` stays
     #: 7 — bumping it would fail every Zone already inside a save for a
     #: change that requires nothing and removes nothing.
     features: tuple[AffordanceFeature, ...] = Field(default=(), max_length=3)
+
+    #: CAMPAIGN_SCALE.md 7: a complex room may carry more than one Check.
+    #:
+    #: Additive for the same reason `features` was — Zones live inside
+    #: saves, so a new REQUIRED field would fail every campaign in
+    #: progress. `reward_location_id` keeps its meaning; this holds the
+    #: rest. Nothing reads either directly: `reward_ids` below is the one
+    #: canonical view, and a test asserts no consumer goes around it.
+    #:
+    #: Bounded low on purpose. Two or three Checks in a genuinely large
+    #: room correspond to distinct activities; fifteen in one room is the
+    #: warehouse of pedestals CAMPAIGN_SCALE.md 5 forbids, and this is
+    #: the cheap structural half of preventing it.
+    additional_reward_location_ids: tuple[int, ...] = Field(
+        default=(), max_length=2)
+
+    #: CAMPAIGN_SCALE.md 9. Additive and optional, like `features` before
+    #: it: a Zone from before the vocabulary existed is still valid.
+    activities: tuple[ActivityPrimitive, ...] = Field(
+        default=(), max_length=3)
+
+    #: D1: authored-shell selection. Epsilon names INTENT, and may pick a
+    #: shell id out of the legal catalog it was handed. It never names
+    #: metres for an authored shell, and it never names a path -- the
+    #: charset here makes the second unspellable rather than merely
+    #: discouraged (S19).
+    #:
+    #: All three are optional and additive. A chamber with none of them
+    #: is the procedural path exactly as before, which is why the
+    #: continuous `width`/`length`/`gap_size` fields below are untouched:
+    #: D1 keeps the safe numeric generator for the fallback and layers
+    #: semantic selection on top for authored content.
+    shell_id: str | None = Field(
+        default=None, max_length=48, pattern=r"^[a-z0-9_]+$")
+    size_class: Literal["small", "medium", "large"] | None = None
+    intent: tuple[Annotated[str, Field(
+        min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")], ...] = Field(
+        default=(), max_length=4)
+
+    @property
+    def reward_ids(self) -> tuple[int, ...]:
+        """Every AP Check this chamber holds, in a stable order.
+
+        THE canonical view. `reward_location_id` and
+        `additional_reward_location_ids` are storage shapes kept apart so
+        that saves written before multi-Check rooms still load; nothing
+        outside this class should read either one.
+        """
+        first = () if self.reward_location_id is None \
+            else (self.reward_location_id,)
+        return first + tuple(self.additional_reward_location_ids)
+
+    @model_validator(mode="after")
+    def _each_check_is_its_own_check(self):
+        """A Check must be earned once, by one thing.
+
+        Two ids sharing a completion edge would send both the moment
+        either was earned -- which is not a duplicate, it is Archipepsi
+        telling the multiworld a player found an item they never reached.
+        Distinctness is the cheap half; the expensive half is that each
+        needs its own acquisition condition, which is the room builder's.
+        """
+        ids = self.reward_ids
+        if len(set(ids)) != len(ids):
+            raise ValueError(
+                f"chamber '{self.id}' lists Check "
+                f"{sorted(i for i in ids if ids.count(i) > 1)[0]} twice; "
+                "two ids sharing one completion edge would send a Check "
+                "the player never earned")
+        if self.reward_location_id is None and \
+                self.additional_reward_location_ids:
+            raise ValueError(
+                f"chamber '{self.id}' has additional Checks but no first "
+                "one; `reward_location_id` is the primary, so extras "
+                "without it would be invisible to anything reading only "
+                "the original field")
+        return self
+
+    @model_validator(mode="after")
+    def _features_sit_clear_of_the_walking_lane(self):
+        """The geometric proof, now applied to EVERY chamber that can hold
+        a feature rather than only to corridors.
+
+        `FEATURE_MIN_WIDTH` is `2 * (lane + 2 * reach + wall clearance)`
+        per tag: a width covering it is a width with somewhere to put the
+        feature that is neither in the masonry nor across the route. That
+        is the real statement of "an affordance is never on the mandatory
+        path", and it used to run on corridors only -- so every other room
+        type got a blanket ban instead (CAMPAIGN_SCALE.md 7).
+        """
+        width = getattr(self, "width", None)
+        if width is None:
+            width = getattr(self, "side", None)
+        if width is None:
+            return self
+        for feature in self.features:
+            needed = C.FEATURE_MIN_WIDTH.get(
+                feature.tag, C.MIN_FEATURE_CHAMBER_WIDTH)
+            if width < needed:
+                raise ValueError(
+                    f"chamber '{self.id}' is {width}m wide and carries "
+                    f"a '{feature.tag}', which needs {needed}m to sit clear "
+                    "of the walking lane on both sides (ECHOES.md 13.2); "
+                    "widen the room or offer a smaller feature"
+                )
+        return self
 
     @property
     def enemy_total(self) -> int:
@@ -152,16 +436,6 @@ class CorridorChamber(_WithEnemies):
         builder: a silently discarded feature is a Zone that reads richer
         than it plays, and a refusal is something the repair loop can fix.
         """
-        for feature in self.features:
-            needed = C.FEATURE_MIN_WIDTH.get(
-                feature.tag, C.MIN_FEATURE_CHAMBER_WIDTH)
-            if self.width < needed:
-                raise ValueError(
-                    f"chamber '{self.id}' is {self.width}m wide and carries "
-                    f"a '{feature.tag}', which needs {needed}m to sit clear "
-                    "of the walking lane on both sides (ECHOES.md 13.2); "
-                    "widen the corridor or offer a smaller feature"
-                )
         return self
 
 
@@ -173,6 +447,31 @@ class ArenaChamber(_WithEnemies):
     wall_height: float = Field(ge=4, le=8)
     objective: Literal["kill_all", "reach_reward"]
     enemies: tuple[EnemyGroup, ...] = Field(default=(), max_length=4)
+
+    #: ROOM_GRAMMAR v0. Additive and optional, for the reason `features`
+    #: and `activities` were: a Zone inside a save that predates the
+    #: grammar is still a valid Zone, and a new REQUIRED field would fail
+    #: every campaign in progress.
+    elevation: ElevationBand | None = None
+
+    @model_validator(mode="after")
+    def _a_band_leaves_room_to_stand(self):
+        """A gallery you cannot stand up on is a shelf.
+
+        Checked here rather than in the builder because it is a property
+        of the DESCRIPTION -- a Zone naming a 4 m gallery under a 5 m
+        ceiling is describing somewhere the player cannot go, and the
+        engine should never be handed one to build.
+        """
+        if self.elevation is None or self.elevation.kind != "gallery":
+            return self
+        clear = self.wall_height - self.elevation.rise
+        if clear < HEADROOM:
+            raise ValueError(
+                f"a {self.elevation.rise:.1f}m gallery under a "
+                f"{self.wall_height:.1f}m ceiling leaves {clear:.1f}m of "
+                f"headroom; a player needs {HEADROOM:.1f}m to stand")
+        return self
 
 
 class PlatformPathChamber(_WithEnemies):
@@ -205,7 +504,7 @@ class PlatformPathChamber(_WithEnemies):
 class TowerChamber(_WithEnemies):
     """Vertical traversal. The template always emits a base-movement route."""
     type: Literal["tower"]
-    floors: int = Field(ge=2, le=5)
+    floors: int = Field(ge=C.TOWER_MIN_FLOORS, le=C.TOWER_MAX_FLOORS)
     objective: Literal["reach_reward", "kill_all"]
     enemies: tuple[EnemyGroup, ...] = Field(default=(), max_length=4)
 
@@ -214,7 +513,7 @@ class TreasureRoomChamber(ChamberBase):
     """Small safe reward room. Exactly one reward, never enemies."""
     type: Literal["treasure_room"]
     objective: Literal["reach_reward"] = "reach_reward"
-    reward_location_id: int = Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_LOCATION_ID)
+    reward_location_id: int = Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_UNIVERSE_ID)
 
 
 Chamber = Annotated[
@@ -251,55 +550,52 @@ class Zone(Strict):
         if len(set(ids)) != len(ids):
             raise ValueError("duplicate chamber id")
 
+        # The PERFORMANCE ceiling only. How many enemies a Zone may hold
+        # by DESIGN depends on its content budget, which is campaign
+        # config and not visible from inside a model -- that check lives
+        # in `validate_zone`, which has it.
+        #
+        # Splitting them this way is the point of CAMPAIGN_SCALE.md 8: a
+        # design that wants more than the engine can hold is wrong about
+        # the target machine and should fail here regardless of budget,
+        # while a design that merely wants more than its Zone was paid
+        # for is a budget question.
         total = sum(c.enemy_total for c in self.chambers)
-        if total > C.MAX_ENEMIES_PER_ZONE:
+        if total > C.MAX_ENEMIES_SPAWNED_CAP:
             raise ValueError(
-                f"zone has {total} enemies, limit is {C.MAX_ENEMIES_PER_ZONE}"
-            )
-
-        brutes = sum(c.brute_total for c in self.chambers)
-        if brutes > C.MAX_BRUTES_PER_ZONE:
-            raise ValueError(
-                f"zone has {brutes} brutes, limit is {C.MAX_BRUTES_PER_ZONE}"
+                f"zone instantiates {total} enemies, past the engine cap "
+                f"of {C.MAX_ENEMIES_SPAWNED_CAP}"
             )
 
         rewards = self.reward_location_ids
         if len(set(rewards)) != len(rewards):
             raise ValueError("duplicate reward_location_id")
 
-        # §13.2, the structural half: a chamber that HOLDS an AP reward may
-        # not also host affordance features. Nothing forces the two to
-        # interact, and keeping them in separate rooms is the cheapest
-        # possible proof that no feature sits between the player and a
-        # Check. The semantic half — capability ownership — needs the
-        # campaign and lives in `validate_zone`.
-        for chamber in self.chambers:
-            if chamber.features and chamber.reward_location_id is not None:
-                raise ValueError(
-                    f"chamber '{chamber.id}' holds Check "
-                    f"{chamber.reward_location_id} and an affordance "
-                    f"feature; an affordance may never sit on the path to "
-                    f"an AP reward (ECHOES.md 13.2)"
-                )
-            # A corridor has no `objective` attribute at all, which is
-            # why the default matters more than the allowlist: the
-            # allowlist named `"reach_exit"`, a value no chamber type in
-            # the union can hold, so it never matched anything. Left out
-            # rather than kept "just in case" — a condition that cannot
-            # fire reads as a rule somebody relies on.
-            if chamber.features and getattr(chamber, "objective", None) \
-                    not in (None, "none"):
-                raise ValueError(
-                    f"chamber '{chamber.id}' has objective "
-                    f"'{chamber.objective}' and an affordance feature; an "
-                    f"affordance may never gate an objective"
-                )
+        # §13.2 used to be enforced by keeping affordances and rewards in
+        # SEPARATE ROOMS. That was the cheapest possible proof that no
+        # feature sits between the player and a Check, and it made every
+        # reward room sterile: no rails, no grapple, no bounce pad, in the
+        # rooms most worth having them (CAMPAIGN_SCALE.md 7).
+        #
+        # The invariant is unchanged. The proof moved:
+        #
+        #   - `_features_sit_clear_of_the_walking_lane` (ChamberBase) is
+        #     the geometric half, and now runs on every chamber type
+        #     rather than only corridors.
+        #   - the ownership half stays in `validate_zone`, which has the
+        #     campaign and can ask what the player actually has.
+        #   - the instantiated half is `godot-legible`, which walks the
+        #     built room and checks the reward is reachable with base
+        #     movement while the feature is not on the way.
+        #
+        # Optional capabilities may shortcut, flank and decorate. They may
+        # never be REQUIRED for a Check, an objective or the exit.
         return self
 
     @property
     def reward_location_ids(self) -> list[int]:
-        return [c.reward_location_id for c in self.chambers
-                if c.reward_location_id is not None]
+        """Every Check in the Zone, across all its rooms."""
+        return [rid for c in self.chambers for rid in c.reward_ids]
 
 
 # ---------------------------------------------------------------------------
@@ -313,14 +609,75 @@ def validate_zone(
     allocated_location_ids: list[int],
     owned_echo_ids: list[str],
     owned_affordance_tags: tuple[str, ...] = (),
+    guaranteed_capabilities: tuple[str, ...] = M.BASELINE_CAPABILITIES,
+    legal_shell_ids: tuple[str, ...] = (),
+    zone_budget: int | None = None,
 ) -> list[str]:
     """Check a structurally-valid Zone against its request.
 
     Returns [] if acceptable, else concise errors for the repair request.
     Never mutates: v0.5 rejects and repairs rather than clamping, so an
     accepted Zone is always something Epsilon actually chose.
+
+    `zone_budget` is the content the campaign asked for
+    (CAMPAIGN_SCALE.md 5). Pass None to skip the check -- which is what a
+    campaign generated before budgets existed does, and NOT a way for a
+    caller to opt out of it. The value scored is recomputed here from the
+    accepted components; nothing the provider sent is read as a score.
     """
     errors: list[str] = []
+
+    # Enemy counts scale with the Zone's content budget: a longer level
+    # holds more enemies OVER TIME. `MAX_ENEMIES_ACTIVE` is what bounds
+    # the moment, and it does not scale.
+    #
+    # No budget means a campaign generated before budgets existed, so it
+    # gets the prototype's caps rather than none -- "optional" must not
+    # be how a limit stops being enforced.
+    combat_budget = (zone_budget if zone_budget is not None
+                     else C.PROTOTYPE_CONFIG.zone_budget)
+    enemy_cap = C.max_enemies_per_zone(combat_budget)
+    total_enemies = sum(c.enemy_total for c in zone.chambers)
+    if total_enemies > enemy_cap:
+        errors.append(
+            f"zone has {total_enemies} enemies, limit is {enemy_cap} for a "
+            f"{combat_budget}-point Zone")
+    brute_cap = C.max_brutes_per_zone(combat_budget)
+    brutes = sum(c.brute_total for c in zone.chambers)
+    if brutes > brute_cap:
+        errors.append(
+            f"zone has {brutes} brutes, limit is {brute_cap} for a "
+            f"{combat_budget}-point Zone")
+
+    if zone_budget is not None:
+        from ..composition import composition_errors
+        from ..content_value import budget_errors
+        errors.extend(budget_errors(zone, zone_budget))
+        # A Zone that holds enough content can still be a hundred
+        # identical rooms (CAMPAIGN_SCALE.md 6). Budget is necessary and
+        # not sufficient, so both run.
+        errors.extend(composition_errors(zone, zone_budget))
+
+    # D1: Epsilon may SELECT among the authored shells it was offered,
+    # and only those. The catalog is handed to it in the request; a shell
+    # id outside it is either a hallucination or a shell this campaign
+    # cannot use, and both produce a zone that cannot be built. Selection
+    # is real agency; invention is not.
+    #
+    # An empty catalog means the campaign offered no authored shells, so
+    # naming any is wrong -- rather than meaning "anything goes", which
+    # is the reading that would let a hallucinated id through on exactly
+    # the runs where nothing was offered.
+    for chamber in zone.chambers:
+        if chamber.shell_id is None:
+            continue
+        if chamber.shell_id not in legal_shell_ids:
+            errors.append(
+                f"chamber '{chamber.id}' selects shell "
+                f"'{chamber.shell_id}', which was not offered; choose "
+                f"from {sorted(legal_shell_ids)}"
+                + ("" if legal_shell_ids
+                   else " (no authored shells were offered for this Zone)"))
 
     # I12: a feature the campaign cannot interact with is set dressing
     # that looks like content, which §13.1 says is worse than nothing.
@@ -334,6 +691,29 @@ def validate_zone(
                     f"which this campaign has no capability to use; "
                     f"offer one of {sorted(owned_affordance_tags)} or none"
                 )
+
+    # NO REQUIREMENT BEFORE GUARANTEE (owner ruling, 2026-08-30).
+    #
+    # An activity may require a semantic capability. It may not require
+    # one the generator cannot PROVE the player can get, because the
+    # proof is the whole difference between a deliberate NOT YET and a
+    # Zone that assumed an ordinary shuffled Check would contain a
+    # grapple. Archipelago decides what is in that Check; this validator
+    # reasons from guarantees and never from what would be convenient.
+    #
+    # `guaranteed_capabilities` defaults to the permanent baseline rather
+    # than to the empty tuple: a caller that forgets to pass it then
+    # refuses MORE than it should, never less.
+    for chamber in zone.chambers:
+        for activity in chamber.activities:
+            missing = [c for c in activity.requires
+                       if c not in guaranteed_capabilities]
+            if missing:
+                errors.append(
+                    f"chamber '{chamber.id}' has a {activity.kind} requiring "
+                    f"{missing}, which this campaign is not guaranteed to be "
+                    f"able to do; guaranteed here is "
+                    f"{sorted(guaranteed_capabilities)}")
 
     if zone.zone_id != expected_zone_id:
         errors.append(

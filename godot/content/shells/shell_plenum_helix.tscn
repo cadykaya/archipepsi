@@ -1,0 +1,97 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://content/shells/shell_plenum_helix.glb" id="1_mkqtn"]
+
+[node name="shell_plenum_helix" type="Node3D"]
+
+[node name="Mesh" type="Node3D" parent="." instance=ExtResource("1_mkqtn")]
+
+[node name="landing_0_to_1_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 68, 2.1)
+
+[node name="landing_0_to_1_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 62.333332, 2.1)
+
+[node name="landing_1_to_2_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 62.333332, 2.1)
+
+[node name="landing_1_to_2_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 56.666668, 17.9)
+
+[node name="landing_2_to_3_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 56.666668, 17.9)
+
+[node name="landing_2_to_3_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 51, 17.9)
+
+[node name="landing_3_to_4_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 51, 17.9)
+
+[node name="landing_3_to_4_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 45.333332, 2.1)
+
+[node name="landing_4_to_5_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 45.333332, 2.1)
+
+[node name="landing_4_to_5_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 39.666668, 2.1)
+
+[node name="landing_5_to_6_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 39.666668, 2.1)
+
+[node name="landing_5_to_6_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 34, 17.9)
+
+[node name="landing_6_to_7_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 34, 17.9)
+
+[node name="landing_6_to_7_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 28.333334, 17.9)
+
+[node name="landing_7_to_8_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 28.333334, 17.9)
+
+[node name="landing_7_to_8_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 22.666666, 2.1)
+
+[node name="landing_8_to_9_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 22.666666, 2.1)
+
+[node name="landing_8_to_9_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 17, 2.1)
+
+[node name="landing_9_to_10_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 17, 2.1)
+
+[node name="landing_9_to_10_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 11.333333, 17.9)
+
+[node name="landing_10_to_11_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 11.333333, 17.9)
+
+[node name="landing_10_to_11_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 5.6666665, 17.9)
+
+[node name="landing_11_to_12_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 5.6666665, 17.9)
+
+[node name="landing_11_to_12_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 0, 2.1)
+
+[node name="landing_4_to_collar_0_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 45.333332, 2.1)
+
+[node name="landing_4_to_collar_0_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 45.333332, 4.75)
+
+[node name="landing_7_to_collar_1_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 28.333334, 17.9)
+
+[node name="landing_7_to_collar_1_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.25, 28.333334, 10)
+
+[node name="landing_10_to_collar_2_start" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 11.333333, 17.9)
+
+[node name="landing_10_to_collar_2_end" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.25, 11.333333, 10)

@@ -37,7 +37,17 @@ except ImportError:  # pragma: no cover
     from protocol import CampaignSnapshot, ClientMessage, ServerMessage
     from zone import Zone
 
-GD_SKIP = ("ENEMY_STATS", "TIER_BOUNDS")
+#: Deliberately not exported to GDScript.
+#:
+#: The two CampaignConfig instances are objects, but the deeper reason is
+#: that Godot must not HAVE a build-time campaign scale. It consumes the
+#: scale the bridge sends for the campaign actually being played
+#: (CAMPAIGN_SCALE.md 2); a client quietly falling back to a baked default
+#: while the campaign is 450 is a divergence, not a default. The bounds
+#: and the DEFAULT_* numbers still export, because validating a received
+#: value against the tested range is exactly what the client should do.
+GD_SKIP = ("ENEMY_STATS", "TIER_BOUNDS", "DEFAULT_CONFIG",
+           "PROTOTYPE_CONFIG", "ENEMY_ENVELOPES")
 
 
 def _gd_literal(value) -> str:
@@ -80,11 +90,85 @@ def export_constants_gd() -> str:
                 "Add it to GD_SKIP deliberately, or change its type."
             ) from exc
 
+    # The joint gap/step bound, as a FUNCTION rather than a number.
+    #
+    # `SAFE_BASE_JUMP_GAP` is the flat-ground case, and exporting only
+    # that left every builder placing a raised platform with nothing to
+    # ask. The tower's spiral was typed as a flat 2.4 m at a 1.0 m rise,
+    # where the safe bound is 2.0 -- the schema enforces that same bound
+    # on Epsilon's `platform_path` and the engine broke it in its own
+    # geometry. A number cannot be asked a question, so this is a
+    # function; `test_schemas.py` pins it against the Python original
+    # across the whole legal step range.
+    lines += [
+        "",
+        "## Largest gap a MANDATORY jump may span, landing this much",
+        "## higher. The joint bound: gap and step maxed independently is",
+        "## not the same as either maxed alone. Mirrors",
+        "## `constants.max_safe_gap`, pinned by `test_schemas.py`.",
+        "## NOT `static`: `Constants` is an autoload, so every call site "
+        "reaches it",
+        "## through the singleton INSTANCE. A static function called that "
+        "way is",
+        "## correct but warns on every one of them, and a warning nobody "
+        "can act",
+        "## on is a warning everybody learns to scroll past.",
+        "func max_safe_gap(vertical_step: float = 0.0) -> float:",
+        "\tvar g := GRAVITY * GRAVITY_MULT_MAX",
+        "\tvar disc := JUMP_VELOCITY * JUMP_VELOCITY - 2.0 * g * vertical_step",
+        "\tif disc < 0.0:",
+        "\t\treturn 0.0",
+        "\tvar reach := WALK_SPEED * SPEED_MULT_MIN \\",
+        "\t\t\t* (JUMP_VELOCITY + sqrt(disc)) / g",
+        "\t# Floor to one decimal: a safety bound must never round upward.",
+        "\treturn floor(reach * SAFE_GAP_MARGIN * 10.0) / 10.0",
+    ]
+
+    # The one colour every optional traversal affordance wears
+    # (art requirement 15). Emitted as a `Color` so a call site cannot
+    # accidentally pass the tuple somewhere expecting three floats.
+    lines += [
+        "",
+        "# The SIGNAL colour. FORM says which affordance; this says that",
+        "# it IS one. Theme, source-game colour and Epsilon green do not",
+        "# redefine it (art requirement 15).",
+        "const AFFORDANCE_SIGNAL := Color"
+        f"{tuple(round(c, 6) for c in C.AFFORDANCE_SIGNAL_RGB)}",
+    ]
+
     lines += ["", "# Tier bounds: tier N holds [TIER_BOUNDS[N], TIER_BOUNDS[N+1]).",
               f"const TIER_BOUNDS = {_gd_literal(list(C.TIER_BOUNDS))}",
               "", "# Enemy stat block, keyed by archetype.", "const ENEMY_STATS = {"]
     for archetype, stats in C.ENEMY_STATS.items():
         lines.append(f'\t"{archetype}": {_gd_literal(stats)},')
+    lines.append("}")
+
+    # Physical envelopes for the whole approved family (art requirement 7).
+    # Emitted by hand rather than through `_gd_literal` so the field NAMES
+    # cross the boundary: `enemy.gd` used to hold three magic vectors, and
+    # a positional triple is exactly how a width and a depth get swapped.
+    lines += [
+        "",
+        "# Enemy physical envelopes, keyed by role. PHYSICAL ONLY -- an",
+        "# envelope says how much room a role takes and whether it walks or",
+        "# holds a height, never what it does. `ENEMY_STATS` is behaviour,",
+        "# and it covers fewer roles on purpose.",
+        "#",
+        "# `size` is Godot's Vector3(width, height, depth). `centre_y` is",
+        "# where the collider's centre sits above the floor -- half the",
+        "# height for a walker, the hover height for a flyer.",
+        "const ENEMY_ENVELOPES = {",
+    ]
+    for role in C.ENEMY_ROLES:
+        envelope = C.ENEMY_ENVELOPES[role]
+        lines.append(
+            f'	"{role}": {{'
+            f'"size": Vector3{envelope.godot_size()}, '
+            f'"centre_y": {envelope.centre_y!r}, '
+            f'"bottom_y": {envelope.bottom_y!r}, "top_y": {envelope.top_y!r}, '
+            f'"lane_width": {envelope.lane_width!r}, '
+            f'"hover_height": {envelope.hover_height!r}, '
+            f'"flying": {"true" if envelope.is_flying else "false"}}},')
     lines.append("}")
 
     # The Action catalog, so the GDScript runner can be checked against the

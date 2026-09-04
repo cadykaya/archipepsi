@@ -104,11 +104,19 @@ _NATIVE_IDS = {
 }
 
 
-def _build_placements() -> dict[int, tuple[str, int, int, int]]:
-    """location_id -> (item_name, item_id, recipient_slot, flags)."""
+def _build_placements(
+        config: C.CampaignConfig = C.PROTOTYPE_CONFIG
+) -> dict[int, tuple[str, int, int, int]]:
+    """location_id -> (item_name, item_id, recipient_slot, flags).
+
+    Sized by the CAMPAIGN, so a test can run the engine at the shape a
+    player will actually be handed. The hand-written fixture covers the
+    prototype's first thirty; beyond that the fill cycle carries on, which
+    is what a real seed looks like anyway.
+    """
     out: dict[int, tuple[str, int, int, int]] = {}
     cycle = 0
-    for n in range(1, C.LOCATION_COUNT + 1):
+    for n in range(1, config.location_count + 1):
         loc = C.LOCATION_ID_BASE + n
         if n in _FIXTURE:
             name, slot, flags = _FIXTURE[n]
@@ -124,11 +132,14 @@ def _build_placements() -> dict[int, tuple[str, int, int, int]]:
     return out
 
 
-def _build_delivery_queue() -> list[int]:
-    """Our items in the wider multiworld: 2 keys, 8 coins, 16 static
-    (2 coins and 2 static sit on our own locations). Keys arrive early."""
-    coins = C.EPSILON_COIN_COUNT - 2
-    static = C.EPSILON_STATIC_COUNT - 2
+def _build_delivery_queue(
+        config: C.CampaignConfig = C.PROTOTYPE_CONFIG) -> list[int]:
+    """Our items in the wider multiworld: at the prototype's thirty that
+    is 2 keys, 8 coins, 16 static (2 coins and 2 static sit on our own
+    locations). Keys arrive early. Scaled by the campaign's own pool."""
+    counts = config.item_counts()
+    coins = counts[C.ITEM_NAME_EPSILON_COIN] - 2
+    static = counts[C.ITEM_NAME_EPSILON_STATIC] - 2
     head = [C.ITEM_ID_EPSILON_COIN, C.ITEM_ID_EPSILON_STATIC,
             C.ITEM_ID_SIGNAL_KEY, C.ITEM_ID_EPSILON_STATIC,
             C.ITEM_ID_EPSILON_COIN, C.ITEM_ID_EPSILON_STATIC,
@@ -156,10 +167,11 @@ class MockServerState:
     Share one instance across backend instances to simulate a persistent
     room."""
 
-    def __init__(self):
+    def __init__(self, config: C.CampaignConfig = C.PROTOTYPE_CONFIG):
+        self.config = config
         self.checked: set[int] = set()
         self.received: list[NormalizedItem] = []
-        self.delivery_queue: list[int] = _build_delivery_queue()
+        self.delivery_queue: list[int] = _build_delivery_queue(config)
         self.delivered = 0
         self.goal_reports = 0
 
@@ -169,16 +181,23 @@ class MockAPBackend:
 
     def __init__(self, engine, *, confirm_delay: float = 0.0,
                  server_state: MockServerState | None = None,
-                 seed_name: str = "MockSeed"):
+                 seed_name: str = "MockSeed",
+                 config: C.CampaignConfig | None = None):
         self.engine = engine
         self.data = APData()
+        #: The scale this "seed" was generated at. A mock pinned to the
+        #: prototype means the engine is only ever tested at thirty
+        #: locations, which is where an allocator capped at three Checks
+        #: per Zone survived the whole redesign unnoticed.
+        self.config = config or (server_state.config if server_state
+                                 else C.PROTOTYPE_CONFIG)
         self.confirm_delay = confirm_delay
         # The seed is the only input to track order, shop stock and the
         # allocator's shuffles, so a fixed one exercises exactly one path
         # through all three. Parameterised so a soak can walk many.
         self.seed_name = seed_name
-        self.placements = _build_placements()
-        self.server = server_state or MockServerState()
+        self.placements = _build_placements(self.config)
+        self.server = server_state or MockServerState(self.config)
         self._tasks: set[asyncio.Task] = set()
 
     # -- helpers -----------------------------------------------------------
@@ -233,10 +252,16 @@ class MockAPBackend:
         d.slot_id = SELF_SLOT
         d.slot_name = slot_name or "Skyiah"
         d.scouts = self._scout_table()
+        # A real seed reports its scale in slot data; the mock reports the
+        # one it was built with. `None` is the prototype, exactly as a
+        # pre-options seed is.
+        d.campaign_scale = (None if self.config == C.PROTOTYPE_CONFIG
+                            else self.config)
         self._sync_from_server()
         d.synced = True
         d.state_is_current = True
-        log.info("mock AP connected: 30 locations scouted")
+        log.info("mock AP connected: %d locations scouted",
+                 self.config.location_count)
         await self.engine.on_ap_ready()
 
     async def disconnect(self) -> None:

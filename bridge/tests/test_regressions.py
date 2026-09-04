@@ -11,8 +11,8 @@ from archipepsi_bridge.mock_ap import MockServerState
 from archipepsi_bridge.schemas import constants as C
 from archipepsi_bridge.schemas import transitions as T
 from archipepsi_bridge.schemas.protocol import (
-    BuyShopStock, CampaignSave, HubStatus, PendingCheck, ShopStockItem,
-    ZoneRecord,
+    BuyShopStock, CampaignSave, HubStatus, PendingCheck, ShopState,
+    ShopStockItem, ZoneRecord,
 )
 
 from .conftest import (
@@ -26,22 +26,69 @@ GOAL = C.GOAL_LOCATION_ID
 # -- 60 --------------------------------------------------------------------
 
 def test_60_no_acquisition_path_names_the_goal(tmp_path):
-    with pytest.raises(ValidationError):
-        ShopStockItem(location_id=GOAL, cost=6, item_name="x",
-                      recipient_name="y", recipient_game="z")
-    with pytest.raises(ValidationError):
-        BuyShopStock(type="buy_shop_stock", location_id=GOAL)
-    with pytest.raises(ValidationError):
-        PendingCheck(transaction_id="t", location_id=GOAL, source="shop",
-                     shop_cost=6)
-    with pytest.raises(ValidationError):
+    """The rule survived a move; the coverage has to move with it.
+
+    Until campaign scale became an option, every acquisition-capable
+    field was typed to a closed range ending one below the goal, so the
+    four constructions below raised on their own. Which id is the goal
+    now depends on `location_count`, which a single record cannot see --
+    so the rule lives on `CampaignSave`, which knows its own scale, and
+    that is where it is checked. The point of the test is unchanged: no
+    path except the finale Zone can name the goal.
+    """
+    def save(**kw):
+        return CampaignSave(seed_name="S", team=0, slot_id=1,
+                            slot_name="Skyiah", **kw)
+
+    with pytest.raises(ValidationError, match="finale"):
+        save(shop=ShopState(stock=(ShopStockItem(
+            location_id=GOAL, cost=6, item_name="x",
+            recipient_name="y", recipient_game="z"),)))
+    with pytest.raises(ValidationError, match="finale"):
+        save(pending_checks=(PendingCheck(
+            transaction_id="t", location_id=GOAL, source="shop",
+            shop_cost=6),), coins_spent=6)
+    with pytest.raises(ValidationError, match="finale"):
+        save(zones=(ZoneRecord(
+            zone_id="z", state="PENDING_GENERATION",
+            allocated_location_ids=(GOAL,), target_game="X",
+            is_finale=False, generation_index=0),),
+            active_zone_id="z")
+    # A finale Zone holds the goal and NOTHING else -- the one rule a
+    # record can still enforce alone, because it counts rather than
+    # compares.
+    with pytest.raises(ValidationError, match="exactly one location"):
         ZoneRecord(zone_id="z", state="PENDING_GENERATION",
-                   allocated_location_ids=(GOAL,), target_game="X",
-                   is_finale=False, generation_index=0)
+                   allocated_location_ids=(GOAL, GOAL - 1), target_game="X",
+                   is_finale=True, generation_index=0)
     for keys in range(4):
         assert GOAL not in C.eligible_location_ids(keys)
     # The one legal path: a zone-source pending check (the finale).
     PendingCheck(transaction_id="t", location_id=GOAL, source="zone")
+
+
+def test_60b_the_goal_moves_with_the_campaign_size(tmp_path):
+    """A 450-location campaign reserves 89100450, not 89100030.
+
+    The old range hardcoded the prototype's goal, so at any other size it
+    would have reserved an ordinary Check and left the real goal buyable.
+    """
+    from archipepsi_bridge.schemas.protocol import CampaignScale
+
+    big = dict(seed_name="S", team=0, slot_id=1, slot_name="Skyiah",
+               scale=CampaignScale(location_count=450, zone_target_checks=15,
+                                   zone_budget=1000))
+    goal = C.DEFAULT_CONFIG.goal_location_id
+    assert goal != GOAL
+
+    with pytest.raises(ValidationError, match="finale"):
+        CampaignSave(**big, shop=ShopState(stock=(ShopStockItem(
+            location_id=goal, cost=6, item_name="x",
+            recipient_name="y", recipient_game="z"),)))
+    # ...and the prototype's goal is an ORDINARY Check at this size.
+    CampaignSave(**big, shop=ShopState(stock=(ShopStockItem(
+        location_id=GOAL, cost=6, item_name="x",
+        recipient_name="y", recipient_game="z"),)))
 
 
 # -- 61 --------------------------------------------------------------------

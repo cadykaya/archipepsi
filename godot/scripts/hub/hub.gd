@@ -10,14 +10,22 @@ signal open_inventory_requested
 signal open_shop_requested
 
 const THEME := "concrete_facility"
-const W := 22.0
-const D := 16.0
-const H := 5.0
+# Room dimensions live with the anchors that derive from them, so a
+# change to the room moves the stations instead of stranding them.
+const W := HubAnchors.W
+const D := HubAnchors.D
+const H := HubAnchors.H
 
 var player: Player
 var _portal: HubPortal
 var _finale_portal: HubPortal
 var _abandon: AbandonConsole
+var _shop: SimpleStation
+var _terminal: SimpleStation
+## S14: where things go. Logic asks by name; `HubAnchors`
+## decides where, from the procedural defaults or from an
+## authored scene's markers.
+var _anchors := HubAnchors.new()
 var _board: Label3D
 var _sub_board: Label3D
 var _static_root: Node3D
@@ -55,6 +63,11 @@ var _voice_greeted := false
 var _seen_completed := -1
 var _seen_keys := -1
 var _seen_finale := false
+## D3: the two once-per-campaign beats. Edges, not levels -- `goal_sent`
+## and ALL_CHECKS_CLEARED both stay true forever once reached, so a level
+## test would say them on every snapshot until the player left.
+var _seen_goal_sent := false
+var _seen_complete := false
 
 func _ready() -> void:
 	_build_room()
@@ -101,11 +114,24 @@ func _voice_on_change() -> void:
 	# is "new" on arrival, and greeting the player with three barks at once
 	# would be worse than silence.
 	var first := _seen_completed < 0
+	var hub := BridgeClient.hub()
+	var goal_sent := bool(hub.get("goal_sent", false))
+	var complete := str(hub.get("mode", "")) == "ALL_CHECKS_CLEARED"
 	if not first:
-		if keys > _seen_keys:
+		# D3, and in this order: finishing the campaign outranks sending
+		# the goal, which outranks everything ambient. On the snapshot
+		# where the last Check is also the goal, the player hears the
+		# bigger of the two rather than both at once.
+		if complete and not _seen_complete:
+			hud.say_line("campaign_complete")
+		elif goal_sent and not _seen_goal_sent:
+			hud.say_line("goal_sent")
+		elif keys > _seen_keys:
 			hud.say_line("hub_key_landed")
 		elif finale and not _seen_finale:
 			hud.say_line("hub_finale_ready")
+	_seen_goal_sent = goal_sent
+	_seen_complete = complete
 	_seen_completed = completed
 	_seen_keys = keys
 	_seen_finale = finale
@@ -114,35 +140,49 @@ func _voice_on_change() -> void:
 ## as two wall segments with a gap rather than by moving the perimeter,
 ## so the Hub's own geometry stays exactly as it was.
 func _cut_lab_doorway(b, root: Node3D) -> void:
-	var door_z := 6.0
-	var door_w := 3.0
-	var door_h := 3.2
-	var opening := MeshInstance3D.new()
-	var mesh := BoxMesh.new()
-	mesh.size = Vector3(0.6, door_h, door_w)
-	opening.mesh = mesh
-	opening.position = Vector3(-W / 2.0, door_h / 2.0, door_z)
-	opening.material_override = ThemeMaterials.glow_material(
-			Color(0.1, 0.12, 0.16), 0.2)
-	root.add_child(opening)
-	# The corridor between the two rooms, floored and lit so the doorway
-	# reads as somewhere to go rather than as a hole in the map.
+	# The doorway's Z is the `lab_entrance` anchor's, and its metrics are
+	# HubAnchors' -- the Lab lines up against the same numbers, so they
+	# have one home rather than two that drift.
+	var door_z := _anchors.origin("lab_entrance").z
+	var door_w := HubAnchors.LAB_DOOR_WIDTH
+	var door_h := HubAnchors.LAB_DOOR_HEIGHT
+	# No decorative pane in the opening any more. It existed to imply a
+	# door on a solid wall; the wall now has a real hole, so the same box
+	# would just stand in it.
+	#
+	# The corridor between the two rooms: floor, ceiling and SIDES. It
+	# had no sides, so the Lab was reached down an open-walled slot with
+	# the void either hand.
 	var link := Node3D.new()
 	add_child(link)
-	b._box(link, Vector3(3.4, 0.5, door_w),
-			Vector3(-W / 2.0 - 1.6, -0.25, door_z),
+	var run := 3.4
+	# Butted against the Hub floor, not overlapping it. At `- 1.6` the
+	# corridor floor reached x = -10.9 while the room floor reaches -11,
+	# so 0.1m of the two top faces were coplanar -- which is the
+	# z-fighting shimmer at the doorway.
+	var mid_x := -W / 2.0 - run / 2.0
+	b._box(link, Vector3(run, 0.5, door_w), Vector3(mid_x, -0.25, door_z),
 			ThemeMaterials.floor_mat(THEME))
-	b._box(link, Vector3(3.4, 0.4, door_w),
-			Vector3(-W / 2.0 - 1.6, door_h, door_z),
+	b._box(link, Vector3(run, 0.4, door_w),
+			Vector3(mid_x, door_h, door_z),
 			ThemeMaterials.trim_mat(THEME))
-	var sign := Label3D.new()
-	sign.text = "ECHO LAB"
-	sign.font_size = 34
-	sign.pixel_size = 0.007
-	sign.position = Vector3(-W / 2.0 + 0.4, door_h + 0.5, door_z)
-	sign.rotation_degrees = Vector3(0, 90, 0)
-	sign.modulate = Color(0.6, 1.0, 0.85)
-	add_child(sign)
+	for side: float in [-1.0, 1.0]:
+		b._box(link, Vector3(run, door_h, ChamberBuilders.WALL_THICKNESS),
+				Vector3(mid_x, door_h / 2.0,
+				door_z + side * (door_w / 2.0)),
+				ThemeMaterials.wall_mat(THEME))
+	var sign_plate := Label3D.new()
+	sign_plate.text = "ECHO LAB"
+	sign_plate.font_size = 34
+	sign_plate.pixel_size = 0.007
+	sign_plate.position = Vector3(-W / 2.0 + 0.4, door_h + 0.5, door_z)
+	sign_plate.rotation_degrees = Vector3(0, 90, 0)
+	sign_plate.modulate = Color(0.6, 1.0, 0.85)
+	add_child(sign_plate)
+
+## Where a reader stands. Signs face this, not the wall behind them.
+func _player_side() -> Vector3:
+	return Vector3(0.0, 0.0, 3.0)
 
 func _build_room() -> void:
 	var environment := WorldEnvironment.new()
@@ -160,12 +200,17 @@ func _build_room() -> void:
 	add_child(root)
 	b._box(root, Vector3(W, 0.5, D), Vector3(0, -0.25, D / 2.0),
 			ThemeMaterials.floor_mat(THEME))
-	b._perimeter(root, W, D, H, THEME, false, false)
+	# The Lab doorway is a real hole in the left wall, cut here rather
+	# than drawn over a solid one by `_cut_lab_doorway`.
+	# `ceiling = false`: the Hub raises its own, two lines below.
+	b._perimeter(root, W, D, H, THEME, false, false, 0.0,
+			HubAnchors.LAB_DOOR_Z, HubAnchors.LAB_DOOR_WIDTH,
+			HubAnchors.LAB_DOOR_HEIGHT, false)
 	b._box(root, Vector3(W, 0.4, D), Vector3(0, H, D / 2.0),
 			ThemeMaterials.trim_mat(THEME))
-	for position in [Vector3(-W / 4.0, H - 0.4, D / 2.0),
+	for at in [Vector3(-W / 4.0, H - 0.4, D / 2.0),
 			Vector3(W / 4.0, H - 0.4, D / 2.0)]:
-		b._light(root, position, THEME, 16.0)
+		b._light(root, at, THEME, 16.0)
 
 	# The Echo Lab (S8): a walk-in annexe, not a mode. Cut a doorway in the
 	# west wall and put the room beyond it, so entering and leaving are
@@ -179,29 +224,41 @@ func _build_room() -> void:
 	_portal = HubPortal.new()
 	_portal.kind = "main"
 	add_child(_portal)
-	_portal.position = Vector3(0, 0, D - 1.2)
+	_portal.position = _anchors.origin("main_portal")
 	_portal.activated.connect(_on_portal_activated)
 
 	# The finale portal: smaller, redder, only shown when offered.
 	_finale_portal = HubPortal.new()
 	_finale_portal.kind = "finale"
 	add_child(_finale_portal)
-	_finale_portal.position = Vector3(W / 2.0 - 3.0, 0, D - 1.2)
+	_finale_portal.position = _anchors.origin("postgame")
 	_finale_portal.activated.connect(_on_finale_activated)
 
 	# Status board above the portal.
 	_board = Label3D.new()
-	_board.position = Vector3(0, 4.2, D - 1.4)
+	_board.position = _anchors.origin("progression_display")
 	_board.font_size = 96
 	_board.pixel_size = 0.008
 	_board.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ChamberBuilders.face_label(_board, _player_side() - _board.position)
 	add_child(_board)
 	_sub_board = Label3D.new()
-	_sub_board.position = Vector3(0, 3.4, D - 1.4)
+	# Hangs under the board rather than at a coordinate of its own: an
+	# authored scene that moves `progression_display` must not leave the
+	# legend behind on the far wall.
+	# 1.35 below, not 0.8. The headline is 96pt at 0.008 -- 0.77 world
+	# units tall -- and the legend runs up to five 40pt lines, 1.6 more.
+	# Half of each is 1.18, so 0.8 of separation had them printing
+	# through one another; the screenshot showed four readouts in one
+	# smear of letters.
+	_sub_board.position = _anchors.origin("progression_display") \
+			+ Vector3(0, -1.35, 0)
 	_sub_board.font_size = 40
 	_sub_board.pixel_size = 0.008
 	_sub_board.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_sub_board.modulate = Color(0.75, 0.8, 0.85)
+	ChamberBuilders.face_label(_sub_board,
+			_player_side() - _sub_board.position)
 	add_child(_sub_board)
 
 	# Shop counter, left wall.
@@ -210,9 +267,11 @@ func _build_room() -> void:
 	shop.prompt = "[E] BROWSE SHOP"
 	shop.station_color = Color(0.9, 0.7, 0.25)
 	add_child(shop)
-	shop.position = Vector3(-W / 2.0 + 1.6, 0, D * 0.45)
-	shop.rotation.y = -PI / 2.0
+	shop.position = _anchors.origin("shop")
+	shop.rotation.y = _anchors.yaw("shop")
+	shop.complete_label = "GOODS EXHAUSTED"
 	shop.used.connect(func() -> void: open_shop_requested.emit())
+	_shop = shop
 
 	# Echo terminal, right wall.
 	var terminal := SimpleStation.new()
@@ -220,15 +279,16 @@ func _build_room() -> void:
 	terminal.prompt = "[E] OPEN ECHO INVENTORY"
 	terminal.station_color = Color(0.4, 0.9, 0.85)
 	add_child(terminal)
-	terminal.position = Vector3(W / 2.0 - 1.6, 0, D * 0.45)
-	terminal.rotation.y = PI / 2.0
+	terminal.position = _anchors.origin("archive_loadout")
+	terminal.rotation.y = _anchors.yaw("archive_loadout")
 	terminal.used.connect(func() -> void: open_inventory_requested.emit())
+	_terminal = terminal
 
 	# Abandon console, next to the portal; the only exit from GENERATING
 	# and ZONE_READY, which have no pause menu to reach.
 	_abandon = AbandonConsole.new()
 	add_child(_abandon)
-	_abandon.position = Vector3(-W / 2.0 + 2.4, 0, D - 2.4)
+	_abandon.position = _anchors.origin("generation_loading")
 
 	_build_campaign_board()
 	_build_controls_board()
@@ -306,9 +366,11 @@ func refresh() -> void:
 		var note: Variant = last.get("designer_note")
 		if note:
 			lines.append("EPSILON: “%s”" % str(note))
-	lines.append("CHECKS %d/30   KEYS %d/2   COINS %d" % [
+	lines.append("CHECKS %d/%d   KEYS %d/%d   COINS %d" % [
 			snapshot.get("checked_location_ids", []).size(),
+			campaign_check_total(snapshot),
 			int(snapshot.get("signal_keys", 0)),
+			Constants.TIER_COUNT - 1,
 			int(snapshot.get("coins_available", 0))])
 	if hub.get("finale_unlocked", false):
 		lines.append("FINALE UNLOCKED")
@@ -320,6 +382,18 @@ func refresh() -> void:
 				int(hub.get("signal_keys_required", 2))])
 	if not snapshot.get("ap_connected", false):
 		lines.append("ARCHIPELAGO OFFLINE")
+
+	# D3: FINISHED BUT STILL ALIVE. Every Archipepsi Check is claimed, so
+	# there are no Zones left to build -- but the player is still here,
+	# and in an async multiworld the others usually are not done. So the
+	# Hub says what has ended and, in the same breath, what has not. No
+	# credits, no forced exit, and the alien computer does not switch off
+	# because it ran out of campaign.
+	if mode == "ALL_CHECKS_CLEARED":
+		lines.append("TRANSMISSION COMPLETE")
+		if snapshot.get("ap_connected", false):
+			lines.append("MULTIWORLD CONNECTION ACTIVE")
+		lines.append("LAB AND ARCHIVE REMAIN OPEN")
 	_sub_board.text = "\n".join(lines)
 
 	_voice_on_change()
@@ -333,6 +407,10 @@ func refresh() -> void:
 	_finale_portal.visible = bool(hub.get("finale_offered", false)) \
 			and goal_missing and mode == "ZONE_AVAILABLE"
 	_finale_portal.refresh(hub, "FINALE_OFFERED")
+	# D3: the shop closes when the campaign does. The Archive beside it
+	# does NOT -- a finished campaign is still a loadout you can look at.
+	if _shop != null:
+		_shop.set_complete(mode == "ALL_CHECKS_CLEARED")
 	_abandon.refresh(mode, BridgeClient.active_zone())
 	_board_pulse = 1.0 - _board_pulse       # slow blink for in-flight cells
 	_refresh_campaign_board(snapshot)
@@ -363,7 +441,7 @@ func _build_campaign_board() -> void:
 	title.font_size = 40
 	title.pixel_size = 0.005
 	title.position = Vector3(wall_x + 0.09, 3.45, panel_z)
-	title.rotation.y = -PI / 2.0
+	ChamberBuilders.face_label(title, Vector3(0.0, 0.0, panel_z) - title.position)
 	title.modulate = Color(0.8, 0.88, 0.95)
 	root.add_child(title)
 
@@ -394,7 +472,8 @@ func _build_campaign_board() -> void:
 		tier_label.pixel_size = 0.005
 		tier_label.position = Vector3(wall_x + 0.09,
 				3.0 - float(tier) * (cell + gap), panel_z - 2.55)
-		tier_label.rotation.y = -PI / 2.0
+		ChamberBuilders.face_label(tier_label,
+				Vector3(0.0, 0.0, panel_z) - tier_label.position)
 		tier_label.modulate = Color(0.55, 0.6, 0.68)
 		root.add_child(tier_label)
 
@@ -402,7 +481,8 @@ func _build_campaign_board() -> void:
 	_board_legend.font_size = 22
 	_board_legend.pixel_size = 0.005
 	_board_legend.position = Vector3(wall_x + 0.09, 1.15, panel_z)
-	_board_legend.rotation.y = -PI / 2.0
+	ChamberBuilders.face_label(_board_legend,
+			Vector3(0.0, 0.0, panel_z) - _board_legend.position)
 	_board_legend.modulate = Color(0.62, 0.7, 0.76)
 	root.add_child(_board_legend)
 
@@ -423,7 +503,7 @@ func _build_controls_board() -> void:
 	title.font_size = 34
 	title.pixel_size = 0.005
 	title.position = Vector3(wall_x - 0.09, 3.15, panel_z)
-	title.rotation.y = PI / 2.0
+	ChamberBuilders.face_label(title, Vector3(0.0, 0.0, panel_z) - title.position)
 	title.modulate = Color(0.85, 0.8, 0.55)
 	root.add_child(title)
 
@@ -441,7 +521,7 @@ Static Pulse and base movement alone."""
 	body.font_size = 26
 	body.pixel_size = 0.005
 	body.position = Vector3(wall_x - 0.09, 2.0, panel_z)
-	body.rotation.y = PI / 2.0
+	ChamberBuilders.face_label(body, Vector3(0.0, 0.0, panel_z) - body.position)
 	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	body.modulate = Color(0.72, 0.78, 0.82)
 	root.add_child(body)
@@ -460,6 +540,29 @@ const _WORKING_LINES := [
 	"hiding something you will not find…",
 	"aligning the corridor with nothing in particular…",
 ]
+
+## How many Checks this campaign actually has.
+##
+## Derived from the snapshot rather than from a constant: the Hub read
+## "CHECKS 15/30" during a 450-location playtest, because 30 was typed in
+## when thirty was the only scale there was. Checked plus missing is
+## every location Archipelago instantiated, whatever the seed chose.
+static func campaign_check_total(snapshot: Dictionary) -> int:
+	return int(snapshot.get("checked_location_ids", []).size()) \
+			+ int(snapshot.get("missing_location_ids", []).size())
+
+
+## How many Checks one board cell stands for.
+##
+## The wall has `TIER_COUNT * TIER_SIZE` cells and a campaign may have 450
+## Checks, so a cell is a BUCKET. At the prototype's thirty this is 1 and
+## the board behaves exactly as it always did -- which is the property
+## that made bucketing the right fix rather than a redesign.
+static func board_bucket_size(total: int, cells: int) -> int:
+	if cells <= 0:
+		return 1
+	return maxi(1, int(ceil(float(total) / float(cells))))
+
 
 func _refresh_campaign_board(snapshot: Dictionary) -> void:
 	if _board_cells.is_empty():
@@ -488,35 +591,67 @@ func _refresh_campaign_board(snapshot: Dictionary) -> void:
 	var locked := 0
 	var unlocked_tiers := mini(keys, Constants.TIER_COUNT - 1)
 
+	# One cell per BUCKET of Checks. At thirty locations a bucket is one
+	# Check and every branch below is the original per-Check behaviour;
+	# at 450 the wall stops being a picture of the first thirty.
+	var total := campaign_check_total(snapshot)
+	var bucket := board_bucket_size(total, _board_cells.size())
 	for index in _board_cells.size():
-		var location: int = Constants.FIRST_LOCATION_ID + index
-		var game: String = games.get(location, "")
+		var first: int = Constants.FIRST_LOCATION_ID + index * bucket
+		var span := bucket
+		var in_bucket := 0
+		var bucket_done := 0
+		var bucket_pending := 0
+		var bucket_stocked := 0
+		var game := ""
+		for offset in span:
+			var one := first + offset
+			if not (checked.has(one) or games.has(one)
+					or pending.has(one) or stocked.has(one)):
+				# Ids past the end of a short campaign contribute nothing.
+				if one - Constants.FIRST_LOCATION_ID >= total:
+					continue
+			in_bucket += 1
+			if game == "":
+				game = str(games.get(one, ""))
+			if checked.has(one):
+				bucket_done += 1
+			elif pending.has(one):
+				bucket_pending += 1
+			elif stocked.has(one):
+				bucket_stocked += 1
 		var tint: Color = ThemeMaterials.color_for_game(game) if game != "" \
 				else Color(0.4, 0.42, 0.46)
 		var energy := 0.5
-		if checked.has(location):
-			# Confirmed: bright, saturated — this one really happened.
+		var share := float(bucket_done) / float(maxi(in_bucket, 1))
+		if in_bucket > 0 and bucket_done == in_bucket:
+			# Confirmed: bright, saturated — these really happened.
 			energy = 2.0
-			done += 1
-		elif pending.has(location):
+			done += bucket_done
+		elif bucket_pending > 0:
 			tint = Color(1.0, 0.85, 0.35)
 			energy = 1.2 + 0.7 * _board_pulse
-			flight += 1
-		elif stocked.has(location):
+			flight += bucket_pending
+			done += bucket_done
+		elif bucket_stocked > 0:
 			# On the shop counter behind you — purchasable, not in flight.
 			# The schema keeps these disjoint; so does the board.
 			tint = Color(0.55, 0.95, 0.55)
 			energy = 0.9 + 0.4 * _board_pulse
-			for_sale += 1
+			for_sale += bucket_stocked
+			done += bucket_done
 		elif index / Constants.TIER_SIZE > unlocked_tiers:
 			# Behind a Signal Key you do not have yet.
 			tint = tint.darkened(0.82)
 			energy = 0.06
-			locked += 1
+			locked += in_bucket
 		else:
-			tint = tint.darkened(0.45)
-			energy = 0.35
-			open += 1
+			# Part-done buckets glow in proportion, so a 450-Check wall
+			# still shows progress rather than snapping cell to cell.
+			tint = tint.darkened(0.45 - 0.3 * share)
+			energy = 0.35 + 1.2 * share
+			done += bucket_done
+			open += in_bucket - bucket_done
 		var material: StandardMaterial3D = _board_cells[index].material_override
 		material.albedo_color = tint
 		material.emission = tint
@@ -659,6 +794,19 @@ class SimpleStation extends StaticBody3D:
 	var prompt := ""
 	var station_color := Color.WHITE
 
+	## D3: a station that has nothing left to do. The shop reaches this
+	## when every Check is claimed -- there is no stock because there are
+	## no unclaimed locations to stock it from. It reads as FINISHED
+	## rather than broken: dimmed, relabelled, and it declines to open
+	## instead of showing an empty list.
+	##
+	## The Archive and the Echo Lab never take this state. They stay
+	## usable in the postgame on purpose.
+	var complete := false
+	var complete_label := ""
+	var _sign: MeshInstance3D
+	var _label: Label3D
+
 	func _ready() -> void:
 		var shape := CollisionShape3D.new()
 		var box := BoxShape3D.new()
@@ -674,26 +822,50 @@ class SimpleStation extends StaticBody3D:
 		counter.material_override = ThemeMaterials.accent_mat(
 				HubController.THEME)
 		add_child(counter)
-		var sign := MeshInstance3D.new()
+		var placard := MeshInstance3D.new()
 		var sign_mesh := BoxMesh.new()
 		sign_mesh.size = Vector3(2.2, 0.5, 0.1)
-		sign.mesh = sign_mesh
-		sign.position = Vector3(0, 2.2, 0)
-		sign.material_override = ThemeMaterials.glow_material(
+		placard.mesh = sign_mesh
+		placard.position = Vector3(0, 2.2, 0)
+		placard.material_override = ThemeMaterials.glow_material(
 				station_color, 1.2)
-		add_child(sign)
+		add_child(placard)
+		_sign = placard
 		var label := Label3D.new()
 		label.text = label_text
 		label.position = Vector3(0, 2.2, 0.1)
 		label.font_size = 36
 		label.pixel_size = 0.006
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		# Local PI, not a world facing: the placard hangs off a station
+		# that is itself rotated, and only the TEXT is on the wrong side.
+		label.rotation.y = PI
 		add_child(label)
+		_label = label
+		_apply_complete()
+
+	func set_complete(on: bool) -> void:
+		if complete == on:
+			return
+		complete = on
+		_apply_complete()
+
+	func _apply_complete() -> void:
+		if _sign == null or _label == null:
+			return
+		_label.text = complete_label if complete and complete_label != "" \
+				else label_text
+		# Dimmed, not dark: the facility is finished, not switched off.
+		_sign.material_override = ThemeMaterials.glow_material(
+				station_color.darkened(0.5) if complete else station_color,
+				0.35 if complete else 1.2)
 
 	func interact_prompt() -> String:
-		return prompt
+		return "" if complete else prompt
 
 	func interact(_player: Node) -> void:
+		if complete:
+			return
 		used.emit()
 
 

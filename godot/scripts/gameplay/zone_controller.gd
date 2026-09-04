@@ -1,5 +1,10 @@
 class_name ZoneController
 extends Node3D
+
+## Metres between two Checks in the same room. Far enough that a player
+## claims one at a time and can see there are two; close enough that a
+## room holding three still reads as one space.
+const REWARD_SPACING := 4.0
 ## Owns one loaded Zone instance: enemies, objective latching, rewards, the
 ## exit portal, and the player. Transient by design — nothing here survives
 ## leaving the Zone, which is why leaving resets objectives (§14.3).
@@ -26,11 +31,19 @@ var _portal_was_locked := true
 var _quiet_time := 0.0
 var _last_claimed := -1
 var _current_chamber := -1
+## Which chamber the in-flight encounter is being timed for, latched on
+## the first blow so walking next door does not retarget the count. -1
+## when no fight is running.
+var _encounter_chamber := -1
 ## Union of every chamber and connector AABB the builder placed.
 ## `blink` tests its landing point against this: outside it is
 ## outside the level, wall or no wall (invariant I14).
 var _world_bounds := AABB()
 var _has_bounds := false
+## Measures how long this Zone actually takes (CAMPAIGN_SCALE.md 13).
+## Never read by anything in the Zone: it observes and reports, and the
+## Zone plays identically without it.
+var playtime := PlaytimeLog.new()
 const _QUIET_BEFORE_ASIDE := 75.0
 
 func setup(zone_dict: Dictionary) -> void:
@@ -44,11 +57,31 @@ func setup(zone_dict: Dictionary) -> void:
 		_world_bounds = box if not _has_bounds \
 				else _world_bounds.merge(box)
 		_has_bounds = true
+	playtime.begin(build["chambers"].size())
+	# THE OFFER BINDING (owner ruling, 2026-09-03). The Zone's root is in
+	# the tree now, so its colliders are about to be real -- one physics
+	# frame from here. Deferred to that frame rather than run inline,
+	# because a probe against a body the physics server has not yet
+	# registered answers "nothing there", and this stage exists precisely
+	# so no movement offer is ever blessed by geometry nobody could see.
+	_validate_offers.call_deferred(build["chambers"])
 	_exit_portal.exit_requested.connect(func() -> void: exit_requested.emit())
 
 	player = Player.create()
 	add_child(player)
 	player.set_spawn(build["spawn_transform"])
+
+	# The measurement hooks (CAMPAIGN_SCALE.md 13). An encounter starts
+	# when someone actually engages -- a shot that connects, or a hit
+	# taken -- rather than when a room is entered, because a room you
+	# sprint through is not a fight and would otherwise report a
+	# thirty-second one.
+	player.died.connect(func() -> void: playtime.note_death())
+	player.hit_confirmed.connect(func(_killed: bool) -> void:
+		_note_engagement())
+	player.damaged_from.connect(func(_source: Vector3) -> void:
+		_note_engagement())
+	player.died.connect(func() -> void: _encounter_chamber = -1)
 
 	# Optional ledges (DESIGN §19). Walked, not searched: nothing is
 	# reported anywhere, so reaching one only ever earns a remark.
@@ -72,6 +105,18 @@ func setup(zone_dict: Dictionary) -> void:
 					xform.basis.get_euler().y).grow(1.0),
 		}
 
+		# The activities this room built, registered for measurement only
+		# (CAMPAIGN_SCALE.md 13). The log never reaches back into a
+		# runtime, so a Zone plays identically with the whole of it gone.
+		for built: Variant in result.get("activities", []):
+			if typeof(built) != TYPE_DICTIONARY:
+				continue
+			var runtime := (built as Dictionary).get("runtime") as \
+					ActivityRuntime
+			if runtime != null:
+				runtime.room_index = _chambers.size()
+				playtime.watch_activity(runtime)
+
 		for spawn: Dictionary in result.get("enemy_spawns", []):
 			var enemy := Enemy.create(spawn["archetype"], theme)
 			add_child(enemy)
@@ -79,13 +124,38 @@ func setup(zone_dict: Dictionary) -> void:
 			record["enemies"].append(enemy)
 			enemy.enemy_died.connect(_on_enemy_died.bind(record))
 
-		var location: Variant = chamber.get("reward_location_id")
-		if location != null:
-			var reward := RewardObject.create(int(location), zone_id, theme)
+		# Every Check the room holds, each its own pedestal.
+		#
+		# CAMPAIGN_SCALE.md 7 lets a large room carry two or three, and
+		# each must be earned SEPARATELY -- two ids on one pedestal would
+		# be one interaction sending two Checks, which tells the
+		# multiworld a player found an item they never reached. Distinct
+		# positions are what make them distinct completion edges.
+		var locations: Array = []
+		var primary: Variant = chamber.get("reward_location_id")
+		if primary != null:
+			locations.append(int(primary))
+		for extra: Variant in chamber.get(
+				"additional_reward_location_ids", []) as Array:
+			locations.append(int(extra))
+
+		var anchor: Vector3 = result.get("reward_position", Vector3(0, 0, 1))
+		record["rewards"] = []
+		for index in locations.size():
+			var reward := RewardObject.create(
+					int(locations[index]), zone_id, theme)
 			add_child(reward)
-			reward.global_position = xform * result.get(
-					"reward_position", Vector3(0, 0, 1))
-			record["reward"] = reward
+			# Spread along the room's axis, staying on the walking lane
+			# the affordance rule keeps features OFF (see
+			# `affordance_driver._a_check_sits_on_the_lane...`). Offsetting
+			# sideways instead would push a Check into the band a feature
+			# may occupy, and put one behind a rail.
+			var offset := Vector3(
+					0.0, 0.0, float(index) * REWARD_SPACING)
+			reward.global_position = xform * (anchor + offset)
+			record["rewards"].append(reward)
+			if index == 0:
+				record["reward"] = reward
 
 		if record["objective"] == "platform_to_goal":
 			var area := Area3D.new()
@@ -107,12 +177,42 @@ func setup(zone_dict: Dictionary) -> void:
 	if is_finale and hud != null:
 		hud.say_line("finale_open")
 
+## Report what the Zone's rooms offer and what was refused.
+##
+## MEASUREMENT ONLY: nothing is repaired, no room is rejected, and NO
+## GAMEPLAY IS CONSTRUCTED. `OfferBinding.validate_zone` reports what the
+## rooms would support and builds none of it -- when this returned
+## `consume`, looking at a Zone put a pad and a beam into every room that
+## offered one, so promoting a room would have activated its offers by
+## accident. A rail that cannot be built is a rail the room plays
+## without, and saying so in the log is the whole point -- "a large room
+## whose traversal quietly did not appear is the worst version of this
+## failure".
+func _validate_offers(chambers: Array) -> void:
+	await get_tree().physics_frame
+	for report: Variant in OfferBinding.validate_zone(chambers):
+		var record: Dictionary = report
+		push_warning("offers: %s" % OfferBinding.summarise(
+				str(record["chamber"]), record["verdict"] as Dictionary))
+
 func _objective_of(chamber: Dictionary) -> String:
 	# A corridor has no objective; a reward inside one is implicitly
 	# reach_reward. treasure_room defaults reach_reward too.
 	return str(chamber.get("objective", "reach_reward"))
 
+## The first blow of a fight latches which room it is about; every later
+## blow in the same fight leaves that alone.
+func _note_engagement() -> void:
+	if _encounter_chamber < 0:
+		_encounter_chamber = _current_chamber
+	playtime.note_engagement(_live_enemy_count())
+
+
 func _on_enemy_died(enemy: Enemy, record: Dictionary) -> void:
+	var remaining := _live_enemy_count()
+	playtime.note_enemy_died(remaining)
+	if remaining <= 0:
+		_encounter_chamber = -1
 	if tones != null:
 		tones.play("hit")
 	_quiet_time = 0.0                # a fight is not a quiet stretch
@@ -162,6 +262,30 @@ func _on_goal_area_entered(body: Node3D, record: Dictionary) -> void:
 	if body is Player and not record["satisfied"]:
 		record["satisfied"] = true          # latches for this instance
 		_push_objective_state(record)
+
+## Enemies still standing in the room this fight is ABOUT.
+##
+## Zone-wide until playtest 2.5, on the theory that a fight spilling
+## between two rooms should count once. The whole Zone is built at once,
+## so a Zone-wide count only reaches zero when the LAST enemy anywhere
+## dies -- which means exactly one encounter could ever close, at the end
+## of the Zone. The 23-room baseline run has ten arenas and recorded ONE
+## encounter of 105 seconds: nine fights happened and none were timed.
+##
+## Scoped to the chamber the fight started in instead. Leaving the room
+## and coming back still resolves it when the room is finally cleared,
+## which keeps the spilling case the old comment wanted; what it no
+## longer does is wait for a room at the other end of the Zone.
+func _live_enemy_count() -> int:
+	var index := _encounter_chamber if _encounter_chamber >= 0 \
+			else _current_chamber
+	if index < 0 or index >= _chambers.size():
+		return 0
+	var alive := 0
+	for enemy in (_chambers[index]["enemies"] as Array):
+		if is_instance_valid(enemy) and not enemy._dead:
+			alive += 1
+	return alive
 
 func _evaluate_objectives() -> void:
 	for record: Dictionary in _chambers:
@@ -219,11 +343,14 @@ func _track_chamber() -> void:
 		if bounds.has_point(player.global_position):
 			if index != _current_chamber:
 				_current_chamber = index
+				playtime.enter_chamber(index)
+				playtime.enter_chamber_activities(index)
 				chamber_entered.emit(index)
 			return
 
 func _process(delta: float) -> void:
 	_track_chamber()
+	playtime.tick(delta)
 	if hud == null or player == null:
 		return
 	var claimed := 0
@@ -259,6 +386,8 @@ func _process(delta: float) -> void:
 	# or exploring; either way it is the one moment a designer's aside is
 	# welcome rather than an interruption.
 	if claimed != _last_claimed:
+		if claimed > _last_claimed and _last_claimed >= 0:
+			playtime.note_check_confirmed()
 		_last_claimed = claimed
 		_quiet_time = 0.0
 	else:

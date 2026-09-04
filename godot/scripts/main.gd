@@ -54,6 +54,15 @@ const DRIVERS := {
 	"--lab-test": preload("res://tests/lab_driver.gd"),
 	"--affordance-test": preload("res://tests/affordance_driver.gd"),
 	"--verbs-test": preload("res://tests/verbs_driver.gd"),
+	"--boot-test": preload("res://tests/boot_driver.gd"),
+	"--legibility-test": preload("res://tests/legibility_driver.gd"),
+	"--content-test": preload("res://tests/content_driver.gd"),
+	"--activity-test": preload("res://tests/activity_driver.gd"),
+	"--zone-audit": preload("res://tests/zone_audit_driver.gd"),
+	"--zone-shots": preload("res://tests/zone_shot_driver.gd"),
+	"--room-test": preload("res://tests/room_driver.gd"),
+	"--room-contract": preload("res://tests/room_contract_driver.gd"),
+	"--movement-test": preload("res://tests/movement_driver.gd"),
 }
 
 func _ready() -> void:
@@ -63,6 +72,28 @@ func _ready() -> void:
 			headless_test = true
 			add_child((DRIVERS[flag] as GDScript).new())
 			return
+	boot()
+
+## Everything the real game needs, extracted so a test can call it.
+##
+## It used to be the tail of `_ready`, which meant NO suite ran it: every
+## driver takes the branch above and returns first. That is how ba0a804
+## deleted the world and the sound bank and nine green suites plus two CI
+## tiers said nothing for a day, while the game could not enter the Hub
+## at all. `--boot-test` calls this directly.
+func boot() -> void:
+	# The world every Hub and Zone is parented to, and the sound bank.
+	#
+	# These were lost in ba0a804, which replaced the block of per-driver
+	# `if` statements above with the `DRIVERS` loop and took the five
+	# lines that happened to sit underneath it. The game could not enter
+	# the Hub from that commit until this one: `_clear_world()` is the
+	# first thing every transition calls, and it dereferenced null.
+	world = Node3D.new()
+	world.name = "World"
+	add_child(world)
+	tones = Tones.new()
+	add_child(tones)
 
 	menu = MainMenu.new()
 	add_child(menu)
@@ -132,7 +163,7 @@ func _on_menu_mock() -> void:
 
 # ---------------------------------------------------------------------------
 
-func _on_snapshot(snapshot: Dictionary) -> void:
+func _on_snapshot(_snapshot: Dictionary) -> void:
 	menu.refresh()
 	debug.refresh()
 	_refresh_banner()
@@ -384,12 +415,10 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	# is the premise, and it was previously invisible.
 	var featured: Array = zone_dict.get("featured_echo_ids", [])
 	if not featured.is_empty():
-		for echo: Dictionary in BridgeClient.snapshot.get(
-				"interpretations", []):
-			if echo.get("echo_id") == featured[0]:
-				note = "Built with your %s in mind. %s" % [
-						echo.get("display_name", "Echo"), note]
-				break
+		var echo := BridgeClient.echo_by_id(str(featured[0]))
+		if not echo.is_empty():
+			note = "Built with your %s in mind. %s" % [
+					echo.get("display_name", "Echo"), note]
 	hud.show_zone_title(index_text, str(zone_dict.get("display_name", "")),
 			note.strip_edges(),
 			Color(ThemeMaterials.spec(theme)["accent_color"]).lightened(0.25))
@@ -398,12 +427,28 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	_update_modal()
 
 func _on_exit_zone() -> void:
+	_send_zone_timing(true)
 	BridgeClient.send_intent({"type": "exit_zone", "zone_id": zone.zone_id})
 	_to_hub()
+
+## What the Zone cost, sent once as the player leaves (CAMPAIGN_SCALE.md
+## 13). The bridge writes it to a local file and nothing else -- it is
+## not campaign state, no snapshot carries it, and it goes nowhere near
+## the network beyond the bridge already running on this machine.
+##
+## `completed` separates a Zone finished from one bailed out of: an
+## abandoned Zone's elapsed time is not a Zone length.
+func _send_zone_timing(completed: bool) -> void:
+	if zone == null:
+		return
+	var intent: Dictionary = zone.playtime.to_intent(zone.zone_id, completed)
+	if not intent.is_empty():
+		BridgeClient.send_intent(intent)
 
 func _on_return_to_hub() -> void:
 	pause_menu.close()
 	if view == View.ZONE:
+		_send_zone_timing(false)
 		BridgeClient.send_intent({"type": "leave_zone",
 				"zone_id": zone.zone_id})
 		_to_hub()
@@ -412,14 +457,33 @@ func _on_abandon() -> void:
 	pause_menu.close()
 	if view == View.ZONE:
 		_abandoning = true
+		_send_zone_timing(false)
 		BridgeClient.send_intent({"type": "abandon_zone",
 				"zone_id": zone.zone_id})
+
+## F4: name every activity, or stop naming them.
+##
+## ON by default. The graybox silhouettes are meant to carry family
+## identity by themselves, so a label that could not be turned off would
+## make "can you tell these apart" a question nobody could answer again
+## -- but a playtester who cannot tell a pressure pad from a floor tile
+## is not testing the mechanics, they are testing the placeholder.
+func _toggle_activity_labels() -> void:
+	ActivityRuntime.labels_visible = not ActivityRuntime.labels_visible
+	for runtime in get_tree().get_nodes_in_group(ActivityRuntime.GROUP):
+		(runtime as ActivityRuntime).set_labels_visible(
+				ActivityRuntime.labels_visible)
+	hud.toast("Activity labels %s"
+			% ("ON" if ActivityRuntime.labels_visible else "OFF"),
+			Color(0.85, 0.88, 0.92))
 
 # -- global input -----------------------------------------------------------
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("debug_overlay"):
 		debug.toggle()
+	if event.is_action_pressed("activity_labels"):
+		_toggle_activity_labels()
 	if view == View.MENU:
 		return
 	if event.is_action_pressed("pause"):

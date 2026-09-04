@@ -26,15 +26,18 @@ from .epsilon.requests import (
 from .schemas import constants as C
 from .schemas import transitions as T
 from .schemas.mechanics import (
-    Mechanics, derive_mechanics, owned_affordance_tags)
+    Mechanics, derive_mechanics, owned_affordance_tags, owned_capabilities)
 from .epsilon.concepts import preferred_modes, read_concepts
 from .schemas.echo import (
     COMPLEXITY_BUDGETS, over_soft_budget, upgradable_field_info)
 from .schemas.protocol import (
+    CampaignScale,
     BridgeError, CampaignSave, CampaignSnapshot, EarnedLocalReward, HubStatus,
     Notification, ScoutedLocation, ShopState, SlotAssignment, ZoneReady,
     ZoneRecord,
 )
+from .echo_projection import detail_examples, history_view
+from . import instrumentation
 from . import store
 
 log = logging.getLogger("archipepsi.campaign")
@@ -199,6 +202,10 @@ class CampaignEngine:
         #: Which Zone `_generation_task` is building, so a resume can tell
         #: "already running" from "a different Zone".
         self._generating_zone_id: str | None = None
+        #: Identity of the Echo log every connected client already holds,
+        #: so a broadcast can elide a log nobody's copy of is stale for.
+        #: See `_log_identity` for why it is a tuple and not a length.
+        self._broadcast_log_identity: tuple | None = None
 
     # ------------------------------------------------------------------
     # Plumbing
@@ -208,18 +215,103 @@ class CampaignEngine:
     def ap(self) -> APData:
         return self.backend.data if self.backend else APData()
 
+    def _build_metadata(self) -> dict:
+        """What this build is, resolved once per process.
+
+        Stamped on every playtime record so a run before authored art and
+        a run after it can be told apart -- which is the only thing that
+        makes the pre-art baseline comparable to anything. Cached because
+        it shells out to git and a Zone ending is not the moment for that.
+        """
+        if CampaignEngine._build_cache is None:
+            from .version import build_metadata
+            CampaignEngine._build_cache = build_metadata()
+        return CampaignEngine._build_cache
+
+    #: Process-wide: the build does not change while the bridge runs.
+    _build_cache: dict | None = None
+
+    @property
+    def config(self) -> C.CampaignConfig:
+        """This campaign's scale — the single place the engine asks.
+
+        The SAVE wins, because a campaign in progress keeps the shape it
+        was created with; a seed's scale is only consulted before there
+        is a save. Neither means the current default: a run that predates
+        the options is a prototype campaign, and reinterpreting it as a
+        450-location one strands every Check it has (CAMPAIGN_SCALE.md 2).
+        """
+        if self.save is not None:
+            return self.save.scale.config()
+        return self.ap.campaign_scale or C.PROTOTYPE_CONFIG
+
     def _apply(self, new_save: CampaignSave) -> None:
-        """Replace the campaign and persist atomically. The only write path."""
-        self.save = new_save
+        """Replace the campaign and persist atomically. The only write path.
+
+        Persist BEFORE assigning. The other order looks equivalent and is
+        not: a write that raises leaves the campaign running on state
+        that was never saved, so memory and disk disagree until restart.
+
+        Playtest 1 is what that costs. A Windows-only fsync error fired
+        inside `start_generation`, so the mode advanced to GENERATING in
+        memory, the save never landed, and the generation task after this
+        call never launched -- leaving a Hub whose portal answered "a
+        Zone cannot be started right now (mode GENERATING)" forever, for
+        a generation that was not running and never would.
+
+        Assigning last means a failed save is just a failed save: the
+        campaign is exactly where it was, and the player can press the
+        button again.
+        """
         if self._save_path is not None:
             store.write_save(self._save_path, new_save)
+        self.save = new_save
 
     async def _emit(self, message) -> None:
         if self.emit is not None:
             await self.emit(message)
 
+    def _log_identity(self) -> tuple | None:
+        """What identifies the Echo log a client is holding.
+
+        Not its length: `self.save` is replaced wholesale — a different
+        campaign, a reload, a switch to `None` — and two different logs
+        can be the same length. The campaign key pins WHICH campaign and
+        `next_interpretation_seq` pins how far it has been written, and
+        that counter is monotone within a campaign and never reused, so
+        equality here really does mean "the same log, unchanged".
+        """
+        save = self.save
+        if save is None:
+            return None
+        return (save.seed_name, save.team, save.slot_id,
+                save.next_interpretation_seq, len(save.interpretations))
+
     async def broadcast_snapshot(self) -> None:
-        await self._emit(self.snapshot())
+        """One snapshot to every client, with the lifetime Echo log left
+        out when it has not changed since the last one.
+
+        A late campaign's log is ~390 KiB of a ~400 KiB snapshot, and a
+        snapshot goes out on every state change — a Check, a Zone
+        transition, a coin. The log only ever grows at the end, so re-
+        sending all of it to say "a coin was spent" was the single
+        largest thing on the wire and the least informative.
+
+        Correctness rests on two facts and nothing else: every client is
+        sent a COMPLETE snapshot the moment it connects (`server.py`) and
+        again for every `hello`, and elision requires the log identity to
+        be exactly equal to the one at the last complete broadcast. Any
+        change at all — an appended Echo, a different campaign, a
+        campaign cleared — is inequality, and inequality sends the log.
+        """
+        snap = self.snapshot()
+        identity = self._log_identity()
+        if identity is not None and identity == self._broadcast_log_identity:
+            snap = snap.model_copy(update={
+                "interpretations": (), "interpretations_complete": False})
+        else:
+            self._broadcast_log_identity = identity
+        await self._emit(snap)
 
     async def _notify(self, kind: str, title: str, lines=(),
                       location_id=None, echo_id=None) -> None:
@@ -251,7 +343,7 @@ class CampaignEngine:
     def zone_candidates(self, *, ignore_stock: bool = False) -> set[int]:
         """§10.4: the ordinary-Zone candidate pool. Starts from
         `eligible_location_ids()` — the goal-free function — always."""
-        pool = set(C.eligible_location_ids(self.ap.signal_keys))
+        pool = set(self.config.eligible_location_ids(self.ap.signal_keys))
         pool &= self.ap.missing
         pool -= self._held_location_ids()
         pool -= self._pending_location_ids()
@@ -293,17 +385,21 @@ class CampaignEngine:
                                        save.slot_id, save.generation_counter,
                                        track))
 
-        picked = shuffled(target)[:C.ZONE_MAX_CHECKS]
-        if len(picked) < C.ZONE_MIN_CHECKS:
+        # This campaign's shape, not the prototype's. Allocating three
+        # Checks in a campaign configured for fifteen is a 450-location
+        # run played at prototype density (CAMPAIGN_SCALE.md 2, 4).
+        config = save.scale.config()
+        picked = shuffled(target)[:config.zone_target_checks]
+        if len(picked) < config.zone_min_checks:
             for track in scan:
                 if track == target:
                     continue
                 for loc in shuffled(track):
                     if loc not in picked:
                         picked.append(loc)
-                    if len(picked) >= C.ZONE_MIN_CHECKS:
+                    if len(picked) >= config.zone_min_checks:
                         break
-                if len(picked) >= C.ZONE_MIN_CHECKS:
+                if len(picked) >= config.zone_min_checks:
                     break
         if len(picked) == 1 and len(pool) > 1:
             raise IntentError(
@@ -315,9 +411,10 @@ class CampaignEngine:
     # ------------------------------------------------------------------
 
     def _finale_progress(self) -> int:
+        config = self.config
         return len(self.ap.checked
-                   & set(range(C.FIRST_NON_FINALE_LOCATION_ID,
-                               C.LAST_NON_FINALE_LOCATION_ID + 1)))
+                   & set(range(config.first_location_id,
+                               config.goal_location_id)))
 
     def hub_status(self) -> HubStatus:
         ap = self.ap
@@ -326,7 +423,11 @@ class CampaignEngine:
         base = dict(ap_online=ap.connected and ap.synced,
                     goal_sent=bool(self.save and self.save.goal_sent),
                     postgame=bool(self.save and self.save.goal_sent),
-                    signal_keys=keys, finale_progress=progress)
+                    signal_keys=keys, finale_progress=progress,
+                    # The Hub RENDERS this. Left at its default, a
+                    # 450-location campaign told the player it needed 24
+                    # of 449 while the gate actually wanted 360.
+                    finale_required=self.config.finale_required_checks())
 
         if self.save is None:
             return HubStatus(mode="NO_CAMPAIGN", headline="NOT CONNECTED",
@@ -350,10 +451,10 @@ class CampaignEngine:
             return HubStatus(mode=mode, headline=headline, detail=detail,
                              holding_finale=az.is_finale, **base)
 
-        finale_unlocked = (progress >= C.FINALE_REQUIRED_OTHER_CHECKS
+        finale_unlocked = (progress >= self.config.finale_required_checks()
                           and keys >= C.FINALE_REQUIRED_SIGNAL_KEYS)
-        goal_missing = C.GOAL_LOCATION_ID in ap.missing
-        all_checked = len(ap.checked) >= C.LOCATION_COUNT
+        goal_missing = self.config.goal_location_id in ap.missing
+        all_checked = len(ap.checked) >= self.config.location_count
 
         if all_checked:
             return HubStatus(mode="ALL_CHECKS_CLEARED",
@@ -429,6 +530,7 @@ class CampaignEngine:
             static_glitch_units=ap.static_received
             * C.STATIC_GLITCH_UNITS_PER_ITEM,
             interpretations=save.interpretations if save else (),
+            interpretation_count=len(save.interpretations) if save else 0,
             # Folded here, once, and sent. The client never folds: a second
             # implementation of this is a second source of truth for the one
             # thing that has to be identical everywhere.
@@ -491,16 +593,41 @@ class CampaignEngine:
             games = sorted({s.track_key for s in ap.scouts.values()})
             order = C.deterministic_shuffle(
                 games, *C.track_order_seed(ap.seed_name, ap.team, ap.slot_id))
+            # The scale the SEED was generated with. None means the seed
+            # predates the options, which is the prototype campaign and
+            # not the current default (CAMPAIGN_SCALE.md 2).
+            scale = ap.campaign_scale or C.PROTOTYPE_CONFIG
             fresh = CampaignSave(
                 seed_name=ap.seed_name, team=ap.team, slot_id=ap.slot_id,
                 slot_name=_clamp_ap_string(ap.slot_name),
-                track_order=tuple(order))
+                track_order=tuple(order),
+                scale=CampaignScale(
+                    location_count=scale.location_count,
+                    zone_target_checks=scale.zone_target_checks,
+                    zone_budget=scale.zone_budget))
             self._apply(fresh)
-            log.info("created campaign %s (track order: %s)",
-                     self._save_path.name, " → ".join(order))
+            log.info("created campaign %s at %d locations / %d per Zone / "
+                     "%d budget (track order: %s)",
+                     self._save_path.name, scale.location_count,
+                     scale.zone_target_checks, scale.zone_budget,
+                     " → ".join(order))
         elif self.save is None:
+            # A campaign in progress keeps the scale it was created with.
+            # If the seed now reports a different one, the save and the
+            # seed are describing different campaigns -- resizing a run
+            # underneath a player would strand every Check outside the
+            # new range, so this is reported and the SAVE wins.
+            if (ap.campaign_scale is not None
+                    and existing.scale.config() != ap.campaign_scale):
+                log.error(
+                    "campaign scale mismatch: the save is %d locations and "
+                    "the seed says %d. Keeping the save's scale; this "
+                    "campaign was generated against different options.",
+                    existing.scale.location_count,
+                    ap.campaign_scale.location_count)
             self.save = existing
-            log.info("loaded campaign %s", self._save_path.name)
+            log.info("loaded campaign %s at %d locations",
+                     self._save_path.name, existing.scale.location_count)
 
         self._low_coin_warned = False
         await self.on_items_updated(notify=False)
@@ -559,6 +686,23 @@ class CampaignEngine:
     # Zone generation
     # ------------------------------------------------------------------
 
+    def _echo_summaries(self) -> tuple:
+        """The BOUNDED detail examples, as `EchoSummary`.
+
+        One helper, used by both provider paths. They used to build the
+        same summary twice, over the whole log, in two places -- which is
+        how one of them (`existing_echoes`) stayed unbounded after the
+        other was noticed.
+        """
+        save = self.save
+        return tuple(
+            EchoSummary(
+                echo_id=e.echo_id, display_name=e.display_name,
+                kinds=tuple(sorted({op.component.kind for op in e.operations
+                                    if op.op == "create"})),
+                tags=tuple(e.tags), description=e.description)
+            for e in detail_examples(save.interpretations))
+
     def _zone_request(self, record: ZoneRecord) -> ZoneGenerationRequest:
         save = self.save
         ap = self.ap
@@ -584,13 +728,14 @@ class CampaignEngine:
                 summaries.append(ZoneSummary(
                     name=z.zone.display_name, theme=z.zone.theme,
                     target_game=z.target_game))
-        echoes = tuple(
-            EchoSummary(
-                echo_id=e.echo_id, display_name=e.display_name,
-                kinds=tuple(sorted({op.component.kind for op in e.operations
-                                    if op.op == "create"})),
-                tags=tuple(e.tags), description=e.description)
-            for e in save.interpretations)
+        # BOUNDED. This used to be every interpretation: ~29 at the
+        # prototype's thirty locations and ~449 at the 450 default, which
+        # is 96 KB and roughly 24,000 tokens of Echo summaries in front
+        # of every Zone prompt. The complete history still reaches the
+        # provider -- as derived state and an accumulated-influence
+        # aggregate, in `echo_history` below -- so nothing is forgotten;
+        # only the DETAIL is a sample.
+        echoes = self._echo_summaries()
         return ZoneGenerationRequest(
             zone_id=record.zone_id,
             generation_id=(f"{save.seed_name}-{save.team}-{save.slot_id}-"
@@ -602,17 +747,37 @@ class CampaignEngine:
                 target_game=_clamp_ap_string(record.target_game),
                 is_finale=record.is_finale,
                 static_glitch_units=ap.static_received,
-                completed_zone_summaries=tuple(summaries[-6:])),
+                completed_zone_summaries=tuple(summaries[-6:]),
+                # A Zone is built for the content its Checks are worth.
+                # The last Zone of a campaign holds whatever divides out
+                # -- often one Check -- and asking for a full-length
+                # level around it would demand content the Zone has no
+                # reason to contain (CAMPAIGN_SCALE.md 5).
+                zone_budget=save.scale.config().zone_budget_for(
+                    len(record.allocated_location_ids))),
             player=PlayerContext(
                 signal_keys=ap.signal_keys,
                 coins_available=max(0, ap.coins_received - save.coins_spent),
-                echoes=echoes),
+                echoes=echoes,
+                # The whole history, bounded. `echoes` above is a dozen
+                # examples; this is what stops a late Zone composing as
+                # though the first four hundred never happened.
+                echo_history=history_view(save.interpretations,
+                                          save.derive())),
             locations=tuple(locations),
             # §13: only what this campaign can actually interact with.
             # Over OWNED mechanics, never the loadout — a Zone whose
             # contents depended on the slots at generation time would lie
             # about itself the moment the player changed them.
-            unlocked_affordances=owned_affordance_tags(save.derive()))
+            unlocked_affordances=owned_affordance_tags(save.derive()),
+            # NO REQUIREMENT BEFORE GUARANTEE (owner ruling 2026-08-30).
+            # Computed here, from the fold, because this is where the
+            # authoritative campaign state lives. Case C -- a capability
+            # the Zone itself establishes before the requirement -- has
+            # no producer yet, so nothing is passed for it and the
+            # guarantee rests on the permanent baseline and what the
+            # campaign already owns.
+            guaranteed_capabilities=owned_capabilities(save.derive()))
 
     def _start_generation_task(self, zone_id: str) -> None:
         """Start the provider call for `zone_id`, unless one is in flight.
@@ -698,6 +863,29 @@ class CampaignEngine:
                                    used_fallback=outcome.used_fallback))
         await self.broadcast_snapshot()
 
+    # ------------------------------------------------------------------
+    # Local instrumentation (CAMPAIGN_SCALE.md 13)
+    # ------------------------------------------------------------------
+
+    def record_zone_timing(self, timing) -> None:
+        """Append what the Zone actually cost. Local file, never a request.
+
+        Not a state transition: nothing in the campaign reads it back, no
+        snapshot carries it and no rule depends on it. It exists so the
+        40-minute Zone can stop being a target and start being a
+        measurement -- and so a content budget that turns out to buy four
+        minutes of play can be seen to.
+
+        Deliberately silent about failure. A Zone the player just finished
+        must not be lost because a log file could not be opened.
+        """
+        if self.save is None:
+            return
+        record = instrumentation.build_record(self.save, timing,
+                                              self._build_metadata())
+        if record is not None:
+            instrumentation.append_record(self.save_dir, record)
+
     async def handle_request_next_zone(self, finale: bool) -> None:
         if self.save is None:
             raise IntentError("no campaign loaded")
@@ -708,11 +896,11 @@ class CampaignEngine:
         if finale:
             if not hub.finale_offered:
                 raise IntentError("the finale is not offered right now")
-            if C.GOAL_LOCATION_ID not in self.ap.missing:
+            if self.config.goal_location_id not in self.ap.missing:
                 raise IntentError("the finale is already resolved")
-            goal_scout = self.ap.scouts.get(C.GOAL_LOCATION_ID)
+            goal_scout = self.ap.scouts.get(self.config.goal_location_id)
             target = goal_scout.track_key if goal_scout else "Archipepsi"
-            ids: list[int] = [C.GOAL_LOCATION_ID]
+            ids: list[int] = [self.config.goal_location_id]
         else:
             ids, target = self._select_zone_locations()
         zone_id = f"zone_{self.save.generation_counter + 1:03d}"
@@ -828,10 +1016,12 @@ class CampaignEngine:
             return
         candidates = sorted(self.shop_candidates()
                             | self._stocked_location_ids())
-        # Leave at least SHOP_MIN_REMAINING_AFTER_STOCK for the next Zone.
+        # Leave one Zone's worth of Checks for the next Zone -- this
+        # campaign's Zone, not the prototype's three, or the shop can
+        # strip a fifteen-Check Zone down to a fifth of its length.
         zone_pool_size = len(self.zone_candidates(ignore_stock=True))
         n = min(C.SHOP_STOCK_SIZE, len(candidates),
-                max(0, zone_pool_size - C.SHOP_MIN_REMAINING_AFTER_STOCK))
+                max(0, zone_pool_size - save.scale.config().shop_reserve))
         shuffled = C.deterministic_shuffle(
             candidates, *C.shop_stock_seed(save.seed_name, save.team,
                                            save.slot_id, count))
@@ -872,14 +1062,11 @@ class CampaignEngine:
                 recipient_name=_clamp_ap_string(s.recipient_name),
                 item_flags=s.flags),
             player_state=EchoPlayerState(
-                existing_echoes=tuple(
-                    EchoSummary(
-                        echo_id=e.echo_id, display_name=e.display_name,
-                        kinds=tuple(sorted({op.component.kind
-                                            for op in e.operations
-                                            if op.op == "create"})),
-                        tags=tuple(e.tags), description=e.description)
-                    for e in save.interpretations),
+                # The SAME bounded projection the Zone path uses. Two
+                # subtly different summaries is how one of them stays
+                # unbounded after the other is fixed.
+                existing_echoes=self._echo_summaries(),
+                echo_history=history_view(save.interpretations, mechanics),
                 signal_keys=self.ap.signal_keys,
                 coins_available=max(
                     0, self.ap.coins_received - save.coins_spent),

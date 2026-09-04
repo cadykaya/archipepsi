@@ -14,10 +14,8 @@ var _balance: Label
 func _ready() -> void:
 	layer = 8
 	visible = false
-	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.custom_minimum_size = Vector2(640, 420)
-	add_child(panel)
+	var panel := UILayout.reading_panel(Vector2(640, 420))
+	UILayout.centred(self, panel)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 10)
 	panel.add_child(box)
@@ -30,9 +28,7 @@ func _ready() -> void:
 	_balance = Label.new()
 	_balance.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(_balance)
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(620, 280)
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var scroll := UILayout.reading_scroll(Vector2(600, 280))
 	box.add_child(scroll)
 	_list = VBoxContainer.new()
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL

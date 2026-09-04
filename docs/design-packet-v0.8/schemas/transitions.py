@@ -90,10 +90,14 @@ def start_generation(save: CampaignSave, *, zone_id: str,
             f"Zone '{held}' still holds locations; finish or abandon it first"
         )
     ids = tuple(allocated_location_ids)
-    if is_finale and ids != (C.GOAL_LOCATION_ID,):
-        raise ValueError(f"the finale Zone holds exactly [{C.GOAL_LOCATION_ID}]")
-    if not is_finale and any(C.is_goal_location(i) for i in ids):
-        raise ValueError(f"{C.GOAL_LOCATION_ID} is reserved for the finale Zone")
+    # THIS campaign's goal. Pinned to the prototype's 89100030 the rule
+    # reserved an ordinary Check in every larger campaign and left the
+    # real goal unreserved (CAMPAIGN_SCALE.md 2).
+    goal_id = save.scale.config().goal_location_id
+    if is_finale and ids != (goal_id,):
+        raise ValueError(f"the finale Zone holds exactly [{goal_id}]")
+    if not is_finale and goal_id in ids:
+        raise ValueError(f"{goal_id} is reserved for the finale Zone")
 
     in_flight = {p.location_id for p in save.pending_checks}
     clash = sorted(set(ids) & in_flight)
@@ -283,7 +287,10 @@ def confirm_check(save: CampaignSave, location_id: int) -> CampaignSave:
                     if p.location_id != location_id)
     if len(pending) == len(save.pending_checks):
         return save                       # already reconciled; idempotent
-    goal = C.is_goal_location(location_id)
+    # Likewise: at 450 locations, Check 030 is an ordinary Check, and
+    # reading the prototype's constant here ENDED THE CAMPAIGN when it
+    # confirmed.
+    goal = save.scale.config().is_goal_location(location_id)
     return _rebuild(save, pending_checks=pending,
                     goal_sent=save.goal_sent or goal)
 

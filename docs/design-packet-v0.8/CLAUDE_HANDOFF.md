@@ -79,7 +79,7 @@ The first genuinely important milestone:
 
 ## Rules that will save you time
 
-**Copy `schemas/` verbatim.** It runs and it is tested. Run `pytest` on it before writing anything else — 126 tests, all green, both standalone and from the repo root. Do not retype the models from the prose; the prose describes them, the code *is* them. Regenerate `constants.gd` and the JSON Schemas with `python schemas/export.py` and never hand-edit the outputs.
+**Copy `schemas/` verbatim.** It runs and it is tested. Run `pytest` on it before writing anything else — 127 tests, all green, both standalone and from the repo root. Do not retype the models from the prose; the prose describes them, the code *is* them. Regenerate `constants.gd` and the JSON Schemas with `python schemas/export.py` and never hand-edit the outputs.
 
 **Every gameplay number is already decided**, in `schemas/constants.py`. Do not invent movement, combat, or timing values. If one is missing, add it there rather than inline.
 

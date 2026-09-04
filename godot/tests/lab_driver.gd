@@ -58,6 +58,11 @@ func _run() -> void:
 	_reset_clears_transient_only(lab, player)
 	_no_campaign_mutation(lab)
 	_the_suite_actually_exercised_something(lab)
+	_the_labs_gap_stays_mechanically_meaningful()
+	_the_hub_resolves_every_anchor_its_logic_needs()
+	_an_authored_scene_can_move_an_anchor()
+	await _the_ending_is_a_beat_not_a_wall()
+	_the_two_completion_beats_fire_once_each()
 
 	lab.queue_free()
 	player.queue_free()
@@ -108,8 +113,8 @@ func _campaign_fingerprint() -> String:
 # --- fixtures --------------------------------------------------------------
 
 func _fixtures_exist(lab: EchoLab) -> void:
-	for name: String in ["dummy", "moving_target", "hazard", "reset_pad"]:
-		_check(lab.fixture(name) != null, "the Lab has a %s" % name)
+	for fixture_name: String in ["dummy", "moving_target", "hazard", "reset_pad"]:
+		_check(lab.fixture(fixture_name) != null, "the Lab has a %s" % fixture_name)
 	_check(lab.get_node_or_null("GapRecovery") != null,
 			"the gap has a recovery trigger")
 
@@ -281,7 +286,7 @@ func _reset_clears_transient_only(lab: EchoLab, player: Player) -> void:
 
 ## The whole point, asserted last: a full session of use sent no intent
 ## and moved no campaign truth.
-func _no_campaign_mutation(lab: EchoLab) -> void:
+func _no_campaign_mutation(_lab: EchoLab) -> void:
 	_check(BridgeClient.sent_intents.is_empty(),
 			"the Lab sent no intent all session (%s)"
 			% str(BridgeClient.sent_intents))
@@ -298,7 +303,7 @@ func _no_campaign_mutation(lab: EchoLab) -> void:
 ## counts what it actually caused and refuses to be green without it.
 var _exercised := {"damage": 0.0, "statuses": 0, "hazard": 0, "motion": 0.0}
 
-func _the_suite_actually_exercised_something(lab: EchoLab) -> void:
+func _the_suite_actually_exercised_something(_lab: EchoLab) -> void:
 	_check(_exercised["damage"] > 0.0,
 			"the suite dealt real damage (%f)" % _exercised["damage"])
 	_check(int(_exercised["statuses"]) > 0,
@@ -309,3 +314,183 @@ func _the_suite_actually_exercised_something(lab: EchoLab) -> void:
 	_check(float(_exercised["motion"]) > 1.0,
 			"...and moved the target a real distance (%f)"
 			% _exercised["motion"])
+
+
+# --- S14: the Hub/Lab geometry contract ------------------------------------
+
+## The Lab's gap is not decoration and its width is not a free number.
+## Both bounds are silent failures if they break: too wide and the Lab
+## cannot be crossed without an Echo, too narrow and it stops showing
+## that an Echo does anything.
+func _the_labs_gap_stays_mechanically_meaningful() -> void:
+	_check(EchoLab.GAP_WIDTH < Constants.JUMP_FLAT_REACH,
+			"the Lab gap (%.2f m) must stay INSIDE the base kit's flat "
+			% EchoLab.GAP_WIDTH
+			+ "reach (%.2f m), or the Lab needs an Echo to cross"
+			% Constants.JUMP_FLAT_REACH)
+	_check(EchoLab.GAP_WIDTH > Constants.SAFE_BASE_JUMP_GAP,
+			"the Lab gap (%.2f m) must stay WIDER than the safe mandatory "
+			% EchoLab.GAP_WIDTH
+			+ "gap (%.2f m), or it demonstrates nothing about mobility"
+			% Constants.SAFE_BASE_JUMP_GAP)
+
+	## The margin is what makes it a demonstration rather than a coin
+	## flip. A gap 1 cm inside the reach is a gap the player fails at and
+	## blames the game for.
+	var margin := Constants.JUMP_FLAT_REACH - EchoLab.GAP_WIDTH
+	_check(margin > 0.1,
+			"the Lab gap leaves only %.3f m of margin inside the base "
+			% margin + "kit's reach; that reads as a bug, not a jump")
+
+func _the_hub_resolves_every_anchor_its_logic_needs() -> void:
+	## The S14 contract. A Hub scene that cannot answer one of these
+	## leaves a station, the portal or the way out of GENERATING with
+	## nowhere to be -- and the Hub is the only screen with no pause menu
+	## to escape from.
+	var anchors := HubAnchors.new()
+	_check(anchors.missing().is_empty(),
+			"the Hub cannot resolve these anchors: %s"
+			% str(anchors.missing()))
+	_check(anchors.outside_room().is_empty(),
+			"these Hub anchors are outside the room: %s"
+			% str(anchors.outside_room()))
+
+	## Art requirement 4. Epsilon's installation is 8.80 x 2.61 x 3.55 --
+	## roughly a third of one 22 m Hub wall -- and the owner ruled it
+	## keeps that prominent back-wall presence. So the bay is reserved
+	## and everything else moves around it, which is a thing that has to
+	## be CHECKED: the abandon console used to sit squarely inside it.
+	_check(anchors.bay_problem().is_empty(),
+			"Epsilon's reserved bay does not fit: %s" % anchors.bay_problem())
+	_check(anchors.intruders().is_empty(),
+			"these Hub stations stand inside Epsilon's reserved bay: %s"
+			% str(anchors.intruders()))
+
+	## ...and the bay is genuinely the size art declared, not a number
+	## quietly trimmed until the room was easier to lay out.
+	var bay := anchors.epsilon_bay()
+	_check(is_equal_approx(bay.size.x, 8.8)
+			and is_equal_approx(bay.size.z, 2.61)
+			and is_equal_approx(bay.size.y, 3.55),
+			"Epsilon's bay is %.2v, the installation is 8.80 x 3.55 x 2.61"
+			% bay.size)
+
+	## The abandon console is the only exit from GENERATING and
+	## ZONE_READY, so "moved out of the bay" must not have meant "moved
+	## somewhere nobody looks". It stays beside the portal.
+	var console := anchors.origin("generation_loading")
+	var portal := anchors.origin("main_portal")
+	_check(console.distance_to(portal) < 6.0,
+			"the abandon console is %.1f m from the portal; it is the "
+			% console.distance_to(portal)
+			+ "only way out of GENERATING and has to be obvious")
+
+	## The Lab lines up with the Hub through the doorway, not by
+	## coincidence: both read the same Z.
+	_check(is_equal_approx(anchors.origin("lab_entrance").z,
+			HubAnchors.LAB_DOOR_Z),
+			"the lab_entrance anchor drifted from LAB_DOOR_Z")
+	_check(is_equal_approx(EchoLab.OFFSET.z, HubAnchors.LAB_DOOR_Z),
+			"the Echo Lab (offset z=%.1f) no longer lines up with the "
+			% EchoLab.OFFSET.z + "Hub doorway (z=%.1f); the way through "
+			% HubAnchors.LAB_DOOR_Z + "opens onto a wall")
+
+func _an_authored_scene_can_move_an_anchor() -> void:
+	## The migration path S14 exists to open: a graybox or authored Hub
+	## supplies anchors as markers, one at a time, and anything it does
+	## not name keeps the procedural default. If adoption were all or
+	## nothing, the first graybox would have to place all eight correctly
+	## before the Hub could boot at all.
+	var scene := Node3D.new()
+	var marker := Marker3D.new()
+	marker.name = "shop"
+	marker.transform = Transform3D(Basis(Vector3.UP, PI), Vector3(1, 0, 2))
+	scene.add_child(marker)
+	add_child(scene)
+
+	var anchors := HubAnchors.new(scene)
+	_check(anchors.origin("shop") == Vector3(1, 0, 2),
+			"a scene's marker must win over the default, got %s"
+			% anchors.origin("shop"))
+	_check(anchors.origin("main_portal")
+			== HubAnchors.defaults()["main_portal"].origin,
+			"an anchor the scene did not name must keep its default")
+	_check(anchors.missing().is_empty(),
+			"partial adoption must still resolve every anchor")
+	scene.queue_free()
+
+
+# --- D3: finished but still alive ------------------------------------------
+
+func _hub_snapshot(mode: String, goal_sent: bool) -> Dictionary:
+	var snapshot := _snapshot()
+	snapshot["hub"] = {"mode": mode, "headline": "H", "goal_sent": goal_sent,
+			"postgame": goal_sent, "ap_online": true}
+	snapshot["ap_connected"] = true
+	return snapshot
+
+func _the_ending_is_a_beat_not_a_wall() -> void:
+	## The decided shape (OWNER_DECISIONS D3): when every Check is claimed
+	## the Hub is FINISHED BUT STILL ALIVE. It is easy to build the first
+	## half of that and forget the second, so both are asserted -- what
+	## must stop, AND what must not.
+	BridgeClient.snapshot = _hub_snapshot("ALL_CHECKS_CLEARED", true)
+	var hub := HubController.new()
+	add_child(hub)
+	await get_tree().process_frame
+	hub.refresh()
+
+	var board: Label3D = hub._sub_board
+	_check(board.text.contains("TRANSMISSION COMPLETE"),
+			"the postgame Hub must say the transmission is complete, got: %s"
+			% board.text)
+	_check(board.text.contains("MULTIWORLD CONNECTION ACTIVE"),
+			"the postgame Hub must say the multiworld is still going -- "
+			+ "in an async game the others usually are. Got: %s" % board.text)
+
+	## What must STOP.
+	_check(hub._shop != null and hub._shop.complete,
+			"the shop must read as complete once there is nothing left "
+			+ "to stock it from")
+	_check(hub._shop.interact_prompt().is_empty(),
+			"a complete shop must not offer to open")
+	_check(not hub._finale_portal.visible,
+			"the finale portal must not be offered after the goal is sent")
+
+	## What must NOT stop. This half is the decision.
+	_check(hub._abandon != null, "the Hub is still inhabited")
+	_check(board.text.contains("LAB AND ARCHIVE REMAIN OPEN"),
+			"the Hub must say the Lab and Archive are still open")
+	## And it must BE open, not merely say so. The first version of this
+	## test only read the board, so closing the Archive alongside the shop
+	## passed cleanly -- a sign advertising a door that is locked.
+	_check(hub._terminal != null and not hub._terminal.complete,
+			"the Archive must stay usable in the postgame; a finished "
+			+ "campaign is still a loadout you can look at")
+	_check(not hub._terminal.interact_prompt().is_empty(),
+			"the Archive must still offer to open")
+	var lab_door := HubAnchors.new()
+	_check(lab_door.has("lab_entrance"),
+			"the way to the Echo Lab must still exist in the postgame")
+	_check(not board.text.to_lower().contains("credits"),
+			"no forced credits: the multiworld is not over")
+
+	hub.queue_free()
+	BridgeClient.snapshot = {}
+
+func _the_two_completion_beats_fire_once_each() -> void:
+	## Edges, not levels. `goal_sent` and ALL_CHECKS_CLEARED both stay
+	## true forever once reached, so a level test would repeat the ending
+	## on every snapshot until the player walked out.
+	var voice := EpsilonVoice.new()
+	for kind: String in ["goal_sent", "campaign_complete"]:
+		_check(not voice.line_for(kind).is_empty(),
+				"'%s' has no line; the beat would be silent" % kind)
+		_check(kind in EpsilonVoice.PRIORITY,
+				"'%s' must outrank ambient barks, or a throttle can "
+				% kind + "silently delete the ending")
+
+	## And the wording is deliberately not locked -- what is pinned is
+	## that the hook EXISTS and is reachable, not what it says.
+	_check(EpsilonVoice.LINES["campaign_complete"].size() >= 2,
+			"a beat with one line repeats the moment it is heard twice")

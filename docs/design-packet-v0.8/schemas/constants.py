@@ -21,10 +21,265 @@ from __future__ import annotations
 import hashlib
 import math
 import random
+from dataclasses import dataclass
 
 # --------------------------------------------------------------------------
-# Campaign shape
+# Campaign scale — the per-seed options (CAMPAIGN_SCALE.md)
 # --------------------------------------------------------------------------
+# Scale is a PER-CAMPAIGN choice, not a build-time constant. Two players in
+# one multiworld may legitimately pick different sizes, so the numbers below
+# describe the space of legal campaigns; a `CampaignConfig` picks one point
+# in it and everything else is derived from that point.
+#
+# Bounds are tested, not advisory. Small values stay reachable for CI, for
+# development and for short multiworlds; the frontier runs at both ends.
+
+LOCATION_COUNT_MIN = 30
+LOCATION_COUNT_MAX = 600
+ZONE_TARGET_CHECKS_MIN = 1
+ZONE_TARGET_CHECKS_MAX = 30
+ZONE_BUDGET_MIN = 200
+ZONE_BUDGET_MAX = 2000
+
+DEFAULT_LOCATION_COUNT = 450
+DEFAULT_ZONE_TARGET_CHECKS = 15
+DEFAULT_ZONE_BUDGET = 1000
+
+#: The stable id and name universe, fixed at the maximum FOREVER.
+#:
+#: `Archipepsi Check 007` is id 89100007 in every seed ever generated,
+#: whatever anyone chose for `location_count`. A world instantiates a PREFIX
+#: of this universe; it never renumbers an existing location because
+#: somebody picked a different campaign size. Raising this is a deliberate,
+#: versioned change -- every seed generated before the change keeps ids that
+#: must still mean the same Checks.
+LOCATION_UNIVERSE = LOCATION_COUNT_MAX
+
+#: Item-pool proportions, preserved from the prototype's 2 / 10 / 18 of 30.
+#: Signal Keys are fixed by the tier count (N tiers need N-1 unlocks), so
+#: the split applies to what is left. Static takes the remainder, which is
+#: what makes the pool EXACTLY equal the location count at any size rather
+#: than one item short after rounding.
+COIN_SHARE_OF_NON_KEY = 10 / 28
+
+#: The least content a Zone must be worth per Check it is asked to hold.
+#:
+#: Every Check needs a room, and a room the player crosses to reach a
+#: pedestal is worth something whether or not anybody budgeted for it. So
+#: `zone_target_checks` and `zone_budget` are not independent, even
+#: though they are separate options: 15 Checks in a 200-point Zone is a
+#: configuration that cannot be built, and the honest place to say so is
+#: at generation rather than when a player's portal refuses to open.
+#:
+#: Measured rather than guessed: the fallback's Check rooms score in the
+#: mid-twenties once they have an objective and a small encounter, and
+#: 25 is the floor of that.
+MIN_BUDGET_PER_CHECK = 25
+
+#: The finale opens after a substantial majority of non-goal Checks.
+#:
+#: 0.8 rather than the prototype's literal 24: `ceil(29 * 0.8) == 24`, so
+#: an existing campaign keeps exactly the requirement it was generated
+#: with, and a 450-location campaign gets 360 instead of a number that
+#: stopped meaning "a substantial majority" the moment the campaign grew.
+FINALE_REQUIRED_FRACTION = 0.8
+
+
+@dataclass(frozen=True)
+class CampaignConfig:
+    """One campaign's immutable scale. Chosen at generation, never in play.
+
+    Frozen and dependency-free on purpose: this module is vendored verbatim
+    into the APWorld, which runs inside Archipelago and cannot import
+    pydantic. Validation is therefore hand-written rather than declarative.
+    """
+
+    location_count: int = DEFAULT_LOCATION_COUNT
+    zone_target_checks: int = DEFAULT_ZONE_TARGET_CHECKS
+    zone_budget: int = DEFAULT_ZONE_BUDGET
+
+    def __post_init__(self) -> None:
+        for name, low, high in (
+            ("location_count", LOCATION_COUNT_MIN, LOCATION_COUNT_MAX),
+            ("zone_target_checks", ZONE_TARGET_CHECKS_MIN,
+             ZONE_TARGET_CHECKS_MAX),
+            ("zone_budget", ZONE_BUDGET_MIN, ZONE_BUDGET_MAX),
+        ):
+            value = getattr(self, name)
+            if not isinstance(value, int) or isinstance(value, bool):
+                raise ValueError(f"{name} must be an int, got {value!r}")
+            if not low <= value <= high:
+                raise ValueError(
+                    f"{name}={value} is outside the tested range "
+                    f"[{low}, {high}]. Widening it is a deliberate change "
+                    f"to CAMPAIGN_SCALE.md, not a call site's decision.")
+        # A campaign needs at least one ordinary Check to allocate, or the
+        # only location is the goal and the finale gate can never open.
+        if self.location_count <= 1:
+            raise ValueError("a campaign needs a non-goal Check")
+        # ...and a Zone must be able to HOLD the Checks it is given.
+        needed = self.zone_target_checks * MIN_BUDGET_PER_CHECK
+        if self.zone_budget < needed:
+            raise ValueError(
+                f"zone_budget={self.zone_budget} cannot hold "
+                f"zone_target_checks={self.zone_target_checks}: every "
+                f"Check needs a room, so this Zone needs at least "
+                f"{needed} points of content. Raise the budget or lower "
+                "the Checks per Zone.")
+
+    # -- the active id range ------------------------------------------------
+
+    @property
+    def first_location_id(self) -> int:
+        return LOCATION_ID_BASE + 1
+
+    @property
+    def last_location_id(self) -> int:
+        return LOCATION_ID_BASE + self.location_count
+
+    @property
+    def goal_location_id(self) -> int:
+        """The FINAL ACTIVE location, so it moves with campaign size.
+
+        Every other id is stable across seeds; this one is not, and that is
+        the price of the goal being at the end. The end is what makes "any
+        location except the goal" a closed range expressible in JSON Schema
+        and GDScript instead of only in a Python validator.
+        """
+        return self.last_location_id
+
+    @property
+    def non_goal_count(self) -> int:
+        return self.location_count - 1
+
+    def is_goal_location(self, location_id: int) -> bool:
+        return location_id == self.goal_location_id
+
+    def active_location_ids(self) -> list[int]:
+        return list(range(self.first_location_id, self.last_location_id + 1))
+
+    # -- tiers --------------------------------------------------------------
+
+    def tier_bounds(self) -> tuple[int, ...]:
+        """Half-open bounds; tier N holds [bounds[N], bounds[N + 1]).
+
+        Split as evenly as the count allows, with the remainder going to the
+        earliest tiers. The sum is exact by construction, so no location can
+        fall outside every tier.
+        """
+        base, extra = divmod(self.location_count, TIER_COUNT)
+        bounds = [self.first_location_id]
+        for tier in range(TIER_COUNT):
+            bounds.append(bounds[-1] + base + (1 if tier < extra else 0))
+        return tuple(bounds)
+
+    def tier_of(self, location_id: int) -> int:
+        if not self.first_location_id <= location_id <= self.last_location_id:
+            raise ValueError(f"{location_id} is not an Archipepsi location")
+        bounds = self.tier_bounds()
+        for tier in range(TIER_COUNT):
+            if bounds[tier] <= location_id < bounds[tier + 1]:
+                return tier
+        raise ValueError(f"{location_id} fell outside every tier")
+
+    def locations_in_tier(self, tier: int) -> list[int]:
+        bounds = self.tier_bounds()
+        return list(range(bounds[tier], bounds[tier + 1]))
+
+    def unlocked_location_ids(self, signal_keys: int) -> list[int]:
+        """Everything AP logic considers reachable. INCLUDES the goal."""
+        unlocked = min(signal_keys, TIER_COUNT - 1)
+        return list(range(self.first_location_id,
+                          self.tier_bounds()[unlocked + 1]))
+
+    def eligible_location_ids(self, signal_keys: int) -> list[int]:
+        """Everything an ordinary Zone or the shop may allocate. Never the
+        goal. The single entry point for allocation."""
+        return [i for i in self.unlocked_location_ids(signal_keys)
+                if not self.is_goal_location(i)]
+
+    # -- allocation ---------------------------------------------------------
+
+    @property
+    def zone_min_checks(self) -> int:
+        """Below this, a Zone is padded from another track.
+
+        A campaign can be configured at one Check per Zone, and a floor
+        of two would then be unsatisfiable -- so the floor is whichever
+        is smaller.
+        """
+        return min(ZONE_MIN_CHECKS, self.zone_target_checks)
+
+    @property
+    def shop_reserve(self) -> int:
+        """Checks the shop leaves in the pool for the next Zone.
+
+        One Zone's worth, which is a per-campaign number: reserving the
+        prototype's three in a fifteen-Check campaign lets the shop
+        strip a Zone down to a fifth of its length.
+        """
+        return self.zone_target_checks
+
+    # -- finale -------------------------------------------------------------
+
+    def zone_budget_for(self, allocated_checks: int) -> int:
+        """The budget for a Zone holding this many Checks.
+
+        The LAST Zone of a campaign is a remainder: 449 Checks at 15 per
+        Zone leaves a short one, and holding it to a full 1000 points
+        would demand a forty-minute level built around two pedestals.
+
+        So the budget scales with what the Zone was actually given, and
+        is floored at the minimum: a one-Check Zone is a short level, not
+        a broken one.
+        """
+        if allocated_checks >= self.zone_target_checks:
+            return self.zone_budget
+        share = allocated_checks / max(1, self.zone_target_checks)
+        return max(ZONE_BUDGET_MIN, round(self.zone_budget * share))
+
+    def finale_required_checks(self) -> int:
+        """Non-goal Checks needed before the finale is offered."""
+        return math.ceil(self.non_goal_count * FINALE_REQUIRED_FRACTION)
+
+    # -- item pool ----------------------------------------------------------
+
+    def item_counts(self) -> dict[str, int]:
+        """Exactly `location_count` items. Static takes the remainder."""
+        keys = min(SIGNAL_KEY_COUNT, self.location_count)
+        rest = self.location_count - keys
+        coins = round(rest * COIN_SHARE_OF_NON_KEY)
+        static = rest - coins
+        counts = {
+            ITEM_NAME_SIGNAL_KEY: keys,
+            ITEM_NAME_EPSILON_COIN: coins,
+            ITEM_NAME_EPSILON_STATIC: static,
+        }
+        assert sum(counts.values()) == self.location_count
+        return counts
+
+
+#: What a campaign generated before these options existed WAS.
+#:
+#: A save or slot with no recorded config migrates to this and never to the
+#: production default. Reinterpreting an old 30-location campaign as 450
+#: would invent 420 locations the seed never had and strand every item the
+#: multiworld placed on them. `zone_budget` is the floor because the
+#: prototype enforced no budget at all; it is a placeholder for a value that
+#: did not exist, not a claim that old Zones were worth 200.
+PROTOTYPE_CONFIG = CampaignConfig(
+    location_count=30, zone_target_checks=3, zone_budget=ZONE_BUDGET_MIN)
+
+DEFAULT_CONFIG = CampaignConfig()
+
+
+# --------------------------------------------------------------------------
+# Campaign shape — PROTOTYPE constants, being migrated to CampaignConfig
+# --------------------------------------------------------------------------
+# These are the prototype campaign's numbers and remain the values the
+# not-yet-migrated call sites use. `test_campaign_config.py` pins every one
+# of them to `PROTOTYPE_CONFIG`, so the two cannot drift while the migration
+# is in progress; they are deleted as their callers move over.
 
 LOCATION_COUNT = 30
 LOCATION_ID_BASE = 89_100_000
@@ -33,6 +288,11 @@ ITEM_ID_BASE = 89_200_000
 FIRST_LOCATION_ID = LOCATION_ID_BASE + 1              # 89100001
 LAST_LOCATION_ID = LOCATION_ID_BASE + LOCATION_COUNT  # 89100030
 GOAL_LOCATION_ID = LAST_LOCATION_ID                   # Check 030
+
+#: The highest id the universe reaches. Every persistent model is bounded by
+#: THIS rather than by one campaign's last location, so a save can hold
+#: whichever prefix its own seed was generated with.
+LAST_UNIVERSE_ID = LOCATION_ID_BASE + LOCATION_UNIVERSE
 
 # --------------------------------------------------------------------------
 # The goal reservation — ONE definition, used by every path
@@ -146,14 +406,245 @@ FINALE_REQUIRED_OTHER_CHECKS = 24     # of the 29 non-goal Checks
 POSTGAME_ENABLED = True
 
 # --------------------------------------------------------------------------
+# Authored cluster placement (art requirement 5)
+# --------------------------------------------------------------------------
+# `PROP_FOOTPRINT` is 1.4 m. That is right for an L0 prop -- a crate, a
+# sconce, a pipe stub -- and far too small for an L2 station or a
+# storytelling cluster, which is a COMPOSED group of pieces that reads as
+# one thing. Art could not author one without guessing how much room the
+# runtime would give it.
+#
+# So this is the legal envelope and the placement grammar, and nothing
+# else. It says how big a cluster may be, what it may hang off, what it
+# must leave clear and how that is checked. It says nothing about what a
+# cluster CONTAINS -- that is art's, and inventing it here would be
+# engineering authoring content.
+
+#: What a cluster hangs off. `floor_wall` and `floor_corner` stand on the
+#: ground against something; `wall` and `ceiling` are mounted and touch no
+#: floor at all.
+#:
+#: There is deliberately no free-standing floor anchor. A cluster in the
+#: middle of a room is a cluster on the mandatory path, and I4 says the
+#: mandatory path is independent of optional content -- so an island
+#: setpiece would either block the route or have to be walked around,
+#: and neither is a thing to discover at runtime.
+CLUSTER_ANCHORS = ("floor_wall", "floor_corner", "wall", "ceiling")
+
+#: Anchors whose cluster rests on the ground, and therefore eats lane.
+CLUSTER_FLOOR_ANCHORS = ("floor_wall", "floor_corner")
+
+#: The largest cluster the placement grammar will admit, in metres
+#: (width across the wall, height, depth out from it).
+#:
+#: Depth is the number that matters and it is the one bounded hardest: a
+#: cluster reaching 2.5 m out of a wall has already taken more room than
+#: two props, and the lane rule below is what actually decides whether it
+#: fits. Width and height are bounded so a "cluster" cannot quietly
+#: become a room shell with no sockets.
+CLUSTER_MAX_WIDTH = 6.0
+CLUSTER_MAX_HEIGHT = 4.0
+CLUSTER_MAX_DEPTH = 2.5
+
+#: Walk-around margin in front of a floor cluster. Not decoration: it is
+#: what stops a player brushing a setpiece they were only walking past.
+CLUSTER_CLEARANCE = 0.4
+
+#: Height a mounted cluster's underside must clear, so a walker passes
+#: beneath it. The tallest ground actor plus the same margin the secret
+#: ledges use.
+CLUSTER_MOUNTED_UNDERSIDE_MIN = 2.75
+
+
+@dataclass(frozen=True)
+class ClusterFootprint:
+    """The envelope an authored cluster declares, and what it needs.
+
+    `collides` is the honest half: a cluster that is pure dressing costs
+    the lane nothing, and one the player can walk into costs it the
+    cluster's depth plus clearance. Declared rather than inferred,
+    because "does this have collision" read off a scene at runtime is
+    exactly the kind of question that gets answered differently by the
+    validator and the builder.
+    """
+    width: float
+    height: float
+    depth: float
+    anchor: str
+    collides: bool = True
+    #: Height of the underside above the floor. Zero for a floor anchor;
+    #: mounted clusters declare where they hang.
+    mount_height: float = 0.0
+
+    def __post_init__(self):
+        if self.anchor not in CLUSTER_ANCHORS:
+            raise ValueError(
+                f"'{self.anchor}' is not a cluster anchor; "
+                f"choose from {CLUSTER_ANCHORS}")
+        for field, value, cap in (("width", self.width, CLUSTER_MAX_WIDTH),
+                                  ("height", self.height, CLUSTER_MAX_HEIGHT),
+                                  ("depth", self.depth, CLUSTER_MAX_DEPTH)):
+            if not 0.1 <= value <= cap:
+                raise ValueError(
+                    f"cluster {field} {value} is outside 0.1..{cap}")
+        if self.anchor in CLUSTER_FLOOR_ANCHORS and self.mount_height != 0.0:
+            raise ValueError(
+                "a floor cluster stands on the floor; mount_height is 0")
+        if self.anchor not in CLUSTER_FLOOR_ANCHORS \
+                and self.mount_height <= 0.0:
+            raise ValueError(
+                f"a '{self.anchor}' cluster is mounted and must declare "
+                "the height its underside hangs at")
+
+    @property
+    def stands_on_the_floor(self) -> bool:
+        return self.anchor in CLUSTER_FLOOR_ANCHORS
+
+    @property
+    def lane_cost(self) -> float:
+        """How much of the room's width this takes out of the walking lane.
+
+        Nothing at all when it does not collide or does not touch the
+        ground -- which is the whole reason the grammar distinguishes
+        them.
+        """
+        if not self.collides or not self.stands_on_the_floor:
+            return 0.0
+        return self.depth + CLUSTER_CLEARANCE
+
+
+def cluster_placement_errors(footprint: ClusterFootprint, wall_run: float,
+                             across: float, room_height: float,
+                             lane: float) -> list[str]:
+    """Why this cluster cannot go on this wall. Empty means it can.
+
+    `wall_run` is the length of the wall it hangs on -- what its WIDTH
+    has to fit inside. `across` is the room's perpendicular span, which
+    its DEPTH eats into and which the walking lane is measured from.
+
+    Named that way rather than `span_x` / `span_z` because a cluster on
+    a side wall runs along z and reaches along x, and one on an end wall
+    does the opposite. Two axis names would mean each caller deciding
+    which was which, and half of them deciding wrong.
+
+    Deterministic and total: the same footprint on the same wall always
+    gets the same answer, and every reason is named. An art lane that
+    cannot ask this question in advance finds out by building something
+    the generator then refuses to place.
+    """
+    out: list[str] = []
+    if footprint.width + 2.0 * CLUSTER_CLEARANCE > wall_run:
+        out.append(
+            f"a {footprint.width}m cluster does not fit along a "
+            f"{wall_run}m wall with {CLUSTER_CLEARANCE}m either side")
+    if footprint.depth + CLUSTER_CLEARANCE > across:
+        out.append(
+            f"a {footprint.depth}m-deep cluster does not fit into a "
+            f"{across}m span")
+    if footprint.stands_on_the_floor:
+        if footprint.height > room_height:
+            out.append(
+                f"a {footprint.height}m cluster does not fit under a "
+                f"{room_height}m ceiling")
+        remaining = across - footprint.lane_cost
+        if remaining < lane:
+            out.append(
+                f"placing it leaves {remaining:.2f}m of walking lane, "
+                f"and the widest actor needs {lane}m")
+    else:
+        if footprint.mount_height < CLUSTER_MOUNTED_UNDERSIDE_MIN:
+            out.append(
+                f"a mounted cluster hanging at {footprint.mount_height}m "
+                f"is below the {CLUSTER_MOUNTED_UNDERSIDE_MIN}m a walker "
+                "needs to pass under it")
+        if footprint.mount_height + footprint.height > room_height:
+            out.append(
+                f"a {footprint.height}m cluster hung at "
+                f"{footprint.mount_height}m reaches through a "
+                f"{room_height}m ceiling")
+    return out
+
+
+# --------------------------------------------------------------------------
+# The affordance signal language (art requirement 15)
+# --------------------------------------------------------------------------
+# Owner ruling, 2026-08-28, in art's favour: every optional traversal
+# affordance wears ONE colour.
+#
+#   FORM tells the player WHICH affordance this is.
+#   COLOUR tells the player THIS IS A CAPABILITY OPPORTUNITY.
+#
+# Theme, source-game colour and Epsilon green each do NOT redefine that
+# semantic. The six affordances used to carry six ad-hoc tints -- the rail
+# a violet that sat beside `glitch` (which means cosmetic corruption, no
+# mechanical meaning), the breakable wall the theme HAZARD colour, and the
+# bounce pad and moving platform whatever the theme's accent and trim
+# happened to be. Seven things that look different everywhere teach the
+# player nothing.
+#
+# The value is the art lane's approved `universal.signal` anchor from
+# `assets/art_palette.json`. Engineering does not get a second opinion
+# about what colour signal is, the same way art does not get one about
+# what colour `concrete_facility` is.
+
+#: sRGB hex of the approved SIGNAL family anchor.
+AFFORDANCE_SIGNAL_HEX = "#39d7c8"
+#: The same colour as linear-ish 0..1 components, for GDScript `Color()`.
+AFFORDANCE_SIGNAL_RGB = (0x39 / 255.0, 0xd7 / 255.0, 0xc8 / 255.0)
+
+#: Channels that stay DYNAMIC and are explicitly preserved by the ruling.
+#: Both are state, not identity, and both ride brightness or count rather
+#: than hue -- so one signal colour costs neither of them anything.
+AFFORDANCE_DYNAMIC_CHANNELS = (
+    #: The breakable wall's damage / crack state, carried by emission
+    #: energy ramping with damage taken.
+    "breakable_wall_damage",
+    #: The wind volume's ring count and stack presentation.
+    "wind_ring_count",
+)
+
+
+# --------------------------------------------------------------------------
 # Zone allocation
 # --------------------------------------------------------------------------
 
+#: The PROTOTYPE's allocation shape, kept because a save written before
+#: the options is a prototype campaign and has to keep behaving like one.
+#: The live numbers come from the campaign's own `CampaignConfig`
+#: (CAMPAIGN_SCALE.md 2) -- a campaign at fifteen Checks per Zone that
+#: allocated three would be a 450-location campaign played at prototype
+#: density, which is the whole thing the options exist to change.
 ZONE_TARGET_CHECKS = 3
 ZONE_MAX_CHECKS = 3
 ZONE_MIN_CHECKS = 2       # 1 only when exactly one eligible Check remains
-ZONE_MAX_CHAMBERS = 6
+#: The engine's ceiling on rooms in one Zone, NOT the composition target
+#: (CAMPAIGN_SCALE.md 7).
+#:
+#: Six was the prototype's shape, and it stopped a 1000-point Zone from
+#: existing at all: fifteen Checks capped at three per room need five
+#: rooms before a single corridor, fight or quiet space is added. This is
+#: now a safety limit -- the point past which a Zone stops being a level
+#: and starts being a memory problem -- and nothing should be designing
+#: toward it.
+ZONE_MAX_CHAMBERS = 40
 ZONE_MIN_CHAMBERS = 1
+
+#: Advisory room count for a budget, which is what Epsilon is TOLD.
+#:
+#: An envelope, not a rule: a Zone may be fewer large complicated spaces
+#: or more small ones, provided the content budget and the composition
+#: constraints hold. Deliberately not validated -- validating it would
+#: make it the rule it is explicitly not, and the thing that actually
+#: matters (is there enough real content, and is it varied) is checked
+#: directly.
+ROOMS_PER_BUDGET_POINT = 15 / 1000
+
+
+def zone_room_envelope(zone_budget: int) -> tuple[int, int]:
+    """Roughly how many meaningful spaces a Zone of this size wants."""
+    middle = zone_budget * ROOMS_PER_BUDGET_POINT
+    return (max(ZONE_MIN_CHAMBERS, round(middle * 0.7)),
+            min(ZONE_MAX_CHAMBERS, round(middle * 1.35)))
 
 #: The narrowest chamber each affordance tag can be built in (ECHOES 13.2).
 #:
@@ -309,6 +800,13 @@ MAX_VERTICAL_STEP = _floor1(
 )
 MIN_PLATFORM_SIZE = 2.5
 
+#: How many floors a tower may have. Here rather than typed into
+#: `TowerChamber` because P2 needs an authored shell to declare which
+#: counts it was BUILT for, and the shell validator, the registry and
+#: the schema must not come to hold three opinions about the range.
+TOWER_MIN_FLOORS = 2
+TOWER_MAX_FLOORS = 5
+
 # --------------------------------------------------------------------------
 # Combat
 # --------------------------------------------------------------------------
@@ -329,16 +827,272 @@ ENEMY_STATS = {
 ENEMY_AGGRO_RADIUS = 18.0
 RANGED_PROJECTILE_SPEED = 14.0
 
-MAX_ENEMIES_PER_ZONE = 14
-MAX_ENEMIES_PER_CHAMBER = 8
-MAX_BRUTES_PER_ZONE = 1
-WORST_CASE_ZONE_TTK_BUDGET = 40.0
+
+# --------------------------------------------------------------------------
+# Enemy physical envelopes (art requirement 7)
+# --------------------------------------------------------------------------
+# The approved enemy production family is TEN roles. `enemy.gd` knew three,
+# and it knew their colliders as three magic vectors inside a `match kind:`
+# in `create()` -- so a model built to a declared box and a collider built
+# to a literal could disagree, and nothing would notice until something
+# clipped through a wall.
+#
+# One table, here, because this is the file the art toolchain already reads
+# (`tools/blender/engine_truth.py` imports it rather than transcribing it).
+# An envelope is PHYSICAL INTEGRATION ONLY: how much room the role occupies
+# and whether it stands on the floor or holds a height. It says nothing
+# about what the role DOES -- see `ENEMY_ARCHETYPES` below for the
+# separation, which is deliberate and load bearing.
+
+#: Axis order, stated once because it is the likeliest silent disagreement.
+#:
+#: Godot is Y-up and takes `Vector3(width, height, depth)`. The authoring
+#: tool is Z-up and writes `[width, depth, height]`. The same three numbers
+#: in a different order, and a transposed height is a model that fits a
+#: doorway on one side of the seam and not the other. So an envelope is
+#: NAMED fields, and both orders are derived from them rather than typed.
+@dataclass(frozen=True)
+class EnemyEnvelope:
+    """How much space one enemy role occupies, and where it sits.
+
+    `hover_height` is the height of the collider's CENTRE above the floor,
+    and zero means the role walks. Centre rather than base on purpose: a
+    flyer described by its base can be given a height that puts its crown
+    through a doorway, and the reader cannot tell which was meant.
+    """
+    width: float
+    height: float
+    depth: float
+    hover_height: float = 0.0
+
+    def __post_init__(self):
+        for field, value in (("width", self.width), ("height", self.height),
+                             ("depth", self.depth)):
+            if not 0.1 <= value <= 6.0:
+                raise ValueError(
+                    f"{field} {value} is outside the buildable range")
+        if self.hover_height < 0.0:
+            raise ValueError("hover_height is a height above the floor")
+        if 0.0 < self.hover_height <= self.height / 2.0:
+            raise ValueError(
+                "a hovering enemy whose centre is at or below its own "
+                "half-height is resting on the floor; it walks, so "
+                "hover_height is 0")
+
+    @property
+    def is_flying(self) -> bool:
+        return self.hover_height > 0.0
+
+    @property
+    def centre_y(self) -> float:
+        """Where the collider's centre sits above the floor."""
+        return self.hover_height if self.is_flying else self.height / 2.0
+
+    @property
+    def bottom_y(self) -> float:
+        """The lowest point the role occupies.
+
+        Exactly 0.0 for a walker, and strictly above it for a flyer. This
+        is what "flying" MEANS physically, so it is the thing to assert
+        rather than comparing a hover height against half a height and
+        hoping the floats land the right way.
+        """
+        return self.centre_y - self.height / 2.0
+
+    @property
+    def top_y(self) -> float:
+        """The highest point the role occupies. What a lintel must clear."""
+        return self.centre_y + self.height / 2.0
+
+    @property
+    def lane_width(self) -> float:
+        """The corridor width this role needs. The wider ground axis."""
+        return max(self.width, self.depth)
+
+    def godot_size(self) -> tuple[float, float, float]:
+        """`Vector3(x, y, z)` for a `BoxShape3D`."""
+        return (self.width, self.height, self.depth)
+
+    def authoring_size(self) -> tuple[float, float, float]:
+        """`[X, Y, Z]` as the Z-up authoring tool writes a bounding box."""
+        return (self.width, self.depth, self.height)
 
 
-def worst_case_zone_ttk() -> float:
-    """Seconds of sustained Static Pulse fire to clear the worst legal Zone."""
-    brute_hp = ENEMY_STATS["brute"]["hp"] * MAX_BRUTES_PER_ZONE
-    grunt_hp = ENEMY_STATS["melee"]["hp"] * (MAX_ENEMIES_PER_ZONE - MAX_BRUTES_PER_ZONE)
+#: The approved production family (ART_REVIEW Batch 002, `PASS`). Every
+#: envelope is the box the art lane declared for the role, so a model and a
+#: collider cannot be built to different numbers.
+#:
+#: THIS IS NOT THE LIST OF ENEMIES A ZONE MAY CONTAIN. It is the list of
+#: roles that have an agreed physical envelope. `ENEMY_ARCHETYPES` is the
+#: placeable set, and it is smaller.
+ENEMY_ENVELOPES = {
+    # -- the three with behaviour, unchanged from `enemy.gd`'s literals
+    "melee":     EnemyEnvelope(width=0.8, height=1.6, depth=0.8),
+    "ranged":    EnemyEnvelope(width=0.7, height=1.4, depth=0.7),
+    "brute":     EnemyEnvelope(width=1.8, height=2.6, depth=1.8),
+    # -- ground roles awaiting behaviour
+    "charger":   EnemyEnvelope(width=0.9, height=1.05, depth=1.9),
+    "bulwark":   EnemyEnvelope(width=1.45, height=2.05, depth=0.85),
+    "scuttler":  EnemyEnvelope(width=1.3, height=0.62, depth=1.2),
+    "artillery": EnemyEnvelope(width=1.25, height=1.55, depth=1.25),
+    "beacon":    EnemyEnvelope(width=0.62, height=2.2, depth=0.62),
+    # -- flyers. `hover_height` is the collider CENTRE above the floor.
+    "diver":     EnemyEnvelope(width=0.7, height=0.5, depth=1.2,
+                               hover_height=1.9),
+    "drifter":   EnemyEnvelope(width=1.35, height=0.95, depth=1.35,
+                               hover_height=2.55),
+}
+
+#: The whole approved family, in a stable order.
+ENEMY_ROLES = tuple(ENEMY_ENVELOPES)
+
+#: Roles that hold a height instead of standing on the floor. Explicit
+#: rather than inferred at each call site, because "is this a flyer" is
+#: asked by spawn placement, by ceiling clearance and by the art toolchain,
+#: and three inferences are three chances to disagree.
+FLYING_ENEMY_ROLES = tuple(
+    role for role, envelope in ENEMY_ENVELOPES.items() if envelope.is_flying)
+GROUND_ENEMY_ROLES = tuple(
+    role for role, envelope in ENEMY_ENVELOPES.items()
+    if not envelope.is_flying)
+
+
+#: The tallest thing that can WALK INTO a slab.
+#:
+#: `chamber_builders.SECRET_UNDERSIDE_MIN` derives from this: a ledge whose
+#: underside does not clear the tallest walker becomes a wall that walker
+#: walks into. Flyers are excluded on purpose -- a flyer is steered and can
+#: descend, so a low soffit is a route it does not take rather than a wall
+#: it collides with.
+TALLEST_GROUND_ACTOR = max(
+    ENEMY_ENVELOPES[role].top_y for role in GROUND_ENEMY_ROLES)
+
+#: The tallest thing in the family, flyers included. NOT the number the
+#: secret-ledge geometry uses, and deliberately separate: the drifter's
+#: crown sits at 3.025 m, above the 2.6 m every room was built around, and
+#: collapsing the two would move generated geometry for the sake of a role
+#: that has no behaviour yet. See `docs/ART_INTEGRATION.md`.
+TALLEST_ACTOR_INCLUDING_FLYERS = max(
+    envelope.top_y for envelope in ENEMY_ENVELOPES.values())
+
+
+def enemy_envelope(role: str) -> EnemyEnvelope:
+    """The envelope for a role. Raises rather than guessing a default.
+
+    A missing envelope is a role somebody added to one list and not the
+    other, and a default box would hide it until something clipped.
+    """
+    try:
+        return ENEMY_ENVELOPES[role]
+    except KeyError:
+        raise KeyError(
+            f"'{role}' has no agreed physical envelope; add one to "
+            "ENEMY_ENVELOPES rather than assuming a box") from None
+
+# --------------------------------------------------------------------------
+# Combat scale (CAMPAIGN_SCALE.md 8)
+# --------------------------------------------------------------------------
+# These were one number, `MAX_ENEMIES_PER_ZONE = 14`, doing four jobs:
+# how many the player meets, how many are alive at once, how long the
+# shooting lasts, and what the engine can afford. That works while a Zone
+# is six rooms and every enemy in it is effectively one fight. It cannot
+# describe a forty-minute level, and replacing 14 with a bigger number
+# would just make the conflation bigger.
+#
+# So they separate. Two of them SCALE with the Zone's content budget --
+# a longer level has more enemies in it over time -- and two do NOT,
+# because they are about a single moment: what is on screen, and what the
+# player is being asked to survive right now.
+
+#: Enemies in one encounter group, and how many of those may be brutes.
+#: This is the unit a player actually fights, and it does not grow with
+#: the level: a 40-minute Zone is more fights, not a bigger fight.
+#: Seconds a player needs per activity element at base movement speed,
+#: used to floor a timed puzzle's clock. Derived from the walk across a
+#: mid-size room plus the interaction itself, generously: a puzzle that
+#: is tight for a good player is fine, one that is impossible for the
+#: base kit is a wall.
+SECONDS_PER_ACTIVITY_ELEMENT = 4.0
+
+#: Ordered puzzles cost more time because a mistake means going back.
+ORDERED_ACTIVITY_TIME_MULTIPLIER = 1.5
+
+#: How long a pressure plate stays held after the player steps off it.
+#:
+#: This is what makes `pressure_routing` a routing puzzle rather than an
+#: impossible one: one player cannot stand on eight plates at once, so
+#: success is "every plate held AT THE SAME TIME" only if a plate keeps
+#: holding for long enough to reach the next. Set to
+#: `SECONDS_PER_ACTIVITY_ELEMENT` exactly, and not to a second number
+#: that means the same thing -- that constant already IS "long enough to
+#: cross a mid-size room and interact, generously", which is the same
+#: question this asks.
+PLATE_HOLD_SECONDS = SECONDS_PER_ACTIVITY_ELEMENT
+
+#: How long a completed or failed activity shows its result before it
+#: resets and can be attempted again. Feedback, not difficulty.
+ACTIVITY_RESULT_SECONDS = 2.0
+
+#: Radius within which a `touch` or `stand` activity element notices the
+#: player. Comfortably larger than the element itself so a switch is
+#: pressed by walking into it rather than by pixel-hunting.
+ACTIVITY_TOUCH_RADIUS = 1.1
+
+MAX_ENEMIES_PER_ENCOUNTER = 10
+MAX_BRUTES_PER_ENCOUNTER = 1
+
+#: Alive and hostile at the same instant, across the whole Zone. Bounded
+#: for fairness first and frame time second -- a player cannot read
+#: thirty telegraphs, whatever the renderer can manage.
+MAX_ENEMIES_ACTIVE = 12
+
+#: One room, over the whole time the player is in it. Larger than an
+#: encounter because a big arena may hold two or three waves.
+MAX_ENEMIES_PER_CHAMBER = 12
+
+#: The hard engine ceiling on enemies instantiated for one Zone. Not a
+#: design number: a design that wants more is wrong about what the target
+#: machine can hold, and should say so by failing here.
+MAX_ENEMIES_SPAWNED_CAP = 240
+
+#: How the two scaling caps derive from `zone_budget`.
+#:
+#: Both reproduce the prototype EXACTLY at the 200-point floor -- 14
+#: enemies, 1 brute -- so a campaign generated before budgets existed
+#: keeps the combat it was built with, the same property CampaignConfig
+#: has for tiers and the item pool.
+ENEMIES_PER_BUDGET_POINT = 14 / 200
+BRUTES_PER_BUDGET_POINT = 1 / 200
+
+
+def max_enemies_per_zone(zone_budget: int) -> int:
+    """Total enemies a Zone may contain, over its whole length.
+
+    NOT how many are alive at once -- that is `MAX_ENEMIES_ACTIVE`, and
+    conflating the two is what made the old single number unable to
+    describe a long level.
+    """
+    return min(MAX_ENEMIES_SPAWNED_CAP,
+               round(zone_budget * ENEMIES_PER_BUDGET_POINT))
+
+
+def max_brutes_per_zone(zone_budget: int) -> int:
+    return max(1, round(zone_budget * BRUTES_PER_BUDGET_POINT))
+
+
+#: Seconds of sustained Static Pulse fire the worst legal ENCOUNTER may
+#: need. Per encounter, because "the whole level equals 40 seconds of
+#: shooting" stopped being a statement about difficulty the moment a Zone
+#: became forty minutes long -- it would have capped a production Zone at
+#: about the combat of one arena.
+WORST_CASE_ENCOUNTER_TTK_BUDGET = 40.0
+
+
+def worst_case_encounter_ttk() -> float:
+    """Seconds to clear the worst legal single encounter with the base kit."""
+    brute_hp = ENEMY_STATS["brute"]["hp"] * MAX_BRUTES_PER_ENCOUNTER
+    grunts = MAX_ENEMIES_PER_ENCOUNTER - MAX_BRUTES_PER_ENCOUNTER
+    grunt_hp = ENEMY_STATS["melee"]["hp"] * grunts
     return (brute_hp + grunt_hp) / STATIC_PULSE_DPS
 
 
@@ -474,6 +1228,28 @@ TEXTURE_SIZE_DEFAULT = 64
 #: prevent, in the one constant both sides must agree on to talk at all.
 BRIDGE_HOST = "127.0.0.1"
 BRIDGE_PORT = 38290
+
+#: How large a single bridge message the CLIENT must be able to receive.
+#:
+#: Godot's `WebSocketPeer.inbound_buffer_size` defaults to 64 KiB and a
+#: message over it is not truncated -- the peer closes the connection
+#: with code 1009 "message too big". The client then reconnects, gets the
+#: same oversized snapshot, and closes again, forever, while the game
+#: says BRIDGE OFFLINE.
+#:
+#: Which is exactly what a 450-location campaign did the first time a
+#: human tried to play one. The prototype's connect snapshot is 8.5 KB
+#: and fits; the default scale's is 110 KB, of which 105 KB is 450
+#: `ScoutedLocation` entries. Nothing caught it because the Godot
+#: integration suite runs at thirty locations, so no test had ever put a
+#: production-scale snapshot through a real WebSocket.
+#:
+#: Sized against the measured worst case rather than guessed: the
+#: largest configurable campaign, late, with its whole Echo log, is
+#: about 1 MB. `test_snapshot_size.py` measures that and fails if it
+#: ever approaches this, so the next growth is a red test rather than a
+#: player whose game will not connect.
+WS_INBOUND_BUFFER_BYTES = 8 * 1024 * 1024
 
 PROVIDER_TIMEOUT_SECONDS = 60.0
 REPAIR_ATTEMPTS = 1

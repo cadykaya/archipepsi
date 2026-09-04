@@ -25,6 +25,102 @@
         "title": "AbandonZone",
         "type": "object"
       },
+      "ActivityOutcome": {
+        "additionalProperties": false,
+        "description": "What one activity did while the player was in the room with it.\n\nThe questions the next playtest has to be able to answer, and the\nfield that answers each:\n\n  Did they notice it?      `entered`\n  Did they try it?         `attempts`\n  Did they understand it?  `attempts` against `completed`\n  Did they finish it?      `completed`\n  How long did it hold them? `active_seconds`\n  Did a gate behave?       `not_yet`\n\n`entered` and `attempts` are deliberately separate. \"Walked past it\"\nand \"had a go and gave up\" are different findings, and a single\nengagement flag would have collapsed them into one number that could\nnot distinguish a legibility problem from a difficulty one.",
+        "properties": {
+          "activity_id": {
+            "maxLength": 64,
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "switch_sequence",
+              "timed_run",
+              "target_challenge",
+              "pressure_routing"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 64,
+            "title": "Room Id",
+            "type": "string"
+          },
+          "element_count": {
+            "maximum": 8,
+            "minimum": 1,
+            "title": "Element Count",
+            "type": "integer"
+          },
+          "time_limit": {
+            "default": 0.0,
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Time Limit",
+            "type": "number"
+          },
+          "ordered": {
+            "default": false,
+            "title": "Ordered",
+            "type": "boolean"
+          },
+          "requires": {
+            "default": [],
+            "items": {
+              "enum": [
+                "blink",
+                "cross_long_gap",
+                "grapple",
+                "ranged_hit"
+              ],
+              "type": "string"
+            },
+            "maxItems": 2,
+            "title": "Requires",
+            "type": "array"
+          },
+          "entered": {
+            "default": false,
+            "title": "Entered",
+            "type": "boolean"
+          },
+          "attempts": {
+            "default": 0,
+            "maximum": 9999,
+            "minimum": 0,
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "completed": {
+            "default": false,
+            "title": "Completed",
+            "type": "boolean"
+          },
+          "not_yet": {
+            "default": false,
+            "title": "Not Yet",
+            "type": "boolean"
+          },
+          "active_seconds": {
+            "default": 0.0,
+            "maximum": 36000.0,
+            "minimum": 0.0,
+            "title": "Active Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "activity_id",
+          "kind",
+          "room_id",
+          "element_count"
+        ],
+        "title": "ActivityOutcome",
+        "type": "object"
+      },
       "ApConnect": {
         "additionalProperties": false,
         "properties": {
@@ -83,7 +179,7 @@
             "type": "string"
           },
           "location_id": {
-            "maximum": 89100029,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -94,6 +190,30 @@
           "location_id"
         ],
         "title": "BuyShopStock",
+        "type": "object"
+      },
+      "ChamberDwell": {
+        "additionalProperties": false,
+        "description": "How long the player spent in one chamber. Seconds, one entry per\nchamber the Zone has, whether or not it was entered.",
+        "properties": {
+          "chamber_index": {
+            "exclusiveMaximum": 40,
+            "minimum": 0,
+            "title": "Chamber Index",
+            "type": "integer"
+          },
+          "seconds": {
+            "maximum": 36000.0,
+            "minimum": 0.0,
+            "title": "Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "chamber_index",
+          "seconds"
+        ],
+        "title": "ChamberDwell",
         "type": "object"
       },
       "ClaimCheck": {
@@ -113,7 +233,7 @@
             "type": "string"
           },
           "location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -406,6 +526,83 @@
         ],
         "title": "StartMockCampaign",
         "type": "object"
+      },
+      "ZoneTiming": {
+        "additionalProperties": false,
+        "description": "What the Zone actually cost the player, measured (CAMPAIGN_SCALE.md 13).\n\nThe 40-minute Zone and the 20-hour campaign are TARGETS. This is the\nonly thing that can turn either into a fact, and it is the reason the\nengine's content budget can be calibrated against play rather than\nagainst a designer's guess.\n\nGodot owns the clock -- elapsed time, per-chamber dwell, deaths and\nencounter durations are things only the running game knows. The\nbridge joins them to the room and Zone VALUES it computed for the\nsame Zone, so one local record holds both halves.\n\nLocal only: the bridge appends it to a file under the save directory.\nNothing is sent anywhere (CAMPAIGN_SCALE.md 13).",
+        "properties": {
+          "type": {
+            "const": "zone_timing",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "elapsed_seconds": {
+            "maximum": 36000.0,
+            "minimum": 0.0,
+            "title": "Elapsed Seconds",
+            "type": "number"
+          },
+          "deaths": {
+            "default": 0,
+            "maximum": 9999,
+            "minimum": 0,
+            "title": "Deaths",
+            "type": "integer"
+          },
+          "checks_completed": {
+            "default": 0,
+            "maximum": 30,
+            "minimum": 0,
+            "title": "Checks Completed",
+            "type": "integer"
+          },
+          "dwell": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ChamberDwell"
+            },
+            "maxItems": 40,
+            "title": "Dwell",
+            "type": "array"
+          },
+          "encounter_seconds": {
+            "default": [],
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 64,
+            "title": "Encounter Seconds",
+            "type": "array"
+          },
+          "completed": {
+            "default": false,
+            "title": "Completed",
+            "type": "boolean"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityOutcome"
+            },
+            "maxItems": 120,
+            "title": "Activities",
+            "type": "array"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "elapsed_seconds"
+        ],
+        "title": "ZoneTiming",
+        "type": "object"
       }
     },
     "discriminator": {
@@ -424,7 +621,8 @@
         "request_next_zone": "#/$defs/RequestNextZone",
         "set_creativity": "#/$defs/SetCreativity",
         "slot_action": "#/$defs/SlotAction",
-        "start_mock_campaign": "#/$defs/StartMockCampaign"
+        "start_mock_campaign": "#/$defs/StartMockCampaign",
+        "zone_timing": "#/$defs/ZoneTiming"
       },
       "propertyName": "type"
     },
@@ -473,6 +671,9 @@
       },
       {
         "$ref": "#/$defs/DebugCommand"
+      },
+      {
+        "$ref": "#/$defs/ZoneTiming"
       }
     ]
   },
@@ -682,6 +883,61 @@
           "primitive"
         ],
         "title": "ActionComponent",
+        "type": "object"
+      },
+      "ActivityPrimitive": {
+        "additionalProperties": false,
+        "description": "One instance of an activity family, with its difficulty dialled in.\n\nEpsilon picks the family and the numbers. It does not describe the\npuzzle in prose, because prose cannot be built and cannot be scored:\nan unimplemented tag counts for nothing (CAMPAIGN_SCALE.md 9), and\nthe way to guarantee that is to have no field it could put prose in.",
+        "properties": {
+          "kind": {
+            "enum": [
+              "switch_sequence",
+              "timed_run",
+              "target_challenge",
+              "pressure_routing"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "element_count": {
+            "default": 1,
+            "maximum": 8,
+            "minimum": 1,
+            "title": "Element Count",
+            "type": "integer"
+          },
+          "time_limit": {
+            "default": 0.0,
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Time Limit",
+            "type": "number"
+          },
+          "ordered": {
+            "default": false,
+            "title": "Ordered",
+            "type": "boolean"
+          },
+          "requires": {
+            "default": [],
+            "items": {
+              "enum": [
+                "blink",
+                "cross_long_gap",
+                "grapple",
+                "ranged_hit"
+              ],
+              "type": "string"
+            },
+            "maxItems": 2,
+            "title": "Requires",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "ActivityPrimitive",
         "type": "object"
       },
       "AffordanceComponent": {
@@ -934,7 +1190,7 @@
           "reward_location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -952,6 +1208,67 @@
             },
             "maxItems": 3,
             "title": "Features",
+            "type": "array"
+          },
+          "additional_reward_location_ids": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "title": "Additional Reward Location Ids",
+            "type": "array"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
+            "type": "array"
+          },
+          "shell_id": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Shell Id"
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "enum": [
+                  "small",
+                  "medium",
+                  "large"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Size Class"
+          },
+          "intent": {
+            "default": [],
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Intent",
             "type": "array"
           },
           "type": {
@@ -993,6 +1310,17 @@
             "maxItems": 4,
             "title": "Enemies",
             "type": "array"
+          },
+          "elevation": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ElevationBand"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           }
         },
         "required": [
@@ -1293,7 +1621,7 @@
           "checked_location_ids": {
             "default": [],
             "items": {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
@@ -1303,7 +1631,7 @@
           "missing_location_ids": {
             "default": [],
             "items": {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
@@ -1361,6 +1689,17 @@
             },
             "title": "Interpretations",
             "type": "array"
+          },
+          "interpretations_complete": {
+            "default": true,
+            "title": "Interpretations Complete",
+            "type": "boolean"
+          },
+          "interpretation_count": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Interpretation Count",
+            "type": "integer"
           },
           "mechanics": {
             "$ref": "#/$defs/Mechanics"
@@ -1420,6 +1759,15 @@
             "default": null,
             "title": "Last Generation Error"
           },
+          "available_capabilities": {
+            "description": "What the player can do RIGHT NOW, over what is equipped.\n\nDerived here rather than in GDScript, for the reason the fold is:\nre-implementing \"can this campaign grapple\" in the client would\nbe a second answer to a question that has exactly one.\n\nDistinct from the OWNED set generation reasons over. A Zone is\nbuilt against what the campaign owns; the player walks into it\nwith whatever they slotted, so the difference between the two is\nwhat a NOT YET gate is FOR \u2014 and it is why that gate is a\nreachable state rather than dead code.",
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true,
+            "title": "Available Capabilities",
+            "type": "array"
+          },
           "coins_available": {
             "description": "Derived, never stored \u2014 `DESIGN.md` \u00a712 said so and v0.6 shipped it\nas a free integer that could read 9999 against zero received.",
             "readOnly": true,
@@ -1433,6 +1781,7 @@
           "ap_mode",
           "epsilon_provider",
           "hub",
+          "available_capabilities",
           "coins_available"
         ],
         "title": "CampaignSnapshot",
@@ -1582,6 +1931,7 @@
             "anyOf": [
               {
                 "maxLength": 32,
+                "pattern": "^[a-z0-9_]+$",
                 "type": "string"
               },
               {
@@ -1632,7 +1982,7 @@
           "reward_location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -1650,6 +2000,67 @@
             },
             "maxItems": 3,
             "title": "Features",
+            "type": "array"
+          },
+          "additional_reward_location_ids": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "title": "Additional Reward Location Ids",
+            "type": "array"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
+            "type": "array"
+          },
+          "shell_id": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Shell Id"
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "enum": [
+                  "small",
+                  "medium",
+                  "large"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Size Class"
+          },
+          "intent": {
+            "default": [],
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Intent",
             "type": "array"
           },
           "type": {
@@ -1873,7 +2284,7 @@
             "type": "integer"
           },
           "source_location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Source Location Id",
             "type": "integer"
@@ -1901,6 +2312,7 @@
             "items": {
               "maxLength": 24,
               "minLength": 1,
+              "pattern": "^[a-z0-9 _-]+$",
               "type": "string"
             },
             "maxItems": 6,
@@ -1934,6 +2346,7 @@
             "default": [],
             "items": {
               "maxLength": 24,
+              "pattern": "^[a-z0-9 _-]*$",
               "type": "string"
             },
             "maxItems": 6,
@@ -2014,6 +2427,7 @@
             "anyOf": [
               {
                 "maxLength": 32,
+                "pattern": "^[a-z0-9_]+$",
                 "type": "string"
               },
               {
@@ -2070,6 +2484,58 @@
         "title": "Effect",
         "type": "object"
       },
+      "ElevationBand": {
+        "additionalProperties": false,
+        "description": "A second walkable height inside an ORDINARY room (ROOM_GRAMMAR v0).\n\nThe measured finding this exists for: a room's entire shape was three\nnumbers. `ArenaChamber` was width, depth and wall_height, so every one\nof the twenty-three rooms in the played Zone was a flat rectangle and\nthe twenty-eight ranged enemies in them had nowhere to be ranged\nFROM. Nothing was wrong with the generator; there was no field in\nwhich a raised area could be described.\n\nDeliberately ONE band, and deliberately not a `platform_path`. This\nis a property an ordinary room may have, not a room type -- the whole\npoint is that verticality stops being a special minigame.\n\nEvery field is a Literal or a bounded float so the vocabulary can\nGROW without becoming free-form: `kind` gains `catwalk` and `alcove`,\n`access` gains `drop` and `capability:<name>`, `side` gains `front`.\nA dead-end one-off would have been a boolean called `has_ledge`.",
+        "properties": {
+          "kind": {
+            "enum": [
+              "gallery",
+              "pit"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "rise": {
+            "maximum": 4.0,
+            "minimum": 1.0,
+            "title": "Rise",
+            "type": "number"
+          },
+          "coverage": {
+            "maximum": 0.55,
+            "minimum": 0.2,
+            "title": "Coverage",
+            "type": "number"
+          },
+          "side": {
+            "enum": [
+              "left",
+              "right",
+              "back"
+            ],
+            "title": "Side",
+            "type": "string"
+          },
+          "access": {
+            "default": "ramp",
+            "enum": [
+              "ramp",
+              "stair"
+            ],
+            "title": "Access",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "rise",
+          "coverage",
+          "side"
+        ],
+        "title": "ElevationBand",
+        "type": "object"
+      },
       "EnemyGroup": {
         "additionalProperties": false,
         "properties": {
@@ -2083,7 +2549,7 @@
             "type": "string"
           },
           "count": {
-            "maximum": 8,
+            "maximum": 10,
             "minimum": 1,
             "title": "Count",
             "type": "integer"
@@ -2883,7 +3349,7 @@
           "location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -3012,7 +3478,7 @@
             "type": "string"
           },
           "location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -3089,7 +3555,7 @@
           "reward_location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -3107,6 +3573,67 @@
             },
             "maxItems": 3,
             "title": "Features",
+            "type": "array"
+          },
+          "additional_reward_location_ids": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "title": "Additional Reward Location Ids",
+            "type": "array"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
+            "type": "array"
+          },
+          "shell_id": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Shell Id"
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "enum": [
+                  "small",
+                  "medium",
+                  "large"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Size Class"
+          },
+          "intent": {
+            "default": [],
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Intent",
             "type": "array"
           },
           "type": {
@@ -3533,7 +4060,7 @@
         "description": "One scouted location as Godot sees it.\n\nItem identity is omitted until revealed. v0.4 shipped every unrevealed\nitem name to the client in every snapshot, which handed the client the\nanswer to all 30 Checks before the player entered a Zone \u2014 and the\nreveal is the payoff moment the whole design is built around.",
         "properties": {
           "location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -3693,7 +4220,7 @@
         "description": "One location the shop is offering RIGHT NOW.\n\nv0.6 carried a `status` field so an in-flight purchase could be greyed\nout \u2014 a second opinion about the same fact as `pending_checks`, and the\ntwo could disagree in both directions. Stock now means purchasable and\nnothing else: buying removes the item from stock and creates the pending\nrecord atomically. Godot renders \"SENDING\u2026\" from the ledger.",
         "properties": {
           "location_id": {
-            "maximum": 89100029,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -3931,7 +4458,7 @@
           "reward_location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -3949,6 +4476,67 @@
             },
             "maxItems": 3,
             "title": "Features",
+            "type": "array"
+          },
+          "additional_reward_location_ids": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "title": "Additional Reward Location Ids",
+            "type": "array"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
+            "type": "array"
+          },
+          "shell_id": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Shell Id"
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "enum": [
+                  "small",
+                  "medium",
+                  "large"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Size Class"
+          },
+          "intent": {
+            "default": [],
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Intent",
             "type": "array"
           },
           "type": {
@@ -4041,6 +4629,7 @@
             "anyOf": [
               {
                 "maxLength": 32,
+                "pattern": "^[a-z0-9_]+$",
                 "type": "string"
               },
               {
@@ -4102,7 +4691,7 @@
             "title": "Flavor"
           },
           "reward_location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Reward Location Id",
             "type": "integer"
@@ -4114,6 +4703,67 @@
             },
             "maxItems": 3,
             "title": "Features",
+            "type": "array"
+          },
+          "additional_reward_location_ids": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "title": "Additional Reward Location Ids",
+            "type": "array"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
+            "type": "array"
+          },
+          "shell_id": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Shell Id"
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "enum": [
+                  "small",
+                  "medium",
+                  "large"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Size Class"
+          },
+          "intent": {
+            "default": [],
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Intent",
             "type": "array"
           },
           "type": {
@@ -4311,7 +4961,7 @@
                 }
               ]
             },
-            "maxItems": 6,
+            "maxItems": 40,
             "minItems": 1,
             "title": "Chambers",
             "type": "array"
@@ -4375,11 +5025,11 @@
           },
           "allocated_location_ids": {
             "items": {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
-            "maxItems": 3,
+            "maxItems": 30,
             "minItems": 1,
             "title": "Allocated Location Ids",
             "type": "array"
@@ -4663,6 +5313,61 @@
         "title": "ActionComponent",
         "type": "object"
       },
+      "ActivityPrimitive": {
+        "additionalProperties": false,
+        "description": "One instance of an activity family, with its difficulty dialled in.\n\nEpsilon picks the family and the numbers. It does not describe the\npuzzle in prose, because prose cannot be built and cannot be scored:\nan unimplemented tag counts for nothing (CAMPAIGN_SCALE.md 9), and\nthe way to guarantee that is to have no field it could put prose in.",
+        "properties": {
+          "kind": {
+            "enum": [
+              "switch_sequence",
+              "timed_run",
+              "target_challenge",
+              "pressure_routing"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "element_count": {
+            "default": 1,
+            "maximum": 8,
+            "minimum": 1,
+            "title": "Element Count",
+            "type": "integer"
+          },
+          "time_limit": {
+            "default": 0.0,
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Time Limit",
+            "type": "number"
+          },
+          "ordered": {
+            "default": false,
+            "title": "Ordered",
+            "type": "boolean"
+          },
+          "requires": {
+            "default": [],
+            "items": {
+              "enum": [
+                "blink",
+                "cross_long_gap",
+                "grapple",
+                "ranged_hit"
+              ],
+              "type": "string"
+            },
+            "maxItems": 2,
+            "title": "Requires",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "ActivityPrimitive",
+        "type": "object"
+      },
       "AffordanceComponent": {
         "additionalProperties": false,
         "properties": {
@@ -4913,7 +5618,7 @@
           "reward_location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -4931,6 +5636,67 @@
             },
             "maxItems": 3,
             "title": "Features",
+            "type": "array"
+          },
+          "additional_reward_location_ids": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "title": "Additional Reward Location Ids",
+            "type": "array"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
+            "type": "array"
+          },
+          "shell_id": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Shell Id"
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "enum": [
+                  "small",
+                  "medium",
+                  "large"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Size Class"
+          },
+          "intent": {
+            "default": [],
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Intent",
             "type": "array"
           },
           "type": {
@@ -4972,6 +5738,17 @@
             "maxItems": 4,
             "title": "Enemies",
             "type": "array"
+          },
+          "elevation": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ElevationBand"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           }
         },
         "required": [
@@ -5275,6 +6052,7 @@
             "anyOf": [
               {
                 "maxLength": 32,
+                "pattern": "^[a-z0-9_]+$",
                 "type": "string"
               },
               {
@@ -5325,7 +6103,7 @@
           "reward_location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -5343,6 +6121,67 @@
             },
             "maxItems": 3,
             "title": "Features",
+            "type": "array"
+          },
+          "additional_reward_location_ids": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "title": "Additional Reward Location Ids",
+            "type": "array"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
+            "type": "array"
+          },
+          "shell_id": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Shell Id"
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "enum": [
+                  "small",
+                  "medium",
+                  "large"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Size Class"
+          },
+          "intent": {
+            "default": [],
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Intent",
             "type": "array"
           },
           "type": {
@@ -5566,7 +6405,7 @@
             "type": "integer"
           },
           "source_location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Source Location Id",
             "type": "integer"
@@ -5594,6 +6433,7 @@
             "items": {
               "maxLength": 24,
               "minLength": 1,
+              "pattern": "^[a-z0-9 _-]+$",
               "type": "string"
             },
             "maxItems": 6,
@@ -5627,6 +6467,7 @@
             "default": [],
             "items": {
               "maxLength": 24,
+              "pattern": "^[a-z0-9 _-]*$",
               "type": "string"
             },
             "maxItems": 6,
@@ -5707,6 +6548,7 @@
             "anyOf": [
               {
                 "maxLength": 32,
+                "pattern": "^[a-z0-9_]+$",
                 "type": "string"
               },
               {
@@ -5763,6 +6605,58 @@
         "title": "Effect",
         "type": "object"
       },
+      "ElevationBand": {
+        "additionalProperties": false,
+        "description": "A second walkable height inside an ORDINARY room (ROOM_GRAMMAR v0).\n\nThe measured finding this exists for: a room's entire shape was three\nnumbers. `ArenaChamber` was width, depth and wall_height, so every one\nof the twenty-three rooms in the played Zone was a flat rectangle and\nthe twenty-eight ranged enemies in them had nowhere to be ranged\nFROM. Nothing was wrong with the generator; there was no field in\nwhich a raised area could be described.\n\nDeliberately ONE band, and deliberately not a `platform_path`. This\nis a property an ordinary room may have, not a room type -- the whole\npoint is that verticality stops being a special minigame.\n\nEvery field is a Literal or a bounded float so the vocabulary can\nGROW without becoming free-form: `kind` gains `catwalk` and `alcove`,\n`access` gains `drop` and `capability:<name>`, `side` gains `front`.\nA dead-end one-off would have been a boolean called `has_ledge`.",
+        "properties": {
+          "kind": {
+            "enum": [
+              "gallery",
+              "pit"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "rise": {
+            "maximum": 4.0,
+            "minimum": 1.0,
+            "title": "Rise",
+            "type": "number"
+          },
+          "coverage": {
+            "maximum": 0.55,
+            "minimum": 0.2,
+            "title": "Coverage",
+            "type": "number"
+          },
+          "side": {
+            "enum": [
+              "left",
+              "right",
+              "back"
+            ],
+            "title": "Side",
+            "type": "string"
+          },
+          "access": {
+            "default": "ramp",
+            "enum": [
+              "ramp",
+              "stair"
+            ],
+            "title": "Access",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "rise",
+          "coverage",
+          "side"
+        ],
+        "title": "ElevationBand",
+        "type": "object"
+      },
       "EnemyGroup": {
         "additionalProperties": false,
         "properties": {
@@ -5776,7 +6670,7 @@
             "type": "string"
           },
           "count": {
-            "maximum": 8,
+            "maximum": 10,
             "minimum": 1,
             "title": "Count",
             "type": "integer"
@@ -6627,7 +7521,7 @@
             "type": "string"
           },
           "location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -6704,7 +7598,7 @@
           "reward_location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -6722,6 +7616,67 @@
             },
             "maxItems": 3,
             "title": "Features",
+            "type": "array"
+          },
+          "additional_reward_location_ids": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "title": "Additional Reward Location Ids",
+            "type": "array"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
+            "type": "array"
+          },
+          "shell_id": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Shell Id"
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "enum": [
+                  "small",
+                  "medium",
+                  "large"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Size Class"
+          },
+          "intent": {
+            "default": [],
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Intent",
             "type": "array"
           },
           "type": {
@@ -7148,7 +8103,7 @@
         "description": "One scouted location as Godot sees it.\n\nItem identity is omitted until revealed. v0.4 shipped every unrevealed\nitem name to the client in every snapshot, which handed the client the\nanswer to all 30 Checks before the player entered a Zone \u2014 and the\nreveal is the payoff moment the whole design is built around.",
         "properties": {
           "location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -7308,7 +8263,7 @@
         "description": "One location the shop is offering RIGHT NOW.\n\nv0.6 carried a `status` field so an in-flight purchase could be greyed\nout \u2014 a second opinion about the same fact as `pending_checks`, and the\ntwo could disagree in both directions. Stock now means purchasable and\nnothing else: buying removes the item from stock and creates the pending\nrecord atomically. Godot renders \"SENDING\u2026\" from the ledger.",
         "properties": {
           "location_id": {
-            "maximum": 89100029,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Location Id",
             "type": "integer"
@@ -7546,7 +8501,7 @@
           "reward_location_id": {
             "anyOf": [
               {
-                "maximum": 89100030,
+                "maximum": 89100600,
                 "minimum": 89100001,
                 "type": "integer"
               },
@@ -7564,6 +8519,67 @@
             },
             "maxItems": 3,
             "title": "Features",
+            "type": "array"
+          },
+          "additional_reward_location_ids": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "title": "Additional Reward Location Ids",
+            "type": "array"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
+            "type": "array"
+          },
+          "shell_id": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Shell Id"
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "enum": [
+                  "small",
+                  "medium",
+                  "large"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Size Class"
+          },
+          "intent": {
+            "default": [],
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Intent",
             "type": "array"
           },
           "type": {
@@ -7656,6 +8672,7 @@
             "anyOf": [
               {
                 "maxLength": 32,
+                "pattern": "^[a-z0-9_]+$",
                 "type": "string"
               },
               {
@@ -7717,7 +8734,7 @@
             "title": "Flavor"
           },
           "reward_location_id": {
-            "maximum": 89100030,
+            "maximum": 89100600,
             "minimum": 89100001,
             "title": "Reward Location Id",
             "type": "integer"
@@ -7729,6 +8746,67 @@
             },
             "maxItems": 3,
             "title": "Features",
+            "type": "array"
+          },
+          "additional_reward_location_ids": {
+            "default": [],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "title": "Additional Reward Location Ids",
+            "type": "array"
+          },
+          "activities": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ActivityPrimitive"
+            },
+            "maxItems": 3,
+            "title": "Activities",
+            "type": "array"
+          },
+          "shell_id": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "pattern": "^[a-z0-9_]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Shell Id"
+          },
+          "size_class": {
+            "anyOf": [
+              {
+                "enum": [
+                  "small",
+                  "medium",
+                  "large"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Size Class"
+          },
+          "intent": {
+            "default": [],
+            "items": {
+              "maxLength": 24,
+              "minLength": 1,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Intent",
             "type": "array"
           },
           "type": {
@@ -7926,7 +9004,7 @@
                 }
               ]
             },
-            "maxItems": 6,
+            "maxItems": 40,
             "minItems": 1,
             "title": "Chambers",
             "type": "array"
@@ -7966,11 +9044,11 @@
           },
           "allocated_location_ids": {
             "items": {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
-            "maxItems": 3,
+            "maxItems": 30,
             "minItems": 1,
             "title": "Allocated Location Ids",
             "type": "array"
@@ -8094,7 +9172,7 @@
       "checked_location_ids": {
         "default": [],
         "items": {
-          "maximum": 89100030,
+          "maximum": 89100600,
           "minimum": 89100001,
           "type": "integer"
         },
@@ -8104,7 +9182,7 @@
       "missing_location_ids": {
         "default": [],
         "items": {
-          "maximum": 89100030,
+          "maximum": 89100600,
           "minimum": 89100001,
           "type": "integer"
         },
@@ -8162,6 +9240,17 @@
         },
         "title": "Interpretations",
         "type": "array"
+      },
+      "interpretations_complete": {
+        "default": true,
+        "title": "Interpretations Complete",
+        "type": "boolean"
+      },
+      "interpretation_count": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Interpretation Count",
+        "type": "integer"
       },
       "mechanics": {
         "$ref": "#/$defs/Mechanics"
@@ -8221,6 +9310,15 @@
         "default": null,
         "title": "Last Generation Error"
       },
+      "available_capabilities": {
+        "description": "What the player can do RIGHT NOW, over what is equipped.\n\nDerived here rather than in GDScript, for the reason the fold is:\nre-implementing \"can this campaign grapple\" in the client would\nbe a second answer to a question that has exactly one.\n\nDistinct from the OWNED set generation reasons over. A Zone is\nbuilt against what the campaign owns; the player walks into it\nwith whatever they slotted, so the difference between the two is\nwhat a NOT YET gate is FOR \u2014 and it is why that gate is a\nreachable state rather than dead code.",
+        "items": {
+          "type": "string"
+        },
+        "readOnly": true,
+        "title": "Available Capabilities",
+        "type": "array"
+      },
       "coins_available": {
         "description": "Derived, never stored \u2014 `DESIGN.md` \u00a712 said so and v0.6 shipped it\nas a free integer that could read 9999 against zero received.",
         "readOnly": true,
@@ -8234,6 +9332,7 @@
       "ap_mode",
       "epsilon_provider",
       "hub",
+      "available_capabilities",
       "coins_available"
     ],
     "title": "CampaignSnapshot",

@@ -7,7 +7,15 @@ validators as model output — no exceptions.
 
 from __future__ import annotations
 
+import math
+import random
+
+from pydantic import TypeAdapter
+
+from .. import composition as X
+from .. import content_value as V
 from ..schemas import constants as C
+from ..schemas.zone import HEADROOM, Zone as _Zone
 from ..schemas import migration as MG
 from ..schemas import echo as E
 from ..schemas.echo import COMPLEXITY_BUDGETS
@@ -27,73 +35,541 @@ def _clamp(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
+_ZONE_ADAPTER = TypeAdapter(_Zone)
+
+
+def _rule_errors(zone, request, budget: int) -> list[str]:
+    """The same rules the real provider's output has to satisfy."""
+    from ..schemas.zone import validate_zone
+    return validate_zone(
+        zone, expected_zone_id=request.zone_id,
+        allocated_location_ids=[loc.location_id
+                                for loc in request.locations],
+        owned_echo_ids=[],
+        owned_affordance_tags=request.unlocked_affordances,
+        guaranteed_capabilities=request.guaranteed_capabilities,
+        zone_budget=budget)
+
+
 def fallback_zone(request: ZoneGenerationRequest) -> dict:
-    """Linear corridor→arena→corridor→platform→brute-arena, trimmed to the
-    allocated Check count. The finale is a single brute arena with Check 030."""
+    """The Zone. See `fallback_zone_attempt` for how it was reached."""
+    return fallback_zone_attempt(request)[0]
+
+
+def fallback_zone_attempt(request: ZoneGenerationRequest) -> tuple[dict, int]:
+    """A Zone that satisfies the same rules the real provider must,
+    and the salt that produced it.
+
+    The salt is returned so the tests can tell a builder that gets it
+    RIGHT from one that gets it right EVENTUALLY. The retry loop below
+    hides construction bugs by definition -- a wrong enemy count on the
+    first attempt is invisible once a later salt validates -- and a
+    safety net nobody measures is a safety net that is quietly load
+    bearing.
+
+    This is the OFFLINE FIXTURE, and it is what a player without an API
+    key actually plays -- so a four-room toy here means human playtesting
+    never exercises production-scale gameplay, whatever the Claude
+    provider is capable of (CAMPAIGN_SCALE.md 11).
+
+    It therefore builds to the requested `zone_budget`, places every
+    allocated Check, and satisfies the composition constraints: a
+    landmark, quiet space, combat, variety, no long connector chains.
+    It does not need an LLM's prose. It needs to be a level.
+
+    Deterministic means the same campaign and zone replay identically.
+    It does not mean every Zone is the same room list, which is what it
+    used to mean.
+    """
     locations = list(request.locations)
     theme = _theme_for(request.campaign.target_game)
     n = request.campaign.zone_index
+    budget = request.campaign.zone_budget
+    rng = random.Random(f"archipepsi/fallback/zone/{n}/{budget}")
 
+    # The finale is a Zone. It holds one Check -- the goal -- so it is a
+    # SHORT level rather than a full-length one, but a campaign that ends
+    # in a corridor and one brute after thirty real Zones ends badly, and
+    # a Zone built for a budget it does not meet fails validation
+    # (CAMPAIGN_SCALE.md 5). It goes through the same builder.
     if request.campaign.is_finale:
+        name = _clamp(f"Terminal Relay {n:03d}", C.MAX_TEXT_LEN)
+        note = "Deterministic fallback finale."
+    else:
+        name = _clamp(f"Relay {n:03d}: {request.campaign.target_game}",
+                      C.MAX_TEXT_LEN)
+        note = "Deterministic fallback zone."
+
+    def attempt(salt: int) -> dict:
+        seeded = random.Random(
+            f"archipepsi/fallback/zone/{n}/{budget}/{salt}")
+        chambers = _build_to_budget(seeded, locations, budget,
+                                    request.unlocked_affordances)
+        _add_features(chambers, request.unlocked_affordances, n)
         return {
             "schema_version": 7,
             "zone_id": request.zone_id,
-            "display_name": _clamp(
-                f"Terminal Relay {n:03d}", C.MAX_TEXT_LEN),
+            "display_name": name,
             "target_game": request.campaign.target_game,
             "theme": theme,
-            "designer_note": "Deterministic fallback finale.",
-            "chambers": [
-                {"id": "c1", "type": "corridor", "length": 14.0, "width": 6.0},
-                {"id": "c2", "type": "arena", "width": 22.0, "depth": 22.0,
-                 "wall_height": 6.0, "objective": "kill_all",
-                 "enemies": [{"archetype": "brute", "count": 1}],
-                 "reward_location_id": locations[0].location_id},
-            ],
+            "designer_note": note,
+            "chambers": chambers,
         }
 
-    step = 0.6
-    gap = min(2.2, C.max_safe_gap(step))
-    reward_chambers = [
-        {"id": "c2", "type": "arena", "width": 16.0, "depth": 14.0,
-         "wall_height": 5.0, "objective": "kill_all",
-         "enemies": [{"archetype": "melee", "count": 3}]},
-        {"id": "c4", "type": "platform_path", "segment_count": 4,
-         "gap_size": gap, "vertical_step": step,
-         "objective": "platform_to_goal"},
-        {"id": "c5", "type": "arena", "width": 20.0, "depth": 18.0,
-         "wall_height": 6.0, "objective": "kill_all",
-         "enemies": [{"archetype": "brute", "count": 1},
-                     {"archetype": "melee", "count": 2}]},
-    ]
-    chambers: list[dict] = [
-        {"id": "c1", "type": "corridor", "length": 12.0, "width": 5.0}]
-    for i, loc in enumerate(locations[:3]):
-        chamber = dict(reward_chambers[i])
-        chamber["reward_location_id"] = loc.location_id
-        if i == 1:
-            chambers.append({"id": "c3", "type": "corridor",
-                             "length": 10.0, "width": 4.0})
-        chambers.append(chamber)
+    # The fallback CHECKS ITS OWN WORK, because it is the one provider
+    # with nothing behind it: a Claude Zone that breaks a rule gets
+    # repaired or replaced by this one, and when this one breaks a rule
+    # the portal simply never opens.
+    #
+    # Retrying with a salted seed rather than adding another heuristic.
+    # The construction satisfies the rules in 119 cases out of 120 across
+    # the whole option space; the last one is a landmark that did not
+    # quite stand out, and chasing it with more special cases makes the
+    # builder harder to reason about than the rules it is trying to
+    # satisfy. Still deterministic: the same zone index and budget
+    # produce the same salt sequence, so the same Zone comes back.
+    last = None
+    for salt in range(8):
+        candidate = attempt(salt)
+        try:
+            zone = _ZONE_ADAPTER.validate_python(candidate)
+        except Exception:
+            last = candidate
+            continue
+        if not _rule_errors(zone, request, budget):
+            return candidate, salt
+        last = candidate
+    return last, 7
 
-    _add_features(chambers, request.unlocked_affordances, n)
 
+def _max_enemy_groups(chamber_type: str) -> int:
+    """How many enemy GROUPS this chamber type accepts.
+
+    Read off the schema rather than retyped: a platform path takes two
+    and an arena four, and the fallback discovering that by failing
+    validation is the fallback discovering it too late.
+    """
+    from ..schemas.zone import Chamber
+    for model in Chamber.__origin__.__args__:
+        if model.model_fields["type"].annotation.__args__[0] != chamber_type:
+            continue
+        field = model.model_fields.get("enemies")
+        if field is None:                       # a treasure room has none
+            return 0
+        for meta in field.metadata:
+            limit = getattr(meta, "max_length", None)
+            if limit is not None:
+                return limit
+    return 0
+
+
+def _content_room(rng, index: int, lean: bool, step: float,
+                  enemies_left: int) -> dict:
+    """A room that exists because the budget bought it, not a Check.
+
+    Checks are worth nothing (CAMPAIGN_SCALE.md 5), so a Zone's length
+    comes from its content -- and a Zone whose rooms all hang off a
+    Check is as long as its Check count and no longer.
+    """
+    count = min(rng.randint(2, 4), max(0, enemies_left))
+    if index % 2 and count:
+        # `kill_all` with nothing to kill is not a legal objective, so a
+        # Zone already at its enemy ceiling gets a traversal room here.
+        return {
+            "id": f"c{index:03d}", "type": "arena",
+            **_arena_shape(rng, lean),
+            "objective": "kill_all",
+            "enemies": [{"archetype": rng.choice(["melee", "ranged"]),
+                         "count": count}]}
     return {
-        "schema_version": 7,
-        "zone_id": request.zone_id,
-        "display_name": _clamp(
-            f"Relay {n:03d}: {request.campaign.target_game}", C.MAX_TEXT_LEN),
-        "target_game": request.campaign.target_game,
-        "theme": theme,
-        "designer_note": "Deterministic fallback zone.",
-        "chambers": chambers,
-    }
+        "id": f"c{index:03d}", "type": "platform_path",
+        "segment_count": rng.randint(3, 5),
+        "gap_size": round(min(rng.uniform(1.4, 2.4),
+                              C.max_safe_gap(step)), 2),
+        "vertical_step": step,
+        "objective": "platform_to_goal"}
+
+
+def _build_to_budget(rng, locations, budget, unlocked) -> list[dict]:
+    """Rooms enough to hold the Checks, then content enough to be a level.
+
+    Two passes on purpose. The first places what the campaign REQUIRES --
+    every allocated Check, in its own room, with a connector rhythm. The
+    second adds content until the Zone is worth what it was asked for.
+    Doing it in one pass makes the Checks compete with the budget, and
+    the Checks are not negotiable.
+    """
+    from ..content_value import budget_band, room_value, zone_value
+
+    low, high = budget_band(budget)
+    enemy_cap = C.max_enemies_per_zone(budget)
+    brute_cap = C.max_brutes_per_zone(budget)
+
+    # How rich the BASE rooms are, before any top-up.
+    #
+    # Scaled by how much budget each Check has to play with. A 200-point
+    # Zone holding three Checks has ~66 points per Check, and rooms built
+    # for a 1000-point Zone overshoot its ceiling before the top-up loop
+    # runs at all -- which no amount of careful adding can then fix,
+    # because the floor is already above the roof.
+    room_low, room_high = C.zone_room_envelope(budget)
+    room_high = max(2, min(C.ZONE_MAX_CHAMBERS - 2, room_high))
+    planned = max(len(locations), room_low)
+    lean = budget / max(1, planned) < 45.0
+
+    chambers: list[dict] = [
+        {"id": "c001", "type": "corridor",
+         "length": round(rng.uniform(10.0, 18.0), 1),
+         "width": round(rng.uniform(5.0, 8.0), 1)}]
+
+    # Connectors thin out as the Check count rises: 30 Checks plus a
+    # connector between every pair is more rooms than the engine ceiling
+    # allows, and the Checks are the part that cannot be dropped.
+    room_budget = C.ZONE_MAX_CHAMBERS - 2
+    # Varied per Zone, not just per campaign: a fixed rhythm gives every
+    # Zone in a run the same number of rooms in the same order, which is
+    # the skeleton behind "the levels are the same". Content varies
+    # already; the SHAPE has to vary too.
+    if len(locations) * 3 // 2 < room_budget:
+        connector_every = rng.choice([2, 2, 3, 4])
+    else:
+        connector_every = rng.choice([5, 6])
+
+    step = round(rng.uniform(0.4, 0.9), 2)
+    for index, loc in enumerate(locations):
+        kind = ("arena", "platform_path", "arena")[index % 3]
+        if kind == "arena":
+            chambers.append({
+                "id": f"c{len(chambers) + 1:03d}", "type": "arena",
+                **_arena_shape(rng, lean),
+                "objective": "kill_all",
+                "enemies": [{"archetype": rng.choice(["melee", "ranged"]),
+                             "count": rng.randint(1, 2 if lean else 5)}],
+                "reward_location_id": loc.location_id})
+        else:
+            chambers.append({
+                "id": f"c{len(chambers) + 1:03d}", "type": "platform_path",
+                "segment_count": rng.randint(3, 4 if lean else 6),
+                "gap_size": round(min(rng.uniform(1.4, 2.4),
+                                      C.max_safe_gap(step)), 2),
+                "vertical_step": step,
+                "objective": "platform_to_goal",
+                "reward_location_id": loc.location_id})
+        if (index % connector_every == connector_every - 1
+                and index < len(locations) - 1
+                and len(chambers) < room_budget):
+            chambers.append({
+                "id": f"c{len(chambers) + 1:03d}", "type": "corridor",
+                "length": round(rng.uniform(8.0, 16.0), 1),
+                "width": round(rng.uniform(5.0, 8.0), 1)})
+
+    # The landmark is built RICH, not merely large. Growing it afterwards
+    # runs into the per-chamber caps at exactly the room counts where the
+    # average is highest, so it starts where it needs to end up.
+    rooms = [c for c in chambers if c["type"] == "arena"]
+    landmark = None
+    if rooms:
+        landmark = rooms[len(rooms) // 2]
+        landmark["width"] = 26.0
+        landmark["depth"] = 24.0
+        landmark["wall_height"] = 7.0
+        landmark["enemies"] = [
+            {"archetype": "melee", "count": 4 if lean else 7},
+            {"archetype": "brute", "count": 1}]
+        if not lean:
+            landmark["activities"] = [
+                _activity("switch_sequence", 5),
+                _activity("target_challenge", 4)]
+
+    # Now top up to the band with activities and enemies, cheapest lever
+    # first, never past a cap.
+    def totals() -> tuple[int, int]:
+        return (sum(sum(g["count"] for g in c.get("enemies", []))
+                    for c in chambers),
+                sum(g["count"] for c in chambers
+                    for g in c.get("enemies", [])
+                    if g["archetype"] == "brute"))
+
+    def chamber_enemies(chamber: dict) -> int:
+        return sum(g["count"] for g in chamber.get("enemies", []) or ())
+
+    def would_fit(extra: int) -> bool:
+        """Room in the BAND for this much more content.
+
+        Checked before adding rather than after: an activity is worth
+        12-20 points, which on a 200-point Zone is a tenth of the whole
+        budget. Adding first and noticing later overshoots the ceiling,
+        which is a validation failure rather than a rounding error.
+        """
+        current = sum(room_value(_AsChamber(c)) for c in chambers)
+        return current + extra <= high
+
+    kinds = ["switch_sequence", "target_challenge", "pressure_routing",
+             "timed_run"]
+    ceiling = min(room_budget, room_high)
+
+    #: How rich an ORDINARY room is allowed to get while there is still
+    #: room in the Zone for another one. Without it the loop fills each
+    #: room to its per-chamber ceiling and only then adds a new one, so
+    #: every room ends up at the ceiling -- and a Zone where everything
+    #: is maximal has no landmark, because nothing can stand out from
+    #: it. Spreading the budget over rooms is also what makes a level
+    #: feel long rather than merely dense (CAMPAIGN_SCALE.md 5, 6).
+    soft_cap = budget / max(1, ceiling)
+
+    def grow(target: dict, guard: int) -> bool:
+        """Put more into one existing room. False when it cannot."""
+        if (len(chambers) < ceiling and target is not landmark
+                and room_value(_AsChamber(target)) >= soft_cap):
+            return False
+        if target["type"] == "corridor":
+            # A level needs somewhere to breathe, and the top-up loop is
+            # perfectly capable of filling every connector on its way to
+            # the budget -- which is how a 2000-point Zone came out dense
+            # in all thirty rooms. The quietest room is protected
+            # outright rather than left to a coin flip.
+            quiet = [c for c in chambers
+                     if room_value(_AsChamber(c)) < X.CONNECTOR_VALUE]
+            if len(quiet) <= 1 and target in quiet:
+                return False
+            if rng.random() < 0.5:
+                return False
+        acts = target.setdefault("activities", [])
+        elements = rng.randint(2, 5)
+        kind = kinds[(guard + len(acts)) % len(kinds)]
+        # Scored from the activity that will actually be appended, not
+        # from a base-plus-elements guess: a `timed_run` now carries a
+        # clock, which is worth `ACTIVITY_TIMED_BONUS` more, and a fit
+        # check that under-counts by four is a fit check that can walk
+        # the Zone out of its band at small budgets.
+        candidate = _activity(kind, elements)
+        if len(acts) < 3 and would_fit(V.room_value(_AsChamber(
+                {"type": "arena", "width": 0.0, "depth": 0.0,
+                 "activities": [candidate]}))):
+            acts.append(candidate)
+            return True
+        enemies, _ = totals()
+        groups = target.setdefault("enemies", [])
+        count = rng.randint(2, 4)
+        if (target["type"] != "corridor"
+                and len(groups) < _max_enemy_groups(target["type"])
+                and enemies + count <= enemy_cap
+                and chamber_enemies(target) + count
+                <= C.MAX_ENEMIES_PER_CHAMBER
+                and would_fit(V.ENEMY_VALUE["melee"] * count)):
+            groups.append({"archetype": rng.choice(["melee", "ranged"]),
+                           "count": count})
+            return True
+        return False
+
+    guard = 0
+    stalled = 0
+    while guard <= 2000:
+        if sum(room_value(_AsChamber(c)) for c in chambers) >= low:
+            break
+        guard += 1
+        if grow(chambers[guard % len(chambers)], guard):
+            stalled = 0
+            continue
+        stalled += 1
+        if stalled < len(chambers):
+            continue
+        # Every room is full and the Zone is still under its band, so
+        # what it needs is another ROOM. A one-Check Zone starts with
+        # two rooms and a per-chamber ceiling, and no amount of adding
+        # to those two reaches its floor: the budget buys rooms, and
+        # Checks are not what pays for them (CAMPAIGN_SCALE.md 5).
+        if len(chambers) < ceiling:
+            spent, _ = totals()
+            chambers.append(_content_room(rng, len(chambers) + 1, lean,
+                                          step, enemy_cap - spent))
+            stalled = 0
+            continue
+        # A room that declined this pass has not necessarily run out --
+        # connectors are left alone on a coin flip, so one sweep of
+        # refusals is normal and giving up on it left 2000-point Zones
+        # a quarter short of their floor. Give up only when several
+        # full sweeps in a row change nothing.
+        if stalled >= 4 * len(chambers):
+            break
+
+    # The landmark, LAST. Topping the Zone up to its budget spreads
+    # content everywhere and flattens the distribution, so a room that
+    # was distinctive before the loop is merely large after it -- which
+    # is how a 2000-point Zone ended up failing the landmark rule while
+    # every individual room looked fine.
+    #
+    # Restored by giving the biggest room more of what it already is,
+    # rather than by shrinking the others: a level wants somewhere that
+    # stands out, not everywhere else made duller.
+    if landmark is not None:
+        for _ in range(24):
+            values = [room_value(_AsChamber(c)) for c in chambers]
+            average = sum(values) / len(values)
+            if room_value(_AsChamber(landmark)) >= average * 1.9:
+                break
+            acts = landmark.setdefault("activities", [])
+            if len(acts) < 3:
+                acts.append(_activity("switch_sequence",
+                                      rng.randint(3, 6)))
+                continue
+            enemies, _ = totals()
+            groups = landmark.setdefault("enemies", [])
+            count = rng.randint(2, 4)
+            if (len(groups) < 4 and enemies + count <= enemy_cap
+                    and chamber_enemies(landmark) + count
+                    <= C.MAX_ENEMIES_PER_CHAMBER):
+                groups.append({"archetype": "ranged", "count": count})
+            else:
+                break
+
+    return chambers
+
+
+class _AsChamber:
+    """Scoring a chamber DICT before it is a model.
+
+    The fallback builds dictionaries and has to know their value while it
+    is still deciding what to add. `room_value` reads attributes, so this
+    presents the same fields -- rather than validating a whole Zone on
+    every iteration of the loop, which is the same number twice.
+    """
+
+    def __init__(self, data: dict):
+        self._data = data
+        self.enemies = tuple(
+            _Group(g) for g in data.get("enemies", []) or ())
+        self.features = tuple(
+            _Tagged(f) for f in data.get("features", []) or ())
+        self.activities = tuple(
+            _Activity(a) for a in data.get("activities", []) or ())
+        # Presence is all `room_value` asks about, so the dict itself is
+        # a good enough stand-in for the model.
+        self.elevation = data.get("elevation")
+
+    def __getattr__(self, name):
+        if name == "reward_ids":
+            first = self._data.get("reward_location_id")
+            extra = tuple(self._data.get(
+                "additional_reward_location_ids", ()) or ())
+            return ((first,) if first is not None else ()) + extra
+        return self._data.get(name)
+
+
+class _Group:
+    def __init__(self, data: dict):
+        self.archetype = data["archetype"]
+        self.count = data["count"]
+
+
+class _Tagged:
+    def __init__(self, data: dict):
+        self.tag = data["tag"]
+
+
+class _Activity:
+    def __init__(self, data: dict):
+        self.kind = data["kind"]
+        self.element_count = data.get("element_count", 1)
+        self.time_limit = data.get("time_limit", 0.0)
+        self.ordered = data.get("ordered", False)
 
 
 #: The schema's own upper bound on a corridor (`CorridorChamber.width`).
 #: Widening past it would make a Zone the validator refuses, which is the
 #: opposite of what the widening is for.
 MAX_CORRIDOR_WIDTH = 10.0
+
+
+#: How often an arena gets a second walkable height (ROOM_GRAMMAR v0).
+#:
+#: PROVISIONAL, and the number the next playtest sets. Not 1.0: a raised
+#: area in every arena is the flat rectangle again with a step in it, and
+#: the variety is in some rooms having one and some not. Not low either,
+#: because a feature the owner meets twice in a Zone cannot be judged.
+BAND_CHANCE = 0.55
+
+
+def _arena_shape(rng, lean: bool) -> dict:
+    """An arena's dimensions and its band, decided together.
+
+    Together because they constrain each other: a gallery's rise is
+    bounded by the ceiling it sits under, so rolling the wall height
+    first and the band second is the only order that cannot produce a
+    room the validator has to refuse.
+    """
+    width = round(rng.uniform(12.0, 18.0 if lean else 24.0), 1)
+    depth = round(rng.uniform(10.0, 16.0 if lean else 22.0), 1)
+    wall_height = round(rng.uniform(4.5, 7.0), 1)
+    shape = {"width": width, "depth": depth, "wall_height": wall_height}
+    band = _band(rng, width, depth, wall_height)
+    if band is not None:
+        shape["elevation"] = band
+    return shape
+
+
+def _band(rng, width: float, depth: float, wall_height: float) -> dict | None:
+    """An elevation band for an arena, or None (ROOM_GRAMMAR v0).
+
+    NOT every room. A raised area in every arena is the flat rectangle
+    again with an extra step in it -- the variety is in some rooms having
+    one and some not, and in which wall it hugs.
+
+    The rise is bounded by the CEILING as well as by the schema: a
+    gallery must leave a player room to stand up on it, which
+    `ArenaChamber._a_band_leaves_room_to_stand` refuses at validation.
+    Computing it here rather than rolling and retrying keeps the
+    fallback's "valid on the first attempt" property, which is measured.
+    """
+    if rng.random() > BAND_CHANCE:
+        return None
+    # A pit needs floor to spare; a narrow room gets a gallery instead.
+    kind = "pit" if (min(width, depth) >= 16.0 and rng.random() < 0.3) \
+        else "gallery"
+    if kind == "gallery":
+        highest = wall_height - HEADROOM
+        if highest < C.MAX_VERTICAL_STEP:
+            return None
+        # FLOORED, not rounded. `round` can move a number UP by half a
+        # centimetre, which is enough to push a rise that exactly fitted
+        # under the ceiling back through the schema's headroom check --
+        # and the fallback is measured on getting it right at salt 0, so
+        # a five-millimetre error costs a reroll rather than a warning.
+        rise = math.floor(min(rng.uniform(1.6, 2.6), highest) * 100) / 100
+    else:
+        rise = round(rng.uniform(1.2, 2.0), 2)
+    return {
+        "kind": kind,
+        "rise": rise,
+        "coverage": round(rng.uniform(0.25, 0.45), 2),
+        "side": rng.choice(["left", "right", "back"]),
+        "access": "ramp",
+    }
+
+
+def _activity(kind: str, elements: int, ordered: bool = False) -> dict:
+    """One activity, with the clock its family needs.
+
+    A `timed_run` with no clock is a contradiction: activate, then reach
+    the target BEFORE IT LAPSES, with nothing that can lapse. The played
+    Zone contained seven of them and every one had `time_limit = 0`, so
+    the one dial that can make the family fail was never set.
+
+    The number is DERIVED, not chosen. `ActivityPrimitive` already
+    computes the minimum a clock may be -- the walk at base movement
+    speed, generously -- and this asks for exactly that floor, which is
+    the most forgiving legal value. Tuning it is a playtest's job, not a
+    fallback's.
+    """
+    activity = {"kind": kind, "element_count": elements}
+    if ordered:
+        activity["ordered"] = True
+    if kind == "timed_run":
+        needed = elements * C.SECONDS_PER_ACTIVITY_ELEMENT
+        if ordered:
+            needed *= C.ORDERED_ACTIVITY_TIME_MULTIPLIER
+        activity["time_limit"] = round(needed, 1)
+    return activity
 
 
 def _add_features(chambers: list[dict], unlocked: tuple[str, ...],
@@ -113,13 +589,19 @@ def _add_features(chambers: list[dict], unlocked: tuple[str, ...],
     """
     if not unlocked:
         return
-    # A corridor is the only chamber type that may carry one: every other
-    # type has a Check or a gating objective. It also has to be wide
-    # enough to hold something beside the walking lane, so widen the ones
-    # that will carry a feature rather than emitting a Zone the validator
-    # would refuse. Widening a connector costs nothing.
+    # Connectors, which the fallback still prefers for features even
+    # though CAMPAIGN_SCALE.md 7 now permits them in reward rooms: the
+    # fallback is not trying to be interesting here, and a corridor is
+    # where a feature is unambiguously off the mandatory route.
+    #
+    # ALL the room's Checks, not just the primary. A room whose only
+    # Checks were "additional" would otherwise read as empty -- which
+    # cannot happen today because extras require a primary, but a rule
+    # that holds only because of another rule is one refactor from being
+    # false.
     plain = [c for c in chambers
              if c.get("reward_location_id") is None
+             and not c.get("additional_reward_location_ids")
              and not c.get("objective")]
     if not plain:
         return
@@ -353,6 +835,32 @@ def _budget_room(mechanics, *, resources: int = 0, rules: int = 0,
 #: Deltas are deliberately modest — a Mk II should read as "the same thing,
 #: better", not as a replacement — and every one is checked against the
 #: target's own bounds before it is emitted.
+#: How an upgraded field is DESCRIBED, one word per field.
+#:
+#: This used to be `"sharper" if delta >= 0 else "quicker"` -- two words
+#: for eleven fields, and since ten of the eleven deltas are positive,
+#: almost everything in the game was "sharper". A Warp Whistle that
+#: gained +6 range read "The same Warp Whistle, sharper", which is not
+#: what happened to it: sharpness is not a property a teleport has.
+#:
+#: The word follows the FIELD, because the field is what changed. A
+#: census, not a default -- `test_fallback_variety.py` fails on a ladder
+#: entry with no word, so adding an upgradable field means saying what
+#: improving it feels like rather than inheriting "sharper".
+_UPGRADE_WORD = {
+    "damage": "heavier",
+    "damage_per_second": "fiercer",
+    "range": "farther",
+    "reach": "longer",
+    "radius": "wider",
+    "pull_force": "stronger",
+    "force": "stronger",
+    "amount": "deeper",
+    "max_value": "deeper",
+    "multiplier": "steeper",
+    "cooldown": "quicker",
+}
+
 _UPGRADE_LADDER = (
     ("damage", 4.0),
     ("damage_per_second", 6.0),
@@ -421,8 +929,8 @@ def _as_sequel(interpretation: dict, request: EchoGenerationRequest):
                 **interpretation,
                 "description": _clamp(
                     "The same %s, %s. Mk %d."
-                    % (owned.display_name,
-                       "sharper" if delta >= 0 else "quicker", owned.mk + 1),
+                    % (owned.display_name, _UPGRADE_WORD[field],
+                       owned.mk + 1),
                     C.MAX_TEXT_LEN),
                 "tags": list(interpretation.get("tags", [])) + ["evolution"],
                 "operations": [{

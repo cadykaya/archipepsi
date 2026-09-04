@@ -124,30 +124,108 @@ def test_a_zone_offering_an_unusable_feature_is_refused():
 
 # --- I4: never on the mandatory path --------------------------------------
 
-def test_a_feature_may_not_share_a_chamber_with_an_ap_reward():
-    """I4/§13.2. A reward chamber is on the mandatory path by definition,
-    so a feature in one is a feature you might have to use. Refused by the
-    Zone model itself, so no provider can produce one and no validator
-    call has to remember to check."""
-    with pytest.raises(ValidationError, match="13.2"):
+def test_a_narrow_chamber_still_cannot_hold_a_check_and_a_feature():
+    """I4/§13.2, by the geometric proof rather than by separation.
+
+    This chamber used to be refused for holding both at all. It is still
+    refused, and for a better reason: a 6m corridor has no room for a
+    bounce pad (7.1m) that is not across the walking lane, so the feature
+    would sit between the player and the Check.
+
+    A corridor deliberately, because it is the one chamber that can hold
+    a Check without a gating objective -- what refuses this is the lane
+    rule, with nothing else in the way to take the credit.
+    """
+    with pytest.raises(ValidationError, match="sit clear"):
         _zone(chambers=[
             {"id": "c1", "type": "corridor", "length": 12.0, "width": 6.0},
-            # A corridor: the one chamber that can hold a Check without
-            # also carrying a gating objective, so what refuses this is
-            # the reward rule rather than the objective rule.
             {"id": "c2", "type": "corridor", "length": 14.0, "width": 6.0,
              "reward_location_id": 89100001,
              "features": [{"tag": "bounce_pad", "at": (0.5, 0.5)}]}])
 
+    # ...and widened past the pad's footprint, the same room is fine.
+    ok = _zone(chambers=[
+        {"id": "c1", "type": "corridor", "length": 12.0, "width": 6.0},
+        {"id": "c2", "type": "corridor", "length": 14.0, "width": 8.0,
+         "reward_location_id": 89100001,
+         "features": [{"tag": "bounce_pad", "at": (0.5, 0.5)}]}])
+    assert ok.chambers[1].features and ok.chambers[1].reward_location_id
 
-def test_a_feature_may_not_gate_an_objective():
-    with pytest.raises(ValidationError, match="gate an objective"):
+
+def test_a_feature_may_share_an_objective_room_but_only_where_it_fits():
+    """The rule that used to be a blanket ban (CAMPAIGN_SCALE.md 7).
+
+    An affordance may never be REQUIRED for an objective. That was
+    enforced by forbidding the two from sharing a room at all, which was
+    the cheapest possible proof and made every objective room sterile --
+    no rails, no grapple, in exactly the rooms most worth having them.
+
+    The invariant did not move; the proof did. `FEATURE_MIN_WIDTH` is
+    `2 * (lane + 2 * reach + wall clearance)`, so a room wide enough for
+    the tag is a room where the feature demonstrably sits clear of the
+    walking lane. A room too narrow is still refused -- there is nowhere
+    to put the feature except across the route.
+    """
+    # Wide enough for a rail (6.7m): legal now, and this is the point.
+    zone = _zone(chambers=[
+        {"id": "c1", "type": "corridor", "length": 12.0, "width": 6.0},
+        {"id": "c2", "type": "arena", "width": 16.0, "depth": 14.0,
+         "wall_height": 5.0, "objective": "kill_all",
+         "enemies": [{"archetype": "melee", "count": 2}],
+         "features": [{"tag": "rail", "at": (0.5, 0.5)}]}])
+    assert zone.chambers[1].features, "the feature was silently dropped"
+
+    # And the refusal half, on a CORRIDOR -- see the vacuity test below
+    # for why an arena cannot demonstrate this. A 7m corridor has nowhere
+    # to put a water volume (7.9m) that is not across the walking lane.
+    with pytest.raises(ValidationError, match="sit clear"):
         _zone(chambers=[
             {"id": "c1", "type": "corridor", "length": 12.0, "width": 6.0},
-            {"id": "c2", "type": "arena", "width": 16.0, "depth": 14.0,
-             "wall_height": 5.0, "objective": "kill_all",
-             "enemies": [{"archetype": "melee", "count": 2}],
-             "features": [{"tag": "rail", "at": (0.5, 0.5)}]}])
+            {"id": "c2", "type": "corridor", "length": 14.0, "width": 7.0,
+             "features": [{"tag": "water_volume", "at": (0.5, 0.5)}]}])
+
+
+def test_a_feature_may_share_a_reward_room_but_only_where_it_fits():
+    """The same change for AP Checks, which is the one that matters.
+
+    A reward room was the most sterile room in the game: it could hold a
+    Check and nothing optional. Now it can hold both, and the ownership
+    half of the guarantee -- that nothing optional is REQUIRED to reach
+    the Check -- is still `validate_zone`'s, while the instantiated half
+    is `godot-legible` walking the built room.
+    """
+    zone = _zone(chambers=[
+        {"id": "c1", "type": "corridor", "length": 12.0, "width": 6.0},
+        {"id": "c2", "type": "arena", "width": 20.0, "depth": 18.0,
+         "wall_height": 6.0, "objective": "reach_reward",
+         "reward_location_id": 89100001,
+         "features": [{"tag": "grapple_anchor", "at": (0.5, 0.5)}]}])
+    room = zone.chambers[1]
+    assert room.reward_location_id == 89100001 and room.features
+
+
+def test_the_width_rule_is_vacuous_for_arenas_and_says_so():
+    """A limitation worth writing down rather than discovering later.
+
+    An arena is `width >= 10` and the widest feature footprint is 7.9m,
+    so EVERY legal arena is wide enough for every tag: the schema's lane
+    rule cannot refuse an arena, ever. It is a real constraint on
+    corridors, whose width starts at 4, and a tautology on rooms.
+
+    That is not a hole as long as the arena guarantee is carried
+    somewhere else, and it is: `godot-legible` walks the BUILT room and
+    checks the reward is reachable with base movement while the feature
+    is not in the way. This test exists so that nobody reads the width
+    rule as the arena's protection, deletes the Godot half as redundant,
+    and leaves reward rooms unguarded.
+    """
+    from archipepsi_bridge.schemas import zone as _Z
+    arena_min = _Z.ArenaChamber.model_fields["width"].metadata
+    lower = next(getattr(m, "ge") for m in arena_min if hasattr(m, "ge"))
+    assert lower >= max(C_MIN_WIDTH.values()), (
+        "an arena can now be narrower than its widest feature, so the "
+        "schema rule has started to bite for rooms -- which is fine, but "
+        "this test's premise no longer holds")
 
 
 def test_the_client_builder_keeps_features_out_of_the_walking_lane():

@@ -59,7 +59,7 @@ static func _grime(image: Image, rng: RandomNumberGenerator,
 					image.set_pixel(x, y, p.darkened(f))
 
 static func _speckle(image: Image, rng: RandomNumberGenerator,
-		base: Color, accent: Color) -> void:
+		base: Color, _accent: Color) -> void:
 	_fill_noise(image, rng, base, 0.05)
 	for i in 220:
 		var x := rng.randi_range(0, SIZE - 1)
@@ -109,7 +109,7 @@ static func _tile(image: Image, rng: RandomNumberGenerator,
 	_grime(image, rng, 3, 0.2)
 
 static func _brick(image: Image, rng: RandomNumberGenerator,
-		base: Color, accent: Color) -> void:
+		base: Color, _accent: Color) -> void:
 	_fill_noise(image, rng, base, 0.06)
 	var mortar := base.darkened(0.5)
 	for row in 4:
@@ -147,7 +147,7 @@ static func _sandstone(image: Image, rng: RandomNumberGenerator,
 			image.set_pixel(x, y, accent.darkened(0.2))
 	_grime(image, rng, 4, 0.2)
 
-static func _checker(image: Image, rng: RandomNumberGenerator,
+static func _checker(image: Image, _rng: RandomNumberGenerator,
 		base: Color, accent: Color) -> void:
 	# The classic missing-texture checker, void_glitch's whole personality.
 	for y in SIZE:
@@ -156,7 +156,7 @@ static func _checker(image: Image, rng: RandomNumberGenerator,
 			image.set_pixel(x, y, accent if cell == 0 else base)
 
 static func _panel(image: Image, rng: RandomNumberGenerator,
-		base: Color, accent: Color) -> void:
+		base: Color, _accent: Color) -> void:
 	_fill_noise(image, rng, base, 0.04)
 	for y in SIZE:
 		for x in SIZE:

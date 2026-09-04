@@ -64,6 +64,12 @@ class APData:
     slot_id: int = 0
     slot_name: str = ""
 
+    #: The campaign scale the SEED was generated with, read from slot data
+    #: (CAMPAIGN_SCALE.md 2). None until Connected, and None for ever on a
+    #: seed generated before the options existed -- which is the prototype
+    #: campaign and is handled as such, not as the current default.
+    campaign_scale: C.CampaignConfig | None = None
+
     checked: set[int] = field(default_factory=set)
     missing: set[int] = field(default_factory=set)
     scouts: dict[int, ScoutInfo] = field(default_factory=dict)

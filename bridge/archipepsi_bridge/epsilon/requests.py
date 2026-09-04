@@ -9,10 +9,14 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from .. import content_value as V
+from .. import echo_projection as P
 from ..schemas import constants as C
 from ..schemas import echo as E
+from ..schemas import zone as Z
+from ..schemas import mechanics as M
 from . import capabilities as CAP
 
 _AP_STR = Annotated[str, Field(max_length=C.MAX_AP_STRING_LEN)]
@@ -42,6 +46,23 @@ class EchoSummary(Strict):
     description: str = Field(max_length=C.MAX_TEXT_LEN)
 
 
+#: Read from the schema rather than retyped, so a family added to the
+#: vocabulary reaches Epsilon without anybody remembering to list it.
+_ACTIVITY_KINDS = tuple(Z.ActivityKind.__args__)
+
+
+def _shell_catalog() -> dict:
+    """The authored shells on offer. Empty while the registry has none.
+
+    Loaded per request rather than cached at import: the registry is a
+    file on disk, a packaged game can ship a different one, and a
+    catalog frozen at import time would describe whichever build
+    happened to start first.
+    """
+    from ..shells import shell_catalog
+    return shell_catalog()
+
+
 class CampaignContext(Strict):
     seed_name: str = Field(max_length=128)
     slot_name: _AP_STR
@@ -53,15 +74,40 @@ class CampaignContext(Strict):
     static_glitch_units: int = Field(ge=0)
     completed_zone_summaries: tuple[ZoneSummary, ...] = ()
 
+    #: How much content this Zone must contain (CAMPAIGN_SCALE.md 5).
+    #:
+    #: Defaults to the PROTOTYPE, like everything else that had to keep
+    #: working while the options landed. A request that forgets to carry
+    #: the campaign's real budget therefore asks for a small Zone, which
+    #: is the safe direction: too little content is a Zone that fails its
+    #: band and gets repaired, not one the engine cannot hold.
+    zone_budget: int = Field(
+        default=C.PROTOTYPE_CONFIG.zone_budget,
+        ge=C.ZONE_BUDGET_MIN, le=C.ZONE_BUDGET_MAX)
+
 
 class PlayerContext(Strict):
     signal_keys: int = Field(ge=0)
     coins_available: int = Field(ge=0)
-    echoes: tuple[EchoSummary, ...] = ()
+    #: BOUNDED detail examples, never the whole log.
+    #:
+    #: This was unbounded, and at the prototype's ~29 Echoes nobody
+    #: noticed. At the 450-location default a campaign accumulates ~449
+    #: and this field alone reached 96 KB -- roughly 24,000 tokens in
+    #: front of every Zone prompt. The whole history still crosses, as
+    #: `echo_history` below; only the DETAIL is a sample.
+    echoes: tuple[EchoSummary, ...] = Field(
+        default=(), max_length=P.MAX_DETAIL_EXAMPLES)
+    #: The complete history, bounded: derived capabilities from the fold
+    #: over the WHOLE log, plus a deterministic accumulated-influence
+    #: aggregate. Nothing is forgotten -- an early Echo's capability is
+    #: in `capabilities` and its source world is in `influence` however
+    #: long ago it arrived.
+    echo_history: dict = Field(default_factory=dict)
 
 
 class RequestLocation(Strict):
-    location_id: int = Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_LOCATION_ID)
+    location_id: int = Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_UNIVERSE_ID)
     location_name: _AP_STR
     item_name: _AP_STR
     recipient_name: _AP_STR
@@ -76,24 +122,62 @@ class ZoneGenerationRequest(Strict):
     generation_id: str = Field(max_length=160)
     campaign: CampaignContext
     player: PlayerContext
+    #: Bounded by the largest campaign anyone can configure, not by the
+    #: prototype's three. `zone_target_checks` is a per-seed option now,
+    #: so a request carrying fifteen is ordinary rather than exceptional.
     locations: tuple[RequestLocation, ...] = Field(
-        min_length=1, max_length=C.ZONE_MAX_CHECKS)
+        min_length=1, max_length=C.ZONE_TARGET_CHECKS_MAX)
     #: §13: the affordance tags this campaign can actually USE, computed
     #: from OWNED mechanics. Epsilon may place matching optional features
     #: and nothing else — a water volume in a run with no way to move
     #: through water is set dressing that looks like content.
     unlocked_affordances: tuple[str, ...] = ()
+    #: The semantic capabilities the generator can PROVE this campaign
+    #: will be able to use (owner ruling, 2026-08-30). An activity may
+    #: name one of these in `requires`; naming anything else is refused
+    #: by `validate_zone`, because a requirement the generator cannot
+    #: prove is a wish, not a gate.
+    #:
+    #: Defaults to the permanent baseline rather than to empty, so a
+    #: caller that forgets it refuses more than it should, never less.
+    guaranteed_capabilities: tuple[str, ...] = M.BASELINE_CAPABILITIES
     catalog: dict = Field(default_factory=lambda: {
         "themes": list(C.THEMES),
         "chamber_types": list(C.CHAMBER_TYPES),
         "enemy_archetypes": list(C.ENEMY_ARCHETYPES),
         "objectives": list(C.OBJECTIVES),
+        # Authored room shells Epsilon may name, keyed by chamber type.
+        #
+        # IDS, NEVER PATHS. An Epsilon that can name a resource path can
+        # name any file; Godot resolves the id. A type with no authored
+        # shell is absent rather than present-and-empty.
+        #
+        # `validate_zone` refuses a `shell_id` that is not in here, so
+        # this is the offer AND the bound. It was empty everywhere in
+        # the live pipeline until now -- the field existed, the
+        # validator enforced it, and nothing ever put a shell in it.
+        "room_shells": _shell_catalog(),
     })
-    constraints: dict = Field(default_factory=lambda: {
+    #: Filled from the campaign's own budget after validation, because a
+    #: `default_factory` cannot see the instance it belongs to -- and
+    #: these numbers are exactly the ones that stopped being global when
+    #: scale became a per-seed option.
+    constraints: dict = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _constraints_describe_THIS_campaign(self):
+        if self.constraints:
+            return self
+        budget = self.campaign.zone_budget
+        object.__setattr__(self, "constraints", {
         "max_chambers": C.ZONE_MAX_CHAMBERS,
-        "max_enemies_total": C.MAX_ENEMIES_PER_ZONE,
+        "rooms_suggested": C.zone_room_envelope(budget),
+        "zone_budget": budget,
+        "budget_tolerance": V.ZONE_BUDGET_TOLERANCE,
+        "activity_kinds": list(_ACTIVITY_KINDS),
+        "max_enemies_total": C.max_enemies_per_zone(budget),
         "max_enemies_per_chamber": C.MAX_ENEMIES_PER_CHAMBER,
-        "max_brutes": C.MAX_BRUTES_PER_ZONE,
+        "max_brutes": C.max_brutes_per_zone(budget),
         "max_vertical_step": C.MAX_VERTICAL_STEP,
         "gap_bound": (
             "gap_size <= max_safe_gap(vertical_step); "
@@ -103,13 +187,17 @@ class ZoneGenerationRequest(Strict):
         "all_locations_must_appear_once": True,
         "critical_path_requires_echo": False,
         "affordances_are_optional_only": (
-            "a chamber holding a reward_location_id may not carry features, "
+            "a chamber may hold Checks AND features, but only where the room is wide enough for the feature to sit clear of the walking lane, "
             "and a feature may never gate an objective or an exit"),
-    })
+        "content_is_scored_by_the_engine": (
+            "room value is recomputed from what a room actually contains; "
+            "a Check on its own is worth nothing"),
+        })
+        return self
 
 
 class EchoSource(Strict):
-    location_id: int = Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_LOCATION_ID)
+    location_id: int = Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_UNIVERSE_ID)
     item_name: _AP_STR
     source_game: _AP_STR
     recipient_name: _AP_STR
@@ -159,7 +247,12 @@ class OwnedLinkSummary(Strict):
 
 
 class EchoPlayerState(Strict):
-    existing_echoes: tuple[EchoSummary, ...] = ()
+    #: The same bound, for the same reason. This is the path that stayed
+    #: unbounded when the Zone path was noticed, which is what happens
+    #: when two places build the same summary separately.
+    existing_echoes: tuple[EchoSummary, ...] = Field(
+        default=(), max_length=P.MAX_DETAIL_EXAMPLES)
+    echo_history: dict = Field(default_factory=dict)
     signal_keys: int = Field(default=0, ge=0)
     coins_available: int = Field(default=0, ge=0)
     #: The graph an interpretation may answer (S6). Empty for every

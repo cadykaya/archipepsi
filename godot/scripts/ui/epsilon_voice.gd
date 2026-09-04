@@ -54,6 +54,24 @@ const LINES := {
 		"This is the finale. I did not have long, and I only had you.",
 		"Everything after this is bookkeeping. Enjoy the bookkeeping.",
 	],
+	## D3's completion beat. **WORDING NOT LOCKED** -- the owner decision
+	## fixes the STRUCTURE (a short acknowledgement, then back to the Hub,
+	## no cinematic and no forced credits) and leaves the words open. These
+	## are placeholders in the established voice so the hook is exercised;
+	## replacing them changes nothing but the text.
+	"goal_sent": [
+		"That is Check 030. It is somebody else's now.",
+		"Sent. The last one I had to give you, and you took it properly.",
+		"Done. I will keep the lights on while the others finish.",
+	],
+	## Fired once, when every Archipepsi Check is cleared. The Hub is
+	## FINISHED BUT STILL ALIVE: Epsilon has run out of campaign to build,
+	## not out of existence. **WORDING NOT LOCKED.**
+	"campaign_complete": [
+		"That is all thirty. I have nothing left to build you.",
+		"Transmission complete. Stay as long as you like; I am not going anywhere.",
+		"I am finished constructing this one. The multiworld is not finished with you.",
+	],
 	"finale_brute": [
 		"That was the biggest thing I know how to make.",
 		"It is down. Take Check 030 and go be somebody else's item.",
@@ -115,7 +133,11 @@ const LINES := {
 #: anything at all had been said in the previous six seconds.
 const PRIORITY := ["died", "revived", "secret_found",
 		"finale_open", "finale_brute", "hub_key_landed",
-		"hub_finale_ready"]
+		"hub_finale_ready",
+		# D3: both fire once per campaign, at the two moments the player
+		# most deserves an answer. Losing either to an ambient bark's
+		# throttle would silently delete the ending.
+		"goal_sent", "campaign_complete"]
 
 #: Hub lines are ambient rather than reactive: nothing is trying to kill
 #: you, so a bark every six seconds would be pestering rather than

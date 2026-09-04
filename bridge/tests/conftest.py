@@ -34,10 +34,13 @@ def make_engine(tmp_path: Path, provider=None,
 
 
 async def connected_engine(tmp_path, *, provider=None, server_state=None,
-                           confirm_delay: float = 0.0):
+                           confirm_delay: float = 0.0, config=None):
+    """A connected engine. `config` defaults to the prototype's thirty
+    locations, which is what the mock has always meant -- pass
+    `C.DEFAULT_CONFIG` for the production scale a human actually plays."""
     engine = make_engine(tmp_path, provider=provider)
     backend = MockAPBackend(engine, server_state=server_state,
-                            confirm_delay=confirm_delay)
+                            confirm_delay=confirm_delay, config=config)
     engine.backend = backend
     await backend.connect("", "Skyiah", "")
     await drain()

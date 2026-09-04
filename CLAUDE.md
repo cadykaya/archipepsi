@@ -11,6 +11,8 @@ On autonomous wake/heartbeat:
 
 Do **not** reread all of `NEXT_STEPS.md`, `IMPLEMENTATION_DECISIONS.md`, or the full design packet on every wake-up. Read those only when the current task needs a specific fact or section.
 
+**Pause the heartbeat when there is no work; resume it when there is a task.** A heartbeat is for carrying work across a gap, not for proving the session is alive. Once the authorised list is done and CI is green, pause the trigger rather than re-arming it into another no-op — and say so, so the next task starts by turning it back on. Re-arm while work is genuinely outstanding: unfinished frontier items, a red PR, something waiting on an external result.
+
 ## Token discipline
 - Search first (`rg -n ...`), then read only relevant line ranges.
 - Do not dump whole source files, documents, diffs, or logs into context unless genuinely necessary.
@@ -19,7 +21,7 @@ Do **not** reread all of `NEXT_STEPS.md`, `IMPLEMENTATION_DECISIONS.md`, or the 
 - Keep intermediate narration terse; one short checkpoint per coherent task is enough.
 
 ## Load-bearing boundaries
-Archipelago owns randomized truth. Python owns deterministic campaign/save/allocation/fold truth. Epsilon emits validated structured creative interpretation only. Godot simulates/renders and sends player intents. Persistent state changes go through validated transitions; derived mechanics come only from the interpretation-log fold and are not separately persisted. Preserve base-kit solvability.
+Archipelago owns randomized truth. Python owns deterministic campaign/save/allocation/fold truth. Epsilon emits validated structured creative interpretation only. Godot simulates/renders and sends player intents. Persistent state changes go through validated transitions; derived mechanics come only from the interpretation-log fold and are not separately persisted. Preserve LOGICAL solvability, not base-kit solvability: a required Check, a local key or a Zone exit may sit behind a declared capability gate (`docs/design-packet-v0.10/SOLUTIONS_CATALOGUE.md` §0-bis). What may never happen is a physical gate the matching AP location logic does not declare.
 
 Never weaken a test merely to pass it. Generated artifacts are regenerated from source, never hand-edited. A capability unlocks only when its **last** required dependency exists.
 

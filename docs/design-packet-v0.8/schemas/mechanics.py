@@ -249,6 +249,200 @@ AFFORDANCE_REQUIREMENTS: dict[str, dict[str, tuple[str, ...]]] = {
 }
 
 
+#: SEMANTIC CAPABILITIES (owner ruling, 2026-08-30). What a piece of
+#: content may ASK FOR, expressed as "can the player DO x", never as "does
+#: the player own item Y".
+#:
+#: The same shape and the same vocabulary as `AFFORDANCE_REQUIREMENTS`
+#: above, and deliberately so: a second taxonomy would be a second answer
+#: to a question that already has one. A capability is satisfied by ANY
+#: primitive in its set, which is the whole point -- `grapple` is not the
+#: canonical Grapple Echo, it is "owns an action whose primitive is in the
+#: grapple family", and an Echo the player built themselves that lands in
+#: that family satisfies it identically.
+#:
+#: Kept SMALL on purpose. Four capabilities, each one something an
+#: activity the engine already builds could genuinely need. The physics
+#: and construction capabilities an owner brief might name --
+#: MOVE_OBJECT_*, TETHER_OBJECT, APPLY_UPWARD_FORCE, PLACE_CONSTRUCT --
+#: are not here because nothing can satisfy them yet: they wait on the
+#: v9 physics tool, and a capability nothing can satisfy is a gate
+#: nothing opens.
+ACTIVITY_CAPABILITIES: dict[str, dict[str, tuple[str, ...]]] = {
+    # Hit a thing at range. Satisfied by the permanent baseline -- Static
+    # Pulse is the always-available ranged floor -- so it is a real
+    # requirement that is ALWAYS guaranteed, which is case A of the
+    # guarantee model and the reason case A is not hypothetical.
+    "ranged_hit": {"primitives": E.RANGED_PRIMITIVES},
+    # Reach across more than base movement covers.
+    "cross_long_gap": {"primitives": (
+        "dash", "air_dash", "double_jump", "wall_kick", "glide", "hover",
+        "blink", "grapple_to_surface", "grapple_swing")},
+    # The same family `grapple_anchor` names, for the same reason.
+    "grapple": {"primitives": (
+        "grapple_to_surface", "grapple_pull_target", "grapple_swing")},
+    "blink": {"primitives": ("blink",)},
+}
+
+#: Capabilities the permanent baseline satisfies for every player in every
+#: campaign, forever. Case A of the guarantee model.
+#:
+#: Exactly one entry, and that is not an oversight. Static Pulse is the
+#: permanent always-available RANGED floor, so `ranged_hit` is guaranteed
+#: to everyone. Base movement is base movement: it does not cross a long
+#: gap, grapple or blink, which is what makes those three capable of
+#: gating anything at all. Baseline melee, when it lands, belongs to the
+#: permanent starting device and its binding is not decided here.
+BASELINE_CAPABILITIES: tuple[str, ...] = ("ranged_hit",)
+
+
+def _capability_is_satisfied(
+    capability: str, primitives: set[str], stats: set[str]
+) -> bool:
+    requirement = ACTIVITY_CAPABILITIES.get(capability)
+    if requirement is None:
+        return False
+    needed_primitives = set(requirement.get("primitives", ()))
+    needed_stats = set(requirement.get("stats", ()))
+    if not needed_primitives and not needed_stats:
+        return True
+    return bool(primitives & needed_primitives or stats & needed_stats)
+
+
+def _primitives_and_stats(components) -> tuple[set[str], set[str]]:
+    primitives: set[str] = set()
+    stats: set[str] = set()
+    for component in components:
+        primitive = getattr(component, "primitive", None)
+        if primitive is not None:
+            primitives.add(primitive.type)
+        stat = getattr(component, "stat", None)
+        if stat is not None:
+            stats.add(stat)
+    return primitives, stats
+
+
+def owned_capabilities(mechanics) -> tuple[str, ...]:
+    """What this campaign can DO, over everything it owns (case B).
+
+    Over OWNED components rather than slotted ones, for the reason
+    `owned_affordance_tags` gives: you own the grapple whether or not it
+    is in a slot, and you can always slot it. Generation asks this
+    question, because a Zone whose contents depended on the loadout at
+    generation time would be a Zone that lies the moment the player
+    changes slots.
+    """
+    primitives, stats = _primitives_and_stats(
+        owned.component for owned in mechanics.owned)
+    return tuple(sorted(
+        capability for capability in ACTIVITY_CAPABILITIES
+        if capability in BASELINE_CAPABILITIES
+        or _capability_is_satisfied(capability, primitives, stats)))
+
+
+def available_capabilities(mechanics, slots) -> tuple[str, ...]:
+    """What the player can do RIGHT NOW, over what is actually equipped.
+
+    The other half of `owned_capabilities`, and the difference between
+    them is the whole reason NOT YET is a real state rather than dead
+    code: a Zone is generated against what the campaign OWNS, and the
+    player may walk into it having slotted something else. Then the
+    activity is legitimately there, legitimately theirs, and legitimately
+    not doable this minute -- which reads as NOT YET, never as a broken
+    switch.
+    """
+    # Field names read off the model rather than listed here: a fifth
+    # slot, or a rename, would otherwise silently stop counting and this
+    # function would quietly under-report what the player can do.
+    equipped = {getattr(slots, name, None)
+                for name in type(slots).model_fields}
+    equipped.discard(None)
+    primitives, stats = _primitives_and_stats(
+        owned.component for owned in mechanics.owned
+        if owned.component.component_id in equipped)
+    return tuple(sorted(
+        capability for capability in ACTIVITY_CAPABILITIES
+        if capability in BASELINE_CAPABILITIES
+        or _capability_is_satisfied(capability, primitives, stats)))
+
+
+class CapabilityGuarantee(Strict):
+    """Why a capability is available, or that it is not (owner ruling).
+
+    THE INVARIANT: **no requirement before guarantee.** Content may
+    require a capability. It may not require one the generator cannot
+    prove the player can get. `reason` is what the proof was, so a
+    refusal can say which door was shut rather than only that one was.
+    """
+    capability: str = Field(max_length=32)
+    guaranteed: bool
+    reason: Literal[
+        # A: the permanent baseline satisfies it for everyone, forever.
+        "permanent_baseline",
+        # B: authoritative campaign state proves the player owns something
+        #    that satisfies it.
+        "already_possessed",
+        # C: the Zone itself establishes it before the requirement. No
+        #    producer yet -- see `capability_guarantee`.
+        "established_in_zone",
+        # D: the Forge can build something that satisfies it. Deferred.
+        "forge_constructible",
+        "not_guaranteed",
+    ]
+
+
+def capability_guarantee(
+    capability: str,
+    mechanics,
+    established_earlier: tuple[str, ...] = (),
+) -> CapabilityGuarantee:
+    """Can the generator PROVE the player will be able to do this?
+
+    The four cases are the owner's, in the owner's order, and the order
+    matters: the cheapest proof that holds is the one reported, so a
+    refusal is only ever reported when every case failed.
+
+    A. PERMANENT BASELINE -- `BASELINE_CAPABILITIES`.
+    B. ALREADY POSSESSED -- `owned_capabilities`, over the fold, which is
+       the authoritative campaign state. Not over the loadout: the player
+       can always slot what they own.
+    C. ESTABLISHED EARLIER IN THE ZONE -- the caller passes the
+       capabilities every route to this point has already been proven to
+       pass through. **Nothing produces that set yet**, and it is
+       deliberately a parameter rather than a lookup so that when a
+       capability-establishment construct exists it plugs in here and
+       every caller inherits it. Passing `()` -- which is what every
+       caller does today -- means "the Zone establishes nothing", which
+       is true.
+    D. FORGE-CONSTRUCTIBLE -- **not implemented.** It needs Forge access,
+       guaranteed ingredients, and a proof that a legal configuration
+       satisfying `capability` can be built from them, none of which
+       exist. It is named in `reason` and unreachable, so the day the
+       Forge lands the shape of the answer does not have to change.
+
+    An unknown capability is refused rather than defaulted. A typo that
+    silently means "no requirement" is the failure this whole invariant
+    exists to prevent.
+    """
+    if capability not in ACTIVITY_CAPABILITIES:
+        return CapabilityGuarantee(
+            capability=capability, guaranteed=False, reason="not_guaranteed")
+    if capability in BASELINE_CAPABILITIES:
+        return CapabilityGuarantee(
+            capability=capability, guaranteed=True,
+            reason="permanent_baseline")
+    if capability in owned_capabilities(mechanics):
+        return CapabilityGuarantee(
+            capability=capability, guaranteed=True,
+            reason="already_possessed")
+    if capability in established_earlier:
+        return CapabilityGuarantee(
+            capability=capability, guaranteed=True,
+            reason="established_in_zone")
+    return CapabilityGuarantee(
+        capability=capability, guaranteed=False, reason="not_guaranteed")
+
+
 def owned_affordance_tags(mechanics) -> tuple[str, ...]:
     """Which affordance tags this campaign can actually USE (§13.1).
 

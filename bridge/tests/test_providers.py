@@ -246,3 +246,260 @@ def test_fallback_echo_heuristics_all_valid():
                 continue
             if op.component.kind == "action":
                 assert op.component.primitive.type in E.IMPLEMENTED_PRIMITIVES
+
+
+def test_the_fallback_is_reproducible_but_not_monotonous():
+    """Playtest 2: "the levels are the same? i went through 4 and they
+    were all the same layout with only a few minor changes."
+
+    They were. `fallback_zone` emitted one hardcoded room list at one set
+    of dimensions, so every Zone was the same five rooms and only the
+    theme moved. Determinism is the point of this provider -- the
+    integration run plays a whole campaign against it -- but determinism
+    means "zone 3 is always zone 3", not "zone 3 is zone 4".
+
+    Both halves are pinned here, because fixing one by breaking the other
+    is the easy mistake: seed it per-zone and the campaign stops being
+    reproducible; leave it fixed and the game is one room forever.
+    """
+    from archipepsi_bridge.epsilon.fallback import fallback_zone
+
+    def zone(index: int) -> dict:
+        base = zone_request()
+        return fallback_zone(base.model_copy(update={
+            "campaign": base.campaign.model_copy(
+                update={"zone_index": index})}))
+
+    # Reproducible: the same index twice is the same Zone.
+    assert zone(3) == zone(3), (
+        "the fallback stopped being deterministic; the integration run "
+        "and every replay depend on it")
+
+    # And distinct: consecutive Zones must not be the same rooms at the
+    # same sizes.
+    shapes = []
+    for i in range(6):
+        chambers = zone(i)["chambers"]
+        shapes.append(tuple(
+            (c["type"], c.get("width"), c.get("depth"), c.get("length"),
+             c.get("segment_count"))
+            for c in chambers))
+    assert len(set(shapes)) >= 5, (
+        "six Zones produced only %d distinct layouts; a player walking "
+        "four in a row is walking one four times" % len(set(shapes)))
+
+
+def test_every_fallback_zone_validates_at_every_index():
+    """The fallback is the ONE provider that has no fallback.
+
+    A Claude zone that breaks a rule gets repaired, and failing that
+    replaced by this one. When THIS one breaks a rule, generation fails
+    outright and the player gets a Hub that will not open a portal.
+
+    That is not hypothetical: widening the fallback for variety drew 1-2
+    brutes per arena, `MAX_BRUTES_PER_ZONE` is a ZONE-wide cap of 1, and
+    zone 6 of the campaign died on it. Only the full 12-zone integration
+    run caught that, which is an expensive way to learn it. Every index
+    a campaign can reach is checked here instead.
+    """
+    from archipepsi_bridge.epsilon.fallback import fallback_zone
+    from archipepsi_bridge.schemas import zone as Z
+    from pydantic import TypeAdapter
+
+    base = zone_request()
+    for index in range(0, 31):
+        for finale in (False, True):
+            # A finale is allocated exactly one location (the goal),
+            # which is what the campaign actually sends it.
+            locations = (base.locations[:1] if finale else base.locations)
+            request = base.model_copy(update={
+                "locations": locations,
+                "campaign": base.campaign.model_copy(update={
+                    "zone_index": index, "is_finale": finale})})
+            raw = fallback_zone(request)
+            zone = TypeAdapter(Z.Zone).validate_python(raw)
+            errors = Z.validate_zone(
+                zone, expected_zone_id=request.zone_id,
+                allocated_location_ids=[
+                    loc.location_id for loc in request.locations],
+                owned_echo_ids=[],
+                owned_affordance_tags=request.unlocked_affordances)
+            assert not errors, (
+                f"fallback zone {index} (finale={finale}) is invalid, so "
+                f"the portal would refuse to open: {errors}")
+
+
+# ---------------------------------------------------------------------------
+# Output size and truncation (CAMPAIGN_SCALE.md 12)
+# ---------------------------------------------------------------------------
+
+def test_the_provider_guards_do_not_need_the_sdk_installed():
+    """Neither CI tier installs `anthropic`, and these guards ship anyway.
+
+    A structural check rather than a comment, because the comment above
+    is exactly what stopped being true once someone needed an exception
+    class: `claude.py` may not import the SDK at module scope or inside
+    `_call`, or the truncation refusal becomes untestable in CI.
+    """
+    import ast
+
+    from archipepsi_bridge.epsilon import claude
+
+    tree = ast.parse(open(claude.__file__, encoding="utf-8").read())
+
+    def imports_the_sdk(scope) -> int | None:
+        for node in ast.walk(scope):
+            names: list[str] = []
+            if isinstance(node, ast.Import):
+                names = [a.name.split(".")[0] for a in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                names = [(node.module or "").split(".")[0]]
+            if "anthropic" in names:
+                return node.lineno
+        return None
+
+    # Module scope: an import here fails the whole file on a runner
+    # without the SDK, taking the fallback provider with it.
+    for node in tree.body:
+        assert imports_the_sdk(node) is None or not isinstance(
+            node, (ast.Import, ast.ImportFrom)), (
+            f"claude.py imports the SDK at module scope (line {node.lineno})")
+
+    # `_call`: the one function that carries both guards.
+    calls = [n for n in ast.walk(tree)
+             if isinstance(n, ast.AsyncFunctionDef) and n.name == "_call"]
+    assert len(calls) == 1, "_call moved or was renamed; update this test"
+    line = imports_the_sdk(calls[0])
+    assert line is None, (
+        f"_call imports the SDK at line {line}; the truncation refusal "
+        "and the output allowance then cannot be tested on a runner "
+        "without it, which is both CI tiers")
+
+    # The constructor may -- it builds the real client, and cannot run
+    # without one either way.
+    init = [n for n in ast.walk(tree)
+            if isinstance(n, ast.FunctionDef) and n.name == "__init__"]
+    assert init and imports_the_sdk(init[0]) is not None, (
+        "the constructor no longer imports the SDK; if the client is "
+        "built some other way this test is checking the wrong thing")
+
+
+def test_the_output_allowance_scales_with_the_zone():
+    """8192 was set when a Zone was six rooms.
+
+    A 2000-point Zone is thirty-six, and a model's version of it carries
+    prose the fallback does not -- so a fixed allowance is a Zone that
+    gets cut off partway through at exactly the sizes the owner asked
+    for.
+    """
+    from archipepsi_bridge.epsilon.claude import (
+        ZONE_OUTPUT_TOKENS_MAX, ZONE_OUTPUT_TOKENS_MIN, zone_output_budget)
+
+    budgets = [C.ZONE_BUDGET_MIN, 600, C.DEFAULT_ZONE_BUDGET, 1500,
+               C.ZONE_BUDGET_MAX]
+    allowed = [zone_output_budget(b) for b in budgets]
+    assert allowed == sorted(allowed), "a bigger Zone gets no more room"
+    assert allowed[0] == ZONE_OUTPUT_TOKENS_MIN
+    assert allowed[-1] == ZONE_OUTPUT_TOKENS_MAX
+    assert zone_output_budget(C.DEFAULT_ZONE_BUDGET) > ZONE_OUTPUT_TOKENS_MIN
+
+
+def test_the_allowance_clears_the_measured_size_with_room_to_spare():
+    """Measured against real Zones, not asserted from a guess."""
+    from archipepsi_bridge.epsilon.claude import zone_output_budget
+
+    for checks, budget in ((3, C.ZONE_BUDGET_MIN),
+                           (C.DEFAULT_ZONE_TARGET_CHECKS,
+                            C.DEFAULT_ZONE_BUDGET),
+                           (C.ZONE_TARGET_CHECKS_MAX, C.ZONE_BUDGET_MAX)):
+        request = zone_request(
+            location_ids=tuple(89100001 + i for i in range(checks)))
+        request = request.model_copy(update={
+            "campaign": request.campaign.model_copy(
+                update={"zone_budget": budget})})
+        payload = json.dumps(fallback_zone(request), indent=2)
+        # ~4 characters per token, the usual rule of thumb.
+        measured = len(payload) // 4
+        assert zone_output_budget(budget) > measured * 3, (
+            f"{checks} Checks at {budget} measures ~{measured} tokens "
+            f"against an allowance of {zone_output_budget(budget)}")
+
+
+def _stub_provider(response):
+    """A ClaudeEpsilonProvider with a scripted client and no API key.
+
+    Built with `__new__` on purpose: constructing one properly needs the
+    `anthropic` SDK and a key, and NEITHER CI TIER INSTALLS THE SDK.
+    These tests are about the provider's own guards -- the scaled output
+    allowance and the truncation refusal -- so they must run where those
+    guards actually ship. `_call` used to open with `import anthropic`
+    purely to name one exception class, which made them fail on both
+    runners while passing on a machine that happened to have it.
+    """
+    from types import SimpleNamespace
+
+    from archipepsi_bridge.epsilon.claude import ClaudeEpsilonProvider
+
+    provider = ClaudeEpsilonProvider.__new__(ClaudeEpsilonProvider)
+    provider.model = "test"
+    provider.creativity = 1
+    provider._last_raw = {}
+    provider._schema_ok = {"zone": False, "echo": False}
+    provider._schemas = {"zone": {}, "echo": {}}
+    seen: dict = {}
+
+    class _Messages:
+        async def create(self, **kwargs):
+            seen.update(kwargs)
+            return response
+
+    provider.client = SimpleNamespace(messages=_Messages())
+    return provider, seen
+
+
+def test_the_request_actually_carries_the_scaled_allowance():
+    """Computing the right number changes nothing if the call sends 8192."""
+    import asyncio
+    from types import SimpleNamespace
+
+    from archipepsi_bridge.epsilon.claude import zone_output_budget
+
+    ok = SimpleNamespace(stop_reason="end_turn",
+                         content=[SimpleNamespace(type="text", text="{}")])
+    for budget in (C.ZONE_BUDGET_MIN, C.DEFAULT_ZONE_BUDGET,
+                   C.ZONE_BUDGET_MAX):
+        provider, seen = _stub_provider(ok)
+        request = zone_request()
+        request = request.model_copy(update={
+            "campaign": request.campaign.model_copy(
+                update={"zone_budget": budget})})
+        asyncio.run(provider.generate_zone(request))
+        assert seen["max_tokens"] == zone_output_budget(budget), (
+            f"a {budget}-point Zone was given {seen['max_tokens']} tokens")
+
+
+def test_a_truncated_response_is_an_error_and_not_a_small_zone():
+    """The one failure that can look like success.
+
+    `_parse_json_object` extracts from the first `{` to the LAST `}`, so
+    a response cut off mid-Zone can still parse into a syntactically
+    valid object holding a few rooms and none of the Checks. Accepted,
+    that is a Zone the player cannot finish; the pipeline has to see an
+    error so it repairs or falls back.
+    """
+    import asyncio
+    from types import SimpleNamespace
+
+    import pytest
+
+    truncated = SimpleNamespace(
+        stop_reason="max_tokens",
+        content=[SimpleNamespace(
+            type="text",
+            text='{"schema_version": 7, "zone_id": "zone_001", '
+                 '"chambers": [{"id": "c1", "type": "corridor"}')],
+    )
+    provider, _ = _stub_provider(truncated)
+
+    with pytest.raises(RuntimeError, match="truncated"):
+        asyncio.run(provider.generate_zone(zone_request()))

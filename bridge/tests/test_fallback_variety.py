@@ -78,6 +78,32 @@ def test_the_fallback_reaches_a_real_spread_of_verbs():
         primitives - set(IMPLEMENTED_PRIMITIVES))
 
 
+def test_every_upgradable_field_says_what_improving_it_feels_like():
+    """A census, so a new ladder entry cannot inherit a wrong word.
+
+    The description used to pick between two words on the SIGN of the
+    delta -- "sharper" for positive, "quicker" for negative -- and ten of
+    the eleven fields are positive, so a Warp Whistle that gained +6
+    range read "The same Warp Whistle, sharper". Sharpness is not a
+    property a teleport has.
+    """
+    from archipepsi_bridge.epsilon.fallback import (_UPGRADE_LADDER,
+                                                    _UPGRADE_WORD)
+
+    missing = [field for field, _ in _UPGRADE_LADDER
+               if field not in _UPGRADE_WORD]
+    assert missing == [], (
+        f"these upgradable fields have no word: {missing}. Say what "
+        "improving each one feels like rather than letting it inherit "
+        "somebody else's adjective")
+    unused = sorted(set(_UPGRADE_WORD) - {f for f, _ in _UPGRADE_LADDER})
+    assert unused == [], f"words for fields nothing can upgrade: {unused}"
+    # And the specific nonsense that started this: a field that is not
+    # about sharpness does not get described as sharper.
+    assert _UPGRADE_WORD["range"] != "sharper"
+    assert _UPGRADE_WORD["max_value"] != "sharper"
+
+
 def test_the_fallback_is_still_deterministic():
     """Same Check, same Echo — every time, and across processes.
 

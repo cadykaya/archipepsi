@@ -49,13 +49,15 @@ from pydantic import (
 try:
     from . import constants as C
     from .echo import EchoInterpretation, SlotName
+    from . import mechanics as M
     from .mechanics import Mechanics, derive_mechanics
-    from .zone import Zone
+    from .zone import ActivityCapability, ActivityKind, Zone
 except ImportError:  # pragma: no cover
     import constants as C
     from echo import EchoInterpretation, SlotName
+    import mechanics as M
     from mechanics import Mechanics, derive_mechanics
-    from zone import Zone
+    from zone import ActivityCapability, ActivityKind, Zone
 
 PROTOCOL_VERSION = 8
 
@@ -63,16 +65,27 @@ _ID = Field(min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")
 
 #: Any Archipepsi location, goal included. Correct for the read-only mirrors
 #: of Archipelago truth (checked/missing/scouted) and for notifications: to
-#: Archipelago, Check 030 is an ordinary location.
-_LOC = Annotated[int, Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_LOCATION_ID)]
+#: Archipelago, the goal is an ordinary location.
+#:
+#: The bound is the STABLE UNIVERSE, not one campaign's range: location ids
+#: mean the same Check in every campaign size, and a save has to be able to
+#: hold whichever prefix its own seed was generated with
+#: (CAMPAIGN_SCALE.md 3). Which of those ids this campaign actually has is
+#: a per-campaign question, answered by `CampaignSave` below.
+_LOC = Annotated[int, Field(ge=C.FIRST_LOCATION_ID, le=C.LAST_UNIVERSE_ID)]
 
 #: Any location EXCEPT the goal. Required on every field that can RESERVE,
 #: STOCK, PRICE or SELL a location — i.e. every acquisition path other than
-#: the finale Zone. Derived from constants, and a plain range rather than a
-#: Python-only validator so the restriction survives into
-#: `protocol.schema.json` and into the engine.
-_NON_FINALE_LOC = Annotated[int, Field(
-    ge=C.FIRST_NON_FINALE_LOCATION_ID, le=C.LAST_NON_FINALE_LOCATION_ID)]
+#: the finale Zone.
+#:
+#: This USED to be a closed range ending one below the goal, because with a
+#: single campaign size the goal was always id 89100030. It is now the same
+#: range as `_LOC`, and the reservation is enforced by `CampaignSave`, which
+#: is the smallest object that knows where this campaign's goal is. The
+#: annotation is kept distinct because it still marks which fields the rule
+#: applies to, and the rule is checked once per save rather than once per
+#: field.
+_NON_FINALE_LOC = _LOC
 
 _AP_STR = Annotated[str, Field(max_length=C.MAX_AP_STRING_LEN)]
 
@@ -120,8 +133,11 @@ class ZoneRecord(Strict):
     #: and discard its other unclaimed Checks — the deadlock ABANDONED was
     #: added to break. Equality is checked once, at acceptance, by
     #: `zone.validate_zone()`, which is where an accept-time rule belongs.
+    #: Bounded by the largest campaign anyone can configure, not by the
+    #: prototype's three -- a save that cannot record a fifteen-Check
+    #: Zone is a 450-location campaign that cannot start one.
     allocated_location_ids: tuple[_LOC, ...] = Field(
-        min_length=1, max_length=C.ZONE_MAX_CHECKS
+        min_length=1, max_length=C.ZONE_TARGET_CHECKS_MAX
     )
     target_game: _AP_STR
     is_finale: bool = False
@@ -158,24 +174,18 @@ class ZoneRecord(Strict):
         return self
 
     @model_validator(mode="after")
-    def _finale_owns_the_goal(self):
-        """The Zone half of the goal reservation (`constants.GOAL_LOCATION_ID`).
+    def _a_finale_holds_one_location(self):
+        """The scale-free half of the goal reservation.
 
-        Both directions, because either one alone is a hole: the finale holds
-        the goal and nothing else, and nothing that is not the finale holds
-        the goal at all. Every other acquisition path uses `_NON_FINALE_LOC`
-        and cannot express the goal in the first place.
+        A record cannot know where its campaign's goal is -- that moved
+        with `location_count` -- but it can know a finale holds exactly
+        one Check, or none once released. `CampaignSave` pins that one to
+        the campaign's own goal, and pins every other path off it.
         """
-        holds_goal = any(C.is_goal_location(i)
-                         for i in self.allocated_location_ids)
-        if self.is_finale and tuple(self.allocated_location_ids) not in (
-                (C.GOAL_LOCATION_ID,), ()):
+        if self.is_finale and len(self.allocated_location_ids) > 1:
             raise ValueError(
-                f"a finale Zone holds exactly [{C.GOAL_LOCATION_ID}]"
-            )
-        if not self.is_finale and holds_goal:
-            raise ValueError(
-                f"{C.GOAL_LOCATION_ID} is reserved for the finale Zone"
+                "a finale Zone holds exactly one location: the goal, "
+                f"not {list(self.allocated_location_ids)}"
             )
         return self
 
@@ -206,12 +216,10 @@ class PendingCheck(Strict):
 
     @model_validator(mode="after")
     def _source_bounds_what_may_be_claimed(self):
+        # Which id is the goal is a per-campaign fact, so the "never the
+        # goal" half of this rule lives on `CampaignSave`. What survives
+        # here is what a record can check alone.
         if self.source == "shop":
-            if C.is_goal_location(self.location_id):
-                raise ValueError(
-                    f"{C.GOAL_LOCATION_ID} is reserved for the finale Zone "
-                    "and can never be purchased"
-                )
             if self.shop_cost <= 0:
                 raise ValueError("a shop purchase costs at least one coin")
         elif self.shop_cost != 0:
@@ -432,6 +440,39 @@ class EarnedLocalReward(Strict):
     best_seconds: float = Field(default=0.0, ge=0.0, le=36000.0)
 
 
+class CampaignScale(Strict):
+    """The campaign's immutable scale, recorded in the save.
+
+    Defaults to the PROTOTYPE, not the production default, and that is the
+    whole point. A save written before these options existed has no scale
+    block, so it loads as the 30-location / 3-Check campaign it actually
+    was. Defaulting to 450 would invent 420 locations the seed never had
+    and strand every item the multiworld placed on them.
+
+    It also makes the failure direction safe: code that forgets to record
+    the real scale produces a campaign that is too SMALL, which refuses
+    allocations, rather than one that is too large, which hands out
+    locations Archipelago has never heard of.
+
+    Validated through `CampaignConfig`, so the save cannot hold a scale the
+    rest of the system would refuse.
+    """
+    location_count: int = C.PROTOTYPE_CONFIG.location_count
+    zone_target_checks: int = C.PROTOTYPE_CONFIG.zone_target_checks
+    zone_budget: int = C.PROTOTYPE_CONFIG.zone_budget
+
+    @model_validator(mode="after")
+    def _within_the_tested_range(self) -> "CampaignScale":
+        self.config()          # raises if any option is out of bounds
+        return self
+
+    def config(self) -> C.CampaignConfig:
+        return C.CampaignConfig(
+            location_count=self.location_count,
+            zone_target_checks=self.zone_target_checks,
+            zone_budget=self.zone_budget)
+
+
 class CampaignSave(Strict):
     """The on-disk campaign. Written atomically (temp, fsync, os.replace).
 
@@ -450,6 +491,11 @@ class CampaignSave(Strict):
     slot_name: _AP_STR
 
     epsilon_creativity: Literal[0, 1, 2] = 1
+
+    #: Immutable campaign scale (CAMPAIGN_SCALE.md). Absent in every save
+    #: written before the options existed, which is exactly how those
+    #: campaigns keep their prototype shape.
+    scale: CampaignScale = CampaignScale()
 
     track_order: tuple[_AP_STR, ...] = ()
     track_cursor: int = Field(default=0, ge=0)
@@ -543,6 +589,67 @@ class CampaignSave(Strict):
             )
         return self
 
+    @model_validator(mode="after")
+    def _every_location_belongs_to_this_campaign(self):
+        """Ids are universal; a CAMPAIGN is a prefix of them.
+
+        The models are bounded by the 600-id universe so that a save can
+        hold whichever prefix its seed was generated with. That bound
+        alone would let a 30-location campaign reserve Check 400, which
+        Archipelago has never heard of -- so the campaign's own range is
+        checked here, where the scale is known.
+        """
+        config = self.scale.config()
+        active = range(config.first_location_id, config.last_location_id + 1)
+        for label, ids in (
+                ("a Zone", {i for z in self.zones
+                            for i in z.allocated_location_ids}),
+                ("the shop", {i.location_id for i in self.shop.stock}),
+                ("a pending check",
+                 {p.location_id for p in self.pending_checks})):
+            outside = sorted(i for i in ids if i not in active)
+            if outside:
+                raise ValueError(
+                    f"{label} holds locations this {config.location_count}"
+                    "-location campaign does not have: "
+                    + ", ".join(str(i) for i in outside))
+        return self
+
+    @model_validator(mode="after")
+    def _the_goal_is_reserved_for_the_finale(self):
+        """The whole goal reservation, in ONE place.
+
+        v0.5 stated the rule in prose five times and enforced it on the
+        Zone path only, so `6 coins -> buy Check 030 -> win` was a legal
+        message sequence. v0.7 fixed that with a closed id range on every
+        acquisition-capable field -- which worked because the goal was
+        always the last of exactly thirty locations.
+
+        It is now the last of however many this campaign has, so a static
+        range cannot express it and this validator is the rule: the
+        finale Zone holds the goal and nothing else, and no other path
+        holds it at all.
+        """
+        goal = self.scale.config().goal_location_id
+        for zone in self.zones:
+            holds = goal in zone.allocated_location_ids
+            if zone.is_finale and zone.allocated_location_ids not in (
+                    (goal,), ()):
+                raise ValueError(f"a finale Zone holds exactly [{goal}]")
+            if holds and not zone.is_finale:
+                raise ValueError(
+                    f"{goal} is reserved for the finale Zone")
+        if any(i.location_id == goal for i in self.shop.stock):
+            raise ValueError(
+                f"{goal} is reserved for the finale Zone and can never be "
+                "purchased")
+        for pending in self.pending_checks:
+            if pending.location_id == goal and pending.source != "zone":
+                raise ValueError(
+                    f"{goal} is reserved for the finale Zone and can never "
+                    "be purchased")
+        return self
+
     def zone_by_id(self, zone_id: str) -> ZoneRecord | None:
         return next((z for z in self.zones if z.zone_id == zone_id), None)
 
@@ -552,10 +659,24 @@ class CampaignSave(Strict):
         )
 
     def derive(self) -> Mechanics:
-        """The live mechanics. Cheap enough to call freely (linear in the
-        log, which is at most 30 entries), and deliberately not cached on
-        the model: a cached fold is a second source of truth waiting to go
-        stale."""
+        """The live mechanics, and deliberately not cached on the model:
+        a cached fold is a second source of truth waiting to go stale.
+
+        This used to justify itself with "the log is at most 30
+        entries", which was true of the prototype's thirty locations and
+        is not true of a 450-location campaign — a full one accumulates
+        ~449 interpretations, and the ceiling is ~599. The justification
+        was re-EARNED rather than re-worded.
+
+        Measured (`test_provider_input_size.py`): the fold is linear at
+        roughly 8 microseconds per interpretation — about 0.2 ms at 30,
+        3.5 ms at 449, 5.0 ms at 600 — on an event-driven path that runs
+        per intent rather than per frame. Cheap enough to keep simple. A
+        cache would buy single-digit milliseconds and cost invalidation
+        correctness on the one value that must be identical everywhere,
+        and the snapshot it rides in spends far more than that on
+        serialisation.
+        """
         return derive_mechanics(self.interpretations)
 
     @property
@@ -691,6 +812,10 @@ class HubStatus(Strict):
     #: The two operands of the finale gate, and the two thresholds.
     signal_keys: int = Field(default=0, ge=0)
     finale_progress: int = Field(default=0, ge=0)
+    #: Defaulted to the prototype's 24, and SET by the engine from the
+    #: campaign's own config on every snapshot -- the Hub renders this
+    #: number, so a 450-location campaign that shipped the default would
+    #: tell the player it needs 24 of 449.
     finale_required: int = C.FINALE_REQUIRED_OTHER_CHECKS
     signal_keys_required: int = C.FINALE_REQUIRED_SIGNAL_KEYS
 
@@ -814,7 +939,33 @@ class CampaignSnapshot(Strict):
     #: FOLD, computed by the bridge, because re-implementing it in GDScript
     #: would be a second source of truth for the one thing that has to be
     #: identical everywhere.
+    #:
+    #: The log is LIFETIME history. At the prototype's thirty locations it
+    #: was ~25 KiB; a 450-location campaign ends around 449 entries and
+    #: ~390 KiB, and every one of the dozen-odd `broadcast_snapshot()`
+    #: calls re-sent all of it, for a list that only ever grows at the
+    #: end. So a snapshot MAY omit it — see `interpretations_complete`.
     interpretations: tuple[EchoInterpretation, ...] = ()
+    #: True when `interpretations` above is the whole log. False when the
+    #: sender elided it because the receiver already has this exact log,
+    #: and the receiver should keep the last complete one it was given.
+    #:
+    #: BACK-COMPAT, deliberately: the default is True and an elided log is
+    #: sent as the empty tuple, so a snapshot built without thinking about
+    #: any of this — a test, a tool, `smoke.py` — means exactly what it
+    #: always meant, and a client that ignores the flag entirely sees an
+    #: empty archive rather than a wrong one. Every connect and every
+    #: `hello` is answered with a complete snapshot, so no client can be
+    #: joined to the stream without a full log to cache first.
+    #:
+    #: FROZEN FOR THE ART A/B: `mechanics` below could be elided on this
+    #: same key and is ~97% of what remains, but no transport change
+    #: lands between the pre-art and post-art runs of the same Zone 1.
+    #: See `docs/PLAYTEST_BASELINE.md`, "THE A/B FREEZE".
+    interpretations_complete: bool = True
+    #: The lifetime length of the log, sent whether or not the log is, so
+    #: a count-only consumer never has to know which kind it received.
+    interpretation_count: int = Field(default=0, ge=0)
     mechanics: Mechanics = Field(default_factory=lambda: Mechanics())
     slots: SlotAssignment = Field(default_factory=lambda: SlotAssignment())
     #: What the player has found that Archipelago does not care about
@@ -831,6 +982,23 @@ class CampaignSnapshot(Strict):
 
     hub: HubStatus
     last_generation_error: str | None = Field(default=None, max_length=C.MAX_TEXT_LEN)
+
+    @computed_field
+    @property
+    def available_capabilities(self) -> tuple[str, ...]:
+        """What the player can do RIGHT NOW, over what is equipped.
+
+        Derived here rather than in GDScript, for the reason the fold is:
+        re-implementing "can this campaign grapple" in the client would
+        be a second answer to a question that has exactly one.
+
+        Distinct from the OWNED set generation reasons over. A Zone is
+        built against what the campaign owns; the player walks into it
+        with whatever they slotted, so the difference between the two is
+        what a NOT YET gate is FOR — and it is why that gate is a
+        reachable state rather than dead code.
+        """
+        return M.available_capabilities(self.mechanics, self.slots)
 
     @computed_field
     @property
@@ -853,6 +1021,21 @@ class CampaignSnapshot(Strict):
             (self.active_zone,) if self.active_zone else ())
         _reject_underfunded_ledger(self.coins_spent, self.pending_checks)
         _reject_duplicate_ids(self.interpretations, "echo_id", "echo_id")
+        # An elided log is elided, not truncated. The two legal shapes are
+        # the whole log with its own length, or nothing at all carrying the
+        # length it would have had; a third shape -- SOME of the log -- is a
+        # silently wrong archive, so it cannot be constructed at all.
+        if self.interpretations_complete:
+            if self.interpretation_count != len(self.interpretations):
+                raise ValueError(
+                    f"interpretation_count {self.interpretation_count} "
+                    f"disagrees with the {len(self.interpretations)} "
+                    "interpretations sent alongside it")
+        elif self.interpretations:
+            raise ValueError(
+                f"{len(self.interpretations)} interpretations were sent "
+                "with interpretations_complete=False; an elided log is sent "
+                "empty, never partially")
         # Against the mechanics actually sent, not a re-fold: if the two
         # ever disagreed, the client would render one and validate the other.
         _reject_unslottable(self.slots, self.mechanics)
@@ -1054,6 +1237,101 @@ class GrantLocalReward(Strict):
     best_seconds: float = Field(default=0.0, ge=0.0, le=36000.0)
 
 
+class ChamberDwell(Strict):
+    """How long the player spent in one chamber. Seconds, one entry per
+    chamber the Zone has, whether or not it was entered."""
+    chamber_index: int = Field(ge=0, lt=C.ZONE_MAX_CHAMBERS)
+    seconds: float = Field(ge=0.0, le=36000.0)
+
+
+class ActivityOutcome(Strict):
+    """What one activity did while the player was in the room with it.
+
+    The questions the next playtest has to be able to answer, and the
+    field that answers each:
+
+      Did they notice it?      `entered`
+      Did they try it?         `attempts`
+      Did they understand it?  `attempts` against `completed`
+      Did they finish it?      `completed`
+      How long did it hold them? `active_seconds`
+      Did a gate behave?       `not_yet`
+
+    `entered` and `attempts` are deliberately separate. "Walked past it"
+    and "had a go and gave up" are different findings, and a single
+    engagement flag would have collapsed them into one number that could
+    not distinguish a legibility problem from a difficulty one.
+    """
+    activity_id: str = Field(max_length=64)
+    kind: ActivityKind
+    room_id: str = Field(max_length=64)
+    element_count: int = Field(ge=1, le=8)
+    time_limit: float = Field(default=0.0, ge=0.0, le=120.0)
+    ordered: bool = False
+    #: The semantic capabilities it asked for, so a playtest can tell a
+    #: gate that behaved from one nobody ever met.
+    requires: tuple[ActivityCapability, ...] = Field(default=(),
+                                                     max_length=2)
+    #: The player came within reach of it at all.
+    entered: bool = False
+    #: Attempts started. Zero with `entered` true is "walked past it".
+    attempts: int = Field(default=0, ge=0, le=9999)
+    completed: bool = False
+    #: Refused for a capability the player did not have equipped.
+    not_yet: bool = False
+    #: Seconds spent with an attempt actually running.
+    active_seconds: float = Field(default=0.0, ge=0.0, le=36000.0)
+
+
+class ZoneTiming(Strict):
+    """What the Zone actually cost the player, measured (CAMPAIGN_SCALE.md 13).
+
+    The 40-minute Zone and the 20-hour campaign are TARGETS. This is the
+    only thing that can turn either into a fact, and it is the reason the
+    engine's content budget can be calibrated against play rather than
+    against a designer's guess.
+
+    Godot owns the clock -- elapsed time, per-chamber dwell, deaths and
+    encounter durations are things only the running game knows. The
+    bridge joins them to the room and Zone VALUES it computed for the
+    same Zone, so one local record holds both halves.
+
+    Local only: the bridge appends it to a file under the save directory.
+    Nothing is sent anywhere (CAMPAIGN_SCALE.md 13).
+    """
+    type: Literal["zone_timing"]
+    zone_id: str = _ID
+    #: Wall-clock inside the Zone, excluding time spent paused.
+    elapsed_seconds: float = Field(ge=0.0, le=36000.0)
+    deaths: int = Field(default=0, ge=0, le=9999)
+    checks_completed: int = Field(default=0, ge=0,
+                                  le=C.ZONE_TARGET_CHECKS_MAX)
+    dwell: tuple[ChamberDwell, ...] = Field(default=(),
+                                            max_length=C.ZONE_MAX_CHAMBERS)
+    #: One entry per encounter the player finished, in seconds from the
+    #: first shot to the last enemy dying. This is what
+    #: `WORST_CASE_ENCOUNTER_TTK_BUDGET` was a guess about.
+    encounter_seconds: tuple[float, ...] = Field(default=(), max_length=64)
+    #: True when the player left through the portal rather than bailing
+    #: to the Hub -- an abandoned Zone's elapsed time is not a Zone length.
+    completed: bool = False
+    #: One entry per activity the Zone built. Bounded by the most a Zone
+    #: can hold: `ZONE_MAX_CHAMBERS` rooms times the schema's three
+    #: activities each.
+    activities: tuple[ActivityOutcome, ...] = Field(
+        default=(), max_length=C.ZONE_MAX_CHAMBERS * 3)
+
+    @model_validator(mode="after")
+    def _one_entry_per_chamber(self):
+        indices = [d.chamber_index for d in self.dwell]
+        if len(set(indices)) != len(indices):
+            raise ValueError("a chamber appears twice in the dwell record")
+        ids = [a.activity_id for a in self.activities]
+        if len(set(ids)) != len(ids):
+            raise ValueError("an activity appears twice in the timing record")
+        return self
+
+
 class SetCreativity(Strict):
     type: Literal["set_creativity"]
     value: Literal[0, 1, 2]
@@ -1078,6 +1356,7 @@ ClientMessage = Annotated[
         Hello, ApConnect, ApDisconnect, StartMockCampaign, RequestNextZone,
         EnterZone, LeaveZone, ExitZone, AbandonZone, ClaimCheck, BuyShopStock,
         SlotAction, GrantLocalReward, SetCreativity, DebugCommand,
+        ZoneTiming,
     ],
     Field(discriminator="type"),
 ]

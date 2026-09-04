@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-integration
+.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-activity godot-room godot-room-contract godot-movement godot-zone-audit zone-shots godot-boot godot-legible godot-integration
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -39,9 +39,31 @@ rules-fixture:
 verbs-fixture:
 	$(PY) bridge/archipepsi_bridge/fixtures/make_verbs_snapshot.py
 
+# The PRE-ART playtest baseline. Regenerate DELIBERATELY and in its own
+# commit: retaking it means the playtest before it and the playtest after
+# it are no longer measuring the same game. See docs/PLAYTEST_BASELINE.md.
+baseline:
+	$(PY) bridge/archipepsi_bridge/fixtures/make_playtest_baseline.py
+
+# The launcher's own guard and report, from a terminal. Same code the
+# Windows launcher runs, so a green `playtest-check` here means the
+# launcher will start.
+playtest-check:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest check
+
+playtest-report:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest report \
+	  --save-dir $(or $(SAVES),../playtest-2.5)
+
 # Two Archipepsi slots in ONE real multiworld: a real MultiServer, two
 # bridges, two saves, checking each other's locations. Needs a generated
 # seed (`make seed-multi`); the harness starts and stops its own server.
+notices:                       # regenerate THIRD_PARTY_NOTICES from assets/LICENSES.json
+	cd bridge && $(PY) -m archipepsi_bridge.notices
+
+doctor:                        # what a fresh clone is missing, and what is optional
+	cd bridge && $(PY) -m archipepsi_bridge.doctor
+
 version:                       # what this build IS (CI attaches it to a run)
 	cd bridge && $(PY) -m archipepsi_bridge.version
 
@@ -118,6 +140,100 @@ godot-test: godot-import       # headless builder tests (no bridge needed)
 	  echo "-- a script error was raised: the suite cannot vouch for itself"; \
 	  exit 1; \
 	fi
+
+# The activity vocabulary, driven rather than grepped.
+#
+# `test_runner_coverage.py` proves each schema kind has a MATCH BRANCH in
+# activities.gd. It cannot see that a branch builds an inert box, which is
+# what four of them did. This target drives each family to completion, and
+# each family to failure, through the real physics and the real damage
+# path -- so the two guards together mean "exists AND behaves".
+godot-activity: godot-import
+	@out=$$($(GODOT) --headless --path godot -- --activity-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT ACTIVITY TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# ROOM GRAMMAR v0: elevation bands, sockets and environmental objects.
+#
+# Every test goes through `ZoneBuilder.build` or
+# `ContentInstantiator.build_chamber`, and none constructs its own room.
+# This project has been burned three times by a subsystem passing its own
+# tests while the real composition path never reached it.
+godot-room: godot-import
+	@out=$$($(GODOT) --headless --path godot -- --room-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT ROOM TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# THE ROOM CONTRACT, over both producers (P1).
+#
+# One suite keyed to `room_contract.gd` and `room_audit.gd`, run over
+# procedural rooms AND authored fixtures. A per-producer suite proves
+# that producer is self-consistent; this asks whether "a valid room"
+# means the same thing whoever built it.
+godot-room-contract: godot-import
+	@out=$$($(GODOT) --headless --path godot -- --room-contract 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT ROOM CONTRACT TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# The REAL Zone 1, audited through the real builder.
+#
+# `godot-activity` drives activities it builds itself. That is what let a
+# whole batch ship with the game building none: the suite proved the
+# runtime works and nothing about whether anything reaches it. This target
+# loads the JSON of the Zone a baseline playtest actually walks, hands it
+# to `ZoneBuilder.build`, and measures the assembled scene with physics.
+#
+# It fails on STRUCTURE -- a declared activity with no runtime, a wrong
+# element count, a kind that cannot be completed in the assembled Zone.
+# Placement findings print as NOTEs and do not fail: they are written down
+# in `docs/ZONE_ACTIVITY_AUDIT.md` and a target that goes red on a known
+# open defect is a target people learn to ignore.
+godot-movement: godot-import   # P3.0 rails, launch pads, and the offer seam
+	@out=$$($(GODOT) --headless --path godot -- --movement-test 2>&1); \
+	status=$$?; echo "$$out" | grep -v "^$$"; \
+	exit $$status
+
+godot-zone-audit: godot-import
+	@out=$$($(GODOT) --headless --path godot -- --zone-audit 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT ZONE AUDIT OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: the audit cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# The first deterministic screenshots of a REAL generated Zone.
+#
+# NOT `--headless`: that selects the dummy renderer and an awaited capture
+# hangs forever with no output (`docs/art/CAMERA_BENCH.md`, gotcha 1, on
+# the art branch). Xvfb plus the GL driver, and the screen must be at
+# least as large as the viewport or the frame comes back part black with
+# no error anywhere.
+#
+# Diagnostic, and not in CI: it asserts nothing, it needs a display, and
+# `godot-zone-audit` is what makes the claims. Output is gitignored --
+# these are for looking at, not for diffing.
+zone-shots: godot-import
+	@xvfb-run -a -s "-screen 0 1600x1000x24" $(GODOT) --path godot \
+	  --rendering-driver opengl3 -- --zone-shots 2>&1 \
+	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
+# The audit's fixture, regenerated from the engine rather than edited.
+zone-fixture:
+	cd bridge && $(PY) -m archipepsi_bridge.playtest dump \
+	  --out ../godot/tests/fixtures/played_zone.json
 
 # Invariant I14 (ACCEPTANCE_TESTS 5.7). Boots the real project rather than
 # using `--script`: a SceneTree script never instantiates the autoloads, so
@@ -200,6 +316,44 @@ godot-verbs: godot-import      # the press and release lifecycle
 	@out=$$($(GODOT) --headless --path godot -- --verbs-test 2>&1); \
 	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
 	printf '%s\n' "$$out" | grep -q "GODOT VERBS TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# Does the game START? The suite that should have existed: every other
+# Godot target boots a DRIVER, and a driver returns from `_ready` before
+# the real setup runs. That is how the world node went missing for a day
+# with nine suites and two CI tiers green.
+godot-boot: godot-import       # the real startup path, and the transition that crashed
+	@out=$$($(GODOT) --headless --path godot -- --boot-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT BOOT TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# Can the player READ the walls? Playtest 1 found every Hub sign
+# mirrored while nine suites stayed green: they all assert state,
+# geometry or protocol, and a backwards sign is correct in all three.
+godot-legible: godot-import    # which way the writing on the wall faces
+	@out=$$($(GODOT) --headless --path godot -- --legibility-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT LEGIBILITY TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
+	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# The S12 authored-content suite. Godot is the physical authority for the
+# registry: it is the only half that can ask whether a scene a manifest
+# claims actually loads, and it owns the S13 selection rule. The Python
+# half validates manifest SHAPE and pins the two together.
+godot-content: godot-import    # the authored-content registry and its fallbacks
+	@out=$$($(GODOT) --headless --path godot -- --content-test 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT CONTENT TESTS OK" || exit 1; \
 	if printf '%s\n' "$$out" | grep -qE "SCRIPT ERROR|String formatting error"; then \
 	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
 	  exit 1; \

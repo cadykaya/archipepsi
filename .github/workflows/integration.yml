@@ -107,8 +107,12 @@ jobs:
       - name: Godot project imports
         run: make godot-import
 
+      - name: Preflight
+        run: make doctor
+
       - name: Headless Godot suites
         run: |
+          make godot-boot
           make godot-test
           make godot-hud
           make godot-rules
@@ -117,6 +121,13 @@ jobs:
           make godot-affordance
           make godot-verbs
           make godot-blink
+          make godot-content
+          make godot-activity
+          make godot-room
+          make godot-room-contract
+          make godot-movement
+          make godot-zone-audit
+          make godot-legible
 
       - name: Whole campaign, headlessly
         run: make godot-integration

@@ -16,8 +16,12 @@ extends RefCounted
 ## it (`Player.environment_influence`).
 class Volume extends Area3D:
 	var influence: Dictionary = {}
+	## A rail lane carries the authoritative path it was swept along, so
+	## the player catches THE path rather than a box that approximates
+	## it. Null on water, wind and every other volume (P3.0).
+	var rail: RailPath = null
 	var extents := Vector3(3.0, 2.0, 3.0)
-	var tint := Color(0.5, 0.8, 1.0)
+	var tint := Constants.AFFORDANCE_SIGNAL
 	## Water and wind should be visible; a rail's lane is implied by the
 	## rail, and a second translucent box over it just reads as fog.
 	var visible_shell := true
@@ -55,6 +59,20 @@ class Volume extends Area3D:
 		if body is Player:
 			_inside.append(body)
 			(body as Player).enter_volume(self, influence)
+			if rail != null:
+				# THE ROOM'S FRAME, DERIVED FROM THIS LANE. The path is
+				# room-local and the player is in world; the lane is
+				# parented into the room, so its own parent is the
+				# transform between them and no second copy is authored.
+				(body as Player).offer_rail(rail, _room_to_world())
+
+	## The transform from this lane's authored frame into world space.
+	func _room_to_world() -> Transform3D:
+		if not is_inside_tree():
+			return Transform3D.IDENTITY
+		var host := get_parent() as Node3D
+		return Transform3D.IDENTITY if host == null \
+				else host.global_transform
 
 	func _on_exited(body: Node3D) -> void:
 		if body is Player:
@@ -86,7 +104,7 @@ class BreakablePanel extends StaticBody3D:
 	const MIN_IMPACT := Constants.STATIC_PULSE_DAMAGE * 2.0
 
 	var hp := HP
-	var tint := Color(0.8, 0.45, 0.3)
+	var tint := Constants.AFFORDANCE_SIGNAL
 	var refused := 0
 
 	var _mesh: MeshInstance3D
@@ -156,12 +174,182 @@ class BreakablePanel extends StaticBody3D:
 ## Launches whoever stands on it. Base-kit usable by design (§13.1): no
 ## owned capability is required, so it is the one affordance that can
 ## appear in a campaign that has interpreted nothing yet.
+## A DIRECTED launch: source and destination are both the contract.
+##
+## Beside `BouncePad`, not instead of it, because they are different
+## offers. A bounce pad is a local vertical opportunity -- up you go,
+## where you land is your problem. A launch pad is a traversal EDGE: it
+## exists to cross a specific distance to a specific place, and if it
+## cannot, it should not have been built.
+##
+## NO HAND-AUTHORED VELOCITY. `target` is set; the velocity is solved by
+## `LaunchSolver` from the two endpoints and gravity. Move the pad and
+## the arc follows, which is the entire point -- a literal vector would
+## be a second authoring of the destination that stops agreeing the first
+## time anything moves.
+##
+## BASE KIT, like the bounce pad: the map provides this movement, so it
+## fires whoever stands on it and asks for no Echo.
+class LaunchPad extends Area3D:
+	## WHAT A `launch_source` RESERVES, AND WHAT IT DOES NOT (owner
+	## ruling, 2026-09-03).
+	##
+	## `launch_source.position` is THE canonical room-local foot-contact
+	## centre the constructed launch fires from -- one point, not a
+	## choice of points. `launch_source.radius` is the REGION RESERVED
+	## for the consuming movement package to build its mechanism in: it
+	## says "this much floor is yours", never "the player may begin the
+	## flight anywhere in here". Production therefore validates ONE
+	## trajectory, from the canonical origin, and the pad's own footprint
+	## has to fit inside the reservation.
+	##
+	## `launch_target.position` is the authored foot-contact AIM and
+	## `launch_target.radius` is the acceptable landing region -- the
+	## asymmetry is deliberate: where you leave from is exact, where you
+	## arrive is a region a player can be trusted to hit.
+	##
+	## THE SEAM THIS CLOSES. `solve()` has always derived its velocity
+	## from the pad centre, and `launch()` applied that velocity to
+	## whoever happened to be overlapping the trigger -- so a player
+	## clipping the edge of a 2.4 m pad flew a trajectory that began up
+	## to 1.2 m from the one Production validated, and landed somewhere
+	## nobody checked. The runtime launch must BE the validated launch,
+	## so the player is captured to the canonical origin first.
+	var target := Vector3.ZERO
+	var tint := Constants.AFFORDANCE_SIGNAL
+	var launched := 0
+
+	## The mechanism's own footprint. Named so the validator can ask
+	## whether it fits the reservation instead of assuming it does.
+	const PAD_SIZE := Vector3(2.4, 0.5, 2.4)
+
+	## How far the pad reaches from its centre, in plan -- the half
+	## diagonal, because a square corner is further out than a square
+	## edge and the reservation is a circle.
+	const PAD_REACH := 1.697056
+
+	func _ready() -> void:
+		monitoring = true
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = PAD_SIZE
+		shape.shape = box
+		shape.position = Vector3(0, 0.25, 0)
+		add_child(shape)
+		var mesh_node := MeshInstance3D.new()
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(PAD_SIZE.x, 0.25, PAD_SIZE.z)
+		mesh_node.mesh = mesh
+		mesh_node.position = Vector3(0, 0.12, 0)
+		mesh_node.material_override = ThemeMaterials.glow_material(tint, 1.8)
+		add_child(mesh_node)
+		# WHICH WAY IT SENDS YOU, drawn from the solved arc rather than
+		# from a decorative arrow somebody aimed by hand. A directed pad
+		# the player cannot read the direction of is a trap.
+		var shot := solve()
+		if bool(shot.get("ok", false)):
+			# THE SAME TRAJECTORY THE PAD ACTUALLY FIRES, drawn from it.
+			# `solve` works in world space, so the pips are world points
+			# and have to come back through this pad's own transform to
+			# be parented to it -- subtracting `position`, which is
+			# room-local, only worked while the room sat at the origin.
+			var points := LaunchSolver.arc(_body_pose(),
+					shot["velocity"] as Vector3, float(shot["time"]))
+			var into_pad := global_transform.affine_inverse() \
+					if is_inside_tree() else Transform3D.IDENTITY
+			for i in points.size():
+				if i % 6 != 0 or i == 0:
+					continue
+				var pip := MeshInstance3D.new()
+				var dot := SphereMesh.new()
+				dot.radius = 0.12
+				dot.height = 0.24
+				pip.mesh = dot
+				pip.position = into_pad * (points[i] as Vector3)
+				pip.material_override = ThemeMaterials.glow_material(
+						tint, 0.9)
+				add_child(pip)
+		body_entered.connect(_on_entered)
+
+	## The pad's own place, whether or not it is in the tree yet.
+	func global_position_or_local() -> Vector3:
+		return global_position if is_inside_tree() else position
+
+	## THE ROOM'S OWN FRAME, derived rather than authored.
+	##
+	## `target` is room-local by contract, and this pad is parented into
+	## the room -- so the room's transform is the parent's, and the pad
+	## needs no second copy of it. Identity before the pad is in a tree,
+	## which is the only state where local and world coincide anyway.
+	func room_to_world() -> Transform3D:
+		if not is_inside_tree():
+			return Transform3D.IDENTITY
+		var host := get_parent() as Node3D
+		return Transform3D.IDENTITY if host == null \
+				else host.global_transform
+
+	## Where the launched BODY is, in world space.
+	func _body_pose() -> Vector3:
+		return SpaceProbe.stand_pose(global_position_or_local())
+
+	## Where the launched body is AIMED, in world space.
+	func world_target() -> Vector3:
+		return SpaceProbe.stand_pose(room_to_world() * target)
+
+	## SOLVED IN WORLD SPACE, BODY POSE TO BODY POSE. This mixed the two
+	## frames: a global source and a room-local target, which aimed every
+	## pad in a placed Zone at a point the room does not contain.
+	func solve() -> Dictionary:
+		return LaunchSolver.solve(_body_pose(), world_target())
+
+	func _on_entered(body: Node3D) -> void:
+		if body is Player:
+			launch(body as Player)
+
+	## Whether the canonical origin can hold a player right now.
+	##
+	## COLLISION-SAFE CAPTURE. Recentring is a teleport, and a teleport
+	## into geometry is worse than the offset trajectory it replaces. The
+	## validator already proved this pose fits when the offer was
+	## accepted, so a refusal here means something moved since -- and
+	## refusing to fire is the safe answer.
+	func origin_is_clear(rider: Player = null) -> bool:
+		if not is_inside_tree():
+			return true
+		var world := get_world_3d()
+		if world == null:
+			return true
+		# The rider is standing ON the pad, so their own body is not an
+		# obstruction to their own launch.
+		var skip: Array[RID] = []
+		if rider != null:
+			skip.append(rider.get_rid())
+		return SpaceProbe.body_fits(world.direct_space_state,
+				_body_pose(), skip)
+
+	## Public so the suite can fire it without staging an overlap.
+	##
+	## CAPTURED, THEN LAUNCHED. The player is moved to the canonical
+	## source body pose before the solved velocity is applied, so the
+	## flight that happens is the flight that was validated -- entering
+	## at an edge, a corner or dead centre all produce the same arc.
+	func launch(player: Player) -> void:
+		var shot := solve()
+		if not bool(shot.get("ok", false)):
+			return
+		if not origin_is_clear(player):
+			return
+		player.global_position = _body_pose()
+		player.velocity = shot["velocity"]
+		launched += 1
+
+
 class BouncePad extends Area3D:
 	## Chosen against `JUMP_VELOCITY` (8.0) so the pad is unmistakably more
 	## than a jump without being a launch you cannot read.
 	const LAUNCH := 16.0
 
-	var tint := Color(0.95, 0.85, 0.4)
+	var tint := Constants.AFFORDANCE_SIGNAL
 	var launched := 0
 
 	func _ready() -> void:
@@ -203,7 +391,7 @@ class MovingPlatform extends AnimatableBody3D:
 	const PERIOD := 5.0
 
 	var travel := Vector3(0, 3.0, 0)
-	var tint := Color(0.6, 0.65, 0.7)
+	var tint := Constants.AFFORDANCE_SIGNAL
 	var elapsed := 0.0
 	## Where along `travel` the platform intends to be, 0..1. Reported
 	## separately because `sync_to_physics` makes `position` a read of the

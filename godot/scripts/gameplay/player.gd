@@ -159,6 +159,49 @@ var _volumes: Dictionary = {}
 ## Called by an affordance volume's own Area3D on overlap. Keyed by the
 ## node so overlapping volumes cannot leave a stale influence behind when
 ## one of them is freed mid-overlap.
+## Riding a rail, or null. The whole ride lives in `RailRider`, which
+## owns no node and reads no input, so it can be driven frame-exact in a
+## headless test instead of only by a human on a controller.
+var _rider: RailRider = null
+
+## A rail lane offering itself as the player passes through it.
+##
+## AN OFFER, NOT AN ORDER: `RailRider.catch` decides, and it refuses a
+## player who is too far off the path, below it, already past its end, or
+## not moving along it. Walking sideways into a rail does nothing, which
+## is what stops the room shoving people down it.
+## `to_world` is the room's own transform: the path is authored local and
+## the player is in world, and comparing the two directly is how a rail
+## in a placed Zone came to be catchable from across the map.
+func offer_rail(rail: RailPath, to_world := Transform3D.IDENTITY) -> void:
+	if _rider != null or _dead:
+		return
+	var caught := RailRider.catch(rail, global_position, velocity, to_world)
+	if caught.is_empty():
+		return
+	_rider = caught["rider"]
+	global_position = _rider.body_position()
+
+func riding_rail() -> bool:
+	return _rider != null
+
+## One step of a grind. Position comes from the path, velocity is what
+## the player leaves with, and `move_and_slide` is deliberately NOT
+## called: while riding, the rail is the collision.
+func _ride(delta: float) -> void:
+	var jump := not input_frozen \
+			and Input.is_action_just_pressed("jump")
+	var step: Dictionary = _rider.advance(delta, jump)
+	global_position = step["position"]
+	velocity = step["velocity"]
+	if not bool(step["riding"]):
+		_rider = null
+		# Off a rail is airborne, and a coyote frame here would give a
+		# free second jump to anyone who let go near the ground.
+		_coyote = 0.0
+		_jump_buffer = 0.0
+	_update_camera_feel(delta)
+
 func enter_volume(volume: Node, influence: Dictionary) -> void:
 	_volumes[volume] = influence
 
@@ -213,7 +256,7 @@ static func create() -> Player:
 	var camera := Camera3D.new()
 	camera.name = "Camera3D"
 	camera.position = Vector3(0, Constants.PLAYER_EYE_HEIGHT, 0)
-	camera.fov = 90.0
+	camera.fov = PlayerSettings.shared().value("field_of_view")
 	player.add_child(camera)
 
 	# The viewmodel: a crude handheld transmitter, very 1998. The Static
@@ -347,8 +390,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseMotion \
 			and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
-		camera.rotate_x(-event.relative.y * MOUSE_SENSITIVITY)
+		# S21: sensitivity and invert-Y are preferences, read live so a
+		# change in the pause menu takes effect without a reload.
+		var settings := PlayerSettings.shared()
+		var sensitivity := settings.value("mouse_sensitivity")
+		var invert := -1.0 if settings.flag("invert_look_y") else 1.0
+		rotate_y(-event.relative.x * sensitivity)
+		camera.rotate_x(-event.relative.y * sensitivity * invert)
 		camera.rotation.x = clampf(camera.rotation.x, -PI / 2.0, PI / 2.0)
 
 func _physics_process(delta: float) -> void:
@@ -356,6 +404,15 @@ func _physics_process(delta: float) -> void:
 	if _dead:
 		return
 	_refresh_derived_stats(delta)
+
+	# ON A RAIL, the rail moves you (P3.0). Not a cutscene: the speed is
+	# the speed you brought, gravity still acts along the path so a climb
+	# costs and a drop pays, and jump gets you off whenever you like. It
+	# returns EARLY because a grind that also ran the walk solve would be
+	# two things steering one body.
+	if _rider != null:
+		_ride(delta)
+		return
 
 	var env := environment_influence()
 	var gravity := Constants.GRAVITY * gravity_mult * hover_gravity_scale \
@@ -530,8 +587,14 @@ func _update_camera_feel(delta: float) -> void:
 ## height every other number in the game is derived from.
 static func camera_feel_offset(phase: float, weight: float,
 		dip: float) -> Vector3:
-	return Vector3(sin(phase) * BOB_SWAY * weight,
-			sin(phase * 2.0) * BOB_RISE * weight - dip, 0.0)
+	# S21 accessibility: `motion_intensity` scales view bob and the
+	# landing dip, and 0 turns both off completely. Motion sickness is
+	# the reason the option exists, so "off" has to actually be off --
+	# a reduced-motion setting with a floor above zero is not one.
+	var motion := PlayerSettings.shared().value("motion_intensity")
+	return Vector3(sin(phase) * BOB_SWAY * weight * motion,
+			sin(phase * 2.0) * BOB_RISE * weight * motion - dip * motion,
+			0.0)
 
 func camera_ray(distance: float, spread_dir: Vector3 = Vector3.ZERO) -> Dictionary:
 	var from := camera.global_position

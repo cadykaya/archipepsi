@@ -1,9 +1,16 @@
 class_name Enemy
 extends CharacterBody3D
-## All three archetypes in one script, stat-driven from Constants.ENEMY_STATS.
+## Stat-driven from Constants.ENEMY_STATS, sized from
+## Constants.ENEMY_ENVELOPES.
 ## melee: walks at the player, short-range hits.
 ## ranged: holds position, fires slow visible projectiles.
 ## brute: large, slow, high-health — the POC boss.
+##
+## Those three are the roles that can be PLACED. The approved art family is
+## ten (`Constants.ENEMY_ROLES`), and every one of them has an agreed
+## physical envelope so models can be built against it — but a role with an
+## envelope and no stat block still has no behaviour, and `create()` refuses
+## it rather than inventing one. Physical integration first (art req 7).
 ##
 ## Direct steering plus collision recovery; no navmesh (EPSILON_SPEC §5).
 ## An enemy below ENEMY_FALL_KILL_Y counts as dead, so a steered-off enemy
@@ -11,7 +18,25 @@ extends CharacterBody3D
 
 signal enemy_died(enemy: Enemy)
 
+## An attack's windup began (art requirement 14). `kind` names the attack,
+## `duration` is how long the promise lasts in seconds.
+##
+## A TELEGRAPH IS A PROMISE. This pair is the seam an authored telegraph
+## attaches to: it fires from the real attack state, so a presentation
+## that listens cannot drift from the attack it is announcing, and it
+## never needs a clock of its own. Read `telegraph_progress()` for 0..1.
+signal telegraph_started(kind: String, duration: float)
+## The windup ended. `completed` is true when the attack actually landed
+## and false when the enemy died or was removed part-way through — so a
+## presentation can end differently for a promise kept and one broken,
+## and either way it is TOLD rather than left to time out.
+signal telegraph_finished(kind: String, completed: bool)
+
 var archetype := "melee"
+## This role's physical envelope, from `Constants.ENEMY_ENVELOPES`. Read by
+## anything that needs to know how much room this enemy takes without
+## measuring its collider back out of the tree.
+var envelope: Dictionary = {}
 var hp := 24.0
 ## Starting HP, kept so an ability can ask how heavy this is.
 ## `grapple_pull_target` refuses a brute by asking this rather
@@ -34,52 +59,95 @@ var _voice: AudioStreamPlayer3D = null
 var _has_noticed := false
 # Brute slam windup.
 var _windup := 0.0
+## Presentation-only container. EVERY mesh hangs off this and nothing
+## else does, so a hit flinch or a windup swell scales the LOOK and can
+## never move the collider -- which is what `scale` on the body did, and
+## it grew the brute's hitbox 12% for the half second it was winding up.
+var visual: Node3D = null
+## Where an authored telegraph attaches. A `Marker3D` at the collider's
+## centre (`Constants.ENEMY_ENVELOPES[role].centre_y`), outside `visual`
+## so a flinch does not drag the telegraph around with it.
+var telegraph_origin: Marker3D = null
+## The attack currently being telegraphed, "" when none.
+var telegraph_kind := ""
+var telegraph_duration := 0.0
 
 static func create(kind: String, theme: String) -> Enemy:
 	var enemy := CharacterBody3D.new()
 	enemy.set_script(load("res://scripts/enemies/enemy.gd"))
 	enemy.archetype = kind
 	enemy.name = "Enemy_%s" % kind
-	var stats: Dictionary = Constants.ENEMY_STATS[kind]
-	enemy.stats = stats
-	enemy.hp = float(stats["hp"])
-	enemy.max_hp = float(stats["hp"])
+	assert(Constants.ENEMY_STATS.has(kind),
+			"'%s' has a physical envelope but no behaviour; " % kind
+			+ "an approved art role is not yet a placeable enemy")
+	var block: Dictionary = Constants.ENEMY_STATS[kind]
+	enemy.stats = block
+	enemy.hp = float(block["hp"])
+	enemy.max_hp = float(block["hp"])
 
-	var size := Vector3(0.8, 1.6, 0.8)
-	match kind:
-		"ranged": size = Vector3(0.7, 1.4, 0.7)
-		"brute": size = Vector3(1.8, 2.6, 1.8)
+	# The envelope is CONTRACT, not a literal (art requirement 7). It used
+	# to be three magic vectors in this match, while the art lane built
+	# models to boxes it declared in a manifest -- two numbers for one
+	# thing, and a model that clips through a door frame is the first time
+	# anyone finds out. Both sides now read Constants.ENEMY_ENVELOPES.
+	var envelope: Dictionary = Constants.ENEMY_ENVELOPES[kind]
+	var size: Vector3 = envelope["size"]
+	enemy.envelope = envelope
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
 	box.size = size
 	shape.shape = box
-	shape.position = Vector3(0, size.y / 2.0, 0)
+	# Half-height for a walker, hover height for a flyer. Asking the
+	# contract rather than assuming size.y / 2.0, which is only true of
+	# something standing on the floor.
+	shape.position = Vector3(0, float(envelope["centre_y"]), 0)
 	enemy.add_child(shape)
+
+	# Presentation hangs off `Visual`; the collider does not. Scaling the
+	# BODY for a flinch or a windup swell scaled its collision shape too,
+	# so the brute's hitbox grew 12% for the half second it telegraphed
+	# and shrank to 88% every time it was hit. Presentation is never
+	# mechanics truth (art requirement 14), and now it structurally cannot
+	# be: there is nothing solid under `Visual` to scale.
+	var body_visual := Node3D.new()
+	body_visual.name = "Visual"
+	enemy.add_child(body_visual)
+	enemy.visual = body_visual
+
+	# The attachment contract. A telegraph is authored against a stable
+	# origin, and "the collider's centre" is the one point every role
+	# already agrees on -- it comes from the same envelope the collider
+	# does. Outside `Visual`, so a flinch does not drag it around.
+	var origin := Marker3D.new()
+	origin.name = "TelegraphOrigin"
+	origin.position = Vector3(0, float(envelope["centre_y"]), 0)
+	enemy.add_child(origin)
+	enemy.telegraph_origin = origin
 
 	# Each archetype gets its own silhouette, because telling a sniper
 	# from a charger across a dark room is gameplay information, not
 	# decoration. Theme only supplies the palette.
 	match kind:
-		"ranged": _build_ranged(enemy, size, theme)
-		"brute": _build_brute(enemy, size, theme)
-		_: _build_melee(enemy, size, theme)
+		"ranged": _build_ranged(body_visual, size, theme)
+		"brute": _build_brute(body_visual, size, theme)
+		_: _build_melee(body_visual, size, theme)
 	return enemy
 
-static func _part(parent: Node3D, size: Vector3, position: Vector3,
+static func _part(parent: Node3D, size: Vector3, at: Vector3,
 		material: Material, tilt := 0.0) -> MeshInstance3D:
 	var part := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = size
 	part.mesh = mesh
-	part.position = position
+	part.position = at
 	part.rotation.x = tilt
 	part.material_override = material
 	parent.add_child(part)
 	return part
 
-static func _eye(parent: Node3D, size: Vector3, position: Vector3,
+static func _eye(parent: Node3D, size: Vector3, at: Vector3,
 		color: Color) -> void:
-	_part(parent, size, position, ThemeMaterials.glow_material(color, 2.4))
+	_part(parent, size, at, ThemeMaterials.glow_material(color, 2.4))
 
 ## Melee: hunched and forward-leaning, with stubby arms — it reads as
 ## something that wants to be where you are.
@@ -213,12 +281,18 @@ func _physics_process(delta: float) -> void:
 	# untelegraphed slam whenever the player next wanders close.
 	if _windup > 0.0:
 		_windup -= delta
-		scale = Vector3.ONE * (1.0 + 0.12 * sin((0.5 - _windup) * TAU))
+		# The swell is the ENGINE's fallback telegraph, and it scales
+		# `visual` rather than the body -- on the body it grew the
+		# collider with it. An authored telegraph listening to
+		# `telegraph_started` replaces the look and never the timing.
+		_set_visual_scale(1.0 + 0.12 * sin(
+				(telegraph_duration - _windup) * TAU))
 		if _windup <= 0.0:
-			scale = Vector3.ONE
+			_set_visual_scale(1.0)
 			_say("slam")
 			if player != null:
 				_slam(player)
+			_end_telegraph(true)
 
 	if player != null:
 		var to_player := player.global_position - global_position
@@ -300,7 +374,7 @@ func _try_attack(player: Player, distance: float) -> void:
 			# The growl matters more than the swell — you can hear it while
 			# looking somewhere else.
 			_attack_cooldown = float(stats["cooldown"])
-			_windup = 0.5
+			_begin_telegraph("slam", 0.5)
 			_say("windup")
 	elif distance <= reach:
 		_attack_cooldown = float(stats["cooldown"])
@@ -347,10 +421,11 @@ func take_damage(amount: float, direction: Vector3, knockback: float) -> bool:
 		_knockback += direction * knockback
 	# Crude hit feedback: a scale punch. 1998 did not have hit shaders.
 	# Skipped mid-windup so it cannot cancel the brute's telegraph.
-	if _windup <= 0.0:
+	# On `visual`, so being hit no longer shrinks the hitbox to 88%.
+	if _windup <= 0.0 and visual != null:
 		var tween := create_tween()
-		scale = Vector3.ONE * 0.88
-		tween.tween_property(self, "scale", Vector3.ONE, 0.1)
+		visual.scale = Vector3.ONE * 0.88
+		tween.tween_property(visual, "scale", Vector3.ONE, 0.1)
 	_refresh_damage_tint()
 	if hp <= 0.0:
 		die()
@@ -367,19 +442,24 @@ func take_damage(amount: float, direction: Vector3, knockback: float) -> bool:
 func _ensure_tint_parts() -> void:
 	if not _tint_parts.is_empty():
 		return
-	for child in get_children():
-		if not (child is MeshInstance3D):
-			continue
-		var shared: Material = child.material_override
-		if not (shared is StandardMaterial3D):
-			continue
-		var mine: StandardMaterial3D = shared.duplicate()
-		child.material_override = mine
-		_tint_parts.append(mine)
-		# Capture the base energy BEFORE overwriting it, or the first
-		# chip of damage makes the eye dimmer than undamaged.
-		_tint_base_energy.append(mine.emission_energy_multiplier)
-		_tint_base_albedo.append(mine.albedo_color)
+	# RECURSIVE, because the meshes moved under `Visual`. A non-recursive
+	# walk kept compiling and silently found nothing, which is a damage
+	# tint that never appears -- there is a test for exactly that.
+	_collect_tint_parts(self)
+
+func _collect_tint_parts(node: Node) -> void:
+	for child in node.get_children():
+		if child is MeshInstance3D:
+			var shared: Material = child.material_override
+			if shared is StandardMaterial3D:
+				var mine: StandardMaterial3D = shared.duplicate()
+				child.material_override = mine
+				_tint_parts.append(mine)
+				# Capture the base energy BEFORE overwriting it, or the
+				# first chip of damage makes the eye dimmer than undamaged.
+				_tint_base_energy.append(mine.emission_energy_multiplier)
+				_tint_base_albedo.append(mine.albedo_color)
+		_collect_tint_parts(child)
 
 func _refresh_damage_tint() -> void:
 	var hurt := 1.0 - clampf(hp / maxf(1.0, float(stats["hp"])), 0.0, 1.0)
@@ -413,10 +493,69 @@ func _take_dot(amount: float) -> void:
 	if hp <= 0.0:
 		die()
 
+# ---------------------------------------------------------------------
+# Telegraph seam (art requirement 14)
+# ---------------------------------------------------------------------
+# Engineering owns the event, the state and the attachment point. Art owns
+# what a telegraph LOOKS like. The two meet at `telegraph_started`,
+# `telegraph_origin` and `telegraph_progress()`, and nowhere else.
+
+## How far through the current windup, 0.0 to 1.0. Returns 0.0 when
+## nothing is being telegraphed.
+##
+## The reason this exists rather than a presentation timing itself: a
+## second clock drifts, and a drifting telegraph is a promise broken by a
+## rounding error. There is exactly one countdown and it is the one the
+## attack uses.
+func telegraph_progress() -> float:
+	if telegraph_kind.is_empty() or telegraph_duration <= 0.0:
+		return 0.0
+	return clampf(1.0 - _windup / telegraph_duration, 0.0, 1.0)
+
+## Whether an attack is being announced right now.
+func is_telegraphing() -> bool:
+	return not telegraph_kind.is_empty()
+
+func _begin_telegraph(kind: String, duration: float) -> void:
+	# A windup that started must always resolve (see `_physics_process`),
+	# so a second one cannot open on top of the first.
+	if not telegraph_kind.is_empty():
+		return
+	telegraph_kind = kind
+	telegraph_duration = duration
+	_windup = duration
+	telegraph_started.emit(kind, duration)
+
+func _end_telegraph(completed: bool) -> void:
+	if telegraph_kind.is_empty():
+		return
+	var kind := telegraph_kind
+	telegraph_kind = ""
+	telegraph_duration = 0.0
+	_windup = 0.0
+	_set_visual_scale(1.0)
+	telegraph_finished.emit(kind, completed)
+
+## Presentation scale, applied to `visual` and never to the body. The
+## collider is a direct child of the body, so scaling the body scaled the
+## hitbox -- the thing this whole seam exists to make impossible.
+func _set_visual_scale(factor: float) -> void:
+	if visual != null:
+		visual.scale = Vector3.ONE * factor
+
+func _exit_tree() -> void:
+	# Despawned mid-windup. The listener is told rather than left holding
+	# a telegraph for an enemy that no longer exists.
+	_end_telegraph(false)
+
 func die() -> void:
 	if _dead:
 		return
 	_dead = true
+	# A promise this enemy will not keep. Told, not left to time out: a
+	# telegraph running its own clock would finish announcing a slam that
+	# is never coming.
+	_end_telegraph(false)
 	enemy_died.emit(self)
 	# Crude death: tip over and sink. 1998 did not have ragdolls either.
 	var tween := create_tween()

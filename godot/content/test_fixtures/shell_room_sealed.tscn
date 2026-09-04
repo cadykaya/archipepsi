@@ -1,0 +1,151 @@
+[gd_scene load_steps=9 format=3]
+
+; NOT CONTENT. A neutral technical fixture for the room-contract
+; conformance suite (`make godot-room-contract`). It is a complete
+; authored room -- floor, four walls, ceiling, two cut doorways and a
+; balcony -- built to the declarations in `room_contract_driver.gd`, so
+; the authored producer can be measured by exactly the checks the
+; procedural producer is measured by. No shipped manifest references it.
+;
+; 12 x 6 x 16 m, and every wall is INSIDE that: the outer faces sit on
+; the declared envelope, which is what lets two rooms butt together
+; without sharing a wall or overlapping. `ShellValidator` measures it.
+; Floor top y=0, ceiling underside y=5.5, balcony top y=3.0 over
+; x [-5.6,-1.6], z [8.2,13.8] -- high enough that the floor beneath it
+; keeps a player's 2.4 m of headroom, the number `ElevationBand`
+; validates at parse.
+; THE LIE: the exit doorway was modelled and never cut. The
+; manifest declares a 2.4 x 3.2 m opening; the geometry is a wall.
+; Mesh is collider here, so the player meets it face first.
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(12, 0.5, 16)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
+size = Vector3(12, 0.5, 16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_side"]
+size = Vector3(0.4, 6, 16)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_side"]
+size = Vector3(0.4, 6, 16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_jamb"]
+size = Vector3(4.8, 6, 0.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_jamb"]
+size = Vector3(4.8, 6, 0.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_deck"]
+size = Vector3(4, 0.4, 5.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_deck"]
+size = Vector3(4, 0.4, 5.6)
+
+[node name="ShellRoomSealed" type="Node3D"]
+
+[node name="entry" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="exit" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 16)
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 8)
+mesh = SubResource("BoxMesh_floor")
+
+[node name="FloorBody" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 8)
+
+[node name="FloorShape" type="CollisionShape3D" parent="FloorBody"]
+shape = SubResource("BoxShape3D_floor")
+
+[node name="Ceiling" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.75, 8)
+mesh = SubResource("BoxMesh_floor")
+
+[node name="CeilingBody" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.75, 8)
+
+[node name="CeilingShape" type="CollisionShape3D" parent="CeilingBody"]
+shape = SubResource("BoxShape3D_floor")
+
+[node name="WallL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.8, 3.0, 8)
+mesh = SubResource("BoxMesh_side")
+
+[node name="WallLBody" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.8, 3.0, 8)
+
+[node name="WallLShape" type="CollisionShape3D" parent="WallLBody"]
+shape = SubResource("BoxShape3D_side")
+
+[node name="WallR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.8, 3.0, 8)
+mesh = SubResource("BoxMesh_side")
+
+[node name="WallRBody" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.8, 3.0, 8)
+
+[node name="WallRShape" type="CollisionShape3D" parent="WallRBody"]
+shape = SubResource("BoxShape3D_side")
+
+[node name="FrontA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.6, 3.0, 0.2)
+mesh = SubResource("BoxMesh_jamb")
+
+[node name="FrontABody" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.6, 3.0, 0.2)
+
+[node name="FrontAShape" type="CollisionShape3D" parent="FrontABody"]
+shape = SubResource("BoxShape3D_jamb")
+
+[node name="FrontB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.6, 3.0, 0.2)
+mesh = SubResource("BoxMesh_jamb")
+
+[node name="FrontBBody" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.6, 3.0, 0.2)
+
+[node name="FrontBShape" type="CollisionShape3D" parent="FrontBBody"]
+shape = SubResource("BoxShape3D_jamb")
+
+[node name="BackSealedA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.6, 3.0, 15.8)
+mesh = SubResource("BoxMesh_jamb")
+
+[node name="BackSealedABody" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.6, 3.0, 15.8)
+
+[node name="BackSealedAShape" type="CollisionShape3D" parent="BackSealedABody"]
+shape = SubResource("BoxShape3D_jamb")
+
+[node name="BackSealedB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.6, 3.0, 15.8)
+mesh = SubResource("BoxMesh_jamb")
+
+[node name="BackSealedBBody" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.6, 3.0, 15.8)
+
+[node name="BackSealedBShape" type="CollisionShape3D" parent="BackSealedBBody"]
+shape = SubResource("BoxShape3D_jamb")
+
+[node name="BackSealedC" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 3.0, 15.8)
+mesh = SubResource("BoxMesh_jamb")
+
+[node name="BackSealedCBody" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 3.0, 15.8)
+
+[node name="BackSealedCShape" type="CollisionShape3D" parent="BackSealedCBody"]
+shape = SubResource("BoxShape3D_jamb")
+
+[node name="Balcony" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.6, 2.8, 11.0)
+mesh = SubResource("BoxMesh_deck")
+
+[node name="BalconyBody" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.6, 2.8, 11.0)
+
+[node name="BalconyShape" type="CollisionShape3D" parent="BalconyBody"]
+shape = SubResource("BoxShape3D_deck")

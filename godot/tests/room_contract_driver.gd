@@ -1,0 +1,3069 @@
+extends Node
+## THE ROOM CONTRACT CONFORMANCE SUITE (`make godot-room-contract`).
+##
+## ONE suite, keyed to `room_contract.gd` and `room_audit.gd`, run over
+## BOTH producers. That is the whole design and it is not a stylistic
+## preference: this project has now watched three per-path suites inherit
+## the blind spot of the fix they were written to protect --
+## `activity_driver.gd` proved the activity runtime worked while the game
+## built activities in zero rooms; `_test_a_pit_is_a_hole_not_a_painted_floor`
+## proved a pit was dug while the floor slab above it was still a lid;
+## the first version of the environment-vs-activity test used a room big
+## enough that the bug it was written for could not occur.
+##
+## A suite whose assumptions mirror one producer proves that producer is
+## self-consistent. The question here is different and it is the owner's:
+##
+##     BEFORE WE PUT AUTHORED ROOMS INTO THE GAME, MAKE "THIS IS A VALID
+##     ROOM" MEAN THE SAME THING REGARDLESS OF WHO PRODUCED IT.
+##
+## So every case below is the same two calls -- `RoomContract.violations`
+## then `RoomAudit.findings` -- against rooms from `ChamberBuilders`, from
+## `ContentInstantiator._from_authored_scene`, and from deliberately
+## broken authored fixtures that MUST be caught. The suite cannot tell
+## which producer made what it is holding, and neither can the contract.
+
+const AUTHORED_ROOM := "res://content/test_fixtures/shell_room_honest.tscn"
+const AUTHORED_LID := "res://content/test_fixtures/shell_room_lid.tscn"
+const AUTHORED_SEALED := "res://content/test_fixtures/shell_room_sealed.tscn"
+
+var failures := 0
+## Vacuity guards. Every "nothing was wrong" assertion is worth nothing
+## if no room was built and no probe was fired.
+var rooms_checked := 0
+var authored_checked := 0
+var probes_expected_to_fail := 0
+## Authored shells that are `review: pending` AND do not yet measure
+## true. Reported, never fatal: nothing can select them.
+var shells_awaiting_review := 0
+
+func _check(condition: bool, message: String) -> void:
+	if not condition:
+		failures += 1
+		push_error("FAIL: " + message)
+		print("FAIL: " + message)
+
+## P1 reported the reward-inside-a-crate finding as a pinned NOTE, since
+## fixing it meant moving what the player sees. P2 fixed it -- the arena
+## reserves the Check's space before it scatters anything -- so there is
+## nothing left to excuse and every finding is a failure again.
+func _judge(found: Array[String], who: String) -> void:
+	_check(found.is_empty(),
+			"%s does not match its own geometry: %s"
+			% [who, "; ".join(found)])
+
+func _ready() -> void:
+	await _run()
+
+func _run() -> void:
+	await get_tree().process_frame
+	BridgeClient.snapshot = _snapshot()
+
+	await _test_every_procedural_room_meets_the_contract()
+	await _test_an_authored_room_meets_the_same_contract()
+	await _test_both_producers_offer_the_same_vocabulary()
+	await _test_the_audit_catches_a_lid_over_a_declared_surface()
+	await _test_the_audit_catches_a_surface_made_of_air()
+	await _test_the_audit_catches_a_sealed_opening()
+	await _test_the_audit_refuses_to_pass_what_it_cannot_measure()
+	await _test_a_shell_that_overflows_its_envelope_is_refused()
+	await _test_the_contract_refuses_a_malformed_room()
+	await _test_a_jump_is_measured_the_same_for_both_producers()
+	await _test_a_measurement_at_the_limit_is_still_the_legal_move()
+	await _test_the_audit_and_the_composer_agree_about_a_surface()
+	await _test_a_partly_roofed_surface_is_still_a_valid_offer()
+	await _test_a_surface_with_nowhere_to_stand_is_still_refused()
+	await _test_one_room_composes_the_same_way_twice()
+	await _test_a_mandatory_route_is_a_route_a_player_can_take()
+	await _test_an_elevated_stance_has_room_for_what_stands_there()
+	await _test_a_declared_turn_steers_the_chain()
+	await _test_a_tower_shell_built_for_other_floor_counts_is_not_used()
+	await _test_a_check_never_stands_inside_the_room()
+	await _test_one_envelope_convention_binds_both_producers()
+	await _test_every_authored_shell_in_the_registry_is_measured()
+	await _test_a_room_is_entered_where_it_says_it_is()
+	await _test_a_pending_shell_never_reaches_a_zone()
+	await _test_every_declared_offer_is_true_against_real_geometry()
+	await _test_a_traversal_destination_must_hold_a_player()
+	await _test_a_chained_chamber_offers_what_it_offered_at_the_origin()
+	await _test_a_launch_source_must_be_standable()
+	await _test_every_launch_endpoint_touches_the_surface_under_it()
+	await _test_the_repaired_launch_positions_are_still_refused()
+	await _test_an_offer_is_judged_without_the_others_being_built()
+	await _test_validating_a_live_room_builds_nothing_in_it()
+	await _test_the_two_collider_counts_measure_different_things()
+	_test_an_approved_shell_is_held_to_the_contract()
+
+	_check(rooms_checked >= 8,
+			"only %d rooms went through the contract; the suite is not "
+			% rooms_checked + "exercising the producers")
+	_check(authored_checked >= 1,
+			"no authored room went through the contract, so this is a "
+			+ "procedural suite wearing a contract's name")
+	_check(probes_expected_to_fail >= 3,
+			"only %d deliberately broken rooms were caught; a suite that "
+			% probes_expected_to_fail + "never sees a failure is a suite "
+			+ "nobody can trust")
+
+	if shells_awaiting_review > 0:
+		print("  %d pending shell(s) do not yet measure true; they are "
+				% shells_awaiting_review
+				+ "not selectable and are the owner's to review")
+
+	if failures == 0:
+		print("GODOT ROOM CONTRACT TESTS OK")
+		get_tree().quit(0)
+	else:
+		print("GODOT ROOM CONTRACT TESTS: %d failures" % failures)
+		get_tree().quit(1)
+
+# --- the entry contract (owner ruling, 2026-09-03) -------------------------
+
+## A room made of boxes, so a connector can be declared anywhere and an
+## arrival region can be made deliberately unsafe. Hand-built rather than
+## instantiated because the point is to vary the ONE thing the ruling is
+## about, and no authored scene lets me move its own doorway.
+## Where hand-built fixtures stand, clear of every staged room.
+const FIXTURE_ISLAND := Vector3(5000.0, 0.0, 5000.0)
+
+func _slab_room(boxes: Array, entry_at: Vector3, size: Vector3,
+		arrival: Variant) -> Dictionary:
+	var root := Node3D.new()
+	for b: Array in boxes:
+		var body := StaticBody3D.new()
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = b[1]
+		shape.shape = box
+		body.add_child(shape)
+		body.position = b[0]
+		root.add_child(body)
+	# FAR FROM EVERYTHING ELSE. Every fixture in this driver is added to
+	# the same tree and therefore the same physics space, so a slab room
+	# built at the origin is measured against whatever else is still
+	# staged there -- a hall wall answered one of these probes. The seam
+	# is transform-correct now, so standing the fixture a kilometre away
+	# costs nothing and cannot be contaminated.
+	root.position = FIXTURE_ISLAND
+	var room := {
+		"root": root,
+		"bounds": AABB(Vector3(-size.x / 2.0, -1.0, 0.0),
+				Vector3(size.x, size.y + 1.0, size.z)),
+		"entry_offset": entry_at,
+		"exit_offset": Vector3(0.0, 0.0, size.z),
+		"sockets": [], "traversal": [], "enemy_spawns": [],
+		"offers": [], "room_height": size.y,
+		"reward_position": Vector3(0.0, 0.0, size.z / 2.0),
+	}
+	if arrival is Vector3:
+		room["player_entry"] = {"position": arrival as Vector3,
+				"extent": Vector3(2.4, 2.0, 2.4)}
+	return room
+
+func _audit_slabs(room: Dictionary, who: String) -> String:
+	add_child(room["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var found := RoomAudit.findings(room, _space(), who)
+	(room["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+	return "; ".join(found)
+
+func _test_a_room_is_entered_where_it_says_it_is() -> void:
+	"""`(0, 0, 0)` WAS NEVER A STATEMENT ABOUT A ROOM.
+
+	It was the value every shell happened to have, read by nobody, and
+	believed by `ZoneBuilder` and `RoomAudit` as though it were a
+	contract. Three LARGE rooms entered at their top, or along their
+	side, therefore measured as having a sealed door in a solid wall --
+	and the message blamed the geometry for an assumption in the probe.
+
+	The room-to-room attachment point is now the room's DECLARED entry
+	connector, and where the player's body lands is the separate
+	question `player_entry` answers."""
+
+	# A room whose only floor is 14 m up, with the origin walled off the
+	# way `sp_south_sill` walls off the span's. The pair is the proof:
+	# the same geometry passes when the room says where its door is and
+	# fails when it is assumed to be at the origin.
+	var walled := [
+		[Vector3(0.0, 14.0, 10.0), Vector3(20.0, 1.0, 20.0)],
+		[Vector3(0.0, 1.0, 0.0), Vector3(20.0, 4.0, 2.0)],
+	]
+
+	# E1 -- ENTRY AT LOCAL Y > 0.
+	var high := _slab_room(walled, Vector3(0.0, 14.5, 0.0),
+			Vector3(20.0, 20.0, 20.0), Vector3(0.0, 14.5, 3.0))
+	var high_says: String = await _audit_slabs(high, "high_entry")
+	_check(not high_says.contains("sealed"),
+			"a room entered 14 m up was called sealed: %s" % high_says)
+
+	# ... and the legacy assumption on the SAME geometry is the failure
+	# it always was, which is what makes the line above a measurement
+	# rather than a room with nothing in it.
+	var assumed := _slab_room(walled, RoomContract.LEGACY_ENTRY,
+			Vector3(20.0, 20.0, 20.0), Vector3(0.0, 14.5, 3.0))
+	var assumed_says: String = await _audit_slabs(assumed, "assumed_entry")
+	_check(assumed_says.contains("sealed"),
+			"the origin of this room is walled, so assuming the entry is "
+			+ "there must still fail: %s" % assumed_says)
+	probes_expected_to_fail += 1
+
+	# E2 -- ENTRY AT A NONZERO HORIZONTAL POSITION, the yard's shape: a
+	# door in the west wall, halfway along, with the origin walled.
+	var side := _slab_room([
+			[Vector3(0.0, -0.5, 13.0), Vector3(40.0, 1.0, 26.0)],
+			[Vector3(0.0, 2.0, 0.0), Vector3(40.0, 4.0, 2.0)],
+		], Vector3(-20.0, 0.0, 13.0), Vector3(40.0, 12.0, 26.0),
+		Vector3(-17.0, 0.0, 13.0))
+	var side_says: String = await _audit_slabs(side, "side_entry")
+	_check(not side_says.contains("sealed"),
+			"a room entered through its west wall was called sealed: %s"
+			% side_says)
+
+	# E5 -- THE ARRIVAL REGION IS CAPSULE-SAFE. Both rooms above declare
+	# one and neither is reported, which is the passing half.
+	_check(not high_says.contains("player_entry")
+			and not side_says.contains("player_entry"),
+			"a safe arrival region was reported unsafe: %s | %s"
+			% [high_says, side_says])
+
+	# E6 -- A BLOCKED ARRIVAL IS REFUSED. Same floor, same declared
+	# connector, one solid block where the room says the player lands.
+	var blocked := _slab_room([
+			[Vector3(0.0, -0.5, 13.0), Vector3(40.0, 1.0, 26.0)],
+			[Vector3(0.0, 1.5, 3.0), Vector3(4.0, 3.0, 4.0)],
+		], Vector3(0.0, 0.0, 0.0), Vector3(40.0, 12.0, 26.0),
+		Vector3(0.0, 0.0, 3.0))
+	var blocked_says: String = await _audit_slabs(blocked, "blocked_arrival")
+	_check(blocked_says.contains("player_entry")
+			and blocked_says.contains("blocked"),
+			"a player_entry region filled with solid geometry was "
+			+ "accepted: %s" % blocked_says)
+	probes_expected_to_fail += 1
+
+	# ... and an arrival over a void is refused for the other reason.
+	var floating := _slab_room([
+			[Vector3(0.0, -0.5, 13.0), Vector3(40.0, 1.0, 26.0)],
+		], Vector3(0.0, 0.0, 0.0), Vector3(40.0, 12.0, 26.0),
+		Vector3(0.0, 40.0, 13.0))
+	var floating_says: String = await _audit_slabs(floating, "void_arrival")
+	_check(floating_says.contains("player_entry")
+			and floating_says.contains("no floor"),
+			"a player_entry region in mid-air was accepted: %s"
+			% floating_says)
+	probes_expected_to_fail += 1
+
+	# E3 -- TOP ENTRY, BOTTOM EXIT. The plenum's form: joined 60 m up,
+	# leaving at its own floor, so the room hangs BELOW the seam and the
+	# next room starts lower than the one before it.
+	var join := Vector3(0.0, 100.0, 5.0)
+	var top_origin := ZoneBuilder.origin_for(join, 0.0,
+			Vector3(0.0, 60.0, 0.0))
+	_check(top_origin.is_equal_approx(Vector3(0.0, 40.0, 5.0)),
+			"a room entered 60 m above its origin must hang below the "
+			+ "seam; got %v" % top_origin)
+	var below := ZoneBuilder.exit_cursor(top_origin, 0.0,
+			Vector3(0.0, 0.0, 20.0))
+	_check(below.is_equal_approx(Vector3(0.0, 40.0, 25.0)),
+			"a bottom exit must leave the chain 60 m lower; got %v" % below)
+
+	# E4 -- THE SEAM IS THE INVARIANT: room A's exit connector and room
+	# B's entry connector are the SAME world point, at any yaw.
+	for yaw: float in [0.0, PI / 2.0, PI]:
+		var a_origin := ZoneBuilder.origin_for(Vector3.ZERO, yaw,
+				Vector3(1.0, 2.0, 0.0))
+		var seam := ZoneBuilder.exit_cursor(a_origin, yaw,
+				Vector3(-1.0, 10.0, 30.0))
+		var b_entry := Vector3(3.0, 3.0, 0.0)
+		var b_origin := ZoneBuilder.origin_for(seam, yaw, b_entry)
+		var b_world := b_origin + Basis(Vector3.UP, yaw) * b_entry
+		_check(b_world.is_equal_approx(seam),
+				"at yaw %.2f the next room's entry connector landed at "
+				% yaw + "%v, not on the seam %v" % [b_world, seam])
+
+	# E7 -- THE CONNECTORS ARE THE CONNECTION, not the origin. Re-express
+	# a room about a different origin, moving both connectors with it,
+	# and the seam it hands on must not move -- otherwise "where the
+	# rooms meet" would depend on where an artist happened to put 0.
+	var e := Vector3(0.0, 14.0, 0.0)
+	var x := Vector3(0.0, 14.0, 92.0)
+	for shift: Vector3 in [Vector3.ZERO, Vector3(7.0, -14.0, 3.0),
+			Vector3(-2.5, 40.0, -11.0)]:
+		var o := ZoneBuilder.origin_for(join, 0.4, e + shift)
+		var moved := ZoneBuilder.exit_cursor(o, 0.4, x + shift)
+		var base := ZoneBuilder.exit_cursor(
+				ZoneBuilder.origin_for(join, 0.4, e), 0.4, x)
+		_check(moved.is_equal_approx(base),
+				"shifting a room's origin by %v moved its seam from %v "
+				% [shift, base] + "to %v" % moved)
+	rooms_checked += 3
+
+# --- fixtures -------------------------------------------------------------
+
+func _snapshot() -> Dictionary:
+	return {
+		"type": "campaign_snapshot",
+		"mechanics": {"owned": [], "aliases": [], "links": [],
+				"statuses": [], "resources": []},
+		"slots": {}, "local_rewards": [],
+		"available_capabilities": ["ranged_hit"],
+		"coins_received": 0, "coins_spent": 0, "hub": {"state": "IDLE"},
+	}
+
+## Every chamber type the generator can produce, including the two shapes
+## ROOM GRAMMAR v0 added. Not a sample: the contract has to hold for the
+## room a Zone actually contains, and the arena WITH a band is a
+## different physical object from the arena without one.
+func _procedural_chambers() -> Array:
+	return [
+		{"id": "k1", "type": "corridor", "length": 14.0, "width": 6.0},
+		{"id": "k2", "type": "arena", "width": 20.0, "depth": 18.0,
+			"wall_height": 6.5, "objective": "kill_all",
+			"enemies": [{"archetype": "ranged", "count": 3}]},
+		{"id": "k3", "type": "arena", "width": 20.0, "depth": 18.0,
+			"wall_height": 6.5, "objective": "kill_all",
+			"enemies": [{"archetype": "ranged", "count": 3}],
+			"elevation": {"kind": "gallery", "rise": 2.2,
+				"coverage": 0.35, "side": "left", "access": "ramp"}},
+		{"id": "k4", "type": "arena", "width": 22.0, "depth": 20.0,
+			"wall_height": 6.5, "objective": "kill_all",
+			"enemies": [{"archetype": "melee", "count": 2}],
+			"elevation": {"kind": "pit", "rise": 1.6, "coverage": 0.35,
+				"side": "back", "access": "ramp"}},
+		{"id": "k5", "type": "platform_path", "segment_count": 4,
+			"gap_size": 2.1, "vertical_step": 0.51,
+			"enemies": [{"archetype": "melee", "count": 2}]},
+		{"id": "k6", "type": "tower", "floors": 3,
+			"enemies": [{"archetype": "ranged", "count": 2}]},
+		{"id": "k7", "type": "treasure_room"},
+	]
+
+## Built through the SAME entry point the game uses. A room this suite
+## constructed itself would be a room only this suite has ever seen.
+func _build(chamber: Dictionary) -> Dictionary:
+	var result := ContentInstantiator.build_chamber(
+			chamber, "concrete_facility")
+	if result.get("root") != null:
+		add_child(result["root"] as Node3D)
+	return result
+
+func _space() -> PhysicsDirectSpaceState3D:
+	return get_viewport().world_3d.direct_space_state
+
+## An authored entry whose declarations match `shell_room_honest.tscn`.
+##
+## The same manifest is reused for the BROKEN fixtures, exactly as the D1
+## traversal test does: nothing in the metadata distinguishes a shell
+## with a lid over its balcony from one without, so only measuring can.
+func _authored_entry(scene: String) -> Dictionary:
+	return {
+		"id": "shell_room_test", "level": 3, "category": "room_shell",
+		"display_name": "Contract Room", "procedural_fallback": false,
+		"scene": scene, "size_class": "medium", "review": "pass",
+		"size": [12.0, 6.0, 16.0],
+		"sockets": [
+			{"name": "entry", "kind": "doorway",
+				"position": [0.0, 0.0, 0.0], "width": 2.4, "height": 3.2},
+			{"name": "exit", "kind": "doorway",
+				"position": [0.0, 0.0, 16.0], "width": 2.4,
+				"height": 3.2},
+			{"name": "crate_a", "kind": "cover",
+				"position": [-3.4, 0.0, 6.0], "surface_id": "floor"},
+			{"name": "drum_a", "kind": "reactive",
+				"position": [3.4, 0.0, 6.0], "surface_id": "floor"},
+			{"name": "perch", "kind": "enemy_high",
+				"position": [-3.6, 3.0, 11.0], "surface_id": "balcony"},
+		],
+		"surfaces": [
+			{"name": "floor", "center": [0.0, 0.0, 8.0],
+				"extent": [11.2, 15.2]},
+			{"name": "balcony", "center": [-3.6, 3.0, 11.0],
+				"extent": [4.0, 5.6]},
+		],
+		"volumes": [
+			{"name": "under_balcony", "kind": "no_build",
+				"center": [-3.6, 1.5, 11.0], "size": [4.0, 3.0, 5.6]},
+			{"name": "prize", "kind": "objective",
+				"center": [0.0, 0.0, 12.0], "size": [2.0, 2.0, 2.0]},
+		],
+	}
+
+func _authored_room(scene: String) -> Dictionary:
+	var entry := _authored_entry(scene)
+	var result: Dictionary = ContentInstantiator.build_chamber(
+			{"id": "auth", "type": "arena", "width": 12.0, "depth": 16.0,
+				"wall_height": 6.0, "objective": "reach_exit",
+				"enemies": [], "shell_id": str(entry["id"])},
+			"concrete_facility", _registry_for(entry))
+	if result.get("root") != null:
+		add_child(result["root"] as Node3D)
+	return result
+
+## A registry holding exactly one authored shell, named by the chamber,
+## so `build_chamber` takes the authored branch instead of the procedural
+## fallback every shipped entry declares.
+func _registry_for(entry: Dictionary) -> ContentRegistry:
+	var registry := ContentRegistry.new()
+	registry.entries[str(entry["id"])] = entry
+	return registry
+
+# --- the contract, over both producers ------------------------------------
+
+func _test_every_procedural_room_meets_the_contract() -> void:
+	for chamber: Dictionary in _procedural_chambers():
+		var result := _build(chamber)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var who := "procedural %s" % str(chamber["type"])
+		var structural := RoomContract.violations(result, who)
+		_check(structural.is_empty(),
+				"%s breaks the contract: %s" % [who, "; ".join(structural)])
+		_judge(RoomAudit.findings(result, _space(), who), who)
+		rooms_checked += 1
+		(result["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+
+func _test_an_authored_room_meets_the_same_contract() -> void:
+	"""The asymmetry this whole slice exists to close.
+
+	Before P1 this room came back with no `sockets` key at all, so it
+	offered no cover, no barrels, no reserved regions and nowhere to
+	stand -- and `Activities` flat-solved against its bounds, which is
+	the defect `552469d` closed for `platform_path` sitting in the one
+	path no Zone takes yet."""
+	var result := _authored_room(AUTHORED_ROOM)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(result.get("root") != null, "the authored fixture did not build")
+	var structural := RoomContract.violations(result, "authored")
+	_check(structural.is_empty(),
+			"an authored room breaks the contract: %s"
+			% "; ".join(structural))
+	var measured := RoomAudit.findings(result, _space(), "authored")
+	_check(measured.is_empty(),
+			"an authored room does not match its own geometry: %s"
+			% "; ".join(measured))
+	rooms_checked += 1
+	authored_checked += 1
+	if result.get("root") != null:
+		(result["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+## Everything a COMPOSER reads off a room. `access` is deliberately not
+## here: it is builder-internal, consumed only by the audits that ask
+## whether a band can be walked to, and an authored shell says the same
+## thing with a traversal segment.
+const COMPOSED_KINDS := ["stand", "reserved", "cover", "reactive",
+		"enemy_high"]
+
+func _test_both_producers_offer_the_same_vocabulary() -> void:
+	"""Parity is not "both pass the checks" -- an empty room passes every
+	check there is. It is "both can SAY the same things", and a contract
+	only one producer can speak is a description of that producer.
+
+	Not every room says everything: an arena has no jumps to declare and
+	a corridor has no balcony. The claim is that no kind belongs to one
+	PRODUCER."""
+	var authored := _authored_room(AUTHORED_ROOM)
+	await get_tree().physics_frame
+	var offered_by_procedural := {}
+	var rooms: Array[Node3D] = []
+	for chamber: Dictionary in _procedural_chambers():
+		var room := _build(chamber)
+		await get_tree().physics_frame
+		for kind: String in RoomContract.SOCKET_KINDS:
+			if not RoomContract.sockets_of(room, kind).is_empty():
+				offered_by_procedural[kind] = true
+		if room.get("root") != null:
+			rooms.append(room["root"] as Node3D)
+		rooms_checked += 1
+
+	for kind: String in COMPOSED_KINDS:
+		_check(not RoomContract.sockets_of(authored, kind).is_empty(),
+				"the authored room offers no '%s'; before P1 it offered "
+				% kind + "NOTHING, which is the asymmetry this closes")
+		_check(offered_by_procedural.has(kind),
+				"no procedural room offers '%s', so the contract has a "
+				% kind + "kind only one producer can speak")
+	_check(offered_by_procedural.has("access"),
+			"no procedural room offers 'access'; the band reachability "
+			+ "audits read it")
+	authored_checked += 1
+	rooms.append(authored["root"] as Node3D)
+	for room in rooms:
+		room.queue_free()
+	await get_tree().process_frame
+
+func _test_a_declared_turn_steers_the_chain() -> void:
+	"""P2-B. The corner shells are the whole reason: their geometry
+	always assumed a turning exit, which is why `exit_offset` already
+	carries it, and until now nothing downstream could act on that.
+
+	The sign is established and was expensive -- `ZoneBuilder` rotates by
+	`Basis(Vector3.UP, yaw)` and ADDS the turn, so a shell leaving
+	through its +X wall turns the chain +90 and is the LEFT corner. An
+	earlier version of the art builders had the two names swapped and it
+	was caught by a render disagreeing with its own caption."""
+	var straight := _authored_room(AUTHORED_ROOM)
+	await get_tree().physics_frame
+	_check(float(straight.get("exit_yaw", 0.0)) == 0.0,
+			"a shell that declares no turn must go straight through")
+	(straight["root"] as Node3D).queue_free()
+
+	for turn: float in [90.0, -90.0]:
+		var entry := _authored_entry(AUTHORED_ROOM)
+		entry["exit_yaw"] = turn
+		var registry := _registry_for(entry)
+		var result: Dictionary = ContentInstantiator.build_chamber(
+				{"id": "turn", "type": "arena", "width": 12.0,
+					"depth": 16.0, "wall_height": 6.0,
+					"objective": "reach_exit", "enemies": [],
+					"shell_id": str(entry["id"])},
+				"concrete_facility", registry)
+		add_child(result["root"] as Node3D)
+		await get_tree().physics_frame
+		_check(float(result.get("exit_yaw", 0.0)) == turn,
+				"a shell declaring %.0f must carry it into the contract"
+				% turn)
+		_check(RoomContract.violations(result, "turn").is_empty(),
+				"a quarter turn must satisfy the contract")
+		rooms_checked += 1
+		authored_checked += 1
+		(result["root"] as Node3D).queue_free()
+
+	# And the chain actually turns. Measured on the built Zone rather
+	# than asserted about the number: two rooms whose exits both turn
+	# +90 must leave the second one facing across the first.
+	var zone := _turning_zone(90.0)
+	await get_tree().physics_frame
+	var yaws := _chamber_yaws(zone)
+	_check(yaws.size() >= 2, "the turning Zone built %d rooms"
+			% yaws.size())
+	if yaws.size() >= 2:
+		var delta: float = rad_to_deg(yaws[1] - yaws[0])
+		_check(absf(delta - 90.0) < 1.0,
+				"a +90 exit must turn the chain +90; it turned %.1f"
+				% delta)
+	(zone["root"] as Node3D).queue_free()
+
+	var back := _turning_zone(0.0)
+	await get_tree().physics_frame
+	var straight_yaws := _chamber_yaws(back)
+	if straight_yaws.size() >= 2:
+		_check(absf(straight_yaws[1] - straight_yaws[0]) < 0.001,
+				"a shell declaring no turn must leave the chain straight")
+	(back["root"] as Node3D).queue_free()
+	# AND THE REAL CORNERS. The fixture proves the mechanism; these are
+	# the shells the turn exists for, with the sign the art lane derived.
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	for pair: Array in [["shell_corner_left", 90.0],
+			["shell_corner_right", -90.0]]:
+		var entry := registry.get_entry(str(pair[0]))
+		_check(not entry.is_empty(), "%s is not in the registry"
+				% str(pair[0]))
+		if entry.is_empty():
+			continue
+		_check(float(entry.get("exit_yaw", 0.0)) == float(pair[1]),
+				"%s declares exit_yaw %.1f; the art lane derived %.0f "
+				% [str(pair[0]), float(entry.get("exit_yaw", 0.0)),
+					float(pair[1])]
+				+ "and that sign was expensive")
+		var lifted := entry.duplicate(true)
+		lifted["review"] = "pass"
+		var private := ContentRegistry.new()
+		private.entries[str(pair[0])] = lifted
+		var built: Dictionary = ContentInstantiator.build_chamber(
+				_chamber_for(lifted), "concrete_facility", private)
+		add_child(built["root"] as Node3D)
+		await get_tree().physics_frame
+		_check(float(built.get("exit_yaw", 0.0)) == float(pair[1]),
+				"%s: the turn did not reach the room contract"
+				% str(pair[0]))
+		rooms_checked += 1
+		authored_checked += 1
+		(built["root"] as Node3D).queue_free()
+	probes_expected_to_fail += 1
+	await get_tree().process_frame
+
+## A two-room Zone whose rooms are the authored fixture, turning by
+## `turn`. Built through `ZoneBuilder.build`, which is the only place
+## chaining happens.
+func _turning_zone(turn: float) -> Dictionary:
+	var entry := _authored_entry(AUTHORED_ROOM)
+	entry["exit_yaw"] = turn
+	# `ZoneBuilder` reaches the SHARED registry, which is the whole
+	# point: this has to be the chaining the game does, not a private
+	# copy of it. Lend the shared one the fixture and hand it back.
+	ContentRegistry.shared().entries[str(entry["id"])] = entry
+	var chambers: Array = []
+	for i in 2:
+		chambers.append({"id": "t%d" % i, "type": "arena", "width": 12.0,
+				"depth": 16.0, "wall_height": 6.0,
+				"objective": "reach_exit", "enemies": [],
+				"shell_id": str(entry["id"])})
+	var zone := ZoneBuilder.build({"zone_id": "zt", "theme":
+			"concrete_facility", "chambers": chambers})
+	ContentRegistry.reset_shared()
+	add_child(zone["root"] as Node3D)
+	return zone
+
+func _chamber_yaws(zone: Dictionary) -> Array[float]:
+	var out: Array[float] = []
+	for entry: Dictionary in zone["chambers"]:
+		out.append((entry["xform"] as Transform3D).basis.get_euler().y)
+	return out
+
+func _test_a_tower_shell_built_for_other_floor_counts_is_not_used() -> void:
+	"""P2-C. The art lane's towers are 2, 3 and 5 floors; the generator
+	may ask for 4. A shell either was built for the count or it was not,
+	and when none was, the permanent procedural builder makes the room.
+
+	Do not stretch a 3-floor tower into a 4-floor one: the climb is
+	geometry, and a floor that is not there is a route the player cannot
+	finish."""
+	var entry := _authored_entry(AUTHORED_ROOM)
+	entry["id"] = "shell_tower_test"
+	entry["fits_floors"] = [3]
+	var registry := _registry_for(entry)
+	for floors: int in [3, 4]:
+		var result: Dictionary = ContentInstantiator.build_chamber(
+				{"id": "tw", "type": "tower", "floors": floors,
+					"enemies": [], "shell_id": str(entry["id"])},
+				"concrete_facility", registry)
+		add_child(result["root"] as Node3D)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var authored := not (result.get("sockets", []) as Array).is_empty()
+		if floors == 3:
+			_check(authored, "a tower shell built for 3 floors must be "
+					+ "used for a 3-floor tower")
+		else:
+			_check(not authored,
+					"a tower shell built for 3 floors was used for a "
+					+ "4-floor tower")
+			# And what came back is a real room, not a refusal.
+			_check(RoomContract.violations(result, "tower4").is_empty(),
+					"the procedural fallback must still be a valid room")
+			_judge(RoomAudit.findings(result, _space(), "tower4"),
+					"tower4")
+		rooms_checked += 1
+		(result["root"] as Node3D).queue_free()
+	# AND THE REAL TOWERS. 2, 3 and 5 exist; the generator may ask for 4.
+	var shipped := ContentRegistry.new()
+	shipped.load_all()
+	var declared := {}
+	for id: String in ["shell_tower_collapsed", "shell_tower_spiral",
+			"shell_tower_gantry"]:
+		var real := shipped.get_entry(id)
+		_check(not real.is_empty(), "%s is not in the registry" % id)
+		if real.is_empty():
+			continue
+		var fits: Array = real.get("fits_floors", [])
+		_check(fits.size() == 1, "%s declares %d floor counts; each art "
+				% [id, fits.size()] + "tower was built for exactly one")
+		if not fits.is_empty():
+			declared[int(fits[0])] = id
+	_check(declared.keys().size() == 3,
+			"the three art towers cover %d distinct floor counts"
+			% declared.keys().size())
+	_check(not declared.has(4),
+			"a tower shell claims to fit 4 floors; the art lane built "
+			+ "2, 3 and 5")
+	# The request the catalog cannot serve.
+	var four := shipped.get_entry("shell_tower_spiral").duplicate(true)
+	four["review"] = "pass"
+	var only_spiral := ContentRegistry.new()
+	only_spiral.entries["shell_tower_spiral"] = four
+	var fallback: Dictionary = ContentInstantiator.build_chamber(
+			{"id": "t4", "type": "tower", "floors": 4, "enemies": [],
+				"shell_id": "shell_tower_spiral"},
+			"concrete_facility", only_spiral)
+	add_child(fallback["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check((fallback.get("traversal", []) as Array).is_empty(),
+			"a 4-floor tower was served by a 3-floor authored shell")
+	_check(RoomContract.violations(fallback, "tower4real").is_empty(),
+			"the procedural room a 4-floor tower falls back to must be "
+			+ "a valid room")
+	_judge(RoomAudit.findings(fallback, _space(), "tower4real"),
+			"tower4real")
+	rooms_checked += 1
+	(fallback["root"] as Node3D).queue_free()
+	probes_expected_to_fail += 1
+	await get_tree().process_frame
+
+func _test_a_check_never_stands_inside_the_room() -> void:
+	"""P2-A, at the scale the bug lived at.
+
+	Two of four arenas in the P1 suite dropped a Check pedestal inside
+	one of their own crates. Sixteen arenas here, each with a Check
+	declared, each measured where `ZoneController` will really put the
+	pedestal -- because one arena passing is how the original bug hid."""
+	var buried := 0
+	for i in 16:
+		var chamber := {
+			"id": "rw%d" % i, "type": "arena",
+			"width": 12.0 + float(i % 5) * 2.5,
+			"depth": 10.0 + float(i % 4) * 3.0,
+			"wall_height": 6.0, "objective": "kill_all",
+			"reward_location_id": 89100001 + i,
+			"enemies": [{"archetype": "melee", "count": 2}]}
+		if i % 3 == 0:
+			chamber["elevation"] = {"kind": "gallery", "rise": 2.2,
+					"coverage": 0.45,
+					"side": ["left", "right", "back"][i % 3],
+					"access": "ramp"}
+		var result := _build(chamber)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var at: Vector3 = result["reward_position"]
+		var query := PhysicsShapeQueryParameters3D.new()
+		var shape := BoxShape3D.new()
+		shape.size = Vector3(ChamberBuilders.REWARD_PEDESTAL,
+				ChamberBuilders.REWARD_PEDESTAL_HEIGHT - 0.4,
+				ChamberBuilders.REWARD_PEDESTAL)
+		query.shape = shape
+		query.transform = Transform3D(Basis(), at + Vector3.UP
+				* (ChamberBuilders.REWARD_PEDESTAL_HEIGHT / 2.0 + 0.2))
+		query.collide_with_areas = false
+		if not (result["root"] as Node3D).get_world_3d() 				.direct_space_state.intersect_shape(query, 1).is_empty():
+			buried += 1
+		rooms_checked += 1
+		(result["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	_check(buried == 0,
+			"%d of 16 arenas stand a Check inside their own geometry"
+			% buried)
+
+func _test_one_envelope_convention_binds_both_producers() -> void:
+	"""THE P2 ENVELOPE DEFECT, and the asymmetry that hid it.
+
+	`ShellValidator._check_envelope` allowed 0.15 m outside a room's
+	declared box and ran on the AUTHORED PATH ALONE. It refused all
+	eight P2 shells, whose entry wall sits at z in [-0.40, 0] -- and
+	every procedural room breaks the same rule by 0.05 m, because
+	`_perimeter` CENTRES its walls on the boundary and overhangs by
+	WALL_THICKNESS / 2 on all four sides. A convention that describes
+	neither producer is not a convention, and a check only one producer
+	takes is not a contract.
+
+	Measured, not argued: this walks both producers and reports the real
+	overhang, then proves the shared rule still bites."""
+	var worst_procedural := 0.0
+	for chamber: Dictionary in _procedural_chambers():
+		var result := _build(chamber)
+		await get_tree().physics_frame
+		var bounds: AABB = result["bounds"]
+		for box in ShellValidator.mesh_boxes(
+				result["root"] as Node3D, Transform3D.IDENTITY):
+			for axis in 3:
+				worst_procedural = maxf(worst_procedural, maxf(
+						bounds.position[axis] - box.position[axis],
+						box.end[axis] - bounds.end[axis]))
+		rooms_checked += 1
+		(result["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	print("  procedural rooms overhang their bounds by up to %.2f m"
+			% worst_procedural)
+	_check(worst_procedural > 0.15,
+			"no procedural room overhangs by more than the old 0.15 m "
+			+ "allowance, so this test is not measuring the defect")
+	_check(worst_procedural <= RoomContract.WALL_ALLOWANCE,
+			"a procedural room reaches %.2f m outside its bounds, past "
+			% worst_procedural + "the shared allowance of %.2f"
+			% RoomContract.WALL_ALLOWANCE)
+
+	# The authored side of the same rule, at its real worst.
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var worst_authored := 0.0
+	var seen := 0
+	for id: String in registry.ids_of_category("room_shell"):
+		var entry := registry.get_entry(id)
+		if bool(entry.get("procedural_fallback", false)):
+			continue
+		var size: Array = entry.get("size", [])
+		if size.size() < 3:
+			continue
+		var node: Node3D = (load(str(entry["scene"])) as PackedScene
+				).instantiate()
+		var declared := AABB(
+				Vector3(-float(size[0]) / 2.0,
+					-ContentInstantiator.FLOOR_ALLOWANCE, 0.0),
+				Vector3(float(size[0]),
+					float(size[1]) + ContentInstantiator.FLOOR_ALLOWANCE,
+					float(size[2])))
+		for box in ShellValidator.mesh_boxes(node, Transform3D.IDENTITY):
+			for axis in 3:
+				worst_authored = maxf(worst_authored, maxf(
+						declared.position[axis] - box.position[axis],
+						box.end[axis] - declared.end[axis]))
+		seen += 1
+		node.free()
+	print("  authored shells overhang their envelope by up to %.2f m "
+			% worst_authored + "(%d measured)" % seen)
+	_check(seen >= 8, "only %d authored shells were measured" % seen)
+	_check(worst_authored > 0.15,
+			"no authored shell overhangs by more than the old 0.15 m "
+			+ "allowance, so this test is not measuring the defect")
+	_check(worst_authored <= RoomContract.WALL_ALLOWANCE,
+			"an authored shell reaches %.2f m outside its envelope, past "
+			% worst_authored + "the shared allowance of %.2f"
+			% RoomContract.WALL_ALLOWANCE)
+
+	# AND IT STILL BITES. A shared convention that accepts everything is
+	# not a convention either.
+	_check(RoomContract.WALL_ALLOWANCE < ChamberBuilders.WALL_THICKNESS * 2.0,
+			"the allowance is two walls wide; geometry that far out is "
+			+ "inside the neighbour's interior")
+
+## Which chamber the art lane built each family for. Read off the entry's
+## own `semantic_tags`, so a shell that renames itself is audited as
+## whatever it now says it is rather than as whatever this list
+## remembers.
+const FAMILY_TYPE := {
+	"tower": "tower", "treasure_room": "treasure_room",
+	# The corners are tagged `corner`, which is NOT a chamber type -- see
+	# the note in the test. Audited as the corridor-shaped room they are.
+	"corner": "corridor",
+}
+
+func _test_every_authored_shell_in_the_registry_is_measured() -> void:
+	"""EVERY authored room shell the registry carries, through the SAME
+	contract and the SAME probes a procedural room gets.
+
+	No F3-specific exemption exists and none may: the audit takes a room
+	output and a physics space and cannot tell who produced it. The one
+	thing lifted here is the art-lane REVIEW GATE, because that is
+	exactly the question being asked -- would this asset be safe if
+	somebody promoted it? Everything else is the live path: the same
+	`build_chamber`, the same `ShellValidator`, the same fallback chain.
+	"""
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var shells: Array[String] = []
+	for id: String in registry.ids_of_category("room_shell"):
+		if not bool(registry.get_entry(id).get("procedural_fallback", false)):
+			shells.append(id)
+	shells.sort()
+	_check(shells.size() >= 8,
+			"the registry carries %d authored room shells; the P2 pack "
+			% shells.size() + "is eight")
+
+	for id in shells:
+		var entry: Dictionary = registry.get_entry(id).duplicate(true)
+		# The review gate, and ONLY the review gate.
+		entry["review"] = "pass"
+		var chamber := _chamber_for(entry)
+		var private := ContentRegistry.new()
+		private.entries[id] = entry
+		var result: Dictionary = ContentInstantiator.build_chamber(
+				chamber, "concrete_facility", private)
+		add_child(result["root"] as Node3D)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+
+		# WHICH BUILDER ANSWERED -- asked of the builder, not guessed
+		# from the answer. `not sockets.is_empty()` reads like this
+		# question and is not one: a refusal falls back to the
+		# PROCEDURAL builder, and a procedural room has sockets, meshes
+		# and hulls like any other. So a shell whose manifest
+		# contradicted its own scene was refused, silently replaced by
+		# an arena, and then measured -- and the arena is clean, so this
+		# census printed `structural=0 measured=0` for a room that never
+		# built. Zero findings over zero probes, which is the one line
+		# the census exists to make unprintable.
+		var authored := str(result.get("authored_shell", "")) == id
+		var structural := RoomContract.violations(result, id)
+		var measured := RoomAudit.findings(result, _space(), id)
+		var pending := str(registry.get_entry(id).get("review", "")) \
+				== "pending"
+		# WHAT EACH PROBE CLASS LOOKED AT, not only what it found. A
+		# clean sheet is only worth reading next to the number of things
+		# that were examined to produce it -- zero findings over zero
+		# probes is the most dangerous line a suite can print.
+		var hulls := 0
+		var meshes := ShellValidator.mesh_boxes(
+				result["root"] as Node3D, Transform3D.IDENTITY).size()
+		for node: Node in (result["root"] as Node3D).find_children(
+				"*", "CollisionShape3D", true, false):
+			hulls += 1
+		# A REFUSED SHELL GETS NO CENSUS LINE. The numbers would all be
+		# the substitute room's, and a reviewer reading `sock=7
+		# structural=0` has no way to tell it is not this shell's. It
+		# reports what actually happened and why, and stops.
+		if not authored:
+			print("  %-24s %-8s REFUSED  the authored scene was rejected; "
+					% [id, "PENDING" if pending else "PASS"]
+					+ "a procedural room answered, so NOTHING here was "
+					+ "measured on this shell")
+			for reason: String in _why_refused(entry):
+				print("      %s" % reason)
+			# The review gate, applied exactly as it is to findings: a
+			# refusal of PENDING content is evidence for the review that
+			# has not happened yet, and a refusal of APPROVED content is
+			# a broken build.
+			_check(pending, "%s is approved content and its authored "
+					% id + "scene was refused")
+			if pending:
+				shells_awaiting_review += 1
+			rooms_checked += 1
+			authored_checked += 1
+			(result["root"] as Node3D).queue_free()
+			await get_tree().process_frame
+			continue
+		print("  %-24s %-8s surf=%-2d trav=%-2d sock=%-2d doors=2 "
+				% [id, "PENDING" if pending else "PASS",
+					RoomContract.sockets_of(result, "stand").size(),
+					(result.get("traversal", []) as Array).size(),
+					(result.get("sockets", []) as Array).size()]
+				+ "mesh=%-2d hull=%-2d structural=%d measured=%d"
+				% [meshes, hulls, structural.size(), measured.size()])
+		# LISTED, not grouped. Under the old "every point must be clear"
+		# reading one root cause produced twenty-seven sentences saying
+		# it and only the CLASSES were worth printing; a finding is now
+		# one broken promise per surface, so the list is the evidence a
+		# reviewer actually needs.
+		for finding: String in structural + measured:
+			print("      %s" % finding)
+		# THE REVIEW GATE IS THE AUDIT GATE. A `pending` shell is content
+		# nobody has approved and nothing can select, so its findings are
+		# EVIDENCE FOR THAT REVIEW rather than a broken build. The moment
+		# somebody flips one to `pass`, this line starts demanding it be
+		# clean -- which is the property that makes promotion safe rather
+		# than a decision taken by whoever edits a JSON field.
+		if not pending:
+			_check(structural.is_empty() and measured.is_empty(),
+					"%s is approved content and fails the room contract"
+					% id)
+		elif not (structural.is_empty() and measured.is_empty()):
+			shells_awaiting_review += 1
+		rooms_checked += 1
+		authored_checked += 1
+		(result["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+
+## TWO COLLIDER COUNTS, TWO SCOPES, BOTH CORRECT.
+##
+## Art measured 71 for the hall and Production reported 73, and the gap
+## sat unreconciled across three passes. They are not the same question:
+##
+##   * AUTHORED SHELL COLLIDERS -- the `-convcolonly` twins the importer
+##     builds from the `.glb`. This is the shape the artist shipped, and
+##     it is what an art-side gate can see.
+##   * INSTANTIATED CHAMBER COLLIDERS -- everything in the room after
+##     `build_chamber` returns, which additionally includes whatever the
+##     COMPOSER placed in it: cover, activity elements, crates.
+##
+## Forcing them equal would be wrong in both directions -- it would
+## either hide placed content from the room or attribute it to the
+## artist. So each is named, each is asserted, and the difference is
+## required to be exactly the placed content.
+func _test_the_two_collider_counts_measure_different_things() -> void:
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var entry: Dictionary = registry.get_entry(
+			"shell_hall_transit").duplicate(true)
+	entry["review"] = "pass"
+	var private := ContentRegistry.new()
+	private.entries["shell_hall_transit"] = entry
+	var result: Dictionary = ContentInstantiator.build_chamber(
+			_chamber_for(entry), "concrete_facility", private)
+	var root := result["root"] as Node3D
+	add_child(root)
+	await get_tree().physics_frame
+
+	var authored := 0
+	var placed := 0
+	var duplicates := 0
+	var seen: Dictionary = {}
+	# WHAT THE TWO EXTRAS ACTUALLY ARE. The independent audit's F-5: the
+	# test BOUNDED them -- two colliders, both "placed content" -- and
+	# the previous Production report NAMED them, "a destructible cover"
+	# and "an activity element". Bounded is not identified, and asking
+	# the class showed the report's second half was simply wrong.
+	#
+	# BOTH are `DestructibleCover`. The hall declares THREE `cover`
+	# sockets and no `reactive` one; `_build_environment` places a cover
+	# per socket and drops any whose box lands on something already
+	# occupied, so three sockets become two crates. No activity element
+	# is placed in this chamber at all. That is the number's cause, and
+	# asserting the cause is what stops 2 from being a magic constant.
+	#
+	# `is_placed_content` also admits a `Player`, so a body standing in
+	# the room during a measurement would have been counted into the
+	# room's own total. Zero is asserted rather than assumed.
+	var covers := 0
+	var barrels := 0
+	var elements := 0
+	var bodies := 0
+	var unattributed: Array[String] = []
+	for n: Node in root.find_children("*", "CollisionShape3D",
+			true, false):
+		var owner_scene := "<added at runtime>"
+		var walk: Node = n
+		while walk != null:
+			if walk.scene_file_path != "":
+				owner_scene = walk.scene_file_path
+				break
+			walk = walk.get_parent()
+		if owner_scene.ends_with(".glb"):
+			authored += 1
+		else:
+			placed += 1
+			_check(SpaceProbe.is_placed_content(n.get_parent()),
+					"a collider outside the authored mesh is not placed "
+					+ "content either: %s under %s"
+					% [n.name, n.get_parent().name])
+			var host: Node = n.get_parent()
+			var named := ""
+			while host != null and host != root and named == "":
+				if host is Player:
+					bodies += 1
+					named = "Player"
+				elif host is DestructibleCover:
+					covers += 1
+					named = "DestructibleCover"
+				elif host is ReactiveBarrel:
+					barrels += 1
+					named = "ReactiveBarrel"
+				elif host is ActivityElement:
+					elements += 1
+					named = "ActivityElement"
+				else:
+					host = host.get_parent()
+			if named == "":
+				unattributed.append("%s under %s"
+						% [n.name, n.get_parent().name])
+		# KEYED ON THE BODY, NOT THE SHAPE NODE. Every collider the
+		# importer builds is an auto-named `CollisionShape3D` under a
+		# body that carries the authored piece's name, and the geometry
+		# is baked into the shape rather than expressed as a transform --
+		# so a position key says "all 71 are at the origin" and a name
+		# key says "all 71 are called CollisionShape3D". The body's name
+		# is the one thing that identifies the authored piece.
+		var body := n.get_parent()
+		var key := "%s|%s" % [body.get_class(), body.name]
+		if seen.has(key):
+			duplicates += 1
+		seen[key] = true
+
+	print("  hall colliders: authored(shell mesh)=%d placed(composer)=%d "
+			% [authored, placed] + "instantiated(total)=%d"
+			% [authored + placed])
+	_check(authored == 71,
+			"the hall's AUTHORED shell collider count is %d, not the 71 "
+			% authored + "the art lane measures")
+	_check(authored + placed == 73,
+			"the hall's INSTANTIATED chamber collider count is %d, not "
+			% (authored + placed) + "the 73 Production measures")
+	_check(duplicates == 0,
+			"%d colliders share a name and a position; one of the two "
+			% duplicates + "counts was concealing duplicate geometry")
+	# THE TWO EXTRAS, BY CLASS.
+	print("  hall placed colliders: DestructibleCover=%d ReactiveBarrel=%d"
+			% [covers, barrels] + " ActivityElement=%d Player=%d"
+			% [elements, bodies])
+	var cover_sockets := RoomContract.sockets_of(result, "cover").size()
+	var reactive_sockets := RoomContract.sockets_of(result,
+			"reactive").size()
+	_check(cover_sockets == 3 and reactive_sockets == 0,
+			"the hall declares %d cover and %d reactive socket(s); the "
+			% [cover_sockets, reactive_sockets] + "two placed colliders "
+			+ "are explained by 3 and 0")
+	_check(covers == 2,
+			"the hall's composer colliders include %d DestructibleCover, "
+			% covers + "not the 2 its three cover sockets place (one is "
+			+ "dropped for landing on occupied space)")
+	_check(barrels == 0,
+			"%d ReactiveBarrel collider(s) were counted; the hall "
+			% barrels + "declares no reactive socket")
+	_check(elements == 0,
+			"%d ActivityElement collider(s) were counted; the hall's "
+			% elements + "chamber places none, and the previous "
+			+ "Production report named one")
+	_check(bodies == 0,
+			"%d Player collider(s) were counted into the hall's chamber "
+			% bodies + "total; a body standing in a room is not part of "
+			+ "the room")
+	_check(unattributed.is_empty(),
+			"%d placed collider(s) belong to no known class: %s"
+			% [unattributed.size(), "; ".join(unattributed)])
+	_check(covers + barrels + elements + bodies == placed,
+			"%d placed collider(s) were counted but %d were identified"
+			% [placed, covers + barrels + elements + bodies])
+	root.queue_free()
+	await get_tree().process_frame
+	rooms_checked += 1
+
+## THE CHAIN THE GAME ACTUALLY BUILDS, not a fixture at the origin.
+##
+## `ZoneBuilder` translates every chamber and yaws the ones after a turn,
+## and offer coordinates stay room-local. The first binding handed those
+## local points to a world physics query, and it was invisible because
+## every authored-shell test placed its root at identity -- the one
+## transform where the two frames agree.
+##
+## So this takes a REAL two-chamber chain with a declared 90-degree turn,
+## proves the second chamber is genuinely translated and rotated, and
+## then asks whether the same offer gets the same verdict there as at the
+## origin.
+func _test_a_chained_chamber_offers_what_it_offered_at_the_origin(
+		) -> void:
+	var zone := _turning_zone(90.0)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var chambers: Array = zone["chambers"]
+	_check(chambers.size() == 2,
+			"the chain fixture built %d chambers, not 2" % chambers.size())
+	var second: Dictionary = chambers[1]
+	var node := second["node"] as Node3D
+	var placed := node.global_transform
+	# THE FIXTURE MUST ACTUALLY BE SOMEWHERE ELSE, or this proves nothing.
+	_check(placed.origin.length() > 1.0,
+			"the second chamber sits at %v; a chain test at the origin "
+			% placed.origin + "cannot detect a frame error")
+	_check(absf(node.rotation.y) > 0.01,
+			"the second chamber is not rotated (yaw %.3f), so the yaw "
+			% node.rotation.y + "half of the seam is untested")
+
+	# One anchor, well inside the chamber, over its own floor. The build
+	# result is a real procedural room, so its floor is the one being
+	# measured -- what is injected is only the OFFER.
+	var build: Dictionary = second["build"]
+	var bounds: AABB = build["bounds"]
+	var mid := bounds.get_center()
+	var anchor := Vector3(mid.x, 6.0, mid.z)
+	build["offers"] = [{"kind": "grapple_point", "name": "chained",
+			"position": anchor, "radius": 1.5}]
+	var chained := OfferBinding.validate(node, build, "chained",
+			["grapple_point"])
+	_check(not bool(chained.get("refused", false)),
+			"a live chained chamber could not be measured: %s"
+			% str(chained["declined"]))
+
+	# THE SAME ROOM AT THE ORIGIN, for comparison. Identical offer,
+	# identical geometry, placement the only difference.
+	var alone: Dictionary = ContentInstantiator.build_chamber(
+			second["chamber"] as Dictionary, "concrete_facility")
+	alone["offers"] = build["offers"]
+	add_child(alone["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var at_origin := OfferBinding.validate(alone["root"] as Node3D,
+			alone, "origin", ["grapple_point"])
+	_check((chained["accepted"] as Array).size()
+			== (at_origin["accepted"] as Array).size()
+			and (chained["declined"] as Array).size()
+			== (at_origin["declined"] as Array).size(),
+			"the same offer measured %d/%d in a placed chamber and "
+			% [(chained["accepted"] as Array).size(),
+				(chained["declined"] as Array).size()]
+			+ "%d/%d at the origin"
+			% [(at_origin["accepted"] as Array).size(),
+				(at_origin["declined"] as Array).size()])
+	(alone["root"] as Node3D).queue_free()
+	(zone["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+	rooms_checked += 1
+
+## A LAUNCH SOURCE IS A PLACE TOO.
+##
+## Nothing ever checked the pad itself: the arc deliberately skips its own
+## first sample, so the one place the source was looked at was the place
+## it was excluded from. A pad inside a slab or hanging in mid-air is a
+## pad nobody can step onto.
+func _test_a_launch_source_must_be_standable() -> void:
+	var deck := [Vector3(10.0, -0.5, 0.0), Vector3(60.0, 1.0, 12.0)]
+	var pair := [{"kind": "launch_source", "name": "pad",
+			"position": Vector3(0.0, 0.0, 0.0), "radius": 3.0,
+			"target": "deck"},
+		{"kind": "launch_target", "name": "deck",
+			"position": Vector3(20.0, 0.0, 0.0), "radius": 3.0}]
+
+	var good := _slab_room([deck], Vector3.ZERO,
+			Vector3(60.0, 20.0, 20.0), null)
+	good["offers"] = pair
+	var good_says: String = await _offer_says(good, "good_source")
+	_check(not good_says.contains("launch source"),
+			"a pad on a clean deck was refused: %s" % good_says)
+
+	# BURIED: the pad's own standing pose inside a block.
+	var buried := _slab_room([deck,
+			[Vector3(0.0, 1.0, 0.0), Vector3(4.0, 3.0, 4.0)]],
+			Vector3.ZERO, Vector3(60.0, 20.0, 20.0), null)
+	buried["offers"] = pair
+	var buried_says: String = await _offer_says(buried, "buried_source")
+	_check(buried_says.contains("standing on the launch source"),
+			"a pad buried in a slab was accepted: %s" % buried_says)
+	probes_expected_to_fail += 1
+
+	# MID-AIR: floor for the landing, nothing under the pad.
+	var floating := _slab_room([
+			[Vector3(20.0, -0.5, 0.0), Vector3(16.0, 1.0, 12.0)]],
+			Vector3.ZERO, Vector3(60.0, 20.0, 20.0), null)
+	floating["offers"] = pair
+	var air_says: String = await _offer_says(floating, "air_source")
+	_check(air_says.contains("launch source at")
+			and air_says.contains("no surface at all"),
+			"a pad hanging in mid-air was accepted: %s" % air_says)
+	probes_expected_to_fail += 1
+	rooms_checked += 3
+
+## The declined reasons a slab room's offers produce, as one string.
+func _offer_says(room: Dictionary, who: String) -> String:
+	add_child(room["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var verdict := OfferBinding.validate(room["root"] as Node3D, room,
+			who, ["launch_source"])
+	var out := ""
+	for raw: Variant in verdict["declined"] as Array:
+		out += str((raw as Dictionary)["why"]) + " "
+	(room["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+	return out
+
+## A DESTINATION MUST BE STANDABLE, NOT MERELY OVER SOMETHING.
+##
+## The independent audit's A-2: the plenum declares three optional collar
+## endpoints on the axis of eight metres of hanging machine, and they
+## measured clean because a ray at the declared height was answered by
+## the collar's own collision. A ray says "is there a surface below". A
+## destination is a place a body can be.
+##
+## OPTIONAL SEGMENTS INCLUDED. The endpoint loop always ran on every
+## segment -- the `mandatory` skip happens after it -- and an optional
+## destination is still a claim about where a player can get to.
+# --- F-1 / F-2: a launch endpoint is a CONTACT point ----------------------
+
+## The shells that declare offers, as registry entries ready to build.
+func _shells_with_offers() -> Array:
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var out: Array = []
+	for id: String in registry.ids_of_category("room_shell"):
+		var entry: Dictionary = registry.get_entry(id).duplicate(true)
+		if bool(entry.get("procedural_fallback", false)):
+			continue
+		if (entry.get("offers", []) as Array).is_empty():
+			continue
+		entry["review"] = "pass"
+		out.append(entry)
+	return out
+
+## ONE shell, live in the tree, under a host that can be moved.
+##
+## ONE AT A TIME, and this is not an optimisation. Four large shells
+## staged together all sit at the origin and overlap: the first draft of
+## this test refused the hall's arc on `yd_roof` and the plenum's landing
+## on `sp_roof`, which are colliders from other rooms. A fixture sharing
+## a physics space with a room it is not about measures the wrong room.
+##
+## The HOST is what moves. Rebuilding a 400 kB GLB seven times to test
+## seven placements measures the importer; moving one room measures the
+## frame handling, which is the thing that was wrong.
+func _live_shell(entry: Dictionary) -> Dictionary:
+	var private := ContentRegistry.new()
+	private.entries[str(entry["id"])] = entry
+	var build: Dictionary = ContentInstantiator.build_chamber(
+			_chamber_for(entry), "concrete_facility", private)
+	var host := Node3D.new()
+	add_child(host)
+	host.add_child(build["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	return {"id": str(entry["id"]), "host": host,
+			"root": build["root"], "build": build}
+
+## Every `launch_source` and `launch_target` a room declares, by name.
+##
+## Read off the registry rather than listed here, so a room the art lane
+## adds is measured without anyone remembering to add it.
+func _launch_points(build: Dictionary) -> Array:
+	var out: Array = []
+	for kind: String in ["launch_source", "launch_target"]:
+		for raw: Variant in RoomContract.offers_of(build, kind):
+			var offer: Dictionary = raw
+			out.append({"kind": kind, "name": str(offer.get("name", "?")),
+					"position": offer["position"] as Vector3})
+	return out
+
+## The placements a chamber actually gets, plus identity.
+##
+## `ZoneBuilder` translates every chamber, lifts the plenum's origin
+## below its own seam and yaws many of them -- and identity is the ONE
+## placement that cannot detect a frame error, because there the room's
+## frame and the world's coincide.
+const LAUNCH_PLACEMENTS := [
+	["at the origin", Vector3.ZERO, 0.0],
+	["translated", Vector3(137.0, 0.0, -84.0), 0.0],
+	["lifted", Vector3(0.0, 61.0, 0.0), 0.0],
+	["yawed 90", Vector3.ZERO, PI / 2.0],
+	["yawed 180", Vector3.ZERO, PI],
+	["yawed 270", Vector3.ZERO, 3.0 * PI / 2.0],
+	["placed and yawed", Vector3(-213.0, -37.0, 96.0), PI / 3.0],
+]
+
+func _test_every_launch_endpoint_touches_the_surface_under_it() -> void:
+	"""F-1. `launch_source.position` and `launch_target.position` ARE the
+	foot-contact centre -- `content.py` says so, in the same commit that
+	moved three of them onto their floors.
+
+	The gate did not say so. It asked `ground_below(..., MAX_VERTICAL_STEP)`
+	-- ground within a metre -- which is a step check wearing a contact
+	check's name, and the yard's pad hovered 0.5 m over `yd_floor` through
+	every gate in the project because of it: a trigger box starting at knee
+	height, a mesh floating half a metre up, and a capture that teleported
+	the player into the air before firing.
+
+	So this compares the DECLARED height against the height the probe
+	actually hits, at `SpaceProbe.CONTACT_EPS`, over every launch endpoint
+	in the library. It measures each one repeatedly, because an exact
+	contact on a collider face is the case the engine is entitled to answer
+	either way -- that determinism is what the epsilon buys, and it is
+	worth nothing untested. And it lifts each one by the half metre the old
+	check allowed, because a guard nobody has watched refuse is a guard
+	nobody has tested."""
+	var shells: Array = await _shells_with_offers()
+	_check(shells.size() >= 4,
+			"only %d shells with offers were reachable; the four LARGE "
+			% shells.size() + "rooms all declare launch endpoints")
+	var endpoints := 0
+	var lifted_sources := 0
+	var lifted_targets := 0
+	var yard_seen := false
+	for raw_entry: Variant in shells:
+		var record: Dictionary = await _live_shell(raw_entry as Dictionary)
+		var id: String = record["id"]
+		var root: Node3D = record["root"]
+		var host: Node3D = record["host"]
+		var build: Dictionary = record["build"]
+		var points: Array = _launch_points(build)
+		for place: Array in LAUNCH_PLACEMENTS:
+			host.transform = Transform3D(
+					Basis(Vector3.UP, place[2] as float),
+					place[1] as Vector3)
+			await get_tree().physics_frame
+			await get_tree().physics_frame
+			var space := OfferBinding.space_of(root)
+			_check(space != null, "%s has no physics space" % id)
+			for raw: Variant in points:
+				var point: Dictionary = raw
+				var world: Vector3 = root.global_transform \
+						* (point["position"] as Vector3)
+				var said := LaunchSolver.off_surface(space, world)
+				_check(said == "", "%s / %s (%s) at %v is not a "
+						% [id, point["name"], point["kind"],
+							point["position"]] + "foot-contact point "
+						+ "%s: %s" % [place[0], said])
+				# THE SAME QUESTION, SIXTEEN TIMES. A point resting
+				# exactly on a face is a coin toss without the epsilon,
+				# and a coin toss that came up heads once is not a pass.
+				for _i in 16:
+					_check(LaunchSolver.off_surface(space, world) == said,
+							"%s / %s answered its own contact question "
+							% [id, point["name"]] + "two different ways "
+							+ "on identical input")
+				if str(place[0]) == "at the origin":
+					endpoints += 1
+
+		# NESTED, because a chamber's root is a child of a Zone root and a
+		# transform only ever read one level up works until it is nested.
+		var wrapper := Node3D.new()
+		wrapper.transform = Transform3D(Basis(Vector3.UP, PI / 5.0),
+				Vector3(44.0, 12.0, -7.0))
+		add_child(wrapper)
+		remove_child(host)
+		wrapper.add_child(host)
+		host.transform = Transform3D(Basis(Vector3.UP, PI / 2.0),
+				Vector3(60.0, -5.0, 30.0))
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var nested_space := OfferBinding.space_of(root)
+		for raw: Variant in points:
+			var point: Dictionary = raw
+			var said := LaunchSolver.off_surface(nested_space,
+					root.global_transform * (point["position"] as Vector3))
+			_check(said == "", "%s / %s touches its surface at the origin "
+					% [id, point["name"]]
+					+ "but not under a nested transform: %s" % said)
+
+		# AND THE GUARD BITES. Lift a point that is genuinely in contact
+		# and the same call must refuse it -- by half a metre, the exact
+		# distance the yard's pad hovered and the old within-a-step check
+		# allowed.
+		for raw: Variant in points:
+			var point: Dictionary = raw
+			var up: Vector3 = (point["position"] as Vector3) \
+					+ Vector3.UP * 0.5
+			var said := LaunchSolver.off_surface(nested_space,
+					root.global_transform * up)
+			_check(said.contains("floats 0.5000 m over"),
+					"%s / %s lifted half a metre off its floor was "
+					% [id, point["name"]] + "accepted as a foot-contact "
+					+ "point: '%s'" % said)
+			if str(point["kind"]) == "launch_source":
+				lifted_sources += 1
+			else:
+				lifted_targets += 1
+			probes_expected_to_fail += 1
+
+		# THE YARD'S OWN OLD VALUE, by name. `launch_west` sat at y = 0.5
+		# over a floor whose top is 0.0 and passed every gate this project
+		# had, in the room it was authored for.
+		if id == "shell_yard_gantry":
+			var was := Vector3(-28.0, 0.5, 26.0)
+			var said := LaunchSolver.off_surface(nested_space,
+					root.global_transform * was)
+			_check(said.contains("floats 0.5000 m over")
+					and said.contains("yd_floor"),
+					"the yard's pre-repair launch_west at %v was accepted, "
+					% was + "or refused without naming the floor it "
+					+ "hovered over: '%s'" % said)
+			probes_expected_to_fail += 1
+			yard_seen = true
+		wrapper.queue_free()
+		await get_tree().process_frame
+		rooms_checked += 1
+	_check(endpoints == 8,
+			"%d launch endpoints were measured for contact; the four "
+			% endpoints + "LARGE rooms declare 8 between them")
+	_check(lifted_sources == 4 and lifted_targets == 4,
+			"the lift sabotage covered %d sources and %d targets; both "
+			% [lifted_sources, lifted_targets] + "halves of the contract "
+			+ "must be guarded, not just the one that was wrong")
+	_check(yard_seen, "shell_yard_gantry was never measured, so the "
+			+ "position F-1 was raised about is unguarded")
+
+## The four launch positions the art lane repaired, and the physical
+## refusal each one must still earn.
+##
+## F-2. The previous report's row 10 -- "old Art launch positions
+## reproduce their refusal" -- recorded something Production DID, once, by
+## hand. Nothing in the repository held those four numbers, so all four
+## defects could return and every suite would stay green. A manual
+## observation is not a guard.
+##
+## `why` is what the refusal must SAY. Each names a specific physical
+## fact rather than "something failed": the surface a point floats over,
+## or the collider a body is inside.
+const REPAIRED_LAUNCHES := [
+	{"shell": "shell_hall_transit", "offer": "launch_basin",
+		"kind": "launch_source", "was": Vector3(12.0, 0.0, 18.0),
+		"why": "the arc is obstructed"},
+	{"shell": "shell_plenum_helix", "offer": "launch_floor",
+		"kind": "launch_source", "was": Vector3(0.0, 0.5, 6.0),
+		"why": "floats 0.5000 m over pl_floor"},
+	{"shell": "shell_plenum_helix", "offer": "launch_collar",
+		"kind": "launch_target",
+		"was": Vector3(0.0, 28.333333333333332, 10.0),
+		"why": "is inside pl_machine"},
+	{"shell": "shell_span_basin", "offer": "launch_basin",
+		"kind": "launch_source", "was": Vector3(0.0, 0.5, 45.0),
+		"why": "floats 0.5000 m over sp_basin"},
+]
+
+func _test_the_repaired_launch_positions_are_still_refused() -> void:
+	"""F-2, and it is the standing version of a table row.
+
+	Each of these four was authored, shipped, and measured true by every
+	gate this project had, because no gate had ever put the offer rules and
+	the geometry in the same room. Putting the old number back must produce
+	the same physical refusal it produced when it was found -- including
+	the plenum's landing point, which sat 4.0 m inside `pl_machine`.
+
+	The room is the room as the art lane shipped it, with ONE value put
+	back, so what is measured is the position and not a fixture."""
+	var reproduced := 0
+	for raw_entry: Variant in await _shells_with_offers():
+		var entry: Dictionary = raw_entry
+		var wanted: Array = []
+		for raw: Variant in REPAIRED_LAUNCHES:
+			if str((raw as Dictionary)["shell"]) == str(entry["id"]):
+				wanted.append(raw)
+		if wanted.is_empty():
+			continue
+		var record: Dictionary = await _live_shell(entry)
+		var root: Node3D = record["root"]
+		for raw: Variant in wanted:
+			var this_case: Dictionary = raw
+			var build: Dictionary = \
+					(record["build"] as Dictionary).duplicate()
+			var offers: Array = []
+			for item: Variant in build.get("offers", []) as Array:
+				var offer: Dictionary = (item as Dictionary).duplicate(true)
+				if str(offer.get("name", "")) == str(this_case["offer"]) \
+						and str(offer.get("kind", "")) \
+							== str(this_case["kind"]):
+					offer["position"] = this_case["was"]
+				offers.append(offer)
+			build["offers"] = offers
+			var verdict := OfferBinding.validate(root, build,
+					str(entry["id"]), ["launch_source"])
+			_check(not bool(verdict.get("refused", false)),
+					"%s could not be measured with the old %s in place"
+					% [entry["id"], this_case["offer"]])
+			var why := ""
+			for item: Variant in verdict["declined"] as Array:
+				why += str((item as Dictionary)["why"]) + " "
+			print("  F-2 %-20s %-14s %v %s"
+					% [entry["id"], this_case["offer"], this_case["was"],
+						("REFUSED" if why != "" else "ACCEPTED")])
+			_check(why != "", "%s / %s put back at %v was ACCEPTED; the "
+					% [entry["id"], this_case["offer"], this_case["was"]]
+					+ "defect the art lane repaired can return without a "
+					+ "single test going red")
+			_check(why.contains(str(this_case["why"])),
+					"%s / %s was refused, but not for the physical reason "
+					% [entry["id"], this_case["offer"]] + "it was found "
+					+ "for ('%s'): %s" % [str(this_case["why"]), why])
+			probes_expected_to_fail += 1
+			reproduced += 1
+		(record["host"] as Node3D).queue_free()
+		await get_tree().process_frame
+		rooms_checked += 1
+	_check(reproduced == 4,
+			"only %d of the 4 repaired launch positions were reproduced"
+			% reproduced)
+
+# --- F-3 / F-4: judging is not building ------------------------------------
+
+## Every node under `root`, so "did anything appear" is a number.
+func _descendants(root: Node) -> int:
+	var n := root.get_child_count()
+	for child: Node in root.get_children():
+		n += _descendants(child)
+	return n
+
+## Every collider under `root`, which is what a probe would actually hit.
+func _colliders(root: Node) -> int:
+	var n := 1 if root is CollisionShape3D else 0
+	for child: Node in root.get_children():
+		n += _colliders(child)
+	return n
+
+## Anything a movement package would have constructed, by class.
+##
+## A `LaunchPad`, a rail `Volume` carrying a `RailPath`, or a beam --
+## every one of which is gameplay geometry a player can touch.
+func _offer_nodes(root: Node) -> int:
+	var n := 0
+	if root is AffordanceNodes.LaunchPad:
+		n += 1
+	elif root is AffordanceNodes.Volume \
+			and (root as AffordanceNodes.Volume).rail != null:
+		n += 1
+	for child: Node in root.get_children():
+		n += _offer_nodes(child)
+	return n
+
+## The `(kind, name)` pairs of a verdict array, as a sorted signature.
+func _signature(entries: Array) -> String:
+	var parts: Array[String] = []
+	for raw: Variant in entries:
+		var item: Dictionary = raw
+		parts.append("%s/%s" % [str(item.get("kind", "?")),
+				str(item.get("name", "?"))])
+	parts.sort()
+	return ", ".join(parts)
+
+func _test_an_offer_is_judged_without_the_others_being_built() -> void:
+	"""F-3, behaviourally.
+
+	The defect this pins was real and it was mine: `consume` used to judge
+	and construct in one pass, so the hall's rail beam existed by the time
+	the hall's launch arc was measured -- and that arc grazes the beam by
+	0.35 m. The launch was declined in company and accepted alone, and the
+	answer depended on which kind the loop happened to visit first.
+
+	So the property is not "the code has two loops". It is: A VERDICT ON
+	ONE OFFER DOES NOT DEPEND ON WHICH OTHER OFFERS WERE ASKED ABOUT. That
+	holds or it does not, whatever the source looks like, and recombining
+	judgment with construction makes it fail here rather than in a
+	playtest."""
+	var subject := "shell_hall_transit"
+	var found := false
+	for raw_entry: Variant in await _shells_with_offers():
+		var entry: Dictionary = raw_entry
+		if str(entry["id"]) != subject:
+			continue
+		found = true
+		var record: Dictionary = await _live_shell(entry)
+		var root: Node3D = record["root"]
+		var build: Dictionary = record["build"]
+		var before := _descendants(root)
+
+		# ALONE, then IN COMPANY, then in the other order. The hall's rail
+		# and its launch are the pair that collided.
+		var rail_alone := OfferBinding.validate(root, build, subject,
+				["rail_route"])
+		var launch_alone := OfferBinding.validate(root, build, subject,
+				["launch_source"])
+		var rail_first := OfferBinding.validate(root, build, subject,
+				["rail_route", "launch_source"])
+		var launch_first := OfferBinding.validate(root, build, subject,
+				["launch_source", "rail_route"])
+		for verdict: Dictionary in [rail_alone, launch_alone, rail_first,
+				launch_first]:
+			_check(not bool(verdict.get("refused", false)),
+					"%s could not be measured: %s"
+					% [subject, str(verdict["declined"])])
+
+		# THE COMBINATION SAYS WHAT THE PARTS SAID.
+		_check(_signature(rail_first["accepted"] as Array)
+				== _signature(launch_first["accepted"] as Array)
+				and _signature(rail_first["declined"] as Array)
+				== _signature(launch_first["declined"] as Array),
+				"asking for the same two kinds in the other order changed "
+				+ "the verdict: [%s] vs [%s]"
+				% [_signature(rail_first["accepted"] as Array),
+					_signature(launch_first["accepted"] as Array)])
+		var apart := _signature((rail_alone["accepted"] as Array)
+				+ (launch_alone["accepted"] as Array))
+		_check(apart == _signature(rail_first["accepted"] as Array),
+				"the hall's rail and launch were accepted [%s] when asked "
+				% apart + "about separately and [%s] when asked about "
+				% _signature(rail_first["accepted"] as Array)
+				+ "together; a verdict that depends on its company is not "
+				+ "a fact about the room")
+		_check(not _signature(rail_first["accepted"] as Array).is_empty(),
+				"the hall accepted nothing at all, so this compares two "
+				+ "empty answers and would pass on any code")
+
+		# AND THE MANIFEST'S OWN ORDER. Reversing the authored `offers`
+		# array must not move a verdict either -- a room does not mean
+		# something different because the art lane listed it backwards.
+		var flipped: Dictionary = build.duplicate()
+		var reversed_offers: Array = (build.get("offers", []) as Array) \
+				.duplicate()
+		reversed_offers.reverse()
+		flipped["offers"] = reversed_offers
+		var backwards := OfferBinding.validate(root, flipped, subject)
+		var forwards := OfferBinding.validate(root, build, subject)
+		_check(_signature(backwards["accepted"] as Array)
+				== _signature(forwards["accepted"] as Array)
+				and _signature(backwards["declined"] as Array)
+				== _signature(forwards["declined"] as Array),
+				"the hall judged its offers differently with the manifest "
+				+ "reversed: [%s] vs [%s]"
+				% [_signature(backwards["accepted"] as Array),
+					_signature(forwards["accepted"] as Array)])
+
+		# AND NONE OF THAT BUILT ANYTHING. Six measurements, zero nodes:
+		# the room they were all judged against is the room as authored.
+		_check(_descendants(root) == before,
+				"six pure validations changed the hall from %d nodes to "
+				% before + "%d; they were judged against each other's "
+				% _descendants(root) + "output, not against the room")
+		_check(_offer_nodes(root) == 0,
+				"%d pad or rail node(s) appeared during validation"
+				% _offer_nodes(root))
+		(record["host"] as Node3D).queue_free()
+		await get_tree().process_frame
+		rooms_checked += 1
+	_check(found, "%s was not reachable, so the room whose rail and arc "
+			% subject + "actually collided is unguarded")
+
+func _test_validating_a_live_room_builds_nothing_in_it() -> void:
+	"""F-4, and the owner's ruling: VALIDATION MUST NOT CONSTRUCT GAMEPLAY.
+
+	`OfferBinding.validate` returned `MovementPackage.consume`, which
+	builds. So the one thing `ZoneController` did with a live Zone -- check
+	it -- put a launch pad and a rail beam into every room that offered
+	one, as a side effect of something named validation. Promoting a room
+	would have activated its offers by accident, and a second `validate`
+	would have judged them against the first call's output.
+
+	Three separate facts, and each is worth its own assertion: measuring
+	changes NOTHING; measuring twice says the SAME THING; and the explicit
+	construction path still works and refuses to run twice into one room."""
+	var measured := 0
+	var declared_total := 0
+	var landings_total := 0
+	var anchors_total := 0
+	var accepted_total := 0
+	var built_total := 0
+	var declined_total := 0
+	for raw_entry: Variant in await _shells_with_offers():
+		var entry: Dictionary = raw_entry
+		var subject := str(entry["id"])
+		var record: Dictionary = await _live_shell(entry)
+		var root: Node3D = record["root"]
+		var build: Dictionary = record["build"]
+		var nodes := _descendants(root)
+		var shapes := _colliders(root)
+
+		var once := OfferBinding.validate(root, build, subject)
+		_check(_descendants(root) == nodes and _colliders(root) == shapes,
+				"validating once took the hall from %d nodes / %d "
+				% [nodes, shapes] + "colliders to %d / %d"
+				% [_descendants(root), _colliders(root)])
+		_check(_offer_nodes(root) == 0,
+				"validating built %d pad or rail node(s); the ruling is "
+				% _offer_nodes(root) + "that it must build none")
+
+		var twice := OfferBinding.validate(root, build, subject)
+		_check(_signature(once["accepted"] as Array)
+				== _signature(twice["accepted"] as Array)
+				and _signature(once["declined"] as Array)
+				== _signature(twice["declined"] as Array),
+				"validating the same live room twice gave [%s] then [%s]"
+				% [_signature(once["accepted"] as Array),
+					_signature(twice["accepted"] as Array)])
+		_check(_descendants(root) == nodes and _colliders(root) == shapes,
+				"validating twice took the hall from %d nodes / %d "
+				% [nodes, shapes] + "colliders to %d / %d"
+				% [_descendants(root), _colliders(root)])
+		_check(not (once["accepted"] as Array).is_empty(),
+				"the hall accepted nothing, so this compares two empty "
+				+ "answers and would pass on any code")
+
+		# THE EXPLICIT PATH STILL BUILDS, and it is a different word.
+		# Nothing shipped calls it -- the consuming gameplay package is a
+		# Playtest-3 milestone -- so this is the only place the offers of
+		# a real room are ever constructed.
+		var made := OfferBinding.construct(root, build, subject)
+		_check(not bool(made.get("refused", false)),
+				"the explicit construction path refused a room its own "
+				+ "validation accepted: %s" % str(made["declined"]))
+		_check((made["built"] as Array).size() > 0,
+				"construct() reported nothing built in a room with %d "
+				% (once["accepted"] as Array).size() + "accepted offers")
+		_check(_offer_nodes(root) > 0,
+				"construct() said it built %d offer(s) and no pad or rail "
+				% (made["built"] as Array).size() + "node exists")
+		# BUILT AND ACCEPTED ARE DIFFERENT FACTS. Every grapple point in
+		# the hall is accepted and none is built, because there is no
+		# grapple mechanic to construct -- and calling one "built" would
+		# be a claim that something was made.
+		_check((made["built"] as Array).size()
+				< (made["accepted"] as Array).size(),
+				"construct() reported %d built out of %d accepted; the "
+				% [(made["built"] as Array).size(),
+					(made["accepted"] as Array).size()]
+				+ "grapple points are accepted and construct nothing, so "
+				+ "the two counts must differ")
+		for raw: Variant in made["built"] as Array:
+			_check(str((raw as Dictionary)["kind"]) != "grapple_point",
+					"a grapple point was reported as BUILT; nothing was "
+					+ "constructed for it")
+		var after_build := _descendants(root)
+
+		# AND IT REFUSES TO RUN TWICE. A second construction into one root
+		# would duplicate every pad and beam and judge the new ones
+		# against the old.
+		var again := OfferBinding.construct(root, build, subject)
+		_check(bool(again.get("refused", false)),
+				"a second construction into the same root was allowed; "
+				+ "it built %d more offer(s)"
+				% (again["built"] as Array).size())
+		_check(str(again["declined"]).contains("already constructed"),
+				"the second construction was refused without saying why: "
+				+ "%s" % str(again["declined"]))
+		_check((again["built"] as Array).is_empty()
+				and _descendants(root) == after_build,
+				"the refused second construction still changed the hall "
+				+ "from %d nodes to %d" % [after_build, _descendants(root)])
+		probes_expected_to_fail += 1
+
+		# VALIDATION STILL WORKS ON A BUILT ROOM, and it is now measuring
+		# a room with a rail in it -- which is exactly why it must never
+		# have been what a gate called.
+		var after := OfferBinding.validate(root, build, subject)
+		_check(not bool(after.get("refused", false)),
+				"validation refused a room it had just built into")
+
+		# THE TWO SCOPES, NAMED. `offers` is what the manifest DECLARES;
+		# `accepted` is what the binding JUDGES. They differ by four in
+		# this library and the difference is not a discrepancy: a launch
+		# PAIR is one judgement that measures two authored points, so
+		# four `launch_target` entries are declared and judged without
+		# appearing as verdicts of their own. Reporting one number for
+		# both scopes is how two counts of one thing start disagreeing.
+		var declared := (build.get("offers", []) as Array).size()
+		declared_total += declared
+		landings_total += RoomContract.offers_of(build,
+				"launch_target").size()
+		anchors_total += RoomContract.offers_of(build,
+				"grapple_point").size()
+		accepted_total += (made["accepted"] as Array).size()
+		built_total += (made["built"] as Array).size()
+		declined_total += (made["declined"] as Array).size()
+		print("  %-24s declared=%d accepted=%d built=%d declined=%d"
+				% [subject, declared, (made["accepted"] as Array).size(),
+					(made["built"] as Array).size(),
+					(made["declined"] as Array).size()])
+		measured += 1
+		(record["host"] as Node3D).queue_free()
+		await get_tree().process_frame
+		rooms_checked += 1
+	print("  offer census: declared=%d judged=%d constructed=%d declined=%d"
+			% [declared_total, accepted_total, built_total, declined_total])
+	_check(measured >= 4,
+			"only %d shell(s) went through the validate/construct split"
+			% measured)
+	_check(declined_total == 0,
+			"%d offer(s) were declined by the explicit construction path"
+			% declined_total)
+	_check(declared_total == accepted_total + landings_total,
+			"the library declares %d offers and judges %d, with %d "
+			% [declared_total, accepted_total, landings_total]
+			+ "launch target(s); declared must be judged plus the "
+			+ "targets, which are measured inside their source's verdict "
+			+ "rather than as verdicts of their own")
+	# CONSTRUCTED IS SMALLER STILL, and for a reason worth asserting: a
+	# grapple point is accepted and never built, because there is no
+	# grapple mechanic in this engine to construct. So "24 offers" and
+	# "8 nodes" are both true and neither is the other.
+	_check(built_total == accepted_total - anchors_total,
+			"the library constructed %d node-bearing offers out of %d "
+			% [built_total, accepted_total] + "judged, with %d grapple "
+			% anchors_total + "point(s) that construct nothing")
+
+func _test_a_traversal_destination_must_hold_a_player() -> void:
+	var floor_box := [Vector3(0.0, -0.5, 5.0), Vector3(20.0, 1.0, 20.0)]
+	var trip := [{"name": "hop", "kind": "walk", "mandatory": false,
+			"start": Vector3(0.0, 0.0, 2.0),
+			"end": Vector3(0.0, 0.0, 8.0)}]
+
+	# Clean: floor under both ends, nothing above them.
+	var open_room := _slab_room([floor_box], Vector3.ZERO,
+			Vector3(20.0, 10.0, 20.0), null)
+	open_room["traversal"] = trip
+	var open_says: String = await _audit_slabs(open_room, "open_trip")
+	_check(not open_says.contains("nowhere within a step"),
+			"an ordinary destination was called unstandable: %s"
+			% open_says)
+
+	# THE SABOTAGE: the same floor, the same declaration, and a solid
+	# filling the destination's whole neighbourhood above step height.
+	# A downward ray still lands on the floor, so only a body probe can
+	# tell this from the room above.
+	var lidded := _slab_room([floor_box,
+			[Vector3(0.0, 2.0, 8.0), Vector3(6.0, 2.0, 6.0)]],
+			Vector3.ZERO, Vector3(20.0, 10.0, 20.0), null)
+	lidded["traversal"] = trip
+	var lidded_says: String = await _audit_slabs(lidded, "lidded_trip")
+	_check(lidded_says.contains("nowhere within a step"),
+			"a destination with a player's body inside solid geometry "
+			+ "was accepted because a ray found the floor: %s"
+			% lidded_says)
+	probes_expected_to_fail += 1
+
+	# AND THE NEIGHBOURHOOD TOLERANCE IS REAL, not a loophole. An
+	# endpoint overhung on ONE side keeps its destination -- that is the
+	# rubble stone under the next stone, which owner ruling C(ii) calls
+	# architecture. Offset so the endpoint's own column is covered and a
+	# neighbour one cell aside is not.
+	var overhung := _slab_room([floor_box,
+			[Vector3(0.0, 2.0, 9.0), Vector3(6.0, 2.0, 1.0)]],
+			Vector3.ZERO, Vector3(20.0, 10.0, 20.0), null)
+	overhung["traversal"] = trip
+	var overhung_says: String = await _audit_slabs(overhung, "overhung")
+	_check(not overhung_says.contains("nowhere within a step"),
+			"an endpoint overhung on one side was refused, which would "
+			+ "refuse every rubble stone in the library: %s"
+			% overhung_says)
+	rooms_checked += 3
+
+## EVERY DECLARED OFFER, AGAINST THE ROOM IT IS DECLARED IN.
+##
+## The gap this closes, in the independent audit's words: the offer rules
+## lived only in `MovementPackage`, `MovementPackage` had never been shown
+## a collider, and `RoomAudit` does not read `offers` at all -- so the
+## rules and the geometry had never been in the same room. Three of four
+## LARGE rails and one of four launch targets turned out to be false
+## against real collision, and nothing in the project could see it.
+##
+## This runs the PRODUCTION caller -- the same `OfferBinding.validate`
+## `ZoneController` uses one physics frame after a Zone goes live -- over
+## every authored shell that declares an offer.
+##
+## PENDING ROOMS REPORT, APPROVED ROOMS GATE. A pending shell's offer
+## findings are evidence for the review that has not happened yet, and
+## they print in full. An APPROVED shell whose declared offer is false
+## against its own geometry is a broken build. No room is exempted by
+## name and nothing is waived.
+func _test_every_declared_offer_is_true_against_real_geometry() -> void:
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var accepted_total := 0
+	var declined_total := 0
+	var measured := 0
+	for id: String in registry.ids_of_category("room_shell"):
+		var entry: Dictionary = registry.get_entry(id).duplicate(true)
+		if bool(entry.get("procedural_fallback", false)):
+			continue
+		if (entry.get("offers", []) as Array).is_empty():
+			continue
+		var pending := str(entry.get("review", "")) == "pending"
+		entry["review"] = "pass"
+		var private := ContentRegistry.new()
+		private.entries[id] = entry
+		var result: Dictionary = ContentInstantiator.build_chamber(
+				_chamber_for(entry), "concrete_facility", private)
+		add_child(result["root"] as Node3D)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		# THE PRODUCTION PATH. If this ever reports `refused` the room was
+		# not measured, and that is a failure whatever the review state:
+		# a probe with nowhere to go comes back clean.
+		var verdict := OfferBinding.validate(
+				result["root"] as Node3D, result, id)
+		_check(not bool(verdict.get("refused", false)),
+				"%s: its offers could not be measured at all: %s"
+				% [id, str(verdict["declined"])])
+		var ok := (verdict["accepted"] as Array).size()
+		var no := (verdict["declined"] as Array).size()
+		accepted_total += ok
+		declined_total += no
+		measured += 1
+		print("  %-24s offers %s  accepted=%d declined=%d"
+				% [id, "PENDING" if pending else "PASS", ok, no])
+		for raw: Variant in verdict["accepted"]:
+			print("      + %-14s %s" % [str((raw as Dictionary)["kind"]),
+					str((raw as Dictionary).get("name", "?"))])
+		for raw: Variant in verdict["declined"]:
+			var item: Dictionary = raw
+			print("      - %-14s %s: %s" % [str(item["kind"]),
+					str(item.get("name", "?")), str(item["why"])])
+		if not pending:
+			_check(no == 0, "%s is approved content and declares an "
+					% id + "offer that is false against its own "
+					+ "geometry: %s" % str(verdict["declined"]))
+		elif no > 0:
+			shells_awaiting_review += 1
+		(result["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+
+		# THE SAME SHELL, SOMEWHERE ELSE. `ZoneBuilder` translates every
+		# chamber and yaws many of them, and offers stay room-local -- so
+		# a placed room must offer exactly what it offered at the origin.
+		# This includes the plenum, whose entry is 68 m up: under the
+		# entry-connector contract its origin lands BELOW the seam, which
+		# is the largest placement any room in the library gets.
+		var moved: Dictionary = ContentInstantiator.build_chamber(
+				_chamber_for(entry), "concrete_facility", private)
+		var host := Node3D.new()
+		host.transform = Transform3D(Basis(Vector3.UP, PI / 2.0),
+				Vector3(213.0, -37.0, -96.0))
+		add_child(host)
+		host.add_child(moved["root"] as Node3D)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var elsewhere := OfferBinding.validate(
+				moved["root"] as Node3D, moved, id)
+		_check(not bool(elsewhere.get("refused", false)),
+				"%s: placed away from the origin its offers could not "
+				% id + "be measured: %s" % str(elsewhere["declined"]))
+		_check((elsewhere["accepted"] as Array).size() == ok
+				and (elsewhere["declined"] as Array).size() == no,
+				"%s offers %d/%d at the origin but %d/%d when placed "
+				% [id, ok, no, (elsewhere["accepted"] as Array).size(),
+					(elsewhere["declined"] as Array).size()]
+				+ "and yawed; placement changed what the room offers")
+		host.queue_free()
+		await get_tree().process_frame
+	_check(measured >= 4,
+			"only %d shells with offers were measured against real "
+			% measured + "geometry; the four LARGE rooms all declare some")
+	# THE WRAPPER `ZoneController` ACTUALLY CALLS. `validate` is what the
+	# loop above exercises; `validate_zone` is the shape a live Zone
+	# hands it, and untested glue between a tested function and its only
+	# production caller is exactly where a binding goes quiet.
+	var one: Dictionary = registry.get_entry(
+			"shell_hall_transit").duplicate(true)
+	one["review"] = "pass"
+	var only := ContentRegistry.new()
+	only.entries["shell_hall_transit"] = one
+	var live: Dictionary = ContentInstantiator.build_chamber(
+			_chamber_for(one), "concrete_facility", only)
+	add_child(live["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	# A CLEAN ROOM REPORTS NOTHING, which is the wrapper's contract: it
+	# returns only chambers with something to say.
+	var quiet := OfferBinding.validate_zone([{
+		"chamber": {"id": "hall"}, "node": live["root"],
+		"build": live}])
+	_check(quiet.is_empty(),
+			"validate_zone reported %d chambers for a room whose offers "
+			% quiet.size() + "all build; it must stay silent when there "
+			+ "is nothing to say")
+	# ... and a room that DOES decline is reached and summarised. An
+	# anchor in the middle of the hall's own machine-free air, 200 m up,
+	# has no ground under it.
+	var noisy: Dictionary = live.duplicate()
+	noisy["offers"] = [{"kind": "grapple_point", "name": "impossible",
+			"position": Vector3(0.0, 200.0, 30.0), "radius": 1.5}]
+	var walked := OfferBinding.validate_zone([{
+		"chamber": {"id": "hall"}, "node": live["root"],
+		"build": noisy}])
+	# AND NEITHER CALL BUILT ANYTHING. This is the exact shape
+	# `ZoneController._validate_offers` hands the binding one physics
+	# frame after a Zone goes live, so this is where "no shipped path
+	# constructs an authored offer" is a measurement rather than a
+	# claim about who calls what. It used to build a pad and a beam in
+	# every room that offered one.
+	_check(_offer_nodes(live["root"] as Node3D) == 0,
+			"validate_zone built %d pad or rail node(s) into a live "
+			% _offer_nodes(live["root"] as Node3D) + "chamber; the Zone "
+			+ "path must measure and construct nothing")
+	_check(walked.size() == 1,
+			"validate_zone reported %d chambers for one with a declined "
+			% walked.size() + "offer; the Zone-level wrapper is not "
+			+ "reaching the room")
+	var line := OfferBinding.summarise("hall",
+			(walked[0] as Dictionary)["verdict"] as Dictionary)
+	_check(line.contains("accepted") and line.contains("declined"),
+			"the Zone-level summary says nothing useful: %s" % line)
+	print("  validate_zone: %s" % line)
+	(live["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+	# VACUITY GUARD. A binding that silently stopped measuring, or one
+	# that accepted everything, would both read as green without this.
+	_check(accepted_total > 0,
+			"no declared offer was ACCEPTED against real geometry, so a "
+			+ "binding that had stopped measuring would read as green")
+	# THE REFUSING HALF OF THE GUARD. Every declared offer in the library
+	# now builds, which is the outcome the repairs were for -- so the
+	# proof that this binding can still REFUSE has to come from an offer
+	# authored to be false, not from a defect nobody has fixed yet. A
+	# guard that needs the content to stay broken is a guard that argues
+	# against its own repairs.
+	var canary: Dictionary = registry.get_entry(
+			"shell_hall_transit").duplicate(true)
+	canary["review"] = "pass"
+	var canary_reg := ContentRegistry.new()
+	canary_reg.entries["shell_hall_transit"] = canary
+	var subject: Dictionary = ContentInstantiator.build_chamber(
+			_chamber_for(canary), "concrete_facility", canary_reg)
+	subject["offers"] = [
+		{"kind": "grapple_point", "name": "over_nothing",
+			"position": Vector3(0.0, 200.0, 30.0), "radius": 1.5},
+		{"kind": "grapple_point", "name": "in_the_floor",
+			"position": Vector3(0.0, 0.2, 30.0), "radius": 1.5},
+	]
+	add_child(subject["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var refused := OfferBinding.validate(subject["root"] as Node3D,
+			subject, "canary", ["grapple_point"])
+	_check((refused["declined"] as Array).size() == 2
+			and (refused["accepted"] as Array).is_empty(),
+			"two knowingly false offers measured %d accepted / %d declined "
+			% [(refused["accepted"] as Array).size(),
+				(refused["declined"] as Array).size()]
+			+ "against real geometry; a binding that accepted everything "
+			+ "would read as green")
+	probes_expected_to_fail += 1
+	(subject["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+	_check(declined_total == 0,
+			"%d declared offer(s) in the library are false against their "
+			% declined_total + "own geometry; they are evidence for "
+			+ "review and are listed above")
+	rooms_checked += measured
+
+## WHY a shell was refused, in the reviewer's output.
+##
+## `ContentInstantiator` already says this -- through `push_error`, which
+## `make godot-room-contract` filters out along with every other engine
+## error, so the one reader who needs it is the one who cannot see it.
+## Asking `ShellValidator` again costs one instantiation and puts the
+## reasons next to the shell they belong to.
+func _why_refused(entry: Dictionary) -> Array[String]:
+	var scene: PackedScene = load(str(entry.get("scene", "")))
+	if scene == null:
+		return ["the scene did not load"] as Array[String]
+	var probe: Node3D = scene.instantiate()
+	var reasons := ShellValidator.refusals(entry, probe)
+	probe.free()
+	return reasons
+
+## The chamber a shell was built to be, with the parameters it declares.
+func _chamber_for(entry: Dictionary) -> Dictionary:
+	var type := "arena"
+	for tag: Variant in entry.get("semantic_tags", []):
+		if FAMILY_TYPE.has(str(tag)):
+			type = str(FAMILY_TYPE[str(tag)])
+	var size: Array = entry.get("size", [12.0, 6.0, 12.0])
+	var chamber := {"id": "audit", "type": type,
+			"shell_id": str(entry["id"]), "enemies": []}
+	match type:
+		"tower":
+			var fits: Array = entry.get("fits_floors", [])
+			chamber["floors"] = int(fits[0]) if not fits.is_empty() else 3
+		"corridor":
+			chamber["length"] = float(size[2])
+			chamber["width"] = float(size[0])
+		"treasure_room":
+			pass
+		_:
+			chamber["width"] = float(size[0])
+			chamber["depth"] = float(size[2])
+			chamber["wall_height"] = float(size[1])
+			chamber["objective"] = "reach_exit"
+	return chamber
+
+func _test_a_pending_shell_never_reaches_a_zone() -> void:
+	"""The art lane's gate, measured rather than trusted.
+
+	A file existing in the tree is not approval, and an asset that
+	validates is not an asset somebody decided to ship. A `pending` shell
+	must be refused by the instantiator, and the room the player gets
+	instead must be a REAL room rather than a hole.
+
+	CONSTRUCTED, NOT BORROWED. This used to walk the registry for
+	whatever happened to be pending and assert it found at least eight --
+	which was true while the P2 pack awaited review and became false the
+	moment the owner passed it. A gate that only works while something
+	unapproved happens to be lying around is a gate that quietly stops
+	testing on the day everything is approved, which is exactly the day
+	it matters most. So the pending shell is now MADE: a real registered
+	shell, copied and marked pending in a private registry, so the
+	refusal is exercised whatever the real pack's review state is."""
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var tried := 0
+	for id: String in registry.ids_of_category("room_shell"):
+		var entry := registry.get_entry(id)
+		if bool(entry.get("procedural_fallback", false)):
+			continue
+		var held := entry.duplicate(true)
+		held["review"] = "pending"
+		var private := ContentRegistry.new()
+		private.entries[id] = held
+		# The fallback the entry names has to be reachable, or this
+		# would prove "a broken registry builds nothing" instead.
+		for other: String in registry.ids_of_category("room_shell"):
+			if other != id:
+				private.entries[other] = registry.get_entry(other)
+		tried += 1
+		var result: Dictionary = ContentInstantiator.build_chamber(
+				_chamber_for(held), "concrete_facility", private)
+		add_child(result["root"] as Node3D)
+		await get_tree().physics_frame
+		# THE AUTHORED SCENE, BY NAME. "no sockets" was the old proxy
+		# and it is wrong for any shell whose fallback is an ARENA: a
+		# procedural arena emits sockets of its own, so an empty list
+		# proves nothing and a full one accuses the wrong thing. The
+		# merged mesh an authored shell instantiates carries the shell's
+		# id as its node name, and the procedural builders never make a
+		# node called that.
+		_check((result["root"] as Node3D).find_child(id, true, false)
+					== null,
+				"%s is pending and its authored scene was built anyway"
+				% id)
+		_check(RoomContract.violations(result, id).is_empty(),
+				"%s: the room a player gets instead must be a valid one"
+				% id)
+		(result["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	_check(tried >= 8,
+			"only %d shells were held back and rebuilt; the refusal is "
+			% tried + "not being exercised across the pack")
+	probes_expected_to_fail += 1
+
+func _test_an_approved_shell_is_held_to_the_contract() -> void:
+	"""What approval CHANGED, stated as an assertion rather than assumed.
+
+	The owner passed all eight, so `review` is no longer a reason the
+	suite may report a finding instead of failing on it: an approved
+	shell that does not measure true turns this suite red. That is the
+	property that makes promotion safe, and it is worth one line saying
+	the pack really is in the state where it applies."""
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var approved := 0
+	var waiting := 0
+	for id: String in registry.ids_of_category("room_shell"):
+		var entry := registry.get_entry(id)
+		if bool(entry.get("procedural_fallback", false)):
+			continue
+		if str(entry.get("review", "")) == "pass":
+			approved += 1
+		else:
+			waiting += 1
+	_check(approved + waiting >= 8,
+			"the registry carries %d authored shells, not the eight the "
+			% (approved + waiting) + "P2 pack shipped")
+	# NOT `shells_awaiting_review == 0`. That counter is PENDING shells
+	# WITH findings, which is the evidence review exists to read -- and
+	# the assertion only ever passed because, on the day it was written,
+	# every shell was approved and clean. An approved shell that fails is
+	# already fatal in the shell test itself; what belongs here is that
+	# the approved set is the one being held to that.
+	_check(approved >= 8,
+			"only %d authored shells are approved; the P2 pack is eight "
+			% approved + "and the hard gate applies to them")
+	if waiting > 0:
+		print("  %d shell(s) awaiting review carry findings; that is "
+				% shells_awaiting_review + "evidence, not a broken build")
+	print("  authored shells: %d approved, %d awaiting review"
+			% [approved, waiting])
+
+# --- the audit catches what a description cannot --------------------------
+
+func _test_the_audit_catches_a_lid_over_a_declared_surface() -> void:
+	"""The sealed-pit lesson, generalised and moved to the import gate.
+
+	`shell_room_lid.tscn` is `shell_room_honest.tscn` with one slab added
+	over the balcony. It carries the IDENTICAL manifest: same surfaces,
+	same sockets, same volumes, all internally consistent. Every
+	structural check passes it. Only a ray from above can tell."""
+	var result := _authored_room(AUTHORED_LID)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var structural := RoomContract.violations(result, "lid")
+	_check(structural.is_empty(),
+			"the lid fixture must be structurally VALID, or the test is "
+			+ "proving the wrong thing: %s" % "; ".join(structural))
+	var measured := RoomAudit.findings(result, _space(), "lid")
+	_check(not measured.is_empty(),
+			"a slab over a declared walkable surface was not measured")
+	_check("; ".join(measured).contains("lid")
+			or "; ".join(measured).contains("headroom"),
+			"the finding must name what was measured: %s"
+			% "; ".join(measured))
+	probes_expected_to_fail += 1
+	authored_checked += 1
+	if result.get("root") != null:
+		(result["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+func _test_the_audit_catches_a_surface_made_of_air() -> void:
+	"""The plainest lie a room can tell, and the one the whole slice
+	exists for: "you can stand here", where there is nothing.
+
+	Every structural check passes it -- the socket is well formed, the
+	extent is real, the position is inside the bounds. The room is built
+	honestly and then its declaration is moved two metres up, so the
+	geometry and the claim disagree by exactly the amount a floor is
+	worth."""
+	var result := _authored_room(AUTHORED_ROOM)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var moved := result.duplicate()
+	var sockets: Array = []
+	for socket: Variant in result.get("sockets", []) as Array:
+		var copy: Dictionary = (socket as Dictionary).duplicate()
+		if str(copy.get("kind", "")) == "stand" \
+				and str(copy.get("name", "")) == "balcony":
+			copy["position"] = (copy["position"] as Vector3) \
+					+ Vector3.UP * 2.0
+		sockets.append(copy)
+	moved["sockets"] = sockets
+	_check(RoomContract.violations(moved, "air").is_empty(),
+			"the moved surface must stay structurally VALID, or this "
+			+ "measures the wrong thing")
+	var measured := RoomAudit.findings(moved, _space(), "air")
+	_check(not measured.is_empty(),
+			"a walkable surface declared in mid-air was not measured")
+	_check("; ".join(measured).contains("nothing under it")
+			or "; ".join(measured).contains("has no geometry under it"),
+			"the finding must say what was missing: %s"
+			% "; ".join(measured))
+	probes_expected_to_fail += 1
+	authored_checked += 1
+	if result.get("root") != null:
+		(result["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+func _test_the_audit_catches_a_sealed_opening() -> void:
+	"""Mesh IS collider here, so a doorway that was modelled and never
+	cut is a wall the chain believes is a door. The player finds out
+	standing in front of it, three rooms into a Zone."""
+	var result := _authored_room(AUTHORED_SEALED)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var measured := RoomAudit.findings(result, _space(), "sealed")
+	_check(not measured.is_empty(), "a sealed exit was not measured")
+	_check("; ".join(measured).contains("sealed"),
+			"the finding must say the opening is sealed: %s"
+			% "; ".join(measured))
+	probes_expected_to_fail += 1
+	authored_checked += 1
+	if result.get("root") != null:
+		(result["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+func _test_the_audit_refuses_to_pass_what_it_cannot_measure() -> void:
+	"""A probe against a detached node comes back clean because there is
+	nothing there to hit. That is the most dangerous possible pass, and
+	it is how a whole batch once shipped green."""
+	var chamber: Dictionary = _procedural_chambers()[1]
+	var detached := ContentInstantiator.build_chamber(
+			chamber, "concrete_facility")
+	var measured := RoomAudit.findings(detached, _space(), "detached")
+	_check(not measured.is_empty(),
+			"a room outside the scene tree was reported clean")
+	_check("; ".join(measured).contains("scene tree"),
+			"the refusal must say why nothing could be measured: %s"
+			% "; ".join(measured))
+	var spaceless := RoomAudit.findings(detached, null, "spaceless")
+	_check(not spaceless.is_empty(),
+			"an audit with no physics space was reported clean")
+	probes_expected_to_fail += 1
+	(detached["root"] as Node3D).free()
+
+func _test_a_shell_that_overflows_its_envelope_is_refused() -> void:
+	"""`content.py` has always DOCUMENTED that Godot re-derives `size`
+	from the real scene and refuses a manifest that lies about it. Until
+	P1 nothing kept that promise, and it is the one claim a room cannot
+	be allowed to get wrong: rooms are chained by butting their declared
+	envelopes together, so a shell bigger than its manifest reaches into
+	the next room -- and the overlap guard that would catch it is fed the
+	very number being lied about."""
+	var entry := _authored_entry(AUTHORED_ROOM)
+	# The same honest 12 x 6 x 16 m room, declared four metres narrower.
+	entry["size"] = [8.0, 6.0, 16.0]
+	var scene: PackedScene = load(AUTHORED_ROOM)
+	var instance: Node3D = scene.instantiate()
+	add_child(instance)
+	var refusals := ShellValidator.refusals(entry, instance)
+	_check(not refusals.is_empty(),
+			"a shell four metres wider than its manifest was accepted")
+	_check("\n".join(refusals).contains("envelope"),
+			"the refusal must name what was measured against: %s"
+			% "\n".join(refusals))
+	instance.free()
+
+	# And the honest one still passes, or the check is just a refusal.
+	var honest: Node3D = (load(AUTHORED_ROOM) as PackedScene).instantiate()
+	add_child(honest)
+	_check(ShellValidator.refusals(_authored_entry(AUTHORED_ROOM),
+			honest).is_empty(),
+			"the honest fixture must survive its own envelope check")
+	honest.free()
+	probes_expected_to_fail += 1
+	await get_tree().process_frame
+
+func _test_the_contract_refuses_a_malformed_room() -> void:
+	"""The other half. Structure and geometry fail differently, and a
+	suite that only measures would accept a room with no exit."""
+	var result := _build(_procedural_chambers()[1])
+	await get_tree().physics_frame
+	for broken: Array in [
+			["a room with no exit", "exit_offset"],
+			["a room with no bounds", "bounds"],
+			["a room with no spawns", "enemy_spawns"]]:
+		var copy := result.duplicate()
+		copy.erase(str(broken[1]))
+		_check(not RoomContract.violations(copy).is_empty(),
+				"%s was accepted" % str(broken[0]))
+	var bad_socket := result.duplicate()
+	bad_socket["sockets"] = [{"kind": "trapdoor",
+			"position": Vector3.ZERO}]
+	_check(not RoomContract.violations(bad_socket).is_empty(),
+			"a socket kind outside the contract was accepted")
+	var no_extent := result.duplicate()
+	no_extent["sockets"] = [{"kind": "stand", "position": Vector3.ZERO,
+			"extent": Vector3.ZERO}]
+	_check(not RoomContract.violations(no_extent).is_empty(),
+			"a walkable surface with no area was accepted")
+	var far_away := result.duplicate()
+	far_away["sockets"] = [{"kind": "cover",
+			"position": Vector3(0.0, 0.0, 900.0)}]
+	_check(not RoomContract.violations(far_away).is_empty(),
+			"a socket outside the room's own bounds was accepted")
+	probes_expected_to_fail += 1
+	(result["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+
+## --- a measurement is not a declaration (P2) -------------------------------
+
+## How far over the limit the "still the same step" rung sits, and the
+## "different step" one. The first must be inside `AS_BUILT_SLACK` and
+## comfortably bigger than the float noise that caused the defect
+## (39 micrometres, measured on Art's P2 stairs); the second must be
+## outside it by a margin no rounding could invent.
+const A_HAIR_OVER := 0.004
+const PLAINLY_OVER := 0.15
+
+func _test_a_measurement_at_the_limit_is_still_the_legal_move() -> void:
+	"""A step modelled AT the base kit's limit is a step the kit allows.
+
+	THE DEFECT THIS PINS. The audit compared a MEASURED rise against
+	`MAX_VERTICAL_STEP` with no tolerance, while the span check three
+	lines below it had always carried `+ 0.01`. A .glb stores vertex
+	positions as quantised floats, so of the thirty authored stairs
+	modelled at exactly 1.0 m, the two whose vertices rounded UP measured
+	1.000039 m and were reported as beyond the player's reach -- and the
+	twenty-eight that rounded down were not. That is not a room failing
+	an audit; that is an audit reading its own float noise, and it read
+	it differently in two comparisons that describe one idea.
+
+	So the rung heights here are the whole test: at `A_HAIR_OVER` the
+	movement law still permits the step, at `PLAINLY_OVER` it does not,
+	and both are measured off real colliders by real rays."""
+	var result := _build(_procedural_chambers()[0])
+	await get_tree().physics_frame
+	var root := result["root"] as Node3D
+	var low := _rung(root, Vector3(0.0, 0.0, 0.0))
+	var lip := Constants.MAX_VERTICAL_STEP + A_HAIR_OVER
+	var high := _rung(root, Vector3(0.0, lip, 2.0))
+	var base := _rung(root, Vector3(4.0, 0.0, 0.0))
+	var over := _rung(root, Vector3(4.0, Constants.MAX_VERTICAL_STEP
+			+ PLAINLY_OVER, 2.0))
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+
+	var legal := {"root": root, "bounds": result["bounds"],
+			"exit_offset": result["exit_offset"],
+			"room_height": result["room_height"], "enemy_spawns": [],
+			"reward_position": result["reward_position"],
+			"traversal": [{"name": "at_the_limit", "kind": "rise",
+				"mandatory": true, "start": Vector3(0.0, 0.0, 0.0),
+				"end": Vector3(0.0, lip, 2.0)}]}
+	# NOT VACUOUS. `_traversal_is_true` reports an endpoint it could not
+	# stand on under the same segment name, so silence here means both
+	# rungs were found AND the rise between them was allowed -- the two
+	# ways this test could pass without measuring anything are the two
+	# things an empty list rules out.
+	var quiet := _findings_for(legal, "at_the_limit")
+	_check(quiet.is_empty(),
+			"a step measured %.6f m over a %.2f m limit is the same step; "
+			% [A_HAIR_OVER, Constants.MAX_VERTICAL_STEP]
+			+ "the audit called it: %s" % "; ".join(quiet))
+
+	# THE SABOTAGE. One rung, 15 cm higher, nothing else changed. If the
+	# slack ever grows to swallow this, the tolerance has stopped being a
+	# measurement tolerance and started being a way to pass.
+	var cheating := legal.duplicate()
+	cheating["traversal"] = [{"name": "plainly_over", "kind": "rise",
+			"mandatory": true, "start": Vector3(4.0, 0.0, 0.0),
+			"end": Vector3(4.0, Constants.MAX_VERTICAL_STEP + PLAINLY_OVER,
+				2.0)}]
+	var caught := _findings_for(cheating, "plainly_over")
+	_check(not caught.is_empty(),
+			"a step %.2f m past the base kit's reach was not measured"
+			% PLAINLY_OVER)
+	# NAMED, not merely present: a 1.15 m rise over a 2.0 m span also
+	# strains `max_safe_gap`, and a test that accepted "some finding
+	# mentioning what was built" would pass on the wrong one.
+	_check("; ".join(caught).contains("rises")
+			and "; ".join(caught).contains("as built"),
+			"the finding must field the RISE that was MEASURED: %s"
+			% "; ".join(caught))
+
+	# ONE SLACK, BOTH COMPARISONS. The span check reads the same constant,
+	# so the two can no longer disagree about how exact a ray is.
+	_check(RoomAudit.AS_BUILT_SLACK > A_HAIR_OVER
+			and RoomAudit.AS_BUILT_SLACK < PLAINLY_OVER,
+			"the as-built slack (%.3f) must sit between a rounding error "
+			% RoomAudit.AS_BUILT_SLACK + "and a real over-step")
+
+	rooms_checked += 1
+	probes_expected_to_fail += 1
+	low.queue_free()
+	high.queue_free()
+	base.queue_free()
+	over.queue_free()
+	root.queue_free()
+	await get_tree().process_frame
+
+## Everything the audit said about ONE segment -- including that it could
+## not find an end of it. The room itself says plenty this test is not
+## about; the segment name is what separates them.
+func _findings_for(room: Dictionary, segment: String) -> Array[String]:
+	var out: Array[String] = []
+	for finding: String in RoomAudit.findings(room, _space(), "rungs"):
+		if finding.contains(segment):
+			out.append(finding)
+	return out
+
+## A real collider with a real top face, at a real height.
+func _rung(root: Node3D, top: Vector3) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(2.0, 0.4, 2.0)
+	shape.shape = box
+	body.add_child(shape)
+	body.position = top - Vector3(0.0, 0.2, 0.0)
+	root.add_child(body)
+	return body
+
+
+## --- a Surface is an offer, and one search answers for it (P2, C(ii)) -----
+
+## The height a roof is put at to take a surface away: under HEADROOM, so
+## a player does not fit, and over a step so nothing else refuses it
+## first.
+const ROOF_AT := 1.4
+
+func _test_the_audit_and_the_composer_agree_about_a_surface() -> void:
+	"""One search, two consumers, and they must not disagree.
+
+	`RoomAudit` measures with rays and shape queries, because it runs on
+	a room that is in the tree. `Activities` runs inside `build_chamber`
+	on a root that is still detached, so it has no physics space and
+	must use the box derivation. That split is real and cannot be
+	wished away -- what would be fatal is if it became a DISAGREEMENT:
+	the audit passing a surface and the composer putting a puzzle
+	element under the staircase on it.
+
+	So both are handed the same `Placement.find`, over the same
+	candidates in the same order, with the same footprint, and asked the
+	same question. The composer may be STRICTER -- a convex hull's AABB
+	is bigger than the hull -- and that is safe. It must never be
+	looser."""
+	var seen := 0
+	# ONE AT A TIME. Every chamber is built at the origin, so holding
+	# seven of them in the tree at once means measuring seven rooms
+	# stacked inside each other -- the borrowed-geometry trap this suite
+	# was bitten by once already, and it reads as a contract failure.
+	var built: Array = _procedural_chambers()
+	built.append(null)
+	for spec: Variant in built:
+		var room: Dictionary = _authored_room(AUTHORED_ROOM) \
+				if spec == null else _build(spec as Dictionary)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var root := room["root"] as Node3D
+		var solids := ChamberBuilders.all_solid_boxes(root)
+		for socket: Variant in RoomContract.sockets_of(room, "stand"):
+			var patch: Dictionary = socket
+			var at: Vector3 = patch["position"]
+			var extent: Vector3 = patch.get("extent", Vector3.ONE)
+			var to_world := root.global_transform
+			var space := _space()
+			var stands := func(spot: Vector3) -> bool:
+				return RoomAudit.player_stands_here(spot, to_world, space)
+			var fits := func(spot: Vector3) -> bool:
+				return Activities.can_place(spot, RoomAudit.STANCE, 0.0,
+						[], solids)
+			var measured := Placement.find(at, extent, RoomAudit.STANCE,
+					0.0, stands)
+			var composed := Placement.find(at, extent, RoomAudit.STANCE,
+					0.0, fits)
+			seen += 1
+			if bool(measured.get("fits", false)):
+				continue
+			_check(not bool(composed.get("fits", false)),
+					"the audit measured no stance anywhere on '%s' and "
+					% str(patch.get("name", "?"))
+					+ "the composer would have placed at %v anyway"
+					% composed.get("position", Vector3.ZERO))
+		rooms_checked += 1
+		root.queue_free()
+		await get_tree().process_frame
+	_check(seen >= 4,
+			"only %d surfaces were cross-examined; the two verdicts are "
+			% seen + "not actually being compared")
+	authored_checked += 1
+
+func _test_a_partly_roofed_surface_is_still_a_valid_offer() -> void:
+	"""PRODUCER INDEPENDENT, and proven on the producer that never had
+	the problem.
+
+	The eight authored shells are full of surfaces whose rect passes
+	under a stair or a dais, and no procedural builder makes one -- a
+	`platform_path` island has open sky over it -- which is exactly why
+	the contract had never been asked what a partly occluded region
+	means. A rule settled only where it was discovered is a rule for
+	that producer.
+
+	So the same occlusion is built over a REAL procedural island, in
+	three steps: none, part, all. The verdict has to follow the
+	geometry, not the producer."""
+	var result := _build(_procedural_chambers()[4])
+	await get_tree().physics_frame
+	var root := result["root"] as Node3D
+	var stands := RoomContract.sockets_of(result, "stand")
+	_check(stands.size() >= 1,
+			"a platform path declared no stand surfaces, so this test "
+			+ "has nothing to occlude")
+	var patch: Dictionary = stands[0]
+	var at: Vector3 = patch["position"]
+	var extent: Vector3 = patch.get("extent", Vector3.ONE)
+
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(_stance_exists(result, patch),
+			"an open island offers nowhere to stand before anything is "
+			+ "even built over it")
+
+	# HALF OF IT, on one side. A player can still stand on the other.
+	var half := _roof(root, Vector3(at.x - extent.x * 0.25,
+			at.y + ROOF_AT, at.z),
+			Vector3(extent.x * 0.5, 0.4, extent.z + 1.0))
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(_stance_exists(result, patch),
+			"half an island was roofed and the whole offer was refused; "
+			+ "a Surface is a region, not a guarantee about every point")
+	_check(_composer_agrees(result, patch),
+			"the composer would place where the audit says a player "
+			+ "cannot stand, on a half-roofed island")
+
+	# ALL of it. Now there is nowhere, and the offer is void.
+	var rest := _roof(root, Vector3(at.x + extent.x * 0.25,
+			at.y + ROOF_AT, at.z),
+			Vector3(extent.x * 0.5 + 1.0, 0.4, extent.z + 1.0))
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(not _stance_exists(result, patch),
+			"an island roofed end to end at %.2f m still measured as a "
+			% ROOF_AT + "place a %.2f m player can stand"
+			% Constants.PLAYER_HEIGHT)
+	_check(_composer_agrees(result, patch),
+			"the composer would place under a roof the audit refused")
+	rooms_checked += 1
+	probes_expected_to_fail += 1
+	half.queue_free()
+	rest.queue_free()
+	root.queue_free()
+	await get_tree().process_frame
+
+## How narrow a rim gets before nobody can use it: half the player's
+## width, which is the treasure dais's rim to the centimetre.
+const A_RIM_TOO_NARROW := Constants.PLAYER_RADIUS
+
+func _test_a_surface_with_nowhere_to_stand_is_still_refused() -> void:
+	"""THE SABOTAGE. C(ii) must not have made a zero-usable surface pass.
+
+	Two shapes, because the eight shells produced two. A region roofed
+	end to end -- the collapsed tower's rubble under its own deck. And a
+	region whose floor really is where it says, at the height it says,
+	with a rim around the thing standing on it too NARROW for anybody to
+	use -- the treasure dais, whose 0.40 m ring is exactly half a
+	player wide.
+
+	Built rather than named. Pinning `rubble_1_0` and `step_low` by name
+	would be a test that goes red the day Art fixes them, and these are
+	the geometric shapes, which outlive any particular shell."""
+	var result := _build(_procedural_chambers()[1] as Dictionary)
+	await get_tree().physics_frame
+	var root := result["root"] as Node3D
+
+	# A perfectly good floor, and a lid over all of it.
+	var deck := _roof(root, Vector3(-6.0, 0.4, 6.0), Vector3(4.0, 0.8, 4.0))
+	var lid := _roof(root, Vector3(-6.0, 0.8 + ROOF_AT, 6.0),
+			Vector3(5.0, 0.4, 5.0))
+	# A wider tier with a narrower one on it: real floor, right height,
+	# and a rim nobody fits on.
+	var wide := _roof(root, Vector3(6.0, 0.4, 6.0),
+			Vector3(3.0 + A_RIM_TOO_NARROW * 2.0, 0.8,
+				3.0 + A_RIM_TOO_NARROW * 2.0))
+	var narrow := _roof(root, Vector3(6.0, 1.2, 6.0),
+			Vector3(3.0, 0.8, 3.0))
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+
+	var roofed := {"kind": "stand", "name": "roofed",
+			"position": Vector3(-6.0, 0.8, 6.0),
+			"extent": Vector3(4.0, 0.0, 4.0)}
+	var rimmed := {"kind": "stand", "name": "rimmed",
+			"position": Vector3(6.0, 0.8, 6.0),
+			"extent": Vector3(3.0 + A_RIM_TOO_NARROW * 2.0, 0.0,
+				3.0 + A_RIM_TOO_NARROW * 2.0)}
+	# THROUGH THE REAL REPORTING PATH, not just the solver. A verdict
+	# nothing surfaces is a verdict nobody acts on, so the probes are
+	# hung on the room and `RoomAudit.findings` is asked -- the same call
+	# the shell suite and CI make.
+	var probed := result.duplicate()
+	var sockets: Array = (result.get("sockets", []) as Array).duplicate()
+	sockets.append(roofed)
+	sockets.append(rimmed)
+	probed["sockets"] = sockets
+	var said := "; ".join(RoomAudit.findings(probed, _space(), "sabotage"))
+	for probe: Dictionary in [roofed, rimmed]:
+		var named := str(probe["name"])
+		_check(said.contains("'%s'" % named),
+				"surface '%s' has nowhere a player fits and the audit "
+				% named + "did not report it: %s" % said)
+		_check(not _stance_exists(result, probe),
+				"surface '%s' has nowhere a player fits and the solver "
+				% named + "found one")
+		_check(_composer_agrees(result, probe),
+				"the composer would place on '%s', which the audit "
+				% named + "refused")
+
+	# AND THE CONTROL. Widen the rim to a full player and it is a
+	# surface again -- so what was measured is the geometry, not a
+	# percentage and not the mere presence of something on top.
+	narrow.queue_free()
+	await get_tree().process_frame
+	var slimmer := _roof(root, Vector3(6.0, 1.2, 6.0),
+			Vector3(3.0 - Constants.PLAYER_RADIUS * 4.0, 0.8,
+				3.0 - Constants.PLAYER_RADIUS * 4.0))
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var after := "; ".join(RoomAudit.findings(probed, _space(), "sabotage"))
+	_check(_stance_exists(result, rimmed),
+			"a rim two players wide is somewhere to stand, and was "
+			+ "refused")
+	_check(not after.contains("'rimmed'"),
+			"a rim two players wide is a valid offer and the audit still "
+			+ "refused it: %s" % after)
+	_check(after.contains("'roofed'"),
+			"widening one probe's rim must not have excused the other, "
+			+ "which is still roofed end to end: %s" % after)
+	rooms_checked += 1
+	probes_expected_to_fail += 2
+	deck.queue_free()
+	lid.queue_free()
+	wide.queue_free()
+	slimmer.queue_free()
+	root.queue_free()
+	await get_tree().process_frame
+
+func _test_one_room_composes_the_same_way_twice() -> void:
+	"""DETERMINISM. The solver sweeps; it never rolls.
+
+	A Zone is a digest, so a placement that varied between two builds of
+	the same chamber would make the campaign unreproducible -- and the
+	temptation when a search fails is always to retry it somewhere
+	random. There is no RNG in `Placement`: a fixed grid, walked row
+	major, first valid candidate wins."""
+	var chamber: Dictionary = _procedural_chambers()[4] as Dictionary
+	chamber = chamber.duplicate(true)
+	chamber["activities"] = [
+		{"kind": "switch_sequence", "element_count": 3}]
+	var first := _build(chamber)
+	var second := _build(chamber)
+	await get_tree().physics_frame
+	var here := _element_positions(first)
+	var there := _element_positions(second)
+	_check(here.size() >= 1,
+			"no activity elements were placed, so nothing was compared")
+	_check(here == there,
+			"the same chamber composed differently twice: %s vs %s"
+			% [str(here), str(there)])
+	var order := Placement.candidates(Vector3(1.0, 2.0, 3.0),
+			Vector3(4.0, 0.0, 4.0), Vector3(1.0, 1.0, 1.0))
+	_check(order == Placement.candidates(Vector3(1.0, 2.0, 3.0),
+			Vector3(4.0, 0.0, 4.0), Vector3(1.0, 1.0, 1.0)),
+			"the candidate sweep is not stable between two calls")
+	_check(order.size() == Placement.GRID * Placement.GRID,
+			"the sweep offered %d candidates, not the %d it sweeps"
+			% [order.size(), Placement.GRID * Placement.GRID])
+	rooms_checked += 2
+	(first["root"] as Node3D).queue_free()
+	(second["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+# --- shared probes --------------------------------------------------------
+
+## Does the audit measure a place a player can stand in this region?
+func _stance_exists(room: Dictionary, patch: Dictionary) -> bool:
+	var root := room["root"] as Node3D
+	var to_world := root.global_transform
+	var space := _space()
+	var stands := func(spot: Vector3) -> bool:
+		return RoomAudit.player_stands_here(spot, to_world, space)
+	var verdict := Placement.find(patch["position"] as Vector3,
+			patch.get("extent", Vector3.ONE) as Vector3,
+			RoomAudit.STANCE, 0.0, stands)
+	return bool(verdict.get("fits", false))
+
+## Does the composer refuse whatever the audit refused?
+##
+## One-directional on purpose. The composer sees convex hulls as their
+## AABBs and is therefore allowed to be STRICTER than the world; what it
+## may never be is looser, because that is an element inside geometry.
+func _composer_agrees(room: Dictionary, patch: Dictionary) -> bool:
+	var solids := ChamberBuilders.all_solid_boxes(room["root"] as Node3D)
+	var fits := func(spot: Vector3) -> bool:
+		return Activities.can_place(spot, RoomAudit.STANCE, 0.0, [], solids)
+	var composed := Placement.find(patch["position"] as Vector3,
+			patch.get("extent", Vector3.ONE) as Vector3,
+			RoomAudit.STANCE, 0.0, fits)
+	if _stance_exists(room, patch):
+		return true
+	return not bool(composed.get("fits", false))
+
+## A real collider, in the room, where the test says.
+func _roof(root: Node3D, at: Vector3, size: Vector3) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = size
+	shape.shape = box
+	body.add_child(shape)
+	body.position = at
+	root.add_child(body)
+	return body
+
+func _element_positions(room: Dictionary) -> Array:
+	var out: Array = []
+	for entry: Variant in room.get("activities", []) as Array:
+		for element: Variant in (entry as Dictionary).get("elements", []):
+			out.append((element as Node3D).position)
+	return out
+
+
+## --- P2 certification: the route and the stance are physical -------------
+
+## Waypoints sampled along a mandatory segment, endpoints included.
+const ALONG_THE_WAY := 5
+
+func _test_a_mandatory_route_is_a_route_a_player_can_take() -> void:
+	"""A declared route that arrives nowhere a player fits is not a route.
+
+	`RoomAudit` already measures that a mandatory rise is inside the base
+	kit\'s reach and that its endpoints have floor. Neither of those asks
+	the question a DECK SLAB OVER A CLIMB raises: is there room for the
+	player\'s BODY where the route arrives. A deck 0.5 m over a rubble
+	stone passes "there is floor at both ends" and stops a 1.8 m player
+	dead -- which is exactly what `rubble_1_1` and `platform_6` did.
+
+	AN OFFER, NOT A CENTRELINE. A traversal segment describes a movement,
+	not a spawn point: its endpoints are where the rise is MEASURED, and
+	the player lands wherever they land on a 2.6 m stone. So this asks
+	the same thing a Surface is asked -- is there SOMEWHERE along the
+	arrival that a standing player fits -- rather than demanding the
+	declared point itself be clear, which would be a stricter rule than
+	the contract holds and would refuse legal architecture.
+
+	CERTIFICATION, NOT CONTRACT. This measures rooms against rules
+	`RoomAudit` already holds; it does not add a rule to the audit, which
+	would change what the eight shells are being certified against
+	half-way through certifying them."""
+	var seen := 0
+	var walked := 0
+	var specs: Array = _procedural_chambers()
+	var ids: Array = _shell_ids()
+	for i in specs.size() + ids.size():
+		var room: Dictionary = _build(specs[i] as Dictionary) \
+				if i < specs.size() \
+				else _shell_room(str(ids[i - specs.size()]))
+		if room.is_empty():
+			continue
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var root := room["root"] as Node3D
+		var to_world := root.global_transform
+		var who := str(room.get("audit_id", "room"))
+		seen += 1
+		for entry: Variant in room.get("traversal", []) as Array:
+			var seg: Dictionary = entry
+			if not bool(seg.get("mandatory", true)):
+				continue
+			var start: Vector3 = seg["start"]
+			var end: Vector3 = seg["end"]
+			var arrival := _floor_at(end, to_world)
+			if arrival == -INF:
+				continue
+			walked += 1
+			# WHERE IT ARRIVES, and that is a REGION. A pure vertical
+			# rise has no "along" to sample -- start and end share an x
+			# and a z -- so sampling the segment would ask about one
+			# point, and one point is never what a Surface promises. So
+			# the arrival is resolved to the declared `stand` region it
+			# lands in and that region is asked, with the same
+			# `Placement.find` the audit uses. A route arrives somewhere
+			# a player can be, or it does not arrive.
+			var region := _region_under(room, end, arrival)
+			var room_for_a_body := false
+			if not region.is_empty():
+				room_for_a_body = _stance_exists(room, region)
+			else:
+				for n in ALONG_THE_WAY:
+					var t := 1.0 if ALONG_THE_WAY < 2 \
+							else float(n) / float(ALONG_THE_WAY - 1)
+					var here := start.lerp(end, t)
+					here.y = arrival
+					if absf(_floor_at(here, to_world) - arrival) > 0.15:
+						continue
+					if not _body_blocked(here, to_world):
+						room_for_a_body = true
+						break
+			# THE REVIEW GATE APPLIES HERE TOO. A `pending` shell's
+			# route findings are evidence for the review, exactly as its
+			# audit findings are; only an APPROVED shell turns this red.
+			# Without this the gate meant two different things in two
+			# tests over the same shell.
+			var judge := _check if not _is_pending(who) else _note
+			judge.call(room_for_a_body,
+					"%s: mandatory '%s' arrives at y=%.2f on %s, with "
+					% [who, str(seg.get("name", "?")), arrival,
+						"'%s'" % str(region.get("name", "?")) \
+							if not region.is_empty() else "open floor"]
+					+ "nowhere a %.2f m player fits"
+					% Constants.PLAYER_HEIGHT)
+		(room["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	_check(seen >= 8 and walked >= 20,
+			"only %d rooms and %d mandatory segments were walked; the "
+			% [seen, walked] + "route certification is not exercising "
+			+ "the producers")
+	rooms_checked += seen
+
+func _test_an_elevated_stance_has_room_for_what_stands_there() -> void:
+	"""An `enemy_high` socket offers a stance, so something has to fit.
+
+	The audit's `_points_have_ground` asks whether the point is buried,
+	with a 0.5 m box -- enough to catch a socket inside a wall and not
+	enough to say an ENEMY fits. The smallest truthful existing statement
+	of how much room one takes is `ENEMY_ENVELOPES`, and the role an
+	elevated stance is for is `ranged`, so that is the box used.
+
+	A socket that moved is not a defect; a socket nothing fits in is."""
+	var seen := 0
+	for id: String in _shell_ids():
+		var room := _shell_room(id)
+		if room.is_empty():
+			continue
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var to_world := (room["root"] as Node3D).global_transform
+		var envelope: Dictionary = Constants.ENEMY_ENVELOPES["ranged"]
+		var size: Vector3 = envelope["size"]
+		for socket: Variant in RoomContract.sockets_of(room, "enemy_high"):
+			var patch: Dictionary = socket
+			var at: Vector3 = patch["position"]
+			seen += 1
+			var ground := _floor_at(at, to_world)
+			_check(ground > -INF,
+					"%s: elevated stance '%s' at %v has no floor under it"
+					% [id, str(patch.get("name", "?")), at])
+			if ground == -INF:
+				continue
+			# `centre_y` is measured FROM THE FLOOR, and the socket marker
+			# sits a little above it -- so the envelope is stood on the
+			# ground that was measured, not hung off the marker.
+			var centre := Vector3(at.x,
+					ground + float(envelope["centre_y"]) + 0.02, at.z)
+			_check(not _box_blocked(centre, size, to_world),
+					"%s: elevated stance '%s' at %v has no room for the "
+					% [id, str(patch.get("name", "?")), at]
+					+ "%v it offers" % size)
+		(room["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	_check(seen >= 8,
+			"only %d elevated stances were measured across the shells"
+			% seen)
+
+# --- certification probes -------------------------------------------------
+
+## Is this shell still awaiting review? Unknown ids are procedural
+## rooms, which are never pending.
+func _is_pending(id: String) -> bool:
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var entry := registry.get_entry(id)
+	return not entry.is_empty() \
+			and str(entry.get("review", "")) == "pending"
+
+## Reported, not failed: a pending shell's findings are review evidence.
+func _note(condition: bool, message: String) -> void:
+	if not condition:
+		print("      %s" % message)
+
+func _shell_ids() -> Array:
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var out: Array = []
+	for id: String in registry.ids_of_category("room_shell"):
+		if not bool(registry.get_entry(id).get("procedural_fallback", false)):
+			out.append(id)
+	return out
+
+## One authored shell, review gate lifted, in the tree and measurable.
+func _shell_room(id: String) -> Dictionary:
+	var registry := ContentRegistry.new()
+	registry.load_all()
+	var entry := registry.get_entry(id).duplicate(true)
+	if entry.is_empty():
+		return {}
+	entry["review"] = "pass"
+	var private := ContentRegistry.new()
+	private.entries[id] = entry
+	var room: Dictionary = ContentInstantiator.build_chamber(
+			_chamber_for(entry), "concrete_facility", private)
+	if room.get("root") == null:
+		return {}
+	room["audit_id"] = id
+	add_child(room["root"] as Node3D)
+	return room
+
+## The declared `stand` region a point at this height lands in, if any.
+func _region_under(room: Dictionary, at: Vector3, height: float) -> Dictionary:
+	for socket: Variant in RoomContract.sockets_of(room, "stand"):
+		var patch: Dictionary = socket
+		var here: Vector3 = patch["position"]
+		if absf(here.y - height) > 0.15:
+			continue
+		var extent: Vector3 = patch.get("extent", Vector3.ZERO)
+		if absf(at.x - here.x) <= extent.x / 2.0 \
+				and absf(at.z - here.z) <= extent.z / 2.0:
+			return patch
+	return {}
+
+func _floor_at(local: Vector3, to_world: Transform3D) -> float:
+	var world := to_world * local
+	var query := PhysicsRayQueryParameters3D.create(
+			world + Vector3.UP * 0.6, world + Vector3.DOWN * 1.4)
+	query.collide_with_areas = false
+	var hit := _space().intersect_ray(query)
+	if hit.is_empty():
+		return -INF
+	return (to_world.affine_inverse() * (hit["position"] as Vector3)).y
+
+## Does the player's own body fit standing on the floor at this point?
+func _body_blocked(at_floor: Vector3, to_world: Transform3D) -> bool:
+	var query := PhysicsShapeQueryParameters3D.new()
+	var shape := CapsuleShape3D.new()
+	shape.radius = Constants.PLAYER_RADIUS
+	shape.height = Constants.PLAYER_HEIGHT
+	query.shape = shape
+	query.transform = Transform3D(to_world.basis, to_world * (at_floor
+			+ Vector3.UP * (Constants.PLAYER_HEIGHT / 2.0 + 0.05)))
+	query.collide_with_areas = false
+	return not _space().intersect_shape(query, 1).is_empty()
+
+func _box_blocked(centre: Vector3, size: Vector3,
+		to_world: Transform3D) -> bool:
+	var query := PhysicsShapeQueryParameters3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+	query.shape = shape
+	query.transform = Transform3D(to_world.basis, to_world * centre)
+	query.collide_with_areas = false
+	return not _space().intersect_shape(query, 1).is_empty()
+
+func _test_a_jump_is_measured_the_same_for_both_producers() -> void:
+	"""One movement law, one measurement, whoever declared the jump.
+
+	`platform_path` has always HAD mandatory jumps bounded by
+	`max_safe_gap`, and until P1 nothing downstream could see that a jump
+	existed. Now it declares them in the same words an authored shell
+	does, and the same audit measures both."""
+	var result := _build(_procedural_chambers()[4])
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var declared: Array = result.get("traversal", []) as Array
+	_check(declared.size() == 5,
+			"a 4-segment platform path makes 5 mandatory jumps and "
+			+ "declared %d" % declared.size())
+	_check(RoomAudit.findings(result, _space(), "jumps").is_empty(),
+			"the platform path's own declared jumps do not measure true")
+
+	# The same audit, on the same room, with one jump quietly widened
+	# past the base kit's reach. Nothing else changes.
+	var lying := result.duplicate()
+	var faked: Array = []
+	for segment: Variant in declared:
+		var copy: Dictionary = (segment as Dictionary).duplicate()
+		faked.append(copy)
+	var first: Dictionary = faked[0]
+	first["end"] = (first["end"] as Vector3) + Vector3(0.0, 0.0, 6.0)
+	lying["traversal"] = faked
+	var measured := RoomAudit.findings(lying, _space(), "jumps")
+	_check(not measured.is_empty(),
+			"a jump past the base kit's reach was not measured")
+	_check("; ".join(measured).contains("as built"),
+			"the finding must field what was MEASURED: %s"
+			% "; ".join(measured))
+	rooms_checked += 1
+	probes_expected_to_fail += 1
+	(result["root"] as Node3D).queue_free()
+	await get_tree().process_frame

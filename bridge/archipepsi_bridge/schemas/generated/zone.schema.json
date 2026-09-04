@@ -1,5 +1,60 @@
 {
   "$defs": {
+    "ActivityPrimitive": {
+      "additionalProperties": false,
+      "description": "One instance of an activity family, with its difficulty dialled in.\n\nEpsilon picks the family and the numbers. It does not describe the\npuzzle in prose, because prose cannot be built and cannot be scored:\nan unimplemented tag counts for nothing (CAMPAIGN_SCALE.md 9), and\nthe way to guarantee that is to have no field it could put prose in.",
+      "properties": {
+        "kind": {
+          "enum": [
+            "switch_sequence",
+            "timed_run",
+            "target_challenge",
+            "pressure_routing"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "element_count": {
+          "default": 1,
+          "maximum": 8,
+          "minimum": 1,
+          "title": "Element Count",
+          "type": "integer"
+        },
+        "time_limit": {
+          "default": 0.0,
+          "maximum": 120.0,
+          "minimum": 0.0,
+          "title": "Time Limit",
+          "type": "number"
+        },
+        "ordered": {
+          "default": false,
+          "title": "Ordered",
+          "type": "boolean"
+        },
+        "requires": {
+          "default": [],
+          "items": {
+            "enum": [
+              "blink",
+              "cross_long_gap",
+              "grapple",
+              "ranged_hit"
+            ],
+            "type": "string"
+          },
+          "maxItems": 2,
+          "title": "Requires",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "ActivityPrimitive",
+      "type": "object"
+    },
     "AffordanceFeature": {
       "additionalProperties": false,
       "description": "One optional world feature a Zone may offer (ECHOES.md \u00a713).\n\nOptional is the whole point. A feature may never lie on the mandatory\npath, host an AP reward, an exit or an objective \u2014 \u00a713.2, enforced by\n`validate_zone` rather than by good intentions \u2014 so a Zone with every\nfeature stripped out is still completable with the base kit. That is\nwhat makes affordances safe to generate against a campaign whose\ncapabilities the generator cannot fully predict.",
@@ -82,7 +137,7 @@
         "reward_location_id": {
           "anyOf": [
             {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
@@ -100,6 +155,67 @@
           },
           "maxItems": 3,
           "title": "Features",
+          "type": "array"
+        },
+        "additional_reward_location_ids": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "title": "Additional Reward Location Ids",
+          "type": "array"
+        },
+        "activities": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ActivityPrimitive"
+          },
+          "maxItems": 3,
+          "title": "Activities",
+          "type": "array"
+        },
+        "shell_id": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shell Id"
+        },
+        "size_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Class"
+        },
+        "intent": {
+          "default": [],
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Intent",
           "type": "array"
         },
         "type": {
@@ -141,6 +257,17 @@
           "maxItems": 4,
           "title": "Enemies",
           "type": "array"
+        },
+        "elevation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ElevationBand"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -181,7 +308,7 @@
         "reward_location_id": {
           "anyOf": [
             {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
@@ -199,6 +326,67 @@
           },
           "maxItems": 3,
           "title": "Features",
+          "type": "array"
+        },
+        "additional_reward_location_ids": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "title": "Additional Reward Location Ids",
+          "type": "array"
+        },
+        "activities": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ActivityPrimitive"
+          },
+          "maxItems": 3,
+          "title": "Activities",
+          "type": "array"
+        },
+        "shell_id": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shell Id"
+        },
+        "size_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Class"
+        },
+        "intent": {
+          "default": [],
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Intent",
           "type": "array"
         },
         "type": {
@@ -237,6 +425,58 @@
       "title": "CorridorChamber",
       "type": "object"
     },
+    "ElevationBand": {
+      "additionalProperties": false,
+      "description": "A second walkable height inside an ORDINARY room (ROOM_GRAMMAR v0).\n\nThe measured finding this exists for: a room's entire shape was three\nnumbers. `ArenaChamber` was width, depth and wall_height, so every one\nof the twenty-three rooms in the played Zone was a flat rectangle and\nthe twenty-eight ranged enemies in them had nowhere to be ranged\nFROM. Nothing was wrong with the generator; there was no field in\nwhich a raised area could be described.\n\nDeliberately ONE band, and deliberately not a `platform_path`. This\nis a property an ordinary room may have, not a room type -- the whole\npoint is that verticality stops being a special minigame.\n\nEvery field is a Literal or a bounded float so the vocabulary can\nGROW without becoming free-form: `kind` gains `catwalk` and `alcove`,\n`access` gains `drop` and `capability:<name>`, `side` gains `front`.\nA dead-end one-off would have been a boolean called `has_ledge`.",
+      "properties": {
+        "kind": {
+          "enum": [
+            "gallery",
+            "pit"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "rise": {
+          "maximum": 4.0,
+          "minimum": 1.0,
+          "title": "Rise",
+          "type": "number"
+        },
+        "coverage": {
+          "maximum": 0.55,
+          "minimum": 0.2,
+          "title": "Coverage",
+          "type": "number"
+        },
+        "side": {
+          "enum": [
+            "left",
+            "right",
+            "back"
+          ],
+          "title": "Side",
+          "type": "string"
+        },
+        "access": {
+          "default": "ramp",
+          "enum": [
+            "ramp",
+            "stair"
+          ],
+          "title": "Access",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "rise",
+        "coverage",
+        "side"
+      ],
+      "title": "ElevationBand",
+      "type": "object"
+    },
     "EnemyGroup": {
       "additionalProperties": false,
       "properties": {
@@ -250,7 +490,7 @@
           "type": "string"
         },
         "count": {
-          "maximum": 8,
+          "maximum": 10,
           "minimum": 1,
           "title": "Count",
           "type": "integer"
@@ -290,7 +530,7 @@
         "reward_location_id": {
           "anyOf": [
             {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
@@ -308,6 +548,67 @@
           },
           "maxItems": 3,
           "title": "Features",
+          "type": "array"
+        },
+        "additional_reward_location_ids": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "title": "Additional Reward Location Ids",
+          "type": "array"
+        },
+        "activities": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ActivityPrimitive"
+          },
+          "maxItems": 3,
+          "title": "Activities",
+          "type": "array"
+        },
+        "shell_id": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shell Id"
+        },
+        "size_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Class"
+        },
+        "intent": {
+          "default": [],
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Intent",
           "type": "array"
         },
         "type": {
@@ -386,7 +687,7 @@
         "reward_location_id": {
           "anyOf": [
             {
-              "maximum": 89100030,
+              "maximum": 89100600,
               "minimum": 89100001,
               "type": "integer"
             },
@@ -404,6 +705,67 @@
           },
           "maxItems": 3,
           "title": "Features",
+          "type": "array"
+        },
+        "additional_reward_location_ids": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "title": "Additional Reward Location Ids",
+          "type": "array"
+        },
+        "activities": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ActivityPrimitive"
+          },
+          "maxItems": 3,
+          "title": "Activities",
+          "type": "array"
+        },
+        "shell_id": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shell Id"
+        },
+        "size_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Class"
+        },
+        "intent": {
+          "default": [],
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Intent",
           "type": "array"
         },
         "type": {
@@ -469,7 +831,7 @@
           "title": "Flavor"
         },
         "reward_location_id": {
-          "maximum": 89100030,
+          "maximum": 89100600,
           "minimum": 89100001,
           "title": "Reward Location Id",
           "type": "integer"
@@ -481,6 +843,67 @@
           },
           "maxItems": 3,
           "title": "Features",
+          "type": "array"
+        },
+        "additional_reward_location_ids": {
+          "default": [],
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "title": "Additional Reward Location Ids",
+          "type": "array"
+        },
+        "activities": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ActivityPrimitive"
+          },
+          "maxItems": 3,
+          "title": "Activities",
+          "type": "array"
+        },
+        "shell_id": {
+          "anyOf": [
+            {
+              "maxLength": 48,
+              "pattern": "^[a-z0-9_]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Shell Id"
+        },
+        "size_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "small",
+                "medium",
+                "large"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Class"
+        },
+        "intent": {
+          "default": [],
+          "items": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Intent",
           "type": "array"
         },
         "type": {
@@ -597,7 +1020,7 @@
           }
         ]
       },
-      "maxItems": 6,
+      "maxItems": 40,
       "minItems": 1,
       "title": "Chambers",
       "type": "array"

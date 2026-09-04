@@ -8,6 +8,19 @@ work; it does not describe work already done.
 > GODOT ENFORCES THE GRAMMAR.
 > EPSILON WRITES SENTENCES.**
 
+> **Amended 2026-08-28** — see
+> `docs/design-packet-v0.9/OWNER_DECISIONS.md` (D2). The first line now
+> reads **DEVELOPERS AUTHOR THE ALPHABET**: an asset a developer builds
+> with Claude at their desk becomes ordinary first-party content once it
+> is reproducibly authored, reviewed, approved, committed and registered
+> under a stable id. The substance below is unchanged — the boundary was
+> always about **runtime** generation, not about which tool a developer
+> used. Everything this document forbids Epsilon at runtime stays
+> forbidden.
+>
+> The original wording is left as written. This packet is history; the
+> decision is later.
+
 ---
 
 ## 1. The rule
@@ -199,3 +212,14 @@ that change is out of contract.
 `challenge_marker` world semantics remain open (see `AGENT_FRONTIER.md`).
 This document does not decide them, and a challenge is not an excuse to
 give Epsilon authored content.
+
+**Still deferred as of 2026-08-28** (`OWNER_DECISIONS.md`): the hook stays
+dormant and is not removed, no AP truth or progression may depend on it,
+and it is not to be guessed at until what starts a challenge, what
+completes or fails it, the retry lifecycle, and the local-only record it
+creates are all defined.
+
+Room sizing (D1), asset licensing (D2), the ending and postgame (D3), the
+tier presentation arc (D4), Epsilon's physical presence (D5) and visual
+colour ownership (D6) WERE open when this was written and are now
+decided. See `docs/design-packet-v0.9/OWNER_DECISIONS.md`.
