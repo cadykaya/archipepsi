@@ -305,7 +305,7 @@ Reference lint passed while every one of §8.1's contradictions was live, becaus
 | **Semantic contradictions** | **not checked — 12 were live** | **`0`** |
 | **Duplicate check ids** | **1 (`23` twice)** | **`0`** |
 | Structural checks | `24` | **`25`** |
-| Package validation checks | `31` | **`32`** unique ids |
+| Package validation checks | `31` | **`32`** unique ids (18 pinned + 14 added, `22a` now indexed in the table) |
 | System-map rows | `15` of 66 | **`66` of 66** |
 
 ## 9. Audited live revision
@@ -314,9 +314,11 @@ Reference lint passed while every one of §8.1's contradictions was live, becaus
 |---|---|
 | **Pull request** | `cadykaya/archipepsi` **#9** |
 | **Branch** | `claude/chatgpt-share-link-review-77kk2l` |
-| **Commit SHA** | *recorded below, after the repair commit* |
+| **Audited commit SHA** | **`487a6446f3bca1969d55ec631b5700f093ceefef`** |
 | **Date** | 2026-09-05 |
-| **Prior head** | `70bc8a4e95bcee0a5a4dc883b123e2fcee6ffc65` (pass 2) |
+| **Prior head** | `70bc8a4e95bcee0a5a4dc883b123e2fcee6ffc65` (pass 2, the revision this pass reviewed) |
+
+**On the recorded SHA.** `487a644` is the commit whose *content* every checker below was run against, from a clean worktree checked out at that revision — not from an export and not from the editing tree. The commit that adds this line necessarily comes after it, so the branch head is one commit ahead; that following commit touches this table and nothing else. Recording the audited content's SHA rather than the head's is the only way for the two to be the same thing.
 
 **Checkers run against that SHA**, all from the repository worktree at that revision and not from any export:
 
