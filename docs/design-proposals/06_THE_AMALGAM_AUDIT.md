@@ -172,9 +172,71 @@ Eight union fixtures became **fifteen**. New: **U9** reserved-capacity saturatio
 
 ---
 
-## 7. Verdict and what remains open
+## 7. Second repair pass — the live-branch diff review
 
-**Design verdict: PASS.** **Zero-Guesswork verdict: PASS.**
+A live-branch review of `9e56d51` found **fourteen further defects**, all real. Every one is repaired below. The first pass's PASS was **false**, and item 14 is why.
+
+### 7.1 The falsifying defect
+
+**§41.6 said `28` seconds and thirty-four waves while the body said `50.0 s` and 35 waves.** The first pass regenerated §41.5 and did not regenerate §41.6's claim paragraph. A document whose closure statement contradicts its own body cannot be Zero-Guesswork, and no other finding was needed to invalidate the verdict.
+
+**Repair:** §41.6 regenerated last, from the repaired body, with an eleven-row table binding every duplicated figure to its authoritative section. A new mechanical duplicate-number checker now runs before any PASS is claimed; it is what would have caught this.
+
+### 7.2 Soundness
+
+| # | Defect | Repair |
+|---:|---|---|
+| 1 | **`manipulate` was physically unsound.** Verb-set membership was declared sufficient, concluding no composed Ability "can be too weak". Two `PUSH` providers with different force/range/mass both satisfy the Boolean while only one moves the crate | §29.3.1 splits **capability identity** (Boolean, unchanged, what the verifier sees) from **provider qualification** (the `700 N` / `20.0 m` / `120 kg` envelope, read only by §29.4's entry check). §23.5 check 30 replays every mandatory package at exactly the envelope, so a passing package is solvable by *every* qualifying provider. Sub-envelope hosts stay real content for optional routes |
+| 2 | **Mandatory Status latches could fail forever.** Reservation stops budget refusal; it does nothing about the roll. `FLAME_JET` is `0.50`, `ELECTRIC_FIELD` `0.45`, `COOLANT_VENT` `0.60`, `PHASE_EMITTER` `0.55` | §35.2.2's guaranteed puzzle-source path: a `status_source` **declared by a mandatory package** applies its declared Status to its declared target without a roll, after legality and trait checks. Scoped to that triple only — the same hazard stays probabilistic everywhere else. Structural check 22 enforces the declaration; fixture U16 tests both halves in one room |
+| 7 | **Property 4 asked questions `(v, r)` cannot answer** — whether an object is consumed or carried | Per-object proof augmentation `(v, room, object_state)` over a closed four-value enum. Validation state only: never in the vector, never saved. Cost `4×` per object, ≤ 8 objects, under `1.6M` configurations |
+
+### 7.3 Composition order and graph safety
+
+| # | Defect | Repair |
+|---:|---|---|
+| 3 | **`offered_shells` required "every offer the room's already-selected packages require" at step 5, when packages are selected at step 11.** Unsatisfiable as written | §30.11.2a: rule 4 now depends only on the room's **purpose**, via a minimum offer vocabulary table. And the honest consequence is stated rather than hidden — the previous claim that legal shell answers are "all equivalent to the composer" is **withdrawn**: shell choice genuinely narrows later package availability |
+| 4 | **Connector compatibility assumed two neighbours** on a graph with degree up to 4 | §30.11.2b: incident-edge signature computed at step 3; a shell is offered only if an **injective assignment** from every incident edge to a compatible socket exists (kind, direction, transform, clearance). Assignment is deterministic (lexicographically smallest), committed, and re-proved by check 19b. Fixture U18 |
+| 10 | **Two shipped purposes could never generate.** The rotation was truncated to twelve entries; `vertical_ascent` and `boss_arena` are entries 13 and 14 | §30.3.0: full fourteen-entry rotation read cyclically from a seeded offset, with three deterministic corrections. Coverage computed over all `5 × 14` pairs — every purpose generatable, `boss_arena` in `49/70` and always the exit room. Fixture U19 |
+| 11 | **Fallback could swap a room's shell after binding**, invalidating connector assignments, neighbour geometry, bound offers, and Epsilon's committed choice | Policy: **the shell is chosen once at step 5 and never changes.** `CERTIFIED_FALLBACK` is indexed by purpose **and connector degree**, and its shell must be in `offered_shells` at step 5 or the attempt fails immediately — before Epsilon is asked |
+| 8 | **"Nearest preceding checkpoint" is undefined on a cyclic graph**, and placement ran at step 15 while `R` appears at step 17 | §30.7.1 defines coverage as multi-source BFS distance from the checkpoint set: `∀ x ∈ R, d(x) ≤ 2`. §30.7.3 puts the real two-pass process into §30.3 as steps 15–20, monotone and bounded at 3 additions |
+
+### 7.4 Determinism and persistence
+
+| # | Defect | Repair |
+|---:|---|---|
+| 5 | **Fresh-generation determinism and committed reconstruction were conflated.** §30.3 claimed byte-identical composition from the seed while §30.11 said re-asking may return a different legal shell | §30.5.1 defines **P1 structural reproducibility** (everything bridge-owned, from declared inputs) and **P2 committed reconstruction** (from the manifest, forever, with Epsilon unreachable). Byte-identical fresh generation is **explicitly not claimed**. Zone identity includes `epsilon_provenance.response_digest` |
+| 6 | **§5.6 step 3 still said "recompose deterministically; assert byte-identical"** — contradicting §30.11 | §5.6.1: load the manifest, verify version and digests, instantiate exactly what is recorded, read committed replay verdicts, never contact Epsilon. §5.6.2 adds `schema_version` with a four-row migration table including Zone **retirement** rather than a stranded campaign. §5.6.3 closes the `ReplayVerdict` and `EpsilonProvenance` schemas, which were prose |
+| 12 | **Theme, display name, and designer note were cited as "pinned: Design 1 §30.1"**, which says the opposite — *"Nothing in Zone composition"* | Declared an **Amalgam extension** with a bounded `ZonePresentation` schema and structural check 19a. No system reads the strings |
+
+### 7.5 Arithmetic, again
+
+| # | Defect | Repair |
+|---:|---|---|
+| 9 | **The replay budget used `settle_timeout` (`8.0 s`), which bounds check 22's settle test, not check 20's replay.** The replay bound is `ReferenceSolution.max_duration`, unbounded in Design 2's schema | §35.4.1 bounds it: `MAX_REPLAY_DURATION = 12.0 s`, enforced by new package check 23. Replay recomputed: `36 × 12.0 / 40 = ` **`10.8 s`** |
+| 13 | **Total wall clock omitted Epsilon's shell request entirely** | §35.4.2: **one batched Zone-level request**, `10.0 s` timeout, `1` repair attempt, offline selector on second failure, **not re-asked on Zone retry**. Worst case `20.0 s`. §35.4.3: total = `20.0 + 5 × 13.6` = **`88.0 s`**, first-pass **`13.6 s`** |
+
+Package density was also re-derived over the corrected purpose distribution: range **`8`–`16`**, mean **`12.11`**. The `42%` / `58%` variety reductions are unchanged, which confirms they were not an artifact of the truncated rotation.
+
+### 7.6 Second-pass mechanical results
+
+| Check | Pass 1 result | Pass 2 result |
+|---|---:|---:|
+| Broken cross-document section references | `0` | **`0`** |
+| Broken source test-vector references | `0` | **`0`** |
+| Broken internal `§` references | `0` | **`0`** |
+| Broken `check N` references | not checked | **`0`** |
+| **Stale duplicated figures** | **not checked — this is what failed** | **`0`** |
+| Structural checks | `21` | **`24`** (13 pinned + 11 union, including 19a and 19b) |
+| Package validation checks | `30` | **`31`** (18 pinned + 12 added + 22a) |
+| Test vectors | `98` | **`102`** |
+| Union fixtures | `15` | **`19`** |
+
+## 8. Verdict and what remains open
+
+
+**Design verdict: PASS.** **Zero-Guesswork verdict: PASS**, against the commit recorded in §9 and not against any earlier revision.
+
+The first pass claimed PASS while §41.6 contradicted the body. That claim was false and is withdrawn. This pass adds a mechanical duplicate-figure check precisely so the verdict rests on something reproducible rather than on a reading.
 
 The architecture was never the problem and is unchanged: latches as the boundary between continuous physics and discrete progression proof; Design 3's verifier at the centre; Status excluded from the search but able to gate through a latch; compositional items over an authored alphabet. Every repair above is integration, arithmetic, ordering, or honesty.
 
