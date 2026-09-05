@@ -288,30 +288,38 @@ TopologyEdge:
 
 **`direction` gains `B_TO_A`.** §30.11.2b's assignment rule needs to say which endpoint a one-way edge points away from, and normalizing every one-way edge to `A_TO_B` by swapping endpoints would reorder `room_a`/`room_b` after §30.3 step 3 has already fixed them and after predicates reference them. Adding the third value is the smaller change, and it makes the enum total over the three real cases.
 
-**`ConnectorKind` is the closed four-value enum §30.11.2b uses**, and it is a property of the *edge* — the kind of join the topology requires — which a shell's sockets must then satisfy:
+**`ConnectorKind` is the live engine's joining vocabulary, not an invented one.** A previous revision proposed `{ DOORWAY, DROP, RAIL_MOUTH, VERTICAL_SHAFT }`, which is wrong twice: `RAIL_MOUTH` and `VERTICAL_SHAFT` do not exist in the authored-room contract, and `DROP` is not a socket kind at all — it is a *traversal* kind, which is the separate axis `crossing` covers. The engine already draws exactly this distinction and this document adopts its names:
 
 ```
-ConnectorKind = enum { DOORWAY, DROP, RAIL_MOUTH, VERTICAL_SHAFT }
+ConnectorKind = enum { DOORWAY, CORRIDOR_END }     # connector_grammar.gd JOINABLE
 ```
 
-**`CrossingMethod` is what makes `carry_legal` derivable** rather than asserted. It is closed and total over every way this design lets a player cross an edge:
+Those are the only two kinds that are ways through — `connector_grammar.gd`'s `JOINABLE` maps each to `["doorway", "corridor_end"]`, so any joining socket meets any other. Every other socket a shell declares — `cover`, `objective`, `player_entry`, `enemy_spawn`, `no_build`, `grapple_point`, `launch_source`, `rail_route` — is a mount or a marker and never a join.
+
+Across the twelve `review: pass` shells the joining sockets are `32` doorways and `4` corridor ends, so the vocabulary is not theoretical: it is what the authored rooms already declare.
+
+**`CrossingMethod` is what makes `carry_legal` derivable** rather than asserted, and it too adopts the engine's vocabulary. `traversal_law.gd`'s `KINDS` are the four base-movement crossings; the rest are the offer-mediated ones the authored shells already declare as sockets:
+
+```
+CrossingMethod = enum { WALK, RISE, DROP, GAP,        # traversal_law.gd KINDS
+                        LAUNCH, RAIL, GRAPPLE,        # offer-mediated
+                        ACTUATOR_RIDE }               # §21.3
+```
 
 | `CrossingMethod` | The crossing | Carry-legal? |
 |---|---|:-:|
 | `WALK` | Base movement across a floor connection | **yes** |
-| `STEP_UP` | A rise within `MAX_SAFE_STEP_UP` | **yes** |
-| `DROP_DOWN` | A one-way fall within safe-landing height | **yes** |
-| `LAUNCHPAD` | A `LAUNCHPAD`'s solved arc (§21.7) | **yes** — the pad does the work |
-| `BOUNCE_PAD` | A `BOUNCE_PAD`'s fixed impulse | **yes** |
-| `RAIL` | Riding a rail (§26.4) | **no** — §26.7 severs held relations on rail entry |
-| `MOBILITY_DASH` | A `DASH` or `BURST_JUMP` gap | **no** |
-| `MOBILITY_GRAPPLE` | A `GRAPPLE` | **no** |
-| `MOBILITY_BLINK` | A `BLINK` | **no** |
+| `RISE` | A step up within the traversal law's bound | **yes** |
+| `DROP` | A fall within safe-landing height | **yes** |
+| `GAP` | A jump within the base-movement gap bound the traversal law exports | **yes** — base movement clears it by definition |
+| `LAUNCH` | A `launch_source` → `launch_target` arc (§21.7) | **yes** — the pad does the work |
 | `ACTUATOR_RIDE` | Riding a `LIFT`, `BRIDGE`, or `MOVING_PLATFORM` (§21.3) | **yes** |
+| `RAIL` | Riding a `rail_route` (§26.4) | **no** — §26.7 severs held relations on rail entry |
+| `GRAPPLE` | A `grapple_point` | **no** — a `MOBILITY` action, blocked while carrying |
 
-> **`carry_legal` is derived, never authored:** `carry_legal(e) = e.crossing ∈ {WALK, STEP_UP, DROP_DOWN, LAUNCHPAD, BOUNCE_PAD, ACTUATOR_RIDE}`.
+> **`carry_legal` is derived, never authored:** `carry_legal(e) = e.crossing ∉ {RAIL, GRAPPLE}`.
 
-The rule behind the table is Design 1 §10.3: a carried object disables `MOBILITY` actions, and rails sever held relations (§26.7). Everything else is either base movement or something the world does to the player, and neither is disabled by carrying.
+The rule behind it is Design 1 §10.3 — a carried object disables `MOBILITY` actions — plus §26.7's rail severance. Everything else is base movement or something the world does to the player, and neither is disabled by carrying. **`GAP` is carry-legal precisely because the traversal law bounds it at what base movement clears**; a gap needing a `DASH` is not a `GAP` edge, it is a capability-gated edge and §29.5a governs whether it may sit on an AP-relevant route at all.
 
 **`carry_legal` is committed but not authored.** The manifest stores `crossing`, and `carry_legal` is recomputed from it at load. **§30.5 check 24** re-derives every edge's `carry_legal` from its `crossing` and compares it to any stored value; a mismatch is a hard error. That way the verifier's input and the runtime's behaviour cannot drift apart, and no field is claimed committed that no schema declares.
 
@@ -2021,11 +2029,13 @@ Three consequences, each exact:
 
 Each room's shell is filtered against its own incident edges, and Epsilon selects one per room independently. **Local compatibility does not automatically prove the combination is spatially valid** — unless the connector contract makes it so, which is the design this document adopts:
 
-> **Every connector socket of every authored shell presents a standardized attachment collar**: a fixed frame, a fixed clearance envelope, and a `connector_kind`. Two sockets of the same `kind` with compatible `direction` join at their collars, and the collar geometry is identical across every shell in the catalog.
+> **Every joining socket of every authored shell presents a standardized attachment collar**: a fixed frame, a fixed clearance envelope, and a `connector_kind`. Two joining sockets join at their collars, and the collar geometry is identical across every shell in the catalog.
+
+**The engine already implements this**, which is why the contract is adoptable rather than aspirational. `connector_grammar.gd` defines `SIDE_CLEARANCE = 0.4` and `HEAD_CLEARANCE = 0.2` as constants above the player capsule, and `JOINABLE` makes every joining kind meet every other — so joinability really is a property of the socket pair and not of the shell pair, exactly as §30.11.2d needs.
 
 With standardized collars, joinability is a property of the **pair of sockets**, not of the pair of shells: any socket satisfying kind, direction, frame, and clearance can be joined to any matching socket without shell-body overlap, because §30.11.2c's clearance minima are what guarantee the bodies do not reach each other. **Local candidate filtering is therefore sufficient by construction, and no cross-room CSP is needed.**
 
-This is a real constraint on the authored-shell contract, not an observation — it is what the twelve `review: pass` shells already satisfy through their entry-doorway and connector transforms, and **§30.5 check 19d** enforces it on the catalog rather than on the Zone: every socket of every offered shell declares a collar from the standard set, and a shell whose socket geometry is bespoke is not offerable.
+This is a real constraint on the authored-shell contract, and the twelve `review: pass` shells already satisfy it — `content.py`'s validator refuses any `room_shell` declaring no `doorway` or `corridor_end` socket, and the clearance constants are engine-wide rather than per-shell. **§30.5 check 19d** enforces it on the catalog rather than on the Zone: every socket of every offered shell declares a collar from the standard set, and a shell whose socket geometry is bespoke is not offerable.
 
 **If a future shell needs a bespoke collar**, this section is the thing that has to change, and the alternative is stated so the choice is real: validate the selected shells as one connector-assignment CSP after the batched response, treating a failing combination as an unusable response under §30.11.5 class 1. That costs a solve per Zone and a possible extra repair round. The collar contract is preferred because it moves the guarantee into authoring, where it can be checked once per shell instead of once per Zone.
 

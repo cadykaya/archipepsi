@@ -199,7 +199,34 @@ The owner ruled that Design 6 adopts the conservative contract, now §29.5a of t
 
 §5's recommendation 6 is closed by this ruling. Recommendations 5 and 7 remain open repository work.
 
-## 9. Recommended changes## 9. Recommended changes
+## 8b. Update — connector vocabulary reconciled to the live contract
+
+**2026-09-05.** A pass-4 addition to Design 6 (§4.9a) proposed a connector enum invented rather than read from the engine. Checking it against `connector_grammar.gd` and `traversal_law.gd` found the engine already draws the exact distinction the design needed, with different names — and the design has been corrected to the engine's, not the reverse.
+
+| Design 6 proposed | Engine has | Resolution |
+|---|---|---|
+| `ConnectorKind = {DOORWAY, DROP, RAIL_MOUTH, VERTICAL_SHAFT}` | `JOINABLE = {doorway, corridor_end}` (`connector_grammar.gd:23`) | **Adopt the engine's two.** `RAIL_MOUTH` and `VERTICAL_SHAFT` do not exist; `DROP` was a traversal kind misfiled as a socket kind |
+| A ten-value `CrossingMethod` | `KINDS = [gap, rise, drop, walk]` (`traversal_law.gd:76`) plus offer sockets `launch_source`, `rail_route`, `grapple_point` | **Adopt four base kinds plus three offer-mediated plus `ACTUATOR_RIDE`** |
+| "Standardized attachment collar", asserted as already satisfied | `SIDE_CLEARANCE = 0.4`, `HEAD_CLEARANCE = 0.2`, engine-wide constants; `content.py` refuses a `room_shell` with no joining socket | **The claim was right and is now cited.** Joinability genuinely is a socket-pair property |
+
+Across the twelve `review: pass` shells the joining sockets are **32 `doorway` and 4 `corridor_end`**, so the reconciled vocabulary is what the authored rooms already declare.
+
+**This is the good direction for a finding to run.** The design moved toward the engine, no authored room needs rework, and one invented enum is gone. It also closes the pass-4 instruction to use *"the exact equivalent ids already present in the live authored-room contract if those names differ"* — they did differ, and they now match.
+
+## 8c. Does Design 6 replace any authored room?
+
+**No.** Design 6 is a *consumer* of the shell catalog and never an author of it:
+
+| Design 6 does | Design 6 does not |
+|---|---|
+| Require every room record to name a `shell_id` (§30.11.1) | Author, generate, modify, or delete any shell |
+| Filter the catalog into `offered_shells` per room (§30.11.2) | Change a shell's geometry, sockets, or review state |
+| Require the runtime instantiate exactly the named shell (§30.11.4) | Replace an authored shell with a procedural one — it forbids exactly that |
+| Read `review: pass`, type, sockets, and clearance | Write any of them |
+
+Wave 2 shells, the 20–30-room proof library, and Theme Packs are explicitly **off** its critical path (§40.1). The authored-room pipeline and Design 6 meet at one seam — `shell_id` — and the design's whole contribution there is to stop that seam silently discarding the rooms.
+
+## 9. Recommended changes## 9. Recommended changes## 9. Recommended changes
 
 **To Design 6, now** — these are corrections of provably false statements, not redesign:
 
