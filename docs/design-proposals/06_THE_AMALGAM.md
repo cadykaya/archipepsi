@@ -1678,7 +1678,7 @@ ConnectorSignature = sorted multiset of (socket_kind, direction) over incident e
 CERTIFIED_FALLBACK[purpose][signature] -> family
 ```
 
-`socket_kind` ranges over four values (doorway, drop, rail mouth, vertical shaft) and `direction` over three (inbound, outbound, bidirectional), so with degree `1`–`4` the signature space is finite and small, and the table is enumerable and checked in.
+`connector_kind` ranges over the engine's two joining kinds (§4.9a: `DOORWAY`, `CORRIDOR_END`) and `direction` over three (`A_TO_B`, `B_TO_A`, `BIDIRECTIONAL`), so with degree `1`–`4` there are at most `6⁴ = 1,296` signatures before normalization and far fewer after — the table is enumerable and checked in.
 
 **Second, the guarantee attaches to every offered shell, not to one certified shell.** A previous revision proved the *certified* shell was in `offered_shells` and then claimed at step 11 that the shell Epsilon *actually selected* could host the fallback family. That does not follow — Epsilon may pick a different offered shell.
 
@@ -2017,7 +2017,7 @@ A previous revision required a shell to be *"connector-compatible with both neig
 
 Define the room's **incident-edge signature** at step 3, before any shell is offered: for room `r`, the ordered list of its incident `TopologyEdge`s, each carrying its `connector_kind` and its `direction` as §4.9a types them. Both are edge fields precisely so the signature can be built before a shell exists — deriving a connector kind from an unselected shell is the circularity §30.11.2a already had to repair once.
 
-> **A shell is connector-satisfiable for room `r` when there exists an injective assignment from `r`'s incident edges to the shell's declared connector sockets** such that every assigned pair is compatible in socket **kind** (doorway, drop, rail mouth, vertical shaft), **direction** (a one-way drop assigns only to a drop socket oriented outward), **transform** (the socket's attachment frame can be placed so both rooms' geometry chains without overlap), and **clearance** (§30.11.2c's headroom and width minima).
+> **A shell is connector-satisfiable for room `r` when there exists an injective assignment from `r`'s incident edges to the shell's declared connector sockets** such that every assigned pair is compatible in socket **kind** (§4.9a's `DOORWAY` and `CORRIDOR_END`, which `connector_grammar.gd`'s `JOINABLE` lets meet each other), **direction** (a one-way drop assigns only to a drop socket oriented outward), **transform** (the socket's attachment frame can be placed so both rooms' geometry chains without overlap), and **clearance** (§30.11.2c's headroom and width minima).
 
 Three consequences, each exact:
 
