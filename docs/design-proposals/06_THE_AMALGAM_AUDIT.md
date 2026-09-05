@@ -231,12 +231,112 @@ Package density was also re-derived over the corrected purpose distribution: ran
 | Test vectors | `98` | **`102`** |
 | Union fixtures | `15` | **`19`** |
 
-## 8. Verdict and what remains open
+## 8. Third pass — the closure review
+
+A closure review of `70bc8a4` found **fifteen further items**. All were real. The second pass's PASS was **premature**: it declared PASS and then listed two unresolved owner-level behavioural forks, which is a contradiction on its face.
+
+### 8.1 Contradictions the repairs themselves created
+
+The second pass added correct new sections without deleting the prose they superseded. Four cases:
+
+| Was | Now |
+|---|---|
+| §29.3 still argued the numeric floor was withdrawn and magnitudes cannot participate — immediately before §29.3.1 explains why that was unsound | Stale prose deleted. §0.5's ledger and §41.1 corrected: the envelope governs **provider qualification**, never composition legality |
+| §0.4 called Defense-to-zero "a rule change" as a distinction from damage modification; §41.1 answered "may one modify damage? None" | Both restated to §15.3's honest three-rule form with `exposed` as the one declared exception |
+| §36.1 claimed fifteen orthogonal pairs in a fifteen-row table containing two INTERACTS rows, and named a system "Zone composition" that is not in the twelve-system inventory | All 66 pairs **generated mechanically**, each classified exactly once. Totals derived from the table: `51` / `15` |
+| Two package checks both numbered `23` | The union's duration check renumbered `31`; every citation updated |
+
+### 8.2 Fields that did not exist in any schema
+
+Five repaired rules referenced fields their schemas could not represent. **A validator may not test a field the schema cannot express.**
+
+| Field | Resolution |
+|---|---|
+| `qualifies_manipulate` on `HostDefinition` | **Derived, never serialized.** Computed from the resolved committed Loadout at §29.4's entry check. Caching would let it go stale when Gear changes |
+| `HostDefinition.profile` vs `composition` | §4.2 now names Mobility as the explicit exception rather than saying composition replaces `profile` "everywhere" and being contradicted in §12.8. Structural check 19c |
+| `StatusSolution` on `PackageManifest` | Added with five fields. `guaranteed_application` is **derived** from the triple, not stored |
+| `RoomRecord.connector_assignment` | Added, typed `dict[EdgeId, SocketId]`, total over incident edges |
+| `ZoneManifest.schema_version` | Added. `ReplayVerdict` and `EpsilonProvenance` now referenced **by name** rather than one being inlined as an anonymous shape beside its named definition |
+
+`ChamberType`'s `# arena \| tower \| corridor \| treasure_room \| ...` is now the closed four-value enum. An ellipsis in a generated-record schema is a guess an implementer has to make.
+
+### 8.3 Semantics
+
+| # | Defect | Repair |
+|---:|---|---|
+| 3 | `EpsilonProvenance` fixed `request_count = 1` while permitting a repair attempt — but **a repair is another request** | `request_count = 1 + repair_attempts`, plus a six-row table defining `model_id`, `response_digest`, `selected_offline`, `elapsed_ms` and a new `outcome` enum in **every** failure case, including the retry case where no request is issued at all |
+| 5 | Property 4's `PLACED` was not room-indexed, justified by a recovery contract Design 2 §10.5 does not state. **And the augmented Move ignored carry legality** — the proof could route a required object across a grapple gap the player cannot cross while holding it | `PLACED(room_id)` bounded to `allowed_volume`; every augmented transition tabulated; a **carry-legal Move rule** requiring the edge be traversable while carrying, with a derived `carry_legal` per edge. Cost recomputed from the real state count: `2 + \|allowed_volume\|` states, worst case `14`, `5,505,024` configurations across `8` objects — not a universal `4×` |
+| 6 | `CERTIFIED_FALLBACK` was keyed on **degree**, not signature — two degree-`2` rooms can need different socket kinds. And step 5 proved the *certified* shell was offered, then step 11 claimed the *selected* shell could host the fallback, which does not follow | Keyed on the normalized `ConnectorSignature`. And **every shell in `offered_shells` must be proven able to host the fallback family** — so the guarantee holds for whatever Epsilon selects, because it held for every candidate before the question was asked |
+| 8 | Wave 14 said "steps 1–10, 13–18", omitting **step 11, package placement**, against a twenty-step algorithm | Rebuilt as steps 1–14 and 16–20, with the wave-17 boundary claim justified explicitly |
+| 9 | §11.8 claimed Design 1 has 14 Weapon profiles | Regenerated from live D1: **`18` primary, `6` secondary, `8` feed, `14` Ability, `9` Mobility**. The unit being counted is now named |
+| 10 | Vector 65 said an attempt "completes within `13.6 s`" including Epsilon selection — false whenever latency is nonzero | Three separate values: first-attempt **compute** `13.6 s`; first-attempt **total** `13.6 s` + actual latency; **bounded** first attempt `33.6 s`; worst-case Zone `88.0 s` |
+
+### 8.4 An owner decision that had been made silently
+
+**The four `HIGH` master atoms are new game content**, introduced during an audit to close a real defect — with Design 4's catalog alone, no high-tier physics, Status, signal, or mass-field Ability is composable, and §29.1 makes `manipulate` a gate granted by a physics Ability. **The defect is real; adding four atoms is the owner's call.** §11.7.2 now carries an ⚠ OWNER DECISION REQUIRED block with both outcomes enumerated:
+
+| Retain | Remove |
+|---|---|
+| Catalog `121`, Abilities `16,586,524`, `HIGH` in-band bases `138` | Catalog `117`, Abilities `6,133,474`, `HIGH` in-band bases `48` |
+
+Both figures are enumerated, not estimated. The removal figures were themselves asserted before being computed in a draft of this pass and corrected — `6,133,474` and `48`, not `5,997,594` and `49`.
+
+### 8.5 The verdict
+
+A PASS that is immediately followed by a list of unresolved behavioural decisions is not a PASS. §41.6 now states:
+
+> **Design verdict: PASS. Zero-Guesswork verdict: CONDITIONAL — NOT YET PROMOTABLE.**
+
+with three open decisions tabulated by what each changes — saved state, procedural validity, content — and a drafted resolution for the Archipelago fork presented **for approval and not enacted**.
+
+### 8.6 A semantic contradiction checker
+
+Reference lint passed while every one of §8.1's contradictions was live, because each reference resolved. A twelve-check semantic pass now runs alongside it, testing for **claims that contradict each other** rather than references that fail to resolve — floor-withdrawn versus floor-required, orthogonal-versus-INTERACTS, schema-uses-field versus schema-lacks-field, PASS-versus-open-forks. It also excludes narrated historical corrections, so a document that says "a previous revision said X, which was wrong" does not trip on X.
+
+### 8.7 Third-pass mechanical results
+
+| Check | Pass 2 | Pass 3 |
+|---|---:|---:|
+| Broken cross-document section references | `0` | **`0`** |
+| Broken source test-vector references | `0` | **`0`** |
+| Broken internal `§` references | `0` | **`0`** |
+| Broken `check N` references | `0` | **`0`** |
+| Stale duplicated figures | `0` | **`0`** |
+| **Semantic contradictions** | **not checked — 12 were live** | **`0`** |
+| **Duplicate check ids** | **1 (`23` twice)** | **`0`** |
+| Structural checks | `24` | **`25`** |
+| Package validation checks | `31` | **`32`** unique ids |
+| System-map rows | `15` of 66 | **`66` of 66** |
+
+## 9. Audited live revision
+
+| | |
+|---|---|
+| **Pull request** | `cadykaya/archipepsi` **#9** |
+| **Branch** | `claude/chatgpt-share-link-review-77kk2l` |
+| **Commit SHA** | *recorded below, after the repair commit* |
+| **Date** | 2026-09-05 |
+| **Prior head** | `70bc8a4e95bcee0a5a4dc883b123e2fcee6ffc65` (pass 2) |
+
+**Checkers run against that SHA**, all from the repository worktree at that revision and not from any export:
+
+| Checker | Result |
+|---|---|
+| `refcheck` — cross-document, source-vector, internal references | `0` / `0` / `0` broken, `145` source-vector citations |
+| `pipecheck` — GFM table integrity across all nine files | `0` broken cells |
+| `dupcheck` — duplicated figures against their authorities | `0` stale |
+| `closurecheck` — every §41.6 figure against its authoritative section | `0` mismatched, `16` figures |
+| `semcheck` — semantic contradictions | `0` of `12` checks |
+| Check-id uniqueness — structural and package | `0` duplicates |
+| System-map derivation — `66` rows, totals derived | consistent |
+
+## 10. Verdict and what remains open
 
 
-**Design verdict: PASS.** **Zero-Guesswork verdict: PASS**, against the commit recorded in §9 and not against any earlier revision.
 
-The first pass claimed PASS while §41.6 contradicted the body. That claim was false and is withdrawn. This pass adds a mechanical duplicate-figure check precisely so the verdict rests on something reproducible rather than on a reading.
+**Design verdict: PASS.** **Zero-Guesswork verdict: CONDITIONAL — NOT YET PROMOTABLE**, against the commit recorded in §9 and not against any earlier revision.
+
+Two earlier PASS claims are withdrawn. Pass 1's was false because §41.6 contradicted the body. Pass 2's was premature because it declared PASS and then listed open owner forks in the same breath. The verdict is conditional until §41.6's three decisions are made; nothing else in the document is open.
 
 The architecture was never the problem and is unchanged: latches as the boundary between continuous physics and discrete progression proof; Design 3's verifier at the centre; Status excluded from the search but able to gate through a latch; compositional items over an authored alphabet. Every repair above is integration, arithmetic, ordering, or honesty.
 

@@ -66,7 +66,7 @@ That is one game. `PHASED` on a wall, `PUSH` on a crate, and `HOLD_SIGNAL` on a 
 
 Design 1's `status:core:exposed` sets a target's Defense to `0.0` **and** adds `+1.0` to incoming crit chance. Design 5's central invariant is that no Status applied to an actor modifies a damage number.
 
-Defense-to-zero is a rule change and survives. The crit bonus is a damage modifier and does not.
+Both change the number the damage resolver produces. The union keeps one and drops the other, and §15.3 states the distinction honestly rather than pretending Defense-to-zero is not a damage change: **no Status may modify raw damage, crit chance, or a crit multiplier**, and `exposed`'s Defense effect is the single declared exception to that rule.
 
 **`exposed` ships here with its Defense effect and without its crit clause.** That is the only content in all five proposals this union does not take, it is one clause of one Status, and it is flagged here rather than buried because "no cuts" was the instruction and this is the exception to it.
 
@@ -88,7 +88,7 @@ Where a pinned section itself pins onward — Design 5 §13 pins to Design 1 §1
 | Design 5 §15.2 (`exposed` absent) | §15.2 | `exposed` is restored, less its crit clause (§0.4) |
 | Design 4 §12.2 (the `effect` dimension) | §11.7.1 | Three atoms superseded by discriminator-carrying equivalents; four `HIGH` atoms added |
 | Design 4 §11.2 (the `payload` dimension) | §11.7 | Two atoms added, carrying Design 2's and Design 3's Weapon riders |
-| Design 2 §29.3 (the `manipulate` contract) | §29.3 | Set membership over verbs replaces the numeric envelope |
+| Design 2 §29.3 (the `manipulate` contract) | §29.3.1, §29.3.2 | Capability **identity** becomes Boolean verb-set membership; the numeric envelope is retained as **provider qualification** for mandatory routes only |
 | Design 1 §19.3 (signal evaluation) | §19.3 | Step 1 gains latches and signal verbs, and an internal order |
 | Design 1 §21.1.1 (power loss) | §21.1.1 | Three constraint-driven actuator kinds added to the per-kind table |
 | Design 1 §23.4 (package reset) | §23.4 | Two clauses added: Statuses cleared, macro state untouched |
@@ -133,7 +133,7 @@ Everything from all five, organised by where it comes from.
 - The interaction resolver with its four-key deterministic sort (§9).
 - The signal graph: four port forms, eleven node types, acyclic single-tick evaluation (§19).
 - Hacking (§22), capability proof (§29), the deterministic offline fallback (§17).
-- Its 24 Weapon and Ability profiles, re-expressed as named compositions (§11.7).
+- Its `32` Weapon-side profiles (`18` primary, `6` secondary, `8` feed) and `14` Ability profiles, re-expressed as named compositions (§11.8). Its `9` Mobility profiles are retained as authored profiles rather than composed (§12.8).
 
 **From Design 2 — the physical layer**
 
@@ -214,7 +214,20 @@ Those two rules together are what let a verified Zone contain a physics simulati
 
 ## 4.2 Host definition
 
-*Pinned: identical to Design 4 §4.4* — `HostDefinition` with `composition` and `budget_spent`. The `profile` field does not exist; composition replaces it everywhere.
+*Pinned: identical to Design 4 §4.4* — `HostDefinition` with `composition` and `budget_spent`.
+
+**Composition replaces `profile` for Weapons, Abilities, Gear, and Mods. Mobility is the exception** and retains `profile`, per §12.8's total exemption. A previous revision said composition replaces `profile` *"everywhere"*, which §12.8 then contradicted forty sections later; the exception is named here instead:
+
+```
+HostDefinition:
+  ...                                    # Design 4 §4.4's fields
+  composition : Composition?             # null for category == mobility
+  profile     : Id?                      # non-null ONLY for category == mobility
+```
+
+Exactly one of the two is non-null, decided by `category`, and §30.5 check 19c rejects a host with both or neither.
+
+**`qualifies_manipulate` is not a field.** §29.3.2's provider qualification is **derived, never serialized**: it is computed from the resolved committed Loadout at §29.4's entry check and discarded. Caching it would create a value that can go stale when Gear changes, and the only consumer runs once per Zone entry, so there is nothing to save. Any text implying a stamped flag is superseded by this paragraph.
 
 ## 4.5 The atom
 
@@ -393,14 +406,32 @@ ReplayVerdict:
 
 ```
 EpsilonProvenance:
-  model_id          : string, 1..64
-  request_digest    : digest
-  response_digest   : digest
-  selected_offline  : bool           # true when 30.11.6's selector chose
-  request_count     : int            # 1 batched request; 30.11.10
+  model_id          : string?        # null iff no request was issued
+  request_digest    : digest?        # null iff no request was issued
+  response_digest   : digest?        # null iff no usable response was received
+  selected_offline  : bool           # true when 30.11.6's selector chose the final shells
   repair_attempts   : int in [0, 1]
-  elapsed_ms        : int
+  request_count     : int            # == 1 + repair_attempts when a request was issued;
+                                     #    0 when none was (retry attempts, 30.11.10)
+  elapsed_ms        : int >= 0       # wall time actually spent waiting; 0 when none
+  outcome           : enum { ACCEPTED, ACCEPTED_AFTER_REPAIR,
+                             TIMED_OUT, MALFORMED, NOT_REQUESTED }
 ```
+
+**A repair attempt is another request**, so `request_count = 1 + repair_attempts` whenever a request was issued at all. A previous revision fixed `request_count = 1` while allowing a repair, which cannot both be true.
+
+Every field is defined in every case — no field is left non-null in a case where no value exists:
+
+| Case | `outcome` | `model_id` | `response_digest` | `selected_offline` | `request_count` | `elapsed_ms` |
+|---|---|---|---|---|---:|---|
+| First response valid | `ACCEPTED` | the model | its digest | `false` | `1` | actual |
+| Repair response valid | `ACCEPTED_AFTER_REPAIR` | the model | the **repair** response's digest | `false` | `2` | actual, both requests |
+| First request times out, repair valid | `ACCEPTED_AFTER_REPAIR` | the model | the repair's digest | `false` | `2` | actual, including the `10.0 s` |
+| Both requests time out | `TIMED_OUT` | the model | **null** | `true` | `2` | `20000` |
+| Response malformed twice | `MALFORMED` | the model | **null** | `true` | `2` | actual |
+| Zone retry attempt (§30.11.10) | `NOT_REQUESTED` | **null** | **null** | `true` | `0` | `0` |
+
+`request_digest` is null exactly when `outcome` is `NOT_REQUESTED`, and non-null otherwise — a request that timed out was still issued and its digest is still what was asked. `selected_offline` is `true` in exactly the last three rows, which is the same condition as *"no usable response existed"*.
 
 Both are covered by `manifest_digest`. A `ReplayVerdict` whose `config_digest` no longer matches its package is **rejected at load**, not silently trusted and not re-certified on the client.
 
@@ -548,6 +579,20 @@ The `HIGH` band is `[165, 180]`. The most expensive base composable without a `t
 
 Design 4 could live with that because nothing in Design 4 depended on a particular effect family reaching `HIGH`. **The union cannot**, because §29.1 makes `capability:core:manipulate` a progression gate granted by a physics Ability, and a capability with no high-tier expression is a capability the Forge can never elevate into.
 
+> ### ⚠ OWNER DECISION REQUIRED — the four `HIGH` master atoms
+>
+> `effect_physics_master`, `effect_mass_master`, `effect_signal_master`, and `effect_status_master` were introduced during an audit pass to close a real defect: with Design 4's catalog alone, **no high-tier physics, Status, signal, or mass-field Ability can be composed at all**, and §29.1 makes `manipulate` a progression gate granted by a physics Ability.
+>
+> **The defect is real. Adding four atoms is new game content, and that is the owner's call, not an auditor's.** This document does not treat their existence as an approved repair.
+>
+> | If the owner **retains** them | If the owner **removes** them |
+> |---|---|
+> | Catalog `121`, Abilities `16,586,524`, `HIGH` in-band bases `138` | Catalog `117`, Abilities `6,133,474`, `HIGH` in-band bases `48` — Design 4's exact known-thin figure |
+> | Every gate-bearing effect family has a high-tier expression | **No high-tier physics, Status, signal, or mass-field Ability exists.** Forge cannot elevate into `manipulate`, and §18's Elevate has nothing to produce for those families |
+> | §12.7's three CI floors stand | Those floors are removed and §12.7's table is regenerated |
+>
+> **Removing them does not break the design** — it re-creates Design 4's known thinness in four more places, and §41.5 would record it. Retaining them is this document's recommendation, and §41.6's verdict is conditional on the choice either way.
+
 Pricing the four at `62` — the price Design 4 already assigns its own high-tier effect atom, `transform*`, rather than a new price point — lifts `HIGH` in-band bases from `48` to `138` and gives every effect family at least one:
 
 | Family | `USEFUL` in-band bases | `HIGH` in-band bases |
@@ -574,10 +619,23 @@ Pricing the four at `62` — the price Design 4 already assigns its own high-tie
 
 Every profile in Designs 1, 2, 3, and 5 is a fixed composition, and all of them are checked in as **named compositions** — pre-built atom selections with a stable id.
 
+**The unit being counted matters**, and a previous revision conflated three of them. Design 1 does not have "14 Weapon profiles"; it has primary-family profiles, secondary profiles, and feed profiles, which compose into complete Weapon configurations. Regenerated from the live `01_RELIABLE_CORE.md`:
+
+| Design 1 unit | Count | The entries |
+|---|---:|---|
+| **Primary profiles** (§11.1) | **`18`** | `cadence_rapid`, `cadence_standard`, `cadence_precise`, `burst_triple`, `burst_double_heavy`, `spread_close`, `spread_wide`, `bolt_fast`, `bolt_piercing`, `shell_impact`, `lob_impact`, `lob_timed`, `beam_steady`, `beam_ramping`, `charge_lance`, `charge_burst`, `arc_swift`, `arc_heavy` |
+| **Secondary profiles** (§11.3) | **`6`** | `zoom_standard`, `zoom_long`, `guard_light`, `guard_heavy`, `detonate_standard`, `mode_swap_standard` |
+| **Feed profiles** (§11.4) | **`8`** | `mag_small_fast`, `mag_standard`, `mag_large_slow`, `mag_shell`, `heat_standard`, `heat_beam`, `charge_hold_short`, `charge_hold_long` |
+| **Ability profiles** (§12.1) | **`14`** | `ab_barrier_small`, `ab_barrier_large`, `ab_channel_heal`, `ab_dash_short`, `ab_field_short`, `ab_field_long`, `ab_instant_light`, `ab_instant_heavy`, `ab_physics_standard`, `ab_reveal`, `ab_rule_standard`, `ab_status_area`, `ab_status_reliable`, `ab_weapon_buff` |
+| **Mobility profiles** (§13) | **`9`** | `mob_dash_short`, `mob_dash_long`, `mob_blink_short`, `mob_blink_long`, `mob_grapple_standard`, `mob_grapple_long`, `mob_burst_standard`, `mob_burst_high`, `mob_airstep_standard` |
+
 | Source | Count | Example |
 |---|---:|---|
-| Design 1 §11.1 Weapon profiles | `14` | `cadence_standard` → `frame_standard + delivery_hitscan + cadence_standard + payload_direct + feed_magazine_standard + secondary_none` |
+| Design 1 §11.1 primary profiles | `18` | `cadence_standard` → `frame_standard + delivery_hitscan + cadence_standard + payload_direct + feed_mag_standard + secondary_none` |
+| Design 1 §11.3 secondary profiles | `6` | `zoom_long` → `secondary_zoom` with its authored parameters |
+| Design 1 §11.4 feed profiles | `8` | `heat_beam` → `feed_heat` with its authored parameters |
 | Design 1 §12.1 Ability profiles | `14` | `ab_barrier_small` → `form_press + effect_barrier + target_self + recharge_cooldown_short + scaling_flat` |
+| Design 1 §13 Mobility profiles | `9` | **Not composed.** Retained verbatim as authored profiles per §12.8 |
 | Design 2 §12.1 physics profiles | `3` | `ab_physics_light` → `form_press + effect_physics_basic + target_actor + recharge_cooldown_short + scaling_flat`, `physics_verb = PUSH`. This is the composition §29.3's floor is defined as. |
 | Design 3 §12.1 signal profiles | `3` | `sig_brief` → `form_press + effect_signal_write + target_actor + recharge_cooldown_short + scaling_flat` |
 | Design 5 §12.2–12.3 Status profiles | `3` | `field_brief` → `form_press + effect_status + target_area + recharge_cooldown_short + scaling_flat`, `status_verb = FIELD` |
@@ -989,9 +1047,23 @@ PackageManifest:
   status_source       : Id? = null                     # Design 5
 
   vector_latches      : list[int] = []                 # NEW — see below
+  status_solution     : StatusSolution? = null         # NEW — §35.2.2
 ```
 
 `ReferenceSolution`, `SolutionStep`, `LatchCondition`, and `MacroSetter` are *pinned: identical to Design 2 §23.1 and Design 3 §23.1*.
+
+**`StatusSolution` is new**, and it is what §35.2.2's guarantee and §30.5 check 22 actually read. A validator may not test a field the schema cannot represent:
+
+```
+StatusSolution:
+  source_id        : Id            # the in-room status_source, per Design 5 §23.1
+  status_id        : Id            # one of the thirteen, or a compound
+  target_id        : Id            # the exact object or actor the solution applies it to
+  reserved_bodies  : int >= 0      # capacity reserved per §35.2.1
+  reserved_entries : int >= 0
+```
+
+A package with a non-null `status_required` **must** carry a `status_solution` whose `source_id` equals `status_source` and whose `status_id` equals `status_required`. `guaranteed_application` is not a stored flag: it is **derived** as *"this application's `(source_id, status_id, target_id)` equals this package's `status_solution` triple"*, evaluated at application time. Check 22 tests the manifest fields above; the runtime tests the triple.
 
 **`vector_latches` is the union's one new field.** It names which of the package's `latch_conditions` are promoted into the Zone state vector (§4.10). A latch not named here is still permanent and still latches — it simply is not something the verifier reasons about, because nothing on a mandatory route depends on it.
 
@@ -1010,7 +1082,7 @@ Clause 11 matters more than it looks. Reset is how a stuck puzzle recovers, and 
 
 ## 23.5 Validation pipeline
 
-Design 1's eighteen checks, plus eight from Designs 2, 3, and 5, plus five the union creates. All thirty-one run on every package at composition.
+Design 1's eighteen checks, plus eight from Designs 2, 3, and 5, plus five the union creates (`27`, `28`, `29`, `30`, `31`) and one sub-numbered addition (`22a`). **All thirty-two ids are unique**; the union's additions are numbered above the inherited range rather than reusing it.
 
 | # | Check | Origin |
 |---:|---|---|
@@ -1031,7 +1103,7 @@ Three further checks are new to the union, and each closes something no single p
 | **27** | **Every index in `vector_latches` names a real entry in `latch_conditions`, that entry has `latches = true`, and the package's `capability_required` is `null` or in the Zone's minimum proven set.** | A state-vector component the verifier can never set is worse than useless: it doubles the search space and adds an unreachable half. |
 | **28** | **No `DRIVER` on a mandatory route drives a hinge whose free rotation — after the §21.1.1 implicit brake releases at its limits — can leave the route impassable, unless a `BRAKE` on the same hinge is on the same signal.** | Design 2's `DRIVER` never faced routine power loss. Under the union it does (§21.11), and a drawbridge held up by torque alone is a softlock waiting for a control room three rooms away. |
 | **29** | **No `STATUS_SENSOR`, `STATUS_VOLUME_SENSOR`, or `COMPOUND_SENSOR` output reaches a mandatory-route actuator or a `macro_setter` enable except through a node listed in `latch_conditions`.** | This is §30.6 property 8 enforced locally, and it is the rule that keeps the entire Status layer out of the state vector. |
-| **23** | **`ReferenceSolution.max_duration ≤ MAX_REPLAY_DURATION = 12.0 s`** (§35.4.1). | The replay budget is built from this bound; an unbounded `max_duration` makes the composition budget unbounded. |
+| **31** | **`ReferenceSolution.max_duration ≤ MAX_REPLAY_DURATION = 12.0 s`** (§35.4.1). | The replay budget is built from this bound; an unbounded `max_duration` makes the composition budget unbounded. Numbered `31` rather than `23`: check `23` is Design 3's setter validation, and two rows sharing an id makes every citation ambiguous. |
 | **30** | **Every mandatory manipulation package's reference solution latches when replayed by a synthetic provider at exactly `700 N` / `20.0 m` / `120 kg`** (§29.3.2). | A package that latches only above the envelope is solvable by some qualifying providers and not others, which is the soundness gap §29.3.1 closes. |
 
 ### 23.5.1 Replay context — which macro states a reference solution must survive
@@ -1228,19 +1300,11 @@ Twenty-four offer types. Every shell in the library declares which it provides, 
 
 ## 29.3 The `manipulate` contract — modifies Design 2 §29.3
 
-Design 2 validates every mandatory manipulation against **the least capable granting profile**, `ab_physics_light`: `700 N`, `20.0 m` range, `120 kg` verb mass limit. That sentence is well-defined in Design 2 because its profiles are a closed, hand-authored set of three.
+Design 2 validates every mandatory manipulation against **the least capable granting profile**, `ab_physics_light`: `700 N`, `20.0 m` range, `120 kg` verb mass limit. That is well-defined in Design 2 because its profiles are a closed, hand-authored set of three.
 
-**Under composition it is not well-defined, and this is the sharpest seam in the union.** Design 4 §11.4 resolves an Ability's numbers from its atoms and its scaling atom, so Epsilon can compose a `PUSH` Ability that grants `manipulate` and is *weaker* than `ab_physics_light`. A player holding only that Ability passes §29.4's entry check — the capability Boolean is true — walks into a Zone whose mandatory puzzle was validated at `700 N`, and cannot move the crate. §30.6 cannot see it, because the verifier treats `manipulate` as a Boolean and never reasons about newtons.
+**Under composition it is not, and this is the sharpest seam in the union.** Design 4 §11.4 resolves an Ability's numbers from its atoms and its scaling atom, so Epsilon can compose a `PUSH` Ability that is *weaker* than `ab_physics_light`. A player holding only that Ability would pass a Boolean-only entry check, walk into a Zone whose mandatory puzzle was authored at `700 N`, and be unable to move the crate. §30.6 cannot see it, because the verifier treats `manipulate` as a Boolean and never reasons about newtons.
 
-That is a softlock class the model check is structurally blind to, and it exists only because two proposals were merged. The union closes it by removing the axis the softlock lives on:
-
-> **A capability is satisfied by set membership over verbs, never by a magnitude. No mandatory puzzle is authored against a force, a range, or a mass number.**
-
-An earlier revision of this section closed the defect the other way, with a numeric floor: *every granting composition delivers at least `700 N`, `20.0 m`, `120 kg`.* **That was withdrawn**, because checking against the engine showed it is the one shape the capability model structurally cannot hold. `schemas/zone.py:132` states the rule and the reason:
-
-> *"What may NOT go here, and cannot, because the vocabulary has no word for it: raw damage, DPS, a health threshold, a crit figure. Numeric combat power is BALANCE. It is never LOGIC."*
-
-Newtons are not DPS, but they are the same kind of thing in the same place, and a capability vocabulary with no magnitude axis has nowhere to put either. ### 29.3.1 Two different questions, and the earlier revision answered only one
+### 29.3.1 Two different questions, and the earlier revision answered only one
 
 A prior revision replaced the numeric floor with pure verb-set membership and concluded that *"a composed Ability cannot be too weak to satisfy a gate — only present or absent."* **That conclusion does not follow.** If two `PUSH` providers resolve to different force, range, and mass limits, one can physically fail to shift an object the other shifts, while both satisfy the same Boolean. Membership answers *"is this a manipulation Ability"*; it does not answer *"can this one move the crate."*
 
@@ -1268,7 +1332,7 @@ Four rules follow, and together they close the soundness gap without putting a n
 3. **A sub-envelope host is still real content.** It manipulates, it solves optional routes, it is Forgeable and composable and fun. It simply is not the thing that unlocks a gated Zone, exactly as a `DASH` under `8.0 m` does not satisfy `long_gap`.
 4. **The verifier is untouched.** §30.6 still sees one Boolean whose value is fixed for the Zone, and §29.5's monotonicity argument holds verbatim, because a richer loadout can only add qualifying providers.
 
-**Where qualification is computed.** At §17.4's validation, once, when the item is composed or received: the resolver produces the host's numbers, compares them to the envelope, and stamps `qualifies_manipulate: bool` on the `HostDefinition`. Entry validation reads the flag. Gear may raise a host's numbers, but qualification is recomputed against the **committed Loadout** at entry, so a player cannot qualify by equipping Gear they then remove.
+**Where qualification is computed.** At §29.4's entry check, from the **resolved committed Loadout**, and nowhere else. It is a pure function of `(host composition, equipped Gear, active Mods)` evaluated at that moment — not a stored field (§4.2). Gear may raise a host's numbers, and because qualification is recomputed at entry, a player cannot qualify by equipping Gear they then remove.
 
 **Why the previous revision's argument was appealing and wrong.** It is true that a numeric floor on every granting composition would be a maintenance burden forever. But the alternative it chose — declaring the numbers irrelevant to logic — quietly moved the failure from composition time to the player standing in front of an immovable crate. The envelope is not a floor on *what may be composed*; it is a floor on *what counts as a guarantee*, which is a much smaller claim and the one Design 2 actually made.
 
@@ -1483,21 +1547,30 @@ Every certified shell is one of the twelve `review: pass` authored shells, and e
 
 **The exhaustion rule, and why the shell is never swapped late.** A previous revision let step 11 substitute the certified shell for the selected one when the selected shell could not host the fallback package. **That is unsafe:** by step 11 the shell's connector assignment is fixed (§30.11.2b), its neighbours' geometry chains to it, its offers may be partly bound, and Epsilon's choice is on its way into the manifest. Replacing it invalidates all four and re-running every affected invariant mid-algorithm is not something this document is willing to specify.
 
-**The policy is: the shell is chosen once, at step 5, and never changes.** `CERTIFIED_FALLBACK` is therefore indexed by **purpose and connector signature** rather than by purpose alone, and it is resolved **before** package binding:
+**The policy is: the shell is chosen once, at step 5, and never changes.** Two repairs make the fallback guarantee actually hold for the shell Epsilon selects.
+
+**First, the key is a connector signature, not a degree.** A previous revision wrote *"indexed by purpose and connector signature"* while the actual form was `CERTIFIED_FALLBACK[purpose][degree]`. Degree is not a signature: two degree-`2` rooms can demand entirely different socket kinds and directions. The key is the room's **normalized incident signature**:
 
 ```
-CERTIFIED_FALLBACK[purpose][degree] -> (family, shell_id)
+ConnectorSignature = sorted multiset of (socket_kind, direction) over incident edges
+CERTIFIED_FALLBACK[purpose][signature] -> family
 ```
 
-At step 5, for each room, the composer checks that `CERTIFIED_FALLBACK[purpose][degree]`'s shell is itself in that room's `offered_shells`. **If it is not, the room's purpose or the topology is at fault and the Zone attempt fails immediately** — before Epsilon is asked, before anything is bound. This is a cheap check on a table lookup and it moves the failure to the only place it can be handled safely.
+`socket_kind` ranges over four values (doorway, drop, rail mouth, vertical shaft) and `direction` over three (inbound, outbound, bidirectional), so with degree `1`–`4` the signature space is finite and small, and the table is enumerable and checked in.
 
-Given that guarantee, the exhaustion rule at step 11 is simple and shell-preserving:
+**Second, the guarantee attaches to every offered shell, not to one certified shell.** A previous revision proved the *certified* shell was in `offered_shells` and then claimed at step 11 that the shell Epsilon *actually selected* could host the fallback family. That does not follow — Epsilon may pick a different offered shell.
+
+> **Every shell in `offered_shells` must be proven capable of hosting the room's `CERTIFIED_FALLBACK[purpose][signature]` family, in addition to the §30.11.2a minimum vocabulary.** A shell that cannot is not offered.
+
+The guarantee then holds for whatever Epsilon selects, because it held for every candidate before the question was asked. If no shell satisfies both conditions, `offered_shells` is empty and §30.11.5's empty-list row applies — `FAIL_ROOM`, before Epsilon is contacted.
+
+Given that, the exhaustion rule at step 11 is shell-preserving:
 
 | Situation | Outcome |
 |---|---|
-| Step 11 exhausts `12` attempts for a room | Place `CERTIFIED_FALLBACK[purpose][degree]`'s **family** into the **already-selected shell**, which step 5 proved can host it |
+| Step 11 exhausts `12` attempts for a room | Place `CERTIFIED_FALLBACK[purpose][signature]`'s **family** into the **already-selected shell**, which step 5 proved every offered shell can host |
 | Density is `2` and only one package placed | The room ships with one. `PACKAGE_DENSITY` is a target, not a floor |
-| The certified family fails in the selected shell | **Unreachable by construction** — step 5 proved compatibility. Reaching it is a corrupted catalog, and it fails the room, then §30.8's Zone retry, then §37.2's fallback Zone |
+| The certified family fails in the selected shell | **Unreachable by construction** — the offering rule proved compatibility for every candidate. Reaching it is a corrupted catalog: it fails the room, then §30.8's Zone retry, then §37.2's fallback Zone |
 
 **No unbounded retry, no late shell swap, and no step that assumes something will fit.**
 
@@ -1529,7 +1602,7 @@ Claiming both would be a contradiction. The document claims two separate, weaker
 
 *Pinned: identical to Design 1 §30.5* for the three independent RNG streams, which underpin P1.
 
-Design 1's eight whole-Zone checks, plus Design 3's five, plus eleven new.
+Design 1's eight whole-Zone checks, plus Design 3's five, plus twelve new. **Every id is unique**, including the sub-numbered `19a`–`19c`.
 
 | # | Check | Origin |
 |---:|---|---|
@@ -1548,6 +1621,7 @@ Design 1's eight whole-Zone checks, plus Design 3's five, plus eleven new.
 | **20** | **The sum of a room's mandatory Status reservations (§35.2.1), plus one ordinary application, is within the room's `60`-entry and `24`-body caps.** | NEW |
 | **19a** | **Every Zone's `ZonePresentation` names a theme in the authored catalog and strings within their length bounds** (§30.1). | NEW |
 | **19b** | **Every incident topology edge of every room carries a distinct connector-socket assignment, and both endpoints of every edge agree on the joining transform** (§30.11.2b). | NEW |
+| **19c** | **Every `HostDefinition` carries exactly one of `composition` or `profile`, decided by its `category`** — `profile` for `mobility`, `composition` for every other category (§4.2). | NEW |
 | **22** | **Every package with a non-null `status_required` declares a `status_source` and a solution target, and that triple is marked `guaranteed_application`** (§35.2.2). | NEW |
 | **21** | **Every constrained body a reachable `POWER_OFF` can affect, and that the player can stand on, ride, or attach to, has a base-movement-safe egress** — a surface reachable from it by §6.2's movement law alone, under every reachable macro state, with no offer geometry and no capability (§21.11). | NEW |
 
@@ -1600,26 +1674,47 @@ HOME(o) = { c in R : c.room == home_room(o) }
 **The configuration must be augmented, because `(v, r)` cannot express this.** `REQ(o)` asks whether `o` has been consumed and `HOME(o)` asks where it is; neither fact is in the state vector or the room. Rather than put transforms into the global vector — which §4.10 exists to prevent — property 4 runs over a **per-object proof augmentation** that exists only inside the verifier:
 
 ```
-ObjectState = enum { AT_HOME, CARRIED, PLACED, CONSUMED }     # 4 values
-augmented configuration = (v, room, object_state)             # for ONE object o
+ObjectState = AT_HOME | CARRIED | PLACED(room_id) | CONSUMED
+augmented configuration = (v, room, object_state)          # for ONE object o
 ```
 
-Four semantic states, closed and sufficient:
+`PLACED` **is** room-indexed, and a previous revision was wrong to drop the index. It argued that room unload returns a dropped required object to `home_transform`, so where it was dropped could not matter. **That is not Design 2 §10.5's contract** — recovery returns an object that has *left the world*, not one legally resting inside its `allowed_volume`. A required cell dropped in room `B` stays in room `B`, and a proof that cannot say so cannot tell "the cell is two rooms away" from "the cell is here".
 
-| State | Meaning | Transitions out |
+`room_id` ranges over the object's declared `allowed_volume` only, which §23.5 check 24 already bounds.
+
+### 30.6.2 The augmented transitions, in full
+
+| From | Transition | Legal when |
 |---|---|---|
-| `AT_HOME` | `o` rests at its `home_transform` | → `CARRIED` when the player is in its room |
-| `CARRIED` | The player holds `o`; it moves with them | → `PLACED` anywhere in `allowed_volume`; → `AT_HOME` by Design 2 §10.5's recovery; → `CONSUMED` at its socket |
-| `PLACED` | `o` rests somewhere legal but not home | → `CARRIED` when the player is in that room; → `AT_HOME` by recovery |
-| `CONSUMED` | `o` is in its socket. Terminal | none |
+| `AT_HOME` | pick up | the player's room is `home_room(o)` |
+| `PLACED(k)` | pick up | the player's room is `k` |
+| `CARRIED` | drop | the player's room is in `allowed_volume`; → `PLACED(player's room)` |
+| `CARRIED` | insert | the player's room holds `o`'s socket; → `CONSUMED`, terminal |
+| `CARRIED` | **Move** | **carry-legal only — see below** |
+| `AT_HOME`, `PLACED(k)`, `CONSUMED` | Move | ordinary §30.6 Move rules; the object does not travel |
 
-`PLACED` is deliberately not room-indexed: Design 2 §10.5's recovery returns any dropped required object to `home_transform` on room unload, so a `PLACED` object is always recoverable from `AT_HOME`, and distinguishing *where* it was dropped adds states without adding proof power.
+> **The carry-legal Move rule.** From a `CARRIED` configuration, a Move across edge `e` is legal only when **all** hold: the destination room is in `o`'s `allowed_volume`; `e`'s predicate is true under `v`; `e`'s `capability` is in the proven set; **and `e` is traversable while carrying.**
+
+That last clause is the one that matters and the one a previous revision omitted entirely. Design 1 §10.3 disables a subset of actions while a carryable is held, and an edge whose only crossing uses a disabled action **is not available to a carrying player** even though it is available to the same player empty-handed. Concretely: an edge whose `capability` is `grapple` or `blink` is not carry-legal, because both are `MOBILITY` actions §10.3 blocks while carrying; an edge crossed by base movement or by a `LAUNCHPAD` is.
+
+Each edge therefore carries a derived `carry_legal: bool`, computed at composition from its `capability` and its authored crossing method, committed in the manifest, and read by the augmented search. **Without it the proof would route a required object across a grapple gap the player cannot actually cross while holding it** — which is precisely the stranding property 4 exists to reject, reintroduced by the proof itself.
 
 > **Property 4, formally.** For each required cross-room carryable `o`, search the augmented graph `R⁺(o)` from `(v_initial, entry, AT_HOME)`. Require: every configuration in `R⁺(o)` whose `object_state` is not `CONSUMED`, and from which the exit is only reachable through `o`'s socket, can reach a configuration with `object_state = CONSUMED`.
 
-**This is validation state, not persistence.** `ObjectState` never enters the state vector, never appears in a save, and never becomes a macro dimension. It exists for the duration of one reverse search and is discarded.
+**This is validation state, not persistence.** `ObjectState` never enters the state vector, never appears in a save, and never becomes a macro dimension. It exists for the duration of one search per object and is discarded.
 
-**Cost.** The augmented graph is `4 ×` the base graph per object: `4 × 49,152 = 196,608` configurations. §30.2 bounds required cross-room objects at `4` authored plus `4` local keys, so at most `8` searches of `196,608` — under `1.6M` configurations total, against the base search's `49,152`. It is still milliseconds, and it is the difference between *"the object's room exists on the map"* and *"you can still go and get it."*
+**Cost, recomputed from the real state count.** `ObjectState` has `2 + |allowed_volume|` values — `AT_HOME`, `CONSUMED`, `CARRIED`, and one `PLACED(k)` per room in the volume — not a universal `4×`. §23.5 check 24 bounds `allowed_volume` by the rooms between an object's home and its socket, and §30.2 caps a Zone at `12` rooms, so the worst case is `|allowed_volume| = 12` and `14` object states.
+
+| Term | Worst case |
+|---|---:|
+| States per object | `14` (`12` rooms + `AT_HOME` + `CONSUMED`) |
+| Augmented configurations per object | `14 × 49,152 = 688,128` |
+| Required cross-room objects | `4` authored + `4` local keys = `8` |
+| **Total augmented configurations** | **`5,505,024`** |
+
+Against the base search's `49,152` that is `112×`, and it is still a BFS over a graph with under `6M` nodes — tens of milliseconds, well inside §35.4's `2.0 s` model-check budget. A typical `allowed_volume` of `3` rooms gives `5` states and `245,760` configurations across all objects, which is smaller than the base search.
+
+It is the difference between *"the object's room exists on the map"* and *"you can still go and get it, while carrying it."*
 
 **On the object's own recovery rule.** Design 2 §10.5's recovery — an object that leaves the world returns to `home_transform` — is what makes `HOME(o)` a fixed room rather than a moving target. Property 4 is stated over rooms rather than over transforms for that reason, and §5.6's reconstruction order guarantees the object is at its home transform whenever the player has not carried it away.
 
@@ -1729,13 +1824,16 @@ This section exists because of the runtime finding in §30.1. It is the seam tha
 
 ```
 RoomRecord:
-  room_id        : Id
-  purpose        : Purpose                  # from PURPOSE_ROTATION
-  type           : ChamberType              # arena | tower | corridor | treasure_room | ...
-  shell_id       : Id                       # REQUIRED. No default. Never null.
-  offers_bound   : list[OfferBinding]
-  packages       : list[Id]
+  room_id              : Id
+  purpose              : Purpose        # the 11 values PURPOSE_ROTATION draws from (30.3.0)
+  type                 : ChamberType    # CLOSED: arena | tower | corridor | treasure_room
+  shell_id             : Id             # REQUIRED. No default. Never null.
+  connector_assignment : dict[EdgeId, SocketId]   # 30.11.2b. Total over incident edges
+  offers_bound         : list[OfferBinding]
+  packages             : list[Id]
 ```
+
+`ChamberType` is the **closed four-value enum** above and carries no open extension — a generated-record schema with an ellipsis in it is a schema an implementer has to guess at. `connector_assignment` is total: every incident edge of the room appears exactly once as a key, and no `SocketId` appears twice as a value (§30.5 check 19b).
 
 `shell_id` has **no default and is not nullable.** A `RoomRecord` without one fails schema validation at the bridge and the Zone is never served. There is no code path in which a room is composed, served, and then discovers it has no shell.
 
@@ -1835,19 +1933,22 @@ Composition therefore **commits an immutable manifest**, and everything downstre
 
 ```
 ZoneManifest:
+  schema_version       : int = 1       # 5.6.2's migration key
   zone_id              : Id
   zone_seed            : int
   progression_state    : digest
   ap_catalog_digest    : digest
   shell_catalog_digest : digest        # the exact catalog the offers came from
-  rooms                : list[RoomRecord]      # each with its bound shell_id
+  presentation         : ZonePresentation      # 30.1
+  rooms                : list[RoomRecord]      # each with shell_id and connector_assignment
   machine              : MachineGraph
   packages             : list[PackageInstance]
-  replay_verdicts      : list[ReplayVerdict]   # §30.11.8
-  epsilon_provenance   : { model_id, request_digest, response_digest,
-                           selected_offline: bool }
+  replay_verdicts      : list[ReplayVerdict]   # the named type in 5.6.3
+  epsilon_provenance   : EpsilonProvenance     # the named type in 5.6.3
   manifest_digest      : digest        # over every field above
 ```
+
+**Exactly one authoritative shape exists for each persisted type.** `ReplayVerdict` and `EpsilonProvenance` are defined once, in §5.6.3, and referenced by name here. A previous revision inlined an abbreviated anonymous `epsilon_provenance` shape alongside the named definition, which is two contracts for one field.
 
 Four rules:
 
@@ -1927,7 +2028,7 @@ Rows 5, 6, 10, 11, and 12 are the five system slots no single proposal filled mo
 
 **Sixty-six against a best-of-inputs thirty-six is `1.83×`.** That number is exact, it follows from the ship table above and nothing else, and it is the strongest quantitative claim this document makes. It is a claim about *surface area*, not about quality — a pair existing is not the same as a pair being good.
 
-**How many of the 66 interact.** §36.1 enumerates **fifteen** pairs as genuinely orthogonal, with a reason for each. The remaining **fifty-one** are required to have a stated resolution in this document, and §36.1's system-map page is where each is recorded against the section that resolves it. §38 vector 66 asserts the page carries all `66` entries with none unclassified.
+**How many of the 66 interact.** §36.1 generates all sixty-six rows mechanically and classifies each: **`51` INTERACTS** with a section reference, **`15` ORTHOGONAL** with a reason. Those totals are derived from the generated table rather than asserted before it, and §38 vector 66 re-derives them.
 
 **What is deliberately not claimed.** The other five proposals were not audited pair-by-pair the same way, so no "stated rules" count is given for them and none should be inferred. The comparison above is on pairs *possible*, which is computable from the ship table, and stops there.
 
@@ -2233,7 +2334,7 @@ The second error, of the same family as the first. `settle_timeout = 8.0 s` (Des
 
 The union bounds the right field and validates the bound:
 
-> **`ReferenceSolution.max_duration ≤ MAX_REPLAY_DURATION = 12.0 s`.** §23.5 **check 23** rejects any package declaring more. `12.0 s` is one second per step at Design 2 §23.1's twelve-step ceiling, which is what a `PUSH`, `MOVE_TO`, or `WAIT` step actually costs.
+> **`ReferenceSolution.max_duration ≤ MAX_REPLAY_DURATION = 12.0 s`.** §23.5 **check 31** rejects any package declaring more. `12.0 s` is one second per step at Design 2 §23.1's twelve-step ceiling, which is what a `PUSH`, `MOVE_TO`, or `WAIT` step actually costs.
 
 Recomputed against the right quantity:
 
@@ -2276,7 +2377,9 @@ Batching is what keeps this bounded: twelve serial per-room requests at a `10.0 
 | **Per attempt** | **`13.6 s`** |
 | Attempts before the §37.2 fallback Zone | `5` |
 | **Total worst case** | **`88.0 s`** = `20.0 + 5 × 13.6` |
-| **First-pass typical** | **`13.6 s`**, plus Epsilon's actual latency rather than its timeout |
+| **First-attempt deterministic compute** | **`13.6 s`** — the bridge-owned work, excluding all model latency |
+| **First-attempt total** | **`13.6 s` + actual Epsilon latency** |
+| **First-attempt bounded worst case** | **`33.6 s`** = `13.6 + 20.0`, when both Epsilon requests time out |
 
 The replay is the largest per-attempt cost, roughly `5×` the model check, and §30.8's package-level retry exists specifically so a failure does not re-pay it.
 
@@ -2311,29 +2414,84 @@ The replay is the largest per-attempt cost, roughly `5×` the model check, and �
 
 *Pinned: identical to Design 5 §36* — the Status table with per-entry phase, source, and remaining duration.
 
-## 36.1 The system map
+## 36.1 The system map — all 66 pairs
 
-Referenced by §31.3. A developer-only page listing all `66` system pairs, each marked *interacting* with the section that resolves it, or *orthogonal*. The fifteen orthogonal pairs:
+Generated mechanically from §31.3's twelve-system inventory, every unordered pair emitted exactly once. A previous revision listed only the fifteen orthogonal pairs while §38 vector 66 claimed the page carried all sixty-six — and two of those fifteen rows said INTERACTS, so it was not even a list of fifteen orthogonal pairs. Both defects are why this table is generated rather than written.
 
-| Pair | Why orthogonal |
-|---|---|
-| Forge — machinery | Forge is Hub-only; machinery is Zone-only |
-| Forge — macro state | Same |
-| Forge — signals | Same |
-| Forge — constraints | Same |
-| Forge — manipulation | Same |
-| Mobility — composition | Mobility is **not** atom-composed (§12.8) and never affects Zone composition. Two separate reasons, no interaction |
-| Mobility — Forge | Forge **excludes** Mobility entirely (§12.8, §18). Not Forgeable, not composed |
-| Weapons — macro state | A weapon never sets a variable; `SHOOTABLE_TARGET` is a signal input, not a setter |
-| Weapons — constraints | Weapons damage; they do not manipulate. §31.2's invariant depends on this |
-| Abilities — machinery | Abilities act on actors and objects; machinery is kinematic and unaffected |
-| Movement — composition | The movement law constrains room geometry at authoring, never at composition |
-| Movement — Forge | None |
-| Movement — macro state | None; a macro effect changes what geometry exists, never how the player moves through it |
-| Status — Zone composition | §30.6 property 8; Status is invisible to the Zone composer's proof. *Item* composition is a different system and interacts — see §11.7's `effect_status` atoms, which are `INTERACTS` |
-| Status — Forge | **INTERACTS.** Forge recomposes and may preserve `effect_status` atoms (§18.2), so Forge can change which Status an Ability delivers. §18's preserved-atom rule governs |
+**`51` INTERACTS, `15` ORTHOGONAL, `66` total.** The totals are derived from the table below, not asserted ahead of it.
 
-The page exists so that "these two systems do not interact" is a **recorded decision** rather than a gap. Six of the fifteen are the same fact — Forge is Hub-only — and stating it once in a table is better than fifteen separate silences.
+| Pair | Class | Section or reason |
+|---|---|---|
+| Movement — Weapons | INTERACTS | §6.2, §11 |
+| Movement — Abilities | INTERACTS | §6.2, §12 |
+| Movement — Mobility | INTERACTS | §13 |
+| Movement — Manipulation | INTERACTS | §14.4 |
+| Movement — Constraints | ORTHOGONAL | The movement law is evaluated against static geometry; a constrained body is a dynamic obstacle handled by §26.7's rails rule and by collision, not by the law |
+| Movement — Status | INTERACTS | §15.2 (`rooted`, `floundering`) |
+| Movement — Signals | ORTHOGONAL | A signal never alters the movement law; it moves actuators, which §21.3 handles as platform velocity |
+| Movement — Machinery | INTERACTS | §21.3 |
+| Movement — Macro state | ORTHOGONAL | A macro effect changes what geometry exists, never how the player moves through it |
+| Movement — Compositional generation | ORTHOGONAL | The movement law constrains room geometry at authoring, never at composition |
+| Movement — Forge | ORTHOGONAL | Forge is Hub-only; the movement law is a Zone-runtime constant |
+| Weapons — Abilities | INTERACTS | §12.5 hybrids |
+| Weapons — Mobility | INTERACTS | §13.7 |
+| Weapons — Manipulation | INTERACTS | §31.2's 10:1 invariant |
+| Weapons — Constraints | ORTHOGONAL | Weapons damage; they do not manipulate. §31.2's invariant depends on this |
+| Weapons — Status | INTERACTS | §11.7 payload atoms |
+| Weapons — Signals | INTERACTS | §20.2 `SHOOTABLE_TARGET` |
+| Weapons — Machinery | INTERACTS | §25 destructibles |
+| Weapons — Macro state | ORTHOGONAL | A weapon never sets a variable; `SHOOTABLE_TARGET` is a signal input, not a setter |
+| Weapons — Compositional generation | INTERACTS | §11.7, §11.9 |
+| Weapons — Forge | INTERACTS | §18 |
+| Abilities — Mobility | INTERACTS | §12.8 |
+| Abilities — Manipulation | INTERACTS | §11.7 `effect_physics_*` |
+| Abilities — Constraints | INTERACTS | §14.8 |
+| Abilities — Status | INTERACTS | §11.7 `effect_status` |
+| Abilities — Signals | INTERACTS | §11.7 `effect_signal_*` |
+| Abilities — Machinery | ORTHOGONAL | Abilities act on actors and objects; machinery is kinematic and unaffected |
+| Abilities — Macro state | INTERACTS | §19.3 signal verbs |
+| Abilities — Compositional generation | INTERACTS | §12.7 |
+| Abilities — Forge | INTERACTS | §18 |
+| Mobility — Manipulation | INTERACTS | §13.7 relations survive Mobility |
+| Mobility — Constraints | INTERACTS | §26.7 |
+| Mobility — Status | INTERACTS | §15.2 (`phased`, `updraft`) |
+| Mobility — Signals | INTERACTS | §20 `PROXIMITY_SENSOR` |
+| Mobility — Machinery | INTERACTS | §21.7 LaunchPad |
+| Mobility — Macro state | INTERACTS | §28.4 capability-gated edges |
+| Mobility — Compositional generation | ORTHOGONAL | Mobility is not atom-composed (§12.8) and never affects Zone composition |
+| Mobility — Forge | ORTHOGONAL | §12.8: Forge excludes Mobility entirely |
+| Manipulation — Constraints | INTERACTS | §26.5, §14.8 |
+| Manipulation — Status | INTERACTS | §15.2 (`lightened`, `anchored`) |
+| Manipulation — Signals | INTERACTS | §20.5 `WEIGHT_THRESHOLD` |
+| Manipulation — Machinery | INTERACTS | §21.10 |
+| Manipulation — Macro state | INTERACTS | §21.11 deferral guard |
+| Manipulation — Compositional generation | INTERACTS | §11.7 |
+| Manipulation — Forge | ORTHOGONAL | Forge is Hub-only; manipulation is Zone-only |
+| Constraints — Status | INTERACTS | §15.2 on constrained bodies |
+| Constraints — Signals | INTERACTS | §20.5 `CONSTRAINT_STATE` |
+| Constraints — Machinery | INTERACTS | §21.10 `WINCH`/`BRAKE`/`DRIVER` |
+| Constraints — Macro state | INTERACTS | §21.1.1, §30.5 check 14 |
+| Constraints — Compositional generation | INTERACTS | §30.5 check 14 bounds what composition may place |
+| Constraints — Forge | ORTHOGONAL | Forge is Hub-only; constraints are Zone-only |
+| Status — Signals | INTERACTS | §20.5 Status sensors |
+| Status — Machinery | INTERACTS | §25.7 Status hazards |
+| Status — Macro state | INTERACTS | §30.6 property 8 — **only** through a latch |
+| Status — Compositional generation | INTERACTS | §11.7's `effect_status` atoms are part of the composed alphabet |
+| Status — Forge | INTERACTS | §18.2 — Forge may recompose or preserve `effect_status` atoms |
+| Signals — Machinery | INTERACTS | §19.3, §21 |
+| Signals — Macro state | INTERACTS | §19.7 the machine graph |
+| Signals — Compositional generation | INTERACTS | §30.3 step 11 places signal packages |
+| Signals — Forge | ORTHOGONAL | Forge is Hub-only; signals are Zone-only |
+| Machinery — Macro state | INTERACTS | §21.10 macro effects |
+| Machinery — Compositional generation | INTERACTS | §30.3 step 11 |
+| Machinery — Forge | ORTHOGONAL | Forge is Hub-only; machinery is Zone-only |
+| Macro state — Compositional generation | INTERACTS | §30.3 steps 6–10 |
+| Macro state — Forge | ORTHOGONAL | Forge is Hub-only; macro state is Zone-only |
+| Compositional generation — Forge | INTERACTS | §18.1 Recompose |
+
+Two naming corrections a previous revision needed. System 11 is **Compositional generation** — item composition — and it is not the same thing as Zone composition, which is §30 and is not one of the twelve systems. `Status — Compositional generation` is therefore **INTERACTS** (§11.7 puts `effect_status` atoms in the composed alphabet), and the orthogonality that does hold is between Status and *Zone* composition, which §30.6 property 8 states in its own section. `Status — Forge` is likewise INTERACTS, because §18.2 lets Forge preserve or recompose those atoms.
+
+The page exists so that "these two systems do not interact" is a **recorded decision** rather than a gap. Five of the fifteen orthogonal rows are the same fact — Forge is Hub-only — and stating it five times in a generated table is better than five separate silences.
 
 ---
 
@@ -2547,15 +2705,17 @@ Every Design 1, 2, 3, 4, and 5 vector applies wherever this document pins to tha
 63. With `n` `ActiveStatus` entries in a room, no single simulation tick evaluates more than `ceil(n / 60)` of them. At the `60`-entry cap, no tick evaluates more than one.
 64. Each Status evaluates exactly once per second of game time, and duration countdown renders per frame.
 64a. A fixture replayed at `30`, `60`, `120`, and uncapped render rates over the same fixed simulation-tick sequence produces byte-identical Status state at every tick boundary. Render rate changes no gameplay value.
-65. Zone composition including Epsilon selection and all retries completes within `88.0 s`. A single attempt completes within `13.6 s`, of which serial physics replay accounts for at most `10.8 s`.
+65. Zone composition including Epsilon selection and all retries completes within `88.0 s`.
+65d. A single composition attempt's **deterministic compute** completes within `13.6 s`, of which serial physics replay accounts for at most `10.8 s`. This figure excludes model latency and is the only one a bridge can hold itself to.
+65e. A first attempt's **total** elapsed time is `13.6 s` plus Epsilon's actual latency, bounded at `33.6 s` when both requests time out.
 65a. `36` replays of `12.0 s` each, at the contracted `40×` minimum throughput, complete in `10.8 s` or less on the canonical environment.
-65b. No package declares `ReferenceSolution.max_duration` above `12.0 s`; §23.5 check 23 rejects one that does.
+65b. No package declares `ReferenceSolution.max_duration` above `12.0 s`; §23.5 check 31 rejects one that does.
 65c. Shell selection issues exactly one batched Epsilon request per Zone, at most one repair attempt, and no request at all on a retry attempt.
 
 ## Coverage of the union itself
 
-66. §36.1's system map contains exactly `66` entries, each marked either *interacting* with a section reference that exists in this document, or *orthogonal* with a reason. No entry is unclassified.
-67. The fifteen entries marked *orthogonal* are exactly those listed in §36.1.
+66. §36.1's system map contains exactly `66` rows — every unordered pair of §31.3's twelve systems, each exactly once — and each row is classified either INTERACTS with a section reference that exists in this document, or ORTHOGONAL with a reason. No row is unclassified and no pair is missing.
+67. Counting §36.1's rows yields exactly `51` INTERACTS and `15` ORTHOGONAL. §31.3's stated totals equal those counts.
 68. Every one of the thirty-four families in §24 has a reference fixture in §37.
 69. Every one of the eighteen sensor types in §20 and twelve actuator kinds in §21 appears in at least one fixture.
 70. All thirteen Statuses, all eight compounds, all twelve manipulation verbs, all eight constraint kinds, and all five signal verbs appear in at least one fixture.
@@ -2810,9 +2970,9 @@ Thirty-five waves. The ordering constraint is that **the verifier exists before 
 | 9 | **`shell_id`, the offered catalog, and the committed manifest (§30.11)** | **A V 3m–3q; fixtures U13, U14, U15.** This is 3B's specification and it ships first |
 | 10 | **The state vector and the model check, properties 1–6** | Fixtures N1–N5 rejected |
 | 11 | Macro variables, predicated topology, the machine graph | D3 V 1–20 |
-| 12 | Sensors 13–15, macro effects, control rooms | D3 V 21–40 |
+| 12 | Sensors 13–15, macro effects, control rooms, `CERTIFIED_FALLBACK` resolution at step 5 | D3 V 21–40 |
 | 13 | The Zone Diagram, read-only, per-variable discovery | A V 57; D3 V 41–55 |
-| 14 | Composition steps 1–10, 13–18; RNG primitives; `PACKAGE_DENSITY` | A V 38–47; §30.3.1, §30.3.2 |
+| 14 | **Composition steps 1–14 and 16–20** — topology, purposes, shell binding, the vector freeze, latch allocation, macro effects, **package placement (step 11)**, Checks, encounters, provisional checkpoints, structural checks, and the manifest commit. RNG primitives and `PACKAGE_DENSITY` | A V 38–47; §30.3.1, §30.3.2 |
 | 15 | **Property 4 as strengthened (§30.6.1)** | A V 40; fixture U10 rejected |
 | 16 | **Checkpoints over reachable configurations (§30.7.1)** | Fixture U1's recorded result |
 | 17 | The certified fallback Zone and `CERTIFIED_FALLBACK` | §37.2 passes with `R = E` |
@@ -2842,7 +3002,7 @@ Four ordering rules the table encodes:
 3. **Wave 23 before wave 25.** The physical half of the proof — check 20's replay — ships before the graph half learns to depend on it. A Latch transition whose legality references a validator that does not exist is a Latch transition that is always legal, which is the most dangerous possible bug in this document.
 4. **Wave 33 before wave 34.** Property 8 ships before Status budgets, so the first Zone composed with Status sensors is already rejected if a Status reaches a topology predicate. Building the budgets first produces a working, playable, unsound game — worse than a broken one, because it looks finished.
 
-Waves 1–17 are a complete, shippable game: Design 3 with authored shells. Waves 18–28 add Design 2. Waves 29–34 add Design 5. Wave 35 adds Design 4. **Each of those four boundaries is a legitimate stopping point**, and §41.2 says what you have at each.
+Waves 1–17 are a complete, shippable game: Design 3 with authored shells. Step 12's physics replay is not among them and is not needed — with no physics layer built, no package requires one, and §30.5 check 17's cap is trivially satisfied at zero. Step 15 and steps 18–19's checkpoint validation land in wave 16. Waves 18–28 add Design 2. Waves 29–34 add Design 5. Wave 35 adds Design 4. **Each of those four boundaries is a legitimate stopping point**, and §41.2 says what you have at each.
 
 ---
 
@@ -2860,18 +3020,18 @@ Waves 1–17 are a complete, shippable game: Design 3 with authored shells. Wave
 | May physics gate progression? | **Yes**, through `capability:core:manipulate` plus a validated reference solution plus a vector latch. This is the one fork that needed new machinery |
 | How is a Zone proven safe? | One model check, eight properties, `R ⊆ E` at its centre, run once at composition |
 | How does Status participate in progression? | **Only through a latch.** Three independent guards enforce it |
-| How many Statuses, and may one modify damage on an actor? | Thirteen. None |
+| How many Statuses, and may one modify damage on an actor? | Thirteen. **None deals or schedules Health damage, and none modifies raw damage, crit chance, or a crit multiplier.** `exposed` sets an actor's Defense stat to `0.0`, which changes the resulting number and is the one declared exception (§15.3) |
 | What happens on power loss? | Per actuator kind. Doors close, load-bearing machinery holds, and no simulated mass is set in motion |
 | Who resolves a conflict between a latch, a sensor, and a signal verb? | §19.3's step-1 order: sensors, then latches, then verbs |
 | What fits on the screen? | §33.10's three tiers, with two elements promoted for safety |
 | Do the physics, signal, and Status verbs get high-tier expressions? | Yes. Four `HIGH` effect atoms at `62`, lifting in-band `HIGH` bases from `48` to `138` |
-| What stops a composed manipulation Ability being too weak for a puzzle validated against a profile? | §29.3's floor on every granting composition, rather than a numeric capability |
+| What stops a composed manipulation Ability being too weak for a puzzle validated against a profile? | §29.3.2's envelope, applied to **provider qualification** rather than to composition legality. Any composition may grant the Boolean; only one meeting `700 N` / `20.0 m` / `120 kg` counts as a guaranteed mandatory-route provider |
 
 ## 41.2 What this proposal sacrificed
 
 It cut one clause of one Status (§0.4). Everything else it gave up is cost, not content, and the cost is real.
 
-**1. Composition time: `88.0 s` per Zone worst case, `13.6 s` for an attempt that passes first time, against Design 3's `20.0 s` and Design 1's low single digits.** Two costs dominate: §23.5 check 20's headless physics replay at `10.8 s` per attempt, and Epsilon's `20.0 s` worst-case shell request. If the replay proves too slow, §30.5 check 17's cap of `12` replay packages is the dial — at `6` it halves to `5.4 s`. If Epsilon's latency dominates, §30.11.6's offline selector is already the certified answer and can be made the default. Both are tuning values with stated meanings, not redesigns.
+**1. Composition time: `88.0 s` per Zone worst case; a first attempt is `13.6 s` of deterministic compute plus Epsilon's actual latency, bounded at `33.6 s`. Against Design 3's `20.0 s` and Design 1's low single digits.** Two costs dominate: §23.5 check 20's headless physics replay at `10.8 s` per attempt, and Epsilon's `20.0 s` worst-case shell request. If the replay proves too slow, §30.5 check 17's cap of `12` replay packages is the dial — at `6` it halves to `5.4 s`. If Epsilon's latency dominates, §30.11.6's offline selector is already the certified answer and can be made the default. Both are tuning values with stated meanings, not redesigns.
 
 **2. Three validators stacked.** A Zone must pass the structural checks, the physics replays, *and* the model check. Each has its own failure mode and its own retry path, and a bug in any of the three produces a class of broken Zone the other two do not catch. Design 1 had one validator that could not fail because construction guaranteed the property. This has three that can.
 
@@ -2949,14 +3109,15 @@ The union works because four of its six apparent forks were superset relationshi
 
 What it buys is `66` system pairs against a best-of-inputs `36`, `34` puzzle families against `18`, thirteen Statuses, twelve manipulation verbs, eight constraint kinds, reversible macro state, `179,326,745` composable Weapons and `16,586,524` composable Abilities, and Forge — with one verifier proving, over all of it simultaneously, that no reachable configuration is a dead one.
 
-What it costs is **`88.0 s`** of worst-case composition (**`13.6 s`** when a Zone composes first time), three stacked validators, two rooms per Zone, and **`35`** waves of build.
+What it costs is **`88.0 s`** of worst-case composition — **`13.6 s`** of deterministic compute on a first attempt, plus Epsilon's actual latency, bounded at **`33.6 s`** — three stacked validators, two rooms per Zone, and **`35`** waves of build.
 
 **Every number in this section is duplicated from an authoritative section and was mechanically compared against it before this document claimed closure.** A previous revision of this paragraph said `28` seconds and thirty-four waves while the body said otherwise — which by itself made that revision's PASS false, and is the reason §41 is now regenerated last rather than carried forward.
 
 | Claim here | Authority | Value |
 |---|---|---:|
 | Composition, worst case | §35.4.3 | `88.0 s` |
-| Composition, first pass | §35.4.3 | `13.6 s` |
+| Composition, first-attempt compute | §35.4.3 | `13.6 s` |
+| Composition, first-attempt bounded | §35.4.3 | `33.6 s` |
 | Implementation waves | §40.2 | `35` |
 | Composable Weapons | §11.9 | `179,326,745` |
 | Composable Abilities | §12.7 | `16,586,524` |
@@ -2968,5 +3129,25 @@ What it costs is **`88.0 s`** of worst-case composition (**`13.6 s`** when a Zon
 | Union fixtures / adversarial | §37.3, §37.4 | `19` / `11` |
 
 This document meets the Zero-Guesswork Standard v1.1 in every area of its twelve-point checklist. Where it deviates from a source proposal it says so inline and names the modifier. Where it cut something it says so in §0.4, once, in the first two hundred words. Where an earlier revision of *this document* was wrong, §41.5 and the repair audit say so by name rather than quietly correcting it.
+
+### The verdict, stated precisely
+
+**Design verdict: PASS.** The architecture holds, and two adversarial repair passes did not find a defect in it.
+
+**Zero-Guesswork verdict: CONDITIONAL — NOT YET PROMOTABLE.** Not PASS, and the difference is not pedantry. The standard requires exactly one mandated outcome for every player-visible behaviour, saved state, procedural-validity input, and failure case. **Three questions remain that an implementer cannot answer from this document**, and a document with open behaviour is not zero-guesswork however clean the rest of it is:
+
+| # | Open decision | What it changes | Whose call |
+|---:|---|---|---|
+| **1** | **Environmental-agency signal persistence** — transient per visit, or persistent through validated transitions and the interpretation-log fold | **Saved state.** §5.2's category assignment for signal state, and therefore what a save contains | Owner. The continuity archive marks it an explicit unresolved gate |
+| **2** | **Capability gating versus Archipelago logic** | **Procedural validity.** Whether §30.6 may admit a capability-gated mandatory Check at all | Owner, and it needs AP work either way |
+| **3** | **The four `HIGH` master atoms** (§11.7.2) | **Content.** Catalog `121` vs `117`, Abilities `16,586,524` vs `6,133,474`, and whether any gate-bearing family has a high-tier expression | Owner. New content, introduced by an audit, not an approved repair |
+
+**The proposed resolution for decision 2, for approval and not enacted:**
+
+> An allocated AP Check, a local key relevant to AP reachability, or a Zone exit may sit behind a capability gate **only if** the matching AP access rule declares the same prerequisite and Archipelago can prove that prerequisite obtainable. **Until that AP integration exists, composition rejects such placement.**
+
+That preserves capability-gated *local* gameplay — optional routes, shortcuts, flanks — while refusing to create a second solvability model Archipelago cannot see. It matches the 2026-09-04 ruling that making an offer load-bearing *"requires a separate owner ruling and matching AP logic"*, and it is the conservative direction: it forbids something the document currently permits. **It is written here for approval and is not in force.**
+
+**Resolve those three and the verdict becomes PASS with no further document work** — decisions 1 and 3 each have their outcomes already tabulated, and decision 2's rule is drafted above.
 
 **It is not canon. Exactly one of the six proposals should be, and this one is the most expensive of them by a wide margin. Pick it only if you want the whole game and are prepared to build the verifier first — and read `07_ENGINE_RECONCILIATION.md` before treating §14, §21.10, §26, or §29 as buildable against the engine that exists today.**
