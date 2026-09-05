@@ -314,12 +314,12 @@ Reference lint passed while every one of §8.1's contradictions was live, becaus
 |---|---|
 | **Pull request** | `cadykaya/archipepsi` **#9** |
 | **Branch** | `claude/chatgpt-share-link-review-77kk2l` |
-| **Audited commit SHA** | **`950a561269119d2e8fb8f31fa7a35266af8f6d37`** (pass 4) |
+| **Audited commit SHA** | **`e7e6c7d5e8762eb4d2a7f9b8243966483087219f`** (pass 4, re-audited after the connector reconciliation) |
 | **Date** | 2026-09-05 |
-| **Prior audited revision** | `487a6446f3bca1969d55ec631b5700f093ceefef` (pass 3) |
+| **Prior audited revisions** | `487a644` (pass 3), `950a561` (pass 4 before the connector reconciliation) |
 | **Prior head reviewed** | `4004f0184aa97ae4a3cec34a3e3f792dcbebb416` |
 
-**On the recorded SHA.** `950a561` is the commit whose *content* every checker below was run against, from a clean worktree checked out at that revision — not from an export and not from the editing tree. The commit that adds this line necessarily comes after it, so the branch head is one commit ahead; that following commit touches this table and nothing else. Recording the audited content's SHA rather than the head's is the only way for the two to be the same thing.
+**On the recorded SHA.** `e7e6c7d` is the commit whose *content* every checker below was run against. It supersedes `950a561`: a later commit changed §4.9a's connector vocabulary, so the earlier SHA no longer covered the document and re-recording it without re-auditing would have been exactly the stale-reference failure this audit exists to prevent, from a clean worktree checked out at that revision — not from an export and not from the editing tree. The commit that adds this line necessarily comes after it, so the branch head is one commit ahead; that following commit touches this table and nothing else. Recording the audited content's SHA rather than the head's is the only way for the two to be the same thing.
 
 **Checkers run against that SHA**, all from the repository worktree at that revision and not from any export:
 
@@ -329,7 +329,7 @@ Reference lint passed while every one of §8.1's contradictions was live, becaus
 | `pipecheck` — GFM table integrity across all nine files | `0` broken cells |
 | `dupcheck` — duplicated figures against their authorities | `0` stale |
 | `closurecheck` — every §41.6 figure against its authoritative section | `0` mismatched, `16` figures |
-| `semcheck` — semantic contradictions | **`0` of `22` checks** |
+| `semcheck` — semantic contradictions | **`0` of `23` checks** |
 | Check-id uniqueness — structural and package | `0` duplicates; `28` structural, `32` package |
 | System-map derivation | `66` rows, `51` / `15`, totals derived |
 | Broken `check N` references | `0` |

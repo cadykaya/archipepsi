@@ -211,6 +211,8 @@ The owner ruled that Design 6 adopts the conservative contract, now §29.5a of t
 
 Across the twelve `review: pass` shells the joining sockets are **32 `doorway` and 4 `corridor_end`**, so the reconciled vocabulary is what the authored rooms already declare.
 
+Two further places still enumerated the invented kinds after the enum was replaced — the signature space and the connector-satisfiability rule — and were caught by a new `semcheck` class rather than by reference lint, which passed while both were live. A stale enumeration in prose resolves fine; only a check that knows the vocabulary catches it.
+
 **This is the good direction for a finding to run.** The design moved toward the engine, no authored room needs rework, and one invented enum is gone. It also closes the pass-4 instruction to use *"the exact equivalent ids already present in the live authored-room contract if those names differ"* — they did differ, and they now match.
 
 ## 8c. Does Design 6 replace any authored room?
