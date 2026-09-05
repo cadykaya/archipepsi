@@ -2,7 +2,7 @@
 
 **Scope:** repair and rebase of `06_THE_AMALGAM.md`. Not a redesign; the architecture is owner-selected and preserved.
 **Rebased onto:** `ARCHIPEPSI_CONTINUITY_2026-09-04` (owner rulings + runtime findings), and the exact current copies of `00`–`05`.
-**Verdict:** **PASS.** See §7.
+**Verdict:** **Design PASS. Zero-Guesswork PASS — PROMOTABLE.** See §10. Four repair passes; §9 records the audited revision.
 
 ---
 
@@ -332,13 +332,61 @@ Reference lint passed while every one of §8.1's contradictions was live, becaus
 | Check-id uniqueness — structural and package | `0` duplicates |
 | System-map derivation — `66` rows, totals derived | consistent |
 
+## 9a. Fourth pass — promotion closure
+
+The owner ruled on all four open decisions, and a closure review of `4004f018` found ten further defects. **Pass 3's checker reported zero semantic contradictions while every one of these was live**, which is the finding that matters most here: a checker that misses a class is not evidence the class is absent.
+
+### 9a.1 The owner rulings, applied
+
+| # | Ruling | Where |
+|---:|---|---|
+| **O1** | Environmental agency is **persistent**, split: accepted consequences become `AgencyRecord`s in the fold and survive unload, save, death, reconstruction; raw signal values, timers, momentary inputs and verb durations stay transient and are recomputed at §5.6 step 6a | New §5.4a, §5.6 steps 6/6a |
+| **O2** | The **conservative AP rule** is the contract, with structural check 23. Optional content — shortcuts, secrets, flanks, optional rewards and traversal — stays gate-able | New §29.5a |
+| **O3** | The four `HIGH` master atoms are **retained**. OWNER DECISION REQUIRED language removed | §11.7.2, §41.3 |
+| **O4** | Queued macro conflict is **latest-wins**, approved | §21.11.1, §41.3 |
+
+### 9a.2 Law 47 — the largest remaining contradiction
+
+§1 claimed all 48 inherited laws held unchanged. **Law 47 requires composition deterministic from a seed**, and §30.5.1 correctly says fresh generation is not seed-deterministic while Epsilon chooses shells. Both could not be true, and the document had been asserting both since pass 1.
+
+New §1.4 narrows the law into three properties rather than hiding the conflict: **47a** bridge structural determinism (everything before the model is consulted, byte-identical); **47b** the model choice, explicitly *not* claimed seed-determined, folded into Zone identity via `response_digest`; **47c** committed determinism from the manifest, forever, on any machine. Law 47's second sentence — decorative randomness never alters solvability — is untouched. §30.3's opening, D73's traceability row, §41.4's "nowhere" claim, and the pin ledger all updated. **This is a supersession by a newer owner ruling, and §41.4 now says so instead of claiming no disagreement exists.**
+
+### 9a.3 The other eight
+
+| # | Defect | Repair |
+|---:|---|---|
+| 2 | Two live `CERTIFIED_FALLBACK` schemas — the superseded `[purpose] -> (family, shell_id)` form and its six-row table were still stated in the present tense | Deleted. One live schema: `[purpose][ConnectorSignature] -> family` |
+| 3 | `ConnectorSignature` read a `socket_kind` and a `B_TO_A` direction the pinned `TopologyEdge` does not have, and `carry_legal` was called "committed" while no schema declared it | New §4.9a extends `TopologyEdge` with `connector_kind` (closed four-value), `crossing` (closed **ten**-value), and `B_TO_A`. `carry_legal` is **derived** from `crossing` by a stated rule and re-checked at load by check 24 |
+| 4 | Property 4's state count omitted `CARRIED`: `2 + \|allowed_volume\|` instead of `3 +` | `15` states worst case, `737,280` per object, **`5,898,240`** across `8`. Typical: `6` states, `294,912` per object, `2,359,296` across all — figures a previous revision conflated |
+| 5 | "Tens of milliseconds" was an invented benchmark for a six-million-configuration search | New §30.6.3: the model-check phase has a **hard `2.0 s` budget**; exceeding it is `MODEL_CHECK_TIMEOUT` and `FAIL_ZONE`. Algorithmic bounds and wall-clock behaviour are now separate claims |
+| 6 | Three sections disagreed on Epsilon failure handling; the provenance enum could not represent a twice-invalid selection; the table was called six-row and had seven | One policy: any unusable first result gets **exactly one** repair. `INVALID_SELECTION` added with a precedence rule for mixed failures. **Six** failure classes, missing and invalid selection merged |
+| 7 | §0.5's completeness statement preceded a table row; §11.8 said every profile is composed while Mobility is not; §35.4.3 called `13.6 s` the actual first-attempt cost; §41 claimed the standard was met while conditional; `ReplayVerdict` cited a nonexistent §30.9a | All five corrected |
+| 8 | Local connector filtering was called sufficient without establishing that the **combination** of independently chosen shells is spatially valid | New §30.11.2d: standardized attachment collars make joinability a property of the socket pair, so local filtering is sufficient **by construction**, enforced on the catalog by check 19d. The CSP alternative is stated for the day a bespoke collar is needed |
+| 10 | `semcheck` reported clean while all of the above were live | **Ten classes added**, one per defect above, plus the meets-standard-versus-verdict pair rewritten to compare the two claims rather than pattern-match one |
+
+### 9a.4 Fourth-pass mechanical results
+
+| Check | Pass 3 | Pass 4 |
+|---|---:|---:|
+| Broken cross-document / vector / internal / check references | `0` | **`0`** |
+| Stale duplicated figures | `0` | **`0`** |
+| GFM table integrity | `0` | **`0`** |
+| **Semantic contradictions** | **`0` reported, `10` live** | **`0` of `22` checks** |
+| Duplicate check ids | `0` | **`0`** |
+| Structural checks | `25` | **`28`** |
+| Package validation checks | `32` | **`32`** |
+| System-map rows | `66` | **`66`** |
+| **Open owner decisions** | **`3`** | **`0`** |
+
 ## 10. Verdict and what remains open
 
 
 
-**Design verdict: PASS.** **Zero-Guesswork verdict: CONDITIONAL — NOT YET PROMOTABLE**, against the commit recorded in §9 and not against any earlier revision.
+**Design verdict: PASS.** **Zero-Guesswork verdict: PASS — PROMOTABLE**, against the commit recorded in §9 and not against any earlier revision.
 
-Two earlier PASS claims are withdrawn. Pass 1's was false because §41.6 contradicted the body. Pass 2's was premature because it declared PASS and then listed open owner forks in the same breath. The verdict is conditional until §41.6's three decisions are made; nothing else in the document is open.
+Three earlier verdicts are superseded. Pass 1's PASS was false — §41.6 contradicted the body. Pass 2's was premature — it declared PASS and then listed open owner forks. Pass 3's CONDITIONAL was correct at the time and is now discharged: the owner ruled on all four decisions on 2026-09-05, and §41.3 records them.
+
+**Zero owner decisions remain open.** `07_ENGINE_RECONCILIATION.md` still reports that production code cannot yet implement several parts of this design; those are implementation blockers against a decided design.
 
 The architecture was never the problem and is unchanged: latches as the boundary between continuous physics and discrete progression proof; Design 3's verifier at the centre; Status excluded from the search but able to gate through a latch; compositional items over an authored alphabet. Every repair above is integration, arithmetic, ordering, or honesty.
 

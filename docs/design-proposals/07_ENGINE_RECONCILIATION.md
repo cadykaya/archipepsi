@@ -185,7 +185,21 @@ Two notes worth more than the table row.
 
 ---
 
-## 9. Recommended changes
+## 8a. Update — the AP fork is now a decided contract
+
+**2026-09-05.** §5's finding is unchanged as a statement about the code. What has changed is its status: it was an open design question and it no longer is.
+
+The owner ruled that Design 6 adopts the conservative contract, now §29.5a of that document:
+
+> An allocated AP Check, a local key relevant to AP reachability, or a Zone exit may sit behind a capability gate **only when** the matching Archipelago access rule declares the same prerequisite and Archipelago proves it obtainable. **Until that AP integration exists, Zone composition rejects such placement.**
+
+**The current engine does not satisfy the first clause**, and cannot: `apworld/archipepsi/__init__.py:109`'s complete rule set is three regions gated on Signal Key counts, declaring no capability prerequisite at all. Design 6's structural check 23 therefore reduces, against today's apworld, to *"no capability gate on any AP-relevant mandatory route"* — which is the intended and safe behaviour until the integration lands.
+
+**This is an implementation blocker, not an unresolved design choice.** The distinction matters for how it gets tracked: there is nothing left to decide, and the work is either extending the apworld to declare capability prerequisites, or accepting that AP-relevant routes stay ungated. Optional content — shortcuts, secrets, flanks, optional rewards and traversal — is unaffected and may be gated freely.
+
+§5's recommendation 6 is closed by this ruling. Recommendations 5 and 7 remain open repository work.
+
+## 9. Recommended changes## 9. Recommended changes
 
 **To Design 6, now** — these are corrections of provably false statements, not redesign:
 
