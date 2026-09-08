@@ -2,7 +2,7 @@
 
 **Scope:** repair and rebase of `06_THE_AMALGAM.md`. Not a redesign; the architecture is owner-selected and preserved.
 **Rebased onto:** `ARCHIPEPSI_CONTINUITY_2026-09-04` (owner rulings + runtime findings), and the exact current copies of `00`–`05`.
-**Verdict:** **Design PASS. Zero-Guesswork PASS — PROMOTABLE.** See §10. Four repair passes; §9 records the audited revision.
+**Verdict:** **Design PASS. Zero-Guesswork PASS — PROMOTABLE.** See §10. Five repair passes; §9 records the audited revision.
 
 ---
 
@@ -314,14 +314,14 @@ Reference lint passed while every one of §8.1's contradictions was live, becaus
 |---|---|
 | **Pull request** | `cadykaya/archipepsi` **#9** |
 | **Branch** | `claude/chatgpt-share-link-review-77kk2l` |
-| **Audited commit SHA** | **`e7e6c7d5e8762eb4d2a7f9b8243966483087219f`** (pass 4, re-audited after the connector reconciliation) |
-| **Date** | 2026-09-05 |
-| **Prior audited revisions** | `487a644` (pass 3), `950a561` (pass 4 before the connector reconciliation) |
-| **Prior head reviewed** | `4004f0184aa97ae4a3cec34a3e3f792dcbebb416` |
+| **Audited commit SHA** | **`PASS5_SHA`** (pass 5, the carry-legal regression repair) |
+| **Date** | 2026-09-08 |
+| **Prior audited revisions** | `487a644` (pass 3), `950a561` (pass 4 before the connector reconciliation), `e7e6c7d` (pass 4 final) |
+| **Prior head reviewed** | `4004f0184aa97ae4a3cec34a3e3f792dcbebb416` (pass 4), `19ab6287d9f8f22c52a6f56d0a9b790540d0cb1a` (pass 5) |
 
-**On the recorded SHA.** `e7e6c7d` is the commit whose *content* every checker below was run against. It supersedes `950a561`: a later commit changed §4.9a's connector vocabulary, so the earlier SHA no longer covered the document and re-recording it without re-auditing would have been exactly the stale-reference failure this audit exists to prevent, from a clean worktree checked out at that revision — not from an export and not from the editing tree. The commit that adds this line necessarily comes after it, so the branch head is one commit ahead; that following commit touches this table and nothing else. Recording the audited content's SHA rather than the head's is the only way for the two to be the same thing.
+**On the recorded SHA.** `PASS5_SHA` is the commit whose *content* every checker below was run against. It supersedes `e7e6c7d`, which pass 5 found had carried a live correctness regression since the connector reconciliation; the same reasoning applied when `e7e6c7d` superseded `950a561`: a later commit changed §4.9a's connector vocabulary, so the earlier SHA no longer covered the document and re-recording it without re-auditing would have been exactly the stale-reference failure this audit exists to prevent, from a clean worktree checked out at that revision — not from an export and not from the editing tree. The commit that adds this line necessarily comes after it, so the branch head is one commit ahead; that following commit touches this table and nothing else. Recording the audited content's SHA rather than the head's is the only way for the two to be the same thing.
 
-**Checkers run against that SHA**, all from the repository worktree at that revision and not from any export:
+**Checkers run against that SHA**, all from the repository worktree at that revision and not from any export. Pass 5 committed them to `docs/design-proposals/_checkers/`, with `run_all.sh` running the set, so every figure below can be reproduced rather than taken on trust:
 
 | Checker | Result |
 |---|---|
@@ -329,16 +329,17 @@ Reference lint passed while every one of §8.1's contradictions was live, becaus
 | `pipecheck` — GFM table integrity across all nine files | `0` broken cells |
 | `dupcheck` — duplicated figures against their authorities | `0` stale |
 | `closurecheck` — every §41.6 figure against its authoritative section | `0` mismatched, `16` figures |
-| `semcheck` — semantic contradictions | **`0` of `23` checks** |
+| `semcheck` — semantic contradictions | **`0` of `34` classes** (`22` pattern, `2` structural, `10` added in pass 5) |
 | Check-id uniqueness — structural and package | `0` duplicates; `28` structural, `32` package |
 | System-map derivation | `66` rows, `51` / `15`, totals derived |
 | Broken `check N` references | `0` |
 | **Open owner decisions** | **`0`** |
 | **Targeted promotion assertions** | **`15` of `15` pass** |
+| **Pin-ledger rows / orphan rows** | **`20` / `0`** |
 
 The fifteen targeted assertions test the specific pairs this pass repaired: Law 47's narrowing agreeing with §30.5.1; exactly one live `CERTIFIED_FALLBACK` schema; Property 4's arithmetic recomputed rather than copied; `carry_legal` derived from a declared field; `connector_kind` and `B_TO_A` present on the edge schema; the model-check hard budget; one Epsilon repair policy; `INVALID_SELECTION` representable; six failure classes; the three first-attempt figures distinct; agency persistence and the AP contract decided; no reference to the nonexistent §30.9a; and the catalog and Ability counts on the retained branch.
 
-**Two `dupcheck` lines are known false positives**, verified by inspection in passes 3 and 4: the four `10.0 s` occurrences are Epsilon request timeouts rather than a composition figure, and the single `1.8 s` is the narrated history of the replay-budget error in §35.4.1's opening.
+**The two `dupcheck` lines that passes 3 and 4 carried as known false positives are now checked exclusions.** `dupcheck` tests a ±200-character window around each stale hit: the seven `10.0 s` occurrences are exempt because every one sits beside Epsilon-timeout or Status-duration wording, and the single `1.8 s` is exempt because it sits inside §35.4.1's narration of the replay-budget error. A `10.0 s` placed away from that wording still fails the check, which was mutation-tested. Carrying them as exclusions rather than as accepted noise means a green run is green.
 
 ## 9a. Fourth pass — promotion closure
 
@@ -364,7 +365,7 @@ New §1.4 narrows the law into three properties rather than hiding the conflict:
 | # | Defect | Repair |
 |---:|---|---|
 | 2 | Two live `CERTIFIED_FALLBACK` schemas — the superseded `[purpose] -> (family, shell_id)` form and its six-row table were still stated in the present tense | Deleted. One live schema: `[purpose][ConnectorSignature] -> family` |
-| 3 | `ConnectorSignature` read a `socket_kind` and a `B_TO_A` direction the pinned `TopologyEdge` does not have, and `carry_legal` was called "committed" while no schema declared it | New §4.9a extends `TopologyEdge` with `connector_kind` (closed four-value), `crossing` (closed **ten**-value), and `B_TO_A`. `carry_legal` is **derived** from `crossing` by a stated rule and re-checked at load by check 24 |
+| 3 | `ConnectorSignature` read a `socket_kind` and a `B_TO_A` direction the pinned `TopologyEdge` does not have, and `carry_legal` was called "committed" while no schema declared it | New §4.9a extends `TopologyEdge` with `connector_kind`, `crossing`, and `B_TO_A`. `carry_legal` is **derived** from `crossing` by a stated rule and re-checked at load by check 24. **The enum sizes this row originally recorded — four and ten — were stale before this line was written, and §9b corrects both.** |
 | 4 | Property 4's state count omitted `CARRIED`: `2 + \|allowed_volume\|` instead of `3 +` | `15` states worst case, `737,280` per object, **`5,898,240`** across `8`. Typical: `6` states, `294,912` per object, `2,359,296` across all — figures a previous revision conflated |
 | 5 | "Tens of milliseconds" was an invented benchmark for a six-million-configuration search | New §30.6.3: the model-check phase has a **hard `2.0 s` budget**; exceeding it is `MODEL_CHECK_TIMEOUT` and `FAIL_ZONE`. Algorithmic bounds and wall-clock behaviour are now separate claims |
 | 6 | Three sections disagreed on Epsilon failure handling; the provenance enum could not represent a twice-invalid selection; the table was called six-row and had seven | One policy: any unusable first result gets **exactly one** repair. `INVALID_SELECTION` added with a precedence rule for mixed failures. **Six** failure classes, missing and invalid selection merged |
@@ -386,6 +387,73 @@ New §1.4 narrows the law into three properties rather than hiding the conflict:
 | System-map rows | `66` | **`66`** |
 | **Open owner decisions** | **`3`** | **`0`** |
 
+## 9b. Fifth pass — the carry-legal regression
+
+Pass 4 closed with a `PASS — PROMOTABLE` verdict and a checker suite reporting zero of twenty-three classes clean. **Nine defects were live at that moment**, and one of them was a correctness regression introduced *by* pass 4's own connector reconciliation. This is the third consecutive pass in which the checkers reported clean while defects were live, and the pattern is now the audit's most reliable finding: **a checker that misses a class is not evidence the class is absent.**
+
+### 9b.1 The regression
+
+Pass 4 replaced `CrossingMethod`'s invented vocabulary with an engine-grounded one and, in doing so, collapsed the Mobility crossings to a single socket-grounded `GRAPPLE`. Design 1 §10.2 blocks Mobility **as a whole category** while carrying — `DASH`, `GRAPPLE`, `BLINK`, `BURST_JUMP` and `AIR_STEP`, the five families of §13.1 — so four of the five had no `CrossingMethod` of their own. An edge crossed by a `DASH` therefore had to be typed `GAP`, and:
+
+```
+carry_legal(e) = e.crossing ∉ {RAIL, GRAPPLE}      # pass 4
+carry_legal(GAP) = true
+```
+
+**A required carryable would be routed across a gap the carrying player cannot cross.** That is precisely the stranding property 4 exists to reject, reintroduced by the derivation rule the same pass added to prevent it. §4.9a even contained the sentence that should have caught it — *"a gap needing a `DASH` is not a `GAP` edge, it is a capability-gated edge"* — while leaving no enum value such an edge could take.
+
+The repair is a twelve-value enum carrying one `MOBILITY_*` value per §13.1 family, six carry-legal and six not, with the derivation set naming all six explicitly. §4.9a also now states which `MOBILITY_*` values may never carry a mandatory route: `AIR_STEP` grants no capability at all, and `DASH` and `BURST_JUMP` grant `capability:core:long_gap` only above their §13.1 thresholds, so none of the three has the validation basis Design 1 §13.6 requires. **§30.5 check 24** enforces it at load.
+
+### 9b.2 The other eight
+
+| # | Defect | Repair |
+|---:|---|---|
+| 2 | §30.6.2 cited *"all ten crossing methods"*, *"six carry-legal"*, and *"the three `MOBILITY_*` methods and `RAIL`"* — a vocabulary declared nowhere in the document, left behind when pass 4 rewrote the enum. `refcheck` passed because it validates that a cited section exists, not that a cited identifier does | Rewritten against the live enum: twelve methods, six carry-legal, `RAIL` and all five `MOBILITY_*` |
+| 3 | §4.9a and §30.6.2 both cited **Design 1 §10.3** for the carry-blocks-Mobility rule. §10.3 is *"Drop and place"* and states no such rule; the blocked-action list is in **§10.2**, *"Pickup and carry"* | Both citations corrected, and §4.9a now quotes §10.2's blocked and permitted lists rather than paraphrasing them |
+| 4 | A **duplicate pin-ledger row sat outside the ledger table**, immediately after the sentence claiming the table is complete. `pipecheck` passed because it validates cell counts *within* tables and an orphaned row is not in one | Deleted |
+| 5 | Design 1 §13.6 requires a mandatory route's capability to be *"one of the four in §29.1"*. §29.1 here has **five** — Design 2 added `manipulate` — and the union does put it on mandatory routes, at §23.5 check 20 and §29.4's entry validation. §13 pinned §13.1–§13.6 unmodified, so the document asserted four and used five | New **§13.6a** modifies the count to five and names each capability's validation basis, with a pin-ledger row. The at-most-one rule is unchanged |
+| 6 | This audit's own §9a.3 row 3 recorded `connector_kind` as *"closed four-value"* and `crossing` as *"closed ten-value"*. Both were stale against §4.9a **at the moment the row was written** | Corrected, and the row now says so |
+| 7 | §10 asserted **"Zero owner decisions remain open"** and then, three paragraphs later, listed environmental-agency persistence and AP capability gating as *"two genuine owner-level forks"* still open — the two the owner had ruled on as **O1** and **O2** | Rewritten: both are recorded as closed, and what survives of fork 2 is named as an implementation blocker rather than a decision |
+| 9 | `README.md` — the index a reader hits first — stated **six stale word counts**, Design 6's worst at `~35.1k` against a live `~46.3k`. Every checker reads the design documents; none read the index | All eight counts regenerated to one decimal, `00` gained the one it lacked, and a class now recomputes each from the file it names |
+| 8 | `07_ENGINE_RECONCILIATION.md`'s §9 heading was **stored three times on one line** — `## 9. Recommended changes## 9. Recommended changes## 9. Recommended changes` — and had been since the file was committed. Nothing checked heading integrity, in any of the nine files | Repaired, and a class now sweeps every file for a heading that repeats itself |
+
+### 9b.3 Ten classes added
+
+Every class below was mutation-tested: each was shown to fire on a document carrying its defect and pass on the repaired one. **Six of the ten fired on the real pass-4 head**; the other four are regression guards proven by mutation.
+
+| Class | Catches | Fired on the pass-4 head? |
+|---|---|:-:|
+| `CrossingMethod` enum members == carry-legal table rows | An enum and its explanatory table drifting apart | no |
+| `carry_legal` derivation set == the table's non-carry-legal rows | The rule and the table disagreeing about a single value | no |
+| No prose reference to an undeclared identifier family | Defect 2 — a `PREFIX_*` family named in prose with no declared member | **yes** |
+| No table row outside a table | Defect 4 | **yes** |
+| Pin ledger has no duplicate row | Defect 4's in-table variant | no |
+| Every `— modifies Design N §X` section has a pin-ledger row | Defect 5's shape, once the section exists | no |
+| Every prose count of `CrossingMethod` matches the table | Defect 2 — the counted-in-prose failure that started this pass | **yes** |
+| Audit: zero-open-decisions claim vs live open-fork prose | Defect 7 | **yes** |
+| No heading repeats itself, across all nine files | Defect 8 | **yes** |
+| Every `README` word count matches the file it names | Defect 9 | **yes** |
+
+`semcheck` now runs **`34`** classes: `22` pattern, `2` structural, `10` added here. The script prints the count; this line copies it rather than asserting it independently.
+
+### 9b.4 Fifth-pass mechanical results
+
+| Check | Pass 4 | Pass 5 |
+|---|---:|---:|
+| Broken cross-document / vector / internal / check references | `0` | **`0`** |
+| Source-vector citations | `145` | **`145`** |
+| Stale duplicated figures | `0` | **`0`** |
+| GFM table integrity, all nine files | `0` | **`0`** |
+| Headings repeating themselves, all nine files | `1`, unchecked | **`0`** |
+| Stale `README` word counts | `6`, unchecked | **`0`** |
+| **Semantic contradictions** | **`0` reported, `9` live** | **`0` of `34` classes** |
+| Duplicate check ids | `0` | **`0`** |
+| Structural checks | `28` | **`28`** — check 24 extended, no id added |
+| Package validation checks | `32` | **`32`** |
+| Pin-ledger rows | `19` + `1` orphan | **`20`**, no orphan |
+| System-map rows | `66` | **`66`** |
+| **Open owner decisions** | **`0`** | **`0`** |
+
 ## 10. Verdict and what remains open
 
 
@@ -398,10 +466,10 @@ Three earlier verdicts are superseded. Pass 1's PASS was false — §41.6 contra
 
 The architecture was never the problem and is unchanged: latches as the boundary between continuous physics and discrete progression proof; Design 3's verifier at the centre; Status excluded from the search but able to gate through a latch; compositional items over an authored alphabet. Every repair above is integration, arithmetic, ordering, or honesty.
 
-**Two genuine owner-level forks remain, and neither is this document's to close:**
+**Both of pass 3's remaining owner forks were closed by the 2026-09-05 rulings.** This paragraph previously listed them as still open, three paragraphs after asserting zero open decisions; pass 5 removed that contradiction. What each became:
 
-1. **Environmental-agency signal persistence** — transient per visit, or persistent through validated transitions and the interpretation-log fold. The continuity archive marks it an explicit unresolved owner gate. §19 and §5.2 are written to accept either; the choice changes which persistence category signal state takes, and it should be made before agency implementation begins.
+1. **Environmental-agency signal persistence** was fork 1. **O1 ruled it persistent**, with the exact split now in §5.4a: accepted consequences become `AgencyRecord`s in the fold and survive unload, save, death and reconstruction; raw signal values, timers, momentary inputs and verb durations stay transient and are recomputed. Nothing here remains for an owner to decide.
 
-2. **Capability gating versus Archipelago logic** — carried forward from `07_ENGINE_RECONCILIATION.md` §5 and unchanged by this repair. The apworld declares no capability prerequisites and defaults to `Accessibility: full`; §30.6 proves a property Archipelago never consumes. The 2026-09-04 ruling that *"making an offer load-bearing requires a separate owner ruling and matching AP logic"* is the same fork seen from the roadmap side. **This must be decided before any capability-gated mandatory route ships**, and no amount of verifier work substitutes for it.
+2. **Capability gating versus Archipelago logic** was fork 2. **O2 ruled the conservative contract**, now §29.5a and structural check 23. What survives is not a decision but a **blocker**: the apworld declares no capability prerequisites and defaults to `Accessibility: full`, so check 23's second clause is never satisfiable today and the check reduces to *"no capability gate on any AP-relevant mandatory route"*. That is the intended behaviour until the integration exists, and `07_ENGINE_RECONCILIATION.md` §5 tracks it as implementation work against a decided design.
 
 **One decision this repair made that an owner may wish to revisit:** §21.11.1's conflict policy is **latest-wins** for a queued macro change. First-wins is defensible and would let a stale intention lock a variable; the choice is recorded in §41.3.

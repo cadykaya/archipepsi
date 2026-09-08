@@ -100,10 +100,10 @@ Where a pinned section itself pins onward — Design 5 §13 pins to Design 1 §1
 | Design 5 §35 (Status budgets) | §35.2, §35.2.1 | Two caps reduced; mandatory capacity reserved |
 | Design 1 Law 47 (seed determinism) | §1.4 | Narrowed into 47a/47b/47c by the 2026-09-04 owner ruling |
 | Design 3 §4.9 (`TopologyEdge`) | §4.9a | Three fields added: `connector_kind`, `crossing`, and `B_TO_A` in `direction` |
+| Design 1 §13.6 (mandatory-route capabilities) | §13.6a | "One of the four in §29.1" becomes one of five; `manipulate`'s validation basis is named |
 | Design 1 §35 (budgets) | §35 | Rewritten entirely; five proposals' budgets cannot coexist unchanged |
 
 **This table is complete and §38 vector 3 tests that claim.** Every section of this document that modifies something it also pins appears above; no section modifies a pin absent from it.
-| Design 1 §35 (budgets) | §35 | Rewritten entirely; five proposals' budgets cannot coexist unchanged |
 
 ---
 
@@ -298,13 +298,17 @@ Those are the only two kinds that are ways through — `connector_grammar.gd`'s 
 
 Across the twelve `review: pass` shells the joining sockets are `32` doorways and `4` corridor ends, so the vocabulary is not theoretical: it is what the authored rooms already declare.
 
-**`CrossingMethod` is what makes `carry_legal` derivable** rather than asserted, and it too adopts the engine's vocabulary. `traversal_law.gd`'s `KINDS` are the four base-movement crossings; the rest are the offer-mediated ones the authored shells already declare as sockets:
+**`CrossingMethod` is what makes `carry_legal` derivable** rather than asserted. Its values come from three places: `traversal_law.gd`'s `KINDS` are the four base-movement crossings, three more are the world-driven ones the authored shells already declare as sockets, and the `MOBILITY_*` family is one value per Design 1 §13.1 family:
 
 ```
-CrossingMethod = enum { WALK, RISE, DROP, GAP,        # traversal_law.gd KINDS
-                        LAUNCH, RAIL, GRAPPLE,        # offer-mediated
-                        ACTUATOR_RIDE }               # §21.3
+CrossingMethod = enum { WALK, RISE, DROP, GAP,          # traversal_law.gd KINDS
+                        LAUNCH, RAIL, ACTUATOR_RIDE,    # world-driven; §21.7, §26.4, §21.3
+                        MOBILITY_DASH,  MOBILITY_GRAPPLE,
+                        MOBILITY_BLINK, MOBILITY_BURST_JUMP,
+                        MOBILITY_AIR_STEP }             # D1 §13.1's five families, one each
 ```
+
+**Twelve values, six carry-legal and six not.**
 
 | `CrossingMethod` | The crossing | Carry-legal? |
 |---|---|:-:|
@@ -315,11 +319,19 @@ CrossingMethod = enum { WALK, RISE, DROP, GAP,        # traversal_law.gd KINDS
 | `LAUNCH` | A `launch_source` → `launch_target` arc (§21.7) | **yes** — the pad does the work |
 | `ACTUATOR_RIDE` | Riding a `LIFT`, `BRIDGE`, or `MOVING_PLATFORM` (§21.3) | **yes** |
 | `RAIL` | Riding a `rail_route` (§26.4) | **no** — §26.7 severs held relations on rail entry |
-| `GRAPPLE` | A `grapple_point` | **no** — a `MOBILITY` action, blocked while carrying |
+| `MOBILITY_DASH` | A gap or offset crossed by a `DASH` displacement (§13.1) | **no** — Mobility, blocked while carrying |
+| `MOBILITY_GRAPPLE` | A `grapple_point` | **no** — Mobility, blocked while carrying |
+| `MOBILITY_BLINK` | A teleport to a validated point along view (§13.5) | **no** — Mobility, blocked while carrying |
+| `MOBILITY_BURST_JUMP` | A vertical impulse taken airborne (§13.1) | **no** — Mobility, blocked while carrying |
+| `MOBILITY_AIR_STEP` | One additional full jump taken airborne (§13.1) | **no** — Mobility, blocked while carrying |
 
-> **`carry_legal` is derived, never authored:** `carry_legal(e) = e.crossing ∉ {RAIL, GRAPPLE}`.
+> **`carry_legal` is derived, never authored:** `carry_legal(e) = e.crossing ∉ { RAIL, MOBILITY_DASH, MOBILITY_GRAPPLE, MOBILITY_BLINK, MOBILITY_BURST_JUMP, MOBILITY_AIR_STEP }` — that is, every `MOBILITY_*` value, plus `RAIL`.
 
-The rule behind it is Design 1 §10.3 — a carried object disables `MOBILITY` actions — plus §26.7's rail severance. Everything else is base movement or something the world does to the player, and neither is disabled by carrying. **`GAP` is carry-legal precisely because the traversal law bounds it at what base movement clears**; a gap needing a `DASH` is not a `GAP` edge, it is a capability-gated edge and §29.5a governs whether it may sit on an AP-relevant route at all.
+The rule behind it is **Design 1 §10.2's blocked-action list** — while carrying, a player loses melee, Weapon primary, Weapon secondary, weapon cycling, **Mobility**, and hacking, and keeps movement, jump, look, Abilities, `interact`, pause and Archive — plus §26.7's rail severance. Everything carry-legal above is base movement or something the world does to the player, and §10.2 permits both while holding an object.
+
+**Why the family is five values and not one.** §10.2 blocks Mobility **as a category**, so all five of Design 1 §13.1's families are carry-illegal, not `GRAPPLE` alone. A previous revision collapsed the family to a single socket-grounded `GRAPPLE` and left the other four with no `CrossingMethod` of their own — which forced a long gap crossed by a `DASH` to be typed `GAP`, and `GAP` derives `carry_legal = true`. **That is exactly the stranding property 4 exists to reject, reintroduced by the derivation rule itself.** `GAP` is carry-legal precisely because the traversal law bounds it at what base movement clears; a gap needing a `DASH` is a `MOBILITY_DASH` edge, and §29.5a governs whether it may sit on an AP-relevant route at all.
+
+**Two `MOBILITY_*` values may never carry a mandatory route.** Design 1 §13.6 requires every mandatory route to be validated against the least capable profile granting the capability it requires, and `AIR_STEP` grants no capability at all while `DASH` and `BURST_JUMP` grant `capability:core:long_gap` only above their §13.1 thresholds. An edge typed `MOBILITY_AIR_STEP`, or typed `MOBILITY_DASH` or `MOBILITY_BURST_JUMP` without `capability:core:long_gap` declared in its `capability` field, therefore has no validation basis and **may not lie on a mandatory route**. `MOBILITY_GRAPPLE` and `MOBILITY_BLINK` always name their capability and may. §30.5 check 24 enforces this at load.
 
 **`carry_legal` is committed but not authored.** The manifest stores `crossing`, and `carry_legal` is recomputed from it at load. **§30.5 check 24** re-derives every edge's `carry_legal` from its `crossing` and compares it to any stored value; a mismatch is a hard error. That way the verifier's input and the runtime's behaviour cannot drift apart, and no field is claimed committed that no schema declares.
 
@@ -878,7 +890,20 @@ All of Designs 2, 3, and 5 pin Mobility unchanged, and Design 4 §12.7 explicitl
 
 # 13. MOBILITY
 
-*Pinned: identical to Design 1 §13.1 through §13.6*, with Design 2 §13.7's addition: `HOLD`, `TETHER`, and `PIN` relations survive a `DASH`, `BLINK`, `BURST_JUMP`, or `AIR_STEP` if the object stays in range, and `GRAPPLE` releases every relation on attach.
+*Pinned: identical to Design 1 §13.1 through §13.6*, **modified by §13.6a**, with Design 2 §13.7's addition: `HOLD`, `TETHER`, and `PIN` relations survive a `DASH`, `BLINK`, `BURST_JUMP`, or `AIR_STEP` if the object stays in range, and `GRAPPLE` releases every relation on attach.
+
+## 13.6a Mandatory-route capabilities — modifies Design 1 §13.6
+
+Design 1 §13.6 permits a mandatory route to require at most one capability and says that capability **must be one of the four in §29.1**. §29.1 now has five: Design 2 added `capability:core:manipulate`, and the union does put it on mandatory routes — §23.5 check 20 replays every `manipulate` package that sits on one, and §29.4 validates it at Zone entry. The count is therefore **five**, and the sentence is modified here rather than left to contradict §29.
+
+The rest of §13.6 is unchanged and the at-most-one rule still binds. What changes is only the validation basis, because `manipulate` has no movement profile to be least capable:
+
+| Capability on a mandatory route | Validated against |
+|---|---|
+| `capability:core:grapple`, `capability:core:blink`, `capability:core:long_gap` | Design 1 §13.6's least-capable granting profile, unchanged |
+| `capability:core:manipulate` | §29.3.2's provider envelope at §29.4's Zone-entry check, plus §23.5 check 20's headless replay |
+
+The fourth Design 1 capability, `capability:core:ranged_hit`, is the engine's `BASELINE_CAPABILITIES` and needs no route validation.
 
 ---
 
@@ -1743,7 +1768,7 @@ Design 1's eight whole-Zone checks, plus Design 3's five, plus fifteen new. **Ev
 | **20** | **The sum of a room's mandatory Status reservations (§35.2.1), plus one ordinary application, is within the room's `60`-entry and `24`-body caps.** | NEW |
 | **19a** | **Every Zone's `ZonePresentation` names a theme in the authored catalog and strings within their length bounds** (§30.1). | NEW |
 | **19b** | **Every incident topology edge of every room carries a distinct connector-socket assignment, and both endpoints of every edge agree on the joining transform** (§30.11.2b). | NEW |
-| **24** | **Every edge's `carry_legal` equals the value §4.9a derives from its `crossing`**, and every edge carries a `connector_kind` and a `crossing` from their closed enums. A stored value disagreeing with its derivation is a hard error. | NEW |
+| **24** | **Every edge's `carry_legal` equals the value §4.9a derives from its `crossing`**, and every edge carries a `connector_kind` and a `crossing` from their closed enums. A stored value disagreeing with its derivation is a hard error. **No mandatory route crosses an edge typed `MOBILITY_AIR_STEP`, or typed `MOBILITY_DASH` or `MOBILITY_BURST_JUMP` without `capability:core:long_gap` in its `capability` field** — §4.9a, on Design 1 §13.6's validation contract. | NEW |
 | **23** | **No allocated AP Check, AP-relevant local key, or Zone exit sits behind a capability gate** unless the bridge produces a matching declared Archipelago access rule for that location (§29.5a). | NEW |
 | **19d** | **Every connector socket of every offered shell declares a standardized attachment collar** from the catalog's fixed set (§30.11.2d). A shell with bespoke socket geometry is not offerable. | NEW |
 | **19c** | **Every `HostDefinition` carries exactly one of `composition` or `profile`, decided by its `category`** — `profile` for `mobility`, `composition` for every other category (§4.2). | NEW |
@@ -1820,7 +1845,7 @@ augmented configuration = (v, room, object_state)          # for ONE object o
 
 > **The carry-legal Move rule.** From a `CARRIED` configuration, a Move across edge `e` is legal only when **all** hold: the destination room is in `o`'s `allowed_volume`; `e`'s predicate is true under `v`; `e`'s `capability` is in the proven set; **and `e` is traversable while carrying.**
 
-That last clause is the one that matters and the one a previous revision omitted entirely. Design 1 §10.3 disables a subset of actions while a carryable is held, and an edge whose only crossing uses a disabled action **is not available to a carrying player** even though it is available to the same player empty-handed. §4.9a's table enumerates all ten crossing methods and which six are carry-legal — not only the grapple and blink examples. The three `MOBILITY_*` methods and `RAIL` are the four that are not.
+That last clause is the one that matters and the one a previous revision omitted entirely. Design 1 §10.2 blocks a subset of actions while a carryable is held — **Mobility among them, as a whole category** — and an edge whose only crossing uses a blocked action **is not available to a carrying player** even though it is available to the same player empty-handed. §4.9a's table enumerates all twelve crossing methods and which six are carry-legal. The six that are not are `RAIL` and all five `MOBILITY_*` values, one per Design 1 §13.1 family — not `MOBILITY_GRAPPLE` alone.
 
 Each edge therefore carries `carry_legal`, **derived from its `crossing` field** by §4.9a's one-line rule, re-derived and checked at load by §30.5 check 24, and read by the augmented search. **Without it the proof would route a required object across a grapple gap the player cannot actually cross while holding it** — which is precisely the stranding property 4 exists to reject, reintroduced by the proof itself.
 
@@ -3309,7 +3334,7 @@ This document meets the Zero-Guesswork Standard v1.1 in every area of its twelve
 
 ### The verdict, stated precisely
 
-**Design verdict: PASS.** The architecture held through four adversarial passes without a defect found in it.
+**Design verdict: PASS.** The architecture held through five adversarial passes without a defect found in it. Every defect the five passes found was integration, arithmetic, ordering, vocabulary, or honesty — including pass 5's, which was a repair from pass 4 that over-collapsed an enum.
 
 **Zero-Guesswork verdict: PASS — PROMOTABLE.** Every question an implementer could not answer from this document has been answered, and the four that were genuinely the owner's were decided on 2026-09-05:
 

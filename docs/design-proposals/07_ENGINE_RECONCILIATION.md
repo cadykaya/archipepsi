@@ -206,7 +206,7 @@ The owner ruled that Design 6 adopts the conservative contract, now §29.5a of t
 | Design 6 proposed | Engine has | Resolution |
 |---|---|---|
 | `ConnectorKind = {DOORWAY, DROP, RAIL_MOUTH, VERTICAL_SHAFT}` | `JOINABLE = {doorway, corridor_end}` (`connector_grammar.gd:23`) | **Adopt the engine's two.** `RAIL_MOUTH` and `VERTICAL_SHAFT` do not exist; `DROP` was a traversal kind misfiled as a socket kind |
-| A ten-value `CrossingMethod` | `KINDS = [gap, rise, drop, walk]` (`traversal_law.gd:76`) plus offer sockets `launch_source`, `rail_route`, `grapple_point` | **Adopt four base kinds plus three offer-mediated plus `ACTUATOR_RIDE`** |
+| A ten-value `CrossingMethod` | `KINDS = [gap, rise, drop, walk]` (`traversal_law.gd:76`) plus offer sockets `launch_source`, `rail_route`, `grapple_point` | **Adopt four base kinds plus `LAUNCH`, `RAIL` and `ACTUATOR_RIDE`** — and, per §8d, keep one value per Design 1 §13.1 Mobility family rather than only the socket-grounded `GRAPPLE`. Twelve values |
 | "Standardized attachment collar", asserted as already satisfied | `SIDE_CLEARANCE = 0.4`, `HEAD_CLEARANCE = 0.2`, engine-wide constants; `content.py` refuses a `room_shell` with no joining socket | **The claim was right and is now cited.** Joinability genuinely is a socket-pair property |
 
 Across the twelve `review: pass` shells the joining sockets are **32 `doorway` and 4 `corridor_end`**, so the reconciled vocabulary is what the authored rooms already declare.
@@ -228,7 +228,21 @@ Two further places still enumerated the invented kinds after the enum was replac
 
 Wave 2 shells, the 20–30-room proof library, and Theme Packs are explicitly **off** its critical path (§40.1). The authored-room pipeline and Design 6 meet at one seam — `shell_id` — and the design's whole contribution there is to stop that seam silently discarding the rooms.
 
-## 9. Recommended changes## 9. Recommended changes## 9. Recommended changes
+
+## 8d. Correction — the reconciliation over-collapsed the Mobility crossings
+
+**2026-09-08.** §8b's second row, as originally ruled, adopted the four engine base kinds plus the three socket-grounded ones and dropped the rest of the pre-reconciliation ten-value enum. That was right about the engine's vocabulary and wrong about the design's requirement, because the engine's *socket* list is not the design's *carry-legality* list.
+
+Design 1 §10.2 blocks **Mobility as a whole category** while a carryable is held. Its five families (§13.1: `DASH`, `GRAPPLE`, `BLINK`, `BURST_JUMP`, `AIR_STEP`) are therefore all carry-illegal, but only `GRAPPLE` has a socket in the authored-room contract, so only `GRAPPLE` survived the collapse. The other four had no `CrossingMethod` to take, which forced a `DASH`-crossed gap to be typed `GAP` — and `GAP` derives `carry_legal = true`. **Design 6 §30.6's property 4 would then route a required carryable across a gap the carrying player cannot cross.**
+
+The corrected enum is twelve values: the four `traversal_law.gd` kinds, `LAUNCH`, `RAIL`, `ACTUATOR_RIDE`, and one `MOBILITY_*` value per §13.1 family. Six are carry-legal and six are not.
+
+**Nothing changes for the engine or the authored rooms.** `connector_grammar.gd`'s `JOINABLE` is untouched, no shell gains or loses a socket, and the socket vocabulary in §8b's first and third rows stands. The `MOBILITY_*` values name how an edge is *crossed*, which is a topology-manifest field, not a socket kind — the same axis distinction §8b drew when it rejected `DROP` as a socket kind.
+
+**The lesson §8b drew still holds, sharpened.** Moving the design toward the engine was correct; adopting the engine's vocabulary *as the design's complete enumeration* was not. Where a design enum encodes a rule the engine does not yet model — here, what carrying disables — the engine's list is a floor, not a ceiling.
+
+
+## 9. Recommended changes
 
 **To Design 6, now** — these are corrections of provably false statements, not redesign:
 

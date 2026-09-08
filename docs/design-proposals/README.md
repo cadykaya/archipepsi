@@ -16,6 +16,7 @@ Proposals 1 through 5 are mutually exclusive. Proposal 6 is their union — it t
 | `05_STATUS_AS_GRAMMAR.md` | Design 5. Status is a rule-changing language rather than a damage tax, and the whole combat system is built on it. |
 | `06_THE_AMALGAM.md` | Design 6. The union of all five, forced to work together. Design 3's model check at the centre, extended to prove physics and Status safe. The most expensive of the six by a wide margin. |
 | [`06_THE_AMALGAM_AUDIT.md`](06_THE_AMALGAM_AUDIT.md) | The repair and rebase audit for Design 6. Read it to see what changed and why, including which external findings were stale-packet artifacts. |
+| [`_checkers/`](_checkers/) | The scripts the audit's §9 cites. `run_all.sh` runs them all; a green run is evidence about the classes they check and nothing else. |
 | [`07_ENGINE_RECONCILIATION.md`](07_ENGINE_RECONCILIATION.md) | **Findings, not a proposal.** All six checked against the live engine branch. Read it before treating any proposal as buildable — three of Design 6's systems are blocked at the substrate, and one finding applies to all six. |
 
 ## Source material
@@ -47,12 +48,12 @@ Where those two documents state an architectural law, every proposal inherits it
 
 | Proposal | State |
 |---|---|
-| 00 — Standard | Complete |
-| 01 — Reliable Core | **Complete** — ~33.7k words, audited, 142/142 authority tests traced |
-| 02 — Physics Is The Game | **Complete** — ~23k words, audited, 142/142 authority tests traced |
-| 03 — The Dungeon Is One Machine | **Complete** — ~16.5k words, audited, 142/142 authority tests traced |
-| 04 — Epsilon Is The Content | **Complete** — ~15.4k words, audited, 142/142 authority tests traced |
-| 05 — Status As Grammar | **Complete** — ~13.7k words, audited, 142/142 authority tests traced |
-| 06 — The Amalgam | **Repaired and rebased** — ~35.1k words, re-audited, 142/142 traced, rebased on the 2026-09-04 `shell_id` ruling |
-| 06 — Repair audit | **Complete** — `06_THE_AMALGAM_AUDIT.md`, every repair with old/new behaviour and regenerated counts |
-| 07 — Engine Reconciliation | **Complete** — the six checked against `claude/archipepsi-echoes-continuation-b1adno` at `df2bb58` |
+| 00 — Standard | Complete — ~3.5k words |
+| 01 — Reliable Core | **Complete** — ~34.0k words, audited, 142/142 authority tests traced |
+| 02 — Physics Is The Game | **Complete** — ~23.4k words, audited, 142/142 authority tests traced |
+| 03 — The Dungeon Is One Machine | **Complete** — ~16.6k words, audited, 142/142 authority tests traced |
+| 04 — Epsilon Is The Content | **Complete** — ~15.5k words, audited, 142/142 authority tests traced |
+| 05 — Status As Grammar | **Complete** — ~13.8k words, audited, 142/142 authority tests traced |
+| 06 — The Amalgam | **Repaired, rebased, promotable** — ~46.9k words, re-audited across five passes, 142/142 traced, rebased on the 2026-09-04 `shell_id` ruling and carrying the four owner rulings of 2026-09-05. Its first line still reads *not canon*; promotion is the owner's action |
+| 06 — Repair audit | **Complete** — `06_THE_AMALGAM_AUDIT.md`, ~7.9k words, five passes, every repair with old/new behaviour and regenerated counts |
+| 07 — Engine Reconciliation | **Complete** — ~3.5k words, the six checked against `claude/archipepsi-echoes-continuation-b1adno` at `df2bb58`, plus four update sections (§8a–§8d) recording later rulings and one correction |
