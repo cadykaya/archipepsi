@@ -23,6 +23,12 @@ signal footstep(kind: String)
 ## against coyote time) — the rule engine's `jump` event, not the input.
 signal jumped
 
+## Rail ride boundaries, for the operator log and for a test that has to
+## prove a rail was RIDDEN rather than merely built (Stage 3A). Emitted
+## by the ride itself, so nothing can report a catch that did not happen.
+signal rail_caught(at: Vector3)
+signal rail_released(at: Vector3)
+
 #: ECHOES §9's control grammar, one binding per slot. LMB is the Static
 #: Pulse and appears nowhere here: its identity is untouchable, so it is
 #: not a slot and cannot be rebound to one.
@@ -159,6 +165,32 @@ var _volumes: Dictionary = {}
 ## Called by an affordance volume's own Area3D on overlap. Keyed by the
 ## node so overlapping volumes cannot leave a stale influence behind when
 ## one of them is freed mid-overlap.
+## Committed to an authored launch arc until the next landing (3A).
+##
+## THE NARROW BINDING A LAUNCH PAD NEEDS TO BE CONSUMABLE, and it was
+## measured before it was written. `LaunchSolver` solves a BALLISTIC arc
+## -- two free-fall halves, no horizontal loss -- and the pad fires
+## exactly that velocity. The airborne walk solve then lerps horizontal
+## velocity toward the input direction every frame at `AIR_CONTROL`, so a
+## player who lets go of the stick keeps `(1 - 0.16)^n` of it: over the
+## hall pad's 1.43 s ascent that is 3.7e-7, and the measured flight rose
+## 24.21 m and travelled 0.00 m horizontally. The player came straight
+## back down onto the pad.
+##
+## That makes every authored launch a bounce, which is the one thing
+## `LaunchSolver` exists to distinguish itself from: "a bounce pad is a
+## local vertical opportunity ... a launch pad is an EDGE -- source and
+## destination are both part of the contract". A destination air control
+## deletes is not part of any contract.
+##
+## So a launch is ballistic until you land: the horizontal solve is
+## skipped for the duration of the arc, and nothing else about walking,
+## jumping, gravity or air control changes. Whether a player should be
+## able to STEER mid-launch is a feel decision and is deliberately not
+## made here -- the conservative default is that the trajectory that was
+## validated is the trajectory that happens.
+var _launch_flight := false
+
 ## Riding a rail, or null. The whole ride lives in `RailRider`, which
 ## owns no node and reads no input, so it can be driven frame-exact in a
 ## headless test instead of only by a human on a controller.
@@ -180,10 +212,26 @@ func offer_rail(rail: RailPath, to_world := Transform3D.IDENTITY) -> void:
 	if caught.is_empty():
 		return
 	_rider = caught["rider"]
+	# The rail owns the body now, so the arc is over whether or not the
+	# ground was reached.
+	_launch_flight = false
 	global_position = _rider.body_position()
+	rail_caught.emit(global_position)
+	Telemetry.rail_caught(global_position)
 
 func riding_rail() -> bool:
 	return _rider != null
+
+## Flying an authored launch arc. Set by the pad that fired it, cleared
+## by the landing that ends it.
+func in_launch_flight() -> bool:
+	return _launch_flight
+
+## Begin an authored launch arc. Called by `AffordanceNodes.LaunchPad`
+## immediately after it applies the solved velocity, so the flight that
+## happens is the flight that was validated.
+func begin_launch_flight() -> void:
+	_launch_flight = true
 
 ## One step of a grind. Position comes from the path, velocity is what
 ## the player leaves with, and `move_and_slide` is deliberately NOT
@@ -196,6 +244,8 @@ func _ride(delta: float) -> void:
 	velocity = step["velocity"]
 	if not bool(step["riding"]):
 		_rider = null
+		rail_released.emit(global_position)
+		Telemetry.rail_released(global_position)
 		# Off a rail is airborne, and a coyote frame here would give a
 		# free second jump to anyone who let go near the ground.
 		_coyote = 0.0
@@ -422,6 +472,9 @@ func _physics_process(delta: float) -> void:
 		_coyote -= delta
 	else:
 		_coyote = Constants.COYOTE_TIME
+		# The arc ends where it lands, which is what an authored launch
+		# target names.
+		_launch_flight = false
 	_jump_buffer -= delta
 
 	# Upward-only, and applied whether or not you are grounded: an updraft
@@ -476,8 +529,11 @@ func _physics_process(delta: float) -> void:
 				if is_on_floor() \
 				else Constants.AIR_CONTROL * air_control_mult
 		control = minf(control, 1.0)
-		velocity.x = lerpf(velocity.x, direction.x * speed, control * 0.4)
-		velocity.z = lerpf(velocity.z, direction.z * speed, control * 0.4)
+		if not _launch_flight:
+			velocity.x = lerpf(velocity.x, direction.x * speed,
+					control * 0.4)
+			velocity.z = lerpf(velocity.z, direction.z * speed,
+					control * 0.4)
 
 		if Input.is_action_pressed("fire_pulse"):
 			_fire_static_pulse()
@@ -494,7 +550,7 @@ func _physics_process(delta: float) -> void:
 		if Input.is_action_just_pressed("interact") \
 				and _interact_target != null:
 			_interact_target.interact(self)
-	else:
+	elif not _launch_flight:
 		velocity.x = lerpf(velocity.x, 0.0, 0.2)
 		velocity.z = lerpf(velocity.z, 0.0, 0.2)
 

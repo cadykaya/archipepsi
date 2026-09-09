@@ -19,6 +19,39 @@ var zone_id := ""
 var player: Player
 var tones: Tones = null          # set by main; null in headless tests
 var hud: Hud = null              # set by main; null in headless tests
+
+## Which movement package this Zone builds (Stage 3A, R6/R7).
+##
+## Set by whoever entered the Zone, BEFORE `setup`. The default is
+## `none`, so an ordinary Zone entered by an ordinary player constructs
+## no movement geometry and behaves exactly as it did before 3A -- the
+## showcase is the only thing that ever sets this to anything else.
+##
+## It is an operator control and nothing more: not an Archipelago item,
+## not progression, not saved, not part of the Zone schema. See
+## `MovementSelection`.
+var movement_package := MovementSelection.DEFAULT_MODE
+
+## What the offer stage actually did, for the operator log and for tests.
+##
+## `declared` counts manifest entries; `judged` counts verdicts, which is
+## smaller because a launch PAIR is one verdict over two authored points;
+## `built` counts nodes that now exist, which is smaller again because a
+## grapple point is accepted and constructs nothing. Three different
+## facts, kept in three different fields on purpose.
+var offer_census := {"declared": 0, "judged": 0, "accepted": 0,
+		"built": 0, "declined": 0, "refused": 0}
+
+## The rooms as `ZoneBuilder` placed them: `{chamber, node, build, xform}`
+## per entry.
+##
+## Kept because the offer stage and anything auditing it need the SAME
+## records -- the live node, the build result it came from, and the
+## chamber that asked for it. `_chambers` below is the objective/enemy
+## bookkeeping and deliberately carries neither the node nor the build,
+## so re-deriving them would be a second answer to a question that
+## already has one.
+var offer_rooms: Array = []
 ## Set by main before setup(). The Zone geometry is whatever the schema
 ## said; this only changes how the last transmission is presented.
 var is_finale := false
@@ -57,6 +90,7 @@ func setup(zone_dict: Dictionary) -> void:
 		_world_bounds = box if not _has_bounds \
 				else _world_bounds.merge(box)
 		_has_bounds = true
+	offer_rooms = build["chambers"]
 	playtime.begin(build["chambers"].size())
 	# THE OFFER BINDING (owner ruling, 2026-09-03). The Zone's root is in
 	# the tree now, so its colliders are about to be real -- one physics
@@ -177,23 +211,79 @@ func setup(zone_dict: Dictionary) -> void:
 	if is_finale and hud != null:
 		hud.say_line("finale_open")
 
-## Report what the Zone's rooms offer and what was refused.
+## THE OFFER STAGE: measure everything, then build only what was asked
+## for.
 ##
-## MEASUREMENT ONLY: nothing is repaired, no room is rejected, and NO
-## GAMEPLAY IS CONSTRUCTED. `OfferBinding.validate_zone` reports what the
-## rooms would support and builds none of it -- when this returned
-## `consume`, looking at a Zone put a pad and a beam into every room that
-## offered one, so promoting a room would have activated its offers by
-## accident. A rail that cannot be built is a rail the room plays
-## without, and saying so in the log is the whole point -- "a large room
-## whose traversal quietly did not appear is the worst version of this
-## failure".
+## SIX STEPS, IN THIS ORDER, AND THE ORDER IS THE POINT (Stage 3A).
+##
+##   1. the Zone root is already in the tree -- `setup` put it there;
+##   2. ONE physics frame is awaited, because a probe against a body the
+##      physics server has not registered yet answers "nothing there",
+##      and a movement offer blessed by geometry nobody could see is the
+##      exact vacuous pass this stage exists to remove;
+##   3. every declared offer of every room is PURELY validated against
+##      real geometry -- all kinds, whatever the selected mode is, so the
+##      census describes the rooms rather than the selection;
+##   4. declines and refusals are reported by name;
+##   5. only then, and only for the selected mode, are accepted offers
+##      CONSTRUCTED -- `none` constructs nothing at all;
+##   6. a second construction into the same room is refused by
+##      `MovementPackage`, not silently doubled.
+##
+## STEPS 3 AND 5 ARE DIFFERENT WORDS FOR DIFFERENT FACTS (owner ruling,
+## 2026-09-03). Validation adds no node and is safe to repeat; it once
+## returned `consume`, so merely looking at a Zone put a pad and a beam
+## into every room that offered one. Nothing is called "built" here
+## unless a node was made.
+##
+## A DECLINED OFFER IS NOT A BROKEN ZONE. A rail that cannot be built is
+## a rail the room plays without -- "a large room whose traversal quietly
+## did not appear is the worst version of this failure", so it is said
+## out loud and the Zone carries on.
 func _validate_offers(chambers: Array) -> void:
 	await get_tree().physics_frame
-	for report: Variant in OfferBinding.validate_zone(chambers):
-		var record: Dictionary = report
-		push_warning("offers: %s" % OfferBinding.summarise(
-				str(record["chamber"]), record["verdict"] as Dictionary))
+	var wanted := MovementSelection.builds(movement_package)
+	offer_census = {"declared": 0, "judged": 0, "accepted": 0,
+			"built": 0, "declined": 0, "refused": 0}
+	for entry: Variant in chambers:
+		var record: Dictionary = entry
+		var node := record.get("node") as Node3D
+		var build: Dictionary = record.get("build", {})
+		if node == null or build.is_empty():
+			continue
+		var chamber: Dictionary = record.get("chamber", {})
+		var named := str(chamber.get("id", "chamber"))
+		var shell := str(chamber.get("shell_id", ""))
+		var declared: int = (build.get("offers", []) as Array).size()
+		offer_census["declared"] += declared
+
+		# PURE. Every kind, every room, no matter what the mode builds.
+		var seen := OfferBinding.validate(node, build, named)
+		var refused := bool(seen.get("refused", false))
+		var judged: int = (seen["accepted"] as Array).size()
+		var turned_down: int = (seen["declined"] as Array).size()
+		offer_census["judged"] += judged
+		offer_census["accepted"] += judged
+		offer_census["declined"] += turned_down
+		if refused:
+			offer_census["refused"] += 1
+		if refused or turned_down > 0:
+			push_warning("offers: %s" % OfferBinding.summarise(named, seen))
+
+		# BUILT. Only the selected kinds, and only after every verdict is
+		# in. `none` asks for nothing and so this loop does nothing.
+		var made := 0
+		if not wanted.is_empty() and not refused:
+			var work := OfferBinding.construct(node, build, named, wanted)
+			if bool(work.get("refused", false)):
+				push_warning("offers: %s refused construction -- %s"
+						% [named, str(work["declined"])])
+			else:
+				made = (work["built"] as Array).size()
+				offer_census["built"] += made
+		Telemetry.room(named, shell, movement_package, declared, judged,
+				turned_down, made, refused)
+	Telemetry.zone_offers(zone_id, movement_package, offer_census)
 
 func _objective_of(chamber: Dictionary) -> String:
 	# A corridor has no objective; a reward inside one is implicitly

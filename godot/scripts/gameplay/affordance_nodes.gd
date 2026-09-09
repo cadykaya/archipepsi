@@ -333,6 +333,10 @@ class LaunchPad extends Area3D:
 	## source body pose before the solved velocity is applied, so the
 	## flight that happens is the flight that was validated -- entering
 	## at an edge, a corner or dead centre all produce the same arc.
+	## Emitted only when a launch actually happened, so a test cannot
+	## mistake a pad that exists for a pad that fired (Stage 3A).
+	signal fired(from: Vector3, velocity: Vector3)
+
 	func launch(player: Player) -> void:
 		var shot := solve()
 		if not bool(shot.get("ok", false)):
@@ -341,7 +345,14 @@ class LaunchPad extends Area3D:
 			return
 		player.global_position = _body_pose()
 		player.velocity = shot["velocity"]
+		# THE ARC IS THE CONTRACT. Without this the walk solve's air
+		# control deletes the horizontal half of the velocity within a
+		# second and the pad becomes a bounce -- measured at 24.21 m up
+		# and 0.00 m across on the hall's own pad.
+		player.begin_launch_flight()
 		launched += 1
+		fired.emit(player.global_position, player.velocity)
+		Telemetry.launch_fired(player.global_position, player.velocity)
 
 
 class BouncePad extends Area3D:

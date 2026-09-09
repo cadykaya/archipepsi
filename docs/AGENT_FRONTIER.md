@@ -167,6 +167,37 @@ What remains needs a person, not more iteration
 5. **Project code licensing** — separate from asset intake, and not
    decided.
 
+## STAGE 3A — a player rides an authored rail, 2026-09-09
+
+**CURRENT STATE.** `docs/ROAD_TO_PLAYABLE_0_3.md` is the frozen authority;
+this is where 3A left the tree.
+
+**DONE.** A real `Player` catches, rides and leaves an authored rail, and is
+thrown by an authored launch pad to within **0.20 m of its authored aim**, in
+a Zone the real runtime built from the four approved Wave-1 rooms. Operator
+control: `--playtest3a` plus `--movement-package=none|rail|launch`. Census per
+mode: 24 declared, 20 judged, 20 accepted, 0 declined, 0 refused; built 0 / 4 /
+4. `make godot-playtest3a`.
+
+**THE SHOWCASE IS SCAFFOLDING (R2).** It names its four `shell_id` values by
+hand. **A1 and A2 are NOT satisfied** — an ordinary generated Zone still
+contains zero authored rooms. **A4 is mechanically proven and not yet closed**:
+it must be re-proven through the normal played-Zone path after 3B.
+
+**ONE PLAYER-BEHAVIOUR CHANGE, MEASURED FIRST.** `LaunchSolver` solves a
+ballistic arc; the airborne walk solve lerped horizontal velocity toward the
+input at `AIR_CONTROL`, keeping 3.7e-7 of it over the hall pad's 1.43 s
+ascent. The first measurement was "rose 24.21 m, travelled 0.00 m, landed back
+on the pad" -- every authored launch was a bounce, which is the one thing
+`LaunchSolver` exists to distinguish itself from. A launch is now ballistic
+until the next landing; nothing else about walking, jumping, gravity or air
+control changed. **OPEN OWNER RULING: may a launched player steer mid-flight?**
+3A took the conservative answer.
+
+**NEXT IS 3B AND NOTHING ELSE (R4).** Epsilon must emit authored `shell_id`
+values through the real path. Nothing unrelated goes between them; Wave 2 and
+Theme Packs stay off the Playable 0.3 critical path.
+
 ## WAVE 1 COMPLETE — all twelve room shells pass, 2026-09-04
 
 **CURRENT STATE. Nothing in this section is outstanding.**

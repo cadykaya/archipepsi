@@ -63,6 +63,7 @@ const DRIVERS := {
 	"--room-test": preload("res://tests/room_driver.gd"),
 	"--room-contract": preload("res://tests/room_contract_driver.gd"),
 	"--movement-test": preload("res://tests/movement_driver.gd"),
+	"--playtest3a-test": preload("res://tests/playtest3a_driver.gd"),
 }
 
 func _ready() -> void:
@@ -73,6 +74,40 @@ func _ready() -> void:
 			add_child((DRIVERS[flag] as GDScript).new())
 			return
 	boot()
+	# THE STAGE 3A SHOWCASE, and only when an operator asks for it by
+	# name. Without `--playtest3a` this branch does nothing at all and
+	# startup is byte-for-byte what it was: the menu, the bridge, the
+	# ordinary campaign. The showcase is scaffolding (Road to Playable
+	# 0.3, R2) and must never be something a player arrives in by
+	# accident.
+	var asked := MovementSelection.from_cmdline()
+	if bool(asked["showcase"]):
+		_enter_showcase(asked)
+
+## Enter the curated Stage 3A showcase.
+##
+## A REFUSED SELECTION STOPS HERE. An unknown `--movement-package` value
+## is not a reason to pick one: it is reported and the showcase does not
+## open, because a typo that quietly became `none` would produce a green
+## run that proved nothing about movement at all.
+##
+## Everything past the refusal is the REAL path -- the same
+## `ZoneController` and the same `_to_zone` an ordinary Zone takes, so
+## what this proves is the runtime rather than a harness beside it.
+func _enter_showcase(asked: Dictionary) -> void:
+	if bool(asked["refused"]):
+		Telemetry.refused_selection(str(asked["why"]))
+		return
+	var mode := str(asked["mode"])
+	Telemetry.showcase(ShowcaseZone.ZONE_ID, mode, ShowcaseZone.shell_ids())
+	_showcase_mode = mode
+	_to_zone(ShowcaseZone.build())
+	_showcase_mode = ""
+
+## The selection `_to_zone` hands the controller, empty outside the
+## showcase. Held for exactly one call rather than kept as state, so an
+## ordinary Zone entered later cannot inherit a playtest setting.
+var _showcase_mode := ""
 
 ## Everything the real game needs, extracted so a test can call it.
 ##
@@ -373,6 +408,12 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	zone.tones = tones
 	zone.hud = hud
 	zone.is_finale = bool(record.get("is_finale", false))
+	# BEFORE `setup`, because the offer stage is deferred from inside it.
+	# Empty outside the showcase, and `ZoneController` then keeps its own
+	# default of `none` -- so an ordinary Zone constructs no movement
+	# geometry and behaves exactly as it did before Stage 3A.
+	if _showcase_mode != "":
+		zone.movement_package = _showcase_mode
 	world.add_child(zone)
 	# Before setup, so a Zone whose first frame already spends something
 	# sees full channels rather than last Zone's leftovers. The rule
