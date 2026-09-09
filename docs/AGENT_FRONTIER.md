@@ -184,15 +184,27 @@ hand. **A1 and A2 are NOT satisfied** — an ordinary generated Zone still
 contains zero authored rooms. **A4 is mechanically proven and not yet closed**:
 it must be re-proven through the normal played-Zone path after 3B.
 
-**ONE PLAYER-BEHAVIOUR CHANGE, MEASURED FIRST.** `LaunchSolver` solves a
+**THE LAUNCH-AIR RULING, SETTLED 2026-09-09.** `LaunchSolver` solves a
 ballistic arc; the airborne walk solve lerped horizontal velocity toward the
 input at `AIR_CONTROL`, keeping 3.7e-7 of it over the hall pad's 1.43 s
-ascent. The first measurement was "rose 24.21 m, travelled 0.00 m, landed back
-on the pad" -- every authored launch was a bounce, which is the one thing
-`LaunchSolver` exists to distinguish itself from. A launch is now ballistic
-until the next landing; nothing else about walking, jumping, gravity or air
-control changed. **OPEN OWNER RULING: may a launched player steer mid-flight?**
-3A took the conservative answer.
+ascent -- measured as "rose 24.21 m, travelled 0.00 m, landed back on the pad".
+Every authored launch was a bounce. Owner ruling: **protect the launch, do not
+lock the player.** Three behaviours, kept distinct: the BALLISTIC CARRIER
+(the pad's validated horizontal velocity, stored apart from `velocity` and
+never touched by the airborne lerp); a BOUNDED PLAYER CORRECTION layered on
+top, capped at `Constants.LAUNCH_CORRECTION_SPEED` = **2.0 m/s, PROVISIONAL**,
+whose final feel is Playtest 3's; and ORDINARY MOVEMENT, unchanged and resumed
+the instant the arc ends. Non-reversal is STRUCTURAL, not a percentage: the
+component along the authored direction is never allowed to go negative, so a
+player leaning back can slow their crossing and can never reverse it or return
+to the pad. Measured: no input lands 1.03 m from the aim, perpendicular input
+bends it 4.10 m, opposing input still ends 10.20 m along the authored
+direction. State clears on landing, rail, death, respawn and `set_spawn`.
+
+**THE `none` RESULT IS A SOLVABILITY AUDIT, NOT A COMPLETION.** 50 mandatory
+endpoints, 0 without ground, zero offer geometry -- that is the authored
+mandatory-route audit staying clean without offers. **A6 remains open**: no
+end-to-end player completion of the showcase was performed or is claimed.
 
 **NEXT IS 3B AND NOTHING ELSE (R4).** Epsilon must emit authored `shell_id`
 values through the real path. Nothing unrelated goes between them; Wave 2 and

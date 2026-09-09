@@ -165,33 +165,45 @@ var _volumes: Dictionary = {}
 ## Called by an affordance volume's own Area3D on overlap. Keyed by the
 ## node so overlapping volumes cannot leave a stale influence behind when
 ## one of them is freed mid-overlap.
-## Committed to an authored launch arc until the next landing (3A).
+## Flying an authored launch arc: the state, and the protected motion.
 ##
-## THE NARROW BINDING A LAUNCH PAD NEEDS TO BE CONSUMABLE, and it was
-## measured before it was written. `LaunchSolver` solves a BALLISTIC arc
-## -- two free-fall halves, no horizontal loss -- and the pad fires
-## exactly that velocity. The airborne walk solve then lerps horizontal
-## velocity toward the input direction every frame at `AIR_CONTROL`, so a
-## player who lets go of the stick keeps `(1 - 0.16)^n` of it: over the
-## hall pad's 1.43 s ascent that is 3.7e-7, and the measured flight rose
-## 24.21 m and travelled 0.00 m horizontally. The player came straight
-## back down onto the pad.
+## THREE THINGS THAT MUST STAY DISTINCT (owner ruling, 2026-09-09):
 ##
-## That makes every authored launch a bounce, which is the one thing
+##   * BALLISTIC CARRIER MOTION -- `_launch_carrier`, the horizontal half
+##     of the velocity the pad fired, supplied by the validated authored
+##     solution and protected from the ordinary airborne lerp. It is
+##     stored rather than left in `velocity` precisely so that nothing
+##     which edits `velocity` can quietly erode it.
+##   * BOUNDED PLAYER CORRECTION -- a modest airborne contribution
+##     LAYERED ON TOP of the carrier each frame, capped at
+##     `Constants.LAUNCH_CORRECTION_SPEED`. It may bend the arc. It may
+##     not overwrite, erase or reverse it.
+##   * ORDINARY MOVEMENT -- resumes untouched the moment the launch state
+##     ends, which is what `_end_launch_flight` is for.
+##
+## WHY THE CARRIER NEEDS PROTECTING, MEASURED BEFORE IT WAS WRITTEN.
+## `LaunchSolver` solves a BALLISTIC arc -- two free-fall halves, no
+## horizontal loss -- and the pad fires exactly that velocity. The
+## airborne walk solve lerps horizontal velocity toward the input
+## direction every frame at `AIR_CONTROL`, so a player who lets go of the
+## stick keeps `(1 - 0.16)^n` of it: over the hall pad's 1.43 s ascent
+## that is 3.7e-7. The first measurement rose 24.21 m and travelled
+## 0.00 m horizontally -- the player came straight back down onto the
+## pad. Every authored launch was a bounce, which is the one thing
 ## `LaunchSolver` exists to distinguish itself from: "a bounce pad is a
 ## local vertical opportunity ... a launch pad is an EDGE -- source and
-## destination are both part of the contract". A destination air control
-## deletes is not part of any contract.
+## destination are both part of the contract".
 ##
-## So a launch is ballistic until you land: the horizontal solve is
-## skipped for the duration of the arc, and nothing else about walking,
-## jumping, gravity or air control changes. Whether a player should be
-## able to STEER mid-launch is a feel decision and is deliberately not
-## made here -- the conservative default is that the trajectory that was
-## validated is the trajectory that happens.
+## AND WHY THE PLAYER STILL STEERS. The base player can always modestly
+## correct in the air, and a launch that took that away would be a
+## cutscene wearing a traversal's name. This is not homing, not
+## path-following, not an Echo, and not a movement-package rule: it is
+## the ordinary air correction, bounded, applied to a motion it cannot
+## cancel.
 var _launch_flight := false
+var _launch_carrier := Vector3.ZERO
 
-## Riding a rail, or null. The whole ride lives in `RailRider`, which
+## Riding a rail, or null. The whole ride lives in `RailRider`, which## Riding a rail, or null. The whole ride lives in `RailRider`, which
 ## owns no node and reads no input, so it can be driven frame-exact in a
 ## headless test instead of only by a human on a controller.
 var _rider: RailRider = null
@@ -214,7 +226,7 @@ func offer_rail(rail: RailPath, to_world := Transform3D.IDENTITY) -> void:
 	_rider = caught["rider"]
 	# The rail owns the body now, so the arc is over whether or not the
 	# ground was reached.
-	_launch_flight = false
+	_end_launch_flight()
 	global_position = _rider.body_position()
 	rail_caught.emit(global_position)
 	Telemetry.rail_caught(global_position)
@@ -223,15 +235,64 @@ func riding_rail() -> bool:
 	return _rider != null
 
 ## Flying an authored launch arc. Set by the pad that fired it, cleared
-## by the landing that ends it.
+## by the landing, rail, respawn or spawn that ends it.
 func in_launch_flight() -> bool:
 	return _launch_flight
+
+## The protected ballistic component, for a caller that has to prove it
+## was not eroded. Horizontal only; the vertical half is plain gravity
+## and was never in danger.
+func launch_carrier() -> Vector3:
+	return _launch_carrier
 
 ## Begin an authored launch arc. Called by `AffordanceNodes.LaunchPad`
 ## immediately after it applies the solved velocity, so the flight that
 ## happens is the flight that was validated.
 func begin_launch_flight() -> void:
 	_launch_flight = true
+	_launch_carrier = Vector3(velocity.x, 0.0, velocity.z)
+
+## End it, from wherever it ended.
+##
+## ONE PLACE, because "cleared on landing" and "cleared on respawn" being
+## two different lines is how one of them comes to be forgotten. Called
+## by the landing, by catching a rail, by respawn -- which is also the
+## out-of-bounds recovery, since falling past `FALL_KILL_Y` kills -- and
+## by `set_spawn`, which is Zone entry and replacement.
+func _end_launch_flight() -> void:
+	_launch_flight = false
+	_launch_carrier = Vector3.ZERO
+
+## THE CARRIER, PLUS WHAT THE PLAYER ASKED FOR, MINUS ANYTHING THAT WOULD
+## UNDO IT.
+##
+## `wish` is the ordinary input direction, already normalized by the walk
+## solve, and zero when there is none. The correction is recomputed from
+## the carrier every frame rather than accumulated, so holding a
+## direction is a steady bend rather than a ramp, and letting go returns
+## the arc exactly to the one that was validated.
+##
+## THE INVARIANT IS STRUCTURAL, NOT NUMERIC. Whatever the correction and
+## whatever the carrier's own speed, the component ALONG the authored
+## direction is never allowed to go negative. So a player leaning back
+## can slow their crossing and can never reverse it, cancel it, or return
+## to the pad they left -- displacement along the launch axis only ever
+## increases. That holds for a 2 m/s carrier as surely as a 20 m/s one,
+## which a percentage of the carrier's speed would not.
+func _carry_launch(wish: Vector3) -> void:
+	if _launch_carrier.length() < 0.001:
+		return
+	var steer := Vector3(wish.x, 0.0, wish.z)
+	if steer.length() > 1.0:
+		steer = steer.normalized()
+	var blended := _launch_carrier \
+			+ steer * Constants.LAUNCH_CORRECTION_SPEED
+	var forward := _launch_carrier.normalized()
+	var along := blended.dot(forward)
+	if along < 0.0:
+		blended -= forward * along
+	velocity.x = blended.x
+	velocity.z = blended.z
 
 ## One step of a grind. Position comes from the path, velocity is what
 ## the player leaves with, and `move_and_slide` is deliberately NOT
@@ -434,6 +495,9 @@ func kick_viewmodel(strength: float) -> void:
 func set_spawn(xform: Transform3D) -> void:
 	_spawn_transform = xform
 	global_transform = xform
+	# Zone entry and Zone replacement both come through here, and a
+	# carrier that outlived its Zone would steer the next one.
+	_end_launch_flight()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if input_frozen or _dead:
@@ -474,7 +538,7 @@ func _physics_process(delta: float) -> void:
 		_coyote = Constants.COYOTE_TIME
 		# The arc ends where it lands, which is what an authored launch
 		# target names.
-		_launch_flight = false
+		_end_launch_flight()
 	_jump_buffer -= delta
 
 	# Upward-only, and applied whether or not you are grounded: an updraft
@@ -529,7 +593,9 @@ func _physics_process(delta: float) -> void:
 				if is_on_floor() \
 				else Constants.AIR_CONTROL * air_control_mult
 		control = minf(control, 1.0)
-		if not _launch_flight:
+		if _launch_flight and not is_on_floor():
+			_carry_launch(direction)
+		else:
 			velocity.x = lerpf(velocity.x, direction.x * speed,
 					control * 0.4)
 			velocity.z = lerpf(velocity.z, direction.z * speed,
@@ -550,7 +616,10 @@ func _physics_process(delta: float) -> void:
 		if Input.is_action_just_pressed("interact") \
 				and _interact_target != null:
 			_interact_target.interact(self)
-	elif not _launch_flight:
+	elif _launch_flight and not is_on_floor():
+		# A frozen player steers nothing, so the carrier arrives intact.
+		_carry_launch(Vector3.ZERO)
+	else:
 		velocity.x = lerpf(velocity.x, 0.0, 0.2)
 		velocity.z = lerpf(velocity.z, 0.0, 0.2)
 
@@ -718,6 +787,11 @@ func heal(amount: float) -> void:
 
 func _die() -> void:
 	_dead = true
+	# `_physics_process` returns early while dead, so the arc would
+	# otherwise sit inert until respawn. Ending it here keeps "am I in a
+	# launch" answerable at every moment rather than only at the ones
+	# physics happens to run.
+	_end_launch_flight()
 	# Every runtime, not just the highlighted one: all four keep their own
 	# `_physics_process`, and this branch is where they stop being polled.
 	for runtime: EchoRuntime in runtimes.values():
@@ -729,6 +803,10 @@ func _die() -> void:
 func _respawn() -> void:
 	global_transform = _spawn_transform
 	velocity = Vector3.ZERO
+	# Also the out-of-bounds recovery: falling past `FALL_KILL_Y` kills,
+	# so this is where a player who flew off the map comes back, and they
+	# must not come back still carrying the arc that threw them.
+	_end_launch_flight()
 	hp = Constants.PLAYER_MAX_HP
 	_dead = false
 	hp_changed.emit(hp, total_shield())

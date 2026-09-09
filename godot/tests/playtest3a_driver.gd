@@ -47,6 +47,7 @@ func _run() -> void:
 	await _test_each_mode_builds_exactly_what_it_says()
 	await _test_a_player_rides_an_authored_rail()
 	await _test_a_player_is_launched_by_an_authored_pad()
+	await _test_a_launch_is_carried_and_steered_and_neither_is_the_other()
 	await _test_movement_works_in_a_translated_and_yawed_room()
 	await _test_the_showcase_finishes_with_no_movement_package()
 	await _test_validation_stays_pure_under_every_mode()
@@ -826,3 +827,246 @@ func _test_ordinary_startup_builds_no_movement_geometry() -> void:
 	var plain := MovementSelection.parse(PackedStringArray([]))
 	_check(not bool(plain["showcase"]),
 			"ordinary startup opened the showcase")
+
+# --- the amendment: a launch is carried, and steered, and neither is the
+#     other (owner ruling, 2026-09-09) ---------------------------------------
+
+## Stand a player on a pad and let it fire.
+##
+## Returns the pad, the carrier it was fired with, and the aim -- the
+## three things every proof below compares against.
+func _fire(zone: ZoneController, pad: AffordanceNodes.LaunchPad) -> Dictionary:
+	var player: Player = zone.player
+	player.input_frozen = true
+	var before := pad.launched
+	player.global_position = pad.global_position + Vector3.UP * 0.1
+	player.velocity = Vector3.ZERO
+	for _i in 8:
+		if pad.launched > before:
+			break
+		await get_tree().physics_frame
+	return {"fired": pad.launched > before, "carrier": player.launch_carrier(),
+			"aim": pad.world_target(), "from": pad.global_position}
+
+## Hold a direction, in the player's own frame, for the whole flight.
+##
+## THE REAL INPUT PATH. `_physics_process` reads `Input.get_vector`, so
+## the correction under test is the one a hand on a stick produces --
+## not a velocity poked in from the side. The player is yawed so that the
+## pressed action points where the proof needs it to.
+## `track` is an axis to watch WHILE THE ARC LASTS: the returned
+## `min_along` is the least displacement along it seen at any moment the
+## player was still in launch flight. Measured in flight only, because
+## once the arc ends ordinary movement resumes and a held direction
+## simply walks -- which is correct, and is not the launch reversing.
+func _fly_holding(player: Player, action: String, face: Vector3,
+		budget := 900, track := Vector3.ZERO) -> Dictionary:
+	player.input_frozen = false
+	if face.length() > 0.001:
+		# A Y-rotation by t puts basis.x at (cos t, 0, -sin t), and
+		# `move_right` pushes along basis.x.
+		player.rotation.y = atan2(-face.z, face.x)
+	if action != "":
+		Input.action_press(action)
+	var frames := 0
+	var carrier_drift := 0.0
+	var start := player.launch_carrier()
+	var from := player.global_position
+	var axis := track.normalized() if track.length() > 0.001 \
+			else Vector3.ZERO
+	var min_along := 0.0
+	while frames < budget:
+		await get_tree().physics_frame
+		frames += 1
+		carrier_drift = maxf(carrier_drift,
+				start.distance_to(player.launch_carrier()))
+		if axis != Vector3.ZERO and player.in_launch_flight():
+			min_along = minf(min_along,
+					(player.global_position - from).dot(axis))
+		if player.is_on_floor() and frames > 20:
+			# ONE MORE FRAME. `is_on_floor()` is set by `move_and_slide`
+			# at the END of a physics tick, so the tick that notices the
+			# landing has already returned -- the tick that ENDS the arc
+			# is the next one.
+			await get_tree().physics_frame
+			break
+	if action != "":
+		Input.action_release(action)
+	player.input_frozen = true
+	return {"landed": player.global_position, "frames": frames,
+			"carrier_drift": carrier_drift, "min_along": min_along}
+
+func _test_a_launch_is_carried_and_steered_and_neither_is_the_other() -> void:
+	"""THE OWNER RULING: protect the launch, do not lock the player.
+
+	Three behaviours, proven apart. The carrier is the validated
+	ballistic motion and nothing airborne may erode it. The correction is
+	a modest layer on top that may bend the arc. Ordinary movement is
+	what happens when neither applies, and it is unchanged."""
+	var rig: Dictionary = await _showcase("launch")
+	var zone: ZoneController = rig["zone"]
+	var pads := _pads(zone)
+	_check(not pads.is_empty(), "the launch mode built no pad")
+	if pads.is_empty():
+		await _drop(rig)
+		return
+	var pad: AffordanceNodes.LaunchPad = pads[0]
+	var player: Player = zone.player
+
+	# 1 -- NO INPUT. The solver's own arc, landing where it was aimed.
+	var shot: Dictionary = await _fire(zone, pad)
+	_check(bool(shot["fired"]), "the pad did not fire")
+	var carrier: Vector3 = shot["carrier"]
+	var aim: Vector3 = shot["aim"]
+	var origin: Vector3 = shot["from"]
+	_check(carrier.length() > 1.0,
+			"the protected carrier is %v, which is not a launch" % carrier)
+	var quiet: Dictionary = await _fly_holding(player, "", Vector3.ZERO)
+	var quiet_miss: float = (quiet["landed"] as Vector3).distance_to(aim)
+	print("  amend: no input -> landed %.2f m from the authored aim, "
+			% quiet_miss + "carrier %v drifted %.4f m/s"
+			% [carrier, quiet["carrier_drift"]])
+	_check(quiet_miss < 2.0,
+			"with no input the launch missed its authored aim by %.2f m"
+			% quiet_miss)
+	# 4 -- THE CARRIER IS NOT INTERPOLATED. Sampled every frame of the
+	# flight: the ordinary air-control lerp would have eaten it.
+	_check(float(quiet["carrier_drift"]) < 0.001,
+			"the protected carrier moved %.4f m/s during the flight; "
+			% float(quiet["carrier_drift"]) + "something is interpolating it")
+	player_proofs += 1
+
+	# 2 -- PERPENDICULAR INPUT BENDS IT. Same pad, same arc, one held
+	# direction across the carrier.
+	var lateral := Vector3(-carrier.z, 0.0, carrier.x).normalized()
+	var again: Dictionary = await _fire(zone, pad)
+	_check(bool(again["fired"]), "the pad did not fire a second time")
+	var steered: Dictionary = await _fly_holding(player, "move_right",
+			lateral)
+	var bent := (steered["landed"] as Vector3) - (quiet["landed"] as Vector3)
+	var sideways := absf(bent.dot(lateral))
+	print("  amend: perpendicular input -> landed %v, %.2f m across the "
+			% [steered["landed"], sideways] + "arc (%.2f m from the quiet "
+			% (quiet["landed"] as Vector3).distance_to(
+				steered["landed"] as Vector3) + "landing)")
+	_check(sideways > 1.0,
+			"holding a direction across the arc moved the landing %.2f m "
+			% sideways + "sideways; the correction is not reaching the "
+			+ "flight")
+	_check(float(steered["carrier_drift"]) < 0.001,
+			"steering changed the protected carrier by %.4f m/s"
+			% float(steered["carrier_drift"]))
+	player_proofs += 1
+
+	# 3 -- OPPOSING INPUT CANNOT UNDO IT. Held directly back along the
+	# authored direction for the whole flight.
+	var backward := -Vector3(carrier.x, 0.0, carrier.z).normalized()
+	var third: Dictionary = await _fire(zone, pad)
+	_check(bool(third["fired"]), "the pad did not fire a third time")
+	var fought: Dictionary = await _fly_holding(player, "move_right",
+			backward)
+	var landed: Vector3 = fought["landed"]
+	var travelled := (landed - origin)
+	var forward := Vector3(carrier.x, 0.0, carrier.z).normalized()
+	var along := travelled.dot(forward)
+	print("  amend: opposing input -> landed %v, %.2f m ALONG the "
+			% [landed, along] + "authored direction, %.2f m from the pad"
+			% Vector3(travelled.x, 0.0, travelled.z).length())
+	_check(along > 0.0,
+			"holding back reversed the launch: the player ended %.2f m "
+			% along + "along the authored direction")
+	_check(landed.distance_to(origin) > 3.0,
+			"holding back returned the player to within %.2f m of the "
+			% landed.distance_to(origin) + "pad they left")
+	refusals_seen += 1
+
+	# 6/7 -- THE STATE IS CLEAN AFTERWARDS, and a later launch is its own.
+	_check(not player.in_launch_flight()
+			and player.launch_carrier().length() < 0.001,
+			"the launch state survived the landing: flight=%s carrier=%v"
+			% [str(player.in_launch_flight()), player.launch_carrier()])
+	var fourth: Dictionary = await _fire(zone, pad)
+	_check((fourth["carrier"] as Vector3).distance_to(carrier) < 0.001,
+			"a later launch began with carrier %v, not the %v this pad "
+			% [fourth["carrier"], carrier] + "fires")
+	# ... and a respawn, which is also the out-of-bounds recovery, clears
+	# it mid-flight.
+	player.take_damage(Constants.PLAYER_MAX_HP * 10.0)
+	await get_tree().process_frame
+	_check(not player.in_launch_flight(),
+			"a killed player kept their launch flight")
+	for _i in int(Constants.RESPAWN_DELAY * 70.0):
+		await get_tree().physics_frame
+	_check(not player.in_launch_flight()
+			and player.launch_carrier().length() < 0.001,
+			"a respawned player came back carrying a launch arc")
+	# ... and so does entering a Zone.
+	var fifth: Dictionary = await _fire(zone, pad)
+	_check(bool(fifth["fired"]), "the pad stopped firing after a respawn")
+	player.set_spawn(Transform3D(Basis(), Vector3(0, 1, 0)))
+	_check(not player.in_launch_flight()
+			and player.launch_carrier().length() < 0.001,
+			"set_spawn left the launch state behind")
+	await _drop(rig)
+
+	# 5 -- ORDINARY JUMPING IS UNCHANGED. Not in a launch, the airborne
+	# horizontal still decays toward the input the way it always did.
+	var plain: Dictionary = await _showcase("none")
+	var ground: ZoneController = plain["zone"]
+	var walker: Player = ground.player
+	walker.input_frozen = true
+	_check(not walker.in_launch_flight(),
+			"a player who has not been launched is in launch flight")
+	walker.global_position = pad_free_air(ground)
+	walker.velocity = Vector3(6.0, 6.0, 0.0)
+	var before_speed := Vector2(walker.velocity.x, walker.velocity.z).length()
+	for _i in 20:
+		await get_tree().physics_frame
+	var after_speed := Vector2(walker.velocity.x, walker.velocity.z).length()
+	print("  amend: ordinary airborne horizontal %.2f -> %.2f m/s over 20 "
+			% [before_speed, after_speed] + "frames (the lerp still runs)")
+	_check(after_speed < before_speed * 0.5,
+			"ordinary airborne horizontal went %.2f -> %.2f m/s; the "
+			% [before_speed, after_speed] + "existing air control is no "
+			+ "longer running for un-launched players")
+
+	# 3-bis -- THE INVARIANT AT ITS BOUNDARY. The hall's carrier is
+	# 7.06 m/s and the correction is capped at 2.0, so on that pad
+	# "opposing input cannot reverse the launch" is arithmetic and the
+	# structural guard never fires. Where it is load-bearing is a carrier
+	# SLOWER than the correction, so that is where it is tested: a real
+	# player, a real launch state, a deliberately slow arc, and a held
+	# direction straight back down it.
+	var slow: Player = ground.player
+	slow.input_frozen = true
+	slow.global_position = pad_free_air(ground) + Vector3.UP * 8.0
+	var creep := Vector3(1.0, 0.0, 0.0)
+	slow.velocity = creep + Vector3.UP * 12.0
+	slow.begin_launch_flight()
+	_check(slow.launch_carrier().distance_to(creep) < 0.001,
+			"a slow launch carried %v, not the %v it was given"
+			% [slow.launch_carrier(), creep])
+	var launched_from := slow.global_position
+	var back := -creep.normalized()
+	var fight: Dictionary = await _fly_holding(slow, "move_right", back,
+			600, creep)
+	var went := float(fight["min_along"])
+	print("  amend: a %.1f m/s carrier held against for %d frames never "
+			% [creep.length(), fight["frames"]]
+			+ "went further back than %.4f m along its authored direction"
+			% went)
+	_check(went >= -0.01,
+			"a correction larger than the carrier reversed the launch: "
+			+ "%.4f m backward along the authored direction while still "
+			% went + "in flight")
+	refusals_seen += 1
+	await _drop(plain)
+
+## Somewhere in the first room with air under it, for the ordinary-jump
+## comparison. Read off the Zone rather than guessed.
+func pad_free_air(zone: ZoneController) -> Vector3:
+	for raw: Variant in zone.offer_rooms:
+		var record: Dictionary = raw
+		var root: Node3D = record["node"]
+		return root.global_transform * Vector3(0.0, 12.0, 20.0)
+	return Vector3(0.0, 12.0, 20.0)
