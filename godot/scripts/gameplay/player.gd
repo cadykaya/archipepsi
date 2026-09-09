@@ -263,36 +263,76 @@ func _end_launch_flight() -> void:
 	_launch_flight = false
 	_launch_carrier = Vector3.ZERO
 
-## THE CARRIER, PLUS WHAT THE PLAYER ASKED FOR, MINUS ANYTHING THAT WOULD
-## UNDO IT.
+## THE CARRIER, PLUS WHAT THE PLAYER ADDS, MINUS NOTHING.
 ##
 ## `wish` is the ordinary input direction, already normalized by the walk
 ## solve, and zero when there is none. The correction is recomputed from
 ## the carrier every frame rather than accumulated, so holding a
-## direction is a steady bend rather than a ramp, and letting go returns
-## the arc exactly to the one that was validated.
+## direction is a steady bend and letting go returns the arc exactly to
+## the one that was validated.
 ##
-## THE INVARIANT IS STRUCTURAL, NOT NUMERIC. Whatever the correction and
-## whatever the carrier's own speed, the component ALONG the authored
-## direction is never allowed to go negative. So a player leaning back
-## can slow their crossing and can never reverse it, cancel it, or return
-## to the pad they left -- displacement along the launch axis only ever
-## increases. That holds for a 2 m/s carrier as surely as a 20 m/s one,
-## which a percentage of the carrier's speed would not.
+## THE CARRIER MAY NOT BE CANCELLED (owner ruling, 2026-09-09). An
+## earlier version clamped the RESULT's axial component at zero, which
+## prevented reversal and still permitted cancellation: a 1 m/s carrier
+## opposed by a 2 m/s correction stopped moving forward while the carrier
+## sat privately stored and did nothing. A carrier preserved in a
+## variable but absent from the velocity is not preserved.
+##
+## So the correction is DECOMPOSED against the authored axis before it is
+## applied, and the opposing half is removed rather than clamped
+## afterwards:
+##
+##   * the component ALONG the authored direction may only be positive --
+##     bounded and additive, never subtractive;
+##   * the component ACROSS it is free, bounded the same way, and bends
+##     the arc;
+##   * so the applied axial speed is `|carrier| + forward * SPEED`, never
+##     less than the carrier's own.
+##
+## Holding directly backward therefore contributes no axial correction at
+## all: it cannot slow the crossing, cancel it, or reverse it. The
+## guarantee is arithmetic rather than tuned, and holds for a 1 m/s
+## carrier as surely as a 20 m/s one.
 func _carry_launch(wish: Vector3) -> void:
-	if _launch_carrier.length() < 0.001:
-		return
 	var steer := Vector3(wish.x, 0.0, wish.z)
 	if steer.length() > 1.0:
 		steer = steer.normalized()
-	var blended := _launch_carrier \
-			+ steer * Constants.LAUNCH_CORRECTION_SPEED
-	var forward := _launch_carrier.normalized()
-	var along := blended.dot(forward)
-	if along < 0.0:
-		blended -= forward * along
-	velocity.x = blended.x
-	velocity.z = blended.z
+	var carrier := Vector3(_launch_carrier.x, 0.0, _launch_carrier.z)
+	if carrier.length() < CARRIER_AXIS_EPS:
+		# A PURELY VERTICAL LAUNCH HAS NO AUTHORED HORIZONTAL AXIS, and
+		# inventing one would be authoring a direction the pad never
+		# named. The carrier -- zero -- is preserved exactly, and the
+		# whole bounded correction is available as lateral steering.
+		velocity.x = steer.x * Constants.LAUNCH_CORRECTION_SPEED
+		velocity.z = steer.z * Constants.LAUNCH_CORRECTION_SPEED
+		return
+	var axis := carrier.normalized()
+	var axial := steer.dot(axis)
+	var forward := maxf(axial, 0.0)
+	var lateral := steer - axis * axial
+	var applied := carrier \
+			+ axis * (forward * Constants.LAUNCH_CORRECTION_SPEED) \
+			+ lateral * Constants.LAUNCH_CORRECTION_SPEED
+	velocity.x = applied.x
+	velocity.z = applied.z
+
+## Below this a launch has no authored horizontal direction to protect.
+const CARRIER_AXIS_EPS := 0.001
+
+## What the carrier contributes along its own axis, and what the velocity
+## ACTUALLY APPLIED to the body contributes along it.
+##
+## Named so a proof can compare the two rather than infer the comparison
+## from a landing position. "The carrier is preserved" means these agree
+## every frame; a carrier living only in a private variable fails it.
+func launch_axis_speed() -> float:
+	var carrier := Vector3(_launch_carrier.x, 0.0, _launch_carrier.z)
+	if carrier.length() < CARRIER_AXIS_EPS:
+		return 0.0
+	return Vector3(velocity.x, 0.0, velocity.z).dot(carrier.normalized())
+
+func launch_carrier_axis_speed() -> float:
+	return Vector3(_launch_carrier.x, 0.0, _launch_carrier.z).length()
 
 ## One step of a grind. Position comes from the path, velocity is what
 ## the player leaves with, and `move_and_slide` is deliberately NOT
@@ -536,9 +576,18 @@ func _physics_process(delta: float) -> void:
 		_coyote -= delta
 	else:
 		_coyote = Constants.COYOTE_TIME
-		# The arc ends where it lands, which is what an authored launch
-		# target names.
-		_end_launch_flight()
+		# ONLY A LANDING ENDS THE ARC, and "on the floor" alone is not a
+		# landing. `is_on_floor()` carries the last `move_and_slide`'s
+		# answer, and a pad fires a player who is STANDING on it -- so on
+		# the frame after the launch the flag is still true and the arc
+		# would be stripped before it had risen a centimetre. Every
+		# launch a player walked onto rather than fell onto would lose
+		# its carrier, and only a test that dropped the body onto the pad
+		# would fail to notice.
+		#
+		# A launch that has just fired is rising. A landing is not.
+		if velocity.y <= 0.0:
+			_end_launch_flight()
 	_jump_buffer -= delta
 
 	# Upward-only, and applied whether or not you are grounded: an updraft
@@ -593,7 +642,15 @@ func _physics_process(delta: float) -> void:
 				if is_on_floor() \
 				else Constants.AIR_CONTROL * air_control_mult
 		control = minf(control, 1.0)
-		if _launch_flight and not is_on_floor():
+		# ONE AUTHORITY FOR "IS THE ARC RUNNING", and it is
+		# `_launch_flight`. Asking `is_on_floor()` here as well gave the
+		# carry and the ending two different notions of airborne: on the
+		# frame after a grounded launch the stale floor flag was true and
+		# the arc was still running, so the ordinary lerp ran against a
+		# live carrier and drove it to -2.2 m/s in a single frame.
+		# `_end_launch_flight` decides when the arc is over; this only
+		# asks whether it is.
+		if _launch_flight:
 			_carry_launch(direction)
 		else:
 			velocity.x = lerpf(velocity.x, direction.x * speed,
@@ -616,7 +673,7 @@ func _physics_process(delta: float) -> void:
 		if Input.is_action_just_pressed("interact") \
 				and _interact_target != null:
 			_interact_target.interact(self)
-	elif _launch_flight and not is_on_floor():
+	elif _launch_flight:
 		# A frozen player steers nothing, so the carrier arrives intact.
 		_carry_launch(Vector3.ZERO)
 	else:

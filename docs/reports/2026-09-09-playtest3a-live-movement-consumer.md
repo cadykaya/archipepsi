@@ -5,7 +5,9 @@
 Head before: `df2bb58`. Frozen authority: `docs/ROAD_TO_PLAYABLE_0_3.md`.
 
 **Amended 2026-09-09** with the owner's launch-air ruling (§7), the corrected
-`none` evidence label (§9), and the S1 adjudication (§13). Stage 3A's
+`none` evidence label (§9), and the S1 adjudication (§13). **Corrected
+2026-09-09** with the three-phase lifecycle and exact selection (§3, §5),
+the carrier non-cancellation rule (§7), and the landing reconciliation (§7). Stage 3A's
 architecture, showcase, rail behaviour, offer census, lifecycle, telemetry,
 safeguards and regression results are otherwise as accepted.
 
@@ -20,13 +22,16 @@ by hand, which is scaffolding and not composition.
 
 | file | what |
 | --- | --- |
-| `godot/scripts/gameplay/movement_selection.gd` | **new** — the operator control: the closed set `none` / `rail` / `launch`, the kinds each builds, and the refusal for anything else |
+| `godot/scripts/gameplay/movement_selection.gd` | **new** — the operator control (the closed set `none` / `rail` / `launch` and the refusal for anything else) and the **deterministic selector** that names accepted offers by identity |
 | `godot/scripts/content/showcase_zone.gd` | **new** — the curated Zone dictionary naming the four approved rooms |
 | `godot/scripts/gameplay/telemetry.gd` | **new** — the `p3a:` operator log |
 | `godot/tests/playtest3a_driver.gd` | **new** — the proof suite |
-| `godot/scripts/gameplay/zone_controller.gd` | the six-step offer lifecycle, `movement_package`, `offer_census`, `offer_rooms` |
+| `godot/scripts/gameplay/zone_controller.gd` | the **three-phase** offer lifecycle, `movement_package`, the seven-term `offer_census`, `offer_selection`, `offer_rooms` |
 | `godot/scripts/main.gd` | `--playtest3a`, the driver flag, and the one-call-only mode handoff |
-| `godot/scripts/gameplay/player.gd` | `rail_caught` / `rail_released` signals, and the launch-flight binding (§7) |
+| `godot/scripts/gameplay/player.gd` | `rail_caught` / `rail_released` signals, the launch-flight binding, the carrier non-cancellation rule and the landing-only arc end (§7) |
+| `godot/scripts/gameplay/movement_package.gd` | `judge`, `consume`, and `build_selected` — construction by identity |
+| `godot/scripts/content/offer_binding.gd` | `construct_selected` |
+| `godot/scripts/autoload/constants.gd` | `LAUNCH_CORRECTION_SPEED` |
 | `godot/scripts/gameplay/affordance_nodes.gd` | `LaunchPad.fired` signal, and the call that begins a launch flight |
 | `Makefile` | `godot-playtest3a` |
 
@@ -54,24 +59,55 @@ span's one-way drop, and turns a quarter at the yard. Three of the four rooms
 sit at a nonzero origin and one is yawed, which is what makes the frame proofs
 in §9 mean anything.
 
-## 3. Runtime lifecycle and ownership
+## 3. Runtime lifecycle: three phases
 
-`ZoneController._validate_offers`, six steps in this order:
+`ZoneController._validate_offers`. The Zone root is already in the tree and one
+physics frame is awaited first, because a probe against a body the physics
+server has not registered answers "nothing there".
 
-1. the Zone root is already in the tree — `setup` put it there;
-2. **one physics frame is awaited**, because a probe against a body the physics
-   server has not registered answers "nothing there";
-3. **every** declared offer of **every** room is purely validated against real
-   geometry — all kinds, whatever mode is selected, so the census describes the
-   rooms rather than the selection;
-4. declines and refusals are reported by name;
-5. only then, and only for the selected mode, are accepted offers
-   **constructed**; `none` constructs nothing at all;
-6. a second construction into the same room is refused by `MovementPackage`.
+| phase | what it does | what it must not do |
+| --- | --- | --- |
+| **1 — VALIDATE** | purely measures every declared offer of **every** room against real geometry, all kinds, whatever the mode is | construct anything; choose anything |
+| **2 — SELECT** | decides which accepted offers to build, **by identity**, with every room's verdict already in | construct anything; look at only one room |
+| **3 — CONSTRUCT** | builds **exactly** the selected identities, from the verdict phase 1 took | re-judge; build anything not named |
 
-Ownership is unchanged: `ContentInstantiator` resolves shells, `ZoneBuilder`
+**All validation finishes before the first construction**, and that is measured
+rather than asserted about the source: the runtime records
+`judged_before_first_build`, the number of rooms with a verdict when the first
+node was made. Three-phase = 4; per-room validate-then-construct = 1. The suite
+requires 4.
+
+Phase 3 does not re-judge. Construction builds from phase 1's accepted array,
+so no room is ever measured against another room's output.
+
+**Ownership unchanged:** `ContentInstantiator` resolves shells, `ZoneBuilder`
 places them, `OfferBinding.validate` measures and builds nothing,
-`OfferBinding.construct` builds and is called from exactly one place.
+`MovementSelection.select` chooses, `OfferBinding.construct_selected` builds.
+
+### Exact-selection API
+
+```gdscript
+MovementSelection.select(mode, judged) -> Array   # {chamber, kind, offer}
+MovementSelection.offers_for(chamber, selection) -> Array   # offer names
+OfferBinding.construct_selected(root, accepted, chosen, who) -> Dictionary
+```
+
+`construct_selected` takes a verdict and a list of **names**, not a kind. An
+offer that was accepted and not chosen constructs nothing; a name that is not
+in `accepted` builds nothing either — construction is only ever a subset of
+what was judged true. Construction can no longer build "everything of a
+matching kind", because it is never told a kind.
+
+### Deterministic selection policy
+
+For the mode's kinds, take every accepted offer of those kinds and sort the
+result on `chamber|kind|offer`. The sort is what makes the outcome independent
+of the order rooms were placed in, the order the manifest listed offers in, the
+order a `Dictionary` iterates, and the order the physics server answered.
+
+For this library the policy happens to take one offer per room — but the
+selection is still **enumerated by identity**, because a filter and a list that
+happen to agree are not the same thing and only one of them can be checked.
 
 ## 4. Operator commands
 
@@ -97,28 +133,42 @@ Omitting `--movement-package` inside the showcase means `none`. Omitting
 the showcase, and ordinary startup printed **0** `p3a:` lines and **0** offer
 warnings.
 
-## 5. The offer census
+## 5. The offer census — seven terms
 
 Measured on the live showcase, three times:
 
-| mode | declared | judged | accepted | declined | refused | built | pads | rail lanes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `none` | 24 | 20 | 20 | 0 | 0 | **0** | 0 | 0 |
-| `rail` | 24 | 20 | 20 | 0 | 0 | **4** | 0 | 29 |
-| `launch` | 24 | 20 | 20 | 0 | 0 | **4** | 4 | 0 |
+| mode | declared | judged | accepted | **selected** | built | declined | refused |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `none` | 24 | 20 | 20 | **0** | 0 | 0 | 0 |
+| `rail` | 24 | 20 | 20 | **4** | 4 | 0 | 0 |
+| `launch` | 24 | 20 | 20 | **4** | 4 | 0 | 0 |
 
-Exactly the expected census. The three numbers are different facts: 24 manifest
-entries; 20 verdicts, because a launch **pair** is one verdict measuring two
-authored points; and 4 built offers, because the 12 accepted `grapple_point`
-offers construct nothing — there is no grapple mechanic, and calling one built
-would be a claim that something was made (R9).
+`judged_before_first_build` = **4** in every mode.
 
-The 29 lanes for 4 rail routes are the per-segment ride volumes
-`AffordanceFeatures.build_rail` sweeps along each curve; the offer count is 4.
+Seven different facts, none of them another:
+
+* **declared 24** — manifest entries the four rooms carry, 6 apiece.
+* **judged 20** — verdicts returned. Smaller, because a launch **pair** is one
+  verdict measuring two authored points: the four `launch_target` entries are
+  measured through their paired sources and never judged independently.
+* **accepted 20** — verdicts that measured true.
+* **selected 0 / 4 / 4** — accepted offers the package chose, by identity.
+  Smaller, because a mode considers only its own kinds.
+* **built 0 / 4 / 4** — selected offers a node now exists for. The **12
+  accepted grapple points construct zero nodes** in every mode: there is no
+  grapple mechanic, they are never selected, and calling one built would be a
+  claim that something was made.
+* **declined 0**, **refused 0**.
+
+Scene counts agree with the census: `none` 0 pads / 0 lanes; `rail` 0 pads /
+29 lanes (the per-segment ride volumes of 4 routes); `launch` 4 pads / 0 lanes.
 
 ## 6. Real-player rail result
 
-Hall `rail_helix`, 146.1 m of baked curve, lane at `(−11.5, 4.4, 19.0)`.
+**Selected identity:** `p3a_hall / rail_route / rail_helix` — one of the four
+the selector named (`p3a_hall/rail_helix`, `p3a_plenum/rail_descent`,
+`p3a_span/rail_underdeck`, `p3a_yard/rail_crane`). 146.1 m of baked curve, lane
+at `(−11.5, 4.4, 19.0)`.
 
 * The player walked into the ride volume; the lane's own `body_entered` called
   `Player.offer_rail`, and `RailRider.catch` accepted — **caught**.
@@ -159,31 +209,56 @@ destination are both part of the contract."
 
 ### The ruling, and three behaviours kept distinct
 
-Owner ruling, 2026-09-09: **protect the launch, do not lock the player.** The
-first fix disabled airborne input entirely for the duration of the arc, which
-conflicts with the Player Authority — the base player can always modestly
-correct in the air. Three things are now separate:
+Owner ruling: **protect the launch, do not lock the player.** The first fix
+disabled airborne input entirely, which conflicts with the Player Authority —
+the base player can always modestly correct in the air. Three things are now
+separate:
 
-| behaviour | what it is | who owns it |
-| --- | --- | --- |
-| **ballistic carrier motion** | the horizontal half of the velocity the pad fired, stored apart from `velocity` and never touched by the airborne lerp | the validated authored solution |
-| **bounded player correction** | a modest airborne contribution layered on top each frame, capped at one named value | the player |
-| **ordinary movement** | untouched, and resumes the instant the launch state ends | the existing Player Authority |
+| behaviour | what it is |
+| --- | --- |
+| **ballistic carrier motion** | the horizontal half of the velocity the pad fired, stored apart from `velocity` and never touched by the airborne lerp |
+| **bounded player correction** | a modest contribution layered on top each frame, capped at one named value |
+| **ordinary movement** | untouched, and resumed the instant the arc ends |
 
-The correction is recomputed from the carrier every frame rather than
-accumulated, so holding a direction is a steady bend and letting go returns the
-arc exactly to the validated one.
+### The carrier may not be cancelled
 
-**The non-reversal invariant is structural, not numeric.** Whatever the
-correction and whatever the carrier's speed, the component *along* the authored
-direction is never allowed to go negative. A player leaning back can slow their
-crossing and can never reverse it, cancel it, or return to the pad — the
-displacement along the launch axis only ever increases. That holds for a 2 m/s
-carrier as surely as a 20 m/s one, which a percentage of the carrier's speed
-would not.
+A second correction was needed. The first version clamped the **result's**
+axial component at zero, which prevented reversal and still permitted
+**cancellation**: a 1 m/s carrier opposed by a 2 m/s correction stopped moving
+forward while the carrier sat privately stored, doing nothing. A carrier
+preserved in a variable but absent from the velocity is not preserved.
 
-This is not homing, not path-following, not a cutscene, not an Ability or
-Mobility Echo, and not a movement-package rule.
+The correction is now **decomposed against the authored axis before it is
+applied**, and the opposing half is removed rather than clamped afterwards:
+
+* the component **along** the authored direction may only be positive —
+  bounded and additive, never subtractive;
+* the component **across** it is free, bounded the same way, and bends the arc;
+* so the applied axial speed is `|carrier| + forward × SPEED`, **never less
+  than the carrier's own**.
+
+Holding directly backward therefore contributes no axial correction at all. The
+guarantee is arithmetic, not tuned, and holds for a 1 m/s carrier as surely as
+a 20 m/s one.
+
+For a **purely vertical carrier** with no horizontal authored axis, the carrier
+(zero) is preserved exactly and the whole bounded correction is available
+laterally — no horizontal launch direction is invented.
+
+### A defect this uncovered
+
+`is_on_floor()` carries the previous `move_and_slide`'s answer, and **a pad
+fires a player who is standing on it**. On the frame after a grounded launch
+the flag was still true, so the arc was ended before it had risen a centimetre
+— every launch a player *walked* onto rather than *fell* onto lost its carrier.
+Only a test that drops the body onto the pad fails to notice, and that is
+exactly the configuration the earlier proofs used. Two corrections:
+
+* only a **landing** ends the arc — on the floor *and* not rising;
+* `_launch_flight` is the **single authority** for "is the arc running". Asking
+  `is_on_floor()` again in the carry gave the carry and the ending two
+  different notions of airborne, and the ordinary lerp drove a live carrier to
+  −2.2 m/s in one frame.
 
 ### The provisional tuning value
 
@@ -191,21 +266,57 @@ Mobility Echo, and not a movement-package rule.
 const LAUNCH_CORRECTION_SPEED = 2.0   # m/s, Constants
 ```
 
-**One named value, provisional.** It is a *speed*, in the same units as
-`WALK_SPEED` (7.0), so "modest" is legible: a correction is under a third of a
-walking pace and cannot be mistaken for propulsion. It bounds the correction
-only — the carrier is never scaled by it. Air-control strength is already a
-Player Authority tuning domain; this is its launch-specific member, and final
-feel calibration is **Playtest 3's**.
+**One named value, provisional**, its final feel Playtest 3's. A *speed*, in
+the same units as `WALK_SPEED` (7.0), so "modest" is legible at under a third
+of a walking pace. It bounds the correction only; the carrier is never scaled
+by it.
 
-**Its exact measured effect**, on the hall pad (carrier `(3.56, 0, 6.09)`,
-7.06 m/s, flight ≈ 113 frames):
+**Measured effect**, hall pad, carrier `(3.56, 0, 6.09)` = 7.06 m/s:
 
 | input held for the whole flight | result |
 | --- | --- |
-| none | lands **1.03 m** from the authored aim; carrier drift **0.0000 m/s** |
-| perpendicular to the arc | **4.10 m** of lateral displacement; carrier drift **0.0000 m/s** |
-| directly opposing | lands **10.20 m along** the authored direction, **10.20 m** from the pad |
+| none | closest approach **0.20 m**, landed **1.03 m** from the aim; carrier drift **0.0000 m/s** |
+| perpendicular | **4.10 m** of lateral displacement; carrier drift **0.0000 m/s** |
+| directly opposing | landed **14.25 m along** the authored direction, 14.25 m from the pad |
+
+**On the slow-arc fixture** (1.0 m/s carrier, correction 2.0 — the boundary
+where the invariant is load-bearing rather than arithmetic):
+
+| run | forward progress along the authored axis | applied axial speed vs the carrier's |
+| --- | --- | --- |
+| no input | **1.883 m** | **0.0000 m/s** below |
+| full opposing input | **1.900 m** | **0.0000 m/s** below |
+
+The two agree to 0.017 m: opposing input contributes nothing axial, so it
+neither slows, cancels, nor reverses the arc, and the applied velocity's
+authored-axis component never falls below the carrier's own on any frame.
+Forward progress is measured **at the moment the arc ends**, not at the loop's
+end — after landing a held direction simply walks, which is correct behaviour
+and is not the launch.
+
+### Landing-error reconciliation
+
+The two numbers were never a regression. They are **two metrics of the same
+flight**, and both are now measured in one place and reported together.
+
+| | |
+| --- | --- |
+| shell | `shell_hall_transit` |
+| source offer | `launch_basin`, `launch_source`, room-local `(9.0, 0.0, 18.0)`, reservation radius 3.0 |
+| target offer | `launch_gantry`, `launch_target`, room-local `(16.0, 21.0, 30.0)`, **landing radius 3.5** |
+| configuration | showcase at identity, `--movement-package=launch`, real `Player`, input unfrozen, no direction held |
+| **closest approach during flight** | **0.20 m** |
+| **landing position** | **1.03 m** |
+
+The first 3A report's 0.20 m was the closest-approach metric; §8's yawed-room
+0.20 m is the same metric on a different placement of the same offer. The
+amendment's 1.03 m is the landing position. **Same offer, same configuration,
+different moments** — and both are well inside the authored 3.5 m landing
+radius. No authored data or geometry was touched.
+
+**And the landing is a place a player can be**, not merely a number near the
+aim: ground found at **y = 21.000** — the authored target's own height — and
+the capsule at the derived stand pose is **clear**.
 
 ### Launch state lifetime
 
@@ -240,8 +351,9 @@ somewhere different again:
 | `shell_yard_gantry` | `(−193.46, −13.0, 224.41)` | −30° |
 | `shell_span_basin` | `(−164.89, −27.0, 270.93)` | 60° |
 
-A pad in a placed, yawed room fired a real player who landed **0.20 m from its
-authored aim** — the same accuracy as at the origin.
+A pad in a placed, yawed room fired a real player whose **closest approach to
+its authored aim was 0.20 m** — the same metric, and the same figure, as at the
+origin. (See §7 for why closest approach and landing position are two numbers.)
 
 **The transform is applied exactly once**, and that is asserted rather than
 assumed: every launch pair's world target is required to equal the authored
@@ -264,17 +376,46 @@ Zone and the owner's playtest after Stage 3B.
 The vacuity guard is asserted too: a run that checked 0 endpoints fails rather
 than reporting clean.
 
-## 10. Purity, ordering, duplication
+## 10. Selection, purity, ordering, duplication
 
-* Validating a live room once, then twice, gives the identical verdict and
-  changes node count, pad count and lane count by **0**, in all three modes.
-* Asking for `["rail_route", "launch_source"]` and `["launch_source",
-  "rail_route"]` gives identical verdicts — order independence as behaviour,
-  not as a source-shape check.
-* A second `construct` into the same room is **refused by name**
-  ("already constructed"), builds nothing, and leaves the pad count unchanged.
-* A genuinely new Zone instance still builds its own four pads, so the guard
-  stops duplication rather than stopping the feature.
+**The selection, by identity:**
+
+```
+rail   -- p3a_hall/rail_route/rail_helix, p3a_plenum/rail_route/rail_descent,
+          p3a_span/rail_route/rail_underdeck, p3a_yard/rail_route/rail_crane
+launch -- p3a_hall/launch_source/launch_basin, p3a_plenum/launch_source/launch_floor,
+          p3a_span/launch_source/launch_basin, p3a_yard/launch_source/launch_west
+none   -- nothing selected
+```
+
+Proven behaviourally:
+
+* **reversing the room array** — a live Zone built from the reversed showcase
+  selects the identical four identities and builds 4 nodes;
+* **reversing every manifest offer array** — the real validator measures the
+  real room with `offers` reversed, and the selection is unchanged;
+* **any other ordering** — the accepted array is reversed before selecting;
+  unchanged. The sort on `chamber|kind|offer` is what guarantees it;
+* **rail selects no launch, launch selects no rail** — asserted on the
+  selected `kind`, not only on the nodes that came out;
+* **none selects nothing** — `selected = 0`, `built = 0`;
+* **accepted but unselected constructs nothing** — each room accepts 3 grapple
+  points (12 across the Zone) and builds none of them, in every mode;
+* **selection is pure and repeatable** — selecting twice from one verdict gives
+  the identical identities;
+* **construction cannot add an identity absent from the selection** — an empty
+  selection built **0** nodes into a live room, and a selection naming one rail
+  built exactly that one and no pad, in all four rooms;
+* **validation is identical before and after selecting** — selection builds
+  nothing, and a verdict taken after it matches one taken before;
+* **all room validation finishes before the first construction** —
+  `judged_before_first_build = 4`.
+
+**Purity and duplication**, unchanged from the accepted result: validating once
+then twice gives the identical verdict and changes node, pad and lane counts by
+**0** in all three modes; both request orders agree; a second construction into
+the same room is **refused by name** and leaves the pad count unchanged; a
+genuinely new Zone still builds its own four.
 
 ## 11. Unknown selection
 
@@ -297,13 +438,22 @@ filter warnings out of their output. Declines and refusals still warn. Nothing
 is persisted, nothing crosses the bridge, and no AP event or interpretation-log
 state was added.
 
+The seven terms are printed as seven, per room and per Zone, plus the selection
+by identity:
+
 ```
-p3a: showcase 'playtest3a_showcase' requested, movement-package=rail, shells=shell_hall_transit, …
-p3a: room p3a_hall   shell=shell_hall_transit   mode=rail   declared=6 judged=5 accepted=5 declined=0 built=1
-p3a: zone playtest3a_showcase mode=rail declared=24 judged=20 accepted=20 built=4 declined=0 refused=0
+p3a: room p3a_hall   shell=shell_hall_transit   mode=rail   declared=6 judged=5 accepted=5 selected=1 declined=0 built=1
+p3a: room p3a_plenum shell=shell_plenum_helix   mode=rail   declared=6 judged=5 accepted=5 selected=1 declined=0 built=1
+p3a: room p3a_yard   shell=shell_yard_gantry    mode=rail   declared=6 judged=5 accepted=5 selected=1 declined=0 built=1
+p3a: room p3a_span   shell=shell_span_basin     mode=rail   declared=6 judged=5 accepted=5 selected=1 declined=0 built=1
+p3a: selection mode=rail (4) -- p3a_hall/rail_route/rail_helix, p3a_plenum/rail_route/rail_descent, p3a_span/rail_route/rail_underdeck, p3a_yard/rail_route/rail_crane
+p3a: zone playtest3a_showcase mode=rail declared=24 judged=20 accepted=20 selected=4 built=4 declined=0 refused=0 (rooms judged before the first build: 4)
 p3a: rail CAUGHT at (…)      p3a: rail RELEASED at (…)
 p3a: launch FIRED from (…) at (…)
 ```
+
+A count cannot distinguish "the rail in every room" from "four rails in one
+room", so the selection is named one identity at a time.
 
 ## 13. Sabotage
 
@@ -346,6 +496,13 @@ fires — removing it changed nothing observable. The guard matters for a carrie
 launch state, a deliberately slow 1.0 m/s arc, and a held direction straight
 back down it. In flight the player never went further back than **0.0000 m**
 along the authored direction; with the invariant removed, **−1.8833 m**.
+
+**Correction sabotages (2026-09-09):**
+
+| # | sabotage | result |
+| --- | --- | --- |
+| B1 | the selector becomes a filter again — construction ignores the chosen identities and builds every accepted offer | **18 failures** — "mode rail built 8 nodes, not the 4 it should" |
+| B2 | the lifecycle collapses back to per-room validate-then-construct | **5 failures** |
 
 ### S1 — adjudicated, and recorded as measured
 

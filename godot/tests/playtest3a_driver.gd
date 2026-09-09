@@ -47,6 +47,7 @@ func _run() -> void:
 	await _test_each_mode_builds_exactly_what_it_says()
 	await _test_a_player_rides_an_authored_rail()
 	await _test_a_player_is_launched_by_an_authored_pad()
+	await _test_selection_is_an_identity_and_survives_every_ordering()
 	await _test_a_launch_is_carried_and_steered_and_neither_is_the_other()
 	await _test_movement_works_in_a_translated_and_yawed_room()
 	await _test_the_showcase_finishes_with_no_movement_package()
@@ -236,6 +237,23 @@ func _test_each_mode_builds_exactly_what_it_says() -> void:
 		_check(int(census["built"]) == int(expected[mode]),
 				"mode %s built %d nodes, not the %d it should"
 				% [mode, int(census["built"]), int(expected[mode])])
+		# SELECTED SITS BETWEEN ACCEPTED AND BUILT, and is its own fact:
+		# `none` chooses nothing from twenty accepted offers, and the
+		# other two choose four apiece and build exactly those.
+		_check(int(census["selected"]) == int(expected[mode]),
+				"mode %s selected %d offers and built %d"
+				% [mode, int(census["selected"]), int(census["built"])])
+		_check(int(census["selected"]) <= int(census["accepted"]),
+				"mode %s selected %d of %d accepted offers"
+				% [mode, int(census["selected"]), int(census["accepted"])])
+		# EVERY ROOM WAS JUDGED BEFORE THE FIRST NODE WAS BUILT. Measured
+		# by the runtime rather than asserted about its source: in a
+		# per-room validate-then-construct lifecycle this is 1.
+		_check(int(census["judged_before_first_build"]) == 4,
+				"only %d room(s) had a verdict before the first "
+				% int(census["judged_before_first_build"])
+				+ "construction in mode %s; validation must finish for "
+				% mode + "the whole Zone before anything is built")
 
 		# AND THE SCENE AGREES WITH THE COUNT. A census is a number the
 		# code wrote about itself; these are the nodes.
@@ -828,6 +846,196 @@ func _test_ordinary_startup_builds_no_movement_geometry() -> void:
 	_check(not bool(plain["showcase"]),
 			"ordinary startup opened the showcase")
 
+# --- selection: an identity, not a filter (owner ruling, 2026-09-09) -------
+
+## The showcase Zone with its rooms in the opposite order.
+func _reversed_showcase() -> Dictionary:
+	var zone := ShowcaseZone.build()
+	var rooms: Array = (zone["chambers"] as Array).duplicate()
+	rooms.reverse()
+	zone["chambers"] = rooms
+	return zone
+
+## Every selected identity, as one sorted comparable string.
+func _identities(selection: Array) -> String:
+	var parts: Array[String] = []
+	for raw: Variant in selection:
+		parts.append(MovementSelection.key_of(raw as Dictionary))
+	parts.sort()
+	return " ; ".join(parts)
+
+func _test_selection_is_an_identity_and_survives_every_ordering() -> void:
+	"""SELECTED IS ITS OWN FACT, between accepted and built.
+
+	Construction once took a KIND, so "build what was chosen" and "build
+	everything that matches" were the same call and no test could tell
+	them apart. The selector now names offers one at a time, and what is
+	proven here is that the names do not move: not when the rooms are
+	placed in the opposite order, not when the manifest lists offers
+	backwards, not when a Dictionary or the physics server answers in
+	whatever order it likes."""
+	var rig: Dictionary = await _showcase("rail")
+	var zone: ZoneController = rig["zone"]
+	var chosen := _identities(zone.offer_selection)
+	print("  selection rail: %s" % chosen)
+	_check(zone.offer_selection.size() == 4,
+			"rail selected %d offers, not the 4 the four rooms carry"
+			% zone.offer_selection.size())
+	# 4 -- KIND ISOLATION IS A PROPERTY OF THE SELECTION, not only of the
+	# nodes that came out of it.
+	for raw: Variant in zone.offer_selection:
+		_check(str((raw as Dictionary)["kind"]) == "rail_route",
+				"rail selected a %s" % str((raw as Dictionary)["kind"]))
+
+	# 8 -- VALIDATION IS THE SAME BEFORE AND AFTER SELECTING. Selection
+	# builds nothing, so a verdict taken after it must match one taken
+	# before it.
+	for entry: Variant in zone.offer_rooms:
+		var record: Dictionary = entry
+		var root: Node3D = record["node"]
+		var build: Dictionary = record["build"]
+		var before := OfferBinding.validate(root, build, "before")
+		var again := MovementSelection.select("rail",
+				[{"chamber": "x", "accepted": before["accepted"]}])
+		var after := OfferBinding.validate(root, build, "after")
+		_check(_names(before["accepted"] as Array)
+				== _names(after["accepted"] as Array),
+				"selecting changed a room's verdict from [%s] to [%s]"
+				% [_names(before["accepted"] as Array),
+					_names(after["accepted"] as Array)])
+		# 6 -- PURE AND REPEATABLE.
+		var twice := MovementSelection.select("rail",
+				[{"chamber": "x", "accepted": before["accepted"]}])
+		_check(_identities(again) == _identities(twice),
+				"selecting twice from one verdict gave [%s] then [%s]"
+				% [_identities(again), _identities(twice)])
+
+		# 2/3 -- THE MANIFEST'S ORDER, AND ANY OTHER ORDER. The offers
+		# array is reversed and the accepted array shuffled; the real
+		# validator measures the real room either way.
+		var flipped: Dictionary = build.duplicate()
+		var backwards: Array = (build.get("offers", []) as Array).duplicate()
+		backwards.reverse()
+		flipped["offers"] = backwards
+		var reversed_verdict := OfferBinding.validate(root, flipped, "rev")
+		var jumbled: Array = (reversed_verdict["accepted"] as Array) \
+				.duplicate()
+		jumbled.reverse()
+		var from_reversed := MovementSelection.select("rail",
+				[{"chamber": "x", "accepted": jumbled}])
+		_check(_identities(again) == _identities(from_reversed),
+				"reversing the manifest offers and the verdict order "
+				+ "changed the selection from [%s] to [%s]"
+				% [_identities(again), _identities(from_reversed)])
+	await _drop(rig)
+
+	# 1 -- THE ROOM ARRAY, REVERSED, through the whole live runtime.
+	var host := Node3D.new()
+	add_child(host)
+	var flipped_zone := ZoneController.new()
+	flipped_zone.movement_package = "rail"
+	host.add_child(flipped_zone)
+	flipped_zone.setup(_reversed_showcase())
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	zones_built += 1
+	var flipped_ids := _identities(flipped_zone.offer_selection)
+	print("  selection rail, rooms reversed: %s" % flipped_ids)
+	_check(flipped_ids == chosen,
+			"reversing the room array changed the selection:\n    [%s]\n"
+			% chosen + "    [%s]" % flipped_ids)
+	_check(int(flipped_zone.offer_census["built"]) == 4,
+			"the reversed Zone built %d nodes, not 4"
+			% int(flipped_zone.offer_census["built"]))
+	host.queue_free()
+	await get_tree().process_frame
+
+	# 4 -- THE OTHER TWO MODES.
+	var launch_rig: Dictionary = await _showcase("launch")
+	var launch_zone: ZoneController = launch_rig["zone"]
+	print("  selection launch: %s" % _identities(launch_zone.offer_selection))
+	for raw: Variant in launch_zone.offer_selection:
+		_check(str((raw as Dictionary)["kind"]) == "launch_source",
+				"launch selected a %s" % str((raw as Dictionary)["kind"]))
+	await _drop(launch_rig)
+	var quiet_rig: Dictionary = await _showcase("none")
+	var quiet_zone: ZoneController = quiet_rig["zone"]
+	_check(quiet_zone.offer_selection.is_empty(),
+			"none selected %d offer(s)" % quiet_zone.offer_selection.size())
+	_check(int(quiet_zone.offer_census["selected"]) == 0
+			and int(quiet_zone.offer_census["built"]) == 0,
+			"none selected %d and built %d"
+			% [int(quiet_zone.offer_census["selected"]),
+				int(quiet_zone.offer_census["built"])])
+
+	# 5/7 -- ACCEPTED IS NOT SELECTED, AND SELECTED IS NOT A FILTER.
+	# The `none` Zone has built nothing, so its rooms can be constructed
+	# into here -- with a deliberately SHORT list. If construction were
+	# still filtering by kind it would build the room's rail and launch
+	# regardless of what it was handed.
+	var probed := 0
+	for entry: Variant in quiet_zone.offer_rooms:
+		var record: Dictionary = entry
+		var root: Node3D = record["node"]
+		var build: Dictionary = record["build"]
+		var seen := OfferBinding.validate(root, build, "exact")
+		var grapples := 0
+		var names: Array = []
+		for raw: Variant in seen["accepted"] as Array:
+			var offer: Dictionary = raw
+			names.append(str(offer["name"]))
+			if str(offer["kind"]) == "grapple_point":
+				grapples += 1
+		_check(grapples == 3,
+				"a showcase room accepted %d grapple points, not 3"
+				% grapples)
+		# NOTHING SELECTED: nothing built, and the accepted grapples in
+		# particular construct no node.
+		var before_nodes := _count_nodes(root)
+		var nothing := OfferBinding.construct_selected(root,
+				seen["accepted"] as Array, [], "exact")
+		_check((nothing["built"] as Array).is_empty()
+				and _count_nodes(root) == before_nodes,
+				"an empty selection built %d node(s)"
+				% (_count_nodes(root) - before_nodes))
+		probed += 1
+	print("  exact selection: %d room(s) built nothing from an empty "
+			% probed + "selection; 12 accepted grapple points across the "
+			+ "Zone construct zero nodes")
+	_check(probed == 4, "only %d rooms were probed" % probed)
+	_check(_pads(quiet_zone).is_empty() and _lanes(quiet_zone).is_empty(),
+			"the none Zone gained offer geometry")
+	await _drop(quiet_rig)
+
+	# 7 again, on a fresh Zone: ONE name in, exactly that one out.
+	var one_rig: Dictionary = await _showcase("none")
+	var one_zone: ZoneController = one_rig["zone"]
+	var single := 0
+	for entry: Variant in one_zone.offer_rooms:
+		var record: Dictionary = entry
+		var root: Node3D = record["node"]
+		var seen := OfferBinding.validate(root,
+				record["build"] as Dictionary, "one")
+		var pick := ""
+		for raw: Variant in seen["accepted"] as Array:
+			if str((raw as Dictionary)["kind"]) == "rail_route":
+				pick = str((raw as Dictionary)["name"])
+		if pick == "":
+			continue
+		var made := OfferBinding.construct_selected(root,
+				seen["accepted"] as Array, [pick], "one")
+		_check((made["built"] as Array).size() == 1
+				and str((made["built"] as Array)[0]["name"]) == pick,
+				"a selection of one built %d offer(s): %s"
+				% [(made["built"] as Array).size(), str(made["built"])])
+		_check(_pads(root).is_empty(),
+				"a selection naming only a rail built a launch pad")
+		single += 1
+	_check(single == 4,
+			"only %d room(s) proved the one-name selection" % single)
+	await _drop(one_rig)
+
 # --- the amendment: a launch is carried, and steered, and neither is the
 #     other (owner ruling, 2026-09-09) ---------------------------------------
 
@@ -860,7 +1068,8 @@ func _fire(zone: ZoneController, pad: AffordanceNodes.LaunchPad) -> Dictionary:
 ## once the arc ends ordinary movement resumes and a held direction
 ## simply walks -- which is correct, and is not the launch reversing.
 func _fly_holding(player: Player, action: String, face: Vector3,
-		budget := 900, track := Vector3.ZERO) -> Dictionary:
+		budget := 900, track := Vector3.ZERO,
+		aim := Vector3.INF) -> Dictionary:
 	player.input_frozen = false
 	if face.length() > 0.001:
 		# A Y-rotation by t puts basis.x at (cos t, 0, -sin t), and
@@ -875,14 +1084,35 @@ func _fly_holding(player: Player, action: String, face: Vector3,
 	var axis := track.normalized() if track.length() > 0.001 \
 			else Vector3.ZERO
 	var min_along := 0.0
+	# THE CARRIER'S APPLIED CONTRIBUTION, sampled every frame of the arc.
+	# `worst_axial` is the least the velocity ACTUALLY APPLIED to the body
+	# ever contributed along the authored axis, minus what the carrier
+	# alone contributes: negative means something ate into the carrier.
+	var worst_axial := INF
+	var arc_along := 0.0
+	var arc_end := player.global_position
+	var closest := INF
 	while frames < budget:
 		await get_tree().physics_frame
 		frames += 1
 		carrier_drift = maxf(carrier_drift,
 				start.distance_to(player.launch_carrier()))
+		if player.in_launch_flight():
+			worst_axial = minf(worst_axial, player.launch_axis_speed()
+					- player.launch_carrier_axis_speed())
+		if aim != Vector3.INF:
+			closest = minf(closest,
+					player.global_position.distance_to(aim))
 		if axis != Vector3.ZERO and player.in_launch_flight():
 			min_along = minf(min_along,
 					(player.global_position - from).dot(axis))
+			# THE ARC'S OWN PROGRESS, taken on the last frame the arc was
+			# still running. Measuring at the loop's end would include
+			# whatever ordinary walking the held direction did after
+			# landing -- which is correct behaviour and is not the
+			# launch.
+			arc_along = (player.global_position - from).dot(axis)
+			arc_end = player.global_position
 		if player.is_on_floor() and frames > 20:
 			# ONE MORE FRAME. `is_on_floor()` is set by `move_and_slide`
 			# at the END of a physics tick, so the tick that notices the
@@ -894,7 +1124,11 @@ func _fly_holding(player: Player, action: String, face: Vector3,
 		Input.action_release(action)
 	player.input_frozen = true
 	return {"landed": player.global_position, "frames": frames,
-			"carrier_drift": carrier_drift, "min_along": min_along}
+			"carrier_drift": carrier_drift, "min_along": min_along,
+			"worst_axial": (0.0 if worst_axial == INF else worst_axial),
+			"arc_along": arc_along, "arc_end": arc_end,
+			"closest": (0.0 if closest == INF else closest),
+			"travel": from.distance_to(player.global_position)}
 
 func _test_a_launch_is_carried_and_steered_and_neither_is_the_other() -> void:
 	"""THE OWNER RULING: protect the launch, do not lock the player.
@@ -921,14 +1155,38 @@ func _test_a_launch_is_carried_and_steered_and_neither_is_the_other() -> void:
 	var origin: Vector3 = shot["from"]
 	_check(carrier.length() > 1.0,
 			"the protected carrier is %v, which is not a launch" % carrier)
-	var quiet: Dictionary = await _fly_holding(player, "", Vector3.ZERO)
+	var quiet: Dictionary = await _fly_holding(player, "", Vector3.ZERO,
+			900, Vector3.ZERO, aim)
 	var quiet_miss: float = (quiet["landed"] as Vector3).distance_to(aim)
-	print("  amend: no input -> landed %.2f m from the authored aim, "
-			% quiet_miss + "carrier %v drifted %.4f m/s"
+	# TWO MEASUREMENTS, REPORTED AS TWO. `closest` is the nearest the arc
+	# ever comes to the authored aim; `landed` is where the body finally
+	# stops. They are different numbers about different moments and one
+	# has been mistaken for the other before.
+	var quiet_closest: float = float(quiet["closest"])
+	print("  amend: no input -> closest approach %.2f m, LANDED %.2f m "
+			% [quiet_closest, quiet_miss] + "from the authored aim; "
+			+ "carrier %v drifted %.4f m/s"
 			% [carrier, quiet["carrier_drift"]])
 	_check(quiet_miss < 2.0,
-			"with no input the launch missed its authored aim by %.2f m"
+			"with no input the launch landed %.2f m from its authored aim"
 			% quiet_miss)
+	# AND THE LANDING IS A PLACE A PLAYER CAN BE, not merely a number
+	# near the aim. Ground under the feet, and the capsule fits.
+	var space := OfferBinding.space_of(zone)
+	var floor_y := SpaceProbe.ground_below(space,
+			(quiet["landed"] as Vector3) + Vector3.UP * 0.2, 1.0)
+	var blocker := SpaceProbe.obstruction(space,
+			SpaceProbe.stand_pose(quiet["landed"] as Vector3))
+	print("  amend: landing support -> ground %s, capsule %s"
+			% [("none" if floor_y == SpaceProbe.NO_GROUND
+					else "at y=%.3f" % floor_y),
+				("clear" if blocker == null else "inside %s" % blocker.name)])
+	_check(floor_y != SpaceProbe.NO_GROUND,
+			"the launched player came to rest at %v with no ground under "
+			% (quiet["landed"] as Vector3) + "them")
+	_check(blocker == null,
+			"the launched player came to rest inside %s"
+			% ("nothing" if blocker == null else blocker.name))
 	# 4 -- THE CARRIER IS NOT INTERPOLATED. Sampled every frame of the
 	# flight: the ordinary air-control lerp would have eaten it.
 	_check(float(quiet["carrier_drift"]) < 0.001,
@@ -1030,37 +1288,71 @@ func _test_a_launch_is_carried_and_steered_and_neither_is_the_other() -> void:
 			% [before_speed, after_speed] + "existing air control is no "
 			+ "longer running for un-launched players")
 
-	# 3-bis -- THE INVARIANT AT ITS BOUNDARY. The hall's carrier is
-	# 7.06 m/s and the correction is capped at 2.0, so on that pad
-	# "opposing input cannot reverse the launch" is arithmetic and the
-	# structural guard never fires. Where it is load-bearing is a carrier
-	# SLOWER than the correction, so that is where it is tested: a real
-	# player, a real launch state, a deliberately slow arc, and a held
-	# direction straight back down it.
+	# 3-bis -- THE CARRIER MAY NOT BE CANCELLED, at the boundary where
+	# that is load-bearing. On the hall pad the carrier is 7.06 m/s and
+	# the correction is capped at 2.0, so "opposing input cannot undo the
+	# launch" is arithmetic there. Where it is a guard is a carrier
+	# SLOWER than the correction: a real player, a real launch state, a
+	# deliberately slow 1.0 m/s arc, and a held direction straight back
+	# down it. Run twice -- quiet, then fought -- because the proof is
+	# that the two are the SAME.
 	var slow: Player = ground.player
-	slow.input_frozen = true
-	slow.global_position = pad_free_air(ground) + Vector3.UP * 8.0
 	var creep := Vector3(1.0, 0.0, 0.0)
-	slow.velocity = creep + Vector3.UP * 12.0
-	slow.begin_launch_flight()
-	_check(slow.launch_carrier().distance_to(creep) < 0.001,
-			"a slow launch carried %v, not the %v it was given"
-			% [slow.launch_carrier(), creep])
-	var launched_from := slow.global_position
-	var back := -creep.normalized()
-	var fight: Dictionary = await _fly_holding(slow, "move_right", back,
-			600, creep)
-	var went := float(fight["min_along"])
-	print("  amend: a %.1f m/s carrier held against for %d frames never "
-			% [creep.length(), fight["frames"]]
-			+ "went further back than %.4f m along its authored direction"
-			% went)
-	_check(went >= -0.01,
-			"a correction larger than the carrier reversed the launch: "
-			+ "%.4f m backward along the authored direction while still "
-			% went + "in flight")
+	var quiet_slow: Dictionary = await _slow_arc(slow, ground, creep, "",
+			Vector3.ZERO)
+	var fought_slow: Dictionary = await _slow_arc(slow, ground, creep,
+			"move_right", -creep.normalized())
+	print("  amend: slow arc  no input -> %.3f m along, worst applied "
+			% float(quiet_slow["along"])
+			+ "axial %.4f m/s under the carrier"
+			% float(quiet_slow["worst_axial"]))
+	print("  amend: slow arc  full opposing input -> %.3f m along, worst "
+			% float(fought_slow["along"])
+			+ "applied axial %.4f m/s under the carrier"
+			% float(fought_slow["worst_axial"]))
+	_check(float(quiet_slow["along"]) > 0.5,
+			"a 1.0 m/s carrier with no input travelled only %.3f m along "
+			% float(quiet_slow["along"]) + "its authored direction")
+	# NO CANCELLATION. Opposing input contributes no axial correction at
+	# all, so the crossing is the same one.
+	_check(absf(float(fought_slow["along"]) - float(quiet_slow["along"]))
+				< 0.05,
+			"holding directly backward changed the forward progress from "
+			+ "%.3f m to %.3f m; opposing input must contribute no axial "
+			% [float(quiet_slow["along"]), float(fought_slow["along"])]
+			+ "correction at all")
+	# NO REVERSAL, and the carrier's own contribution intact every frame.
+	_check(float(fought_slow["min_along"]) >= -0.01,
+			"holding back reversed the launch by %.4f m in flight"
+			% -float(fought_slow["min_along"]))
+	for label: String in ["quiet", "fought"]:
+		var run: Dictionary = quiet_slow if label == "quiet" \
+				else fought_slow
+		_check(float(run["worst_axial"]) >= -0.001,
+				"the applied velocity's authored-axis component fell "
+				+ "%.4f m/s below the carrier's own during the %s run; "
+				% [-float(run["worst_axial"]), label] + "a carrier that "
+				+ "is stored and not applied is not preserved")
 	refusals_seen += 1
 	await _drop(plain)
+
+## One deliberately slow authored-style arc, flown twice for comparison.
+##
+## The launch state is begun through the real `begin_launch_flight`, so
+## the carrier is taken from the velocity exactly as a pad's would be.
+func _slow_arc(player: Player, zone: ZoneController, creep: Vector3,
+		action: String, face: Vector3) -> Dictionary:
+	player.input_frozen = true
+	player.global_position = pad_free_air(zone) + Vector3.UP * 8.0
+	player.velocity = creep + Vector3.UP * 12.0
+	player.begin_launch_flight()
+	var from := player.global_position
+	var flight: Dictionary = await _fly_holding(player, action, face, 600,
+			creep)
+	return {"along": flight["arc_along"],
+			"min_along": flight["min_along"],
+			"worst_axial": flight["worst_axial"],
+			"frames": flight["frames"]}
 
 ## Somewhere in the first room with air under it, for the ordinary-jump
 ## comparison. Read off the Zone rather than guessed.

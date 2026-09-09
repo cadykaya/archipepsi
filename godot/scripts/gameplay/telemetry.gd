@@ -40,18 +40,39 @@ static func refused_selection(why: String) -> void:
 
 ## One room's offer result, with the shell it actually resolved to.
 ##
-## The shell id is here because "the room offered six things" is not
-## useful evidence unless you know whether the room was the authored
-## shell or the procedural stand-in it falls back to.
+## SEVEN TERMS, PRINTED AS SEVEN. An operator reading one number cannot
+## tell an offer that was measured true from one that was chosen from one
+## that a node exists for, and those are the three questions a 3A run
+## exists to answer separately. The shell id is here because "the room
+## offered six things" is not useful evidence unless you know whether the
+## room was the authored shell or the procedural stand-in it falls back
+## to.
 static func room(named: String, shell_id: String, mode: String,
-		declared: int, judged: int, declined: int, built: int,
-		refused: bool) -> void:
+		declared: int, judged: int, accepted: int, selected: int,
+		declined: int, built: int, refused: bool) -> void:
 	print("%s: room %-10s shell=%-20s mode=%-6s declared=%d judged=%d "
 			% [TAG, named, ("(procedural)" if shell_id == "" else shell_id),
 				mode, declared, judged]
-			+ "accepted=%d declined=%d built=%d%s"
-			% [judged, declined, built,
+			+ "accepted=%d selected=%d declined=%d built=%d%s"
+			% [accepted, selected, declined, built,
 				("  REFUSED" if refused else "")])
+
+## What the selector chose, by identity, once for the Zone.
+##
+## Named one at a time on purpose: a count cannot distinguish "the rail
+## in every room" from "four rails in one room", and the identity is what
+## a later run is compared against.
+static func selection(mode: String, chosen: Array) -> void:
+	if chosen.is_empty():
+		print("%s: selection mode=%s -- nothing selected" % [TAG, mode])
+		return
+	var parts: Array[String] = []
+	for raw: Variant in chosen:
+		var entry: Dictionary = raw
+		parts.append("%s/%s/%s" % [str(entry.get("chamber", "?")),
+				str(entry.get("kind", "?")), str(entry.get("offer", "?"))])
+	print("%s: selection mode=%s (%d) -- %s"
+			% [TAG, mode, chosen.size(), ", ".join(parts)])
 
 ## The Zone-wide census, once, after every room.
 static func zone_offers(zone_id: String, mode: String,
@@ -59,9 +80,11 @@ static func zone_offers(zone_id: String, mode: String,
 	print("%s: zone %s mode=%s declared=%d judged=%d accepted=%d "
 			% [TAG, zone_id, mode, int(census.get("declared", 0)),
 				int(census.get("judged", 0)), int(census.get("accepted", 0))]
-			+ "built=%d declined=%d refused=%d"
-			% [int(census.get("built", 0)), int(census.get("declined", 0)),
-				int(census.get("refused", 0))])
+			+ "selected=%d built=%d declined=%d refused=%d "
+			% [int(census.get("selected", 0)), int(census.get("built", 0)),
+				int(census.get("declined", 0)), int(census.get("refused", 0))]
+			+ "(rooms judged before the first build: %d)"
+			% int(census.get("judged_before_first_build", 0)))
 
 ## The player caught a rail. This is the line that distinguishes "a rail
 ## node exists" from "a player rode a rail", which are not the same

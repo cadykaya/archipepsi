@@ -68,6 +68,16 @@ static func construct(root: Node3D, room: Dictionary,
 		who := "offers", only: Array = []) -> Dictionary:
 	return MovementPackage.consume(root, room, space_of(root), only, who)
 
+## BUILD EXACTLY THE OFFERS THE SELECTOR NAMED, from a verdict already
+## taken.
+##
+## The three-phase entry point: `validate` measures every room, the
+## selector decides, and this builds. It judges nothing itself, so the
+## room it constructs into is the room every verdict was taken against.
+static func construct_selected(root: Node3D, accepted: Array,
+		chosen: Array, who := "offers") -> Dictionary:
+	return MovementPackage.build_selected(root, accepted, chosen, who)
+
 ## The physics space a live room sits in, or null.
 ##
 ## Named rather than inlined because "which space" is exactly the

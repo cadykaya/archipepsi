@@ -161,6 +161,40 @@ static func consume(root: Node3D, room: Dictionary,
 	return {"built": built, "accepted": verdict["accepted"],
 			"declined": verdict["declined"], "refused": false}
 
+## BUILD EXACTLY THESE, and nothing a filter would have swept up with
+## them (owner ruling, 2026-09-09).
+##
+## `accepted` is the verdict a PRIOR validation pass produced -- nothing
+## is judged here, because the whole point of the three-phase lifecycle
+## is that every room was measured before any room was built. `chosen` is
+## the offer names the selector named for this room.
+##
+## An offer that was accepted and not chosen constructs nothing, which is
+## how twelve accepted grapple points and every unselected route stay
+## accepted without becoming geometry. A name in `chosen` that is not in
+## `accepted` builds nothing either: construction may only ever be a
+## subset of what was judged true.
+static func build_selected(root: Node3D, accepted: Array,
+		chosen: Array, who := "offers") -> Dictionary:
+	if root.has_meta(BUILT_MARK):
+		return {"built": [], "selected": chosen, "refused": true,
+				"declined": [{"name": "*", "kind": "*",
+					"why": "offers were already constructed into %s; a "
+						% root.name + "second construction would duplicate "
+						+ "every pad and beam"}]}
+	root.set_meta(BUILT_MARK, true)
+	var wanted: Dictionary = {}
+	for raw: Variant in chosen:
+		wanted[str(raw)] = true
+	var built: Array = []
+	for raw: Variant in accepted:
+		var offer: Dictionary = raw
+		if not wanted.has(str(offer.get("name", ""))):
+			continue
+		_construct(root, offer, built)
+	return {"built": built, "selected": chosen, "refused": false,
+			"declined": []}
+
 ## Build one accepted offer, when there is something to build.
 ##
 ## Separated from judging so that no offer is ever measured against

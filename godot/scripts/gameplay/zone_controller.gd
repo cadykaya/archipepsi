@@ -39,8 +39,29 @@ var movement_package := MovementSelection.DEFAULT_MODE
 ## `built` counts nodes that now exist, which is smaller again because a
 ## grapple point is accepted and constructs nothing. Three different
 ## facts, kept in three different fields on purpose.
+## SEVEN TERMS, SEVEN FACTS, AND NONE OF THEM IS ANOTHER.
+##
+##   declared  -- manifest entries the rooms carry
+##   judged    -- verdicts returned; smaller, because a launch PAIR is
+##                one verdict measuring two authored points
+##   accepted  -- verdicts that measured true
+##   selected  -- accepted offers the package chose to build; smaller
+##                again, because a mode considers only its own kinds
+##   built     -- selected offers a NODE now exists for; smaller still,
+##                because a grapple point constructs nothing
+##   declined  -- offers that measured false
+##   refused   -- rooms that could not be measured at all
+##
+## `judged_before_first_build` is the lifecycle itself, measured: how
+## many rooms had a verdict recorded before the first node was
+## constructed. In the three-phase lifecycle that is every room; in a
+## per-room validate-then-construct it is one.
 var offer_census := {"declared": 0, "judged": 0, "accepted": 0,
-		"built": 0, "declined": 0, "refused": 0}
+		"selected": 0, "built": 0, "declined": 0, "refused": 0,
+		"judged_before_first_build": 0}
+
+## What the selector chose, as `{chamber, kind, offer}` identities.
+var offer_selection: Array = []
 
 ## The rooms as `ZoneBuilder` placed them: `{chamber, node, build, xform}`
 ## per entry.
@@ -211,30 +232,35 @@ func setup(zone_dict: Dictionary) -> void:
 	if is_finale and hud != null:
 		hud.say_line("finale_open")
 
-## THE OFFER STAGE: measure everything, then build only what was asked
-## for.
+## THE OFFER STAGE: THREE PHASES, IN THIS ORDER, AND THE ORDER IS THE
+## POINT.
 ##
-## SIX STEPS, IN THIS ORDER, AND THE ORDER IS THE POINT (Stage 3A).
+## The Zone root is already in the tree -- `setup` put it there -- and
+## ONE physics frame is awaited first, because a probe against a body the
+## physics server has not registered answers "nothing there", and a
+## movement offer blessed by geometry nobody could see is the vacuous
+## pass this stage exists to remove.
 ##
-##   1. the Zone root is already in the tree -- `setup` put it there;
-##   2. ONE physics frame is awaited, because a probe against a body the
-##      physics server has not registered yet answers "nothing there",
-##      and a movement offer blessed by geometry nobody could see is the
-##      exact vacuous pass this stage exists to remove;
-##   3. every declared offer of every room is PURELY validated against
-##      real geometry -- all kinds, whatever the selected mode is, so the
-##      census describes the rooms rather than the selection;
-##   4. declines and refusals are reported by name;
-##   5. only then, and only for the selected mode, are accepted offers
-##      CONSTRUCTED -- `none` constructs nothing at all;
-##   6. a second construction into the same room is refused by
-##      `MovementPackage`, not silently doubled.
+##   PHASE 1, VALIDATE -- every declared offer of EVERY room is purely
+##     measured against real geometry, all kinds, whatever the selected
+##     mode is. Nothing is constructed and nothing is chosen. The census
+##     therefore describes the ROOMS rather than the selection, and every
+##     verdict is taken against a Zone with no offer geometry in it.
+##   PHASE 2, SELECT -- the package decides which accepted offers it
+##     will build, by identity, with every room's verdict already in.
+##     One decision for the Zone, not a decision per room as each is
+##     measured.
+##   PHASE 3, CONSTRUCT -- exactly the selected identities are built,
+##     from the verdict phase 1 took. Nothing is re-judged, so no room
+##     is ever measured against another room's output, and a second
+##     construction into the same room is refused rather than doubled.
 ##
-## STEPS 3 AND 5 ARE DIFFERENT WORDS FOR DIFFERENT FACTS (owner ruling,
-## 2026-09-03). Validation adds no node and is safe to repeat; it once
+## MEASURING, CHOOSING AND BUILDING ARE THREE VERBS. Validation once
 ## returned `consume`, so merely looking at a Zone put a pad and a beam
-## into every room that offered one. Nothing is called "built" here
-## unless a node was made.
+## into every room that offered one; construction once took a KIND, so
+## "build what was chosen" and "build everything that matches" were the
+## same call. Nothing here is called "built" unless a node was made, or
+## "selected" unless the selector named it.
 ##
 ## A DECLINED OFFER IS NOT A BROKEN ZONE. A rail that cannot be built is
 ## a rail the room plays without -- "a large room whose traversal quietly
@@ -242,9 +268,13 @@ func setup(zone_dict: Dictionary) -> void:
 ## out loud and the Zone carries on.
 func _validate_offers(chambers: Array) -> void:
 	await get_tree().physics_frame
-	var wanted := MovementSelection.builds(movement_package)
 	offer_census = {"declared": 0, "judged": 0, "accepted": 0,
-			"built": 0, "declined": 0, "refused": 0}
+			"selected": 0, "built": 0, "declined": 0, "refused": 0,
+			"judged_before_first_build": 0}
+	offer_selection = []
+
+	# ---- PHASE 1: measure every room, build nothing ----
+	var measured: Array = []
 	for entry: Variant in chambers:
 		var record: Dictionary = entry
 		var node := record.get("node") as Node3D
@@ -253,36 +283,52 @@ func _validate_offers(chambers: Array) -> void:
 			continue
 		var chamber: Dictionary = record.get("chamber", {})
 		var named := str(chamber.get("id", "chamber"))
-		var shell := str(chamber.get("shell_id", ""))
 		var declared: int = (build.get("offers", []) as Array).size()
 		offer_census["declared"] += declared
-
-		# PURE. Every kind, every room, no matter what the mode builds.
 		var seen := OfferBinding.validate(node, build, named)
 		var refused := bool(seen.get("refused", false))
-		var judged: int = (seen["accepted"] as Array).size()
+		var accepted: Array = seen["accepted"]
 		var turned_down: int = (seen["declined"] as Array).size()
-		offer_census["judged"] += judged
-		offer_census["accepted"] += judged
+		offer_census["judged"] += accepted.size() + turned_down
+		offer_census["accepted"] += accepted.size()
 		offer_census["declined"] += turned_down
 		if refused:
 			offer_census["refused"] += 1
 		if refused or turned_down > 0:
 			push_warning("offers: %s" % OfferBinding.summarise(named, seen))
+		measured.append({"chamber": named, "node": node,
+				"shell": str(chamber.get("shell_id", "")),
+				"declared": declared, "accepted": accepted,
+				"declined": turned_down, "refused": refused})
+	# Every room now has a verdict, and no node has been constructed.
+	offer_census["judged_before_first_build"] = measured.size()
 
-		# BUILT. Only the selected kinds, and only after every verdict is
-		# in. `none` asks for nothing and so this loop does nothing.
+	# ---- PHASE 2: choose, once, with every verdict in hand ----
+	offer_selection = MovementSelection.select(movement_package, measured)
+	offer_census["selected"] = offer_selection.size()
+
+	# ---- PHASE 3: build exactly what was chosen ----
+	for entry: Variant in measured:
+		var room: Dictionary = entry
+		var chosen := MovementSelection.offers_for(
+				str(room["chamber"]), offer_selection)
 		var made := 0
-		if not wanted.is_empty() and not refused:
-			var work := OfferBinding.construct(node, build, named, wanted)
+		if not chosen.is_empty() and not bool(room["refused"]):
+			var work := OfferBinding.construct_selected(
+					room["node"] as Node3D, room["accepted"] as Array,
+					chosen, str(room["chamber"]))
 			if bool(work.get("refused", false)):
 				push_warning("offers: %s refused construction -- %s"
-						% [named, str(work["declined"])])
+						% [str(room["chamber"]), str(work["declined"])])
 			else:
 				made = (work["built"] as Array).size()
 				offer_census["built"] += made
-		Telemetry.room(named, shell, movement_package, declared, judged,
-				turned_down, made, refused)
+		Telemetry.room(str(room["chamber"]), str(room["shell"]),
+				movement_package, int(room["declared"]),
+				(room["accepted"] as Array).size() + int(room["declined"]),
+				(room["accepted"] as Array).size(), chosen.size(),
+				int(room["declined"]), made, bool(room["refused"]))
+	Telemetry.selection(movement_package, offer_selection)
 	Telemetry.zone_offers(zone_id, movement_package, offer_census)
 
 func _objective_of(chamber: Dictionary) -> String:

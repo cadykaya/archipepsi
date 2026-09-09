@@ -173,11 +173,21 @@ What remains needs a person, not more iteration
 this is where 3A left the tree.
 
 **DONE.** A real `Player` catches, rides and leaves an authored rail, and is
-thrown by an authored launch pad to within **0.20 m of its authored aim**, in
-a Zone the real runtime built from the four approved Wave-1 rooms. Operator
-control: `--playtest3a` plus `--movement-package=none|rail|launch`. Census per
-mode: 24 declared, 20 judged, 20 accepted, 0 declined, 0 refused; built 0 / 4 /
-4. `make godot-playtest3a`.
+thrown by an authored launch pad whose **closest approach to its authored aim
+is 0.20 m and whose landing is 1.03 m from it** -- two metrics, one flight,
+both inside the authored 3.5 m landing radius -- in a Zone the real runtime
+built from the four approved Wave-1 rooms. Operator control: `--playtest3a`
+plus `--movement-package=none|rail|launch`. `make godot-playtest3a`.
+
+**THREE PHASES: VALIDATE, SELECT, CONSTRUCT.** Every room is measured before
+anything is chosen, and everything is chosen before anything is built --
+measured by the runtime as `judged_before_first_build`, which is 4 in the
+three-phase lifecycle and 1 in a per-room one. Selection names offers BY
+IDENTITY (`chamber|kind|offer`, sorted), so construction is never told a kind
+and can no longer build "everything that matches". Census, seven terms:
+declared 24, judged 20 (a launch PAIR is one verdict over two authored
+points), accepted 20, selected 0/4/4, built 0/4/4, declined 0, refused 0. The
+12 accepted grapple points are never selected and construct zero nodes.
 
 **THE SHOWCASE IS SCAFFOLDING (R2).** It names its four `shell_id` values by
 hand. **A1 and A2 are NOT satisfied** — an ordinary generated Zone still
@@ -194,12 +204,23 @@ lock the player.** Three behaviours, kept distinct: the BALLISTIC CARRIER
 never touched by the airborne lerp); a BOUNDED PLAYER CORRECTION layered on
 top, capped at `Constants.LAUNCH_CORRECTION_SPEED` = **2.0 m/s, PROVISIONAL**,
 whose final feel is Playtest 3's; and ORDINARY MOVEMENT, unchanged and resumed
-the instant the arc ends. Non-reversal is STRUCTURAL, not a percentage: the
-component along the authored direction is never allowed to go negative, so a
-player leaning back can slow their crossing and can never reverse it or return
-to the pad. Measured: no input lands 1.03 m from the aim, perpendicular input
-bends it 4.10 m, opposing input still ends 10.20 m along the authored
-direction. State clears on landing, rail, death, respawn and `set_spawn`.
+the instant the arc ends.
+
+**THE CARRIER MAY NOT BE CANCELLED.** Clamping the RESULT at zero prevented
+reversal and still permitted cancellation -- a 1 m/s carrier opposed by 2 m/s
+stopped moving forward while the carrier sat privately stored. The correction
+is now DECOMPOSED against the authored axis before it is applied and the
+opposing half removed: along-axis correction may only be positive, lateral is
+free, so the applied axial speed is never below the carrier's own. Measured on
+the 1.0 m/s slow-arc fixture: no input 1.883 m forward, full opposing input
+1.900 m, applied axial never 0.0001 m/s under the carrier in either.
+
+**AND A DEFECT IT UNCOVERED:** `is_on_floor()` is the previous frame's answer
+and a pad fires a player STANDING on it, so the arc was ended before it rose --
+every launch walked onto rather than fallen onto lost its carrier. Only a
+landing ends the arc now, and `_launch_flight` is the single authority for
+whether it is running. State clears on landing, rail, death, respawn and
+`set_spawn`.
 
 **THE `none` RESULT IS A SOLVABILITY AUDIT, NOT A COMPLETION.** 50 mandatory
 endpoints, 0 without ground, zero offer geometry -- that is the authored

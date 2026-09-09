@@ -76,8 +76,75 @@ static func parse(args: PackedStringArray) -> Dictionary:
 static func from_cmdline() -> Dictionary:
 	return parse(OS.get_cmdline_user_args())
 
-## The offer kinds a mode constructs. Unknown modes build nothing, which
-## is the safe answer and never the silent one -- `parse` refuses them
-## before a caller gets here.
+## The offer kinds a mode is willing to consider. Unknown modes consider
+## nothing, which is the safe answer and never the silent one -- `parse`
+## refuses them before a caller gets here.
+##
+## CONSIDERING IS NOT SELECTING. This is the appetite; `select` below is
+## the decision, and construction builds what `select` returned rather
+## than everything of a matching kind.
 static func builds(mode: String) -> Array:
 	return (BUILDS.get(mode, []) as Array).duplicate()
+
+## THE SELECTION: which accepted offers this package will build, named
+## one at a time.
+##
+## `judged` is one entry per room, `{chamber, accepted}`, taken from the
+## Zone-wide validation pass -- so the decision is made once, with every
+## room's verdict already in, and not room by room as each is measured.
+##
+## Returns `{chamber, offer, kind}` triples. AN IDENTITY, NOT A FILTER:
+## construction is handed these and builds exactly them, so "build every
+## accepted offer of a matching kind" is a thing the runtime can no
+## longer do by accident. Today the policy takes every accepted offer of
+## the mode's kinds, which for this library is one per room -- but the
+## selection is still enumerated, because a filter and a list that happen
+## to agree are not the same thing, and only one of them can be checked.
+##
+## DETERMINISTIC BY CONSTRUCTION. The result is sorted on
+## `chamber|kind|offer`, so it cannot depend on the order rooms were
+## placed in, the order the manifest listed offers in, the order a
+## Dictionary iterates, or the order the physics server answered. Two
+## Zones with the same content select the same offers in the same
+## sequence.
+static func select(mode: String, judged: Array) -> Array:
+	var kinds := builds(mode)
+	if kinds.is_empty():
+		return []
+	var keys: Array[String] = []
+	var by_key: Dictionary = {}
+	for raw: Variant in judged:
+		var room: Dictionary = raw
+		var chamber := str(room.get("chamber", ""))
+		for item: Variant in room.get("accepted", []) as Array:
+			var offer: Dictionary = item
+			var kind := str(offer.get("kind", ""))
+			if not kinds.has(kind):
+				continue
+			var entry := {"chamber": chamber, "kind": kind,
+					"offer": str(offer.get("name", ""))}
+			var key := key_of(entry)
+			if by_key.has(key):
+				continue
+			keys.append(key)
+			by_key[key] = entry
+	keys.sort()
+	var out: Array = []
+	for key: String in keys:
+		out.append(by_key[key])
+	return out
+
+## The identity of one selected offer, as one comparable string.
+static func key_of(entry: Dictionary) -> String:
+	return "%s|%s|%s" % [str(entry.get("chamber", "")),
+			str(entry.get("kind", "")), str(entry.get("offer", ""))]
+
+## The offer names selected for one chamber, for the construction call
+## that room receives.
+static func offers_for(chamber: String, selection: Array) -> Array:
+	var out: Array = []
+	for raw: Variant in selection:
+		var entry: Dictionary = raw
+		if str(entry.get("chamber", "")) == chamber:
+			out.append(str(entry.get("offer", "")))
+	return out
