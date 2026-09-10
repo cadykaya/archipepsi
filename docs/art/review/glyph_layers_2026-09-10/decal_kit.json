@@ -1,0 +1,380 @@
+{
+  "_comment": [
+    "The Archipepsi decal kit, authored in ECMS Glyph. TRIAL ART: it ships",
+    "nowhere, is in no content manifest, and changes no approved asset.",
+    "Physical size is authoritative -- a decal card is built from `metres`,",
+    "never from the pixel size, so a texture rework cannot silently resize",
+    "a mark in the world."
+  ],
+  "glyph_root": "/home/user/ecms-glyph",
+  "glyph_sha": "62b0bfd5f9ac3eb49f6167dc82098fe4dab0688b",
+  "owner": "act_owner_skyiah",
+  "artist": "act_agent_arty",
+  "texels_per_metre": 32,
+  "decals": [
+    {
+      "id": "decal_drip",
+      "title": "leak / drip beneath a joint",
+      "native_size": [
+        16,
+        48
+      ],
+      "metres": [
+        0.5,
+        1.5
+      ],
+      "texels_per_metre": 32,
+      "surfaces": [
+        "wall"
+      ],
+      "orientation": "upright only",
+      "why": "gravity is structure. A drip on its side is not a drip, and a drip on a floor is a stain, which is `decal_grime`.",
+      "palette": [
+        {
+          "name": "wet",
+          "rgba": [
+            36,
+            31,
+            28,
+            215
+          ]
+        },
+        {
+          "name": "run",
+          "rgba": [
+            78,
+            67,
+            60,
+            165
+          ]
+        },
+        {
+          "name": "trail",
+          "rgba": [
+            123,
+            106,
+            96,
+            105
+          ]
+        },
+        {
+          "name": "haze",
+          "rgba": [
+            123,
+            106,
+            96,
+            55
+          ]
+        }
+      ],
+      "images": {
+        "native": "decals/decal_drip.png",
+        "enlarged": "decals/decal_drip_8x.png",
+        "on_wall": "decals/decal_drip_on_wall.png",
+        "on_checker": "decals/decal_drip_checker.png"
+      },
+      "render_sha256": "eda75a013ea3085df3072123822d47ed10675065d850ec7f8454fc2e00fb85d3",
+      "verified": true
+    },
+    {
+      "id": "decal_grime",
+      "title": "accumulated grime patch",
+      "native_size": [
+        32,
+        32
+      ],
+      "metres": [
+        1,
+        1
+      ],
+      "texels_per_metre": 32,
+      "surfaces": [
+        "wall",
+        "floor",
+        "ceiling"
+      ],
+      "orientation": "any rotation",
+      "why": "an accumulation has no up. Rotating it is how one asset stops reading as the same asset.",
+      "palette": [
+        {
+          "name": "deep",
+          "rgba": [
+            36,
+            31,
+            28,
+            130
+          ]
+        },
+        {
+          "name": "mid",
+          "rgba": [
+            78,
+            67,
+            60,
+            95
+          ]
+        },
+        {
+          "name": "thin",
+          "rgba": [
+            123,
+            106,
+            96,
+            60
+          ]
+        },
+        {
+          "name": "edge",
+          "rgba": [
+            123,
+            106,
+            96,
+            28
+          ]
+        }
+      ],
+      "images": {
+        "native": "decals/decal_grime.png",
+        "enlarged": "decals/decal_grime_8x.png",
+        "on_wall": "decals/decal_grime_on_wall.png",
+        "on_checker": "decals/decal_grime_checker.png"
+      },
+      "render_sha256": "9e41b6854b1c19a73697a860b5279f3e31888d193fae26d7ddf42426dd684e26",
+      "verified": true
+    },
+    {
+      "id": "decal_scuff",
+      "title": "scuff / scrape",
+      "native_size": [
+        24,
+        8
+      ],
+      "metres": [
+        0.75,
+        0.25
+      ],
+      "texels_per_metre": 32,
+      "surfaces": [
+        "wall",
+        "floor"
+      ],
+      "orientation": "wall: horizontal only, 0.3-1.1 m up; floor: any rotation",
+      "why": "on a wall a scrape is made by something passing at a height, so it is level. On a floor there is no height and no level.",
+      "palette": [
+        {
+          "name": "bare",
+          "rgba": [
+            232,
+            236,
+            228,
+            140
+          ]
+        },
+        {
+          "name": "worn",
+          "rgba": [
+            140,
+            142,
+            138,
+            105
+          ]
+        },
+        {
+          "name": "bite",
+          "rgba": [
+            98,
+            99,
+            96,
+            120
+          ]
+        }
+      ],
+      "images": {
+        "native": "decals/decal_scuff.png",
+        "enlarged": "decals/decal_scuff_8x.png",
+        "on_wall": "decals/decal_scuff_on_wall.png",
+        "on_checker": "decals/decal_scuff_checker.png"
+      },
+      "render_sha256": "1c44384178658768e9f63bbb1239febb48f971fbf8a3e623ebcc22f12ed64483",
+      "verified": true
+    },
+    {
+      "id": "decal_stencil",
+      "title": "sprayed maintenance stencil",
+      "native_size": [
+        24,
+        16
+      ],
+      "metres": [
+        0.75,
+        0.5
+      ],
+      "texels_per_metre": 32,
+      "surfaces": [
+        "wall"
+      ],
+      "orientation": "upright only",
+      "why": "it is lettering. Rotating it makes it unreadable, and an unreadable mark that used to be readable looks like a mistake.",
+      "palette": [
+        {
+          "name": "paint",
+          "rgba": [
+            49,
+            69,
+            89,
+            205
+          ]
+        },
+        {
+          "name": "faded",
+          "rgba": [
+            79,
+            111,
+            143,
+            130
+          ]
+        },
+        {
+          "name": "mist",
+          "rgba": [
+            79,
+            111,
+            143,
+            55
+          ]
+        }
+      ],
+      "images": {
+        "native": "decals/decal_stencil.png",
+        "enlarged": "decals/decal_stencil_8x.png",
+        "on_wall": "decals/decal_stencil_on_wall.png",
+        "on_checker": "decals/decal_stencil_checker.png"
+      },
+      "render_sha256": "730bb5aeaf2c83c17aca3361a2293c3099e7897ca46f7466c8372584026b16fe",
+      "verified": true
+    },
+    {
+      "id": "decal_scorch",
+      "title": "scorch mark",
+      "native_size": [
+        32,
+        32
+      ],
+      "metres": [
+        1,
+        1
+      ],
+      "texels_per_metre": 32,
+      "surfaces": [
+        "wall",
+        "floor",
+        "ceiling"
+      ],
+      "orientation": "any rotation",
+      "why": "a burn radiates from a point and has no up.",
+      "palette": [
+        {
+          "name": "char",
+          "rgba": [
+            26,
+            21,
+            18,
+            225
+          ]
+        },
+        {
+          "name": "soot",
+          "rgba": [
+            58,
+            50,
+            44,
+            165
+          ]
+        },
+        {
+          "name": "smoke",
+          "rgba": [
+            107,
+            96,
+            88,
+            95
+          ]
+        },
+        {
+          "name": "ash",
+          "rgba": [
+            107,
+            96,
+            88,
+            40
+          ]
+        }
+      ],
+      "images": {
+        "native": "decals/decal_scorch.png",
+        "enlarged": "decals/decal_scorch_8x.png",
+        "on_wall": "decals/decal_scorch_on_wall.png",
+        "on_checker": "decals/decal_scorch_checker.png"
+      },
+      "render_sha256": "5131afae4f77d76b25163b009d0f4deb4afdf37aa9326d99af79b68ec4b8754d",
+      "verified": true
+    },
+    {
+      "id": "decal_splatter",
+      "title": "splatter",
+      "native_size": [
+        24,
+        24
+      ],
+      "metres": [
+        0.75,
+        0.75
+      ],
+      "texels_per_metre": 32,
+      "surfaces": [
+        "wall",
+        "floor"
+      ],
+      "orientation": "any rotation",
+      "why": "it lands from a direction, but which direction is the placer's to choose, so the asset does not fix one.",
+      "palette": [
+        {
+          "name": "wet",
+          "rgba": [
+            36,
+            31,
+            28,
+            190
+          ]
+        },
+        {
+          "name": "spot",
+          "rgba": [
+            78,
+            67,
+            60,
+            150
+          ]
+        },
+        {
+          "name": "fleck",
+          "rgba": [
+            78,
+            67,
+            60,
+            95
+          ]
+        }
+      ],
+      "images": {
+        "native": "decals/decal_splatter.png",
+        "enlarged": "decals/decal_splatter_8x.png",
+        "on_wall": "decals/decal_splatter_on_wall.png",
+        "on_checker": "decals/decal_splatter_checker.png"
+      },
+      "render_sha256": "8f5eeba30b812f8019d832494376fe38b94a99ab79ba1095c01493167a001718",
+      "verified": true
+    }
+  ],
+  "elapsed_ms": 480
+}

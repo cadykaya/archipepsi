@@ -263,6 +263,38 @@ and runs.
 * **It ships nowhere.** `assets/textures/theme/concrete_facility_wall.png`
   is unchanged and no approved asset was touched.
 
+### Wall layers and a decal kit — done 2026-09-10
+
+Report: `docs/art/reports/2026-09-10-wall-layers-and-decals.md`. Package:
+`docs/art/review/glyph_layers_2026-09-10/`. Glyph `62b0bfd`. **Trial art: it
+ships nowhere and no approved asset changed.**
+
+* **The wall is three layers now.** Field (`wall` role), structural trim
+  once at the floor junction (`trim` role), decals (cards). Removing the
+  baked base course exposed a seam it had been hiding: the shipped course
+  pitch of 1.2 m = 38 texels does **not** divide a 128 texel tile, so
+  courses never lined up across a vertical repeat. 1.0 m = 32 does. Texel
+  density unchanged at 32/m.
+* **A mark that specific cannot survive repetition.** The field's first
+  pass kept the trial's drips; at 3 × 3 they were all anyone could see. They
+  are `decal_drip` now, placed once. The field carries only what bears
+  being seen a hundred times.
+* **Six decals**, transparent, each at a declared physical size with the
+  surfaces and orientations it allows. Physical size is authoritative — a
+  card is built from `metres`, never from a pixel count.
+* **`tools/content/check_decal_colours.py`** guards the five *chromatic*
+  reserved families by chroma and hue. `dead` is deliberately unguarded and
+  the reason is in the file: its ramp is neutral grey, so guarding against
+  it forbade the whole shared `grime` family the shipped textures use. The
+  gate carries eleven negative controls and fails if they do not bite.
+* **`Decal` does nothing in Compatibility** — it is a Forward+ node. Decals
+  are surface-aligned quads, 6 mm off, depth-write off, nearest filter. No
+  z-fighting, flicker or floating edges at four framings.
+* **`shell_corner_left` already has a kick rail at the floor junction**, so
+  the skirting binds to the `trim` role rather than sitting on a card over
+  it. Recorded limitation: the rail is far shorter than the skirting's
+  authored 1.00 m, so the texture reads as tone rather than structure there.
+
 **The concrete limitation, for whoever plans the next Glyph work.** Indexed
 colour has no partial mix, and the house look is built from partial mixes —
 `materials.py` blends at 0.10, 0.26, 0.5, 0.80 and fades streaks
