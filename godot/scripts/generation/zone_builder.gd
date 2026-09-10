@@ -43,6 +43,35 @@ static func _world_aabb(local: AABB, position: Vector3, yaw: float) -> AABB:
 		out = AABB(corner, Vector3.ZERO) if i == 0 else out.expand(corner)
 	return out
 
+## The hard ceiling on how far a room may be pushed forward, so a
+## pathological Zone fails loudly instead of hanging. The working budget
+## is `_clearance_budget`, derived from the geometry actually placed.
+const MAX_CLEARANCE_CONNECTORS := 96
+
+## HOW MANY CONNECTORS IT COULD EVER TAKE to push clear, derived rather
+## than guessed.
+##
+## This was a literal 6 -- about 48 m, enough for the builder's own rooms
+## and not for a 90 m authored one -- and when it ran out the room was
+## placed ANYWAY. Deriving it was unsafe while a connector was never
+## itself overlap-checked, because a long push just marched a corridor
+## THROUGH whatever was in the way. `_search` now stops at the first
+## connector that would overlap, so distance costs nothing but
+## arithmetic and the bound can be what the geometry needs.
+static func _clearance_budget(placed: Array) -> int:
+	if placed.is_empty():
+		return 1
+	var span: AABB = placed[0]
+	for box: AABB in placed:
+		span = span.merge(box)
+	var reach := span.size.x + span.size.z
+	return mini(int(ceil(reach / maxf(CONNECTOR_LENGTH, 1.0))) + 2,
+			MAX_CLEARANCE_CONNECTORS)
+
+## Everything a route has laid except the piece a new one joins onto.
+static func _all_but_last(laid: Array) -> Array:
+	return [] if laid.size() < 2 else laid.slice(0, laid.size() - 1)
+
 static func _overlaps(placed: Array, candidate: AABB) -> bool:
 	for existing: AABB in placed:
 		if existing.intersection(candidate).get_volume() > 0.5:
@@ -52,6 +81,160 @@ static func _overlaps(placed: Array, candidate: AABB) -> bool:
 ## Places one connector at (cursor, yaw) and returns the advanced cursor.
 ## A helper rather than a lambda: GDScript lambdas capture Vector3 locals
 ## by value, which silently pinned every connector to the origin.
+## The local geometry of a connector and of a corner, measured from the
+## real builders and then thrown away.
+##
+## PLAN BEFORE BUILDING. Placement used to decide by emitting: it added a
+## connector, asked whether the room fitted now, and added another --
+## so a connector was never itself overlap-checked and a long push
+## marched a corridor straight THROUGH the rooms in the way. Reading the
+## shapes once lets the whole route be judged as arithmetic, and only the
+## route that clears is built.
+static func _shape_of(built: Dictionary) -> Dictionary:
+	var out := {"bounds": built["bounds"],
+			"exit_offset": built["exit_offset"]}
+	(built["root"] as Node3D).free()
+	return out
+
+static func _connector_shape(theme: String) -> Dictionary:
+	return _shape_of(ChamberBuilders.corridor(
+			{"id": "probe", "length": CONNECTOR_LENGTH,
+			"width": CONNECTOR_WIDTH}, theme))
+
+## How many corners a route may take to reach a spot for the next room.
+##
+## One was not enough. A 90 m authored arena in a 23-room chain boxes the
+## route in, and with a single turn available `c017` of Zone 1 had
+## nowhere to go after 37 pieces -- reported as a routing failure, which
+## was honest and still left the Zone unbuildable. Two turns is "go
+## around it", which is what a level does.
+const MAX_ROUTE_TURNS := 2
+
+## How far a route may push between turns while it is still exploring.
+## The FINAL leg gets the full `_clearance_budget`; the legs before it
+## are bounded tighter, because the search is a product of them.
+##
+## MEASURED AGAINST THE ROOMS. At 16 this is 80 m of sidestep, and
+## `shell_span_basin` is 90 m deep -- so a route could never get far
+## enough around one, and Zone 1's `c017` had nowhere to go after 36
+## pieces. A sidestep has to be able to clear the largest room there is.
+const EXPLORE_CONNECTORS := 40
+
+## Where this room can go: straight ahead, or around one or two corners.
+##
+## Returns `{ok, route}` where `route` is the steps to walk, in order:
+## `{turn, connectors}` entries, `turn` being 0, -1 or +1. `prefer` is
+## the aesthetic roll -- the layout's way of not running in a straight
+## line -- and it only reorders the candidates. What decides is whether
+## the geometry clears.
+##
+## A direction is exhausted the moment the NEXT CONNECTOR would itself
+## overlap something. Pushing past that point is how a corridor ends up
+## inside a room, and it is exactly what the old unchecked push did.
+static func _plan_route(shape: Dictionary, corners: Dictionary,
+		room: AABB, entry_at: Vector3, cursor: Vector3, yaw: float,
+		placed: Array, prefer: int) -> Dictionary:
+	var budget := _clearance_budget(placed)
+	# THE PREFERRED TURN IS TRIED FIRST, and that is not a detail: the
+	# search below always fits a room straight ahead when it can, so a
+	# Zone whose rooms all fit straight ahead is a Zone that never bends.
+	# `_test_bent_layouts_never_overlap` caught exactly that.
+	if prefer != 0:
+		var corner: Dictionary = corners[prefer]
+		if not _overlaps(placed, _world_aabb(corner["bounds"], cursor, yaw)):
+			var bent := _search(shape, corners, room, entry_at,
+					cursor + _rot(yaw, corner["exit_offset"] as Vector3),
+					yaw + float(prefer) * PI / 2.0, placed,
+					MAX_ROUTE_TURNS - 1, prefer, budget,
+					[_world_aabb(corner["bounds"], cursor, yaw)])
+			if bool(bent["ok"]):
+				var route: Array = [{"turn": prefer, "connectors": 0}]
+				route.append_array(bent["route"] as Array)
+				return {"ok": true, "route": route}
+	return _search(shape, corners, room, entry_at, cursor, yaw, placed,
+			MAX_ROUTE_TURNS, prefer, budget)
+
+static func _search(shape: Dictionary, corners: Dictionary, room: AABB,
+		entry_at: Vector3, cursor: Vector3, yaw: float, placed: Array,
+		turns_left: int, prefer: int, budget: int,
+		mine: Array = []) -> Dictionary:
+	# A ROUTE MUST CLEAR ITSELF, not only what was already there. Without
+	# `mine` -- the pieces this route has planned so far -- a room was
+	# judged against `placed` alone, and a room whose declared entry
+	# socket sits inside its envelope extends BACKWARDS over the
+	# connectors just planned to reach it. Fourteen large authored rooms
+	# routed successfully and overlapped.
+	#
+	# EXCEPT THE PIECE IT JOINS ONTO. A room meets its approach connector
+	# at a shared face and an inset entry socket swallows a little of it:
+	# that is the join, not a collision. `_all_but_last` drops exactly
+	# the piece most recently laid, which is always the one the next
+	# piece attaches to -- so adjacency is free and everything else is
+	# refused. Treating the join as a collision refused every large
+	# authored room outright.
+	var chain: Array = placed.duplicate()
+	chain.append_array(mine)
+	var at := cursor
+	var laid: Array = mine.duplicate()
+	for i in budget + 1:
+		var here := _world_aabb(room, origin_for(at, yaw, entry_at), yaw)
+		if not _overlaps(_all_but_last(chain), here):
+			return {"ok": true, "route": [{"turn": 0, "connectors": i}]}
+		if turns_left > 0:
+			var first := prefer if prefer != 0 else 1
+			for turn: int in [first, -first]:
+				var corner: Dictionary = corners[turn]
+				var corner_box := _world_aabb(corner["bounds"], at, yaw)
+				if _overlaps(_all_but_last(chain), corner_box):
+					continue
+				var beyond := laid.duplicate()
+				beyond.append(corner_box)
+				var sub := _search(shape, corners, room, entry_at,
+						at + _rot(yaw, corner["exit_offset"] as Vector3),
+						yaw + float(turn) * PI / 2.0, placed,
+						turns_left - 1, prefer,
+						budget if turns_left == 1 else EXPLORE_CONNECTORS,
+						beyond)
+				if bool(sub["ok"]):
+					var route: Array = [{"turn": 0, "connectors": i},
+							{"turn": turn, "connectors": 0}]
+					route.append_array(sub["route"] as Array)
+					return {"ok": true, "route": route}
+		var link := _world_aabb(shape["bounds"], at, yaw)
+		if _overlaps(_all_but_last(chain), link):
+			break
+		chain.append(link)
+		laid.append(link)
+		at += _rot(yaw, shape["exit_offset"] as Vector3)
+	return {"ok": false, "route": []}
+
+## Builds the route `_plan_route` chose. Returns `{cursor, yaw}`.
+static func _emit_route(root: Node3D, theme: String, plan: Dictionary,
+		cursor: Vector3, yaw: float, placed: Array,
+		bounds_list: Array) -> Dictionary:
+	var at := cursor
+	var facing := yaw
+	var turns := 0
+	for raw: Variant in plan["route"] as Array:
+		var step: Dictionary = raw
+		if int(step["turn"]) != 0:
+			var corner := ChamberBuilders.corner(int(step["turn"]), theme)
+			var world: AABB = _world_aabb(corner["bounds"], at, facing)
+			var node: Node3D = corner["root"]
+			node.name = "Corner"
+			node.position = at
+			node.rotation.y = facing
+			root.add_child(node)
+			placed.append(world)
+			bounds_list.append(world)
+			at += _rot(facing, corner["exit_offset"] as Vector3)
+			facing += float(step["turn"]) * PI / 2.0
+			turns += 1
+		for _i in int(step["connectors"]):
+			at = _emit_connector(root, theme, at, facing, placed,
+					bounds_list)
+	return {"cursor": at, "yaw": facing, "turns": turns}
+
 static func _emit_connector(root: Node3D, theme: String, cursor: Vector3,
 		yaw: float, placed: Array, bounds_list: Array) -> Vector3:
 	# A distinct id per connector: greebles and theme props seed from it,
@@ -103,6 +286,14 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 	## Set when the room just placed bent the route itself, so the corner
 	## roll below is skipped exactly once rather than compounding.
 	var straight_after_turn := false
+	# The shapes routing reasons about, measured once from the real
+	# builders so the plan and the emission cannot describe different
+	# geometry.
+	var shape := _connector_shape(theme)
+	var corners := {
+		1: _shape_of(ChamberBuilders.corner(1, theme)),
+		-1: _shape_of(ChamberBuilders.corner(-1, theme)),
+	}
 
 	for chamber: Dictionary in zone.get("chambers", []):
 		# S13: every chamber's geometry is chosen here, not assumed.
@@ -120,57 +311,47 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 		var entry_at: Vector3 = result.get("entry_offset",
 				RoomContract.LEGACY_ENTRY)
 
-		# Maybe take a corner first. Turns alternate direction, and both the
-		# corner and the chamber beyond it must clear every prior arm.
-		var may_turn := not straight_after_turn
+		# WHERE THIS ROOM CAN GO -- decided before anything is built.
+		# The random roll is the layout's way of not running in a
+		# straight line and it only REORDERS the candidates; what
+		# decides is whether the geometry clears. A room that turned the
+		# chain itself has already turned it, so the roll is skipped
+		# exactly once rather than compounding into a U-turn back into
+		# the arm just left.
+		# ...AND A ROOM THAT WILL TURN THE CHAIN DOES NOT NEED A CORNER
+		# IN FRONT OF IT EITHER. The roll was suppressed only AFTER such
+		# a room, so a corner shell could still get one immediately
+		# before it -- two 90 degree turns with a 6 m room between them,
+		# repeated six times in a Zone, and the route folds into itself.
+		# `exit_yaw` is known here because the room is already built, so
+		# this is read rather than guessed.
+		var turns_itself := RoomContract.EXIT_YAWS.has(
+				float(result.get("exit_yaw", 0.0))) \
+				and float(result.get("exit_yaw", 0.0)) != 0.0
+		var prefer := 0
+		if not first and not straight_after_turn and not turns_itself \
+				and rng.randf() < TURN_CHANCE:
+			prefer = next_turn
 		straight_after_turn = false
-		if not first and may_turn and rng.randf() < TURN_CHANCE:
-			var corner := ChamberBuilders.corner(next_turn, theme)
-			var corner_world: AABB = _world_aabb(corner["bounds"], cursor, yaw)
-			var yaw_after := yaw + float(next_turn) * PI / 2.0
-			var cursor_after: Vector3 = cursor \
-					+ _rot(yaw, corner["exit_offset"])
-			var chamber_world: AABB = _world_aabb(result["bounds"],
-					origin_for(cursor_after, yaw_after, entry_at), yaw_after)
-			if not _overlaps(placed, corner_world) \
-					and not _overlaps(placed, chamber_world):
-				var corner_node: Node3D = corner["root"]
-				corner_node.name = "Corner"
-				corner_node.position = cursor
-				corner_node.rotation.y = yaw
-				root.add_child(corner_node)
-				placed.append(corner_world)
-				bounds_list.append(corner_world)
-				cursor = cursor_after
-				yaw = yaw_after
-				next_turn = -next_turn
-			else:
-				corner["root"].free()
-
-		# Straight clearance: a wide chamber after a bend can reach back
-		# toward an earlier arm; push forward until it clears.
-		var attempts := 0
-		while _overlaps(placed, _world_aabb(result["bounds"],
-				origin_for(cursor, yaw, entry_at), yaw)) and attempts < 6:
-			cursor = _emit_connector(root, theme, cursor, yaw, placed,
-					bounds_list)
-			attempts += 1
-		# NEVER SILENTLY. A room placed on top of another is a Check in a
-		# wall and an enemy inside the floor. The retry budget stays six
-		# connectors -- pushing further just marches a corridor THROUGH
-		# the rooms in the way, since a connector is never itself
-		# overlap-checked -- so what changes here is that giving up is
-		# reported. The condition that exhausted it (an authored shell
-		# several times the size of the chamber it was building) is now
-		# refused at selection by `ContentInstantiator._footprint_misfit`
-		# and `shells.rule_errors`, which is where an oversize room
-		# should be stopped; this is the guard that says so if one ever
-		# gets past them again.
-		if _overlaps(placed, _world_aabb(result["bounds"],
-				origin_for(cursor, yaw, entry_at), yaw)):
-			push_error("zone: room '%s' could not be placed clear of "
+		var plan := _plan_route(shape, corners, result["bounds"] as AABB,
+				entry_at, cursor, yaw, placed, prefer)
+		# NO ROOM IS EVER ATTACHED ON TOP OF ANOTHER. Straight ahead and
+		# both corners were tried, connectors included, and none of them
+		# clears. A Zone with a room inside another room is a Check in a
+		# wall and an enemy inside the floor; there is no version of that
+		# worth returning, so the build FAILS and the caller decides.
+		if not bool(plan["ok"]):
+			(result["root"] as Node3D).free()
+			root.free()
+			return {"failed": "room '%s' could not be placed clear of "
 					% str(chamber.get("id", "?"))
-					+ "the rooms before it after %d connectors" % attempts)
+					+ "the %d room(s) before it" % placed.size()}
+		var walked := _emit_route(root, theme, plan, cursor, yaw, placed,
+				bounds_list)
+		cursor = walked["cursor"]
+		yaw = float(walked["yaw"])
+		if int(walked["turns"]) % 2 == 1:
+			next_turn = -next_turn
 
 		var origin := origin_for(cursor, yaw, entry_at)
 		var node: Node3D = result["root"]
@@ -215,19 +396,35 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 			push_warning("zone: chamber '%s' asks to turn %.1f degrees; "
 					% [str(chamber.get("id", "?")), turn]
 					+ "the chain turns by quarters, so it goes straight")
-		cursor = _emit_connector(root, theme, cursor, yaw, placed,
-				bounds_list)
+		# The linking connector between rooms, and it is CHECKED like
+		# everything else now. It was emitted unconditionally, so on a
+		# folded chain it could be laid inside a room that was already
+		# there -- geometry attached without anything having asked
+		# whether it fitted. Where it does not fit, the next room simply
+		# starts at this room's exit, which is where it would have
+		# started anyway.
+		if not _overlaps(placed, _world_aabb(shape["bounds"], cursor, yaw)):
+			cursor = _emit_connector(root, theme, cursor, yaw, placed,
+					bounds_list)
 		first = false
 
-	# Exit room with the appended portal — checked like every other
-	# placement, not trusted to clear by arithmetic coincidence.
+	# Exit room with the appended portal — routed like every other
+	# placement, not trusted to clear by arithmetic coincidence. A Zone
+	# whose exit sits inside another room is one a player cannot finish,
+	# so this fails the build for the same reason a chamber does.
 	var exit_room := ChamberBuilders.treasure_room({"id": "exit"}, theme)
-	var exit_attempts := 0
-	while _overlaps(placed, _world_aabb(exit_room["bounds"], cursor, yaw)) \
-			and exit_attempts < 6:
-		cursor = _emit_connector(root, theme, cursor, yaw, placed,
-				bounds_list)
-		exit_attempts += 1
+	var exit_plan := _plan_route(shape, corners,
+			exit_room["bounds"] as AABB, RoomContract.LEGACY_ENTRY,
+			cursor, yaw, placed, 0)
+	if not bool(exit_plan["ok"]):
+		(exit_room["root"] as Node3D).free()
+		root.free()
+		return {"failed": "the exit room could not be placed clear of "
+				+ "the %d room(s) before it" % placed.size()}
+	var exit_walk := _emit_route(root, theme, exit_plan, cursor, yaw,
+			placed, bounds_list)
+	cursor = exit_walk["cursor"]
+	yaw = float(exit_walk["yaw"])
 	var exit_node: Node3D = exit_room["root"]
 	exit_node.name = "ExitRoom"
 	exit_node.position = cursor

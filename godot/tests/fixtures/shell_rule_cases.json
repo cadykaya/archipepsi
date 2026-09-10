@@ -1,0 +1,151 @@
+{
+  "note": "THE COMPATIBILITY RULE, as cases rather than as a claim. bridge/tests/test_shell_catalog.py and godot/tests/content_driver.gd both execute this file: Python through shells.rule_errors, Godot through ContentInstantiator._misfit. A parity test that only compared FIELD NAMES passed while the two sides compared them differently, which is the whole failure it was supposed to catch. Regenerate nothing here -- these are hand-written cases, and a new clause means new cases.",
+  "clauses": ["type", "footprint", "height", "feature", "floors", "elevation"],
+  "cases": [
+    {
+      "name": "an arena shell matching its chamber exactly",
+      "shell": {"semantic_tags": ["arena"], "size": [20.8, 6.0, 20.8]},
+      "chamber": {"type": "arena", "width": 20.0, "depth": 20.0, "wall_height": 6.0},
+      "fits": true, "because": ""
+    },
+    {
+      "name": "a corridor shell matching length rather than depth",
+      "shell": {"semantic_tags": ["corridor"], "size": [6.8, 3.6, 6.8]},
+      "chamber": {"type": "corridor", "width": 6.0, "length": 6.0},
+      "fits": true, "because": ""
+    },
+    {
+      "name": "a shell tagged for another room type",
+      "shell": {"semantic_tags": ["treasure_room"], "size": [20.8, 6.0, 20.8]},
+      "chamber": {"type": "arena", "width": 20.0, "depth": 20.0, "wall_height": 6.0},
+      "fits": false, "because": "type"
+    },
+    {
+      "name": "a shell tagged for several types including this one",
+      "shell": {"semantic_tags": ["treasure_room", "arena"], "size": [20.8, 6.0, 20.8]},
+      "chamber": {"type": "arena", "width": 20.0, "depth": 20.0, "wall_height": 6.0},
+      "fits": true, "because": ""
+    },
+    {
+      "name": "a shell declaring no tags constrains nothing by type",
+      "shell": {"semantic_tags": [], "size": [20.8, 6.0, 20.8]},
+      "chamber": {"type": "arena", "width": 20.0, "depth": 20.0, "wall_height": 6.0},
+      "fits": true, "because": ""
+    },
+    {
+      "name": "a shell wider than its chamber",
+      "shell": {"semantic_tags": ["arena"], "size": [40.8, 6.0, 20.8]},
+      "chamber": {"type": "arena", "width": 20.0, "depth": 20.0, "wall_height": 6.0},
+      "fits": false, "because": "footprint"
+    },
+    {
+      "name": "a shell narrower than its chamber",
+      "shell": {"semantic_tags": ["arena"], "size": [12.8, 6.0, 20.8]},
+      "chamber": {"type": "arena", "width": 20.0, "depth": 20.0, "wall_height": 6.0},
+      "fits": false, "because": "footprint"
+    },
+    {
+      "name": "a shell deeper than its chamber",
+      "shell": {"semantic_tags": ["arena"], "size": [20.8, 6.0, 40.8]},
+      "chamber": {"type": "arena", "width": 20.0, "depth": 20.0, "wall_height": 6.0},
+      "fits": false, "because": "footprint"
+    },
+    {
+      "name": "one centimetre wide of the chamber is not the chamber",
+      "shell": {"semantic_tags": ["arena"], "size": [20.81, 6.0, 20.8]},
+      "chamber": {"type": "arena", "width": 20.0, "depth": 20.0, "wall_height": 6.0},
+      "fits": false, "because": "footprint"
+    },
+    {
+      "name": "four millimetres is a manifest rounding to two decimals",
+      "shell": {"semantic_tags": ["arena"], "size": [20.804, 6.0, 20.796]},
+      "chamber": {"type": "arena", "width": 20.0, "depth": 20.0, "wall_height": 6.0},
+      "fits": true, "because": ""
+    },
+    {
+      "name": "a shell shorter than the chamber declares",
+      "shell": {"semantic_tags": ["arena"], "size": [20.8, 4.0, 20.8]},
+      "chamber": {"type": "arena", "width": 20.0, "depth": 20.0, "wall_height": 6.0},
+      "fits": false, "because": "height"
+    },
+    {
+      "name": "a chamber with no declared height constrains nothing by height",
+      "shell": {"semantic_tags": ["corridor"], "size": [6.8, 99.0, 6.8]},
+      "chamber": {"type": "corridor", "width": 6.0, "length": 6.0},
+      "fits": true, "because": ""
+    },
+    {
+      "name": "a shell whose interior cannot hold the feature the room carries",
+      "shell": {"semantic_tags": ["corridor"], "size": [6.8, 3.6, 14.8]},
+      "chamber": {"type": "corridor", "width": 6.0, "length": 14.0,
+                  "features": [{"tag": "rail"}]},
+      "fits": false, "because": "feature"
+    },
+    {
+      "name": "the same room without the feature",
+      "shell": {"semantic_tags": ["corridor"], "size": [6.8, 3.6, 14.8]},
+      "chamber": {"type": "corridor", "width": 6.0, "length": 14.0},
+      "fits": true, "because": ""
+    },
+    {
+      "name": "a wide corridor that can hold the feature",
+      "shell": {"semantic_tags": ["corridor"], "size": [10.8, 3.6, 14.8]},
+      "chamber": {"type": "corridor", "width": 10.0, "length": 14.0,
+                  "features": [{"tag": "rail"}]},
+      "fits": true, "because": ""
+    },
+    {
+      "name": "a tower shell built for other floor counts",
+      "shell": {"semantic_tags": ["tower"], "size": [12.8, 20.0, 12.8],
+                "fits_floors": [2, 3]},
+      "chamber": {"type": "tower", "width": 12.0, "depth": 12.0, "floors": 4},
+      "fits": false, "because": "floors"
+    },
+    {
+      "name": "a tower shell built for this floor count",
+      "shell": {"semantic_tags": ["tower"], "size": [12.8, 20.0, 12.8],
+                "fits_floors": [2, 3, 4]},
+      "chamber": {"type": "tower", "width": 12.0, "depth": 12.0, "floors": 4},
+      "fits": true, "because": ""
+    },
+    {
+      "name": "an empty fits_floors declares no floor constraint",
+      "shell": {"semantic_tags": ["tower"], "size": [12.8, 20.0, 12.8],
+                "fits_floors": []},
+      "chamber": {"type": "tower", "width": 12.0, "depth": 12.0, "floors": 4},
+      "fits": true, "because": ""
+    },
+    {
+      "name": "a chamber declaring a band no shell provides",
+      "shell": {"semantic_tags": ["arena"], "size": [20.8, 6.0, 20.8]},
+      "chamber": {"type": "arena", "width": 20.0, "depth": 20.0,
+                  "wall_height": 6.0,
+                  "elevation": {"kind": "gallery", "rise": 2.0,
+                                "coverage": 0.3, "side": "left",
+                                "access": "ramp"}},
+      "fits": false, "because": "elevation"
+    },
+    {
+      "name": "a shell that provides the band the chamber declares",
+      "shell": {"semantic_tags": ["arena"], "size": [20.8, 6.0, 20.8],
+                "provides_elevation": ["gallery"]},
+      "chamber": {"type": "arena", "width": 20.0, "depth": 20.0,
+                  "wall_height": 6.0,
+                  "elevation": {"kind": "gallery", "rise": 2.0,
+                                "coverage": 0.3, "side": "left",
+                                "access": "ramp"}},
+      "fits": true, "because": ""
+    },
+    {
+      "name": "a shell that provides a different band",
+      "shell": {"semantic_tags": ["arena"], "size": [20.8, 6.0, 20.8],
+                "provides_elevation": ["pit"]},
+      "chamber": {"type": "arena", "width": 20.0, "depth": 20.0,
+                  "wall_height": 6.0,
+                  "elevation": {"kind": "gallery", "rise": 2.0,
+                                "coverage": 0.3, "side": "left",
+                                "access": "ramp"}},
+      "fits": false, "because": "elevation"
+    }
+  ]
+}

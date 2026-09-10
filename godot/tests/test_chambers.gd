@@ -38,6 +38,9 @@ func _ready() -> void:
 	_test_light_fixtures_are_not_buried()
 	_test_playtime_measures_what_it_claims()
 	_test_playtime_is_silent_about_a_zone_nobody_played()
+	_test_a_chain_of_large_authored_rooms_routes()
+	_test_an_exhausted_layout_is_refused_not_overlapped()
+	_test_no_accepted_zone_has_rooms_inside_each_other()
 	if failures == 0:
 		print("GODOT CHAMBER TESTS OK")
 		get_tree().quit(0)
@@ -834,3 +837,122 @@ func _test_a_brute_fits_through_a_doorway() -> void:
 			+ "no longer needs to exempt doorway jambs -- drop the exemption")
 	print("chambers: doorway %.1f m, brute %.1f m, clearance %.2f a side"
 			% [door, brute, (door - brute) / 2.0])
+
+
+## The two halves of "placement must succeed or explicitly fail".
+
+## Fourteen of the largest approved arena DO lay out, and cleanly.
+##
+## The interesting half of the placement work: a chain that could only
+## push six connectors straight ahead had nowhere to put a 90 m room and
+## attached it anyway. Routing may now take up to two corners and push as
+## far as the placed geometry is wide, so these fit -- and the assertion
+## that matters is that they fit WITHOUT sharing space.
+func _test_a_chain_of_large_authored_rooms_routes() -> void:
+	var chambers: Array = []
+	for i in 14:
+		chambers.append({
+			"id": "y%02d" % i, "type": "arena",
+			"width": 84.4, "depth": 51.2, "wall_height": 17.6,
+			"objective": "kill_all", "shell_id": "shell_yard_gantry",
+			"enemies": [{"archetype": "melee", "count": 2}]})
+	var build := ZoneBuilder.build({
+		"zone_id": "zone_big", "theme": "concrete_facility",
+		"chambers": chambers})
+	_check(not build.has("failed"),
+			"fourteen 84x51 rooms could not be routed: %s"
+			% str(build.get("failed", "")))
+	if build.has("failed"):
+		return
+	_check(_clashes(build["bounds_list"] as Array).is_empty(),
+			"the large-room chain placed pieces inside each other")
+	(build["root"] as Node3D).queue_free()
+
+## A Zone that cannot be routed comes back as a FAILURE, not as a Zone.
+##
+## `ZoneBuilder` used to push a room forward six connectors and, if that
+## did not clear it, attach it anyway -- so an exhausted layout became an
+## accepted Zone with one room inside another, which is how a Check came
+## to stand in a different chamber's wall.
+##
+## WHAT ACTUALLY EXHAUSTS ROUTING. Not size: a room extends forward from
+## its cursor and the plane is open, so 120 copies of the largest
+## approved arena route cleanly (measured). What exhausts it is a chain
+## that SPIRALS -- every corridor here carries the same corner shell, so
+## the route turns the same way each time and closes on itself, and by
+## the sixth room there is nowhere left that is not already something.
+## A generator that happened to pick `shell_corner_right` several times
+## running would produce exactly this.
+func _test_an_exhausted_layout_is_refused_not_overlapped() -> void:
+	var chambers: Array = []
+	for i in 8:
+		chambers.append({"id": "c%03d" % i, "type": "corridor",
+				"width": 6.0, "length": 6.0,
+				"shell_id": "shell_corner_right"})
+		if i % 3 == 2:
+			chambers.append({"id": "a%03d" % i, "type": "arena",
+					"width": 84.4, "depth": 51.2, "wall_height": 17.6,
+					"objective": "kill_all",
+					"shell_id": "shell_yard_gantry",
+					"enemies": [{"archetype": "melee", "count": 2}]})
+	var build := ZoneBuilder.build({"zone_id": "zone_spiral",
+			"theme": "concrete_facility", "chambers": chambers})
+	_check(build.has("failed"),
+			"a chain that closes on itself was laid out anyway, which "
+			+ "means something was placed on top of something else")
+	if build.has("failed"):
+		_check(not build.has("root"),
+				"a failed build still handed back a scene to attach")
+		_check(str(build["failed"]).contains("could not be placed"),
+				"the failure does not say what could not be placed: %s"
+				% str(build["failed"]))
+	else:
+		_check(_clashes(build["bounds_list"] as Array).is_empty(),
+				"...and the Zone it returned has pieces inside each other")
+		(build["root"] as Node3D).queue_free()
+
+## Every pair of placed pieces that shares space and should not.
+##
+## CONSECUTIVE PIECES ARE EXEMPT, and only consecutive ones. A room meets
+## its approach connector at a shared face, and an authored room whose
+## declared entry socket sits inside its envelope swallows a little of
+## it -- that is how the rooms join. Any OTHER pair sharing volume is a
+## piece laid through something, which is the defect: connectors were
+## never overlap-checked at all before 3B, so a long push marched a
+## corridor straight through the rooms in its way.
+func _clashes(boxes: Array) -> Array:
+	var out: Array[String] = []
+	for i in boxes.size():
+		for j in range(i + 2, boxes.size()):
+			var a: AABB = boxes[i]
+			var b: AABB = boxes[j]
+			if a.intersection(b).get_volume() > 0.5:
+				out.append("%d/%d %.0fm3" % [i, j,
+						a.intersection(b).get_volume()])
+	return out
+
+## ...and every Zone that IS accepted has no two pieces sharing space.
+##
+## The general statement, over the Zone a player actually gets. Checked
+## from `bounds_list`, which is every piece the builder placed --
+## chambers, connectors, corners and the exit room alike -- so a
+## connector laid through a room fails this too. Connectors were never
+## overlap-checked at all until 3B.
+func _test_no_accepted_zone_has_rooms_inside_each_other() -> void:
+	var text := FileAccess.get_file_as_string(
+			"res://tests/fixtures/played_zone.json")
+	var zone: Dictionary = JSON.parse_string(text)
+	var build := ZoneBuilder.build(zone)
+	_check(not build.has("failed"),
+			"the played Zone no longer lays out: %s"
+			% str(build.get("failed", "")))
+	if build.has("failed"):
+		return
+	var boxes: Array = build["bounds_list"]
+	var clashes := _clashes(boxes)
+	_check(clashes.is_empty(),
+			"%d pair(s) of placed pieces share space: %s"
+			% [clashes.size(), ", ".join(PackedStringArray(clashes))])
+	_check(boxes.size() >= (zone.get("chambers", []) as Array).size(),
+			"fewer pieces were placed than the Zone has chambers")
+	(build["root"] as Node3D).queue_free()

@@ -282,12 +282,21 @@ def test_the_fallback_is_reproducible_but_not_monotonous():
 
     # And distinct: consecutive Zones must not be the same rooms at the
     # same sizes.
+    #
+    # `shell_id` IS PART OF A ROOM'S SHAPE now, and leaving it out made
+    # this measure blind rather than strict. Since the owner ruling of
+    # 2026-09-11 a chamber that adopts an authored shell takes that
+    # shell's dimensions, so every corridor carrying a corner shell is
+    # 6.0 x 6.0 -- and a left corner and a right corner, which send the
+    # player in opposite directions, read as the same room to a
+    # fingerprint made of numbers alone. The rooms did not become more
+    # alike; the ruler stopped being able to tell them apart.
     shapes = []
     for i in range(6):
         chambers = zone(i)["chambers"]
         shapes.append(tuple(
             (c["type"], c.get("width"), c.get("depth"), c.get("length"),
-             c.get("segment_count"))
+             c.get("segment_count"), c.get("shell_id"))
             for c in chambers))
     assert len(set(shapes)) >= 5, (
         "six Zones produced only %d distinct layouts; a player walking "

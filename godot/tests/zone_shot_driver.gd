@@ -50,6 +50,11 @@ func _run() -> void:
 		return
 
 	var build := ZoneBuilder.build(zone as Dictionary)
+	# A routing failure is a result, not a Zone: reading `root` off one
+	# is a script error and a hung run.
+	if build.has("failed"):
+		push_error("zone could not be laid out: %s" % str(build["failed"]))
+		return
 	var root: Node3D = build["root"]
 	add_child(root)
 

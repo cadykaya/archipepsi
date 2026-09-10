@@ -55,6 +55,7 @@ func _run() -> void:
 	_a_normally_generated_zone_builds_authored_rooms()
 	_every_refusal_says_which_one_it_was()
 	_a_fallback_room_never_reports_itself_authored()
+	_godot_decides_the_shared_cases_the_way_they_say()
 	_cleanup()
 	# Both awaited. A function containing `await` called WITHOUT one
 	# returns at its first suspend, and the suite goes on to print OK
@@ -204,14 +205,13 @@ func _a_normally_generated_zone_builds_authored_rooms() -> void:
 func _every_refusal_says_which_one_it_was() -> void:
 	var registry := _load([
 		_authored_entry({"id": "shell_probe_fit",
-			"semantic_tags": ["arena"], "size": [6.0, 3.6, 10.0]}),
+			"semantic_tags": ["arena"]}),
 		_authored_entry({"id": "shell_probe_wrong_type",
-			"semantic_tags": ["treasure_room"], "size": [6.0, 3.6, 10.0]}),
+			"semantic_tags": ["treasure_room"]}),
 		_authored_entry({"id": "shell_probe_huge",
 			"semantic_tags": ["arena"], "size": [60.0, 3.6, 60.0]}),
 		_authored_entry({"id": "shell_probe_pending",
-			"semantic_tags": ["arena"], "size": [6.0, 3.6, 10.0],
-			"review": "pending"}),
+			"semantic_tags": ["arena"], "review": "pending"}),
 	])
 	_check(registry.errors.is_empty(),
 			"the 3B probe manifest should validate: %s"
@@ -232,8 +232,11 @@ func _every_refusal_says_which_one_it_was() -> void:
 	]
 	for raw: Variant in cases:
 		var case: Array = raw
-		var chamber := {"id": "c1", "type": "arena", "width": 6.0,
-				"depth": 10.0, "wall_height": 4.0, "objective": "kill_all",
+		# The fixture scene's envelope is 6.0 x 3.6 x 10.0, so the room
+		# it can BE is that minus one wall on each side. The rule is an
+		# equality since the owner ruling of 2026-09-11.
+		var chamber := {"id": "c1", "type": "arena", "width": 5.2,
+				"depth": 9.2, "wall_height": 3.6, "objective": "kill_all",
 				"shell_id": case[0]}
 		var built := ContentInstantiator.build_chamber(
 				chamber, "concrete_facility", registry)
@@ -276,8 +279,8 @@ func _every_refusal_says_which_one_it_was() -> void:
 func _a_fallback_room_never_reports_itself_authored() -> void:
 	var registry := _load([_authored_entry({"id": "shell_probe_huge",
 			"semantic_tags": ["arena"], "size": [60.0, 3.6, 60.0]})])
-	var chamber := {"id": "c1", "type": "arena", "width": 6.0,
-			"depth": 10.0, "wall_height": 4.0, "objective": "kill_all",
+	var chamber := {"id": "c1", "type": "arena", "width": 5.2,
+			"depth": 9.2, "wall_height": 3.6, "objective": "kill_all",
 			"shell_id": "shell_probe_huge"}
 	var built := ContentInstantiator.build_chamber(
 			chamber, "concrete_facility", registry)
@@ -292,6 +295,40 @@ func _a_fallback_room_never_reports_itself_authored() -> void:
 			"a procedural room carries an `authored_shell` stamp, which "
 			+ "is the field a census reads to call it authored")
 	(built["root"] as Node3D).queue_free()
+
+
+
+## THE COMPATIBILITY RULE, executed rather than claimed.
+##
+## `shell_rule_cases.json` is run here and by
+## `test_shell_catalog.py::test_python_decides_the_shared_cases_the_way_they_say`,
+## case for case and clause for clause. What this replaces compared the
+## FIELD NAMES the two implementations mention -- and passed while Godot
+## compared `fits_floors` and nothing else, which is the exact drift it
+## was written to catch. A comparison changed on one side now fails here
+## even if every field name stays.
+func _godot_decides_the_shared_cases_the_way_they_say() -> void:
+	var text := FileAccess.get_file_as_string(
+			"res://tests/fixtures/shell_rule_cases.json")
+	var parsed: Dictionary = JSON.parse_string(text)
+	var cases: Array = parsed.get("cases", [])
+	_check(cases.size() >= 20, "the shared cases have been thinned out")
+	for raw: Variant in cases:
+		var case: Dictionary = raw
+		var entry: Dictionary = (case["shell"] as Dictionary).duplicate(true)
+		var chamber: Dictionary = case["chamber"] as Dictionary
+		var got := ContentInstantiator.misfit_problem(entry, chamber)
+		var fits := str(got.get("clause", "")).is_empty()
+		_check(fits == bool(case["fits"]),
+				"%s: expected fits=%s, got '%s' (%s)" % [
+					str(case["name"]), str(case["fits"]),
+					str(got.get("clause", "")), str(got.get("why", ""))])
+		if not bool(case["fits"]):
+			_check(str(got.get("clause", "")) == str(case["because"]),
+					"%s: expected the '%s' clause to refuse it, got '%s'"
+					% [str(case["name"]), str(case["because"]),
+						str(got.get("clause", ""))])
+	print("  3B: %d shared compatibility case(s) agreed" % cases.size())
 
 
 func _cleanup() -> void:

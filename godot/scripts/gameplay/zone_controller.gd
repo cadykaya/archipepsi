@@ -33,6 +33,14 @@ var hud: Hud = null              # set by main; null in headless tests
 ## `MovementSelection`.
 var movement_package := MovementSelection.DEFAULT_MODE
 
+## Why this Zone has no geometry, or "" when it built.
+##
+## Set when `ZoneBuilder` reports that a room could not be routed clear
+## of the ones before it. Nothing else in the controller runs after that:
+## a half-built Zone with an unplaced room is the state this exists to
+## make impossible.
+var layout_failed := ""
+
 ## What the offer stage actually did, for the operator log and for tests.
 ##
 ## `declared` counts manifest entries; `judged` counts verdicts, which is
@@ -106,6 +114,16 @@ func setup(zone_dict: Dictionary) -> void:
 	zone_id = zone.get("zone_id", "")
 	var theme: String = zone.get("theme", "void_glitch")
 	var build := ZoneBuilder.build(zone)
+	# A ZONE THAT COULD NOT BE LAID OUT IS NOT A ZONE. `ZoneBuilder`
+	# reports a routing failure rather than attaching a room on top of
+	# another one, and the honest thing to do with that report is to
+	# refuse the Zone -- not to enter a level whose Check is inside a
+	# wall. `layout_failed` is what a caller and the suites read.
+	if build.has("failed"):
+		layout_failed = str(build["failed"])
+		push_error("zone: %s could not be laid out -- %s"
+				% [zone_id, layout_failed])
+		return
 	add_child(build["root"])
 	_exit_portal = build["exit_portal"]
 	for box: AABB in build["bounds_list"]:

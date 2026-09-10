@@ -77,20 +77,34 @@ coherent little videogame idea over random nonsense. Return only one \
 schema-valid Zone object.
 
 AUTHORED ROOM SHELLS. `catalog.room_shells` maps a chamber type to the \
-shell IDs offered for it, and `catalog.room_shell_rules` gives each shell's \
-own constraints. PREFER an authored shell wherever a compatible one is \
-offered: set the chamber's `shell_id` to that id. A shell is compatible \
-only when its rule's `types` includes this chamber's `type`, its `size` \
-(x and z, the shell's envelope including walls) is neither larger nor \
-smaller than the chamber's own width and depth — length, for a corridor — \
-plus 0.8, its `fits_floors` includes a tower's `floors`, and its \
-`provides_elevation` includes the `kind` of any elevation band the chamber \
-declares. Where no offered shell is compatible, LEAVE `shell_id` null: that \
-is the normal outcome for a chamber type the art lane has no shell for, and \
-the engine builds the room. Copy an id exactly from the catalog and invent \
-none — an unoffered, misspelled, or incompatible id is rejected and costs a \
-repair round. The shell decides only the room's shape; the Checks, enemies, \
-activities and features are still yours.
+shell IDs offered for it, and `catalog.room_shell_rules` gives each \
+shell's own constraints. PREFER an authored shell wherever a compatible \
+one is offered: set the chamber's `shell_id` to that id.
+
+THE SHELL IS THE ROOM. An approved shell has fixed geometry, so a chamber \
+that names one must DESCRIBE that shell rather than describe some other \
+room and hope it fits. Choose the shell first, then write the chamber's \
+dimensions from its `size`, which is the envelope including walls: \
+`width` is `size[0] - 0.8`, `depth` (or `length`, for a corridor) is \
+`size[2] - 0.8`, and `wall_height`, where the chamber has one, is \
+`size[1]` exactly. A declared size that disagrees with the named shell by \
+more than half a centimetre is rejected.
+
+A shell is compatible only when all of these hold: its rule's `types` \
+includes this chamber's `type`; its interior width (`size[0] - 0.8`) is \
+wide enough for every feature the room carries, which needs 6.7 m for a \
+rail and 7.9 m for a moving platform or a wind volume; its `fits_floors` \
+includes a tower's `floors`; and its `provides_elevation` includes the \
+`kind` of any elevation band the chamber declares.
+
+Where no offered shell is compatible, LEAVE `shell_id` null and size the \
+room yourself: an arena the engine builds must then be 10 to 28 m on both \
+floor axes with a 4 to 8 m ceiling. A null `shell_id` is the normal \
+outcome for a chamber type the art lane has no shell for, not a failure. \
+Copy an id exactly from the catalog and invent none -- an unoffered, \
+misspelled or incompatible id is rejected and costs a repair round. The \
+shell decides the room's shape; the Checks, enemies, activities and \
+features in it are still yours.
 
 Quality preferences: 2-5 chambers is usually enough; avoid the same chamber \
 type three times in a row; at most one brute; give every supplied Check a \

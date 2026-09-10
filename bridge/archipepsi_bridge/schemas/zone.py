@@ -442,9 +442,19 @@ class CorridorChamber(_WithEnemies):
 class ArenaChamber(_WithEnemies):
     """Rectangular combat room. A boss room is an arena holding one brute."""
     type: Literal["arena"]
-    width: float = Field(ge=10, le=28)
-    depth: float = Field(ge=10, le=28)
-    wall_height: float = Field(ge=4, le=8)
+    # THE FIELD IS A SANITY CEILING; the RANGE is enforced where it
+    # means something. A chamber naming no shell is held to
+    # `PROCEDURAL_ARENA_*` by `validate_zone`; one naming a shell is
+    # held to that shell's declared footprint, which is an equality and
+    # therefore tighter than any range. Widening the field alone would
+    # let a procedural room be 90 m across, and it cannot -- see
+    # `_a_procedural_room_stays_in_the_builder's_range` there.
+    width: float = Field(ge=C.PROCEDURAL_ARENA_MIN_SPAN,
+                         le=C.MAX_AUTHORED_SPAN)
+    depth: float = Field(ge=C.PROCEDURAL_ARENA_MIN_SPAN,
+                         le=C.MAX_AUTHORED_SPAN)
+    wall_height: float = Field(ge=C.PROCEDURAL_ARENA_MIN_HEIGHT,
+                               le=C.MAX_AUTHORED_HEIGHT)
     objective: Literal["kill_all", "reach_reward"]
     enemies: tuple[EnemyGroup, ...] = Field(default=(), max_length=4)
 
@@ -679,6 +689,29 @@ def validate_zone(
     # per chamber TYPE, and the shell's own fixed constraints with it.
     for chamber in zone.chambers:
         if chamber.shell_id is None:
+            # A ROOM THE BUILDER MAKES STAYS IN THE BUILDER'S RANGE.
+            # `ArenaChamber`'s field bounds were widened so an authored
+            # shell's fixed geometry could inform the chamber it builds
+            # (owner ruling, 2026-09-11); widening them alone would have
+            # let a PROCEDURAL arena be 90 m across, which no builder,
+            # audit or layout path has ever been asked for. The range
+            # that used to live on the field is enforced here instead,
+            # on exactly the rooms it describes.
+            if chamber.type == "arena":
+                for name, low, high in (
+                        ("width", C.PROCEDURAL_ARENA_MIN_SPAN,
+                         C.PROCEDURAL_ARENA_MAX_SPAN),
+                        ("depth", C.PROCEDURAL_ARENA_MIN_SPAN,
+                         C.PROCEDURAL_ARENA_MAX_SPAN),
+                        ("wall_height", C.PROCEDURAL_ARENA_MIN_HEIGHT,
+                         C.PROCEDURAL_ARENA_MAX_HEIGHT)):
+                    got = float(getattr(chamber, name))
+                    if not low <= got <= high:
+                        errors.append(
+                            f"chamber '{chamber.id}' names no shell, so "
+                            f"the builder makes it, and its {name} of "
+                            f"{got:.1f} is outside the {low:.0f}-{high:.0f} "
+                            f"the builder is designed for")
             continue
         if chamber.shell_id not in legal_shell_ids:
             errors.append(

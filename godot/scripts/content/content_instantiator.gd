@@ -41,6 +41,11 @@ const BUILD_PROCEDURAL := "procedural"
 ## runtime; `validate_zone` refuses an unoffered id before a Zone is
 ## ever stored. Inventing a runtime offer check here would mean a second
 ## opinion about a fact this process does not have.
+## How far a declared dimension may sit from a shell's, in metres.
+## Mirrors `shells.SPAN_TOLERANCE`: manifests carry two decimals and
+## floats round, and this is that rounding allowance and nothing else.
+const SPAN_TOLERANCE := 0.005
+
 const REASON_NO_SHELL := "no_authored_shell_for_type"
 const REASON_UNKNOWN := "unknown_shell_id"
 const REASON_MALFORMED := "malformed_shell_id"
@@ -717,90 +722,101 @@ static func _exit_offset(entry: Dictionary, size: Vector3) -> Vector3:
 ## reinterprets a shell to make it fit; the only outcomes are "use it"
 ## and "use the builder".
 static func _misfit(entry: Dictionary, chamber: Dictionary) -> String:
-	# TYPE FIRST, and it was missing (3B). This asked only about floors,
-	# so a shell tagged `treasure_room` named for an `arena` chamber
-	# resolved, fitted and BUILT -- Python's `shells.rule_errors` refused
-	# that pairing and Godot did not, which is exactly the contradictory
-	# pair of definitions the registry exists to prevent. A shell says
-	# what it is through `semantic_tags`; a chamber says what it needs
-	# through `type`.
-	# An entry that declares NO tags constrains nothing by type -- the
-	# same early return `fits_floors` takes just below, and the same one
-	# `shells.rule_errors` takes on an empty `types`. "Declares nothing"
-	# is not "fits nothing": the offer is what keeps an untagged shell
-	# from being selected in the first place, and it is checked in
-	# Python against the request's catalog.
-	var band := _band_misfit(entry, chamber)
-	if not band.is_empty():
-		return band
+	return str(misfit_problem(entry, chamber).get("why", ""))
 
-	var oversize := _footprint_misfit(entry, chamber)
-	if not oversize.is_empty():
-		return oversize
-
+## WHICH COMPARISON FAILED, and why -- `{clause, why}`, empty `clause`
+## when the shell fits.
+##
+## PUBLIC, and it is the Godot half of the shared rule.
+## `godot/tests/fixtures/shell_rule_cases.json` is executed against this
+## and against `shells.rule_problems` in Python, case for case. The test
+## it replaces compared FIELD NAMES between the two files and passed
+## while the two sides compared those fields differently, which is the
+## one thing it existed to catch.
+##
+## The clause vocabulary is `type`, `footprint`, `height`, `feature`,
+## `floors`, `elevation` -- the same six names Python returns.
+static func misfit_problem(entry: Dictionary,
+		chamber: Dictionary) -> Dictionary:
+	# TYPE. A shell says what it is through `semantic_tags`; a chamber
+	# says what it needs through `type`. An entry declaring NO tags
+	# constrains nothing -- the same early return every other clause
+	# takes on an empty declaration, and the same one
+	# `shells.rule_problems` takes on an empty `types`.
 	var wanted := str(chamber.get("type", ""))
 	var tags: Variant = entry.get("semantic_tags", [])
-	if typeof(tags) != TYPE_ARRAY or (tags as Array).is_empty():
-		pass
-	elif not wanted.is_empty() and not (tags as Array).has(wanted):
-		return "is tagged %s and this chamber is a '%s'" % [
+	if typeof(tags) == TYPE_ARRAY and not (tags as Array).is_empty() \
+			and not wanted.is_empty() and not (tags as Array).has(wanted):
+		return {"clause": "type",
+			"why": "is tagged %s and this chamber is a '%s'" % [
 				", ".join((tags as Array).map(
-					func(t: Variant) -> String: return str(t))), wanted]
+					func(t: Variant) -> String: return str(t))), wanted]}
 
-	var fits: Variant = entry.get("fits_floors", [])
-	if typeof(fits) != TYPE_ARRAY or (fits as Array).is_empty():
-		return ""
-	if not chamber.has("floors"):
-		return ""
-	var floors := int(chamber["floors"])
-	for allowed: Variant in fits as Array:
-		if int(allowed) == floors:
-			return ""
-	return "is built for %s floors and this tower has %d" % [
-			", ".join((fits as Array).map(
-				func(f: Variant) -> String: return str(int(f)))), floors]
-
-## Is the shell small enough to BE this room?
-##
-## Mirrors the `size` clause of `shells.rule_errors`. The shell's `size`
-## is its envelope, walls included; a chamber's width and depth are its
-## interior, so one wall on each side is the allowance. Corridors say
-## `length` where other rooms say `depth`.
-static func _footprint_misfit(entry: Dictionary,
-		chamber: Dictionary) -> String:
+	# IS THE SHELL THE ROOM? An equality since the owner ruling of
+	# 2026-09-11: the generator DERIVES a chamber's dimensions from the
+	# shell it picked, so a declared size that disagrees with the shell
+	# is a Zone describing a room it is not going to build. The shell's
+	# `size` is its envelope, walls included; width and depth are the
+	# interior. Corridors say `length` where other rooms say `depth`.
 	var size: Variant = entry.get("size", [])
-	if typeof(size) != TYPE_ARRAY or (size as Array).size() < 3:
-		return ""
-	if not chamber.has("width"):
-		return ""
+	var has_size := typeof(size) == TYPE_ARRAY \
+			and (size as Array).size() >= 3
 	var along: Variant = chamber.get("depth", chamber.get("length"))
-	if along == null:
-		return ""
-	var outer := 2.0 * ChamberBuilders.WALL_THICKNESS
-	var room_x := float(chamber["width"]) + outer
-	var room_z := float(along) + outer
-	var shell_x := float((size as Array)[0])
-	var shell_z := float((size as Array)[2])
-	if shell_x > room_x or shell_z > room_z:
-		return "has a %.1f x %.1f footprint and this chamber is %.1f x %.1f" \
-				% [shell_x, shell_z, room_x, room_z]
-	# ...and not smaller than a room sized to hold something. Mirrors the
-	# same clause in `shells.rule_errors`.
-	var features: Variant = chamber.get("features", [])
-	var carries := typeof(features) == TYPE_ARRAY \
-			and not (features as Array).is_empty()
-	if carries and (shell_x < room_x or shell_z < room_z):
-		return "has a %.1f x %.1f footprint and this chamber was sized %.1f x %.1f to hold %d feature(s)" \
-				% [shell_x, shell_z, room_x, room_z,
-					(features as Array).size()]
-	return ""
+	if has_size and chamber.has("width") and along != null:
+		var outer := 2.0 * ChamberBuilders.WALL_THICKNESS
+		for pair: Array in [["width", 0, float(chamber["width"]) + outer],
+				["depth", 2, float(along) + outer]]:
+			var got := float((size as Array)[int(pair[1])])
+			if absf(got - float(pair[2])) > SPAN_TOLERANCE:
+				return {"clause": "footprint",
+					"why": "has a %s of %.2f and this chamber declares %.2f including walls"
+						% [str(pair[0]), got, float(pair[2])]}
+	if has_size and chamber.has("wall_height"):
+		var tall := float((size as Array)[1])
+		if absf(tall - float(chamber["wall_height"])) > SPAN_TOLERANCE:
+			return {"clause": "height",
+				"why": "is %.2f tall and this chamber declares %.2f"
+					% [tall, float(chamber["wall_height"])]}
+
+	# CAN IT HOLD WHAT THE ROOM CARRIES? A feature needs somewhere to sit
+	# that is neither in the masonry nor across the walking lane.
+	if has_size:
+		var interior := float((size as Array)[0]) \
+				- 2.0 * ChamberBuilders.WALL_THICKNESS
+		for raw: Variant in chamber.get("features", []) as Array:
+			if typeof(raw) != TYPE_DICTIONARY:
+				continue
+			var tag := str((raw as Dictionary).get("tag", ""))
+			var needed := float(Constants.FEATURE_MIN_WIDTH.get(
+					tag, Constants.MIN_FEATURE_CHAMBER_WIDTH))
+			if interior + SPAN_TOLERANCE < needed:
+				return {"clause": "feature",
+					"why": "has a %.2fm interior and cannot hold a '%s', which needs %.1fm"
+						% [interior, tag, needed]}
+
+	# FIXED AUTHORED CONSTRAINTS. An empty `fits_floors`, or a chamber
+	# with no `floors`, declares no constraint.
+	var fits: Variant = entry.get("fits_floors", [])
+	if typeof(fits) == TYPE_ARRAY and not (fits as Array).is_empty() \
+			and chamber.has("floors"):
+		var floors := int(chamber["floors"])
+		var ok := false
+		for allowed: Variant in fits as Array:
+			if int(allowed) == floors:
+				ok = true
+		if not ok:
+			return {"clause": "floors",
+				"why": "is built for %s floors and this chamber has %d" % [
+					", ".join((fits as Array).map(
+						func(f: Variant) -> String: return str(int(f)))),
+					floors]}
+
+	var band := _band_misfit(entry, chamber)
+	if not band.is_empty():
+		return {"clause": "elevation", "why": band}
+	return {"clause": "", "why": ""}
 
 ## Does this shell provide the elevation band the chamber declares?
-##
-## Mirrors `shells.rule_errors`. Checked BEFORE the floor clause returns,
-## which is why it is its own function: a chamber can declare a band and
-## no floors at all, and an early return for "declares no floor
-## constraint" would have skipped this.
 static func _band_misfit(entry: Dictionary, chamber: Dictionary) -> String:
 	var band: Variant = chamber.get("elevation")
 	if typeof(band) != TYPE_DICTIONARY:

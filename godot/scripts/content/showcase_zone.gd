@@ -79,9 +79,16 @@ static func build(registry: ContentRegistry = null) -> Dictionary:
 			"objective": "reach_exit",
 			"enemies": [],
 			"activities": [],
-			"width": float(size[0]),
+			# THE INTERIOR, not the envelope. `size` includes the walls
+			# and `width`/`depth` do not, so these carried 0.8 m more
+			# room than the shell has. Nothing noticed while the
+			# compatibility rule only asked whether a shell was small
+			# ENOUGH; once it became an equality -- the shell IS the
+			# room, owner ruling 2026-09-11 -- every showcase room was
+			# refused and fell back to a procedural one.
+			"width": float(size[0]) - 2.0 * ChamberBuilders.WALL_THICKNESS,
 			"wall_height": float(size[1]),
-			"depth": float(size[2]),
+			"depth": float(size[2]) - 2.0 * ChamberBuilders.WALL_THICKNESS,
 		}
 		if str(spec["type"]) == "tower":
 			var fits: Array = entry.get("fits_floors", [])

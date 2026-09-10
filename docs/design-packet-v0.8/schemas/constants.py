@@ -720,6 +720,23 @@ COYOTE_TIME = 0.12
 JUMP_BUFFER = 0.10
 AIR_CONTROL = 0.4
 
+#: How much a player may add to an authored launch arc, in m/s.
+#:
+#: PROVISIONAL, and named so it can be tuned rather than argued about.
+#: Air-control strength is already a Player Authority tuning domain; this
+#: is the launch-specific member of it, and its final feel is Playtest
+#: 3's to calibrate. It is a SPEED, in the same units as `WALK_SPEED`
+#: (7.0), so "modest" is legible: a correction is under a third of a
+#: walking pace and cannot be mistaken for propulsion.
+#:
+#: It bounds the CORRECTION only. The ballistic carrier the launch pad
+#: supplies is protected separately and is never scaled by this.
+#:
+#: It lived in `constants.gd` alone until 3B regenerated that file and it
+#: vanished -- a hand-edit to a generated artifact survives exactly until
+#: the artifact is next generated.
+LAUNCH_CORRECTION_SPEED = 2.0
+
 PLAYER_HEIGHT = 1.8
 PLAYER_RADIUS = 0.4
 PLAYER_EYE_HEIGHT = 1.6
@@ -806,6 +823,58 @@ MIN_PLATFORM_SIZE = 2.5
 #: the schema must not come to hold three opinions about the range.
 TOWER_MIN_FLOORS = 2
 TOWER_MAX_FLOORS = 5
+
+#: The dimensions a PROCEDURALLY built arena may have. These were the
+#: schema's field bounds until an approved shell's fixed geometry was
+#: allowed to inform the chamber it builds (owner ruling, 2026-09-11):
+#: `shell_hall_transit` is 41.2 x 60.0 and no range tuned for the
+#: builder's rooms was ever going to contain it.
+#:
+#: They are still enforced, and on exactly the rooms they describe:
+#: `validate_zone` holds a chamber naming NO shell to them. A chamber
+#: naming one is held to that shell's declared footprint instead, which
+#: is a tighter constraint than a range -- it is an equality.
+PROCEDURAL_ARENA_MIN_SPAN = 10.0
+PROCEDURAL_ARENA_MAX_SPAN = 28.0
+PROCEDURAL_ARENA_MIN_HEIGHT = 4.0
+PROCEDURAL_ARENA_MAX_HEIGHT = 8.0
+
+#: The schema's outer sanity ceiling, NOT a design range. It exists so a
+#: malformed number is still refused by the field itself; what decides an
+#: authored room's size is the equality above. Chosen to cover every
+#: approved shell with headroom -- the largest are `shell_span_basin` at
+#: 90.0 deep, `shell_yard_gantry` at 85.2 wide and `shell_plenum_helix`
+#: at 73.6 tall -- and raising it means re-running the layout and audit
+#: suites at the new size, because those are what have been exercised.
+MAX_AUTHORED_SPAN = 96.0
+MAX_AUTHORED_HEIGHT = 80.0
+
+#: How much authored floor a single Zone may adopt, in square metres.
+#:
+#: WHY A BUDGET AT ALL, stated after two wrong answers were measured and
+#: discarded. It is NOT routing: `ZoneBuilder` lays out eleven authored
+#: rooms without a clash once a route may take two corners and a room
+#: that turns the chain stops collecting a corner piece on each side of
+#: it. It is NOT audit cost: the 900-second "timeout" that suggested one
+#: was a routing failure hanging the driver, and the audit runs in about
+#: fifteen seconds either way.
+#:
+#: It is SCALE, which is a design question nobody has answered. Every
+#: approved arena shell is 31 to 85 m across and the builder's arenas are
+#: 12 to 26, so "prefer authored where compatible" multiplies a Zone's
+#: floor by roughly ten while its Checks, enemies and activities stay
+#: exactly as they were -- a Zone with the same content spread over ten
+#: times the walking. How long a Zone should take is the owner's to
+#: decide (`CAMPAIGN_SCALE.md` 13), so this keeps the change bounded
+#: until they do.
+#:
+#: The eight corner shells of a 23-room Zone cost about 46 m2 each;
+#: `shell_hall_transit` is 2472, `shell_span_basin` 2808 and
+#: `shell_yard_gantry` 4429. This admits the corridors plus one large
+#: authored arena, which is what the milestone asked for. Raising it is
+#: one number, and the layout carries it: measured at 20000 m2, eleven
+#: authored rooms, no clash.
+AUTHORED_AREA_BUDGET = 4000.0
 
 # --------------------------------------------------------------------------
 # Combat

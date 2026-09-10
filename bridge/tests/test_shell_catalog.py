@@ -195,6 +195,11 @@ _UNOFFERED_ZONE = {
          "reward_location_id": 89100001}]}
 
 
+#: The cases both languages execute. Not a Python fixture: it lives
+#: under `godot/tests/fixtures` because Godot can only read `res://`.
+RULE_CASES = ROOT / "godot" / "tests" / "fixtures" / "shell_rule_cases.json"
+
+
 class TestTheLoopIsClosed:
     """Offered -> chosen -> validated -> instantiated. Each link tested,
     because the chain had three broken ones and every link's own test
@@ -279,6 +284,88 @@ class TestTheLoopIsClosed:
                              **common)
         assert validate_zone(zone, legal_shell_ids=("shell_not_offered",),
                              **common) == []
+
+    def test_the_production_prompt_tells_epsilon_the_catalog_exists(self):
+        """The request has carried `room_shells` since Wave 1 and the
+        system prompt never mentioned it, so the one provider that could
+        have made a creative choice was never told there was one to make.
+
+        Every clause `shells.rule_errors` enforces has to be stated, or
+        the provider guesses and pays a repair round for a fact the
+        registry already knew.
+        """
+        from archipepsi_bridge.epsilon.claude import ZONE_SYSTEM
+        for phrase in ("catalog.room_shells", "catalog.room_shell_rules",
+                       "shell_id", "fits_floors", "provides_elevation",
+                       "size", "types",
+                       # THE RULE IS AN EQUALITY, and the prompt used to
+                       # state an unconditional exact fit while the code
+                       # enforced a one-sided bound that loosened when
+                       # the room carried no feature. A prompt that
+                       # describes a rule nobody enforces teaches a
+                       # provider to produce Zones that get rejected.
+                       "size[0] - 0.8", "size[2] - 0.8", "size[1]",
+                       "10 to 28"):
+            assert phrase in ZONE_SYSTEM, (
+                f"the production Zone prompt never mentions '{phrase}', "
+                f"so a provider cannot choose validly")
+        assert "null" in ZONE_SYSTEM, (
+            "the prompt does not say what to do when nothing fits, and "
+            "a provider with no legal option invents one")
+
+    def test_the_instantiator_reads_what_epsilon_chose(self):
+        source = INSTANTIATOR_GD.read_text()
+        assert 'chamber.get("shell_id")' in source, (
+            "the instantiator ignores shell_id and maps the chamber type "
+            "straight to its procedural shell; a Zone that named a shell "
+            "would get the procedural one and no test would notice")
+        # ...and an id the registry no longer carries is a downgrade, not
+        # a crash: a saved Zone outlives a registry edit.
+        assert "falling back" in source
+
+    def test_python_decides_the_shared_cases_the_way_they_say(self):
+        """The compatibility rule, executed rather than claimed.
+
+        `godot/tests/fixtures/shell_rule_cases.json` is run by this AND
+        by `content_driver.gd`, case for case, clause for clause. What it
+        replaces compared the FIELD NAMES the two files mention -- which
+        passed while Godot compared `fits_floors` and nothing else, and
+        would pass again on any change that kept a name and inverted a
+        comparison.
+        """
+        cases = json.loads(RULE_CASES.read_text())["cases"]
+        assert len(cases) >= 20, "the shared cases have been thinned out"
+        for case in cases:
+            shell = case["shell"]
+            rule = {"types": list(shell.get("semantic_tags", []))}
+            for key in ("fits_floors", "provides_elevation", "size"):
+                if key in shell:
+                    rule[key] = shell[key]
+            problems = shells.rule_problems("shell_x", rule, case["chamber"])
+            fits = not problems
+            assert fits == case["fits"], (
+                f"{case['name']}: expected fits={case['fits']}, got "
+                f"{[why for _, why in problems]}")
+            if not case["fits"]:
+                assert problems[0][0] == case["because"], (
+                    f"{case['name']}: expected the '{case['because']}' "
+                    f"clause to refuse it, got '{problems[0][0]}'")
+
+    def test_both_languages_answer_the_shared_cases_identically(self):
+        """The Godot half is run by `make godot-content`; this asserts the
+        two suites are pointed at the same file and the same clause
+        vocabulary, so neither can quietly stop executing it."""
+        gd = INSTANTIATOR_GD.read_text()
+        driver = (ROOT / "godot" / "tests" / "content_driver.gd").read_text()
+        assert "shell_rule_cases.json" in driver, (
+            "the Godot suite no longer executes the shared cases")
+        assert "misfit_problem" in driver and "misfit_problem" in gd, (
+            "the Godot suite no longer asks the rule for its clause")
+        vocabulary = json.loads(RULE_CASES.read_text())["clauses"]
+        for clause in vocabulary:
+            assert f'"{clause}"' in gd, (
+                f"Godot's rule cannot report the '{clause}' clause, so a "
+                f"case naming it could never be answered the same way")
 
     def test_the_production_prompt_tells_epsilon_the_catalog_exists(self):
         """The request has carried `room_shells` since Wave 1 and the

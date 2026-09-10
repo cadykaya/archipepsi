@@ -167,6 +167,61 @@ What remains needs a person, not more iteration
 5. **Project code licensing** — separate from asset intake, and not
    decided.
 
+## 3A/3B INTEGRATION CLOSED — an authored room a player rides, 2026-09-11
+
+**CURRENT STATE.** Report:
+`docs/reports/2026-09-11-3ab-integration.md`. Head before: `67277aa`.
+
+**DONE.** A Zone the generator produced, loaded the ordinary way, holds an
+authored room that carries movement offers. Zone 1 composes **7 of 23
+chambers** from authored shells (`shell_span_basin` plus six alternating
+corner shells); a player walks into it from outside and lands on its
+floor, and its authored rail carries them **34.3 m along an 83 m path**
+over ground that has none -- from the same start in `none`, the same push
+ends 14.8 m away. Provider: **offline** (the deterministic fallback), no
+live model call. Census on the generated Zone: declared 6, judged 5,
+accepted 5, selected/built 1 in `rail` and in `launch`, 0 in `none`.
+
+**THE OWNER RULING OF 2026-09-11.** An approved shell's geometry informs
+the chamber being generated: the generator picks from the request's
+catalog and DERIVES the chamber's dimensions from the shell, and the
+shared rule holds the two to an equality. The one-sided pair it replaces
+could not express that -- "no bigger than the chamber" refused every arena
+shell outright. `ArenaChamber`'s field bounds are now a sanity ceiling;
+the builder's 10-28 m range is enforced on rooms that name NO shell.
+
+**Placement succeeds or says so.** `ZoneBuilder` plans a route (up to two
+corners, connectors and the exit room all checked, its own pieces
+included) and, when none exists, returns `{"failed": ...}` and attaches
+nothing rather than laying a room on top of another. Measured: 120 copies
+of the largest approved arena route with zero clashes; a chain whose
+corridors all turn the same way is refused.
+
+**Compatibility is 21 shared cases** in
+`godot/tests/fixtures/shell_rule_cases.json`, executed by both languages,
+clause for clause. A comparison changed on one side fails them even if
+every field name stays -- which is what the field-name check could not
+see.
+
+**Digests:** played Zone `ab57d275eea29018` -> `a9e649315285bdf3`;
+baseline `c1131ac29931cc68` -> `57e8baf561e38083`. 23 rooms, 15 Checks, 35
+enemies unchanged; content value 922 -> 908, inside the band, because
+rooms now have their shells' dimensions. Byte-identity outside `shell_id`
+no longer holds and should not.
+
+**CORRECTION.** 3B's "blocked on Art -- no arena shell fits" is
+SUPERSEDED: the chamber adopts the shell, so the existing twelve compose
+arenas today. What remains Art-side is only that no shell declares
+`provides_elevation`, so a chamber with a band takes the procedural
+builder; the field exists and needs no code change to take effect.
+
+**Bounded by `AUTHORED_AREA_BUDGET` (4000 m2)** -- and its reason is
+SCALE, not routing and not audit cost (both were measured and wrong).
+Preferring authored everywhere multiplies a Zone's floor by ~10 with the
+same content in it; how long a Zone should take is an owner decision.
+
+**Gates:** Python 1144/0; 18 Godot suites exit 0; packet gate clean.
+
 ## STAGE 3B — authored rooms in a generated Zone, 2026-09-10
 
 **CURRENT STATE.** `docs/ROAD_TO_PLAYABLE_0_3.md` is the frozen authority.
@@ -197,13 +252,13 @@ self-check, preflight, the archive replayer, the baseline fixture and the
 tests, because the self-check being held to different rules than its
 caller silently changed the played Zone's content.
 
-**BLOCKED ON ART, not on engineering.** No approved shell can build an
-arena: all three arena shells are 2-5x the size of any arena the generator
-produces, and five arenas additionally declare an elevation band no shell
-provides. Unblocked by (1) arena shells at generator scale, roughly 12-26 m
-on both floor axes, or (2) a shell declaring `provides_elevation` -- the
-field exists, is empty everywhere, and needs no code change to take
-effect. Until then the honest number is 6 of 23, and it is corridors.
+**BLOCKED ON ART (SUPERSEDED 2026-09-11).** This said no approved shell
+could build an arena, because every arena shell is 2-5x the size of any
+arena the generator produces. The owner ruled instead that the chamber
+adopts the shell's geometry, so the existing shells compose arenas as they
+are. Only the elevation-band half stands: no shell declares
+`provides_elevation`, so a chamber with a band takes the procedural
+builder.
 
 **Deliberately not attempted:** having the generator adopt a selected
 shell's fixed dimensions as the chamber's. Probably the right long-term

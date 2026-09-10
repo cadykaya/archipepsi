@@ -47,6 +47,15 @@ CHAMBER_TYPES = tuple(C.CHAMBER_TYPES)
 #: second definition of a number GDScript already declares.
 WALL_THICKNESS = 0.4
 
+#: A shell's envelope minus its interior: one wall on each side.
+OUTER = 2.0 * WALL_THICKNESS
+
+#: How far a declared dimension may sit from a shell's, in metres.
+#: Manifests carry two decimals and floats round; this is a rounding
+#: allowance and nothing else -- it is far below `MAX_VERTICAL_STEP`, so
+#: no gap a player could notice can hide inside it.
+SPAN_TOLERANCE = 0.005
+
 
 def load_registry(directory: Path | None = None) -> dict[str, ContentEntry]:
     """Every registry entry, validated. Empty on any problem.
@@ -162,7 +171,23 @@ def rule_of(entry: ContentEntry) -> dict:
     return rule
 
 
+def feature_tags(chamber) -> tuple[str, ...]:
+    """The affordance tags a chamber carries, dict or model."""
+    out: list[str] = []
+    for feature in field(chamber, "features") or ():
+        tag = (feature.get("tag") if isinstance(feature, dict)
+               else getattr(feature, "tag", None))
+        if tag:
+            out.append(str(tag))
+    return tuple(out)
+
+
 def rule_errors(shell_id: str, rule: dict, chamber) -> list[str]:
+    """`rule_problems`, message only, for callers that just want the text."""
+    return [why for _, why in rule_problems(shell_id, rule, chamber)]
+
+
+def rule_problems(shell_id: str, rule: dict, chamber) -> list[tuple[str, str]]:
     """Why this shell cannot build this chamber, or [] when it can.
 
     THE SHARED RULE, and the only copy of it in Python. The selector in
@@ -184,6 +209,12 @@ def rule_errors(shell_id: str, rule: dict, chamber) -> list[str]:
       `fits_floors`, or a chamber with no `floors`, declares no
       constraint -- the same two early returns Godot takes.
 
+    Each problem comes back as `(clause, message)`. The clause names
+    the COMPARISON that failed, and `godot/tests/fixtures/shell_rule_cases.json`
+    is executed against it by both this and `ContentInstantiator._misfit`
+    -- a parity test comparing field NAMES passed while the two sides
+    compared those fields differently, which was the whole point of it.
+
     An ABSENT OR EMPTY `types` constrains nothing by type -- the same
     early return `fits_floors` takes, and the same one Godot's `_misfit`
     takes. "Declares nothing" is not "fits nothing", and the distinction
@@ -192,19 +223,19 @@ def rule_errors(shell_id: str, rule: dict, chamber) -> list[str]:
     being SELECTED is the offer, checked against the request's catalog
     one clause earlier.
     """
-    out: list[str] = []
+    out: list[tuple[str, str]] = []
     wanted = str(field(chamber, "type") or "")
     types = rule.get("types")
     if wanted and types and wanted not in types:
-        out.append(
+        out.append(("type",
             f"selects shell '{shell_id}', which is tagged "
-            f"{sorted(types)} and this chamber is a '{wanted}'")
+            f"{sorted(types)} and this chamber is a '{wanted}'"))
     allowed = rule.get("fits_floors")
     floors = field(chamber, "floors")
     if allowed and floors is not None and int(floors) not in allowed:
-        out.append(
+        out.append(("floors",
             f"selects shell '{shell_id}', which is built for "
-            f"{sorted(allowed)} floors and this chamber has {floors}")
+            f"{sorted(allowed)} floors and this chamber has {floors}"))
 
     # THE CHAMBER'S OWN CONTENT REQUIREMENTS, not just the shell's
     # dimensions. A chamber that declares an elevation band needs a
@@ -212,57 +243,69 @@ def rule_errors(shell_id: str, rule: dict, chamber) -> list[str]:
     # the chamber says, and an authored shell's geometry was fixed
     # before the request existed. Naming one anyway produced five rooms
     # whose declared band had no `band_deck` socket at all.
-    # DOES THE SHELL FIT THE ROOM IT IS BUILDING? The most basic fixed
-    # authored constraint, and the one that was missing. Every offered
-    # arena shell is a showpiece 31 to 85 m across; every arena the
-    # generator asks for is 12 to 26 m. Naming one for the other does
-    # not compose a room -- it substitutes a space five times the size,
-    # and the Zone's budget, enemy counts, connector rhythm and layout
-    # were all computed from the numbers the room then ignores. Measured
-    # on the played Zone: rooms landed inside each other and a Check
-    # ended up buried in the wall of a different chamber.
+    # IS THE SHELL THE ROOM? Since the owner ruling of 2026-09-11 an
+    # approved shell's fixed geometry informs the chamber it builds, so
+    # the two are not merely compatible -- they are the same room, and
+    # this is an EQUALITY rather than a range.
+    #
+    # The pair of one-sided clauses this replaces was the source of the
+    # discrepancy with the production prompt, and worse, it could not
+    # express what was wanted: "no bigger than the chamber" refused
+    # every arena shell outright (they are 31 to 85 m and the builder's
+    # arenas are 12 to 26), and "no smaller when the chamber carries
+    # features" was a special case standing in for the general rule.
+    # `_select_authored_shells` now DERIVES the chamber's dimensions
+    # from the shell it picked, so the equality is what generation
+    # produces and what a provider must reproduce.
     #
     # The shell's `size` is its ENVELOPE, walls included; a chamber's
     # width and depth are its INTERIOR, so one wall on each side is the
     # allowance. Corridors say `length` where other rooms say `depth`.
     size = rule.get("size")
-    outer = 2.0 * WALL_THICKNESS
     width = field(chamber, "width")
     along = field(chamber, "depth")
     if along is None:
         along = field(chamber, "length")
     if size and width is not None and along is not None:
-        room = (float(width) + outer, float(along) + outer)
-        if size[0] > room[0] or size[2] > room[1]:
-            out.append(
-                f"selects shell '{shell_id}', whose footprint is "
-                f"{size[0]:.1f} x {size[2]:.1f} and this chamber is "
-                f"{room[0]:.1f} x {room[1]:.1f} including walls")
-        # ...AND NOT SMALLER, once the room has been sized to hold
-        # something. The fallback WIDENS a corridor before hanging an
-        # affordance on it, so a chamber carrying features is a room
-        # whose dimensions were chosen for its contents. A 6.8 m corner
-        # shell in a corridor widened to 7.9 x 14.4 is under half the
-        # floor the features were placed against, and the measured
-        # result was a Zone that offered two affordances and built
-        # neither -- content dropped without a word, which is the one
-        # thing a passing result may never be obtained by.
-        elif field(chamber, "features") and (
-                size[0] < room[0] or size[2] < room[1]):
-            out.append(
-                f"selects shell '{shell_id}', whose footprint is "
-                f"{size[0]:.1f} x {size[2]:.1f} and this chamber was "
-                f"sized {room[0]:.1f} x {room[1]:.1f} to hold "
-                f"{len(field(chamber, 'features'))} feature(s)")
+        for axis, got, want in (("width", size[0], float(width) + OUTER),
+                                ("depth", size[2], float(along) + OUTER)):
+            if abs(float(got) - want) > SPAN_TOLERANCE:
+                out.append(("footprint",
+                    f"selects shell '{shell_id}', whose {axis} is "
+                    f"{float(got):.2f} and this chamber declares "
+                    f"{want:.2f} including walls"))
+    tall = field(chamber, "wall_height")
+    if size and tall is not None and abs(float(size[1]) - float(tall)) \
+            > SPAN_TOLERANCE:
+        out.append(("height",
+            f"selects shell '{shell_id}', which is {float(size[1]):.2f} "
+            f"tall and this chamber declares {float(tall):.2f}"))
+
+    # ...AND CAN IT HOLD WHAT THE ROOM CARRIES? A feature needs somewhere
+    # to sit that is neither in the masonry nor across the walking lane,
+    # and `FEATURE_MIN_WIDTH` is that width per tag. The chamber model
+    # refuses a room too narrow for its own features, so a shell narrower
+    # than one would produce a Zone that cannot validate -- and the
+    # measured version of getting this wrong was a Zone that offered two
+    # affordances and BUILT NEITHER.
+    if size:
+        interior = float(size[0]) - OUTER
+        for tag in feature_tags(chamber):
+            needed = C.FEATURE_MIN_WIDTH.get(tag, C.MIN_FEATURE_CHAMBER_WIDTH)
+            if interior + SPAN_TOLERANCE < needed:
+                out.append(("feature",
+                    f"selects shell '{shell_id}', whose {interior:.2f}m "
+                    f"interior cannot hold a '{tag}', which needs "
+                    f"{needed}m to sit clear of the walking lane"))
 
     band = field(chamber, "elevation")
     kind = (band.get("kind") if isinstance(band, dict)
             else getattr(band, "kind", None)) if band else None
     if kind and kind not in rule.get("provides_elevation", ()):
-        out.append(
+        out.append(("elevation",
             f"selects shell '{shell_id}', which provides "
             f"{sorted(rule.get('provides_elevation', ())) or 'no'} "
-            f"elevation band(s) and this chamber declares a '{kind}'")
+            f"elevation band(s) and this chamber declares a '{kind}'"))
     return out
 
 
@@ -290,6 +333,70 @@ def offered_for(chamber, catalog: dict[str, list[str]] | None,
     return tuple(sorted(
         shell_id for shell_id in offered
         if not rule_errors(shell_id, (rules or {}).get(shell_id, {}), chamber)))
+
+
+def adoptable(chamber, catalog: dict[str, list[str]] | None,
+              rules: dict[str, dict] | None) -> tuple[str, ...]:
+    """Offered shells this chamber could BECOME, sorted.
+
+    `offered_for` asks whether a shell fits a room that already has its
+    dimensions. This asks the generator's question instead: which offered
+    shells could this chamber adopt? Every clause of `rule_errors` still
+    applies except the dimension equality, which adoption is about to
+    satisfy by construction -- the shell's type, its floor count, the
+    elevation band it does or does not provide, and whether its interior
+    can hold the features the room already carries.
+
+    THE SIZE STILL HAS A BOUND. `MAX_AUTHORED_SPAN` and
+    `MAX_AUTHORED_HEIGHT` are the schema's ceilings; a shell above them
+    could be adopted and then fail to validate, which is a worse trade
+    than not offering it.
+    """
+    out: list[str] = []
+    for shell_id in (catalog or {}).get(str(field(chamber, "type") or ""), ()):
+        rule = (rules or {}).get(shell_id, {})
+        size = rule.get("size")
+        if size and (max(float(size[0]), float(size[2])) > C.MAX_AUTHORED_SPAN
+                     or float(size[1]) > C.MAX_AUTHORED_HEIGHT):
+            continue
+        probe = dict(chamber)
+        for key in ("width", "depth", "length", "wall_height"):
+            probe.pop(key, None)
+        if not rule_errors(shell_id, rule, probe):
+            out.append(shell_id)
+    return tuple(sorted(out))
+
+
+def footprint_area(rule: dict) -> float:
+    """The floor a shell would add to a Zone, in square metres."""
+    size = rule.get("size")
+    return 0.0 if not size else float(size[0]) * float(size[2])
+
+
+def adopt(chamber: dict, rule: dict) -> None:
+    """Write a shell's fixed geometry into the chamber it will build.
+
+    THE OWNER RULING OF 2026-09-11, in one function: an approved shell's
+    geometry informs the chamber being generated, rather than the shell
+    having to fit dimensions a builder chose before it was consulted.
+    Every arena shell the art lane approved is 31 to 85 m across and no
+    arena the builder proposes is over 28, so under the old direction the
+    twelve approved shells could never have composed an arena at all.
+
+    NOT SCALING. Nothing here stretches, retimes or reinterprets the
+    shell: the numbers are copied off the manifest, and what changes is
+    the chamber's description of itself. `rule_errors` then holds the two
+    to an equality, so a Zone whose declared size disagrees with its
+    named shell is refused wherever it came from.
+    """
+    size = rule.get("size")
+    if not size:
+        return
+    chamber["width"] = round(float(size[0]) - OUTER, 3)
+    key = "length" if "length" in chamber else "depth"
+    chamber[key] = round(float(size[2]) - OUTER, 3)
+    if "wall_height" in chamber:
+        chamber["wall_height"] = round(float(size[1]), 3)
 
 
 def compatible_shells(registry: dict[str, ContentEntry],

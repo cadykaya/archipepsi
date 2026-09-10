@@ -118,20 +118,11 @@ def fallback_zone_attempt(request: ZoneGenerationRequest) -> tuple[dict, int]:
     def attempt(salt: int) -> dict:
         seeded = random.Random(
             f"archipepsi/fallback/zone/{n}/{budget}/{salt}")
-        chambers = _build_to_budget(seeded, locations, budget,
-                                    request.unlocked_affordances)
-        _add_features(chambers, request.unlocked_affordances, n)
-        # AFTER the geometry is final, and that is load bearing.
-        # `_add_features` WIDENS a corridor it is about to hang something
-        # on, so selecting first judged every shell against a width the
-        # room was about to stop having: five of the played Zone's eight
-        # corridors were refused a corner shell they then fitted. A
-        # choice made against dimensions that change afterwards is not a
-        # choice about the room that gets built.
-        _select_authored_shells(
-            seeded, chambers,
-            request.catalog.get("room_shells", {}),
-            request.catalog.get("room_shell_rules", {}))
+        chambers = _build_to_budget(
+            seeded, locations, budget, request.unlocked_affordances,
+            zone_index=n,
+            catalog=request.catalog.get("room_shells", {}),
+            rules=request.catalog.get("room_shell_rules", {}))
         return {
             "schema_version": 7,
             "zone_id": request.zone_id,
@@ -216,7 +207,8 @@ def _content_room(rng, index: int, lean: bool, step: float,
         "objective": "platform_to_goal"}
 
 
-def _build_to_budget(rng, locations, budget, unlocked) -> list[dict]:
+def _build_to_budget(rng, locations, budget, unlocked, zone_index=0,
+                     catalog=None, rules=None) -> list[dict]:
     """Rooms enough to hold the Checks, then content enough to be a level.
 
     Two passes on purpose. The first places what the campaign REQUIRES --
@@ -224,6 +216,15 @@ def _build_to_budget(rng, locations, budget, unlocked) -> list[dict]:
     second adds content until the Zone is worth what it was asked for.
     Doing it in one pass makes the Checks compete with the budget, and
     the Checks are not negotiable.
+
+    BETWEEN THEM, the rooms become final: features are hung and authored
+    shells are chosen and adopted. Both change what a room IS -- a
+    feature widens a corridor, and an adopted shell replaces its
+    dimensions outright -- and `room_value` scores space. Doing either
+    after the top-up meant topping up against rooms that were about to
+    change size: the played Zone came out a single point under its
+    minimum and the retry loop covered for it, which is the loop earning
+    its keep for a reason it should not have to.
     """
     from ..content_value import budget_band, room_value, zone_value
 
@@ -306,6 +307,12 @@ def _build_to_budget(rng, locations, budget, unlocked) -> list[dict]:
             landmark["activities"] = [
                 _activity("switch_sequence", 5),
                 _activity("target_challenge", 4)]
+
+    # THE ROOMS ARE FINAL FROM HERE. Features first, because hanging one
+    # widens the corridor it goes in; then shells, because a shell can
+    # only be judged against the room it is actually going into.
+    _add_features(chambers, unlocked, zone_index)
+    _select_authored_shells(rng, chambers, catalog or {}, rules or {})
 
     # Now top up to the band with activities and enemies, cheapest lever
     # first, never past a cap.
@@ -487,16 +494,44 @@ def _select_authored_shells(rng, chambers: list[dict],
     asked to change. A field being added must not silently rewrite the
     level it is added to.
     """
-    from ..shells import offered_for
+    from ..shells import adopt, adoptable, footprint_area
     if not catalog:
         return
+    # WHAT THE ZONE CAN AFFORD IN FLOOR. "Prefer authored where
+    # compatible" plus arena shells 31 to 85 m across means every
+    # eligible arena becomes one, and the measured result was a Zone
+    # `make godot-zone-audit` could not finish in 900 seconds. A Zone
+    # nobody can measure is not a better Zone. Rooms are considered in
+    # order, so which ones get the authored geometry is deterministic.
+    spent = 0.0
+    last = ""
     state = rng.getstate()
     try:
         for chamber in chambers:
-            options = offered_for(chamber, catalog, rules)
+            options = tuple(
+                s for s in adoptable(chamber, catalog, rules)
+                if spent + footprint_area(rules.get(s, {}))
+                <= C.AUTHORED_AREA_BUDGET)
             if not options:
                 continue
-            chamber["shell_id"] = options[rng.randrange(len(options))]
+            # NOT THE SAME SHELL TWICE RUNNING, where there is a
+            # choice. Corner shells turn the chain, and five
+            # `shell_corner_left` in a row is a route that spirals into
+            # itself: `ZoneBuilder` reported that Zone unroutable, which
+            # is the right answer to the wrong Zone. Python cannot see
+            # layout, so what it can do is not hand the layout a run of
+            # identical rooms.
+            fresh = tuple(s for s in options if s != last) or options
+            picked = fresh[rng.randrange(len(fresh))]
+            last = picked
+            spent += footprint_area(rules.get(picked, {}))
+            chamber["shell_id"] = picked
+            # CHOOSE, THEN BECOME. The chamber's dimensions are the
+            # shell's from here on, so everything downstream -- the
+            # validator, the budget, the composer, the layout -- reads
+            # the room that will actually be built rather than the one
+            # the builder guessed at before a shell was consulted.
+            adopt(chamber, rules.get(picked, {}))
     finally:
         rng.setstate(state)
 

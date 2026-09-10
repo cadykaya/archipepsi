@@ -1277,20 +1277,20 @@
             "type": "string"
           },
           "width": {
-            "maximum": 28,
-            "minimum": 10,
+            "maximum": 96.0,
+            "minimum": 10.0,
             "title": "Width",
             "type": "number"
           },
           "depth": {
-            "maximum": 28,
-            "minimum": 10,
+            "maximum": 96.0,
+            "minimum": 10.0,
             "title": "Depth",
             "type": "number"
           },
           "wall_height": {
-            "maximum": 8,
-            "minimum": 4,
+            "maximum": 80.0,
+            "minimum": 4.0,
             "title": "Wall Height",
             "type": "number"
           },
@@ -5705,20 +5705,20 @@
             "type": "string"
           },
           "width": {
-            "maximum": 28,
-            "minimum": 10,
+            "maximum": 96.0,
+            "minimum": 10.0,
             "title": "Width",
             "type": "number"
           },
           "depth": {
-            "maximum": 28,
-            "minimum": 10,
+            "maximum": 96.0,
+            "minimum": 10.0,
             "title": "Depth",
             "type": "number"
           },
           "wall_height": {
-            "maximum": 8,
-            "minimum": 4,
+            "maximum": 80.0,
+            "minimum": 4.0,
             "title": "Wall Height",
             "type": "number"
           },

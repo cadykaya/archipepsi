@@ -37,6 +37,23 @@ var probes_expected_to_fail := 0
 ## true. Reported, never fatal: nothing can select them.
 var shells_awaiting_review := 0
 
+## A chamber that DESCRIBES the shell it names.
+##
+## These fixtures carried 12 x 16 x 6 regardless of the shell they were
+## pointed at. That passed while the compatibility rule only asked
+## whether a shell was small enough; since the owner ruling of
+## 2026-09-11 the shell IS the room, so a chamber whose numbers disagree
+## with its shell is refused and quietly built procedurally -- which is
+## how six of this suite's authored-room assertions came to be made
+## about a procedural room.
+func _sized(entry: Dictionary) -> Dictionary:
+	var size: Array = entry.get("size", [12.8, 6.0, 16.8])
+	var outer := 2.0 * ChamberBuilders.WALL_THICKNESS
+	return {"width": float(size[0]) - outer,
+			"wall_height": float(size[1]),
+			"depth": float(size[2]) - outer}
+
+
 func _check(condition: bool, message: String) -> void:
 	if not condition:
 		failures += 1
@@ -392,8 +409,11 @@ func _authored_entry(scene: String) -> Dictionary:
 func _authored_room(scene: String) -> Dictionary:
 	var entry := _authored_entry(scene)
 	var result: Dictionary = ContentInstantiator.build_chamber(
-			{"id": "auth", "type": "arena", "width": 12.0, "depth": 16.0,
-				"wall_height": 6.0, "objective": "reach_exit",
+			{"id": "auth", "type": "arena",
+				"width": _sized(entry)["width"],
+				"depth": _sized(entry)["depth"],
+				"wall_height": _sized(entry)["wall_height"],
+				"objective": "reach_exit",
 				"enemies": [], "shell_id": str(entry["id"])},
 			"concrete_facility", _registry_for(entry))
 	if result.get("root") != null:
@@ -516,8 +536,10 @@ func _test_a_declared_turn_steers_the_chain() -> void:
 		entry["exit_yaw"] = turn
 		var registry := _registry_for(entry)
 		var result: Dictionary = ContentInstantiator.build_chamber(
-				{"id": "turn", "type": "arena", "width": 12.0,
-					"depth": 16.0, "wall_height": 6.0,
+				{"id": "turn", "type": "arena",
+					"width": _sized(entry)["width"],
+					"depth": _sized(entry)["depth"],
+					"wall_height": _sized(entry)["wall_height"],
 					"objective": "reach_exit", "enemies": [],
 					"shell_id": str(entry["id"])},
 				"concrete_facility", registry)
@@ -599,10 +621,14 @@ func _turning_zone(turn: float) -> Dictionary:
 	ContentRegistry.shared().entries[str(entry["id"])] = entry
 	var chambers: Array = []
 	for i in 2:
-		chambers.append({"id": "t%d" % i, "type": "arena", "width": 12.0,
-				"depth": 16.0, "wall_height": 6.0,
+		chambers.append({"id": "t%d" % i, "type": "arena",
+				"width": _sized(entry)["width"],
+				"depth": _sized(entry)["depth"],
+				"wall_height": _sized(entry)["wall_height"],
 				"objective": "reach_exit", "enemies": [],
 				"shell_id": str(entry["id"])})
+	# A routing failure would surface here as a missing `root`; the
+	# fixture is two small rooms, so it is a crash-clarity guard.
 	var zone := ZoneBuilder.build({"zone_id": "zt", "theme":
 			"concrete_facility", "chambers": chambers})
 	ContentRegistry.reset_shared()
@@ -2091,7 +2117,6 @@ func _chamber_for(entry: Dictionary) -> Dictionary:
 	for tag: Variant in entry.get("semantic_tags", []):
 		if FAMILY_TYPE.has(str(tag)):
 			type = str(FAMILY_TYPE[str(tag)])
-	var size: Array = entry.get("size", [12.0, 6.0, 12.0])
 	var chamber := {"id": "audit", "type": type,
 			"shell_id": str(entry["id"]), "enemies": []}
 	match type:
@@ -2099,14 +2124,14 @@ func _chamber_for(entry: Dictionary) -> Dictionary:
 			var fits: Array = entry.get("fits_floors", [])
 			chamber["floors"] = int(fits[0]) if not fits.is_empty() else 3
 		"corridor":
-			chamber["length"] = float(size[2])
-			chamber["width"] = float(size[0])
+			chamber["length"] = _sized(entry)["depth"]
+			chamber["width"] = _sized(entry)["width"]
 		"treasure_room":
 			pass
 		_:
-			chamber["width"] = float(size[0])
-			chamber["depth"] = float(size[2])
-			chamber["wall_height"] = float(size[1])
+			chamber["width"] = _sized(entry)["width"]
+			chamber["depth"] = _sized(entry)["depth"]
+			chamber["wall_height"] = _sized(entry)["wall_height"]
 			chamber["objective"] = "reach_exit"
 	return chamber
 

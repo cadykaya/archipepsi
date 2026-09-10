@@ -208,6 +208,10 @@ godot-movement: godot-import   # P3.0 rails, launch pads, and the offer seam
 godot-playtest3a: godot-import  # 3A: a real player rides an authored rail
 	@out=$$($(GODOT) --headless --path godot -- --playtest3a-test 2>&1); \
 	status=$$?; echo "$$out" | grep -v "^$$"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: a test that crashed is not a test that passed"; \
+	  exit 1; \
+	fi; \
 	exit $$status
 
 godot-zone-audit: godot-import

@@ -4,6 +4,12 @@
 
 Head before: `2f727a7`. Frozen authority: `docs/ROAD_TO_PLAYABLE_0_3.md`.
 
+> **Superseded in part, 2026-09-11.** §10's "blocked on Art" no longer
+> holds: the owner ruled that a chamber adopts its shell's geometry, so
+> the existing twelve shells compose arenas as they are. See
+> `docs/reports/2026-09-11-3ab-integration.md` §8. The rest of this
+> report stands as the record of what 3B measured.
+
 Approved authored room shells now reach a played Zone through ordinary
 generation: the offline generator selects them from the request's own
 catalog, the shared validator judges them, they survive storage, and the

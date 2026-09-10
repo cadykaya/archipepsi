@@ -481,6 +481,10 @@ func _test_the_real_zone_builder_actually_builds_activities() -> void:
 	calls, and counts what came out.
 	"""
 	var build := ZoneBuilder.build(_zone_with_activities())
+	if build.has("failed"):
+		_check(false, "the activity Zone could not be laid out: %s"
+				% str(build["failed"]))
+		return
 	var root: Node3D = build["root"]
 	add_child(root)
 	await get_tree().process_frame
@@ -507,6 +511,10 @@ func _test_a_zone_built_activity_is_drivable() -> void:
 	does nothing.
 	"""
 	var build := ZoneBuilder.build(_zone_with_activities())
+	if build.has("failed"):
+		_check(false, "the activity Zone could not be laid out: %s"
+				% str(build["failed"]))
+		return
 	var root: Node3D = build["root"]
 	add_child(root)
 	await get_tree().process_frame

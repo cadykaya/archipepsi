@@ -57,6 +57,8 @@ func _run() -> void:
 	await _test_an_unknown_selection_is_refused_not_defaulted()
 	await _test_ordinary_startup_builds_no_movement_geometry()
 	await _test_an_ordinary_generated_zone_honours_the_package()
+	await _test_a_player_enters_an_authored_room_in_a_generated_zone()
+	await _test_an_authored_offer_changes_navigation_in_a_generated_zone()
 
 	_check(zones_built >= 3,
 			"only %d showcase Zones were built; the three selections must "
@@ -1626,4 +1628,205 @@ func _test_an_ordinary_generated_zone_honours_the_package() -> void:
 				% [mode, built_authored, authored])
 		host.queue_free()
 		await get_tree().process_frame
+
+
+
+## ------------------------------------------------- 3B, the normal path --
+##
+## The Zone here is `played_zone.json`, dumped by
+## `archipepsi_bridge.playtest` from the OFFLINE provider -- the same
+## deterministic fallback the game uses when no API key is present -- and
+## entered through the same `ZoneController` an ordinary player enters
+## through. No `shell_id` is edited, no showcase room is substituted and
+## no developer override is used: what is measured is the composition the
+## generator produced.
+
+## The Zone under test, built for a mode, plus the authored room in it.
+func _generated(mode: String) -> Dictionary:
+	var text := FileAccess.get_file_as_string(
+			"res://tests/fixtures/played_zone.json")
+	var data: Dictionary = JSON.parse_string(text)
+	var host := Node3D.new()
+	add_child(host)
+	var zone := ZoneController.new()
+	zone.movement_package = mode
+	host.add_child(zone)
+	zone.setup(data)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	zones_built += 1
+	# THE OFFER-BEARING ROOM, found by what BUILT rather than by name:
+	# a chamber whose authored shell was refused still carries its id.
+	var authored: Dictionary = {}
+	for entry: Variant in zone.offer_rooms:
+		var record: Dictionary = entry
+		var built: Dictionary = record["build"]
+		var got: Dictionary = built.get("shell_resolution", {})
+		if str(got.get("build", "")) != ContentInstantiator.BUILD_AUTHORED:
+			continue
+		if (built.get("offers", []) as Array).is_empty():
+			continue
+		authored = record
+		break
+	return {"host": host, "zone": zone, "room": authored}
+
+## A player walks from outside an authored room into it.
+##
+## CROSSING THE JOIN is the claim: not spawned inside, not teleported to
+## its floor, but standing in the piece before it and walking through the
+## connector into the authored geometry, ending on ground inside its
+## bounds.
+func _test_a_player_enters_an_authored_room_in_a_generated_zone() -> void:
+	var rig: Dictionary = await _generated("none")
+	var zone: ZoneController = rig["zone"]
+	var room: Dictionary = rig["room"]
+	_check(not room.is_empty(),
+			"the generated Zone built no authored room that carries "
+			+ "offers, so there is nothing here to walk into")
+	if room.is_empty():
+		(rig["host"] as Node3D).queue_free()
+		await get_tree().process_frame
+		return
+	var node: Node3D = room["node"]
+	var built: Dictionary = room["build"]
+	var world: AABB = node.global_transform * (built["bounds"] as AABB)
+	var forward: Vector3 = node.global_transform.basis.z.normalized()
+	# `player_entry` is a REGION -- `{position, extent}` -- not a point,
+	# and a shell that declares none returns {}. Its entry SOCKET is
+	# where the rooms join, so that is the fallback and the thing a walk
+	# from outside actually aims at.
+	var arrival: Dictionary = built.get("player_entry", {})
+	var local: Vector3 = arrival.get("position",
+			built.get("entry_offset", RoomContract.LEGACY_ENTRY)) \
+			as Vector3
+	var inside: Vector3 = node.global_transform * local
+	print("  3B: walking into '%s' (%s), bounds %v"
+			% [str((room["chamber"] as Dictionary).get("id", "?")),
+				str((built["shell_resolution"] as Dictionary)["resolved"]),
+				world.size])
+
+	var player: Player = zone.player
+	player.input_frozen = true
+	# OUTSIDE, in the piece that joins onto it: back along the room's own
+	# forward axis from where the body arrives.
+	var outside := inside - forward * 4.0
+	var space := OfferBinding.space_of(node)
+	var ground := SpaceProbe.ground_below(space, outside + Vector3.UP * 2.0,
+			6.0)
+	_check(ground != SpaceProbe.NO_GROUND,
+			"there is no floor outside the authored room's entry, so a "
+			+ "player could not be standing there to walk in")
+	if ground == SpaceProbe.NO_GROUND:
+		(rig["host"] as Node3D).queue_free()
+		await get_tree().process_frame
+		return
+	player.global_position = Vector3(outside.x, ground + 0.05, outside.z)
+	var started := player.global_position
+	_check(not world.has_point(started),
+			"the walk starts inside the room it is supposed to enter")
+
+	var crossed := false
+	for _i in 90:
+		player.velocity.x = forward.x * Constants.WALK_SPEED
+		player.velocity.z = forward.z * Constants.WALK_SPEED
+		await get_tree().physics_frame
+		if world.has_point(player.global_position):
+			crossed = true
+			break
+	_check(crossed,
+			"the player walked %.1f m from outside the authored room and "
+			% started.distance_to(player.global_position)
+			+ "never got in")
+	# ...and arrived on its floor rather than falling through it.
+	if crossed:
+		var under := SpaceProbe.ground_below(space,
+				player.global_position + Vector3.UP * 0.5, 4.0)
+		_check(under != SpaceProbe.NO_GROUND,
+				"the player crossed into the authored room and had "
+				+ "nothing under them")
+	(rig["host"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+## An authored offer changes where a player can go.
+##
+## THE COMPARISON IS THE POINT. A rail that carries a body 20 m proves
+## nothing on its own if the body could have walked there. So the same
+## start is run twice -- once with the package that builds the offer, once
+## with `none` -- and the rail is additionally shown to span ground the
+## walker has none of.
+func _test_an_authored_offer_changes_navigation_in_a_generated_zone() -> void:
+	var rig: Dictionary = await _generated("rail")
+	var zone: ZoneController = rig["zone"]
+	var lanes := _lanes(zone)
+	_check(not lanes.is_empty(),
+			"the generated Zone built no rail in `rail` mode, so its "
+			+ "authored room declared offers that never became geometry")
+	if lanes.is_empty():
+		(rig["host"] as Node3D).queue_free()
+		await get_tree().process_frame
+		return
+	var lane: AffordanceNodes.Volume = lanes[0]
+	var rail: RailPath = lane.rail
+	var start: Vector3 = lane.global_position
+	var along: Vector3 = lane.global_transform.basis.z.normalized()
+	var space := OfferBinding.space_of(lane)
+
+	var player: Player = zone.player
+	player.input_frozen = true
+	player.global_position = start
+	player.velocity = along * Constants.WALK_SPEED
+	for _i in 12:
+		if player.riding_rail():
+			break
+		player.velocity = along * Constants.WALK_SPEED
+		await get_tree().physics_frame
+	_check(player.riding_rail(),
+			"the player stood on the generated Zone's authored rail "
+			+ "moving along it and was not caught")
+	var frames := 0
+	while player.riding_rail() and frames < 240:
+		await get_tree().physics_frame
+		frames += 1
+	var rode: Vector3 = player.global_position
+	var carried := start.distance_to(rode)
+	print("  3B: rail carried the player %.1f m over %d frames (path %.1f m)"
+			% [carried, frames, rail.length()])
+	_check(carried > 4.0,
+			"the rail moved the player %.2f m, which is not a ride"
+			% carried)
+
+	# THE SAME START, WITHOUT THE PACKAGE. Same body, same push, same
+	# number of frames -- and no lane to catch.
+	(rig["host"] as Node3D).queue_free()
+	await get_tree().process_frame
+	var plain: Dictionary = await _generated("none")
+	var walker: Player = (plain["zone"] as ZoneController).player
+	walker.input_frozen = true
+	walker.global_position = start
+	_check(_lanes(plain["zone"] as ZoneController).is_empty(),
+			"`none` built a lane, so this comparison proves nothing")
+	for _i in frames + 12:
+		walker.velocity.x = along.x * Constants.WALK_SPEED
+		walker.velocity.z = along.z * Constants.WALK_SPEED
+		await get_tree().physics_frame
+	var walked: Vector3 = walker.global_position
+	print("  3B: without the package the same start reached %.1f m away "
+			% start.distance_to(walked) + "and ended %.1f m from the rail's end"
+			% walked.distance_to(rode))
+	_check(walked.distance_to(rode) > 4.0,
+			"walking from the same start ended %.2f m from where the "
+			% walked.distance_to(rode)
+			+ "rail put the player, so the offer changed nothing")
+	# ...and the rail spans somewhere there is no floor, so the walker
+	# was never going to get there on foot.
+	var midpoint := start.lerp(rode, 0.5)
+	var below := SpaceProbe.ground_below(
+			OfferBinding.space_of((plain["zone"] as ZoneController)),
+			midpoint, Constants.MAX_VERTICAL_STEP)
+	_check(below == SpaceProbe.NO_GROUND,
+			"the rail runs over ground a player could simply walk along, "
+			+ "so it does not change navigation")
+	(plain["host"] as Node3D).queue_free()
+	await get_tree().process_frame
 

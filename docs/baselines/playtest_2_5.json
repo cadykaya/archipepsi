@@ -953,7 +953,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 922,
+        "content_value": 908,
         "enemy_total": 35,
         "rooms_holding_no_check": 8
       },
@@ -1473,7 +1473,7 @@
                 "kind": "target_challenge"
               }
             ],
-            "depth": 13.1,
+            "depth": 89.2,
             "enemies": [
               {
                 "archetype": "melee",
@@ -1483,9 +1483,10 @@
             "id": "c006",
             "objective": "kill_all",
             "reward_location_id": 89100004,
+            "shell_id": "shell_span_basin",
             "type": "arena",
-            "wall_height": 5.9,
-            "width": 19.8
+            "wall_height": 23.6,
+            "width": 30.4
           },
           {
             "activities": [
@@ -1495,10 +1496,10 @@
               }
             ],
             "id": "c007",
-            "length": 14.7,
-            "shell_id": "shell_corner_right",
+            "length": 6.0,
+            "shell_id": "shell_corner_left",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -1526,10 +1527,6 @@
               {
                 "element_count": 2,
                 "kind": "switch_sequence"
-              },
-              {
-                "element_count": 3,
-                "kind": "switch_sequence"
               }
             ],
             "depth": 20.4,
@@ -1555,10 +1552,10 @@
           },
           {
             "id": "c010",
-            "length": 12.5,
+            "length": 6.0,
             "shell_id": "shell_corner_right",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -1606,10 +1603,10 @@
           },
           {
             "id": "c013",
-            "length": 13.0,
-            "shell_id": "shell_corner_right",
+            "length": 6.0,
+            "shell_id": "shell_corner_left",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -1682,10 +1679,10 @@
               }
             ],
             "id": "c016",
-            "length": 8.5,
-            "shell_id": "shell_corner_left",
+            "length": 6.0,
+            "shell_id": "shell_corner_right",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -1725,10 +1722,10 @@
           },
           {
             "id": "c019",
-            "length": 13.3,
+            "length": 6.0,
             "shell_id": "shell_corner_left",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -1775,10 +1772,10 @@
               }
             ],
             "id": "c022",
-            "length": 14.4,
+            "length": 6.0,
             "shell_id": "shell_corner_right",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -1820,7 +1817,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 912,
+        "content_value": 916,
         "enemy_total": 26,
         "rooms_holding_no_check": 8
       },
@@ -2301,7 +2298,7 @@
                 "kind": "switch_sequence"
               }
             ],
-            "depth": 11.6,
+            "depth": 89.2,
             "enemies": [
               {
                 "archetype": "melee",
@@ -2311,9 +2308,10 @@
             "id": "c005",
             "objective": "kill_all",
             "reward_location_id": 89100103,
+            "shell_id": "shell_span_basin",
             "type": "arena",
-            "wall_height": 6.4,
-            "width": 16.4
+            "wall_height": 23.6,
+            "width": 30.4
           },
           {
             "activities": [
@@ -2348,10 +2346,10 @@
               }
             ],
             "id": "c007",
-            "length": 14.7,
-            "shell_id": "shell_corner_right",
+            "length": 6.0,
+            "shell_id": "shell_corner_left",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -2414,10 +2412,10 @@
               }
             ],
             "id": "c010",
-            "length": 9.1,
-            "shell_id": "shell_corner_left",
+            "length": 6.0,
+            "shell_id": "shell_corner_right",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -2469,10 +2467,10 @@
           },
           {
             "id": "c013",
-            "length": 13.6,
+            "length": 6.0,
             "shell_id": "shell_corner_left",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -2531,10 +2529,10 @@
           },
           {
             "id": "c016",
-            "length": 13.6,
+            "length": 6.0,
             "shell_id": "shell_corner_right",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -2574,10 +2572,10 @@
           },
           {
             "id": "c019",
-            "length": 15.2,
+            "length": 6.0,
             "shell_id": "shell_corner_left",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -2624,10 +2622,10 @@
               }
             ],
             "id": "c022",
-            "length": 8.6,
-            "shell_id": "shell_corner_left",
+            "length": 6.0,
+            "shell_id": "shell_corner_right",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -2669,7 +2667,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 913,
+        "content_value": 915,
         "enemy_total": 32,
         "rooms_holding_no_check": 8
       },
@@ -3145,7 +3143,7 @@
                 "kind": "switch_sequence"
               }
             ],
-            "depth": 12.6,
+            "depth": 89.2,
             "enemies": [
               {
                 "archetype": "melee",
@@ -3155,9 +3153,10 @@
             "id": "c005",
             "objective": "kill_all",
             "reward_location_id": 89100203,
+            "shell_id": "shell_span_basin",
             "type": "arena",
-            "wall_height": 4.9,
-            "width": 12.3
+            "wall_height": 23.6,
+            "width": 30.4
           },
           {
             "activities": [
@@ -3193,10 +3192,10 @@
           },
           {
             "id": "c007",
-            "length": 10.0,
-            "shell_id": "shell_corner_right",
+            "length": 6.0,
+            "shell_id": "shell_corner_left",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -3255,10 +3254,10 @@
               }
             ],
             "id": "c010",
-            "length": 14.5,
-            "shell_id": "shell_corner_left",
+            "length": 6.0,
+            "shell_id": "shell_corner_right",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -3306,10 +3305,10 @@
           },
           {
             "id": "c013",
-            "length": 10.5,
-            "shell_id": "shell_corner_right",
+            "length": 6.0,
+            "shell_id": "shell_corner_left",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -3389,10 +3388,10 @@
               }
             ],
             "id": "c016",
-            "length": 11.7,
-            "shell_id": "shell_corner_left",
+            "length": 6.0,
+            "shell_id": "shell_corner_right",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -3432,10 +3431,10 @@
           },
           {
             "id": "c019",
-            "length": 14.6,
-            "shell_id": "shell_corner_right",
+            "length": 6.0,
+            "shell_id": "shell_corner_left",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -3482,10 +3481,10 @@
               }
             ],
             "id": "c022",
-            "length": 15.9,
+            "length": 6.0,
             "shell_id": "shell_corner_right",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [

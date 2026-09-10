@@ -95,6 +95,16 @@ func _run() -> void:
 			declared.size()])
 
 	var build := ZoneBuilder.build(zone)
+	# A ROUTING FAILURE IS A RESULT, and it is this suite's business:
+	# the alternative `ZoneBuilder` used to offer was a room attached on
+	# top of another one, which is what the Check-in-a-wall failures
+	# were. Reported here rather than walked past, because reading
+	# `build["root"]` off a failure is a script error and a hung run.
+	if build.has("failed"):
+		_check(false, "the Zone could not be laid out: %s"
+				% str(build["failed"]))
+		_finish()
+		return
 	var root: Node3D = build["root"]
 	add_child(root)
 	# Two physics frames so every Area3D has registered its overlaps and
