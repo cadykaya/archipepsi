@@ -184,7 +184,12 @@ const FIELDS = [
       { name: "deck_b", value: [72, 86, 89, 255] },
       { name: "deck_d", value: [...rgb(hex("floor", 1)), 255] },
       { name: "deck_dd", value: [...rgb(hex("floor", 0)), 255] },
-      { name: "tread", value: [...rgb(hex("floor", 3)), 255] },
+      // TREAD, RE-SOLVED. See the note in draw(): the first version paired
+      // the ramp's lightest step with its darkest and spanned 26 L*, which
+      // is a lot of shouting for a surface a player looks at while walking.
+      // These sit +-6 L* either side of the field.
+      { name: "tread", value: [78, 92, 95, 255] },
+      { name: "tread_dark", value: [50, 64, 66, 255] },
       { name: "seam", value: [...rgb(hex("trim", 0)), 255] },
       { name: "bolt", value: [...rgb(hex("floor", 3)), 255] },
       { name: "wear", value: [...rgb(GRIME[1]), 255] },
@@ -222,25 +227,59 @@ const FIELDS = [
       }
       // ANTI-SLIP TREAD. The single strongest "this is a ship" mark in the
       // theme, and a REGULAR one: a rhythm at 0.125 m, not an event.
-      const P = t(0.125);              // 4
-      // How worn each plate's tread is, keyed off the same draw as its tone
-      // so a pale plate is a fresher plate. THIS is where the age lives.
+      // ANTI-SLIP TREAD: CONTINUOUS DIAGONAL GROOVES.
+      //
+      // Two earlier versions failed, and the second failed IN THE ROOM
+      // rather than in the texture, which is the whole reason to look
+      // there.
+      //
+      // The first read as SHEET MUSIC: each mark was a 2x1 bright block
+      // with a 2x1 dark block directly beneath, staggered row to row --
+      // a note head with a stem. It was loud too, spanning 26 L* against a
+      // field at L32, on the one surface a player stares at while moving.
+      //
+      // The second replaced those with short 4-texel diagonal bars. Flat,
+      // and tiled, they read correctly as chequer plate. From 1.7 m at a
+      // grazing angle they did not: a 1-texel stepped diagonal is
+      // sub-pixel through most of the room's depth, so mipmapping broke
+      // every bar into disconnected dashes and the deck came back as
+      // confetti. Short marks do not survive minification.
+      //
+      // CONTINUOUS LINES DO. A groove that runs the whole width of its
+      // plate still reads when a pixel covers several texels, because
+      // there is always line under that pixel. So: parallel grooves at
+      // 45 degrees spanning each plate, 8 texels apart, with the direction
+      // alternating plate to plate the way real deck plate is laid. The
+      // highlight and its shadow sit +-6 L* either side of the field
+      // instead of +10 / -16.
+      const PITCH = t(0.25);           // 8, and 32 / 8 = 4 grooves a plate
       const wearOf = (x, y) => {
         const px = x - (x % PLATE), py = y - (y % PLATE);
         return r("plate", px, py);
       };
-      for (let y = 2; y < N; y += P) {
-        for (let x = 2; x < N; x += P) {
-          const ox = ((y / P) | 0) % 2 ? P >> 1 : 0;   // staggered rows
-          const xx = (x + ox) % N;
-          // A worn plate keeps less of its tread. 0.25 of the marks gone on
-          // the freshest, 0.70 on the most walked-over.
-          const gone = 0.25 + 0.45 * (1 - wearOf(xx, y));
-          if (r("worn", xx, y) > gone) {
-            g[y][xx] = S.tread;
-            g[y][(xx + 1) % N] = S.tread;
-            g[(y + 1) % N][xx] = S.deck_dd;
-            g[(y + 1) % N][(xx + 1) % N] = S.deck_dd;
+      for (let py = 0; py < N; py += PLATE) {
+        for (let px = 0; px < N; px += PLATE) {
+          // Alternating lay, so no two neighbouring plates run the same
+          // way and the deck never becomes one big hatch.
+          const up = (((px / PLATE) | 0) + ((py / PLATE) | 0)) % 2 === 0;
+          // A worn plate has shallower grooves: some simply do not draw.
+          const worn = wearOf(px, py);
+          for (let k = -PLATE; k < PLATE * 2; k += PITCH) {
+            if (r("groove", px + k, py) < 0.10 + 0.22 * (1 - worn)) continue;
+            for (let i = 0; i < PLATE; i++) {
+              // The line, clipped to its own plate so a groove never runs
+              // across a seam.
+              const gx = px + i;
+              const gy = py + (up ? k + i : k + PLATE - 1 - i);
+              if (gy < py || gy >= py + PLATE) continue;
+              g[gy % N][gx % N] = S.tread;
+              // One texel of shadow under the groove, also clipped, so it
+              // reads as cut into the plate rather than drawn on it.
+              const sy = gy + 1;
+              if (sy >= py && sy < py + PLATE) {
+                g[sy % N][gx % N] = S.tread_dark;
+              }
+            }
           }
         }
       }

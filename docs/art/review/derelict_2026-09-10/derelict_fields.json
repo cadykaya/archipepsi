@@ -57,14 +57,14 @@
         "horizontal": true,
         "vertical": true
       },
-      "palette_entries": 9,
+      "palette_entries": 10,
       "images": {
         "native": "derelict_floor.png",
         "enlarged": "derelict_floor_4x.png",
         "tiled": "derelict_floor_3x3.png",
         "tiled_value": "derelict_floor_3x3_value.png"
       },
-      "render_sha256": "41c5b9fe4a37954c253ef65e604578f0dea33a0252edbe372e823bd298df4272",
+      "render_sha256": "36864373905c1ce6b3a1adeb09886a051d4859f88c3fc0567c05a3bd4c300114",
       "verified": true,
       "studies_are_renders": false
     },
@@ -127,5 +127,5 @@
       "studies_are_renders": false
     }
   ],
-  "elapsed_ms": 3506
+  "elapsed_ms": 3022
 }

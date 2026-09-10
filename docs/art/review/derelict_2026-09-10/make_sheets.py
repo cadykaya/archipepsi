@@ -251,5 +251,54 @@ def uv_board():
     print("[sheet] UV_DIRECTION.png  %dx%d" % im.size)
 
 
+def floor_board():
+    """The deck tread, before and after, in the room.
+
+    Two framings at standing height, because the failure this replaces was
+    invisible in the texture and obvious on the floor: short marks broke up
+    under minification and came back as confetti. A flat preview would have
+    passed it again.
+    """
+    rows = [("FLOOR_stand", "standing, looking down the deck"),
+            ("FLOOR_feet", "closer, near the player's own feet")]
+    PAD, GAP = 24, 16
+    a = Image.open(os.path.join(HERE, "FLOOR_stand_before.png"))
+    w, h = a.size
+    im = Image.new("RGB", (PAD * 2 + w * 2 + GAP,
+                           214 + len(rows) * (h + 40) + PAD), BG)
+    dr = ImageDraw.Draw(im)
+    dr.text((PAD, 18), "DECK TREAD - redrawn as manufactured plate",
+            font=font(28), fill=INK)
+    for i, line in enumerate([
+            "ONE texture changed. The corrected wall rotation, the trim "
+            "rescale, the lighting rig and the decals are all held.",
+            "BEFORE: a 2x1 bright block over a 2x1 dark one, staggered - a "
+            "note head with a stem - spanning 26 L* against a field at L32.",
+            "AFTER: continuous diagonal grooves, 0.25 m apart, clipped to "
+            "their own plate, with the lay alternating plate to plate.",
+            "Highlight and shadow now sit +-6 L* either side of the field "
+            "instead of +10 / -16, so the deck supports the room.",
+            "A middle version used SHORT diagonal bars. Flat and tiled they "
+            "read fine; at 1.7 m they broke into dashes. Continuous lines "
+            "survive minification, short marks do not."]):
+        dr.text((PAD, 56 + i * 23), line, font=font(17), fill=DIM)
+    y0 = 214
+    for r, (stem, cap) in enumerate(rows):
+        yy = y0 + r * (h + 40)
+        im.paste(Image.open(os.path.join(HERE, stem + "_before.png")), (PAD, yy))
+        im.paste(Image.open(os.path.join(HERE, stem + "_after.png")),
+                 (PAD + w + GAP, yy))
+        if r == 0:
+            dr.text((PAD, yy - 26), "BEFORE - the jazz floor",
+                    font=font(18), fill=DIM)
+            dr.text((PAD + w + GAP, yy - 26),
+                    "AFTER - continuous grooves, alternating lay",
+                    font=font(18), fill=OK)
+        dr.text((PAD, yy + h + 8), cap, font=font(17), fill=INK)
+    im.save(os.path.join(OUT, "FLOOR_TREAD.png"))
+    print("[sheet] FLOOR_TREAD.png  %dx%d" % im.size)
+
+
 lighting_board()
 uv_board()
+floor_board()

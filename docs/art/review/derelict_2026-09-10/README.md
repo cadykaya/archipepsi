@@ -97,6 +97,27 @@ either side of the field (L 28.5 and L 35.5 against L 32) and the age is
 carried by **how worn each plate's tread is** — which is what actually
 differs between two plates of the same metal.
 
+**And then the tread read as sheet music.** Each mark was a 2 × 1 bright
+block with a 2 × 1 dark block directly beneath it, staggered row to row —
+which is a note head with a stem. It was loud as well: the bright half was
+the ramp's lightest step and the dark half its darkest, so every mark spanned
+**26 L\*** against a field at L 32, on the one surface a player stares at
+while moving.
+
+**A middle version failed in the room rather than in the texture, which is
+why the room is the test.** Short 4-texel diagonal bars read correctly flat
+and correctly tiled. From 1.7 m at a grazing angle they did not: a 1-texel
+stepped diagonal is sub-pixel through most of the room's depth, so
+mipmapping broke every bar into disconnected dashes and the deck came back
+as confetti — a different scatter, the same problem.
+
+**Continuous lines survive minification; short marks do not.** The tread is
+now parallel **grooves at 45°**, 0.25 m apart, each clipped to its own plate
+so none crosses a seam, with the **lay alternating plate to plate** as real
+deck plate is laid. Highlight and shadow sit **±6 L\*** either side of the
+field instead of +10 / −16. `FLOOR_TREAD.png` is the before/after at
+standing height; `derelict_floor_3x3.png` is the tiled check.
+
 **And the whole theme was re-solved once.** The first solve put the wall
 field at L 58 and the room rendered as a bright steel corridor: readable,
 cold, and not lonely. The hierarchy was right and the absolute level was
