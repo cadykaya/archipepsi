@@ -263,6 +263,44 @@ and runs.
 * **It ships nowhere.** `assets/textures/theme/concrete_facility_wall.png`
   is unchanged and no approved asset was touched.
 
+### Batch 042 — deep_space_derelict, proved not shipped (2026-09-10)
+
+Report: `docs/art/reports/2026-09-10-batch042-derelict.md`. Package:
+`docs/art/review/derelict_2026-09-10/`. Glyph `6c80b63`. **Visual proof
+only: nothing is bound into runtime, `Constants.THEME_MATERIALS` is
+unchanged, and theme selection is NOT claimed to work in a played Zone.**
+
+* **One strongly differentiated theme on the same approved shell**, by
+  per-surface override alone. Four roles authored — `wall`, `floor`, `trim`,
+  `accent` — all at 32 texels/m, all surviving 3 × 3.
+* **It is not a darkened concrete, and the value study is the proof.** The
+  structure is transposed (vertical stringers at 1.0 m and horizontal welds
+  at 2.0 m, against concrete's horizontal courses and vertical joints) and
+  the ramps are re-solved in CIE LCh rather than dimmed. With hue removed
+  entirely the two rooms are still unmistakably different.
+* **A tiling field's structural pitch must divide its own tile.** 1.0 m = 32
+  and 2.0 m = 64 both divide 128; this is the same lesson Batch 041 learned
+  and it now holds by construction in both themes.
+* **`hazard` stays engine-owned** — no theme-specific replacement, no
+  decorative stripe. **No warm emergency colour was authored**: the only warm
+  semantics available are engine-owned, and inventing a decorative warm near
+  them is what the direction forbids. Recorded as a gap.
+* **Four new decals, four reused.** `decal_drip` and `decal_splatter` were
+  deliberately NOT carried over — a warm run and a splatter belong to a wet
+  building, and reusing them would be filling a list.
+* **Binding evidence:** 0 unresolved surfaces on all three instances, shared
+  mesh unchanged, collision digest unchanged, dressing added 6 cards and no
+  collision, and no geometry was duplicated to carry the trim role.
+* **`ceiling` has no authored field** and falls back to `wall` per the
+  authority draft's §8.2. One surface took that path and the binder records
+  it rather than resolving it quietly.
+
+**Before this could ship** it needs a runtime binder, a `THEME_MATERIALS`
+entry, somewhere for the textures to land, a `ceiling` ruling, canonical
+material naming, contracts for the four unbound proposals (emissive mask,
+roughness mask, animated display, light colour), a lighting pass, and owner
+review. None of that is Art's alone.
+
 ### Wall layers and a decal kit — done 2026-09-10
 
 Report: `docs/art/reports/2026-09-10-wall-layers-and-decals.md`. Package:

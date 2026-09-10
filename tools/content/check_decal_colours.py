@@ -199,7 +199,12 @@ def main(argv):
         kit = json.load(open(kit_path))
         base = os.path.dirname(os.path.abspath(kit_path))
         print("[decal-colour] %s" % os.path.relpath(kit_path, REPO))
-        for entry in kit["decals"]:
+        # A repeating FIELD is decoration too, and the rule that it may not
+        # impersonate a signal is the same one. The two records name their
+        # entries differently, so both keys are read rather than a second
+        # copy of this file existing.
+        entries = kit.get("decals", []) + kit.get("fields", [])
+        for entry in entries:
             png = os.path.join(base, entry["images"]["native"])
             shown = []
             for (r, g, b, a), _n in sorted(pixels(png).items()):

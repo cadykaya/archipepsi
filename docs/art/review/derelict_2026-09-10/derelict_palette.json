@@ -1,0 +1,123 @@
+{
+  "_comment": [
+    "deep_space_derelict -- an ART-SIDE THEME PROPOSAL for Batch 042.",
+    "",
+    "NOT a theme pack, NOT in Constants.THEME_MATERIALS, NOT in any manifest",
+    "or schema, and read by nothing at runtime. It exists so the review",
+    "package has one place its colours come from.",
+    "",
+    "",
+    "SOLVED TWICE. The first solve put the wall field at L58 and the room",
+    "rendered as a bright steel corridor -- readable, cold, and not lonely.",
+    "The hierarchy was right and the absolute level was wrong, so the base and",
+    "floor were re-solved DOWN the same L* axis rather than hue-shifted or",
+    "dimmed at the light: base L 22-62, floor L 16-42. The wall field is still",
+    "the palest large surface (L48 against a floor at L32 and a frame at L9),",
+    "which is what keeps it navigable.",
+    "WHY THESE AND NOT A DARKENED CONCRETE. Ramps are solved in CIE LCh at a",
+    "FIXED hue and chroma per role, against chosen L* steps -- the same",
+    "method art_palette.json uses -- so the theme is a different PLACE rather",
+    "than the same place with the brightness pulled down:",
+    "",
+    "  concrete_facility base: L 42-93, chroma 2-4, hue 129 (neutral)",
+    "  deep_space_derelict base: L 30-72, chroma 8, hue ~200 (cold steel)",
+    "",
+    "The wall field stays the palest large surface in the room (L 58) while",
+    "the structural trim goes to near-black (L 9-26). Dark secondary",
+    "structure establishes the room; the pale field keeps it navigable.",
+    "",
+    "PROTECTED COLOURS. Every entry is measured by",
+    "tools/content/check_decal_colours.py. The accent sits 39.4 deg in hue",
+    "from `signal` #39d7c8 and 38.0 deg from concrete's own accent, so it is",
+    "neither a gameplay colour nor a borrowed one. `hazard` is engine-owned",
+    "and this theme supplies NO replacement for it."
+  ],
+  "id": "deep_space_derelict",
+  "status": "art proposal, not shipped, not runtime-bound",
+  "texels_per_metre": 32,
+  "solved_in": "CIE LCh, fixed hue and chroma per role, chosen L* steps",
+  "roles": {
+    "base": {
+      "means": "bulkhead plating. The WALL field, and still the palest large surface in the room -- but a cold dark station, not a lit one",
+      "hue": 200.0,
+      "chroma": 8.0,
+      "lstar": [
+        22,
+        34,
+        48,
+        62
+      ],
+      "ramp": [
+        "#253838",
+        "#405454",
+        "#617676",
+        "#849a9a"
+      ]
+    },
+    "floor": {
+      "means": "deck plate. Darker than the wall, so the floor plane is never the brightest thing",
+      "hue": 214.0,
+      "chroma": 6.0,
+      "lstar": [
+        16,
+        24,
+        32,
+        42
+      ],
+      "ramp": [
+        "#1d2a2c",
+        "#2e3c3e",
+        "#404e50",
+        "#576668"
+      ]
+    },
+    "trim": {
+      "means": "structural frame. Near-black: it is what establishes the room",
+      "hue": 232.0,
+      "chroma": 7.0,
+      "lstar": [
+        9,
+        17,
+        26
+      ],
+      "ramp": [
+        "#0d1b21",
+        "#1e2c32",
+        "#314046"
+      ]
+    },
+    "accent": {
+      "means": "cold navigation. Small, and the only saturated thing in the theme",
+      "hue": 225.0,
+      "chroma": 28.0,
+      "lstar": [
+        26,
+        46,
+        66
+      ],
+      "ramp": [
+        "#00475b",
+        "#02788d",
+        "#54acc3"
+      ]
+    }
+  },
+  "shared": {
+    "grime": "the theme-independent grime family from art_palette.json, unchanged",
+    "hazard": "ENGINE-OWNED. This theme supplies no replacement and paints none."
+  },
+  "proposals_not_bound": {
+    "_comment": [
+      "Named so a future pack author does not have to rediscover them.",
+      "NONE of these is a runtime contract and none is implemented."
+    ],
+    "light_colour": {
+      "recommend": "#b9cfd6",
+      "energy": 2.2,
+      "why": "cooler and dimmer than concrete_facility's #eaf2ff at 3.0. The theme's readability comes from its own value hierarchy, so the light does not have to carry it."
+    },
+    "emissive_mask": "the accent field's indicator marks are the only emissive candidates. A mask channel would let them glow without painting fake bloom into the albedo, which this batch deliberately does not do.",
+    "roughness_mask": "deck tread and bare metal want to be rougher than a painted bulkhead. One mask per field, greyscale.",
+    "animated_display": "the accent field reserves a 0.5 x 0.25 m recessed strip that a future display could drive. It is painted dark and inert here."
+  }
+}
