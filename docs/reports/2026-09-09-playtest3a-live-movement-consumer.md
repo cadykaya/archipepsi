@@ -7,7 +7,9 @@ Head before: `df2bb58`. Frozen authority: `docs/ROAD_TO_PLAYABLE_0_3.md`.
 **Amended 2026-09-09** with the owner's launch-air ruling (§7), the corrected
 `none` evidence label (§9), and the S1 adjudication (§13). **Corrected
 2026-09-09** with the three-phase lifecycle and exact selection (§3, §5),
-the carrier non-cancellation rule (§7), and the landing reconciliation (§7). Stage 3A's
+the carrier non-cancellation rule (§7), and the landing reconciliation (§7).
+**Resolved 2026-09-10**: the selection policy is approved with no cardinality
+cap (§3), and a grounded player now walks onto a pad (§7a). Stage 3A's
 architecture, showcase, rail behaviour, offer census, lifecycle, telemetry,
 safeguards and regression results are otherwise as accepted.
 
@@ -105,9 +107,43 @@ result on `chamber|kind|offer`. The sort is what makes the outcome independent
 of the order rooms were placed in, the order the manifest listed offers in, the
 order a `Dictionary` iterates, and the order the physics server answered.
 
-For this library the policy happens to take one offer per room — but the
-selection is still **enumerated by identity**, because a filter and a list that
-happen to agree are not the same thing and only one of them can be checked.
+For this library that is one offer per room — four for `rail`, four for
+`launch` — but the selection is still **enumerated by identity**, because a
+filter and a list that happen to agree are not the same thing and only one of
+them can be checked.
+
+### Cardinality: approved, no cap (owner ruling, 2026-09-10)
+
+An earlier instruction asked for exactly one selected offer per Zone. **That
+instruction is explicitly superseded.** For the temporary operator harness the
+implemented policy stands: select **all** accepted offers of the chosen mode,
+deterministically sorted by stable `chamber|kind|offer` identity. The showcase
+therefore remains:
+
+| mode | selected | built |
+| --- | --- | --- |
+| `none` | 0 | 0 |
+| `rail` | 4 | 4 |
+| `launch` | 4 | 4 |
+
+What the cap was never load-bearing for is the shape that matters: **pure
+validation → pure selection → exact-identity construction**, and *construction
+may never expand the selection*. Those hold regardless of how many offers a
+policy chooses, and they are what §10's proofs are about.
+
+This settles the temporary 3A harness only. **It does not settle the eventual
+shipped package-selection design** — how many offers a real movement package
+takes, and on what basis, is a gameplay design question that belongs after 3B.
+
+**On the record:** I implemented the no-cap policy without the authorizing
+instruction. The brief that asked for the cap reached me without its opening —
+its first numbered section is "3. LAUNCH CARRIER MAY NOT BE CANCELLED", with no
+items 1 or 2 — but it also asked me to "sabotage the selector into 'all
+matching kinds' and require the suite to fail", which is impossible if the
+policy already *is* all-matching-kinds. I hit exactly that (B1 did not bite
+until construction became identity-based), worked around it, and did not stop
+to ask why. The outcome is now authorized; the reasoning that produced it was
+not sound.
 
 ## 4. Operator commands
 
@@ -339,6 +375,47 @@ anyone who is not flying an authored arc.
 Under `none`, standing on the same spot moved the body 0.10 m in the same
 number of frames, and nothing fired.
 
+## 7a. A player walks onto a pad
+
+**`_test_a_player_walks_onto_a_pad_and_is_launched`**, on
+`shell_hall_transit` / `launch_basin` — the pad at room-local `(9.0, 0.0,
+18.0)`, constructed through the production path by the `launch` selection.
+
+This is the configuration every other pad proof missed, and the one the
+stale-`is_on_floor()` defect lived in. The three earlier proofs place the body
+0.1 m above a pad and let it fall in, where the floor flag is already false.
+This one walks.
+
+| step | measurement |
+| --- | --- |
+| start | `(6.000, 0.000, 18.000)` — real floor, **3.00 m** from the pad centre, outside its 1.70 m reach. Found by probing the live space for ground with a clear capsule, not by a hard-coded coordinate. |
+| grounded | `is_on_floor()` became true after **13 frames** of falling. Waited for, never asserted or fabricated. |
+| walk | `move_forward` held; **3.15 m over 15 frames** until the pad's own `body_entered` fired. Input released immediately after activation. |
+| activation | fired from `(9.059, 1.522, 18.102)` — mid-stride, grounded |
+| survives the stale flag | still in launch flight on the activation frame **and on the frame after it**, with the carrier unchanged to 0.001 m/s |
+| flight | rose **24.21 m**, **14.53 m forward** along the authored axis, arc active for **123 of 123** frames |
+| landing | arc cleared: not in flight, carrier zero |
+
+Nothing is teleported onto the pad, no floor state is fabricated, and neither
+`launch` nor `begin_launch_flight` is called from the test. The Player is the
+one its own fresh `ZoneController` created, so the test depends on no earlier
+launch and no reused body.
+
+**Standalone:** run as the only test in the suite, it passes (`EXIT=0`).
+
+**Targeted sabotage.** With the stale-floor defect restored — any floor contact
+ends the arc — this test alone produces **4 failures**:
+
+```
+FAIL: the arc was ended on the frame after a grounded launch; `is_on_floor()` was still true from walking
+FAIL: the carrier changed from (3.555229, 0.000000, 6.094678) to (0.000000, 0.000000, 0.000000) across the first frame
+FAIL: the walked-onto launch carried the player 0.00 m along its authored direction
+FAIL: the arc was only active for 1 frames of a 174 frame flight
+```
+
+`rose 24.21 m, 0.00 m forward` — the bounce, exactly. With the fix restored the
+same standalone run passes. No further defect surfaced.
+
 ## 8. Translated and yawed rooms
 
 With the whole Zone placed at `(−311, 27, 148)` and yawed 60°, every room sits
@@ -501,8 +578,15 @@ along the authored direction; with the invariant removed, **−1.8833 m**.
 
 | # | sabotage | result |
 | --- | --- | --- |
-| B1 | the selector becomes a filter again — construction ignores the chosen identities and builds every accepted offer | **18 failures** — "mode rail built 8 nodes, not the 4 it should" |
+| B1 | **construction ignores the chosen identities** and builds every accepted offer it can, regardless of what the selector named | **18 failures** — "mode rail built 8 nodes, not the 4 it should" |
 | B2 | the lifecycle collapses back to per-room validate-then-construct | **5 failures** |
+| W1 | the stale-`is_on_floor()` defect restored — any floor contact ends the arc | **4 failures**, all in `_test_a_player_walks_onto_a_pad_and_is_launched` (§7a) |
+
+**B1 guards exact-identity construction, not a cardinality cap.** Selecting all
+accepted offers of a matching kind is the authorized policy (§3) and is not a
+sabotage; what B1 breaks is construction *expanding* beyond what the selector
+named. An earlier draft of this row described it as a cap guard, which was
+wrong.
 
 ### S1 — adjudicated, and recorded as measured
 

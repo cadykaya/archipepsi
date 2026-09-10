@@ -47,6 +47,7 @@ func _run() -> void:
 	await _test_each_mode_builds_exactly_what_it_says()
 	await _test_a_player_rides_an_authored_rail()
 	await _test_a_player_is_launched_by_an_authored_pad()
+	await _test_a_player_walks_onto_a_pad_and_is_launched()
 	await _test_selection_is_an_identity_and_survives_every_ordering()
 	await _test_a_launch_is_carried_and_steered_and_neither_is_the_other()
 	await _test_movement_works_in_a_translated_and_yawed_room()
@@ -845,6 +846,190 @@ func _test_ordinary_startup_builds_no_movement_geometry() -> void:
 	var plain := MovementSelection.parse(PackedStringArray([]))
 	_check(not bool(plain["showcase"]),
 			"ordinary startup opened the showcase")
+
+# --- a player WALKS onto a pad (owner ruling, 2026-09-10) ------------------
+
+## The hall's `launch_basin` pad, found by its authored position.
+func _hall_pad(zone: ZoneController) -> AffordanceNodes.LaunchPad:
+	for raw: Variant in zone.offer_rooms:
+		var record: Dictionary = raw
+		if str((record["build"] as Dictionary).get("authored_shell", "")) \
+				!= "shell_hall_transit":
+			continue
+		for candidate: Variant in _pads(record["node"] as Node3D):
+			var pad: AffordanceNodes.LaunchPad = candidate
+			if pad.position.distance_to(Vector3(9.0, 0.0, 18.0)) < 0.001:
+				return pad
+	return null
+
+## Somewhere a player can stand, on real floor, OUTSIDE a pad's trigger.
+##
+## Searched rather than guessed: the offsets are tried against the live
+## space until one has ground under it and room for a body above it, so
+## the walk starts from a place the room actually provides rather than a
+## coordinate that happened to work once.
+func _standing_start(pad: AffordanceNodes.LaunchPad,
+		space: PhysicsDirectSpaceState3D) -> Dictionary:
+	var clear := AffordanceNodes.LaunchPad.PAD_REACH + Constants.PLAYER_RADIUS
+	for step: float in [3.0, 4.0, 5.0, 6.0, 2.5]:
+		for way: Vector3 in [Vector3.LEFT, Vector3.RIGHT, Vector3.BACK,
+				Vector3.FORWARD]:
+			if step <= clear:
+				continue
+			var at := pad.global_position + way * step
+			var ground := SpaceProbe.ground_below(space,
+					at + Vector3.UP * 1.5, 3.0)
+			if ground == SpaceProbe.NO_GROUND:
+				continue
+			var foot := Vector3(at.x, ground, at.z)
+			if SpaceProbe.obstruction(space,
+					SpaceProbe.stand_pose(foot)) != null:
+				continue
+			return {"found": true, "foot": foot, "toward": -way,
+					"gap": step}
+	return {"found": false}
+
+func _test_a_player_walks_onto_a_pad_and_is_launched() -> void:
+	"""THE CONFIGURATION EVERY OTHER PAD PROOF MISSED.
+
+	`is_on_floor()` carries the previous `move_and_slide`'s answer, and a
+	pad fires a player who is STANDING on it -- so on the frame after a
+	grounded launch the flag is still true. Ending the arc there stripped
+	the carrier from every launch a player walked onto rather than fell
+	onto, and every earlier proof in this file dropped the body from
+	0.1 m up, where the flag is already false. The defect was real, it
+	shipped for a commit, and nothing here caught it.
+
+	So this one walks. A fresh Player from a fresh Zone, standing on real
+	floor outside the trigger, grounded by physics rather than asserted;
+	then ordinary movement input until the pad's own `body_entered`
+	fires. Nothing is teleported onto the pad, no floor state is
+	fabricated, and neither `launch` nor `begin_launch_flight` is called
+	from here."""
+	var rig: Dictionary = await _showcase("launch")
+	var zone: ZoneController = rig["zone"]
+	var pad := _hall_pad(zone)
+	_check(pad != null,
+			"the hall's launch_basin pad was not constructed, so the walk "
+			+ "has nothing to walk onto")
+	if pad == null:
+		await _drop(rig)
+		return
+	var space := OfferBinding.space_of(zone)
+	var spot := _standing_start(pad, space)
+	_check(bool(spot["found"]),
+			"no standable floor was found outside the pad's trigger")
+	if not bool(spot["found"]):
+		await _drop(rig)
+		return
+
+	# A FRESH PLAYER, and it has never been launched. `_showcase` builds
+	# its own `ZoneController`, which creates its own `Player`, so this
+	# depends on no earlier test having run.
+	var player: Player = zone.player
+	_check(not player.in_launch_flight()
+			and player.launch_carrier().length() < 0.001,
+			"a freshly built Zone's player is already in launch flight")
+
+	# GROUNDED BY PHYSICS. Placed above the floor and left to fall onto
+	# it, then required to actually report standing -- `is_on_floor()` is
+	# not set here, it is waited for.
+	player.input_frozen = true
+	player.global_position = (spot["foot"] as Vector3) + Vector3.UP * 0.6
+	player.velocity = Vector3.ZERO
+	var settled := 0
+	while settled < 120 and not player.is_on_floor():
+		await get_tree().physics_frame
+		settled += 1
+	_check(player.is_on_floor(),
+			"the player never came to rest on the floor %.1f m from the "
+			% float(spot["gap"]) + "pad after %d frames" % settled)
+	var stood := player.global_position
+	var before := pad.launched
+	_check(before == pad.launched and not player.in_launch_flight(),
+			"the player was launched before walking anywhere")
+	print("  walk: grounded at %v after %d frames, %.2f m from the pad "
+			% [stood, settled, stood.distance_to(pad.global_position)]
+			+ "at %v" % pad.global_position)
+	_check(stood.distance_to(pad.global_position)
+				> AffordanceNodes.LaunchPad.PAD_REACH,
+			"the player settled %.2f m from the pad centre, which is "
+			% stood.distance_to(pad.global_position) + "inside its own "
+			+ "trigger; there is no walk to make")
+
+	# WALK. Ordinary movement input, and nothing else: the yaw points the
+	# player's own forward at the pad and `move_forward` is held until
+	# the pad's trigger fires by itself.
+	var toward: Vector3 = (pad.global_position - stood)
+	toward.y = 0.0
+	toward = toward.normalized()
+	player.input_frozen = false
+	player.rotation.y = atan2(-toward.x, -toward.z)
+	Input.action_press("move_forward")
+	var steps := 0
+	while steps < 300 and pad.launched == before:
+		await get_tree().physics_frame
+		steps += 1
+	Input.action_release("move_forward")
+	var walked := stood.distance_to(player.global_position)
+	print("  walk: walked %.2f m over %d frames; pad fired %s"
+			% [walked, steps, str(pad.launched > before)])
+	_check(pad.launched > before,
+			"the player walked %.2f m in %d frames and the pad never "
+			% [walked, steps] + "fired; the trigger is not reachable on "
+			+ "foot")
+	if pad.launched == before:
+		await _drop(rig)
+		return
+
+	# THE ARC SURVIVES THE STALE FLOOR RESULT. This is the assertion the
+	# defect fails: the player was grounded when the pad fired, so the
+	# next frame still reports `is_on_floor()` true from the walk.
+	_check(player.in_launch_flight(),
+			"the launch did not survive the frame it fired on")
+	var carrier := player.launch_carrier()
+	await get_tree().physics_frame
+	_check(player.in_launch_flight(),
+			"the arc was ended on the frame after a grounded launch; "
+			+ "`is_on_floor()` was still true from walking")
+	_check(player.launch_carrier().distance_to(carrier) < 0.001,
+			"the carrier changed from %v to %v across the first frame"
+			% [carrier, player.launch_carrier()])
+	var fired_at := player.global_position
+	var axis := Vector3(carrier.x, 0.0, carrier.z).normalized()
+
+	# FLIGHT. Input is released, so this is the arc alone.
+	var apex := player.global_position.y
+	var in_flight := 0
+	var flight := 0
+	while flight < 900:
+		await get_tree().physics_frame
+		flight += 1
+		apex = maxf(apex, player.global_position.y)
+		if player.in_launch_flight():
+			in_flight += 1
+		if player.is_on_floor() and flight > 20:
+			await get_tree().physics_frame
+			break
+	var rose := apex - fired_at.y
+	var forward := (player.global_position - fired_at).dot(axis)
+	print("  walk: launched from %v, rose %.2f m, %.2f m forward along "
+			% [fired_at, rose, forward] + "the authored axis over %d "
+			% flight + "frames (%d of them in flight)" % in_flight)
+	_check(rose > 4.0,
+			"the walked-onto launch lifted the player %.2f m" % rose)
+	_check(forward > 3.0,
+			"the walked-onto launch carried the player %.2f m along its "
+			% forward + "authored direction")
+	_check(in_flight > 30,
+			"the arc was only active for %d frames of a %d frame flight"
+			% [in_flight, flight])
+	_check(not player.in_launch_flight()
+			and player.launch_carrier().length() < 0.001,
+			"the arc did not clear on landing: flight=%s carrier=%v"
+			% [str(player.in_launch_flight()), player.launch_carrier()])
+	player_proofs += 1
+	await _drop(rig)
 
 # --- selection: an identity, not a filter (owner ruling, 2026-09-09) -------
 

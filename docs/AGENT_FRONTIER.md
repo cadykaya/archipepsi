@@ -220,7 +220,18 @@ and a pad fires a player STANDING on it, so the arc was ended before it rose --
 every launch walked onto rather than fallen onto lost its carrier. Only a
 landing ends the arc now, and `_launch_flight` is the single authority for
 whether it is running. State clears on landing, rail, death, respawn and
-`set_spawn`.
+`set_spawn`. **The regression that would have caught it now exists**:
+`_test_a_player_walks_onto_a_pad_and_is_launched` settles a fresh player on
+real floor 3.00 m from the hall's `launch_basin`, walks it on with ordinary
+input, and requires the arc to survive the stale flag -- 24.21 m up and 14.53 m
+forward, versus 24.21 m up and 0.00 m forward with the defect restored.
+
+**SELECTION CARDINALITY: NO CAP** (owner ruling, 2026-09-10, superseding an
+earlier exactly-one-per-Zone instruction). The harness selects ALL accepted
+offers of the chosen mode, sorted by `chamber|kind|offer`. What is load-bearing
+is the shape, not the count: pure validation -> pure selection -> exact-identity
+construction, and construction may never expand the selection. This settles the
+temporary 3A harness only, not the shipped package-selection design.
 
 **THE `none` RESULT IS A SOLVABILITY AUDIT, NOT A COMPLETION.** 50 mandatory
 endpoints, 0 without ground, zero offer geometry -- that is the authored
