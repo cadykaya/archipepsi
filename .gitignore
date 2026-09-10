@@ -11,6 +11,13 @@ saves/
 # The pre-art playtest run's own save directory, kept apart from
 # `saves/` so a baseline playtest cannot overwrite a real campaign.
 playtest-2.5/
+# ...and the 3A/3B checkpoint's, for the same reason. All three movement
+# packages share it deliberately: the Zone is generated once and stored,
+# so `none`, `rail` and `launch` are three visits to one level.
+playtest-3ab/
+# Where YOUR Godot lives. A fact about one machine, not about the
+# project -- committing it hands everyone else a path that is not there.
+godot-path.txt
 .integration-saves/
 generation_archive/
 godot-bin/

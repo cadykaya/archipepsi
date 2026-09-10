@@ -11,7 +11,7 @@
 
 Game code and assets are **unchanged from `96c450e`**. This document and
 the corrections in it are documentation only and were committed
-separately; if this file is at a later commit than the one above, the
+separately (the launcher files added later touch no game code); if this file is at a later commit than the one above, the
 code you are playing is still `96c450e`.
 
 **This is a checkpoint, not a finish line.** It is the 3A/3B slice: an
@@ -86,7 +86,39 @@ same level after the fact.
 The authored-floor budget stays at **4000 m²** as audited. Nothing about
 it changed for this handoff.
 
-## 3. Exact commands
+## 3. The easy way, on Windows
+
+Three double-click files at the repo root:
+
+```
+Play 3AB - none (Windows).bat
+Play 3AB - rail (Windows).bat
+Play 3AB - launch (Windows).bat
+```
+
+Each one finds Python and Godot (asking once and remembering the answer
+in `godot-path.txt`), starts the bridge **if it is not already running**,
+and launches the game with its movement package. Switching modes means
+closing the **game** window and double-clicking the next file — leave the
+bridge window open, and the Zone stays the one you were just in.
+
+They share `playtest-3ab\` as their save directory, which is what makes
+all three the same stored Zone. They prefer Godot's `_console.exe` build
+where it exists, because the ordinary Windows build is a GUI app whose
+`print` output goes nowhere — and the `p3a:` census lines come from the
+game.
+
+All three are one line each; the logic lives once in `_play-3ab.bat`,
+which is not for double-clicking.
+
+**Caveat, stated plainly:** these were written and reviewed on Linux and
+**I could not execute a Windows batch file to test them**. What is
+verified is everything they call — the bridge command, `playtest check`,
+the port they wait on (`127.0.0.1:38290`, confirmed by starting the real
+bridge), and the Godot argument form. If one misbehaves, §4 below is the
+same thing by hand.
+
+## 4. Exact commands, by hand
 
 Two windows: the bridge in one, the game in the other. **Start the bridge
 first.**
@@ -163,7 +195,7 @@ p3a: zone zone_001 mode=launch declared=6 judged=5 accepted=5 selected=1 built=1
 `built=1` in `rail` and `launch`, `built=0` in `none`, and the same
 `zone_001` in all three, is the checkpoint working.
 
-## 4. Controls
+## 5. Controls
 
 Read from `godot/project.godot` at this revision.
 
@@ -179,7 +211,7 @@ Read from `godot/project.godot` at this revision.
 Movement law you can feel: walk **7.0 m/s**, jump **8.0 m/s** against
 **24.0** gravity, a **1.0 m** step-up, player height **1.8 m**.
 
-## 5. What to try
+## 6. What to try
 
 Roughly in order; the first three are the checkpoint itself.
 
@@ -208,7 +240,7 @@ Roughly in order; the first three are the checkpoint itself.
 - [ ] Only when you are done: **take the exit portal** if you want the
       playtime record written, knowing it advances to Zone 2.
 
-## 6. Vera's findings, recorded
+## 7. Vera's findings, recorded
 
 Three claims in the Production report were stronger than the evidence
 behind them. **The facts hold; the wording did not.** Corrected here.
@@ -244,7 +276,7 @@ failed** in a checkout where `make setup` has not run — modules that skip
 at import. Nothing fails either way; the difference is environment, not
 result.
 
-## 7. Follow-ups — logged, not done here
+## 8. Follow-ups — logged, not done here
 
 None of these is done in this task, and none blocks playing.
 
@@ -292,7 +324,7 @@ but neither should stay.
 it does not exclude a yard wall standing in its own approach connector.
 Fixing F-1 is what makes INT-3 mean what it appears to mean.
 
-## 8. Where the evidence lives
+## 9. Where the evidence lives
 
 * Audit — `docs/audit/2026-09-10-3ab-integration-audit.md` @ `a83a8a5`
 * Production report — `docs/reports/2026-09-11-3ab-integration.md`
