@@ -174,6 +174,25 @@ somewhere for the 37-PNG theme texture set to ship, and the binder itself.
 change all twelve shells' bytes to buy tidiness a legacy-aware binder does
 not need.
 
+**ECMS GLYPH IS AVAILABLE AND HAS BEEN RUN (2026-09-10).**
+`cadykaya/ECMS-GLYPH` at **`727129e1`** on `main` — the implementation
+merge. An earlier note in this lane read the frozen authority snapshot
+`0cf872d` and concluded Glyph was "a specification, not a program"; that is
+**superseded**, and the difference was the branch, not the project. `npm ci`
+and `npm run build` are clean on Node 22, the worked example runs, and one
+128 × 128 `concrete_facility` wall has been authored through it on the house
+palette and structure, then bound onto real room geometry through Batch
+041's override path. **It ships nowhere** and no approved asset changed.
+Report: `docs/art/reports/2026-09-10-glyph-first-texture.md`.
+
+Two things a later agent should not have to rediscover. **Glyph's indexed
+colour has no partial mix**, and the house look is built from partial mixes,
+so a Glyph-authored surface comes out crisper than `materials.py`'s — a
+direction question, not a defect. And **the owner has settled `hazard`**:
+every pack must resolve the role, but may resolve it to the same shared
+universal material; separate theme-coloured hazard textures are not
+required.
+
 **001–022 PASS. 031–037 PASS** (031; 032 *with boundary*; 033 *audit, build
 nothing*; 034 *the visual principle*; 035-R; 036-R; 037-R *with a documented
 caveat*; boss audit *accepted, build nothing*).

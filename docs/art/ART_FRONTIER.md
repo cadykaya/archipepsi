@@ -230,6 +230,52 @@ shipped binder:
    reporting, and the "complete before the first visible frame"
    guarantee.
 
+**HAZARD IS SETTLED (owner, 2026-09-10).** Every pack must **resolve** the
+`hazard` role, but may resolve it to the **same shared universal material**.
+Separate theme-coloured hazard textures are **not required**, and none was
+painted. G1 above is answered; it was the one gap that looked like a
+collision with the art lane's own rule and it is not one.
+
+### ECMS Glyph — available, run, and one texture through it (2026-09-10)
+
+Report: `docs/art/reports/2026-09-10-glyph-first-texture.md`. Package:
+`docs/art/review/glyph_trial_2026-09-10/`.
+
+**CORRECTION.** An earlier reconnaissance in this lane inspected
+`cadykaya/ECMS-GLYPH` at `0cf872d` and recorded that Glyph *"is a
+specification, not a program"*. That was true of the revision fetched and
+**false about the project**: `0cf872d` is the frozen authority snapshot, and
+the implementation merged to `main` at **`727129e1`**. Glyph exists, builds
+and runs.
+
+* `npm ci` exit 0, `npm run build` clean, `node tools/first-edit.mjs`
+  produced a project and a PNG, and the container reopens — checked twice,
+  once by the script and once through `glyph describe` / `glyph log` on the
+  closed file. Node v22.22.2 against the documented `>=22.5.0`.
+* **One 128 × 128 `concrete_facility` wall authored through it**, on the
+  house palette and the house structural vocabulary, in a dedicated project
+  with **Skyiah as Lead Owner and Arty as the agent artist** — both
+  identities recorded, neither replacing the other. Six revisions, 936 ms,
+  byte-identical on re-run.
+* Inspected native, at 8×, tiled 3 × 3, beside the shipped painter, and **on
+  real room geometry through Batch 041's per-surface override path** — 0
+  unresolved surfaces.
+* **It ships nowhere.** `assets/textures/theme/concrete_facility_wall.png`
+  is unchanged and no approved asset was touched.
+
+**The concrete limitation, for whoever plans the next Glyph work.** Indexed
+colour has no partial mix, and the house look is built from partial mixes —
+`materials.py` blends at 0.10, 0.26, 0.5, 0.80 and fades streaks
+continuously. In indexed mode every one of those must be pre-resolved into a
+named palette entry, so an eleven-entry wall comes out **crisper and cleaner
+than the shipped one**. Three responses exist — spend more entries, accept
+the crisper look, or author in RGBA and give up the palette constraint — and
+choosing between them is a direction question for the owner, not a defect.
+
+`GLA-PRF-001` (pixel-edit p95 108.08 ms against 100 ms at the certified
+envelope) **remains open and was not touched**. It is a 2048 × 2048 /
+131,072-cel workload; a 128 × 128 texture does not approach it.
+
 Until 1–4 land, §8.4 canonical renaming stays **not started**: it would
 change all twelve shells' bytes to buy tidiness a legacy-aware binder does
 not need. The refreshes the owner flagged for the backlog — Neon Transit,
