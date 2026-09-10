@@ -44,6 +44,7 @@ from archipepsi_bridge.epsilon.requests import (              # noqa: E402
     PlayerContext, RequestLocation, ZoneGenerationRequest)
 from archipepsi_bridge.schemas import constants as C          # noqa: E402
 from archipepsi_bridge.schemas import zone as Z               # noqa: E402
+from archipepsi_bridge import shells                     # noqa: E402
 from archipepsi_bridge.schemas.mechanics import (             # noqa: E402
     Mechanics, owned_affordance_tags, owned_capabilities)
 from archipepsi_bridge.schemas.echo import EchoInterpretation  # noqa: E402
@@ -151,6 +152,10 @@ def build() -> dict:
             owned_echo_ids=[],
             owned_affordance_tags=request.unlocked_affordances,
             guaranteed_capabilities=request.guaranteed_capabilities,
+            # The shells THIS request offered (3B) -- the same unpacking
+            # the shipping validator uses, so the archived evidence is
+            # accepted under the rules the game accepts under.
+            **shells.offer_of(request),
             zone_budget=request.campaign.zone_budget)
         if errors:                       # a bug in our own generator
             raise SystemExit(

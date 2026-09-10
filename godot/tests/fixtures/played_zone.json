@@ -251,7 +251,7 @@
      "requires": []
     }
    ],
-   "shell_id": null,
+   "shell_id": "shell_corner_right",
    "size_class": null,
    "intent": [],
    "type": "corridor",
@@ -342,7 +342,7 @@
    "features": [],
    "additional_reward_location_ids": [],
    "activities": [],
-   "shell_id": null,
+   "shell_id": "shell_corner_right",
    "size_class": null,
    "intent": [],
    "type": "corridor",
@@ -419,7 +419,7 @@
    "features": [],
    "additional_reward_location_ids": [],
    "activities": [],
-   "shell_id": null,
+   "shell_id": "shell_corner_right",
    "size_class": null,
    "intent": [],
    "type": "corridor",
@@ -528,7 +528,7 @@
      "requires": []
     }
    ],
-   "shell_id": null,
+   "shell_id": "shell_corner_left",
    "size_class": null,
    "intent": [],
    "type": "corridor",
@@ -599,7 +599,7 @@
    "features": [],
    "additional_reward_location_ids": [],
    "activities": [],
-   "shell_id": null,
+   "shell_id": "shell_corner_left",
    "size_class": null,
    "intent": [],
    "type": "corridor",
@@ -678,7 +678,7 @@
      "requires": []
     }
    ],
-   "shell_id": null,
+   "shell_id": "shell_corner_right",
    "size_class": null,
    "intent": [],
    "type": "corridor",

@@ -505,6 +505,22 @@ class ContentEntry(Strict):
     #: degradation.
     fits_floors: tuple[int, ...] = Field(default=(), max_length=8)
 
+    #: 3B: which `ElevationBand` kinds this shell's fixed geometry
+    #: PROVIDES. Same shape of promise as `fits_floors`, for the same
+    #: reason: a chamber may declare a gallery or a pit, the procedural
+    #: builder digs one where the chamber says, and an authored shell
+    #: cannot -- its geometry was authored before the request existed.
+    #: Naming a shell for such a chamber produced a room whose declared
+    #: band had no `band_deck` socket, which is a ranged enemy with
+    #: nowhere to be ranged from and a Check standing in a wall (five
+    #: rooms of the played Zone, measured).
+    #:
+    #: EMPTY ON EVERY APPROVED SHELL TODAY, which is a fact about the
+    #: art lane rather than a rule: a chamber with a band therefore
+    #: takes the procedural builder. A shell that one day declares
+    #: `("gallery",)` becomes eligible with no code change here.
+    provides_elevation: tuple[str, ...] = Field(default=(), max_length=8)
+
     #: D1: the semantic size Epsilon asks for, when it asks at all.
     #: Optional -- a shell that is simply "the corridor" needs no class.
     size_class: SizeClass | None = None

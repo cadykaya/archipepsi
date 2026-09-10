@@ -30,6 +30,7 @@ from pathlib import Path
 
 from . import content_value as V
 from .schemas import constants as C
+from . import shells
 from .schemas import zone as Z
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -220,6 +221,11 @@ def preflight_problems() -> list[str]:
         owned_echo_ids=[],
         owned_affordance_tags=request.unlocked_affordances,
         guaranteed_capabilities=request.guaranteed_capabilities,
+        # The shells THIS request offered (3B). Preflight is the last
+        # gate before a human plays, so it is held to the same offer the
+        # acceptance path used -- a preflight applying a stricter rule
+        # than the game would refuse to launch a Zone the game accepts.
+        **shells.offer_of(request),
         zone_budget=request.campaign.zone_budget)
     if errors:
         problems.append(

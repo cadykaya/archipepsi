@@ -52,6 +52,9 @@ func _run() -> void:
 	_the_narrower_opening_decides()
 	_a_room_that_cannot_be_chained_is_named()
 	_every_shipped_shell_is_chainable_by_the_base_kit()
+	_a_normally_generated_zone_builds_authored_rooms()
+	_every_refusal_says_which_one_it_was()
+	_a_fallback_room_never_reports_itself_authored()
 	_cleanup()
 	# Both awaited. A function containing `await` called WITHOUT one
 	# returns at its first suspend, and the suite goes on to print OK
@@ -141,6 +144,155 @@ func _refuses(entries: Array, fragment: String, what: String) -> void:
 	_check(joined.contains(fragment),
 			"%s should be refused with '%s'; errors were: %s"
 			% [what, fragment, joined if not joined.is_empty() else "(none)"])
+
+
+## ---------------------------------------------------------------- 3B --
+##
+## The three questions Stage 3B exists to answer, asked of the ROOM THAT
+## GETS BUILT rather than of the chamber that asked for one.
+
+## Does a Zone the generator actually produced contain authored rooms?
+##
+## Not a hand-picked fixture: `played_zone.json` is dumped from the same
+## Python path the game runs, so this is the composition a player gets.
+## Before 3B every chamber of it carried `shell_id: null` and every room
+## was procedural -- twelve approved shells, selected by nobody.
+func _a_normally_generated_zone_builds_authored_rooms() -> void:
+	var text := FileAccess.get_file_as_string(
+			"res://tests/fixtures/played_zone.json")
+	var zone: Dictionary = JSON.parse_string(text)
+	var authored := 0
+	var claimed := 0
+	for raw: Variant in zone.get("chambers", []):
+		var chamber: Dictionary = raw
+		if chamber.get("shell_id") == null:
+			continue
+		claimed += 1
+		var built := ContentInstantiator.build_chamber(
+				chamber, str(zone.get("theme", "concrete_facility")))
+		var got: Dictionary = built.get("shell_resolution", {})
+		# THE CHOICE AND THE ROOM ARE THE SAME ROOM. A chamber naming a
+		# shell that then falls back is the silent substitution 3B
+		# removes, so this asserts the resolved id, not merely that
+		# something authored was built.
+		_check(str(got.get("build", "")) == ContentInstantiator.BUILD_AUTHORED,
+				"chamber '%s' names '%s' and built %s (%s)" % [
+					str(chamber.get("id", "?")), str(chamber["shell_id"]),
+					str(got.get("build", "?")), str(got.get("reason", ""))])
+		_check(str(got.get("resolved", "")) == str(chamber["shell_id"]),
+				"chamber '%s' asked for '%s' and got '%s'" % [
+					str(chamber.get("id", "?")), str(chamber["shell_id"]),
+					str(got.get("resolved", ""))])
+		if str(got.get("build", "")) == ContentInstantiator.BUILD_AUTHORED:
+			authored += 1
+		(built["root"] as Node3D).queue_free()
+	_check(claimed > 0,
+			"no chamber of the generated Zone names a shell at all, so "
+			+ "this suite cannot tell composition from the old null state")
+	_check(authored == claimed,
+			"%d of %d named chambers built their authored shell"
+			% [authored, claimed])
+	print("  3B: %d authored room(s) in the generated Zone" % authored)
+
+## Every way a selection can fail names ITSELF.
+##
+## "Something fell back" is not a diagnostic: an unknown id, a malformed
+## one, a shell tagged for another room, one too big for the room and one
+## still in art review are five different problems with five different
+## owners. Each is provoked and each must come back with its own reason
+## -- and none of them may quietly become a valid choice.
+func _every_refusal_says_which_one_it_was() -> void:
+	var registry := _load([
+		_authored_entry({"id": "shell_probe_fit",
+			"semantic_tags": ["arena"], "size": [6.0, 3.6, 10.0]}),
+		_authored_entry({"id": "shell_probe_wrong_type",
+			"semantic_tags": ["treasure_room"], "size": [6.0, 3.6, 10.0]}),
+		_authored_entry({"id": "shell_probe_huge",
+			"semantic_tags": ["arena"], "size": [60.0, 3.6, 60.0]}),
+		_authored_entry({"id": "shell_probe_pending",
+			"semantic_tags": ["arena"], "size": [6.0, 3.6, 10.0],
+			"review": "pending"}),
+	])
+	_check(registry.errors.is_empty(),
+			"the 3B probe manifest should validate: %s"
+			% "\n".join(registry.errors))
+
+	var cases := [
+		["shell_probe_fit", ContentInstantiator.BUILD_AUTHORED, ""],
+		["shell_probe_wrong_type", ContentInstantiator.BUILD_PROCEDURAL,
+			ContentInstantiator.REASON_INCOMPATIBLE],
+		["shell_probe_huge", ContentInstantiator.BUILD_PROCEDURAL,
+			ContentInstantiator.REASON_INCOMPATIBLE],
+		["shell_probe_pending", ContentInstantiator.BUILD_PROCEDURAL,
+			ContentInstantiator.REASON_PENDING],
+		["shell_does_not_exist", ContentInstantiator.BUILD_PROCEDURAL,
+			ContentInstantiator.REASON_UNKNOWN],
+		[42, ContentInstantiator.BUILD_PROCEDURAL,
+			ContentInstantiator.REASON_MALFORMED],
+	]
+	for raw: Variant in cases:
+		var case: Array = raw
+		var chamber := {"id": "c1", "type": "arena", "width": 6.0,
+				"depth": 10.0, "wall_height": 4.0, "objective": "kill_all",
+				"shell_id": case[0]}
+		var built := ContentInstantiator.build_chamber(
+				chamber, "concrete_facility", registry)
+		var got: Dictionary = built.get("shell_resolution", {})
+		_check(str(got.get("build", "")) == str(case[1]),
+				"selection %s should have built %s and built %s"
+				% [str(case[0]), str(case[1]), str(got.get("build", "?"))])
+		_check(str(got.get("reason", "")) == str(case[2]),
+				"selection %s should have reported '%s' and reported '%s'"
+				% [str(case[0]), str(case[2]), str(got.get("reason", ""))])
+		# NEVER NORMALISED INTO A VALID CHOICE. A refused selection may
+		# not come back naming some other shell that happened to fit.
+		if str(case[1]) == ContentInstantiator.BUILD_PROCEDURAL:
+			_check(str(got.get("resolved", "")).is_empty(),
+					"refused selection %s resolved to '%s' instead of "
+					% [str(case[0]), str(got.get("resolved", ""))]
+					+ "nothing")
+		(built["root"] as Node3D).queue_free()
+
+	# ...and a chamber the art lane has no shell for is its own outcome,
+	# not a failure: `platform_path` has none and never will have one by
+	# accident.
+	var none := ContentInstantiator.build_chamber(
+			{"id": "c2", "type": "platform_path", "width": 6.0,
+			"depth": 20.0, "gap": 3.0, "island_size": 2.5, "islands": 3,
+			"drop": 12.0}, "concrete_facility", registry)
+	var no_shell: Dictionary = none.get("shell_resolution", {})
+	_check(str(no_shell.get("reason", ""))
+			== ContentInstantiator.REASON_NO_SHELL,
+			"a chamber type with no authored shell reported '%s'"
+			% str(no_shell.get("reason", "")))
+	(none["root"] as Node3D).queue_free()
+
+## A room is authored because the AUTHORED SCENE BUILT IT, never because
+## its input still names one.
+##
+## The census read `chamber["shell_id"]` -- the request -- so a chamber
+## whose shell was refused still reported that shell's name and every
+## consumer downstream counted a procedural room as authored.
+func _a_fallback_room_never_reports_itself_authored() -> void:
+	var registry := _load([_authored_entry({"id": "shell_probe_huge",
+			"semantic_tags": ["arena"], "size": [60.0, 3.6, 60.0]})])
+	var chamber := {"id": "c1", "type": "arena", "width": 6.0,
+			"depth": 10.0, "wall_height": 4.0, "objective": "kill_all",
+			"shell_id": "shell_probe_huge"}
+	var built := ContentInstantiator.build_chamber(
+			chamber, "concrete_facility", registry)
+	var got: Dictionary = built.get("shell_resolution", {})
+	_check(str(chamber["shell_id"]) == "shell_probe_huge",
+			"the input should still carry the id it asked for")
+	_check(str(got.get("requested", "")) == "shell_probe_huge",
+			"the outcome should say what was asked for")
+	_check(str(got.get("build", "")) == ContentInstantiator.BUILD_PROCEDURAL,
+			"an oversize shell built %s" % str(got.get("build", "?")))
+	_check(not built.has("authored_shell"),
+			"a procedural room carries an `authored_shell` stamp, which "
+			+ "is the field a census reads to call it authored")
+	(built["root"] as Node3D).queue_free()
+
 
 func _cleanup() -> void:
 	var dir := DirAccess.open(SCRATCH)

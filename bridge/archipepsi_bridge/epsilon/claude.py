@@ -76,6 +76,22 @@ base jumping, and the default attack — never require an Echo. Prefer a \
 coherent little videogame idea over random nonsense. Return only one \
 schema-valid Zone object.
 
+AUTHORED ROOM SHELLS. `catalog.room_shells` maps a chamber type to the \
+shell IDs offered for it, and `catalog.room_shell_rules` gives each shell's \
+own constraints. PREFER an authored shell wherever a compatible one is \
+offered: set the chamber's `shell_id` to that id. A shell is compatible \
+only when its rule's `types` includes this chamber's `type`, its `size` \
+(x and z, the shell's envelope including walls) is neither larger nor \
+smaller than the chamber's own width and depth — length, for a corridor — \
+plus 0.8, its `fits_floors` includes a tower's `floors`, and its \
+`provides_elevation` includes the `kind` of any elevation band the chamber \
+declares. Where no offered shell is compatible, LEAVE `shell_id` null: that \
+is the normal outcome for a chamber type the art lane has no shell for, and \
+the engine builds the room. Copy an id exactly from the catalog and invent \
+none — an unoffered, misspelled, or incompatible id is rejected and costs a \
+repair round. The shell decides only the room's shape; the Checks, enemies, \
+activities and features are still yours.
+
 Quality preferences: 2-5 chambers is usually enough; avoid the same chamber \
 type three times in a row; at most one brute; give every supplied Check a \
 real payoff moment; design opportunities for a featured Echo without \

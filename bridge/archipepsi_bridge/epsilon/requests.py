@@ -63,6 +63,12 @@ def _shell_catalog() -> dict:
     return shell_catalog()
 
 
+def _shell_rules() -> dict:
+    """The per-shell constraints, read live for the same reason."""
+    from ..shells import shell_rules
+    return shell_rules()
+
+
 class CampaignContext(Strict):
     seed_name: str = Field(max_length=128)
     slot_name: _AP_STR
@@ -157,6 +163,15 @@ class ZoneGenerationRequest(Strict):
         # the live pipeline until now -- the field existed, the
         # validator enforced it, and nothing ever put a shell in it.
         "room_shells": _shell_catalog(),
+        # What each shell REQUIRES, so a choice can be made rather than
+        # guessed (3B). A tower shell built for three floors is illegal
+        # in a four-floor tower, and the registry has always known that
+        # -- withholding it forced a provider to guess and cost a repair
+        # round for a fact already on disk.
+        #
+        # Constraints only: `types`, and `fits_floors` where it applies.
+        # No scene, no path, no metres.
+        "room_shell_rules": _shell_rules(),
     })
     #: Filled from the campaign's own budget after validation, because a
     #: `default_factory` cannot see the instance it belongs to -- and

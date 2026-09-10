@@ -332,8 +332,9 @@ def test_the_fallback_only_hangs_features_on_chambers_with_nothing_on_them():
         if chamber.features:
             assert chamber.reward_location_id is None, chamber.id
             assert not getattr(chamber, "objective", None), chamber.id
-    assert _validate(zone, owned=request.unlocked_affordances,
-                     allocated=[loc.location_id for loc in request.locations]) == []
+    assert _validate(zone, owned=request.unlocked_affordances, request=request,
+                     allocated=[loc.location_id
+                                for loc in request.locations]) == []
 
 
 def test_every_shipping_provider_offers_affordances():
@@ -362,8 +363,9 @@ def test_every_shipping_provider_offers_affordances():
         assert placed, f"{name} offered no affordance at all"
         assert set(placed) <= set(request.unlocked_affordances), (name, placed)
         assert _validate(
-            zone, owned=request.unlocked_affordances,
-            allocated=[loc.location_id for loc in request.locations]) == [], name
+            zone, owned=request.unlocked_affordances, request=request,
+            allocated=[loc.location_id
+                       for loc in request.locations]) == [], name
 
 
 def test_the_fallback_offers_nothing_it_was_not_told_the_player_can_use():
@@ -513,12 +515,22 @@ def _zone(chambers: list[dict]) -> Z.Zone:
         "target_game": "Game", "theme": "void_glitch", "chambers": chambers})
 
 
-def _validate(zone, *, owned=(), allocated=None) -> list[str]:
+def _validate(zone, *, owned=(), allocated=None, request=None) -> list[str]:
+    """As `generate_zone_validated` validates, including the shell offer.
+
+    `request` is optional because most callers here hand-build chambers
+    that name no shell. A caller that generated its Zone FROM a request
+    must pass it: without the offer this helper judged the fallback's
+    valid authored choices against an empty catalog and called them
+    unoffered, which is a rule the shipping path does not apply.
+    """
+    from archipepsi_bridge import shells
     return Z.validate_zone(
         zone, expected_zone_id="zone_001",
         allocated_location_ids=(allocated if allocated is not None
                                 else list(zone.reward_location_ids)),
-        owned_echo_ids=[], owned_affordance_tags=owned)
+        owned_echo_ids=[], owned_affordance_tags=owned,
+        **(shells.offer_of(request) if request is not None else {}))
 
 
 def _gd_const(path: Path, name: str) -> float:

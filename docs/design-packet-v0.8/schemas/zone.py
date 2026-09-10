@@ -611,6 +611,8 @@ def validate_zone(
     owned_affordance_tags: tuple[str, ...] = (),
     guaranteed_capabilities: tuple[str, ...] = M.BASELINE_CAPABILITIES,
     legal_shell_ids: tuple[str, ...] = (),
+    shell_catalog: dict[str, list[str]] | None = None,
+    shell_rules: dict[str, dict] | None = None,
     zone_budget: int | None = None,
 ) -> list[str]:
     """Check a structurally-valid Zone against its request.
@@ -668,6 +670,13 @@ def validate_zone(
     # naming any is wrong -- rather than meaning "anything goes", which
     # is the reading that would let a hallucinated id through on exactly
     # the runs where nothing was offered.
+    # BEING IN THE FLATTENED LIST IS NOT ENOUGH (3B). A treasure room is
+    # offered and it is not an arena, and a tower shell built for three
+    # floors is not a four-floor tower. Both were legal under the
+    # membership test alone, and both produce a Zone that validates here
+    # and silently falls back to a procedural room at runtime -- which
+    # is the substitution 3B exists to remove. So the offer is checked
+    # per chamber TYPE, and the shell's own fixed constraints with it.
     for chamber in zone.chambers:
         if chamber.shell_id is None:
             continue
@@ -678,6 +687,27 @@ def validate_zone(
                 f"from {sorted(legal_shell_ids)}"
                 + ("" if legal_shell_ids
                    else " (no authored shells were offered for this Zone)"))
+            continue
+        if shell_catalog is not None:
+            for_type = shell_catalog.get(chamber.type, [])
+            if chamber.shell_id not in for_type:
+                errors.append(
+                    f"chamber '{chamber.id}' is a '{chamber.type}' and "
+                    f"selects shell '{chamber.shell_id}', which is not "
+                    f"offered for that type; choose from "
+                    f"{sorted(for_type)}"
+                    + ("" if for_type
+                       else f" (no authored shell is offered for "
+                            f"'{chamber.type}')"))
+                continue
+        # The shell's own fixed constraints, judged by THE one rule --
+        # `shells.rule_errors`, which the offline generator selects with
+        # and Godot's `_misfit` mirrors. A second copy here is how a
+        # validator comes to accept what the builder then refuses.
+        from ..shells import rule_errors as _shell_rule_errors
+        rule = (shell_rules or {}).get(chamber.shell_id, {})
+        errors.extend(f"chamber '{chamber.id}' {why}" for why
+                      in _shell_rule_errors(chamber.shell_id, rule, chamber))
 
     # I12: a feature the campaign cannot interact with is set dressing
     # that looks like content, which §13.1 says is worse than nothing.

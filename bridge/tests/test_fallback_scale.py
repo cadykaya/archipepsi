@@ -27,6 +27,7 @@ from archipepsi_bridge.epsilon.requests import (
     CampaignContext, PlayerContext, RequestLocation, ZoneGenerationRequest)
 from archipepsi_bridge.schemas import constants as C
 from archipepsi_bridge.schemas import zone as Z
+from archipepsi_bridge import shells
 
 _ZONE = TypeAdapter(Z.Zone)
 
@@ -62,6 +63,11 @@ def _errors(request: ZoneGenerationRequest, zone: Z.Zone) -> list[str]:
                                 for loc in request.locations],
         owned_echo_ids=[],
         owned_affordance_tags=request.unlocked_affordances,
+        # Held to the offer the request carried, exactly as
+        # `generate_zone_validated` holds a real provider. A helper that
+        # validated against no offer would pass a Zone the game rejects
+        # and reject the Zones it accepts.
+        **shells.offer_of(request),
         zone_budget=request.campaign.zone_budget)
 
 

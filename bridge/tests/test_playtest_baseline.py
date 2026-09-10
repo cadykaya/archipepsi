@@ -29,6 +29,7 @@ from archipepsi_bridge.epsilon.requests import (EchoGenerationRequest,
 from archipepsi_bridge import playtest as PT
 from archipepsi_bridge.fixtures import make_playtest_baseline as B
 from archipepsi_bridge.schemas import constants as C
+from archipepsi_bridge import shells
 from archipepsi_bridge.schemas import zone as Z
 from archipepsi_bridge.schemas.echo import (EchoInterpretation,
                                             validate_interpretation)
@@ -83,6 +84,10 @@ def test_the_recorded_zones_still_validate(baseline):
                                     for loc in request.locations],
             owned_echo_ids=[],
             owned_affordance_tags=request.unlocked_affordances,
+            # From the RECORDED request: the archived Zone is judged
+            # against the offer it was actually generated under, not
+            # against whatever the registry holds today.
+            **shells.offer_of(request),
             zone_budget=request.campaign.zone_budget)
         assert errors == [], (entry["zone_index"], errors)
 

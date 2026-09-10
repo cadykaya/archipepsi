@@ -47,12 +47,20 @@ static func refused_selection(why: String) -> void:
 ## offered six things" is not useful evidence unless you know whether the
 ## room was the authored shell or the procedural stand-in it falls back
 ## to.
+## `shell_id` is the shell that ACTUALLY BUILT, and `requested` the one
+## the Zone asked for. They differ exactly when a selection was refused,
+## and printing only the first was how a procedural room came to be
+## reported under an authored shell's name: the reason says which of the
+## closed `ContentInstantiator.REASON_*` causes applied.
 static func room(named: String, shell_id: String, mode: String,
 		declared: int, judged: int, accepted: int, selected: int,
-		declined: int, built: int, refused: bool) -> void:
+		declined: int, built: int, refused: bool,
+		requested: String = "", reason: String = "") -> void:
+	var shell := "(procedural)" if shell_id == "" else shell_id
+	if shell_id == "" and requested != "":
+		shell = "(procedural: wanted %s, %s)" % [requested, reason]
 	print("%s: room %-10s shell=%-20s mode=%-6s declared=%d judged=%d "
-			% [TAG, named, ("(procedural)" if shell_id == "" else shell_id),
-				mode, declared, judged]
+			% [TAG, named, shell, mode, declared, judged]
 			+ "accepted=%d selected=%d declined=%d built=%d%s"
 			% [accepted, selected, declined, built,
 				("  REFUSED" if refused else "")])

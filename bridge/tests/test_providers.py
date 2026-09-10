@@ -12,6 +12,7 @@ from archipepsi_bridge.epsilon import (
 from archipepsi_bridge.epsilon.requests import (
     EchoGenerationRequest, EchoPlayerState, EchoSource,
 )
+from archipepsi_bridge import shells
 from archipepsi_bridge.schemas import constants as C
 from archipepsi_bridge.schemas import echo as E
 from archipepsi_bridge.schemas.echo import EchoInterpretation
@@ -58,7 +59,8 @@ def test_13_invalid_model_json_falls_back():
         assert provider.zone_repairs == 1
         errors = validate_zone(
             outcome.value, expected_zone_id="zone_001",
-            allocated_location_ids=[89100001, 89100002], owned_echo_ids=[])
+            allocated_location_ids=[89100001, 89100002], owned_echo_ids=[],
+            **shells.offer_of(zone_request()))
         assert errors == []
     run(scenario())
 
@@ -115,7 +117,9 @@ def test_fallback_zone_valid_for_all_check_counts():
         zone = zone_adapter.validate_python(raw)
         assert validate_zone(zone, expected_zone_id="zone_001",
                              allocated_location_ids=list(ids),
-                             owned_echo_ids=[]) == []
+                             owned_echo_ids=[],
+                             **shells.offer_of(
+                                 zone_request(tuple(ids)))) == []
 
 
 def test_mock_provider_zones_are_varied_and_always_valid():
@@ -150,7 +154,8 @@ def test_mock_provider_zones_are_varied_and_always_valid():
                     assert validate_zone(
                         zone, expected_zone_id=scoped.zone_id,
                         allocated_location_ids=ids, owned_echo_ids=[],
-                        owned_affordance_tags=unlocked) == [], (
+                        owned_affordance_tags=unlocked,
+                        **shells.offer_of(scoped)) == [], (
                             seed_index, count, unlocked)
                     placed = [f.tag for c in zone.chambers for f in c.features]
                     if unlocked:
@@ -185,7 +190,7 @@ def test_mock_finale_keeps_the_reserved_shape():
         assert validate_zone(
             zone, expected_zone_id=request.zone_id,
             allocated_location_ids=[C.GOAL_LOCATION_ID],
-            owned_echo_ids=[]) == []
+            owned_echo_ids=[], **shells.offer_of(request)) == []
     run(scenario())
 
 
@@ -323,7 +328,8 @@ def test_every_fallback_zone_validates_at_every_index():
                 allocated_location_ids=[
                     loc.location_id for loc in request.locations],
                 owned_echo_ids=[],
-                owned_affordance_tags=request.unlocked_affordances)
+                owned_affordance_tags=request.unlocked_affordances,
+                **shells.offer_of(request))
             assert not errors, (
                 f"fallback zone {index} (finale={finale}) is invalid, so "
                 f"the portal would refuse to open: {errors}")

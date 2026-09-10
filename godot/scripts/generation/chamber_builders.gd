@@ -85,8 +85,23 @@ static func _gather_solids(node: Node, xform: Transform3D,
 		here = xform * (node as Node3D).transform
 	if node is MeshInstance3D:
 		var box: AABB = here * (node as MeshInstance3D).get_aabb()
-		if everything or (box.size.x < ROOM_SCALE_SOLID
-				and box.size.z < ROOM_SCALE_SOLID):
+		# THE ARCHITECTURE FILTER APPLIES ON BOTH PATHS (3B). `everything`
+		# meant "also read collision hulls", and it ALSO switched this
+		# filter off -- two unrelated things behind one flag. The cost
+		# was invisible until authored shells actually built: an authored
+		# shell is ONE merged mesh for the whole room, so its single AABB
+		# is the room, and with the filter off every interior spot was
+		# "inside geometry". `Activities._best_surface` then found zero
+		# usable points on all twelve declared surfaces of the Hall, fell
+		# back to the flat solve, and put 22 elements at the corners of
+		# the bounding box where there is no floor. Treating the room
+		# itself as an obstacle leaves every solver with nowhere legal
+		# to go, which is what this constant has always said.
+		#
+		# The hulls are NOT filtered: they are per-piece and describe the
+		# real interior, and a deck over a walkway is decisive for
+		# clearance even though it is room-scale.
+		if box.size.x < ROOM_SCALE_SOLID and box.size.z < ROOM_SCALE_SOLID:
 			out.append(box)
 	if everything and node is CollisionShape3D:
 		var shape := (node as CollisionShape3D).shape

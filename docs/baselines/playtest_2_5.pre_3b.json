@@ -988,137 +988,6 @@
             "kill_all",
             "platform_to_goal"
           ],
-          "room_shell_rules": {
-            "shell_corner_left": {
-              "size": [
-                6.8,
-                4.5,
-                6.8
-              ],
-              "types": [
-                "corridor"
-              ]
-            },
-            "shell_corner_right": {
-              "size": [
-                6.8,
-                4.5,
-                6.8
-              ],
-              "types": [
-                "corridor"
-              ]
-            },
-            "shell_hall_transit": {
-              "size": [
-                41.2,
-                39.6,
-                60.0
-              ],
-              "types": [
-                "arena"
-              ]
-            },
-            "shell_plenum_helix": {
-              "size": [
-                21.2,
-                73.6,
-                20.0
-              ],
-              "types": [
-                "tower"
-              ]
-            },
-            "shell_span_basin": {
-              "size": [
-                31.2,
-                23.6,
-                90.0
-              ],
-              "types": [
-                "arena"
-              ]
-            },
-            "shell_tower_collapsed": {
-              "fits_floors": [
-                2
-              ],
-              "size": [
-                12.8,
-                11.5,
-                14.6
-              ],
-              "types": [
-                "tower"
-              ]
-            },
-            "shell_tower_gantry": {
-              "fits_floors": [
-                5
-              ],
-              "size": [
-                12.8,
-                20.5,
-                14.6
-              ],
-              "types": [
-                "tower"
-              ]
-            },
-            "shell_tower_spiral": {
-              "fits_floors": [
-                3
-              ],
-              "size": [
-                12.8,
-                14.5,
-                14.6
-              ],
-              "types": [
-                "tower"
-              ]
-            },
-            "shell_treasure_cache": {
-              "size": [
-                8.8,
-                5.4,
-                8.8
-              ],
-              "types": [
-                "treasure_room"
-              ]
-            },
-            "shell_treasure_coffer": {
-              "size": [
-                8.8,
-                6.3,
-                8.8
-              ],
-              "types": [
-                "treasure_room"
-              ]
-            },
-            "shell_treasure_vault": {
-              "size": [
-                8.8,
-                5.4,
-                8.8
-              ],
-              "types": [
-                "treasure_room"
-              ]
-            },
-            "shell_yard_gantry": {
-              "size": [
-                85.2,
-                17.6,
-                52.0
-              ],
-              "types": [
-                "arena"
-              ]
-            }
-          },
           "room_shells": {
             "arena": [
               "shell_hall_transit",
@@ -1496,7 +1365,6 @@
             ],
             "id": "c007",
             "length": 14.7,
-            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 7.9
           },
@@ -1556,7 +1424,6 @@
           {
             "id": "c010",
             "length": 12.5,
-            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 7.9
           },
@@ -1607,7 +1474,6 @@
           {
             "id": "c013",
             "length": 13.0,
-            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 7.9
           },
@@ -1683,7 +1549,6 @@
             ],
             "id": "c016",
             "length": 8.5,
-            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 7.9
           },
@@ -1726,7 +1591,6 @@
           {
             "id": "c019",
             "length": 13.3,
-            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 7.9
           },
@@ -1776,7 +1640,6 @@
             ],
             "id": "c022",
             "length": 14.4,
-            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 7.9
           },
@@ -1855,137 +1718,6 @@
             "kill_all",
             "platform_to_goal"
           ],
-          "room_shell_rules": {
-            "shell_corner_left": {
-              "size": [
-                6.8,
-                4.5,
-                6.8
-              ],
-              "types": [
-                "corridor"
-              ]
-            },
-            "shell_corner_right": {
-              "size": [
-                6.8,
-                4.5,
-                6.8
-              ],
-              "types": [
-                "corridor"
-              ]
-            },
-            "shell_hall_transit": {
-              "size": [
-                41.2,
-                39.6,
-                60.0
-              ],
-              "types": [
-                "arena"
-              ]
-            },
-            "shell_plenum_helix": {
-              "size": [
-                21.2,
-                73.6,
-                20.0
-              ],
-              "types": [
-                "tower"
-              ]
-            },
-            "shell_span_basin": {
-              "size": [
-                31.2,
-                23.6,
-                90.0
-              ],
-              "types": [
-                "arena"
-              ]
-            },
-            "shell_tower_collapsed": {
-              "fits_floors": [
-                2
-              ],
-              "size": [
-                12.8,
-                11.5,
-                14.6
-              ],
-              "types": [
-                "tower"
-              ]
-            },
-            "shell_tower_gantry": {
-              "fits_floors": [
-                5
-              ],
-              "size": [
-                12.8,
-                20.5,
-                14.6
-              ],
-              "types": [
-                "tower"
-              ]
-            },
-            "shell_tower_spiral": {
-              "fits_floors": [
-                3
-              ],
-              "size": [
-                12.8,
-                14.5,
-                14.6
-              ],
-              "types": [
-                "tower"
-              ]
-            },
-            "shell_treasure_cache": {
-              "size": [
-                8.8,
-                5.4,
-                8.8
-              ],
-              "types": [
-                "treasure_room"
-              ]
-            },
-            "shell_treasure_coffer": {
-              "size": [
-                8.8,
-                6.3,
-                8.8
-              ],
-              "types": [
-                "treasure_room"
-              ]
-            },
-            "shell_treasure_vault": {
-              "size": [
-                8.8,
-                5.4,
-                8.8
-              ],
-              "types": [
-                "treasure_room"
-              ]
-            },
-            "shell_yard_gantry": {
-              "size": [
-                85.2,
-                17.6,
-                52.0
-              ],
-              "types": [
-                "arena"
-              ]
-            }
-          },
           "room_shells": {
             "arena": [
               "shell_hall_transit",
@@ -2349,7 +2081,6 @@
             ],
             "id": "c007",
             "length": 14.7,
-            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 7.9
           },
@@ -2415,7 +2146,6 @@
             ],
             "id": "c010",
             "length": 9.1,
-            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 7.9
           },
@@ -2470,7 +2200,6 @@
           {
             "id": "c013",
             "length": 13.6,
-            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 7.9
           },
@@ -2532,7 +2261,6 @@
           {
             "id": "c016",
             "length": 13.6,
-            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 7.9
           },
@@ -2575,7 +2303,6 @@
           {
             "id": "c019",
             "length": 15.2,
-            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 7.9
           },
@@ -2625,7 +2352,6 @@
             ],
             "id": "c022",
             "length": 8.6,
-            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 7.9
           },
@@ -2704,137 +2430,6 @@
             "kill_all",
             "platform_to_goal"
           ],
-          "room_shell_rules": {
-            "shell_corner_left": {
-              "size": [
-                6.8,
-                4.5,
-                6.8
-              ],
-              "types": [
-                "corridor"
-              ]
-            },
-            "shell_corner_right": {
-              "size": [
-                6.8,
-                4.5,
-                6.8
-              ],
-              "types": [
-                "corridor"
-              ]
-            },
-            "shell_hall_transit": {
-              "size": [
-                41.2,
-                39.6,
-                60.0
-              ],
-              "types": [
-                "arena"
-              ]
-            },
-            "shell_plenum_helix": {
-              "size": [
-                21.2,
-                73.6,
-                20.0
-              ],
-              "types": [
-                "tower"
-              ]
-            },
-            "shell_span_basin": {
-              "size": [
-                31.2,
-                23.6,
-                90.0
-              ],
-              "types": [
-                "arena"
-              ]
-            },
-            "shell_tower_collapsed": {
-              "fits_floors": [
-                2
-              ],
-              "size": [
-                12.8,
-                11.5,
-                14.6
-              ],
-              "types": [
-                "tower"
-              ]
-            },
-            "shell_tower_gantry": {
-              "fits_floors": [
-                5
-              ],
-              "size": [
-                12.8,
-                20.5,
-                14.6
-              ],
-              "types": [
-                "tower"
-              ]
-            },
-            "shell_tower_spiral": {
-              "fits_floors": [
-                3
-              ],
-              "size": [
-                12.8,
-                14.5,
-                14.6
-              ],
-              "types": [
-                "tower"
-              ]
-            },
-            "shell_treasure_cache": {
-              "size": [
-                8.8,
-                5.4,
-                8.8
-              ],
-              "types": [
-                "treasure_room"
-              ]
-            },
-            "shell_treasure_coffer": {
-              "size": [
-                8.8,
-                6.3,
-                8.8
-              ],
-              "types": [
-                "treasure_room"
-              ]
-            },
-            "shell_treasure_vault": {
-              "size": [
-                8.8,
-                5.4,
-                8.8
-              ],
-              "types": [
-                "treasure_room"
-              ]
-            },
-            "shell_yard_gantry": {
-              "size": [
-                85.2,
-                17.6,
-                52.0
-              ],
-              "types": [
-                "arena"
-              ]
-            }
-          },
           "room_shells": {
             "arena": [
               "shell_hall_transit",
@@ -3194,7 +2789,6 @@
           {
             "id": "c007",
             "length": 10.0,
-            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 7.9
           },
@@ -3256,7 +2850,6 @@
             ],
             "id": "c010",
             "length": 14.5,
-            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 7.9
           },
@@ -3307,7 +2900,6 @@
           {
             "id": "c013",
             "length": 10.5,
-            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 7.9
           },
@@ -3390,7 +2982,6 @@
             ],
             "id": "c016",
             "length": 11.7,
-            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 7.9
           },
@@ -3433,7 +3024,6 @@
           {
             "id": "c019",
             "length": 14.6,
-            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 7.9
           },
@@ -3483,7 +3073,6 @@
             ],
             "id": "c022",
             "length": 15.9,
-            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 7.9
           },

@@ -329,10 +329,33 @@ func _audit_rewards(build: Dictionary, space: PhysicsDirectSpaceState3D) -> void
 			query.transform = Transform3D(Basis(), at + Vector3.UP
 					* (ChamberBuilders.REWARD_PEDESTAL_HEIGHT / 2.0 + 0.2))
 			query.collide_with_areas = false
-			_check(space.intersect_shape(query, 1).is_empty(),
-					"Check %s in room '%s' stands inside the room's own "
-					% [str(ids[index]), str(chamber.get("id", "?"))]
-					+ "geometry")
+			# NAME THE COLLIDER. "Stands inside geometry" was true and
+			# useless: it does not say whether the pedestal is in its own
+			# room's wall, in a prop, or in a NEIGHBOURING room that the
+			# chain placed over it, and those are three different bugs
+			# with three different fixes.
+			var hits := space.intersect_shape(query, 4)
+			var named: Array[String] = []
+			for hit: Dictionary in hits:
+				var body: Node = hit.get("collider") as Node
+				if body == null:
+					named.append("<freed>")
+					continue
+				# WHICH ROOM it belongs to, walked up rather than
+				# guessed: a pedestal inside its own room's wall and one
+				# inside the NEXT room the chain placed over it look
+				# identical from the collider alone.
+				var chain: Array[String] = []
+				var walk: Node = body
+				while walk != null and chain.size() < 6:
+					chain.append(str(walk.name))
+					walk = walk.get_parent()
+				named.append("%s [%s]" % [body.get_class(),
+						" < ".join(PackedStringArray(chain))])
+			_check(hits.is_empty(),
+					"Check %s in room '%s' at %v stands inside: %s"
+					% [str(ids[index]), str(chamber.get("id", "?")),
+						at, ", ".join(PackedStringArray(named))])
 	_check(checks > 0, "the Zone allocates no Checks to measure")
 	print("  %d Check pedestal(s) measured where they will stand" % checks)
 

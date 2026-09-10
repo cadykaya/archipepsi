@@ -56,6 +56,7 @@ func _run() -> void:
 	await _test_a_second_construction_is_refused()
 	await _test_an_unknown_selection_is_refused_not_defaulted()
 	await _test_ordinary_startup_builds_no_movement_geometry()
+	await _test_an_ordinary_generated_zone_honours_the_package()
 
 	_check(zones_built >= 3,
 			"only %d showcase Zones were built; the three selections must "
@@ -1547,3 +1548,82 @@ func pad_free_air(zone: ZoneController) -> Vector3:
 		var root: Node3D = record["node"]
 		return root.global_transform * Vector3(0.0, 12.0, 20.0)
 	return Vector3(0.0, 12.0, 20.0)
+
+
+## 3B: the operator's package reaches a NORMALLY GENERATED Zone.
+##
+## In 3A `--movement-package` was held for the showcase alone and
+## deliberately not inherited, so the movement work was provable only
+## against four hand-picked rooms and the shipping composition path was
+## never exercised by it. The Zone here is `played_zone.json` -- dumped
+## from the same Python the game runs -- entered through the same
+## `ZoneController` an ordinary player enters through.
+##
+## WHAT THIS DOES NOT CLAIM. The approved shells this Zone composes with
+## declare no movement offers, so the honest assertion is that the offer
+## stage RAN and found nothing to build: a census exists, every room was
+## judged before anything was constructed, and nothing was refused. A
+## test that asserted rails appeared would be asserting content the art
+## lane has not shipped.
+func _test_an_ordinary_generated_zone_honours_the_package() -> void:
+	var text := FileAccess.get_file_as_string(
+			"res://tests/fixtures/played_zone.json")
+	var zone_data: Dictionary = JSON.parse_string(text)
+	var authored := 0
+	for raw: Variant in zone_data.get("chambers", []):
+		if (raw as Dictionary).get("shell_id") != null:
+			authored += 1
+	_check(authored > 0,
+			"the generated Zone names no authored shell, so this test "
+			+ "would prove the package reaches a procedural Zone only")
+
+	for mode: String in ["none", "rail", "launch"]:
+		var host := Node3D.new()
+		add_child(host)
+		var zone := ZoneController.new()
+		zone.movement_package = mode
+		host.add_child(zone)
+		zone.setup(zone_data)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		zones_built += 1
+
+		_check(zone.movement_package == mode,
+				"an ordinary Zone did not keep the package it was given")
+		var census: Dictionary = zone.offer_census
+		_check(int(census.get("judged_before_first_build", 0))
+				== (zone.offer_rooms as Array).size(),
+				"%s: %d room(s) were judged and the Zone has %d"
+				% [mode, int(census.get("judged_before_first_build", 0)),
+					(zone.offer_rooms as Array).size()])
+		_check(int(census.get("refused", 0)) == 0,
+				"%s: %d room(s) refused validation in an ordinary Zone"
+				% [mode, int(census.get("refused", 0))])
+		# Nothing offered, so nothing selected and nothing built -- and
+		# the three must agree. A built count above a selected count is
+		# construction without a choice behind it.
+		_check(int(census.get("selected", 0))
+				<= int(census.get("accepted", 0)),
+				"%s: more offers selected than were accepted" % mode)
+		_check(int(census.get("built", 0))
+				<= int(census.get("selected", 0)),
+				"%s: %d node(s) built from %d selection(s)"
+				% [mode, int(census.get("built", 0)),
+					int(census.get("selected", 0))])
+		# ...and the rooms report the shell that BUILT, so an authored
+		# room in an ordinary Zone is visible as one here.
+		var built_authored := 0
+		for entry: Variant in zone.offer_rooms:
+			var record: Dictionary = entry
+			var got: Dictionary = (record["build"] as Dictionary).get(
+					"shell_resolution", {})
+			if str(got.get("build", "")) \
+					== ContentInstantiator.BUILD_AUTHORED:
+				built_authored += 1
+		_check(built_authored == authored,
+				"%s: %d authored room(s) built and %d were named"
+				% [mode, built_authored, authored])
+		host.queue_free()
+		await get_tree().process_frame
+

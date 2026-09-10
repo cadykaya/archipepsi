@@ -39,8 +39,22 @@ _ZONE_ADAPTER = TypeAdapter(_Zone)
 
 
 def _rule_errors(zone, request, budget: int) -> list[str]:
-    """The same rules the real provider's output has to satisfy."""
+    """The same rules the real provider's output has to satisfy.
+
+    THE SAME RULES MEANS THE SAME CATALOG (3B). This self-check omitted
+    `legal_shell_ids`, so the moment the fallback started naming authored
+    shells it rejected every one of its own choices as "not offered" --
+    and, being a retry loop, quietly produced a DIFFERENT Zone on each
+    salt until it ran out and shipped the last one. The measured cost was
+    a played Zone whose every chamber changed while nothing about its
+    content had been asked to. A self-check held to different rules than
+    the caller is not a self-check.
+
+    Taken from the request, exactly as `generate_zone_validated` does:
+    what the provider was offered is what it is held to.
+    """
     from ..schemas.zone import validate_zone
+    from ..shells import offer_of
     return validate_zone(
         zone, expected_zone_id=request.zone_id,
         allocated_location_ids=[loc.location_id
@@ -48,6 +62,7 @@ def _rule_errors(zone, request, budget: int) -> list[str]:
         owned_echo_ids=[],
         owned_affordance_tags=request.unlocked_affordances,
         guaranteed_capabilities=request.guaranteed_capabilities,
+        **offer_of(request),
         zone_budget=budget)
 
 
@@ -106,6 +121,17 @@ def fallback_zone_attempt(request: ZoneGenerationRequest) -> tuple[dict, int]:
         chambers = _build_to_budget(seeded, locations, budget,
                                     request.unlocked_affordances)
         _add_features(chambers, request.unlocked_affordances, n)
+        # AFTER the geometry is final, and that is load bearing.
+        # `_add_features` WIDENS a corridor it is about to hang something
+        # on, so selecting first judged every shell against a width the
+        # room was about to stop having: five of the played Zone's eight
+        # corridors were refused a corner shell they then fitted. A
+        # choice made against dimensions that change afterwards is not a
+        # choice about the room that gets built.
+        _select_authored_shells(
+            seeded, chambers,
+            request.catalog.get("room_shells", {}),
+            request.catalog.get("room_shell_rules", {}))
         return {
             "schema_version": 7,
             "zone_id": request.zone_id,
@@ -424,6 +450,55 @@ def _build_to_budget(rng, locations, budget, unlocked) -> list[dict]:
                 break
 
     return chambers
+
+
+def _select_authored_shells(rng, chambers: list[dict],
+                            catalog: dict, rules: dict) -> None:
+    """Name an approved authored shell for every chamber one fits (3B).
+
+    THE GAP THIS CLOSES. `shell_id` has been on the chamber schema since
+    D1, `validate_zone` has refused an unoffered one, and
+    `ContentInstantiator` resolves it -- but nothing ever WROTE one, so
+    every chamber of every generated Zone carried `shell_id: null` and
+    `SHELL_FOR_TYPE` routed all of them to a procedural builder. Twelve
+    approved shells were selectable in principle and selected by nobody.
+
+    FROM THE REQUEST'S OFFER, NOT FROM THE REGISTRY. `shells.offered_for`
+    reads the catalog this request actually carries. The first draft read
+    the registry directly and was wrong in a way production could not
+    show: the live request is built from that same registry, so the two
+    agreed -- until a request offering nothing got shells named anyway,
+    and sixty-eight tests said so. The offer is the contract.
+
+    PREFER AUTHORED WHERE COMPATIBLE, and say nothing where not. A
+    chamber type with no offered shell -- `platform_path` today -- keeps
+    `shell_id` absent, which is the documented "no compatible shell" case
+    and not an oversight. Compatibility is `shells.rule_errors`, the one
+    rule `validate_zone` enforces and Godot's `_misfit` mirrors, so a
+    choice made here cannot be one the validator then refuses.
+
+    DETERMINISTIC, AND IT DOES NOT MOVE THE STREAM. The candidate list is
+    sorted and the pick comes from the Zone's own seeded `rng`, so one
+    seed names one set of shells -- but the generator's random state is
+    SNAPSHOTTED and RESTORED around the picks. Without that, naming
+    shells advanced the stream every later draw reads from, and the
+    measured cost was real: the played Zone went from 35 enemies to 29
+    and from 922 points to 927 while nothing about its content had been
+    asked to change. A field being added must not silently rewrite the
+    level it is added to.
+    """
+    from ..shells import offered_for
+    if not catalog:
+        return
+    state = rng.getstate()
+    try:
+        for chamber in chambers:
+            options = offered_for(chamber, catalog, rules)
+            if not options:
+                continue
+            chamber["shell_id"] = options[rng.randrange(len(options))]
+    finally:
+        rng.setstate(state)
 
 
 class _AsChamber:

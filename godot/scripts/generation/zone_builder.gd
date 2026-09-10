@@ -100,6 +100,9 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 	var built_chambers: Array = []
 	var bounds_list: Array = []
 	var first := true
+	## Set when the room just placed bent the route itself, so the corner
+	## roll below is skipped exactly once rather than compounding.
+	var straight_after_turn := false
 
 	for chamber: Dictionary in zone.get("chambers", []):
 		# S13: every chamber's geometry is chosen here, not assumed.
@@ -119,7 +122,9 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 
 		# Maybe take a corner first. Turns alternate direction, and both the
 		# corner and the chamber beyond it must clear every prior arm.
-		if not first and rng.randf() < TURN_CHANCE:
+		var may_turn := not straight_after_turn
+		straight_after_turn = false
+		if not first and may_turn and rng.randf() < TURN_CHANCE:
 			var corner := ChamberBuilders.corner(next_turn, theme)
 			var corner_world: AABB = _world_aabb(corner["bounds"], cursor, yaw)
 			var yaw_after := yaw + float(next_turn) * PI / 2.0
@@ -150,6 +155,22 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 			cursor = _emit_connector(root, theme, cursor, yaw, placed,
 					bounds_list)
 			attempts += 1
+		# NEVER SILENTLY. A room placed on top of another is a Check in a
+		# wall and an enemy inside the floor. The retry budget stays six
+		# connectors -- pushing further just marches a corridor THROUGH
+		# the rooms in the way, since a connector is never itself
+		# overlap-checked -- so what changes here is that giving up is
+		# reported. The condition that exhausted it (an authored shell
+		# several times the size of the chamber it was building) is now
+		# refused at selection by `ContentInstantiator._footprint_misfit`
+		# and `shells.rule_errors`, which is where an oversize room
+		# should be stopped; this is the guard that says so if one ever
+		# gets past them again.
+		if _overlaps(placed, _world_aabb(result["bounds"],
+				origin_for(cursor, yaw, entry_at), yaw)):
+			push_error("zone: room '%s' could not be placed clear of "
+					% str(chamber.get("id", "?"))
+					+ "the rooms before it after %d connectors" % attempts)
 
 		var origin := origin_for(cursor, yaw, entry_at)
 		var node: Node3D = result["root"]
@@ -177,6 +198,19 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 		var turn := float(result.get("exit_yaw", 0.0))
 		if RoomContract.EXIT_YAWS.has(turn):
 			yaw += deg_to_rad(turn)
+			# A ROOM THAT TURNED THE CHAIN HAS TURNED IT. The random
+			# corner below is the layout's way of not running in a
+			# straight line, and it rolled independently of whether the
+			# room just placed had already bent the route -- so a corner
+			# shell's 90 degrees plus a corner piece's 90 degrees sent
+			# the next room straight back into the arm it had just left.
+			# Nothing noticed while no room turned: `exit_yaw` was zero
+			# on every procedural builder, so the second turn never had
+			# a first one to compound. With eight authored corners in a
+			# Zone it folded the chain onto itself, and Zone 1's `c020`
+			# came to hold its Check inside `c023`.
+			if turn != 0.0:
+				straight_after_turn = true
 		else:
 			push_warning("zone: chamber '%s' asks to turn %.1f degrees; "
 					% [str(chamber.get("id", "?")), turn]

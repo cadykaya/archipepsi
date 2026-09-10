@@ -302,6 +302,16 @@ def test_the_art_spec_quotes_the_real_architectural_dimensions():
         assert stated == pytest.approx(float(found.group(1))), (
             f"ART_ASSET_SPEC says {name} is {stated}, the code says "
             f"{found.group(1)}")
+        if name == "WALL_THICKNESS":
+            # THE THIRD COPY. `shells.rule_errors` asks whether a shell's
+            # envelope fits a chamber's interior, and it needs the wall
+            # allowance to ask. A Python mirror that drifted from
+            # GDScript would offer a shell Godot then refuses.
+            from archipepsi_bridge import shells
+            assert shells.WALL_THICKNESS == pytest.approx(
+                float(found.group(1))), (
+                    f"shells.WALL_THICKNESS is {shells.WALL_THICKNESS}, "
+                    f"the generation code says {found.group(1)}")
 
 
 def test_the_art_spec_names_every_category_the_registry_accepts():

@@ -167,6 +167,60 @@ What remains needs a person, not more iteration
 5. **Project code licensing** — separate from asset intake, and not
    decided.
 
+## STAGE 3B — authored rooms in a generated Zone, 2026-09-10
+
+**CURRENT STATE.** `docs/ROAD_TO_PLAYABLE_0_3.md` is the frozen authority.
+Report: `docs/reports/2026-09-10-playtest3b-authored-composition.md`.
+
+**DONE.** Approved authored shells reach a played Zone through ordinary
+generation -- selected by the offline generator from the request's own
+catalog, judged by the shared rule, stored, and built by the runtime.
+**Zone 1 composes 6 of 23 chambers from authored shells** (both corner
+variants), and every one builds the authored scene. `--movement-package`
+now reaches ordinary Zones, no `--playtest3a` required. The showcase is
+unchanged and remains a regression fixture.
+
+**Digests moved, content did not.** Played Zone `6e8d83d0f3ec088b` ->
+`ab57d275eea29018`; baseline `5a7cfdc03da0e59b` -> `c1131ac29931cc68`.
+Machine-checked on all three baseline Zones: with `shell_id` removed the
+new and preserved Zones are byte-identical and every measurement matches
+(23 rooms, 15 Checks, 922/912/913 value, 35/26/32 enemies). The pre-3B
+baseline is kept verbatim at `docs/baselines/playtest_2_5.pre_3b.json`.
+
+**ONE compatibility rule, mirrored.** `shells.rule_errors` (Python) and
+`ContentInstantiator._misfit` (GDScript) judge `semantic_tags`, `size`,
+`provides_elevation` and `fits_floors`. Godot previously checked
+`fits_floors` alone. A parity test fails if a clause is added to one side
+only. `shells.offer_of` is the single definition of the shell arguments a
+request carries -- used by the acceptance path, the generator's
+self-check, preflight, the archive replayer, the baseline fixture and the
+tests, because the self-check being held to different rules than its
+caller silently changed the played Zone's content.
+
+**BLOCKED ON ART, not on engineering.** No approved shell can build an
+arena: all three arena shells are 2-5x the size of any arena the generator
+produces, and five arenas additionally declare an elevation band no shell
+provides. Unblocked by (1) arena shells at generator scale, roughly 12-26 m
+on both floor axes, or (2) a shell declaring `provides_elevation` -- the
+field exists, is empty everywhere, and needs no code change to take
+effect. Until then the honest number is 6 of 23, and it is corridors.
+
+**Deliberately not attempted:** having the generator adopt a selected
+shell's fixed dimensions as the chamber's. Probably the right long-term
+design; it changes every downstream number and is an owner decision.
+
+**Three defects found in code 3B did not touch,** all fixed: an authored
+room's single merged mesh was read as one room-filling solid (the
+`ROOM_SCALE_SOLID` filter was switched off by the same flag that enables
+hull reading), so 22 activity elements were solved onto nothing; the
+builder reserved the Check's space in a local array the composer never
+saw; and a room that turned the chain could be followed by a corner piece
+turning it again, folding rooms into each other.
+
+**Gates:** Python 1142/0; 18 Godot suites exit 0; packet gate clean.
+The production Epsilon prompt now states the catalog and every
+compatibility clause; it had never mentioned `room_shells` at all.
+
 ## STAGE 3A — a player rides an authored rail, 2026-09-09
 
 **CURRENT STATE.** `docs/ROAD_TO_PLAYABLE_0_3.md` is the frozen authority;

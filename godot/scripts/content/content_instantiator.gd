@@ -25,6 +25,29 @@ extends RefCounted
 ## Chamber type -> the content id that provides it. The indirection S15
 ## needs: a themed or authored shell registers a new id and points its
 ## `fallback` at the procedural one, and nothing here changes.
+## WHICH BUILDER ANSWERED. Two values, and no third: a room is either
+## the authored scene or the procedural builder's.
+const BUILD_AUTHORED := "authored"
+const BUILD_PROCEDURAL := "procedural"
+
+## WHY THE PROCEDURAL BUILDER ANSWERED. A closed list, so a consumer can
+## branch on it, and distinct values because the causes are different
+## kinds of thing: a chamber type with no authored shell is the designed
+## outcome, an unknown id is a downgraded registry, an incompatible one
+## is a composition mistake, and a pending one is the art gate holding.
+##
+## "not offered" is deliberately ABSENT. The offer is the request's
+## catalog, which lives on the Python side and never crosses to the
+## runtime; `validate_zone` refuses an unoffered id before a Zone is
+## ever stored. Inventing a runtime offer check here would mean a second
+## opinion about a fact this process does not have.
+const REASON_NO_SHELL := "no_authored_shell_for_type"
+const REASON_UNKNOWN := "unknown_shell_id"
+const REASON_MALFORMED := "malformed_shell_id"
+const REASON_INCOMPATIBLE := "incompatible_shell"
+const REASON_UNRESOLVABLE := "unresolvable_chain"
+const REASON_PENDING := "pending_art_review"
+
 const SHELL_FOR_TYPE := {
 	"corridor": "shell_corridor_proc",
 	"arena": "shell_arena_proc",
@@ -75,18 +98,36 @@ static func build_chamber(chamber: Dictionary, theme: String,
 	# buried elements the audit found was two builders that could not see
 	# their own geometry -- see `ChamberBuilders.solid_boxes` and the
 	# ramp's `reserved` socket.
-	var occupied := _room_occupancy(result)
+	var occupied := _room_occupancy(result, chamber)
 	result["activities"] = _build_activities(result, chamber, theme, occupied)
 	result["environment"] = _build_environment(result, theme, occupied)
 	return result
 
 ## Everything the built shell already occupies, in the room's own space.
-static func _room_occupancy(result: Dictionary) -> Array[AABB]:
+static func _room_occupancy(result: Dictionary,
+		chamber: Dictionary = {}) -> Array[AABB]:
 	var occupied: Array[AABB] = []
 	var root := result.get("root") as Node3D
 	if root == null:
 		return occupied
 	occupied.append_array(ChamberBuilders.solid_boxes(root))
+	# WHERE THE CHECK WILL STAND. `ChamberBuilders.reward_clearance` has
+	# always been honoured -- by the crate placer, in a local array that
+	# never left the builder. So the builder knew where the pedestal goes
+	# and the composer did not, and an activity element was free to be
+	# placed inside it. That is the same "the builder knows a physical
+	# fact the composer does not" shape this project has now paid for
+	# five times; the fix is to PUBLISH the one derivation rather than
+	# make a second one.
+	#
+	# The pedestal is not built yet -- `ZoneController` places it when
+	# the campaign says which Check this is -- so nothing in the scene
+	# could answer this by measurement.
+	if not chamber.is_empty():
+		var box := ChamberBuilders.reward_clearance(chamber,
+				result.get("reward_position", Vector3.ZERO) as Vector3)
+		if box.size != Vector3.ZERO:
+			occupied.append(box)
 	# Regions the BUILDER reserved, which occupancy-by-mesh cannot see: a
 	# band's deck is room-scale, so it is skipped as architecture, and
 	# the space under it then looked free to anything placed at floor
@@ -210,24 +251,39 @@ static func _shell(chamber: Dictionary, theme: String,
 	# warning. A default only applies to a MISSING key, never to a
 	# present null.
 	var declared: Variant = chamber.get("shell_id")
-	var chosen_by_epsilon := str(declared) if declared is String else ""
+	var requested := ""
+	var malformed := false
+	if declared is String:
+		requested = str(declared)
+	elif declared != null:
+		# A number, an array, a dictionary. Not a downgrade and not a
+		# choice: it is a malformed selection, and it says so rather
+		# than being quietly read as "chose nothing" (3B).
+		malformed = true
+
 	var wanted: String = SHELL_FOR_TYPE.get(type, "")
-	if not chosen_by_epsilon.is_empty():
-		if reg.has(chosen_by_epsilon):
-			wanted = chosen_by_epsilon
+	if malformed:
+		return _procedural(chamber, theme, "", REASON_MALFORMED,
+				"content: chamber '%s' names a %s where a shell id was "
+				% [str(chamber.get("id", "")),
+					type_string(typeof(declared))]
+				+ "expected; using the procedural builder")
+	if not requested.is_empty():
+		if reg.has(requested):
+			wanted = requested
 		else:
 			# Not a reason to fail to build a room. A registry that no
 			# longer carries a shell a saved Zone names is a downgrade,
 			# not a corruption, and the procedural route still plays.
-			push_warning("content: zone names shell '%s', which this "
-					% chosen_by_epsilon + "registry does not carry; "
-					+ "falling back")
+			return _procedural(chamber, theme, requested, REASON_UNKNOWN,
+					"content: zone names shell '%s', which this "
+					% requested + "registry does not carry; falling back")
 
 	# An unregistered chamber type is not a reason to fail to build a
 	# room. The generator has always had a default arm and still does;
 	# the registry is a routing table, not a gate on generation.
 	if wanted.is_empty() or not reg.has(wanted):
-		return ChamberBuilders.build(chamber, theme)
+		return _procedural(chamber, theme, requested, REASON_NO_SHELL, "")
 
 	var chosen := reg.resolve(wanted)
 	if chosen.is_empty():
@@ -235,13 +291,17 @@ static func _shell(chamber: Dictionary, theme: String,
 		# this nearly unreachable (a chain ending in a procedural entry
 		# always terminates), but "nearly" is not a thing to bet a zone
 		# on.
-		push_warning("content: nothing in the fallback chain for '%s' "
+		return _procedural(chamber, theme, requested, REASON_UNRESOLVABLE,
+				"content: nothing in the fallback chain for '%s' "
 				% wanted + "is available; using the procedural builder")
-		return ChamberBuilders.build(chamber, theme)
 
 	var entry := reg.get_entry(chosen)
 	if bool(entry.get("procedural_fallback", false)):
-		return ChamberBuilders.build(chamber, theme)
+		# Reached either because the chamber named nothing and
+		# `SHELL_FOR_TYPE` routes here, or because a resolve chain ended
+		# on the permanent procedural entry. Both are "no authored shell
+		# built", which is what the reason says.
+		return _procedural(chamber, theme, requested, REASON_NO_SHELL, "")
 	# P2-C: DOES THIS SHELL FIT THIS ROOM?
 	#
 	# An authored shell has fixed geometry. The art lane's towers are 2,
@@ -252,17 +312,49 @@ static func _shell(chamber: Dictionary, theme: String,
 	# and not an error.
 	var misfit := _misfit(entry, chamber)
 	if not misfit.is_empty():
-		push_warning("content: '%s' %s; using the procedural builder"
+		return _procedural(chamber, theme, requested, REASON_INCOMPATIBLE,
+				"content: '%s' %s; using the procedural builder"
 				% [chosen, misfit])
-		return ChamberBuilders.build(chamber, theme)
 	# The art-lane gate. A PENDING asset is one somebody is still
 	# deciding about; putting it in a zone decides for them, and the
 	# decision was explicit that files existing is not approval.
 	if not VisualOwnership.is_shippable(entry):
-		push_warning("content: '%s' is pending art review; using the "
+		return _procedural(chamber, theme, requested, REASON_PENDING,
+				"content: '%s' is pending art review; using the "
 				% chosen + "placeholder until it passes")
-		return ChamberBuilders.build(chamber, theme)
-	return _from_authored_scene(entry, chamber, theme)
+	var room := _from_authored_scene(entry, chamber, theme)
+	room["shell_resolution"] = {
+		"requested": requested,
+		"resolved": chosen,
+		"build": BUILD_AUTHORED,
+		"reason": "",
+	}
+	return room
+
+## THE PROCEDURAL OUTCOME, SAID OUT LOUD.
+##
+## Every fallback arm above used to `push_warning` and return an
+## unmarked room, and a warning is not a result: `shell_id` survived in
+## the chamber DATA whether or not the shell built, so a consumer
+## reading the input called the room authored and was wrong. A fallback
+## room does not count as an authored room merely because its input
+## still contains an authored shell id.
+##
+## So the room carries what happened -- what was asked for, what
+## answered, which builder ran, and why -- and `build` is the field that
+## settles "was this authored", not the presence of a requested id.
+static func _procedural(chamber: Dictionary, theme: String,
+		requested: String, reason: String, warning: String) -> Dictionary:
+	if not warning.is_empty():
+		push_warning(warning)
+	var room := ChamberBuilders.build(chamber, theme)
+	room["shell_resolution"] = {
+		"requested": requested,
+		"resolved": "",
+		"build": BUILD_PROCEDURAL,
+		"reason": reason,
+	}
+	return room
 
 ## The HOUSING for a light, per theme (art requirement 3a).
 ##
@@ -625,6 +717,36 @@ static func _exit_offset(entry: Dictionary, size: Vector3) -> Vector3:
 ## reinterprets a shell to make it fit; the only outcomes are "use it"
 ## and "use the builder".
 static func _misfit(entry: Dictionary, chamber: Dictionary) -> String:
+	# TYPE FIRST, and it was missing (3B). This asked only about floors,
+	# so a shell tagged `treasure_room` named for an `arena` chamber
+	# resolved, fitted and BUILT -- Python's `shells.rule_errors` refused
+	# that pairing and Godot did not, which is exactly the contradictory
+	# pair of definitions the registry exists to prevent. A shell says
+	# what it is through `semantic_tags`; a chamber says what it needs
+	# through `type`.
+	# An entry that declares NO tags constrains nothing by type -- the
+	# same early return `fits_floors` takes just below, and the same one
+	# `shells.rule_errors` takes on an empty `types`. "Declares nothing"
+	# is not "fits nothing": the offer is what keeps an untagged shell
+	# from being selected in the first place, and it is checked in
+	# Python against the request's catalog.
+	var band := _band_misfit(entry, chamber)
+	if not band.is_empty():
+		return band
+
+	var oversize := _footprint_misfit(entry, chamber)
+	if not oversize.is_empty():
+		return oversize
+
+	var wanted := str(chamber.get("type", ""))
+	var tags: Variant = entry.get("semantic_tags", [])
+	if typeof(tags) != TYPE_ARRAY or (tags as Array).is_empty():
+		pass
+	elif not wanted.is_empty() and not (tags as Array).has(wanted):
+		return "is tagged %s and this chamber is a '%s'" % [
+				", ".join((tags as Array).map(
+					func(t: Variant) -> String: return str(t))), wanted]
+
 	var fits: Variant = entry.get("fits_floors", [])
 	if typeof(fits) != TYPE_ARRAY or (fits as Array).is_empty():
 		return ""
@@ -637,6 +759,64 @@ static func _misfit(entry: Dictionary, chamber: Dictionary) -> String:
 	return "is built for %s floors and this tower has %d" % [
 			", ".join((fits as Array).map(
 				func(f: Variant) -> String: return str(int(f)))), floors]
+
+## Is the shell small enough to BE this room?
+##
+## Mirrors the `size` clause of `shells.rule_errors`. The shell's `size`
+## is its envelope, walls included; a chamber's width and depth are its
+## interior, so one wall on each side is the allowance. Corridors say
+## `length` where other rooms say `depth`.
+static func _footprint_misfit(entry: Dictionary,
+		chamber: Dictionary) -> String:
+	var size: Variant = entry.get("size", [])
+	if typeof(size) != TYPE_ARRAY or (size as Array).size() < 3:
+		return ""
+	if not chamber.has("width"):
+		return ""
+	var along: Variant = chamber.get("depth", chamber.get("length"))
+	if along == null:
+		return ""
+	var outer := 2.0 * ChamberBuilders.WALL_THICKNESS
+	var room_x := float(chamber["width"]) + outer
+	var room_z := float(along) + outer
+	var shell_x := float((size as Array)[0])
+	var shell_z := float((size as Array)[2])
+	if shell_x > room_x or shell_z > room_z:
+		return "has a %.1f x %.1f footprint and this chamber is %.1f x %.1f" \
+				% [shell_x, shell_z, room_x, room_z]
+	# ...and not smaller than a room sized to hold something. Mirrors the
+	# same clause in `shells.rule_errors`.
+	var features: Variant = chamber.get("features", [])
+	var carries := typeof(features) == TYPE_ARRAY \
+			and not (features as Array).is_empty()
+	if carries and (shell_x < room_x or shell_z < room_z):
+		return "has a %.1f x %.1f footprint and this chamber was sized %.1f x %.1f to hold %d feature(s)" \
+				% [shell_x, shell_z, room_x, room_z,
+					(features as Array).size()]
+	return ""
+
+## Does this shell provide the elevation band the chamber declares?
+##
+## Mirrors `shells.rule_errors`. Checked BEFORE the floor clause returns,
+## which is why it is its own function: a chamber can declare a band and
+## no floors at all, and an early return for "declares no floor
+## constraint" would have skipped this.
+static func _band_misfit(entry: Dictionary, chamber: Dictionary) -> String:
+	var band: Variant = chamber.get("elevation")
+	if typeof(band) != TYPE_DICTIONARY:
+		return ""
+	var kind := str((band as Dictionary).get("kind", ""))
+	if kind.is_empty():
+		return ""
+	var provides: Variant = entry.get("provides_elevation", [])
+	if typeof(provides) == TYPE_ARRAY and (provides as Array).has(kind):
+		return ""
+	var named := "no" if typeof(provides) != TYPE_ARRAY \
+			or (provides as Array).is_empty() \
+			else ", ".join((provides as Array).map(
+				func(v: Variant) -> String: return str(v)))
+	return "provides %s elevation band(s) and this chamber declares a '%s'" \
+			% [named, kind]
 
 ## Enemy placement stays the generator's decision; the shell only says
 ## WHERE it is safe to put one. An authored shell with no `enemy_spawn`

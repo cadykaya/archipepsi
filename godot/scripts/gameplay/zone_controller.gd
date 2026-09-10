@@ -24,8 +24,9 @@ var hud: Hud = null              # set by main; null in headless tests
 ##
 ## Set by whoever entered the Zone, BEFORE `setup`. The default is
 ## `none`, so an ordinary Zone entered by an ordinary player constructs
-## no movement geometry and behaves exactly as it did before 3A -- the
-## showcase is the only thing that ever sets this to anything else.
+## no movement geometry and behaves exactly as it did before 3A. Since
+## 3B `--movement-package` reaches ordinary generated Zones too, not the
+## showcase alone.
 ##
 ## It is an operator control and nothing more: not an Archipelago item,
 ## not progression, not saved, not part of the Zone schema. See
@@ -296,8 +297,21 @@ func _validate_offers(chambers: Array) -> void:
 			offer_census["refused"] += 1
 		if refused or turned_down > 0:
 			push_warning("offers: %s" % OfferBinding.summarise(named, seen))
+		# WHAT ACTUALLY BUILT, not what was asked for (3B). This read
+		# `chamber["shell_id"]` -- the INPUT -- so a chamber whose
+		# authored shell was refused as unknown, incompatible or pending
+		# still reported that shell's name, and every consumer of this
+		# record called the procedural room authored. A fallback room
+		# does not become an authored room because its input still names
+		# one; `ContentInstantiator` stamps what happened and this reads
+		# the stamp.
+		var resolution: Dictionary = build.get("shell_resolution", {})
 		measured.append({"chamber": named, "node": node,
-				"shell": str(chamber.get("shell_id", "")),
+				"shell": str(resolution.get("resolved", "")),
+				"requested": str(resolution.get("requested", "")),
+				"builder": str(resolution.get(
+					"build", ContentInstantiator.BUILD_PROCEDURAL)),
+				"reason": str(resolution.get("reason", "")),
 				"declared": declared, "accepted": accepted,
 				"declined": turned_down, "refused": refused})
 	# Every room now has a verdict, and no node has been constructed.
@@ -327,7 +341,8 @@ func _validate_offers(chambers: Array) -> void:
 				movement_package, int(room["declared"]),
 				(room["accepted"] as Array).size() + int(room["declined"]),
 				(room["accepted"] as Array).size(), chosen.size(),
-				int(room["declined"]), made, bool(room["refused"]))
+				int(room["declined"]), made, bool(room["refused"]),
+				str(room["requested"]), str(room["reason"]))
 	Telemetry.selection(movement_package, offer_selection)
 	Telemetry.zone_offers(zone_id, movement_package, offer_census)
 

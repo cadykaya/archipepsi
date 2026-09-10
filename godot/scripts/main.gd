@@ -81,6 +81,21 @@ func _ready() -> void:
 	# 0.3, R2) and must never be something a player arrives in by
 	# accident.
 	var asked := MovementSelection.from_cmdline()
+	# THE OPERATOR'S MOVEMENT PACKAGE, for EVERY Zone this run enters
+	# (Stage 3B). In 3A this was held for the showcase alone and
+	# deliberately not inherited by an ordinary Zone, which made the
+	# movement work provable only against four hand-picked rooms. A
+	# normally generated Zone now honours the same flag, so what the
+	# suite exercises is the shipping composition path.
+	#
+	# A REFUSED VALUE IS NEVER APPLIED and never quietly becomes `none`:
+	# it is reported and the package stays at the default, so an
+	# operator who mistyped `--movement-package=rial` learns that from
+	# the log rather than from a green run that built nothing.
+	if bool(asked["refused"]):
+		Telemetry.refused_selection(str(asked["why"]))
+	else:
+		_movement_package = str(asked["mode"])
 	if bool(asked["showcase"]):
 		_enter_showcase(asked)
 
@@ -96,18 +111,21 @@ func _ready() -> void:
 ## what this proves is the runtime rather than a harness beside it.
 func _enter_showcase(asked: Dictionary) -> void:
 	if bool(asked["refused"]):
-		Telemetry.refused_selection(str(asked["why"]))
+		# Already reported by the caller. The showcase additionally does
+		# not OPEN, because a showcase that proved nothing about
+		# movement is worse than no showcase.
 		return
-	var mode := str(asked["mode"])
-	Telemetry.showcase(ShowcaseZone.ZONE_ID, mode, ShowcaseZone.shell_ids())
-	_showcase_mode = mode
+	Telemetry.showcase(ShowcaseZone.ZONE_ID, _movement_package,
+			ShowcaseZone.shell_ids())
 	_to_zone(ShowcaseZone.build())
-	_showcase_mode = ""
 
-## The selection `_to_zone` hands the controller, empty outside the
-## showcase. Held for exactly one call rather than kept as state, so an
-## ordinary Zone entered later cannot inherit a playtest setting.
-var _showcase_mode := ""
+## The movement package every Zone this run builds (Stage 3B, R6/R7).
+##
+## An operator control and nothing more: not an Archipelago item, not
+## progression, not saved, not part of the Zone schema. Default `none`,
+## so a run started without the flag constructs no movement geometry and
+## behaves exactly as it did before Stage 3A.
+var _movement_package := MovementSelection.DEFAULT_MODE
 
 ## Everything the real game needs, extracted so a test can call it.
 ##
@@ -409,11 +427,10 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	zone.hud = hud
 	zone.is_finale = bool(record.get("is_finale", false))
 	# BEFORE `setup`, because the offer stage is deferred from inside it.
-	# Empty outside the showcase, and `ZoneController` then keeps its own
-	# default of `none` -- so an ordinary Zone constructs no movement
-	# geometry and behaves exactly as it did before Stage 3A.
-	if _showcase_mode != "":
-		zone.movement_package = _showcase_mode
+	# `none` unless an operator asked for a package on the command line,
+	# so a run started without the flag constructs no movement geometry
+	# and behaves exactly as it did before Stage 3A.
+	zone.movement_package = _movement_package
 	world.add_child(zone)
 	# Before setup, so a Zone whose first frame already spends something
 	# sees full channels rather than last Zone's leftovers. The rule
