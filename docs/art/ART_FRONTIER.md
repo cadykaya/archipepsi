@@ -151,6 +151,38 @@ is history and this is the state.
 **There is no Art-side blocker.** The lane is idle by intent, not by
 obstruction.
 
+### Theme Pack PREPARATION — done 2026-09-10. The infrastructure is NOT.
+
+Inspection, baselines and documentation only, against art `7ecd3fe` and
+Production `2f727a7`. **No ThemePack schema, compiler or runtime binder
+exists, and none was built.** Report:
+`docs/art/reports/2026-09-10-theme-pack-preparation.md`; baselines in
+`docs/art/review/theme_baseline_2026-09-10/`.
+
+What it established:
+
+* **The theme is baked at Blender export.** Eleven shells hard-code
+  `THEME = "concrete_facility"` and the plenum `"rusted_industrial"`, so a
+  second theme of a room means a second `.glb` today.
+* **But every slot is classifiable.** 597 of 597 material names across the
+  twelve approved shells parse as `<prefix>_<role>` with a texture, and
+  `ComposedRoom._retheme` already performs the swap in Godot — for
+  procedural modules. The gap is a checked convention, a shipped texture
+  set and a runtime path, not a rebuild.
+* **The six-theme texture set (37 PNG) ships nowhere**; its only consumer
+  is the preview tool.
+* **Nine agency primitives exist and ship nowhere** — no seam. Their state
+  plate survives export as a material slot rather than an addressable node.
+* **Three of six themes share a value structure** (concrete, neon, gothic).
+
+`ARCHIPEPSI_THEME_PACK_SYSTEM_AUTHORITY_2026-09-03.txt` was **not
+available**, so no contract comparison was made.
+
+**Proposed and NOT started: Batch 041**, the theme role contract plus one
+room proved in two themes. It needs an owner brief. The refreshes the
+owner flagged for the backlog — Neon Transit, Void Glitch, and a later
+cold station theme — follow infrastructure and migration, not this.
+
 ---
 
 ## Status
