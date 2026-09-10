@@ -167,6 +167,40 @@ What remains needs a person, not more iteration
 5. **Project code licensing** — separate from asset intake, and not
    decided.
 
+## PLAYTEST HANDOFF READY — the 3A/3B checkpoint, 2026-09-11
+
+**`docs/PLAYTEST_3AB_HANDOFF.md`** is the owner-facing handoff: where to
+run it, prerequisites, exact commands for `none`, `rail` and `launch`,
+controls, and a what-to-try list. **Play `96c450e`** -- game code and
+assets are untouched by the handoff, which is documentation only.
+
+**Vera's audit** (`docs/audit/2026-09-10-3ab-integration-audit.md` @
+`a83a8a5`) found **no blocker**. A1 and A2 supported; A4 supported as the
+Road words it. Three of the Production report's claims were stronger than
+their evidence and are corrected in the handoff §6: the walk-in test
+proves CROSSING and never waits for a landing; 34.3 m is DISPLACEMENT and
+the authored curve is ~83.04 m; and the basin floor runs unbroken beneath
+the rail, so the rail changes the route (which is what A4 asks) rather
+than being the only way there.
+
+**One stored Zone for all three modes**, guaranteed by a shared
+`--save-dir` and verified: launch 1 generates once, launches 2 and 3
+generate zero times and read back the same `zone_001` -- 23 chambers,
+`shell_span_basin` plus six alternating corners, id `a9e649315285bdf3`.
+The offline provider, not the showcase.
+
+**Follow-ups logged, none done here and none blocking:** F-1 the Yard
+join (its 26 m entry inset lets a connecting corridor intersect solid
+wall; the area budget excludes the Yard today but that is a side effect,
+not a placement guarantee, and the budget binds only the OFFLINE
+generator -- a live provider is merely told about it); F-2 the missing
+`is_on_floor()` assertion; F-3 the ground probe that samples 6.9 m off
+the ride; F-4 INT-3's stress result being narrower than it reads.
+
+**Not claimed:** full-run completion, the owner's own judgment of how it
+plays, and Road criteria A3 and A5-A8 -- each still needs its own
+evidence. This is a checkpoint.
+
 ## 3A/3B INTEGRATION CLOSED — an authored room a player rides, 2026-09-11
 
 **CURRENT STATE.** Report:
