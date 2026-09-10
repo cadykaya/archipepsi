@@ -16,7 +16,7 @@ appearance changed.
 | Art head inspected | **`7ecd3fe`** (all twelve shells `review: pass`) |
 | Production revision inspected | **`2f727a7`**, `claude/archipepsi-echoes-continuation-b1adno`, read-only |
 | Godot | 4.5.1.stable, Compatibility renderer (`opengl3`) |
-| `ARCHIPEPSI_THEME_PACK_SYSTEM_AUTHORITY_2026-09-03.txt` | **not present** in the repository or the session workspace — **detailed contract comparisons are unavailable**, and everything below proceeds from this brief alone |
+| `ARCHIPEPSI_THEME_PACK_SYSTEM_AUTHORITY_20260903.txt` | was **not available** when this report was first written, so §3 and §7 below were reasoned from the brief alone. It was supplied to the art lane later the same day; the reconciliation against its §8 role contract is Batch 041 — `docs/art/reports/2026-09-10-batch041-two-themes.md` |
 
 Production history was not merged. Its files were read through
 `git show` only.
@@ -98,17 +98,32 @@ carries an animation, and emission is used only in review overlays, which
 never ship. `void_glitch`'s identity is a static checker.
 
 **Authored ↔ procedural binding.** `ContentInstantiator.SHELL_FOR_TYPE`
-maps five chamber types to the five `*_proc` ids. **All twelve authored
-shells are still unreferenced by it** — they are shippable and unreached.
-Every authored entry declares `fallback` to its procedural id, so a missing
-authored scene degrades rather than fails.
+maps five chamber types to the five `*_proc` ids. That map is the
+**default routing for a chamber that names no shell**: `_shell` prefers
+`chamber["shell_id"]` whenever the registry carries it, and reaches
+`SHELL_FOR_TYPE` only when the field is empty or unresolvable. Its five
+procedural entries are therefore the **fallback policy**, not the thing
+keeping authored rooms out.
+
+**Four of the twelve are already reached.** Stage 3A's `ShowcaseZone.ROOMS`
+(Production `2f727a7`, `godot/scripts/content/showcase_zone.gd`) names
+`shell_hall_transit`, `shell_plenum_helix`, `shell_yard_gantry` and
+`shell_span_basin`, and everything downstream is the real runtime:
+`ZoneBuilder` places and aligns them, `ContentInstantiator` resolves each
+id through the registry and instantiates the authored scene, `OfferBinding`
+measures the declared offers against the authored colliders, and the real
+`Player` walks in. The showcase's own header calls the hand-naming
+scaffolding, and it is — what is missing is **Epsilon emitting `shell_id`
+itself**, which is Stage 3B and is what *normal generated-Zone*
+reachability waits on. Every authored entry declares `fallback` to its
+procedural id, so a missing authored scene degrades rather than fails.
 
 ### 2.4 Exists vs. actually used
 
 | asset family | exists | ships in the pack | reaches a player today |
 | --- | --- | --- | --- |
 | theme textures (37 PNG) | ✔ | ✘ | ✘ — **only consumer is the preview tool** |
-| room shells (12) | ✔ | ✔ | ✘ — `SHELL_FOR_TYPE` still names `*_proc` |
+| room shells (12) | ✔ | ✔ | **4 of 12** — through the Stage 3A showcase, named by hand. None in a *generated* Zone until Epsilon emits `shell_id` (3B) |
 | fixture housings (6 of 10) | ✔ | ✔ | ✔ |
 | projectile visuals (3) | ✔ | ✔ | ✘ — held `pending` |
 | dressing, props, interaction, secrets, landmarks, decoys, gates, keys | ✔ | ✘ | ✘ — **no seam exists** |
@@ -244,8 +259,21 @@ approved asset.
 ## 4 · Agency visual inventory
 
 Every asset below **exists and ships nowhere** — there is no seam for
-interaction visuals in `ContentInstantiator`. That is a *runtime* gap, not
-an art gap, and the two are separated in the last column.
+*authored* interaction visuals in `ContentInstantiator`. That is a
+*runtime* gap, not an art gap, and the two are separated in the last
+column.
+
+**That absence does not establish that agency gameplay is blocked.** The
+activity vocabulary runs today: `Activities.build` places
+`ActivityElement`s and one `ActivityRuntime` owns every rule, across all
+four families — a switch that is touched, a target that is shot, a plate
+that is stood on, a timed run that is run. Those elements already carry a
+deliberate art-lane grammar — silhouette for family, interaction hardware
+for operability, state treatment for what it is doing now, and colour
+never the only cue for any of the three — declared in
+`activity_element.gd` as *provisional graybox, not final art*. So what the
+missing seam blocks is **substituting the authored kit for that graybox**,
+not agency itself.
 
 | thing | visual | status | note |
 | --- | --- | --- | --- |
@@ -302,12 +330,21 @@ Two sheets, phone-readable, from real captures — nothing simulated:
 | art revision | `7ecd3fe` |
 | fixture | the housing the pack ships for each theme |
 
-**What the baselines show, including the limitation.** The room is composed
-from batch001 architecture modules and rethemed by
-`ComposedRoom._retheme` — so these are *procedural-module* rooms wearing
-six themes. **There is no capture of an authored shell in a second theme,
-because that is not currently possible**: the shell's texture is baked at
-export. That absence is the honest state of authored-room theming today.
+**What the baselines show, and what they do not.** These sheets
+demonstrate **the preview scene's appearance** — `ComposedRoom`, built from
+batch001 architecture modules and rethemed by `ComposedRoom._retheme` —
+under six themes. They are not a capture of the game, and not a capture of
+an authored shell. Read them as the six theme palettes' behaviour in one
+controlled room, measured the same way six times, which is what a baseline
+is for.
+
+*Superseded in part, same day.* This section originally said an authored
+shell in a second theme "is not currently possible". Batch 041 does it:
+`shell_corner_left` is shown in `concrete_facility` and `rusted_industrial`
+in one scene, by per-surface material override at runtime, with no rebuild
+and no second `.glb` — `docs/art/reports/2026-09-10-batch041-two-themes.md`.
+What remains true is that the **baked** texture inside the `.glb` cannot
+change.
 
 **And a finding from the value sheet.** `concrete_facility`, `neon_transit`
 and `gothic_stone` are near-identical in value structure — three of six read
@@ -321,12 +358,12 @@ note about Neon Transit describes, now measured rather than felt.
 
 | # | gap | owner | why this order |
 | --- | --- | --- | --- |
-| **1** | **No authored shell is reachable.** `SHELL_FOR_TYPE` still names the five `*_proc` ids, so twelve passed rooms appear in no Zone. | **Production** | Stage 3B. Everything below is decoration until a player can stand in one. |
+| **1** | **No authored shell is reachable in a *generated* Zone.** Stage 3A's showcase already reaches four of the twelve by naming their `shell_id`; Epsilon emits none, so an ordinary Zone contains no authored room. `SHELL_FOR_TYPE`'s `*_proc` entries are the fallback policy for a chamber that names no shell, not the missing writer. | **Production** | Stage 3B. Normal reachability, not first contact — a player can already stand in four. |
 | **2** | **The theme role convention is undeclared and unchecked.** F3 proves it holds in all 597 slots today; nothing stops the next builder breaking it. | **Art** | Cheapest item on the list and every later step depends on it. |
 | **3** | **The six-theme texture set ships nowhere.** Only the preview tool reads it. | **Art** to ship it, **Production** to decide where it lands | A binder cannot bind textures the game does not have. |
 | **4** | **The theme is a build-time constant per builder.** F1. | **Art** | Unblocks a second theme of an existing room without a binder at all. |
 | **5** | **No runtime retheme path for an authored shell.** The mechanism exists in the preview tool; the game has no equivalent. | **Production** (Art to supply the convention and the set) | The actual Theme Pack feature. Gaps 2–4 are its prerequisites. |
-| **6** | **Interaction visuals have no seam.** Nine agency primitives ship nowhere. | **Production** | Independent of themes; blocks any agency chain. |
+| **6** | **Authored interaction visuals have no seam.** Nine agency primitives ship nowhere. | **Production** | Independent of themes. Blocks the authored *look*, not agency itself: `ActivityRuntime` drives all four families today on graybox elements. |
 | **7** | **State addressing is ambiguous** — plate survives as a material slot, not a node. | **Art**, once Production picks how state is driven | Small, and premature to fix first. |
 | **8** | **Three of six themes share a value structure.** | **Art**, backlog | Owner has already flagged the Neon Transit direction. Follows infrastructure. |
 | **9** | **Dressing is not a six-way set; no generic object skins.** | **Art**, backlog | Only matters once props have a seam. |
@@ -355,6 +392,15 @@ condition of the batch, not a hope.
 Wave 2, the Neon Transit or Void Glitch refreshes, the cold station theme,
 and any agency asset.
 
+**What Batch 041 was actually briefed as, later the same day.** The owner
+supplied the authority document and narrowed the batch to inspection and
+proof: reconcile the §8 role contract, check the mapping for the twelve
+shipped shells, and prove one asset wearing two themes **by per-instance
+surface override rather than a rebuild** — so item 4 (`THEME` as a build
+argument) and item 5 (a second `.glb` in a scratch path) were **not**
+done, and no shell was rebuilt. See
+`docs/art/reports/2026-09-10-batch041-two-themes.md`.
+
 ---
 
 ## Standing state
@@ -363,5 +409,7 @@ and any agency asset.
   substitutions remain `pending`.
 * **No approved asset, manifest, review state or runtime appearance was
   changed by this task.**
-* **Theme Pack infrastructure does not exist.** This is preparation.
+* **Theme Pack infrastructure does not exist.** This is preparation. The
+  Batch 041 follow-up is a preview compatibility proof, not a shipped
+  runtime binder.
 * Wave 2 has not started.

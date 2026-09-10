@@ -148,6 +148,14 @@ is history and this is the state.
    gameplay. A passing shell can be placed, entered and walked end to end
    today with nothing installed; the offers it carries are reservations.
 
+8. **Theme Pack: prepared and proved, not built.** Since 2026-09-10 the
+   role contract is reconciled against the authority draft, all 597
+   shipped material slots classify, and one shipped room has been shown
+   wearing two themes at once by per-surface override. What remains is
+   **Production's**: a `hazard` ruling, the material-mode and
+   `protected_materials` fields, somewhere for the six-theme texture set
+   to ship, and the binder. See the Batch 041 section below.
+
 **There is no Art-side blocker.** The lane is idle by intent, not by
 obstruction.
 
@@ -175,13 +183,58 @@ What it established:
   plate survives export as a material slot rather than an addressable node.
 * **Three of six themes share a value structure** (concrete, neon, gothic).
 
-`ARCHIPEPSI_THEME_PACK_SYSTEM_AUTHORITY_2026-09-03.txt` was **not
-available**, so no contract comparison was made.
+`ARCHIPEPSI_THEME_PACK_SYSTEM_AUTHORITY_20260903.txt` was **not available
+when the preparation report was written**, so it made no contract
+comparison. The document arrived later the same day; the reconciliation is
+Batch 041, below.
 
-**Proposed and NOT started: Batch 041**, the theme role contract plus one
-room proved in two themes. It needs an owner brief. The refreshes the
-owner flagged for the backlog — Neon Transit, Void Glitch, and a later
-cold station theme — follow infrastructure and migration, not this.
+### Batch 041 — DONE 2026-09-10. Still a preview proof, not infrastructure.
+
+Against art `a2b6d59` and Production `2f727a7` (read-only, not merged).
+Report: `docs/art/reports/2026-09-10-batch041-two-themes.md`; evidence in
+`docs/art/review/theme_baseline_2026-09-10/`.
+
+* **The role contract is reconciled and mirrored in the tool.**
+  `inspect_materials.py` now carries §8.1's five required roles and §8.2's
+  five optional roles with their fallbacks, verbatim. `trim_plain` and
+  `wall_ribbed` stay **Art texture variants, not roles**.
+* **All 597 shipped material names classify; none is guessed.** Zero
+  canonical, 597 legacy, 0 unknown, 0 refused — the mapping is
+  `role_map.json`, tied to each `.glb`'s git blob id. `--selftest` drives
+  ten probes through the classifier, including the refusals.
+* **Godot preserves every name exactly** — 597 surfaces, 597 named, 0
+  blank, same order as the glTF in all twelve. The role is recoverable at
+  runtime with no manifest field.
+* **One shipped room wears two themes at once**, by per-surface override:
+  the shared mesh never changes, a third-theme rebind of A leaves B
+  untouched, and the collision digest (10 bodies, 10 shapes, 22 nodes,
+  instance-local transforms) is identical before and after.
+* **No asset was rebuilt.** Twelve shells byte-identical; no schema,
+  manifest, runtime or review change.
+
+**REMAINING PRODUCTION DEPENDENCY — the Theme Pack cannot proceed on Art
+alone.** Four things are Production's, and every one of them blocks a
+shipped binder:
+
+1. **A `hazard` ruling.** §8.1 makes it a required per-theme role; the art
+   lane's standing rule is that hazard is a *universal* colour no theme may
+   re-tint, and no theme has a hazard texture. Production decides whether
+   `hazard` resolves to the universal ramp for every pack.
+2. **Material-mode and `protected_materials` fields.** §8.3 and §8.4
+   require every asset to declare `themed`/`hybrid`/`authored` and to list
+   hero materials. Neither field exists in the registry entry schema, and
+   Art was told not to add one.
+3. **Where the six-theme texture set lands.** 37 PNG ship nowhere; a
+   binder cannot bind textures the game does not have.
+4. **The binder itself** — §8.5's walk, per-surface override, unresolved
+   reporting, and the "complete before the first visible frame"
+   guarantee.
+
+Until 1–4 land, §8.4 canonical renaming stays **not started**: it would
+change all twelve shells' bytes to buy tidiness a legacy-aware binder does
+not need. The refreshes the owner flagged for the backlog — Neon Transit,
+Void Glitch, and a later cold station theme — follow infrastructure and
+migration, not this.
 
 ---
 

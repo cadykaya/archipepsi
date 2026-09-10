@@ -139,19 +139,40 @@ beam must keep. Targets, landings, routes and radii unchanged, and
 `docs/art/reports/2026-09-03-physical-truth-repair.md` and
 `docs/art/reports/2026-09-03-launch-pads.md`.
 
-**One question is open and is PRODUCTION's, not the owner's:** what a
-`launch_source`'s `radius` means to the solver. If it launches from the
-declared point, both pads are correct; if from anywhere in the 3 m disc,
-both need a much larger move (hall x ≤ 6.8, span x = −9.5). Not guessed
-at.
+**RESOLVED 2026-09-04 — `launch_source.radius`.** Settled at Production
+`833fe80` and guarded at `7e13f44`: `launch_source.position` is the exact
+**foot-contact** launch origin, and `radius` reserves space for the
+constructed pad — it is **not** a disc of possible ballistic origins. All
+four large-room pads are correct as authored. *Superseded history: this
+was previously recorded here as an open Production question.*
 
-**One thing needs PRODUCTION, not the owner: req 40 in
-`docs/art/ART_FRONTIER.md`.** `ShellValidator._check_segment` applies the
-base-kit reach bounds to every mandatory traversal segment without
-reading `kind`, while `TraversalSegment` in `schemas/content.py` bounds
-only `rise` and `gap`. It refuses any ramped climb in any LARGE room —
-and refuses a 3.20 m FLAT walk along a continuous collar. Art has not
-altered the shell to route around it.
+**RESOLVED — req 40.** `ShellValidator` is kind-aware through
+`TraversalLaw`; it no longer applies base-kit jump bounds to continuous
+walks or to ramps. Fixed before the Wave 1 promotion, so no room in the
+library is refused by it. *Superseded history: this was previously
+recorded here as needing Production.*
+
+**THEME PACK: PREPARED AND PROVED, NOT BUILT (2026-09-10).** Two
+inspection-only batches, no asset rebuilt and all twelve shells
+byte-identical. The role contract is reconciled against
+`ARCHIPEPSI_THEME_PACK_SYSTEM_AUTHORITY_20260903.txt`; all 597 shipped
+material slots classify (0 canonical, 597 legacy, 0 unknown) and Godot
+preserves every name exactly, so a binder can recover the role at runtime
+with no manifest field; and one shipped room has been shown wearing two
+themes **at once**, by per-surface override, with the shared mesh
+unchanged and the collision digest identical. Reports:
+`docs/art/reports/2026-09-10-theme-pack-preparation.md` and
+`docs/art/reports/2026-09-10-batch041-two-themes.md`.
+
+**What is left is PRODUCTION's, and there are four of them:** a ruling on
+`hazard` (the authority makes it a required per-theme role; the art lane's
+standing rule is that hazard is a universal colour no theme may re-tint,
+and no theme has a hazard texture), the `material mode` and
+`protected_materials` fields the registry entry schema does not have,
+somewhere for the 37-PNG theme texture set to ship, and the binder itself.
+**Do not start canonical `<role>` renaming on a wake-up** — it would
+change all twelve shells' bytes to buy tidiness a legacy-aware binder does
+not need.
 
 **001–022 PASS. 031–037 PASS** (031; 032 *with boundary*; 033 *audit, build
 nothing*; 034 *the visual principle*; 035-R; 036-R; 037-R *with a documented
