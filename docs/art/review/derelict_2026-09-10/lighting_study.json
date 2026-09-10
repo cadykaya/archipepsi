@@ -1,4 +1,26 @@
 {
+  "binding": {
+    "shared": {
+      "rotated": 0,
+      "scaled": 0,
+      "unresolved": 0
+    },
+    "study": {
+      "rotated": 0,
+      "scaled": 0,
+      "unresolved": 0
+    },
+    "study_uv_corrected": {
+      "rotated": 4,
+      "scaled": 8,
+      "unresolved": 0
+    },
+    "theme": {
+      "rotated": 0,
+      "scaled": 0,
+      "unresolved": 0
+    }
+  },
   "collision_added_by_preview": 0,
   "fixture_count": 4,
   "fixtures": [
@@ -84,11 +106,12 @@
     "source": "ZoneBuilder + ChamberBuilders at Production 2f727a7"
   },
   "sun_removed": true,
-  "unresolved": [
-    0,
-    0,
-    0,
-    0
-  ],
+  "uv_correction": {
+    "method": "per-surface override material only; no mesh, UV or GLB touched",
+    "rescaled_surfaces": 8,
+    "rotated_surfaces": 4,
+    "why_rescaled": "the trim strip is 128x32 over 4 m of V, which is 8 texels/m against 32 on U; uv1_scale.y = 4 repeats it per metre for a matched 32x32",
+    "why_rotated": "X-facing wall slabs get V along +Z from the box unwrap, so authored vertical stringers lie on their side; Z-facing slabs get V along world up and are already correct"
+  },
   "why_sun_removed": "DirectionalLight3D with shadow_enabled false lit the interior through the walls; a built Zone has no DirectionalLight3D at all"
 }

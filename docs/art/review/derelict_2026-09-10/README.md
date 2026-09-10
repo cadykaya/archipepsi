@@ -282,58 +282,95 @@ fixture shadows is theirs to decide.
 matched framings under three lights is what `LIGHTING_STUDY.png` is; it is
 not a playtest.
 
-## Directional materials — measured, and mostly fine
+## Directional materials — corrected twice, and now resolved
 
-`tools/content/inspect_uvs.py` solves the Jacobian dP/dU and dP/dV per
-triangle from the shipped `.glb`, **grouped by face normal**. That grouping
-matters: a first version averaged over each primitive and reported the same
-answer for the floor, ceiling, wall and trim, which is impossible for
-surfaces in different planes — the giveaway that it was averaging the six
-faces of a box together.
+**The first measurement was wrong in two ways, and both were mine.**
 
-Every piece of this shell is a box with a per-face unwrap:
+**1. The checker rotated the coordinates a second time.** `axis_name` assumed
+the `.glb` was Blender-handed and mapped `(x, y, z)` to `(x, z, −y)`. But
+**glTF is Y-up by definition** — the Blender exporter has already done that
+conversion — and Godot's frame is Y-up too, so the file's axes need no
+touching at all. The file says so outright: in this shell the floor's second
+component sits at **0.0** and the ceiling's at **3.6**. I printed that range
+while debugging the previous version and read straight past it. Every
+world-direction label in the earlier report was unreliable.
 
-| faces | U runs | V runs | pattern |
+**2. The density used the wrong image height.** It divided **128** by
+`metres_per_uv` on *both* axes. The trim strip is **128 × 32**.
+
+### What the corrected measurement says
+
+Every piece is still a box with a per-face unwrap, but the numbers invert.
+
+| | |
+| --- | --- |
+| wall faces with V along world up | **16 of 48** (previously reported as 32) |
+| wall faces rotated | **32 of 48** |
+
+And per **primitive**, which is what a viewer actually sees:
+
+| slabs | thin axis | V runs | stringers read |
 | --- | --- | --- | --- |
-| the four **vertical** (±X, ±Z) | horizontal | **world up** | upright, as authored |
-| the two **horizontal** (±Y) | +X | +Z | laid flat, rotated 90° |
+| `cl_wall`, `.001`, `.002`, `.003` | **Z** — around the doorway | −Y (up) | **vertical, correct** |
+| `cl_wall.004`–`.007` | **X** — the east and west walls | +Z | **horizontal, rotated** |
 
-**32 of 48 wall faces have V along world up.** The 16 that do not are the
-tops and bottoms of wall slabs — nearly all hidden — **except the ceiling**,
-which is exactly such a face and takes the `wall` field through the resolved
-§8.2 fallback.
+**That resolves the left-wall observation exactly.** The four X-thin slabs
+are the east and west walls; the box unwrap hands them a V axis along +Z, so
+authored vertical stringers lie on their side. The four Z-thin slabs get V
+along world up and were always right. One material, two readings, in one
+room — a **defect**, not a preference, because the pattern is directional.
 
-**Which roles tolerate rotation:**
+`UV_wall_before.png` shows both in a single frame: horizontal on the west
+wall, vertical beside the doorway.
+
+### Texel density, measured per axis from the bound texture
+
+| role | texture | texels/m U | texels/m V | |
+| --- | --- | --- | --- | --- |
+| `wall` | 128 × 128 | 32.0 | 32.0 | matched |
+| `floor` | 128 × 128 | 32.0 | 32.0 | matched |
+| `ceiling` | 128 × 128 (via §8.2) | 32.0 | 32.0 | matched |
+| `trim` | **128 × 32** | 32.0 | **8.0** | **anisotropic, stretched 4×** |
+
+The mesh spans 4 m per UV unit on both axes, so a 32-pixel-tall strip covers
+four metres of V. **The earlier claim of 32 × 32 for trim was an artifact of
+assuming a square texture.** Declaring 32 texels/m in an asset record does
+not establish it after UV mapping, and here it did not hold.
+
+### The corrections, preview-only
+
+Both are properties of the override material. **No mesh, no UV, no approved
+GLB is touched.**
+
+| fix | applied to | how |
+| --- | --- | --- |
+| rotate 90° | **4 surfaces** — the X-thin wall slabs | `Image.rotate_90()` on that material's own texture copy |
+| rescale V | **8 surfaces** — the trim | `uv1_scale.y = 4.0`, giving 32 × 32 |
+
+Which surface gets which is decided by measuring the surface's own vertices
+at bind time — the axis it is thinnest along is the one it presents — rather
+than by a hand-written list.
+
+**The ceiling is deliberately left alone.** It is a Y-thin face, it reads as
+longitudinal stiffeners either way, and rotating it would be a preference.
+
+### Which roles tolerate rotation
 
 | role | tolerates | why |
 | --- | --- | --- |
 | `floor` | **yes** | the deck grid is symmetric; tread reads either way |
-| `wall` | **no** on a vertical face | stringers and welds are directional and must stand up |
-| `trim` | **no** | it has a lit top chamfer and a dark bottom; upside-down is wrong |
+| `wall` | **no** | stringers and welds are directional and must stand up |
+| `trim` | **no** | a lit top chamfer and a dark bottom; upside-down is wrong |
 | `accent` | **no** | louvres and conduit runs are horizontal by intent |
-
-**Is the ceiling's rotation appropriate? Yes — and I am not correcting it.**
-`UV_DIRECTION.png` shows both. As shipped, the stringers run *along* the
-corridor and read as longitudinal stiffeners. Rotated 90° they run *across*
-and read as transverse frames. Both are plausible ship overheads; the
-rotated one lines up slightly better with the doorway lintel. That is a
-**preference, not a defect**, so the shipped behaviour stands and the
-rotation is shown only as a demonstration that a per-surface material can do
-it — `img.rotate_90()` on one material's own texture, no mesh, no UV and no
-shared texture touched.
-
-**Texel density, re-checked on the real geometry:** **32.0 × 32.0 texels/m
-on all 108 faces**, trim included. The declared figure holds after UV
-mapping — measured from `metres_per_uv`, not taken from the asset record.
 
 ### The smallest future requirement
 
-If consistent orientation is ever wanted, the smallest thing that would do
-it is **a per-role declaration of whether the role is directional**, plus a
-binder that consults the surface's own V axis. Something like
-`{"wall": "up", "trim": "up", "accent": "up", "floor": "any"}` — four
-strings. **Not built here**, and it needs a contract before it means
-anything.
+Two fields, not a system: **a per-role declaration of whether the role is
+directional**, and **the role's authored pixel aspect**. A binder could then
+compare each surface's measured V axis and `metres_per_uv` against them and
+apply the rotation or scale itself. Something like
+`{"wall": {"upright": true, "px": [128,128]}, "trim": {"upright": true, "px": [128,32]}, "floor": {"upright": false, "px": [128,128]}}`.
+**Not built here**, and it needs a contract before it means anything.
 
 ## Delivery correction
 

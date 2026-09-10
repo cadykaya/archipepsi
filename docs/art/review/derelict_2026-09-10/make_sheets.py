@@ -143,13 +143,17 @@ row_board("VALUE_STUDY.png", "wide",
           [("concrete", "concrete_facility, value only"),
            ("derelict", "deep_space_derelict, value only"),
            ("dressed", "dressed, value only")],
-          "VALUE ONLY - does the dark theme still navigate",
+          "VALUE ONLY - inspecting the value hierarchy and the boundaries",
           ["Reduced to CIE L*, the same reduction Glyph's study({value:true}) "
-           "applies to the flat fields. Hue removed entirely.",
-           "What has to survive: the doorway, the floor plane, the wall/floor "
-           "boundary, and the trim line that says where the room ends.",
-           "If the theme were a darkened concrete the two left panels would "
-           "be the same picture. They are not."], value=True)
+           "applies to the flat fields. This removes HUE, not brightness:",
+           "a lighter and a darker version of one texture stay lighter and "
+           "darker here. So it does NOT by itself prove more than a recolour.",
+           "What it is for: checking that the trim still separates from the "
+           "wall, and that the doorway, the floor plane and the wall/floor",
+           "boundary still read. What establishes more than a recolour is the "
+           "CHANGED PATTERNS - courses that became stringers, joints that",
+           "became welds, a bolt line that moved to the stringers, and a deck "
+           "that grew tread it did not have."], value=True)
 
 tiling_board()
 
@@ -195,28 +199,54 @@ def lighting_board():
 
 
 def uv_board():
-    a = Image.open(os.path.join(HERE, "UV_ceiling_before.png"))
-    b = Image.open(os.path.join(HERE, "UV_ceiling_after.png"))
+    """The directional-material board, after the measurement was corrected.
+
+    An earlier version of this function paired UV_ceiling_before/after and
+    treated the ceiling as the interesting surface. It was not: the checker
+    that pointed there had rotated the coordinates a second time, and once
+    that was fixed the defect turned out to be on the X-facing WALL slabs.
+    This pairs those, plus the trim, whose density had been measured with
+    the wrong image height.
+    """
+    rows = [("UV_wall", "the WEST wall - an X-facing slab"),
+            ("UV_trim", "the skirting, close")]
     PAD, GAP = 24, 16
-    im = Image.new("RGB", (PAD * 2 + a.width + b.width + GAP,
-                           196 + a.height + 46 + PAD), BG)
+    a = Image.open(os.path.join(HERE, "UV_wall_before.png"))
+    w, h = a.size
+    im = Image.new("RGB", (PAD * 2 + w * 2 + GAP,
+                           214 + len(rows) * (h + 40) + PAD), BG)
     dr = ImageDraw.Draw(im)
-    y0 = head(dr, "DIRECTIONAL MATERIALS - what the UVs actually do", [
-        "MEASURED, not assumed: every piece of this shell is a box with a "
-        "per-face unwrap. On the four VERTICAL faces the texture's V axis",
-        "runs along world up, so an authored vertical stringer reads "
-        "vertical - 32 of 48 wall faces. On the two HORIZONTAL faces V runs",
-        "along +Z instead, so the same texture lies flat and its stringers "
-        "run lengthwise. The ceiling is such a face, and it takes the wall",
-        "field through the resolved ceiling -> wall fallback. Texel density "
-        "measures 32.0 x 32.0 on all 108 faces - the declared figure holds.",
-    ])
-    im.paste(a, (PAD, y0)); im.paste(b, (PAD + a.width + GAP, y0))
-    dr.text((PAD, y0 + a.height + 10),
-            "AS SHIPPED - stringers run along the corridor", font=font(20), fill=INK)
-    dr.text((PAD + a.width + GAP, y0 + a.height + 10),
-            "preview UV correction, rotated 90 - stringers run across",
-            font=font(20), fill=OK)
+    dr.text((PAD, 18),
+            "DIRECTIONAL MATERIALS - corrected, per-surface material only",
+            font=font(28), fill=INK)
+    for i, line in enumerate([
+            "MEASURED with the coordinate handling fixed. glTF is Y-UP by "
+            "definition and Godot's frame is Y-up too, so the file's axes "
+            "need no",
+            "conversion; an earlier version of the checker rotated them a "
+            "second time and every direction it reported was wrong.",
+            "Four of eight wall slabs are X-thin (east/west). The box unwrap "
+            "gives them V along +Z, so authored vertical stringers lie on "
+            "their side -",
+            "that is the sideways pattern. The four Z-thin slabs (around the "
+            "doorway) get V along world up and were always correct.",
+            "The trim strip is 128x32 spanning 4 m per UV unit: 32 texels/m "
+            "on U but only 8 on V. uv1_scale.y = 4 matches them."]):
+        dr.text((PAD, 56 + i * 23), line, font=font(17), fill=DIM)
+    y0 = 214
+    for r, (stem, cap) in enumerate(rows):
+        yy = y0 + r * (h + 40)
+        im.paste(Image.open(os.path.join(HERE, stem + "_before.png")), (PAD, yy))
+        im.paste(Image.open(os.path.join(HERE, stem + "_after.png")),
+                 (PAD + w + GAP, yy))
+        if r == 0:
+            dr.text((PAD, yy - 26),
+                    "AS BOUND - stringers sideways, trim stretched 4x",
+                    font=font(18), fill=DIM)
+            dr.text((PAD + w + GAP, yy - 26),
+                    "CORRECTED - rotation on 4 surfaces, uv1_scale.y on 8",
+                    font=font(18), fill=OK)
+        dr.text((PAD, yy + h + 8), cap, font=font(17), fill=INK)
     im.save(os.path.join(OUT, "UV_DIRECTION.png"))
     print("[sheet] UV_DIRECTION.png  %dx%d" % im.size)
 

@@ -224,3 +224,36 @@ Not started, and none of it is Art's alone:
 | `check_art_current.sh` | **PASS** |
 | `check_docs_metrics.py` | **PASS** |
 | `check_decal_colours.py` | **PASS** |
+
+---
+
+## 9 · Follow-up corrections (same day)
+
+Three findings, all mine, all measured rather than argued.
+
+**The room was lit through its own walls.** `derelict_preview.gd` used a
+`DirectionalLight3D` with `shadow_enabled` left at its `false` default, so an
+enclosed room was lit by a sun nothing stopped. **A built Zone has no
+`DirectionalLight3D` at all** — ambient 0.35 plus one `OmniLight3D` per
+fixture at `omni_range` 12.0. `derelict_lighting.gd` drops the sun and lights
+the room the shipped way. Darkening the ramps to compensate was treating a
+rendering artifact as an art problem; the ramps still stand on their own
+terms, the stated reason does not.
+
+**The UV checker rotated coordinates a second time.** glTF is Y-up by
+definition and Godot's frame is Y-up too. Corrected, the counts invert: **32
+of 48 wall faces are rotated**, and per primitive the four **X-thin** slabs
+(east and west walls) show authored vertical stringers **horizontally** while
+the four Z-thin slabs around the doorway are correct. That resolves the
+left-wall observation, and it is a **defect**, not a preference.
+
+**The density used the wrong image height.** 128 was divided by
+`metres_per_uv` on both axes. The trim strip is **128 × 32**, so it measures
+**32.0 × 8.0 texels/m** — stretched fourfold on V, not the 32 × 32 claimed.
+
+Both corrected preview-only in the override material — a 90° texture rotation
+on 4 surfaces, `uv1_scale.y = 4.0` on 8 — with each surface's facing measured
+from its own vertices at bind time. No mesh, UV or approved GLB touched.
+
+**And the grayscale claim is corrected in the value sheet's caption and in
+its generator**, not only in prose: grayscale removes hue, not brightness.

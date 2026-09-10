@@ -313,14 +313,28 @@ emission recorded per fixture rather than painted into any albedo.
 Compatibility and dark recesses must come from falloff alone. The study
 turns them on and says so.
 
-**UV orientation, measured not assumed** (`tools/content/inspect_uvs.py`,
-grouped by face normal): every piece is a box with a per-face unwrap. The
-four vertical faces run V along world up — 32 of 48 wall faces — and the two
-horizontal ones lay the texture flat, rotating it 90°. The ceiling is such a
-face. **That rotation is visually appropriate on this shell and was NOT
-corrected**; both readings are plausible ship overheads. **Texel density
-measures 32.0 × 32.0 on all 108 faces**, so the declared figure holds after
-UV mapping. `floor` tolerates rotation; `wall`, `trim` and `accent` do not.
+**UV orientation — the first measurement was wrong twice, and is now
+corrected** (`tools/content/inspect_uvs.py`). It rotated the coordinates a
+SECOND time: **glTF is Y-up by definition** and Godot's frame is Y-up too,
+so the file's axes need no conversion — the floor's second component sits at
+0.0 and the ceiling's at 3.6, which the tool printed and I read past. And it
+divided **128** by `metres_per_uv` on both axes for every role.
+
+Corrected: **32 of 48 wall faces are rotated, not 16.** Per primitive, the
+four **Z-thin** slabs around the doorway get V along world up and are
+correct; the four **X-thin** slabs — the east and west walls — get V along
++Z, so authored vertical stringers lie on their side. **That is the sideways
+left wall, and it is a defect rather than a preference.** And **trim measures
+32.0 × 8.0 texels/m**, not 32 × 32: a 128 × 32 strip spanning 4 m per UV
+unit is stretched fourfold on V. Declaring 32 texels/m in an asset record
+does not establish it after UV mapping.
+
+**Both corrected preview-only, in the override material:** a 90° texture
+rotation on the 4 X-thin wall surfaces, `uv1_scale.y = 4.0` on the 8 trim
+surfaces, with the facing decided by measuring each surface's own vertices
+at bind time. No mesh, UV or approved GLB touched. The ceiling is
+deliberately left alone. `floor` tolerates rotation; `wall`, `trim` and
+`accent` do not.
 
 **Before this could ship** it needs a runtime binder, a `THEME_MATERIALS`
 entry, somewhere for the textures to land, a `ceiling` ruling, canonical

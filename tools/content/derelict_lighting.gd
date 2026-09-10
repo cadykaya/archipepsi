@@ -77,24 +77,66 @@ func _path_for(role: String) -> String:
 ## Rotating the IMAGE for that one material puts the stringers back along
 ## the room's long axis. Nothing about the mesh, its UVs or the shared
 ## texture changes.
-func _material(role: String, rotate_ceiling: bool) -> StandardMaterial3D:
-	var key := "%s|%s" % [role, str(rotate_ceiling)]
+## `correct` applies the two PREVIEW-ONLY per-surface fixes measured by
+## `tools/content/inspect_uvs.py`. Neither touches a mesh, a UV or an
+## approved GLB -- both are properties of the override material.
+##
+## 1. ROTATION on the X-facing wall slabs. Every piece is a box with a
+##    per-face unwrap, and the two families do not agree: the four Z-thin
+##    slabs (around the doorway) get V along world up, so an authored
+##    vertical stringer stands up; the four X-thin slabs (the east and west
+##    walls) get V along +Z, so the SAME texture lies on its side. That is
+##    the sideways pattern on the left wall, and it is a defect rather than
+##    a preference -- one material reading two ways in one room.
+##
+## 2. SCALE on the trim. The mesh spans 4 m per UV unit on both axes, but
+##    the trim strip is 128x32, so its V density is 32 / 4 = 8 texels/m
+##    against 32 on U -- stretched fourfold and anisotropic. `uv1_scale.y`
+##    of 4 repeats the strip over each metre instead, which is 32 texels/m
+##    and matches U.
+func _material(role: String, correct: bool, rotate: bool) -> StandardMaterial3D:
+	var key := "%s|%s|%s" % [role, str(correct), str(rotate)]
 	if _cache.has(key):
 		return _cache[key]
 	var img := Image.load_from_file(_path_for(role))
-	if rotate_ceiling and role == "ceiling":
+	var tag := ""
+	if correct and rotate:
 		img.rotate_90(CLOCKWISE)
+		tag = "@rot90"
 	var mat := StandardMaterial3D.new()
 	mat.albedo_texture = ImageTexture.create_from_image(img)
 	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
 	mat.roughness = 0.9
-	mat.resource_name = "deep_space_derelict/%s%s" % [
-			role, "@rot90" if (rotate_ceiling and role == "ceiling") else ""]
+	if correct and role == "trim":
+		# 128x32 over 4 m of V is 8 texels/m. Repeat it per metre.
+		mat.uv1_scale = Vector3(1.0, 4.0, 1.0)
+		tag = "@vscale4"
+	mat.resource_name = "deep_space_derelict/%s%s" % [role, tag]
 	_cache[key] = mat
 	return mat
 
-func _bind(root: Node, rotate_ceiling: bool) -> int:
+## Which way a surface faces, from its own vertices: the axis it is THINNEST
+## along is the one it presents. Measured per surface rather than assumed,
+## because the shell's wall slabs come in two families and only one of them
+## needs rotating.
+func _thin_axis(mesh: Mesh, surface: int) -> int:
+	var verts: PackedVector3Array = mesh.surface_get_arrays(surface)[Mesh.ARRAY_VERTEX]
+	if verts.is_empty():
+		return -1
+	var lo := verts[0]
+	var hi := verts[0]
+	for v in verts:
+		lo = lo.min(v)
+		hi = hi.max(v)
+	var ext := hi - lo
+	if ext.x <= ext.y and ext.x <= ext.z:
+		return 0
+	return 1 if ext.y <= ext.z else 2
+
+func _bind(root: Node, correct: bool) -> Dictionary:
 	var unresolved := 0
+	var rotated := 0
+	var scaled := 0
 	for node in root.find_children("*", "MeshInstance3D", true, false):
 		var mi := node as MeshInstance3D
 		for i in mi.mesh.get_surface_count():
@@ -103,8 +145,18 @@ func _bind(root: Node, rotate_ceiling: bool) -> int:
 			if role == "":
 				unresolved += 1
 				continue
-			mi.set_surface_override_material(i, _material(role, rotate_ceiling))
-	return unresolved
+			# Only the X-facing wall family is rotated. The ceiling is a
+			# Y-facing face and is deliberately left alone: it reads as
+			# longitudinal stiffeners either way, and rotating it would be a
+			# preference rather than a fix.
+			var rotate := (role == "wall" or role == "ceiling") \
+					and _thin_axis(mi.mesh, i) == 0
+			if correct and rotate:
+				rotated += 1
+			if correct and role == "trim":
+				scaled += 1
+			mi.set_surface_override_material(i, _material(role, correct, rotate))
+	return {"unresolved": unresolved, "rotated": rotated, "scaled": scaled}
 
 # =========================================================================
 # THE LIGHTING STUDY
@@ -214,8 +266,23 @@ func _run() -> void:
 	for n in [a, b, c, d]:
 		world.add_child(n)
 
-	_log["unresolved"] = [_bind(a, false), _bind(b, false), _bind(c, false),
-			_bind(d, true)]
+	var ra := _bind(a, false)
+	var rb := _bind(b, false)
+	var rc := _bind(c, false)
+	var rd := _bind(d, true)
+	_log["binding"] = {"shared": ra, "theme": rb, "study": rc,
+			"study_uv_corrected": rd}
+	_log["uv_correction"] = {
+		"rotated_surfaces": rd["rotated"],
+		"rescaled_surfaces": rd["scaled"],
+		"why_rotated": ("X-facing wall slabs get V along +Z from the box "
+			+ "unwrap, so authored vertical stringers lie on their side; "
+			+ "Z-facing slabs get V along world up and are already correct"),
+		"why_rescaled": ("the trim strip is 128x32 over 4 m of V, which is "
+			+ "8 texels/m against 32 on U; uv1_scale.y = 4 repeats it per "
+			+ "metre for a matched 32x32"),
+		"method": "per-surface override material only; no mesh, UV or GLB touched",
+	}
 	var fc := _build_fixtures(c, true)
 	var fd := _build_fixtures(d, true)
 	_log["fixtures"] = fc["fixtures"]
@@ -245,17 +312,25 @@ func _run() -> void:
 				"LIT_%s_2theme" % s["n"], THEME)
 		await _shot(world, at + Vector3(-40, 0, 0), to + Vector3(-40, 0, 0),
 				"LIT_%s_3study" % s["n"], STUDY)
-	# The UV correction, under the study light, against the same view.
-	await _shot(world, Vector3(-40, 2.2, 4.6) + Vector3(0, 0, 0),
-			Vector3(-40.6, 3.5, 1.4), "UV_ceiling_before", STUDY)
-	await _shot(world, Vector3(0, 2.2, 4.6), Vector3(-0.6, 3.5, 1.4),
-			"UV_ceiling_after", STUDY)
+	# The UV correction, under the study light, matched views. The camera
+	# looks at the WEST wall -- an X-facing slab, which is where the defect
+	# actually is.
+	await _shot(world, Vector3(-40 + 1.2, 1.6, 4.2), Vector3(-40 - 3.0, 1.5, 2.4),
+			"UV_wall_before", STUDY)
+	await _shot(world, Vector3(1.2, 1.6, 4.2), Vector3(-3.0, 1.5, 2.4),
+			"UV_wall_after", STUDY)
+	# And the trim density, close, where 8 texels/m against 32 is visible.
+	await _shot(world, Vector3(-40 + 0.6, 0.75, 3.4), Vector3(-40 - 3.0, 0.15, 2.6),
+			"UV_trim_before", STUDY)
+	await _shot(world, Vector3(0.6, 0.75, 3.4), Vector3(-3.0, 0.15, 2.6),
+			"UV_trim_after", STUDY)
 
 	var fh := FileAccess.open("%s/lighting_study.json" % _out, FileAccess.WRITE)
 	fh.store_string(JSON.stringify(_log, "  ", true))
 	fh.close()
-	print("[lit] unresolved %s | fixtures %d | sun removed" %
-			[str(_log["unresolved"]), FIXTURES.size()])
+	print("[lit] unresolved %d/%d/%d/%d | rotated %d | rescaled %d | fixtures %d"
+			% [ra["unresolved"], rb["unresolved"], rc["unresolved"],
+			   rd["unresolved"], rd["rotated"], rd["scaled"], FIXTURES.size()])
 	print("[lit] wrote lighting_study.json")
 	quit(0)
 

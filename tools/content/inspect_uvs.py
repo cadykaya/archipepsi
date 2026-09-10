@@ -25,6 +25,10 @@ From each group:
 
   * `u_world` / `v_world`  which way the texture's axes point in the room
   * `metres_per_uv`        so texels/m is size_px / metres_per_uv, MEASURED
+                           -- and size_px is taken PER AXIS from the texture
+                           actually bound to that role, because a 128x32 trim
+                           strip is not 128 on both axes and assuming it is
+                           overstates its vertical density fourfold
   * `v_up`                 whether the texture's V axis runs along world up,
                            which is what decides if a vertical rib reads as
                            vertical
@@ -96,19 +100,45 @@ def norm(v):
 
 
 def axis_name(v):
-    """The dominant world axis of a direction, in Godot's frame.
+    """The dominant world axis of a direction. NO conversion is applied.
 
-    The .glb is Blender-handed: Godot imports (x, y, z) as (x, z, -y), so
-    what is +Z in the file is UP in the room.
+    A FIRST VERSION OF THIS FUNCTION ROTATED THE COORDINATES AND EVERY LABEL
+    IT PRODUCED WAS WRONG. It assumed the .glb was Blender-handed and mapped
+    (x, y, z) to (x, z, -y) -- but glTF is Y-UP BY DEFINITION and the Blender
+    exporter has already done that conversion, so this did it a second time.
+    Godot's own frame is Y-up too, so the file's axes need no touching at all.
+
+    The file says so outright: in this shell the floor's second component
+    sits at 0.0 and the ceiling's at 3.6. Component 1 is up. That range was
+    printed while debugging the earlier version and read straight past.
     """
-    gx, gy, gz = v[0], v[2], -v[1]
-    names = [("+X", gx), ("+Y(up)", gy), ("+Z", gz)]
+    names = [("+X", v[0]), ("+Y(up)", v[1]), ("+Z", v[2])]
     k, val = max(names, key=lambda kv: abs(kv[1]))
     return ("-" + k[1:]) if val < 0 else k
 
 
+def bound_sizes():
+    """(width, height) per role, from the textures the preview binds.
+
+    Read rather than assumed. `derelict_fields.json` records what each field
+    actually is, and the binder's own fallback (`ceiling` takes the `wall`
+    field) is mirrored here so the density reported is the density a viewer
+    would see.
+    """
+    rec = os.path.join(REPO, "docs/art/review/derelict_2026-09-10",
+                       "derelict_fields.json")
+    sizes = {}
+    if os.path.exists(rec):
+        for f in json.load(open(rec))["fields"]:
+            sizes[f["role"]] = tuple(f["native_size"])
+        if "wall" in sizes:
+            sizes.setdefault("ceiling", sizes["wall"])
+    return sizes
+
+
 def main():
     want = sys.argv[1] if len(sys.argv) > 1 else "shell_corner_left"
+    sizes = bound_sizes()
     hit = [p for p in I.LEGACY_SHELLS if p == want]
     if not hit:
         raise SystemExit("unknown shell %s" % want)
@@ -162,43 +192,52 @@ def main():
     by_role = collections.defaultdict(list)
     for r in rows:
         by_role[r["role"]].append(r)
-    print("%-14s %-8s %-8s %-8s %-8s %-7s %8s %8s" % (
+    for r in rows:
+        w, h = sizes.get(r["role"], (128, 128))
+        r["bound_texture_px"] = [w, h]
+        r["texels_per_m_u"] = round(w / r["metres_per_u"], 2) if r["metres_per_u"] else 0
+        r["texels_per_m_v"] = round(h / r["metres_per_v"], 2) if r["metres_per_v"] else 0
+    print("%-14s %-8s %-8s %-8s %-8s %-7s %9s %8s %8s" % (
         "material", "role", "faces", "U runs", "V runs", "V=up?",
-        "tex/m U", "tex/m V"))
+        "texture", "tex/m U", "tex/m V"))
     for role in sorted(by_role):
         seen = set()
         for r in sorted(by_role[role], key=lambda x: (x["material"],
                                                       x["face_normal"])):
-            size = 128.0
             key = (r["role"], r["face_normal"], r["u_axis"], r["v_axis"])
             if key in seen:      # one line per distinct behaviour per role
                 continue
             seen.add(key)
-            print("%-14s %-8s %-8s %-8s %-8s %-7s %8.1f %8.1f" % (
+            print("%-14s %-8s %-8s %-8s %-8s %-7s %9s %8.1f %8.1f" % (
                 r["material"], r["role"], r["face_normal"],
                 r["u_axis"], r["v_axis"],
                 "yes" if r["v_is_world_up"] else "NO",
-                size / r["metres_per_u"] if r["metres_per_u"] else 0,
-                size / r["metres_per_v"] if r["metres_per_v"] else 0))
+                "%dx%d" % tuple(r["bound_texture_px"]),
+                r["texels_per_m_u"], r["texels_per_m_v"]))
     upright = [r for r in rows if r["role"] == "wall" and r["v_is_world_up"]]
     rotated = [r for r in rows if r["role"] == "wall" and not r["v_is_world_up"]]
     print("[uv] wall faces: %d with V along world up, %d rotated"
           % (len(upright), len(rotated)))
     dens = collections.Counter(
-        (round(128 / r["metres_per_u"], 1), round(128 / r["metres_per_v"], 1))
-        for r in rows)
-    print("[uv] measured texel density, all faces: %s"
-          % ", ".join("%sx%s on %d face(s)" % (a, b, n)
-                      for (a, b), n in dens.most_common()))
+        (r["role"], r["texels_per_m_u"], r["texels_per_m_v"]) for r in rows)
+    print("[uv] measured texel density, from the BOUND texture per role:")
+    for (role, a, b), n in sorted(dens.items()):
+        flag = "" if abs(a - b) < 0.5 else "   <-- ANISOTROPIC"
+        print("       %-8s %6.1f x %-6.1f texels/m  on %3d face(s)%s"
+              % (role, a, b, n, flag))
     out = os.path.join(REPO, "docs/art/review/derelict_2026-09-10/uv_survey.json")
     with open(out, "w") as fh:
         json.dump({"_comment": [
-            "MEASURED from the shipped .glb, not declared. Axis names are in",
-            "Godot's frame: the .glb is Blender-handed and imports as",
-            "(x, z, -y), so +Z in the file is UP in the room.",
-            "texels/m is 128 / metres_per_uv -- what the MESH does with the",
-            "texture, which an asset record cannot establish.",
+            "MEASURED from the shipped .glb, not declared.",
+            "AXES ARE THE FILE'S OWN, UNCONVERTED. glTF is Y-up by",
+            "definition and Godot's frame is Y-up too, so component 1 is up",
+            "in both. An earlier version of this tool rotated them a second",
+            "time and every direction it reported was wrong.",
+            "texels/m is the BOUND TEXTURE's size on that axis divided by",
+            "metres_per_uv -- per axis, because a 128x32 strip is not 128",
+            "on both and assuming it is overstates its V density fourfold.",
         ], "shell": want, "source": os.path.relpath(src, REPO),
+            "bound_texture_px_by_role": {k: list(v) for k, v in sizes.items()},
             "surfaces": rows}, fh, indent=2)
     print("[uv] -> %s" % os.path.relpath(out, REPO))
 
