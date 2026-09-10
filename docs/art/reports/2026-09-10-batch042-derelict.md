@@ -49,9 +49,17 @@ The wall field remains the **palest large surface** (L 48) against a floor
 at L 32 and a frame at L 9 — dark secondary structure establishes the room,
 the pale field keeps it navigable.
 
-**`VALUE_STUDY.png` is the load-bearing evidence.** With hue removed
-entirely, the two rooms are still unmistakably different structures. A theme
-differing only in brightness would collapse into the same picture there.
+**`VALUE_STUDY.png` supports the reading rather than carrying it alone.**
+Grayscale removes **hue**, not brightness: a lighter and a darker version of
+the same texture remain lighter and darker in it. Its real use is inspecting
+the **value hierarchy and the boundaries** — whether trim still separates
+from wall, whether the doorway and floor plane still read.
+
+What establishes more than a recolour is the **changed patterns**: courses
+that became stringers, poured joints that became weld seams, a bolt line
+that moved from the seams to the stringers, and a deck that grew anti-slip
+tread it did not have. Different marks in different places, which no
+brightness or hue change produces.
 
 **The theme was re-solved once, honestly.** The first solve put the wall
 field at L 58 and the room rendered as a bright steel corridor — readable,
@@ -76,9 +84,9 @@ invisible. All four survive 3 × 3 with no singular event and no visible
 boundary.
 
 `hazard` is engine-owned; **this theme supplies no replacement** and paints
-no decorative hazard stripe. `ceiling` has no authored field and falls back
-to `wall` per the authority draft's §8.2 — one surface took that path and
-the binder records it rather than resolving it silently.
+no decorative hazard stripe. **`ceiling` resolves to `wall` by the authority
+draft's §8.2 optional-role fallback — intentional and resolved, not a
+missing asset.** One surface took that path and the binder records it.
 
 **Two noise passes were wrong and are kept.** The wall banded 30% of columns
 and dropped 45% of the pixels inside each; the floor dithered plate tone at
@@ -189,7 +197,8 @@ Not started, and none of it is Art's alone:
    Production's and unchanged.
 3. **Somewhere for the textures to ship.** As with the six existing themes,
    the set is read only by tooling.
-4. **A `ceiling` field, or a ruling that the §8.2 fallback is the answer.**
+4. **A `ceiling` field, only if one is ever wanted** — the §8.2 fallback is
+   already the answer and is applied deliberately, not a gap to close.
 5. **Canonical material naming.** All 597 shipped slots are legacy
    `<prefix>_<role>`; a binder reads them today, but §8.4 wants exact role
    ids.

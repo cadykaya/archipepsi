@@ -273,11 +273,13 @@ unchanged, and theme selection is NOT claimed to work in a played Zone.**
 * **One strongly differentiated theme on the same approved shell**, by
   per-surface override alone. Four roles authored — `wall`, `floor`, `trim`,
   `accent` — all at 32 texels/m, all surviving 3 × 3.
-* **It is not a darkened concrete, and the value study is the proof.** The
-  structure is transposed (vertical stringers at 1.0 m and horizontal welds
-  at 2.0 m, against concrete's horizontal courses and vertical joints) and
-  the ramps are re-solved in CIE LCh rather than dimmed. With hue removed
-  entirely the two rooms are still unmistakably different.
+* **It is not a darkened concrete, and the CHANGED PATTERNS are what say
+  so.** The structure is transposed — vertical stringers at 1.0 m and
+  horizontal welds at 2.0 m against concrete's horizontal courses and
+  vertical joints, with the bolt line moved from the seams to the stringers
+  — and the ramps are re-solved in CIE LCh rather than dimmed. The value
+  study supports this by removing HUE, not brightness, which is what makes
+  it useful for checking the value hierarchy and the boundaries.
 * **A tiling field's structural pitch must divide its own tile.** 1.0 m = 32
   and 2.0 m = 64 both divide 128; this is the same lesson Batch 041 learned
   and it now holds by construction in both themes.
@@ -291,9 +293,34 @@ unchanged, and theme selection is NOT claimed to work in a played Zone.**
 * **Binding evidence:** 0 unresolved surfaces on all three instances, shared
   mesh unchanged, collision digest unchanged, dressing added 6 cards and no
   collision, and no geometry was duplicated to carry the trim role.
-* **`ceiling` has no authored field** and falls back to `wall` per the
-  authority draft's §8.2. One surface took that path and the binder records
-  it rather than resolving it quietly.
+* **`ceiling` resolves to `wall` by the §8.2 optional-role fallback** —
+  intentional and resolved, not a missing asset. Do not reopen it as one.
+
+**FOLLOW-UP, same day — the first preview lit the room through its walls.**
+`derelict_preview.gd` used a `DirectionalLight3D` whose `shadow_enabled`
+defaults to **false**, so an enclosed room was lit by a sun nothing stopped.
+**A built Zone has no DirectionalLight3D at all** — `ZoneBuilder` sets
+ambient 0.35 plus fog, and `ChamberBuilders` adds one `OmniLight3D` per
+fixture at `omni_range` 12.0 with `shadow_enabled = false`. The sun was
+preview scaffolding, and darkening the textures to compensate for it was
+treating a rendering artifact as an art problem. `derelict_lighting.gd`
+drops the sun and lights the room the shipped way: low ambient plus four
+labelled preview fixtures under `PREVIEW_LIGHTING_NOT_SHIPPED`, with
+emission recorded per fixture rather than painted into any albedo.
+
+**A note for Production:** the shipped fixture builder sets
+`shadow_enabled = false`, so the game currently gets no cast shadows in
+Compatibility and dark recesses must come from falloff alone. The study
+turns them on and says so.
+
+**UV orientation, measured not assumed** (`tools/content/inspect_uvs.py`,
+grouped by face normal): every piece is a box with a per-face unwrap. The
+four vertical faces run V along world up — 32 of 48 wall faces — and the two
+horizontal ones lay the texture flat, rotating it 90°. The ceiling is such a
+face. **That rotation is visually appropriate on this shell and was NOT
+corrected**; both readings are plausible ship overheads. **Texel density
+measures 32.0 × 32.0 on all 108 faces**, so the declared figure holds after
+UV mapping. `floor` tolerates rotation; `wall`, `trim` and `accent` do not.
 
 **Before this could ship** it needs a runtime binder, a `THEME_MATERIALS`
 entry, somewhere for the textures to land, a `ceiling` ruling, canonical

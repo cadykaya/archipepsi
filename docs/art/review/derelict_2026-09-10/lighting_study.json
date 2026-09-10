@@ -1,0 +1,94 @@
+{
+  "collision_added_by_preview": 0,
+  "fixture_count": 4,
+  "fixtures": [
+    {
+      "at": [
+        0.0,
+        3.34999990463257,
+        2.59999990463257
+      ],
+      "colour": [
+        0.779999971389771,
+        0.860000014305115,
+        0.899999976158142
+      ],
+      "emission_energy": 0.4,
+      "energy": 1.7,
+      "id": "ceiling_panel",
+      "omni_range": 7.0,
+      "shadow_enabled": true,
+      "why": "the one panel still lit; it is what makes the deck readable"
+    },
+    {
+      "at": [
+        -0.400000005960464,
+        3.34999990463257,
+        5.09999990463257
+      ],
+      "colour": [
+        0.620000004768372,
+        0.720000028610229,
+        0.800000011920929
+      ],
+      "emission_energy": 0.2,
+      "energy": 0.65,
+      "id": "mouth_panel",
+      "omni_range": 4.2,
+      "shadow_enabled": true,
+      "why": "failing: a quarter of the output, so the mouth stays gloomy"
+    },
+    {
+      "at": [
+        -2.5,
+        1.14999997615814,
+        3.40000009536743
+      ],
+      "colour": [
+        0.800000011920929,
+        0.850000023841858,
+        0.860000014305115
+      ],
+      "emission_energy": 0.22,
+      "energy": 0.55,
+      "id": "west_service",
+      "omni_range": 2.8,
+      "shadow_enabled": true,
+      "why": "a service lamp raking the bulkhead, so its ribs read as ribs"
+    },
+    {
+      "at": [
+        1.20000004768372,
+        2.45000004768372,
+        5.84999990463257
+      ],
+      "colour": [
+        0.330000013113022,
+        0.670000016689301,
+        0.759999990463257
+      ],
+      "emission_energy": 0.38,
+      "energy": 0.4,
+      "id": "conduit_glow",
+      "omni_range": 1.8,
+      "shadow_enabled": true,
+      "why": "the accent conduit's own indicator colour, decorative only"
+    }
+  ],
+  "preview_nodes_under": "PREVIEW_LIGHTING_NOT_SHIPPED",
+  "preview_shadow_enabled": true,
+  "shipped_reference": {
+    "ambient": 0.35,
+    "fixture_shadow_enabled": false,
+    "omni_range": 12.0,
+    "source": "ZoneBuilder + ChamberBuilders at Production 2f727a7"
+  },
+  "sun_removed": true,
+  "unresolved": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "why_sun_removed": "DirectionalLight3D with shadow_enabled false lit the interior through the walls; a built Zone has no DirectionalLight3D at all"
+}

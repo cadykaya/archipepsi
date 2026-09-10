@@ -152,3 +152,74 @@ row_board("VALUE_STUDY.png", "wide",
            "be the same picture. They are not."], value=True)
 
 tiling_board()
+
+
+# =========================================================================
+# BATCH 042 FOLLOW-UP
+# =========================================================================
+def lighting_board():
+    rows = [("wide", "standing in the corridor mouth"),
+            ("floor", "looking down the deck")]
+    cols = [("1shared", "SHARED light - the material control, unchanged"),
+            ("2theme", "proposed theme light - still broadly lit"),
+            ("3study", "the lighting study - fixtures, falloff, recesses")]
+    PAD, GAP = 24, 16
+    first = Image.open(os.path.join(HERE, "LIT_wide_1shared.png"))
+    w, h = first.size
+    W = PAD * 2 + w * 3 + GAP * 2
+    H = 196 + len(rows) * (h + 40) + PAD
+    im = Image.new("RGB", (W, H), BG)
+    dr = ImageDraw.Draw(im)
+    y0 = head(dr, "LIGHTING STUDY - same camera, same materials, three lights", [
+        "The materials, decals and dressing are IDENTICAL in all nine panels. "
+        "Only the lights differ.",
+        "The first preview lit this enclosed room with a DirectionalLight3D "
+        "whose shadow_enabled defaulted to false, so it shone through the",
+        "hull. A built Zone has no DirectionalLight3D at all - it uses "
+        "ambient plus one OmniLight3D per fixture. The study drops the sun",
+        "and lights the room the way the game can: placement and falloff. "
+        "Static shots cannot show combat visibility or flicker.",
+    ])
+    for r, (shot, rcap) in enumerate(rows):
+        yy = y0 + r * (h + 40)
+        for c, (cond, ccap) in enumerate(cols):
+            x = PAD + c * (w + GAP)
+            im.paste(Image.open(os.path.join(HERE, "LIT_%s_%s.png" % (shot, cond))),
+                     (x, yy))
+            if r == 0:
+                dr.text((x, yy - 26), ccap, font=font(18),
+                        fill=OK if c == 2 else DIM)
+        dr.text((PAD, yy + h + 8), rcap, font=font(17), fill=INK)
+    im.save(os.path.join(OUT, "LIGHTING_STUDY.png"))
+    print("[sheet] LIGHTING_STUDY.png  %dx%d" % im.size)
+
+
+def uv_board():
+    a = Image.open(os.path.join(HERE, "UV_ceiling_before.png"))
+    b = Image.open(os.path.join(HERE, "UV_ceiling_after.png"))
+    PAD, GAP = 24, 16
+    im = Image.new("RGB", (PAD * 2 + a.width + b.width + GAP,
+                           196 + a.height + 46 + PAD), BG)
+    dr = ImageDraw.Draw(im)
+    y0 = head(dr, "DIRECTIONAL MATERIALS - what the UVs actually do", [
+        "MEASURED, not assumed: every piece of this shell is a box with a "
+        "per-face unwrap. On the four VERTICAL faces the texture's V axis",
+        "runs along world up, so an authored vertical stringer reads "
+        "vertical - 32 of 48 wall faces. On the two HORIZONTAL faces V runs",
+        "along +Z instead, so the same texture lies flat and its stringers "
+        "run lengthwise. The ceiling is such a face, and it takes the wall",
+        "field through the resolved ceiling -> wall fallback. Texel density "
+        "measures 32.0 x 32.0 on all 108 faces - the declared figure holds.",
+    ])
+    im.paste(a, (PAD, y0)); im.paste(b, (PAD + a.width + GAP, y0))
+    dr.text((PAD, y0 + a.height + 10),
+            "AS SHIPPED - stringers run along the corridor", font=font(20), fill=INK)
+    dr.text((PAD + a.width + GAP, y0 + a.height + 10),
+            "preview UV correction, rotated 90 - stringers run across",
+            font=font(20), fill=OK)
+    im.save(os.path.join(OUT, "UV_DIRECTION.png"))
+    print("[sheet] UV_DIRECTION.png  %dx%d" % im.size)
+
+
+lighting_board()
+uv_board()
