@@ -105,6 +105,22 @@ goto trimtail
 :trimmed
 
 if not exist "%GODOT%" goto godotmissing
+
+REM IS IT ACTUALLY A FILE? `if exist` says yes to a directory, so a
+REM folder named `something.exe` passes every check above and fails only
+REM when cmd tries to run it. Where the answer is a directory the useful
+REM move is to look INSIDE it rather than refuse -- that is exactly
+REM where the real executable was.
+set ATTR=
+for %%i in ("%GODOT%") do set "ATTR=%%~ai"
+if /i not "%ATTR:~0,1%"=="d" goto godotisfile
+set "GODOTDIR=%GODOT%"
+set "GODOT="
+call :findgodot "%GODOTDIR%"
+if not defined GODOT goto godotwasdir
+goto godotclean
+
+:godotisfile
 > "%GODOTFILE%" echo %GODOT%
 
 REM THE CONSOLE BUILD, WHERE THERE IS ONE. Godot ships two .exe files
@@ -113,7 +129,11 @@ REM goes nowhere you can see. The census lines this checkpoint is read
 REM by -- `p3a: zone zone_001 mode=rail ... built=1` -- come from the
 REM game, so a run through the GUI build plays fine and tells you
 REM nothing.
-set "CONSOLE=%GODOT:.exe=_console.exe%"
+REM Built from the name, not by replacing ".exe" in the whole path:
+REM the containing FOLDER is called `...win64.exe` here, so a blind
+REM replace renames the directory too and points at nothing.
+set CONSOLE=
+for %%i in ("%GODOT%") do set "CONSOLE=%%~dpni_console%%~xi"
 if exist "%CONSOLE%" set "GODOT=%CONSOLE%"
 
 echo   Godot:  %GODOT%
@@ -192,7 +212,12 @@ REM --- subroutine ---------------------------------------------------
 :findgodot
 if defined GODOT goto :eof
 if not exist "%~1" goto :eof
-for /f "delims=" %%g in ('dir /b /s "%~1\Godot_v4.5*.exe" 2^>nul') do if not defined GODOT set "GODOT=%%g"
+REM /a-d = FILES ONLY. Without it `dir /s` lists a DIRECTORY whose name
+REM matches too -- and one does: the Windows zip extracts to a folder
+REM called `Godot_v4.5.1-stable_win64.exe` with the real executables
+REM inside it. The launcher resolved that folder, `if exist` agreed it
+REM was there, and cmd was then asked to run a directory.
+for /f "delims=" %%g in ('dir /b /s /a-d "%~1\Godot_v4.5*.exe" 2^>nul') do if not defined GODOT set "GODOT=%%g"
 goto :eof
 
 REM --- the ways this stops ------------------------------------------
@@ -217,6 +242,17 @@ exit /b 1
 echo.
 echo   That failed. Try running this by hand to see why:
 echo       %PY% -m pip install pydantic websockets
+echo.
+pause
+exit /b 1
+
+:godotwasdir
+echo.
+echo   That path is a folder, not a program, and I could not find a
+echo   Godot executable inside it:
+echo       %GODOTDIR%
+echo.
+echo   Delete "godot-path.txt" next to this file and run this again.
 echo.
 pause
 exit /b 1
