@@ -388,17 +388,36 @@ func _on_key_collected(key_id: String) -> void:
 				ZoneKey.tint(key_id), 3.0)
 	_open_what_the_keys_allow()
 
-## Every lock the held keys admit, opened at once.
+## Every lock the held keys AND capabilities admit, opened at once.
 ##
 ## Driven by the key set rather than by touching a door, so a key picked
 ## up on the far side of the Zone opens its lock without the player
-## walking back to watch it happen.
+## walking back to watch it happen. Capability gates ride the same path:
+## a gate whose capability the player already has is open the moment the
+## Zone is built, which is what makes a Zone re-entered WITH the Missile
+## simply passable rather than needing a second mechanism.
 func _open_what_the_keys_allow() -> void:
+	var capabilities := held_capabilities()
 	for raw: Variant in _zone_locks:
 		if not is_instance_valid(raw):
 			continue
 		var lock: LockedDoor = raw
-		lock.try_open(_keys_held)
+		lock.try_open(_keys_held, capabilities)
+
+## What the player can currently do, from the ONE place that knows.
+##
+## `available_capabilities` on the bridge snapshot is what
+## `ActivityRuntime` already reads to decide NOT_YET. A gate asking a
+## different oracle would be a second answer to the same question, and
+## the two would disagree the first time a loadout changed.
+func held_capabilities() -> Dictionary:
+	var out := {}
+	var available: Variant = BridgeClient.snapshot.get(
+			"available_capabilities", [])
+	if typeof(available) == TYPE_ARRAY:
+		for capability: Variant in available as Array:
+			out[str(capability)] = true
+	return out
 
 func _on_lock_opened(room: String, socket: String) -> void:
 	var ref := "%s/%s" % [room, socket]
@@ -409,6 +428,23 @@ func _on_lock_opened(room: String, socket: String) -> void:
 			"zone_id": zone_id, "room_id": room, "socket_id": socket})
 	if hud != null:
 		hud.toast("UNLOCKED", Color(0.6, 1.0, 0.7), 2.5)
+
+## Gates the player cannot open yet, as "room/socket" -> what is missing.
+##
+## "NOT YET is good gameplay" (§0-bis), and a player who cannot tell
+## NOT YET from BROKEN is playing a different, worse game. This is what
+## a readout asks.
+func gates_not_yet_open() -> Dictionary:
+	var capabilities := held_capabilities()
+	var out := {}
+	for raw: Variant in _zone_locks:
+		if not is_instance_valid(raw):
+			continue
+		var lock: LockedDoor = raw
+		var missing := lock.unmet(_keys_held, capabilities)
+		if not missing.is_empty():
+			out["%s/%s" % [lock.room_id, lock.socket_id]] = missing
+	return out
 
 ## Screen-level acknowledgement for a finished activity.
 ##

@@ -12,18 +12,33 @@ extends StaticBody3D
 signal opened(room_id: String, socket_id: String)
 
 var key_id := ""
+## THE CAPABILITY THIS DOOR ASKS FOR, or "" for a plain key lock.
+##
+## SOLUTIONS_CATALOGUE §0-bis: a local key, a required Check or the Zone
+## exit itself may sit behind a hard Echo capability gate, and "NOT YET
+## is good gameplay". The owner's example is the shape this serves --
+## Epsilon knows a Missile-like capability arrives in Zone 2, so it puts
+## that door on a dead-end branch in Zone 1 and fills the branch with
+## Checks.
+##
+## A door may declare a key, a capability, or both; EVERY requirement it
+## declares must be satisfied. One field would have forced a choice the
+## design does not make.
+var requires_capability := ""
 var room_id := ""
 var socket_id := ""
 var colour := "gold"
 var is_open := false
 
 static func create(room: String, socket: String, key: String,
-		colour_name: String, width: float, height: float) -> LockedDoor:
+		colour_name: String, width: float, height: float,
+		capability := "") -> LockedDoor:
 	var door := LockedDoor.new()
 	door.name = "LockedDoor_%s_%s" % [room, socket]
 	door.room_id = room
 	door.socket_id = socket
 	door.key_id = key
+	door.requires_capability = capability
 	door.colour = colour_name
 	door._build(width, height)
 	return door
@@ -47,7 +62,10 @@ func _build(width: float, height: float) -> void:
 	add_child(mesh)
 
 	var label := Label3D.new()
-	label.text = "%s LOCK" % colour.to_upper()
+	# The gate says what it wants. A capability gate labelled by colour
+	# would send the player hunting for a key that does not exist.
+	label.text = ("%s GATE" % requires_capability.to_upper()) \
+			if requires_capability != "" else ("%s LOCK" % colour.to_upper())
 	label.position = Vector3(0, height + 0.4, 0)
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.font_size = 28
@@ -68,10 +86,32 @@ func open() -> void:
 	opened.emit(room_id, socket_id)
 	queue_free()
 
-func try_open(keys_held: Dictionary) -> bool:
+## EVERY declared requirement, not the first one that happens to match.
+##
+## `capabilities` is what the player currently has, in the vocabulary
+## `ACTIVITY_CAPABILITIES` already defines and `available_capabilities`
+## already carries -- the one the activity NOT_YET state reads. A second
+## source for "what can this player do" would be a second answer to a
+## question that already has one.
+func try_open(keys_held: Dictionary, capabilities := {}) -> bool:
 	if is_open:
 		return true
-	if not keys_held.has(key_id):
+	if key_id != "" and not keys_held.has(key_id):
 		return false
+	if requires_capability != "" \
+			and not capabilities.has(requires_capability):
+		return false
+	# A door that declares NEITHER is not a lock; refusing to open it
+	# would leave an unopenable slab in a carved hole.
 	open()
 	return true
+
+## What this door is waiting for, for a prompt or a report.
+func unmet(keys_held: Dictionary, capabilities := {}) -> PackedStringArray:
+	var missing := PackedStringArray()
+	if key_id != "" and not keys_held.has(key_id):
+		missing.append("key:%s" % key_id)
+	if requires_capability != "" \
+			and not capabilities.has(requires_capability):
+		missing.append("capability:%s" % requires_capability)
+	return missing

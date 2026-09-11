@@ -123,6 +123,7 @@ func _run() -> void:
 	await _test_a_zone_resumes_at_the_station_it_was_left_from()
 	await _test_a_spatial_cycle_is_refused_and_a_plug_cycle_is_not()
 	await _test_a_broken_station_is_repaired_by_its_own_rooms_puzzle()
+	await _test_a_capability_gate_holds_and_never_blocks_the_way_out()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
 
@@ -2843,6 +2844,103 @@ func _test_the_playable_slice_composes_end_to_end() -> void:
 ## "Already reached" is the whole safety property: a station a player has
 ## never stood at is not a destination, and offering it would be a
 ## teleport past whatever stands between them.
+## A MISSILE DOOR: refused without the capability, open with it, and
+## never standing between the player and the exit.
+##
+## SOLUTIONS_CATALOGUE §0-bis makes the gate legal -- "NOT YET is good
+## gameplay" -- and puts five conditions on it. Two of them are this
+## lane's: the player must be able to leave the blocked Zone (4) and the
+## physical graph must agree with the logic (3). The owner's own example
+## is what makes condition 4 bite: the capability is in ZONE 2, so a gate
+## on Zone 1's chain is a door nothing in Zone 1 can open.
+##
+## Three things, each checked:
+##   1. a gate on a BRANCH socket composes;
+##   2. a gate on a CHAIN socket is refused, by name, before anything is
+##      allocated;
+##   3. the slab refuses without the capability and opens with it, and a
+##      key does not substitute for one.
+func _test_a_capability_gate_holds_and_never_blocks_the_way_out() -> void:
+	var branch := ZoneBuilder.build(_gated_zone("side_left"))
+	_check(str(branch.get("status", "")) == "LAYOUT_OK",
+			"a capability gate on a BRANCH socket was refused: %s"
+			% str(branch.get("failed", "?")))
+	var gate: LockedDoor = null
+	if branch.has("root"):
+		add_child(branch["root"] as Node3D)
+		await get_tree().physics_frame
+		for raw: Variant in branch["locks"] as Array:
+			var lock: LockedDoor = raw
+			if lock.requires_capability != "":
+				gate = lock
+	_check(gate != null,
+			"the Zone declared a capability gate and the builder placed "
+			+ "no door that asks for one")
+
+	# THE CHAIN IS NOT GATEABLE.
+	for socket: String in ZoneBuilder.CHAIN_SOCKETS:
+		var out := ZoneBuilder.build(_gated_zone(socket))
+		_check(str(out.get("status", "")) == "LAYOUT_INFEASIBLE",
+				"a capability gate on the chain socket '%s' composed "
+				% socket + "anyway, so a player can be sealed away from "
+				+ "the exit by a capability this Zone does not contain")
+		_check(not out.has("root"),
+				"a refused gated layout allocated a Zone root anyway")
+		_check((out.get("blocking_rooms", []) as Array).has("gated"),
+				"the refusal did not name the room holding the gate: %s"
+				% str(out.get("blocking_rooms", [])))
+	# AND A KEY LOCK ON THE CHAIN IS STILL FINE -- the guard must not have
+	# swept up the case the key suite already proves.
+	var keyed := _gated_zone("entry")
+	var doors: Array = (keyed["chambers"] as Array)[1]["doors"]
+	for raw: Variant in doors:
+		var door: Dictionary = raw
+		if door.has("requires"):
+			door.erase("requires")
+			door["key_id"] = "k_red"
+	_check(str(ZoneBuilder.build(keyed).get("status", ""))
+				== "LAYOUT_OK",
+			"the gate guard refused a plain KEY lock on the chain, which "
+			+ "is the case the key suite already proves legal")
+
+	# THE SLAB ITSELF.
+	if gate != null:
+		_check(not gate.try_open({}, {}),
+				"a capability gate opened for a player with nothing")
+		_check(not gate.try_open({"k_red": true}, {}),
+				"a KEY opened a capability gate, so the Missile door is "
+				+ "a red door with a different label")
+		_check(Array(gate.unmet({}, {})).has("capability:cross_long_gap"),
+				"a gate does not say which capability it wants: %s"
+				% str(gate.unmet({}, {})))
+		_check(gate.try_open({}, {"cross_long_gap": true}),
+				"the capability was held and the gate stayed shut")
+		_check(gate.is_open, "a gate that opened does not read as open")
+	rooms_checked += 1
+	if branch.has("root"):
+		(branch["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+## Three rooms; the middle one carries a capability gate on `socket`.
+func _gated_zone(socket: String) -> Dictionary:
+	var chambers: Array = []
+	for id: String in ["start", "gated", "finish"]:
+		var chamber := {"id": id, "type": "arena",
+				"width": 16.0, "depth": 14.0,
+				"wall_height": 5.0, "objective": "reach_exit",
+				"enemies": [], "activities": [], "features": [],
+				"reward_location_id": 89101100 + chambers.size(),
+				"additional_reward_location_ids": []}
+		if id == "gated":
+			chamber["doors"] = [
+					{"socket_id": "entry", "usage": "USED"},
+					{"socket_id": "exit", "usage": "USED"},
+					{"socket_id": socket, "usage": "LOCKED",
+							"requires": "cross_long_gap"}]
+		chambers.append(chamber)
+	return {"zone_id": "gate_probe", "theme": "concrete_facility",
+			"display_name": "Gate Probe", "chambers": chambers}
+
 ## A STATION IN A PUZZLED ROOM STARTS BROKEN, AND THE PUZZLE FIXES IT.
 ##
 ## The owner ruling: stations "start off or broken and need you to

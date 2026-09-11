@@ -91,6 +91,7 @@ that was verified by removing them.
 | **Key reachable before its own lock, by walking** | `room_contract_driver.gd` | flooded walk-only from spawn; the room beyond the lock is *not* reached |
 | **A spatial cycle is refused; a plug cycle is not** | `zone_builder.gd` `unclosable_cycles` | the same three-room loop is refused when the closing edge is `JOINED` and composes when it is `TRAVERSAL_ONLY`; disabling the guard reports `LAYOUT_OK` on a loop, and counting `TRAVERSAL_ONLY` edges refuses a legal return plug |
 | **A broken station is repaired by its own room's puzzle** | `warp_station.gd`, `zone_controller.gd` `_repair_station_for` | a large room WITH an activity yields a broken station and one without does not; the entrance and exit are never broken; the other room's puzzle does not repair it |
+| **A capability gate holds, and never blocks the way out** | `locked_door.gd` `requires_capability`, `zone_builder.gd` `gates_on_the_route` | a gate on a branch socket composes and one on a chain socket is refused by name; the slab opens for the capability and not for a key; a plain key lock on the chain is still legal |
 
 ## 4. Implemented but not integrated
 
@@ -123,10 +124,48 @@ that was verified by removing them.
   this lane authored, so Art can add real three-door shells without the
   engine being the unknown. All twelve shipping shells remain two-door
   and remain valid.
-- Ability gates and the exit unlock.
+- The exit unlock.
+- **Where a branch comes from.** The gate is built and proved, and the
+  router still composes a chain, so the only sockets a gate can legally
+  stand on are ones nothing is attached to yet. A gated dead-end branch
+  full of Checks — the owner's Missile-door example — needs the branch
+  rooms the bridge column assigns.
 - **Closing** a spatial cycle. Refusal is implemented and proved (§5e);
   the router still builds chains, so a Zone that wants a genuine loop
   gets a typed `LAYOUT_INFEASIBLE` naming the pair, not a layout.
+
+## 5g. NOT YET, without a dead run
+
+`SOLUTIONS_CATALOGUE §0-bis` makes a hard capability gate legal — "NOT
+YET is good gameplay" — and puts five conditions on it. A `LOCKED` door
+may now declare `requires`, naming a capability from the vocabulary
+`ACTIVITY_CAPABILITIES` already defines, read from the same
+`available_capabilities` snapshot field `ActivityRuntime` reads for its
+NOT_YET state. A door may declare a key, a capability, or both, and
+every requirement it declares must be satisfied.
+
+Condition 4 — *the player can safely leave the blocked Zone* — is the
+one with teeth here, and the owner's own example is why. "The missile
+ability will be in zone 2, so it puts a missile door guarding a dead end
+zone that contains a few checks": the capability is deliberately NOT in
+this Zone. A key lock on the chain is safe because its key is in the
+Zone by construction and the suite proves the key is reachable first. A
+capability gate on the chain is a door nothing in this Zone can open,
+standing between the player and the exit.
+
+So `build()` refuses it, beside the cycle guard and before anything is
+allocated: the chain walks `entry` and `exit`, so a gate may stand only
+on a branch socket. The refusal names the room.
+
+Verified by removal: with the guard disabled a gate on `entry` and on
+`exit` both compose and allocate a root; with the capability check
+removed from `try_open`, a player holding nothing — and a player holding
+a red key — walk through a Missile door.
+
+**Conditions 1, 2 and 3 are not this lane's** and nothing here pretends
+otherwise. "The matching AP location logic declares the same
+prerequisite" is the divergence the catalogue calls the real failure
+mode, and it lives where the AP logic does.
 
 ## 5f. The first thing a solved puzzle does
 

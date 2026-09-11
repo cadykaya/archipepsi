@@ -192,6 +192,35 @@ static func unclosable_cycles(zone: Dictionary) -> Array:
 			seen[ra] = rb
 	return closing
 
+## The sockets the chain itself walks through. A door on one of these is
+## on the route from the entrance to the exit; anything else is a branch.
+const CHAIN_SOCKETS := ["entry", "exit"]
+
+## Capability gates standing on a chain socket, as room id -> socket ids.
+##
+## Empty for every Zone that has no `requires` on any door, which is
+## every Zone built before capability gates existed.
+static func gates_on_the_route(zone: Dictionary) -> Dictionary:
+	var out := {}
+	for raw_chamber: Variant in zone.get("chambers", []):
+		if typeof(raw_chamber) != TYPE_DICTIONARY:
+			continue
+		var chamber: Dictionary = raw_chamber
+		for raw_door: Variant in chamber.get("doors", []):
+			if typeof(raw_door) != TYPE_DICTIONARY:
+				continue
+			var door: Dictionary = raw_door
+			if str(door.get("requires", "")) == "":
+				continue
+			var socket := str(door.get("socket_id", ""))
+			if not CHAIN_SOCKETS.has(socket):
+				continue
+			var rid := str(chamber.get("id", "?"))
+			var hit: Array = out.get(rid, [])
+			hit.append(socket)
+			out[rid] = hit
+	return out
+
 static func _root(parent: Dictionary, id: String) -> String:
 	var at := id
 	while parent.has(at) and str(parent[at]) != at:
@@ -392,6 +421,29 @@ static func build(zone: Dictionary, theme_override := "",
 				"failed": "%d JOINED edge(s) close a spatial cycle and "
 				% closing.size() + "this router builds chains; see "
 				+ "policy.closes_cycles"}
+	# A CAPABILITY GATE MAY NOT STAND ON THE ROUTE OUT.
+	#
+	# SOLUTIONS_CATALOGUE §0-bis makes a hard capability gate legal and
+	# conditions 4 and 5 on it: the player must be able to leave the
+	# blocked Zone and to come back. A KEY lock on the chain is fine --
+	# its key is in this Zone by construction, and the suite proves the
+	# key is reachable before the lock. A CAPABILITY gate is not: the
+	# owner's own example puts the capability in Zone 2, so a gate on the
+	# chain would stand between the player and the exit with nothing in
+	# this Zone able to open it. That is a dead run, not hard
+	# progression.
+	#
+	# The chain walks `entry` and `exit`; `side_left` and `side_right`
+	# are branch sockets. So the rule is exactly: gates go on branches.
+	var stranding := gates_on_the_route(zone)
+	if not stranding.is_empty():
+		return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+				"policy": routing_policy([], policy_override),
+				"blocking_rooms": stranding.keys(),
+				"blocking_pairs": [],
+				"failed": "%d capability gate(s) stand on a chain "
+				% stranding.size() + "socket, which puts them between "
+				+ "the player and the Zone exit: %s" % str(stranding)}
 	var links := {}
 	var room_transforms := {}
 	# ANCHORS ARE THE COMPOSER'S VOCABULARY FOR PLACES. A plug names one
@@ -567,7 +619,8 @@ static func build(zone: Dictionary, theme_override := "",
 					str(door.get("key_id", "")),
 					str(door.get("colour", "gold")),
 					ChamberBuilders.DOOR_WIDTH,
-					ChamberBuilders.DOOR_HEIGHT)
+					ChamberBuilders.DOOR_HEIGHT,
+					str(door.get("requires", "")))
 			slab.position = origin + _rot(yaw, socket["position"] as Vector3)
 			slab.rotation.y = yaw
 			root.add_child(slab)
