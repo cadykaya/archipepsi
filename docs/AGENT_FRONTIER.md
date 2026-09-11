@@ -36,7 +36,7 @@ not done":
 | | |
 |---|---|
 | **Connected** — runs in a real campaign | graph composition at acceptance, reachability refusing an unreachable Zone, `layout_result` validated and committed, progress identities checked, DORMANT/VISITING, leave-reload-re-enter |
-| **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | layout evidence validation (the engine does not send `layout_result`), the physics contract in `schemas/physics.py` (no runtime exists) |
+| **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | layout evidence validation (the engine does not send `layout_result`), the physics contract in `schemas/physics.py` (no runtime exists). **Both stay in this row until real engine output passes through their actual acceptance path** — a synthetic payload exercising a validator is not the seam being crossed |
 | **Requires Godot** | aperture polarity in the layout result, the manifest replay consumer, physical reachability, and the whole physics substrate — `docs/AMALGAM_BRIDGE.md` §5 and §6 |
 
 **Capability gates are searched, not sampled.** A previous guard removed

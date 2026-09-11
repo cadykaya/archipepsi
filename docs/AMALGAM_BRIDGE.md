@@ -327,21 +327,72 @@ reasons about:
 do. Identity is the verb; the numbers are qualification and are a
 different question.
 
-**Evidence.** The one the whole gate turns on — §23.5 check 20's replay:
+**Evidence.** The one the whole gate turns on — §23.5 check 20's replay,
+**bound to what it replayed**:
 
 ```json
-{"runs": 3, "latched": 3,
- "provider_force_n": 700.0, "provider_range_m": 20.0,
+{"package_id": "basin_bridge",
+ "content_digest": "9f2c14ab7d3e0561",
+ "provider_force_n": 700.0,
+ "provider_range_m": 20.0,
  "provider_mass_kg": 120.0,
- "latched_ids": ["basin_bridge_down"]}
+ "per_run_latched": [["bridge_down"], ["bridge_down"], ["bridge_down"]]}
 ```
 
-**Three runs, all latched, at EXACTLY the envelope.** Replaying above it
-proves a strong provider can solve the puzzle, which is not the claim
-check 20 makes — a package that passes must be solvable by *every*
-qualifying provider. Evidence at `2000 N` is refused, and so is
-`2/3` runs, and so is evidence that latched something other than the
-latch the package promotes. All four refusals are tested.
+**Three runs, all latching every promoted latch, at EXACTLY the
+envelope.** Replaying above it proves a strong provider can solve the
+puzzle, which is not the claim check 20 makes — a package that passes
+must be solvable by *every* qualifying provider.
+
+**`per_run_latched` is per run, not a union.** A record saying "all
+three latched, and here is everything that latched somewhere" cannot
+distinguish three good runs from three runs each latching a different
+third of the requirement. That case is tested.
+
+### 6.2a The content digest — one function, both sides
+
+Counts, provider values and latch names do not describe what was
+replayed, so a successful record from one package read as a pass for a
+different package with different conditions. **`content_digest` closes
+that, and it is identity and freshness, not authentication.** It does
+not stop anyone forging a record; it stops a record that was true of one
+thing being read as true of another.
+
+**The producer and the validator compute it the same way.** The bridge's
+implementation is `schemas/physics.py::package_digest`; the engine must
+match it byte for byte:
+
+1. Build this object, exactly these fields, exactly these names:
+
+```json
+{"package_id": "basin_bridge",
+ "latch_conditions": [{"latch_id": "bridge_down",
+                       "kind": "CONSTRAINT_STATE",
+                       "detail": "hinge at rest below 5 degrees"}],
+ "vector_latches": [0],
+ "setup": {"bodies": [{"body_id": "crate_a", "mass_kg": 80.0,
+                       "constrained": false}],
+           "solver": {"iterations": 8, "fixed_step_hz": 60.0,
+                      "settle_timeout_s": 8.0}},
+ "reference_solution": ["push_crate", "wait_for_settle"]}
+```
+
+2. Serialize as JSON with **sorted keys** and **no whitespace**
+   (`separators=(",", ":")`).
+3. `sha256`, hex, **first 16 characters**.
+
+`setup` and `reference_solution` are `null` when absent. Everything that
+could change what a replay proves is in there — the conditions
+*including their detail*, which are promoted, the bodies, the solver
+settings, and the solution's steps. **Change any one and the evidence is
+stale and is refused**, which is a prompt to re-replay rather than an
+accusation.
+
+**Latch identity.** `latch_id` is unique **within** a package and
+nowhere wider; globally a latch is `package_id/latch_id`. Two packages
+may both call a latch `bridge_down`; one package may not declare it
+twice, because two conditions sharing a name are indistinguishable to
+every consumer.
 
 ### 6.3 Sequence
 

@@ -30,6 +30,8 @@ state vector.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -144,6 +146,10 @@ class LatchCondition(Strict):
     keys and shortcuts, and it is why physics can gate progression at
     all — latching is the bridge between simulated physics and provable
     progression.
+
+    **`latch_id` is unique within its package and nowhere wider.** Two
+    packages may both call a latch `bridge_down`; the same package may
+    not. Globally a latch is `package_id/latch_id` — see `latch_ref`.
     """
 
     latch_id: str = Field(min_length=1, max_length=32,
@@ -151,52 +157,61 @@ class LatchCondition(Strict):
     kind: Literal["CONSTRAINT_STATE", "WEIGHT_THRESHOLD", "ATTACH_SENSOR",
                   "POSITION_REGION"]
     #: What the engine must observe. Opaque to the bridge: it is measured
-    #: in the physics world and the bridge never re-derives it.
+    #: in the physics world and the bridge never re-derives it. It IS
+    #: part of the content digest, so changing it invalidates evidence.
     detail: str = Field(default="", max_length=200)
 
 
-class ReplayEvidence(Strict):
-    """The engine's proof that a package's reference solution latches.
+def latch_ref(package_id: str, latch_id: str) -> str:
+    """The global identity of a latch.
 
-    §23.5 check 20: replayed headless three times at fixed solver
-    settings against a synthetic provider **at exactly the envelope** —
-    `700 N` / `20.0 m` / `120 kg`. All three must latch. A package that
-    passes is therefore solvable by every qualifying provider rather
-    than merely by a strong one.
+    A bare `latch_id` is not one. Two packages naming a latch
+    `bridge_down` mean two different latches, and a state vector that
+    conflated them would prove reachability across a condition nobody
+    satisfied.
+    """
+    return f"{package_id}/{latch_id}"
 
-    **This is evidence, not a promise.** Nothing in the bridge can
-    produce it, and no engine can yet either; a package claiming a
-    load-bearing latch without it is refused rather than accepted
-    pending.
+
+class BodySpec(Strict):
+    """A manipulable body, as far as the contract reasons about it."""
+
+    body_id: str = Field(min_length=1, max_length=32,
+                         pattern=r"^[a-z0-9_]+$")
+    mass_kg: float = Field(gt=0.0, le=100_000.0)
+    constrained: bool = False
+
+
+class SolverConfig(Strict):
+    """The solver settings a replay ran under.
+
+    §23.5 check 20 replays at FIXED settings. Fixed means stated: a
+    solution that latches at sixteen iterations and not at eight is a
+    solution that depends on the solver, and evidence that does not say
+    which it ran under cannot distinguish those.
     """
 
-    runs: int = Field(ge=0, le=16)
-    latched: int = Field(ge=0, le=16)
-    provider_force_n: float = Field(ge=0.0)
-    provider_range_m: float = Field(ge=0.0)
-    provider_mass_kg: float = Field(ge=0.0)
-    #: Which `latch_id`s actually latched in every run.
-    latched_ids: tuple[str, ...] = ()
+    iterations: int = Field(ge=1, le=64)
+    fixed_step_hz: float = Field(gt=0.0, le=1000.0)
+    settle_timeout_s: float = Field(gt=0.0, le=120.0)
 
-    @model_validator(mode="after")
-    def _evidence_is_self_consistent(self):
-        if self.latched > self.runs:
-            raise ValueError(
-                f"evidence claims {self.latched} latched runs out of "
-                f"{self.runs}")
-        return self
 
-    @property
-    def proves_solvable(self) -> bool:
-        """Three runs, all latched, at exactly the envelope.
+class PhysicsSetup(Strict):
+    """The bodies and solver a package's solution is authored against."""
 
-        Replaying above the envelope proves a strong provider can solve
-        it, which is not the claim check 20 makes.
-        """
-        return (self.runs == 3 and self.latched == 3
-                and self.provider_force_n == ENVELOPE_FORCE_N
-                and self.provider_range_m == ENVELOPE_RANGE_M
-                and self.provider_mass_kg == ENVELOPE_MASS_KG)
+    bodies: tuple[BodySpec, ...] = Field(default=(), max_length=40)
+    solver: SolverConfig
+
+
+class ReferenceSolution(Strict):
+    """The authored solution check 20 replays.
+
+    `steps` is opaque to the bridge — it is the engine's script — but it
+    is part of the digest, so editing the solution invalidates the
+    evidence that the old one latched.
+    """
+
+    steps: tuple[str, ...] = Field(default=(), max_length=64)
 
 
 class PhysicsPackage(Strict):
@@ -222,8 +237,22 @@ class PhysicsPackage(Strict):
                                             max_length=MAX_VECTOR_LATCHES)
     #: Does a mandatory route depend on this package?
     on_mandatory_route: bool = False
+    setup: PhysicsSetup | None = None
+    reference_solution: ReferenceSolution | None = None
     #: The engine's replay proof. Absent until a physics runtime exists.
-    evidence: ReplayEvidence | None = None
+    evidence: "ReplayEvidence | None" = None
+
+    @model_validator(mode="after")
+    def _latch_ids_are_unique_within_the_package(self):
+        ids = [c.latch_id for c in self.latch_conditions]
+        twice = sorted({i for i in ids if ids.count(i) > 1})
+        if twice:
+            raise ValueError(
+                f"package '{self.package_id}' declares latch id(s) "
+                f"{twice} more than once; a latch is identified by name "
+                "within its package, so two conditions sharing one are "
+                "indistinguishable to every consumer")
+        return self
 
     @model_validator(mode="after")
     def _promoted_latches_exist_and_are_distinct(self):
@@ -243,6 +272,114 @@ class PhysicsPackage(Strict):
     @property
     def promoted(self) -> tuple[LatchCondition, ...]:
         return tuple(self.latch_conditions[i] for i in self.vector_latches)
+
+
+# --------------------------------------------------------------------------
+# THE CONTENT DIGEST — one function, both sides.
+# --------------------------------------------------------------------------
+
+def package_digest(package: PhysicsPackage) -> str:
+    """What a replay ran against, as sixteen hex characters.
+
+    **This is identity and freshness, not authentication.** It does not
+    stop anyone forging a record; it stops a record that was true of one
+    thing being read as true of another. Those are different problems
+    and only the second one is the bridge's.
+
+    Evidence names counts, provider values and latch names. None of that
+    describes the CONTENT replayed, so a successful record from one
+    package passed for a different package with different conditions —
+    which is the whole of the defect this closes.
+
+    **Producer and validator call this same function.** The engine
+    computes it over the package it is about to replay and returns it
+    with the result; the bridge recomputes it over the package it is
+    about to accept and compares. Everything that could change what a
+    replay proves is in it: the latch conditions including their detail,
+    which are promoted, the bodies, the solver settings, and the
+    reference solution's steps. Change any and the evidence is stale.
+    """
+    body = {
+        "package_id": package.package_id,
+        "latch_conditions": [
+            {"latch_id": c.latch_id, "kind": c.kind, "detail": c.detail}
+            for c in package.latch_conditions],
+        "vector_latches": list(package.vector_latches),
+        "setup": None if package.setup is None else {
+            "bodies": [{"body_id": b.body_id, "mass_kg": b.mass_kg,
+                        "constrained": b.constrained}
+                       for b in package.setup.bodies],
+            "solver": {
+                "iterations": package.setup.solver.iterations,
+                "fixed_step_hz": package.setup.solver.fixed_step_hz,
+                "settle_timeout_s": package.setup.solver.settle_timeout_s},
+        },
+        "reference_solution": None if package.reference_solution is None
+        else list(package.reference_solution.steps),
+    }
+    blob = json.dumps(body, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
+
+
+class ReplayEvidence(Strict):
+    """The engine's proof that a package's reference solution latches.
+
+    §23.5 check 20: replayed headless three times at fixed solver
+    settings against a synthetic provider **at exactly the envelope** —
+    `700 N` / `20.0 m` / `120 kg`. All three must latch. A package that
+    passes is therefore solvable by every qualifying provider rather
+    than merely by a strong one.
+
+    **Bound to what it replayed.** `package_id` says which package and
+    `content_digest` says which revision of it — the conditions, the
+    promotion, the bodies, the solver and the solution. Evidence that
+    does not match the package in front of the validator is refused as
+    copied or stale rather than read as a pass.
+
+    **`per_run_latched` is per run, not a union.** A record saying "all
+    three runs latched, and here is the set of things that latched
+    somewhere" cannot distinguish three good runs from three runs that
+    each latched a different third of the requirement.
+
+    **This is evidence, not a promise.** Nothing in the bridge can
+    produce it, and no engine can yet either; a package claiming a
+    load-bearing latch without it is refused rather than accepted
+    pending.
+    """
+
+    package_id: str = Field(min_length=1, max_length=32,
+                            pattern=r"^[a-z0-9_]+$")
+    content_digest: str = Field(min_length=16, max_length=16,
+                                pattern=r"^[0-9a-f]{16}$")
+    provider_force_n: float = Field(ge=0.0)
+    provider_range_m: float = Field(ge=0.0)
+    provider_mass_kg: float = Field(ge=0.0)
+    #: One tuple of latched `latch_id`s per run, in run order.
+    per_run_latched: tuple[tuple[str, ...], ...] = Field(default=(),
+                                                        max_length=16)
+
+    @property
+    def runs(self) -> int:
+        return len(self.per_run_latched)
+
+    @property
+    def at_the_envelope(self) -> bool:
+        """Replaying ABOVE the envelope proves a strong provider can
+        solve it, which is not the claim check 20 makes."""
+        return (self.provider_force_n == ENVELOPE_FORCE_N
+                and self.provider_range_m == ENVELOPE_RANGE_M
+                and self.provider_mass_kg == ENVELOPE_MASS_KG)
+
+    def latched_every_run(self, required) -> tuple[str, ...]:
+        """Which required latches failed to latch in at least one run."""
+        need = set(required)
+        missed: set[str] = set()
+        for run in self.per_run_latched:
+            missed |= need - set(run)
+        return tuple(sorted(missed))
+
+
+PhysicsPackage.model_rebuild()
 
 
 def state_vector_product(*, macro_variables: tuple[int, ...] = (),
@@ -269,18 +406,27 @@ def check_physics_content(packages, *, macro_variables=(), local_keys=0,
                           visited_flags=0) -> tuple[str, ...]:
     """Everything the bridge can refuse about physics content today.
 
-    Three refusals, and the third is the one that matters:
-
     1. The promoted latch count fits `MAX_VECTOR_LATCHES`.
     2. The whole state vector fits `STATE_VECTOR_BOUND`.
     3. **A package whose latch the verifier reasons about carries engine
-       replay evidence.** A latch on a mandatory route is a progression
-       gate, and accepting one on the strength of a declaration would be
-       trusting a physical claim nobody has measured. With no physics
-       runtime, every such package is refused — which is the honest
-       state and is the point of writing the rule first.
+       replay evidence, for THAT package and THAT revision of it.** A
+       latch on a mandatory route is a progression gate, and accepting
+       one on the strength of a declaration — or on a record that was
+       true of something else — would be trusting a physical claim
+       nobody has measured. With no physics runtime, every such package
+       is refused, which is the honest state and the point of writing
+       the rule first.
     """
     errors: list[str] = []
+    seen_ids: set[str] = set()
+    for p in packages:
+        if p.package_id in seen_ids:
+            errors.append(
+                f"two packages share the id '{p.package_id}'; a latch is "
+                "identified by package and name, so duplicate package "
+                "ids make its global identity ambiguous")
+        seen_ids.add(p.package_id)
+
     promoted = sum(len(p.vector_latches) for p in packages)
     if promoted > MAX_VECTOR_LATCHES:
         errors.append(
@@ -301,25 +447,45 @@ def check_physics_content(packages, *, macro_variables=(), local_keys=0,
         needs_proof = bool(p.vector_latches) or p.on_mandatory_route
         if not needs_proof:
             continue
-        if p.evidence is None:
+        ev = p.evidence
+        if ev is None:
             errors.append(
                 f"package '{p.package_id}' puts a latch on a route the "
                 "verifier reasons about and carries no replay evidence; "
                 "a physical claim nobody has measured is not a "
                 "progression guarantee")
-        elif not p.evidence.proves_solvable:
+            continue
+        if ev.package_id != p.package_id:
             errors.append(
-                f"package '{p.package_id}' carries replay evidence that "
-                "does not prove solvability at the envelope: "
-                f"{p.evidence.latched}/{p.evidence.runs} runs latched at "
-                f"{p.evidence.provider_force_n:.0f} N / "
-                f"{p.evidence.provider_range_m:.1f} m / "
-                f"{p.evidence.provider_mass_kg:.0f} kg")
-        else:
-            missing = [c.latch_id for c in p.promoted
-                       if c.latch_id not in p.evidence.latched_ids]
-            if missing:
-                errors.append(
-                    f"package '{p.package_id}' promotes latch(es) "
-                    f"{missing} that its own replay never latched")
+                f"package '{p.package_id}' carries evidence recorded for "
+                f"'{ev.package_id}'; a replay proves something about the "
+                "thing it replayed and nothing about anything else")
+            continue
+        want = package_digest(p)
+        if ev.content_digest != want:
+            errors.append(
+                f"package '{p.package_id}' has changed since its replay "
+                f"(evidence {ev.content_digest}, content {want}); the "
+                "conditions, the promotion, the bodies, the solver or "
+                "the solution are not what was measured")
+            continue
+        if ev.runs != 3:
+            errors.append(
+                f"package '{p.package_id}' carries {ev.runs} replay "
+                "run(s); check 20 replays three")
+            continue
+        if not ev.at_the_envelope:
+            errors.append(
+                f"package '{p.package_id}' was replayed at "
+                f"{ev.provider_force_n:.0f} N / {ev.provider_range_m:.1f} m "
+                f"/ {ev.provider_mass_kg:.0f} kg, not at the envelope; a "
+                "stronger provider solving it is not the claim")
+            continue
+        missed = ev.latched_every_run(c.latch_id for c in p.promoted)
+        if missed:
+            errors.append(
+                f"package '{p.package_id}' promotes latch(es) "
+                f"{list(missed)} that did not latch in every run; three "
+                "runs each latching a different part is not three "
+                "successes")
     return tuple(errors)
