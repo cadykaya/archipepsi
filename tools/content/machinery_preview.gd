@@ -27,6 +27,8 @@ var _models: String
 var _out: String
 var _bench: GDScript
 var _log := {}
+## The band node's authored X, captured before anything scales it.
+var _band_base_x := 0.0
 
 func _init() -> void:
 	var a := OS.get_cmdline_user_args()
@@ -86,21 +88,46 @@ func _drive(asset: Node3D, state: String, phase: float) -> void:
 	var band := asset.find_child("state_band", true, false) as MeshInstance3D
 	if band == null:
 		return
+	if not band.has_meta("base_x"):
+		band.set_meta("base_x", band.position.x)
+	_band_base_x = band.get_meta("base_x")
 	var mat := _band_material(state)
 	if state == "active":
 		mat.uv1_offset = Vector3(-phase, 0.0, 0.0)
 	elif state == "pulse_travelling":
 		mat.uv1_offset = Vector3(-phase * 4.0, 0.0, 0.0)
 	band.set_surface_override_material(0, mat)
-	if state == "delayed":
-		# Grow from the -X end. The texture holds still; the node changes
-		# length -- which is exactly how a delay differs from a pulse.
-		var frac := clampf(0.12 + phase, 0.12, 1.0)
-		band.scale = Vector3(frac, 1.0, 1.0)
-		band.position.x = -(1.0 - frac)
-	else:
-		band.scale = Vector3.ONE
-		band.position.x = 0.0
+	# `fill_band` is the ONLY thing that grows. `state_band` carries the
+	# track and both end stops and is never scaled, so the span the fill is
+	# a fraction of holds still in every frame.
+	var fill := asset.find_child("fill_band", true, false) as MeshInstance3D
+	if fill != null:
+		if not fill.has_meta("base_x"):
+			fill.set_meta("base_x", fill.position.x)
+		fill.visible = state == "delayed"
+		if state == "delayed":
+			var fbox := fill.mesh.get_aabb()
+			var fx0 := fbox.position.x
+			var ffrac := clampf(phase, 0.0, 1.0)
+			fill.scale = Vector3(maxf(ffrac, 0.001), 1.0, 1.0)
+			fill.position.x = (fill.get_meta("base_x")
+					+ fx0 * (1.0 - maxf(ffrac, 0.001)))
+	if false:
+		# The band itself is never scaled any more. Kept as a named branch
+		# so the contract is visible where the driving happens.
+		#
+		# The first version hard-coded `position.x = -(1 - frac)`, which is
+		# only right if the band runs exactly -1..+1. It did not: an
+		# asymmetric clamp had moved the asset's centre and the band
+		# exported spanning -1.14..+0.86, so every frame of the delay was
+		# drawn in the wrong place. The clamp is fixed and the band is
+		# symmetric again -- and this no longer cares either way.
+		#
+		# A point at local x maps to `position.x + scale.x * x`. Holding the
+		# -X end at its unscaled place means position.x = base + x0*(1 - s).
+		pass
+	band.scale = Vector3.ONE
+	band.position.x = _band_base_x
 
 func _load(rel: String) -> Node3D:
 	return _bench.call("load_glb", "%s/%s" % [_models, rel])
@@ -154,8 +181,7 @@ func _label(vp: SubViewport, size: Vector2i, lines: Array) -> void:
 		layer.add_child(lab)
 
 func _shot(world: Node3D, at: Vector3, look: Vector3, name: String,
-		lines: Array = []) -> void:
-	var size := Vector2i(1180, 600)
+		lines: Array = [], size := Vector2i(1180, 600)) -> void:
 	var vp := SubViewport.new()
 	vp.size = size
 	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
@@ -183,6 +209,7 @@ func _shot(world: Node3D, at: Vector3, look: Vector3, name: String,
 func _run() -> void:
 	await _comparison()
 	await _motion()
+	await _delay_demo()
 	await _switch()
 	var f := FileAccess.open("%s/machinery_log.json" % _out, FileAccess.WRITE)
 	f.store_string(JSON.stringify(_log, "  "))
@@ -215,13 +242,37 @@ func _comparison() -> void:
 		lines.append([STATES[i], Vector2(760, 62 + i * 103)])
 	await _shot(w, Vector3(0.30, 1.35, 3.02), Vector3(-3.0, 1.35, 3.0),
 			"MACH_five_states", lines)
-	# And close, at the distance a player reads a conduit from. The pair
-	# this shot has to settle is `inactive` against `blocked`: both dim,
-	# both still, separated by pattern alone.
-	await _shot(w, Vector3(-1.35, 1.95, 3.02), Vector3(-3.0, 1.95, 3.02),
+	w.get_parent().remove_child(w)
+	w.queue_free()
+	await _pair()
+
+
+func _pair() -> void:
+	## `inactive` against `blocked`, ALONE, at reading distance.
+	##
+	## The first version of this shot framed two rows of a five-row stack and
+	## put the two labels beside `active`'s chevrons and the travelling
+	## pulse. The labels were right about the states and wrong about the
+	## conduits under them, which is the worst kind of caption. This scene
+	## contains two conduits and nothing else.
+	var w := _scene()
+	var ids := ["inactive", "blocked"]
+	for i in ids.size():
+		var run := _load("batch043/machinery/mach_conduit_run.glb")
+		if run == null:
+			continue
+		w.add_child(run)
+		run.global_position = Vector3(-2.97, 1.85 - i * 0.80, 3.0)
+		run.rotate_y(deg_to_rad(90.0))
+		_drive(run, ids[i], 0.0)
+	await _shot(w, Vector3(-1.15, 1.50, 3.02), Vector3(-3.0, 1.50, 3.02),
 			"MACH_close_inactive_vs_blocked",
-			[["inactive -- dim, unbroken, still", Vector2(60, 150)],
-			 ["blocked -- dim, SEVERED, still", Vector2(60, 430)]])
+			[["inactive -- dimmest in the kit, unbroken, still",
+			  Vector2(560, 120)],
+			 ["blocked -- brighter, broken, bright cut ends, still",
+			  Vector2(500, 400)],
+			 ["two channels: brightness AND pattern. No hue, no hazard.",
+			  Vector2(60, 540)]])
 	w.get_parent().remove_child(w)
 	w.queue_free()
 
@@ -279,9 +330,10 @@ func _switch() -> void:
 		# received -- and it made the only visible part, the lever, point
 		# backwards. The fix belonged in `set_origin_group`, not here.
 		rx.global_position = Vector3(0.72, 0.0, 3.0)
-		var arm := sw.find_child("lever_arm", true, false) as Node3D
-		if arm != null:
-			arm.rotate_x(deg_to_rad(s[1]))
+		var hinge := sw.find_child("hinge_lever", true, false) as Node3D
+		var arm := sw.find_child("lever_arm", true, false) as MeshInstance3D
+		if hinge != null:
+			hinge.rotate_x(deg_to_rad(s[1]))
 		var lens := sw.find_child("state_lens", true, false) as MeshInstance3D
 		if lens != null:
 			lens.set_surface_override_material(0, _lit(s[2]))
@@ -299,6 +351,141 @@ func _switch() -> void:
 		await process_frame
 	w.get_parent().remove_child(w)
 	w.queue_free()
+	await _hinge_proof()
+
+
+func _hinge_proof() -> void:
+	## THE CLAIM: the lever's attachment point does not move when the lever
+	## does. Measured across a full sweep, and rendered.
+	##
+	## `hinge_lever` is an Empty at the pintle with `lever_arm` as its child
+	## at identity, so the attachment point IS the hinge's own origin -- and
+	## rotating a transform never moves its own origin. The number that
+	## matters is therefore not "is it small", it is "is it zero".
+	##
+	## The contrast is what makes it worth measuring. In the previous export
+	## the arm was a node with identity transform whose vertices ran from
+	## Y 0.27 to Y 0.53, so rotating it turned the lever about the ASSET
+	## origin. This reports how far the pintle would have swung under that
+	## arrangement, from the same geometry.
+	var w := _scene()
+	var sw := _load("batch043/machinery/mach_wall_switch.glb")
+	w.add_child(sw)
+	sw.global_position = Vector3(0.0, 1.15, 3.0)
+	var hinge := sw.find_child("hinge_lever", true, false) as Node3D
+	var arm := sw.find_child("lever_arm", true, false) as MeshInstance3D
+	if hinge == null or arm == null:
+		push_error("[mach] no hinge_lever / lever_arm in the export")
+		quit(4)
+	var local := arm.mesh.get_aabb()
+	var inside := (local.position.x <= 0.0 and local.end.x >= 0.0
+			and local.position.y <= 0.0 and local.end.y >= 0.0
+			and local.position.z <= 0.0 and local.end.z >= 0.0)
+	var offset := hinge.position          # pintle, relative to the asset root
+	var rows := []
+	var base := hinge.global_position
+	var worst := 0.0
+	var worst_old := 0.0
+	for a in [0.0, -15.0, -30.0, -45.0, -60.0, -75.0]:
+		hinge.rotation = Vector3.ZERO
+		hinge.rotate_x(deg_to_rad(a))
+		var moved := hinge.global_position.distance_to(base)
+		# What the OLD arrangement did: the same point, rotated about the
+		# asset origin instead of about itself.
+		var swung: Vector3 = Basis(Vector3.RIGHT, deg_to_rad(a)) * offset
+		var old_moved := swung.distance_to(offset)
+		worst = maxf(worst, moved)
+		worst_old = maxf(worst_old, old_moved)
+		rows.append({"deg": a, "pivot_moved_m": moved,
+				"would_have_moved_m": old_moved})
+	hinge.rotation = Vector3.ZERO
+	_log["hinge"] = {
+		"pivot_local_to_arm": [local.position.x, local.position.y,
+				local.position.z, local.end.x, local.end.y, local.end.z],
+		"pivot_inside_arm_geometry": inside,
+		"max_pivot_movement_m": worst,
+		"max_movement_without_the_hinge_m": worst_old,
+		"samples": rows,
+	}
+	print("[mach] pivot inside arm geometry: %s" % inside)
+	print("[mach] pivot movement across a 75 deg sweep: %.9f m" % worst)
+	print("[mach] the same point without a hinge node: %.4f m" % worst_old)
+	if not inside or worst > 1e-6:
+		push_error("[mach] the hinge does not hold its own attachment point")
+		quit(5)
+	# And the picture: six angles, composited, with the pintle marked.
+	for i in 6:
+		var a := -15.0 * i
+		hinge.rotation = Vector3.ZERO
+		hinge.rotate_x(deg_to_rad(a))
+		var pip := MeshInstance3D.new()
+		var ball := SphereMesh.new()
+		ball.radius = 0.012
+		ball.height = 0.024
+		ball.radial_segments = 8
+		ball.rings = 4
+		pip.mesh = ball
+		var m := StandardMaterial3D.new()
+		m.albedo_color = Color(0.95, 0.96, 0.97)
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.no_depth_test = true
+		pip.material_override = m
+		w.add_child(pip)
+		pip.global_position = hinge.global_position
+		# Three-quarter view: the arm swings out of the plate toward the
+		# camera, so the motion is in the silhouette rather than hidden
+		# against the housing it is mounted on.
+		await _shot(w, Vector3(0.80, 1.34, 3.72), Vector3(0.0, 1.26, 3.02),
+				"MACH_hinge_%02d" % i,
+				[["lever at %d deg" % int(a), Vector2(30, 26)],
+				 ["white pip = the pintle. Movement across the sweep: "
+				  + "%.9f m" % worst, Vector2(30, 58)],
+				 ["without a hinge node the same point swings %.3f m"
+				  % worst_old, Vector2(30, 90)]],
+				Vector2i(820, 520))
+		pip.queue_free()
+		await process_frame
+	w.get_parent().remove_child(w)
+	w.queue_free()
+
+
+func _delay_demo() -> void:
+	## A LABELLED, KNOWN-DURATION DELAY, WITH BOTH ENDPOINTS.
+	##
+	## §19.5's row for `delayed` is "filling-band animation showing remaining
+	## time, rising pitch". The filling band is the FIRST timing channel and
+	## the section requires it; the pitch is the second. An earlier revision
+	## of this kit said the pitch was the only way to show remaining time,
+	## which is not what §19.5 says and sold the visual half short.
+	##
+	## So: one conduit, a stated four-second delay, sampled at five known
+	## fractions, with the source stop and the arrival stop both marked. A
+	## reader should be able to say "about three quarters" from any single
+	## frame without hearing anything.
+	var w := _scene()
+	var run := _load("batch043/machinery/mach_conduit_run.glb")
+	if run == null:
+		return
+	w.add_child(run)
+	run.global_position = Vector3(-2.97, 1.30, 3.0)
+	run.rotate_y(deg_to_rad(90.0))
+	const DURATION := 4.0
+	for i in 5:
+		var frac := float(i) / 4.0
+		_drive(run, "delayed", frac)
+		await _shot(w, Vector3(-0.55, 1.30, 3.02), Vector3(-3.0, 1.30, 3.02),
+				"MACH_delay_%d" % int(frac * 100.0),
+				[["a %.1f s delay, %d%% elapsed -- %.1f s remaining"
+				  % [DURATION, int(frac * 100.0), DURATION * (1.0 - frac)],
+				  Vector2(40, 34)],
+				 ["left stop = the source. right stop = arrival.",
+				  Vector2(40, 66)],
+				 ["the fill between them IS the timing display (§19.5);"
+				  + " no audio is used or needed to read it", Vector2(40, 98)]],
+				Vector2i(1180, 440))
+	w.get_parent().remove_child(w)
+	w.queue_free()
+
 
 func _lit(c: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()

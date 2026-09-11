@@ -58,6 +58,7 @@ def uniq(items):
 REVIEW = uniq(
     ["docs/art/reports/2026-09-11-batch043.md",
      "docs/art/BATCH_043_INVENTORY.md",
+     "docs/art/BATCH_043_INTEGRATION.md",
      f"{STATUS}/README.md", f"{STATUS}/DECISIONS_FOR_OWNER.md",
      f"{MACH}/README.md",
      f"{PROPS}/README.md", f"{PROPS}/CLASS_MAP.md"]
@@ -85,6 +86,7 @@ SOURCE = uniq(
      "tools/content/run_machinery_preview.sh",
      "tools/content/run_props_preview.sh",
      "tools/content/inspect_glb_nodes.py",
+     "tools/content/verify_attach_points.py",
      "tools/content/package_batch043.py",
      "tools/artpreview/artbench.gd",
      "assets/art_palette.json", "assets/art_budgets.json"]
@@ -151,7 +153,9 @@ unchanged.
 1. `docs/art/reports/2026-09-11-batch043.md` — the report.
 2. `docs/art/review/status_2026-09-11/DECISIONS_FOR_OWNER.md` — the five
    things that genuinely need you.
-3. `docs/art/BATCH_043_INVENTORY.md` — what already existed, before anything
+3. `docs/art/BATCH_043_INTEGRATION.md` — the handoff: every addressable node,
+   how to drive it, what each coordinate means, and the six checks.
+4. `docs/art/BATCH_043_INVENTORY.md` — what already existed, before anything
    new was made.
 
 ## The status kit
@@ -176,17 +180,24 @@ and a visually busy background: `room/STATUS_individual_*`,
 
 `docs/art/review/machinery_2026-09-11/README.md`, then `_look_states.png` for
 the five states flat, `room/MACH_five_states.png` on a wall,
-`room/MACH_close_inactive_vs_blocked.png` for the pair that has to be settled
-by pattern alone, `room/MACHSEQ_motion.gif` for travel against growth, and
-`room/MACH_switch_*.png` for the setter and receiver.
+`room/MACH_close_inactive_vs_blocked.png` for the pair separated by
+brightness **and** pattern, `room/MACHSEQ_motion.gif` for travel against
+growth, `room/MACH_delay_*.png` for a labelled 4.0 s delay with both
+endpoints, `room/MACH_hinge_sweep.png` and `.gif` for the lever's fixed
+pintle, and `room/MACH_switch_*.png` for the setter and receiver.
 
-**No audio exists in this kit** and no frame here demonstrates any.
+**No audio exists in this kit** and no frame here demonstrates any — but the
+filling band, not the audio, is §19.5's primary timing channel and it is
+delivered.
 
 ## The physics props
 
-`docs/art/review/props_2026-09-11/CLASS_MAP.md` maps all twelve of Design 2
-§10.1's classes; four are built. `room/PROPS_lineup.png`,
-`room/PROPS_manipulable_vs_decorative.png`, and one close frame per candidate.
+`docs/art/review/props_2026-09-11/CLASS_MAP.md` — **all twelve** of Design 2
+§10.1's classes, all built. `room/PROPS_lineup_bright.png` and `_dark.png`
+are the family in three rows split at the 60 kg carry line, under both
+lighting conditions; `room/PROPS_candidate_vs_decorative_*.png` settles the
+`GENERIC` / `DRUM` question; `room/PROPS_fixed_vs_movable_*.png` shows
+`ANCHOR_BLOCK` reading as `FIXED`; and there is one close frame per class.
 
 ## What these pictures do not show
 

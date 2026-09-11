@@ -163,18 +163,27 @@ export const FRAMES = [
   },
 ];
 
-/** The player-applied tick, 8x8, seated at the marker's lower right. */
+/**
+ * The player-applied tick, 8x8, seated OUTSIDE the marker's lower right.
+ *
+ * It used to be gold, and the gold was the only thing separating it from the
+ * frame it overlapped. With the kit neutral (see `author_status_kit.mjs` on
+ * why `send` was the wrong colour to borrow) the tick has to be separated by
+ * geometry instead: it sits clear of the frame's outer edge, so the ink
+ * outline of each draws a gap between them, and its stroke is two pixels so
+ * it reads as a mark rather than as a nick in the ring.
+ */
 export const TICK = [
-  "........",
-  "......XX",
   ".....XX.",
-  "X....XX.",
-  "XX..XX..",
-  ".XXXX...",
+  "....XX..",
+  "...XX...",
+  "X..XX...",
+  "XX.XX...",
+  ".XXX....",
   "..XX....",
   "........",
 ];
-export const TICK_AT = [21, 21];
+export const TICK_AT = [23, 23];
 
 /**
  * The depletion track: the frame's own outer edge, in clockwise order from

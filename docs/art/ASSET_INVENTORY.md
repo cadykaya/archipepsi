@@ -184,28 +184,39 @@ disagree.
 
 ### Batch 043 — PROPOSAL, not approved
 
-These nine are candidates. They are in the pending band with 023–030 and
+These fifteen are candidates. They are in the pending band with 023–030 and
 nothing below is a `PASS`. They are listed here because the metrics checker
 reads this table and a built asset that appears in no row is a built asset
 nobody is tracking.
 
 | id | L | kind | tris | size (m) | anchor | theme | batch | review |
 | --- | --- | --- | ---: | --- | --- | --- | --- | --- |
-| `mach_conduit_run` | L0 | prop | 108 | 2.28 × 0.17 × 0.50 | wall | B1R | B43 | PROPOSAL |
+| `mach_conduit_run` | L0 | prop | 120 | 2.06 × 0.18 × 0.50 | wall | B1R | B43 | PROPOSAL |
 | `mach_wall_switch` | L0 | prop | 60 | 0.36 × 0.19 × 0.54 | wall | B1R | B43 | PROPOSAL |
 | `mach_receiver_lamp` | L0 | prop | 60 | 0.50 × 0.26 × 0.37 | floor | B1R | B43 | PROPOSAL |
-| `phys_key_component` | L0 | prop | 108 | 0.25 × 0.20 × 0.35 | floor | B1R | B43 | PROPOSAL |
+| `phys_key_component` | L0 | prop | 108 | 0.25 × 0.20 × 0.30 | floor | B1R | B43 | PROPOSAL |
+| `phys_generic` | L0 | prop | 96 | 0.65 × 0.65 × 0.62 | floor | B1R | B43 | PROPOSAL |
 | `phys_power_cell` | L0 | prop | 148 | 0.34 × 0.34 × 0.60 | floor | B1R | B43 | PROPOSAL |
 | `phys_mechanical_part` | L0 | prop | 136 | 0.47 × 0.40 × 0.43 | floor | B1R | B43 | PROPOSAL |
+| `phys_plate` | L0 | prop | 68 | 1.80 × 0.92 × 0.14 | floor | B1R | B43 | PROPOSAL |
+| `phys_drum` | L0 | prop | 108 | 1.03 × 0.68 × 0.68 | floor | B1R | B43 | PROPOSAL |
 | `phys_girder` | L0 | prop | 84 | 3.20 × 0.20 × 0.26 | floor | B1R | B43 | PROPOSAL |
-| `phys_weighted` | L0 | prop | 108 | 0.82 × 0.91 × 0.70 | floor | B1R | B43 | PROPOSAL |
+| `phys_weighted` | L0 | prop | 108 | 0.82 × 0.86 × 0.70 | floor | B1R | B43 | PROPOSAL |
+| `phys_cart` | L0 | prop | 232 | 1.36 × 0.86 × 0.67 | floor | B1R | B43 | PROPOSAL |
+| `phys_movable_cover` | L0 | prop | 108 | 1.33 × 0.26 × 1.72 | floor | B1R | B43 | PROPOSAL |
 | `phys_ballast` | L0 | prop | 120 | 1.12 × 0.82 × 0.50 | floor | B1R | B43 | PROPOSAL |
+| `phys_anchor_block` | L0 | prop | 80 | 0.99 × 0.99 × 0.69 | floor | B1R | B43 | PROPOSAL |
 
-The six `phys_*` are Design 2 §10.1 object classes and complete the family's
-mass ladder — 8, 40, 55, 95, 140, 320 kg; `CLASS_MAP.md` in
+The twelve `phys_*` are **all twelve** of Design 2 §10.1's object classes —
+8, 15, 40, 55, 60, 70, 95, 140, 180, 220, 320, 500 kg; `CLASS_MAP.md` in
 `docs/art/review/props_2026-09-11/` maps all twelve. The three `mach_*` are
 the machinery feedback kit and each exports its state regions as separately
 named nodes — the contract is in their manifest's `how_to_drive`.
+
+`phys_generic` and `phys_drum` are the **manipulable siblings** of
+`prop_crate` and `prop_oil_drum`. Those two approved rows are unchanged and
+remain decoration; a class needing both a decorative and a manipulable
+reading gets two candidates rather than one contradictory promise.
 
 The status graphic kit is **not** in this table: it is 2D, it has no mesh,
 no triangle count and no metres, and `status_kit.json` is its manifest.

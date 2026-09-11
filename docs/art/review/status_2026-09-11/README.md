@@ -85,10 +85,24 @@ sixteen files — because a player can arrive at a pair from either side.
 
 ## Colour
 
-Neutral: one ink, one face, one dim, one spent. The only reserved colour in
-the kit is `send` on the player tick, and it is **proposed** rather than
-assumed. The reasoning, and the four other questions this batch needs an
-owner for, are in `DECISIONS_FOR_OWNER.md`.
+**Neutral throughout, and no reserved colour is used at all.**
+
+An earlier revision made the player-applied tick `send` #ffd45c and argued
+that `send` means "this one came from you". **That misreads the palette.**
+`send` means one specific thing — *this leaves for the multiworld* — and it
+belongs to Check transmission. Everything the player causes is not a send,
+and a gold tick on a `burning` crate would have taught a player that setting
+a crate on fire is an Archipelago event.
+
+The tick is now the same near-white as the rest of the kit, and it moved
+outside the frame's outer edge so the two ink outlines draw a gap between
+them. Its job was always carried by shape and position — a check mark proud
+of the lower right, present or absent — and the colour was never doing the
+work.
+
+The four families stay neutral by owner decision, and the compound
+double-ring is kept: it identifies a compound, not a fifth mechanical family.
+`DECISIONS_FOR_OWNER.md` records what was decided and what is still open.
 
 `SHEET_markers_grayscale.png` is therefore nearly identical to
 `SHEET_markers.png` — which is the point, not an oversight.
@@ -112,9 +126,36 @@ Barrier, the weapon and feed, five abilities and Mobility, and they exist so
 the proximate tier can be judged against something it is not allowed to
 cover. No HUD is being designed here.
 
-Statuses are shown only on `OBJECT` targets, because that is the only one of
-§15.1's five kinds with an approved candidate in the catalogue.
-`BATCH_043_INVENTORY.md` says why.
+## Every example is legal, and the preview enforces it
+
+An earlier revision put `confused` on an oil drum and `rooted` on a utility
+box. **Both are actor-only**, and `status_kit.json` said so on the line
+above — the metadata was right and the picture was wrong, which is the worse
+way round, because the picture is what gets looked at.
+
+The preview now loads the kit's own `targets` lists at startup and every
+marker goes through a gate that **fails the run** rather than render an
+illegal pair:
+
+```
+[status] 84 status/target pairs checked against §15.2
+```
+
+§15.2 makes exactly **twelve** of the twenty-one legal on an `OBJECT` — which
+is also §33.10 rule 2's full-render count — and **eight** actor-only, plus
+`arc_path`, which is surface-only.
+
+**Actor-only statuses ride a labelled stand-in.** Batch 030's ten enemy roles
+are still unspawnable behind req 31, so there is no approved actor to put
+them on. The stand-in is a flat, unshaded, untextured capsule with
+`PREVIEW STAND-IN / not an enemy asset` over its head, drawn in front of its
+own body so it cannot be hidden behind. **It is a placement, not a proposal:
+no silhouette decision is being made and nothing here is a sketch of an
+enemy.** The alternative was putting actor-only statuses on crates, which is
+what the first pass did.
+
+`arc_path` is shown on a floor face — the one surface-only member of the kit,
+on the one kind it is legal for.
 
 ## What a still cannot show
 

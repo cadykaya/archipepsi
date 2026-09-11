@@ -509,10 +509,20 @@ def set_origin_group(objects, anchor="floor"):
     else:
         shift = Vector((mid_x, mid_y, (min_z + max_z) / 2.0))
     for obj in objects:
+        if getattr(obj.data, "vertices", None) is None:  # noqa: E501
+            # An Empty -- a hinge, a marker. It has no vertices to move, so
+            # the shift lands on its location instead. Without this branch a
+            # pivot silently stays where the unshifted body used to be.
+            obj.location = tuple(Vector(obj.location) - shift)
+            continue
         for vertex in obj.data.vertices:
             vertex.co -= shift
         obj.location = (0.0, 0.0, 0.0)
-    return objects
+    # THE SHIFT, not the objects. A caller that recorded a position in the
+    # authoring frame -- an attachment point, a pivot -- has to move it by
+    # exactly this, exactly once, or the metadata describes a different
+    # object from the one that shipped.
+    return shift
 
 
 def set_origin_floor_centre(obj):
@@ -531,9 +541,15 @@ def measure(obj):
 
 
 def measure_group(objects):
-    """(width_x, depth_y, height_z) over several objects at once."""
+    """(width_x, depth_y, height_z) over several objects at once.
+
+    Objects with no geometry -- hinges and other Empties -- are skipped. An
+    Empty's `bound_box` is eight copies of its origin, which would drag the
+    declared size out to include a point that is not part of the asset.
+    """
     bbox = [o.matrix_world @ Vector(corner)
-            for o in objects for corner in o.bound_box]
+            for o in objects if getattr(o.data, "vertices", None) is not None
+            for corner in o.bound_box]
     return (
         max(v.x for v in bbox) - min(v.x for v in bbox),
         max(v.y for v in bbox) - min(v.y for v in bbox),
@@ -554,7 +570,8 @@ def assert_budget_group(objects, asset_name, category):
             "%s: no triangle ceiling for category '%s'. Categories are %s. A "
             "new category is a budget decision, not a spelling."
             % (asset_name, category, ", ".join(sorted(ceilings))))
-    count = sum(triangle_count(o) for o in objects)
+    count = sum(triangle_count(o) for o in objects
+                if getattr(o.data, "vertices", None) is not None)
     limit = ceilings[category]
     if count > limit:
         raise AssertionError(
@@ -563,6 +580,102 @@ def assert_budget_group(objects, asset_name, category):
             "never optimise the mesh, and never raise the ceiling to fit one "
             "asset." % (asset_name, count, len(objects), category, limit))
     return count
+
+
+def assert_parts_touch(body, parts, asset_name, tolerance=0.002):
+    """Every addressable fitting must be physically CONNECTED to the body.
+
+    A grip that floats above its case, or a pad that hovers off its face, is
+    a modelling error the renders will show and the manifest will not -- and
+    it is easy to make, because a fitting is usually positioned against a
+    NOMINAL dimension (`h`, the class height) rather than against the body's
+    actual top, which sits wherever the last piece put it.
+
+    Measured, and it is why this exists: `phys_key_component`'s carry grip
+    was placed at `h + 0.002` while the case topped out at 0.231, so the
+    handle exported 43 mm in the air. `phys_weighted`'s push pads floated
+    10 mm off the posts they were meant to sit on. Both passed every other
+    check in the pipeline.
+
+    CONNECTED, not touching-the-body. A D-handle is a chain: the crossbar
+    rests on two posts and the posts rest on the case, and the bar never
+    meets the case at all. A first version of this check compared every part
+    against the body alone and refused a perfectly sound handle. So it
+    floods outward from the body instead, and a part is connected if it
+    meets anything already connected.
+
+    The test is an axis-aligned box overlap inflated by `tolerance`, which
+    is a LOWER BOUND on contact: two boxes can overlap while the shapes
+    inside them do not. It catches gross floats -- which is what it is for
+    -- and it is not a proof of surface contact.
+    """
+    def box(obj):
+        # From the VERTICES, not `bound_box`. Blender caches `bound_box`
+        # against the depsgraph, and `set_origin_group` moves vertices in
+        # place -- so a box read straight after an origin shift can be the
+        # box from before it. That stale read is what made this assertion
+        # fire on a conduit band that was sitting exactly where it should.
+        pts = [obj.matrix_world @ v.co for v in obj.data.vertices]
+        return ([min(p[i] for p in pts) for i in range(3)],
+                [max(p[i] for p in pts) for i in range(3)])
+
+    def overlap(a, b):
+        for i in range(3):
+            if a[0][i] > b[1][i] + tolerance or a[1][i] < b[0][i] - tolerance:
+                return False
+        return True
+
+    meshy = [p for p in parts
+             if getattr(p.data, "vertices", None) is not None]
+    boxes = {p.name: box(p) for p in meshy}
+    connected = {"__body__": box(body)}
+    pending = list(meshy)
+    grew = True
+    while grew:
+        grew = False
+        for part in list(pending):
+            if any(overlap(boxes[part.name], b)
+                   for b in connected.values()):
+                connected[part.name] = boxes[part.name]
+                pending.remove(part)
+                grew = True
+    if pending:
+        detail = []
+        for part in pending:
+            lo, hi = boxes[part.name]
+            blo, bhi = connected["__body__"]
+            gaps = []
+            for i, axis in enumerate("XYZ"):
+                if lo[i] > bhi[i] + tolerance:
+                    gaps.append("%s +%.4f m" % (axis, lo[i] - bhi[i]))
+                elif hi[i] < blo[i] - tolerance:
+                    gaps.append("%s -%.4f m" % (axis, blo[i] - hi[i]))
+            detail.append("%s (%s from the body, and touching no connected "
+                          "fitting)" % (part.name, ", ".join(gaps) or "inside "
+                                        "the body's box on every axis"))
+        raise AssertionError(
+            "%s: %d fitting(s) are not connected to the body: %s. A handle a "
+            "hand cannot reach and a pad a device cannot press are the same "
+            "defect -- position fittings against the body's MEASURED extent, "
+            "never against the class's nominal height."
+            % (asset_name, len(pending), "; ".join(detail)))
+    return len(meshy)
+
+
+def top_of(obj):
+    """The highest world Z of an object's geometry. What a fitting sits on.
+
+    From the vertices for the same reason `assert_parts_touch` does: a
+    cached `bound_box` can predate an in-place origin shift.
+    """
+    return max((obj.matrix_world @ v.co).z for v in obj.data.vertices)
+
+
+def world_box(obj):
+    """(min, max) world-space corners, read from the vertices."""
+    pts = [obj.matrix_world @ v.co for v in obj.data.vertices]
+    return ([min(p[i] for p in pts) for i in range(3)],
+            [max(p[i] for p in pts) for i in range(3)])
 
 
 def assert_fits(obj, asset_name, max_size, why):
@@ -613,15 +726,16 @@ def export_glb(obj, relative_path, category, tier=None, texture_size=None,
     """
     name = os.path.basename(relative_path)
     parts = list(parts)
+    meshy = [p for p in parts if getattr(p.data, "vertices", None) is not None]
     if check_flat:
         assert_flat(obj, name)
-        for part in parts:
+        for part in meshy:
             assert_flat(part, "%s/%s" % (name, part.name))
     tris = assert_budget_group([obj] + parts, name, category)
     density = None
     if tier and texture_size:
         density = assert_texel_density(obj, name, tier, texture_size)
-        for part in parts:
+        for part in meshy:
             assert_texel_density(part, "%s/%s" % (name, part.name),
                                  tier, texture_size)
 

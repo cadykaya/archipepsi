@@ -1,7 +1,7 @@
 {
   "batch": "043",
   "authored": "2026-09-11",
-  "art_revision": "327c0894ea9b16b166aaa8bf9f26a5b1f3136c95",
+  "art_revision": "4f088acb91a710089ccdd8f35d3ddcbd21e5b595",
   "glyph_revision": "6c80b6315912a70b44c28d566ddff608eafa234a",
   "design_revision": "a20bf55",
   "design_sections": [
@@ -26,8 +26,8 @@
     ]
   },
   "tick_origin": [
-    21,
-    21
+    23,
+    23
   ],
   "glyph_origin_in_marker": [
     8,

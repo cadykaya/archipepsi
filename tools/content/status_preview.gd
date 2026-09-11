@@ -35,6 +35,8 @@ var _out: String
 var _bench: GDScript
 var _tex := {}
 var _log := {}
+var _legal := {}          ## status id -> the §15.2 target list, from the kit
+var _checked := 0
 
 func _init() -> void:
 	var a := OS.get_cmdline_user_args()
@@ -43,7 +45,25 @@ func _init() -> void:
 	_models = a[2]
 	_out = a[3]
 	_bench = load("res://_harness/artbench.gd") as GDScript
+	_load_target_lists()
 	_run.call_deferred()
+
+
+func _load_target_lists() -> void:
+	## §15.2's `targets` column, read from the kit's OWN metadata.
+	##
+	## THE PREVIEW MUST NOT BE ABLE TO CONTRADICT THE KIT IT IS PREVIEWING.
+	## The first version of this file put `confused` on an oil drum and
+	## `rooted` on a utility box. Both are actor-only, and status_kit.json
+	## said so on the line above -- the metadata was right and the picture
+	## was wrong, which is the worst way round because the picture is what
+	## gets looked at. Every marker placed below now goes through
+	## `_marker()`, which fails the run rather than render an illegal pair.
+	var text := FileAccess.get_file_as_string("%s/status_kit.json" % _kit)
+	var kit: Dictionary = JSON.parse_string(text)
+	for raw: Variant in kit.get("glyphs", []):
+		var g: Dictionary = raw
+		_legal[g["id"]] = g["targets"]
 
 # -- the shipped surface roles, per background -----------------------------
 
@@ -109,7 +129,34 @@ func _bind(root: Node, ground: String) -> int:
 
 # -- markers ---------------------------------------------------------------
 
-func _marker(parent: Node3D, at: Vector3, image: String) -> Sprite3D:
+func _status_of(image: String) -> String:
+	## The status id inside a marker/glyph/example image name.
+	for prefix: String in ["marker_", "glyph_"]:
+		if image.begins_with(prefix):
+			return "glyph_" + image.substr(prefix.length())
+	if image.begins_with("example_"):
+		# `example_slippery_38pct_player`
+		var tail := image.substr("example_".length())
+		return "glyph_" + tail.split("_")[0]
+	return ""
+
+
+func _assert_legal(image: String, kind: String) -> void:
+	var id := _status_of(image)
+	if id == "" or not _legal.has(id):
+		return                                  # a frame, a tick, an atlas
+	var allowed: Array = _legal[id]
+	if kind not in allowed:
+		push_error("[status] ILLEGAL EXAMPLE: %s on a %s target. §15.2 "
+				% [id.substr(6), kind]
+				+ "allows %s only. The preview may not contradict the kit."
+				% ", ".join(allowed))
+		quit(3)
+	_checked += 1
+
+
+func _marker(parent: Node3D, at: Vector3, image: String,
+		kind: String = "object") -> Sprite3D:
 	## A world-anchored, screen-fixed marker.
 	##
 	## `fixed_size` is the whole argument for authoring at 32 px: the marker
@@ -117,6 +164,7 @@ func _marker(parent: Node3D, at: Vector3, image: String) -> Sprite3D:
 	## DRAWN at is the size it is READ at, and a distant target does not get
 	## a smaller, mushier version of the same picture -- it gets the reduced
 	## treatment instead, which is a different picture (§33.10 rule 2).
+	_assert_legal(image, kind)
 	var s := Sprite3D.new()
 	var img := Image.load_from_file("%s/png/%s.png" % [_kit, image])
 	s.texture = ImageTexture.create_from_image(img)
@@ -167,6 +215,48 @@ func _top_of(node: Node3D) -> float:
 			var corner: Vector3 = mi.global_transform * box.get_endpoint(i)
 			top = maxf(top, corner.y)
 	return 0.0 if top == -INF else top
+
+
+func _stand_in(parent: Node3D, at: Vector3) -> Node3D:
+	## An ACTOR-shaped hole, and it is drawn so nobody can mistake it for art.
+	##
+	## Eight of the twenty-one statuses are actor-only (§15.2), and Batch
+	## 030's ten enemy roles are still unspawnable behind req 31 -- so there
+	## is no approved actor to put them on. The alternative to this was
+	## putting actor-only statuses on crates, which is what the first pass
+	## did and it was wrong.
+	##
+	## Flat, unshaded, mid grey, no texture, no detail, and a label over its
+	## head. It is a placement, not a proposal: nothing here is a sketch of
+	## an enemy and no silhouette decision is being made.
+	var body := MeshInstance3D.new()
+	var capsule := CapsuleMesh.new()
+	capsule.radius = 0.36
+	capsule.height = 1.72
+	capsule.radial_segments = 8
+	capsule.rings = 2
+	body.mesh = capsule
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.44, 0.46, 0.50)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	body.material_override = mat
+	parent.add_child(body)
+	body.global_position = at + Vector3(0, 0.86, 0)
+	var tag := Label3D.new()
+	tag.text = "PREVIEW STAND-IN\nnot an enemy asset"
+	tag.font_size = 44
+	tag.pixel_size = 0.0016
+	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	tag.modulate = Color(0.86, 0.88, 0.91)
+	tag.outline_size = 14
+	tag.outline_modulate = Color(0.05, 0.06, 0.08)
+	# Drawn in front of its own body and never occluded. A label that a
+	# stand-in can hide behind is a label that stops saying "stand-in"
+	# exactly when the picture starts looking like an enemy.
+	tag.no_depth_test = true
+	parent.add_child(tag)
+	tag.global_position = at + Vector3(0, 0.34, 0.42)
+	return body
 
 
 func _target(parent: Node3D, kind: String, at: Vector3, yaw: float) -> Node3D:
@@ -361,19 +451,30 @@ func _run() -> void:
 		await _compound(ground)
 		await _crowd(ground)
 	await _frames()
+	_log["legal_pairs_checked"] = _checked
+	print("[status] %d status/target pairs checked against §15.2" % _checked)
 	var f := FileAccess.open("%s/preview_log.json" % _out, FileAccess.WRITE)
 	f.store_string(JSON.stringify(_log, "  "))
 	f.close()
 	quit(0)
 
 func _individual(ground: String) -> void:
+	## One example per family, EVERY ONE ON A KIND §15.2 ALLOWS.
+	##
+	## KINETIC and MATERIAL have object-legal members, so they go on props.
+	## PERMISSION has exactly one member that is not actor-only -- `phased`
+	## -- so that is the one a crate may wear. COGNITIVE has none at all:
+	## all four of its statuses are actor-only, so it goes on a stand-in.
+	## That is not a limitation of the preview, it is what §15.2 says
+	## COGNITIVE is.
 	var w := _scene(ground)
-	# Four targets, one per family, at standing height and walking distance.
 	var rows := [
-		[Vector3(-1.9, 0, 2.2), "crate", "marker_lightened", "Lighter than it should be."],
-		[Vector3(-0.6, 0, 2.6), "drum", "marker_confused", "Cannot tell friend from foe."],
-		[Vector3(0.7, 0, 2.6), "utility", "marker_rooted", "Cannot walk."],
-		[Vector3(2.0, 0, 2.2), "debris", "marker_burning", "On fire, and setting fire."],
+		[Vector3(-2.05, 0, 2.2), "crate", "marker_lightened",
+		 "Lighter than it should be.", "KINETIC"],
+		[Vector3(-0.75, 0, 2.5), "utility", "marker_phased",
+		 "Passes through.", "PERMISSION"],
+		[Vector3(2.05, 0, 2.2), "debris", "marker_burning",
+		 "On fire, and setting fire.", "MATERIAL"],
 	]
 	var focus := Vector3.INF
 	var text := ""
@@ -385,22 +486,31 @@ func _individual(ground: String) -> void:
 			continue
 		var top := base
 		top.y = _top_of(node) + 0.30
-		_marker(w, top, r[2])
-		if r[2] == "marker_rooted":
+		_marker(w, top, r[2], "object")
+		if r[4] == "PERMISSION":
 			focus = top
 			text = r[3]
-	# A partly spent duration, and the player-applied tick, on its own target
-	# so neither is read as part of the four above.
-	var lone := Vector3(1.95, 0, 4.35)
+	# COGNITIVE, on the only kind it is legal for.
+	var actor := Vector3(0.7, 0, 3.0)
+	_stand_in(w, actor)
+	_marker(w, actor + Vector3(0, 1.95, 0), "marker_blinded", "actor")
+	# And a SURFACE target, which is the third of §15.1's five kinds with
+	# anything to stand on: `arc_path` is surface-only and this is the only
+	# legal place in the room to show it.
+	_marker(w, Vector3(-1.15, 0.22, 4.55), "marker_arc_path", "surface")
+	# A partly spent duration and the player tick, on its own object target.
+	var lone := Vector3(1.55, 0, 4.45)
 	var lnode := _target(w, "crate", lone, -22.0)
 	if lnode != null:
 		_marker(w, Vector3(lone.x, _top_of(lnode) + 0.30, lone.z),
-				"example_slippery_38pct_player")
+				"example_slippery_38pct_player", "object")
 	await _shot(w, Vector3(0.1, 1.62, 5.9), Vector3(0.1, 1.30, 2.4),
 			"STATUS_individual_%s" % ground, text, focus,
-			"individual markers | one at 38% remaining with the player tick"
-			+ " | sentence printed verbatim on focus (§33.7)")
+			"one per family, every pair legal under §15.2 | COGNITIVE is "
+			+ "actor-only so it sits on a labelled stand-in | arc_path is "
+			+ "surface-only, on the wall | 38% remaining with the tick")
 	_clear(w)
+
 
 func _compound(ground: String) -> void:
 	var w := _scene(ground)
@@ -412,10 +522,13 @@ func _compound(ground: String) -> void:
 	var nb := _target(w, "crate", b, -12.0)
 	var ay := _top_of(na) + 0.30
 	var by := _top_of(nb) + 0.30
-	_marker(w, Vector3(a.x, ay, a.z), "marker_lightened")
-	_marker(w, Vector3(a.x, ay + 0.42, a.z), "hint_updraft_needs_burning")
-	# RIGHT: the same pair, resolved.
-	_marker(w, Vector3(b.x, by, b.z), "marker_updraft")
+	_marker(w, Vector3(a.x, ay, a.z), "marker_lightened", "object")
+	_marker(w, Vector3(a.x, ay + 0.42, a.z), "hint_updraft_needs_burning",
+			"object")
+	# RIGHT: the same pair, resolved. `updraft` targets actor and object;
+	# `lightened` and `burning`, its two components, are both object-legal,
+	# so this whole sequence is legal on a crate.
+	_marker(w, Vector3(b.x, by, b.z), "marker_updraft", "object")
 	await _shot(w, Vector3(0.0, 1.60, 5.6), Vector3(0.0, 1.35, 2.4),
 			"STATUS_compound_%s" % ground, "Rising on its own heat.",
 			b + Vector3(0, 1.15, 0),
@@ -424,39 +537,53 @@ func _compound(ground: String) -> void:
 	_clear(w)
 
 func _crowd(ground: String) -> void:
+	## Sixteen marked targets: twelve objects and four actors.
+	##
+	## The split is not arbitrary -- §15.2 makes exactly twelve of the
+	## twenty-one legal on an OBJECT, which is also §33.10 rule 2's
+	## full-render count. The four actor-only ones ride stand-ins at the
+	## back, which puts them past the twelve nearest and demonstrates the
+	## reduced treatment on the targets that need it most.
 	var w := _scene(ground)
-	# Sixteen marked targets. §33.10 rule 2: the nearest twelve render fully,
-	# everything past that renders as a single glyph with no ring.
 	var kinds := ["crate", "drum", "utility", "debris"]
-	var marks := ["lightened", "anchored", "slippery", "confused", "turncoat",
-			"blinded", "exposed", "silenced", "rooted", "phased", "burning",
-			"conductive", "brittle", "updraft", "grounded", "suspended"]
+	var object_legal := ["lightened", "anchored", "slippery", "phased",
+			"burning", "conductive", "brittle", "updraft", "grounded",
+			"spreading", "suspended", "shatterpoint"]
+	var actor_only := ["confused", "blinded", "silenced", "floundering"]
 	var eye := Vector3(0.0, 1.62, 5.9)
 	var placed := []
 	var n := 0
 	for ix in 4:
-		for iz in 4:
-			var p := Vector3(-2.4 + ix * 1.6, 0.0, 0.6 + iz * 1.35)
+		for iz in 3:
+			var p := Vector3(-2.4 + ix * 1.6, 0.0, 1.1 + iz * 1.35)
 			var tn := _target(w, kinds[n % kinds.size()], p, 20.0 * n)
 			placed.append({"at": Vector3(p.x, _top_of(tn) + 0.28, p.z),
-					"id": marks[n], "d": eye.distance_to(p)})
+					"id": object_legal[n], "kind": "object",
+					"d": eye.distance_to(p)})
 			n += 1
+	for ia in 4:
+		var p := Vector3(-2.1 + ia * 1.4, 0.0, 0.55)
+		_stand_in(w, p)
+		placed.append({"at": p + Vector3(0, 1.95, 0), "id": actor_only[ia],
+				"kind": "actor", "d": eye.distance_to(p)})
 	placed.sort_custom(func(x, y): return x["d"] < y["d"])
 	var reduced := 0
 	for i in placed.size():
 		var e: Dictionary = placed[i]
 		var far: bool = i >= TIER_FULL_COUNT or e["d"] > TIER_PROXIMATE_M
 		_marker(w, e["at"], ("glyph_%s" % e["id"]) if far
-				else ("marker_%s" % e["id"]))
+				else ("marker_%s" % e["id"]), e["kind"])
 		if far:
 			reduced += 1
 	_log["crowd_reduced_%s" % ground] = reduced
 	await _shot(w, eye, Vector3(0.0, 1.20, 2.2), "STATUS_crowd_%s" % ground,
 			"", Vector3.INF,
-			"16 marked targets | nearest %d full, %d reduced to a single"
+			"12 objects + 4 actor stand-ins | nearest %d full, %d reduced"
 			% [TIER_FULL_COUNT, reduced]
-			+ " glyph (§33.10 rule 2) | crosshair and persistent tier clear")
+			+ " to a single glyph (§33.10 rule 2) | crosshair and"
+			+ " persistent tier clear | every pair legal under §15.2")
 	_clear(w)
+
 
 func _frames() -> void:
 	## Twelve frames of one change: a duration running down, and a compound
@@ -469,10 +596,10 @@ func _frames() -> void:
 	var top := Vector3(at.x, _top_of(tn) + 0.30, at.z)
 	var hint := top + Vector3(0, 0.42, 0)
 	for i in 12:
-		var mk := _marker(w, top, "marker_lightened")
+		var mk := _marker(w, top, "marker_lightened", "object")
 		var hn: Sprite3D = null
 		if i < 9:
-			hn = _marker(w, hint, "hint_updraft_needs_burning")
+			hn = _marker(w, hint, "hint_updraft_needs_burning", "object")
 		if i >= 9:
 			mk.texture = ImageTexture.create_from_image(
 					Image.load_from_file("%s/png/marker_updraft.png" % _kit))

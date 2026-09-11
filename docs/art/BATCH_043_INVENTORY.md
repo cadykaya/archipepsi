@@ -73,23 +73,23 @@ owner last saw it.
 
 | class | mass | state | nearest existing candidate |
 | --- | ---: | --- | --- |
-| `GENERIC` | 15 kg | **APPROVED USABLE** | `prop_crate` (PASS, B1R) is 15 kg-shaped and 1.0 m, exactly `MAX_VERTICAL_STEP` |
-| `WEIGHTED` | 140 kg | **PENDING / ADAPT** | none is right; `prop_crate` at 140 kg would lie about its mass |
+| `GENERIC` | 15 kg | **APPROVED FOR DRESSING; SIBLING BUILT** | `prop_crate` (PASS, B1R) is decoration and stays so. `phys_generic` is the manipulable sibling. **The earlier note that a 1.0 m crate is automatically a step is withdrawn** — `MAX_VERTICAL_STEP` is a schema bound, not a statement about the current player |
+| `WEIGHTED` | 140 kg | **NO ASSET → BUILT** | — |
 | `POWER_CELL` | 40 kg | **NO ASSET → BUILT** | — |
-| `KEY_COMPONENT` | 8 kg | **NO ASSET** | — |
+| `KEY_COMPONENT` | 8 kg | **NO ASSET → BUILT** | — |
 | `MECHANICAL_PART` | 55 kg | **NO ASSET → BUILT** | — |
-| `MOVABLE_COVER` | 220 kg | **NO ASSET** | `breakwall_panel` is a destructible, not a cover |
-| `CART` | 180 kg | **NO ASSET** | — |
+| `MOVABLE_COVER` | 220 kg | **NO ASSET → BUILT** | `breakwall_panel` is a destructible, not a cover, and was not reused |
+| `CART` | 180 kg | **NO ASSET → BUILT** | — |
 | `GIRDER` | 95 kg | **NO ASSET → BUILT** | — |
 | `BALLAST` | 320 kg | **NO ASSET → BUILT** | — |
-| `PLATE` | 60 kg | **PENDING / ADAPT** | `prop_wall_plate` (PASS, B10) is 0.90 × 0.10 × 0.62 — a wall dressing at a tenth of the mass, so the name matches and the object does not |
-| `DRUM` | 70 kg | **APPROVED USABLE, WITH A CAVEAT** | `prop_oil_drum` (PASS, B10) is 0.78 × 0.78 × 0.95 and rolls. It has no handling features, so it reads as decoration — adaptation is one pass of fittings, not a rebuild |
-| `ANCHOR_BLOCK` | 500 kg | **PENDING / ADAPT** | `anchor_a_soffit` / `anchor_b_jib` (PASS, B1R/B2) are grapple anchors — the same *word*, a different mechanic. Do not reuse on the name alone |
+| `PLATE` | 60 kg | **NO SUITABLE ASSET → BUILT** | `prop_wall_plate` (PASS, B10) is a wall dressing at a tenth of the mass — the name matches and the object does not, so it was not adapted |
+| `DRUM` | 70 kg | **APPROVED FOR DRESSING; SIBLING BUILT** | `prop_oil_drum` (PASS, B10) has no handling features and reads as decoration. It stays unchanged; `phys_drum` is the manipulable sibling |
+| `ANCHOR_BLOCK` | 500 kg | **NO SUITABLE ASSET → BUILT** | `anchor_a_soffit` / `anchor_b_jib` are **grapple** anchors — the same word, a different mechanic — and were deliberately not reused |
 
-Two of the twelve are covered by approved assets, two more have a candidate
-worth adapting, four were built here, and **four have nothing at all**:
-`KEY_COMPONENT`, `MOVABLE_COVER`, `CART` and — in the class's own sense —
-`ANCHOR_BLOCK`.
+**All twelve now have a candidate.** Two classes (`GENERIC`, `DRUM`) also
+keep an approved decorative asset, unchanged, beside the new manipulable
+sibling — because "you can pick this up" and "this is scenery" are different
+promises and one mesh cannot make both.
 
 ## 4. Target candidates for the status preview (Design 5 §15.1, five kinds)
 
@@ -97,13 +97,15 @@ worth adapting, four were built here, and **four have nothing at all**:
 | --- | --- | --- |
 | `OBJECT` | **APPROVED USABLE** | `prop_crate`, `prop_oil_drum`, `prop_utility_box`, `prop_debris`, `prop_terminal`, `prop_machinery_unit` |
 | `SURFACE` | **APPROVED USABLE** | the shipped `shell_corner_left` faces |
-| `ACTOR` | **PENDING, AND BLOCKED DOWNSTREAM** | Batch 030's ten enemy roles exist and are `PASS`, but req 31 leaves seven unspawnable. No actor appears in this preview and no still here claims one |
+| `ACTOR` | **PENDING, AND BLOCKED DOWNSTREAM** | Batch 030's ten enemy roles exist and are `PASS`, but req 31 leaves seven unspawnable. The preview uses a flat, unshaded, labelled **stand-in** for the eight actor-only statuses. It is a placement, not a proposal: no silhouette decision is made and no still here claims an enemy |
 | `PLAYER` | **NO ASSET** | the player's own status display is a HUD element, and no HUD exists |
 | `VOLUME` | **NO ASSET** | nothing in the catalogue renders an authored region |
 
-The preview shows statuses **only on `OBJECT` targets**, because that is the
-only kind with an approved candidate. §15.2's target column was honoured:
-nothing actor-only or surface-only is shown on a crate.
+The preview shows each status only on a kind §15.2 permits, and it **enforces
+that from the kit's own metadata** rather than by care: 84 status/target
+pairs are checked per run and an illegal pair fails the run. An earlier
+revision put `confused` on a drum and `rooted` on a utility box; the
+metadata was right and the picture was wrong.
 
 ---
 

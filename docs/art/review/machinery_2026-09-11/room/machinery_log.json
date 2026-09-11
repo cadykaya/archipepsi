@@ -1,3 +1,48 @@
 {
+  "hinge": {
+    "max_movement_without_the_hinge_m": 0.446517258882523,
+    "max_pivot_movement_m": 0.0,
+    "pivot_inside_arm_geometry": true,
+    "pivot_local_to_arm": [
+      -0.0299999993294477,
+      -0.0999999940395355,
+      -0.0300000011920929,
+      0.0299999993294477,
+      0.199999988079071,
+      0.0300000011920929
+    ],
+    "samples": [
+      {
+        "deg": 0.0,
+        "pivot_moved_m": 0.0,
+        "would_have_moved_m": 0.0
+      },
+      {
+        "deg": -15.0,
+        "pivot_moved_m": 0.0,
+        "would_have_moved_m": 0.095738984644413
+      },
+      {
+        "deg": -30.0,
+        "pivot_moved_m": 0.0,
+        "would_have_moved_m": 0.189839825034142
+      },
+      {
+        "deg": -45.0,
+        "pivot_moved_m": 0.0,
+        "would_have_moved_m": 0.280692487955093
+      },
+      {
+        "deg": -60.0,
+        "pivot_moved_m": 0.0,
+        "would_have_moved_m": 0.366742432117462
+      },
+      {
+        "deg": -75.0,
+        "pivot_moved_m": 0.0,
+        "would_have_moved_m": 0.446517258882523
+      }
+    ]
+  },
   "runs": 5
 }

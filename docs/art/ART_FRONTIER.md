@@ -315,15 +315,20 @@ Three deliverables, from Design 6 at `a20bf55`:
   channel plus a swappable band, and three pieces carrying them. **No
   audio** — §19.5's hum, arrival click and rising pitch do not exist, and
   `delayed` is the state that suffers for it.
-* **The physics-prop family.** All twelve Design 2 §10.1 classes mapped; six
-  built, completing the mass ladder **8 / 40 / 55 / 95 / 140 / 320 kg**:
-  `phys_key_component`, `phys_power_cell`, `phys_mechanical_part`,
-  `phys_girder`, `phys_weighted`, `phys_ballast`. Family rule: **unpainted
-  dark steel only where the player's device touches**, and a hand grip only
-  below §10.3's 60 kg line. **Two classes still have nothing:**
-  `MOVABLE_COVER` and `CART`. Two want adaptation (`PLATE`, `DRUM`) and
-  `ANCHOR_BLOCK` wants careful adaptation — the grapple anchors share its
-  word, not its mechanic.
+* **The physics-prop family.** **All twelve** Design 2 §10.1 classes built,
+  8 kg to 500. Family rule: **unpainted dark steel only where the player's
+  device touches**, a hand grip only below §10.3's 60 kg line, and
+  `ANCHOR_BLOCK` `FIXED` with neither — one tether eye and nothing to grab.
+  `phys_generic` and `phys_drum` are manipulable siblings of the approved,
+  unchanged `prop_crate` and `prop_oil_drum`.
+
+**Revision 2 (2026-09-11) applied the owner's rulings and repaired eight
+defects** — the `send` tick, two illegal status/target examples, a lever with
+no hinge, a band whose fixed end was assumed, `hazard` on a harmless conduit,
+a two-channel rule satisfied by one channel, a mislabelled comparison, and
+the claim that audio was the only way to show a delay. Six new checks stand
+behind them and each was sabotage-tested. Handoff:
+`docs/art/BATCH_043_INTEGRATION.md`.
 
 **The measured finding the owner asked for.** Batch 028's `state_visual`
 regions are material slots on one merged mesh, confirmed at `327c089` with

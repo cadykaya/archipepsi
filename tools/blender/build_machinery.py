@@ -47,6 +47,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import bpy  # noqa: E402
 import bmesh  # noqa: E402
+import mathutils  # noqa: E402
 import brushkit  # noqa: E402
 import common  # noqa: E402
 import propkit  # noqa: E402
@@ -96,6 +97,55 @@ def _assert_band_uv(obj, metres, tile):
                 % (obj.name, density, i, DENSITY))
 
 
+def _hinge(name, arm, pivot):
+    """Give a moving part a REAL pivot, as an Empty it hangs from.
+
+    ## The defect this repairs
+
+    `mach_wall_switch` exported `lever_arm` as a node whose vertices ran from
+    Y 0.27 to Y 0.53 with an IDENTITY transform. Rotating that node rotates
+    it about the ASSET origin at Y 0, half a metre below the arm -- so the
+    lever swept through the wall instead of turning on its pintle, while the
+    manifest promised "the pivot sits at the arm's base". The preview looked
+    plausible because a big enough swing hides a wrong centre.
+
+    ## What this does instead
+
+    An Empty is created AT the pivot, the arm's vertices are re-based so the
+    pivot is its local origin, and the arm is parented to the Empty with an
+    identity parent-inverse. The exporter then writes the Empty as a node
+    carrying the pivot's translation and the arm as its child at identity,
+    so `hinge_lever.rotate_x(a)` turns the arm about the pintle for any `a`,
+    and the attachment point -- the Empty's own origin -- cannot move,
+    because rotating a transform never moves its own origin.
+
+    Call it AFTER `set_origin_group`, with `pivot` already in the asset's
+    final frame.
+    """
+    empty = bpy.data.objects.new(name, None)
+    empty.empty_display_type = "PLAIN_AXES"
+    empty.empty_display_size = 0.05
+    bpy.context.collection.objects.link(empty)
+    empty.location = pivot
+    offset = mathutils.Vector(pivot)
+    for vertex in arm.data.vertices:
+        vertex.co -= offset
+    arm.location = (0.0, 0.0, 0.0)
+    arm.parent = empty
+    arm.matrix_parent_inverse = mathutils.Matrix.Identity(4)
+    # The pivot has to be INSIDE the arm, or it is a pivot the arm is merely
+    # near. Checked rather than assumed.
+    lo = [min(v.co[i] for v in arm.data.vertices) for i in range(3)]
+    hi = [max(v.co[i] for v in arm.data.vertices) for i in range(3)]
+    for i, axis in enumerate("XYZ"):
+        if not (lo[i] - 1e-4 <= 0.0 <= hi[i] + 1e-4):
+            raise AssertionError(
+                "%s: the pivot is outside the arm on %s (local %.4f..%.4f). "
+                "A hinge the geometry does not contain is a hinge in the air."
+                % (name, axis, lo[i], hi[i]))
+    return empty
+
+
 def _attach(child, parent):
     """Parent without moving the child.
 
@@ -138,8 +188,14 @@ def conduit_run():
         brushkit.block("cr_rail_bottom", (length, depth, 0.07),
                        (0.0, 0.0, 0.035)),
     ]
+    # Five clamps at the 0.5 m pitch, at the run's ENDS and its midpoints.
+    # The first version ran `-1.0 + 0.25 + 0.5i` and put the fifth clamp at
+    # x = +1.25 -- 25 cm past the end of a 2.00 m run. That asymmetry moved
+    # the asset's centre by 12.5 cm when `set_origin_group` centred it, and
+    # the state band exported spanning -1.14..+0.86 instead of -1.00..+1.00,
+    # which is what made the preview's growth compensation wrong.
     for i in range(5):
-        x = -length / 2.0 + 0.25 + i * 0.50        # the 0.5 m clamp pitch
+        x = -length / 2.0 + i * 0.50
         body.append(brushkit.block("cr_clamp_%d" % i,
                                    (0.06, depth * 1.25, height),
                                    (x, 0.0, height / 2.0)))
@@ -158,7 +214,26 @@ def conduit_run():
     band.name = "state_band"
     _planar_uv(band, (-length / 2.0, 0.0, 0.0), (length, height))
     _assert_band_uv(band, (length, height), BAND_TILE)
-    return shell, band, (length, depth * 1.25, height)
+
+    # THE FILL IS GEOMETRY, AND THAT IS WHY `delayed` HAS FIXED ENDPOINTS.
+    #
+    # `state_band` carries the per-state TEXTURE, including `delayed`'s
+    # graduated track and both its end stops -- static, full length, every
+    # frame. `fill_band` is a separate untextured quad that grows across it.
+    #
+    # The alternative, which this replaces, was to draw the fill into the
+    # texture and scale the whole band. That scaled the track's own end
+    # stops with it, so at 0% the arrival stop sat 12% along the run and the
+    # span the fill was a fraction OF moved with the fill. A player cannot
+    # read a fraction off a ruler that shrinks.
+    #
+    # It sits inside the trough rather than over the whole face, so it never
+    # covers the end stops it is measured against.
+    fill = brushkit.block("fill_band", (length, 0.012, height * 0.30),
+                          (0.0, -0.083, height / 2.0))
+    fill.name = "fill_band"
+    common.uv_project_world(fill, DENSITY, propkit.PROP_SIZE)
+    return shell, [band, fill], (length, depth * 1.25, height)
 
 
 def wall_switch():
@@ -172,9 +247,13 @@ def wall_switch():
         brushkit.block("ws_pivot", (0.10, 0.10, 0.10), (0.0, -0.04, 0.30)),
     ]
     shell = common.join(body, "mach_wall_switch")
-    arm = brushkit.block("lever_arm", (0.06, 0.06, 0.26), (0.0, -0.09, 0.40))
+    # The arm reaches DOWN from its pintle as well as up, so the pivot is
+    # inside the geometry rather than at its very end -- a lever with no
+    # heel below the pin has nothing to press against.
+    arm = brushkit.block("lever_arm", (0.06, 0.06, 0.30), (0.0, -0.09, 0.38))
     arm.name = "lever_arm"
     common.uv_project_world(arm, DENSITY, propkit.PROP_SIZE)
+    pivot = (0.0, -0.09, 0.30)
     # Proud of the plate face, not flush with it. At y=-0.005 the lens sat
     # INSIDE the plate and the first switch render had no visible indicator
     # at all -- a state region buried in the thing it reports on.
@@ -182,7 +261,7 @@ def wall_switch():
                           (0.0, -0.022, 0.13))
     lens.name = "state_lens"
     common.uv_project_world(lens, DENSITY, propkit.PROP_SIZE)
-    return shell, [arm, lens], (0.36, 0.19, 0.52)
+    return shell, [arm, lens], pivot
 
 
 def receiver_lamp():
@@ -221,26 +300,37 @@ def main():
     LENS_DIM = "#4a5058"
 
     # 1. the conduit run
-    shell, band, size = conduit_run()
-    common.set_origin_group([shell, band], "wall")
+    shell, bands, size = conduit_run()
+    common.set_origin_group([shell] + bands, "wall")
     common.uv_project_world(shell, DENSITY, propkit.PROP_SIZE)
     canvas = propkit.painted_metal(THEME, "mach_conduit_run", wear=0.18)
     common.assign(shell, common.make_textured_material(
         "mach_conduit_run", canvas.to_blender("mach_conduit_run_t"),
         roughness=pal.roughness(THEME)))
-    _attach(band, shell)
-    common.assign(band, common.make_textured_material(
+    common.assert_parts_touch(shell, bands, "mach_conduit_run")
+    for part in bands:
+        _attach(part, shell)
+    common.assign(bands[0], common.make_textured_material(
         "mach_conduit_run_state", _image(band_png, "band_inactive"),
         roughness=0.55))
+    common.assign(bands[1], common.make_material(
+        "mach_conduit_run_fill", "#eef3f7", roughness=0.5))
     made.append(common.export_glb(shell, "%s/mach_conduit_run.glb" % OUT,
-                                  "prop", anchor="wall", parts=[band]))
+                                  "prop", anchor="wall", parts=bands))
     common.save_texture(canvas.to_blender("mach_conduit_run_save"),
                         "batch043/mach_conduit_run.png")
 
     # 2. the wall switch
     common.reset_scene()
-    shell, parts, size = wall_switch()
+    shell, parts, pivot = wall_switch()
     common.set_origin_group([shell] + parts, "wall")
+    # The pivot is
+    # re-derived from the arm's own moved geometry: its centre on X and Y,
+    # and the height the pintle was authored at, measured off the arm's top.
+    arm = parts[0]
+    arm_top = common.top_of(arm)
+    arm_lo, arm_hi = common.world_box(arm)
+    pivot_now = (0.0, (arm_lo[1] + arm_hi[1]) / 2.0, arm_top - 0.20)
     common.uv_project_world(shell, DENSITY, propkit.PROP_SIZE)
     canvas = propkit.painted_metal(THEME, "mach_wall_switch", wear=0.16)
     common.assign(shell, common.make_textured_material(
@@ -254,8 +344,12 @@ def main():
     common.assign(parts[0], mat_arm)
     common.assign(parts[1], common.make_material(
         "mach_wall_switch_state", LENS_DIM, roughness=0.5))
+    common.assert_parts_touch(shell, parts, "mach_wall_switch")
+    _ = pivot
+    hinge = _hinge("hinge_lever", arm, pivot_now)
     made.append(common.export_glb(shell, "%s/mach_wall_switch.glb" % OUT,
-                                  "prop", anchor="wall", parts=parts))
+                                  "prop", anchor="wall",
+                                  parts=[hinge, arm, parts[1]]))
     common.save_texture(canvas.to_blender("mach_wall_switch_save"),
                         "batch043/mach_wall_switch.png")
 
@@ -270,6 +364,7 @@ def main():
         roughness=pal.roughness(THEME)))
     state_mat = common.make_material(
         "mach_receiver_lamp_state", LENS_DIM, roughness=0.5)
+    common.assert_parts_touch(shell, lenses, "mach_receiver_lamp")
     for lens in lenses:
         _attach(lens, shell)
         common.assign(lens, state_mat)
@@ -307,10 +402,20 @@ def main():
                                   "the NODE is enough for a texture swap",
                 "scroll": "set `uv1_offset.x` on the band's material for "
                           "`active` and `pulse_travelling`",
-                "fill": "scale the band node on X from its -X end for "
-                        "`delayed`; the texture does not move",
-                "lever": "rotate `lever_arm` about its own X axis; the "
-                         "pivot sits at the arm's base",
+                "fill": "for `delayed`, scale the `fill_band` NODE on X from "
+                        "its -X end and leave `state_band` alone. "
+                        "`state_band` carries the graduated track and both "
+                        "end stops, which must not move; `fill_band` is the "
+                        "only thing that grows. Derive the fixed end from "
+                        "the node's own AABB rather than assuming -1..+1.",
+                "fill_band": "hidden for every state except `delayed`",
+                "lever": "rotate the `hinge_lever` NODE about its X axis. "
+                         "It is an empty at the pintle and `lever_arm` is "
+                         "its child at identity, so the hinge's own origin "
+                         "is the attachment point and cannot move. Do NOT "
+                         "rotate `lever_arm` itself -- that is the child "
+                         "and its origin is the hinge, so it would work, "
+                         "but the hinge is the named handle.",
                 "audio": "NOT SUPPLIED. §19.5's hum, arrival click and "
                          "rising pitch do not exist in this kit.",
             },

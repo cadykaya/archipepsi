@@ -13,26 +13,28 @@
     "design": "Design 1 \u00a719.5 five conduit states, pinned by Design 6 \u00a719; Design 3 \u00a733.8 in-world readability",
     "how_to_drive": {
       "audio": "NOT SUPPLIED. \u00a719.5's hum, arrival click and rising pitch do not exist in this kit.",
-      "fill": "scale the band node on X from its -X end for `delayed`; the texture does not move",
-      "lever": "rotate `lever_arm` about its own X axis; the pivot sits at the arm's base",
+      "fill": "for `delayed`, scale the `fill_band` NODE on X from its -X end and leave `state_band` alone. `state_band` carries the graduated track and both end stops, which must not move; `fill_band` is the only thing that grows. Derive the fixed end from the node's own AABB rather than assuming -1..+1.",
+      "fill_band": "hidden for every state except `delayed`",
+      "lever": "rotate the `hinge_lever` NODE about its X axis. It is an empty at the pintle and `lever_arm` is its child at identity, so the hinge's own origin is the attachment point and cannot move. Do NOT rotate `lever_arm` itself -- that is the child and its origin is the hinge, so it would work, but the hinge is the named handle.",
       "material_slots": "each named node also owns exactly one material slot, so `set_surface_override_material(0, m)` on the NODE is enough for a texture swap",
       "named_nodes": "every state region is its own node under the asset root; fetch it by name and drive it directly",
       "scroll": "set `uv1_offset.x` on the band's material for `active` and `pulse_travelling`"
     },
     "kind": "machinery_feedback",
     "parts": [
-      "state_band"
+      "state_band",
+      "fill_band"
     ],
     "path": "batch043/machinery/mach_conduit_run.glb",
     "size": [
-      2.28,
-      0.175,
+      2.06,
+      0.176,
       0.5
     ],
     "status": "PROPOSAL -- presentation only; no signal graph, no node types, no gameplay state machine",
     "texel_density": null,
     "texels_per_metre": 32.0,
-    "triangles": 108
+    "triangles": 120
   },
   "mach_receiver_lamp": {
     "anchor": "floor",
@@ -48,8 +50,9 @@
     "design": "Design 1 \u00a719.5 five conduit states, pinned by Design 6 \u00a719; Design 3 \u00a733.8 in-world readability",
     "how_to_drive": {
       "audio": "NOT SUPPLIED. \u00a719.5's hum, arrival click and rising pitch do not exist in this kit.",
-      "fill": "scale the band node on X from its -X end for `delayed`; the texture does not move",
-      "lever": "rotate `lever_arm` about its own X axis; the pivot sits at the arm's base",
+      "fill": "for `delayed`, scale the `fill_band` NODE on X from its -X end and leave `state_band` alone. `state_band` carries the graduated track and both end stops, which must not move; `fill_band` is the only thing that grows. Derive the fixed end from the node's own AABB rather than assuming -1..+1.",
+      "fill_band": "hidden for every state except `delayed`",
+      "lever": "rotate the `hinge_lever` NODE about its X axis. It is an empty at the pintle and `lever_arm` is its child at identity, so the hinge's own origin is the attachment point and cannot move. Do NOT rotate `lever_arm` itself -- that is the child and its origin is the hinge, so it would work, but the hinge is the named handle.",
       "material_slots": "each named node also owns exactly one material slot, so `set_surface_override_material(0, m)` on the NODE is enough for a texture swap",
       "named_nodes": "every state region is its own node under the asset root; fetch it by name and drive it directly",
       "scroll": "set `uv1_offset.x` on the band's material for `active` and `pulse_travelling`"
@@ -84,14 +87,16 @@
     "design": "Design 1 \u00a719.5 five conduit states, pinned by Design 6 \u00a719; Design 3 \u00a733.8 in-world readability",
     "how_to_drive": {
       "audio": "NOT SUPPLIED. \u00a719.5's hum, arrival click and rising pitch do not exist in this kit.",
-      "fill": "scale the band node on X from its -X end for `delayed`; the texture does not move",
-      "lever": "rotate `lever_arm` about its own X axis; the pivot sits at the arm's base",
+      "fill": "for `delayed`, scale the `fill_band` NODE on X from its -X end and leave `state_band` alone. `state_band` carries the graduated track and both end stops, which must not move; `fill_band` is the only thing that grows. Derive the fixed end from the node's own AABB rather than assuming -1..+1.",
+      "fill_band": "hidden for every state except `delayed`",
+      "lever": "rotate the `hinge_lever` NODE about its X axis. It is an empty at the pintle and `lever_arm` is its child at identity, so the hinge's own origin is the attachment point and cannot move. Do NOT rotate `lever_arm` itself -- that is the child and its origin is the hinge, so it would work, but the hinge is the named handle.",
       "material_slots": "each named node also owns exactly one material slot, so `set_surface_override_material(0, m)` on the NODE is enough for a texture swap",
       "named_nodes": "every state region is its own node under the asset root; fetch it by name and drive it directly",
       "scroll": "set `uv1_offset.x` on the band's material for `active` and `pulse_travelling`"
     },
     "kind": "machinery_feedback",
     "parts": [
+      "hinge_lever",
       "lever_arm",
       "state_lens"
     ],

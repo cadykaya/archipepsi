@@ -12,13 +12,16 @@ const ROLES := ["floor", "wall", "ceiling", "trim", "accent", "hazard"]
 const PREFIX := "cl"
 
 var _models: String
+var _derelict: String
 var _out: String
 var _bench: GDScript
+var _ground := "bright"
 
 func _init() -> void:
 	var a := OS.get_cmdline_user_args()
 	_models = a[0]
-	_out = a[1]
+	_derelict = a[1]
+	_out = a[2]
 	_bench = load("res://_harness/artbench.gd") as GDScript
 	_run.call_deferred()
 
@@ -37,13 +40,32 @@ func _bind(root: Node) -> void:
 			var role := stem.substr(PREFIX.length() + 1)
 			if role not in ROLES:
 				continue
-			var mat := StandardMaterial3D.new()
-			var tex := load("res://content/shells/shell_corner_left_room_concrete_facility_%s.png" % role) as Texture2D
-			if tex != null:
-				mat.albedo_texture = tex
-			mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
-			mat.roughness = 0.9
-			mi.set_surface_override_material(i, mat)
+			mi.set_surface_override_material(i, _surface(role))
+
+func _surface(role: String) -> StandardMaterial3D:
+	## The same two grounds the status kit is judged against: bright
+	## concrete, and Batch 042's dark derelict. A handling fitting is a
+	## VALUE statement -- dark steel against a painted body -- so it has to
+	## be checked on a ground where the body itself is already dark.
+	var mat := StandardMaterial3D.new()
+	var img: Image = null
+	if _ground == "dark":
+		var d := {"floor": "derelict_floor", "wall": "derelict_wall",
+				"ceiling": "derelict_wall", "trim": "derelict_trim",
+				"accent": "derelict_accent", "hazard": "derelict_accent"}
+		var f := "%s/%s.png" % [_derelict, d.get(role, "derelict_wall")]
+		if FileAccess.file_exists(f):
+			img = Image.load_from_file(f)
+	if img == null:
+		var tex := load("res://content/shells/shell_corner_left_room_concrete_facility_%s.png" % role) as Texture2D
+		if tex != null:
+			img = tex.get_image()
+	if img != null:
+		mat.albedo_texture = ImageTexture.create_from_image(img)
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	mat.roughness = 0.9
+	return mat
+
 
 func _scene() -> Node3D:
 	var world := Node3D.new()
@@ -58,17 +80,19 @@ func _scene() -> Node3D:
 		var lamp := OmniLight3D.new()
 		world.add_child(lamp)
 		lamp.global_position = f[0]
-		lamp.light_energy = f[1]
+		lamp.light_energy = f[1] if _ground == "bright" else f[1] * 0.9
 		lamp.omni_range = 12.0
 		lamp.shadow_enabled = false
-		lamp.light_color = Color(0.918, 0.949, 1.0)
+		lamp.light_color = (Color(0.725, 0.812, 0.839) if _ground == "dark"
+				else Color(0.918, 0.949, 1.0))
 	var env := WorldEnvironment.new()
 	var e := Environment.new()
 	e.background_mode = Environment.BG_COLOR
 	e.background_color = Color(0.05, 0.06, 0.07)
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = Color(0.918, 0.949, 1.0)
-	e.ambient_light_energy = 0.36
+	e.ambient_light_color = (Color(0.66, 0.75, 0.80) if _ground == "dark"
+			else Color(0.918, 0.949, 1.0))
+	e.ambient_light_energy = 0.17 if _ground == "dark" else 0.36
 	env.environment = e
 	world.add_child(env)
 	return world
@@ -82,8 +106,24 @@ func _put(w: Node3D, rel: String, at: Vector3, yaw: float) -> Node3D:
 	n.rotate_y(deg_to_rad(yaw))
 	return n
 
+func _width_of(n: Node3D) -> float:
+	var lo := 1e9
+	var hi := -1e9
+	for child in n.find_children("*", "MeshInstance3D", true, false):
+		var mi := child as MeshInstance3D
+		if mi.mesh == null:
+			continue
+		var box := mi.mesh.get_aabb()
+		for i in 8:
+			var p: Vector3 = mi.global_transform * box.get_endpoint(i)
+			lo = minf(lo, p.x)
+			hi = maxf(hi, p.x)
+	return 0.0 if hi < lo else hi - lo
+
+
 func _shot(w: Node3D, at: Vector3, look: Vector3, name: String,
-		lines: Array, size := Vector2i(1240, 620)) -> void:
+		lines: Array, size := Vector2i(1240, 620),
+		world_labels: Array = []) -> void:
 	var vp := SubViewport.new()
 	vp.size = size
 	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
@@ -98,6 +138,14 @@ func _shot(w: Node3D, at: Vector3, look: Vector3, name: String,
 	var parent := w.get_parent()
 	parent.remove_child(w)
 	vp.add_child(w)
+	# Labels anchored to a WORLD point are projected here rather than typed
+	# as pixels. Hand-placed captions drift the moment anything moves, and a
+	# caption beside the wrong object is worse than no caption -- this lane
+	# has already shipped one of those.
+	for raw: Variant in world_labels:
+		var wl: Array = raw
+		var at_px := cam.unproject_position(wl[1])
+		lines.append([wl[0], at_px + Vector2(-8, 0)])
 	var layer := Control.new()
 	layer.size = Vector2(size)
 	vp.add_child(layer)
@@ -128,55 +176,127 @@ func _clear(w: Node3D) -> void:
 	w.queue_free()
 
 func _run() -> void:
-	await _lineup()
-	await _family()
+	for ground: String in ["bright", "dark"]:
+		_ground = ground
+		await _lineup()
+		await _family()
+		await _fixed()
+	_ground = "bright"
 	await _closeups()
 	quit(0)
 
+
+## Three rows, split at §10.3's 60 kg carry line and then by footprint.
+## Eleven objects side by side is 8.5 m of row and the room is 6 m wide, so
+## one row was never going to hold them -- and the version that tried put
+## half the family inside the walls.
+const ROWS := [
+	{"z": 4.25, "band": "CARRIABLE -- 60 kg and under",
+	 "ids": [["phys_key_component", "8"], ["phys_generic", "15"],
+			 ["phys_power_cell", "40"], ["phys_mechanical_part", "55"]]},
+	{"z": 2.85, "band": "MANIPULATE ONLY",
+	 "ids": [["phys_plate", "60"], ["phys_drum", "70"],
+			 ["phys_weighted", "140"]]},
+	{"z": 1.45, "band": "",
+	 "ids": [["phys_cart", "180"], ["phys_movable_cover", "220"],
+			 ["phys_ballast", "320"], ["phys_anchor_block", "500 FIXED"]]},
+]
+
 func _lineup() -> void:
-	## The four candidates together, at one scale, on one floor. A class
-	## family has to be readable as a family before any one of it is judged.
+	## All twelve classes. Eleven stand in three rows -- carriable nearest,
+	## then manipulate by footprint -- and `GIRDER` lies across the front,
+	## because it is 3.2 m long and standing it would say nothing about its
+	## mass. Each object is placed by its MEASURED width and each label is
+	## projected from the object's own position, so neither can drift.
 	var w := _scene()
-	# The mass ladder, left to right: 8, 40, 55, 140, 320 kg, with the
-	# 95 kg girder lying across the front because it is 3.2 m long and
-	# standing it in the row would say nothing about its mass.
-	_put(w, "batch043/physics/phys_key_component.glb", Vector3(-2.35, 0, 2.6), 24.0)
-	_put(w, "batch043/physics/phys_power_cell.glb", Vector3(-1.65, 0, 2.6), 18.0)
-	_put(w, "batch043/physics/phys_mechanical_part.glb", Vector3(-0.80, 0, 2.6), -24.0)
-	_put(w, "batch043/physics/phys_weighted.glb", Vector3(0.35, 0, 2.6), -14.0)
-	_put(w, "batch043/physics/phys_ballast.glb", Vector3(1.75, 0, 2.6), 12.0)
-	_put(w, "batch043/physics/phys_girder.glb", Vector3(-0.10, 0, 4.15), 6.0)
-	await _shot(w, Vector3(0.0, 1.42, 5.9), Vector3(-0.2, 0.50, 2.7),
-			"PROPS_lineup",
-			[["8 kg", Vector2(120, 452)],
-			 ["40", Vector2(300, 452)],
-			 ["55", Vector2(452, 452)],
-			 ["140", Vector2(650, 452)],
-			 ["320 kg", Vector2(900, 452)],
-			 ["carriable, under §10.3's 60 kg line", Vector2(120, 490)],
-			 ["manipulate only", Vector2(650, 490)],
-			 ["GIRDER 95 kg manipulate -- 3.20 m", Vector2(400, 540)]])
+	var tags := []
+	for raw: Variant in ROWS:
+		var row: Dictionary = raw
+		var loaded := []
+		var total := 0.0
+		var gap := 0.26
+		for e: Variant in row["ids"]:
+			var item: Array = e
+			var n := _put(w, "batch043/physics/%s.glb" % item[0],
+					Vector3(0, 0, row["z"]), 12.0)
+			if n == null:
+				continue
+			var wide := _width_of(n)
+			loaded.append({"node": n, "w": wide, "kg": item[1]})
+			total += wide + gap
+		var x := -(total - gap) / 2.0
+		for raw2: Variant in loaded:
+			var e: Dictionary = raw2
+			var node: Node3D = e["node"]
+			var half: float = e["w"] * 0.5
+			node.global_position = Vector3(x + half, 0.0, row["z"])
+			tags.append([e["kg"], Vector3(x + half, 0.03, row["z"] - 0.42)])
+			x += e["w"] + gap
+	_put(w, "batch043/physics/phys_girder.glb", Vector3(-0.10, 0, 5.05), 3.0)
+	await _shot(w, Vector3(0.0, 2.55, 6.35), Vector3(-0.05, 0.35, 2.9),
+			"PROPS_lineup_%s" % _ground,
+			[["CARRIABLE -- under §10.3's 60 kg line", Vector2(40, 470)],
+			 ["MANIPULATE ONLY -- no hand grip on any of them",
+			  Vector2(40, 300)],
+			 ["GIRDER 95 kg, 3.20 m", Vector2(470, 560)]],
+			Vector2i(1240, 640), tags)
 	_clear(w)
 
+
 func _family() -> void:
-	## The rule, tested. Left: four candidates, every one of which carries
-	## bare machined metal where a device grips it. Right: three props
-	## already in the catalogue, none of which does, and none of which is
-	## manipulable. The claim is that a player can tell those two groups
-	## apart at a glance, and this is the frame that has to carry it.
+	## THE CONTRADICTION THIS FRAME EXISTS TO SETTLE.
+	##
+	## The class map called `GENERIC` and `DRUM` manipulable candidates while
+	## the comparison frame showed `prop_crate` and `prop_oil_drum` -- which
+	## are decoration, painted end to end, with no fittings. Two different
+	## promises about the same two classes.
+	##
+	## They are now separate candidates. `prop_crate` and `prop_oil_drum` are
+	## unchanged and stay decoration; `phys_generic` and `phys_drum` are
+	## their manipulable siblings. This frame puts each pair side by side so
+	## the difference is the thing you look at rather than a claim.
 	var w := _scene()
-	_put(w, "batch043/physics/phys_power_cell.glb", Vector3(-2.15, 0, 3.2), 22.0)
-	_put(w, "batch043/physics/phys_mechanical_part.glb", Vector3(-1.25, 0, 3.2), -18.0)
-	_put(w, "batch043/physics/phys_weighted.glb", Vector3(-0.1, 0, 3.2), 10.0)
-	_put(w, "batch001/props/prop_crate.glb", Vector3(1.15, 0, 3.2), 14.0)
-	_put(w, "batch010/dressing/prop_oil_drum.glb", Vector3(1.95, 0, 3.2), 0.0)
-	_put(w, "batch001/props/prop_debris.glb", Vector3(2.65, 0, 3.2), -30.0)
-	await _shot(w, Vector3(-0.05, 1.30, 5.75), Vector3(-0.05, 0.50, 3.2),
-			"PROPS_manipulable_vs_decorative",
-			[["MANIPULABLE -- bare metal where the device grips",
-			  Vector2(60, 46)],
-			 ["DECORATIVE -- painted end to end", Vector2(760, 46)]])
+	var pairs := [
+		["batch001/props/prop_crate.glb", "batch043/physics/phys_generic.glb"],
+		["batch010/dressing/prop_oil_drum.glb", "batch043/physics/phys_drum.glb"],
+	]
+	for i in pairs.size():
+		var p: Array = pairs[i]
+		_put(w, p[0], Vector3(-1.95 + 2.9 * i, 0, 2.9), 16.0)
+		_put(w, p[1], Vector3(-0.95 + 2.9 * i, 0, 2.9), -12.0)
+	await _shot(w, Vector3(-0.05, 1.45, 5.6), Vector3(-0.05, 0.50, 2.9),
+			"PROPS_candidate_vs_decorative_%s" % _ground,
+			[["prop_crate", Vector2(150, 62)],
+			 ["phys_generic", Vector2(420, 62)],
+			 ["prop_oil_drum", Vector2(700, 62)],
+			 ["phys_drum", Vector2(960, 62)],
+			 ["DECORATION -- painted end to end, unchanged, still approved",
+			  Vector2(62, 520)],
+			 ["CANDIDATE -- the same class, carrying the handling language",
+			  Vector2(62, 556)]])
 	_clear(w)
+
+
+func _fixed() -> void:
+	## `ANCHOR_BLOCK` has to read as FIXED (§33.7: a `FIXED` object visibly
+	## does not share the manipulable treatment). It has no grip and no push
+	## pad -- nothing a device could take hold of to shift it -- one bare
+	## tether eye on top, a spreading cast skirt, and a taper that is wider
+	## at the floor than at the crown. Beside a 320 kg `BALLAST`, which has
+	## four attach pads and is meant to move, the difference is the fittings.
+	var w := _scene()
+	_put(w, "batch043/physics/phys_anchor_block.glb", Vector3(-0.85, 0, 2.8), 18.0)
+	_put(w, "batch043/physics/phys_ballast.glb", Vector3(0.95, 0, 2.8), -14.0)
+	await _shot(w, Vector3(0.0, 1.30, 5.0), Vector3(0.0, 0.45, 2.8),
+			"PROPS_fixed_vs_movable_%s" % _ground,
+			[["ANCHOR_BLOCK 500 kg -- FIXED", Vector2(150, 62)],
+			 ["BALLAST 320 kg -- manipulate", Vector2(760, 62)],
+			 ["no grip, no push pad, one tether eye, cast into a skirt",
+			  Vector2(62, 520)],
+			 ["four attach pads, skids, and it is meant to move",
+			  Vector2(640, 556)]])
+	_clear(w)
+
 
 func _closeups() -> void:
 	## One frame each, at the distance a player decides whether to pick
@@ -184,6 +304,18 @@ func _closeups() -> void:
 	var jobs := [
 		["phys_key_component", Vector3(0, 0, 2.4), 28.0, 0.78,
 		 "KEY_COMPONENT 8 kg -- hand scale, and an asymmetric keyed bit"],
+		["phys_generic", Vector3(0, 0, 2.4), 22.0, 0.92,
+		 "GENERIC 15 kg -- recessed hand grips on two opposite faces"],
+		["phys_plate", Vector3(0, 0, 2.4), 12.0, 0.85,
+		 "PLATE 60 kg -- lifting slots, no grip: exactly on the carry line"],
+		["phys_drum", Vector3(0, 0, 2.4), 18.0, 0.95,
+		 "DRUM 70 kg -- end hubs on the rolling axis"],
+		["phys_cart", Vector3(0, 0, 2.4), 24.0, 1.05,
+		 "CART 180 kg -- fixed forks, a rail shoe, a push bar at one end"],
+		["phys_movable_cover", Vector3(0, 0, 2.9), 16.0, 1.35,
+		 "MOVABLE_COVER 220 kg -- taller than eye level, push faces both sides"],
+		["phys_anchor_block", Vector3(0, 0, 2.4), 20.0, 0.95,
+		 "ANCHOR_BLOCK 500 kg FIXED -- one tether eye and nothing to grab"],
 		["phys_weighted", Vector3(0, 0, 2.4), -16.0, 1.05,
 		 "WEIGHTED 140 kg -- two opposite push faces, NO hand grip"],
 		["phys_power_cell", Vector3(0, 0, 2.4), 26.0, 1.05,

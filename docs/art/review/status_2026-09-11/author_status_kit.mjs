@@ -47,10 +47,19 @@
 // So: shape studies proceed, and the colour question goes to the owner. It
 // is written up in DECISIONS_FOR_OWNER.md.
 //
-// ONE reserved colour IS used, and it is proposed rather than assumed: the
-// player-applied tick is `send` #ffd45c, because `send` already means "this
-// one came from you". If the owner would rather the tick were neutral too,
-// it is one palette entry.
+// NO RESERVED COLOUR IS USED. An earlier revision of this kit made the
+// player-applied tick `send` #ffd45c and argued that `send` means "this one
+// came from you". THAT MISREADS THE PALETTE. `send` means one specific
+// thing -- THIS LEAVES FOR THE MULTIWORLD -- and it belongs to Check
+// transmission. Everything the player causes is not a send, and a gold tick
+// on a `burning` crate would have taught a player that setting a crate on
+// fire is an Archipelago event.
+//
+// The tick is therefore the same near-white as the rest of the kit, one
+// value step brighter than the marker face so it still separates from it.
+// Its job was always carried by SHAPE and POSITION anyway -- a check mark
+// sitting proud of the frame's lower right, present or absent -- and the
+// colour was never doing the work.
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -89,7 +98,7 @@ const PALETTE = [
   { name: "lit", value: [238, 241, 244, 255] },  // L* 94.6
   { name: "dim", value: [122, 130, 140, 255] },  // L* 53.4  -- dimmed hint
   { name: "spent", value: [74, 80, 88, 255] },   // L* 33.3  -- used duration
-  { name: "tick", value: [255, 212, 92, 255] },  // `send`, proposed
+  { name: "tick", value: [246, 249, 251, 255] }, // neutral -- see below
 ];
 // `dim` and `spent` are two values, not one, because they answer different
 // questions. A dimmed compound hint must still be READ as a glyph -- it is
