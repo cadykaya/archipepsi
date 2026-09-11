@@ -1,0 +1,288 @@
+{
+  "phys_ballast": {
+    "anchor": "floor",
+    "attach_points": [
+      {
+        "at": [
+          0.0,
+          -0.39,
+          0.29700000000000004
+        ],
+        "id": "attach_pad_0",
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "proposes": "a device attach pad; four of them so the player is never on the wrong side"
+      },
+      {
+        "at": [
+          0.0,
+          0.39,
+          0.29700000000000004
+        ],
+        "id": "attach_pad_1",
+        "normal": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "proposes": "a device attach pad; four of them so the player is never on the wrong side"
+      },
+      {
+        "at": [
+          -0.54,
+          0.0,
+          0.29700000000000004
+        ],
+        "id": "attach_pad_2",
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "proposes": "a device attach pad; four of them so the player is never on the wrong side"
+      },
+      {
+        "at": [
+          0.54,
+          0.0,
+          0.29700000000000004
+        ],
+        "id": "attach_pad_3",
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "proposes": "a device attach pad; four of them so the player is never on the wrong side"
+      }
+    ],
+    "batch": "043",
+    "carriable": false,
+    "class": "BALLAST",
+    "collision": "NONE. Not derived, not shipped, not evidence.",
+    "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
+    "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "kind": "physics_props",
+    "manipulable": true,
+    "mass_class": "HEAVY",
+    "mass_kg": 320.0,
+    "material_roles": {
+      "body": "phys_ballast",
+      "handling": "phys_ballast_grip"
+    },
+    "not_changed": [
+      "player physics",
+      "object mass rules",
+      "carry limits",
+      "package schemas",
+      "any approved asset"
+    ],
+    "orientation": "+X is the object's length; +Z is up; the origin is floor-centred",
+    "parts": [
+      "attach_pad_0",
+      "attach_pad_1",
+      "attach_pad_2",
+      "attach_pad_3"
+    ],
+    "path": "batch043/physics/phys_ballast.glb",
+    "size": [
+      1.125,
+      0.825,
+      0.497
+    ],
+    "status": "PROPOSAL -- four of Design 2 \u00a710.1's twelve classes",
+    "texel_density": 64.0,
+    "texels_per_metre": 64,
+    "triangles": 120
+  },
+  "phys_girder": {
+    "anchor": "floor",
+    "attach_points": [
+      {
+        "at": [
+          -1.6,
+          0.0,
+          0.0
+        ],
+        "id": "attach_end_a",
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "proposes": "an end plate that meets a wall or another girder's end plate"
+      },
+      {
+        "at": [
+          1.6,
+          0.0,
+          0.0
+        ],
+        "id": "attach_end_b",
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "proposes": "an end plate that meets a wall or another girder's end plate"
+      }
+    ],
+    "batch": "043",
+    "carriable": false,
+    "class": "GIRDER",
+    "collision": "NONE. Not derived, not shipped, not evidence.",
+    "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
+    "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "kind": "physics_props",
+    "manipulable": true,
+    "mass_class": "MEDIUM",
+    "mass_kg": 95.0,
+    "material_roles": {
+      "body": "phys_girder",
+      "handling": "phys_girder_grip"
+    },
+    "not_changed": [
+      "player physics",
+      "object mass rules",
+      "carry limits",
+      "package schemas",
+      "any approved asset"
+    ],
+    "orientation": "+X is the object's length; +Z is up; the origin is floor-centred",
+    "parts": [
+      "attach_end_a",
+      "attach_end_b"
+    ],
+    "path": "batch043/physics/phys_girder.glb",
+    "size": [
+      3.201,
+      0.2,
+      0.26
+    ],
+    "status": "PROPOSAL -- four of Design 2 \u00a710.1's twelve classes",
+    "texel_density": 64.0,
+    "texels_per_metre": 64,
+    "triangles": 84
+  },
+  "phys_mechanical_part": {
+    "anchor": "floor",
+    "attach_points": [
+      {
+        "at": [
+          0.0,
+          -0.2,
+          0.1386
+        ],
+        "id": "attach_key",
+        "normal": [
+          0.0,
+          -1.0,
+          0.0
+        ],
+        "proposes": "the keyed face that enters a repair socket"
+      }
+    ],
+    "batch": "043",
+    "carriable": true,
+    "class": "MECHANICAL_PART",
+    "collision": "NONE. Not derived, not shipped, not evidence.",
+    "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
+    "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "kind": "physics_props",
+    "manipulable": true,
+    "mass_class": "MEDIUM",
+    "mass_kg": 55.0,
+    "material_roles": {
+      "body": "phys_mechanical_part",
+      "handling": "phys_mechanical_part_grip"
+    },
+    "not_changed": [
+      "player physics",
+      "object mass rules",
+      "carry limits",
+      "package schemas",
+      "any approved asset"
+    ],
+    "orientation": "+X is the object's length; +Z is up; the origin is floor-centred",
+    "parts": [
+      "grip_bar",
+      "grip_post_l",
+      "grip_post_r",
+      "attach_key"
+    ],
+    "path": "batch043/physics/phys_mechanical_part.glb",
+    "size": [
+      0.475,
+      0.403,
+      0.43
+    ],
+    "status": "PROPOSAL -- four of Design 2 \u00a710.1's twelve classes",
+    "texel_density": 64.0,
+    "texels_per_metre": 64,
+    "triangles": 136
+  },
+  "phys_power_cell": {
+    "anchor": "floor",
+    "attach_points": [
+      {
+        "at": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "id": "attach_socket",
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "proposes": "the face that meets a power socket"
+      }
+    ],
+    "batch": "043",
+    "carriable": true,
+    "class": "POWER_CELL",
+    "collision": "NONE. Not derived, not shipped, not evidence.",
+    "design": "Design 2 \u00a710.1 classes and masses, \u00a710.2 derived mass class, \u00a710.3 the 60 kg carry limit, \u00a733.7 the manipulable treatment; pinned by Design 6 \u00a74.7",
+    "dimensions_are": "PROPOSED ART DIMENSIONS -- no runtime contract for object size or attachment interfaces exists; these are not one",
+    "family_rule": "bare machined metal appears only on surfaces the player's device touches; a hand grip means a hand can lift it, and its absence on an object with attach pads means a device has to",
+    "kind": "physics_props",
+    "manipulable": true,
+    "mass_class": "MEDIUM",
+    "mass_kg": 40.0,
+    "material_roles": {
+      "body": "phys_power_cell",
+      "handling": "phys_power_cell_grip"
+    },
+    "not_changed": [
+      "player physics",
+      "object mass rules",
+      "carry limits",
+      "package schemas",
+      "any approved asset"
+    ],
+    "orientation": "+X is the object's length; +Z is up; the origin is floor-centred",
+    "parts": [
+      "grip_bar",
+      "grip_post_l",
+      "grip_post_r",
+      "attach_socket"
+    ],
+    "path": "batch043/physics/phys_power_cell.glb",
+    "size": [
+      0.34,
+      0.34,
+      0.6
+    ],
+    "status": "PROPOSAL -- four of Design 2 \u00a710.1's twelve classes",
+    "texel_density": 64.0,
+    "texels_per_metre": 64,
+    "triangles": 148
+  }
+}

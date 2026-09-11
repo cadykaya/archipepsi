@@ -182,6 +182,31 @@ Every figure above is read from the `manifest.json` the build writes, and
 `tools/blender/check_docs_metrics.py` fails if this table and the build ever
 disagree.
 
+### Batch 043 — PROPOSAL, not approved
+
+These seven are candidates. They are in the pending band with 023–030 and
+nothing below is a `PASS`. They are listed here because the metrics checker
+reads this table and a built asset that appears in no row is a built asset
+nobody is tracking.
+
+| id | L | kind | tris | size (m) | anchor | theme | batch | review |
+| --- | --- | --- | ---: | --- | --- | --- | --- | --- |
+| `mach_conduit_run` | L0 | prop | 108 | 2.28 × 0.17 × 0.50 | wall | B1R | B43 | PROPOSAL |
+| `mach_wall_switch` | L0 | prop | 60 | 0.36 × 0.19 × 0.54 | wall | B1R | B43 | PROPOSAL |
+| `mach_receiver_lamp` | L0 | prop | 60 | 0.50 × 0.26 × 0.37 | floor | B1R | B43 | PROPOSAL |
+| `phys_power_cell` | L0 | prop | 148 | 0.34 × 0.34 × 0.60 | floor | B1R | B43 | PROPOSAL |
+| `phys_mechanical_part` | L0 | prop | 136 | 0.47 × 0.40 × 0.43 | floor | B1R | B43 | PROPOSAL |
+| `phys_girder` | L0 | prop | 84 | 3.20 × 0.20 × 0.26 | floor | B1R | B43 | PROPOSAL |
+| `phys_ballast` | L0 | prop | 120 | 1.12 × 0.82 × 0.50 | floor | B1R | B43 | PROPOSAL |
+
+The four `phys_*` are Design 2 §10.1 object classes; `CLASS_MAP.md` in
+`docs/art/review/props_2026-09-11/` maps all twelve. The three `mach_*` are
+the machinery feedback kit and each exports its state regions as separately
+named nodes — the contract is in their manifest's `how_to_drive`.
+
+The status graphic kit is **not** in this table: it is 2D, it has no mesh,
+no triangle count and no metres, and `status_kit.json` is its manifest.
+
 ## 1. Permanent / hero spaces
 
 The spaces `AUTHORED_CONTENT.md` §2 lists first, because they are seen more

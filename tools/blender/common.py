@@ -474,6 +474,47 @@ def set_origin(obj, anchor="floor"):
     return obj
 
 
+def set_origin_group(objects, anchor="floor"):
+    """`set_origin` for an asset that arrives as more than one object.
+
+    An asset's anchor belongs to the WHOLE asset. `set_origin` computes its
+    shift from one object's bounding box and moves only that object's
+    vertices, so an addressable part built beside the body -- a conduit's
+    state band, a switch's indicator lens -- keeps its old coordinates and
+    ends up displaced by exactly the shift the body received.
+
+    Measured, and it is why this exists: `mach_wall_switch`'s `state_lens`
+    was authored 2 cm proud of the plate and exported sitting 7 cm INSIDE
+    the housing, so the first switch render had no visible indicator in any
+    of its three states. The body's own `set_origin` had moved the body and
+    left the lens behind.
+    """
+    if anchor not in ANCHORS:
+        raise ValueError("set_origin_group: anchor must be one of %s, got "
+                         "'%s'" % (", ".join(ANCHORS), anchor))
+    bbox = [o.matrix_world @ Vector(corner)
+            for o in objects for corner in o.bound_box]
+    min_x, max_x = min(v.x for v in bbox), max(v.x for v in bbox)
+    min_y, max_y = min(v.y for v in bbox), max(v.y for v in bbox)
+    min_z, max_z = min(v.z for v in bbox), max(v.z for v in bbox)
+    mid_x, mid_y = (min_x + max_x) / 2.0, (min_y + max_y) / 2.0
+    if anchor == "floor":
+        shift = Vector((mid_x, mid_y, min_z))
+    elif anchor == "ceiling":
+        shift = Vector((mid_x, mid_y, max_z))
+    elif anchor == "wall":
+        shift = Vector((mid_x, max_y, min_z))
+    elif anchor == "module_floor":
+        shift = Vector((mid_x, mid_y, 0.0))
+    else:
+        shift = Vector((mid_x, mid_y, (min_z + max_z) / 2.0))
+    for obj in objects:
+        for vertex in obj.data.vertices:
+            vertex.co -= shift
+        obj.location = (0.0, 0.0, 0.0)
+    return objects
+
+
 def set_origin_floor_centre(obj):
     """Kept as the common case. Prefer `set_origin(obj, anchor)`."""
     return set_origin(obj, "floor")
@@ -487,6 +528,41 @@ def measure(obj):
         max(v.y for v in bbox) - min(v.y for v in bbox),
         max(v.z for v in bbox) - min(v.z for v in bbox),
     )
+
+
+def measure_group(objects):
+    """(width_x, depth_y, height_z) over several objects at once."""
+    bbox = [o.matrix_world @ Vector(corner)
+            for o in objects for corner in o.bound_box]
+    return (
+        max(v.x for v in bbox) - min(v.x for v in bbox),
+        max(v.y for v in bbox) - min(v.y for v in bbox),
+        max(v.z for v in bbox) - min(v.z for v in bbox),
+    )
+
+
+def assert_budget_group(objects, asset_name, category):
+    """The category ceiling against the SUM of an asset's exported nodes.
+
+    Splitting a mesh into addressable parts must not buy triangles. The
+    ceiling is a property of the thing that arrives in the level, and how
+    many nodes it arrives as is an integration convenience.
+    """
+    ceilings = BUDGETS["max_triangles"]
+    if category not in ceilings:
+        raise KeyError(
+            "%s: no triangle ceiling for category '%s'. Categories are %s. A "
+            "new category is a budget decision, not a spelling."
+            % (asset_name, category, ", ".join(sorted(ceilings))))
+    count = sum(triangle_count(o) for o in objects)
+    limit = ceilings[category]
+    if count > limit:
+        raise AssertionError(
+            "%s: %d triangles across %d node(s) against the %s ceiling of "
+            "%d. Over budget means DELETE geometry and paint it instead -- "
+            "never optimise the mesh, and never raise the ceiling to fit one "
+            "asset." % (asset_name, count, len(objects), category, limit))
+    return count
 
 
 def assert_fits(obj, asset_name, max_size, why):
@@ -510,7 +586,7 @@ def assert_fits(obj, asset_name, max_size, why):
 # ----------------------------------------------------------------------
 
 def export_glb(obj, relative_path, category, tier=None, texture_size=None,
-               check_flat=True, anchor="floor", collision=()):
+               check_flat=True, anchor="floor", collision=(), parts=()):
     """Write a .glb, after every assertion that can be made has been made.
 
     `collision` is the collision-only twins from `roomcollision.build`.
@@ -519,20 +595,43 @@ def export_glb(obj, relative_path, category, tier=None, texture_size=None,
     triangle budget, its texel density or its declared size -- and the
     manifest that Production reads is built from those numbers. Rooms
     that gained collision must not appear to have changed shape.
+
+    `parts` are VISIBLE child objects exported as their own named nodes
+    beside `obj`. They exist for one reason: a region a runtime has to
+    DRIVE -- a conduit's flow band, a switch's state lens -- must arrive
+    in Godot as something a script can fetch by name, not only as a
+    material slot on one merged mesh. Batch 028's kit declared a state
+    region and exported it merged, so the only handle a runtime has on it
+    today is `set_surface_override_material`; that can recolour the region
+    and nothing else. A part can be hidden, moved, scaled, lit and shaded
+    on its own.
+
+    Unlike `collision`, parts are real art: their triangles count against
+    the same category ceiling as the body, they are asserted flat, their
+    texel density is checked, and `measure` covers the union. An
+    addressable region is not a budget loophole.
     """
     name = os.path.basename(relative_path)
+    parts = list(parts)
     if check_flat:
         assert_flat(obj, name)
-    tris = assert_budget(obj, name, category)
+        for part in parts:
+            assert_flat(part, "%s/%s" % (name, part.name))
+    tris = assert_budget_group([obj] + parts, name, category)
     density = None
     if tier and texture_size:
         density = assert_texel_density(obj, name, tier, texture_size)
+        for part in parts:
+            assert_texel_density(part, "%s/%s" % (name, part.name),
+                                 tier, texture_size)
 
     out_path = os.path.join(MODEL_DIR, relative_path)
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
 
     bpy.ops.object.select_all(action="DESELECT")
     obj.select_set(True)
+    for part in parts:
+        part.select_set(True)
     for collider in collision:
         collider.select_set(True)
     bpy.context.view_layer.objects.active = obj
@@ -547,7 +646,7 @@ def export_glb(obj, relative_path, category, tier=None, texture_size=None,
         export_image_format="AUTO",
         export_yup=True,
     )
-    size = measure(obj)
+    size = measure_group([obj] + parts)
     if density:
         log("%-40s %4d tris  %5.2f x %5.2f x %5.2f m  %5.1f texels/m "
             "(spread %.1f-%.1f)%s"
@@ -566,6 +665,10 @@ def export_glb(obj, relative_path, category, tier=None, texture_size=None,
         # Recorded only when there IS collision, so every asset that
         # never had any keeps the manifest entry it already had.
         entry["colliders"] = len(collision)
+    if parts:
+        # The names a runtime can actually fetch. Written into the manifest
+        # so integration reads the contract instead of opening the .glb.
+        entry["parts"] = [part.name for part in parts]
     return entry
 
 

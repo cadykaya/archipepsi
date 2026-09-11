@@ -263,6 +263,52 @@ and runs.
 * **It ships nowhere.** `assets/textures/theme/concrete_facility_wall.png`
   is unchanged and no approved asset was touched.
 
+### Batch 043 — the Amalgam preparation batch (2026-09-11)
+
+Report: `docs/art/reports/2026-09-11-batch043.md`. Packages:
+`docs/art/packages/archipepsi-art-batch043-REVIEW.zip` and `-SOURCE.zip`.
+Inventory that preceded it: `docs/art/BATCH_043_INVENTORY.md`.
+
+**All of it is a PROPOSAL and joins 023–030 in the pending band.** Nothing
+approved, nothing bound to runtime, no mechanic implemented, playable build
+unchanged, twelve shipped shells untouched. **Both holds below were
+respected**: no junction, closure, return device or warp station, and
+`shell_span_basin` was not opened.
+
+Three deliverables, from Design 6 at `a20bf55`:
+
+* **The complete status graphic kit.** 13 statuses, 8 compounds, 4 family
+  frames, a compound frame, the player tick, the depletion rule and the
+  §33.8 hint in both directions. Native sizes: glyph **16 × 16**, marker
+  **32 × 32**, tick **8 × 8** — 32 because the frame must leave a 12 px
+  clear radius and a 16 px glyph needs 11.3 at its corners. Neutral colour;
+  the four-family hue question is **open and goes to the owner**
+  (`review/status_2026-09-11/DECISIONS_FOR_OWNER.md`, five items).
+* **The machinery feedback kit.** The five §19.5 conduit states as a static
+  channel plus a swappable band, and three pieces carrying them. **No
+  audio** — §19.5's hum, arrival click and rising pitch do not exist, and
+  `delayed` is the state that suffers for it.
+* **The physics-prop family.** All twelve Design 2 §10.1 classes mapped;
+  four built (`phys_power_cell`, `phys_mechanical_part`, `phys_girder`,
+  `phys_ballast`). Family rule: **unpainted dark steel only where the
+  player's device touches**, and a hand grip only below §10.3's 60 kg line.
+  Four classes still have nothing: `WEIGHTED`, `KEY_COMPONENT`,
+  `MOVABLE_COVER`, `CART`.
+
+**The measured finding the owner asked for.** Batch 028's `state_visual`
+regions are material slots on one merged mesh, confirmed at `327c089` with
+the new `tools/content/inspect_glb_nodes.py`. The only handle a runtime has
+is `set_surface_override_material(2, …)`, which recolours and nothing else.
+Batch 043's machinery exports every state region as its own named node **and**
+its own material slot. **Batch 028 was not modified.**
+
+**Pipeline changes, and they are load-bearing.** `common.export_glb(parts=…)`
+exports addressable child nodes whose triangles still count against the same
+ceiling; `common.set_origin_group()` anchors a body and its parts together —
+without it `set_origin` moved a body and left its parts 7 cm behind, which
+buried a switch's indicator inside its own housing;
+`common.assert_budget_group()` stops a split mesh buying triangles.
+
 ### HOLD — no new authoring until two things arrive (owner, 2026-09-11)
 
 After the Zone 1 playtest the owner accepted the multi-door direction and

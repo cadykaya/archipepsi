@@ -1,0 +1,109 @@
+{
+  "mach_conduit_run": {
+    "anchor": "wall",
+    "band_tile_metres": [
+      2.0,
+      0.5
+    ],
+    "band_tile_pixels": [
+      64,
+      16
+    ],
+    "batch": "043",
+    "design": "Design 1 \u00a719.5 five conduit states, pinned by Design 6 \u00a719; Design 3 \u00a733.8 in-world readability",
+    "how_to_drive": {
+      "audio": "NOT SUPPLIED. \u00a719.5's hum, arrival click and rising pitch do not exist in this kit.",
+      "fill": "scale the band node on X from its -X end for `delayed`; the texture does not move",
+      "lever": "rotate `lever_arm` about its own X axis; the pivot sits at the arm's base",
+      "material_slots": "each named node also owns exactly one material slot, so `set_surface_override_material(0, m)` on the NODE is enough for a texture swap",
+      "named_nodes": "every state region is its own node under the asset root; fetch it by name and drive it directly",
+      "scroll": "set `uv1_offset.x` on the band's material for `active` and `pulse_travelling`"
+    },
+    "kind": "machinery_feedback",
+    "parts": [
+      "state_band"
+    ],
+    "path": "batch043/machinery/mach_conduit_run.glb",
+    "size": [
+      2.28,
+      0.175,
+      0.5
+    ],
+    "status": "PROPOSAL -- presentation only; no signal graph, no node types, no gameplay state machine",
+    "texel_density": null,
+    "texels_per_metre": 32.0,
+    "triangles": 108
+  },
+  "mach_receiver_lamp": {
+    "anchor": "floor",
+    "band_tile_metres": [
+      2.0,
+      0.5
+    ],
+    "band_tile_pixels": [
+      64,
+      16
+    ],
+    "batch": "043",
+    "design": "Design 1 \u00a719.5 five conduit states, pinned by Design 6 \u00a719; Design 3 \u00a733.8 in-world readability",
+    "how_to_drive": {
+      "audio": "NOT SUPPLIED. \u00a719.5's hum, arrival click and rising pitch do not exist in this kit.",
+      "fill": "scale the band node on X from its -X end for `delayed`; the texture does not move",
+      "lever": "rotate `lever_arm` about its own X axis; the pivot sits at the arm's base",
+      "material_slots": "each named node also owns exactly one material slot, so `set_surface_override_material(0, m)` on the NODE is enough for a texture swap",
+      "named_nodes": "every state region is its own node under the asset root; fetch it by name and drive it directly",
+      "scroll": "set `uv1_offset.x` on the band's material for `active` and `pulse_travelling`"
+    },
+    "kind": "machinery_feedback",
+    "parts": [
+      "state_lens_0",
+      "state_lens_1"
+    ],
+    "path": "batch043/machinery/mach_receiver_lamp.glb",
+    "size": [
+      0.5,
+      0.26,
+      0.37
+    ],
+    "status": "PROPOSAL -- presentation only; no signal graph, no node types, no gameplay state machine",
+    "texel_density": null,
+    "texels_per_metre": 32.0,
+    "triangles": 60
+  },
+  "mach_wall_switch": {
+    "anchor": "wall",
+    "band_tile_metres": [
+      2.0,
+      0.5
+    ],
+    "band_tile_pixels": [
+      64,
+      16
+    ],
+    "batch": "043",
+    "design": "Design 1 \u00a719.5 five conduit states, pinned by Design 6 \u00a719; Design 3 \u00a733.8 in-world readability",
+    "how_to_drive": {
+      "audio": "NOT SUPPLIED. \u00a719.5's hum, arrival click and rising pitch do not exist in this kit.",
+      "fill": "scale the band node on X from its -X end for `delayed`; the texture does not move",
+      "lever": "rotate `lever_arm` about its own X axis; the pivot sits at the arm's base",
+      "material_slots": "each named node also owns exactly one material slot, so `set_surface_override_material(0, m)` on the NODE is enough for a texture swap",
+      "named_nodes": "every state region is its own node under the asset root; fetch it by name and drive it directly",
+      "scroll": "set `uv1_offset.x` on the band's material for `active` and `pulse_travelling`"
+    },
+    "kind": "machinery_feedback",
+    "parts": [
+      "lever_arm",
+      "state_lens"
+    ],
+    "path": "batch043/machinery/mach_wall_switch.glb",
+    "size": [
+      0.36,
+      0.19,
+      0.535
+    ],
+    "status": "PROPOSAL -- presentation only; no signal graph, no node types, no gameplay state machine",
+    "texel_density": null,
+    "texels_per_metre": 32.0,
+    "triangles": 60
+  }
+}

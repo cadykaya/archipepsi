@@ -1,0 +1,62 @@
+{
+  "batch": "043",
+  "authored": "2026-09-11",
+  "glyph_revision": "6c80b6315912a70b44c28d566ddff608eafa234a",
+  "design_revision": "a20bf55",
+  "design_section": "Design 1 §19.5, pinned by Design 6 §19",
+  "status": "PROPOSAL -- presentation only, no signal graph implemented",
+  "tile": {
+    "pixels": [
+      64,
+      16
+    ],
+    "metres": [
+      2,
+      0.5
+    ],
+    "texels_per_metre": 32
+  },
+  "audio": "NOT DELIVERED. §19.5 names a low hum, a click on arrival and a rising pitch. None of the three exists and no still or sequence here demonstrates them.",
+  "states": {
+    "inactive": {
+      "texture": "png/band_inactive.png",
+      "why": "An unbroken hairline at the dim value. A whole conduit with nothing in it. Still, and continuous.",
+      "motion": "none",
+      "brightness": "dim",
+      "pattern": "unbroken hairline",
+      "audio_required": "none"
+    },
+    "active": {
+      "texture": "png/band_active.png",
+      "why": "Full-height lit bar with chevrons pointing the way the signal goes. Scrolls +X at 0.6 m/s. Bright, patterned, moving.",
+      "motion": "scrolls +X, 0.6 m/s",
+      "brightness": "bright",
+      "pattern": "directional chevrons",
+      "audio_required": "low hum (§19.5)"
+    },
+    "pulse_travelling": {
+      "texture": "png/band_pulse_travelling.png",
+      "why": "One short lit block, 12 px (0.375 m), with a solid leading edge, on an otherwise dim line. Scrolls +X at 4.0 m/s. The block's LENGTH never changes -- that is what separates it from a delay.",
+      "motion": "scrolls +X, 4.0 m/s, constant length",
+      "brightness": "bright block on a dim line",
+      "pattern": "one block",
+      "audio_required": "click on arrival (§19.5)"
+    },
+    "blocked": {
+      "texture": "png/band_blocked.png",
+      "why": "The same dim line, cut into 6 px segments with 4 px gaps, and one hard break mark across the trough. Dim and SEVERED, against inactive's dim and whole.",
+      "motion": "none",
+      "brightness": "dim",
+      "pattern": "broken segments plus a break mark",
+      "audio_required": "none"
+    },
+    "delayed": {
+      "texture": "png/band_delayed.png",
+      "why": "A solid lit FILL from the source end behind a hard leading edge, with the rest of the run dim. The fill GROWS; nothing travels. This frame is the 55% one -- a runtime advances the edge.",
+      "motion": "the leading edge advances; the tail never leaves the source",
+      "brightness": "bright fill on a dim remainder",
+      "pattern": "solid fill behind a hard edge, ticks ahead of it",
+      "audio_required": "rising pitch (§19.5) -- THE ONE THAT CARRIES DURATION"
+    }
+  }
+}
