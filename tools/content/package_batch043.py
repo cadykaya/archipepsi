@@ -86,7 +86,8 @@ SOURCE = uniq(
      "tools/content/run_machinery_preview.sh",
      "tools/content/run_props_preview.sh",
      "tools/content/inspect_glb_nodes.py",
-     "tools/content/verify_attach_points.py",
+     "tools/content/verify_exported_geometry.py",
+     "tools/content/skin_compare.py",
      "tools/content/package_batch043.py",
      "tools/artpreview/artbench.gd",
      "assets/art_palette.json", "assets/art_budgets.json"]

@@ -303,7 +303,17 @@ def main():
     shell, bands, size = conduit_run()
     common.set_origin_group([shell] + bands, "wall")
     common.uv_project_world(shell, DENSITY, propkit.PROP_SIZE)
-    canvas = propkit.painted_metal(THEME, "mach_conduit_run", wear=0.18)
+    # Quiet housings, for the same reason the object family got them: the
+    # default prop skin's patch, bolt and speckle frequencies are tuned for
+    # 1-2 m props and these are 0.18-0.50 m in section. Here it matters
+    # twice over, because a conduit's job is to carry a STATE DISPLAY and a
+    # noisy channel competes with the band lying on it.
+    #
+    # The band, the fill and the lenses are NOT touched -- they are the
+    # state and they keep every value they had.
+    canvas = propkit.quiet_painted(THEME, "mach_conduit_run",
+                                   seam_metres=0.50, wear=0.09, tone="mid",
+                                   bolts=True)
     common.assign(shell, common.make_textured_material(
         "mach_conduit_run", canvas.to_blender("mach_conduit_run_t"),
         roughness=pal.roughness(THEME)))
@@ -332,7 +342,9 @@ def main():
     arm_lo, arm_hi = common.world_box(arm)
     pivot_now = (0.0, (arm_lo[1] + arm_hi[1]) / 2.0, arm_top - 0.20)
     common.uv_project_world(shell, DENSITY, propkit.PROP_SIZE)
-    canvas = propkit.painted_metal(THEME, "mach_wall_switch", wear=0.16)
+    canvas = propkit.quiet_painted(THEME, "mach_wall_switch",
+                                   seam_metres=0.22, wear=0.06, tone="light",
+                                   bolts=False)
     common.assign(shell, common.make_textured_material(
         "mach_wall_switch", canvas.to_blender("mach_wall_switch_t"),
         roughness=pal.roughness(THEME)))
@@ -358,7 +370,9 @@ def main():
     shell, lenses, size = receiver_lamp()
     common.set_origin_group([shell] + lenses, "floor")
     common.uv_project_world(shell, DENSITY, propkit.PROP_SIZE)
-    canvas = propkit.painted_metal(THEME, "mach_receiver_lamp", wear=0.20)
+    canvas = propkit.quiet_painted(THEME, "mach_receiver_lamp",
+                                   seam_metres=0.26, wear=0.07, tone="light",
+                                   bolts=False)
     common.assign(shell, common.make_textured_material(
         "mach_receiver_lamp", canvas.to_blender("mach_receiver_lamp_t"),
         roughness=pal.roughness(THEME)))
@@ -389,6 +403,17 @@ def main():
             "design": "Design 1 §19.5 five conduit states, pinned by "
                       "Design 6 §19; Design 3 §33.8 in-world readability",
             "texels_per_metre": DENSITY,
+            "coordinate_space": {
+                "authoring": "Blender, Z-up, metres",
+                "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees",
+                "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime; for "
+                              "a size triple, (x, y, z) -> (x, z, y)",
+                "note": "`size` is the exporter's field and is in AUTHORING "
+                        "axes, unchanged from every other batch. "
+                        "`size_runtime_y_up` is the same object in runtime "
+                        "axes. A node's own translation -- `hinge_lever` "
+                        "carries one -- is already in runtime axes.",
+            },
             "band_tile_pixels": list(BAND_TILE),
             "band_tile_metres": [BAND_TILE[0] / DENSITY,
                                  BAND_TILE[1] / DENSITY],
@@ -423,6 +448,13 @@ def main():
         keyed = {}
         for entry in made:
             asset_id = os.path.basename(entry["path"])[:-4]
+            rx, ry, rz = common.runtime_size(entry["size"])
+            entry = dict(entry)
+            entry["size_runtime_y_up"] = {"x": rx, "y_up": ry, "z": rz}
+            entry["size_authoring_blender_z_up"] = {
+                "x": entry["size"][0], "y": entry["size"][1],
+                "z_up": entry["size"][2],
+            }
             keyed[asset_id] = dict(shared, **entry)
         json.dump(keyed, handle, indent=2, sort_keys=True)
     common.log("manifest %s" % path)

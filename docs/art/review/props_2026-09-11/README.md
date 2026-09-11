@@ -16,6 +16,9 @@ schemas are untouched. `prop_crate` and `prop_oil_drum` are unchanged.
 | `room/PROPS_candidate_vs_decorative_*.png` | `prop_crate` beside `phys_generic`, `prop_oil_drum` beside `phys_drum` — the decoration/candidate split, settled |
 | `room/PROPS_fixed_vs_movable_*.png` | `ANCHOR_BLOCK` (`FIXED`, one tether eye) beside `BALLAST` (four attach pads) |
 | `room/PROPS_close_*.png` | one per candidate, at the distance a player decides whether to pick something up |
+| `room/SKIN_trio_bright.png` · `_dark.png` | power cell, ballast and anchor block after the material pass, **unlabelled**, on both grounds |
+| `room/BEFORE_skin_lineup_*.png` · `BEFORE_skin_close_ballast.png` | the same views before it |
+| `room/skin_contrast_bright.json` · `_dark.json` | the measured body-versus-fitting L\* for all twelve |
 
 Every object in the line-up is placed by its **measured** width and every
 label is **projected from the object's own position**, so a caption cannot
@@ -25,6 +28,9 @@ Rebuild:
 
 ```
 .tools/blender/blender -b --python tools/blender/build_physics_props.py
-python3 tools/content/verify_attach_points.py
+python3 tools/content/verify_exported_geometry.py
 tools/content/run_props_preview.sh
+
+# the material pass: unlabelled comparison plus the contrast measurement
+LABELS=nolabels tools/content/run_props_preview.sh
 ```

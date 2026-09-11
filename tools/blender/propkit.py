@@ -98,6 +98,73 @@ def painted_metal(theme, name, label=None, band=False, wear=0.14,
     return canvas
 
 
+def quiet_painted(theme, name, seam_metres=0.5, wear=0.10, tone="mid",
+                  bolts=True):
+    """A painted field that lets the SHAPE be the thing you see.
+
+    ## Why this exists beside `painted_metal` rather than replacing it
+
+    `painted_metal` is tuned for the 1-2 m props Batch 001 built: broad
+    patches on a 0.28 m cell, bolts every 0.25 m, and a speckle field near
+    every seam and edge. On a 1.0 m crate that reads as worn facility steel.
+    On Batch 043's object family it does not, and the reason is frequency
+    rather than taste.
+
+    These objects are 0.25 m to 1.8 m. The UV projection is world-space at a
+    fixed 64 texels/m, so a 0.34 m power cell samples a 0.34 m window of a
+    2.0 m texture -- and a 0.28 m patch cell, a 0.25 m bolt pitch and a
+    16% speckle field all land inside it at once. Every feature the
+    treatment has arrives on every face, and the result is a dense,
+    high-contrast crust that obscures the silhouette and competes with the
+    dark handling fittings, which are the one thing on these objects that
+    has to read first.
+
+    `painted_metal` is NOT changed, because every approved batch wears it
+    and re-skinning them all is not this batch's decision to take.
+
+    ## What this does instead
+
+    A near-flat field, DELIBERATE seams, and wear only where a thing is
+    actually handled:
+
+      * one tonal drift at a metre scale, so the field is not dead flat;
+      * no broad patches at all;
+      * panel seams at a pitch the CALLER chooses, so an object gets seams
+        that suit its size instead of a fixed 0.5 m grid;
+      * bolts on the seams only, at half the old density, and optional;
+      * edge wear at a shorter reach and lower strength;
+      * one grime pool, weaker.
+
+    The reserved-colour rules are untouched: everything here comes from the
+    theme's own base and trim ramps, and no universal grammar colour appears.
+    Texel density is unchanged at `PROP_DENSITY`.
+    """
+    base, accent, trim = _ramps(theme)
+    del accent
+    fill = base[TONES[tone]]
+    surf = surface(theme, name)
+    canvas = paintkit.Canvas(PROP_SIZE, fill)
+    # A single slow drift. `painted_metal` uses 0.06 at 0.5 m, which at prop
+    # scale is a visible mottle; 0.035 at 1.1 m reads as a painted surface
+    # that is not perfectly even, which is all it is for.
+    paintkit.tonal_drift(canvas, surf, amount=0.035, cell_metres=1.1)
+    paintkit.panel_grid(canvas, surf, trim[0], base[min(3, TONES[tone] + 1)],
+                        pitch_metres=seam_metres,
+                        vertical_pitch_metres=seam_metres)
+    surf.seams = tuple(range(0, PROP_SIZE, surf.texels(seam_metres)))
+    if bolts:
+        # Half the density of the default. A bolt every 0.25 m on a 0.34 m
+        # object is a row of rivets on something the size of a lunchbox.
+        surf.bolt_pitch = surf.texels(seam_metres)
+        paintkit.bolts(canvas, surf, trim[0], base[3], inset=3)
+    # Wear, and ONLY at the edges -- no speckle field. An object is worn
+    # where it is handled and where it is knocked, not uniformly.
+    paintkit.edge_wear(canvas, surf, base[0], surf.texels(wear),
+                       strength=0.55)
+    paintkit.grime_pool(canvas, surf, pal.grime(0), strength=0.22)
+    return canvas
+
+
 def bare_metal(theme, name, wear=0.2):
     """Unpainted, oxidised steel: pipes, braces, debris, broken machinery."""
     base, accent, trim = _ramps(theme)

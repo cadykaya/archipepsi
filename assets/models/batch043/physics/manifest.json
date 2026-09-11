@@ -30,7 +30,7 @@
     "coordinate_space": {
       "authoring": "Blender, Z-up, metres",
       "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
-      "note": "`size` below is the exporter's own measurement and is already in runtime axes.",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
       "origin_shift_applied": "once, by set_origin_group, before the conversion",
       "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
     },
@@ -62,10 +62,16 @@
       0.988,
       0.689
     ],
+    "size_authoring_blender_z_up": {
+      "x": 0.988,
+      "y": 0.988,
+      "z_up": 0.689
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_runtime_y_up": {
       "x": 0.988,
-      "y_up": 0.988,
-      "z": 0.689
+      "y_up": 0.689,
+      "z": 0.988
     },
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
@@ -163,7 +169,7 @@
     "coordinate_space": {
       "authoring": "Blender, Z-up, metres",
       "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
-      "note": "`size` below is the exporter's own measurement and is already in runtime axes.",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
       "origin_shift_applied": "once, by set_origin_group, before the conversion",
       "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
     },
@@ -198,10 +204,16 @@
       0.825,
       0.497
     ],
+    "size_authoring_blender_z_up": {
+      "x": 1.125,
+      "y": 0.825,
+      "z_up": 0.497
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_runtime_y_up": {
       "x": 1.125,
-      "y_up": 0.825,
-      "z": 0.497
+      "y_up": 0.497,
+      "z": 0.825
     },
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
@@ -239,7 +251,7 @@
     "coordinate_space": {
       "authoring": "Blender, Z-up, metres",
       "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
-      "note": "`size` below is the exporter's own measurement and is already in runtime axes.",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
       "origin_shift_applied": "once, by set_origin_group, before the conversion",
       "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
     },
@@ -271,10 +283,16 @@
       0.856,
       0.67
     ],
+    "size_authoring_blender_z_up": {
+      "x": 1.36,
+      "y": 0.856,
+      "z_up": 0.67
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_runtime_y_up": {
       "x": 1.36,
-      "y_up": 0.856,
-      "z": 0.67
+      "y_up": 0.67,
+      "z": 0.856
     },
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
@@ -332,7 +350,7 @@
     "coordinate_space": {
       "authoring": "Blender, Z-up, metres",
       "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
-      "note": "`size` below is the exporter's own measurement and is already in runtime axes.",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
       "origin_shift_applied": "once, by set_origin_group, before the conversion",
       "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
     },
@@ -365,6 +383,12 @@
       0.684,
       0.684
     ],
+    "size_authoring_blender_z_up": {
+      "x": 1.029,
+      "y": 0.684,
+      "z_up": 0.684
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_runtime_y_up": {
       "x": 1.029,
       "y_up": 0.684,
@@ -426,7 +450,7 @@
     "coordinate_space": {
       "authoring": "Blender, Z-up, metres",
       "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
-      "note": "`size` below is the exporter's own measurement and is already in runtime axes.",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
       "origin_shift_applied": "once, by set_origin_group, before the conversion",
       "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
     },
@@ -459,10 +483,16 @@
       0.646,
       0.625
     ],
+    "size_authoring_blender_z_up": {
+      "x": 0.645,
+      "y": 0.646,
+      "z_up": 0.625
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_runtime_y_up": {
       "x": 0.645,
-      "y_up": 0.646,
-      "z": 0.625
+      "y_up": 0.625,
+      "z": 0.646
     },
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
@@ -520,7 +550,7 @@
     "coordinate_space": {
       "authoring": "Blender, Z-up, metres",
       "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
-      "note": "`size` below is the exporter's own measurement and is already in runtime axes.",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
       "origin_shift_applied": "once, by set_origin_group, before the conversion",
       "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
     },
@@ -553,10 +583,16 @@
       0.2,
       0.26
     ],
+    "size_authoring_blender_z_up": {
+      "x": 3.201,
+      "y": 0.2,
+      "z_up": 0.26
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_runtime_y_up": {
       "x": 3.201,
-      "y_up": 0.2,
-      "z": 0.26
+      "y_up": 0.26,
+      "z": 0.2
     },
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
@@ -594,7 +630,7 @@
     "coordinate_space": {
       "authoring": "Blender, Z-up, metres",
       "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
-      "note": "`size` below is the exporter's own measurement and is already in runtime axes.",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
       "origin_shift_applied": "once, by set_origin_group, before the conversion",
       "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
     },
@@ -630,10 +666,16 @@
       0.195,
       0.305
     ],
+    "size_authoring_blender_z_up": {
+      "x": 0.246,
+      "y": 0.195,
+      "z_up": 0.305
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_runtime_y_up": {
       "x": 0.246,
-      "y_up": 0.195,
-      "z": 0.305
+      "y_up": 0.305,
+      "z": 0.195
     },
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
@@ -671,7 +713,7 @@
     "coordinate_space": {
       "authoring": "Blender, Z-up, metres",
       "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
-      "note": "`size` below is the exporter's own measurement and is already in runtime axes.",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
       "origin_shift_applied": "once, by set_origin_group, before the conversion",
       "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
     },
@@ -706,10 +748,16 @@
       0.403,
       0.43
     ],
+    "size_authoring_blender_z_up": {
+      "x": 0.475,
+      "y": 0.403,
+      "z_up": 0.43
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_runtime_y_up": {
       "x": 0.475,
-      "y_up": 0.403,
-      "z": 0.43
+      "y_up": 0.43,
+      "z": 0.403
     },
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
@@ -767,7 +815,7 @@
     "coordinate_space": {
       "authoring": "Blender, Z-up, metres",
       "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
-      "note": "`size` below is the exporter's own measurement and is already in runtime axes.",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
       "origin_shift_applied": "once, by set_origin_group, before the conversion",
       "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
     },
@@ -800,10 +848,16 @@
       0.26,
       1.72
     ],
+    "size_authoring_blender_z_up": {
+      "x": 1.326,
+      "y": 0.26,
+      "z_up": 1.72
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_runtime_y_up": {
       "x": 1.326,
-      "y_up": 0.26,
-      "z": 1.72
+      "y_up": 1.72,
+      "z": 0.26
     },
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
@@ -861,7 +915,7 @@
     "coordinate_space": {
       "authoring": "Blender, Z-up, metres",
       "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
-      "note": "`size` below is the exporter's own measurement and is already in runtime axes.",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
       "origin_shift_applied": "once, by set_origin_group, before the conversion",
       "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
     },
@@ -894,10 +948,16 @@
       0.92,
       0.145
     ],
+    "size_authoring_blender_z_up": {
+      "x": 1.8,
+      "y": 0.92,
+      "z_up": 0.145
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_runtime_y_up": {
       "x": 1.8,
-      "y_up": 0.92,
-      "z": 0.145
+      "y_up": 0.145,
+      "z": 0.92
     },
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
@@ -935,7 +995,7 @@
     "coordinate_space": {
       "authoring": "Blender, Z-up, metres",
       "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
-      "note": "`size` below is the exporter's own measurement and is already in runtime axes.",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
       "origin_shift_applied": "once, by set_origin_group, before the conversion",
       "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
     },
@@ -970,10 +1030,16 @@
       0.34,
       0.6
     ],
+    "size_authoring_blender_z_up": {
+      "x": 0.34,
+      "y": 0.34,
+      "z_up": 0.6
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_runtime_y_up": {
       "x": 0.34,
-      "y_up": 0.34,
-      "z": 0.6
+      "y_up": 0.6,
+      "z": 0.34
     },
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,
@@ -1031,7 +1097,7 @@
     "coordinate_space": {
       "authoring": "Blender, Z-up, metres",
       "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
-      "note": "`size` below is the exporter's own measurement and is already in runtime axes.",
+      "note": "`size` is the EXPORTER's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in the frame a loader sees, converted once by common.runtime_size(). They are not the same triple and must not be read as one.",
       "origin_shift_applied": "once, by set_origin_group, before the conversion",
       "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
     },
@@ -1064,10 +1130,16 @@
       0.86,
       0.696
     ],
+    "size_authoring_blender_z_up": {
+      "x": 0.82,
+      "y": 0.86,
+      "z_up": 0.696
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_runtime_y_up": {
       "x": 0.82,
-      "y_up": 0.86,
-      "z": 0.696
+      "y_up": 0.696,
+      "z": 0.86
     },
     "status": "PROPOSAL -- all twelve of Design 2 \u00a710.1's classes",
     "texel_density": 64.0,

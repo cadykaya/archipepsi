@@ -317,10 +317,23 @@ Three deliverables, from Design 6 at `a20bf55`:
   `delayed` is the state that suffers for it.
 * **The physics-prop family.** **All twelve** Design 2 §10.1 classes built,
   8 kg to 500. Family rule: **unpainted dark steel only where the player's
-  device touches**, a hand grip only below §10.3's 60 kg line, and
+  device touches** and fully matte so it cannot out-shine the body (measured:
+  at least 17.9 L* below it on bright concrete, 13.4 on dark derelict), a
+  hand grip only on the classes §10.1 marks `carriable` — which is the flag,
+  not the 60 kg threshold: `PLATE` is exactly 60 kg and is not carriable —
+  and
   `ANCHOR_BLOCK` `FIXED` with neither — one tether eye and nothing to grab.
   `phys_generic` and `phys_drum` are manipulable siblings of the approved,
   unchanged `prop_crate` and `prop_oil_drum`.
+
+**Revision 3 (2026-09-11)** corrected the exported dimension contract —
+`size_runtime_y_up` had been filled from the exporter's authoring-axis triple,
+so Y and Z were swapped in all fifteen entries — gave the whole family a
+quieter painted skin (`propkit.quiet_painted`, new beside the untouched
+`painted_metal`), and made the handling-contrast rule a measurement rather
+than a claim. `tools/content/verify_exported_geometry.py` now checks sizes as
+well as attach points and refuses to run without an asymmetric object to
+expose a swap.
 
 **Revision 2 (2026-09-11) applied the owner's rulings and repaired eight
 defects** — the `send` tick, two illegal status/target examples, a lever with

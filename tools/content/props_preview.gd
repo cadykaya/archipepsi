@@ -16,12 +16,22 @@ var _derelict: String
 var _out: String
 var _bench: GDScript
 var _ground := "bright"
+var _labels := true
+
+## How far below its body a handling fitting must measure IN THE RENDER,
+## on the darkest ground it is shown on. §33.7 asks for a treatment a player
+## can read; a number in the palette is not that, and the first pass had two
+## of three objects with the fitting BRIGHTER than the body.
+const MIN_HANDLING_GAP := 12.0
 
 func _init() -> void:
 	var a := OS.get_cmdline_user_args()
 	_models = a[0]
 	_derelict = a[1]
 	_out = a[2]
+	# Labels off for the material comparison. A caption tells the eye where
+	# to look, which is the opposite of what a readability check wants.
+	_labels = a.size() < 4 or a[3] != "nolabels"
 	_bench = load("res://_harness/artbench.gd") as GDScript
 	_run.call_deferred()
 
@@ -142,10 +152,13 @@ func _shot(w: Node3D, at: Vector3, look: Vector3, name: String,
 	# as pixels. Hand-placed captions drift the moment anything moves, and a
 	# caption beside the wrong object is worse than no caption -- this lane
 	# has already shipped one of those.
-	for raw: Variant in world_labels:
-		var wl: Array = raw
-		var at_px := cam.unproject_position(wl[1])
-		lines.append([wl[0], at_px + Vector2(-8, 0)])
+	if _labels:
+		for raw: Variant in world_labels:
+			var wl: Array = raw
+			var at_px := cam.unproject_position(wl[1])
+			lines.append([wl[0], at_px + Vector2(-8, 0)])
+	else:
+		lines = []
 	var layer := Control.new()
 	layer.size = Vector2(size)
 	vp.add_child(layer)
@@ -176,6 +189,14 @@ func _clear(w: Node3D) -> void:
 	w.queue_free()
 
 func _run() -> void:
+	if not _labels:
+		# The material pass: three objects, both grounds, nothing written
+		# over them.
+		for ground: String in ["bright", "dark"]:
+			_ground = ground
+			await _skin_trio()
+		quit(0)
+		return
 	for ground: String in ["bright", "dark"]:
 		_ground = ground
 		await _lineup()
@@ -201,6 +222,144 @@ const ROWS := [
 	 "ids": [["phys_cart", "180"], ["phys_movable_cover", "220"],
 			 ["phys_ballast", "320"], ["phys_anchor_block", "500 FIXED"]]},
 ]
+
+## sRGB -> CIE L*, the perceptual value axis the palette's ramps are solved
+## against. A channel average would flatter blues and punish yellows, which
+## is the confound a value measurement exists to remove.
+func _lstar(c: Color) -> float:
+	var lin := func(v: float) -> float:
+		return v / 12.92 if v <= 0.04045 else pow((v + 0.055) / 1.055, 2.4)
+	var y: float = (0.2126 * lin.call(c.r) + 0.7152 * lin.call(c.g)
+			+ 0.0722 * lin.call(c.b))
+	return 116.0 * pow(y, 1.0 / 3.0) - 16.0 if y > 0.008856 else 903.3 * y
+
+
+func _paint(node: Node3D, body: Color, fitting: Color) -> void:
+	## Key the two material roles into flat colours so a mask can be read
+	## back. Which surface is which is not guessed: the fittings are the
+	## named part nodes, and the body is the node the asset is named after.
+	for child in node.find_children("*", "MeshInstance3D", true, false):
+		var mi := child as MeshInstance3D
+		var m := StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.albedo_color = (body if str(mi.name).begins_with("phys_")
+				else fitting)
+		mi.material_override = m
+
+
+func _probe(w: Node3D, at: Vector3, look: Vector3, node: Node3D) -> Dictionary:
+	## THE FAMILY RULE, MEASURED IN THE RENDER RATHER THAN IN THE PALETTE.
+	##
+	## "Unpainted dark steel, far below any painted body in value" is a claim
+	## about what reaches the screen, and a material's albedo is not that: a
+	## low-roughness fitting catches the room's own specular and can arrive
+	## BRIGHTER than the body it is supposed to sit under. That is exactly
+	## what happened at roughness 0.30 -- the pads read pale blue.
+	##
+	## So: render once normally, render again with the two material roles
+	## keyed to flat colours, and use the second as a mask over the first.
+	## No pixel coordinates are guessed and no surface is assumed.
+	var size := Vector2i(900, 560)
+	var shot := func(keyed: bool) -> Image:
+		var vp := SubViewport.new()
+		vp.size = size
+		vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+		get_root().add_child(vp)
+		var holder := Node3D.new()
+		vp.add_child(holder)
+		var cam := Camera3D.new()
+		cam.fov = 58.0
+		holder.add_child(cam)
+		cam.global_position = at
+		cam.look_at(look, Vector3.UP)
+		var parent := w.get_parent()
+		parent.remove_child(w)
+		vp.add_child(w)
+		if keyed:
+			_paint(node, Color(0, 1, 0), Color(1, 0, 1))
+		await process_frame
+		await process_frame
+		await process_frame
+		var img := vp.get_texture().get_image()
+		vp.remove_child(w)
+		parent.add_child(w)
+		vp.queue_free()
+		return img
+	var lit: Image = await shot.call(false)
+	var key: Image = await shot.call(true)
+	var body_sum := 0.0
+	var body_n := 0
+	var fit_sum := 0.0
+	var fit_n := 0
+	for y in size.y:
+		for x in size.x:
+			var k := key.get_pixel(x, y)
+			var v := _lstar(lit.get_pixel(x, y))
+			if k.g > 0.85 and k.r < 0.2 and k.b < 0.2:
+				body_sum += v
+				body_n += 1
+			elif k.r > 0.85 and k.b > 0.85 and k.g < 0.2:
+				fit_sum += v
+				fit_n += 1
+	return {
+		"body_px": body_n, "fitting_px": fit_n,
+		"body_L": body_sum / maxf(body_n, 1.0),
+		"fitting_L": fit_sum / maxf(fit_n, 1.0),
+		"gap_L": (body_sum / maxf(body_n, 1.0)) - (fit_sum / maxf(fit_n, 1.0)),
+	}
+
+
+func _skin_trio() -> void:
+	## The three the brief named, side by side, unlabelled, both grounds.
+	var w := _scene()
+	# The three the brief named lead the frame; the measurement below covers
+	# all twelve, because a rule that holds on three objects and fails on
+	# the ninth is not a rule.
+	var ids := ["phys_power_cell", "phys_ballast", "phys_anchor_block"]
+	var all_ids := ["phys_key_component", "phys_generic", "phys_power_cell",
+			"phys_mechanical_part", "phys_plate", "phys_drum", "phys_girder",
+			"phys_weighted", "phys_cart", "phys_movable_cover",
+			"phys_ballast", "phys_anchor_block"]
+	for i in ids.size():
+		_put(w, "batch043/physics/%s.glb" % ids[i],
+				Vector3(-1.35 + 1.35 * i, 0, 2.9), 18.0 + 26.0 * i)
+	await _shot(w, Vector3(0.0, 1.30, 5.35), Vector3(0.0, 0.42, 2.9),
+			"SKIN_trio_%s" % _ground, [], Vector2i(1120, 560))
+	_clear(w)
+	# And the measurement, one prop at a time so the masks cannot mix.
+	var report := {}
+	for id: String in all_ids:
+		var w2 := _scene()
+		var n := _put(w2, "batch043/physics/%s.glb" % id,
+				Vector3(0, 0, 2.6), 24.0)
+		if n == null:
+			continue
+		# Frame each object from its own size, so a 0.25 m component and a
+		# 1.72 m cover are both read at the distance they fill the frame.
+		var span: float = maxf(_width_of(n), 0.3)
+		var back: float = clampf(1.05 + span * 1.6, 1.4, 3.4)
+		var r: Dictionary = await _probe(w2,
+				Vector3(0.0, 0.55 + span * 0.45, 2.6 + back),
+				Vector3(0.0, span * 0.35, 2.6), n)
+		report[id] = r
+		print("[props] %-20s %s body L* %.1f  fitting L* %.1f  gap %.1f%s"
+				% [id, _ground, r["body_L"], r["fitting_L"], r["gap_L"],
+				   "" if r["gap_L"] >= MIN_HANDLING_GAP else "   << UNDER"])
+		_clear(w2)
+	var worst := 999.0
+	for id: String in report:
+		worst = minf(worst, report[id]["gap_L"])
+	report["floor_L"] = MIN_HANDLING_GAP
+	report["worst_gap_L"] = worst
+	var f := FileAccess.open("%s/skin_contrast_%s.json" % [_out, _ground],
+			FileAccess.WRITE)
+	f.store_string(JSON.stringify(report, "  "))
+	f.close()
+	if worst < MIN_HANDLING_GAP:
+		push_error("[props] handling contrast %.1f L* on %s, under the %.1f "
+				% [worst, _ground, MIN_HANDLING_GAP]
+				+ "floor. The family rule does not hold in the render.")
+
 
 func _lineup() -> void:
 	## All twelve classes. Eleven stand in three rows -- carriable nearest,

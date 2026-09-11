@@ -59,32 +59,62 @@ slot**, so a runtime gets both handles.
 Band tile: 64 × 16 px = **2.00 × 0.50 m at 32 texels/m**, the architecture
 budget, asserted on both axes at build time. Clamps at the 0.50 m bolt pitch.
 
-**Still required:** the signal graph itself, and §19.5's audio — a low hum,
-an arrival click, and a rising pitch. The rising pitch is the **second**
-timing channel; the filling band is the first and it is delivered.
+**Still required for Production's machinery integration — recorded, not
+blocking.** §19.5 names three cues and none exists:
+
+| state | cue | status |
+| --- | --- | --- |
+| `active` | a low hum | **not supplied** |
+| `pulse_travelling` | a click on arrival | **not supplied** |
+| `delayed` | a rising pitch | **not supplied** — and it is the *second* timing channel, not the first |
+
+The filling band is §19.5's primary timing display and it is delivered, with
+both endpoints static and a labelled 4.0 s demonstration. **The visual kit
+does not wait on sound**; these three remain open against whoever owns audio.
+
+Also still required: the signal graph itself.
 
 ## 3. The physics-prop family
 
 `assets/models/batch043/physics/` — all twelve Design 2 §10.1 classes.
 
-**Coordinates.** Every entry carries a `coordinate_space` block.
-Dimensions (`size`, `size_runtime_y_up`) and every attach point's `position`
-and `normal` are in **runtime axes: X, Y up, Z**, with the origin shift
-applied once and the Y-up conversion applied once.
-`authored_blender_z_up` sits beside each point for traceability and is
-**not** the runtime value. `tools/content/verify_attach_points.py` confirms
-each runtime position lands on the node it names, read from the exported
-`.glb`.
+**Coordinates — read this before using any number.** Every entry carries a
+`coordinate_space` block, and **two different size fields that are not the
+same triple**:
+
+| field | frame | what it is |
+| --- | --- | --- |
+| `size` | **authoring**, Blender Z-up: width X, depth Y, height Z | the shared exporter's own field, identical in meaning across every batch. Left alone on purpose |
+| `size_runtime_y_up` | **runtime**, glTF/Godot Y-up: `{x, y_up, z}` | what a loader sees. `common.runtime_size()` maps (x, y, z) → (x, z, y) |
+| `size_authoring_blender_z_up` | authoring | the same as `size`, spelled out, so the two are never confused by shape |
+
+Attach-point `position` and `normal` are in **runtime axes**, with the origin
+shift applied once and the Y-up conversion applied once;
+`authored_blender_z_up` sits beside each for traceability and is **not** the
+runtime value.
+
+`tools/content/verify_exported_geometry.py` measures both against the
+exported `.glb` — union AABB with node transforms accumulated for sizes,
+per-node accessor bounds for points.
 
 **Per entry:** `class`, `mass_kg`, derived `mass_class`, `carriable`,
 `manipulable`, `parts` (the addressable node names), `material_roles`
 (`body`, `handling`), `attach_points`, triangle count, texel density, anchor.
 
 **Reading the family.** Unpainted dark steel appears **only** where the
-player's device touches. A hand grip means a hand can lift it (≤ 60 kg,
-§10.3); its absence on an object with attach pads means a device has to.
-`ANCHOR_BLOCK` is `FIXED` and has neither — one tether eye, and nothing to
-take hold of.
+player's device touches, fully matte so it cannot catch the room's specular
+and arrive brighter than the body it sits on. Measured across all twelve in
+the render: the fitting is at least **17.9 L\*** below its body on bright
+concrete and **13.4 L\*** on dark derelict.
+
+A hand grip means a hand can lift it, and **that follows §10.1's `carriable`
+flag, not a mass threshold.** §10.3's 60 kg is necessary, not sufficient —
+carriable is `carriable = true` AND `mass_kg <= 60.0`. `PLATE` is exactly
+60 kg and §10.1 marks it **not carriable**, so it has lifting slots and no
+grip. Read the flag; the threshold only removes candidates.
+
+`ANCHOR_BLOCK` is `FIXED` and has neither grip nor pad — one tether eye, and
+nothing to take hold of.
 
 **Two candidates for two classes.** `phys_generic` and `phys_drum` are the
 manipulable siblings of the approved, unchanged, decorative `prop_crate` and
@@ -98,12 +128,22 @@ they are art dimensions and will move to fit one.
 
 | check | catches |
 | --- | --- |
-| `tools/content/verify_attach_points.py` | a missed origin shift, a double shift, a wrong axis convention, a point naming a node that is not in the `.glb` |
+| `tools/content/verify_exported_geometry.py` — sizes | a swapped or relabelled axis convention, measured against the union AABB with node transforms. It refuses to run unless the manifest contains an object asymmetric enough to expose a swap |
+| `tools/content/verify_exported_geometry.py` — attach points | a missed origin shift, a double shift, a point naming a node that is not in the `.glb` |
+| `props_preview.gd` handling-contrast probe | the family's value rule failing in the render — a fitting that reads brighter than its body under the shipped lights |
 | `common.assert_parts_touch` | a fitting floating off the body or off the chain of fittings that reaches it |
 | `common.assert_budget_group` | a split mesh buying triangles |
 | `author_conduit_states.mjs` brightness floor | `inactive` and `blocked` collapsing back onto one channel |
 | `status_preview.gd` legality gate | an example scene contradicting `status_kit.json` |
 | `tools/content/inspect_glb_nodes.py` | a state region that arrives as a material slot with no node to drive |
 
-All six fail loudly. The attach-point verifier was sabotage-tested: moving
-one point 0.35 m produces a named failure and a non-zero exit.
+All of them fail loudly, and each was made to fail on purpose before it was
+trusted. Re-declaring the old axis convention on two objects produces:
+
+```
+phys_plate declares size_runtime_y_up [1.8, 0.92, 0.145]; the exported
+geometry measures [1.8, 0.145, 0.92]  -- these match with Y and Z swapped,
+so the axis convention is wrong rather than the geometry
+```
+
+and moving one attach point 0.35 m names it the same way.

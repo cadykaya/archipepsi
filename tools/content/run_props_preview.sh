@@ -27,4 +27,4 @@ xvfb-run -a "$GODOT" --path "$ROOT/godot" --rendering-driver opengl3 \
   -s _harness/props.gd -- \
   "$ROOT/assets/models" \
   "$ROOT/docs/art/review/derelict_2026-09-10" \
-  "$OUT" 2>&1 | grep -E "^\[props\]|SCRIPT ERROR" || true
+  "$OUT" ${LABELS:-labels} 2>&1 | grep -E "^\[props\]|SCRIPT ERROR" || true

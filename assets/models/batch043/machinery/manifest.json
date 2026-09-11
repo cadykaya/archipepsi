@@ -10,6 +10,12 @@
       16
     ],
     "batch": "043",
+    "coordinate_space": {
+      "authoring": "Blender, Z-up, metres",
+      "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime; for a size triple, (x, y, z) -> (x, z, y)",
+      "note": "`size` is the exporter's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in runtime axes. A node's own translation -- `hinge_lever` carries one -- is already in runtime axes.",
+      "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
+    },
     "design": "Design 1 \u00a719.5 five conduit states, pinned by Design 6 \u00a719; Design 3 \u00a733.8 in-world readability",
     "how_to_drive": {
       "audio": "NOT SUPPLIED. \u00a719.5's hum, arrival click and rising pitch do not exist in this kit.",
@@ -31,6 +37,17 @@
       0.176,
       0.5
     ],
+    "size_authoring_blender_z_up": {
+      "x": 2.06,
+      "y": 0.176,
+      "z_up": 0.5
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime_y_up": {
+      "x": 2.06,
+      "y_up": 0.5,
+      "z": 0.176
+    },
     "status": "PROPOSAL -- presentation only; no signal graph, no node types, no gameplay state machine",
     "texel_density": null,
     "texels_per_metre": 32.0,
@@ -47,6 +64,12 @@
       16
     ],
     "batch": "043",
+    "coordinate_space": {
+      "authoring": "Blender, Z-up, metres",
+      "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime; for a size triple, (x, y, z) -> (x, z, y)",
+      "note": "`size` is the exporter's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in runtime axes. A node's own translation -- `hinge_lever` carries one -- is already in runtime axes.",
+      "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
+    },
     "design": "Design 1 \u00a719.5 five conduit states, pinned by Design 6 \u00a719; Design 3 \u00a733.8 in-world readability",
     "how_to_drive": {
       "audio": "NOT SUPPLIED. \u00a719.5's hum, arrival click and rising pitch do not exist in this kit.",
@@ -68,6 +91,17 @@
       0.26,
       0.37
     ],
+    "size_authoring_blender_z_up": {
+      "x": 0.5,
+      "y": 0.26,
+      "z_up": 0.37
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime_y_up": {
+      "x": 0.5,
+      "y_up": 0.37,
+      "z": 0.26
+    },
     "status": "PROPOSAL -- presentation only; no signal graph, no node types, no gameplay state machine",
     "texel_density": null,
     "texels_per_metre": 32.0,
@@ -84,6 +118,12 @@
       16
     ],
     "batch": "043",
+    "coordinate_space": {
+      "authoring": "Blender, Z-up, metres",
+      "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime; for a size triple, (x, y, z) -> (x, z, y)",
+      "note": "`size` is the exporter's field and is in AUTHORING axes, unchanged from every other batch. `size_runtime_y_up` is the same object in runtime axes. A node's own translation -- `hinge_lever` carries one -- is already in runtime axes.",
+      "runtime": "glTF / Godot, Y-UP, metres -- what a loader sees"
+    },
     "design": "Design 1 \u00a719.5 five conduit states, pinned by Design 6 \u00a719; Design 3 \u00a733.8 in-world readability",
     "how_to_drive": {
       "audio": "NOT SUPPLIED. \u00a719.5's hum, arrival click and rising pitch do not exist in this kit.",
@@ -106,6 +146,17 @@
       0.19,
       0.535
     ],
+    "size_authoring_blender_z_up": {
+      "x": 0.36,
+      "y": 0.19,
+      "z_up": 0.535
+    },
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_runtime_y_up": {
+      "x": 0.36,
+      "y_up": 0.535,
+      "z": 0.19
+    },
     "status": "PROPOSAL -- presentation only; no signal graph, no node types, no gameplay state machine",
     "texel_density": null,
     "texels_per_metre": 32.0,

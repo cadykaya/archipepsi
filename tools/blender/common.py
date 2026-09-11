@@ -540,6 +540,28 @@ def measure(obj):
     )
 
 
+def runtime_size(size):
+    """An authoring-axis size in the frame a loader sees.
+
+    Blender is Z-up and glTF is Y-UP BY DEFINITION, so the exporter maps
+    (x, y, z) to (x, z, -y) on the way out. For a SIZE -- three unsigned
+    extents -- that is (x, y, z) -> (x, z, y): the height becomes the second
+    component and the depth becomes the third.
+
+    Measured, and it is why this is a named function rather than a line at
+    each call site: Batch 043 first recorded `size_runtime_y_up` as
+    {x: w, y_up: d, z: h} straight off the authoring triple, which is the
+    authoring frame relabelled. `phys_power_cell` shipped declaring
+    0.34 / 0.34 / 0.60 against an actual 0.34 / 0.60 / 0.34, and
+    `phys_plate` declared 1.80 / 0.92 / 0.145 against 1.80 / 0.145 / 0.92.
+    Both are plausible-looking numbers for the wrong axes, which is exactly
+    the shape of error a comment cannot catch and a checker can --
+    `tools/content/verify_exported_geometry.py` now does.
+    """
+    x, y, z = size
+    return [round(x, 3), round(z, 3), round(y, 3)]
+
+
 def measure_group(objects):
     """(width_x, depth_y, height_z) over several objects at once.
 
@@ -772,8 +794,16 @@ def export_glb(obj, relative_path, category, tier=None, texture_size=None,
             % (relative_path, tris, size[0], size[1], size[2],
                "" if not collision
                else "  +%d colliders" % len(collision)))
+    # `size` STAYS IN AUTHORING (BLENDER) AXES: (width X, depth Y, height Z).
+    #
+    # Every batch's manifest and `check_docs_metrics.py` already read this
+    # field with that meaning, so it is not re-based here. A caller that
+    # wants the frame a loader actually sees calls `runtime_size()` and
+    # records the result under its own name -- see Batch 043's two builders.
     entry = {"path": relative_path, "triangles": tris, "anchor": anchor,
              "size": [round(v, 3) for v in size],
+             "size_axes": "authoring (Blender) Z-up: width X, depth Y, "
+                          "height Z. NOT runtime axes -- see runtime_size()",
              "texel_density": None if not density else round(density[0], 1)}
     if collision:
         # Recorded only when there IS collision, so every asset that

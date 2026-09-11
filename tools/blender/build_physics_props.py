@@ -82,9 +82,26 @@ import palette as pal  # noqa: E402
 
 THEME = "concrete_facility"
 OUT = "batch043/physics"
-#: The one colour the whole family shares. L* 18.6 against painted bodies at
-#: L* 60-70, and low-chroma so it never reads as a signalling family.
-HANDLING = "#252a31"
+#: The one colour the whole family shares. L* 11.4, low-chroma so it never
+#: reads as a signalling family.
+#:
+#: TWO NUMBERS THAT WERE WRONG BEFORE. It was #252a31 at roughness 0.30, and
+#: the comment claimed "L* 18.6 against painted bodies at L* 60-70". Neither
+#: half survived measurement once the quiet skin landed:
+#:
+#:   * a painted body is not L* 60-70 IN THE ROOM. Under the shipped light
+#:     model the ballast measured L* 36.3 on bright concrete and 24.6 on
+#:     derelict -- the palette value is the albedo, not what reaches the eye.
+#:   * at roughness 0.30 the fitting caught the room's own specular and
+#:     arrived BRIGHTER than the body it sits on: measured gaps of -1.8 on
+#:     the ballast and -3.4 on the anchor block. The rule was inverted on
+#:     two of the three objects the owner named, and the palette could not
+#:     have shown it.
+#:
+#: So the albedo is darker, the roughness is up at 0.62 so it stops
+#: reflecting, and `tools/content/props_preview.gd` MEASURES the gap in the
+#: render on both grounds rather than trusting either number.
+HANDLING = "#191d23"
 DENSITY = propkit.PROP_DENSITY
 
 
@@ -109,7 +126,7 @@ DENSITY = propkit.PROP_DENSITY
 # shift is returned by `set_origin_group`, subtracted here, and the result
 # is converted by `_to_runtime`. Both spaces are written into the manifest
 # under their own names so neither can be mistaken for the other, and
-# `tools/content/verify_attach_points.py` then reads the EXPORTED .glb and
+# `tools/content/verify_exported_geometry.py` then reads the EXPORTED .glb
 # checks each runtime point actually lands on the part it names.
 
 def _to_runtime(v):
@@ -596,6 +613,50 @@ def anchor_block():
 
 # ----------------------------------------------------------------------
 
+#: The seam pitch each class wears, in metres, and the tone of its paint.
+#:
+#: TONE IS ALSO A READABILITY DECISION, NOT A MOOD ONE. The heavy classes
+#: first wore the `dark` tone because heavy things look heavy dark -- and
+#: that closed the gap against their own fittings to nothing. A body has to
+#: stay well above the handling steel or the family rule stops working on
+#: exactly the objects that carry the most fittings. Weight is carried by
+#: proportion, banding and skirts instead, which is where it belongs.
+#:
+#: A fixed grid is the wrong answer for a family spanning 0.25 m to 3.2 m:
+#: at 0.5 m a key component gets no seam at all and a girder gets six. So
+#: each class names a pitch that divides its own longest axis into two to
+#: four panels, and the small carried objects get no bolts, because a bolt
+#: at 64 texels/m is 3 px and three of them on a 0.25 m face is a rash.
+SKIN = {
+    # 0.30 m on a 0.25 m object: at most one seam crosses any face, which
+    # is the right answer for a hand-held component rather than a tuning
+    # dodge. A 0.14 m pitch panelled it like a housing and the dark seam
+    # lines dragged its measured body value to within 11 L* of its own
+    # fittings -- the smallest object in the family, with the finest
+    # fittings, needing the cleanest field.
+    "phys_key_component": {"seam": 0.30, "wear": 0.05, "tone": "light",
+                           "bolts": False},
+    "phys_generic": {"seam": 0.31, "wear": 0.09, "tone": "light",
+                     "bolts": False},
+    "phys_power_cell": {"seam": 0.20, "wear": 0.07, "tone": "light",
+                        "bolts": False},
+    "phys_mechanical_part": {"seam": 0.24, "wear": 0.08, "tone": "light",
+                             "bolts": True},
+    "phys_plate": {"seam": 0.45, "wear": 0.10, "tone": "light", "bolts": True},
+    "phys_drum": {"seam": 0.34, "wear": 0.10, "tone": "light", "bolts": False},
+    "phys_girder": {"seam": 0.80, "wear": 0.09, "tone": "light",
+                    "bolts": True},
+    "phys_weighted": {"seam": 0.41, "wear": 0.12, "tone": "light",
+                      "bolts": True},
+    "phys_cart": {"seam": 0.45, "wear": 0.12, "tone": "light", "bolts": True},
+    "phys_movable_cover": {"seam": 0.57, "wear": 0.12, "tone": "light",
+                           "bolts": True},
+    "phys_ballast": {"seam": 0.52, "wear": 0.13, "tone": "light",
+                     "bolts": True},
+    "phys_anchor_block": {"seam": 0.38, "wear": 0.08, "tone": "light",
+                          "bolts": True},
+}
+
 CLASSES = [
     ("phys_key_component", "KEY_COMPONENT", 8.0, True, True, key_component,
      "floor"),
@@ -634,7 +695,10 @@ def main():
         shell, parts, attach = build()
         shift = common.set_origin_group([shell] + parts, anchor)
         common.uv_project_world(shell, DENSITY, propkit.PROP_SIZE)
-        canvas = propkit.painted_metal(THEME, name, wear=0.22)
+        skin = SKIN[name]
+        canvas = propkit.quiet_painted(THEME, name, seam_metres=skin["seam"],
+                                       wear=skin["wear"], tone=skin["tone"],
+                                       bolts=skin["bolts"])
         common.assign(shell, common.make_textured_material(
             name, canvas.to_blender("%s_t" % name),
             roughness=pal.roughness(THEME)))
@@ -642,8 +706,12 @@ def main():
         # machined surface has no grain at 64 texels/m -- painting one on
         # would only add noise to the one region whose job is to be the
         # quiet dark shape in a speckled field.
+        # Fully matte. Every bit of sheen a fitting picks up is value it
+        # gains against the body it is supposed to sit under, and at 0.62 it
+        # was still catching enough to close the gap on the objects whose
+        # bodies are mostly recessed geometry in shadow.
         bare_mat = common.make_material("%s_grip" % name, HANDLING,
-                                        roughness=0.30)
+                                        roughness=0.95)
         for part in parts:
             common.uv_project_world(part, DENSITY, propkit.PROP_SIZE)
             common.assign(part, bare_mat)
@@ -664,7 +732,8 @@ def main():
                 "proposes": point["proposes"],
                 "authored_blender_z_up": [round(v, 5) for v in point["at"]],
             })
-        w, d, h = entry["size"]  # already runtime axes: X, Y-up, Z
+        # AUTHORING axes out of the exporter; converted once, here.
+        rx, ry, rz = common.runtime_size(entry["size"])
         entry.update({
             "class": klass, "mass_kg": kg,
             "mass_class": mass_class(kg, manipulable),
@@ -675,10 +744,18 @@ def main():
                 "conversion": "(x, y, z)_blender -> (x, z, -y)_runtime",
                 "origin_shift_applied": "once, by set_origin_group, before "
                                         "the conversion",
-                "note": "`size` below is the exporter's own measurement and "
-                        "is already in runtime axes.",
+                "note": "`size` is the EXPORTER's field and is in AUTHORING "
+                        "axes, unchanged from every other batch. "
+                        "`size_runtime_y_up` is the same object in the frame "
+                        "a loader sees, converted once by "
+                        "common.runtime_size(). They are not the same "
+                        "triple and must not be read as one.",
             },
-            "size_runtime_y_up": {"x": w, "y_up": d, "z": h},
+            "size_runtime_y_up": {"x": rx, "y_up": ry, "z": rz},
+            "size_authoring_blender_z_up": {
+                "x": entry["size"][0], "y": entry["size"][1],
+                "z_up": entry["size"][2],
+            },
             "orientation_runtime": "+X is the object's length, +Y is up, "
                                    "+Z is depth; the origin is %s"
                                    % ("floor-centred, on the ground plane"
