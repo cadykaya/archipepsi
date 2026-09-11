@@ -395,7 +395,13 @@ static func _furnish_room(root: Node3D, theme: String,
 ## Zone-local key both gate a branch rather than sealing it.
 static func unreachable_branches(zone: Dictionary) -> Dictionary:
 	var out := {}
-	for raw_chamber: Variant in zone.get("chambers", []):
+	# EVERY ROOM THAT BRANCHES, at every depth. A branch is a room and
+	# may branch again, so checking only the chain's chambers would leave
+	# the deeper ones unchecked -- and an unreachable room is exactly as
+	# invisible at depth two as at depth one.
+	var queue: Array = (zone.get("chambers", []) as Array).duplicate()
+	while not queue.is_empty():
+		var raw_chamber: Variant = queue.pop_front()
 		if typeof(raw_chamber) != TYPE_DICTIONARY:
 			continue
 		var chamber: Dictionary = raw_chamber
@@ -410,6 +416,7 @@ static func unreachable_branches(zone: Dictionary) -> Dictionary:
 			if typeof(raw_branch) != TYPE_DICTIONARY:
 				continue
 			var branch: Dictionary = raw_branch
+			queue.append(branch.get("chamber", {}))
 			var socket := str(branch.get("socket_id", ""))
 			var how := str(usage.get(socket, "UNASSIGNED"))
 			if how == "USED" or how == "LOCKED":
@@ -932,17 +939,31 @@ static func build(zone: Dictionary, theme_override := "",
 		#
 		# The chain's own `cursor`, `yaw` and turn state are untouched:
 		# a branch must not steer the Zone.
+		#
+		# A QUEUE, NOT A LOOP OVER ONE LIST. A branch is a room, and a
+		# room may branch -- a gated dead end whose far end holds the key
+		# to a second gated dead end is the owner's own shape, and a flat
+		# loop over `chamber.branches` could not build it: the branch's
+		# own `branches` were read by nothing. Each placed branch pushes
+		# its children on, so depth is whatever the Zone declares.
+		var pending: Array = []
 		for raw_branch: Variant in chamber.get("branches", []):
-			if typeof(raw_branch) != TYPE_DICTIONARY:
-				continue
-			var branch: Dictionary = raw_branch
+			if typeof(raw_branch) == TYPE_DICTIONARY:
+				pending.append({"from": chamber, "at": origin,
+						"yaw": yaw, "branch": raw_branch})
+		while not pending.is_empty():
+			var job: Dictionary = pending.pop_front()
+			var parent: Dictionary = job["from"]
+			var p_origin: Vector3 = job["at"]
+			var p_yaw: float = float(job["yaw"])
+			var branch: Dictionary = job["branch"]
 			var b_chamber: Dictionary = branch.get("chamber", {})
 			if b_chamber.is_empty():
 				continue
 			var socket_id := str(branch.get("socket_id", "side_left"))
 			var mouth := ChamberBuilders.socket_placed(socket_id,
-					float(chamber.get("width", 16.0)),
-					float(chamber.get("depth", 16.0)))
+					float(parent.get("width", 16.0)),
+					float(parent.get("depth", 16.0)))
 			if mouth.is_empty():
 				push_warning("zone: branch on unknown socket '%s'"
 						% socket_id)
@@ -953,7 +974,7 @@ static func build(zone: Dictionary, theme_override := "",
 			# through the room it came from. The direction from the
 			# room's centre line to the socket cannot be ambiguous.
 			var out_dir := -1.0 if socket_id == "side_left" else 1.0
-			var b_yaw := yaw + out_dir * PI / 2.0
+			var b_yaw := p_yaw + out_dir * PI / 2.0
 			var b_result := ContentInstantiator.build_chamber(
 					b_chamber, theme)
 			var b_entry: Vector3 = b_result.get("entry_offset",
@@ -974,8 +995,8 @@ static func build(zone: Dictionary, theme_override := "",
 			# connector between every pair of rooms. A branch is a join
 			# like any other and gets one too.
 			var b_link: Array = []
-			var mouth_at: Vector3 = origin \
-					+ _rot(yaw, mouth["position"] as Vector3)
+			var mouth_at: Vector3 = p_origin \
+					+ _rot(p_yaw, mouth["position"] as Vector3)
 			b_link.append({"kind": "CONNECTOR", "position": mouth_at,
 					"yaw": b_yaw, "bounds": _world_aabb(
 							shape["bounds"] as AABB, mouth_at, b_yaw)})
@@ -993,7 +1014,8 @@ static func build(zone: Dictionary, theme_override := "",
 						"blocking_rooms": [str(b_chamber.get("id", "?"))],
 						"blocking_pairs": [],
 						"failed": "branch room '%s' off '%s' could not "
-						% [str(b_chamber.get("id", "?")), rid]
+						% [str(b_chamber.get("id", "?")),
+							str(parent.get("id", "?"))]
 						+ "be placed clear of the %d room(s) already "
 						% placed.size() + "standing"}
 			var b_walked := _emit_route(root, theme, b_plan, b_cursor,
@@ -1018,6 +1040,12 @@ static func build(zone: Dictionary, theme_override := "",
 			_furnish_room(root, theme, b_chamber, b_result, b_origin,
 					float(b_walked["yaw"]), anchors, room_transforms,
 					keys, locks, stations)
+			# ITS OWN BRANCHES, from the transform it was just given.
+			for raw_deeper: Variant in b_chamber.get("branches", []):
+				if typeof(raw_deeper) == TYPE_DICTIONARY:
+					pending.append({"from": b_chamber, "at": b_origin,
+							"yaw": float(b_walked["yaw"]),
+							"branch": raw_deeper})
 			# ON `built_chambers`, so a branch is a room to everything
 			# downstream: its Checks, activities and enemies are wired by
 			# the same controller code that wires the chain's.

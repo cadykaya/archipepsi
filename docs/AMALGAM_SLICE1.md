@@ -97,6 +97,7 @@ that was verified by removing them.
 | **The walk prober is no kinder than the body** | `room_contract_driver.gd` `_rise_over`, `_is_a_ramp` | the ascent bound is read off a real `Player`'s `floor_max_angle` and is strictly less than `MAX_VERTICAL_STEP`; with climbing disabled all three escape proofs fail, so the rule is live |
 | **A branch is a placed room, crossed, returned from and remembered** | `zone_builder.gd` branches, `slice1_fixture.gd`, `zone_controller.gd` carried progress | the vault is refused reachable with the lock standing and reachable once it opens, its plug lands standable at `zone_start`, and the opened lock, the key and the station all survive a leave and a re-entry |
 | **A branch is furnished like any other room** | `zone_builder.gd` `_furnish_room` | a 280 m² branch declaring a key gets the key and the warp station it is owed; discarding the branch's furnishing turns both red |
+| **A branch may branch** | `zone_builder.gd` branch queue, `unreachable_branches` | a depth-two branch is placed, furnished and reachability-checked; removing the recursion reports "branching is one level deep" |
 | **A committed layout replays without re-solving** (law 47c) | `zone_builder.gd` `_replay_route`, `build(..., layout)` | a manifest replays under a **0.001 ms** budget — the budget that makes solving impossible — with every room within 0.001 m, the same piece count and the same box count |
 
 ## 4. Implemented but not integrated
@@ -175,6 +176,17 @@ was ever going to find them.
 Still missing, and named: nothing writes a layout to disk or hashes it
 into `manifest_digest`. That is the Zone record, and the Zone record is
 the bridge's.
+
+## 5n. A branch may branch
+
+The owner's shape is a gated dead end whose far end holds the key to the
+next one, so depth two is not a curiosity. A flat loop over
+`chamber.branches` read a branch's own `branches` with nothing at all,
+and the reachability guard walked only `zone.chambers` — so a room
+unreachable at depth two was exactly as invisible as one at depth one and
+had no check at all.
+
+Both are queues now, and depth is whatever the Zone declares.
 
 ## 5l. A branch is a room, not a room-shaped exception
 

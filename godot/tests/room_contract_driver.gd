@@ -3151,6 +3151,28 @@ func _test_the_branch_is_crossed_returned_from_and_remembered() -> void:
 				% ((hold.size.x) * (hold.size.z))
 				+ "player who walks into a large dead end cannot save "
 				+ "in it")
+		# AND A BRANCH MAY BRANCH. A flat pass over `chamber.branches`
+		# read a branch's own branches with nothing at all, so a gated
+		# dead end could not lead to a second one.
+		var deeper: Dictionary = furnished["rooms"]
+		_check(deeper.has("innervault") and
+					(furnished["links"] as Dictionary).has("innervault"),
+				"the branch declares a branch of its own and it was not "
+				+ "placed, so branching is one level deep")
+		if deeper.has("innervault"):
+			var inner: AABB = (deeper["innervault"] as Dictionary)["bounds"]
+			var gold := false
+			for raw_key: Variant in furnished["keys"] as Array:
+				if inner.grow(1.0).has_point(
+						(raw_key as ZoneKey).global_position):
+					gold = true
+			_check(gold,
+					"the depth-two branch declares a key and none was "
+					+ "placed in it")
+			_check(ZoneBuilder.layout_findings(furnished).is_empty(),
+					"a two-deep branching Zone violates Body or "
+					+ "Arrival: %s"
+					% str(ZoneBuilder.layout_findings(furnished)))
 		(furnished["root"] as Node3D).queue_free()
 	else:
 		_check(false, "the furnished-branch Zone did not compose: %s"
@@ -3183,7 +3205,24 @@ func _zone_with_a_furnished_branch() -> Dictionary:
 					"activities": [], "features": [],
 					"keys": [{"key_id": "blue", "colour": "blue"}],
 					"reward_location_id": null,
-					"additional_reward_location_ids": []},
+					"additional_reward_location_ids": [],
+					# A BRANCH OFF A BRANCH. The owner's shape is a gated
+					# dead end whose far end holds the key to the next
+					# one, so depth two is not a curiosity.
+					"doors": [{"socket_id": "entry", "usage": "USED"},
+							{"socket_id": "side_left", "usage": "USED"}],
+					"branches": [{
+						"socket_id": "side_left",
+						"chamber": {"id": "innervault",
+							"type": "arena", "width": 14.0,
+							"depth": 12.0, "wall_height": 5.0,
+							"objective": "reach_exit", "enemies": [],
+							"activities": [], "features": [],
+							"keys": [{"key_id": "gold",
+									"colour": "gold"}],
+							"reward_location_id": null,
+							"additional_reward_location_ids": []},
+					}]},
 			}]
 		chambers.append(chamber)
 	return {"zone_id": "branch_furnish", "theme": "concrete_facility",
