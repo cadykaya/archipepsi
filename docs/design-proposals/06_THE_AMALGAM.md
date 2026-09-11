@@ -1774,12 +1774,12 @@ Design 1's eight whole-Zone checks, plus Design 3's five, plus fifteen new. **Ev
 | **19** | **Every room record carries a `shell_id` that is present in the offered catalog, type-compatible with the room's purpose, and exposes every offer the room's packages bind to** (§30.11). | NEW |
 | **20** | **The sum of a room's mandatory Status reservations (§35.2.1), plus one ordinary application, is within the room's `60`-entry and `24`-body caps.** | NEW |
 | **19a** | **Every Zone's `ZonePresentation` names a theme in the authored catalog and strings within their length bounds** (§30.1). | NEW |
-| **19b** | **Every incident topology edge of every room carries a distinct connector-socket assignment, and both endpoints of every edge agree on the joining transform** (§30.11.2b). | NEW |
+| **19b** | **Every incident `JOINED` edge of every room carries a distinct connector-socket assignment, and both endpoints of every such edge agree on the joining transform** (§30.11.2b). `TRAVERSAL_ONLY` edges assign no socket and are outside this check. | NEW |
 | **25** | **The exit-unlock rule and re-entry ship together** (§30.12.3): a Zone whose exit is reachable without every allocated Check claimed is legal only when its record can reach `DORMANT`. A build that unlocks the exit without a re-enterable state is rejected at composition. | NEW |
 | **24** | **Every edge's `carry_legal` equals the value §4.9a derives from its `crossing`**, and every edge carries a `connector_kind` and a `crossing` from their closed enums. A stored value disagreeing with its derivation is a hard error. **No mandatory route crosses an edge typed `MOBILITY_AIR_STEP`, or typed `MOBILITY_DASH` or `MOBILITY_BURST_JUMP` without `capability:core:long_gap` in its `capability` field** — §4.9a, on Design 1 §13.6's validation contract. | NEW |
 | **23** | **No allocated AP Check, AP-relevant local key, or Zone exit sits behind a capability gate** unless the bridge produces a matching declared Archipelago access rule for that location (§29.5a). | NEW |
 | **19d** | **Every connector socket of every offered shell declares a standardized attachment collar** from the catalog's fixed set (§30.11.2d). A shell with bespoke socket geometry is not offerable. **This is a catalog check about apertures and proves nothing about shell bodies** — 19e is what proves the Zone. | NEW |
-| **19e** | **The committed layout holds**: every edge joined within `EPSILON_JOIN`, no two room envelopes intersecting, every independent cycle closed, and every assigned `player_entry` volume admitting the standing capsule (§30.11.2e). Measured on the committed transforms; the solver is not re-run. | NEW |
+| **19e** | **The committed layout holds**: every **`JOINED`** edge joined within `EPSILON_JOIN` **through its connector chain**, no two room envelopes intersecting, every independent cycle **of the `JOINED` subgraph** closed, and every assigned `player_entry` volume and plug destination admitting the standing capsule (§30.11.2e). Measured on the committed layout and the engine's returned evidence; the solver is not re-run. | NEW |
 | **19c** | **Every `HostDefinition` carries exactly one of `composition` or `profile`, decided by its `category`** — `profile` for `mobility`, `composition` for every other category (§4.2). | NEW |
 | **22** | **Every package with a non-null `status_required` declares a `status_source` and a solution target, and that triple is marked `guaranteed_application`** (§35.2.2). | NEW |
 | **21** | **Every constrained body a reachable `POWER_OFF` can affect, and that the player can stand on, ride, or attach to, has a base-movement-safe egress** — a surface reachable from it by §6.2's movement law alone, under every reachable macro state, with no offer geometry and no capability (§21.11). | NEW |
@@ -2118,7 +2118,7 @@ The bridge sends a **placement request** — the topology graph, each room's sel
 
 #### Determinism, and how it is actually obtained
 
-Law 47a requires a Zone to rebuild identically forever. **It does not require two machines to independently rediscover the same layout**, and claiming that would be a promise about cross-platform floating point that nothing in this project can keep.
+Law 47c requires a Zone to rebuild identically forever — *once a `ZoneManifest` exists, every save, load, replay and later retrieval of that Zone is byte-identical from the manifest.* **47a is bridge structural determinism before the model is consulted, and is a different property; a previous revision cited it here by mistake.** **It does not require two machines to independently rediscover the same layout**, and claiming that would be a promise about cross-platform floating point that nothing in this project can keep.
 
 > **The layout is solved once and committed.** The transforms the engine returns are written into the Zone manifest and are part of `manifest_digest`. Every later load — same machine or another, same session or years later — **replays the committed transforms and does not re-solve.** §30.11.5 class 6's digest mismatch is what catches a client whose catalog would have produced different geometry.
 
@@ -2252,8 +2252,12 @@ That sentence rules out the cheap substitute. Returning a Zone's unclaimed Check
 |---|---|:-:|:-:|:-:|:-:|:-:|
 | `ACTIVE` | entering | — | — | — | — | — |
 | **`DORMANT`** | **leaving with Checks unclaimed** | **kept** | **kept** | **kept** | **kept** | **yes** |
-| `COMPLETE` | leaving with every Check claimed | kept | kept | kept | kept | no — nothing remains |
+| `COMPLETE` | leaving with every Check claimed | kept | kept | kept | kept | **yes** |
 | `ABANDONED` | **explicit** abandonment or replacement | discarded | **released to the allocator** | — | discarded | no |
+
+**`COMPLETE` is re-enterable, ruled 2026-09-12.** A previous revision wrote *"no — nothing remains"* into this table without a ruling behind it, and the engine lane was right to refuse to implement an unapproved prohibition. **"Nothing remains" was a claim about Checks**, and a player may return for a room, a route, a station, or a plug they never used. **Claiming the final Check does not close the place.**
+
+`COMPLETE` and `DORMANT` therefore differ only in whether work is outstanding — both keep everything and both re-enter. **`ABANDONED` is the only state that discards, and it is only ever reached deliberately.**
 
 **`DORMANT` is the new state and the one the ruling requires.** A Zone left with work outstanding keeps everything: its committed layout (§30.11.2e), its allocated location ids, which of them are claimed, and the player's progress within it. Re-entering resumes rather than regenerates.
 

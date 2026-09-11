@@ -56,8 +56,8 @@ Where those two documents state an architectural law, every proposal inherits it
 | 03 — The Dungeon Is One Machine | **Complete** — ~16.6k words, audited, 142/142 authority tests traced |
 | 04 — Epsilon Is The Content | **Complete** — ~15.5k words, audited, 142/142 authority tests traced |
 | 05 — Status As Grammar | **Complete** — ~13.8k words, audited, 142/142 authority tests traced |
-| 06 — The Amalgam | **Repaired, rebased, promotable** — ~49.2k words, re-audited across five passes, 142/142 traced, rebased on the 2026-09-04 `shell_id` ruling and carrying the four owner rulings of 2026-09-05. Its first line still reads *not canon*; promotion is the owner's action |
+| 06 — The Amalgam | **Repaired, rebased, promotable** — ~49.4k words, re-audited across five passes, 142/142 traced, rebased on the 2026-09-04 `shell_id` ruling and carrying the four owner rulings of 2026-09-05. Its first line still reads *not canon*; promotion is the owner's action |
 | 06 — Repair audit | **Complete** — `06_THE_AMALGAM_AUDIT.md`, ~8.8k words, five passes, every repair with old/new behaviour and regenerated counts |
-| 09 — Room Contract | **Draft** — awaiting Prod's interface review. Three separated layers, typed failure reporting, 15 acceptance checks |
+| 09 — Room Contract | **Reconciled** — engine-lane review returned changes requested 2026-09-12; all six taken. Separate `PlugAssignment`, whole-layout commitment, validate-before-publish, 19 acceptance checks |
 | 08 — Playtest Reconciliation | **Complete** — the seven owner decisions against Design 6, two playtest findings falsified, and a bounded first slice |
 | 07 — Engine Reconciliation | **Complete** — ~3.5k words, the six checked against `claude/archipepsi-echoes-continuation-b1adno` at `df2bb58`, plus four update sections (§8a–§8d) recording later rulings and one correction |
