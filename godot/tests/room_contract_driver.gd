@@ -110,6 +110,8 @@ func _run() -> void:
 	await _test_validating_a_live_room_builds_nothing_in_it()
 	await _test_the_two_collider_counts_measure_different_things()
 	await _test_the_played_zone_rooms_can_be_left_on_foot()
+	await _test_a_composed_room_carves_every_assigned_door()
+	await _test_a_sealed_door_that_is_a_hole_is_caught()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
 
@@ -2251,6 +2253,96 @@ func _walk_reaches(result: Dictionary, from_xz: Vector2,
 ## left on Teleport and `c005` on an Echo's boost. They stay here exactly
 ## as they were generated, because the repair has to be proved against
 ## the input that failed and not against a tidied version of it.
+# --- composed rooms: N doors, carved and proved ---------------------------
+
+func _doors(plan: Array) -> Array:
+	var out: Array = []
+	for pair: Array in plan:
+		out.append({"socket_id": pair[0], "usage": pair[1],
+				"edge_id": ("e_%s" % pair[0]) if pair[1] != "SEALED" else null,
+				"key_id": null})
+	return out
+
+func _junction(plan: Array) -> Dictionary:
+	return {"id": "junction", "type": "arena", "width": 20.0,
+			"depth": 18.0, "wall_height": 5.5, "objective": "reach_exit",
+			"enemies": [], "doors": _doors(plan)}
+
+## A degree-3 junction: three openings carved, one socket sealed.
+##
+## This is the first room in the project with more than two doors, and it
+## is the whole point of the slice: the composer names which openings a
+## room uses, the builder carves exactly those, and the audit proves each
+## one against what was DECLARED rather than against a fixed expectation.
+func _test_a_composed_room_carves_every_assigned_door() -> void:
+	var chamber := _junction([["entry", "USED"], ["exit", "USED"],
+			["side_left", "USED"], ["side_right", "SEALED"]])
+	var result := _build(chamber)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check((result["doors"] as Array).size() == 4,
+			"the junction resolved %d doors, not the four assigned"
+			% (result["doors"] as Array).size())
+	var who := "a three-door junction"
+	_judge(RoomContract.violations(result, who), who)
+	_judge(RoomAudit.findings(result, _space(), who), who)
+	# AND THE OPENINGS ARE WHERE THE COMPOSER PUT THEM, not merely
+	# somewhere. A room that carved three holes in one wall would pass
+	# every check above.
+	var seen := {}
+	for raw: Variant in result["doors"] as Array:
+		var door: Dictionary = raw
+		seen[str(door["socket_id"])] = door["position"]
+	for want: String in ["entry", "exit", "side_left", "side_right"]:
+		_check(seen.has(want),
+				"the junction has no door called '%s'" % want)
+	_check((seen["side_left"] as Vector3).x < -9.0
+				and (seen["side_right"] as Vector3).x > 9.0,
+			"the two side doors are not on opposite walls")
+	rooms_checked += 1
+	(result["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+## The negative case, and the reason the probe cannot be skipped.
+##
+## The geometry is IDENTICAL to the room above -- `side_right` is a solid
+## wall. Only the DECLARATION changes: it now claims the socket is
+## `USED`. A probe that runs and reads the declaration fails. A probe
+## that is skipped for sealed doors, or that judges geometry against
+## itself, passes. **This test failing is the evidence that the sealed
+## check is real**, and it is written as an expected failure so that
+## deleting `_assigned_doors_match_their_usage` turns the suite red.
+func _test_a_sealed_door_that_is_a_hole_is_caught() -> void:
+	var honest := _junction([["entry", "USED"], ["exit", "USED"],
+			["side_left", "USED"], ["side_right", "SEALED"]])
+	var built := _build(honest)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	# Re-declare the same built room with the sealed socket called USED.
+	var lying: Dictionary = (built as Dictionary).duplicate()
+	var claims: Array = []
+	for raw: Variant in built["doors"] as Array:
+		var door: Dictionary = (raw as Dictionary).duplicate()
+		if str(door["socket_id"]) == "side_right":
+			door["usage"] = "USED"
+			door["passable"] = true
+		claims.append(door)
+	lying["doors"] = claims
+	var found := RoomAudit.findings(lying, _space(), "a lying junction")
+	_check(not found.is_empty(),
+			"a solid wall declared USED was not caught: the door probe "
+			+ "is not reading the declaration")
+	var named := false
+	for line: String in found:
+		if line.find("side_right") >= 0:
+			named = true
+	_check(named, "the finding does not name the door that lied: %s"
+			% "; ".join(found))
+	probes_expected_to_fail += 1
+	rooms_checked += 1
+	(built["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
 func _test_the_played_zone_rooms_can_be_left_on_foot() -> void:
 	var cases := [
 		{"chamber": {"id": "c015", "type": "arena",

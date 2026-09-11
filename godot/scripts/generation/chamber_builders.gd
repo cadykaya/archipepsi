@@ -518,13 +518,102 @@ static func _end_wall(root: Node3D, width: float, height: float, z: float,
 		_box(root, Vector3(DOOR_WIDTH, height - lintel, WALL_THICKNESS),
 				Vector3(0, lintel + (height - lintel) / 2.0, z), wall)
 
+## Every assigned door, resolved to a place and an EXPECTED ANSWER.
+##
+## The audit cannot ask "is this opening a hole" without being told which
+## answer is correct, and the answer comes from the DECLARATION and never
+## from the geometry. A `SEALED` door is not skipped: it is measured with
+## the expectation inverted, so a sealed door that is accidentally a hole
+## fails exactly as loudly as a used door that is accidentally a wall.
+static func door_plan(chamber: Dictionary, width: float,
+		depth: float) -> Array:
+	var out: Array = []
+	var placed := {}
+	for socket: Variant in procedural_sockets(width, depth):
+		var s: Dictionary = socket
+		placed[str(s["name"])] = s
+	for raw: Variant in chamber.get("doors", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var door: Dictionary = raw
+		var id := str(door.get("socket_id", ""))
+		if not placed.has(id):
+			continue
+		var usage := str(door.get("usage", "USED"))
+		var at: Dictionary = placed[id]
+		out.append({
+			"socket_id": id,
+			"usage": usage,
+			"position": at["position"],
+			# LOCKED carves; the lock is a placement over a real hole,
+			# not an uncut wall. Passability is the geometry's question
+			# and the key's answer is the runtime's.
+			"passable": usage != "SEALED",
+		})
+	return out
+
+## THE FOUR JOINING SOCKETS OF A PROCEDURAL ROOM, named and placed.
+##
+## An authored shell declares its openings in its manifest. A procedural
+## room had none to declare: `_perimeter` cut a front and a back hole and
+## nothing named them, so there was no id for a composer to assign an
+## edge to and no third opening to assign at all.
+##
+## These are STABLE IDS, not ordinals, and the first two keep the names
+## the two-door path has always used -- so an assignment naming `entry`
+## means what it has always meant and an unassigned room still builds
+## through the legacy path unchanged.
+static func procedural_sockets(width: float, depth: float) -> Array:
+	return [
+		{"name": "entry", "kind": "doorway", "position": Vector3(0, 0, 0),
+			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": 180.0},
+		{"name": "exit", "kind": "doorway",
+			"position": Vector3(0, 0, depth),
+			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": 0.0},
+		{"name": "side_left", "kind": "doorway",
+			"position": Vector3(-width / 2.0, 0, depth / 2.0),
+			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": 90.0},
+		{"name": "side_right", "kind": "doorway",
+			"position": Vector3(width / 2.0, 0, depth / 2.0),
+			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": -90.0},
+	]
+
+## Which of a room's joining sockets are cut, from its door assignments.
+##
+## `USED` and `LOCKED` carve; `SEALED` does not. An unassigned room
+## returns an EMPTY dictionary, which `_perimeter` reads as "use the old
+## two-door behaviour" -- the property that keeps every existing shell
+## and every existing procedural room composing exactly as before.
+static func cut_plan(chamber: Dictionary) -> Dictionary:
+	var out := {}
+	for raw: Variant in chamber.get("doors", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var door: Dictionary = raw
+		var id := str(door.get("socket_id", ""))
+		if id == "":
+			continue
+		out[id] = str(door.get("usage", "USED")) != "SEALED"
+	return out
+
 static func _perimeter(root: Node3D, width: float, depth: float,
 		height: float, theme: String, door_in := true, door_out := true,
 		exit_gap_y := 0.0, left_gap_z := 0.0, left_gap_width := 0.0,
-		left_gap_height := 0.0, ceiling := true) -> void:
+		left_gap_height := 0.0, ceiling := true,
+		cut := {}) -> void:
 	var wall := ThemeMaterials.wall_mat(theme)
 	var half_w := width / 2.0
 	var side := (width - DOOR_WIDTH) / 2.0
+	# AN ASSIGNMENT OVERRIDES THE OLD FLAGS, and its absence changes
+	# nothing. `cut` is the door plan; empty means no composer spoke and
+	# the two-door defaults stand.
+	if not cut.is_empty():
+		door_in = bool(cut.get("entry", false))
+		door_out = bool(cut.get("exit", false))
+		if bool(cut.get("side_left", false)) and left_gap_width <= 0.0:
+			left_gap_z = depth / 2.0
+			left_gap_width = DOOR_WIDTH
+			left_gap_height = DOOR_HEIGHT
 	# Front wall (z=0) with optional door gap.
 	if door_in:
 		_box(root, Vector3(side, height, WALL_THICKNESS),
@@ -566,8 +655,12 @@ static func _perimeter(root: Node3D, width: float, depth: float,
 	else:
 		_box(root, Vector3(WALL_THICKNESS, height, depth),
 				Vector3(-half_w, height / 2.0, depth / 2.0), wall)
-	_box(root, Vector3(WALL_THICKNESS, height, depth),
-			Vector3(half_w, height / 2.0, depth / 2.0), wall)
+	if bool(cut.get("side_right", false)):
+		_side_wall_with_gap(root, half_w, height, depth, wall,
+				depth / 2.0, DOOR_WIDTH, DOOR_HEIGHT)
+	else:
+		_box(root, Vector3(WALL_THICKNESS, height, depth),
+				Vector3(half_w, height / 2.0, depth / 2.0), wall)
 	# A ceiling, by DEFAULT. This built four walls and called itself a
 	# perimeter, so every chamber that did not add its own roof was open
 	# to the void -- and one that jumps (bounce pad, platform, blink)
@@ -1304,7 +1397,8 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 	# climbs to it and it reaches the far wall. So the door goes WHERE
 	# THE DECK IS, which is what `exit_gap_y` has always been for and
 	# what a tower already does with its summit.
-	_perimeter(root, width, depth, wall_height, theme)
+	_perimeter(root, width, depth, wall_height, theme, true, true,
+			0.0, 0.0, 0.0, 0.0, true, cut_plan(chamber))
 	# ROOM GRAMMAR v0's band, built BEFORE anything is scattered.
 	#
 	# It used to go in near the end, which was fine while nothing else
@@ -1458,6 +1552,7 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 			spawns.append({"archetype": group["archetype"], "position": at})
 			index += 1
 	return {"root": root, "exit_offset": Vector3(0, 0, depth),
+			"doors": door_plan(chamber, width, depth),
 			"bounds": AABB(Vector3(-width / 2.0, lowest, 0),
 					Vector3(width, wall_height - lowest, depth)),
 			"enemy_spawns": spawns,

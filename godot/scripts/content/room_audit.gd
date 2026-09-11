@@ -113,6 +113,8 @@ static func findings(result: Variant, space: PhysicsDirectSpaceState3D,
 			who))
 	out.append_array(_arrivals_are_standable(room, to_world, space, who))
 	out.append_array(_openings_are_holes(room, to_world, space, who))
+	out.append_array(_assigned_doors_match_their_usage(room, to_world,
+			space, who))
 	out.append_array(_arrival_is_safe(room, to_world, space, who))
 	out.append_array(_traversal_is_true(room, to_world, space, who))
 	out.append_array(_geometry_stays_inside_its_bounds(room, root, who))
@@ -393,6 +395,65 @@ static func _openings_are_holes(room: Dictionary, to_world: Transform3D,
 						+ "capsule does not fit through it")
 				break
 	return out
+
+# --- 4b. every assigned door is what it was declared to be ----------------
+
+## THE SAME MEASUREMENT, WITH THE EXPECTED ANSWER FROM THE DECLARATION.
+##
+## `_openings_are_holes` asks one question of two fixed doors and always
+## wants the same answer. A composed room has N doors and two answers:
+## `USED` and `LOCKED` carve an aperture, `SEALED` does not.
+##
+## **A sealed door is checked HARDER, never skipped.** Skipping it is the
+## tempting shortcut and it is the recurring defect this project keeps
+## finding -- a measurement that exists, is correct, and is never handed
+## the case that fails it. A sealed door that is accidentally a hole is a
+## way past a lock, and if the probe is skipped it is indistinguishable
+## in the report from one that is correctly solid.
+static func _assigned_doors_match_their_usage(room: Dictionary,
+		to_world: Transform3D, space: PhysicsDirectSpaceState3D,
+		who: String) -> Array[String]:
+	var out: Array[String] = []
+	for raw: Variant in room.get("doors", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var door: Dictionary = raw
+		var at: Vector3 = door["position"]
+		var want_open := bool(door["passable"])
+		# Stand where the floor is, exactly as the two-door probe does:
+		# an aperture's sill is not always the height its socket names.
+		var ground := _ray(space, to_world * (at + Vector3.UP * 1.0),
+				to_world * (at + Vector3.DOWN * 1.0))
+		var base := at.y
+		if not ground.is_empty():
+			base = (to_world.affine_inverse()
+					* (ground["position"] as Vector3)).y
+		var stance := Vector3.UP * (base - at.y
+				+ Constants.PLAYER_HEIGHT / 2.0 + 0.05)
+		# INWARD, because a room's own doors are measured from inside it.
+		var inward := _inward(at, room["bounds"] as AABB)
+		var blocked := false
+		for step: float in [0.0, 0.45]:
+			if _blocked(space, to_world * (at + inward * step + stance)):
+				blocked = true
+				break
+		if want_open and blocked:
+			out.append("%s: door '%s' is %s and must be passable, but "
+					% [who, str(door["socket_id"]), str(door["usage"])]
+					+ "the player's own capsule does not fit through it")
+		elif not want_open and not blocked:
+			out.append("%s: door '%s' is SEALED and must be solid, but "
+					% [who, str(door["socket_id"])]
+					+ "the player's own capsule passes straight through it")
+	return out
+
+## Toward the middle of the room from a point on its shell.
+static func _inward(at: Vector3, bounds: AABB) -> Vector3:
+	var middle := bounds.get_center()
+	var away := Vector3(at.x - middle.x, 0.0, at.z - middle.z)
+	if absf(away.x) >= absf(away.z):
+		return Vector3(-signf(away.x), 0, 0)
+	return Vector3(0, 0, -signf(away.z))
 
 # --- 5. a declared movement is the movement the geometry makes -------------
 

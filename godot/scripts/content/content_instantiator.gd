@@ -528,13 +528,13 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 		# assumed (owner ruling, 2026-09-03). `exit_offset` has read the
 		# declared exit socket since S15; the entry had no equivalent and
 		# was taken to be the origin by everything downstream.
-		"entry_offset": _entry_offset(entry),
+		"entry_offset": _entry_offset(entry, chamber),
 		# WHERE THE PLAYER'S BODY ARRIVES, which is a different question
 		# from where the rooms join. The connector is a transform on the
 		# envelope and may sit outside it; this is the interior region
 		# the arrival has to be safe in.
 		"player_entry": _player_entry(entry),
-		"exit_offset": _exit_offset(entry, size),
+		"exit_offset": _exit_offset(entry, size, chamber),
 		"bounds": AABB(
 			Vector3(-size.x / 2.0, -FLOOR_ALLOWANCE, 0.0),
 			Vector3(size.x, size.y + FLOOR_ALLOWANCE, size.z)),
@@ -665,6 +665,54 @@ static func _authored_offers(entry: Dictionary) -> Array:
 ## joining socket at all), but a shell whose only socket is named `entry`
 ## can, and it should chain rather than stack every room at the origin.
 ## WHERE THE PREVIOUS ROOM'S EXIT MEETS THIS ONE (owner ruling).
+## ONE OPENING, BY ITS ID. The resolver every joining question goes
+## through.
+##
+## `socket_id` is an OPAQUE STABLE IDENTIFIER, not an ordinal. Production
+## has always treated it that way: `entry` was resolved through a
+## two-name alias set alongside `end_a`, and `exit` alongside `end_b`, so
+## neither has ever meant "the first door" or "the last". A shell gaining
+## a third opening therefore takes a third id and the existing two keep
+## pointing at the openings they always pointed at. Nothing renames.
+static func socket_by_id(entry: Dictionary, socket_id: String) -> Dictionary:
+	if socket_id == "":
+		return {}
+	for socket: Variant in entry.get("sockets", []):
+		if typeof(socket) != TYPE_DICTIONARY:
+			continue
+		var s: Dictionary = socket
+		if str(s.get("name", "")) == socket_id:
+			return s
+	return {}
+
+## The socket this room joins a named edge through, or empty.
+##
+## WHICH OPENING JOINS WHICH EDGE IS THE COMPOSER'S DECISION, carried in
+## `chamber.doors` as the contract's `DoorAssignment` list. Resolving it
+## by NAME instead was the real defect behind "positional names cannot
+## survive a third door": the names were fine, and the builder had no way
+## to be told which of N openings the chain was walking through.
+##
+## `key` is `arrive_edge` or `depart_edge` -- the edge the chain enters
+## and leaves by. **An empty answer is the legacy path**, which is what
+## keeps every two-door shell composing exactly as it does today: a
+## chamber carrying no assignment falls through to the alias sets below.
+static func socket_for_edge(entry: Dictionary, chamber: Dictionary,
+		key: String) -> Dictionary:
+	var want := str(chamber.get(key, ""))
+	if want == "":
+		return {}
+	for raw: Variant in chamber.get("doors", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var door: Dictionary = raw
+		if str(door.get("edge_id", "")) != want:
+			continue
+		if str(door.get("usage", "USED")) == "SEALED":
+			continue
+		return socket_by_id(entry, str(door.get("socket_id", "")))
+	return {}
+
 ##
 ## The mirror of `_exit_offset`, and named `end_a` for the same reason
 ## `exit` accepts `end_b`: a connector grammar that calls its two ends
@@ -673,7 +721,12 @@ static func _authored_offers(entry: Dictionary) -> Array:
 ## A room that declares no entry connector attaches at
 ## `RoomContract.LEGACY_ENTRY`, which is the origin and is what every
 ## procedural builder and every pre-ruling shell does.
-static func _entry_offset(entry: Dictionary) -> Vector3:
+static func _entry_offset(entry: Dictionary,
+		chamber: Dictionary = {}) -> Vector3:
+	var assigned := socket_for_edge(entry, chamber, "arrive_edge")
+	if not assigned.is_empty():
+		return _vector(assigned.get("position", []),
+				RoomContract.LEGACY_ENTRY)
 	for socket: Variant in entry.get("sockets", []):
 		if typeof(socket) != TYPE_DICTIONARY:
 			continue
@@ -701,7 +754,11 @@ static func _player_entry(entry: Dictionary) -> Dictionary:
 			}
 	return {}
 
-static func _exit_offset(entry: Dictionary, size: Vector3) -> Vector3:
+static func _exit_offset(entry: Dictionary, size: Vector3,
+		chamber: Dictionary = {}) -> Vector3:
+	var assigned := socket_for_edge(entry, chamber, "depart_edge")
+	if not assigned.is_empty():
+		return _vector(assigned.get("position", []), Vector3(0, 0, size.z))
 	for socket: Variant in entry.get("sockets", []):
 		if typeof(socket) != TYPE_DICTIONARY:
 			continue
