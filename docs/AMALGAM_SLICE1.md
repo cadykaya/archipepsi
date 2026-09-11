@@ -27,8 +27,15 @@ to everything it carried before:
 Everything else about the Zone is unchanged. The fixture adds an
 assignment; it never changes a room's dimensions or removes content.
 
-**Without `--slice1` nothing above exists** and an ordinary run is
-byte-for-byte what it was.
+**Without `--slice1` the junction, the lock, the key and the plug do not
+exist**, and an ordinary run is otherwise what it was.
+
+**Warp stations are the exception and are deliberately NOT flag-gated.**
+§30.12.4 makes them part of what a Zone *is* — entrance, exit and large
+rooms — rather than a slice feature, and the Amalgam is now the
+implementation target, so they are placed in every Zone this branch
+builds. That is a gameplay change to ordinary play on this branch and is
+called out here rather than left to be discovered.
 
 ## 2. How to run it
 
@@ -105,6 +112,30 @@ that was verified by removing them.
 - **Authored** multi-door shells. Slice 1 uses only procedural junctions;
   all twelve authored shells remain two-door and remain valid.
 - Spatial cycles, warp stations, ability gates, the exit unlock.
+
+## 5b. The playtest's open finding, closed
+
+The Zone 1 playtest reported finishing activities and perceiving nothing.
+The correction to that report established that `ActivityRuntime` already
+clocks a `time_limit`, says `DONE`, sends `grant_local_reward` and emits
+`completed` — and left the gap between that and the player open, because
+the mechanism existing is not evidence it reaches anyone.
+
+**The gap was that `completed` had no listener anywhere in the project.**
+The only acknowledgement was a `Label3D` on the activity itself, which is
+behind you the moment you touch the last element. A key toasts and a lock
+toasts; finishing a puzzle did not.
+
+`ZoneController` now connects it and raises a HUD toast with the
+activity's id and its time. No new reward and no new rule — the grant
+already went out from the runtime, keyed by identity so the same
+completion twice is one grant. This adds only the part that was missing.
+
+`godot-integration` asserts it on the **live object graph**: every
+`ActivityRuntime` in a built Zone must have a listener on `completed`.
+Removing the connection reports *"6 of 6 activities complete into
+silence"*. A test that grepped the controller for a `connect` call would
+have passed on a connection to a function that does nothing.
 
 ## 5a. A live defect found while closing the infeasibility gap
 

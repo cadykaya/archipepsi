@@ -226,6 +226,19 @@ func setup(zone_dict: Dictionary) -> void:
 			if runtime != null:
 				runtime.room_index = _chambers.size()
 				playtime.watch_activity(runtime)
+				# COMPLETION HAS TO REACH THE SCREEN.
+				#
+				# `ActivityRuntime` has done its half since the activity
+				# batch: it clocks a `time_limit`, says DONE, sends
+				# `grant_local_reward` and emits `completed`. The
+				# playtest finished four activities and perceived none
+				# of it, and the reason is here -- `completed` had NO
+				# LISTENER anywhere in the project, and the only
+				# acknowledgement was a Label3D on the activity itself,
+				# which is behind you the moment you touch the last
+				# element. A key toasts and a lock toasts; finishing a
+				# puzzle did not.
+				runtime.completed.connect(_on_activity_completed)
 
 		for spawn: Dictionary in result.get("enemy_spawns", []):
 			var enemy := Enemy.create(spawn["archetype"], theme)
@@ -364,6 +377,21 @@ func _on_lock_opened(room: String, socket: String) -> void:
 			"zone_id": zone_id, "room_id": room, "socket_id": socket})
 	if hud != null:
 		hud.toast("UNLOCKED", Color(0.6, 1.0, 0.7), 2.5)
+
+## Screen-level acknowledgement for a finished activity.
+##
+## Deliberately NOT a new reward or a new rule: the reward already went
+## out as `grant_local_reward` from the runtime, keyed by the activity's
+## identity so the same completion twice is one grant. This is the part
+## that was missing -- telling the player it happened.
+func _on_activity_completed(activity_id: String, seconds: float,
+		_attempts: int) -> void:
+	if hud != null:
+		hud.toast("%s COMPLETE   %.1fs"
+				% [activity_id.to_upper(), seconds],
+				Color(0.55, 0.95, 0.75), 3.0)
+	if tones != null and tones.has_method("play"):
+		tones.play("secret_found")
 
 ## The next reached station after this one, wrapping.
 ##
