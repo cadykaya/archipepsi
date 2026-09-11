@@ -112,6 +112,8 @@ func _run() -> void:
 	await _test_the_played_zone_rooms_can_be_left_on_foot()
 	await _test_a_composed_room_carves_every_assigned_door()
 	await _test_a_sealed_door_that_is_a_hole_is_caught()
+	await _test_the_layout_result_commits_the_whole_chain()
+	await _test_a_spent_budget_is_a_timeout_and_not_infeasibility()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
 
@@ -2342,6 +2344,104 @@ func _test_a_sealed_door_that_is_a_hole_is_caught() -> void:
 	rooms_checked += 1
 	(built["root"] as Node3D).queue_free()
 	await get_tree().process_frame
+
+# --- the committed layout, and the two failures that mean opposite things -
+
+func _eight_room_zone() -> Dictionary:
+	var chambers: Array = []
+	for i in 8:
+		chambers.append({"id": "r%d" % i, "type": "arena",
+				"width": 14.0 + float(i % 3) * 4.0,
+				"depth": 12.0 + float(i % 4) * 3.0,
+				"wall_height": 5.0, "objective": "reach_exit",
+				"enemies": [], "activities": [], "features": [],
+				"reward_location_id": 89100200 + i,
+				"additional_reward_location_ids": []})
+	return {"zone_id": "layout_probe", "theme": "concrete_facility",
+			"display_name": "Layout Probe", "chambers": chambers}
+
+## `LAYOUT_OK` has to carry enough to rebuild the Zone without searching.
+##
+## Room transforms alone cannot: the builder also lays corner pieces and
+## connector segments chosen by `_plan_route`, and a manifest missing
+## them can only be replayed by running that search again -- the one
+## thing a committed layout promises never to do.
+func _test_the_layout_result_commits_the_whole_chain() -> void:
+	var out := ZoneBuilder.build(_eight_room_zone())
+	_check(str(out.get("status", "")) == "LAYOUT_OK",
+			"an ordinary eight-room Zone did not compose: %s"
+			% str(out.get("failed", "?")))
+	if out.has("root"):
+		var rooms: Dictionary = out["rooms"]
+		var links: Dictionary = out["links"]
+		_check(rooms.size() == 8,
+				"%d room transforms committed, not eight" % rooms.size())
+		for id: String in rooms:
+			var t: Dictionary = rooms[id]
+			_check(t.has("position") and t.has("yaw"),
+					"room '%s' committed no transform" % id)
+			_check(links.has(id),
+					"room '%s' committed no approach chain, so its "
+					% id + "connectors cannot be replayed")
+		# AND THE CHAIN IS REAL WHERE ONE WAS BUILT. An always-empty
+		# `links` would satisfy every assertion above and commit
+		# nothing, which is the shape of the defect this guards.
+		var pieces := 0
+		for id: String in links:
+			for raw: Variant in links[id] as Array:
+				var piece: Dictionary = raw
+				_check(piece.has("position") and piece.has("yaw")
+							and piece.has("bounds"),
+						"a placed piece in '%s' is not replayable" % id)
+				_check(str(piece["kind"]) in ["CONNECTOR", "CORNER"],
+						"unknown piece kind '%s'" % str(piece["kind"]))
+				pieces += 1
+		_check(pieces > 0,
+				"eight rooms were placed and not one connector or "
+				+ "corner was committed; the chain is not being recorded")
+		(out["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	rooms_checked += 1
+
+## The pair that has to mean opposite things.
+##
+## A TIMEOUT IS A CLOCK, NOT A DIFFICULTY. The fixture controls the
+## BUDGET and leaves the Zone ordinary -- an over-constrained Zone would
+## fail fast, exhaust its candidate space, and be infeasibility wearing a
+## timeout's name. `candidates_remaining > 0` is what keeps the two
+## apart, and a solver reporting a timeout with none remaining has in
+## fact exhausted and should have said so.
+func _test_a_spent_budget_is_a_timeout_and_not_infeasibility() -> void:
+	var out := ZoneBuilder.build(_eight_room_zone(), "", 0.001)
+	_check(str(out.get("status", "")) == "LAYOUT_TIMEOUT",
+			"a budget of 0.001 ms returned '%s' rather than a timeout"
+			% str(out.get("status", "?")))
+	if str(out.get("status", "")) == "LAYOUT_TIMEOUT":
+		_check(int(out["candidates_remaining"]) > 0,
+				"the timeout reports no candidates remaining, which is "
+				+ "exhaustion and must have been reported as infeasible")
+		_check(float(out["elapsed_ms"]) >= 0.0,
+				"the timeout reports no elapsed time")
+	_check(not out.has("exhausted"),
+			"a timeout claimed exhaustion; only an exhausted search may")
+	if out.has("root"):
+		(out["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	# WHAT INFEASIBILITY WOULD CARRY, asserted on the policy itself.
+	#
+	# NOT PROVED HERE: that a genuinely unplaceable Zone is reachable.
+	# This builder pushes up to MAX_CLEARANCE_CONNECTORS and turns twice,
+	# and no fixture yet constructs a Zone it cannot route. Until one
+	# does, `LAYOUT_INFEASIBLE`'s branch is unexercised and is recorded
+	# as such rather than simulated -- a fixture that fakes the result
+	# would prove the assertion and not the behaviour.
+	var policy := ZoneBuilder.routing_policy([])
+	for field: String in ["max_route_turns", "explore_connectors",
+			"max_clearance_connectors", "clearance_budget"]:
+		_check(policy.has(field),
+				"the routing policy omits '%s', so an infeasible result "
+				% field + "could not say what space it exhausted")
+	rooms_checked += 1
 
 func _test_the_played_zone_rooms_can_be_left_on_foot() -> void:
 	var cases := [

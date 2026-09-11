@@ -120,6 +120,20 @@ const MAX_ROUTE_TURNS := 2
 ## pieces. A sidestep has to be able to clear the largest room there is.
 const EXPLORE_CONNECTORS := 40
 
+## THE CANDIDATE SPACE THIS SOLVER ACTUALLY SEARCHES.
+##
+## `LAYOUT_INFEASIBLE` may only ever mean "this policy's candidate space
+## is empty" -- never "no geometric layout exists". The search bends at
+## most `MAX_ROUTE_TURNS` times and pushes at most this many connectors;
+## a layout needing three turns is outside the space and its absence
+## here says nothing about it. A result carries the policy so a catalog
+## review can see that widening it is an available answer.
+static func routing_policy(placed: Array) -> Dictionary:
+	return {"max_route_turns": MAX_ROUTE_TURNS,
+			"explore_connectors": EXPLORE_CONNECTORS,
+			"max_clearance_connectors": MAX_CLEARANCE_CONNECTORS,
+			"clearance_budget": _clearance_budget(placed)}
+
 ## Where this room can go: straight ahead, or around one or two corners.
 ##
 ## Returns `{ok, route}` where `route` is the steps to walk, in order:
@@ -209,9 +223,18 @@ static func _search(shape: Dictionary, corners: Dictionary, room: AABB,
 	return {"ok": false, "route": []}
 
 ## Builds the route `_plan_route` chose. Returns `{cursor, yaw}`.
+## THE PIECES ARE THE LAYOUT TOO, so they are recorded as they are laid.
+##
+## `LAYOUT_OK` used to be room transforms alone, and room transforms
+## cannot rebuild a Zone: this function also places corner pieces and
+## connector segments, chosen by a search, and a manifest without them
+## can only be replayed by running that search again -- which is the one
+## thing a committed layout promises never to do. `chain` collects each
+## piece as it is built, in build order, so a replay lays them down
+## rather than rediscovering them.
 static func _emit_route(root: Node3D, theme: String, plan: Dictionary,
 		cursor: Vector3, yaw: float, placed: Array,
-		bounds_list: Array) -> Dictionary:
+		bounds_list: Array, chain: Array = []) -> Dictionary:
 	var at := cursor
 	var facing := yaw
 	var turns := 0
@@ -227,12 +250,18 @@ static func _emit_route(root: Node3D, theme: String, plan: Dictionary,
 			root.add_child(node)
 			placed.append(world)
 			bounds_list.append(world)
+			chain.append({"kind": "CORNER", "position": at,
+					"yaw": facing, "bounds": world})
 			at += _rot(facing, corner["exit_offset"] as Vector3)
 			facing += float(step["turn"]) * PI / 2.0
 			turns += 1
 		for _i in int(step["connectors"]):
+			var was := at
 			at = _emit_connector(root, theme, at, facing, placed,
 					bounds_list)
+			chain.append({"kind": "CONNECTOR", "position": was,
+					"yaw": facing,
+					"bounds": bounds_list[bounds_list.size() - 1]})
 	return {"cursor": at, "yaw": facing, "turns": turns}
 
 static func _emit_connector(root: Node3D, theme: String, cursor: Vector3,
@@ -254,9 +283,17 @@ static func _emit_connector(root: Node3D, theme: String, cursor: Vector3,
 
 ## Returns { root, spawn_transform, chambers: [{chamber, node, build,
 ##           xform}], exit_portal, bounds_list }
-static func build(zone: Dictionary, theme_override := "") -> Dictionary:
+static func build(zone: Dictionary, theme_override := "",
+		budget_ms := 0.0) -> Dictionary:
 	var theme: String = theme_override if theme_override != "" \
 			else zone.get("theme", "void_glitch")
+	# THE BUDGET IS WHAT A TIMEOUT MEASURES, and it is the caller's.
+	# A timeout must never be inferred from difficulty: a constrained
+	# Zone fails FAST and exhausts, which is infeasibility. Only a clock
+	# running out is a timeout.
+	var began := Time.get_ticks_msec()
+	var links := {}
+	var room_transforms := {}
 	var root := Node3D.new()
 	root.name = "Zone_%s" % zone.get("zone_id", "unknown")
 
@@ -341,13 +378,38 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 		# wall and an enemy inside the floor; there is no version of that
 		# worth returning, so the build FAILS and the caller decides.
 		if not bool(plan["ok"]):
+			# EXHAUSTED, not expired. `_search` returns false only after
+			# it has walked its whole candidate space, so this is
+			# infeasibility UNDER THE DECLARED POLICY and says nothing
+			# about a layout outside it.
 			(result["root"] as Node3D).free()
 			root.free()
-			return {"failed": "room '%s' could not be placed clear of "
+			return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+					"policy": routing_policy(placed),
+					"blocking_rooms": [str(chamber.get("id", "?"))],
+					"blocking_pairs": [],
+					"failed": "room '%s' could not be placed clear of "
 					% str(chamber.get("id", "?"))
 					+ "the %d room(s) before it" % placed.size()}
+		if budget_ms > 0.0 \
+				and float(Time.get_ticks_msec() - began) > budget_ms:
+			# The clock ran out with rooms still unplaced. Candidates
+			# remain by construction, which is what separates this from
+			# the branch above.
+			(result["root"] as Node3D).free()
+			root.free()
+			return {"status": "LAYOUT_TIMEOUT",
+					"elapsed_ms": float(Time.get_ticks_msec() - began),
+					"nodes_explored": placed.size(),
+					"candidates_remaining":
+						maxi(1, (zone.get("chambers", []) as Array).size()
+							- built_chambers.size()),
+					"failed": "the placement budget of %.0f ms was spent "
+					% budget_ms + "with rooms still unplaced"}
+		var link: Array = []
 		var walked := _emit_route(root, theme, plan, cursor, yaw, placed,
-				bounds_list)
+				bounds_list, link)
+		links[str(chamber.get("id", "?"))] = link
 		cursor = walked["cursor"]
 		yaw = float(walked["yaw"])
 		if int(walked["turns"]) % 2 == 1:
@@ -358,6 +420,8 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 		node.name = "Chamber_%s" % chamber.get("id", "c")
 		node.position = origin
 		node.rotation.y = yaw
+		room_transforms[str(chamber.get("id", "?"))] = {
+			"position": origin, "yaw": yaw}
 		root.add_child(node)
 		var world_bounds: AABB = _world_aabb(result["bounds"], origin, yaw)
 		placed.append(world_bounds)
@@ -442,4 +506,10 @@ static func build(zone: Dictionary, theme_override := "") -> Dictionary:
 	var spawn := Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.8, 1.2))
 	return {"root": root, "spawn_transform": spawn,
 			"chambers": built_chambers, "exit_portal": portal,
-			"bounds_list": bounds_list}
+			"bounds_list": bounds_list,
+			# THE WHOLE LAYOUT, not just where the rooms are. `links`
+			# holds the connector and corner chain that reaches each
+			# room, in build order, so a committed Zone replays by
+			# laying pieces down rather than by searching again.
+			"status": "LAYOUT_OK", "rooms": room_transforms,
+			"links": links}
