@@ -265,6 +265,28 @@ def _progress(save: CampaignSave, zone_id: str, change,
                     zones=_replace_zone(save, zone_id, progress=nxt))
 
 
+def commit_layout(save: CampaignSave, zone_id: str,
+                  manifest: dict) -> CampaignSave:
+    """Store a validated layout. Once, and then never recomputed.
+
+    The caller has already validated: this transition is the atomic
+    write, not the decision. A Zone that already carries a manifest keeps
+    it — a layout is solved once and replayed forever, so a second
+    proposal for the same Zone is a bug upstream rather than an update.
+    """
+    rec = _require_zone(save, zone_id)
+    if rec.manifest is not None:
+        if rec.manifest.get("manifest_digest") \
+                == manifest.get("manifest_digest"):
+            return save
+        raise ValueError(
+            f"Zone '{zone_id}' already carries layout "
+            f"{rec.manifest.get('manifest_digest')}; a committed layout "
+            "is replayed, never replaced")
+    return _rebuild(save,
+                    zones=_replace_zone(save, zone_id, manifest=manifest))
+
+
 def record_key(save: CampaignSave, zone_id: str, key_id: str) -> CampaignSave:
     """A Zone-local key collected. Idempotent by `key_id`."""
     def known(rec):
@@ -328,8 +350,13 @@ def complete_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
         raise ValueError(
             f"Zone '{zone_id}' is already counted in this campaign's "
             "history; a revisit completes nothing a second time")
-    if rec.state != "ACTIVE":
-        raise ValueError(f"Zone '{zone_id}' is {rec.state}, not ACTIVE")
+    # ACTIVE or DORMANT: §14.5 completes a Zone with every Check
+    # confirmed WHEREVER THE PLAYER IS, and a Zone put down with work
+    # outstanding is exactly the case where the last Check can land
+    # while they stand in the Hub.
+    if rec.state not in ("ACTIVE", "DORMANT"):
+        raise ValueError(
+            f"Zone '{zone_id}' is {rec.state}, not ACTIVE or DORMANT")
     if any(p.location_id in set(rec.allocated_location_ids)
            for p in save.pending_checks):
         raise ValueError(
@@ -599,4 +626,5 @@ TRANSITIONS = (
     rollback_shop_purchase, restock_shop, append_interpretation,
     slot_action, grant_local_reward,
     rest_zone, record_key, record_lock, record_station,
+    commit_layout,
 )

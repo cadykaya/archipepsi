@@ -177,59 +177,106 @@ are different questions that one constant used to answer.
 
 ---
 
-## 4. Integration gaps — what is not yet true
+## 4. What is proved, and by what
 
-Stated plainly rather than implied by what is missing.
+**An earlier version of this document said "one gap left". That was
+wrong** — the aperture check was not merely unfed, it was *optional*, so
+it could never have failed on a real Zone. An independent pass found six
+kinds of evidence that could each be omitted from an otherwise sound
+layout and still produce an ACCEPTED manifest. That is fixed, and the
+wording that hid it is corrected here.
 
-1. **Nothing sends `layout_result` yet.** The validator is written,
-   tested against the documented shape, and has never seen real engine
-   output. §2.3 is what closes it.
-2. **`apertures` is not surfaced.** `bounds` and `arrival` arrived at
-   `a632ec9` and the validator reads them. The door-polarity evidence is
-   measured in `room_audit.gd` and does not travel in the layout result,
-   so **the check that a `SEALED` door is solid and a `USED` door is a
-   hole is written, tested, and currently never handed real data.** That
-   is the one remaining piece of §2.3.
-3. ~~**The branch is logical, not physical.**~~ **Closed at `a632ec9`.**
-   The engine now routes and places a branch room off the junction —
-   `_emit_route` runs a second time for it and the room lands in
-   `room_transforms` with its own bounds and arrival. The graph and the
-   placement now say the same thing.
-4. **`links` is keyed by room.** Sound while each room has one inbound
-   `JOINED` edge. The validator **asserts that** and refuses the Zone
-   when it stops holding, naming `edge_id` keying as the fix.
-5. **Physical reachability is unproved and is not mine.** `R ⊆ E` is a
-   graph property; it cannot see a key inside a crate. Per owner
-   direction of 2026-09-12 the `c8ed2e9` walk flood is **not**
-   authoritative — it permits one-metre step-ups the player cannot
-   perform, so it is a structural diagnostic rather than a traversal
-   proof, and a diagnostic that over-permits will pass a key nobody can
-   reach. **The bridge states the obligation and consumes a verdict; it
-   encodes no flood as the proof.**
-6. ~~**`station_reached` has no emitter.**~~ **Closed at `a632ec9`.**
-   `warp_station.gd` exists and `zone_controller.gd` sends the intent;
-   the bridge receiver was already written to the documented shape and
-   needed no change.
-7. **The relaxed exit is not shipped**, and should not be until the
-   leave-and-return round trip is demonstrated end to end. The unlock is
-   a two-line change and re-entry is a schema change; shipping them in
-   the easy order converts a forgone reward into a stranded one.
+### 4.1 Two kinds of evidence, kept apart
 
----
+| | |
+|---|---|
+| **Connected runtime evidence** | the bridge's own path, end to end, through real handlers. `test_amalgam_end_to_end.py` generates an ordinary Zone, commits a layout through `handle_layout_result`, plays through `handle_progress`, leaves through `handle_exit_zone`, **reloads the bytes from disk**, and re-enters. Nothing in it assigns to `engine.save` |
+| **Helper-level evidence** | a function proved in isolation. `test_layout.py` and `test_topology.py` are this: they establish that a validator refuses what it should, not that anything calls it |
 
-## 5. One consequence that wants an owner's eye
+**The end-to-end test's one synthetic part is the engine.** `_place()`
+builds the layout payload that `zone_builder.build()` will send once it
+serializes one. Everything downstream of that payload is the real path;
+everything upstream is the real path. **The seam itself is not yet
+crossed by a running engine**, and no test here should be read as
+evidence that it is.
 
-A `DORMANT` Zone still reserves its locations — that is exactly what
-stops the allocator reissuing a Check the player means to come back for.
-It is therefore **the** Zone holding locations, so **a new Zone cannot be
-generated while one is dormant.**
+### 4.2 Gaps, precisely
 
-That satisfies every ruling: the outstanding Checks stay where they are,
-and the Zone is re-enterable with progress intact. It also means one Zone
-in flight at a time. Allowing several dormant Zones at once is a real
-allocation change and is not made here.
+1. **The engine does not send `layout_result`.** The intent, the route,
+   the handler, the validator and the manifest store all exist and are
+   exercised; `zone_builder.build()` returns its result into Godot and
+   nothing puts it on the wire. **§5 is the handoff.**
+2. **Aperture evidence is not in the layout result.**
+   `_assigned_doors_match_their_usage` measures both polarities in
+   `room_audit.gd`. Until it travels, a real Zone will be **refused**
+   rather than silently accepted — which is the correct failure, and is
+   why closing this is worth doing before the emitter ships.
+3. **No engine consumes the replayed manifest.** `handle_enter_zone`
+   sends `ZoneReady.manifest` on a re-entry. Laying those pieces back
+   down instead of re-searching is the engine's half.
+4. **Physical reachability is unproved and is not this lane's.** `R ⊆ E`
+   is a graph property; it cannot see a key inside a crate. Per owner
+   direction the `c8ed2e9` walk flood is **not** authoritative — it
+   permits one-metre step-ups the player cannot perform, so a diagnostic
+   that over-permits would pass a key nobody can reach.
+5. **One unfinished Zone holds locations at a time.** A DORMANT Zone
+   still reserves its Checks, so a new Zone cannot be generated while
+   one is outstanding. **This is the current implementation limit, not a
+   frozen Amalgam rule**; `test_one_unfinished_zone_holds_locations_at_a_time`
+   asserts the boundary so lifting it is deliberate. Revisiting a
+   finished Zone is unaffected — VISITING reserves nothing.
 
----
+## 5. Handoff to the engine lane
+
+Three items, in the order that makes each one testable when it lands.
+
+### 5.1 Surface aperture polarity
+
+`room_audit.gd` already measures it. Add it to the build result:
+
+```json
+"apertures": {"c014/entry": true, "c014/side_left": true,
+              "c014/side_right": false}
+```
+
+`true` = the capsule passes; `false` = solid. **Every door the Zone
+declares needs an entry**, including `SEALED` ones — that is the
+inverted probe, and a door the layout does not report is refused rather
+than skipped.
+
+### 5.2 Send the result
+
+```json
+{"type": "layout_result", "zone_id": "zone_001", "layout": { … }}
+```
+
+`layout` is `zone_builder.build()`'s dictionary, serialized. The bridge
+needs `rooms` (with nested `bounds`), `joins`, `anchors`, `arrival_ok`,
+`apertures` and `stations`. Two of those are new:
+
+```json
+"joins": {"e:c012:c014": {
+    "socket_a": [0, 0, 24], "socket_b": [0, 0, 40],
+    "chain": [{"kind": "CONNECTOR", "entry": [0, 0, 24],
+               "exit": [0, 0, 40],
+               "bounds": {"position": [-2, 0, 24], "size": [4, 4, 16]}}]}}
+
+"arrival_ok": {"room:c014:arrival": true, "zone_start": true}
+```
+
+**`joins` is the one that matters most.** Absolute room transforms make
+cycle closure free and prove nothing about whether two assigned sockets
+are connected; the bridge walks socket → first entry, each exit → the
+next entry, last exit → socket. An empty chain means direct abutment and
+is still walked. **`arrival_ok` is a measured verdict, not a
+coordinate** — a point says where a body would arrive, not that one
+fits.
+
+### 5.3 Replay instead of re-searching
+
+On re-entry `ZoneReady` carries `manifest`. Laying its `rooms` and
+`joins` back down is what makes a revisited Zone the same Zone; a
+re-search would be a second layout for a place the player already knows.
 
 ## 6. What remains in this lane
 

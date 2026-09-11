@@ -1310,6 +1310,23 @@ class AbandonZone(Strict):
     zone_id: str = _ID
 
 
+class LayoutResult(Strict):
+    """What the engine placed, offered to the bridge for validation.
+
+    Nested rather than flattened: the payload is the engine's shape and
+    it grows as the engine measures more, so carrying it whole keeps
+    this message from needing a field per measurement. `layout.validate`
+    is what types it, and it is strict about every part it reads.
+
+    **Offered, not committed.** Only a layout that passes validation
+    becomes a manifest; a failing one is refused and never acquires a
+    digest.
+    """
+    type: Literal["layout_result"]
+    zone_id: str = _ID
+    layout: dict
+
+
 class KeyCollected(Strict):
     """A Zone-local key picked up.
 
@@ -1530,7 +1547,7 @@ ClientMessage = Annotated[
         Hello, ApConnect, ApDisconnect, StartMockCampaign, RequestNextZone,
         EnterZone, LeaveZone, ExitZone, AbandonZone, ClaimCheck, BuyShopStock,
         SlotAction, GrantLocalReward, SetCreativity, DebugCommand,
-        ZoneTiming, KeyCollected, LockOpened, StationReached,
+        ZoneTiming, KeyCollected, LockOpened, StationReached, LayoutResult,
     ],
     Field(discriminator="type"),
 ]
@@ -1550,6 +1567,10 @@ class ZoneReady(Strict):
     type: Literal["zone_ready"]
     zone: Zone
     used_fallback: bool
+    #: The committed layout, when this Zone already has one. Present on
+    #: a re-entry and absent on a first generation, which is exactly the
+    #: difference between replaying a layout and solving one.
+    manifest: dict | None = None
 
 
 NotificationKind = Literal[

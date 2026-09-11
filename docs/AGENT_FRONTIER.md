@@ -1,3 +1,28 @@
+# AGENT FRONTIER
+
+## BRIDGE LANE — the Zone is a graph, and the path is connected — 2026-09-12
+
+**`claude/archipepsi-amalgam-bridge`, from the engine slice `82d500f`,
+merged up to `a632ec9`.** Read `docs/AMALGAM_BRIDGE.md` first: payloads,
+what is proved by what, and the three-item handoff to the engine lane.
+
+**Connected today, through real handlers:** generation composes the
+graph and refuses one the player could not get around; `layout_result`
+is validated and committed once; progress identities are checked against
+the accepted Zone; leaving puts the Zone dormant with its Checks intact;
+a reload from disk re-enters with layout, keys and locks preserved.
+`test_amalgam_end_to_end.py` is that path and assigns to `engine.save`
+nowhere.
+
+**Not connected:** the engine does not serialize `layout_result`, does
+not surface aperture polarity, and does not replay the committed
+manifest. Those three are `docs/AMALGAM_BRIDGE.md` §5.
+
+**The lesson worth keeping.** The first validator skipped every check
+whose input was absent, so a layout with no apertures, no bounds and no
+arrival verdicts was ACCEPTED. Missing evidence is not passing evidence;
+a graph Zone now arrives complete or is refused.
+
 # Archipepsi autonomous frontier
 
 This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS.md` for the detailed project/history handoff and the v0.8 packet for authoritative contract details.

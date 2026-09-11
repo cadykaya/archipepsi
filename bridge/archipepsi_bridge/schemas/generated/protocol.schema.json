@@ -434,6 +434,36 @@
         "title": "KeyCollected",
         "type": "object"
       },
+      "LayoutResult": {
+        "additionalProperties": false,
+        "description": "What the engine placed, offered to the bridge for validation.\n\nNested rather than flattened: the payload is the engine's shape and\nit grows as the engine measures more, so carrying it whole keeps\nthis message from needing a field per measurement. `layout.validate`\nis what types it, and it is strict about every part it reads.\n\n**Offered, not committed.** Only a layout that passes validation\nbecomes a manifest; a failing one is refused and never acquires a\ndigest.",
+        "properties": {
+          "type": {
+            "const": "layout_result",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "layout": {
+            "additionalProperties": true,
+            "title": "Layout",
+            "type": "object"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "layout"
+        ],
+        "title": "LayoutResult",
+        "type": "object"
+      },
       "LeaveZone": {
         "additionalProperties": false,
         "description": "Pause-menu Return to Hub. Zone stays ACTIVE; transient state resets.",
@@ -722,6 +752,7 @@
         "grant_local_reward": "#/$defs/GrantLocalReward",
         "hello": "#/$defs/Hello",
         "key_collected": "#/$defs/KeyCollected",
+        "layout_result": "#/$defs/LayoutResult",
         "leave_zone": "#/$defs/LeaveZone",
         "lock_opened": "#/$defs/LockOpened",
         "request_next_zone": "#/$defs/RequestNextZone",
@@ -790,6 +821,9 @@
       },
       {
         "$ref": "#/$defs/StationReached"
+      },
+      {
+        "$ref": "#/$defs/LayoutResult"
       }
     ]
   },
@@ -5473,6 +5507,19 @@
           "used_fallback": {
             "title": "Used Fallback",
             "type": "boolean"
+          },
+          "manifest": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Manifest"
           }
         },
         "required": [

@@ -960,22 +960,72 @@ class CampaignEngine:
     # ------------------------------------------------------------------
 
     async def handle_enter_zone(self, zone_id: str) -> None:
+        """Walk in. A Zone that has been placed before is REPLAYED.
+
+        Re-entry sends the committed manifest back down, so the engine
+        lays the same pieces in the same places rather than searching
+        again. That is where the determinism actually comes from: not
+        from two machines rediscovering a layout, but from one machine
+        writing it down once.
+        """
         self._require_save()
         try:
             self._apply(T.enter_zone(self.save, zone_id))
         except ValueError as exc:
             raise IntentError(str(exc)) from exc
+        rec = self.save.zone_by_id(zone_id)
+        if rec is not None and rec.zone is not None \
+                and rec.manifest is not None:
+            await self._emit(ZoneReady(
+                type="zone_ready", zone=rec.zone,
+                used_fallback=rec.used_fallback,
+                manifest=rec.manifest))
         await self.broadcast_snapshot()
 
+    async def _put_the_zone_down(self, zone_id: str) -> None:
+        """Leave a Zone without finishing or abandoning it.
+
+        The Zone keeps everything — its committed layout, its Check
+        identities, which of them are claimed, and the player's
+        progress. **Returning unclaimed Checks to the allocator is
+        abandonment's behaviour and only abandonment's**; it is an
+        explicit act with an explicit cost, never the consequence of
+        walking out of a door.
+
+        Reconciling afterwards is what keeps the relaxed exit honest: a
+        Zone whose last Check confirms while the player is in the Hub
+        still completes, so leaving early costs a walk back rather than
+        the Check.
+        """
+        rec = self.save.zone_by_id(zone_id) if self.save else None
+        if rec is not None and rec.state in ("ACTIVE", "VISITING"):
+            try:
+                self._apply(T.rest_zone(self.save, zone_id))
+            except ValueError as exc:
+                # Checks in flight: the Zone stays where it is and the
+                # next reconcile pass settles it. Refusing the intent
+                # would strand the player in a Zone they have left.
+                log.info("zone %s stays active on leave: %s", zone_id, exc)
+
     async def handle_leave_zone(self, zone_id: str) -> None:
-        """Pause-menu Return to Hub. No persistent change; Godot resets
-        transient state itself."""
+        """Pause-menu Return to Hub. The Zone goes dormant, not away."""
         self._require_save()
+        await self._put_the_zone_down(zone_id)
+        await self.reconcile()
         await self.broadcast_snapshot()
 
     async def handle_exit_zone(self, zone_id: str) -> None:
-        """Pure travel. Completion is driven by Check confirmation."""
+        """Out through the exit portal.
+
+        **The exit does not require every Check.** Reaching it completes
+        the route; the Zone goes dormant with whatever is outstanding
+        still allocated to it, and the player can come back. That
+        relaxation is only safe because re-entry works — shipping it
+        without `DORMANT` would convert a forgone reward into a stranded
+        one.
+        """
         self._require_save()
+        await self._put_the_zone_down(zone_id)
         await self.reconcile()
         await self.broadcast_snapshot()
 
@@ -1045,6 +1095,44 @@ class CampaignEngine:
         if nxt is before:
             return          # already recorded; nothing to save or announce
         self._apply(nxt)
+        await self.broadcast_snapshot()
+
+    async def handle_layout_result(self, intent) -> None:
+        """The engine placed a Zone; decide whether to commit it.
+
+        **Validate, then commit.** A layout that passes becomes the
+        accepted immutable manifest and is replayed forever after; one
+        that fails is refused and never acquires a digest, so nothing
+        downstream can mistake an unchecked layout for a checked one.
+
+        A Zone whose topology is still its chamber order returns
+        LEGACY_UNCERTIFIED and stores nothing — there are no edges for
+        the evidence to be about, and pretending otherwise would let an
+        old save look newly certified.
+        """
+        if self.save is None:
+            raise IntentError("no campaign loaded")
+        rec = self.save.zone_by_id(intent.zone_id)
+        if rec is None or rec.zone is None:
+            raise IntentError(
+                f"no generated Zone '{intent.zone_id}' to place")
+        verdict = layout_check.validate(rec.zone, intent.layout)
+        if verdict.legacy:
+            log.info("zone %s has no graph; layout not certified",
+                     intent.zone_id)
+            return
+        if not verdict.accepted:
+            log.warning("zone %s layout refused (%s): %s", intent.zone_id,
+                        verdict.status, "; ".join(verdict.errors[:3]))
+            await self._notify(
+                "zone_abandoned", "LAYOUT REFUSED",
+                tuple(verdict.errors[:3]) or (verdict.status,))
+            await self.broadcast_snapshot()
+            return
+        self._apply(T.commit_layout(self.save, intent.zone_id,
+                                    verdict.manifest))
+        log.info("zone %s layout committed (%s)", intent.zone_id,
+                 verdict.manifest["manifest_digest"])
         await self.broadcast_snapshot()
 
     async def handle_slot_action(
