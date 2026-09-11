@@ -192,6 +192,95 @@ static func unclosable_cycles(zone: Dictionary) -> Array:
 			seen[ra] = rb
 	return closing
 
+## MEASURING A COMMITTED LAYOUT, WITHOUT RE-SOLVING IT.
+##
+## §30.11.2e names four constraints and insists they are measured on the
+## committed transforms rather than recomputed by re-running the search:
+## "the bridge does not check the engine's arithmetic by redoing it".
+## Two of the four are answerable from the manifest alone and are
+## answered here:
+##
+##   2. **Body.** No two room envelopes intersect, less the collar
+##      tolerance at a shared aperture.
+##   4. **Arrival.** Every committed arrival point lies inside the room
+##      whose arrival it is.
+##
+## Constraint 1 (Join) needs the socket assignment, which is the bridge
+## column. Constraint 4's PHYSICAL half -- that the standing capsule
+## actually fits there -- needs a live scene, and `RoomAudit` sweeps it;
+## this is the geometric half, which catches an arrival committed outside
+## its own room before any physics runs.
+##
+## THIS IS NOT THE PLACEMENT CHECK. `_overlaps` refuses an overlapping
+## candidate DURING the search, over a `placed` array that deliberately
+## omits pieces (`_all_but_last`) and tolerates half a cubic metre. This
+## measures what was actually committed, afterwards, over every pair. A
+## builder whose incremental check has a blind spot passes the first and
+## fails this one, which is the entire reason the design asks for two
+## different computations.
+##
+## Returns a list of human-readable findings; empty means the committed
+## layout satisfies what can be measured from it.
+static func layout_findings(result: Dictionary) -> Array:
+	var out: Array = []
+	if str(result.get("status", "")) != "LAYOUT_OK":
+		return out
+	var rooms: Dictionary = result.get("rooms", {})
+	var ids: Array = rooms.keys()
+	ids.sort()
+	for a in ids.size():
+		var room_a: Dictionary = rooms[ids[a]]
+		if not room_a.has("bounds"):
+			out.append("room '%s' committed no envelope, so Body cannot "
+					% str(ids[a]) + "be measured without re-solving")
+			continue
+		var box_a: AABB = room_a["bounds"]
+		# ARRIVAL, geometrically: the point a body appears at has to be
+		# in the room that claims it. An arrival outside its own envelope
+		# is a spawn in the void and no physics probe is needed to say so.
+		if room_a.has("arrival"):
+			var at: Vector3 = room_a["arrival"]
+			if not box_a.grow(0.01).has_point(at):
+				out.append("room '%s' commits an arrival at %v that is "
+						% [str(ids[a]), at] + "outside its own envelope "
+						+ "%v" % box_a)
+		for b in range(a + 1, ids.size()):
+			var room_b: Dictionary = rooms[ids[b]]
+			if not room_b.has("bounds"):
+				continue
+			var shared := box_a.intersection(room_b["bounds"] as AABB)
+			if not shared.has_volume():
+				continue
+			if not _is_a_collar(shared.size):
+				out.append("rooms '%s' and '%s' interpenetrate over "
+						% [str(ids[a]), str(ids[b])]
+						+ "%v (%.2f m3), which is larger than the one "
+						% [shared.size, shared.get_volume()]
+						+ "aperture a shared collar may be")
+	return out
+
+## Is this overlap the SHAPE of a collar, rather than merely its size?
+##
+## A volume bound cannot tell the two apart, and the difference matters:
+## a 0.05 m sliver spread across two rooms' whole shared face is 3.6 m3,
+## more than a doorway of wall, and it is interpenetration rather than a
+## collar. A real collar is ONE APERTURE -- thin through the wall, and no
+## wider or taller than a door.
+##
+## So the rule is a shape: the thinnest extent is wall-thickness or less,
+## and the other two are a doorway or less. Not tuned numbers -- they are
+## the doorway constants, and they move only if a doorway does.
+static func _is_a_collar(size: Vector3) -> bool:
+	var extents := [size.x, size.y, size.z]
+	extents.sort()
+	return float(extents[0]) <= ChamberBuilders.WALL_THICKNESS + COLLAR_SLACK \
+			and float(extents[1]) <= ChamberBuilders.DOOR_WIDTH + COLLAR_SLACK \
+			and float(extents[2]) <= ChamberBuilders.DOOR_HEIGHT + COLLAR_SLACK
+
+## Float slop, not a design allowance. `EPSILON_JOIN` is 0.001 m; this is
+## two orders looser so a collar built to spec is never reported.
+const COLLAR_SLACK := 0.1
+
 ## The sockets the chain itself walks through. A door on one of these is
 ## on the route from the entrance to the exit; anything else is a branch.
 const CHAIN_SOCKETS := ["entry", "exit"]
@@ -581,7 +670,6 @@ static func build(zone: Dictionary, theme_override := "",
 		node.position = origin
 		node.rotation.y = yaw
 		var rid := str(chamber.get("id", "?"))
-		room_transforms[rid] = {"position": origin, "yaw": yaw}
 		# Where a body arriving in this room stands: the room's own
 		# declared arrival, carried into world space.
 		var arrive: Vector3 = result.get("player_entry", {}).get(
@@ -590,6 +678,18 @@ static func build(zone: Dictionary, theme_override := "",
 					and not (result["player_entry"] as Dictionary).is_empty() \
 				else Vector3(0, 0, 3.0)
 		anchors["room:%s:arrival" % rid] = origin + _rot(yaw, arrive)
+		# THE ENVELOPE TRAVELS WITH THE TRANSFORM.
+		#
+		# §30.11.2e constraint 2 is measured on the COMMITTED layout and
+		# the measurer must not re-solve. A transform without its
+		# envelope cannot be checked for Body without re-running the
+		# builders, which is exactly the second computation the design
+		# forbids. So the layout carries both the envelope and the
+		# arrival point, and Body and Arrival are answerable from the
+		# manifest alone.
+		room_transforms[rid] = {"position": origin, "yaw": yaw,
+				"bounds": _world_aabb(result["bounds"], origin, yaw),
+				"arrival": origin + _rot(yaw, arrive)}
 		# The room reserved a place for each key it declares, so this
 		# only carries it into world space.
 		for raw_spot: Variant in result.get("key_spots", []):

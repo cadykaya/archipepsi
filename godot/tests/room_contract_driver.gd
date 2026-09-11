@@ -124,6 +124,7 @@ func _run() -> void:
 	await _test_a_spatial_cycle_is_refused_and_a_plug_cycle_is_not()
 	await _test_a_broken_station_is_repaired_by_its_own_rooms_puzzle()
 	await _test_a_capability_gate_holds_and_never_blocks_the_way_out()
+	await _test_the_committed_layout_is_measured_not_re_solved()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
 
@@ -2844,6 +2845,116 @@ func _test_the_playable_slice_composes_end_to_end() -> void:
 ## "Already reached" is the whole safety property: a station a player has
 ## never stood at is not a destination, and offering it would be a
 ## teleport past whatever stands between them.
+## BODY AND ARRIVAL, MEASURED ON WHAT WAS COMMITTED.
+##
+## §30.11.2e insists its four constraints are measured on the committed
+## transforms and not recomputed by re-running the search -- "the bridge
+## does not check the engine's arithmetic by redoing it". The builder
+## already refuses an overlapping candidate DURING placement, over a
+## `placed` array that deliberately omits pieces and tolerates half a
+## cubic metre. That is a different computation from measuring every
+## committed pair afterwards, and a blind spot in the first is invisible
+## to itself.
+##
+## So: measure real Zones, then hand the measurement a layout that is
+## genuinely broken and require it to say so. Without the second half
+## this test would pass with `layout_findings` returning `[]` always,
+## which is the recurring defect in this branch and has already appeared
+## four times inside work written to prevent it.
+func _test_the_committed_layout_is_measured_not_re_solved() -> void:
+	var zones := [_eight_room_zone(), _puzzled_station_zone(),
+			_gated_zone("side_left")]
+	var pairs_seen := 0
+	for raw: Variant in zones:
+		var out := ZoneBuilder.build(raw as Dictionary)
+		if str(out.get("status", "")) != "LAYOUT_OK":
+			continue
+		var rooms: Dictionary = out["rooms"]
+		pairs_seen += rooms.size() * (rooms.size() - 1) / 2
+		# EVERY COMMITTED ROOM CARRIES ITS ENVELOPE. A manifest without
+		# one cannot answer Body without re-solving, which is the thing
+		# the design forbids.
+		for id: String in rooms:
+			var t: Dictionary = rooms[id]
+			_check(t.has("bounds") and t.has("arrival"),
+					"room '%s' committed a transform with no envelope "
+					% id + "or arrival, so Body and Arrival can only be "
+					+ "answered by re-running the builders")
+		var findings := ZoneBuilder.layout_findings(out)
+		_check(findings.is_empty(),
+				"a committed layout the builder called LAYOUT_OK does "
+				+ "not satisfy Body/Arrival: %s" % str(findings))
+		(out["root"] as Node3D).queue_free()
+	# The measurement has to have had something to measure.
+	_check(pairs_seen >= 20,
+			"only %d room pairs were measured across three Zones, which "
+			% pairs_seen + "is too few for a pass to mean anything")
+
+	# NOW HAND IT THE CASE THAT FAILS IT.
+	var good := ZoneBuilder.build(_eight_room_zone())
+	if str(good.get("status", "")) == "LAYOUT_OK":
+		var rooms: Dictionary = good["rooms"]
+		var ids: Array = rooms.keys()
+		ids.sort()
+		# Body: put r1 exactly on top of r0.
+		var stacked := {"status": "LAYOUT_OK", "rooms": rooms.duplicate(true)}
+		var first: Dictionary = (stacked["rooms"] as Dictionary)[ids[0]]
+		var second: Dictionary = (stacked["rooms"] as Dictionary)[ids[1]]
+		second["bounds"] = first["bounds"]
+		second["arrival"] = first["arrival"]
+		var body_says := ZoneBuilder.layout_findings(stacked)
+		_check(not body_says.is_empty(),
+				"two rooms committed at the same place measured as "
+				+ "satisfying Body, so the measurement is blind")
+		_check(str(body_says).find("share") >= 0,
+				"the Body finding does not say what is shared: %s"
+				% str(body_says))
+		# THE TOLERANCE IS A SHAPE, NOT A SIZE, and this is the pair of
+		# cases that proves it. A collar is ONE APERTURE: thin through
+		# the wall, no wider or taller than a door. A sliver spread
+		# across two rooms' whole shared face has a smaller footprint in
+		# one axis and is still interpenetration -- and at 3.6 m3 it is
+		# BIGGER than a doorway of wall, so a volume bound would have had
+		# to choose between passing this and failing a real collar.
+		var box: AABB = (rooms[ids[0]] as Dictionary)["bounds"]
+		var sliver := {"status": "LAYOUT_OK", "rooms": rooms.duplicate(true)}
+		var s1: Dictionary = (sliver["rooms"] as Dictionary)[ids[1]]
+		s1["bounds"] = AABB(box.position + Vector3(box.size.x - 0.05,
+				0.0, 0.0), box.size)
+		s1["arrival"] = (s1["bounds"] as AABB).get_center()
+		_check(not ZoneBuilder.layout_findings(sliver).is_empty(),
+				"a 0.05 m sliver across two rooms' entire shared face "
+				+ "measured as a collar, which is interpenetration "
+				+ "wearing a doorway's name")
+		# ...and a genuine door-sized collar is not reported.
+		var collared := {"status": "LAYOUT_OK", "rooms": rooms.duplicate(true)}
+		var c1: Dictionary = (collared["rooms"] as Dictionary)[ids[1]]
+		c1["bounds"] = AABB(
+				Vector3(box.end.x - ChamberBuilders.WALL_THICKNESS,
+						box.position.y,
+						box.get_center().z - ChamberBuilders.DOOR_WIDTH / 2.0),
+				Vector3(ChamberBuilders.WALL_THICKNESS,
+						ChamberBuilders.DOOR_HEIGHT,
+						ChamberBuilders.DOOR_WIDTH))
+		c1["arrival"] = (c1["bounds"] as AABB).get_center()
+		_check(ZoneBuilder.layout_findings(collared).is_empty(),
+				"one doorway of shared wall was reported as an "
+				+ "intersection: %s"
+				% str(ZoneBuilder.layout_findings(collared)))
+		# Arrival: move one room's arrival outside its own envelope.
+		var adrift := {"status": "LAYOUT_OK", "rooms": rooms.duplicate(true)}
+		var a0: Dictionary = (adrift["rooms"] as Dictionary)[ids[0]]
+		a0["arrival"] = (a0["bounds"] as AABB).position \
+				- Vector3(50.0, 0.0, 50.0)
+		var arrival_says := ZoneBuilder.layout_findings(adrift)
+		_check(not arrival_says.is_empty()
+					and str(arrival_says).find("outside its own") >= 0,
+				"an arrival committed 50 m outside its own room measured "
+				+ "as satisfying Arrival: %s" % str(arrival_says))
+		(good["root"] as Node3D).queue_free()
+	rooms_checked += 1
+	await get_tree().process_frame
+
 ## A MISSILE DOOR: refused without the capability, open with it, and
 ## never standing between the player and the exit.
 ##

@@ -92,6 +92,7 @@ that was verified by removing them.
 | **A spatial cycle is refused; a plug cycle is not** | `zone_builder.gd` `unclosable_cycles` | the same three-room loop is refused when the closing edge is `JOINED` and composes when it is `TRAVERSAL_ONLY`; disabling the guard reports `LAYOUT_OK` on a loop, and counting `TRAVERSAL_ONLY` edges refuses a legal return plug |
 | **A broken station is repaired by its own room's puzzle** | `warp_station.gd`, `zone_controller.gd` `_repair_station_for` | a large room WITH an activity yields a broken station and one without does not; the entrance and exit are never broken; the other room's puzzle does not repair it |
 | **A capability gate holds, and never blocks the way out** | `locked_door.gd` `requires_capability`, `zone_builder.gd` `gates_on_the_route` | a gate on a branch socket composes and one on a chain socket is refused by name; the slab opens for the capability and not for a key; a plain key lock on the chain is still legal |
+| **The committed layout is measured, not re-solved** | `zone_builder.gd` `layout_findings` | §30.11.2e Body and Arrival over every committed room pair; two rooms stacked, a face-wide sliver and an arrival 50 m outside its room are each caught, and one doorway of shared wall is not |
 
 ## 4. Implemented but not integrated
 
@@ -125,6 +126,9 @@ that was verified by removing them.
   engine being the unknown. All twelve shipping shells remain two-door
   and remain valid.
 - The exit unlock.
+- **§30.11.2e constraint 1 (Join).** Needs the socket assignment to say
+  which two sockets are supposed to meet, which is the bridge column.
+  Constraints 2 and 4 are measured (§5h); 3 is refused (§5e).
 - **Where a branch comes from.** The gate is built and proved, and the
   router still composes a chain, so the only sockets a gate can legally
   stand on are ones nothing is attached to yet. A gated dead-end branch
@@ -133,6 +137,41 @@ that was verified by removing them.
 - **Closing** a spatial cycle. Refusal is implemented and proved (§5e);
   the router still builds chains, so a Zone that wants a genuine loop
   gets a typed `LAYOUT_INFEASIBLE` naming the pair, not a layout.
+
+## 5h. Two computations, not one done twice
+
+§30.11.2e asks for its constraints to be measured on the committed
+transforms — "the bridge does not check the engine's arithmetic by
+redoing it". The builder already refused overlapping candidates *during*
+placement, and that is not the same computation: `_overlaps` runs over a
+`placed` array that deliberately omits pieces (`_all_but_last`) and
+tolerates half a cubic metre. A blind spot there is invisible to itself.
+
+`layout_findings(result)` measures what was actually committed, over
+every pair, afterwards:
+
+- **Body** — no two room envelopes intersect beyond a collar.
+- **Arrival** (geometric half) — every committed arrival point lies
+  inside the room that claims it. The *physical* half, that the standing
+  capsule fits, is `RoomAudit`'s and needs a live scene.
+
+For this to be answerable at all, `LayoutResult` now commits each room's
+**envelope and arrival** alongside its transform. Without them Body and
+Arrival can only be answered by re-running the builders, which is exactly
+the second computation the design forbids.
+
+**The collar tolerance is a shape, not a size**, and the test that
+settled it is worth recording: a 0.05 m sliver spread across two rooms'
+whole shared face is **3.6 m³** — *more* than a doorway's worth of wall
+(2.4 × 3.2 × 0.4 = 3.07 m³) — and it is interpenetration, not a collar.
+A volume bound would have had to choose between passing that and failing
+a real door-sized collar. So the rule is the shape of one aperture: thin
+through the wall, no wider or taller than a door. Both cases are in the
+suite.
+
+Verified by removal: with `layout_findings` returning `[]` always, two
+rooms committed at the same place, the sliver, and an arrival 50 m
+outside its own room all measure as satisfying the constraints.
 
 ## 5g. NOT YET, without a dead run
 
