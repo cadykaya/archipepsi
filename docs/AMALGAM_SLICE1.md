@@ -96,6 +96,7 @@ that was verified by removing them.
 | **Everything built is committed** | `zone_builder.gd`, `room_contract_driver.gd` `_box_key` | every box in `bounds_list` is accounted for by a committed room or chain piece; the check found two real omissions (§5i) |
 | **The walk prober is no kinder than the body** | `room_contract_driver.gd` `_rise_over`, `_is_a_ramp` | the ascent bound is read off a real `Player`'s `floor_max_angle` and is strictly less than `MAX_VERTICAL_STEP`; with climbing disabled all three escape proofs fail, so the rule is live |
 | **A branch is a placed room, crossed, returned from and remembered** | `zone_builder.gd` branches, `slice1_fixture.gd`, `zone_controller.gd` carried progress | the vault is refused reachable with the lock standing and reachable once it opens, its plug lands standable at `zone_start`, and the opened lock, the key and the station all survive a leave and a re-entry |
+| **A branch is furnished like any other room** | `zone_builder.gd` `_furnish_room` | a 280 m² branch declaring a key gets the key and the warp station it is owed; discarding the branch's furnishing turns both red |
 
 ## 4. Implemented but not integrated
 
@@ -132,17 +133,27 @@ that was verified by removing them.
 - **§30.11.2e constraint 1 (Join).** Needs the socket assignment to say
   which two sockets are supposed to meet, which is the bridge column.
   Constraints 2 and 4 are measured (§5h); 3 is refused (§5e).
-- **A branch's own keys, locks and stations.** The branch is a room to
-  everything downstream — its Checks, activities and enemies are wired by
-  the same controller code as the chain's — but the per-room key, lock
-  and station placement still runs only over `zone.chambers`. A branch
-  that wants its own locked door does not get one yet.
 - **Checks in the vault.** A Check id is an AP allocation, so the slice
   fixture's branch carries a puzzle instead. The owner's design puts
   Checks in a gated dead end and that arrives with `RoomAssignment`.
 - **Closing** a spatial cycle. Refusal is implemented and proved (§5e);
   the router still builds chains, so a Zone that wants a genuine loop
   gets a typed `LAYOUT_INFEASIBLE` naming the pair, not a layout.
+
+## 5l. A branch is a room, not a room-shaped exception
+
+The branch's Checks, activities and enemies came free, because a branch
+joins `built_chambers` and the controller wires that list. Its **keys,
+its locked doors and its warp station did not**: those were written
+inline in the chain loop and iterated `zone.chambers`, so a gated dead
+end could not hold the key to the next gate — which is most of what a
+gated dead end is for — and a large one offered nowhere to save.
+
+`_furnish_room` is that block, extracted and called from both paths. A
+second copy for branches would have been two places to forget the same
+thing. Proved on a 280 m² branch declaring a key: it gets the key and
+the station it is owed, and discarding the branch's furnishing turns
+both assertions red.
 
 ## 5k. The door opened onto the outside of a wall
 

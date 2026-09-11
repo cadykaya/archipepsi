@@ -3118,9 +3118,75 @@ func _test_the_branch_is_crossed_returned_from_and_remembered() -> void:
 					% str(back["why"]))
 		second.queue_free()
 		(again["root"] as Node3D).queue_free()
+	# 5. A BRANCH IS A ROOM, not a room-shaped exception.
+	#
+	# Its Checks and activities came free, because a branch joins
+	# `built_chambers`. Its keys, its locked doors and its warp station
+	# did not: those were written inline in the chain loop and ran only
+	# over `zone.chambers`, so a gated dead end could not hold the key to
+	# the next gate -- which is most of what a gated dead end is for.
+	var furnished := ZoneBuilder.build(_zone_with_a_furnished_branch())
+	if str(furnished.get("status", "")) == "LAYOUT_OK":
+		add_child(furnished["root"] as Node3D)
+		await get_tree().physics_frame
+		var hold: AABB = (furnished["rooms"] as Dictionary)["deepvault"] \
+				["bounds"]
+		var key_here := false
+		for raw_key: Variant in furnished["keys"] as Array:
+			if hold.grow(1.0).has_point(
+					(raw_key as ZoneKey).global_position):
+				key_here = true
+		_check(key_here,
+				"the branch declares a key and none was placed inside "
+				+ "it, so a gated dead end cannot hold the key to the "
+				+ "next gate")
+		var station_here := false
+		for raw_st: Variant in furnished["stations"] as Array:
+			if hold.grow(1.0).has_point(
+					(raw_st as WarpStation).global_position):
+				station_here = true
+		_check(station_here,
+				"the branch is %.0f m2 and got no warp station, so a "
+				% ((hold.size.x) * (hold.size.z))
+				+ "player who walks into a large dead end cannot save "
+				+ "in it")
+		(furnished["root"] as Node3D).queue_free()
+	else:
+		_check(false, "the furnished-branch Zone did not compose: %s"
+				% str(furnished.get("failed", "?")))
 	rooms_checked += 1
 	(out["root"] as Node3D).queue_free()
 	await get_tree().process_frame
+
+## A Zone whose BRANCH carries a key and is big enough for a station.
+func _zone_with_a_furnished_branch() -> Dictionary:
+	var chambers: Array = []
+	for id: String in ["approach", "hub", "onward"]:
+		var chamber := {"id": id, "type": "arena",
+				"width": 16.0, "depth": 14.0, "wall_height": 5.0,
+				"objective": "reach_exit", "enemies": [],
+				"activities": [], "features": [],
+				"reward_location_id": 89101300 + chambers.size(),
+				"additional_reward_location_ids": []}
+		if id == "hub":
+			chamber["doors"] = [
+					{"socket_id": "entry", "usage": "USED"},
+					{"socket_id": "exit", "usage": "USED"},
+					{"socket_id": "side_right", "usage": "USED"}]
+			chamber["branches"] = [{
+				"socket_id": "side_right",
+				"chamber": {"id": "deepvault", "type": "arena",
+					# Over STATION_ROOM_AREA, so a station is owed.
+					"width": 20.0, "depth": 14.0, "wall_height": 5.0,
+					"objective": "reach_exit", "enemies": [],
+					"activities": [], "features": [],
+					"keys": [{"key_id": "blue", "colour": "blue"}],
+					"reward_location_id": null,
+					"additional_reward_location_ids": []},
+			}]
+		chambers.append(chamber)
+	return {"zone_id": "branch_furnish", "theme": "concrete_facility",
+			"display_name": "Branch Furnish", "chambers": chambers}
 
 ## Does a standing capsule fit at this point, allowing for the small drop
 ## a spawn takes onto the floor under it?

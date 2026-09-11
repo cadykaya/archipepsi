@@ -281,6 +281,108 @@ static func _is_a_collar(size: Vector3) -> bool:
 ## two orders looser so a collar built to spec is never reported.
 const COLLAR_SLACK := 0.1
 
+## EVERYTHING A PLACED ROOM GETS, wherever it was placed from.
+##
+## Extracted because a BRANCH is a room and was not being treated as one:
+## keys, locked doors and the warp station were written inline in the
+## chain loop and ran only over `zone.chambers`, so a branch could hold a
+## Check and an activity and could not hold its own key, its own locked
+## door or its own station. A second copy for branches would have been
+## two places to forget the same thing.
+##
+## Appends into `keys`, `locks` and `stations` and writes into `anchors`
+## and `room_transforms`; returns the room's footprint, which is the only
+## thing the caller still has a use for.
+static func _furnish_room(root: Node3D, theme: String,
+		chamber: Dictionary, result: Dictionary, origin: Vector3,
+		yaw: float, anchors: Dictionary, room_transforms: Dictionary,
+		keys: Array, locks: Array, stations: Array) -> float:
+	var rid := str(chamber.get("id", "?"))
+	# Where a body arriving in this room stands: the room's own
+	# declared arrival, carried into world space.
+	var arrive: Vector3 = result.get("player_entry", {}).get(
+			"position", Vector3(0, 0, 3.0)) \
+			if typeof(result.get("player_entry")) == TYPE_DICTIONARY \
+				and not (result["player_entry"] as Dictionary).is_empty() \
+			else Vector3(0, 0, 3.0)
+	anchors["room:%s:arrival" % rid] = origin + _rot(yaw, arrive)
+	# THE ENVELOPE TRAVELS WITH THE TRANSFORM.
+	#
+	# §30.11.2e constraint 2 is measured on the COMMITTED layout and
+	# the measurer must not re-solve. A transform without its
+	# envelope cannot be checked for Body without re-running the
+	# builders, which is exactly the second computation the design
+	# forbids. So the layout carries both the envelope and the
+	# arrival point, and Body and Arrival are answerable from the
+	# manifest alone.
+	room_transforms[rid] = {"position": origin, "yaw": yaw,
+			"bounds": _world_aabb(result["bounds"], origin, yaw),
+			"arrival": origin + _rot(yaw, arrive)}
+	# The room reserved a place for each key it declares, so this
+	# only carries it into world space.
+	for raw_spot: Variant in result.get("key_spots", []):
+		var spot: Dictionary = raw_spot
+		var key := ZoneKey.create(str(spot["key_id"]),
+				str(spot["colour"]))
+		key.position = origin + _rot(yaw, spot["position"] as Vector3)
+		root.add_child(key)
+		keys.append(key)
+	# A LOCKED door's slab, standing in an aperture that IS carved.
+	# The audit still sweeps the capsule through the opening and
+	# still requires it to be a hole; this is what stands in it.
+	for raw_door: Variant in chamber.get("doors", []):
+		if typeof(raw_door) != TYPE_DICTIONARY:
+			continue
+		var door: Dictionary = raw_door
+		if str(door.get("usage", "")) != "LOCKED":
+			continue
+		var socket := ChamberBuilders.socket_placed(
+				str(door.get("socket_id", "")),
+				float(chamber.get("width", 16.0)),
+				float(chamber.get("depth", 16.0)))
+		if socket.is_empty():
+			continue
+		var slab := LockedDoor.create(rid,
+				str(door.get("socket_id", "")),
+				str(door.get("key_id", "")),
+				str(door.get("colour", "gold")),
+				ChamberBuilders.DOOR_WIDTH,
+				ChamberBuilders.DOOR_HEIGHT,
+				str(door.get("requires", "")))
+		slab.position = origin + _rot(yaw, socket["position"] as Vector3)
+		slab.rotation.y = yaw
+		root.add_child(slab)
+		locks.append(slab)
+	# A STATION IN EVERY LARGE ROOM (§30.12.4). The entrance and the
+	# exit get one below; this is the third of the three places the
+	# design names.
+	var footprint: float = float(chamber.get("width", 0.0)) \
+			* float(chamber.get("depth", 0.0))
+	if footprint >= STATION_ROOM_AREA:
+		# A STATION IN A ROOM WITH A PUZZLE STARTS BROKEN.
+		#
+		# The owner ruling is that a station may start off and be
+		# repaired by "a small puzzle (since we already have puzzles
+		# they just do nothing)". This lane spends no new schema
+		# field on the choice: Epsilon already decides whether a room
+		# carries an activity, so Epsilon already decides this, and
+		# the rule is one the builder can state.
+		#
+		# ENTRANCE AND EXIT ARE NEVER BROKEN -- they are appended
+		# below, outside this loop, so the Zone always has a working
+		# save point at the door and one at the goal.
+		var puzzled := not (chamber.get("activities", []) as Array) \
+				.is_empty()
+		var here := WarpStation.create("st:%s" % rid,
+				str(chamber.get("id", "room")).to_upper(), theme,
+				rid if puzzled else "")
+		here.position = origin + _rot(yaw, Vector3(
+				float(chamber.get("width", 16.0)) * 0.3, 0.0,
+				float(chamber.get("depth", 16.0)) * 0.5))
+		root.add_child(here)
+		stations.append(here)
+	return footprint
+
 ## Branches declared behind a door that is not a way through.
 ##
 ## A branch room is reached through ONE side socket and no other, so a
@@ -726,89 +828,9 @@ static func build(zone: Dictionary, theme_override := "",
 		node.position = origin
 		node.rotation.y = yaw
 		var rid := str(chamber.get("id", "?"))
-		# Where a body arriving in this room stands: the room's own
-		# declared arrival, carried into world space.
-		var arrive: Vector3 = result.get("player_entry", {}).get(
-				"position", Vector3(0, 0, 3.0)) \
-				if typeof(result.get("player_entry")) == TYPE_DICTIONARY \
-					and not (result["player_entry"] as Dictionary).is_empty() \
-				else Vector3(0, 0, 3.0)
-		anchors["room:%s:arrival" % rid] = origin + _rot(yaw, arrive)
-		# THE ENVELOPE TRAVELS WITH THE TRANSFORM.
-		#
-		# §30.11.2e constraint 2 is measured on the COMMITTED layout and
-		# the measurer must not re-solve. A transform without its
-		# envelope cannot be checked for Body without re-running the
-		# builders, which is exactly the second computation the design
-		# forbids. So the layout carries both the envelope and the
-		# arrival point, and Body and Arrival are answerable from the
-		# manifest alone.
-		room_transforms[rid] = {"position": origin, "yaw": yaw,
-				"bounds": _world_aabb(result["bounds"], origin, yaw),
-				"arrival": origin + _rot(yaw, arrive)}
-		# The room reserved a place for each key it declares, so this
-		# only carries it into world space.
-		for raw_spot: Variant in result.get("key_spots", []):
-			var spot: Dictionary = raw_spot
-			var key := ZoneKey.create(str(spot["key_id"]),
-					str(spot["colour"]))
-			key.position = origin + _rot(yaw, spot["position"] as Vector3)
-			root.add_child(key)
-			keys.append(key)
-		# A LOCKED door's slab, standing in an aperture that IS carved.
-		# The audit still sweeps the capsule through the opening and
-		# still requires it to be a hole; this is what stands in it.
-		for raw_door: Variant in chamber.get("doors", []):
-			if typeof(raw_door) != TYPE_DICTIONARY:
-				continue
-			var door: Dictionary = raw_door
-			if str(door.get("usage", "")) != "LOCKED":
-				continue
-			var socket := ChamberBuilders.socket_placed(
-					str(door.get("socket_id", "")),
-					float(chamber.get("width", 16.0)),
-					float(chamber.get("depth", 16.0)))
-			if socket.is_empty():
-				continue
-			var slab := LockedDoor.create(rid,
-					str(door.get("socket_id", "")),
-					str(door.get("key_id", "")),
-					str(door.get("colour", "gold")),
-					ChamberBuilders.DOOR_WIDTH,
-					ChamberBuilders.DOOR_HEIGHT,
-					str(door.get("requires", "")))
-			slab.position = origin + _rot(yaw, socket["position"] as Vector3)
-			slab.rotation.y = yaw
-			root.add_child(slab)
-			locks.append(slab)
-		# A STATION IN EVERY LARGE ROOM (§30.12.4). The entrance and the
-		# exit get one below; this is the third of the three places the
-		# design names.
-		var footprint: float = float(chamber.get("width", 0.0)) \
-				* float(chamber.get("depth", 0.0))
-		if footprint >= STATION_ROOM_AREA:
-			# A STATION IN A ROOM WITH A PUZZLE STARTS BROKEN.
-			#
-			# The owner ruling is that a station may start off and be
-			# repaired by "a small puzzle (since we already have puzzles
-			# they just do nothing)". This lane spends no new schema
-			# field on the choice: Epsilon already decides whether a room
-			# carries an activity, so Epsilon already decides this, and
-			# the rule is one the builder can state.
-			#
-			# ENTRANCE AND EXIT ARE NEVER BROKEN -- they are appended
-			# below, outside this loop, so the Zone always has a working
-			# save point at the door and one at the goal.
-			var puzzled := not (chamber.get("activities", []) as Array) \
-					.is_empty()
-			var here := WarpStation.create("st:%s" % rid,
-					str(chamber.get("id", "room")).to_upper(), theme,
-					rid if puzzled else "")
-			here.position = origin + _rot(yaw, Vector3(
-					float(chamber.get("width", 16.0)) * 0.3, 0.0,
-					float(chamber.get("depth", 16.0)) * 0.5))
-			root.add_child(here)
-			stations.append(here)
+		var footprint := _furnish_room(root, theme, chamber, result,
+				origin, yaw, anchors, room_transforms, keys, locks,
+				stations)
 		if footprint > float(largest["area"]):
 			largest = {"area": footprint, "id": rid}
 		root.add_child(node)
@@ -908,18 +930,13 @@ static func build(zone: Dictionary, theme_override := "",
 			placed.append(b_world)
 			bounds_list.append(b_world)
 			links[b_id] = b_link
-			var b_arrive: Vector3 = b_result.get("player_entry", {}).get(
-					"position", Vector3(0, 0, 3.0)) \
-					if typeof(b_result.get("player_entry")) \
-							== TYPE_DICTIONARY \
-						and not (b_result["player_entry"] as Dictionary) \
-							.is_empty() \
-					else Vector3(0, 0, 3.0)
-			anchors["room:%s:arrival" % b_id] = b_origin \
-					+ _rot(float(b_walked["yaw"]), b_arrive)
-			room_transforms[b_id] = {"position": b_origin,
-					"yaw": float(b_walked["yaw"]), "bounds": b_world,
-					"arrival": anchors["room:%s:arrival" % b_id]}
+			# A BRANCH IS FURNISHED LIKE ANY OTHER ROOM. Its keys,
+			# its locked doors and its warp station come from the same
+			# function the chain's do, so a gated dead end can hold the
+			# key to the next one.
+			_furnish_room(root, theme, b_chamber, b_result, b_origin,
+					float(b_walked["yaw"]), anchors, room_transforms,
+					keys, locks, stations)
 			# ON `built_chambers`, so a branch is a room to everything
 			# downstream: its Checks, activities and enemies are wired by
 			# the same controller code that wires the chain's.
