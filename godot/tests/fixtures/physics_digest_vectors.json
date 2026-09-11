@@ -1,0 +1,30 @@
+{
+  "_comment": "Shared digest vectors. Python computes these in bridge/tests/test_physics_contract.py; Godot must reproduce every digest byte for byte. `canonical` is the exact string that is hashed, so a mismatch says whether construction or hashing diverged.",
+  "recipe": [
+    "build the object in `canonical_fields` order-independently",
+    "json, sorted keys, separators (',', ':'), no whitespace",
+    "sha256 over utf-8, hex, first 16 characters"
+  ],
+  "vectors": [
+    {
+      "name": "a fully specified load-bearing package",
+      "canonical": "{\"latch_conditions\":[{\"detail\":\"hinge at rest below 5 degrees\",\"kind\":\"CONSTRAINT_STATE\",\"latch_id\":\"bridge_down\"}],\"package_id\":\"basin_bridge\",\"reference_solution\":[\"push_crate\",\"wait_for_settle\"],\"required_latches\":[\"bridge_down\"],\"setup\":{\"bodies\":[{\"body_id\":\"crate_a\",\"constrained\":false,\"mass_kg\":80.0}],\"scene_digest\":\"0123456789abcdef\",\"solver\":{\"fixed_step_hz\":60.0,\"iterations\":8,\"settle_timeout_s\":8.0}},\"vector_latches\":[0]}",
+      "digest": "d3002bf86cf6cded"
+    },
+    {
+      "name": "the same package with a moved scene",
+      "canonical": "{\"latch_conditions\":[{\"detail\":\"hinge at rest below 5 degrees\",\"kind\":\"CONSTRAINT_STATE\",\"latch_id\":\"bridge_down\"}],\"package_id\":\"basin_bridge\",\"reference_solution\":[\"push_crate\",\"wait_for_settle\"],\"required_latches\":[\"bridge_down\"],\"setup\":{\"bodies\":[{\"body_id\":\"crate_a\",\"constrained\":false,\"mass_kg\":80.0}],\"scene_digest\":\"fedcba9876543210\",\"solver\":{\"fixed_step_hz\":60.0,\"iterations\":8,\"settle_timeout_s\":8.0}},\"vector_latches\":[0]}",
+      "digest": "dd50149194ac74ff"
+    },
+    {
+      "name": "empty: no setup, no solution, no latches",
+      "canonical": "{\"latch_conditions\":[],\"package_id\":\"empty\",\"reference_solution\":null,\"required_latches\":[],\"setup\":null,\"vector_latches\":[]}",
+      "digest": "e2ba9cb41dd118ee"
+    },
+    {
+      "name": "unicode and punctuation in a detail",
+      "canonical": "{\"latch_conditions\":[{\"detail\":\"hinge \\u2264 5\\u00b0, \\\"at rest\\\"\",\"kind\":\"CONSTRAINT_STATE\",\"latch_id\":\"bridge_down\"}],\"package_id\":\"basin_bridge\",\"reference_solution\":[\"push_crate\",\"wait_for_settle\"],\"required_latches\":[\"bridge_down\"],\"setup\":{\"bodies\":[{\"body_id\":\"crate_a\",\"constrained\":false,\"mass_kg\":80.0}],\"scene_digest\":\"0123456789abcdef\",\"solver\":{\"fixed_step_hz\":60.0,\"iterations\":8,\"settle_timeout_s\":8.0}},\"vector_latches\":[0]}",
+      "digest": "35b72f731731c1f0"
+    }
+  ]
+}

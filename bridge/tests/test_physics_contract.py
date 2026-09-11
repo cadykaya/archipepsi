@@ -20,24 +20,33 @@ def _latch(i: int, detail: str = "") -> P.LatchCondition:
                             detail=detail)
 
 
-def _setup(mass: float = 80.0, iterations: int = 8) -> P.PhysicsSetup:
+def _setup(mass: float = 80.0, iterations: int = 8,
+           scene: str = "0123456789abcdef") -> P.PhysicsSetup:
     return P.PhysicsSetup(
         bodies=(P.BodySpec(body_id="crate_a", mass_kg=mass),),
         solver=P.SolverConfig(iterations=iterations, fixed_step_hz=60.0,
-                              settle_timeout_s=8.0))
+                              settle_timeout_s=8.0),
+        scene_digest=scene)
 
 
 def _package(package_id: str = "p", *, latches=None, promote=(0,),
-             detail: str = "", mass: float = 80.0,
-             iterations: int = 8, steps=("push_crate",),
+             required=None, detail: str = "", mass: float = 80.0,
+             iterations: int = 8, scene: str = "0123456789abcdef",
+             steps=("push_crate",), setup=..., solution=...,
+             mandatory: bool = False,
              evidence=None) -> P.PhysicsPackage:
+    conditions = latches if latches is not None else (_latch(0, detail),)
+    promoted_ids = [conditions[i].latch_id for i in promote]
     return P.PhysicsPackage(
         package_id=package_id,
-        latch_conditions=latches if latches is not None
-        else (_latch(0, detail),),
+        latch_conditions=conditions,
         vector_latches=tuple(promote),
-        setup=_setup(mass, iterations),
-        reference_solution=P.ReferenceSolution(steps=tuple(steps)),
+        required_latches=tuple(promoted_ids if required is None
+                               else required),
+        on_mandatory_route=mandatory,
+        setup=_setup(mass, iterations, scene) if setup is ... else setup,
+        reference_solution=(P.ReferenceSolution(steps=tuple(steps))
+                            if solution is ... else solution),
         evidence=evidence)
 
 
@@ -45,8 +54,8 @@ def _proved(pkg: P.PhysicsPackage, *, runs: int = 3,
             force: float = P.ENVELOPE_FORCE_N,
             latched=None) -> P.PhysicsPackage:
     """The same package, carrying evidence that proves it."""
-    ids = tuple(c.latch_id for c in pkg.promoted) if latched is None \
-        else tuple(latched)
+    ids = tuple(c.latch_id for c in pkg.latch_conditions) \
+        if latched is None else tuple(latched)
     ev = P.ReplayEvidence(
         package_id=pkg.package_id,
         content_digest=P.package_digest(pkg),
@@ -189,8 +198,8 @@ def test_a_promoted_latch_without_evidence_is_refused():
 
 
 def test_a_mandatory_route_package_without_evidence_is_refused():
-    pkg = _package(promote=()).model_copy(
-        update={"on_mandatory_route": True})
+    """A required latch, a real setup, a real solution — and no proof."""
+    pkg = _package(mandatory=True)
     assert any("carries no replay evidence" in e
                for e in P.check_physics_content([pkg]))
 
@@ -314,3 +323,134 @@ def test_today_every_load_bearing_package_is_refused():
     assert P.check_physics_content([_package()]), (
         "with no runtime there is no evidence, and no evidence is a "
         "refusal rather than a pending acceptance")
+
+
+# --- A PROOF OF NOTHING IS NOT A PROOF ------------------------------------
+#
+# Three green runs against no setup, no solution, or no required outcome
+# are three runs of nothing — and a digest over `null` is a perfectly
+# consistent digest of an absence.
+
+def test_a_promoted_latch_with_no_setup_is_refused():
+    pkg = _proved(_package(setup=None))
+    errors = P.check_physics_content([pkg])
+    assert any("no physical setup" in e for e in errors), errors
+
+
+def test_a_promoted_latch_with_no_reference_solution_is_refused():
+    pkg = _proved(_package(solution=None))
+    assert any("no reference solution" in e
+               for e in P.check_physics_content([pkg]))
+
+
+def test_a_setup_with_no_bodies_is_refused():
+    empty = P.PhysicsSetup(
+        bodies=(), solver=P.SolverConfig(iterations=8, fixed_step_hz=60.0,
+                                         settle_timeout_s=8.0),
+        scene_digest="0123456789abcdef")
+    assert any("no physical setup" in e
+               for e in P.check_physics_content([_proved(_package(setup=empty))]))
+
+
+def test_a_solution_with_no_steps_is_refused():
+    assert any("no reference solution" in e
+               for e in P.check_physics_content(
+                   [_proved(_package(steps=()))]))
+
+
+def test_a_mandatory_route_with_no_required_latch_is_refused():
+    """Codex's second case. A route that depends on nothing in
+    particular cannot be proved passable."""
+    pkg = P.PhysicsPackage(package_id="p", on_mandatory_route=True,
+                           setup=_setup(),
+                           reference_solution=P.ReferenceSolution(
+                               steps=("push_crate",)))
+    ev = P.ReplayEvidence(
+        package_id="p", content_digest=P.package_digest(pkg),
+        provider_force_n=P.ENVELOPE_FORCE_N,
+        provider_range_m=P.ENVELOPE_RANGE_M,
+        provider_mass_kg=P.ENVELOPE_MASS_KG,
+        per_run_latched=((), (), ()))
+    errors = P.check_physics_content([pkg.model_copy(
+        update={"evidence": ev})])
+    assert any("names no required latch" in e for e in errors), errors
+
+
+def test_a_load_bearing_package_with_no_latch_condition_is_refused():
+    pkg = P.PhysicsPackage(package_id="p", on_mandatory_route=True,
+                           required_latches=(), setup=_setup(),
+                           reference_solution=P.ReferenceSolution(
+                               steps=("push",)))
+    assert P.check_physics_content([pkg])
+
+
+# --- required outcomes and promoted latches are different things ----------
+
+def test_a_required_latch_must_be_declared():
+    with pytest.raises(ValidationError, match="does not declare"):
+        P.PhysicsPackage(package_id="p", latch_conditions=(_latch(0),),
+                         vector_latches=(0,),
+                         required_latches=("nonexistent",))
+
+
+def test_a_required_latch_must_also_be_promoted():
+    """§23.1: a latch left out of `vector_latches` is one nothing on a
+    mandatory route depends on. Required therefore implies promoted."""
+    with pytest.raises(ValidationError, match="without promoting them"):
+        P.PhysicsPackage(package_id="p",
+                         latch_conditions=(_latch(0), _latch(1)),
+                         vector_latches=(0,),
+                         required_latches=("l1",))
+
+
+def test_a_promoted_latch_need_not_be_required():
+    """The distinction, from the other side: a latch the verifier
+    reasons about because it opens a shortcut."""
+    pkg = _package(latches=(_latch(0), _latch(1)), promote=(0, 1),
+                   required=("l0",))
+    assert P.check_physics_content([_proved(pkg)]) == ()
+
+
+# --- the scene is part of what was replayed -------------------------------
+
+def test_moving_the_scene_invalidates_the_evidence():
+    """Body id, mass and constrained-ness are what the CONTRACT reasons
+    about. Collision geometry and initial placement are not, and a
+    solution that latched before the crate moved is not evidence about
+    the room as it now stands."""
+    original = _proved(_package())
+    moved = _package(scene="fedcba9876543210").model_copy(
+        update={"evidence": original.evidence})
+    assert any("has changed since its replay" in e
+               for e in P.check_physics_content([moved]))
+
+
+def test_re_replaying_in_the_moved_scene_accepts_again():
+    assert P.check_physics_content(
+        [_proved(_package(scene="fedcba9876543210"))]) == ()
+
+
+# --- one recipe, two languages --------------------------------------------
+
+def test_the_shared_digest_vectors_reproduce():
+    """`godot/tests/fixtures/physics_digest_vectors.json` is executed by
+    both lanes. `canonical` is the exact string hashed, so a
+    cross-language mismatch says whether construction or hashing
+    diverged rather than only that they disagree.
+    """
+    import hashlib
+    import json
+    from pathlib import Path
+
+    path = (Path(__file__).resolve().parents[2] / "godot" / "tests"
+            / "fixtures" / "physics_digest_vectors.json")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    assert data["vectors"], "the shared vectors must not be empty"
+    for v in data["vectors"]:
+        got = hashlib.sha256(
+            v["canonical"].encode("utf-8")).hexdigest()[:16]
+        assert got == v["digest"], f"{v['name']}: {got} != {v['digest']}"
+    # and the digests are actually distinct, so a vector set that proved
+    # nothing would show up here
+    digests = {v["digest"] for v in data["vectors"]}
+    assert len(digests) == len(data["vectors"])

@@ -381,12 +381,76 @@ match it byte for byte:
    (`separators=(",", ":")`).
 3. `sha256`, hex, **first 16 characters**.
 
-`setup` and `reference_solution` are `null` when absent. Everything that
-could change what a replay proves is in there — the conditions
-*including their detail*, which are promoted, the bodies, the solver
-settings, and the solution's steps. **Change any one and the evidence is
-stale and is refused**, which is a prompt to re-replay rather than an
-accusation.
+`setup` and `reference_solution` are `null` when absent — **but a
+load-bearing package may not have them absent**, see §6.2c. Everything
+that could change what a replay proves is in there: the conditions
+*including their detail*, which are promoted, which are required, the
+bodies, the **scene digest**, the solver settings, and the solution's
+steps. **Change any one and the evidence is stale and is refused**,
+which is a prompt to re-replay rather than an accusation.
+
+### 6.2b `scene_digest` — the part only the engine can compute
+
+Body id, mass and constrained-ness are what the **contract** reasons
+about. They are not what a replay **ran against**. Collision geometry,
+initial transforms, static obstacles, gravity and layer masks can all
+change while every field the bridge holds stays identical — and a
+solution that latched before the crate moved two metres left is not
+evidence about the room as it now stands.
+
+**The bridge cannot compute this and must not try.** It has no scene,
+and re-deriving a physical fact in Python is the thing the lane split
+exists to prevent. The engine computes it over the actual replay setup
+and supplies it; the bridge folds it into `package_digest` so a scene
+change invalidates evidence exactly as a solver change does.
+
+What it must cover, at minimum — **agree this list before implementing,
+because widening it later invalidates every existing record**:
+
+| | |
+|---|---|
+| Geometry | every collider participating in the replay: shape, extents, transform |
+| Initial state | each body's starting transform, linear and angular velocity, sleep state |
+| Physics configuration | gravity, layer/mask assignments, friction and restitution where not default |
+| Static content | the room geometry the bodies interact with |
+
+Excluded on purpose: anything that cannot change the outcome —
+materials, lighting, audio, decals.
+
+**One shared file, executed by both lanes.**
+`godot/tests/fixtures/physics_digest_vectors.json` holds four vectors,
+each with the exact `canonical` string and its `digest`. Python runs
+them in `test_physics_contract.py`; Godot must reproduce every one byte
+for byte. Including the canonical string is deliberate: **a mismatch
+then says whether construction or hashing diverged**, rather than only
+that the two disagree.
+
+### 6.2c A proof of nothing is not a proof
+
+Three green runs against no setup, no solution, or no required outcome
+are three runs of nothing — and a digest over `null` is a perfectly
+consistent digest of an absence. A **load-bearing** package (one with a
+promoted latch, a required latch, or on a mandatory route) is refused
+unless it has all of:
+
+- a `setup` with **at least one body**;
+- a `reference_solution` with **at least one step**;
+- at least one `latch_condition`;
+- on a mandatory route, at least one **`required_latch`**.
+
+**`required_latches` and `vector_latches` are different questions.**
+`vector_latches` is the verifier's budget — what it reasons about as a
+state dimension. `required_latches` is what a mandatory route actually
+depends on. A latch can be promoted without being required (it opens a
+shortcut the search should know about); **the reverse cannot hold**,
+because §23.1 says a latch left out of `vector_latches` is one nothing
+on a mandatory route depends on. Required therefore implies promoted,
+and the schema enforces that rather than leaving it to prose.
+
+Evidence must show **every declared `latch_condition`** latching in
+every run, not merely the promoted ones — §23.5 check 20's wording, and
+the reason is that the verifier trusts the promoted ones on the strength
+of the same solution.
 
 **Latch identity.** `latch_id` is unique **within** a package and
 nowhere wider; globally a latch is `package_id/latch_id`. Two packages
@@ -404,9 +468,15 @@ Nothing above needs the full physics system. In order:
    the envelope for one host.
 3. **The headless replay harness** — three runs at fixed solver
    settings against a synthetic provider at exactly the envelope,
-   reporting which `latch_id`s latched. **This is the deliverable the
-   bridge is waiting on**; the schema for its output already exists and
-   is validated.
+   reporting which `latch_id`s latched **per run**. **This is the
+   deliverable the bridge is waiting on**; the schema for its output
+   already exists and is validated.
+
+**Before any of that, one small shared thing:** `scene_digest`, and the
+four vectors in `physics_digest_vectors.json` passing in GDScript. It
+needs no physics at all — it is JSON and sha256 — and it is what makes
+every later piece of evidence mean something. Doing it first means the
+harness has somewhere to put its answer on the day it works.
 
 ## 6. What remains in this lane
 
