@@ -120,6 +120,7 @@ func _run() -> void:
 	await _test_the_playable_slice_composes_end_to_end()
 	await _test_warp_stations_are_placed_and_only_link_reached_ones()
 	await _test_an_authored_shell_carries_three_doors()
+	await _test_a_zone_resumes_at_the_station_it_was_left_from()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
 
@@ -3011,6 +3012,95 @@ func _test_an_authored_shell_carries_three_doors() -> void:
 	probes_expected_to_fail += 1
 	rooms_checked += 1
 	(closed["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+## Leave from a station, come back to it.
+##
+## `handle_leave_zone` was already non-destructive on the bridge -- "no
+## persistent change; Godot resets transient state itself" -- so walking
+## out and back in kept every Check and lost only WHERE YOU WERE. A save
+## station is exactly that missing piece, which is why the station had to
+## exist before this could.
+##
+## Two properties, and the second is the one that makes the first safe:
+## the player spawns at the station they left from, and a station that
+## was online stays online, because reached-ness is progress and progress
+## is monotone.
+func _test_a_zone_resumes_at_the_station_it_was_left_from() -> void:
+	var zone := _eight_room_zone()
+	var first := ZoneController.new()
+	add_child(first)
+	first.setup(zone)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var stations: Array = first._stations
+	_check(stations.size() >= 2,
+			"the resume Zone placed %d stations" % stations.size())
+	if stations.size() < 2:
+		first.queue_free()
+		return
+	# THE STATION FURTHEST FROM THE SPAWN, chosen deliberately.
+	#
+	# The first version took `stations[size - 1]`, which is the ENTRANCE
+	# -- it is appended last -- and the entrance is two metres from
+	# where a player starts anyway. The distance assertion below held
+	# whether or not the resume existed, which is a test that passes
+	# when the thing it guards is removed. Removing the resume and
+	# watching it still pass is how that was caught.
+	var far: WarpStation = stations[0]
+	for raw: Variant in stations:
+		var candidate: WarpStation = raw
+		if candidate.global_position.distance_to(
+					first.player.global_position) \
+				> far.global_position.distance_to(
+					first.player.global_position):
+			far = candidate
+	_check(far.global_position.distance_to(
+				first.player.global_position) > 20.0,
+			"the furthest station is only %.1f m from the spawn, so a "
+			% far.global_position.distance_to(first.player.global_position)
+			+ "resume to it proves nothing about where the player lands")
+	far.mark_reached()
+	first._on_station_reached(far.station_id)
+	_check(first.resume_anchor == far.station_id,
+			"reaching a station did not make it the resume point")
+	var carried := first.stations_reached()
+	var anchor := first.resume_anchor
+	var landing := far.global_position
+	first.queue_free()
+	await get_tree().process_frame
+
+	# The same Zone, entered again, carrying what the session kept.
+	var again := ZoneController.new()
+	add_child(again)
+	again.resume_anchor = anchor
+	again.stations_online = carried
+	again.setup(zone)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(again.player != null, "the resumed Zone spawned no player")
+	if again.player != null:
+		var back: Vector3 = again.player.global_position
+		_check(back.distance_to(landing) < 6.0,
+				"the player resumed %.1f m from the station they left "
+				% back.distance_to(landing) + "from, at %v rather than "
+				% back + "near %v" % landing)
+	# AND IT IS STILL ONLINE. A station that switched off behind the
+	# player would make the resume a one-way trip to somewhere they can
+	# no longer warp from.
+	var same: WarpStation = null
+	for raw: Variant in again._stations:
+		var station: WarpStation = raw
+		if station.station_id == anchor:
+			same = station
+	_check(same != null, "the resumed Zone has no station called '%s'"
+			% anchor)
+	if same != null:
+		_check(same.is_reached(),
+				"the station the player resumed at is offline, so "
+				+ "reached-ness is not monotone across a re-entry")
+	rooms_checked += 1
+	again.queue_free()
 	await get_tree().process_frame
 
 func _test_the_played_zone_rooms_can_be_left_on_foot() -> void:

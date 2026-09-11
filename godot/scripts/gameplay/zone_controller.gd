@@ -102,6 +102,9 @@ var _stations: Array = []
 ## accumulated, and losing it costs a walk rather than a run.
 var _stations_reached := {}
 var resume_anchor := ""
+## Stations already online when this Zone is entered, by id. Set before
+## `setup` by whoever is carrying progress; empty on a first entry.
+var stations_online := {}
 var _first_kill_seen := false
 var _portal_was_locked := true
 var _quiet_time := 0.0
@@ -172,6 +175,12 @@ func setup(zone_dict: Dictionary) -> void:
 		# The station asks the controller where E goes, rather than each
 		# station keeping its own copy of who has been reached.
 		station.cycle = _next_reached
+		# ALREADY ONLINE FROM A PREVIOUS VISIT. Reached-ness is progress
+		# and progress is monotone, so a station a player switched on
+		# before they walked out does not switch off behind them.
+		if stations_online.has(station.station_id):
+			station.mark_reached()
+			_stations_reached[station.station_id] = true
 	_zone_locks = build.get("locks", [])
 	for raw_lock: Variant in _zone_locks:
 		var lock: LockedDoor = raw_lock
@@ -179,7 +188,19 @@ func setup(zone_dict: Dictionary) -> void:
 
 	player = Player.create()
 	add_child(player)
-	player.set_spawn(build["spawn_transform"])
+	# RESUME AT THE STATION, when there is one to resume to.
+	#
+	# `handle_leave_zone` is already non-destructive on the bridge --
+	# "no persistent change; Godot resets transient state itself" -- so
+	# walking out and back in kept every Check and lost only WHERE YOU
+	# WERE. That is the whole of what a save station adds, and it is why
+	# the station had to come first.
+	var spawn_at: Transform3D = build["spawn_transform"]
+	var resume := _station_by_id(resume_anchor)
+	if resume != null:
+		spawn_at = Transform3D(spawn_at.basis,
+				resume.global_position + Vector3(0, 0.3, 2.0))
+	player.set_spawn(spawn_at)
 
 	# The measurement hooks (CAMPAIGN_SCALE.md 13). An encounter starts
 	# when someone actually engages -- a shot that connects, or a hit
@@ -411,6 +432,10 @@ func _next_reached(from_id: String) -> String:
 	if at < 0:
 		return order[0]
 	return order[(at + 1) % order.size()]
+
+## Which stations are online, for whoever is carrying progress out.
+func stations_reached() -> Dictionary:
+	return _stations_reached.duplicate()
 
 func _station_by_id(id: String) -> WarpStation:
 	for raw: Variant in _stations:

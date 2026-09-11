@@ -87,6 +87,7 @@ that was verified by removing them.
 | **Warp stations** | `warp_station.gd` | placed at entrance, exit and large rooms; an unreached station is never a destination; no prompt offers loadout editing |
 | **Activity completion reaches the screen** | `zone_controller.gd` | asserted on the live object graph; removing the listener reports "6 of 6 activities complete into silence" |
 | **The AUTHORED producer carries N doors too** | `content_instantiator.gd` `authored_door_plan` | a three-doorway authored shell composes, audits and seals |
+| **A Zone resumes at the station it was left from** | `zone_controller.gd`, `main.gd` | removing the resume lands the player **153.9 m** away; a station that was online stays online |
 | **Key reachable before its own lock, by walking** | `room_contract_driver.gd` | flooded walk-only from spawn; the room beyond the lock is *not* reached |
 
 ## 4. Implemented but not integrated
@@ -99,8 +100,12 @@ that was verified by removing them.
   with the shapes the contract specifies. `ZoneProgress` does not exist
   yet on the bridge, so they are currently dropped. The engine side is
   idempotent by identity, so a later receiver needs no engine change.
-- **`station_reached`** is specified in the contract and not implemented
-  here; warp stations are not in this slice.
+- **Resume is in memory, not in a save.** `main.gd` keeps each Zone's
+  resume anchor and online stations for the life of the session, so
+  leaving to the Hub and returning puts the player back at their station
+  with it still lit. It does not survive quitting, and nothing pretends
+  it does — `ZoneProgress` on the Zone record is where it belongs and is
+  Dess's column. This is what that field replaces.
 - **`Slice1Fixture` is scaffolding.** It decorates an already-composed
   Zone with one valid assignment so the engine half can be walked. It
   invents no topology and is expected to be deleted when the bridge sends
@@ -117,6 +122,23 @@ that was verified by removing them.
   engine being the unknown. All twelve shipping shells remain two-door
   and remain valid.
 - Spatial cycles, warp stations, ability gates, the exit unlock.
+
+## 5d. A test of mine passed with the thing it guarded removed
+
+The resume test asserted the player lands near the station they left
+from, and it passed **whether or not the resume existed**. It took
+`stations[size - 1]`, which is the *entrance* — it is appended last — and
+the entrance is two metres from where a player spawns anyway.
+
+Caught by removing the resume and watching the suite stay green, which is
+the only reason it was caught at all. The test now picks the station
+furthest from the spawn and additionally refuses to run unless that
+station is more than 20 m away, so the assertion cannot go quiet again.
+With the resume removed it now reports the player landing **153.9 m** off.
+
+Worth stating plainly: this is the fourth time in this session the
+recurring defect has appeared inside work written to fix the recurring
+defect. The removal check is not a formality.
 
 ## 5c. The authored producer had no door plan at all
 
