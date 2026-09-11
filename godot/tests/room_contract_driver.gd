@@ -3357,21 +3357,60 @@ func _test_a_generated_zone_places_its_branch_off_the_spine() -> void:
 ## merely MATCH would pass for a solver that redid the work and happened
 ## to agree, which is the thing law 47c says not to depend on.
 func _test_a_committed_layout_replays_without_re_solving() -> void:
-	var zone := _eight_room_zone()
+	# A BRANCHING ZONE, with a branch off a branch and an exit room --
+	# the shapes the old version of this test did not have. It used an
+	# unbranched fixture, and branch construction called the planner
+	# unconditionally, so the one thing a replay must not do was outside
+	# what the proof covered.
+	var zone := _zone_with_a_furnished_branch()
 	var solved := ZoneBuilder.build(zone)
 	_check(str(solved.get("status", "")) == "LAYOUT_OK",
-			"the Zone to be replayed did not solve")
+			"the Zone to be replayed did not solve: %s"
+			% str(solved.get("failed", "?")))
 	if not solved.has("root"):
 		return
-	var manifest := {"rooms": (solved["rooms"] as Dictionary),
-			"links": (solved["links"] as Dictionary)}
-	# The same Zone, the same manifest, and a clock that makes solving
-	# impossible.
+	_check((solved["rooms"] as Dictionary).has("deepvault")
+				and (solved["rooms"] as Dictionary).has("innervault")
+				and (solved["rooms"] as Dictionary).has(
+					ZoneBuilder.EXIT_ROOM_ID),
+			"the Zone being replayed has no branch, nested branch or "
+			+ "exit room, so the replay proof would not cover them")
+
+	# THROUGH SERIALIZATION AND STORAGE, not passed in memory. A manifest
+	# that only ever travels as GDScript objects is not the manifest: the
+	# real one goes out as JSON, sits in a save, and comes back with
+	# every Vector3 as three numbers.
+	var on_the_wire := ZoneBuilder.layout_to_json(solved)
+	var text := JSON.stringify(on_the_wire)
+	var path := "user://replay_manifest_test.json"
+	var handle := FileAccess.open(path, FileAccess.WRITE)
+	_check(handle != null, "could not write the manifest to storage")
+	if handle == null:
+		(solved["root"] as Node3D).queue_free()
+		return
+	handle.store_string(text)
+	handle.close()
+	var read_back: Dictionary = JSON.parse_string(
+			FileAccess.get_file_as_string(path))
+	_check(read_back != null and not read_back.is_empty(),
+			"the manifest did not survive the round trip through storage")
+	var manifest := ZoneBuilder.layout_from_json(read_back)
+
+	# THE SEARCH MUST NOT BE ENTERED, and that is counted rather than
+	# inferred. "It produced the same transforms" would pass for a solver
+	# that redid the work and happened to agree, which is the thing law
+	# 47c says not to depend on. The 0.001 ms budget stays as well: it
+	# makes solving impossible, so a replay that succeeds under it did
+	# not solve.
+	var searches_before := ZoneBuilder.searches
 	var replayed := ZoneBuilder.build(zone, "", 0.001, manifest)
+	var searched := ZoneBuilder.searches - searches_before
+	_check(searched == 0,
+			"the replay entered the placement search %d time(s)"
+			% searched)
 	_check(str(replayed.get("status", "")) == "LAYOUT_OK",
 			"replaying a committed layout under a 0.001 ms budget "
-			+ "returned '%s', so it was still searching"
-			% str(replayed.get("status", "?")))
+			+ "returned '%s'" % str(replayed.get("status", "?")))
 	if not replayed.has("root"):
 		(solved["root"] as Node3D).queue_free()
 		return
@@ -3395,42 +3434,61 @@ func _test_a_committed_layout_replays_without_re_solving() -> void:
 	_check(worst <= 0.001,
 			"the furthest room moved %.4f m between the solve and the "
 			% worst + "replay; EPSILON_JOIN is 0.001 m")
-	var pieces_before := 0
-	var pieces_after := 0
-	for id: String in solved["links"] as Dictionary:
-		pieces_before += ((solved["links"] as Dictionary)[id] as Array).size()
-	for id: String in replayed["links"] as Dictionary:
-		pieces_after += ((replayed["links"] as Dictionary)[id] as Array).size()
-	_check(pieces_before == pieces_after and pieces_before > 0,
-			"the solve laid %d connector/corner pieces and the replay "
-			% pieces_before + "laid %d" % pieces_after)
-	# AND THE SAME AMOUNT OF GEOMETRY. A replay that quietly skipped a
-	# piece would satisfy everything above, because `links` is copied
-	# from the manifest rather than re-derived.
 	_check((solved["bounds_list"] as Array).size()
 				== (replayed["bounds_list"] as Array).size(),
 			"the solve placed %d boxes and the replay placed %d, so the "
 			% [(solved["bounds_list"] as Array).size(),
 				(replayed["bounds_list"] as Array).size()]
 			+ "replayed Zone is not the Zone that was committed")
-	# A CORNER KNOWS WHICH WAY IT BENDS. Without it a replayed corner is
-	# a guess, and the chain after it walks off in the wrong direction.
+	_check(ZoneBuilder.layout_findings(replayed).is_empty(),
+			"the replayed layout violates Body or Arrival: %s"
+			% str(ZoneBuilder.layout_findings(replayed)))
+
+	# A CORNER KNOWS WHICH WAY IT BENDS, through serialization.
 	var corners := 0
-	for id: String in solved["links"] as Dictionary:
-		for raw: Variant in (solved["links"] as Dictionary)[id] as Array:
+	for eid: String in manifest["joins"] as Dictionary:
+		for raw: Variant in ((manifest["joins"] as Dictionary)[eid]
+				as Dictionary)["chain"] as Array:
 			var piece: Dictionary = raw
 			if str(piece.get("kind", "")) != "CORNER":
 				continue
 			corners += 1
-			_check(piece.has("turn") and int(piece["turn"]) != 0,
-					"a committed corner records no turn, so it cannot "
-					+ "be rebuilt")
+			_check(int(piece.get("turn", 0)) != 0,
+					"a committed corner records no turn after the round "
+					+ "trip, so it cannot be rebuilt")
 	_check(corners > 0,
-			"no corner was committed in an eight-room Zone, so the turn "
-			+ "field is untested")
-	_check(ZoneBuilder.layout_findings(replayed).is_empty(),
-			"the replayed layout violates Body or Arrival: %s"
-			% str(ZoneBuilder.layout_findings(replayed)))
+			"no corner survived the round trip, so the turn field is "
+			+ "untested")
+
+	# MISSING AND MALFORMED PIECES REFUSE, rather than quietly searching.
+	var gutted := {"rooms": (manifest["rooms"] as Dictionary).duplicate(true),
+			"joins": (manifest["joins"] as Dictionary).duplicate(true)}
+	(gutted["rooms"] as Dictionary).erase("hub")
+	var short_manifest := ZoneBuilder.build(zone, "", 0.0, gutted)
+	_check(str(short_manifest.get("status", "")) == "LAYOUT_INFEASIBLE",
+			"a manifest missing a room replayed anyway ('%s'), so part "
+			% str(short_manifest.get("status", "?"))
+			+ "of the Zone was re-solved into a place the player has "
+			+ "never been")
+	var mangled := {"rooms": (manifest["rooms"] as Dictionary).duplicate(true),
+			"joins": (manifest["joins"] as Dictionary).duplicate(true)}
+	var broke := false
+	for eid: String in mangled["joins"] as Dictionary:
+		var chain: Array = ((mangled["joins"] as Dictionary)[eid]
+				as Dictionary)["chain"]
+		for raw: Variant in chain:
+			var piece: Dictionary = raw
+			if str(piece.get("kind", "")) == "CORNER":
+				piece["turn"] = 0
+				broke = true
+	if broke:
+		var bad := ZoneBuilder.build(zone, "", 0.0, mangled)
+		_check(str(bad.get("status", "")) == "LAYOUT_INFEASIBLE",
+				"a corner with no turn replayed anyway ('%s')"
+				% str(bad.get("status", "?")))
+		_check(str(bad.get("failed", "")).find("turn") >= 0,
+				"the refusal does not say what was malformed: %s"
+				% str(bad.get("failed", "")))
 	rooms_checked += 1
 	(solved["root"] as Node3D).queue_free()
 	(replayed["root"] as Node3D).queue_free()

@@ -297,8 +297,19 @@ static func _furnish_room(root: Node3D, theme: String,
 		chamber: Dictionary, result: Dictionary, origin: Vector3,
 		yaw: float, anchors: Dictionary, room_transforms: Dictionary,
 		keys: Array, locks: Array, stations: Array,
-		dropped: Array = []) -> float:
+		dropped: Array = [], door_world: Dictionary = {}) -> float:
 	var rid := str(chamber.get("id", "?"))
+	# WHERE EACH DECLARED DOOR ACTUALLY IS, from the producer's own plan
+	# rather than re-derived. Both producers emit `doors` with a position,
+	# a usage and the polarity the audit expects; this is the same list,
+	# carried into world space once, so `joins` and the aperture report
+	# cannot disagree about where a socket is.
+	for raw_door: Variant in result.get("doors", []):
+		if typeof(raw_door) != TYPE_DICTIONARY:
+			continue
+		var plan: Dictionary = raw_door
+		door_world["%s/%s" % [rid, str(plan.get("socket_id", ""))]] = \
+				origin + _rot(yaw, plan.get("position", Vector3.ZERO))
 	# A DECLARED KEY THAT NO PRODUCER PLACED IS A DROPPED KEY.
 	#
 	# Not a warning: the bridge's `R ⊆ E` proves a key is obtainable
@@ -586,6 +597,275 @@ static func unreachable_branches(zone: Dictionary) -> Dictionary:
 			out[rid] = hit
 	return out
 
+## The committed approach to this room, out of the edge-keyed manifest.
+##
+## A room is reached through the edge its `entry` door names -- which is
+## true of a branch room as well as a spine room, because a branch hangs
+## off its parent's SIDE and arrives at its own entry. A Zone with no
+## graph has no edges to name, so its rooms fall back to the room-keyed
+## form the engine also keeps.
+static func committed_chain(layout: Dictionary,
+		chamber: Dictionary) -> Array:
+	var joins: Dictionary = layout.get("joins", {})
+	for raw_door: Variant in chamber.get("doors", []):
+		if typeof(raw_door) != TYPE_DICTIONARY:
+			continue
+		var door: Dictionary = raw_door
+		if str(door.get("socket_id", "")) != "entry":
+			continue
+		var eid := str(door.get("edge_id", ""))
+		if joins.has(eid):
+			return ((joins[eid] as Dictionary).get("chain", []) as Array) \
+					.duplicate()
+	var by_room := "%s%s" % [ROOM_EDGE_PREFIX,
+			str(chamber.get("id", "?"))]
+	if joins.has(by_room):
+		return ((joins[by_room] as Dictionary).get("chain", []) as Array) \
+				.duplicate()
+	return ((layout.get("links", {}) as Dictionary)
+			.get(str(chamber.get("id", "?")), []) as Array).duplicate()
+
+## Why this committed chain cannot be laid down, or "".
+##
+## A piece missing its pose is not a piece, and a CORNER that does not
+## say which way it bends is a guess that sends everything after it off
+## in the wrong direction. Named rather than skipped: a replay that
+## quietly drops a corridor rebuilds a Zone the player has walked before
+## and finds it changed.
+static func malformed_pieces(chain: Array) -> String:
+	for index in chain.size():
+		if typeof(chain[index]) != TYPE_DICTIONARY:
+			return "piece %d is not a record" % index
+		var piece: Dictionary = chain[index]
+		var kind := str(piece.get("kind", ""))
+		if kind != "CONNECTOR" and kind != "CORNER":
+			return "piece %d has kind '%s'" % [index, kind]
+		if not piece.has("position") or not piece.has("yaw"):
+			return "piece %d commits no pose" % index
+		if typeof(piece["position"]) != TYPE_VECTOR3:
+			return "piece %d's position is not a point" % index
+		if kind == "CORNER" and int(piece.get("turn", 0)) == 0:
+			return "corner at piece %d records no turn" % index
+	return ""
+
+## THE MANIFEST ON THE WIRE, and the manifest back off it.
+##
+## Law 47c commits a layout once and replays it forever, and "forever"
+## goes through JSON and a save file. `Vector3` and `AABB` do not survive
+## that, so the two conversions are written here, next to each other,
+## where a field added to one and forgotten in the other is visible.
+##
+## `rooms`, `joins`, `anchors` and the two measured verdicts are what
+## crosses. `links` does not: it is the same corridors keyed by room
+## instead of by edge, and two spellings of one fact on one wire is how
+## the lanes come to disagree about a corridor.
+static func layout_to_json(result: Dictionary) -> Dictionary:
+	var rooms := {}
+	for rid: String in result.get("rooms", {}):
+		var t: Dictionary = (result["rooms"] as Dictionary)[rid]
+		rooms[rid] = {"position": _v3_out(t.get("position", Vector3.ZERO)),
+				"yaw": float(t.get("yaw", 0.0)),
+				"bounds": _box_out(t.get("bounds", AABB())),
+				"arrival": _v3_out(t.get("arrival", Vector3.ZERO))}
+	var joins := {}
+	for eid: String in result.get("joins", {}):
+		var j: Dictionary = (result["joins"] as Dictionary)[eid]
+		var chain: Array = []
+		for raw: Variant in j.get("chain", []):
+			var piece: Dictionary = raw
+			chain.append({"kind": str(piece.get("kind", "CONNECTOR")),
+					"position": _v3_out(piece.get("position", Vector3.ZERO)),
+					"yaw": float(piece.get("yaw", 0.0)),
+					"turn": int(piece.get("turn", 0)),
+					"entry": _v3_out(piece.get("entry", Vector3.ZERO)),
+					"exit": _v3_out(piece.get("exit", Vector3.ZERO)),
+					"bounds": _box_out(piece.get("bounds", AABB()))})
+		joins[eid] = {"room_a": str(j.get("room_a", "")),
+				"room_b": str(j.get("room_b", "")),
+				"socket_a": _v3_out(j.get("socket_a", Vector3.ZERO)),
+				"socket_b": _v3_out(j.get("socket_b", Vector3.ZERO)),
+				"synthetic": bool(j.get("synthetic", false)),
+				"chain": chain}
+	var anchors := {}
+	for name: String in result.get("anchors", {}):
+		anchors[name] = _v3_out((result["anchors"] as Dictionary)[name])
+	return {"status": str(result.get("status", "")),
+			"rooms": rooms, "joins": joins, "anchors": anchors,
+			"arrival": result.get("arrival", {}),
+			"apertures": result.get("apertures", {})}
+
+static func layout_from_json(payload: Dictionary) -> Dictionary:
+	var rooms := {}
+	for rid: String in payload.get("rooms", {}):
+		var t: Dictionary = (payload["rooms"] as Dictionary)[rid]
+		rooms[rid] = {"position": _v3_in(t.get("position")),
+				"yaw": float(t.get("yaw", 0.0)),
+				"bounds": _box_in(t.get("bounds")),
+				"arrival": _v3_in(t.get("arrival"))}
+	var joins := {}
+	for eid: String in payload.get("joins", {}):
+		var j: Dictionary = (payload["joins"] as Dictionary)[eid]
+		var chain: Array = []
+		for raw: Variant in j.get("chain", []):
+			var piece: Dictionary = raw
+			chain.append({"kind": str(piece.get("kind", "CONNECTOR")),
+					"position": _v3_in(piece.get("position")),
+					"yaw": float(piece.get("yaw", 0.0)),
+					"turn": int(piece.get("turn", 0)),
+					"entry": _v3_in(piece.get("entry")),
+					"exit": _v3_in(piece.get("exit")),
+					"bounds": _box_in(piece.get("bounds"))})
+		joins[eid] = {"room_a": str(j.get("room_a", "")),
+				"room_b": str(j.get("room_b", "")),
+				"socket_a": _v3_in(j.get("socket_a")),
+				"socket_b": _v3_in(j.get("socket_b")),
+				"synthetic": bool(j.get("synthetic", false)),
+				"chain": chain}
+	var anchors := {}
+	for name: String in payload.get("anchors", {}):
+		anchors[name] = _v3_in((payload["anchors"] as Dictionary)[name])
+	return {"rooms": rooms, "joins": joins, "anchors": anchors}
+
+static func _v3_out(v: Variant) -> Array:
+	var at: Vector3 = v if typeof(v) == TYPE_VECTOR3 else Vector3.ZERO
+	return [at.x, at.y, at.z]
+
+static func _v3_in(v: Variant) -> Vector3:
+	if typeof(v) == TYPE_VECTOR3:
+		return v
+	if typeof(v) != TYPE_ARRAY or (v as Array).size() < 3:
+		return Vector3.ZERO
+	var a: Array = v
+	return Vector3(float(a[0]), float(a[1]), float(a[2]))
+
+static func _box_out(v: Variant) -> Dictionary:
+	var box: AABB = v if typeof(v) == TYPE_AABB else AABB()
+	return {"position": _v3_out(box.position), "size": _v3_out(box.size)}
+
+static func _box_in(v: Variant) -> AABB:
+	if typeof(v) == TYPE_AABB:
+		return v
+	if typeof(v) != TYPE_DICTIONARY:
+		return AABB()
+	var d: Dictionary = v
+	return AABB(_v3_in(d.get("position")), _v3_in(d.get("size")))
+
+## THE LAYOUT AS THE BRIDGE HAS TO READ IT: keyed by edge.
+##
+## `links` is keyed by the room a chain reaches, which is what a replay
+## needs -- it walks rooms. The validator needs the other question
+## answered: are the two sockets THIS EDGE assigns actually connected?
+## Absolute room transforms make that free and prove nothing, so the
+## bridge walks socket -> first entry, each exit -> the next entry, last
+## exit -> socket, and an empty chain means direct abutment and is still
+## walked.
+##
+## ONE PAYLOAD, not two. The pieces carry `position`/`yaw`/`turn` for the
+## replay and `entry`/`exit` for the walk, so both lanes read the same
+## corridor and cannot come to different conclusions about it. `links`
+## stays an in-engine convenience and is not what goes on the wire.
+static func _joins(zone: Dictionary, links: Dictionary,
+		door_world: Dictionary, rooms: Dictionary,
+		spine_tail: String) -> Dictionary:
+	var out := {}
+	for raw_edge: Variant in zone.get("edges", []):
+		if typeof(raw_edge) != TYPE_DICTIONARY:
+			continue
+		var edge: Dictionary = raw_edge
+		if str(edge.get("realization", "JOINED")) != "JOINED":
+			continue
+		var a := str(edge.get("room_a", ""))
+		var b := str(edge.get("room_b", ""))
+		var eid := str(edge.get("edge_id", ""))
+		# The chain recorded against a room is the one that REACHED it,
+		# so the edge's chain is whichever end was placed second.
+		var reached := b if links.has(b) and rooms.has(b) else a
+		out[eid] = {
+			"room_a": a, "room_b": b,
+			"socket_a": _socket_for(door_world, a, eid, zone),
+			"socket_b": _socket_for(door_world, b, eid, zone),
+			"chain": links.get(reached, []),
+		}
+	# EVERY ROOM WITH A CHAIN GETS A JOIN, even when no edge names it.
+	#
+	# A Zone that carries no graph has no edge ids at all, and a branch
+	# declared in the nested fixture form has none either -- so their
+	# corridors existed only in the room-keyed `links`, which is not what
+	# goes on the wire. A manifest that cannot rebuild those rooms is not
+	# a manifest; it is most of one.
+	for rid: String in links:
+		if rid == EXIT_ROOM_ID or not rooms.has(rid):
+			continue
+		var already := false
+		for eid: String in out:
+			if str((out[eid] as Dictionary).get("room_b", "")) == rid:
+				already = true
+				break
+		if already:
+			continue
+		out["%s%s" % [ROOM_EDGE_PREFIX, rid]] = {
+			"room_a": "", "room_b": rid,
+			"socket_a": (rooms[rid] as Dictionary).get("position",
+					Vector3.ZERO),
+			"socket_b": (rooms[rid] as Dictionary).get("arrival",
+					Vector3.ZERO),
+			"chain": links[rid], "synthetic": true}
+	# THE EXIT ROOM'S APPROACH IS A JOIN TOO, under the reserved id, so a
+	# manifest carries the last leg instead of leaving it to be re-solved.
+	if rooms.has(EXIT_ROOM_ID):
+		out[EXIT_EDGE_ID] = {
+			"room_a": spine_tail, "room_b": EXIT_ROOM_ID,
+			"socket_a": door_world.get("%s/exit" % spine_tail,
+					(rooms.get(spine_tail, {}) as Dictionary)
+						.get("arrival", Vector3.ZERO)),
+			"socket_b": (rooms[EXIT_ROOM_ID] as Dictionary)["position"],
+			"chain": links.get(EXIT_ROOM_ID, []),
+			"synthetic": true,
+		}
+	return out
+
+## Where a room's door for this edge is, or its arrival if it declares
+## none. Never a guess at geometry: the fallback is a point the room
+## already committed.
+static func _socket_for(door_world: Dictionary, room: String,
+		edge_id: String, zone: Dictionary) -> Vector3:
+	for raw_chamber: Variant in zone.get("chambers", []):
+		if typeof(raw_chamber) != TYPE_DICTIONARY:
+			continue
+		var chamber: Dictionary = raw_chamber
+		if str(chamber.get("id", "")) != room:
+			continue
+		for raw_door: Variant in chamber.get("doors", []):
+			if typeof(raw_door) != TYPE_DICTIONARY:
+				continue
+			var door: Dictionary = raw_door
+			if str(door.get("edge_id", "")) != edge_id:
+				continue
+			return door_world.get("%s/%s"
+					% [room, str(door.get("socket_id", ""))], Vector3.ZERO)
+	return Vector3.ZERO
+
+## THE EXIT ROOM IS THE ENGINE'S, and it is named so both lanes agree.
+##
+## `ChamberBuilders.treasure_room` is appended after the last chamber and
+## is declared by nobody: it has no `TopologyEdge`, no `DoorAssignment`
+## and no entry in `zone.chambers`. It was still routed by the same
+## search as every other room and committed a transform, so a manifest
+## that left it out could rebuild the whole Zone and then have to
+## re-solve the last leg.
+##
+## So it is a room with a reserved id and its approach is a join under a
+## reserved edge id. Reserved means reserved: a Zone that declares either
+## is refused, because two different rooms answering to `exit` is a
+## manifest that cannot say which one it committed.
+const EXIT_ROOM_ID := "exit"
+const EXIT_EDGE_ID := "e:__exit__"
+
+## The key a room's approach is filed under when no edge names it. Also
+## reserved: an `edge_id` starting with this is refused for the same
+## reason `exit` is.
+const ROOM_EDGE_PREFIX := "r:"
+
 ## The sockets the chain itself walks through. A door on one of these is
 ## on the route from the entrance to the exit; anything else is a branch.
 const CHAIN_SOCKETS := ["entry", "exit"]
@@ -645,9 +925,18 @@ static var policy_override := {}
 ## A direction is exhausted the moment the NEXT CONNECTOR would itself
 ## overlap something. Pushing past that point is how a corridor ends up
 ## inside a room, and it is exactly what the old unchecked push did.
+## HOW MANY TIMES THE PLACEMENT SEARCH HAS BEEN ENTERED.
+##
+## Law 47c says a replay does not re-solve, and "it produced the same
+## transforms" is not that claim -- a solver that redid the work and
+## happened to agree would satisfy it. This counts the thing the law
+## forbids, so a test can assert the search was never entered at all.
+static var searches := 0
+
 static func _plan_route(shape: Dictionary, corners: Dictionary,
 		room: AABB, entry_at: Vector3, cursor: Vector3, yaw: float,
 		placed: Array, prefer: int) -> Dictionary:
+	searches += 1
 	var budget := int(routing_policy(placed,
 			policy_override)["clearance_budget"])
 	var turns_allowed := int(routing_policy(placed,
@@ -757,10 +1046,22 @@ static func _emit_route(root: Node3D, theme: String, plan: Dictionary,
 			# on which way it bends, and a piece recorded without it
 			# cannot be rebuilt -- which is how far "the chain is
 			# committed" actually went until a replay was written.
+			var corner_out := at + _rot(facing,
+					corner["exit_offset"] as Vector3)
+			# POSE AND ENDPOINTS, in one record.
+			#
+			# The two lanes needed different things from the same
+			# pieces: the engine replays from `position`/`yaw`/`turn`,
+			# and the bridge walks socket -> entry, exit -> next entry,
+			# last exit -> socket to prove two assigned sockets are
+			# actually connected. Absolute transforms make that walk
+			# free and prove nothing. One record carries both rather
+			# than two payloads disagreeing about the same corridor.
 			chain.append({"kind": "CORNER", "position": at,
 					"yaw": facing, "bounds": world,
-					"turn": int(step["turn"])})
-			at += _rot(facing, corner["exit_offset"] as Vector3)
+					"turn": int(step["turn"]),
+					"entry": at, "exit": corner_out})
+			at = corner_out
 			facing += float(step["turn"]) * PI / 2.0
 			turns += 1
 		for _i in int(step["connectors"]):
@@ -769,7 +1070,8 @@ static func _emit_route(root: Node3D, theme: String, plan: Dictionary,
 					bounds_list)
 			chain.append({"kind": "CONNECTOR", "position": was,
 					"yaw": facing,
-					"bounds": bounds_list[bounds_list.size() - 1]})
+					"bounds": bounds_list[bounds_list.size() - 1],
+					"entry": was, "exit": at})
 	return {"cursor": at, "yaw": facing, "turns": turns}
 
 ## LAYS A COMMITTED CHAIN DOWN, without searching for it.
@@ -897,6 +1199,30 @@ static func build(zone: Dictionary, theme_override := "",
 				"failed": "%d capability gate(s) stand on a chain "
 				% stranding.size() + "socket, which puts them between "
 				+ "the player and the Zone exit: %s" % str(stranding)}
+	for raw_chamber: Variant in zone.get("chambers", []):
+		if typeof(raw_chamber) == TYPE_DICTIONARY \
+				and str((raw_chamber as Dictionary).get("id", "")) \
+					== EXIT_ROOM_ID:
+			return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+					"policy": routing_policy([], policy_override),
+					"blocking_rooms": [EXIT_ROOM_ID],
+					"blocking_pairs": [],
+					"failed": "a chamber is named '%s', which is "
+					% EXIT_ROOM_ID + "reserved for the engine's appended "
+					+ "exit room; two rooms answering to it makes a "
+					+ "manifest that cannot say which one it committed"}
+	for raw_edge: Variant in zone.get("edges", []):
+		if typeof(raw_edge) == TYPE_DICTIONARY \
+				and (str((raw_edge as Dictionary).get("edge_id", ""))
+					== EXIT_EDGE_ID
+					or str((raw_edge as Dictionary).get("edge_id", ""))
+						.begins_with(ROOM_EDGE_PREFIX)):
+			return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+					"policy": routing_policy([], policy_override),
+					"blocking_rooms": [], "blocking_pairs": [],
+					"failed": "an edge is named '%s', which is reserved "
+					% EXIT_EDGE_ID + "for the approach to the engine's "
+					+ "appended exit room"}
 	var orphaned := unreachable_branches(zone)
 	if not orphaned.is_empty():
 		return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
@@ -939,6 +1265,8 @@ static func build(zone: Dictionary, theme_override := "",
 	var yaw := 0.0
 	## Pieces laid after a room, belonging to the next room's approach.
 	var carried: Array = []
+	## "room/socket" -> where that declared door is, in world space.
+	var door_world := {}
 	## Rooms whose declared keys no producer reserved space for.
 	var dropped_keys: Array = []
 	var next_turn := 1 if rng.randf() < 0.5 else -1
@@ -1019,7 +1347,27 @@ static func build(zone: Dictionary, theme_override := "",
 		straight_after_turn = false
 		var committed: Dictionary = (layout.get("rooms", {}) as Dictionary) \
 				.get(str(chamber.get("id", "?")), {})
+		# A MANIFEST THAT IS PRESENT MUST BE COMPLETE.
+		#
+		# Falling back to the search for a room the manifest does not
+		# mention is the silent failure: a revisited Zone would be part
+		# replayed and part re-solved, and the part that was re-solved is
+		# a different place than the player remembers -- with a
+		# LAYOUT_OK on it. A manifest is either what this Zone is, or it
+		# is refused by name.
 		var replaying := not committed.is_empty()
+		if not replaying and not (layout.get("rooms", {}) as Dictionary) \
+				.is_empty():
+			(result["root"] as Node3D).free()
+			root.free()
+			return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+					"policy": routing_policy(placed, policy_override),
+					"blocking_rooms": [str(chamber.get("id", "?"))],
+					"blocking_pairs": [],
+					"failed": "the committed manifest has no transform "
+					+ "for room '%s'; a partial manifest would replay "
+					% str(chamber.get("id", "?"))
+					+ "part of the Zone and re-solve the rest"}
 		var plan := {"ok": true} if replaying \
 				else _plan_route(shape, corners, result["bounds"] as AABB,
 						entry_at, cursor, yaw, placed, prefer)
@@ -1075,9 +1423,18 @@ static func build(zone: Dictionary, theme_override := "",
 			# The whole chain comes from the manifest, the carried piece
 			# included -- it was recorded INTO this room's chain when the
 			# layout was committed, so replaying it twice would double it.
-			link = ((layout.get("links", {}) as Dictionary)
-					.get(str(chamber.get("id", "?")), []) as Array) \
-					.duplicate()
+			link = committed_chain(layout, chamber)
+			var bad := malformed_pieces(link)
+			if bad != "":
+				(result["root"] as Node3D).free()
+				root.free()
+				return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+						"policy": routing_policy(placed, policy_override),
+						"blocking_rooms": [str(chamber.get("id", "?"))],
+						"blocking_pairs": [],
+						"failed": "the committed approach to room '%s' "
+						% str(chamber.get("id", "?")) + "cannot be "
+						+ "rebuilt: %s" % bad}
 			walked = _replay_route(root, theme, link, cursor, yaw,
 					placed, bounds_list)
 		else:
@@ -1100,7 +1457,7 @@ static func build(zone: Dictionary, theme_override := "",
 		var rid := str(chamber.get("id", "?"))
 		var footprint := _furnish_room(root, theme, chamber, result,
 				origin, yaw, anchors, room_transforms, keys, locks,
-				stations, dropped_keys)
+				stations, dropped_keys, door_world)
 		if footprint > float(largest["area"]):
 			largest = {"area": footprint, "id": rid}
 		root.add_child(node)
@@ -1182,17 +1539,41 @@ static func build(zone: Dictionary, theme_override := "",
 			# The chain never hit this because it lays a linking
 			# connector between every pair of rooms. A branch is a join
 			# like any other and gets one too.
+			var b_id_early := str(b_chamber.get("id", "branch"))
+			var b_committed: Dictionary = \
+					(layout.get("rooms", {}) as Dictionary) \
+					.get(b_id_early, {})
+			var b_replaying := not b_committed.is_empty()
+			if not b_replaying and not (layout.get("rooms", {})
+					as Dictionary).is_empty():
+				(b_result["root"] as Node3D).free()
+				(result["root"] as Node3D).free()
+				root.free()
+				return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+						"policy": routing_policy(placed, policy_override),
+						"blocking_rooms": [b_id_early],
+						"blocking_pairs": [],
+						"failed": "the committed manifest has no "
+						+ "transform for branch room '%s'" % b_id_early}
 			var b_link: Array = []
 			var mouth_at: Vector3 = p_origin \
 					+ _rot(p_yaw, mouth["position"] as Vector3)
-			b_link.append({"kind": "CONNECTOR", "position": mouth_at,
-					"yaw": b_yaw, "bounds": _world_aabb(
-							shape["bounds"] as AABB, mouth_at, b_yaw)})
-			var b_cursor := _emit_connector(root, theme, mouth_at,
-					b_yaw, placed, bounds_list)
-			var b_plan := _plan_route(shape, corners,
-					b_result["bounds"] as AABB, b_entry, b_cursor,
-					b_yaw, placed, 0)
+			var b_cursor := mouth_at
+			# A REPLAYED BRANCH LAYS ITS CHAIN DOWN, bridging connector
+			# and all. The bridging connector is part of the committed
+			# chain -- it was recorded there when the layout was solved --
+			# so emitting one here as well would lay it twice.
+			if not b_replaying:
+				b_cursor = _emit_connector(root, theme, mouth_at,
+						b_yaw, placed, bounds_list)
+				b_link.append({"kind": "CONNECTOR", "position": mouth_at,
+						"yaw": b_yaw, "bounds": _world_aabb(
+								shape["bounds"] as AABB, mouth_at, b_yaw),
+						"entry": mouth_at, "exit": b_cursor})
+			var b_plan := {"ok": true} if b_replaying \
+					else _plan_route(shape, corners,
+							b_result["bounds"] as AABB, b_entry, b_cursor,
+							b_yaw, placed, 0)
 			if not bool(b_plan["ok"]):
 				(b_result["root"] as Node3D).free()
 				(result["root"] as Node3D).free()
@@ -1206,10 +1587,34 @@ static func build(zone: Dictionary, theme_override := "",
 							str(parent.get("id", "?"))]
 						+ "be placed clear of the %d room(s) already "
 						% placed.size() + "standing"}
-			var b_walked := _emit_route(root, theme, b_plan, b_cursor,
-					b_yaw, placed, bounds_list, b_link)
-			var b_origin := origin_for(b_walked["cursor"],
-					float(b_walked["yaw"]), b_entry)
+			var b_walked: Dictionary
+			if b_replaying:
+				b_link = committed_chain(layout, b_chamber)
+				var b_bad := malformed_pieces(b_link)
+				if b_bad != "":
+					(b_result["root"] as Node3D).free()
+					(result["root"] as Node3D).free()
+					root.free()
+					return {"status": "LAYOUT_INFEASIBLE",
+							"exhausted": true,
+							"policy": routing_policy(placed,
+									policy_override),
+							"blocking_rooms": [b_id_early],
+							"blocking_pairs": [],
+							"failed": "the committed approach to branch "
+							+ "room '%s' cannot be rebuilt: %s"
+							% [b_id_early, b_bad]}
+				b_walked = _replay_route(root, theme, b_link, b_cursor,
+						b_yaw, placed, bounds_list)
+			else:
+				b_walked = _emit_route(root, theme, b_plan, b_cursor,
+						b_yaw, placed, bounds_list, b_link)
+			var b_origin: Vector3 = b_committed["position"] \
+					if b_replaying \
+					else origin_for(b_walked["cursor"],
+							float(b_walked["yaw"]), b_entry)
+			if b_replaying:
+				b_walked["yaw"] = float(b_committed["yaw"])
 			var b_node: Node3D = b_result["root"]
 			var b_id := str(b_chamber.get("id", "branch"))
 			b_node.name = "Chamber_%s" % b_id
@@ -1227,7 +1632,7 @@ static func build(zone: Dictionary, theme_override := "",
 			# key to the next one.
 			_furnish_room(root, theme, b_chamber, b_result, b_origin,
 					float(b_walked["yaw"]), anchors, room_transforms,
-					keys, locks, stations, dropped_keys)
+					keys, locks, stations, dropped_keys, door_world)
 			# ITS OWN BRANCHES, from the transform it was just given,
 			# from either source.
 			for raw_deeper: Variant in graph_branches.get(
@@ -1302,7 +1707,8 @@ static func build(zone: Dictionary, theme_override := "",
 			# pieces `_emit_route` laid, so it could not see this.
 			carried.append({"kind": "CONNECTOR", "position": was,
 					"yaw": yaw,
-					"bounds": bounds_list[bounds_list.size() - 1]})
+					"bounds": bounds_list[bounds_list.size() - 1],
+					"entry": was, "exit": cursor})
 		first = false
 
 	# Exit room with the appended portal — routed like every other
@@ -1317,9 +1723,15 @@ static func build(zone: Dictionary, theme_override := "",
 				"failed": "%d room(s) declare a key their producer does "
 				% dropped_keys.size() + "not build, so a lock in this "
 				+ "Zone has no key: %s" % str(dropped_keys)}
-	var exit_room := ChamberBuilders.treasure_room({"id": "exit"}, theme)
+	# The last room on the spine, which is what the exit room hangs off.
+	var spine_tail := ""
+	for spine_id: Variant in graph.get("spine", []):
+		if chamber_by_id.has(str(spine_id)):
+			spine_tail = str(spine_id)
+	var exit_room := ChamberBuilders.treasure_room(
+			{"id": EXIT_ROOM_ID}, theme)
 	var exit_committed: Dictionary = \
-			(layout.get("rooms", {}) as Dictionary).get("exit", {})
+			(layout.get("rooms", {}) as Dictionary).get(EXIT_ROOM_ID, {})
 	var exit_replaying := not exit_committed.is_empty()
 	var exit_plan := {"ok": true} if exit_replaying \
 			else _plan_route(shape, corners,
@@ -1339,14 +1751,23 @@ static func build(zone: Dictionary, theme_override := "",
 	carried.clear()
 	var exit_walk: Dictionary
 	if exit_replaying:
-		exit_link = ((layout.get("links", {}) as Dictionary)
-				.get("exit", []) as Array).duplicate()
+		exit_link = (((layout.get("joins", {}) as Dictionary)
+				.get(EXIT_EDGE_ID, {}) as Dictionary)
+				.get("chain", []) as Array).duplicate()
+		var exit_bad := malformed_pieces(exit_link)
+		if exit_bad != "":
+			root.free()
+			return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+					"policy": routing_policy(placed, policy_override),
+					"blocking_rooms": [EXIT_ROOM_ID], "blocking_pairs": [],
+					"failed": "the committed approach to the exit room "
+					+ "cannot be rebuilt: %s" % exit_bad}
 		exit_walk = _replay_route(root, theme, exit_link, cursor, yaw,
 				placed, bounds_list)
 	else:
 		exit_walk = _emit_route(root, theme, exit_plan, cursor, yaw,
 				placed, bounds_list, exit_link)
-	links["exit"] = exit_link
+	links[EXIT_ROOM_ID] = exit_link
 	cursor = exit_committed["position"] if exit_replaying \
 			else exit_walk["cursor"]
 	yaw = float(exit_committed["yaw"]) if exit_replaying \
@@ -1359,7 +1780,7 @@ static func build(zone: Dictionary, theme_override := "",
 	var exit_world: AABB = _world_aabb(exit_room["bounds"], cursor, yaw)
 	placed.append(exit_world)
 	bounds_list.append(exit_world)
-	room_transforms["exit"] = {"position": cursor, "yaw": yaw,
+	room_transforms[EXIT_ROOM_ID] = {"position": cursor, "yaw": yaw,
 			"bounds": exit_world,
 			"arrival": cursor + _rot(yaw, RoomContract.LEGACY_ENTRY)}
 	var portal := ExitPortal.create(theme)
@@ -1430,5 +1851,9 @@ static func build(zone: Dictionary, theme_override := "",
 			# room, in build order, so a committed Zone replays by
 			# laying pieces down rather than by searching again.
 			"status": "LAYOUT_OK", "rooms": room_transforms,
-			"links": links, "anchors": anchors, "plugs": plugs,
+			"links": links,
+			"joins": _joins(zone, links, door_world, room_transforms,
+					spine_tail),
+			"doors": door_world,
+			"anchors": anchors, "plugs": plugs,
 			"keys": keys, "locks": locks, "stations": stations}
