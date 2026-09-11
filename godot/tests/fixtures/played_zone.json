@@ -1337,161 +1337,184 @@
    "room_a": "c001",
    "room_b": "c002",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c002:c003",
    "room_a": "c002",
    "room_b": "c003",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c003:c004",
    "room_a": "c003",
    "room_b": "c004",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c004:c005",
    "room_a": "c004",
    "room_b": "c005",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c005:c006",
    "room_a": "c005",
    "room_b": "c006",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c006:c007",
    "room_a": "c006",
    "room_b": "c007",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c007:c008",
    "room_a": "c007",
    "room_b": "c008",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c008:c009",
    "room_a": "c008",
    "room_b": "c009",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c009:c010",
    "room_a": "c009",
    "room_b": "c010",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c010:c011",
    "room_a": "c010",
    "room_b": "c011",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c011:c012",
    "room_a": "c011",
    "room_b": "c012",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c012:c013",
    "room_a": "c012",
    "room_b": "c013",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c013:c014",
    "room_a": "c013",
    "room_b": "c014",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c014:c015",
    "room_a": "c014",
    "room_b": "c015",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c015:c016",
    "room_a": "c015",
    "room_b": "c016",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c016:c017",
    "room_a": "c016",
    "room_b": "c017",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c017:c018",
    "room_a": "c017",
    "room_b": "c018",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c018:c019",
    "room_a": "c018",
    "room_b": "c019",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c019:c021",
    "room_a": "c019",
    "room_b": "c021",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c021:c022",
    "room_a": "c021",
    "room_b": "c022",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c022:c023",
    "room_a": "c022",
    "room_b": "c023",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "e:c014:c020",
    "room_a": "c014",
    "room_b": "c020",
    "direction": "BIDIRECTIONAL",
-   "realization": "JOINED"
+   "realization": "JOINED",
+   "capability": null
   },
   {
    "edge_id": "p:c020:start",
    "room_a": "c020",
    "room_b": "c001",
    "direction": "A_TO_B",
-   "realization": "TRAVERSAL_ONLY"
+   "realization": "TRAVERSAL_ONLY",
+   "capability": null
   }
  ],
  "plugs": [

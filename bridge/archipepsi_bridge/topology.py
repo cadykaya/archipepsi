@@ -308,8 +308,106 @@ def _explore(entry: str, edges, doors_by_room, keys_by_room,
                  rooms=frozenset(r for r, _ in seen))
 
 
+def _key_graph_is_acyclic(zone, doors_by_room, keys_by_room) -> list[str]:
+    """SOLUTIONS_CATALOGUE §2 rule 2, asked directly.
+
+    A key behind its own lock is caught by rule 1. A CHAIN is not the
+    same shape: red behind the blue door and blue behind the red one
+    leaves both rooms unreachable, and a search that only ever withholds
+    one key at a time reports that as two unrelated failures rather than
+    as the cycle it is.
+
+    The graph here is `key -> the keys you must already hold to fetch
+    it`, and a cycle in it is a Zone nobody can open.
+    """
+    where = {k.key_id: c.id for c in zone.chambers for k in c.keys}
+    if len(where) < 2:
+        return []          # one key cannot form a chain with itself
+    entry = zone.chambers[0].id
+
+    needs: dict[str, set[str]] = {}
+    for key_id, room in where.items():
+        # Which other keys must be held for this one's room to be
+        # reachable at all? Withhold each in turn and see.
+        blocking = set()
+        for other in where:
+            if other == key_id:
+                continue
+            got = _explore(entry, zone.edges, doors_by_room, keys_by_room,
+                           ignore_keys=frozenset({other}))
+            if room not in got.rooms:
+                blocking.add(other)
+        needs[key_id] = blocking
+
+    # Tarjan is overkill for four keys; a depth walk names the cycle.
+    out: list[str] = []
+    seen: set[str] = set()
+    for start in sorted(needs):
+        stack = [(start, [start])]
+        while stack:
+            at, path = stack.pop()
+            for nxt in sorted(needs.get(at, ())):
+                if nxt == start:
+                    loop = " -> ".join(path + [start])
+                    if start not in seen:
+                        seen.update(path)
+                        out.append(
+                            f"the key graph has a cycle: {loop}; no order "
+                            "of collection opens it")
+                elif nxt not in path:
+                    stack.append((nxt, path + [nxt]))
+    return out
+
+
+def _capability_gates_are_declared(zone, doors_by_room, keys_by_room,
+                                   exit_room: str,
+                                   declared: set[str]) -> list[str]:
+    """SOLUTIONS_CATALOGUE §2 rule 3 and `06` §29.5a, check 23.
+
+    **A key MAY sit behind Grapple.** What may never happen is the Zone
+    requiring Grapple while Archipelago's logic for those locations does
+    not say so — that is the divergence, and it is the one thing
+    CLAUDE.md names as never allowed.
+
+    A Zone-local key is not a capability and is not covered: it is
+    obtainable inside the Zone, so AP's claim that reaching the Zone
+    reaches its Checks stays true with one behind a lock.
+
+    `declared` is what the apworld states as a prerequisite. It is empty
+    today, so the rule reduces to *"no capability gate on any AP-relevant
+    route"* — which is the intended behaviour until that integration
+    exists, and is a refusal rather than a silence.
+    """
+    gated = [e for e in zone.edges if e.capability]
+    if not gated:
+        return []
+
+    ap_relevant: set[str] = {exit_room}
+    for c in zone.chambers:
+        if c.reward_ids:
+            ap_relevant.add(c.id)
+
+    out: list[str] = []
+    entry = zone.chambers[0].id
+    for e in gated:
+        if e.capability in declared:
+            continue
+        # Is any AP-relevant room unreachable without this edge?
+        without = [x for x in zone.edges if x.edge_id != e.edge_id]
+        got = _explore(entry, without, doors_by_room, keys_by_room)
+        stranded = sorted(ap_relevant - got.rooms)
+        if stranded:
+            out.append(
+                f"edge '{e.edge_id}' gates {stranded} behind capability "
+                f"'{e.capability}', which the Archipelago logic does not "
+                "declare; the physical graph and the logical graph would "
+                "disagree about what is reachable")
+    return out
+
+
 def reachability(zone, entry_id: str | None = None,
-                 exit_id: str | None = None) -> Reach:
+                 exit_id: str | None = None,
+                 declared_capabilities: set[str] | None = None) -> Reach:
     """Prove you can get around this Zone, or say exactly why not.
 
     Four properties, each stated as an outcome rather than a method:
@@ -388,6 +486,11 @@ def reachability(zone, entry_id: str | None = None,
                 errors.append(
                     f"key '{k.key_id}' sits in room '{c.id}', which is "
                     "unreachable for reasons other than its own lock")
+
+    errors.extend(_key_graph_is_acyclic(zone, doors_by_room, keys_by_room))
+    errors.extend(_capability_gates_are_declared(
+        zone, doors_by_room, keys_by_room, exit_room,
+        declared_capabilities or set()))
 
     return Reach(states=forward.states, rooms=forward.rooms,
                  errors=tuple(errors))

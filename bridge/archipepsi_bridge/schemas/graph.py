@@ -49,6 +49,17 @@ Direction = Literal["BIDIRECTIONAL", "A_TO_B", "B_TO_A"]
 #: The authored plug catalogue. Each is a way back that is not a door.
 PlugKind = Literal["pad", "threshold", "tube"]
 
+#: The capabilities that exist, from `mechanics.ACTIVITY_CAPABILITIES`.
+#: Closed rather than free text: a gate naming a capability nothing can
+#: grant is a wall the validator would wave through while believing it
+#: had checked something.
+#:
+#: `manipulate` is deliberately absent. Design 6 §29.1 has five, and the
+#: fifth needs a physics substrate that does not exist — zero
+#: `RigidBody3D` in the project — so naming it here would let a Zone
+#: declare a gate no build can satisfy.
+Capability = Literal["ranged_hit", "grapple", "blink", "cross_long_gap"]
+
 #: The key tints the engine knows (`zone_key.gd` `COLOURS`). Closed
 #: rather than free text: an unknown name silently became gold, so two
 #: differently-named keys could read identically to a player.
@@ -76,6 +87,21 @@ class TopologyEdge(Strict):
     room_b: str = _ROOM
     direction: Direction = "BIDIRECTIONAL"
     realization: Realization = "JOINED"
+    #: A CAPABILITY this edge requires, if any — an Echo the player must
+    #: hold, not a Zone-local key.
+    #:
+    #: The two are different in the one way that matters. A local key is
+    #: obtainable inside the Zone, so Archipelago's claim ("reach the
+    #: Zone and you can reach its Checks") stays true with one behind a
+    #: lock. A capability comes from the multiworld, so gating an
+    #: AP-relevant route on one makes the physical graph disagree with
+    #: the logical graph unless AP's location logic says the same thing.
+    #:
+    #: `None` is the only value composition currently produces. The
+    #: field exists so that the first gate to appear is REFUSED by
+    #: `reachability` rather than passing unnoticed, which is what a
+    #: vacuous rule buys you.
+    capability: Capability | None = None
 
     @model_validator(mode="after")
     def _an_edge_joins_two_rooms(self):

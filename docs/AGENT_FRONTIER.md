@@ -18,6 +18,18 @@ nowhere.
 not surface aperture polarity, and does not replay the committed
 manifest. Those three are `docs/AMALGAM_BRIDGE.md` §5.
 
+**All three of SOLUTIONS_CATALOGUE §2's local-key rules are enforced.**
+A key reachable without passing its own lock, an acyclic key graph, and
+every capability gate on the way to a key, a required Check or the Zone
+exit declared in the matching AP logic. The third is currently a refusal
+of everything — the apworld declares no prerequisites — which is the
+intended behaviour and is a refusal rather than a silence.
+
+**`manipulate` and `vector_latches` are blocked at the substrate**, not
+waiting on this lane. Zero `RigidBody3D` in the project, and the
+capability vocabulary deliberately omits `manipulate` so a Zone cannot
+declare a gate no build can satisfy.
+
 **The lesson worth keeping.** The first validator skipped every check
 whose input was absent, so a layout with no apertures, no bounds and no
 arrival verdicts was ACCEPTED. Missing evidence is not passing evidence;
