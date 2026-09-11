@@ -110,6 +110,7 @@ func _run() -> void:
 	await _test_validating_a_live_room_builds_nothing_in_it()
 	await _test_the_two_collider_counts_measure_different_things()
 	await _test_the_played_zone_rooms_can_be_left_on_foot()
+	await _test_the_actual_player_leaves_c015_and_c005_on_foot()
 	await _test_a_composed_room_carves_every_assigned_door()
 	await _test_a_sealed_door_that_is_a_hole_is_caught()
 	await _test_the_layout_result_commits_the_whole_chain()
@@ -130,6 +131,7 @@ func _run() -> void:
 	await _test_a_generated_zone_places_its_branch_off_the_spine()
 	_test_no_new_shell_puts_a_doorway_outside_its_room()
 	await _test_the_branch_is_crossed_returned_from_and_remembered()
+	await _test_a_real_player_walks_the_whole_branch_journey()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
 
@@ -2172,8 +2174,13 @@ func _chamber_for(entry: Dictionary) -> Dictionary:
 ## missing Echo.
 const ESCAPE_CELL := 0.5
 
+## `ignore` is the bodies the probe must not see, and it exists because
+## of one measurement: flooding a room with the real Player standing in
+## it read the PLAYER'S OWN HEAD as the floor. The pit escape reported a
+## start height of 1.02 m for a body at -0.75 m, found one standable cell
+## and declared the pit sealed.
 func _standable_at(space: PhysicsDirectSpaceState3D, x: float, z: float,
-		from_y: float) -> float:
+		from_y: float, ignore: Array[RID] = []) -> float:
 	## The topmost surface BELOW `from_y` at this column, or NAN.
 	##
 	## `from_y` starts INSIDE the room, not above it. A room has a
@@ -2184,6 +2191,7 @@ func _standable_at(space: PhysicsDirectSpaceState3D, x: float, z: float,
 	## whole repair is about, committed by the repair.
 	var down := PhysicsRayQueryParameters3D.create(
 			Vector3(x, from_y, z), Vector3(x, -60.0, z))
+	down.exclude = ignore
 	var hit := space.intersect_ray(down)
 	if hit.is_empty():
 		return NAN
@@ -2197,9 +2205,24 @@ func _standable_at(space: PhysicsDirectSpaceState3D, x: float, z: float,
 	query.transform = Transform3D(Basis(), Vector3(x,
 			y + Constants.PLAYER_HEIGHT / 2.0 + 0.05, z))
 	query.collide_with_areas = false
+	query.exclude = ignore
 	if not space.intersect_shape(query, 1).is_empty():
 		return NAN
 	return y
+
+## Does a standing player fit with its feet at this point?
+static func _capsule_clear(space: PhysicsDirectSpaceState3D, at: Vector3,
+		ignore: Array[RID] = []) -> bool:
+	var shape := CapsuleShape3D.new()
+	shape.height = Constants.PLAYER_HEIGHT
+	shape.radius = Constants.PLAYER_RADIUS
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = shape
+	query.transform = Transform3D(Basis(), at
+			+ Vector3(0, Constants.PLAYER_HEIGHT / 2.0 + 0.05, 0))
+	query.collide_with_areas = false
+	query.exclude = ignore
+	return space.intersect_shape(query, 1).is_empty()
 
 func _walk_reaches(result: Dictionary, from_xz: Vector2,
 		to_xz: Vector2) -> Dictionary:
@@ -2243,16 +2266,18 @@ const RAMP_SAMPLES := 5
 ## Is the ground between these two columns a climbable slope, rather than
 ## a wall that merely has a standable top?
 func _is_a_ramp(space: PhysicsDirectSpaceState3D, from_y: float,
-		cell: float, from_xz: Vector2, to_xz: Vector2) -> bool:
+		cell: float, from_xz: Vector2, to_xz: Vector2,
+		ignore: Array[RID] = []) -> bool:
 	var sub := cell / float(RAMP_SAMPLES)
 	var allowed := _rise_over(sub)
-	var last := _standable_at(space, from_xz.x, from_xz.y, from_y)
+	var last := _standable_at(space, from_xz.x, from_xz.y, from_y,
+			ignore)
 	if is_nan(last):
 		return false
 	for i in range(1, RAMP_SAMPLES + 1):
 		var t := float(i) / float(RAMP_SAMPLES)
 		var at := from_xz.lerp(to_xz, t)
-		var y := _standable_at(space, at.x, at.y, from_y)
+		var y := _standable_at(space, at.x, at.y, from_y, ignore)
 		if is_nan(y):
 			return false
 		if y - last > allowed:
@@ -2275,7 +2300,7 @@ func _is_a_ramp(space: PhysicsDirectSpaceState3D, from_y: float,
 ## surface above that height. Rooms with decks higher than the corridor
 ## roof need a taller pass, and this prober does not do one.
 func _walk_bounds(bounds: AABB, from_xz: Vector2, to_xz: Vector2,
-		cell: float, from_y := INF) -> Dictionary:
+		cell: float, from_y := INF, ignore: Array[RID] = []) -> Dictionary:
 	var space := _space()
 	# Just under the roof: high enough to clear any deck the room has,
 	# low enough that the roof itself is never what gets measured.
@@ -2288,7 +2313,7 @@ func _walk_bounds(bounds: AABB, from_xz: Vector2, to_xz: Vector2,
 	for ix in nx:
 		for iz in nz:
 			var y := _standable_at(space, x0 + float(ix) * cell,
-					z0 + float(iz) * cell, ceiling)
+					z0 + float(iz) * cell, ceiling, ignore)
 			if not is_nan(y):
 				height[Vector2i(ix, iz)] = y
 	var cell_of := func(p: Vector2) -> Vector2i:
@@ -2300,6 +2325,10 @@ func _walk_bounds(bounds: AABB, from_xz: Vector2, to_xz: Vector2,
 		return {"ok": false, "why": "the player cannot stand where the "
 				+ "room is entered", "reached": 0}
 	var seen := {start: true}
+	## Where each cell was reached FROM, so a route can be handed to the
+	## real Player. The flood is a diagnostic; a route out of it is a
+	## PROPOSAL, and the body walking it is the evidence.
+	var came_from := {}
 	var queue: Array[Vector2i] = [start]
 	while not queue.is_empty():
 		var here: Vector2i = queue.pop_front()
@@ -2331,12 +2360,42 @@ func _walk_bounds(bounds: AABB, from_xz: Vector2, to_xz: Vector2,
 					Vector2(x0 + float(here.x) * cell,
 							z0 + float(here.y) * cell),
 					Vector2(x0 + float(next.x) * cell,
-							z0 + float(next.y) * cell)):
+							z0 + float(next.y) * cell), ignore):
+				continue
+			# AND THERE IS ROOM BETWEEN THEM.
+			#
+			# Two standable cells are not a step a body can take. A wall
+			# is 0.4 m thick and the cells are 0.5 m apart, so a wall can
+			# sit ENTIRELY BETWEEN two cells whose centres are both
+			# clear -- and the flood walked straight through it. Measured:
+			# it proposed a route out of a room's side wall, and the real
+			# Player followed it as far as the masonry and stopped.
+			#
+			# The midpoint is where that wall is, so the midpoint is what
+			# is asked.
+			var mid := Vector3(
+					(x0 + float(here.x) * cell
+						+ x0 + float(next.x) * cell) / 2.0,
+					maxf(float(height[here]), float(height[next])),
+					(z0 + float(here.y) * cell
+						+ z0 + float(next.y) * cell) / 2.0)
+			if not _capsule_clear(space, mid, ignore):
 				continue
 			seen[next] = true
+			came_from[next] = here
 			queue.append(next)
 	if seen.has(goal):
-		return {"ok": true, "why": "", "reached": seen.size()}
+		var route: Array[Vector3] = []
+		var at_cell: Vector2i = goal
+		while came_from.has(at_cell):
+			route.push_front(Vector3(x0 + float(at_cell.x) * cell,
+					float(height[at_cell]),
+					z0 + float(at_cell.y) * cell))
+			at_cell = came_from[at_cell]
+		route.push_front(Vector3(x0 + float(start.x) * cell,
+				float(height[start]), z0 + float(start.y) * cell))
+		return {"ok": true, "why": "", "reached": seen.size(),
+				"route": route}
 	var lo := Vector2i(9999, 9999)
 	var hi := Vector2i(-9999, -9999)
 	for c: Vector2i in seen:
@@ -3540,6 +3599,538 @@ func _test_a_committed_layout_replays_without_re_solving() -> void:
 	(solved["root"] as Node3D).queue_free()
 	(replayed["root"] as Node3D).queue_free()
 	await get_tree().process_frame
+
+## THE TWO ROOMS, LEFT BY THE ACTUAL PLAYER.
+##
+## The flood says these are escapable. The flood is a model: it samples
+## columns and joins them by a slope rule, and a model reported as
+## evidence is how the first version of it passed both rooms it was
+## written to catch. This walks a real `Player` -- `move_and_slide`,
+## gravity, the capsule, the real input actions -- from where a body
+## enters to where one leaves.
+##
+## **No movement offers and no Teleport.** Nothing here constructs an
+## offer, equips an Echo or touches a constant. The kit is walking,
+## gravity and the base jump, and the rooms are the ones the 2026-09-11
+## playtest could not leave.
+func _test_the_actual_player_leaves_c015_and_c005_on_foot() -> void:
+	var cases := [
+		{"chamber": {"id": "c015", "type": "arena",
+				"width": 23.7, "depth": 10.1, "wall_height": 4.6,
+				"objective": "kill_all", "enemies": [],
+				"elevation": {"kind": "gallery", "rise": 1.86,
+					"coverage": 0.3, "side": "back", "access": "ramp"}},
+			"who": "c015 (back gallery over the exit)"},
+		{"chamber": {"id": "c005", "type": "arena",
+				"width": 19.3, "depth": 17.0, "wall_height": 6.0,
+				"objective": "kill_all", "enemies": [],
+				"elevation": {"kind": "pit", "rise": 1.66,
+					"coverage": 0.32, "side": "left", "access": "ramp"}},
+			"who": "c005 (pit)"},
+	]
+	for case: Dictionary in cases:
+		var result := _build(case["chamber"] as Dictionary)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var entry: Vector3 = result.get("entry_offset",
+				RoomContract.LEGACY_ENTRY)
+		var leave: Vector3 = result["exit_offset"]
+		var player := await _player_at(
+				Vector3(entry.x, entry.y + 0.6, entry.z + 1.0))
+		_check(player.velocity.length() < 30.0,
+				"%s: the player fell out of the room at spawn"
+				% str(case["who"]))
+		var walk := await _player_walks_to(player,
+				Vector3(leave.x, leave.y, leave.z - 0.6), WALK_FRAMES,
+				true)
+		print("  PLAYER %s: arrived=%s frames=%d closest=%.2f m stuck=%s at %v"
+				% [str(case["who"]), str(walk["arrived"]),
+					int(walk["frames"]), float(walk["closest"]),
+					str(walk["stuck"]), walk["at"]])
+		_check(bool(walk["arrived"]),
+				"%s: the actual player walked for %d frames and got no "
+				% [str(case["who"]), int(walk["frames"])]
+				+ "closer than %.2f m to the way out (stuck=%s, ended at "
+				% [float(walk["closest"]), str(walk["stuck"])]
+				+ "%v)" % walk["at"])
+		player.queue_free()
+		(result["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+		rooms_checked += 1
+
+	# AND OUT OF THE PIT ITSELF, which is the case the playtest actually
+	# hit: falling in is not optional, because the pit is a hole in the
+	# floor of a room the mandatory route crosses.
+	var pit := _build({"id": "c005", "type": "arena",
+			"width": 19.3, "depth": 17.0, "wall_height": 6.0,
+			"objective": "kill_all", "enemies": [],
+			"elevation": {"kind": "pit", "rise": 1.66, "coverage": 0.32,
+				"side": "left", "access": "ramp"}})
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var floor_at: Vector3 = pit["exit_offset"]
+	# Drop into the recess: the pit is on the LEFT, a third of the width.
+	var into := Vector3(-19.3 * 0.30, 1.0, 17.0 * 0.5)
+	var fell := await _player_at(into)
+	for _i in 40:
+		await get_tree().physics_frame
+	print("  PLAYER c005 fell to y=%.2f" % fell.global_position.y)
+	_check(fell.global_position.y < -0.5,
+			"the player did not fall into the pit (y=%.2f), so climbing "
+			% fell.global_position.y + "out of it was never tested")
+	# THE DIAGNOSTIC PROPOSES THE ROUTE; THE BODY WALKS IT. Steering
+	# straight at the exit put the player in the corner of the pit
+	# nearest it, 4.00 m short and 0.86 m down -- which measures the
+	# steering and not the room. The ramp is round a corner, and a human
+	# with the same information walks to the ramp.
+	var goal := Vector3(floor_at.x, floor_at.y, floor_at.z - 0.6)
+	var here := fell.global_position
+	var blind: Array[RID] = [fell.get_rid()]
+	var proposed := _walk_bounds(pit["bounds"] as AABB,
+			Vector2(here.x, here.z), Vector2(goal.x, goal.z),
+			ESCAPE_CELL, INF, blind)
+	print("  FLOOD c005 pit: ok=%s reached=%d route=%d waypoints"
+			% [str(proposed["ok"]), int(proposed["reached"]),
+				(proposed.get("route", []) as Array).size()])
+	_check(bool(proposed["ok"]),
+			"the flood cannot get out of c005's pit either: %s"
+			% str(proposed["why"]))
+	var out_walk := await _player_follows(fell,
+			proposed.get("route", []) as Array, goal)
+	print("  PLAYER c005 pit escape: arrived=%s legs=%d/%d frames=%d final=%.2f m at %v"
+			% [str(out_walk["arrived"]), int(out_walk["legs"]),
+				int(out_walk["marks"]), int(out_walk["frames"]),
+				float(out_walk["final"]), out_walk["at"]])
+	_check(bool(out_walk["arrived"]),
+			"a player who fell into c005's pit could not walk out along "
+			+ "the route the flood says exists: stopped %.2f m short at "
+			% float(out_walk["final"]) + "%v after %d of %d waypoints"
+			% [out_walk["at"], int(out_walk["legs"]),
+				int(out_walk["marks"])])
+	fell.queue_free()
+	(pit["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+	rooms_checked += 1
+
+## THE WHOLE JOURNEY, WALKED BY THE BODY.
+##
+## `_test_the_branch_is_crossed_returned_from_and_remembered` proves the
+## same shape with the flood and with direct calls: it opens the lock by
+## calling `try_open` and moves progress between controllers by hand.
+## That is a proof about the STRUCTURE. This is the proof about the
+## PLAYER: a real `Player`, real input actions, real physics, walking
+## into the lock, onto the key, through the doorway, onto the plug, and
+## back in after the progress went to disk and came off it again.
+##
+## The flood is still used, and only to PROPOSE a route -- the body is
+## what walks it. Nothing here equips an Echo, constructs an offer or
+## touches a movement constant.
+func _test_a_real_player_walks_the_whole_branch_journey() -> void:
+	var zone := ZoneController.new()
+	add_child(zone)
+	zone.setup(_journey_zone())
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	if zone.layout_failed != "" or zone.player == null:
+		_check(false, "the journey Zone did not compose: %s"
+				% zone.layout_failed)
+		zone.queue_free()
+		return
+	var locks: Array = zone._zone_locks
+	_check(locks.size() == 1,
+			"%d locks in the journey Zone; the fixture declares one"
+			% locks.size())
+	if locks.size() != 1:
+		zone.queue_free()
+		return
+	var lock: LockedDoor = locks[0]
+	var door_at := lock.global_position
+	var player: Player = zone.player
+	var blind: Array[RID] = [player.get_rid()]
+	var whole: AABB = zone._world_bounds
+	var key_node: ZoneKey = null
+	for node: Node in _collect_all(zone):
+		if node is ZoneKey:
+			key_node = node
+	_check(key_node != null, "the journey Zone placed no key")
+	var vault_at := _anchor_of(zone, "room:vault:arrival")
+	_check(vault_at != Vector3.ZERO,
+			"the Zone resolved no arrival for the vault")
+	if key_node == null or vault_at == Vector3.ZERO:
+		zone.queue_free()
+		return
+
+	# 1. THE CLOSED LOCK IS A WALL TO A BODY. Walk at the vault before
+	#    holding anything: the flood says there is no way through, and the
+	#    body confirms it by ending up outside.
+	var shut := _walk_bounds(whole,
+			Vector2(player.global_position.x, player.global_position.z),
+			Vector2(vault_at.x, vault_at.z), 0.5,
+			whole.position.y + 2.6, blind)
+	print("  JOURNEY lock shut: flood reaches the vault = %s (door at %v)"
+			% [str(shut["ok"]), door_at])
+	_check(not bool(shut["ok"]),
+			"the vault is reachable with the lock still standing, so the "
+			+ "gate is scenery")
+	_check(is_instance_valid(lock), "the lock opened without a key")
+
+	# 2. THE KEY, PICKED UP BY WALKING ONTO IT. The pickup box is
+	#    1.2 m across, so arriving "near" it is not arriving on it.
+	var to_key := _walk_bounds(whole,
+			Vector2(player.global_position.x, player.global_position.z),
+			Vector2(key_node.global_position.x,
+					key_node.global_position.z),
+			0.5, whole.position.y + 2.6, blind)
+	_check(bool(to_key["ok"]),
+			"no walking route to the key exists: %s" % str(to_key["why"]))
+	var got := await _player_follows(player,
+			to_key.get("route", []) as Array, key_node.global_position,
+			0.45)
+	print("  JOURNEY key: arrived=%s legs=%d/%d frames=%d final=%.2f m"
+			% [str(got["arrived"]), int(got["legs"]), int(got["marks"]),
+				int(got["frames"]), float(got["final"])])
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(zone.keys_held().has("red"),
+			"the player walked onto the key and is not holding it "
+			+ "(stopped %.2f m away): %s"
+			% [float(got["final"]), str(zone.keys_held())])
+	_check(not is_instance_valid(lock),
+			"the key is held and the lock is still standing")
+
+	# 3. ACROSS THE THRESHOLD, into the branch the door actually opens on.
+	await get_tree().physics_frame
+	var into := _walk_bounds(whole,
+			Vector2(player.global_position.x, player.global_position.z),
+			Vector2(vault_at.x, vault_at.z), 0.5,
+			whole.position.y + 2.6, blind)
+	_check(bool(into["ok"]),
+			"with the lock open there is still no route into the vault: "
+			+ "%s" % str(into["why"]))
+	var start_at := _anchor_of(zone, "zone_start")
+	var rt: Array = into.get("route", [])
+	var vault_box := AABB()
+	for record: Dictionary in zone._chambers:
+		if str((record["chamber"] as Dictionary).get("id", "")) == "vault":
+			vault_box = record["bounds"]
+	_check(vault_box.has_volume(), "the vault has no bounds to enter")
+	var crossed := await _player_follows(player,
+			into.get("route", []) as Array, vault_at, ARRIVED, 0.5,
+			vault_box)
+	print("  JOURNEY vault: entered=%s legs=%d/%d frames=%d at %v"
+			% [str(crossed["entered"]), int(crossed["legs"]),
+				int(crossed["marks"]), int(crossed["frames"]),
+				crossed["at"]])
+	_check(bool(crossed["entered"]),
+			"the body could not cross into the vault: stopped %.2f m "
+			% float(crossed["final"]) + "short at %v" % crossed["at"])
+	_check(vault_box.grow(0.4).has_point(player.global_position),
+			"the walk reported entering the vault and the body is at %v, "
+			% player.global_position + "outside %v" % vault_box)
+
+	# 4. THE RETURN PLUG, ACTIVATED BY WALKING ONTO IT. The plug stands
+	#    at the vault's arrival -- the dead end's way back -- so the last
+	#    few metres of this walk are the activation.
+	var before := player.global_position
+	var home := AABB(start_at - Vector3(3.0, 3.0, 3.0),
+			Vector3(6.0, 6.0, 6.0))
+	var onto := await _player_walks_to(player, vault_at, 300, true, 0.8,
+			home)
+	print("  JOURNEY onto the plug: frames=%d at %v"
+			% [int(onto["frames"]), onto["at"]])
+	Input.action_release("move_forward")
+	for _i in 20:
+		await get_tree().physics_frame
+	var after := player.global_position
+	print("  JOURNEY plug: %v -> %v (zone_start %v)"
+			% [before, after, start_at])
+	# AT the Zone start, not merely nearer it. "Closer" would pass for a
+	# player who simply walked back out of the vault.
+	_check(after.distance_to(start_at) < 3.0,
+			"the player walked onto the return plug in the dead end and "
+			+ "ended %.2f m from the Zone start it names (%v -> %v, "
+			% [after.distance_to(start_at), before, after]
+			+ "start %v)" % start_at)
+
+	# 5. LEAVE, PERSIST, RE-ENTER.
+	#
+	# **This is the ENGINE's half of the save and says so.** The campaign
+	# save is the bridge's and is reloaded from bytes by
+	# `test_amalgam_end_to_end`; what is proved here is that the progress
+	# the engine hands out survives serialization and puts the Zone back
+	# the way the player left it.
+	var carried := {"keys": zone.keys_held(),
+			"locks": zone.locks_opened(),
+			"stations": zone.stations_reached(),
+			"resume": zone.resume_anchor}
+	var path := "user://journey_progress_test.json"
+	var handle := FileAccess.open(path, FileAccess.WRITE)
+	_check(handle != null, "could not persist the journey's progress")
+	if handle != null:
+		handle.store_string(JSON.stringify(carried))
+		handle.close()
+	zone.queue_free()
+	await get_tree().process_frame
+	var reloaded: Dictionary = JSON.parse_string(
+			FileAccess.get_file_as_string(path))
+	_check(reloaded != null
+				and (reloaded["keys"] as Dictionary).has("red")
+				and not (reloaded["locks"] as Dictionary).is_empty(),
+			"the progress did not survive the round trip to disk: %s"
+			% str(reloaded))
+
+	var again := ZoneController.new()
+	again.keys_carried = reloaded["keys"]
+	again.locks_carried = reloaded["locks"]
+	again.stations_online = reloaded["stations"]
+	again.resume_anchor = str(reloaded["resume"])
+	add_child(again)
+	again.setup(_journey_zone())
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var still_shut := 0
+	for raw: Variant in again._zone_locks:
+		if is_instance_valid(raw):
+			still_shut += 1
+	print("  JOURNEY re-entry: locks standing=%d keys=%s"
+			% [still_shut, str(again.keys_held())])
+	_check(still_shut == 0,
+			"%d lock(s) were standing again after the progress came back "
+			% still_shut + "off disk, so a player can be sealed on the "
+			+ "far side of a door they opened")
+	_check(again.keys_held().has("red"),
+			"the red key was not held on re-entry")
+	# AND THE BODY AGREES: the vault is walkable again without touching
+	# the key a second time.
+	if again.player != null:
+		var back_blind: Array[RID] = [again.player.get_rid()]
+		var back := _walk_bounds(again._world_bounds as AABB,
+				Vector2(again.player.global_position.x,
+						again.player.global_position.z),
+				Vector2(_anchor_of(again, "room:vault:arrival").x,
+						_anchor_of(again, "room:vault:arrival").z),
+				0.5, (again._world_bounds as AABB).position.y + 2.6,
+				back_blind)
+		_check(bool(back["ok"]),
+				"on re-entry the vault is not reachable even though its "
+				+ "lock was already open: %s" % str(back["why"]))
+	again.queue_free()
+	await get_tree().process_frame
+	rooms_checked += 1
+
+## A SMALL ZONE THE WHOLE JOURNEY FITS IN: a key, a lock, a branch behind
+## it, and the plug in the dead end. Three spine rooms rather than eight,
+## because what is being measured is a body walking and not a router.
+func _journey_zone() -> Dictionary:
+	var chambers: Array = []
+	for id: String in ["arrival_hall", "junction", "far_end"]:
+		var chamber := {"id": id, "type": "arena",
+				"width": 16.0, "depth": 14.0, "wall_height": 5.0,
+				"objective": "reach_exit", "enemies": [],
+				"activities": [], "features": [],
+				"reward_location_id": 89101500 + chambers.size(),
+				"additional_reward_location_ids": []}
+		if id == "arrival_hall":
+			chamber["keys"] = [{"key_id": "red", "colour": "red"}]
+		if id == "junction":
+			chamber["doors"] = [
+					{"socket_id": "entry", "usage": "USED"},
+					{"socket_id": "exit", "usage": "USED"},
+					{"socket_id": "side_left", "usage": "LOCKED",
+							"key_id": "red", "colour": "red"}]
+			chamber["branches"] = [{
+				"socket_id": "side_left",
+				"chamber": {"id": "vault", "type": "arena",
+					"width": 14.0, "depth": 12.0, "wall_height": 5.0,
+					"objective": "reach_exit", "enemies": [],
+					"activities": [], "features": [],
+					"reward_location_id": null,
+					"additional_reward_location_ids": []},
+			}]
+		chambers.append(chamber)
+	return {"zone_id": "journey", "theme": "concrete_facility",
+			"display_name": "Journey", "chambers": chambers,
+			"plugs": [{"edge_id": "p:vault:start", "room_id": "vault",
+				"source_anchor": "room:vault:arrival",
+				"destination": "zone_start", "device": "pad"}]}
+
+## Every node under a Zone, so a test can find the one it needs without
+## the controller having to publish a list for it.
+func _collect_all(root: Node) -> Array[Node]:
+	var out: Array[Node] = [root]
+	for child in root.get_children():
+		out.append_array(_collect_all(child))
+	return out
+
+func _anchor_of(zone: ZoneController, name: String) -> Vector3:
+	var anchors: Variant = zone.get("_zone_anchors")
+	if typeof(anchors) == TYPE_DICTIONARY \
+			and (anchors as Dictionary).has(name):
+		return (anchors as Dictionary)[name]
+	return Vector3.ZERO
+
+# --- the actual Player, walking ------------------------------------------
+#
+# THE FLOOD IS A DIAGNOSTIC AND THIS IS THE EVIDENCE. The flood samples
+# columns and joins them by a slope rule; it is fast, it covers a whole
+# Zone, and it is a MODEL of the player. What follows is the player:
+# `Player.create()`, `move_and_slide`, gravity, the capsule, the real
+# input actions. A model that agrees with the body is worth having; a
+# model reported as if it were the body is not, which is why the two are
+# kept apart here and reported apart.
+#
+# NOTHING BELOW CHANGES MOVEMENT TUNING. No offer is constructed, no
+# Echo is equipped, no constant is touched: walking, gravity, and the
+# jump the base kit already has.
+
+## How many physics frames a walk may take before it has failed.
+const WALK_FRAMES := 900
+
+## Close enough to have arrived, in the horizontal plane.
+const ARRIVED := 1.4
+
+## Drives the real Player toward a point and reports what happened.
+##
+## Steers by yaw and presses `move_forward`, which is what the human does:
+## `Player._physics_process` reads `Input.get_vector` and moves along its
+## own basis, so a test that set `velocity` directly would be testing
+## arithmetic rather than the controller.
+##
+## Returns `{arrived, at, frames, closest, stuck}`. `stuck` is the honest
+## part -- a player pressed into a wall for a second of game time has not
+## arrived and is not going to.
+func _player_walks_to(player: Player, goal: Vector3,
+		frames := WALK_FRAMES, jump_when_stuck := false,
+		tolerance := ARRIVED, stop_inside := AABB()) -> Dictionary:
+	var closest := INF
+	var still := 0
+	var last := player.global_position
+	Input.action_press("move_forward", 1.0)
+	var used := 0
+	for i in frames:
+		used = i + 1
+		var here := player.global_position
+		# SOMETHING MAY MOVE THE BODY MID-WALK, and when it does the
+		# walk is over. A return plug sends the player home from the
+		# dead end they just walked into -- and the finger is still on
+		# the key, so the old version kept walking from the Zone start
+		# back toward the vault and reported the position twelve metres
+		# along that second walk as where the plug had put them.
+		if stop_inside.has_volume() and stop_inside.has_point(here):
+			break
+		var flat := Vector2(goal.x - here.x, goal.z - here.z)
+		closest = minf(closest, flat.length())
+		if flat.length() <= tolerance:
+			break
+		# Face the goal. The player walks along -Z of its own basis, which
+		# is what `Vector3(input.x, 0, input.y)` with `move_forward` gives.
+		player.rotation.y = atan2(-flat.x, -flat.y)
+		if (here - last).length() < 0.012:
+			still += 1
+			if jump_when_stuck and still == 24 and player.is_on_floor():
+				Input.action_press("jump", 1.0)
+				await get_tree().physics_frame
+				Input.action_release("jump")
+				still = 0
+		else:
+			still = 0
+		last = here
+		if still > 90:
+			break
+		await get_tree().physics_frame
+	Input.action_release("move_forward")
+	var at := player.global_position
+	var final := Vector2(goal.x - at.x, goal.z - at.z).length()
+	return {"arrived": final <= tolerance, "at": at, "frames": used,
+			"closest": closest, "stuck": still > 90}
+
+## Walks the real Player along a route the flood proposed.
+##
+## **The flood proposes and the body disposes.** A straight line at the
+## goal is not how anyone leaves a pit -- the ramp is round a corner, and
+## a player pressed into the wall nearest the exit is not evidence about
+## the geometry, it is evidence about steering. So the diagnostic hands
+## over waypoints and the real controller walks them, which is what a
+## human does with the same information.
+##
+## Thinned, because a waypoint every half metre is a stutter and not a
+## walk: the body only needs the corners.
+func _player_follows(player: Player, route: Array,
+		goal: Vector3, tolerance := ARRIVED,
+		cell_hint := 0.5, stop_inside := AABB()) -> Dictionary:
+	var legs := 0
+	var frames := 0
+	var stuck_run := 0
+	var entered := false
+	# THINNED TO ABOUT A METRE AND A HALF, not to a fixed count.
+	#
+	# A fixed twelve waypoints put them three metres apart on a forty
+	# metre route, and the straight line between two of them cuts the
+	# corner of a wall -- so the body walked into masonry beside a 2.4 m
+	# doorway and pressed there for two thousand frames while the flood
+	# insisted a route existed. The doorway is the narrowest thing on any
+	# route, so the spacing has to be narrower than the doorway.
+	var step := maxi(1, int(round(1.5 / maxf(cell_hint, 0.1))))
+	var marks: Array[Vector3] = []
+	for i in range(0, route.size(), step):
+		marks.append(route[i] as Vector3)
+	marks.append(goal)
+	for raw: Variant in marks:
+		var mark: Vector3 = raw
+		var leg := await _player_walks_to(player, mark, 150, true,
+				ARRIVED if legs + 1 < marks.size() else tolerance,
+				stop_inside)
+		legs += 1
+		frames += int(leg["frames"])
+		# A STUCK LEG IS NOT A STUCK WALK. The route is a grid path, so
+		# the straight line between two waypoints can clip the corner
+		# beside a doorway -- and the next waypoint is usually what pulls
+		# the body round it. Abandoning the whole walk on the first one
+		# stopped the player against the wall of the room it started in
+		# and reported the vault unreachable. Only a RUN of stuck legs
+		# means the body is not going anywhere.
+		# ARRIVED, IN THE SENSE THE CALLER MEANT. A walk whose goal is a
+		# room can end the moment the body is in the room -- and has to,
+		# when something in that room acts on a player who stands in it.
+		# The return plug sits at the vault's arrival, so a walk aimed at
+		# the arrival was still walking when the plug fired, and the legs
+		# after that measured a player who had already been sent home.
+		if stop_inside.has_volume() \
+				and stop_inside.grow(0.4).has_point(
+					player.global_position):
+			entered = true
+			break
+		if bool(leg["stuck"]):
+			stuck_run += 1
+			if stuck_run >= 4:
+				break
+		else:
+			stuck_run = 0
+	var at := player.global_position
+	var final := Vector2(goal.x - at.x, goal.z - at.z).length()
+	return {"arrived": entered or final <= tolerance, "at": at,
+			"frames": frames, "legs": legs, "marks": marks.size(),
+			"final": final, "entered": entered}
+
+## Presses `interact` for exactly one frame, as a finger does.
+func _player_interacts(player: Player) -> void:
+	Input.action_press("interact", 1.0)
+	await get_tree().physics_frame
+	Input.action_release("interact")
+	await get_tree().physics_frame
+	# `player` is what carries the interact target; touching it here keeps
+	# the signature honest about what this needs.
+	assert(player != null)
+
+## A real Player standing at `at`, ready to walk.
+func _player_at(at: Vector3) -> Player:
+	var player := Player.create()
+	add_child(player)
+	player.global_position = at
+	player.velocity = Vector3.ZERO
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	return player
 
 ## THE PROBER MUST NOT BE KINDER THAN THE BODY.
 ##

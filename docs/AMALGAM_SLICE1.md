@@ -97,6 +97,8 @@ that was verified by removing them.
 | **The walk prober is no kinder than the body** | `room_contract_driver.gd` `_rise_over`, `_is_a_ramp` | the ascent bound is read off a real `Player`'s `floor_max_angle` and is strictly less than `MAX_VERTICAL_STEP`; with climbing disabled all three escape proofs fail, so the rule is live |
 | **A branch is a placed room, crossed, returned from and remembered** | `zone_builder.gd` branches, `slice1_fixture.gd`, `zone_controller.gd` carried progress | the vault is refused reachable with the lock standing and reachable once it opens, its plug lands standable at `zone_start`, and the opened lock, the key and the station all survive a leave and a re-entry |
 | **A branch is furnished like any other room** | `zone_builder.gd` `_furnish_room` | a 280 m² branch declaring a key gets the key and the warp station it is owed; discarding the branch's furnishing turns both red |
+| **The actual Player leaves c015 and c005** | `room_contract_driver.gd` `_player_walks_to` | a real `Player`, real input actions, real physics: c015 in 69 frames, c005 in 126, and out of the pit in 102 along a route the flood proposed |
+| **The actual Player walks the whole branch journey** | `_test_a_real_player_walks_the_whole_branch_journey` | lock shut → vault unreachable; key picked up at 0.34 m → lock opens; body crosses into the vault; walks onto the plug and lands at `zone_start`; progress through a file and back and the lock is still open |
 | **A branch may branch** | `zone_builder.gd` branch queue, `unreachable_branches` | a depth-two branch is placed, furnished and reachability-checked; removing the recursion reports "branching is one level deep" |
 | **A committed layout replays without re-solving** (law 47c) | `zone_builder.gd` `_replay_route`, `build(..., layout)` | a manifest replays under a **0.001 ms** budget — the budget that makes solving impossible — with every room within 0.001 m, the same piece count and the same box count |
 
@@ -144,6 +146,60 @@ that was verified by removing them.
 - **Closing** a spatial cycle. Refusal is implemented and proved (§5e);
   the router still builds chains, so a Zone that wants a genuine loop
   gets a typed `LAYOUT_INFEASIBLE` naming the pair, not a layout.
+
+## 5o. The flood proposes, the body disposes
+
+The brief asked for evidence from the actual Player rather than from the
+flood, and the two are now kept apart and reported apart.
+
+**The flood is a diagnostic.** It samples columns and joins them by a
+slope rule. It is fast, it covers a Zone, and it is a *model*.
+
+**The Player is the evidence.** `Player.create()`, `move_and_slide`,
+gravity, the capsule, and the real input actions — `move_forward` pressed
+and the body steered by yaw, because `_physics_process` reads
+`Input.get_vector` and a test that set `velocity` would be testing
+arithmetic instead of the controller. No offer is constructed, no Echo
+equipped, no constant touched.
+
+The two work together the way a player does: the flood **proposes a
+route** and the body **walks it**. Steering straight at a goal is not how
+anyone leaves a pit — the ramp is round a corner — and a player pressed
+into the wall nearest the exit measures the steering, not the room.
+
+### What the body did
+
+| | frames | result |
+|---|---:|---|
+| c015, entry → exit | 69 | out |
+| c005, entry → exit | 126 | out |
+| c005, **fallen into the pit** → exit | 102 | out, via 11 waypoints |
+| journey: onto the key | 95 | picked up at **0.34 m** |
+| journey: into the vault | 277 | entered at waypoint 24 of 27 |
+| journey: onto the plug | 25 | landed at `zone_start` |
+
+### Three defects the body found that the model did not
+
+1. **The flood measured the player's own head.** Flooding a room with a
+   real Player standing in it read the capsule's top as the floor: a body
+   at −0.75 m reported a start height of 1.02 m, one standable cell, and
+   a sealed pit. The probe takes an exclusion list now.
+2. **A stuck leg is not a stuck walk.** The straight line between two
+   waypoints clips the corner beside a doorway; abandoning the walk on
+   the first stuck leg stopped the body in the room it started in and
+   reported the vault unreachable. Only a run of four gives up.
+3. **Something may move the body mid-walk.** The return plug sends the
+   player home from the dead end they just walked into — and the finger
+   is still on the key, so the walk carried on from the Zone start and
+   reported a position twelve metres into that *second* walk as where the
+   plug had put them. A walk can now end on entering a region.
+
+### And one rule that is stricter but not yet distinguished
+
+Two standable cells 0.5 m apart can have a 0.4 m wall **entirely between
+them**, so the flood could walk through masonry. The midpoint is now
+checked as well. **No current fixture separates the two behaviours** —
+this is recorded as a correctness improvement, not claimed as proved.
 
 ## 5m. Solved once, replayed forever — and a corner that could not be
 
