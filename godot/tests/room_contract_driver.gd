@@ -119,6 +119,7 @@ func _run() -> void:
 	await _test_a_key_is_reachable_before_the_lock_it_opens()
 	await _test_the_playable_slice_composes_end_to_end()
 	await _test_warp_stations_are_placed_and_only_link_reached_ones()
+	await _test_an_authored_shell_carries_three_doors()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
 
@@ -2902,6 +2903,114 @@ func _test_warp_stations_are_placed_and_only_link_reached_ones() -> void:
 					% banned + "editing and is deferred")
 	rooms_checked += 1
 	(out["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+const AUTHORED_JUNCTION := 		"res://content/test_fixtures/shell_room_junction.tscn"
+
+## The authored counterpart of `shell_room_honest`, with a third doorway.
+func _junction_entry() -> Dictionary:
+	var manifest := _authored_entry(AUTHORED_JUNCTION)
+	manifest["id"] = "shell_room_junction"
+	var sockets: Array = []
+	for raw: Variant in manifest["sockets"]:
+		var socket: Dictionary = raw
+		# The balcony moved to the right wall in this fixture, so the
+		# perch that stands on it moves with it.
+		if str(socket.get("name", "")) == "perch":
+			socket = socket.duplicate()
+			socket["position"] = [3.6, 3.0, 11.0]
+		sockets.append(socket)
+	sockets.append({"name": "side_west", "kind": "doorway",
+			"position": [-6.0, 0.0, 8.0], "width": 2.4, "height": 3.2})
+	manifest["sockets"] = sockets
+	var surfaces: Array = []
+	for raw: Variant in manifest["surfaces"]:
+		var surface: Dictionary = raw
+		if str(surface.get("name", "")) == "balcony":
+			surface = surface.duplicate()
+			surface["center"] = [3.6, 3.0, 11.0]
+		surfaces.append(surface)
+	manifest["surfaces"] = surfaces
+	var volumes: Array = []
+	for raw: Variant in manifest["volumes"]:
+		var volume: Dictionary = raw
+		if str(volume.get("name", "")) == "under_balcony":
+			volume = volume.duplicate()
+			volume["center"] = [3.6, 1.5, 11.0]
+		volumes.append(volume)
+	manifest["volumes"] = volumes
+	return manifest
+
+## The authored producer, with three doors, held to the same rule.
+##
+## Multi-door composition was proved on the PROCEDURAL producer alone:
+## `procedural_sockets` declares four openings and `cut_plan` carves the
+## assigned ones. The authored producer had **no door plan at all** —
+## every opening it has is already in the mesh — so nothing measured
+## whether an authored shell's assignment meant anything.
+##
+## The asymmetry is real and is why this is a separate path. A `USED`
+## authored door needs nothing done to it. A `SEALED` one cannot be an
+## uncut wall, because the hole is already modelled: it needs a CLOSURE
+## PLACED OVER IT, which is a different construction with a different way
+## of going wrong, and it must be measured as solid all the same.
+func _test_an_authored_shell_carries_three_doors() -> void:
+	var manifest := _junction_entry()
+	var registry := ContentRegistry.new()
+	registry.entries[str(manifest["id"])] = manifest
+	var chamber := {"id": "auth_junction", "type": "arena",
+			"shell_id": str(manifest["id"]), "enemies": [],
+			# INNER dimensions. The shared rule is an equality: a
+			# chamber declares the space inside the walls and the
+			# manifest declares the envelope, so these are the shell's
+			# 12 x 16 less `OUTER`.
+			"width": 11.2, "depth": 15.2, "wall_height": 6.0,
+			"objective": "reach_exit",
+			"doors": [
+				{"socket_id": "entry", "usage": "USED",
+					"edge_id": "a_in", "key_id": null},
+				{"socket_id": "exit", "usage": "USED",
+					"edge_id": "a_out", "key_id": null},
+				{"socket_id": "side_west", "usage": "USED",
+					"edge_id": "a_side", "key_id": null},
+			]}
+	var result := ContentInstantiator.build_chamber(
+			chamber, "concrete_facility", registry)
+	add_child(result["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(str(result.get("authored_shell", "")) == str(manifest["id"]),
+			"the authored junction fell back to a procedural room")
+	var doors: Array = result["doors"]
+	_check(doors.size() == 3,
+			"the authored junction resolved %d doors, not three"
+			% doors.size())
+	var who := "the authored three-door junction"
+	_judge(RoomContract.violations(result, who), who)
+	_judge(RoomAudit.findings(result, _space(), who), who)
+	authored_checked += 1
+	rooms_checked += 1
+	(result["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+	# AND THE SEALED ONE IS SOLID, by a slab that is really there.
+	var sealed_chamber: Dictionary = chamber.duplicate(true)
+	(sealed_chamber["doors"] as Array)[2] = {"socket_id": "side_west",
+			"usage": "SEALED", "edge_id": null, "key_id": null}
+	var closed := ContentInstantiator.build_chamber(
+			sealed_chamber, "concrete_facility", registry)
+	add_child(closed["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check((closed["root"] as Node3D).find_child(
+				"Closure_side_west", true, false) != null,
+			"an authored SEALED door placed no closure, so the hole the "
+			+ "shell was modelled with is still a hole")
+	var shut := "the authored junction with its side door sealed"
+	_judge(RoomAudit.findings(closed, _space(), shut), shut)
+	probes_expected_to_fail += 1
+	rooms_checked += 1
+	(closed["root"] as Node3D).queue_free()
 	await get_tree().process_frame
 
 func _test_the_played_zone_rooms_can_be_left_on_foot() -> void:

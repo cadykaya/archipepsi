@@ -85,6 +85,8 @@ that was verified by removing them.
 | **Timeout ≠ infeasible** | `zone_builder.gd` | a 0.001 ms budget yields `LAYOUT_TIMEOUT` with candidates remaining |
 | **Infeasible is exhausted** | `zone_builder.gd` | a Zone that doubles back into its own arm exhausts the **shipping** policy and reports it; a tightened policy exhausts too, which is what makes the result mean "this space is empty" |
 | **Warp stations** | `warp_station.gd` | placed at entrance, exit and large rooms; an unreached station is never a destination; no prompt offers loadout editing |
+| **Activity completion reaches the screen** | `zone_controller.gd` | asserted on the live object graph; removing the listener reports "6 of 6 activities complete into silence" |
+| **The AUTHORED producer carries N doors too** | `content_instantiator.gd` `authored_door_plan` | a three-doorway authored shell composes, audits and seals |
 | **Key reachable before its own lock, by walking** | `room_contract_driver.gd` | flooded walk-only from spawn; the room beyond the lock is *not* reached |
 
 ## 4. Implemented but not integrated
@@ -109,9 +111,51 @@ that was verified by removing them.
 - The bridge column entirely: `TopologyEdge`, `realization`,
   `DoorAssignment` / `PlugAssignment`, `ZoneProgress`, `DORMANT`, the
   `R ⊆ E` verifier, the manifest and check 19e.
-- **Authored** multi-door shells. Slice 1 uses only procedural junctions;
-  all twelve authored shells remain two-door and remain valid.
+- **Shipping** authored multi-door shells. The engine path is proved
+  against `shell_room_junction.tscn`, a three-doorway technical fixture
+  this lane authored, so Art can add real three-door shells without the
+  engine being the unknown. All twelve shipping shells remain two-door
+  and remain valid.
 - Spatial cycles, warp stations, ability gates, the exit unlock.
+
+## 5c. The authored producer had no door plan at all
+
+Multi-door composition was proved on the **procedural** producer alone:
+`procedural_sockets` declares four openings and `cut_plan` carves the
+assigned ones. The authored producer resolved sockets by id — that landed
+in the first commit — and then **emitted no door plan**, so nothing
+measured whether an authored shell's assignment meant anything, and the
+inverted seal probe never ran on one.
+
+The two are not symmetrical and that is why this is a separate path:
+
+- A **`USED`** authored door needs nothing done to it. The opening is
+  already in the mesh.
+- A **`SEALED`** authored door cannot be an uncut wall for the same
+  reason. It needs a **closure placed over the existing aperture**,
+  which is a different construction with a different way of failing.
+
+`authored_door_plan` resolves each assignment against the shell's
+declared doorway sockets and refuses one that names a socket the shell
+does not declare, or names a socket that is not a doorway.
+`_place_closures` puts the slab in before the result is handed out, so
+the room a caller receives is already the room the audit will measure.
+
+**`shell_room_junction.tscn`** is the fixture that makes this measurable:
+`shell_room_honest.tscn`'s geometry with the left wall split around a
+2.4 m opening and the balcony moved to the right wall so it does not hang
+across it. It is a technical fixture, not content, and it needed no
+art-lane asset to exist.
+
+Removing `_place_closures` produces both failures it should: the closure
+is missing, **and** the inverted probe reports *"door 'side_west' is
+SEALED and must be solid, but the player's own capsule passes straight
+through it"*.
+
+One thing the fixture taught, worth writing down: the shared
+compatibility rule is an **equality**, and a chamber declares the space
+**inside** its walls while a manifest declares the **envelope**. A 12 × 16
+shell is offered to a chamber declaring 11.2 × 15.2, not 12 × 16.
 
 ## 5b. The playtest's open finding, closed
 

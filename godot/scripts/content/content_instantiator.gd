@@ -512,6 +512,12 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 		return ChamberBuilders.build(chamber, theme)
 
 	var size := _vector(entry.get("size", []), Vector3(4.0, 3.6, 8.0))
+	# CLOSURES BEFORE THE RESULT IS HANDED OUT, so the room a caller
+	# receives is already the room the audit will measure. An authored
+	# `SEALED` door is a slab over an aperture that exists; placing it
+	# later would leave a window in which the shell is a hole.
+	var doors := authored_door_plan(entry, chamber)
+	_place_closures(root, doors, size)
 	var result := {
 		"root": root,
 		# WHICH SHELL ACTUALLY ANSWERED, stamped by the only code that
@@ -528,6 +534,7 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 		# assumed (owner ruling, 2026-09-03). `exit_offset` has read the
 		# declared exit socket since S15; the entry had no equivalent and
 		# was taken to be the origin by everything downstream.
+		"doors": doors,
 		"entry_offset": _entry_offset(entry, chamber),
 		# WHERE THE PLAYER'S BODY ARRIVES, which is a different question
 		# from where the rooms join. The connector is a transform on the
@@ -665,6 +672,89 @@ static func _authored_offers(entry: Dictionary) -> Array:
 ## joining socket at all), but a shell whose only socket is named `entry`
 ## can, and it should chain rather than stack every room at the origin.
 ## WHERE THE PREVIOUS ROOM'S EXIT MEETS THIS ONE (owner ruling).
+## An authored shell's assigned doors, resolved and given an expected
+## answer — the authored counterpart of `ChamberBuilders.door_plan`.
+##
+## The procedural producer DECLARES its four openings and carves the ones
+## the assignment names. An authored shell is the other way round: every
+## opening it has is already modelled, so a `USED` door needs nothing
+## done to it and a `SEALED` one needs a CLOSURE PLACED OVER IT.
+##
+## That asymmetry is the reason this exists rather than reusing the
+## procedural plan. "No aperture; wall" is achievable for a room that has
+## not been built yet and is not achievable for a mesh that already has
+## the hole in it, and pretending otherwise would make an authored
+## `SEALED` door indistinguishable from a missing one.
+static func authored_door_plan(entry: Dictionary,
+		chamber: Dictionary) -> Array:
+	var out: Array = []
+	for raw: Variant in chamber.get("doors", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var door: Dictionary = raw
+		var socket := socket_by_id(entry, str(door.get("socket_id", "")))
+		if socket.is_empty():
+			push_warning("%s: door names socket '%s', which this shell "
+					% [str(entry.get("id", "?")),
+						str(door.get("socket_id", "?"))]
+					+ "does not declare")
+			continue
+		if str(socket.get("kind", "")) != "doorway":
+			push_warning("%s: door names '%s', which is a %s and not a "
+					% [str(entry.get("id", "?")),
+						str(socket.get("name", "?")),
+						str(socket.get("kind", "?"))] + "doorway")
+			continue
+		var usage := str(door.get("usage", "USED"))
+		out.append({
+			"socket_id": str(socket.get("name", "")),
+			"usage": usage,
+			"position": _vector(socket.get("position", []), Vector3.ZERO),
+			"width": float(socket.get("width", 2.4)),
+			"height": float(socket.get("height", 3.2)),
+			"passable": usage != "SEALED",
+		})
+	return out
+
+## The slab that makes an authored `SEALED` door solid.
+##
+## Placed rather than omitted, because the hole is already in the mesh.
+## It is the shell's own aperture dimensions plus a margin, so a closure
+## cannot be narrower than what it closes.
+static func _place_closures(root: Node3D, plan: Array,
+		size: Vector3) -> void:
+	for raw: Variant in plan:
+		var door: Dictionary = raw
+		if bool(door["passable"]):
+			continue
+		var body := StaticBody3D.new()
+		body.name = "Closure_%s" % str(door["socket_id"])
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		var w: float = float(door["width"]) + 0.6
+		var h: float = float(door["height"]) + 0.6
+		box.size = Vector3(w, h, 0.5)
+		shape.shape = box
+		shape.position = Vector3(0, h / 2.0, 0)
+		body.add_child(shape)
+		var mesh := MeshInstance3D.new()
+		var slab := BoxMesh.new()
+		slab.size = box.size
+		mesh.mesh = slab
+		mesh.position = shape.position
+		body.add_child(mesh)
+		var at: Vector3 = door["position"]
+		body.position = at
+		# WHICH WALL, decided against the ENVELOPE and not against the
+		# raw coordinates. A doorway at `(-6, 0, 8)` is in the left wall
+		# of a 12 x 16 room, and comparing |x| with |z| says otherwise
+		# because z is measured from the room's front rather than from
+		# its middle. Getting it wrong lays the slab flat across the
+		# opening's face and hangs it a metre outside the room.
+		if absf(at.x) >= size.x / 2.0 - 0.5:
+			body.rotation.y = PI / 2.0
+		root.add_child(body)
+
 ## ONE OPENING, BY ITS ID. The resolver every joining question goes
 ## through.
 ##
