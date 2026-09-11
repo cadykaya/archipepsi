@@ -331,6 +331,46 @@ run of them is guaranteed dead space.
      finding — a board that picks destinations is what lets a deferred
      Check be returned to.
 
+- **ask, major** Rooms with more than one entrance and one exit:
+  T-connectors, several exits from a large room, branches that rejoin, and
+  progression-locked entry points. Owner's words: *"its a major change but
+  I think its deserved."* What assumes exactly two doors:
+  - **The chamber contract.** Every builder returns one `exit_offset` and
+    reads one `entry_offset`, and all **twelve** authored shells declare
+    exactly two doorway sockets named `entry` and `exit`.
+  - **The Zone schema has no edges.** `Zone` carries `chambers` as a list
+    and the list order *is* the topology. A graph needs edges as data:
+    schema bump, save migration, baseline regeneration.
+  - **`ZoneBuilder`'s safety depends on being a chain.** Its header: *"turns
+    alternate direction (no U-shapes by construction)"*. Reconnection is
+    exactly what that rule forbids. `_all_but_last` — the exemption
+    letting a room touch the connector it joins — stops being correct once
+    a room legitimately joins two pieces. A cursor walk becomes a frontier
+    of open doorways plus a solver that can branch, fail and backtrack,
+    and the current generator already needs a 96-connector escape hatch to
+    chain large rooms in a line.
+  - **Every audit probes two doors.** `_openings_are_holes` tests "the
+    entry" and "the exit". N doors need N probes, plus a rule for which
+    branch is mandatory and whether an optional branch may dead-end.
+
+  **Two versions of the gating, very different cost.** `SOLUTIONS_CATALOGUE.md`
+  §2 **Zone-local keys** are not items — no location id, never scouted,
+  never sent, do not survive the Zone; *"a lock state on generated
+  geometry, exactly like `objective: kill_all`"* — validated by three
+  rules (a key reachable without passing its own lock, an acyclic key
+  graph, every gate declared in the AP logic), and the packet's verdict is
+  that it *"does not touch Archipelago at all ... it buys metroidvania
+  structure inside a Zone with zero multiworld risk."* **Unimplemented:
+  `zone.py` has no key field.** The other version, §0-bis Echo-capability
+  gates across Zones, is permitted but carries the AP-logic obligation.
+
+  **Recommended sequence: topology first, then local keys as the proving
+  layer, and the capability gates last.** Open question for the owner,
+  needed before a solver is written rather than after: **must a branch
+  rejoin, or may it dead-end?** Rejoining gives BRC-style freedom and is a
+  much stronger constraint; dead-ends give Zelda side-rooms and are far
+  easier to solve.
+
 ---
 
 ## 4. Corrections to earlier reports of mine
