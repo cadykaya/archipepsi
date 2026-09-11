@@ -128,6 +128,7 @@ func _run() -> void:
 	_test_the_walk_prober_is_no_kinder_than_the_controller()
 	await _test_a_committed_layout_replays_without_re_solving()
 	await _test_a_generated_zone_places_its_branch_off_the_spine()
+	_test_no_new_shell_puts_a_doorway_outside_its_room()
 	await _test_the_branch_is_crossed_returned_from_and_remembered()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
@@ -3241,6 +3242,52 @@ func _standable_near(at: Vector3) -> bool:
 	query.transform = Transform3D(Basis.IDENTITY,
 			at + Vector3(0, Constants.PLAYER_HEIGHT / 2.0 + 0.1, 0))
 	return space.intersect_shape(query, 1).is_empty()
+
+## EVERY AUTHORED DOORWAY IS ON ITS ROOM -- except three, by name.
+##
+## A joining socket outside its shell's `size` is a doorway in mid-air:
+## the router joins a corridor to the socket, the room's wall is
+## somewhere else, and between them is a gap with no floor. Three of the
+## twelve approved shells do this, all on `exit`, all by exactly 2.0 m
+## past their declared depth, and the other nine put `exit` INSIDE their
+## envelope -- so it is three mistakes and not a convention.
+##
+## **This lane measured it and did not change it.** A manifest coordinate
+## is authored geometry and authored geometry is Art's; the repair is
+## `docs/art-requests/2026-09-11-doorways-outside-their-envelope.md`.
+## The three are named here so a FOURTH turns this red, and so the day
+## Arty repairs one this test tells us by failing on the stale name.
+const KNOWN_DOORWAY_OVERHANGS := {
+	"shell_hall_transit": 1.6,
+	"shell_plenum_helix": 1.6,
+	"shell_span_basin": 1.6,
+}
+
+func _test_no_new_shell_puts_a_doorway_outside_its_room() -> void:
+	var registry := ContentRegistry.shared()
+	var seen := {}
+	var checked := 0
+	for id: String in registry.ids_of_category("room_shell"):
+		var entry := registry.get_entry(id)
+		checked += 1
+		var over := ContentInstantiator.doorways_outside_envelope(entry)
+		if over.is_empty():
+			continue
+		seen[id] = true
+		_check(KNOWN_DOORWAY_OVERHANGS.has(id),
+				"shell '%s' declares a doorway outside its own envelope "
+				% id + "(%s); the corridor joins where the socket is and "
+				% str(over) + "the wall is somewhere else, so there is a "
+				+ "gap with no floor between them")
+	_check(checked >= 12,
+			"only %d room shells were measured; the registry declares "
+			% checked + "twelve approved ones")
+	for id: String in KNOWN_DOORWAY_OVERHANGS:
+		_check(seen.has(id),
+				"'%s' is recorded here as having a doorway outside its "
+				% id + "envelope and no longer does; the Art repair has "
+				+ "landed and this list is stale")
+	rooms_checked += 1
 
 ## THE GENERATED GRAPH, PLACED.
 ##

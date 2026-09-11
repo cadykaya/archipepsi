@@ -689,10 +689,25 @@ static func layout_to_json(result: Dictionary) -> Dictionary:
 	var anchors := {}
 	for name: String in result.get("anchors", {}):
 		anchors[name] = _v3_out((result["anchors"] as Dictionary)[name])
+	# `arrival_ok` and not `arrival`: the validator's name for it, and the
+	# name says what it is. A MEASURED VERDICT, not a coordinate -- the
+	# points are already in `anchors`, and a point is where a body would
+	# arrive rather than evidence that one fits.
 	return {"status": str(result.get("status", "")),
 			"rooms": rooms, "joins": joins, "anchors": anchors,
-			"arrival": result.get("arrival", {}),
-			"apertures": result.get("apertures", {})}
+			"arrival_ok": result.get("arrival_ok", {}),
+			"apertures": result.get("apertures", {}),
+			"stations": _station_ids(result)}
+
+## The station ids the layout placed, which the manifest records so a
+## revisited Zone offers the same travel it did before.
+static func _station_ids(result: Dictionary) -> Array:
+	var out: Array = []
+	for raw: Variant in result.get("stations", []):
+		if raw is WarpStation:
+			out.append((raw as WarpStation).station_id)
+	out.sort()
+	return out
 
 static func layout_from_json(payload: Dictionary) -> Dictionary:
 	var rooms := {}
@@ -1304,10 +1319,18 @@ static func build(zone: Dictionary, theme_override := "",
 			chamber_by_id[str((raw_chamber as Dictionary).get("id", ""))] \
 					= raw_chamber
 	var graph_branches: Dictionary = graph.get("branches", {})
+	var head_id := str((graph.get("spine", []) as Array)[0]) \
+			if not (graph.get("spine", []) as Array).is_empty() else ""
 	for spine_id: Variant in graph.get("spine", []):
 		var chamber: Dictionary = chamber_by_id.get(str(spine_id), {})
 		if chamber.is_empty():
 			continue
+		# The head of the spine is where the player comes in. Marked on a
+		# COPY so nothing upstream sees a chamber the composer did not
+		# write.
+		if str(spine_id) == head_id:
+			chamber = chamber.duplicate(true)
+			chamber["zone_entrance"] = true
 		# S13: every chamber's geometry is chosen here, not assumed.
 		# Today every route ends at ChamberBuilders because every registry
 		# entry is still a declared placeholder; the routing is what lets an

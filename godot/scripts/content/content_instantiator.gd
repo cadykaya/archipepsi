@@ -67,6 +67,50 @@ const SHELL_FOR_TYPE := {
 ## with like.
 const FLOOR_ALLOWANCE := 1.0
 
+## HOW FAR THIS SHELL'S DOORWAYS SIT OUTSIDE ITS OWN ENVELOPE.
+##
+## A joining socket declares where a corridor meets this shell. A socket
+## outside the shell's `size` is a doorway in mid-air: the router joins a
+## corridor to the socket, the room's wall is somewhere else, and between
+## them is a gap with no floor. It is the playtest's first sentence --
+## "oof the connecter isnt connected at all haha" -- measured.
+##
+## Nothing caught it because every other compatibility rule is about a
+## SPAN and this is about a POINT. Found when the layout began crossing
+## to the bridge and the validator said the route and the room disagreed
+## about where the doorway was.
+##
+## Returns `socket name -> metres outside`, empty when every doorway is
+## on the room. **Reports; changes nothing.** Authored geometry is Art's,
+## and a manifest coordinate is authored geometry.
+static func doorways_outside_envelope(entry: Dictionary) -> Dictionary:
+	var out := {}
+	var size: Variant = entry.get("size", [])
+	if typeof(size) != TYPE_ARRAY or (size as Array).size() < 3:
+		return out
+	var envelope := AABB(
+			Vector3(-float((size as Array)[0]) / 2.0, 0.0, 0.0),
+			Vector3(float((size as Array)[0]), float((size as Array)[1]),
+				float((size as Array)[2])))
+	var slack := envelope.grow(ChamberBuilders.WALL_THICKNESS
+			+ SPAN_TOLERANCE)
+	for raw: Variant in entry.get("sockets", []) as Array:
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var socket: Dictionary = raw
+		if str(socket.get("kind", "")) != "doorway":
+			continue
+		var at := _vector(socket.get("position", []), Vector3.ZERO)
+		if slack.has_point(at):
+			continue
+		var worst := 0.0
+		for axis in 3:
+			worst = maxf(worst, slack.position[axis] - at[axis])
+			worst = maxf(worst,
+					at[axis] - (slack.position[axis] + slack.size[axis]))
+		out[str(socket.get("name", "?"))] = worst
+	return out
+
 ## Builds one chamber. Signature-compatible with `ChamberBuilders.build`,
 ## which is what it falls back to, so `ZoneBuilder` did not have to learn
 ## anything new.
@@ -116,7 +160,33 @@ static func build_chamber(chamber: Dictionary, theme: String,
 	# leaves and nothing else.
 	if (result.get("key_spots", []) as Array).is_empty():
 		result["key_spots"] = _key_spots(result, chamber)
+	# EVERY PRODUCER THAT CAN CARRY DOORS REPORTS THEM.
+	#
+	# Only the ARENA builder emitted a door plan. A procedural corridor
+	# emitted none and an authored shell emitted none, so two thirds of a
+	# real Zone reported no doorways at all -- their apertures were never
+	# measured, their sockets had no world position, and the layout the
+	# bridge received put every one of them at the origin. It refused the
+	# Zone for it, which is the correct failure and is how this was found.
+	if (result.get("doors", []) as Array).is_empty():
+		result["doors"] = _doors_from_bounds(result, chamber)
 	return result
+
+## A door plan for a producer that emitted none, from the room's own
+## measured envelope rather than from the chamber dictionary.
+##
+## The envelope is what the geometry actually is: a corridor declares a
+## `length` and no `depth`, and re-deriving a socket from a field the
+## chamber may not carry is how the plan and the room come to disagree
+## about where a doorway is.
+static func _doors_from_bounds(result: Dictionary,
+		chamber: Dictionary) -> Array:
+	if (chamber.get("doors", []) as Array).is_empty():
+		return []
+	var box: AABB = result.get("bounds", AABB())
+	if box.size.x <= 0.0 or box.size.z <= 0.0:
+		return []
+	return ChamberBuilders.door_plan(chamber, box.size.x, box.size.z)
 
 ## WHERE AN AUTHORED ROOM PUTS A KEY IT WAS ASKED TO HOLD.
 ##
@@ -737,6 +807,11 @@ static func _authored_offers(entry: Dictionary) -> Array:
 ## not been built yet and is not achievable for a mesh that already has
 ## the hole in it, and pretending otherwise would make an authored
 ## `SEALED` door indistinguishable from a missing one.
+## The names one opening answers to. `connector_grammar` calls a
+## connector's two ends `end_a` and `end_b`; a `DoorAssignment` calls the
+## same two openings `entry` and `exit`.
+const ALIASES := {"entry": ["end_a"], "exit": ["end_b"]}
+
 static func authored_door_plan(entry: Dictionary,
 		chamber: Dictionary) -> Array:
 	var out: Array = []
@@ -744,11 +819,23 @@ static func authored_door_plan(entry: Dictionary,
 		if typeof(raw) != TYPE_DICTIONARY:
 			continue
 		var door: Dictionary = raw
-		var socket := socket_by_id(entry, str(door.get("socket_id", "")))
+		var declared := str(door.get("socket_id", ""))
+		# THE ALIASES ARE THE SAME ONES PLACEMENT USES. A connector
+		# grammar that calls its two ends `end_a` and `end_b` is naming
+		# the same openings a door assignment calls `entry` and `exit`,
+		# and `_entry_offset` has resolved through that pair since the
+		# first shell composed. Resolving it in one place and not the
+		# other is how a shell came to be joined correctly and then
+		# report no doorway where it was joined.
+		var socket := socket_by_id(entry, declared)
+		if socket.is_empty():
+			for alias: String in ALIASES.get(declared, []):
+				socket = socket_by_id(entry, alias)
+				if not socket.is_empty():
+					break
 		if socket.is_empty():
 			push_warning("%s: door names socket '%s', which this shell "
-					% [str(entry.get("id", "?")),
-						str(door.get("socket_id", "?"))]
+					% [str(entry.get("id", "?")), declared]
 					+ "does not declare")
 			continue
 		if str(socket.get("kind", "")) != "doorway":
@@ -759,7 +846,12 @@ static func authored_door_plan(entry: Dictionary,
 			continue
 		var usage := str(door.get("usage", "USED"))
 		out.append({
-			"socket_id": str(socket.get("name", "")),
+			# THE NAME THE ASSIGNMENT USED, not the shell's own. The
+			# bridge asks about `c001/entry` because that is the door it
+			# assigned; answering about `c001/end_a` is answering a
+			# question nobody asked, and reads as a door that carries no
+			# measurement.
+			"socket_id": declared,
 			"usage": usage,
 			"position": _vector(socket.get("position", []), Vector3.ZERO),
 			"width": float(socket.get("width", 2.4)),

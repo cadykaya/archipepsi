@@ -480,6 +480,13 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	zone.stations_online = _zone_stations.get(zid, {})
 	zone.keys_carried = _zone_keys.get(zid, {})
 	zone.locks_carried = _zone_locks_open.get(zid, {})
+	# THE COMMITTED LAYOUT, when this Zone has one. `ZoneReady` carries
+	# the manifest the bridge accepted on the first visit, and replaying
+	# it is what makes the Zone the player walks back into the Zone they
+	# walked out of rather than a second one that happens to be similar.
+	var committed: Variant = record.get("manifest")
+	zone.committed_manifest = committed \
+			if typeof(committed) == TYPE_DICTIONARY else {}
 	zone.setup(Slice1Fixture.decorate(zone_dict) if _slice1 else zone_dict)
 	zone.exit_requested.connect(_on_exit_zone)
 	hud.bind_player(zone.player)

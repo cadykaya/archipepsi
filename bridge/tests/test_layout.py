@@ -56,7 +56,12 @@ def _ok_result(zone) -> dict:
                        "size": [16.0, 5.0, DEPTH]},
         }
         for d in ch.doors:
-            apertures[f"{ch.id}/{d.socket_id}"] = d.passable_geometry
+            # THE FIRST ROOM'S `entry` IS THE ZONE'S FRONT DOOR. No edge
+            # names it, so it is declared SEALED, and the player walks in
+            # through it -- so a sound layout reports it as a hole.
+            front = (i == 0 and d.socket_id == "entry")
+            apertures[f"{ch.id}/{d.socket_id}"] = (
+                True if front else d.passable_geometry)
         if any(d.usage != "SEALED" for d in ch.doors):
             anchor = f"room:{ch.id}:arrival"
             anchors[anchor] = [0.0, 0.0, z0 + 3.0]
@@ -240,10 +245,33 @@ def test_an_arrival_coordinate_is_not_an_arrival_verdict():
 def test_a_sealed_door_measured_as_a_hole_is_refused():
     z = _zone()
     bad = _ok_result(z)
-    ref = next(f"{c.id}/{d.socket_id}" for c in z.chambers
-               for d in c.doors if d.usage == "SEALED")
+    # NOT the first room's `entry`: that one is the Zone's front door and
+    # is a hole on purpose. Picking it would have made this test assert
+    # nothing, which is what it did the moment the front-door rule
+    # landed.
+    ref = next(f"{c.id}/{d.socket_id}" for i, c in enumerate(z.chambers)
+               for d in c.doors
+               if d.usage == "SEALED"
+               and not (i == 0 and d.socket_id == "entry"))
     bad["apertures"][ref] = True
     assert any("disagree" in e for e in layout.validate(z, bad).errors)
+
+
+def test_the_front_door_may_not_be_solid():
+    """The one SEALED door that must be a hole, and it is checked.
+
+    Nothing joins into the head of the spine, so no edge names its entry
+    and it is declared SEALED -- and the player arrives through it. A
+    rule that exempts it must still say something, or a Zone whose first
+    room is walled shut passes validation and strands the player at the
+    front door.
+    """
+    z = _zone()
+    bad = _ok_result(z)
+    head = z.chambers[0].id
+    bad["apertures"][f"{head}/entry"] = False
+    errors = layout.validate(z, bad).errors
+    assert any("front door" in e for e in errors), errors
 
 
 def test_a_used_door_measured_as_solid_is_refused():
