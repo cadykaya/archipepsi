@@ -60,20 +60,53 @@ static func decorate(zone: Dictionary) -> Dictionary:
 			"edge_id": null, "key_id": null},
 	]
 
+	# AND THE VAULT IS A ROOM, not a name on a door.
+	#
+	# `slice1:vault` used to be an edge id on a locked door with nothing
+	# on the other side of it: the door opened onto the outside of the
+	# room's wall. A branch is a real chamber now, placed off that side
+	# socket by the same route search the chain uses, so the slice can be
+	# WALKED -- through the lock, into the branch, and back out through
+	# its plug.
+	#
+	# IT HOLDS NO CHECK, and that is deliberate rather than an oversight.
+	# The owner's design puts Checks in a gated dead end, and a Check id
+	# is an AP allocation: inventing one here would be this file claiming
+	# a decision that belongs to the bridge. It carries a puzzle instead,
+	# which needs no allocation, and the real vault gets its Checks when
+	# `RoomAssignment` arrives.
+	junction["branches"] = [{
+		"socket_id": "side_left",
+		"return_to": "zone_start",
+		"chamber": {
+			"id": "vault", "type": "arena",
+			"width": 14.0, "depth": 12.0, "wall_height": 5.0,
+			"objective": "reach_exit", "enemies": [],
+			"activities": [{"kind": "target_challenge",
+					"element_count": 3}],
+			"features": [], "reward_location_id": null,
+			"additional_reward_location_ids": [],
+		},
+	}]
+
 	# The key goes in an EARLIER room than the lock it opens, which is
 	# the ordering `R ⊆ E` guarantees logically and the engine's walk
 	# check proves physically.
 	var holder: Dictionary = chambers[arenas[0]]
 	holder["keys"] = [{"key_id": "red", "colour": "red"}]
 
-	# The return plug: a dead end's way back, in the last wide room,
-	# landing at the Zone start. Both ends are anchors.
-	var last_id := str((chambers[arenas[arenas.size() - 1]]
-			as Dictionary).get("id", ""))
+	# THE RETURN PLUG IS IN THE DEAD END, which is the only place a
+	# return plug means anything.
+	#
+	# It used to stand in the last room of the CHAIN -- a room the player
+	# walks out of anyway -- so the feature was placed where it could
+	# never be needed. The vault has one way in and the plug is the way
+	# back, which is the owner's ruling: "its ok to dead end, but if it
+	# does, it needs to end with some way to get back to the entrance".
 	out["plugs"] = [{
 		"edge_id": "slice1:return",
-		"room_id": last_id,
-		"source_anchor": "room:%s:arrival" % last_id,
+		"room_id": "vault",
+		"source_anchor": "room:vault:arrival",
 		"destination": "zone_start",
 		"device": "pad",
 	}]

@@ -139,6 +139,22 @@ var _movement_package := MovementSelection.DEFAULT_MODE
 ## assignment so the Amalgam's first slice can be WALKED. Off unless an
 ## operator asks, so an ordinary run is untouched.
 var _slice1 := false
+## WHAT A ZONE RESUMES TO, kept per Zone for the life of the session.
+##
+## §30.12.4 says a player may SAVE at a warp station, and §30.12.2 makes
+## reached-ness progress that survives a Hub return. The bridge owns that
+## persistence -- `ZoneProgress` on the Zone record -- and does not carry
+## it yet, so this holds the same two facts in memory: which station a
+## Zone resumes at, and which of its stations are already online.
+##
+## **In memory only, and deliberately.** It survives a Hub return and a
+## re-entry, which is what the feature is for; it does not survive
+## quitting, and nothing here pretends it does. When `ZoneProgress`
+## lands, this is what it replaces.
+var _zone_resume := {}
+var _zone_stations := {}
+var _zone_keys := {}
+var _zone_locks_open := {}
 
 ## Everything the real game needs, extracted so a test can call it.
 ##
@@ -456,6 +472,14 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	# The slice's assignment goes on HERE, at the last moment before the
 	# Zone is built, so nothing upstream -- the bridge, the save, the
 	# manifest -- ever sees a decorated Zone.
+	# WHERE THIS ZONE RESUMES, if it has been left and re-entered.
+	# Empty on a first entry, which is every Zone before a station is
+	# reached, so nothing changes for a Zone nobody has left.
+	var zid := str(record.get("zone_id", ""))
+	zone.resume_anchor = str(_zone_resume.get(zid, ""))
+	zone.stations_online = _zone_stations.get(zid, {})
+	zone.keys_carried = _zone_keys.get(zid, {})
+	zone.locks_carried = _zone_locks_open.get(zid, {})
 	zone.setup(Slice1Fixture.decorate(zone_dict) if _slice1 else zone_dict)
 	zone.exit_requested.connect(_on_exit_zone)
 	hud.bind_player(zone.player)
@@ -523,9 +547,22 @@ func _on_return_to_hub() -> void:
 	pause_menu.close()
 	if view == View.ZONE:
 		_send_zone_timing(false)
+		_remember_zone_progress()
 		BridgeClient.send_intent({"type": "leave_zone",
 				"zone_id": zone.zone_id})
 		_to_hub()
+
+## Carry the resume point and the online stations out of a Zone.
+##
+## Read from the controller rather than pushed to it, so a Zone plays
+## identically whether or not anything is remembering.
+func _remember_zone_progress() -> void:
+	if zone == null or zone.zone_id == "":
+		return
+	_zone_resume[zone.zone_id] = zone.resume_anchor
+	_zone_stations[zone.zone_id] = zone.stations_reached()
+	_zone_keys[zone.zone_id] = zone.keys_held()
+	_zone_locks_open[zone.zone_id] = zone.locks_opened()
 
 func _on_abandon() -> void:
 	pause_menu.close()

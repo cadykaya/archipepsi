@@ -690,6 +690,31 @@ func _play_one_zone(detailed: bool) -> bool:
 	if detailed:
 		_check(controller.player != null, "player spawned")
 		_check(controller._exit_portal != null, "exit portal appended")
+		# COMPLETION REACHES THE SCREEN, asserted on the live object
+		# graph and not by reading a source file.
+		#
+		# `ActivityRuntime` clocks, says DONE and grants a local reward,
+		# and it emitted `completed` to NOBODY -- which is why a
+		# playtester finished four activities and perceived none of it.
+		# Checking that the signal has a listener is the property; a
+		# test that greps the controller for a `connect` call would pass
+		# on a connection to a function that does nothing.
+		var runtimes := get_tree().get_nodes_in_group(
+				ActivityRuntime.GROUP)
+		var unheard := 0
+		for node: Node in runtimes:
+			var runtime := node as ActivityRuntime
+			if runtime == null:
+				continue
+			if runtime.completed.get_connections().is_empty():
+				unheard += 1
+		_check(not runtimes.is_empty(),
+				"the Zone built no activities, so nothing here is tested")
+		_check(unheard == 0,
+				"%d of %d activities complete into silence: `completed` "
+				% [unheard, runtimes.size()]
+				+ "has no listener, so finishing one tells the player "
+				+ "nothing")
 		await _check_affordances_and_local_rewards(controller, zone_dict)
 		_check(controller._exit_portal.unlocked == false,
 				"exit portal starts sealed")

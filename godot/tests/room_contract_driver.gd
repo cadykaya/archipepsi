@@ -118,6 +118,15 @@ func _run() -> void:
 	await _test_a_locked_door_gates_until_its_key_is_held()
 	await _test_a_key_is_reachable_before_the_lock_it_opens()
 	await _test_the_playable_slice_composes_end_to_end()
+	await _test_warp_stations_are_placed_and_only_link_reached_ones()
+	await _test_an_authored_shell_carries_three_doors()
+	await _test_a_zone_resumes_at_the_station_it_was_left_from()
+	await _test_a_spatial_cycle_is_refused_and_a_plug_cycle_is_not()
+	await _test_a_broken_station_is_repaired_by_its_own_rooms_puzzle()
+	await _test_a_capability_gate_holds_and_never_blocks_the_way_out()
+	await _test_the_committed_layout_is_measured_not_re_solved()
+	_test_the_walk_prober_is_no_kinder_than_the_controller()
+	await _test_the_branch_is_crossed_returned_from_and_remembered()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
 
@@ -2203,6 +2212,51 @@ func _walk_zone(out: Dictionary, from_xz: Vector2,
 	return _walk_bounds(whole, from_xz, to_xz, 0.5,
 			whole.position.y + 2.6)
 
+## WHAT THE REAL CONTROLLER CAN ASCEND, over a given horizontal run.
+##
+## Read off an actual `Player` rather than declared here, so the
+## measurement cannot drift from the body: `floor_max_angle` is the
+## `CharacterBody3D` property `move_and_slide` uses to decide what counts
+## as floor, and a surface steeper than it is a wall the player slides
+## down. Cached because it is constant for the run and building a Player
+## per grid edge would dominate the flood.
+static var _slope_tan := -1.0
+
+func _rise_over(run: float) -> float:
+	if _slope_tan < 0.0:
+		var body := Player.create()
+		_slope_tan = tan(body.floor_max_angle)
+		body.free()
+	return run * _slope_tan
+
+## Below this a difference is float noise on a flat floor, not a climb.
+const FLAT := 0.02
+
+## How many columns to sample between two adjacent cells when the step
+## rises. Five sub-cells over a 0.5 m cell is 0.1 m of run each, which
+## separates a ramp from a kerb at the scale the geometry is built at.
+const RAMP_SAMPLES := 5
+
+## Is the ground between these two columns a climbable slope, rather than
+## a wall that merely has a standable top?
+func _is_a_ramp(space: PhysicsDirectSpaceState3D, from_y: float,
+		cell: float, from_xz: Vector2, to_xz: Vector2) -> bool:
+	var sub := cell / float(RAMP_SAMPLES)
+	var allowed := _rise_over(sub)
+	var last := _standable_at(space, from_xz.x, from_xz.y, from_y)
+	if is_nan(last):
+		return false
+	for i in range(1, RAMP_SAMPLES + 1):
+		var t := float(i) / float(RAMP_SAMPLES)
+		var at := from_xz.lerp(to_xz, t)
+		var y := _standable_at(space, at.x, at.y, from_y)
+		if is_nan(y):
+			return false
+		if y - last > allowed:
+			return false
+		last = y
+	return true
+
 ## `from_y` is where the downward rays START, and it is a parameter
 ## because no single height serves a whole Zone.
 ##
@@ -2251,13 +2305,30 @@ func _walk_bounds(bounds: AABB, from_xz: Vector2, to_xz: Vector2,
 			var next: Vector2i = here + step
 			if seen.has(next) or not height.has(next):
 				continue
-			# UP IS LIMITED, DOWN IS FREE. A walking player cannot
-			# climb more than one step without a jump, and can always
-			# walk off a ledge. Testing the absolute difference forbade
-			# descending, which made every raised deck a one-way trap
-			# in the measurement and nowhere else.
-			if float(height[next]) - float(height[here]) \
-					> Constants.MAX_VERTICAL_STEP:
+			# UP IS A SLOPE, DOWN IS FREE.
+			#
+			# This used to allow a rise of `MAX_VERTICAL_STEP` per cell,
+			# and that constant is not something the body implements:
+			# `chamber_builders.gd` says so in as many words -- "there is
+			# no step-up anywhere in `player.gd`; MAX_VERTICAL_STEP is a
+			# constant validation reasons with". The real Player is a
+			# bare `CharacterBody3D` with a capsule, so what it can
+			# actually ascend is a RAMP no steeper than `floor_max_angle`
+			# and nothing else. A 1.0 m kerb was being walked up in the
+			# measurement and nowhere else, which is the same defect as
+			# the trim lip, on the other side.
+			var rise := float(height[next]) - float(height[here])
+			if rise > _rise_over(cell):
+				continue
+			# A rise inside the slope bound still has to BE a slope. At
+			# this cell size a vertical step of half a metre and a 45
+			# degree ramp are the same two numbers, so the ones that
+			# climb are re-sampled between the columns.
+			if rise > FLAT and not _is_a_ramp(space, ceiling, cell,
+					Vector2(x0 + float(here.x) * cell,
+							z0 + float(here.y) * cell),
+					Vector2(x0 + float(next.x) * cell,
+							z0 + float(next.y) * cell)):
 				continue
 			seen[next] = true
 			queue.append(next)
@@ -2405,8 +2476,15 @@ func _test_the_layout_result_commits_the_whole_chain() -> void:
 	if out.has("root"):
 		var rooms: Dictionary = out["rooms"]
 		var links: Dictionary = out["links"]
-		_check(rooms.size() == 8,
-				"%d room transforms committed, not eight" % rooms.size())
+		# Eight chambers AND the exit room. The exit room's approach was
+		# searched exactly like every other and was the one route never
+		# written down.
+		_check(rooms.size() == 9,
+				"%d room transforms committed, not the eight chambers "
+				% rooms.size() + "plus the exit room")
+		_check(rooms.has("exit") and links.has("exit"),
+				"the exit room committed no transform or no approach "
+				+ "chain, so a manifest has to re-solve the last leg")
 		for id: String in rooms:
 			var t: Dictionary = rooms[id]
 			_check(t.has("position") and t.has("yaw"),
@@ -2430,9 +2508,47 @@ func _test_the_layout_result_commits_the_whole_chain() -> void:
 		_check(pieces > 0,
 				"eight rooms were placed and not one connector or "
 				+ "corner was committed; the chain is not being recorded")
+		# THE MEASUREMENT THAT WOULD HAVE CAUGHT BOTH HOLES.
+		#
+		# Everything above asks whether each committed thing is
+		# well-formed. Neither asks whether everything BUILT was
+		# committed, and that is the question two real omissions hid
+		# behind: the linking connector between rooms was emitted and
+		# never recorded, and so was the whole exit-room route. Both
+		# passed every assertion above, because an unrecorded piece
+		# raises no complaint about the recorded ones.
+		#
+		# `bounds_list` is every world box the builder actually placed.
+		# A committed layout is complete exactly when it accounts for
+		# all of them.
+		var committed := {}
+		for id: String in rooms:
+			committed[_box_key((rooms[id] as Dictionary)["bounds"])] = true
+		for id: String in links:
+			for raw: Variant in links[id] as Array:
+				committed[_box_key((raw as Dictionary)["bounds"])] = true
+		var orphans := 0
+		var first_orphan := ""
+		for raw: Variant in out["bounds_list"] as Array:
+			if not committed.has(_box_key(raw as AABB)):
+				orphans += 1
+				if first_orphan == "":
+					first_orphan = "%v" % (raw as AABB)
+		_check(orphans == 0,
+				"%d of %d placed boxes are in no committed room or "
+				% [orphans, (out["bounds_list"] as Array).size()]
+				+ "chain, so a replay rebuilds a Zone missing them "
+				+ "(first: %s)" % first_orphan)
 		(out["root"] as Node3D).queue_free()
 		await get_tree().process_frame
 	rooms_checked += 1
+
+## An AABB as a dictionary key, rounded so float noise cannot make two
+## records of the same box look like two boxes.
+func _box_key(box: AABB) -> String:
+	return "%.3f,%.3f,%.3f|%.3f,%.3f,%.3f" % [
+			box.position.x, box.position.y, box.position.z,
+			box.size.x, box.size.y, box.size.z]
 
 ## The pair that has to mean opposite things.
 ##
@@ -2458,21 +2574,95 @@ func _test_a_spent_budget_is_a_timeout_and_not_infeasibility() -> void:
 	if out.has("root"):
 		(out["root"] as Node3D).queue_free()
 		await get_tree().process_frame
-	# WHAT INFEASIBILITY WOULD CARRY, asserted on the policy itself.
+	# AND THE OTHER HALF, exhausted for real.
 	#
-	# NOT PROVED HERE: that a genuinely unplaceable Zone is reachable.
-	# This builder pushes up to MAX_CLEARANCE_CONNECTORS and turns twice,
-	# and no fixture yet constructs a Zone it cannot route. Until one
-	# does, `LAYOUT_INFEASIBLE`'s branch is unexercised and is recorded
-	# as such rather than simulated -- a fixture that fakes the result
-	# would prove the assertion and not the behaviour.
-	var policy := ZoneBuilder.routing_policy([])
-	for field: String in ["max_route_turns", "explore_connectors",
-			"max_clearance_connectors", "clearance_budget"]:
-		_check(policy.has(field),
-				"the routing policy omits '%s', so an infeasible result "
-				% field + "could not say what space it exhausted")
+	# The honest way to reach `LAYOUT_INFEASIBLE` is to DECLARE a smaller
+	# candidate space and empty it, because that is exactly what the
+	# result means: this policy's space is empty. Contriving geometry the
+	# shipping policy cannot route would read as "no layout exists",
+	# which is the one claim a bounded search may never make.
+	# AND THE OTHER HALF, exhausted for real and under the SHIPPING
+	# policy -- no override, no contrivance.
+	#
+	# Two `shell_corner_left` pieces in a row swing the route 180
+	# degrees, and the arena after them is placed back along the arm it
+	# just left. `_search` walks its whole candidate space -- every
+	# clearance push and both turns -- and every candidate overlaps. That
+	# is what `exhausted` means, and it is the one condition that
+	# permits this result.
+	var boxed := ZoneBuilder.build(_doubling_back_zone())
+	_check(str(boxed.get("status", "")) == "LAYOUT_INFEASIBLE",
+			"a chain that doubles back into its own arm returned '%s'"
+			% str(boxed.get("status", "?")))
+	if str(boxed.get("status", "")) == "LAYOUT_INFEASIBLE":
+		_check(bool(boxed["exhausted"]),
+				"an infeasible result did not claim exhaustion")
+		_check(not (boxed["blocking_rooms"] as Array).is_empty(),
+				"infeasibility named no blocking room, so a catalog "
+				+ "review has nothing to look at")
+		var policy: Dictionary = boxed["policy"]
+		for field: String in ["max_route_turns", "explore_connectors",
+				"max_clearance_connectors", "clearance_budget"]:
+			_check(policy.has(field),
+					"the infeasible result omits '%s', so it cannot say "
+					% field + "what space it exhausted")
+		# THE POLICY REPORTED IS THE POLICY RUN. A result naming bounds
+		# it did not search under would send a catalog review after the
+		# wrong thing.
+		_check(int(policy["max_route_turns"]) == ZoneBuilder.MAX_ROUTE_TURNS,
+				"the result reports %d turns and the search allowed %d"
+				% [int(policy["max_route_turns"]),
+					ZoneBuilder.MAX_ROUTE_TURNS])
+	if boxed.has("root"):
+		(boxed["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	# AND A TIGHTER POLICY STILL EXHAUSTS, which is what makes the
+	# result's meaning "this space is empty" rather than "no layout
+	# exists": narrow the space and more Zones fall into it.
+	ZoneBuilder.policy_override = {"clearance_budget": 0,
+			"max_route_turns": 0}
+	var tighter := ZoneBuilder.build(_doubling_back_zone())
+	ZoneBuilder.policy_override = {}
+	_check(str(tighter.get("status", "")) == "LAYOUT_INFEASIBLE",
+			"a zero-budget policy did not exhaust")
+	if str(tighter.get("status", "")) == "LAYOUT_INFEASIBLE":
+		_check(int((tighter["policy"] as Dictionary)["clearance_budget"])
+					== 0,
+				"the tightened result reports a policy it did not run "
+				+ "under")
+	if tighter.has("root"):
+		(tighter["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	probes_expected_to_fail += 1
 	rooms_checked += 1
+
+## A chain that turns back into itself.
+##
+## Two corner shells in a row swing the route 180 degrees, so the room
+## after them is placed back along the arm it just left. With connectors
+## and turns available the router pushes past it, which is the shipping
+## behaviour; with neither, the candidate space is one position and that
+## position overlaps.
+func _doubling_back_zone() -> Dictionary:
+	return {"zone_id": "boxed_in", "theme": "concrete_facility",
+			"display_name": "Boxed In", "chambers": [
+		{"id": "b0", "type": "arena", "width": 26.0, "depth": 24.0,
+			"wall_height": 6.0, "objective": "reach_exit", "enemies": [],
+			"activities": [], "features": [],
+			"additional_reward_location_ids": []},
+		{"id": "b1", "type": "corridor", "shell_id": "shell_corner_left",
+			"length": 6.0, "width": 6.0, "enemies": [],
+			"activities": [], "features": [],
+			"additional_reward_location_ids": []},
+		{"id": "b2", "type": "corridor", "shell_id": "shell_corner_left",
+			"length": 6.0, "width": 6.0, "enemies": [],
+			"activities": [], "features": [],
+			"additional_reward_location_ids": []},
+		{"id": "b3", "type": "arena", "width": 26.0, "depth": 24.0,
+			"wall_height": 6.0, "objective": "reach_exit", "enemies": [],
+			"activities": [], "features": [],
+			"additional_reward_location_ids": []},
+	]}
 
 ## A dead end's way back, placed and proved.
 ##
@@ -2756,6 +2946,898 @@ func _test_the_playable_slice_composes_end_to_end() -> void:
 	rooms_checked += 1
 	(out["root"] as Node3D).queue_free()
 	await get_tree().process_frame
+
+## Travel and save, and the one thing a station must never offer.
+##
+## §30.12.4 places a station at the entrance, at the exit and in large
+## rooms, and lets a player warp between stations **already reached**.
+## "Already reached" is the whole safety property: a station a player has
+## never stood at is not a destination, and offering it would be a
+## teleport past whatever stands between them.
+## THE WHOLE BRANCHING LOOP, WALKED.
+##
+## Cross the unlocked side doorway into the branch it actually connects
+## to, use the branch's return route, and keep the progress across
+## leaving and re-entering. Each of the three was proved separately and
+## none of them together, which is how `slice1:vault` came to be an edge
+## id on a door with nothing behind it: the door was carved, the lock
+## stood in it, the audit passed, and the opening led to the outside of
+## the room's own wall.
+##
+## The walk is the real prober -- the one whose ascent bound is read off
+## a `Player` -- with no movement offers and no Teleport.
+func _test_the_branch_is_crossed_returned_from_and_remembered() -> void:
+	var decorated := Slice1Fixture.decorate(_eight_room_zone())
+	var junction_id := ""
+	for raw: Variant in decorated["chambers"] as Array:
+		var c: Dictionary = raw
+		if not (c.get("branches", []) as Array).is_empty():
+			junction_id = str(c.get("id", ""))
+	_check(junction_id != "",
+			"the fixture declares a locked side door and no branch "
+			+ "behind it, so the door opens onto the outside of a wall")
+	var out := ZoneBuilder.build(decorated)
+	_check(str(out.get("status", "")) == "LAYOUT_OK",
+			"the branched slice did not compose: %s"
+			% str(out.get("failed", "?")))
+	if not out.has("root") or junction_id == "":
+		if out.has("root"):
+			(out["root"] as Node3D).queue_free()
+		return
+	add_child(out["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+
+	# 1. THE BRANCH IS A PLACED ROOM, with its own approach chain.
+	var rooms: Dictionary = out["rooms"]
+	var links: Dictionary = out["links"]
+	_check(rooms.has("vault") and links.has("vault"),
+			"the vault committed no transform or approach chain, so it "
+			+ "is a name and not a room")
+	if not rooms.has("vault"):
+		(out["root"] as Node3D).queue_free()
+		return
+	var vault: Dictionary = rooms["vault"]
+	var parent: Dictionary = rooms[junction_id]
+	var gap := ((vault["bounds"] as AABB).get_center()
+			- (parent["bounds"] as AABB).get_center()).length()
+	_check(gap > 8.0,
+			"the vault's centre is %.1f m from the junction's, which is "
+			% gap + "not a room beside it but a room inside it")
+	_check(ZoneBuilder.layout_findings(out).is_empty(),
+			"the branched layout violates Body or Arrival: %s"
+			% str(ZoneBuilder.layout_findings(out)))
+
+	# 2. THE LOCK IS WHAT STANDS BETWEEN THEM. Walk it before and after.
+	var from_xz := Vector2((parent["arrival"] as Vector3).x,
+			(parent["arrival"] as Vector3).z)
+	var to_xz := Vector2((vault["arrival"] as Vector3).x,
+			(vault["arrival"] as Vector3).z)
+	var shut := _walk_zone(out, from_xz, to_xz)
+	_check(not bool(shut["ok"]),
+			"the vault was walked into with the lock still standing, so "
+			+ "the gate is scenery")
+	var lock: LockedDoor = (out["locks"] as Array)[0]
+	lock.try_open({"red": true})
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var open := _walk_zone(out, from_xz, to_xz)
+	_check(bool(open["ok"]),
+			"the key opened the lock and the vault is still not "
+			+ "reachable on foot: %s" % str(open["why"]))
+
+	# 3. THE RETURN ROUTE. The plug stands in the dead end and sends the
+	#    player to an anchor that exists and admits a standing capsule.
+	var plugs: Array = out["plugs"]
+	_check(plugs.size() == 1, "%d plugs; the slice declares one"
+			% plugs.size())
+	if plugs.size() == 1:
+		var plug: ReturnPlug = plugs[0]
+		var stands_in_vault := (vault["bounds"] as AABB).grow(1.0) \
+				.has_point(plug.global_position)
+		_check(stands_in_vault,
+				"the return plug is at %v, outside the vault %v -- a way "
+				% [plug.global_position, vault["bounds"]]
+				+ "back placed where nobody is trapped")
+		var anchors: Dictionary = out["anchors"]
+		_check(anchors.has(plug.destination),
+				"the plug returns to '%s', which is not an anchor"
+				% plug.destination)
+		if anchors.has(plug.destination):
+			var land: Vector3 = anchors[plug.destination]
+			_check(_standable_near(land),
+					"the plug lands at %v where no standing capsule "
+					% land + "fits")
+	# 4. LEAVE AND COME BACK. The lock the player opened stays open, the
+	#    key stays held, and the station stays online. Without this a
+	#    player who opened the vault, walked out and walked back in
+	#    would find it locked again -- possibly from the inside.
+	#
+	#    Carried through the SAME fields `main.gd` uses, so this tests
+	#    the seam that ships rather than a parallel one built for it.
+	var first_visit := _controller_over(out)
+	first_visit._keys_held = {"red": true}
+	first_visit._locks_open = {"%s/side_left" % junction_id: true}
+	first_visit._stations_reached = {"st:entrance": true}
+	first_visit.resume_anchor = "st:entrance"
+	var carried_keys := first_visit.keys_held()
+	var carried_locks := first_visit.locks_opened()
+	var carried_stations := first_visit.stations_reached()
+	_check(carried_keys.has("red") and carried_locks.size() == 1
+				and carried_stations.has("st:entrance"),
+			"the controller does not hand out the progress a Zone was "
+			+ "left with: keys=%s locks=%s stations=%s"
+			% [str(carried_keys), str(carried_locks),
+				str(carried_stations)])
+	first_visit.queue_free()
+
+	var again := ZoneBuilder.build(decorated)
+	if str(again.get("status", "")) == "LAYOUT_OK":
+		add_child(again["root"] as Node3D)
+		var second := ZoneController.new()
+		second.keys_carried = carried_keys
+		second.locks_carried = carried_locks
+		second.stations_online = carried_stations
+		second.resume_anchor = "st:entrance"
+		add_child(second)
+		# Only the carry-in half of `setup` is exercised: the rest of it
+		# builds a player, a HUD and a bridge conversation, none of
+		# which this measures.
+		for key_id: Variant in second.keys_carried:
+			second._keys_held[str(key_id)] = true
+		second._zone_locks = again["locks"]
+		for raw_lock: Variant in (again["locks"] as Array).duplicate():
+			var l: LockedDoor = raw_lock
+			if second.locks_carried.has("%s/%s" % [l.room_id, l.socket_id]):
+				l.open()
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var still_shut := 0
+		for raw_lock: Variant in again["locks"] as Array:
+			if is_instance_valid(raw_lock):
+				still_shut += 1
+		_check(still_shut == 0,
+				"%d lock(s) the player had already opened were standing "
+				% still_shut + "again on re-entry, which can seal a "
+				+ "player on the far side of a door they opened")
+		_check(second._keys_held.has("red"),
+				"the red key was not held on re-entry, so the lock "
+				+ "would re-close the moment anything re-evaluated it")
+		# And the walk agrees: the vault is reachable without touching
+		# the key again.
+		var rooms2: Dictionary = again["rooms"]
+		if rooms2.has("vault") and rooms2.has(junction_id):
+			var back := _walk_zone(again,
+					Vector2((rooms2[junction_id] as Dictionary)["arrival"].x,
+							(rooms2[junction_id] as Dictionary)["arrival"].z),
+					Vector2((rooms2["vault"] as Dictionary)["arrival"].x,
+							(rooms2["vault"] as Dictionary)["arrival"].z))
+			_check(bool(back["ok"]),
+					"on re-entry the vault is not reachable on foot "
+					+ "even though its lock was already opened: %s"
+					% str(back["why"]))
+		second.queue_free()
+		(again["root"] as Node3D).queue_free()
+	rooms_checked += 1
+	(out["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+## Does a standing capsule fit at this point, allowing for the small drop
+## a spawn takes onto the floor under it?
+func _standable_near(at: Vector3) -> bool:
+	var space := _space()
+	var shape := CapsuleShape3D.new()
+	shape.height = Constants.PLAYER_HEIGHT
+	shape.radius = Constants.PLAYER_RADIUS
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = shape
+	query.transform = Transform3D(Basis.IDENTITY,
+			at + Vector3(0, Constants.PLAYER_HEIGHT / 2.0 + 0.1, 0))
+	return space.intersect_shape(query, 1).is_empty()
+
+## THE PROBER MUST NOT BE KINDER THAN THE BODY.
+##
+## Every escape proof in this file is only worth what its movement model
+## is worth. That model used to allow a rise of `MAX_VERTICAL_STEP` per
+## cell -- a full metre -- and the real Player cannot step up at all:
+## `chamber_builders.gd` already said so, "there is no step-up anywhere
+## in `player.gd`; MAX_VERTICAL_STEP is a constant validation reasons
+## with, not one the body implements". A prober that climbs kerbs proves
+## escapes that do not exist.
+##
+## So the ascent bound is read off a real `Player`'s `floor_max_angle`,
+## and this states the relationship that made the old bound wrong. It is
+## a standing guard against the drift coming back: if someone restores a
+## step-up constant here, this says so before an escape proof does not.
+func _test_the_walk_prober_is_no_kinder_than_the_controller() -> void:
+	var body := Player.create()
+	var angle := body.floor_max_angle
+	body.free()
+	_check(angle > 0.0 and angle < PI / 2.0,
+			"the Player's floor_max_angle is %.4f rad, which is not a "
+			% angle + "slope bound this prober can reason from")
+	var per_cell := _rise_over(ESCAPE_CELL)
+	_check(per_cell < Constants.MAX_VERTICAL_STEP,
+			"the flood allows a rise of %.3f m per %.2f m cell, which is "
+			% [per_cell, ESCAPE_CELL] + "not less than MAX_VERTICAL_STEP "
+			+ "(%.3f m) -- the constant the body does not implement"
+			% Constants.MAX_VERTICAL_STEP)
+	# And it scales with the run, because a slope does.
+	_check(is_equal_approx(_rise_over(2.0 * ESCAPE_CELL),
+					2.0 * per_cell),
+			"the ascent bound does not scale with the horizontal run, so "
+			+ "it is a step and not a slope")
+	rooms_checked += 1
+
+## BODY AND ARRIVAL, MEASURED ON WHAT WAS COMMITTED.
+##
+## §30.11.2e insists its four constraints are measured on the committed
+## transforms and not recomputed by re-running the search -- "the bridge
+## does not check the engine's arithmetic by redoing it". The builder
+## already refuses an overlapping candidate DURING placement, over a
+## `placed` array that deliberately omits pieces and tolerates half a
+## cubic metre. That is a different computation from measuring every
+## committed pair afterwards, and a blind spot in the first is invisible
+## to itself.
+##
+## So: measure real Zones, then hand the measurement a layout that is
+## genuinely broken and require it to say so. Without the second half
+## this test would pass with `layout_findings` returning `[]` always,
+## which is the recurring defect in this branch and has already appeared
+## four times inside work written to prevent it.
+func _test_the_committed_layout_is_measured_not_re_solved() -> void:
+	var zones := [_eight_room_zone(), _puzzled_station_zone(),
+			_gated_zone("side_left")]
+	var pairs_seen := 0
+	for raw: Variant in zones:
+		var out := ZoneBuilder.build(raw as Dictionary)
+		if str(out.get("status", "")) != "LAYOUT_OK":
+			continue
+		var rooms: Dictionary = out["rooms"]
+		pairs_seen += rooms.size() * (rooms.size() - 1) / 2
+		# EVERY COMMITTED ROOM CARRIES ITS ENVELOPE. A manifest without
+		# one cannot answer Body without re-solving, which is the thing
+		# the design forbids.
+		for id: String in rooms:
+			var t: Dictionary = rooms[id]
+			_check(t.has("bounds") and t.has("arrival"),
+					"room '%s' committed a transform with no envelope "
+					% id + "or arrival, so Body and Arrival can only be "
+					+ "answered by re-running the builders")
+		var findings := ZoneBuilder.layout_findings(out)
+		_check(findings.is_empty(),
+				"a committed layout the builder called LAYOUT_OK does "
+				+ "not satisfy Body/Arrival: %s" % str(findings))
+		(out["root"] as Node3D).queue_free()
+	# The measurement has to have had something to measure.
+	_check(pairs_seen >= 20,
+			"only %d room pairs were measured across three Zones, which "
+			% pairs_seen + "is too few for a pass to mean anything")
+
+	# NOW HAND IT THE CASE THAT FAILS IT.
+	var good := ZoneBuilder.build(_eight_room_zone())
+	if str(good.get("status", "")) == "LAYOUT_OK":
+		var rooms: Dictionary = good["rooms"]
+		var ids: Array = rooms.keys()
+		ids.sort()
+		# Body: put r1 exactly on top of r0.
+		var stacked := {"status": "LAYOUT_OK", "rooms": rooms.duplicate(true)}
+		var first: Dictionary = (stacked["rooms"] as Dictionary)[ids[0]]
+		var second: Dictionary = (stacked["rooms"] as Dictionary)[ids[1]]
+		second["bounds"] = first["bounds"]
+		second["arrival"] = first["arrival"]
+		var body_says := ZoneBuilder.layout_findings(stacked)
+		_check(not body_says.is_empty(),
+				"two rooms committed at the same place measured as "
+				+ "satisfying Body, so the measurement is blind")
+		_check(str(body_says).find("share") >= 0,
+				"the Body finding does not say what is shared: %s"
+				% str(body_says))
+		# THE TOLERANCE IS A SHAPE, NOT A SIZE, and this is the pair of
+		# cases that proves it. A collar is ONE APERTURE: thin through
+		# the wall, no wider or taller than a door. A sliver spread
+		# across two rooms' whole shared face has a smaller footprint in
+		# one axis and is still interpenetration -- and at 3.6 m3 it is
+		# BIGGER than a doorway of wall, so a volume bound would have had
+		# to choose between passing this and failing a real collar.
+		var box: AABB = (rooms[ids[0]] as Dictionary)["bounds"]
+		var sliver := {"status": "LAYOUT_OK", "rooms": rooms.duplicate(true)}
+		var s1: Dictionary = (sliver["rooms"] as Dictionary)[ids[1]]
+		s1["bounds"] = AABB(box.position + Vector3(box.size.x - 0.05,
+				0.0, 0.0), box.size)
+		s1["arrival"] = (s1["bounds"] as AABB).get_center()
+		_check(not ZoneBuilder.layout_findings(sliver).is_empty(),
+				"a 0.05 m sliver across two rooms' entire shared face "
+				+ "measured as a collar, which is interpenetration "
+				+ "wearing a doorway's name")
+		# ...and a genuine door-sized collar is not reported.
+		var collared := {"status": "LAYOUT_OK", "rooms": rooms.duplicate(true)}
+		var c1: Dictionary = (collared["rooms"] as Dictionary)[ids[1]]
+		c1["bounds"] = AABB(
+				Vector3(box.end.x - ChamberBuilders.WALL_THICKNESS,
+						box.position.y,
+						box.get_center().z - ChamberBuilders.DOOR_WIDTH / 2.0),
+				Vector3(ChamberBuilders.WALL_THICKNESS,
+						ChamberBuilders.DOOR_HEIGHT,
+						ChamberBuilders.DOOR_WIDTH))
+		c1["arrival"] = (c1["bounds"] as AABB).get_center()
+		_check(ZoneBuilder.layout_findings(collared).is_empty(),
+				"one doorway of shared wall was reported as an "
+				+ "intersection: %s"
+				% str(ZoneBuilder.layout_findings(collared)))
+		# Arrival: move one room's arrival outside its own envelope.
+		var adrift := {"status": "LAYOUT_OK", "rooms": rooms.duplicate(true)}
+		var a0: Dictionary = (adrift["rooms"] as Dictionary)[ids[0]]
+		a0["arrival"] = (a0["bounds"] as AABB).position \
+				- Vector3(50.0, 0.0, 50.0)
+		var arrival_says := ZoneBuilder.layout_findings(adrift)
+		_check(not arrival_says.is_empty()
+					and str(arrival_says).find("outside its own") >= 0,
+				"an arrival committed 50 m outside its own room measured "
+				+ "as satisfying Arrival: %s" % str(arrival_says))
+		(good["root"] as Node3D).queue_free()
+	rooms_checked += 1
+	await get_tree().process_frame
+
+## A MISSILE DOOR: refused without the capability, open with it, and
+## never standing between the player and the exit.
+##
+## SOLUTIONS_CATALOGUE §0-bis makes the gate legal -- "NOT YET is good
+## gameplay" -- and puts five conditions on it. Two of them are this
+## lane's: the player must be able to leave the blocked Zone (4) and the
+## physical graph must agree with the logic (3). The owner's own example
+## is what makes condition 4 bite: the capability is in ZONE 2, so a gate
+## on Zone 1's chain is a door nothing in Zone 1 can open.
+##
+## Three things, each checked:
+##   1. a gate on a BRANCH socket composes;
+##   2. a gate on a CHAIN socket is refused, by name, before anything is
+##      allocated;
+##   3. the slab refuses without the capability and opens with it, and a
+##      key does not substitute for one.
+func _test_a_capability_gate_holds_and_never_blocks_the_way_out() -> void:
+	var branch := ZoneBuilder.build(_gated_zone("side_left"))
+	_check(str(branch.get("status", "")) == "LAYOUT_OK",
+			"a capability gate on a BRANCH socket was refused: %s"
+			% str(branch.get("failed", "?")))
+	var gate: LockedDoor = null
+	if branch.has("root"):
+		add_child(branch["root"] as Node3D)
+		await get_tree().physics_frame
+		for raw: Variant in branch["locks"] as Array:
+			var lock: LockedDoor = raw
+			if lock.requires_capability != "":
+				gate = lock
+	_check(gate != null,
+			"the Zone declared a capability gate and the builder placed "
+			+ "no door that asks for one")
+
+	# THE CHAIN IS NOT GATEABLE.
+	for socket: String in ZoneBuilder.CHAIN_SOCKETS:
+		var out := ZoneBuilder.build(_gated_zone(socket))
+		_check(str(out.get("status", "")) == "LAYOUT_INFEASIBLE",
+				"a capability gate on the chain socket '%s' composed "
+				% socket + "anyway, so a player can be sealed away from "
+				+ "the exit by a capability this Zone does not contain")
+		_check(not out.has("root"),
+				"a refused gated layout allocated a Zone root anyway")
+		_check((out.get("blocking_rooms", []) as Array).has("gated"),
+				"the refusal did not name the room holding the gate: %s"
+				% str(out.get("blocking_rooms", [])))
+	# AND A KEY LOCK ON THE CHAIN IS STILL FINE -- the guard must not have
+	# swept up the case the key suite already proves.
+	var keyed := _gated_zone("entry")
+	var doors: Array = (keyed["chambers"] as Array)[1]["doors"]
+	for raw: Variant in doors:
+		var door: Dictionary = raw
+		if door.has("requires"):
+			door.erase("requires")
+			door["key_id"] = "k_red"
+	_check(str(ZoneBuilder.build(keyed).get("status", ""))
+				== "LAYOUT_OK",
+			"the gate guard refused a plain KEY lock on the chain, which "
+			+ "is the case the key suite already proves legal")
+
+	# THE SLAB ITSELF.
+	if gate != null:
+		_check(not gate.try_open({}, {}),
+				"a capability gate opened for a player with nothing")
+		_check(not gate.try_open({"k_red": true}, {}),
+				"a KEY opened a capability gate, so the Missile door is "
+				+ "a red door with a different label")
+		_check(Array(gate.unmet({}, {})).has("capability:cross_long_gap"),
+				"a gate does not say which capability it wants: %s"
+				% str(gate.unmet({}, {})))
+		_check(gate.try_open({}, {"cross_long_gap": true}),
+				"the capability was held and the gate stayed shut")
+		_check(gate.is_open, "a gate that opened does not read as open")
+	rooms_checked += 1
+	if branch.has("root"):
+		(branch["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+## Three rooms; the middle one carries a capability gate on `socket`.
+func _gated_zone(socket: String) -> Dictionary:
+	var chambers: Array = []
+	for id: String in ["start", "gated", "finish"]:
+		var chamber := {"id": id, "type": "arena",
+				"width": 16.0, "depth": 14.0,
+				"wall_height": 5.0, "objective": "reach_exit",
+				"enemies": [], "activities": [], "features": [],
+				"reward_location_id": 89101100 + chambers.size(),
+				"additional_reward_location_ids": []}
+		if id == "gated":
+			chamber["doors"] = [
+					{"socket_id": "entry", "usage": "USED"},
+					{"socket_id": "exit", "usage": "USED"},
+					{"socket_id": socket, "usage": "LOCKED",
+							"requires": "cross_long_gap"}]
+		chambers.append(chamber)
+	return {"zone_id": "gate_probe", "theme": "concrete_facility",
+			"display_name": "Gate Probe", "chambers": chambers}
+
+## A STATION IN A PUZZLED ROOM STARTS BROKEN, AND THE PUZZLE FIXES IT.
+##
+## The owner ruling: stations "start off or broken and need you to
+## complete a small puzzle (since we already have puzzles they just do
+## nothing lol)". The last clause is the point -- four activities were
+## completed in the Zone 1 playtest and none of them changed anything a
+## player could see, so this is the first thing a solved puzzle does.
+##
+## Three things have to hold and each is checked:
+##   1. a station in a room WITHOUT a puzzle is not broken, and the
+##      entrance and exit are never broken, so a Zone is never entered
+##      without a working save point;
+##   2. a broken station cannot be reached by standing in it, by pressing
+##      E at it, or by a caller reaching for `mark_reached`;
+##   3. solving the puzzle in ITS OWN ROOM repairs it, and solving the
+##      puzzle in the other room does not.
+func _test_a_broken_station_is_repaired_by_its_own_rooms_puzzle() -> void:
+	var out := ZoneBuilder.build(_puzzled_station_zone())
+	_check(str(out.get("status", "")) == "LAYOUT_OK",
+			"the puzzled-station Zone did not compose: %s"
+			% str(out.get("failed", "?")))
+	if not out.has("root"):
+		return
+	add_child(out["root"] as Node3D)
+	await get_tree().physics_frame
+	var stations: Array = out["stations"]
+	var broken: Array[String] = []
+	var whole: Array[String] = []
+	for raw: Variant in stations:
+		var station: WarpStation = raw
+		if station.is_broken():
+			broken.append(station.station_id)
+		else:
+			whole.append(station.station_id)
+	_check(broken.has("st:puzzled_a") and broken.has("st:puzzled_b"),
+			"a large room with an activity produced a working station; "
+			+ "broken = %s" % str(broken))
+	_check(not broken.has("st:plain"),
+			"a large room with NO activity produced a broken station, so "
+			+ "the puzzle is not what decides it")
+	# THE DOOR AND THE GOAL ALWAYS WORK.
+	_check(not broken.has("st:entrance") and not broken.has("st:exit"),
+			"the entrance or the exit station started broken, which "
+			+ "leaves a Zone with no save point at the door: %s"
+			% str(broken))
+
+	var a := _station_named(stations, "st:puzzled_a")
+	var b := _station_named(stations, "st:puzzled_b")
+	if a == null or b == null:
+		_check(false, "the two puzzled stations were not both placed")
+		(out["root"] as Node3D).queue_free()
+		return
+	# NOTHING REACHES A BROKEN STATION.
+	a.mark_reached()
+	_check(not a.is_reached(),
+			"`mark_reached` lit a broken station, so the puzzle is "
+			+ "decoration")
+	a.interact(self)
+	_check(not a.is_reached(),
+			"pressing E activated a broken station")
+	_check(a.interact_prompt().to_upper().find("BROKEN") >= 0,
+			"a broken station's prompt does not say so: '%s'"
+			% a.interact_prompt())
+
+	# THE PUZZLE IN ITS OWN ROOM, AND ONLY THAT ONE.
+	var zone := _controller_over(out)
+	zone._repair_station_for("puzzled_b_0")
+	_check(not a.is_reached(),
+			"the OTHER room's puzzle repaired this station, so one "
+			+ "puzzle lights every station in the Zone")
+	_check(b.is_reached() and not b.is_broken(),
+			"the puzzle in b's own room did not repair b")
+	zone._repair_station_for("puzzled_a_0")
+	_check(a.is_reached() and not a.is_broken(),
+			"solving this room's puzzle did not repair its station")
+	_check(a.interact_prompt().to_upper().find("BROKEN") < 0,
+			"a repaired station still reads as broken: '%s'"
+			% a.interact_prompt())
+	# AND IT IS ON THE REACHED SET, not merely lit -- a repair that does
+	# not reach is a station you cannot warp to.
+	_check((zone.stations_reached() as Dictionary).has("st:puzzled_a"),
+			"a repaired station never joined the reached set, so no "
+			+ "warp can name it")
+	_check(str(zone.resume_anchor) == "st:puzzled_a",
+			"a repaired station did not become the resume anchor")
+	rooms_checked += 1
+	zone.queue_free()
+	(out["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+func _station_named(stations: Array, id: String) -> WarpStation:
+	for raw: Variant in stations:
+		var station: WarpStation = raw
+		if station.station_id == id:
+			return station
+	return null
+
+## A controller wired to an already-built Zone, for exercising the
+## repair path without running a whole Zone setup. The repair rule reads
+## `_stations` and `_activity_room` and nothing else.
+func _controller_over(out: Dictionary) -> ZoneController:
+	var zone := ZoneController.new()
+	add_child(zone)
+	zone._stations = out["stations"]
+	zone._activity_room = {"puzzled_a_0": "puzzled_a",
+			"puzzled_b_0": "puzzled_b"}
+	return zone
+
+## Two large rooms with a puzzle each and one large room without, so the
+## rule can be told apart from "every large room is broken".
+func _puzzled_station_zone() -> Dictionary:
+	var chambers: Array = []
+	for id: String in ["puzzled_a", "plain", "puzzled_b"]:
+		chambers.append({"id": id, "type": "arena",
+				"width": 18.0, "depth": 16.0,
+				"wall_height": 5.0, "objective": "reach_exit",
+				"enemies": [],
+				"activities": ([] if id == "plain" else [
+						{"kind": "switch_sequence", "element_count": 3}]),
+				"features": [],
+				"reward_location_id": 89100900 + chambers.size(),
+				"additional_reward_location_ids": []})
+	return {"zone_id": "station_repair", "theme": "concrete_facility",
+			"display_name": "Station Repair", "chambers": chambers}
+
+func _test_warp_stations_are_placed_and_only_link_reached_ones() -> void:
+	var out := ZoneBuilder.build(_eight_room_zone())
+	_check(str(out.get("status", "")) == "LAYOUT_OK",
+			"the station Zone did not compose")
+	if not out.has("root"):
+		return
+	add_child(out["root"] as Node3D)
+	await get_tree().physics_frame
+	var stations: Array = out["stations"]
+	var ids: Array[String] = []
+	for raw: Variant in stations:
+		ids.append((raw as WarpStation).station_id)
+	_check(ids.has("st:entrance"), "no station at the Zone entrance")
+	_check(ids.has("st:exit"), "no station at the Zone exit")
+	_check(stations.size() >= 3,
+			"%d stations placed; the entrance, the exit and at least one "
+			% stations.size() + "large room should each have one")
+	# NOTHING IS A DESTINATION UNTIL IT IS REACHED.
+	var cycled := {}
+	var reached_order: Array[String] = []
+	var lookup := func(from_id: String) -> String:
+		if reached_order.size() < 2:
+			return ""
+		var at := reached_order.find(from_id)
+		if at < 0:
+			return reached_order[0]
+		return reached_order[(at + 1) % reached_order.size()]
+	for raw: Variant in stations:
+		var station: WarpStation = raw
+		station.cycle = lookup
+		_check(not station.is_reached(),
+				"station '%s' was reached before anyone stood in it"
+				% station.station_id)
+		_check(station.interact_prompt().find("ACTIVATE") >= 0,
+				"an unreached station offers '%s' rather than activation"
+				% station.interact_prompt())
+	# One reached: still nowhere to go.
+	var first: WarpStation = stations[0]
+	first.mark_reached()
+	reached_order.append(first.station_id)
+	_check(first.interact_prompt().find("no other station") >= 0,
+			"a lone reached station offered a warp: '%s'"
+			% first.interact_prompt())
+	# Two reached: each names the other.
+	var second: WarpStation = stations[1]
+	second.mark_reached()
+	reached_order.append(second.station_id)
+	_check(first.interact_prompt().find("WARP TO") >= 0,
+			"two stations are reached and the first offers no warp")
+	cycled[first.station_id] = true
+	_check(second.is_reached() and first.is_reached(),
+			"reached-ness is monotone and one of them lost it")
+	# AND IT NEVER OFFERS A LOADOUT. The deferral of in-Zone loadout
+	# stations is pinned, and travel-and-save must not quietly reopen it.
+	for raw: Variant in stations:
+		var station: WarpStation = raw
+		var prompt := station.interact_prompt().to_upper()
+		for banned: String in ["LOADOUT", "EQUIP", "SLOT", "ECHO"]:
+			_check(prompt.find(banned) < 0,
+					"a warp station offers '%s', which is loadout "
+					% banned + "editing and is deferred")
+	rooms_checked += 1
+	(out["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+const AUTHORED_JUNCTION := 		"res://content/test_fixtures/shell_room_junction.tscn"
+
+## The authored counterpart of `shell_room_honest`, with a third doorway.
+func _junction_entry() -> Dictionary:
+	var manifest := _authored_entry(AUTHORED_JUNCTION)
+	manifest["id"] = "shell_room_junction"
+	var sockets: Array = []
+	for raw: Variant in manifest["sockets"]:
+		var socket: Dictionary = raw
+		# The balcony moved to the right wall in this fixture, so the
+		# perch that stands on it moves with it.
+		if str(socket.get("name", "")) == "perch":
+			socket = socket.duplicate()
+			socket["position"] = [3.6, 3.0, 11.0]
+		sockets.append(socket)
+	sockets.append({"name": "side_west", "kind": "doorway",
+			"position": [-6.0, 0.0, 8.0], "width": 2.4, "height": 3.2})
+	manifest["sockets"] = sockets
+	var surfaces: Array = []
+	for raw: Variant in manifest["surfaces"]:
+		var surface: Dictionary = raw
+		if str(surface.get("name", "")) == "balcony":
+			surface = surface.duplicate()
+			surface["center"] = [3.6, 3.0, 11.0]
+		surfaces.append(surface)
+	manifest["surfaces"] = surfaces
+	var volumes: Array = []
+	for raw: Variant in manifest["volumes"]:
+		var volume: Dictionary = raw
+		if str(volume.get("name", "")) == "under_balcony":
+			volume = volume.duplicate()
+			volume["center"] = [3.6, 1.5, 11.0]
+		volumes.append(volume)
+	manifest["volumes"] = volumes
+	return manifest
+
+## The authored producer, with three doors, held to the same rule.
+##
+## Multi-door composition was proved on the PROCEDURAL producer alone:
+## `procedural_sockets` declares four openings and `cut_plan` carves the
+## assigned ones. The authored producer had **no door plan at all** —
+## every opening it has is already in the mesh — so nothing measured
+## whether an authored shell's assignment meant anything.
+##
+## The asymmetry is real and is why this is a separate path. A `USED`
+## authored door needs nothing done to it. A `SEALED` one cannot be an
+## uncut wall, because the hole is already modelled: it needs a CLOSURE
+## PLACED OVER IT, which is a different construction with a different way
+## of going wrong, and it must be measured as solid all the same.
+func _test_an_authored_shell_carries_three_doors() -> void:
+	var manifest := _junction_entry()
+	var registry := ContentRegistry.new()
+	registry.entries[str(manifest["id"])] = manifest
+	var chamber := {"id": "auth_junction", "type": "arena",
+			"shell_id": str(manifest["id"]), "enemies": [],
+			# INNER dimensions. The shared rule is an equality: a
+			# chamber declares the space inside the walls and the
+			# manifest declares the envelope, so these are the shell's
+			# 12 x 16 less `OUTER`.
+			"width": 11.2, "depth": 15.2, "wall_height": 6.0,
+			"objective": "reach_exit",
+			"doors": [
+				{"socket_id": "entry", "usage": "USED",
+					"edge_id": "a_in", "key_id": null},
+				{"socket_id": "exit", "usage": "USED",
+					"edge_id": "a_out", "key_id": null},
+				{"socket_id": "side_west", "usage": "USED",
+					"edge_id": "a_side", "key_id": null},
+			]}
+	var result := ContentInstantiator.build_chamber(
+			chamber, "concrete_facility", registry)
+	add_child(result["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(str(result.get("authored_shell", "")) == str(manifest["id"]),
+			"the authored junction fell back to a procedural room")
+	var doors: Array = result["doors"]
+	_check(doors.size() == 3,
+			"the authored junction resolved %d doors, not three"
+			% doors.size())
+	var who := "the authored three-door junction"
+	_judge(RoomContract.violations(result, who), who)
+	_judge(RoomAudit.findings(result, _space(), who), who)
+	authored_checked += 1
+	rooms_checked += 1
+	(result["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+	# AND THE SEALED ONE IS SOLID, by a slab that is really there.
+	var sealed_chamber: Dictionary = chamber.duplicate(true)
+	(sealed_chamber["doors"] as Array)[2] = {"socket_id": "side_west",
+			"usage": "SEALED", "edge_id": null, "key_id": null}
+	var closed := ContentInstantiator.build_chamber(
+			sealed_chamber, "concrete_facility", registry)
+	add_child(closed["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check((closed["root"] as Node3D).find_child(
+				"Closure_side_west", true, false) != null,
+			"an authored SEALED door placed no closure, so the hole the "
+			+ "shell was modelled with is still a hole")
+	var shut := "the authored junction with its side door sealed"
+	_judge(RoomAudit.findings(closed, _space(), shut), shut)
+	probes_expected_to_fail += 1
+	rooms_checked += 1
+	(closed["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+## Leave from a station, come back to it.
+##
+## `handle_leave_zone` was already non-destructive on the bridge -- "no
+## persistent change; Godot resets transient state itself" -- so walking
+## out and back in kept every Check and lost only WHERE YOU WERE. A save
+## station is exactly that missing piece, which is why the station had to
+## exist before this could.
+##
+## Two properties, and the second is the one that makes the first safe:
+## the player spawns at the station they left from, and a station that
+## was online stays online, because reached-ness is progress and progress
+## is monotone.
+func _test_a_zone_resumes_at_the_station_it_was_left_from() -> void:
+	var zone := _eight_room_zone()
+	var first := ZoneController.new()
+	add_child(first)
+	first.setup(zone)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var stations: Array = first._stations
+	_check(stations.size() >= 2,
+			"the resume Zone placed %d stations" % stations.size())
+	if stations.size() < 2:
+		first.queue_free()
+		return
+	# THE STATION FURTHEST FROM THE SPAWN, chosen deliberately.
+	#
+	# The first version took `stations[size - 1]`, which is the ENTRANCE
+	# -- it is appended last -- and the entrance is two metres from
+	# where a player starts anyway. The distance assertion below held
+	# whether or not the resume existed, which is a test that passes
+	# when the thing it guards is removed. Removing the resume and
+	# watching it still pass is how that was caught.
+	var far: WarpStation = stations[0]
+	for raw: Variant in stations:
+		var candidate: WarpStation = raw
+		if candidate.global_position.distance_to(
+					first.player.global_position) \
+				> far.global_position.distance_to(
+					first.player.global_position):
+			far = candidate
+	_check(far.global_position.distance_to(
+				first.player.global_position) > 20.0,
+			"the furthest station is only %.1f m from the spawn, so a "
+			% far.global_position.distance_to(first.player.global_position)
+			+ "resume to it proves nothing about where the player lands")
+	far.mark_reached()
+	first._on_station_reached(far.station_id)
+	_check(first.resume_anchor == far.station_id,
+			"reaching a station did not make it the resume point")
+	var carried := first.stations_reached()
+	var anchor := first.resume_anchor
+	var landing := far.global_position
+	first.queue_free()
+	await get_tree().process_frame
+
+	# The same Zone, entered again, carrying what the session kept.
+	var again := ZoneController.new()
+	add_child(again)
+	again.resume_anchor = anchor
+	again.stations_online = carried
+	again.setup(zone)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(again.player != null, "the resumed Zone spawned no player")
+	if again.player != null:
+		var back: Vector3 = again.player.global_position
+		_check(back.distance_to(landing) < 6.0,
+				"the player resumed %.1f m from the station they left "
+				% back.distance_to(landing) + "from, at %v rather than "
+				% back + "near %v" % landing)
+	# AND IT IS STILL ONLINE. A station that switched off behind the
+	# player would make the resume a one-way trip to somewhere they can
+	# no longer warp from.
+	var same: WarpStation = null
+	for raw: Variant in again._stations:
+		var station: WarpStation = raw
+		if station.station_id == anchor:
+			same = station
+	_check(same != null, "the resumed Zone has no station called '%s'"
+			% anchor)
+	if same != null:
+		_check(same.is_reached(),
+				"the station the player resumed at is offline, so "
+				+ "reached-ness is not monotone across a re-entry")
+	rooms_checked += 1
+	again.queue_free()
+	await get_tree().process_frame
+
+## §30.11.2e constraint 3, and the scoping that makes it survivable.
+##
+## **Closure is not implemented and this router cannot do it.** It walks
+## a chain: each room is placed from the one before it, and it never
+## returns to a transform it has already fixed. A cycle would have to
+## compose to the identity within `EPSILON_JOIN` and nothing here even
+## tries.
+##
+## The danger is not that it cannot; it is that it could build the chain
+## anyway and ignore the closing edge, leaving a Zone whose GRAPH says
+## two rooms are joined both ways and whose GEOMETRY joins them once.
+## Nothing downstream could tell. So a closing `JOINED` edge is refused
+## before a single node is allocated, and the result names
+## `policy.closes_cycles` so a reviewer can see which bound to widen.
+##
+## The second half is the one §30.11.2e calls load-bearing: **a cycle
+## through a `TRAVERSAL_ONLY` edge is not a spatial cycle at all.** A
+## return plug makes a graph cyclic with nothing to close, and a solver
+## asked to close a loop through a teleport would refuse a Zone that is
+## perfectly sound. The same three rooms, the same closing edge, one
+## field different, must compose.
+func _test_a_spatial_cycle_is_refused_and_a_plug_cycle_is_not() -> void:
+	var zone := _eight_room_zone()
+	var rooms: Array = zone["chambers"]
+	var loop := func(realization: String) -> Array:
+		return [
+			{"edge_id": "e01", "room_a": str((rooms[0] as Dictionary)["id"]),
+				"room_b": str((rooms[1] as Dictionary)["id"]),
+				"realization": "JOINED"},
+			{"edge_id": "e12", "room_a": str((rooms[1] as Dictionary)["id"]),
+				"room_b": str((rooms[2] as Dictionary)["id"]),
+				"realization": "JOINED"},
+			# The closing edge, and the only thing that changes.
+			{"edge_id": "e20", "room_a": str((rooms[2] as Dictionary)["id"]),
+				"room_b": str((rooms[0] as Dictionary)["id"]),
+				"realization": realization},
+		]
+
+	var spatial: Dictionary = zone.duplicate(true)
+	spatial["edges"] = loop.call("JOINED")
+	var refused := ZoneBuilder.build(spatial)
+	_check(str(refused.get("status", "")) == "LAYOUT_INFEASIBLE",
+			"a JOINED spatial cycle returned '%s' rather than being "
+			% str(refused.get("status", "?")) + "refused")
+	if str(refused.get("status", "")) == "LAYOUT_INFEASIBLE":
+		_check(not bool((refused["policy"] as Dictionary)["closes_cycles"]),
+				"the result does not say that closure is what it lacks")
+		var pairs: Array = refused["blocking_pairs"]
+		_check(pairs.size() == 1,
+				"%d blocking pairs named for one closing edge"
+				% pairs.size())
+	_check(not refused.has("root"),
+			"a refused layout allocated a Zone root anyway")
+
+	# THE SAME LOOP, THROUGH A PLUG. One field, opposite outcome.
+	var teleported: Dictionary = zone.duplicate(true)
+	teleported["edges"] = loop.call("TRAVERSAL_ONLY")
+	var built := ZoneBuilder.build(teleported)
+	_check(str(built.get("status", "")) == "LAYOUT_OK",
+			"a cycle closed only by a TRAVERSAL_ONLY edge was refused "
+			+ "('%s'); a return plug creates no spatial cycle and the "
+			% str(built.get("status", "?")) + "solver must never see one")
+	if built.has("root"):
+		(built["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	# AND A ZONE WITH NO EDGES AT ALL is the chain every Zone has always
+	# been, so nothing above changes what already shipped.
+	var plain := ZoneBuilder.build(zone)
+	_check(str(plain.get("status", "")) == "LAYOUT_OK",
+			"a Zone declaring no edges stopped composing")
+	if plain.has("root"):
+		(plain["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	probes_expected_to_fail += 1
+	rooms_checked += 1
 
 func _test_the_played_zone_rooms_can_be_left_on_foot() -> void:
 	var cases := [

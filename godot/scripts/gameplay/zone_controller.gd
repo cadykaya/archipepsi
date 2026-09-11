@@ -96,6 +96,27 @@ var _zone_anchors := {}
 var _keys_held := {}
 var _locks_open := {}
 var _zone_locks: Array = []
+var _stations: Array = []
+## Reached-ness is progress, so this only ever grows. `resume_anchor` is
+## the exception the contract names: a POSITION, overwritten rather than
+## accumulated, and losing it costs a walk rather than a run.
+var _stations_reached := {}
+## PROGRESS CARRIED IN, set before `setup` by whoever is remembering.
+##
+## `locked_door.gd` already states the rule this serves: opened locks are
+## "a growing set, which is what makes a resume safe: a reload can never
+## put the player back behind a door they have already opened". Stations
+## were being carried and these were not, so walking out of a Zone and
+## back in re-locked every door and took the keys away -- and the player
+## could be standing on the far side of one when it happened.
+var keys_carried := {}
+var locks_carried := {}
+## activity id -> the room it stands in, for station repair.
+var _activity_room := {}
+var resume_anchor := ""
+## Stations already online when this Zone is entered, by id. Set before
+## `setup` by whoever is carrying progress; empty on a first entry.
+var stations_online := {}
 var _first_kill_seen := false
 var _portal_was_locked := true
 var _quiet_time := 0.0
@@ -158,14 +179,55 @@ func setup(zone_dict: Dictionary) -> void:
 	for raw_key: Variant in build.get("keys", []):
 		var key: ZoneKey = raw_key
 		key.collected.connect(_on_key_collected)
+	_stations = build.get("stations", [])
+	for raw_station: Variant in _stations:
+		var station: WarpStation = raw_station
+		station.reached.connect(_on_station_reached)
+		station.warp_requested.connect(_on_warp_requested)
+		# The station asks the controller where E goes, rather than each
+		# station keeping its own copy of who has been reached.
+		station.cycle = _next_reached
+		# ALREADY ONLINE FROM A PREVIOUS VISIT. Reached-ness is progress
+		# and progress is monotone, so a station a player switched on
+		# before they walked out does not switch off behind them.
+		if stations_online.has(station.station_id):
+			# A station the player repaired stays repaired: the puzzle
+			# was solved, and re-entering the Zone does not unsolve it.
+			station.repair()
+			station.mark_reached()
+			_stations_reached[station.station_id] = true
+	# KEYS FIRST, so a lock wired below opens on the same frame rather
+	# than standing shut until the player touches something.
+	for key_id: Variant in keys_carried:
+		_keys_held[str(key_id)] = true
 	_zone_locks = build.get("locks", [])
 	for raw_lock: Variant in _zone_locks:
 		var lock: LockedDoor = raw_lock
 		lock.opened.connect(_on_lock_opened)
+	# A DOOR ALREADY OPENED STAYS OPENED, whatever opened it. A
+	# capability gate the player passed with an Echo they have since
+	# unequipped is still a door they have been through.
+	for raw_lock: Variant in _zone_locks.duplicate():
+		var lock: LockedDoor = raw_lock
+		if locks_carried.has("%s/%s" % [lock.room_id, lock.socket_id]):
+			lock.open()
+	_open_what_the_keys_allow()
 
 	player = Player.create()
 	add_child(player)
-	player.set_spawn(build["spawn_transform"])
+	# RESUME AT THE STATION, when there is one to resume to.
+	#
+	# `handle_leave_zone` is already non-destructive on the bridge --
+	# "no persistent change; Godot resets transient state itself" -- so
+	# walking out and back in kept every Check and lost only WHERE YOU
+	# WERE. That is the whole of what a save station adds, and it is why
+	# the station had to come first.
+	var spawn_at: Transform3D = build["spawn_transform"]
+	var resume := _station_by_id(resume_anchor)
+	if resume != null:
+		spawn_at = Transform3D(spawn_at.basis,
+				resume.global_position + Vector3(0, 0.3, 2.0))
+	player.set_spawn(spawn_at)
 
 	# The measurement hooks (CAMPAIGN_SCALE.md 13). An encounter starts
 	# when someone actually engages -- a shot that connects, or a hit
@@ -212,6 +274,25 @@ func setup(zone_dict: Dictionary) -> void:
 			if runtime != null:
 				runtime.room_index = _chambers.size()
 				playtime.watch_activity(runtime)
+				# COMPLETION HAS TO REACH THE SCREEN.
+				#
+				# `ActivityRuntime` has done its half since the activity
+				# batch: it clocks a `time_limit`, says DONE, sends
+				# `grant_local_reward` and emits `completed`. The
+				# playtest finished four activities and perceived none
+				# of it, and the reason is here -- `completed` had NO
+				# LISTENER anywhere in the project, and the only
+				# acknowledgement was a Label3D on the activity itself,
+				# which is behind you the moment you touch the last
+				# element. A key toasts and a lock toasts; finishing a
+				# puzzle did not.
+				runtime.completed.connect(_on_activity_completed)
+				# WHICH ROOM A PUZZLE IS IN, so a broken station in that
+				# room can be repaired by solving it. Kept here rather
+				# than re-derived from the activity id, because the id
+				# format is `Activities.build`'s business and agreeing
+				# with it from a distance is how the two drift apart.
+				_activity_room[runtime.activity_id] = runtime.room_id
 
 		for spawn: Dictionary in result.get("enemy_spawns", []):
 			var enemy := Enemy.create(spawn["archetype"], theme)
@@ -329,17 +410,36 @@ func _on_key_collected(key_id: String) -> void:
 				ZoneKey.tint(key_id), 3.0)
 	_open_what_the_keys_allow()
 
-## Every lock the held keys admit, opened at once.
+## Every lock the held keys AND capabilities admit, opened at once.
 ##
 ## Driven by the key set rather than by touching a door, so a key picked
 ## up on the far side of the Zone opens its lock without the player
-## walking back to watch it happen.
+## walking back to watch it happen. Capability gates ride the same path:
+## a gate whose capability the player already has is open the moment the
+## Zone is built, which is what makes a Zone re-entered WITH the Missile
+## simply passable rather than needing a second mechanism.
 func _open_what_the_keys_allow() -> void:
+	var capabilities := held_capabilities()
 	for raw: Variant in _zone_locks:
 		if not is_instance_valid(raw):
 			continue
 		var lock: LockedDoor = raw
-		lock.try_open(_keys_held)
+		lock.try_open(_keys_held, capabilities)
+
+## What the player can currently do, from the ONE place that knows.
+##
+## `available_capabilities` on the bridge snapshot is what
+## `ActivityRuntime` already reads to decide NOT_YET. A gate asking a
+## different oracle would be a second answer to the same question, and
+## the two would disagree the first time a loadout changed.
+func held_capabilities() -> Dictionary:
+	var out := {}
+	var available: Variant = BridgeClient.snapshot.get(
+			"available_capabilities", [])
+	if typeof(available) == TYPE_ARRAY:
+		for capability: Variant in available as Array:
+			out[str(capability)] = true
+	return out
 
 func _on_lock_opened(room: String, socket: String) -> void:
 	var ref := "%s/%s" % [room, socket]
@@ -350,6 +450,125 @@ func _on_lock_opened(room: String, socket: String) -> void:
 			"zone_id": zone_id, "room_id": room, "socket_id": socket})
 	if hud != null:
 		hud.toast("UNLOCKED", Color(0.6, 1.0, 0.7), 2.5)
+
+## Gates the player cannot open yet, as "room/socket" -> what is missing.
+##
+## "NOT YET is good gameplay" (§0-bis), and a player who cannot tell
+## NOT YET from BROKEN is playing a different, worse game. This is what
+## a readout asks.
+func gates_not_yet_open() -> Dictionary:
+	var capabilities := held_capabilities()
+	var out := {}
+	for raw: Variant in _zone_locks:
+		if not is_instance_valid(raw):
+			continue
+		var lock: LockedDoor = raw
+		var missing := lock.unmet(_keys_held, capabilities)
+		if not missing.is_empty():
+			out["%s/%s" % [lock.room_id, lock.socket_id]] = missing
+	return out
+
+## Screen-level acknowledgement for a finished activity.
+##
+## Deliberately NOT a new reward or a new rule: the reward already went
+## out as `grant_local_reward` from the runtime, keyed by the activity's
+## identity so the same completion twice is one grant. This is the part
+## that was missing -- telling the player it happened.
+func _on_activity_completed(activity_id: String, seconds: float,
+		_attempts: int) -> void:
+	if hud != null:
+		hud.toast("%s COMPLETE   %.1fs"
+				% [activity_id.to_upper(), seconds],
+				Color(0.55, 0.95, 0.75), 3.0)
+	if tones != null and tones.has_method("play"):
+		tones.play("secret_found")
+	_repair_station_for(activity_id)
+
+## A solved puzzle switches on the broken station in its own room.
+##
+## Only its own room: a Zone with two puzzled station rooms must not have
+## one puzzle light both, which is the failure a room-blind match would
+## produce and the reason the room is carried at all.
+func _repair_station_for(activity_id: String) -> void:
+	var room := str(_activity_room.get(activity_id, ""))
+	if room == "":
+		return
+	for raw: Variant in _stations:
+		var station: WarpStation = raw
+		if station.repair_room != room or not station.repair():
+			continue
+		# Repair activates, so the station is now reached and the rest of
+		# the reached bookkeeping has to happen exactly as it would have.
+		_station_came_online(station.station_id, "STATION REPAIRED")
+
+## The next reached station after this one, wrapping.
+##
+## Held by the controller and not by the stations, because "which
+## stations have been reached" is one fact and a copy per station is
+## several. Returns "" when this is the only one reached, which is what
+## the prompt reads to say so rather than offering a warp to itself.
+func _next_reached(from_id: String) -> String:
+	var order: Array[String] = []
+	for raw: Variant in _stations:
+		var station: WarpStation = raw
+		if station.is_reached():
+			order.append(station.station_id)
+	if order.size() < 2:
+		return ""
+	var at := order.find(from_id)
+	if at < 0:
+		return order[0]
+	return order[(at + 1) % order.size()]
+
+## The keys and the opened locks, for whoever is carrying progress out.
+func keys_held() -> Dictionary:
+	return _keys_held.duplicate()
+
+func locks_opened() -> Dictionary:
+	return _locks_open.duplicate()
+
+## Which stations are online, for whoever is carrying progress out.
+func stations_reached() -> Dictionary:
+	return _stations_reached.duplicate()
+
+func _station_by_id(id: String) -> WarpStation:
+	for raw: Variant in _stations:
+		var station: WarpStation = raw
+		if station.station_id == id:
+			return station
+	return null
+
+func _on_station_reached(station_id: String) -> void:
+	_station_came_online(station_id, "STATION ONLINE")
+
+## One path onto the reached set, whether a player walked onto the pad or
+## solved the puzzle that repaired it. Two paths would be two chances to
+## forget the intent or the resume anchor.
+func _station_came_online(station_id: String, note: String) -> void:
+	if _stations_reached.has(station_id):
+		return
+	_stations_reached[station_id] = true
+	# The station a player last stood at is where a resume puts them.
+	resume_anchor = station_id
+	BridgeClient.send_intent({"type": "station_reached",
+			"zone_id": zone_id, "station_id": station_id})
+	if hud != null:
+		hud.toast(note, Color(0.45, 1.0, 0.8), 2.5)
+
+## Travel only. A station provides travel and save and NOT loadout
+## editing (§30.12.4), so nothing here opens a slot or touches a
+## capability the entry check validated.
+func _on_warp_requested(from_id: String, to_id: String) -> void:
+	var to := _station_by_id(to_id)
+	if to == null or not to.is_reached():
+		push_error("zone: warp to '%s' from '%s' is not a reached station"
+				% [to_id, from_id])
+		return
+	player.global_position = to.global_position + Vector3(0, 0.3, 2.0)
+	player.velocity = Vector3.ZERO
+	resume_anchor = to_id
+	if hud != null:
+		hud.toast("WARPED TO %s" % to.label_text, Color(0.45, 1.0, 0.8))
 
 func _on_plug_traversed(edge_id: String, destination: String) -> void:
 	if not _zone_anchors.has(destination):
