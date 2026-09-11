@@ -59,17 +59,26 @@ REM Warn before pulling rather than after: a pull onto edited files
 REM stops halfway with a message about merging, which is alarming and
 REM hard to undo if you do not already know Git.
 REM
-REM But check for REAL edits first. Godot rewrites godot\project.godot
-REM every time it opens the project -- a version stamp, a feature list --
-REM so treating that as "you edited files" would block every update you
-REM ever run, for a file you never touched.
-git diff --quiet -- . ":(exclude)godot/project.godot"
+REM But check for REAL edits first. Godot rewrites files of its own
+REM every time it opens the project, and treating those as "you edited
+REM files" would block every update you ever run, for files you never
+REM touched. There are two kinds:
+REM
+REM   godot\project.godot   a version stamp and a feature list;
+REM   *.import              texture import settings. Godot's "detect 3D"
+REM                         flips a texture to VRAM compression the first
+REM                         time it is used in a 3D scene and rewrites
+REM                         the .import beside it. Twenty-nine of them
+REM                         changed the first time the authored room
+REM                         shells were opened, which read as "you edited
+REM                         twenty-nine files" and stopped the update.
+git diff --quiet -- . ":(exclude)godot/project.godot" ":(exclude)*.import"
 if errorlevel 1 (
     echo   Some files here differ from the version on GitHub, so nothing
     echo   has been done. If you did not edit these on purpose, tell
     echo   Claude what this says.
     echo.
-    git diff --stat -- . ":(exclude)godot/project.godot"
+    git diff --stat -- . ":(exclude)godot/project.godot" ":(exclude)*.import"
     echo.
     pause
     exit /b 1
@@ -85,6 +94,14 @@ if errorlevel 1 (
     echo   That is normal and not something you did; resetting it.
     echo.
     git checkout -- godot/project.godot
+)
+
+git diff --quiet -- "*.import"
+if errorlevel 1 (
+    echo   Godot rewrote some .import files when it opened the project -
+    echo   that is its texture importer, not you; resetting them.
+    echo.
+    git checkout -- "*.import"
 )
 
 git pull --ff-only origin %BRANCH%
