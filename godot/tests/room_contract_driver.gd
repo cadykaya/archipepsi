@@ -122,6 +122,7 @@ func _run() -> void:
 	await _test_an_authored_shell_carries_three_doors()
 	await _test_a_zone_resumes_at_the_station_it_was_left_from()
 	await _test_a_spatial_cycle_is_refused_and_a_plug_cycle_is_not()
+	await _test_a_broken_station_is_repaired_by_its_own_rooms_puzzle()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
 
@@ -2842,6 +2843,131 @@ func _test_the_playable_slice_composes_end_to_end() -> void:
 ## "Already reached" is the whole safety property: a station a player has
 ## never stood at is not a destination, and offering it would be a
 ## teleport past whatever stands between them.
+## A STATION IN A PUZZLED ROOM STARTS BROKEN, AND THE PUZZLE FIXES IT.
+##
+## The owner ruling: stations "start off or broken and need you to
+## complete a small puzzle (since we already have puzzles they just do
+## nothing lol)". The last clause is the point -- four activities were
+## completed in the Zone 1 playtest and none of them changed anything a
+## player could see, so this is the first thing a solved puzzle does.
+##
+## Three things have to hold and each is checked:
+##   1. a station in a room WITHOUT a puzzle is not broken, and the
+##      entrance and exit are never broken, so a Zone is never entered
+##      without a working save point;
+##   2. a broken station cannot be reached by standing in it, by pressing
+##      E at it, or by a caller reaching for `mark_reached`;
+##   3. solving the puzzle in ITS OWN ROOM repairs it, and solving the
+##      puzzle in the other room does not.
+func _test_a_broken_station_is_repaired_by_its_own_rooms_puzzle() -> void:
+	var out := ZoneBuilder.build(_puzzled_station_zone())
+	_check(str(out.get("status", "")) == "LAYOUT_OK",
+			"the puzzled-station Zone did not compose: %s"
+			% str(out.get("failed", "?")))
+	if not out.has("root"):
+		return
+	add_child(out["root"] as Node3D)
+	await get_tree().physics_frame
+	var stations: Array = out["stations"]
+	var broken: Array[String] = []
+	var whole: Array[String] = []
+	for raw: Variant in stations:
+		var station: WarpStation = raw
+		if station.is_broken():
+			broken.append(station.station_id)
+		else:
+			whole.append(station.station_id)
+	_check(broken.has("st:puzzled_a") and broken.has("st:puzzled_b"),
+			"a large room with an activity produced a working station; "
+			+ "broken = %s" % str(broken))
+	_check(not broken.has("st:plain"),
+			"a large room with NO activity produced a broken station, so "
+			+ "the puzzle is not what decides it")
+	# THE DOOR AND THE GOAL ALWAYS WORK.
+	_check(not broken.has("st:entrance") and not broken.has("st:exit"),
+			"the entrance or the exit station started broken, which "
+			+ "leaves a Zone with no save point at the door: %s"
+			% str(broken))
+
+	var a := _station_named(stations, "st:puzzled_a")
+	var b := _station_named(stations, "st:puzzled_b")
+	if a == null or b == null:
+		_check(false, "the two puzzled stations were not both placed")
+		(out["root"] as Node3D).queue_free()
+		return
+	# NOTHING REACHES A BROKEN STATION.
+	a.mark_reached()
+	_check(not a.is_reached(),
+			"`mark_reached` lit a broken station, so the puzzle is "
+			+ "decoration")
+	a.interact(self)
+	_check(not a.is_reached(),
+			"pressing E activated a broken station")
+	_check(a.interact_prompt().to_upper().find("BROKEN") >= 0,
+			"a broken station's prompt does not say so: '%s'"
+			% a.interact_prompt())
+
+	# THE PUZZLE IN ITS OWN ROOM, AND ONLY THAT ONE.
+	var zone := _controller_over(out)
+	zone._repair_station_for("puzzled_b_0")
+	_check(not a.is_reached(),
+			"the OTHER room's puzzle repaired this station, so one "
+			+ "puzzle lights every station in the Zone")
+	_check(b.is_reached() and not b.is_broken(),
+			"the puzzle in b's own room did not repair b")
+	zone._repair_station_for("puzzled_a_0")
+	_check(a.is_reached() and not a.is_broken(),
+			"solving this room's puzzle did not repair its station")
+	_check(a.interact_prompt().to_upper().find("BROKEN") < 0,
+			"a repaired station still reads as broken: '%s'"
+			% a.interact_prompt())
+	# AND IT IS ON THE REACHED SET, not merely lit -- a repair that does
+	# not reach is a station you cannot warp to.
+	_check((zone.stations_reached() as Dictionary).has("st:puzzled_a"),
+			"a repaired station never joined the reached set, so no "
+			+ "warp can name it")
+	_check(str(zone.resume_anchor) == "st:puzzled_a",
+			"a repaired station did not become the resume anchor")
+	rooms_checked += 1
+	zone.queue_free()
+	(out["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+func _station_named(stations: Array, id: String) -> WarpStation:
+	for raw: Variant in stations:
+		var station: WarpStation = raw
+		if station.station_id == id:
+			return station
+	return null
+
+## A controller wired to an already-built Zone, for exercising the
+## repair path without running a whole Zone setup. The repair rule reads
+## `_stations` and `_activity_room` and nothing else.
+func _controller_over(out: Dictionary) -> ZoneController:
+	var zone := ZoneController.new()
+	add_child(zone)
+	zone._stations = out["stations"]
+	zone._activity_room = {"puzzled_a_0": "puzzled_a",
+			"puzzled_b_0": "puzzled_b"}
+	return zone
+
+## Two large rooms with a puzzle each and one large room without, so the
+## rule can be told apart from "every large room is broken".
+func _puzzled_station_zone() -> Dictionary:
+	var chambers: Array = []
+	for id: String in ["puzzled_a", "plain", "puzzled_b"]:
+		chambers.append({"id": id, "type": "arena",
+				"width": 18.0, "depth": 16.0,
+				"wall_height": 5.0, "objective": "reach_exit",
+				"enemies": [],
+				"activities": ([] if id == "plain" else [
+						{"kind": "switch_sequence", "element_count": 3}]),
+				"features": [],
+				"reward_location_id": 89100900 + chambers.size(),
+				"additional_reward_location_ids": []})
+	return {"zone_id": "station_repair", "theme": "concrete_facility",
+			"display_name": "Station Repair", "chambers": chambers}
+
 func _test_warp_stations_are_placed_and_only_link_reached_ones() -> void:
 	var out := ZoneBuilder.build(_eight_room_zone())
 	_check(str(out.get("status", "")) == "LAYOUT_OK",

@@ -101,6 +101,8 @@ var _stations: Array = []
 ## the exception the contract names: a POSITION, overwritten rather than
 ## accumulated, and losing it costs a walk rather than a run.
 var _stations_reached := {}
+## activity id -> the room it stands in, for station repair.
+var _activity_room := {}
 var resume_anchor := ""
 ## Stations already online when this Zone is entered, by id. Set before
 ## `setup` by whoever is carrying progress; empty on a first entry.
@@ -179,6 +181,9 @@ func setup(zone_dict: Dictionary) -> void:
 		# and progress is monotone, so a station a player switched on
 		# before they walked out does not switch off behind them.
 		if stations_online.has(station.station_id):
+			# A station the player repaired stays repaired: the puzzle
+			# was solved, and re-entering the Zone does not unsolve it.
+			station.repair()
 			station.mark_reached()
 			_stations_reached[station.station_id] = true
 	_zone_locks = build.get("locks", [])
@@ -260,6 +265,12 @@ func setup(zone_dict: Dictionary) -> void:
 				# element. A key toasts and a lock toasts; finishing a
 				# puzzle did not.
 				runtime.completed.connect(_on_activity_completed)
+				# WHICH ROOM A PUZZLE IS IN, so a broken station in that
+				# room can be repaired by solving it. Kept here rather
+				# than re-derived from the activity id, because the id
+				# format is `Activities.build`'s business and agreeing
+				# with it from a distance is how the two drift apart.
+				_activity_room[runtime.activity_id] = runtime.room_id
 
 		for spawn: Dictionary in result.get("enemy_spawns", []):
 			var enemy := Enemy.create(spawn["archetype"], theme)
@@ -413,6 +424,24 @@ func _on_activity_completed(activity_id: String, seconds: float,
 				Color(0.55, 0.95, 0.75), 3.0)
 	if tones != null and tones.has_method("play"):
 		tones.play("secret_found")
+	_repair_station_for(activity_id)
+
+## A solved puzzle switches on the broken station in its own room.
+##
+## Only its own room: a Zone with two puzzled station rooms must not have
+## one puzzle light both, which is the failure a room-blind match would
+## produce and the reason the room is carried at all.
+func _repair_station_for(activity_id: String) -> void:
+	var room := str(_activity_room.get(activity_id, ""))
+	if room == "":
+		return
+	for raw: Variant in _stations:
+		var station: WarpStation = raw
+		if station.repair_room != room or not station.repair():
+			continue
+		# Repair activates, so the station is now reached and the rest of
+		# the reached bookkeeping has to happen exactly as it would have.
+		_station_came_online(station.station_id, "STATION REPAIRED")
 
 ## The next reached station after this one, wrapping.
 ##
@@ -445,6 +474,12 @@ func _station_by_id(id: String) -> WarpStation:
 	return null
 
 func _on_station_reached(station_id: String) -> void:
+	_station_came_online(station_id, "STATION ONLINE")
+
+## One path onto the reached set, whether a player walked onto the pad or
+## solved the puzzle that repaired it. Two paths would be two chances to
+## forget the intent or the resume anchor.
+func _station_came_online(station_id: String, note: String) -> void:
 	if _stations_reached.has(station_id):
 		return
 	_stations_reached[station_id] = true
@@ -453,7 +488,7 @@ func _on_station_reached(station_id: String) -> void:
 	BridgeClient.send_intent({"type": "station_reached",
 			"zone_id": zone_id, "station_id": station_id})
 	if hud != null:
-		hud.toast("STATION ONLINE", Color(0.45, 1.0, 0.8), 2.5)
+		hud.toast(note, Color(0.45, 1.0, 0.8), 2.5)
 
 ## Travel only. A station provides travel and save and NOT loadout
 ## editing (§30.12.4), so nothing here opens a slot or touches a

@@ -578,8 +578,23 @@ static func build(zone: Dictionary, theme_override := "",
 		var footprint: float = float(chamber.get("width", 0.0)) \
 				* float(chamber.get("depth", 0.0))
 		if footprint >= STATION_ROOM_AREA:
+			# A STATION IN A ROOM WITH A PUZZLE STARTS BROKEN.
+			#
+			# The owner ruling is that a station may start off and be
+			# repaired by "a small puzzle (since we already have puzzles
+			# they just do nothing)". This lane spends no new schema
+			# field on the choice: Epsilon already decides whether a room
+			# carries an activity, so Epsilon already decides this, and
+			# the rule is one the builder can state.
+			#
+			# ENTRANCE AND EXIT ARE NEVER BROKEN -- they are appended
+			# below, outside this loop, so the Zone always has a working
+			# save point at the door and one at the goal.
+			var puzzled := not (chamber.get("activities", []) as Array) \
+					.is_empty()
 			var here := WarpStation.create("st:%s" % rid,
-					str(chamber.get("id", "room")).to_upper(), theme)
+					str(chamber.get("id", "room")).to_upper(), theme,
+					rid if puzzled else "")
 			here.position = origin + _rot(yaw, Vector3(
 					float(chamber.get("width", 16.0)) * 0.3, 0.0,
 					float(chamber.get("depth", 16.0)) * 0.5))

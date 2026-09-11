@@ -90,6 +90,7 @@ that was verified by removing them.
 | **A Zone resumes at the station it was left from** | `zone_controller.gd`, `main.gd` | removing the resume lands the player **153.9 m** away; a station that was online stays online |
 | **Key reachable before its own lock, by walking** | `room_contract_driver.gd` | flooded walk-only from spawn; the room beyond the lock is *not* reached |
 | **A spatial cycle is refused; a plug cycle is not** | `zone_builder.gd` `unclosable_cycles` | the same three-room loop is refused when the closing edge is `JOINED` and composes when it is `TRAVERSAL_ONLY`; disabling the guard reports `LAYOUT_OK` on a loop, and counting `TRAVERSAL_ONLY` edges refuses a legal return plug |
+| **A broken station is repaired by its own room's puzzle** | `warp_station.gd`, `zone_controller.gd` `_repair_station_for` | a large room WITH an activity yields a broken station and one without does not; the entrance and exit are never broken; the other room's puzzle does not repair it |
 
 ## 4. Implemented but not integrated
 
@@ -122,10 +123,38 @@ that was verified by removing them.
   this lane authored, so Art can add real three-door shells without the
   engine being the unknown. All twelve shipping shells remain two-door
   and remain valid.
+- Ability gates and the exit unlock.
 - **Closing** a spatial cycle. Refusal is implemented and proved (§5e);
   the router still builds chains, so a Zone that wants a genuine loop
   gets a typed `LAYOUT_INFEASIBLE` naming the pair, not a layout.
-- Ability gates and the exit unlock.
+
+## 5f. The first thing a solved puzzle does
+
+The Zone 1 playtest finished four activities and perceived none of it.
+The listener fix (§5 above) put the completion on screen; this puts it in
+the world. The owner ruling is that a station may "start off or broken
+and need you to complete a small puzzle (since we already have puzzles
+they just do nothing lol)" — the parenthesis is the brief.
+
+A station in a large room that carries an activity starts BROKEN: it
+cannot be reached by standing in it, by pressing E at it, or by a caller
+reaching for `mark_reached`, and it reads as dead from across the room.
+Solving that room's puzzle repairs it, which also activates it — the
+player has already earned it and should not then have to walk onto the
+pad.
+
+**No new schema field was spent on the choice.** Epsilon already decides
+whether a room carries an activity, so Epsilon already decides this; the
+builder states the rule. If that turns out to be too blunt — every
+puzzled station room, no exceptions — a `station_repair` field on the
+chamber is the place to put the finer choice, and it belongs with the
+rest of the interpretation schema rather than here.
+
+**The entrance and the exit are never broken**, because they are appended
+outside the per-room loop. A Zone therefore always has a working save
+point at the door and one at the goal, and a broken station is never a
+gate on progression: warp only ever moves a player between stations they
+have already reached on foot.
 
 ## 5e. Constraint 3 is a refusal, not a solver
 
