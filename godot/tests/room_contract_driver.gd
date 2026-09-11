@@ -118,6 +118,7 @@ func _run() -> void:
 	await _test_a_locked_door_gates_until_its_key_is_held()
 	await _test_a_key_is_reachable_before_the_lock_it_opens()
 	await _test_the_playable_slice_composes_end_to_end()
+	await _test_warp_stations_are_placed_and_only_link_reached_ones()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
 
@@ -2458,21 +2459,95 @@ func _test_a_spent_budget_is_a_timeout_and_not_infeasibility() -> void:
 	if out.has("root"):
 		(out["root"] as Node3D).queue_free()
 		await get_tree().process_frame
-	# WHAT INFEASIBILITY WOULD CARRY, asserted on the policy itself.
+	# AND THE OTHER HALF, exhausted for real.
 	#
-	# NOT PROVED HERE: that a genuinely unplaceable Zone is reachable.
-	# This builder pushes up to MAX_CLEARANCE_CONNECTORS and turns twice,
-	# and no fixture yet constructs a Zone it cannot route. Until one
-	# does, `LAYOUT_INFEASIBLE`'s branch is unexercised and is recorded
-	# as such rather than simulated -- a fixture that fakes the result
-	# would prove the assertion and not the behaviour.
-	var policy := ZoneBuilder.routing_policy([])
-	for field: String in ["max_route_turns", "explore_connectors",
-			"max_clearance_connectors", "clearance_budget"]:
-		_check(policy.has(field),
-				"the routing policy omits '%s', so an infeasible result "
-				% field + "could not say what space it exhausted")
+	# The honest way to reach `LAYOUT_INFEASIBLE` is to DECLARE a smaller
+	# candidate space and empty it, because that is exactly what the
+	# result means: this policy's space is empty. Contriving geometry the
+	# shipping policy cannot route would read as "no layout exists",
+	# which is the one claim a bounded search may never make.
+	# AND THE OTHER HALF, exhausted for real and under the SHIPPING
+	# policy -- no override, no contrivance.
+	#
+	# Two `shell_corner_left` pieces in a row swing the route 180
+	# degrees, and the arena after them is placed back along the arm it
+	# just left. `_search` walks its whole candidate space -- every
+	# clearance push and both turns -- and every candidate overlaps. That
+	# is what `exhausted` means, and it is the one condition that
+	# permits this result.
+	var boxed := ZoneBuilder.build(_doubling_back_zone())
+	_check(str(boxed.get("status", "")) == "LAYOUT_INFEASIBLE",
+			"a chain that doubles back into its own arm returned '%s'"
+			% str(boxed.get("status", "?")))
+	if str(boxed.get("status", "")) == "LAYOUT_INFEASIBLE":
+		_check(bool(boxed["exhausted"]),
+				"an infeasible result did not claim exhaustion")
+		_check(not (boxed["blocking_rooms"] as Array).is_empty(),
+				"infeasibility named no blocking room, so a catalog "
+				+ "review has nothing to look at")
+		var policy: Dictionary = boxed["policy"]
+		for field: String in ["max_route_turns", "explore_connectors",
+				"max_clearance_connectors", "clearance_budget"]:
+			_check(policy.has(field),
+					"the infeasible result omits '%s', so it cannot say "
+					% field + "what space it exhausted")
+		# THE POLICY REPORTED IS THE POLICY RUN. A result naming bounds
+		# it did not search under would send a catalog review after the
+		# wrong thing.
+		_check(int(policy["max_route_turns"]) == ZoneBuilder.MAX_ROUTE_TURNS,
+				"the result reports %d turns and the search allowed %d"
+				% [int(policy["max_route_turns"]),
+					ZoneBuilder.MAX_ROUTE_TURNS])
+	if boxed.has("root"):
+		(boxed["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	# AND A TIGHTER POLICY STILL EXHAUSTS, which is what makes the
+	# result's meaning "this space is empty" rather than "no layout
+	# exists": narrow the space and more Zones fall into it.
+	ZoneBuilder.policy_override = {"clearance_budget": 0,
+			"max_route_turns": 0}
+	var tighter := ZoneBuilder.build(_doubling_back_zone())
+	ZoneBuilder.policy_override = {}
+	_check(str(tighter.get("status", "")) == "LAYOUT_INFEASIBLE",
+			"a zero-budget policy did not exhaust")
+	if str(tighter.get("status", "")) == "LAYOUT_INFEASIBLE":
+		_check(int((tighter["policy"] as Dictionary)["clearance_budget"])
+					== 0,
+				"the tightened result reports a policy it did not run "
+				+ "under")
+	if tighter.has("root"):
+		(tighter["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	probes_expected_to_fail += 1
 	rooms_checked += 1
+
+## A chain that turns back into itself.
+##
+## Two corner shells in a row swing the route 180 degrees, so the room
+## after them is placed back along the arm it just left. With connectors
+## and turns available the router pushes past it, which is the shipping
+## behaviour; with neither, the candidate space is one position and that
+## position overlaps.
+func _doubling_back_zone() -> Dictionary:
+	return {"zone_id": "boxed_in", "theme": "concrete_facility",
+			"display_name": "Boxed In", "chambers": [
+		{"id": "b0", "type": "arena", "width": 26.0, "depth": 24.0,
+			"wall_height": 6.0, "objective": "reach_exit", "enemies": [],
+			"activities": [], "features": [],
+			"additional_reward_location_ids": []},
+		{"id": "b1", "type": "corridor", "shell_id": "shell_corner_left",
+			"length": 6.0, "width": 6.0, "enemies": [],
+			"activities": [], "features": [],
+			"additional_reward_location_ids": []},
+		{"id": "b2", "type": "corridor", "shell_id": "shell_corner_left",
+			"length": 6.0, "width": 6.0, "enemies": [],
+			"activities": [], "features": [],
+			"additional_reward_location_ids": []},
+		{"id": "b3", "type": "arena", "width": 26.0, "depth": 24.0,
+			"wall_height": 6.0, "objective": "reach_exit", "enemies": [],
+			"activities": [], "features": [],
+			"additional_reward_location_ids": []},
+	]}
 
 ## A dead end's way back, placed and proved.
 ##
@@ -2753,6 +2828,78 @@ func _test_the_playable_slice_composes_end_to_end() -> void:
 			Vector2(key_at.x, key_at.z))
 	_check(bool(walk["ok"]),
 			"the slice's key cannot be walked to: %s" % str(walk["why"]))
+	rooms_checked += 1
+	(out["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+## Travel and save, and the one thing a station must never offer.
+##
+## §30.12.4 places a station at the entrance, at the exit and in large
+## rooms, and lets a player warp between stations **already reached**.
+## "Already reached" is the whole safety property: a station a player has
+## never stood at is not a destination, and offering it would be a
+## teleport past whatever stands between them.
+func _test_warp_stations_are_placed_and_only_link_reached_ones() -> void:
+	var out := ZoneBuilder.build(_eight_room_zone())
+	_check(str(out.get("status", "")) == "LAYOUT_OK",
+			"the station Zone did not compose")
+	if not out.has("root"):
+		return
+	add_child(out["root"] as Node3D)
+	await get_tree().physics_frame
+	var stations: Array = out["stations"]
+	var ids: Array[String] = []
+	for raw: Variant in stations:
+		ids.append((raw as WarpStation).station_id)
+	_check(ids.has("st:entrance"), "no station at the Zone entrance")
+	_check(ids.has("st:exit"), "no station at the Zone exit")
+	_check(stations.size() >= 3,
+			"%d stations placed; the entrance, the exit and at least one "
+			% stations.size() + "large room should each have one")
+	# NOTHING IS A DESTINATION UNTIL IT IS REACHED.
+	var cycled := {}
+	var reached_order: Array[String] = []
+	var lookup := func(from_id: String) -> String:
+		if reached_order.size() < 2:
+			return ""
+		var at := reached_order.find(from_id)
+		if at < 0:
+			return reached_order[0]
+		return reached_order[(at + 1) % reached_order.size()]
+	for raw: Variant in stations:
+		var station: WarpStation = raw
+		station.cycle = lookup
+		_check(not station.is_reached(),
+				"station '%s' was reached before anyone stood in it"
+				% station.station_id)
+		_check(station.interact_prompt().find("ACTIVATE") >= 0,
+				"an unreached station offers '%s' rather than activation"
+				% station.interact_prompt())
+	# One reached: still nowhere to go.
+	var first: WarpStation = stations[0]
+	first.mark_reached()
+	reached_order.append(first.station_id)
+	_check(first.interact_prompt().find("no other station") >= 0,
+			"a lone reached station offered a warp: '%s'"
+			% first.interact_prompt())
+	# Two reached: each names the other.
+	var second: WarpStation = stations[1]
+	second.mark_reached()
+	reached_order.append(second.station_id)
+	_check(first.interact_prompt().find("WARP TO") >= 0,
+			"two stations are reached and the first offers no warp")
+	cycled[first.station_id] = true
+	_check(second.is_reached() and first.is_reached(),
+			"reached-ness is monotone and one of them lost it")
+	# AND IT NEVER OFFERS A LOADOUT. The deferral of in-Zone loadout
+	# stations is pinned, and travel-and-save must not quietly reopen it.
+	for raw: Variant in stations:
+		var station: WarpStation = raw
+		var prompt := station.interact_prompt().to_upper()
+		for banned: String in ["LOADOUT", "EQUIP", "SLOT", "ECHO"]:
+			_check(prompt.find(banned) < 0,
+					"a warp station offers '%s', which is loadout "
+					% banned + "editing and is deferred")
 	rooms_checked += 1
 	(out["root"] as Node3D).queue_free()
 	await get_tree().process_frame

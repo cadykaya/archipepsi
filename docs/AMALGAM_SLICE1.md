@@ -76,6 +76,8 @@ that was verified by removing them.
 | **Return plugs** | `return_plug.gd`, `zone_builder.gd` anchors | a plug naming an unknown anchor is refused; the destination admits a standing capsule |
 | **`LayoutResult` commits the whole chain** | `zone_builder.gd` | `rooms` + `links` per edge, with every connector and corner |
 | **Timeout ≠ infeasible** | `zone_builder.gd` | a 0.001 ms budget yields `LAYOUT_TIMEOUT` with candidates remaining |
+| **Infeasible is exhausted** | `zone_builder.gd` | a Zone that doubles back into its own arm exhausts the **shipping** policy and reports it; a tightened policy exhausts too, which is what makes the result mean "this space is empty" |
+| **Warp stations** | `warp_station.gd` | placed at entrance, exit and large rooms; an unreached station is never a destination; no prompt offers loadout editing |
 | **Key reachable before its own lock, by walking** | `room_contract_driver.gd` | flooded walk-only from spawn; the room beyond the lock is *not* reached |
 
 ## 4. Implemented but not integrated
@@ -102,11 +104,27 @@ that was verified by removing them.
   `R ⊆ E` verifier, the manifest and check 19e.
 - **Authored** multi-door shells. Slice 1 uses only procedural junctions;
   all twelve authored shells remain two-door and remain valid.
-- `LAYOUT_INFEASIBLE`'s branch is **unexercised** — no fixture yet builds
-  a Zone this router genuinely cannot place. The result carries the
-  policy it would report; the behaviour is unproved and is recorded as
-  such rather than simulated.
 - Spatial cycles, warp stations, ability gates, the exit unlock.
+
+## 5a. A live defect found while closing the infeasibility gap
+
+**Two same-direction corner shells in a row make a Zone the router
+cannot place.** `shell_corner_left` twice swings the route 180°, the next
+room is placed back along the arm it just left, and `_search` exhausts
+every clearance push and both turns without finding a clear position.
+
+`zone_builder.gd`'s header says *"turns alternate direction (no U-shapes
+by construction)"*. That guarantee covers **route** turns — the ones
+`_plan_route` chooses. It does **not** cover **shell** turns, which come
+from a chamber's `exit_yaw` and are the composer's choice. Zone 1 never
+hit it because its six corner shells happened to alternate.
+
+This is now the fixture that exercises `LAYOUT_INFEASIBLE` under the
+shipping policy, so the branch is proved rather than recorded as
+unproved. **The defect itself is not fixed here**: whether the router
+should absorb a U-turn or the composer should be forbidden from emitting
+one is a composition decision that touches Dess's column, and it is
+recorded for that conversation rather than settled unilaterally.
 
 ## 6. A pre-existing defect found on the way, and not fixed here
 

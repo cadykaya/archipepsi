@@ -48,6 +48,14 @@ static func _world_aabb(local: AABB, position: Vector3, yaw: float) -> AABB:
 ## is `_clearance_budget`, derived from the geometry actually placed.
 const MAX_CLEARANCE_CONNECTORS := 96
 
+## How big a room has to be to earn a warp station.
+##
+## §30.12.4 says "large rooms" and leaves the number to the engine, which
+## is this lane's to pick: below this a station is furniture in the way,
+## and a Zone where every room has one is a Zone where warping replaces
+## walking.
+const STATION_ROOM_AREA := 260.0
+
 ## HOW MANY CONNECTORS IT COULD EVER TAKE to push clear, derived rather
 ## than guessed.
 ##
@@ -128,11 +136,26 @@ const EXPLORE_CONNECTORS := 40
 ## a layout needing three turns is outside the space and its absence
 ## here says nothing about it. A result carries the policy so a catalog
 ## review can see that widening it is an available answer.
-static func routing_policy(placed: Array) -> Dictionary:
-	return {"max_route_turns": MAX_ROUTE_TURNS,
+static func routing_policy(placed: Array,
+		override := {}) -> Dictionary:
+	var out := {"max_route_turns": MAX_ROUTE_TURNS,
 			"explore_connectors": EXPLORE_CONNECTORS,
 			"max_clearance_connectors": MAX_CLEARANCE_CONNECTORS,
 			"clearance_budget": _clearance_budget(placed)}
+	for field: String in override:
+		out[field] = override[field]
+	return out
+
+## A TIGHTER POLICY, so exhaustion can be exercised without contriving
+## geometry that pretends to be impossible.
+##
+## `LAYOUT_INFEASIBLE` means "the candidate space defined by the declared
+## routing policy is empty", and the only honest way to reach it in a
+## test is to declare a smaller space and exhaust THAT. Contriving a Zone
+## the shipping policy cannot route would prove something narrower and
+## read as "no layout exists", which is the claim this result may never
+## make.
+static var policy_override := {}
 
 ## Where this room can go: straight ahead, or around one or two corners.
 ##
@@ -148,7 +171,10 @@ static func routing_policy(placed: Array) -> Dictionary:
 static func _plan_route(shape: Dictionary, corners: Dictionary,
 		room: AABB, entry_at: Vector3, cursor: Vector3, yaw: float,
 		placed: Array, prefer: int) -> Dictionary:
-	var budget := _clearance_budget(placed)
+	var budget := int(routing_policy(placed,
+			policy_override)["clearance_budget"])
+	var turns_allowed := int(routing_policy(placed,
+			policy_override)["max_route_turns"])
 	# THE PREFERRED TURN IS TRIED FIRST, and that is not a detail: the
 	# search below always fits a room straight ahead when it can, so a
 	# Zone whose rooms all fit straight ahead is a Zone that never bends.
@@ -159,14 +185,14 @@ static func _plan_route(shape: Dictionary, corners: Dictionary,
 			var bent := _search(shape, corners, room, entry_at,
 					cursor + _rot(yaw, corner["exit_offset"] as Vector3),
 					yaw + float(prefer) * PI / 2.0, placed,
-					MAX_ROUTE_TURNS - 1, prefer, budget,
+					turns_allowed - 1, prefer, budget,
 					[_world_aabb(corner["bounds"], cursor, yaw)])
 			if bool(bent["ok"]):
 				var route: Array = [{"turn": prefer, "connectors": 0}]
 				route.append_array(bent["route"] as Array)
 				return {"ok": true, "route": route}
 	return _search(shape, corners, room, entry_at, cursor, yaw, placed,
-			MAX_ROUTE_TURNS, prefer, budget)
+			turns_allowed, prefer, budget)
 
 static func _search(shape: Dictionary, corners: Dictionary, room: AABB,
 		entry_at: Vector3, cursor: Vector3, yaw: float, placed: Array,
@@ -300,6 +326,7 @@ static func build(zone: Dictionary, theme_override := "",
 	var plugs: Array = []
 	var keys: Array = []
 	var locks: Array = []
+	var stations: Array = []
 	var largest := {"area": 0.0, "id": ""}
 	var root := Node3D.new()
 	root.name = "Zone_%s" % zone.get("zone_id", "unknown")
@@ -392,7 +419,7 @@ static func build(zone: Dictionary, theme_override := "",
 			(result["root"] as Node3D).free()
 			root.free()
 			return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
-					"policy": routing_policy(placed),
+					"policy": routing_policy(placed, policy_override),
 					"blocking_rooms": [str(chamber.get("id", "?"))],
 					"blocking_pairs": [],
 					"failed": "room '%s' could not be placed clear of "
@@ -471,8 +498,19 @@ static func build(zone: Dictionary, theme_override := "",
 			slab.rotation.y = yaw
 			root.add_child(slab)
 			locks.append(slab)
+		# A STATION IN EVERY LARGE ROOM (§30.12.4). The entrance and the
+		# exit get one below; this is the third of the three places the
+		# design names.
 		var footprint: float = float(chamber.get("width", 0.0)) \
 				* float(chamber.get("depth", 0.0))
+		if footprint >= STATION_ROOM_AREA:
+			var here := WarpStation.create("st:%s" % rid,
+					str(chamber.get("id", "room")).to_upper(), theme)
+			here.position = origin + _rot(yaw, Vector3(
+					float(chamber.get("width", 16.0)) * 0.3, 0.0,
+					float(chamber.get("depth", 16.0)) * 0.5))
+			root.add_child(here)
+			stations.append(here)
 		if footprint > float(largest["area"]):
 			largest = {"area": footprint, "id": rid}
 		root.add_child(node)
@@ -552,12 +590,24 @@ static func build(zone: Dictionary, theme_override := "",
 	bounds_list.append(exit_world)
 	var portal := ExitPortal.create(theme)
 	portal.position = cursor + _rot(yaw, Vector3(0, 0, 6.5))
+	# AND THE EXIT STATION, beside the portal rather than in its doorway
+	# -- nothing may stand in front of a portal.
+	var by_exit := WarpStation.create("st:exit", "EXIT", theme)
+	by_exit.position = portal.position + _rot(yaw, Vector3(3.0, 0, -1.5))
+	root.add_child(by_exit)
+	stations.append(by_exit)
 	portal.rotation.y = yaw
 	root.add_child(portal)
 
 	# Face +Z, where the level actually is (identity looks down -Z).
 	var spawn := Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.8, 1.2))
 	anchors["zone_start"] = spawn.origin
+	# THE ENTRANCE STATION, off to one side of the spawn so a player
+	# does not begin standing inside it.
+	var entrance := WarpStation.create("st:entrance", "ENTRANCE", theme)
+	entrance.position = spawn.origin + Vector3(2.4, -0.8, 0.0)
+	root.add_child(entrance)
+	stations.append(entrance)
 	if str(largest["id"]) != "":
 		anchors["last_large_room"] = anchors.get(
 				"room:%s:arrival" % str(largest["id"]), spawn.origin)
@@ -607,4 +657,4 @@ static func build(zone: Dictionary, theme_override := "",
 			# laying pieces down rather than by searching again.
 			"status": "LAYOUT_OK", "rooms": room_transforms,
 			"links": links, "anchors": anchors, "plugs": plugs,
-			"keys": keys, "locks": locks}
+			"keys": keys, "locks": locks, "stations": stations}

@@ -96,6 +96,12 @@ var _zone_anchors := {}
 var _keys_held := {}
 var _locks_open := {}
 var _zone_locks: Array = []
+var _stations: Array = []
+## Reached-ness is progress, so this only ever grows. `resume_anchor` is
+## the exception the contract names: a POSITION, overwritten rather than
+## accumulated, and losing it costs a walk rather than a run.
+var _stations_reached := {}
+var resume_anchor := ""
 var _first_kill_seen := false
 var _portal_was_locked := true
 var _quiet_time := 0.0
@@ -158,6 +164,14 @@ func setup(zone_dict: Dictionary) -> void:
 	for raw_key: Variant in build.get("keys", []):
 		var key: ZoneKey = raw_key
 		key.collected.connect(_on_key_collected)
+	_stations = build.get("stations", [])
+	for raw_station: Variant in _stations:
+		var station: WarpStation = raw_station
+		station.reached.connect(_on_station_reached)
+		station.warp_requested.connect(_on_warp_requested)
+		# The station asks the controller where E goes, rather than each
+		# station keeping its own copy of who has been reached.
+		station.cycle = _next_reached
 	_zone_locks = build.get("locks", [])
 	for raw_lock: Variant in _zone_locks:
 		var lock: LockedDoor = raw_lock
@@ -350,6 +364,58 @@ func _on_lock_opened(room: String, socket: String) -> void:
 			"zone_id": zone_id, "room_id": room, "socket_id": socket})
 	if hud != null:
 		hud.toast("UNLOCKED", Color(0.6, 1.0, 0.7), 2.5)
+
+## The next reached station after this one, wrapping.
+##
+## Held by the controller and not by the stations, because "which
+## stations have been reached" is one fact and a copy per station is
+## several. Returns "" when this is the only one reached, which is what
+## the prompt reads to say so rather than offering a warp to itself.
+func _next_reached(from_id: String) -> String:
+	var order: Array[String] = []
+	for raw: Variant in _stations:
+		var station: WarpStation = raw
+		if station.is_reached():
+			order.append(station.station_id)
+	if order.size() < 2:
+		return ""
+	var at := order.find(from_id)
+	if at < 0:
+		return order[0]
+	return order[(at + 1) % order.size()]
+
+func _station_by_id(id: String) -> WarpStation:
+	for raw: Variant in _stations:
+		var station: WarpStation = raw
+		if station.station_id == id:
+			return station
+	return null
+
+func _on_station_reached(station_id: String) -> void:
+	if _stations_reached.has(station_id):
+		return
+	_stations_reached[station_id] = true
+	# The station a player last stood at is where a resume puts them.
+	resume_anchor = station_id
+	BridgeClient.send_intent({"type": "station_reached",
+			"zone_id": zone_id, "station_id": station_id})
+	if hud != null:
+		hud.toast("STATION ONLINE", Color(0.45, 1.0, 0.8), 2.5)
+
+## Travel only. A station provides travel and save and NOT loadout
+## editing (§30.12.4), so nothing here opens a slot or touches a
+## capability the entry check validated.
+func _on_warp_requested(from_id: String, to_id: String) -> void:
+	var to := _station_by_id(to_id)
+	if to == null or not to.is_reached():
+		push_error("zone: warp to '%s' from '%s' is not a reached station"
+				% [to_id, from_id])
+		return
+	player.global_position = to.global_position + Vector3(0, 0.3, 2.0)
+	player.velocity = Vector3.ZERO
+	resume_anchor = to_id
+	if hud != null:
+		hud.toast("WARPED TO %s" % to.label_text, Color(0.45, 1.0, 0.8))
 
 func _on_plug_traversed(edge_id: String, destination: String) -> void:
 	if not _zone_anchors.has(destination):
