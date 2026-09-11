@@ -1673,10 +1673,21 @@ def test_every_non_terminal_zone_state_pins_exactly_one_hub_mode():
     so it is where they are made to agree."""
     want = {"PENDING_GENERATION": "GENERATING",
             "GENERATED": "ZONE_READY", "ACTIVE": "ZONE_ACTIVE"}
+    #: DORMANT pins no mode ON PURPOSE. It is the one non-terminal state
+    #: that is never the active Zone -- it still reserves its Checks and
+    #: the player is in the Hub -- so the Hub shows no Zone in play and
+    #: going back is an affordance rather than a mode. A ZONE_DORMANT
+    #: mode would put a Zone on screen that nobody is standing in.
+    never_active = {"DORMANT"}
     states = [s for s in typing_args_of_zone_state()
-              if s not in P.TERMINAL_ZONE_STATES]
+              if s not in P.TERMINAL_ZONE_STATES and s not in never_active]
     assert set(states) == set(want), (
         f"unclassified ZoneState(s): {set(states) ^ set(want)}")
+
+    for state in never_active:
+        rec = _record(state=state)
+        with pytest.raises(ValidationError, match="not the active Zone"):
+            _snapshot(active_zone=rec, hub=_hub(mode="ZONE_ACTIVE"))
 
     for state, mode in want.items():
         rec = (ZoneRecord(zone_id="zone_001", state=state,
@@ -1707,7 +1718,11 @@ def test_a_mode_that_claims_a_zone_must_have_one():
 def test_a_terminal_zone_is_never_presented_as_active():
     """COMPLETE and ABANDONED reserve nothing. Showing one as the active Zone
     is how a released allocation looks like a held one."""
-    for state in P.TERMINAL_ZONE_STATES:
+    # VISITING is terminal for ALLOCATION and occupied for presentation:
+    # the player is standing in a finished Zone. It is the one terminal
+    # state that legitimately appears as the active Zone.
+    for state in (s for s in P.TERMINAL_ZONE_STATES
+                  if s not in P.OCCUPIED_ZONE_STATES):
         with pytest.raises(ValidationError, match="reserves nothing"):
             _snapshot(active_zone=_record(state=state),
                       hub=_hub(mode="ZONE_AVAILABLE"))

@@ -58,6 +58,15 @@ ALLOWED_FREE_TEXT = {
     "source_item_name": "the AP item's own name, echoed back",
     "source_recipient_name": "the AP player it was destined for",
     "target_game": "the AP game a Zone is themed after",
+
+    # Layer 2 identifiers the BRIDGE mints, not Epsilon. They are safe
+    # for a stronger reason than the prose above: they are charset-
+    # constrained to `[a-z0-9_:]`, and every one is resolved against a
+    # declaration in the same Zone -- `Zone._the_graph_and_the_assignments_agree`
+    # refuses a door naming an edge the Zone does not declare, or a key
+    # no room holds. They resolve to nothing outside the model.
+    "edge_id": "which topology edge a door or plug carries",
+    "key_id": "which Zone-local key opens a lock",
 }
 
 #: Words that betray a field which resolves to a file or a program. Any

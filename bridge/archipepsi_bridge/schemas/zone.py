@@ -23,9 +23,19 @@ from pydantic import (
 try:  # works standalone and when copied into a package
     from . import constants as C
     from . import mechanics as M
+    from .graph import (
+        DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
 except ImportError:  # pragma: no cover
     import constants as C
     import mechanics as M
+    from graph import (
+        DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
+
+#: The four joining sockets every procedural room declares, matching
+#: `chamber_builders.procedural_sockets`. An authored shell declares its
+#: own set in the catalog; these are the ones the bridge can check
+#: without one.
+PROCEDURAL_SOCKETS = ("entry", "exit", "side_left", "side_right")
 
 SCHEMA_VERSION = 7
 
@@ -274,6 +284,44 @@ class ChamberBase(Strict):
     #: 7 — bumping it would fail every Zone already inside a save for a
     #: change that requires nothing and removes nothing.
     features: tuple[AffordanceFeature, ...] = Field(default=(), max_length=3)
+
+    #: Layer 2 of `09_ROOM_CONTRACT.md`: which joining socket of this
+    #: room does what. Additive and optional for the same reason
+    #: `features` was — a chamber carrying no doors is the two-door
+    #: chamber that shipped before multi-door existed, and the engine
+    #: falls back to its legacy socket pair when no assignment is
+    #: present. That fallback is what keeps all twelve authored shells
+    #: composing unchanged, by construction rather than by promise.
+    doors: tuple[DoorAssignment, ...] = Field(default=(), max_length=8)
+
+    #: Zone-local keys this room holds. Not Archipelago items: no
+    #: location id, never scouted, never sent, gone when the Zone is.
+    keys: tuple[ZoneKeySpec, ...] = Field(default=(), max_length=4)
+
+    @model_validator(mode="after")
+    def _no_socket_serves_twice(self):
+        """Invariant 2: one socket, one job.
+
+        A socket assigned twice is two doors in one opening, and whichever
+        the engine carves last silently wins.
+        """
+        used = [d.socket_id for d in self.doors]
+        twice = {s for s in used if used.count(s) > 1}
+        if twice:
+            raise ValueError(
+                f"chamber '{self.id}' assigns socket(s) {sorted(twice)} "
+                "more than once")
+        return self
+
+    @property
+    def door_degree(self) -> int:
+        """How many edges this room's doors carry.
+
+        A room's door degree is its JOINED degree. A dead end with one
+        door and one plug has door degree 1 — the plug consumes no
+        socket.
+        """
+        return sum(1 for d in self.doors if d.usage != "SEALED")
 
     #: CAMPAIGN_SCALE.md 7: a complex room may carry more than one Check.
     #:
@@ -550,6 +598,154 @@ class Zone(Strict):
     chambers: tuple[Chamber, ...] = Field(
         min_length=C.ZONE_MIN_CHAMBERS, max_length=C.ZONE_MAX_CHAMBERS
     )
+
+    #: THE TOPOLOGY, AS DATA. `chambers`'s list order used to be the
+    #: graph, which is why nothing could express a junction: a list has
+    #: no room for a third neighbour.
+    #:
+    #: Additive and optional. A Zone carrying no edges still means the
+    #: chain its order describes, so every Zone already inside a save
+    #: stays valid and `schema_version` stays 7.
+    edges: tuple[TopologyEdge, ...] = Field(default=(), max_length=32)
+
+    #: Return plugs. A TRAVERSAL_ONLY edge is carried here and never by
+    #: a door, because a door assignment consumes a joining socket and a
+    #: plug must not.
+    plugs: tuple[PlugAssignment, ...] = Field(default=(), max_length=8)
+
+    @model_validator(mode="after")
+    def _the_graph_and_the_assignments_agree(self):
+        """Invariants 3, 4, 6 and 7 of `09_ROOM_CONTRACT.md` §3.3.
+
+        These are the ones a schema can settle. Invariant 1 needs the
+        shell catalog and invariant 5 needs a graph search, so both live
+        with the code that has what they need.
+
+        A Zone with no edges skips all of it: there is no graph to
+        disagree with.
+        """
+        if not self.edges and not self.plugs:
+            for c in self.chambers:
+                if c.doors:
+                    raise ValueError(
+                        f"chamber '{c.id}' assigns doors but the Zone "
+                        "declares no edges; an assignment with no graph "
+                        "names routes that do not exist")
+            return self
+
+        rooms = {c.id for c in self.chambers}
+        by_id: dict[str, TopologyEdge] = {}
+        for e in self.edges:
+            if e.edge_id in by_id:
+                raise ValueError(f"duplicate edge_id '{e.edge_id}'")
+            by_id[e.edge_id] = e
+            missing = [r for r in e.rooms if r not in rooms]
+            if missing:
+                raise ValueError(
+                    f"edge '{e.edge_id}' names unknown room(s) {missing}")
+
+        # Which doors and plugs claim which edge.
+        door_ends: dict[str, list[tuple[str, DoorAssignment]]] = {}
+        for c in self.chambers:
+            for d in c.doors:
+                if d.edge_id is None:
+                    continue
+                if d.edge_id not in by_id:
+                    raise ValueError(
+                        f"chamber '{c.id}' door '{d.socket_id}' names "
+                        f"unknown edge '{d.edge_id}'")
+                door_ends.setdefault(d.edge_id, []).append((c.id, d))
+
+        plug_of: dict[str, PlugAssignment] = {}
+        for pl in self.plugs:
+            if pl.edge_id in plug_of:
+                raise ValueError(
+                    f"edge '{pl.edge_id}' carries two plugs")
+            if pl.edge_id not in by_id:
+                raise ValueError(
+                    f"plug names unknown edge '{pl.edge_id}'")
+            if pl.room_id not in rooms:
+                raise ValueError(
+                    f"plug '{pl.edge_id}' stands in unknown room "
+                    f"'{pl.room_id}'")
+            plug_of[pl.edge_id] = pl
+
+        for e in self.edges:
+            ends = door_ends.get(e.edge_id, [])
+            if e.realization == "JOINED":
+                if e.edge_id in plug_of:
+                    raise ValueError(
+                        f"JOINED edge '{e.edge_id}' carries a plug; a "
+                        "plug realizes no geometry and cannot serve one")
+                if len(ends) != 2:
+                    raise ValueError(
+                        f"JOINED edge '{e.edge_id}' is named by "
+                        f"{len(ends)} door(s), not 2")
+                if {r for r, _ in ends} != set(e.rooms):
+                    raise ValueError(
+                        f"JOINED edge '{e.edge_id}' joins {e.rooms} but "
+                        f"its doors sit in {sorted(r for r, _ in ends)}")
+            else:  # TRAVERSAL_ONLY
+                if ends:
+                    raise ValueError(
+                        f"TRAVERSAL_ONLY edge '{e.edge_id}' is named by a "
+                        "door; a plug consumes no joining socket, and "
+                        "carrying one on a door would cut an aperture "
+                        "the room never asked for")
+                if e.edge_id not in plug_of:
+                    raise ValueError(
+                        f"TRAVERSAL_ONLY edge '{e.edge_id}' has no plug; "
+                        "nothing would carry the player across it")
+
+        # Invariant 7: anchors are names the engine can resolve. The
+        # bridge checks the FORM and the room id; whether the anchor
+        # exists in the built scene is the engine's answer, returned as
+        # evidence.
+        for pl in self.plugs:
+            for anchor in (pl.source_anchor, pl.destination):
+                if anchor in ("zone_start", "last_large_room"):
+                    continue
+                if anchor.startswith("room:") and anchor.endswith(":arrival"):
+                    rid = anchor[len("room:"):-len(":arrival")]
+                    if rid not in rooms:
+                        raise ValueError(
+                            f"plug '{pl.edge_id}' names anchor '{anchor}' "
+                            f"in unknown room '{rid}'")
+                    continue
+                raise ValueError(
+                    f"plug '{pl.edge_id}' names anchor '{anchor}', which "
+                    "is not a form the engine resolves")
+
+        # Invariant 6: a LOCKED door's key must exist somewhere in the
+        # Zone. Whether it is REACHABLE before its own lock is a graph
+        # question and lives in `reachability`.
+        declared = {k.key_id for c in self.chambers for k in c.keys}
+        for c in self.chambers:
+            for d in c.doors:
+                if d.key_id and d.key_id not in declared:
+                    raise ValueError(
+                        f"chamber '{c.id}' door '{d.socket_id}' is locked "
+                        f"by key '{d.key_id}', which no room holds")
+
+        # Invariant 8: a procedural room's unused joining sockets are
+        # declared SEALED, never left unmentioned. "Unmentioned" is
+        # exactly how an unaudited hole gets into a wall.
+        for c in self.chambers:
+            if not c.doors or getattr(c, "shell_id", None):
+                continue
+            named = {d.socket_id for d in c.doors}
+            unknown = named - set(PROCEDURAL_SOCKETS)
+            if unknown:
+                raise ValueError(
+                    f"chamber '{c.id}' assigns socket(s) {sorted(unknown)} "
+                    "that a procedural room does not declare")
+            silent = set(PROCEDURAL_SOCKETS) - named
+            if silent:
+                raise ValueError(
+                    f"chamber '{c.id}' leaves joining socket(s) "
+                    f"{sorted(silent)} unmentioned; an unused socket is "
+                    "declared SEALED so it is measured, never omitted")
+        return self
 
     # NOTE: no `required_echo_ids`, and no field anywhere in this schema can
     # express a mandatory Echo requirement. Structural, not a rule.

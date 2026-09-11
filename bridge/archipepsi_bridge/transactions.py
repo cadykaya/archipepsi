@@ -195,7 +195,7 @@ def zone_completion_sweep(engine: CampaignEngine) -> None:
         return
     pending = engine._pending_location_ids()
     for record in save.zones:
-        if record.state not in ("ACTIVE", "GENERATED"):
+        if record.state not in ("ACTIVE", "GENERATED", "DORMANT"):
             continue
         ids = set(record.allocated_location_ids)
         if not ids or not ids.issubset(engine.ap.checked) or ids & pending:

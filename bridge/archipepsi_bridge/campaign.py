@@ -38,7 +38,9 @@ from .schemas.protocol import (
 )
 from .echo_projection import detail_examples, history_view
 from . import instrumentation
+from . import layout as layout_check
 from . import store
+from . import topology
 
 log = logging.getLogger("archipepsi.campaign")
 
@@ -173,6 +175,40 @@ def _relevance_hint(mechanics) -> str:
     parts.append("prefer a new relationship with what is owned over a "
                  "fourth of something")
     return "; ".join(parts)[:C.MAX_TEXT_LEN]
+
+
+def _with_graph(zone):
+    """A composed Zone, carrying the topology its chamber order implied.
+
+    Branching when the Zone can carry it and a plain chain when it
+    cannot: `compose_with_branch` returns the chain unchanged rather
+    than forcing a junction into a Zone with nowhere to put one.
+
+    **Refuses rather than ships a Zone you cannot get around.** The
+    graph is proved here — the exit reachable, `R` a subset of `E`,
+    every Check in a reachable room, every key obtainable without
+    passing its own lock — because a Zone that fails this has no
+    business reaching a save. A failure falls back to the chain, which
+    is the topology that shipped before graphs existed and is reachable
+    by construction.
+    """
+    product = topology.compose_with_branch(list(zone.chambers))
+    composed = topology.apply(zone, product)
+    verdict = topology.reachability(composed)
+    if verdict.ok:
+        return composed
+    log.warning("zone %s: branch graph refused (%s); composing the chain",
+                zone.zone_id, "; ".join(verdict.errors[:2]))
+    chain = topology.apply(zone, topology.compose_chain(list(zone.chambers)))
+    chain_verdict = topology.reachability(chain)
+    if chain_verdict.ok:
+        return chain
+    # A chain that fails reachability is a defect in the chambers, not
+    # in the graph, and hiding it behind an ungraphed Zone would lose
+    # the only evidence of it.
+    log.error("zone %s: even the chain is unreachable (%s)",
+              zone.zone_id, "; ".join(chain_verdict.errors[:2]))
+    return zone
 
 
 class CampaignEngine:
@@ -854,12 +890,21 @@ class CampaignEngine:
                      "discarding this outcome", zone_id,
                      current.state if current else "gone")
             return
-        self._apply(T.accept_zone(self.save, outcome.value,
+        # THE GRAPH IS PRODUCED HERE, once, before the Zone is accepted.
+        #
+        # A composed Zone arrives with its chambers and no topology, so
+        # this is where the list stops being the graph: `compose_*`
+        # emits the edges, the door assignments, the keys and the plugs,
+        # and `reachability` refuses a Zone the player could not get
+        # around before anything is stored. Doing it after acceptance
+        # would mean a Zone existed in a save with an unproved graph.
+        composed = _with_graph(outcome.value)
+        self._apply(T.accept_zone(self.save, composed,
                                   used_fallback=outcome.used_fallback))
         if outcome.used_fallback and self.provider_name != "fallback":
             await self._notify("fallback_used", "EPSILON OFFLINE — FALLBACK USED",
                                (outcome.error or "",))
-        await self._emit(ZoneReady(type="zone_ready", zone=outcome.value,
+        await self._emit(ZoneReady(type="zone_ready", zone=composed,
                                    used_fallback=outcome.used_fallback))
         await self.broadcast_snapshot()
 
@@ -915,22 +960,72 @@ class CampaignEngine:
     # ------------------------------------------------------------------
 
     async def handle_enter_zone(self, zone_id: str) -> None:
+        """Walk in. A Zone that has been placed before is REPLAYED.
+
+        Re-entry sends the committed manifest back down, so the engine
+        lays the same pieces in the same places rather than searching
+        again. That is where the determinism actually comes from: not
+        from two machines rediscovering a layout, but from one machine
+        writing it down once.
+        """
         self._require_save()
         try:
             self._apply(T.enter_zone(self.save, zone_id))
         except ValueError as exc:
             raise IntentError(str(exc)) from exc
+        rec = self.save.zone_by_id(zone_id)
+        if rec is not None and rec.zone is not None \
+                and rec.manifest is not None:
+            await self._emit(ZoneReady(
+                type="zone_ready", zone=rec.zone,
+                used_fallback=rec.used_fallback,
+                manifest=rec.manifest))
         await self.broadcast_snapshot()
 
+    async def _put_the_zone_down(self, zone_id: str) -> None:
+        """Leave a Zone without finishing or abandoning it.
+
+        The Zone keeps everything — its committed layout, its Check
+        identities, which of them are claimed, and the player's
+        progress. **Returning unclaimed Checks to the allocator is
+        abandonment's behaviour and only abandonment's**; it is an
+        explicit act with an explicit cost, never the consequence of
+        walking out of a door.
+
+        Reconciling afterwards is what keeps the relaxed exit honest: a
+        Zone whose last Check confirms while the player is in the Hub
+        still completes, so leaving early costs a walk back rather than
+        the Check.
+        """
+        rec = self.save.zone_by_id(zone_id) if self.save else None
+        if rec is not None and rec.state in ("ACTIVE", "VISITING"):
+            try:
+                self._apply(T.rest_zone(self.save, zone_id))
+            except ValueError as exc:
+                # Checks in flight: the Zone stays where it is and the
+                # next reconcile pass settles it. Refusing the intent
+                # would strand the player in a Zone they have left.
+                log.info("zone %s stays active on leave: %s", zone_id, exc)
+
     async def handle_leave_zone(self, zone_id: str) -> None:
-        """Pause-menu Return to Hub. No persistent change; Godot resets
-        transient state itself."""
+        """Pause-menu Return to Hub. The Zone goes dormant, not away."""
         self._require_save()
+        await self._put_the_zone_down(zone_id)
+        await self.reconcile()
         await self.broadcast_snapshot()
 
     async def handle_exit_zone(self, zone_id: str) -> None:
-        """Pure travel. Completion is driven by Check confirmation."""
+        """Out through the exit portal.
+
+        **The exit does not require every Check.** Reaching it completes
+        the route; the Zone goes dormant with whatever is outstanding
+        still allocated to it, and the player can come back. That
+        relaxation is only safe because re-entry works — shipping it
+        without `DORMANT` would convert a forgone reward into a stranded
+        one.
+        """
         self._require_save()
+        await self._put_the_zone_down(zone_id)
         await self.reconcile()
         await self.broadcast_snapshot()
 
@@ -964,6 +1059,80 @@ class CampaignEngine:
             description=intent.description[:C.MAX_TEXT_LEN],
             source_zone_id=active,
             best_seconds=intent.best_seconds)))
+        await self.broadcast_snapshot()
+
+    async def handle_progress(self, intent) -> None:
+        """Zone progress the engine reports: a key, a lock, a station.
+
+        **Closing a path that was open and dropped.** The engine has been
+        sending `key_collected` and `lock_opened` since the slice landed
+        and nothing received them, so a key survived exactly as long as
+        the process did.
+
+        The Zone is taken from the intent rather than from
+        `active_zone_id`: progress belongs to the place it happened in,
+        and a player who left for the Hub mid-report should not have a
+        key land in whichever Zone is current.
+
+        **Idempotent, and quietly so.** Every target set is monotone, so
+        the same event twice is one event. A resend after a dropped
+        connection is the normal case and must never be an error.
+        """
+        if self.save is None:
+            raise IntentError("no campaign loaded")
+        if self.save.zone_by_id(intent.zone_id) is None:
+            raise IntentError(
+                f"no Zone '{intent.zone_id}' in this campaign")
+        before = self.save
+        if intent.type == "key_collected":
+            nxt = T.record_key(self.save, intent.zone_id, intent.key_id)
+        elif intent.type == "lock_opened":
+            nxt = T.record_lock(self.save, intent.zone_id, intent.room_id,
+                                intent.socket_id)
+        else:
+            nxt = T.record_station(self.save, intent.zone_id,
+                                   intent.station_id)
+        if nxt is before:
+            return          # already recorded; nothing to save or announce
+        self._apply(nxt)
+        await self.broadcast_snapshot()
+
+    async def handle_layout_result(self, intent) -> None:
+        """The engine placed a Zone; decide whether to commit it.
+
+        **Validate, then commit.** A layout that passes becomes the
+        accepted immutable manifest and is replayed forever after; one
+        that fails is refused and never acquires a digest, so nothing
+        downstream can mistake an unchecked layout for a checked one.
+
+        A Zone whose topology is still its chamber order returns
+        LEGACY_UNCERTIFIED and stores nothing — there are no edges for
+        the evidence to be about, and pretending otherwise would let an
+        old save look newly certified.
+        """
+        if self.save is None:
+            raise IntentError("no campaign loaded")
+        rec = self.save.zone_by_id(intent.zone_id)
+        if rec is None or rec.zone is None:
+            raise IntentError(
+                f"no generated Zone '{intent.zone_id}' to place")
+        verdict = layout_check.validate(rec.zone, intent.layout)
+        if verdict.legacy:
+            log.info("zone %s has no graph; layout not certified",
+                     intent.zone_id)
+            return
+        if not verdict.accepted:
+            log.warning("zone %s layout refused (%s): %s", intent.zone_id,
+                        verdict.status, "; ".join(verdict.errors[:3]))
+            await self._notify(
+                "zone_abandoned", "LAYOUT REFUSED",
+                tuple(verdict.errors[:3]) or (verdict.status,))
+            await self.broadcast_snapshot()
+            return
+        self._apply(T.commit_layout(self.save, intent.zone_id,
+                                    verdict.manifest))
+        log.info("zone %s layout committed (%s)", intent.zone_id,
+                 verdict.manifest["manifest_digest"])
         await self.broadcast_snapshot()
 
     async def handle_slot_action(
