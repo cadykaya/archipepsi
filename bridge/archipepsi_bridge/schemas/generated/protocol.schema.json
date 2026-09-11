@@ -402,6 +402,38 @@
         "title": "Hello",
         "type": "object"
       },
+      "KeyCollected": {
+        "additionalProperties": false,
+        "description": "A Zone-local key picked up.\n\n**Idempotent by `key_id`, because the target set is monotone.** The\nsame key twice is one key, a resend after a dropped connection is\nthe normal case, and neither is an error. The engine already\nde-duplicates on its side; the bridge does so again rather than\ntrusting it, because a set union is cheaper than a class of bug.\n\nNot an Archipelago item and never one: no location id, never\nscouted, never sent, gone when the Zone is.",
+        "properties": {
+          "type": {
+            "const": "key_collected",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "key_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Key Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "key_id"
+        ],
+        "title": "KeyCollected",
+        "type": "object"
+      },
       "LeaveZone": {
         "additionalProperties": false,
         "description": "Pause-menu Return to Hub. Zone stays ACTIVE; transient state resets.",
@@ -424,6 +456,46 @@
           "zone_id"
         ],
         "title": "LeaveZone",
+        "type": "object"
+      },
+      "LockOpened": {
+        "additionalProperties": false,
+        "description": "A locked door opened, identified by the door rather than the key.\n\nIdempotent by `(room_id, socket_id)`. One key may open several\nlocks, so the key is not the identity of the event.",
+        "properties": {
+          "type": {
+            "const": "lock_opened",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "socket_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Socket Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "room_id",
+          "socket_id"
+        ],
+        "title": "LockOpened",
         "type": "object"
       },
       "RequestNextZone": {
@@ -527,6 +599,38 @@
         "title": "StartMockCampaign",
         "type": "object"
       },
+      "StationReached": {
+        "additionalProperties": false,
+        "description": "A warp station reached. Travel and save; never loadout editing.\n\nIdempotent by `station_id`.",
+        "properties": {
+          "type": {
+            "const": "station_reached",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "station_id": {
+            "maxLength": 48,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_:]+$",
+            "title": "Station Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "station_id"
+        ],
+        "title": "StationReached",
+        "type": "object"
+      },
       "ZoneTiming": {
         "additionalProperties": false,
         "description": "What the Zone actually cost the player, measured (CAMPAIGN_SCALE.md 13).\n\nThe 40-minute Zone and the 20-hour campaign are TARGETS. This is the\nonly thing that can turn either into a fact, and it is the reason the\nengine's content budget can be calibrated against play rather than\nagainst a designer's guess.\n\nGodot owns the clock -- elapsed time, per-chamber dwell, deaths and\nencounter durations are things only the running game knows. The\nbridge joins them to the room and Zone VALUES it computed for the\nsame Zone, so one local record holds both halves.\n\nLocal only: the bridge appends it to a file under the save directory.\nNothing is sent anywhere (CAMPAIGN_SCALE.md 13).",
@@ -617,11 +721,14 @@
         "exit_zone": "#/$defs/ExitZone",
         "grant_local_reward": "#/$defs/GrantLocalReward",
         "hello": "#/$defs/Hello",
+        "key_collected": "#/$defs/KeyCollected",
         "leave_zone": "#/$defs/LeaveZone",
+        "lock_opened": "#/$defs/LockOpened",
         "request_next_zone": "#/$defs/RequestNextZone",
         "set_creativity": "#/$defs/SetCreativity",
         "slot_action": "#/$defs/SlotAction",
         "start_mock_campaign": "#/$defs/StartMockCampaign",
+        "station_reached": "#/$defs/StationReached",
         "zone_timing": "#/$defs/ZoneTiming"
       },
       "propertyName": "type"
@@ -674,6 +781,15 @@
       },
       {
         "$ref": "#/$defs/ZoneTiming"
+      },
+      {
+        "$ref": "#/$defs/KeyCollected"
+      },
+      {
+        "$ref": "#/$defs/LockOpened"
+      },
+      {
+        "$ref": "#/$defs/StationReached"
       }
     ]
   },
@@ -1208,6 +1324,24 @@
             },
             "maxItems": 3,
             "title": "Features",
+            "type": "array"
+          },
+          "doors": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/DoorAssignment"
+            },
+            "maxItems": 8,
+            "title": "Doors",
+            "type": "array"
+          },
+          "keys": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ZoneKeySpec"
+            },
+            "maxItems": 4,
+            "title": "Keys",
             "type": "array"
           },
           "additional_reward_location_ids": {
@@ -2002,6 +2136,24 @@
             "title": "Features",
             "type": "array"
           },
+          "doors": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/DoorAssignment"
+            },
+            "maxItems": 8,
+            "title": "Doors",
+            "type": "array"
+          },
+          "keys": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ZoneKeySpec"
+            },
+            "maxItems": 4,
+            "title": "Keys",
+            "type": "array"
+          },
           "additional_reward_location_ids": {
             "default": [],
             "items": {
@@ -2173,6 +2325,78 @@
           "force"
         ],
         "title": "Dash",
+        "type": "object"
+      },
+      "DoorAssignment": {
+        "additionalProperties": false,
+        "description": "One joining socket of one room instance, and what it does.\n\n`edge_id` is required unless the door is `SEALED`, and the edge it\nnames must be `JOINED` \u2014 a `TRAVERSAL_ONLY` edge is carried by a\n`PlugAssignment` and never by a door.",
+        "properties": {
+          "socket_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Socket Id",
+            "type": "string"
+          },
+          "usage": {
+            "enum": [
+              "USED",
+              "LOCKED",
+              "SEALED"
+            ],
+            "title": "Usage",
+            "type": "string"
+          },
+          "edge_id": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Edge Id"
+          },
+          "key_id": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Key Id"
+          },
+          "colour": {
+            "anyOf": [
+              {
+                "enum": [
+                  "red",
+                  "blue",
+                  "gold",
+                  "green"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Colour"
+          }
+        },
+        "required": [
+          "socket_id",
+          "usage"
+        ],
+        "title": "DoorAssignment",
         "type": "object"
       },
       "DoubleJump": {
@@ -3575,6 +3799,24 @@
             "title": "Features",
             "type": "array"
           },
+          "doors": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/DoorAssignment"
+            },
+            "maxItems": 8,
+            "title": "Doors",
+            "type": "array"
+          },
+          "keys": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ZoneKeySpec"
+            },
+            "maxItems": 4,
+            "title": "Keys",
+            "type": "array"
+          },
           "additional_reward_location_ids": {
             "default": [],
             "items": {
@@ -3683,6 +3925,58 @@
           "vertical_step"
         ],
         "title": "PlatformPathChamber",
+        "type": "object"
+      },
+      "PlugAssignment": {
+        "additionalProperties": false,
+        "description": "A return plug: the way back out of a dead end.\n\nBoth ends are anchors rather than coordinates, so the composer still\nnames no world position and the authored-alphabet boundary holds\nwithout special pleading.",
+        "properties": {
+          "edge_id": {
+            "maxLength": 48,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_:]+$",
+            "title": "Edge Id",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "source_anchor": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_:]+$",
+            "title": "Source Anchor",
+            "type": "string"
+          },
+          "destination": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_:]+$",
+            "title": "Destination",
+            "type": "string"
+          },
+          "device": {
+            "default": "pad",
+            "enum": [
+              "pad",
+              "threshold",
+              "tube"
+            ],
+            "title": "Device",
+            "type": "string"
+          }
+        },
+        "required": [
+          "edge_id",
+          "room_id",
+          "source_anchor",
+          "destination"
+        ],
+        "title": "PlugAssignment",
         "type": "object"
       },
       "ProjectileDamage": {
@@ -4431,6 +4725,59 @@
         "title": "StatusComponent",
         "type": "object"
       },
+      "TopologyEdge": {
+        "additionalProperties": false,
+        "description": "One edge of the Zone graph.\n\nThe list order of `Zone.chambers` used to *be* the topology. This is\nwhat replaces it, and a Zone carrying no edges still means the chain\nit always meant.",
+        "properties": {
+          "edge_id": {
+            "maxLength": 48,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_:]+$",
+            "title": "Edge Id",
+            "type": "string"
+          },
+          "room_a": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room A",
+            "type": "string"
+          },
+          "room_b": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room B",
+            "type": "string"
+          },
+          "direction": {
+            "default": "BIDIRECTIONAL",
+            "enum": [
+              "BIDIRECTIONAL",
+              "A_TO_B",
+              "B_TO_A"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "realization": {
+            "default": "JOINED",
+            "enum": [
+              "JOINED",
+              "TRAVERSAL_ONLY"
+            ],
+            "title": "Realization",
+            "type": "string"
+          }
+        },
+        "required": [
+          "edge_id",
+          "room_a",
+          "room_b"
+        ],
+        "title": "TopologyEdge",
+        "type": "object"
+      },
       "TowerChamber": {
         "additionalProperties": false,
         "description": "Vertical traversal. The template always emits a base-movement route.",
@@ -4476,6 +4823,24 @@
             },
             "maxItems": 3,
             "title": "Features",
+            "type": "array"
+          },
+          "doors": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/DoorAssignment"
+            },
+            "maxItems": 8,
+            "title": "Doors",
+            "type": "array"
+          },
+          "keys": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ZoneKeySpec"
+            },
+            "maxItems": 4,
+            "title": "Keys",
             "type": "array"
           },
           "additional_reward_location_ids": {
@@ -4703,6 +5068,24 @@
             },
             "maxItems": 3,
             "title": "Features",
+            "type": "array"
+          },
+          "doors": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/DoorAssignment"
+            },
+            "maxItems": 8,
+            "title": "Doors",
+            "type": "array"
+          },
+          "keys": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ZoneKeySpec"
+            },
+            "maxItems": 4,
+            "title": "Keys",
             "type": "array"
           },
           "additional_reward_location_ids": {
@@ -4965,6 +5348,24 @@
             "minItems": 1,
             "title": "Chambers",
             "type": "array"
+          },
+          "edges": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/TopologyEdge"
+            },
+            "maxItems": 32,
+            "title": "Edges",
+            "type": "array"
+          },
+          "plugs": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/PlugAssignment"
+            },
+            "maxItems": 8,
+            "title": "Plugs",
+            "type": "array"
           }
         },
         "required": [
@@ -4975,6 +5376,87 @@
           "chambers"
         ],
         "title": "Zone",
+        "type": "object"
+      },
+      "ZoneKeySpec": {
+        "additionalProperties": false,
+        "description": "A Zone-local key. Not an Archipelago item, and never one.\n\nNo location id, never scouted, never sent, does not survive the Zone.\nIt is a lock state on generated geometry, which is what buys\nmetroidvania structure with zero multiworld risk.",
+        "properties": {
+          "key_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Key Id",
+            "type": "string"
+          },
+          "colour": {
+            "anyOf": [
+              {
+                "enum": [
+                  "red",
+                  "blue",
+                  "gold",
+                  "green"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Colour"
+          }
+        },
+        "required": [
+          "key_id"
+        ],
+        "title": "ZoneKeySpec",
+        "type": "object"
+      },
+      "ZoneProgress": {
+        "additionalProperties": false,
+        "description": "What the player DID to a Zone, as opposed to what the Zone is.\n\n**Progress is not layout.** The layout rebuilds from the manifest and\nis identical by construction; this is separate persistence, and\nconflating the two is how a catalog change would reach a player as a\nlost key.\n\n**Every set is monotone and only ever grows within a Zone's life.**\nThat is not a convenience \u2014 it is what makes a resume safe. A\nmonotone progress set is a latch, so a reload cannot regress a player\nbehind a door they opened, and `R \u2286 E` holds across a resume for the\nsame reason it holds within a run.",
+        "properties": {
+          "collected_keys": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Collected Keys",
+            "type": "array"
+          },
+          "opened_locks": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Opened Locks",
+            "type": "array"
+          },
+          "reached_stations": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Reached Stations",
+            "type": "array"
+          },
+          "resume_anchor": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Resume Anchor"
+          }
+        },
+        "title": "ZoneProgress",
         "type": "object"
       },
       "ZoneReady": {
@@ -5017,11 +5499,15 @@
               "PENDING_GENERATION",
               "GENERATED",
               "ACTIVE",
+              "DORMANT",
               "COMPLETE",
               "ABANDONED"
             ],
             "title": "State",
             "type": "string"
+          },
+          "progress": {
+            "$ref": "#/$defs/ZoneProgress"
           },
           "allocated_location_ids": {
             "items": {
@@ -5638,6 +6124,24 @@
             "title": "Features",
             "type": "array"
           },
+          "doors": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/DoorAssignment"
+            },
+            "maxItems": 8,
+            "title": "Doors",
+            "type": "array"
+          },
+          "keys": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ZoneKeySpec"
+            },
+            "maxItems": 4,
+            "title": "Keys",
+            "type": "array"
+          },
           "additional_reward_location_ids": {
             "default": [],
             "items": {
@@ -6123,6 +6627,24 @@
             "title": "Features",
             "type": "array"
           },
+          "doors": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/DoorAssignment"
+            },
+            "maxItems": 8,
+            "title": "Doors",
+            "type": "array"
+          },
+          "keys": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ZoneKeySpec"
+            },
+            "maxItems": 4,
+            "title": "Keys",
+            "type": "array"
+          },
           "additional_reward_location_ids": {
             "default": [],
             "items": {
@@ -6294,6 +6816,78 @@
           "force"
         ],
         "title": "Dash",
+        "type": "object"
+      },
+      "DoorAssignment": {
+        "additionalProperties": false,
+        "description": "One joining socket of one room instance, and what it does.\n\n`edge_id` is required unless the door is `SEALED`, and the edge it\nnames must be `JOINED` \u2014 a `TRAVERSAL_ONLY` edge is carried by a\n`PlugAssignment` and never by a door.",
+        "properties": {
+          "socket_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Socket Id",
+            "type": "string"
+          },
+          "usage": {
+            "enum": [
+              "USED",
+              "LOCKED",
+              "SEALED"
+            ],
+            "title": "Usage",
+            "type": "string"
+          },
+          "edge_id": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Edge Id"
+          },
+          "key_id": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Key Id"
+          },
+          "colour": {
+            "anyOf": [
+              {
+                "enum": [
+                  "red",
+                  "blue",
+                  "gold",
+                  "green"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Colour"
+          }
+        },
+        "required": [
+          "socket_id",
+          "usage"
+        ],
+        "title": "DoorAssignment",
         "type": "object"
       },
       "DoubleJump": {
@@ -7618,6 +8212,24 @@
             "title": "Features",
             "type": "array"
           },
+          "doors": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/DoorAssignment"
+            },
+            "maxItems": 8,
+            "title": "Doors",
+            "type": "array"
+          },
+          "keys": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ZoneKeySpec"
+            },
+            "maxItems": 4,
+            "title": "Keys",
+            "type": "array"
+          },
           "additional_reward_location_ids": {
             "default": [],
             "items": {
@@ -7726,6 +8338,58 @@
           "vertical_step"
         ],
         "title": "PlatformPathChamber",
+        "type": "object"
+      },
+      "PlugAssignment": {
+        "additionalProperties": false,
+        "description": "A return plug: the way back out of a dead end.\n\nBoth ends are anchors rather than coordinates, so the composer still\nnames no world position and the authored-alphabet boundary holds\nwithout special pleading.",
+        "properties": {
+          "edge_id": {
+            "maxLength": 48,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_:]+$",
+            "title": "Edge Id",
+            "type": "string"
+          },
+          "room_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room Id",
+            "type": "string"
+          },
+          "source_anchor": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_:]+$",
+            "title": "Source Anchor",
+            "type": "string"
+          },
+          "destination": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_:]+$",
+            "title": "Destination",
+            "type": "string"
+          },
+          "device": {
+            "default": "pad",
+            "enum": [
+              "pad",
+              "threshold",
+              "tube"
+            ],
+            "title": "Device",
+            "type": "string"
+          }
+        },
+        "required": [
+          "edge_id",
+          "room_id",
+          "source_anchor",
+          "destination"
+        ],
+        "title": "PlugAssignment",
         "type": "object"
       },
       "ProjectileDamage": {
@@ -8474,6 +9138,59 @@
         "title": "StatusComponent",
         "type": "object"
       },
+      "TopologyEdge": {
+        "additionalProperties": false,
+        "description": "One edge of the Zone graph.\n\nThe list order of `Zone.chambers` used to *be* the topology. This is\nwhat replaces it, and a Zone carrying no edges still means the chain\nit always meant.",
+        "properties": {
+          "edge_id": {
+            "maxLength": 48,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_:]+$",
+            "title": "Edge Id",
+            "type": "string"
+          },
+          "room_a": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room A",
+            "type": "string"
+          },
+          "room_b": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Room B",
+            "type": "string"
+          },
+          "direction": {
+            "default": "BIDIRECTIONAL",
+            "enum": [
+              "BIDIRECTIONAL",
+              "A_TO_B",
+              "B_TO_A"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "realization": {
+            "default": "JOINED",
+            "enum": [
+              "JOINED",
+              "TRAVERSAL_ONLY"
+            ],
+            "title": "Realization",
+            "type": "string"
+          }
+        },
+        "required": [
+          "edge_id",
+          "room_a",
+          "room_b"
+        ],
+        "title": "TopologyEdge",
+        "type": "object"
+      },
       "TowerChamber": {
         "additionalProperties": false,
         "description": "Vertical traversal. The template always emits a base-movement route.",
@@ -8519,6 +9236,24 @@
             },
             "maxItems": 3,
             "title": "Features",
+            "type": "array"
+          },
+          "doors": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/DoorAssignment"
+            },
+            "maxItems": 8,
+            "title": "Doors",
+            "type": "array"
+          },
+          "keys": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ZoneKeySpec"
+            },
+            "maxItems": 4,
+            "title": "Keys",
             "type": "array"
           },
           "additional_reward_location_ids": {
@@ -8746,6 +9481,24 @@
             },
             "maxItems": 3,
             "title": "Features",
+            "type": "array"
+          },
+          "doors": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/DoorAssignment"
+            },
+            "maxItems": 8,
+            "title": "Doors",
+            "type": "array"
+          },
+          "keys": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ZoneKeySpec"
+            },
+            "maxItems": 4,
+            "title": "Keys",
             "type": "array"
           },
           "additional_reward_location_ids": {
@@ -9008,6 +9761,24 @@
             "minItems": 1,
             "title": "Chambers",
             "type": "array"
+          },
+          "edges": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/TopologyEdge"
+            },
+            "maxItems": 32,
+            "title": "Edges",
+            "type": "array"
+          },
+          "plugs": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/PlugAssignment"
+            },
+            "maxItems": 8,
+            "title": "Plugs",
+            "type": "array"
           }
         },
         "required": [
@@ -9018,6 +9789,87 @@
           "chambers"
         ],
         "title": "Zone",
+        "type": "object"
+      },
+      "ZoneKeySpec": {
+        "additionalProperties": false,
+        "description": "A Zone-local key. Not an Archipelago item, and never one.\n\nNo location id, never scouted, never sent, does not survive the Zone.\nIt is a lock state on generated geometry, which is what buys\nmetroidvania structure with zero multiworld risk.",
+        "properties": {
+          "key_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Key Id",
+            "type": "string"
+          },
+          "colour": {
+            "anyOf": [
+              {
+                "enum": [
+                  "red",
+                  "blue",
+                  "gold",
+                  "green"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Colour"
+          }
+        },
+        "required": [
+          "key_id"
+        ],
+        "title": "ZoneKeySpec",
+        "type": "object"
+      },
+      "ZoneProgress": {
+        "additionalProperties": false,
+        "description": "What the player DID to a Zone, as opposed to what the Zone is.\n\n**Progress is not layout.** The layout rebuilds from the manifest and\nis identical by construction; this is separate persistence, and\nconflating the two is how a catalog change would reach a player as a\nlost key.\n\n**Every set is monotone and only ever grows within a Zone's life.**\nThat is not a convenience \u2014 it is what makes a resume safe. A\nmonotone progress set is a latch, so a reload cannot regress a player\nbehind a door they opened, and `R \u2286 E` holds across a resume for the\nsame reason it holds within a run.",
+        "properties": {
+          "collected_keys": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Collected Keys",
+            "type": "array"
+          },
+          "opened_locks": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Opened Locks",
+            "type": "array"
+          },
+          "reached_stations": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Reached Stations",
+            "type": "array"
+          },
+          "resume_anchor": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Resume Anchor"
+          }
+        },
+        "title": "ZoneProgress",
         "type": "object"
       },
       "ZoneRecord": {
@@ -9036,11 +9888,15 @@
               "PENDING_GENERATION",
               "GENERATED",
               "ACTIVE",
+              "DORMANT",
               "COMPLETE",
               "ABANDONED"
             ],
             "title": "State",
             "type": "string"
+          },
+          "progress": {
+            "$ref": "#/$defs/ZoneProgress"
           },
           "allocated_location_ids": {
             "items": {

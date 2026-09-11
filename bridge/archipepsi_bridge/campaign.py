@@ -966,6 +966,42 @@ class CampaignEngine:
             best_seconds=intent.best_seconds)))
         await self.broadcast_snapshot()
 
+    async def handle_progress(self, intent) -> None:
+        """Zone progress the engine reports: a key, a lock, a station.
+
+        **Closing a path that was open and dropped.** The engine has been
+        sending `key_collected` and `lock_opened` since the slice landed
+        and nothing received them, so a key survived exactly as long as
+        the process did.
+
+        The Zone is taken from the intent rather than from
+        `active_zone_id`: progress belongs to the place it happened in,
+        and a player who left for the Hub mid-report should not have a
+        key land in whichever Zone is current.
+
+        **Idempotent, and quietly so.** Every target set is monotone, so
+        the same event twice is one event. A resend after a dropped
+        connection is the normal case and must never be an error.
+        """
+        if self.save is None:
+            raise IntentError("no campaign loaded")
+        if self.save.zone_by_id(intent.zone_id) is None:
+            raise IntentError(
+                f"no Zone '{intent.zone_id}' in this campaign")
+        before = self.save
+        if intent.type == "key_collected":
+            nxt = T.record_key(self.save, intent.zone_id, intent.key_id)
+        elif intent.type == "lock_opened":
+            nxt = T.record_lock(self.save, intent.zone_id, intent.room_id,
+                                intent.socket_id)
+        else:
+            nxt = T.record_station(self.save, intent.zone_id,
+                                   intent.station_id)
+        if nxt is before:
+            return          # already recorded; nothing to save or announce
+        self._apply(nxt)
+        await self.broadcast_snapshot()
+
     async def handle_slot_action(
         self, slot: str, component_id: str | None
     ) -> None:
