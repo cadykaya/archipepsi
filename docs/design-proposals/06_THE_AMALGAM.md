@@ -99,7 +99,7 @@ Where a pinned section itself pins onward — Design 5 §13 pins to Design 1 §1
 | Design 5 §15.3 (the no-damage rule) | §15.3 | Restated as three rules with `exposed` as a declared exception |
 | Design 5 §35 (Status budgets) | §35.2, §35.2.1 | Two caps reduced; mandatory capacity reserved |
 | Design 1 Law 47 (seed determinism) | §1.4 | Narrowed into 47a/47b/47c by the 2026-09-04 owner ruling |
-| Design 3 §4.9 (`TopologyEdge`) | §4.9a | Three fields added: `connector_kind`, `crossing`, and `B_TO_A` in `direction` |
+| Design 3 §4.9 (`TopologyEdge`) | §4.9a | Four fields added: `connector_kind`, `crossing`, `realization`, and `B_TO_A` in `direction` |
 | Design 1 §13.6 (mandatory-route capabilities) | §13.6a | "One of the four in §29.1" becomes one of five; `manipulate`'s validation basis is named |
 | Design 1 §35 (budgets) | §35 | Rewritten entirely; five proposals' budgets cannot coexist unchanged |
 
@@ -272,7 +272,7 @@ Exactly one of the two is non-null, decided by `category`, and §30.5 check 19c 
 
 ## 4.9a `TopologyEdge` — modifies Design 3 §4.9
 
-Two repaired systems read edge data Design 3's `TopologyEdge` does not carry. §30.11.2b builds a `ConnectorSignature` from `(socket_kind, direction)` **before a shell is selected**, and §30.6.2's carry-legal Move needs to know whether an edge is traversable while carrying. Neither can be derived from a shell that has not been chosen. Three fields close it:
+Three repaired systems read edge data Design 3's `TopologyEdge` does not carry. §30.11.2b builds a `ConnectorSignature` from `(socket_kind, direction)` **before a shell is selected**, and §30.6.2's carry-legal Move needs to know whether an edge is traversable while carrying. §30.11.2e's placement solve needs to know which edges bind geometry at all. None can be derived from a shell that has not been chosen. Four fields close it:
 
 ```
 TopologyEdge:
@@ -284,7 +284,14 @@ TopologyEdge:
   capability     : Id? = null                            # pinned
   connector_kind : ConnectorKind                         # NEW
   crossing       : CrossingMethod                        # NEW
+  realization    : Realization                           # NEW
 ```
+
+```
+Realization = enum { JOINED, TRAVERSAL_ONLY }
+```
+
+**`realization` separates an edge that binds geometry from one that does not.** A `JOINED` edge is two sockets meeting at their collars, and it is what §30.11.2e's join and closure constraints quantify over. A `TRAVERSAL_ONLY` edge carries the player between two rooms with no geometry joining them — a return plug, a non-euclidean door, a rematerialisation pad — and has neither a collar to meet nor a loop to close. **Both are equally real to §30.6**, which reads reachability and never geometry; the distinction exists so a solver is not asked to close a cycle through a teleport. A `TRAVERSAL_ONLY` edge assigns no socket, so §30.11.2b's injective assignment ranges over `JOINED` edges only, and a room's **door degree** is its `JOINED` degree rather than its total degree.
 
 **`direction` gains `B_TO_A`.** §30.11.2b's assignment rule needs to say which endpoint a one-way edge points away from, and normalizing every one-way edge to `A_TO_B` by swapping endpoints would reorder `room_a`/`room_b` after §30.3 step 3 has already fixed them and after predicates reference them. Adding the third value is the smaller change, and it makes the enum total over the three real cases.
 
@@ -1768,6 +1775,7 @@ Design 1's eight whole-Zone checks, plus Design 3's five, plus fifteen new. **Ev
 | **20** | **The sum of a room's mandatory Status reservations (§35.2.1), plus one ordinary application, is within the room's `60`-entry and `24`-body caps.** | NEW |
 | **19a** | **Every Zone's `ZonePresentation` names a theme in the authored catalog and strings within their length bounds** (§30.1). | NEW |
 | **19b** | **Every incident topology edge of every room carries a distinct connector-socket assignment, and both endpoints of every edge agree on the joining transform** (§30.11.2b). | NEW |
+| **25** | **The exit-unlock rule and re-entry ship together** (§30.12.3): a Zone whose exit is reachable without every allocated Check claimed is legal only when its record can reach `DORMANT`. A build that unlocks the exit without a re-enterable state is rejected at composition. | NEW |
 | **24** | **Every edge's `carry_legal` equals the value §4.9a derives from its `crossing`**, and every edge carries a `connector_kind` and a `crossing` from their closed enums. A stored value disagreeing with its derivation is a hard error. **No mandatory route crosses an edge typed `MOBILITY_AIR_STEP`, or typed `MOBILITY_DASH` or `MOBILITY_BURST_JUMP` without `capability:core:long_gap` in its `capability` field** — §4.9a, on Design 1 §13.6's validation contract. | NEW |
 | **23** | **No allocated AP Check, AP-relevant local key, or Zone exit sits behind a capability gate** unless the bridge produces a matching declared Archipelago access rule for that location (§29.5a). | NEW |
 | **19d** | **Every connector socket of every offered shell declares a standardized attachment collar** from the catalog's fixed set (§30.11.2d). A shell with bespoke socket geometry is not offerable. **This is a catalog check about apertures and proves nothing about shell bodies** — 19e is what proves the Zone. | NEW |
@@ -2081,24 +2089,54 @@ What a collar bounds is the **aperture** — the opening the player walks throug
 
 ### 30.11.2e The placement solve
 
-**After the batched Epsilon response and before §30.5's checks, the bridge solves one placement problem for the whole Zone.**
+**Corrected 2026-09-11 by owner ruling, twice, before a line of it was written.** A first draft had the *bridge* solve placement and had a search timeout report the layout impossible. Both are wrong, and each was wrong for a reason worth keeping:
 
-**Input:** the topology graph from §30.3, each room's selected `shell_id`, and — from the catalog snapshot, never from the model — each shell's envelope, socket frames, and declared `player_entry` volumes.
+> **There is exactly one physical-placement implementation, and it is the engine's.** `zone_builder.gd:4` already owns world coordinates; a second solver in the bridge would be two implementations of the same geometry, disagreeing eventually and expensively.
 
-**Output:** a world transform per room, together with the `connector_assignment` §30.11.2b commits — or `INFEASIBLE_LAYOUT`.
+> **A timeout is a timeout.** Reporting "no layout found in the budget" as "no layout exists" makes a slow machine indict a sound design, and sends a recomposable Zone to a terminal path.
 
-**Four constraints, all hard:**
+#### What each side does
 
-1. **Join.** For every `TopologyEdge`, the two assigned sockets coincide at their collars, within `EPSILON_JOIN = 0.001 m` and `0.001 rad`.
+| | Bridge | Engine |
+|---|---|---|
+| **Owns** | the graph, the logical assignment, the commitment | world coordinates, geometry, collision |
+| **Emits** | `TopologyEdge`s, each room's `shell_id`, the §30.11.2b socket assignment | a world transform per room, or a typed failure |
+| **Never** | computes a transform | invents an edge, a shell, or an assignment |
+
+The bridge sends a **placement request** — the topology graph, each room's selected `shell_id`, and the socket assignment — and receives either a **layout** or a typed failure. **The bridge does not check the engine's arithmetic by redoing it**; §30.5 check 19e measures the returned transforms against the four constraints, which is a different computation from producing them.
+
+#### The four constraints the layout must satisfy
+
+1. **Join.** For every **physically realized** `TopologyEdge`, the two assigned sockets coincide at their collars, within `EPSILON_JOIN = 0.001 m` and `0.001 rad`.
 2. **Body.** No two room envelopes intersect, less the collar tolerance at a shared aperture. The envelope is the shell's declared bounding volume, not its socket set.
-3. **Closure.** Every independent cycle composes to the identity within `EPSILON_JOIN`.
-4. **Arrival.** Every `player_entry` volume on an assigned socket admits the standing capsule. This is the constraint the engine added a consumer for after three shells declared an arrival region no probe ever read.
+3. **Closure.** Every cycle **in the physically realized subgraph** composes to the identity within `EPSILON_JOIN`.
+4. **Arrival.** Every `player_entry` volume on an assigned socket admits the standing capsule.
 
-**Determinism, because Law 47a requires it.** Rooms are ordered by `room_id` ascending; each room's candidate transforms are ordered by §30.11.2b's lexicographic assignment; the first complete solution wins. **No seed is consumed and no search is randomised**, so the same graph and the same selected shells give the same layout on any machine — which is what makes the layout committable to the manifest rather than recomputed per load.
+**Constraints 1 and 3 are scoped to the physically realized subgraph, and that scoping is load-bearing.** A `TopologyEdge` may be **traversal-only**: a return plug — a non-euclidean door, a rematerialisation pad, a tube — carries the player between two rooms without any geometry joining them. It is a directed edge, it is real, and **it participates fully in §30.6's reachability**; it simply has no collar to meet and no loop to close. A layout solver asked to close a cycle through a teleport would fail on a Zone that is perfectly sound.
 
-**The budget is a hard bound, not a prediction.** The solve gets **`3.0 s`**. Exceeding it is `LAYOUT_TIMEOUT`, and `LAYOUT_TIMEOUT` is `INFEASIBLE_LAYOUT` for every purpose below — the design does not distinguish "no layout exists" from "none was found in the budget", because a composer cannot tell them apart and pretending otherwise would be §2.5's *method instead of an outcome*. §35.4.3 carries the cost.
+> **`TopologyEdge.realization = enum { JOINED, TRAVERSAL_ONLY }`.** `JOINED` edges bind geometry and carry constraints 1 and 3. `TRAVERSAL_ONLY` edges bind nothing spatial and carry neither. **Both carry §30.6's reachability, §4.9a's `crossing`, and every predicate and capability the model check reads.** A Zone whose graph has a cycle only through a `TRAVERSAL_ONLY` edge has **no spatial cycle at all** and the solver never sees one.
 
-**§30.5 check 19e** re-proves the solve's output on the composed Zone: every edge joined within tolerance, no envelope pair intersecting, every cycle closed, every assigned `player_entry` standable. Check 19e measures the committed transforms; it does not re-run the solver.
+#### Determinism, and how it is actually obtained
+
+Law 47a requires a Zone to rebuild identically forever. **It does not require two machines to independently rediscover the same layout**, and claiming that would be a promise about cross-platform floating point that nothing in this project can keep.
+
+> **The layout is solved once and committed.** The transforms the engine returns are written into the Zone manifest and are part of `manifest_digest`. Every later load — same machine or another, same session or years later — **replays the committed transforms and does not re-solve.** §30.11.5 class 6's digest mismatch is what catches a client whose catalog would have produced different geometry.
+
+Within one solve the search is still ordered rather than random — rooms by `room_id` ascending, candidate transforms by §30.11.2b's lexicographic assignment, first complete solution wins, **no seed consumed** — because a reproducible search is far easier to debug than an arbitrary one. That ordering is a quality of implementation, not the source of the determinism guarantee.
+
+#### The budget, and the two failures it separates
+
+The solve gets **`3.0 s`**, a hard bound rather than a prediction, and §35.4.3 carries the cost. What happens at the bound depends on what the search knows:
+
+| Outcome | Meaning | Reported when |
+|---|---|---|
+| `LAYOUT_OK` | a layout satisfying all four constraints | a complete assignment was found |
+| **`LAYOUT_TIMEOUT`** | **the budget was spent and the search space was not exhausted.** Says nothing about whether a layout exists | the `3.0 s` bound is reached with candidates unexplored |
+| **`LAYOUT_INFEASIBLE`** | **the search space was exhausted and no layout exists** for this combination of shells and assignments | every candidate was tried and rejected, within budget |
+
+**Only an exhausted search may report `LAYOUT_INFEASIBLE`.** A solver that cannot tell the two apart reports `LAYOUT_TIMEOUT`, which is the honest answer and the conservative one. §30.11.5 class 7 routes them differently for exactly this reason.
+
+**§30.5 check 19e** measures the committed layout against the four constraints — every `JOINED` edge joined within tolerance, no envelope pair intersecting, every realized cycle closed, every assigned `player_entry` standable. It measures; it does not re-solve.
 
 **§30.5 check 19b** re-proves on the composed Zone that every incident edge of every room carries a distinct socket assignment and that both endpoints of every edge agree on the transform that joins them. A Zone with an unassigned edge, a doubly-assigned socket, or a transform mismatch is rejected.
 
@@ -2133,7 +2171,7 @@ The client reads `shell_id` from the committed manifest and instantiates that sh
 
 That is one retry, never two, which is exactly what §35.4.2's `20.0 s` budget pays for.
 
-**Seven failure classes:**
+**Eight failure classes:**
 
 | # | Condition | Outcome |
 |---:|---|---|
@@ -2143,9 +2181,10 @@ That is one retry, never two, which is exactly what §35.4.2's `20.0 s` budget p
 | 4 | `offered_shells` is **empty** for a room | `FAIL_ROOM`. Retry the room with a different shell-compatible purpose up to `3` times, then `FAIL_ZONE` per §30.8. A room with no legal shell is a catalog gap, not a runtime condition |
 | 5 | A selected shell is **`review: pending`** or has been withdrawn since the request | Rejected at §30.5 check 19 and the Zone is recomposed from the same seed with the shrunken catalog. The catalog snapshot digest (§30.11.7) makes this detectable rather than silent |
 | 6 | **At load**, the manifest's `shell_id` is unknown to the client, or the client's shell-catalog digest differs from the manifest's | **Hard error.** The Zone is refused with §34.13's message, never approximated. This is §30.9's consistency check extended to shells |
-| 7 | **`INFEASIBLE_LAYOUT`** — §30.11.2e finds no world layout for the selected combination, or exceeds its `3.0 s` budget | One repair request naming the rooms whose envelopes could not be placed; then the offline selector supplies every shell and the solve is run once more. A third failure is `FAIL_ZONE` per §30.8, terminating in §37.2's certified fallback Zone, which is authored and therefore feasible by construction. **The offline selector is not itself a feasibility guarantee** — §30.11.6 picks by hash from `offered_shells` and knows nothing about geometry |
+| 7 | **`LAYOUT_TIMEOUT`** — §30.11.2e spent its `3.0 s` with candidates still unexplored. **This is a statement about the budget and about nothing else** | One repair request for a combination with fewer large shells; then the offline selector; then `FAIL_ZONE` per §30.8, terminating in §37.2's certified fallback Zone. **Re-running the identical request is never the response**, because the search is ordered and would spend the same budget the same way. Logged as a **performance** event against the solver, never as a defect in the Zone |
+| 8 | **`LAYOUT_INFEASIBLE`** — §30.11.2e **exhausted** the search space within budget and no layout exists for this combination of shells and assignments | The same escalation as class 7, and a different meaning: the offered set, not the solver, is what failed. Logged for **catalog review** with the room ids and the exhausted assignment. **Only an exhausted search may report this**; a solver that cannot distinguish exhaustion from expiry reports class 7. §37.2's fallback Zone is authored and therefore placeable by construction, which is what makes it a terminal rather than a hope |
 
-**Classes 1 through 3 are the model-failure classes** and share the one-repair policy. Class 4 is a catalog gap, class 5 a catalog change between request and validation, class 6 a load-time mismatch — none involves a second request. **Class 7 is the one failure that is nobody's mistake**: every selection can be individually legal and the combination still have no layout, which is exactly why §30.11.2d's local-sufficiency claim had to go. Every one maps to a terminal `EpsilonProvenance.outcome` below.
+**Classes 1 through 3 are the model-failure classes** and share the one-repair policy. Class 4 is a catalog gap, class 5 a catalog change between request and validation, class 6 a load-time mismatch — none involves a second request. **Classes 7 and 8 are the two that are nobody's mistake** — every selection can be individually legal and the combination still fail to place, which is why §30.11.2d's local-sufficiency claim had to go. They escalate identically and mean opposite things: **7 says the solver ran out of time, 8 says the geometry ran out of room.** Collapsing them would let a slow machine file a catalog bug. Every one maps to a terminal `EpsilonProvenance.outcome` below.
 
 ### 30.11.6 The deterministic offline selector
 
@@ -2196,6 +2235,57 @@ A `ReplayVerdict` is data like any other manifest field, covered by `manifest_di
 ### 30.11.9 What this does not authorise
 
 `shell_id` selection is the **entire** extension of Epsilon's authority in this document. Epsilon still emits no transform, no distance, no node graph, no completion condition, no callback, no balance number, and no executable behaviour of any kind. It picks a name from a list the bridge proved legal, and §30.5 check 19 re-proves the choice on the composed Zone before it is committed.
+
+---
+
+## 30.12 Zone lifecycle and revisit — new
+
+**Owner rulings, 2026-09-11.** All five proposals treated a Zone as a thing you finish and leave. The owner ruled otherwise, and the word she used is the specification:
+
+> **Revisit means returning to the same Zone — familiar rooms, the branches left unexplored, and progress still there.**
+
+That sentence rules out the cheap substitute. Returning a Zone's unclaimed Checks to the allocator and reissuing them elsewhere satisfies *"the Checks are still obtainable"* and satisfies nothing the ruling is about: **a reissued Check is not the locked branch you came back for.**
+
+### 30.12.1 Four states, and what each preserves
+
+| State | Reached by | Layout | Check identities | Claimed status | Progress | Re-enterable |
+|---|---|:-:|:-:|:-:|:-:|:-:|
+| `ACTIVE` | entering | — | — | — | — | — |
+| **`DORMANT`** | **leaving with Checks unclaimed** | **kept** | **kept** | **kept** | **kept** | **yes** |
+| `COMPLETE` | leaving with every Check claimed | kept | kept | kept | kept | no — nothing remains |
+| `ABANDONED` | **explicit** abandonment or replacement | discarded | **released to the allocator** | — | discarded | no |
+
+**`DORMANT` is the new state and the one the ruling requires.** A Zone left with work outstanding keeps everything: its committed layout (§30.11.2e), its allocated location ids, which of them are claimed, and the player's progress within it. Re-entering resumes rather than regenerates.
+
+**Returning unclaimed Checks to the pool is `ABANDONED`'s behaviour and only `ABANDONED`'s.** It is an explicit act with an explicit cost, never the silent consequence of walking out of a door.
+
+### 30.12.2 What survives, exactly
+
+| Survives death | Survives Hub return | Survives Zone re-entry |
+|---|---|---|
+| Collected local keys | Collected local keys | Collected local keys |
+| Opened locks | Opened locks | Opened locks |
+| Reached warp stations | Reached warp stations | Reached warp stations |
+| Claimed Checks | Claimed Checks | Claimed Checks |
+| Macro state (§23.4, pinned) | Macro state | Macro state |
+
+**Key and lock state are progress, not layout.** The layout rebuilds from the manifest and is identical by construction; what a player *did* to the Zone is separate persistence, and §5.4a's fold is where it lives. A key collected and a lock opened are both monotone — §5.7's latch shape — so neither can regress on reload, and the model check's `R ⊆ E` is preserved across a resume for the same reason it holds within a run.
+
+### 30.12.3 The exit does not require every Check
+
+> **Reaching the intended exit completes the Zone's route. It does not require that every allocated Check has been claimed.**
+
+This supersedes the behaviour Production shipped, where the exit portal holds shut until every assigned Check confirms. That rule turns a missed Check into a locked Zone rather than a forgone reward, and in the 2026-09-11 playthrough it compounded with a sealed doorway to force a backtrack through a room with no walking exit.
+
+**The ruling is explicitly coupled**: the exit may stop requiring `100%` **only when re-entry works**. Shipping the unlock first would let a player leave and strand the remainder — the same defect wearing the opposite costume. §40's wave ordering carries the coupling, and **§30.5 check 25** enforces it as a composition-time invariant: a Zone whose exit is reachable without every Check claimed is legal only when its record can reach `DORMANT`.
+
+### 30.12.4 Warp stations
+
+> **A warp station provides travel and save. It does not provide loadout editing.**
+
+Stations are placed at the Zone entrance, the exit, and large rooms; a player may save at one, return to the Hub from one, and warp between stations already reached **within the same Zone**. Reached-ness is progress and persists per §30.12.2.
+
+**§2.2's deferral of in-Zone loadout stations is unaffected and stays pinned.** The two features share a word and nothing else: editing a loadout mid-Zone would let a player re-specify the capabilities §29.4 validated at entry, which is the reason all five proposals deferred it. Travel and save touch none of that. **No §0.5 ledger row is needed, because no pin is modified.**
 
 ---
 

@@ -17,6 +17,7 @@ Proposals 1 through 5 are mutually exclusive. Proposal 6 is their union — it t
 | `06_THE_AMALGAM.md` | Design 6. The union of all five, forced to work together. Design 3's model check at the centre, extended to prove physics and Status safe. The most expensive of the six by a wide margin. |
 | [`06_THE_AMALGAM_AUDIT.md`](06_THE_AMALGAM_AUDIT.md) | The repair and rebase audit for Design 6. Read it to see what changed and why, including which external findings were stale-packet artifacts. |
 | [`08_PLAYTEST_RECONCILIATION.md`](08_PLAYTEST_RECONCILIATION.md) | **Findings, not a proposal.** Design 6 against Production `96c450e` and the 2026-09-11 owner decisions, after the first human playthrough. Verifies the playtest's diagnoses, says which decisions the design already carries, and proposes the first branching slice. |
+| [`09_ROOM_CONTRACT.md`](09_ROOM_CONTRACT.md) | **Draft for interface review.** The bridge/engine seam for multi-door rooms: shell capacity, room-instance assignment, persistent progress, how the sides talk, how they report failure, and the first slice's acceptance checks. |
 | [`_checkers/`](_checkers/) | The scripts the audit's §9 cites. `run_all.sh` runs them all; a green run is evidence about the classes they check and nothing else. |
 | [`07_ENGINE_RECONCILIATION.md`](07_ENGINE_RECONCILIATION.md) | **Findings, not a proposal.** All six checked against the live engine branch. Read it before treating any proposal as buildable — three of Design 6's systems are blocked at the substrate, and one finding applies to all six. |
 
@@ -55,7 +56,8 @@ Where those two documents state an architectural law, every proposal inherits it
 | 03 — The Dungeon Is One Machine | **Complete** — ~16.6k words, audited, 142/142 authority tests traced |
 | 04 — Epsilon Is The Content | **Complete** — ~15.5k words, audited, 142/142 authority tests traced |
 | 05 — Status As Grammar | **Complete** — ~13.8k words, audited, 142/142 authority tests traced |
-| 06 — The Amalgam | **Repaired, rebased, promotable** — ~47.7k words, re-audited across five passes, 142/142 traced, rebased on the 2026-09-04 `shell_id` ruling and carrying the four owner rulings of 2026-09-05. Its first line still reads *not canon*; promotion is the owner's action |
+| 06 — The Amalgam | **Repaired, rebased, promotable** — ~49.2k words, re-audited across five passes, 142/142 traced, rebased on the 2026-09-04 `shell_id` ruling and carrying the four owner rulings of 2026-09-05. Its first line still reads *not canon*; promotion is the owner's action |
 | 06 — Repair audit | **Complete** — `06_THE_AMALGAM_AUDIT.md`, ~8.8k words, five passes, every repair with old/new behaviour and regenerated counts |
+| 09 — Room Contract | **Draft** — awaiting Prod's interface review. Three separated layers, typed failure reporting, 15 acceptance checks |
 | 08 — Playtest Reconciliation | **Complete** — the seven owner decisions against Design 6, two playtest findings falsified, and a bounded first slice |
 | 07 — Engine Reconciliation | **Complete** — ~3.5k words, the six checked against `claude/archipepsi-echoes-continuation-b1adno` at `df2bb58`, plus four update sections (§8a–§8d) recording later rulings and one correction |

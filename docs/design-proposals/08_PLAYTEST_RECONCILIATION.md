@@ -76,9 +76,9 @@ Two further reasons, both available when the claim was made:
 | 2 | Existing two-door shells remain valid | **Already covered, by the rule that looks like a restriction.** §30.11.2b offers a shell only when an injective assignment exists from incident edges to sockets — so a two-door shell is simply never offered to a degree-3 room, and stays legal everywhere else. No variant-per-door-count is needed | §30.11.2b |
 | 3 | Dead-end branches must provide a declared return route | **Partially.** The model check's `R ⊆ E` already *rejects* a dead end the player cannot leave — the verifier will not pass a Zone that strands. But Design 6 has **no plug catalogue and no return anchor**, so it can only reject the bad Zone, never compose the good one | §30.6 property 1; mechanism **absent** |
 | 4 | Shells declare doorway capacity; composition declares used / sealed / locked | **Half.** Capacity-versus-usage falls out of §30.11.2b's injective assignment for free. **Sealed and locked are absent** — and sealing carries the trap the playtest named: `_openings_are_holes` reports a blocked doorway as a defect, so for a declared-sealed door the same measurement must **invert** and confirm the seal. Skipping the check for walled doors would be a fourth instance of the recurring shape | §30.11.2b; sealing **absent** |
-| 5 | Warp stations support useful return and revisit | **Absent, and deliberately so.** §2.2 *Explicitly deferred* records *"In-Zone loadout stations — deferred in all five. Hub-only editing"*, and deferral there means *pinned: identical to Design 1 §2.2*. This is the one decision that reverses a choice all six proposals made, so it is a **modifier to a pin**, not a gap — §0.5's ledger gains a row when it is written | **absent** |
+| 5 | Warp stations support useful return and revisit | **Absent, and now specified.** §2.2 defers *in-Zone loadout stations*, and the 2026-09-11 ruling keeps that deferral: **a station provides travel and save, not loadout editing.** The two share a word and nothing else — editing a loadout mid-Zone would re-specify capabilities §29.4 validated at entry, which is why all five deferred it. **No pin is modified and §0.5 gains no row.** Written as §30.12.4 | §30.12.4; §2.2 unaffected |
 | 6 | Zone-local keys first; cross-game ability gates later | **Already the design, and the sequence matches.** Local keys are in the state vector (`0`–`4`, two states each), pinned from Design 1 §28, and `LOCAL_KEY_LOOP` is one of the `34` authored puzzle families. **A key behind its own lock is caught as unreachability** by the model check's `R ⊆ E`, not by a named key-graph check — Design 6 has no check corresponding to the design packet's *acyclic key graph* rule, and does not need one while the model check subsumes it. Ability gates are §29.5a and check 23, which today reduces to *"no capability gate on any AP-relevant mandatory route"* until the apworld declares prerequisites — exactly "later" | §4.10, §28 pin, §30.6 property 1; §29.5a, check 23 |
-| 7 | Leaving with unclaimed Checks must preserve a way to obtain them | **Partially, and not as a player affordance.** §5.6.2 returns a retired Zone's unclaimed Checks to the allocator when a schema migration retires it. That is a data-safety path, not a way for a player to go back | §5.6.2; affordance **absent** |
+| 7 | Leaving with unclaimed Checks must preserve a way to obtain them | **Now ruled, and the ruling rejects the cheap version.** Revisit means *the same Zone* — familiar rooms, the branch left unexplored, progress intact. A reissued Check is not the locked branch you came back for. New `DORMANT` state preserves layout, Check identities, claimed status and progress; **returning Checks to the allocator is `ABANDONED`'s behaviour and only `ABANDONED`'s.** §5.6.2's migration path is unchanged and is not this | §30.12.1, §30.12.2 |
 
 ### 3.1 Where Design 6 constrains the decisions
 
@@ -134,12 +134,14 @@ It fits the existing shape without moving the boundary: a bridge-filtered offer 
 |---|---|
 | **Shape** | Eight procedural rooms. Exactly **one** room of degree `3`. Zero cycles, one entry, one exit |
 | **The branch** | The short branch dead-ends behind a **local key**. The key sits in the long branch. The dead end carries **one plug** — the simplest in the catalogue, a one-way return door to the Zone start |
-| **Shells** | **None authored.** Every room is procedural |
+| **Shells** | **The authored composition path is preserved unchanged.** Existing two-door shells still serve every non-junction room exactly as they do today. Only the **degree-3 junction** is procedural, because a three-door junction needs geometry that does not exist yet |
 | **Excluded** | Authored multi-door shells, warp stations, ability gates, cycles, multi-room activities |
 
-**Why no authored shells.** All twelve declare exactly two doorways, so a branching room built from one needs an **art change**. Procedural rooms are built by code and gain a third door the moment `_perimeter` can carve it. Cutting art out of slice 1 means the contract can be proven before anyone re-authors a shell — and when the shells do gain doorways, they arrive against a contract that is already tested.
+**Why the junction alone is procedural.** All twelve authored shells declare exactly two doorways, so a branching room built from one needs **new geometry**. Procedural rooms are built by code and gain a third door the moment `_perimeter` can carve it. Keeping art off the junction means the contract can be proven before anyone authors a three-door shell — and when one is authored, it arrives against a tested contract. **Everything else in the Zone composes exactly as it does today**: this slice adds a capability, it does not replace the path that works.
 
-**Why one junction and no cycle.** A single degree-3 node exercises edges-as-data, the N-door builder, the N-probe audit, key lock and unlock, the plug return, and `R ⊆ E` over a real branch. **A cycle additionally requires closure**, which is the solver's hardest constraint (§30.11.2e) and the one with no Production precedent. Proving the graph on an acyclic junction first means the solver's closure constraint is the only thing under test when the first cycle lands.
+**Why one junction and no *spatial* cycle.** A single degree-3 node exercises edges-as-data, the N-door builder, the N-probe audit, key lock and unlock, the plug return, and `R ⊆ E` over a real branch.
+
+**"No cycle" means no physical loop requiring spatial closure — it does not mean no cycle in the graph.** The return plug is a **directed traversal edge**: it carries the player from the dead end back to the Zone start, it makes the graph cyclic, and **it participates fully in reachability**. What it does not do is bind geometry, so nothing has to close spatially. §4.9a's `realization` field is what draws that line — `JOINED` edges carry §30.11.2e's join and closure constraints, `TRAVERSAL_ONLY` edges carry neither and carry every reachability obligation. **Slice 1 therefore proves the plug edge in the verifier while keeping the solver's hardest constraint out of the first build.**
 
 **What it proves, in order:** edges survive a save round-trip → a room builds with three doors → the audit probes three and passes → the solver places a branch without overlap → a key locks and unlocks real geometry → a plug returns the player → the verifier accepts a Zone it could not previously express.
 
@@ -157,21 +159,19 @@ Proposed, not assumed — the boundary matters more than who holds which side.
 
 **The seam is the deliverable that unblocks both lanes**, and it is one document, not a system. Neither side can start without it and neither side should write it alone.
 
-### 4.5 Player-facing decisions still open
+### 4.5 Player-facing decisions — all five ruled 2026-09-11
 
-These change what the slice feels like and none is answerable from the code.
+Every question §4.5 raised has been answered. Recorded as decisions, and written into `06_THE_AMALGAM.md` §30.12.
 
-| # | Question | Why it is open |
+| # | Question | Ruling |
 |---:|---|---|
-| 1 | **Does a local key survive death?** | Design 6 classes local keys `ROOM_PERSISTENT`, so the machinery says yes. But a key that survives death and a key that does not are different games, and the classification was made for a different question |
-| 2 | **Does a sealed or locked door survive Hub return and re-entry?** | The layout is committed to the manifest and rebuilds deterministically. **Key and lock state are not layout** — they are progress, and nothing currently says which |
-| 3 | **What does revisit mean?** Re-enterable Zones, a Hub board that routes back, or unclaimed Checks returning to the pool for reallocation into a later Zone | Decision 7 requires *a* way. Design 6 already implements the third (§5.6.2) as data safety; the first two are campaign structure. **This is the one that decides whether "revisit" is a place or a promise** |
-| 4 | **Does the exit still hard-lock on 100%?** | `exit_portal.gd` locks until every assigned Check confirms. Design 6 requires every Check *reachable*, never every Check *claimed*. With B-1 present that lock is what forced a Teleport backtrack through an impassable room — the two defects compounded |
-| 5 | **Where does completion feedback live?** | §1.2: it exists and the player cannot see it. Moving it to the HUD is small; deciding whether the world label stays as well is a legibility choice |
+| 1 | Does a local key survive death? | **Yes**, and so do opened locks — across death *and* Hub return. Both are monotone, so neither can regress on reload |
+| 2 | Does lock state survive Hub return and re-entry? | **Yes.** Layout rebuilds from the manifest; key and lock state are **progress, not layout**, and live in §5.4a's fold |
+| 3 | What does revisit mean? | **The same Zone.** Familiar rooms, the unexplored branch, progress intact. New `DORMANT` state. **Reissuing Checks elsewhere is not revisit** — it satisfies the letter and misses the point |
+| 4 | Does the exit hard-lock on 100%? | **No**, and the change is **coupled**: the exit may stop requiring every Check only when re-entry works, or leaving strands the remainder. Check 25 enforces the coupling |
+| 5 | Where does completion feedback live? | **Near the player's attention, on the HUD**, brief. **The world labels stay** where they are useful — this surfaces an existing signal, it does not replace one |
 
-Question 3 is the one to answer first: it is the only one that changes what gets built in slice 2.
-
----
+**Ruling 4's coupling is the one to hold onto during implementation.** The exit unlock is a two-line change and re-entry is a schema change; shipping them in that order would be the easy mistake, and it converts a forgone reward into a stranded one.
 
 ## 5. What this document does not do
 
