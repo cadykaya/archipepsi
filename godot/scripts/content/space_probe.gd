@@ -295,5 +295,17 @@ static func is_placed_content(collider: Variant) -> bool:
 			return true
 		if node.is_in_group(DestructibleCover.GROUP):
 			return true
+		# A LOCK IS CONTENT IN AN OPENING, NOT THE OPENING.
+		#
+		# A `LOCKED` door's aperture IS carved -- that is the whole
+		# difference between a lock and a `SEALED` wall, and the audit
+		# has to be able to see the hole to tell them apart. The slab
+		# standing in it is placed content exactly as a crate is, so
+		# the probe that asks "is this opening a hole" must look past
+		# it. Otherwise every lock reads as a sealed wall and the two
+		# promises become indistinguishable, which is the failure the
+		# contract's `SEALED` rule exists to prevent.
+		if node is LockedDoor:
+			return true
 		node = node.get_parent()
 	return false

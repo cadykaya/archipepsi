@@ -114,6 +114,10 @@ func _run() -> void:
 	await _test_a_sealed_door_that_is_a_hole_is_caught()
 	await _test_the_layout_result_commits_the_whole_chain()
 	await _test_a_spent_budget_is_a_timeout_and_not_infeasibility()
+	await _test_a_return_plug_lands_somewhere_a_player_fits()
+	await _test_a_locked_door_gates_until_its_key_is_held()
+	await _test_a_key_is_reachable_before_the_lock_it_opens()
+	await _test_the_playable_slice_composes_end_to_end()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
 
@@ -2187,25 +2191,52 @@ func _standable_at(space: PhysicsDirectSpaceState3D, x: float, z: float,
 
 func _walk_reaches(result: Dictionary, from_xz: Vector2,
 		to_xz: Vector2) -> Dictionary:
+	return _walk_bounds(result["bounds"] as AABB, from_xz, to_xz,
+			ESCAPE_CELL)
+
+## A whole Zone, flooded below its lowest ceiling.
+func _walk_zone(out: Dictionary, from_xz: Vector2,
+		to_xz: Vector2) -> Dictionary:
+	var whole: AABB = (out["bounds_list"] as Array)[0]
+	for box: AABB in out["bounds_list"] as Array:
+		whole = whole.merge(box)
+	return _walk_bounds(whole, from_xz, to_xz, 0.5,
+			whole.position.y + 2.6)
+
+## `from_y` is where the downward rays START, and it is a parameter
+## because no single height serves a whole Zone.
+##
+## Inside ONE room, just under its ceiling is right. Across a Zone it is
+## not: a corridor's roof is 3.6 m and an arena's is 5.0 m, so a cast
+## dropped from just under the arena's ceiling begins INSIDE the
+## corridor's roof and reads that roof as the corridor's floor -- which
+## disconnects every room from every other and makes a Zone-wide flood
+## report the first room and stop.
+##
+## **The limit, stated rather than discovered later:** a Zone-scale
+## flood passes a height below the lowest ceiling, so it cannot see a
+## surface above that height. Rooms with decks higher than the corridor
+## roof need a taller pass, and this prober does not do one.
+func _walk_bounds(bounds: AABB, from_xz: Vector2, to_xz: Vector2,
+		cell: float, from_y := INF) -> Dictionary:
 	var space := _space()
-	var bounds: AABB = result["bounds"]
 	# Just under the roof: high enough to clear any deck the room has,
 	# low enough that the roof itself is never what gets measured.
-	var ceiling := bounds.end.y - 0.2
+	var ceiling := (bounds.end.y - 0.2) if is_inf(from_y) else from_y
 	var x0 := bounds.position.x
 	var z0 := bounds.position.z
-	var nx := int(ceil(bounds.size.x / ESCAPE_CELL)) + 1
-	var nz := int(ceil(bounds.size.z / ESCAPE_CELL)) + 1
+	var nx := int(ceil(bounds.size.x / cell)) + 1
+	var nz := int(ceil(bounds.size.z / cell)) + 1
 	var height := {}
 	for ix in nx:
 		for iz in nz:
-			var y := _standable_at(space, x0 + float(ix) * ESCAPE_CELL,
-					z0 + float(iz) * ESCAPE_CELL, ceiling)
+			var y := _standable_at(space, x0 + float(ix) * cell,
+					z0 + float(iz) * cell, ceiling)
 			if not is_nan(y):
 				height[Vector2i(ix, iz)] = y
 	var cell_of := func(p: Vector2) -> Vector2i:
-		return Vector2i(int(round((p.x - x0) / ESCAPE_CELL)),
-				int(round((p.y - z0) / ESCAPE_CELL)))
+		return Vector2i(int(round((p.x - x0) / cell)),
+				int(round((p.y - z0) / cell)))
 	var start: Vector2i = cell_of.call(from_xz)
 	var goal: Vector2i = cell_of.call(to_xz)
 	if not height.has(start):
@@ -2239,10 +2270,10 @@ func _walk_reaches(result: Dictionary, from_xz: Vector2,
 		hi = Vector2i(maxi(hi.x, c.x), maxi(hi.y, c.y))
 	return {"ok": false, "reached": seen.size(),
 			"why": "walked %d cells, x %.1f..%.1f z %.1f..%.1f, start y=%.2f, goal cell %s %s"
-			% [seen.size(), x0 + float(lo.x) * ESCAPE_CELL,
-				x0 + float(hi.x) * ESCAPE_CELL,
-				z0 + float(lo.y) * ESCAPE_CELL,
-				z0 + float(hi.y) * ESCAPE_CELL,
+			% [seen.size(), x0 + float(lo.x) * cell,
+				x0 + float(hi.x) * cell,
+				z0 + float(lo.y) * cell,
+				z0 + float(hi.y) * cell,
 				float(height[start]),
 				str(goal),
 				("standable y=%.2f" % float(height[goal])) if height.has(goal) else "NOT STANDABLE"]}
@@ -2442,6 +2473,289 @@ func _test_a_spent_budget_is_a_timeout_and_not_infeasibility() -> void:
 				"the routing policy omits '%s', so an infeasible result "
 				% field + "could not say what space it exhausted")
 	rooms_checked += 1
+
+## A dead end's way back, placed and proved.
+##
+## The owner's ruling allows a branch to dead-end provided it carries a
+## return. Three things have to hold and none is implied by the others:
+## the device is placed where the composer said; its destination is an
+## anchor this Zone actually has; and **a body fits where it lands.**
+## The third is the one nothing else checks -- a plug that returns the
+## player inside a wall is a worse dead end than the one it was added to
+## relieve.
+func _test_a_return_plug_lands_somewhere_a_player_fits() -> void:
+	var zone := _eight_room_zone()
+	zone["plugs"] = [
+		{"edge_id": "e_return", "room_id": "r7",
+			"source_anchor": "room:r7:arrival",
+			"destination": "zone_start", "device": "pad"},
+		# A plug naming an anchor this Zone does not have must be
+		# refused rather than silently landed at the origin.
+		{"edge_id": "e_bogus", "room_id": "r7",
+			"source_anchor": "room:nowhere:arrival",
+			"destination": "zone_start", "device": "tube"},
+	]
+	var out := ZoneBuilder.build(zone)
+	_check(str(out.get("status", "")) == "LAYOUT_OK",
+			"the plug Zone did not compose: %s" % str(out.get("failed", "?")))
+	if not out.has("root"):
+		return
+	add_child(out["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var anchors: Dictionary = out["anchors"]
+	var placed: Array = out["plugs"]
+	_check(placed.size() == 1,
+			"%d plugs were placed; the one naming an unknown anchor "
+			% placed.size() + "should have been refused and the real "
+			+ "one kept")
+	_check(anchors.has("zone_start") and anchors.has("last_large_room"),
+			"the Zone published no anchor vocabulary for a plug to name")
+	if placed.size() == 1:
+		var plug: ReturnPlug = placed[0]
+		_check(plug.destination == "zone_start",
+				"the plug forgot its destination")
+		_check(anchors.has(plug.destination),
+				"the plug returns to '%s', which this Zone has no anchor "
+				% plug.destination + "for")
+		# THE ARRIVAL, measured with the player's own capsule.
+		var to: Vector3 = anchors[plug.destination]
+		var landed := _standable_at(_space(), to.x, to.z, to.y + 4.0)
+		_check(not is_nan(landed),
+				"the plug's destination anchor %v has no ground a body "
+				% to + "can stand on")
+	rooms_checked += 1
+	(out["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+## The lock gates, measured rather than asserted.
+##
+## A `LOCKED` door's aperture IS carved -- the audit sweeps the capsule
+## through it and requires a hole -- and a slab stands in that hole until
+## the key is held. That ordering is the whole design: a lock modelled as
+## "do not carve" would be indistinguishable from `SEALED` in every
+## measurement, and the two are different promises.
+##
+## So this measures the SLAB, twice: solid with no key, gone with one.
+func _test_a_locked_door_gates_until_its_key_is_held() -> void:
+	var zone := _eight_room_zone()
+	var gated: Dictionary = (zone["chambers"] as Array)[3]
+	gated["doors"] = [
+		{"socket_id": "entry", "usage": "USED", "edge_id": "e_in",
+			"key_id": null},
+		{"socket_id": "exit", "usage": "USED", "edge_id": "e_out",
+			"key_id": null},
+		{"socket_id": "side_left", "usage": "LOCKED", "edge_id": "e_vault",
+			"key_id": "red", "colour": "red"},
+		{"socket_id": "side_right", "usage": "SEALED", "edge_id": null,
+			"key_id": null},
+	]
+	((zone["chambers"] as Array)[1] as Dictionary)["keys"] = [
+			{"key_id": "red", "colour": "red"}]
+	var out := ZoneBuilder.build(zone)
+	_check(str(out.get("status", "")) == "LAYOUT_OK",
+			"the locked Zone did not compose: %s"
+			% str(out.get("failed", "?")))
+	if not out.has("root"):
+		return
+	add_child(out["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var locks: Array = out["locks"]
+	var keys: Array = out["keys"]
+	_check(locks.size() == 1,
+			"%d lock slabs were placed for one LOCKED door" % locks.size())
+	_check(keys.size() == 1,
+			"%d keys were placed for one declared key" % keys.size())
+	if locks.size() != 1:
+		(out["root"] as Node3D).queue_free()
+		return
+	var slab: LockedDoor = locks[0]
+	_check(slab.key_id == "red",
+			"the lock wants '%s' and the Zone's key is 'red'" % slab.key_id)
+	var at := slab.global_position + Vector3.UP \
+			* (Constants.PLAYER_HEIGHT / 2.0 + 0.1)
+	_check(_blocked_at(at),
+			"the locked door does not block: a player walks through a "
+			+ "lock they have no key for")
+	# WITH THE KEY. Not by walking into it -- by holding it, which is
+	# how the runtime opens locks: the key set drives the doors so a key
+	# found across the Zone opens its lock without a return trip.
+	slab.try_open({"red": true})
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(not _blocked_at(at),
+			"the door stayed solid after its key was held")
+	probes_expected_to_fail += 1
+	rooms_checked += 1
+	(out["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+func _blocked_at(world: Vector3) -> bool:
+	var shape := CapsuleShape3D.new()
+	shape.height = Constants.PLAYER_HEIGHT
+	shape.radius = Constants.PLAYER_RADIUS
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = shape
+	query.transform = Transform3D(Basis(), world)
+	query.collide_with_areas = false
+	return not _space().intersect_shape(query, 1).is_empty()
+
+## What `R ⊆ E` cannot see.
+##
+## The bridge proves a key is obtainable without passing its own lock,
+## and that is a property of a GRAPH -- over edges it believes exist. It
+## cannot see that the key stands inside a crate, on a ledge with no
+## ramp, or behind a trim lip that made every band ramp unwalkable until
+## `c8ed2e9`. Reachability in the logical graph and reachability of a
+## body are different claims and only one of them has been checked.
+##
+## So this walks it. Four rooms, a key in the second, a lock on the
+## third, flooded from the spawn with WALKING ONLY -- no jump, no offer,
+## no Teleport -- and the key has to be reached with the lock still shut.
+func _test_a_key_is_reachable_before_the_lock_it_opens() -> void:
+	var chambers: Array = []
+	for i in 4:
+		chambers.append({"id": "k%d" % i, "type": "arena",
+				"width": 14.0, "depth": 12.0, "wall_height": 5.0,
+				"objective": "reach_exit", "enemies": [],
+				"activities": [], "features": [],
+				"additional_reward_location_ids": []})
+	chambers[2]["doors"] = [
+		{"socket_id": "entry", "usage": "USED", "edge_id": "e2",
+			"key_id": null},
+		{"socket_id": "exit", "usage": "LOCKED", "edge_id": "e3",
+			"key_id": "blue", "colour": "blue"},
+	]
+	chambers[1]["keys"] = [{"key_id": "blue", "colour": "blue"}]
+	var zone := {"zone_id": "key_probe", "theme": "concrete_facility",
+			"display_name": "Key Probe", "chambers": chambers}
+	var out := ZoneBuilder.build(zone)
+	_check(str(out.get("status", "")) == "LAYOUT_OK",
+			"the key Zone did not compose: %s" % str(out.get("failed", "?")))
+	if not out.has("root"):
+		return
+	add_child(out["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var keys: Array = out["keys"]
+	var locks: Array = out["locks"]
+	_check(keys.size() == 1 and locks.size() == 1,
+			"expected one key and one lock, got %d and %d"
+			% [keys.size(), locks.size()])
+	if keys.size() != 1 or locks.size() != 1:
+		(out["root"] as Node3D).queue_free()
+		return
+	var spawn: Transform3D = out["spawn_transform"]
+	var key_at: Vector3 = (keys[0] as ZoneKey).global_position
+	var walk := _walk_zone(out, Vector2(spawn.origin.x, spawn.origin.z),
+			Vector2(key_at.x, key_at.z))
+	_check(bool(walk["ok"]),
+			"the blue key cannot be walked to with its own lock shut: %s"
+			% str(walk["why"]))
+	# AND THE LOCK IS REALLY IN THE WAY. If everything is reachable the
+	# test above proves nothing about ordering -- it would pass on a Zone
+	# with no lock at all.
+	var beyond: Vector3 = (locks[0] as LockedDoor).global_position
+	var past := _walk_zone(out, Vector2(spawn.origin.x, spawn.origin.z),
+			Vector2(beyond.x, beyond.z + 3.0))
+	_check(not bool(past["ok"]),
+			"the room beyond the locked door was reached without the "
+			+ "key, so the lock gates nothing and the check above is "
+			+ "vacuous")
+	probes_expected_to_fail += 1
+	rooms_checked += 1
+	(out["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+## What `--slice1` actually hands a player, built and measured.
+##
+## Every piece of this slice has its own test above. This one proves they
+## compose: the fixture decorates an ordinary Zone, the decorated Zone
+## builds, its junction carries three carved doors and one solid one, a
+## key and its lock are placed, a return plug stands somewhere a body
+## fits, and the whole thing passes the room audit. A slice whose parts
+## each pass and whose assembly does not is a slice nobody can play.
+func _test_the_playable_slice_composes_end_to_end() -> void:
+	var decorated := Slice1Fixture.decorate(_eight_room_zone())
+	var junctions := 0
+	for raw: Variant in decorated["chambers"] as Array:
+		var c: Dictionary = raw
+		if (c.get("doors", []) as Array).size() == 4:
+			junctions += 1
+	_check(junctions == 1,
+			"the fixture decorated %d junctions; it should decorate one"
+			% junctions)
+	_check((decorated.get("plugs", []) as Array).size() == 1,
+			"the fixture placed no return plug")
+	var out := ZoneBuilder.build(decorated)
+	_check(str(out.get("status", "")) == "LAYOUT_OK",
+			"the decorated Zone did not compose: %s"
+			% str(out.get("failed", "?")))
+	if not out.has("root"):
+		return
+	add_child(out["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check((out["keys"] as Array).size() == 1,
+			"%d keys in the slice; the fixture declares one"
+			% (out["keys"] as Array).size())
+	_check((out["locks"] as Array).size() == 1,
+			"%d locks in the slice; the fixture declares one"
+			% (out["locks"] as Array).size())
+	_check((out["plugs"] as Array).size() == 1,
+			"%d plugs in the slice; the fixture declares one"
+			% (out["plugs"] as Array).size())
+	# THE JUNCTION IS AUDITED AS A ROOM, with its declared polarities.
+	# THE JUNCTION IS AUDITED STANDALONE, at the origin.
+	#
+	# A room inside a placed Zone sits tens of metres from the origin,
+	# and the bounds check compares against the room's OWN local
+	# envelope -- so auditing it in place measures the right geometry in
+	# the wrong space and reports the whole Zone as overhang. Each
+	# check belongs in the frame it was written for.
+	var audited := 0
+	for raw: Variant in decorated["chambers"] as Array:
+		var spec: Dictionary = raw
+		if (spec.get("doors", []) as Array).size() != 4:
+			continue
+		audited += 1
+		var alone := _build(spec)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var who := "the slice's junction"
+		_judge(RoomContract.violations(alone, who), who)
+		# EVERY FINDING EXCEPT ONE THAT IS NOT THIS SLICE'S.
+		#
+		# An 18 x 12 arena offers a `cover` ground socket that lands
+		# inside its own crates. It reproduces EXACTLY when the same
+		# chamber is built with no door assignment at all, so it is a
+		# pre-existing defect in ground-socket placement and not
+		# something multi-door composition introduced. It is recorded in
+		# the findings report rather than fixed here, and it is excluded
+		# BY NAME so that any OTHER finding still fails this test --
+		# scoping a check is not the same as softening one.
+		var unexpected: Array[String] = []
+		for line: String in RoomAudit.findings(alone, _space(), who):
+			if line.find("'cover' socket") >= 0 \
+					and line.find("inside solid geometry") >= 0:
+				continue
+			unexpected.append(line)
+		_judge(unexpected, who)
+		(alone["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	_check(audited == 1,
+			"%d junctions reached the audit" % audited)
+	# AND THE KEY CAN BE WALKED TO.
+	var spawn: Transform3D = out["spawn_transform"]
+	var key_at: Vector3 = (out["keys"] as Array)[0].global_position
+	var walk := _walk_zone(out, Vector2(spawn.origin.x, spawn.origin.z),
+			Vector2(key_at.x, key_at.z))
+	_check(bool(walk["ok"]),
+			"the slice's key cannot be walked to: %s" % str(walk["why"]))
+	rooms_checked += 1
+	(out["root"] as Node3D).queue_free()
+	await get_tree().process_frame
 
 func _test_the_played_zone_rooms_can_be_left_on_foot() -> void:
 	var cases := [

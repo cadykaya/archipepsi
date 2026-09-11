@@ -96,6 +96,15 @@ func _ready() -> void:
 		Telemetry.refused_selection(str(asked["why"]))
 	else:
 		_movement_package = str(asked["mode"])
+	# THE AMALGAM'S FIRST SLICE, and only when an operator asks. Without
+	# `--slice1` nothing below runs and an ordinary campaign is
+	# untouched; with it, the composed Zone is decorated with one valid
+	# multi-door assignment so the slice can be walked rather than only
+	# asserted.
+	_slice1 = Slice1Fixture.FLAG in user_args
+	if _slice1:
+		print("slice1: the composed Zone will be decorated with a "
+				+ "three-door junction, a red lock and a return plug")
 	if bool(asked["showcase"]):
 		_enter_showcase(asked)
 
@@ -126,6 +135,10 @@ func _enter_showcase(asked: Dictionary) -> void:
 ## so a run started without the flag constructs no movement geometry and
 ## behaves exactly as it did before Stage 3A.
 var _movement_package := MovementSelection.DEFAULT_MODE
+## `--slice1` decorates the composed Zone with one multi-door
+## assignment so the Amalgam's first slice can be WALKED. Off unless an
+## operator asks, so an ordinary run is untouched.
+var _slice1 := false
 
 ## Everything the real game needs, extracted so a test can call it.
 ##
@@ -440,7 +453,10 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	# longer existed.
 	resource_pool.reset_for_zone()
 	rule_runtime.reset_for_zone()
-	zone.setup(zone_dict)
+	# The slice's assignment goes on HERE, at the last moment before the
+	# Zone is built, so nothing upstream -- the bridge, the save, the
+	# manifest -- ever sees a decorated Zone.
+	zone.setup(Slice1Fixture.decorate(zone_dict) if _slice1 else zone_dict)
 	zone.exit_requested.connect(_on_exit_zone)
 	hud.bind_player(zone.player)
 	zone.player.fired_pulse.connect(func() -> void: tones.play("pulse"))

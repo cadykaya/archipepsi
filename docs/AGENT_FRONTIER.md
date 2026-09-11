@@ -4,6 +4,24 @@ This file is the cheap wake-up state. Keep it short and current. Use `NEXT_STEPS
 
 **A packet version is not a product milestone.** `design-packet-v0.4 / v0.7 / v0.8 / v0.9 / v0.10` are document revisions; **Playable 0.3** is the product milestone, frozen in `docs/ROAD_TO_PLAYABLE_0_3.md`. Packet v0.10 does not mean Playable 0.10, and Playable 0.3 has nothing to do with the superseded packet v0.3 — always write the full name.
 
+## AMALGAM SLICE 1 — the active implementation branch
+
+**`claude/archipepsi-amalgam-slice1`, from Production `c8ed2e9`.** The
+playable checkpoint stays on `claude/archipepsi-echoes-continuation-b1adno`
+and is not merged into.
+
+**Read `docs/AMALGAM_SLICE1.md` first** — what is playable, what is
+implemented but unintegrated, what remains, and how to run it
+(`--slice1`).
+
+Engine lane only. The bridge column — `TopologyEdge`, `DoorAssignment` /
+`PlugAssignment`, `ZoneProgress`, `DORMANT`, `R ⊆ E`, the manifest and
+check 19e — is Dess's and nothing here implements it.
+`docs/reviews/2026-09-12-room-contract-prod-review.md` (on the checkpoint
+branch) returned changes requested against `cb3bf64`; this slice builds
+only what is invariant across how the `TRAVERSAL_ONLY` contradiction is
+resolved.
+
 ## THE ACTIVE FRONTIER: v0.9 — production and the authored-content transition
 
 **`docs/design-packet-v0.9/IMPLEMENTATION_PLAN.md` is what wake-ups

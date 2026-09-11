@@ -89,6 +89,13 @@ var is_finale := false
 var _chambers: Array = []      # {chamber, objective, satisfied, enemies,
                                #  reward, goal_area}
 var _exit_portal: ExitPortal
+var _zone_anchors := {}
+## MONOTONE, and that is what makes a resume safe. A Zone's key set and
+## its opened-lock set only ever grow, so a reload can never put the
+## player back behind a door they already opened.
+var _keys_held := {}
+var _locks_open := {}
+var _zone_locks: Array = []
 var _first_kill_seen := false
 var _portal_was_locked := true
 var _quiet_time := 0.0
@@ -140,6 +147,21 @@ func setup(zone_dict: Dictionary) -> void:
 	# so no movement offer is ever blessed by geometry nobody could see.
 	_validate_offers.call_deferred(build["chambers"])
 	_exit_portal.exit_requested.connect(func() -> void: exit_requested.emit())
+	# RETURN PLUGS. A dead end's way back, and the only movement in the
+	# game that is not the player's own: the device names a destination
+	# ANCHOR and the builder has already resolved every anchor to a
+	# place, so nothing here invents a coordinate either.
+	_zone_anchors = build.get("anchors", {})
+	for raw: Variant in build.get("plugs", []):
+		var plug: ReturnPlug = raw
+		plug.traversed.connect(_on_plug_traversed)
+	for raw_key: Variant in build.get("keys", []):
+		var key: ZoneKey = raw_key
+		key.collected.connect(_on_key_collected)
+	_zone_locks = build.get("locks", [])
+	for raw_lock: Variant in _zone_locks:
+		var lock: LockedDoor = raw_lock
+		lock.opened.connect(_on_lock_opened)
 
 	player = Player.create()
 	add_child(player)
@@ -285,6 +307,61 @@ func setup(zone_dict: Dictionary) -> void:
 ## a rail the room plays without -- "a large room whose traversal quietly
 ## did not appear is the worst version of this failure", so it is said
 ## out loud and the Zone carries on.
+## The player arrives at the anchor the plug named.
+##
+## The destination is checked against the resolved anchor table rather
+## than trusted: a plug naming an anchor this Zone does not have is a
+## composition error, and moving the player to the origin would hide it
+## as a strange teleport instead of reporting it.
+## A Zone-local key, and the intent that records it.
+##
+## `key_collected` is idempotent by `key_id` because the target set is
+## monotone: the same key twice is one key, a resend after a dropped
+## connection is the normal case, and neither is an error.
+func _on_key_collected(key_id: String) -> void:
+	if _keys_held.has(key_id):
+		return
+	_keys_held[key_id] = true
+	BridgeClient.send_intent({"type": "key_collected",
+			"zone_id": zone_id, "key_id": key_id})
+	if hud != null:
+		hud.toast("%s KEY" % key_id.to_upper(),
+				ZoneKey.tint(key_id), 3.0)
+	_open_what_the_keys_allow()
+
+## Every lock the held keys admit, opened at once.
+##
+## Driven by the key set rather than by touching a door, so a key picked
+## up on the far side of the Zone opens its lock without the player
+## walking back to watch it happen.
+func _open_what_the_keys_allow() -> void:
+	for raw: Variant in _zone_locks:
+		if not is_instance_valid(raw):
+			continue
+		var lock: LockedDoor = raw
+		lock.try_open(_keys_held)
+
+func _on_lock_opened(room: String, socket: String) -> void:
+	var ref := "%s/%s" % [room, socket]
+	if _locks_open.has(ref):
+		return
+	_locks_open[ref] = true
+	BridgeClient.send_intent({"type": "lock_opened",
+			"zone_id": zone_id, "room_id": room, "socket_id": socket})
+	if hud != null:
+		hud.toast("UNLOCKED", Color(0.6, 1.0, 0.7), 2.5)
+
+func _on_plug_traversed(edge_id: String, destination: String) -> void:
+	if not _zone_anchors.has(destination):
+		push_error("zone: plug '%s' returns to unknown anchor '%s'"
+				% [edge_id, destination])
+		return
+	var to: Vector3 = _zone_anchors[destination]
+	player.global_position = to + Vector3.UP * 0.2
+	player.velocity = Vector3.ZERO
+	if hud != null:
+		hud.toast("RETURNED", Color(0.42, 0.85, 1.0))
+
 func _validate_offers(chambers: Array) -> void:
 	await get_tree().physics_frame
 	offer_census = {"declared": 0, "judged": 0, "accepted": 0,

@@ -578,6 +578,41 @@ static func procedural_sockets(width: float, depth: float) -> Array:
 			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": -90.0},
 	]
 
+## A place in this room nothing has claimed yet.
+##
+## Deterministic: the same room and the same id give the same spot on
+## every run, which Law 47c needs. Candidates walk a ring inward from the
+## room's quarter points so a key lands in the open rather than against a
+## wall, and the first clear one wins.
+static func _clear_spot(width: float, depth: float, claimed: Array,
+		seed_value: int) -> Vector3:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	for _try in 24:
+		var at := Vector3(
+				rng.randf_range(-width * 0.34, width * 0.34), 0.0,
+				depth * rng.randf_range(0.2, 0.8))
+		var box := AABB(at - Vector3(0.9, 0.0, 0.9),
+				Vector3(1.8, 2.0, 1.8))
+		if not box_hits(box, claimed):
+			return at
+	# Nowhere clear: the room's middle, which at least is not inside a
+	# wall. A room this full is a composition problem and the audit is
+	# what reports it -- inventing a spot outside the room would hide it.
+	return Vector3(0, 0, depth / 2.0)
+
+## One procedural joining socket by id, or empty.
+##
+## The lock slab and the door probe both need to know where an opening
+## is, and a second derivation of that is how the two come to disagree.
+static func socket_placed(socket_id: String, width: float,
+		depth: float) -> Dictionary:
+	for raw: Variant in procedural_sockets(width, depth):
+		var s: Dictionary = raw
+		if str(s["name"]) == socket_id:
+			return s
+	return {}
+
 ## Which of a room's joining sockets are cut, from its door assignments.
 ##
 ## `USED` and `LOCKED` carve; `SEALED` does not. An unassigned room
@@ -1435,6 +1470,27 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 	var reward_box := reward_clearance(chamber, reward_at)
 	if reward_box.size != Vector3.ZERO:
 		claimed.append(reward_box)
+	# A KEY'S SPACE IS RESERVED THE SAME WAY THE CHECK'S IS.
+	#
+	# The first version placed Zone keys from `ZoneBuilder`, after the
+	# room was finished, at an anchor nothing had reserved -- so the
+	# room's own cover crates scattered on top of them and the key stood
+	# inside a box. That is the defect P2 already fixed once for the
+	# reward pedestal, arriving again through a new door: the builder
+	# knows where it put its furniture, so the builder is what reconciles
+	# them.
+	var key_spots: Array = []
+	for raw_key: Variant in chamber.get("keys", []):
+		if typeof(raw_key) != TYPE_DICTIONARY:
+			continue
+		var spec: Dictionary = raw_key
+		var spot := _clear_spot(width, depth, claimed,
+				hash(str(spec.get("key_id", "k")) + str(chamber.get("id", ""))))
+		claimed.append(AABB(spot - Vector3(0.8, 0.0, 0.8),
+				Vector3(1.6, 2.0, 1.6)))
+		key_spots.append({"key_id": str(spec.get("key_id", "")),
+				"colour": str(spec.get("colour", "gold")),
+				"position": spot})
 	# Crude cover: a few boxes and a wedge.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(str(chamber.get("id", "c")) + theme)
@@ -1506,7 +1562,15 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 	# the gallery's solid mass. The builder knows where it put those, so
 	# the builder is the one that can answer.
 	var solids := solid_boxes(root)
-	var reserved: Array[AABB] = []
+	# WHAT THIS ROOM HAS ALREADY SPOKEN FOR, both kinds.
+	#
+	# `claimed` holds the Check's pedestal box and every key's space,
+	# and the pedestal is built by the instantiator AFTER this runs --
+	# so `solid_boxes` cannot see it and a ground socket offered here
+	# could be, and was, inside it. `reserved` holds the band's declared
+	# regions. Checking one and not the other is why an 18 x 12 arena
+	# offered a `cover` socket standing in its own Check.
+	var reserved: Array[AABB] = claimed.duplicate()
 	for socket: Dictionary in sockets:
 		if str(socket.get("kind", "")) == "reserved":
 			var at: Vector3 = socket["position"]
@@ -1553,6 +1617,7 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 			index += 1
 	return {"root": root, "exit_offset": Vector3(0, 0, depth),
 			"doors": door_plan(chamber, width, depth),
+			"key_spots": key_spots,
 			"bounds": AABB(Vector3(-width / 2.0, lowest, 0),
 					Vector3(width, wall_height - lowest, depth)),
 			"enemy_spawns": spawns,

@@ -294,6 +294,13 @@ static func build(zone: Dictionary, theme_override := "",
 	var began := Time.get_ticks_msec()
 	var links := {}
 	var room_transforms := {}
+	# ANCHORS ARE THE COMPOSER'S VOCABULARY FOR PLACES. A plug names one
+	# and this file resolves it; nothing outside ever says a coordinate.
+	var anchors := {}
+	var plugs: Array = []
+	var keys: Array = []
+	var locks: Array = []
+	var largest := {"area": 0.0, "id": ""}
 	var root := Node3D.new()
 	root.name = "Zone_%s" % zone.get("zone_id", "unknown")
 
@@ -420,8 +427,54 @@ static func build(zone: Dictionary, theme_override := "",
 		node.name = "Chamber_%s" % chamber.get("id", "c")
 		node.position = origin
 		node.rotation.y = yaw
-		room_transforms[str(chamber.get("id", "?"))] = {
-			"position": origin, "yaw": yaw}
+		var rid := str(chamber.get("id", "?"))
+		room_transforms[rid] = {"position": origin, "yaw": yaw}
+		# Where a body arriving in this room stands: the room's own
+		# declared arrival, carried into world space.
+		var arrive: Vector3 = result.get("player_entry", {}).get(
+				"position", Vector3(0, 0, 3.0)) \
+				if typeof(result.get("player_entry")) == TYPE_DICTIONARY \
+					and not (result["player_entry"] as Dictionary).is_empty() \
+				else Vector3(0, 0, 3.0)
+		anchors["room:%s:arrival" % rid] = origin + _rot(yaw, arrive)
+		# The room reserved a place for each key it declares, so this
+		# only carries it into world space.
+		for raw_spot: Variant in result.get("key_spots", []):
+			var spot: Dictionary = raw_spot
+			var key := ZoneKey.create(str(spot["key_id"]),
+					str(spot["colour"]))
+			key.position = origin + _rot(yaw, spot["position"] as Vector3)
+			root.add_child(key)
+			keys.append(key)
+		# A LOCKED door's slab, standing in an aperture that IS carved.
+		# The audit still sweeps the capsule through the opening and
+		# still requires it to be a hole; this is what stands in it.
+		for raw_door: Variant in chamber.get("doors", []):
+			if typeof(raw_door) != TYPE_DICTIONARY:
+				continue
+			var door: Dictionary = raw_door
+			if str(door.get("usage", "")) != "LOCKED":
+				continue
+			var socket := ChamberBuilders.socket_placed(
+					str(door.get("socket_id", "")),
+					float(chamber.get("width", 16.0)),
+					float(chamber.get("depth", 16.0)))
+			if socket.is_empty():
+				continue
+			var slab := LockedDoor.create(rid,
+					str(door.get("socket_id", "")),
+					str(door.get("key_id", "")),
+					str(door.get("colour", "gold")),
+					ChamberBuilders.DOOR_WIDTH,
+					ChamberBuilders.DOOR_HEIGHT)
+			slab.position = origin + _rot(yaw, socket["position"] as Vector3)
+			slab.rotation.y = yaw
+			root.add_child(slab)
+			locks.append(slab)
+		var footprint: float = float(chamber.get("width", 0.0)) \
+				* float(chamber.get("depth", 0.0))
+		if footprint > float(largest["area"]):
+			largest = {"area": footprint, "id": rid}
 		root.add_child(node)
 		var world_bounds: AABB = _world_aabb(result["bounds"], origin, yaw)
 		placed.append(world_bounds)
@@ -504,6 +557,47 @@ static func build(zone: Dictionary, theme_override := "",
 
 	# Face +Z, where the level actually is (identity looks down -Z).
 	var spawn := Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.8, 1.2))
+	anchors["zone_start"] = spawn.origin
+	if str(largest["id"]) != "":
+		anchors["last_large_room"] = anchors.get(
+				"room:%s:arrival" % str(largest["id"]), spawn.origin)
+	# THE ZONE'S KEYS. Not items: no location id, never scouted, never
+	# sent, gone when the Zone is. Placed at anchors like everything
+	# else a composer positions.
+	for raw: Variant in zone.get("keys", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var spec: Dictionary = raw
+		var at := str(spec.get("anchor", ""))
+		if not anchors.has(at):
+			push_warning("zone: key '%s' names unknown anchor '%s'"
+					% [str(spec.get("key_id", "?")), at])
+			continue
+		var key := ZoneKey.create(str(spec.get("key_id", "")),
+				str(spec.get("colour", "gold")))
+		key.position = anchors[at]
+		root.add_child(key)
+		keys.append(key)
+	# THE RETURN DEVICES, placed where the composer put them.
+	#
+	# A plug is not a door: it takes no joining socket, so nothing here
+	# consults the door plan, and the placement search was never handed a
+	# closure constraint for it. Both its ends are anchors.
+	for raw: Variant in zone.get("plugs", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var spec: Dictionary = raw
+		var source := str(spec.get("source_anchor", ""))
+		if not anchors.has(source):
+			push_warning("zone: plug '%s' names unknown anchor '%s'"
+					% [str(spec.get("edge_id", "?")), source])
+			continue
+		var plug := ReturnPlug.create(str(spec.get("edge_id", "")),
+				str(spec.get("destination", "zone_start")),
+				str(spec.get("device", "threshold")), theme)
+		plug.position = anchors[source]
+		root.add_child(plug)
+		plugs.append(plug)
 	return {"root": root, "spawn_transform": spawn,
 			"chambers": built_chambers, "exit_portal": portal,
 			"bounds_list": bounds_list,
@@ -512,4 +606,5 @@ static func build(zone: Dictionary, theme_override := "",
 			# room, in build order, so a committed Zone replays by
 			# laying pieces down rather than by searching again.
 			"status": "LAYOUT_OK", "rooms": room_transforms,
-			"links": links}
+			"links": links, "anchors": anchors, "plugs": plugs,
+			"keys": keys, "locks": locks}
