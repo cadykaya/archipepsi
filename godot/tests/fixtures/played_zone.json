@@ -21,7 +21,36 @@
      "note": null
     }
    ],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c001:c002",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -46,7 +75,36 @@
    "flavor": null,
    "reward_location_id": 89100076,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c001:c002",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c002:c003",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -92,7 +150,36 @@
    "flavor": null,
    "reward_location_id": 89100089,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c002:c003",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c003:c004",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -135,7 +222,36 @@
      "note": null
     }
    ],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c003:c004",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c004:c005",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -167,7 +283,36 @@
    "flavor": null,
    "reward_location_id": 89100019,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c004:c005",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c005:c006",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -213,7 +358,22 @@
    "flavor": null,
    "reward_location_id": 89100042,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c005:c006",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c006:c007",
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -253,8 +413,28 @@
    "flavor": null,
    "reward_location_id": null,
    "features": [],
-   "doors": [],
-   "keys": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c006:c007",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c007:c008",
+     "key_id": null,
+     "colour": null
+    }
+   ],
+   "keys": [
+    {
+     "key_id": "red",
+     "colour": "red"
+    }
+   ],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -278,7 +458,36 @@
    "flavor": null,
    "reward_location_id": 89100147,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c007:c008",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c008:c009",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -312,7 +521,36 @@
    "flavor": null,
    "reward_location_id": 89100093,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c008:c009",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c009:c010",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -351,7 +589,22 @@
    "flavor": null,
    "reward_location_id": null,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c009:c010",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c010:c011",
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [],
@@ -368,7 +621,36 @@
    "flavor": null,
    "reward_location_id": 89100110,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c010:c011",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c011:c012",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -407,7 +689,36 @@
    "flavor": null,
    "reward_location_id": 89100139,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c011:c012",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c012:c013",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -434,7 +745,22 @@
    "flavor": null,
    "reward_location_id": null,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c012:c013",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c013:c014",
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [],
@@ -451,7 +777,36 @@
    "flavor": null,
    "reward_location_id": 89100097,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c013:c014",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c014:c015",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "LOCKED",
+     "edge_id": "e:c014:c020",
+     "key_id": "red",
+     "colour": "red"
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -502,7 +857,36 @@
    "flavor": null,
    "reward_location_id": 89100055,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c014:c015",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c015:c016",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -541,7 +925,22 @@
    "flavor": null,
    "reward_location_id": null,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c015:c016",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c016:c017",
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -566,7 +965,36 @@
    "flavor": null,
    "reward_location_id": 89100051,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c016:c017",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c017:c018",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -593,7 +1021,36 @@
    "flavor": null,
    "reward_location_id": 89100005,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c017:c018",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c018:c019",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -626,7 +1083,22 @@
    "flavor": null,
    "reward_location_id": null,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c018:c019",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c019:c021",
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [],
@@ -643,7 +1115,36 @@
    "flavor": null,
    "reward_location_id": 89100025,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c014:c020",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -676,7 +1177,36 @@
    "flavor": null,
    "reward_location_id": 89100126,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c019:c021",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c021:c022",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -703,7 +1233,22 @@
    "flavor": null,
    "reward_location_id": null,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c021:c022",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "USED",
+     "edge_id": "e:c022:c023",
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -728,7 +1273,36 @@
    "flavor": null,
    "reward_location_id": 89100068,
    "features": [],
-   "doors": [],
+   "doors": [
+    {
+     "socket_id": "entry",
+     "usage": "USED",
+     "edge_id": "e:c022:c023",
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "exit",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    }
+   ],
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -757,6 +1331,176 @@
    "elevation": null
   }
  ],
- "edges": [],
- "plugs": []
+ "edges": [
+  {
+   "edge_id": "e:c001:c002",
+   "room_a": "c001",
+   "room_b": "c002",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c002:c003",
+   "room_a": "c002",
+   "room_b": "c003",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c003:c004",
+   "room_a": "c003",
+   "room_b": "c004",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c004:c005",
+   "room_a": "c004",
+   "room_b": "c005",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c005:c006",
+   "room_a": "c005",
+   "room_b": "c006",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c006:c007",
+   "room_a": "c006",
+   "room_b": "c007",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c007:c008",
+   "room_a": "c007",
+   "room_b": "c008",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c008:c009",
+   "room_a": "c008",
+   "room_b": "c009",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c009:c010",
+   "room_a": "c009",
+   "room_b": "c010",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c010:c011",
+   "room_a": "c010",
+   "room_b": "c011",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c011:c012",
+   "room_a": "c011",
+   "room_b": "c012",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c012:c013",
+   "room_a": "c012",
+   "room_b": "c013",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c013:c014",
+   "room_a": "c013",
+   "room_b": "c014",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c014:c015",
+   "room_a": "c014",
+   "room_b": "c015",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c015:c016",
+   "room_a": "c015",
+   "room_b": "c016",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c016:c017",
+   "room_a": "c016",
+   "room_b": "c017",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c017:c018",
+   "room_a": "c017",
+   "room_b": "c018",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c018:c019",
+   "room_a": "c018",
+   "room_b": "c019",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c019:c021",
+   "room_a": "c019",
+   "room_b": "c021",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c021:c022",
+   "room_a": "c021",
+   "room_b": "c022",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c022:c023",
+   "room_a": "c022",
+   "room_b": "c023",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "e:c014:c020",
+   "room_a": "c014",
+   "room_b": "c020",
+   "direction": "BIDIRECTIONAL",
+   "realization": "JOINED"
+  },
+  {
+   "edge_id": "p:c020:start",
+   "room_a": "c020",
+   "room_b": "c001",
+   "direction": "A_TO_B",
+   "realization": "TRAVERSAL_ONLY"
+  }
+ ],
+ "plugs": [
+  {
+   "edge_id": "p:c020:start",
+   "room_id": "c020",
+   "source_anchor": "room:c020:arrival",
+   "destination": "zone_start",
+   "device": "pad"
+  }
+ ]
 }

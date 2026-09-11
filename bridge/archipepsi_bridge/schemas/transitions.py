@@ -34,7 +34,7 @@ try:
     from . import constants as C
     from .echo import EchoInterpretation
     from .protocol import (
-        REVISITABLE_ZONE_STATES,
+        OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
         ShopStockItem, ZoneRecord,
     )
@@ -43,7 +43,7 @@ except ImportError:  # pragma: no cover
     import constants as C
     from echo import EchoInterpretation
     from protocol import (
-        REVISITABLE_ZONE_STATES,
+        OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
         ShopStockItem, ZoneRecord,
     )
@@ -152,14 +152,19 @@ def enter_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
     abandonment is the deliberate act that gives the Zone back.
     """
     rec = _require_zone(save, zone_id)
-    if rec.state == "ACTIVE":
+    if rec.state in OCCUPIED_ZONE_STATES:
         return save
     if rec.state not in REVISITABLE_ZONE_STATES:
         raise ValueError(
             f"Zone '{zone_id}' is {rec.state}; nothing to enter")
-    changes = {"state": "ACTIVE"}
+    # A FINISHED ZONE IS VISITED, NOT RE-ENTERED. Sending it back through
+    # ACTIVE would make it reserve its old locations again — colliding
+    # with whatever Zone is genuinely in flight, and re-opening Checks
+    # the campaign already counted. VISITING is the same experience and
+    # different accounting.
+    state = "VISITING" if rec.state == "COMPLETE" else "ACTIVE"
     return _rebuild(save,
-                    zones=_replace_zone(save, zone_id, **changes),
+                    zones=_replace_zone(save, zone_id, state=state),
                     active_zone_id=zone_id)
 
 
@@ -176,8 +181,17 @@ def rest_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
     is also revisitable — the two differ only in whether work remains.
     """
     rec = _require_zone(save, zone_id)
-    if rec.state == "DORMANT":
+    if rec.state in ("DORMANT", "COMPLETE"):
         return save
+    # Leaving a VISIT puts the Zone back exactly as it was. No counter
+    # moves, no history entry, no cursor: the campaign already recorded
+    # this Zone the first time, and walking through it again is not a
+    # second completion.
+    if rec.state == "VISITING":
+        return _rebuild(save,
+                        zones=_replace_zone(save, zone_id,
+                                            state="COMPLETE"),
+                        active_zone_id=None)
     if rec.state != "ACTIVE":
         raise ValueError(f"Zone '{zone_id}' is {rec.state}, not ACTIVE")
     if any(p.location_id in set(rec.allocated_location_ids)
@@ -190,18 +204,60 @@ def rest_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
                     active_zone_id=None)
 
 
-def _progress(save: CampaignSave, zone_id: str, change) -> CampaignSave:
-    """Apply a monotone progress change, idempotently.
+def _chambers_of(rec: ZoneRecord):
+    """This record's chambers, however the Zone happens to be stored.
+
+    `ZoneRecord.zone` is a model in a live save and a plain dict when it
+    came off disk mid-migration, and a validator that only understood
+    one of those would refuse real progress on a real Zone.
+    """
+    zone = rec.zone
+    if zone is None:
+        return ()
+    chambers = zone.get("chambers", ()) if isinstance(zone, dict) \
+        else zone.chambers
+    out = []
+    for ch in chambers or ():
+        out.append(ch if isinstance(ch, dict) else ch.model_dump())
+    return out
+
+
+def _declared_keys(rec: ZoneRecord) -> set[str]:
+    return {str(k.get("key_id")) for ch in _chambers_of(rec)
+            for k in (ch.get("keys") or ())}
+
+
+def _declared_locks(rec: ZoneRecord) -> set[tuple[str, str]]:
+    return {(str(ch.get("id")), str(d.get("socket_id")))
+            for ch in _chambers_of(rec)
+            for d in (ch.get("doors") or ())
+            if str(d.get("usage")) == "LOCKED"}
+
+
+def _declared_stations(rec: ZoneRecord) -> set[str]:
+    return {str(s) for s in (rec.manifest or {}).get("stations", ())}
+
+
+def _progress(save: CampaignSave, zone_id: str, change,
+              known) -> CampaignSave:
+    """Apply a monotone progress change, idempotently and only if real.
 
     Every progress set only grows, so applying the same event twice is
     applying it once. A resend after a dropped connection is the normal
     case and must never be an error — which is why this returns `save`
     unchanged rather than raising when nothing moved.
+
+    **An unknown identity is refused, not recorded.** A key the Zone
+    never declared, a lock on a door that is not locked, a station the
+    layout never placed: each would otherwise become permanent save
+    data describing something that does not exist, and progress sets are
+    monotone, so nothing would ever take it out again.
     """
     rec = _require_zone(save, zone_id)
     if rec.state not in REVISITABLE_ZONE_STATES:
         raise ValueError(
             f"Zone '{zone_id}' is {rec.state}; it records no progress")
+    known(rec)
     nxt = change(rec.progress)
     if nxt == rec.progress:
         return save
@@ -211,7 +267,14 @@ def _progress(save: CampaignSave, zone_id: str, change) -> CampaignSave:
 
 def record_key(save: CampaignSave, zone_id: str, key_id: str) -> CampaignSave:
     """A Zone-local key collected. Idempotent by `key_id`."""
-    return _progress(save, zone_id, lambda p: p.with_key(key_id))
+    def known(rec):
+        declared = _declared_keys(rec)
+        if key_id not in declared:
+            raise ValueError(
+                f"Zone '{zone_id}' declares no key '{key_id}'"
+                + (f"; it holds {sorted(declared)}" if declared
+                   else " and holds none"))
+    return _progress(save, zone_id, lambda p: p.with_key(key_id), known)
 
 
 def record_lock(save: CampaignSave, zone_id: str, room_id: str,
@@ -221,8 +284,16 @@ def record_lock(save: CampaignSave, zone_id: str, room_id: str,
     Identified by the DOOR, not the key: one key may open several locks,
     so the key is not the identity of the event.
     """
+    def known(rec):
+        locks = _declared_locks(rec)
+        if (room_id, socket_id) not in locks:
+            raise ValueError(
+                f"Zone '{zone_id}' has no locked door "
+                f"'{room_id}/{socket_id}'"
+                + (f"; its locks are {sorted(locks)}" if locks
+                   else " and has no locks at all"))
     return _progress(save, zone_id,
-                     lambda p: p.with_lock(room_id, socket_id))
+                     lambda p: p.with_lock(room_id, socket_id), known)
 
 
 def record_station(save: CampaignSave, zone_id: str,
@@ -234,7 +305,15 @@ def record_station(save: CampaignSave, zone_id: str,
     is why all five proposals deferred it and why this ruling did not
     bring it back.
     """
-    return _progress(save, zone_id, lambda p: p.with_station(station_id))
+    def known(rec):
+        stations = _declared_stations(rec)
+        if station_id not in stations:
+            raise ValueError(
+                f"Zone '{zone_id}' placed no station '{station_id}'"
+                + (f"; it has {sorted(stations)}" if stations
+                   else " and its layout records none"))
+    return _progress(save, zone_id,
+                     lambda p: p.with_station(station_id), known)
 
 
 def complete_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
@@ -245,6 +324,10 @@ def complete_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
     which is correct and is exactly why this must be one transition.
     """
     rec = _require_zone(save, zone_id)
+    if zone_id in save.zone_history:
+        raise ValueError(
+            f"Zone '{zone_id}' is already counted in this campaign's "
+            "history; a revisit completes nothing a second time")
     if rec.state != "ACTIVE":
         raise ValueError(f"Zone '{zone_id}' is {rec.state}, not ACTIVE")
     if any(p.location_id in set(rec.allocated_location_ids)

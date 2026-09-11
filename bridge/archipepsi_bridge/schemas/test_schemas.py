@@ -1718,7 +1718,11 @@ def test_a_mode_that_claims_a_zone_must_have_one():
 def test_a_terminal_zone_is_never_presented_as_active():
     """COMPLETE and ABANDONED reserve nothing. Showing one as the active Zone
     is how a released allocation looks like a held one."""
-    for state in P.TERMINAL_ZONE_STATES:
+    # VISITING is terminal for ALLOCATION and occupied for presentation:
+    # the player is standing in a finished Zone. It is the one terminal
+    # state that legitimately appears as the active Zone.
+    for state in (s for s in P.TERMINAL_ZONE_STATES
+                  if s not in P.OCCUPIED_ZONE_STATES):
         with pytest.raises(ValidationError, match="reserves nothing"):
             _snapshot(active_zone=_record(state=state),
                       hub=_hub(mode="ZONE_AVAILABLE"))

@@ -5501,6 +5501,7 @@
               "ACTIVE",
               "DORMANT",
               "COMPLETE",
+              "VISITING",
               "ABANDONED"
             ],
             "title": "State",
@@ -5508,6 +5509,19 @@
           },
           "progress": {
             "$ref": "#/$defs/ZoneProgress"
+          },
+          "manifest": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Manifest"
           },
           "allocated_location_ids": {
             "items": {
@@ -9890,6 +9904,7 @@
               "ACTIVE",
               "DORMANT",
               "COMPLETE",
+              "VISITING",
               "ABANDONED"
             ],
             "title": "State",
@@ -9897,6 +9912,19 @@
           },
           "progress": {
             "$ref": "#/$defs/ZoneProgress"
+          },
+          "manifest": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Manifest"
           },
           "allocated_location_ids": {
             "items": {

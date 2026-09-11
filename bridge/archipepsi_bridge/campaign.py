@@ -38,7 +38,9 @@ from .schemas.protocol import (
 )
 from .echo_projection import detail_examples, history_view
 from . import instrumentation
+from . import layout as layout_check
 from . import store
+from . import topology
 
 log = logging.getLogger("archipepsi.campaign")
 
@@ -173,6 +175,40 @@ def _relevance_hint(mechanics) -> str:
     parts.append("prefer a new relationship with what is owned over a "
                  "fourth of something")
     return "; ".join(parts)[:C.MAX_TEXT_LEN]
+
+
+def _with_graph(zone):
+    """A composed Zone, carrying the topology its chamber order implied.
+
+    Branching when the Zone can carry it and a plain chain when it
+    cannot: `compose_with_branch` returns the chain unchanged rather
+    than forcing a junction into a Zone with nowhere to put one.
+
+    **Refuses rather than ships a Zone you cannot get around.** The
+    graph is proved here — the exit reachable, `R` a subset of `E`,
+    every Check in a reachable room, every key obtainable without
+    passing its own lock — because a Zone that fails this has no
+    business reaching a save. A failure falls back to the chain, which
+    is the topology that shipped before graphs existed and is reachable
+    by construction.
+    """
+    product = topology.compose_with_branch(list(zone.chambers))
+    composed = topology.apply(zone, product)
+    verdict = topology.reachability(composed)
+    if verdict.ok:
+        return composed
+    log.warning("zone %s: branch graph refused (%s); composing the chain",
+                zone.zone_id, "; ".join(verdict.errors[:2]))
+    chain = topology.apply(zone, topology.compose_chain(list(zone.chambers)))
+    chain_verdict = topology.reachability(chain)
+    if chain_verdict.ok:
+        return chain
+    # A chain that fails reachability is a defect in the chambers, not
+    # in the graph, and hiding it behind an ungraphed Zone would lose
+    # the only evidence of it.
+    log.error("zone %s: even the chain is unreachable (%s)",
+              zone.zone_id, "; ".join(chain_verdict.errors[:2]))
+    return zone
 
 
 class CampaignEngine:
@@ -854,12 +890,21 @@ class CampaignEngine:
                      "discarding this outcome", zone_id,
                      current.state if current else "gone")
             return
-        self._apply(T.accept_zone(self.save, outcome.value,
+        # THE GRAPH IS PRODUCED HERE, once, before the Zone is accepted.
+        #
+        # A composed Zone arrives with its chambers and no topology, so
+        # this is where the list stops being the graph: `compose_*`
+        # emits the edges, the door assignments, the keys and the plugs,
+        # and `reachability` refuses a Zone the player could not get
+        # around before anything is stored. Doing it after acceptance
+        # would mean a Zone existed in a save with an unproved graph.
+        composed = _with_graph(outcome.value)
+        self._apply(T.accept_zone(self.save, composed,
                                   used_fallback=outcome.used_fallback))
         if outcome.used_fallback and self.provider_name != "fallback":
             await self._notify("fallback_used", "EPSILON OFFLINE — FALLBACK USED",
                                (outcome.error or "",))
-        await self._emit(ZoneReady(type="zone_ready", zone=outcome.value,
+        await self._emit(ZoneReady(type="zone_ready", zone=composed,
                                    used_fallback=outcome.used_fallback))
         await self.broadcast_snapshot()
 

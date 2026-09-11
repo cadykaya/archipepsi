@@ -103,15 +103,26 @@ class Strict(BaseModel):
 #: generation forever, with clear_campaign the only escape.
 ZoneState = Literal[
     "PENDING_GENERATION", "GENERATED", "ACTIVE", "DORMANT", "COMPLETE",
-    "ABANDONED"
+    "VISITING", "ABANDONED"
 ]
 
-#: **Still reserves its AP locations, or not.** Unchanged: a COMPLETE
-#: Zone claimed everything it held and an ABANDONED one released it, so
-#: neither reserves anything. This drives allocation and the
+#: **Still reserves its AP locations, or not.** A COMPLETE Zone claimed
+#: everything it held and an ABANDONED one released it, so neither
+#: reserves anything — and neither does VISITING, which is a COMPLETE
+#: Zone with a player standing in it. This drives allocation and the
 #: one-holder-at-a-time invariant, and it is NOT a statement about
 #: whether a player can walk back in.
-TERMINAL_ZONE_STATES = ("COMPLETE", "ABANDONED")
+#:
+#: **Going back must not re-reserve.** Sending a revisit through ACTIVE
+#: would make a finished Zone hold its old locations again, which both
+#: collides with whatever Zone is genuinely in flight and re-opens
+#: Checks the campaign already counted.
+TERMINAL_ZONE_STATES = ("COMPLETE", "VISITING", "ABANDONED")
+
+#: The player is standing in this Zone. Two states, because a Zone with
+#: work outstanding and a Zone being revisited are the same experience
+#: and different accounting.
+OCCUPIED_ZONE_STATES = ("ACTIVE", "VISITING")
 
 #: **Can a player walk back in?** A separate question from the one
 #: above, and the 2026-09-12 ruling is why it had to become one:
@@ -129,7 +140,8 @@ TERMINAL_ZONE_STATES = ("COMPLETE", "ABANDONED")
 #: and worth an owner's eye: while a Zone is DORMANT it is the Zone
 #: holding locations, so a new Zone cannot be generated until it is
 #: finished or explicitly abandoned.
-REVISITABLE_ZONE_STATES = ("GENERATED", "ACTIVE", "DORMANT", "COMPLETE")
+REVISITABLE_ZONE_STATES = ("GENERATED", "ACTIVE", "DORMANT", "COMPLETE",
+                           "VISITING")
 
 
 class ZoneProgress(Strict):
@@ -197,6 +209,14 @@ class ZoneRecord(Strict):
     #: re-entry, because all three are the same question: is the Zone
     #: still the one you left?
     progress: ZoneProgress = Field(default_factory=lambda: ZoneProgress())
+    #: THE COMMITTED LAYOUT, once validation accepted one. Solved by the
+    #: engine, checked here, and replayed forever after: a later load
+    #: lays the same pieces down rather than searching again.
+    #:
+    #: `None` until an accepted layout arrives, and for every Zone that
+    #: predates the graph. A Zone with no manifest is not a broken Zone;
+    #: it is one whose topology is still its chamber order.
+    manifest: dict | None = None
     #: `_LOC`, not `_NON_FINALE_LOC`: the finale Zone legitimately holds the
     #: goal. `_finale_owns_the_goal` below splits the two cases — this is the
     #: ONE model in the packet allowed to carry Check 030 on an
@@ -640,25 +660,31 @@ class CampaignSave(Strict):
                 + ", ".join(sorted(z.zone_id for z in holding))
             )
 
-        # `active_zone_id` names the Zone currently in play -- from
-        # allocation through completion -- and it must name the holder.
+        # `active_zone_id` NAMES WHERE THE PLAYER IS, and failing that,
+        # the Zone being prepared for them.
         #
-        # WITH ONE EXEMPTION, AND DORMANT IS IT. A Zone left with Checks
-        # outstanding still reserves them, which is exactly what stops
-        # the allocator reissuing a Check the player means to come back
-        # for. But the player is in the Hub, not in it. Requiring every
-        # holder to be the active Zone would make the revisit ruling
-        # unrepresentable; exempting the one state that means "yours,
-        # and you are not standing in it" costs nothing else.
-        in_play = [z for z in holding if z.state != "DORMANT"]
-        if in_play and self.active_zone_id != in_play[0].zone_id:
+        # It used to mean "the holder", which worked while leaving a Zone
+        # meant finishing or abandoning it. Two states broke that:
+        # DORMANT holds locations with nobody in it, and VISITING has
+        # somebody in it holding nothing. Ordering the rule by occupancy
+        # first covers both and says the thing a reader expects it to.
+        occupied = [z for z in self.zones
+                    if z.state in OCCUPIED_ZONE_STATES]
+        if len(occupied) > 1:
             raise ValueError(
-                f"active_zone_id must name the held Zone "
-                f"'{in_play[0].zone_id}'"
+                "more than one Zone is occupied: "
+                + ", ".join(sorted(z.zone_id for z in occupied))
             )
-        if not in_play and self.active_zone_id is not None:
+        waiting = [z for z in holding if z.state != "DORMANT"]
+        expected = occupied[0].zone_id if occupied else (
+            waiting[0].zone_id if waiting else None)
+        if self.active_zone_id != expected:
             raise ValueError(
-                "active_zone_id must be cleared when no Zone is in play"
+                f"active_zone_id is {self.active_zone_id!r} but the "
+                f"player is in {expected!r}"
+                if expected else
+                "active_zone_id must be cleared when no Zone is occupied "
+                "or waiting"
             )
 
         stocked = {i.location_id for i in self.shop.stock}
@@ -1154,7 +1180,8 @@ class CampaignSnapshot(Strict):
         symptom was a disagreement between them.
         """
         az = self.active_zone
-        if az is not None and az.state in TERMINAL_ZONE_STATES:
+        if az is not None and az.state in TERMINAL_ZONE_STATES \
+                and az.state not in OCCUPIED_ZONE_STATES:
             raise ValueError(
                 f"active_zone '{az.zone_id}' is {az.state}; a terminal Zone "
                 "reserves nothing and must not be presented as active"
@@ -1175,6 +1202,10 @@ class CampaignSnapshot(Strict):
             "PENDING_GENERATION": "GENERATING",
             "GENERATED": "ZONE_READY",
             "ACTIVE": "ZONE_ACTIVE",
+            # A revisit is the same experience as a first visit: the
+            # player is in a Zone. It differs in accounting, not in what
+            # the Hub should say about where they are.
+            "VISITING": "ZONE_ACTIVE",
         }
         if az is None:
             if self.hub.mode in ZONE_HELD_MODES:
