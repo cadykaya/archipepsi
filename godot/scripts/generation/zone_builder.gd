@@ -296,8 +296,21 @@ const COLLAR_SLACK := 0.1
 static func _furnish_room(root: Node3D, theme: String,
 		chamber: Dictionary, result: Dictionary, origin: Vector3,
 		yaw: float, anchors: Dictionary, room_transforms: Dictionary,
-		keys: Array, locks: Array, stations: Array) -> float:
+		keys: Array, locks: Array, stations: Array,
+		dropped: Array = []) -> float:
 	var rid := str(chamber.get("id", "?"))
+	# A DECLARED KEY THAT NO PRODUCER PLACED IS A DROPPED KEY.
+	#
+	# Not a warning: the bridge's `R ⊆ E` proves a key is obtainable
+	# before its lock, and that proof is about a key that EXISTS. A Zone
+	# whose key was silently not built has a lock nothing opens, and that
+	# is a Zone the player cannot finish. Collected here and refused by
+	# the caller, so the reason names the room.
+	var wanted := (chamber.get("keys", []) as Array).size()
+	var got := (result.get("key_spots", []) as Array).size()
+	if wanted > got:
+		dropped.append("%s wanted %d key(s) and its producer reserved %d"
+				% [rid, wanted, got])
 	# Where a body arriving in this room stands: the room's own
 	# declared arrival, carried into world space.
 	var arrive: Vector3 = result.get("player_entry", {}).get(
@@ -382,6 +395,152 @@ static func _furnish_room(root: Node3D, theme: String,
 		root.add_child(here)
 		stations.append(here)
 	return footprint
+
+## WHERE THE ROOMS GO, READ OFF THE GRAPH THE BRIDGE SENT.
+##
+## The bridge composes a real branching topology -- `topology.py`
+## `compose_with_branch` moves one room off the spine onto a junction's
+## `side_left` behind a lock, and says so in `edges` and in each
+## chamber's `doors`. Until this existed the engine walked
+## `zone.chambers` in list order and the branch room was built IN LINE:
+## the graph said "off to one side", the geometry said "next in the
+## corridor", and nothing could tell.
+##
+## Nothing here invents an assignment. A door's `socket_id` is the
+## socket, an edge's `realization` says whether it binds geometry, and
+## the two sockets an edge names are read from the two rooms' own door
+## lists. The engine's only contribution is knowing that `entry` and
+## `exit` are the chain's sockets and the sides are not.
+##
+## Returns `{spine, branches, refused}`:
+##   `spine`    room ids in chain order
+##   `branches` parent id -> [{socket_id, chamber, edge_id}]
+##   `refused`  non-empty when the graph cannot be placed, saying why
+##
+## A Zone with no `edges` returns its chamber list as the spine and no
+## branches, which is exactly the chain that shipped before -- the
+## additive promise `schema_version` 7 rests on.
+static func placement_plan(zone: Dictionary) -> Dictionary:
+	var order: Array = []
+	var by_id := {}
+	for raw: Variant in zone.get("chambers", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var chamber: Dictionary = raw
+		var rid := str(chamber.get("id", ""))
+		if rid == "":
+			continue
+		order.append(rid)
+		by_id[rid] = chamber
+	var edges: Array = zone.get("edges", [])
+	if edges.is_empty():
+		return {"spine": order, "branches": {}, "refused": ""}
+
+	# Which socket each room assigns to each edge. A room that names no
+	# door for an edge it is an endpoint of is a refusal and not a
+	# default: the bridge's rule 1 is that every joining socket is
+	# mentioned, so an absent one means the two lanes disagree.
+	var socket_of := {}
+	for rid: String in by_id:
+		for raw_door: Variant in (by_id[rid] as Dictionary).get("doors", []):
+			if typeof(raw_door) != TYPE_DICTIONARY:
+				continue
+			var door: Dictionary = raw_door
+			var eid := str(door.get("edge_id", ""))
+			if eid == "" or str(door.get("usage", "")) == "SEALED":
+				continue
+			socket_of["%s|%s" % [rid, eid]] = str(door.get("socket_id", ""))
+
+	var next_on_spine := {}
+	var has_parent := {}
+	var branches := {}
+	for raw_edge: Variant in edges:
+		if typeof(raw_edge) != TYPE_DICTIONARY:
+			continue
+		var edge: Dictionary = raw_edge
+		# A TRAVERSAL_ONLY edge binds no geometry. It is as real as any
+		# other to reachability and has nothing for a placer to do.
+		if str(edge.get("realization", "JOINED")) != "JOINED":
+			continue
+		var a := str(edge.get("room_a", ""))
+		var b := str(edge.get("room_b", ""))
+		var eid := str(edge.get("edge_id", ""))
+		if not by_id.has(a) or not by_id.has(b):
+			return {"spine": order, "branches": {},
+					"refused": "edge '%s' joins '%s' and '%s' and this "
+					% [eid, a, b] + "Zone has no such chamber"}
+		var sa := str(socket_of.get("%s|%s" % [a, eid], ""))
+		var sb := str(socket_of.get("%s|%s" % [b, eid], ""))
+		if sa == "" or sb == "":
+			return {"spine": order, "branches": {},
+					"refused": "edge '%s' is JOINED and room '%s' "
+					% [eid, a if sa == "" else b]
+					+ "assigns it no door; every joining socket a room "
+					+ "declares is supposed to be mentioned"}
+		var a_side := not CHAIN_SOCKETS.has(sa)
+		var b_side := not CHAIN_SOCKETS.has(sb)
+		if a_side and b_side:
+			return {"spine": order, "branches": {},
+					"refused": "edge '%s' joins two side sockets ('%s' "
+					% [eid, sa] + "and '%s'); one end has to be a room's "
+					% sb + "entry for the other to hang off it"}
+		if not a_side and not b_side:
+			# The spine: one room's exit meeting the next room's entry.
+			var frm := a if sa == "exit" else b
+			var to := b if sa == "exit" else a
+			next_on_spine[frm] = to
+			has_parent[to] = true
+			continue
+		var parent := a if a_side else b
+		var child := b if a_side else a
+		var hook: Array = branches.get(parent, [])
+		hook.append({"socket_id": sa if a_side else sb,
+				"chamber": by_id[child], "edge_id": eid})
+		branches[parent] = hook
+		has_parent[child] = true
+
+	# The spine starts at the room nothing leads into, walked forward.
+	var head := ""
+	for rid: String in order:
+		if not has_parent.has(rid):
+			head = rid
+			break
+	if head == "":
+		return {"spine": order, "branches": {},
+				"refused": "every room has something joining into it, so "
+				+ "the chain has no head; a cycle is refused separately"}
+	var spine: Array = []
+	var at := head
+	var guard := 0
+	while at != "" and guard <= order.size():
+		spine.append(at)
+		at = str(next_on_spine.get(at, ""))
+		guard += 1
+
+	# EVERY CHAMBER IS PLACED SOMEWHERE, or the plan is refused.
+	#
+	# A Zone whose `edges` reach only some of its rooms would otherwise
+	# lose the rest in silence: the spine walk stops where the edges stop,
+	# the remaining chambers are never iterated, and a Zone comes back
+	# short with a LAYOUT_OK on it. Dropping a room is exactly the class
+	# of failure a placement result must never report success for.
+	var seen := {}
+	for rid: Variant in spine:
+		seen[str(rid)] = true
+	for parent: Variant in branches:
+		for raw_hook: Variant in branches[parent] as Array:
+			seen[str(((raw_hook as Dictionary)["chamber"] as Dictionary)
+					.get("id", ""))] = true
+	var orphans: Array = []
+	for rid: String in order:
+		if not seen.has(rid):
+			orphans.append(rid)
+	if not orphans.is_empty():
+		return {"spine": order, "branches": {},
+				"refused": "%d chamber(s) are in no spine and on no "
+				% orphans.size() + "branch, so the graph would place "
+				+ "fewer rooms than the Zone declares: %s" % str(orphans)}
+	return {"spine": spine, "branches": branches, "refused": ""}
 
 ## Branches declared behind a door that is not a way through.
 ##
@@ -780,6 +939,8 @@ static func build(zone: Dictionary, theme_override := "",
 	var yaw := 0.0
 	## Pieces laid after a room, belonging to the next room's approach.
 	var carried: Array = []
+	## Rooms whose declared keys no producer reserved space for.
+	var dropped_keys: Array = []
 	var next_turn := 1 if rng.randf() < 0.5 else -1
 	var placed: Array = []
 	var built_chambers: Array = []
@@ -797,7 +958,28 @@ static func build(zone: Dictionary, theme_override := "",
 		-1: _shape_of(ChamberBuilders.corner(-1, theme)),
 	}
 
-	for chamber: Dictionary in zone.get("chambers", []):
+	# THE GRAPH DECIDES THE ORDER, when the Zone carries one.
+	#
+	# `placement_plan` reads `edges` and each chamber's `doors` and says
+	# which rooms are the spine and which hang off a side socket. A Zone
+	# with no edges gets its chamber list back unchanged, which is the
+	# chain that shipped before.
+	var graph := placement_plan(zone)
+	if str(graph.get("refused", "")) != "":
+		return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+				"policy": routing_policy([], policy_override),
+				"blocking_rooms": [], "blocking_pairs": [],
+				"failed": str(graph["refused"])}
+	var chamber_by_id := {}
+	for raw_chamber: Variant in zone.get("chambers", []):
+		if typeof(raw_chamber) == TYPE_DICTIONARY:
+			chamber_by_id[str((raw_chamber as Dictionary).get("id", ""))] \
+					= raw_chamber
+	var graph_branches: Dictionary = graph.get("branches", {})
+	for spine_id: Variant in graph.get("spine", []):
+		var chamber: Dictionary = chamber_by_id.get(str(spine_id), {})
+		if chamber.is_empty():
+			continue
 		# S13: every chamber's geometry is chosen here, not assumed.
 		# Today every route ends at ChamberBuilders because every registry
 		# entry is still a declared placeholder; the routing is what lets an
@@ -918,7 +1100,7 @@ static func build(zone: Dictionary, theme_override := "",
 		var rid := str(chamber.get("id", "?"))
 		var footprint := _furnish_room(root, theme, chamber, result,
 				origin, yaw, anchors, room_transforms, keys, locks,
-				stations)
+				stations, dropped_keys)
 		if footprint > float(largest["area"]):
 			largest = {"area": footprint, "id": rid}
 		root.add_child(node)
@@ -947,6 +1129,12 @@ static func build(zone: Dictionary, theme_override := "",
 		# own `branches` were read by nothing. Each placed branch pushes
 		# its children on, so depth is whatever the Zone declares.
 		var pending: Array = []
+		# TWO SOURCES, ONE QUEUE. `edges` + `doors` is what the bridge
+		# sends; the nested `branches` form is what a fixture can write
+		# without a graph. Neither is special-cased downstream.
+		for raw_branch: Variant in graph_branches.get(rid, []):
+			pending.append({"from": chamber, "at": origin,
+					"yaw": yaw, "branch": raw_branch})
 		for raw_branch: Variant in chamber.get("branches", []):
 			if typeof(raw_branch) == TYPE_DICTIONARY:
 				pending.append({"from": chamber, "at": origin,
@@ -1039,8 +1227,14 @@ static func build(zone: Dictionary, theme_override := "",
 			# key to the next one.
 			_furnish_room(root, theme, b_chamber, b_result, b_origin,
 					float(b_walked["yaw"]), anchors, room_transforms,
-					keys, locks, stations)
-			# ITS OWN BRANCHES, from the transform it was just given.
+					keys, locks, stations, dropped_keys)
+			# ITS OWN BRANCHES, from the transform it was just given,
+			# from either source.
+			for raw_deeper: Variant in graph_branches.get(
+					str(b_chamber.get("id", "")), []):
+				pending.append({"from": b_chamber, "at": b_origin,
+						"yaw": float(b_walked["yaw"]),
+						"branch": raw_deeper})
 			for raw_deeper: Variant in b_chamber.get("branches", []):
 				if typeof(raw_deeper) == TYPE_DICTIONARY:
 					pending.append({"from": b_chamber, "at": b_origin,
@@ -1115,6 +1309,14 @@ static func build(zone: Dictionary, theme_override := "",
 	# placement, not trusted to clear by arithmetic coincidence. A Zone
 	# whose exit sits inside another room is one a player cannot finish,
 	# so this fails the build for the same reason a chamber does.
+	if not dropped_keys.is_empty():
+		root.free()
+		return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+				"policy": routing_policy(placed, policy_override),
+				"blocking_rooms": [], "blocking_pairs": [],
+				"failed": "%d room(s) declare a key their producer does "
+				% dropped_keys.size() + "not build, so a lock in this "
+				+ "Zone has no key: %s" % str(dropped_keys)}
 	var exit_room := ChamberBuilders.treasure_room({"id": "exit"}, theme)
 	var exit_committed: Dictionary = \
 			(layout.get("rooms", {}) as Dictionary).get("exit", {})

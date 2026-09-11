@@ -106,7 +106,59 @@ static func build_chamber(chamber: Dictionary, theme: String,
 	var occupied := _room_occupancy(result, chamber)
 	result["activities"] = _build_activities(result, chamber, theme, occupied)
 	result["environment"] = _build_environment(result, theme, occupied)
+	# ONLY WHEN THE PRODUCER RESERVED NONE.
+	#
+	# The procedural arena reserves a key's space beside the Check's
+	# pedestal, chosen by `_clear_spot` so it does not land inside the
+	# room's own crates -- a defect this branch already fixed once.
+	# Overwriting that with an arrival-relative guess would put the key
+	# back in the furniture. This fills the gap the AUTHORED producer
+	# leaves and nothing else.
+	if (result.get("key_spots", []) as Array).is_empty():
+		result["key_spots"] = _key_spots(result, chamber)
 	return result
+
+## WHERE AN AUTHORED ROOM PUTS A KEY IT WAS ASKED TO HOLD.
+##
+## The procedural arena has reserved a spot for a declared key since the
+## branching slice landed; the authored producer emitted none, so a key
+## the bridge placed in an authored room WAS SIMPLY NOT BUILT. The
+## generated Zone puts the branch's red key in `c007`, which is
+## `shell_corner_left` -- so the lock on `c014`'s side door had no key
+## anywhere in the Zone and the branch was unopenable. The same shape as
+## the door plan the authored producer also lacked: proved on one
+## producer, absent on the other.
+##
+## THE ARRIVAL IS THE ONE PLACE AN AUTHORED SHELL GUARANTEES.
+## `RoomAudit._arrival_is_safe` measures that a standing capsule fits at
+## `player_entry` and that it has floor under it, on every shell, every
+## build. Anywhere else in an L-shaped corridor is a guess about geometry
+## this file cannot see. A key on the floor beside the way in is also
+## where a player looks first, which is not a coincidence -- both follow
+## from it being the part of the room the contract knows.
+static func _key_spots(result: Dictionary, chamber: Dictionary) -> Array:
+	var out: Array = []
+	var declared: Array = chamber.get("keys", [])
+	if declared.is_empty():
+		return out
+	var entry: Dictionary = result.get("player_entry", {})
+	var at: Vector3 = entry.get("position", Vector3.ZERO) \
+			if typeof(entry) == TYPE_DICTIONARY and not entry.is_empty() \
+			else Vector3.ZERO
+	var index := 0
+	for raw: Variant in declared:
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var spec: Dictionary = raw
+		# Fanned out, so two keys in one room are two pickups rather
+		# than one pickup wearing two colours.
+		out.append({"key_id": str(spec.get("key_id", "")),
+				"colour": str(spec.get("colour", "gold")),
+				"position": at + Vector3(
+						1.1 * float(index % 2) - 0.55, 0.0,
+						1.4 + 1.1 * floor(float(index) / 2.0))})
+		index += 1
+	return out
 
 ## Everything the built shell already occupies, in the room's own space.
 static func _room_occupancy(result: Dictionary,

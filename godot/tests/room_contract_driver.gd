@@ -127,6 +127,7 @@ func _run() -> void:
 	await _test_the_committed_layout_is_measured_not_re_solved()
 	_test_the_walk_prober_is_no_kinder_than_the_controller()
 	await _test_a_committed_layout_replays_without_re_solving()
+	await _test_a_generated_zone_places_its_branch_off_the_spine()
 	await _test_the_branch_is_crossed_returned_from_and_remembered()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
@@ -3241,6 +3242,107 @@ func _standable_near(at: Vector3) -> bool:
 			at + Vector3(0, Constants.PLAYER_HEIGHT / 2.0 + 0.1, 0))
 	return space.intersect_shape(query, 1).is_empty()
 
+## THE GENERATED GRAPH, PLACED.
+##
+## Not a fixture this lane wrote: `played_zone.json` is dumped from the
+## same Python path the game runs, and the bridge's `compose_with_branch`
+## has moved `c020` off the spine onto `c014`'s `side_left` behind a red
+## lock, with the key in `c007` and a plug back to the start.
+##
+## Until `placement_plan` existed the engine walked `zone.chambers` in
+## list order and built `c020` IN LINE between `c019` and `c021`. The
+## graph said "off to one side", the geometry said "next in the
+## corridor", and nothing in either lane could tell: the bridge's own
+## note said so in as many words -- "the branch is logically real; the
+## engine still places a chain".
+func _test_a_generated_zone_places_its_branch_off_the_spine() -> void:
+	var text := FileAccess.get_file_as_string(
+			"res://tests/fixtures/played_zone.json")
+	var zone: Dictionary = JSON.parse_string(text)
+	_check(not (zone.get("edges", []) as Array).is_empty(),
+			"the generated Zone fixture carries no edges, so this test "
+			+ "cannot say anything about reading them")
+
+	# 1. THE PLAN, read off edges and doors alone.
+	var plan := ZoneBuilder.placement_plan(zone)
+	_check(str(plan.get("refused", "")) == "",
+			"the generated Zone's graph was refused: %s"
+			% str(plan.get("refused", "")))
+	var spine: Array = plan.get("spine", [])
+	var branches: Dictionary = plan.get("branches", {})
+	_check(not spine.has("c020"),
+			"'c020' is on the spine, so the branch the bridge composed "
+			+ "is still being built in line")
+	_check(branches.has("c014"),
+			"'c014' carries the LOCKED side door in the fixture and no "
+			+ "branch hangs off it: %s" % str(branches.keys()))
+	if branches.has("c014"):
+		var hook: Dictionary = (branches["c014"] as Array)[0]
+		_check(str(hook["socket_id"]) == "side_left",
+				"the branch hangs off '%s' and the door is on side_left"
+				% str(hook["socket_id"]))
+		_check(str((hook["chamber"] as Dictionary)["id"]) == "c020",
+				"the branch room is '%s', not c020"
+				% str((hook["chamber"] as Dictionary)["id"]))
+	# Every chamber is placed somewhere.
+	var placed_ids := {}
+	for rid: Variant in spine:
+		placed_ids[str(rid)] = true
+	for parent: Variant in branches:
+		for raw_hook: Variant in branches[parent] as Array:
+			placed_ids[str(((raw_hook as Dictionary)["chamber"]
+					as Dictionary)["id"])] = true
+	_check(placed_ids.size() == (zone["chambers"] as Array).size(),
+			"the plan places %d of the Zone's %d chambers"
+			% [placed_ids.size(), (zone["chambers"] as Array).size()])
+
+	# 2. AND THE GEOMETRY AGREES. `c020` has to be somewhere the chain
+	#    does not run through, which is what "off the spine" means once
+	#    it stops being a graph statement.
+	var out := ZoneBuilder.build(zone)
+	_check(str(out.get("status", "")) == "LAYOUT_OK",
+			"the generated branching Zone did not compose: %s"
+			% str(out.get("failed", "?")))
+	if not out.has("root"):
+		return
+	add_child(out["root"] as Node3D)
+	await get_tree().physics_frame
+	var rooms: Dictionary = out["rooms"]
+	_check(rooms.has("c020") and (out["links"] as Dictionary).has("c020"),
+			"the branch room committed no transform or approach chain")
+	if rooms.has("c020") and rooms.has("c019") and rooms.has("c021"):
+		# Its neighbours in the CHAMBER LIST are c019 and c021; on the
+		# spine they are adjacent to each other, and c020 is not between
+		# them. A room built in line would be.
+		var a: Vector3 = (rooms["c019"] as Dictionary)["position"]
+		var b: Vector3 = (rooms["c021"] as Dictionary)["position"]
+		var v: Vector3 = (rooms["c020"] as Dictionary)["position"]
+		var along := (b - a).normalized()
+		var off := (v - a) - along * (v - a).dot(along)
+		_check(off.length() > 6.0,
+				"the branch room sits %.1f m off the line between its "
+				% off.length() + "list neighbours, which is close enough "
+				+ "to in line to be in line")
+	# 3. THE LOCK, THE KEY AND THE PLUG all landed where the graph says.
+	var locks: Array = out["locks"]
+	_check(locks.size() == 1
+				and str((locks[0] as LockedDoor).room_id) == "c014"
+				and str((locks[0] as LockedDoor).socket_id) == "side_left",
+			"%d lock(s), and the graph declares one on c014/side_left"
+			% locks.size())
+	_check((out["keys"] as Array).size() == 1,
+			"%d keys, and the graph declares one"
+			% (out["keys"] as Array).size())
+	_check((out["plugs"] as Array).size() == 1,
+			"%d plugs, and the graph declares one"
+			% (out["plugs"] as Array).size())
+	_check(ZoneBuilder.layout_findings(out).is_empty(),
+			"the generated branching layout violates Body or Arrival: %s"
+			% str(ZoneBuilder.layout_findings(out)))
+	rooms_checked += 1
+	(out["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
 ## LAW 47c: SOLVED ONCE, REPLAYED FOREVER.
 ##
 ## "The layout is solved once and committed... every later load replays
@@ -3986,22 +4088,49 @@ func _test_a_zone_resumes_at_the_station_it_was_left_from() -> void:
 func _test_a_spatial_cycle_is_refused_and_a_plug_cycle_is_not() -> void:
 	var zone := _eight_room_zone()
 	var rooms: Array = zone["chambers"]
+	# THE FULL CHAIN, WITH THE DOORS THE BRIDGE ACTUALLY SENDS. An
+	# edge list covering three of eight rooms is not a Zone any composer
+	# produces, and `placement_plan` now refuses one rather than placing
+	# the rooms it can reach and losing the rest.
 	var loop := func(realization: String) -> Array:
-		return [
-			{"edge_id": "e01", "room_a": str((rooms[0] as Dictionary)["id"]),
-				"room_b": str((rooms[1] as Dictionary)["id"]),
-				"realization": "JOINED"},
-			{"edge_id": "e12", "room_a": str((rooms[1] as Dictionary)["id"]),
-				"room_b": str((rooms[2] as Dictionary)["id"]),
-				"realization": "JOINED"},
-			# The closing edge, and the only thing that changes.
-			{"edge_id": "e20", "room_a": str((rooms[2] as Dictionary)["id"]),
+		var out: Array = []
+		for i in range(rooms.size() - 1):
+			out.append({"edge_id": "e%d" % i,
+					"room_a": str((rooms[i] as Dictionary)["id"]),
+					"room_b": str((rooms[i + 1] as Dictionary)["id"]),
+					"realization": "JOINED"})
+		# The closing edge, and the only thing that changes.
+		out.append({"edge_id": "eclose",
+				"room_a": str((rooms[rooms.size() - 1] as Dictionary)["id"]),
 				"room_b": str((rooms[0] as Dictionary)["id"]),
-				"realization": realization},
-		]
+				"realization": realization})
+		return out
+
+	## The chain's own doors. A plug never appears in `doors` (the
+	## bridge's rule 3), so the closing edge gets one only when it is
+	## JOINED -- which is the case the cycle guard refuses first anyway.
+	var wire := func(zone_in: Dictionary, closing_is_joined: bool) -> void:
+		var chambers: Array = zone_in["chambers"]
+		for i in chambers.size():
+			var c: Dictionary = chambers[i]
+			var doors: Array = []
+			if i > 0:
+				doors.append({"socket_id": "entry", "usage": "USED",
+						"edge_id": "e%d" % (i - 1)})
+			if i < chambers.size() - 1:
+				doors.append({"socket_id": "exit", "usage": "USED",
+						"edge_id": "e%d" % i})
+			if closing_is_joined and i == 0:
+				doors.append({"socket_id": "side_left", "usage": "USED",
+						"edge_id": "eclose"})
+			if closing_is_joined and i == chambers.size() - 1:
+				doors.append({"socket_id": "exit", "usage": "USED",
+						"edge_id": "eclose"})
+			c["doors"] = doors
 
 	var spatial: Dictionary = zone.duplicate(true)
 	spatial["edges"] = loop.call("JOINED")
+	wire.call(spatial, true)
 	var refused := ZoneBuilder.build(spatial)
 	_check(str(refused.get("status", "")) == "LAYOUT_INFEASIBLE",
 			"a JOINED spatial cycle returned '%s' rather than being "
@@ -4019,6 +4148,7 @@ func _test_a_spatial_cycle_is_refused_and_a_plug_cycle_is_not() -> void:
 	# THE SAME LOOP, THROUGH A PLUG. One field, opposite outcome.
 	var teleported: Dictionary = zone.duplicate(true)
 	teleported["edges"] = loop.call("TRAVERSAL_ONLY")
+	wire.call(teleported, false)
 	var built := ZoneBuilder.build(teleported)
 	_check(str(built.get("status", "")) == "LAYOUT_OK",
 			"a cycle closed only by a TRAVERSAL_ONLY edge was refused "
