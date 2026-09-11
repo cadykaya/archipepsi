@@ -371,6 +371,71 @@ run of them is guaranteed dead space.
   much stronger constraint; dead-ends give Zelda side-rooms and are far
   easier to solve.
 
+### Owner rulings, 2026-09-11, on the multi-door change
+
+Given in answer to the four questions above. Recorded as decisions, not
+proposals.
+
+1. **A branch may dead-end, but every dead-end carries a return.** A
+   catalogue of authored "dead-end plugs" — a non-euclidean door, a
+   disintegrate/rematerialise pad, a tube that fades to black — and
+   **Epsilon picks which.** Destination is the Zone start **or the last
+   big room**, also Epsilon's choice. Both are *declared anchors*, not
+   coordinates, so the composer still names no world position and the
+   authored-alphabet boundary holds without special pleading.
+2. **Checks are not all mandatory**, and Epsilon should compose against
+   the distinction: a Check at the end of a branch, behind a plug; a
+   branch that leads to content the player must return for later.
+   **Correction applied to the ask:** the trap/filler/progression
+   classification is Archipelago's truth and Epsilon must never *choose*
+   it. It already *reads* it — `constants.py:707` defines
+   `FLAG_PROGRESSION` / `FLAG_USEFUL` / `FLAG_TRAP`, and both
+   `RequestLocation` (`epsilon/requests.py:121`) and `EchoSource` (`:219`)
+   already carry `item_flags`. So the ask is composition against a flag
+   that is already delivered, not a new authority.
+3. **Plug destination is Epsilon's**, per 1.
+4. **The shell declares doorway capacity; the composer declares usage.** A
+   five-door shell may be used as a three-door room by walling two off, or
+   by locking one behind a key. Same shape as `adopt` / `offered_for` from
+   3A/3B, and it removes the need to author a 2-, 3- and 4-door variant of
+   every room.
+
+**Also asked for:** warp stations at the entrance, the exit and large
+rooms — save, return to Hub, and warp between stations already reached in
+the same Zone; optionally starting broken and repaired by completing one
+of the existing activities, which is the first real consequence anything
+has proposed for `switch_sequence` / `pressure_routing` /
+`target_challenge`.
+
+**How much of that exists.** `handle_leave_zone` is already
+*"Pause-menu Return to Hub. No persistent change; Godot resets transient
+state itself."* Mid-Zone Hub return is therefore already non-destructive —
+claimed Checks survive; the destructive intent is `handle_abandon_zone`,
+which returns unclaimed Checks to the pool. The only missing piece is the
+**resume point**: Godot discards the player's position. A station is a
+persisted set of stations reached plus a spawn anchor, not a new
+subsystem.
+
+**One thing to get right when this is built.** `_openings_are_holes`
+reports a blocked doorway as a defect. For a **declared-walled** door it
+must invert and confirm the door *is* sealed — the same measurement with
+the opposite expected answer, and the difference must come from the
+declaration. The tempting shortcut is to skip the opening check for walled
+doors, which would be a fourth instance of §5's recurring shape. It has to
+be checked harder, not skipped.
+
+**Open, and it sets the first build's scope:** is the locked door's key a
+Zone-local key (zero Archipelago risk, fully specified in
+`SOLUTIONS_CATALOGUE.md` §2) or an Echo capability (§0-bis, every gate
+mirrored in AP location logic)?
+
+**New defect found while checking the above.** `Epsilon Static` is
+declared `ItemClassification.filler` (`apworld/archipepsi/__init__.py:53`)
+while functionally being a trap — it permanently corrupts the Hub. AP
+offers `ItemClassification.trap` and Archipepsi uses it nowhere, so other
+players' hint and trap-filtering logic reads Archipepsi's Static as
+harmless filler.
+
 ---
 
 ## 4. Corrections to earlier reports of mine
