@@ -314,9 +314,9 @@ Reference lint passed while every one of §8.1's contradictions was live, becaus
 |---|---|
 | **Pull request** | `cadykaya/archipepsi` **#9** |
 | **Branch** | `claude/chatgpt-share-link-review-77kk2l` |
-| **Audited commit SHA** | **`35e131b4ef30cdd2f6db058b0f80745651e46aea`** (pass 5, the carry-legal regression repair) |
-| **Date** | 2026-09-08 |
-| **Prior audited revisions** | `487a644` (pass 3), `950a561` (pass 4 before the connector reconciliation), `e7e6c7d` (pass 4 final) |
+| **Audited commit SHA** | **`02646f6dd44f67891cc9453bda9bbadbc394b953`** (pass 6, the §30.11.2d correction) |
+| **Date** | 2026-09-11 |
+| **Prior audited revisions** | `487a644` (pass 3), `950a561` (pass 4 before the connector reconciliation), `e7e6c7d` (pass 4 final), `35e131b` (pass 5) |
 | **Prior head reviewed** | `4004f0184aa97ae4a3cec34a3e3f792dcbebb416` (pass 4), `19ab6287d9f8f22c52a6f56d0a9b790540d0cb1a` (pass 5) |
 
 **On the recorded SHA.** `35e131b` is the commit whose *content* every checker below was run against. It supersedes `e7e6c7d`, which pass 5 found had carried a live correctness regression since the connector reconciliation; the same reasoning applied when `e7e6c7d` superseded `950a561`: a later commit changed §4.9a's connector vocabulary, so the earlier SHA no longer covered the document and re-recording it without re-auditing would have been exactly the stale-reference failure this audit exists to prevent, from a clean worktree checked out at that revision — not from an export and not from the editing tree. The commit that adds this line necessarily comes after it, so the branch head is one commit ahead; that following commit touches this table and nothing else. Recording the audited content's SHA rather than the head's is the only way for the two to be the same thing.
