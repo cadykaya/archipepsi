@@ -126,6 +126,7 @@ func _run() -> void:
 	await _test_a_capability_gate_holds_and_never_blocks_the_way_out()
 	await _test_the_committed_layout_is_measured_not_re_solved()
 	_test_the_walk_prober_is_no_kinder_than_the_controller()
+	await _test_a_committed_layout_replays_without_re_solving()
 	await _test_the_branch_is_crossed_returned_from_and_remembered()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
@@ -3200,6 +3201,99 @@ func _standable_near(at: Vector3) -> bool:
 	query.transform = Transform3D(Basis.IDENTITY,
 			at + Vector3(0, Constants.PLAYER_HEIGHT / 2.0 + 0.1, 0))
 	return space.intersect_shape(query, 1).is_empty()
+
+## LAW 47c: SOLVED ONCE, REPLAYED FOREVER.
+##
+## "The layout is solved once and committed... every later load replays
+## the committed transforms and does not re-solve." Nothing in the engine
+## could replay one: `LayoutResult` was returned and the only way to
+## rebuild a Zone was to run the search again.
+##
+## THE PROOF THAT IT DOES NOT SEARCH is the budget. A build with a
+## 0.001 ms budget cannot solve -- the suite already relies on that to
+## separate a timeout from an infeasibility -- so a replay that succeeds
+## under the same budget did not search. An assertion that the transforms
+## merely MATCH would pass for a solver that redid the work and happened
+## to agree, which is the thing law 47c says not to depend on.
+func _test_a_committed_layout_replays_without_re_solving() -> void:
+	var zone := _eight_room_zone()
+	var solved := ZoneBuilder.build(zone)
+	_check(str(solved.get("status", "")) == "LAYOUT_OK",
+			"the Zone to be replayed did not solve")
+	if not solved.has("root"):
+		return
+	var manifest := {"rooms": (solved["rooms"] as Dictionary),
+			"links": (solved["links"] as Dictionary)}
+	# The same Zone, the same manifest, and a clock that makes solving
+	# impossible.
+	var replayed := ZoneBuilder.build(zone, "", 0.001, manifest)
+	_check(str(replayed.get("status", "")) == "LAYOUT_OK",
+			"replaying a committed layout under a 0.001 ms budget "
+			+ "returned '%s', so it was still searching"
+			% str(replayed.get("status", "?")))
+	if not replayed.has("root"):
+		(solved["root"] as Node3D).queue_free()
+		return
+	# EVERY ROOM, AND EVERY PIECE, IN THE SAME PLACE.
+	var before: Dictionary = solved["rooms"]
+	var after: Dictionary = replayed["rooms"]
+	_check(before.size() == after.size(),
+			"the replay committed %d rooms and the solve committed %d"
+			% [after.size(), before.size()])
+	var worst := 0.0
+	for id: String in before:
+		if not after.has(id):
+			_check(false, "the replay lost room '%s'" % id)
+			continue
+		var a: Vector3 = (before[id] as Dictionary)["position"]
+		var b: Vector3 = (after[id] as Dictionary)["position"]
+		worst = maxf(worst, (a - b).length())
+		_check(is_equal_approx(float((before[id] as Dictionary)["yaw"]),
+						float((after[id] as Dictionary)["yaw"])),
+				"room '%s' replayed at a different yaw" % id)
+	_check(worst <= 0.001,
+			"the furthest room moved %.4f m between the solve and the "
+			% worst + "replay; EPSILON_JOIN is 0.001 m")
+	var pieces_before := 0
+	var pieces_after := 0
+	for id: String in solved["links"] as Dictionary:
+		pieces_before += ((solved["links"] as Dictionary)[id] as Array).size()
+	for id: String in replayed["links"] as Dictionary:
+		pieces_after += ((replayed["links"] as Dictionary)[id] as Array).size()
+	_check(pieces_before == pieces_after and pieces_before > 0,
+			"the solve laid %d connector/corner pieces and the replay "
+			% pieces_before + "laid %d" % pieces_after)
+	# AND THE SAME AMOUNT OF GEOMETRY. A replay that quietly skipped a
+	# piece would satisfy everything above, because `links` is copied
+	# from the manifest rather than re-derived.
+	_check((solved["bounds_list"] as Array).size()
+				== (replayed["bounds_list"] as Array).size(),
+			"the solve placed %d boxes and the replay placed %d, so the "
+			% [(solved["bounds_list"] as Array).size(),
+				(replayed["bounds_list"] as Array).size()]
+			+ "replayed Zone is not the Zone that was committed")
+	# A CORNER KNOWS WHICH WAY IT BENDS. Without it a replayed corner is
+	# a guess, and the chain after it walks off in the wrong direction.
+	var corners := 0
+	for id: String in solved["links"] as Dictionary:
+		for raw: Variant in (solved["links"] as Dictionary)[id] as Array:
+			var piece: Dictionary = raw
+			if str(piece.get("kind", "")) != "CORNER":
+				continue
+			corners += 1
+			_check(piece.has("turn") and int(piece["turn"]) != 0,
+					"a committed corner records no turn, so it cannot "
+					+ "be rebuilt")
+	_check(corners > 0,
+			"no corner was committed in an eight-room Zone, so the turn "
+			+ "field is untested")
+	_check(ZoneBuilder.layout_findings(replayed).is_empty(),
+			"the replayed layout violates Body or Arrival: %s"
+			% str(ZoneBuilder.layout_findings(replayed)))
+	rooms_checked += 1
+	(solved["root"] as Node3D).queue_free()
+	(replayed["root"] as Node3D).queue_free()
+	await get_tree().process_frame
 
 ## THE PROBER MUST NOT BE KINDER THAN THE BODY.
 ##

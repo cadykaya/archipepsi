@@ -587,8 +587,13 @@ static func _emit_route(root: Node3D, theme: String, plan: Dictionary,
 			root.add_child(node)
 			placed.append(world)
 			bounds_list.append(world)
+			# THE TURN, not just the pose. A corner's geometry depends
+			# on which way it bends, and a piece recorded without it
+			# cannot be rebuilt -- which is how far "the chain is
+			# committed" actually went until a replay was written.
 			chain.append({"kind": "CORNER", "position": at,
-					"yaw": facing, "bounds": world})
+					"yaw": facing, "bounds": world,
+					"turn": int(step["turn"])})
 			at += _rot(facing, corner["exit_offset"] as Vector3)
 			facing += float(step["turn"]) * PI / 2.0
 			turns += 1
@@ -600,6 +605,55 @@ static func _emit_route(root: Node3D, theme: String, plan: Dictionary,
 					"yaw": facing,
 					"bounds": bounds_list[bounds_list.size() - 1]})
 	return {"cursor": at, "yaw": facing, "turns": turns}
+
+## LAYS A COMMITTED CHAIN DOWN, without searching for it.
+##
+## Law 47c: "the layout is solved once and committed... every later load
+## replays the committed transforms and does not re-solve." This is the
+## replay half, and it is deliberately the only thing in this file that
+## can place a piece without asking whether it fits: the question was
+## answered when the layout was solved, and asking it again is the
+## re-solve the law forbids.
+##
+## Returns `{cursor, yaw}` like `_emit_route`, read off the last piece so
+## a caller that mixes the two cannot tell them apart.
+static func _replay_route(root: Node3D, theme: String, chain: Array,
+		cursor: Vector3, yaw: float, placed: Array,
+		bounds_list: Array) -> Dictionary:
+	var at := cursor
+	var facing := yaw
+	for raw: Variant in chain:
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var piece: Dictionary = raw
+		at = piece["position"]
+		facing = float(piece["yaw"])
+		if str(piece.get("kind", "")) == "CORNER":
+			var corner := ChamberBuilders.corner(
+					int(piece.get("turn", 1)), theme)
+			var node: Node3D = corner["root"]
+			node.name = "Corner"
+			node.position = at
+			node.rotation.y = facing
+			root.add_child(node)
+			placed.append(piece["bounds"])
+			bounds_list.append(piece["bounds"])
+			at += _rot(facing, corner["exit_offset"] as Vector3)
+			facing += float(int(piece.get("turn", 1))) * PI / 2.0
+		else:
+			var connector := ChamberBuilders.corridor(
+					{"id": "conn_%d" % bounds_list.size(),
+					"length": CONNECTOR_LENGTH,
+					"width": CONNECTOR_WIDTH}, theme)
+			var node: Node3D = connector["root"]
+			node.name = "Connector"
+			node.position = at
+			node.rotation.y = facing
+			root.add_child(node)
+			placed.append(piece["bounds"])
+			bounds_list.append(piece["bounds"])
+			at += _rot(facing, connector["exit_offset"] as Vector3)
+	return {"cursor": at, "yaw": facing, "turns": 0}
 
 static func _emit_connector(root: Node3D, theme: String, cursor: Vector3,
 		yaw: float, placed: Array, bounds_list: Array) -> Vector3:
@@ -620,8 +674,13 @@ static func _emit_connector(root: Node3D, theme: String, cursor: Vector3,
 
 ## Returns { root, spawn_transform, chambers: [{chamber, node, build,
 ##           xform}], exit_portal, bounds_list }
+## `layout` REPLAYS instead of solving. Pass a previous result's `rooms`
+## and `links` and the search is never entered: every room goes where the
+## manifest says and every connector and corner is laid rather than
+## rediscovered. A room the manifest does not mention is still solved, so
+## a partial manifest degrades rather than lies.
 static func build(zone: Dictionary, theme_override := "",
-		budget_ms := 0.0) -> Dictionary:
+		budget_ms := 0.0, layout := {}) -> Dictionary:
 	var theme: String = theme_override if theme_override != "" \
 			else zone.get("theme", "void_glitch")
 	# THE BUDGET IS WHAT A TIMEOUT MEASURES, and it is the caller's.
@@ -769,8 +828,12 @@ static func build(zone: Dictionary, theme_override := "",
 				and rng.randf() < TURN_CHANCE:
 			prefer = next_turn
 		straight_after_turn = false
-		var plan := _plan_route(shape, corners, result["bounds"] as AABB,
-				entry_at, cursor, yaw, placed, prefer)
+		var committed: Dictionary = (layout.get("rooms", {}) as Dictionary) \
+				.get(str(chamber.get("id", "?")), {})
+		var replaying := not committed.is_empty()
+		var plan := {"ok": true} if replaying \
+				else _plan_route(shape, corners, result["bounds"] as AABB,
+						entry_at, cursor, yaw, placed, prefer)
 		# NO ROOM IS EVER ATTACHED ON TOP OF ANOTHER. Straight ahead and
 		# both corners were tried, connectors included, and none of them
 		# clears. A Zone with a room inside another room is a Check in a
@@ -790,7 +853,11 @@ static func build(zone: Dictionary, theme_override := "",
 					"failed": "room '%s' could not be placed clear of "
 					% str(chamber.get("id", "?"))
 					+ "the %d room(s) before it" % placed.size()}
-		if budget_ms > 0.0 \
+		# A REPLAY HAS NO SEARCH TO TIME OUT. The budget bounds the
+		# placement SOLVE; a Zone being laid down from a manifest has
+		# already been solved, and reporting LAYOUT_TIMEOUT for it would
+		# say the search space was not exhausted when no search ran.
+		if not replaying and budget_ms > 0.0 \
 				and float(Time.get_ticks_msec() - began) > budget_ms:
 			# The clock ran out with rooms still unplaced. Candidates
 			# remain by construction, which is what separates this from
@@ -814,15 +881,29 @@ static func build(zone: Dictionary, theme_override := "",
 		# order a replay lays pieces down.
 		var link: Array = carried.duplicate()
 		carried.clear()
-		var walked := _emit_route(root, theme, plan, cursor, yaw, placed,
-				bounds_list, link)
+		var walked: Dictionary
+		if replaying:
+			# The whole chain comes from the manifest, the carried piece
+			# included -- it was recorded INTO this room's chain when the
+			# layout was committed, so replaying it twice would double it.
+			link = ((layout.get("links", {}) as Dictionary)
+					.get(str(chamber.get("id", "?")), []) as Array) \
+					.duplicate()
+			walked = _replay_route(root, theme, link, cursor, yaw,
+					placed, bounds_list)
+		else:
+			walked = _emit_route(root, theme, plan, cursor, yaw, placed,
+					bounds_list, link)
 		links[str(chamber.get("id", "?"))] = link
 		cursor = walked["cursor"]
 		yaw = float(walked["yaw"])
 		if int(walked["turns"]) % 2 == 1:
 			next_turn = -next_turn
 
-		var origin := origin_for(cursor, yaw, entry_at)
+		var origin: Vector3 = committed["position"] if replaying \
+				else origin_for(cursor, yaw, entry_at)
+		if replaying:
+			yaw = float(committed["yaw"])
 		var node: Node3D = result["root"]
 		node.name = "Chamber_%s" % chamber.get("id", "c")
 		node.position = origin
@@ -983,7 +1064,12 @@ static func build(zone: Dictionary, theme_override := "",
 		# whether it fitted. Where it does not fit, the next room simply
 		# starts at this room's exit, which is where it would have
 		# started anyway.
-		if not _overlaps(placed, _world_aabb(shape["bounds"], cursor, yaw)):
+		# NOT WHILE REPLAYING. This connector was recorded into the NEXT
+		# room's chain when the layout was committed, so emitting it here
+		# as well would lay it twice -- once from the manifest and once
+		# from this arithmetic.
+		if not replaying and not _overlaps(placed,
+				_world_aabb(shape["bounds"], cursor, yaw)):
 			var was := cursor
 			cursor = _emit_connector(root, theme, cursor, yaw, placed,
 					bounds_list)
@@ -1002,9 +1088,13 @@ static func build(zone: Dictionary, theme_override := "",
 	# whose exit sits inside another room is one a player cannot finish,
 	# so this fails the build for the same reason a chamber does.
 	var exit_room := ChamberBuilders.treasure_room({"id": "exit"}, theme)
-	var exit_plan := _plan_route(shape, corners,
-			exit_room["bounds"] as AABB, RoomContract.LEGACY_ENTRY,
-			cursor, yaw, placed, 0)
+	var exit_committed: Dictionary = \
+			(layout.get("rooms", {}) as Dictionary).get("exit", {})
+	var exit_replaying := not exit_committed.is_empty()
+	var exit_plan := {"ok": true} if exit_replaying \
+			else _plan_route(shape, corners,
+					exit_room["bounds"] as AABB,
+					RoomContract.LEGACY_ENTRY, cursor, yaw, placed, 0)
 	if not bool(exit_plan["ok"]):
 		(exit_room["root"] as Node3D).free()
 		root.free()
@@ -1017,11 +1107,20 @@ static func build(zone: Dictionary, theme_override := "",
 	# never to do.
 	var exit_link: Array = carried.duplicate()
 	carried.clear()
-	var exit_walk := _emit_route(root, theme, exit_plan, cursor, yaw,
-			placed, bounds_list, exit_link)
+	var exit_walk: Dictionary
+	if exit_replaying:
+		exit_link = ((layout.get("links", {}) as Dictionary)
+				.get("exit", []) as Array).duplicate()
+		exit_walk = _replay_route(root, theme, exit_link, cursor, yaw,
+				placed, bounds_list)
+	else:
+		exit_walk = _emit_route(root, theme, exit_plan, cursor, yaw,
+				placed, bounds_list, exit_link)
 	links["exit"] = exit_link
-	cursor = exit_walk["cursor"]
-	yaw = float(exit_walk["yaw"])
+	cursor = exit_committed["position"] if exit_replaying \
+			else exit_walk["cursor"]
+	yaw = float(exit_committed["yaw"]) if exit_replaying \
+			else float(exit_walk["yaw"])
 	var exit_node: Node3D = exit_room["root"]
 	exit_node.name = "ExitRoom"
 	exit_node.position = cursor

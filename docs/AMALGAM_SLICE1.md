@@ -97,6 +97,7 @@ that was verified by removing them.
 | **The walk prober is no kinder than the body** | `room_contract_driver.gd` `_rise_over`, `_is_a_ramp` | the ascent bound is read off a real `Player`'s `floor_max_angle` and is strictly less than `MAX_VERTICAL_STEP`; with climbing disabled all three escape proofs fail, so the rule is live |
 | **A branch is a placed room, crossed, returned from and remembered** | `zone_builder.gd` branches, `slice1_fixture.gd`, `zone_controller.gd` carried progress | the vault is refused reachable with the lock standing and reachable once it opens, its plug lands standable at `zone_start`, and the opened lock, the key and the station all survive a leave and a re-entry |
 | **A branch is furnished like any other room** | `zone_builder.gd` `_furnish_room` | a 280 m² branch declaring a key gets the key and the warp station it is owed; discarding the branch's furnishing turns both red |
+| **A committed layout replays without re-solving** (law 47c) | `zone_builder.gd` `_replay_route`, `build(..., layout)` | a manifest replays under a **0.001 ms** budget — the budget that makes solving impossible — with every room within 0.001 m, the same piece count and the same box count |
 
 ## 4. Implemented but not integrated
 
@@ -130,6 +131,9 @@ that was verified by removing them.
   engine being the unknown. All twelve shipping shells remain two-door
   and remain valid.
 - The exit unlock.
+- **Persisting the manifest.** Replay is implemented and proved; nothing
+  writes a layout to disk or hashes it into `manifest_digest`. The Zone
+  record is the bridge's.
 - **§30.11.2e constraint 1 (Join).** Needs the socket assignment to say
   which two sockets are supposed to meet, which is the bridge column.
   Constraints 2 and 4 are measured (§5h); 3 is refused (§5e).
@@ -139,6 +143,38 @@ that was verified by removing them.
 - **Closing** a spatial cycle. Refusal is implemented and proved (§5e);
   the router still builds chains, so a Zone that wants a genuine loop
   gets a typed `LAYOUT_INFEASIBLE` naming the pair, not a layout.
+
+## 5m. Solved once, replayed forever — and a corner that could not be
+
+Law 47c: *"the layout is solved once and committed… every later load
+replays the committed transforms and does not re-solve."* Nothing in the
+engine could replay one. `build()` now takes an optional `layout`, and a
+room the manifest mentions is **laid down** rather than searched for: the
+transform comes from `rooms`, the connectors and corners from `links`.
+A room the manifest does not mention is still solved, so a partial
+manifest degrades rather than lies.
+
+**The proof that it does not search is the budget.** A build under a
+0.001 ms budget cannot solve — the suite already relies on that to
+separate a timeout from an infeasibility — so a replay that *succeeds*
+under the same budget did not search. Asserting only that the transforms
+match would pass for a solver that redid the work and happened to agree,
+which is precisely what law 47c says not to depend on. (The budget now
+bounds the solve only: reporting `LAYOUT_TIMEOUT` for a replay would
+claim a search space was unexhausted when no search ran.)
+
+**Writing the replay found the third hole in the manifest.** A committed
+`CORNER` recorded its position, yaw and bounds and **not which way it
+bends** — so a replayed corner was a guess, and the chain after it walks
+off in the wrong direction. Nothing could see this while the only
+consumer of `links` was a test asking whether the recorded fields were
+well-formed. Each of the three holes (§5i, and this) was found by trying
+to *use* the manifest for what it promises, which is the only check that
+was ever going to find them.
+
+Still missing, and named: nothing writes a layout to disk or hashes it
+into `manifest_digest`. That is the Zone record, and the Zone record is
+the bridge's.
 
 ## 5l. A branch is a room, not a room-shaped exception
 
