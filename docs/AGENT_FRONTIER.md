@@ -30,6 +30,22 @@ waiting on this lane. Zero `RigidBody3D` in the project, and the
 capability vocabulary deliberately omits `manipulate` so a Zone cannot
 declare a gate no build can satisfy.
 
+**Three levels of evidence, kept apart.** The frontier is not "done /
+not done":
+
+| | |
+|---|---|
+| **Connected** — runs in a real campaign | graph composition at acceptance, reachability refusing an unreachable Zone, `layout_result` validated and committed, progress identities checked, DORMANT/VISITING, leave-reload-re-enter |
+| **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | layout evidence validation (the engine does not send `layout_result`), the physics contract in `schemas/physics.py` (no runtime exists) |
+| **Requires Godot** | aperture polarity in the layout result, the manifest replay consumer, physical reachability, and the whole physics substrate — `docs/AMALGAM_BRIDGE.md` §5 and §6 |
+
+**Capability gates are searched, not sampled.** A previous guard removed
+one gate edge at a time with every other gate left passable, so two
+undeclared gates each validated the other. Availability is a set the
+question is asked under, and everything — exit, Checks, keys, `R ⊆ E` —
+is asked under it. `BASELINE_CAPABILITIES` counts: `ranged_hit` is Static
+Pulse and needs no AP logic behind it.
+
 **The lesson worth keeping.** The first validator skipped every check
 whose input was absent, so a layout with no apertures, no bounds and no
 arrival verdicts was ACCEPTED. Missing evidence is not passing evidence;

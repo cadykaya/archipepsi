@@ -278,6 +278,85 @@ On re-entry `ZoneReady` carries `manifest`. Laying its `rooms` and
 `joins` back down is what makes a revisited Zone the same Zone; a
 re-search would be a second layout for a place the player already knows.
 
+## 6. The physics dependency, and what the engine lane owes it
+
+**The missing physics runtime is an implementation dependency with an
+owner, not an indefinite block.** Zero `RigidBody3D` in the project. The
+bridge-side contract is written and tested anyway —
+`schemas/physics.py`, `test_physics_contract.py` — so that when a
+runtime lands, the rules it has to satisfy already exist rather than
+being invented under pressure to make a demo work.
+
+**Today every load-bearing physics package is REFUSED**, and a test
+asserts that so it cannot drift quietly. No runtime means no replay
+evidence, and no evidence is a refusal rather than a pending acceptance.
+
+### 6.1 Two questions that must not merge
+
+| | Identity | Qualification |
+|---|---|---|
+| Asks | does this host grant `manipulate` at all? | does it count as the *guaranteed* provider for a mandatory route? |
+| Type | **Boolean**, from verb-set membership | **numeric**, `700 N` / `20.0 m` / `120 kg` |
+| Read by | the verifier, and only the verifier | §29.4's Zone-entry check, and nowhere else |
+| Stored | no | **no** — recomputed at entry from the resolved loadout, so a player cannot qualify by equipping Gear they then remove |
+
+A sub-envelope host is real content: it manipulates, solves optional
+routes, and is composable. It is simply not the thing that unlocks a
+gated Zone — exactly as a `DASH` under `8.0 m` does not satisfy
+`long_gap`. **Keeping them apart is what keeps a newton out of the state
+vector.**
+
+### 6.2 What the engine lane owes, concretely
+
+**A body.** A manipulable object declaring what the bridge's contract
+reasons about:
+
+```json
+{"body_id": "crate_a", "mass_kg": 80.0, "constrained": false,
+ "rest_region": "room:c014:basin"}
+```
+
+**An interaction.** A verb resolving to numbers the envelope compares:
+
+```json
+{"verb": "PUSH", "force_n": 700.0, "range_m": 20.0,
+ "mass_limit_kg": 120.0}
+```
+
+`PUSH`, `PULL` and `HOLD` grant `manipulate`; the other nine verbs never
+do. Identity is the verb; the numbers are qualification and are a
+different question.
+
+**Evidence.** The one the whole gate turns on — §23.5 check 20's replay:
+
+```json
+{"runs": 3, "latched": 3,
+ "provider_force_n": 700.0, "provider_range_m": 20.0,
+ "provider_mass_kg": 120.0,
+ "latched_ids": ["basin_bridge_down"]}
+```
+
+**Three runs, all latched, at EXACTLY the envelope.** Replaying above it
+proves a strong provider can solve the puzzle, which is not the claim
+check 20 makes — a package that passes must be solvable by *every*
+qualifying provider. Evidence at `2000 N` is refused, and so is
+`2/3` runs, and so is evidence that latched something other than the
+latch the package promotes. All four refusals are tested.
+
+### 6.3 Sequence
+
+Nothing above needs the full physics system. In order:
+
+1. **A rigid body that rests and can be pushed** — the substrate. Until
+   this exists nothing else can be measured.
+2. **One verb resolving to force, range and mass** — enough to evaluate
+   the envelope for one host.
+3. **The headless replay harness** — three runs at fixed solver
+   settings against a synthetic provider at exactly the envelope,
+   reporting which `latch_id`s latched. **This is the deliverable the
+   bridge is waiting on**; the schema for its output already exists and
+   is validated.
+
 ## 6. What remains in this lane
 
 - Consume a real `layout_result` (§4.1) and commit a real manifest.
