@@ -153,6 +153,8 @@ var _slice1 := false
 ## lands, this is what it replaces.
 var _zone_resume := {}
 var _zone_stations := {}
+var _zone_keys := {}
+var _zone_locks_open := {}
 
 ## Everything the real game needs, extracted so a test can call it.
 ##
@@ -476,6 +478,8 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	var zid := str(record.get("zone_id", ""))
 	zone.resume_anchor = str(_zone_resume.get(zid, ""))
 	zone.stations_online = _zone_stations.get(zid, {})
+	zone.keys_carried = _zone_keys.get(zid, {})
+	zone.locks_carried = _zone_locks_open.get(zid, {})
 	zone.setup(Slice1Fixture.decorate(zone_dict) if _slice1 else zone_dict)
 	zone.exit_requested.connect(_on_exit_zone)
 	hud.bind_player(zone.player)
@@ -557,6 +561,8 @@ func _remember_zone_progress() -> void:
 		return
 	_zone_resume[zone.zone_id] = zone.resume_anchor
 	_zone_stations[zone.zone_id] = zone.stations_reached()
+	_zone_keys[zone.zone_id] = zone.keys_held()
+	_zone_locks_open[zone.zone_id] = zone.locks_opened()
 
 func _on_abandon() -> void:
 	pause_menu.close()

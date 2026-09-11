@@ -281,6 +281,43 @@ static func _is_a_collar(size: Vector3) -> bool:
 ## two orders looser so a collar built to spec is never reported.
 const COLLAR_SLACK := 0.1
 
+## Branches declared behind a door that is not a way through.
+##
+## A branch room is reached through ONE side socket and no other, so a
+## socket the door plan leaves `SEALED` -- or does not assign at all --
+## makes the branch unreachable. Nothing downstream can tell: the room
+## composes, its Checks are placed, and the player simply never sees it.
+## Refused before anything is allocated, like every other contradiction.
+##
+## `LOCKED` is fine and is the point: the owner's Missile door and the
+## Zone-local key both gate a branch rather than sealing it.
+static func unreachable_branches(zone: Dictionary) -> Dictionary:
+	var out := {}
+	for raw_chamber: Variant in zone.get("chambers", []):
+		if typeof(raw_chamber) != TYPE_DICTIONARY:
+			continue
+		var chamber: Dictionary = raw_chamber
+		if (chamber.get("branches", []) as Array).is_empty():
+			continue
+		var usage := {}
+		for raw_door: Variant in chamber.get("doors", []):
+			if typeof(raw_door) == TYPE_DICTIONARY:
+				usage[str((raw_door as Dictionary).get("socket_id", ""))] \
+						= str((raw_door as Dictionary).get("usage", ""))
+		for raw_branch: Variant in chamber.get("branches", []):
+			if typeof(raw_branch) != TYPE_DICTIONARY:
+				continue
+			var branch: Dictionary = raw_branch
+			var socket := str(branch.get("socket_id", ""))
+			var how := str(usage.get(socket, "UNASSIGNED"))
+			if how == "USED" or how == "LOCKED":
+				continue
+			var rid := str(chamber.get("id", "?"))
+			var hit: Array = out.get(rid, [])
+			hit.append("%s is %s" % [socket, how])
+			out[rid] = hit
+	return out
+
 ## The sockets the chain itself walks through. A door on one of these is
 ## on the route from the entrance to the exit; anything else is a branch.
 const CHAIN_SOCKETS := ["entry", "exit"]
@@ -533,6 +570,15 @@ static func build(zone: Dictionary, theme_override := "",
 				"failed": "%d capability gate(s) stand on a chain "
 				% stranding.size() + "socket, which puts them between "
 				+ "the player and the Zone exit: %s" % str(stranding)}
+	var orphaned := unreachable_branches(zone)
+	if not orphaned.is_empty():
+		return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+				"policy": routing_policy([], policy_override),
+				"blocking_rooms": orphaned.keys(),
+				"blocking_pairs": [],
+				"failed": "%d room(s) declare a branch behind a socket "
+				% orphaned.size() + "that is not a way through: %s"
+				% str(orphaned)}
 	var links := {}
 	var room_transforms := {}
 	# ANCHORS ARE THE COMPOSER'S VOCABULARY FOR PLACES. A plug names one
@@ -773,6 +819,116 @@ static func build(zone: Dictionary, theme_override := "",
 			"chamber": chamber, "node": node, "build": result,
 			"xform": Transform3D(Basis(Vector3.UP, yaw), origin),
 		})
+		# BRANCHES: ROOMS THE CHAIN DOES NOT PASS THROUGH.
+		#
+		# Placed from the parent's SIDE socket, outward, using the same
+		# route search the chain uses -- a branch is not a special kind
+		# of geometry, it is the same placement problem started from a
+		# different door. It is placed BEFORE the chain continues, so
+		# every later room routes around it rather than through it.
+		#
+		# The chain's own `cursor`, `yaw` and turn state are untouched:
+		# a branch must not steer the Zone.
+		for raw_branch: Variant in chamber.get("branches", []):
+			if typeof(raw_branch) != TYPE_DICTIONARY:
+				continue
+			var branch: Dictionary = raw_branch
+			var b_chamber: Dictionary = branch.get("chamber", {})
+			if b_chamber.is_empty():
+				continue
+			var socket_id := str(branch.get("socket_id", "side_left"))
+			var mouth := ChamberBuilders.socket_placed(socket_id,
+					float(chamber.get("width", 16.0)),
+					float(chamber.get("depth", 16.0)))
+			if mouth.is_empty():
+				push_warning("zone: branch on unknown socket '%s'"
+						% socket_id)
+				continue
+			# OUTWARD IS DERIVED, NOT READ. A socket declares a `yaw`
+			# and the two side sockets declare inward-facing ones, so
+			# trusting that field would have sent every branch back
+			# through the room it came from. The direction from the
+			# room's centre line to the socket cannot be ambiguous.
+			var out_dir := -1.0 if socket_id == "side_left" else 1.0
+			var b_yaw := yaw + out_dir * PI / 2.0
+			var b_result := ContentInstantiator.build_chamber(
+					b_chamber, theme)
+			var b_entry: Vector3 = b_result.get("entry_offset",
+					RoomContract.LEGACY_ENTRY)
+			# ONE CONNECTOR ALWAYS, and it is not decoration.
+			#
+			# Without it the search happily placed the branch flush
+			# against the junction and returned a route of zero pieces:
+			# the two envelopes abutted, each room's floor stopped at its
+			# own wall, and the half-metre of wall between them had NO
+			# FLOOR AT ALL. The aperture was carved, the lock opened, the
+			# audit passed, and a player walking through the door fell
+			# into the gap. Measured, not reasoned about -- the flood
+			# reported no standable column at z=66.75 or z=66.50 with
+			# standable floor on both sides of it.
+			#
+			# The chain never hit this because it lays a linking
+			# connector between every pair of rooms. A branch is a join
+			# like any other and gets one too.
+			var b_link: Array = []
+			var mouth_at: Vector3 = origin \
+					+ _rot(yaw, mouth["position"] as Vector3)
+			b_link.append({"kind": "CONNECTOR", "position": mouth_at,
+					"yaw": b_yaw, "bounds": _world_aabb(
+							shape["bounds"] as AABB, mouth_at, b_yaw)})
+			var b_cursor := _emit_connector(root, theme, mouth_at,
+					b_yaw, placed, bounds_list)
+			var b_plan := _plan_route(shape, corners,
+					b_result["bounds"] as AABB, b_entry, b_cursor,
+					b_yaw, placed, 0)
+			if not bool(b_plan["ok"]):
+				(b_result["root"] as Node3D).free()
+				(result["root"] as Node3D).free()
+				root.free()
+				return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+						"policy": routing_policy(placed, policy_override),
+						"blocking_rooms": [str(b_chamber.get("id", "?"))],
+						"blocking_pairs": [],
+						"failed": "branch room '%s' off '%s' could not "
+						% [str(b_chamber.get("id", "?")), rid]
+						+ "be placed clear of the %d room(s) already "
+						% placed.size() + "standing"}
+			var b_walked := _emit_route(root, theme, b_plan, b_cursor,
+					b_yaw, placed, bounds_list, b_link)
+			var b_origin := origin_for(b_walked["cursor"],
+					float(b_walked["yaw"]), b_entry)
+			var b_node: Node3D = b_result["root"]
+			var b_id := str(b_chamber.get("id", "branch"))
+			b_node.name = "Chamber_%s" % b_id
+			b_node.position = b_origin
+			b_node.rotation.y = float(b_walked["yaw"])
+			root.add_child(b_node)
+			var b_world := _world_aabb(b_result["bounds"], b_origin,
+					float(b_walked["yaw"]))
+			placed.append(b_world)
+			bounds_list.append(b_world)
+			links[b_id] = b_link
+			var b_arrive: Vector3 = b_result.get("player_entry", {}).get(
+					"position", Vector3(0, 0, 3.0)) \
+					if typeof(b_result.get("player_entry")) \
+							== TYPE_DICTIONARY \
+						and not (b_result["player_entry"] as Dictionary) \
+							.is_empty() \
+					else Vector3(0, 0, 3.0)
+			anchors["room:%s:arrival" % b_id] = b_origin \
+					+ _rot(float(b_walked["yaw"]), b_arrive)
+			room_transforms[b_id] = {"position": b_origin,
+					"yaw": float(b_walked["yaw"]), "bounds": b_world,
+					"arrival": anchors["room:%s:arrival" % b_id]}
+			# ON `built_chambers`, so a branch is a room to everything
+			# downstream: its Checks, activities and enemies are wired by
+			# the same controller code that wires the chain's.
+			built_chambers.append({
+				"chamber": b_chamber, "node": b_node, "build": b_result,
+				"xform": Transform3D(
+						Basis(Vector3.UP, float(b_walked["yaw"])),
+						b_origin),
+			})
 		cursor = exit_cursor(origin, yaw, result["exit_offset"])
 		# P2-B: A ROOM MAY TURN THE CHAIN. Applied after the room is
 		# placed and its cursor advanced, so the room itself is still

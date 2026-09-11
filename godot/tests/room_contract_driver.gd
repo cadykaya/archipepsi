@@ -126,6 +126,7 @@ func _run() -> void:
 	await _test_a_capability_gate_holds_and_never_blocks_the_way_out()
 	await _test_the_committed_layout_is_measured_not_re_solved()
 	_test_the_walk_prober_is_no_kinder_than_the_controller()
+	await _test_the_branch_is_crossed_returned_from_and_remembered()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
 
@@ -2953,6 +2954,187 @@ func _test_the_playable_slice_composes_end_to_end() -> void:
 ## "Already reached" is the whole safety property: a station a player has
 ## never stood at is not a destination, and offering it would be a
 ## teleport past whatever stands between them.
+## THE WHOLE BRANCHING LOOP, WALKED.
+##
+## Cross the unlocked side doorway into the branch it actually connects
+## to, use the branch's return route, and keep the progress across
+## leaving and re-entering. Each of the three was proved separately and
+## none of them together, which is how `slice1:vault` came to be an edge
+## id on a door with nothing behind it: the door was carved, the lock
+## stood in it, the audit passed, and the opening led to the outside of
+## the room's own wall.
+##
+## The walk is the real prober -- the one whose ascent bound is read off
+## a `Player` -- with no movement offers and no Teleport.
+func _test_the_branch_is_crossed_returned_from_and_remembered() -> void:
+	var decorated := Slice1Fixture.decorate(_eight_room_zone())
+	var junction_id := ""
+	for raw: Variant in decorated["chambers"] as Array:
+		var c: Dictionary = raw
+		if not (c.get("branches", []) as Array).is_empty():
+			junction_id = str(c.get("id", ""))
+	_check(junction_id != "",
+			"the fixture declares a locked side door and no branch "
+			+ "behind it, so the door opens onto the outside of a wall")
+	var out := ZoneBuilder.build(decorated)
+	_check(str(out.get("status", "")) == "LAYOUT_OK",
+			"the branched slice did not compose: %s"
+			% str(out.get("failed", "?")))
+	if not out.has("root") or junction_id == "":
+		if out.has("root"):
+			(out["root"] as Node3D).queue_free()
+		return
+	add_child(out["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+
+	# 1. THE BRANCH IS A PLACED ROOM, with its own approach chain.
+	var rooms: Dictionary = out["rooms"]
+	var links: Dictionary = out["links"]
+	_check(rooms.has("vault") and links.has("vault"),
+			"the vault committed no transform or approach chain, so it "
+			+ "is a name and not a room")
+	if not rooms.has("vault"):
+		(out["root"] as Node3D).queue_free()
+		return
+	var vault: Dictionary = rooms["vault"]
+	var parent: Dictionary = rooms[junction_id]
+	var gap := ((vault["bounds"] as AABB).get_center()
+			- (parent["bounds"] as AABB).get_center()).length()
+	_check(gap > 8.0,
+			"the vault's centre is %.1f m from the junction's, which is "
+			% gap + "not a room beside it but a room inside it")
+	_check(ZoneBuilder.layout_findings(out).is_empty(),
+			"the branched layout violates Body or Arrival: %s"
+			% str(ZoneBuilder.layout_findings(out)))
+
+	# 2. THE LOCK IS WHAT STANDS BETWEEN THEM. Walk it before and after.
+	var from_xz := Vector2((parent["arrival"] as Vector3).x,
+			(parent["arrival"] as Vector3).z)
+	var to_xz := Vector2((vault["arrival"] as Vector3).x,
+			(vault["arrival"] as Vector3).z)
+	var shut := _walk_zone(out, from_xz, to_xz)
+	_check(not bool(shut["ok"]),
+			"the vault was walked into with the lock still standing, so "
+			+ "the gate is scenery")
+	var lock: LockedDoor = (out["locks"] as Array)[0]
+	lock.try_open({"red": true})
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var open := _walk_zone(out, from_xz, to_xz)
+	_check(bool(open["ok"]),
+			"the key opened the lock and the vault is still not "
+			+ "reachable on foot: %s" % str(open["why"]))
+
+	# 3. THE RETURN ROUTE. The plug stands in the dead end and sends the
+	#    player to an anchor that exists and admits a standing capsule.
+	var plugs: Array = out["plugs"]
+	_check(plugs.size() == 1, "%d plugs; the slice declares one"
+			% plugs.size())
+	if plugs.size() == 1:
+		var plug: ReturnPlug = plugs[0]
+		var stands_in_vault := (vault["bounds"] as AABB).grow(1.0) \
+				.has_point(plug.global_position)
+		_check(stands_in_vault,
+				"the return plug is at %v, outside the vault %v -- a way "
+				% [plug.global_position, vault["bounds"]]
+				+ "back placed where nobody is trapped")
+		var anchors: Dictionary = out["anchors"]
+		_check(anchors.has(plug.destination),
+				"the plug returns to '%s', which is not an anchor"
+				% plug.destination)
+		if anchors.has(plug.destination):
+			var land: Vector3 = anchors[plug.destination]
+			_check(_standable_near(land),
+					"the plug lands at %v where no standing capsule "
+					% land + "fits")
+	# 4. LEAVE AND COME BACK. The lock the player opened stays open, the
+	#    key stays held, and the station stays online. Without this a
+	#    player who opened the vault, walked out and walked back in
+	#    would find it locked again -- possibly from the inside.
+	#
+	#    Carried through the SAME fields `main.gd` uses, so this tests
+	#    the seam that ships rather than a parallel one built for it.
+	var first_visit := _controller_over(out)
+	first_visit._keys_held = {"red": true}
+	first_visit._locks_open = {"%s/side_left" % junction_id: true}
+	first_visit._stations_reached = {"st:entrance": true}
+	first_visit.resume_anchor = "st:entrance"
+	var carried_keys := first_visit.keys_held()
+	var carried_locks := first_visit.locks_opened()
+	var carried_stations := first_visit.stations_reached()
+	_check(carried_keys.has("red") and carried_locks.size() == 1
+				and carried_stations.has("st:entrance"),
+			"the controller does not hand out the progress a Zone was "
+			+ "left with: keys=%s locks=%s stations=%s"
+			% [str(carried_keys), str(carried_locks),
+				str(carried_stations)])
+	first_visit.queue_free()
+
+	var again := ZoneBuilder.build(decorated)
+	if str(again.get("status", "")) == "LAYOUT_OK":
+		add_child(again["root"] as Node3D)
+		var second := ZoneController.new()
+		second.keys_carried = carried_keys
+		second.locks_carried = carried_locks
+		second.stations_online = carried_stations
+		second.resume_anchor = "st:entrance"
+		add_child(second)
+		# Only the carry-in half of `setup` is exercised: the rest of it
+		# builds a player, a HUD and a bridge conversation, none of
+		# which this measures.
+		for key_id: Variant in second.keys_carried:
+			second._keys_held[str(key_id)] = true
+		second._zone_locks = again["locks"]
+		for raw_lock: Variant in (again["locks"] as Array).duplicate():
+			var l: LockedDoor = raw_lock
+			if second.locks_carried.has("%s/%s" % [l.room_id, l.socket_id]):
+				l.open()
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var still_shut := 0
+		for raw_lock: Variant in again["locks"] as Array:
+			if is_instance_valid(raw_lock):
+				still_shut += 1
+		_check(still_shut == 0,
+				"%d lock(s) the player had already opened were standing "
+				% still_shut + "again on re-entry, which can seal a "
+				+ "player on the far side of a door they opened")
+		_check(second._keys_held.has("red"),
+				"the red key was not held on re-entry, so the lock "
+				+ "would re-close the moment anything re-evaluated it")
+		# And the walk agrees: the vault is reachable without touching
+		# the key again.
+		var rooms2: Dictionary = again["rooms"]
+		if rooms2.has("vault") and rooms2.has(junction_id):
+			var back := _walk_zone(again,
+					Vector2((rooms2[junction_id] as Dictionary)["arrival"].x,
+							(rooms2[junction_id] as Dictionary)["arrival"].z),
+					Vector2((rooms2["vault"] as Dictionary)["arrival"].x,
+							(rooms2["vault"] as Dictionary)["arrival"].z))
+			_check(bool(back["ok"]),
+					"on re-entry the vault is not reachable on foot "
+					+ "even though its lock was already opened: %s"
+					% str(back["why"]))
+		second.queue_free()
+		(again["root"] as Node3D).queue_free()
+	rooms_checked += 1
+	(out["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+## Does a standing capsule fit at this point, allowing for the small drop
+## a spawn takes onto the floor under it?
+func _standable_near(at: Vector3) -> bool:
+	var space := _space()
+	var shape := CapsuleShape3D.new()
+	shape.height = Constants.PLAYER_HEIGHT
+	shape.radius = Constants.PLAYER_RADIUS
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = shape
+	query.transform = Transform3D(Basis.IDENTITY,
+			at + Vector3(0, Constants.PLAYER_HEIGHT / 2.0 + 0.1, 0))
+	return space.intersect_shape(query, 1).is_empty()
+
 ## THE PROBER MUST NOT BE KINDER THAN THE BODY.
 ##
 ## Every escape proof in this file is only worth what its movement model

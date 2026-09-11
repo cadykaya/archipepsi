@@ -101,6 +101,16 @@ var _stations: Array = []
 ## the exception the contract names: a POSITION, overwritten rather than
 ## accumulated, and losing it costs a walk rather than a run.
 var _stations_reached := {}
+## PROGRESS CARRIED IN, set before `setup` by whoever is remembering.
+##
+## `locked_door.gd` already states the rule this serves: opened locks are
+## "a growing set, which is what makes a resume safe: a reload can never
+## put the player back behind a door they have already opened". Stations
+## were being carried and these were not, so walking out of a Zone and
+## back in re-locked every door and took the keys away -- and the player
+## could be standing on the far side of one when it happened.
+var keys_carried := {}
+var locks_carried := {}
 ## activity id -> the room it stands in, for station repair.
 var _activity_room := {}
 var resume_anchor := ""
@@ -186,10 +196,22 @@ func setup(zone_dict: Dictionary) -> void:
 			station.repair()
 			station.mark_reached()
 			_stations_reached[station.station_id] = true
+	# KEYS FIRST, so a lock wired below opens on the same frame rather
+	# than standing shut until the player touches something.
+	for key_id: Variant in keys_carried:
+		_keys_held[str(key_id)] = true
 	_zone_locks = build.get("locks", [])
 	for raw_lock: Variant in _zone_locks:
 		var lock: LockedDoor = raw_lock
 		lock.opened.connect(_on_lock_opened)
+	# A DOOR ALREADY OPENED STAYS OPENED, whatever opened it. A
+	# capability gate the player passed with an Echo they have since
+	# unequipped is still a door they have been through.
+	for raw_lock: Variant in _zone_locks.duplicate():
+		var lock: LockedDoor = raw_lock
+		if locks_carried.has("%s/%s" % [lock.room_id, lock.socket_id]):
+			lock.open()
+	_open_what_the_keys_allow()
 
 	player = Player.create()
 	add_child(player)
@@ -497,6 +519,13 @@ func _next_reached(from_id: String) -> String:
 	if at < 0:
 		return order[0]
 	return order[(at + 1) % order.size()]
+
+## The keys and the opened locks, for whoever is carrying progress out.
+func keys_held() -> Dictionary:
+	return _keys_held.duplicate()
+
+func locks_opened() -> Dictionary:
+	return _locks_open.duplicate()
 
 ## Which stations are online, for whoever is carrying progress out.
 func stations_reached() -> Dictionary:

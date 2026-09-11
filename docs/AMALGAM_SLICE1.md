@@ -95,6 +95,7 @@ that was verified by removing them.
 | **The committed layout is measured, not re-solved** | `zone_builder.gd` `layout_findings` | §30.11.2e Body and Arrival over every committed room pair; two rooms stacked, a face-wide sliver and an arrival 50 m outside its room are each caught, and one doorway of shared wall is not |
 | **Everything built is committed** | `zone_builder.gd`, `room_contract_driver.gd` `_box_key` | every box in `bounds_list` is accounted for by a committed room or chain piece; the check found two real omissions (§5i) |
 | **The walk prober is no kinder than the body** | `room_contract_driver.gd` `_rise_over`, `_is_a_ramp` | the ascent bound is read off a real `Player`'s `floor_max_angle` and is strictly less than `MAX_VERTICAL_STEP`; with climbing disabled all three escape proofs fail, so the rule is live |
+| **A branch is a placed room, crossed, returned from and remembered** | `zone_builder.gd` branches, `slice1_fixture.gd`, `zone_controller.gd` carried progress | the vault is refused reachable with the lock standing and reachable once it opens, its plug lands standable at `zone_start`, and the opened lock, the key and the station all survive a leave and a re-entry |
 
 ## 4. Implemented but not integrated
 
@@ -131,14 +132,59 @@ that was verified by removing them.
 - **§30.11.2e constraint 1 (Join).** Needs the socket assignment to say
   which two sockets are supposed to meet, which is the bridge column.
   Constraints 2 and 4 are measured (§5h); 3 is refused (§5e).
-- **Where a branch comes from.** The gate is built and proved, and the
-  router still composes a chain, so the only sockets a gate can legally
-  stand on are ones nothing is attached to yet. A gated dead-end branch
-  full of Checks — the owner's Missile-door example — needs the branch
-  rooms the bridge column assigns.
+- **A branch's own keys, locks and stations.** The branch is a room to
+  everything downstream — its Checks, activities and enemies are wired by
+  the same controller code as the chain's — but the per-room key, lock
+  and station placement still runs only over `zone.chambers`. A branch
+  that wants its own locked door does not get one yet.
+- **Checks in the vault.** A Check id is an AP allocation, so the slice
+  fixture's branch carries a puzzle instead. The owner's design puts
+  Checks in a gated dead end and that arrives with `RoomAssignment`.
 - **Closing** a spatial cycle. Refusal is implemented and proved (§5e);
   the router still builds chains, so a Zone that wants a genuine loop
   gets a typed `LAYOUT_INFEASIBLE` naming the pair, not a layout.
+
+## 5k. The door opened onto the outside of a wall
+
+`slice1:vault` was an edge id on a `LOCKED` side door with **nothing
+behind it**. The aperture was carved, the lock stood in it, the seal
+probe measured it as a real hole, the audit passed — and the door led out
+of the room into empty space. Every part was proved and the thing they
+were parts of was not.
+
+A branch is a real room now: declared on its parent as
+`branches: [{socket_id, chamber}]`, placed off that side socket by the
+**same route search the chain uses**, before the chain continues, so
+every later room routes around it. It joins `built_chambers`, so its
+Checks, activities and enemies are wired by the same controller code as
+any other room's. A branch declared behind a socket the door plan leaves
+`SEALED` — or never assigns — is refused before anything is allocated;
+`LOCKED` is fine and is the point.
+
+**The connector into a branch is not decoration, and this is why.** The
+first version let the search place the branch flush against its parent
+and return a route of *zero* pieces. The envelopes abutted, each room's
+floor stopped at its own wall, and the half-metre between them **had no
+floor at all** — a player through the door fell into the gap. Found by
+measuring, not by reading: the flood reported no standable column at
+z=66.75 or z=66.50 with standable floor on both sides. The chain never
+hit it because it lays a linking connector between every pair of rooms;
+a branch is a join like any other and gets one too.
+
+Both failure modes are now sabotage cases in the suite, and they are
+caught by **different** measurements — which is the §5h point again:
+- flush abutment → Body reports a 28.80 m³ interpenetration;
+- the 0.4 m gap → Body reports nothing and the **walk** cannot cross.
+
+**Progress now survives leaving and re-entering.** `main.gd` carried the
+resume anchor and the online stations and carried neither the keys nor
+the opened locks, so a player who opened the vault, walked out and walked
+back in found it locked — possibly from the inside. `locked_door.gd`
+already stated the rule this breaks: opened locks are "a growing set,
+which is what makes a resume safe: a reload can never put the player back
+behind a door they have already opened". Both are carried now, through
+the same fields `main.gd` uses, and the re-entry walk confirms the vault
+is reachable without touching the key again.
 
 ## 5j. The prober climbed a metre the player cannot
 
@@ -439,6 +485,17 @@ the ground-socket loop now excludes `claimed` — the Check's pedestal box
 and every key's reserved space — and not only the band's declared
 regions. The pedestal is built after that loop runs, so `solid_boxes`
 cannot see it, and a socket could be offered inside it.
+
+## 6b. Owner rulings recorded
+
+- **2026-09-11 — a fully cleared Zone stays revisitable.** Completing the
+  final Check does not permanently close a Zone. This settles the
+  question this document had open against `06_THE_AMALGAM` §30.12.1, and
+  it is what `SOLUTIONS_CATALOGUE` §0-bis condition 5 ("the Zone remains
+  re-enterable") needs in order to be satisfiable at all — a capability
+  gate is only legal because the player can come back with the
+  capability. Nothing in the engine closed a Zone on completion, so
+  nothing had to change; it is recorded here so nothing starts to.
 
 ## 7. Interface status
 
