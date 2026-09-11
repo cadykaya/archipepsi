@@ -112,7 +112,12 @@ All three are one line each; the logic lives once in `_play-3ab.bat`,
 which is not for double-clicking.
 
 **Caveat, stated plainly:** these were written and reviewed on Linux and
-**I could not execute a Windows batch file to test them**. What is
+**I could not execute a Windows batch file to test them**. The first real
+run found one: stripping the quotes drag-and-drop adds to a path was done
+inside a parenthesised `if` block, where a `"` changes how cmd parses the
+rest of the block, so the quotes survived into `godot-path.txt` and cmd
+tried to run a command whose name was a quoted string. Everything that
+touches a path is at the top level now, and delayed expansion is gone. What is
 verified is everything they call — the bridge command, `playtest check`,
 the port they wait on (`127.0.0.1:38290`, confirmed by starting the real
 bridge), and the Godot argument form. If one misbehaves, §4 below is the
