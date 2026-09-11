@@ -72,12 +72,25 @@ VARIANTS = {"trim_plain": "trim", "wall_ribbed": "wall"}
 #: -- not because it matched a regular expression. A thirteenth shell
 #: does not inherit the exemption by looking similar.
 LEGACY_SHELLS = {
+    # The twelve approved P2/P3/Wave-1 shells, measured at art `a2b6d59`.
     "shell_corner_left": "cl", "shell_corner_right": "cr",
     "shell_hall_transit": "hl", "shell_plenum_helix": "pl",
     "shell_span_basin": "sp", "shell_tower_collapsed": "tc",
     "shell_tower_gantry": "tg", "shell_tower_spiral": "ts",
     "shell_treasure_cache": "rc", "shell_treasure_coffer": "rf",
     "shell_treasure_vault": "rv", "shell_yard_gantry": "yd",
+    # The eleven room-shell vocabulary shells of Batches 015-019, DECLARED
+    # 2026-09-11 after `check_theme_roles.py` found that nothing had ever
+    # classified them. There are twenty-three shells on disk and the Batch
+    # 041 role map covered twelve; these eleven were approved vocabulary
+    # sitting outside every check. Each prefix below was read from the
+    # shell's own exported material names, not guessed from its id.
+    "shell_arena_balcony": "ab", "shell_arena_pillars": "aq",
+    "shell_arena_pit": "ap", "shell_arena_split": "as",
+    "shell_corridor_bays": "cb", "shell_corridor_gallery": "cg",
+    "shell_corridor_narrow": "cn", "shell_corridor_stepped": "cs",
+    "shell_path_ascent": "pa", "shell_path_spans": "pn",
+    "shell_path_stagger": "ps",
 }
 
 SUFFIX = re.compile(r"\.(\d{3})$")

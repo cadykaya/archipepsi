@@ -290,6 +290,40 @@ and runs.
 * **It ships nowhere.** `assets/textures/theme/concrete_facility_wall.png`
   is unchanged and no approved asset was touched.
 
+### Theme-pack gap 2 CLOSED on the Art side (2026-09-11)
+
+Report: `docs/art/reports/2026-09-11-theme-role-gate.md`. Tooling and
+documentation only; every `.glb` byte-identical.
+
+The role convention is now **declared and enforced** by
+`tools/content/check_theme_roles.py`, running inside
+`tools/check_art_current.sh`. Two findings got it there:
+
+* **There are 23 shells on disk and the Batch 041 role map covered 12.** The
+  eleven arena / corridor / path shells of Batches 015–019 were approved
+  vocabulary that nothing had ever classified. They follow the same
+  `<prefix>_<role>` convention; each prefix was read from the shell's own
+  exported names and is now declared. The role map grows from **597 slots
+  across 12** to **894 across 23**, still 0 unknown and 0 refused.
+* **Nothing checked the themes at all.** The gate now also asserts that every
+  role a shell uses exists in every theme, that an optional role's §8.2
+  fallback is present when it is missing, and — enforcing the owner's
+  2026-09-10 ruling — that **no theme ships its own `hazard` texture**,
+  because a pack must resolve `hazard` to the shared universal material and
+  must not re-tint it.
+
+A shell that is neither canonically named nor declared is **refused**. A
+thirteenth shell does not inherit the exemption by looking similar.
+
+Sabotage found one hole before the gate was trusted: the universal-role
+check ran only for roles a shell uses, no shell uses `hazard`, so a
+theme-tinted hazard texture passed silently. It runs unconditionally now.
+
+**Still Production's, and still open:** the material-mode and
+`protected_materials` fields, where the six-theme texture set lands, and the
+binder itself. Gap 4 (`THEME` as a build argument) remains the next
+Art-owned item and is unblocked.
+
 ### Batch 043 — the Amalgam preparation batch (2026-09-11)
 
 Report: `docs/art/reports/2026-09-11-batch043.md`. Packages:

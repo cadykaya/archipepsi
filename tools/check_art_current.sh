@@ -22,6 +22,10 @@
 #   * the palette's anchors still match THEME_MATERIALS, every ramp still
 #     contains its own anchor, and the value sandwich still holds
 #   * the numbers ART_REVIEW.md and ASSET_INVENTORY.md quote match the build
+#   * every shell's material names still resolve to a theme role, and every
+#     theme still carries every role a shell uses
+#   * every declared runtime size and attachment point still matches the
+#     geometry that was exported
 #   * assets/art_budgets.json still matches its own derivation
 #   * every .glb and .png rebuilds byte-identical from its source
 #   * the preview project's renderer settings still match godot/'s
@@ -69,6 +73,22 @@ python3 tools/blender/check_docs_metrics.py >/dev/null || \
 # --- 4. budgets still match their own derivation ------------------------
 say "budgets match their derivation..."
 cp assets/art_budgets.json /tmp/art_budgets_committed.json
+# The theme role convention, over EVERY shell on disk rather than a list.
+# Cheap, and gap 2 of the theme-pack queue: nothing else stops the next
+# builder naming a surface something no binder can resolve.
+python3 tools/content/check_theme_roles.py >/dev/null || \
+  fail "check_theme_roles: a shell carries a material name that resolves to
+    no theme role, or a theme is short a role a shell uses. Run
+
+    python3 tools/content/check_theme_roles.py"
+
+# The Batch 043 candidates' declared geometry against what was exported.
+python3 tools/content/verify_exported_geometry.py >/dev/null || \
+  fail "verify-geometry: a declared runtime size or attachment point
+    disagrees with the exported .glb. Run
+
+    python3 tools/content/verify_exported_geometry.py"
+
 python3 tools/blender/derive_budgets.py --write >/dev/null
 if ! cmp -s assets/art_budgets.json /tmp/art_budgets_committed.json; then
   fail "assets/art_budgets.json no longer matches derive_budgets.py. Either a
