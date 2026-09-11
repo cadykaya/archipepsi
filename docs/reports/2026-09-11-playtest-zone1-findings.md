@@ -306,6 +306,31 @@ run of them is guaranteed dead space.
   currently emits a declared gated Check.** The missing piece is the
   declared path, not permission.
 
+- **ask** Make the Hub's multiworld board a destination map you can shoot
+  for information and travel through. Three builds, and the third needs an
+  owner ruling:
+  1. The cells have **no collider** — `hub.gd:455` builds each as
+     `b._box(root, ..., null, false)` and `_box`'s last parameter is
+     `collide := true`. A hitscan passes through the panel.
+  2. **A cell is not a world.** `hub.gd:594`: *"One cell per BUCKET of
+     Checks."* At 450 locations over ~30 cells one square is 15 of the
+     player's own Checks, tinted by state, labelled with whichever game
+     owns the first location in the bucket. It is titled THE MULTIWORLD
+     and looks exactly like a departure board, so it is read as a map of
+     places — a legibility defect on its own terms, whatever is decided
+     about travel.
+  3. **Nothing in the protocol carries a destination.**
+     `handle_request_next_zone(finale: bool)` takes one boolean;
+     `_select_zone_locations` (`campaign.py:360`) walks `save.track_order`
+     from `save.track_cursor` and takes the first track with anything
+     eligible. Round-robin, player never consulted. Replacing that scan
+     with a player choice is small; keeping Archipelago's guarantee that
+     progression stays obtainable while the player picks the order is the
+     part that is a campaign-structure decision, not an implementation
+     one. Related: this is the constructive form of the one-way-Zone
+     finding — a board that picks destinations is what lets a deferred
+     Check be returned to.
+
 ---
 
 ## 4. Corrections to earlier reports of mine
