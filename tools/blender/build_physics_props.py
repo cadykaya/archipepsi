@@ -3,10 +3,16 @@
     .tools/blender/blender -b --python tools/blender/build_physics_props.py
 
 Design 2 §10.1, pinned by Design 6 §4.7, gives twelve object classes with a
-typical mass, a carriable flag and a manipulable flag. Four are built here to
-textured, exported candidates: `POWER_CELL`, `MECHANICAL_PART`, `GIRDER` and
-`BALLAST`. The other eight are mapped against the existing catalogue in
+typical mass, a carriable flag and a manipulable flag. SIX are built here to
+textured, exported candidates: `KEY_COMPONENT`, `POWER_CELL`,
+`MECHANICAL_PART`, `GIRDER`, `WEIGHTED` and `BALLAST`. The other six are
+mapped against the existing catalogue in
 docs/art/review/props_2026-09-11/CLASS_MAP.md and not built.
+
+The six were chosen to make the family's MASS LADDER complete and legible in
+one line-up -- 8, 40, 55, 95, 140, 320 kg -- because the question a player
+asks of one of these objects is "can I lift that", and the answer is only
+learnable by comparison.
 
 ## THE FAMILY RULE, AND WHY IT IS CONSTRUCTION AND NOT COLOUR
 
@@ -34,9 +40,11 @@ dark fitting on it" and "you can do something to it" are the same statement.
 The second half of the rule is the read between carriable and merely
 manipulable, which Design 2 §10.3 draws at 60 kg:
 
+    KEY_COMPONENT     8 kg   carriable      ONE hand-scale grip, on top
     POWER_CELL       40 kg   carriable      ONE hand-scale grip, on top
     MECHANICAL_PART  55 kg   carriable      ONE hand-scale grip, on top
     GIRDER           95 kg   manipulate     attach PADS at both ends, no grip
+    WEIGHTED        140 kg   manipulate     attach PADS on two faces, no grip
     BALLAST         320 kg   manipulate     attach PADS on four faces, no grip
 
 A hand grip means a hand can lift it. Its absence, on an object that plainly
@@ -161,6 +169,77 @@ def mechanical_part():
     return shell, parts, attach
 
 
+def key_component():
+    """`KEY_COMPONENT`, 8 kg, carriable, "local key loops".
+
+    The lightest thing in the twelve, and the read is entirely scale. At
+    0.22 x 0.17 x 0.30 it is the only one that sits inside a silhouette a
+    player could close a hand around, and the keyed bit on its nose is the
+    whole of what it says: this goes in ONE thing, and you know which.
+    """
+    w, d, h = 0.22, 0.17, 0.30
+    body = [
+        brushkit.block("kc_case", (w, d, h * 0.74), (0.0, 0.0, h * 0.40)),
+        brushkit.block("kc_collar", (w * 1.12, d * 1.12, 0.045),
+                       (0.0, 0.0, h * 0.66)),
+        brushkit.block("kc_heel", (w * 0.86, d * 0.86, 0.035),
+                       (0.0, 0.0, 0.018)),
+        brushkit.block("kc_window", (w * 0.46, 0.02, h * 0.28),
+                       (0.0, -d / 2.0 - 0.005, h * 0.40)),
+    ]
+    shell = common.join(body, "phys_key_component")
+    parts = [
+        _grip("grip_bar", (0.11, 0.035, 0.032), (0.0, 0.0, h + 0.034)),
+        _grip("grip_post_l", (0.028, 0.035, 0.055), (-0.041, 0.0, h + 0.002)),
+        _grip("grip_post_r", (0.028, 0.035, 0.055), (0.041, 0.0, h + 0.002)),
+        # The key. Asymmetric on purpose: a symmetric bit would go in either
+        # way round, and then it is a plug rather than a key.
+        _grip("attach_bit", (0.055, 0.075, 0.075), (-0.028, 0.0, 0.038)),
+        _grip("attach_bit_ward", (0.030, 0.075, 0.038), (0.030, 0.0, 0.030)),
+    ]
+    attach = [{"id": "attach_bit", "at": [0.0, 0.0, 0.0],
+               "normal": [0.0, 0.0, -1.0],
+               "proposes": "a keyed underside; the ward is offset so the "
+                           "component enters a receiver one way round only"}]
+    return shell, parts, attach
+
+
+def weighted():
+    """`WEIGHTED`, 140 kg, NOT carriable, "pressure plates, counterweights".
+
+    Design 2 changed this class from carriable specifically so it would feel
+    different -- §10.1: "Design 1's cube puzzles are walked; Design 2's are
+    pushed, pulled, and dropped." So it must not read as a crate that got
+    bigger. It is battered, it tapers to a broad base, and it carries push
+    pads on two opposite faces and no hand grip at all.
+    """
+    w, d, h = 0.82, 0.82, 0.74
+    body = [
+        brushkit.block("wt_base", (w, d, h * 0.24), (0.0, 0.0, h * 0.12)),
+        brushkit.block("wt_body", (w * 0.88, d * 0.88, h * 0.60),
+                       (0.0, 0.0, h * 0.54)),
+        brushkit.block("wt_cap", (w * 0.96, d * 0.96, h * 0.10),
+                       (0.0, 0.0, h * 0.89)),
+    ]
+    for sx in (-1.0, 1.0):
+        for sy in (-1.0, 1.0):
+            body.append(brushkit.block(
+                "wt_post_%d_%d" % (int(sx), int(sy)), (0.075, 0.075, h * 0.72),
+                (sx * (w / 2.0 - 0.05), sy * (d / 2.0 - 0.05), h * 0.48)))
+    shell = common.join(body, "phys_weighted")
+    parts, attach = [], []
+    for i, sy in enumerate((-1.0, 1.0)):
+        py = sy * (d / 2.0 + 0.020)
+        parts.append(_grip("attach_push_%d" % i, (0.30, 0.045, 0.18),
+                           (0.0, py, h * 0.52)))
+        attach.append({"id": "attach_push_%d" % i,
+                       "at": [0.0, py, h * 0.52], "normal": [0.0, sy, 0.0],
+                       "proposes": "a push face; two of them, opposite, "
+                                   "because this class is pushed along an "
+                                   "axis rather than carried"})
+    return shell, parts, attach
+
+
 def girder():
     """`GIRDER`, 95 kg, NOT carriable, "spans gaps; attaches at both ends".
 
@@ -239,10 +318,13 @@ def ballast():
 # ----------------------------------------------------------------------
 
 CLASSES = [
+    ("phys_key_component", "KEY_COMPONENT", 8.0, True, True, key_component,
+     "floor"),
     ("phys_power_cell", "POWER_CELL", 40.0, True, True, power_cell, "floor"),
     ("phys_mechanical_part", "MECHANICAL_PART", 55.0, True, True,
      mechanical_part, "floor"),
     ("phys_girder", "GIRDER", 95.0, False, True, girder, "floor"),
+    ("phys_weighted", "WEIGHTED", 140.0, False, True, weighted, "floor"),
     ("phys_ballast", "BALLAST", 320.0, False, True, ballast, "floor"),
 ]
 
@@ -306,7 +388,7 @@ def main():
         # `check_docs_metrics.py` reads a manifest's keys AS asset ids.
         shared = {
             "batch": "043", "kind": "physics_props",
-            "status": "PROPOSAL -- four of Design 2 §10.1's twelve classes",
+            "status": "PROPOSAL -- six of Design 2 §10.1's twelve classes",
             "design": "Design 2 §10.1 classes and masses, §10.2 derived mass "
                       "class, §10.3 the 60 kg carry limit, §33.7 the "
                       "manipulable treatment; pinned by Design 6 §4.7",

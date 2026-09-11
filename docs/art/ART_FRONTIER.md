@@ -288,12 +288,15 @@ Three deliverables, from Design 6 at `a20bf55`:
   channel plus a swappable band, and three pieces carrying them. **No
   audio** — §19.5's hum, arrival click and rising pitch do not exist, and
   `delayed` is the state that suffers for it.
-* **The physics-prop family.** All twelve Design 2 §10.1 classes mapped;
-  four built (`phys_power_cell`, `phys_mechanical_part`, `phys_girder`,
-  `phys_ballast`). Family rule: **unpainted dark steel only where the
-  player's device touches**, and a hand grip only below §10.3's 60 kg line.
-  Four classes still have nothing: `WEIGHTED`, `KEY_COMPONENT`,
-  `MOVABLE_COVER`, `CART`.
+* **The physics-prop family.** All twelve Design 2 §10.1 classes mapped; six
+  built, completing the mass ladder **8 / 40 / 55 / 95 / 140 / 320 kg**:
+  `phys_key_component`, `phys_power_cell`, `phys_mechanical_part`,
+  `phys_girder`, `phys_weighted`, `phys_ballast`. Family rule: **unpainted
+  dark steel only where the player's device touches**, and a hand grip only
+  below §10.3's 60 kg line. **Two classes still have nothing:**
+  `MOVABLE_COVER` and `CART`. Two want adaptation (`PLATE`, `DRUM`) and
+  `ANCHOR_BLOCK` wants careful adaptation — the grapple anchors share its
+  word, not its mechanic.
 
 **The measured finding the owner asked for.** Batch 028's `state_visual`
 regions are material slots on one merged mesh, confirmed at `327c089` with

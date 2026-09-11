@@ -4,8 +4,8 @@
 
 Design 2 §10.1, pinned by Design 6 §4.7. Twelve classes, each with a typical
 mass and two flags. Below: what the catalogue already covers, what needs
-adaptation, what is missing, and which four were taken through to textured
-exported candidates.
+adaptation, what is missing, and which **six** were taken through to
+textured exported candidates.
 
 **Masses, carriable and manipulable are the design's and are quoted.
 Everything else in this file is a proposal.**
@@ -15,9 +15,9 @@ Everything else in this file is a proposal.**
 | class | mass | carry | manip | derived class | state | note |
 | --- | ---: | --- | --- | --- | --- | --- |
 | `GENERIC` | 15 | yes | yes | `LIGHT` | **COVERED** | `prop_crate`, PASS. 1.0 m — exactly `MAX_VERTICAL_STEP`, so it is also a step |
-| `WEIGHTED` | 140 | **no** | yes | `HEAVY` | **GAP** | nothing reads as 140 kg. A crate relabelled would lie about its mass, and §10.1 changed this class from carriable *specifically* so it would feel different |
+| `WEIGHTED` | 140 | **no** | yes | `HEAVY` | **BUILT** | `phys_weighted`. §10.1 changed this class from carriable *specifically* so it would feel different, so it must not read as a crate that got bigger |
 | `POWER_CELL` | 40 | yes | yes | `MEDIUM` | **BUILT** | `phys_power_cell` |
-| `KEY_COMPONENT` | 8 | yes | yes | `LIGHT` | **GAP** | the lightest class; wants hand scale and a socket read |
+| `KEY_COMPONENT` | 8 | yes | yes | `LIGHT` | **BUILT** | `phys_key_component`. The lightest of the twelve; the read is entirely scale |
 | `MECHANICAL_PART` | 55 | yes | yes | `MEDIUM` | **BUILT** | `phys_mechanical_part` |
 | `MOVABLE_COVER` | 220 | no | yes | `HEAVY` | **GAP** | `breakwall_panel` is a destructible, not a cover. Different mechanic, similar silhouette — do not reuse |
 | `CART` | 180 | no | yes | `HEAVY` | **GAP** | constrained to a floor path or rail; needs wheels or a rail shoe that says so |
@@ -32,13 +32,22 @@ derived column above is computed by `build_physics_props.py`, not typed.
 
 ---
 
-## Which four, and why those four
+## Which six, and why those six
 
-The brief named them, and the choice held up against the map: all four were
-**GAP**, so nothing was rebuilt that already existed, and between them they
-cover the whole range the family has to express — 40 kg you carry in one
-hand, 55 kg at the very top of the carry limit, 95 kg you drag and attach at
-both ends, and 320 kg you barely move at all.
+The brief named four — `POWER_CELL`, `MECHANICAL_PART`, `GIRDER`, `BALLAST` —
+and all four were **GAP**, so nothing was rebuilt that already existed.
+`KEY_COMPONENT` and `WEIGHTED` followed with the time that was left, and they
+were chosen over `CART` and `MOVABLE_COVER` for one reason: **they complete
+the mass ladder.**
+
+    8 kg    40 kg    55 kg   |  95 kg    140 kg    320 kg
+    ---- carriable ----------|---------- manipulate only ----------
+                        §10.3's 60 kg line
+
+The question a player asks of one of these objects is *"can I lift that"*,
+and the answer is only learnable by comparison. Six rungs make the ladder
+legible in a single line-up; four left two gaps in the middle of it.
+`room/PROPS_lineup.png` is that line-up.
 
 Where an existing candidate would have done, it was left alone: `GENERIC` and
 `DRUM` were not touched, and the effort went into the gaps instead.
@@ -70,8 +79,8 @@ manipulable, which §10.3 draws at 60 kg:
 
 | | fitting |
 | --- | --- |
-| `POWER_CELL` 40 kg, `MECHANICAL_PART` 55 kg | **one hand-scale D-grip**, on top |
-| `GIRDER` 95 kg, `BALLAST` 320 kg | **device attach pads**, and no grip at all |
+| `KEY_COMPONENT` 8, `POWER_CELL` 40, `MECHANICAL_PART` 55 kg | **one hand-scale D-grip**, on top |
+| `GIRDER` 95, `WEIGHTED` 140, `BALLAST` 320 kg | **device attach pads**, and no grip at all |
 
 A hand grip means a hand can lift it. Its absence, on an object that plainly
 has attachment features, means a device has to.
@@ -80,14 +89,21 @@ has attachment features, means a device has to.
 
 | | class | mass | derived | exported size (m) | tris |
 | --- | --- | ---: | --- | --- | ---: |
+| `phys_key_component` | `KEY_COMPONENT` | 8 | `LIGHT` | 0.25 × 0.20 × 0.35 | 108 |
 | `phys_power_cell` | `POWER_CELL` | 40 | `MEDIUM` | 0.34 × 0.34 × 0.60 | 148 |
 | `phys_mechanical_part` | `MECHANICAL_PART` | 55 | `MEDIUM` | 0.47 × 0.40 × 0.43 | 136 |
 | `phys_girder` | `GIRDER` | 95 | `MEDIUM` | 3.20 × 0.20 × 0.26 | 84 |
+| `phys_weighted` | `WEIGHTED` | 140 | `HEAVY` | 0.82 × 0.91 × 0.70 | 108 |
 | `phys_ballast` | `BALLAST` | 320 | `HEAVY` | 1.12 × 0.82 × 0.50 | 120 |
 
-All four are at 64 texels/m — the prop budget's target — origin floor-centred,
+All six are at 64 texels/m — the prop budget's target — origin floor-centred,
 +X the length and +Z up. Attachment points, with positions and normals, are
 in `assets/models/batch043/physics/manifest.json`.
+
+`phys_key_component`'s keyed bit is deliberately **asymmetric** — a symmetric
+bit would enter a receiver either way round, which makes it a plug rather
+than a key. `phys_weighted` carries its two attach pads on **opposite** faces
+because §10.1's own fixtures push it along an axis rather than lift it.
 
 **Every dimension above is a PROPOSED ART DIMENSION.** No runtime contract
 for object size or attachment interfaces exists, and this file is not one.

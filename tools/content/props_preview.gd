@@ -137,16 +137,25 @@ func _lineup() -> void:
 	## The four candidates together, at one scale, on one floor. A class
 	## family has to be readable as a family before any one of it is judged.
 	var w := _scene()
-	_put(w, "batch043/physics/phys_power_cell.glb", Vector3(-1.95, 0, 2.6), 18.0)
-	_put(w, "batch043/physics/phys_mechanical_part.glb", Vector3(-0.95, 0, 2.6), -24.0)
-	_put(w, "batch043/physics/phys_ballast.glb", Vector3(0.65, 0, 2.6), 12.0)
+	# The mass ladder, left to right: 8, 40, 55, 140, 320 kg, with the
+	# 95 kg girder lying across the front because it is 3.2 m long and
+	# standing it in the row would say nothing about its mass.
+	_put(w, "batch043/physics/phys_key_component.glb", Vector3(-2.35, 0, 2.6), 24.0)
+	_put(w, "batch043/physics/phys_power_cell.glb", Vector3(-1.65, 0, 2.6), 18.0)
+	_put(w, "batch043/physics/phys_mechanical_part.glb", Vector3(-0.80, 0, 2.6), -24.0)
+	_put(w, "batch043/physics/phys_weighted.glb", Vector3(0.35, 0, 2.6), -14.0)
+	_put(w, "batch043/physics/phys_ballast.glb", Vector3(1.75, 0, 2.6), 12.0)
 	_put(w, "batch043/physics/phys_girder.glb", Vector3(-0.10, 0, 4.15), 6.0)
-	await _shot(w, Vector3(0.0, 1.42, 5.8), Vector3(-0.2, 0.50, 2.7),
+	await _shot(w, Vector3(0.0, 1.42, 5.9), Vector3(-0.2, 0.50, 2.7),
 			"PROPS_lineup",
-			[["POWER_CELL 40 kg carriable", Vector2(60, 470)],
-			 ["MECHANICAL_PART 55 kg carriable", Vector2(370, 470)],
-			 ["BALLAST 320 kg manipulate", Vector2(770, 470)],
-			 ["GIRDER 95 kg manipulate -- 3.20 m", Vector2(400, 520)]])
+			[["8 kg", Vector2(120, 452)],
+			 ["40", Vector2(300, 452)],
+			 ["55", Vector2(452, 452)],
+			 ["140", Vector2(650, 452)],
+			 ["320 kg", Vector2(900, 452)],
+			 ["carriable, under §10.3's 60 kg line", Vector2(120, 490)],
+			 ["manipulate only", Vector2(650, 490)],
+			 ["GIRDER 95 kg manipulate -- 3.20 m", Vector2(400, 540)]])
 	_clear(w)
 
 func _family() -> void:
@@ -158,7 +167,7 @@ func _family() -> void:
 	var w := _scene()
 	_put(w, "batch043/physics/phys_power_cell.glb", Vector3(-2.15, 0, 3.2), 22.0)
 	_put(w, "batch043/physics/phys_mechanical_part.glb", Vector3(-1.25, 0, 3.2), -18.0)
-	_put(w, "batch043/physics/phys_ballast.glb", Vector3(-0.1, 0, 3.2), 10.0)
+	_put(w, "batch043/physics/phys_weighted.glb", Vector3(-0.1, 0, 3.2), 10.0)
 	_put(w, "batch001/props/prop_crate.glb", Vector3(1.15, 0, 3.2), 14.0)
 	_put(w, "batch010/dressing/prop_oil_drum.glb", Vector3(1.95, 0, 3.2), 0.0)
 	_put(w, "batch001/props/prop_debris.glb", Vector3(2.65, 0, 3.2), -30.0)
@@ -173,6 +182,10 @@ func _closeups() -> void:
 	## One frame each, at the distance a player decides whether to pick
 	## something up. The handling feature is what has to read here.
 	var jobs := [
+		["phys_key_component", Vector3(0, 0, 2.4), 28.0, 0.78,
+		 "KEY_COMPONENT 8 kg -- hand scale, and an asymmetric keyed bit"],
+		["phys_weighted", Vector3(0, 0, 2.4), -16.0, 1.05,
+		 "WEIGHTED 140 kg -- two opposite push faces, NO hand grip"],
 		["phys_power_cell", Vector3(0, 0, 2.4), 26.0, 1.05,
 		 "POWER_CELL -- one hand grip on top, socket lugs underneath"],
 		["phys_mechanical_part", Vector3(0, 0, 2.4), -32.0, 0.95,
