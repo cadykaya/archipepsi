@@ -21,6 +21,8 @@
      "note": null
     }
    ],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -44,6 +46,8 @@
    "flavor": null,
    "reward_location_id": 89100076,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -88,6 +92,8 @@
    "flavor": null,
    "reward_location_id": 89100089,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -129,6 +135,8 @@
      "note": null
     }
    ],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -159,6 +167,8 @@
    "flavor": null,
    "reward_location_id": 89100019,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -203,6 +213,8 @@
    "flavor": null,
    "reward_location_id": 89100042,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -241,6 +253,8 @@
    "flavor": null,
    "reward_location_id": null,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -264,6 +278,8 @@
    "flavor": null,
    "reward_location_id": 89100147,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -296,6 +312,8 @@
    "flavor": null,
    "reward_location_id": 89100093,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -333,6 +351,8 @@
    "flavor": null,
    "reward_location_id": null,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [],
    "shell_id": "shell_corner_right",
@@ -348,6 +368,8 @@
    "flavor": null,
    "reward_location_id": 89100110,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -385,6 +407,8 @@
    "flavor": null,
    "reward_location_id": 89100139,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -410,6 +434,8 @@
    "flavor": null,
    "reward_location_id": null,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [],
    "shell_id": "shell_corner_left",
@@ -425,6 +451,8 @@
    "flavor": null,
    "reward_location_id": 89100097,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -474,6 +502,8 @@
    "flavor": null,
    "reward_location_id": 89100055,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -511,6 +541,8 @@
    "flavor": null,
    "reward_location_id": null,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -534,6 +566,8 @@
    "flavor": null,
    "reward_location_id": 89100051,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -559,6 +593,8 @@
    "flavor": null,
    "reward_location_id": 89100005,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -590,6 +626,8 @@
    "flavor": null,
    "reward_location_id": null,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [],
    "shell_id": "shell_corner_left",
@@ -605,6 +643,8 @@
    "flavor": null,
    "reward_location_id": 89100025,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -636,6 +676,8 @@
    "flavor": null,
    "reward_location_id": 89100126,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -661,6 +703,8 @@
    "flavor": null,
    "reward_location_id": null,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -684,6 +728,8 @@
    "flavor": null,
    "reward_location_id": 89100068,
    "features": [],
+   "doors": [],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -710,5 +756,7 @@
    ],
    "elevation": null
   }
- ]
+ ],
+ "edges": [],
+ "plugs": []
 }
