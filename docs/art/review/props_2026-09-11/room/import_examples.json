@@ -1,0 +1,86 @@
+{
+  "carriable": {
+    "aabb_min_y": 0.0,
+    "asset": "phys_power_cell",
+    "grip_bar_end_after_yaw": [
+      2.59,
+      0.575,
+      -1.313
+    ],
+    "grip_world": [
+      2.5,
+      0.575,
+      -1.25
+    ],
+    "origin_is": "floor-anchored: local Y 0 is the ground plane",
+    "placed_at": [
+      2.5,
+      0.0,
+      -1.25
+    ],
+    "size_runtime": [
+      0.34,
+      0.6,
+      0.34
+    ],
+    "socket_normal_after_yaw": [
+      0.0,
+      -1.0,
+      0.0
+    ],
+    "socket_world_after_35deg_yaw": [
+      2.5,
+      0.004,
+      -1.25
+    ]
+  },
+  "fixed": {
+    "asset": "phys_anchor_block",
+    "fittings": [
+      "attach_eye"
+    ],
+    "grips_or_push_pads": 0,
+    "manipulable": false,
+    "mesh_nodes": [
+      "phys_anchor_block",
+      "attach_eye"
+    ],
+    "note": "no fitting exists for moving it; the eye is for attaching something to it",
+    "tether_eye_world": [
+      0.0,
+      0.651,
+      0.0
+    ]
+  },
+  "manipulate_only": {
+    "asset": "phys_ballast",
+    "carriable": false,
+    "facing_dot": 0.826,
+    "highlighted_by": "set_surface_override_material(0, ...) on that node",
+    "pad_facing_a_player_at_0_1.6_3": "attach_pad_0",
+    "pads": 4
+  },
+  "presentation": {
+    "conduit": {
+      "band_span_x": [
+        -1.0,
+        1.0
+      ],
+      "endpoints_move": false,
+      "fill_at_55pct_world_x": [
+        -1.0,
+        0.1
+      ],
+      "state_by": "swap state_band's material; never scale it",
+      "track_world_x": [
+        -1.0,
+        1.0
+      ]
+    },
+    "switch": {
+      "lens_node": "state_lens, one material slot",
+      "pivot_moved_m": 0.0,
+      "rotate": "hinge_lever, about X"
+    }
+  }
+}

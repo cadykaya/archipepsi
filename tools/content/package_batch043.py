@@ -88,6 +88,8 @@ SOURCE = uniq(
      "tools/content/inspect_glb_nodes.py",
      "tools/content/verify_exported_geometry.py",
      "tools/content/skin_compare.py",
+     "tools/content/import_examples.gd",
+     "tools/content/run_import_examples.sh",
      "tools/content/package_batch043.py",
      "tools/artpreview/artbench.gd",
      "assets/art_palette.json", "assets/art_budgets.json"]
@@ -154,8 +156,11 @@ unchanged.
 1. `docs/art/reports/2026-09-11-batch043.md` — the report.
 2. `docs/art/review/status_2026-09-11/DECISIONS_FOR_OWNER.md` — the five
    things that genuinely need you.
-3. `docs/art/BATCH_043_INTEGRATION.md` — the handoff: every addressable node,
-   how to drive it, what each coordinate means, and the six checks.
+3. `docs/art/BATCH_043_INTEGRATION.md` — **the handoff for Production and
+   Dess**, pinned to art `7ea95e2`: model paths, runtime dimensions,
+   attachment frames, named moving parts, material controls, four runnable
+   import examples with their measured output, and the open integration
+   dependencies.
 4. `docs/art/BATCH_043_INVENTORY.md` — what already existed, before anything
    new was made.
 
