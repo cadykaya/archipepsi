@@ -102,9 +102,93 @@ class Strict(BaseModel):
 #: v0.5 adds ABANDONED. Without it an unfinishable Zone blocked all further
 #: generation forever, with clear_campaign the only escape.
 ZoneState = Literal[
-    "PENDING_GENERATION", "GENERATED", "ACTIVE", "COMPLETE", "ABANDONED"
+    "PENDING_GENERATION", "GENERATED", "ACTIVE", "DORMANT", "COMPLETE",
+    "VISITING", "ABANDONED"
 ]
-TERMINAL_ZONE_STATES = ("COMPLETE", "ABANDONED")
+
+#: **Still reserves its AP locations, or not.** A COMPLETE Zone claimed
+#: everything it held and an ABANDONED one released it, so neither
+#: reserves anything — and neither does VISITING, which is a COMPLETE
+#: Zone with a player standing in it. This drives allocation and the
+#: one-holder-at-a-time invariant, and it is NOT a statement about
+#: whether a player can walk back in.
+#:
+#: **Going back must not re-reserve.** Sending a revisit through ACTIVE
+#: would make a finished Zone hold its old locations again, which both
+#: collides with whatever Zone is genuinely in flight and re-opens
+#: Checks the campaign already counted.
+TERMINAL_ZONE_STATES = ("COMPLETE", "VISITING", "ABANDONED")
+
+#: The player is standing in this Zone. Two states, because a Zone with
+#: work outstanding and a Zone being revisited are the same experience
+#: and different accounting.
+OCCUPIED_ZONE_STATES = ("ACTIVE", "VISITING")
+
+#: **Can a player walk back in?** A separate question from the one
+#: above, and the 2026-09-12 ruling is why it had to become one:
+#: claiming the final Check does not close the place. A player may come
+#: back for a room, a route, a station or a plug they never used, and
+#: "nothing remains" was only ever a claim about Checks.
+#:
+#: `ABANDONED` is the only state that is gone, and it is only ever
+#: reached deliberately.
+#:
+#: `DORMANT` — left with Checks outstanding — still reserves its
+#: locations, so it is NOT terminal above. That is what stops the
+#: allocator from reissuing a Check the player walked away from and
+#: means to come back for. One consequence, deliberately conservative
+#: and worth an owner's eye: while a Zone is DORMANT it is the Zone
+#: holding locations, so a new Zone cannot be generated until it is
+#: finished or explicitly abandoned.
+REVISITABLE_ZONE_STATES = ("GENERATED", "ACTIVE", "DORMANT", "COMPLETE",
+                           "VISITING")
+
+
+class ZoneProgress(Strict):
+    """What the player DID to a Zone, as opposed to what the Zone is.
+
+    **Progress is not layout.** The layout rebuilds from the manifest and
+    is identical by construction; this is separate persistence, and
+    conflating the two is how a catalog change would reach a player as a
+    lost key.
+
+    **Every set is monotone and only ever grows within a Zone's life.**
+    That is not a convenience — it is what makes a resume safe. A
+    monotone progress set is a latch, so a reload cannot regress a player
+    behind a door they opened, and `R ⊆ E` holds across a resume for the
+    same reason it holds within a run.
+    """
+    #: Zone-local keys collected. Never AP items.
+    collected_keys: tuple[str, ...] = ()
+    #: `room_id/socket_id` for each lock opened.
+    opened_locks: tuple[str, ...] = ()
+    #: Warp stations reached.
+    reached_stations: tuple[str, ...] = ()
+    #: The station a re-entering player returns to. The one field that is
+    #: a POSITION rather than progress: it is overwritten rather than
+    #: accumulated, and losing it costs a walk rather than a run.
+    resume_anchor: str | None = Field(default=None, max_length=64)
+
+    def with_key(self, key_id: str) -> "ZoneProgress":
+        if key_id in self.collected_keys:
+            return self
+        return self.model_copy(update={
+            "collected_keys": tuple(sorted({*self.collected_keys, key_id}))})
+
+    def with_lock(self, room_id: str, socket_id: str) -> "ZoneProgress":
+        ref = f"{room_id}/{socket_id}"
+        if ref in self.opened_locks:
+            return self
+        return self.model_copy(update={
+            "opened_locks": tuple(sorted({*self.opened_locks, ref}))})
+
+    def with_station(self, station_id: str) -> "ZoneProgress":
+        if station_id in self.reached_stations:
+            return self
+        return self.model_copy(update={
+            "reached_stations": tuple(
+                sorted({*self.reached_stations, station_id})),
+            "resume_anchor": station_id})
 
 
 class ZoneRecord(Strict):
@@ -121,6 +205,18 @@ class ZoneRecord(Strict):
     """
     zone_id: str = _ID
     state: ZoneState
+    #: What the player DID here. Survives death, Hub return and
+    #: re-entry, because all three are the same question: is the Zone
+    #: still the one you left?
+    progress: ZoneProgress = Field(default_factory=lambda: ZoneProgress())
+    #: THE COMMITTED LAYOUT, once validation accepted one. Solved by the
+    #: engine, checked here, and replayed forever after: a later load
+    #: lays the same pieces down rather than searching again.
+    #:
+    #: `None` until an accepted layout arrives, and for every Zone that
+    #: predates the graph. A Zone with no manifest is not a broken Zone;
+    #: it is one whose topology is still its chamber order.
+    manifest: dict | None = None
     #: `_LOC`, not `_NON_FINALE_LOC`: the finale Zone legitimately holds the
     #: goal. `_finale_owns_the_goal` below splits the two cases — this is the
     #: ONE model in the packet allowed to carry Check 030 on an
@@ -554,22 +650,41 @@ class CampaignSave(Strict):
                 z.zone_id for z in self.zones}:
             raise ValueError(f"active_zone_id '{self.active_zone_id}' has no record")
 
-        # At most one Zone may hold locations, and active_zone_id must name
-        # it. Without this the v0.4 orphan shape - several non-terminal
-        # Zones with active_zone_id on one of them - stays representable.
+        # At most one Zone may hold locations. Without this the v0.4
+        # orphan shape - several non-terminal Zones with active_zone_id on
+        # one of them - stays representable.
         holding = [z for z in self.zones if z.holds_locations]
         if len(holding) > 1:
             raise ValueError(
                 "more than one Zone holds locations: "
                 + ", ".join(sorted(z.zone_id for z in holding))
             )
-        if holding and self.active_zone_id != holding[0].zone_id:
+
+        # `active_zone_id` NAMES WHERE THE PLAYER IS, and failing that,
+        # the Zone being prepared for them.
+        #
+        # It used to mean "the holder", which worked while leaving a Zone
+        # meant finishing or abandoning it. Two states broke that:
+        # DORMANT holds locations with nobody in it, and VISITING has
+        # somebody in it holding nothing. Ordering the rule by occupancy
+        # first covers both and says the thing a reader expects it to.
+        occupied = [z for z in self.zones
+                    if z.state in OCCUPIED_ZONE_STATES]
+        if len(occupied) > 1:
             raise ValueError(
-                f"active_zone_id must name the held Zone '{holding[0].zone_id}'"
+                "more than one Zone is occupied: "
+                + ", ".join(sorted(z.zone_id for z in occupied))
             )
-        if not holding and self.active_zone_id is not None:
+        waiting = [z for z in holding if z.state != "DORMANT"]
+        expected = occupied[0].zone_id if occupied else (
+            waiting[0].zone_id if waiting else None)
+        if self.active_zone_id != expected:
             raise ValueError(
-                "active_zone_id must be cleared when no Zone holds locations"
+                f"active_zone_id is {self.active_zone_id!r} but the "
+                f"player is in {expected!r}"
+                if expected else
+                "active_zone_id must be cleared when no Zone is occupied "
+                "or waiting"
             )
 
         stocked = {i.location_id for i in self.shop.stock}
@@ -1065,16 +1180,32 @@ class CampaignSnapshot(Strict):
         symptom was a disagreement between them.
         """
         az = self.active_zone
-        if az is not None and az.state in TERMINAL_ZONE_STATES:
+        if az is not None and az.state in TERMINAL_ZONE_STATES \
+                and az.state not in OCCUPIED_ZONE_STATES:
             raise ValueError(
                 f"active_zone '{az.zone_id}' is {az.state}; a terminal Zone "
                 "reserves nothing and must not be presented as active"
+            )
+        # DORMANT is the one non-terminal state that is never the active
+        # Zone: it still reserves its Checks, and the player is in the
+        # Hub. It therefore pins NO hub mode -- the Hub shows no Zone in
+        # play, and going back is a separate affordance rather than a
+        # mode. Inventing a ZONE_DORMANT mode would put a Zone on screen
+        # that nobody is standing in.
+        if az is not None and az.state == "DORMANT":
+            raise ValueError(
+                f"active_zone '{az.zone_id}' is DORMANT; it is yours and "
+                "you are not in it, so it is not the active Zone"
             )
 
         expected = {
             "PENDING_GENERATION": "GENERATING",
             "GENERATED": "ZONE_READY",
             "ACTIVE": "ZONE_ACTIVE",
+            # A revisit is the same experience as a first visit: the
+            # player is in a Zone. It differs in accounting, not in what
+            # the Hub should say about where they are.
+            "VISITING": "ZONE_ACTIVE",
         }
         if az is None:
             if self.hub.mode in ZONE_HELD_MODES:
@@ -1177,6 +1308,66 @@ class AbandonZone(Strict):
     """
     type: Literal["abandon_zone"]
     zone_id: str = _ID
+
+
+class LayoutResult(Strict):
+    """What the engine placed, offered to the bridge for validation.
+
+    Nested rather than flattened: the payload is the engine's shape and
+    it grows as the engine measures more, so carrying it whole keeps
+    this message from needing a field per measurement. `layout.validate`
+    is what types it, and it is strict about every part it reads.
+
+    **Offered, not committed.** Only a layout that passes validation
+    becomes a manifest; a failing one is refused and never acquires a
+    digest.
+    """
+    type: Literal["layout_result"]
+    zone_id: str = _ID
+    layout: dict
+
+
+class KeyCollected(Strict):
+    """A Zone-local key picked up.
+
+    **Idempotent by `key_id`, because the target set is monotone.** The
+    same key twice is one key, a resend after a dropped connection is
+    the normal case, and neither is an error. The engine already
+    de-duplicates on its side; the bridge does so again rather than
+    trusting it, because a set union is cheaper than a class of bug.
+
+    Not an Archipelago item and never one: no location id, never
+    scouted, never sent, gone when the Zone is.
+    """
+    type: Literal["key_collected"]
+    zone_id: str = _ID
+    key_id: str = Field(min_length=1, max_length=24,
+                        pattern=r"^[a-z0-9_]+$")
+
+
+class LockOpened(Strict):
+    """A locked door opened, identified by the door rather than the key.
+
+    Idempotent by `(room_id, socket_id)`. One key may open several
+    locks, so the key is not the identity of the event.
+    """
+    type: Literal["lock_opened"]
+    zone_id: str = _ID
+    room_id: str = Field(min_length=1, max_length=24,
+                         pattern=r"^[a-z0-9_]+$")
+    socket_id: str = Field(min_length=1, max_length=32,
+                           pattern=r"^[a-z0-9_]+$")
+
+
+class StationReached(Strict):
+    """A warp station reached. Travel and save; never loadout editing.
+
+    Idempotent by `station_id`.
+    """
+    type: Literal["station_reached"]
+    zone_id: str = _ID
+    station_id: str = Field(min_length=1, max_length=48,
+                            pattern=r"^[a-z0-9_:]+$")
 
 
 class ClaimCheck(Strict):
@@ -1356,7 +1547,7 @@ ClientMessage = Annotated[
         Hello, ApConnect, ApDisconnect, StartMockCampaign, RequestNextZone,
         EnterZone, LeaveZone, ExitZone, AbandonZone, ClaimCheck, BuyShopStock,
         SlotAction, GrantLocalReward, SetCreativity, DebugCommand,
-        ZoneTiming,
+        ZoneTiming, KeyCollected, LockOpened, StationReached, LayoutResult,
     ],
     Field(discriminator="type"),
 ]
@@ -1376,6 +1567,10 @@ class ZoneReady(Strict):
     type: Literal["zone_ready"]
     zone: Zone
     used_fallback: bool
+    #: The committed layout, when this Zone already has one. Present on
+    #: a re-entry and absent on a first generation, which is exactly the
+    #: difference between replaying a layout and solving one.
+    manifest: dict | None = None
 
 
 NotificationKind = Literal[
