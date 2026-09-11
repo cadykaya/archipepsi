@@ -22,10 +22,12 @@ from dataclasses import dataclass, field
 try:
     from .schemas.graph import (
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
+    from .schemas import mechanics as M
     from .schemas.zone import PROCEDURAL_SOCKETS
 except ImportError:  # pragma: no cover
     from schemas.graph import (
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
+    from schemas import mechanics as M
     from schemas.zone import PROCEDURAL_SOCKETS
 
 #: The two openings an authored shell declares. Every one of the twelve
@@ -219,7 +221,6 @@ def apply(zone, product: GraphProduct):
         "plugs": product.plugs,
     })
 
-
 # --------------------------------------------------------------------------
 # Reachability — the logical half, and only the logical half.
 # --------------------------------------------------------------------------
@@ -230,6 +231,15 @@ def apply(zone, product: GraphProduct):
 # previous revision of the contract treated it as both. Physical
 # reachability is the engine's to define and prove; this module states
 # the logical obligation and nothing more.
+#
+# **ONE EXPLORATION, AND IT KNOWS WHAT THE PLAYER HAS.** A previous
+# version asked about capability gates by removing one edge at a time
+# while leaving every other gate passable, so two undeclared gates each
+# validated the other: remove the grapple route and the blink shortcut
+# covers it, remove the blink shortcut and the grapple route covers it,
+# and a Zone whose exit needs one of two things nobody has passed. Gates
+# the player cannot use are unavailable TOGETHER or the question is not
+# being asked.
 
 
 @dataclass(frozen=True)
@@ -247,6 +257,17 @@ class Reach:
         return not self.errors
 
 
+def guaranteed_capabilities(declared=None) -> frozenset[str]:
+    """What a player is certain to have on an AP-relevant route.
+
+    `BASELINE_CAPABILITIES` is the existing guarantee: Static Pulse is
+    permanent, so `ranged_hit` needs no Archipelago progression logic
+    behind it and an edge requiring it is not a gate at all. Anything
+    Archipelago declares as a prerequisite joins it.
+    """
+    return frozenset(M.BASELINE_CAPABILITIES) | frozenset(declared or ())
+
+
 def _door_on(doors_by_room, room: str, edge_id: str):
     for d in doors_by_room.get(room, ()):
         if d.edge_id == edge_id:
@@ -255,15 +276,20 @@ def _door_on(doors_by_room, room: str, edge_id: str):
 
 
 def _passable(edge, frm: str, held: frozenset[str], doors_by_room,
-              ignore_keys: frozenset[str]) -> bool:
-    """Can the player cross `edge` starting from `frm`, holding `held`?
+              ignore_keys: frozenset[str], have: frozenset[str]) -> bool:
+    """Can the player cross `edge` from `frm`, holding `held` and `have`?
 
-    `ignore_keys` names keys treated as never held, which is how the
-    "obtainable without passing its own lock" question is asked: run the
-    same search with that key withheld and see whether its room still
-    comes up.
+    `ignore_keys` names keys treated as never held, which is how "is this
+    key obtainable without passing its own lock" is asked.
+
+    `have` is the capability set the question is being asked under. An
+    edge requiring something outside it is impassable — not skipped, not
+    assumed, impassable — which is what makes two undeclared gates fail
+    together instead of covering for each other.
     """
     if not edge.traversable(frm):
+        return False
+    if edge.capability and edge.capability not in have:
         return False
     if edge.realization == "TRAVERSAL_ONLY":
         return True          # a plug binds no geometry and carries no lock
@@ -280,8 +306,16 @@ def _passable(edge, frm: str, held: frozenset[str], doors_by_room,
     return True
 
 
-def _explore(entry: str, edges, doors_by_room, keys_by_room,
-             ignore_keys: frozenset[str] = frozenset()) -> Reach:
+def _explore(start: str, edges, doors_by_room, keys_by_room,
+             have: frozenset[str],
+             ignore_keys: frozenset[str] = frozenset(),
+             start_held: frozenset[str] = frozenset()) -> Reach:
+    """Every `(room, keys)` reachable from `start`, under `have`.
+
+    One function for both questions a search here ever asks — from the
+    entrance empty-handed, and from a room mid-run with keys already in
+    hand — because two of them drifted apart once already.
+    """
     incident: dict[str, list] = {}
     for e in edges:
         incident.setdefault(e.room_a, []).append(e)
@@ -291,13 +325,14 @@ def _explore(entry: str, edges, doors_by_room, keys_by_room,
         got = {k.key_id for k in keys_by_room.get(room, ())}
         return held | (got - ignore_keys)
 
-    start = (entry, collect(entry, frozenset()))
-    seen = {start}
-    queue = [start]
+    first = (start, collect(start, start_held))
+    seen = {first}
+    queue = [first]
     while queue:
         room, held = queue.pop()
         for e in incident.get(room, ()):
-            if not _passable(e, room, held, doors_by_room, ignore_keys):
+            if not _passable(e, room, held, doors_by_room, ignore_keys,
+                             have):
                 continue
             nxt_room = e.other(room)
             nxt = (nxt_room, collect(nxt_room, held))
@@ -308,20 +343,81 @@ def _explore(entry: str, edges, doors_by_room, keys_by_room,
                  rooms=frozenset(r for r, _ in seen))
 
 
+def _key_graph_is_acyclic(zone, doors_by_room, keys_by_room,
+                          have: frozenset[str]) -> list[str]:
+    """SOLUTIONS_CATALOGUE §2 rule 2, asked directly.
+
+    A key behind its own lock is caught by rule 1. A CHAIN is not the
+    same shape: red behind the blue door and blue behind the red one
+    leaves both rooms unreachable, and a search that only ever withholds
+    one key at a time reports that as two unrelated failures rather than
+    as the cycle it is.
+
+    The graph here is `key -> the keys you must already hold to fetch
+    it`, and a cycle in it is a Zone nobody can open.
+    """
+    where = {k.key_id: c.id for c in zone.chambers for k in c.keys}
+    if len(where) < 2:
+        return []          # one key cannot form a chain with itself
+    entry = zone.chambers[0].id
+
+    needs: dict[str, set[str]] = {}
+    for key_id, room in where.items():
+        blocking = set()
+        for other in where:
+            if other == key_id:
+                continue
+            got = _explore(entry, zone.edges, doors_by_room, keys_by_room,
+                           have, ignore_keys=frozenset({other}))
+            if room not in got.rooms:
+                blocking.add(other)
+        needs[key_id] = blocking
+
+    out: list[str] = []
+    seen: set[str] = set()
+    for start in sorted(needs):
+        stack = [(start, [start])]
+        while stack:
+            at, path = stack.pop()
+            for nxt in sorted(needs.get(at, ())):
+                if nxt == start:
+                    loop = " -> ".join(path + [start])
+                    if start not in seen:
+                        seen.update(path)
+                        out.append(
+                            f"the key graph has a cycle: {loop}; no order "
+                            "of collection opens it")
+                elif nxt not in path:
+                    stack.append((nxt, path + [nxt]))
+    return out
+
+
 def reachability(zone, entry_id: str | None = None,
-                 exit_id: str | None = None) -> Reach:
+                 exit_id: str | None = None,
+                 declared_capabilities=None) -> Reach:
     """Prove you can get around this Zone, or say exactly why not.
 
-    Four properties, each stated as an outcome rather than a method:
+    Five properties, each an outcome rather than a method:
 
-    1. **The exit is reachable.**
+    1. **The exit is reachable**, with what the player is guaranteed.
     2. **`R ⊆ E`** — from every state the player can get into, the exit
        is still reachable. This is what rejects a Zone that strands.
     3. **Every allocated Check sits in a reachable room.**
-    4. **Every key is obtainable without passing its own lock.**
+    4. **Every key is obtainable without passing its own lock**, and the
+       key graph is acyclic.
+    5. **Every capability gate on the way to any of the above is
+       declared** in the matching Archipelago logic
+       (SOLUTIONS_CATALOGUE §2 rule 3, `06` §29.5a, check 23).
+
+    The fifth is not a separate pass. Everything above is searched with
+    the capability set the player actually has, so an undeclared gate
+    shows up as the thing it causes: an unreachable exit, a stranded
+    Check, a key nobody can fetch. The diagnosis then says whether a gate
+    was the reason, by asking the same question again with every gate
+    open and reporting the difference.
 
     A Zone with no edges is the chain its list order describes and
-    trivially satisfies all four; it is not searched.
+    trivially satisfies all five; it is not searched.
     """
     if not zone.edges:
         return Reach(states=frozenset(), rooms=frozenset())
@@ -332,37 +428,53 @@ def reachability(zone, entry_id: str | None = None,
     doors_by_room = {c.id: c.doors for c in chambers}
     keys_by_room = {c.id: c.keys for c in chambers}
 
-    errors: list[str] = []
-    forward = _explore(entry, zone.edges, doors_by_room, keys_by_room)
+    have = guaranteed_capabilities(declared_capabilities)
+    every = have | {e.capability for e in zone.edges if e.capability}
+    undeclared = sorted(every - have)
 
-    if exit_room not in forward.rooms:
-        errors.append(
-            f"the exit '{exit_room}' is not reachable from '{entry}'")
+    errors: list[str] = []
+    real = _explore(entry, zone.edges, doors_by_room, keys_by_room, have)
+    ideal = (real if not undeclared else
+             _explore(entry, zone.edges, doors_by_room, keys_by_room,
+                      every))
+
+    def blame(what: str, rooms_needed) -> None:
+        """Say what is unreachable, and whether a gate is why."""
+        stranded = sorted(set(rooms_needed) - real.rooms)
+        if not stranded:
+            return
+        by_gate = sorted(set(stranded) & ideal.rooms)
+        if by_gate:
+            errors.append(
+                f"{what} {by_gate} are reachable only through capability "
+                f"gate(s) {undeclared}, which the Archipelago logic does "
+                "not declare; the physical graph and the logical graph "
+                "would disagree about what is reachable")
+        rest = sorted(set(stranded) - set(by_gate))
+        if rest:
+            errors.append(f"{what} {rest} are not reachable at all")
+
+    blame("the exit", [exit_room])
+    blame("Check-bearing room(s)",
+          [c.id for c in chambers if c.reward_ids])
+    blame("key-bearing room(s)", [c.id for c in chambers if c.keys])
 
     # R subset E, over STATES rather than rooms: a room you can stand in
     # holding the wrong keys is a different situation from the same room
     # holding the right ones, and only the state form catches it.
     stranded = []
-    for state in sorted(forward.states):
-        room, held = state
+    for room, held in sorted(real.states):
         if room == exit_room:
             continue
-        # Re-run from this room with the keys already held: a key cannot
-        # be un-collected, so anything held here stays held.
-        if exit_room not in _explore_holding(
-                room, held, zone.edges, doors_by_room, keys_by_room).rooms:
+        onward = _explore(room, zone.edges, doors_by_room, keys_by_room,
+                          have, start_held=held)
+        if exit_room not in onward.rooms:
             stranded.append(f"{room} holding {sorted(held) or 'nothing'}")
     if stranded:
         errors.append(
             "R is not a subset of E; the exit is unreachable from: "
             + "; ".join(stranded[:4])
             + (f" (+{len(stranded) - 4} more)" if len(stranded) > 4 else ""))
-
-    for c in chambers:
-        if c.reward_ids and c.id not in forward.rooms:
-            errors.append(
-                f"chamber '{c.id}' holds Check(s) {list(c.reward_ids)} and "
-                "is not reachable")
 
     for c in chambers:
         for k in c.keys:
@@ -372,50 +484,20 @@ def reachability(zone, entry_id: str | None = None,
             # fetch by already holding it is the defect, and it is a
             # different fault from a room nothing reaches.
             without = _explore(entry, zone.edges, doors_by_room,
-                               keys_by_room,
+                               keys_by_room, have,
                                ignore_keys=frozenset({k.key_id}))
             if c.id in without.rooms:
                 continue
-            granted = _explore_holding(entry, frozenset({k.key_id}),
-                                       zone.edges, doors_by_room,
-                                       keys_by_room)
+            granted = _explore(entry, zone.edges, doors_by_room,
+                               keys_by_room, have,
+                               start_held=frozenset({k.key_id}))
             if c.id in granted.rooms:
                 errors.append(
                     f"key '{k.key_id}' is behind a lock only it opens; "
                     f"room '{c.id}' is reachable holding it and not "
                     "reachable without it")
-            else:
-                errors.append(
-                    f"key '{k.key_id}' sits in room '{c.id}', which is "
-                    "unreachable for reasons other than its own lock")
 
-    return Reach(states=forward.states, rooms=forward.rooms,
+    errors.extend(_key_graph_is_acyclic(zone, doors_by_room, keys_by_room,
+                                        have))
+    return Reach(states=real.states, rooms=real.rooms,
                  errors=tuple(errors))
-
-
-def _explore_holding(room: str, held: frozenset[str], edges, doors_by_room,
-                     keys_by_room) -> Reach:
-    """`_explore` from a room the player already stands in, keys in hand."""
-    incident: dict[str, list] = {}
-    for e in edges:
-        incident.setdefault(e.room_a, []).append(e)
-        incident.setdefault(e.room_b, []).append(e)
-
-    def collect(r: str, h: frozenset[str]) -> frozenset[str]:
-        return h | {k.key_id for k in keys_by_room.get(r, ())}
-
-    start = (room, collect(room, held))
-    seen = {start}
-    queue = [start]
-    while queue:
-        at, have = queue.pop()
-        for e in incident.get(at, ()):
-            if not _passable(e, at, have, doors_by_room, frozenset()):
-                continue
-            nxt_room = e.other(at)
-            nxt = (nxt_room, collect(nxt_room, have))
-            if nxt not in seen:
-                seen.add(nxt)
-                queue.append(nxt)
-    return Reach(states=frozenset(seen),
-                 rooms=frozenset(r for r, _ in seen))

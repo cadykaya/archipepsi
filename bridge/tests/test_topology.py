@@ -243,3 +243,209 @@ def test_the_return_edge_participates_in_reachability():
     assert not topology.reachability(one_way).ok
     assert any("R is not a subset of E" in m
                for m in topology.reachability(one_way).errors)
+
+
+# --- the packet's three local-key rules -----------------------------------
+#
+# SOLUTIONS_CATALOGUE §2 names three, and each is testable by sabotage:
+# build the broken shape and confirm the validator refuses it.
+
+def _locked(z, room, socket, edge_id, key_id):
+    """Turn one door into a lock, in place."""
+    out = []
+    for c in z.chambers:
+        if c.id != room:
+            out.append(c)
+            continue
+        out.append(c.model_copy(update={"doors": tuple(
+            d.model_copy(update={"usage": "LOCKED", "key_id": key_id})
+            if d.socket_id == socket else d for d in c.doors)}))
+    return z.model_copy(update={"chambers": tuple(out)})
+
+
+def _holds(z, room, key_id):
+    out = []
+    for c in z.chambers:
+        out.append(c.model_copy(update={
+            "keys": (ZoneKeySpec(key_id=key_id, colour="blue"),)})
+            if c.id == room else c)
+    return z.model_copy(update={"chambers": tuple(out)})
+
+
+def test_rule_2_a_cyclic_key_graph_is_refused():
+    """Red behind the blue door and blue behind the red one.
+
+    Neither key is behind its OWN lock, so rule 1 does not see it. No
+    order of collection opens the Zone.
+    """
+    z = _chain_zone(8)
+    out = topology.apply(z, topology.compose_chain(list(z.chambers)))
+    assert topology.reachability(out).ok
+
+    # c003's entry needs red; c006's entry needs blue.
+    e3 = next(e for e in out.edges if e.room_b == "c003")
+    e6 = next(e for e in out.edges if e.room_b == "c006")
+    out = _locked(out, "c003", "entry", e3.edge_id, "red")
+    out = _locked(out, "c006", "entry", e6.edge_id, "blue")
+    # blue sits past the red door; red sits past the blue one.
+    rooms = {c.id: c for c in out.chambers}
+    out = out.model_copy(update={"chambers": tuple(
+        c.model_copy(update={"keys": (ZoneKeySpec(key_id="blue"),)})
+        if c.id == "c004" else
+        c.model_copy(update={"keys": (ZoneKeySpec(key_id="red"),)})
+        if c.id == "c007" else c
+        for c in out.chambers)})
+
+    result = topology.reachability(out)
+    assert not result.ok
+    assert any("cycle" in e for e in result.errors), result.errors
+
+
+def test_rule_3_an_undeclared_capability_gate_is_refused():
+    """A key MAY sit behind Grapple. The Zone requiring Grapple while
+    AP's logic does not say so is the divergence."""
+    z = _chain_zone(8)
+    out = topology.apply(z, topology.compose_chain(list(z.chambers)))
+    gated = out.model_copy(update={"edges": tuple(
+        e.model_copy(update={"capability": "grapple"})
+        if e.room_b == "c005" else e for e in out.edges)})
+
+    refused = topology.reachability(gated)
+    assert not refused.ok
+    assert any("does not declare" in e for e in refused.errors)
+
+    # Declared by AP, the same Zone is fine: the gate is not the problem.
+    allowed = topology.reachability(
+        gated, declared_capabilities={"grapple"})
+    assert allowed.ok, allowed.errors
+
+
+def test_rule_3_ignores_a_gate_on_nothing_ap_relevant():
+    """A capability gate that strands no Check and no exit is a
+    shortcut, not a divergence."""
+    z = _chain_zone(8)
+    out = topology.apply(z, topology.compose_chain(list(z.chambers)))
+    # An extra edge nothing depends on, gated.
+    extra = type(out.edges[0])(
+        edge_id="e:shortcut", room_a="c002", room_b="c006",
+        realization="TRAVERSAL_ONLY", direction="A_TO_B",
+        capability="blink")
+    plug = PlugAssignment(edge_id="e:shortcut", room_id="c002",
+                          source_anchor="room:c002:arrival",
+                          destination="room:c006:arrival")
+    shortcut = out.model_copy(update={"edges": out.edges + (extra,),
+                                      "plugs": (plug,)})
+    assert topology.reachability(shortcut).ok, \
+        topology.reachability(shortcut).errors
+
+
+def test_a_zone_local_key_gating_a_check_is_legal():
+    """The distinction rule 3 turns on.
+
+    A local key is obtainable inside the Zone, so Archipelago's claim —
+    reach the Zone and you can reach its Checks — stays true with one
+    behind a lock. The branch producer relies on this being true.
+    """
+    z = _chain_zone(8)
+    out = topology.apply(z, topology.compose_with_branch(list(z.chambers)))
+    locked = [(c.id, d.socket_id) for c in out.chambers
+              for d in c.doors if d.usage == "LOCKED"]
+    assert locked, "the branch producer should lock the branch"
+    assert topology.reachability(out).ok
+
+
+# --- gates the player cannot use are unavailable TOGETHER ------------------
+
+def _gate(z, room_b, capability, edge_id=None):
+    """Put a capability on the edge that arrives at `room_b`."""
+    return z.model_copy(update={"edges": tuple(
+        e.model_copy(update={"capability": capability})
+        if (e.edge_id == edge_id if edge_id else e.room_b == room_b) else e
+        for e in z.edges)})
+
+
+def _shortcut(z, frm, to, capability):
+    """A traversal-only bypass, gated."""
+    extra = TopologyEdge(edge_id=f"e:{frm}:{to}:cut", room_a=frm,
+                         room_b=to, realization="TRAVERSAL_ONLY",
+                         direction="A_TO_B", capability=capability)
+    plug = PlugAssignment(edge_id=extra.edge_id, room_id=frm,
+                          source_anchor=f"room:{frm}:arrival",
+                          destination=f"room:{to}:arrival")
+    return z.model_copy(update={"edges": z.edges + (extra,),
+                                "plugs": z.plugs + (plug,)})
+
+
+def _chain8():
+    z = _chain_zone(8)
+    return topology.apply(z, topology.compose_chain(list(z.chambers)))
+
+
+def test_two_undeclared_gates_do_not_validate_each_other():
+    """Codex's case, and the one the old guard got exactly backwards.
+
+    Gate the spine at c004 -> c005 behind grapple and add a blink
+    shortcut c002 -> c006. Removing either edge alone leaves the other
+    passable, so each route vouched for the other while a player holding
+    neither reaches only c001-c004.
+    """
+    z = _shortcut(_gate(_chain8(), "c005", "grapple"),
+                  "c002", "c006", "blink")
+    result = topology.reachability(z)
+    assert not result.ok, "a Zone nobody can finish was accepted"
+    assert any("do not declare" in e or "does not declare" in e
+               for e in result.errors), result.errors
+    # and the reachable set really does stop at c004
+    assert result.rooms == {"c001", "c002", "c003", "c004"}
+
+
+def test_two_alternatives_needing_the_same_unavailable_capability():
+    z = _shortcut(_gate(_chain8(), "c005", "grapple"),
+                  "c002", "c006", "grapple")
+    assert not topology.reachability(z).ok
+
+
+def test_two_alternatives_needing_different_unavailable_capabilities():
+    z = _shortcut(_gate(_chain8(), "c005", "grapple"),
+                  "c002", "c006", "cross_long_gap")
+    assert not topology.reachability(z).ok
+
+
+def test_a_genuinely_ungated_alternative_is_accepted():
+    """The control that stops the rule widening into refusing shortcuts."""
+    z = _shortcut(_gate(_chain8(), "c005", "grapple"),
+                  "c002", "c006", None)
+    result = topology.reachability(z)
+    assert result.ok, result.errors
+
+
+def test_declaring_the_capability_makes_the_same_zone_legal():
+    z = _shortcut(_gate(_chain8(), "c005", "grapple"),
+                  "c002", "c006", "blink")
+    ok = topology.reachability(
+        z, declared_capabilities={"grapple", "blink"})
+    assert ok.ok, ok.errors
+
+
+def test_a_baseline_capability_is_not_a_gate():
+    """`ranged_hit` is Static Pulse: permanent, and every player has it.
+
+    Requiring AP progression logic for something the baseline already
+    guarantees would refuse a Zone for a gate that does not exist.
+    """
+    z = _gate(_chain8(), "c005", "ranged_hit")
+    result = topology.reachability(z)
+    assert result.ok, result.errors
+    assert "ranged_hit" in topology.guaranteed_capabilities()
+
+
+def test_a_gate_before_a_key_is_caught_too():
+    """Keys, Checks, the exit and return safety, all one exploration."""
+    z = _chain_zone(8)
+    z = topology.apply(z, topology.compose_with_branch(list(z.chambers)))
+    holder = next(c.id for c in z.chambers if c.keys)
+    gated = _gate(z, holder, "blink")
+    result = topology.reachability(gated)
+    assert not result.ok
+    assert any("key-bearing" in e or "R is not a subset" in e
+               for e in result.errors), result.errors
