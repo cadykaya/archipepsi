@@ -125,6 +125,7 @@ func _run() -> void:
 	await _test_a_broken_station_is_repaired_by_its_own_rooms_puzzle()
 	await _test_a_capability_gate_holds_and_never_blocks_the_way_out()
 	await _test_the_committed_layout_is_measured_not_re_solved()
+	_test_the_walk_prober_is_no_kinder_than_the_controller()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
 
@@ -2210,6 +2211,51 @@ func _walk_zone(out: Dictionary, from_xz: Vector2,
 	return _walk_bounds(whole, from_xz, to_xz, 0.5,
 			whole.position.y + 2.6)
 
+## WHAT THE REAL CONTROLLER CAN ASCEND, over a given horizontal run.
+##
+## Read off an actual `Player` rather than declared here, so the
+## measurement cannot drift from the body: `floor_max_angle` is the
+## `CharacterBody3D` property `move_and_slide` uses to decide what counts
+## as floor, and a surface steeper than it is a wall the player slides
+## down. Cached because it is constant for the run and building a Player
+## per grid edge would dominate the flood.
+static var _slope_tan := -1.0
+
+func _rise_over(run: float) -> float:
+	if _slope_tan < 0.0:
+		var body := Player.create()
+		_slope_tan = tan(body.floor_max_angle)
+		body.free()
+	return run * _slope_tan
+
+## Below this a difference is float noise on a flat floor, not a climb.
+const FLAT := 0.02
+
+## How many columns to sample between two adjacent cells when the step
+## rises. Five sub-cells over a 0.5 m cell is 0.1 m of run each, which
+## separates a ramp from a kerb at the scale the geometry is built at.
+const RAMP_SAMPLES := 5
+
+## Is the ground between these two columns a climbable slope, rather than
+## a wall that merely has a standable top?
+func _is_a_ramp(space: PhysicsDirectSpaceState3D, from_y: float,
+		cell: float, from_xz: Vector2, to_xz: Vector2) -> bool:
+	var sub := cell / float(RAMP_SAMPLES)
+	var allowed := _rise_over(sub)
+	var last := _standable_at(space, from_xz.x, from_xz.y, from_y)
+	if is_nan(last):
+		return false
+	for i in range(1, RAMP_SAMPLES + 1):
+		var t := float(i) / float(RAMP_SAMPLES)
+		var at := from_xz.lerp(to_xz, t)
+		var y := _standable_at(space, at.x, at.y, from_y)
+		if is_nan(y):
+			return false
+		if y - last > allowed:
+			return false
+		last = y
+	return true
+
 ## `from_y` is where the downward rays START, and it is a parameter
 ## because no single height serves a whole Zone.
 ##
@@ -2258,13 +2304,30 @@ func _walk_bounds(bounds: AABB, from_xz: Vector2, to_xz: Vector2,
 			var next: Vector2i = here + step
 			if seen.has(next) or not height.has(next):
 				continue
-			# UP IS LIMITED, DOWN IS FREE. A walking player cannot
-			# climb more than one step without a jump, and can always
-			# walk off a ledge. Testing the absolute difference forbade
-			# descending, which made every raised deck a one-way trap
-			# in the measurement and nowhere else.
-			if float(height[next]) - float(height[here]) \
-					> Constants.MAX_VERTICAL_STEP:
+			# UP IS A SLOPE, DOWN IS FREE.
+			#
+			# This used to allow a rise of `MAX_VERTICAL_STEP` per cell,
+			# and that constant is not something the body implements:
+			# `chamber_builders.gd` says so in as many words -- "there is
+			# no step-up anywhere in `player.gd`; MAX_VERTICAL_STEP is a
+			# constant validation reasons with". The real Player is a
+			# bare `CharacterBody3D` with a capsule, so what it can
+			# actually ascend is a RAMP no steeper than `floor_max_angle`
+			# and nothing else. A 1.0 m kerb was being walked up in the
+			# measurement and nowhere else, which is the same defect as
+			# the trim lip, on the other side.
+			var rise := float(height[next]) - float(height[here])
+			if rise > _rise_over(cell):
+				continue
+			# A rise inside the slope bound still has to BE a slope. At
+			# this cell size a vertical step of half a metre and a 45
+			# degree ramp are the same two numbers, so the ones that
+			# climb are re-sampled between the columns.
+			if rise > FLAT and not _is_a_ramp(space, ceiling, cell,
+					Vector2(x0 + float(here.x) * cell,
+							z0 + float(here.y) * cell),
+					Vector2(x0 + float(next.x) * cell,
+							z0 + float(next.y) * cell)):
 				continue
 			seen[next] = true
 			queue.append(next)
@@ -2412,8 +2475,15 @@ func _test_the_layout_result_commits_the_whole_chain() -> void:
 	if out.has("root"):
 		var rooms: Dictionary = out["rooms"]
 		var links: Dictionary = out["links"]
-		_check(rooms.size() == 8,
-				"%d room transforms committed, not eight" % rooms.size())
+		# Eight chambers AND the exit room. The exit room's approach was
+		# searched exactly like every other and was the one route never
+		# written down.
+		_check(rooms.size() == 9,
+				"%d room transforms committed, not the eight chambers "
+				% rooms.size() + "plus the exit room")
+		_check(rooms.has("exit") and links.has("exit"),
+				"the exit room committed no transform or no approach "
+				+ "chain, so a manifest has to re-solve the last leg")
 		for id: String in rooms:
 			var t: Dictionary = rooms[id]
 			_check(t.has("position") and t.has("yaw"),
@@ -2437,9 +2507,47 @@ func _test_the_layout_result_commits_the_whole_chain() -> void:
 		_check(pieces > 0,
 				"eight rooms were placed and not one connector or "
 				+ "corner was committed; the chain is not being recorded")
+		# THE MEASUREMENT THAT WOULD HAVE CAUGHT BOTH HOLES.
+		#
+		# Everything above asks whether each committed thing is
+		# well-formed. Neither asks whether everything BUILT was
+		# committed, and that is the question two real omissions hid
+		# behind: the linking connector between rooms was emitted and
+		# never recorded, and so was the whole exit-room route. Both
+		# passed every assertion above, because an unrecorded piece
+		# raises no complaint about the recorded ones.
+		#
+		# `bounds_list` is every world box the builder actually placed.
+		# A committed layout is complete exactly when it accounts for
+		# all of them.
+		var committed := {}
+		for id: String in rooms:
+			committed[_box_key((rooms[id] as Dictionary)["bounds"])] = true
+		for id: String in links:
+			for raw: Variant in links[id] as Array:
+				committed[_box_key((raw as Dictionary)["bounds"])] = true
+		var orphans := 0
+		var first_orphan := ""
+		for raw: Variant in out["bounds_list"] as Array:
+			if not committed.has(_box_key(raw as AABB)):
+				orphans += 1
+				if first_orphan == "":
+					first_orphan = "%v" % (raw as AABB)
+		_check(orphans == 0,
+				"%d of %d placed boxes are in no committed room or "
+				% [orphans, (out["bounds_list"] as Array).size()]
+				+ "chain, so a replay rebuilds a Zone missing them "
+				+ "(first: %s)" % first_orphan)
 		(out["root"] as Node3D).queue_free()
 		await get_tree().process_frame
 	rooms_checked += 1
+
+## An AABB as a dictionary key, rounded so float noise cannot make two
+## records of the same box look like two boxes.
+func _box_key(box: AABB) -> String:
+	return "%.3f,%.3f,%.3f|%.3f,%.3f,%.3f" % [
+			box.position.x, box.position.y, box.position.z,
+			box.size.x, box.size.y, box.size.z]
 
 ## The pair that has to mean opposite things.
 ##
@@ -2845,6 +2953,40 @@ func _test_the_playable_slice_composes_end_to_end() -> void:
 ## "Already reached" is the whole safety property: a station a player has
 ## never stood at is not a destination, and offering it would be a
 ## teleport past whatever stands between them.
+## THE PROBER MUST NOT BE KINDER THAN THE BODY.
+##
+## Every escape proof in this file is only worth what its movement model
+## is worth. That model used to allow a rise of `MAX_VERTICAL_STEP` per
+## cell -- a full metre -- and the real Player cannot step up at all:
+## `chamber_builders.gd` already said so, "there is no step-up anywhere
+## in `player.gd`; MAX_VERTICAL_STEP is a constant validation reasons
+## with, not one the body implements". A prober that climbs kerbs proves
+## escapes that do not exist.
+##
+## So the ascent bound is read off a real `Player`'s `floor_max_angle`,
+## and this states the relationship that made the old bound wrong. It is
+## a standing guard against the drift coming back: if someone restores a
+## step-up constant here, this says so before an escape proof does not.
+func _test_the_walk_prober_is_no_kinder_than_the_controller() -> void:
+	var body := Player.create()
+	var angle := body.floor_max_angle
+	body.free()
+	_check(angle > 0.0 and angle < PI / 2.0,
+			"the Player's floor_max_angle is %.4f rad, which is not a "
+			% angle + "slope bound this prober can reason from")
+	var per_cell := _rise_over(ESCAPE_CELL)
+	_check(per_cell < Constants.MAX_VERTICAL_STEP,
+			"the flood allows a rise of %.3f m per %.2f m cell, which is "
+			% [per_cell, ESCAPE_CELL] + "not less than MAX_VERTICAL_STEP "
+			+ "(%.3f m) -- the constant the body does not implement"
+			% Constants.MAX_VERTICAL_STEP)
+	# And it scales with the run, because a slope does.
+	_check(is_equal_approx(_rise_over(2.0 * ESCAPE_CELL),
+					2.0 * per_cell),
+			"the ascent bound does not scale with the horizontal run, so "
+			+ "it is a step and not a slope")
+	rooms_checked += 1
+
 ## BODY AND ARRIVAL, MEASURED ON WHAT WAS COMMITTED.
 ##
 ## §30.11.2e insists its four constraints are measured on the committed

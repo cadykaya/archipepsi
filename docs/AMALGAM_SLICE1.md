@@ -93,6 +93,8 @@ that was verified by removing them.
 | **A broken station is repaired by its own room's puzzle** | `warp_station.gd`, `zone_controller.gd` `_repair_station_for` | a large room WITH an activity yields a broken station and one without does not; the entrance and exit are never broken; the other room's puzzle does not repair it |
 | **A capability gate holds, and never blocks the way out** | `locked_door.gd` `requires_capability`, `zone_builder.gd` `gates_on_the_route` | a gate on a branch socket composes and one on a chain socket is refused by name; the slab opens for the capability and not for a key; a plain key lock on the chain is still legal |
 | **The committed layout is measured, not re-solved** | `zone_builder.gd` `layout_findings` | §30.11.2e Body and Arrival over every committed room pair; two rooms stacked, a face-wide sliver and an arrival 50 m outside its room are each caught, and one doorway of shared wall is not |
+| **Everything built is committed** | `zone_builder.gd`, `room_contract_driver.gd` `_box_key` | every box in `bounds_list` is accounted for by a committed room or chain piece; the check found two real omissions (§5i) |
+| **The walk prober is no kinder than the body** | `room_contract_driver.gd` `_rise_over`, `_is_a_ramp` | the ascent bound is read off a real `Player`'s `floor_max_angle` and is strictly less than `MAX_VERTICAL_STEP`; with climbing disabled all three escape proofs fail, so the rule is live |
 
 ## 4. Implemented but not integrated
 
@@ -137,6 +139,65 @@ that was verified by removing them.
 - **Closing** a spatial cycle. Refusal is implemented and proved (§5e);
   the router still builds chains, so a Zone that wants a genuine loop
   gets a typed `LAYOUT_INFEASIBLE` naming the pair, not a layout.
+
+## 5j. The prober climbed a metre the player cannot
+
+Every escape proof here is worth exactly what its movement model is
+worth, and the model was wrong in the permissive direction. The flood
+allowed a rise of `MAX_VERTICAL_STEP` — **a full metre** — between
+adjacent cells. The real Player is a bare `CharacterBody3D` with a
+capsule and **no step-up at all**; `chamber_builders.gd` already said so
+in as many words, in the comment explaining why the trim lip had to be
+gapped: *"there is no step-up anywhere in `player.gd`;
+`MAX_VERTICAL_STEP` is a constant validation reasons with, not one the
+body implements"*. The repair to that lip was made because a 0.35 m kerb
+stops a walking player dead — and the prober proving the repair would
+have walked up three of them.
+
+What the body can actually ascend is a ramp no steeper than
+`floor_max_angle`, so that is now the rule, **read off a real `Player`**
+rather than declared, so it cannot drift from the body again. Over one
+cell the bound is `cell × tan(floor_max_angle)`; at 0.5 m cells that is
+half what the old constant allowed. And because at that cell size a
+vertical half-metre and a 45° ramp are the same two numbers, any step
+that rises is re-sampled at 0.1 m between the columns: a ramp passes,
+a kerb does not.
+
+**The escape proofs still hold under the stricter measure** — c015's
+back gallery, c005's pit and the pit band all remain leavable on foot,
+with no movement offers and no Teleport. That is the result, and it was
+not assumed: with the ascent bound set to zero all three fail, so the
+ramps are genuinely being walked rather than the rule being inert.
+
+`_test_the_walk_prober_is_no_kinder_than_the_controller` is a standing
+guard: it fails if the per-cell bound ever stops being strictly less than
+`MAX_VERTICAL_STEP`, or if the bound stops scaling with the run — which
+is what makes it a slope rather than a step.
+
+## 5i. Two pieces the layout was built with and never wrote down
+
+`LayoutResult` was committed as complete, and it was not. Two things the
+builder placed were in no manifest:
+
+1. **The linking connector between rooms.** Emitted at the end of each
+   room's turn, after that room's chain had already been recorded.
+2. **The whole exit-room route, and the exit room itself.** Its approach
+   was searched by `_plan_route` exactly like every other and was the one
+   route never written down.
+
+Both passed every assertion the completeness test made, because each one
+asked whether the *recorded* pieces were well-formed and none asked
+whether everything *built* was recorded. An unrecorded piece raises no
+complaint about the recorded ones. This is the recurring defect once
+more, and this time inside the test written to prevent exactly it — the
+fifth time on this branch.
+
+The measurement that closes it is one line of principle: `bounds_list` is
+every world box the builder actually placed, so a committed layout is
+complete exactly when it accounts for all of them. The linking connector
+is now carried into the **next** room's chain (build order, so a replay
+lays it before the room it leads to), and the exit room commits a
+transform and a chain like any other room.
 
 ## 5h. Two computations, not one done twice
 

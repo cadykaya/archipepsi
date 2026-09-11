@@ -564,6 +564,8 @@ static func build(zone: Dictionary, theme_override := "",
 
 	var cursor := Vector3.ZERO
 	var yaw := 0.0
+	## Pieces laid after a room, belonging to the next room's approach.
+	var carried: Array = []
 	var next_turn := 1 if rng.randf() < 0.5 else -1
 	var placed: Array = []
 	var built_chambers: Array = []
@@ -655,7 +657,15 @@ static func build(zone: Dictionary, theme_override := "",
 							- built_chambers.size()),
 					"failed": "the placement budget of %.0f ms was spent "
 					% budget_ms + "with rooms still unplaced"}
-		var link: Array = []
+		# THE LINKING CONNECTOR BELONGS TO THE ROOM IT LEADS TO.
+		#
+		# It is emitted at the END of the previous room's turn, after
+		# that room's chain was already recorded, so recording it there
+		# would replay it BEFORE the room it follows. Carrying it into
+		# the next room's chain puts it in build order, which is the
+		# order a replay lays pieces down.
+		var link: Array = carried.duplicate()
+		carried.clear()
 		var walked := _emit_route(root, theme, plan, cursor, yaw, placed,
 				bounds_list, link)
 		links[str(chamber.get("id", "?"))] = link
@@ -801,8 +811,17 @@ static func build(zone: Dictionary, theme_override := "",
 		# starts at this room's exit, which is where it would have
 		# started anyway.
 		if not _overlaps(placed, _world_aabb(shape["bounds"], cursor, yaw)):
+			var was := cursor
 			cursor = _emit_connector(root, theme, cursor, yaw, placed,
 					bounds_list)
+			# RECORDED, like every other piece. It was emitted and never
+			# written down, so a manifest replayed the Zone one
+			# connector short at every room boundary -- and the test that
+			# checks the chain is complete only ever asked about the
+			# pieces `_emit_route` laid, so it could not see this.
+			carried.append({"kind": "CONNECTOR", "position": was,
+					"yaw": yaw,
+					"bounds": bounds_list[bounds_list.size() - 1]})
 		first = false
 
 	# Exit room with the appended portal — routed like every other
@@ -818,8 +837,16 @@ static func build(zone: Dictionary, theme_override := "",
 		root.free()
 		return {"failed": "the exit room could not be placed clear of "
 				+ "the %d room(s) before it" % placed.size()}
+	# THE EXIT ROOM IS A ROOM. Its approach was searched exactly like
+	# every other and was the one route never written down, so a
+	# manifest could rebuild the whole Zone and then have to re-solve
+	# the last leg -- which is the one thing a committed layout promises
+	# never to do.
+	var exit_link: Array = carried.duplicate()
+	carried.clear()
 	var exit_walk := _emit_route(root, theme, exit_plan, cursor, yaw,
-			placed, bounds_list)
+			placed, bounds_list, exit_link)
+	links["exit"] = exit_link
 	cursor = exit_walk["cursor"]
 	yaw = float(exit_walk["yaw"])
 	var exit_node: Node3D = exit_room["root"]
@@ -830,6 +857,9 @@ static func build(zone: Dictionary, theme_override := "",
 	var exit_world: AABB = _world_aabb(exit_room["bounds"], cursor, yaw)
 	placed.append(exit_world)
 	bounds_list.append(exit_world)
+	room_transforms["exit"] = {"position": cursor, "yaw": yaw,
+			"bounds": exit_world,
+			"arrival": cursor + _rot(yaw, RoomContract.LEGACY_ENTRY)}
 	var portal := ExitPortal.create(theme)
 	portal.position = cursor + _rot(yaw, Vector3(0, 0, 6.5))
 	# AND THE EXIT STATION, beside the portal rather than in its doorway
