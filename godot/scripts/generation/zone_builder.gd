@@ -141,10 +141,64 @@ static func routing_policy(placed: Array,
 	var out := {"max_route_turns": MAX_ROUTE_TURNS,
 			"explore_connectors": EXPLORE_CONNECTORS,
 			"max_clearance_connectors": MAX_CLEARANCE_CONNECTORS,
+			# THIS ROUTER BUILDS CHAINS. §30.11.2e constraint 3 requires
+			# every cycle in the physically realized subgraph to compose
+			# to the identity, and a chain walk cannot satisfy that: it
+			# places each room from the previous one and never returns
+			# to a transform it has already fixed.
+			#
+			# Declared rather than assumed, because the alternative is
+			# the silent one -- building the chain, ignoring the closing
+			# edge, and shipping a Zone whose graph says there is a loop
+			# and whose geometry has none. A reviewer reading an
+			# infeasible result can see exactly which bound to widen.
+			"closes_cycles": false,
 			"clearance_budget": _clearance_budget(placed)}
 	for field: String in override:
 		out[field] = override[field]
 	return out
+
+## The closing edges this Zone asks for and this router cannot build.
+##
+## §30.11.2e scopes its join and closure constraints to the PHYSICALLY
+## REALIZED subgraph, and that scoping is the whole point: a return plug
+## makes a graph cyclic and creates no spatial cycle, so a solver must
+## never be handed a loop to close through a teleport. Only `JOINED`
+## edges are counted here.
+##
+## Returns the edges that would close a cycle, or empty. A Zone with no
+## `edges` at all is the chain every Zone has always been and answers
+## empty immediately.
+static func unclosable_cycles(zone: Dictionary) -> Array:
+	var seen := {}
+	var closing: Array = []
+	for raw: Variant in zone.get("edges", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var edge: Dictionary = raw
+		if str(edge.get("realization", "JOINED")) != "JOINED":
+			continue
+		var a := str(edge.get("room_a", ""))
+		var b := str(edge.get("room_b", ""))
+		if a == "" or b == "":
+			continue
+		# Union-find over the JOINED subgraph: an edge whose endpoints
+		# already share a component closes a cycle.
+		var ra := _root(seen, a)
+		var rb := _root(seen, b)
+		if ra == rb:
+			closing.append(edge)
+		else:
+			seen[ra] = rb
+	return closing
+
+static func _root(parent: Dictionary, id: String) -> String:
+	var at := id
+	while parent.has(at) and str(parent[at]) != at:
+		at = str(parent[at])
+	if not parent.has(id):
+		parent[id] = at
+	return at
 
 ## A TIGHTER POLICY, so exhaustion can be exercised without contriving
 ## geometry that pretends to be impossible.
@@ -318,6 +372,26 @@ static func build(zone: Dictionary, theme_override := "",
 	# Zone fails FAST and exhausts, which is infeasibility. Only a clock
 	# running out is a timeout.
 	var began := Time.get_ticks_msec()
+	# A CLOSING EDGE IS REFUSED BEFORE ANYTHING IS BUILT.
+	#
+	# Ignoring it and building the chain anyway is the failure mode this
+	# check exists to prevent: the graph would say two rooms are joined
+	# both ways and the geometry would join them once, and nothing
+	# downstream could tell.
+	var closing := unclosable_cycles(zone)
+	if not closing.is_empty():
+		var pairs: Array = []
+		for raw: Variant in closing:
+			var edge: Dictionary = raw
+			pairs.append([str(edge.get("room_a", "")),
+					str(edge.get("room_b", ""))])
+		return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+				"policy": routing_policy([], policy_override),
+				"blocking_rooms": [],
+				"blocking_pairs": pairs,
+				"failed": "%d JOINED edge(s) close a spatial cycle and "
+				% closing.size() + "this router builds chains; see "
+				+ "policy.closes_cycles"}
 	var links := {}
 	var room_transforms := {}
 	# ANCHORS ARE THE COMPOSER'S VOCABULARY FOR PLACES. A plug names one

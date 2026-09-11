@@ -121,6 +121,7 @@ func _run() -> void:
 	await _test_warp_stations_are_placed_and_only_link_reached_ones()
 	await _test_an_authored_shell_carries_three_doors()
 	await _test_a_zone_resumes_at_the_station_it_was_left_from()
+	await _test_a_spatial_cycle_is_refused_and_a_plug_cycle_is_not()
 	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
 
@@ -3102,6 +3103,82 @@ func _test_a_zone_resumes_at_the_station_it_was_left_from() -> void:
 	rooms_checked += 1
 	again.queue_free()
 	await get_tree().process_frame
+
+## §30.11.2e constraint 3, and the scoping that makes it survivable.
+##
+## **Closure is not implemented and this router cannot do it.** It walks
+## a chain: each room is placed from the one before it, and it never
+## returns to a transform it has already fixed. A cycle would have to
+## compose to the identity within `EPSILON_JOIN` and nothing here even
+## tries.
+##
+## The danger is not that it cannot; it is that it could build the chain
+## anyway and ignore the closing edge, leaving a Zone whose GRAPH says
+## two rooms are joined both ways and whose GEOMETRY joins them once.
+## Nothing downstream could tell. So a closing `JOINED` edge is refused
+## before a single node is allocated, and the result names
+## `policy.closes_cycles` so a reviewer can see which bound to widen.
+##
+## The second half is the one §30.11.2e calls load-bearing: **a cycle
+## through a `TRAVERSAL_ONLY` edge is not a spatial cycle at all.** A
+## return plug makes a graph cyclic with nothing to close, and a solver
+## asked to close a loop through a teleport would refuse a Zone that is
+## perfectly sound. The same three rooms, the same closing edge, one
+## field different, must compose.
+func _test_a_spatial_cycle_is_refused_and_a_plug_cycle_is_not() -> void:
+	var zone := _eight_room_zone()
+	var rooms: Array = zone["chambers"]
+	var loop := func(realization: String) -> Array:
+		return [
+			{"edge_id": "e01", "room_a": str((rooms[0] as Dictionary)["id"]),
+				"room_b": str((rooms[1] as Dictionary)["id"]),
+				"realization": "JOINED"},
+			{"edge_id": "e12", "room_a": str((rooms[1] as Dictionary)["id"]),
+				"room_b": str((rooms[2] as Dictionary)["id"]),
+				"realization": "JOINED"},
+			# The closing edge, and the only thing that changes.
+			{"edge_id": "e20", "room_a": str((rooms[2] as Dictionary)["id"]),
+				"room_b": str((rooms[0] as Dictionary)["id"]),
+				"realization": realization},
+		]
+
+	var spatial: Dictionary = zone.duplicate(true)
+	spatial["edges"] = loop.call("JOINED")
+	var refused := ZoneBuilder.build(spatial)
+	_check(str(refused.get("status", "")) == "LAYOUT_INFEASIBLE",
+			"a JOINED spatial cycle returned '%s' rather than being "
+			% str(refused.get("status", "?")) + "refused")
+	if str(refused.get("status", "")) == "LAYOUT_INFEASIBLE":
+		_check(not bool((refused["policy"] as Dictionary)["closes_cycles"]),
+				"the result does not say that closure is what it lacks")
+		var pairs: Array = refused["blocking_pairs"]
+		_check(pairs.size() == 1,
+				"%d blocking pairs named for one closing edge"
+				% pairs.size())
+	_check(not refused.has("root"),
+			"a refused layout allocated a Zone root anyway")
+
+	# THE SAME LOOP, THROUGH A PLUG. One field, opposite outcome.
+	var teleported: Dictionary = zone.duplicate(true)
+	teleported["edges"] = loop.call("TRAVERSAL_ONLY")
+	var built := ZoneBuilder.build(teleported)
+	_check(str(built.get("status", "")) == "LAYOUT_OK",
+			"a cycle closed only by a TRAVERSAL_ONLY edge was refused "
+			+ "('%s'); a return plug creates no spatial cycle and the "
+			% str(built.get("status", "?")) + "solver must never see one")
+	if built.has("root"):
+		(built["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	# AND A ZONE WITH NO EDGES AT ALL is the chain every Zone has always
+	# been, so nothing above changes what already shipped.
+	var plain := ZoneBuilder.build(zone)
+	_check(str(plain.get("status", "")) == "LAYOUT_OK",
+			"a Zone declaring no edges stopped composing")
+	if plain.has("root"):
+		(plain["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+	probes_expected_to_fail += 1
+	rooms_checked += 1
 
 func _test_the_played_zone_rooms_can_be_left_on_foot() -> void:
 	var cases := [

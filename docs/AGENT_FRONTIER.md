@@ -22,6 +22,14 @@ branch) returned changes requested against `cb3bf64`; this slice builds
 only what is invariant across how the `TRAVERSAL_ONLY` contradiction is
 resolved.
 
+**§30.11.2e constraint 3 is a refusal, not a solver.** `build()` returns
+`LAYOUT_INFEASIBLE` naming `blocking_pairs` when a `JOINED` edge would
+close a spatial cycle, before allocating anything, and
+`routing_policy.closes_cycles` is `false`. A `TRAVERSAL_ONLY` edge is
+never counted — a return plug creates no spatial cycle. Closing a real
+loop needs a router that can return to a fixed transform and is not
+built. See `docs/AMALGAM_SLICE1.md` §5e.
+
 ## THE ACTIVE FRONTIER: v0.9 — production and the authored-content transition
 
 **`docs/design-packet-v0.9/IMPLEMENTATION_PLAN.md` is what wake-ups

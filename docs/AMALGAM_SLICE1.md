@@ -89,6 +89,7 @@ that was verified by removing them.
 | **The AUTHORED producer carries N doors too** | `content_instantiator.gd` `authored_door_plan` | a three-doorway authored shell composes, audits and seals |
 | **A Zone resumes at the station it was left from** | `zone_controller.gd`, `main.gd` | removing the resume lands the player **153.9 m** away; a station that was online stays online |
 | **Key reachable before its own lock, by walking** | `room_contract_driver.gd` | flooded walk-only from spawn; the room beyond the lock is *not* reached |
+| **A spatial cycle is refused; a plug cycle is not** | `zone_builder.gd` `unclosable_cycles` | the same three-room loop is refused when the closing edge is `JOINED` and composes when it is `TRAVERSAL_ONLY`; disabling the guard reports `LAYOUT_OK` on a loop, and counting `TRAVERSAL_ONLY` edges refuses a legal return plug |
 
 ## 4. Implemented but not integrated
 
@@ -121,7 +122,37 @@ that was verified by removing them.
   this lane authored, so Art can add real three-door shells without the
   engine being the unknown. All twelve shipping shells remain two-door
   and remain valid.
-- Spatial cycles, warp stations, ability gates, the exit unlock.
+- **Closing** a spatial cycle. Refusal is implemented and proved (§5e);
+  the router still builds chains, so a Zone that wants a genuine loop
+  gets a typed `LAYOUT_INFEASIBLE` naming the pair, not a layout.
+- Ability gates and the exit unlock.
+
+## 5e. Constraint 3 is a refusal, not a solver
+
+§30.11.2e constraint 3 requires every cycle in the physically realized
+subgraph to compose to the identity. This router places each room from
+the previous one and never returns to a transform it has already fixed,
+so it cannot satisfy that constraint — it can only avoid being asked.
+
+Two ways to not-satisfy it were available. The silent one is to build the
+chain and drop the closing edge: the graph would say two rooms are joined
+both ways, the geometry would join them once, and nothing downstream
+could tell. The loud one is to refuse before anything is allocated and
+name the pair. `build()` takes the loud one, ahead of the first `new()`,
+and `routing_policy` now carries `closes_cycles: false` so the refusal
+points at the bound a reviewer would have to widen.
+
+The scoping is the load-bearing half, and it is the owner's feature that
+makes it so. A return plug makes the topology cyclic and creates no
+spatial cycle — that is the entire point of `TRAVERSAL_ONLY`. So
+`unclosable_cycles` unions over `JOINED` edges only. Both halves were
+verified by removal: disabling the guard reports `LAYOUT_OK` on a
+`JOINED` loop and allocates a root; removing the realization filter
+refuses a legal dead-end plug.
+
+What this is **not** is cycle closure. A Zone that genuinely wants a loop
+does not get one. It gets a typed infeasibility naming `blocking_pairs`,
+which is honest and is not the feature.
 
 ## 5d. A test of mine passed with the thing it guarded removed
 
