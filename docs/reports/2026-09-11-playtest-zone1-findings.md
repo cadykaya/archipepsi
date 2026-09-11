@@ -131,9 +131,15 @@ if distance <= aggro:
 - **Line of sight is not checked.** `_has_line_of_sight()` is used only at
   line 368, to gate *firing*. Walls, crates, cover and the gallery deck
   hide nothing.
-- **`_has_noticed` is a latch that is never cleared.** No de-aggro, no
-  memory decay, no leash. An enemy that has noticed you follows forever,
-  including out of the room it was composed for.
+- *(Corrected 2026-09-12.)* This entry claimed `_has_noticed` was a latch
+  that never clears and that an enemy therefore **follows forever**. That
+  is a misreading. `_has_noticed` guards only `_say("aggro")` — the
+  notification — and the pursuit itself sits inside `if distance <=
+  aggro`, so it is distance-conditioned and stops when the player is out
+  of range. What remains true is the radius: **18 m with no line-of-sight
+  test**, which is wider than the rooms. Pursuit leaking into the
+  previous room follows from the radius reaching through a shared wall
+  (S-5), not from a latch.
 - The only stealth surface that exists is a `low_profile` status halving
   the radius to 9 m.
 
@@ -252,10 +258,21 @@ run of them is guaranteed dead space.
 
 ### S-9 … S-15. Confirmed, lower severity
 
-- **No activity timer exists anywhere**, and `timed_run` clocks are derived
-  at the most forgiving legal value.
-- **No completion feedback**: finishing a `switch_sequence` or
-  `target_challenge` produces nothing the player can perceive.
+- **Activity completion is built, and was not perceived.** *Corrected
+  2026-09-12: the two claims that stood here — "no activity timer exists
+  anywhere" and "no completion feedback" — are false against the played
+  source.* `activity_runtime.gd` carries `time_limit` (92), sets it as a
+  live clock (`_clock = time_limit`, 256 and 363), appends `"   %.0fs"`
+  to the prompt the HUD shows (178), says `DONE` on completion (332),
+  sends a `grant_local_reward` intent keyed `activity_<id>` (339) and
+  emits `completed` (345). **The finding is the gap, not the absence:**
+  the player ran four activities to completion and perceived no clock and
+  no completion. Something between that code and the screen does not
+  arrive, and it is still unexplained — the mechanism existing is not
+  evidence that it reaches the player. Open, and needing its own
+  investigation.
+- **`timed_run` clocks are derived at the most forgiving legal value.**
+  Unchanged, and separate from the above.
 - **The exit hard-locks on 100%.** `exit_portal.gd:3`: *"Locked until every
   assigned Check confirms."* A forgotten Check holds the Zone shut rather
   than costing a reward — which, with B-1, is what forced a Teleport
@@ -270,9 +287,19 @@ run of them is guaranteed dead space.
 - **There is no physics.** Zero `RigidBody3D` in the project. Every crate,
   prop and barrel is a `StaticBody`; `ReactiveBarrel` damages and never
   moves.
-- **Cosmetic, confirmed:** walls not meeting the floor; a Check pedestal
-  reading as floating; repeating-texture moiré on long walls; rooms darker
-  than intended; ceiling lights blown out.
+- **Cosmetic, confirmed:** a Check pedestal reading as floating;
+  repeating-texture moiré on long walls; rooms darker than intended;
+  ceiling lights blown out. *"Walls not meeting the floor" is removed from
+  this list: it was a real defect, not a cosmetic one — a recess is lined
+  on the faces where it met another lining and left open where it met a
+  room wall, because `_perimeter` builds walls from y = 0 upward and a
+  recess goes down. Fixed; see §6.*
+- **The checkpoint is not pre-art.** *Corrected 2026-09-12.* An earlier
+  framing of this report described the build as untextured primitives.
+  `godot/content/shells/` holds **12 authored shell scenes and 44
+  textures**, and the played Zone instantiated seven of those shells. The
+  images in the handoff package are test-harness renders from
+  2026-08-30 and are **not** screenshots of the played session.
 - **Not a bug:** the garbled Hub headline. `hub.gd:353` is
   `_garble(headline, static_units)` — corruption proportional to Static
   delivered, by design.
@@ -435,6 +462,113 @@ while functionally being a trap — it permanently corrupts the Hub. AP
 offers `ItemClassification.trap` and Archipepsi uses it nowhere, so other
 players' hint and trap-filtering logic reads Archipepsi's Static as
 harmless filler.
+
+---
+
+## 6. Repairs landed, 2026-09-12
+
+Bounded to escape. No graph work, no enemy changes, no Amalgam.
+
+### Fixed, with the played Zone's own chambers as the regression input
+
+`_test_the_played_zone_rooms_can_be_left_on_foot` builds `c015` and `c005`
+from the chamber dictionaries the generator produced on 2026-09-11 and
+floods the standable surface with **walking only** — no jump, no offer, no
+Teleport — so anything it reaches is reachable by the base kit alone.
+
+| | before | after |
+|---|---|---|
+| `c015` entry → exit | no route | **reached, 526 cells** |
+| `c005` entry → exit | reached (around the pit) | reached, 728 cells |
+| `c005` **pit floor** → exit | no route | **reached, 728 cells** |
+
+Four defects, all in `_elevation_band` / `band_rect`, and all invisible
+for one reason: **no fixture in the suite ever built a `back` band.**
+`room_contract_driver.gd:743` rolls `["left","right","back"][i % 3]`
+inside `if i % 3 == 0`, so `i % 3` is always 0 and two entries of that
+array are unreachable.
+
+1. **A `back` band sat on the room's own exit.** `band_rect` takes a width
+   and a depth and no door position, and "back" is the wall the exit is
+   cut into. A gallery laid its deck over the doorway; a pit took the
+   floor away in front of it. Both now leave a `BAND_DOOR_MARGIN` walkway
+   at the exit wall, at room level.
+2. **A `back` band spanned the full width**, so it was a wall across the
+   room whichever kind it was — a deck you had to climb, or a moat you
+   fell into and could not leave on the far side, a band having exactly
+   one ramp which returns you to the side you came from. `back` bands now
+   leave a lane, as `left` and `right` always have.
+3. **A pit's ramp was built outside the recess it serves.** Only the
+   FACING was flipped for a pit; the position stayed on the gallery's
+   side of the band edge, which put the only way out beyond the pit's own
+   wall. This is the `c005` softlock.
+4. **A `back` band's ramp climbed away from its own deck.** The quarter
+   turn was `-PI/2` where the deck is at `+Z` of the ramp, so the ramp
+   rose to a 1.86 m step at its foot and descended into nothing at its
+   head.
+
+Two smaller repairs fell out of the above and are load-bearing for the
+escape:
+
+- **The deck's trim lip ran across the top of the ramp.** It is 0.35 m of
+  solid trim along the deck's inner edge, and the ramp arrives at that
+  same edge. There is **no step-up anywhere in `player.gd`** —
+  `move_and_slide` does not climb, and `MAX_VERTICAL_STEP` is a constant
+  validation reasons with rather than one the body implements — so a
+  0.35 m kerb stops a walking player dead. The lip now has a gap where
+  the ramp lands. The same gap is cut in a pit's lining, for the same
+  reason.
+- **A recess was open to the void** on any face where it met a room wall
+  rather than another lining, because `_perimeter` builds from y = 0
+  upward and a recess goes down. All four faces are lined now. This is
+  the "missing wall" from the playtest.
+
+Each repair was reverted individually and the suite confirmed to go red
+on that revert alone, so none of them is decoration.
+
+### One defect in the prober, recorded because it is the same shape
+
+The first version of the escape flood dropped its rays from **above the
+room**, hit the ceiling first, read every column as one flat surface, and
+**passed both rooms it was written to catch.** The second version tested
+`abs(Δheight) <= MAX_VERTICAL_STEP`, which forbids walking *off* a ledge
+and made every raised deck a one-way trap in the measurement and nowhere
+else. Climbing is limited; descending is free. Both are fixed, and both
+are the finding of §5 committed by the repair for it.
+
+### Not fixed here: the Span stairs — an Art repair request
+
+`shell_span_basin`, routes `basin_south_to_deck` and `basin_north_to_deck`
+(`kind: walk`, `mandatory: false`). Measured against the built scene by
+dropping rays along the declared line at x = 11.9:
+
+- Both stairs run **uniform 0.875 m risers** on ~0.9 m treads, from 0.88 m
+  up to **11.37 m** (south) and **11.38 m** (north).
+- The deck is at **14.00 m**.
+- **The final step is 2.63 m** — at z ≈ 14.62 south, z ≈ 75.40 north. It
+  exceeds `MAX_VERTICAL_STEP` (1.0) and also the base-kit jump apex
+  (1.333 m), so it cannot be climbed at all without an Echo.
+
+The collider is the authored shell's own merged mesh, not anything the
+composer placed, so this is **Art's to repair, not this task's**. The
+request is in `docs/art-requests/2026-09-12-span-basin-stairs.md`.
+
+Note the earlier report said the stairs were unverified because the routes
+are `mandatory: false`. That is exactly right and now has a line number:
+`shell_validator.gd:110` is `if not mandatory: return out`, which returns
+after the endpoint-drift check and before the step where `TraversalLaw`
+proves a declared `walk` has ground along its whole length.
+`room_audit.gd:455` skips non-mandatory segments too. **Promoting that
+check is deliberately NOT done in this task**: it would land a red suite
+on an Art defect this lane may not fix. It should follow the stair repair.
+
+### Still open from the playtest
+
+- Activity completion is built and was not perceived (§S-9, corrected).
+- The 0.875 m risers are within the declared walkable step and still
+  require a jump each, because the controller has no step-up. That is a
+  movement question, not a geometry one, and is untouched here.
+- Everything in §2 and §3 that is not an escape repair.
 
 ---
 

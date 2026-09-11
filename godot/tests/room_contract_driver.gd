@@ -109,6 +109,8 @@ func _run() -> void:
 	await _test_an_offer_is_judged_without_the_others_being_built()
 	await _test_validating_a_live_room_builds_nothing_in_it()
 	await _test_the_two_collider_counts_measure_different_things()
+	await _test_the_played_zone_rooms_can_be_left_on_foot()
+	await _test_a_band_never_seals_the_room_it_stands_in()
 	_test_an_approved_shell_is_held_to_the_contract()
 
 	_check(rooms_checked >= 8,
@@ -2134,6 +2136,213 @@ func _chamber_for(entry: Dictionary) -> Dictionary:
 			chamber["wall_height"] = _sized(entry)["wall_height"]
 			chamber["objective"] = "reach_exit"
 	return chamber
+
+
+# --- escape: the played Zone's two blockers, as inputs ---------------------
+
+## How far a WALKING player can get, measured rather than assumed.
+##
+## Not a general walkability prover -- the codebase deliberately has no
+## such thing, and `_openings_are_holes` says so. This is narrower and
+## answerable: sample the room's standable surface on a grid, join cells
+## whose surfaces are within one `MAX_VERTICAL_STEP` of each other, and
+## flood from a start cell. It uses WALKING ONLY. No jump, no offer, no
+## Teleport, no `MovementPackage` -- so anything it reaches is reachable
+## by the base kit alone, and a `false` cannot be explained away by a
+## missing Echo.
+const ESCAPE_CELL := 0.5
+
+func _standable_at(space: PhysicsDirectSpaceState3D, x: float, z: float,
+		from_y: float) -> float:
+	## The topmost surface BELOW `from_y` at this column, or NAN.
+	##
+	## `from_y` starts INSIDE the room, not above it. A room has a
+	## ceiling, and a ray dropped from outside hits that first: the
+	## first version of this probe read every column as the roof slab,
+	## reported one flat surface across the whole room, and passed the
+	## two rooms it was written to catch. Which is the finding this
+	## whole repair is about, committed by the repair.
+	var down := PhysicsRayQueryParameters3D.create(
+			Vector3(x, from_y, z), Vector3(x, -60.0, z))
+	var hit := space.intersect_ray(down)
+	if hit.is_empty():
+		return NAN
+	var y: float = (hit["position"] as Vector3).y
+	# The player's own body has to fit standing there.
+	var shape := CapsuleShape3D.new()
+	shape.height = Constants.PLAYER_HEIGHT
+	shape.radius = Constants.PLAYER_RADIUS
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = shape
+	query.transform = Transform3D(Basis(), Vector3(x,
+			y + Constants.PLAYER_HEIGHT / 2.0 + 0.05, z))
+	query.collide_with_areas = false
+	if not space.intersect_shape(query, 1).is_empty():
+		return NAN
+	return y
+
+func _walk_reaches(result: Dictionary, from_xz: Vector2,
+		to_xz: Vector2) -> Dictionary:
+	var space := _space()
+	var bounds: AABB = result["bounds"]
+	# Just under the roof: high enough to clear any deck the room has,
+	# low enough that the roof itself is never what gets measured.
+	var ceiling := bounds.end.y - 0.2
+	var x0 := bounds.position.x
+	var z0 := bounds.position.z
+	var nx := int(ceil(bounds.size.x / ESCAPE_CELL)) + 1
+	var nz := int(ceil(bounds.size.z / ESCAPE_CELL)) + 1
+	var height := {}
+	for ix in nx:
+		for iz in nz:
+			var y := _standable_at(space, x0 + float(ix) * ESCAPE_CELL,
+					z0 + float(iz) * ESCAPE_CELL, ceiling)
+			if not is_nan(y):
+				height[Vector2i(ix, iz)] = y
+	var cell_of := func(p: Vector2) -> Vector2i:
+		return Vector2i(int(round((p.x - x0) / ESCAPE_CELL)),
+				int(round((p.y - z0) / ESCAPE_CELL)))
+	var start: Vector2i = cell_of.call(from_xz)
+	var goal: Vector2i = cell_of.call(to_xz)
+	if not height.has(start):
+		return {"ok": false, "why": "the player cannot stand where the "
+				+ "room is entered", "reached": 0}
+	var seen := {start: true}
+	var queue: Array[Vector2i] = [start]
+	while not queue.is_empty():
+		var here: Vector2i = queue.pop_front()
+		for step: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0),
+				Vector2i(0, 1), Vector2i(0, -1)]:
+			var next: Vector2i = here + step
+			if seen.has(next) or not height.has(next):
+				continue
+			# UP IS LIMITED, DOWN IS FREE. A walking player cannot
+			# climb more than one step without a jump, and can always
+			# walk off a ledge. Testing the absolute difference forbade
+			# descending, which made every raised deck a one-way trap
+			# in the measurement and nowhere else.
+			if float(height[next]) - float(height[here]) \
+					> Constants.MAX_VERTICAL_STEP:
+				continue
+			seen[next] = true
+			queue.append(next)
+	if seen.has(goal):
+		return {"ok": true, "why": "", "reached": seen.size()}
+	var lo := Vector2i(9999, 9999)
+	var hi := Vector2i(-9999, -9999)
+	for c: Vector2i in seen:
+		lo = Vector2i(mini(lo.x, c.x), mini(lo.y, c.y))
+		hi = Vector2i(maxi(hi.x, c.x), maxi(hi.y, c.y))
+	return {"ok": false, "reached": seen.size(),
+			"why": "walked %d cells, x %.1f..%.1f z %.1f..%.1f, start y=%.2f, goal cell %s %s"
+			% [seen.size(), x0 + float(lo.x) * ESCAPE_CELL,
+				x0 + float(hi.x) * ESCAPE_CELL,
+				z0 + float(lo.y) * ESCAPE_CELL,
+				z0 + float(hi.y) * ESCAPE_CELL,
+				float(height[start]),
+				str(goal),
+				("standable y=%.2f" % float(height[goal])) if height.has(goal) else "NOT STANDABLE"]}
+
+## THE TWO ROOMS THE PLAYTEST COULD NOT LEAVE, as the generator made them.
+##
+## These are not invented shapes. Both chamber dictionaries are copied
+## from `zone_001`, the Zone played on 2026-09-11 at 96c450e, and both
+## ended that session as a room the base kit could not exit -- `c015` was
+## left on Teleport and `c005` on an Echo's boost. They stay here exactly
+## as they were generated, because the repair has to be proved against
+## the input that failed and not against a tidied version of it.
+func _test_the_played_zone_rooms_can_be_left_on_foot() -> void:
+	var cases := [
+		{"chamber": {"id": "c015", "type": "arena",
+				"width": 23.7, "depth": 10.1, "wall_height": 4.6,
+				"objective": "kill_all", "enemies": [],
+				"elevation": {"kind": "gallery", "rise": 1.86,
+					"coverage": 0.3, "side": "back", "access": "ramp"}},
+			"who": "c015 (back gallery over the exit)"},
+		{"chamber": {"id": "c005", "type": "arena",
+				"width": 19.3, "depth": 17.0, "wall_height": 6.0,
+				"objective": "kill_all", "enemies": [],
+				"elevation": {"kind": "pit", "rise": 1.66,
+					"coverage": 0.32, "side": "left", "access": "ramp"}},
+			"who": "c005 (pit)"},
+	]
+	for case: Dictionary in cases:
+		var chamber: Dictionary = case["chamber"]
+		var result := _build(chamber)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var entry: Vector3 = result.get("entry_offset", RoomContract.LEGACY_ENTRY)
+		var leave: Vector3 = result["exit_offset"]
+		var walk := _walk_reaches(result,
+				Vector2(entry.x, entry.z + 1.0),
+				Vector2(leave.x, leave.z - 0.6))
+		print("  ESCAPE %s: ok=%s reached=%d %s"
+				% [case["who"], str(walk["ok"]), int(walk["reached"]),
+					str(walk["why"])])
+		_check(bool(walk["ok"]),
+				"%s cannot be left on foot: %s" % [case["who"], walk["why"]])
+		rooms_checked += 1
+		(result["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+
+	# AND OUT OF THE RECESS ITSELF. Reaching the exit from the entry does
+	# not prove a player who fell in can get back out, and falling in is
+	# not optional -- the pit is a hole in the floor of the room the
+	# mandatory route crosses.
+	var pit := {"id": "c005", "type": "arena",
+			"width": 19.3, "depth": 17.0, "wall_height": 6.0,
+			"objective": "kill_all", "enemies": [],
+			"elevation": {"kind": "pit", "rise": 1.66, "coverage": 0.32,
+				"side": "left", "access": "ramp"}}
+	var built := _build(pit)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var floor_rect := ChamberBuilders.band_rect(
+			pit["elevation"] as Dictionary, 19.3, 17.0)
+	var inside := floor_rect.get_center()
+	var out: Vector3 = built["exit_offset"]
+	var escape := _walk_reaches(built, inside, Vector2(out.x, out.z - 0.6))
+	print("  ESCAPE c005 pit floor -> exit: ok=%s reached=%d %s"
+			% [str(escape["ok"]), int(escape["reached"]), str(escape["why"])])
+	_check(bool(escape["ok"]),
+			"a player who falls into c005's pit is stuck: %s" % escape["why"])
+	rooms_checked += 1
+	(built["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+## The fixture gap that let `c015` ship, closed as a property.
+##
+## The suite DID build galleries, and never a `back` one: the sixteen-room
+## reward fixture rolls `["left","right","back"][i % 3]` inside
+## `if i % 3 == 0`, so `i % 3` is always 0 and the other two entries are
+## unreachable. `back` is the only side that reaches the wall the exit is
+## cut into. Every side, of both kinds, now goes through the opening
+## audit that would have caught it.
+func _test_a_band_never_seals_the_room_it_stands_in() -> void:
+	for kind: String in ["gallery", "pit"]:
+		for side: String in ["left", "right", "back"]:
+			var chamber := {"id": "band_%s_%s" % [kind, side],
+					"type": "arena", "width": 22.0, "depth": 18.0,
+					"wall_height": 5.0, "objective": "kill_all",
+					"enemies": [],
+					"elevation": {"kind": kind, "rise": 1.8,
+						"coverage": 0.35, "side": side,
+						"access": "ramp"}}
+			var result := _build(chamber)
+			await get_tree().physics_frame
+			await get_tree().physics_frame
+			var who := "a %s band on the %s wall" % [kind, side]
+			_judge(RoomContract.violations(result, who), who)
+			_judge(RoomAudit.findings(result, _space(), who), who)
+			var leave: Vector3 = result["exit_offset"]
+			var walk := _walk_reaches(result, Vector2(0.0, 1.0),
+					Vector2(leave.x, leave.z - 0.6))
+			_check(bool(walk["ok"]),
+					"a %s band on the %s wall leaves no way out: %s"
+					% [kind, side, walk["why"]])
+			rooms_checked += 1
+			(result["root"] as Node3D).queue_free()
+			await get_tree().process_frame
 
 func _test_a_pending_shell_never_reaches_a_zone() -> void:
 	"""The art lane's gate, measured rather than trusted.

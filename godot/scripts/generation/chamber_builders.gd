@@ -29,6 +29,16 @@ const BRUTE_LANE := 2.6
 ## `reserved` sockets instead.
 const ROOM_SCALE_SOLID := 6.0
 
+## How wide a band's access ramp is. Named because the deck's lip has to
+## leave a gap exactly this wide, and two literals drift apart.
+const RAMP_WIDTH := 2.6
+
+## Floor a `back` band leaves between itself and the exit wall.
+##
+## The player is 0.8 m across; this is that plus room to turn and walk,
+## so the doorway always has ground in front of it at room level.
+const BAND_DOOR_MARGIN := 2.0
+
 ## Every piece of furniture-scale solid geometry under `node`, in that
 ## node's own space.
 ##
@@ -127,7 +137,15 @@ static func band_rect(band: Dictionary, width: float,
 	# The band occupies a strip against one wall. `back` runs the room's
 	# width at the far end; `left`/`right` run its depth.
 	var span_z := depth * coverage if side == "back" else depth
-	var span_x := width if side == "back" else width * coverage
+	# A `back` band leaves a LANE as well as a walkway. `left` and
+	# `right` are partial in the axis the player crosses, so there is
+	# always floor to walk past them; `back` used to span the whole
+	# width, which makes it a wall across the room whichever kind it is
+	# -- a deck you must climb, or a moat you fall into and cannot leave
+	# on the far side, since a band has exactly one ramp and it returns
+	# you to the side you entered from.
+	var span_x := (width - BAND_DOOR_MARGIN) if side == "back" \
+			else width * coverage
 	var centre_x := 0.0
 	var centre_z := depth / 2.0
 	match side:
@@ -136,7 +154,18 @@ static func band_rect(band: Dictionary, width: float,
 		"right":
 			centre_x = (width - span_x) / 2.0
 		_:
-			centre_z = depth - span_z / 2.0
+			# NOT FLUSH TO THE FAR WALL. `back` means the far end of the
+			# room, and the far wall is the one the exit is cut into --
+			# so a band pushed right up against it lands on top of the
+			# room's own way out. A gallery laid its deck over the
+			# doorway (Zone 1's `c015`: 1.46 m of clearance under the
+			# slab, 1.34 m over it, for a 1.8 m capsule) and a pit took
+			# the floor away in front of it instead. Both are the same
+			# mistake, and one margin answers both: leave a walkway at
+			# the exit wall, at room level, wide enough to stand and
+			# walk in.
+			centre_z = depth - span_z / 2.0 - BAND_DOOR_MARGIN
+			centre_x = -BAND_DOOR_MARGIN / 2.0
 	return Rect2(centre_x - span_x / 2.0, centre_z - span_z / 2.0,
 			span_x, span_z)
 
@@ -1045,15 +1074,38 @@ static func _elevation_band(root: Node3D, band: Dictionary, width: float,
 		# being a texture change you notice by falling off it.
 		_box(root, Vector3(span_x, 0.4, span_z),
 				Vector3(centre_x, rise - 0.2, centre_z), deck)
-		var lip_x := span_x if side == "back" else 0.25
-		var lip_z := 0.25 if side == "back" else span_z
+		# WITH A GAP WHERE THE RAMP LANDS. The lip is 0.35 m of solid
+		# trim along the deck's inner edge, and the ramp arrives at that
+		# same edge -- so it ran across the top of the only way up.
+		# `move_and_slide` does not climb steps (there is no step-up
+		# anywhere in `player.gd`; `MAX_VERTICAL_STEP` is a constant
+		# validation reasons with, not one the body implements), so a
+		# 0.35 m kerb stops a walking player dead. That contradicts this
+		# file's own claim that a ramp is base-kit traversal in both
+		# directions, which is what `NO REQUIREMENT BEFORE GUARANTEE`
+		# rests on for geometry.
 		var edge_x := centre_x + (span_x / 2.0 - 0.12) * (
 				1.0 if side == "left" else -1.0)
 		var edge_z := centre_z - span_z / 2.0 + 0.12
-		_box(root, Vector3(lip_x, 0.35, lip_z),
-				Vector3(centre_x if side == "back" else edge_x,
-					rise + 0.17,
-					edge_z if side == "back" else centre_z), trim)
+		var gap := RAMP_WIDTH + 0.6
+		if side == "back":
+			# The lip runs along X; the ramp crosses it at `centre_x`.
+			for edge: float in [-1.0, 1.0]:
+				var length := maxf(0.0, (span_x - gap) / 2.0)
+				if length <= 0.01:
+					continue
+				_box(root, Vector3(length, 0.35, 0.25),
+						Vector3(centre_x + edge * (gap + length) / 2.0,
+							rise + 0.17, edge_z), trim)
+		else:
+			# The lip runs along Z; the ramp crosses it at `centre_z`.
+			for edge: float in [-1.0, 1.0]:
+				var length := maxf(0.0, (span_z - gap) / 2.0)
+				if length <= 0.01:
+					continue
+				_box(root, Vector3(0.25, 0.35, length),
+						Vector3(edge_x, rise + 0.17,
+							centre_z + edge * (gap + length) / 2.0), trim)
 	else:
 		# A pit is a hole, so the floor slab is not carved -- the walls
 		# of the recess are built and the deck is dropped. Carving the
@@ -1061,14 +1113,55 @@ static func _elevation_band(root: Node3D, band: Dictionary, width: float,
 		# with a floor across it is not a pit.
 		_box(root, Vector3(span_x, 0.4, span_z),
 				Vector3(centre_x, -rise - 0.2, centre_z), deck)
+		# FOUR SIDES, NOT THREE. The fourth was left out because the
+		# room's own perimeter is already there -- but `_perimeter`
+		# builds its walls from y = 0 UP, and a recess goes DOWN. So on
+		# whichever face the recess met a room wall rather than another
+		# lining, there was nothing at all below the floor and the pit
+		# was open to the void. A `left` band spans the full depth, so
+		# that was both of its ends; Zone 1's `c005` is the one the
+		# playtest reported as a missing wall.
+		# WITH A GAP WHERE THE RAMP LANDS, for the same reason the
+		# gallery's lip has one: the ramp now descends from the rim
+		# INTO the recess, and the lining on that rim is exactly where
+		# it arrives. A full-length lining turns the top of the only way
+		# out into a 1.66 m wall.
+		var mouth := RAMP_WIDTH + 0.6
+		var run_z := side == "back"
 		for wall: Array in [
 				[Vector3(0.3, rise, span_z), Vector3(
-					centre_x + span_x / 2.0, -rise / 2.0, centre_z)],
+					centre_x + span_x / 2.0, -rise / 2.0, centre_z),
+					not run_z and side == "left"],
 				[Vector3(0.3, rise, span_z), Vector3(
-					centre_x - span_x / 2.0, -rise / 2.0, centre_z)],
+					centre_x - span_x / 2.0, -rise / 2.0, centre_z),
+					not run_z and side == "right"],
 				[Vector3(span_x, rise, 0.3), Vector3(
-					centre_x, -rise / 2.0, centre_z - span_z / 2.0)]]:
-			_box(root, wall[0] as Vector3, wall[1] as Vector3, trim)
+					centre_x, -rise / 2.0, centre_z - span_z / 2.0),
+					run_z],
+				[Vector3(span_x, rise, 0.3), Vector3(
+					centre_x, -rise / 2.0, centre_z + span_z / 2.0),
+					false]]:
+			var size: Vector3 = wall[0]
+			var at: Vector3 = wall[1]
+			if not bool(wall[2]):
+				_box(root, size, at, trim)
+				continue
+			# The ramp crosses this face. Build it either side.
+			for edge: float in [-1.0, 1.0]:
+				if run_z:
+					var length := maxf(0.0, (span_x - mouth) / 2.0)
+					if length <= 0.01:
+						continue
+					_box(root, Vector3(length, rise, 0.3),
+							at + Vector3(
+								edge * (mouth + length) / 2.0, 0, 0), trim)
+				else:
+					var length := maxf(0.0, (span_z - mouth) / 2.0)
+					if length <= 0.01:
+						continue
+					_box(root, Vector3(0.3, rise, length),
+							at + Vector3(
+								0, 0, edge * (mouth + length) / 2.0), trim)
 
 	# ACCESS. A ramp is base-kit traversal in both directions, which is
 	# what keeps NO REQUIREMENT BEFORE GUARANTEE true of geometry: a band
@@ -1080,24 +1173,43 @@ static func _elevation_band(root: Node3D, band: Dictionary, width: float,
 	# steeper as the band rises, and there is no reason to make the tall
 	# ones the hard ones.
 	var run := maxf(3.0, absf(rise) * 3.0)
-	var width_of_ramp := 2.6
+	var width_of_ramp := RAMP_WIDTH
 	# The prism's slope runs along its X and its apex sits at -X, so the
 	# apex end is placed against the deck's inner edge and the ramp is
 	# turned to face it.
+	#
+	# WHICH SIDE OF THE BAND'S EDGE THE RAMP SITS ON IS THE WHOLE
+	# DIFFERENCE between the two kinds, and it used to be unwritten.
+	# A gallery's deck is ABOVE the floor, so its ramp climbs to the
+	# edge from OUTSIDE the deck's footprint. A pit's deck is BELOW it,
+	# so its ramp must descend from the edge INTO the recess -- inside
+	# the footprint. Only the facing was flipped for a pit (`turn`), and
+	# the position was left on the gallery's side of the edge, which put
+	# every pit's only way out on the far side of its own wall. Zone 1's
+	# `c005` shipped that way and could not be left on foot.
+	var reach := (-run / 2.0) if kind == "pit" else (run / 2.0)
 	var ramp_at := Vector3.ZERO
 	var turn := 0.0
 	match side:
 		"left":
-			ramp_at = Vector3(centre_x + span_x / 2.0 + run / 2.0,
+			ramp_at = Vector3(centre_x + span_x / 2.0 + reach,
 					surface / 2.0, centre_z)
 		"right":
-			ramp_at = Vector3(centre_x - span_x / 2.0 - run / 2.0,
+			ramp_at = Vector3(centre_x - span_x / 2.0 - reach,
 					surface / 2.0, centre_z)
 			turn = PI
 		_:
+			# +PI/2, NOT -PI/2. The prism's tall end is at its local -X,
+			# and a `back` band's deck is at +Z of the ramp -- so the
+			# quarter turn has to carry -X onto +Z. Turned the other way
+			# the ramp climbed AWAY from the deck it serves, leaving a
+			# 1.86 m step off the floor at its foot and a descent into
+			# nothing at its head. Zone 1's `c015` had this and the
+			# sealed doorway at once, and for the same reason: no
+			# fixture in the suite ever built a `back` band.
 			ramp_at = Vector3(centre_x,
-					surface / 2.0, centre_z - span_z / 2.0 - run / 2.0)
-			turn = -PI / 2.0
+					surface / 2.0, centre_z - span_z / 2.0 - reach)
+			turn = PI / 2.0
 	var size := Vector3(run, absf(rise), width_of_ramp)
 	# A pit's ramp descends, so its high end faces the ROOM rather than
 	# the deck: the same wedge, turned the other way.
@@ -1139,9 +1251,18 @@ static func _elevation_band(root: Node3D, band: Dictionary, width: float,
 					+ (span_z - inset * 2.0) * t
 		sockets.append({"kind": "enemy_high",
 				"position": Vector3(socket_x, surface + 0.2, socket_z)})
-	sockets.append({"kind": "cover",
-			"position": Vector3(centre_x, surface + 0.4,
-				centre_z + span_z * 0.18 * (1.0 if side == "back" else 1.0))})
+	# ACROSS THE RAMP, NEVER ALONG IT. A `left` or `right` band's ramp
+	# runs along X at `centre_z`, so offsetting this socket in Z steps off
+	# it. A `back` band's ramp runs along Z at `centre_x` -- so the same
+	# Z offset walks straight down the middle of it, which is where a
+	# pit's ramp now is. (The line this replaces chose between 1.0 and
+	# 1.0, so the `back` case it was reaching for was never written.)
+	var cover_at := Vector3(centre_x, surface + 0.4,
+			centre_z + span_z * 0.18)
+	if side == "back":
+		cover_at = Vector3(centre_x + (width_of_ramp / 2.0 + 1.4),
+				surface + 0.4, centre_z)
+	sockets.append({"kind": "cover", "position": cover_at})
 	# THE FOOTPRINT IS SPOKEN FOR at ground level. A gallery's deck is a
 	# floor when you are on it and a ceiling when you are under it, and
 	# ground-level composition has to treat it as neither: the space
@@ -1169,6 +1290,20 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 		hole = band_rect(declared as Dictionary, width, depth)
 	_floor_with_hole(root, width, depth, ThemeMaterials.floor_mat(theme),
 			hole)
+	# WHERE THE EXIT LEAVES FROM, which a `back` band decides.
+	#
+	# `band_rect` takes a width and a depth and NO door position, and
+	# `back` means "against the far wall" -- which is the wall the exit
+	# is cut into. So a back gallery lays its full-width deck across the
+	# room's own exit, and `_perimeter`'s default sill of 0.0 then put
+	# the opening underneath it: 1.46 m of clearance under the slab and
+	# 1.34 m over it, for a capsule 1.8 m tall with no crouch. Zone 1's
+	# `c015` had no walking exit at all.
+	#
+	# The deck is not an obstruction, it is the approach: the ramp
+	# climbs to it and it reaches the far wall. So the door goes WHERE
+	# THE DECK IS, which is what `exit_gap_y` has always been for and
+	# what a tower already does with its summit.
 	_perimeter(root, width, depth, wall_height, theme)
 	# ROOM GRAMMAR v0's band, built BEFORE anything is scattered.
 	#

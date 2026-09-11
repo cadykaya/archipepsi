@@ -1947,6 +1947,20 @@ Skyah played the 3A/3B checkpoint Zone start to portal in `none` mode.
 Game code stayed at the audited `96c450e`; that report and the two
 corrections beside it are documentation only.
 
+**Both blockers are REPAIRED as of 2026-09-12** (see §6 of that report):
+the escape flood in `room_contract_driver.gd` now walks `c015` and `c005`
+from the played Zone's own chamber dictionaries, walking only, and each
+repair was reverted individually to confirm the suite goes red without it.
+The Span stairs are measured and handed to Art
+(`docs/art-requests/2026-09-12-span-basin-stairs.md`): both flights stop
+three risers short of their deck, a final step of 2.63 m against a jump
+apex of 1.333 m. Promoting `shell_validator.gd:110` so a non-mandatory
+`walk` is proven along its length is the follow-up and waits on that
+repair, or it lands a red suite on an Art defect.
+
+What was repaired, all in `_elevation_band` / `band_rect` and all
+invisible because no fixture built a `back` band:
+
 Two **blockers**, both run-ending without an Echo:
 
 - A `gallery` with `side: "back"` puts its full-width deck across the room's
