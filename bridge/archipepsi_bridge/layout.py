@@ -97,11 +97,25 @@ def validate(zone, result: dict) -> Verdict:
 
     # --- bodies do not interpenetrate. AABB arithmetic on what the
     # engine measured from the built scene; the bridge measures nothing.
+    #
+    # THE ENGINE NESTS THE EVIDENCE inside each room's transform entry --
+    # `{position, yaw, bounds, arrival}` -- rather than shipping sibling
+    # maps, which is what `zone_builder.gd` actually emits. A top-level
+    # `bounds` map is still accepted because an earlier draft of this
+    # contract asked for one, and reading both costs a `get`.
     boxes: dict[str, tuple] = {}
-    for rid, raw in (result.get("bounds") or {}).items():
+    top_bounds = result.get("bounds") or {}
+    for rid, entry in rooms.items():
+        raw = None
+        if isinstance(entry, dict) and "bounds" in entry:
+            raw = entry["bounds"]
+        elif rid in top_bounds:
+            raw = top_bounds[rid]
+        if raw is None:
+            continue
         try:
             boxes[rid] = _aabb(raw)
-        except (KeyError, TypeError, ValueError):
+        except (KeyError, TypeError, ValueError, IndexError):
             errors.append(f"room '{rid}' returned bounds the bridge "
                           "could not read")
     ids = sorted(boxes)
@@ -152,6 +166,14 @@ def validate(zone, result: dict) -> Verdict:
     # --- anchors a plug names must resolve, and land somewhere a body
     # fits. The bridge checks the id is present; whether a capsule fits
     # is the engine's measurement, consumed here as evidence.
+    # Arrival evidence, from wherever the engine put it. A room entry
+    # carrying `arrival` is the engine saying "a body arriving here
+    # stands at this point"; the separate `arrival` map is the boolean
+    # form an earlier draft asked for. Neither is re-derived here.
+    for rid, entry in rooms.items():
+        if isinstance(entry, dict) and "arrival" in entry:
+            anchors.setdefault(f"room:{rid}:arrival", entry["arrival"])
+
     for plug in zone.plugs:
         for anchor in (plug.source_anchor, plug.destination):
             if anchor not in anchors:

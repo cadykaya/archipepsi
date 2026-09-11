@@ -30,7 +30,12 @@ def _ok_result(zone, **over) -> dict:
     """What a successful engine placement looks like on the wire."""
     rooms, bounds, apertures = {}, {}, {}
     for i, c in enumerate(zone.chambers):
-        rooms[c.id] = {"position": [0.0, 0.0, i * 40.0], "yaw": 0.0}
+        # The shape `zone_builder.gd` actually emits: bounds and arrival
+        # nested in the room's own entry, not as sibling maps.
+        rooms[c.id] = {"position": [0.0, 0.0, i * 40.0], "yaw": 0.0,
+                       "bounds": {"position": [-8.0, 0.0, i * 40.0],
+                                  "size": [16.0, 5.0, 15.0]},
+                       "arrival": [0.0, 0.0, i * 40.0 + 3.0]}
         bounds[c.id] = {"position": [-8.0, 0.0, i * 40.0],
                         "size": [16.0, 5.0, 15.0]}
         for d in c.doors:
@@ -118,7 +123,7 @@ def test_an_unknown_status_is_refused_rather_than_guessed():
 def test_overlapping_rooms_are_caught():
     z = _zone()
     bad = _ok_result(z)
-    bad["bounds"]["c002"] = bad["bounds"]["c001"]
+    bad["rooms"]["c002"]["bounds"] = bad["rooms"]["c001"]["bounds"]
     v = layout.validate(z, bad)
     assert not v.accepted
     assert any("overlap" in e for e in v.errors)
@@ -175,6 +180,18 @@ def test_two_inbound_joined_edges_make_room_keyed_links_ambiguous():
     v = layout.validate(doubled, _ok_result(doubled))
     assert not v.accepted
     assert any("key chains by edge_id" in e for e in v.errors)
+
+
+def test_the_engine_nests_bounds_and_arrival_in_the_room_entry():
+    """The shape the engine emits, not the one an earlier draft asked for."""
+    z = _zone()
+    nested = _ok_result(z)
+    nested.pop("bounds")           # no sibling map at all
+    v = layout.validate(z, nested)
+    assert v.accepted, v.errors
+    # and the overlap check still has something to work on
+    nested["rooms"]["c002"]["bounds"] = nested["rooms"]["c001"]["bounds"]
+    assert not layout.validate(z, nested).accepted
 
 
 def test_relative_transforms_would_make_closure_stop_being_free():

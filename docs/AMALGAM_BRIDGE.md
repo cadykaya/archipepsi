@@ -120,14 +120,26 @@ new intent, not new computation.
 }
 ```
 
+**Updated 2026-09-11 against `a632ec9`.** Prod surfaced two of the three
+missing fields, and **nested them inside each room's entry** rather than
+shipping sibling maps. The bridge reads the engine's shape; the sibling
+form is still accepted because an earlier draft of this document asked
+for one, and reading both costs a `get`.
+
+```json
+"rooms": {"c001": {"position": [0,0,0], "yaw": 0.0,
+                   "bounds":  {"position": [-8,0,0], "size": [16,5,15]},
+                   "arrival": [0,0,3]}}
+```
+
 | Field | Status | Note |
 |---|---|---|
 | `rooms` | **exists** | `room_transforms`, as is |
 | `links` | **exists** | as is, keyed by chamber id — see §4 |
 | `anchors` | **exists** | as is |
-| `bounds` | **needs keying** | today `bounds_list` is a flat array including connectors. The bridge needs **room** bounds by room id to check body overlap |
-| `arrival` | **needs surfacing** | the engine already measures it; a `{anchor_id: bool}` map is the evidence the bridge consumes |
-| `apertures` | **needs surfacing** | `_assigned_doors_match_their_usage` already measures both polarities; `{"room/socket": is_hole}` is the shape |
+| `bounds` | **now exists**, nested | `room_transforms[id].bounds`, world-space, as measured |
+| `arrival` | **now exists**, nested | `room_transforms[id].arrival`, the point a body arriving there stands at |
+| `apertures` | **still needed** | `_assigned_doors_match_their_usage` measures both polarities in `room_audit.gd`, and the layout result does not carry them. `{"room/socket": is_hole}` is the shape the validator reads |
 
 Failure payloads are already exactly right:
 
@@ -172,14 +184,17 @@ Stated plainly rather than implied by what is missing.
 1. **Nothing sends `layout_result` yet.** The validator is written,
    tested against the documented shape, and has never seen real engine
    output. §2.3 is what closes it.
-2. **`bounds`, `arrival` and `apertures` are not surfaced.** All three
-   are measured in the engine today. Until they arrive the validator
-   checks what it is given and silently skips what it is not — which is
-   honest but is not the same as proving the layout.
-3. **The branch is logical, not physical.** `compose_with_branch`
-   produces a genuine degree-3 junction with a locked branch and a
-   return plug, and the engine still places rooms by walking a chain. The
-   graph says what the topology is; placement says where the rooms go.
+2. **`apertures` is not surfaced.** `bounds` and `arrival` arrived at
+   `a632ec9` and the validator reads them. The door-polarity evidence is
+   measured in `room_audit.gd` and does not travel in the layout result,
+   so **the check that a `SEALED` door is solid and a `USED` door is a
+   hole is written, tested, and currently never handed real data.** That
+   is the one remaining piece of §2.3.
+3. ~~**The branch is logical, not physical.**~~ **Closed at `a632ec9`.**
+   The engine now routes and places a branch room off the junction —
+   `_emit_route` runs a second time for it and the room lands in
+   `room_transforms` with its own bounds and arrival. The graph and the
+   placement now say the same thing.
 4. **`links` is keyed by room.** Sound while each room has one inbound
    `JOINED` edge. The validator **asserts that** and refuses the Zone
    when it stops holding, naming `edge_id` keying as the fix.
@@ -191,8 +206,10 @@ Stated plainly rather than implied by what is missing.
    proof, and a diagnostic that over-permits will pass a key nobody can
    reach. **The bridge states the obligation and consumes a verdict; it
    encodes no flood as the proof.**
-6. **`station_reached` has no emitter.** Warp stations are not in either
-   slice.
+6. ~~**`station_reached` has no emitter.**~~ **Closed at `a632ec9`.**
+   `warp_station.gd` exists and `zone_controller.gd` sends the intent;
+   the bridge receiver was already written to the documented shape and
+   needed no change.
 7. **The relaxed exit is not shipped**, and should not be until the
    leave-and-return round trip is demonstrated end to end. The unlock is
    a two-line change and re-entry is a schema change; shipping them in
