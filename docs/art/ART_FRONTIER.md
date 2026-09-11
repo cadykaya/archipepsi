@@ -236,6 +236,33 @@ Separate theme-coloured hazard textures are **not required**, and none was
 painted. G1 above is answered; it was the one gap that looked like a
 collision with the art lane's own rule and it is not one.
 
+### ECMS Glyph PR #3 — stood down, and the watcher is deleted (2026-09-11)
+
+`cadykaya/ECMS-GLYPH` PR #3, branch `claude/archipepsi-glyph-tooling`, head
+`6c80b63`, base `main` at `727129e`. **Open, draft, and finished from this
+lane's side.** Do not re-arm a check-in on it.
+
+* The only red check is `Build, test, conformance` on **`GLA-PRF-001`** —
+  *"expected 108.08 to be less than or equal to 100"*. It is red on `main`
+  at `727129e` too, `HANDOFF.md` documents it as deterministic (read from a
+  stored measurement, so a re-run cannot move it), and **no fix exists to
+  port**. 337 passed / 1 failed on both heads, identical figure. The other
+  three checks are green. `mergeable_state` "unstable" means CI red with
+  **no merge conflict**.
+* The failure was **not weakened, relabelled or worked around**, per the
+  owner's standing instruction. The stand-down comment is posted on the PR
+  and both comments there are this lane's.
+* **Six consecutive quiet checks** with `updated_at` frozen at
+  2026-09-10T18:11:12Z. The Batch 043 brief then said *"No recurring
+  check-ins, PR watchers or heartbeat tasks"*, so the routine
+  (`trig_017uJk2bXe2vzD8HjXnmQGEP`) was **deleted rather than re-armed**.
+* Batch 043 used Glyph at `6c80b63` and **changed nothing in it**. Two
+  limitations were met and worked around with the established art tools
+  rather than by extending Glyph mid-batch: a project holds one variant, so
+  a 70-asset kit is 70 project files; and `easel.study` composites a view
+  over a ground but cannot composite two Glyph documents, so every composed
+  marker is authored as its own document instead.
+
 ### ECMS Glyph — available, run, and one texture through it (2026-09-10)
 
 Report: `docs/art/reports/2026-09-10-glyph-first-texture.md`. Package:
