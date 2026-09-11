@@ -101,6 +101,8 @@ var _stations: Array = []
 ## the exception the contract names: a POSITION, overwritten rather than
 ## accumulated, and losing it costs a walk rather than a run.
 var _stations_reached := {}
+## Every Check this Zone holds, from its own chambers.
+var _zone_locations: Array[int] = []
 ## PROGRESS CARRIED IN, set before `setup` by whoever is remembering.
 ##
 ## `locked_door.gd` already states the rule this serves: opened locks are
@@ -315,6 +317,10 @@ func setup(zone_dict: Dictionary) -> void:
 		for extra: Variant in chamber.get(
 				"additional_reward_location_ids", []) as Array:
 			locations.append(int(extra))
+		# THE ZONE'S OWN CHECKS, kept where the Zone can be asked about
+		# them without the bridge having to call it the active one.
+		for location: Variant in locations:
+			_zone_locations.append(int(location))
 
 		var anchor: Vector3 = result.get("reward_position", Vector3(0, 0, 1))
 		record["rewards"] = []
@@ -781,17 +787,21 @@ func refresh() -> void:
 		var reward: RewardObject = record["reward"]
 		if reward != null:
 			reward.refresh_from_snapshot()
-	# The bridge auto-completes the Zone when its last Check confirms; the
-	# snapshot then reports no active zone (or a different one). That is the
-	# exit portal's unlock signal.
-	var active := BridgeClient.active_zone()
-	var complete: bool = active.is_empty() \
-			or active.get("zone_id") != zone_id \
-			or _all_checks_confirmed()
+	# THE ZONE'S OWN CHECKS DECIDE, not whether the bridge still calls
+	# this Zone active.
+	#
+	# "No active Zone means this one completed" was sound while the only
+	# way to stop being active was to finish. It is not any more: a Zone
+	# walked out of with work outstanding goes DORMANT and
+	# `active_zone_id` is cleared, so the old inference opened the exit
+	# portal on a Zone the player had barely started -- and the label read
+	# "0 CHECKS REMAIN" because the outstanding count came from the same
+	# empty record.
 	var outstanding := 0
-	for location in active.get("allocated_location_ids", []):
-		if not BridgeClient.is_checked(int(location)):
+	for location: int in _zone_locations:
+		if not BridgeClient.is_checked(location):
 			outstanding += 1
+	var complete := outstanding == 0
 	_exit_portal.set_unlocked(complete, outstanding)
 	# The unlock is pushed on every snapshot, so remark on the edge only.
 	if complete and _portal_was_locked and hud != null:
@@ -878,12 +888,12 @@ func _process(delta: float) -> void:
 	else:
 		hud.clear_waypoint()
 
+## Every Check THIS Zone holds, confirmed. Asked of the Zone's own
+## chambers for the same reason the portal is: a Zone that is not the
+## active one is not thereby a finished one.
 func _all_checks_confirmed() -> bool:
-	var active := BridgeClient.active_zone()
-	if active.is_empty():
-		return true
-	for location in active.get("allocated_location_ids", []):
-		if not BridgeClient.is_checked(int(location)):
+	for location: int in _zone_locations:
+		if not BridgeClient.is_checked(location):
 			return false
 	return true
 
