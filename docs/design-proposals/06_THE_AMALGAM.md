@@ -1770,7 +1770,8 @@ Design 1's eight whole-Zone checks, plus Design 3's five, plus fifteen new. **Ev
 | **19b** | **Every incident topology edge of every room carries a distinct connector-socket assignment, and both endpoints of every edge agree on the joining transform** (§30.11.2b). | NEW |
 | **24** | **Every edge's `carry_legal` equals the value §4.9a derives from its `crossing`**, and every edge carries a `connector_kind` and a `crossing` from their closed enums. A stored value disagreeing with its derivation is a hard error. **No mandatory route crosses an edge typed `MOBILITY_AIR_STEP`, or typed `MOBILITY_DASH` or `MOBILITY_BURST_JUMP` without `capability:core:long_gap` in its `capability` field** — §4.9a, on Design 1 §13.6's validation contract. | NEW |
 | **23** | **No allocated AP Check, AP-relevant local key, or Zone exit sits behind a capability gate** unless the bridge produces a matching declared Archipelago access rule for that location (§29.5a). | NEW |
-| **19d** | **Every connector socket of every offered shell declares a standardized attachment collar** from the catalog's fixed set (§30.11.2d). A shell with bespoke socket geometry is not offerable. | NEW |
+| **19d** | **Every connector socket of every offered shell declares a standardized attachment collar** from the catalog's fixed set (§30.11.2d). A shell with bespoke socket geometry is not offerable. **This is a catalog check about apertures and proves nothing about shell bodies** — 19e is what proves the Zone. | NEW |
+| **19e** | **The committed layout holds**: every edge joined within `EPSILON_JOIN`, no two room envelopes intersecting, every independent cycle closed, and every assigned `player_entry` volume admitting the standing capsule (§30.11.2e). Measured on the committed transforms; the solver is not re-run. | NEW |
 | **19c** | **Every `HostDefinition` carries exactly one of `composition` or `profile`, decided by its `category`** — `profile` for `mobility`, `composition` for every other category (§4.2). | NEW |
 | **22** | **Every package with a non-null `status_required` declares a `status_source` and a solution target, and that triple is marked `guaranteed_application`** (§35.2.2). | NEW |
 | **21** | **Every constrained body a reachable `POWER_OFF` can affect, and that the player can stand on, ride, or attach to, has a base-movement-safe egress** — a surface reachable from it by §6.2's movement law alone, under every reachable macro state, with no offer geometry and no capability (§21.11). | NEW |
@@ -1874,7 +1875,7 @@ The budget is made a **contract** instead:
 
 Three consequences, and they are why this shape is right:
 
-1. **§35.4.3's `88.0 s` stays a real hard bound.** No search can silently overrun it, because a search that would is a rejected Zone.
+1. **§35.4.3's `103.0 s` stays a real hard bound.** No search can silently overrun it, because a search that would is a rejected Zone.
 2. **A slow implementation rejects candidates rather than hanging.** The failure is visible, attributable, and retried — not a composition that takes four minutes.
 3. **Performance can be measured later without changing correctness.** If the canonical environment turns out to finish a worst-case Zone in `200 ms`, nothing in this document changes; if it needs `3 s`, the composer rejects Zones it should accept and the response is to optimise, raise the budget deliberately and recompute §35.4.3, or lower §30.2's bounds.
 
@@ -2042,7 +2043,7 @@ A previous revision required a shell to be *"connector-compatible with both neig
 
 Define the room's **incident-edge signature** at step 3, before any shell is offered: for room `r`, the ordered list of its incident `TopologyEdge`s, each carrying its `connector_kind` and its `direction` as §4.9a types them. Both are edge fields precisely so the signature can be built before a shell exists — deriving a connector kind from an unselected shell is the circularity §30.11.2a already had to repair once.
 
-> **A shell is connector-satisfiable for room `r` when there exists an injective assignment from `r`'s incident edges to the shell's declared connector sockets** such that every assigned pair is compatible in socket **kind** (§4.9a's `DOORWAY` and `CORRIDOR_END`, which `connector_grammar.gd`'s `JOINABLE` lets meet each other), **direction** (a one-way drop assigns only to a drop socket oriented outward), **transform** (the socket's attachment frame can be placed so both rooms' geometry chains without overlap), and **clearance** (§30.11.2c's headroom and width minima).
+> **A shell is connector-satisfiable for room `r` when there exists an injective assignment from `r`'s incident edges to the shell's declared connector sockets** such that every assigned pair is compatible in socket **kind** (§4.9a's `DOORWAY` and `CORRIDOR_END`, which `connector_grammar.gd`'s `JOINABLE` lets meet each other), **direction** (a one-way drop assigns only to a drop socket oriented outward), **transform** (the socket's attachment frame is orientable to meet the edge's other endpoint), and **clearance** (§30.11.2c's headroom and width minima). **Whether the two shell bodies then fit is not this predicate's question** — §30.11.2d says why it cannot be, and §30.11.2e is where it is answered.
 
 Three consequences, each exact:
 
@@ -2050,19 +2051,54 @@ Three consequences, each exact:
 2. **The assignment is computed, recorded, and committed.** `RoomRecord.connector_assignment` maps each incident edge id to the socket id it uses. It is part of the manifest and therefore part of `manifest_digest`.
 3. **Assignment is deterministic.** Where several injective assignments exist, take the lexicographically smallest by `(edge_id, socket_id)` pairs sorted ascending. No search, no choice, no seed consumed.
 
-### 30.11.2d Why local filtering is globally sufficient
+### 30.11.2d Why local filtering is necessary and not sufficient
 
-Each room's shell is filtered against its own incident edges, and Epsilon selects one per room independently. **Local compatibility does not automatically prove the combination is spatially valid** — unless the connector contract makes it so, which is the design this document adopts:
+**Corrected 2026-09-11 by owner ruling, against a counterexample the live engine had already recorded.** A previous revision claimed that standardized attachment collars make joinability a property of the socket pair, so local candidate filtering is sufficient *by construction* and no cross-room solve is needed. **That claim is false.** The collar contract survives; the conclusion drawn from it does not.
+
+The contract itself is real and the engine implements it:
 
 > **Every joining socket of every authored shell presents a standardized attachment collar**: a fixed frame, a fixed clearance envelope, and a `connector_kind`. Two joining sockets join at their collars, and the collar geometry is identical across every shell in the catalog.
 
-**The engine already implements this**, which is why the contract is adoptable rather than aspirational. `connector_grammar.gd` defines `SIDE_CLEARANCE = 0.4` and `HEAD_CLEARANCE = 0.2` as constants above the player capsule, and `JOINABLE` makes every joining kind meet every other — so joinability really is a property of the socket pair and not of the shell pair, exactly as §30.11.2d needs.
+What a collar bounds is the **aperture** — the opening the player walks through and the clear volume immediately around it. `connector_grammar.gd`'s `SIDE_CLEARANCE = 0.4` and `HEAD_CLEARANCE = 0.2` are measured around the player capsule at the socket. **They say nothing about either shell's body**, and that is the whole of the error.
 
-With standardized collars, joinability is a property of the **pair of sockets**, not of the pair of shells: any socket satisfying kind, direction, frame, and clearance can be joined to any matching socket without shell-body overlap, because §30.11.2c's clearance minima are what guarantee the bodies do not reach each other. **Local candidate filtering is therefore sufficient by construction, and no cross-room CSP is needed.**
+**Two reasons the local predicate cannot carry the global claim:**
 
-This is a real constraint on the authored-shell contract, and the twelve `review: pass` shells already satisfy it — `content.py`'s validator refuses any `room_shell` declaring no `doorway` or `corridor_end` socket, and the clearance constants are engine-wide rather than per-shell. **§30.5 check 19d** enforces it on the catalog rather than on the Zone: every socket of every offered shell declares a collar from the standard set, and a shell whose socket geometry is bespoke is not offerable.
+1. **The socket frame is not guaranteed to lie on the shell's envelope.** `shell_yard_gantry`'s entry connector sits **`0.4 m` past its own west wall**. The engine states the separation outright: the entry connector is the room-to-room *attachment transform*, it "may sit slightly outside" the envelope, and therefore "no standing floor is required under it" — the interior region the body arrives into is the separate `player_entry` volume. A predicate reading only the socket knows neither where the shell's mass is nor whether there is floor on the far side. **Two collars can mate exactly while a `30.4 × 89.2 × 23.6 m` span and a `17.6 m` yard interpenetrate somewhere neither socket can see.**
 
-**If a future shell needs a bespoke collar**, this section is the thing that has to change, and the alternative is stated so the choice is real: validate the selected shells as one connector-assignment CSP after the batched response, treating a failing combination as an unusable response under §30.11.5 class 1. That costs a solve per Zone and a possible extra repair round. The collar contract is preferred because it moves the guarantee into authoring, where it can be checked once per shell instead of once per Zone.
+2. **A cycle has to close, and closure is not a pairwise property.** §30.2 gives the Zone `1`–`4` independent cycles. Composing the joining transforms around a cycle must return to the identity, and every pairwise join in that cycle can be individually legal while the product is not. No local filter discharges a constraint whose statement quantifies over a loop.
+
+**The live generator is the third piece of evidence.** `ZoneBuilder._search` already needs a `96`-connector escape hatch to chain large rooms in a straight line — the acyclic degenerate case — which is a global search wearing another name.
+
+**What each layer now proves.** The split matters, because the repair is not "distrust the collar":
+
+| Layer | Proves | Does not prove |
+|---|---|---|
+| §30.11.2b's per-edge predicate | this socket can serve this edge — kind, direction, aperture frame, §30.11.2c clearance | anything about either shell's body |
+| §30.11.2d's collar contract | every joining socket presents the same aperture, so the predicate is shell-independent | that two shells joined at compatible collars do not overlap |
+| **§30.11.2e's placement solve** | **the whole Zone has a world layout: no body overlap, every cycle closed, every arrival region standable** | per-edge legality, which is its input |
+
+**§30.11.2e is therefore mandatory, not the deferred alternative a previous revision offered.** The collar contract is still worth having: it keeps the per-edge predicate cheap and shell-independent, and it shrinks the solve's search space. It simply never was the proof it was claimed to be.
+
+### 30.11.2e The placement solve
+
+**After the batched Epsilon response and before §30.5's checks, the bridge solves one placement problem for the whole Zone.**
+
+**Input:** the topology graph from §30.3, each room's selected `shell_id`, and — from the catalog snapshot, never from the model — each shell's envelope, socket frames, and declared `player_entry` volumes.
+
+**Output:** a world transform per room, together with the `connector_assignment` §30.11.2b commits — or `INFEASIBLE_LAYOUT`.
+
+**Four constraints, all hard:**
+
+1. **Join.** For every `TopologyEdge`, the two assigned sockets coincide at their collars, within `EPSILON_JOIN = 0.001 m` and `0.001 rad`.
+2. **Body.** No two room envelopes intersect, less the collar tolerance at a shared aperture. The envelope is the shell's declared bounding volume, not its socket set.
+3. **Closure.** Every independent cycle composes to the identity within `EPSILON_JOIN`.
+4. **Arrival.** Every `player_entry` volume on an assigned socket admits the standing capsule. This is the constraint the engine added a consumer for after three shells declared an arrival region no probe ever read.
+
+**Determinism, because Law 47a requires it.** Rooms are ordered by `room_id` ascending; each room's candidate transforms are ordered by §30.11.2b's lexicographic assignment; the first complete solution wins. **No seed is consumed and no search is randomised**, so the same graph and the same selected shells give the same layout on any machine — which is what makes the layout committable to the manifest rather than recomputed per load.
+
+**The budget is a hard bound, not a prediction.** The solve gets **`3.0 s`**. Exceeding it is `LAYOUT_TIMEOUT`, and `LAYOUT_TIMEOUT` is `INFEASIBLE_LAYOUT` for every purpose below — the design does not distinguish "no layout exists" from "none was found in the budget", because a composer cannot tell them apart and pretending otherwise would be §2.5's *method instead of an outcome*. §35.4.3 carries the cost.
+
+**§30.5 check 19e** re-proves the solve's output on the composed Zone: every edge joined within tolerance, no envelope pair intersecting, every cycle closed, every assigned `player_entry` standable. Check 19e measures the committed transforms; it does not re-run the solver.
 
 **§30.5 check 19b** re-proves on the composed Zone that every incident edge of every room carries a distinct socket assignment and that both endpoints of every edge agree on the transform that joins them. A Zone with an unassigned edge, a doubly-assigned socket, or a transform mismatch is rejected.
 
@@ -2097,7 +2133,7 @@ The client reads `shell_id` from the committed manifest and instantiates that sh
 
 That is one retry, never two, which is exactly what §35.4.2's `20.0 s` budget pays for.
 
-**Six failure classes:**
+**Seven failure classes:**
 
 | # | Condition | Outcome |
 |---:|---|---|
@@ -2107,8 +2143,9 @@ That is one retry, never two, which is exactly what §35.4.2's `20.0 s` budget p
 | 4 | `offered_shells` is **empty** for a room | `FAIL_ROOM`. Retry the room with a different shell-compatible purpose up to `3` times, then `FAIL_ZONE` per §30.8. A room with no legal shell is a catalog gap, not a runtime condition |
 | 5 | A selected shell is **`review: pending`** or has been withdrawn since the request | Rejected at §30.5 check 19 and the Zone is recomposed from the same seed with the shrunken catalog. The catalog snapshot digest (§30.11.7) makes this detectable rather than silent |
 | 6 | **At load**, the manifest's `shell_id` is unknown to the client, or the client's shell-catalog digest differs from the manifest's | **Hard error.** The Zone is refused with §34.13's message, never approximated. This is §30.9's consistency check extended to shells |
+| 7 | **`INFEASIBLE_LAYOUT`** — §30.11.2e finds no world layout for the selected combination, or exceeds its `3.0 s` budget | One repair request naming the rooms whose envelopes could not be placed; then the offline selector supplies every shell and the solve is run once more. A third failure is `FAIL_ZONE` per §30.8, terminating in §37.2's certified fallback Zone, which is authored and therefore feasible by construction. **The offline selector is not itself a feasibility guarantee** — §30.11.6 picks by hash from `offered_shells` and knows nothing about geometry |
 
-**Classes 1 through 3 are the model-failure classes** and share the one-repair policy. Class 4 is a catalog gap, class 5 a catalog change between request and validation, class 6 a load-time mismatch — none involves a second request. Every one maps to a terminal `EpsilonProvenance.outcome` below.
+**Classes 1 through 3 are the model-failure classes** and share the one-repair policy. Class 4 is a catalog gap, class 5 a catalog change between request and validation, class 6 a load-time mismatch — none involves a second request. **Class 7 is the one failure that is nobody's mistake**: every selection can be individually legal and the combination still have no layout, which is exactly why §30.11.2d's local-sufficiency claim had to go. Every one maps to a terminal `EpsilonProvenance.outcome` below.
 
 ### 30.11.6 The deterministic offline selector
 
@@ -2510,7 +2547,7 @@ This is a pure implementation rule with no player-visible consequence, and it is
 | **Physics replays per Zone** | **`36`** — `12` packages × `3` runs, capped by §30.5 check 17 |
 | **Physics replay wall clock** | **`10.8 s` per Zone attempt**, serial |
 | **Epsilon shell selection** | `20.0 s` worst case, one batched request, not re-asked on retry (§35.4.2) |
-| **Total composition budget including retries** | **`88.0 s` per Zone** = `20.0` + `5` attempts × `13.6` (§35.4.3) |
+| **Total composition budget including retries** | **`103.0 s` per Zone** = `20.0` + `5` attempts × `16.6` (§35.4.3) |
 | Atom catalog resolution, per item, on Archive load | `0.5 ms` |
 | Full Archive expansion at `5,000` items | `2.5 s`, once, off the main thread |
 | Interpretation round-trip timeout | `10.0 s`, then §17.10's fallback |
@@ -2562,17 +2599,20 @@ Batching is what keeps this bounded: twelve serial per-room requests at a `10.0 
 | Epsilon shell selection, once per Zone | `20.0 s` |
 | Per composition attempt: replay | `10.8 s` |
 | Per composition attempt: model check | `2.0 s` |
+| Per composition attempt: **placement solve (§30.11.2e)** | **`3.0 s`** |
 | Per composition attempt: everything else | `0.8 s` |
-| **Per attempt** | **`13.6 s`** |
+| **Per attempt** | **`16.6 s`** |
 | Attempts before the §37.2 fallback Zone | `5` |
-| **Total worst case** | **`88.0 s`** = `20.0 + 5 × 13.6` |
-| **First-attempt deterministic compute** | **`13.6 s`** — the bridge-owned work, excluding all model latency |
-| **First-attempt total** | **`13.6 s` + actual Epsilon latency** |
-| **First-attempt bounded worst case** | **`33.6 s`** = `13.6 + 20.0`, when both Epsilon requests time out |
+| **Total worst case** | **`103.0 s`** = `20.0 + 5 × 16.6` |
+| **First-attempt deterministic compute** | **`16.6 s`** — the bridge-owned work, excluding all model latency |
+| **First-attempt total** | **`16.6 s` + actual Epsilon latency** |
+| **First-attempt bounded worst case** | **`36.6 s`** = `16.6 + 20.0`, when both Epsilon requests time out |
 
-The replay is the largest per-attempt cost, roughly `5×` the model check, and §30.8's package-level retry exists specifically so a failure does not re-pay it.
+The replay is the largest per-attempt cost, roughly `5×` the model check and `3.6×` the placement solve, and §30.8's package-level retry exists specifically so a failure does not re-pay it.
 
-`88.0 s` against Design 3's `20.0 s` is the honest price of the union's composition. A first attempt is `13.6 s` of **deterministic compute** plus Epsilon's actual latency, bounded at `33.6 s` — never `13.6 s` of wall clock, which would require a model that answers instantly. §41.2 says what to do if it proves too slow.
+**The placement solve is new as of 2026-09-11** and is the cost of §30.11.2d's correction: local socket filtering was claimed sufficient and is not, so a global solve was added and the budget grew by `3.0 s` per attempt — `15.0 s` per Zone across five attempts. Like the model check's `2.0 s`, it is a **hard bound rather than a prediction**: exceeding it is `INFEASIBLE_LAYOUT` and §30.11.5 class 7, not a longer Zone.
+
+`103.0 s` against Design 3's `20.0 s` is the honest price of the union's composition. A first attempt is `16.6 s` of **deterministic compute** plus Epsilon's actual latency, bounded at `36.6 s` — never `16.6 s` of wall clock, which would require a model that answers instantly. §41.2 says what to do if it proves too slow.
 
 ## 35.5 Performance certification — what composition cannot check
 
@@ -2585,7 +2625,7 @@ The replay is the largest per-attempt cost, roughly `5×` the model check, and �
 | Frame time, 99th percentile, target hardware | ≤ `16.667 ms` | A tuning task against §35.0's row allocations |
 | Physics solver | ≤ `4.0 ms` | Reduce §35.1's body or constraint caps and recompose |
 | Status evaluation, worst tick | ≤ `0.4 ms` | §35.3's bucketing is not distributing; a composer bug |
-| Composition wall clock, worst Zone | ≤ `88.0 s` | Reduce §30.5 check 17's replay cap, or default to the offline selector |
+| Composition wall clock, worst Zone | ≤ `103.0 s` | Reduce §30.5 check 17's replay cap, or default to the offline selector |
 
 **Target hardware is named in the fixture, not here**, because it is a project fact that changes and this document should not go stale when it does. What this document fixes is that the certification exists, what it measures, and that a failure is a tuning task rather than a validation failure — a Zone that passes composition is *legal*; whether it is *fast* is a separate question answered on a real machine.
 
@@ -2894,9 +2934,9 @@ Every Design 1, 2, 3, 4, and 5 vector applies wherever this document pins to tha
 63. With `n` `ActiveStatus` entries in a room, no single simulation tick evaluates more than `ceil(n / 60)` of them. At the `60`-entry cap, no tick evaluates more than one.
 64. Each Status evaluates exactly once per second of game time, and duration countdown renders per frame.
 64a. A fixture replayed at `30`, `60`, `120`, and uncapped render rates over the same fixed simulation-tick sequence produces byte-identical Status state at every tick boundary. Render rate changes no gameplay value.
-65. Zone composition including Epsilon selection and all retries completes within `88.0 s`.
-65d. A single composition attempt's **deterministic compute** completes within `13.6 s`, of which serial physics replay accounts for at most `10.8 s`. This figure excludes model latency and is the only one a bridge can hold itself to.
-65e. A first attempt's **total** elapsed time is `13.6 s` plus Epsilon's actual latency, bounded at `33.6 s` when both requests time out.
+65. Zone composition including Epsilon selection and all retries completes within `103.0 s`.
+65d. A single composition attempt's **deterministic compute** completes within `16.6 s`, of which serial physics replay accounts for at most `10.8 s`. This figure excludes model latency and is the only one a bridge can hold itself to.
+65e. A first attempt's **total** elapsed time is `16.6 s` plus Epsilon's actual latency, bounded at `36.6 s` when both requests time out.
 65a. `36` replays of `12.0 s` each, at the contracted `40×` minimum throughput, complete in `10.8 s` or less on the canonical environment.
 65b. No package declares `ReferenceSolution.max_duration` above `12.0 s`; §23.5 check 31 rejects one that does.
 65c. Shell selection issues exactly one batched Epsilon request per Zone, at most one repair attempt, and no request at all on a retry attempt.
@@ -3220,7 +3260,7 @@ Waves 1–17 are a complete, shippable game: Design 3 with authored shells. Step
 
 It cut one clause of one Status (§0.4). Everything else it gave up is cost, not content, and the cost is real.
 
-**1. Composition time: `88.0 s` per Zone worst case; a first attempt is `13.6 s` of deterministic compute plus Epsilon's actual latency, bounded at `33.6 s`. Against Design 3's `20.0 s` and Design 1's low single digits.** Two costs dominate: §23.5 check 20's headless physics replay at `10.8 s` per attempt, and Epsilon's `20.0 s` worst-case shell request. If the replay proves too slow, §30.5 check 17's cap of `12` replay packages is the dial — at `6` it halves to `5.4 s`. If Epsilon's latency dominates, §30.11.6's offline selector is already the certified answer and can be made the default. Both are tuning values with stated meanings, not redesigns.
+**1. Composition time: `103.0 s` per Zone worst case; a first attempt is `16.6 s` of deterministic compute plus Epsilon's actual latency, bounded at `36.6 s`. Against Design 3's `20.0 s` and Design 1's low single digits.** Three costs dominate: §23.5 check 20's headless physics replay at `10.8 s` per attempt, Epsilon's `20.0 s` worst-case shell request, and §30.11.2e's `3.0 s` placement solve. If the replay proves too slow, §30.5 check 17's cap of `12` replay packages is the dial — at `6` it halves to `5.4 s`. If Epsilon's latency dominates, §30.11.6's offline selector is already the certified answer and can be made the default. Both are tuning values with stated meanings, not redesigns.
 
 **2. Three validators stacked.** A Zone must pass the structural checks, the physics replays, *and* the model check. Each has its own failure mode and its own retry path, and a bug in any of the three produces a class of broken Zone the other two do not catch. Design 1 had one validator that could not fail because construction guaranteed the property. This has three that can.
 
@@ -3311,15 +3351,15 @@ The union works because four of its six apparent forks were superset relationshi
 
 What it buys is `66` system pairs against a best-of-inputs `36`, `34` puzzle families against `18`, thirteen Statuses, twelve manipulation verbs, eight constraint kinds, reversible macro state, `179,326,745` composable Weapons and `16,586,524` composable Abilities, and Forge — with one verifier proving, over all of it simultaneously, that no reachable configuration is a dead one.
 
-What it costs is **`88.0 s`** of worst-case composition — **`13.6 s`** of deterministic compute on a first attempt, plus Epsilon's actual latency, bounded at **`33.6 s`** — three stacked validators, two rooms per Zone, and **`35`** waves of build.
+What it costs is **`103.0 s`** of worst-case composition — **`16.6 s`** of deterministic compute on a first attempt, plus Epsilon's actual latency, bounded at **`36.6 s`** — three stacked validators, two rooms per Zone, and **`35`** waves of build.
 
 **Every number in this section is duplicated from an authoritative section and was mechanically compared against it before this document claimed closure.** A previous revision of this paragraph said `28` seconds and thirty-four waves while the body said otherwise — which by itself made that revision's PASS false, and is the reason §41 is now regenerated last rather than carried forward.
 
 | Claim here | Authority | Value |
 |---|---|---:|
-| Composition, worst case | §35.4.3 | `88.0 s` |
-| Composition, first-attempt compute | §35.4.3 | `13.6 s` |
-| Composition, first-attempt bounded | §35.4.3 | `33.6 s` |
+| Composition, worst case | §35.4.3 | `103.0 s` |
+| Composition, first-attempt compute | §35.4.3 | `16.6 s` |
+| Composition, first-attempt bounded | §35.4.3 | `36.6 s` |
 | Implementation waves | §40.2 | `35` |
 | Composable Weapons | §11.9 | `179,326,745` |
 | Composable Abilities | §12.7 | `16,586,524` |

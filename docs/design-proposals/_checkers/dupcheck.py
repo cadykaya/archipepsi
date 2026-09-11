@@ -11,11 +11,12 @@ s = open("06_THE_AMALGAM.md", encoding="utf-8").read()
 #            false positives; carrying them as checked exclusions instead means a
 #            green run is green.
 CANON = {
- "composition worst case": (r'88\.0 s', r'\b(28|45|50)\.0 s\b', None),
+ "composition worst case": (r'103\.0 s', r'\b(28|45|50|88)\.0 s\b',
+                           r'(previous|earlier|prior) revision|before the placement solve'),
  # `10.0 s` in this document is always Epsilon's interpretation timeout
  # (Design 4 §17.4) or a Status duration (Design 5 §15.2) — never a
  # composition-pass figure, which is `13.6 s`.
- "composition first pass": (r'13\.6 s', r'\b10\.0 s\b',
+ "composition first pass": (r'16\.6 s', r'\b(10\.0|13\.6) s\b',
                             r'([Tt]ime[sd]? out|[Tt]imeout|interpretation|expires|duration)'),
  # The single `1.8 s` is §35.4.1's narration of the replay-budget error itself.
  "replay wall clock": (r'10\.8 s', r'\b(1\.8|7\.2) s\b',

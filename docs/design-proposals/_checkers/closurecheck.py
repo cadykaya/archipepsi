@@ -8,8 +8,9 @@ def norm(t):
     return re.sub(r'\s+',' ',t)
 def sect(a,b):
     i=s.index(a); j=s.index(b,i+len(a)); return norm(s[i:j])
-CH=[("Composition worst case","88.0 s",   sect("### 35.4.3","\n## ")),
-    ("Composition first pass","13.6 s",   sect("### 35.4.3","\n## ")),
+CH=[("Composition worst case","103.0 s", sect("### 35.4.3","\n## ")),
+    ("Composition first pass","16.6 s",   sect("### 35.4.3","\n## ")),
+    ("Placement solve","3.0 s",           sect("### 35.4.3","\n## ")),
     ("Replay wall clock","10.8 s",        sect("### 35.4.1","### 35.4.2")),
     ("Replay duration bound","12.0 s",    sect("### 35.4.1","### 35.4.2")),
     ("Epsilon worst case","20.0 s",       sect("### 35.4.2","### 35.4.3")),

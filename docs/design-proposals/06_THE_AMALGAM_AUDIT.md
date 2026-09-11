@@ -2,7 +2,7 @@
 
 **Scope:** repair and rebase of `06_THE_AMALGAM.md`. Not a redesign; the architecture is owner-selected and preserved.
 **Rebased onto:** `ARCHIPEPSI_CONTINUITY_2026-09-04` (owner rulings + runtime findings), and the exact current copies of `00`–`05`.
-**Verdict:** **Design PASS. Zero-Guesswork PASS — PROMOTABLE.** See §10. Five repair passes; §9 records the audited revision.
+**Verdict:** **Design PASS. Zero-Guesswork PASS — PROMOTABLE.** See §10. Six repair passes; §9 records the audited revision.
 
 ---
 
@@ -213,7 +213,7 @@ A live-branch review of `9e56d51` found **fourteen further defects**, all real. 
 | # | Defect | Repair |
 |---:|---|---|
 | 9 | **The replay budget used `settle_timeout` (`8.0 s`), which bounds check 22's settle test, not check 20's replay.** The replay bound is `ReferenceSolution.max_duration`, unbounded in Design 2's schema | §35.4.1 bounds it: `MAX_REPLAY_DURATION = 12.0 s`, enforced by new package check 23. Replay recomputed: `36 × 12.0 / 40 = ` **`10.8 s`** |
-| 13 | **Total wall clock omitted Epsilon's shell request entirely** | §35.4.2: **one batched Zone-level request**, `10.0 s` timeout, `1` repair attempt, offline selector on second failure, **not re-asked on Zone retry**. Worst case `20.0 s`. §35.4.3: total = `20.0 + 5 × 13.6` = **`88.0 s`**, first-pass **`13.6 s`** |
+| 13 | **Total wall clock omitted Epsilon's shell request entirely** | §35.4.2: **one batched Zone-level request**, `10.0 s` timeout, `1` repair attempt, offline selector on second failure, **not re-asked on Zone retry**. Worst case `20.0 s`. §35.4.3: total = `20.0 + 5 × 16.6` = **`103.0 s`**, first-pass **`16.6 s`** |
 
 Package density was also re-derived over the corrected purpose distribution: range **`8`–`16`**, mean **`12.11`**. The `42%` / `58%` variety reductions are unchanged, which confirms they were not an artifact of the truncated rotation.
 
@@ -269,7 +269,7 @@ Five repaired rules referenced fields their schemas could not represent. **A val
 | 6 | `CERTIFIED_FALLBACK` was keyed on **degree**, not signature — two degree-`2` rooms can need different socket kinds. And step 5 proved the *certified* shell was offered, then step 11 claimed the *selected* shell could host the fallback, which does not follow | Keyed on the normalized `ConnectorSignature`. And **every shell in `offered_shells` must be proven able to host the fallback family** — so the guarantee holds for whatever Epsilon selects, because it held for every candidate before the question was asked |
 | 8 | Wave 14 said "steps 1–10, 13–18", omitting **step 11, package placement**, against a twenty-step algorithm | Rebuilt as steps 1–14 and 16–20, with the wave-17 boundary claim justified explicitly |
 | 9 | §11.8 claimed Design 1 has 14 Weapon profiles | Regenerated from live D1: **`18` primary, `6` secondary, `8` feed, `14` Ability, `9` Mobility**. The unit being counted is now named |
-| 10 | Vector 65 said an attempt "completes within `13.6 s`" including Epsilon selection — false whenever latency is nonzero | Three separate values: first-attempt **compute** `13.6 s`; first-attempt **total** `13.6 s` + actual latency; **bounded** first attempt `33.6 s`; worst-case Zone `88.0 s` |
+| 10 | Vector 65 said an attempt "completes within `16.6 s`" including Epsilon selection — false whenever latency is nonzero | Three separate values: first-attempt **compute** `16.6 s`; first-attempt **total** `16.6 s` + actual latency; **bounded** first attempt `36.6 s`; worst-case Zone `103.0 s` |
 
 ### 8.4 An owner decision that had been made silently
 
@@ -369,8 +369,8 @@ New §1.4 narrows the law into three properties rather than hiding the conflict:
 | 4 | Property 4's state count omitted `CARRIED`: `2 + \|allowed_volume\|` instead of `3 +` | `15` states worst case, `737,280` per object, **`5,898,240`** across `8`. Typical: `6` states, `294,912` per object, `2,359,296` across all — figures a previous revision conflated |
 | 5 | "Tens of milliseconds" was an invented benchmark for a six-million-configuration search | New §30.6.3: the model-check phase has a **hard `2.0 s` budget**; exceeding it is `MODEL_CHECK_TIMEOUT` and `FAIL_ZONE`. Algorithmic bounds and wall-clock behaviour are now separate claims |
 | 6 | Three sections disagreed on Epsilon failure handling; the provenance enum could not represent a twice-invalid selection; the table was called six-row and had seven | One policy: any unusable first result gets **exactly one** repair. `INVALID_SELECTION` added with a precedence rule for mixed failures. **Six** failure classes, missing and invalid selection merged |
-| 7 | §0.5's completeness statement preceded a table row; §11.8 said every profile is composed while Mobility is not; §35.4.3 called `13.6 s` the actual first-attempt cost; §41 claimed the standard was met while conditional; `ReplayVerdict` cited a nonexistent §30.9a | All five corrected |
-| 8 | Local connector filtering was called sufficient without establishing that the **combination** of independently chosen shells is spatially valid | New §30.11.2d: standardized attachment collars make joinability a property of the socket pair, so local filtering is sufficient **by construction**, enforced on the catalog by check 19d. The CSP alternative is stated for the day a bespoke collar is needed |
+| 7 | §0.5's completeness statement preceded a table row; §11.8 said every profile is composed while Mobility is not; §35.4.3 called `16.6 s` the actual first-attempt cost; §41 claimed the standard was met while conditional; `ReplayVerdict` cited a nonexistent §30.9a | All five corrected |
+| 8 | Local connector filtering was called sufficient without establishing that the **combination** of independently chosen shells is spatially valid | New §30.11.2d argued that standardized attachment collars make joinability a property of the socket pair, so local filtering is sufficient **by construction**. **This repair was itself wrong and §9c reverses it** — the collar bounds the aperture, not the shell bodies, and the deferred cross-room solve is mandatory |
 | 10 | `semcheck` reported clean while all of the above were live | **Ten classes added**, one per defect above, plus the meets-standard-versus-verdict pair rewritten to compare the two claims rather than pattern-match one |
 
 ### 9a.4 Fourth-pass mechanical results
@@ -453,6 +453,60 @@ Every class below was mutation-tested: each was shown to fire on a document carr
 | Pin-ledger rows | `19` + `1` orphan | **`20`**, no orphan |
 | System-map rows | `66` | **`66`** |
 | **Open owner decisions** | **`0`** | **`0`** |
+
+## 9c. Sixth pass — a repair that was itself wrong
+
+**2026-09-11.** The owner ran the first human playthrough of the 3A/3B build at `96c450e` and ruled on §30.11.2d directly: *compatible sockets do not prove shell-body clearance or global layout feasibility.* Pass 4 had introduced the opposite claim as defect 8's repair, and pass 5 audited around it without noticing — **the second time a repair has been the defect** (§9b.1 was the first).
+
+### 9c.1 The counterexample
+
+`shell_yard_gantry`'s entry connector sits **`0.4 m` past its own west wall**. The engine's own frontier notes state the separation: the entry connector is the room-to-room *attachment transform*, it "may sit slightly outside" the envelope, and so "no standing floor is required under it" — the region the body arrives into is the separate `player_entry` volume. A predicate that reads only the socket therefore knows neither where the shell's mass is nor whether the far side has floor.
+
+`connector_grammar.gd`'s `SIDE_CLEARANCE = 0.4` and `HEAD_CLEARANCE = 0.2` are measured **around the player capsule at the aperture**, and pass 4 read them as if they bounded the shells. They never did.
+
+Two further reasons the local predicate cannot carry the global claim, both available to pass 4 and both missed:
+
+- **Cycle closure is not pairwise.** §30.2 gives the Zone `1`–`4` independent cycles; the joining transforms around a cycle must compose to the identity, and every pairwise join can be legal while the product is not.
+- **The live generator already contradicts it.** `ZoneBuilder._search` needs a `96`-connector escape hatch to chain large rooms in a straight line — the acyclic degenerate case — which is a global search under another name.
+
+### 9c.2 The repair
+
+§30.11.2d is rewritten to say what each layer proves and what it does not. New **§30.11.2e** adopts the placement solve pass 4 deferred, with four hard constraints (join, body, closure, arrival), a deterministic variable and value order so Law 47a still holds, and a **`3.0 s` hard budget** stated as a bound rather than a prediction — the §30.6.3 shape, not the "tens of milliseconds" shape §9a.3 defect 5 had to remove.
+
+`INFEASIBLE_LAYOUT` becomes §30.11.5's **seventh** failure class, and it is the only one that is nobody's mistake: every selection can be individually legal and the combination still have no layout. Its terminal is §37.2's authored fallback Zone, because §30.11.6's offline selector picks by hash and knows nothing about geometry — stating that explicitly, rather than assuming the fallback is feasible, is the difference between a terminal and a hope.
+
+**§30.5 check 19e** measures the committed transforms. **Check 19d** keeps its catalog scope and now says so: it proves apertures, not bodies.
+
+### 9c.3 What it costs
+
+The composition budget grows by the solve, and every dependent figure moves with it:
+
+| | Pass 5 | Pass 6 |
+|---|---:|---:|
+| Per-attempt placement solve | — | **`3.0 s`** |
+| Per attempt | `13.6 s` | **`16.6 s`** |
+| Total worst case | `88.0 s` | **`103.0 s`** = `20.0 + 5 × 16.6` |
+| First-attempt bounded | `33.6 s` | **`36.6 s`** |
+
+`dupcheck` and `closurecheck` carry the new figures, with the superseded ones added as stale patterns so the old numbers cannot return quietly.
+
+### 9c.4 The playtest's own findings, verified rather than accepted
+
+The owner's brief was explicit that the playtest package is *observations plus diagnoses to verify*. Checked against `96c450e` directly:
+
+| Claim | Verdict |
+|---|---|
+| `c015` has no walking exit — `1.46 m` under the deck, `1.34 m` over it | **Confirmed.** `band_rect` takes `(band, width, depth)` and no door position; `_elevation_band` lays a `0.4 m` slab centred at `rise − 0.2`; `DOOR_HEIGHT = 3.2`; the played Zone's `c015` carries `side: "back"`, `rise: 1.86` |
+| The fixture array's second and third entries are unreachable | **Confirmed verbatim.** `room_contract_driver.gd:743` is `["left","right","back"][i % 3]` inside `if i % 3 == 0:` |
+| The pit's ramp is built outside the recess | **Confirmed.** `ramp_at` is computed identically for both kinds and `turn += PI` only rotates the wedge |
+| Epsilon cannot express position | **Confirmed.** `EnemyGroup` is `{archetype, count}`; `ArenaChamber` carries no position field |
+| The Zone has no edges | **Confirmed.** `chambers: tuple[Chamber, ...]` at `schema_version: 7`; list order is the topology |
+| All twelve authored shells declare exactly two doorways | **Confirmed.** Every one is `['entry', 'exit']`, though the large shells carry `9`–`11` sockets in total |
+| **"No activity timer exists anywhere"** | **FALSE.** `activity_runtime.gd` reads `time_limit`, counts `_clock` down, renders `"%.1fs"` live, and calls `_fail("out of time")`. **All nine `timed_run` activities in the Zone that was played carried clocks of `8.0`–`20.0 s`** |
+| **"No completion feedback"** | **FALSE.** `_succeed()` says `DONE` and sends `grant_local_reward`; `_fail()` says `RESET — <reason>` and lingers for `ACTIVITY_RESULT_SECONDS`; progress reads `"%d / %d"`; `timed_run` tags its `START` and `GOAL` |
+| `timed_run` clocks sit at the most forgiving legal value | **Confirmed.** Derived as exactly `ActivityPrimitive`'s validator floor — `4.0 s` per element |
+
+The two false findings share a shape worth naming, because it is the mirror of §5's: **the feedback exists and is a billboard `Label3D` `3.1 m` above the activity's start element.** A player facing the goal at the moment of completion is not looking at it. That is a placement defect, not an absence — and the fix is to surface the existing signal, not to build a feedback system that already exists.
 
 ## 10. Verdict and what remains open
 
