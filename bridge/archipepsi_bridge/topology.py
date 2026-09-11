@@ -1,0 +1,421 @@
+"""Producing the Zone graph, and proving you can get around it.
+
+`09_ROOM_CONTRACT.md` Layer 2 production plus the logical half of §5.5.
+Everything here is a graph question. **Nothing here touches geometry** —
+whether a door is walkable, whether a key can physically be reached, and
+where any room ends up are the engine's to measure and this module never
+guesses at them.
+
+Two halves:
+
+* `compose_graph` turns a composed chamber list into edges, door
+  assignments, keys and plugs.
+* `reachability` answers the questions a composer has to answer before
+  it may send a Zone: can the player reach the exit, every Check and
+  every key, and is every key obtainable without passing its own lock.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+try:
+    from .schemas.graph import (
+        DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
+    from .schemas.zone import PROCEDURAL_SOCKETS
+except ImportError:  # pragma: no cover
+    from schemas.graph import (
+        DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
+    from schemas.zone import PROCEDURAL_SOCKETS
+
+#: The two openings an authored shell declares. Every one of the twelve
+#: authored shells is exactly `entry` + `exit`, so a shell room can carry
+#: a chain and nothing more until three-door geometry is authored.
+AUTHORED_SOCKETS = ("entry", "exit")
+
+#: Wide enough to carry a side door without the opening landing on the
+#: room's own furniture. Matches `Slice1Fixture.MIN_SPAN`, deliberately:
+#: two lanes disagreeing about which rooms can branch is a defect that
+#: only shows up as a wall in the wrong place.
+MIN_JUNCTION_SPAN = 13.0
+
+
+@dataclass(frozen=True)
+class GraphProduct:
+    """What a composer hands the engine, minus the chambers themselves."""
+
+    edges: tuple[TopologyEdge, ...]
+    doors: dict[str, tuple[DoorAssignment, ...]]
+    keys: dict[str, tuple[ZoneKeySpec, ...]]
+    plugs: tuple[PlugAssignment, ...]
+    #: What the producer did and why, for a log rather than for logic.
+    notes: tuple[str, ...] = ()
+
+
+def _sockets_for(chamber) -> tuple[str, ...]:
+    """Which joining sockets this room actually declares.
+
+    An authored shell declares its openings in its manifest and all
+    twelve declare two. A procedural room declares four, because
+    `chamber_builders.procedural_sockets` names four.
+    """
+    return AUTHORED_SOCKETS if chamber.shell_id else PROCEDURAL_SOCKETS
+
+
+def _seal_the_rest(chamber, used: dict[str, DoorAssignment]
+                   ) -> tuple[DoorAssignment, ...]:
+    """Every socket this room declares, with the unused ones SEALED.
+
+    An unmentioned socket is a contract violation, because "unmentioned"
+    is exactly how an unaudited hole gets into a wall. A sealed door is
+    measured with the expectation inverted, never skipped.
+    """
+    out = []
+    for socket in _sockets_for(chamber):
+        if socket in used:
+            out.append(used[socket])
+        else:
+            out.append(DoorAssignment(socket_id=socket, usage="SEALED"))
+    return tuple(out)
+
+
+def compose_chain(chambers) -> GraphProduct:
+    """The graph the list order always meant, now said out loud.
+
+    This is not new topology. It is the existing chain written as edges
+    so that everything downstream — reachability, the manifest, the
+    engine's socket resolution — reads one representation instead of
+    inferring one from a list index.
+    """
+    edges: list[TopologyEdge] = []
+    doors: dict[str, dict[str, DoorAssignment]] = {c.id: {} for c in chambers}
+    for a, b in zip(chambers, chambers[1:]):
+        edge = TopologyEdge(
+            edge_id=f"e:{a.id}:{b.id}", room_a=a.id, room_b=b.id,
+            direction="BIDIRECTIONAL", realization="JOINED")
+        edges.append(edge)
+        doors[a.id]["exit"] = DoorAssignment(
+            socket_id="exit", usage="USED", edge_id=edge.edge_id)
+        doors[b.id]["entry"] = DoorAssignment(
+            socket_id="entry", usage="USED", edge_id=edge.edge_id)
+    return GraphProduct(
+        edges=tuple(edges),
+        doors={c.id: _seal_the_rest(c, doors[c.id]) for c in chambers},
+        keys={}, plugs=(),
+        notes=("chain: %d rooms, %d edges" % (len(chambers), len(edges)),))
+
+
+def compose_with_branch(chambers) -> GraphProduct:
+    """The chain, with one room moved onto a locked branch off a junction.
+
+    **The branch is logically real and not yet physically real.** The
+    engine at `82d500f` still places rooms by walking a chain, so the
+    branch room is currently built in line. Nothing here depends on that:
+    the graph says what the topology *is*, and placement says where the
+    rooms *go*, and the two become the same thing when the engine's
+    placement lands. Sending the honest graph now is what lets that
+    happen without a second migration.
+
+    Returns the plain chain unchanged when the Zone has no room wide
+    enough to be a junction, or too few rooms to spare one for a branch.
+    """
+    base = compose_chain(chambers)
+    by_id = {c.id: c for c in chambers}
+
+    # THE ENTRY AND THE EXIT STAY ON THE SPINE. Moving the last room onto
+    # a branch makes the exit the dead end, which reads as sound to a
+    # reachability search -- you are never stranded *at* the exit -- and
+    # is a Zone whose exit is behind a lock with a plug next to it.
+    interior = chambers[1:-1]
+    wide = [c for c in interior
+            if not c.shell_id
+            and float(getattr(c, "width", 0.0) or 0.0) >= MIN_JUNCTION_SPAN]
+    if len(wide) < 2 or len(chambers) < 5:
+        return GraphProduct(
+            *(base.edges, base.doors, base.keys, base.plugs),
+            notes=base.notes + (
+                "no branch: %d wide rooms, %d chambers" % (
+                    len(wide), len(chambers)),))
+
+    order = [c.id for c in chambers]
+    # The junction is a wide room with a room after it to spare, and the
+    # branch room is the LAST wide room, so the chain keeps its ends.
+    branch = wide[-1]
+    candidates = [c for c in wide[:-1]
+                  if 0 < order.index(c.id) < order.index(branch.id) - 1]
+    if not candidates:
+        return GraphProduct(
+            *(base.edges, base.doors, base.keys, base.plugs),
+            notes=base.notes + ("no branch: no junction before the "
+                                "branch room",))
+    junction = candidates[len(candidates) // 2]
+
+    # Re-wire: the chain skips the branch room, and the branch hangs off
+    # the junction's side door behind a lock.
+    edges: list[TopologyEdge] = []
+    doors: dict[str, dict[str, DoorAssignment]] = {c.id: {} for c in chambers}
+    spine = [rid for rid in order if rid != branch.id]
+    for a_id, b_id in zip(spine, spine[1:]):
+        edge = TopologyEdge(
+            edge_id=f"e:{a_id}:{b_id}", room_a=a_id, room_b=b_id,
+            direction="BIDIRECTIONAL", realization="JOINED")
+        edges.append(edge)
+        doors[a_id]["exit"] = DoorAssignment(
+            socket_id="exit", usage="USED", edge_id=edge.edge_id)
+        doors[b_id]["entry"] = DoorAssignment(
+            socket_id="entry", usage="USED", edge_id=edge.edge_id)
+
+    vault = TopologyEdge(
+        edge_id=f"e:{junction.id}:{branch.id}", room_a=junction.id,
+        room_b=branch.id, direction="BIDIRECTIONAL", realization="JOINED")
+    edges.append(vault)
+    doors[junction.id]["side_left"] = DoorAssignment(
+        socket_id="side_left", usage="LOCKED", edge_id=vault.edge_id,
+        key_id="red", colour="red")
+    doors[branch.id]["entry"] = DoorAssignment(
+        socket_id="entry", usage="USED", edge_id=vault.edge_id)
+
+    # The way back. A dead end that can only be left the way you came is
+    # a dead end; a dead end that carries a return is a place you chose
+    # to visit.
+    plug_edge = TopologyEdge(
+        edge_id=f"p:{branch.id}:start", room_a=branch.id,
+        room_b=spine[0], direction="A_TO_B", realization="TRAVERSAL_ONLY")
+    edges.append(plug_edge)
+    plug = PlugAssignment(
+        edge_id=plug_edge.edge_id, room_id=branch.id,
+        source_anchor=f"room:{branch.id}:arrival",
+        destination="zone_start", device="pad")
+
+    # The key goes in a room the player passes BEFORE the junction, which
+    # is the ordering `R ⊆ E` then proves rather than assumes.
+    before = spine[:spine.index(junction.id)]
+    holder = before[len(before) // 2] if before else spine[0]
+    keys = {holder: (ZoneKeySpec(key_id="red", colour="red"),)}
+
+    return GraphProduct(
+        edges=tuple(edges),
+        doors={c.id: _seal_the_rest(c, doors[c.id]) for c in chambers},
+        keys=keys, plugs=(plug,),
+        notes=(
+            "branch: junction '%s', branch room '%s', key in '%s'"
+            % (junction.id, branch.id, holder),
+            "the branch is logically real; the engine still places a "
+            "chain, so it is not yet physically off to one side",
+        ))
+
+
+def apply(zone, product: GraphProduct):
+    """Return `zone` carrying `product`. The input is never mutated."""
+    chambers = []
+    for c in zone.chambers:
+        chambers.append(c.model_copy(update={
+            "doors": product.doors.get(c.id, ()),
+            "keys": product.keys.get(c.id, ()),
+        }))
+    return zone.model_copy(update={
+        "chambers": tuple(chambers),
+        "edges": product.edges,
+        "plugs": product.plugs,
+    })
+
+
+# --------------------------------------------------------------------------
+# Reachability — the logical half, and only the logical half.
+# --------------------------------------------------------------------------
+#
+# `R ⊆ E` is a GRAPH property over edges the bridge believes exist. It
+# cannot see that a key stands inside a crate, on a ledge with no ramp, or
+# behind a trim lip. **It is necessary and it is not sufficient**, and a
+# previous revision of the contract treated it as both. Physical
+# reachability is the engine's to define and prove; this module states
+# the logical obligation and nothing more.
+
+
+@dataclass(frozen=True)
+class Reach:
+    """What a graph search can establish, and the errors it found."""
+
+    #: Every `(room, keys)` the player can get into.
+    states: frozenset[tuple[str, frozenset[str]]]
+    #: Every room appearing in any reachable state.
+    rooms: frozenset[str]
+    errors: tuple[str, ...] = ()
+
+    @property
+    def ok(self) -> bool:
+        return not self.errors
+
+
+def _door_on(doors_by_room, room: str, edge_id: str):
+    for d in doors_by_room.get(room, ()):
+        if d.edge_id == edge_id:
+            return d
+    return None
+
+
+def _passable(edge, frm: str, held: frozenset[str], doors_by_room,
+              ignore_keys: frozenset[str]) -> bool:
+    """Can the player cross `edge` starting from `frm`, holding `held`?
+
+    `ignore_keys` names keys treated as never held, which is how the
+    "obtainable without passing its own lock" question is asked: run the
+    same search with that key withheld and see whether its room still
+    comes up.
+    """
+    if not edge.traversable(frm):
+        return False
+    if edge.realization == "TRAVERSAL_ONLY":
+        return True          # a plug binds no geometry and carries no lock
+    for side in edge.rooms:
+        door = _door_on(doors_by_room, side, edge.edge_id)
+        if door is None:
+            return False     # an edge with no door is not a way through
+        if door.usage == "SEALED":
+            return False
+        if door.usage == "LOCKED":
+            key = door.key_id
+            if key in ignore_keys or key not in held:
+                return False
+    return True
+
+
+def _explore(entry: str, edges, doors_by_room, keys_by_room,
+             ignore_keys: frozenset[str] = frozenset()) -> Reach:
+    incident: dict[str, list] = {}
+    for e in edges:
+        incident.setdefault(e.room_a, []).append(e)
+        incident.setdefault(e.room_b, []).append(e)
+
+    def collect(room: str, held: frozenset[str]) -> frozenset[str]:
+        got = {k.key_id for k in keys_by_room.get(room, ())}
+        return held | (got - ignore_keys)
+
+    start = (entry, collect(entry, frozenset()))
+    seen = {start}
+    queue = [start]
+    while queue:
+        room, held = queue.pop()
+        for e in incident.get(room, ()):
+            if not _passable(e, room, held, doors_by_room, ignore_keys):
+                continue
+            nxt_room = e.other(room)
+            nxt = (nxt_room, collect(nxt_room, held))
+            if nxt not in seen:
+                seen.add(nxt)
+                queue.append(nxt)
+    return Reach(states=frozenset(seen),
+                 rooms=frozenset(r for r, _ in seen))
+
+
+def reachability(zone, entry_id: str | None = None,
+                 exit_id: str | None = None) -> Reach:
+    """Prove you can get around this Zone, or say exactly why not.
+
+    Four properties, each stated as an outcome rather than a method:
+
+    1. **The exit is reachable.**
+    2. **`R ⊆ E`** — from every state the player can get into, the exit
+       is still reachable. This is what rejects a Zone that strands.
+    3. **Every allocated Check sits in a reachable room.**
+    4. **Every key is obtainable without passing its own lock.**
+
+    A Zone with no edges is the chain its list order describes and
+    trivially satisfies all four; it is not searched.
+    """
+    if not zone.edges:
+        return Reach(states=frozenset(), rooms=frozenset())
+
+    chambers = list(zone.chambers)
+    entry = entry_id or chambers[0].id
+    exit_room = exit_id or chambers[-1].id
+    doors_by_room = {c.id: c.doors for c in chambers}
+    keys_by_room = {c.id: c.keys for c in chambers}
+
+    errors: list[str] = []
+    forward = _explore(entry, zone.edges, doors_by_room, keys_by_room)
+
+    if exit_room not in forward.rooms:
+        errors.append(
+            f"the exit '{exit_room}' is not reachable from '{entry}'")
+
+    # R subset E, over STATES rather than rooms: a room you can stand in
+    # holding the wrong keys is a different situation from the same room
+    # holding the right ones, and only the state form catches it.
+    stranded = []
+    for state in sorted(forward.states):
+        room, held = state
+        if room == exit_room:
+            continue
+        # Re-run from this room with the keys already held: a key cannot
+        # be un-collected, so anything held here stays held.
+        if exit_room not in _explore_holding(
+                room, held, zone.edges, doors_by_room, keys_by_room).rooms:
+            stranded.append(f"{room} holding {sorted(held) or 'nothing'}")
+    if stranded:
+        errors.append(
+            "R is not a subset of E; the exit is unreachable from: "
+            + "; ".join(stranded[:4])
+            + (f" (+{len(stranded) - 4} more)" if len(stranded) > 4 else ""))
+
+    for c in chambers:
+        if c.reward_ids and c.id not in forward.rooms:
+            errors.append(
+                f"chamber '{c.id}' holds Check(s) {list(c.reward_ids)} and "
+                "is not reachable")
+
+    for c in chambers:
+        for k in c.keys:
+            # THE CIRCULAR CASE, ASKED DIRECTLY. Withhold the key and see
+            # whether its own room still comes up; grant it for free and
+            # see whether that is what unlocks it. A key you can only
+            # fetch by already holding it is the defect, and it is a
+            # different fault from a room nothing reaches.
+            without = _explore(entry, zone.edges, doors_by_room,
+                               keys_by_room,
+                               ignore_keys=frozenset({k.key_id}))
+            if c.id in without.rooms:
+                continue
+            granted = _explore_holding(entry, frozenset({k.key_id}),
+                                       zone.edges, doors_by_room,
+                                       keys_by_room)
+            if c.id in granted.rooms:
+                errors.append(
+                    f"key '{k.key_id}' is behind a lock only it opens; "
+                    f"room '{c.id}' is reachable holding it and not "
+                    "reachable without it")
+            else:
+                errors.append(
+                    f"key '{k.key_id}' sits in room '{c.id}', which is "
+                    "unreachable for reasons other than its own lock")
+
+    return Reach(states=forward.states, rooms=forward.rooms,
+                 errors=tuple(errors))
+
+
+def _explore_holding(room: str, held: frozenset[str], edges, doors_by_room,
+                     keys_by_room) -> Reach:
+    """`_explore` from a room the player already stands in, keys in hand."""
+    incident: dict[str, list] = {}
+    for e in edges:
+        incident.setdefault(e.room_a, []).append(e)
+        incident.setdefault(e.room_b, []).append(e)
+
+    def collect(r: str, h: frozenset[str]) -> frozenset[str]:
+        return h | {k.key_id for k in keys_by_room.get(r, ())}
+
+    start = (room, collect(room, held))
+    seen = {start}
+    queue = [start]
+    while queue:
+        at, have = queue.pop()
+        for e in incident.get(at, ()):
+            if not _passable(e, at, have, doors_by_room, frozenset()):
+                continue
+            nxt_room = e.other(at)
+            nxt = (nxt_room, collect(nxt_room, have))
+            if nxt not in seen:
+                seen.add(nxt)
+                queue.append(nxt)
+    return Reach(states=frozenset(seen),
+                 rooms=frozenset(r for r, _ in seen))
