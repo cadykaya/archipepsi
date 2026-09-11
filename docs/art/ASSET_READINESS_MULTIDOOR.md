@@ -2,6 +2,32 @@
 
 **Arty** · art lane · 2026-09-11 · against the Zone 1 playtest of the same day
 
+---
+
+## OWNER RULINGS, 2026-09-11 — read these before the note below
+
+The note was written as questions. Four of them are now answered, and the
+answers bind.
+
+1. **Return devices, Zone exits, sealed doors and secrets each get their own
+   visual identity.** The two conflicts flagged in §2 and §3 are settled the
+   way they were flagged: a plug does **not** borrow the portal, and a
+   closure does **not** borrow the batch029 secret language.
+2. **A closure is a placement, not baked shell geometry** — §5 item 2,
+   decided as recommended, so doorway usage stays selectable per decision 3.
+3. **The pending checkpoint assets are candidates for ADAPTATION, not
+   approved.** Nothing in this note or the discussion around it promotes
+   batch026, and it must not be cited as approval.
+4. **HOLD on authoring.** No junction shell, plug or warp station is
+   authored until **Dess returns the doorway contract**. The Span shell
+   stays untouched until **Production supplies the precise route/collider
+   finding**.
+
+**The continuous-groove deck tread is accepted and that revision is
+closed** (Art `3cf824b`).
+
+---
+
 A readiness note, not a batch. **Nothing is authored here**, no approved
 asset, manifest or review state is touched, and the twelve shells are not
 rebuilt. Written after reading `03-decisions-and-open-questions.md` so the

@@ -263,6 +263,39 @@ and runs.
 * **It ships nowhere.** `assets/textures/theme/concrete_facility_wall.png`
   is unchanged and no approved asset was touched.
 
+### HOLD — no new authoring until two things arrive (owner, 2026-09-11)
+
+After the Zone 1 playtest the owner accepted the multi-door direction and
+then **put authoring on hold**. Do not start any of it on a wake-up:
+
+* **No junction shell, dead-end plug or warp station** until **Dess returns
+  the doorway contract** — how many doorways a shell may declare, what they
+  are named now that `entry`/`exit` no longer describes them, and whether
+  the composer relies on an ordering.
+* **`shell_span_basin` stays untouched** until **Production supplies the
+  precise route/collider finding.** The playtest showed its two
+  basin→deck routes are `mandatory: False`, so nothing ever verified the
+  14 m climb — but changing geometry against a symptom risks repairing the
+  wrong thing.
+* **The twelve approved shells are not rebuilt** and their manifests do not
+  change. Existing two-door shells remain valid.
+
+**Settled, and these bind when authoring does start:**
+
+* **Return devices, Zone exits, sealed doors and secrets each get a
+  DISTINCT visual identity.** A plug may not borrow `portal_core_*` (that
+  is the Zone exit, and confusing "this ends the level" with "this sends me
+  back" is an irreversible mistake), and a closure may not borrow the
+  batch029 secret language (which means *this can be got through*).
+* **A closure is a PLACEMENT, not baked shell geometry**, so doorway usage
+  stays selectable.
+* **batch026's checkpoint assets are candidates for adaptation and are NOT
+  approved.** They remain in the 023–030 PENDING band; no discussion since
+  has promoted them.
+
+Readiness detail, with measured sizes:
+`docs/art/ASSET_READINESS_MULTIDOOR.md`.
+
 ### Batch 042 — deep_space_derelict, proved not shipped (2026-09-10)
 
 Report: `docs/art/reports/2026-09-10-batch042-derelict.md`. Package:
