@@ -247,7 +247,7 @@ Missing ids have documented handling, and the three cases are distinct:
 | A1 authored rooms in a normally generated Zone | **met** — 6 of 23, both corner variants |
 | A2 selection from the offered catalog, validated | **met** — `shells.offered_for`, `validate_zone` |
 | A3 one compatibility rule, no contradictory copies | **met** — §2, parity test |
-| A4 required content present and reachable | **met** — content byte-identical; zone audit green |
+| A4 required content present and reachable | **met** — every required Check, objective and activity still present; zone audit green. *Corrected 2026-09-11: this row originally read "content byte-identical" and offered that as evidence of correctness. It is not. Byte-identical content inside a room that grew to 2712 m² is the defect the Zone 1 playtest found — see `2026-09-11-playtest-zone1-findings.md` §S-7.* |
 | A5 explicit diagnostics, no silent normalisation | **met** — §5 |
 | A6 old saved Zones preserved | **met** — not regenerated on load or reconnect |
 | A7 movement package on ordinary Zones | **met** — §7 |

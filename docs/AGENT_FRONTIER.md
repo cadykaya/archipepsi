@@ -1940,6 +1940,38 @@ Two smaller finds recorded there: `SECRET_VALUE` is priced in
 archived baseline under-reports optional content against the Zone that
 was actually played (2 features).
 
+## Zone 1 playtest, 2026-09-11 — the frontier now
+
+**`docs/reports/2026-09-11-playtest-zone1-findings.md` is the live list.**
+Skyah played the 3A/3B checkpoint Zone start to portal in `none` mode.
+Game code stayed at the audited `96c450e`; that report and the two
+corrections beside it are documentation only.
+
+Two **blockers**, both run-ending without an Echo:
+
+- A `gallery` with `side: "back"` puts its full-width deck across the room's
+  own exit doorway. `c015` has 1.46 m under the deck and 1.34 m over it for
+  a 1.8 m capsule. `_openings_are_holes` would refuse the room; no fixture
+  ever builds that shape — `room_contract_driver.gd:743` rolls
+  `["left","right","back"][i % 3]` inside `if i % 3 == 0:`, so only `left`
+  is ever built, and the one `back` fixture is a pit.
+- The pit ramp is built outside the recess it serves and the recess has
+  three walls. Escape from a pit is never audited.
+
+The structural finds that outrank polish: **Epsilon owns no positions**
+(no chamber field expresses where anything goes, so intentional
+composition is not expressible); **prop placement is a fixed lattice
+identical in every arena**, with the barrel points and the enemy ring
+computed by formulas that never compare (barrels cannot kill anything);
+**there is no enemy perception** (18 m sphere, no line-of-sight check,
+`_has_noticed` never cleared — 9 of 10 arenas are 100% watched before
+entry); **enemy stats never scale while player power does**; and
+**connectors are a collision spacer, not grammar**, so rooms butt into
+coincident wall slabs and a fight leaks into the room behind it.
+
+Nothing from this list is scheduled. It is the evidence the next batch
+gets scoped from, and the owner decides the order.
+
 ## What playtest 1 taught, and the guard it left behind
 
 Nine headless suites, a whole-campaign integration run and both CI tiers

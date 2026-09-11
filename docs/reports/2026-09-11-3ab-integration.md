@@ -183,6 +183,16 @@ Zone is **23 rooms, 15 Checks, 35 enemies** — unchanged — and its content
 value moved from 922 to 908, inside the budget band, because six corridors
 became 6.0 × 6.0 rooms and one arena became 30.4 × 89.2.
 
+**Corrected 2026-09-11.** That paragraph reported the unchanged content as
+a reassurance. It is the finding. A room that became 30.4 × 89.2 —
+2712 m² — kept the contents budgeted for the small arena the generator
+proposed: one melee enemy, two activities, one Check, and five declared `enemy_high`
+stances left empty. `room_value`'s space term caps at `MAX_SPACE_VALUE` and
+is then clamped by content, so the budget is structurally unable to notice
+a room growing. Content staying put across a 30× area change is evidence
+that nothing is watching, not evidence that nothing broke. See
+`2026-09-11-playtest-zone1-findings.md` §S-7.
+
 One consequence was worth chasing: the first attempt came out a single
 point under its minimum and the retry loop covered for it. Features are
 hung and shells adopted **between** the builder's two passes now, so the
