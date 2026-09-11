@@ -71,11 +71,27 @@ socket by the same route search the chain uses, furnished by the same
 integrated proof crosses the lock into the branch, returns through its
 plug, and re-enters to find the lock still open.
 
-**Still a chain, and this is the open seam with Dess.** `ZoneBuilder`
-walks `zone.chambers` in list order; branches hang off it as a nested
-declaration. Placing the REAL graph needs which socket each
-`TopologyEdge` takes, which is `DoorAssignment` and is Dess's. This lane
-deliberately has not invented that interface — see AMALGAM_SLICE1 §7.
+**THE SEAM IS CROSSED.** `placement_plan` reads the bridge's `edges` and
+each chamber's `doors` and places the real branching graph; the layout
+goes back as `layout_result` with measured apertures and arrival
+verdicts; and `ZoneReady.manifest` is replayed on re-entry rather than
+re-solved. Five of six generated Zones commit a layout with a digest.
+
+**One thing blocks the sixth, and it is Art's.** `shell_hall_transit`,
+`shell_plenum_helix` and `shell_span_basin` each declare their `exit`
+doorway **2.0 m outside their own envelope** — the router joins the
+corridor at the socket and the wall is two metres away, which is the
+playtest's "the connecter isnt connected at all". Measured and NOT
+changed (a manifest coordinate is authored geometry):
+`docs/art-requests/2026-09-11-doorways-outside-their-envelope.md`. A Zone
+holding one of these shells is refused by the layout validator until it
+lands.
+
+**Evidence comes from the body now, not only the model.** The flood
+proposes a route and a real `Player` walks it; the two are reported
+separately. c015, c005 and the pit are all left on foot, and the whole
+branch journey — lock, key, crossing, plug, persist, re-enter — is walked
+by a real body. See `docs/AMALGAM_SLICE1.md` §5o.
 
 ## THE ACTIVE FRONTIER: v0.9 — production and the authored-content transition
 
