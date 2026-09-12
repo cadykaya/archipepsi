@@ -1,5 +1,130 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the journey measures itself honestly now — 2026-09-13
+
+**`claude/archipepsi-echoes-continuation-b1adno`**, bridge lane merged at
+`4b68092`, art lane at `1a9f1c9`. Read this first.
+
+### The reference round trip — GREEN
+
+`godot-graphs` now proves ONE round trip through the real controller
+before it says anything about a sample. A two-room Zone, a real
+`ZoneController`, the real return action, **no edges** (so an
+UNCERTIFIED Zone is never held for a verdict and this measures the
+return path, not the bridge). Asserted in order, all passing:
+
+walk in → stay standing, return not fired → reach a real interaction
+target, **stopped by the player's own probe** (it found
+`WarpStation_st_r002`, `[E] ACTIVATE R002`) → walk into the trigger,
+stopped by the trigger → **exactly one** traversal, for the assigned
+edge → the production consumer puts the body at `zone_start`, 0.0 m →
+walk back in on foot and stay, no second traversal.
+
+**And two controls, because a measurement that cannot fail is not one:**
+
+| control | result |
+|---|---|
+| the production consumer taken off `traversed`, nothing else changed | the device still fires; the body ends **32.3 m** from the start. A driver asserting only the event cannot tell that from a completed return. |
+| stopping at `ARRIVED` (the old rule) | the body stops **3.8 m** from a **1.4 m** trigger and nothing fires — this is what made the old journey read "could NOT get back". |
+
+The four source-review findings are all closed: `ARRIVED` is no longer
+one tolerance for every purpose (`_walk` takes a stopping condition);
+the driver exercises `ZoneController._on_plug_traversed` rather than
+instantiating a device; "content" is a node with `interact()` found by
+the player's own probe; "re-entered" is walked.
+
+### The preserved five, carried onto the same measurement
+
+| leg | today |
+|---|---|
+| valid start | 5 of 5 |
+| crossed the junction to the intended door | 5 |
+| entered the side destination | 2 |
+| remained standing in it | 2 |
+| reached a real interaction target | **0** |
+| completed the return | **1–2** |
+| walked back in | 0 |
+
+**`content` fell from 2 to 0 because it changed meaning** — it used to
+be "reached the room's geometric middle". The old two were not two.
+**`returned` rose from 0** because the walk is now stopped by the
+trigger. Three approaches still never reach the branch (`zone_01` FALLS
+at waypoint 0 even with the climb; `zone_04`, `zone_05` stop short), and
+in the two that get in **the return device sits between the body and the
+room's content**, so the content leg ends by being sent home — recorded
+as "by wandering", which is not the §5.7 defect (it does not fire on
+entry) and is not an intentional return either.
+
+**`JOURNEY_FLOOR` is a MINIMUM OVER OBSERVED RUNS.** `returned` has been
+seen at 2 and at 1 on the same commit from the same fixtures with
+nothing changed: these legs are a real body in real physics steered by
+signals and overlaps, and they do not repeat. Making them reproducible
+is its own piece of work.
+
+### Placement evidence — the correction, with five controls
+
+Dess bars a host on evidence this lane produces, and three defects in it
+could bar a good room. All three were mine and all three are fixed:
+
+* `plug_clear` wrote `false` when the room published **no arrival**.
+  `false` means "measured, and the body stands inside the device". The
+  entry is now ABSENT — rule 4b refuses the LAYOUT for missing
+  measurement, which is right, and does not condemn the ROOM.
+* the settle **skipped its search whenever the pad was standable**,
+  including a pad two metres from the arrival inside its own trigger.
+  Support **and** clearance are asked now, of the anchor and of every
+  candidate.
+* one boolean cannot carry three outcomes. `plug_placement` reports, per
+  room: `MEASURED`, `REPAIRED`, `NO_EVIDENCE`, `NO_CANDIDATE` — **and
+  only `NO_CANDIDATE` may justify reselecting a host**, carrying what
+  was searched (count, offsets, clearance, envelope) rather than a claim
+  of impossibility.
+
+Five controls in `godot-zone-audit`, each on a real built Zone. One of
+them settles a question this lane got wrong: **a room over a kill pit
+CAN host a return.** `platform_path` declares which square metres hold
+weight and its end ledge holds a device as well as a player; with the
+builder preferring a declared stand it reports MEASURED. "All pit rooms
+are unhostable" was a generalisation from one position, and the control
+exists so it cannot come back. `room:c012:return` no longer refuses
+anything.
+
+Also fixed: the arrival had **two sources** (`rooms[rid].arrival` and
+`anchors["room:<rid>:arrival"]`). Both read the published anchor now.
+
+### `godot-reload` — still RED, and it now names which half
+
+**PHASE 1 (initial build + acceptance) fails**: a freshly composed Zone
+is refused for *"door 'c008/side_left' is USED and the engine measured
+it as solid"*. **PHASE 2 (reconstruction of an existing manifest) is
+never reached**, so this run measures nothing about replay. Both phases
+print what the bridge and the engine actually said instead of a bare
+timeout. The earlier `room:c012:return` cause is gone; this is a
+different, aperture-polarity failure and it is not diagnosed yet.
+
+### NOT DONE in this batch, and not started
+
+1. **Overlap reconciliation (item 2).** The join/collar distinction, the
+   separate "router found a candidate" vs "bridge accepted it"
+   publication, and the bounds diagnosis for the four large-shell
+   failures. The previous batch's four attempts and why they were
+   reverted are in `zone_builder.gd` and the section below.
+2. **The pending-room integration proof (item 4).** The registry
+   dependency seam, the one-neighbour Terminus with unused openings
+   closed, the onward-branch assignment with its real departure, rotated
+   placement and real arrival. The asset is present at
+   `assets/models/batch044/shells/shell_bay_terminus.glb` (entry,
+   branch_east, branch_west, **no exit**, and a manifest `exit_offset`
+   of [0,0,22] which is exactly the fictional departure to refuse).
+   `has_departure` and the consumer refusal are in; the seam is not.
+3. **Items 2–4 of the placement correction**: the bar on required
+   destinations, the no-automatic-branch-removal rule, and driving one
+   real failed placement through reselection, rebuilding, acceptance,
+   deliberate return and cold restart.
+4. **The three journey gaps above** — the fall at waypoint 0, the two
+   stop-shorts, and the device standing between the arrival and the
+   content.
+
 ## ENGINE LANE — the recovery is driven, and the return stands up — 2026-09-13
 
 **`claude/archipepsi-echoes-continuation-b1adno`, bridge lane merged at

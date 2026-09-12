@@ -77,8 +77,18 @@ const SAMPLE_FLOOR := 16
 ##   not the §5.7 defect (it does not fire on entry) but it is not an
 ##   intentional return either, and it is recorded as "by wandering".
 ## * neither walked back in afterwards.
+##
+## **A MINIMUM OVER OBSERVED RUNS, not a fixed expectation.** These legs
+## are walked by a real body through real physics, steered by a
+## controller loop whose stopping conditions are signals and overlaps;
+## two runs of the same fixture do not take the same path. `returned`
+## has been seen at 2 and at 1 on the same commit, from the same
+## fixtures, with nothing changed. So the floor is the LOWEST seen and a
+## drop below it is still a finding -- it is not a claim that the number
+## is stable. Making these legs reproducible is its own piece of work
+## and is not done here.
 const JOURNEY_FLOOR := {"valid": 5, "at_mouth": 5, "entered": 2,
-		"stayed": 2, "content": 0, "returned": 2, "re_entered": 0}
+		"stayed": 2, "content": 0, "returned": 1, "re_entered": 0}
 const ARRIVED := 4.0
 
 ## ZONES THE ROUTER CANNOT LAY OUT TODAY: the status, and where it wedges.
