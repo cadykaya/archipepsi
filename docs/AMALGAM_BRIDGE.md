@@ -466,6 +466,19 @@ exists to prevent. The engine computes it over the actual replay setup
 and supplies it; the bridge folds it into `package_digest` so a scene
 change invalidates evidence exactly as a solver change does.
 
+**Wire format: sixteen lowercase hex characters** (`^[0-9a-f]{16}$`),
+the same shape as `package_digest`, enforced by `PhysicsSetup`. Only the
+*output* shape is contracted — how the engine builds the string it
+hashes is engine-owned, because the bridge must never be in a position
+to re-derive it.
+
+**A constant passes.** The bridge cannot tell a real scene digest from
+`"0123456789abcdef"` repeated forever: both are sixteen hex characters
+and both fold into `package_digest` identically. §6.2c catches a proof
+over an *absent* setup; it cannot catch a proof over a *fake* one. That
+is level 2, it belongs to the engine lane, and there is no validator on
+this side that will ever substitute for it.
+
 **Coverage — agreed with the engine lane before implementing, because
 widening it later invalidates every existing record.**
 
@@ -482,6 +495,20 @@ widening it later invalidates every existing record.**
 | Visual-only materials | albedo, shaders, textures — anything with no collision consequence |
 | Lighting | lights, probes, environment, post-processing |
 | Decoration | props with no collider, decals, audio, particles |
+
+**Five decisions only the engine lane can make.** Each one changes the
+implementation, and each has a proposed default so the answer can be
+"yes" rather than an essay. **Answer these before computing a real
+`scene_digest`**; widening or re-quantizing afterwards invalidates every
+record written in between.
+
+| | Question | Proposed default |
+|---|---|---|
+| 1 | **Float quantization.** Transforms and velocities are floats. Digested raw, single-precision noise or a build change churns the digest; digested too coarsely, a real move hides | Round every length to **1e-4 m**, every angle to **1e-4 rad**, every velocity to **1e-4 m/s**, and format with a fixed decimal representation before digesting. Never digest a raw `float`'s printed form |
+| 2 | **Are effective values actually readable?** The list says *effective, not overridden* — gravity from project settings plus area overrides, friction from a possibly-inherited `PhysicsMaterial`. If some of these cannot be read without stepping the sim, the list is wrong and must shrink | Read what is readable statically; for anything that is not, digest the **resource path plus its own digest** rather than the resolved number, and say so here |
+| 3 | **What counts as "participating".** "Every collider participating in the replay" is not yet decidable, and an undecidable rule is two implementations that disagree | Every collider on the **collision layers the package's bodies test against**, within the room the package belongs to. Not a radius — a radius is a tuning constant that will drift |
+| 4 | **Ordering.** Scene-tree order is not stable across saves, and an unordered digest makes the same scene digest differently on reload | Sort bodies by `body_id` and static colliders by **scene-relative node path**, both before digesting |
+| 5 | **Versioning granularity.** "Construction/physics versioning" needs concrete sources | Godot version, **physics backend name and version** (Godot Physics vs Jolt are not the same experiment), and a **generator version constant** bumped by hand whenever scene construction changes shape |
 
 Two of these are easy to get wrong and are called out for that reason:
 

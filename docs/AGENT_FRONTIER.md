@@ -47,8 +47,13 @@ serializer** — hashing the stored strings proves the file is
 self-consistent and nothing about the code) — Python side done, Godot
 side owed. Scene binding (`scene_digest` computed from a real setup, not
 a constant) — not started; coverage list is `docs/AMALGAM_BRIDGE.md`
-§6.2b. Physical outcome (replay) — not started. Level 1 passing says
-nothing about level 2. Regenerate the vectors with `cd bridge && python3
+§6.2b, with **five decisions for the engine lane** (float
+quantization, whether effective values are statically readable, what
+counts as participating geometry, ordering, versioning granularity) —
+each with a proposed default so the answer can be yes. Physical outcome
+(replay) — not started. Level 1 passing says nothing about level 2, and
+**a constant `scene_digest` passes every check on this side**: sixteen
+hex characters is all the bridge can see. Regenerate the vectors with `cd bridge && python3
 -m archipepsi_bridge.schemas.physics_vectors`; **that is a contract
 change and the engine lane must re-run.**
 
