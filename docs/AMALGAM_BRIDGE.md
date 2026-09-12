@@ -1392,20 +1392,56 @@ loading. A resend after a dropped connection is the ordinary case.
 number of times; it keeps its manifest, saturates the same counter,
 stays `ZONE_DORMANT` and stays enterable.
 
-> **For Prod — the Hub half, and it is small.**
+> **For Prod — the Hub half, in one console.**
 >
 > `hub.gd` already has the control. `AbandonConsole` has the wording
 > ("[E] ABANDON HELD ZONE"), the confirm step ("CONFIRM ABANDON? —
-> unclaimed Checks return to the pool") and the intent. Two changes:
+> unclaimed Checks return to the pool") and the intent. Two changes,
+> and **no second control and no duplicated campaign state.**
 >
 > 1. **`_visible_modes` gains `"ZONE_FAILED"`.** It is currently
 >    `["GENERATING", "ZONE_READY", "ZONE_ACTIVE"]`, so the console is
 >    hidden for a Zone nobody is standing in — which is every failed
 >    one.
-> 2. **Take the id from `hub.discard_zone_id`, not from
->    `BridgeClient.active_zone()`.** A failed Zone is DORMANT, so
->    `active_zone()` is empty and the console has nothing to send.
->    `discard_zone_name` is there for the label.
+> 2. **Resolve the target CONDITIONALLY.** In `ZONE_FAILED`, take it
+>    from `hub.discard_zone_id` (and `discard_zone_name` for the
+>    label): a failed Zone is DORMANT, so `BridgeClient.active_zone()`
+>    is empty and the console would have nothing to send. **In the
+>    three modes the console already serves, keep the resolution it
+>    already has.**
+>
+> **`discard_zone_id` is populated in `ZONE_FAILED` and nowhere else.**
+> Measured, not assumed — `ZONE_READY`, `ZONE_ACTIVE` and a committed
+> `ZONE_DORMANT` all report it empty. So replacing the lookup
+> unconditionally would give the existing modes a console that shows its
+> prompt, arms its confirmation and does nothing: a control that
+> displays and does not act, which is the failure this whole batch has
+> been about. **Owner correction, 2026-09-12** — this section said
+> "take the id from `discard_zone_id`, not from `active_zone()`", which
+> read as a replacement, and that was this lane's error rather than a
+> misreading.
+>
+> The field is deliberately not populated in the other modes. Its
+> meaning is "the Zone the Hub is offering to discard because it cannot
+> be entered", and widening it to "any Zone you could abandon" would
+> make one name answer two questions — which is the shape of every
+> defect this seam has produced.
+>
+> **And it is now an invariant, not a sentence.** `HubStatus`
+> refuses a `discard_zone_id` outside `ZONE_FAILED` and refuses
+> `ZONE_FAILED` without one, so the conditional this section asks for
+> is guaranteed by the model rather than by anyone remembering.
+>
+> No matching rule exists for `resume_zone_id`, and one must not be
+> added: it is legitimately set in `GENERATING`, which is not in
+> `ZONE_ENTERABLE_MODES`, so the symmetric-looking invariant is false.
+> It was written, refused by 128 tests, and removed.
+>
+> **Arm against the id, and disarm when it changes.** A confirmation
+> armed for one Zone must not apply to another: reset it when the
+> resolved target changes or goes away (a restart, an abandon from the
+> pause menu, a Zone that left the mode). The console holds the arming;
+> the bridge holds no notion of it, and should not.
 >
 > Nothing else changes. `_on_portal_activated` needs no new arm:
 > `ZONE_FAILED` is not in `ZONE_ENTERABLE_MODES`, the portal is
@@ -1413,8 +1449,9 @@ stays `ZONE_DORMANT` and stays enterable.
 > could not be laid out. Discard it to return its Checks to the pool."
 >
 > **The only way to make this wrong is to leave the player a mode with
-> no control**, so if the console cannot be shown in `ZONE_FAILED`, say
-> so rather than adding a second way in.
+> no usable control**, so if the console cannot be shown in
+> `ZONE_FAILED`, say so rather than adding a second way in. A correct
+> snapshot and a console with no reachable target are not a recovery.
 
 
 ## 6. What remains in this lane

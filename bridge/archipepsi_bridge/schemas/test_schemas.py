@@ -1071,6 +1071,14 @@ def _hub(**over):
     generation_in_progress and accepts_zone_request are all derived."""
     base = dict(mode="ZONE_AVAILABLE", headline="x")
     base.update(over)
+    # ZONE_FAILED IS THE MODE THAT NAMES A ZONE TO DISCARD, and the
+    # invariant is an iff — so a helper that left the field empty could
+    # not build the mode at all, and every census below would have
+    # stopped covering it. Supplied here rather than skipped, which is
+    # what `test_naming_a_zone_and_lighting_the_portal_are_one_decision`
+    # refuses to let happen quietly.
+    if base["mode"] == "ZONE_FAILED":
+        base.setdefault("discard_zone_id", "zone_001")
     return HubStatus(**base)
 
 
