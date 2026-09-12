@@ -438,6 +438,19 @@ hosting one onward branch departs by a real doorway through
 fix it. **A capability probe, not a promotion** — no shipped shell
 lacks `exit`, and nothing here offers a pending asset.
 
+**AND THE REFUSAL IS A VALUE** (§5.8a). Those refusal paths returned an
+edge-less product with a note, and nothing read it: `apply` drops notes,
+`reachability` cannot tell an edge-less refusal from the legacy chain it
+must keep accepting, and `_with_graph` handed it back as a good Zone —
+caught only by the `Zone` schema rejecting doors-without-edges when
+`accept_zone` rebuilt the record, which is a pydantic error out of a
+background task. This lane's own recurring failure in its own code.
+`GraphProduct.refusal` carries a code from a closed set now, a refused
+product carries no doors, `_with_graph` raises, and the generation
+handler takes the bounded recovery a failed generation already had. The
+"no edges and a note" tests are gone; the controls drive the wrapper and
+the real handler, and removing the consumption fails all five.
+
 **NEXT FOR THIS LANE: nothing, until integration says otherwise**
 (owner, 2026-09-12). Topology behaviour is to stay stable while Prod
 exercises the integrated build. The next bridge work is **a specific

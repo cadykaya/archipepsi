@@ -113,6 +113,54 @@ def _zone_limit(field: str) -> int:
     raise ValueError(f"`Zone.{field}` states no maximum length")
 
 
+#: Why a composition failed, as a CODE rather than as a sentence.
+#:
+#: The refusal paths below used to say what was wrong in `notes` and
+#: nothing else — and `apply` drops notes, `reachability` reads an
+#: edge-less Zone as the legacy chain it cannot distinguish this from,
+#: and `campaign._with_graph` handed the result back as a good Zone. The
+#: only thing that caught it was the `Zone` schema refusing doors
+#: without edges when `accept_zone` rebuilt the record: a pydantic
+#: exception out of a background task, which protects the save and is
+#: not a handled refusal.
+#:
+#: So the reason is a value the campaign reads. **Prose is for the log;
+#: it is never control flow.**
+REFUSAL_CODES = (
+    "no_arrival",               # a room declares no `entry`
+    "destination_is_an_end",    # a leaf is the Zone's first or last room
+    "destination_unreachable",  # no room before a leaf can host it
+    "chain_unreachable",        # not even the plain chain gets around
+)
+
+
+@dataclass(frozen=True)
+class GraphRefusal:
+    """A composition that did not happen, and why."""
+
+    code: str
+    detail: str
+    rooms: tuple[str, ...] = ()
+
+    def __post_init__(self):
+        if self.code not in REFUSAL_CODES:
+            raise ValueError(
+                f"'{self.code}' is not a refusal this composer declares; "
+                f"the codes are {list(REFUSAL_CODES)}")
+
+
+class GraphRefused(Exception):
+    """Raised when a Zone cannot be composed at all.
+
+    Carries the `GraphRefusal` so the caller decides what to do about it
+    without reading a message.
+    """
+
+    def __init__(self, refusal: GraphRefusal):
+        super().__init__(f"{refusal.code}: {refusal.detail}")
+        self.refusal = refusal
+
+
 @dataclass(frozen=True)
 class GraphProduct:
     """What a composer hands the engine, minus the chambers themselves."""
@@ -130,6 +178,17 @@ class GraphProduct:
     #: validator refuses one that does not.
     arrivals: dict[str, str] = field(default_factory=dict)
     departures: dict[str, str] = field(default_factory=dict)
+
+    #: Set when the Zone could not be composed at all. **Not the same as
+    #: an empty product**: a Zone with nothing to branch composes as a
+    #: plain chain and refuses nothing, and a Zone carrying no graph at
+    #: all is the legacy shape that still loads. This says the composer
+    #: was asked for something it could not build.
+    refusal: GraphRefusal | None = None
+
+    @property
+    def refused(self) -> bool:
+        return self.refusal is not None
 
 
 def _shell_sockets() -> dict[str, tuple[str, ...]]:
@@ -291,7 +350,7 @@ def _roles(chambers, shell_sockets) -> dict[str, str]:
     return {c.id: _role(c, shell_sockets) for c in chambers}
 
 
-def _role_refusals(chambers, roles: dict[str, str]) -> tuple[str, ...]:
+def _role_refusal(chambers, roles: dict[str, str]) -> GraphRefusal | None:
     """Why this Zone's rooms cannot be given the roles it needs.
 
     Each of these is a REFUSAL, never a quiet linearisation. A Zone that
@@ -299,21 +358,25 @@ def _role_refusals(chambers, roles: dict[str, str]) -> tuple[str, ...]:
     the graph would leave the leaf with every opening sealed and nothing
     saying so, which is what happened.
     """
-    notes: list[str] = []
-    stranded = [c.id for c in chambers if roles[c.id] == ROLE_UNJOINABLE]
+    stranded = tuple(c.id for c in chambers
+                     if roles[c.id] == ROLE_UNJOINABLE)
     if stranded:
-        notes.append(
-            "no graph: room(s) %s declare no `entry`; nothing can reach "
-            "them and the composer will not invent an opening" % stranded)
+        return GraphRefusal(
+            "no_arrival",
+            "room(s) %s declare no `entry`; nothing can reach them and "
+            "the composer will not invent an opening" % list(stranded),
+            stranded)
     first, last = chambers[0].id, chambers[-1].id
     for rid, what in ((first, "the room the player arrives in"),
                       (last, "the room the Zone leaves by")):
         if roles[rid] == ROLE_LEAF:
-            notes.append(
-                "no graph: room '%s' is %s and declares no `exit`; a "
-                "destination cannot carry the chain and the composer "
-                "will not fabricate a departure for it" % (rid, what))
-    return tuple(notes)
+            return GraphRefusal(
+                "destination_is_an_end",
+                "room '%s' is %s and declares no `exit`; a destination "
+                "cannot carry the chain and the composer will not "
+                "fabricate a departure for it" % (rid, what),
+                (rid,))
+    return None
 
 
 def _side_socket(chamber, spare: tuple[str, ...]) -> str | None:
@@ -623,6 +686,23 @@ def _lock_routes(chambers, routes) -> tuple[list[BranchRoute], tuple[str, ...]]:
     return out, tuple(notes)
 
 
+def _refused(refusal: GraphRefusal, notes: tuple[str, ...] = ()
+             ) -> GraphProduct:
+    """A composition that did not happen.
+
+    **Carries no doors.** The refusal paths used to seal every socket and
+    return that, which is a Zone with door assignments and no edges — a
+    shape the `Zone` schema refuses, but only later, when `accept_zone`
+    rebuilds the record, as a pydantic error out of a background task.
+    Half-built output is what let the failure travel as far as it did;
+    there is nothing here to mistake for a product.
+    """
+    return GraphProduct(edges=(), doors={}, keys={}, plugs=(),
+                        notes=notes + (f"refused ({refusal.code}): "
+                                       f"{refusal.detail}",),
+                        refusal=refusal)
+
+
 def compose_with_branch(chambers, shell_sockets=None) -> GraphProduct:
     """The chain, with every room a junction can afford moved onto a
     branch off it — locked where a lock has a key to go with it.
@@ -654,12 +734,9 @@ def compose_with_branch(chambers, shell_sockets=None) -> GraphProduct:
     # only a note to say so. A room whose declared role is "destination"
     # must not be asked for a departure first.
     roles = _roles(chambers, caps)
-    blocked = _role_refusals(chambers, roles)
-    if blocked:
-        return GraphProduct(
-            edges=(), doors={c.id: _seal_the_rest(c, {}, caps)
-                             for c in chambers},
-            keys={}, plugs=(), notes=blocked)
+    blocked = _role_refusal(chambers, roles)
+    if blocked is not None:
+        return _refused(blocked)
     leaves = [c for c in chambers if roles[c.id] == ROLE_LEAF]
 
     if not leaves:
@@ -682,14 +759,12 @@ def compose_with_branch(chambers, shell_sockets=None) -> GraphProduct:
         # REFUSED, never linearised. A leaf with no branch is a room the
         # chain cannot reach and cannot pass through, and composing the
         # Zone without it would seal it shut in silence.
-        return GraphProduct(
-            edges=(), doors={c.id: _seal_the_rest(c, {}, caps)
-                             for c in chambers},
-            keys={}, plugs=(),
-            notes=why + ("no graph: destination room(s) %s declare no "
-                         "`exit` and no room before them had a socket to "
-                         "spare; the chain cannot reach them and cannot "
-                         "pass through them" % unplaced,))
+        return _refused(GraphRefusal(
+            "destination_unreachable",
+            "destination room(s) %s declare no `exit` and no room before "
+            "them had a socket to spare; the chain cannot reach them and "
+            "cannot pass through them" % unplaced,
+            tuple(unplaced)), notes=why)
     if not routes:
         return GraphProduct(
             *(base.edges, base.doors, base.keys, base.plugs),

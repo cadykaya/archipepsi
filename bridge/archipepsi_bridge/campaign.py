@@ -195,6 +195,17 @@ def _with_graph(zone):
     by construction.
     """
     product = topology.compose_with_branch(list(zone.chambers))
+    # A COMPOSITION THAT DID NOT HAPPEN IS NOT A ZONE.
+    #
+    # This used to read the refusal paths as ordinary empty products and
+    # hand the result back as a good Zone: `apply` drops `notes`,
+    # `reachability` cannot tell an edge-less refusal from the legacy
+    # chain it must keep accepting, and the only thing that noticed was
+    # the `Zone` schema refusing doors-without-edges when `accept_zone`
+    # rebuilt the record — a pydantic error out of a background task.
+    # The reason is a code now, and it is read rather than logged.
+    if product.refused:
+        raise topology.GraphRefused(product.refusal)
     composed = topology.apply(zone, product)
     verdict = topology.reachability(composed)
     if verdict.ok:
@@ -205,12 +216,14 @@ def _with_graph(zone):
     chain_verdict = topology.reachability(chain)
     if chain_verdict.ok:
         return chain
-    # A chain that fails reachability is a defect in the chambers, not
-    # in the graph, and hiding it behind an ungraphed Zone would lose
-    # the only evidence of it.
-    log.error("zone %s: even the chain is unreachable (%s)",
-              zone.zone_id, "; ".join(chain_verdict.errors[:2]))
-    return zone
+    # EVEN THE CHAIN DOES NOT GET AROUND. A defect in the chambers, not
+    # in the graph — and returning the ungraphed Zone made a failed NEW
+    # composition indistinguishable from a genuine legacy save, which is
+    # the one shape that must keep loading. Refused explicitly instead.
+    raise topology.GraphRefused(topology.GraphRefusal(
+        "chain_unreachable",
+        "even the plain chain does not get around this Zone: "
+        + "; ".join(chain_verdict.errors[:2])))
 
 
 class CampaignEngine:
@@ -917,12 +930,10 @@ class CampaignEngine:
                 archive_dir=self.archive_dir)
         except Exception:
             log.exception("generation failed past fallback for %s", zone_id)
-            self.last_generation_error = "generation failed past fallback"
-            self._apply(T.abandon_zone(self.save, zone_id))
-            await self._notify("zone_abandoned", "GENERATION FAILED",
-                               ("The Zone could not be built; its Checks "
-                                "returned to the pool.",))
-            await self.broadcast_snapshot()
+            await self._generation_failed(
+                zone_id, "generation failed past fallback",
+                "The Zone could not be built; its Checks returned to the "
+                "pool.")
             return
 
         self.last_generation_error = outcome.error
@@ -945,7 +956,21 @@ class CampaignEngine:
         # and `reachability` refuses a Zone the player could not get
         # around before anything is stored. Doing it after acceptance
         # would mean a Zone existed in a save with an unproved graph.
-        composed = _with_graph(outcome.value)
+        try:
+            composed = _with_graph(outcome.value)
+        except topology.GraphRefused as exc:
+            # THE SAME BOUNDED RECOVERY a failed generation already has,
+            # because this IS a Zone that could not be built. Nothing is
+            # accepted, no `zone_ready` is emitted, the locations go back
+            # to the pool through `abandon_zone` and no other path, and
+            # the Hub can ask for the next Zone.
+            log.error("zone %s: composition refused (%s) %s", zone_id,
+                      exc.refusal.code, exc.refusal.detail)
+            await self._generation_failed(
+                zone_id, f"composition refused: {exc.refusal.code}",
+                "The Zone could not be assembled; its Checks returned to "
+                "the pool.")
+            return
         self._apply(T.accept_zone(self.save, composed,
                                   used_fallback=outcome.used_fallback))
         if outcome.used_fallback and self.provider_name != "fallback":
@@ -953,6 +978,20 @@ class CampaignEngine:
                                (outcome.error or "",))
         await self._emit(ZoneReady(type="zone_ready", zone=composed,
                                    used_fallback=outcome.used_fallback))
+        await self.broadcast_snapshot()
+
+    async def _generation_failed(self, zone_id: str, error: str,
+                                 detail: str) -> None:
+        """A Zone that could not be built, handled the one supported way.
+
+        One function rather than two copies, because the recovery is the
+        same whether the provider failed or the composer refused: give
+        the Checks back, say so, and leave the Hub able to ask for the
+        next Zone. Accounting is `abandon_zone`'s and only its.
+        """
+        self.last_generation_error = error
+        self._apply(T.abandon_zone(self.save, zone_id))
+        await self._notify("zone_abandoned", "GENERATION FAILED", (detail,))
         await self.broadcast_snapshot()
 
     # ------------------------------------------------------------------

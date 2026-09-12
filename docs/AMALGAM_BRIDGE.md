@@ -1524,6 +1524,61 @@ asset may be offered, and this section grants nothing on that.
 > doorways are built closed, and that nothing reads `exit_offset` for a
 > room with no exit socket. The bridge will not fabricate the departure
 > that field implies.
+>
+> **A leaf is a capacity, not a graph degree.** A room that declares no
+> `exit` can still host onward branches through its other doorways, and
+> then it has two or more neighbours and is NOT a dead end. Only a
+> one-neighbour assignment is. Both cases are measured
+> (`test_a_leaf_is_only_a_dead_end_when_it_has_one_neighbour`); do not
+> report every leaf as a dead end.
+
+#### 5.8a The refusal is a value, not a sentence
+
+**Owner finding, 2026-09-12.** The refusal paths above returned an
+edge-less `GraphProduct` with sealed doors and an explanatory note —
+and **nothing read it**. `apply` drops `notes`; `reachability` cannot
+tell an edge-less refusal from the legacy chain it must keep accepting;
+`campaign._with_graph` handed the result back as a good Zone. The only
+thing that caught it was the `Zone` schema refusing doors-without-edges
+when `accept_zone` rebuilt the record: that protects the save, and it is
+a pydantic exception out of a background task rather than a handled
+composition refusal.
+
+This lane's own recurring failure, in this lane's own code — a
+measurement that exists, is correct, and is never handed to the thing
+that must act on it. The tests were the same shape: "no edges and a
+note" proves the composer had an opinion, not that anything acted on it.
+
+**`GraphProduct.refusal` is a `GraphRefusal` with a code from a closed
+set** — `no_arrival`, `destination_is_an_end`, `destination_unreachable`,
+`chain_unreachable` — plus the rooms and prose for the log. Prose is
+never control flow. A refused product carries **no doors**: half-built
+output is what let the failure travel, and there is now nothing to
+mistake for a product.
+
+`_with_graph` raises `GraphRefused`, and `_run_generation` takes **the
+recovery a failed generation already had**: `abandon_zone`, one
+notification, no acceptance and no `zone_ready`. One helper rather than
+two copies of it. The Checks return through `abandon_zone` and no other
+path, and the Hub can ask for the next Zone.
+
+**`chain_unreachable` is new here too.** A Zone whose plain chain fails
+reachability used to be returned ungraphed — which made a failed NEW
+composition indistinguishable from a genuine legacy save. It is a
+refusal now.
+
+**`reachability` is unchanged and must stay so.** An edge-less Zone is
+the chain its list order describes, and every save written before graphs
+existed is that shape; it has to keep loading. The distinction is made
+at composition time by an explicit code, which is exactly why it could
+not be made by counting edges.
+
+Controls: the four refusals through `campaign._with_graph` itself, and
+the recovery end to end through `handle_request_next_zone` with the real
+provider and no stand-in — nothing accepted, nothing published, no
+uncaught exception, the save still loading, and the next Zone composing
+a real graph on the released ids. Removing the consumption fails all
+five.
 
 
 ## 6. What remains in this lane

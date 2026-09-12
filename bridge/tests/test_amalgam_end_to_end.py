@@ -864,3 +864,160 @@ def test_a_committed_zone_is_never_swept_into_this(tmp_path):
         await engine.handle_enter_zone(zone_id)
         assert engine.save.zone_by_id(zone_id).state == "ACTIVE"
     run(go())
+
+
+# --- a composition that did not happen -------------------------------------
+#
+# The composer's refusal paths returned an edge-less `GraphProduct` with
+# sealed doors and a note. Nothing read it: `apply` drops notes,
+# `reachability` cannot tell an edge-less refusal from the legacy chain
+# it MUST keep accepting, and `_with_graph` handed the result back as a
+# good Zone. The only thing that noticed was the `Zone` schema refusing
+# doors-without-edges when `accept_zone` rebuilt the record — which
+# protects the save and is a pydantic exception out of a background
+# task, not a handled refusal.
+#
+# These drive the real generation handler. A test that asserted "no
+# edges and a note" proved the composer had an opinion, not that
+# anything acted on it.
+
+from archipepsi_bridge import topology as TOPO
+
+
+TERMINUS = ("entry", "branch_east", "branch_west")
+
+
+def _caps_with(shell_id: str, sockets):
+    """The real socket map plus one shell of a chosen capacity."""
+    caps = dict(TOPO._shell_sockets())
+    caps[shell_id] = sockets
+    return caps
+
+
+def _zone_with_leaf(index: int, shell_id="shell_bay_terminus",
+                    sockets=TERMINUS, rooms=8):
+    from .test_topology import _chain_zone
+    z = _chain_zone(rooms)
+    chambers = list(z.chambers)
+    i = index if index >= 0 else len(chambers) + index
+    chambers[i] = chambers[i].model_copy(update={"shell_id": shell_id})
+    return z.model_copy(update={"chambers": tuple(chambers)})
+
+
+@pytest.mark.parametrize("index,shell,sockets,code", [
+    # No eligible host: a destination in the second room, where the only
+    # earlier room is the one the player arrives in.
+    (1, "shell_bay_terminus", TERMINUS, "destination_unreachable"),
+    # An invalid first/last assignment: it would have to carry the chain.
+    (0, "shell_bay_terminus", TERMINUS, "destination_is_an_end"),
+    (-1, "shell_bay_terminus", TERMINUS, "destination_is_an_end"),
+    # Unsupported by the arrival contract: nothing can reach it.
+    (3, "shell_no_way_in", ("branch_east",), "no_arrival"),
+])
+def test_the_campaign_wrapper_refuses_rather_than_returning_a_zone(
+        index, shell, sockets, code):
+    """`campaign._with_graph` is the wrapper, and this is what it does now.
+
+    It used to hand the refusal back as a good Zone: `apply` drops
+    `notes`, `reachability` cannot tell an edge-less refusal from the
+    legacy chain it must keep accepting, and the only thing that noticed
+    was the `Zone` schema refusing doors-without-edges when
+    `accept_zone` rebuilt the record.
+    """
+    from archipepsi_bridge import campaign as CAMP
+    zone = _zone_with_leaf(index, shell, sockets)
+    caps = _caps_with(shell, sockets)
+    real = TOPO._shell_sockets
+    TOPO._shell_sockets = lambda: caps
+    try:
+        with pytest.raises(TOPO.GraphRefused) as caught:
+            CAMP._with_graph(zone)
+    finally:
+        TOPO._shell_sockets = real
+    # THE CODE, not the sentence.
+    assert caught.value.refusal.code == code
+    assert caught.value.refusal.rooms
+
+
+def test_the_generation_handler_recovers_from_a_refusal(tmp_path):
+    """End to end through `handle_request_next_zone`, with the REAL
+    provider and no stand-in anywhere on the path.
+
+    Every authored shell is declared unreachable for the length of the
+    run — a capacity a registered shell could genuinely declare, and one
+    the composer must refuse wherever the room lands. What is asserted
+    is the recovery: nothing accepted, nothing published, no uncaught
+    exception, and the Checks back in the pool.
+    """
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        sink = Collector(engine)
+        real = TOPO._shell_sockets
+        # A registered shell that declares no `entry`: nothing can reach
+        # it, whichever room adopts it.
+        TOPO._shell_sockets = lambda: {
+            sid: ("branch_east",) for sid in real()}
+        try:
+            await engine.handle_request_next_zone(False)
+            await drain()
+        finally:
+            TOPO._shell_sockets = real
+
+        assert engine.save.zones, "a Zone was reserved and then refused"
+        # NOTHING ACCEPTED and NOTHING PUBLISHED.
+        assert all(r.state == "ABANDONED" for r in engine.save.zones), [
+            r.state for r in engine.save.zones]
+        assert not sink.of_type("zone_ready")
+        # Reported as a refusal, not swallowed, and not a schema
+        # exception out of a background task.
+        assert engine.last_generation_error.startswith(
+            "composition refused"), engine.last_generation_error
+        assert "no_arrival" in engine.last_generation_error
+        assert any(n.kind == "zone_abandoned"
+                   for n in sink.of_type("notification"))
+
+        # LOCATION ACCOUNTING SURVIVES, through `abandon_zone` and no
+        # other path, and the save still loads.
+        hub = engine.snapshot().hub
+        assert hub.mode == "ZONE_AVAILABLE" and hub.accepts_zone_request
+        assert store.load_save(engine._save_path) is not None
+
+        # THE BOUNDED RECOVERY ACTUALLY RECOVERS: ask again, unpatched,
+        # and the next Zone composes a real graph on released ids.
+        await engine.handle_request_next_zone(False)
+        await drain()
+        zid = engine.save.active_zone_id
+        assert zid is not None
+        rec = engine.save.zone_by_id(zid)
+        assert rec.zone is not None and rec.zone.edges
+        assert rec.allocated_location_ids
+    run(go())
+
+
+def test_a_genuine_legacy_zone_with_no_graph_still_loads(tmp_path):
+    """The shape the refusal must NOT be confused with.
+
+    A Zone carrying no edges, no doors and no plugs is the chain its
+    list order describes — every save written before graphs existed.
+    `reachability` accepts it, and that is why the refusal had to become
+    an explicit code rather than "there are no edges".
+    """
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        await engine.handle_request_next_zone(False)
+        await drain()
+        zid = engine.save.active_zone_id
+        zone = engine.save.zone_by_id(zid).zone
+
+        legacy = zone.model_copy(update={
+            "edges": (), "plugs": (),
+            "chambers": tuple(c.model_copy(update={
+                "doors": (), "arrive_edge": None, "depart_edge": None})
+                for c in zone.chambers)})
+        assert TOPO.reachability(legacy).ok, "a legacy Zone must load"
+        # And a refusal is NOT that: it says so in a field, which is why
+        # "there are no edges" could never have been the test.
+        again = TOPO.compose_with_branch(list(legacy.chambers))
+        assert not again.refused, "an ordinary Zone refuses nothing"
+        assert again.edges, "and it composes a graph"
+    run(go())
