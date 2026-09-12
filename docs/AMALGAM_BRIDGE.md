@@ -703,7 +703,7 @@ none of them substitutes for another:
 | Level | Artefact | Proves | Status |
 |---|---|---|---|
 | 1. Serialization agreement | the shared vectors, run through both production serializers | the two lanes build and hash the same bytes from the same input | **done 2026-09-12, both lanes** — `PhysicsPackage` in `godot/scripts/content/physics_package.gd`, checked in `godot-content`; all nine agree byte for byte |
-| 2. Scene binding | `scene_digest` computed from the **real** setup, not a constant | the evidence names the scene it ran against | **not started** — needs a physics scene |
+| 2. Scene binding | `scene_digest` computed from the **real** setup, not a constant | the evidence names the scene it ran against | **computed 2026-09-12** — `SceneDigest` in `godot/scripts/content/scene_digest.gd`, falsified in `godot-content`; not yet called from a replay, because there is no replay |
 | 3. Physical outcome | replaying that setup and observing the latches | the puzzle is actually solvable as built | **not started** — needs a physics runtime |
 
 Level 1 passing says nothing about level 2, and both passing say nothing
@@ -1054,8 +1054,30 @@ remembers to bump cannot cover a lane that ships geometry independently.
 
 **And the level-2 hole is acknowledged as the engine lane's.** A constant
 passes the bridge's check; nothing on that side will ever catch a fake
-digest. What will catch it here is the same shape as the crossing
-control in `room_contract_driver`: a digest is only evidence if changing
-the scene changes it, so the first test computes a digest, moves one
-collider by 1e-3 m, and requires a different digest. Without that
-sabotage the function is a constant with extra steps.
+digest. What catches it here is the same shape as the crossing control
+in `room_contract_driver`: a digest is only evidence if changing the
+scene changes it.
+
+**Implemented 2026-09-12** as `SceneDigest`, under exactly the five
+answers above, and falsified four ways in `godot-content`: the same room
+built in a different node order digests the same; a collider moved by
+1e-3 m digests differently; a move a tenth of the quantum does not; and a
+body that starts the replay moving digests differently from one at rest.
+Without those the function is a constant with extra steps.
+
+Two things the implementation taught, recorded because they change what
+the answers above claim:
+
+* **The digest is of the SETUP, before anything is stepped.** A body
+  still falling when the digest is taken makes the digest a moment
+  nobody can reproduce. The bodies therefore carry their starting
+  transform, velocity and sleep state, and a replay harness digests
+  before it runs.
+* **The shell registry digest is the weaker half of decision 5, not the
+  strong one.** The reason given for adding it was Arty's threshold
+  repair, and the collider enumeration is what actually catches that:
+  `yd_threshold_±1` added colliders while `size` and the sockets stayed
+  byte-identical. The registry digest covers the other direction — a
+  DECLARATION that moved without the geometry moving — which the
+  collider list cannot see. Both are in; the claim about which catches
+  what is corrected here.

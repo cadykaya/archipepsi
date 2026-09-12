@@ -95,9 +95,11 @@ finding, not a join one — the corridor either side of it crosses.
 Procedural `ChamberBuilders` spawn placement is not covered by the
 doorway rule; only the authored-shell path is.
 
-**Done since:** level 1 of the physics digest, both lanes — see the
-three-levels paragraph below. Levels 2 and 3 still need a scene and a
-runtime respectively.
+**Done since:** levels 1 and 2 of the physics digest — see the
+three-levels paragraph below. Level 3 needs a physics runtime, which is
+the next thing in `docs/AMALGAM_BRIDGE.md` §6.3: a rigid body that rests
+and can be pushed, one verb resolving to force/range/mass, then the
+headless replay harness.
 
 ## BRIDGE LANE — the Zone is a graph, and the path is connected — 2026-09-12
 
@@ -218,7 +220,11 @@ a constant) — not started; coverage list is `docs/AMALGAM_BRIDGE.md`
 §6.2b, with **five decisions for the engine lane** (float
 quantization, whether effective values are statically readable, what
 counts as participating geometry, ordering, versioning granularity) —
-each with a proposed default so the answer can be yes. Physical outcome
+all five answered and **implemented 2026-09-12** as `SceneDigest`
+(`godot/scripts/content/scene_digest.gd`), falsified four ways: node
+order does not move it, a millimetre does, a tenth of the quantum does
+not, and a body that starts the replay moving does. Not yet called from
+a replay, because there is no replay. Physical outcome
 (replay) — not started. Level 1 passing says nothing about level 2, and
 **a constant `scene_digest` passes every check on this side**: sixteen
 hex characters is all the bridge can see. Regenerate the vectors with

@@ -47,6 +47,11 @@ const BUILD_PROCEDURAL := "procedural"
 const SPAN_TOLERANCE := 0.005
 
 const REASON_NO_SHELL := "no_authored_shell_for_type"
+
+## The meta key an adopted shell's root carries, naming which shell it
+## is. Read by `SceneDigest`, which cannot ask the builder after the
+## fact.
+const SHELL_META := "authored_shell"
 const REASON_UNKNOWN := "unknown_shell_id"
 const REASON_MALFORMED := "malformed_shell_id"
 const REASON_INCOMPATIBLE := "incompatible_shell"
@@ -659,6 +664,15 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 	# later would leave a window in which the shell is a hole.
 	var doors := authored_door_plan(entry, chamber)
 	_place_closures(root, doors, size)
+	# AND STAMPED ON THE SCENE, not only in the answer.
+	#
+	# `authored_shell` below tells the CALLER which shell answered, which
+	# is no use to anything holding the node afterwards -- `SceneDigest`
+	# has to say which authored geometry a replay ran against and had
+	# nothing in the tree to read. A procedural room has sockets, meshes
+	# and hulls like any other, so nothing about the SHAPE distinguishes
+	# one; a consumer that wants to know has to be told.
+	root.set_meta(SHELL_META, str(entry.get("id", "")))
 	var result := {
 		"root": root,
 		# WHICH SHELL ACTUALLY ANSWERED, stamped by the only code that

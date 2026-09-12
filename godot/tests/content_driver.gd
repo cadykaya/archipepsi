@@ -57,6 +57,7 @@ func _run() -> void:
 	_a_fallback_room_never_reports_itself_authored()
 	_godot_decides_the_shared_cases_the_way_they_say()
 	_the_physics_digest_vectors_agree_with_the_bridge()
+	await _a_scene_digest_changes_when_the_scene_does()
 	_cleanup()
 	# Both awaited. A function containing `await` called WITHOUT one
 	# returns at its first suspend, and the suite goes on to print OK
@@ -1816,3 +1817,126 @@ func _first_difference(a: String, b: String) -> String:
 						b.substr(maxi(0, i - 20), 45)])
 	return "identical for %d characters; one is longer (%d vs %d)" \
 			% [limit, a.length(), b.length()]
+
+
+## LEVEL 2: THE DIGEST NAMES THE SCENE IT RAN AGAINST.
+##
+## A constant passes the bridge. Sixteen hex characters is all it can
+## see, so `"0123456789abcdef"` folds into `package_digest` exactly as a
+## real digest does and nothing on that side will ever tell them apart.
+## That makes the falsification the engine lane's, and this is it: a
+## digest is only evidence if changing the scene changes it.
+##
+## Three properties, and the second is what makes the first mean
+## anything. The same scene digests the same however its nodes were
+## added; a collider moved by a MILLIMETRE digests differently; and a
+## move a tenth of the quantum does not, because a digest that churns on
+## single-precision noise invalidates evidence nothing changed about.
+func _a_scene_digest_changes_when_the_scene_does() -> void:
+	var bounds := AABB(Vector3(-20, -5, -20), Vector3(40, 20, 40))
+	var first := _digest_room(false)
+	add_child(first["root"] as Node3D)
+	await get_tree().physics_frame
+	var baseline := SceneDigest.of_room(first["root"] as Node3D, bounds,
+			first["bodies"] as Array)
+	_check(baseline.length() == 16
+				and baseline == baseline.to_lower()
+				and baseline.is_valid_hex_number(false),
+			"a scene digest is sixteen lowercase hex characters, and "
+			+ "this is '%s'" % baseline)
+
+	# THE SAME ROOM, BUILT IN A DIFFERENT ORDER. Scene-tree order is not
+	# stable across saves, so an unordered digest makes the same scene
+	# digest differently on reload -- which reads as "the room changed"
+	# every time anybody loads it.
+	var shuffled := _digest_room(true)
+	add_child(shuffled["root"] as Node3D)
+	await get_tree().physics_frame
+	_check(SceneDigest.of_room(shuffled["root"] as Node3D, bounds,
+				shuffled["bodies"] as Array) == baseline,
+			"the same room built in a different node order digested "
+			+ "differently, so every reload would invalidate its own "
+			+ "evidence")
+
+	# A MILLIMETRE. `EPSILON_JOIN` is 1e-3 m, so this is the smallest
+	# move anything in this game reasons about.
+	var wall := (first["root"] as Node3D).get_node("obstacle") as Node3D
+	var was := wall.position
+	wall.position = was + Vector3(0.001, 0.0, 0.0)
+	await get_tree().physics_frame
+	_check(SceneDigest.of_room(first["root"] as Node3D, bounds,
+				first["bodies"] as Array) != baseline,
+			"a collider moved a millimetre left the digest unchanged, "
+			+ "so it is a constant with extra steps")
+
+	# AND A TENTH OF THE QUANTUM DOES NOT MOVE IT.
+	wall.position = was + Vector3(SceneDigest.QUANTUM / 10.0, 0.0, 0.0)
+	await get_tree().physics_frame
+	_check(SceneDigest.of_room(first["root"] as Node3D, bounds,
+				first["bodies"] as Array) == baseline,
+			"a move a tenth of the quantum changed the digest, so it "
+			+ "churns on single-precision noise and invalidates "
+			+ "evidence nothing changed about")
+
+	# AND THE BODY'S OWN STATE IS IN IT. Mass is the contract's and is
+	# already in `package_digest`; the starting VELOCITY is not, and a
+	# crate that begins the replay moving is a different experiment.
+	wall.position = was
+	var crate := (first["bodies"] as Array)[0] as RigidBody3D
+	crate.linear_velocity = Vector3(0.5, 0.0, 0.0)
+	await get_tree().physics_frame
+	_check(SceneDigest.of_room(first["root"] as Node3D, bounds,
+				first["bodies"] as Array) != baseline,
+			"a body that starts the replay moving digested the same as "
+			+ "one at rest")
+	(first["root"] as Node3D).queue_free()
+	(shuffled["root"] as Node3D).queue_free()
+
+## A small room with a floor, an obstacle and one crate. `shuffled` adds
+## the same nodes in the opposite order, which is the only difference.
+func _digest_room(shuffled: bool) -> Dictionary:
+	var root := Node3D.new()
+	root.name = "digest_room"
+	var pieces: Array[Node3D] = [
+		_solid("floor", Vector3(0, -0.5, 0), Vector3(40, 1, 40)),
+		_solid("obstacle", Vector3(3, 1, 0), Vector3(1, 2, 4)),
+		_solid("ledge", Vector3(-6, 0.5, 2), Vector3(2, 1, 2)),
+	]
+	if shuffled:
+		pieces.reverse()
+	for piece: Node3D in pieces:
+		root.add_child(piece)
+	var crate := RigidBody3D.new()
+	crate.name = "crate_a"
+	crate.mass = 80.0
+	crate.position = Vector3(0, 1, 0)
+	# FROZEN, because a digest is of the SETUP.
+	#
+	# The first version of this left the crate falling, so the baseline
+	# and every comparison were taken at different points of its arc and
+	# two of the four properties failed -- a statement about the test,
+	# not about the digest. A replay harness builds the setup, digests
+	# it, and THEN steps; a body already moving when the digest is taken
+	# means the digest is of a moment nobody can reproduce.
+	crate.freeze = true
+	crate.freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+	var shape := CollisionShape3D.new()
+	shape.name = "hull"
+	var box := BoxShape3D.new()
+	box.size = Vector3(1, 1, 1)
+	shape.shape = box
+	crate.add_child(shape)
+	root.add_child(crate)
+	return {"root": root, "bodies": [crate]}
+
+func _solid(named: String, at: Vector3, size: Vector3) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.name = named
+	body.position = at
+	var shape := CollisionShape3D.new()
+	shape.name = "hull"
+	var box := BoxShape3D.new()
+	box.size = size
+	shape.shape = box
+	body.add_child(shape)
+	return body
