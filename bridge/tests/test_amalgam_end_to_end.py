@@ -11,6 +11,8 @@ here touches `engine.save` except to read it.
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from archipepsi_bridge import store
@@ -305,7 +307,7 @@ def test_a_committed_layout_is_replayed_not_replaced(tmp_path):
 def _portal_target(engine):
     """What `hub.gd` will have: a mode, and the Zone id to send."""
     hub = engine.snapshot().hub
-    if hub.mode not in P.ZONE_ENTER_MODES:
+    if hub.mode not in P.ZONE_ENTERABLE_MODES:
         return None
     return hub.resume_zone_id
 
@@ -341,6 +343,31 @@ def test_the_portal_can_find_the_zone_you_walked_out_of(tmp_path):
         target = _portal_target(engine)
         assert target == zone_id, "the portal has no way to name the Zone"
         assert hub.resume_zone_name, "and nothing to put on the sign"
+
+        # THE WHOLE OFFER, AS THE GAME RECEIVES IT. `hub.gd` reads
+        # `portal_enabled` off the serialized snapshot — naming the Zone
+        # and lighting the button were two constants, and the second one
+        # was never updated, so the Hub said "your Zone is waiting" over
+        # a portal that was greyed out. A mode branch in the consumer
+        # would not have fixed that.
+        wire = json.loads(engine.snapshot().model_dump_json())["hub"]
+        assert wire["mode"] == "ZONE_DORMANT"
+        assert wire["resume_zone_id"] == zone_id
+        assert wire["portal_enabled"] is True, "the button is dark"
+        assert wire["accepts_zone_request"] is False, (
+            "offering to generate here is the call the bridge refuses")
+
+        # AND WITH ARCHIPELAGO DOWN. The Zone is already on disk;
+        # entering it needs no round-trip, and a returning player during
+        # an outage is exactly who this is for.
+        engine.ap.connected = False
+        offline = json.loads(engine.snapshot().model_dump_json())["hub"]
+        assert offline["mode"] == "ZONE_DORMANT", "an outage moves no mode"
+        assert offline["ap_online"] is False
+        assert offline["portal_enabled"] is True, (
+            "an outage must not shut the door on a local Zone")
+        assert offline["resume_zone_id"] == zone_id
+        engine.ap.connected = True
 
         # ENTER THE WAY THE PORTAL WILL, by the id the Hub handed over.
         await engine.handle_enter_zone(target)

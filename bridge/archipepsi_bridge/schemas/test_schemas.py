@@ -31,6 +31,7 @@ try:
     from . import transitions as T
     from .protocol import (
         ZONE_HELD_MODES, ZONE_REQUEST_MODES, CampaignSave, CampaignSnapshot,
+        ZoneHandle,
         ClientMessage, HubStatus, PendingCheck, ScoutedLocation, ShopState,
         ShopStockItem, ZoneRecord,
     )
@@ -49,6 +50,7 @@ except ImportError:  # pragma: no cover
     import transitions as T
     from protocol import (
         ZONE_HELD_MODES, ZONE_REQUEST_MODES, CampaignSave, CampaignSnapshot,
+        ZoneHandle,
         ClientMessage, HubStatus, PendingCheck, ScoutedLocation, ShopState,
         ShopStockItem, ZoneRecord,
     )
@@ -1706,6 +1708,11 @@ def test_every_non_terminal_zone_state_pins_exactly_one_hub_mode():
                 _snapshot(active_zone=rec, hub=_hub(mode=other))
 
 
+def typing_args_of_hub_mode():
+    import typing
+    return typing.get_args(P.HubMode)
+
+
 def typing_args_of_zone_state():
     import typing
     return typing.get_args(P.ZoneState)
@@ -1743,14 +1750,69 @@ def test_zone_dormant_holds_a_zone_without_anyone_standing_in_it():
                   hub=_hub(mode="ZONE_DORMANT"))
 
 
-def test_the_portal_is_told_which_zone_it_enters():
-    """`ZONE_ENTER_MODES` is the consumer's one branch, and
-    `resume_zone_id` is what it sends. A mode in that list with no Zone
-    named is a portal that lights up and does nothing."""
-    assert set(P.ZONE_ENTER_MODES) <= set(P.ZONE_HELD_MODES)
-    h = _hub(mode="ZONE_DORMANT", resume_zone_id="zone_001",
-             resume_zone_name="The Quiet Floor")
-    assert h.resume_zone_id == "zone_001"
+def test_naming_a_zone_and_lighting_the_portal_are_one_decision():
+    """**The bug this exists for.** `ZONE_DORMANT` was added to a new
+    constant while `portal_enabled` kept reading the old one, so the Hub
+    said "your Zone is waiting", `resume_zone_id` said which one, and
+    the button was greyed out. Two spellings of one fact.
+
+    Asserted off the model rather than restated: every mode that lights
+    the portal without Archipelago is a mode that can name a Zone, and a
+    mode that cannot name one must not light it.
+    """
+    def any_hub(**kw):
+        # Some modes will not construct bare: FINALE_ONLY needs its
+        # thresholds met, ALL_CHECKS_CLEARED refuses them. Try both
+        # rather than hand-listing, so a new mode joins this test by
+        # existing.
+        # ALL_CHECKS_CLEARED additionally implies the goal was sent.
+        for extra in ({}, {"goal_sent": True, "postgame": True}):
+            for build in (_hub, _unlocked):
+                try:
+                    return build(**kw, **extra)
+                except ValidationError:
+                    continue
+        raise AssertionError(
+            f"no way to construct a hub in {kw}; a mode this test cannot "
+            "build is a mode it silently stops covering")
+
+    for mode in typing_args_of_hub_mode():
+        h = (any_hub(mode=mode, resume_zone_id="zone_001")
+             if mode in P.ZONE_ENTERABLE_MODES else any_hub(mode=mode))
+        if mode in P.ZONE_ENTERABLE_MODES:
+            assert h.portal_enabled, (
+                f"{mode} enters a local Zone and the portal is dark")
+            assert mode in P.ZONE_HELD_MODES, (
+                f"{mode} enters a Zone, so the campaign holds one")
+            assert mode not in P.ZONE_REQUEST_MODES, (
+                f"{mode} enters a Zone; requesting a new one is refused")
+        else:
+            assert not h.resume_zone_id, (
+                f"{mode} names a Zone the portal will not enter")
+
+
+def test_entering_a_local_zone_does_not_need_archipelago():
+    """A Zone that already exists is local. Walking back into one during
+    an outage is exactly the case the portal must stay lit for, and a
+    dormant Zone is the one a returning player most needs."""
+    for mode in P.ZONE_ENTERABLE_MODES:
+        offline = _hub(mode=mode, resume_zone_id="zone_001",
+                       ap_online=False)
+        assert offline.portal_enabled, (
+            f"{mode} is a local Zone; an Archipelago outage must not "
+            "shut the door on it")
+        assert not offline.accepts_zone_request
+
+
+def test_a_long_campaign_can_offer_every_zone_it_finished():
+    """`revisitable` carried a 64-entry cap that `CampaignSave.zones`
+    does not have, so a campaign finishing 65 Zones had its whole
+    snapshot REFUSED — a long game breaking on a bound nobody chose."""
+    many = tuple(ZoneHandle(zone_id=f"zone_{i:03d}", display_name=f"Z{i}")
+                 for i in range(1, 130))
+    h = _hub(mode="ZONE_AVAILABLE", revisitable=many)
+    assert len(h.revisitable) == 129
+    assert h.revisitable[0].zone_id == "zone_001"
 
 
 def test_a_terminal_zone_is_never_presented_as_active():

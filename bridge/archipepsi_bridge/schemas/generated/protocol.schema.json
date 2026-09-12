@@ -3119,7 +3119,6 @@
             "items": {
               "$ref": "#/$defs/ZoneHandle"
             },
-            "maxItems": 64,
             "title": "Revisitable",
             "type": "array"
           },
@@ -7700,7 +7699,6 @@
             "items": {
               "$ref": "#/$defs/ZoneHandle"
             },
-            "maxItems": 64,
             "title": "Revisitable",
             "type": "array"
           },

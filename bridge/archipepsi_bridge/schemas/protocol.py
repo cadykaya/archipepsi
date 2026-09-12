@@ -898,15 +898,10 @@ ZONE_STATE_HUB_MODE: dict[str, HubMode] = {
     "ABANDONED": "",
 }
 
-#: The modes in which the portal ENTERS a Zone that already exists,
-#: rather than generating one. The Hub has one branch for all of them
-#: and reads `resume_zone_id` for which Zone it is.
-ZONE_ENTER_MODES = ("ZONE_READY", "ZONE_ACTIVE", "ZONE_DORMANT")
 
 assert set(ZONE_STATE_HUB_MODE) == set(get_args(ZoneState)), (
     "every ZoneState needs a Hub mode or an explicit empty one; a state "
     "missing from this map raises KeyError on the next snapshot")
-assert set(ZONE_ENTER_MODES) <= set(get_args(HubMode))
 
 
 #: The only two modes in which a `request_next_zone` intent is legal. Every
@@ -933,7 +928,14 @@ ZONE_OCCUPIED_MODES = ("GENERATING", "ZONE_READY", "ZONE_ACTIVE")
 
 #: Modes with something the player can walk into right now. Entering one of
 #: these needs no Archipelago round-trip: the Zone already exists locally.
-ZONE_ENTERABLE_MODES = ("ZONE_READY", "ZONE_ACTIVE")
+#:
+#: **This is the list `portal_enabled` reads, and therefore the list the
+#: game obeys.** Adding `ZONE_DORMANT` to a second, near-identically
+#: named constant left the portal dark over a Zone the Hub was naming —
+#: the mode said "your Zone is waiting", `resume_zone_id` said which
+#: one, and the button was greyed out. Two spellings of one fact is how
+#: the lanes come to disagree; there is one spelling.
+ZONE_ENTERABLE_MODES = ("ZONE_READY", "ZONE_ACTIVE", "ZONE_DORMANT")
 
 
 class ZoneHandle(Strict):
@@ -983,7 +985,7 @@ class HubStatus(Strict):
     holding_finale: bool = False
 
     #: WHICH Zone the portal enters, when `mode` is one of
-    #: `ZONE_ENTER_MODES`. Empty otherwise.
+    #: `ZONE_ENTERABLE_MODES`. Empty otherwise.
     #:
     #: **The Hub could not name a dormant Zone before this existed.**
     #: `rest_zone` clears `active_zone_id` — nobody is standing in the
@@ -1002,7 +1004,13 @@ class HubStatus(Strict):
     #: at most one Zone is unfinished and blocks generation, while any
     #: number of COMPLETE ones stay open and block nothing. A revisit
     #: reserves no locations and counts no completion twice.
-    revisitable: tuple[ZoneHandle, ...] = Field(default=(), max_length=64)
+    #: Uncapped, deliberately. `CampaignSave.zones` has no limit, and
+    #: this is derived from it, so any bound here is an invented one: a
+    #: campaign that finished 65 Zones had its whole snapshot REFUSED,
+    #: which is a long game breaking on arithmetic nobody chose. A
+    #: `ZoneHandle` is an id and a name, so even several hundred is
+    #: noise beside the fold the same message already carries.
+    revisitable: tuple[ZoneHandle, ...] = ()
 
     #: The two operands of the finale gate, and the two thresholds.
     signal_keys: int = Field(default=0, ge=0)

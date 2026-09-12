@@ -806,13 +806,28 @@ screen.
   non-null). Those were one list, which is precisely why "held and
   unoccupied" could not be described.
 - **`hub.resume_zone_id` / `resume_zone_name`** — which Zone the portal
-  enters, filled for every mode in **`ZONE_ENTER_MODES`**
-  (`ZONE_READY`, `ZONE_ACTIVE`, `ZONE_DORMANT`). One branch, one field.
+  enters, filled for every mode in **`ZONE_ENTERABLE_MODES`**, which is
+  now `ZONE_READY`, `ZONE_ACTIVE`, `ZONE_DORMANT`. One branch, one
+  field.
+- **`hub.portal_enabled` is true for all three**, including with
+  Archipelago down: the Zone is already on disk and entering it needs no
+  round-trip. **This was the correction that mattered.** The first
+  version added `ZONE_DORMANT` to a *new* constant while
+  `portal_enabled` kept reading the old one — so the Hub said "your Zone
+  is waiting", `resume_zone_id` said which one, and the button was
+  greyed out. The game consumes `portal_enabled`; a mode branch in the
+  consumer would not have fixed it. There is one constant now, and
+  `test_naming_a_zone_and_lighting_the_portal_are_one_decision` asserts
+  the two facts off the model so they cannot drift apart again.
 - **`hub.revisitable`** — finished Zones the player may walk back into,
   newest first, as `{zone_id, display_name}`. Separate from
   `resume_zone_id` because they are different offers: at most one Zone is
   unfinished and blocks generation; any number of COMPLETE ones stay open
-  and block nothing.
+  and block nothing. **Uncapped** — it carried a 64-entry limit that
+  `CampaignSave.zones` does not have, so a campaign that finished 65
+  Zones had its whole snapshot refused. A `ZoneHandle` is an id and a
+  name; several hundred is noise beside the fold in the same message, so
+  no pagination is needed and none is invented.
 - **`ZONE_STATE_HUB_MODE`** is total over `ZoneState` by assertion, so the
   next lifecycle state cannot be forgotten into a `KeyError` in front of
   a player. `VISITING` maps to `ZONE_ACTIVE` — the snapshot invariant
@@ -842,7 +857,10 @@ side of this seam** — this is the proposal, not a patch.
 ```
 
 or, better, drive it off the constant so the next mode needs no edit
-here: `if BridgeClient.hub_mode() in Constants.ZONE_ENTER_MODES:`.
+here: `if BridgeClient.hub_mode() in Constants.ZONE_ENTERABLE_MODES:`.
+
+Nothing is needed for the *enabled* half — `portal_enabled` already
+carries it, and that is the field `hub.gd` reads at line 754.
 
 **`main.gd::_on_enter_zone`** — take the id from the Hub rather than
 from `active_zone()`, which is empty for a dormant Zone:
@@ -859,10 +877,28 @@ func _on_enter_zone() -> void:
 `resume_zone_id` is filled for `ZONE_READY` and `ZONE_ACTIVE` too, so
 this one path replaces the old one rather than sitting beside it.
 
-**What proves it, and it is the engine lane's to run:** restart with a
-dormant Zone, press the portal, and arrive in the same layout with the
-same keys, locks and Checks. This lane has no Godot; everything above is
-the bridge half.
+**The serialized offer, which is the contract.** Proved on the wire in
+`test_the_portal_can_find_the_zone_you_walked_out_of`, against
+`snapshot().model_dump_json()` rather than the Python objects:
+
+```json
+"hub": {
+  "mode": "ZONE_DORMANT",
+  "resume_zone_id": "zone_001",
+  "resume_zone_name": "…",
+  "portal_enabled": true,
+  "accepts_zone_request": false,
+  "revisitable": []
+}
+```
+
+and the same with `"ap_online": false` — the mode does not move, the
+portal stays lit, the Zone id is still there.
+
+**What proves it end to end, and it is the engine lane's to run:**
+restart with a dormant Zone, press the portal, and arrive in the same
+layout with the same keys, locks and Checks. This lane has no Godot;
+everything above is the bridge half.
 
 **Open for Prod:** `revisitable` can hold many Zones and the portal is
 one object. Offering the dormant Zone on the portal and finished Zones
