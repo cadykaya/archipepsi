@@ -10,6 +10,8 @@ const REWARD_SPACING := 4.0
 ## leaving the Zone, which is why leaving resets objectives (§14.3).
 
 signal exit_requested
+## The bridge refused this Zone's layout; it is not safe to play.
+signal layout_refused(zone_id: String)
 ## The player moved into a different chamber's bounds — the rule engine's
 ## `chamber_enter` event. Fires for the first chamber on the first frame.
 signal chamber_entered(index: int)
@@ -90,6 +92,9 @@ var _chambers: Array = []      # {chamber, objective, satisfied, enemies,
                                #  reward, goal_area}
 var _exit_portal: ExitPortal
 var _zone_anchors := {}
+
+## `room_id -> world AABB`, from the committed layout.
+var room_bounds := {}
 ## MONOTONE, and that is what makes a resume safe. A Zone's key set and
 ## its opened-lock set only ever grow, so a reload can never put the
 ## player back behind a door they already opened.
@@ -108,6 +113,8 @@ var committed_manifest := {}
 ## What the bridge said about the layout this session sent, for a caller
 ## or a suite to read: "", "ACCEPTED", "LAYOUT_REFUSED", ...
 var layout_verdict := ""
+## How long to hold before treating silence as a refusal.
+const VERDICT_TIMEOUT := 10.0
 ## Every Check this Zone holds, from its own chambers.
 var _zone_locations: Array[int] = []
 ## PROGRESS CARRIED IN, set before `setup` by whoever is remembering.
@@ -188,11 +195,30 @@ func setup(zone_dict: Dictionary) -> void:
 	# ANCHOR and the builder has already resolved every anchor to a
 	# place, so nothing here invents a coordinate either.
 	_zone_anchors = build.get("anchors", {})
+	# WHERE EACH ROOM IS, in world space, off the committed layout. The
+	# builder already resolved it and the manifest already carries it;
+	# anything that needs to ask "is this point in that room" asks here
+	# rather than re-deriving a transform.
+	for rid: String in build.get("rooms", {}) as Dictionary:
+		room_bounds[rid] = (build["rooms"] as Dictionary)[rid].get(
+				"bounds", AABB())
 	for raw: Variant in build.get("plugs", []):
 		var plug: ReturnPlug = raw
 		plug.traversed.connect(_on_plug_traversed)
 	for raw_key: Variant in build.get("keys", []):
 		var key: ZoneKey = raw_key
+		# A KEY ALREADY COLLECTED IS NOT REBUILT.
+		#
+		# Collecting it again is harmless -- `_keys_held` is a set and
+		# the intent is idempotent -- which is exactly why nothing
+		# noticed: a Zone reopened in a second process put the red key
+		# back on its pedestal, and a player who had already carried it
+		# through the door was looking at a Check-shaped object that
+		# meant nothing. Progress is monotone, so the thing it unlocked
+		# stays unlocked and the thing it was stays gone.
+		if keys_carried.has(key.key_id):
+			key.queue_free()
+			continue
 		key.collected.connect(_on_key_collected)
 	_stations = build.get("stations", [])
 	for raw_station: Variant in _stations:
@@ -269,13 +295,17 @@ func setup(zone_dict: Dictionary) -> void:
 	# fits at an anchor, or whether a declared door is a hole -- and it
 	# refuses a layout that does not carry it rather than assuming. A
 	# coordinate is not evidence a body fits there.
-	_measure_layout_evidence(build)
-	# SENT AFTER THE EVIDENCE IS MEASURED, which is the only order that
-	# works: the first version sent the layout forty lines earlier, so
-	# every arrival verdict and every aperture reading was attached to a
-	# dictionary the bridge had already been handed a copy of. It refused
-	# the Zone for carrying no measurements, which was true.
-	send_layout_result(build)
+	# MEASURED AND SENT ONCE THE PHYSICS EXISTS, which is two frames
+	# after the scene goes in and not the same frame.
+	#
+	# A collider is registered by the physics server on the next step, so
+	# a probe fired in the frame a room was added comes back CLEAN --
+	# every aperture a hole, every arrival supported, because there is
+	# nothing there to hit yet. That is the most dangerous kind of pass,
+	# and this file's own audit says so in as many words: "a probe
+	# against [a detached node] comes back clean because there is nothing
+	# there to hit".
+	_publish_layout(build)
 	for entry: Dictionary in build["chambers"]:
 		var chamber: Dictionary = entry["chamber"]
 		var xform: Transform3D = entry["xform"]
@@ -560,6 +590,63 @@ func keys_held() -> Dictionary:
 func locks_opened() -> Dictionary:
 	return _locks_open.duplicate()
 
+## Waits for the physics to exist, then measures and sends.
+##
+## Not awaited by `setup`: the Zone is playable while this runs, and the
+## verdict it brings back is what decides whether it stays that way.
+func _publish_layout(build: Dictionary) -> void:
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	if not is_inside_tree():
+		return
+	_measure_layout_evidence(build)
+	send_layout_result(build)
+	await _await_verdict()
+
+## HOLD THE PLAYER UNTIL THE LAYOUT IS ACCEPTED.
+##
+## A refusal used to change nothing: the bridge logged it, sent a
+## notification, and the client went on playing a Zone whose geometry the
+## validator had just said does not hold together -- and went on claiming
+## its Checks against it. Gameplay waits for the verdict now, and a
+## refusal leaves the Zone instead of continuing in it.
+##
+## A ZONE WITH NO GRAPH IS NOT HELD. There are no edges for the evidence
+## to be about, so there is no verdict coming; that Zone is the chain
+## that shipped before any of this and it plays exactly as it did.
+func _await_verdict() -> void:
+	if (zone.get("edges", []) as Array).is_empty():
+		layout_verdict = "UNCERTIFIED"
+		return
+	if player != null:
+		player.input_frozen = true
+	var waited := 0.0
+	while waited < VERDICT_TIMEOUT:
+		var state := str(BridgeClient.active_zone().get(
+				"layout_state", ""))
+		if state == "ACCEPTED":
+			layout_verdict = state
+			if player != null:
+				player.input_frozen = false
+			return
+		# A refusal clears the active Zone, so the record stops being
+		# there at all -- which is the same news arriving a different way.
+		if state == "REFUSED" or (BridgeClient.active_zone().is_empty()
+				and waited > 0.25):
+			layout_verdict = "REFUSED"
+			push_warning("zone: %s layout refused; leaving" % zone_id)
+			layout_refused.emit(zone_id)
+			return
+		await get_tree().process_frame
+		waited += get_process_delta_time()
+	# NO VERDICT IS NOT AN ACCEPTANCE. A bridge that never answers leaves
+	# the player frozen forever, which is worse than the Zone they are
+	# standing in; treat silence as a refusal and go back to the Hub.
+	layout_verdict = "REFUSED"
+	push_warning("zone: %s waited %.1fs for a layout verdict"
+			% [zone_id, VERDICT_TIMEOUT])
+	layout_refused.emit(zone_id)
+
 ## Aperture polarity and arrival verdicts, measured and attached.
 ##
 ## `apertures` is ARCHITECTURAL: a `LOCKED` door reads as a hole because
@@ -579,22 +666,18 @@ func _measure_layout_evidence(build: Dictionary) -> void:
 	build["apertures"] = apertures
 	var arrival_ok := {}
 	for name: String in build.get("anchors", {}):
-		arrival_ok[name] = _capsule_fits(space,
+		arrival_ok[name] = RoomAudit.arrival_is_supported(space,
 				(build["anchors"] as Dictionary)[name])
 	build["arrival_ok"] = arrival_ok
 
-## Does a standing player fit here? The one question a coordinate cannot
-## answer, asked of the physics the player will actually collide with.
-func _capsule_fits(space: PhysicsDirectSpaceState3D, at: Vector3) -> bool:
-	var shape := CapsuleShape3D.new()
-	shape.height = Constants.PLAYER_HEIGHT
-	shape.radius = Constants.PLAYER_RADIUS
-	var query := PhysicsShapeQueryParameters3D.new()
-	query.shape = shape
-	query.transform = Transform3D(Basis.IDENTITY,
-			at + Vector3(0, Constants.PLAYER_HEIGHT / 2.0 + 0.1, 0))
-	query.collide_with_areas = false
-	return space.intersect_shape(query, 1).is_empty()
+## Can a body ARRIVE here? Not "is this space empty".
+##
+## The first version asked only whether a capsule had room, so an anchor
+## over a hole in the floor reported `true` -- a body would appear there
+## and fall. `RoomAudit.arrival_is_supported` asks the pair the audit has
+## always asked: ground within a step below, and clearance to stand in.
+## One measurement, two consumers, so the audit and the wire cannot
+## disagree about whether an arrival works.
 
 ## THE LAYOUT GOES BACK, which is the half of the exchange that was
 ## missing. `zone_builder.build()` returned everything the validator

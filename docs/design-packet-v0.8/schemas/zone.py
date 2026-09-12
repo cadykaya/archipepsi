@@ -188,6 +188,41 @@ class ActivityPrimitive(Strict):
 HEADROOM = C.PLAYER_HEIGHT + 0.6
 
 
+def band_ramp_fits(band, width: float, depth: float) -> str:
+    """Why this band's ramp does not fit this room, or "" when it does.
+
+    A band is a deck plus the ramp that reaches it, and only the deck was
+    ever bounded. The ramp runs `BAND_RAMP_RUN_FACTOR` metres per metre
+    of rise back from the deck's inner edge, along DEPTH for a `back`
+    band and along WIDTH for a `left` or `right` one, and in a shallow
+    room that run leaves the room entirely -- through the entry wall,
+    across the doorway and across the arrival at `(0, 0, 3)`.
+
+    The bound is the same `BAND_DOOR_MARGIN` walkway `back` already
+    leaves at the far wall, now required at the ramp's foot as well.
+    Public because the fallback has to know it BEFORE it proposes a
+    band, which is the same reason `HEADROOM` is public.
+    """
+    if band is None:
+        return ""
+    run = max(C.BAND_RAMP_MIN_RUN, abs(band.rise) * C.BAND_RAMP_RUN_FACTOR)
+    if band.side == "back":
+        deck = depth * band.coverage
+        free = depth - deck - C.BAND_DOOR_MARGIN - run
+        axis, span = "deep", depth
+    else:
+        deck = width * band.coverage
+        free = width - deck - run
+        axis, span = "wide", width
+    if free < C.BAND_DOOR_MARGIN:
+        return (f"a {band.rise:.2f}m {band.side} {band.kind} covering "
+                f"{band.coverage:.2f} of a room {span:.1f}m {axis} needs "
+                f"{run:.1f}m of ramp and leaves {free:.1f}m at its foot; "
+                f"{C.BAND_DOOR_MARGIN:.1f}m is the walkway a doorway and "
+                f"an arrival need")
+    return ""
+
+
 class ElevationBand(Strict):
     """A second walkable height inside an ORDINARY room (ROOM_GRAMMAR v0).
 
@@ -521,7 +556,28 @@ class ArenaChamber(_WithEnemies):
         ceiling is describing somewhere the player cannot go, and the
         engine should never be handed one to build.
         """
-        if self.elevation is None or self.elevation.kind != "gallery":
+        if self.elevation is None:
+            return self
+        # AND ITS RAMP FITS IN THE ROOM, which is the same kind of claim
+        # and was the missing half of it: a band the player cannot stand
+        # on and a band whose only way up runs out through the front wall
+        # are both rooms nobody can use, described rather than built.
+        why = band_ramp_fits(self.elevation, self.width, self.depth)
+        if why:
+            raise ValueError(f"chamber '{self.id}': {why}")
+        # AND IT DOES NOT HUG A WALL WITH A DOORWAY IN IT. A `left`
+        # band's deck reaches the left wall at `rise`, so a doorway cut
+        # into that wall has a floor slab across it at whatever height
+        # the band sits -- a hole the engine carves and the deck closes.
+        blocked = f"side_{self.elevation.side}"
+        for door in self.doors:
+            if door.socket_id == blocked and door.usage != "SEALED":
+                raise ValueError(
+                    f"chamber '{self.id}': a {self.elevation.side} "
+                    f"{self.elevation.kind} hugs the wall its "
+                    f"'{blocked}' door is cut into, so its deck stands "
+                    f"in that doorway")
+        if self.elevation.kind != "gallery":
             return self
         clear = self.wall_height - self.elevation.rise
         if clear < HEADROOM:

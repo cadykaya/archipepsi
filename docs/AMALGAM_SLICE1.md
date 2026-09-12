@@ -147,6 +147,153 @@ that was verified by removing them.
   the router still builds chains, so a Zone that wants a genuine loop
   gets a typed `LAYOUT_INFEASIBLE` naming the pair, not a layout.
 
+## 5s. What withholding three shells cost, and what paid for it
+
+Withholding `shell_hall_transit`, `shell_plenum_helix` and
+`shell_span_basin` is right — a shell whose doorway is off its body
+cannot be joined — but it is not free, and two suites said so rather than
+letting it pass quietly.
+
+**The fallback's variety collapsed to four shapes in six Zones.**
+`test_the_fallback_is_reproducible_but_not_monotonous` refused it. The
+cause was underneath the shells the whole time: the landmark arena was a
+literal `26.0 x 24.0 x 7.0` in every Zone of every campaign, and the
+shell a big room happened to wear was doing all the varying. The landmark
+rolls now, bounded below by the ordinary arena's ceiling so it is still
+the biggest room in the Zone.
+
+**No generated Zone can carry an authored movement offer at all.**
+`godot-playtest3a` refused it: "the generated Zone built no authored room
+that carries offers, so there is nothing here to walk into". Four shells
+carry offers — the three withheld ones and `shell_yard_gantry` — and the
+yard is 4429 m2 against an `AUTHORED_AREA_BUDGET` of 4000. None is both
+joinable and affordable.
+
+Raising the budget to 5000 to admit the yard was tried and **put back**.
+It worked, and it cost more than it bought: every generated Zone became
+an 85 x 52 m room with two joins that neither the flood nor a real body
+can walk, an arrival a body cannot stand at, and a rail it cannot ride.
+Changing a tuned content decision to route around an Art defect made the
+Zone worse, so the decision stands.
+
+What the two offer tests do instead is **state the whole reason and pin
+it**: four offer-bearing shells, three withheld for their doorways, the
+fourth over budget, none usable. The pin fails the moment any part of
+that stops being true — a repaired doorway, a raised budget, a fifth
+offer-bearing shell — and when it fails those tests go back to walking,
+which is what they are for. Not a skip: a skip goes quiet, and this says
+the sentence out loud on every run.
+
+## 5r. The crossing split: the prober's limits, and the geometry's
+
+The brief asked for the assembled crossing to be verified against real
+geometry, and the previous version of this test said in as many words
+that the split between "the geometry is broken" and "this prober casts
+from one height" **had not been made**. It pinned a single number, 10,
+covering both.
+
+The split is made the way the rest of this suite makes one: every join
+the flood refuses is handed to a **real `Player`**, spawned at the first
+room's arrival and walked toward the second, and it is only called broken
+if the body cannot cross either.
+
+On the current `played_zone.json`, of 16 same-level joins:
+
+| | |
+|---|---|
+| **crossed by the flood** | 8 |
+| **the flood could not grid, the body walked** | 5 — `c007->c008`, `c010->c011`, `c016->c017`, `c019->c021`, `c022->c023`, each in about 75 frames |
+| **neither could cross** | 3 — `c001->c002`, `c002->c003`, `c009->c010` |
+| skipped as a level change this prober cannot climb | 5 |
+
+Five of the eight were the prober. Three are geometry, and those are what
+`KNOWN_UNWALKED_JOINS` pins now — a real number about the Zone rather
+than a mixed one about the Zone and the ruler.
+
+## 5q. A DORMANT Zone has no way back in, and that is the bridge's
+
+**Found while building the two-process reload proof; NOT fixed here.**
+
+Leaving a Zone clears `active_zone_id` and leaves the record `DORMANT`
+holding its Checks. `hub_status` has no branch for that state, so the Hub
+falls through to `ZONE_AVAILABLE` — and `Hub._on_portal_activated` maps
+`ZONE_AVAILABLE` to `request_next_zone`, which the bridge **refuses**
+while a dormant Zone still holds its locations (`godot-integration`
+asserts that refusal by name). So the player walks back to the portal,
+activates it, and gets an error.
+
+The intent that works is `enter_zone` with the dormant Zone's id.
+`_test_leave_and_resume` sends it, `godot-reload` sends it, and both
+work. What is missing is a way for the Hub to know to send it, and that
+is a `HubMode` — the bridge's vocabulary, Dess's column. Two candidate
+shapes, either fine:
+
+* a `ZONE_DORMANT` mode carrying the id, which the portal maps to
+  `enter_zone`; or
+* `ZONE_READY` reused for a dormant Zone, since "a Zone is waiting and
+  the portal takes you in" is already exactly what that mode means.
+
+Until it lands, `godot-reload` spells the two steps out (`_entering_zone`
+then the intent) with this section named in a comment, rather than
+pretending `_on_enter_zone` could have been called.
+
+## 5p. Five defects between the Zone declared and the Zone built
+
+Acceptance gating landed in §5m, and with it on, **no generated Zone
+could pass**. Every refusal was real, and each one was a different
+defect. They are worth listing together because they are one shape: a
+fact the builder knew and the model did not.
+
+**1. The socket table said every doorway was at `y = 0`.**
+`procedural_sockets` returns the shape of a FLAT room — four openings
+around a rectangle. `platform_path` carves its exit at `rise` and `tower`
+at the summit, and both have said so in `exit_offset` since they were
+written. So the next corridor was laid at the foot of a wall whose hole
+was metres above it, and the aperture probe read the wall. `door_plan`
+now takes the producer's own way out.
+
+**2. Five producers ignored the door assignment.** `_perimeter` has
+honoured `cut_plan` since the composer started assigning doors;
+`corridor`, `platform_path`, `tower` and `treasure_room` raise their own
+walls and never learned to. A Zone whose last room SEALS its exit came
+back with a hole in the end wall over open ground — the playtest-2 defect
+the end walls exist to close, arriving through a new door.
+
+**3. The Zone's front door was carved against the composer, in both
+lanes.** `cut_plan` forced the spine head's `entry` open and `layout.py`
+exempted it from the polarity check, both on the stated ground that "the
+player walks in through it". `zone_start` is `Vector3(0, 0.8, 1.2)` in
+the head room's own frame: the player arrives **1.2 m inside**, past that
+wall, and nothing is built outside it. The exemption required a hole in
+the Zone's outer wall opening onto nothing. Both halves removed.
+
+**4. Two things stood where a body arrives.** An arena's cover crates
+roll at `z` in `depth x [0.25, 0.75]` and are up to 2.4 m deep, so in a
+13.3 m arena one reached back to z = 2.1 — over the arrival at z = 3.0.
+And a `back` band's ramp runs three metres per metre of rise: a 2.41 m
+gallery at 0.36 coverage in an 11.6 m room put its ramp's foot at
+z = -1.8, through the front wall. The arena reserves its arrival before
+it places anything; a band whose ramp does not fit is not proposed and
+not accepted (`zone.band_ramp_fits`). A third of the same family: a
+`left` band's deck reaches the left wall at `rise`, so a LOCKED
+`side_left` on that room is a doorway with a floor slab across it at
+chest height — `compose_with_branch` picks the free side now, and the
+schema refuses the pairing.
+
+**5. Three approved shells put `exit` off their own body.** See the
+frontier and the art request. The engine measures it and withholds the
+shell; it changes no authored coordinate.
+
+**And one rule that is NOT "outside the envelope".** `corner` steps its
+exit a full `WALL_THICKNESS` past its bounds on purpose — with the reason
+written next to it — and `shell_yard_gantry` sits exactly on its wall
+face. A doorway socket is an ATTACHMENT TRANSFORM and may sit one wall
+thickness proud of the body; `layout.SOCKET_PROUD` and
+`shells.doorways_off_the_body` are the same number, defined once. It
+answers a different question from the aperture probe (is the hole cut)
+and from `arrival_is_supported` (can a body stand), and all three are
+measured separately and reported separately.
+
 ## 5o. The flood proposes, the body disposes
 
 The brief asked for evidence from the actual Player rather than from the

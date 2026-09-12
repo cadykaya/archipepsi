@@ -953,7 +953,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 908,
+        "content_value": 903,
         "enemy_total": 35,
         "rooms_holding_no_check": 8
       },
@@ -1007,36 +1007,6 @@
               ],
               "types": [
                 "corridor"
-              ]
-            },
-            "shell_hall_transit": {
-              "size": [
-                41.2,
-                39.6,
-                60.0
-              ],
-              "types": [
-                "arena"
-              ]
-            },
-            "shell_plenum_helix": {
-              "size": [
-                21.2,
-                73.6,
-                20.0
-              ],
-              "types": [
-                "tower"
-              ]
-            },
-            "shell_span_basin": {
-              "size": [
-                31.2,
-                23.6,
-                90.0
-              ],
-              "types": [
-                "arena"
               ]
             },
             "shell_tower_collapsed": {
@@ -1107,30 +1077,14 @@
               "types": [
                 "treasure_room"
               ]
-            },
-            "shell_yard_gantry": {
-              "size": [
-                85.2,
-                17.6,
-                52.0
-              ],
-              "types": [
-                "arena"
-              ]
             }
           },
           "room_shells": {
-            "arena": [
-              "shell_hall_transit",
-              "shell_span_basin",
-              "shell_yard_gantry"
-            ],
             "corridor": [
               "shell_corner_left",
               "shell_corner_right"
             ],
             "tower": [
-              "shell_plenum_helix",
               "shell_tower_collapsed",
               "shell_tower_gantry",
               "shell_tower_spiral"
@@ -1473,7 +1427,7 @@
                 "kind": "target_challenge"
               }
             ],
-            "depth": 89.2,
+            "depth": 13.1,
             "enemies": [
               {
                 "archetype": "melee",
@@ -1483,10 +1437,9 @@
             "id": "c006",
             "objective": "kill_all",
             "reward_location_id": 89100004,
-            "shell_id": "shell_span_basin",
             "type": "arena",
-            "wall_height": 23.6,
-            "width": 30.4
+            "wall_height": 5.9,
+            "width": 19.8
           },
           {
             "activities": [
@@ -1497,7 +1450,7 @@
             ],
             "id": "c007",
             "length": 6.0,
-            "shell_id": "shell_corner_left",
+            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 6.0
           },
@@ -1527,6 +1480,10 @@
               {
                 "element_count": 2,
                 "kind": "switch_sequence"
+              },
+              {
+                "element_count": 3,
+                "kind": "switch_sequence"
               }
             ],
             "depth": 20.4,
@@ -1553,7 +1510,7 @@
           {
             "id": "c010",
             "length": 6.0,
-            "shell_id": "shell_corner_right",
+            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 6.0
           },
@@ -1604,7 +1561,7 @@
           {
             "id": "c013",
             "length": 6.0,
-            "shell_id": "shell_corner_left",
+            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 6.0
           },
@@ -1639,8 +1596,8 @@
             "objective": "kill_all",
             "reward_location_id": 89100009,
             "type": "arena",
-            "wall_height": 7.0,
-            "width": 26.0
+            "wall_height": 8.0,
+            "width": 27.3
           },
           {
             "activities": [
@@ -1650,13 +1607,6 @@
               }
             ],
             "depth": 10.1,
-            "elevation": {
-              "access": "ramp",
-              "coverage": 0.3,
-              "kind": "gallery",
-              "rise": 1.86,
-              "side": "back"
-            },
             "enemies": [
               {
                 "archetype": "ranged",
@@ -1680,7 +1630,7 @@
             ],
             "id": "c016",
             "length": 6.0,
-            "shell_id": "shell_corner_right",
+            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 6.0
           },
@@ -1723,7 +1673,7 @@
           {
             "id": "c019",
             "length": 6.0,
-            "shell_id": "shell_corner_left",
+            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 6.0
           },
@@ -1773,7 +1723,7 @@
             ],
             "id": "c022",
             "length": 6.0,
-            "shell_id": "shell_corner_right",
+            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 6.0
           },
@@ -1817,7 +1767,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 916,
+        "content_value": 907,
         "enemy_total": 26,
         "rooms_holding_no_check": 8
       },
@@ -1871,36 +1821,6 @@
               ],
               "types": [
                 "corridor"
-              ]
-            },
-            "shell_hall_transit": {
-              "size": [
-                41.2,
-                39.6,
-                60.0
-              ],
-              "types": [
-                "arena"
-              ]
-            },
-            "shell_plenum_helix": {
-              "size": [
-                21.2,
-                73.6,
-                20.0
-              ],
-              "types": [
-                "tower"
-              ]
-            },
-            "shell_span_basin": {
-              "size": [
-                31.2,
-                23.6,
-                90.0
-              ],
-              "types": [
-                "arena"
               ]
             },
             "shell_tower_collapsed": {
@@ -1971,30 +1891,14 @@
               "types": [
                 "treasure_room"
               ]
-            },
-            "shell_yard_gantry": {
-              "size": [
-                85.2,
-                17.6,
-                52.0
-              ],
-              "types": [
-                "arena"
-              ]
             }
           },
           "room_shells": {
-            "arena": [
-              "shell_hall_transit",
-              "shell_span_basin",
-              "shell_yard_gantry"
-            ],
             "corridor": [
               "shell_corner_left",
               "shell_corner_right"
             ],
             "tower": [
-              "shell_plenum_helix",
               "shell_tower_collapsed",
               "shell_tower_gantry",
               "shell_tower_spiral"
@@ -2195,6 +2099,13 @@
       "zone": {
         "chambers": [
           {
+            "activities": [
+              {
+                "element_count": 2,
+                "kind": "timed_run",
+                "time_limit": 8.0
+              }
+            ],
             "features": [
               {
                 "at": [
@@ -2212,7 +2123,7 @@
           {
             "activities": [
               {
-                "element_count": 5,
+                "element_count": 3,
                 "kind": "target_challenge"
               },
               {
@@ -2244,11 +2155,11 @@
           {
             "activities": [
               {
-                "element_count": 2,
+                "element_count": 5,
                 "kind": "pressure_routing"
               },
               {
-                "element_count": 3,
+                "element_count": 4,
                 "kind": "pressure_routing"
               }
             ],
@@ -2263,14 +2174,14 @@
           {
             "activities": [
               {
-                "element_count": 3,
+                "element_count": 5,
                 "kind": "timed_run",
-                "time_limit": 12.0
+                "time_limit": 20.0
               },
               {
-                "element_count": 2,
+                "element_count": 5,
                 "kind": "timed_run",
-                "time_limit": 8.0
+                "time_limit": 20.0
               }
             ],
             "features": [
@@ -2294,11 +2205,11 @@
                 "kind": "switch_sequence"
               },
               {
-                "element_count": 5,
+                "element_count": 4,
                 "kind": "switch_sequence"
               }
             ],
-            "depth": 89.2,
+            "depth": 11.6,
             "enemies": [
               {
                 "archetype": "melee",
@@ -2308,19 +2219,18 @@
             "id": "c005",
             "objective": "kill_all",
             "reward_location_id": 89100103,
-            "shell_id": "shell_span_basin",
             "type": "arena",
-            "wall_height": 23.6,
-            "width": 30.4
+            "wall_height": 6.4,
+            "width": 16.4
           },
           {
             "activities": [
               {
-                "element_count": 3,
+                "element_count": 5,
                 "kind": "target_challenge"
               },
               {
-                "element_count": 4,
+                "element_count": 3,
                 "kind": "target_challenge"
               }
             ],
@@ -2342,7 +2252,7 @@
             "activities": [
               {
                 "element_count": 5,
-                "kind": "target_challenge"
+                "kind": "pressure_routing"
               }
             ],
             "id": "c007",
@@ -2375,11 +2285,11 @@
           {
             "activities": [
               {
-                "element_count": 5,
+                "element_count": 2,
                 "kind": "switch_sequence"
               },
               {
-                "element_count": 3,
+                "element_count": 4,
                 "kind": "switch_sequence"
               }
             ],
@@ -2405,12 +2315,6 @@
             "width": 16.9
           },
           {
-            "activities": [
-              {
-                "element_count": 5,
-                "kind": "target_challenge"
-              }
-            ],
             "id": "c010",
             "length": 6.0,
             "shell_id": "shell_corner_right",
@@ -2420,22 +2324,11 @@
           {
             "activities": [
               {
-                "element_count": 5,
-                "kind": "pressure_routing"
-              },
-              {
                 "element_count": 4,
                 "kind": "pressure_routing"
               }
             ],
             "depth": 16.0,
-            "elevation": {
-              "access": "ramp",
-              "coverage": 0.42,
-              "kind": "gallery",
-              "rise": 1.85,
-              "side": "back"
-            },
             "enemies": [
               {
                 "archetype": "melee",
@@ -2452,9 +2345,9 @@
           {
             "activities": [
               {
-                "element_count": 2,
+                "element_count": 3,
                 "kind": "timed_run",
-                "time_limit": 8.0
+                "time_limit": 12.0
               }
             ],
             "gap_size": 1.67,
@@ -2483,12 +2376,12 @@
                 "kind": "target_challenge"
               },
               {
-                "element_count": 4,
+                "element_count": 5,
                 "kind": "timed_run",
-                "time_limit": 16.0
+                "time_limit": 20.0
               }
             ],
-            "depth": 24.0,
+            "depth": 24.5,
             "enemies": [
               {
                 "archetype": "melee",
@@ -2503,13 +2396,13 @@
             "objective": "kill_all",
             "reward_location_id": 89100109,
             "type": "arena",
-            "wall_height": 7.0,
-            "width": 26.0
+            "wall_height": 7.9,
+            "width": 25.6
           },
           {
             "activities": [
               {
-                "element_count": 3,
+                "element_count": 2,
                 "kind": "pressure_routing"
               }
             ],
@@ -2537,7 +2430,7 @@
           {
             "activities": [
               {
-                "element_count": 5,
+                "element_count": 2,
                 "kind": "switch_sequence"
               }
             ],
@@ -2571,6 +2464,12 @@
             "width": 22.9
           },
           {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "pressure_routing"
+              }
+            ],
             "id": "c019",
             "length": 6.0,
             "shell_id": "shell_corner_left",
@@ -2580,9 +2479,9 @@
           {
             "activities": [
               {
-                "element_count": 2,
+                "element_count": 3,
                 "kind": "timed_run",
-                "time_limit": 8.0
+                "time_limit": 12.0
               }
             ],
             "depth": 20.0,
@@ -2602,7 +2501,7 @@
           {
             "activities": [
               {
-                "element_count": 2,
+                "element_count": 4,
                 "kind": "switch_sequence"
               }
             ],
@@ -2617,7 +2516,7 @@
           {
             "activities": [
               {
-                "element_count": 3,
+                "element_count": 5,
                 "kind": "target_challenge"
               }
             ],
@@ -2667,7 +2566,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 915,
+        "content_value": 918,
         "enemy_total": 32,
         "rooms_holding_no_check": 8
       },
@@ -2721,36 +2620,6 @@
               ],
               "types": [
                 "corridor"
-              ]
-            },
-            "shell_hall_transit": {
-              "size": [
-                41.2,
-                39.6,
-                60.0
-              ],
-              "types": [
-                "arena"
-              ]
-            },
-            "shell_plenum_helix": {
-              "size": [
-                21.2,
-                73.6,
-                20.0
-              ],
-              "types": [
-                "tower"
-              ]
-            },
-            "shell_span_basin": {
-              "size": [
-                31.2,
-                23.6,
-                90.0
-              ],
-              "types": [
-                "arena"
               ]
             },
             "shell_tower_collapsed": {
@@ -2821,30 +2690,14 @@
               "types": [
                 "treasure_room"
               ]
-            },
-            "shell_yard_gantry": {
-              "size": [
-                85.2,
-                17.6,
-                52.0
-              ],
-              "types": [
-                "arena"
-              ]
             }
           },
           "room_shells": {
-            "arena": [
-              "shell_hall_transit",
-              "shell_span_basin",
-              "shell_yard_gantry"
-            ],
             "corridor": [
               "shell_corner_left",
               "shell_corner_right"
             ],
             "tower": [
-              "shell_plenum_helix",
               "shell_tower_collapsed",
               "shell_tower_gantry",
               "shell_tower_spiral"
@@ -3045,13 +2898,6 @@
       "zone": {
         "chambers": [
           {
-            "activities": [
-              {
-                "element_count": 2,
-                "kind": "timed_run",
-                "time_limit": 8.0
-              }
-            ],
             "features": [
               {
                 "at": [
@@ -3069,11 +2915,11 @@
           {
             "activities": [
               {
-                "element_count": 4,
+                "element_count": 2,
                 "kind": "target_challenge"
               },
               {
-                "element_count": 3,
+                "element_count": 4,
                 "kind": "target_challenge"
               }
             ],
@@ -3101,11 +2947,11 @@
           {
             "activities": [
               {
-                "element_count": 2,
+                "element_count": 4,
                 "kind": "pressure_routing"
               },
               {
-                "element_count": 5,
+                "element_count": 3,
                 "kind": "pressure_routing"
               }
             ],
@@ -3135,15 +2981,15 @@
           {
             "activities": [
               {
-                "element_count": 2,
+                "element_count": 4,
                 "kind": "switch_sequence"
               },
               {
-                "element_count": 4,
+                "element_count": 5,
                 "kind": "switch_sequence"
               }
             ],
-            "depth": 89.2,
+            "depth": 12.6,
             "enemies": [
               {
                 "archetype": "melee",
@@ -3153,30 +2999,22 @@
             "id": "c005",
             "objective": "kill_all",
             "reward_location_id": 89100203,
-            "shell_id": "shell_span_basin",
             "type": "arena",
-            "wall_height": 23.6,
-            "width": 30.4
+            "wall_height": 4.9,
+            "width": 12.3
           },
           {
             "activities": [
               {
-                "element_count": 2,
+                "element_count": 4,
                 "kind": "target_challenge"
               },
               {
-                "element_count": 3,
+                "element_count": 5,
                 "kind": "target_challenge"
               }
             ],
             "depth": 11.8,
-            "elevation": {
-              "access": "ramp",
-              "coverage": 0.31,
-              "kind": "gallery",
-              "rise": 2.31,
-              "side": "back"
-            },
             "enemies": [
               {
                 "archetype": "melee",
@@ -3191,6 +3029,12 @@
             "width": 21.6
           },
           {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "pressure_routing"
+              }
+            ],
             "id": "c007",
             "length": 6.0,
             "shell_id": "shell_corner_left",
@@ -3200,14 +3044,14 @@
           {
             "activities": [
               {
-                "element_count": 4,
-                "kind": "timed_run",
-                "time_limit": 16.0
-              },
-              {
                 "element_count": 5,
                 "kind": "timed_run",
                 "time_limit": 20.0
+              },
+              {
+                "element_count": 2,
+                "kind": "timed_run",
+                "time_limit": 8.0
               }
             ],
             "gap_size": 1.48,
@@ -3220,6 +3064,10 @@
           },
           {
             "activities": [
+              {
+                "element_count": 3,
+                "kind": "switch_sequence"
+              },
               {
                 "element_count": 4,
                 "kind": "switch_sequence"
@@ -3249,8 +3097,8 @@
           {
             "activities": [
               {
-                "element_count": 3,
-                "kind": "target_challenge"
+                "element_count": 5,
+                "kind": "switch_sequence"
               }
             ],
             "id": "c010",
@@ -3262,7 +3110,11 @@
           {
             "activities": [
               {
-                "element_count": 5,
+                "element_count": 3,
+                "kind": "pressure_routing"
+              },
+              {
+                "element_count": 4,
                 "kind": "pressure_routing"
               }
             ],
@@ -3290,9 +3142,14 @@
           {
             "activities": [
               {
-                "element_count": 3,
+                "element_count": 4,
                 "kind": "timed_run",
-                "time_limit": 12.0
+                "time_limit": 16.0
+              },
+              {
+                "element_count": 5,
+                "kind": "timed_run",
+                "time_limit": 20.0
               }
             ],
             "gap_size": 2.03,
@@ -3304,6 +3161,12 @@
             "vertical_step": 0.65
           },
           {
+            "activities": [
+              {
+                "element_count": 3,
+                "kind": "switch_sequence"
+              }
+            ],
             "id": "c013",
             "length": 6.0,
             "shell_id": "shell_corner_left",
@@ -3321,19 +3184,12 @@
                 "kind": "target_challenge"
               },
               {
-                "element_count": 3,
+                "element_count": 4,
                 "kind": "timed_run",
-                "time_limit": 12.0
+                "time_limit": 16.0
               }
             ],
-            "depth": 24.0,
-            "elevation": {
-              "access": "ramp",
-              "coverage": 0.32,
-              "kind": "gallery",
-              "rise": 2.53,
-              "side": "right"
-            },
+            "depth": 22.7,
             "enemies": [
               {
                 "archetype": "melee",
@@ -3348,24 +3204,17 @@
             "objective": "kill_all",
             "reward_location_id": 89100209,
             "type": "arena",
-            "wall_height": 7.0,
-            "width": 26.0
+            "wall_height": 7.3,
+            "width": 25.1
           },
           {
             "activities": [
               {
-                "element_count": 4,
+                "element_count": 2,
                 "kind": "pressure_routing"
               }
             ],
             "depth": 15.2,
-            "elevation": {
-              "access": "ramp",
-              "coverage": 0.45,
-              "kind": "gallery",
-              "rise": 2.27,
-              "side": "back"
-            },
             "enemies": [
               {
                 "archetype": "ranged",
@@ -3380,13 +3229,6 @@
             "width": 20.0
           },
           {
-            "activities": [
-              {
-                "element_count": 3,
-                "kind": "timed_run",
-                "time_limit": 12.0
-              }
-            ],
             "id": "c016",
             "length": 6.0,
             "shell_id": "shell_corner_right",
@@ -3396,7 +3238,7 @@
           {
             "activities": [
               {
-                "element_count": 4,
+                "element_count": 5,
                 "kind": "switch_sequence"
               }
             ],
@@ -3411,7 +3253,7 @@
           {
             "activities": [
               {
-                "element_count": 2,
+                "element_count": 5,
                 "kind": "target_challenge"
               }
             ],
@@ -3430,6 +3272,12 @@
             "width": 13.5
           },
           {
+            "activities": [
+              {
+                "element_count": 5,
+                "kind": "pressure_routing"
+              }
+            ],
             "id": "c019",
             "length": 6.0,
             "shell_id": "shell_corner_left",
@@ -3439,9 +3287,9 @@
           {
             "activities": [
               {
-                "element_count": 5,
+                "element_count": 3,
                 "kind": "timed_run",
-                "time_limit": 20.0
+                "time_limit": 12.0
               }
             ],
             "depth": 21.0,
@@ -3461,7 +3309,7 @@
           {
             "activities": [
               {
-                "element_count": 5,
+                "element_count": 2,
                 "kind": "switch_sequence"
               }
             ],
@@ -3474,12 +3322,6 @@
             "vertical_step": 0.65
           },
           {
-            "activities": [
-              {
-                "element_count": 5,
-                "kind": "target_challenge"
-              }
-            ],
             "id": "c022",
             "length": 6.0,
             "shell_id": "shell_corner_right",
@@ -3489,18 +3331,11 @@
           {
             "activities": [
               {
-                "element_count": 3,
+                "element_count": 5,
                 "kind": "pressure_routing"
               }
             ],
             "depth": 20.7,
-            "elevation": {
-              "access": "ramp",
-              "coverage": 0.4,
-              "kind": "gallery",
-              "rise": 2.48,
-              "side": "left"
-            },
             "enemies": [
               {
                 "archetype": "melee",

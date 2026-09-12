@@ -92,8 +92,19 @@ static func doorways_outside_envelope(entry: Dictionary) -> Dictionary:
 			Vector3(-float((size as Array)[0]) / 2.0, 0.0, 0.0),
 			Vector3(float((size as Array)[0]), float((size as Array)[1]),
 				float((size as Array)[2])))
-	var slack := envelope.grow(ChamberBuilders.WALL_THICKNESS
-			+ SPAN_TOLERANCE)
+	# A SHELL'S `size` IS ITS OUTER FACE, so the allowance is the
+	# manifests' two-decimal rounding and nothing more.
+	#
+	# This grew by a whole `WALL_THICKNESS` at first, by analogy with
+	# `ChamberBuilders.corner` stepping its exit past its own bounds --
+	# but a producer's `bounds` span its walls' centre planes and a
+	# manifest's `size` is the outer face already. Arty measured the
+	# repaired shells' walls running to exactly the declared depth, and
+	# measured `shell_yard_gantry` putting both doorways 0.40 m past an
+	# envelope of -42.60..42.60. A 0.405 allowance passed it by five
+	# millimetres. `layout.SOCKET_PROUD` is where a wall thickness
+	# belongs, because that one compares against reported bounds.
+	var slack := envelope.grow(SPAN_TOLERANCE)
 	for raw: Variant in entry.get("sockets", []) as Array:
 		if typeof(raw) != TYPE_DICTIONARY:
 			continue
@@ -179,6 +190,12 @@ static func build_chamber(chamber: Dictionary, theme: String,
 ## `length` and no `depth`, and re-deriving a socket from a field the
 ## chamber may not carry is how the plan and the room come to disagree
 ## about where a doorway is.
+##
+## And the EXIT comes from the producer's own `exit_offset` rather than
+## from the envelope's far face, for the same reason: the envelope says
+## how far the room reaches and the producer says where it lets the
+## player out, and for `platform_path` and `tower` those are different
+## heights.
 static func _doors_from_bounds(result: Dictionary,
 		chamber: Dictionary) -> Array:
 	if (chamber.get("doors", []) as Array).is_empty():
@@ -186,7 +203,9 @@ static func _doors_from_bounds(result: Dictionary,
 	var box: AABB = result.get("bounds", AABB())
 	if box.size.x <= 0.0 or box.size.z <= 0.0:
 		return []
-	return ChamberBuilders.door_plan(chamber, box.size.x, box.size.z)
+	var way_out: Vector3 = result.get("exit_offset", Vector3.INF)
+	return ChamberBuilders.door_plan(chamber, box.size.x, box.size.z,
+			way_out)
 
 ## WHERE AN AUTHORED ROOM PUTS A KEY IT WAS ASKED TO HOLD.
 ##

@@ -293,6 +293,18 @@ const COLLAR_SLACK := 0.1
 ## Appends into `keys`, `locks` and `stations` and writes into `anchors`
 ## and `room_transforms`; returns the room's footprint, which is the only
 ## thing the caller still has a use for.
+## One entry of a built room's own door plan, by socket id, or empty.
+static func _planned_door(result: Dictionary, socket_id: String) -> Dictionary:
+	if socket_id == "":
+		return {}
+	for raw: Variant in result.get("doors", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var plan: Dictionary = raw
+		if str(plan.get("socket_id", "")) == socket_id:
+			return plan
+	return {}
+
 static func _furnish_room(root: Node3D, theme: String,
 		chamber: Dictionary, result: Dictionary, origin: Vector3,
 		yaw: float, anchors: Dictionary, room_transforms: Dictionary,
@@ -354,16 +366,22 @@ static func _furnish_room(root: Node3D, theme: String,
 	# A LOCKED door's slab, standing in an aperture that IS carved.
 	# The audit still sweeps the capsule through the opening and
 	# still requires it to be a hole; this is what stands in it.
+	#
+	# READ OFF THE ROOM'S OWN PLAN, which is the same list `door_world`
+	# and the aperture report read. This used to re-derive the socket
+	# from `chamber.width`/`chamber.depth` -- fields a `platform_path`
+	# does not carry at all, so the derivation fell to a 16 x 16 default
+	# and put the slab in a room that is 8 m wide. `socket_placed` says
+	# out loud that a second derivation is how the two come to disagree;
+	# this was the second derivation.
 	for raw_door: Variant in chamber.get("doors", []):
 		if typeof(raw_door) != TYPE_DICTIONARY:
 			continue
 		var door: Dictionary = raw_door
 		if str(door.get("usage", "")) != "LOCKED":
 			continue
-		var socket := ChamberBuilders.socket_placed(
-				str(door.get("socket_id", "")),
-				float(chamber.get("width", 16.0)),
-				float(chamber.get("depth", 16.0)))
+		var socket := _planned_door(result,
+				str(door.get("socket_id", "")))
 		if socket.is_empty():
 			continue
 		var slab := LockedDoor.create(rid,
@@ -709,61 +727,141 @@ static func _station_ids(result: Dictionary) -> Array:
 	out.sort()
 	return out
 
-static func layout_from_json(payload: Dictionary) -> Dictionary:
-	var rooms := {}
-	for rid: String in payload.get("rooms", {}):
-		var t: Dictionary = (payload["rooms"] as Dictionary)[rid]
-		rooms[rid] = {"position": _v3_in(t.get("position")),
-				"yaw": float(t.get("yaw", 0.0)),
-				"bounds": _box_in(t.get("bounds")),
-				"arrival": _v3_in(t.get("arrival"))}
-	var joins := {}
-	for eid: String in payload.get("joins", {}):
-		var j: Dictionary = (payload["joins"] as Dictionary)[eid]
-		var chain: Array = []
-		for raw: Variant in j.get("chain", []):
-			var piece: Dictionary = raw
-			chain.append({"kind": str(piece.get("kind", "CONNECTOR")),
-					"position": _v3_in(piece.get("position")),
-					"yaw": float(piece.get("yaw", 0.0)),
-					"turn": int(piece.get("turn", 0)),
-					"entry": _v3_in(piece.get("entry")),
-					"exit": _v3_in(piece.get("exit")),
-					"bounds": _box_in(piece.get("bounds"))})
-		joins[eid] = {"room_a": str(j.get("room_a", "")),
-				"room_b": str(j.get("room_b", "")),
-				"socket_a": _v3_in(j.get("socket_a")),
-				"socket_b": _v3_in(j.get("socket_b")),
-				"synthetic": bool(j.get("synthetic", false)),
-				"chain": chain}
-	var anchors := {}
-	for name: String in payload.get("anchors", {}):
-		anchors[name] = _v3_in((payload["anchors"] as Dictionary)[name])
-	return {"rooms": rooms, "joins": joins, "anchors": anchors}
-
-static func _v3_out(v: Variant) -> Array:
-	var at: Vector3 = v if typeof(v) == TYPE_VECTOR3 else Vector3.ZERO
-	return [at.x, at.y, at.z]
-
-static func _v3_in(v: Variant) -> Vector3:
-	if typeof(v) == TYPE_VECTOR3:
-		return v
-	if typeof(v) != TYPE_ARRAY or (v as Array).size() < 3:
-		return Vector3.ZERO
-	var a: Array = v
-	return Vector3(float(a[0]), float(a[1]), float(a[2]))
-
 static func _box_out(v: Variant) -> Dictionary:
 	var box: AABB = v if typeof(v) == TYPE_AABB else AABB()
 	return {"position": _v3_out(box.position), "size": _v3_out(box.size)}
 
-static func _box_in(v: Variant) -> AABB:
+## DECODING NEVER INVENTS A COORDINATE.
+##
+## The first version filled a missing `position` with the origin, a
+## missing `yaw` with zero and a missing `kind` with `CONNECTOR` -- so a
+## piece that committed no pose arrived at `malformed_pieces` wearing a
+## perfectly valid one, and the check that exists to catch exactly that
+## could not see it. A default is an answer, and this has no business
+## answering: the manifest either says where a thing is or it does not.
+##
+## Returns the decoded layout with `malformed` naming the first things
+## that were missing, and `build()` refuses on it rather than searching.
+## An EMPTY chain is not missing data -- it is direct abutment, and it
+## stays valid.
+static func layout_from_json(payload: Dictionary) -> Dictionary:
+	var errors: Array[String] = []
+	var rooms := {}
+	for rid: String in payload.get("rooms", {}):
+		var raw_room: Variant = (payload["rooms"] as Dictionary)[rid]
+		if typeof(raw_room) != TYPE_DICTIONARY:
+			errors.append("room '%s' is not a record" % rid)
+			continue
+		var t: Dictionary = raw_room
+		rooms[rid] = {
+			"position": _v3_req(t, "position",
+					"room '%s'" % rid, errors),
+			"yaw": _float_req(t, "yaw", "room '%s'" % rid, errors),
+			"bounds": _box_req(t, "bounds", "room '%s'" % rid, errors),
+			"arrival": _v3_req(t, "arrival", "room '%s'" % rid, errors),
+		}
+	var joins := {}
+	for eid: String in payload.get("joins", {}):
+		var raw_join: Variant = (payload["joins"] as Dictionary)[eid]
+		if typeof(raw_join) != TYPE_DICTIONARY:
+			errors.append("join '%s' is not a record" % eid)
+			continue
+		var j: Dictionary = raw_join
+		var chain: Array = []
+		var index := 0
+		for raw: Variant in j.get("chain", []):
+			var where := "join '%s' piece %d" % [eid, index]
+			index += 1
+			if typeof(raw) != TYPE_DICTIONARY:
+				errors.append("%s is not a record" % where)
+				continue
+			var piece: Dictionary = raw
+			var kind := str(piece.get("kind", ""))
+			if kind != "CONNECTOR" and kind != "CORNER":
+				errors.append("%s has kind '%s'" % [where, kind])
+			var built := {
+				"kind": kind,
+				"position": _v3_req(piece, "position", where, errors),
+				"yaw": _float_req(piece, "yaw", where, errors),
+				"entry": _v3_req(piece, "entry", where, errors),
+				"exit": _v3_req(piece, "exit", where, errors),
+				"bounds": _box_req(piece, "bounds", where, errors),
+			}
+			# A CONNECTOR has no turn and a CORNER must have one. Reading
+			# the field for both would let a cornerless zero look like a
+			# corner that bends nowhere.
+			if kind == "CORNER":
+				built["turn"] = int(piece.get("turn", 0))
+				if int(built["turn"]) == 0:
+					errors.append("%s is a corner that records no turn"
+							% where)
+			else:
+				built["turn"] = 0
+			chain.append(built)
+		joins[eid] = {"room_a": str(j.get("room_a", "")),
+				"room_b": str(j.get("room_b", "")),
+				"socket_a": _v3_req(j, "socket_a", "join '%s'" % eid,
+						errors),
+				"socket_b": _v3_req(j, "socket_b", "join '%s'" % eid,
+						errors),
+				"synthetic": bool(j.get("synthetic", false)),
+				"chain": chain}
+	var anchors := {}
+	for name: String in payload.get("anchors", {}):
+		anchors[name] = _v3_req(payload["anchors"] as Dictionary, name,
+				"anchor '%s'" % name, errors)
+	return {"rooms": rooms, "joins": joins, "anchors": anchors,
+			"malformed": "; ".join(errors.slice(0, 4))}
+
+## A vector the manifest must actually carry. Absent, short or
+## non-numeric is an error and NOT a zero.
+static func _v3_req(from: Dictionary, field: String, where: String,
+		errors: Array[String]) -> Vector3:
+	if not from.has(field):
+		errors.append("%s carries no %s" % [where, field])
+		return Vector3.ZERO
+	var v: Variant = from[field]
+	if typeof(v) == TYPE_VECTOR3:
+		return v
+	if typeof(v) != TYPE_ARRAY or (v as Array).size() < 3:
+		errors.append("%s's %s is not a point" % [where, field])
+		return Vector3.ZERO
+	var a: Array = v
+	for n: Variant in a.slice(0, 3):
+		if typeof(n) != TYPE_FLOAT and typeof(n) != TYPE_INT:
+			errors.append("%s's %s is not numeric" % [where, field])
+			return Vector3.ZERO
+	return Vector3(float(a[0]), float(a[1]), float(a[2]))
+
+static func _float_req(from: Dictionary, field: String, where: String,
+		errors: Array[String]) -> float:
+	if not from.has(field):
+		errors.append("%s carries no %s" % [where, field])
+		return 0.0
+	var v: Variant = from[field]
+	if typeof(v) != TYPE_FLOAT and typeof(v) != TYPE_INT:
+		errors.append("%s's %s is not a number" % [where, field])
+		return 0.0
+	return float(v)
+
+static func _box_req(from: Dictionary, field: String, where: String,
+		errors: Array[String]) -> AABB:
+	if not from.has(field):
+		errors.append("%s carries no %s" % [where, field])
+		return AABB()
+	var v: Variant = from[field]
 	if typeof(v) == TYPE_AABB:
 		return v
 	if typeof(v) != TYPE_DICTIONARY:
+		errors.append("%s's %s is not a box" % [where, field])
 		return AABB()
 	var d: Dictionary = v
-	return AABB(_v3_in(d.get("position")), _v3_in(d.get("size")))
+	return AABB(_v3_req(d, "position", "%s %s" % [where, field], errors),
+			_v3_req(d, "size", "%s %s" % [where, field], errors))
+
+static func _v3_out(v: Variant) -> Array:
+	var at: Vector3 = v if typeof(v) == TYPE_VECTOR3 else Vector3.ZERO
+	return [at.x, at.y, at.z]
 
 ## THE LAYOUT AS THE BRIDGE HAS TO READ IT: keyed by edge.
 ##
@@ -1238,6 +1336,18 @@ static func build(zone: Dictionary, theme_override := "",
 					"failed": "an edge is named '%s', which is reserved "
 					% EXIT_EDGE_ID + "for the approach to the engine's "
 					+ "appended exit room"}
+	# A MANIFEST THAT DID NOT DECODE IS NOT A MANIFEST.
+	#
+	# Refused here, before a room is produced and before the replay path
+	# can fall back to searching: the alternative is rebuilding part of a
+	# Zone from data that was missing and part of it from a fresh solve,
+	# which is a place the player has never been with a LAYOUT_OK on it.
+	if str(layout.get("malformed", "")) != "":
+		return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+				"policy": routing_policy([], policy_override),
+				"blocking_rooms": [], "blocking_pairs": [],
+				"failed": "the committed manifest did not decode: %s"
+				% str(layout["malformed"])}
 	var orphaned := unreachable_branches(zone)
 	if not orphaned.is_empty():
 		return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
@@ -1319,18 +1429,10 @@ static func build(zone: Dictionary, theme_override := "",
 			chamber_by_id[str((raw_chamber as Dictionary).get("id", ""))] \
 					= raw_chamber
 	var graph_branches: Dictionary = graph.get("branches", {})
-	var head_id := str((graph.get("spine", []) as Array)[0]) \
-			if not (graph.get("spine", []) as Array).is_empty() else ""
 	for spine_id: Variant in graph.get("spine", []):
 		var chamber: Dictionary = chamber_by_id.get(str(spine_id), {})
 		if chamber.is_empty():
 			continue
-		# The head of the spine is where the player comes in. Marked on a
-		# COPY so nothing upstream sees a chamber the composer did not
-		# write.
-		if str(spine_id) == head_id:
-			chamber = chamber.duplicate(true)
-			chamber["zone_entrance"] = true
 		# S13: every chamber's geometry is chosen here, not assumed.
 		# Today every route ends at ChamberBuilders because every registry
 		# entry is still a declared placeholder; the routing is what lets an

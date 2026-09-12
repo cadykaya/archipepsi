@@ -1159,9 +1159,26 @@ class CampaignEngine:
         if not verdict.accepted:
             log.warning("zone %s layout refused (%s): %s", intent.zone_id,
                         verdict.status, "; ".join(verdict.errors[:3]))
+            # A REFUSAL HAS TO CHANGE SOMETHING. This used to log, notify
+            # and leave the Zone ACTIVE, so the client kept playing a
+            # Zone the validator had just said does not hold together and
+            # kept claiming its Checks against it. The Zone goes DORMANT
+            # and stops being the active one; its allocated locations are
+            # untouched, because giving them back is `abandon_zone`'s
+            # behaviour and only its.
+            self._apply(T.refuse_layout(self.save, intent.zone_id))
             await self._notify(
                 "zone_abandoned", "LAYOUT REFUSED",
                 tuple(verdict.errors[:3]) or (verdict.status,))
+            # COMPOSE IT AGAIN, against the ids it already holds. This is
+            # the same recovery a crash mid-generation gets, and it is
+            # why a refusal costs the seed nothing: `refuse_layout` puts
+            # the record back to PENDING_GENERATION and this runs the
+            # provider for it. After MAX_LAYOUT_REFUSALS it stops asking
+            # and the record is DORMANT instead.
+            again = self.save.zone_by_id(intent.zone_id)
+            if again is not None and again.state == "PENDING_GENERATION":
+                self._start_generation_task(intent.zone_id)
             await self.broadcast_snapshot()
             return
         self._apply(T.commit_layout(self.save, intent.zone_id,

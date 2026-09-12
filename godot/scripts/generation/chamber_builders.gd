@@ -494,6 +494,14 @@ static func _light(parent: Node3D, position: Vector3, theme: String,
 
 ## Walls around a rectangular room with door gaps at entrance/exit centers.
 ## `exit_gap_y` raises the exit door's sill — a tower exits at its summit.
+#: WHERE A BODY ARRIVES IN A PROCEDURAL ROOM, in its own local frame.
+#:
+#: `ZoneBuilder._furnish_room` has used this number as a fallback since
+#: before a producer could declare anything, and the arena now returns it
+#: as its `player_entry` so the room that reserves the space and the room
+#: that reports the arrival cannot drift apart.
+const PROCEDURAL_ARRIVAL := Vector3(0, 0, 3.0)
+
 ## One end wall with a doorway in it, at whatever height the doorway sits.
 ##
 ## `_perimeter` does this inline for its own two ends. The builders that
@@ -502,8 +510,21 @@ static func _light(parent: Node3D, position: Vector3, theme: String,
 ## 2 bounced out through the hole. A wall nobody raises is not a wall
 ## anybody notices missing: the bounds Dictionary still reads right, the
 ## exit socket is still in the right place, and every assertion passes.
+## `cut` IS THE DOOR ASSIGNMENT'S ANSWER, and it defaults to the
+## behaviour this had before it took one: a doorway, always.
+##
+## `_perimeter` has honoured `cut_plan` since the composer started
+## assigning doors, and the producers that raise their own walls never
+## learned to -- so `platform_path` carved an exit whatever the graph
+## said, and a Zone whose last room SEALS its exit came back with a hole
+## in the end wall over open ground. The bridge named it: "door
+## 'c004/exit' is SEALED and the engine measured it as a hole".
 static func _end_wall(root: Node3D, width: float, height: float, z: float,
-		wall: Material, gap_y := 0.0) -> void:
+		wall: Material, gap_y := 0.0, cut := true) -> void:
+	if not cut:
+		_box(root, Vector3(width, height, WALL_THICKNESS),
+				Vector3(0, height / 2.0, z), wall)
+		return
 	var side := (width - DOOR_WIDTH) / 2.0
 	if side > 0.01:
 		for sign_x: float in [-1.0, 1.0]:
@@ -526,10 +547,10 @@ static func _end_wall(root: Node3D, width: float, height: float, z: float,
 ## the expectation inverted, so a sealed door that is accidentally a hole
 ## fails exactly as loudly as a used door that is accidentally a wall.
 static func door_plan(chamber: Dictionary, width: float,
-		depth: float) -> Array:
+		depth: float, exit_at := Vector3.INF) -> Array:
 	var out: Array = []
 	var placed := {}
-	for socket: Variant in procedural_sockets(width, depth):
+	for socket: Variant in procedural_sockets(width, depth, exit_at):
 		var s: Dictionary = socket
 		placed[str(s["name"])] = s
 	for raw: Variant in chamber.get("doors", []):
@@ -563,12 +584,29 @@ static func door_plan(chamber: Dictionary, width: float,
 ## the two-door path has always used -- so an assignment naming `entry`
 ## means what it has always meant and an unassigned room still builds
 ## through the legacy path unchanged.
-static func procedural_sockets(width: float, depth: float) -> Array:
+## `exit_at` IS THE PRODUCER'S OWN WAY OUT, and passing it is how a room
+## whose exit is not at floor level gets a socket where its hole is.
+##
+## The table below is the shape of a FLAT room: four openings around a
+## rectangle, all at y = 0. That is true of an arena and a corridor and
+## false of the two producers that climb. `platform_path` carves its exit
+## at `rise` and `tower` carves its at the summit -- both say so, in
+## `exit_offset`, and have since they were written -- and the socket
+## table said y = 0 anyway. So a generated Zone laid its next corridor at
+## the foot of a wall whose hole was metres above it, the aperture probe
+## read the wall, and the bridge refused the layout twice over: "edge
+## 'e:c003:c004' is broken between socket_a and piece 0: 2.560 m apart;
+## door 'c003/exit' is USED and the engine measured it as solid".
+##
+## Left defaulted, this is the flat table exactly as it was.
+static func procedural_sockets(width: float, depth: float,
+		exit_at := Vector3.INF) -> Array:
+	var way_out := exit_at if exit_at.is_finite() else Vector3(0, 0, depth)
 	return [
 		{"name": "entry", "kind": "doorway", "position": Vector3(0, 0, 0),
 			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": 180.0},
 		{"name": "exit", "kind": "doorway",
-			"position": Vector3(0, 0, depth),
+			"position": way_out,
 			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": 0.0},
 		{"name": "side_left", "kind": "doorway",
 			"position": Vector3(-width / 2.0, 0, depth / 2.0),
@@ -606,8 +644,8 @@ static func _clear_spot(width: float, depth: float, claimed: Array,
 ## The lock slab and the door probe both need to know where an opening
 ## is, and a second derivation of that is how the two come to disagree.
 static func socket_placed(socket_id: String, width: float,
-		depth: float) -> Dictionary:
-	for raw: Variant in procedural_sockets(width, depth):
+		depth: float, exit_at := Vector3.INF) -> Dictionary:
+	for raw: Variant in procedural_sockets(width, depth, exit_at):
 		var s: Dictionary = raw
 		if str(s["name"]) == socket_id:
 			return s
@@ -629,22 +667,21 @@ static func cut_plan(chamber: Dictionary) -> Dictionary:
 		if id == "":
 			continue
 		out[id] = str(door.get("usage", "USED")) != "SEALED"
-	# THE ZONE'S FRONT DOOR IS CARVED WHATEVER THE GRAPH SAYS.
+	# AND NOTHING OVERRIDES IT, the Zone's front door included.
 	#
-	# Nothing joins into the head of the spine, so no `TopologyEdge`
-	# names its `entry` and the composer seals it by omission -- and the
-	# player walks in through exactly there, from the Zone start. Sealing
-	# it walls the player out of their own Zone, which is what a
-	# generated Zone actually did: the bridge measured `c001/entry` as
-	# solid and refused the layout for it.
+	# This used to force the head of the spine's `entry` open -- "the
+	# player walks in through exactly there, from the Zone start" --
+	# against a `DoorAssignment` that says SEALED. The Zone start is
+	# `Vector3(0, 0.8, 1.2)` in the head room's own frame: the player
+	# arrives ONE POINT TWO METRES INSIDE, past the entry wall, and
+	# nothing is built outside it at all. So the override carved a hole
+	# in the Zone's outer wall opening onto nothing, which is the
+	# playtest-2 defect the end walls exist to close ("playtest 2 bounced
+	# out through the hole"), and it did it by overruling the one lane
+	# that owns which doors exist.
 	#
-	# ONLY WHEN A COMPOSER SPOKE. An empty plan means no door assignment
-	# exists and `_perimeter` falls back to the two-door defaults, which
-	# already carve the entry -- adding one key would turn that fallback
-	# off and seal every other opening in the room, which is exactly what
-	# it did: a Zone's first room came back with its EXIT walled up.
-	if not out.is_empty() and bool(chamber.get("zone_entrance", false)):
-		out["entry"] = true
+	# An empty plan still means no composer spoke, and `_perimeter` still
+	# falls back to its two-door defaults for a room with no assignment.
 	return out
 
 static func _perimeter(root: Node3D, width: float, depth: float,
@@ -1150,8 +1187,11 @@ static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 	# builder declares. Two pieces then meet back-to-back at the seam
 	# rather than occupying the same slab -- the difference between a
 	# door frame and a z-fight.
-	_end_wall(root, width, height, WALL_THICKNESS / 2.0, wall)
-	_end_wall(root, width, height, length - WALL_THICKNESS / 2.0, wall)
+	var corridor_cut := cut_plan(chamber)
+	_end_wall(root, width, height, WALL_THICKNESS / 2.0, wall, 0.0,
+			bool(corridor_cut.get("entry", true)))
+	_end_wall(root, width, height, length - WALL_THICKNESS / 2.0, wall,
+			0.0, bool(corridor_cut.get("exit", true)))
 	# Pipes along one wall: the load-bearing GoldSrc prop.
 	var pipe := MeshInstance3D.new()
 	var cylinder := CylinderMesh.new()
@@ -1482,6 +1522,19 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 			var at: Vector3 = socket["position"]
 			var extent: Vector3 = socket["extent"]
 			claimed.append(AABB(at - extent * 0.5, extent))
+	# AND THE PLACE A BODY ARRIVES IS RESERVED BEFORE ANYTHING ELSE IS.
+	#
+	# Same defect as the pedestal and the key, one room feature further
+	# out. Cover rolls at `z` in `depth * [0.25, 0.75]` and is up to
+	# 2.4 m deep, so in a 13.3 m arena a crate reaches back to z = 2.1 --
+	# over the arrival at z = 3.0 -- and a player entering the room
+	# appeared inside a box. The bridge named it: "the engine reports a
+	# standing capsule does not fit at 'room:c002:arrival'".
+	#
+	# First in the list, so the reward anchor and the keys avoid it too:
+	# a pedestal on the doorstep is the same room.
+	claimed.append(AABB(PROCEDURAL_ARRIVAL - Vector3(0.8, 0.0, 0.8),
+			Vector3(1.6, Constants.PLAYER_HEIGHT + 0.2, 1.6)))
 	var reward_at := _reward_anchor(chamber, width, depth, claimed)
 	var reward_box := reward_clearance(chamber, reward_at)
 	if reward_box.size != Vector3.ZERO:
@@ -1633,6 +1686,7 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 			index += 1
 	return {"root": root, "exit_offset": Vector3(0, 0, depth),
 			"doors": door_plan(chamber, width, depth),
+			"player_entry": {"position": PROCEDURAL_ARRIVAL},
 			"key_spots": key_spots,
 			"bounds": AABB(Vector3(-width / 2.0, lowest, 0),
 					Vector3(width, wall_height - lowest, depth)),
@@ -1730,8 +1784,11 @@ static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 	# nothing, and the chamber was open to the void sideways of its own
 	# doorways. The exit doorway is raised by `rise` because that is
 	# where the path leaves from.
-	_end_wall(root, width, wall_height, 0.0, wall)
-	_end_wall(root, width, wall_height, total, wall, rise)
+	var path_cut := cut_plan(chamber)
+	_end_wall(root, width, wall_height, 0.0, wall, 0.0,
+			bool(path_cut.get("entry", true)))
+	_end_wall(root, width, wall_height, total, wall, rise,
+			bool(path_cut.get("exit", true)))
 	_box(root, Vector3(width, WALL_THICKNESS, total),
 			Vector3(0, wall_height, total / 2.0),
 			ThemeMaterials.trim_mat(theme))
@@ -1796,7 +1853,8 @@ static func tower(chamber: Dictionary, theme: String) -> Dictionary:
 	var tower_rng := _greeble_rng(chamber, theme)
 	var wants_secret := tower_rng.randf() < 0.34
 	var shaft_height := total_rise + (6.5 if wants_secret else 5.0)
-	_perimeter(root, side, side, shaft_height, theme, true, true, summit)
+	_perimeter(root, side, side, shaft_height, theme, true, true, summit,
+			0.0, 0.0, 0.0, true, cut_plan(chamber))
 
 	# Central column, so the shaft reads as a structure and blocks
 	# straight-line ranged fire across it.
@@ -1933,13 +1991,14 @@ static func corner(turn: int, theme: String) -> Dictionary:
 			"bounds": AABB(Vector3(-S / 2.0, -1, 0), Vector3(S, H + 1, S)),
 			"turn": turn}
 
-static func treasure_room(_chamber: Dictionary, theme: String) -> Dictionary:
+static func treasure_room(chamber: Dictionary, theme: String) -> Dictionary:
 	var side := 8.0
 	var height := 4.5
 	var root := Node3D.new()
 	_box(root, Vector3(side, 0.5, side),
 			Vector3(0, -0.25, side / 2.0), ThemeMaterials.floor_mat(theme))
-	_perimeter(root, side, side, height, theme)
+	_perimeter(root, side, side, height, theme, true, true, 0.0,
+			0.0, 0.0, 0.0, true, cut_plan(chamber))
 	_box(root, Vector3(side, WALL_THICKNESS, side),
 			Vector3(0, height, side / 2.0), ThemeMaterials.trim_mat(theme))
 	# The one warm room in the building.

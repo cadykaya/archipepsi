@@ -15,7 +15,7 @@ from pydantic import TypeAdapter
 from .. import composition as X
 from .. import content_value as V
 from ..schemas import constants as C
-from ..schemas.zone import HEADROOM, Zone as _Zone
+from ..schemas.zone import HEADROOM, band_ramp_fits, Zone as _Zone
 from ..schemas import migration as MG
 from ..schemas import echo as E
 from ..schemas.echo import COMPLEXITY_BUDGETS
@@ -293,13 +293,27 @@ def _build_to_budget(rng, locations, budget, unlocked, zone_index=0,
     # The landmark is built RICH, not merely large. Growing it afterwards
     # runs into the per-chamber caps at exactly the room counts where the
     # average is highest, so it starts where it needs to end up.
+    #
+    # RICH IS A RANGE, NOT A NUMBER. This was a literal 26.0 x 24.0 x 7.0
+    # in every Zone of every campaign, and the provider's variety measure
+    # passed anyway because the biggest room in most Zones was wearing an
+    # authored shell and took ITS dimensions instead. Withholding the
+    # three shells whose doorway sits off their own body took that cover
+    # away and the fixed landmark was what was underneath: six Zones, four
+    # shapes. So the landmark rolls, bounded BELOW by the ordinary arena's
+    # ceiling (`_arena_shape` stops at 24.0 x 22.0) so it is still the
+    # biggest room in the Zone, and above by the procedural builder's own
+    # span cap.
     rooms = [c for c in chambers if c["type"] == "arena"]
     landmark = None
     if rooms:
         landmark = rooms[len(rooms) // 2]
-        landmark["width"] = 26.0
-        landmark["depth"] = 24.0
-        landmark["wall_height"] = 7.0
+        landmark["width"] = round(
+            rng.uniform(24.0, C.PROCEDURAL_ARENA_MAX_SPAN), 1)
+        landmark["depth"] = round(
+            rng.uniform(22.0, C.PROCEDURAL_ARENA_MAX_SPAN - 2.0), 1)
+        landmark["wall_height"] = round(
+            rng.uniform(6.5, C.PROCEDURAL_ARENA_MAX_HEIGHT), 1)
         landmark["enemies"] = [
             {"archetype": "melee", "count": 4 if lean else 7},
             {"archetype": "brute", "count": 1}]
@@ -648,13 +662,42 @@ def _band(rng, width: float, depth: float, wall_height: float) -> dict | None:
         rise = math.floor(min(rng.uniform(1.6, 2.6), highest) * 100) / 100
     else:
         rise = round(rng.uniform(1.2, 2.0), 2)
-    return {
+    band = {
         "kind": kind,
         "rise": rise,
         "coverage": round(rng.uniform(0.25, 0.45), 2),
         "side": rng.choice(["left", "right", "back"]),
         "access": "ramp",
     }
+    # AND THE RAMP HAS TO FIT, asked here rather than rolled and retried,
+    # for the same reason the ceiling bound is: the fallback is measured
+    # on being valid at the first attempt. A room too shallow for the
+    # band's ramp gets NO band, which the vocabulary already allows and
+    # which this function already returns for a third of arenas.
+    #
+    # Both rolls happen either way. Dropping the band by returning early
+    # would leave the rng stream in a different place for every room
+    # after it, and a deterministic provider that reshuffles when a bound
+    # is added is not reproducible.
+    if band_ramp_fits(_BandView(band), width, depth):
+        return None
+    return band
+
+
+class _BandView:
+    """The three fields `band_ramp_fits` reads, off a plain dict.
+
+    The rule lives on the schema because it decides what may be
+    PROPOSED, and this function proposes before a `Chamber` exists.
+    """
+
+    __slots__ = ("kind", "rise", "coverage", "side")
+
+    def __init__(self, band: dict):
+        self.kind = band["kind"]
+        self.rise = band["rise"]
+        self.coverage = band["coverage"]
+        self.side = band["side"]
 
 
 def _activity(kind: str, elements: int, ordered: bool = False) -> dict:

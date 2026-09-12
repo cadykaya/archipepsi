@@ -132,6 +132,9 @@ jobs:
       - name: Whole campaign, headlessly
         run: make godot-integration
 
+      - name: A campaign reopened in a second process
+        run: make godot-reload
+
       - name: Build metadata
         if: always()
         run: make version

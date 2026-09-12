@@ -1,0 +1,437 @@
+class_name ReloadDriver
+extends Node
+## A CAMPAIGN REOPENED IN A NEW PROCESS, through the real Main.
+##
+## What this exists to catch: `ZoneProgress` has been persisted on every
+## `key_collected`, `lock_opened` and `station_reached` since it landed,
+## and `Main._to_zone` read none of it -- it read three in-memory
+## dictionaries whose own docstring says they do not survive quitting. So
+## the save held the progress and the game walked past it, and relaunching
+## put a player back in front of a lock they had already opened with a key
+## that was no longer there to collect. Nothing could see it, because
+## every automated proof of a resume lived inside ONE process, and one
+## process is exactly where the in-memory copy is right.
+##
+## So this is TWO Godot processes against one bridge and one save
+## directory. The first plays; the second is launched cold, boots the real
+## `Main`, reconnects, loads the campaign off disk and re-enters. The only
+## thing carried between them is the save.
+##
+## Everything goes through the shipping path: `main._on_enter_zone()`
+## sends the intent, `Main._on_snapshot` notices `ZONE_ACTIVE` and calls
+## `_to_zone`, and `_to_zone` is where the recovery either happens or
+## does not.
+
+const PHASE_FLAG := "--reload-phase="
+const WALK_FRAMES := 900
+const ARRIVED := 1.4
+
+## Untyped on purpose: `Main` names this class to start it, and naming
+## `Main` back would be a cycle the parser refuses.
+var main: Node
+var _failures := 0
+var _checks := 0
+
+
+func _check(condition: bool, message: String) -> void:
+	_checks += 1
+	if condition:
+		print("  ok: %s" % message)
+		return
+	_failures += 1
+	printerr("FAIL: %s" % message)
+	print("FAIL: %s" % message)
+
+
+func _finish(code: int) -> void:
+	if code == 0 and _failures == 0:
+		print("GODOT RELOAD TESTS OK (%d checks)" % _checks)
+	else:
+		print("GODOT RELOAD FAILED (%d of %d checks)"
+				% [_failures, _checks])
+	get_tree().quit(1 if (code != 0 or _failures > 0) else 0)
+
+
+static func phase_from_cmdline() -> String:
+	for arg: String in OS.get_cmdline_user_args():
+		if arg.begins_with(PHASE_FLAG):
+			return arg.substr(PHASE_FLAG.length())
+	return ""
+
+
+func _ready() -> void:
+	_run()
+
+
+func _run() -> void:
+	await get_tree().process_frame
+	if not await _await("bridge connection",
+			func() -> bool: return BridgeClient.online, 20.0):
+		_finish(1)
+		return
+	match phase_from_cmdline():
+		"record":
+			await _record()
+		"resume":
+			await _resume()
+		_:
+			_check(false, "no --reload-phase was named")
+			_finish(1)
+
+
+## Anything the driver has to hand the next process that the SAVE does
+## not carry: which Zone, which lock, which key. Written beside the save
+## rather than into it, because the save is the bridge's and this is the
+## test's own bookkeeping.
+func _notes_path() -> String:
+	return "user://reload_notes.json"
+
+
+func _write_notes(notes: Dictionary) -> void:
+	var f := FileAccess.open(_notes_path(), FileAccess.WRITE)
+	f.store_string(JSON.stringify(notes))
+	f.close()
+
+
+func _read_notes() -> Dictionary:
+	if not FileAccess.file_exists(_notes_path()):
+		return {}
+	var raw := FileAccess.get_file_as_string(_notes_path())
+	var parsed: Variant = JSON.parse_string(raw)
+	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
+
+
+func _await(what: String, predicate: Callable,
+		seconds := 30.0) -> bool:
+	var waited := 0.0
+	while waited < seconds:
+		if predicate.call():
+			return true
+		await get_tree().process_frame
+		waited += get_process_delta_time()
+	_check(false, "timed out waiting for %s" % what)
+	return false
+
+
+## A Zone carrying a lock and its key, through the real intents.
+##
+## Same shape as `bridge/tests/test_amalgam_end_to_end._branching_zone`:
+## a branch needs a Zone big enough to spare a room, so ask until one
+## comes, and put the ones that do not back.
+func _a_locked_zone() -> Dictionary:
+	for _attempt in 4:
+		BridgeClient.send_intent({"type": "request_next_zone",
+				"finale": false})
+		if not await _await("ZONE_READY",
+				func() -> bool:
+					return BridgeClient.hub_mode() == "ZONE_READY"):
+			return {}
+		var record := BridgeClient.active_zone()
+		var zone: Dictionary = record.get("zone", {})
+		for raw_chamber: Variant in zone.get("chambers", []):
+			var chamber: Dictionary = raw_chamber
+			for raw_door: Variant in chamber.get("doors", []):
+				var door: Dictionary = raw_door
+				if str(door.get("usage", "")) != "LOCKED":
+					continue
+				var edge_id := str(door.get("edge_id", ""))
+				var branch := ""
+				for raw_edge: Variant in zone.get("edges", []):
+					var edge: Dictionary = raw_edge
+					if str(edge.get("edge_id", "")) != edge_id:
+						continue
+					branch = str(edge["room_b"]) \
+							if str(edge["room_a"]) == str(chamber["id"]) \
+							else str(edge["room_a"])
+				return {"record": record, "room": str(chamber.get("id", "")),
+						"socket": str(door.get("socket_id", "")),
+						"key": str(door.get("key_id", "")),
+						"branch": branch}
+		# Not this one. Put it back rather than playing it.
+		var zid := str(record.get("zone_id", ""))
+		BridgeClient.send_intent({"type": "enter_zone", "zone_id": zid})
+		if not await _await("ZONE_ACTIVE before abandoning",
+				func() -> bool:
+					return BridgeClient.hub_mode() == "ZONE_ACTIVE"):
+			return {}
+		BridgeClient.send_intent({"type": "abandon_zone", "zone_id": zid})
+		if not await _await("the Zone is put back",
+				func() -> bool:
+					return BridgeClient.active_zone().is_empty()):
+			return {}
+	_check(false, "no Zone with a lock in four attempts")
+	return {}
+
+
+func _record() -> void:
+	if BridgeClient.hub_mode() == "NO_CAMPAIGN":
+		BridgeClient.send_intent({"type": "start_mock_campaign"})
+	if not await _await("a campaign",
+			func() -> bool:
+				return BridgeClient.hub_mode() != "NO_CAMPAIGN"):
+		_finish(1)
+		return
+	var found := await _a_locked_zone()
+	if found.is_empty():
+		_finish(1)
+		return
+	var record: Dictionary = found["record"]
+	var zone_id := str(record.get("zone_id", ""))
+
+	# THE REAL ENTRY PATH. `_on_enter_zone` sends the intent; the
+	# snapshot handler builds the Zone. Nothing here constructs a
+	# `ZoneController`.
+	main._on_enter_zone()
+	if not await _await("Main builds the Zone",
+			func() -> bool:
+				return main.zone != null and main.zone.player != null,
+			40.0):
+		_finish(1)
+		return
+	if not await _await("the bridge accepts the layout",
+			func() -> bool: return main.zone.layout_verdict == "ACCEPTED",
+			20.0):
+		_finish(1)
+		return
+	var zone := main.zone as ZoneController
+
+	# COLLECT THE KEY AND OPEN THE LOCK, on the real objects. The walk
+	# itself is proved by the branch-journey test in the room-contract
+	# suite; what this run is about is what survives the process, so it
+	# drives the same collect and the same open the body would and lets
+	# the same intents go.
+	var key_id := str(found["key"])
+	for node: Node in _find_all(zone, "ZoneKey"):
+		var key := node as ZoneKey
+		if key == null or key.key_id != key_id:
+			continue
+		zone.player.global_position = key.global_position + Vector3.UP * 1.2
+		for _i in 10:
+			await get_tree().physics_frame
+	_check(zone.keys_held().has(key_id),
+			"the key '%s' was collected in the first process" % key_id)
+	# The key alone opens its lock -- `_open_what_the_keys_allow` runs on
+	# every collection -- so this asserts rather than arranges.
+	var opened := "%s/%s" % [str(found["room"]), str(found["socket"])]
+	_check(zone.locks_opened().has(opened),
+			"collecting the key opened '%s'" % opened)
+	# A STATION TOO, so the resume anchor has something to be.
+	var station_id := ""
+	for node: Node in _find_all(zone, "WarpStation"):
+		var station := node as WarpStation
+		if station == null:
+			continue
+		zone.player.global_position = station.global_position \
+				+ Vector3.UP * 1.2
+		for _i in 10:
+			await get_tree().physics_frame
+		if zone.stations_reached().has(station.station_id):
+			station_id = station.station_id
+			break
+
+	# LEAVE THE WAY THE GAME LEAVES, so the bridge writes the save.
+	BridgeClient.send_intent({"type": "leave_zone", "zone_id": zone_id})
+	if not await _await("the Zone goes dormant",
+			func() -> bool: return BridgeClient.active_zone().is_empty()):
+		_finish(1)
+		return
+	_write_notes({"zone_id": zone_id, "key": key_id, "lock": opened,
+			"room": str(found["room"]), "socket": str(found["socket"]),
+			"branch": str(found["branch"]), "station": station_id})
+	print("recorded: zone %s, key %s, lock %s, station %s"
+			% [zone_id, key_id, opened, station_id])
+	_finish(0)
+
+
+func _resume() -> void:
+	var notes := _read_notes()
+	_check(not notes.is_empty(),
+			"the first process left its notes behind")
+	if notes.is_empty():
+		_finish(1)
+		return
+	var zone_id := str(notes["zone_id"])
+	if not await _await("the campaign loads from disk",
+			func() -> bool:
+				return BridgeClient.hub_mode() != "NO_CAMPAIGN", 30.0):
+		_finish(1)
+		return
+
+	# THE SAVE IS THE ONLY THING THAT CROSSED. Nothing in this process
+	# has ever seen this Zone, so `Main`'s in-memory dictionaries are
+	# empty by construction and whatever comes back came from the bridge.
+	_check(main._zone_keys.is_empty() and main._zone_locks_open.is_empty()
+				and main._zone_resume.is_empty(),
+			"this process remembers nothing of its own about any Zone")
+
+	# RE-ENTRY IS THE `enter_zone` INTENT, and `Main._on_snapshot` is
+	# what builds what comes back -- the same two steps `_on_enter_zone`
+	# takes. It is spelled out here rather than called because
+	# `_on_enter_zone` reads the ACTIVE Zone to find its id, and a
+	# dormant Zone is not the active one: the Hub's portal has no
+	# affordance for going back to a Zone you left, which is a bridge
+	# -column gap recorded in `docs/AMALGAM_SLICE1.md`. Everything past
+	# the intent is the shipping path.
+	var searches_before := ZoneBuilder.searches
+	main._entering_zone = true
+	BridgeClient.send_intent({"type": "enter_zone", "zone_id": zone_id})
+	if not await _await("ZONE_ACTIVE",
+			func() -> bool:
+				return BridgeClient.hub_mode() == "ZONE_ACTIVE"):
+		_finish(1)
+		return
+	var record := _record_for(zone_id)
+	_check(not record.is_empty(),
+			"the reloaded campaign still holds %s" % zone_id)
+	var progress: Dictionary = record.get("progress", {})
+	_check((progress.get("collected_keys", []) as Array)
+				.has(str(notes["key"])),
+			"the save carries the key '%s'" % str(notes["key"]))
+	_check((progress.get("opened_locks", []) as Array)
+				.has(str(notes["lock"])),
+			"the save carries the opened lock '%s'" % str(notes["lock"]))
+	_check(typeof(record.get("manifest")) == TYPE_DICTIONARY
+				and not (record["manifest"] as Dictionary).is_empty(),
+			"the save carries the committed layout")
+	if not await _await("Main rebuilds the Zone",
+			func() -> bool:
+				return main.zone != null and main.zone.player != null, 40.0):
+		_finish(1)
+		return
+	var zone := main.zone as ZoneController
+	_check(ZoneBuilder.searches == searches_before,
+			"the Zone was REPLAYED from its manifest: %d route search(es) "
+			% (ZoneBuilder.searches - searches_before)
+			+ "ran, and a committed layout is rebuilt rather than solved")
+	if not await _await("the replayed layout is accepted",
+			func() -> bool: return zone.layout_verdict == "ACCEPTED", 20.0):
+		_finish(1)
+		return
+
+	# 1. THE PROGRESS CAME BACK, from the bridge and from nowhere else.
+	_check(zone.keys_held().has(str(notes["key"])),
+			"the player still holds the key they collected last time")
+	_check(zone.locks_opened().has(str(notes["lock"])),
+			"the lock they opened last time is open")
+	if str(notes["station"]) != "":
+		_check(zone.stations_reached().has(str(notes["station"])),
+				"the station they reached last time is online")
+
+	# 2. AND THE KEY IS NOT THERE TO COLLECT AGAIN. A resume that
+	#    respawned it would read as "progress restored" on every counter
+	#    above and still hand the player a second copy.
+	var loose := 0
+	for node: Node in _find_all(zone, "ZoneKey"):
+		var key := node as ZoneKey
+		if key != null and key.key_id == str(notes["key"]):
+			loose += 1
+	_check(loose == 0,
+			"%d copies of the collected key were rebuilt" % loose)
+
+	# 3. AND THE DOORWAY IS OPEN, with no slab left standing in it.
+	#    `LockedDoor.open()` frees the node, so "already opened" is the
+	#    absence of one -- and a resume that rebuilt the slab would show
+	#    up here and nowhere else.
+	var standing := 0
+	for node: Node in _find_all(zone, "LockedDoor"):
+		var candidate := node as LockedDoor
+		if candidate == null:
+			continue
+		if "%s/%s" % [candidate.room_id, candidate.socket_id] \
+				== str(notes["lock"]):
+			standing += 1
+	_check(standing == 0,
+			"%d slab(s) were rebuilt in a doorway the player opened"
+			% standing)
+
+	# 4. AND THE PLAYER WALKS THROUGH IT, on foot, with no offers and no
+	#    teleport. The two rooms the lock joins are in the manifest; the
+	#    walk is from the junction's arrival to the branch room's.
+	var from_at: Vector3 = zone._zone_anchors.get(
+			"room:%s:arrival" % str(notes["room"]), Vector3.INF)
+	var to_at: Vector3 = zone._zone_anchors.get(
+			"room:%s:arrival" % str(notes["branch"]), Vector3.INF)
+	_check(from_at != Vector3.INF and to_at != Vector3.INF,
+			"the manifest carries both rooms' arrivals")
+	if from_at == Vector3.INF or to_at == Vector3.INF:
+		_finish(1)
+		return
+	var box: AABB = zone.room_bounds.get(str(notes["branch"]), AABB())
+	zone.player.global_position = from_at + Vector3.UP * 0.6
+	for _i in 12:
+		await get_tree().physics_frame
+	var walk := await _walk(zone.player, to_at, box)
+	# INSIDE THE ROOM, not within a metre of a point in it.
+	#
+	# The walk crosses a doorway, a connector and a turn, and a straight
+	# line at the far room's arrival is not how anyone walks that -- a
+	# body pressed against the last crate before the goal has still gone
+	# through the door, which is the claim. So the test asks the
+	# question the claim is made of: is the player in the branch room?
+	var at: Vector3 = walk["at"]
+	_check(box.has_volume() and box.grow(0.5).has_point(at),
+			"the player walked from '%s' through the doorway they had "
+			% str(notes["room"]) + "already opened and into '%s': they "
+			% str(notes["branch"]) + "are at %s and it is %s (%d frames, "
+			% [str(at), str(box), int(walk["frames"])]
+			+ "%.1f m from its arrival)" % float(walk["closest"]))
+	_finish(0)
+
+
+## Every node of one class under `root`, by class name rather than by a
+## group, because a key and a lock declare neither.
+func _find_all(root: Node, class_wanted: String) -> Array[Node]:
+	var out: Array[Node] = []
+	if root.get_script() != null \
+			and (root.get_script() as GDScript).get_global_name() \
+				== class_wanted:
+		out.append(root)
+	for child: Node in root.get_children():
+		out.append_array(_find_all(child, class_wanted))
+	return out
+
+
+## One Zone's record out of the snapshot.
+##
+## Only the ACTIVE Zone is on the wire -- a snapshot carries no list of
+## dormant records -- which is why the resume asks for this AFTER the
+## `enter_zone` intent rather than before.
+func _record_for(zone_id: String) -> Dictionary:
+	var active := BridgeClient.active_zone()
+	return active if str(active.get("zone_id", "")) == zone_id else {}
+
+
+## `stop_inside` ENDS THE WALK THE MOMENT IT SUCCEEDS.
+##
+## A branch room carries a return plug, and a plug sends the player home
+## from the dead end they just walked into -- while the finger is still
+## on the key. Without this the walk kept going from the Zone start and
+## reported a position twelve rooms away as where the walk ended.
+func _walk(player: Player, goal: Vector3,
+		stop_inside := AABB()) -> Dictionary:
+	var closest := INF
+	var still := 0
+	var last := player.global_position
+	Input.action_press("move_forward", 1.0)
+	var used := 0
+	var ended := player.global_position
+	for i in WALK_FRAMES:
+		used = i + 1
+		var here := player.global_position
+		ended = here
+		if stop_inside.has_volume() and stop_inside.grow(0.5).has_point(here):
+			break
+		var flat := Vector2(goal.x - here.x, goal.z - here.z)
+		closest = minf(closest, flat.length())
+		if flat.length() <= ARRIVED:
+			break
+		player.rotation.y = atan2(-flat.x, -flat.y)
+		still = still + 1 if (here - last).length() < 0.012 else 0
+		last = here
+		if still > 90:
+			break
+		await get_tree().physics_frame
+	Input.action_release("move_forward")
+	return {"arrived": Vector2(goal.x - ended.x, goal.z - ended.z).length()
+				<= ARRIVED,
+			"at": ended, "frames": used, "closest": closest}

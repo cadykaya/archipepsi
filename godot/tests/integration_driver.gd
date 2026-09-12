@@ -78,8 +78,17 @@ func _run() -> void:
 		_finish(1)
 		return
 
+	# ---- The refusal control, before the campaign runs on ----------------
+	if not await _test_a_refused_layout_is_not_playable():
+		_finish(1)
+		return
+	# and the Zone it left recomposed is then played normally.
+	if not await _play_one_zone(false, true):
+		_finish(1)
+		return
+
 	# ---- Pass 2: play the campaign to the end -----------------------------
-	var zones_played := 1
+	var zones_played := 2
 	var stock_ever_seen := false
 	while zones_played < 40:
 		var mode := BridgeClient.hub_mode()
@@ -650,7 +659,134 @@ func _check_hit_confirmation() -> void:
 			"shooting a corpse never re-reports a kill")
 	enemy.queue_free()
 
-func _play_one_zone(detailed: bool) -> bool:
+## A LAYOUT THE BRIDGE REFUSES, through the real client and the real
+## intent, and what the game does about it.
+##
+## The refusal half of the exchange had only ever been driven from
+## Python. What that left unproven is the half the player lives in:
+## `handle_layout_result` refused a manifest and sent a `zone_abandoned`
+## NOTIFICATION, `main.gd` showed it as a toast, and the Zone carried on
+## being playable and claimable. A refusal nobody acts on is a refusal in
+## name.
+##
+## NO TEST SEAM IN THE ENGINE. The falsification is in this driver's own
+## COPY of the Zone: one `USED` door is flipped to `SEALED` before the
+## controller builds it, so the engine honestly builds a wall, honestly
+## measures it as solid, and honestly says so -- while the bridge still
+## holds the `USED` assignment it composed. That is not a doctored
+## message; it is exactly the disagreement the exchange exists to catch,
+## and every line of the path between them is the shipping one.
+func _test_a_refused_layout_is_not_playable() -> bool:
+	BridgeClient.send_intent({"type": "request_next_zone", "finale": false})
+	if not await _await_condition("ZONE_READY for the refusal control",
+			func() -> bool: return BridgeClient.hub_mode() == "ZONE_READY",
+			30.0):
+		return false
+	var record := BridgeClient.active_zone()
+	var zone_id := str(record.get("zone_id", ""))
+	var allocated: Array = (record.get("allocated_location_ids", [])
+			as Array).duplicate()
+	var falsified: Dictionary = (record.get("zone", {}) as Dictionary) \
+			.duplicate(true)
+	# WHICH DOOR, and why that one.
+	#
+	# An arena's SEALED `side_left`: a wall in the bridge's copy, carved
+	# open in this client's. It has to be a door that carries NO edge,
+	# because `placement_plan` refuses a JOINED edge whose room seals its
+	# door -- that makes the Zone unbuildable rather than wrong, and the
+	# controller then never reaches the bridge at all. And it has to be
+	# an arena, because `_perimeter` is what reads a side socket out of
+	# the cut plan and a corridor raises its own walls.
+	#
+	# So the engine honestly carves a hole, honestly measures it as one,
+	# and says so; the bridge is still holding SEALED. Nothing in the
+	# message is doctored.
+	var flipped := ""
+	for raw_chamber: Variant in falsified.get("chambers", []):
+		var chamber: Dictionary = raw_chamber
+		if flipped != "" or str(chamber.get("type", "")) != "arena":
+			continue
+		for raw_door: Variant in chamber.get("doors", []):
+			var door: Dictionary = raw_door
+			if str(door.get("socket_id", "")) != "side_left":
+				continue
+			if str(door.get("usage", "")) != "SEALED":
+				continue
+			if door.get("edge_id") != null:
+				continue
+			door["usage"] = "USED"
+			flipped = "%s/side_left" % str(chamber.get("id", "?"))
+	_check(flipped != "",
+			"an arena's sealed side door (%s) was carved open in this "
+			% flipped + "client's copy only")
+	if flipped == "":
+		return false
+
+	BridgeClient.send_intent({"type": "enter_zone", "zone_id": zone_id})
+	if not await _await_condition("ZONE_ACTIVE for the refusal control",
+			func() -> bool:
+				return BridgeClient.hub_mode() == "ZONE_ACTIVE"):
+		return false
+	var controller := ZoneController.new()
+	var refusals: Array[String] = []
+	controller.layout_refused.connect(
+			func(refused_id: String) -> void: refusals.append(refused_id))
+	get_tree().root.add_child(controller)
+	controller.setup(falsified)
+	var refused := func() -> bool:
+		var state := str(BridgeClient.active_zone().get("layout_state", ""))
+		return state == "REFUSED" or BridgeClient.active_zone().is_empty()
+	if not await _await_condition("the bridge refuses the falsified layout",
+			refused, 20.0):
+		controller.queue_free()
+		return false
+	# The controller polls the same snapshot this driver does, so seeing
+	# REFUSED here says nothing about whether its own loop has come
+	# round yet. Give it frames before asking what it did.
+	for _i in 30:
+		await get_tree().process_frame
+	_check(refusals == [zone_id],
+			"the controller raised `layout_refused` for %s, and it "
+			% zone_id + "raised %s" % str(refusals))
+	_check(controller.player == null or controller.player.input_frozen,
+			"the player is held while the layout is unaccepted")
+
+	# AND THE REFUSED ZONE CANNOT CLAIM A CHECK. The intent is the real
+	# one, sent the way a reward sends it; the bridge's Zone is no longer
+	# ACTIVE, so it must come back unclaimed.
+	var claimed := int(allocated[0]) if not allocated.is_empty() else 0
+	BridgeClient.send_intent({"type": "claim_check", "zone_id": zone_id,
+			"location_id": claimed})
+	for _i in 30:
+		await get_tree().process_frame
+	_check(not (claimed in BridgeClient.snapshot.get(
+				"checked_location_ids", [])),
+			"a refused Zone cannot claim check %d" % claimed)
+	controller.queue_free()
+	await get_tree().process_frame
+
+	# AND ITS CHECKS SURVIVE. Recovering safely means recomposing the
+	# Zone against the ids it already holds, not spending them.
+	if not await _await_condition("the refused Zone is composed again",
+			func() -> bool:
+				return BridgeClient.hub_mode() == "ZONE_READY", 30.0):
+		return false
+	var again := BridgeClient.active_zone()
+	_check(str(again.get("zone_id", "")) == zone_id,
+			"the recomposed Zone is still %s" % zone_id)
+	var kept: Array = again.get("allocated_location_ids", [])
+	allocated.sort()
+	kept.sort()
+	_check(kept == allocated,
+			"the refused Zone kept its Checks: %s, and it holds %s"
+			% [str(allocated), str(kept)])
+	return true
+
+
+## `already_ready` plays the Zone the campaign is ALREADY holding rather
+## than asking for a new one -- which the Hub refuses while one is ready,
+## and which is the state the refusal control leaves behind.
+func _play_one_zone(detailed: bool, already_ready := false) -> bool:
 	var mode := BridgeClient.hub_mode()
 	# finale_offered stays true in postgame by schema construction (both its
 	# operands remain honestly true); the goal being missing is the extra
@@ -661,7 +797,9 @@ func _play_one_zone(detailed: bool) -> bool:
 			goal_missing = true
 	var finale := goal_missing and (mode == "FINALE_ONLY"
 			or bool(BridgeClient.hub().get("finale_offered", false)))
-	BridgeClient.send_intent({"type": "request_next_zone", "finale": finale})
+	if not already_ready:
+		BridgeClient.send_intent({"type": "request_next_zone",
+				"finale": finale})
 	if not await _await_condition("ZONE_READY",
 			func() -> bool: return BridgeClient.hub_mode() == "ZONE_READY",
 			30.0):
@@ -675,15 +813,53 @@ func _play_one_zone(detailed: bool) -> bool:
 			" [FINALE]" if record.get("is_finale") else "",
 			str(record.get("allocated_location_ids", []))])
 
-	BridgeClient.send_intent({"type": "enter_zone",
-			"zone_id": record.get("zone_id", "")})
-	if not await _await_condition("ZONE_ACTIVE",
-			func() -> bool: return BridgeClient.hub_mode() == "ZONE_ACTIVE"):
+	# ENTER, THEN WAIT FOR THE LAYOUT VERDICT.
+	#
+	# A refused layout is no longer a toast over a Zone that keeps
+	# playing: the bridge sends the Zone back to be composed again
+	# against the ids it already holds, and the Zone this client is
+	# holding is stale the moment that happens. So the client does what a
+	# client has to do -- drop it, wait for the new one, and try again.
+	# Bounded, because `MAX_LAYOUT_REFUSALS` bounds the other side.
+	var controller: ZoneController = null
+	for attempt in 4:
+		BridgeClient.send_intent({"type": "enter_zone",
+				"zone_id": record.get("zone_id", "")})
+		if not await _await_condition("ZONE_ACTIVE",
+				func() -> bool:
+					return BridgeClient.hub_mode() == "ZONE_ACTIVE"):
+			return false
+		controller = ZoneController.new()
+		get_tree().root.add_child(controller)
+		controller.setup(zone_dict)
+		for _i in 12:
+			await get_tree().physics_frame
+		var verdict := str(BridgeClient.active_zone().get(
+				"layout_state", ""))
+		if verdict != "REFUSED":
+			break
+		print("zone %s: layout refused, composing again (attempt %d)"
+				% [str(record.get("zone_id", "")), attempt + 1])
+		controller.queue_free()
+		controller = null
+		await get_tree().process_frame
+		if not await _await_condition("recomposed ZONE_READY",
+				func() -> bool:
+					return BridgeClient.hub_mode() == "ZONE_READY", 30.0):
+			return false
+		record = BridgeClient.active_zone()
+		zone_dict = record.get("zone", {})
+	if controller == null:
+		_check(false, "every layout this client sent was refused")
 		return false
-
-	var controller := ZoneController.new()
-	get_tree().root.add_child(controller)
-	controller.setup(zone_dict)
+	# THE ACCEPTED CONTROL, asserted rather than assumed. Everything
+	# after this line reads as a Zone that is being played; the thing
+	# that makes it one is the bridge having ACCEPTED the layout this
+	# client measured and sent.
+	_check(str(BridgeClient.active_zone().get("layout_state", ""))
+				== "ACCEPTED",
+			"the Zone this client is playing has an accepted layout (%s)"
+			% str(BridgeClient.active_zone().get("layout_state", "?")))
 	await get_tree().process_frame
 	await get_tree().process_frame
 

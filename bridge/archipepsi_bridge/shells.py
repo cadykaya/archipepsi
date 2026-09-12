@@ -76,15 +76,81 @@ def load_registry(directory: Path | None = None) -> dict[str, ContentEntry]:
         return {}
 
 
+def doorways_off_the_body(entry: ContentEntry) -> dict[str, float]:
+    """`socket name -> metres adrift`, for doorways not on this shell.
+
+    The Python half of `ContentInstantiator.doorways_outside_envelope`,
+    measuring the same allowance against the same manifest so the two
+    lanes cannot disagree about which shells are joinable.
+
+    A shell's `size` IS ITS OUTER FACE, and that is measured rather than
+    assumed: Arty's 2026-09-12 reply reports the wall at the exit of all
+    three repaired shells running to exactly the declared depth
+    (`hl_back_*` 59.40-60.00 against a depth of 60, and the same for
+    Plenum and Span). Nine of the twelve put their doorways at or inside
+    that face -- `shell_corner_left`'s exit sits on it exactly, at 3.4 of
+    6.8. So the allowance here is the manifests' two-decimal ROUNDING and
+    nothing more.
+
+    NOT ONE WALL THICKNESS. This allowed `WALL_THICKNESS` at first, by
+    analogy with `ChamberBuilders.corner`, which steps its exit a full
+    thickness past its bounds on purpose. That analogy is wrong, and
+    `layout.SOCKET_PROUD` is where it belongs: the engine's REPORTED
+    bounds span its walls' centre planes, so a socket on the outer face
+    is half a thickness outside them; a manifest's `size` is the outer
+    face already. Two comparisons against two different things.
+    Collapsing them cost a false negative -- `shell_yard_gantry` puts
+    both its doorways 0.40 m past an envelope running -42.60..42.60, and
+    a 0.405 allowance passed it by five millimetres. Arty measured it and
+    said so.
+
+    What it is not is a free coordinate. A socket past the body puts a
+    corridor's mouth in open air with the room's wall behind it, and the
+    composer's overlap test never considered that volume because the room
+    does not claim it. This measures that distance and nothing else: it
+    says nothing about whether the aperture is cut, whether a lock blocks
+    it, or whether a body can stand at it -- those are three other
+    measurements, taken in the engine, against real geometry.
+    """
+    out: dict[str, float] = {}
+    w, h, d = (float(v) for v in entry.size)
+    if w <= 0.0 or d <= 0.0:
+        return out
+    slack = SPAN_TOLERANCE
+    lo = (-w / 2.0 - slack, -slack, -slack)
+    hi = (w / 2.0 + slack, h + slack, d + slack)
+    for socket in entry.sockets:
+        if socket.kind != "doorway":
+            continue
+        worst = max(max(lo[i] - socket.position[i],
+                        socket.position[i] - hi[i]) for i in range(3))
+        if worst > 0.0:
+            out[socket.name] = worst
+    return out
+
+
 def is_offerable(entry: ContentEntry) -> bool:
     """Whether this entry may be put in front of Epsilon at all.
 
-    Three gates, and the middle one is the art lane's:
+    Four gates, and the middle two are the art lane's:
 
     * it is a room shell;
     * it is not `review: pending` -- a file existing in the tree is not
       approval, and offering a pending asset decides for whoever is
       still deciding;
+    * every doorway it declares lies on its own body. `review: pass`
+      approved how these three look, and nothing in that review
+      measured where their doorways were: `shell_hall_transit`,
+      `shell_plenum_helix` and `shell_span_basin` each put `exit` two
+      metres past their own declared depth, so a Zone built with one
+      has its wall at the depth and its corridor starting two metres
+      further on, with nothing in between. That is the join the
+      2026-09-11 playtest opened with ("the connecter isnt connected at
+      all") and what the layout validator now refuses a generated Zone
+      for, by name. Withheld rather than repaired: an authored
+      coordinate is Art's, the repair is filed
+      (`docs/art-requests/2026-09-11-doorways-outside-their-envelope.md`),
+      and this gate lets the shell back in the moment it lands;
     * it is authored. A procedural entry is the fallback the builder
       reaches anyway, so naming it explicitly buys nothing and would let
       Epsilon "choose" the thing it gets by choosing nothing.
@@ -92,6 +158,12 @@ def is_offerable(entry: ContentEntry) -> bool:
     if entry.category != "room_shell":
         return False
     if entry.review == "pending":
+        return False
+    adrift = doorways_off_the_body(entry)
+    if adrift:
+        log.warning("shell '%s' is not offerable: %s", entry.id,
+                    "; ".join(f"doorway '{n}' is {m:.2f} m off the body"
+                              for n, m in sorted(adrift.items())))
         return False
     return not entry.procedural_fallback
 

@@ -26,8 +26,37 @@ import json
 import math
 from dataclasses import dataclass, field
 
+from . import shells as _SH
+
 #: Two things meet when they are this close. Metres, and radians.
 EPSILON_JOIN = 0.001
+
+#: How far a doorway may sit outside its room's reported bounds.
+#:
+#: A DOORWAY SOCKET IS AN ATTACHMENT TRANSFORM, not a point inside the
+#: room. The bounds a room reports span its walls' centre planes, and a
+#: connector meets the room at the wall's OUTER FACE -- `corner` steps
+#: its exit a full `WALL_THICKNESS` past that plane on purpose, with the
+#: reason written next to it ("the next chamber's own front wall then
+#: butts against this one's outer face instead of occupying the same
+#: slab"), and has since before this check existed. Holding an
+#: attachment transform to `EPSILON_JOIN` asked it to be a point in the
+#: interior, which is the one thing it is not.
+#:
+#: NOT the same allowance `shells.doorways_off_the_body` uses, and the
+#: difference is what the two compare against. That one holds a manifest
+#: socket to the shell's `size`, which IS the outer face already, so it
+#: allows only rounding. This one holds a socket to the bounds the ENGINE
+#: reports, which span the walls' centre planes -- half a thickness
+#: further in -- and `corner` deliberately steps a full thickness past
+#: them. One number for both was a false negative waiting to happen, and
+#: it happened: it passed `shell_yard_gantry`'s doorways, 0.40 m off
+#: their own body, by five millimetres.
+#:
+#: What this still refuses is what it was written to refuse: a socket
+#: left at the world origin because no door assignment named it, and the
+#: three shells whose `exit` sat 1.6 m clear of the room.
+SOCKET_PROUD = _SH.WALL_THICKNESS + _SH.SPAN_TOLERANCE
 
 
 @dataclass(frozen=True)
@@ -496,11 +525,22 @@ def validate(zone, result: dict) -> Verdict:
             if box is None:
                 continue
             lo, hi = box
-            if any(point[i] < lo[i] - EPSILON_JOIN
-                   or point[i] > hi[i] + EPSILON_JOIN for i in range(3)):
+            out = [i for i in range(3)
+                   if point[i] < lo[i] - SOCKET_PROUD
+                   or point[i] > hi[i] + SOCKET_PROUD]
+            if out:
+                # NAME THE AXIS AND THE DISTANCE. "Does not lie on" was
+                # true of a socket one millimetre proud of a wall and of
+                # a socket left at the world origin because no door was
+                # found, and the engine could not tell those apart from
+                # the message. Both are refusals; only one of them is a
+                # missing assignment.
+                over = ", ".join(
+                    f"{'xyz'[i]} {point[i]:.3f} outside "
+                    f"[{lo[i]:.3f}, {hi[i]:.3f}]" for i in out)
                 c.fail(f"edge '{e.edge_id}' {side} does not lie on room "
                        f"'{rid}'; the route and the room disagree about "
-                       "where the doorway is")
+                       f"where the doorway is ({over})")
     placeable = set(declared) | {ENGINE_EXIT_ROOM}
     for eid in joins:
         if eid in {e.edge_id for e in joined}:
@@ -543,32 +583,23 @@ def validate(zone, result: dict) -> Verdict:
 
     # --- 5. aperture polarity, for every declared door -----------------
     #
-    # THE FIRST ROOM'S `entry` IS THE ZONE'S FRONT DOOR. Nothing joins
-    # into the head of the spine, so no `TopologyEdge` names its entry
-    # and `_seal_the_rest` seals it by omission -- and the player walks
-    # in through it from the Zone start, so the engine carves it and
-    # measures it as the hole it is. Sealing the way in would seal the
-    # player out of their own Zone.
+    # EVERY DOOR, INCLUDING THE HEAD'S `entry`, AND NO EXEMPTION.
     #
-    # Named rather than tolerated: exactly the entry of exactly the room
-    # with no inbound JOINED edge, and every other SEALED door is still
-    # held to being solid.
-    # Which room is the head is read off the DOOR ASSIGNMENTS, not the
-    # edge directions: every spine edge is BIDIRECTIONAL, so direction
-    # cannot say which end you arrive from. A room is entered from an
-    # edge exactly when it assigns that edge to its `entry` socket, and
-    # the head assigns none.
-    entered = {ch.id for ch in zone.chambers
-               if any(d.socket_id == "entry" and d.edge_id
-                      for d in ch.doors)}
-    head = next((ch.id for ch in zone.chambers
-                 if ch.id not in entered), None)
+    # This exempted the head of the spine -- nothing joins into it, so
+    # `_seal_the_rest` seals its entry by omission, and the rule said the
+    # player "walks in through it from the Zone start" so the engine
+    # carves it anyway. The Zone start is `Vector3(0, 0.8, 1.2)` in the
+    # head room's own frame: the player arrives 1.2 m INSIDE, past the
+    # entry wall, and nothing is built outside it. The exemption
+    # therefore required a hole in the Zone's outer wall opening onto
+    # nothing, and it required it against the composer's own
+    # `DoorAssignment`. A rule that overrules the lane that owns which
+    # doors exist needs a physical fact behind it, and this one had the
+    # fact backwards.
     for ch in zone.chambers:
         for d in ch.doors:
             ref = f"{ch.id}/{d.socket_id}"
             expected = d.passable_geometry
-            if ch.id == head and d.socket_id == "entry":
-                expected = True
             measured = apertures.get(ref)
             if measured is None:
                 c.fail(f"door '{ref}' is {d.usage} and carries no "
@@ -578,17 +609,11 @@ def validate(zone, result: dict) -> Verdict:
                 c.fail(f"door '{ref}' measurement is {measured!r}, "
                        "not a boolean")
             elif measured != expected:
-                if ch.id == head and d.socket_id == "entry":
-                    c.fail(
-                        f"door '{ref}' is the Zone's front door and the "
-                        "engine measured it as solid; the player arrives "
-                        "through it")
-                else:
-                    c.fail(
-                        f"door '{ref}' is {d.usage} and the engine "
-                        "measured it "
-                        + ("as a hole" if measured else "as solid")
-                        + "; the declaration and the geometry disagree")
+                c.fail(
+                    f"door '{ref}' is {d.usage} and the engine "
+                    "measured it "
+                    + ("as a hole" if measured else "as solid")
+                    + "; the declaration and the geometry disagree")
 
     # --- 6. one chain per room, which is what makes room-keyed data
     # sound. It stops being sound the moment a room has two inbound
