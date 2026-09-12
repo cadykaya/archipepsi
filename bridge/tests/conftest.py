@@ -189,7 +189,7 @@ def place_layout(zone) -> dict:
         for i, f in enumerate(
                 [f for f in ch.features
                  if f.tag in _LAYOUT.CERTIFIED_TAGS]):
-            physics.append(certified_chain(ch.id, i))
+            physics.append(certified_chain(ch.id, i, zone.zone_id))
         if any(d.usage != "SEALED" for d in ch.doors):
             a = f"room:{ch.id}:arrival"
             anchors[a] = [x, 0.0, z]
@@ -235,10 +235,11 @@ def place_layout(zone) -> dict:
     return {"status": "LAYOUT_OK", "rooms": rooms, "joins": joins,
             "anchors": anchors, "arrival_ok": arrival_ok,
             "apertures": apertures, "stations": stations,
-            "physics": physics}
+            "packages": physics}
 
 
-def certified_chain(room_id: str, index: int = 0) -> dict:
+def certified_chain(room_id: str, index: int = 0,
+                    zone_id: str = "z1") -> dict:
     """What the engine sends for one `powered_door` chain it built.
 
     Fabricated here the way `apertures` is: the engine measures and
@@ -263,15 +264,20 @@ def certified_chain(room_id: str, index: int = 0) -> dict:
             "steps": ["push crate 0.0000 1.0000 0.8000", "settle"]},
     }
     digest = _PHYS.package_digest(_PHYS.PhysicsPackage(**package))
+    package["evidence"] = {
+        "package_id": package["package_id"],
+        "content_digest": digest,
+        "provider_force_n": _PHYS.ENVELOPE_FORCE_N,
+        "provider_range_m": _PHYS.ENVELOPE_RANGE_M,
+        "provider_mass_kg": _PHYS.ENVELOPE_MASS_KG,
+        "per_run_latched": [["plate_loaded"]] * 3,
+    }
     return {
-        "room_id": room_id, "index": index, "package": package,
-        "evidence": {
-            "package_id": package["package_id"],
-            "content_digest": digest,
-            "provider_force_n": _PHYS.ENVELOPE_FORCE_N,
-            "provider_range_m": _PHYS.ENVELOPE_RANGE_M,
-            "provider_mass_kg": _PHYS.ENVELOPE_MASS_KG,
-            "per_run_latched": [["plate_loaded"]] * 3},
+        "package_id": package["package_id"],
+        "zone_id": zone_id,
+        "room_id": room_id,
+        "content_ref": "feature:powered_door",
+        "package": package,
     }
 
 

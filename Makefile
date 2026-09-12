@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -200,6 +200,28 @@ godot-room-contract: godot-import
 # Placement findings print as NOTEs and do not fail: they are written down
 # in `docs/ZONE_ACTIVITY_AUDIT.md` and a target that goes red on a known
 # open defect is a target people learn to ignore.
+# SEVERAL ordinary generated Zones, composed and walked.
+#
+# `godot-room-contract` proves a great deal about ONE Zone, which is one
+# shape the composer happened to make. This walks a run of consecutive
+# Zones from a real campaign: does each compose, what shape is it, which
+# branches were physically placed, and can the real `Player` reach a side
+# destination and get back. No topology is preferred -- what is measured
+# is whether the shape the composer chose can be built and walked.
+godot-graphs: godot-import
+	@out=$$($(GODOT) --headless --path godot -- --graphs 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT GRAPH TESTS OK" || exit 1; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: the suite cannot vouch for itself"; \
+	  exit 1; \
+	fi
+
+# The generated Zones `godot-graphs` walks, regenerated from the engine
+# rather than edited. Five consecutive Zones of a real campaign.
+zone-fixtures:
+	cd bridge && $(PY) tools/dump_zones.py --count 5
+
 godot-movement: godot-import   # P3.0 rails, launch pads, and the offer seam
 	@out=$$($(GODOT) --headless --path godot -- --movement-test 2>&1); \
 	status=$$?; echo "$$out" | grep -v "^$$"; \
@@ -244,7 +266,7 @@ zone-shots: godot-import
 # means -- it is not automatically a missing test.
 mutate-bridge:
 	cd bridge && $(PY) tools/mutate.py archipepsi_bridge/layout.py \
-	  "c.fail(" tests/test_layout.py
+	  "c.fail(" tests/test_layout.py tests/test_physics_carrier.py
 	cd bridge && $(PY) tools/mutate.py archipepsi_bridge/topology.py \
 	  "errors.append(" tests/test_topology.py
 	cd bridge && $(PY) tools/mutate.py archipepsi_bridge/schemas/physics.py \

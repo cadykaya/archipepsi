@@ -509,7 +509,9 @@ Stated because each of these was checked and found not to bite:
   fallbacks in §2.1 are by construction, not by promise, and
   `godot-room-contract` builds all twelve every run.
 
-## 11.7 Restriction 1 answered — the bridge now writes both edge ids
+---
+
+### 11.7 Restriction 1 answered — the bridge now writes both edge ids
 
 **Bridge lane, 2026-09-12, against the engine lane's `7adc5e5`.** §11.2
 named `arrive_edge` / `depart_edge` as read by the engine and written by
@@ -562,7 +564,10 @@ way down its edge, and a selector onto a sealed door.
 mouths from the procedural socket table. A `joinable` list in the offer
 proves capacity is visible and these two fields say which opening the
 chain uses; neither is a claim that the body arrives through it.
-## 11.8 Restrictions 2 and 3 answered — the engine lifted both
+
+---
+
+### 11.8 Restrictions 2 and 3 answered — the engine lifted both
 
 **Engine lane, 2026-09-12.** Both were the engine's and both are gone.
 Nothing in §1–§10 changed; two lookups did.

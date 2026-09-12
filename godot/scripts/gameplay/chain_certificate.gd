@@ -44,8 +44,8 @@ const CRATE_ID := "crate"
 ## refused -- one entry per declared feature, so an unreported one is a
 ## hole the bridge can see. `bounds` is the room's committed world
 ## envelope, which is what makes "within the room" decidable.
-static func of_room(tree: SceneTree, chamber: Dictionary, node: Node3D,
-		bounds: AABB) -> Array:
+static func of_room(tree: SceneTree, zone_id: String,
+		chamber: Dictionary, node: Node3D, bounds: AABB) -> Array:
 	var rid := str(chamber.get("id", ""))
 	var declared := 0
 	for raw: Variant in chamber.get("features", []):
@@ -61,11 +61,21 @@ static func of_room(tree: SceneTree, chamber: Dictionary, node: Node3D,
 			# drops a tag a corridor is too narrow for rather than
 			# cramming the rig into a wall, and the bridge is told so
 			# instead of being left to read silence.
-			out.append({"room_id": rid, "index": i,
-					"declined": "the room could not host the chain; "
-						+ "the feature was not built"})
+			# DECLINED, and the bridge is told by the absence rather
+			# than by a word. `AffordanceFeatures.fits` drops a tag a
+			# corridor is too narrow for; the composer's own feature
+			# count and the offered package count then disagree, and
+			# `layout.validate` refuses -- which is the right answer,
+			# because a Zone that declared a chain and built nothing is
+			# a Zone whose content was quietly downgraded.
+			push_warning("zone: room '%s' declared a powered_door the "
+					% rid + "room could not host; no package is offered "
+					+ "and the layout will be refused")
 			continue
-		out.append(await certify(tree, rid, i, chains[i], node, bounds))
+		var certified := await certify(tree, zone_id, rid, i, chains[i],
+				node, bounds)
+		if not certified.is_empty():
+			out.append(certified)
 	return out
 
 ## The chains built under `node`, in tree order.
@@ -90,14 +100,15 @@ static func _crate_of(link: PoweredLink) -> ManipulableBody:
 	return null
 
 ## One chain, replayed.
-static func certify(tree: SceneTree, rid: String, index: int,
-		chain: Dictionary, room: Node3D, bounds: AABB) -> Dictionary:
+static func certify(tree: SceneTree, zone_id: String, rid: String,
+		index: int, chain: Dictionary, room: Node3D,
+		bounds: AABB) -> Dictionary:
 	var link: PoweredLink = chain["link"]
 	var crate: ManipulableBody = chain["crate"]
 	if crate == null:
-		return {"room_id": rid, "index": index,
-				"refused": "the chain has a plate and a door and no "
-					+ "body to put on either"}
+		push_warning("zone: the chain in '%s' has a plate and a door "
+				% rid + "and no body to put on either")
+		return {}
 	# SETTLE, THEN FREEZE THE SETUP. The digest records velocity and
 	# sleep state, so a digest taken two frames after the crate was
 	# created is a digest of a moment that depends on when it was taken.
@@ -115,10 +126,26 @@ static func certify(tree: SceneTree, rid: String, index: int,
 	# replay against the alcove wall.
 	_reset(crate, home)
 	if evidence.has("refused"):
-		return {"room_id": rid, "index": index, "package": package,
-				"refused": str(evidence["refused"])}
-	return {"room_id": rid, "index": index, "package": package,
-			"evidence": evidence}
+		# A BUILT CHAIN THIS ENGINE CANNOT REPLAY IS NOT OFFERED, and
+		# the absence is what refuses the layout. Offering the package
+		# without its evidence would be offering a claim and calling it
+		# a certificate.
+		push_warning("zone: the chain in '%s' was built and could not "
+				% rid + "be certified: %s" % str(evidence["refused"]))
+		return {}
+	package["evidence"] = evidence
+	# DESS'S CARRIER (`AMALGAM_BRIDGE.md` §5.6, option 2): a
+	# `PlacedPackage`, bound to the Zone, the room and the declared
+	# content it realizes, travelling in `layout_result` and committed
+	# with the manifest. The three identities are checked on the other
+	# side, which is why they are stated here rather than implied.
+	return {
+		"package_id": str(package["package_id"]),
+		"zone_id": zone_id,
+		"room_id": rid,
+		"content_ref": "feature:powered_door",
+		"package": package,
+	}
 
 ## The stage for one run: the room's own chain, reset.
 static func _stage(link: PoweredLink, crate: ManipulableBody,

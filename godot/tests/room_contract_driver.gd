@@ -7321,7 +7321,7 @@ func _test_a_generated_chain_certifies_and_stops_when_the_room_changes() \
 
 	var started := Time.get_ticks_msec()
 	var certified: Array = await ChainCertificate.of_room(get_tree(),
-			chamber, host["node"] as Node3D, bounds)
+			"zone_001", chamber, host["node"] as Node3D, bounds)
 	var took := Time.get_ticks_msec() - started
 	_check(certified.size() == 1,
 			"room '%s' declared one chain and the certifier returned %d "
@@ -7330,23 +7330,32 @@ func _test_a_generated_chain_certifies_and_stops_when_the_room_changes() \
 		(out["root"] as Node3D).queue_free()
 		return
 	var entry: Dictionary = certified[0]
-	_check(not entry.has("refused"),
-			"the chain ordinary generation built certified: %s"
-			% str(entry.get("refused", "")))
-	_check(entry.has("package") and entry.has("evidence"),
-			"and it came back as a package and its evidence, which is "
-			+ "what the bridge validates")
-	if not entry.has("evidence"):
+	# DESS'S CARRIER, and the three identities it binds. A package valid
+	# in itself and attached to the wrong room is the failure the
+	# wrapper exists to make impossible, so the wrapper is what is
+	# checked here rather than the package alone.
+	_check(str(entry.get("zone_id", "")) == "zone_001"
+				and str(entry.get("room_id", "")) == rid
+				and str(entry.get("content_ref", ""))
+					== "feature:powered_door",
+			"the certificate names the Zone, the room and the declared "
+			+ "content it realizes: %s" % str(entry))
+	var package: Dictionary = entry.get("package", {})
+	_check(not package.is_empty() and package.has("evidence"),
+			"and it came back as a package carrying its evidence, which "
+			+ "is what `layout.validate` accepts the Zone on")
+	if package.is_empty() or not package.has("evidence"):
 		(out["root"] as Node3D).queue_free()
 		return
-	var package: Dictionary = entry["package"]
-	var evidence: Dictionary = entry["evidence"]
+	var evidence: Dictionary = package["evidence"]
 
 	# THE FIVE THINGS `layout.validate` ASKS. Asked here too, because
 	# evidence that only the bridge checks is evidence this lane cannot
 	# tell is broken until CI is red for a reason nobody can see.
 	var errors: Array[String] = []
-	var built := PhysicsPackage.from_dict(package, errors)
+	var without := package.duplicate(true)
+	without.erase("evidence")
+	var built := PhysicsPackage.from_dict(without, errors)
 	_check(built != null and errors.is_empty(),
 			"the package the engine built satisfies the contract: %s"
 			% str(errors))
@@ -7396,13 +7405,14 @@ func _test_a_generated_chain_certifies_and_stops_when_the_room_changes() \
 	wall.global_basis = link.global_basis
 	await get_tree().physics_frame
 	var sabotaged: Array = await ChainCertificate.of_room(get_tree(),
-			chamber, host["node"] as Node3D, bounds)
+			"zone_001", chamber, host["node"] as Node3D, bounds)
 	probes_expected_to_fail += 1
 	var still_green := false
-	if sabotaged.size() == 1:
-		var after: Dictionary = sabotaged[0]
-		var after_runs: Array = (after.get("evidence", {}) as Dictionary) \
-				.get("per_run_latched", [])
+	for raw_after: Variant in sabotaged:
+		var after: Dictionary = raw_after
+		var after_runs: Array = ((after.get("package", {}) as Dictionary)
+				.get("evidence", {}) as Dictionary).get(
+					"per_run_latched", [])
 		for run: Variant in after_runs:
 			if "plate_loaded" in (run as Array):
 				still_green = true

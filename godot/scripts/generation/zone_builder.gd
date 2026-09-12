@@ -715,11 +715,13 @@ static func layout_to_json(result: Dictionary) -> Dictionary:
 			"rooms": rooms, "joins": joins, "anchors": anchors,
 			"arrival_ok": result.get("arrival_ok", {}),
 			"apertures": result.get("apertures", {}),
-			# The chains the engine built and replayed. Passed through
-			# rather than re-shaped: the entries are already the
-			# contract's own `PhysicsPackage` and `ReplayEvidence`, and
-			# a second spelling of them here would be a second truth.
-			"physics": result.get("physics", []),
+			# The chains the engine built and replayed, as
+			# `PlacedPackage` records bound to this Zone, the room and
+			# the declared content they realize. Passed through rather
+			# than re-shaped: the entries are already the contract's own
+			# models, and a second spelling here would be a second
+			# truth. `AMALGAM_BRIDGE.md` §5.6, option 2.
+			"packages": result.get("packages", []),
 			# WHICH BUILD'S CONTROLLER MEASURED ANY OF THIS.
 			# `AP_CAPABILITY_LOGIC.md` §8b-ANSWERED: a movement
 			# measurement is about what this executable does when you

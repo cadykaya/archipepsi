@@ -628,15 +628,97 @@ def validate(zone, result: dict) -> Verdict:
                "edges, so room-keyed evidence is ambiguous; the engine "
                "must key by edge_id before this Zone can be committed")
 
-    # --- 7. the chains the rooms declared, as the engine certified
-    # them. `AMALGAM_BRIDGE.md` §5.6a.
-    _check_physics(c, zone, result)
+    # --- 7. the physics packages the engine instantiated, if any.
+    placed = _packages(c, zone, result)
 
     if c.errors:
         return Verdict(status="LAYOUT_REFUSED", errors=tuple(c.errors),
                        engine=result)
     return Verdict(status="ACCEPTED",
-                   manifest=_manifest(zone, result, positions))
+                   manifest=_manifest(zone, result, positions, placed))
+
+
+def _content_refs(chamber) -> set[str]:
+    """What a room declares that a package could be realizing.
+
+    Both halves already exist and neither is new vocabulary: an
+    affordance tag the chamber asked for, and the authored shell it was
+    built from. A `content_ref` naming anything else names nothing.
+    """
+    refs = {f"feature:{f.tag}" for f in chamber.features}
+    if chamber.shell_id:
+        refs.add(f"shell:{chamber.shell_id}")
+    return refs
+
+
+def _packages(c: "_Check", zone, result: dict) -> tuple:
+    """The proposed physics packages, bound to this Zone or refused.
+
+    **A proposal is not a certificate.** The engine resolves the Zone's
+    bounded intent into a real setup, measures it and replays it; what
+    arrives here is a claim, and every part of it is checked before any
+    of it is committed:
+
+    1. It parses as a `PlacedPackage`, strictly.
+    2. Its `zone_id` is this Zone and its `room_id` is a room this Zone
+       declares.
+    3. Its `content_ref` names content that room declares.
+    4. `check_physics_content` passes over the whole set — which is
+       where a load-bearing latch with no replay evidence, evidence
+       recorded for another package, and evidence for another revision
+       of this one are each refused.
+
+    **A bad package refuses the LAYOUT; it is never dropped.** Silently
+    committing the manifest without it would build the room and leave
+    the mechanism inert — the content the engine asked for, quietly
+    downgraded, with nothing anywhere saying so. Load-bearing or not:
+    the engine declared it, so dropping it is the downgrade.
+    """
+    raw = result.get("packages") or []
+    if not isinstance(raw, list):
+        c.fail(f"'packages' is {type(raw).__name__}, not a list")
+        return ()
+    rooms = {ch.id: ch for ch in zone.chambers}
+    placed = []
+    for i, entry in enumerate(raw):
+        try:
+            pp = _PH.PlacedPackage.model_validate(entry)
+        except Exception as exc:                      # pydantic ValidationError
+            first = str(exc).splitlines()
+            c.fail(f"package entry {i} is malformed: "
+                   + " ".join(first[1:3]).strip())
+            continue
+        if pp.zone_id != zone.zone_id:
+            c.fail(f"package '{pp.package_id}' is filed under Zone "
+                   f"'{pp.zone_id}' and was offered for '{zone.zone_id}'")
+            continue
+        room = rooms.get(pp.room_id)
+        if room is None:
+            c.fail(f"package '{pp.package_id}' stands in room "
+                   f"'{pp.room_id}', which this Zone does not have")
+            continue
+        refs = _content_refs(room)
+        if pp.content_ref not in refs:
+            c.fail(f"package '{pp.package_id}' realizes "
+                   f"'{pp.content_ref}' in room '{pp.room_id}', which "
+                   "declares "
+                   + (str(sorted(refs)) if refs else "no such content"))
+            continue
+        placed.append(pp)
+
+    if placed:
+        # LOCAL KEYS are a real state dimension with a real count, so
+        # they are passed. The others are the verifier's budget question
+        # and nothing derives them from a Zone yet, so what is checked
+        # here is a FLOOR on the state vector rather than the whole of
+        # it — said out loud rather than implied by a default.
+        keys = {k.key_id for ch in zone.chambers for k in ch.keys}
+        for err in _PH.check_physics_content(
+                [pp.package for pp in placed], local_keys=len(keys)):
+            c.fail(err)
+
+    _certified_features(c, zone, placed)
+    return tuple(placed)
 
 
 # Affordance tags whose construction is a PHYSICAL CLAIM rather than a
@@ -647,109 +729,61 @@ def validate(zone, result: dict) -> Verdict:
 CERTIFIED_TAGS = frozenset({"powered_door"})
 
 
-def _check_physics(c: "_Check", zone, result: dict) -> None:
-    """Every declared chain is accounted for, and every built one works.
+def _certified_features(c: "_Check", zone, placed) -> None:
+    """The three things `check_physics_content` deliberately does not ask.
 
-    **The bridge re-derives no physical fact here.** It has no scene and
-    could not; what it checks is that a claim exists for each thing the
-    composer asked for, that the evidence is bound to the package in
-    front of it, and that the replay was the one §23.5 check 20
-    describes. Whether the crate fits through the doorway is the
-    engine's to measure and is what the package is.
+    It skips every package that is not load-bearing, and correctly: its
+    subject is progression guarantees, and a `powered_door` chain guards
+    a note. So on its own it would accept every chain in silence — the
+    recurring defect in this project, a measurement that exists, is
+    correct, and is never handed the case that fails it.
 
-    **Unreported is refused, exactly as an unreported aperture is.** The
-    inverted probe: a room that declares a `powered_door` and sends
-    nothing about it has either failed to build it and not said so, or
-    built it and not replayed it, and both are worse than a refusal.
+    1. **Unreported is refused**, exactly as an unreported aperture is.
+       A room that declares a `powered_door` and offers no package has
+       either failed to build it and not said so, or built it and not
+       replayed it.
+    2. **Its evidence is checked anyway.** `evidence_fault` is the same
+       function `check_physics_content` calls, asked here of the
+       packages it skips — one implementation, two callers.
+    3. **§13.2: a feature may never lie on the mandatory path.** A
+       package realizing a `feature:` ref that claims a route depends on
+       it is claiming the opposite of what the affordance contract
+       promises, whatever its evidence says.
     """
-    entries = result.get("physics")
-    if entries is None:
-        entries = []
-    if not isinstance(entries, list):
-        c.fail("'physics' is not a list of certified chains")
-        return
-
-    reported: dict[str, int] = {}
-    ids: set[str] = set()
-    for i, raw in enumerate(entries):
-        if not isinstance(raw, dict):
-            c.fail(f"physics entry {i} is not an object")
+    reported: dict[tuple[str, str], int] = {}
+    for pp in placed:
+        kind, _, name = pp.content_ref.partition(":")
+        if kind != "feature" or name not in CERTIFIED_TAGS:
             continue
-        rid = str(raw.get("room_id", ""))
-        reported[rid] = reported.get(rid, 0) + 1
-        where = f"chain {rid}/{raw.get('index', i)}"
-        if rid not in {ch.id for ch in zone.chambers}:
-            c.fail(f"{where} certifies a room this Zone does not "
-                   "declare")
-            continue
-
-        # THE ENGINE DECLINED TO BUILD IT, which is legal and is not
-        # silence. A corridor too narrow for the rig drops the tag
-        # rather than cramming it into a wall.
-        declined = raw.get("declined")
-        if declined is not None:
-            if not isinstance(declined, str) or not declined.strip():
-                c.fail(f"{where} was declined with no reason given")
-            continue
-
-        package_raw = raw.get("package")
-        if not isinstance(package_raw, dict):
-            c.fail(f"{where} carries no package; the engine either "
-                   "built the chain or declined it, and this says "
-                   "neither")
-            continue
-        try:
-            package = _PH.PhysicsPackage(**package_raw)
-        except Exception as exc:                      # pydantic detail
-            c.fail(f"{where} carries a package the contract refuses: "
-                   f"{exc}")
-            continue
-        if package.package_id in ids:
-            c.fail(f"{where} reuses package id '{package.package_id}'; "
-                   "a latch is identified by package and name")
-        ids.add(package.package_id)
-
-        # §13.2: a feature may never lie on the mandatory path, host an
-        # AP reward, an exit or an objective. A package that claims a
-        # route depends on it is claiming the opposite of what the
-        # affordance contract promises, whatever its evidence says.
-        if package.load_bearing:
-            c.fail(f"{where} is an optional affordance and its package "
-                   "is load-bearing; §13.2 forbids a feature on the "
-                   "mandatory path")
-
-        refused = raw.get("refused")
-        if refused is not None:
-            c.fail(f"{where} was built and could not be certified: "
-                   f"{refused}")
-            continue
-        evidence_raw = raw.get("evidence")
-        if not isinstance(evidence_raw, dict):
+        reported[(pp.room_id, name)] = reported.get(
+            (pp.room_id, name), 0) + 1
+        where = f"chain '{pp.package_id}' in room '{pp.room_id}'"
+        if pp.package.load_bearing:
+            c.fail(f"{where} realizes the optional affordance "
+                   f"'{name}' and its package is load-bearing; §13.2 "
+                   "forbids a feature on the mandatory path")
+        if pp.package.evidence is None:
             c.fail(f"{where} was built and carries no replay evidence; "
                    "a chain nobody has replayed is a claim, not a "
                    "certificate")
             continue
-        try:
-            evidence = _PH.ReplayEvidence(**evidence_raw)
-        except Exception as exc:                      # pydantic detail
-            c.fail(f"{where} carries evidence the contract refuses: "
-                   f"{exc}")
-            continue
-        fault = _PH.evidence_fault(package, evidence)
+        fault = _PH.evidence_fault(pp.package, pp.package.evidence)
         if fault:
             c.fail(f"{where}: {fault}")
 
     for ch in zone.chambers:
-        want = sum(1 for f in ch.features if f.tag in CERTIFIED_TAGS)
-        got = reported.get(ch.id, 0)
-        if got != want:
-            c.fail(f"room '{ch.id}' declares {want} chain(s) the engine "
-                   f"must certify and the layout reports {got}; the "
-                   "inverted probe cannot be skipped for a feature the "
-                   "layout never mentions")
+        for tag in CERTIFIED_TAGS:
+            want = sum(1 for f in ch.features if f.tag == tag)
+            got = reported.get((ch.id, tag), 0)
+            if got != want:
+                c.fail(f"room '{ch.id}' declares {want} '{tag}' "
+                       f"chain(s) the engine must certify and the "
+                       f"layout offers {got}; the inverted probe cannot "
+                       "be skipped for a feature the layout never "
+                       "mentions")
 
 
-def _manifest(zone, result: dict, positions: dict) -> dict:
+def _manifest(zone, result: dict, positions: dict, placed=()) -> dict:
     """The committed layout, and the digest that pins it.
 
     Solved once and replayed forever: every later load uses these
@@ -765,6 +799,12 @@ def _manifest(zone, result: dict, positions: dict) -> dict:
         "stations": sorted(result.get("stations") or []),
         "edges": [e.model_dump() for e in zone.edges],
         "plugs": [p.model_dump() for p in zone.plugs],
+        # THE ACCEPTED PACKAGE DESCRIPTION, with the layout it was
+        # measured in. It rides the manifest because it is the same kind
+        # of fact: solved once, replayed forever, and pinned by the same
+        # digest — so a package cannot be swapped under a Zone that was
+        # certified with a different one.
+        "packages": [pp.model_dump() for pp in placed],
     }
     blob = json.dumps(body, sort_keys=True, separators=(",", ":"),
                       default=str)

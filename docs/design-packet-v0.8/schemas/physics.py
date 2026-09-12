@@ -450,7 +450,66 @@ class ReplayEvidence(Strict):
         return tuple(sorted(missed))
 
 
+class PlacedPackage(Strict):
+    """One physics package, instantiated in one room of one Zone.
+
+    **This is where a package travels, and why it is not on the Zone.**
+    `AMALGAM_BRIDGE.md` §5.6 put three carriers to the engine lane;
+    option 2 was taken. A package is a PHYSICAL fact, like the layout:
+    the engine resolves the Zone's bounded intent into a real setup,
+    measures it, replays it, and offers the result inside
+    `layout_result` — so it reaches the bridge through the same
+    validate-then-commit path the layout does, and travels afterwards
+    inside the committed manifest.
+
+    Putting it on the Zone instead was tried and refused, correctly, by
+    `test_epsilon_vocabulary`: the Zone is **Epsilon's output surface**,
+    and `LatchCondition.detail` and `ReferenceSolution.steps` are what
+    the engine must observe and the engine's own script. A provider that
+    can write those is a provider authoring a physical claim, which is
+    the lane boundary itself. Epsilon's surface stays bounded intent;
+    the engine resolves it; a provider-authored proposal is never an
+    accepted physical certificate.
+
+    The three identities are all checked, because a package that is
+    valid in itself and attached to the wrong thing is the failure this
+    record exists to make impossible:
+
+    * `zone_id` — the Zone the layout was proposed for;
+    * `room_id` — a room that Zone actually declares;
+    * `content_ref` — a piece of content that room actually declares.
+    """
+
+    package_id: str = Field(min_length=1, max_length=32,
+                            pattern=r"^[a-z0-9_]+$")
+    zone_id: str = Field(min_length=1, max_length=32,
+                         pattern=r"^[a-z0-9_]+$")
+    room_id: str = Field(min_length=1, max_length=24,
+                         pattern=r"^[a-z0-9_]+$")
+    #: `feature:<tag>` or `shell:<shell_id>` — which declared piece of
+    #: that room's content this package realizes. Charset-constrained and
+    #: resolved against the Zone, exactly like `edge_id`: a reference
+    #: that names nothing is refused rather than stored.
+    content_ref: str = Field(min_length=1, max_length=64,
+                             pattern=r"^(feature|shell):[a-z0-9_]+$")
+    package: PhysicsPackage
+
+    @model_validator(mode="after")
+    def _the_wrapper_and_the_package_name_the_same_thing(self):
+        if self.package.package_id != self.package_id:
+            raise ValueError(
+                f"placement names package '{self.package_id}' and carries "
+                f"'{self.package.package_id}'; two spellings of one fact "
+                "is how a latch comes to be filed under the wrong thing")
+        return self
+
+    @property
+    def ref(self) -> str:
+        return f"{self.room_id}/{self.package_id}"
+
+
 PhysicsPackage.model_rebuild()
+PlacedPackage.model_rebuild()
 
 
 def evidence_fault(package: PhysicsPackage,

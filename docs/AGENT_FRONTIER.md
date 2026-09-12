@@ -1,5 +1,53 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — Dess's carrier, and five Zones walked — 2026-09-13
+
+**`claude/archipepsi-echoes-continuation-b1adno`, with the bridge lane
+merged at `0ec9e8e` and the art lane at `19e271b`.** Read this section
+first on a wake-up.
+
+**THE PHYSICS PACKAGE TRAVELS ON DESS'S CARRIER.** Her `PlacedPackage`
+landed while this lane was building a parallel `layout["physics"]` key;
+hers is better — it binds the package to the Zone, the room AND the
+declared content it realizes, and it goes into the manifest under the
+same digest. So this lane took it: `ChainCertificate` emits
+`layout["packages"]` as `PlacedPackage` records with the
+`ReplayEvidence` inside the package, and the ad-hoc key is gone rather
+than kept beside hers.
+
+Three checks were added to her `_packages`, because
+`check_physics_content` deliberately skips them: it passes over every
+package that is not load-bearing — correctly, its subject is
+progression guarantees — and a chain guarding a note is not one. On its
+own it would have accepted every chain in silence.
+`_certified_features` asks the inverted probe (a declared
+`powered_door` with no package offered), the evidence gate (the same
+`evidence_fault` function, asked of the packages it skips), and §13.2
+(an optional feature's package may not be load-bearing).
+
+**FIVE ORDINARY GENERATED ZONES, COMPOSED AND WALKED.**
+`bridge/tools/dump_zones.py` writes a run of consecutive Zones from a
+real campaign and `make godot-graphs` builds each one, reports its
+shape, and sends the real `Player` into a side destination and back.
+The shapes the composer makes today: 20–23 rooms, 4–5 junctions, 7–8
+dead ends, degrees up to four. **No topology is preferred and none is
+ruled out** — what is measured is whether the shape the composer chose
+can be built and walked.
+
+**Also landed:** the theme pack binds (22 surfaces of a real built room
+painted from Arty's export, 3 from the procedural fallback), with the
+hazard-role contradiction reconciled in the shared handoff — `hazard` is
+universal, four roles need authored pixels, and a pack that paints its
+own hazard is refused.
+
+**Still open, and named rather than implied:** Art's half of §11.3 (a
+`player_entry` volume per opening); the three Batch 044 junction shells
+are `review: "pending"`, not exported, not selectable, and the owner's
+to review; `latch_fired` from the engine when a player satisfies a
+declared latch; and the fun verdict is not this lane's to award.
+
+---
+
 ## ENGINE LANE — the chain is certified and the junction is walked — 2026-09-12
 
 **`claude/archipepsi-echoes-continuation-b1adno`, with the bridge lane
@@ -205,6 +253,81 @@ as "did not latch" is a harness claiming a puzzle is unsolvable.
 Zone has produced evidence and `handle_layout_result` has no path that
 carries one. Levels 1, 2 and 3 all run; what has not happened is a
 package reaching them from content.
+
+## BRIDGE LANE — branches are choices, and a package has a carrier — 2026-09-12
+
+**`claude/archipepsi-amalgam-bridge`, merged with the engine lane at
+`7adc5e5`.** Read this before the older bridge section below; that one
+is still the payload reference for the graph work.
+
+**Green:** `make test` 1339, `check_packet.py`, `make mutate-bridge`
+(layout 39 sites 0 unmeasured). No Godot run in this lane.
+
+**FOUR BRANCHES WAS THE KEY RECIPE TALKING.** Whether a route off the
+spine exists, whether it is locked, and how a lock and its key are
+identified were one loop, so the branch count was capped at the four key
+colours and every Zone got four. Three stages now: `_branch_routes` for
+the topology, `_lock_routes` for which of those carry a lock,
+`BranchLock` for identity and presentation. A route is lockable when its
+key has somewhere to go that is not the spawn room; the rest are
+ordinary branches, which are still choices. What bounds the route count
+is real — spare rooms (`SPINE_SHARE`, **provisional tuning**), declared
+socket capacity, and the `Zone` schema's own plug and edge maximums,
+read from the schema rather than copied.
+
+**AND EIGHT BRANCHES WAS ONE SIDE CHAIN.** The old report counted
+locked doors; the new one reads the JOINED graph the Zone serialized
+(`tests/zone_shape.py`). Eight "branches", seven "nested", were one side
+chain eight rooms deep: one turning, taken once, **counted wrong**.
+Default scale now measures **3-4 distinct side paths, 4-5 junctions, 2
+inside a side path, 5-6 side dead ends, 4 locked and 4 open branch
+edges**; prototype scale still composes chains and still says why. Two
+instrument controls hand the report a spur and a fan that move the same
+four rooms.
+
+**NO SHAPE IS RULED OUT** (owner clarification, 2026-09-12). `SPINE_SHARE`
+and `MAX_SIDE_DEPTH` are **provisional tuning and nothing more** — dials
+where they currently sit, kept only if play evidence later gives them a
+reason. A central junction connecting many rooms is good dungeon design,
+and so are deep branches, shallow ones, nested ones, hubs, spurs and
+dead ends. **The post-3A/3B complaint was never about graph shape**: it
+was that rooms behaved like enlarged corridors, with little reason to
+occupy or revisit them. That is a question about what is IN a room —
+content, not topology — and no value of either constant answers it. Do
+not promote either into a design law, and do not read the distribution
+above as a target.
+
+Two defects the measuring found: the planner gave up on a destination
+when the *nearest* candidate junction had only its elevated wall spare
+(one deck cost a 23-room Zone six of eight branches), and
+`_branch_plan`'s no-destination path raised `NameError` instead of
+falling back to the chain.
+
+**§11.2 ANSWERED.** `arrive_edge`/`depart_edge` were read by
+`content_instantiator.socket_for_edge` and written by nobody, so every
+room fell through to the legacy `entry`/`exit` pair. The bridge writes
+them now, derived from the door assignment and validated against it —
+see `09_ROOM_CONTRACT.md` §11.7. §11.3 arrival regions and §11.4 branch
+mouths remain the engine's.
+
+**A PHYSICS PACKAGE HAS A CARRIER: option 2.** It arrives in
+`layout_result`, is validated before anything commits, and rides the
+accepted manifest — nothing on the Zone, so Epsilon's surface is
+unchanged by construction. Three identities bound and resolved against
+the Zone; a bad package refuses the layout rather than being dropped;
+`latch_fired` is checked against the packages the manifest accepted and
+only the approved consequence is persisted, in `ZoneProgress.latched`.
+**Nothing became load-bearing** — no engine produces evidence yet, so
+every load-bearing package is refused, and that is a test rather than a
+promise. `docs/AMALGAM_BRIDGE.md` §5.6a says what the engine lane owes.
+
+**What is NOT claimed by any of the above.** Bridge acceptance is not
+Godot layout acceptance and neither is a player walking it. Regenerating
+`played_zone.json` and the playtest baseline updates the baseline; it is
+not evidence the changed level is better or physically buildable. The
+Godot targets have not been run in this lane.
+
+---
 
 ## BRIDGE LANE — the Zone is a graph, and the path is connected — 2026-09-12
 

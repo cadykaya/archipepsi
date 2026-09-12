@@ -981,6 +981,10 @@ below landed; `make godot-reload` presses the real portal in
 the Zone it left. The proposal is kept as written because it is what was
 taken.
 
+**DONE 2026-09-12, and one line of it was on the bridge's side.** Both
+consumer changes below landed; `make godot-reload` presses the real
+portal in `ZONE_DORMANT` and lands back in the Zone it left.
+
 **Both lanes found the same last obstacle, from opposite ends.**
 `portal_enabled` was reading a second list: one of two near-identically
 named constants gained `ZONE_DORMANT` and the other did not. From the
@@ -1130,148 +1134,118 @@ carrier is the open question, and it is genuinely joint:
 > other.
 
 
-## 5.6a ANSWERED by the engine lane, 2026-09-12: option 2, and the engine produces it
+### 5.6a Option 2 taken — a package travels with the layout
 
-**Beside the manifest.** A package is a physical claim about geometry
-the engine built, so it travels with `layout_result` and is committed
-with the manifest — the same carrier `apertures`, `arrival_ok` and the
-chain already use, whose own docstring says the payload "grows as the
-engine measures more". Nothing new is added beside `ZoneReady` or the
-snapshot.
+**Owner direction, 2026-09-12: option 2.** A package is a physical fact,
+so it moves the way the layout moves. Implemented on the bridge side;
+what the engine owes is at the end.
 
-**And the composer does not write one.** Option 1 would have Epsilon's
-output surface carry `LatchCondition.detail` and `ReferenceSolution
-.steps`, and the guard that refused it is right: those two are the
-engine's script and the engine's observation, and a provider that can
-write them is authoring a physical claim. Under option 2 the provider
-never sees either field, so the guard needs no exemption and the lane
-boundary needs no footnote.
+**The path.** The engine resolves the Zone's bounded intent into a real
+setup, measures it, replays it, and offers the result inside
+`layout_result` as `layout["packages"]` — a list of `PlacedPackage`.
+`layout.validate` is where it is checked, so it goes through the same
+**validate-then-commit** gate the layout does, and an accepted package
+is written into the manifest under the same `manifest_digest`. Nothing
+is on the Zone, so `test_epsilon_vocabulary` never walks it and the two
+fields that refused the first attempt — `LatchCondition.detail` and
+`ReferenceSolution.steps` — stay out of Epsilon's reach by
+construction rather than by exemption.
 
-**Provider intent and engine certification stay separate, and that is
-the shape.** A chamber declares INTENT in the vocabulary it already has
-— `features: [{tag: "powered_door"}]`, an ordinary optional affordance,
-§13.2-bound so it can never gate the mandatory path. The engine builds
-the chain that intent asks for and CERTIFIES it by producing the
-package and replaying it. One is "I would like a crate and a door here";
-the other is "here is the package I built and the evidence that it
-latches". Neither can be mistaken for the other and neither is derivable
-from the other.
+**Three identities, all resolved against the Zone.** `zone_id` is the
+Zone the layout was offered for; `room_id` is a room it declares;
+`content_ref` is `feature:<tag>` or `shell:<shell_id>` and must name
+content that room declares. Neither half of that vocabulary is new. A
+package that parses, describes a real mechanism, and is attached to the
+wrong thing is the failure the wrapper exists to make impossible.
 
-### The shape, exactly, as it is now implemented
+**A bad package refuses the layout and is never dropped.** Committing
+the manifest without it would build the room and leave the mechanism
+inert — the content the engine asked for, quietly downgraded, with
+nothing saying so. Load-bearing or not: the engine declared it.
 
-`layout_result.layout` gains one key. **One entry per declared
-feature**, so a feature the layout never mentions is a hole the bridge
-can see:
+**`check_physics_content` runs over the accepted set**, which is where a
+load-bearing latch with no evidence, evidence recorded for another
+package, and evidence for another revision of this one are each refused.
+`local_keys` is passed because it is a real dimension with a real count;
+the rest of the state vector is the verifier's budget question and
+nothing derives it from a Zone yet, so what is checked there is a
+**floor** rather than the whole vector, and the code says so.
 
-```json
-"physics": [
-  {"room_id": "c002", "index": 0,
-   "package": { ... PhysicsPackage ... },
-   "evidence": { ... ReplayEvidence ... }}
-]
-```
+**The consequence, and only the approved one.** `latch_fired` is a
+client intent; `record_latch` checks it against the packages the
+committed manifest accepted and only then adds
+`package_id/latch_id` to `ZoneProgress.latched` — monotone, idempotent,
+and persisted, because Design 2 §5.7 says a satisfied latch is never
+cleared by a reset and quitting is a reset. The live signal is not
+state. **One carrier**: `ZoneProgress` on the `ZoneRecord` the snapshot
+already carries and `main.gd::_to_zone` already reads. Nothing was added
+to `ZoneReady`.
 
-Three entry shapes and no fourth:
+**Nothing became load-bearing.** No engine produces evidence yet, so
+every load-bearing package is refused — which is the accessibility
+guarantee stated as a test rather than as a promise
+(`test_a_load_bearing_package_without_evidence_refuses_the_layout`).
+`CROSSING_EVIDENCE` is untouched: a package proving a crate moves says
+nothing about how far a dash carries a body.
 
-| shape | means | verdict |
-|---|---|---|
-| `package` + `evidence` | the engine built the chain and replayed it | checked, below |
-| `declined: "<reason>"` | `AffordanceFeatures.fits` did not build it — the corridor could not host the rig | accepted; a reason is required |
-| `refused: "<reason>"` (+ `package`) | built, and the engine could not certify it | **refused** |
+> **What the engine lane owes, concretely.** Emit `layout["packages"]`
+> from `zone_builder`/`ReplayHarness` as a list of
+> `{package_id, zone_id, room_id, content_ref, package}` — the wrapper
+> is `schemas/physics.py::PlacedPackage` and `package` is the shape
+> `physics_package.gd` already builds. Send `latch_fired` when a latch
+> the accepted package declares is satisfied. Two things are NOT
+> requested: any field on the Zone, and any second carrier for what a
+> player has latched.
 
-* **`package`** is `PhysicsPackage` as `schemas/physics.py` already
-  defines it — no new model. The body is the crate; the latch is a
-  `WEIGHT_THRESHOLD` naming the plate and the kilograms it asks for,
-  because that is literally what `PoweredLink` reads every physics
-  frame and a `POSITION_REGION` would describe a different condition
-  than the door's own; `reference_solution.steps` is the engine's push
-  script, aimed from the crate at the plate; `setup.scene_digest` is
-  the real `SceneDigest` over the room the chain stands in, taken after
-  the crate has settled and been zeroed so that the setup is the same
-  setup every time.
-* **`evidence`** is `ReplayEvidence`, produced by `ReplayHarness.replay`
-  at Zone entry: three runs, at exactly the envelope, `per_run_latched`
-  per run.
-* **`vector_latches`, `required_latches` and `on_mandatory_route` are
-  all empty or false, and the bridge refuses a chain where they are
-  not.** §13.2 forbids a feature on the mandatory path; a package
-  claiming a route depends on it claims the opposite of what the
-  affordance contract promises, whatever its evidence says.
 
-**It replays IN THE ROOM, on the real chain.** `ChainCertificate`
-(`godot/scripts/gameplay/chain_certificate.gd`) hands `ReplayHarness` a
-stage whose body is the room's own crate and whose plate is the room's
-own plate, resets that crate between runs, and puts it back afterwards.
-A reconstruction would agree with the generator by construction; the
-failure worth catching is the one where the composer put something
-between the crate and the plate. The cost is about three seconds of
-Zone-entry time per chain, inside the hold the player is already under
-from the moment their body exists until the verdict.
+### 5.6a-bis ANSWERED by the engine lane, 2026-09-12: it emits them
 
-**The harness's observation is stricter than the door's.**
-`ReplayHarness` asks whether the crate's CENTRE is in the plate box;
-`PoweredLink` asks whether the crate OVERLAPS its `Area3D`. The first
-implies the second, so a latch here implies a powered door — the safe
-direction for the two to differ in.
+**What the engine owes is paid.** `ChainCertificate`
+(`godot/scripts/gameplay/chain_certificate.gd`) builds a
+`PhysicsPackage` for every `powered_door` a room declares, replays it
+three times at exactly the manipulation envelope, and
+`layout_to_json` sends the result as `layout["packages"]` — the
+`PlacedPackage` wrapper above, `content_ref: "feature:powered_door"`,
+with the `ReplayEvidence` inside the package where the model already
+has a field for it. No second carrier, and nothing on the Zone.
 
-### What the bridge should check, and what it must not
+**It replays IN THE ROOM, on the real chain.** The room's own crate and
+its own plate, reset between the three runs and put back afterwards. A
+reconstruction on a clean floor agrees with the generator by
+construction; the failure worth catching is the one where the composer
+put something between the crate and the plate, and
+`godot-room-contract` drops a slab there and requires the certificate
+to stop. The latch is a `WEIGHT_THRESHOLD` naming the plate and its
+kilograms, because that is what `PoweredLink` reads every physics
+frame. `setup.scene_digest` is the real `SceneDigest` over the room,
+taken after the crate has settled and been zeroed so the setup is the
+same setup every time. It costs about five seconds of Zone-entry time
+per chain, inside the hold the player is already under.
+
+**And three checks were added to `_packages`, because
+`check_physics_content` deliberately skips these.** Its subject is
+progression guarantees, so it passes over every package that is not
+load-bearing — and a chain guarding a note is not. On its own it would
+have accepted every chain in silence, which is this project's recurring
+defect: a measurement that exists, is correct, and is never handed the
+case that fails it. `_certified_features` asks the three it skips:
 
 | check | why |
 |---|---|
-| one entry per declared `powered_door` feature | the inverted probe: unreported is refused, exactly as an unreported aperture is |
-| the package validates as `PhysicsPackage` | it is the bridge's model |
-| the package is not load-bearing | §13.2, above |
-| package ids are unique in the Zone | a latch is `package_id/latch_id` |
-| `evidence.content_digest == package_digest(package)` | evidence bound to what it describes, not merely well-shaped |
-| `evidence.at_the_envelope` | replaying above it proves a strong provider can solve it, which is not the claim |
-| `evidence.runs == 3`, and **every declared latch** latched in every run | §23.5 check 20 |
-| **nothing about the geometry** | the bridge has no scene, and re-deriving a physical fact in Python is what the lane split prevents |
+| one package per declared `powered_door` | the inverted probe: a room that declares a chain and offers nothing has either failed to build it and not said so, or built it and not replayed it |
+| its evidence passes `evidence_fault` | the same function `check_physics_content` calls, asked of the packages it skips — one implementation, two callers |
+| the package is not load-bearing | §13.2 forbids a feature on the mandatory path; a package claiming a route depends on it claims the opposite of what the affordance contract promises |
 
-The last check names the DECLARED latches and not `required_latches`,
-which is empty here by the rule two rows above it: a check written
-against `required_latches` would pass every chain vacuously. That is
-this project's recurring defect — a measurement that exists, is
-correct, and is never handed the case that fails it — caught at design
-time for once.
+**A chain the engine could not build or could not replay is not
+offered, and the absence is what refuses the layout.** Warned loudly
+engine-side, refused bridge-side by the count. Dropping it quietly
+would build the room and leave the mechanism inert — the downgrade this
+carrier exists to make impossible.
 
-**`check_physics_content` alone could not do this**, and that is worth
-saying because §5.6 offered it. It skips every package that is not
-load-bearing — correctly, since its subject is progression guarantees —
-and these packages are deliberately not load-bearing, so it would have
-accepted every chain in silence. `physics.evidence_fault` is the shared
-half, one function with two callers: `check_physics_content` asks it of
-a load-bearing package, where unsound evidence means a progression gate
-nobody measured; `layout.validate` asks it of every chain a generated
-room built. The question is the same and must not grow two answers.
+**Still owed by this lane:** `latch_fired` when a player satisfies a
+declared latch. The chain's consequence today is the local reward
+behind the door, which rides the validated path every reward does.
 
-**It is validated at acceptance and NOT written into the manifest.** A
-manifest is replayed byte-identically forever; a scene digest is
-re-measured on every entry, and a solver that resolves a resting
-contact one quantum differently would then refuse a Zone that is fine.
-Acceptance is the commitment point: a Zone whose declared chains do not
-certify does not get a manifest at all, which is the guarantee that
-matters and the one that does not rest on an unproved claim about
-physics determinism.
-
-### And the three things this does NOT do
-
-* **It does not populate `CROSSING_EVIDENCE`.** Agreed, and stated in
-  `AP_CAPABILITY_LOGIC.md` §8b-ANSWERED for the same reason: a package
-  proving a crate moves says nothing about how far a dash carries a
-  body. Different quantity, different digest (`controller_digest`,
-  not `scene_digest`), different contract.
-* **It makes nothing load-bearing.** The chain is an affordance. §13.2
-  already forbids a feature on the mandatory path, hosting an AP reward,
-  an exit or an objective — so a player who never shoves the crate loses
-  a note. No capability gate is declared, and `manipulate` stays out of
-  the vocabulary.
-* **It does not decide persistence.** `ZoneProgress.latched` and a
-  `latch_fired` intent are this lane's and are welcome; the engine's
-  half today records the consequence the player actually takes — the
-  local reward behind the door — on the existing validated path. The
-  live signal is recomputed from the plate every physics frame and is
-  written nowhere, which is §5.4a's split observed rather than asserted:
-  `godot-room-contract` lifts the crate off and watches the door shut.
 
 ## 6. What remains in this lane
 

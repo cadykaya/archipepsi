@@ -142,7 +142,8 @@ class BridgeServer:
             await engine.handle_slot_action(m.slot, m.component_id)
         elif m.type == "grant_local_reward":
             await engine.handle_grant_local_reward(m)
-        elif m.type in ("key_collected", "lock_opened", "station_reached"):
+        elif m.type in ("key_collected", "lock_opened", "station_reached",
+                        "latch_fired"):
             await engine.handle_progress(m)
         elif m.type == "layout_result":
             await engine.handle_layout_result(m)

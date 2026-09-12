@@ -750,9 +750,10 @@ func _certify_physics(build: Dictionary) -> void:
 		var placed: Dictionary = rooms.get(rid, {})
 		var bounds: AABB = placed.get("bounds", AABB())
 		for certified: Variant in await ChainCertificate.of_room(
-				get_tree(), chamber, entry["node"] as Node3D, bounds):
+				get_tree(), zone_id, chamber, entry["node"] as Node3D,
+				bounds):
 			out.append(certified)
-	build["physics"] = out
+	build["packages"] = out
 
 ## Aperture polarity and arrival verdicts, measured and attached.
 ##

@@ -55,23 +55,39 @@ BRANCH_COLOURS: tuple[str, ...] = ("red", "blue", "green", "gold")
 
 #: How much of the spare room budget may go onto branches.
 #:
-#: **Provisional tuning, under evaluation — not a design law and not a
-#: physical cost.** Every room pulled off the spine is a room the route
-#: no longer passes through; "every spare room" produced, measured, a
-#: three-room spine with five spokes off it. A half share was the first
-#: value that kept the Zone a journey with side rooms. It is a dial, and
-#: the generation-coverage report is how it gets turned.
+#: **Provisional tuning, and nothing more** (owner clarification,
+#: 2026-09-12). Not a design law, not a physical cost, and **not a rule
+#: against any particular shape.** A half share is where the dial
+#: currently sits because it was the first value tried that produced a
+#: distribution worth reading; it has no play evidence behind it yet,
+#: and it keeps its place only if some arrives.
+#:
+#: An earlier note here reported "a three-room spine with five spokes
+#: off it" as though the shape were the defect. **It is not.** A central
+#: junction connecting many rooms is good dungeon design, and so are
+#: deep branches, shallow ones, nested ones, spurs and dead ends. The
+#: complaint this composer was built after was never about graph shape:
+#: it was that rooms behaved like enlarged corridors, with little reason
+#: to occupy or revisit them. That is a question about what is IN a
+#: room, and no value of this constant answers it.
 SPINE_SHARE = 0.5
 
 #: How far off the spine a side path may run, counted in rooms.
 #:
-#: **Provisional tuning, under evaluation — not a design law and not a
-#: physical cost.** Without it the planner produced, measured, eight
-#: branches that were one side chain eight rooms deep: one turning,
-#: taken once, reported as eight. A side path a room or two deep is a
-#: place you chose to go; a side path eight deep is a second corridor.
-#: Nesting is kept — it is what puts a junction INSIDE a side path — and
-#: this is what stops it running away.
+#: **Provisional tuning, and nothing more** (owner clarification,
+#: 2026-09-12). Not a design law and not a physical cost.
+#:
+#: What it was introduced for was a MEASUREMENT defect, not a shape one:
+#: the planner reported eight branches for what was one side chain eight
+#: rooms deep, and `zone_shape.shape_of` is the fix for that — it counts
+#: turnings rather than moved rooms, whatever this value is. With the
+#: count honest, the depth itself is an open question. A long side path
+#: is a legitimate thing for a Zone to have; so is a short one; so is a
+#: junction with many rooms hanging off it.
+#:
+#: So this stays at 2 for now because it produces a distribution worth
+#: reading, and it is a dial rather than a verdict. Raise it, remove it,
+#: or keep it on play evidence — not to avoid a shape.
 MAX_SIDE_DEPTH = 2
 
 #: Wide enough to carry a side door without the opening landing on the
@@ -373,8 +389,8 @@ def _branch_routes(chambers, caps) -> tuple[list[BranchRoute], tuple[str, ...]]:
     used: dict[str, set[str]] = {c.id: set(SPINE_SOCKETS) for c in chambers}
     #: How far off the spine each room sits. A spine room is 0; a branch
     #: destination is one further than its junction. Read by the
-    #: candidate filter below, which is what keeps a nested branch a
-    #: wing rather than a second corridor.
+    #: candidate filter below, which applies `MAX_SIDE_DEPTH` — a dial,
+    #: not a judgement about which shapes a Zone may have.
     depth: dict[str, int] = {c.id: 0 for c in chambers}
     routes: list[BranchRoute] = []
 

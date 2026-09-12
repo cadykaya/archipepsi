@@ -397,6 +397,59 @@ def record_key(save: CampaignSave, zone_id: str, key_id: str) -> CampaignSave:
     return _progress(save, zone_id, lambda p: p.with_key(key_id), known)
 
 
+def _accepted_packages(rec: ZoneRecord) -> dict[str, set[str]]:
+    """`package_id -> declared latch ids`, from the COMMITTED manifest.
+
+    The manifest and not the Zone, because a package is a physical fact
+    the engine measured and the bridge accepted — `AMALGAM_BRIDGE.md`
+    §5.6 option 2. A Zone whose layout has not been committed has no
+    accepted packages at all, which is the honest answer: nothing has
+    been measured, so nothing can have latched.
+    """
+    manifest = rec.manifest or {}
+    out: dict[str, set[str]] = {}
+    for entry in manifest.get("packages") or ():
+        pkg = entry.get("package") or {}
+        out[str(entry.get("package_id"))] = {
+            str(c.get("latch_id"))
+            for c in (pkg.get("latch_conditions") or ())}
+    return out
+
+
+def record_latch(save: CampaignSave, zone_id: str, package_id: str,
+                 latch_id: str) -> CampaignSave:
+    """A physics latch fired. Idempotent by `package_id/latch_id`.
+
+    **The live signal is not the state.** What is persisted is the
+    approved consequence: the event is checked against the packages the
+    committed manifest accepted, and only then does it join a monotone
+    set that survives a reload. Design 2 §5.7 says a satisfied latch is
+    never cleared by reset or death, and quitting is a reset.
+
+    Refused rather than recorded when the package is not one this Zone's
+    layout accepted, or when it is and does not declare that latch. A
+    latch nobody placed would otherwise become permanent save data
+    describing nothing — and monotone sets never give anything back.
+    """
+    def known(rec):
+        packages = _accepted_packages(rec)
+        if package_id not in packages:
+            raise ValueError(
+                f"Zone '{zone_id}' accepted no physics package "
+                f"'{package_id}'"
+                + (f"; it holds {sorted(packages)}" if packages
+                   else " and its committed layout holds none"))
+        declared = packages[package_id]
+        if latch_id not in declared:
+            raise ValueError(
+                f"package '{package_id}' in Zone '{zone_id}' declares no "
+                f"latch '{latch_id}'"
+                + (f"; it declares {sorted(declared)}" if declared
+                   else " and declares none"))
+    ref = f"{package_id}/{latch_id}"
+    return _progress(save, zone_id, lambda p: p.with_latch(ref), known)
+
+
 def record_lock(save: CampaignSave, zone_id: str, room_id: str,
                 socket_id: str) -> CampaignSave:
     """A lock opened. Idempotent by `(room_id, socket_id)`.
@@ -746,6 +799,6 @@ TRANSITIONS = (
     release_location, claim_zone_check, buy_shop_stock, confirm_check,
     rollback_shop_purchase, restock_shop, append_interpretation,
     slot_action, grant_local_reward,
-    rest_zone, record_key, record_lock, record_station,
+    rest_zone, record_key, record_latch, record_lock, record_station,
     commit_layout, refuse_layout,
 )

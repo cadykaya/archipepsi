@@ -434,6 +434,46 @@
         "title": "KeyCollected",
         "type": "object"
       },
+      "LatchFired": {
+        "additionalProperties": false,
+        "description": "A physics latch satisfied in the world.\n\n**Idempotent by `package_id/latch_id`, because a latch is monotone.**\nDesign 2 \u00a75.7 says a satisfied latch is never re-evaluated, so the\nsame latch twice is one latch and a resend after a dropped\nconnection is the normal case rather than an error.\n\n**Validated against the packages the manifest accepted, not against\nthe message.** `record_key` once took any `key_id` the engine sent\nand wrote it into monotone save data; the identity of a latch is\nchecked the same way a key's is now \u2014 against what the Zone's\ncommitted layout actually holds \u2014 because a latch nobody placed\nwould otherwise become permanent state describing nothing.",
+        "properties": {
+          "type": {
+            "const": "latch_fired",
+            "title": "Type",
+            "type": "string"
+          },
+          "zone_id": {
+            "maxLength": 24,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Zone Id",
+            "type": "string"
+          },
+          "package_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Package Id",
+            "type": "string"
+          },
+          "latch_id": {
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]+$",
+            "title": "Latch Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "zone_id",
+          "package_id",
+          "latch_id"
+        ],
+        "title": "LatchFired",
+        "type": "object"
+      },
       "LayoutResult": {
         "additionalProperties": false,
         "description": "What the engine placed, offered to the bridge for validation.\n\nNested rather than flattened: the payload is the engine's shape and\nit grows as the engine measures more, so carrying it whole keeps\nthis message from needing a field per measurement. `layout.validate`\nis what types it, and it is strict about every part it reads.\n\n**Offered, not committed.** Only a layout that passes validation\nbecomes a manifest; a failing one is refused and never acquires a\ndigest.",
@@ -752,6 +792,7 @@
         "grant_local_reward": "#/$defs/GrantLocalReward",
         "hello": "#/$defs/Hello",
         "key_collected": "#/$defs/KeyCollected",
+        "latch_fired": "#/$defs/LatchFired",
         "layout_result": "#/$defs/LayoutResult",
         "leave_zone": "#/$defs/LeaveZone",
         "lock_opened": "#/$defs/LockOpened",
@@ -821,6 +862,9 @@
       },
       {
         "$ref": "#/$defs/StationReached"
+      },
+      {
+        "$ref": "#/$defs/LatchFired"
       },
       {
         "$ref": "#/$defs/LayoutResult"
@@ -5693,6 +5737,15 @@
             "title": "Reached Stations",
             "type": "array"
           },
+          "latched": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 32,
+            "title": "Latched",
+            "type": "array"
+          },
           "resume_anchor": {
             "anyOf": [
               {
@@ -10365,6 +10418,15 @@
               "type": "string"
             },
             "title": "Reached Stations",
+            "type": "array"
+          },
+          "latched": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 32,
+            "title": "Latched",
             "type": "array"
           },
           "resume_anchor": {
