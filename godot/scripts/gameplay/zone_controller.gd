@@ -749,6 +749,12 @@ func _certify_physics(build: Dictionary) -> void:
 		var rid := str(chamber.get("id", ""))
 		var placed: Dictionary = rooms.get(rid, {})
 		var bounds: AABB = placed.get("bounds", AABB())
+		# THE ZONE CAN GO AWAY WHILE THIS RUNS. Certifying a chain takes
+		# seconds and `_publish_layout` is not awaited by anything, so a
+		# Zone freed mid-certification leaves this loop measuring nodes
+		# that no longer exist.
+		if not is_inside_tree():
+			return
 		for certified: Variant in await ChainCertificate.of_room(
 				get_tree(), zone_id, chamber, entry["node"] as Node3D,
 				bounds):

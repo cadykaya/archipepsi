@@ -72,11 +72,31 @@ static func of_room(tree: SceneTree, zone_id: String,
 					% rid + "room could not host; no package is offered "
 					+ "and the layout will be refused")
 			continue
+		if not _still_there(node):
+			return out
 		var certified := await certify(tree, zone_id, rid, i, chains[i],
 				node, bounds)
 		if not certified.is_empty():
 			out.append(certified)
 	return out
+
+## IS THE ROOM STILL THERE? Certifying a chain takes seconds, not
+## frames, and it is started from `_publish_layout`, which nobody
+## awaits. So the Zone can be torn down underneath it -- a suite that
+## builds a Zone, looks at it and frees it does exactly that -- and
+## every line below this one then touches a freed node. `godot-playtest3a`
+## found it the honest way: SIGABRT inside `_settle`, on a crate that had
+## stopped existing between two physics frames.
+## **UNTYPED ON PURPOSE.** A `Node`-typed parameter is type-checked
+## before the body runs, and a freed object fails that check -- so the
+## guard written to survive a freed node was itself the thing that
+## raised on one. `Variant` in, `is_instance_valid` first, and the cast
+## only after it is known to be safe.
+static func _still_there(node: Variant) -> bool:
+	if not is_instance_valid(node):
+		return false
+	var live := node as Node
+	return live != null and live.is_inside_tree()
 
 ## The chains built under `node`, in tree order.
 static func chains_in(node: Node3D) -> Array:
@@ -115,6 +135,8 @@ static func certify(tree: SceneTree, zone_id: String, rid: String,
 	# Letting the crate come to rest and then zeroing it makes the setup
 	# the same setup every time this runs.
 	await _settle(tree, crate)
+	if not _still_there(crate) or not _still_there(room):
+		return {}
 	var home := crate.global_transform
 	_reset(crate, home)
 	var package := _package(rid, index, link, crate, room, bounds, home)
@@ -123,7 +145,11 @@ static func certify(tree: SceneTree, zone_id: String, rid: String,
 				return _stage(link, crate, home))
 	# AND PUT THE ROOM BACK. The player is held while this runs and has
 	# not seen any of it; they must not walk in on a crate that ended a
-	# replay against the alcove wall.
+	# replay against the alcove wall. Unless the room went away while the
+	# replay ran, in which case there is nothing to put back and nothing
+	# to report.
+	if not _still_there(crate):
+		return {}
 	_reset(crate, home)
 	if evidence.has("refused"):
 		# A BUILT CHAIN THIS ENGINE CANNOT REPLAY IS NOT OFFERED, and
@@ -151,6 +177,11 @@ static func certify(tree: SceneTree, zone_id: String, rid: String,
 static func _stage(link: PoweredLink, crate: ManipulableBody,
 		home: Transform3D) -> ReplayHarness.Stage:
 	var stage := ReplayHarness.Stage.new()
+	if not _still_there(link) or not _still_there(crate):
+		# An empty stage: `ReplayHarness` refuses a run whose body the
+		# stage does not build, which is the honest answer for a chain
+		# whose room stopped existing mid-replay.
+		return stage
 	# The harness frees `root` after each run, so it is a marker and not
 	# the rig -- freeing the rig would delete the chain being certified.
 	var marker := Node3D.new()
@@ -245,7 +276,10 @@ static func _push_seconds(mass: float, gap: float) -> float:
 ## Waits for the crate to stop moving, bounded.
 static func _settle(tree: SceneTree, crate: ManipulableBody) -> void:
 	for _i in int(SETTLE_TIMEOUT_S * Engine.physics_ticks_per_second):
-		if crate.at_rest():
+		# CHECKED EVERY ITERATION, not once at the top: the await below
+		# is where the Zone gets freed, so the crate this loop asks
+		# about may not exist by the time the question is asked again.
+		if not _still_there(crate) or crate.at_rest():
 			return
 		await tree.physics_frame
 
