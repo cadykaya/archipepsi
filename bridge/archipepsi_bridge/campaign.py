@@ -179,7 +179,7 @@ def _relevance_hint(mechanics) -> str:
     return "; ".join(parts)[:C.MAX_TEXT_LEN]
 
 
-def _with_graph(zone):
+def _with_graph(zone, barred=()):
     """A composed Zone, carrying the topology its chamber order implied.
 
     Branching when the Zone can carry it and a plain chain when it
@@ -194,7 +194,8 @@ def _with_graph(zone):
     is the topology that shipped before graphs existed and is reachable
     by construction.
     """
-    product = topology.compose_with_branch(list(zone.chambers))
+    product = topology.compose_with_branch(list(zone.chambers),
+                                           barred=barred)
     # A COMPOSITION THAT DID NOT HAPPEN IS NOT A ZONE.
     #
     # This used to read the refusal paths as ordinary empty products and
@@ -980,6 +981,54 @@ class CampaignEngine:
                                    used_fallback=outcome.used_fallback))
         await self.broadcast_snapshot()
 
+    async def _reselect_hosts(self, rec, rooms) -> bool:
+        """Recompose this Zone's graph with `rooms` barred as hosts.
+
+        Returns whether it was done. False falls through to the ordinary
+        layout refusal — which is the honest answer when the rooms are
+        ones this Zone has already been told about, or when the Zone
+        cannot be composed at all without them.
+        """
+        barred = tuple(sorted(set(rec.unhostable_rooms) | set(rooms)))
+        try:
+            regraphed = _with_graph(rec.zone, barred=barred)
+        except topology.GraphRefused as exc:
+            # Barring the room left a Zone that cannot be composed —
+            # a leaf with nowhere to hang, most likely. That is the
+            # composition refusal it already has, not this path.
+            log.info("zone %s: barring %s leaves it uncomposable (%s)",
+                     rec.zone_id, list(rooms), exc.refusal.code)
+            return False
+        # THE ARRANGEMENT IS PRESERVED OR THIS IS NOT THE REPAIR.
+        #
+        # Re-selection moves a branch to a supported host. Quietly
+        # handing back a Zone with FEWER branches is a different thing —
+        # branch removal to make a device requirement go away — and it
+        # is not an approved outcome here. When no reassignment of the
+        # same arrangement exists, this stands down and the ordinary
+        # bounded layout refusal takes it, which is a distinct result
+        # with its own recovery.
+        want = len(rec.zone.plugs)
+        if len(regraphed.plugs) != want:
+            log.info("zone %s: barring %s leaves %d branch(es) of %d; "
+                     "not re-selecting", rec.zone_id, list(rooms),
+                     len(regraphed.plugs), want)
+            return False
+        try:
+            self._apply(T.reselect_hosts(self.save, rec.zone_id, rooms,
+                                         regraphed))
+        except ValueError as exc:
+            log.info("zone %s: not re-selecting (%s)", rec.zone_id, exc)
+            return False
+        log.info("zone %s: %s cannot host a return; recomposed with "
+                 "%d branch(es)", rec.zone_id, list(rooms),
+                 len(regraphed.plugs))
+        await self._emit(ZoneReady(
+            type="zone_ready", zone=regraphed,
+            used_fallback=self.save.zone_by_id(rec.zone_id).used_fallback))
+        await self.broadcast_snapshot()
+        return True
+
     async def _generation_failed(self, zone_id: str, error: str,
                                  detail: str) -> None:
         """A Zone that could not be built, handled the one supported way.
@@ -1236,6 +1285,20 @@ class CampaignEngine:
         if not verdict.accepted:
             log.warning("zone %s layout refused (%s): %s", intent.zone_id,
                         verdict.status, "; ".join(verdict.errors[:3]))
+            # A HOST THE ENGINE CANNOT STAND THE RETURN IN IS NOT A LOST
+            # ZONE. The engine measured and said "not in this room"; the
+            # content and the Checks are fine, and only the choice of
+            # destination was wrong. Recompose the GRAPH with that room
+            # barred and send it back to be laid out.
+            #
+            # Fresh proposals only, and `reselect_hosts` enforces it: a
+            # Zone holding a committed manifest is a solved Zone the
+            # player may be part-way through, and it keeps what it has.
+            # The three recoveries stay separate — this one, the
+            # abandon-on-composition-refusal, and the held-Zone discard.
+            if verdict.unhostable_rooms and rec.manifest is None:
+                if await self._reselect_hosts(rec, verdict.unhostable_rooms):
+                    return
             # A REFUSAL HAS TO CHANGE SOMETHING. This used to log, notify
             # and leave the Zone ACTIVE, so the client kept playing a
             # Zone the validator had just said does not hold together and

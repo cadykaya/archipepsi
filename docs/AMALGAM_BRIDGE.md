@@ -1581,6 +1581,146 @@ a real graph on the released ids. Removing the consumption fails all
 five.
 
 
+### 5.9 A return needs a room that can hold it
+
+**Engine-lane finding at `594dba3`.** `played_zone`'s `c012` is a
+`platform_path` — rising islands and two narrow ledges over a kill pit
+— and the composer gives it a branch, which makes it a dead end, which
+requires a return device. The engine tried four placements and measured
+every one: the reserved spot, the arrival's height, a lattice around the
+arrival, and the room's own declared `stand` surfaces probed in world
+space. Nothing in that room is both standable and clear of the arrival
+by trigger plus capsule. `godot-reload` red; a live campaign exhausted
+a Zone on it.
+
+**The engine is right that this is a composition question.** It has run
+out of places to look, and the remaining decision is which room gets the
+branch — which is this lane's.
+
+**What the bridge reads is a PLACEMENT OUTCOME, and nothing else.**
+Neither `arrival_ok` nor `plug_clear` can carry a host verdict, and this
+lane read both as if they could:
+
+* `room_audit.plugs_clear_of_arrivals` writes `false` when the room's
+  **arrival** anchor is missing, so incomplete data and a measured
+  overlap arrive under one word;
+* `_settle_return_anchors` skips searching whenever the current anchor
+  is standable, even when it overlaps the arrival's trigger clearance —
+  so a badly positioned pad with a perfectly good alternate elsewhere in
+  the room reports exactly like a room with nowhere to stand.
+
+Either one barred a whole room from branch selection. So the engine says
+which of three things happened, per plug, in `layout["plug_placement"]`:
+
+| `outcome` | means | this lane |
+|---|---|---|
+| *(absent)* | incomplete evidence | refuse; **do not bar** |
+| `CANDIDATE_REJECTED` | this position failed, the search did not finish | refuse; **do not bar** |
+| `NO_CANDIDATE` | the declared bounded search finished, nothing held | refuse **and bar the host** |
+| `PLACED` | a position with support and clearance | nothing |
+
+`policy` and `tried` ride along for the LOG — what search ran and how
+much of it. **No exhaustive proof of geometric impossibility is asked
+for**: a bounded search, stated. The bridge branches on the outcome and
+never on the prose, and an outcome outside that set is refused rather
+than guessed at.
+
+Support and clearance are both the engine's, and route accessibility is
+the existing physical journey work — not re-derived here.
+
+**An unresolved anchor is not a host verdict either**, and reading it as
+one was a defect for a commit: an engine that placed nothing publishes
+no anchors, so every plug's room looked unhostable, every Zone
+recomposed forever, and the refusal budget stopped counting because
+nothing reached it.
+
+**The answer is a different host, not a different Zone.**
+`compose_with_branch(..., barred=...)` stops offering those rooms a
+branch; `transitions.reselect_hosts` keeps the content, the allocation
+and the progress, replaces only the GRAPH, and sends the Zone back to be
+laid out. The return is not dropped and branching is not suppressed —
+the branch moves.
+
+**The arrangement is preserved, or this is not the repair.**
+Re-selection moves a branch to a supported host. Handing back a Zone
+with FEWER branches is a different thing — branch removal to make a
+device requirement go away — and it is **not an approved outcome here**.
+When no reassignment of the same arrangement exists, `_reselect_hosts`
+stands down and the ordinary bounded layout refusal takes it, which is a
+distinct result with its own recovery. None of this is a branch quota
+and none of it bans an ordinary chain: a Zone the composer never
+branched is untouched by any of it.
+
+**`ZoneRecord.unhostable_rooms` is monotone, and that is what makes it
+terminate.** No host is offered twice and two rooms cannot trade places.
+It survives a reload, because the engine may report after a restart.
+
+**And it is scoped to the proposal it concerns.** Room ids repeat across
+generations — `c004` in this Zone is not the `c004` the engine measured
+in the one before it — so `accept_zone` clears the set whenever the
+content is replaced. A placement verdict against replaced content is not
+evidence about the replacement.
+
+**A barred required destination is a refusal, not a filter.**
+`_branch_routes` drops barred rooms from the destinations it *chooses*
+and then adds required leaves separately, so a barred leaf sailed past
+the bar and was assigned anyway — the same host the engine had just
+refused. A room declaring no `exit` can only be a destination, so
+barring it makes the Zone uncomposable: `destination_unhostable`, with
+the room named. Not a reassignment, not a dropped return, not an
+invented departure.
+
+**Four recoveries, still four.** This one is new and touches none of the
+others:
+
+| when | what happens |
+|---|---|
+| the composer cannot build a graph at all | `GraphRefused` → abandon, Checks to the pool (§5.8a) |
+| **the engine cannot host a required return** | **recompose the graph with that room barred; content and Checks kept** |
+| a fresh proposal's layout fails otherwise | `refuse_layout` → recompose from Epsilon, then `ZONE_FAILED` (§5.7b) |
+| a COMMITTED Zone's replay is refused | DORMANT with its manifest, content and progress (Law 47c) |
+
+`reselect_hosts` raises on a record holding a manifest, so the committed
+case cannot be taken by this path even by mistake.
+
+> **For Prod — one field, and it is the only thing asked.**
+>
+> `layout["plug_placement"][edge_id] = {"outcome": ..., "policy": ...,
+> "tried": ...}`, where `outcome` is `PLACED`, `CANDIDATE_REJECTED` or
+> `NO_CANDIDATE` and the other two are context for the log. It is the
+> FINAL outcome for that plug: a candidate rejected and then replaced is
+> `PLACED`.
+>
+> `CANDIDATE_REJECTED` is the one `_settle_return_anchors` cannot report
+> today, because it `continue`s whenever the current anchor is standable
+> — so a standable pad inside the arrival's trigger clearance never
+> starts a search. Whether that becomes a search or stays a rejection is
+> yours; either answer is expressible here.
+>
+> Until the field arrives nothing regresses: **absent is incomplete
+> evidence**, the layout is refused exactly as it is today, and no room
+> is barred. The old bar is gone, so no room is barred on `plug_clear`
+> or `arrival_ok` any more.
+>
+> **Still open, and yours (§4 of the correction).** One real failed
+> placement driven through re-selection, rebuild, acceptance, a
+> deliberate return use and a cold restart — the Python `place_layout`
+> helper is right for bridge controls and demonstrates no physical
+> layout or traversal. Confirm the client replaces the old proposal and
+> that no old acceptance coroutine or verdict reaches the replacement.
+>
+> **One thing this lane cannot do alone.** A `layout_result` for a
+> proposal that has since been replaced is only caught by its joins
+> naming edges the current graph does not have — it is refused, but it
+> can still spend a refusal. A graph identity echoed back on
+> `layout_result` would close that; say if you would rather carry one
+> than have the bridge infer it.
+>
+> `played_zone` is regenerated from source (`make zone-fixture`), so
+> `c012` stops being a destination the moment a run reports
+> `NO_CANDIDATE` for it. No committed manifest was rewritten.
+
+
 ## 6. What remains in this lane
 
 **The five conditions §0-bis puts on a legal capability gate**

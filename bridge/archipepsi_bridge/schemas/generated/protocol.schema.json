@@ -5870,6 +5870,15 @@
             "title": "Layout Refusals",
             "type": "integer"
           },
+          "unhostable_rooms": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Unhostable Rooms",
+            "type": "array"
+          },
           "allocated_location_ids": {
             "items": {
               "maximum": 89100600,
@@ -10528,6 +10537,15 @@
             "minimum": 0,
             "title": "Layout Refusals",
             "type": "integer"
+          },
+          "unhostable_rooms": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Unhostable Rooms",
+            "type": "array"
           },
           "allocated_location_ids": {
             "items": {
