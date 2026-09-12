@@ -43,12 +43,19 @@ EPSILON_JOIN = 0.001
 #: attachment transform to `EPSILON_JOIN` asked it to be a point in the
 #: interior, which is the one thing it is not.
 #:
-#: This is the same allowance `shells.doorways_off_the_body` measures
-#: against a manifest, so a shell that may be offered and a room that
-#: may be committed answer to one number. What it still refuses is what
-#: it was written to refuse: a socket left at the world origin because
-#: no door assignment named it, and the three shells whose `exit` sits
-#: 1.6 m clear of their own body.
+#: NOT the same allowance `shells.doorways_off_the_body` uses, and the
+#: difference is what the two compare against. That one holds a manifest
+#: socket to the shell's `size`, which IS the outer face already, so it
+#: allows only rounding. This one holds a socket to the bounds the ENGINE
+#: reports, which span the walls' centre planes -- half a thickness
+#: further in -- and `corner` deliberately steps a full thickness past
+#: them. One number for both was a false negative waiting to happen, and
+#: it happened: it passed `shell_yard_gantry`'s doorways, 0.40 m off
+#: their own body, by five millimetres.
+#:
+#: What this still refuses is what it was written to refuse: a socket
+#: left at the world origin because no door assignment named it, and the
+#: three shells whose `exit` sat 1.6 m clear of the room.
 SOCKET_PROUD = _SH.WALL_THICKNESS + _SH.SPAN_TOLERANCE
 
 

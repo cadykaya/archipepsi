@@ -3553,24 +3553,34 @@ func _test_an_arrival_verdict_means_supported_ground() -> void:
 	await get_tree().process_frame
 	rooms_checked += 1
 
-## EVERY AUTHORED DOORWAY IS ON ITS ROOM -- except three, by name.
+## EVERY AUTHORED DOORWAY IS ON ITS ROOM -- except four, by name.
 ##
 ## A joining socket outside its shell's `size` is a doorway in mid-air:
 ## the router joins a corridor to the socket, the room's wall is
-## somewhere else, and between them is a gap with no floor. Three of the
-## twelve approved shells do this, all on `exit`, all by exactly 2.0 m
-## past their declared depth, and the other nine put `exit` INSIDE their
-## envelope -- so it is three mistakes and not a convention.
+## somewhere else, and between them is a gap with no floor.
+##
+## THE FOURTH WAS FOUND BY ART, NOT BY THIS. The first three are all on
+## `exit`, all 2.0 m past their declared depth, and this named exactly
+## those three -- with an allowance of one `WALL_THICKNESS`, which passed
+## `shell_yard_gantry`'s 0.40 m by five millimetres. Arty's 2026-09-12
+## reply measured the yard's `entry` at x -43.0 and `exit` at x +43.0
+## against an envelope of -42.60..42.60 and reported it as the same
+## defect on the other axis, and measured the repaired shells' walls
+## running to exactly the declared depth -- which is what says `size` is
+## the outer face and the allowance is rounding, not a wall.
 ##
 ## **This lane measured it and did not change it.** A manifest coordinate
 ## is authored geometry and authored geometry is Art's; the repair is
 ## `docs/art-requests/2026-09-11-doorways-outside-their-envelope.md`.
-## The three are named here so a FOURTH turns this red, and so the day
-## Arty repairs one this test tells us by failing on the stale name.
+## They are named here so a FIFTH turns this red, and so the day Arty
+## repairs one this test tells us by failing on the stale name -- which
+## it will, for the first three, the moment `claude/archipepsi-art`
+## merges.
 const KNOWN_DOORWAY_OVERHANGS := {
-	"shell_hall_transit": 1.6,
-	"shell_plenum_helix": 1.6,
-	"shell_span_basin": 1.6,
+	"shell_hall_transit": 2.0,
+	"shell_plenum_helix": 2.0,
+	"shell_span_basin": 2.0,
+	"shell_yard_gantry": 0.4,
 }
 
 func _test_no_new_shell_puts_a_doorway_outside_its_room() -> void:

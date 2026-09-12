@@ -140,6 +140,19 @@ budget to admit the yard was tried and put back (it made every Zone an
 `godot-playtest3a`'s two offer tests state the whole reason and pin it,
 so they fail the day any part of it is repaired.
 
+**FOUR shells are withheld now, not three, and Art found the fourth.**
+Arty's 2026-09-12 reply measured `shell_yard_gantry`'s doorways 0.40 m
+past an envelope of -42.60..42.60 — the same defect on the other axis —
+and measured the three repaired shells' walls running to exactly the
+declared depth, which is what says a shell's `size` IS its outer face.
+The gate allowed one `WALL_THICKNESS` and passed the yard by five
+millimetres; it allows rounding now. A wall thickness still belongs in
+`layout.SOCKET_PROUD`, which compares against the engine's REPORTED
+bounds (wall centre planes), and that distinction is the whole fix.
+Nothing about a generated Zone changes — the yard was already over
+`AUTHORED_AREA_BUDGET` and the fixture digest is byte-identical — what
+changes is that the gate now says the real reason.
+
 **Those three shells are Art's and are withheld, not patched.**
 `shell_hall_transit`, `shell_plenum_helix` and `shell_span_basin` each
 declare their `exit` doorway 2.0 m past their own declared depth — the

@@ -1645,10 +1645,11 @@ func _test_an_ordinary_generated_zone_honours_the_package() -> void:
 ## WHY A GENERATED ZONE CARRIES NO AUTHORED OFFER RIGHT NOW.
 ##
 ## Four shells carry movement offers: `shell_hall_transit`,
-## `shell_plenum_helix`, `shell_span_basin` and `shell_yard_gantry`. The
-## first three declare their `exit` doorway off their own body and
-## `shells.is_offerable` withholds them until Art repairs it; the yard is
-## 4429 m2 against an `AUTHORED_AREA_BUDGET` of 4000 and does not fit. So
+## `shell_plenum_helix`, `shell_span_basin` and `shell_yard_gantry`, and
+## `shells.is_offerable` withholds ALL FOUR for doorways off their own
+## body -- the first three by 2.0 m on `exit`, the yard by 0.40 m on both
+## of its, which Arty measured and reported on 2026-09-12. The yard is
+## also 4429 m2 against an `AUTHORED_AREA_BUDGET` of 4000. So
 ## the scenario the two tests below measure -- a player using an authored
 ## offer in a Zone the composer built -- DOES NOT EXIST today, and no
 ## amount of care in those tests can make it exist.
@@ -1696,10 +1697,10 @@ func _check_no_generated_zone_can_carry_an_offer() -> bool:
 			continue
 		if float(size[0]) * float(size[2]) <= Constants.AUTHORED_AREA_BUDGET:
 			usable.append(id)
-	_check(withheld == 3,
+	_check(withheld == 4,
 			"%d of the four offer-bearing shells have a doorway off "
-			% withheld + "their own body, and this pin says three; if "
-			+ "one was repaired, these two tests can walk it now")
+			% withheld + "their own body, and this pin says all four; "
+			+ "if one was repaired, these two tests can walk it now")
 	_check(usable.is_empty(),
 			"%s is both joinable and inside AUTHORED_AREA_BUDGET, so a "
 			% str(usable) + "generated Zone CAN carry an authored offer "

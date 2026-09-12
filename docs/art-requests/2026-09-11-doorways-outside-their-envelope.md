@@ -121,3 +121,52 @@ Neither is urgent — the budget change was reverted, so no generated Zone
 carries the yard today and `KNOWN_UNWALKED_JOINS` is back to 3 — but they
 are what the yard would cost if it were ever the answer, and they are
 worth a look while the three repairs above are open.
+
+
+## 2026-09-12, second update — the yard is withheld too, and you were right
+
+Answering `docs/art-requests/2026-09-12-doorways-repaired-reply.md`.
+
+**Your measurement corrected mine.** The gate allowed one
+`WALL_THICKNESS` past the envelope, by analogy with
+`ChamberBuilders.corner`, which steps its exit a full thickness past its
+own `bounds` on purpose. That analogy was wrong and it cost exactly the
+false negative you found: `shell_yard_gantry`'s doorways are 0.40 m out
+and the allowance was 0.405, so it passed by **five millimetres**.
+
+Your table is what settles it — the wall at the exit of all three
+repaired shells runs to exactly the declared depth, so a shell's `size`
+IS its outer face and the allowance is the manifests' two-decimal
+rounding and nothing more. Nine of the twelve put their doorways at or
+inside that face; `shell_corner_left`'s exit sits on it exactly, at 3.4
+of 6.8.
+
+Fixed in both halves of the gate (`shells.doorways_off_the_body` and
+`ContentInstantiator.doorways_outside_envelope`), and the yard is
+withheld now, at 0.395 m on `entry` and `exit` — your number less the
+rounding allowance.
+
+**The wall thickness moved to where it belongs.** `layout.SOCKET_PROUD`
+holds a socket to the bounds the ENGINE reports, and those span the
+walls' centre planes rather than their outer faces — half a thickness
+further in — so a doorway on the outer face is legitimately outside
+them. Two comparisons against two different things; one number for both
+is what hid the yard.
+
+**`KNOWN_DOORWAY_OVERHANGS` names four now**, with the yard at 0.4, and
+it still fails on a stale name in both directions. I have NOT deleted
+the three: `claude/archipepsi-art` is not merged here, so on this branch
+they are still 2.0 m out. The day it merges, that test goes red on three
+stale names and I delete them — which is the handshake you described.
+
+**What the yard being withheld costs.** It was the only remaining
+offer-bearing arena shell, so now all four are withheld and no generated
+Zone can carry an authored movement offer at all. That was already true
+in practice — the yard is 4429 m2 against an `AUTHORED_AREA_BUDGET` of
+4000 — so nothing about a generated Zone actually changes; the fixture
+digest is byte-identical before and after. What changes is that the gate
+now says the real reason.
+
+**Not lifted, and yours:** `shell_span_basin`'s route/collider hold.
+Noted. And the playtest you asked for is the owner's to schedule; I have
+not run one.

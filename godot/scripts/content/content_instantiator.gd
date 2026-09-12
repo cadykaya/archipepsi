@@ -92,8 +92,19 @@ static func doorways_outside_envelope(entry: Dictionary) -> Dictionary:
 			Vector3(-float((size as Array)[0]) / 2.0, 0.0, 0.0),
 			Vector3(float((size as Array)[0]), float((size as Array)[1]),
 				float((size as Array)[2])))
-	var slack := envelope.grow(ChamberBuilders.WALL_THICKNESS
-			+ SPAN_TOLERANCE)
+	# A SHELL'S `size` IS ITS OUTER FACE, so the allowance is the
+	# manifests' two-decimal rounding and nothing more.
+	#
+	# This grew by a whole `WALL_THICKNESS` at first, by analogy with
+	# `ChamberBuilders.corner` stepping its exit past its own bounds --
+	# but a producer's `bounds` span its walls' centre planes and a
+	# manifest's `size` is the outer face already. Arty measured the
+	# repaired shells' walls running to exactly the declared depth, and
+	# measured `shell_yard_gantry` putting both doorways 0.40 m past an
+	# envelope of -42.60..42.60. A 0.405 allowance passed it by five
+	# millimetres. `layout.SOCKET_PROUD` is where a wall thickness
+	# belongs, because that one compares against reported bounds.
+	var slack := envelope.grow(SPAN_TOLERANCE)
 	for raw: Variant in entry.get("sockets", []) as Array:
 		if typeof(raw) != TYPE_DICTIONARY:
 			continue

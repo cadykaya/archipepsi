@@ -1077,22 +1077,9 @@
               "types": [
                 "treasure_room"
               ]
-            },
-            "shell_yard_gantry": {
-              "size": [
-                85.2,
-                17.6,
-                52.0
-              ],
-              "types": [
-                "arena"
-              ]
             }
           },
           "room_shells": {
-            "arena": [
-              "shell_yard_gantry"
-            ],
             "corridor": [
               "shell_corner_left",
               "shell_corner_right"
@@ -1904,22 +1891,9 @@
               "types": [
                 "treasure_room"
               ]
-            },
-            "shell_yard_gantry": {
-              "size": [
-                85.2,
-                17.6,
-                52.0
-              ],
-              "types": [
-                "arena"
-              ]
             }
           },
           "room_shells": {
-            "arena": [
-              "shell_yard_gantry"
-            ],
             "corridor": [
               "shell_corner_left",
               "shell_corner_right"
@@ -2716,22 +2690,9 @@
               "types": [
                 "treasure_room"
               ]
-            },
-            "shell_yard_gantry": {
-              "size": [
-                85.2,
-                17.6,
-                52.0
-              ],
-              "types": [
-                "arena"
-              ]
             }
           },
           "room_shells": {
-            "arena": [
-              "shell_yard_gantry"
-            ],
             "corridor": [
               "shell_corner_left",
               "shell_corner_right"

@@ -83,26 +83,40 @@ def doorways_off_the_body(entry: ContentEntry) -> dict[str, float]:
     measuring the same allowance against the same manifest so the two
     lanes cannot disagree about which shells are joinable.
 
-    A doorway socket is an ATTACHMENT TRANSFORM: the plane where the
-    next connector begins. It legitimately sits proud of the interior,
-    because a room's outer wall face is where a corridor meets it -- so
-    the allowance is one `WALL_THICKNESS` plus the manifests' rounding
-    tolerance, and `shell_yard_gantry`, whose doorways sit exactly on
-    that face, is fine.
+    A shell's `size` IS ITS OUTER FACE, and that is measured rather than
+    assumed: Arty's 2026-09-12 reply reports the wall at the exit of all
+    three repaired shells running to exactly the declared depth
+    (`hl_back_*` 59.40-60.00 against a depth of 60, and the same for
+    Plenum and Span). Nine of the twelve put their doorways at or inside
+    that face -- `shell_corner_left`'s exit sits on it exactly, at 3.4 of
+    6.8. So the allowance here is the manifests' two-decimal ROUNDING and
+    nothing more.
 
-    What it is not is a free coordinate. A socket metres past the body
-    puts a corridor's mouth in open air with the room's wall behind it,
-    and the composer's overlap test never considered that volume because
-    the room does not claim it. This measures that distance and nothing
-    else: it says nothing about whether the aperture is cut, whether a
-    lock blocks it, or whether a body can stand at it -- those are three
-    other measurements, taken in the engine, against real geometry.
+    NOT ONE WALL THICKNESS. This allowed `WALL_THICKNESS` at first, by
+    analogy with `ChamberBuilders.corner`, which steps its exit a full
+    thickness past its bounds on purpose. That analogy is wrong, and
+    `layout.SOCKET_PROUD` is where it belongs: the engine's REPORTED
+    bounds span its walls' centre planes, so a socket on the outer face
+    is half a thickness outside them; a manifest's `size` is the outer
+    face already. Two comparisons against two different things.
+    Collapsing them cost a false negative -- `shell_yard_gantry` puts
+    both its doorways 0.40 m past an envelope running -42.60..42.60, and
+    a 0.405 allowance passed it by five millimetres. Arty measured it and
+    said so.
+
+    What it is not is a free coordinate. A socket past the body puts a
+    corridor's mouth in open air with the room's wall behind it, and the
+    composer's overlap test never considered that volume because the room
+    does not claim it. This measures that distance and nothing else: it
+    says nothing about whether the aperture is cut, whether a lock blocks
+    it, or whether a body can stand at it -- those are three other
+    measurements, taken in the engine, against real geometry.
     """
     out: dict[str, float] = {}
     w, h, d = (float(v) for v in entry.size)
     if w <= 0.0 or d <= 0.0:
         return out
-    slack = WALL_THICKNESS + SPAN_TOLERANCE
+    slack = SPAN_TOLERANCE
     lo = (-w / 2.0 - slack, -slack, -slack)
     hi = (w / 2.0 + slack, h + slack, d + slack)
     for socket in entry.sockets:
