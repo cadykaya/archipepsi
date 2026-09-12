@@ -21,9 +21,9 @@
    22.0
   ],
   "room:c005:return": [
+   2.5,
    0.0,
-   0.0,
-   24.5
+   22.0
   ],
   "zone_start": [
    0.0,
@@ -162,8 +162,9 @@
   "p:c005:start": {
    "how": "a probed lattice",
    "outcome": "PLACED",
+   "probed": 1,
    "repaired": true,
-   "tried": 1
+   "searched": 1
   }
  },
  "rooms": {

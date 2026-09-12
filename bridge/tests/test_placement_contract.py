@@ -4,19 +4,24 @@
 built in Python: a dictionary shaped the way the engine's serializer is
 believed to shape one. That is the right tool for "what does the
 validator do with X", and it is precisely the wrong tool for the defect
-this file exists for — the engine's placement producer spoke
-`MEASURED` / `REPAIRED` / `NO_EVIDENCE` keyed by ROOM while this
-validator read `PLACED` / `CANDIDATE_REJECTED` / `NO_CANDIDATE` keyed by
-EDGE. Both halves had tests. Both halves passed. Nothing on either side
-of the wire was ever asked to agree with the other, so every outcome the
-engine sent fell through `if outcome not in PLACEMENT_OUTCOMES` and
-looked like a payload from an older engine.
+this file exists for. Both lanes shipped a `plug_placement`. The engine
+keyed it by ROOM id with `MEASURED`/`REPAIRED`/`NO_EVIDENCE`/
+`NO_CANDIDATE`; this side keyed it by EDGE id with `PLACED`/
+`CANDIDATE_REJECTED`/`NO_CANDIDATE`. Both halves had tests. Both halves
+passed. Nothing on either side of the wire was ever asked to agree with
+the other, so every lookup missed, every plug read as a payload
+predating the field, and a `NO_CANDIDATE` was ACCEPTED — a Zone
+committing with a return device that was never placed.
 
 So the payloads here are written by `make godot-zone-audit` — by
 `ZoneBuilder.layout_to_json`, from a build `RoomAudit.measure_layout`
-measured in a real physics space — and committed. They are
-**regenerated, never hand-edited**: a fixture somebody adjusts to match
-the prose is the same mistake in a new place.
+measured in a real physics space — and committed alongside
+`captures.json`, which records for each one the exact Zone proposal
+handed to `ZoneBuilder.build`, the outcome it demonstrates, the
+controller build that measured it and the commit the tree was on. They
+are **regenerated, never hand-edited**: a fixture somebody adjusts to
+match the prose is the same mistake in a new place. Nothing below
+rewrites a key or an outcome on the way in.
 
 The trace this completes, end to end:
 
@@ -33,6 +38,12 @@ way. Nothing is renamed on the way in: the engine's own dictionary is
 dropped onto a production Zone's layout under the key the engine itself
 wrote, which is the only form of this test that can fail when the two
 vocabularies drift apart again.
+
+**Scope.** This file is the engine-evidence half: four captured
+payloads, the compatibility rule, and the reselection they feed. The
+decoder's own shape rules — a container that is not a mapping, a report
+whose keys name nothing this Zone has, a mixed report — are
+`test_amalgam_end_to_end.py`'s, on the lane that owns the decoder.
 """
 
 from __future__ import annotations
@@ -45,8 +56,8 @@ import pytest
 from archipepsi_bridge import layout, topology
 from .test_layout import _ok_result, _zone
 
-#: Written by `godot/tests/zone_audit_driver.gd`; see `make zone-fixtures`
-#: in the Makefile for the regeneration command.
+#: Written by `godot/tests/zone_audit_driver.gd`; `make godot-zone-audit`
+#: regenerates every file in here, `captures.json` included.
 PAYLOADS = (Path(__file__).resolve().parents[2]
             / "godot" / "tests" / "fixtures" / "placement")
 
@@ -54,6 +65,10 @@ PAYLOADS = (Path(__file__).resolve().parents[2]
 #: writes its report under. Named once so a drift shows up here.
 EDGE = "p:c005:start"
 HOST = "c005"
+
+#: The four the engine was asked to capture, by what each demonstrates.
+CAPTURES = {"supported": "PLACED", "repaired": "PLACED",
+            "no_evidence": "NO_EVIDENCE", "exhausted": "NO_CANDIDATE"}
 
 
 def _engine(name: str) -> dict:
@@ -85,24 +100,54 @@ def _carrying(name: str):
     return zone, result, sent
 
 
-# --- the wire identity ----------------------------------------------------
+# --- the captures, and where they came from -------------------------------
 
-@pytest.mark.parametrize("name", ["placed", "repaired", "barren",
-                                  "rejected"])
+def test_the_captures_say_what_they_are_and_how_to_remake_them():
+    """A payload with no provenance is one nobody can re-derive.
+
+    `captures.json` is the engine's own record of what it measured: the
+    Zone proposal each payload came from, the outcome it demonstrates,
+    the controller digest that measured it, the commit the tree was on
+    and the single command that rebuilds all of it. Checked against the
+    bytes, so a manifest that drifts from its own captures fails here
+    rather than misleading whoever reads it next.
+    """
+    index = json.loads((PAYLOADS / "captures.json").read_text())
+    assert index["reproduce"] == "make godot-zone-audit"
+    assert index["controller_digest"]
+    assert index["source_commit"] and "unknown" not in index["source_commit"], (
+        "a capture with no commit cannot be traced back to the engine "
+        "that produced it; `make godot-zone-audit` sets it")
+    by_file = {c["file"]: c for c in index["captures"]}
+    assert set(by_file) == {f"{n}.json" for n in CAPTURES}
+    for name, outcome in CAPTURES.items():
+        claim = by_file[f"{name}.json"]
+        assert claim["outcome"] == outcome
+        assert claim["edge_id"] == EDGE and claim["room_id"] == HOST
+        assert claim["proposal"], "every capture says what it captured"
+        assert claim["zone"]["chambers"], "and the exact Zone proposal"
+        told = _engine(name)["plug_placement"][EDGE]
+        assert told["outcome"] == outcome, (
+            f"{name}.json reports {told['outcome']!r} and its manifest "
+            f"entry claims {outcome!r}")
+
+
+@pytest.mark.parametrize("name", sorted(CAPTURES))
 def test_the_engine_keys_its_report_by_edge_and_speaks_this_vocabulary(name):
     """THE DEFECT ITSELF, on the bytes.
 
     A room id here, or an outcome spelled any other way, is the two-
-    vocabulary bug back again — and it would be invisible in every
-    other test in this suite, because a report the validator cannot
-    read is one it walks straight past.
+    vocabulary bug back again. It would not be invisible any more —
+    §5.9 made a report keyed by something else a loud refusal rather
+    than a silent miss — but the refusal would take every Zone with it,
+    so the producer is held to the key here as well.
     """
     sent = _engine(name)
     assert set(sent["plug_placement"]) == {EDGE}, (
         f"{name}.json keys its placement report "
         f"{sorted(sent['plug_placement'])}; the validator iterates "
         f"`zone.plugs` and looks up `edge_id`, so a report filed under "
-        f"a room id ({HOST!r}) is a report nothing reads")
+        f"a room id ({HOST!r}) is a report about something else")
     outcome = sent["plug_placement"][EDGE]["outcome"]
     assert outcome in layout.PLACEMENT_OUTCOMES, (
         f"{name}.json reports {outcome!r}, which this contract does "
@@ -113,7 +158,7 @@ def test_the_engine_keys_its_report_by_edge_and_speaks_this_vocabulary(name):
 
 def test_a_supported_placement_is_accepted():
     """A position with support and clearance, and the layout stands."""
-    zone, result, sent = _carrying("placed")
+    zone, result, sent = _carrying("supported")
     told = sent["plug_placement"][EDGE]
     assert told["outcome"] == "PLACED" and told["repaired"] is False
     v = layout.validate(zone, result)
@@ -122,42 +167,50 @@ def test_a_supported_placement_is_accepted():
     assert v.manifest["manifest_digest"]
 
 
-def test_a_rejected_candidate_that_was_replaced_is_accepted():
+def test_a_replaced_candidate_is_accepted_and_says_it_was_replaced():
     """The builder's spot failed and the search found another one.
 
-    **The final outcome is what crosses.** `repaired` and `tried` ride
-    along for the log; they do not soften a `PLACED` into a doubt. This
-    is the case that used to bar the room outright: a pad on solid
-    ground inside the arrival's own trigger reported `plug_clear =
-    false`, which read as "this room cannot host a return".
+    **`MEASURED` and `REPAIRED` are one outcome**: the device is
+    placed. Which position it ended on rides along in `repaired` and
+    `how` and changes nothing about the verdict. This is the case that
+    used to bar the room outright — a pad on solid ground inside the
+    arrival's own trigger reported `plug_clear = false`, which read as
+    "this room cannot host a return".
     """
     zone, result, sent = _carrying("repaired")
     told = sent["plug_placement"][EDGE]
     assert told["outcome"] == "PLACED"
-    assert told["repaired"] is True and told["tried"] > 0, told
+    assert told["repaired"] is True and told["how"], told
+    assert told["searched"] > 0 and told["probed"] > 0, told
     v = layout.validate(zone, result)
     assert v.accepted, v.errors
     assert v.unhostable_rooms == ()
 
 
 def test_missing_evidence_refuses_the_layout_and_does_not_bar_the_host():
-    """Nothing was measured, so nothing is claimed about the room.
+    """The engine measured nothing, and SAYS so rather than falling silent.
 
-    These bytes come from a build whose arrival anchor is not published:
-    the engine files no placement entry AND no clearance verdict, which
-    is one room reported consistently rather than two answers about it.
-    The layout is refused — for the measurement that is missing — and
-    `c005` is not named, because a room nobody measured has not been
-    found wanting.
+    These bytes come from a build whose arrival anchor is not published.
+    Silence would be indistinguishable from a client that predates the
+    field, so the engine reports `NO_EVIDENCE` — and omits the clearance
+    verdict for the same room in the same breath, which is one room
+    reported consistently rather than two answers about it. The layout
+    is refused, twice and for the two things that are missing, and
+    `c005` is not named: a room nobody measured has not been found
+    wanting.
     """
-    zone, result, sent = _carrying("absent")
-    assert sent["plug_placement"] == {}, sent["plug_placement"]
+    zone, result, sent = _carrying("no_evidence")
+    told = sent["plug_placement"][EDGE]
+    assert told["outcome"] == "NO_EVIDENCE"
+    assert told["searched"] == 0, (
+        "an unmeasured room must not claim a search it did not run")
     assert sent["plug_clear"] == {}, sent["plug_clear"]
     v = layout.validate(zone, result)
     assert not v.accepted
     assert v.unhostable_rooms == (), (
-        "absence is not NO_CANDIDATE; barring a host on it would "
+        "NO_EVIDENCE is never NO_CANDIDATE; barring a host on it would "
         "reselect a branch away from a room the engine never judged")
+    assert any("was not measured" in e for e in v.errors), v.errors
     assert any("no measured clearance" in e for e in v.errors), v.errors
     assert not any("offers no position" in e for e in v.errors), v.errors
 
@@ -170,34 +223,23 @@ def test_a_finished_search_that_found_nothing_bars_the_host():
     room used to be barred on — reports no problem at all here. The bar
     comes from the placement outcome or it does not come, which is the
     whole reason the outcome exists.
+
+    And the search is stated rather than asserted: 80 candidates
+    enumerated across the declared lattice, 14 of them inside the room's
+    envelope and put to the physics world. `searched` without `probed`
+    cannot tell a finished search from one that never ran a query, which
+    is exactly how a lattice with a missing axis passed for months.
     """
-    zone, result, sent = _carrying("barren")
+    zone, result, sent = _carrying("exhausted")
     told = sent["plug_placement"][EDGE]
     assert told["outcome"] == "NO_CANDIDATE"
-    assert told["tried"] > 0 and told["policy"], told
+    assert told["searched"] > 0 and told["probed"] > 0, told
+    assert told["policy"], told
     assert sent["plug_clear"][EDGE] is True, sent["plug_clear"]
     v = layout.validate(zone, result)
     assert not v.accepted
     assert v.unhostable_rooms == (HOST,), v.unhostable_rooms
     assert any("offers no position" in e for e in v.errors), v.errors
-
-
-def test_a_search_that_could_not_be_run_refuses_without_barring():
-    """`CANDIDATE_REJECTED`: refuse this layout, judge nothing.
-
-    The room has no committed envelope, so the bounded search the
-    contract describes has nothing to run inside. A refusal — a return
-    with no accepted position is a return that fires on the way in — and
-    NOT a bar, because an unrun search establishes nothing about a room.
-    """
-    zone, result, sent = _carrying("rejected")
-    assert sent["plug_placement"][EDGE]["outcome"] == "CANDIDATE_REJECTED"
-    v = layout.validate(zone, result)
-    assert not v.accepted
-    assert v.unhostable_rooms == (), (
-        "only a finished search may bar a host; a layout refused on an "
-        "unrun one must be retried, not recomposed around")
-    assert any("did not finish" in e for e in v.errors), v.errors
 
 
 # --- compatibility, and what absence is not ------------------------------
@@ -208,33 +250,32 @@ def test_a_payload_from_an_engine_that_predates_the_report_is_accepted():
     Constructed rather than measured, and it has to be: the field is
     removed from a real accepted payload, which is exactly what an
     engine built before this contract sends and exactly what no engine
-    built after it can produce. Every rule that governed acceptance
-    before the report existed still governs, so a layout with sound
-    anchors, support and clearance is accepted with nothing said about
-    placement.
+    built after it can produce — this one says `NO_EVIDENCE` when it has
+    nothing, and absence is reserved for clients that never learned the
+    word. Every rule that governed acceptance before the report existed
+    still governs.
     """
-    zone, result, _ = _carrying("placed")
+    zone, result, _ = _carrying("supported")
     del result["plug_placement"]
     v = layout.validate(zone, result)
     assert v.accepted, v.errors
     assert v.unhostable_rooms == ()
 
 
-@pytest.mark.parametrize("entry", ["NO_CANDIDATE", None, [], 0,
-                                   {"outcome": "NO_EVIDENCE"},
-                                   {"outcome": "MEASURED"}, {}])
-def test_a_malformed_report_does_not_masquerade_as_legacy_absence(entry):
+@pytest.mark.parametrize("entry", ["NO_CANDIDATE", None,
+                                   {"outcome": "NO_EVIDENCE_"},
+                                   {"outcome": "MEASURED"},
+                                   {"outcome": "CANDIDATE_REJECTED"}, {}])
+def test_a_malformed_record_does_not_masquerade_as_legacy_absence(entry):
     """A present entry is a report, whatever shape it is in.
 
-    The gate was `isinstance(told, dict)`, so a bare outcome string, a
-    null or a list took the compatibility path and was **accepted in
-    silence** — and the two spellings this producer briefly used,
-    `NO_EVIDENCE` and `MEASURED`, arrive as exactly that: a dictionary
-    whose outcome this contract does not declare. An engine that half
-    speaks this contract must be louder than one that does not speak it
-    at all, not quieter.
+    The two spellings this producer used before §5.9 arrive as exactly
+    this: a record whose outcome the contract does not declare. So does
+    `CANDIDATE_REJECTED`, the word the consumer briefly had and nothing
+    ever produced. An engine that half speaks this contract must be
+    louder than one that does not speak it at all, not quieter.
     """
-    zone, result, _ = _carrying("placed")
+    zone, result, _ = _carrying("supported")
     result["plug_placement"] = {EDGE: entry}
     v = layout.validate(zone, result)
     assert not v.accepted, (
@@ -242,18 +283,6 @@ def test_a_malformed_report_does_not_masquerade_as_legacy_absence(entry):
     assert v.unhostable_rooms == (), (
         "a report that cannot be read is not a report that a room "
         "cannot host a return")
-
-
-def test_a_placement_report_that_is_not_a_mapping_is_refused():
-    """And the container itself. `result.get(...) or {}` let a non-empty
-    list through to `.get`, which is an AttributeError inside the
-    validator rather than a refusal — a malformed payload must be
-    answered, not crashed on."""
-    zone, result, _ = _carrying("placed")
-    result["plug_placement"] = [EDGE]
-    v = layout.validate(zone, result)
-    assert not v.accepted
-    assert any("not a mapping" in e for e in v.errors), v.errors
 
 
 # --- and on to reselection ------------------------------------------------
@@ -267,7 +296,7 @@ def test_the_barred_host_the_engine_named_is_what_reselection_bars():
     not fall — recomposing a Zone with fewer branches would make the
     device requirement go away rather than satisfy it.
     """
-    zone, result, _ = _carrying("barren")
+    zone, result, _ = _carrying("exhausted")
     barred = layout.validate(zone, result).unhostable_rooms
     assert barred == (HOST,)
 

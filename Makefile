@@ -256,8 +256,14 @@ godot-playtest3a: godot-import  # 3A: a real player rides an authored rail
 	fi; \
 	exit $$status
 
+# Also the producer of `godot/tests/fixtures/placement/*.json` -- the
+# engine payloads `bridge/tests/test_placement_contract.py` runs through
+# the real validator. `ARCHIPEPSI_CAPTURE_COMMIT` is what lets each
+# capture record the tree it was measured from; the driver says
+# "unknown" rather than inventing one when it is not set.
 godot-zone-audit: godot-import
-	@out=$$($(GODOT) --headless --path godot -- --zone-audit 2>&1); \
+	@out=$$(ARCHIPEPSI_CAPTURE_COMMIT=$$(git rev-parse --short=12 HEAD 2>/dev/null) \
+	  $(GODOT) --headless --path godot -- --zone-audit 2>&1); \
 	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" ; \
 	printf '%s\n' "$$out" | grep -q "GODOT ZONE AUDIT OK" || exit 1; \
 	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
