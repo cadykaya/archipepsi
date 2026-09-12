@@ -355,6 +355,45 @@ def _copy(rel_dir, asset, kind):
     return "res://content/%s/%s.glb" % (kind, asset)
 
 
+def export_theme_pack():
+    """Copy the six-theme texture set to the destination Production named.
+
+    `docs/art-requests/2026-09-12-theme-pack-binding-contract.md`:
+
+        godot/content/theme/<theme>_<role>.png     the imported textures
+        godot/content/theme/THEME_PACK.json        the descriptor, verbatim
+
+    VERBATIM IS THE POINT. The descriptor carries a `sha256_16` per texture
+    and clause 4 of the contract refuses a texture whose digest does not
+    match its row -- that is what makes "the pack Arty built" and "the pack
+    the game loaded" the same claim. So this copies bytes and rewrites
+    nothing: the descriptor's `texture` field is already relative in the
+    shape `res://content/theme/...` needs.
+
+    The `.import` sidecars are NOT written here. They are Godot's own
+    output, produced by running the real importer over the copied files --
+    `tools/import_godot_content.sh` -- because a hand-written sidecar is a
+    guess about an importer's schema and this one has a uid and a source
+    md5 in it.
+    """
+    src = os.path.join(ROOT, "assets", "textures", "theme")
+    dst = os.path.join(CONTENT, "theme")
+    os.makedirs(dst, exist_ok=True)
+    wanted = set()
+    for name in sorted(os.listdir(src)):
+        if not (name.endswith(".png") or name == "THEME_PACK.json"):
+            continue
+        wanted.add(name)
+        shutil.copyfile(os.path.join(src, name), os.path.join(dst, name))
+    # A texture that left the set must leave the pack, or the digest check
+    # passes on a file nothing points at any more.
+    for name in sorted(os.listdir(dst)):
+        base = name[:-7] if name.endswith(".import") else name
+        if base not in wanted:
+            os.remove(os.path.join(dst, name))
+    print("[content] %d theme file(s) -> godot/content/theme/" % len(wanted))
+
+
 def main():
     entries = []
     plan = []
@@ -579,6 +618,7 @@ def main():
           % len(entries))
     for c, k, a, _ in plan:
         print("[content]   %-30s <- %s/%s.glb" % (c, k, a))
+    export_theme_pack()
     return 0
 
 

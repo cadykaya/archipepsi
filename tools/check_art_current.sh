@@ -98,6 +98,15 @@ python3 tools/content/verify_theme_set.py >/dev/null || \
 
     python3 tools/content/verify_theme_set.py"
 
+# The exported theme pack against the set it came from, and against the
+# digests Production's loader refuses on. Gap 3's shipping half.
+python3 tools/content/verify_theme_export.py >/dev/null || \
+  fail "verify-theme-export: godot/content/theme/ is stale, a digest no
+    longer matches its descriptor row, or a sidecar is missing or is
+    importing without mipmaps. Re-export and re-import:
+
+    python3 tools/export_content_pack.py && tools/import_godot_content.sh"
+
 # The Batch 043 candidates' declared geometry against what was exported.
 python3 tools/content/verify_exported_geometry.py >/dev/null || \
   fail "verify-geometry: a declared runtime size or attachment point
