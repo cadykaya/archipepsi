@@ -68,18 +68,34 @@ def test_the_branch_producer_makes_a_junction_a_lock_and_a_way_back():
     product = topology.compose_with_branch(list(z.chambers))
     out = topology.apply(z, product)
 
-    junction = [c for c in out.chambers if c.door_degree == 3]
-    assert len(junction) == 1, "exactly one three-door room"
-    locked = [d for d in junction[0].doors if d.usage == "LOCKED"]
-    assert len(locked) == 1 and locked[0].key_id == "red"
+    # EVERY branch, not one: how many a Zone gets is derived from what it
+    # can afford, so the invariants are stated per branch.
+    locked = [(c, d) for c in out.chambers for d in c.doors
+              if d.usage == "LOCKED"]
+    assert locked, "an eight-room Zone can afford at least one branch"
+    joined = [e for e in out.edges if e.realization == "JOINED"]
+    for room, door in locked:
+        # A junction carries the side door AND whatever else joins it.
+        # Not a fixed 3: the first room has no inbound edge, and a NESTED
+        # junction is reached by a branch rather than by the spine.
+        others = [d for d in room.doors
+                  if d.usage != "SEALED" and d.socket_id != door.socket_id]
+        assert others, f"'{room.id}' is a junction off nothing"
+        assert room.door_degree == len(
+            [e for e in joined if room.id in e.rooms]), room.id
+        assert door.key_id and door.colour, "a lock needs its key"
 
-    assert len(out.plugs) == 1
-    plug = out.plugs[0]
-    assert plug.destination == "zone_start"
+    assert len(out.plugs) == len(locked), "one way back per branch"
     plug_edges = [e for e in out.edges if e.realization == "TRAVERSAL_ONLY"]
-    assert len(plug_edges) == 1
-    assert plug_edges[0].edge_id == plug.edge_id
-    assert plug_edges[0].direction == "A_TO_B", "a plug is one-way"
+    assert len(plug_edges) == len(out.plugs)
+    for plug in out.plugs:
+        assert plug.destination == "zone_start"
+        edge = next(e for e in plug_edges if e.edge_id == plug.edge_id)
+        assert edge.direction == "A_TO_B", "a plug is one-way"
+
+    # Distinct keys, so two branches are two decisions rather than one.
+    ids = [d.key_id for _, d in locked]
+    assert len(set(ids)) == len(ids), ids
 
     assert topology.reachability(out).ok, topology.reachability(out).errors
 
@@ -92,12 +108,21 @@ def test_a_plug_consumes_no_joining_socket():
     room = next(c for c in out.chambers if c.id == plug.room_id)
     carried_by_a_door = [d for d in room.doors if d.edge_id == plug.edge_id]
     assert not carried_by_a_door
-    # and the branch room's door budget is unaffected by holding a plug
-    assert room.door_degree == 1
+    # And the room's door degree is its JOINED degree exactly — holding a
+    # plug adds nothing. Counted off the edges rather than asserted as a
+    # constant, because a destination may itself be a junction for a
+    # nested branch and a hardcoded 1 would quietly stop testing this.
+    joined = [e for e in out.edges
+              if e.realization == "JOINED" and room.id in e.rooms]
+    assert room.door_degree == len(joined), (
+        room.id, room.door_degree, [e.edge_id for e in joined])
 
 
 def test_a_zone_too_small_to_branch_returns_the_chain_rather_than_guessing():
-    z = _chain_zone(4)
+    """A spine of `MIN_SPINE` has no room to spare, so every room is
+    load-bearing for the chain and the note says which cost was not met
+    rather than the Zone silently coming back unbranched."""
+    z = _chain_zone(topology.MIN_SPINE)
     product = topology.compose_with_branch(list(z.chambers))
     assert all(e.realization == "JOINED" for e in product.edges)
     assert not product.plugs

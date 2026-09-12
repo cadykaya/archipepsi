@@ -248,6 +248,49 @@ def field(chamber, name: str):
     return getattr(chamber, name, None)
 
 
+#: Socket kinds a corridor may actually join to.
+#:
+#: The Python mirror of `connector_grammar.gd`'s `JOINABLE`. A shell's
+#: CAPACITY is how many of these it declares, and it is read here rather
+#: than assumed: `topology.AUTHORED_SOCKETS` used to hardcode
+#: `("entry", "exit")` on the true-but-brittle ground that all twelve
+#: authored shells declare exactly those two. True today; a three-door
+#: shell would have been read as a two-door one, and no amount of
+#: composer support would have made it usable.
+JOINABLE_SOCKET_KINDS = ("doorway", "corridor_end")
+
+
+def joinable_sockets(entry: ContentEntry) -> tuple[str, ...]:
+    """The stable socket identities this content offers a corridor.
+
+    Names, not a count: the composer assigns edges to named sockets and
+    the engine resolves those names against the imported scene, so a
+    capacity expressed as a number would leave the composer inventing
+    which openings it meant. Sorted, so two runs assign the same way.
+    """
+    return tuple(sorted(s.name for s in entry.sockets
+                        if s.kind in JOINABLE_SOCKET_KINDS))
+
+
+def sockets_by_shell(registry: dict[str, ContentEntry] | None = None,
+                     ) -> dict[str, tuple[str, ...]]:
+    """`shell_id -> its joinable socket names`, for the composer."""
+    reg = registry if registry is not None else load_registry()
+    return {cid: joinable_sockets(entry) for cid, entry in reg.items()}
+
+
+def declared_sockets(rule: dict) -> tuple[str, ...]:
+    """The same thing off the WIRE rule, which is what a generator has.
+
+    `offered_for` exists because a generator that reads the registry can
+    name a shell the request never offered. Capacity has the same
+    problem one level down: a generator choosing a shell for a room that
+    will branch has to be able to see which shells can carry a branch,
+    and until `rule_of` carried the names it could not.
+    """
+    return tuple(rule.get("joinable", ()))
+
+
 def rule_of(entry: ContentEntry) -> dict:
     """The constraint row for one shell: what it is, and what it fits.
 
@@ -264,6 +307,13 @@ def rule_of(entry: ContentEntry) -> dict:
         rule["provides_elevation"] = sorted(entry.provides_elevation)
     if entry.size:
         rule["size"] = [float(v) for v in entry.size]
+    # CAPACITY, ON THE WIRE. Without it the offer says what a shell fits
+    # and not how many ways out it has, so nothing choosing a shell can
+    # choose one that branches -- and a composer taught about three-door
+    # rooms would still never be handed one.
+    joinable = joinable_sockets(entry)
+    if joinable:
+        rule["joinable"] = list(joinable)
     return rule
 
 
