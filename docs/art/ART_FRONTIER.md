@@ -206,6 +206,14 @@ is history and this is the state.
      four-connection room is readable — the blocker the Batch 044 handoff
      named is theirs, and gone. **A four-connection asset is still not a
      four-neighbour room in a generated Zone.**
+   * **"Leaf" is not "dead end", and Art's tag says nothing about
+     degree.** `shell_bay_terminus` carries three joinable sockets and
+     can be assigned one neighbour or three. Its `dead_end` shape tag
+     describes the END-WALL TREATMENT and is read by nothing in
+     Production, whose own `dead_ends` is a measured adjacency count.
+     Both states rendered: from the approach they are pixel-identical,
+     because the 8 m mouth hides the side openings; from inside, an
+     assigned branch is plainly a way on.
    * **Span is closed on completion, not on walkability.** Sixteen jumps,
      one per riser. The capsule limits (0.12 m step, 1.50 m jump, 46°
      ramps) are a measurement of the shipped constants by one harness —

@@ -98,7 +98,15 @@ Do not start work in it on a wake-up. Read this section and stop.
    two-sided sign and with the room rotated. **The mirrored stencil is
    still real on the procedural path** — that is a separate, unfiled
    item, not Batch 044's.
-6. **`shell_bay_terminus` cannot be composed at all today**, and it is a
+6. **"LEAF" IS NOT "DEAD END".** A branch destination in this
+   implementation can still host onward branches. Production's
+   `dead_ends` is a measured degree (`n == 1` adjacency); Art's
+   `dead_end` is a shape tag describing a treatment, and **nothing in
+   Production reads it**. Measured: from the Terminus's approach the
+   one-neighbour and two-neighbour states are pixel-identical (the mouth
+   hides both side openings); from inside, an assigned branch is plainly
+   a way on. Evaluate a one-neighbour assignment separately.
+7. **`shell_bay_terminus` cannot be composed at all today**, and it is a
    PRODUCER limit, not a door count: `topology.compose_chain` returns
    `edges=()` when any chamber lacks the literal `entry`+`exit` pair, and
    `compose_with_branch` calls it first and returns immediately. So one

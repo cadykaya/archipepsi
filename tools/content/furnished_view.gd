@@ -183,8 +183,42 @@ func _lit(view: SubViewport, root: Node3D, lamps: Array,
 		lamp.global_position = at - Vector3(0, 0.5, 0)
 
 
+## THE SLAB THE ENGINE LAYS OVER AN UNASSIGNED SOCKET.
+##
+## `ContentInstantiator._place_closures` builds the aperture plus 0.6 m,
+## 0.5 m deep, at the socket -- the same shape `crossing_test.gd` walks
+## into, drawn here instead of collided with. The question is what the
+## room LOOKS like with its spare openings sealed, because that is the
+## only state a one-neighbour assignment ever shows a player.
+func _seal(root: Node3D, entry: Dictionary, names: Array) -> int:
+	var made := 0
+	for raw: Variant in entry.get("sockets", []):
+		var socket: Dictionary = raw
+		if not names.has(str(socket.get("name", ""))):
+			continue
+		var mesh := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = Vector3(float(socket.get("width", 2.4)) + 0.6,
+				float(socket.get("height", 3.2)) + 0.6, 0.5)
+		mesh.mesh = box
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(0.42, 0.44, 0.47)
+		mat.roughness = 0.95
+		mesh.set_surface_override_material(0, mat)
+		root.add_child(mesh)
+		mesh.global_position = _v3(socket["position"]) \
+				+ Vector3(0, box.size.y / 2.0, 0)
+		mesh.rotate_y(deg_to_rad(float(socket.get("yaw", 0.0))))
+		made += 1
+	if made != names.size():
+		_fail("asked to seal %s and sealed %d -- a socket name that does "
+				% [str(names), made] + "not exist seals nothing, and the "
+				+ "picture would show an open door captioned as closed")
+	return made
+
+
 func _shot(entry: Dictionary, lamps: Array, eye: Vector3, look: Vector3,
-		out_name: String) -> void:
+		out_name: String, seal: Array = []) -> void:
 	var view: SubViewport = _bench.call("make_viewport", self,
 			Vector2i(1280, 720), 0.35)
 	var root := Node3D.new()
@@ -198,6 +232,7 @@ func _shot(entry: Dictionary, lamps: Array, eye: Vector3, look: Vector3,
 	root.add_child(shell)
 	_bench.call("force_nearest", shell)
 	var counted := _furnish(root, entry)
+	counted["sealed"] = _seal(root, entry, seal)
 	_lit(view, root, lamps, counted)
 
 	var cam := Camera3D.new()
@@ -275,6 +310,25 @@ func _run() -> void:
 			[Vector3(0, EYE, 11.0), Vector3(-12.0, EYE - 0.1, 13.5),
 				"2_the_decision_point"],
 		]
+	elif _shell == "shell_bay_terminus":
+		# THE DEAD-END TREATMENT, AGAINST WHAT THE GRAPH ACTUALLY DOES.
+		# "Leaf" in this implementation can still host onward branches,
+		# so a room whose ART says "the line stops here" has two states
+		# and they are not the same picture. Both are rendered and the
+		# report judges them separately rather than showing the flattering
+		# one and calling the room a dead end.
+		lamps = [Vector3(0, 4.4, 4.0), Vector3(0, 4.4, 12.0),
+				Vector3(-5.0, 4.4, 17.0), Vector3(5.0, 4.4, 17.0),
+				Vector3(0, 4.4, 20.0)]
+		shots = [
+			[Vector3(0, EYE, 3.0), Vector3(0, EYE, 18.0),
+				"1_one_neighbour_both_branches_sealed",
+				["branch_east", "branch_west"]],
+			[Vector3(0, EYE, 3.0), Vector3(0, EYE, 18.0),
+				"2_same_view_one_branch_open", ["branch_west"]],
+			[Vector3(0, EYE, 15.0), Vector3(9.0, EYE, 16.0),
+				"3_the_open_branch", ["branch_west"]],
+		]
 	else:
 		_fail("no shot list for %s" % _shell)
 		quit(1)
@@ -282,7 +336,8 @@ func _run() -> void:
 	for raw: Variant in shots:
 		var shot: Array = raw
 		await _shot(entry, lamps, shot[0], shot[1],
-				"%s_%s" % [_shell.replace("shell_", "").to_upper(), shot[2]])
+				"%s_%s" % [_shell.replace("shell_", "").to_upper(), shot[2]],
+				shot[3] if shot.size() > 3 else [])
 
 	if _made != shots.size():
 		_fail("%d of %d views were made" % [_made, shots.size()])

@@ -86,12 +86,46 @@ declares `entry`, `branch_east`, `branch_west` — three joinable sockets
 and no socket named `exit`. No `exit` has been invented and no opening
 has been cut to make the old sentence true.
 
-**Its intended role is a DESTINATION — a leaf.** `shape_tags` say so
-(`destination`, `dead_end`) and the room is built to say it: the channel
-comes in from the entry, opens into a turning circle, and stops at a
-blank end wall with a maintenance recess. One connection is used; the
-other two are the composer's to seal, and an unassigned socket is
-`SEALED` and gets a slab, which needs no special schema.
+**Its intended role is a DESTINATION.** ~~— a leaf.~~ The word was doing
+work it should not: **"leaf" in this implementation can still host onward
+branches**, so a room at a branch destination is not thereby a graph dead
+end, and this handoff should not have implied it was.
+
+**Two senses of "dead end", and only one is Art's.** Production's
+`dead_ends` is a MEASURED degree — `graph_driver.gd` counts adjacency and
+calls `n == 1` a dead end. Art's `dead_end` is a **shape tag describing a
+treatment**: the channel comes in from the entry, opens into a turning
+circle, and stops at a blank end wall with a maintenance recess. The two
+are unrelated, and **the tag is consumed by nothing**: every `dead_end`
+hit in Production is `side_dead_ends`, the measured property, or a test
+fixture. Whether a shape tag that reads like a degree claim is worth
+renaming is the matcher's owners' call, not Art's — flagged, not changed.
+
+### The treatment, evaluated against BOTH graph states
+
+Rendered separately, as asked, in `docs/art/review/furnished_2026-09-13/`:
+
+| frame | state | reads |
+|---|---|---|
+| `BAY_TERMINUS_1_one_neighbour_both_branches_sealed` | degree 1 | the line stops here |
+| `BAY_TERMINUS_2_same_view_one_branch_open` | degree 2 | **pixel-identical to frame 1** |
+| `BAY_TERMINUS_3_the_open_branch` | degree 2, from inside | plainly a way on |
+
+**From the approach the two states are the same picture — 0 of 921,600
+pixels differ.** Not a harness failure: the seal count is 2 against 1, so
+the closure ran and simply is not visible. The 8 m mouth hides both side
+openings until a player is inside the chamber, so the dead-end treatment
+survives an onward branch *from the approach* whatever the degree.
+
+**From inside, an assigned branch is obviously a doorway** and the "it
+stops here" reading does not survive it. So the treatment is a claim
+about the CHANNEL terminating, not about the room's degree — which is
+the distinction to keep, and the reason a one-neighbour assignment has to
+be evaluated on its own rather than inferred from the tag.
+
+One connection is used; the others are the composer's to seal, and an
+unassigned socket is `SEALED` and gets a slab, which needs no special
+schema.
 
 **The mismatch is in the PRODUCER, and it is not small.** ~~`_exit_offset`
 resolves `depart_edge` first, so the fallback is the problem.~~ That was
@@ -131,7 +165,11 @@ made a through-room to preserve an inaccurate sentence.**
 |---|---|---|---|---|---|
 | `shell_junction_cross` | medium | junction, branching | entry, exit, branch_east, branch_west | cover ×2, reactive ×2 | 4 arrival, 2 enemy_spawn, 1 objective, 1 no_build |
 | `shell_junction_triad` | medium | junction, branching | entry, exit, branch_east | cover ×2, reactive ×1, enemy_high ×1 | 3 arrival, 1 enemy_spawn, 1 objective, 1 no_build |
-| `shell_bay_terminus` | small | destination, dead_end | entry, branch_east, branch_west | cover ×2, reactive ×1 | 3 arrival, 1 enemy_spawn, 1 objective |
+| `shell_bay_terminus` | small | destination, dead_end¹ | entry, branch_east, branch_west | cover ×2, reactive ×1 | 3 arrival, 1 enemy_spawn, 1 objective |
+
+¹ `dead_end` is an **art treatment tag and not a degree claim**, and
+nothing in Production reads it. Capacity is **three** joinable sockets:
+this room can be assigned one neighbour or three.
 
 `shells.joinable_sockets` reads these by kind and by name, so the three-
 and four-connection capacity is visible to the composer as names rather
