@@ -27,6 +27,9 @@
 #   * every declared runtime size and attachment point still matches the
 #     geometry that was exported
 #   * assets/art_budgets.json still matches its own derivation
+#   * the asset interface BATCH_043_INTEGRATION.md quotes still holds
+#   * every builder on disk is in the rebuild list, so none is silently
+#     exempt from the line below
 #   * every .glb and .png rebuilds byte-identical from its source
 #   * the preview project's renderer settings still match godot/'s
 #   * files the build produces that were never committed at all, which
@@ -98,6 +101,24 @@ if ! cmp -s assets/art_budgets.json /tmp/art_budgets_committed.json; then
   diff -u /tmp/art_budgets_committed.json assets/art_budgets.json | head -30 || true
 fi
 
+# --- 4b. the exported asset interface still matches the handoff ---------
+# BATCH_043_INTEGRATION.md quotes this script's measurements as the contract
+# Production imports against. It exits non-zero on a missing model, a renamed
+# part, a short result or a moved end stop, so it is worth running rather
+# than merely quoting. Needs the engine; skipped without it, like the
+# rebuild below.
+if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
+  say "the Batch 043 import examples..."
+  tools/content/run_import_examples.sh >/dev/null 2>&1 || \
+    fail "import_examples: the asset interface quoted in
+    docs/art/BATCH_043_INTEGRATION.md no longer matches the exported assets.
+    Run
+
+    tools/content/run_import_examples.sh"
+else
+  say "SKIPPED the import examples -- no godot at ${GODOT:-$ROOT/.tools/godot}"
+fi
+
 # --- 5. the preview project has not drifted from the game ---------------
 say "preview renderer settings match godot/..."
 for setting in "textures/canvas_textures/default_texture_filter=0"; do
@@ -116,6 +137,49 @@ if ! grep -q "f62fdbde1" tools/artpreview/project.godot; then
   build. The preview and the game must run the same engine."
 fi
 
+# EVERY builder, not the ones that existed when this was written. The
+# batch002 scripts were added and this loop was not, so the newest assets in
+# the tree were the only ones nothing proved could be rebuilt -- the same
+# shape of gap as L-33.
+#
+# It happened again: `build_physics_props`, `build_machinery` and
+# `build_wave1_repair_overlay` each shipped .glb files into assets/models and
+# none was listed here. The Batch 043 pair were the two builders behind the
+# candidates pinned for an integration trial, so the art Production was about
+# to import against was the art with the least proof behind it.
+#
+# Twice is a pattern, and a list maintained by remembering is not a check. So
+# the list is now compared with the directory, and a builder that exists but
+# is not named here FAILS -- rather than being quietly skipped, which is what
+# made both gaps invisible. This runs whether or not Blender is installed.
+SCRIPTS="build_materials build_architecture build_props
+  build_concept_epsilon build_concept_check build_concept_portal
+  build_concept_enemy build_concept_anchor build_batch002_enemies
+  build_epsilon_installation build_hub build_lab build_check
+  build_ways_out build_traversal build_projectile build_affordances
+  build_dressing build_rails build_theme_dressing build_lights
+  build_shells build_arenas build_paths build_towers build_rooms
+  build_hall build_hall_overlay build_plenum build_yard build_span
+  build_arch_kit build_arch_services build_navigation build_landmarks
+  build_epsilon_states build_forge build_checkpoint build_pickups
+  build_interaction_kit build_secrets build_enemy_roles build_zone_keys
+  build_viewmodel build_gates build_decoys build_physics_props
+  build_machinery build_wave1_repair_overlay"
+
+# Unquoted on purpose: word-splitting collapses the list's line breaks, so a
+# name that happens to sit at the end of a line is still delimited by spaces.
+# (The first version quoted it, and flagged all six line-terminal builders.)
+listed=" $(echo $SCRIPTS) "
+for f in tools/blender/build_*.py; do
+  name=$(basename "$f" .py)
+  case "$listed" in
+    *" $name "*) ;;
+    *) fail "$name is not in this script's rebuild list, so nothing proves
+  the art it writes came from its source. Add it to SCRIPTS in
+  tools/check_art_current.sh." ;;
+  esac
+done
+
 # --- 6. everything rebuilds byte-identical ------------------------------
 if [ ! -x "$BLENDER" ]; then
   say "SKIPPED rebuild -- no blender at $BLENDER (set BLENDER=...)"
@@ -130,17 +194,7 @@ if ! git diff --quiet -- $PATHS; then
   exit 2
 fi
 
-# EVERY builder, not the ones that existed when this was written. The
-# batch002 scripts were added and this loop was not, so the newest assets in
-# the tree were the only ones nothing proved could be rebuilt -- the same
-# shape of gap as L-33.
-for script in build_materials build_architecture build_props \
-              build_concept_epsilon build_concept_check build_concept_portal \
-              build_concept_enemy build_concept_anchor \
-              build_batch002_enemies build_epsilon_installation \
-              build_hub build_lab build_check build_ways_out build_traversal build_projectile \
-              build_affordances build_dressing build_rails \
-              build_theme_dressing build_lights build_shells build_arenas build_paths build_towers build_rooms build_hall build_hall_overlay build_plenum build_yard build_span build_arch_kit build_arch_services build_navigation build_landmarks build_epsilon_states build_forge build_checkpoint build_pickups build_interaction_kit build_secrets build_enemy_roles build_zone_keys build_viewmodel build_gates build_decoys; do
+for script in $SCRIPTS; do
   say "rebuilding $script..."
   "$BLENDER" --background --python "tools/blender/$script.py" >/dev/null 2>&1 || \
     fail "$script.py did not complete. Run it directly for the traceback."

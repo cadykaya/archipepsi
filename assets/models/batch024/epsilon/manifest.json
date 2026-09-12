@@ -15,6 +15,7 @@
       1.706,
       2.9
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "stage": "early",
     "texel_density": null,
     "triangles": 240
@@ -35,6 +36,7 @@
       1.706,
       3.892
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "stage": "late",
     "texel_density": null,
     "triangles": 516
@@ -55,6 +57,7 @@
       1.706,
       2.9
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "stage": "middle",
     "texel_density": null,
     "triangles": 288
@@ -80,6 +83,7 @@
       1.42,
       2.9
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state": "dormant",
     "texel_density": null,
     "triangles": 392
@@ -105,6 +109,7 @@
       1.42,
       2.9
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state": "focus",
     "texel_density": null,
     "triangles": 448
@@ -130,6 +135,7 @@
       1.42,
       2.9
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state": "interpreted",
     "texel_density": null,
     "triangles": 480
@@ -155,6 +161,7 @@
       1.42,
       2.9
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state": "refusal",
     "texel_density": null,
     "triangles": 380
@@ -180,6 +187,7 @@
       1.42,
       2.9
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state": "speaking",
     "texel_density": null,
     "triangles": 420
@@ -205,6 +213,7 @@
       1.42,
       2.9
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state": "thinking",
     "texel_density": null,
     "triangles": 428

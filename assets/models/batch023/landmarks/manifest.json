@@ -23,6 +23,7 @@
       16.0,
       13.859
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "spatial_job": "three levels, one event",
     "texel_density": 32.0,
     "theme": "gothic_stone",
@@ -52,6 +53,7 @@
       25.0,
       12.45
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "spatial_job": "the ruin IS the route",
     "texel_density": 32.0,
     "theme": "temple_ruin",
@@ -81,6 +83,7 @@
       16.3,
       17.95
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "spatial_job": "loop around a central void",
     "texel_density": 32.0,
     "theme": "concrete_facility",
@@ -110,6 +113,7 @@
       14.0,
       17.057
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "spatial_job": "spiral route up a leaning mass",
     "texel_density": 32.0,
     "theme": "rusted_industrial",
@@ -139,6 +143,7 @@
       18.868,
       9.275
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "spatial_job": "space that lies about itself",
     "texel_density": 32.0,
     "theme": "void_glitch",
@@ -168,6 +173,7 @@
       21.1,
       14.9
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "spatial_job": "two platforms around a void",
     "texel_density": 32.0,
     "theme": "neon_transit",

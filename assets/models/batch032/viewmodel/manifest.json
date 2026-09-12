@@ -20,6 +20,7 @@
       0.68,
       0.178
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state": "melee deployed",
     "texel_density": null,
     "triangles": 96,
@@ -47,6 +48,7 @@
       0.449,
       0.23
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state": "stowed",
     "texel_density": null,
     "triangles": 96,
@@ -76,6 +78,7 @@
       0.064,
       0.247
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "triangles": 76,
     "why": "a reforge from ranged to grapple currently changes nothing on the viewmodel -- same source, same slot"
@@ -103,6 +106,7 @@
       0.068,
       0.231
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "triangles": 44,
     "why": "a reforge from ranged to grapple currently changes nothing on the viewmodel -- same source, same slot"
@@ -130,6 +134,7 @@
       0.08,
       0.285
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "triangles": 64,
     "why": "a reforge from ranged to grapple currently changes nothing on the viewmodel -- same source, same slot"

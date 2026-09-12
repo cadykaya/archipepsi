@@ -28,6 +28,7 @@
       0.591,
       0.189
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "theme": "concrete_facility",
     "themed_parts": [
@@ -57,6 +58,7 @@
       0.591,
       0.189
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "theme": "rusted_industrial",
     "themed_parts": [
@@ -86,6 +88,7 @@
       0.591,
       0.189
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "theme": "void_glitch",
     "themed_parts": [
@@ -128,6 +131,7 @@
       0.591,
       0.189
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "theme": "concrete_facility",
     "themed_parts": [
@@ -170,6 +174,7 @@
       0.591,
       0.189
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "theme": "concrete_facility",
     "themed_parts": [
@@ -199,6 +204,7 @@
       0.3,
       1.48
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "theme": "concrete_facility",
     "triangles": 136
@@ -219,6 +225,7 @@
       0.3,
       1.48
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "theme": "concrete_facility",
     "triangles": 148
@@ -239,6 +246,7 @@
       0.3,
       1.48
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "theme": "concrete_facility",
     "triangles": 160

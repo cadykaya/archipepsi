@@ -12,6 +12,8 @@ GODOT="${GODOT:-$ROOT/.tools/godot}"
 OUT="${1:-$ROOT/docs/art/review/machinery_2026-09-11/room}"
 H="$ROOT/godot/_harness"
 [ -x "$GODOT" ] || { echo "no godot at $GODOT" >&2; exit 2; }
+# shellcheck source=godot_run.sh
+. "$ROOT/tools/content/godot_run.sh"
 mkdir -p "$OUT"
 cleanup() { rm -rf "$H"; }
 trap cleanup EXIT
@@ -23,8 +25,7 @@ cp "$ROOT/tools/content/machinery_preview.gd" "$H/mach.gd"
 sed 's/^class_name ArtBench$//' "$ROOT/tools/artpreview/artbench.gd" > "$H/artbench.gd"
 # Compatibility renderer, with a real GL context. --headless gives the dummy
 # driver and every capture comes back black.
-xvfb-run -a "$GODOT" --path "$ROOT/godot" --rendering-driver opengl3 \
-  -s _harness/mach.gd -- \
+run_godot mach _harness/mach.gd \
   "$ROOT/docs/art/review/machinery_2026-09-11" \
   "$ROOT/assets/models" \
-  "$OUT" 2>&1 | grep -E "^\[mach\]|SCRIPT ERROR" || true
+  "$OUT"

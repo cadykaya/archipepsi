@@ -30,12 +30,23 @@ number here disagrees with a file, the file wins and this document is stale.
 
 **The pin is on the ASSETS.** This document and the import examples are
 committed after `7ea95e2`, so the doc's own commit is later — but every
-`.glb`, texture and manifest is byte-identical between them, which is the
-part a consumer depends on and is checkable:
+`.glb`, texture and manifest Batch 043 ships is byte-identical between them,
+which is the part a consumer depends on and is checkable:
 
 ```
-git diff --stat 7ea95e2 HEAD -- assets/     # empty
+git diff --stat 7ea95e2 HEAD -- assets/models/batch043 \
+                                assets/textures/batch043     # empty
 ```
+
+One thing outside Batch 043 did move after `7ea95e2`, and it is named here
+rather than left for someone to find in a diff. Revision 3 taught the
+exporter to annotate its `size` field with the axes it is in; only Batch
+043's manifests were rebuilt at the time, so every **older** batch's
+manifest was stale by one documentation string. `check_art_current.sh`
+caught it on the next full rebuild and they were regenerated —
+**245 added lines, all of them the same `"size_axes"` annotation, no line
+removed, and not one `.glb` or `.png` byte changed.** Nothing a consumer
+reads about geometry differs.
 
 **Verified at this revision:**
 
@@ -191,8 +202,15 @@ The five `§19.5` states, with the measured trough value that separates them:
 
 Runnable, and **run**: `tools/content/import_examples.gd`, driven by
 `tools/content/run_import_examples.sh`. Every figure quoted below is that
-script's own output at `7ea95e2`, recorded in
+script's own output against the assets at `7ea95e2`, recorded in
 `docs/art/review/props_2026-09-11/room/import_examples.json`.
+
+It can also **fail**, which is the point of quoting it. A model that is not
+there, a part renamed out from under an example, an example that comes back
+short of the figures it claims, a track whose end stops move when the fill
+grows, a GDScript fault, or an engine that hangs instead of finishing — each
+exits non-zero and names the defect. Run it after changing these assets and
+it will tell you whether this section is still true.
 
 These show the **asset interface**. They add no physics body, no collider and
 no behaviour.
@@ -286,7 +304,8 @@ Measured:
 ```
 manipulable          false
 mesh_nodes           ["phys_anchor_block", "attach_eye"]
-grips_or_push_pads   0
+fittings             ["attach_eye"]
+grips_or_push_pads   0          <- counted from the loaded scene
 tether_eye_world     [0.0, 0.651, 0.0]
 ```
 
@@ -322,7 +341,7 @@ pivot_moved_m            0.0        <- the attachment point does not move
 band_span_x              [-1.0, 1.0]
 track_world_x            [-1.0, 1.0]     <- unchanged by the fill
 fill_at_55pct_world_x    [-1.0, 0.1]     <- grows from the fixed end
-endpoints_move           false
+end_stop_drift_m         0.0        <- the track measured before and after
 ```
 
 ---
@@ -405,6 +424,7 @@ does not wait on sound; these three remain open against whoever owns audio.
 | `status_preview.gd` legality gate | an example scene contradicting `status_kit.json` |
 | `inspect_glb_nodes.py` | a state region arriving as a material slot with no node to drive |
 | `import_examples.gd` | the interface in this document drifting from the assets |
+| `godot_run.sh` | a preview that crashed, faulted or hung being read as a pass |
 
 Each was made to fail on purpose before it was trusted.
 

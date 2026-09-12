@@ -174,6 +174,7 @@
       60.0,
       39.6
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_godot": [
       41.2,
       39.6,

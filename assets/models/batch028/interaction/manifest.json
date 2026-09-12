@@ -18,6 +18,7 @@
       0.238,
       1.9
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
     "triangles": 252,
@@ -42,6 +43,7 @@
       0.483,
       0.655
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
     "triangles": 252,
@@ -66,6 +68,7 @@
       0.548,
       2.3
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
     "triangles": 228,
@@ -90,6 +93,7 @@
       0.34,
       1.56
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
     "triangles": 168,
@@ -114,6 +118,7 @@
       0.958,
       0.623
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
     "triangles": 188,
@@ -138,6 +143,7 @@
       0.235,
       1.73
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
     "triangles": 192,
@@ -162,6 +168,7 @@
       0.78,
       1.25
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
     "triangles": 244,
@@ -186,6 +193,7 @@
       0.545,
       1.545
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
     "triangles": 152,
@@ -210,6 +218,7 @@
       1.048,
       0.23
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state_plate_is": "the `state_visual` of interactable_contract.REQUIRED_PARTS",
     "texel_density": null,
     "triangles": 144,

@@ -90,6 +90,7 @@ SOURCE = uniq(
      "tools/content/skin_compare.py",
      "tools/content/import_examples.gd",
      "tools/content/run_import_examples.sh",
+     "tools/content/godot_run.sh",
      "tools/content/package_batch043.py",
      "tools/artpreview/artbench.gd",
      "assets/art_palette.json", "assets/art_budgets.json"]

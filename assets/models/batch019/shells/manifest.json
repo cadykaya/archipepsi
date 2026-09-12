@@ -34,6 +34,7 @@
       6.8,
       4.5
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_godot": [
       6.8,
       4.5,
@@ -137,6 +138,7 @@
       6.8,
       4.5
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_godot": [
       6.8,
       4.5,
@@ -248,6 +250,7 @@
       8.8,
       5.4
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_godot": [
       8.8,
       5.4,
@@ -425,6 +428,7 @@
       8.8,
       6.3
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_godot": [
       8.8,
       6.3,
@@ -601,6 +605,7 @@
       8.8,
       5.4
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "size_godot": [
       8.8,
       5.4,

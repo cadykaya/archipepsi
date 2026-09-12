@@ -1,7 +1,12 @@
 extends SceneTree
 ## The Batch 043 asset interface, exercised. Four small examples.
 ##
-##   godot --path godot -s _harness/examples.gd -- <models> <manifests> <out>
+##   godot --path godot -s _harness/examples.gd -- <models> <out>
+##
+## Exits 0 only when all four examples measured everything they claim to.
+## A missing model, a renamed part, or a short result exits 1 and names the
+## defect -- this script is quoted as verification, so it has to be able to
+## fail.
 ##
 ## THIS IS THE ASSET INTERFACE, NOT GAMEPLAY. Nothing here decides what a
 ## power cell does when it is inserted, how heavy a ballast feels, what a
@@ -16,17 +21,70 @@ var _models: String
 var _out: String
 var _bench: GDScript
 var _log := {}
+var _problems: Array[String] = []
+
+## What each example has to have MEASURED for this run to count as evidence.
+##
+## The handoff quotes this script's output as verification, so an example
+## that returned early -- a model that is not there, a part that was renamed
+## out from under it -- must not read as a short but successful result. Every
+## key below is produced by a measurement; if one is absent the run exits
+## non-zero and says which.
+const REQUIRED := {
+	"carriable": ["asset", "size_runtime", "aabb_min_y", "grip_world",
+			"socket_world_after_35deg_yaw", "socket_normal_after_yaw",
+			"grip_bar_end_after_yaw"],
+	"manipulate_only": ["asset", "carriable", "pads",
+			"pad_facing_a_player_at_0_1.6_3", "facing_dot"],
+	"fixed": ["asset", "manipulable", "mesh_nodes", "fittings",
+			"grips_or_push_pads", "tether_eye_world"],
+	"presentation": ["switch", "conduit"],
+}
+
 
 func _init() -> void:
 	var a := OS.get_cmdline_user_args()
-	_models = a[0]
-	_out = a[1]
+	if a.size() < 2:
+		_fail("usage: -- <models-dir> <out-dir>")
+	else:
+		_models = a[0]
+		_out = a[1]
 	_bench = load("res://_harness/artbench.gd") as GDScript
+	if _bench == null:
+		_fail("the bench script did not load")
 	_run.call_deferred()
 
 
+## Record a defect. It is printed as it happens, not only at the end, so the
+## engine log still carries it if a later example brings the run down.
+func _fail(what: String) -> void:
+	_problems.append(what)
+	printerr("[examples] FAIL: %s" % what)
+
+
+## Load a model, or record why this run is not evidence.
 func _load(rel: String) -> Node3D:
-	return _bench.call("load_glb", "%s/%s" % [_models, rel])
+	if _bench == null or _models == "":
+		return null
+	var node: Node3D = _bench.call("load_glb", "%s/%s" % [_models, rel])
+	if node == null:
+		_fail("missing or unreadable asset: %s" % rel)
+	return node
+
+
+## Find a named part, or record that the interface this example documents is
+## no longer the interface. A renamed node is exactly the change integration
+## needs to hear about, so it must not come back as a quiet empty result.
+func _part(root: Node3D, part: String, kind: String) -> Node3D:
+	var found := root.find_child(part, true, false)
+	if found == null:
+		_fail("%s has no node named '%s'" % [root.name, part])
+		return null
+	if not found.is_class(kind):
+		_fail("%s/%s is a %s, not a %s"
+				% [root.name, part, found.get_class(), kind])
+		return null
+	return found as Node3D
 
 
 ## The union AABB of an asset, in its own local frame -- runtime axes.
@@ -65,10 +123,11 @@ func _example_carriable() -> Dictionary:
 
 	# The grip is a named node. It is geometry, not a marker -- so its own
 	# AABB centre is the point a hand closes on.
-	var grip := cell.find_child("grip_bar", true, false) as MeshInstance3D
+	var grip := _part(cell, "grip_bar", "MeshInstance3D") as MeshInstance3D
+	if grip == null:
+		cell.queue_free()
+		return {}
 	var grip_world := grip.global_transform * grip.mesh.get_aabb().get_center()
-	var grip_local_centre := grip.mesh.get_aabb().get_center()
-	assert(grip_local_centre != Vector3.INF)
 
 	# The socket face comes from the manifest, in runtime axes, and is a
 	# point ON the asset -- so it transforms with it like any other point.
@@ -143,7 +202,10 @@ func _example_manipulate() -> Dictionary:
 			best = pad["id"]
 	# And the same node can be lit when the player is close enough to use
 	# it -- §33.7's "attach point available" -- because it IS a node.
-	var node := ballast.find_child(best, true, false) as MeshInstance3D
+	var node := _part(ballast, best, "MeshInstance3D") as MeshInstance3D
+	if node == null:
+		ballast.queue_free()
+		return {}
 	var lit := StandardMaterial3D.new()
 	lit.albedo_color = Color(0.22, 0.84, 0.78)
 	lit.emission_enabled = true
@@ -173,17 +235,36 @@ func _example_fixed() -> Dictionary:
 	if anchor == null:
 		return {}
 	get_root().add_child(anchor)
+	# Counted from the loaded scene. "It has no grip" is a claim about the
+	# asset, so the example measures it instead of printing a hand-written 0.
 	var names := []
+	var fittings := []
+	var handling := 0
 	for child in anchor.find_children("*", "MeshInstance3D", true, false):
-		names.append(str(child.name))
+		var part := str(child.name)
+		names.append(part)
+		if part.begins_with("attach_"):
+			fittings.append(part)
+		if part.begins_with("grip_") or part.begins_with("push_"):
+			handling += 1
+	if names.is_empty():
+		_fail("phys_anchor_block loaded with no meshes at all")
+		anchor.queue_free()
+		return {}
+	if not fittings.has("attach_eye"):
+		_fail("phys_anchor_block has no attach_eye; the tether has nothing "
+				+ "to hold")
+	if handling != 0:
+		_fail("phys_anchor_block gained %d handling fitting(s): %s"
+				% [handling, str(names)])
 	var eye_local := Vector3(0.0, 0.651, 0.0)
 	var eye_world := anchor.global_transform * eye_local
 	var out := {
 		"asset": "phys_anchor_block",
 		"manipulable": false,
 		"mesh_nodes": names,
-		"fittings": ["attach_eye"],
-		"grips_or_push_pads": 0,
+		"fittings": fittings,
+		"grips_or_push_pads": handling,
 		"tether_eye_world": [snappedf(eye_world.x, 0.001),
 				snappedf(eye_world.y, 0.001), snappedf(eye_world.z, 0.001)],
 		"note": "no fitting exists for moving it; the eye is for attaching "
@@ -205,14 +286,25 @@ func _example_presentation() -> Dictionary:
 	get_root().add_child(run)
 
 	# (a) the lever: rotate the HINGE, never the arm.
-	var hinge := sw.find_child("hinge_lever", true, false) as Node3D
+	var hinge := _part(sw, "hinge_lever", "Node3D")
+	var lens := _part(sw, "state_lens", "MeshInstance3D") as MeshInstance3D
+	var band := _part(run, "state_band", "MeshInstance3D") as MeshInstance3D
+	var fill := _part(run, "fill_band", "MeshInstance3D") as MeshInstance3D
+	if hinge == null or lens == null or band == null or fill == null:
+		sw.queue_free()
+		run.queue_free()
+		return {}
+
 	var before := hinge.global_position
 	hinge.rotate_x(deg_to_rad(-52.0))
 	var after := hinge.global_position
 	var pivot_moved := before.distance_to(after)
+	# The whole reason the hinge is exported is that the pivot stays put.
+	if pivot_moved > 0.000001:
+		_fail("hinge_lever's pivot travelled %.6f m through its own rotation"
+				% pivot_moved)
 
 	# (b) the indicator lens: one material slot on its own node.
-	var lens := sw.find_child("state_lens", true, false) as MeshInstance3D
 	var on := StandardMaterial3D.new()
 	on.albedo_color = Color(0.22, 0.84, 0.78)
 	on.emission_enabled = true
@@ -221,17 +313,23 @@ func _example_presentation() -> Dictionary:
 
 	# (c) the conduit: swap the band's texture for state, scroll it for
 	# motion, and grow `fill_band` -- and ONLY `fill_band` -- for `delayed`.
-	var band := run.find_child("state_band", true, false) as MeshInstance3D
-	var fill := run.find_child("fill_band", true, false) as MeshInstance3D
 	var band_span := band.mesh.get_aabb()
 	var fill_span := fill.mesh.get_aabb()
 	var base_x := fill.position.x
 	var frac := 0.55
+	# Where the track's end stops sit BEFORE the fill is touched, so the
+	# claim below is a before/after measurement rather than a literal.
+	var track_before := band.global_transform * band.mesh.get_aabb()
 	fill.visible = true
 	fill.scale = Vector3(frac, 1.0, 1.0)
 	fill.position.x = base_x + fill_span.position.x * (1.0 - frac)
 	var fill_box := fill.global_transform * fill.mesh.get_aabb()
 	var track_box := band.global_transform * band.mesh.get_aabb()
+	var end_drift := maxf(absf(track_box.position.x - track_before.position.x),
+			absf(track_box.end.x - track_before.end.x))
+	if end_drift > 0.0005:
+		_fail("growing fill_band moved the track's end stops by %.4f m"
+				% end_drift)
 
 	var out := {
 		"switch": {
@@ -247,8 +345,7 @@ func _example_presentation() -> Dictionary:
 					snappedf(fill_box.end.x, 0.001)],
 			"track_world_x": [snappedf(track_box.position.x, 0.001),
 					snappedf(track_box.end.x, 0.001)],
-			"endpoints_move": (absf(track_box.position.x
-					- (-1.0)) > 0.01),
+			"end_stop_drift_m": snappedf(end_drift, 0.000001),
 		},
 	}
 	sw.queue_free()
@@ -261,10 +358,35 @@ func _run() -> void:
 	_log["manipulate_only"] = _example_manipulate()
 	_log["fixed"] = _example_fixed()
 	_log["presentation"] = _example_presentation()
+
+	# An example that came back short is not evidence of anything. Name the
+	# field that is missing; the caller gets a non-zero status either way.
+	for example: String in REQUIRED:
+		var got: Dictionary = _log.get(example, {})
+		if got.is_empty():
+			_fail("example '%s' measured nothing" % example)
+			continue
+		for key: String in REQUIRED[example]:
+			if not got.has(key):
+				_fail("example '%s' never measured '%s'" % [example, key])
+
 	for key: String in _log:
 		print("[examples] %s: %s" % [key, JSON.stringify(_log[key])])
-	var f := FileAccess.open("%s/import_examples.json" % _out,
-			FileAccess.WRITE)
-	f.store_string(JSON.stringify(_log, "  "))
-	f.close()
-	quit(0)
+
+	if _out != "":
+		var f := FileAccess.open("%s/import_examples.json" % _out,
+				FileAccess.WRITE)
+		if f == null:
+			_fail("could not write import_examples.json under %s" % _out)
+		else:
+			f.store_string(JSON.stringify(_log, "  "))
+			f.close()
+
+	if _problems.is_empty():
+		print("[examples] %d example(s) complete, 0 problem(s)"
+				% REQUIRED.size())
+		quit(0)
+		return
+	printerr("[examples] %d problem(s); this run is NOT verification"
+			% _problems.size())
+	quit(1)

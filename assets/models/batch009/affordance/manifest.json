@@ -7,6 +7,7 @@
       2.033,
       0.42
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "triangles": 160
   },
@@ -18,6 +19,7 @@
       2.42,
       2.6
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "triangles": 112
   },
@@ -29,6 +31,7 @@
       2.4,
       0.72
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "triangles": 144
   },
@@ -40,6 +43,7 @@
       6.25,
       1.68
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "triangles": 132
   },
@@ -51,6 +55,7 @@
       1.64,
       0.225
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "triangles": 124
   },
@@ -62,6 +67,7 @@
       1.5,
       0.64
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "triangles": 80
   },
@@ -73,6 +79,7 @@
       1.64,
       0.165
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "triangles": 160
   }

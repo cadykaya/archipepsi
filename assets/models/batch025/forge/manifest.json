@@ -28,6 +28,7 @@
       1.168,
       2.19
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state": "idle",
     "station_x_m": {
       "analysis": -1.35,
@@ -73,6 +74,7 @@
       1.168,
       2.19
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "state": "working",
     "station_x_m": {
       "analysis": -1.35,
@@ -121,6 +123,7 @@
       1.398,
       2.4
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "triangles": 412,
     "wall_run_m": 3.0

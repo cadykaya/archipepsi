@@ -15,6 +15,7 @@
       5.0,
       5.5
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "the_tell": "finish quality. Broken is ragged; installed is neat. No colour carries this read.",
     "triangles": 352,
@@ -36,6 +37,7 @@
       5.0,
       5.5
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "the_tell": "finish quality. Broken is ragged; installed is neat. No colour carries this read.",
     "triangles": 96,
@@ -57,6 +59,7 @@
       5.0,
       5.5
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "the_tell": "finish quality. Broken is ragged; installed is neat. No colour carries this read.",
     "triangles": 228,
@@ -78,6 +81,7 @@
       5.0,
       5.5
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "the_tell": "finish quality. Broken is ragged; installed is neat. No colour carries this read.",
     "triangles": 120,
@@ -99,6 +103,7 @@
       5.0,
       5.5
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "the_tell": "finish quality. Broken is ragged; installed is neat. No colour carries this read.",
     "triangles": 260,
@@ -120,6 +125,7 @@
       5.0,
       5.5
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "the_tell": "finish quality. Broken is ragged; installed is neat. No colour carries this read.",
     "triangles": 84,
@@ -141,6 +147,7 @@
       5.0,
       5.5
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "the_tell": "finish quality. Broken is ragged; installed is neat. No colour carries this read.",
     "triangles": 152,
@@ -162,6 +169,7 @@
       5.0,
       5.5
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": null,
     "the_tell": "finish quality. Broken is ragged; installed is neat. No colour carries this read.",
     "triangles": 92,

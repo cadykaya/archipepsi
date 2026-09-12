@@ -324,6 +324,29 @@ theme-tinted hazard texture passed silently. It runs unconditionally now.
 binder itself. Gap 4 (`THEME` as a build argument) remains the next
 Art-owned item and is unblocked.
 
+### The verification repair (2026-09-11, revision 4 of Batch 043)
+
+The owner found that `run_import_examples.sh` ended in `|| true`, masking
+every Godot failure in the one script `BATCH_043_INTEGRATION.md` quotes as
+evidence. `tools/content/godot_run.sh` now backs all four runners: the
+engine's own exit status is kept, `SCRIPT ERROR` and `USER ERROR` fail, and
+the run has a deadline — because sabotage-testing the first fix showed that
+a GDScript fault before `quit()` does not fail, it **hangs**.
+`import_examples.gd` fails on a missing model, a renamed part or an example
+that comes back short of the figures it claims.
+
+Two claims in the examples became measurements: the anchor block's absent
+handling fittings are counted, and the conduit's fixed end stop is read
+before and after the fill grows.
+
+Adding the examples to `tools/check_art_current.sh` turned up three builders
+missing from its rebuild loop — `build_physics_props`, `build_machinery`,
+`build_wave1_repair_overlay` — including both Batch 043 builders. All three
+rebuild byte-identical; nothing had proved it. The loop's list is now
+compared against `tools/blender/build_*.py` and a missing builder fails.
+
+**No asset changed.** Batch 043 stays pinned at `7ea95e2`.
+
 ### Batch 043 — the Amalgam preparation batch (2026-09-11)
 
 Report: `docs/art/reports/2026-09-11-batch043.md`. Packages:

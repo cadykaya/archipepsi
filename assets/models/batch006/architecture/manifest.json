@@ -7,6 +7,7 @@
       0.62,
       3.38
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 32.0,
     "triangles": 144
   }

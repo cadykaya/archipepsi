@@ -16,6 +16,7 @@
       0.3,
       0.52
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 15,
     "text_usable_width_m": 0.686,
@@ -39,6 +40,7 @@
       0.3,
       0.52
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 15,
     "text_usable_width_m": 0.686,
@@ -62,6 +64,7 @@
       0.3,
       0.52
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 15,
     "text_usable_width_m": 0.686,
@@ -85,6 +88,7 @@
       0.3,
       0.52
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 15,
     "text_usable_width_m": 0.686,
@@ -108,6 +112,7 @@
       0.3,
       0.52
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 15,
     "text_usable_width_m": 0.686,
@@ -131,6 +136,7 @@
       0.3,
       0.52
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 15,
     "text_usable_width_m": 0.686,
@@ -154,6 +160,7 @@
       0.208,
       0.36
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 7,
     "text_usable_width_m": 0.317,
@@ -177,6 +184,7 @@
       0.208,
       0.36
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 7,
     "text_usable_width_m": 0.317,
@@ -200,6 +208,7 @@
       0.208,
       0.36
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 7,
     "text_usable_width_m": 0.317,
@@ -223,6 +232,7 @@
       0.208,
       0.36
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 7,
     "text_usable_width_m": 0.317,
@@ -246,6 +256,7 @@
       0.208,
       0.36
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 7,
     "text_usable_width_m": 0.317,
@@ -269,6 +280,7 @@
       0.208,
       0.36
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 7,
     "text_usable_width_m": 0.317,
@@ -292,6 +304,7 @@
       0.13,
       0.98
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 20,
     "text_usable_width_m": 0.898,
@@ -315,6 +328,7 @@
       0.13,
       0.98
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 20,
     "text_usable_width_m": 0.898,
@@ -338,6 +352,7 @@
       0.13,
       0.98
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 20,
     "text_usable_width_m": 0.898,
@@ -361,6 +376,7 @@
       0.13,
       0.98
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 20,
     "text_usable_width_m": 0.898,
@@ -384,6 +400,7 @@
       0.13,
       0.98
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 20,
     "text_usable_width_m": 0.898,
@@ -407,6 +424,7 @@
       0.13,
       0.98
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 20,
     "text_usable_width_m": 0.898,
@@ -430,6 +448,7 @@
       0.225,
       0.55
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 16,
     "text_usable_width_m": 0.713,
@@ -453,6 +472,7 @@
       0.225,
       0.55
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 16,
     "text_usable_width_m": 0.713,
@@ -476,6 +496,7 @@
       0.225,
       0.55
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 16,
     "text_usable_width_m": 0.713,
@@ -499,6 +520,7 @@
       0.225,
       0.55
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 16,
     "text_usable_width_m": 0.713,
@@ -522,6 +544,7 @@
       0.225,
       0.55
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 16,
     "text_usable_width_m": 0.713,
@@ -545,6 +568,7 @@
       0.225,
       0.55
     ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
     "texel_density": 64.0,
     "text_max_chars_at_22px": 16,
     "text_usable_width_m": 0.713,
