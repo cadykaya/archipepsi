@@ -1,0 +1,14 @@
+{
+  "epsilon_installation": {
+    "anchor": "floor",
+    "path": "batch002/epsilon/epsilon_installation.glb",
+    "size": [
+      9.02,
+      3.482,
+      3.55
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "texel_density": null,
+    "triangles": 1644
+  }
+}

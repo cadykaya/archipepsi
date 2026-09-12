@@ -1,0 +1,90 @@
+{
+  "batch": "043",
+  "authored": "2026-09-11",
+  "glyph_revision": "6c80b6315912a70b44c28d566ddff608eafa234a",
+  "design_revision": "a20bf55",
+  "design_section": "Design 1 §19.5, pinned by Design 6 §19",
+  "status": "PROPOSAL -- presentation only, no signal graph implemented",
+  "tile": {
+    "pixels": [
+      64,
+      16
+    ],
+    "metres": [
+      2,
+      0.5
+    ],
+    "texels_per_metre": 32
+  },
+  "audio": "NOT DELIVERED. §19.5 names a low hum, a click on arrival and a rising pitch. None of the three exists and no still or sequence here demonstrates them. It is an integration requirement and NOT the only timing information: §19.5 requires the filling band to show remaining time, and `band_delayed` does.",
+  "two_channel_rule": "§19.5 requires every state to differ from every other in at least two of brightness, pattern, motion and audio. NOTE that §19.5's own table separates `inactive` and `blocked` by pattern alone; this kit adds a brightness difference so the pair satisfies the rule the section states.",
+  "states": {
+    "inactive": {
+      "texture": "png/band_inactive.png",
+      "why": "A thin unbroken hairline, low value, end to end. A whole conduit with nothing in it -- scenery rather than a problem. Still, continuous, and the dimmest state in the kit.",
+      "motion": "none",
+      "brightness": "lowest in the kit (L* 38 line)",
+      "pattern": "unbroken hairline",
+      "audio_required": "none",
+      "measured_trough_L": {
+        "mean": 22,
+        "peak": 56.3
+      }
+    },
+    "active": {
+      "texture": "png/band_active.png",
+      "why": "Full-height lit bar with chevrons pointing the way the signal goes. Scrolls +X at 0.6 m/s. Bright, patterned, moving.",
+      "motion": "scrolls +X, 0.6 m/s",
+      "brightness": "bright",
+      "pattern": "directional chevrons",
+      "audio_required": "low hum (§19.5)",
+      "measured_trough_L": {
+        "mean": 47.3,
+        "peak": 95.6
+      }
+    },
+    "pulse_travelling": {
+      "texture": "png/band_pulse_travelling.png",
+      "why": "One short lit block, 12 px (0.375 m), with a solid leading edge, on an otherwise dim line. Scrolls +X at 4.0 m/s. The block's LENGTH never changes -- that is what separates it from a delay.",
+      "motion": "scrolls +X, 4.0 m/s, constant length",
+      "brightness": "bright block on a dim line",
+      "pattern": "one block",
+      "audio_required": "click on arrival (§19.5)",
+      "measured_trough_L": {
+        "mean": 34.5,
+        "peak": 95.6
+      }
+    },
+    "blocked": {
+      "texture": "png/band_blocked.png",
+      "why": "Segments at a LOWER value than inactive's line, each capped by a short bright cut-end, and one wide gap where the run is severed. Dimmer AND severed, against inactive's dim and whole -- two channels, and neither of them hue.",
+      "motion": "none",
+      "brightness": "well above inactive (L* 60 blocks against a L* 38 line)",
+      "pattern": "tall broken blocks, bright cut ends, one wide severance",
+      "audio_required": "none",
+      "measured_trough_L": {
+        "mean": 41,
+        "peak": 81
+      }
+    },
+    "delayed": {
+      "texture": "png/band_delayed.png",
+      "why": "THE TRACK, NOT THE FILL. A marked START STOP at the source, a marked END STOP at arrival, a dim hairline between them and quarter marks along it. Both endpoints and every graduation are STATIC and full length, in every frame of the delay.\n\nThe fill is separate GEOMETRY -- the `fill_band` node -- which grows from the source stop across this track. That split is the whole point. A first version drew the fill into this texture and scaled the band to grow it, which squashed the track's own end stops along with it: at 0% the arrival stop sat 12% of the way along the run, so the span the fill is a fraction OF moved with the fill, and the player could not read a fraction at all. Endpoints that move are not endpoints.",
+      "motion": "the `fill_band` node grows from the source stop; the track and both its endpoints never move",
+      "brightness": "a bright fill over a dim track",
+      "pattern": "a static graduated track between two fixed end stops, with a growing fill across it",
+      "audio_required": "rising pitch (§19.5), as the SECOND timing channel -- the filling band is the first and §19.5 requires it",
+      "measured_trough_L": {
+        "mean": 27.1,
+        "peak": 81
+      }
+    }
+  },
+  "two_channel_measurement": {
+    "rule": "|mean L*(inactive) - mean L*(blocked)| >= 8",
+    "inactive_mean": 22,
+    "blocked_mean": 41,
+    "gap": 19,
+    "asserted_by": "author_conduit_states.mjs, at authoring time"
+  }
+}

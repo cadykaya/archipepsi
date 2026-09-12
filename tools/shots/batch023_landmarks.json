@@ -1,0 +1,101 @@
+{
+  "_comment": [
+    "Batch 023 -- PROPOSAL: theme landmark language. Silhouettes only.",
+    "",
+    "The silhouette is the harder of the two tests a landmark has to pass.",
+    "A landmark is a thing you recognise from across a room before you can",
+    "read a single texel of its material, so if it does not survive being",
+    "reduced to a shape it is a large prop with a good texture.",
+    "",
+    "Player-scale views, room context and the 1.8 m human reference are in",
+    "Landmarks.gd, because the shot runner has no human-scale reference and",
+    "the owner asked for the same one across all six.",
+    "",
+    "NOTHING HERE IS INTEGRATION-READY. The audit in build_landmarks.py",
+    "found no landmark placement contract and no engine seam at all --",
+    "godot/scripts reads no .glb and no manifest. See interface req 24.",
+    "The key is `variants` (an array), not `variant`. Written singular the runner silently ignored it and shipped six lit frames labelled SILHOUETTE -- a caption claiming a test that had not run."
+  ],
+  "defaults": {
+    "size": [
+      1100,
+      900
+    ],
+    "ambient": 0.16,
+    "lens": 35
+  },
+  "shots": [
+    {
+      "name": "L_freight_shaft",
+      "scene": "model:batch023/landmarks/lm_freight_shaft.glb",
+      "frame": 0.86,
+      "azimuth": -24,
+      "elevation": 5,
+      "caption": "LM_FREIGHT_SHAFT - CONCRETE_FACILITY",
+      "note": "VERTICAL SHAFT, READS AT TWO ELEVATIONS",
+      "variants": [
+        "silhouette"
+      ]
+    },
+    {
+      "name": "L_pour_ladle",
+      "scene": "model:batch023/landmarks/lm_pour_ladle.glb",
+      "frame": 0.86,
+      "azimuth": -24,
+      "elevation": 5,
+      "caption": "LM_POUR_LADLE - RUSTED_INDUSTRIAL",
+      "note": "CURVED MASS, RAMP AND MID-ROOM COVER",
+      "variants": [
+        "silhouette"
+      ]
+    },
+    {
+      "name": "L_escalator_bank",
+      "scene": "model:batch023/landmarks/lm_escalator_bank.glb",
+      "frame": 0.86,
+      "azimuth": -24,
+      "elevation": 5,
+      "caption": "LM_ESCALATOR_BANK - NEON_TRANSIT",
+      "note": "LEVEL LINK, CIRCULATION BETWEEN FLOORS",
+      "variants": [
+        "silhouette"
+      ]
+    },
+    {
+      "name": "L_bell_frame",
+      "scene": "model:batch023/landmarks/lm_bell_frame.glb",
+      "frame": 0.86,
+      "azimuth": -24,
+      "elevation": 5,
+      "caption": "LM_BELL_FRAME - GOTHIC_STONE",
+      "note": "OVERHEAD VOLUME, ONE STORY AT TWO HEIGHTS",
+      "variants": [
+        "silhouette"
+      ]
+    },
+    {
+      "name": "L_stepped_cistern",
+      "scene": "model:batch023/landmarks/lm_stepped_cistern.glb",
+      "frame": 0.86,
+      "azimuth": -24,
+      "elevation": 5,
+      "caption": "LM_STEPPED_CISTERN - TEMPLE_RUIN",
+      "note": "CUT VOID, DESCENDS -- NEGATIVE NOT MASS",
+      "variants": [
+        "silhouette"
+      ]
+    },
+    {
+      "name": "L_unfinished_room",
+      "scene": "model:batch023/landmarks/lm_unfinished_room.glb",
+      "frame": 0.86,
+      "azimuth": -24,
+      "elevation": 5,
+      "caption": "LM_UNFINISHED_ROOM - VOID_GLITCH",
+      "note": "BROKEN CONSTRUCT, THE THEME ADMITTING IT IS BUILT",
+      "variants": [
+        "silhouette"
+      ]
+    }
+  ]
+}

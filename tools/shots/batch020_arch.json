@@ -1,0 +1,123 @@
+{
+  "_comment": [
+    "Batch 020 -- the structural half of architecture Pri-B.",
+    "",
+    "These are KIT PARTS, not rooms. The question a reviewer has to answer",
+    "is not 'is this a nice object' but 'does it belong to the same kit as",
+    "Batch 001', so the family sheet and the silhouette come first and the",
+    "in-situ frame -- the parts actually assembled into a bay -- comes last.",
+    "",
+    "CAMERA FRAME (L-52): multi-model offsets are in the yawed frame, so x",
+    "and z are negated.",
+    "K_bay_in_situ was first shot with a hand-placed `eye` and returned a photograph of the backdrop. `frame` solves its distance from the subject AABB and cannot miss the models; a guessed eye position can, and does so silently (L-62).",
+    "The family shot was first a four-model row 17 m wide. `frame` has to pick an axis to fit and picked the wrong one; staggering the row in z then hid the column behind a wall; and a hand-computed `look` missed the subject entirely. Two tight pairs is what the bench is good at, and comparing walls to walls is better evidence anyway (L-62).",
+    "K_grate is shot with backdrop 'none'. The grate is a RECESS anchored module_floor, and the bench stands an asset on a floor slab -- so the recess sank into the slab and the sheet showed its rim and nothing else. A part that is a hole cannot be photographed standing on a floor (L-63)."
+  ],
+  "defaults": {
+    "size": [
+      1600,
+      900
+    ],
+    "ambient": 0.16,
+    "lens": 35
+  },
+  "shots": [
+    {
+      "name": "K_walls_pair",
+      "scene": "model:batch020/architecture/arch_wall_variant_a.glb + batch020/architecture/arch_wall_variant_b.glb@4.6,0,0",
+      "size": [
+        1920,
+        1080
+      ],
+      "frame": 0.86,
+      "azimuth": -32,
+      "elevation": 10,
+      "caption": "WALL VARIANT A AND B - THE TWO NEW 4 M PANELS",
+      "note": "SAME 4.0 M MODULE AND 0.40 M THICKNESS AS BATCH 001"
+    },
+    {
+      "name": "K_walls_pair_silhouette",
+      "scene": "model:batch020/architecture/arch_wall_variant_a.glb + batch020/architecture/arch_wall_variant_b.glb@4.6,0,0",
+      "size": [
+        1920,
+        1080
+      ],
+      "frame": 0.86,
+      "azimuth": -32,
+      "elevation": 10,
+      "variants": [
+        "silhouette"
+      ],
+      "caption": "THE SAME TWO, AS SHAPE ONLY",
+      "note": "A PANEL EARNS ITS PLACE BY BEING A DIFFERENT SHAPE"
+    },
+    {
+      "name": "K_structure_pair",
+      "scene": "model:batch020/architecture/arch_column.glb + batch020/architecture/arch_floor_grate.glb@4.2,0,0",
+      "size": [
+        1920,
+        1080
+      ],
+      "frame": 0.82,
+      "azimuth": -30,
+      "elevation": 34,
+      "caption": "COLUMN AND FLOOR GRATE",
+      "note": "THE COLUMN IS ON _GREEBLE_ROOM'S OWN 0.50 M BUTTRESS FOOTPRINT",
+      "backdrop": "none"
+    },
+    {
+      "name": "K_overhead_family",
+      "scene": "model:batch020/architecture/arch_ceiling_plain.glb + batch020/architecture/arch_trim_ceiling.glb@4.6,0,0 + batch020/architecture/arch_beam_span.glb@0,0,-5.0",
+      "size": [
+        1920,
+        1080
+      ],
+      "frame": 0.84,
+      "azimuth": -24,
+      "elevation": -26,
+      "caption": "OVERHEAD - PLAIN CEILING BAY, CEILING TRIM, BEAM SPAN",
+      "note": "SEEN FROM BELOW, WHICH IS THE ONLY PLACE ANY OF THEM IS SEEN"
+    },
+    {
+      "name": "K_wall_a",
+      "scene": "model:batch020/architecture/arch_wall_variant_a.glb",
+      "frame": 0.8,
+      "azimuth": -34,
+      "elevation": 8,
+      "caption": "WALL VARIANT A - A SERVICE BAND AT 2.20 M",
+      "note": "ABOVE EYE HEIGHT 1.60, BELOW REACH_STANDING 2.93"
+    },
+    {
+      "name": "K_wall_b",
+      "scene": "model:batch020/architecture/arch_wall_variant_b.glb",
+      "frame": 0.8,
+      "azimuth": -34,
+      "elevation": 8,
+      "caption": "WALL VARIANT B - A 1.60 X 2.60 RECESSED BAY",
+      "note": "2.60 IS TALLEST_ACTOR: NOTHING SPAWNS TALLER THAN THE HOLE"
+    },
+    {
+      "name": "K_grate",
+      "scene": "model:batch020/architecture/arch_floor_grate.glb",
+      "frame": 0.74,
+      "azimuth": -30,
+      "elevation": 52,
+      "caption": "FLOOR GRATE - REAL BARS OVER A 0.30 M VOID",
+      "note": "0.32 M PITCH, COARSENED TO COME IN UNDER 250 TRIANGLES",
+      "backdrop": "none"
+    },
+    {
+      "name": "K_bay_in_situ",
+      "scene": "model:batch020/architecture/arch_wall_variant_a.glb + batch020/architecture/arch_wall_variant_a.glb@4,0,0 + batch020/architecture/arch_ceiling_plain.glb@0,4,-2 + batch020/architecture/arch_ceiling_plain.glb@4,4,-2 + batch020/architecture/arch_trim_ceiling.glb@2,4,-2",
+      "size": [
+        1920,
+        1080
+      ],
+      "caption": "TWO WALL BAYS, TWO CEILING BAYS, ONE TRIM - ASSEMBLED",
+      "note": "A KIT PART IS ONLY RIGHT IF IT IS RIGHT NEXT TO ANOTHER ONE",
+      "frame": 0.8,
+      "azimuth": -26,
+      "elevation": 26
+    }
+  ]
+}

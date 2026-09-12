@@ -1,0 +1,26 @@
+{
+  "portal_a_blast": {
+    "anchor": "floor",
+    "path": "batch001/portal/portal_a_blast.glb",
+    "size": [
+      3.54,
+      1.02,
+      4.6
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "texel_density": null,
+    "triangles": 252
+  },
+  "portal_b_collar": {
+    "anchor": "floor",
+    "path": "batch001/portal/portal_b_collar.glb",
+    "size": [
+      3.5,
+      1.26,
+      4.36
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "texel_density": null,
+    "triangles": 412
+  }
+}
