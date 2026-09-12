@@ -653,7 +653,7 @@ def validate(zone, result: dict) -> Verdict:
     #
     # | outcome | means | this lane |
     # |---|---|---|
-    # | *(absent)* | incomplete evidence | refuse; do not bar |
+    # | *(no entry)* | the report was not made | this check does not run |
     # | `CANDIDATE_REJECTED` | this position failed, the search did not finish | refuse; do not bar |
     # | `NO_CANDIDATE` | the declared bounded search finished and nothing held | **bar the host** |
     # | `PLACED` | a position with support and clearance | nothing |
@@ -662,10 +662,40 @@ def validate(zone, result: dict) -> Verdict:
     # ran and how much of it. No exhaustive proof of impossibility is
     # asked for — a bounded search, stated. The bridge branches on the
     # outcome and never on the prose.
+    #
+    # WHAT ABSENCE DOES, EXACTLY, because the prose here used to say it
+    # refuses and the code has always skipped. **Skipping is the
+    # intended rollout** and the prose was wrong: this check is additive
+    # and every rule that governed acceptance before it still does, so a
+    # payload from an engine that predates the report is judged exactly
+    # as it was. It is not accepted BECAUSE the entry is missing — the
+    # anchor, support and clearance rules below decide it. In practice
+    # the two cases separate cleanly: an older engine sends a sound
+    # `plug_clear` and is accepted, while the current engine omits the
+    # placement entry only when it also had no arrival to measure
+    # against, so it omits the clearance verdict too and this layout is
+    # refused a few lines down for the missing measurement.
+    #
+    # A MALFORMED REPORT IS NOT ABSENCE. `isinstance(told, dict)` as the
+    # gate meant a present entry of the wrong shape — a bare outcome
+    # string, a null, a list — took the legacy path and was accepted in
+    # silence. Absence is a key that is not there; anything else is a
+    # report, and a report this contract cannot read is a failure.
     placement = result.get("plug_placement") or {}
+    if not isinstance(placement, dict):
+        c.fail(f"the layout reports 'plug_placement' as "
+               f"{type(placement).__name__}, not a mapping of edge id "
+               "to placement outcome")
+        placement = {}
     for pl in zone.plugs:
-        told = placement.get(pl.edge_id)
+        if pl.edge_id not in placement:
+            continue
+        told = placement[pl.edge_id]
         if not isinstance(told, dict):
+            c.fail(f"plug '{pl.edge_id}' carries a placement report of "
+                   f"{told!r}, which is not a report; an entry this "
+                   "contract cannot read is a malformed report and not "
+                   "the absence of one")
             continue
         outcome = told.get("outcome")
         if outcome not in PLACEMENT_OUTCOMES:

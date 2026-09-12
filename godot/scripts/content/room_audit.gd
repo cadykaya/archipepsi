@@ -467,27 +467,46 @@ static func measure_layout(build: Dictionary,
 			# about the ROOM. See `PLACEMENT_*`.
 			"plug_placement": placement}
 
-## THE THREE PLACEMENT OUTCOMES, kept apart on purpose.
+## THE PLACEMENT OUTCOME CONTRACT, and it is ONE contract.
 ##
 ## A room was being barred from branch selection on `plug_clear ==
-## false`, and that boolean could not tell these three apart:
+## false`, and that boolean cannot tell "nothing was measured" from
+## "this position is bad" from "no position works". This says which,
+## PER PLUG, and `layout.py` branches on it:
 ##
-## * `NO_EVIDENCE` -- nothing was measured. No arrival anchor, no
-##   committed bounds, no device. Says nothing about the room; the
-##   layout is refused for carrying no measurement, which is a different
-##   and correct consequence.
-## * `REPAIRED` -- the position the builder reserved did not support a
-##   body or did not clear the arrival, AND the bounded search found one
-##   that does. The candidate failed; the host did not.
-## * `NO_CANDIDATE` -- the bounded search ran and nothing it examined
-##   both supports a body and clears the arrival. **This is the only
-##   outcome that may justify reselecting the host**, and it carries
-##   what was actually searched rather than a claim of impossibility.
+## | outcome | means | the bridge |
+## |---|---|---|
+## | *(no entry)* | the report was not made | the check does not run |
+## | `CANDIDATE_REJECTED` | this position failed, the search did not finish | refuse; do not bar |
+## | `NO_CANDIDATE` | the declared bounded search finished and nothing held | **bar the host** |
+## | `PLACED` | a position with support and clearance | nothing |
 ##
-## `MEASURED` is the ordinary case: the reserved position holds.
-const PLACEMENT_MEASURED := "MEASURED"
-const PLACEMENT_REPAIRED := "REPAIRED"
-const PLACEMENT_NO_EVIDENCE := "NO_EVIDENCE"
+## ABSENCE IS NOT A VERDICT AND NOT A REFUSAL. The report is additive:
+## when there is no entry the bridge judges the layout on the anchor,
+## support and clearance rules it had before this existed, so a payload
+## from an engine that predates the report is judged exactly as it was.
+## This producer omits the entry only where it also has no arrival to
+## measure against -- and `plugs_clear_of_arrivals` omits the clearance
+## verdict for the same room in the same breath, so such a layout is
+## refused for the measurement it is missing rather than for a claim
+## nobody made. **What must never be sent is a malformed entry**: the
+## bridge reads a present-but-unreadable report as a failure, not as
+## absence, which is why the outcome is written from the constants
+## below and never assembled from a string.
+##
+## **KEYED BY `edge_id`, NOT BY ROOM**, and spelled the way `layout.py`
+## spells it. This producer briefly wrote `MEASURED` / `REPAIRED` /
+## `NO_EVIDENCE` / `NO_CANDIDATE` keyed by room id while the consumer
+## read `PLACED` / `CANDIDATE_REJECTED` / `NO_CANDIDATE` keyed by edge
+## id -- two vocabularies for one fact across one wire, which is a
+## contract that cannot be true. The FINAL outcome is what crosses;
+## whether the position was the one the builder reserved or one the
+## search found is diagnostic and rides along as `repaired`.
+##
+## `tried` and `policy` are for the log: what search ran and how much of
+## it. No exhaustive proof of impossibility is asked for.
+const PLACEMENT_PLACED := "PLACED"
+const PLACEMENT_CANDIDATE_REJECTED := "CANDIDATE_REJECTED"
 const PLACEMENT_NO_CANDIDATE := "NO_CANDIDATE"
 
 ## Where the settle looks for standable ground: a LATTICE around the
@@ -541,8 +560,11 @@ static func _settle_return_anchors(build: Dictionary,
 			published = placed.get("arrival")
 		if placed.is_empty() or published == null:
 			# NOTHING TO MEASURE AGAINST. Not a verdict on the room.
-			report[rid] = {"outcome": PLACEMENT_NO_EVIDENCE,
-					"why": "the room published no arrival anchor"}
+			# NOTHING TO MEASURE AGAINST, so NOTHING IS SAID. Absence is
+			# the contract's word for incomplete evidence: the bridge
+			# refuses the layout on the anchor rules it already has and
+			# does not bar the room. An entry here -- any entry -- would
+			# be a claim about a room nobody measured.
 			continue
 		var box: AABB = placed.get("bounds", AABB())
 		var from: Vector3 = published
@@ -555,7 +577,9 @@ static func _settle_return_anchors(build: Dictionary,
 		# repairable and the room was barred for it.
 		if arrival_is_supported(space, anchors[name]) \
 				and clear_of_arrival(anchors[name], from):
-			report[rid] = {"outcome": PLACEMENT_MEASURED}
+			_say_placement(report, build, rid, {
+					"outcome": PLACEMENT_PLACED, "repaired": false,
+					"tried": 0})
 			continue
 		var moved := Vector3.INF
 		# THE ROOM'S OWN DECLARED GROUND FIRST, probed in world space.
@@ -594,8 +618,9 @@ static func _settle_return_anchors(build: Dictionary,
 					best_gap = gap
 		if moved != Vector3.INF:
 			_stand_the_device(build, anchors, name, rid, moved)
-			report[rid] = {"outcome": PLACEMENT_REPAIRED,
-					"searched": examined, "how": "a declared stand"}
+			_say_placement(report, build, rid, {
+					"outcome": PLACEMENT_PLACED, "repaired": true,
+					"tried": examined, "how": "a declared stand"})
 			continue
 		var inside := box.grow(-0.6)
 		for dz: float in RETURN_OFFSETS:
@@ -626,16 +651,40 @@ static func _settle_return_anchors(build: Dictionary,
 			# it searched rather than claiming impossibility: this many
 			# candidates, the room's own declared stands and a lattice
 			# bounded by `RETURN_OFFSETS` inside the committed envelope.
-			report[rid] = {"outcome": PLACEMENT_NO_CANDIDATE,
-					"searched": examined,
+			# THE SEARCH FINISHED AND NOTHING HELD -- or it could not be
+			# run to completion at all, which is a different answer. A
+			# room with no committed envelope has no lattice to bound,
+			# so the declared search never finished: that is
+			# `CANDIDATE_REJECTED`, a refusal and not a bar.
+			_say_placement(report, build, rid, {
+					"outcome": PLACEMENT_NO_CANDIDATE if box.has_volume()
+						else PLACEMENT_CANDIDATE_REJECTED,
+					"tried": examined,
 					"policy": {"offsets": RETURN_OFFSETS,
 						"clearance": clearance,
-						"inside": "committed bounds less 0.6 m"}}
+						"inside": "committed bounds less 0.6 m"}})
 			continue
 		_stand_the_device(build, anchors, name, rid, moved)
-		report[rid] = {"outcome": PLACEMENT_REPAIRED,
-				"searched": examined, "how": "a probed lattice"}
+		_say_placement(report, build, rid, {
+				"outcome": PLACEMENT_PLACED, "repaired": true,
+				"tried": examined, "how": "a probed lattice"})
 	return report
+
+## Files one placement outcome under EVERY plug the room hosts.
+##
+## The search is per ROOM -- one return position, whoever asks for it --
+## and the contract is per PLUG, because that is the identity
+## `layout.py` iterates and the identity a `PlugAssignment` carries. A
+## room with no plug says nothing: there is no device whose placement it
+## would be about.
+static func _say_placement(report: Dictionary, build: Dictionary,
+		rid: String, told: Dictionary) -> void:
+	for raw: Variant in build.get("plugs", []):
+		if not is_instance_valid(raw as Object):
+			continue
+		var plug: ReturnPlug = raw
+		if str(plug.get_meta("room_id", "")) == rid:
+			report[plug.edge_id] = told.duplicate()
 
 ## Publishes an anchor and moves the device standing on it together.
 ## One place, because publishing one and standing the other somewhere

@@ -130,18 +130,29 @@ func _run() -> void:
 ## and asserts which outcome the engine reports -- because only
 ## `NO_CANDIDATE` may justify reselecting the host.
 func _the_placement_outcomes_are_distinguishable() -> void:
+	# WHY THE HOST ROOM IS `c005` AND THE PLUG IS `p:c005:start`.
+	#
+	# `topology.compose_with_branch` names a return plug
+	# `p:<room>:start`, sources it at `room:<room>:return` and sends it
+	# to `zone_start`; on a six-chamber Zone the branch lands on `c005`.
+	# So the payloads this suite writes out key their placement report
+	# under the SAME edge id a production Zone's plug carries, and
+	# `bridge/tests/test_placement_contract.py` drops the engine's own
+	# dictionary onto that Zone's layout WITHOUT renaming a thing. A
+	# fixture whose key had to be rewritten on the way in would prove
+	# the wire identity holds by repairing it.
 	var zone := {
 		"zone_id": "zplace", "theme": "concrete_facility",
 		"chambers": [
-			{"id": "p001", "type": "corridor", "length": 14.0,
+			{"id": "c004", "type": "corridor", "length": 14.0,
 					"width": 7.9, "enemies": [], "activities": [],
 					"features": []},
-			{"id": "p002", "type": "arena", "width": 18.0, "depth": 18.0,
+			{"id": "c005", "type": "arena", "width": 18.0, "depth": 18.0,
 					"wall_height": 6.0, "objective": "reach_exit",
 					"enemies": [], "activities": [], "features": []},
 		],
-		"plugs": [{"edge_id": "p:p002:start", "room_id": "p002",
-				"source_anchor": "room:p002:return",
+		"plugs": [{"edge_id": "p:c005:start", "room_id": "c005",
+				"source_anchor": "room:c005:return",
 				"destination": "zone_start", "device": "pad"}],
 	}
 
@@ -156,17 +167,18 @@ func _the_placement_outcomes_are_distinguishable() -> void:
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	var space := get_viewport().world_3d.direct_space_state
-	var was: Vector3 = (good["anchors"] as Dictionary)["room:p002:return"]
+	var was: Vector3 = (good["anchors"] as Dictionary)["room:c005:return"]
 	var evidence := RoomAudit.measure_layout(good, space)
 	var seen: Dictionary = evidence["plug_placement"]
-	_check(str((seen.get("p002", {}) as Dictionary).get("outcome", ""))
-				== RoomAudit.PLACEMENT_MEASURED,
-			"a good host reports MEASURED and is not moved (%s)"
-			% str(seen.get("p002", {})))
-	_check((good["anchors"] as Dictionary)["room:p002:return"] == was,
+	var good_told: Dictionary = seen.get("p:c005:start", {})
+	_check(str(good_told.get("outcome", "")) == RoomAudit.PLACEMENT_PLACED
+				and not bool(good_told.get("repaired", true)),
+			"a good host reports PLACED, unrepaired, keyed by its EDGE "
+			+ "(%s)" % str(good_told))
+	_check((good["anchors"] as Dictionary)["room:c005:return"] == was,
 			"and its anchor is where the builder put it")
 	_check(bool((evidence["plug_clear"] as Dictionary).get(
-				"p:p002:start", false)),
+				"p:c005:start", false)),
 			"and a body at its arrival stands outside the device")
 
 	# 2. A STANDABLE PAD TOO CLOSE TO THE ARRIVAL IS REPAIRED, NOT
@@ -174,38 +186,50 @@ func _the_placement_outcomes_are_distinguishable() -> void:
 	#    settle skipped its search whenever the anchor was standable, so
 	#    a pad on solid ground inside its own trigger stayed there and
 	#    reported `plug_clear = false`.
-	var arrival: Vector3 = (good["rooms"] as Dictionary)["p002"]["arrival"]
-	(good["anchors"] as Dictionary)["room:p002:return"] = arrival \
+	var arrival: Vector3 = (good["rooms"] as Dictionary)["c005"]["arrival"]
+	(good["anchors"] as Dictionary)["room:c005:return"] = arrival \
 			+ Vector3(0.5, 0.0, 0.5)
 	var repaired := RoomAudit.measure_layout(good, space)
 	var fixed: Dictionary = (repaired["plug_placement"] as Dictionary) \
-			.get("p002", {})
-	_check(str(fixed.get("outcome", "")) == RoomAudit.PLACEMENT_REPAIRED,
-			"a standable pad inside the arrival's clearance is REPAIRED "
-			+ "rather than barred (%s)" % str(fixed))
+			.get("p:c005:start", {})
+	_check(str(fixed.get("outcome", "")) == RoomAudit.PLACEMENT_PLACED
+				and bool(fixed.get("repaired", false)),
+			"a standable pad inside the arrival's clearance is PLACED "
+			+ "after repair rather than barred (%s)" % str(fixed))
 	_check(bool((repaired["plug_clear"] as Dictionary).get(
-				"p:p002:start", false)),
+				"p:c005:start", false)),
 			"and the repaired position clears the arrival")
-	_check(int(fixed.get("searched", 0)) > 0,
-			"and it says how many candidates it examined (%d)"
-			% int(fixed.get("searched", 0)))
+	_check(int(fixed.get("tried", 0)) > 0,
+			"and it says how many candidates it tried (%d)"
+			% int(fixed.get("tried", 0)))
+	good["plug_clear"] = repaired["plug_clear"]
+	good["plug_placement"] = repaired["plug_placement"]
+	var repaired_wire := ZoneBuilder.layout_to_json(good)
 
 	# 3. NO ARRIVAL TO MEASURE AGAINST IS NOT A VERDICT ON THE ROOM.
-	var blind := (good["rooms"] as Dictionary)["p002"] as Dictionary
+	var blind := (good["rooms"] as Dictionary)["c005"] as Dictionary
 	var kept: Vector3 = blind["arrival"]
 	blind.erase("arrival")
-	(good["anchors"] as Dictionary).erase("room:p002:arrival")
+	(good["anchors"] as Dictionary).erase("room:c005:arrival")
 	var nothing := RoomAudit.measure_layout(good, space)
-	_check(str(((nothing["plug_placement"] as Dictionary).get("p002", {})
-				as Dictionary).get("outcome", ""))
-				== RoomAudit.PLACEMENT_NO_EVIDENCE,
-			"a room with no published arrival reports NO_EVIDENCE (%s)"
-			% str((nothing["plug_placement"] as Dictionary).get("p002", {})))
-	_check(not (nothing["plug_clear"] as Dictionary).has("p:p002:start"),
+	_check(not (nothing["plug_placement"] as Dictionary).has(
+				"p:c005:start"),
+			"a room with no published arrival reports NOTHING: absence "
+			+ "IS the contract's word for incomplete evidence, and an "
+			+ "entry would be a claim about a room nobody measured (%s)"
+			% str(nothing["plug_placement"]))
+	_check(not (nothing["plug_clear"] as Dictionary).has("p:c005:start"),
 			"and its clearance is ABSENT rather than false: missing "
 			+ "evidence must not read as a measured failure")
+	# AND ABSENCE IS WHAT CROSSES. Serialized here, from the build that
+	# has nothing to say, so the compatibility control on the Python
+	# side reads a real payload with no entry rather than a sound one
+	# with its entry deleted.
+	good["plug_clear"] = nothing["plug_clear"]
+	good["plug_placement"] = nothing["plug_placement"]
+	var absent_wire := ZoneBuilder.layout_to_json(good)
 	blind["arrival"] = kept
-	(good["anchors"] as Dictionary)["room:p002:arrival"] = kept
+	(good["anchors"] as Dictionary)["room:c005:arrival"] = kept
 
 	# 4. AND A SEARCH THAT REALLY FINDS NOTHING SAYS SO -- on the room
 	#    that actually produces it rather than a contrived arrival.
@@ -219,14 +243,14 @@ func _the_placement_outcomes_are_distinguishable() -> void:
 	var pit := ZoneBuilder.build({
 		"zone_id": "zpit", "theme": "concrete_facility",
 		"chambers": [
-			{"id": "q001", "type": "corridor", "length": 14.0,
+			{"id": "c004", "type": "corridor", "length": 14.0,
 					"width": 7.9, "enemies": [], "activities": [],
 					"features": []},
-			{"id": "q002", "type": "platform_path", "enemies": [],
+			{"id": "c005", "type": "platform_path", "enemies": [],
 					"activities": [], "features": []},
 		],
-		"plugs": [{"edge_id": "p:q002:start", "room_id": "q002",
-				"source_anchor": "room:q002:return",
+		"plugs": [{"edge_id": "p:c005:start", "room_id": "c005",
+				"source_anchor": "room:c005:return",
 				"destination": "zone_start", "device": "pad"}],
 	})
 	if pit.has("failed"):
@@ -238,20 +262,28 @@ func _the_placement_outcomes_are_distinguishable() -> void:
 	await get_tree().physics_frame
 	var empty := RoomAudit.measure_layout(pit,
 			get_viewport().world_3d.direct_space_state)
+	# THE COPY THE CONTROLLER MAKES, made here too. `measure_layout`
+	# returns the evidence; `_measure_layout_evidence` is what puts it
+	# ON the build, and `layout_to_json` reads it from there. A harness
+	# that measures and serializes without that step sends an empty
+	# `plug_placement` and would have proved the opposite of what it set
+	# out to -- which is exactly what this assertion caught.
+	pit["plug_clear"] = empty["plug_clear"]
+	pit["plug_placement"] = empty["plug_placement"]
+	var good_wire := ZoneBuilder.layout_to_json(pit)
 	var pit_seen: Dictionary = (empty["plug_placement"] as Dictionary) \
-			.get("q002", {})
+			.get("p:c005:start", {})
 	# AND THE PIT ROOM CAN HOST ONE. `c012` refused its layout for
 	# months of this batch, which made "a room over a kill pit cannot
 	# host a return" an easy and WRONG generalisation: the room declares
 	# which square metres hold weight, and its end ledge holds a device
 	# as well as it holds a player. The finding was about one position,
 	# not one kind of room.
-	_check(str(pit_seen.get("outcome", "")) in [
-				RoomAudit.PLACEMENT_MEASURED, RoomAudit.PLACEMENT_REPAIRED],
+	_check(str(pit_seen.get("outcome", "")) == RoomAudit.PLACEMENT_PLACED,
 			"a room over a kill pit CAN host a return -- its declared "
 			+ "ground is real ground (%s)" % str(pit_seen))
 	_check(bool((empty["plug_clear"] as Dictionary).get(
-				"p:q002:start", false)),
+				"p:c005:start", false)),
 			"and a body at its arrival stands outside that device")
 
 	# 4b. AND WHEN THERE REALLY IS NO GROUND, the report says so and
@@ -262,30 +294,113 @@ func _the_placement_outcomes_are_distinguishable() -> void:
 	#     in the air.
 	for raw: Variant in pit.get("chambers", []):
 		var entry: Dictionary = raw
-		if str((entry["chamber"] as Dictionary).get("id", "")) != "q002":
+		if str((entry["chamber"] as Dictionary).get("id", "")) != "c005":
 			continue
 		(entry["build"] as Dictionary)["sockets"] = []
 	var lifted: Vector3 = (pit["anchors"] as Dictionary)[
-			"room:q002:arrival"] + Vector3(0.0, 60.0, 0.0)
-	(pit["anchors"] as Dictionary)["room:q002:arrival"] = lifted
-	(pit["anchors"] as Dictionary)["room:q002:return"] = lifted
-	var box: AABB = (pit["rooms"] as Dictionary)["q002"]["bounds"]
-	(pit["rooms"] as Dictionary)["q002"]["bounds"] = AABB(
+			"room:c005:arrival"] + Vector3(0.0, 60.0, 0.0)
+	(pit["anchors"] as Dictionary)["room:c005:arrival"] = lifted
+	(pit["anchors"] as Dictionary)["room:c005:return"] = lifted
+	var box: AABB = (pit["rooms"] as Dictionary)["c005"]["bounds"]
+	(pit["rooms"] as Dictionary)["c005"]["bounds"] = AABB(
 			box.position + Vector3(0.0, 60.0, 0.0), box.size)
 	var none := RoomAudit.measure_layout(pit,
 			get_viewport().world_3d.direct_space_state)
 	var barren: Dictionary = (none["plug_placement"] as Dictionary) \
-			.get("q002", {})
+			.get("p:c005:start", {})
 	_check(str(barren.get("outcome", ""))
 				== RoomAudit.PLACEMENT_NO_CANDIDATE,
 			"a room with no supported ground reports NO_CANDIDATE, "
 			+ "which is the only outcome that may bar the host (%s)"
 			% str(barren))
-	_check(barren.has("policy") and int(barren.get("searched", -1)) > 0,
+	_check(barren.has("policy") and int(barren.get("tried", -1)) > 0,
 			"and it states the bounded search it actually ran rather "
 			+ "than claiming impossibility (%s)" % str(barren))
+	pit["plug_clear"] = none["plug_clear"]
+	pit["plug_placement"] = none["plug_placement"]
+	var barren_wire := ZoneBuilder.layout_to_json(pit)
+
+	# 4c. AND A SEARCH THAT COULD NOT BE RUN IS NOT A VERDICT EITHER.
+	#
+	#     `NO_CANDIDATE` says the declared search finished and nothing
+	#     held; it is the one outcome that bars a host, so it may only
+	#     be said when the search it names actually ran. A room with no
+	#     committed envelope has no lattice to bound -- there is nothing
+	#     to search INSIDE -- so the engine says `CANDIDATE_REJECTED`:
+	#     refuse this layout, do not condemn the room.
+	#
+	#     CONSTRUCTED, like 4b, and said so: no shipping builder emits a
+	#     room without bounds. The branch exists so that the one outcome
+	#     with teeth cannot be reached by an unrun search, and a branch
+	#     with no control is a branch nobody has read.
+	(pit["rooms"] as Dictionary)["c005"]["bounds"] = AABB(
+			(box.position + Vector3(0.0, 60.0, 0.0)), Vector3.ZERO)
+	var unrun := RoomAudit.measure_layout(pit,
+			get_viewport().world_3d.direct_space_state)
+	var rejected: Dictionary = (unrun["plug_placement"] as Dictionary) \
+			.get("p:c005:start", {})
+	_check(str(rejected.get("outcome", ""))
+				== RoomAudit.PLACEMENT_CANDIDATE_REJECTED,
+			"a room with no committed envelope reports "
+			+ "CANDIDATE_REJECTED: the bounded search never ran, so "
+			+ "nothing was established about the room (%s)"
+			% str(rejected))
+	pit["plug_clear"] = unrun["plug_clear"]
+	pit["plug_placement"] = unrun["plug_placement"]
+	var rejected_wire := ZoneBuilder.layout_to_json(pit)
+
+	# 5. AND THE PAYLOAD THE BRIDGE ACTUALLY RECEIVES CARRIES IT.
+	#
+	# A field existing in `RoomAudit` proves nothing about the wire.
+	# `layout_to_json` is the serializer, and this is where the two
+	# vocabularies were: the producer wrote `MEASURED`/`REPAIRED`/
+	# `NO_EVIDENCE` keyed by ROOM while `layout.py` read `PLACED`/
+	# `CANDIDATE_REJECTED`/`NO_CANDIDATE` keyed by EDGE, so every
+	# outcome this lane sent fell through the consumer's `if outcome not
+	# in PLACEMENT_OUTCOMES` and every room looked like legacy absence.
+	# Written out for `bridge/tests/test_placement_contract.py`, which
+	# runs the real validator over exactly these bytes.
+	var wire := barren_wire
+	_check((wire.get("plug_placement", {}) as Dictionary).has(
+				"p:c005:start"),
+			"the serialized layout carries the placement outcome under "
+			+ "the EDGE id the validator iterates (%s)"
+			% str((wire.get("plug_placement", {}) as Dictionary).keys()))
+	for spelling: String in [RoomAudit.PLACEMENT_PLACED,
+			RoomAudit.PLACEMENT_CANDIDATE_REJECTED,
+			RoomAudit.PLACEMENT_NO_CANDIDATE]:
+		_check(spelling in ["PLACED", "CANDIDATE_REJECTED",
+					"NO_CANDIDATE"],
+				"'%s' is spelled the way `layout.PLACEMENT_OUTCOMES` "
+				% spelling + "spells it")
+	_write_placement_payloads({
+			"placed.json": good_wire,
+			"repaired.json": repaired_wire,
+			"absent.json": absent_wire,
+			"barren.json": barren_wire,
+			"rejected.json": rejected_wire})
 	(pit["root"] as Node3D).queue_free()
 	await get_tree().process_frame
+
+## The engine-produced payloads the bridge-side contract test reads.
+##
+## REGENERATED BY THIS SUITE, never hand-edited: they exist so the
+## Python side validates bytes this engine actually emits rather than a
+## dictionary somebody typed to match the prose.
+func _write_placement_payloads(payloads: Dictionary) -> void:
+	var dir := "res://tests/fixtures/placement"
+	DirAccess.make_dir_recursive_absolute(dir)
+	for name: String in payloads:
+		var file := FileAccess.open("%s/%s" % [dir, name],
+				FileAccess.WRITE)
+		if file != null:
+			file.store_string(JSON.stringify(payloads[name], " "))
+			file.close()
+		else:
+			_check(false, "could not write the placement payload '%s'; "
+					% name + "the bridge-side contract test reads bytes "
+					+ "this suite produces, so failing to produce them "
+					+ "leaves that test measuring a stale wire")
 
 func _finish() -> void:
 	_write_audit()
