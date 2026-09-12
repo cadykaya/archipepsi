@@ -130,6 +130,7 @@ func _run() -> void:
 	await _test_a_committed_layout_replays_without_re_solving()
 	await _test_a_generated_zone_places_its_branch_off_the_spine()
 	_test_no_new_shell_puts_a_doorway_outside_its_room()
+	await _test_an_arrival_verdict_means_supported_ground()
 	await _test_the_branch_is_crossed_returned_from_and_remembered()
 	await _test_a_real_player_walks_the_whole_branch_journey()
 	await _test_a_band_never_seals_the_room_it_stands_in()
@@ -3302,6 +3303,79 @@ func _standable_near(at: Vector3) -> bool:
 			at + Vector3(0, Constants.PLAYER_HEIGHT / 2.0 + 0.1, 0))
 	return space.intersect_shape(query, 1).is_empty()
 
+## AN ARRIVAL VERDICT IS ABOUT GROUND, not about empty air.
+##
+## The layout result's first version asked only whether a standing
+## capsule had ROOM at the anchor. An anchor over a hole in the floor
+## passed it: a body would arrive there and fall, and the bridge would
+## have committed the Zone on the strength of that `true`.
+##
+## Three cases, because two of them are the ones that used to pass:
+## supported ground, no ground, and ground with something standing on it.
+func _test_an_arrival_verdict_means_supported_ground() -> void:
+	var stage := Node3D.new()
+	add_child(stage)
+	# A floor with a hole in it: two slabs with a gap between them.
+	for side: float in [-1.0, 1.0]:
+		var slab := StaticBody3D.new()
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = Vector3(6.0, 0.4, 20.0)
+		shape.shape = box
+		slab.add_child(shape)
+		slab.position = Vector3(side * 5.0, -0.2, 0.0)
+		stage.add_child(slab)
+	# And a lump standing on the left slab, blocking the headroom there.
+	var lump := StaticBody3D.new()
+	var lump_shape := CollisionShape3D.new()
+	var lump_box := BoxShape3D.new()
+	lump_box.size = Vector3(2.0, 3.0, 2.0)
+	lump_shape.shape = lump_box
+	lump.add_child(lump_shape)
+	lump.position = Vector3(-5.0, 1.5, 6.0)
+	stage.add_child(lump)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var space := _space()
+
+	_check(RoomAudit.arrival_is_supported(space, Vector3(-5.0, 0.0, 0.0)),
+			"an arrival on solid floor was reported unsupported")
+	_check(not RoomAudit.arrival_is_supported(space,
+					Vector3(0.0, 0.0, 0.0)),
+			"an arrival over the HOLE between the two slabs was reported "
+			+ "supported; a body would appear there and fall")
+	_check(not RoomAudit.arrival_is_supported(space,
+					Vector3(-5.0, 0.0, 6.0)),
+			"an arrival under a solid lump was reported supported; there "
+			+ "is ground but no room to stand in it")
+
+	# AND THE BODY ASKING IS NOT THE GROUND IT IS ASKING ABOUT.
+	#
+	# The downward ray takes the first thing it hits. A player at the
+	# anchor IS the first thing it hits, so its own capsule reads as the
+	# floor -- and an anchor over a hole comes back supported because the
+	# body standing in the hole is holding itself up.
+	# AND A BODY STANDING THERE IS NOT THE ANSWER. `is_placed_content`
+	# already says a room is not wrong because somebody is standing in
+	# it, and the downward ray starts inside that body's capsule, so a
+	# player at the anchor changes neither verdict. Checked rather than
+	# assumed: an `ignore` list here would be a second mechanism for a
+	# question that already has one.
+	var standing := await _player_at(Vector3(-5.0, 0.4, 0.0))
+	_check(RoomAudit.arrival_is_supported(space, Vector3(-5.0, 0.0, 0.0)),
+			"a player standing on solid ground made its own anchor "
+			+ "measure as unsupported")
+	standing.global_position = Vector3(0.0, 0.2, 0.0)
+	await get_tree().physics_frame
+	_check(not RoomAudit.arrival_is_supported(space,
+					Vector3(0.0, 0.0, 0.0)),
+			"a body hanging over the hole made the hole measure as "
+			+ "supported ground")
+	standing.queue_free()
+	stage.queue_free()
+	await get_tree().process_frame
+	rooms_checked += 1
+
 ## EVERY AUTHORED DOORWAY IS ON ITS ROOM -- except three, by name.
 ##
 ## A joining socket outside its shell's `size` is a doorway in mid-air:
@@ -3565,6 +3639,73 @@ func _test_a_committed_layout_replays_without_re_solving() -> void:
 	_check(corners > 0,
 			"no corner survived the round trip, so the turn field is "
 			+ "untested")
+
+	# OMISSIONS, THROUGH THE ACTUAL DECODER. Not a hand-built dictionary:
+	# the fields are deleted from the JSON TEXT, parsed by
+	# `JSON.parse_string`, and handed to `layout_from_json`, because the
+	# defect being guarded lived in the decoder and a test that skipped
+	# it would have skipped the defect.
+	# A JOIN THAT ACTUALLY HAS PIECES. The first key in the map may be a
+	# direct abutment with an empty chain, and picking it made three of
+	# the four omissions below skip silently -- the same shape of quiet
+	# pass this whole test exists to catch.
+	var first_join := ""
+	for eid: String in on_the_wire["joins"] as Dictionary:
+		if not (((on_the_wire["joins"] as Dictionary)[eid]
+				as Dictionary)["chain"] as Array).is_empty():
+			first_join = eid
+			break
+	_check(first_join != "",
+			"no committed join carries a chain, so the omission cases "
+			+ "below would all skip")
+	for omission: Array in [
+			["position", "carries no position"],
+			["yaw", "carries no yaw"],
+			["kind", "has kind ''"],
+			["entry", "carries no entry"]]:
+		var wire: Dictionary = JSON.parse_string(
+				JSON.stringify(on_the_wire))
+		var chain0: Array = ((wire["joins"] as Dictionary)[first_join]
+				as Dictionary)["chain"]
+		_check(not chain0.is_empty(),
+				"the join chosen for omission '%s' has no pieces"
+				% str(omission[0]))
+		if chain0.is_empty():
+			continue
+		(chain0[0] as Dictionary).erase(str(omission[0]))
+		var decoded := ZoneBuilder.layout_from_json(wire)
+		_check(str(decoded.get("malformed", "")) != "",
+				"a piece with no '%s' decoded cleanly, so the missing "
+				% str(omission[0]) + "field became a default before "
+				+ "anything could refuse it")
+		var searches_at := ZoneBuilder.searches
+		var refused_build := ZoneBuilder.build(zone, "", 0.0, decoded)
+		_check(str(refused_build.get("status", ""))
+					== "LAYOUT_INFEASIBLE",
+				"a manifest missing a piece's '%s' was replayed anyway "
+				% str(omission[0]) + "('%s')"
+				% str(refused_build.get("status", "?")))
+		_check(ZoneBuilder.searches == searches_at,
+				"refusing a malformed manifest entered the placement "
+				+ "search, so a missing field became a fresh solve")
+	# A ROOM'S OWN FIELDS TOO.
+	var no_yaw: Dictionary = JSON.parse_string(JSON.stringify(on_the_wire))
+	var some_room: String = str(((no_yaw["rooms"] as Dictionary)
+			.keys() as Array)[0])
+	((no_yaw["rooms"] as Dictionary)[some_room] as Dictionary).erase("yaw")
+	_check(str(ZoneBuilder.layout_from_json(no_yaw).get("malformed", ""))
+				!= "",
+			"a room with no yaw decoded cleanly")
+	# AND DIRECT ABUTMENT STAYS VALID. An empty chain is not missing
+	# data; it is two sockets meeting each other.
+	var abutted: Dictionary = JSON.parse_string(
+			JSON.stringify(on_the_wire))
+	((abutted["joins"] as Dictionary)[first_join]
+			as Dictionary)["chain"] = []
+	_check(str(ZoneBuilder.layout_from_json(abutted).get("malformed", ""))
+				== "",
+			"an empty chain was refused as malformed: %s"
+			% str(ZoneBuilder.layout_from_json(abutted).get("malformed")))
 
 	# MISSING AND MALFORMED PIECES REFUSE, rather than quietly searching.
 	var gutted := {"rooms": (manifest["rooms"] as Dictionary).duplicate(true),

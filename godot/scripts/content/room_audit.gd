@@ -744,6 +744,38 @@ static func _outward(at: Vector3, bounds: AABB) -> Vector3:
 ## player's own capsule must fit standing there, and there must be
 ## something under it to stand on. A room that declares none is not
 ## required to -- the nine shells that predate the ruling do not.
+## CAN A BODY ARRIVE HERE? Ground under it AND room to stand in it.
+##
+## The two halves are one question and were split in half: the layout
+## result asked only whether a capsule had EMPTY SPACE, so an anchor over
+## a hole in the floor passed -- a body would appear there and fall.
+## `_arrival_is_safe` has asked both since it was written, and this is
+## that pair pulled out, so the audit and the layout result read one
+## measurement instead of two.
+##
+## THE FLOOR MUST BE WITHIN A STEP. Ground forty metres down is not
+## ground the arriving body lands on.
+##
+## THE PROBING BODY IS ALREADY EXCLUDED, and not by a second mechanism.
+## `SpaceProbe.is_placed_content` answers for the `Player` class -- "a
+## room is not wrong because somebody is standing in it" -- so `_blocked`
+## looks past a body at the anchor, and the downward ray starts INSIDE
+## that body's capsule and therefore never reports it as ground. An
+## `ignore` list here would be a second answer to a question that has
+## one, which is the shape of defect this file exists to catch.
+static func arrival_is_supported(space: PhysicsDirectSpaceState3D,
+		at: Vector3) -> bool:
+	var ground := space.intersect_ray(
+			PhysicsRayQueryParameters3D.create(
+				at + Vector3.UP * 0.5,
+				at + Vector3.DOWN * (0.5 + Constants.MAX_VERTICAL_STEP)))
+	if ground.is_empty():
+		return false
+	var floor_y: float = (ground["position"] as Vector3).y
+	var stance := Vector3(at.x, floor_y, at.z) \
+			+ Vector3.UP * (Constants.PLAYER_HEIGHT / 2.0 + 0.05)
+	return not _blocked(space, stance)
+
 static func _arrival_is_safe(room: Dictionary, to_world: Transform3D,
 		space: PhysicsDirectSpaceState3D, who: String) -> Array[String]:
 	var out: Array[String] = []

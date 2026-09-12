@@ -269,13 +269,17 @@ func setup(zone_dict: Dictionary) -> void:
 	# fits at an anchor, or whether a declared door is a hole -- and it
 	# refuses a layout that does not carry it rather than assuming. A
 	# coordinate is not evidence a body fits there.
-	_measure_layout_evidence(build)
-	# SENT AFTER THE EVIDENCE IS MEASURED, which is the only order that
-	# works: the first version sent the layout forty lines earlier, so
-	# every arrival verdict and every aperture reading was attached to a
-	# dictionary the bridge had already been handed a copy of. It refused
-	# the Zone for carrying no measurements, which was true.
-	send_layout_result(build)
+	# MEASURED AND SENT ONCE THE PHYSICS EXISTS, which is two frames
+	# after the scene goes in and not the same frame.
+	#
+	# A collider is registered by the physics server on the next step, so
+	# a probe fired in the frame a room was added comes back CLEAN --
+	# every aperture a hole, every arrival supported, because there is
+	# nothing there to hit yet. That is the most dangerous kind of pass,
+	# and this file's own audit says so in as many words: "a probe
+	# against [a detached node] comes back clean because there is nothing
+	# there to hit".
+	_publish_layout(build)
 	for entry: Dictionary in build["chambers"]:
 		var chamber: Dictionary = entry["chamber"]
 		var xform: Transform3D = entry["xform"]
@@ -560,6 +564,18 @@ func keys_held() -> Dictionary:
 func locks_opened() -> Dictionary:
 	return _locks_open.duplicate()
 
+## Waits for the physics to exist, then measures and sends.
+##
+## Not awaited by `setup`: the Zone is playable while this runs, and the
+## verdict it brings back is what decides whether it stays that way.
+func _publish_layout(build: Dictionary) -> void:
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	if not is_inside_tree():
+		return
+	_measure_layout_evidence(build)
+	send_layout_result(build)
+
 ## Aperture polarity and arrival verdicts, measured and attached.
 ##
 ## `apertures` is ARCHITECTURAL: a `LOCKED` door reads as a hole because
@@ -579,22 +595,18 @@ func _measure_layout_evidence(build: Dictionary) -> void:
 	build["apertures"] = apertures
 	var arrival_ok := {}
 	for name: String in build.get("anchors", {}):
-		arrival_ok[name] = _capsule_fits(space,
+		arrival_ok[name] = RoomAudit.arrival_is_supported(space,
 				(build["anchors"] as Dictionary)[name])
 	build["arrival_ok"] = arrival_ok
 
-## Does a standing player fit here? The one question a coordinate cannot
-## answer, asked of the physics the player will actually collide with.
-func _capsule_fits(space: PhysicsDirectSpaceState3D, at: Vector3) -> bool:
-	var shape := CapsuleShape3D.new()
-	shape.height = Constants.PLAYER_HEIGHT
-	shape.radius = Constants.PLAYER_RADIUS
-	var query := PhysicsShapeQueryParameters3D.new()
-	query.shape = shape
-	query.transform = Transform3D(Basis.IDENTITY,
-			at + Vector3(0, Constants.PLAYER_HEIGHT / 2.0 + 0.1, 0))
-	query.collide_with_areas = false
-	return space.intersect_shape(query, 1).is_empty()
+## Can a body ARRIVE here? Not "is this space empty".
+##
+## The first version asked only whether a capsule had room, so an anchor
+## over a hole in the floor reported `true` -- a body would appear there
+## and fall. `RoomAudit.arrival_is_supported` asks the pair the audit has
+## always asked: ground within a step below, and clearance to stand in.
+## One measurement, two consumers, so the audit and the wire cannot
+## disagree about whether an arrival works.
 
 ## THE LAYOUT GOES BACK, which is the half of the exchange that was
 ## missing. `zone_builder.build()` returned everything the validator
