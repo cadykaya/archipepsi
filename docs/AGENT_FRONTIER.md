@@ -40,11 +40,39 @@ hazard-role contradiction reconciled in the shared handoff — `hazard` is
 universal, four roles need authored pixels, and a pack that paints its
 own hazard is refused.
 
-**Still open, and named rather than implied:** Art's half of §11.3 (a
-`player_entry` volume per opening); the three Batch 044 junction shells
-are `review: "pending"`, not exported, not selectable, and the owner's
-to review; `latch_fired` from the engine when a player satisfies a
-declared latch; and the fun verdict is not this lane's to award.
+**AND `make godot-graphs` IS RED, FOR A REAL REASON.** Four of the five
+Zones do not lay out at all:
+
+| | shape | layout |
+|---|---|---|
+| zone_01 | 23 rooms, 4 junctions, 7 dead ends | **LAYOUT_OK** |
+| zone_02 | 23 rooms, 4 junctions, 7 dead ends | INFEASIBLE — branch `c021` off `c016`, 42 boxes standing |
+| zone_03 | 23 rooms, 4 junctions, 7 dead ends | INFEASIBLE — branch `c015` off `c014`, 36 boxes |
+| zone_04 | 20 rooms, 4 junctions, 7 dead ends | INFEASIBLE — branch `c019` off `c018`, 36 boxes |
+| zone_05 | 20 rooms, 5 junctions, 8 dead ends | INFEASIBLE — spine room `c017`, 65 boxes |
+
+**This is the next thing to fix and it is the engine's.** The graphs are
+legal; the router cannot lay four of them out. `branch_mouth` fixed the
+case where the mouth was inside its own junction; what is left is a
+route search that runs out of room — `MAX_ROUTE_TURNS` is 2 and a branch
+reaching around laid geometry may need more, which is a bound to raise
+deliberately and measure, not a seed to tune. The smallest failing
+shapes are captured in `godot/tests/fixtures/generated/`.
+
+**The player leg of that target reports and does not assert**, and the
+comment in `_walk_one` says why: standing a body at an arbitrary
+junction's side doorway is not solved, and failing on a walk that cannot
+start would report a Zone defect that is not there. The junction
+interior and branch that ARE walked with a proven spawn are in
+`godot-room-contract`.
+
+**Still open, and named rather than implied:** the four infeasible
+layouts above; Art's half of §11.3 (a `player_entry` volume per
+opening); the three Batch 044 junction shells are `review: "pending"`,
+not exported, not selectable, and the owner's to review — **a
+four-connection asset is not yet a four-neighbour room in a generated
+Zone**; `latch_fired` from the engine when a player satisfies a declared
+latch; and the fun verdict is not this lane's to award.
 
 ---
 
