@@ -200,11 +200,22 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
   # ThemeMaterials is procedural, so a Zone builds the same whether the
   # pack is there or not. Runs three controls that move real files aside
   # and put them back.
-  say "the theme pack binding, and its three controls..."
+  # Every opening's OWN arrival region, by Production's own rule. A
+  # single generic region is the pre-§11.3 behaviour: one answer for
+  # however many doors a room has.
+  say "per-socket arrival regions..."
+  tools/content/run_arrival_test.sh >/dev/null 2>&1 || \
+    fail "arrival: an opening has no arrival region named after it, or a
+    declared region is unsupported, blocked, or cannot be walked into the
+    room from. Run
+
+    tools/content/run_arrival_test.sh"
+
+  say "the theme pack binding, and its control..."
   tools/content/run_theme_bind.sh >/dev/null 2>&1 || \
-    fail "theme-bind: an exported theme no longer binds its authored pixels
-    to a material, or one of the three controls stopped behaving -- a
-    missing required texture, a wrong-pixels file, a missing optional one.
+    fail "theme-bind: Production's ThemeMaterials no longer binds the
+    exported pack's authored pixels to a material, the pixels no longer
+    survive the import, or the missing-row control stopped falling back.
     Run
 
     tools/content/run_theme_bind.sh"
@@ -317,7 +328,8 @@ done
 # 5b could not see it because the path still appeared in the commit's own
 # prose. So these are named, and what is required is the CALL SHAPE, not a
 # mention.
-for gate in run_import_examples.sh run_crossing_test.sh run_theme_bind.sh; do
+for gate in run_import_examples.sh run_crossing_test.sh run_theme_bind.sh \
+           run_arrival_test.sh; do
   grep -q "^[[:space:]]*tools/content/$gate >/dev/null" "$SELF" || \
     fail "tools/content/$gate is an engine gate and this script does not
   call it. Naming it in a comment or an error message is not calling it."

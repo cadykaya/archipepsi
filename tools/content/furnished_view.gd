@@ -10,6 +10,15 @@ extends SceneTree
 ## expensive kind of wrong picture: it gets believed, and then the real
 ## Zone looks nothing like it.
 ##
+## **THE RED CAPSULES ARE OCCUPANCY STAND-INS, NOT A PLAYED ENCOUNTER AND
+## NOT A SPAWN COUNT.** Three are drawn inside each declared
+## `enemy_spawn` VOLUME, spaced along its diagonal. Three is this
+## harness's own number, picked to show a volume's extent; the shell
+## declares no spawn points at all, and how many enemies a room gets is
+## the composer's answer from its budget at runtime. Reading three
+## capsules as three declared spawns is the exact mistake the stamps
+## exist to prevent, and this lane's own report made it.
+##
 ## What makes it honest is that it places nothing of its own invention.
 ## Every prop stands at a point the SHELL DECLARES -- a `cover` socket, a
 ## `reactive` socket, an `enemy_high` socket, an `objective` volume, an
@@ -103,8 +112,12 @@ func _v3(raw: Variant) -> Vector3:
 
 
 func _furnish(root: Node3D, entry: Dictionary) -> Dictionary:
+	# `spawn_standins`, not `enemy_spawn`: the number is CAPSULES DRAWN,
+	# three per declared volume, and a key called `enemy_spawn` reads as a
+	# count of spawns the shell declares. It declares none.
 	var counted := {"cover": 0, "reactive": 0, "enemy_high": 0,
-			"objective": 0, "enemy_spawn": 0, "fixture": 0}
+			"objective": 0, "spawn_standins": 0, "spawn_volumes": 0,
+			"fixture": 0}
 	for raw: Variant in entry.get("sockets", []):
 		var socket: Dictionary = raw
 		var kind := str(socket.get("kind", ""))
@@ -132,13 +145,14 @@ func _furnish(root: Node3D, entry: Dictionary) -> Dictionary:
 					centre - Vector3(0, size.y / 2.0, 0), 20.0):
 				counted["objective"] += 1
 		elif kind == "enemy_spawn":
+			counted["spawn_volumes"] += 1
 			for i in 3:
 				var t := (i + 1) / 4.0
 				var spot := centre + Vector3(
 						(t - 0.5) * size.x * 0.7, -size.y / 2.0,
 						(0.5 - t) * size.z * 0.7)
 				_standin(root, spot, Color(0.55, 0.17, 0.14))
-				counted["enemy_spawn"] += 1
+				counted["spawn_standins"] += 1
 	return counted
 
 
@@ -200,6 +214,9 @@ func _shot(entry: Dictionary, lamps: Array, eye: Vector3, look: Vector3,
 	_bench.call("label", image,
 			"props stand only at points the shell declares", Vector2i(16, 34),
 			Color(0.82, 0.84, 0.88))
+	_bench.call("label", image,
+			"red capsules are occupancy stand-ins -- 3 per declared volume, "
+			+ "not a spawn count", Vector2i(16, 52), Color(0.82, 0.84, 0.88))
 	if image.save_png("%s/%s.png" % [_out, out_name]) != OK:
 		_fail("could not write %s" % out_name)
 	else:

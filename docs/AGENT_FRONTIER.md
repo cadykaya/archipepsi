@@ -68,23 +68,30 @@ Do not start work in it on a wake-up. Read this section and stop.
 **2026-09-13 — three things another lane may need, from
 `docs/art/reports/2026-09-13-presentation-study.md`:**
 
-1. **`shell_yard_gantry`'s two doorways are refused by
-   `shells.doorways_off_the_body` at current Production** — 0.395 m past
-   the shell's declared 85.20 m size, against a 0.005 m rounding
-   allowance. Art's own gate carried the wrong number (0.405, the
-   *layout* allowance) and now carries 0.005. **Not repaired**: the fix is
-   one line but rewrites an approved manifest, so it needs Prod's and the
-   owner's word.
-2. **The six-theme pack is proved to bind authored pixels through the real
-   Godot import**, with three controls. The binder used to prove it
-   (`tools/content/theme_binder.gd`) is a **proposal** and is not wired
-   into the game — the shipped `ThemeMaterials` is still fully procedural,
-   which is exactly why "the Zone still builds" proved nothing.
-   `texture_filter` and `texture_repeat` are **material** state in Godot 4,
-   not importer parameters.
-3. **Production now reads shell sockets by kind and by name**, so a three-
-   or four-connection room is readable. **A four-connection asset is still
+1. ~~**`shell_yard_gantry`'s two doorways are refused.**~~ **WRONG,
+   withdrawn same day.** `shells.is_offerable` *reports*
+   `doorways_off_the_body` and returns regardless, because a manifest
+   rule cannot see floor and the assembled crossing decides. Art's gate
+   now reports the 0.395 m without failing. **No socket repair is
+   requested.**
+2. ~~**The binder used to prove it is a proposal not wired into the
+   game.**~~ **WRONG, withdrawn same day: the runtime binder exists.**
+   `ThemeMaterials._material` asks `ThemePack.texture_for` first and
+   falls back to `ProcTextures` on null. The art-side binder is deleted.
+   What survives is the check nothing else makes — the pixels the GPU
+   samples, against the authored PNG, through the real import — run
+   against the material Production builds.
+3. **Production reads shell sockets by kind and by name**, so a three- or
+   four-connection room is readable. **A four-connection asset is still
    not a four-neighbour room in a generated Zone.**
+4. **Every opening now declares its own arrival region**, named after its
+   socket — Art's half of §11.3. Handoff:
+   `docs/art-requests/2026-09-13-capacity-and-arrival-handoff.md`. It
+   also corrects the capacity claim for `shell_bay_terminus`, which has
+   **no `exit` socket** and is a destination, not a through-room.
+5. **Lettering cannot be fixed in UVs.** `ThemeMaterials` sets
+   `uv1_triplanar = true`, which ignores mesh UVs entirely, so the
+   mirrored stencil is a material decision rather than a projection bug.
 
 **ALL TWELVE AUTHORED ROOM SHELLS PASS** (owner, 2026-09-04). The eight
 P2 shells passed on 2026-09-02 after Production certified them at

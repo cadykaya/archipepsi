@@ -419,6 +419,60 @@ def uv_project_world(obj, texels_per_metre, texture_size):
     return obj
 
 
+def uv_read_right(obj, boxes):
+    """Make LETTERING read the right way round, on named pieces only.
+
+    `uv_project_world` projects every face from the world axis it most
+    faces and IGNORES THE NORMAL'S SIGN -- a +Z face and a -Z face get
+    the same UVs, so one of the pair is seen reversed. That is deliberate
+    and load-bearing: it is what makes a wall tile seamlessly into the
+    wall beside it whatever order the modules are placed in, and flipping
+    it globally would re-cut every surface in the library.
+
+    It only COSTS anything where a texture carries text or a directional
+    mark, which in this theme is the `accent` panel's stencil band. So
+    this is the bounded repair: after the projection, flip U back about
+    each face's own span, for faces inside one of `boxes` and nowhere
+    else.
+
+    Flipping about the face's own span leaves the texel density and the
+    tile the face lands in exactly as projected -- the letters turn
+    round, the scale does not move, and no surface outside the boxes is
+    touched at all.
+
+    `boxes` is a list of `(min_xyz, max_xyz)` in the object's own space.
+    A box, not a name, because this runs AFTER the join and the pieces
+    have stopped being separate objects by then.
+    """
+    mesh = obj.data
+    if not mesh.uv_layers:
+        return obj
+    uv_layer = mesh.uv_layers.active.data
+    touched = 0
+    for poly in mesh.polygons:
+        centre = poly.center
+        inside = False
+        for lo, hi in boxes:
+            if all(lo[i] - 1e-4 <= centre[i] <= hi[i] + 1e-4
+                   for i in range(3)):
+                inside = True
+                break
+        if not inside:
+            continue
+        us = [uv_layer[i].uv[0] for i in poly.loop_indices]
+        span = min(us) + max(us)
+        for loop_index in poly.loop_indices:
+            uv = uv_layer[loop_index].uv
+            uv_layer[loop_index].uv = (span - uv[0], uv[1])
+        touched += 1
+    if touched == 0:
+        raise SystemExit(
+            "uv_read_right: no face fell inside any of the %d box(es) "
+            "given, so the flip did nothing and the caller believes it "
+            "did something." % len(boxes))
+    return obj
+
+
 def uv_unwrap_prop(obj, angle_limit_deg=66.0, island_margin=0.02):
     """`smart_project`, for discrete objects that never tile against anything."""
     bpy.context.view_layer.objects.active = obj

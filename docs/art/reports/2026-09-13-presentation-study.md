@@ -6,6 +6,26 @@
 `claude/archipepsi-echoes-continuation-b1adno` `05dd5d6`, which is 12
 commits past the `612a7d2` the last handoff was written against.*
 
+> ## CORRECTED THE SAME DAY — read this before §3 and §4c
+>
+> **Three claims below are wrong and are struck where they appear.** The
+> corrections, with evidence, are in
+> `docs/art-requests/2026-09-13-capacity-and-arrival-handoff.md`.
+>
+> 1. **§4c said the Yard's doorways are refused. They are not.**
+>    `shells.is_offerable` reports `doorways_off_the_body` and returns
+>    regardless. The socket repair asked for there is **withdrawn**: no
+>    current production failure names those doorways.
+> 2. **§3 said the runtime binder is missing. It is not.**
+>    `ThemeMaterials._material` asks `ThemePack` before falling back to
+>    `ProcTextures`. The art-side binder written for that section is
+>    **deleted**; the pixel check now runs against the material
+>    Production builds. Disqualification is **per role**, not per theme.
+> 3. **"three declared spawn points" in §1 and the closing list is
+>    wrong.** The shells declare no spawn points at all. The preview
+>    draws three capsules per declared `enemy_spawn` VOLUME, and three
+>    is the harness's own number.
+
 **Everything about the three Batch 044 rooms is still a proposal. Nothing
 here is owner approval, and nothing here promotes anything.**
 
@@ -107,8 +127,10 @@ with a gauge board, a working face on one side and service gear on the
 other, and its trunk lines leaving west.
 
 **Useful space: yes, and deliberately left empty.** The bay's 7.5 m is
-open floor with declared `cover`, `reactive`, `objective` and
-`enemy_spawn` points in it. Nothing was scattered to fill it. The room
+open floor with declared `cover` and `reactive` SOCKETS in it and an
+`objective` and an `enemy_spawn` VOLUME over it. ~~and `enemy_spawn`
+points~~ — a volume is not a point, and the room declares no spawn
+points. Nothing was scattered to fill it. The room
 declares where things go and leaves the runtime to choose what.
 
 ### Two things I am not claiming, and two I am reporting against myself
@@ -340,8 +362,8 @@ check-art          PASS -- every generated asset matches its source
 - **Owner:** every Batch 044 room, still a proposal. The furnishing pass
   for the triad and the terminus. Whether a sixteen-jump climb is the
   intended Span experience.
-- **Prod:** the yard socket repair (one line, needs the word). The runtime
-  binder — the reference one here is a proposal and is not wired in.
-  Whether a 2.5 m service passage carrying three declared spawn points is
-  the intended choke.
+- **Prod:** ~~the yard socket repair~~ **withdrawn — not refused.**
+  ~~The runtime binder~~ **exists.** Whether a 2.5 m service passage
+  carrying ~~three declared spawn points~~ **one declared `enemy_spawn`
+  volume** is the intended choke — a real-player, real-enemy question.
 - **Art:** the triad and terminus surfaces, which have stage 2's defect.

@@ -166,18 +166,30 @@ is history and this is the state.
      surfaces carry the same defect the cross's did — the block painted in
      the room's architecture material, so it reads as corridor wall.
      **That is the next Art task.**
-   * **The theme pack BINDS, proved against the real exported files**, by
-     a reference binder that is a proposal and is **not wired into the
-     game**: `tools/content/theme_binder.gd`, interrogated by
-     `tools/content/theme_bind_proof.gd`, gated in `check_art_current.sh`.
-     Three controls — a missing required texture, a wrong-pixels file, a
-     missing optional one — move real files aside and put them back.
-   * **The yard's two doorways are REFUSED by Production's current
-     manifest rule** and are not repaired. They sit 0.395 m past the
-     shell's declared 85.20 m size; `shells.doorways_off_the_body` allows
-     0.005 m of rounding, not the 0.405 m this lane's gate used to carry.
-     The gate now carries 0.005. **The repair is one line and needs Prod's
-     and the owner's word**, because it rewrites an approved manifest.
+   * **The theme pack BINDS, through PRODUCTION'S OWN CONSUMER.**
+     ~~by a reference binder that is a proposal~~ — **the runtime binder
+     is not missing**: `ThemeMaterials._material` asks `ThemePack` before
+     falling back to `ProcTextures`, and the art-side binder written on a
+     wrong premise is **deleted**. `tools/content/theme_bind_proof.gd`
+     drives their `ThemePack` and `ThemeMaterials`, fetched read-only,
+     and keeps the one check that is still Art's: the pixels the GPU
+     samples, against the authored PNG, through the real import. The
+     control uses their own `_descriptor_override`.
+   * ~~**The yard's two doorways are REFUSED by Production's current
+     manifest rule.**~~ **WRONG, withdrawn.** `shells.is_offerable`
+     *reports* `doorways_off_the_body` and returns regardless — a
+     manifest rule cannot see floor, and the assembled crossing decides.
+     `measure_doorways.py` now reports the 0.395 m without failing, and
+     **no socket repair is requested.**
+   * **EVERY OPENING HAS ITS OWN ARRIVAL REGION**, named after its
+     socket, which is Art's whole half of §11.3. 10 openings across the
+     three rooms, each supported, clear, and walked into the room from by
+     a body placed AT it. `tools/content/run_arrival_test.sh`.
+   * **The mirrored stencil cannot be repaired in UVs.** A local flip
+     fixes the authored material path and is inert at runtime, because
+     `ThemeMaterials` sets `uv1_triplanar = true` and triplanar ignores
+     mesh UVs. Matched pair in `docs/art/review/theme_bind_2026-09-13/`.
+     The runtime repair is a material decision and is Production's.
    * **Production reads sockets by kind and by NAME now**, so a three- or
      four-connection room is readable — the blocker the Batch 044 handoff
      named is theirs, and gone. **A four-connection asset is still not a

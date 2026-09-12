@@ -145,6 +145,12 @@ class Room:
         self.sockets = []
         #: side -> (centre along the wall) for every doorway cut.
         self.doors = {}
+        #: Boxes whose lettering must read the right way round.
+        self.readable = []
+        #: (name, side, along) per doorway socket, in declaration order --
+        #: the source `arrivals()` derives from, so a region and the
+        #: socket it belongs to cannot come from two different places.
+        self.doorways = []
 
     # -- geometry -------------------------------------------------------
     def slab(self, tag, x0, x1, z0, z1, top, thick=0.70, role="floor",
@@ -157,10 +163,22 @@ class Room:
             self.snames.append(tag)
         return stone
 
-    def block(self, tag, size_xyz, centre_xyz, role="wall", collide=None):
+    def block(self, tag, size_xyz, centre_xyz, role="wall", collide=None,
+              readable=False):
+        """`readable` marks a piece whose TEXT has to read the right way.
+
+        The axis-aligned projection ignores the normal's sign, so half of
+        every pair of opposite faces shows its stencil reversed. The box
+        is recorded here and `common.uv_read_right` flips U back inside
+        it after the projection -- on this piece and nothing else.
+        """
         self.parts.append(_paint(brushkit.block(
             "%s_%s" % (self.name, tag), size_xyz, centre_xyz), self.name,
             role, collide))
+        if readable:
+            self.readable.append((
+                tuple(centre_xyz[i] - size_xyz[i] / 2.0 for i in range(3)),
+                tuple(centre_xyz[i] + size_xyz[i] / 2.0 for i in range(3))))
 
     def shell(self, doors):
         """Four walls, a roof, and an aperture wherever `doors` says.
@@ -353,6 +371,7 @@ class Room:
     def socket_at(self, socket_name, side, along, surface_id):
         """A doorway socket on the OUTER face of its wall."""
         half_w = self.w / 2.0
+        self.doorways.append((socket_name, side, along))
         if side == "south":
             pos, yaw = (along, 0.0, 0.0), 180.0
         elif side == "north":
@@ -365,6 +384,50 @@ class Room:
             socket_name, "doorway",
             (pos[0], roomkit.y(pos[2]), pos[1]), yaw=yaw,
             width=DOOR_W, height=DOOR_H, surface_id=surface_id))
+
+
+    def arrivals(self, reach=3.0, height=2.0, width=DOOR_W):
+        """ONE `player_entry` REGION PER DOORWAY, NAMED AFTER IT.
+
+        `ContentInstantiator._player_entry` resolves the arrival region
+        by NAME against the socket the chain arrives through -- the same
+        `socket_for_edge(entry, chamber, "arrive_edge")` lookup
+        `_entry_offset` uses, so the region and the attachment point
+        cannot come from different doors. A shell that declares one
+        unnamed region is read as every shell that predates the rule:
+        the four-door junction entered from the side vouched for the
+        space in front of its FRONT door.
+
+        So the name is the contract, and it is the socket's name exactly.
+        Art's half is nothing more than that -- and nothing less, because
+        a region named anything else falls through to the fallback and
+        the room is back to one answer for four openings.
+
+        `reach` is measured inward from the socket's own plane, which is
+        the wall's OUTER face. At 3.0 m with a 2.4 m box the region spans
+        1.8-4.2 m in, clear of a 0.60 m wall by 1.20 m.
+
+        The first one emitted is the entry's, because `_player_entry`
+        falls back to the FIRST region when the composer names no
+        arriving socket -- which is the behaviour these rooms had when
+        they declared a single region called `arrival`, preserved
+        deliberately rather than by accident.
+        """
+        half_w = self.w / 2.0
+        out = []
+        for name, side, along in self.doorways:
+            if side == "south":
+                x, z = along, reach
+            elif side == "north":
+                x, z = along, self.d - reach
+            elif side == "east":
+                x, z = half_w - reach, along
+            else:
+                x, z = -half_w + reach, along
+            out.append(roomcontract.volume(
+                name, "player_entry", (x, roomkit.y(z), height / 2.0),
+                (width, width, height)))
+        return out
 
 
 def _groove_floor(room, spine_x, spine_z, arms):
@@ -466,8 +529,7 @@ def triad():
     r.place("reactive_0", "reactive", 8.4, 15.2, "arm_east")
     r.place("high_0", "enemy_high", 10.4, 10.8, "arm_east", height=2.8)
     volumes = [
-        roomcontract.volume("arrival", "player_entry",
-                            (0.0, roomkit.y(3.0), 1.0), (DOOR_W, 2.4, 2.0)),
+        *r.arrivals(),
         # ON THE SORTING FLOOR, not in a corner and not in a doorway. A
         # shell with no enemy_spawn gets its enemies scattered over the
         # largest declared surface, which for this room would be the whole
@@ -636,7 +698,8 @@ def cross():
     # as a wall with a gap either side. A gauge board is the one thing a
     # plant's public face carries.
     r.block("gauge_board", (3.2, 0.22, 1.5),
-            (2.1, roomkit.y(pz0 - 0.11), 2.05), "accent", "wall")
+            (2.1, roomkit.y(pz0 - 0.11), 2.05), "accent", "wall",
+            readable=True)
     # The machine is PLUMBED, and it is plumbed west. Two trunk lines
     # leave the body at 5.6 m -- clear of the 3.2 m doors and the 4.8 m
     # arm headers -- and run the length of the bay into the west wall.
@@ -676,8 +739,7 @@ def cross():
     r.place("reactive_0", "reactive", -3.0, 16.2, "bay_west")
     r.place("reactive_1", "reactive", 7.7, 18.6, "pass_east")
     volumes = [
-        roomcontract.volume("arrival", "player_entry",
-                            (0.0, roomkit.y(3.0), 1.0), (DOOR_W, 2.4, 2.0)),
+        *r.arrivals(),
         # TWO, one per side of the plant, because a single box that spanned
         # the ambulatory would also cover the machine standing in it.
         # THE BAY IS THE FIGHT. The passage gets a second, smaller one so
@@ -753,10 +815,13 @@ def terminus():
     r.socket_at("branch_west", "west", side_z, "chamber_w")
     r.place("cover_0", "cover", -4.6, 13.4, "chamber_w")
     r.place("cover_1", "cover", 4.6, 13.4, "chamber_e")
-    r.place("reactive_0", "reactive", -6.6, 19.6, "chamber_w")
+    # NOT (-6.6, 19.6): that is `drum_0`'s own centre, so a runtime
+    # ReactiveBarrel would have stood inside an authored drum. Found
+    # deriving the arrival regions, and it is the same class of defect --
+    # a declared point that nothing had measured against the geometry.
+    r.place("reactive_0", "reactive", -4.6, 19.4, "chamber_w")
     volumes = [
-        roomcontract.volume("arrival", "player_entry",
-                            (0.0, roomkit.y(3.0), 1.0), (DOOR_W, 2.4, 2.0)),
+        *r.arrivals(),
         roomcontract.volume("fight", "enemy_spawn",
                             (0.0, roomkit.y(14.5), 1.0), (12.0, 6.0, 2.0)),
         # THE DESTINATION'S USABLE SPACE, and deliberately not a Check.
@@ -803,6 +868,8 @@ def main():
         obj = common.join(r.parts, r.name)
         common.uv_project_world(obj, materials.ARCH_DENSITY,
                                 materials.ARCH_SIZE)
+        if r.readable:
+            common.uv_read_right(obj, r.readable)
         entry = common.export_glb(obj, "%s/%s.glb" % (OUT, cid), "room",
                                   tier="architecture",
                                   texture_size=materials.ARCH_SIZE,
