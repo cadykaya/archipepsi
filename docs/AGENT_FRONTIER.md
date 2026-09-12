@@ -203,6 +203,21 @@ only the approved consequence is persisted, in `ZoneProgress.latched`.
 every load-bearing package is refused, and that is a test rather than a
 promise. `docs/AMALGAM_BRIDGE.md` §5.6a says what the engine lane owes.
 
+**NEXT FOR THIS LANE: nothing, until integration says otherwise**
+(owner, 2026-09-12). Topology behaviour is to stay stable while Prod
+exercises the integrated build. The next bridge work is **a specific
+repair identified during that integration** — not a redesign, and not a
+setting changed to produce a different-looking graph.
+
+When a disagreement turns up, **read both ends before changing either
+contract.** The producer here and the consumer in `godot/`. This lane
+has twice been about to file a defect against the engine that the
+payload settled in one run, and has twice committed two spellings of one
+fact by writing its half without reading the other's. The existing
+handoff — `09_ROOM_CONTRACT.md` §11.7 and `AMALGAM_BRIDGE.md` §5.6a —
+is what Prod is building against; preserve it rather than adjusting it
+to meet a finding partway.
+
 **What is NOT claimed by any of the above.** Bridge acceptance is not
 Godot layout acceptance and neither is a player walking it. Regenerating
 `played_zone.json` and the playtest baseline updates the baseline; it is
