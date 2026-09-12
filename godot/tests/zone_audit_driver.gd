@@ -82,6 +82,8 @@ func _run() -> void:
 		"coins_received": 0, "coins_spent": 0, "hub": {"state": "IDLE"},
 	}
 
+	await _the_placement_outcomes_are_distinguishable()
+
 	var zone := _load_zone()
 	if zone.is_empty():
 		_check(false, "could not load %s -- run `playtest dump` first"
@@ -118,6 +120,172 @@ func _run() -> void:
 	root.queue_free()
 	await get_tree().process_frame
 	_finish()
+
+## THE FOUR PLACEMENT OUTCOMES, DRIVEN.
+##
+## A room was being barred from branch selection on `plug_clear ==
+## false`, and that boolean cannot tell "nothing was measured" from
+## "this position is bad" from "no position works". Each control here
+## builds a real Zone, puts the return anchor in one of those states,
+## and asserts which outcome the engine reports -- because only
+## `NO_CANDIDATE` may justify reselecting the host.
+func _the_placement_outcomes_are_distinguishable() -> void:
+	var zone := {
+		"zone_id": "zplace", "theme": "concrete_facility",
+		"chambers": [
+			{"id": "p001", "type": "corridor", "length": 14.0,
+					"width": 7.9, "enemies": [], "activities": [],
+					"features": []},
+			{"id": "p002", "type": "arena", "width": 18.0, "depth": 18.0,
+					"wall_height": 6.0, "objective": "reach_exit",
+					"enemies": [], "activities": [], "features": []},
+		],
+		"plugs": [{"edge_id": "p:p002:start", "room_id": "p002",
+				"source_anchor": "room:p002:return",
+				"destination": "zone_start", "device": "pad"}],
+	}
+
+	# 1. A GOOD HOST IS LEFT ALONE. The builder reserved a spot that
+	#    supports a body and clears the arrival, so nothing moves.
+	var good := ZoneBuilder.build(zone)
+	if good.has("failed"):
+		_check(false, "the placement fixture did not lay out: %s"
+				% str(good["failed"]))
+		return
+	add_child(good["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var space := get_viewport().world_3d.direct_space_state
+	var was: Vector3 = (good["anchors"] as Dictionary)["room:p002:return"]
+	var evidence := RoomAudit.measure_layout(good, space)
+	var seen: Dictionary = evidence["plug_placement"]
+	_check(str((seen.get("p002", {}) as Dictionary).get("outcome", ""))
+				== RoomAudit.PLACEMENT_MEASURED,
+			"a good host reports MEASURED and is not moved (%s)"
+			% str(seen.get("p002", {})))
+	_check((good["anchors"] as Dictionary)["room:p002:return"] == was,
+			"and its anchor is where the builder put it")
+	_check(bool((evidence["plug_clear"] as Dictionary).get(
+				"p:p002:start", false)),
+			"and a body at its arrival stands outside the device")
+
+	# 2. A STANDABLE PAD TOO CLOSE TO THE ARRIVAL IS REPAIRED, NOT
+	#    CONDEMNED. This is the case that used to bar the room: the
+	#    settle skipped its search whenever the anchor was standable, so
+	#    a pad on solid ground inside its own trigger stayed there and
+	#    reported `plug_clear = false`.
+	var arrival: Vector3 = (good["rooms"] as Dictionary)["p002"]["arrival"]
+	(good["anchors"] as Dictionary)["room:p002:return"] = arrival \
+			+ Vector3(0.5, 0.0, 0.5)
+	var repaired := RoomAudit.measure_layout(good, space)
+	var fixed: Dictionary = (repaired["plug_placement"] as Dictionary) \
+			.get("p002", {})
+	_check(str(fixed.get("outcome", "")) == RoomAudit.PLACEMENT_REPAIRED,
+			"a standable pad inside the arrival's clearance is REPAIRED "
+			+ "rather than barred (%s)" % str(fixed))
+	_check(bool((repaired["plug_clear"] as Dictionary).get(
+				"p:p002:start", false)),
+			"and the repaired position clears the arrival")
+	_check(int(fixed.get("searched", 0)) > 0,
+			"and it says how many candidates it examined (%d)"
+			% int(fixed.get("searched", 0)))
+
+	# 3. NO ARRIVAL TO MEASURE AGAINST IS NOT A VERDICT ON THE ROOM.
+	var blind := (good["rooms"] as Dictionary)["p002"] as Dictionary
+	var kept: Vector3 = blind["arrival"]
+	blind.erase("arrival")
+	(good["anchors"] as Dictionary).erase("room:p002:arrival")
+	var nothing := RoomAudit.measure_layout(good, space)
+	_check(str(((nothing["plug_placement"] as Dictionary).get("p002", {})
+				as Dictionary).get("outcome", ""))
+				== RoomAudit.PLACEMENT_NO_EVIDENCE,
+			"a room with no published arrival reports NO_EVIDENCE (%s)"
+			% str((nothing["plug_placement"] as Dictionary).get("p002", {})))
+	_check(not (nothing["plug_clear"] as Dictionary).has("p:p002:start"),
+			"and its clearance is ABSENT rather than false: missing "
+			+ "evidence must not read as a measured failure")
+	blind["arrival"] = kept
+	(good["anchors"] as Dictionary)["room:p002:arrival"] = kept
+
+	# 4. AND A SEARCH THAT REALLY FINDS NOTHING SAYS SO -- on the room
+	#    that actually produces it rather than a contrived arrival.
+	#    `platform_path` is rising islands and two narrow ledges over a
+	#    kill pit; `played_zone`'s `c012` is one, and no position in it
+	#    both holds a capsule and clears the arrival. That is the ONE
+	#    outcome Dess may reselect a host on, so it is measured on the
+	#    real thing.
+	(good["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+	var pit := ZoneBuilder.build({
+		"zone_id": "zpit", "theme": "concrete_facility",
+		"chambers": [
+			{"id": "q001", "type": "corridor", "length": 14.0,
+					"width": 7.9, "enemies": [], "activities": [],
+					"features": []},
+			{"id": "q002", "type": "platform_path", "enemies": [],
+					"activities": [], "features": []},
+		],
+		"plugs": [{"edge_id": "p:q002:start", "room_id": "q002",
+				"source_anchor": "room:q002:return",
+				"destination": "zone_start", "device": "pad"}],
+	})
+	if pit.has("failed"):
+		_check(false, "the pit fixture did not lay out: %s"
+				% str(pit["failed"]))
+		return
+	add_child(pit["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var empty := RoomAudit.measure_layout(pit,
+			get_viewport().world_3d.direct_space_state)
+	var pit_seen: Dictionary = (empty["plug_placement"] as Dictionary) \
+			.get("q002", {})
+	# AND THE PIT ROOM CAN HOST ONE. `c012` refused its layout for
+	# months of this batch, which made "a room over a kill pit cannot
+	# host a return" an easy and WRONG generalisation: the room declares
+	# which square metres hold weight, and its end ledge holds a device
+	# as well as it holds a player. The finding was about one position,
+	# not one kind of room.
+	_check(str(pit_seen.get("outcome", "")) in [
+				RoomAudit.PLACEMENT_MEASURED, RoomAudit.PLACEMENT_REPAIRED],
+			"a room over a kill pit CAN host a return -- its declared "
+			+ "ground is real ground (%s)" % str(pit_seen))
+	_check(bool((empty["plug_clear"] as Dictionary).get(
+				"p:q002:start", false)),
+			"and a body at its arrival stands outside that device")
+
+	# 4b. AND WHEN THERE REALLY IS NO GROUND, the report says so and
+	#     says what it looked at. Constructed rather than found, because
+	#     no shipping builder produces it any more: the room's declared
+	#     stands are taken away and its published arrival lifted clear of
+	#     the geometry, so every candidate the bounded search examines is
+	#     in the air.
+	for raw: Variant in pit.get("chambers", []):
+		var entry: Dictionary = raw
+		if str((entry["chamber"] as Dictionary).get("id", "")) != "q002":
+			continue
+		(entry["build"] as Dictionary)["sockets"] = []
+	var lifted: Vector3 = (pit["anchors"] as Dictionary)[
+			"room:q002:arrival"] + Vector3(0.0, 60.0, 0.0)
+	(pit["anchors"] as Dictionary)["room:q002:arrival"] = lifted
+	(pit["anchors"] as Dictionary)["room:q002:return"] = lifted
+	var box: AABB = (pit["rooms"] as Dictionary)["q002"]["bounds"]
+	(pit["rooms"] as Dictionary)["q002"]["bounds"] = AABB(
+			box.position + Vector3(0.0, 60.0, 0.0), box.size)
+	var none := RoomAudit.measure_layout(pit,
+			get_viewport().world_3d.direct_space_state)
+	var barren: Dictionary = (none["plug_placement"] as Dictionary) \
+			.get("q002", {})
+	_check(str(barren.get("outcome", ""))
+				== RoomAudit.PLACEMENT_NO_CANDIDATE,
+			"a room with no supported ground reports NO_CANDIDATE, "
+			+ "which is the only outcome that may bar the host (%s)"
+			% str(barren))
+	_check(barren.has("policy") and int(barren.get("searched", -1)) > 0,
+			"and it states the bounded search it actually ran rather "
+			+ "than claiming impossibility (%s)" % str(barren))
+	(pit["root"] as Node3D).queue_free()
+	await get_tree().process_frame
 
 func _finish() -> void:
 	_write_audit()

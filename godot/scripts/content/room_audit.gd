@@ -453,13 +453,42 @@ static func measure_layout(build: Dictionary,
 	# WHOLE layout for it. Measured in a live campaign: "a standing
 	# capsule does not fit at 'room:c003:return'", nine times, five
 	# Zones discarded. So where reservation ends, the probe begins.
-	_settle_return_anchors(build, space)
+	var placement := _settle_return_anchors(build, space)
 	var arrival_ok := {}
 	for name: String in build.get("anchors", {}):
 		arrival_ok[name] = arrival_is_supported(space,
 				(build["anchors"] as Dictionary)[name])
 	return {"apertures": apertures, "arrival_ok": arrival_ok,
-			"plug_clear": plugs_clear_of_arrivals(build)}
+			"plug_clear": plugs_clear_of_arrivals(build),
+			# WHAT THE ENGINE FOUND WHEN IT PLACED EACH RETURN, and the
+			# bounded search it ran. `plug_clear` answers "is THIS
+			# position clear"; only this says whether a position was
+			# found at all -- and only `NO_CANDIDATE` is a statement
+			# about the ROOM. See `PLACEMENT_*`.
+			"plug_placement": placement}
+
+## THE THREE PLACEMENT OUTCOMES, kept apart on purpose.
+##
+## A room was being barred from branch selection on `plug_clear ==
+## false`, and that boolean could not tell these three apart:
+##
+## * `NO_EVIDENCE` -- nothing was measured. No arrival anchor, no
+##   committed bounds, no device. Says nothing about the room; the
+##   layout is refused for carrying no measurement, which is a different
+##   and correct consequence.
+## * `REPAIRED` -- the position the builder reserved did not support a
+##   body or did not clear the arrival, AND the bounded search found one
+##   that does. The candidate failed; the host did not.
+## * `NO_CANDIDATE` -- the bounded search ran and nothing it examined
+##   both supports a body and clears the arrival. **This is the only
+##   outcome that may justify reselecting the host**, and it carries
+##   what was actually searched rather than a claim of impossibility.
+##
+## `MEASURED` is the ordinary case: the reserved position holds.
+const PLACEMENT_MEASURED := "MEASURED"
+const PLACEMENT_REPAIRED := "REPAIRED"
+const PLACEMENT_NO_EVIDENCE := "NO_EVIDENCE"
+const PLACEMENT_NO_CANDIDATE := "NO_CANDIDATE"
 
 ## Where the settle looks for standable ground: a LATTICE around the
 ## room's arrival, not a ring.
@@ -489,21 +518,45 @@ const RETURN_OFFSETS := [2.5, -2.5, 3.5, -3.5, 5.0, -5.0, 8.0, -8.0]
 ## The plug NODE moves with the anchor. Publishing one place and standing
 ## the device in another is two truths about one thing.
 static func _settle_return_anchors(build: Dictionary,
-		space: PhysicsDirectSpaceState3D) -> void:
+		space: PhysicsDirectSpaceState3D) -> Dictionary:
+	var report := {}
 	var anchors: Dictionary = build.get("anchors", {})
 	var rooms: Dictionary = build.get("rooms", {})
 	for name: String in anchors.keys():
 		if not name.begins_with("room:") or not name.ends_with(":return"):
 			continue
-		if arrival_is_supported(space, anchors[name]):
-			continue
 		var rid := name.substr(5, name.length() - 12)
 		var placed: Dictionary = rooms.get(rid, {})
-		if placed.is_empty():
+		# ONE SOURCE FOR THE ARRIVAL, and the published one.
+		#
+		# This read `rooms[rid].arrival` while `plugs_clear_of_arrivals`
+		# read `anchors["room:<rid>:arrival"]` -- two places holding one
+		# fact, and a control that removed one of them got a "missing
+		# evidence" verdict from the settle and a measured boolean from
+		# the clearance. The ANCHOR is what the bridge validates, so the
+		# anchor is what both ask; the committed transform is the
+		# fallback for a build that predates it.
+		var published: Variant = anchors.get("room:%s:arrival" % rid)
+		if published == null:
+			published = placed.get("arrival")
+		if placed.is_empty() or published == null:
+			# NOTHING TO MEASURE AGAINST. Not a verdict on the room.
+			report[rid] = {"outcome": PLACEMENT_NO_EVIDENCE,
+					"why": "the room published no arrival anchor"}
 			continue
 		var box: AABB = placed.get("bounds", AABB())
-		var from: Vector3 = placed.get("arrival",
-				box.position + box.size / 2.0)
+		var from: Vector3 = published
+		# SUPPORT **AND** CLEARANCE, and the second one is the fix.
+		#
+		# This skipped the search whenever the current anchor was
+		# standable -- so a pad on solid ground two metres from the
+		# arrival, well inside its own trigger, was left exactly where
+		# it was and reported `plug_clear = false`. The candidate was
+		# repairable and the room was barred for it.
+		if arrival_is_supported(space, anchors[name]) \
+				and clear_of_arrival(anchors[name], from):
+			report[rid] = {"outcome": PLACEMENT_MEASURED}
+			continue
 		var moved := Vector3.INF
 		# THE ROOM'S OWN DECLARED GROUND FIRST, probed in world space.
 		#
@@ -516,6 +569,7 @@ static func _settle_return_anchors(build: Dictionary,
 		# a body at the arrival outside the trigger is the answer.
 		var clearance := ReturnPlug.RADIUS + Constants.PLAYER_RADIUS
 		var best_gap := clearance
+		var examined := 0
 		for raw: Variant in build.get("chambers", []):
 			var entry: Dictionary = raw
 			if str((entry["chamber"] as Dictionary).get("id", "")) != rid:
@@ -533,17 +587,15 @@ static func _settle_return_anchors(build: Dictionary,
 				var gap := Vector2(at.x - from.x, at.z - from.z).length()
 				if gap < clearance or gap < best_gap:
 					continue
-				if arrival_is_supported(space, at):
+				examined += 1
+				if arrival_is_supported(space, at) \
+						and clear_of_arrival(at, from):
 					moved = at
 					best_gap = gap
 		if moved != Vector3.INF:
-			anchors[name] = moved
-			for raw_plug: Variant in build.get("plugs", []):
-				if not is_instance_valid(raw_plug as Object):
-					continue
-				var standing: ReturnPlug = raw_plug
-				if str(standing.get_meta("room_id", "")) == rid:
-					standing.global_position = moved
+			_stand_the_device(build, anchors, name, rid, moved)
+			report[rid] = {"outcome": PLACEMENT_REPAIRED,
+					"searched": examined, "how": "a declared stand"}
 			continue
 		var inside := box.grow(-0.6)
 		for dz: float in RETURN_OFFSETS:
@@ -553,7 +605,9 @@ static func _settle_return_anchors(build: Dictionary,
 				var at := from + Vector3(float(dx), 0.0, dz)
 				if not inside.has_point(at):
 					continue
-				if arrival_is_supported(space, at):
+				examined += 1
+				if arrival_is_supported(space, at) \
+						and clear_of_arrival(at, from):
 					moved = at
 					break
 		if moved == Vector3.INF:
@@ -568,14 +622,33 @@ static func _settle_return_anchors(build: Dictionary,
 			push_warning("zone: no standable spot in room '%s' is clear "
 					% rid + "of its arrival, so its return device has "
 					+ "nowhere to stand; the layout will be refused")
+			# THE ONE OUTCOME THAT IS ABOUT THE ROOM, and it says what
+			# it searched rather than claiming impossibility: this many
+			# candidates, the room's own declared stands and a lattice
+			# bounded by `RETURN_OFFSETS` inside the committed envelope.
+			report[rid] = {"outcome": PLACEMENT_NO_CANDIDATE,
+					"searched": examined,
+					"policy": {"offsets": RETURN_OFFSETS,
+						"clearance": clearance,
+						"inside": "committed bounds less 0.6 m"}}
 			continue
-		anchors[name] = moved
-		for raw: Variant in build.get("plugs", []):
-			if not is_instance_valid(raw as Object):
-				continue
-			var plug: ReturnPlug = raw
-			if str(plug.get_meta("room_id", "")) == rid:
-				plug.global_position = moved
+		_stand_the_device(build, anchors, name, rid, moved)
+		report[rid] = {"outcome": PLACEMENT_REPAIRED,
+				"searched": examined, "how": "a probed lattice"}
+	return report
+
+## Publishes an anchor and moves the device standing on it together.
+## One place, because publishing one and standing the other somewhere
+## else is two truths about one thing.
+static func _stand_the_device(build: Dictionary, anchors: Dictionary,
+		name: String, rid: String, at: Vector3) -> void:
+	anchors[name] = at
+	for raw: Variant in build.get("plugs", []):
+		if not is_instance_valid(raw as Object):
+			continue
+		var plug: ReturnPlug = raw
+		if str(plug.get_meta("room_id", "")) == rid:
+			plug.global_position = at
 
 ## IS A BODY AT THE ROOM'S ARRIVAL OUTSIDE THE RETURN DEVICE?
 ##
@@ -600,17 +673,36 @@ static func plugs_clear_of_arrivals(build: Dictionary) -> Dictionary:
 		var room := str(plug.get_meta("room_id", ""))
 		var arrive: Variant = anchors.get("room:%s:arrival" % room)
 		if arrive == null:
-			out[plug.edge_id] = false
+			# NO ENTRY AT ALL, rather than `false`.
+			#
+			# `false` here meant "measured, and a body at the arrival
+			# stands inside the device" -- a fact about a POSITION, and
+			# the bridge bars a host on it. Writing it when there was no
+			# arrival to measure against made MISSING EVIDENCE
+			# indistinguishable from a measured failure, and a room
+			# could be removed from branch selection because its anchor
+			# had not been published. Rule 4b already refuses a layout
+			# whose plug carries no measurement; that refuses the
+			# LAYOUT, which is right, and does not condemn the ROOM.
 			continue
 		var at: Vector3 = arrive
 		var here := plug.global_position if plug.is_inside_tree() \
 				else plug.position
-		var flat := Vector2(at.x - here.x, at.z - here.z).length()
-		var apart := flat >= ReturnPlug.RADIUS + Constants.PLAYER_RADIUS
-		var above := at.y >= here.y + ReturnPlug.HEIGHT
-		var below := at.y + Constants.PLAYER_HEIGHT <= here.y
-		out[plug.edge_id] = apart or above or below
+		out[plug.edge_id] = clear_of_arrival(here, at)
 	return out
+
+## Is a body standing at `arrival` outside the device standing at `at`?
+##
+## The trigger is a cylinder of `RADIUS` by `HEIGHT`; the body is a
+## capsule of `PLAYER_RADIUS` by `PLAYER_HEIGHT`. They miss each other
+## when the horizontal gap covers both radii, or when the two vertical
+## spans do not meet -- which is what the `Area3D` itself would report.
+static func clear_of_arrival(at: Vector3, arrival: Vector3) -> bool:
+	var flat := Vector2(arrival.x - at.x, arrival.z - at.z).length()
+	var apart := flat >= ReturnPlug.RADIUS + Constants.PLAYER_RADIUS
+	var above := arrival.y >= at.y + ReturnPlug.HEIGHT
+	var below := arrival.y + Constants.PLAYER_HEIGHT <= at.y
+	return apart or above or below
 
 static func aperture_polarity(room: Dictionary, to_world: Transform3D,
 		space: PhysicsDirectSpaceState3D) -> Dictionary:

@@ -731,6 +731,13 @@ static func layout_to_json(result: Dictionary) -> Dictionary:
 			# a distinct anchor is not evidence, the same way a
 			# coordinate is not evidence a capsule fits.
 			"plug_clear": result.get("plug_clear", {}),
+			# WHY a return stands where it does, per ROOM: measured as
+			# reserved, repaired by a bounded search, no evidence to
+			# measure against, or no candidate the search examined both
+			# supports a body and clears the arrival. Only the LAST is a
+			# statement about the room, and it carries what was searched.
+			# `RoomAudit.PLACEMENT_*`.
+			"plug_placement": result.get("plug_placement", {}),
 			# The chains the engine built and replayed, as
 			# `PlacedPackage` records bound to this Zone, the room and
 			# the declared content they realize. Passed through rather

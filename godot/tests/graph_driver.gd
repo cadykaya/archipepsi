@@ -52,25 +52,33 @@ const SAMPLE_FLOOR := 16
 
 ## HOW FAR THE PLAYER JOURNEY GETS TODAY, leg by leg, as a ratchet.
 ##
-## Not a waiver and not a pass: the six legs are measured separately and
+## Not a waiver and not a pass: the legs are measured separately and
 ## these are the numbers the measurement returns, so a change to any of
 ## them shows up here. Raise them when they rise; do not lower them.
 ##
-## Five valid starts, five bodies that cross their junction, two that
-## enter the side destination, stay in it and cross it to its middle,
-## and NONE that complete the intended return.
+## **`content` MEANS SOMETHING ELSE NOW, and that is why it fell from
+## two to zero.** It used to mean "the body reached the room's geometric
+## middle", which is a fact about a coordinate. It now means "the
+## PLAYER'S OWN interact probe found something with `interact()`" --
+## the same condition the reference round trip uses, and the same one
+## the game uses to offer a prompt. The old two were not two.
 ##
-## The reason is one thing and it is written down rather than waived:
-## `_walk` presses forward and steers flat, and these Zones have rooms
-## fifty metres tall with elevation bands in them. A body steered at a
-## waypoint on a different level walks off a ledge -- `zone_05`'s ended
-## twelve metres down -- so three of the five approaches fall before
-## they reach the branch and both successful entries fall on the way
-## home. THAT IS A HARNESS LIMIT, NOT A ZONE VERDICT: what these
-## journeys have established is that two Zones' side rooms are enterable
-## and crossable, not that the other three are not.
+## **`returned` rose from zero to two** for the opposite reason: the
+## walk is stopped by the return trigger reporting the body inside it
+## rather than by a four-metre tolerance that left it outside.
+##
+## What the current numbers say, and none of it is repaired here:
+##
+## * three approaches never reach the branch. `zone_01` FALLS at
+##   waypoint 0 even with the climb; `zone_04` and `zone_05` stop short.
+## * the two that get in reach nothing: a target exists in each room,
+##   and the return device sits between the body and it, so the content
+##   leg ends by being sent home. The device firing on the way PAST is
+##   not the §5.7 defect (it does not fire on entry) but it is not an
+##   intentional return either, and it is recorded as "by wandering".
+## * neither walked back in afterwards.
 const JOURNEY_FLOOR := {"valid": 5, "at_mouth": 5, "entered": 2,
-		"stayed": 2, "content": 2, "returned": 0}
+		"stayed": 2, "content": 0, "returned": 2, "re_entered": 0}
 const ARRIVED := 4.0
 
 ## ZONES THE ROUTER CANNOT LAY OUT TODAY: the status, and where it wedges.
@@ -109,6 +117,7 @@ var solve_ms_total := 0.0
 var journeys_stayed := 0
 var journeys_content := 0
 var journeys_at_mouth := 0
+var journeys_re_entered := 0
 ## WHICH FIXTURES THIS RUN IS ABOUT. Hardcoding the generated directory
 ## here read five files and then failed to read fifteen -- and reported
 ## "20 of 20 lay out" on the strength of fifteen empty Dictionaries that
@@ -205,7 +214,8 @@ func _run() -> void:
 		var got := {"valid": journeys_valid, "at_mouth": journeys_at_mouth,
 				"entered": journeys_entered, "stayed": journeys_stayed,
 				"content": journeys_content,
-				"returned": journeys_returned}
+				"returned": journeys_returned,
+				"re_entered": journeys_re_entered}
 		for leg: String in JOURNEY_FLOOR:
 			_check(int(got[leg]) >= int(JOURNEY_FLOOR[leg]),
 					"%d journey(s) reached '%s' and %d did before"
@@ -621,6 +631,7 @@ func _walk_one(file: String) -> void:
 		out["apertures"] = evidence["apertures"]
 		out["arrival_ok"] = evidence["arrival_ok"]
 		out["plug_clear"] = evidence["plug_clear"]
+		out["plug_placement"] = evidence["plug_placement"]
 		var sink := FileAccess.open("%s/layouts/%s" % [_where, file],
 				FileAccess.WRITE)
 		if sink != null:
@@ -713,7 +724,38 @@ func _walk_one(file: String) -> void:
 	# started and then broke is a Zone finding, and a harness whose
 	# route can break without failing anything is a harness measuring
 	# nothing.
-	var reached := await _reach_a_branch(out, zone, spine, side)
+	# THE JOURNEY RUNS ON A REAL CONTROLLER, like the reference above.
+	#
+	# The structural pass just made needs the raw build (its status, its
+	# attempt count, its room list); the JOURNEY needs the production
+	# return action, which lives in `ZoneController`. So the measured
+	# build is let go and the Zone is stood up again the way the game
+	# stands it up. Two builds per Zone, and the second one is the one a
+	# player would be in.
+	(out["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+	var controller := ZoneController.new()
+	add_child(controller)
+	controller.setup(zone)
+	for _i in 10:
+		await get_tree().physics_frame
+	if controller.layout_failed != "" or not is_instance_valid(
+			controller.player):
+		_check(false, "%s laid out once and not twice: %s"
+				% [file, controller.layout_failed])
+		controller.queue_free()
+		return
+	# THE ACCEPTANCE HOLD IS NOT THIS SUITE'S SUBJECT. These fixtures
+	# carry edges, so `_await_verdict` holds the player until a bridge
+	# answers -- and there is no bridge here. `godot-integration` is
+	# where acceptance is measured; this driver measures the walk, so it
+	# takes that one claim off and says so.
+	if is_instance_valid(controller.player):
+		controller.player.release(ZoneController.LAYOUT_HOLD)
+	var reached := await _reach_a_branch(controller, out, zone, spine,
+			side)
+	controller.queue_free()
+	await get_tree().process_frame
 	print("    player: %s" % str(reached["how"]))
 	if not bool(reached["valid"]):
 		journeys_inconclusive += 1
@@ -740,17 +782,26 @@ func _walk_one(file: String) -> void:
 		# plug returns through the junction and that is a whole
 		# journey too.
 		if bool(reached.get("used_pad", false)):
-			_check(bool(reached.get("re_entered", false)),
-					"%s: and walking back into the side room did not "
-					% file + "fire its return again (%s)"
-					% str(reached["how"]))
-	(out["root"] as Node3D).queue_free()
-	await get_tree().process_frame
+			_check(int(reached.get("traversals", 0)) == 1,
+					"%s: the return device raised exactly one traversal "
+					% file + "(%d)" % int(reached.get("traversals", 0)))
+			if bool(reached.get("re_entered", false)):
+				journeys_re_entered += 1
+			# ASKED OF A DELIBERATE RETURN ONLY. A device the body
+			# wandered onto while crossing the room was not chosen, and
+			# whether the walk back in succeeds after an accidental
+			# return says nothing about §5.7's property. The counter
+			# above ratchets either way.
+			if bool(reached.get("deliberate", false)):
+				_check(bool(reached.get("re_entered", false)),
+						"%s: and walking back into the side room did "
+						% file + "not fire its return again (%s)"
+						% str(reached["how"]))
 
 ## Walks the real Player from a junction into one of its side rooms and
 ## back out, and says what happened.
-func _reach_a_branch(out: Dictionary, zone: Dictionary, spine: Array,
-		side: Array) -> Dictionary:
+func _reach_a_branch(controller: ZoneController, out: Dictionary,
+		zone: Dictionary, spine: Array, side: Array) -> Dictionary:
 	if side.is_empty():
 		return _no_start("no side destination to reach")
 	var doors: Dictionary = out.get("doors", {})
@@ -780,7 +831,8 @@ func _reach_a_branch(out: Dictionary, zone: Dictionary, spine: Array,
 					Vector3.INF)
 			if mouth == Vector3.INF:
 				continue
-			return await _walk_into(out, junction, served, mouth)
+			return await _walk_into(controller, out, junction, served,
+					mouth)
 	return _no_start("no door carrying a JOINED edge onto a placed "
 			+ "off-spine room")
 
@@ -820,18 +872,21 @@ func _no_start(why: String) -> Dictionary:
 ## destination, the ability to REMAIN there, reaching its CONTENT, and a
 ## successful intended RETURN. A body crossing a room boundary is one of
 ## those six and is reported as one of those six.
-func _walk_into(out: Dictionary, junction: String, branch: String,
-		mouth: Vector3) -> Dictionary:
+func _walk_into(controller: ZoneController, out: Dictionary,
+		junction: String, branch: String, mouth: Vector3) -> Dictionary:
 	var rooms: Dictionary = out["rooms"]
 	var box: AABB = (rooms[branch] as Dictionary)["bounds"]
 	var from: AABB = (rooms[junction] as Dictionary)["bounds"]
-	var body := Player.create()
-	(out["root"] as Node3D).add_child(body)
+	var body: Player = controller.player
 	# INSIDE THE JUNCTION, a quarter of the way toward its middle. The
 	# doorway itself is a hole in a wall and the floor either side of it
 	# is the room's, not the opening's: a body dropped ON the mouth falls
 	# through the gap the connector bridges and the walk then reports how
 	# far it got from the bottom of the world.
+	#
+	# THE CONTROLLER'S OWN PLAYER, moved to the start of the leg under
+	# test. That is a harness setup and it is not a result: everything
+	# after it is walked, and the re-entry at the end is walked too.
 	var stand := mouth.lerp(from.position + from.size / 2.0, 0.25)
 	body.global_position = Vector3(stand.x,
 			mouth.y + Constants.PLAYER_HEIGHT, stand.z)
@@ -843,56 +898,57 @@ func _walk_into(out: Dictionary, junction: String, branch: String,
 	# after that is about the fall. `from` is the junction's committed
 	# envelope, so "below its floor" is a fact and not a guess.
 	if body.global_position.y < from.position.y - Constants.PLAYER_HEIGHT:
-		var fell := body.global_position
-		body.queue_free()
 		return _no_start("the body fell out of '%s' before it took a "
-				% junction + "step (ended at %v)" % fell)
+				% junction + "step (ended at %v)"
+				% body.global_position)
 	if not from.grow(1.0).has_point(body.global_position):
-		var adrift := body.global_position
-		body.queue_free()
 		return _no_start("the body settled outside '%s', so it never "
-				% junction + "stood in the junction (at %v)" % adrift)
+				% junction + "stood in the junction (at %v)"
+				% body.global_position)
 
-	# 1. THROUGH THE JUNCTION INTERIOR TO THE INTENDED OPENING. Not a
-	#    spawn at the door: the body walks the junction floor to get
-	#    there, which is the leg that proves the junction is crossable.
-	var reached_mouth := await _walk(body,
-			Vector3(mouth.x, body.global_position.y, mouth.z), AABB())
+	# 1. THROUGH THE JUNCTION INTERIOR TO THE INTENDED OPENING.
+	var reached_mouth := await _leg(body, mouth, LEG_FRAMES * 2)
 	var at_mouth := bool(reached_mouth["arrived"])
 	var crossed := stand.distance_to(body.global_position)
 
-	# 2. ALONG THE COMMITTED CORRIDOR. `links[branch]` is the chain the
-	#    router solved and the manifest recorded, so the waypoints are
-	#    the route the Zone actually has rather than a straight line
-	#    through its walls.
+	# 2. ALONG THE COMMITTED CORRIDOR, AT ITS OWN HEIGHTS.
+	#
+	# `links[branch]` is the chain the router solved, and each piece
+	# records where it is entered and left -- INCLUDING its `y`. The
+	# first version of this projected every waypoint onto the body's
+	# current height, which is how three of five approaches walked off a
+	# ledge: a route that climbs was steered as though it were flat, and
+	# the fall then read as "stopped N metres short".
 	var route := _corridor(out, branch)
-	for step: Vector3 in route:
+	var fell_at := -1
+	for i in route.size():
+		var step: Vector3 = route[i]
 		if box.grow(1.0).has_point(body.global_position):
 			break
-		await _walk(body, Vector3(step.x, body.global_position.y, step.z),
-				box.grow(1.0), LEG_FRAMES)
+		var leg := await _leg(body, step, LEG_FRAMES)
+		if bool(leg["fell"]):
+			fell_at = i
+			break
 
-	# 3. ENTRY. The committed envelope, grown by the tolerance the rest
-	#    of this file uses, and nothing wider.
+	# 3. ENTRY.
 	var entered := box.grow(2.0).has_point(body.global_position)
 	if not entered:
 		var stopped := body.global_position
 		var gap := Vector2(box.position.x + box.size.x / 2.0 - stopped.x,
 				box.position.z + box.size.z / 2.0 - stopped.z).length()
-		body.queue_free()
 		return {"valid": true, "at_mouth": at_mouth, "entered": false,
 				"stayed": false, "content": false, "returned": false,
 				"how": "%s -> %s: crossed %.1f m of junction%s, then "
 					% [junction, branch, crossed,
 						"" if at_mouth else " but never reached the door"]
-					+ "stopped %.1f m short of the room at %v"
-					% [gap, stopped]}
+					+ "%s %.1f m short of the room at %v"
+					% ["FELL off the route at waypoint %d," % fell_at
+						if fell_at >= 0 else "stopped", gap, stopped]}
 
 	# 4. CAN IT REMAIN THERE? A body that enters and is immediately
 	#    somewhere else has not arrived, and the two ways that happens
 	#    are opposite failures: falling through the floor, and a return
-	#    pad that fires on entry and sends the player home. Entering a
-	#    side room must not use up its own return.
+	#    that fires on entry and sends the player home.
 	var start := _anchor_of(out, "zone_start")
 	for _rest in 30:
 		await get_tree().physics_frame
@@ -902,104 +958,145 @@ func _walk_into(out: Dictionary, junction: String, branch: String,
 	var stayed := box.grow(2.0).has_point(body.global_position) \
 			and body.is_on_floor() and not sent_home
 	if not stayed:
-		var left := body.global_position
-		body.queue_free()
 		return {"valid": true, "at_mouth": at_mouth, "entered": true,
 				"stayed": false, "content": false, "returned": false,
 				"how": "%s -> %s entered, then %s (at %v)"
 					% [junction, branch,
-						"the return pad fired on entry and sent it home"
+						"the return fired on entry and sent it home"
 						if sent_home else "could not stay standing in it",
-						left]}
+						body.global_position]}
 
-	# 5. AND REACH WHAT IS IN THERE. The room's own declared arrival is
-	#    where the corridor puts a body down; its middle is where the
-	#    furnishing goes. Walking between the two is the difference
-	#    between standing in the doorway and being in the room.
-	var middle := box.position + box.size / 2.0
-	var to_content := await _walk(body,
-			Vector3(middle.x, body.global_position.y, middle.z), AABB())
-	var content := bool(to_content["arrived"])
+	# THE DEVICE IS WATCHED FROM HERE, before the content leg, so a pad
+	# the body WANDERS onto on its way round the room is distinguishable
+	# from one it is sent to. "Using it intentional" is the §5.7
+	# property; firing on the way past is not firing on entry, and it is
+	# not a deliberate return either.
+	var plug := _plug_of(controller, branch)
+	var fired: Array[String] = []
+	var deliberate := false
+	if plug != null:
+		plug.traversed.connect(func(edge: String, _to: String) -> void:
+				fired.append(edge))
+
+	# 5. AND REACH SOMETHING IN THERE THE PLAYER CAN ACTUALLY USE,
+	#    stopped by the player's OWN interact probe -- the same
+	#    condition the reference round trip uses. The room's geometric
+	#    middle is not content.
+	var target := _an_interactable_in(controller, box)
+	var content := false
+	var holds_nothing := target == null
+	if target != null:
+		var prompted: Array[String] = []
+		var listener := func(text: String) -> void:
+				if text != "":
+					prompted.append(text)
+		body.interact_prompt_changed.connect(listener)
+		await _leg(body, (target as Node3D).global_position,
+				LEG_FRAMES * 2,
+				func() -> bool: return not prompted.is_empty())
+		body.interact_prompt_changed.disconnect(listener)
+		content = not prompted.is_empty()
 
 	# 6. AND BACK, BY THE ROUTE THE ZONE OFFERS. The return DEVICE if the
-	#    room has one -- deliberately, walked to, after the content, and
-	#    exactly once -- and otherwise the corridor in reverse to the
-	#    mouth and into the junction. `returned` is the answer to THAT
-	#    question and not to any earlier one: leaving the side room is
-	#    not getting home, and a version of this that counted it reported
-	#    a successful round trip for a body standing in a corridor it
-	#    could not leave.
-	var pad := _return_of(out, branch)
-	var used_pad := false
-	if pad != Vector3.INF:
-		await _walk(body, Vector3(pad.x, body.global_position.y, pad.z),
-				AABB(), LEG_FRAMES * 2)
+	#    room has one -- deliberately, after the content, stopped by the
+	#    trigger itself -- and otherwise the corridor in reverse.
+	if plug != null and fired.is_empty():
+		deliberate = true
+		await _leg(body, plug.global_position, LEG_FRAMES * 2,
+				func() -> bool: return not fired.is_empty())
 		for _settle in 20:
 			await get_tree().physics_frame
-		used_pad = start != Vector3.INF and Vector2(
-				body.global_position.x - start.x,
-				body.global_position.z - start.z).length() < 6.0
-	if not used_pad:
+		deliberate = not fired.is_empty()
+	if fired.is_empty():
 		var home := route.duplicate()
 		home.reverse()
 		home.append(mouth)
 		for step: Vector3 in home:
 			if from.grow(1.0).has_point(body.global_position):
 				break
-			await _walk(body,
-					Vector3(step.x, body.global_position.y, step.z),
-					from.grow(1.0), LEG_FRAMES)
+			await _leg(body, step, LEG_FRAMES)
 	var by_pad := start != Vector3.INF and Vector2(
 			body.global_position.x - start.x,
 			body.global_position.z - start.z).length() < 6.0
 	var returned := from.grow(2.0).has_point(body.global_position) or by_pad
-	# 7. AND BACK IN WITHOUT BEING THROWN OUT AGAIN. The defect §5.7
-	#    repaired was a return that fired on entry, so the proof it is
-	#    gone is a SECOND entry that sticks: put the body back at the
-	#    room's arrival, let it settle, and it is still in the room.
-	var re_entered := true
-	if used_pad:
-		body.global_position = Vector3(
-				(rooms[branch] as Dictionary).get("arrival",
-						box.position + box.size / 2.0))
-		body.global_position.y += Constants.PLAYER_HEIGHT
-		body.velocity = Vector3.ZERO
-		for _settle in 30:
+	var ended := body.global_position
+
+	# 7. AND BACK IN ON FOOT. The defect §5.7 repaired was a return that
+	#    fired on entry, so the proof it is gone is a SECOND entry that
+	#    sticks -- WALKED, because relocating the body to the arrival
+	#    proves the arrival is standable and nothing about the route.
+	var re_entered := false
+	# ASKED OF A DELIBERATE RETURN. After an accidental one the walk
+	# back in is not measuring §5.7's property, and the legs are not
+	# free: this suite has to stay a bounded run.
+	if returned and (deliberate or plug == null):
+		for step: Vector3 in route:
+			if box.grow(1.0).has_point(body.global_position):
+				break
+			await _leg(body, step, LEG_FRAMES)
+		for _rest in 30:
 			await get_tree().physics_frame
 		re_entered = box.grow(2.0).has_point(body.global_position)
-	var ended := body.global_position
-	body.queue_free()
 	return {"valid": true, "at_mouth": at_mouth, "entered": true,
 			"stayed": true, "content": content, "returned": returned,
-			"used_pad": used_pad, "re_entered": re_entered,
+			"used_pad": not fired.is_empty(), "re_entered": re_entered,
+			"traversals": fired.size(), "holds_nothing": holds_nothing,
+			"deliberate": deliberate,
 			"how": "%s -> %s: crossed %.1f m of junction, %s, entered, "
 				% [junction, branch, crossed,
 					"through the door" if at_mouth
 					else "reached the corridor"]
 				+ "stayed, %s, and %s%s"
-				% ["reached its middle" if content
-					else "could NOT cross it to its middle",
-					("took the return pad home" if used_pad
-					else ("was taken home by a pad it did not choose"
+				% ["reached what it holds" if content
+					else ("holds nothing a player can use" if holds_nothing
+					else "could NOT reach anything it holds"),
+					("took the return device home %s(%d event(s))"
+					% ["deliberately " if deliberate else "by wandering "
+						+ "onto it, ", fired.size()]
+					if not fired.is_empty()
+					else ("was taken home by a device it did not choose"
 					if by_pad else "walked back into the junction"))
 					if returned
 					else "could NOT get back (ended at %v)" % ended,
-					("" if not used_pad else
+					"" if not returned else
 					("; walked back in and stayed" if re_entered
-					else "; walking back in threw it out again"))]}
+					else "; could not walk back in")]}
 
-## Where this room's return device stands, from the committed anchors,
-## or `Vector3.INF` when the Zone gives it none. `AMALGAM_BRIDGE.md`
-## §5.7 -- `room:<rid>:return`, which is NOT `room:<rid>:arrival`.
-func _return_of(out: Dictionary, room: String) -> Vector3:
-	for raw: Variant in (out.get("plugs", []) as Array):
-		if not is_instance_valid(raw as Object):
-			continue
-		var plug: ReturnPlug = raw
-		if str(plug.get_meta("room_id", "")) == room:
-			return plug.global_position if plug.is_inside_tree() \
-					else plug.position
-	return Vector3.INF
+## ONE LEG, AT THE WAYPOINT'S OWN HEIGHT.
+##
+## `_walk` steers in XZ, which is what steering is; what this adds is the
+## route's `y`. A leg is finished when the body is within `ARRIVED`
+## horizontally AND within a storey vertically, and it has FALLEN when
+## the body ends a storey and a half below where the waypoint said the
+## floor was. Reported rather than walked past: a body at the bottom of
+## a pit that keeps being steered at the next waypoint is what produced
+## "stopped 131.6 m short".
+func _leg(body: Player, to: Vector3, frames: int,
+		until := Callable()) -> Dictionary:
+	var was := body.global_position
+	var out := await _walk(body, to, AABB(), frames,
+			until if until.is_valid()
+			else (func() -> bool:
+					var here := body.global_position
+					return Vector2(to.x - here.x,
+							to.z - here.z).length() <= ARRIVED \
+							and absf(here.y - to.y) <= ARRIVED))
+	var dropped := was.y - body.global_position.y
+	return {"arrived": bool(out["arrived"]), "closest": out["closest"],
+			"fell": body.global_position.y < to.y - ARRIVED * 1.5
+					and dropped > ARRIVED}
+
+## The return device this room holds, from the controller's own scene.
+func _plug_of(node: Node, room: String) -> ReturnPlug:
+	for child in node.get_children():
+		if child is ReturnPlug \
+				and str((child as ReturnPlug).get_meta("room_id", "")) \
+					== room:
+			return child
+		var deeper := _plug_of(child, room)
+		if deeper != null:
+			return deeper
+	return null
 
 ## The committed corridor to `room`, as waypoints. Each piece of the
 ## chain the router solved records where it is entered and where it is
@@ -1051,6 +1148,17 @@ func _walk(body: Player, goal: Vector3, stop_inside: AABB,
 		closest = minf(closest, flat.length())
 		if until.is_valid():
 			body.rotation.y = atan2(-flat.x, -flat.y)
+			# A ROUTE THAT CLIMBS IS CLIMBED. `MAX_VERTICAL_STEP` is a
+			# metre, so anything above that is a jump the player has to
+			# make -- and waiting to be STUCK first is how a body ends a
+			# leg at the bottom of the rise it was meant to go up.
+			# Pressed while moving, on the ground, at the rate a player
+			# can actually repeat it.
+			if goal.y - here.y > Constants.MAX_VERTICAL_STEP \
+					and body.is_on_floor() and i % 24 == 0:
+				Input.action_press("jump", 1.0)
+				await get_tree().physics_frame
+				Input.action_release("jump")
 			if (here - last).length() < 0.012:
 				still += 1
 				if still == 24 and body.is_on_floor():
