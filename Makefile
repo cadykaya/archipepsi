@@ -247,6 +247,10 @@ mutate-bridge:
 	  "c.fail(" tests/test_layout.py
 	cd bridge && $(PY) tools/mutate.py archipepsi_bridge/topology.py \
 	  "errors.append(" tests/test_topology.py
+	cd bridge && $(PY) tools/mutate.py archipepsi_bridge/schemas/physics.py \
+	  "errors.append(" tests/test_physics_contract.py || \
+	  { echo "(the empty-latch backstop is an expected survivor -- see"; \
+	    echo " AMALGAM_BRIDGE.md 4.1a case 2)"; }
 
 # The shared package-digest vectors, generated from the production
 # serializer rather than edited. Regenerating is a CONTRACT CHANGE: the

@@ -212,6 +212,37 @@ than a mixed one about the Zone and the ruler.
 
 ## 5q. A DORMANT Zone has no way back in, and that is the bridge's
 
+> **ANSWERED — the bridge half has landed** (bridge lane,
+> `claude/archipepsi-amalgam-bridge`). The first of the two shapes below:
+> **`ZONE_DORMANT`**, carrying `hub.resume_zone_id` and
+> `hub.resume_zone_name`. `ZONE_READY` was not reused — it means "a Zone
+> was generated and never entered", and a Zone with a committed layout,
+> collected keys and Checks outstanding is a different sentence to put
+> on a portal.
+>
+> What arrives with it, because the mode alone was not enough:
+> `hub.portal_enabled` is **true** for `ZONE_DORMANT`, including with
+> Archipelago down — the Zone is on disk and entering it needs no
+> round-trip. That came from getting it wrong first: the new mode went
+> into a second constant while `portal_enabled` kept reading
+> `ZONE_ENTERABLE_MODES`, so the Hub named the Zone and greyed the
+> button out. There is one list now and a test asserts the two facts off
+> the model so they cannot drift. `ZONE_HELD_MODES` ("must not start
+> another") also split from a new `ZONE_OCCUPIED_MODES` ("`active_zone`
+> is non-null") — a dormant Zone is held and unoccupied at once, which
+> one list could not say, and that is why the state had no branch here.
+> `hub.revisitable` lists finished Zones as `{zone_id, display_name}`,
+> uncapped.
+>
+> **The Hub affordance is still yours**, and it is the only thing left on
+> this seam: `docs/AMALGAM_BRIDGE.md` §5.5b has the `hub.gd` arm, the
+> `main.gd` id lookup and the exact serialized `hub` block, including
+> the one open Hub-design question (`revisitable` can hold many Zones
+> and the portal is one object). Progress restoration is NOT in that
+> task — `fa5f056` already did it, and `ZoneReady.progress`, briefly
+> added on the bridge side as a second carrier, has been reverted:
+> `_to_zone` reads the record and the record is the carrier.
+
 **Found while building the two-process reload proof; NOT fixed here.**
 
 Leaving a Zone clears `active_zone_id` and leaves the record `DORMANT`
