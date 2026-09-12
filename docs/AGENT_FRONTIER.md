@@ -149,8 +149,15 @@ gate-only-optional option: optional to finishing a Zone is not optional
 to AP accessibility.
 
 **READY FOR PROD, AND IT MOVES ON ITS OWN: the way back into a Zone.**
-Bridge half done and accepted; the Godot half is two lines and depends
-on nothing else here. `docs/AMALGAM_BRIDGE.md` §5.5b has the exact
+Bridge half done and accepted; the Godot half is a handful of lines and
+depends on nothing else here. **Two findings, one seam**: the portal was
+dark over a dormant Zone (`portal_enabled` read a different constant
+from the one naming the Zone), and the progress did not survive a
+restart — `main.gd` reads the layout off `ZoneReady` but reads keys,
+locks, stations and the resume point out of in-memory dictionaries a new
+process starts empty, so a returning player got the same rooms with
+every key back on the floor. `ZoneReady.progress` now travels beside
+`ZoneReady.manifest`; nothing in Godot reads `record.progress` yet. `docs/AMALGAM_BRIDGE.md` §5.5b has the exact
 serialized `hub` block, the `hub.gd` / `main.gd` change, and the one
 open Hub-design question (`revisitable` can hold many Zones and the
 portal is one object). Take it whenever; nothing in the qualification
