@@ -51,6 +51,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": null,
+   "depart_edge": "e:c001:c002",
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -105,6 +107,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c001:c002",
+   "depart_edge": "e:c002:c003",
    "keys": [
     {
      "key_id": "red",
@@ -185,6 +189,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c002:c003",
+   "depart_edge": "e:c003:c004",
    "keys": [
     {
      "key_id": "blue",
@@ -262,6 +268,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c003:c004",
+   "depart_edge": "e:c004:c005",
    "keys": [
     {
      "key_id": "green",
@@ -328,6 +336,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c004:c005",
+   "depart_edge": "e:c005:c006",
    "keys": [
     {
      "key_id": "gold",
@@ -394,6 +404,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c005:c006",
+   "depart_edge": "e:c006:c007",
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -449,6 +461,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c006:c007",
+   "depart_edge": "e:c007:c008",
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -503,6 +517,8 @@
      "colour": "blue"
     }
    ],
+   "arrive_edge": "e:c007:c008",
+   "depart_edge": "e:c008:c009",
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -566,6 +582,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c008:c009",
+   "depart_edge": "e:c009:c010",
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -627,6 +645,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c009:c010",
+   "depart_edge": "e:c010:c013",
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [],
@@ -673,6 +693,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c009:c011",
+   "depart_edge": "e:c011:c012",
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -741,6 +763,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c011:c012",
+   "depart_edge": null,
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -783,6 +807,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c010:c013",
+   "depart_edge": "e:c013:c016",
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [],
@@ -829,6 +855,8 @@
      "colour": "red"
     }
    ],
+   "arrive_edge": "e:c008:c014",
+   "depart_edge": null,
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -909,6 +937,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c014:c015",
+   "depart_edge": null,
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -957,6 +987,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c013:c016",
+   "depart_edge": "e:c016:c019",
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -1011,6 +1043,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c014:c017",
+   "depart_edge": null,
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -1067,6 +1101,8 @@
      "colour": "gold"
     }
    ],
+   "arrive_edge": "e:c008:c018",
+   "depart_edge": null,
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -1115,6 +1151,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c016:c019",
+   "depart_edge": "e:c019:c022",
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [],
@@ -1161,6 +1199,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c018:c020",
+   "depart_edge": null,
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -1223,6 +1263,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c018:c021",
+   "depart_edge": null,
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -1265,6 +1307,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c019:c022",
+   "depart_edge": "e:c022:c023",
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
@@ -1319,6 +1363,8 @@
      "colour": null
     }
    ],
+   "arrive_edge": "e:c022:c023",
+   "depart_edge": null,
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [

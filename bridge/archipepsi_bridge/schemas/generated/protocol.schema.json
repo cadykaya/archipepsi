@@ -1369,6 +1369,36 @@
             "title": "Doors",
             "type": "array"
           },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
+          },
           "keys": {
             "default": [],
             "items": {
@@ -2179,6 +2209,36 @@
             "title": "Doors",
             "type": "array"
           },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
+          },
           "keys": {
             "default": [],
             "items": {
@@ -2385,6 +2445,8 @@
             "anyOf": [
               {
                 "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
                 "type": "string"
               },
               {
@@ -2398,6 +2460,8 @@
             "anyOf": [
               {
                 "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
                 "type": "string"
               },
               {
@@ -3863,6 +3927,36 @@
             "title": "Doors",
             "type": "array"
           },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
+          },
           "keys": {
             "default": [],
             "items": {
@@ -4907,6 +5001,36 @@
             "title": "Doors",
             "type": "array"
           },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
+          },
           "keys": {
             "default": [],
             "items": {
@@ -5151,6 +5275,36 @@
             "maxItems": 8,
             "title": "Doors",
             "type": "array"
+          },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
           },
           "keys": {
             "default": [],
@@ -6273,6 +6427,36 @@
             "title": "Doors",
             "type": "array"
           },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
+          },
           "keys": {
             "default": [],
             "items": {
@@ -6776,6 +6960,36 @@
             "title": "Doors",
             "type": "array"
           },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
+          },
           "keys": {
             "default": [],
             "items": {
@@ -6982,6 +7196,8 @@
             "anyOf": [
               {
                 "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
                 "type": "string"
               },
               {
@@ -6995,6 +7211,8 @@
             "anyOf": [
               {
                 "maxLength": 24,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$",
                 "type": "string"
               },
               {
@@ -8382,6 +8600,36 @@
             "title": "Doors",
             "type": "array"
           },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
+          },
           "keys": {
             "default": [],
             "items": {
@@ -9426,6 +9674,36 @@
             "title": "Doors",
             "type": "array"
           },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
+          },
           "keys": {
             "default": [],
             "items": {
@@ -9670,6 +9948,36 @@
             "maxItems": 8,
             "title": "Doors",
             "type": "array"
+          },
+          "arrive_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Arrive Edge"
+          },
+          "depart_edge": {
+            "anyOf": [
+              {
+                "maxLength": 48,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_:]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depart Edge"
           },
           "keys": {
             "default": [],

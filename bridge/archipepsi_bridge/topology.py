@@ -107,6 +107,13 @@ class GraphProduct:
     plugs: tuple[PlugAssignment, ...]
     #: What the producer did and why, for a log rather than for logic.
     notes: tuple[str, ...] = ()
+    #: `room_id -> edge_id` for the edge the chain arrives by and the one
+    #: it departs by (`09_ROOM_CONTRACT.md` §11.2). **Pointers into the
+    #: door assignment, not a second topology**: every value names an
+    #: edge that room's own door already carries, and `Chamber`'s
+    #: validator refuses one that does not.
+    arrivals: dict[str, str] = field(default_factory=dict)
+    departures: dict[str, str] = field(default_factory=dict)
 
 
 def _shell_sockets() -> dict[str, tuple[str, ...]]:
@@ -194,6 +201,8 @@ def compose_chain(chambers, shell_sockets=None) -> GraphProduct:
     caps = _shell_sockets() if shell_sockets is None else shell_sockets
     edges: list[TopologyEdge] = []
     doors: dict[str, dict[str, DoorAssignment]] = {c.id: {} for c in chambers}
+    arrivals: dict[str, str] = {}
+    departures: dict[str, str] = {}
     unfit = [c.id for c in chambers
              if not set(SPINE_SOCKETS) <= set(_sockets_for(c, caps))]
     if unfit:
@@ -215,11 +224,14 @@ def compose_chain(chambers, shell_sockets=None) -> GraphProduct:
             socket_id="exit", usage="USED", edge_id=edge.edge_id)
         doors[b.id]["entry"] = DoorAssignment(
             socket_id="entry", usage="USED", edge_id=edge.edge_id)
+        departures[a.id] = edge.edge_id
+        arrivals[b.id] = edge.edge_id
     return GraphProduct(
         edges=tuple(edges),
         doors={c.id: _seal_the_rest(c, doors[c.id], caps) for c in chambers},
         keys={}, plugs=(),
-        notes=("chain: %d rooms, %d edges" % (len(chambers), len(edges)),))
+        notes=("chain: %d rooms, %d edges" % (len(chambers), len(edges)),),
+        arrivals=arrivals, departures=departures)
 
 
 def _side_socket(chamber, spare: tuple[str, ...]) -> str | None:
@@ -555,6 +567,11 @@ def compose_with_branch(chambers, shell_sockets=None) -> GraphProduct:
 
     edges: list[TopologyEdge] = []
     doors: dict[str, dict[str, DoorAssignment]] = {c.id: {} for c in chambers}
+    # §11.2. THE CHAIN through each room, as a pointer into the door
+    # assignment below rather than as a second account of it.
+    arrivals: dict[str, str] = {}
+    departures: dict[str, str] = {}
+    onward: dict[str, list[str]] = {}
     for a_id, b_id in zip(spine, spine[1:]):
         edge = TopologyEdge(
             edge_id=f"e:{a_id}:{b_id}", room_a=a_id, room_b=b_id,
@@ -564,6 +581,8 @@ def compose_with_branch(chambers, shell_sockets=None) -> GraphProduct:
             socket_id="exit", usage="USED", edge_id=edge.edge_id)
         doors[b_id]["entry"] = DoorAssignment(
             socket_id="entry", usage="USED", edge_id=edge.edge_id)
+        departures[a_id] = edge.edge_id
+        arrivals[b_id] = edge.edge_id
 
     plugs: list[PlugAssignment] = []
     keys: dict[str, tuple[ZoneKeySpec, ...]] = {}
@@ -586,6 +605,12 @@ def compose_with_branch(chambers, shell_sockets=None) -> GraphProduct:
             colour=route.lock.colour if route.locked else None)
         doors[destination.id]["entry"] = DoorAssignment(
             socket_id="entry", usage="USED", edge_id=vault.edge_id)
+        # The destination arrives by the vault. The JUNCTION does not
+        # depart by it: a junction on the spine departs by the spine, and
+        # a branch mouth is placed by the engine's own socket table
+        # (§11.4), not by `_exit_offset`.
+        arrivals[destination.id] = vault.edge_id
+        onward.setdefault(route.junction_id, []).append(vault.edge_id)
 
         # The way back. A dead end that can only be left the way you came
         # is a dead end; one that carries a return is a place you chose
@@ -616,11 +641,21 @@ def compose_with_branch(chambers, shell_sockets=None) -> GraphProduct:
         keys[holder] = keys.get(holder, ()) + (
             ZoneKeySpec(key_id=route.lock.key_id, colour=route.lock.colour),)
 
+    # A NESTED junction has no spine to depart by, so its one onward
+    # vault is the chain's continuation through it. With two children
+    # there is no single continuation and the engine's documented
+    # fallback is the honest answer — better an unset field than a
+    # selector that picks one of two arbitrarily.
+    for room_id, out_edges in onward.items():
+        if room_id not in departures and len(out_edges) == 1:
+            departures[room_id] = out_edges[0]
+
     nested = sum(1 for r in routes if r.junction_id in moved)
     return GraphProduct(
         edges=tuple(edges),
         doors={c.id: _seal_the_rest(c, doors[c.id], caps) for c in chambers},
         keys=keys, plugs=tuple(plugs),
+        arrivals=arrivals, departures=departures,
         notes=base.notes + why + (
             "branches: %d off %d junction(s), %d nested, %d locked; "
             "spine %d rooms"
@@ -635,6 +670,8 @@ def apply(zone, product: GraphProduct):
         chambers.append(c.model_copy(update={
             "doors": product.doors.get(c.id, ()),
             "keys": product.keys.get(c.id, ()),
+            "arrive_edge": product.arrivals.get(c.id),
+            "depart_edge": product.departures.get(c.id),
         }))
     return zone.model_copy(update={
         "chambers": tuple(chambers),

@@ -24,12 +24,14 @@ try:  # works standalone and when copied into a package
     from . import constants as C
     from . import mechanics as M
     from .graph import (
-        DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
+        EDGE_ID_CHARSET, DoorAssignment, PlugAssignment, TopologyEdge,
+        ZoneKeySpec)
 except ImportError:  # pragma: no cover
     import constants as C
     import mechanics as M
     from graph import (
-        DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
+        EDGE_ID_CHARSET, DoorAssignment, PlugAssignment, TopologyEdge,
+        ZoneKeySpec)
 
 #: The four joining sockets every procedural room declares, matching
 #: `chamber_builders.procedural_sockets`. An authored shell declares its
@@ -329,9 +331,65 @@ class ChamberBase(Strict):
     #: composing unchanged, by construction rather than by promise.
     doors: tuple[DoorAssignment, ...] = Field(default=(), max_length=8)
 
+    #: Which edge the chain ARRIVES by and which it DEPARTS by.
+    #:
+    #: `09_ROOM_CONTRACT.md` §11.2. `content_instantiator.socket_for_edge`
+    #: reads exactly these two names off the chamber and resolves each
+    #: through `doors` to a socket, so `_entry_offset`/`_exit_offset` use
+    #: the opening the composer assigned rather than the one that happens
+    #: to be called `entry`. The engine's half has shipped; nothing wrote
+    #: these, so every room fell through to the legacy name pair and an
+    #: authored junction would have been entered through the wrong door.
+    #:
+    #: **They name an EDGE, never a socket.** Which socket serves that
+    #: edge is already in `doors`, and saying it twice is how the two
+    #: come to disagree. `_the_chain_names_edges_this_room_carries`
+    #: below is what stops them being a second topology: each must name
+    #: an edge one of this room's own non-`SEALED` doors carries.
+    #:
+    #: Additive and optional, for the third time and the same reason
+    #: `features` and `doors` were: a chamber carrying neither is the
+    #: chamber that shipped before multi-door existed, the engine's
+    #: documented fallback applies, and `schema_version` stays 7.
+    arrive_edge: str | None = Field(default=None, min_length=1,
+                                    max_length=48, pattern=EDGE_ID_CHARSET)
+    depart_edge: str | None = Field(default=None, min_length=1,
+                                    max_length=48, pattern=EDGE_ID_CHARSET)
+
     #: Zone-local keys this room holds. Not Archipelago items: no
     #: location id, never scouted, never sent, gone when the Zone is.
     keys: tuple[ZoneKeySpec, ...] = Field(default=(), max_length=4)
+
+    @model_validator(mode="after")
+    def _the_chain_names_edges_this_room_carries(self):
+        """A selector that names an edge no door of this room serves.
+
+        The engine resolves `arrive_edge` by scanning `doors` for it and
+        returns an empty socket when it finds none — which is the LEGACY
+        FALLBACK, silently. So a selector naming an edge this room does
+        not carry does not fail: it quietly places the room at its
+        default opening, which is the defect this field exists to fix,
+        with a value in it that looks like the fix was applied.
+        """
+        carried = {d.edge_id for d in self.doors
+                   if d.edge_id and d.usage != "SEALED"}
+        for name, edge in (("arrive_edge", self.arrive_edge),
+                           ("depart_edge", self.depart_edge)):
+            if edge is None:
+                continue
+            if edge not in carried:
+                raise ValueError(
+                    f"chamber '{self.id}' names '{edge}' as its {name} "
+                    "and carries no open door onto it; the engine would "
+                    "fall back to the legacy opening and nothing would "
+                    "say so")
+        if self.arrive_edge is not None \
+                and self.arrive_edge == self.depart_edge:
+            raise ValueError(
+                f"chamber '{self.id}' arrives and departs by the same "
+                f"edge '{self.arrive_edge}'; that is one opening asked "
+                "to be both ends of the room")
+        return self
 
     @model_validator(mode="after")
     def _no_socket_serves_twice(self):
@@ -752,6 +810,41 @@ class Zone(Strict):
                     raise ValueError(
                         f"TRAVERSAL_ONLY edge '{e.edge_id}' has no plug; "
                         "nothing would carry the player across it")
+
+        # §11.2: the chain's arrival is the room's INBOUND edge, and
+        # §11.1/§6.5 say a room is the `room_b` of at most one JOINED
+        # edge because the engine keys its route record by room. A
+        # selector pointing the other way would have the engine place
+        # the room by the opening it leaves through.
+        for c in self.chambers:
+            if c.arrive_edge is not None:
+                e = by_id[c.arrive_edge]
+                if e.realization != "JOINED":
+                    # BACKSTOP, unreachable by construction: a selector
+                    # must name an edge one of this room's open doors
+                    # carries, and a door carrying a TRAVERSAL_ONLY edge
+                    # is refused above. Kept because the two rules that
+                    # make it unreachable live in different models.
+                    raise ValueError(
+                        f"chamber '{c.id}' arrives by '{e.edge_id}', "
+                        f"which is {e.realization}; a plug carries no "
+                        "geometry to arrive through")
+                if e.room_b != c.id:
+                    raise ValueError(
+                        f"chamber '{c.id}' names '{e.edge_id}' as its "
+                        f"arrival, but that edge runs {e.room_a} -> "
+                        f"{e.room_b}; the arrival is the inbound edge")
+            if c.depart_edge is not None:
+                e = by_id[c.depart_edge]
+                if e.realization != "JOINED":
+                    raise ValueError(
+                        f"chamber '{c.id}' departs by '{e.edge_id}', "
+                        f"which is {e.realization}")
+                if e.room_a != c.id:
+                    raise ValueError(
+                        f"chamber '{c.id}' names '{e.edge_id}' as its "
+                        f"departure, but that edge runs {e.room_a} -> "
+                        f"{e.room_b}; the departure is the outbound edge")
 
         # Invariant 7: anchors are names the engine can resolve. The
         # bridge checks the FORM and the room id; whether the anchor

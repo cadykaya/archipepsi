@@ -66,8 +66,15 @@ Capability = Literal["ranged_hit", "grapple", "blink", "cross_long_gap"]
 KeyColour = Literal["red", "blue", "gold", "green"]
 
 _ROOM = Field(min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")
-_EDGE = Field(min_length=1, max_length=48, pattern=r"^[a-z0-9_:]+$")
-_KEY = Field(min_length=1, max_length=24, pattern=r"^[a-z0-9_]+$")
+#: The charset every edge id in the contract is held to. Named because
+#: three models and one allowlist all depend on it: `test_epsilon_
+#: vocabulary` permits `edge_id` on the stated ground that it cannot
+#: spell a path, and that ground is this pattern.
+EDGE_ID_CHARSET = r"^[a-z0-9_:]+$"
+_EDGE = Field(min_length=1, max_length=48, pattern=EDGE_ID_CHARSET)
+#: And the charset every key id is held to, named for the same reason.
+KEY_ID_CHARSET = r"^[a-z0-9_]+$"
+_KEY = Field(min_length=1, max_length=24, pattern=KEY_ID_CHARSET)
 _SOCKET = Field(min_length=1, max_length=32, pattern=r"^[a-z0-9_]+$")
 #: An anchor is a NAME, never a coordinate. The composer says which
 #: anchor; the engine says where it is.
@@ -137,8 +144,15 @@ class DoorAssignment(Strict):
 
     socket_id: str = _SOCKET
     usage: DoorUsage
-    edge_id: str | None = Field(default=None, max_length=48)
-    key_id: str | None = Field(default=None, max_length=24)
+    # SAME CHARSET AS EVERY OTHER EDGE ID. It had none, while the
+    # vocabulary allowlist admitted `edge_id` on the stated ground that
+    # it is "charset-constrained to [a-z0-9_:]" — true of
+    # `TopologyEdge` and `PlugAssignment` and not of this one, which is
+    # the field a composer actually fills per room.
+    edge_id: str | None = Field(default=None, min_length=1, max_length=48,
+                                pattern=EDGE_ID_CHARSET)
+    key_id: str | None = Field(default=None, min_length=1, max_length=24,
+                               pattern=KEY_ID_CHARSET)
     #: Presentation only; the engine tints the slab. Never read by logic.
     colour: KeyColour | None = None
 

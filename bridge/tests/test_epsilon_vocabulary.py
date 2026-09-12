@@ -67,7 +67,17 @@ ALLOWED_FREE_TEXT = {
     # no room holds. They resolve to nothing outside the model.
     "edge_id": "which topology edge a door or plug carries",
     "key_id": "which Zone-local key opens a lock",
+    "arrive_edge": "which edge the chain enters this room by",
+    "depart_edge": "which edge the chain leaves this room by",
 }
+
+#: The subset of `ALLOWED_FREE_TEXT` admitted on the CHARSET ground
+#: rather than the prose ground, checked below. The reason those entries
+#: give is stronger than "someone vouched for it" — it is a claim about
+#: the field's own pattern — and a claim nothing reads is how
+#: `DoorAssignment.edge_id` came to carry no pattern at all while the
+#: allowlist said every `edge_id` was constrained to `[a-z0-9_:]`.
+CHARSET_CONSTRAINED = {"edge_id", "key_id", "arrive_edge", "depart_edge"}
 
 #: Words that betray a field which resolves to a file or a program. Any
 #: of these as a WORD in a field name is refused outright -- the whole
@@ -296,3 +306,19 @@ def test_no_player_preference_is_part_of_campaign_truth():
             f"{model.__name__} carries player preferences {sorted(overlap)}; "
             f"preferences belong in user://settings.cfg, never in campaign "
             f"truth")
+
+
+def test_the_identifier_allowlist_states_a_reason_that_is_true():
+    """Four allowlist entries are admitted because their own pattern
+    cannot spell a path. That is a checkable claim, so it is checked —
+    on every model carrying the field, not on the one that suggested
+    the rule."""
+    unconstrained = []
+    for root in EPSILON_ROOTS:
+        for path, name, _annotation, owner in _string_fields(root):
+            if name in CHARSET_CONSTRAINED and not _is_path_proof(owner, name):
+                unconstrained.append(path)
+    assert not unconstrained, (
+        "these fields are allowlisted as charset-constrained identifiers "
+        "and carry no pattern that makes a path unspellable:\n  "
+        + "\n  ".join(sorted(unconstrained)))
