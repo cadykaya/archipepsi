@@ -1,6 +1,6 @@
 """Generate the shared package-digest vectors.
 
-    python3 -m archipepsi_bridge.schemas.physics_vectors
+    make physics-vectors        # or: cd bridge && python3 tools/physics_vectors.py
 
 **Generated, never hand-edited.** Every vector's `canonical` and
 `digest` come from the production path — `physics.canonical_bytes` and
@@ -17,14 +17,19 @@ says whether a mismatch is a construction difference or a hashing one.
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
-try:
-    from . import physics as P
-except ImportError:  # pragma: no cover
-    import physics as P
+# Runnable straight from a checkout, installed or not: the script's own
+# directory is what lands on sys.path, and that is `tools/`.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-OUT = (Path(__file__).resolve().parents[3] / "godot" / "tests"
+from archipepsi_bridge.schemas import physics as P  # noqa: E402
+
+#: A GENERATOR, not a schema. It lives beside `mutate.py` rather than in
+#: `archipepsi_bridge/schemas/` because the packet mirrors that directory
+#: as the binding contract, and build tooling is not part of it.
+OUT = (Path(__file__).resolve().parents[2] / "godot" / "tests"
        / "fixtures" / "physics_digest_vectors.json")
 
 _BASE = {

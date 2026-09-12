@@ -253,7 +253,7 @@ mutate-bridge:
 # engine lane must re-run its side against the new file. See
 # docs/AMALGAM_BRIDGE.md 6.2a.
 physics-vectors:
-	cd bridge && $(PY) -m archipepsi_bridge.schemas.physics_vectors
+	cd bridge && $(PY) tools/physics_vectors.py
 
 # The audit's fixture, regenerated from the engine rather than edited.
 zone-fixture:

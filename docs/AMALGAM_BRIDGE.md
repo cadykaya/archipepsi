@@ -484,7 +484,7 @@ serializer is the same defect one level down.
 **Generated, never hand-edited.** Regenerate with:
 
 ```
-make physics-vectors        # cd bridge && python3 -m archipepsi_bridge.schemas.physics_vectors
+make physics-vectors        # cd bridge && python3 tools/physics_vectors.py
 ```
 
 The generator calls `canonical_bytes` and `package_digest` — no second
