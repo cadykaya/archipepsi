@@ -302,3 +302,145 @@ def test_two_inbound_joined_edges_make_room_keyed_evidence_ambiguous():
     v = layout.validate(doubled, _ok_result(doubled))
     assert not v.accepted
     assert any("key by edge_id" in e for e in v.errors)
+
+
+# --- the walk's inductive step, and four refusals nothing was reading -----
+#
+# Mutation testing found these: neuter the refusal, run the suite, and it
+# stayed green. Every one is reachable and every one was unmeasured. The
+# multi-piece cases matter most — the fixture above puts ONE piece in each
+# chain, so `piece n -> piece n+1`, the step that makes the walk a walk,
+# had never been exercised at all.
+
+def _split(result: dict, eid: str, pieces: int) -> None:
+    """Replace a chain's single piece with `pieces` collinear ones."""
+    j = result["joins"][eid]
+    a, b = j["chain"][0]["entry"], j["chain"][0]["exit"]
+    pts = [[a[k] + (b[k] - a[k]) * i / pieces for k in range(3)]
+           for i in range(pieces + 1)]
+    j["chain"] = [
+        {"kind": "CONNECTOR", "entry": pts[i], "exit": pts[i + 1],
+         "bounds": {"position": [-2.0, 0.0, min(pts[i][2], pts[i + 1][2])],
+                    "size": [4.0, 4.0,
+                             abs(pts[i + 1][2] - pts[i][2]) or 0.1]}}
+        for i in range(pieces)]
+
+
+def test_a_sound_multi_piece_chain_is_accepted():
+    """The control. A walk that refuses every corridor of more than one
+    segment is not a walk, and the real engine emits several."""
+    z = _zone()
+    good = _ok_result(z)
+    for eid in good["joins"]:
+        _split(good, eid, 4)
+    v = layout.validate(z, good)
+    assert v.accepted, v.errors
+
+
+def test_a_break_in_the_middle_of_a_chain_is_refused():
+    """Not the last hop. The fixture's single-piece chains only ever
+    tested `last.exit -> socket_b`; a corridor can come apart anywhere,
+    and a walk that only checks its own ends is not walking."""
+    z = _zone()
+    bad = _ok_result(z)
+    eid = next(iter(bad["joins"]))
+    _split(bad, eid, 4)
+    bad["joins"][eid]["chain"][2]["entry"] = [0.0, 0.0, -500.0]
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("piece 2" in e and "broken between" in e for e in v.errors), (
+        v.errors)
+
+
+def test_a_chain_piece_that_is_not_a_piece_is_refused():
+    z = _zone()
+    bad = _ok_result(z)
+    eid = next(iter(bad["joins"]))
+    _split(bad, eid, 3)
+    bad["joins"][eid]["chain"][1] = "a corridor, honest"
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("piece 1 is not a piece" in e for e in v.errors), v.errors
+
+
+def test_a_socket_that_does_not_lie_on_its_room_is_refused():
+    """The chain stays continuous and the rooms stay put; only the
+    doorway has left the wall it is cut into. Continuity cannot see it —
+    the route is perfectly connected, to nothing."""
+    z = _zone()
+    bad = _ok_result(z)
+    eid = next(iter(bad["joins"]))
+    j = bad["joins"][eid]
+    away = [500.0, 0.0, j["socket_a"][2]]
+    j["socket_a"] = away
+    j["chain"][0]["entry"] = away
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("does not lie on room" in e for e in v.errors), v.errors
+
+
+def test_a_join_reported_for_an_edge_the_zone_does_not_have_is_refused():
+    """Evidence about something that is not in this Zone is evidence the
+    validator cannot check, and unchecked evidence must not ride along
+    into the manifest."""
+    z = _zone()
+    bad = _ok_result(z)
+    bad["joins"]["e:phantom"] = {"socket_a": [0.0, 0.0, 0.0],
+                                 "socket_b": [0.0, 0.0, 0.0], "chain": []}
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("not\na JOINED edge".replace("\n", " ") in e
+               for e in v.errors), v.errors
+
+
+def test_a_layout_that_places_a_room_this_zone_never_declared_is_refused():
+    z = _zone()
+    bad = _ok_result(z)
+    bad["rooms"]["c999"] = {
+        "position": [0.0, 0.0, -5000.0], "yaw": 0.0,
+        "bounds": {"position": [-8.0, 0.0, -5000.0],
+                   "size": [16.0, 5.0, DEPTH]}}
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("unknown room 'c999'" in e for e in v.errors), v.errors
+
+
+def test_a_room_placed_without_a_yaw_is_refused():
+    """A room's facing is not optional. Absent yaw is a room the engine
+    placed and did not orient, and every socket on it is then in an
+    unknown place — see the door-polarity and socket-on-room checks,
+    which read positions this rotation decides."""
+    z = _zone()
+    bad = _ok_result(z)
+    bad["rooms"]["c002"].pop("yaw")
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("reports no yaw" in e for e in v.errors), v.errors
+
+
+def test_a_chain_that_is_not_a_list_is_refused():
+    """`"chain": {...}` is not one piece and `"chain": "corridor"` is
+    not a route. Walking either by iteration would read a dict's keys
+    or a string's characters and call the result continuity."""
+    z = _zone()
+    for shape in ({"kind": "CONNECTOR"}, "corridor", 3):
+        bad = _ok_result(z)
+        eid = next(iter(bad["joins"]))
+        bad["joins"][eid]["chain"] = shape
+        v = layout.validate(z, bad)
+        assert not v.accepted, shape
+        assert any("not a list of pieces" in e for e in v.errors), v.errors
+
+
+def test_a_door_measurement_that_is_not_a_boolean_is_refused():
+    """`"passable"` and `1` and `None`-in-a-list are not measurements.
+    A truthy string would pass an `if measured:` polarity test for a
+    SEALED door, which is the exact case the inverted probe exists for."""
+    z = _zone()
+    ref = next(f"{c.id}/{d.socket_id}" for c in z.chambers for d in c.doors)
+    for measured in ("passable", 1, 0.0, [], {"open": True}):
+        bad = _ok_result(z)
+        bad["apertures"][ref] = measured
+        v = layout.validate(z, bad)
+        assert not v.accepted, measured
+        assert any("not a boolean" in e for e in v.errors), v.errors

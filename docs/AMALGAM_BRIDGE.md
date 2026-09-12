@@ -200,6 +200,55 @@ everything upstream is the real path. **The seam itself is not yet
 crossed by a running engine**, and no test here should be read as
 evidence that it is.
 
+### 4.1a Which refusals has anything ever triggered?
+
+A validator with twenty-two refusals and a green suite says nothing
+about how many of those refusals a test has ever fired. `make
+mutate-bridge` answers it: mute one refusal, run the tests, and if they
+still pass, nothing was reading it.
+
+The first run found **eleven**, and one of them was not in a validator
+at all — deleting the re-entry manifest replay outright, the thing §5.3
+calls where the determinism comes from, passed all 1091 tests, because
+every assertion read the saved record and the save file is identical
+either way. **Assert the message, not the record.**
+
+| Module | Sites | Unmeasured, first run | Now |
+|---|---|---|---|
+| `layout.py` | 22 | 8 — including the chain walk's inductive step, which the single-piece fixture could never reach | 0 |
+| `topology.py` | 4 | 1 — "not reachable at all" had never fired; every test stranded rooms behind a *gate* | 0 |
+| `schemas/physics.py` | 13 | 1 | 1, deliberately — see below |
+| `schemas/transitions.py` | 28 | 22 | 17, and **not this lane's** — see below |
+
+**A survivor is not automatically a missing test.** It is one of three
+things, and saying which is the work:
+
+1. a real gap — write the test that fires it;
+2. unreachable by construction — keep it as a backstop, comment which
+   invariants keep it unreachable, and test *those*. The empty-`must`
+   branch in `check_physics_content` is this: three separate model rules
+   have to hold for it to stay dead, and
+   `test_nothing_load_bearing_reaches_the_empty_latch_backstop` pins all
+   three. It will keep showing up as a survivor, and that is correct;
+3. dead code — delete it.
+
+Never close a survivor by weakening the check.
+
+**Seventeen survivors in `schemas/transitions.py` are left standing on
+purpose.** They are in `start_generation`, `accept_zone`, `abandon_zone`,
+`release_location`, `claim_zone_check`, `buy_shop_stock`,
+`rollback_shop_purchase` and `grant_local_reward` — pre-existing
+campaign transitions, not this lane's, and touching them here would mix
+an audit of someone else's code into an Amalgam slice. The five that
+were this lane's (`rest_zone` ×2, the progress-state guard,
+`complete_zone` ×2) are closed. The finding is real and reproducible:
+
+```
+cd bridge && python3 tools/mutate.py archipepsi_bridge/schemas/transitions.py \
+  "raise ValueError(" tests/test_zone_progress.py tests/test_regressions.py \
+  tests/test_reconnect_races.py tests/test_affordances.py
+```
+
 ### 4.2 Gaps, precisely
 
 1. **The engine does not send `layout_result`.** The intent, the route,

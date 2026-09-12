@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture physics-vectors version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-activity godot-room godot-room-contract godot-movement godot-playtest3a godot-zone-audit zone-shots godot-boot godot-legible godot-integration
+.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture physics-vectors mutate-bridge version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-activity godot-room godot-room-contract godot-movement godot-playtest3a godot-zone-audit zone-shots godot-boot godot-legible godot-integration
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -238,6 +238,15 @@ zone-shots: godot-import
 	@xvfb-run -a -s "-screen 0 1600x1000x24" $(GODOT) --path godot \
 	  --rendering-driver opengl3 -- --zone-shots 2>&1 \
 	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
+# Which refusals has anything ever triggered? Mutes one at a time and
+# reports the survivors. See bridge/tools/mutate.py for what a survivor
+# means -- it is not automatically a missing test.
+mutate-bridge:
+	cd bridge && $(PY) tools/mutate.py archipepsi_bridge/layout.py \
+	  "c.fail(" tests/test_layout.py
+	cd bridge && $(PY) tools/mutate.py archipepsi_bridge/topology.py \
+	  "errors.append(" tests/test_topology.py
 
 # The shared package-digest vectors, generated from the production
 # serializer rather than edited. Regenerating is a CONTRACT CHANGE: the

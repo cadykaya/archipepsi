@@ -584,6 +584,18 @@ def check_physics_content(packages, *, macro_variables=(), local_keys=0,
         # on the strength of the same solution.
         must = {c.latch_id for c in p.latch_conditions}
         if not must:
+            # BACKSTOP, and unreachable today — deliberately kept.
+            # Three separate rules have to hold for it to stay that way:
+            # a promoted index cannot point into an empty tuple, a
+            # required latch must be declared, and the mandatory-route
+            # guard above already refuses the only remaining way to be
+            # load-bearing with nothing declared. Loosen any one and a
+            # package proving nothing arrives here, where
+            # `latched_every_run(set())` would find nothing missing and
+            # accept it. `test_nothing_load_bearing_reaches_the_empty_
+            # latch_backstop` pins all three, so this branch showing up
+            # as unmeasured in a mutation run is the expected result and
+            # not an invitation to write a test that cannot exist.
             errors.append(
                 f"package '{p.package_id}' is load-bearing and declares "
                 "no latch condition; there is no outcome to require")

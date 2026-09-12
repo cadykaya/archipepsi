@@ -69,6 +69,21 @@ question is asked under, and everything — exit, Checks, keys, `R ⊆ E` —
 is asked under it. `BASELINE_CAPABILITIES` counts: `ranged_hit` is Static
 Pulse and needs no AP logic behind it.
 
+**`make mutate-bridge` asks which refusals anything has ever fired.**
+Mute one, run the tests, and a green suite means nothing was reading it.
+First run: eleven unmeasured, including the whole re-entry manifest
+replay (deleting it passed all 1091 tests — every assertion read the
+saved record, and the save file is identical either way) and the chain
+walk's inductive step, which the single-piece fixture could not reach.
+`layout.py` and `topology.py` are now at zero. **Seventeen survivors
+remain in `schemas/transitions.py`, in pre-existing campaign
+transitions** — `start_generation`, `accept_zone`, `abandon_zone`,
+`release_location`, `claim_zone_check`, the shop pair,
+`grant_local_reward` — left standing on purpose because they are not
+this lane's; `docs/AMALGAM_BRIDGE.md` §4.1a has the command. A survivor
+is a real gap, a backstop unreachable by construction, or dead code —
+never something to close by weakening the check.
+
 **The lesson worth keeping.** The first validator skipped every check
 whose input was absent, so a layout with no apertures, no bounds and no
 arrival verdicts was ACCEPTED. Missing evidence is not passing evidence;

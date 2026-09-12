@@ -449,3 +449,25 @@ def test_a_gate_before_a_key_is_caught_too():
     assert not result.ok
     assert any("key-bearing" in e or "R is not a subset" in e
                for e in result.errors), result.errors
+
+
+def test_a_room_no_capability_would_reach_is_named_as_simply_unreachable():
+    """Mutation testing found this one: every reachability test so far
+    stranded rooms behind a GATE, so the branch that says "not reachable
+    at all" had never fired. The two blames are not interchangeable —
+    one says declare the capability in AP logic, the other says the
+    graph is broken — and a validator that only ever reaches the first
+    would tell the engine to fix the wrong thing."""
+    z = _chain8()
+    # One middle edge walkable only backwards. No capability exists that
+    # helps, so the strandedness survives granting every one of them.
+    z = z.model_copy(update={"edges": tuple(
+        e.model_copy(update={"direction": "B_TO_A"})
+        if e.edge_id == "e:c004:c005" else e for e in z.edges)})
+    result = topology.reachability(z)
+    assert not result.ok
+    assert any("not reachable at all" in e for e in result.errors), \
+        result.errors
+    assert not any("does not declare" in e for e in result.errors), (
+        "no gate is involved; blaming AP logic would send the engine "
+        "lane to fix a declaration that is not the problem")

@@ -507,3 +507,41 @@ def test_there_is_one_canonicalization_in_this_language():
     assert "canonical_bytes" in src
     assert "json.dumps" not in src
     assert inspect.getsource(P).count("json.dumps") == 1
+
+
+def test_nothing_load_bearing_reaches_the_empty_latch_backstop():
+    """Why `check_physics_content`'s empty-`must` branch cannot fire.
+
+    A mutation run reports it as unmeasured, correctly: no package can
+    reach it. That is a property of three rules rather than an accident,
+    so the rules are what get asserted. If one of them loosens this test
+    breaks and the backstop becomes live — which is the whole reason it
+    is still there.
+    """
+    setup = P.PhysicsSetup(
+        bodies=[P.BodySpec(body_id="b", mass_kg=10.0, constrained=False)],
+        solver=P.SolverConfig(iterations=8, fixed_step_hz=60.0,
+                              settle_timeout_s=8.0),
+        scene_digest="0123456789abcdef")
+    solution = P.ReferenceSolution(steps=["push"])
+
+    # 1. Promotion cannot point into an empty tuple.
+    with pytest.raises(ValidationError):
+        P.PhysicsPackage(package_id="hollow", vector_latches=(0,))
+
+    # 2. A required latch must be one the package declares.
+    with pytest.raises(ValidationError):
+        P.PhysicsPackage(package_id="hollow", required_latches=("ghost",))
+
+    # 3. Which leaves on_mandatory_route as the only way to be
+    #    load-bearing with nothing declared, and that is refused before
+    #    the backstop, by its own error rather than the backstop's.
+    hollow = P.PhysicsPackage(package_id="hollow", on_mandatory_route=True,
+                              setup=setup, reference_solution=solution)
+    assert hollow.load_bearing
+    errors = P.check_physics_content([hollow])
+    assert errors and all("names no required latch" in e for e in errors), \
+        errors
+    assert not any("no latch condition" in e for e in errors), (
+        "if the backstop is what fires, one of the three rules above "
+        "has loosened and this test should have caught it first")
