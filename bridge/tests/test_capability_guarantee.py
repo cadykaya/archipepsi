@@ -20,6 +20,7 @@ import typing
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from archipepsi_bridge.schemas import constants as C
 from archipepsi_bridge.schemas import echo as E
@@ -355,45 +356,180 @@ def test_owning_nothing_in_the_family_says_so_distinctly():
     assert not q.qualifies and q.reason == "no_provider"
 
 
-def test_a_measured_floor_is_what_makes_qualification_possible(monkeypatch):
-    """And the mechanism works once the engine supplies one — so this is
-    a check that refuses for a reason, not one that refuses everything.
+ACTIVITY_LONG_GAP = M.ACTIVITY_CAPABILITIES["cross_long_gap"]["primitives"]
 
-    The numbers here are FIXTURE, not a claim: they say "if a floor were
-    measured at these points, qualification would read it this way."
-    `MOBILITY_REACH_ENVELOPE` stays empty in the shipped module.
+
+def _primitive_model(primitive: str):
+    """The model class for a primitive, off the union rather than a
+    hand-kept table."""
+    for candidate in typing.get_args(
+            E.ActionComponent.model_fields["primitive"].annotation):
+        literal = typing.get_args(candidate.model_fields["type"].annotation)
+        if literal and literal[0] == primitive:
+            return candidate
+    raise AssertionError(f"no model for primitive {primitive!r}")
+
+
+def _evidence(**over) -> M.CrossingEvidence:
+    """Fixture evidence. The numbers say "if a crossing were measured
+    like this", never "a crossing crosses this far" — the shipped table
+    stays empty."""
+    base = dict(primitive="dash", parameter="force",
+                parameter_min=10.0, parameter_max=14.0,
+                rise_min_m=-1.0, rise_max_m=1.5, reach_m=7.0,
+                setup_digest="0123456789abcdef")
+    base.update(over)
+    return M.CrossingEvidence(**base)
+
+
+def test_a_measured_crossing_is_what_makes_qualification_possible(monkeypatch):
+    """The accepted control. A check that refuses everything is as
+    broken as one that refuses nothing, so the mechanism has to work
+    when evidence actually covers the case."""
+    monkeypatch.setitem(M.CROSSING_EVIDENCE, "dash", (_evidence(),))
+    q = M.qualifies_for_gap("cross_long_gap", _owning_dash(12.0), 6.0,
+                            rise_m=0.5)
+    assert q.qualifies and q.reason == "meets_envelope"
+    assert q.reach_m == 7.0 and q.rise_m == 0.5
+
+
+def test_a_crossing_measured_flat_does_not_certify_a_landing_above_it(
+        monkeypatch):
+    """**The hole.** `rise_m` reached the base-kit comparison and stopped
+    there, so a six-metre gap whose landing sat a hundred metres up was
+    certified by evidence executed on level ground. Identical to the
+    control in every other respect."""
+    monkeypatch.setitem(M.CROSSING_EVIDENCE, "dash", (_evidence(),))
+    flat = M.qualifies_for_gap("cross_long_gap", _owning_dash(12.0), 6.0,
+                               rise_m=0.5)
+    high = M.qualifies_for_gap("cross_long_gap", _owning_dash(12.0), 6.0,
+                               rise_m=100.0)
+    assert flat.qualifies, "the control still passes"
+    assert not high.qualifies
+    assert high.reason == "outside_measured_scope", high
+    assert flat.gap_m == high.gap_m, "one variable changed: the landing"
+
+
+def test_a_drop_below_the_measured_band_is_also_outside_it(monkeypatch):
+    """Scope is a band, not a floor. Falling four metres while crossing
+    is not the crossing that was measured either."""
+    monkeypatch.setitem(M.CROSSING_EVIDENCE, "dash", (_evidence(),))
+    q = M.qualifies_for_gap("cross_long_gap", _owning_dash(12.0), 6.0,
+                            rise_m=-4.0)
+    assert not q.qualifies and q.reason == "outside_measured_scope"
+
+
+def test_a_stronger_provider_is_not_automatically_a_suitable_one(
+        monkeypatch):
+    """**The second hole.** A point measured at force 12 certified force
+    14 and force 20, on the assumption that more impulse can only help.
+    It can also overshoot the landing, clip a ceiling, or carry the body
+    past the ledge it was meant to arrive on. Evidence certifies a
+    stated RANGE and nothing outside it."""
+    monkeypatch.setitem(M.CROSSING_EVIDENCE, "dash", (_evidence(),))
+    inside = M.qualifies_for_gap("cross_long_gap", _owning_dash(14.0), 6.0)
+    beyond = M.qualifies_for_gap("cross_long_gap", _owning_dash(20.0), 6.0)
+    weaker = M.qualifies_for_gap("cross_long_gap", _owning_dash(4.0), 6.0)
+    assert inside.qualifies, "the top of the certified band still counts"
+    assert not beyond.qualifies
+    assert beyond.reason == "outside_measured_scope", beyond
+    assert not weaker.qualifies
+    assert weaker.reason == "outside_measured_scope", weaker
+
+
+def test_measured_but_not_here_is_a_different_answer_from_never_measured(
+        monkeypatch):
+    """"Somebody should measure this" and "this was measured, just not
+    for your case" send the engine lane to different work."""
+    never = M.qualifies_for_gap("cross_long_gap", _owning_dash(12.0), 6.0)
+    assert never.reason == "no_envelope_measured"
+    monkeypatch.setitem(M.CROSSING_EVIDENCE, "dash", (_evidence(),))
+    elsewhere = M.qualifies_for_gap("cross_long_gap", _owning_dash(20.0),
+                                    6.0)
+    assert elsewhere.reason == "outside_measured_scope"
+
+
+def test_a_provider_this_lane_cannot_qualify_says_so(monkeypatch):
+    """`glide` satisfies `cross_long_gap` by identity and carries a fall
+    -speed fraction; `hover` carries seconds. Neither is a thing this
+    lane knows how to turn into metres, and a `force`-or-`range` shrug
+    reported them as "no envelope measured" — which reads as work for
+    the engine lane when the truth is that nobody has said what
+    measuring them would mean."""
+    q = M.qualifies_for_gap("cross_long_gap", _owning("glide"), 6.0)
+    assert not q.qualifies
+    assert q.reason == "provider_not_qualifiable", q
+
+    # And the table agrees for every member of the family that carries
+    # neither of the two parameters qualification reads — `hover` needs
+    # a resource link to fold at all, so it is asserted here rather than
+    # built.
+    for primitive in ACTIVITY_LONG_GAP:
+        model = _primitive_model(primitive)
+        readable = {"force", "range"} & set(model.model_fields)
+        assert bool(readable) == (primitive in M.QUALIFIABLE_PARAMETER), (
+            f"{primitive} carries {sorted(readable) or 'neither'} and "
+            f"{'is' if primitive in M.QUALIFIABLE_PARAMETER else 'is not'} "
+            "listed as qualifiable")
+
+
+def test_evidence_names_the_parameter_it_certifies():
+    """Evidence that certified `force` while qualification read `range`
+    would be two lanes describing different numbers with one word."""
+    for primitive, field in M.QUALIFIABLE_PARAMETER.items():
+        assert field in ("force", "range")
+        model = _primitive_model(primitive)
+        assert field in model.model_fields, (
+            f"{primitive} is qualified on '{field}' and has no such field")
+
+
+def test_evidence_is_bound_to_the_setup_that_produced_it():
+    """A controller change must invalidate a measurement rather than
+    silently keep it, which is why `setup_digest` is required and shaped
+    like `PhysicsSetup.scene_digest`."""
+    with pytest.raises(ValidationError):
+        M.CrossingEvidence(primitive="dash", parameter="force",
+                           parameter_min=10.0, parameter_max=14.0,
+                           rise_min_m=0.0, rise_max_m=1.0, reach_m=7.0,
+                           setup_digest="not-a-digest")
+
+
+def test_the_evidence_table_ships_empty_and_that_is_the_honest_state():
+    """A gate with no measured crossing behind it is a route nobody has
+    shown the player can make. Filling this is the engine lane's;
+    inventing a number here would be this lane claiming a physical fact
+    it cannot measure."""
+    assert M.CROSSING_EVIDENCE == {}
+
+
+def test_the_dash_parameter_is_a_speed_and_the_schema_says_so():
+    """The trap the whole split exists to avoid: reading `force >= 8.0`
+    as "eight metres". `Dash.force` is a velocity impulse, and
+    `echo_runtime.gd::_dash` spends it as `player.velocity += dir *
+    force`.
+
+    An earlier version of this test asserted
+    `"m/s" in (field.description or "") or True`, which cannot fail —
+    a vacuous guard inside the test written to stop vacuous guarantees.
+    This reads the bounds instead, which are speeds and are checked
+    against the engine source that spends them.
     """
-    monkeypatch.setitem(M.MOBILITY_REACH_ENVELOPE, "dash",
-                        ((4.0, 3.0), (12.0, 7.0)))
-    weak = M.qualifies_for_gap("cross_long_gap", _owning_dash(4.0), 6.0)
-    assert not weak.qualifies and weak.reason == "below_envelope"
-    assert weak.reach_m == 3.0
-
-    strong = M.qualifies_for_gap("cross_long_gap", _owning_dash(14.0), 6.0)
-    assert strong.qualifies and strong.reason == "meets_envelope"
-    assert strong.reach_m == 7.0, "the floor at or below the value, not above"
-
-
-def test_the_envelope_ships_empty_and_that_is_the_honest_state():
-    """A gate with no measured floor behind it is a route nobody has
-    shown the player can cross. Populating this table is the engine
-    lane's, and inventing a number here would be this lane claiming a
-    physical fact it cannot measure."""
-    assert M.MOBILITY_REACH_ENVELOPE == {}
-
-
-def test_the_dash_parameter_is_not_a_distance():
-    """The trap this whole split exists to avoid. `Dash.force` is a
-    velocity impulse in m/s — `echo_runtime.gd::_dash` spends it as
-    `player.velocity += dir * force` along camera-forward, so it adds to
-    whatever the player was already doing. Reading 8.0 as "eight metres"
-    would have been a distance guarantee manufactured from a number that
-    is not a distance."""
-    assert M.MOBILITY_PARAMETER_UNITS["dash"] == "m/s"
     field = E.Dash.model_fields["force"]
-    assert "m/s" in (field.description or "") or True
     lo = next(m.ge for m in field.metadata if getattr(m, "ge", None))
     hi = next(m.le for m in field.metadata if getattr(m, "le", None))
     assert (lo, hi) == (4, 20), (
-        "the bounds are speeds; if these become metres the envelope "
-        "work above changes shape and this test should say so")
+        "these bounds are m/s. If they ever become metres the whole "
+        "envelope contract changes shape and this test must say so")
+    # A dash of 4–20 METRES would be inside or beyond the base kit's
+    # own reach in a way that makes the envelope pointless; as speeds
+    # they are not comparable to it at all, which is the point.
+    assert C.max_safe_gap(0.0) < lo, (
+        "if the bounds were distances, even the weakest dash would "
+        "out-reach the base kit and no measurement would be needed")
+    runtime = (Path(__file__).resolve().parents[2] / "godot" / "scripts"
+               / "gameplay" / "echo_runtime.gd").read_text(encoding="utf-8")
+    assert "player.velocity += dir * float(prim[\"force\"])" in runtime, (
+        "the engine no longer spends `force` as a velocity impulse; the "
+        "unit claim in QUALIFIABLE_PARAMETER and the envelope contract "
+        "need re-reading against whatever it does now")
+    assert M.MOBILITY_PARAMETER_UNITS["dash"] == "m/s"

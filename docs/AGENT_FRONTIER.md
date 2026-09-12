@@ -148,6 +148,14 @@ hours later. And hidden Checks are **not** exempt under the
 gate-only-optional option: optional to finishing a Zone is not optional
 to AP accessibility.
 
+**READY FOR PROD, AND IT MOVES ON ITS OWN: the way back into a Zone.**
+Bridge half done and accepted; the Godot half is two lines and depends
+on nothing else here. `docs/AMALGAM_BRIDGE.md` §5.5b has the exact
+serialized `hub` block, the `hub.gd` / `main.gd` change, and the one
+open Hub-design question (`revisitable` can hold many Zones and the
+portal is one object). Take it whenever; nothing in the qualification
+work below blocks it or is blocked by it.
+
 **PROVIDER QUALIFICATION IS SEPARATE FROM IDENTITY, and now
 implemented.** `owned_capabilities` said `cross_long_gap` for a 4 m/s
 dash and a 20 m/s dash alike, so a six-metre route was proved by a
@@ -156,14 +164,36 @@ provider parameters against the route's requirement in metres;
 `max_safe_gap(rise)` is the base kit's own reach, so a crossing inside
 it is not a gate at all. **No envelope went into the `stats` Boolean** —
 `stats` holds stat NAMES, and that branch is the identity question.
-`MOBILITY_REACH_ENVELOPE` ships EMPTY and nothing qualifies without it:
+`CROSSING_EVIDENCE` ships EMPTY and nothing qualifies without it:
 `Dash.force` is a velocity impulse in m/s that `_dash` ADDS to current
 velocity along camera-forward, so no closed form exists here and the
-measured floor is the engine lane's, like `scene_digest`. Design 1
-§13.1 calls `DASH_IMPULSE` a distance in metres while the schema carries
-m/s — a divergence someone has to reconcile.
-`docs/AP_CAPABILITY_LOGIC.md` §8b has the table shape for Prod.
-**AP-relevant gates without a matching guarantee stay refused.**
+measurement is the engine lane's, like `scene_digest`.
+
+**Evidence states what it covers and extrapolates nothing.** A first
+draft stored `(parameter, reach)` points and read the largest at or
+below the provider's value, so force 12 silently certified force 20 —
+stronger is not automatically suitable, it can overshoot the landing.
+And reach alone certified a six-metre gap landing a hundred metres up,
+because `rise_m` reached the base-kit comparison and never the
+provider's evidence. `CrossingEvidence` now names a certified parameter
+band, an executed rise band and the `setup_digest` that produced it;
+outside either band is `outside_measured_scope`, a different answer from
+`no_envelope_measured`. Providers are scoped by name
+(`QUALIFIABLE_PARAMETER`), so `glide` and `hover` report
+`provider_not_qualifiable` rather than pretending to be unmeasured.
+
+**The boundary, plainly: `qualifies_for_gap` has TEST CALLERS ONLY.**
+What refuses an undeclared gate today is `topology.reachability`, on the
+Archipelago side. The production consumer will be `layout.validate` —
+the only place the bridge holds metres, since a gated TRAVERSAL_ONLY
+edge's plug anchors give a gap and a rise once the engine returns
+`layout_result`. AP obtainability and physical suitability are separate
+obligations and neither substitutes for the other.
+`docs/AP_CAPABILITY_LOGIC.md` §8b has the evidence shape to agree with
+Prod, §8c the boundary. Design 1 §13.1 calls `DASH_IMPULSE` a distance
+in metres while the schema carries m/s — a divergence someone has to
+reconcile. **AP-relevant gates without a matching guarantee stay
+refused.**
 
 **Capability gates are searched, not sampled.** A previous guard removed
 one gate edge at a time with every other gate left passable, so two

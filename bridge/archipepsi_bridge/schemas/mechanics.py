@@ -409,31 +409,96 @@ MOBILITY_PARAMETER_UNITS: dict[str, str] = {
     "grapple_pull_target": "m",
 }
 
-#: Measured horizontal reach, in metres, guaranteed by a provider at a
-#: given parameter value. **Engine-owned, and empty until measured.**
+#: Which resolved parameter each primitive is qualified on, BY NAME.
+#:
+#: Explicit rather than a `getattr(force) or getattr(range)` fallback.
+#: `Glide` carries a fall-speed fraction and `Hover` carries a duration
+#: in seconds; a lookup that shrugged at both would report them as "no
+#: envelope measured", which reads as "somebody should measure this"
+#: when the truth is "this lane does not know what measuring it would
+#: even mean". Those are different answers and a player stranded by the
+#: second one is stranded differently.
+QUALIFIABLE_PARAMETER: dict[str, str] = {
+    "dash": "force",
+    "air_dash": "force",
+    "double_jump": "force",
+    "wall_kick": "force",
+    "blink": "range",
+    "grapple_to_surface": "range",
+    "grapple_swing": "range",
+}
+
+
+class CrossingEvidence(Strict):
+    """One measured crossing, and EXACTLY what it certifies.
+
+    **A measurement is not a trend.** The first version of this held
+    `(parameter, reach)` points and read "the largest point at or below
+    the provider's value", so a crossing measured at force 12 silently
+    certified force 14 and force 20. Stronger is not automatically
+    suitable: a bigger impulse can overshoot the landing, clip a ceiling,
+    or carry the body past a ledge it was meant to arrive on. Whatever a
+    measurement covers, it says so here; nothing is extrapolated.
+
+    **And a crossing has conditions.** Reach alone certified a 6 m gap
+    whose landing was a hundred metres above the takeoff, because the
+    rise only ever reached the base-kit comparison. Evidence names the
+    rise band it was executed at, and anything outside that band is
+    outside its scope rather than covered by it.
+    """
+
+    primitive: str = Field(max_length=32)
+    #: Which parameter the ranges below are about — must match
+    #: `QUALIFIABLE_PARAMETER[primitive]`, so evidence cannot certify a
+    #: field qualification never reads.
+    parameter: str = Field(max_length=32)
+    parameter_min: float
+    parameter_max: float
+    #: The landing-height band, in metres relative to takeoff. Negative
+    #: is a drop.
+    rise_min_m: float
+    rise_max_m: float
+    #: Horizontal metres the crossing covered, at EVERY point in both
+    #: bands above. A floor, not a best case.
+    reach_m: float = Field(gt=0)
+    #: The controller and scene it was measured against — engine-owned
+    #: and opaque here, exactly like `PhysicsSetup.scene_digest`. The
+    #: bridge never re-derives a physical fact; it records which one was
+    #: measured, so a changed controller invalidates the evidence
+    #: instead of silently keeping it.
+    setup_digest: str = Field(min_length=16, max_length=16,
+                              pattern=r"^[0-9a-f]{16}$")
+
+    def covers(self, value: float, rise_m: float) -> bool:
+        return (self.parameter_min - 1e-9 <= value <= self.parameter_max + 1e-9
+                and self.rise_min_m - 1e-9 <= rise_m
+                <= self.rise_max_m + 1e-9)
+
+
+#: Measured crossings per primitive. **Engine-owned, and empty.**
 #:
 #: The pattern is §29.3.2's, which already solved this for `manipulate`:
 #: a mandatory-route envelope, content authored against the MINIMUM, and
 #: a reference solution replayed at exactly that minimum so anything
-#: qualifying can solve it. The equivalent here is a measured floor —
-#: "a `dash` at force F carries a standing player at least D metres
-#: under the worst legal loadout" — and only the engine can produce it,
-#: for the same reason it owns `scene_digest`: the bridge has no body,
-#: no controller and no physics frame.
+#: qualifying can solve it. Only the engine can produce the equivalent
+#: here, for the same reason it owns `scene_digest`: the bridge has no
+#: body, no controller and no physics frame.
 #:
-#: Until an entry exists, NOTHING QUALIFIES. That is the honest state,
-#: not a placeholder: a gate with no measured floor behind it is a route
-#: nobody has shown the player can cross.
-MOBILITY_REACH_ENVELOPE: dict[str, tuple[tuple[float, float], ...]] = {}
+#: Until an entry covers a provider's parameter AND the rise being
+#: asked for, NOTHING QUALIFIES. That is the honest state rather than a
+#: placeholder: a gate with no measured crossing behind it is a route
+#: nobody has shown the player can make.
+CROSSING_EVIDENCE: dict[str, tuple[CrossingEvidence, ...]] = {}
 
 
 class ProviderQualification(Strict):
-    """Can THIS provider make THIS crossing?
+    """Can THIS provider make THIS crossing, under THESE conditions?
 
     Separate from `CapabilityGuarantee`, which asks whether the player
-    can get a capability at all. Both have to hold: a gate needs a
-    capability the generator can prove is obtainable AND a provider that
-    actually spans the gap.
+    can get a capability at all. Both have to hold, and they are
+    different obligations: Archipelago proves the capability is
+    OBTAINABLE, a measured crossing proves the provider is SUITABLE.
+    Neither substitutes for the other.
     """
 
     capability: str = Field(max_length=32)
@@ -442,84 +507,99 @@ class ProviderQualification(Strict):
         # The base kit already covers it; no provider is needed and the
         # crossing is not a gate at all.
         "within_base_kit",
-        # A measured envelope exists and this provider's resolved
-        # parameter meets it.
+        # Evidence covers this provider's parameter and this rise, and
+        # its measured reach spans the gap.
         "meets_envelope",
-        # A measured envelope exists and it does not.
+        # Same, and it does not.
         "below_envelope",
         # The campaign owns nothing in the family.
         "no_provider",
-        # The family is owned and no measured floor exists, so no claim
-        # about crossing can be made. See `MOBILITY_REACH_ENVELOPE`.
+        # The family is owned; nothing has been measured for it at all.
         "no_envelope_measured",
+        # Measurements exist and none covers this parameter value or
+        # this rise. A different answer from the one above: something
+        # was measured, just not this.
+        "outside_measured_scope",
+        # The family member carries no parameter qualification reads —
+        # glide, hover. Not a gap in the measurements; a gap in what
+        # this lane knows how to ask for.
+        "provider_not_qualifiable",
     ]
     #: The gap asked for and the reach proved, both metres, when known.
     gap_m: float | None = None
     reach_m: float | None = None
-
-
-def _reach_for(primitive: str, value: float) -> float | None:
-    """Measured metres for this primitive at this parameter, or None."""
-    table = MOBILITY_REACH_ENVELOPE.get(primitive)
-    if not table:
-        return None
-    # Largest measured floor at or below the provider's value: a measured
-    # point is a guarantee for that value and anything above it only if
-    # the table says so, so interpolation is not invented here either.
-    best: float | None = None
-    for at, reach in sorted(table):
-        if value + 1e-9 >= at:
-            best = reach
-    return best
+    rise_m: float | None = None
 
 
 def qualifies_for_gap(capability: str, mechanics, gap_m: float,
                       rise_m: float = 0.0) -> ProviderQualification:
-    """Does anything the campaign owns actually cross `gap_m`?
+    """Does anything the campaign owns actually make this crossing?
 
-    `gap_m` is the crossing the route needs, in metres. The base kit's
-    own reach is `C.max_safe_gap(rise_m)` — derived from the same
-    constants the engine generates its own copy from — so a gap inside
-    that needs no provider and is not a gate.
+    **A TESTED HELPER, NOT YET WIRED.** Nothing in production calls it —
+    see `AP_CAPABILITY_LOGIC.md` §8c for the consumer it is waiting on
+    and why that consumer is `layout.validate` rather than generation.
+    What refuses an undeclared gate today is still
+    `topology.reachability`, on the Archipelago side of the question.
+
+    `gap_m` is the crossing the route needs and `rise_m` its landing
+    height relative to takeoff, both metres. The base kit's own reach is
+    `C.max_safe_gap(rise_m)` — derived from the same constants the
+    engine generates its copy from — so a gap inside that needs no
+    provider and is not a gate.
     """
     base = C.max_safe_gap(rise_m)
     if gap_m <= base:
         return ProviderQualification(
             capability=capability, qualifies=True,
-            reason="within_base_kit", gap_m=gap_m, reach_m=base)
+            reason="within_base_kit", gap_m=gap_m, reach_m=base,
+            rise_m=rise_m)
 
     wanted = set(ACTIVITY_CAPABILITIES.get(capability, {})
                  .get("primitives", ()))
-    best_reach: float | None = None
+    best: float | None = None
     saw_provider = False
+    saw_qualifiable = False
+    saw_measurement = False
     for owned in mechanics.owned:
         primitive = getattr(owned.component, "primitive", None)
         if primitive is None or primitive.type not in wanted:
             continue
         saw_provider = True
-        # The RESOLVED parameter off this provider, not a constant and
-        # not the primitive's name.
-        value = getattr(primitive, "force", None)
-        if value is None:
-            value = getattr(primitive, "range", None)
+        field = QUALIFIABLE_PARAMETER.get(primitive.type)
+        if field is None:
+            continue
+        value = getattr(primitive, field, None)
         if value is None:
             continue
-        reach = _reach_for(primitive.type, float(value))
-        if reach is not None and (best_reach is None or reach > best_reach):
-            best_reach = reach
+        saw_qualifiable = True
+        for evidence in CROSSING_EVIDENCE.get(primitive.type, ()):
+            saw_measurement = True
+            # Covered means covered: the parameter inside the certified
+            # band AND the rise inside the executed band. Neither is
+            # extrapolated from a neighbouring measurement.
+            if not evidence.covers(float(value), rise_m):
+                continue
+            if best is None or evidence.reach_m > best:
+                best = evidence.reach_m
 
     if not saw_provider:
         return ProviderQualification(
             capability=capability, qualifies=False, reason="no_provider",
-            gap_m=gap_m, reach_m=base)
-    if best_reach is None:
+            gap_m=gap_m, reach_m=base, rise_m=rise_m)
+    if not saw_qualifiable:
         return ProviderQualification(
             capability=capability, qualifies=False,
-            reason="no_envelope_measured", gap_m=gap_m)
+            reason="provider_not_qualifiable", gap_m=gap_m, rise_m=rise_m)
+    if best is None:
+        return ProviderQualification(
+            capability=capability, qualifies=False,
+            reason=("outside_measured_scope" if saw_measurement
+                    else "no_envelope_measured"),
+            gap_m=gap_m, rise_m=rise_m)
     return ProviderQualification(
-        capability=capability, qualifies=best_reach >= gap_m,
-        reason="meets_envelope" if best_reach >= gap_m else "below_envelope",
-        gap_m=gap_m, reach_m=best_reach)
+        capability=capability, qualifies=best >= gap_m,
+        reason="meets_envelope" if best >= gap_m else "below_envelope",
+        gap_m=gap_m, reach_m=best, rise_m=rise_m)
 
 
 class CapabilityGuarantee(Strict):

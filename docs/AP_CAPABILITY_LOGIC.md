@@ -204,7 +204,7 @@ it is wrong.
 now; B1 (the Forge) needs a system that does not exist. B2 first, B1 as
 the eventual home, is coherent.
 
-## 8. Provider qualification — done, except the physics
+## 8. Provider qualification — a tested helper, waiting on two things
 
 **Identity is not qualification**, and §29.3.1 already drew that line for
 `manipulate`: membership answers *"is this a manipulation Ability"*,
@@ -227,21 +227,54 @@ What landed instead (`schemas/mechanics.py`):
 - `qualifies_for_gap(capability, mechanics, gap_m, rise_m)` is the new,
   separate question. It reads **resolved provider parameters** off the
   owned components and compares them against **the route's actual
-  requirement** in metres.
+  requirement** in metres, at the landing height asked for.
 - The base kit's own reach is `C.max_safe_gap(rise)` — derived from the
   same constants the engine generates its copy from — so a crossing
   inside it needs no provider and is not a gate at all
   (`within_base_kit`).
-- `MOBILITY_REACH_ENVELOPE` is the measured floor per primitive, **and
-  it ships empty**. With no entry, nothing qualifies, and the reason
-  reported is `no_envelope_measured` — distinct from `no_provider`,
-  because "the campaign owns no dash" and "nobody has measured what a
-  dash crosses" are different faults.
+- `CROSSING_EVIDENCE` holds measured crossings per primitive, **and it
+  ships empty**. With nothing covering a case, nothing qualifies.
 
-### 8a. The number this lane must not invent
+### 8a. What a measurement certifies, and what it does not
+
+Two corrections to the first draft of this contract, both found by
+instantiating it rather than reading it:
+
+**A measurement is not a trend.** The first version stored
+`(parameter, reach)` points and read "the largest point at or below the
+provider's value", so a crossing measured at force 12 silently certified
+force 14 and force 20. Stronger is not automatically suitable — a bigger
+impulse can overshoot the landing, clip a ceiling, or carry the body
+past the ledge it was meant to arrive on. `CrossingEvidence` states a
+`parameter_min`/`parameter_max` band and certifies nothing outside it.
+
+**A crossing has conditions.** Reach alone certified a six-metre gap
+whose landing sat a hundred metres above the takeoff, because `rise_m`
+only ever reached the base-kit comparison and never the provider's
+evidence. Evidence now names the `rise_min_m`/`rise_max_m` band it was
+executed at, and anything outside is `outside_measured_scope` — a
+distinct answer from `no_envelope_measured`, because "measure this" and
+"this was measured, just not for your case" send the engine lane to
+different work.
+
+**Providers are scoped explicitly.** `QUALIFIABLE_PARAMETER` names which
+field each primitive is qualified on. A `getattr(force) or
+getattr(range)` fallback reported `glide` (a fall-speed fraction) and
+`hover` (seconds) as "no envelope measured", which reads as work for the
+engine lane when the truth is that nobody has said what measuring them
+would mean. They report `provider_not_qualifiable` instead.
+
+**Evidence is bound to what produced it.** `setup_digest` is required
+and shaped exactly like `PhysicsSetup.scene_digest`, so a changed
+controller invalidates a measurement rather than silently keeping it.
+
+### 8b. For the engine lane — the shape to fill
+
+The evidence is engine-owned for the same reason `scene_digest` is: the
+bridge has no body, no controller and no physics frame.
 
 `Dash.force` is documented in `echo.py` as an **instantaneous velocity
-change in m/s**, bounded 4–20. `echo_runtime.gd::_dash` spends it as:
+change in m/s**, bounded 4–20, and `echo_runtime.gd::_dash` spends it as:
 
 ```gdscript
 var dir := -player.camera.global_transform.basis.z
@@ -257,40 +290,69 @@ airborne. **There is no closed form to write in the bridge**, and
 reading `force >= 8.0` as "eight metres" would be a distance guarantee
 manufactured from a quantity that is not a distance.
 
+What is needed is a **measured crossing**, stated as what it covers:
+
+```python
+CROSSING_EVIDENCE["dash"] = (
+    CrossingEvidence(
+        primitive="dash", parameter="force",
+        parameter_min=10.0, parameter_max=14.0,   # certified band
+        rise_min_m=-1.0, rise_max_m=1.5,          # executed band
+        reach_m=6.4,                              # FLOOR across both
+        setup_digest="…"),                        # controller + scene
+)
+```
+
+`reach_m` is a floor across **every** point in both bands, not a best
+case — that is what makes it usable as §29.3.2's minimum, with content
+authored against it and a reference crossing replayed at exactly that
+minimum so anything qualifying can make it.
+
+**Agree the shape before measuring.** If a band is the wrong unit of
+evidence — if the honest answer is one row per exact configuration, or
+if rise is the wrong second axis and something else (takeoff speed,
+ceiling clearance) matters more — say so and this model changes before
+anyone spends time in the engine. It is a schema, not a decision
+already taken.
+
 **A design divergence to reconcile, which is not this lane's to settle.**
 Design 1 §13.1 lists `DASH_IMPULSE` as *"distance in metres"* and
 describes it as repositioning the player a fixed distance. The
 implemented `Dash` carries a velocity in m/s. Those are different
 quantities, and whichever is intended, one of the two needs to change.
 
-### 8b. For the engine lane
+### 8c. The integration boundary, stated plainly
 
-The envelope is engine-owned for the same reason `scene_digest` is: the
-bridge has no body, no controller and no physics frame. What is needed
-is a **measured floor**, not a derivation:
+**`qualifies_for_gap` has test callers only.** Nothing in production
+calls it, and what refuses an undeclared gate today is still
+`topology.reachability`, on the Archipelago side. Saying otherwise would
+put this in the same class as the checks this project keeps
+cataloguing — correct, and never handed the case that fails it.
 
-> For each mobility primitive, what is the **guaranteed minimum**
-> horizontal distance it carries a player at a given parameter value,
-> under the worst legal conditions — standing start, level camera, the
-> same pessimistic `speed_mult` / `gravity_mult` defaults `jump_reach`
-> already uses?
+**The two obligations are separate and neither substitutes for the
+other:**
 
-Shape it to fill directly:
+| | Question | Where it is answered | State |
+|---|---|---|---|
+| **AP obtainability** | can a player who reaches this location have got the capability? | `topology.reachability`, from the §4a contract | enforced, by refusal (§6) |
+| **Physical suitability** | does the provider they have actually make this crossing? | `layout.validate` | **helper written, not wired** |
 
-```python
-MOBILITY_REACH_ENVELOPE["dash"] = ((4.0, 2.9), (12.0, 6.4), (20.0, 9.1))
-#                                   ^ m/s      ^ metres, measured floor
-```
+**The consumer is `layout.validate`, and the reason is metres.** A
+capability gate lives on a `TopologyEdge`, and the bridge has no
+distances until the engine returns `layout_result`. At that point it
+does: a gated `TRAVERSAL_ONLY` edge is reached by a plug, and the layout
+already carries `anchors[source_anchor]` and `anchors[destination]` —
+two points, so a gap and a rise, in metres, already validated as finite
+and in-bounds. Generation cannot ask the question because the rooms are
+not placed yet; validation can, and it is already the place a Zone is
+refused for physical evidence it does not carry.
 
-A step table of measured points, read as "at or above this parameter,
-at least this reach". No interpolation is invented between points; the
-largest measured point at or below the provider's value is what counts.
-
-Then §29.3.2's pattern completes itself: content is authored against the
-minimum, a reference crossing is replayed at exactly that minimum, and
-anything qualifying can make it. Until the table has entries,
-`qualifies_for_gap` refuses and says why — which is the honest state,
-and is what keeps an AP-relevant gate refused while this proceeds.
+**It is not wired yet on purpose.** With `CROSSING_EVIDENCE` empty,
+wiring it would refuse every gated Zone with `no_envelope_measured` —
+true, but indistinguishable at the seam from a Zone that is genuinely
+unsound, and composition emits no gates today anyway. The wiring lands
+with the first evidence entry, and it lands as a `c.fail` beside the
+others, with the qualification's own `reason` in the sentence.
 
 ---
 
@@ -302,5 +364,6 @@ refusing an AP-relevant gate with no matching guarantee,
 emits no gates — so the restriction costs nothing today and removes no
 option tomorrow.
 
-On the qualification side the seam is open and waiting on one measured
-table from the engine lane.
+On the qualification side: the model is tested and the seam is named.
+It needs the evidence shape agreed (§8b) and then one measured row
+before `layout.validate` starts asking.
