@@ -889,3 +889,237 @@ def test_a_selector_can_never_point_at_a_plug():
     room["arrive_edge"] = plug.edge_id
     with pytest.raises(ValueError, match="carries no open door onto it"):
         Zone.model_validate(wire)
+
+
+# --- a destination needs no departure ------------------------------------
+#
+# `shell_bay_terminus` (batch 044) declares `entry`, `branch_east` and
+# `branch_west`, and no `exit`; its `shape_tags` are "destination" and
+# "dead_end". `compose_with_branch` called `compose_chain` first, and
+# `compose_chain` requires an entry/exit pair from EVERY room — so a
+# leaf-compatible room was refused as a through-room before it could be
+# chosen as a leaf. The Zone came back with ZERO edges and every one of
+# that room's openings SEALED: a linear fallback with the destination
+# walled shut, and only a note to say so.
+#
+# **A CAPABILITY PROBE, not ordinary generation.** No shell in the
+# shipped registry lacks `exit`, so the catalogue cannot produce this
+# today. What is proved is that the PRODUCER PATH handles the capacity
+# when a shell declaring it arrives — which is a separate question from
+# whether a pending asset may be offered.
+
+TERMINUS = ("branch_east", "branch_west", "entry")
+
+
+def _with_shells(n: int, **shells_by_index):
+    """A Zone with named shells at chosen room indices, plus their caps."""
+    z = _chain_zone(n)
+    rooms = list(z.chambers)
+    caps = dict(topology._shell_sockets())
+    for index, (shell_id, sockets) in shells_by_index.items():
+        i = int(index.lstrip("r"))
+        rooms[i] = rooms[i].model_copy(update={"shell_id": shell_id})
+        caps[shell_id] = sockets
+    return z.model_copy(update={"chambers": tuple(rooms)}), caps
+
+
+def test_a_room_that_declares_no_exit_is_composed_as_a_destination():
+    """The repair. It arrives through the opening it declares and is
+    never asked for one it does not."""
+    z, caps = _with_shells(8, r4=("shell_bay_terminus", TERMINUS))
+    product = topology.compose_with_branch(list(z.chambers), caps)
+    assert product.edges, "the Zone lost its graph over one leaf"
+    out = topology.apply(z, product)
+
+    leaf = next(c for c in out.chambers if c.shell_id == "shell_bay_terminus")
+    joined = [e for e in out.edges if e.realization == "JOINED"]
+    inbound = [e for e in joined if e.room_b == leaf.id]
+    assert len(inbound) == 1, "a destination is reached exactly once"
+    arrival = next(d for d in leaf.doors if d.edge_id == inbound[0].edge_id)
+    assert arrival.socket_id == "entry"
+    assert arrival.usage in ("USED", "LOCKED")
+
+    # NO FABRICATED DEPARTURE. Nothing names an `exit` it never declared.
+    assert {d.socket_id for d in leaf.doors} == set(TERMINUS)
+    assert "exit" not in {d.socket_id for d in leaf.doors}
+    # And it carries a way back, like any other dead end.
+    assert any(pl.room_id == leaf.id for pl in out.plugs)
+    assert topology.reachability(out).ok, topology.reachability(out).errors
+
+
+def test_a_destinations_unused_openings_are_closed():
+    """"With unused openings closed" — asserted, not assumed.
+
+    The size is chosen by MEASURING rather than by guessing: at this one
+    the Terminus hosts nothing, so both of its side doorways are SEALED
+    rather than left unmentioned. A first attempt used a Zone that
+    afforded a second branch and legitimately hung it off `branch_east`,
+    which is the composer being right and the fixture being wrong.
+    """
+    z, caps = _with_shells(8, r3=("shell_bay_terminus", TERMINUS))
+    out = topology.apply(z, topology.compose_with_branch(
+        list(z.chambers), caps))
+    leaf = next(c for c in out.chambers if c.shell_id == "shell_bay_terminus")
+    carrying = {d.socket_id for d in leaf.doors if d.edge_id}
+    sealed = {d.socket_id for d in leaf.doors if d.usage == "SEALED"}
+    assert carrying == {"entry"}, carrying
+    assert sealed == {"branch_east", "branch_west"}, sealed
+    # Every declared opening is accounted for, none invented.
+    assert carrying | sealed == set(TERMINUS)
+
+
+def test_a_destination_that_hosts_a_branch_departs_by_a_real_opening():
+    """The half `_exit_offset`'s fallback could not reach.
+
+    A leaf hosting one onward branch has a continuation, and the engine
+    places it from `depart_edge` — which resolves through `doors` to
+    `branch_east`, a doorway the shell actually declares. Without the
+    selector the engine falls back to the room's `exit_offset`, which
+    the manifest still carries for a room with no exit socket: a
+    departure through a wall.
+    """
+    import json
+    z, caps = _with_shells(8, r5=("shell_bay_terminus", TERMINUS))
+    out = topology.apply(z, topology.compose_with_branch(
+        list(z.chambers), caps))
+    leaf = next(c for c in out.chambers if c.shell_id == "shell_bay_terminus")
+    assert leaf.depart_edge is not None, (
+        "this Zone must give the leaf one continuation, or the test "
+        "asserts nothing")
+    wire = json.loads(out.model_dump_json())
+    room = next(c for c in wire["chambers"] if c["id"] == leaf.id)
+    socket = _resolve_like_the_engine(room, "depart_edge")
+    assert socket in ("branch_east", "branch_west"), socket
+    assert socket != "exit"
+    assert _resolve_like_the_engine(room, "arrive_edge") == "entry"
+
+
+@pytest.mark.parametrize("index,says", [
+    (0, "the room the player arrives in"),
+    (7, "the room the Zone leaves by"),
+])
+def test_a_destination_may_not_be_the_zones_own_first_or_last_room(
+        index, says):
+    """It would have to carry the chain, and it declares no way on. The
+    composer refuses rather than fabricating a departure."""
+    z, caps = _with_shells(8, **{f"r{index}": ("shell_bay_terminus",
+                                              TERMINUS)})
+    product = topology.compose_with_branch(list(z.chambers), caps)
+    # THE CODE IS THE ANSWER; the sentence is for the log.
+    assert product.refused
+    assert product.refusal.code == "destination_is_an_end"
+    assert product.refusal.rooms == (z.chambers[index].id,)
+    assert says in product.refusal.detail
+    # And nothing half-built leaks: no doors, no edges, no plugs.
+    assert not product.edges and not product.doors and not product.plugs
+
+
+def test_a_room_with_no_arrival_at_all_is_refused():
+    """No `entry`: nothing can reach it, and the composer will not
+    invent an opening to make one."""
+    z, caps = _with_shells(8, r4=("shell_sealed", ("branch_east",)))
+    product = topology.compose_with_branch(list(z.chambers), caps)
+    assert product.refused and product.refusal.code == "no_arrival"
+    assert product.refusal.rooms == ("c005",)
+    assert not product.edges and not product.doors
+
+
+def test_a_destination_that_cannot_be_reached_refuses_the_zone():
+    """**Never a silent linear fallback.** If no room before the leaf
+    has a socket to spare, the Zone is refused with a reason — composing
+    it without the leaf would seal every one of its openings and say
+    nothing."""
+    # Every other room is a two-door authored shell, so nothing can host
+    # a branch and the leaf has nowhere to hang.
+    z = _chain_zone(6)
+    rooms = [c.model_copy(update={"shell_id": "shell_hall_transit"})
+             for c in z.chambers]
+    rooms[3] = rooms[3].model_copy(update={"shell_id": "shell_bay_terminus"})
+    z = z.model_copy(update={"chambers": tuple(rooms)})
+    caps = {"shell_hall_transit": ("entry", "exit"),
+            "shell_bay_terminus": TERMINUS}
+    product = topology.compose_with_branch(list(z.chambers), caps)
+    assert product.refused, "the Zone was linearised around the leaf"
+    assert product.refusal.code == "destination_unreachable"
+    assert product.refusal.rooms == ("c004",)
+    assert not product.edges and not product.doors
+
+
+def test_the_role_comes_from_the_declaration_and_nothing_else():
+    """Capacity, not authored prose. `shape_tags` never reaches this
+    lane, and a role read off prose could disagree with the openings the
+    room actually has."""
+    z, caps = _with_shells(
+        8, r2=("shell_junction_triad", ("branch_east", "entry", "exit")),
+        r4=("shell_bay_terminus", TERMINUS))
+    roles = topology._roles(list(z.chambers), caps)
+    assert roles["c003"] == topology.ROLE_THROUGH, "3 doors, and an exit"
+    assert roles["c005"] == topology.ROLE_LEAF, "3 doors, and no exit"
+    assert roles["c001"] == topology.ROLE_THROUGH, "procedural"
+    # A through-room with three doors is still a through-room: the extra
+    # opening is capacity for a branch, not a change of role.
+    out = topology.apply(z, topology.compose_with_branch(
+        list(z.chambers), caps))
+    triad = next(c for c in out.chambers
+                 if c.shell_id == "shell_junction_triad")
+    assert triad.depart_edge is not None, "a through-room departs"
+    assert topology.reachability(out).ok
+
+
+def test_a_destination_the_arrival_room_cannot_host_refuses_the_zone():
+    """Found by measuring across Zone sizes: a leaf immediately after the
+    room the player arrives in has only that room before it, and the
+    planner will not branch off the arrival — a lock there has nowhere
+    its key could go but the room the lock is in.
+
+    So the leaf is unplaceable, and the Zone is REFUSED. Before the
+    repair this exact shape came back as a chain with the destination
+    sealed shut.
+    """
+    z, caps = _with_shells(8, r1=("shell_bay_terminus", TERMINUS))
+    product = topology.compose_with_branch(list(z.chambers), caps)
+    assert product.refused
+    assert product.refusal.code == "destination_unreachable"
+    assert product.refusal.rooms == ("c002",), "it names the room"
+
+
+def test_a_refusal_code_is_one_the_composer_declares():
+    """A closed set, so a caller can branch on it. An invented code is a
+    branch nobody wrote."""
+    with pytest.raises(ValueError, match="not a refusal this composer"):
+        topology.GraphRefusal("something_went_wrong", "...")
+    for code in topology.REFUSAL_CODES:
+        assert topology.GraphRefusal(code, "why").code == code
+
+
+def test_a_leaf_is_only_a_dead_end_when_it_has_one_neighbour():
+    """**"Leaf" is a capacity, not a graph degree.**
+
+    A room that declares no `exit` can still host onward branches
+    through its other doorways, and then it is a junction inside a side
+    path with two or more neighbours. Reporting every such room as a
+    dead end would be the same "counted the wrong thing" error the
+    branch report was built to fix, so both cases are measured.
+    """
+    from .zone_shape import shape_of
+
+    # One neighbour: arrives through `entry`, hosts nothing.
+    z, caps = _with_shells(8, r3=("shell_bay_terminus", TERMINUS))
+    lone = topology.apply(z, topology.compose_with_branch(
+        list(z.chambers), caps))
+    leaf = next(c for c in lone.chambers
+                if c.shell_id == "shell_bay_terminus")
+    assert leaf.door_degree == 1
+    assert leaf.id in shape_of(lone).side_dead_ends
+
+    # Two neighbours: the same shell, hosting a branch of its own.
+    z, caps = _with_shells(8, r5=("shell_bay_terminus", TERMINUS))
+    hosting = topology.apply(z, topology.compose_with_branch(
+        list(z.chambers), caps))
+    host = next(c for c in hosting.chambers
+                if c.shell_id == "shell_bay_terminus")
+    assert host.door_degree >= 2, "this fixture must host a branch"
+    assert host.id not in shape_of(hosting).side_dead_ends, (
+        "a leaf that hosts a branch is not a dead end")
+    # It still carries a return, because it is still a destination.
+    assert any(pl.room_id == host.id for pl in hosting.plugs)

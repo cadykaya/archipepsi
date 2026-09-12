@@ -1392,20 +1392,56 @@ loading. A resend after a dropped connection is the ordinary case.
 number of times; it keeps its manifest, saturates the same counter,
 stays `ZONE_DORMANT` and stays enterable.
 
-> **For Prod — the Hub half, and it is small.**
+> **For Prod — the Hub half, in one console.**
 >
 > `hub.gd` already has the control. `AbandonConsole` has the wording
 > ("[E] ABANDON HELD ZONE"), the confirm step ("CONFIRM ABANDON? —
-> unclaimed Checks return to the pool") and the intent. Two changes:
+> unclaimed Checks return to the pool") and the intent. Two changes,
+> and **no second control and no duplicated campaign state.**
 >
 > 1. **`_visible_modes` gains `"ZONE_FAILED"`.** It is currently
 >    `["GENERATING", "ZONE_READY", "ZONE_ACTIVE"]`, so the console is
 >    hidden for a Zone nobody is standing in — which is every failed
 >    one.
-> 2. **Take the id from `hub.discard_zone_id`, not from
->    `BridgeClient.active_zone()`.** A failed Zone is DORMANT, so
->    `active_zone()` is empty and the console has nothing to send.
->    `discard_zone_name` is there for the label.
+> 2. **Resolve the target CONDITIONALLY.** In `ZONE_FAILED`, take it
+>    from `hub.discard_zone_id` (and `discard_zone_name` for the
+>    label): a failed Zone is DORMANT, so `BridgeClient.active_zone()`
+>    is empty and the console would have nothing to send. **In the
+>    three modes the console already serves, keep the resolution it
+>    already has.**
+>
+> **`discard_zone_id` is populated in `ZONE_FAILED` and nowhere else.**
+> Measured, not assumed — `ZONE_READY`, `ZONE_ACTIVE` and a committed
+> `ZONE_DORMANT` all report it empty. So replacing the lookup
+> unconditionally would give the existing modes a console that shows its
+> prompt, arms its confirmation and does nothing: a control that
+> displays and does not act, which is the failure this whole batch has
+> been about. **Owner correction, 2026-09-12** — this section said
+> "take the id from `discard_zone_id`, not from `active_zone()`", which
+> read as a replacement, and that was this lane's error rather than a
+> misreading.
+>
+> The field is deliberately not populated in the other modes. Its
+> meaning is "the Zone the Hub is offering to discard because it cannot
+> be entered", and widening it to "any Zone you could abandon" would
+> make one name answer two questions — which is the shape of every
+> defect this seam has produced.
+>
+> **And it is now an invariant, not a sentence.** `HubStatus`
+> refuses a `discard_zone_id` outside `ZONE_FAILED` and refuses
+> `ZONE_FAILED` without one, so the conditional this section asks for
+> is guaranteed by the model rather than by anyone remembering.
+>
+> No matching rule exists for `resume_zone_id`, and one must not be
+> added: it is legitimately set in `GENERATING`, which is not in
+> `ZONE_ENTERABLE_MODES`, so the symmetric-looking invariant is false.
+> It was written, refused by 128 tests, and removed.
+>
+> **Arm against the id, and disarm when it changes.** A confirmation
+> armed for one Zone must not apply to another: reset it when the
+> resolved target changes or goes away (a restart, an abandon from the
+> pause menu, a Zone that left the mode). The console holds the arming;
+> the bridge holds no notion of it, and should not.
 >
 > Nothing else changes. `_on_portal_activated` needs no new arm:
 > `ZONE_FAILED` is not in `ZONE_ENTERABLE_MODES`, the portal is
@@ -1413,8 +1449,136 @@ stays `ZONE_DORMANT` and stays enterable.
 > could not be laid out. Discard it to return its Checks to the pool."
 >
 > **The only way to make this wrong is to leave the player a mode with
-> no control**, so if the console cannot be shown in `ZONE_FAILED`, say
-> so rather than adding a second way in.
+> no usable control**, so if the console cannot be shown in
+> `ZONE_FAILED`, say so rather than adding a second way in. A correct
+> snapshot and a console with no reachable target are not a recovery.
+
+
+### 5.8 A destination needs no departure — the Terminus
+
+**Owner finding against Art's batch 044, 2026-09-12.**
+`shell_bay_terminus` declares `entry`, `branch_east` and `branch_west`,
+and **no `exit`**; its `shape_tags` are "destination" and "dead_end".
+
+**What it did, measured before repairing it.** `compose_with_branch`
+called `compose_chain` first as a feasibility gate, and `compose_chain`
+requires an entry/exit pair from EVERY room — so a leaf-compatible room
+was refused as a through-room before it could ever be chosen as a leaf.
+The Zone came back with **zero edges and every one of the Terminus's
+openings SEALED**: a linear fallback with the destination walled shut,
+and a single note the only thing that said so.
+
+**Roles are decided before anything is composed.** `_role` reads the
+room's own declaration:
+
+| declares | role | may be |
+|---|---|---|
+| `entry` + `exit` | `ROLE_THROUGH` | on the spine, or a destination |
+| `entry`, no `exit` | `ROLE_LEAF` | a destination only |
+| no `entry` | `ROLE_UNJOINABLE` | refused |
+
+`entry` and `exit` are not two names among many: the contract gives each
+one meaning, and the engine's `socket_by_id` aliases them to a connector
+grammar's `end_a`/`end_b` for exactly that reason. A shell declaring
+`exit` says *the chain may continue through me*; one declaring an
+arrival and no `exit` says *the chain arrives and stops*. That is a
+capacity fact already on the wire.
+
+**`shape_tags` is not consulted and does not reach this lane.** A role
+read off authored prose could disagree with the openings the room
+actually has; the openings are the thing the composer must assign.
+
+**A leaf is a REQUIRED destination, not a budgeted one.** It is placed
+before the spare-room budget picks anything and does not spend it —
+refusing to branch would seal it shut. A leaf may not be the Zone's
+first or last room (it would have to carry the chain), and a leaf no
+room before it can host **refuses the Zone with a reason**. Nothing is
+fabricated, nothing is cut, and there is no silent linear fallback: all
+three are refusals with the room named.
+
+**A leaf that hosts one onward branch departs by a real opening.**
+`depart_edge` resolves through `doors` to `branch_east` — a doorway the
+shell declares — so the engine places the continuation from there. This
+is why fixing `_exit_offset`'s fallback alone was insufficient: the
+manifest still carries `exit_offset: [0, 0, 22]` for a room with no exit
+socket, and the fallback is a departure through a wall. The selector is
+the fix, and it landed in §11.7.
+
+**A capability probe, not a promotion.** No shell in the shipped
+registry lacks `exit`, so ordinary generation cannot produce this today.
+What is proved is that the producer path handles the capacity when a
+shell declaring it arrives — a separate question from whether a pending
+asset may be offered, and this section grants nothing on that.
+
+> **For Prod — what the bridge now sends, and what is yours.**
+>
+> A leaf arrives through `entry` and carries a return plug like any
+> dead end. Its unused declared openings are `SEALED` and its `doors`
+> list every one of them; none is invented. `arrive_edge` names the
+> inbound edge and `depart_edge` is **absent** unless the leaf hosts
+> exactly one onward branch, in which case it names that branch's edge
+> and resolves to a real doorway.
+>
+> Yours: the physical placement — that the body arrives through the
+> assigned opening in a rotated placement, that the sealed side
+> doorways are built closed, and that nothing reads `exit_offset` for a
+> room with no exit socket. The bridge will not fabricate the departure
+> that field implies.
+>
+> **A leaf is a capacity, not a graph degree.** A room that declares no
+> `exit` can still host onward branches through its other doorways, and
+> then it has two or more neighbours and is NOT a dead end. Only a
+> one-neighbour assignment is. Both cases are measured
+> (`test_a_leaf_is_only_a_dead_end_when_it_has_one_neighbour`); do not
+> report every leaf as a dead end.
+
+#### 5.8a The refusal is a value, not a sentence
+
+**Owner finding, 2026-09-12.** The refusal paths above returned an
+edge-less `GraphProduct` with sealed doors and an explanatory note —
+and **nothing read it**. `apply` drops `notes`; `reachability` cannot
+tell an edge-less refusal from the legacy chain it must keep accepting;
+`campaign._with_graph` handed the result back as a good Zone. The only
+thing that caught it was the `Zone` schema refusing doors-without-edges
+when `accept_zone` rebuilt the record: that protects the save, and it is
+a pydantic exception out of a background task rather than a handled
+composition refusal.
+
+This lane's own recurring failure, in this lane's own code — a
+measurement that exists, is correct, and is never handed to the thing
+that must act on it. The tests were the same shape: "no edges and a
+note" proves the composer had an opinion, not that anything acted on it.
+
+**`GraphProduct.refusal` is a `GraphRefusal` with a code from a closed
+set** — `no_arrival`, `destination_is_an_end`, `destination_unreachable`,
+`chain_unreachable` — plus the rooms and prose for the log. Prose is
+never control flow. A refused product carries **no doors**: half-built
+output is what let the failure travel, and there is now nothing to
+mistake for a product.
+
+`_with_graph` raises `GraphRefused`, and `_run_generation` takes **the
+recovery a failed generation already had**: `abandon_zone`, one
+notification, no acceptance and no `zone_ready`. One helper rather than
+two copies of it. The Checks return through `abandon_zone` and no other
+path, and the Hub can ask for the next Zone.
+
+**`chain_unreachable` is new here too.** A Zone whose plain chain fails
+reachability used to be returned ungraphed — which made a failed NEW
+composition indistinguishable from a genuine legacy save. It is a
+refusal now.
+
+**`reachability` is unchanged and must stay so.** An edge-less Zone is
+the chain its list order describes, and every save written before graphs
+existed is that shape; it has to keep loading. The distinction is made
+at composition time by an explicit code, which is exactly why it could
+not be made by counting edges.
+
+Controls: the four refusals through `campaign._with_graph` itself, and
+the recovery end to end through `handle_request_next_zone` with the real
+provider and no stand-in — nothing accepted, nothing published, no
+uncaught exception, the save still loading, and the next Zone composing
+a real graph on the released ids. Removing the consumption fails all
+five.
 
 
 ## 6. What remains in this lane

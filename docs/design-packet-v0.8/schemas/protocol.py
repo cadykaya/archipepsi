@@ -1229,6 +1229,25 @@ class HubStatus(Strict):
             raise ValueError("postgame requires goal_sent")
         if self.mode == "ALL_CHECKS_CLEARED" and not self.goal_sent:
             raise ValueError("every Check cleared implies the goal was sent")
+        # `discard_zone_id` IS `ZONE_FAILED` AND NOTHING ELSE, because
+        # the Hub's abandon console resolves its target conditionally on
+        # exactly that: a consumer that swapped its existing lookup for
+        # this one unconditionally would show a prompt, arm a
+        # confirmation and send nothing in the three modes it already
+        # serves. Stated as an invariant rather than as a sentence in a
+        # handoff, because the handoff said it and said it wrongly.
+        #
+        # `resume_zone_id` gets NO matching rule. It is legitimately set
+        # in GENERATING — the Hub names the Zone being designed — which
+        # is not in `ZONE_ENTERABLE_MODES`, so the symmetric-looking
+        # invariant is simply false. Written here once, refused by 128
+        # tests, and left as a note so nobody adds it again for the
+        # pleasure of the symmetry.
+        if bool(self.discard_zone_id) != (self.mode == "ZONE_FAILED"):
+            raise ValueError(
+                f"discard_zone_id is set in {self.mode}; it names the "
+                "Zone the Hub offers to discard because it cannot be "
+                "entered, which is ZONE_FAILED and nothing else")
         return self
 
 
