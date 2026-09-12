@@ -14,9 +14,22 @@ a reload from disk re-enters with layout, keys and locks preserved.
 `test_amalgam_end_to_end.py` is that path and assigns to `engine.save`
 nowhere.
 
-**Not connected:** the engine does not serialize `layout_result`, does
-not surface aperture polarity, and does not replay the committed
-manifest. Those three are `docs/AMALGAM_BRIDGE.md` §5.
+**Connected since 2026-09-12 (engine lane):** all three of the items
+this section used to list as missing. The engine serializes
+`layout_result`, measures aperture polarity and arrival support and
+sends both, and replays the committed manifest on re-entry with the
+route search counter proving it did not re-solve. `make godot-integration`
+plays a whole campaign with every layout ACCEPTED and carries a
+deliberate refusal as its control; `make godot-reload` reopens a campaign
+in a SECOND PROCESS and recovers the layout and the progress from the
+bridge alone.
+
+**Not connected:** the physics contract in `schemas/physics.py` — no
+runtime exists for it yet. And one player-facing hole, in the bridge
+column: a DORMANT Zone leaves the Hub in `ZONE_AVAILABLE`, so the portal
+sends `request_next_zone`, which the bridge refuses while that Zone still
+holds its locations. `enter_zone` works and every suite uses it; the Hub
+has no affordance that sends it. `docs/AMALGAM_SLICE1.md` §5q.
 
 **All three of SOLUTIONS_CATALOGUE §2's local-key rules are enforced.**
 A key reachable without passing its own lock, an acyclic key graph, and
@@ -37,7 +50,7 @@ not done":
 |---|---|
 | **Connected** — runs in a real campaign | graph composition at acceptance, reachability refusing an unreachable Zone, `layout_result` validated and committed, progress identities checked, DORMANT/VISITING, leave-reload-re-enter |
 | **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | layout evidence validation (the engine does not send `layout_result`), the physics contract in `schemas/physics.py` (no runtime exists). **Both stay in this row until real engine output passes through their actual acceptance path** — a synthetic payload exercising a validator is not the seam being crossed |
-| **Requires Godot** | aperture polarity in the layout result, the manifest replay consumer, physical reachability, and the whole physics substrate — `docs/AMALGAM_BRIDGE.md` §5 and §6 |
+| **Requires Godot** | physical reachability and the whole physics substrate — `docs/AMALGAM_BRIDGE.md` §6. Aperture polarity and the manifest replay consumer moved to **Connected** on 2026-09-12 |
 
 **Capability gates are searched, not sampled.** A previous guard removed
 one gate edge at a time with every other gate left passable, so two
@@ -105,21 +118,61 @@ goes back as `layout_result` with measured apertures and arrival
 verdicts; and `ZoneReady.manifest` is replayed on re-entry rather than
 re-solved. Five of six generated Zones commit a layout with a digest.
 
-**One thing blocks the sixth, and it is Art's.** `shell_hall_transit`,
-`shell_plenum_helix` and `shell_span_basin` each declare their `exit`
-doorway **2.0 m outside their own envelope** — the router joins the
-corridor at the socket and the wall is two metres away, which is the
-playtest's "the connecter isnt connected at all". Measured and NOT
-changed (a manifest coordinate is authored geometry):
-`docs/art-requests/2026-09-11-doorways-outside-their-envelope.md`. A Zone
-holding one of these shells is refused by the layout validator until it
-lands.
+**EVERY generated Zone commits a layout.** Crossing the seam with
+acceptance gating on surfaced five defects between the Zone a composer
+declares and the one the engine builds; all five are fixed and
+`docs/AMALGAM_SLICE1.md` §5p names them. The shortest version: a socket
+table that said every doorway was at `y = 0` while two producers carve
+theirs metres up; five producers that ignored the door assignment
+entirely; a front door both lanes carved against the composer's own
+`SEALED`; an arena's cover crates and a band's access ramp standing where
+a body arrives; and three authored shells whose `exit` is off their own
+body.
+
+**And withholding them costs two things, both recorded rather than
+worked around.** The fallback's landmark arena was a fixed
+`26.0 x 24.0 x 7.0` and the shell a big room happened to wear was doing
+all its varying — the landmark rolls now. And no generated Zone can carry
+an authored movement offer: four shells carry offers, three are withheld
+and `shell_yard_gantry` is over `AUTHORED_AREA_BUDGET`. Raising the
+budget to admit the yard was tried and put back (it made every Zone an
+85 x 52 m room with two unwalkable joins and a rail a body cannot ride);
+`godot-playtest3a`'s two offer tests state the whole reason and pin it,
+so they fail the day any part of it is repaired.
+
+**Those three shells are Art's and are withheld, not patched.**
+`shell_hall_transit`, `shell_plenum_helix` and `shell_span_basin` each
+declare their `exit` doorway 2.0 m past their own declared depth — the
+router joins the corridor at the socket and the wall is two metres away,
+which is the playtest's "the connecter isnt connected at all". Codex
+measured the shipped GLBs independently and they end at the declared
+depth, so the socket is the outlier. `shells.is_offerable` withholds
+them and lets them back the moment the repair lands:
+`docs/art-requests/2026-09-11-doorways-outside-their-envelope.md`.
+
+**"Outside the envelope" is not the rule.** `corner` steps its exit a
+full `WALL_THICKNESS` past its bounds deliberately and
+`shell_yard_gantry` sits exactly on its wall face. A doorway is an
+attachment transform and may sit one wall thickness proud; that one
+allowance is defined once (`layout.SOCKET_PROUD` /
+`shells.doorways_off_the_body`) and both lanes read it. It is a different
+measurement from the aperture (is the hole cut) and from the arrival (can
+a body stand), and all three are taken separately.
 
 **Evidence comes from the body now, not only the model.** The flood
 proposes a route and a real `Player` walks it; the two are reported
 separately. c015, c005 and the pit are all left on foot, and the whole
 branch journey — lock, key, crossing, plug, persist, re-enter — is walked
 by a real body. See `docs/AMALGAM_SLICE1.md` §5o.
+
+**A resume now comes from the save, not from memory.** `Main._to_zone`
+read three in-memory dictionaries whose own docstring said they do not
+survive quitting, so the bridge held the progress and the game walked
+past it. `make godot-reload` is two Godot processes against one bridge
+and one save directory: the first plays, the second is launched cold and
+recovers the committed layout (0 route searches), the key, the lock and
+the resume station from the bridge alone, then walks through the doorway
+it opened last time without collecting the key again.
 
 ## THE ACTIVE FRONTIER: v0.9 — production and the authored-content transition
 

@@ -1,5 +1,37 @@
 # Archipepsi — build state
 
+## 2026-09-12 — the layout exchange is connected end to end
+
+`claude/archipepsi-amalgam-slice1`. Acceptance gating was in place and no
+generated Zone could pass it; every refusal turned out to be a real
+defect between the Zone a composer declares and the one the engine
+builds. Five of them, all fixed, listed in `docs/AMALGAM_SLICE1.md` §5p.
+
+What runs now:
+
+* `make godot-integration` plays a whole campaign with **every layout
+  ACCEPTED**, and carries a refusal as its control: one Zone is entered
+  with a falsified client copy (an arena's sealed side door carved open)
+  to show a refused layout raises `layout_refused`, holds the player,
+  claims no Check and keeps the ones it was allocated.
+* `make godot-reload` is **two Godot processes against one bridge and one
+  save**: the first plays, the second is launched cold and recovers the
+  committed layout (0 route searches — a replay, not a re-solve), the
+  key, the lock and the resume station from the bridge alone, then walks
+  through the doorway it opened last time without collecting the key
+  again. `Main._to_zone` read in-memory dictionaries before this.
+* The crossing measurement now splits the prober's limits from the
+  geometry's: every join the flood refuses is handed to a real `Player`
+  first. Five of eight were the prober; three are geometry.
+
+Open, and both named: `shell_hall_transit`, `shell_plenum_helix` and
+`shell_span_basin` are withheld until Art moves their `exit` doorway back
+onto their body (`docs/art-requests/2026-09-11-doorways-outside-their-envelope.md`),
+which is what currently leaves a generated Zone with no authored movement
+offer. And a DORMANT Zone has no Hub affordance to re-enter it — the
+`enter_zone` intent works, the portal has no mode that sends it. That one
+is the bridge's `HubMode` vocabulary: `docs/AMALGAM_SLICE1.md` §5q.
+
 ## Where this is
 **The full v0.7 POC (Phases 0–7) is complete and green**, and the build has
 moved on to making it good to actually play. Everything below "What works"

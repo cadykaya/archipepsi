@@ -92,6 +92,9 @@ var _chambers: Array = []      # {chamber, objective, satisfied, enemies,
                                #  reward, goal_area}
 var _exit_portal: ExitPortal
 var _zone_anchors := {}
+
+## `room_id -> world AABB`, from the committed layout.
+var room_bounds := {}
 ## MONOTONE, and that is what makes a resume safe. A Zone's key set and
 ## its opened-lock set only ever grow, so a reload can never put the
 ## player back behind a door they already opened.
@@ -192,11 +195,30 @@ func setup(zone_dict: Dictionary) -> void:
 	# ANCHOR and the builder has already resolved every anchor to a
 	# place, so nothing here invents a coordinate either.
 	_zone_anchors = build.get("anchors", {})
+	# WHERE EACH ROOM IS, in world space, off the committed layout. The
+	# builder already resolved it and the manifest already carries it;
+	# anything that needs to ask "is this point in that room" asks here
+	# rather than re-deriving a transform.
+	for rid: String in build.get("rooms", {}) as Dictionary:
+		room_bounds[rid] = (build["rooms"] as Dictionary)[rid].get(
+				"bounds", AABB())
 	for raw: Variant in build.get("plugs", []):
 		var plug: ReturnPlug = raw
 		plug.traversed.connect(_on_plug_traversed)
 	for raw_key: Variant in build.get("keys", []):
 		var key: ZoneKey = raw_key
+		# A KEY ALREADY COLLECTED IS NOT REBUILT.
+		#
+		# Collecting it again is harmless -- `_keys_held` is a set and
+		# the intent is idempotent -- which is exactly why nothing
+		# noticed: a Zone reopened in a second process put the red key
+		# back on its pedestal, and a player who had already carried it
+		# through the door was looking at a Check-shaped object that
+		# meant nothing. Progress is monotone, so the thing it unlocked
+		# stays unlocked and the thing it was stays gone.
+		if keys_carried.has(key.key_id):
+			key.queue_free()
+			continue
 		key.collected.connect(_on_key_collected)
 	_stations = build.get("stations", [])
 	for raw_station: Variant in _stations:

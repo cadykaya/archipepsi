@@ -19,6 +19,7 @@ playtest-3ab/
 # project -- committing it hands everyone else a path that is not there.
 godot-path.txt
 .integration-saves/
+.reload-saves/
 generation_archive/
 godot-bin/
 

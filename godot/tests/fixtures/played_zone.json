@@ -552,17 +552,17 @@
     },
     {
      "socket_id": "side_left",
-     "usage": "LOCKED",
-     "edge_id": "e:c009:c020",
-     "key_id": "red",
-     "colour": "red"
-    },
-    {
-     "socket_id": "side_right",
      "usage": "SEALED",
      "edge_id": null,
      "key_id": null,
      "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "LOCKED",
+     "edge_id": "e:c009:c020",
+     "key_id": "red",
+     "colour": "red"
     }
    ],
    "keys": [],

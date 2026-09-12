@@ -171,8 +171,21 @@ def compose_with_branch(chambers) -> GraphProduct:
         edge_id=f"e:{junction.id}:{branch.id}", room_a=junction.id,
         room_b=branch.id, direction="BIDIRECTIONAL", realization="JOINED")
     edges.append(vault)
-    doors[junction.id]["side_left"] = DoorAssignment(
-        socket_id="side_left", usage="LOCKED", edge_id=vault.edge_id,
+    # NOT ALWAYS `side_left`. A room's elevation band hugs one wall, and
+    # a `left` band's deck reaches the left wall at `rise` -- 1.79 m up
+    # for a 2.19 m gallery, which is inside a standing capsule. So the
+    # doorway cut into that wall is a doorway with a floor slab across
+    # it at chest height: the engine carves the hole, the deck stands in
+    # it, and the bridge refuses the layout ("door 'c009/side_left' is
+    # LOCKED and the engine measured it as solid").
+    #
+    # The junction has two side walls and a band uses at most one, so
+    # there is always a free one to choose.
+    band = getattr(junction, "elevation", None)
+    side = "side_right" if band is not None and band.side == "left" \
+        else "side_left"
+    doors[junction.id][side] = DoorAssignment(
+        socket_id=side, usage="LOCKED", edge_id=vault.edge_id,
         key_id="red", colour="red")
     doors[branch.id]["entry"] = DoorAssignment(
         socket_id="entry", usage="USED", edge_id=vault.edge_id)

@@ -897,6 +897,20 @@ MAX_AUTHORED_HEIGHT = 80.0
 #: authored arena, which is what the milestone asked for. Raising it is
 #: one number, and the layout carries it: measured at 20000 m2, eleven
 #: authored rooms, no clash.
+#:
+#: RAISED TO 5000 AND PUT BACK, 2026-09-12, and the reason is worth
+#: keeping. `shell_hall_transit`, `shell_plenum_helix` and
+#: `shell_span_basin` are withheld until Art repairs their doorways, and
+#: they were the arena shells this number was tuned around -- so a
+#: generated Zone now carries NO authored arena and therefore no movement
+#: offer, which `godot-playtest3a` said out loud. Admitting
+#: `shell_yard_gantry` at 4429 closes that, and putting the yard in every
+#: Zone turned out to cost more than it bought: two joins that neither
+#: the flood nor a real body can walk, an arrival a body cannot stand at,
+#: and a rail it cannot ride. Routing around an Art defect by changing a
+#: tuned content decision made the Zone worse, so the decision stands and
+#: the cost is recorded instead
+#: (`docs/art-requests/2026-09-11-doorways-outside-their-envelope.md`).
 AUTHORED_AREA_BUDGET = 4000.0
 
 # --------------------------------------------------------------------------

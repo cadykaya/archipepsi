@@ -3333,6 +3333,11 @@ func _test_the_assembled_crossing_is_walkable() -> void:
 		whole = whole.merge(box)
 	# One pair per JOINED edge: arrival to arrival, on foot.
 	var broken: Array[String] = []
+	## Joins the flood refused and the real body walked anyway.
+	var prober: Array[String] = []
+	## Built only when the flood refuses something, so a Zone whose joins
+	## all grid costs nothing.
+	var body: Player = null
 	var walked := 0
 	var skipped := 0
 	for raw_edge: Variant in zone.get("edges", []):
@@ -3384,11 +3389,42 @@ func _test_the_assembled_crossing_is_walkable() -> void:
 		var walk := _walk_bounds(region, Vector2(from.x, from.z),
 				Vector2(to.x, to.z), 0.5, ceiling)
 		walked += 1
-		if not bool(walk["ok"]):
-			broken.append("%s->%s (%s)" % [a, b, str(walk["why"])])
-	print("  CROSSING %d joins walked, %d broken, %d skipped as "
-			% [walked, broken.size(), skipped]
-			+ "level changes this prober cannot climb: %s" % str(broken))
+		if bool(walk["ok"]):
+			continue
+		# THE FLOOD SAYS NO. ASK THE BODY.
+		#
+		# The pin this used to carry said the split between "the geometry
+		# is broken" and "this prober casts from one height" had not been
+		# made. This is the split, and it is made the way the rest of
+		# this suite makes one: a real `Player`, walking. A join the
+		# flood cannot grid but the body can walk is a limit of the
+		# grid; a join neither can cross is the assembled crossing being
+		# broken, and only those are pinned.
+		if body == null:
+			body = Player.create()
+			add_child(body)
+			await get_tree().physics_frame
+		body.global_position = from + Vector3.UP * 0.6
+		for _settle in 10:
+			await get_tree().physics_frame
+		var into: AABB = ((rooms[b] as Dictionary)["bounds"] as AABB) \
+				.grow(0.5)
+		var crossed := await _player_walks_to(body, to, 700, false,
+				ARRIVED, into)
+		var landed: Vector3 = crossed["at"]
+		if bool(crossed["arrived"]) or into.has_point(landed):
+			prober.append("%s->%s (the flood could not grid it; the body "
+					% [a, b] + "walked it in %d frames)"
+					% int(crossed["frames"]))
+			continue
+		broken.append("%s->%s (%s; the body stopped %.1f m short)"
+				% [a, b, str(walk["why"]), float(crossed["closest"])])
+	print("  CROSSING %d joins walked, %d broken, %d the flood could not "
+			% [walked, broken.size(), prober.size()]
+			+ "grid but the body crossed, %d skipped as level changes "
+			% skipped + "this prober cannot climb"
+			+ "\n    broken: %s\n    prober-only: %s"
+			% [str(broken), str(prober)])
 	_check(walked >= 6,
 			"only %d joins were on one level in a 23-room Zone, so this "
 			% walked + "measured too little to mean anything")
@@ -3397,35 +3433,45 @@ func _test_the_assembled_crossing_is_walkable() -> void:
 	_check(broken.size() < walked,
 			"every one of the %d same-level joins failed, so this is "
 			% walked + "measuring the flood and not the geometry")
-	# AND WHAT IT FOUND IS RECORDED RATHER THAN ASSERTED.
-	#
-	# %d of them do not walk, in a Zone dumped from the Python path the
-	# game runs. That corroborates the playtest's first sentence and the
-	# Art request, and it is NOT yet separated from what this prober
-	# cannot do: it casts from one height, so a lip, a lift or a ramp
-	# inside a join reads the same as a hole. Asserting zero here would
-	# claim a distinction that has not been made; asserting nothing at
-	# all would let the number grow in silence, so the COUNT is pinned.
+	# AND THE SPLIT IS MADE. `broken` is now only what NEITHER the flood
+	# nor a real `Player` could cross; a join the grid refused and the
+	# body walked is counted separately and is a statement about the
+	# prober. Pinned rather than asserted at zero, because a count that
+	# may not grow is what stops one appearing in silence, and the
+	# remainder is real geometry that the Art repair and the placement
+	# work are both still moving.
 	_check(broken.size() <= KNOWN_UNWALKED_JOINS,
-			"%d same-level joins in the generated Zone do not walk, up "
-			% broken.size() + "from the %d recorded; a join stopped "
-			% KNOWN_UNWALKED_JOINS + "connecting: %s" % str(broken))
+			"%d same-level joins in the generated Zone are crossed by "
+			% broken.size() + "neither the flood nor the body, up from "
+			+ "the %d recorded; a join stopped connecting: %s"
+			% [KNOWN_UNWALKED_JOINS, str(broken)])
 	if broken.size() < KNOWN_UNWALKED_JOINS:
 		print("  CROSSING fewer broken joins than recorded (%d < %d) -- "
 				% [broken.size(), KNOWN_UNWALKED_JOINS]
 				+ "something was repaired; lower the number")
 	rooms_checked += 1
+	if body != null:
+		body.queue_free()
 	(out["root"] as Node3D).queue_free()
 	await get_tree().process_frame
 
 ## How far outside the two rooms the corridor between them may reach.
 const CONNECTOR_SLACK := 12.0
 
-## How many same-level joins in `played_zone.json` the flood cannot
-## cross today. Pinned so the number cannot grow quietly, and NOT a
-## target: the split between "the geometry is broken" and "this prober
-## casts from one height" has not been made yet.
-const KNOWN_UNWALKED_JOINS := 10
+## How many same-level joins in `played_zone.json` NEITHER the flood nor
+## a real `Player` can cross today.
+##
+## The split the earlier version of this said had not been made: every
+## join the flood refuses is handed to a real body before it is called
+## broken, so "this prober casts from one height" is now a separate,
+## separately reported count. What is left is geometry.
+##
+## Pinned rather than asserted at zero: the remainder is what the Art
+## repair and the placement work are still moving, and a pinned count is
+## what stops a new one appearing in silence.
+##
+## The three are `c001->c002`, `c002->c003` and `c009->c010`.
+const KNOWN_UNWALKED_JOINS := 3
 
 func _doors_of(zone: Dictionary, room: String) -> Array:
 	for raw: Variant in zone.get("chambers", []):

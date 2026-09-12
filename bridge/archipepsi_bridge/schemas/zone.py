@@ -565,6 +565,18 @@ class ArenaChamber(_WithEnemies):
         why = band_ramp_fits(self.elevation, self.width, self.depth)
         if why:
             raise ValueError(f"chamber '{self.id}': {why}")
+        # AND IT DOES NOT HUG A WALL WITH A DOORWAY IN IT. A `left`
+        # band's deck reaches the left wall at `rise`, so a doorway cut
+        # into that wall has a floor slab across it at whatever height
+        # the band sits -- a hole the engine carves and the deck closes.
+        blocked = f"side_{self.elevation.side}"
+        for door in self.doors:
+            if door.socket_id == blocked and door.usage != "SEALED":
+                raise ValueError(
+                    f"chamber '{self.id}': a {self.elevation.side} "
+                    f"{self.elevation.kind} hugs the wall its "
+                    f"'{blocked}' door is cut into, so its deck stands "
+                    f"in that doorway")
         if self.elevation.kind != "gallery":
             return self
         clear = self.wall_height - self.elevation.rise

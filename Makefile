@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-activity godot-room godot-room-contract godot-movement godot-playtest3a godot-zone-audit zone-shots godot-boot godot-legible godot-integration
+.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-activity godot-room godot-room-contract godot-movement godot-playtest3a godot-zone-audit zone-shots godot-boot godot-legible godot-integration godot-reload
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -367,6 +367,32 @@ godot-content: godot-import    # the authored-content registry and its fallbacks
 	  echo "-- a runtime error was raised: the suite cannot vouch for itself"; \
 	  exit 1; \
 	fi
+
+RELOAD_SAVES := $(CURDIR)/.reload-saves
+
+# TWO PROCESSES, ONE SAVE. The only thing that crosses between them is
+# the campaign on disk, which is what makes this the one suite that can
+# see a resume read from memory instead of from the bridge.
+#
+# `--mock-scale default` because a locked branch needs a Zone big enough
+# to spare a room, and the prototype's thirty locations do not make one.
+godot-reload: godot-import
+	rm -rf $(RELOAD_SAVES) $(HOME)/.local/share/godot/app_userdata/Archipepsi/reload_notes.json
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(RELOAD_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start (port already serving?)"; exit 1; }; \
+	$(GODOT) --headless --path godot -- --reload-phase=record > /tmp/reload-record.log 2>&1; \
+	RECORD=$$?; \
+	grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" /tmp/reload-record.log | tail -25; \
+	if [ $$RECORD -ne 0 ]; then kill $$BRIDGE_PID; exit $$RECORD; fi; \
+	echo "-- second process --"; \
+	$(GODOT) --headless --path godot -- --reload-phase=resume > /tmp/reload-resume.log 2>&1; \
+	RESUME=$$?; \
+	grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" /tmp/reload-resume.log | tail -30; \
+	kill $$BRIDGE_PID; exit $$RESUME
 
 godot-integration: godot-import   # full loop through a live mock bridge, fresh state
 	rm -rf $(INTEGRATION_SAVES)

@@ -107,6 +107,18 @@ func _ready() -> void:
 				+ "three-door junction, a red lock and a return plug")
 	if bool(asked["showcase"]):
 		_enter_showcase(asked)
+	# THE TWO-PROCESS RELOAD PROOF, and only when an operator asks.
+	#
+	# Unlike every other driver, this one runs AFTER `boot()` and beside
+	# the real `Main` rather than instead of it -- because what it is
+	# testing is `Main`. A driver that replaced the boot could not have
+	# caught the thing this exists for: `_to_zone` reading in-memory
+	# dictionaries that a new process cannot have.
+	var phase := ReloadDriver.phase_from_cmdline()
+	if phase != "":
+		var reload_driver := ReloadDriver.new()
+		reload_driver.main = self
+		add_child(reload_driver)
 
 ## Enter the curated Stage 3A showcase.
 ##
