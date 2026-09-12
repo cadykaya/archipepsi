@@ -1,5 +1,181 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the recovery is driven, and the return stands up — 2026-09-13
+
+**`claude/archipepsi-echoes-continuation-b1adno`, bridge lane merged at
+`6d475e9`, art lane at `19e271b`.** Read this first; the section below
+it is the router batch this continues.
+
+### `godot-integration` is GREEN, end to end, with both new controls
+
+A live bridge, a real campaign to `ALL_CHECKS_CLEARED` in 11 Zones.
+
+**THE FAILED-ZONE RECOVERY, DRIVEN.** §5.7a defect 1 and §5.7b. The
+control spends a Zone's whole layout budget with real refusals from the
+real validator, then asserts what a player can do: the Hub names that
+Zone to discard and offers no resume id for it; the portal is disabled
+and asks for nothing; **a FRESH `HubController`** finds the console
+visible and armed with the right id; the first press asks to confirm and
+changes nothing; the second discards that Zone; its locations come back;
+the next Zone generates. Twelve assertions, all passing.
+
+**The owner's correction to the §5.7b handoff is in.** `discard_zone_id`
+is populated in `ZONE_FAILED` and nowhere else, so the console resolves
+its target **conditionally**: that field in `ZONE_FAILED`, `active_zone`
+in the three modes it already served. One console, no second control.
+An armed confirmation falls the moment its target moves or goes away.
+
+**Successful generation and failed recovery are separate results**, and
+here they are:
+
+| | count |
+|---|---|
+| Zones played to completion | 11 |
+| Zones that exhausted their layout budget and were discarded | **1** (`zone_007`) |
+| layout refusals in the run | 7, of which 4 are the two controls' own falsifications |
+
+Before the return-anchor settle below, those numbers were **5 discarded
+and 19 refusals**. The difference is one defect, mine, described next.
+
+### The return anchor — reserved, then SETTLED on measured ground
+
+§5.7's engine half: `ChamberBuilders.return_spot` reserves the spot with
+`_clear_spot` against the room's own furniture (claimed before the cover
+crates roll), `anchors["room:<rid>:return"]` publishes it, `ReturnPlug`
+stands on it, and `plug_clear[edge_id]` measures a player capsule at the
+room's arrival against the device's trigger cylinder.
+
+**AND RESERVING IS NOT STANDING.** A room with a chasm, a sunken bay or
+a floor the builder does not model as furniture offers a spot that
+reserves cleanly and holds no body — and the bridge refuses the WHOLE
+layout for it. Measured live: *"a standing capsule does not fit at
+'room:c003:return'"*, nine times, five Zones lost. So
+`RoomAudit.measure_layout` now settles each return anchor onto ground it
+has PROBED, and moves the plug node with it.
+
+A lattice and not a ring, and that distinction was measured too: a ring
+at 4 m and 7 m finds nothing in a corridor 7 m wide — every bearing but
+two is outside the envelope and those two are the ones the ring steps
+over. Nine refusals before, nine after, byte for byte. Offsets on both
+axes, nearest first: **9 → 3**, and five discarded Zones became one.
+
+When nothing holds, the anchor stays where the builder put it and the
+bridge refuses — the honest outcome, not a silent one.
+
+### A destination is not a through-room
+
+The Terminus declares `entry`, `branch_east`, `branch_west` and no
+`exit`. `_exit_offset` answers "where is the departure" by falling back
+to the far face of the envelope, so a chain running through one would
+advance its cursor through a back wall.
+
+`ContentInstantiator` now reports **`has_departure`** as a fact of its
+own — an assigned `depart_edge`, or a declared `exit`/`end_b` socket; a
+shell that declares no sockets at all keeps the old answer, because the
+whole authored contract post-dates it. `zone_builder` refuses a Zone
+that asks a room with no departure to be walked through, naming it. **No
+fabricated socket, no extra door, no silent fall back to a linear
+Zone.** The last room on the spine is exempt: that is the leaf
+assignment the shell is for, and a leaf may still carry branches — those
+hang off its side sockets and never touch this.
+
+**Not yet proven end to end**, and said plainly: the Terminus asset is
+pending (Art `a6817cf`, not merged), and `zone_builder` builds through
+`ContentInstantiator.build_chamber` without a registry argument, so a
+synthetic destination shell cannot be routed into a full `ZoneBuilder`
+test without a registry seam that does not exist yet. **Next item:** that
+seam, then the leaf assignment through serialization and physical
+placement with unused openings closed.
+
+### MEASURED AND REVERTED: the router asking the validator's overlap question
+
+The declared sample found a real disagreement. `_overlaps` in
+`zone_builder` tolerates half a cubic metre so a room's inset entry
+socket can swallow a little of the connector it joins; `layout.py`
+tolerates a **millimetre on every axis** and refuses the whole manifest.
+A thin, wide intersection sits inside one and outside the other, so the
+router can return `LAYOUT_OK` for a proposal the bridge would not take —
+`zone_10`'s `c008`/`c018` and `zone_12`'s `c005`/`c006`.
+
+**Four changes were tried to close it, each correct about the thing in
+front of it, and the stack does not hold:**
+
+| change | result |
+|---|---|
+| the validator's rule as a post-check before claiming `LAYOUT_OK` | 36 shell/theme combinations in `godot-room-contract` stopped laying out — a real finding about those fixtures, not a repair |
+| the same test pushed into `_search`, room against room | fixed those 36, and cost the turning fixture its turn: the route was free to corner back and undo an authored `exit_yaw` |
+| forbidding that cancelling corner | the turning fixture then had no pose at all — a corridor leaving a room's face grazes that room, so the push broke against the room it had just left |
+| exempting the room a route leaves | fixed that, and took the preserved five from **5 of 5 to 1**, branch rooms failing against 97 standing boxes where 42 had been the worst case |
+
+So it is reverted, in the source and here. What the evidence says is that
+the join exemption and the validator's rule have to be reconciled
+**together** — corridor adjacency keeps a tolerance, rooms do not — and
+that is a router change with its own measurements, not a rider on this
+one. `SAMPLE_FLOOR` is 16 again, with the two unclean Zones named in the
+constant's own comment rather than counted as clean.
+
+Two tests whose premise the placement ladder outgrew were changed to
+assert what they always claimed rather than to demand the router stay
+worse: the spiral chain and the doubling-back chain each now say which
+answer came back, assert the refusal's shape when refused, and assert
+nothing is laid through anything when they lay out. The zero-budget arm
+still holds the refusal's shape under test on a space that really is
+empty.
+
+### And the base kit had two definitions
+
+`integration_driver.gd` carried a hand-written `["bounce_pad",
+"moving_platform"]`; `bridge/tests/test_affordances.py` carried the
+tuple. The day `powered_door` joined the kit the engine offered it
+correctly and the client suite failed the Zone for offering it.
+`BASE_KIT_TAGS` lives in `schemas/constants.py` now, exports, and both
+sides read it.
+
+### Withdrawn, and not implemented
+
+The Batch 044 material-change request (lettering through the production
+material path). The B image forcibly replaced authored shell materials in
+a preview harness; `ContentInstantiator` does not do that, so the request
+rested on reading the harness as the runtime path. **Nothing was changed
+for it.** The procedural-material lettering issue is separate and still
+open.
+
+### `godot-reload` is RED, and the reason is a producer/consumer seam
+
+`played_zone.json`'s `c012` is a `platform_path` — rising islands and two
+narrow ledges over a kill pit — and the composer gives it a return plug.
+**No spot in that room is both standable and clear of the arrival**, so
+the layout is refused every time: *"a standing capsule does not fit at
+'room:c012:return'"*.
+
+Four placements were tried and measured, in this order: the reserved
+spot from `_clear_spot`; the arrival's height instead of the envelope's
+floor; a probed lattice around the arrival; and the room's own declared
+`stand` surfaces probed in world space, which is the strongest answer
+available and still finds nothing that clears the arrival by trigger
+plus capsule. The engine now says so in its own words rather than
+leaving the bridge's message to carry it alone.
+
+**This is the §5.7 contract working, not failing** — the engine refuses
+rather than standing a device where a player cannot be. **For Dess:** a
+room over a kill pit is not a viable plug host. Either the composer
+should not assign one there, or `platform_path` needs a declared return
+surface wide enough to hold the device away from its start ledge. The
+committed manifest was not rewritten to dodge this.
+
+### What is still open
+
+1. **The walker** — `_walk` steers flat through rooms fifty metres tall
+   with elevation bands, so 3 of 5 branch approaches and both returns
+   fall off a ledge. The single thing between here and a measured round
+   trip. (See the section below for the leg-by-leg numbers.)
+2. **`zone_007`** still loses its layout budget live: `room:c003:return`
+   survives neither the reservation nor the settle.
+3. **The destination/leaf seam** (above) — a registry argument through
+   `ZoneBuilder`.
+4. **Four sample Zones** wedge on oversized authored branch shells; a
+   shell-vs-budget contract question, reported not repaired.
+
 ## ENGINE LANE — every preserved Zone lays out, and the journey is measured — 2026-09-13
 
 **`claude/archipepsi-echoes-continuation-b1adno`, with the bridge lane

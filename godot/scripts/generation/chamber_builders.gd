@@ -644,6 +644,38 @@ static func return_clearance(at: Vector3) -> AABB:
 static func return_spot(build: Dictionary, chamber: Dictionary) -> Vector3:
 	if build.has("return_spot"):
 		return build["return_spot"]
+	# A ROOM THAT SAYS WHICH SQUARE METRES HOLD WEIGHT IS BELIEVED.
+	#
+	# `platform_path` is rising islands over a kill pit, and a spot
+	# chosen by sampling its ENVELOPE is a spot in the void: the reload
+	# fixture's `c012` refused its layout every time for "a standing
+	# capsule does not fit at 'room:c012:return'", and no lattice of
+	# offsets was going to find ground that is mostly not there. The
+	# room already declares its `stand` surfaces -- the same vocabulary
+	# that stopped activity elements being laid out over the pit -- so
+	# the return takes the LAST one wide enough to hold the device,
+	# which is the end ledge and is as far from the arrival as the room
+	# goes.
+	var best := Vector3.INF
+	# A CAPSULE HAS TO FIT, NOT THE TRIGGER. `ReturnPlug.RADIUS` is the
+	# volume that FIRES; what has to be held up is a player, and a
+	# trigger may overhang the ledge it stands on. Demanding the trigger
+	# fit skipped every surface `platform_path` has -- its end ledge is
+	# about three metres deep and its islands two and a half -- so the
+	# room declared exactly the ground it holds and none of it counted.
+	var reach := Constants.PLAYER_RADIUS + 0.6
+	for raw: Variant in build.get("sockets", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var surface: Dictionary = raw
+		if str(surface.get("kind", "")) != "stand":
+			continue
+		var extent: Vector3 = surface.get("extent", Vector3.ZERO)
+		if extent.x < reach * 2.0 or extent.z < reach * 2.0:
+			continue
+		best = surface.get("position", Vector3.ZERO)
+	if best != Vector3.INF:
+		return best
 	var box: AABB = build.get("bounds", AABB())
 	var claimed: Array[AABB] = []
 	var arrive: Vector3 = (build.get("player_entry", {}) as Dictionary) \
@@ -664,7 +696,17 @@ static func return_spot(build: Dictionary, chamber: Dictionary) -> Vector3:
 	# is carried back onto the envelope it was measured against.
 	var at := _clear_spot(box.size.x, box.size.z, claimed,
 			hash("return:" + str(chamber.get("id", "c"))))
-	return Vector3(at.x + box.position.x + box.size.x / 2.0, box.position.y,
+	# THE ARRIVAL'S HEIGHT, NOT THE ENVELOPE'S FLOOR.
+	#
+	# An envelope's bottom is not a room's floor: a shell with a sunken
+	# bay or a plinth starts its box below the surface a body stands on,
+	# and a return anchor down there is inside the geometry. The bridge
+	# refuses the whole layout for it -- "the engine reports a standing
+	# capsule does not fit at 'room:c003:return'", three times running,
+	# and that Zone went to ZONE_FAILED in a live campaign. The arrival
+	# is where the room itself says a body stands, so its height is the
+	# one height in the room known to work.
+	return Vector3(at.x + box.position.x + box.size.x / 2.0, arrive.y,
 			at.z + box.position.z)
 
 static func _clear_spot(width: float, depth: float, claimed: Array,

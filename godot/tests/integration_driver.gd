@@ -1269,10 +1269,30 @@ func _play_one_zone(detailed: bool, already_ready := false) -> bool:
 		controller.queue_free()
 		controller = null
 		await get_tree().process_frame
-		if not await _await_condition("recomposed ZONE_READY",
+		# OR IT RAN OUT OF ATTEMPTS, which is a real outcome and not a
+		# hang. `MAX_LAYOUT_REFUSALS` spent on a Zone that was never
+		# accepted sends it to ZONE_FAILED, and waiting for a
+		# recomposition after that waits forever -- which is exactly
+		# what this did when `zone_006` genuinely could not be laid out
+		# three times running. The recovery is the one a player has:
+		# discard it and ask for another.
+		if not await _await_condition("a recomposition or a failure",
 				func() -> bool:
-					return BridgeClient.hub_mode() == "ZONE_READY", 30.0):
+					return BridgeClient.hub_mode() in ["ZONE_READY",
+							"ZONE_FAILED"], 30.0):
 			return false
+		if BridgeClient.hub_mode() == "ZONE_FAILED":
+			var lost := str(BridgeClient.hub().get("discard_zone_id", ""))
+			print("zone %s: exhausted its layout attempts; discarding"
+					% lost)
+			BridgeClient.send_intent({"type": "abandon_zone",
+					"zone_id": lost})
+			if not await _await_condition("the failed Zone is discarded",
+					func() -> bool:
+						return BridgeClient.hub_mode() == "ZONE_AVAILABLE",
+					30.0):
+				return false
+			return await _play_one_zone(detailed, false)
 		record = BridgeClient.active_zone()
 		zone_dict = record.get("zone", {})
 	if controller == null:

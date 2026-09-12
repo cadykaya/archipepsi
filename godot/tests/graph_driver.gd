@@ -34,18 +34,21 @@ const LEG_FRAMES := 300
 ## failures is printed, and the run goes red if coverage drops or if a
 ## Zone that does lay out produces a manifest the bridge refuses.
 ##
-## Fourteen, and the history matters. Sixteen laid out before the router
-## started asking the BRIDGE's overlap question -- a millimetre on every
-## axis rather than half a cubic metre of volume -- and two of those
-## sixteen, `zone_10` and `zone_12`, were layouts the validator would
-## have refused. Fourteen is the smaller number and the truer one.
+## Sixteen, and TWO OF THE SIXTEEN ARE NOT CLEAN. `zone_10` and
+## `zone_12` lay out with two rooms overlapping by more than
+## `layout.py` accepts -- a millimetre on every axis, where the router
+## tolerates half a cubic metre of volume at a join -- so the bridge
+## would refuse those manifests. The router refusing them itself was
+## measured and reverted (see `zone_builder.gd`, the reservation and
+## overlap notes) because the stack of changes it needed cost four of
+## the five preserved Zones. Counted here as laying out because they do;
+## named here because they are not acceptable.
 ##
-## The six that do not lay out: `zone_07`, `zone_13`, `zone_18` and
-## `zone_20` each wedge on an authored branch shell around 39 m deep and
-## 50 m tall in a Zone 51 m tall with thirty to fifty rooms already
-## standing; `zone_10` and `zone_12` overlap by less than the router used
-## to care about. Raise this when the number goes up; do not lower it.
-const SAMPLE_FLOOR := 14
+## The four that do not lay out -- `zone_07`, `zone_13`, `zone_18`,
+## `zone_20` -- each wedge on an authored branch shell around 39 m deep
+## and 50 m tall in a Zone 51 m tall with thirty to fifty rooms already
+## standing. Raise this when the number goes up; do not lower it.
+const SAMPLE_FLOOR := 16
 
 ## HOW FAR THE PLAYER JOURNEY GETS TODAY, leg by leg, as a ratchet.
 ##

@@ -80,24 +80,6 @@ static func _clearance_budget(placed: Array) -> int:
 static func _all_but_last(laid: Array) -> Array:
 	return [] if laid.size() < 2 else laid.slice(0, laid.size() - 1)
 
-## The first pair of committed rooms that overlap by the BRIDGE's rule:
-## a positive extent on all three axes past a millimetre. `layout.py`
-## `_overlaps` is the same arithmetic, and this exists so the two sides
-## cannot disagree about what "overlap" means.
-static func _rooms_that_overlap(rooms: Dictionary) -> Array:
-	var ids: Array = rooms.keys()
-	ids.sort()
-	for i in ids.size():
-		var a: AABB = (rooms[ids[i]] as Dictionary).get("bounds", AABB())
-		for j in range(i + 1, ids.size()):
-			var b: AABB = (rooms[ids[j]] as Dictionary).get(
-					"bounds", AABB())
-			var hit := a.intersection(b)
-			if hit.size.x > BRIDGE_EPSILON and hit.size.y > BRIDGE_EPSILON \
-					and hit.size.z > BRIDGE_EPSILON:
-				return [str(ids[i]), str(ids[j])]
-	return []
-
 ## `EPSILON_JOIN` in `bridge/archipepsi_bridge/layout.py`.
 const BRIDGE_EPSILON := 0.001
 
@@ -2413,28 +2395,41 @@ static func _build_once(zone: Dictionary, theme_override := "",
 		plug.position = anchors[source]
 		root.add_child(plug)
 		plugs.append(plug)
-	# THE VALIDATOR'S OWN OVERLAP RULE, ASKED BEFORE THE LAYOUT IS
-	# CLAIMED. `_overlaps` above tolerates half a cubic metre so a room's
-	# inset entry socket can swallow a little of the connector it joins;
+	# THE VALIDATOR'S OWN OVERLAP RULE -- MEASURED, AND NOT LANDED.
+	#
+	# `_overlaps` above tolerates half a cubic metre so a room's inset
+	# entry socket can swallow a little of the connector it joins;
 	# `layout.py` tolerates a MILLIMETRE on every axis and refuses the
-	# whole manifest. A thin, wide intersection sits inside the first
-	# tolerance and outside the second, and the router then returns
-	# LAYOUT_OK for a proposal the bridge will not take -- measured on
-	# the declared sample: `zone_10`'s c008/c018 and `zone_12`'s
-	# c005/c006. Reported as a wedge so the placement ladder re-solves
-	# it, which is the machinery that already exists for "this room is
-	# in the wrong place".
-	var touching := _rooms_that_overlap(room_transforms)
-	if not touching.is_empty() \
-			and (layout.get("rooms", {}) as Dictionary).is_empty():
-		root.free()
-		return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
-				"policy": routing_policy(placed, policy_override),
-				"blocking_rooms": [str(touching[1])],
-				"blocking_pairs": [touching], "wedge": true,
-				"failed": "rooms '%s' and '%s' overlap by more than the "
-				% [str(touching[0]), str(touching[1])]
-				+ "bridge will accept, so this layout would be refused"}
+	# whole manifest. A thin, wide intersection sits inside one and
+	# outside the other, so the router can return LAYOUT_OK for a
+	# proposal the bridge would not take. Found on the declared sample:
+	# `zone_10`'s c008/c018 and `zone_12`'s c005/c006.
+	#
+	# REFUSING IT HERE WAS TRIED AND REVERTED, and the measurements are
+	# the reason rather than the taste:
+	#
+	# * as a post-check alone it refused 36 shell/theme combinations the
+	#   room-contract suite builds as three-room Zones -- which is a real
+	#   finding about those fixtures, and a suite going red for it is not
+	#   the same as the router being repaired;
+	# * pushed into `_search` as a room-versus-room test it fixed those
+	#   36 and cost the turning fixture its turn, because the route was
+	#   free to corner back and undo an authored `exit_yaw`;
+	# * forbidding that cancelling corner then left the turning fixture
+	#   with no pose at all, because a corridor leaving a room's face
+	#   grazes that room and the push broke against the room it had just
+	#   left;
+	# * exempting the room a route leaves fixed THAT and took the
+	#   preserved five Zones from five of five down to ONE, with branch
+	#   rooms failing against 97 standing boxes where 42 used to be the
+	#   worst case.
+	#
+	# Four changes, each correct about the thing in front of it, and the
+	# stack does not hold. What the evidence actually says is that the
+	# join exemption and the validator's rule have to be reconciled
+	# together -- corridor adjacency keeps a tolerance, rooms do not --
+	# and that is a router change with its own measurements, not a rider
+	# on this one. `docs/AGENT_FRONTIER.md` carries the finding.
 	return {"root": root, "spawn_transform": spawn,
 			"chambers": built_chambers, "exit_portal": portal,
 			"bounds_list": bounds_list,

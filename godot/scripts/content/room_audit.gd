@@ -443,12 +443,139 @@ static func measure_layout(build: Dictionary,
 				entry["xform"] as Transform3D, space)
 		for socket: String in measured:
 			apertures["%s/%s" % [rid, socket]] = bool(measured[socket])
+	# THE RETURN ANCHOR IS SETTLED BEFORE IT IS REPORTED.
+	#
+	# `ChamberBuilders.return_spot` reserves against the room's own
+	# furniture, which is what §5.7 asks for and is not the same as
+	# standing somewhere. A room with a chasm, a sunken bay or a floor
+	# the builder does not model as furniture can offer a spot that
+	# reserves cleanly and holds no body -- and the bridge refuses the
+	# WHOLE layout for it. Measured in a live campaign: "a standing
+	# capsule does not fit at 'room:c003:return'", nine times, five
+	# Zones discarded. So where reservation ends, the probe begins.
+	_settle_return_anchors(build, space)
 	var arrival_ok := {}
 	for name: String in build.get("anchors", {}):
 		arrival_ok[name] = arrival_is_supported(space,
 				(build["anchors"] as Dictionary)[name])
 	return {"apertures": apertures, "arrival_ok": arrival_ok,
 			"plug_clear": plugs_clear_of_arrivals(build)}
+
+## Where the settle looks for standable ground: a LATTICE around the
+## room's arrival, not a ring.
+##
+## A ring at four and seven metres finds nothing in a corridor seven
+## metres wide -- every bearing but two is outside the envelope, and the
+## two that are not are the ones the ring steps over. Measured: nine
+## refusals of `room:c003:return` before and nine after, byte for byte.
+## Offsets on both axes, nearest first, so a narrow room is served by
+## its long axis and a wide one by whichever is clear.
+##
+## Every offset is at least the device's trigger plus a capsule from the
+## arrival, so a spot this finds cannot be one the player is standing on
+## when they walk in -- which is the defect the whole anchor exists for.
+## `ReturnPlug.RADIUS` (1.4) plus `PLAYER_RADIUS` (0.4) is 1.8, so 2.5
+## is the nearest offset that still leaves a body at the arrival outside
+## the trigger -- and a small room needs a near one or it has no
+## candidates at all: `played_zone`'s `c012` had none at three metres.
+const RETURN_OFFSETS := [2.5, -2.5, 3.5, -3.5, 5.0, -5.0, 8.0, -8.0]
+
+## Moves each `room:<rid>:return` anchor onto ground a body can stand on,
+## when the reserved spot is not. Bounded: sixteen probes, the room's own
+## envelope, and the first that holds -- and if none does, the anchor is
+## left exactly where the builder put it and the bridge refuses the
+## layout, which is the honest outcome and not a silent one.
+##
+## The plug NODE moves with the anchor. Publishing one place and standing
+## the device in another is two truths about one thing.
+static func _settle_return_anchors(build: Dictionary,
+		space: PhysicsDirectSpaceState3D) -> void:
+	var anchors: Dictionary = build.get("anchors", {})
+	var rooms: Dictionary = build.get("rooms", {})
+	for name: String in anchors.keys():
+		if not name.begins_with("room:") or not name.ends_with(":return"):
+			continue
+		if arrival_is_supported(space, anchors[name]):
+			continue
+		var rid := name.substr(5, name.length() - 12)
+		var placed: Dictionary = rooms.get(rid, {})
+		if placed.is_empty():
+			continue
+		var box: AABB = placed.get("bounds", AABB())
+		var from: Vector3 = placed.get("arrival",
+				box.position + box.size / 2.0)
+		var moved := Vector3.INF
+		# THE ROOM'S OWN DECLARED GROUND FIRST, probed in world space.
+		#
+		# A lattice around the arrival keeps the arrival's HEIGHT, and
+		# `platform_path` is rising islands over a kill pit: every
+		# candidate at the start ledge's height is over the void, which
+		# is why `played_zone`'s `c012` refused its layout however wide
+		# the lattice got. The room already declares which square metres
+		# hold weight; the farthest one that holds a capsule and leaves
+		# a body at the arrival outside the trigger is the answer.
+		var clearance := ReturnPlug.RADIUS + Constants.PLAYER_RADIUS
+		var best_gap := clearance
+		for raw: Variant in build.get("chambers", []):
+			var entry: Dictionary = raw
+			if str((entry["chamber"] as Dictionary).get("id", "")) != rid:
+				continue
+			var to_world: Transform3D = entry["xform"]
+			for raw_socket: Variant in (entry["build"] as Dictionary) \
+					.get("sockets", []):
+				if typeof(raw_socket) != TYPE_DICTIONARY:
+					continue
+				var surface: Dictionary = raw_socket
+				if str(surface.get("kind", "")) != "stand":
+					continue
+				var at: Vector3 = to_world * (surface.get("position",
+						Vector3.ZERO) as Vector3)
+				var gap := Vector2(at.x - from.x, at.z - from.z).length()
+				if gap < clearance or gap < best_gap:
+					continue
+				if arrival_is_supported(space, at):
+					moved = at
+					best_gap = gap
+		if moved != Vector3.INF:
+			anchors[name] = moved
+			for raw_plug: Variant in build.get("plugs", []):
+				if not is_instance_valid(raw_plug as Object):
+					continue
+				var standing: ReturnPlug = raw_plug
+				if str(standing.get_meta("room_id", "")) == rid:
+					standing.global_position = moved
+			continue
+		var inside := box.grow(-0.6)
+		for dz: float in RETURN_OFFSETS:
+			if moved != Vector3.INF:
+				break
+			for dx: float in ([0.0] as Array) + RETURN_OFFSETS:
+				var at := from + Vector3(float(dx), 0.0, dz)
+				if not inside.has_point(at):
+					continue
+				if arrival_is_supported(space, at):
+					moved = at
+					break
+		if moved == Vector3.INF:
+			# SAY SO, because the bridge's refusal names the anchor and
+			# not the reason. A room over a kill pit -- `platform_path`
+			# is rising islands and two narrow ledges -- can have NO
+			# ground that both holds a capsule and leaves a body at the
+			# arrival outside the device's trigger. That is a composition
+			# question (should such a room host a return at all?) and not
+			# a placement one, and the engine refusing is the contract
+			# working rather than the contract failing.
+			push_warning("zone: no standable spot in room '%s' is clear "
+					% rid + "of its arrival, so its return device has "
+					+ "nowhere to stand; the layout will be refused")
+			continue
+		anchors[name] = moved
+		for raw: Variant in build.get("plugs", []):
+			if not is_instance_valid(raw as Object):
+				continue
+			var plug: ReturnPlug = raw
+			if str(plug.get_meta("room_id", "")) == rid:
+				plug.global_position = moved
 
 ## IS A BODY AT THE ROOM'S ARRIVAL OUTSIDE THE RETURN DEVICE?
 ##
