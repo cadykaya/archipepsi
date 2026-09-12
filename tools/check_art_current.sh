@@ -193,6 +193,21 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
     repaired joins, at the origin or placed and yawed. Run
 
     tools/content/run_crossing_test.sh"
+
+  # The exported pack ACTUALLY BINDING, which no Python validator reaches:
+  # between the last byte on disk and a wall in a room there is an
+  # importer, a loader, a sampler and a UV scale, and the shipped
+  # ThemeMaterials is procedural, so a Zone builds the same whether the
+  # pack is there or not. Runs three controls that move real files aside
+  # and put them back.
+  say "the theme pack binding, and its three controls..."
+  tools/content/run_theme_bind.sh >/dev/null 2>&1 || \
+    fail "theme-bind: an exported theme no longer binds its authored pixels
+    to a material, or one of the three controls stopped behaving -- a
+    missing required texture, a wrong-pixels file, a missing optional one.
+    Run
+
+    tools/content/run_theme_bind.sh"
 else
   say "SKIPPED the engine checks -- no godot at ${GODOT:-$ROOT/.tools/godot}"
 fi
@@ -290,6 +305,22 @@ for f in tools/content/verify_*.py tools/content/check_*.py \
     *) fail "$f is a gate and nothing in this script runs it, directly or
   through a script it calls. Add it, or add whatever does run it." ;;
   esac
+done
+
+# --- 5c. every ENGINE gate is actually CALLED ---------------------------
+#
+# 5b greps for a path anywhere in the file and deliberately ignores the
+# `run_*.sh` harnesses, because most of them render evidence and would
+# re-render the review library on every run. Three of them are not
+# evidence, they are gates -- and this file lost the theme-bind call in a
+# botched stash recovery, shipped a commit claiming it was gated, and
+# 5b could not see it because the path still appeared in the commit's own
+# prose. So these are named, and what is required is the CALL SHAPE, not a
+# mention.
+for gate in run_import_examples.sh run_crossing_test.sh run_theme_bind.sh; do
+  grep -q "^[[:space:]]*tools/content/$gate >/dev/null" "$SELF" || \
+    fail "tools/content/$gate is an engine gate and this script does not
+  call it. Naming it in a comment or an error message is not calling it."
 done
 
 # --- 6. everything rebuilds byte-identical ------------------------------
