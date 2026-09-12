@@ -4004,6 +4004,20 @@ brief room by room. All three are `review: "pending"`; Art does not write
 | `shell_yard_gantry` | 540 tris · 85.20 × 52.00 × 17.60 m · 32.0 texels/m | 5.3 : 1 wide | an 84 m gantry crane spanning the full width at 12 m |
 | `shell_span_basin` | 672 tris · 31.20 × 90.00 × 23.60 m · 32.0 texels/m | 3 : 1 long | one 90 m deck on two pylons, with a walkable basin under all of it |
 
+### Batch 044 — the first branching rooms (2026-09-13, PENDING)
+
+Two junctions and a side destination. Proposal art: `review: "pending"`,
+not exported to `godot/content/`, and Art does not write `pass`. Every
+route in all three is flat, because the measured walk-up limit of the
+current player is **0.12 m** — see
+`docs/art/reports/2026-09-13-branching-rooms.md`.
+
+| Shell | Metrics | Connections | Plan |
+| --- | --- | --- | --- |
+| `shell_junction_triad` | 672 tris · 26.00 × 26.00 × 8.66 m · 32.0 texels/m | 3 ways | a T of arms round an open middle, the branch and the bay opening together |
+| `shell_junction_cross` | 852 tris · 30.00 × 30.00 × 9.66 m · 32.0 texels/m | 4 ways | a plant block you walk around, four arms off the ambulatory |
+| `shell_bay_terminus` | 516 tris · 18.00 × 22.00 × 7.66 m · 32.0 texels/m | 1 used + 2 closable | narrow in, opens out, stops at a recessed end wall |
+
 Measured boxes are Blender-ordered (width, length, height) and include
 the 0.60 m boundary wall on each face; the pack carries `size_godot`.
 

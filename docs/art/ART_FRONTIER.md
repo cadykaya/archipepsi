@@ -325,6 +325,37 @@ binder itself. ~~Gap 4 (`THEME` as a build argument) remains the next
 Art-owned item and is unblocked.~~ **Gap 4 was done on 2026-09-12** — see
 below. Gap 3 is now the next Art-owned item.
 
+### Batch 044 — the first branching rooms (2026-09-13)
+
+Report: `docs/art/reports/2026-09-13-branching-rooms.md`. Handoff:
+`docs/art-requests/2026-09-13-branching-rooms-handoff.md`. Prod's handoffs
+read at `612a7d2`.
+
+`shell_junction_triad` (3 connections), `shell_junction_cross` (4) and
+`shell_bay_terminus` (1 used + 2 closable), in `assets/models/batch044/`.
+**PENDING; not exported to `godot/content/`; no approval claimed.**
+
+**`entry` and `exit` keep their names**, so all three still work as ordinary
+through-rooms under today's two-socket router. Branches are additional and
+an unassigned socket is `SEALED`. Not a flag day.
+
+**Every route is flat, and that is a measurement.**
+`run_controller_limits.sh` drives Production's capsule at a step: **walking
+up, 0.12 m**; jumping, 1.50 m; a ramp, to 46°. `move_and_slide` has no
+step-up, so 0.12 m is the whole budget for a walking route. Areas are told
+apart by enclosure, ceiling and fittings instead of by height.
+
+The triad's first build was a hall — from the entry you could not tell the
+east branch existed. Filling the four corners turned the square into a T, so
+the approach is narrow and both arms appear when you arrive. **An interior
+view at eye height is what found it.**
+
+The span's stairs: the flight was never short. `sp_landing_0` lay across its
+last three treads, 0.38 m of headroom over one and the next one inside the
+slab — the playtest's *"the catwalk on top is above the stairs"*. Repaired;
+a capsule now completes both routes onto the deck in **16 jumps**, and
+cannot walk them, which is the engine's step-up question and Production's.
+
 ### Theme-pack gap 3 — the set is described and checked (2026-09-12)
 
 Report: `docs/art/reports/2026-09-12-theme-set.md`.
@@ -349,9 +380,11 @@ Value separation is **reported, not asserted**: the palette's
 `min_value_separation` governs adjacent steps within a ramp, not one role
 against another, and a role-versus-role rule would be one I invented.
 
-**Still Production's, and this is the whole of what blocks gap 3:** where
-the set lands in `godot/content/`, and the binding contract. Nothing here
-chooses either, and nothing was copied into `godot/`.
+~~**Still Production's, and this is the whole of what blocks gap 3:** where
+the set lands in `godot/content/`, and the binding contract.~~ **Answered
+2026-09-12** by `docs/art-requests/2026-09-12-theme-pack-binding-contract.md`
+and **shipped** to `godot/content/theme/` with the engine's own `.import`
+sidecars. The runtime binder is Production's and is not started here.
 
 ### Doorway repairs, round 2 (2026-09-12)
 

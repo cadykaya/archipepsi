@@ -175,6 +175,51 @@ func _run() -> void:
 	_log["basin_south_to_deck"] = _walk(glb, south, 40.0)
 	_log["basin_north_to_deck"] = _walk(glb, north, 40.0)
 
+	# --- the branching rooms, inside ---------------------------------
+	#
+	# Crossing a doorway is `crossing_test.gd`'s question. This one is
+	# whether the room BEHIND the doorway is navigable: can a body get
+	# from the way in to each way out, and to the space the runtime puts
+	# its content in. A junction whose branches are visible and
+	# unreachable is worse than a corridor.
+	var tri := "%s/batch044/shells/shell_junction_triad.glb" % _models
+	_log["triad entry to exit"] = _walk(tri, [
+		Vector3(0.0, 0.0, 1.4), Vector3(0.0, 0.0, 13.0),
+		Vector3(0.0, 0.0, 24.6)], 25.0)
+	_log["triad entry to the east branch"] = _walk(tri, [
+		Vector3(0.0, 0.0, 1.4), Vector3(0.0, 0.0, 13.0),
+		Vector3(11.6, 0.0, 13.0)], 25.0)
+	_log["triad entry to the west bay"] = _walk(tri, [
+		Vector3(0.0, 0.0, 1.4), Vector3(-4.0, 0.0, 13.0),
+		Vector3(-9.6, 0.0, 13.0)], 25.0)
+
+	# The cross is walked AROUND the plant on purpose: a straight line
+	# from entry to exit goes through five metres of machine.
+	var crs := "%s/batch044/shells/shell_junction_cross.glb" % _models
+	# Every one of these goes UP THE ARM FIRST and then round the plant.
+	# A straight line from the entry to anywhere else in this room passes
+	# through either a corner fill or five metres of machine, which is the
+	# room working: you cannot cut the corner of a plant room.
+	_log["cross entry to exit, west of the plant"] = _walk(crs, [
+		Vector3(0.0, 0.0, 1.4), Vector3(0.0, 0.0, 7.5),
+		Vector3(-6.5, 0.0, 9.0), Vector3(-6.5, 0.0, 21.0),
+		Vector3(0.0, 0.0, 28.6)], 40.0)
+	_log["cross entry to the east branch"] = _walk(crs, [
+		Vector3(0.0, 0.0, 1.4), Vector3(0.0, 0.0, 7.5),
+		Vector3(6.5, 0.0, 9.0), Vector3(13.6, 0.0, 15.0)], 40.0)
+	_log["cross entry to the north bay"] = _walk(crs, [
+		Vector3(0.0, 0.0, 1.4), Vector3(0.0, 0.0, 7.5),
+		Vector3(6.5, 0.0, 9.0), Vector3(6.5, 0.0, 21.0),
+		Vector3(6.6, 0.0, 21.8)], 40.0)
+
+	var bay := "%s/batch044/shells/shell_bay_terminus.glb" % _models
+	_log["terminus entry to the prize"] = _walk(bay, [
+		Vector3(0.0, 0.0, 1.4), Vector3(0.0, 0.0, 12.0),
+		Vector3(0.0, 0.0, 18.0)], 25.0)
+	_log["terminus entry to the west door"] = _walk(bay, [
+		Vector3(0.0, 0.0, 1.4), Vector3(0.0, 0.0, 13.0),
+		Vector3(-7.6, 0.0, 16.0)], 25.0)
+
 	for key: String in _log:
 		print("[route] %s: %s" % [key, JSON.stringify(_log[key])])
 		var got: Dictionary = _log[key]

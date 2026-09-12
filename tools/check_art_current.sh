@@ -222,7 +222,7 @@ SCRIPTS="build_materials build_architecture build_props
   build_epsilon_states build_forge build_checkpoint build_pickups
   build_interaction_kit build_secrets build_enemy_roles build_zone_keys
   build_viewmodel build_gates build_decoys build_physics_props
-  build_machinery build_wave1_repair_overlay"
+  build_machinery build_wave1_repair_overlay build_junctions"
 
 # Unquoted on purpose: word-splitting collapses the list's line breaks, so a
 # name that happens to sit at the end of a line is still delimited by spaces.

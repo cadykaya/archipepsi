@@ -95,7 +95,8 @@ func _joins() -> Array:
 			"batch018/shells/manifest.json",
 			"batch019/shells/manifest.json",
 			"batch039/shells/manifest.json",
-			"batch040/shells/manifest.json"]:
+			"batch040/shells/manifest.json",
+			"batch044/shells/manifest.json"]:
 		var path := "%s/%s" % [_models, rel]
 		var text := FileAccess.get_file_as_string(path)
 		if text == "":
@@ -132,10 +133,35 @@ func _facing(socket: Dictionary, place: Transform3D) -> Vector3:
 	return (place.basis * (Basis(Vector3.UP, yaw) * Vector3(0, 0, 1))).normalized()
 
 
+## The slab the engine lays over a SEALED door, built to the same rule:
+## `ContentInstantiator._place_closures` uses the aperture plus 0.6 m, 0.5 m
+## deep, at the socket. An authored opening has to ACCEPT one -- a collar
+## that does not clear the aperture by 0.30 m on each side leaves a closure
+## hanging in the hole, and a room whose unused doors do not close is a room
+## the composer cannot use as a dead end.
+func _closure(root: Node3D, socket: Dictionary, place: Transform3D) -> void:
+	var at: Vector3 = place * (Vector3(socket["position"][0],
+			socket["position"][1], socket["position"][2]))
+	var yaw := deg_to_rad(float(socket.get("yaw", 0.0)))
+	var body := StaticBody3D.new()
+	body.name = "closure"
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	var w: float = float(socket.get("width", 2.4)) + 0.6
+	var h: float = float(socket.get("height", 3.2)) + 0.6
+	box.size = Vector3(w, h, 0.5)
+	shape.shape = box
+	shape.position = Vector3(0, h / 2.0, 0)
+	body.add_child(shape)
+	body.transform = Transform3D(place.basis * Basis(Vector3.UP, yaw), at)
+	root.add_child(body)
+
+
 ## The room, its collision, and a corridor stub attached at the socket --
 ## which is the whole point: ZoneBuilder attaches AT THE SOCKET, so the
 ## stub is placed by transforming the socket, never by re-deriving it.
-func _stage(glb: String, socket: Dictionary, place: Transform3D) -> Node3D:
+func _stage(glb: String, socket: Dictionary, place: Transform3D,
+		sealed: bool = false) -> Node3D:
 	var root := Node3D.new()
 	get_root().add_child(root)
 
@@ -176,6 +202,8 @@ func _stage(glb: String, socket: Dictionary, place: Transform3D) -> Node3D:
 	floor_body.transform = Transform3D(place.basis * Basis(Vector3.UP, yaw),
 			at + out_dir * (CORRIDOR / 2.0) + Vector3(0, -0.2, 0))
 	root.add_child(floor_body)
+	if sealed:
+		_closure(root, socket, place)
 	return root
 
 
@@ -259,11 +287,13 @@ func _walk(root: Node3D, socket: Dictionary, place: Transform3D,
 			"max_drop_below_threshold_m": snappedf(maxf(drop, 0.0), 0.001)}
 
 
-func _cross(join: Dictionary, place: Transform3D, label: String) -> void:
+func _cross(join: Dictionary, place: Transform3D, label: String,
+		sealed: bool = false) -> void:
 	var socket: Dictionary = join["socket"]
 	var shell: String = join["shell"]
 	var going_in: bool = str(socket.get("name", "")) == "entry"
-	var root := _stage("%s/%s" % [_models, join["glb"]], socket, place)
+	var root := _stage("%s/%s" % [_models, join["glb"]], socket, place,
+			sealed)
 	if root == null:
 		return
 	var result := _walk(root, socket, place, going_in)
@@ -273,6 +303,14 @@ func _cross(join: Dictionary, place: Transform3D, label: String) -> void:
 			snappedf(place.origin.y, 0.01), snappedf(place.origin.z, 0.01)]
 	var key := "%s/%s %s" % [shell, socket.get("name", "?"), label]
 	_log[key] = result
+	if sealed:
+		# A closed assignment must STOP the player. A doorway that stays
+		# crossable when the engine has sealed it is a hole in the Zone.
+		if result["crossed"]:
+			_fail("%s: the closure did not stop the player -- %s"
+					% [key, JSON.stringify(result)])
+		root.free()
+		return
 	if not result["crossed"] or result["fell"]:
 		_fail("%s: the player did not cross -- %s"
 				% [key, JSON.stringify(result)])
@@ -305,6 +343,10 @@ func _run() -> void:
 	# preview and not in a Zone.
 	for raw: Variant in joins:
 		_cross(raw, placed, "placed and yawed 37 deg")
+	# And every one of them CLOSED, which is what an unused authored
+	# opening becomes.
+	for raw: Variant in joins:
+		_cross(raw, Transform3D.IDENTITY, "closed", true)
 
 	for key: String in _log:
 		print("[crossing] %s: %s" % [key, JSON.stringify(_log[key])])
