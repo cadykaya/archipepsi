@@ -68,12 +68,12 @@ its own room's doorway is the room's property and is proved by
 `_test_the_played_zone_rooms_can_be_left_on_foot`.
 
 **THE WAY BACK IN IS REAL, ON BOTH SIDES OF A RESTART.**
-`ZONE_ENTERABLE_MODES` and `ZONE_ENTER_MODES` were two lists for one
-question and they drifted: `ZONE_DORMANT` was added to the second so the
-Hub's portal branch would accept it, and `portal_enabled` went on
-reading the first. The portal showed the mode's prompt and refused to
-fire — a way back that is wired, labelled and dead. One list now, and
-the portal carries `[E] RETURN TO ZONE`.
+Two near-identically named constants were one question: `ZONE_DORMANT`
+went into one and `portal_enabled` reads the other, so the portal showed
+the mode's prompt and refused to fire — a way back that is wired,
+labelled and dead. Both lanes found it independently, from opposite
+ends. One name now (`ZONE_ENTERABLE_MODES`, the bridge's, spelled the
+same in `HubController`), and the portal carries `[E] RETURN TO ZONE`.
 
 `make godot-reload` **restarts the bridge too**. It used to stay up
 across the two Godot processes, so "the campaign loads from disk" meant
@@ -208,12 +208,20 @@ bridge alone.
 **Not connected:** the physics contract in `schemas/physics.py` — no
 runtime exists for it yet.
 
-~~And one player-facing hole, in the bridge column: a DORMANT Zone
-leaves the Hub in `ZONE_AVAILABLE`, so the portal sends
-`request_next_zone`.~~ **Closed 2026-09-12.** The bridge carries
-`ZONE_DORMANT` and `resume_zone_id`, the Hub's portal branch reads them,
-and `portal_enabled` was the last thing still saying no — see the engine
--lane section above. `make godot-reload` presses the real portal.
+~~**The DORMANT-Hub hole (`AMALGAM_SLICE1.md` §5q) is half closed.**~~
+**Closed on both sides, 2026-09-12.** The bridge side landed first:
+`ZONE_DORMANT`, `hub.resume_zone_id`/`resume_zone_name` naming which
+Zone the portal enters, `hub.revisitable` for finished Zones, and
+`portal_enabled` true for the dormant mode. The Hub affordance landed in
+the engine lane the same day — the portal branch reads the mode,
+`_on_enter_zone` takes the id from `resume_zone_id`, and the portal
+carries `[E] RETURN TO ZONE`. `make godot-reload` presses it, through a
+restart of BOTH processes.
+
+Both lanes found the same last obstacle independently and from opposite
+ends: `portal_enabled` was reading a second constant that had never
+heard of the new mode. There is one list now rather than two with equal
+contents.
 
 **All three of SOLUTIONS_CATALOGUE §2's local-key rules are enforced.**
 A key reachable without passing its own lock, an acyclic key graph, and
@@ -222,10 +230,13 @@ exit declared in the matching AP logic. The third is currently a refusal
 of everything — the apworld declares no prerequisites — which is the
 intended behaviour and is a refusal rather than a silence.
 
-**`manipulate` and `vector_latches` are blocked at the substrate**, not
-waiting on this lane. Zero `RigidBody3D` in the project, and the
-capability vocabulary deliberately omits `manipulate` so a Zone cannot
-declare a gate no build can satisfy.
+~~**`manipulate` and `vector_latches` are blocked at the substrate.**
+Zero `RigidBody3D` in the project.~~ **The substrate landed 2026-09-12**
+(engine lane): `ManipulableBody`, `Manipulation` resolving §29.3.2's
+three minima, and `ReplayHarness` replaying three times at exactly the
+envelope. The capability vocabulary still omits `manipulate` on purpose
+— a Zone must not declare a gate before content can author one — and
+that is now a CONTENT gap rather than a substrate one.
 
 **Three levels of evidence, kept apart.** The frontier is not "done /
 not done":
@@ -233,7 +244,7 @@ not done":
 | | |
 |---|---|
 | **Connected** — runs in a real campaign | graph composition at acceptance, reachability refusing an unreachable Zone, `layout_result` validated and committed, progress identities checked, DORMANT/VISITING, leave-reload-re-enter |
-| **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | layout evidence validation (the engine does not send `layout_result`), the physics contract in `schemas/physics.py` (no runtime exists). **Both stay in this row until real engine output passes through their actual acceptance path** — a synthetic payload exercising a validator is not the seam being crossed |
+| **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | **nothing in this row today.** Layout evidence validation moved up when the engine sent a real `layout_result` (`dc4ef39`); the physics contract moved up on 2026-09-12 when the engine lane built `ManipulableBody`, `SceneDigest` and `ReplayHarness` and `make godot-physics` began measuring them. What is left is not a rule waiting for a runtime — it is that no CONTENT authors a physics package yet |
 | **Requires Godot** | physical reachability and the whole physics substrate — `docs/AMALGAM_BRIDGE.md` §6. Aperture polarity and the manifest replay consumer moved to **Connected** on 2026-09-12 |
 
 **The physics digest has three levels and only the first is done.**
@@ -302,11 +313,87 @@ traces the acquisition chain and compares explicit capability items
 against guaranteed local acquisition represented in AP logic — for each,
 where the guarantee comes from, how location rules match it, and how a
 qualifying provider reaches the player. The two options are different
-games; that is the choice. It also names a repair owed under either:
-`_capability_is_satisfied` tests primitives only, so a 2-metre dash
-satisfies `cross_long_gap`. **Until it is settled the bridge keeps
-refusing AP-relevant gates — a temporary restriction, not a verdict on
-the gameplay.**
+games; that is the choice. The choice is narrower than the
+first draft claimed: an AP progression item does **not** cost the
+interpretation premise, because a guarantee is a contract on FUNCTION
+(primitive family, resolved parameters at or above the envelope) and
+presentation stays interpreted and validated exactly as it is today.
+What actually differs is whether capability progression sits in the
+multiworld or beside it. Also corrected there: access rules are fixed
+at seed generation, so the capability contract flows AP -> runtime
+(location_id -> required capabilities, in slot data) and the allocator
+obeys it — the runtime cannot attach a rule to a Zone it allocates
+hours later. And hidden Checks are **not** exempt under the
+gate-only-optional option: optional to finishing a Zone is not optional
+to AP accessibility.
+
+**READY FOR PROD, AND IT MOVES ON ITS OWN: the way back into a Zone.**
+Bridge half done and accepted. **One task, and it is only the portal**
+— `ZONE_DORMANT` routing and `resume_zone_id`. The progress half of the
+restart is CLOSED: the engine lane fixed it independently at `fa5f056`,
+better than the write-up here (it UNIONS the bridge's persisted
+progress with the in-flight in-memory half, because an intent sent in
+the same breath as leaving may not be in the snapshot yet, and both are
+monotone sets). `ZoneReady.progress` was added here and is reverted: the
+game reads progress and manifest from `BridgeClient.active_zone()`, the
+snapshot record, so a field on `ZoneReady` was a second carrier for one
+fact — the same failure as `ZONE_ENTER_MODES`, one commit after writing
+it down. Regression coverage kept and now asserts the carrier in use. `docs/AMALGAM_BRIDGE.md` §5.5b has the exact
+serialized `hub` block, the `hub.gd` / `main.gd` change, and the one
+open Hub-design question (`revisitable` can hold many Zones and the
+portal is one object). Take it whenever; nothing in the qualification
+work below blocks it or is blocked by it.
+
+**PROVIDER QUALIFICATION IS SEPARATE FROM IDENTITY, and now
+implemented.** `owned_capabilities` said `cross_long_gap` for a 4 m/s
+dash and a 20 m/s dash alike, so a six-metre route was proved by a
+provider that might carry three. `qualifies_for_gap` reads RESOLVED
+provider parameters against the route's requirement in metres;
+`max_safe_gap(rise)` is the base kit's own reach, so a crossing inside
+it is not a gate at all. **No envelope went into the `stats` Boolean** —
+`stats` holds stat NAMES, and that branch is the identity question.
+**Evidence is bound to what it describes, not just well-shaped.** A row
+naming `blink` certified a dash, a row certifying a band of `range`
+certified a `force` reading, and any well-formed `setup_digest` passed
+because nothing compared it — the tests checked digest FORMATTING and
+the provider mapping, never the bindings. All three refuse now
+(`evidence_misfiled`, `evidence_for_another_setup`), and a missing
+expected identity is `setup_identity_unknown` rather than a pass. **The
+digest is recorded provenance, not working stale-evidence
+invalidation**: the comparison is here and nothing produces the other
+half, so where the expected setup identity comes from is the first thing
+to agree with Prod (§8b).
+
+`CROSSING_EVIDENCE` ships EMPTY and nothing qualifies without it:
+`Dash.force` is a velocity impulse in m/s that `_dash` ADDS to current
+velocity along camera-forward, so no closed form exists here and the
+measurement is the engine lane's, like `scene_digest`.
+
+**Evidence states what it covers and extrapolates nothing.** A first
+draft stored `(parameter, reach)` points and read the largest at or
+below the provider's value, so force 12 silently certified force 20 —
+stronger is not automatically suitable, it can overshoot the landing.
+And reach alone certified a six-metre gap landing a hundred metres up,
+because `rise_m` reached the base-kit comparison and never the
+provider's evidence. `CrossingEvidence` now names a certified parameter
+band, an executed rise band and the `setup_digest` that produced it;
+outside either band is `outside_measured_scope`, a different answer from
+`no_envelope_measured`. Providers are scoped by name
+(`QUALIFIABLE_PARAMETER`), so `glide` and `hover` report
+`provider_not_qualifiable` rather than pretending to be unmeasured.
+
+**The boundary, plainly: `qualifies_for_gap` has TEST CALLERS ONLY.**
+What refuses an undeclared gate today is `topology.reachability`, on the
+Archipelago side. The production consumer will be `layout.validate` —
+the only place the bridge holds metres, since a gated TRAVERSAL_ONLY
+edge's plug anchors give a gap and a rise once the engine returns
+`layout_result`. AP obtainability and physical suitability are separate
+obligations and neither substitutes for the other.
+`docs/AP_CAPABILITY_LOGIC.md` §8b has the evidence shape to agree with
+Prod, §8c the boundary. Design 1 §13.1 calls `DASH_IMPULSE` a distance
+in metres while the schema carries m/s — a divergence someone has to
+reconcile. **AP-relevant gates without a matching guarantee stay
+refused.**
 
 **Capability gates are searched, not sampled.** A previous guard removed
 one gate edge at a time with every other gate left passable, so two

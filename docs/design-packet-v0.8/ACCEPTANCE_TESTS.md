@@ -8,7 +8,7 @@ All examples use the canonical fixture in `IMPLEMENTATION_PLAN.md` §3.1. v0.3 s
 
 # 1. Schema tests — ship with the packet
 
-`schemas/test_schemas.py` — 129 tests at time of writing, all passing. Run them first, before writing anything else. The count will grow; what matters is that they are green on arrival, so any red one is a regression you introduced.
+`schemas/test_schemas.py` — 131 tests at time of writing, all passing. Run them first, before writing anything else. The count will grow; what matters is that they are green on arrival, so any red one is a regression you introduced.
 
 They pin: the derived jump gap and its margin; the worst-case Zone clear time; the PRNG recipe (with a pinned seed value); Zone structural and semantic rules; the impossibility of expressing an Echo gate; Echo composition rules; rejection of invented fields and unsupported effects; save round-tripping; and that a `PENDING_GENERATION` Zone retains its allocation.
 
@@ -143,8 +143,13 @@ each test walks the *adjacent* path rather than the originally reported one.
     one each; with a single list the state could not be described, so
     the Hub fell through to `ZONE_AVAILABLE` and offered to design a
     Zone the bridge then refused to allocate. `hub.resume_zone_id` names
-    which Zone the portal enters in every mode in `ZONE_ENTER_MODES`,
-    and `hub.revisitable` lists the finished Zones that stay open.
+    which Zone the portal enters in every mode in
+    `ZONE_ENTERABLE_MODES` — one list, which is also what
+    `portal_enabled` reads, so naming a Zone and lighting the portal
+    cannot become two answers, and an Archipelago outage does not shut
+    the door on a Zone already on disk — and `hub.revisitable` lists the
+    finished Zones that stay open, bounded only by how many the campaign
+    finished.
 66. *(needs the shop)* **Buying leaves stock and enters the ledger
     atomically.** After a purchase the item is gone from `shop.stock` and
     present in `pending_checks`, and `coins_spent` has risen by its cost. A

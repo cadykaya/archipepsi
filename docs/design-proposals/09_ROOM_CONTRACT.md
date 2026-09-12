@@ -411,3 +411,100 @@ Any §3.3 invariant violated — an unknown `socket_id`, a doubly-assigned socke
 Plus two corrections to the document itself: **Law 47a → 47c** where committed replay is meant, and the header line, which asserted a review that had not happened.
 
 **One correction to the review, per owner direction of 2026-09-12.** Its check 10b proposed the `c8ed2e9` walk flood as the physical-reachability proof. That flood permits one-metre step-ups the player cannot perform, making it a **structural diagnostic rather than a traversal proof**, and a diagnostic that over-permits will pass a key the player cannot reach. **Physical reachability stays Prod's to define and prove; this contract states the obligation, consumes the verdict, and encodes no particular flood as authoritative.** §5.5 records it as an open gap rather than a satisfied check.
+
+---
+
+## 11. Engine-lane confirmation — what the shipped engine does today
+
+**Engine lane, 2026-09-12, against `612a7d2` merged with the bridge lane
+at `37793b9`.** The brief asked which capacity/assignment interface the
+other lanes should target. It is the one above; nothing here is a new
+contract. What follows is which parts the engine already honours, and
+**four restrictions that are real and are not in §1–§10** — three of
+them the engine's to lift, one the bridge's to fill.
+
+Read this section before building against §2 or §3. A restriction nobody
+wrote down is the same defect as a rule nobody enforces.
+
+### 11.1 Confirmed, and already true of the engine
+
+| §2.1 **Stable socket ids** | Confirmed. `content_instantiator.socket_by_id` resolves a `DoorAssignment`'s `socket_id` against the shell's declared sockets, with a two-name alias set (`entry`/`end_a`, `exit`/`end_b`) so a connector grammar and a door assignment can name the same opening. A third opening gets a third id and nothing renames. |
+| §3 **Assignment decides which opening serves which edge** | Confirmed and implemented: `socket_for_edge(entry, chamber, "arrive_edge" \| "depart_edge")` reads the edge id off the room's own `doors[]` and returns the socket. The name-based `_entry_offset`/`_exit_offset` remain only as the fallback §2.1 describes. |
+| §3.3.8 **Every unused joining socket is `SEALED`** | Confirmed, and it is load-bearing rather than bookkeeping: `_place_closures` builds a `Closure_<socket_id>` `StaticBody3D` for every non-passable door, and `RoomAudit.aperture_polarity` measures each declared door and reports it. A `SEALED` door the engine measures as a hole is a `LAYOUT_REFUSED` from `layout.validate`, so an unmentioned socket is not merely untidy — it is an un-audited hole. |
+| §6.5 **One inbound `JOINED` edge per room** | Confirmed **and enforced**: `layout.py:626` refuses a Zone where any room has two, in the words §6.5 predicted. The engine's `links` is keyed by room because `_emit_route` records "the chain that reached this room"; that is why. **Outbound is unbounded** — a room may be the `room_a` of as many `JOINED` edges as it has sockets, which is what makes a three-neighbour junction expressible today. Orient the edges so each room is `room_b` at most once. |
+
+### 11.2 Restriction 1 — `arrive_edge` / `depart_edge` are read and never set
+
+**The engine's half is done and the bridge's half does not exist.**
+`socket_for_edge` looks for `chamber["arrive_edge"]` and
+`chamber["depart_edge"]`, and no composer, schema field or model writes
+either. So every room in every Zone falls through to the §2.1 legacy
+pair and the chain arrives at `entry` and departs by `exit`, whatever
+the assignment says.
+
+For a junction whose chain should arrive through `side_left`, the
+composed chamber has to carry the two edge ids. They are one field each
+and they name an **edge**, never a socket — which socket serves that
+edge is already in `doors[]`, and saying it twice is how the two come to
+disagree.
+
+**This is the bridge's to fill.** Until it is, an authored junction
+composes correctly and is entered through the wrong opening.
+
+### 11.3 Restriction 2 — one arrival region per room, not per socket
+
+§2.3 makes "a `player_entry` volume per joining socket" Art's whole
+obligation for slice 1. **The engine reads one.**
+`ContentInstantiator._player_entry` returns the first `player_entry`
+volume it finds and hands it up as the room's single arrival region, so
+a body entering a three-door junction through its third door arrives
+where the room says a body arrives from its first.
+
+Two things are needed and only one is Art's:
+
+* **Art:** give each `player_entry` volume a `socket_id`, naming which
+  opening it is the arrival for. A volume with no `socket_id` stays the
+  room's default, so **every existing shell keeps composing unchanged**.
+* **Engine:** resolve the arrival by the socket the chain actually
+  arrives through, falling back to the default volume. Ours; see §11.5.
+
+### 11.4 Restriction 3 — a branch's mouth comes from the procedural socket table
+
+`zone_builder` places a branch from its parent's side socket via
+`ChamberBuilders.socket_placed(socket_id, width, depth)`, which reads
+`procedural_sockets` — **the procedural convention, not the authored
+shell's declared socket position.** A branch off an authored junction's
+`side_left` therefore starts where a procedural room of that footprint
+would have put `side_left`, which for a shell whose openings are
+anywhere else is a corridor that starts in a wall.
+
+It also defaults to `side_left` when a branch names no socket, so two
+branches off one room silently want the same opening.
+
+**Ours; see §11.5.** No contract change: §3 already says the assignment
+decides, and this is the engine not asking it.
+
+### 11.5 What the engine lane is doing about 11.3 and 11.4
+
+Both, in this batch, because the branching-journey proof needs them:
+an authored room connected to three distinct neighbours cannot be walked
+through if two of its doors share one arrival and its branch corridor
+starts in the wrong wall. §11.2 stays open until the bridge sends the
+two edge ids; the engine will read them the day they arrive and the
+fallback keeps every two-door shell composing meanwhile.
+
+### 11.6 What does NOT restrict a multi-door room
+
+Stated because each of these was checked and found not to bite:
+
+* **Door count.** `_perimeter` carves from `cut_plan(chamber)`, which is
+  the assignment; nothing caps it at two.
+* **Aperture measurement.** `aperture_polarity` iterates every declared
+  door, and since 2026-09-12 the shell census declares every doorway
+  socket, so an N-door shell is measured on all N — at the origin and,
+  separately, placed in a real Zone in all six themes.
+* **Branch depth.** Branch placement is a queue, not a loop: a branch
+  may itself branch, to whatever depth the Zone declares.
+* **Two-door shells.** Every one of the twelve stays valid. The
+  fallbacks in §2.1 are by construction, not by promise, and
+  `godot-room-contract` builds all twelve every run.

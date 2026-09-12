@@ -870,13 +870,28 @@ screen.
   non-null). Those were one list, which is precisely why "held and
   unoccupied" could not be described.
 - **`hub.resume_zone_id` / `resume_zone_name`** — which Zone the portal
-  enters, filled for every mode in **`ZONE_ENTER_MODES`**
-  (`ZONE_READY`, `ZONE_ACTIVE`, `ZONE_DORMANT`). One branch, one field.
+  enters, filled for every mode in **`ZONE_ENTERABLE_MODES`**, which is
+  now `ZONE_READY`, `ZONE_ACTIVE`, `ZONE_DORMANT`. One branch, one
+  field.
+- **`hub.portal_enabled` is true for all three**, including with
+  Archipelago down: the Zone is already on disk and entering it needs no
+  round-trip. **This was the correction that mattered.** The first
+  version added `ZONE_DORMANT` to a *new* constant while
+  `portal_enabled` kept reading the old one — so the Hub said "your Zone
+  is waiting", `resume_zone_id` said which one, and the button was
+  greyed out. The game consumes `portal_enabled`; a mode branch in the
+  consumer would not have fixed it. There is one constant now, and
+  `test_naming_a_zone_and_lighting_the_portal_are_one_decision` asserts
+  the two facts off the model so they cannot drift apart again.
 - **`hub.revisitable`** — finished Zones the player may walk back into,
   newest first, as `{zone_id, display_name}`. Separate from
   `resume_zone_id` because they are different offers: at most one Zone is
   unfinished and blocks generation; any number of COMPLETE ones stay open
-  and block nothing.
+  and block nothing. **Uncapped** — it carried a 64-entry limit that
+  `CampaignSave.zones` does not have, so a campaign that finished 65
+  Zones had its whole snapshot refused. A `ZoneHandle` is an id and a
+  name; several hundred is noise beside the fold in the same message, so
+  no pagination is needed and none is invented.
 - **`ZONE_STATE_HUB_MODE`** is total over `ZoneState` by assertion, so the
   next lifecycle state cannot be forgotten into a `KeyError` in front of
   a player. `VISITING` maps to `ZONE_ACTIVE` — the snapshot invariant
@@ -893,24 +908,71 @@ collected keys and allocated Checks all intact; and a revisit that
 reserves nothing and leaves `completed_zone_count` and `zone_history`
 untouched.
 
-### 5.5b The consumer change, for Prod to make
+### 5.5a-bis The other half of the restart — **done, on both sides**
+
+The manifest survived a restart and the progress did not: `main.gd` read
+keys, locks, stations and the resume point out of its own in-memory
+dictionaries, which a new process starts empty. Same rooms, every key
+back on the floor.
+
+**The engine lane found and fixed this independently, at `fa5f056`, and
+their fix is better than the one written up here.** `_to_zone` reads
+`record.progress` and `_union_progress` converts the saved arrays into
+the runtime dictionaries — **as a union with the in-memory half, not a
+replacement**, because an intent sent in the same breath as leaving may
+not be in the snapshot yet. Both sides are monotone sets, so taking both
+cannot lose progress and cannot invent it. That is a case this lane's
+write-up did not consider.
+
+**What this lane got wrong, and has reverted.** `ZoneReady.progress` was
+added here as the carrier. It is not the one the game reads: `_to_zone`
+is driven by `_on_snapshot`, and takes both the layout and the progress
+from `BridgeClient.active_zone()` — the snapshot's `ZoneRecord`, which
+has carried `progress` since it existed. Adding a field to `ZoneReady`
+made **a second carrier for one fact on a different message**, which is
+the failure this document describes two sections earlier about
+`ZONE_ENTER_MODES`, committed again one commit after writing it down.
+Reverted; the record is the carrier.
+
+The regression coverage stays and now asserts the carrier in use: after
+a restart and a re-entry, the **serialized snapshot's**
+`active_zone.progress` carries the collected keys and opened locks, and
+`active_zone.manifest` the committed digest.
+
+> **One thing for Prod, not a change request.** The comment above the
+> manifest read in `_to_zone` says "`ZoneReady` carries the manifest",
+> while the line beneath takes it from the snapshot record. Both
+> carriers do exist — `ZoneReady.manifest` is real and emitted — so the
+> comment is describing a path the code does not take. Worth a look
+> when convenient; whether `ZoneReady.manifest` should stay at all is
+> the engine lane's call, since it is their consumer that decides.
+
+### 5.5b The dormant portal — **done 2026-09-12, engine lane**
+
+**Scope was the dormant Hub portal and `resume_zone_id` routing, and
+nothing else.** Progress restoration was folded in here once and
+removed — the engine lane had already done it (§5.5a-bis). Both changes
+below landed; `make godot-reload` presses the real portal in
+`ZONE_DORMANT`, across a restart of BOTH processes, and lands back in
+the Zone it left. The proposal is kept as written because it is what was
+taken.
 
 **DONE 2026-09-12, and one line of it was on the bridge's side.** Both
 consumer changes below landed; `make godot-reload` presses the real
 portal in `ZONE_DORMANT` and lands back in the Zone it left.
 
-The line the engine lane had to touch in `protocol.py`, flagged here
-because it is the bridge's file: **`portal_enabled` was reading a second
-list.** `ZONE_ENTER_MODES` gained `ZONE_DORMANT`; `ZONE_ENTERABLE_MODES`
-— the same question, under a different name — did not, and
-`portal_enabled` reads that one. So the portal showed the mode's prompt
-and refused to fire: a way back into a Zone that is wired, labelled and
-dead, and no test on either side could see it because each lane's half
-was correct.
+**Both lanes found the same last obstacle, from opposite ends.**
+`portal_enabled` was reading a second list: one of two near-identically
+named constants gained `ZONE_DORMANT` and the other did not. From the
+bridge it looked like a button greyed out over a Zone the Hub was
+naming; from the engine it looked like a portal that showed the mode's
+prompt and refused to fire. No test on either side could see it, because
+each lane's half was correct.
 
-`ZONE_ENTERABLE_MODES` is now `ZONE_ENTER_MODES` rather than a copy of
-it. Two names for one question is how they drifted; please keep the
-collapse, or say which question the second name was meant to be asking.
+There is one name now — `ZONE_ENTERABLE_MODES`, the bridge's spelling,
+which `portal_enabled` reads — and `HubController` spells it the same
+way. The alternative (two tuples kept equal by hand) is the same defect
+waiting for the next mode.
 
 Two places, and deliberately small. **Neither lane should edit the other
 side of this seam** — this was the proposal, and the engine lane took
@@ -924,7 +986,10 @@ it.
 ```
 
 or, better, drive it off the constant so the next mode needs no edit
-here: `if BridgeClient.hub_mode() in Constants.ZONE_ENTER_MODES:`.
+here: `if BridgeClient.hub_mode() in Constants.ZONE_ENTERABLE_MODES:`.
+
+Nothing is needed for the *enabled* half — `portal_enabled` already
+carries it, and that is the field `hub.gd` reads at line 754.
 
 **`main.gd::_on_enter_zone`** — take the id from the Hub rather than
 from `active_zone()`, which is empty for a dormant Zone:
@@ -941,10 +1006,32 @@ func _on_enter_zone() -> void:
 `resume_zone_id` is filled for `ZONE_READY` and `ZONE_ACTIVE` too, so
 this one path replaces the old one rather than sitting beside it.
 
-**What proves it, and it is the engine lane's to run:** restart with a
-dormant Zone, press the portal, and arrive in the same layout with the
-same keys, locks and Checks. This lane has no Godot; everything above is
-the bridge half.
+**Progress restoration is NOT in this task.** It was, and the engine
+lane had already done it at `fa5f056` — see §5.5a-bis. Nothing is owed
+there.
+
+**The serialized offer, which is the contract.** Proved on the wire in
+`test_the_portal_can_find_the_zone_you_walked_out_of`, against
+`snapshot().model_dump_json()` rather than the Python objects:
+
+```json
+"hub": {
+  "mode": "ZONE_DORMANT",
+  "resume_zone_id": "zone_001",
+  "resume_zone_name": "…",
+  "portal_enabled": true,
+  "accepts_zone_request": false,
+  "revisitable": []
+}
+```
+
+and the same with `"ap_online": false` — the mode does not move, the
+portal stays lit, the Zone id is still there.
+
+**What proves it end to end, and it is the engine lane's to run:**
+restart with a dormant Zone, press the portal, and arrive in the same
+layout with the same keys, locks and Checks. This lane has no Godot;
+everything above is the bridge half.
 
 **Open for Prod:** `revisitable` can hold many Zones and the portal is
 one object. Offering the dormant Zone on the portal and finished Zones
