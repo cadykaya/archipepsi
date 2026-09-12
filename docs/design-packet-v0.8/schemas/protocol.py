@@ -1660,22 +1660,14 @@ class ZoneReady(Strict):
     #: difference between replaying a layout and solving one.
     manifest: dict | None = None
 
-    #: What the player already did in it, on the same message and under
-    #: the same condition as `manifest`.
+    #: **Progress is NOT here, and that is deliberate.**
     #:
-    #: **The manifest survived a restart and the progress did not.**
-    #: `main.gd` read the layout off this message and read keys, locks,
-    #: stations and the resume point out of its own in-memory
-    #: dictionaries — which are empty in a new process. So a returning
-    #: player got the same rooms in the same places with every key back
-    #: on the floor and every door locked again, while the bridge held
-    #: the truth on disk and said nothing about it here. One message
-    #: rebuilds the Zone; it carries everything needed to rebuild it as
-    #: it was left.
-    #:
-    #: Empty is meaningful: a Zone walked into and straight back out of
-    #: has a manifest and nothing done in it.
-    progress: "ZoneProgress | None" = None
+    #: It was, for one commit. `ZoneRecord.progress` already crosses in
+    #: every snapshot, and `main.gd::_to_zone` — driven by `_on_snapshot`
+    #: rather than by this message — reads it from
+    #: `BridgeClient.active_zone()`. Adding it here made a second carrier
+    #: for one fact on a different message, which is how two lanes come
+    #: to disagree about what a player did. One carrier: the record.
 
 
 NotificationKind = Literal[

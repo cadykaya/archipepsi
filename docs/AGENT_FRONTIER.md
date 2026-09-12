@@ -149,15 +149,17 @@ gate-only-optional option: optional to finishing a Zone is not optional
 to AP accessibility.
 
 **READY FOR PROD, AND IT MOVES ON ITS OWN: the way back into a Zone.**
-Bridge half done and accepted; the Godot half is a handful of lines and
-depends on nothing else here. **Two findings, one seam**: the portal was
-dark over a dormant Zone (`portal_enabled` read a different constant
-from the one naming the Zone), and the progress did not survive a
-restart — `main.gd` reads the layout off `ZoneReady` but reads keys,
-locks, stations and the resume point out of in-memory dictionaries a new
-process starts empty, so a returning player got the same rooms with
-every key back on the floor. `ZoneReady.progress` now travels beside
-`ZoneReady.manifest`; nothing in Godot reads `record.progress` yet. `docs/AMALGAM_BRIDGE.md` §5.5b has the exact
+Bridge half done and accepted. **One task, and it is only the portal**
+— `ZONE_DORMANT` routing and `resume_zone_id`. The progress half of the
+restart is CLOSED: the engine lane fixed it independently at `fa5f056`,
+better than the write-up here (it UNIONS the bridge's persisted
+progress with the in-flight in-memory half, because an intent sent in
+the same breath as leaving may not be in the snapshot yet, and both are
+monotone sets). `ZoneReady.progress` was added here and is reverted: the
+game reads progress and manifest from `BridgeClient.active_zone()`, the
+snapshot record, so a field on `ZoneReady` was a second carrier for one
+fact — the same failure as `ZONE_ENTER_MODES`, one commit after writing
+it down. Regression coverage kept and now asserts the carrier in use. `docs/AMALGAM_BRIDGE.md` §5.5b has the exact
 serialized `hub` block, the `hub.gd` / `main.gd` change, and the one
 open Hub-design question (`revisitable` can hold many Zones and the
 portal is one object). Take it whenever; nothing in the qualification
@@ -171,6 +173,18 @@ provider parameters against the route's requirement in metres;
 `max_safe_gap(rise)` is the base kit's own reach, so a crossing inside
 it is not a gate at all. **No envelope went into the `stats` Boolean** —
 `stats` holds stat NAMES, and that branch is the identity question.
+**Evidence is bound to what it describes, not just well-shaped.** A row
+naming `blink` certified a dash, a row certifying a band of `range`
+certified a `force` reading, and any well-formed `setup_digest` passed
+because nothing compared it — the tests checked digest FORMATTING and
+the provider mapping, never the bindings. All three refuse now
+(`evidence_misfiled`, `evidence_for_another_setup`), and a missing
+expected identity is `setup_identity_unknown` rather than a pass. **The
+digest is recorded provenance, not working stale-evidence
+invalidation**: the comparison is here and nothing produces the other
+half, so where the expected setup identity comes from is the first thing
+to agree with Prod (§8b).
+
 `CROSSING_EVIDENCE` ships EMPTY and nothing qualifies without it:
 `Dash.force` is a velocity impulse in m/s that `_dash` ADDS to current
 velocity along camera-forward, so no closed form exists here and the

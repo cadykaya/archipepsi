@@ -1014,11 +1014,7 @@ class CampaignEngine:
             await self._emit(ZoneReady(
                 type="zone_ready", zone=rec.zone,
                 used_fallback=rec.used_fallback,
-                manifest=rec.manifest,
-                # Same message, same condition. A Zone rebuilt from its
-                # manifest with the keys back on the floor is not the
-                # Zone the player walked out of.
-                progress=rec.progress))
+                manifest=rec.manifest))
         await self.broadcast_snapshot()
 
     async def _put_the_zone_down(self, zone_id: str) -> None:

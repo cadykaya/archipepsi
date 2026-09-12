@@ -170,10 +170,6 @@ def test_the_whole_path(tmp_path):
                 if m.zone.zone_id == zone_id]
         assert born and all(m.manifest is None for m in born), (
             "a first generation has nothing to replay")
-        assert all(m.progress is None for m in born), (
-            "and nothing done in it yet — the control for the re-entry "
-            "assertion below, without which `progress` present would "
-            "prove only that the field exists")
         key = next(k.key_id for c in zone.chambers for k in c.keys)
         room, socket = next((c.id, d.socket_id) for c in zone.chambers
                             for d in c.doors if d.usage == "LOCKED")
@@ -246,19 +242,16 @@ def test_the_whole_path(tmp_path):
             "the layout replayed is the layout committed")
         assert replayed[0].manifest["joins"] == rec.manifest["joins"]
 
-        # AND WHAT THE PLAYER ALREADY DID IN IT. The manifest survived a
-        # restart and the progress did not: `main.gd` reads the layout
-        # off this message and reads keys, locks and the resume point
-        # out of its own in-memory dictionaries, which a new process
-        # starts empty. Same rooms, every key back on the floor.
-        assert replayed[0].progress is not None, (
-            "the message that rebuilds the Zone says nothing about what "
-            "was done in it")
-        assert replayed[0].progress.collected_keys == (key,)
-        assert replayed[0].progress.opened_locks == (f"{room}/{socket}",)
-        wire = json.loads(replayed[0].model_dump_json())
-        assert wire["progress"]["collected_keys"] == [key], (
-            "it has to survive serialization to be of any use")
+        # AND WHAT THE PLAYER ALREADY DID IN IT, on the carrier the game
+        # actually reads: `main.gd::_to_zone` is driven by `_on_snapshot`
+        # and takes both the layout and the progress from
+        # `BridgeClient.active_zone()`. Asserting a second copy on
+        # `zone_ready` would test a field nothing consumes.
+        snap = json.loads(engine.snapshot().model_dump_json())
+        assert snap["active_zone"]["progress"]["collected_keys"] == [key]
+        assert snap["active_zone"]["progress"]["opened_locks"] == [
+            f"{room}/{socket}"]
+        assert snap["active_zone"]["manifest"]["manifest_digest"] == digest
         assert rec.state == "ACTIVE"
         assert rec.manifest["manifest_digest"] == digest
         assert rec.progress.collected_keys == (key,)

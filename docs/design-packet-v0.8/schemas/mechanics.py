@@ -462,10 +462,18 @@ class CrossingEvidence(Strict):
     #: bands above. A floor, not a best case.
     reach_m: float = Field(gt=0)
     #: The controller and scene it was measured against — engine-owned
-    #: and opaque here, exactly like `PhysicsSetup.scene_digest`. The
-    #: bridge never re-derives a physical fact; it records which one was
-    #: measured, so a changed controller invalidates the evidence
-    #: instead of silently keeping it.
+    #: and opaque here, exactly like `PhysicsSetup.scene_digest`.
+    #:
+    #: **Recorded provenance, and a comparison waiting on its other
+    #: half.** `qualifies_for_gap` compares this against an
+    #: `expected_setup` the caller supplies, and refuses a row measured
+    #: somewhere else. What is not settled is where that expected
+    #: identity comes from — the engine computes it, like
+    #: `scene_digest`, and nobody has agreed what it covers or when it
+    #: is handed over. Until that is agreed this is not yet working
+    #: stale-evidence invalidation; it is a field that records which
+    #: setup was measured, and a comparison ready for the day the other
+    #: side of it exists.
     setup_digest: str = Field(min_length=16, max_length=16,
                               pattern=r"^[0-9a-f]{16}$")
 
@@ -520,6 +528,19 @@ class ProviderQualification(Strict):
         # this rise. A different answer from the one above: something
         # was measured, just not this.
         "outside_measured_scope",
+        # A row filed under this primitive names a different primitive
+        # or a parameter this provider is not qualified on. Not a gap in
+        # the measurements — a defect in them, and reporting it as
+        # "nobody measured this" would send someone to measure a thing
+        # that was already measured and misfiled.
+        "evidence_misfiled",
+        # Every covering row was measured against a different setup.
+        "evidence_for_another_setup",
+        # No `expected_setup` was supplied, so no row can be tied to the
+        # setup the question is being asked about. Refused rather than
+        # waved through: evidence that might be about another build is
+        # not evidence about this one.
+        "setup_identity_unknown",
         # The family member carries no parameter qualification reads —
         # glide, hover. Not a gap in the measurements; a gap in what
         # this lane knows how to ask for.
@@ -532,7 +553,9 @@ class ProviderQualification(Strict):
 
 
 def qualifies_for_gap(capability: str, mechanics, gap_m: float,
-                      rise_m: float = 0.0) -> ProviderQualification:
+                      rise_m: float = 0.0,
+                      expected_setup: str | None = None
+                      ) -> ProviderQualification:
     """Does anything the campaign owns actually make this crossing?
 
     **A TESTED HELPER, NOT YET WIRED.** Nothing in production calls it —
@@ -560,6 +583,9 @@ def qualifies_for_gap(capability: str, mechanics, gap_m: float,
     saw_provider = False
     saw_qualifiable = False
     saw_measurement = False
+    misfiled = False
+    other_setup = False
+    unknown_setup = False
     for owned in mechanics.owned:
         primitive = getattr(owned.component, "primitive", None)
         if primitive is None or primitive.type not in wanted:
@@ -574,10 +600,25 @@ def qualifies_for_gap(capability: str, mechanics, gap_m: float,
         saw_qualifiable = True
         for evidence in CROSSING_EVIDENCE.get(primitive.type, ()):
             saw_measurement = True
-            # Covered means covered: the parameter inside the certified
-            # band AND the rise inside the executed band. Neither is
-            # extrapolated from a neighbouring measurement.
+            # IDENTITY BEFORE SHAPE. A row is evidence about THIS
+            # provider only if it says so: filed under the primitive it
+            # names, about the parameter this primitive is qualified on.
+            # Neither was checked, so a row naming `blink` certified a
+            # dash and a row naming `range` certified a `force` reading.
+            if (evidence.primitive != primitive.type
+                    or evidence.parameter != field):
+                misfiled = True
+                continue
             if not evidence.covers(float(value), rise_m):
+                continue
+            # AND MEASURED AGAINST THE SETUP BEING ASKED ABOUT. A
+            # well-formed digest from another build is not a crossing in
+            # this one.
+            if expected_setup is None:
+                unknown_setup = True
+                continue
+            if evidence.setup_digest != expected_setup:
+                other_setup = True
                 continue
             if best is None or evidence.reach_m > best:
                 best = evidence.reach_m
@@ -591,10 +632,22 @@ def qualifies_for_gap(capability: str, mechanics, gap_m: float,
             capability=capability, qualifies=False,
             reason="provider_not_qualifiable", gap_m=gap_m, rise_m=rise_m)
     if best is None:
+        # Ordered by what the answer sends someone to do. A misfiled row
+        # is a defect in the evidence; a wrong setup is a re-measure; an
+        # unknown setup is a missing input; out of scope is a gap; none
+        # at all is work not started.
+        if misfiled:
+            reason = "evidence_misfiled"
+        elif other_setup:
+            reason = "evidence_for_another_setup"
+        elif unknown_setup:
+            reason = "setup_identity_unknown"
+        elif saw_measurement:
+            reason = "outside_measured_scope"
+        else:
+            reason = "no_envelope_measured"
         return ProviderQualification(
-            capability=capability, qualifies=False,
-            reason=("outside_measured_scope" if saw_measurement
-                    else "no_envelope_measured"),
+            capability=capability, qualifies=False, reason=reason,
             gap_m=gap_m, rise_m=rise_m)
     return ProviderQualification(
         capability=capability, qualifies=best >= gap_m,

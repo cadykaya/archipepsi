@@ -264,9 +264,27 @@ getattr(range)` fallback reported `glide` (a fall-speed fraction) and
 engine lane when the truth is that nobody has said what measuring them
 would mean. They report `provider_not_qualifiable` instead.
 
-**Evidence is bound to what produced it.** `setup_digest` is required
-and shaped exactly like `PhysicsSetup.scene_digest`, so a changed
-controller invalidates a measurement rather than silently keeping it.
+**Evidence is bound to the provider it describes.** A row is read only
+if it names the primitive it is filed under and the parameter that
+primitive is qualified on. Neither was checked: a row saying `blink`
+certified a dash, and a row certifying a band of `range` certified a
+`force` reading — two different quantities compared as one.
+`evidence_misfiled` is its own answer, because "measure this" and "this
+was measured and filed wrong" send someone to different work.
+
+**And to the setup it was measured against** — `expected_setup` is
+compared against `setup_digest`, and a well-formed digest from another
+build is refused. With no expected identity supplied the answer is
+`setup_identity_unknown`, a refusal: evidence that might be about
+another build is not evidence about this one.
+
+> **`setup_digest` is recorded provenance today, not working
+> stale-evidence invalidation.** The comparison exists and is tested;
+> what is not settled is **where the expected identity comes from** —
+> what it covers, when the engine hands it over, and whether it is one
+> value for the controller or one per measurement session. That is
+> §8b's to agree, and until it is agreed nothing produces the other
+> half, so no measurement is actually being invalidated by anything.
 
 ### 8b. For the engine lane — the shape to fill
 
@@ -308,8 +326,18 @@ case — that is what makes it usable as §29.3.2's minimum, with content
 authored against it and a reference crossing replayed at exactly that
 minimum so anything qualifying can make it.
 
-**Agree the shape before measuring.** If a band is the wrong unit of
-evidence — if the honest answer is one row per exact configuration, or
+**Two things to agree, and one of them gates the other.** First, where
+the **expected setup identity** comes from: the bridge compares
+`setup_digest` against an `expected_setup` it is handed, and nothing
+produces that yet. What does it cover — controller constants, the
+character scene, the physics build? Is it one value for a build or one
+per measurement session, and does it reach the bridge in slot data, in
+the layout result, or somewhere else? Computing it stays engine work,
+exactly like `scene_digest`; naming its source is a joint decision and
+the comparison is inert until it is made.
+
+**Second, agree the shape before measuring.** If a band is the wrong
+unit of evidence — if the honest answer is one row per exact configuration, or
 if rise is the wrong second axis and something else (takeoff speed,
 ceiling clearance) matters more — say so and this model changes before
 anyone spends time in the engine. It is a schema, not a decision

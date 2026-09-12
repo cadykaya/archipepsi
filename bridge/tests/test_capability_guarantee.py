@@ -333,7 +333,7 @@ def test_a_gap_inside_the_base_kit_is_not_a_gate_at_all():
     from the same constants the engine generates its own copy from. A
     crossing inside it needs no provider and gates nothing."""
     inside = C.max_safe_gap(0.0) - 0.1
-    q = M.qualifies_for_gap("cross_long_gap", M.EMPTY_MECHANICS, inside)
+    q = _qualify(M.EMPTY_MECHANICS, inside)
     assert q.qualifies and q.reason == "within_base_kit"
 
 
@@ -352,7 +352,7 @@ def test_owning_nothing_in_the_family_says_so_distinctly():
     """A different fault from "owned but unmeasured", and the two must
     not be reported as one: the first is a Zone asking for a capability
     the campaign lacks, the second is a measurement nobody has taken."""
-    q = M.qualifies_for_gap("cross_long_gap", M.EMPTY_MECHANICS, 6.0)
+    q = _qualify(M.EMPTY_MECHANICS, 6.0)
     assert not q.qualifies and q.reason == "no_provider"
 
 
@@ -382,13 +382,22 @@ def _evidence(**over) -> M.CrossingEvidence:
     return M.CrossingEvidence(**base)
 
 
+SETUP = "0123456789abcdef"
+
+
+def _qualify(mechanics, gap_m, rise_m=0.0, setup=SETUP):
+    """Ask the real question: this provider, this crossing, this setup."""
+    return M.qualifies_for_gap("cross_long_gap", mechanics, gap_m,
+                               rise_m=rise_m, expected_setup=setup)
+
+
 def test_a_measured_crossing_is_what_makes_qualification_possible(monkeypatch):
     """The accepted control. A check that refuses everything is as
     broken as one that refuses nothing, so the mechanism has to work
-    when evidence actually covers the case."""
+    when evidence covers the case AND is about this provider AND was
+    measured against the setup being asked about."""
     monkeypatch.setitem(M.CROSSING_EVIDENCE, "dash", (_evidence(),))
-    q = M.qualifies_for_gap("cross_long_gap", _owning_dash(12.0), 6.0,
-                            rise_m=0.5)
+    q = _qualify(_owning_dash(12.0), 6.0, rise_m=0.5)
     assert q.qualifies and q.reason == "meets_envelope"
     assert q.reach_m == 7.0 and q.rise_m == 0.5
 
@@ -400,10 +409,8 @@ def test_a_crossing_measured_flat_does_not_certify_a_landing_above_it(
     certified by evidence executed on level ground. Identical to the
     control in every other respect."""
     monkeypatch.setitem(M.CROSSING_EVIDENCE, "dash", (_evidence(),))
-    flat = M.qualifies_for_gap("cross_long_gap", _owning_dash(12.0), 6.0,
-                               rise_m=0.5)
-    high = M.qualifies_for_gap("cross_long_gap", _owning_dash(12.0), 6.0,
-                               rise_m=100.0)
+    flat = _qualify(_owning_dash(12.0), 6.0, rise_m=0.5)
+    high = _qualify(_owning_dash(12.0), 6.0, rise_m=100.0)
     assert flat.qualifies, "the control still passes"
     assert not high.qualifies
     assert high.reason == "outside_measured_scope", high
@@ -414,8 +421,7 @@ def test_a_drop_below_the_measured_band_is_also_outside_it(monkeypatch):
     """Scope is a band, not a floor. Falling four metres while crossing
     is not the crossing that was measured either."""
     monkeypatch.setitem(M.CROSSING_EVIDENCE, "dash", (_evidence(),))
-    q = M.qualifies_for_gap("cross_long_gap", _owning_dash(12.0), 6.0,
-                            rise_m=-4.0)
+    q = _qualify(_owning_dash(12.0), 6.0, rise_m=-4.0)
     assert not q.qualifies and q.reason == "outside_measured_scope"
 
 
@@ -427,9 +433,9 @@ def test_a_stronger_provider_is_not_automatically_a_suitable_one(
     past the ledge it was meant to arrive on. Evidence certifies a
     stated RANGE and nothing outside it."""
     monkeypatch.setitem(M.CROSSING_EVIDENCE, "dash", (_evidence(),))
-    inside = M.qualifies_for_gap("cross_long_gap", _owning_dash(14.0), 6.0)
-    beyond = M.qualifies_for_gap("cross_long_gap", _owning_dash(20.0), 6.0)
-    weaker = M.qualifies_for_gap("cross_long_gap", _owning_dash(4.0), 6.0)
+    inside = _qualify(_owning_dash(14.0), 6.0)
+    beyond = _qualify(_owning_dash(20.0), 6.0)
+    weaker = _qualify(_owning_dash(4.0), 6.0)
     assert inside.qualifies, "the top of the certified band still counts"
     assert not beyond.qualifies
     assert beyond.reason == "outside_measured_scope", beyond
@@ -441,11 +447,10 @@ def test_measured_but_not_here_is_a_different_answer_from_never_measured(
         monkeypatch):
     """"Somebody should measure this" and "this was measured, just not
     for your case" send the engine lane to different work."""
-    never = M.qualifies_for_gap("cross_long_gap", _owning_dash(12.0), 6.0)
+    never = _qualify(_owning_dash(12.0), 6.0)
     assert never.reason == "no_envelope_measured"
     monkeypatch.setitem(M.CROSSING_EVIDENCE, "dash", (_evidence(),))
-    elsewhere = M.qualifies_for_gap("cross_long_gap", _owning_dash(20.0),
-                                    6.0)
+    elsewhere = _qualify(_owning_dash(20.0), 6.0)
     assert elsewhere.reason == "outside_measured_scope"
 
 
@@ -456,7 +461,7 @@ def test_a_provider_this_lane_cannot_qualify_says_so(monkeypatch):
     reported them as "no envelope measured" — which reads as work for
     the engine lane when the truth is that nobody has said what
     measuring them would mean."""
-    q = M.qualifies_for_gap("cross_long_gap", _owning("glide"), 6.0)
+    q = _qualify(_owning("glide"), 6.0)
     assert not q.qualifies
     assert q.reason == "provider_not_qualifiable", q
 
@@ -533,3 +538,71 @@ def test_the_dash_parameter_is_a_speed_and_the_schema_says_so():
         "unit claim in QUALIFIABLE_PARAMETER and the envelope contract "
         "need re-reading against whatever it does now")
     assert M.MOBILITY_PARAMETER_UNITS["dash"] == "m/s"
+
+
+# --- evidence identity, not just evidence shape ---------------------------
+#
+# The shape checks passed and the bindings did not exist: a row naming
+# `blink` certified a dash, a row naming `range` certified a `force`
+# reading, and any well-formed digest passed because nothing compared
+# it. Testing that `setup_digest` is sixteen hex characters proved the
+# field was well formed and nothing about whether it was the right one.
+
+def test_evidence_filed_under_the_wrong_primitive_is_refused(monkeypatch):
+    """A row in the `dash` table that says it is about `blink`. It is
+    perfectly well-formed and it is not about this provider."""
+    monkeypatch.setitem(M.CROSSING_EVIDENCE, "dash",
+                        (_evidence(primitive="blink"),))
+    q = _qualify(_owning_dash(12.0), 6.0, rise_m=0.5)
+    assert not q.qualifies
+    assert q.reason == "evidence_misfiled", q
+
+
+def test_evidence_about_a_different_parameter_is_refused(monkeypatch):
+    """`dash` is qualified on `force`. A row certifying a band of
+    `range` is a band of a number this provider does not carry, and
+    reading it as a force band compares two different quantities."""
+    monkeypatch.setitem(M.CROSSING_EVIDENCE, "dash",
+                        (_evidence(parameter="range"),))
+    q = _qualify(_owning_dash(12.0), 6.0, rise_m=0.5)
+    assert not q.qualifies
+    assert q.reason == "evidence_misfiled", q
+
+
+def test_a_misfiled_row_is_not_reported_as_an_unmeasured_one(monkeypatch):
+    """Different answers send someone to different work: "measure this"
+    against "this was measured and filed wrong"."""
+    monkeypatch.setitem(M.CROSSING_EVIDENCE, "dash",
+                        (_evidence(primitive="blink"),))
+    misfiled = _qualify(_owning_dash(12.0), 6.0, rise_m=0.5)
+    monkeypatch.setitem(M.CROSSING_EVIDENCE, "dash", ())
+    absent = _qualify(_owning_dash(12.0), 6.0, rise_m=0.5)
+    assert misfiled.reason == "evidence_misfiled"
+    assert absent.reason == "no_envelope_measured"
+
+
+def test_a_well_formed_digest_from_another_setup_is_refused(monkeypatch):
+    """Sixteen hex characters and the wrong sixteen. The control above
+    differs from this in one value."""
+    monkeypatch.setitem(M.CROSSING_EVIDENCE, "dash",
+                        (_evidence(setup_digest="fedcba9876543210"),))
+    q = _qualify(_owning_dash(12.0), 6.0, rise_m=0.5)
+    assert not q.qualifies
+    assert q.reason == "evidence_for_another_setup", q
+
+
+def test_no_setup_identity_means_no_qualification(monkeypatch):
+    """Refused rather than waved through. Evidence that might be about
+    another build is not evidence about this one, and a caller with no
+    setup identity to offer cannot be told the crossing is fine.
+
+    This is also why the digest is **recorded provenance** today rather
+    than working stale-evidence invalidation: the comparison is here,
+    and where the expected identity comes from is not yet agreed —
+    `AP_CAPABILITY_LOGIC.md` §8b.
+    """
+    monkeypatch.setitem(M.CROSSING_EVIDENCE, "dash", (_evidence(),))
+    q = M.qualifies_for_gap("cross_long_gap", _owning_dash(12.0), 6.0,
+                            rise_m=0.5)
+    assert not q.qualifies
+    assert q.reason == "setup_identity_unknown", q
