@@ -402,12 +402,25 @@ is never repositioned. **The two halves must land together** — see
 the handlers rather than read. Two things correct and now controlled: a
 never-accepted Zone and a committed one stay properly distinct, and the
 locations are recoverable — abandon returns them and the next Zone
-generates. Two defects REPORTED AND NOT FIXED, because widening this
-repair was not authorised: after exhaustion the Hub's only offer is
-re-entry into the same refusal (`layout_refusals` is never read again,
-so the stop stops recomposition and not the loop), and the counter is
-`le=99` but incremented without limit, so the 100th refusal raises
-instead of refusing.
+generates. Two defects found, then AUTHORISED AND REPAIRED
+(§5.7b): after exhaustion the Hub's only offer was re-entry into the
+same refusal, and the counter was `le=99` but incremented without limit
+so the 100th refusal raised instead of refusing.
+
+**A FAILED ZONE IS A ZONE TO DISCARD.** `ZoneRecord.layout_exhausted` —
+no manifest, REFUSED, budget spent — is the predicate, three existing
+facts read together with no fourth field and no new `ZoneState`.
+`hub_mode_for` is the one place that derives `ZONE_FAILED` from it; the
+mode is held but neither enterable nor requestable, so `portal_enabled`
+and `accepts_zone_request` fall out false without anything setting them,
+and `enter_zone` refuses it at the transition too. `hub.discard_zone_id`
+names the Zone for the abandon console — a separate name from
+`resume_zone_id` so a consumer holding it cannot resume with it.
+Nothing abandons automatically; the locations come back through
+`abandon_zone` and no other path. `layout_refusals` saturates and a
+further result is an ignored stale one, so 120 retries leave the field
+at 3 and the save loading. A committed Zone is never swept in.
+**Prod's half is two lines in `AbandonConsole`** — see §5.7b.
 
 **NEXT FOR THIS LANE: nothing, until integration says otherwise**
 (owner, 2026-09-12). Topology behaviour is to stay stable while Prod

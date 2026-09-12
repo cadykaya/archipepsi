@@ -634,7 +634,7 @@ def test_the_hub_will_not_start_a_new_zone_over_an_exhausted_one(tmp_path):
     async def go():
         engine, zid, _held = await _exhausted(tmp_path)
         hub = engine.snapshot().hub
-        assert hub.mode == "ZONE_DORMANT"
+        assert hub.mode == "ZONE_FAILED"
         assert not hub.accepts_zone_request
         with pytest.raises(IntentError):
             await engine.handle_request_next_zone(False)
@@ -701,4 +701,166 @@ def test_a_refused_replay_never_costs_a_committed_zone_its_manifest(tmp_path):
         assert rec.progress.collected_keys == (key,), "progress was lost"
         assert rec.state != "PENDING_GENERATION", (
             "a committed Zone was sent back to be composed again")
+    run(go())
+
+
+# --- the budget is spent exactly once -------------------------------------
+#
+# `layout_refusals` is persisted and bounded at 99, and `refuse_layout`
+# incremented it on every refusal without limit — so a client that kept
+# sending `layout_result` reached the hundredth and got a pydantic
+# `ValidationError` out of a transition, which is a schema exception
+# where a domain refusal belongs. It was reachable because the Hub then
+# offered the failed Zone as a way back in, so the loop had somewhere to
+# come from.
+
+def test_the_final_allowed_refusal_lands_exactly_on_the_budget(tmp_path):
+    async def go():
+        engine, zid, _ = await _exhausted(tmp_path)
+        rec = engine.save.zone_by_id(zid)
+        assert rec.layout_refusals == T.MAX_LAYOUT_REFUSALS
+        assert rec.layout_exhausted
+        assert engine.snapshot().hub.mode == "ZONE_FAILED"
+    run(go())
+
+
+def test_one_refusal_beyond_the_budget_changes_nothing(tmp_path):
+    async def go():
+        engine, zid, _ = await _exhausted(tmp_path)
+        before = engine.save
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zid,
+             "layout": dict(_UNPLACEABLE)}))
+        await drain()
+        assert engine.save is before, "a stale result moved the save"
+        assert engine.save.zone_by_id(zid).layout_refusals == \
+            T.MAX_LAYOUT_REFUSALS
+    run(go())
+
+
+def test_a_client_that_never_stops_retrying_never_leaves_the_bound(tmp_path):
+    """The defect, at the scale that produced it. The hundredth refusal
+    used to raise; none of these may."""
+    async def go():
+        engine, zid, _ = await _exhausted(tmp_path)
+        for _ in range(120):
+            await engine.handle_layout_result(_ADAPTER.validate_python(
+                {"type": "layout_result", "zone_id": zid,
+                 "layout": dict(_UNPLACEABLE)}))
+        await drain()
+        rec = engine.save.zone_by_id(zid)
+        assert rec.layout_refusals == T.MAX_LAYOUT_REFUSALS
+        # And the save still round-trips, which is what the bound is for.
+        assert store.load_save(engine._save_path).zone_by_id(zid) \
+            .layout_refusals == T.MAX_LAYOUT_REFUSALS
+    run(go())
+
+
+def test_the_transition_itself_saturates(tmp_path):
+    """Asserted at the transition as well as through the handler: the
+    handler's stale-result guard and the transition's are two answers to
+    one question and both have to be right."""
+    async def go():
+        engine, zid, _ = await _exhausted(tmp_path)
+        save = engine.save
+        for _ in range(200):
+            save = T.refuse_layout(save, zid)
+        assert save.zone_by_id(zid).layout_refusals == T.MAX_LAYOUT_REFUSALS
+        assert save is engine.save, "an exhausted Zone was rebuilt anyway"
+    run(go())
+
+
+def test_an_exhausted_zone_cannot_be_entered(tmp_path):
+    """Owner decision, 2026-09-12. Refused at the transition too, so a
+    replayed intent or a debug command cannot route around the Hub."""
+    async def go():
+        engine, zid, _ = await _exhausted(tmp_path)
+        hub = engine.snapshot().hub
+        assert hub.mode == "ZONE_FAILED"
+        assert not hub.portal_enabled, "the portal offered a way in"
+        assert hub.resume_zone_id == "", "it named a Zone it cannot enter"
+        assert hub.discard_zone_id == zid
+        assert hub.discard_zone_name
+
+        with pytest.raises(IntentError, match="cannot be entered"):
+            await engine.handle_enter_zone(zid)
+        assert engine.save.zone_by_id(zid).state == "DORMANT"
+    run(go())
+
+
+def test_an_exhausted_zone_survives_a_reload_still_failed(tmp_path):
+    async def go():
+        engine, zid, held = await _exhausted(tmp_path)
+        await drain()
+        engine.save = store.load_save(engine._save_path)
+        rec = engine.save.zone_by_id(zid)
+        assert rec.layout_exhausted
+        assert rec.layout_refusals == T.MAX_LAYOUT_REFUSALS
+        assert set(rec.allocated_location_ids) == held
+        hub = engine.snapshot().hub
+        assert hub.mode == "ZONE_FAILED" and hub.discard_zone_id == zid
+        with pytest.raises(IntentError):
+            await engine.handle_enter_zone(zid)
+    run(go())
+
+
+def test_discarding_an_exhausted_zone_is_the_offer_and_it_works(tmp_path):
+    """The affordance the Hub now advertises, exercised end to end.
+
+    Nothing abandons it automatically: releasing the locations is a
+    decision with a cost and the player makes it.
+    """
+    async def go():
+        engine, zid, held = await _exhausted(tmp_path)
+        target = engine.snapshot().hub.discard_zone_id
+        assert target == zid
+
+        await engine.handle_abandon_zone(target)
+        await drain()
+        assert engine.save.zone_by_id(zid).state == "ABANDONED"
+        hub = engine.snapshot().hub
+        assert hub.mode == "ZONE_AVAILABLE" and hub.accepts_zone_request
+        assert hub.discard_zone_id == ""
+
+        await engine.handle_request_next_zone(False)
+        await drain()
+        fresh = engine.save.active_zone_id
+        assert fresh and fresh != zid
+        assert set(engine.save.zone_by_id(fresh).allocated_location_ids) & held
+        # The discarded Zone stays discarded.
+        assert engine.save.zone_by_id(zid).state == "ABANDONED"
+    run(go())
+
+
+def test_a_committed_zone_is_never_swept_into_this(tmp_path):
+    """The distinction, asserted against the same machinery.
+
+    A committed Zone whose replay is refused keeps its manifest, stays
+    re-enterable, and never becomes `ZONE_FAILED` however many times its
+    replay is rejected.
+    """
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zone_id, zone = await _branching_zone(engine)
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zone_id,
+             "layout": _place(zone)}))
+        digest = engine.save.zone_by_id(zone_id).manifest["manifest_digest"]
+
+        for _ in range(T.MAX_LAYOUT_REFUSALS + 5):
+            await engine.handle_layout_result(_ADAPTER.validate_python(
+                {"type": "layout_result", "zone_id": zone_id,
+                 "layout": dict(_UNPLACEABLE)}))
+            await drain()
+
+        rec = engine.save.zone_by_id(zone_id)
+        assert not rec.layout_exhausted, "a committed Zone was swept in"
+        assert rec.manifest["manifest_digest"] == digest
+        assert rec.layout_refusals <= T.MAX_LAYOUT_REFUSALS, "the bound"
+        hub = engine.snapshot().hub
+        assert hub.mode == "ZONE_DORMANT", hub.mode
+        assert hub.resume_zone_id == zone_id and hub.discard_zone_id == ""
+        # And it is still a way back in, which is the point.
+        await engine.handle_enter_zone(zone_id)
+        assert engine.save.zone_by_id(zone_id).state == "ACTIVE"
     run(go())

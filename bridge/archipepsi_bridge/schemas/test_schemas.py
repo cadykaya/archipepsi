@@ -1598,8 +1598,11 @@ def test_a_zone_check_is_never_charged_and_a_shop_check_always_is():
 
 #: Every HubMode, sorted into exactly one bucket.
 MODE_BUCKETS = {
+    # ZONE_FAILED holds a Zone: it never laid out, it still reserves its
+    # Checks, and discarding it is an explicit act with a cost. What it
+    # is NOT is enterable — see `ZONE_ENTERABLE_MODES`.
     "holds_a_zone": ("GENERATING", "ZONE_READY", "ZONE_ACTIVE",
-                     "ZONE_DORMANT"),
+                     "ZONE_DORMANT", "ZONE_FAILED"),
     "may_request":  ("ZONE_AVAILABLE", "FINALE_ONLY"),
     "idle":         ("NO_CAMPAIGN", "WAITING_FOR_AP", "ALL_CHECKS_CLEARED"),
 }
