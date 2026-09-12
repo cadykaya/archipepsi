@@ -1599,31 +1599,43 @@ branch — which is this lane's.
 
 **What the bridge reads is a PLACEMENT OUTCOME, and nothing else.**
 Neither `arrival_ok` nor `plug_clear` can carry a host verdict, and this
-lane read both as if they could:
+lane read both as if they could — `plugs_clear_of_arrivals` writes
+`false` on a missing ARRIVAL anchor, and `_settle_return_anchors`
+skipped searching whenever the current anchor was standable. Both are
+repaired in the engine at `d870dc3`; the bar reads neither.
 
-* `room_audit.plugs_clear_of_arrivals` writes `false` when the room's
-  **arrival** anchor is missing, so incomplete data and a measured
-  overlap arrive under one word;
-* `_settle_return_anchors` skips searching whenever the current anchor
-  is standable, even when it overlaps the arrival's trigger clearance —
-  so a badly positioned pad with a perfectly good alternate elsewhere in
-  the room reports exactly like a room with nowhere to stand.
+**ONE CONTRACT, and the two halves did not meet.** Both lanes shipped a
+`plug_placement`. The engine keyed it by **room id** with
+`MEASURED`/`REPAIRED`/`NO_EVIDENCE`/`NO_CANDIDATE`; this side keyed it
+by **edge id** with `PLACED`/`CANDIDATE_REJECTED`/`NO_CANDIDATE`. Traced
+and measured: a `NO_CANDIDATE` in the engine's shape was **ACCEPTED**
+here and barred nothing — a Zone committing with a return device that
+was never placed. Both halves correct alone, the seam silent. A field on
+both sides is not a field that connects.
 
-Either one barred a whole room from branch selection. So the engine says
-which of three things happened, per plug, in `layout["plug_placement"]`:
+Reconciled, keyed by the plug's `edge_id`, one final outcome:
 
 | `outcome` | means | this lane |
 |---|---|---|
-| *(absent)* | incomplete evidence | refuse; **do not bar** |
-| `CANDIDATE_REJECTED` | this position failed, the search did not finish | refuse; **do not bar** |
+| *(absent)* | this payload predates the field | **the check does not apply** |
+| `NO_EVIDENCE` | the engine measured nothing | refuse; do not bar |
 | `NO_CANDIDATE` | the declared bounded search finished, nothing held | refuse **and bar the host** |
 | `PLACED` | a position with support and clearance | nothing |
 
-`policy` and `tried` ride along for the LOG — what search ran and how
-much of it. **No exhaustive proof of geometric impossibility is asked
-for**: a bounded search, stated. The bridge branches on the outcome and
-never on the prose, and an outcome outside that set is refused rather
-than guessed at.
+`MEASURED` and `REPAIRED` are **one outcome** — the device is placed —
+and which it was is diagnostic, carried in `repaired` and `how`
+alongside `searched`. `CANDIDATE_REJECTED` is gone: nothing produced it,
+and a word with no producer is the mirror of the vocabulary-with-no-
+consumer this project keeps finding.
+
+**Three kinds of absence, kept apart.** *Absent* is a payload that
+predates the field: the existing anchor, support and clearance rules
+still govern acceptance, every older valid payload stays valid, and
+absence is **never** `NO_CANDIDATE`. *Present and malformed* — a record
+that is not a record, or an outcome outside the set — is refused, and
+must not masquerade as an older client. *A report keyed by something
+else* is refused loudly: that is precisely how the two shapes passed
+each other, every lookup missing and every plug reading as legacy.
 
 Support and clearance are both the engine's, and route accessibility is
 the existing physical journey work — not re-derived here.
@@ -1683,38 +1695,47 @@ others:
 `reselect_hosts` raises on a record holding a manifest, so the committed
 case cannot be taken by this path even by mistake.
 
-> **For Prod — one field, and it is the only thing asked.**
+> **For Prod — two changes, and both are small.**
 >
-> `layout["plug_placement"][edge_id] = {"outcome": ..., "policy": ...,
-> "tried": ...}`, where `outcome` is `PLACED`, `CANDIDATE_REJECTED` or
-> `NO_CANDIDATE` and the other two are context for the log. It is the
-> FINAL outcome for that plug: a candidate rejected and then replaced is
-> `PLACED`.
+> **1. Key `plug_placement` by the plug's `edge_id`, not the room id,
+> and collapse `MEASURED`/`REPAIRED` into `PLACED`** with the
+> distinction kept as `repaired: bool` beside `searched` and `how`.
+> `NO_EVIDENCE` and `NO_CANDIDATE` keep their meanings exactly. That is
+> the whole vocabulary; the bridge branches on `outcome` and reads
+> nothing else.
 >
-> `CANDIDATE_REJECTED` is the one `_settle_return_anchors` cannot report
-> today, because it `continue`s whenever the current anchor is standable
-> — so a standable pad inside the arrival's trigger clearance never
-> starts a search. Whether that becomes a search or stays a rejection is
-> yours; either answer is expressible here.
+> Until it lands nothing regresses — absent means the check does not
+> apply — **except that a room-keyed report is now REFUSED rather than
+> ignored**, which is deliberate: it is how the mismatch stayed silent.
 >
-> Until the field arrives nothing regresses: **absent is incomplete
-> evidence**, the layout is refused exactly as it is today, and no room
-> is barred. The old bar is gone, so no room is barred on `plug_clear`
-> or `arrival_ok` any more.
+> **2. Echo `proposal_id`.** It arrives on `zone_ready`; capture it when
+> you START the build and send it back on `layout_result`. Absent is
+> still accepted.
 >
-> **Still open, and yours (§4 of the correction).** One real failed
-> placement driven through re-selection, rebuild, acceptance, a
-> deliberate return use and a cold restart — the Python `place_layout`
-> helper is right for bridge controls and demonstrates no physical
-> layout or traversal. Confirm the client replaces the old proposal and
-> that no old acceptance coroutine or verdict reaches the replacement.
+> **Integration controls need your payloads.** The bridge controls use
+> the Python `place_layout` helper, which demonstrates no physical
+> layout or traversal, and there is no captured engine payload in the
+> tree to read. Four captured `layout_result` payloads would let this
+> lane assert against real ones: a supported placement, a rejected
+> candidate successfully replaced, missing evidence, and a completed
+> unsuccessful search. Asked for rather than fabricated.
 >
-> **One thing this lane cannot do alone.** A `layout_result` for a
-> proposal that has since been replaced is only caught by its joins
-> naming edges the current graph does not have — it is refused, but it
-> can still spend a refusal. A graph identity echoed back on
-> `layout_result` would close that; say if you would rather carry one
-> than have the bridge infer it.
+> **Still yours (§4).** One real failed placement driven through
+> re-selection, rebuild, acceptance, a deliberate return use and a cold
+> restart; and that the client replaces the old proposal with no old
+> coroutine or verdict reaching the replacement.
+>
+> **Stale proposals are closed.** `ZoneReady.proposal_id` is
+> `layout.proposal_digest(zone)` — the whole serialized Zone, so
+> **content replacement counts as much as regraphing** and identical
+> edges over different rooms are two proposals. The client captures it
+> when it STARTS a build and echoes it on `layout_result`, so an old
+> coroutine carries the old id however long it takes to come back and
+> cannot acquire the replacement's. A mismatch is ignored outright:
+> no budget spent, no room barred, no graph changed, no layout
+> committed, the record untouched — and the replacement still completes
+> its own acceptance. Absent means "cannot be checked", never "stale",
+> so a client that does not echo one behaves exactly as it does today.
 >
 > `played_zone` is regenerated from source (`make zone-fixture`), so
 > `c012` stops being a destination the moment a run reports

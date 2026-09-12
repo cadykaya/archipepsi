@@ -1038,14 +1038,17 @@ def test_a_genuine_legacy_zone_with_no_graph_still_loads(tmp_path):
 # answer is a different host rather than a different Zone.
 
 def _placement(layout: dict, zone, room_id: str, outcome: str,
-               tried: int = 16) -> dict:
-    """The engine's placement outcome for one room's return device."""
+               searched: int = 16, **detail) -> dict:
+    """The engine's placement outcome for one room's return device.
+
+    The agreed wire shape: keyed by the plug's `edge_id`, one final
+    outcome, `searched` and the diagnostic detail alongside.
+    """
     out = dict(layout)
     out["plug_placement"] = dict(layout.get("plug_placement") or {})
     plug = next(p for p in zone.plugs if p.room_id == room_id)
     out["plug_placement"][plug.edge_id] = {
-        "outcome": outcome, "policy": "stand-surfaces-then-lattice",
-        "tried": tried}
+        "outcome": outcome, "searched": searched, **detail}
     return out
 
 
@@ -1100,18 +1103,17 @@ def test_a_missing_arrival_does_not_bar_the_room(tmp_path):
     run(go())
 
 
-def test_a_badly_positioned_pad_with_an_alternate_does_not_bar_the_room(
-        tmp_path):
-    """A repairable candidate failure. The pad is standable and too close
-    to the arrival; the engine has not finished looking. Refuse the
-    layout, keep the host."""
+def test_measured_nothing_does_not_bar_the_room(tmp_path):
+    """`NO_EVIDENCE`: the engine measured nothing — no arrival anchor,
+    no room. A refusal, because an unmeasured device is not a placed
+    one, and not a bar, because nothing was learned about the room."""
     async def go():
         engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
         zid, zone = await _zone_with_branches(engine)
         room = zone.plugs[0].room_id
         await _offer(engine, zid, _placement(
             _missing_arrival(_place(zone), zone, room), zone, room,
-            "CANDIDATE_REJECTED", tried=1))
+            "NO_EVIDENCE", searched=0))
 
         rec = engine.save.zone_by_id(zid)
         assert rec.manifest is None
@@ -1382,4 +1384,229 @@ def test_re_selection_stands_down_when_the_graph_cannot_be_rebuilt(tmp_path):
         assert after.unhostable_rooms == (), "it recorded a bar anyway"
         assert {p.room_id for p in after.zone.plugs} == {
             p.room_id for p in zone.plugs}
+    run(go())
+
+
+# --- one placement contract, traced end to end ----------------------------
+#
+# Both lanes shipped a `plug_placement` and they did not meet. The
+# engine keys by ROOM id with MEASURED/REPAIRED/NO_EVIDENCE/NO_CANDIDATE;
+# this side keyed by EDGE id with PLACED/CANDIDATE_REJECTED/NO_CANDIDATE.
+# Measured before reconciling: a NO_CANDIDATE in the engine's shape was
+# ACCEPTED here and barred nothing, so a Zone committed with a return
+# device that was never placed. A field on both sides is not a field
+# that connects.
+
+def test_a_report_keyed_by_something_else_is_refused_not_ignored(tmp_path):
+    """The exact live mismatch. Keyed by room id, every lookup missed,
+    every plug looked like an older payload, and the refusal vanished."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        plug = zone.plugs[0]
+        wrong = dict(_place(zone))
+        wrong["plug_placement"] = {
+            plug.room_id: {"outcome": "NO_CANDIDATE", "searched": 16}}
+        await _offer(engine, zid, wrong)
+
+        rec = engine.save.zone_by_id(zid)
+        assert rec.manifest is None, (
+            "a placement report keyed by room id was accepted")
+        assert rec.unhostable_rooms == (), "and it must not bar on it"
+    run(go())
+
+
+@pytest.mark.parametrize("detail", [
+    {"repaired": False, "how": "reserved"},
+    {"repaired": True, "how": "a declared stand"},
+])
+def test_measured_and_repaired_are_one_outcome(tmp_path, detail):
+    """The engine's `MEASURED` and `REPAIRED` both mean the device is
+    placed. Which it was is diagnostic and rides along; it is not a
+    second vocabulary for the bridge to branch on."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        await _offer(engine, zid, _placement(
+            _place(zone), zone, zone.plugs[0].room_id, "PLACED", **detail))
+        rec = engine.save.zone_by_id(zid)
+        assert rec.manifest is not None, "a placed return was refused"
+        assert rec.unhostable_rooms == ()
+    run(go())
+
+
+def test_a_malformed_report_does_not_masquerade_as_an_older_payload(tmp_path):
+    """Present and unreadable is not absent. An older client sends no
+    entry at all; a new one that sends nonsense is a new one."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        broken = dict(_place(zone))
+        broken["plug_placement"] = {zone.plugs[0].edge_id: "PLACED"}
+        await _offer(engine, zid, broken)
+        rec = engine.save.zone_by_id(zid)
+        assert rec.manifest is None, "a malformed record was read as absence"
+        assert rec.unhostable_rooms == ()
+    run(go())
+
+
+def test_an_older_payload_with_no_placement_report_still_commits(tmp_path):
+    """The rollout. Absence means the check does not apply — the anchor,
+    support and clearance rules still govern — and never NO_CANDIDATE."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        older = _place(zone)
+        assert "plug_placement" not in older
+        await _offer(engine, zid, older)
+        rec = engine.save.zone_by_id(zid)
+        assert rec.manifest is not None, "an older valid payload was failed"
+        assert rec.unhostable_rooms == ()
+    run(go())
+
+
+# --- a result about a proposal that no longer exists ----------------------
+
+def _build_id(engine, zid) -> str:
+    from archipepsi_bridge import layout as LAY
+    return LAY.proposal_digest(engine.save.zone_by_id(zid).zone)
+
+
+def test_a_late_result_from_a_replaced_proposal_changes_nothing(tmp_path):
+    """A starts, B replaces it, A reports late.
+
+    B must be untouched — no budget spent, no room barred, no graph
+    changed, no layout committed — and must still complete its own
+    acceptance afterwards.
+    """
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone_a = await _zone_with_branches(engine)
+        id_a = _build_id(engine, zid)
+        layout_a = _place(zone_a)          # A's build, held back
+
+        # B replaces A: the engine could not host A's first destination.
+        await _offer(engine, zid, _placement(
+            _place(zone_a), zone_a, zone_a.plugs[0].room_id, "NO_CANDIDATE"))
+        rec_b = engine.save.zone_by_id(zid)
+        id_b = _build_id(engine, zid)
+        assert id_b != id_a, "the replacement has its own identity"
+        barred_b, graph_b = rec_b.unhostable_rooms, rec_b.zone
+        refusals_b = rec_b.layout_refusals
+
+        # A finally reports, carrying the identity it started with.
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zid, "proposal_id": id_a,
+             "layout": _placement(layout_a, zone_a,
+                                  zone_a.plugs[1].room_id, "NO_CANDIDATE")}))
+        await drain()
+
+        after = engine.save.zone_by_id(zid)
+        assert after.manifest is None, "A's layout was committed"
+        assert after.layout_refusals == refusals_b, "A spent B's budget"
+        assert after.unhostable_rooms == barred_b, "A barred B's rooms"
+        assert after.zone == graph_b, "A changed B's graph"
+
+        # AND B STILL COMPLETES ITS OWN ACCEPTANCE.
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zid, "proposal_id": id_b,
+             "layout": _place(graph_b)}))
+        await drain()
+        assert engine.save.zone_by_id(zid).manifest is not None
+    run(go())
+
+
+def test_identical_edges_do_not_make_it_the_same_proposal(tmp_path):
+    """Content replacement counts as much as regraphing.
+
+    A replacement that reuses every room and edge NAME is a different
+    proposal, and a digest over the graph alone would call the two one.
+    """
+    from archipepsi_bridge import layout as LAY
+
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        before = LAY.proposal_digest(zone)
+
+        # Same ids, same edges, one room's content changed.
+        rooms = list(zone.chambers)
+        rooms[1] = rooms[1].model_copy(update={"flavor": "a different room"})
+        twin = zone.model_copy(update={"chambers": tuple(rooms)})
+        assert [c.id for c in twin.chambers] == [c.id for c in zone.chambers]
+        assert twin.edges == zone.edges
+        assert LAY.proposal_digest(twin) != before, (
+            "identical edges made two Zones one proposal")
+
+        # And a result carrying the old id is ignored against the new.
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zid,
+             "proposal_id": LAY.proposal_digest(twin),
+             "layout": {"status": "LAYOUT_OK"}}))
+        await drain()
+        rec = engine.save.zone_by_id(zid)
+        assert rec.layout_refusals == 0, "a foreign id spent the budget"
+        assert rec.state == "GENERATED"
+    run(go())
+
+
+def test_a_result_with_no_proposal_id_behaves_as_it_does_today(tmp_path):
+    """Absent means "cannot be checked", never "stale" — so a client
+    that does not echo one is not broken by this."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        await _offer(engine, zid, _place(zone))
+        assert engine.save.zone_by_id(zid).manifest is not None
+    run(go())
+
+
+def test_the_identity_survives_a_restart(tmp_path):
+    """A build in flight across a reconnect still names its proposal,
+    and the record it is checked against comes off disk."""
+    from archipepsi_bridge import layout as LAY
+
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        mine = LAY.proposal_digest(zone)
+        await drain()
+
+        engine.save = store.load_save(engine._save_path)
+        assert LAY.proposal_digest(engine.save.zone_by_id(zid).zone) == mine
+        await _offer(engine, zid, _place(zone))
+        assert engine.save.zone_by_id(zid).manifest is not None
+
+        # And a stale id is still refused after the restart.
+        engine.save = store.load_save(engine._save_path)
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zid,
+             "proposal_id": "0" * 16, "layout": {"status": "LAYOUT_OK"}}))
+        await drain()
+        assert engine.save.zone_by_id(zid).manifest is not None
+    run(go())
+
+
+def test_the_offer_carries_the_identity_the_client_captures(tmp_path):
+    """It has to come from `zone_ready`, or the client has nothing to
+    echo and an old coroutine could pick up the replacement's id."""
+    async def go():
+        from archipepsi_bridge import layout as LAY
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        sink = Collector(engine)
+        zid, zone = await _zone_with_branches(engine)
+        offered = [m for m in sink.of_type("zone_ready")
+                   if m.zone.zone_id == zid]
+        assert offered and offered[-1].proposal_id
+        assert offered[-1].proposal_id == LAY.proposal_digest(
+            offered[-1].zone)
+
+        # A re-selection offers a NEW identity, so a build started on the
+        # first one cannot claim the second.
+        await _offer(engine, zid, _placement(
+            _place(zone), zone, zone.plugs[0].room_id, "NO_CANDIDATE"))
+        again = [m for m in sink.of_type("zone_ready")
+                 if m.zone.zone_id == zid]
+        assert len(again) == 2
+        assert again[0].proposal_id != again[1].proposal_id
     run(go())

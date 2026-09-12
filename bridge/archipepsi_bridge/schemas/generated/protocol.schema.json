@@ -494,6 +494,21 @@
             "additionalProperties": true,
             "title": "Layout",
             "type": "object"
+          },
+          "proposal_id": {
+            "anyOf": [
+              {
+                "maxLength": 16,
+                "minLength": 16,
+                "pattern": "^[0-9a-f]{16}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Proposal Id"
           }
         },
         "required": [
@@ -5790,6 +5805,12 @@
           "used_fallback": {
             "title": "Used Fallback",
             "type": "boolean"
+          },
+          "proposal_id": {
+            "default": "",
+            "maxLength": 16,
+            "title": "Proposal Id",
+            "type": "string"
           },
           "manifest": {
             "anyOf": [
