@@ -92,6 +92,19 @@ func _run() -> void:
 		_finish(1)
 		return
 
+	# ---- The recovery control: a Zone that can never be built ------------
+	if not await _test_a_failed_zone_is_discarded_and_its_checks_come_back():
+		_finish(1)
+		return
+	# AND THE ZONE IT ASKED FOR IS PLAYED, not left standing. The control
+	# proves the campaign can generate again after a discard, which
+	# leaves a Zone READY -- and the pass below only knows how to act on
+	# ZONE_AVAILABLE and FINALE_ONLY, so a READY Zone it never asked for
+	# spins it forever waiting for a mode nobody is going to send.
+	if not await _play_one_zone(false, true):
+		_finish(1)
+		return
+
 	# ---- Pass 2: play the campaign to the end -----------------------------
 	var zones_played := 2
 	var stock_ever_seen := false
@@ -838,38 +851,216 @@ func _test_a_refused_layout_is_not_playable() -> bool:
 	return true
 
 
-## A ZONE THAT CAN NEVER BE BUILT IS NOT A ZONE TO WALK BACK INTO.
+## THE WHOLE RECOVERY, DRIVEN: a Zone that can never be built, the
+## console that discards it, and the campaign carrying on.
 ##
-## `AMALGAM_BRIDGE.md` §5.7a defect 1, and the owner's decision on it.
-## When a fresh proposal exhausts its layout attempts the Zone goes
-## DORMANT holding its Checks -- and DORMANT is a mode whose portal says
-## "RETURN TO ZONE", into geometry the validator has refused three
-## times. Entering succeeded, the client sent a layout, it was refused,
-## and the Zone went DORMANT again: the recomposition stopped and the
-## LOOP did not. The escape existed at the abandon console, which in
-## that mode was invisible and did not know which Zone it held.
+## `AMALGAM_BRIDGE.md` §5.7a defect 1 and §5.7b. A fresh proposal that
+## exhausts its layout attempts goes to `ZONE_FAILED` holding its
+## Checks, and the Hub used to answer that with "RETURN TO ZONE" -- into
+## geometry the validator had refused three times. Entering succeeded,
+## the client sent a layout, it was refused, and round it went; the
+## escape at the abandon console was hidden in that mode and, reading
+## `active_zone` for a Zone nobody is standing in, had nothing to send.
 ##
-## Driven rather than read: the refusals are real ones from the real
-## validator, and what is asserted is what a player standing at the
-## portal can DO.
-func _test_an_unbuildable_zone_is_not_offered_as_a_way_back() -> bool:
+## Every refusal here is a real one from the real validator: the same
+## falsification the refusal control uses, sent again and again until
+## the budget is spent. What is asserted is what a player standing in
+## the Hub can DO -- and that the first press changes nothing.
+func _test_a_failed_zone_is_discarded_and_its_checks_come_back() -> bool:
+	# LET GO OF WHATEVER IS HELD FIRST. The control before this one
+	# leaves a Zone active, and `request_next_zone` is refused while the
+	# campaign holds one -- so this would wait thirty seconds for a
+	# ZONE_READY nobody was going to send.
+	var held := str(BridgeClient.hub().get("resume_zone_id", ""))
+	if held == "":
+		held = str(BridgeClient.active_zone().get("zone_id", ""))
+	if held != "" and BridgeClient.hub_mode() != "ZONE_AVAILABLE":
+		BridgeClient.send_intent({"type": "abandon_zone",
+				"zone_id": held})
+		if not await _await_condition("the held Zone is let go",
+				func() -> bool:
+					return BridgeClient.hub_mode() == "ZONE_AVAILABLE",
+				30.0):
+			return false
+	BridgeClient.send_intent({"type": "request_next_zone", "finale": false})
+	if not await _await_condition("ZONE_READY for the discard control",
+			func() -> bool: return BridgeClient.hub_mode() == "ZONE_READY",
+			30.0):
+		return false
+	var failed_id := str(BridgeClient.active_zone().get("zone_id", ""))
+	var reserved: Array = (BridgeClient.active_zone().get(
+			"allocated_location_ids", []) as Array).duplicate()
+	var checks_before: Array = BridgeClient.snapshot.get(
+			"checked_location_ids", []).duplicate()
+
+	# 1. SPEND THE BUDGET. A refusal recomposes the Zone against the same
+	#    ids, so each round is a fresh shape falsified the same way.
+	#    Bounded by `MAX_LAYOUT_REFUSALS` + 1 with room to spare; a run
+	#    that does not reach ZONE_FAILED has not measured this and says
+	#    so rather than passing.
+	for round_number in 6:
+		if BridgeClient.hub_mode() == "ZONE_FAILED":
+			break
+		if BridgeClient.hub_mode() == "ZONE_READY":
+			BridgeClient.send_intent({"type": "enter_zone",
+					"zone_id": failed_id})
+			if not await _await_condition("ZONE_ACTIVE for round %d"
+						% round_number,
+					func() -> bool:
+						return BridgeClient.hub_mode() == "ZONE_ACTIVE"):
+				return false
+		var falsified := _a_zone_with_one_door_dropped(
+				BridgeClient.active_zone().get("zone", {}))
+		if falsified.is_empty():
+			_check(false, "no sealed edge-less door to drop, so this "
+					+ "control cannot falsify anything")
+			return false
+		var doomed := ZoneController.new()
+		get_tree().root.add_child(doomed)
+		doomed.setup(falsified)
+		if not await _await_condition("a verdict in round %d"
+					% round_number,
+				func() -> bool: return doomed.layout_verdict != "", 30.0):
+			doomed.queue_free()
+			return false
+		_check(doomed.layout_verdict == "REFUSED",
+				"round %d's falsified layout was refused, and it was "
+				% round_number + "'%s'" % doomed.layout_verdict)
+		doomed.queue_free()
+		await get_tree().process_frame
+		await _await_condition("the campaign settles after round %d"
+					% round_number,
+				func() -> bool:
+					return BridgeClient.hub_mode() in ["ZONE_READY",
+							"ZONE_FAILED", "GENERATING"], 30.0)
+	if BridgeClient.hub_mode() != "ZONE_FAILED":
+		_check(false, "six falsified layouts did not exhaust the budget; "
+				+ "the Hub is in %s" % BridgeClient.hub_mode())
+		return false
+
+	# 2. THE HUB SHOWS THE FAILURE AND NAMES WHAT TO DISCARD.
 	var hub := BridgeClient.hub()
-	if not bool(hub.get("resume_layout_exhausted", false)):
-		# NOT REACHED IN THIS RUN, AND SAID SO. Getting here needs three
-		# real refusals in a row of a Zone that was never accepted; this
-		# campaign's Zones lay out. The claim below is about the state
-		# when it happens, so a run that never reaches it asserts
-		# nothing rather than passing quietly.
-		print("  -- no exhausted Zone in this run; the unbuildable-Zone "
-				+ "offer is asserted by test_hub.gd on the state itself")
-		return true
-	_check(BridgeClient.hub_mode() == "ZONE_DORMANT",
-			"an exhausted Zone leaves the Hub in ZONE_DORMANT, and it "
-			+ "is in %s" % BridgeClient.hub_mode())
-	_check(str(hub.get("resume_zone_id", "")) != "",
-			"the Hub still names the Zone it is holding, so the abandon "
-			+ "console has something to discard")
+	_check(str(hub.get("discard_zone_id", "")) == failed_id,
+			"the Hub names %s as the Zone to discard, and it names '%s'"
+			% [failed_id, str(hub.get("discard_zone_id", ""))])
+	_check(str(hub.get("resume_zone_id", "")) == "",
+			"and offers no resume id for it, so nothing can enter it by "
+			+ "accident: resume_zone_id is '%s'"
+			% str(hub.get("resume_zone_id", "")))
+	_check(not bool(hub.get("portal_enabled", true)),
+			"the portal is disabled in ZONE_FAILED")
+
+	# 3. AND A FRESH CLIENT FINDS THE SAME CONTROL. Built here rather
+	#    than reused: a console that only works because it happened to
+	#    be standing when the Zone failed is not a recovery a player
+	#    who restarts can reach.
+	var room := HubController.new()
+	get_tree().root.add_child(room)
+	await get_tree().process_frame
+	room.refresh()
+	await get_tree().process_frame
+	var asked: Array[int] = [0]
+	room.enter_zone_requested.connect(func() -> void: asked[0] += 1)
+	_check(not room.portal().interact_prompt().contains("[E]"),
+			"the portal offers no way in: '%s'"
+			% room.portal().interact_prompt())
+	room._on_portal_activated()
+	_check(asked[0] == 0,
+			"and activating it asks for nothing (asked %d times)"
+			% asked[0])
+	var console := room.abandon_console()
+	_check(console != null and console.visible,
+			"the discard console is visible in ZONE_FAILED")
+	if console == null:
+		room.queue_free()
+		return false
+
+	# 4. THE FIRST PRESS ASKS, AND CHANGES NOTHING.
+	var before_mode := BridgeClient.hub_mode()
+	console.interact(null)
+	for _i in 30:
+		await get_tree().process_frame
+	_check(console.interact_prompt().to_upper().contains("CONFIRM"),
+			"the first press asks for confirmation: '%s'"
+			% console.interact_prompt())
+	_check(BridgeClient.hub_mode() == before_mode,
+			"and changed no campaign state: the Hub is still %s"
+			% BridgeClient.hub_mode())
+	_check(str(BridgeClient.hub().get("discard_zone_id", "")) == failed_id,
+			"and the Zone is still held")
+
+	# 5. THE SECOND PRESS DISCARDS THAT ZONE, and 6. the ids come back.
+	console.interact(null)
+	if not await _await_condition("the failed Zone is discarded",
+			func() -> bool:
+				return BridgeClient.hub_mode() != "ZONE_FAILED", 30.0):
+		room.queue_free()
+		return false
+	_check(BridgeClient.hub_mode() == "ZONE_AVAILABLE",
+			"discarding it leaves the Hub able to generate again, and "
+			+ "it is in %s" % BridgeClient.hub_mode())
+	var checks_now: Array = BridgeClient.snapshot.get(
+			"checked_location_ids", []).duplicate()
+	checks_before.sort()
+	checks_now.sort()
+	_check(checks_before == checks_now,
+			"discarding claimed nothing on the player's behalf: %s "
+			% str(checks_before) + "before, %s after" % str(checks_now))
+	var missing: Array = BridgeClient.snapshot.get(
+			"missing_location_ids", [])
+	var stranded: Array = []
+	for id: Variant in reserved:
+		if not missing.has(id):
+			stranded.append(id)
+	_check(stranded.is_empty(),
+			"the discarded Zone's %d reserved location(s) are back in "
+			% reserved.size() + "the pool; stranded: %s" % str(stranded))
+
+	# 7. AND THE NEXT ZONE CAN BE ASKED FOR.
+	BridgeClient.send_intent({"type": "request_next_zone", "finale": false})
+	if not await _await_condition("the next Zone after a discard",
+			func() -> bool: return BridgeClient.hub_mode() == "ZONE_READY",
+			40.0):
+		room.queue_free()
+		return false
+	_check(str(BridgeClient.active_zone().get("zone_id", "")) != failed_id,
+			"and it is a new Zone, not the discarded one")
+	room.queue_free()
+	await get_tree().process_frame
 	return true
+
+
+## A copy of `zone` with one sealed, edge-less door dropped, or empty.
+##
+## The falsification both the refusal control and the discard control
+## use. A SEALED door carrying NO edge: no edge, because
+## `placement_plan` refuses a JOINED edge whose room drops its door --
+## that makes the Zone unbuildable rather than wrong, and the controller
+## never reaches the bridge at all. SEALED, because a sealed socket is
+## sealed by omission too, so the room this client builds is the same
+## room down to the geometry and the ONLY difference is that one
+## aperture goes unmeasured.
+func _a_zone_with_one_door_dropped(zone: Variant) -> Dictionary:
+	if typeof(zone) != TYPE_DICTIONARY:
+		return {}
+	var out: Dictionary = (zone as Dictionary).duplicate(true)
+	var dropped := ""
+	for raw_chamber: Variant in out.get("chambers", []):
+		var chamber: Dictionary = raw_chamber
+		if dropped != "":
+			continue
+		var kept: Array = []
+		for raw_door: Variant in chamber.get("doors", []):
+			var door: Dictionary = raw_door
+			if dropped == "" and str(door.get("usage", "")) == "SEALED" \
+					and door.get("edge_id") == null:
+				dropped = "%s/%s" % [str(chamber.get("id", "?")),
+						str(door.get("socket_id", "?"))]
+				continue
+			kept.append(door)
+		if dropped != "":
+			chamber["doors"] = kept
+	return {} if dropped == "" else out
 
 
 ## THE ZONE GOES AWAY WHILE ITS LAYOUT IS BEING CERTIFIED, twice, and a
@@ -942,11 +1133,16 @@ func _test_a_zone_survives_being_torn_down_mid_certification() -> bool:
 		_check(refusals.is_empty(),
 				"the discarded attempt raised no verdict of its own, "
 				+ "and it raised %s (offset %d)" % [str(refusals), offset])
-		_check(caught == "",
-				"the discarded attempt had not yet acted on a verdict "
-				+ "when it was freed, so anything it did after is the "
-				+ "bug under test (it held '%s', offset %d)"
-				% [caught, offset])
+		# WHAT IT HELD, AND WHAT IT MUST NOT HAVE. The early offset tears
+		# the Zone down inside the settle and the replay, before any
+		# verdict; the later one can legitimately catch an ACCEPTED,
+		# because a fast round trip beats fourteen physics frames. What
+		# neither may leave behind is a REFUSAL -- that is the answer
+		# that sends a player back to the Hub, and a discarded attempt
+		# has no standing to give it.
+		_check(caught != "REFUSED",
+				"the discarded attempt left no refusal behind (it held "
+				+ "'%s', offset %d)" % [caught, offset])
 		_check(BridgeClient.hub_mode() == "ZONE_ACTIVE",
 				"the campaign is still in %s after the teardown, and it "
 				% zone_id + "is in %s (offset %d)"
@@ -1236,7 +1432,13 @@ func _check_affordances_and_local_rewards(_controller: ZoneController,
 	for entry: Dictionary in BridgeClient.owned_components("affordance"):
 		usable.append(str(entry.get("component", {}).get("tag", "")))
 	for tag: String in offered:
-		_check(tag in ["bounce_pad", "moving_platform"] or tag in usable,
+		# THE BASE KIT, FROM THE CONTRACT. This was a hand-written pair
+		# here and a tuple in `bridge/tests/test_affordances.py`, which
+		# is two places recording one decision -- so the day
+		# `powered_door` joined the kit the engine offered it correctly
+		# and this line failed the Zone for offering it. One definition,
+		# exported, read by both sides.
+		_check(tag in Constants.BASE_KIT_TAGS or tag in usable,
 				"'%s' was offered without the capability that pays for it"
 				% tag)
 

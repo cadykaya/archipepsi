@@ -16,6 +16,7 @@ const AUTHORED_AREA_BUDGET = 4000.0
 const BAND_DOOR_MARGIN = 2.0
 const BAND_RAMP_MIN_RUN = 3.0
 const BAND_RAMP_RUN_FACTOR = 3.0
+const BASE_KIT_TAGS = ["bounce_pad", "moving_platform", "powered_door"]
 const BRIDGE_HOST = "127.0.0.1"
 const BRIDGE_PORT = 38290
 const BRUTES_PER_BUDGET_POINT = 0.005

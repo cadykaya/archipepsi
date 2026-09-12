@@ -261,10 +261,17 @@ func _zone_signage_faces_the_player_too() -> void:
 ## console was invisible in that mode and, reading `active_zone` for a
 ## Zone nobody is in, did not know what it would be discarding.
 ##
-## Driven on the STATE, not on the text: `resume_layout_exhausted` is
-## the bridge's fact, and what is asserted here is that the prompt
-## carries no `[E]`, that the portal refuses to emit, and that the
-## abandon console is visible and armed with the held Zone's id.
+## Driven on the STATE, not on the text: `ZONE_FAILED` with a
+## `discard_zone_id` is the bridge's answer (§5.7b), and what is
+## asserted here is that the prompt carries no `[E]`, that the portal
+## refuses to emit, and that the console is visible and knows which Zone
+## it would discard.
+##
+## AND THAT THE THREE MODES THE CONSOLE ALREADY SERVED STILL WORK.
+## `discard_zone_id` is populated in `ZONE_FAILED` and nowhere else, so
+## a console that took its target from that field unconditionally would
+## show its prompt and do nothing in GENERATING, ZONE_READY and
+## ZONE_ACTIVE -- which is where `active_zone` is what names the Zone.
 func _an_unbuildable_zone_offers_no_way_in(hub: HubController) -> void:
 	var was := BridgeClient.snapshot
 	# AN ARRAY, BECAUSE A GDSCRIPT LAMBDA CAPTURES LOCALS BY VALUE. An
@@ -278,7 +285,7 @@ func _an_unbuildable_zone_offers_no_way_in(hub: HubController) -> void:
 	# in and nothing here may take that away.
 	BridgeClient.snapshot = {"hub": {"mode": "ZONE_DORMANT",
 			"headline": "ZONE WAITING", "portal_enabled": true,
-			"resume_zone_id": "zone_009", "resume_layout_exhausted": false}}
+			"resume_zone_id": "zone_009"}}
 	hub.refresh()
 	await get_tree().process_frame
 	_check(hub.portal().interact_prompt().contains("[E]"),
@@ -289,10 +296,43 @@ func _an_unbuildable_zone_offers_no_way_in(hub: HubController) -> void:
 			"activating the portal on a committed dormant Zone asks to "
 			+ "enter it (asked %d times)" % asked[0])
 
+	# THE CONSOLE'S OWN THREE MODES, which no new field may take away.
+	var console := hub.abandon_console()
+	BridgeClient.snapshot = {"hub": {"mode": "ZONE_ACTIVE",
+			"headline": "ZONE IN PROGRESS", "portal_enabled": true},
+			"active_zone": {"zone_id": "zone_008"}}
+	hub.refresh()
+	await get_tree().process_frame
+	_check(console != null and console.visible,
+			"the console is still visible in ZONE_ACTIVE")
+	_check(console != null and str(console.get("_zone_id")) == "zone_008",
+			"and still takes its target from the active Zone ('%s'), "
+			% (str(console.get("_zone_id")) if console != null else "?")
+			+ "which is the only field that names one in this mode")
+
+	# AND AN ARMED CONFIRMATION DOES NOT FOLLOW THE TARGET. Armed for
+	# one Zone and still armed over another, the next press discards a
+	# Zone the player never agreed to.
+	if console != null:
+		console.interact(null)
+		_check(console.interact_prompt().to_upper().contains("CONFIRM"),
+				"a first press on the console asks to confirm: '%s'"
+				% console.interact_prompt())
+	BridgeClient.snapshot = {"hub": {"mode": "ZONE_ACTIVE",
+			"headline": "ZONE IN PROGRESS", "portal_enabled": true},
+			"active_zone": {"zone_id": "zone_010"}}
+	hub.refresh()
+	await get_tree().process_frame
+	if console != null:
+		_check(not console.interact_prompt().to_upper().contains("CONFIRM"),
+				"and the confirmation falls when the target moves to "
+				+ "another Zone: '%s'" % console.interact_prompt())
+
 	# And now the one that cannot be built.
-	BridgeClient.snapshot = {"hub": {"mode": "ZONE_DORMANT",
-			"headline": "ZONE WAITING", "portal_enabled": true,
-			"resume_zone_id": "zone_009", "resume_layout_exhausted": true}}
+	BridgeClient.snapshot = {"hub": {"mode": "ZONE_FAILED",
+			"headline": "ZONE FAILED TO BUILD", "portal_enabled": false,
+			"resume_zone_id": "", "discard_zone_id": "zone_009",
+			"discard_zone_name": "Relay 009"}}
 	hub.refresh()
 	await get_tree().process_frame
 	_check(not hub.portal().interact_prompt().contains("[E]"),
@@ -302,9 +342,8 @@ func _an_unbuildable_zone_offers_no_way_in(hub: HubController) -> void:
 	_check(asked[0] == 1,
 			"activating the portal on an unbuildable Zone asks for "
 			+ "nothing (asked %d times in total)" % asked[0])
-	var console := hub.abandon_console()
 	_check(console != null and console.visible,
-			"the abandon console is visible, because discarding the "
+			"the discard console is visible, because discarding the "
 			+ "Zone is the only move left")
 	if console != null:
 		_check(console.interact_prompt().contains("[E]"),
