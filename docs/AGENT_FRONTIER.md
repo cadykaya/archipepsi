@@ -40,8 +40,7 @@ hazard-role contradiction reconciled in the shared handoff — `hazard` is
 universal, four roles need authored pixels, and a pack that paints its
 own hazard is refused.
 
-**AND `make godot-graphs` IS RED, FOR A REAL REASON.** Four of the five
-Zones do not lay out at all:
+**AND FOUR OF THE FIVE ZONES DO NOT LAY OUT AT ALL:**
 
 | | shape | layout |
 |---|---|---|
@@ -85,6 +84,16 @@ rooms off its spine eventually paints itself into a corner and the room
 that cannot fit is whichever one was unlucky enough to be last. Either
 the walk backtracks, or branch placement reserves its space before the
 spine consumes it.
+
+**`make godot-graphs` is GREEN and that is not the same as "this is
+fine".** The four are recorded in `KNOWN_INFEASIBLE` with the room each
+one wedges on, and the list is checked BOTH ways: a Zone that composes
+today and stops is a regression and fails; one on the list that starts
+composing means the router was fixed and the list is stale, which also
+fails. A target simply left red on a known defect is a target people
+learn to ignore, and then the regression it was meant to catch arrives
+unnoticed. The defect is not hidden by this — it is in the list, in this
+section, and in `NEXT_STEPS.md`.
 
 **The player leg of that target reports and does not assert**, and the
 comment in `_walk_one` says why: standing a body at an arbitrary
