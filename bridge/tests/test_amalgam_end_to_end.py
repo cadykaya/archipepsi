@@ -28,6 +28,21 @@ DEPTH = 16.0
 BRANCH_X = 90.0
 
 
+def _corridor(a, b) -> dict:
+    """One chain piece in the shape `zone_builder` emits one.
+
+    Pose and kind as well as endpoints: the engine refuses to replay a
+    committed chain whose pieces carry no `position`/`yaw` or an unknown
+    `kind` (`malformed_pieces`), so a fixture without them stands in for
+    a payload the engine could not rebuild.
+    """
+    return {"kind": "CONNECTOR", "position": list(a), "yaw": 0.0,
+            "entry": list(a), "exit": list(b),
+            "bounds": {"position": [min(a[0], b[0]) - 1.5, 0.0,
+                                    min(a[2], b[2])],
+                       "size": [3.0, 4.0, max(abs(b[2] - a[2]), 0.1)]}}
+
+
 def _place(zone) -> dict:
     """A physically sound layout for this Zone, in the engine's shape.
 
@@ -90,13 +105,7 @@ def _place(zone) -> dict:
             if abs(bx - ax) < 1e-6 else \
             [bx + (-HALF_W if bx > ax else HALF_W), 0.0, bz]
         joins[e.edge_id] = {
-            "socket_a": sa, "socket_b": sb,
-            "chain": [{"kind": "CONNECTOR", "entry": sa, "exit": sb,
-                       "bounds": {"position": [min(sa[0], sb[0]) - 1.5, 0.0,
-                                               min(sa[2], sb[2])],
-                                  "size": [3.0, 4.0,
-                                           max(abs(sb[2] - sa[2]), 0.1)]}}],
-        }
+            "socket_a": sa, "socket_b": sb, "chain": [_corridor(sa, sb)]}
 
     stations = []
     for p in zone.plugs:
@@ -105,6 +114,22 @@ def _place(zone) -> dict:
         arrival_ok.setdefault(p.source_anchor, True)
         arrival_ok.setdefault(p.destination, True)
 
+    # THE ENGINE'S OWN GEOMETRY, which every finished build appends: an
+    # exit room with the portal in it, and the approach to it filed
+    # under the reserved edge id. A payload without them is not one
+    # `zone_builder` could have produced.
+    far = max(z for _, z in centre.values()) + SPACING
+    rooms["exit"] = {
+        "position": [0.0, 0.0, far], "yaw": 0.0,
+        "bounds": {"position": [-HALF_W, 0.0, far - DEPTH / 2],
+                   "size": [HALF_W * 2, 5.0, DEPTH]}}
+    tail = max((c.id for c in zone.chambers),
+               key=lambda rid: centre[rid][1])
+    tz = centre[tail][1] + DEPTH / 2
+    joins["e:__exit__"] = {
+        "room_a": tail, "room_b": "exit", "synthetic": True,
+        "socket_a": [0.0, 0.0, tz], "socket_b": [0.0, 0.0, far],
+        "chain": [_corridor([0.0, 0.0, tz], [0.0, 0.0, far])]}
     return {"status": "LAYOUT_OK", "rooms": rooms, "joins": joins,
             "anchors": anchors, "arrival_ok": arrival_ok,
             "apertures": apertures, "stations": stations}

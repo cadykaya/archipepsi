@@ -1,6 +1,6 @@
 """Neuter one refusal at a time and report the ones no test notices.
 
-    python3 tools/mutate.py <source> <needle> <test file>...
+    python3 tools/mutate.py <source> <needle> <test path>...
     python3 tools/mutate.py archipepsi_bridge/layout.py "c.fail(" tests/test_layout.py
     python3 tools/mutate.py archipepsi_bridge/schemas/transitions.py \
         "raise ValueError(" tests/test_zone_progress.py
@@ -21,6 +21,20 @@ things, and saying which is the actual work:
 3. dead code -> delete it.
 
 Never close a survivor by weakening the check.
+
+**A BROKEN TEST RUN IS NOT A KILLED MUTANT.** The first version scored
+any non-zero exit as "the tests noticed", so a directory where pytest
+could not start at all reported `1 sites, 0 unmeasured` — a clean bill
+of health from a run in which nothing ran. That is precisely the defect
+this tool exists to find, in the tool itself. Two things stop it now:
+
+* an **unmutated baseline** has to pass before a single mutation is
+  written, so the harness knows the suite is runnable and green to
+  begin with; and
+* only pytest's exit code **1** (tests ran, tests failed) counts as a
+  kill. Collection failure, usage error, internal error, interruption
+  and anything else are HARNESS ERRORS, reported with their output and
+  never silently counted either way.
 """
 
 from __future__ import annotations
@@ -33,6 +47,33 @@ import sys
 
 USAGE = "usage: mutate.py <source> <needle> <test path>..."
 
+#: pytest's documented exit codes. Only TESTS_FAILED means a mutant died.
+OK, TESTS_FAILED, INTERRUPTED, INTERNAL_ERROR, USAGE_ERROR, NO_TESTS = range(6)
+_WHY = {
+    INTERRUPTED: "the run was interrupted (exit 2)",
+    INTERNAL_ERROR: "pytest hit an internal error (exit 3)",
+    USAGE_ERROR: "pytest usage error — bad path or option (exit 4)",
+    NO_TESTS: "no tests were collected (exit 5)",
+}
+
+
+def _why(code: int) -> str:
+    if code in _WHY:
+        return _WHY[code]
+    if code < 0:
+        return f"the run died on signal {-code}"
+    return f"pytest exited {code}, which is not a test result"
+
+
+class HarnessError(RuntimeError):
+    """The run did not produce a verdict. Never a measurement."""
+
+
+def _tail(run: subprocess.CompletedProcess, lines: int = 25) -> str:
+    out = (run.stdout or "") + (run.stderr or "")
+    kept = out.strip().splitlines()[-lines:]
+    return "\n".join("    | " + ln for ln in kept) or "    | (no output)"
+
 
 def main(argv: list[str]) -> int:
     if len(argv) < 3:
@@ -40,11 +81,15 @@ def main(argv: list[str]) -> int:
         return 2
     target, needle, tests = argv[0], argv[1], argv[2:]
     path = pathlib.Path(target)
+    if not path.is_file():
+        print(f"mutate: no such source file: {target}", file=sys.stderr)
+        return 2
     orig = path.read_text(encoding="utf-8")
     lines = orig.split("\n")
     sites = [i for i, ln in enumerate(lines) if needle in ln]
     if not sites:
-        print(f"no occurrence of {needle!r} in {target}", file=sys.stderr)
+        print(f"mutate: no occurrence of {needle!r} in {target}",
+              file=sys.stderr)
         return 2
 
     # `raise X(...)` cannot be muted by swapping in a no-op callable:
@@ -67,20 +112,47 @@ def main(argv: list[str]) -> int:
         for d in pathlib.Path(".").rglob("__pycache__"):
             shutil.rmtree(d, ignore_errors=True)
 
-    survivors = []
+    def run_tests() -> subprocess.CompletedProcess:
+        purge()
+        try:
+            return subprocess.run(
+                [sys.executable, "-m", "pytest", *tests, "-q", "-x",
+                 "--no-header", "-p", "no:cacheprovider"],
+                capture_output=True, text=True, env=env)
+        except OSError as exc:                       # pragma: no cover
+            raise HarnessError(f"could not start pytest: {exc}") from exc
+
+    survivors: list[tuple[int, str]] = []
     try:
+        # THE BASELINE, before a single byte is mutated. Without it,
+        # "every mutant died" is indistinguishable from "the suite could
+        # never run", and the second reads as a perfect score.
+        base = run_tests()
+        if base.returncode != OK:
+            reason = ("the tests fail before anything is mutated"
+                      if base.returncode == TESTS_FAILED
+                      else _why(base.returncode))
+            raise HarnessError(
+                f"baseline run is not green: {reason}\n{_tail(base)}")
+
         for i in sites:
             mut = list(lines)
             mut[i] = mut[i].replace(needle, repl, 1)
             path.write_text("\n".join(mut), encoding="utf-8")
-            purge()
-            run = subprocess.run(
-                [sys.executable, "-m", "pytest", *tests, "-q", "-x",
-                 "--no-header", "-p", "no:cacheprovider"],
-                capture_output=True, text=True, env=env)
-            if run.returncode == 0:
+            run = run_tests()
+            if run.returncode == OK:
                 survivors.append((i + 1, lines[i].strip()[:88]))
+            elif run.returncode != TESTS_FAILED:
+                raise HarnessError(
+                    f"{target}:{i + 1} produced no verdict: "
+                    f"{_why(run.returncode)}\n{_tail(run)}")
+    except HarnessError as exc:
+        print(f"mutate: HARNESS ERROR — no result.\n{exc}", file=sys.stderr)
+        return 2
     finally:
+        # Restore unconditionally, including on KeyboardInterrupt and on
+        # SystemExit: leaving a mutated validator behind is worse than
+        # any report this tool could produce.
         path.write_text(orig, encoding="utf-8")
         purge()
 

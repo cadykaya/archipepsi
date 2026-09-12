@@ -216,7 +216,7 @@ either way. **Assert the message, not the record.**
 
 | Module | Sites | Unmeasured, first run | Now |
 |---|---|---|---|
-| `layout.py` | 22 | 8 — including the chain walk's inductive step, which the single-piece fixture could never reach | 0 |
+| `layout.py` | 22 → 34 | 8 — including the chain walk's inductive step, which the single-piece fixture could never reach | 0 |
 | `topology.py` | 4 | 1 — "not reachable at all" had never fired; every test stranded rooms behind a *gate* | 0 |
 | `schemas/physics.py` | 13 | 1 | 1, deliberately — see below |
 | `schemas/transitions.py` | 28 | 22 | 17, and **not this lane's** — see below |
@@ -234,6 +234,17 @@ things, and saying which is the work:
 3. dead code — delete it.
 
 Never close a survivor by weakening the check.
+
+**The harness had the defect it exists to find.** Run in a directory
+where pytest could not start, it reported `1 sites, 0 unmeasured` — a
+clean bill of health from a run in which nothing ran, because any
+non-zero exit was scored as "the tests noticed". Two things stop that
+now: an **unmutated baseline** must pass before a single mutation is
+written, and only pytest's exit code **1** (tests ran, tests failed)
+counts as a kill. Collection failure, usage error, internal error,
+interruption and anything else are **harness errors** — reported with
+their output, exit 2, never counted as a measurement in either
+direction. The source is restored on every path, including interrupts.
 
 **Seventeen survivors in `schemas/transitions.py` are left standing on
 purpose.** They are in `start_generation`, `accept_zone`, `abandon_zone`,
@@ -347,7 +358,7 @@ On re-entry `ZoneReady` carries `manifest`. Laying its `rooms` and
 `joins` back down is what makes a revisited Zone the same Zone; a
 re-search would be a second layout for a place the player already knows.
 
-### 5.4 What the crossing found on this side — and one open question
+### 5.4 What the crossing found on this side
 
 Reading the engine's `layout_to_json` against the validator turned up a
 hole that was mine. `zone_builder` appends an **exit room nobody
@@ -356,41 +367,92 @@ its approach under `e:__exit__`, plus `r:<room>` for the first room on
 the spine, which no edge names because nothing joins *into* it.
 
 The validator knew those three names and **did nothing else with them**.
-The exit room's transform was never parsed, so it never reached `boxes`
-and neither the overlap check nor the position-in-bounds check could
-see it; the reserved joins were skipped straight past the chain walk. So
-all of these were ACCEPTED, and the manifest replays exactly what it
-accepted:
+That took two passes to actually close, and the first one is worth
+recording because it is the same defect wearing a smaller hat.
 
-| Accepted before | Now |
+**Pass one** parsed the exit room like any other and walked each
+reserved chain's own links. That caught an exit room with no bounds and
+one sitting inside `c001`. It did not catch four more, and the write-up
+claimed one of them as fixed when it was not:
+
+| Still accepted after pass one | Why the check could not see it |
 |---|---|
-| an exit room with **no bounds at all** | refused |
-| an exit room sitting **inside `c001`** | refused |
-| an exit approach whose corridor **ends ten kilometres away** | refused |
-| an approach to an exit room **that was never placed** | refused |
-| `"e:__exit__": "yes"` | refused |
+| delete `rooms["exit"]` **and** `joins["e:__exit__"]` | the reserved pair was optional, so absent was indistinguishable from absent-on-purpose |
+| delete only `joins["e:__exit__"]` | same |
+| the **last** piece's `exit` moved ten kilometres away | internal continuity has no opinion about where a corridor goes, only that it does not come apart on the way |
+| a piece with `kind: "NOT_A_PIECE"` | nothing read `kind` at all |
 
-"Allowed by name" was never meant to mean "unchecked", and the comment
-above those constants claimed they were "checked as reserved" while
-nothing checked them.
+**The claim to correct.** The pass-one table in this document said "an
+exit approach whose corridor **ends** ten kilometres away → refused".
+That was false. The test behind it broke a chain in the *middle*, which
+was caught; the case as written — a chain continuous through itself that
+simply never arrives — accepted. `test_an_exit_approach_whose_last_piece_ends_far_away_is_refused`
+is now that exact case, and it fails without the fix.
 
-**Reserved joins are checked LESS than a JOINED edge, and the difference
-is not laziness.** A JOINED edge's `socket_a` and `socket_b` are two
-doorways, so the walk may demand they abut. A reserved join's endpoints
-are not doorways: `r:<room>` runs from the room's own `position` to its
-`arrival`, and the exit approach ends at the exit room's `position` —
-points several metres from any wall by construction. Demanding abutment
-there would refuse every real Zone, which is the other way to get a
-check wrong. So the pieces must be pieces and the chain must be
-continuous **through itself**, and the endpoints are not asserted.
+**Pass two takes the contract from the builder instead of from taste.**
 
-> **Open, for the engine lane.** Should a reserved join's endpoints abut
-> something checkable — the spine tail's `exit` doorway on one side, the
-> exit room's own doorway on the other — rather than a room origin? If
-> the engine can file them as doorways, this lane can walk them end to
-> end exactly like a JOINED edge, and the last leg stops being the one
-> corridor nobody verifies. If it cannot, say so and the weaker check
-> stands as the honest one.
+*Presence.* Every `LAYOUT_OK` out of `zone_builder` carries the exit room
+— it is appended unconditionally on that path, and every earlier return
+is a `LAYOUT_INFEASIBLE` — and `_joins` files its approach whenever the
+room is there. So both are **required**, not tolerated.
+
+*Pieces.* `PIECE_KINDS` and the pose requirement are
+`zone_builder.gd::malformed_pieces`, lifted whole: kind in
+{`CONNECTOR`, `CORNER`}, `position` and `yaw` present, `position` a
+point, and a `CORNER` recording a non-zero `turn`. **That guard is what
+the engine runs against a committed chain before replaying it, and when
+it trips the engine returns `LAYOUT_INFEASIBLE` and the Zone does not
+open.** So a manifest the bridge accepts and the engine cannot rebuild
+is a Zone that dies on re-entry — the exact failure Law 47c exists to
+prevent. The bridge now applies the same rule at commit time, where it
+is still a refusal rather than a dead save. `bounds` travels with every
+piece and is deliberately **not** required: `_replay_route` re-derives
+it by placing the piece, so demanding it would be the bridge inventing a
+contract the engine does not have.
+
+*Route.* `e:__exit__` gets the **full walk** — `socket_a -> first
+entry`, `exit -> next entry`, `last exit -> socket_b` — because the
+builder makes that close exactly: the exit room's `position` **is** the
+route cursor, which is the last piece's `exit`, and `socket_a` is the
+spine tail's `exit` doorway, which is where the route started. The
+engine's own comment above the CORNER record says this walk is the
+bridge's half of the exchange.
+
+**The existing helper fixtures were brought up to that contract rather
+than the contract brought down to them.** `_ok_result` and the
+end-to-end `_place` now emit pieces with a pose and a kind and include
+the reserved pair, because that is what a complete layout *is*; their
+age was not a reason to make production evidence optional. The accepted
+real-payload control is
+`test_a_complete_layout_is_accepted_and_gets_a_digest`, and 34 of 34
+refusals in `layout.py` are exercised by a test (`make mutate-bridge`).
+
+### 5.4a Open, and Prod's to settle: the `r:<room>` endpoints
+
+`r:<room>` is **anchored, not walked end to end**, and that is the one
+place where the check is weaker than an edge's on purpose.
+
+`zone_builder` files it as `socket_a` = the room's own `position`,
+`socket_b` = its `arrival`, `chain` = the corridor that reaches the
+room. So the chain *terminates at* `socket_a`, and `socket_b` is a point
+several metres inside the room: the two declared ends are not the two
+ends of the chain, and `socket_a -> chain -> socket_b` would refuse
+every real Zone. What is required instead is that the chain **arrives**
+— its last piece ends inside the room it approaches — which catches a
+corridor that stops in open space without asserting a shape the builder
+does not produce.
+
+> **The question.** Can `r:<room>` be filed with doorway endpoints, the
+> way `e:__exit__` already is — `socket_a` where the corridor starts,
+> `socket_b` the doorway it arrives at? If yes, this lane deletes the
+> special case and walks it exactly like a `JOINED` edge, and the first
+> room's approach stops being the one corridor checked more loosely than
+> the rest. If the fields are meant as they are, say so and the anchor
+> check stands as the honest one, with this note as the reason.
+
+Two things make this cheap to settle: it is one dictionary literal in
+`_joins`, and this lane's side is a single branch in
+`_check_reserved_join`.
 
 ## 6. The physics dependency, and what the engine lane owes it
 

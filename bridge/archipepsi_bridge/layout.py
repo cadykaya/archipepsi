@@ -148,32 +148,124 @@ ENGINE_EXIT_ROOM = "exit"
 ENGINE_EXIT_EDGE = "e:__exit__"
 ENGINE_ROOM_EDGE = "r:"
 
+#: The two kinds a chain piece may be, and what makes one REBUILDABLE.
+#:
+#: **This is not the bridge's invention.** It is
+#: `zone_builder.gd::malformed_pieces`, the guard the engine runs against
+#: a committed chain before replaying it — and when it trips, the engine
+#: returns `LAYOUT_INFEASIBLE` and the Zone does not open. So a manifest
+#: the bridge accepts and the engine cannot rebuild is a Zone that dies
+#: on re-entry, which is the failure Law 47c exists to prevent. The
+#: bridge applies the same rule at COMMIT time, where it is still a
+#: refusal rather than a dead save.
+#:
+#: `bounds` travels with every piece and is deliberately NOT required:
+#: `_replay_route` re-derives it by placing the piece, so demanding it
+#: would be the bridge inventing a contract the engine does not have.
+PIECE_KINDS = ("CONNECTOR", "CORNER")
 
+
+
+
+def _piece(c: "_Check", label: str, n: int, raw) -> tuple | None:
+    """One chain piece, against the engine's own replay contract.
+
+    Returns `(entry, exit)` or `None`. Everything checked here is what
+    `zone_builder.gd::malformed_pieces` checks, for the reason in
+    `PIECE_KINDS`: a piece that fails it cannot be laid back down, so
+    committing it writes a Zone that refuses to open.
+    """
+    if not isinstance(raw, dict):
+        c.fail(f"{label} piece {n} is not a piece")
+        return None
+    kind = raw.get("kind")
+    if kind not in PIECE_KINDS:
+        c.fail(f"{label} piece {n} has kind {kind!r}, and the engine "
+               f"rebuilds {' and '.join(PIECE_KINDS)}; a chain it cannot "
+               "replay must not be committed as one it can")
+        return None
+    if "position" not in raw or "yaw" not in raw:
+        c.fail(f"{label} piece {n} commits no pose; the engine replays "
+               "from position and yaw, and a piece without them has to "
+               "be searched for again")
+        return None
+    c.read(_vec, raw.get("position"), f"{label} piece {n} position")
+    c.read(_finite, raw.get("yaw"), f"{label} piece {n} yaw")
+    # A CORNER is defined by which way it bends. Recorded without the
+    # turn it rebuilds as a different corner, and the chain after it
+    # lands somewhere else entirely.
+    if kind == "CORNER":
+        turn = raw.get("turn")
+        if not isinstance(turn, int) or isinstance(turn, bool) or turn == 0:
+            c.fail(f"{label} piece {n} is a corner recording turn "
+                   f"{turn!r}; a corner that does not bend is not one")
+            return None
+    pe = c.read(_vec, raw.get("entry"), f"{label} piece {n} entry")
+    px = c.read(_vec, raw.get("exit"), f"{label} piece {n} exit")
+    if pe is None or px is None:
+        return None
+    return pe, px
+
+
+def _walk(c: "_Check", label: str, start, chain: list, end) -> bool:
+    """`start -> entry, exit -> next entry, last exit -> end`.
+
+    The engine writes this walk down as the bridge's half of the
+    exchange (`zone_builder.gd`, the comment above the CORNER record):
+    absolute transforms make cycle closure free and prove nothing, so
+    the route between two assigned points is walked or it is unverified.
+
+    An EMPTY chain is not a missing one — it says the two points meet
+    directly, and that is walked too.
+    """
+    cursor, where = start, "the start"
+    for n, raw in enumerate(chain):
+        got = _piece(c, label, n, raw)
+        if got is None:
+            return False
+        pe, px = got
+        gap = _apart(cursor, pe)
+        if gap > EPSILON_JOIN:
+            c.fail(f"{label} is broken between {where} and piece {n}: "
+                   f"{gap:.3f} m apart")
+            return False
+        cursor, where = px, f"piece {n}"
+    gap = _apart(cursor, end)
+    if gap > EPSILON_JOIN:
+        c.fail(f"{label} is broken between {where} and the end: "
+               f"{gap:.3f} m apart")
+        return False
+    return True
 
 def _check_reserved_join(c: "_Check", eid: str, raw, boxes: dict) -> None:
     """The engine's own joins: the exit approach and `r:<room>`.
 
-    **Reserved was buying a pass on everything.** These were skipped
-    past the walk, so an exit approach whose corridor ended ten
-    kilometres from the room was ACCEPTED — and the manifest replays
-    exactly this, so a Zone would be rebuilt around a corridor reaching
-    nowhere. That is the playtest's "the connecter isnt connected at
-    all", one room further along.
+    **Reserved was buying a pass on every check.** These were skipped
+    past the walk entirely, and then a first repair walked only the
+    chain's own links — so a corridor whose LAST piece ended ten
+    kilometres from the room was still accepted, because nothing after
+    it disagreed. A route is not verified by being internally tidy.
 
-    **What is checked here is deliberately less than for a JOINED
-    edge, and the difference is not laziness.** A JOINED edge's
-    `socket_a` and `socket_b` are two DOORWAYS, so the walk may demand
-    they abut. A reserved join's endpoints are not doorways:
-    `zone_builder` files `r:<room>` from the room's own `position` to
-    its `arrival`, and the exit approach ends at the exit room's
-    `position` — points several metres from any wall by construction.
-    Demanding abutment there would refuse every real Zone, which is the
-    other way to get a check wrong.
+    The two are checked differently, and the difference comes from the
+    builder rather than from taste:
 
-    So: the pieces are pieces, and the chain is continuous THROUGH
-    ITSELF. Whether a reserved join's endpoints should abut a socket is
-    a question for the engine lane, and is recorded as open in
-    `AMALGAM_BRIDGE.md` §5.4 rather than guessed at here.
+    `e:__exit__` **gets the full walk.** `zone_builder` sets the exit
+    room's `position` to the route cursor — the last piece's `exit`,
+    the same value — and `socket_a` to the spine tail's `exit` doorway,
+    which is where that route started. So `socket_a -> chain ->
+    socket_b` closes exactly, and the engine's own comment says the
+    bridge is the half that walks it.
+
+    `r:<room>` **gets anchored, not walked end to end.** Its `socket_a`
+    is the room's own `position` and `socket_b` its `arrival`, so the
+    chain reaching the room terminates at `socket_a` and `socket_b` is
+    a point inside the room — the two ends are not the two ends of the
+    chain. Walking it like an edge would refuse every real Zone, which
+    is the other way to get a check wrong. What is required instead is
+    that the chain actually ARRIVES: its last piece ends inside the
+    room it approaches. **Whether these can be filed as doorways so
+    this becomes the same walk is the open question in
+    `AMALGAM_BRIDGE.md` §5.4a, and is Prod's to answer.**
     """
     if not isinstance(raw, dict):
         c.fail(f"reserved join '{eid}' is not a join")
@@ -187,24 +279,7 @@ def _check_reserved_join(c: "_Check", eid: str, raw, boxes: dict) -> None:
     if not isinstance(chain, list):
         c.fail(f"reserved join '{eid}' chain is not a list of pieces")
         return
-    cursor, where = None, None
-    for n, piece in enumerate(chain):
-        if not isinstance(piece, dict):
-            c.fail(f"reserved join '{eid}' piece {n} is not a piece")
-            return
-        pe = c.read(_vec, piece.get("entry"), f"join '{eid}' piece {n} entry")
-        px = c.read(_vec, piece.get("exit"), f"join '{eid}' piece {n} exit")
-        if pe is None or px is None:
-            return
-        if cursor is not None:
-            gap = _apart(cursor, pe)
-            if gap > EPSILON_JOIN:
-                c.fail(f"reserved join '{eid}' is broken between {where} "
-                       f"and piece {n}: {gap:.3f} m apart")
-                return
-        cursor, where = px, f"piece {n}"
-    # AND A ROOM IT NAMES IS A ROOM THAT WAS PLACED. An approach to a
-    # room with no transform cannot be replayed at all.
+
     # `r:<room>` files `room_a` as the empty string on purpose — nothing
     # is on the far side of the first room's approach — so an empty name
     # is not a missing one.
@@ -212,6 +287,53 @@ def _check_reserved_join(c: "_Check", eid: str, raw, boxes: dict) -> None:
         if isinstance(rid, str) and rid and rid not in boxes:
             c.fail(f"reserved join '{eid}' approaches room '{rid}', "
                    "which the layout does not place")
+            return
+
+    label = f"reserved join '{eid}'"
+    if eid == ENGINE_EXIT_EDGE:
+        a = c.read(_vec, raw.get("socket_a"), f"{label} socket_a")
+        b = c.read(_vec, raw.get("socket_b"), f"{label} socket_b")
+        if a is None or b is None:
+            return
+        if not _walk(c, label, a, chain, b):
+            return
+        _endpoint_on_room(c, label, b, raw.get("room_b"), boxes)
+        return
+
+    # `r:<room>`: pieces and internal continuity, then arrival.
+    last = None
+    cursor, where = None, None
+    for n, piece in enumerate(chain):
+        got = _piece(c, label, n, piece)
+        if got is None:
+            return
+        pe, px = got
+        if cursor is not None:
+            gap = _apart(cursor, pe)
+            if gap > EPSILON_JOIN:
+                c.fail(f"{label} is broken between {where} and piece "
+                       f"{n}: {gap:.3f} m apart")
+                return
+        cursor, where, last = px, f"piece {n}", px
+    if last is not None:
+        _endpoint_on_room(c, label, last, raw.get("room_b"), boxes)
+
+
+def _endpoint_on_room(c: "_Check", label: str, point, rid, boxes: dict) -> None:
+    """The route ends at the room it claims to reach.
+
+    A chain can be flawless piece to piece and still stop in open space
+    a kilometre away; internal continuity has no opinion about where
+    the corridor goes, only that it does not come apart on the way.
+    """
+    if not isinstance(rid, str) or rid not in boxes:
+        return
+    lo, hi = boxes[rid]
+    if any(point[i] < lo[i] - EPSILON_JOIN
+           or point[i] > hi[i] + EPSILON_JOIN for i in range(3)):
+        c.fail(f"{label} ends outside room '{rid}'; the route is "
+               "continuous and arrives nowhere")
+
 
 def validate(zone, result: dict) -> Verdict:
     """Check a proposed layout against the Zone that asked for it.
@@ -288,6 +410,27 @@ def validate(zone, result: dict) -> Verdict:
         if rid not in declared and rid != ENGINE_EXIT_ROOM:
             c.fail(f"the layout places unknown room '{rid}'")
 
+    # THE RESERVED GEOMETRY IS REQUIRED, not merely tolerated.
+    #
+    # Every `LAYOUT_OK` out of `zone_builder` carries both: the exit room
+    # is appended unconditionally on that path (an earlier return is a
+    # LAYOUT_INFEASIBLE, never an OK), and `_joins` files its approach
+    # under `e:__exit__` whenever the room is there. So a graph layout
+    # that arrives without them did not come from a build that finished,
+    # and accepting it commits a manifest with no last leg — which
+    # re-solves on re-entry, the one thing Law 47c promises never
+    # happens. Deleting both, or only the join, was ACCEPTED before.
+    if isinstance(rooms.get(ENGINE_EXIT_ROOM), dict):
+        if not isinstance(joins.get(ENGINE_EXIT_EDGE), (dict, type(None))) \
+                or joins.get(ENGINE_EXIT_EDGE) is None:
+            c.fail(f"the layout places the exit room and files no "
+                   f"'{ENGINE_EXIT_EDGE}' approach to it; the last leg "
+                   "would have to be searched for again on every entry")
+    else:
+        c.fail(f"the layout places no '{ENGINE_EXIT_ROOM}' room; every "
+               "finished build appends one with the portal in it, so a "
+               "layout without it is not a finished build")
+
     # --- 1b. a room's position, bounds and sockets describe ONE room ---
     #
     # Three pieces of evidence about the same object can drift apart, and
@@ -341,36 +484,8 @@ def validate(zone, result: dict) -> Verdict:
         if not isinstance(chain, list):
             c.fail(f"edge '{e.edge_id}' chain is not a list of pieces")
             continue
-        # Walk it: socket_a -> piece.entry, piece.exit -> next.entry,
-        # last.exit -> socket_b. An empty chain means the two sockets
-        # meet each other directly, which is the special case.
-        cursor, where = a, "socket_a"
-        broken = False
-        for n, raw in enumerate(chain):
-            if not isinstance(raw, dict):
-                c.fail(f"edge '{e.edge_id}' piece {n} is not a piece")
-                broken = True
-                break
-            pe = c.read(_vec, raw.get("entry"),
-                        f"edge '{e.edge_id}' piece {n} entry")
-            px = c.read(_vec, raw.get("exit"),
-                        f"edge '{e.edge_id}' piece {n} exit")
-            if pe is None or px is None:
-                broken = True
-                break
-            gap = _apart(cursor, pe)
-            if gap > EPSILON_JOIN:
-                c.fail(f"edge '{e.edge_id}' is broken between {where} and "
-                       f"piece {n}: {gap:.3f} m apart")
-                broken = True
-                break
-            cursor, where = px, f"piece {n}"
-        if broken:
+        if not _walk(c, f"edge '{e.edge_id}'", a, chain, b):
             continue
-        gap = _apart(cursor, b)
-        if gap > EPSILON_JOIN:
-            c.fail(f"edge '{e.edge_id}' is broken between {where} and "
-                   f"socket_b: {gap:.3f} m apart")
         # AND THE SOCKETS BELONG TO THE ROOMS THEY CLAIM. A doorway sits
         # on its room's surface; a socket floating away from the body it
         # is cut into means the chain was verified against a room that

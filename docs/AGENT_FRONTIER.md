@@ -23,12 +23,34 @@ lane has run the integration driver.
 **What this lane verified from the merge is narrower, and found a hole
 that was mine.** The engine appends an exit room nobody declared and
 files reserved joins (`e:__exit__`, `r:<room>`); the validator knew the
-names and checked nothing else, so an exit room with no bounds, an exit
-room inside `c001`, and an exit corridor ending ten kilometres away were
-all ACCEPTED — and the manifest replays what it accepts. Now refused;
-`docs/AMALGAM_BRIDGE.md` §5.4, which also carries the one open question
-(whether reserved joins can be filed as doorways so the last leg gets
-walked end to end like any other).
+names and checked nothing else. It took two passes. Pass one caught an
+exit room with no bounds and one inside `c001` — and **claimed a case it
+had not fixed**: a corridor that *ends* ten kilometres away, as opposed
+to one broken in the middle, still accepted, because internal continuity
+has no opinion about where a corridor goes. So did deleting the reserved
+pair outright, and a piece of a kind the engine cannot rebuild.
+
+Pass two takes the contract from `zone_builder` instead of from taste:
+the reserved pair is **required** (every LAYOUT_OK appends it), pieces
+must satisfy `malformed_pieces` — kind, pose, a corner's turn — because
+**that is the guard the engine runs before replaying a committed chain,
+and when it trips the Zone returns LAYOUT_INFEASIBLE and does not
+open**, and `e:__exit__` gets the full `socket_a -> chain -> socket_b`
+walk, which the builder makes close exactly. The old fixtures were
+brought up to that shape rather than the contract brought down to them.
+34 of 34 refusals in `layout.py` are exercised. `docs/AMALGAM_BRIDGE.md`
+§5.4.
+
+**TWO QUESTIONS WAITING ON THE ENGINE LANE**, both implementation
+details rather than owner decisions:
+1. **`r:<room>` endpoints** — `docs/AMALGAM_BRIDGE.md` §5.4a. Can it be
+   filed with doorway endpoints like `e:__exit__` already is? If yes the
+   bridge deletes a special case and walks it like any other edge. One
+   dictionary literal in `_joins`, one branch in `_check_reserved_join`.
+2. **`scene_digest` coverage** — §6.2b. Five decisions with proposed
+   defaults: float quantization, whether effective physics values are
+   statically readable at all, what counts as participating geometry,
+   ordering across saves, versioning granularity.
 
 The bridge's half of the replay is connected and measured — re-entry
 emits the manifest and `test_the_whole_path` asserts the emitted message
