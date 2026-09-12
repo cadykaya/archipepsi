@@ -85,7 +85,13 @@ def test_the_branch_producer_makes_a_junction_a_lock_and_a_way_back():
             [e for e in joined if room.id in e.rooms]), room.id
         assert door.key_id and door.colour, "a lock needs its key"
 
-    assert len(out.plugs) == len(locked), "one way back per branch"
+    # ONE WAY BACK PER BRANCH — counted off the branches, not off the
+    # locks. Those were the same number while every branch was locked,
+    # and an open branch needs its way home just as much.
+    branch_edges = {d.edge_id for c in out.chambers for d in c.doors
+                    if d.socket_id not in ("entry", "exit") and d.edge_id}
+    assert len(out.plugs) == len(branch_edges), (
+        sorted(branch_edges), [pl.room_id for pl in out.plugs])
     plug_edges = [e for e in out.edges if e.realization == "TRAVERSAL_ONLY"]
     assert len(plug_edges) == len(out.plugs)
     for plug in out.plugs:
@@ -98,6 +104,58 @@ def test_the_branch_producer_makes_a_junction_a_lock_and_a_way_back():
     assert len(set(ids)) == len(ids), ids
 
     assert topology.reachability(out).ok, topology.reachability(out).errors
+
+
+def test_an_unlocked_branch_is_a_real_branch_with_a_real_way_back():
+    """A branch need not be locked, and an open one is not a lesser one.
+
+    It is the same edge on the same socket with the same return plug;
+    what it does not have is a key errand attached. Written because
+    "every branch is locked" was true for so long that several checks
+    counted locks and called the answer branches — including the one
+    directly above this, which counted `len(out.plugs) == len(locked)`
+    and would have passed forever while open branches went uncounted.
+    """
+    z = _chain_zone(20)
+    out = topology.apply(z, topology.compose_with_branch(list(z.chambers)))
+    side = [(c, d) for c in out.chambers for d in c.doors
+            if d.socket_id not in ("entry", "exit") and d.usage != "SEALED"]
+    open_side = [(c, d) for c, d in side if d.usage == "USED"]
+    locked_side = [(c, d) for c, d in side if d.usage == "LOCKED"]
+    assert open_side, "a 20-room Zone should outrun the four key colours"
+    assert locked_side, "and should still lock the ones it can key"
+
+    joined = {e.edge_id: e for e in out.edges if e.realization == "JOINED"}
+    for room, door in open_side:
+        assert door.key_id is None and door.colour is None, (
+            f"'{room.id}/{door.socket_id}' is USED and carries a key")
+        edge = joined[door.edge_id]
+        far = edge.room_b if edge.room_a == room.id else edge.room_a
+        assert any(pl.room_id == far for pl in out.plugs), (
+            f"open branch to '{far}' has no way back")
+    assert topology.reachability(out).ok, topology.reachability(out).errors
+
+
+def test_one_colour_names_one_lock_in_a_zone():
+    """Readable presentation: "the red door" names exactly one door.
+
+    Two locks of one colour opened by different keys read as one lock
+    and behave as two, which is the confusion that "more branches" must
+    not be paid for with.
+    """
+    for n in (8, 12, 16, 20, 24):
+        z = _chain_zone(n)
+        out = topology.apply(z, topology.compose_with_branch(list(z.chambers)))
+        locked = [d for c in out.chambers for d in c.doors
+                  if d.usage == "LOCKED"]
+        colours = [d.colour for d in locked]
+        assert len(set(colours)) == len(colours), (n, colours)
+        assert len({d.key_id for d in locked}) == len(locked), (n, locked)
+        # And one key per lock, wherever it was put.
+        spec = [k for c in out.chambers for k in c.keys]
+        assert sorted(s.key_id for s in spec) == sorted(
+            d.key_id for d in locked), (n, spec, locked)
+        assert {s.colour for s in spec} == set(colours), n
 
 
 def test_a_plug_consumes_no_joining_socket():

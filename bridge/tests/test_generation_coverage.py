@@ -24,6 +24,7 @@ from archipepsi_bridge import topology
 from archipepsi_bridge.schemas import constants as C
 
 from .conftest import connected_engine, drain, run
+from .zone_shape import shape_of
 
 #: The declared inputs. Campaign scale is what moves room count, so it
 #: is what this varies; each entry is played until the pool runs dry or
@@ -38,25 +39,44 @@ class Tally:
     accepted: int = 0
     refused: list[str] = field(default_factory=list)
     fallback: int = 0
-    branched: int = 0
-    nested: int = 0
     authored_junctions: int = 0
     two_door_authored: int = 0
-    branch_counts: list[int] = field(default_factory=list)
     room_counts: list[int] = field(default_factory=list)
+    #: The JOINED graph of each accepted Zone. **Not "rooms moved off the
+    #: spine"** — four moved rooms can be one side chain four deep, which
+    #: is one turning taken once. `zone_shape.shape_of` reads what the
+    #: Zone actually serialized.
+    shapes: list[object] = field(default_factory=list)
     #: Why a Zone did not branch, in its own words. A zero that says
     #: nothing is a zero nobody can act on.
     reasons: list[str] = field(default_factory=list)
 
+    @property
+    def branched(self) -> int:
+        return sum(1 for s in self.shapes if s.side_paths)
+
+    @property
+    def nested(self) -> int:
+        """Zones with a side path more than one room deep."""
+        return sum(1 for s in self.shapes if any(d > 1 for d in s.side_depths))
+
     def line(self, label: str) -> str:
-        return (f"{label}: {self.generated} generated, {self.accepted} "
-                f"accepted, {len(self.refused)} refused, {self.fallback} "
-                f"fallback; {self.branched} branched "
-                f"({self.nested} with nesting), branches per Zone "
-                f"{self.branch_counts}, authored junctions "
-                f"{self.authored_junctions}; rooms {self.room_counts}"
-                + (f"; not branching because {sorted(set(self.reasons))}"
-                   if self.reasons else ""))
+        return "\n".join([
+            f"{label}: {self.generated} generated, {self.accepted} accepted, "
+            f"{len(self.refused)} refused, {self.fallback} fallback; rooms "
+            f"{self.room_counts}; authored junctions "
+            f"{self.authored_junctions} of {self.two_door_authored} "
+            f"two-door authored rooms",
+            f"  spine rooms          {[len(s.spine) for s in self.shapes]}",
+            f"  junctions (>=3 nbrs) {[len(s.junctions) for s in self.shapes]}",
+            f"  distinct side paths  {[s.choices for s in self.shapes]}",
+            f"  side path depths     {[list(s.side_depths) for s in self.shapes]}",
+            f"  junctions inside one {[len(s.side_junctions) for s in self.shapes]}",
+            f"  side dead ends       {[len(s.side_dead_ends) for s in self.shapes]}",
+            f"  branch edges locked  {[len(s.locked_branch_edges) for s in self.shapes]}",
+            f"  branch edges open    {[len(s.open_branch_edges) for s in self.shapes]}",
+        ] + ([f"  not branching because {sorted(set(self.reasons))}"]
+             if self.reasons else []))
 
 
 async def _survey(tmp_path, config, limit: int) -> Tally:
@@ -80,23 +100,8 @@ async def _survey(tmp_path, config, limit: int) -> Tally:
         tally.fallback += 1 if rec.used_fallback else 0
 
         zone = rec.zone
-        joined = [e for e in zone.edges if e.realization == "JOINED"]
-        spine_ids = {c.id for c in zone.chambers}
-        locked = [d for c in zone.chambers for d in c.doors
-                  if d.usage == "LOCKED"]
-        tally.branch_counts.append(len(locked))
-        if locked:
-            tally.branched += 1
-        # A NESTED branch is one whose junction is itself a branch
-        # destination: the junction sits behind a locked door.
-        behind = {e.room_b for e in joined
-                  for c in zone.chambers if c.id == e.room_a
-                  for d in c.doors
-                  if d.edge_id == e.edge_id and d.usage == "LOCKED"}
-        nested = [c for c in zone.chambers if c.id in behind
-                  and any(d.usage == "LOCKED" for d in c.doors)]
-        if nested:
-            tally.nested += 1
+        shape = shape_of(zone)
+        tally.shapes.append(shape)
         for c in zone.chambers:
             if not c.shell_id:
                 continue
@@ -106,7 +111,7 @@ async def _survey(tmp_path, config, limit: int) -> Tally:
             else:
                 tally.two_door_authored += 1
         tally.room_counts.append(len(zone.chambers))
-        if not locked:
+        if not shape.side_paths:
             # Recompose to read the note: acceptance keeps the Zone, not
             # the composer's account of it, and a Zone that did not
             # branch has to be able to say which cost it could not meet.
@@ -150,9 +155,14 @@ def test_ordinary_generation_over_declared_inputs(tmp_path, scale, capsys):
 def test_the_declared_inputs_do_produce_branching(tmp_path, capsys):
     """A run that never branches would satisfy every assertion above.
 
-    So this asks the distribution question directly: over the declared
-    inputs, ordinary generation has to produce branching, more than one
-    branch in a Zone, and at least one branch off a branch.
+    So this asks the distribution question directly — and it asks it of
+    the JOINED graph, not of how many rooms moved off the spine. Those
+    are different numbers: eight moved rooms were, measured, one side
+    chain eight rooms deep, which is one turning taken once.
+
+    **No numeric quota per Zone.** What is asserted is that the sample
+    contains each kind of shape somewhere, not that every Zone has the
+    same amount of it.
     """
     async def go():
         tally = await _survey(tmp_path, C.DEFAULT_CONFIG, ZONES_PER_SCALE)
@@ -160,10 +170,75 @@ def test_the_declared_inputs_do_produce_branching(tmp_path, capsys):
         assert tally.branched, (
             "no generated Zone branched; the composer is producing "
             "chains and every other test would still pass")
-        assert max(tally.branch_counts) > 1, (
-            f"no Zone got more than one branch: {tally.branch_counts}")
-        assert tally.nested, "no Zone nested a branch off a branch"
+        # GENUINELY SEPARATE side destinations, somewhere in the sample.
+        # One Zone with several distinct turnings is the claim; every
+        # Zone having several is not.
+        assert max(s.choices for s in tally.shapes) > 1, (
+            "no Zone offered more than one distinct side path: "
+            f"{[s.choices for s in tally.shapes]}")
+        # NESTING RETAINED: a side path that runs more than one room
+        # deep, and a junction sitting inside one.
+        assert tally.nested, (
+            "every side path is a single room; nothing nests: "
+            f"{[list(s.side_depths) for s in tally.shapes]}")
+        assert any(s.side_junctions for s in tally.shapes), (
+            "no side path contains a junction of its own")
+        # BOTH KINDS OF BRANCH. A locked branch and an open one are
+        # different offers, and a run producing only one of them is the
+        # key recipe deciding the topology again.
+        assert any(s.locked_branch_edges for s in tally.shapes), (
+            "no branch is locked anywhere in the sample")
+        assert any(s.open_branch_edges for s in tally.shapes), (
+            "every branch in the sample is locked; the lock recipe is "
+            "still deciding which routes exist")
     run(go())
+
+
+def test_a_return_plug_never_counts_as_a_doorway(tmp_path):
+    """The way back out of a dead end is not a third door.
+
+    A plug is `TRAVERSAL_ONLY`; it spends no socket, and a room that
+    carries one keeps the JOINED degree its doors give it. Asserted
+    against the shape report because that report would otherwise be the
+    easiest place to count one by mistake — a dead end with a plug would
+    read as degree 2 and stop being a dead end.
+    """
+    from .test_topology import _chain_zone
+    caps = topology._shell_sockets()
+    seen_plugs = 0
+    for n in (8, 12, 20):
+        z = _chain_zone(n)
+        out = topology.apply(z, topology.compose_with_branch(
+            list(z.chambers), caps))
+        shape = shape_of(out)
+        seen_plugs += len(out.plugs)
+        assert out.plugs, f"{n} rooms: no plug to be wrong about"
+        assert shape.side_dead_ends, f"{n} rooms: no side dead end"
+        neighbours = {c.id: set() for c in out.chambers}
+        for e in out.edges:
+            if e.realization == "JOINED":
+                neighbours[e.room_a].add(e.room_b)
+                neighbours[e.room_b].add(e.room_a)
+        for plug in out.plugs:
+            room = next(c for c in out.chambers if c.id == plug.room_id)
+            # The room the plug leaves from keeps the degree its DOORS
+            # give it. A branch destination that is ITSELF a junction —
+            # a nested branch hangs off it — has two neighbours and is
+            # correctly not a dead end; what must never happen is the
+            # plug being the reason for either count.
+            assert room.door_degree == len(neighbours[room.id]), room.id
+            if room.door_degree == 1:
+                assert plug.room_id in shape.side_dead_ends, (
+                    f"'{plug.room_id}' has one doorway and carries a "
+                    "plug, and is not counted a dead end; the way back "
+                    "was counted as a way on")
+        # The far end of every plug is the Zone start, which must gain no
+        # neighbour from carrying them.
+        start = out.chambers[0]
+        assert start.door_degree == len(neighbours[start.id]), (
+            f"the Zone start took {len(out.plugs)} plug(s) and its "
+            "doorway degree moved")
+    assert seen_plugs >= 3
 
 
 def test_authored_junctions_are_selectable_the_day_one_exists(tmp_path):
@@ -311,7 +386,7 @@ def test_affording_a_branch_with_nowhere_worth_going_falls_back_to_the_chain():
         z = _hollow_zone(n)
         chambers = list(z.chambers)
 
-        plan, notes = topology._branch_plan(chambers, caps)
+        plan, notes = topology._branch_routes(chambers, caps)
         assert plan == [], f"{n} rooms: nothing here is worth a branch"
         assert any("none carrying a Check or a key" in note
                    for note in notes), notes
@@ -331,3 +406,83 @@ def test_affording_a_branch_with_nowhere_worth_going_falls_back_to_the_chain():
                    for note in product.notes), product.notes
         out = topology.apply(z, product)
         assert topology.reachability(out).ok, topology.reachability(out).errors
+
+
+def _wired(n: int, joins: list[tuple[str, str, str]]):
+    """A Zone wired by hand from `(room_a, socket_on_a, room_b)` joins.
+
+    Not a producible Zone and not presented as one — no plugs, no keys.
+    It exists so the shape report can be handed a graph whose answer is
+    known in advance.
+    """
+    from archipepsi_bridge.schemas.graph import DoorAssignment, TopologyEdge
+    from .test_topology import _chain_zone
+    z = _chain_zone(n)
+    edges, doors = [], {c.id: {} for c in z.chambers}
+    for a, socket, b in joins:
+        edge = TopologyEdge(edge_id=f"e:{a}:{b}", room_a=a, room_b=b,
+                            direction="BIDIRECTIONAL", realization="JOINED")
+        edges.append(edge)
+        doors[a][socket] = DoorAssignment(
+            socket_id=socket, usage="USED", edge_id=edge.edge_id)
+        doors[b]["entry"] = DoorAssignment(
+            socket_id="entry", usage="USED", edge_id=edge.edge_id)
+    caps = topology._shell_sockets()
+    return topology.apply(z, topology.GraphProduct(
+        edges=tuple(edges),
+        doors={c.id: topology._seal_the_rest(c, doors[c.id], caps)
+               for c in z.chambers},
+        keys={}, plugs=()))
+
+
+def test_the_shape_report_tells_a_spur_from_separate_side_rooms():
+    """Four rooms off the spine; two very different Zones.
+
+    **The instrument gets handed the case that would fool it.** "Rooms
+    moved off the spine" is 4 for both of these. One is a single turning
+    that runs four rooms deep — one decision, taken once. The other is
+    four separate turnings. A report that cannot tell them apart is how
+    "eight branches" got written down for a Zone that offered one
+    choice, which is exactly what happened.
+    """
+    spur = _wired(8, [
+        ("c001", "exit", "c002"), ("c002", "exit", "c003"),
+        ("c003", "exit", "c008"),
+        ("c003", "side_left", "c004"), ("c004", "side_left", "c005"),
+        ("c005", "side_left", "c006"), ("c006", "side_left", "c007")])
+    fan = _wired(8, [
+        ("c001", "exit", "c002"), ("c002", "exit", "c003"),
+        ("c003", "exit", "c008"),
+        ("c002", "side_left", "c004"), ("c002", "side_right", "c005"),
+        ("c003", "side_left", "c006"), ("c003", "side_right", "c007")])
+
+    a, b = shape_of(spur), shape_of(fan)
+    assert len(a.spine) == len(b.spine) == 4
+    assert a.rooms - len(a.spine) == b.rooms - len(b.spine) == 4, (
+        "both Zones move the same number of rooms off the spine")
+
+    assert a.choices == 1, a.side_paths
+    assert a.side_depths == (4,), a.side_depths
+    assert a.side_dead_ends == ("c007",), a.side_dead_ends
+    assert a.junctions == ("c003",), a.junctions
+
+    assert b.choices == 4, b.side_paths
+    assert b.side_depths == (1, 1, 1, 1), b.side_depths
+    assert len(b.side_dead_ends) == 4, b.side_dead_ends
+    assert b.junctions == ("c002", "c003"), b.junctions
+
+
+def test_the_shape_report_finds_a_junction_inside_a_side_path():
+    """A side path that itself forks. Neither "rooms off the spine" nor
+    "locked doors" can see this, and it is the difference between a
+    corridor of rooms and a wing."""
+    wing = _wired(8, [
+        ("c001", "exit", "c002"), ("c002", "exit", "c003"),
+        ("c003", "exit", "c008"),
+        ("c003", "side_left", "c004"),
+        ("c004", "side_left", "c005"), ("c004", "side_right", "c006"),
+        ("c002", "side_left", "c007")])
+    s = shape_of(wing)
+    assert s.choices == 2, s.side_paths
+    assert s.side_junctions == ("c004",), s.side_junctions
+    assert sorted(s.side_depths) == [1, 2], s.side_depths

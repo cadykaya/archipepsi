@@ -23,12 +23,12 @@ try:
     from .schemas.graph import (
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
     from .schemas import mechanics as M
-    from .schemas.zone import PROCEDURAL_SOCKETS
+    from .schemas.zone import PROCEDURAL_SOCKETS, Zone
 except ImportError:  # pragma: no cover
     from schemas.graph import (
         DoorAssignment, PlugAssignment, TopologyEdge, ZoneKeySpec)
     from schemas import mechanics as M
-    from schemas.zone import PROCEDURAL_SOCKETS
+    from schemas.zone import PROCEDURAL_SOCKETS, Zone
 
 #: What a chain needs from any room: a way in and a way out.
 #:
@@ -42,17 +42,59 @@ SPINE_SOCKETS = ("entry", "exit")
 #: a way out. Below this every room is load-bearing for the chain.
 MIN_SPINE = 3
 
-#: The distinct locks a Zone can hold, which is the key-colour
+#: The distinct **locks** a Zone can hold, which is the key-colour
 #: vocabulary and not a number chosen here. `KeyColour` has four values;
-#: a fifth branch would reuse a colour, and two doors of one colour are
+#: a fifth lock would reuse a colour, and two doors of one colour are
 #: one lock rather than two decisions.
+#:
+#: This bounds how many branches are LOCKED. It does not bound how many
+#: branches there are: it used to, because every branch got a lock, and
+#: "every Zone gets four branches" was that recipe showing through
+#: rather than anything about the shape of a Zone.
 BRANCH_COLOURS: tuple[str, ...] = ("red", "blue", "green", "gold")
+
+#: How much of the spare room budget may go onto branches.
+#:
+#: **Provisional tuning, under evaluation — not a design law and not a
+#: physical cost.** Every room pulled off the spine is a room the route
+#: no longer passes through; "every spare room" produced, measured, a
+#: three-room spine with five spokes off it. A half share was the first
+#: value that kept the Zone a journey with side rooms. It is a dial, and
+#: the generation-coverage report is how it gets turned.
+SPINE_SHARE = 0.5
+
+#: How far off the spine a side path may run, counted in rooms.
+#:
+#: **Provisional tuning, under evaluation — not a design law and not a
+#: physical cost.** Without it the planner produced, measured, eight
+#: branches that were one side chain eight rooms deep: one turning,
+#: taken once, reported as eight. A side path a room or two deep is a
+#: place you chose to go; a side path eight deep is a second corridor.
+#: Nesting is kept — it is what puts a junction INSIDE a side path — and
+#: this is what stops it running away.
+MAX_SIDE_DEPTH = 2
 
 #: Wide enough to carry a side door without the opening landing on the
 #: room's own furniture. Matches `Slice1Fixture.MIN_SPAN`, deliberately:
 #: two lanes disagreeing about which rooms can branch is a defect that
 #: only shows up as a wall in the wrong place.
 MIN_JUNCTION_SPAN = 13.0
+
+
+def _zone_limit(field: str) -> int:
+    """A `Zone` collection bound, read from the schema that states it.
+
+    Not copied here. `Zone.plugs` is capped at 8 and `Zone.edges` at 32,
+    and a producer that quietly emitted 10 plugs would be refused by
+    `accept_zone` with a pydantic error naming a tuple length — which is
+    what happened, and is a worse way to learn the bound than asking for
+    it. The alternative to reading it is a second spelling of a number
+    that can then disagree.
+    """
+    for meta in Zone.model_fields[field].metadata:
+        if hasattr(meta, "max_length"):
+            return meta.max_length
+    raise ValueError(f"`Zone.{field}` states no maximum length")
 
 
 @dataclass(frozen=True)
@@ -201,25 +243,68 @@ def _side_socket(chamber, spare: tuple[str, ...]) -> str | None:
     return None
 
 
-def _branch_plan(chambers, caps) -> tuple[list[tuple], tuple[str, ...]]:
+@dataclass(frozen=True)
+class BranchLock:
+    """How one lock and its key are identified and presented.
+
+    Two spellings on purpose, because they answer different questions.
+    `key_id` is the identity the runtime matches a picked-up key
+    against; `colour` is what the player sees on the slab and on the key
+    in their hand. They are kept one-to-one **within a Zone** — see
+    `_lock_routes` — so that "the red door" names exactly one door. Two
+    locks sharing a colour with different `key_id`s would be readable as
+    one lock and behave as two, which is the confusion this class exists
+    to make impossible to write by accident.
+    """
+
+    key_id: str
+    colour: str
+
+
+@dataclass(frozen=True)
+class BranchRoute:
+    """One route off the spine: where it starts, where it goes, and
+    which of the junction's openings carries it.
+
+    `lock` is deliberately a separate, optional field. Whether a route
+    exists is a question about capacity and content; whether it is
+    locked is a question about the local-key recipe. A route with
+    `lock=None` is an ordinary branch — a side room the player can walk
+    into, which is still a choice about where to go.
+    """
+
+    junction_id: str
+    destination: object
+    socket: str
+    lock: BranchLock | None = None
+
+    @property
+    def locked(self) -> bool:
+        return self.lock is not None
+
+
+def _branch_routes(chambers, caps) -> tuple[list[BranchRoute], tuple[str, ...]]:
     """Which rooms branch off which, and why the rest do not.
 
+    **Topology only.** Nothing here decides whether a route is locked;
+    `_lock_routes` does that, afterwards, from what this produced. The
+    two were one function, and the join made the branch count a
+    consequence of the key vocabulary — four colours meant four
+    branches, in every Zone big enough, which read as a template.
+
     Derived from what the Zone already has rather than from a template.
-    Three things bound it, and each one is a real cost:
+    Three things bound it:
 
     * **The spine keeps its ends.** The first room is where the player
       arrives and the last is the exit; moving either onto a branch
-      makes the exit a dead end behind a lock.
+      makes the exit a dead end behind a lock. A real cost.
     * **A destination must be spare.** Every room pulled off the spine
-      shortens it, and a spine below `MIN_SPINE` is not a Zone with a
-      branch — it is a fork.
+      shortens it. How many may be spared is *provisional tuning* — see
+      `SPINE_SHARE` — not a design law and not a physical cost.
     * **A junction must have a socket to spare.** Capacity comes from
       the room's own declaration, so a two-door authored shell is never
       a junction and a four-socket procedural room can hold two
-      branches. Nothing invents an opening.
-
-    Returns `(plan, notes)` where each plan entry is
-    `(junction_id, destination_chamber, socket, key_id, colour)`.
+      branches. Nothing invents an opening. A real cost.
     """
     notes: list[str] = []
     order = [c.id for c in chambers]
@@ -233,19 +318,26 @@ def _branch_plan(chambers, caps) -> tuple[list[tuple], tuple[str, ...]]:
         return bool(getattr(c, "reward_ids", ()) or getattr(c, "keys", ()))
 
     interior = [c for c in chambers[1:-1]]
-    # THE SPINE KEEPS THE MAJORITY. Every room pulled onto a branch is a
-    # room the route no longer passes through, so half the spare rooms
-    # is the bound: an eight-room Zone gets up to two branches and stays
-    # a journey with side rooms, rather than a three-room spine with
-    # five spokes off it — which is what "every spare room" produced,
-    # measured, on the first draft of this.
-    affordable = min(max(0, len(chambers) - MIN_SPINE) // 2,
-                     len(BRANCH_COLOURS))
+    spare = max(0, len(chambers) - MIN_SPINE)
+    budget = int(spare * SPINE_SHARE)
+    # WHAT THE ZONE SCHEMA ALREADY ALLOWS, which is not tuning: a Zone
+    # over either bound is refused by `accept_zone`, so a producer that
+    # exceeds one here is producing something that cannot be accepted.
+    # Each branch costs one plug. Its edge cost is ONE: the vault in and
+    # the return are two new edges, but the room it moved off the spine
+    # took a spine edge with it.
+    by_plugs = _zone_limit("plugs")
+    by_edges = max(0, _zone_limit("edges") - (len(chambers) - 1))
+    affordable = min(budget, by_plugs, by_edges)
+    if affordable < budget:
+        notes.append(
+            "branch budget %d cut to %d by the Zone schema: at most %d "
+            "plugs and %d edges" % (budget, affordable, by_plugs,
+                                    _zone_limit("edges")))
     if not affordable:
-        return [], ("no branch: %d rooms leaves %d spare over a spine of "
-                    "%d, and a branch costs two" % (
-                        len(chambers), max(0, len(chambers) - MIN_SPINE),
-                        MIN_SPINE),)
+        return [], tuple(notes) + (
+            "no branch: %d rooms leaves %d spare over a spine of %d, and a "
+            "branch costs a room" % (len(chambers), spare, MIN_SPINE),)
     # FROM THE FAR END. Taking the earliest worthwhile rooms put every
     # junction near the entrance, which left nowhere ahead of it to put
     # the key — every key landed in the room the player spawns in, where
@@ -259,15 +351,20 @@ def _branch_plan(chambers, caps) -> tuple[list[tuple], tuple[str, ...]]:
         # met, and this one is "nowhere worth going" rather than "not
         # enough rooms" — a different fact, and the two were once
         # reported by the same sentence.
-        return [], ("no branch: %d interior room(s), room for %d, none "
-                    "carrying a Check or a key"
-                    % (len(interior), affordable),)
+        return [], tuple(notes) + (
+            "no branch: %d interior room(s), room for %d, none carrying a "
+            "Check or a key" % (len(interior), affordable),)
 
     # Junctions are chosen from what STAYS on the spine, so a room can
     # be a junction or a destination and never both.
     taken = {c.id for c in destinations}
     used: dict[str, set[str]] = {c.id: set(SPINE_SOCKETS) for c in chambers}
-    plan: list[tuple] = []
+    #: How far off the spine each room sits. A spine room is 0; a branch
+    #: destination is one further than its junction. Read by the
+    #: candidate filter below, which is what keeps a nested branch a
+    #: wing rather than a second corridor.
+    depth: dict[str, int] = {c.id: 0 for c in chambers}
+    routes: list[BranchRoute] = []
 
     for destination in destinations:
         # NESTING: a junction may be a room already reached by a branch,
@@ -276,7 +373,7 @@ def _branch_plan(chambers, caps) -> tuple[list[tuple], tuple[str, ...]]:
         # rooms the player reaches BEFORE the destination on the spine.
         reached = [c for c in chambers
                    if c.id not in taken or c.id in
-                   {p[1].id for p in plan}]
+                   {r.destination.id for r in routes}]
         candidates = [
             c for c in reached
             if order.index(c.id) < order.index(destination.id)
@@ -288,45 +385,140 @@ def _branch_plan(chambers, caps) -> tuple[list[tuple], tuple[str, ...]]:
             # pick up in one breath. Found by a Zone of two-door
             # authored rooms branching anyway, off c001.
             and c.id != chambers[0].id
+            and depth[c.id] < MAX_SIDE_DEPTH
             and _spare_sockets(c, caps, used[c.id])]
         if not candidates:
             notes.append("room '%s' stays on the spine: no room before "
-                         "it has a socket to spare" % destination.id)
+                         "it has a socket to spare within %d of the spine"
+                         % (destination.id, MAX_SIDE_DEPTH))
             continue
-        # THE NEAREST ROOM BEFORE IT, which is what makes nesting happen
-        # where the shape already supports it: when the previous
-        # destination sits immediately before this one and still has a
-        # socket spare, the branch hangs off the branch. Preferring the
-        # middle candidate instead produced zero nested branches at every
-        # Zone size, because a spine room almost always won.
-        junction = candidates[-1]
-        socket = _side_socket(junction, _spare_sockets(
-            junction, caps, used[junction.id]))
-        if socket is None:
-            notes.append("room '%s' stays on the spine: junction '%s' "
-                         "has only its elevated wall spare"
-                         % (destination.id, junction.id))
+        # THE NEAREST ROOM BEFORE IT, WALKING BACK. Nearest first is what
+        # makes nesting happen where the shape already supports it: when
+        # the previous destination sits immediately before this one and
+        # still has a socket spare, the branch hangs off the branch.
+        # Preferring the middle candidate instead produced zero nested
+        # branches at every Zone size, because a spine room almost always
+        # won.
+        #
+        # WALKING BACK matters as much. This used to take the nearest
+        # candidate and give up on the whole destination if that one room
+        # had only its elevated wall spare — so one procedural room with
+        # a deck against its free side cost a 23-room Zone six of its
+        # eight branches, every refusal naming the same junction. A
+        # junction that cannot serve is a reason to ask the next room,
+        # not a reason to stop.
+        junction = socket = None
+        for candidate in reversed(candidates):
+            choice = _side_socket(candidate, _spare_sockets(
+                candidate, caps, used[candidate.id]))
+            if choice is not None:
+                junction, socket = candidate, choice
+                break
+        if junction is None:
+            notes.append("room '%s' stays on the spine: all %d room(s) "
+                         "before it have only an elevated wall spare"
+                         % (destination.id, len(candidates)))
             continue
         used[junction.id].add(socket)
-        # One colour per branch, never reused: the plan is capped at the
-        # vocabulary above, so this cannot wrap.
-        colour = BRANCH_COLOURS[len(plan)]
-        plan.append((junction.id, destination, socket, colour, colour))
-    if not plan:
+        depth[destination.id] = depth[junction.id] + 1
+        routes.append(BranchRoute(junction.id, destination, socket))
+    if not routes:
         notes.append("no branch: no junction had capacity")
-    elif len(plan) == len(BRANCH_COLOURS) and len(destinations) \
-            >= len(BRANCH_COLOURS):
-        # SAID OUT LOUD when the vocabulary is what bound the count, so
-        # "every Zone got four" reads as a stated limit rather than a
-        # template nobody noticed.
-        notes.append("branch count capped by the %d key colours"
-                     % len(BRANCH_COLOURS))
-    return plan, tuple(notes)
+    return routes, tuple(notes)
+
+
+def _spine_of(chambers, routes) -> list[str]:
+    """The rooms the chain still passes through, in order."""
+    moved = {r.destination.id for r in routes}
+    return [c.id for c in chambers if c.id not in moved]
+
+
+def _key_homes(route, routes, spine: list[str]) -> list[str]:
+    """Where this route's key may sit: the spine BEFORE its junction.
+
+    For a NESTED junction — one that is itself a branch destination —
+    that means the spine before its parent, walked up until a spine room
+    is found. Anything later is a key behind the lock it opens, which
+    `R ⊆ E` would catch and which should never be composed in the first
+    place.
+
+    The room the player arrives in is excluded. A key lying at the
+    player's feet on the first frame is a lock that was never closed,
+    and it makes "is this key reachable before its lock" a question with
+    no content — the first room is reachable by definition. An empty
+    result therefore means *this route cannot carry a lock*, which is
+    now a reason to leave it open rather than a reason to put the key
+    underfoot anyway.
+    """
+    parent_of = {r.destination.id: r.junction_id for r in routes}
+    anchor, seen = route.junction_id, set()
+    while anchor not in spine and anchor not in seen:
+        seen.add(anchor)
+        anchor = parent_of.get(anchor, spine[0])
+    reach = list(spine[:spine.index(anchor)]) if anchor in spine else []
+    return reach[1:]
+
+
+def _lock_routes(chambers, routes) -> tuple[list[BranchRoute], tuple[str, ...]]:
+    """Which of the existing routes receive a local lock.
+
+    **A separate decision from whether the route exists.** A route is
+    lockable when its key has somewhere to go that is not the room the
+    player spawns in; the rest stay open, and an open branch to a room
+    with a Check in it is still a choice about where to go.
+
+    Two things bound the count, and only the first is a law:
+
+    * **One colour, one lock.** `BRANCH_COLOURS` is the presentation
+      vocabulary, so a Zone holds at most that many locks. A fifth lock
+      would have to reuse a colour, and two red doors opened by
+      different keys read as one lock and behave as two.
+    * **Which lockable routes get the colours** is *provisional tuning*:
+      the latest along the spine, so the Zone opens up before it asks
+      the player to go looking, and so each lock has the widest choice
+      of where its key sits. Stated here rather than implied by an
+      index, because it is the kind of rule that turns into a template
+      nobody remembers choosing.
+    """
+    notes: list[str] = []
+    spine = _spine_of(chambers, routes)
+    lockable = [r for r in routes if _key_homes(r, routes, spine)]
+    order = [c.id for c in chambers]
+
+    def depth(route) -> int:
+        return order.index(route.destination.id)
+
+    chosen = {id(r) for r in
+              sorted(lockable, key=depth)[-len(BRANCH_COLOURS):]}
+    out, colours = [], iter(BRANCH_COLOURS)
+    for route in routes:
+        if id(route) not in chosen:
+            out.append(route)
+            continue
+        colour = next(colours)
+        # ONE SPELLING, NOT TWO NAMES FOR ONE FACT: with at most one
+        # lock per colour in a Zone, the colour IS the identity, and a
+        # second independent identifier would be a thing that could
+        # disagree with it. `BranchLock` keeps them separate fields
+        # because the runtime matches one and the player reads the
+        # other — not because they may differ.
+        out.append(BranchRoute(route.junction_id, route.destination,
+                               route.socket, BranchLock(colour, colour)))
+    locked = sum(1 for r in out if r.locked)
+    if locked < len(routes):
+        notes.append(
+            "%d of %d branch(es) locked; %d stay open (%d had nowhere to "
+            "put a key before the lock, %d beyond the %d key colours)"
+            % (locked, len(routes), len(routes) - locked,
+               len(routes) - len(lockable),
+               max(0, len(lockable) - len(BRANCH_COLOURS)),
+               len(BRANCH_COLOURS)))
+    return out, tuple(notes)
 
 
 def compose_with_branch(chambers, shell_sockets=None) -> GraphProduct:
     """The chain, with every room a junction can afford moved onto a
-    locked branch off it.
+    branch off it — locked where a lock has a key to go with it.
 
     **Capacity decides, not authorship.** This used to consider only
     procedural rooms wide enough for a side door, because authored
@@ -336,23 +528,30 @@ def compose_with_branch(chambers, shell_sockets=None) -> GraphProduct:
     changing here, and until then a Zone of authored rooms composes as a
     chain and SAYS SO in its notes rather than branching silently.
 
+    **Three decisions, three stages.** `_branch_routes` says which
+    routes exist; `_lock_routes` says which of them are locked;
+    `BranchLock` says how a lock and its key are identified and
+    presented. They were one loop, and the join made the branch count a
+    consequence of the colour vocabulary.
+
     Returns the plain chain unchanged when nothing can be afforded, with
-    a note naming which of the three costs was not met.
+    a note naming which cost was not met.
     """
     caps = _shell_sockets() if shell_sockets is None else shell_sockets
     base = compose_chain(chambers, caps)
     if not base.edges:
         return base
 
-    plan, why = _branch_plan(chambers, caps)
-    if not plan:
+    routes, why = _branch_routes(chambers, caps)
+    if not routes:
         return GraphProduct(
             *(base.edges, base.doors, base.keys, base.plugs),
             notes=base.notes + why)
+    routes, lock_notes = _lock_routes(chambers, routes)
+    why = why + lock_notes
 
-    order = [c.id for c in chambers]
-    moved = {d.id for _, d, _, _, _ in plan}
-    spine = [rid for rid in order if rid not in moved]
+    moved = {r.destination.id for r in routes}
+    spine = _spine_of(chambers, routes)
 
     edges: list[TopologyEdge] = []
     doors: dict[str, dict[str, DoorAssignment]] = {c.id: {} for c in chambers}
@@ -368,17 +567,23 @@ def compose_with_branch(chambers, shell_sockets=None) -> GraphProduct:
 
     plugs: list[PlugAssignment] = []
     keys: dict[str, tuple[ZoneKeySpec, ...]] = {}
-    parent_of = {d.id: j for j, d, _, _, _ in plan}
-    for index, (junction_id, destination, socket, key_id, colour) \
-            in enumerate(plan):
+    placed = 0
+    for route in routes:
+        destination = route.destination
         vault = TopologyEdge(
-            edge_id=f"e:{junction_id}:{destination.id}", room_a=junction_id,
-            room_b=destination.id, direction="BIDIRECTIONAL",
-            realization="JOINED")
+            edge_id=f"e:{route.junction_id}:{destination.id}",
+            room_a=route.junction_id, room_b=destination.id,
+            direction="BIDIRECTIONAL", realization="JOINED")
         edges.append(vault)
-        doors[junction_id][socket] = DoorAssignment(
-            socket_id=socket, usage="LOCKED", edge_id=vault.edge_id,
-            key_id=key_id, colour=colour)
+        # THE ONE PLACE THE LOCK DECISION IS READ. An open branch is a
+        # USED door: the same edge, the same socket, the same way back,
+        # and no key errand attached to it.
+        doors[route.junction_id][route.socket] = DoorAssignment(
+            socket_id=route.socket,
+            usage="LOCKED" if route.locked else "USED",
+            edge_id=vault.edge_id,
+            key_id=route.lock.key_id if route.locked else None,
+            colour=route.lock.colour if route.locked else None)
         doors[destination.id]["entry"] = DoorAssignment(
             socket_id="entry", usage="USED", edge_id=vault.edge_id)
 
@@ -396,41 +601,31 @@ def compose_with_branch(chambers, shell_sockets=None) -> GraphProduct:
             source_anchor=f"room:{destination.id}:arrival",
             destination="zone_start", device="pad"))
 
+        if not route.locked:
+            continue
         # The key goes in a room the player passes BEFORE the junction,
         # which is the ordering `R ⊆ E` then proves rather than assumes.
-        # WHERE THE KEY MAY GO: the spine before this junction. For a
-        # NESTED junction — one that is itself a branch destination —
-        # that means the spine before its parent, walked up until a
-        # spine room is found. Anything later is a key behind the lock
-        # it opens, which `R ⊆ E` would catch and which should never be
-        # composed in the first place.
-        anchor, seen = junction_id, set()
-        while anchor not in spine and anchor not in seen:
-            seen.add(anchor)
-            anchor = parent_of.get(anchor, spine[0])
-        reach = list(spine[:spine.index(anchor)]) if anchor in spine \
-            else [spine[0]]
-        # NOT THE ROOM YOU ARRIVE IN, where there is anywhere else. A key
-        # lying at the player's feet on the first frame is a lock that
-        # was never closed, and it makes "is this key reachable before
-        # its lock" a question with no content — the first room is
-        # reachable by definition.
+        # `_key_homes` is the same function `_lock_routes` used to decide
+        # this route could be locked at all, so "there is a home for the
+        # key" and "here is the home" cannot disagree.
         # Spread, not stacked: four keys in one room is four locks with
         # one errand. Deterministic, so two runs place them the same.
-        choices = reach[1:] or reach or [spine[0]]
-        holder = choices[index % len(choices)]
+        homes = _key_homes(route, routes, spine)
+        holder = homes[placed % len(homes)]
+        placed += 1
         keys[holder] = keys.get(holder, ()) + (
-            ZoneKeySpec(key_id=key_id, colour=colour),)
+            ZoneKeySpec(key_id=route.lock.key_id, colour=route.lock.colour),)
 
-    nested = sum(1 for j, _, _, _, _ in plan if j in moved)
+    nested = sum(1 for r in routes if r.junction_id in moved)
     return GraphProduct(
         edges=tuple(edges),
         doors={c.id: _seal_the_rest(c, doors[c.id], caps) for c in chambers},
         keys=keys, plugs=tuple(plugs),
         notes=base.notes + why + (
-            "branches: %d off %d junction(s), %d nested; spine %d rooms"
-            % (len(plan), len({j for j, _, _, _, _ in plan}), nested,
-               len(spine)),))
+            "branches: %d off %d junction(s), %d nested, %d locked; "
+            "spine %d rooms"
+            % (len(routes), len({r.junction_id for r in routes}), nested,
+               sum(1 for r in routes if r.locked), len(spine)),))
 
 
 def apply(zone, product: GraphProduct):
