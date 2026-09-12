@@ -88,6 +88,16 @@ python3 tools/content/check_theme_roles.py >/dev/null || \
 
     python3 tools/content/check_theme_roles.py"
 
+# Theme-pack gap 3's unblocked half: the six-theme texture set as a
+# shippable thing, and one description a binder could be written against.
+# Where it lands is Production's and nothing here decides it.
+python3 tools/content/verify_theme_set.py >/dev/null || \
+  fail "verify-theme-set: the six-theme texture set is short a required
+    role, a theme has painted a universal one, or THEME_PACK.json no longer
+    matches the set. Run
+
+    python3 tools/content/verify_theme_set.py"
+
 # The Batch 043 candidates' declared geometry against what was exported.
 python3 tools/content/verify_exported_geometry.py >/dev/null || \
   fail "verify-geometry: a declared runtime size or attachment point
