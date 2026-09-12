@@ -23,6 +23,7 @@
       "godot/content/fixtures/",
       "godot/content/projectiles/",
       "godot/content/shells/",
+   "godot/content/theme/",
       "godot/content/test_fixtures/",
       "tools/artpreview/"
     ]

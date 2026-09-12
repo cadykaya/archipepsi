@@ -97,6 +97,9 @@ func _run() -> void:
 	_reduced_motion_actually_reaches_zero()
 	_preferences_never_enter_campaign_truth()
 	_the_postgame_has_somewhere_to_attach()
+	_the_theme_pack_binds_authored_pixels()
+	_a_missing_required_texture_falls_back_and_says_so()
+	_a_built_room_is_painted_from_the_pack()
 	if failures == 0:
 		print("GODOT CONTENT TESTS OK")
 		get_tree().quit(0)
@@ -1940,3 +1943,164 @@ func _solid(named: String, at: Vector3, size: Vector3) -> StaticBody3D:
 	shape.shape = box
 	body.add_child(shape)
 	return body
+
+# --- the authored theme pack, actually bound -----------------------------
+
+## DOES A PLAYED ROOM USE ARTY'S PIXELS, OR IS IT FALLING BACK?
+##
+## "The Zone still builds" is true of a pack that binds nothing at all,
+## which is why it is not the claim. `ThemeMaterials.is_authored` asks
+## where the albedo came from, and these ask it of a material a builder
+## actually made.
+##
+## **And the control is here too.** Four of them: a required role removed
+## from the descriptor, a digest that does not match, a role with no
+## fallback, and the universal role a pack must never paint. A binder
+## nobody has watched fail is a binder nobody can trust.
+func _the_theme_pack_binds_authored_pixels() -> void:
+	ThemePack.clear_descriptor()
+	ThemeMaterials.reset_cache()
+	_check(ThemePack.bound(),
+			"the exported pack at %s is there and parses"
+			% ThemePack.DESCRIPTOR)
+	if not ThemePack.bound():
+		return
+	var theme := "concrete_facility"
+	var floor_mat := ThemeMaterials.floor_mat(theme)
+	var wall_mat := ThemeMaterials.wall_mat(theme)
+	_check(ThemeMaterials.is_authored(floor_mat),
+			"'%s' floor is painted from the exported pack (%s)"
+			% [theme, "" if floor_mat.albedo_texture == null
+				else str(floor_mat.albedo_texture.resource_path)])
+	_check(ThemeMaterials.is_authored(wall_mat),
+			"'%s' wall is painted from the exported pack (%s)"
+			% [theme, "" if wall_mat.albedo_texture == null
+				else str(wall_mat.albedo_texture.resource_path)])
+	# AND IT IS THE FILE THE DESCRIPTOR NAMES, not merely some texture.
+	_check(floor_mat.albedo_texture != null
+				and str(floor_mat.albedo_texture.resource_path)
+					== "res://content/theme/%s_floor.png" % theme,
+			"and it is the file the descriptor names")
+	# EVERY THEME, so this is not one row that happens to work.
+	var bound_themes := 0
+	for other: String in (ThemePack.descriptor().get("themes", []) as Array):
+		if ThemeMaterials.is_authored(ThemeMaterials.floor_mat(other)):
+			bound_themes += 1
+	_check(bound_themes >= 6,
+			"%d of the six exported themes bind an authored floor"
+			% bound_themes)
+
+	# HAZARD IS UNIVERSAL. Not per-theme, in any theme, however the pack
+	# is built -- `ASSET_INVENTORY.md` says a theme-tinted hazard stripe
+	# is one the player has to re-learn.
+	for other: String in (ThemePack.descriptor().get("themes", []) as Array):
+		_check(ThemePack.texture_for(other, "hazard") == null,
+				"'%s' resolves hazard from the shared material and not "
+				% other + "from the pack")
+		_check(not ThemeMaterials.is_authored(
+					ThemeMaterials.hazard_mat(other)),
+				"and `hazard_mat` is the shared one in '%s'" % other)
+
+	# ONE HOP, THROUGH THE DESCRIPTOR'S OWN TABLE. `wall_ribbed` is
+	# shipped by one theme; every other theme's request lands on `wall`.
+	var ribbed := ThemePack.texture_for("gothic_stone", "wall_ribbed")
+	_check(ribbed != null
+				and str(ribbed.resource_path).ends_with(
+					"gothic_stone_wall.png"),
+			"a role a theme does not ship falls back exactly once, to "
+			+ "the role the descriptor names (%s)"
+			% ("null" if ribbed == null else str(ribbed.resource_path)))
+	# AND `glass: null` MEANS NO FALLBACK.
+	_check(ThemePack.texture_for("gothic_stone", "glass") == null,
+			"a role the descriptor gives no fallback for is a refusal "
+			+ "rather than a lookup that lands somewhere nobody chose")
+
+## THE CONTROL: a required authored texture is missing, and the
+## documented fallback is what happens.
+##
+## Produced by installing a descriptor with the row removed, because
+## deleting a shipped file is not something a test may do and a control
+## that cannot be run is not a control.
+func _a_missing_required_texture_falls_back_and_says_so() -> void:
+	var real := ThemePack.descriptor().duplicate(true)
+	if real.is_empty():
+		return
+	var theme := "concrete_facility"
+	var broken := real.duplicate(true)
+	(broken["textures"] as Dictionary).erase("%s/floor" % theme)
+	ThemePack.use_descriptor(broken)
+	ThemeMaterials.reset_cache()
+	_check(not ThemeMaterials.is_authored(ThemeMaterials.floor_mat(theme)),
+			"a theme that ships no floor falls back to the procedural "
+			+ "texture rather than painting nothing")
+	_check(ThemePack.disqualified(theme) == ["floor"],
+			"and the engine can say which role disqualified it: %s"
+			% str(ThemePack.disqualified(theme)))
+	# THE REST OF THE PACK STILL BINDS. Contract clause 3: a missing
+	# role disqualifies THAT ROLE, not the pack and not the theme.
+	_check(ThemeMaterials.is_authored(ThemeMaterials.wall_mat(theme)),
+			"and the same theme's wall is still painted from the pack")
+
+	# AND A DIGEST THAT DOES NOT MATCH IS NOT BOUND (clause 4).
+	var stale := real.duplicate(true)
+	((stale["textures"] as Dictionary)["%s/wall" % theme]
+			as Dictionary)["sha256_16"] = "0000000000000000"
+	ThemePack.use_descriptor(stale)
+	ThemeMaterials.reset_cache()
+	_check(not ThemeMaterials.is_authored(ThemeMaterials.wall_mat(theme)),
+			"a texture whose digest does not match its descriptor row "
+			+ "is not bound, which is what makes the row a claim")
+
+	# AND A PACK THAT PAINTS THE UNIVERSAL ROLE IS REFUSED.
+	var painted := real.duplicate(true)
+	(painted["textures"] as Dictionary)["%s/hazard" % theme] = {
+		"covers_m": 4.0, "size_px": 128, "sha256_16": "0000000000000000",
+		"texture": "theme/%s_accent.png" % theme,
+	}
+	ThemePack.use_descriptor(painted)
+	ThemeMaterials.reset_cache()
+	_check(ThemePack.refusals(theme) == ["hazard"],
+			"a pack shipping its own hazard is refused rather than "
+			+ "bound: %s" % str(ThemePack.refusals(theme)))
+	_check(ThemePack.texture_for(theme, "hazard") == null,
+			"and the shared material is still what answers")
+
+	ThemePack.clear_descriptor()
+	ThemeMaterials.reset_cache()
+
+## AND A ROOM A PLAYER STANDS IN IS PAINTED WITH IT.
+##
+## The two above are about the binder. This is about a room: build one
+## through the ordinary content path and count the surfaces whose albedo
+## came from the pack. A binder that answers correctly and is never asked
+## by a builder would pass both of the others.
+func _a_built_room_is_painted_from_the_pack() -> void:
+	ThemePack.clear_descriptor()
+	ThemeMaterials.reset_cache()
+	var chamber := {
+		"id": "painted", "type": "arena", "width": 16.0, "depth": 14.0,
+		"wall_height": 5.0, "objective": "kill_all", "enemies": [],
+		"activities": [], "features": [],
+	}
+	var built := ContentInstantiator.build_chamber(chamber,
+			"concrete_facility")
+	var root: Node3D = built["root"]
+	var authored := 0
+	var fell_back := 0
+	for node: Node in root.find_children("*", "MeshInstance3D", true,
+			false):
+		var mesh := node as MeshInstance3D
+		var material := mesh.material_override as StandardMaterial3D
+		if material == null or material.albedo_texture == null:
+			continue
+		if ThemeMaterials.is_authored(material):
+			authored += 1
+		else:
+			fell_back += 1
+	print("  THEME a built room: %d surface(s) painted from the pack, "
+			% authored + "%d from the procedural fallback" % fell_back)
+	_check(authored > 0,
+			"a room built through the ordinary content path is painted "
+			+ "with the exported pack, not only falling back (%d "
+			% authored + "authored, %d procedural)" % fell_back)
+	root.free()

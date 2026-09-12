@@ -51,6 +51,7 @@ func _run() -> void:
 	await _a_weight_threshold_needs_the_weight()
 	await _a_latch_this_engine_cannot_observe_is_refused()
 	_the_envelope_friction_keeps_the_contract_s_promise()
+	_the_controller_digest_covers_the_code_and_not_only_the_numbers()
 	_the_verb_set_decides_the_capability()
 	_the_envelope_says_which_minimum_a_host_misses()
 	if failures == 0:
@@ -645,3 +646,41 @@ func _walk_into_the_crate(room: Node3D, link: PoweredLink) -> Player:
 
 func _world_space() -> PhysicsDirectSpaceState3D:
 	return get_viewport().world_3d.direct_space_state
+
+## WHICH BUILD'S CONTROLLER, and the half a constants list would miss.
+##
+## `AP_CAPABILITY_LOGIC.md` §8b-ANSWERED promised the bridge a
+## `controller_digest` and said what it covers. A promise is not a
+## digest; this is where the claim is measured.
+##
+## **The source of the movement scripts is the half that matters.**
+## Change `EchoRuntime._dash` from adding to velocity to replacing it and
+## every crossing in a movement table moves while every constant stays
+## where it was -- and while the physics package's `scene_digest`, which
+## describes the platform and not the controller, stays byte-identical.
+## So this asserts the script bodies are actually in it, against the
+## files themselves, rather than trusting that a line naming them runs.
+func _the_controller_digest_covers_the_code_and_not_only_the_numbers() \
+		-> void:
+	var text := ControllerDigest.text()
+	var digest := ControllerDigest.digest()
+	_check(digest.length() == 16 and digest == digest.to_lower(),
+			"the controller digest is sixteen lowercase hex characters "
+			+ "(%s)" % digest)
+	_check(digest == ControllerDigest.digest(),
+			"and it is the same twice in one build, which is what 'one "
+			+ "per build' means")
+	for path: String in ControllerDigest.MOVEMENT_SCRIPTS:
+		var source := FileAccess.get_file_as_string(path)
+		_check(source != "",
+				"'%s' is named as a movement script and could not be "
+				% path + "read; a digest over a missing file is a "
+				+ "constant")
+		_check(text.contains(source.sha256_text().substr(0, 16)),
+				"the digest carries the CONTENT of '%s', so changing "
+				% path + "what it does invalidates a measurement even "
+				+ "when no constant moves")
+	# AND IT IS NOT THE SCENE DIGEST. Different question, different
+	# answer; §8b says so and this is the assertion behind it.
+	_check(text.contains("WALK_SPEED") and text.contains("floor_max_angle"),
+			"it covers the controller's own numbers: %s" % text)

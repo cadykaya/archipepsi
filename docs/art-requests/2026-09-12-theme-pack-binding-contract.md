@@ -58,10 +58,10 @@ say all six is a binder that will silently paint a room the wrong colour.
    asking for glass where a theme ships none is a refusal. One hop, never
    two, so a chain cannot end somewhere nobody chose.
 3. **`required_roles` is a floor, checked at load.** A theme missing
-   `floor`, `wall`, `trim`, `accent` or `hazard` disqualifies **that
-   theme**, not the pack — the other five still bind, and the engine
-   falls back to `ProcTextures` for the disqualified one and says so
-   once.
+   `floor`, `wall`, `trim` or `accent` disqualifies **that role**, not
+   the pack and not the theme — everything else still binds, and the
+   engine falls back to `ProcTextures` for the disqualified one and says
+   so once. **`hazard` is NOT in that list; see the correction below.**
 4. **`sha256_16` is checked on load.** A texture whose digest does not
    match its descriptor row is not bound. This is what makes "the pack
    Arty built" and "the pack the game loaded" the same claim; without it
@@ -93,3 +93,85 @@ how to prove a generated file matches its source.
 
 Nothing here changes `Constants.THEME_MATERIALS`, any builder, or any
 shipped `.tscn`.
+
+
+## CORRECTION, 2026-09-12: clause 3 asked for a hazard texture and must not
+
+**Production's, and Production's to fix.** Clause 3 above originally
+listed `hazard` among the roles a theme must ship. The exported
+descriptor says the opposite in as many words —
+
+```json
+"universal_roles": {
+  "hazard": "resolve to the shared universal material; a pack must not
+             paint its own"
+}
+```
+
+— and `docs/art/ASSET_INVENTORY.md` says why: *"The hazard and signage
+treatment is **shared**, not per-theme, and that is deliberate: a
+theme-tinted hazard stripe is one the player has to re-learn."* So the
+two statements did not form a contract: satisfying clause 3 meant
+breaking the rule clause 3 existed to protect, and `required_roles`
+listing `hazard` while `roles_shipped` does not is that contradiction
+written down.
+
+**The agreed rule, and it is a split rather than a removal:**
+
+| | needs authored pixels, per theme | resolved from a shared material |
+|---|---|---|
+| roles | `floor`, `wall`, `trim`, `accent` | `hazard` |
+| shipped by | the theme pack | the engine, identically in all six themes |
+| missing → | that role falls back to `ProcTextures`, once, loudly | cannot be missing; it is not a pack row |
+
+**Nothing is removed from the runtime.** `ThemeMaterials.hazard_mat`
+still answers in every theme and every builder that asks for a hazard
+surface still gets one. What is removed is a per-pack obligation that
+could only be discharged by making the shared signal six different
+signals.
+
+**And a pack that ships one is refused, not bound.**
+`ThemePack.refusals(theme)` names a `<theme>/hazard` row and the engine
+declines it — because the failure mode here is not a missing texture, it
+is a present one that quietly re-themes a signal the player is supposed
+to read the same way everywhere.
+
+### Whose half is whose
+
+* **Arty:** the descriptor generator. `required_roles` should carry the
+  four roles a pack must paint; `hazard` is already in `universal_roles`
+  and belongs only there. No new textures — the correction is to the
+  wording, and inventing six hazard textures to satisfy it is the one
+  outcome this correction exists to prevent.
+* **Production:** the loader and material resolution, landed:
+  `godot/scripts/generation/theme_pack.gd` binds by role with one
+  fallback hop, checks `sha256_16` where the source bytes are readable,
+  drives `uv1_scale` from `covers_m`, and never binds a universal role.
+  `ThemeMaterials._material` asks it and falls back to `ProcTextures`.
+
+### The importer-versus-material correction, kept where both lanes read it
+
+The destination section above asks for `filter=false` and `repeat=true`
+in the `.import` files. **Those are not importer parameters in Godot 4**
+— filter and repeat are sampler state on the *material*
+(`BaseMaterial3D.texture_filter`, `texture_repeat`), and asserting an
+import key that cannot exist is a check that either always fails or
+lies. Arty's export is right to set only mipmaps. `ThemeMaterials` sets
+`TEXTURE_FILTER_NEAREST` on every material it builds, which is the half
+that actually decides how the texture is sampled. **Neither lane should
+reintroduce the import keys.**
+
+### What is proved, and what "it still builds" does not prove
+
+`make godot-content` asserts that a material built by the real authority
+is painted from the exported file the descriptor names — in all six
+themes — and that **a room built through the ordinary content path has
+surfaces painted from the pack**. "The Zone still builds" is true of a
+pack that binds nothing, so it is not the claim.
+
+Four controls run beside it, because a binder nobody has watched fail is
+a binder nobody can trust: a required role removed from the descriptor
+(falls back, and the engine names the role), a `sha256_16` that does not
+match (not bound), a role with no declared fallback (refused rather than
+landing somewhere nobody chose), and a pack that paints the universal
+role (refused).

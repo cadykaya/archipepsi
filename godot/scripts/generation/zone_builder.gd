@@ -720,6 +720,15 @@ static func layout_to_json(result: Dictionary) -> Dictionary:
 			# contract's own `PhysicsPackage` and `ReplayEvidence`, and
 			# a second spelling of them here would be a second truth.
 			"physics": result.get("physics", []),
+			# WHICH BUILD'S CONTROLLER MEASURED ANY OF THIS.
+			# `AP_CAPABILITY_LOGIC.md` §8b-ANSWERED: a movement
+			# measurement is about what this executable does when you
+			# press dash, and the physics package's `scene_digest`
+			# cannot say that -- it describes the platform, not the
+			# controller. Sent on every Zone entry because slot data is
+			# fixed at seed generation and would certify a build the
+			# player may not be running.
+			"controller_digest": ControllerDigest.digest(),
 			"stations": _station_ids(result)}
 
 ## The station ids the layout placed, which the manifest records so a
@@ -1070,6 +1079,57 @@ static var policy_override := {}
 ## happened to agree would satisfy it. This counts the thing the law
 ## forbids, so a test can assert the search was never entered at all.
 static var searches := 0
+
+## WHERE A BRANCH LEAVES ITS JUNCTION, and which way it faces.
+##
+## **The room's own door plan, not the procedural socket table.** Both
+## producers emit `doors` in the same shape -- `ChamberBuilders
+## .door_plan` from `procedural_sockets`, `ContentInstantiator
+## .authored_door_plan` from the shell's declared doorways -- and the
+## two disagree for exactly the rooms that matter. This read
+## `socket_placed(socket_id, chamber.width, chamber.depth)`, which is
+## the procedural table, and an authored shell that answers a 17.9 m
+## chamber with a 41 m envelope then puts the branch mouth INSIDE
+## itself: the first connector overlapped the junction that was meant
+## to be serving it, every route failed at push 0, and the Zone came
+## back LAYOUT_INFEASIBLE naming the branch. `09_ROOM_CONTRACT.md`
+## §11.4 is where this was written down as a restriction; this lifts it.
+##
+## **OUTWARD IS DERIVED, NOT READ.** A socket declares a `yaw` and the
+## two procedural side sockets declare inward-facing ones, so trusting
+## that field would send every branch back through the room it came
+## from. The direction from the room's own envelope centre to the
+## opening cannot be ambiguous -- and unlike `side_left` / `side_right`
+## it is right for a shell whose doorway is somewhere else entirely.
+##
+## Returns `{"position": room-local Vector3, "turn": radians}`, or empty
+## when the room declares no such opening.
+static func branch_mouth(build: Dictionary, chamber: Dictionary,
+		socket_id: String) -> Dictionary:
+	var at := Vector3.INF
+	for raw: Variant in build.get("doors", []):
+		var door: Dictionary = raw
+		if str(door.get("socket_id", "")) == socket_id:
+			at = door.get("position", Vector3.ZERO)
+			break
+	if at == Vector3.INF:
+		# A room built before door plans, or one whose build result did
+		# not reach here. The table is the old answer and stays the
+		# fallback rather than a refusal.
+		var table := ChamberBuilders.socket_placed(socket_id,
+				float(chamber.get("width", 16.0)),
+				float(chamber.get("depth", 16.0)))
+		if table.is_empty():
+			return {}
+		at = table["position"]
+	var box: AABB = build.get("bounds", AABB())
+	var away := at - (box.position + box.size / 2.0)
+	var turn := 0.0
+	if absf(away.x) >= absf(away.z):
+		turn = -PI / 2.0 if away.x < 0.0 else PI / 2.0
+	else:
+		turn = PI if away.z < 0.0 else 0.0
+	return {"position": at, "turn": turn}
 
 static func _plan_route(shape: Dictionary, corners: Dictionary,
 		room: AABB, entry_at: Vector3, cursor: Vector3, yaw: float,
@@ -1640,12 +1700,13 @@ static func build(zone: Dictionary, theme_override := "",
 		# sends; the nested `branches` form is what a fixture can write
 		# without a graph. Neither is special-cased downstream.
 		for raw_branch: Variant in graph_branches.get(rid, []):
-			pending.append({"from": chamber, "at": origin,
-					"yaw": yaw, "branch": raw_branch})
+			pending.append({"from": chamber, "at": origin, "yaw": yaw,
+					"build": result, "branch": raw_branch})
 		for raw_branch: Variant in chamber.get("branches", []):
 			if typeof(raw_branch) == TYPE_DICTIONARY:
 				pending.append({"from": chamber, "at": origin,
-						"yaw": yaw, "branch": raw_branch})
+						"yaw": yaw, "build": result,
+						"branch": raw_branch})
 		while not pending.is_empty():
 			var job: Dictionary = pending.pop_front()
 			var parent: Dictionary = job["from"]
@@ -1656,20 +1717,13 @@ static func build(zone: Dictionary, theme_override := "",
 			if b_chamber.is_empty():
 				continue
 			var socket_id := str(branch.get("socket_id", "side_left"))
-			var mouth := ChamberBuilders.socket_placed(socket_id,
-					float(parent.get("width", 16.0)),
-					float(parent.get("depth", 16.0)))
+			var mouth := branch_mouth(job.get("build", {}), parent,
+					socket_id)
 			if mouth.is_empty():
 				push_warning("zone: branch on unknown socket '%s'"
 						% socket_id)
 				continue
-			# OUTWARD IS DERIVED, NOT READ. A socket declares a `yaw`
-			# and the two side sockets declare inward-facing ones, so
-			# trusting that field would have sent every branch back
-			# through the room it came from. The direction from the
-			# room's centre line to the socket cannot be ambiguous.
-			var out_dir := -1.0 if socket_id == "side_left" else 1.0
-			var b_yaw := p_yaw + out_dir * PI / 2.0
+			var b_yaw := p_yaw + float(mouth["turn"])
 			var b_result := ContentInstantiator.build_chamber(
 					b_chamber, theme)
 			var b_entry: Vector3 = b_result.get("entry_offset",
@@ -1789,12 +1843,12 @@ static func build(zone: Dictionary, theme_override := "",
 					str(b_chamber.get("id", "")), []):
 				pending.append({"from": b_chamber, "at": b_origin,
 						"yaw": float(b_walked["yaw"]),
-						"branch": raw_deeper})
+						"build": b_result, "branch": raw_deeper})
 			for raw_deeper: Variant in b_chamber.get("branches", []):
 				if typeof(raw_deeper) == TYPE_DICTIONARY:
 					pending.append({"from": b_chamber, "at": b_origin,
 							"yaw": float(b_walked["yaw"]),
-							"branch": raw_deeper})
+							"build": b_result, "branch": raw_deeper})
 			# ON `built_chambers`, so a branch is a room to everything
 			# downstream: its Checks, activities and enemies are wired by
 			# the same controller code that wires the chain's.

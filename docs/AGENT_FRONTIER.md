@@ -1,5 +1,75 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the chain is certified and the junction is walked — 2026-09-12
+
+**`claude/archipepsi-echoes-continuation-b1adno`, with the bridge lane
+merged at `603e876` and the art lane at `19e271b`.** Read this section
+first on a wake-up.
+
+**THE ENVIRONMENTAL-AGENCY CHAIN IS CLOSED, END TO END.** A physical
+crate, a plate, a live signal and a powered door, in a Zone ordinary
+generation produced — and the currently playable character performs it.
+`Player._shove_what_i_walked_into` is what makes a body move a body:
+`move_and_slide` resolves the contact by sliding the character, so
+walking into a crate did nothing at all until the impulse was applied
+from `_walk_intent` (direction × speed), which is the only quantity that
+stays constant while a player leans on something. A 60 kg crate moves
+7.10 m in three seconds; a 900 kg one moves 0.00 m.
+
+`godot-physics` walks the whole chain with no force call by the test:
+the door starts shut, a capsule does not fit through it, walking into
+the crate puts 60 kg on a plate that asks for 36, the signal goes high,
+the doorway opens — **and with the crate removed the same walk leaves
+the door shut**, which is the sabotage that makes the rest evidence.
+
+**AND THE ENGINE CERTIFIES IT IN THE CONTRACT'S OWN WORDS.**
+`ChainCertificate` builds a `PhysicsPackage` for every `powered_door` a
+room declares and replays it three times at exactly the manipulation
+envelope **in the room it was built in** — the room's own crate, the
+room's own plate, reset between runs — and sends the package and its
+`ReplayEvidence` in `layout_result.layout["physics"]`.
+`layout.validate` refuses a Zone whose declared chain is unreported,
+unreplayed, replayed above the envelope, replayed against another
+revision, or claims anything load-bearing (§13.2). `AMALGAM_BRIDGE.md`
+§5.6a is the agreed shape. It costs about five seconds of Zone-entry
+time per chain, inside the hold the player is already under.
+
+The version this replaced measured the same physical fact and put a
+four-word verdict in `build["mechanisms"]`, a key `layout_to_json` never
+forwarded. It told nobody.
+
+**BRANCHING IS A JOURNEY NOW, AND THE JUNCTION WAS BROKEN.** Ordinary
+generation produces four junctions and eight rooms off the spine, and
+the first Zone with two branches off one junction would not compose:
+the branch mouth came from `ChamberBuilders.socket_placed` — the
+PROCEDURAL socket table — and `c008` had answered a 17.9 m chamber with
+a 41 × 60 m authored shell, so the mouth landed inside the junction
+itself and every route failed at the first connector.
+`ZoneBuilder.branch_mouth` reads the room's own door plan now, whichever
+producer wrote it, and derives outward from the room's envelope rather
+than from the name `side_left`. `09_ROOM_CONTRACT.md` §11.8.
+
+With that fixed the real `Player` walks the whole journey in the
+generated Zone: across the interior of a four-neighbour junction from
+the opening it arrived through to the opening the branch leaves by, into
+a side destination that is not the next room on the route, and back out.
+Twenty-one corridor crossings never proved this; a corridor has two ends
+and no inside.
+
+**Also in this batch:** nobody spawns in a doorway whichever producer
+built the room (the nudge moved to the runtime placement path, where
+every producer's spawns become a body); the arrival region resolves by
+the socket the chain arrives through (§11.3); and Arty's Span Basin
+repair is walked by the actual Player rather than by a capsule.
+
+**Still open, and named rather than implied:** Art's half of §11.3 (a
+`player_entry` volume per opening); the three Batch 044 junction shells
+are `review: "pending"` and are not selectable — the owner's to review,
+and this lane does not write `pass`; and the fun verdict is not this
+lane's to award.
+
+---
+
 ## ENGINE LANE — the merged Zone opens again, and the way back is real — 2026-09-12
 
 **`claude/archipepsi-echoes-continuation-b1adno`, from the art merge

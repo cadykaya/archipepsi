@@ -1,5 +1,114 @@
 # Archipepsi — build state
 
+## 2026-09-13 — the chain certifies, and the junction is walked
+
+`claude/archipepsi-echoes-continuation-b1adno`, with the bridge lane
+merged at `603e876` and the art lane at `19e271b`. Read
+`docs/AGENT_FRONTIER.md` first; this is the longer version.
+
+### The environmental-agency chain, closed
+
+A physical crate, a plate, a live signal, a powered door, and the
+**currently playable character** performing it. Three things had to be
+true and none of them was:
+
+* **A body has to be able to move a body.** `CharacterBody3D` does not
+  push a `RigidBody3D`: `move_and_slide` resolves the contact by sliding
+  the character. `Player._shove_what_i_walked_into` applies the impulse,
+  and it took three attempts to find the right quantity — `velocity`
+  read after the slide is zero by construction, the velocity carried
+  into the slide is near-zero once the player is pressed against the
+  crate, and `_walk_intent` (direction × speed) is the one that stays
+  constant while leaning. 60 kg moves 7.10 m in three seconds; 900 kg
+  moves 0.00 m.
+* **The chain has to be in a Zone ordinary generation emits.**
+  `powered_door` is the eighth `AffordanceTag`, base-kit, §13.2-bound so
+  it can never lie on the mandatory path or host a Check. The fallback
+  composer declares one per Zone and `AffordanceFeatures` builds it.
+* **The outcome has to stop when a link is removed.** `godot-physics`
+  walks the same line with the crate gone and the door stays shut.
+
+The proof is split on purpose: `godot-physics` proves the
+player-performed chain on a flat floor with no force call by the test,
+`godot-room-contract` proves ordinary generation emits it and the built
+chain gates. Steering a crude walker down a corridor it shares with a
+crate produced findings about the steering, four times.
+
+### The carrier, reconciled rather than added
+
+`ZoneController._measure_mechanisms` measured the same physical fact and
+put a four-word verdict in `build["mechanisms"]` — a key
+`layout_to_json` never forwarded. `ChainCertificate` replaces it with
+the contract's own models on the carrier that already reaches the
+bridge: `layout_result.layout["physics"]`, one entry per declared
+feature, each a `PhysicsPackage` and the `ReplayEvidence` of replaying
+it three times at exactly the manipulation envelope.
+
+**It replays in the room, on the real chain** — the room's own crate and
+plate, reset between runs, put back afterwards. A reconstruction on a
+clean floor agrees with the generator by construction; the failure worth
+catching is a pylon between the crate and the plate, and the suite drops
+a slab there and requires the certificate to stop.
+
+`layout.validate` is the acceptance consumer. `physics.evidence_fault`
+is one function with two callers so the question cannot grow two
+answers — `check_physics_content` could not have done this alone: it
+skips packages that are not load-bearing, and these deliberately are
+not. Not written into the manifest: a manifest replays byte-identically
+forever and a scene digest is re-measured every entry.
+`AMALGAM_BRIDGE.md` §5.6a.
+
+### Branching, as a journey
+
+Ordinary generation now produces **four junctions and eight rooms off
+the spine**, and the first Zone with two branches off one junction would
+not compose. The branch mouth came from `ChamberBuilders.socket_placed`
+— the procedural socket table — and `c008` answered a 17.9 m chamber
+with a 41 × 60 m authored shell, so the mouth landed inside the junction
+and every route failed at the first connector.
+`ZoneBuilder.branch_mouth` reads the room's own door plan now, whichever
+producer wrote it, and derives outward from the room's envelope rather
+than from the name `side_left`. `09_ROOM_CONTRACT.md` §11.8.
+
+The real `Player` then walks it: across the interior of a
+four-neighbour junction between the two openings that matter, into a
+side destination that is not the next room on the route, and back out.
+The branching test that used to pin one junction and one branch room now
+counts the structure — a test that names `c020` fails on the day the
+composer makes four branches, for a reason that is not about branching.
+
+### Two restrictions lifted, one handed back
+
+* §11.4 (branch mouth) — **lifted**, above.
+* §11.3 (arrival per socket) — **the engine half is lifted**:
+  `_player_entry` resolves by the socket the chain arrives through,
+  using `socket_for_edge(entry, chamber, "arrive_edge")`, the same
+  lookup `_entry_offset` uses. Art's half is naming each `player_entry`
+  volume after the opening it serves, and is the only half left.
+* The doorway-spawn nudge moved to the **runtime placement path**, where
+  every producer's spawns become a body. The four procedural builders
+  never had it.
+
+### Arty's Span repair, with the actual Player
+
+The art lane's evidence is a capsule and says so. The real `Player`
+walks the repaired routes now. The mandatory deck route walks; the two
+basin climbs are completed **only by jumping**, which is a finding about
+a sixteen-riser staircase declared `kind: "walk"` and not a defect this
+batch fixes — `move_and_slide` has no step-up anywhere and that is the
+law. `KNOWN_JUMPED_WALKS` records it so the day it becomes a walk the
+test says the list is stale.
+
+### Not done, and named
+
+* The three Batch 044 junction shells (`shell_junction_triad`,
+  `shell_junction_cross`, `shell_bay_terminus`) are `review: "pending"`,
+  are not exported to `godot/content/`, and are not selectable. The
+  owner reviews them; this lane does not write `pass`.
+* Art's half of §11.3.
+* The fun verdict is a human's.
+
+
 ## 2026-09-12 (later) — the merged Zone opens, and the physics has a runtime
 
 `claude/archipepsi-echoes-continuation-b1adno`, from the art merge

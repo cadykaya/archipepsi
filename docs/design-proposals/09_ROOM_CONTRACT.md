@@ -562,3 +562,41 @@ way down its edge, and a selector onto a sealed door.
 mouths from the procedural socket table. A `joinable` list in the offer
 proves capacity is visible and these two fields say which opening the
 chain uses; neither is a claim that the body arrives through it.
+## 11.8 Restrictions 2 and 3 answered — the engine lifted both
+
+**Engine lane, 2026-09-12.** Both were the engine's and both are gone.
+Nothing in §1–§10 changed; two lookups did.
+
+**Restriction 3 (§11.4), and it was not theoretical.** The branch mouth
+now comes from the parent room's OWN door plan —
+`ZoneBuilder.branch_mouth` reads `result["doors"]`, which
+`ChamberBuilders.door_plan` fills from `procedural_sockets` and
+`ContentInstantiator.authored_door_plan` fills from the shell's declared
+doorways — and falls back to the procedural table only for a room that
+publishes no plan at all. The outward direction is derived from the
+room's own envelope centre rather than from the socket's declared yaw
+(which faces inward) or from the name `side_left`/`side_right` (which
+says nothing about where a shell's opening is).
+
+The first generated Zone with two branches off one junction found it
+immediately: `c008` answered a 17.9 m chamber with a 41 × 60 m authored
+shell, the procedural table put the branch mouth **inside** that shell,
+the first connector overlapped the junction that was meant to be
+serving it, and the Zone came back `LAYOUT_INFEASIBLE` naming the
+branch. `godot-zone-audit` and `godot-room-contract` both refused it;
+they both pass now, on four junctions and eight rooms off the spine.
+
+**Restriction 2 (§11.3).** `ContentInstantiator._player_entry` resolves
+the arrival region by the socket the chain arrives through, using
+`socket_for_edge(entry, chamber, "arrive_edge")` — §11.7's field, the
+same lookup `_entry_offset` already uses, so the region and the
+attachment point cannot come from different doors. A `player_entry`
+volume whose `name` matches that socket wins; an unnamed one is the
+room's default and is what every shell declares today, so **every
+existing shell composes unchanged**.
+
+**Art's half of §11.3 is still Art's**, and is now the only half left:
+name each `player_entry` volume after the opening it serves. Until a
+shell does, a multi-door room vouches for one arrival — which is the
+same guarantee it had, now with somewhere for the better one to go.
+
