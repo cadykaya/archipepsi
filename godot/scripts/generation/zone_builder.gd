@@ -715,6 +715,11 @@ static func layout_to_json(result: Dictionary) -> Dictionary:
 			"rooms": rooms, "joins": joins, "anchors": anchors,
 			"arrival_ok": result.get("arrival_ok", {}),
 			"apertures": result.get("apertures", {}),
+			# The chains the engine built and replayed. Passed through
+			# rather than re-shaped: the entries are already the
+			# contract's own `PhysicsPackage` and `ReplayEvidence`, and
+			# a second spelling of them here would be a second truth.
+			"physics": result.get("physics", []),
 			"stations": _station_ids(result)}
 
 ## The station ids the layout placed, which the manifest records so a

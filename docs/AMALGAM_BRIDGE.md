@@ -1040,6 +1040,145 @@ is a Hub design question and is yours. The bridge exposes the list; it
 does not assume a widget.
 
 
+## 5.6a ANSWERED by the engine lane, 2026-09-12: option 2, and the engine produces it
+
+**Beside the manifest.** A package is a physical claim about geometry
+the engine built, so it travels with `layout_result` and is committed
+with the manifest — the same carrier `apertures`, `arrival_ok` and the
+chain already use, whose own docstring says the payload "grows as the
+engine measures more". Nothing new is added beside `ZoneReady` or the
+snapshot.
+
+**And the composer does not write one.** Option 1 would have Epsilon's
+output surface carry `LatchCondition.detail` and `ReferenceSolution
+.steps`, and the guard that refused it is right: those two are the
+engine's script and the engine's observation, and a provider that can
+write them is authoring a physical claim. Under option 2 the provider
+never sees either field, so the guard needs no exemption and the lane
+boundary needs no footnote.
+
+**Provider intent and engine certification stay separate, and that is
+the shape.** A chamber declares INTENT in the vocabulary it already has
+— `features: [{tag: "powered_door"}]`, an ordinary optional affordance,
+§13.2-bound so it can never gate the mandatory path. The engine builds
+the chain that intent asks for and CERTIFIES it by producing the
+package and replaying it. One is "I would like a crate and a door here";
+the other is "here is the package I built and the evidence that it
+latches". Neither can be mistaken for the other and neither is derivable
+from the other.
+
+### The shape, exactly, as it is now implemented
+
+`layout_result.layout` gains one key. **One entry per declared
+feature**, so a feature the layout never mentions is a hole the bridge
+can see:
+
+```json
+"physics": [
+  {"room_id": "c002", "index": 0,
+   "package": { ... PhysicsPackage ... },
+   "evidence": { ... ReplayEvidence ... }}
+]
+```
+
+Three entry shapes and no fourth:
+
+| shape | means | verdict |
+|---|---|---|
+| `package` + `evidence` | the engine built the chain and replayed it | checked, below |
+| `declined: "<reason>"` | `AffordanceFeatures.fits` did not build it — the corridor could not host the rig | accepted; a reason is required |
+| `refused: "<reason>"` (+ `package`) | built, and the engine could not certify it | **refused** |
+
+* **`package`** is `PhysicsPackage` as `schemas/physics.py` already
+  defines it — no new model. The body is the crate; the latch is a
+  `WEIGHT_THRESHOLD` naming the plate and the kilograms it asks for,
+  because that is literally what `PoweredLink` reads every physics
+  frame and a `POSITION_REGION` would describe a different condition
+  than the door's own; `reference_solution.steps` is the engine's push
+  script, aimed from the crate at the plate; `setup.scene_digest` is
+  the real `SceneDigest` over the room the chain stands in, taken after
+  the crate has settled and been zeroed so that the setup is the same
+  setup every time.
+* **`evidence`** is `ReplayEvidence`, produced by `ReplayHarness.replay`
+  at Zone entry: three runs, at exactly the envelope, `per_run_latched`
+  per run.
+* **`vector_latches`, `required_latches` and `on_mandatory_route` are
+  all empty or false, and the bridge refuses a chain where they are
+  not.** §13.2 forbids a feature on the mandatory path; a package
+  claiming a route depends on it claims the opposite of what the
+  affordance contract promises, whatever its evidence says.
+
+**It replays IN THE ROOM, on the real chain.** `ChainCertificate`
+(`godot/scripts/gameplay/chain_certificate.gd`) hands `ReplayHarness` a
+stage whose body is the room's own crate and whose plate is the room's
+own plate, resets that crate between runs, and puts it back afterwards.
+A reconstruction would agree with the generator by construction; the
+failure worth catching is the one where the composer put something
+between the crate and the plate. The cost is about three seconds of
+Zone-entry time per chain, inside the hold the player is already under
+from the moment their body exists until the verdict.
+
+**The harness's observation is stricter than the door's.**
+`ReplayHarness` asks whether the crate's CENTRE is in the plate box;
+`PoweredLink` asks whether the crate OVERLAPS its `Area3D`. The first
+implies the second, so a latch here implies a powered door — the safe
+direction for the two to differ in.
+
+### What the bridge should check, and what it must not
+
+| check | why |
+|---|---|
+| one entry per declared `powered_door` feature | the inverted probe: unreported is refused, exactly as an unreported aperture is |
+| the package validates as `PhysicsPackage` | it is the bridge's model |
+| the package is not load-bearing | §13.2, above |
+| package ids are unique in the Zone | a latch is `package_id/latch_id` |
+| `evidence.content_digest == package_digest(package)` | evidence bound to what it describes, not merely well-shaped |
+| `evidence.at_the_envelope` | replaying above it proves a strong provider can solve it, which is not the claim |
+| `evidence.runs == 3`, and **every declared latch** latched in every run | §23.5 check 20 |
+| **nothing about the geometry** | the bridge has no scene, and re-deriving a physical fact in Python is what the lane split prevents |
+
+The last check names the DECLARED latches and not `required_latches`,
+which is empty here by the rule two rows above it: a check written
+against `required_latches` would pass every chain vacuously. That is
+this project's recurring defect — a measurement that exists, is
+correct, and is never handed the case that fails it — caught at design
+time for once.
+
+`physics.evidence_fault` is one function with two callers:
+`check_physics_content` asks it of a load-bearing package, where
+unsound evidence means a progression gate nobody measured;
+`layout.validate` asks it of every chain a generated room built. The
+question is the same and must not grow two answers.
+
+**It is validated at acceptance and NOT written into the manifest.** A
+manifest is replayed byte-identically forever; a scene digest is
+re-measured on every entry, and a solver that resolves a resting
+contact one quantum differently would then refuse a Zone that is fine.
+Acceptance is the commitment point: a Zone whose declared chains do not
+certify does not get a manifest at all, which is the guarantee that
+matters and the one that does not rest on an unproved claim about
+physics determinism.
+
+### And the three things this does NOT do
+
+* **It does not populate `CROSSING_EVIDENCE`.** Agreed, and stated in
+  `AP_CAPABILITY_LOGIC.md` §8b-ANSWERED for the same reason: a package
+  proving a crate moves says nothing about how far a dash carries a
+  body. Different quantity, different digest (`controller_digest`,
+  not `scene_digest`), different contract.
+* **It makes nothing load-bearing.** The chain is an affordance. §13.2
+  already forbids a feature on the mandatory path, hosting an AP reward,
+  an exit or an objective — so a player who never shoves the crate loses
+  a note. No capability gate is declared, and `manipulate` stays out of
+  the vocabulary.
+* **It does not decide persistence.** `ZoneProgress.latched` and a
+  `latch_fired` intent are this lane's and are welcome; the engine's
+  half today records the consequence the player actually takes — the
+  local reward behind the door — on the existing validated path. The
+  live signal is recomputed from the plate every physics frame and is
+  written nowhere, which is §5.4a's split observed rather than asserted:
+  `godot-room-contract` lifts the crate off and watches the door shut.
+
 ## 6. What remains in this lane
 
 **The five conditions §0-bis puts on a legal capability gate**

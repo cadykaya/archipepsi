@@ -60,6 +60,12 @@ const FOOTPRINT := {
 	"wind_volume": {"half_width": 0.8, "half_depth": 0.8, "height": 6.0},
 	"bounce_pad": {"half_width": 0.6, "half_depth": 0.6, "height": 7.0},
 	"moving_platform": {"half_width": 0.8, "half_depth": 0.8, "height": 5.2},
+	# THE ONE FEATURE THAT IS A CHAIN RATHER THAN AN OBJECT. It needs a
+	# RUN: somewhere the crate starts, the plate it is shoved onto, the
+	# door beyond, and the alcove the door closes. All of that is along
+	# depth, deliberately -- laid across the width it would need a 12 m
+	# room and would be offered to almost nothing.
+	"powered_door": {"half_width": 0.8, "half_depth": 3.5, "height": 3.6},
 }
 
 ## Note text per tag, so a feature that yields a note says something about
@@ -72,6 +78,7 @@ const _NOTES := {
 	"wind_volume": "The updraft is free. The landing is yours.",
 	"bounce_pad": "No item required. Just enthusiasm.",
 	"moving_platform": "It goes there, then it comes back. Forever.",
+	"powered_door": "The crate is the key. I lost the other kind.",
 }
 
 ## The narrowest chamber that can host this tag: lane, the feature's own
@@ -208,6 +215,8 @@ static func _build(root: Node3D, tag: String, theme: String,
 			return _wind_volume(root, theme, origin, height, reward_id, note)
 		"bounce_pad":
 			return _bounce_pad(root, theme, origin, height, reward_id, note)
+		"powered_door":
+			return _powered_door(root, theme, origin, reward_id, note)
 		"moving_platform":
 			return _moving_platform(root, theme, origin, height, reward_id, note)
 	# An unknown tag is drift between the schema and this file, not a Zone
@@ -575,3 +584,87 @@ static func _solid(parent: Node3D, size: Vector3, at: Vector3,
 	body.position = at
 	parent.add_child(body)
 	return body
+
+## THE ENVIRONMENTAL-AGENCY CHAIN: a crate, a plate, a signal, a door.
+##
+## `06_THE_AMALGAM.md` §5.4a's requirement made of supported parts and
+## nothing else. A `ManipulableBody` the player shoves with their own
+## body, a `PoweredLink` whose plate adds up what is standing on it, and
+## a door that is open exactly while the signal is high. No key, no
+## activity, no station, no joint, no attachment sensor.
+##
+## **It is an affordance, and that is what makes it safe.** §13.2 says a
+## feature may never lie on the mandatory path, host an AP reward, an
+## exit or an objective -- enforced by `validate_zone`, not by intention
+## -- so a player who cannot or will not shove the crate loses a note and
+## nothing else. That is also why this could be built without inventing a
+## capability gate: there is no gate, by construction.
+##
+## The layout, in the rig's own frame, along +Z:
+##
+##     z -3.0   the crate, where a player walking in meets it
+##     z -0.8   the plate
+##     z  1.1   the door
+##     z  1.1..3.2  the alcove, with the note at the back
+##
+## **The plate is 1.9 m SHORT of the doorway**, so the crate that opens
+## the door is never standing in it. The player goes round the crate
+## using the room's own width, and the only thing that has to be
+## player-wide is the 1.2 m opening.
+##
+## The whole rig is 1.6 m across on purpose. `required_width` is
+## `2 * (lane + 2 * half_width + margin)`, so a wider chain would widen
+## every corridor the fallback hangs features on -- and at 1.2 m of reach
+## it did: 9.5 m corridors, and `played_zone` stopped composing at room
+## c022 for want of space. A feature that costs the Zone its layout is
+## not optional content.
+static func _powered_door(root: Node3D, theme: String, origin: Vector3,
+		reward_id: String, note: String) -> Node3D:
+	var rig := Node3D.new()
+	rig.name = "PoweredDoorChain"
+	rig.position = origin
+	root.add_child(rig)
+	var wall := ThemeMaterials.wall_mat(theme)
+	# The alcove: two sides, a back and a roof, so what the door closes
+	# is a room rather than a patch of floor to walk around. The opening
+	# between the inner faces is 1.2 m for a 0.8 m body.
+	for side: float in [-1.0, 1.0]:
+		_solid(rig, Vector3(0.2, 3.1, 2.1),
+				Vector3(side * 0.7, 1.55, 2.15), wall)
+	_solid(rig, Vector3(1.6, 3.1, 0.2), Vector3(0, 1.55, 3.2), wall)
+	_solid(rig, Vector3(1.6, 0.2, 2.1), Vector3(0, 3.1, 2.15), wall)
+	# THE LINK: its origin is the plate, and the door is named relative
+	# to it, so the two cannot drift apart by being positioned twice.
+	var link := PoweredLink.create(theme, Vector3(0.0, 0.0, 1.9),
+			CRATE_MASS_KG * 0.6)
+	link.position = Vector3(0.0, 0.0, -0.8)
+	rig.add_child(link)
+	# THE CRATE. Lighter than the manipulation envelope's 120 kg on
+	# purpose: this is a body shoved by a body, not a host qualifying
+	# against §29.3.2, and the two must not be confused.
+	var crate := ManipulableBody.create("%s_crate" % reward_id,
+			CRATE_MASS_KG, Vector3(0.7, 0.7, 0.7))
+	crate.position = Vector3(0.0, 0.45, -3.0)
+	rig.add_child(crate)
+	# THE CONSEQUENCE, behind the door. A note is a local reward and
+	# rides the same validated path every other one does, so taking it
+	# persists and taking it twice does not.
+	_reward(rig, "powered_door", Vector3(0.0, 0.9, 2.6), reward_id, note)
+	return rig
+
+## What the crate weighs, and therefore what the plate asks for (60% of
+## it, so a crate nudged most of the way on still counts and a player
+## standing there alone does not).
+##
+## MEASURED, not chosen. A walking player delivers about
+## `WALK_SPEED * SHOVE_MASS_KG` newtons into whatever they lean on, and
+## the crate resists with `envelope_friction() * m * g`. At 100 kg the
+## first run of this chain moved the crate far enough to stall the
+## player and not far enough to reach the plate: the walk gave up 2.95 m
+## short with nothing on it. At 60 kg the net is about 5 m/s^2, which is
+## a crate that visibly slides when you walk into it.
+##
+## It is well under the manipulation envelope's 120 kg on purpose. This
+## is a body shoved by a body; a host qualifying against §29.3.2 is a
+## different question and must not be confused with this one.
+const CRATE_MASS_KG := 60.0

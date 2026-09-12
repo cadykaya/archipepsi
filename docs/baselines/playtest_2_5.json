@@ -953,7 +953,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 909,
+        "content_value": 911,
         "enemy_total": 35,
         "rooms_holding_no_check": 8
       },
@@ -1324,7 +1324,8 @@
         "schema_version": 7,
         "unlocked_affordances": [
           "bounce_pad",
-          "moving_platform"
+          "moving_platform",
+          "powered_door"
         ],
         "zone_id": "zone_001"
       },
@@ -1345,6 +1346,20 @@
                   0.3
                 ],
                 "tag": "moving_platform"
+              },
+              {
+                "at": [
+                  0.82,
+                  0.3
+                ],
+                "tag": "powered_door"
+              },
+              {
+                "at": [
+                  0.18,
+                  0.5
+                ],
+                "tag": "bounce_pad"
               }
             ],
             "id": "c001",
@@ -1416,19 +1431,11 @@
                 "time_limit": 16.0
               }
             ],
-            "features": [
-              {
-                "at": [
-                  0.82,
-                  0.3
-                ],
-                "tag": "bounce_pad"
-              }
-            ],
             "id": "c004",
-            "length": 14.4,
+            "length": 6.0,
+            "shell_id": "shell_corner_right",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -1473,7 +1480,7 @@
                 "kind": "target_challenge"
               }
             ],
-            "depth": 89.2,
+            "depth": 59.2,
             "enemies": [
               {
                 "archetype": "melee",
@@ -1483,10 +1490,10 @@
             "id": "c006",
             "objective": "kill_all",
             "reward_location_id": 89100004,
-            "shell_id": "shell_span_basin",
+            "shell_id": "shell_hall_transit",
             "type": "arena",
-            "wall_height": 23.6,
-            "width": 30.4
+            "wall_height": 39.6,
+            "width": 40.4
           },
           {
             "activities": [
@@ -1814,7 +1821,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 915,
+        "content_value": 901,
         "enemy_total": 26,
         "rooms_holding_no_check": 8
       },
@@ -2185,7 +2192,8 @@
         "schema_version": 7,
         "unlocked_affordances": [
           "bounce_pad",
-          "moving_platform"
+          "moving_platform",
+          "powered_door"
         ],
         "zone_id": "zone_002"
       },
@@ -2199,19 +2207,11 @@
                 "time_limit": 8.0
               }
             ],
-            "features": [
-              {
-                "at": [
-                  0.18,
-                  0.3
-                ],
-                "tag": "bounce_pad"
-              }
-            ],
             "id": "c001",
-            "length": 11.1,
+            "length": 6.0,
+            "shell_id": "shell_corner_left",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -2277,19 +2277,11 @@
                 "time_limit": 20.0
               }
             ],
-            "features": [
-              {
-                "at": [
-                  0.82,
-                  0.3
-                ],
-                "tag": "moving_platform"
-              }
-            ],
             "id": "c004",
-            "length": 14.7,
+            "length": 6.0,
+            "shell_id": "shell_corner_right",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -2381,10 +2373,6 @@
               {
                 "element_count": 2,
                 "kind": "switch_sequence"
-              },
-              {
-                "element_count": 4,
-                "kind": "switch_sequence"
               }
             ],
             "depth": 22.0,
@@ -2453,11 +2441,26 @@
             "vertical_step": 0.77
           },
           {
+            "features": [
+              {
+                "at": [
+                  0.18,
+                  0.3
+                ],
+                "tag": "powered_door"
+              },
+              {
+                "at": [
+                  0.18,
+                  0.5
+                ],
+                "tag": "moving_platform"
+              }
+            ],
             "id": "c013",
-            "length": 6.0,
-            "shell_id": "shell_corner_right",
+            "length": 13.6,
             "type": "corridor",
-            "width": 6.0
+            "width": 7.9
           },
           {
             "activities": [
@@ -2515,11 +2518,19 @@
             "width": 16.2
           },
           {
+            "features": [
+              {
+                "at": [
+                  0.82,
+                  0.3
+                ],
+                "tag": "bounce_pad"
+              }
+            ],
             "id": "c016",
-            "length": 6.0,
-            "shell_id": "shell_corner_left",
+            "length": 13.6,
             "type": "corridor",
-            "width": 6.0
+            "width": 7.8
           },
           {
             "activities": [
@@ -2660,7 +2671,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 902,
+        "content_value": 904,
         "enemy_total": 32,
         "rooms_holding_no_check": 8
       },
@@ -3031,26 +3042,19 @@
         "schema_version": 7,
         "unlocked_affordances": [
           "bounce_pad",
-          "moving_platform"
+          "moving_platform",
+          "powered_door"
         ],
         "zone_id": "zone_003"
       },
       "zone": {
         "chambers": [
           {
-            "features": [
-              {
-                "at": [
-                  0.18,
-                  0.3
-                ],
-                "tag": "moving_platform"
-              }
-            ],
             "id": "c001",
-            "length": 16.7,
+            "length": 6.0,
+            "shell_id": "shell_corner_left",
             "type": "corridor",
-            "width": 7.9
+            "width": 6.0
           },
           {
             "activities": [
@@ -3110,7 +3114,14 @@
                   0.82,
                   0.3
                 ],
-                "tag": "bounce_pad"
+                "tag": "moving_platform"
+              },
+              {
+                "at": [
+                  0.18,
+                  0.5
+                ],
+                "tag": "powered_door"
               }
             ],
             "id": "c004",
@@ -3129,7 +3140,7 @@
                 "kind": "switch_sequence"
               }
             ],
-            "depth": 59.2,
+            "depth": 89.2,
             "enemies": [
               {
                 "archetype": "melee",
@@ -3139,10 +3150,10 @@
             "id": "c005",
             "objective": "kill_all",
             "reward_location_id": 89100203,
-            "shell_id": "shell_hall_transit",
+            "shell_id": "shell_span_basin",
             "type": "arena",
-            "wall_height": 39.6,
-            "width": 40.4
+            "wall_height": 23.6,
+            "width": 30.4
           },
           {
             "activities": [
@@ -3178,7 +3189,7 @@
             ],
             "id": "c007",
             "length": 6.0,
-            "shell_id": "shell_corner_right",
+            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 6.0
           },
@@ -3244,7 +3255,7 @@
             ],
             "id": "c010",
             "length": 6.0,
-            "shell_id": "shell_corner_left",
+            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 6.0
           },
@@ -3303,11 +3314,19 @@
                 "kind": "switch_sequence"
               }
             ],
+            "features": [
+              {
+                "at": [
+                  0.18,
+                  0.3
+                ],
+                "tag": "bounce_pad"
+              }
+            ],
             "id": "c013",
-            "length": 6.0,
-            "shell_id": "shell_corner_right",
+            "length": 10.5,
             "type": "corridor",
-            "width": 6.0
+            "width": 7.5
           },
           {
             "activities": [

@@ -622,6 +622,7 @@ func _publish_layout(build: Dictionary) -> void:
 	if not is_inside_tree():
 		return
 	_measure_layout_evidence(build)
+	await _certify_physics(build)
 	send_layout_result(build)
 	await _await_verdict()
 
@@ -689,6 +690,38 @@ func _await_verdict() -> void:
 	push_warning("zone: %s waited %.1fs for a layout verdict"
 			% [zone_id, VERDICT_TIMEOUT])
 	layout_refused.emit(zone_id)
+
+## THE CHAINS THIS ZONE BUILT, CERTIFIED. `AMALGAM_BRIDGE.md` §5.6a.
+##
+## `apertures` says a doorway is a hole; nothing said whether a
+## `powered_door` feature's crate can actually be put on its plate in
+## the room the composer placed it in. Both are failures a Zone can ship
+## with, and neither is visible to the bridge, which has no geometry.
+##
+## **The engine certifies; the composer only asked.** A chamber declares
+## `features: [{tag: "powered_door"}]` and that is intent. What goes on
+## the wire here is a `PhysicsPackage` the engine built and the
+## `ReplayEvidence` of replaying it three times at exactly the
+## manipulation envelope -- the contract's own models, carried in the
+## layout proposal that is already committed with the manifest, so
+## nothing needed a second carrier.
+##
+## The previous version of this was a four-word verdict in a key called
+## `mechanisms` that `layout_to_json` never forwarded. It measured
+## something real and told nobody.
+func _certify_physics(build: Dictionary) -> void:
+	var out: Array = []
+	var rooms: Dictionary = build.get("rooms", {})
+	for raw: Variant in build.get("chambers", []):
+		var entry: Dictionary = raw
+		var chamber: Dictionary = entry["chamber"]
+		var rid := str(chamber.get("id", ""))
+		var placed: Dictionary = rooms.get(rid, {})
+		var bounds: AABB = placed.get("bounds", AABB())
+		for certified: Variant in await ChainCertificate.of_room(
+				get_tree(), chamber, entry["node"] as Node3D, bounds):
+			out.append(certified)
+	build["physics"] = out
 
 ## Aperture polarity and arrival verdicts, measured and attached.
 ##

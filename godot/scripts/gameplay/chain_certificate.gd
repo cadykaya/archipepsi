@@ -1,0 +1,236 @@
+class_name ChainCertificate
+extends RefCounted
+
+## THE ENGINE CERTIFYING A CHAIN IT BUILT, in the contract's own models.
+##
+## A chamber declares INTENT -- `features: [{tag: "powered_door"}]`, an
+## ordinary optional affordance -- and `AffordanceFeatures` builds the
+## crate, the plate, the signal and the door that intent asks for. That
+## the thing was built is not evidence that it works, and the bridge has
+## no geometry with which to find out: `AMALGAM_BRIDGE.md` §5.6a is the
+## agreed answer, and this is its engine half.
+##
+## **It replays IN THE ROOM, on the real chain.** Not a reconstruction
+## of one: a reconstruction agrees with the generator by construction,
+## and the failure worth catching is the one where the room put a pylon
+## between the crate and the plate. `ReplayHarness` reads `stage.bodies`
+## and `stage.plates` and never touches `stage.root` except to free it,
+## so a run's stage is the room's own crate with its state reset and a
+## marker node for the harness to drop.
+##
+## **Three runs, each from the same reset setup.** §23.5 check 20. The
+## room is not rebuilt between them -- the chain's physical state is,
+## which is what "a fresh stage" is protecting: three runs that continue
+## one another are one run read three times.
+##
+## **It costs entry time and that is the trade.** The player is held by
+## `ZoneController.LAYOUT_HOLD` from the moment their body exists until
+## the verdict, and a chain adds roughly three seconds of crate-pushing
+## inside that hold. Certifying a claim about physics requires running
+## the physics.
+
+## How long a settle may take. Short on purpose: the latch fires while
+## the crate is crossing the plate, so a settle is the tail of the run
+## and not its substance, and `ReplayHarness` breaks out of one the
+## moment every body is at rest.
+const SETTLE_TIMEOUT_S := 0.75
+
+## Body id inside the package. The crate's NODE name carries the reward
+## it guards; the package's body id is the contract's, and the contract
+## allows `^[a-z0-9_]+$`.
+const CRATE_ID := "crate"
+
+## Every `powered_door` chain this room declared, certified, declined or
+## refused -- one entry per declared feature, so an unreported one is a
+## hole the bridge can see. `bounds` is the room's committed world
+## envelope, which is what makes "within the room" decidable.
+static func of_room(tree: SceneTree, chamber: Dictionary, node: Node3D,
+		bounds: AABB) -> Array:
+	var rid := str(chamber.get("id", ""))
+	var declared := 0
+	for raw: Variant in chamber.get("features", []):
+		if str((raw as Dictionary).get("tag", "")) == "powered_door":
+			declared += 1
+	if declared == 0:
+		return []
+	var chains := chains_in(node)
+	var out: Array = []
+	for i in declared:
+		if i >= chains.size():
+			# A LEGAL OUTCOME, not a defect. `AffordanceFeatures.fits`
+			# drops a tag a corridor is too narrow for rather than
+			# cramming the rig into a wall, and the bridge is told so
+			# instead of being left to read silence.
+			out.append({"room_id": rid, "index": i,
+					"declined": "the room could not host the chain; "
+						+ "the feature was not built"})
+			continue
+		out.append(await certify(tree, rid, i, chains[i], node, bounds))
+	return out
+
+## The chains built under `node`, in tree order.
+static func chains_in(node: Node3D) -> Array:
+	var out: Array = []
+	for child: Node in node.find_children("*", "Node3D", true, false):
+		var link := child as PoweredLink
+		if link == null:
+			continue
+		out.append({"link": link, "crate": _crate_of(link)})
+	return out
+
+## The crate belonging to a link: a manipulable body under the same rig.
+static func _crate_of(link: PoweredLink) -> ManipulableBody:
+	var rig := link.get_parent() as Node3D
+	if rig == null:
+		return null
+	for child: Node in rig.find_children("*", "RigidBody3D", true, false):
+		var body := child as ManipulableBody
+		if body != null:
+			return body
+	return null
+
+## One chain, replayed.
+static func certify(tree: SceneTree, rid: String, index: int,
+		chain: Dictionary, room: Node3D, bounds: AABB) -> Dictionary:
+	var link: PoweredLink = chain["link"]
+	var crate: ManipulableBody = chain["crate"]
+	if crate == null:
+		return {"room_id": rid, "index": index,
+				"refused": "the chain has a plate and a door and no "
+					+ "body to put on either"}
+	# SETTLE, THEN FREEZE THE SETUP. The digest records velocity and
+	# sleep state, so a digest taken two frames after the crate was
+	# created is a digest of a moment that depends on when it was taken.
+	# Letting the crate come to rest and then zeroing it makes the setup
+	# the same setup every time this runs.
+	await _settle(tree, crate)
+	var home := crate.global_transform
+	_reset(crate, home)
+	var package := _package(rid, index, link, crate, room, bounds, home)
+	var evidence: Dictionary = await ReplayHarness.replay(tree, package,
+			func() -> ReplayHarness.Stage:
+				return _stage(link, crate, home))
+	# AND PUT THE ROOM BACK. The player is held while this runs and has
+	# not seen any of it; they must not walk in on a crate that ended a
+	# replay against the alcove wall.
+	_reset(crate, home)
+	if evidence.has("refused"):
+		return {"room_id": rid, "index": index, "package": package,
+				"refused": str(evidence["refused"])}
+	return {"room_id": rid, "index": index, "package": package,
+			"evidence": evidence}
+
+## The stage for one run: the room's own chain, reset.
+static func _stage(link: PoweredLink, crate: ManipulableBody,
+		home: Transform3D) -> ReplayHarness.Stage:
+	var stage := ReplayHarness.Stage.new()
+	# The harness frees `root` after each run, so it is a marker and not
+	# the rig -- freeing the rig would delete the chain being certified.
+	var marker := Node3D.new()
+	marker.name = "ReplayRun"
+	(link.get_parent() as Node3D).add_child(marker)
+	stage.root = marker
+	_reset(crate, home)
+	stage.bodies[CRATE_ID] = crate
+	stage.plates["plate"] = plate_region(link)
+	return stage
+
+## The plate, in world space.
+##
+## `ReplayHarness` asks whether a body's CENTRE is inside this box; the
+## door asks whether the body OVERLAPS its own `Area3D`. Centre-inside
+## implies overlap, so a latch here implies a powered door -- the
+## evidence claims slightly more than the door needs, which is the safe
+## direction for it to differ in.
+##
+## Rooms are laid on right-angle turns, so the box over the rotated
+## corners is the rotated box. A room placed at some other angle would
+## make this permissive rather than wrong, and the comparison above is
+## what keeps that from mattering.
+static func plate_region(link: PoweredLink) -> AABB:
+	var extent := link.plate_extent
+	var local := AABB(Vector3(-extent.x / 2.0, 0.0, -extent.z / 2.0),
+			extent)
+	var xf := link.global_transform
+	var out := AABB(xf * local.position, Vector3.ZERO)
+	for i in 8:
+		out = out.expand(xf * local.get_endpoint(i))
+	return out
+
+## The package: what the engine built, said in the contract's words.
+static func _package(rid: String, index: int, link: PoweredLink,
+		crate: ManipulableBody, room: Node3D, bounds: AABB,
+		home: Transform3D) -> Dictionary:
+	var toward := link.plate_position() - home.origin
+	toward.y = 0.0
+	var gap := toward.length()
+	var dir := toward / gap if gap > 0.001 else Vector3.FORWARD
+	return {
+		"package_id": "%s_pd%d" % [rid, index],
+		"latch_conditions": [{
+			"latch_id": "plate_loaded",
+			"kind": "WEIGHT_THRESHOLD",
+			"detail": "plate >= %s" % _num(link.threshold_kg)}],
+		# NOTHING IS PROMOTED AND NOTHING IS REQUIRED, because a feature
+		# may not lie on the mandatory path (§13.2). `vector_latches` is
+		# the verifier's budget for latches a route depends on, and this
+		# chain guards a note. Declaring either would be claiming the
+		# opposite of what the affordance contract promises.
+		"vector_latches": [],
+		"required_latches": [],
+		"on_mandatory_route": false,
+		"setup": {
+			"bodies": [{"body_id": CRATE_ID, "mass_kg": crate.mass,
+					"constrained": crate.constrained}],
+			"solver": {
+				"iterations": int(ProjectSettings.get_setting(
+						"physics/3d/solver/solver_iterations", 8)),
+				"fixed_step_hz": float(
+						Engine.physics_ticks_per_second),
+				"settle_timeout_s": SETTLE_TIMEOUT_S},
+			"scene_digest": SceneDigest.of_room(room, bounds, [crate])},
+		"reference_solution": {"steps": [
+			"push %s %s %s %s" % [CRATE_ID, _num(dir.x), _num(dir.z),
+					_num(_push_seconds(crate.mass, gap))],
+			"settle"]},
+	}
+
+## How long the reference solution pushes.
+##
+## The time a body under the envelope's NET force -- 700 N less what
+## friction takes back -- needs to cover the gap between where the crate
+## sits and where the plate is. It ignores the coast after the push, so
+## it errs long: a crate that crosses the plate fast still latches while
+## it is over it, and a crate that stops short latches nothing and would
+## have the bridge refuse a chain that works. The alcove behind the door
+## is what stops the overshoot.
+static func _push_seconds(mass: float, gap: float) -> float:
+	var net := Constants.ENVELOPE_FORCE_N \
+			- ManipulableBody.envelope_friction() * mass \
+				* ManipulableBody.gravity()
+	if net <= 0.0 or mass <= 0.0:
+		# The envelope cannot move this body at all. A push of no length
+		# is still emitted: the evidence then says, honestly, that the
+		# reference solution latched nothing.
+		return 0.05
+	return snappedf(sqrt(2.0 * gap * mass / net), 0.05)
+
+## Waits for the crate to stop moving, bounded.
+static func _settle(tree: SceneTree, crate: ManipulableBody) -> void:
+	for _i in int(SETTLE_TIMEOUT_S * Engine.physics_ticks_per_second):
+		if crate.at_rest():
+			return
+		await tree.physics_frame
+
+## The setup, as the digest recorded it.
+static func _reset(crate: ManipulableBody, home: Transform3D) -> void:
+	crate.global_transform = home
+	crate.linear_velocity = Vector3.ZERO
+	crate.angular_velocity = Vector3.ZERO
+	crate.sleeping = false
+
+## Four decimals, because the package's text IS the digest: a number
+## printed one way here and another way tomorrow invalidates evidence
+## about a chain nothing changed about.
+static func _num(x: float) -> String:
+	return "%.4f" % x

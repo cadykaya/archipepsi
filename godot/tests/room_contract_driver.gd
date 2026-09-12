@@ -99,6 +99,8 @@ func _run() -> void:
 	await _test_one_envelope_convention_binds_both_producers()
 	await _test_every_authored_shell_in_the_registry_is_measured()
 	await _test_every_shell_reports_its_apertures_once_placed()
+	await _test_a_player_shoves_a_crate_and_a_door_opens()
+	await _test_a_generated_chain_certifies_and_stops_when_the_room_changes()
 	await _test_a_room_is_entered_where_it_says_it_is()
 	await _test_a_pending_shell_never_reaches_a_zone()
 	await _test_every_declared_offer_is_true_against_real_geometry()
@@ -1000,21 +1002,155 @@ func _test_every_authored_shell_in_the_registry_is_measured() -> void:
 		(result["root"] as Node3D).queue_free()
 		await get_tree().process_frame
 
-## EVERY APPROVED SHELL, PLACED, MEASURED THE WAY THE BRIDGE READS IT.
+## THE ENVIRONMENTAL-AGENCY CHAIN, PERFORMED BY THE PLAYER.
 ##
-## The census above composes each shell at the origin, unyawed, alone.
-## `ZoneController._measure_layout_evidence` measures it where the layout
-## search put it -- rotated, with a corridor fastened to its doorway and
-## the rest of the Zone in the same space -- and THAT measurement is what
-## goes on the wire as `apertures`. The bridge refuses the whole layout
-## when it disagrees with the declaration, so a shell that is clean at
-## the origin and solid once placed does not fail a test, it stops the
-## Zone opening.
+## `06_THE_AMALGAM.md` §5.4a's requirement, end to end, in the Zone
+## ordinary generation actually emits: a physical crate, a plate, a live
+## signal, and a door that opens. Not a harness calling
+## `apply_central_force` -- the body walks into the crate and its own
+## momentum moves it, which is the only thing that establishes that the
+## currently playable character can do this at all.
 ##
-## Which is what happened. `shell_hall_transit` passed every probe in
-## this file and reported `c002/entry` SOLID in the integration slice:
-## three refusals, three recompositions, and a player who never left the
-## Hub. Nothing here had ever measured a placed shell's apertures.
+## Four properties, and the last two are what make the first two mean
+## something:
+##
+##   1. the door starts shut, and the doorway is not passable;
+##   2. a player who walks into the crate puts it on the plate, the
+##      signal goes high, and the doorway opens;
+##   3. SABOTAGE -- with the crate gone, the same walk leaves the door
+##      shut, so the crate is the cause and not scenery;
+##   4. the signal is LIVE -- take the crate off the plate and the door
+##      shuts again, which is §5.4a's "raw live signal values do not
+##      persist" observable inside one session.
+func _test_a_player_shoves_a_crate_and_a_door_opens() -> void:
+	var text := FileAccess.get_file_as_string(
+			"res://tests/fixtures/played_zone.json")
+	var zone: Dictionary = JSON.parse_string(text)
+	var out := ZoneBuilder.build(zone)
+	if str(out.get("status", "")) != "LAYOUT_OK" or not out.has("root"):
+		_check(false, "the generated Zone did not compose: %s"
+				% str(out.get("failed", "?")))
+		return
+	add_child(out["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var links := _powered_links(out["root"] as Node3D)
+	_check(not links.is_empty(),
+			"the Zone ordinary generation emits carries a powered_door "
+			+ "chain; the fallback composer declares one and "
+			+ "`AffordanceFeatures` builds it")
+	if links.is_empty():
+		(out["root"] as Node3D).queue_free()
+		return
+	var link := links[0] as PoweredLink
+	var crate := _crate_beside(link)
+	_check(crate != null,
+			"the chain built its crate")
+	if crate == null:
+		(out["root"] as Node3D).queue_free()
+		return
+
+	# 1. SHUT, and not merely reported shut.
+	_check(not link.powered, "the door starts unpowered")
+	_check(not link.doorway_is_clear(_space()),
+			"and the doorway is really blocked -- a capsule does not fit "
+			+ "through it")
+
+	# 2. THE CHAIN GATES. Crate on the plate, signal high, door open.
+	#
+	# **The crate is placed here rather than pushed here, and that is
+	# deliberate.** What this test owns is whether ORDINARY GENERATION
+	# emits the chain and whether the built chain gates — the layout
+	# question. Whether the currently playable character can move the
+	# crate is a different question with a different answer, and it is
+	# measured in `godot-physics`, on a flat floor with nothing else in
+	# the room, by a real `Player` walking into one: 7.10 m in three
+	# seconds, with no force applied by the test. The full chain is
+	# opened by that player there too.
+	#
+	# Proving it here as well would mean steering a crude walker through
+	# a corridor it shares with a crate, and four attempts did exactly
+	# what a crude walker does: slid past the crate, shoved it the wrong
+	# way, and reported a finding about the steering.
+	crate.global_position = link.plate_position() + Vector3.UP * 0.5
+	crate.linear_velocity = Vector3.ZERO
+	for _settle in 24:
+		await get_tree().physics_frame
+	_check(link.mass_on_plate() >= link.threshold_kg,
+			"%.0f kg on the plate, which asks for %.0f"
+			% [link.mass_on_plate(), link.threshold_kg])
+	_check(link.powered, "so the signal went high")
+	_check(link.doorway_is_clear(_space()),
+			"and the doorway a capsule could not fit through is open")
+	# AND THE CONSEQUENCE IS BEHIND IT. A door that opens onto nothing is
+	# a door that changed no outcome.
+	var note := _reward_behind(link)
+	_check(note != null,
+			"there is a local reward behind the door, which is the thing "
+			+ "the chain is FOR")
+
+	# 3. THE SIGNAL IS LIVE. Nothing latched: lift the crate off and the
+	# door shuts, which is what "recomputed rather than persisted" looks
+	# like from inside a session (§5.4a).
+	var was := crate.global_position
+	crate.global_position = was + Vector3(0, 6.0, 0)
+	crate.freeze = true
+	for _i in 16:
+		await get_tree().physics_frame
+	_check(not link.powered,
+			"the crate off the plate takes the signal back down")
+	_check(not link.doorway_is_clear(_space()),
+			"and the door is shut again")
+
+	# 4. SABOTAGE. The crate is gone; nothing else in the room opens it.
+	crate.queue_free()
+	await get_tree().process_frame
+	for _i in 16:
+		await get_tree().physics_frame
+	_check(not link.powered,
+			"with the crate removed the signal stays low (%.0f kg on "
+			% link.mass_on_plate() + "the plate), so the crate is the "
+			+ "cause and not scenery")
+	_check(not link.doorway_is_clear(_space()),
+			"and the door stays shut, so the outcome stops when the link "
+			+ "is removed")
+	rooms_checked += 1
+	(out["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+## Every powered link in a built Zone. By class, not by node name: a
+## name is a convention and a cast is the question being asked.
+func _powered_links(root: Node3D) -> Array:
+	var out: Array = []
+	for node: Node in root.find_children("*", "Node3D", true, false):
+		var link := node as PoweredLink
+		if link != null:
+			out.append(link)
+	return out
+
+## The crate this link's chain owns: the nearest `ManipulableBody` under
+## the rig the link is in. Found rather than indexed, so the test breaks
+## if the chain stops building one instead of silently measuring another
+## room's.
+func _crate_beside(link: PoweredLink) -> ManipulableBody:
+	var rig := link.get_parent() as Node3D
+	if rig == null:
+		return null
+	for node: Node in rig.find_children("*", "RigidBody3D", true, false):
+		var body := node as ManipulableBody
+		if body != null:
+			return body
+	return null
+
+func _reward_behind(link: PoweredLink) -> Node3D:
+	var rig := link.get_parent() as Node3D
+	if rig == null:
+		return null
+	for node: Node in rig.get_children():
+		if node is LocalRewardPickup:
+			return node as Node3D
+	return null
+
 ## EVERY APPROVED SHELL, PLACED, MEASURED THE WAY THE BRIDGE READS IT.
 ##
 ## The census above composes each shell at the origin, unyawed, alone.
@@ -7039,3 +7175,144 @@ func _solid_box(size: Vector3, at: Vector3) -> StaticBody3D:
 	body.add_child(shape)
 	body.position = at
 	return body
+
+## THE CHAIN'S CERTIFICATE, PRODUCED FROM AN ORDINARILY GENERATED ZONE.
+##
+## `_test_a_player_shoves_a_crate_and_a_door_opens` proves the chain
+## exists and gates. This proves the engine can say so IN THE CONTRACT'S
+## OWN WORDS -- a `PhysicsPackage` and the `ReplayEvidence` of replaying
+## it three times at exactly the manipulation envelope -- which is what
+## `layout.validate` accepts or refuses the Zone on
+## (`AMALGAM_BRIDGE.md` §5.6a).
+##
+## **And it sabotages the room, not the package.** Dropping a slab
+## between the crate and the plate is the failure a reconstruction could
+## never see: every field of the package still describes a sound chain,
+## and the replay stops latching because the ROOM changed. A certifier
+## that rebuilt the chain on a clean floor would report three green runs
+## for a chain no player can solve.
+func _test_a_generated_chain_certifies_and_stops_when_the_room_changes() \
+		-> void:
+	var text := FileAccess.get_file_as_string(
+			"res://tests/fixtures/played_zone.json")
+	var zone: Dictionary = JSON.parse_string(text)
+	var out := ZoneBuilder.build(zone)
+	if str(out.get("status", "")) != "LAYOUT_OK" or not out.has("root"):
+		_check(false, "the generated Zone did not compose: %s"
+				% str(out.get("failed", "?")))
+		return
+	add_child(out["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+
+	var host: Dictionary = {}
+	for raw: Variant in out.get("chambers", []):
+		var entry: Dictionary = raw
+		if not ChainCertificate.chains_in(
+				entry["node"] as Node3D).is_empty():
+			host = entry
+			break
+	_check(not host.is_empty(),
+			"ordinary generation put a chain in a room the certifier can "
+			+ "find")
+	if host.is_empty():
+		(out["root"] as Node3D).queue_free()
+		return
+	var chamber: Dictionary = host["chamber"]
+	var rid := str(chamber.get("id", ""))
+	var rooms: Dictionary = out.get("rooms", {})
+	var bounds: AABB = (rooms.get(rid, {}) as Dictionary).get(
+			"bounds", AABB())
+
+	var started := Time.get_ticks_msec()
+	var certified: Array = await ChainCertificate.of_room(get_tree(),
+			chamber, host["node"] as Node3D, bounds)
+	var took := Time.get_ticks_msec() - started
+	_check(certified.size() == 1,
+			"room '%s' declared one chain and the certifier returned %d "
+			% [rid, certified.size()] + "entr(ies)")
+	if certified.size() != 1:
+		(out["root"] as Node3D).queue_free()
+		return
+	var entry: Dictionary = certified[0]
+	_check(not entry.has("refused"),
+			"the chain ordinary generation built certified: %s"
+			% str(entry.get("refused", "")))
+	_check(entry.has("package") and entry.has("evidence"),
+			"and it came back as a package and its evidence, which is "
+			+ "what the bridge validates")
+	if not entry.has("evidence"):
+		(out["root"] as Node3D).queue_free()
+		return
+	var package: Dictionary = entry["package"]
+	var evidence: Dictionary = entry["evidence"]
+
+	# THE FIVE THINGS `layout.validate` ASKS. Asked here too, because
+	# evidence that only the bridge checks is evidence this lane cannot
+	# tell is broken until CI is red for a reason nobody can see.
+	var errors: Array[String] = []
+	var built := PhysicsPackage.from_dict(package, errors)
+	_check(built != null and errors.is_empty(),
+			"the package the engine built satisfies the contract: %s"
+			% str(errors))
+	if built == null:
+		(out["root"] as Node3D).queue_free()
+		return
+	_check(str(evidence.get("content_digest", "")) == built.digest(),
+			"the evidence is bound to the package it was measured "
+			+ "against")
+	var runs: Array = evidence.get("per_run_latched", [])
+	_check(runs.size() == ReplayHarness.RUNS,
+			"%d runs, and check 20 replays %d"
+			% [runs.size(), ReplayHarness.RUNS])
+	var every := not runs.is_empty()
+	for run: Variant in runs:
+		if not "plate_loaded" in (run as Array):
+			every = false
+	_check(every,
+			"the plate was loaded in every run, and the runs were %s"
+			% str(runs))
+	_check(float(evidence.get("provider_force_n", 0.0))
+				== Constants.ENVELOPE_FORCE_N,
+			"at exactly the envelope (%.0f N), not above it"
+			% Constants.ENVELOPE_FORCE_N)
+	_check(not built.on_mandatory_route
+				and built.vector_latches.is_empty()
+				and built.required_latches.is_empty(),
+			"and nothing load-bearing rides on it, which is what §13.2 "
+			+ "requires of an optional feature")
+	print("  CHAIN %s certified in %.1f s of held Zone-entry time"
+			% [rid, took / 1000.0])
+
+	# SABOTAGE: a slab across the route the crate has to take.
+	var chain: Dictionary = ChainCertificate.chains_in(
+			host["node"] as Node3D)[0]
+	var link: PoweredLink = chain["link"]
+	var crate: ManipulableBody = chain["crate"]
+	var wall := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(4.0, 3.0, 0.4)
+	shape.shape = box
+	wall.add_child(shape)
+	(link.get_parent() as Node3D).add_child(wall)
+	wall.global_position = crate.global_position.lerp(
+			link.plate_position(), 0.5) + Vector3.UP * 1.0
+	wall.global_basis = link.global_basis
+	await get_tree().physics_frame
+	var sabotaged: Array = await ChainCertificate.of_room(get_tree(),
+			chamber, host["node"] as Node3D, bounds)
+	probes_expected_to_fail += 1
+	var still_green := false
+	if sabotaged.size() == 1:
+		var after: Dictionary = sabotaged[0]
+		var after_runs: Array = (after.get("evidence", {}) as Dictionary) \
+				.get("per_run_latched", [])
+		for run: Variant in after_runs:
+			if "plate_loaded" in (run as Array):
+				still_green = true
+	_check(not still_green,
+			"with a slab across the route the crate never reaches the "
+			+ "plate, so no run latches and the bridge refuses the Zone")
+	(out["root"] as Node3D).queue_free()
+	await get_tree().process_frame

@@ -453,6 +453,62 @@ class ReplayEvidence(Strict):
 PhysicsPackage.model_rebuild()
 
 
+def evidence_fault(package: PhysicsPackage,
+                   evidence: ReplayEvidence) -> str:
+    """Why `evidence` is not a sound record of `package`, or `""`.
+
+    **One implementation, two consumers.** `check_physics_content` asks
+    it of a load-bearing package, where unsound evidence means a
+    progression gate nobody measured. `layout.validate` asks it of every
+    `powered_door` chain a generated room built and the engine
+    certified (`AMALGAM_BRIDGE.md` §5.6a), where it means an affordance
+    the engine says works and has not shown to. The question is the
+    same one and it must not grow two answers.
+
+    At most one fault, because they compound: a digest that does not
+    match says nothing about whether the runs were at the envelope, and
+    listing both invites fixing the second.
+    """
+    if evidence.package_id != package.package_id:
+        return (f"package '{package.package_id}' carries evidence "
+                f"recorded for '{evidence.package_id}'; a replay proves "
+                "something about the thing it replayed and nothing "
+                "about anything else")
+    want = package_digest(package)
+    if evidence.content_digest != want:
+        return (f"package '{package.package_id}' has changed since its "
+                f"replay (evidence {evidence.content_digest}, content "
+                f"{want}); the conditions, the promotion, the bodies, "
+                "the solver or the solution are not what was measured")
+    if evidence.runs != 3:
+        return (f"package '{package.package_id}' carries "
+                f"{evidence.runs} replay run(s); check 20 replays three")
+    if not evidence.at_the_envelope:
+        return (f"package '{package.package_id}' was replayed at "
+                f"{evidence.provider_force_n:.0f} N / "
+                f"{evidence.provider_range_m:.1f} m / "
+                f"{evidence.provider_mass_kg:.0f} kg, not at the "
+                "envelope; a stronger provider solving it is not the "
+                "claim")
+    # §23.5 check 20: the reference solution latches EVERY latch
+    # condition, not merely the promoted ones. A package whose optional
+    # latch never fires has a solution that does not do what it says,
+    # and the verifier reasons about the promoted ones on the strength
+    # of the same solution.
+    must = {c.latch_id for c in package.latch_conditions}
+    if not must:
+        return (f"package '{package.package_id}' declares no latch "
+                "condition; there is no outcome to require")
+    missed = evidence.latched_every_run(must)
+    if missed:
+        return (f"package '{package.package_id}' declares latch(es) "
+                f"{list(missed)} that did not latch in every run; three "
+                "runs each latching a different part is not three "
+                "successes")
+    return ""
+
+
+
 def state_vector_product(*, macro_variables: tuple[int, ...] = (),
                          local_keys: int = 0, encounter_flags: int = 0,
                          shortcut_flags: int = 0, visited_flags: int = 0,
@@ -551,39 +607,7 @@ def check_physics_content(packages, *, macro_variables=(), local_keys=0,
                 "a physical claim nobody has measured is not a "
                 "progression guarantee")
             continue
-        if ev.package_id != p.package_id:
-            errors.append(
-                f"package '{p.package_id}' carries evidence recorded for "
-                f"'{ev.package_id}'; a replay proves something about the "
-                "thing it replayed and nothing about anything else")
-            continue
-        want = package_digest(p)
-        if ev.content_digest != want:
-            errors.append(
-                f"package '{p.package_id}' has changed since its replay "
-                f"(evidence {ev.content_digest}, content {want}); the "
-                "conditions, the promotion, the bodies, the solver or "
-                "the solution are not what was measured")
-            continue
-        if ev.runs != 3:
-            errors.append(
-                f"package '{p.package_id}' carries {ev.runs} replay "
-                "run(s); check 20 replays three")
-            continue
-        if not ev.at_the_envelope:
-            errors.append(
-                f"package '{p.package_id}' was replayed at "
-                f"{ev.provider_force_n:.0f} N / {ev.provider_range_m:.1f} m "
-                f"/ {ev.provider_mass_kg:.0f} kg, not at the envelope; a "
-                "stronger provider solving it is not the claim")
-            continue
-        # §23.5 check 20: the reference solution latches EVERY latch
-        # condition, not merely the promoted ones. A package whose
-        # optional latch never fires has a solution that does not do
-        # what it says, and the verifier reasons about the promoted ones
-        # on the strength of the same solution.
-        must = {c.latch_id for c in p.latch_conditions}
-        if not must:
+        if not p.latch_conditions:
             # BACKSTOP, and unreachable today — deliberately kept.
             # Three separate rules have to hold for it to stay that way:
             # a promoted index cannot point into an empty tuple, a
@@ -600,11 +624,7 @@ def check_physics_content(packages, *, macro_variables=(), local_keys=0,
                 f"package '{p.package_id}' is load-bearing and declares "
                 "no latch condition; there is no outcome to require")
             continue
-        missed = ev.latched_every_run(must)
-        if missed:
-            errors.append(
-                f"package '{p.package_id}' declares latch(es) "
-                f"{list(missed)} that did not latch in every run; three "
-                "runs each latching a different part is not three "
-                "successes")
+        fault = evidence_fault(p, ev)
+        if fault:
+            errors.append(fault)
     return tuple(errors)

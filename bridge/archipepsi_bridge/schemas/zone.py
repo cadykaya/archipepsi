@@ -63,6 +63,21 @@ class Strict(BaseModel):
 AffordanceTag = Literal[
     "grapple_anchor", "breakable_wall", "water_volume", "rail",
     "wind_volume", "bounce_pad", "moving_platform",
+    # ENVIRONMENTAL AGENCY, and it is a feature for a reason.
+    #
+    # `powered_door` is a chain rather than an object: a crate the player
+    # shoves with their own body, a plate that adds up what stands on it,
+    # a live signal, and a door open exactly while the signal is high
+    # (`06_THE_AMALGAM.md` §5.4a).
+    #
+    # It is declared HERE, in the optional-feature vocabulary, rather
+    # than as a new kind of thing, because §13.2 already guarantees what
+    # this most needs to be true: a feature may never lie on the
+    # mandatory path, host an AP reward, an exit or an objective. A
+    # player who cannot shove the crate therefore loses a note and
+    # nothing else, and the chain cannot become an undeclared capability
+    # gate by construction rather than by anyone remembering.
+    "powered_door",
 ]
 
 

@@ -1153,7 +1153,8 @@
               "rail",
               "wind_volume",
               "bounce_pad",
-              "moving_platform"
+              "moving_platform",
+              "powered_door"
             ],
             "title": "Tag",
             "type": "string"
@@ -6057,7 +6058,8 @@
               "rail",
               "wind_volume",
               "bounce_pad",
-              "moving_platform"
+              "moving_platform",
+              "powered_door"
             ],
             "title": "Tag",
             "type": "string"

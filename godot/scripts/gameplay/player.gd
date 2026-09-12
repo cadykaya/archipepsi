@@ -692,6 +692,9 @@ func _physics_process(delta: float) -> void:
 					control * 0.4)
 			velocity.z = lerpf(velocity.z, direction.z * speed,
 					control * 0.4)
+		# HOW HARD THEY ARE TRYING TO WALK, which is not how fast they
+		# are going. See `_shove_what_i_walked_into`.
+		_walk_intent = Vector3(direction.x * speed, 0.0, direction.z * speed)
 
 		if Input.is_action_pressed("fire_pulse"):
 			_fire_static_pulse()
@@ -714,10 +717,12 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.x = lerpf(velocity.x, 0.0, 0.2)
 		velocity.z = lerpf(velocity.z, 0.0, 0.2)
+		_walk_intent = Vector3.ZERO
 
 	var falling_speed := -velocity.y
 	var was_airborne := not is_on_floor()
 	move_and_slide()
+	_shove_what_i_walked_into()
 	if was_airborne and is_on_floor():
 		_resolve_pending_slam()
 	_update_footsteps(delta, falling_speed)
@@ -981,3 +986,66 @@ func _update_swing(delta: float) -> void:
 	var along := velocity.dot(rope)
 	if along < 0.0:
 		velocity -= rope * along * 0.5
+
+## WALKING INTO A CRATE MOVES IT, and every player can do it.
+##
+## `CharacterBody3D` does not push a `RigidBody3D`: `move_and_slide`
+## resolves the collision by sliding the character and leaves the body
+## where it was. Without this a crate is a wall that happens to have
+## mass, and the only thing in the build that could move one was a
+## harness calling `apply_central_force` -- which proves the physics and
+## nothing about the game.
+##
+## **NO CAPABILITY, NO VERB, NO ECHO.** This is the base character
+## shoving something with their body, available to every player from the
+## first Zone. `Manipulation`'s envelope is a different question --
+## whether a HOST qualifies to be relied on by content authored at
+## §29.3.2's minimum -- and it stays where it is. Routing an ordinary
+## shove through it would have made a crate an undeclared capability
+## gate, which is the one thing the environmental-agency chain must not
+## become.
+##
+## The impulse is the momentum the character was carrying into the
+## contact, scaled by how much of it was into the body rather than along
+## it. A player who walks past a crate does not fling it.
+##
+## **IT IS THE INTENT, NOT THE ACHIEVED VELOCITY**, and two wrong
+## versions got here. Reading `velocity` after `move_and_slide` gives
+## zero by construction: resolving the contact is exactly what removes
+## the component heading into the body. Reading it BEFORE the slide is
+## better and still wrong — a player already pressed against a crate is
+## being held there, so their velocity into it is near zero on every
+## frame after the first, and a three-second push moved a 60 kg crate
+## 0.07 m.
+##
+## What is constant while somebody leans on something is how hard they
+## are trying to walk, and that is `_walk_intent`. It is what a shove
+## should be proportional to, and it is what a person means by pushing.
+func _shove_what_i_walked_into() -> void:
+	for i in get_slide_collision_count():
+		var hit := get_slide_collision(i)
+		var body := hit.get_collider() as ManipulableBody
+		if body == null or body.constrained or body.freeze:
+			continue
+		# INTO the body, not along its face. `get_normal` points back at
+		# the character, so the push direction is its negation.
+		var into := -hit.get_normal()
+		var speed := _walk_intent.dot(into)
+		if speed <= 0.0:
+			continue
+		body.sleeping = false
+		body.apply_central_impulse(
+				into * speed * SHOVE_MASS_KG * get_physics_process_delta_time())
+
+## How hard the player is trying to walk this frame, in m/s, before the
+## world has had its say. Zero whenever they are not walking.
+var _walk_intent := Vector3.ZERO
+
+## The mass the player shoves WITH.
+##
+## A character controller has no mass -- it is kinematic -- so the
+## momentum it delivers has to be stated. Set to the player's own
+## plausible mass: a body shoves a crate about as well as it would in
+## life, a 500 kg block barely moves, and nothing here can be tuned into
+## a capability by accident.
+const SHOVE_MASS_KG := 80.0

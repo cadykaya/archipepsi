@@ -27,6 +27,7 @@ import math
 from dataclasses import dataclass, field
 
 from . import shells as _SH
+from .schemas import physics as _PH
 
 #: Two things meet when they are this close. Metres, and radians.
 EPSILON_JOIN = 0.001
@@ -627,11 +628,125 @@ def validate(zone, result: dict) -> Verdict:
                "edges, so room-keyed evidence is ambiguous; the engine "
                "must key by edge_id before this Zone can be committed")
 
+    # --- 7. the chains the rooms declared, as the engine certified
+    # them. `AMALGAM_BRIDGE.md` §5.6a.
+    _check_physics(c, zone, result)
+
     if c.errors:
         return Verdict(status="LAYOUT_REFUSED", errors=tuple(c.errors),
                        engine=result)
     return Verdict(status="ACCEPTED",
                    manifest=_manifest(zone, result, positions))
+
+
+# Affordance tags whose construction is a PHYSICAL CLAIM rather than a
+# decoration: the engine must certify one it built, and the bridge
+# refuses a Zone that declares one and reports nothing about it. It
+# grows as the engine learns to build more; a tag outside it is a mesh
+# and a note and needs no replay.
+CERTIFIED_TAGS = frozenset({"powered_door"})
+
+
+def _check_physics(c: "_Check", zone, result: dict) -> None:
+    """Every declared chain is accounted for, and every built one works.
+
+    **The bridge re-derives no physical fact here.** It has no scene and
+    could not; what it checks is that a claim exists for each thing the
+    composer asked for, that the evidence is bound to the package in
+    front of it, and that the replay was the one §23.5 check 20
+    describes. Whether the crate fits through the doorway is the
+    engine's to measure and is what the package is.
+
+    **Unreported is refused, exactly as an unreported aperture is.** The
+    inverted probe: a room that declares a `powered_door` and sends
+    nothing about it has either failed to build it and not said so, or
+    built it and not replayed it, and both are worse than a refusal.
+    """
+    entries = result.get("physics")
+    if entries is None:
+        entries = []
+    if not isinstance(entries, list):
+        c.fail("'physics' is not a list of certified chains")
+        return
+
+    reported: dict[str, int] = {}
+    ids: set[str] = set()
+    for i, raw in enumerate(entries):
+        if not isinstance(raw, dict):
+            c.fail(f"physics entry {i} is not an object")
+            continue
+        rid = str(raw.get("room_id", ""))
+        reported[rid] = reported.get(rid, 0) + 1
+        where = f"chain {rid}/{raw.get('index', i)}"
+        if rid not in {ch.id for ch in zone.chambers}:
+            c.fail(f"{where} certifies a room this Zone does not "
+                   "declare")
+            continue
+
+        # THE ENGINE DECLINED TO BUILD IT, which is legal and is not
+        # silence. A corridor too narrow for the rig drops the tag
+        # rather than cramming it into a wall.
+        declined = raw.get("declined")
+        if declined is not None:
+            if not isinstance(declined, str) or not declined.strip():
+                c.fail(f"{where} was declined with no reason given")
+            continue
+
+        package_raw = raw.get("package")
+        if not isinstance(package_raw, dict):
+            c.fail(f"{where} carries no package; the engine either "
+                   "built the chain or declined it, and this says "
+                   "neither")
+            continue
+        try:
+            package = _PH.PhysicsPackage(**package_raw)
+        except Exception as exc:                      # pydantic detail
+            c.fail(f"{where} carries a package the contract refuses: "
+                   f"{exc}")
+            continue
+        if package.package_id in ids:
+            c.fail(f"{where} reuses package id '{package.package_id}'; "
+                   "a latch is identified by package and name")
+        ids.add(package.package_id)
+
+        # §13.2: a feature may never lie on the mandatory path, host an
+        # AP reward, an exit or an objective. A package that claims a
+        # route depends on it is claiming the opposite of what the
+        # affordance contract promises, whatever its evidence says.
+        if package.load_bearing:
+            c.fail(f"{where} is an optional affordance and its package "
+                   "is load-bearing; §13.2 forbids a feature on the "
+                   "mandatory path")
+
+        refused = raw.get("refused")
+        if refused is not None:
+            c.fail(f"{where} was built and could not be certified: "
+                   f"{refused}")
+            continue
+        evidence_raw = raw.get("evidence")
+        if not isinstance(evidence_raw, dict):
+            c.fail(f"{where} was built and carries no replay evidence; "
+                   "a chain nobody has replayed is a claim, not a "
+                   "certificate")
+            continue
+        try:
+            evidence = _PH.ReplayEvidence(**evidence_raw)
+        except Exception as exc:                      # pydantic detail
+            c.fail(f"{where} carries evidence the contract refuses: "
+                   f"{exc}")
+            continue
+        fault = _PH.evidence_fault(package, evidence)
+        if fault:
+            c.fail(f"{where}: {fault}")
+
+    for ch in zone.chambers:
+        want = sum(1 for f in ch.features if f.tag in CERTIFIED_TAGS)
+        got = reported.get(ch.id, 0)
+        if got != want:
+            c.fail(f"room '{ch.id}' declares {want} chain(s) the engine "
+                   f"must certify and the layout reports {got}; the "
+                   "inverted probe cannot be skipped for a feature the "
+                   "layout never mentions")
 
 
 def _manifest(zone, result: dict, positions: dict) -> dict:

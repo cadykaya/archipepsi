@@ -51,17 +51,32 @@ def test_every_tag_declares_what_makes_it_interactable():
     assert set(M.AFFORDANCE_REQUIREMENTS) == set(_tags())
 
 
+#: The tags a campaign that has interpreted nothing can still use.
+#:
+#: Two under §13.1, and three since 2026-09-12: `powered_door` is a crate
+#: the player shoves with their own body onto a plate, which needs no
+#: primitive and no stat. Listed here rather than inferred, so adding one
+#: is a decision somebody made rather than a side effect of an empty
+#: registry entry.
+BASE_KIT_TAGS = ("bounce_pad", "moving_platform", "powered_door")
+
+
 def test_the_base_kit_tags_need_nothing_and_the_rest_need_something():
-    """§13.1 marks exactly two tags base-kit usable. The distinction is
-    load-bearing: it is why a campaign that has interpreted nothing still
-    gets optional content, and why the other five cannot appear as set
-    dressing."""
+    """The distinction is load-bearing: it is why a campaign that has
+    interpreted nothing still gets optional content, and why the rest
+    cannot appear as set dressing.
+
+    Both directions, which is the point — a tag with an empty
+    requirement that is NOT on the list is one somebody forgot to gate,
+    and a listed tag with a requirement is one that will never appear in
+    a first Zone.
+    """
     empty = M.derive_mechanics([])
-    assert M.owned_affordance_tags(empty) == ("bounce_pad", "moving_platform")
+    assert M.owned_affordance_tags(empty) == BASE_KIT_TAGS
     for tag, requirement in M.AFFORDANCE_REQUIREMENTS.items():
         needs_nothing = not requirement.get("primitives") \
             and not requirement.get("stats")
-        assert needs_nothing == (tag in ("bounce_pad", "moving_platform")), tag
+        assert needs_nothing == (tag in BASE_KIT_TAGS), tag
 
 
 def test_a_grapple_you_own_but_have_not_slotted_still_pays_for_the_anchor():
