@@ -1038,6 +1038,76 @@ is a Hub design question and is yours. The bridge exposes the list; it
 does not assume a widget.
 
 
+## 5.6 Environmental agency: where a physics package may live
+
+**The engine half exists.** `ReplayHarness.replay` returns exactly the
+`ReplayEvidence` shape this lane already validates — `package_id`,
+`content_digest`, the three provider values, `per_run_latched` — and
+refuses with a reason when a package has no setup or no reference
+solution. What is missing is the other end: **nothing produces a
+package**, so the harness has nothing to replay and the evidence gate
+has nothing to gate.
+
+This lane owns package validation, acceptance plumbing and the
+persistent consequence. Before writing them it tried the obvious
+placement — `Chamber.packages`, beside `keys`, additive and empty — and
+**a guard refused it, correctly**:
+
+```
+these fields let Epsilon say an arbitrary string:
+    LatchCondition.detail
+    PhysicsPackage.required_latches
+    ReferenceSolution.steps
+    ReplayEvidence.per_run_latched
+```
+
+`test_epsilon_vocabulary` walks the Zone schema as **Epsilon's output
+surface**, because the Zone is what a creative provider fills. Two of
+those four are safe under the existing precedent — `required_latches`
+and `per_run_latched` are charset-constrained ids resolved against a
+declaration in the same object, exactly like `edge_id` and `key_id`.
+**Two are not.** `LatchCondition.detail` is what the engine must
+observe, and `ReferenceSolution.steps` is the engine's own script. A
+provider that can write those is a provider authoring a physical claim,
+which is the lane boundary itself: *Epsilon emits validated structured
+creative interpretation only.*
+
+So the placement was wrong and the field is not in the tree. The
+carrier is the open question, and it is genuinely joint:
+
+> **For Prod.** A package has to reach the engine, and it must not be
+> reachable by Epsilon. Three shapes, and the choice decides what this
+> lane builds:
+>
+> 1. **Composer-written, on the Zone.** Packages land where `doors`,
+>    `edges` and `plugs` land — added by `topology.apply` after
+>    acceptance, so the provider never sees the field. Needs the
+>    vocabulary guard taught that these fields are composer-owned, the
+>    same exemption `edge_id` already has and for the same reason.
+> 2. **Beside the manifest.** A package is physical, like the layout, so
+>    it travels with `layout_result`/the committed manifest rather than
+>    with the Zone. Fits "the engine owns physical truth" and means a
+>    package is part of what a re-entry replays.
+> 3. **Its own carrier.** Rejected here unless one of the above fails:
+>    the brief is explicit that competing truths beside `ZoneReady` and
+>    the snapshot are what this seam keeps getting wrong.
+>
+> Whichever it is, the bridge's half is the same and is ready to write:
+> `PhysicsPackage` validation at acceptance via `check_physics_content`,
+> a `latch_fired` intent validated against packages the Zone actually
+> declares (the `record_key`-accepts-anything defect, not repeated), and
+> `ZoneProgress.latched` as a monotone set that survives a reload —
+> §5.7's "never cleared by reset or death" includes quitting.
+>
+> **Nothing becomes load-bearing on the way.** A latch is recorded
+> before any route depends on one, and what a route may depend on waits
+> on `AP_CAPABILITY_LOGIC.md` §8. **And movement qualification stays
+> separate**: `CROSSING_EVIDENCE` is not populated from a physics
+> replay. A package proving a crate moves says nothing about how far a
+> dash carries a body, and the two contracts do not establish each
+> other.
+
+
 ## 6. What remains in this lane
 
 **The five conditions §0-bis puts on a legal capability gate**

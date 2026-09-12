@@ -384,6 +384,32 @@ in metres while the schema carries m/s — a divergence someone has to
 reconcile. **AP-relevant gates without a matching guarantee stay
 refused.**
 
+**BRANCHING COMES FROM THE CATALOGUE NOW.** `AUTHORED_SOCKETS` hardcoded
+`("entry", "exit")` — true of all twelve shells, never a property of
+being authored, and a three-door shell would have been composed as a
+two-door one with its third opening SEALED. Capacity is read from the
+catalogue end to end: `shells.joinable_sockets` off the entry,
+`rule_of` carrying it on the wire so a generator can choose a shell that
+branches, `topology` reading it and refusing rather than assuming for an
+unknown shell. Junction candidacy is capacity, not authorship.
+
+Composition derives what a Zone can afford from two things that already
+exist — the spine keeps half the spare rooms, and `KeyColour` has four
+values so a fifth branch would reuse a colour. Multiple branches and
+branches off branches, with destinations that carry a Check or a key.
+`make test` includes generation coverage over declared inputs that
+REPORTS the distribution: prototype scale 3-4 rooms and 0 branches, each
+saying which cost it could not meet; default scale 19-23 rooms, all
+branching, all nesting, four each because the colour vocabulary caps it.
+
+**Physics packages have no carrier yet and the reason is a boundary, not
+an oversight.** `Chamber.packages` was refused by
+`test_epsilon_vocabulary`: `LatchCondition.detail` and
+`ReferenceSolution.steps` are free text, so a package on the Zone is a
+package a creative provider could author. `docs/AMALGAM_BRIDGE.md` §5.6
+puts three carrier shapes to Prod; this lane's half is ready to write
+behind whichever answer.
+
 **Capability gates are searched, not sampled.** A previous guard removed
 one gate edge at a time with every other gate left passable, so two
 undeclared gates each validated the other. Availability is a set the
