@@ -130,6 +130,7 @@ REFUSAL_CODES = (
     "no_arrival",               # a room declares no `entry`
     "destination_is_an_end",    # a leaf is the Zone's first or last room
     "destination_unreachable",  # no room before a leaf can host it
+    "destination_unhostable",   # a required leaf is a barred host
     "chain_unreachable",        # not even the plain chain gets around
 )
 
@@ -766,6 +767,22 @@ def compose_with_branch(chambers, shell_sockets=None,
     # can only be a destination, so barring it does not make it a
     # through-room — it makes the Zone uncomposable, and that is the
     # refusal it already has rather than a silently dropped return.
+    # A BARRED LEAF IS A REFUSAL, NOT A FILTER. `_branch_routes` drops
+    # barred rooms from the destinations it CHOOSES and then adds the
+    # required leaves separately, so a barred leaf sailed straight past
+    # the bar and was assigned anyway. A room that declares no `exit`
+    # can only be a destination, so barring it does not make it a
+    # through-room — it makes the Zone uncomposable, and that is the
+    # honest answer rather than reassigning the same host, dropping its
+    # return, or inventing a departure.
+    grounded = [c.id for c in leaves if c.id in set(barred)]
+    if grounded:
+        return _refused(GraphRefusal(
+            "destination_unhostable",
+            "room(s) %s can only be destinations — they declare no "
+            "`exit` — and the engine found nowhere in them to stand the "
+            "return this Zone requires" % grounded,
+            tuple(grounded)))
     routes, why = _branch_routes(chambers, caps, required=leaves,
                                  barred=barred)
     unplaced = [c.id for c in leaves

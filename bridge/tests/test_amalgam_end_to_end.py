@@ -1037,12 +1037,25 @@ def test_a_genuine_legacy_zone_with_no_graph_still_loads(tmp_path):
 # read here is the engine's own measured verdict, by room, and the
 # answer is a different host rather than a different Zone.
 
-def _refuse_host(layout: dict, zone, room_id: str) -> dict:
-    """The engine's answer for one room: the return spot holds no body."""
+def _placement(layout: dict, zone, room_id: str, outcome: str,
+               tried: int = 16) -> dict:
+    """The engine's placement outcome for one room's return device."""
     out = dict(layout)
-    out["arrival_ok"] = dict(layout["arrival_ok"])
+    out["plug_placement"] = dict(layout.get("plug_placement") or {})
     plug = next(p for p in zone.plugs if p.room_id == room_id)
-    out["arrival_ok"][plug.source_anchor] = False
+    out["plug_placement"][plug.edge_id] = {
+        "outcome": outcome, "policy": "stand-surfaces-then-lattice",
+        "tried": tried}
+    return out
+
+
+def _missing_arrival(layout: dict, zone, room_id: str) -> dict:
+    """What `plugs_clear_of_arrivals` reports when the ARRIVAL anchor is
+    absent: `plug_clear` false, which is not a fact about the room."""
+    out = dict(layout)
+    out["plug_clear"] = dict(layout["plug_clear"])
+    plug = next(p for p in zone.plugs if p.room_id == room_id)
+    out["plug_clear"][plug.edge_id] = False
     return out
 
 
@@ -1055,54 +1068,114 @@ async def _zone_with_branches(engine):
     return zid, zone
 
 
-def test_an_unhostable_room_costs_a_branch_and_not_the_zone(tmp_path):
-    """The repair. The Checks, the content and the allocation all stay."""
+async def _offer(engine, zid, layout):
+    await engine.handle_layout_result(_ADAPTER.validate_python(
+        {"type": "layout_result", "zone_id": zid, "layout": layout}))
+    await drain()
+
+
+# --- only "the search finished and found nothing" bars a room ------------
+#
+# Neither `arrival_ok` nor `plug_clear` can carry a host verdict, and
+# both were read as if they could. `room_audit.plugs_clear_of_arrivals`
+# writes `false` when the room's ARRIVAL anchor is missing, so incomplete
+# data and a measured overlap arrive under one word; and
+# `_settle_return_anchors` skips searching whenever the current anchor is
+# standable, so a badly positioned pad with a good alternate elsewhere in
+# the room reports exactly like a room with nowhere to stand. Either one
+# removed a whole room from branch selection.
+
+def test_a_missing_arrival_does_not_bar_the_room(tmp_path):
+    """Incomplete evidence. The layout is refused — it always was — and
+    the room keeps its branch."""
     async def go():
         engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        room = zone.plugs[0].room_id
+        await _offer(engine, zid, _missing_arrival(_place(zone), zone, room))
+
+        rec = engine.save.zone_by_id(zid)
+        assert rec.manifest is None, "a false plug_clear must still refuse"
+        assert rec.unhostable_rooms == (), "missing data barred a room"
+    run(go())
+
+
+def test_a_badly_positioned_pad_with_an_alternate_does_not_bar_the_room(
+        tmp_path):
+    """A repairable candidate failure. The pad is standable and too close
+    to the arrival; the engine has not finished looking. Refuse the
+    layout, keep the host."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        room = zone.plugs[0].room_id
+        await _offer(engine, zid, _placement(
+            _missing_arrival(_place(zone), zone, room), zone, room,
+            "CANDIDATE_REJECTED", tried=1))
+
+        rec = engine.save.zone_by_id(zid)
+        assert rec.manifest is None
+        assert rec.unhostable_rooms == (), (
+            "a repairable position barred the whole room")
+        assert room in {p.room_id for p in rec.zone.plugs}
+    run(go())
+
+
+def test_only_a_finished_search_bars_the_room(tmp_path):
+    """The one outcome that is a fact about the ROOM. The Checks, the
+    content and the allocation all stay; the branch moves."""
+    async def go():
+        engine, sink = await connected_engine(
+            tmp_path, config=C.DEFAULT_CONFIG), None
+        engine, _ = engine
         sink = Collector(engine)
         zid, zone = await _zone_with_branches(engine)
         held = set(engine.save.zone_by_id(zid).allocated_location_ids)
         refused = zone.plugs[0].room_id
+        want = len(zone.plugs)
 
-        await engine.handle_layout_result(_ADAPTER.validate_python(
-            {"type": "layout_result", "zone_id": zid,
-             "layout": _refuse_host(_place(zone), zone, refused)}))
-        await drain()
+        await _offer(engine, zid, _placement(
+            _place(zone), zone, refused, "NO_CANDIDATE"))
 
         rec = engine.save.zone_by_id(zid)
-        # NOT LOST: same Zone, same Checks, still offered.
         assert rec.state == "GENERATED", rec.state
         assert set(rec.allocated_location_ids) == held
-        assert rec.zone is not None and rec.zone.zone_id == zid
         assert rec.manifest is None, "nothing was committed"
-        # THE ROOM IS REMEMBERED, by the engine's verdict.
         assert refused in rec.unhostable_rooms
-        # AND IT IS NO LONGER A DESTINATION — the return moved rather
-        # than being dropped, and branching was not suppressed.
         assert refused not in {p.room_id for p in rec.zone.plugs}
-        assert rec.zone.plugs, "branching was suppressed to dodge the device"
-        assert len(rec.zone.plugs) == len(
-            [e for e in rec.zone.edges if e.realization == "TRAVERSAL_ONLY"])
-        # The client is asked to lay the new graph out.
+        # THE ARRANGEMENT IS PRESERVED. Re-selection moves a branch; it
+        # does not remove one.
+        assert len(rec.zone.plugs) == want, "a branch was removed"
         offered = [m for m in sink.of_type("zone_ready")
                    if m.zone.zone_id == zid]
         assert len(offered) == 2, "the recomposed Zone was never sent"
-        assert refused not in {p.room_id for p in offered[-1].zone.plugs}
+    run(go())
+
+
+def test_an_unknown_placement_outcome_is_refused(tmp_path):
+    """A closed set, so the bridge can branch on it. An outcome nobody
+    declared is a branch nobody wrote."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        room = zone.plugs[0].room_id
+        await _offer(engine, zid, _placement(
+            _place(zone), zone, room, "PROBABLY_FINE"))
+        rec = engine.save.zone_by_id(zid)
+        assert rec.manifest is None
+        assert rec.unhostable_rooms == ()
     run(go())
 
 
 def test_a_supported_host_commits_and_never_reselects(tmp_path):
-    """The control. Without it the test above could pass on a rule that
+    """The control. Without it the tests above could pass on a rule that
     fires for every layout."""
     async def go():
         engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
         zid, zone = await _zone_with_branches(engine)
         before = {p.room_id for p in zone.plugs}
-
-        await engine.handle_layout_result(_ADAPTER.validate_python(
-            {"type": "layout_result", "zone_id": zid,
-             "layout": _place(zone)}))
-        await drain()
+        await _offer(engine, zid, _placement(
+            _place(zone), zone, zone.plugs[0].room_id, "PLACED"))
 
         rec = engine.save.zone_by_id(zid)
         assert rec.manifest is not None, "a good layout was refused"
@@ -1111,49 +1184,41 @@ def test_a_supported_host_commits_and_never_reselects(tmp_path):
     run(go())
 
 
-def test_re_selection_terminates_and_the_floor_is_a_chain(tmp_path):
-    """**Monotone, which is what makes it stop.**
+def test_re_selection_never_removes_a_branch(tmp_path):
+    """**Reducing a branched proposal to a chain is not the repair.**
 
-    Refuse every host the composer offers, one round after another. The
-    accumulated set only grows, so no room is offered twice and two
-    rooms cannot trade places. The worst case is a Zone with no branches
-    — the chain it was always allowed to be — and not a Zone that spins
-    or a Zone that is lost.
+    Re-selection moves a branch to a supported host. When no
+    reassignment of the same arrangement exists it stands down, and the
+    ordinary bounded layout refusal takes it — a distinct outcome with
+    its own recovery, rather than a Zone quietly losing its branches to
+    make a device requirement go away.
     """
     async def go():
         engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
         zid, zone = await _zone_with_branches(engine)
-        held = set(engine.save.zone_by_id(zid).allocated_location_ids)
+        want = len(zone.plugs)
 
-        seen, rounds = set(), 0
+        rounds = 0
         while rounds < 40:
             rec = engine.save.zone_by_id(zid)
-            if rec.manifest is not None or not rec.zone.plugs:
+            if rec.state != "GENERATED" or rec.layout_state == "REFUSED":
                 break
             room = rec.zone.plugs[0].room_id
-            assert room not in seen, f"'{room}' was offered twice"
-            seen.add(room)
-            await engine.handle_layout_result(_ADAPTER.validate_python(
-                {"type": "layout_result", "zone_id": zid,
-                 "layout": _refuse_host(_place(rec.zone), rec.zone, room)}))
-            await drain()
+            await _offer(engine, zid, _placement(
+                _place(rec.zone), rec.zone, room, "NO_CANDIDATE"))
+            after = engine.save.zone_by_id(zid)
+            # EVERY accepted re-selection keeps the arrangement.
+            if after.zone.plugs:
+                assert len(after.zone.plugs) == want, (
+                    f"round {rounds} handed back "
+                    f"{len(after.zone.plugs)} of {want} branches")
+            if after.unhostable_rooms == rec.unhostable_rooms:
+                break          # it stood down; the refusal path has it
             rounds += 1
         assert rounds < 40, "re-selection did not terminate"
-
-        rec = engine.save.zone_by_id(zid)
-        assert not rec.zone.plugs, "it should have run out of hosts"
-        assert rec.zone.edges, "and still be a graph — the chain"
-        assert set(rec.allocated_location_ids) == held, "Checks were lost"
-        assert TOPO.reachability(rec.zone).ok
-
-        # AND THE CHAIN LAYS OUT AND COMMITS. The Zone is playable.
-        await engine.handle_layout_result(_ADAPTER.validate_python(
-            {"type": "layout_result", "zone_id": zid,
-             "layout": _place(rec.zone)}))
-        await drain()
-        done = engine.save.zone_by_id(zid)
-        assert done.manifest is not None
-        assert set(done.allocated_location_ids) == held
+        # It ended by standing down, not by whittling the Zone away.
+        final = engine.save.zone_by_id(zid)
+        assert len(final.zone.plugs) == want or final.manifest is not None
     run(go())
 
 
@@ -1167,24 +1232,17 @@ def test_a_committed_zone_is_never_recomposed_for_a_host(tmp_path):
     async def go():
         engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
         zid, zone = await _zone_with_branches(engine)
-        await engine.handle_layout_result(_ADAPTER.validate_python(
-            {"type": "layout_result", "zone_id": zid,
-             "layout": _place(zone)}))
+        await _offer(engine, zid, _place(zone))
         digest = engine.save.zone_by_id(zid).manifest["manifest_digest"]
         room = zone.plugs[0].room_id
 
-        await engine.handle_layout_result(_ADAPTER.validate_python(
-            {"type": "layout_result", "zone_id": zid,
-             "layout": _refuse_host(_place(zone), zone, room)}))
-        await drain()
+        await _offer(engine, zid, _placement(
+            _place(zone), zone, room, "NO_CANDIDATE"))
 
         rec = engine.save.zone_by_id(zid)
         assert rec.manifest["manifest_digest"] == digest, "it was rewritten"
         assert rec.state == "DORMANT", "the committed-Zone recovery"
         assert rec.unhostable_rooms == (), "a committed Zone is not re-hosted"
-        assert {p.room_id for p in rec.zone.plugs} == {
-            p.room_id for p in zone.plugs}
-        # And the transition refuses it outright, so no other caller can.
         with pytest.raises(ValueError, match="committed manifest"):
             T.reselect_hosts(engine.save, zid, (room,), rec.zone)
     run(go())
@@ -1197,10 +1255,8 @@ def test_the_same_room_twice_does_not_re_select(tmp_path):
         engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
         zid, zone = await _zone_with_branches(engine)
         room = zone.plugs[0].room_id
-        await engine.handle_layout_result(_ADAPTER.validate_python(
-            {"type": "layout_result", "zone_id": zid,
-             "layout": _refuse_host(_place(zone), zone, room)}))
-        await drain()
+        await _offer(engine, zid, _placement(
+            _place(zone), zone, room, "NO_CANDIDATE"))
         rec = engine.save.zone_by_id(zid)
         assert rec.unhostable_rooms == (room,)
 
@@ -1216,13 +1272,114 @@ def test_the_unhostable_set_survives_a_reload(tmp_path):
         engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
         zid, zone = await _zone_with_branches(engine)
         room = zone.plugs[0].room_id
-        await engine.handle_layout_result(_ADAPTER.validate_python(
-            {"type": "layout_result", "zone_id": zid,
-             "layout": _refuse_host(_place(zone), zone, room)}))
-        await drain()
+        await _offer(engine, zid, _placement(
+            _place(zone), zone, room, "NO_CANDIDATE"))
 
         engine.save = store.load_save(engine._save_path)
         rec = engine.save.zone_by_id(zid)
         assert rec.unhostable_rooms == (room,)
         assert room not in {p.room_id for p in rec.zone.plugs}
+    run(go())
+
+
+def test_a_fresh_proposal_remembers_nothing_about_the_replaced_one(tmp_path):
+    """Room ids repeat across generations.
+
+    `c004` in this Zone is not the `c004` the engine measured in the one
+    before it, so a placement verdict against replaced content is not
+    evidence about the replacement. Cleared when the content is.
+    """
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        room = zone.plugs[0].room_id
+        await _offer(engine, zid, _placement(
+            _place(zone), zone, room, "NO_CANDIDATE"))
+        assert engine.save.zone_by_id(zid).unhostable_rooms == (room,)
+
+        # The content is replaced: a refused layout sends the record back
+        # to be composed again by the provider.
+        await _offer(engine, zid, {"status": "LAYOUT_OK"})
+        rec = engine.save.zone_by_id(zid)
+        assert rec.unhostable_rooms == (), (
+            "a measurement against replaced content was carried forward")
+    run(go())
+
+
+def test_a_barred_required_destination_refuses_rather_than_reassigning():
+    """A leaf cannot be barred into being something else.
+
+    `_branch_routes` drops barred rooms from the destinations it CHOOSES
+    and then adds the required leaves separately, so a barred leaf
+    sailed straight past the bar and was assigned anyway — the same host
+    the engine had just refused. A room declaring no `exit` can only be
+    a destination, so barring it makes the Zone uncomposable, and that
+    is the answer: not a reassignment, not a dropped return, not an
+    invented departure.
+    """
+    from .test_topology import _with_shells, TERMINUS
+    z, caps = _with_shells(8, r3=("shell_bay_terminus", TERMINUS))
+    chambers = list(z.chambers)
+    leaf = chambers[3].id
+
+    # It composes: the leaf is a destination with a return.
+    good = TOPO.compose_with_branch(chambers, caps)
+    assert not good.refused
+    assert leaf in {p.room_id for p in good.plugs}
+
+    # Barred, it refuses — with a code, naming the room.
+    barred = TOPO.compose_with_branch(chambers, caps, barred=(leaf,))
+    assert barred.refused, "the barred leaf was assigned anyway"
+    assert barred.refusal.code == "destination_unhostable"
+    assert barred.refusal.rooms == (leaf,)
+    assert not barred.plugs and not barred.edges
+
+
+def test_the_campaign_wrapper_refuses_a_barred_required_destination():
+    """Through the consumer, not `GraphProduct.notes`.
+
+    `campaign._with_graph` is what the generation handler calls, and it
+    raises with the code. `_reselect_hosts` standing down on that is
+    asserted separately below.
+    """
+    from archipepsi_bridge import campaign as CAMP
+    from .test_topology import _with_shells, TERMINUS
+
+    z, caps = _with_shells(8, r3=("shell_bay_terminus", TERMINUS))
+    leaf = z.chambers[3].id
+    real = TOPO._shell_sockets
+    TOPO._shell_sockets = lambda: caps
+    try:
+        with pytest.raises(TOPO.GraphRefused) as caught:
+            CAMP._with_graph(z, barred=(leaf,))
+    finally:
+        TOPO._shell_sockets = real
+    assert caught.value.refusal.code == "destination_unhostable"
+    assert caught.value.refusal.rooms == (leaf,)
+
+
+def test_re_selection_stands_down_when_the_graph_cannot_be_rebuilt(tmp_path):
+    """`_reselect_hosts` returns False on a composition refusal, so the
+    layout refusal takes the Zone — no half-applied recompose."""
+    from archipepsi_bridge import campaign as CAMP
+
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        rec = engine.save.zone_by_id(zid)
+
+        def refuse(_zone, barred=()):
+            raise TOPO.GraphRefused(TOPO.GraphRefusal(
+                "destination_unhostable", "nowhere to put it", ("c004",)))
+
+        real, CAMP._with_graph = CAMP._with_graph, refuse
+        try:
+            done = await engine._reselect_hosts(rec, ("c004",))
+        finally:
+            CAMP._with_graph = real
+        assert done is False, "it re-selected on an uncomposable graph"
+        after = engine.save.zone_by_id(zid)
+        assert after.unhostable_rooms == (), "it recorded a bar anyway"
+        assert {p.room_id for p in after.zone.plugs} == {
+            p.room_id for p in zone.plugs}
     run(go())

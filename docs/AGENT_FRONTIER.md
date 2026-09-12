@@ -454,17 +454,32 @@ the real handler, and removing the consumption fails all five.
 **A RETURN NEEDS A ROOM THAT CAN HOLD IT** (§5.9). `played_zone`'s
 `c012` is a `platform_path` over a kill pit; the engine measured four
 placements and none is standable and clear of the arrival, and the whole
-Zone was lost for it. The bridge reads the engine's MEASURED verdict per
-room — `arrival_ok` false at the return anchor, never the room's type
-and never a flag — and answers with a different host: the graph is
-recomposed with that room barred, keeping the content, the allocation
-and the Checks. `ZoneRecord.unhostable_rooms` is monotone, so no host is
-offered twice and the floor is a Zone with fewer branches (or the chain)
-rather than a Zone that spins. An UNRESOLVED anchor is deliberately not
-a host verdict — read as one for a commit, it recomposed every Zone
-forever because an empty layout publishes no anchors. Four recoveries
-now, still separate: composition refusal, host re-selection, fresh-
-proposal layout failure, committed-Zone preservation.
+Zone was lost for it. The bridge answers with a different host: the
+graph is recomposed with that room barred, keeping the content, the
+allocation and the Checks.
+
+**What bars a room is a PLACEMENT OUTCOME and nothing else** — an
+explicit `plug_placement` per plug, `PLACED` / `CANDIDATE_REJECTED` /
+`NO_CANDIDATE`, and only the last. Neither `arrival_ok` nor `plug_clear`
+can carry that verdict and this lane read both as if they could:
+`plugs_clear_of_arrivals` writes false when the ARRIVAL anchor is
+missing, and `_settle_return_anchors` skips searching whenever the
+current anchor is standable — so incomplete data, and a badly positioned
+pad with a good alternate, each barred a whole room. Absent is
+incomplete evidence and bars nothing, so nothing regresses before the
+field arrives.
+
+**Re-selection preserves the arrangement or stands down.** Handing back
+a Zone with fewer branches is branch removal to dodge a device
+requirement and is not an approved outcome; when no equal reassignment
+exists the ordinary bounded refusal takes it. Not a branch quota, and
+ordinary chains are untouched. `unhostable_rooms` is monotone AND
+scoped: `accept_zone` clears it when content is replaced, because room
+ids repeat across generations. A barred required leaf is
+`destination_unhostable` rather than a filter it slips past.
+
+Four recoveries, still separate: composition refusal, host re-selection,
+fresh-proposal layout failure, committed-Zone preservation.
 
 **NEXT FOR THIS LANE: nothing, until integration says otherwise**
 (owner, 2026-09-12). Topology behaviour is to stay stable while Prod

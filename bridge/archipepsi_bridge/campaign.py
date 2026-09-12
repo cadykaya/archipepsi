@@ -999,6 +999,21 @@ class CampaignEngine:
             log.info("zone %s: barring %s leaves it uncomposable (%s)",
                      rec.zone_id, list(rooms), exc.refusal.code)
             return False
+        # THE ARRANGEMENT IS PRESERVED OR THIS IS NOT THE REPAIR.
+        #
+        # Re-selection moves a branch to a supported host. Quietly
+        # handing back a Zone with FEWER branches is a different thing —
+        # branch removal to make a device requirement go away — and it
+        # is not an approved outcome here. When no reassignment of the
+        # same arrangement exists, this stands down and the ordinary
+        # bounded layout refusal takes it, which is a distinct result
+        # with its own recovery.
+        want = len(rec.zone.plugs)
+        if len(regraphed.plugs) != want:
+            log.info("zone %s: barring %s leaves %d branch(es) of %d; "
+                     "not re-selecting", rec.zone_id, list(rooms),
+                     len(regraphed.plugs), want)
+            return False
         try:
             self._apply(T.reselect_hosts(self.save, rec.zone_id, rooms,
                                          regraphed))

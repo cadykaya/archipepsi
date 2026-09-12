@@ -137,8 +137,13 @@ def accept_zone(save: CampaignSave, zone: Zone, *,
     rec = _require_zone(save, zone.zone_id)
     if rec.state != "PENDING_GENERATION":
         raise ValueError(f"Zone '{zone.zone_id}' is {rec.state}, not pending")
+    # A FRESH PROPOSAL REMEMBERS NOTHING ABOUT THE OLD ONE. Room ids
+    # repeat across generations — `c004` in this Zone is not the `c004`
+    # the engine measured in the last one — so a placement verdict
+    # against replaced content is not evidence about the replacement.
     return _rebuild(save, zones=_replace_zone(
         save, zone.zone_id, state="GENERATED", zone=zone.model_dump(),
+        unhostable_rooms=(),
         used_fallback=used_fallback))
 
 

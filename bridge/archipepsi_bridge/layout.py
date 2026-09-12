@@ -27,6 +27,12 @@ import math
 from dataclasses import dataclass, field
 
 from . import shells as _SH
+
+#: What the engine can say about placing one return device.
+#:
+#: Three outcomes because three things happen, and only the last is a
+#: fact about the ROOM. See the table at rule 4b.
+PLACEMENT_OUTCOMES = ("PLACED", "CANDIDATE_REJECTED", "NO_CANDIDATE")
 from .schemas import physics as _PH
 
 #: Two things meet when they are this close. Metres, and radians.
@@ -626,22 +632,62 @@ def validate(zone, result: dict) -> Verdict:
     # refused here and recomposed, which is the recovery path that
     # already exists for a refusal.
     plug_clear = result.get("plug_clear") or {}
+    # WHICH ROOM THE ENGINE SEARCHED AND COULD NOT HOST.
+    #
+    # **A PLACEMENT OUTCOME, and nothing else.** Neither `arrival_ok`
+    # nor `plug_clear` can carry this, and both were read as if they
+    # could:
+    #
+    # * `room_audit.plugs_clear_of_arrivals` writes `false` when the
+    #   room's ARRIVAL anchor is missing, so `plug_clear` false is
+    #   "missing data" and "measured overlap" under one word;
+    # * `_settle_return_anchors` skips searching whenever the current
+    #   anchor is standable, even when it overlaps the arrival's trigger
+    #   clearance — so a badly positioned pad with a perfectly good
+    #   alternate elsewhere in the room reports exactly like a room with
+    #   nowhere to stand.
+    #
+    # Either one barred a whole room from branch selection. So the
+    # engine says which of three things happened, per plug, and only the
+    # last is a host verdict:
+    #
+    # | outcome | means | this lane |
+    # |---|---|---|
+    # | *(absent)* | incomplete evidence | refuse; do not bar |
+    # | `CANDIDATE_REJECTED` | this position failed, the search did not finish | refuse; do not bar |
+    # | `NO_CANDIDATE` | the declared bounded search finished and nothing held | **bar the host** |
+    # | `PLACED` | a position with support and clearance | nothing |
+    #
+    # `policy` and `tried` ride along and are for the LOG: what search
+    # ran and how much of it. No exhaustive proof of impossibility is
+    # asked for — a bounded search, stated. The bridge branches on the
+    # outcome and never on the prose.
+    placement = result.get("plug_placement") or {}
     for pl in zone.plugs:
-        # WHICH ROOM THE ENGINE MEASURED AND COULD NOT HOST.
-        #
-        # **A measured `False` and nothing else.** An anchor the layout
-        # never resolved is not this: the engine may have placed nothing
-        # at all, and reading a missing measurement as "this room cannot
-        # hold a return" is exactly the unverified judgement that must
-        # not stand in for the physical half. It was read that way for
-        # one commit, and an empty layout then recomposed every Zone
-        # forever instead of exhausting — the budget stopped counting
-        # because nothing ever reached it.
-        #
-        # Missing evidence stays an ordinary refusal, which is what the
-        # rest of this validator does with it.
-        if arrival_ok.get(pl.source_anchor) is False:
+        told = placement.get(pl.edge_id)
+        if not isinstance(told, dict):
+            continue
+        outcome = told.get("outcome")
+        if outcome not in PLACEMENT_OUTCOMES:
+            c.fail(f"plug '{pl.edge_id}' reports placement outcome "
+                   f"{outcome!r}, which is not one this contract "
+                   f"declares: {list(PLACEMENT_OUTCOMES)}")
+        elif outcome == "CANDIDATE_REJECTED":
+            # The device has no good position YET. A refusal, because a
+            # return in a bad place is a return that fires on the way
+            # in — and NOT a bar, because the search is unfinished.
+            c.fail(f"plug '{pl.edge_id}' has no accepted position in "
+                   f"room '{pl.room_id}': {told.get('tried', 0)} "
+                   f"candidate(s) rejected under '{told.get('policy')}' "
+                   "and the search did not finish")
+        elif outcome == "NO_CANDIDATE":
+            # Both. A required return with nowhere to go fails this
+            # layout, and the room is where it had nowhere to go.
             c.unhostable.add(pl.room_id)
+            c.fail(f"plug '{pl.edge_id}': room '{pl.room_id}' offers no "
+                   f"position with support and clearance — "
+                   f"{told.get('tried', 0)} candidate(s) under "
+                   f"'{told.get('policy')}'")
     for pl in zone.plugs:
         if pl.source_anchor == f"room:{pl.room_id}:arrival":
             c.fail(f"plug '{pl.edge_id}' stands at '{pl.source_anchor}', "
@@ -659,7 +705,6 @@ def validate(zone, result: dict) -> Verdict:
             c.fail(f"plug '{pl.edge_id}' clearance verdict is "
                    f"{verdict!r}, not a boolean")
         elif verdict is False:
-            c.unhostable.add(pl.room_id)
             c.fail(f"the engine reports a body at the arrival of room "
                    f"'{pl.room_id}' stands inside plug '{pl.edge_id}'; "
                    "the return would fire on the way in")
