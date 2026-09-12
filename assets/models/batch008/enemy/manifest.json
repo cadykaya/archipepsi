@@ -1,0 +1,38 @@
+{
+  "enemy_projectile_falling": {
+    "anchor": "centre",
+    "path": "batch008/enemy/enemy_projectile_falling.glb",
+    "size": [
+      0.44,
+      0.44,
+      0.29
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "texel_density": null,
+    "triangles": 152
+  },
+  "enemy_projectile_lobbed": {
+    "anchor": "centre",
+    "path": "batch008/enemy/enemy_projectile_lobbed.glb",
+    "size": [
+      0.63,
+      0.61,
+      0.475
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "texel_density": null,
+    "triangles": 192
+  },
+  "enemy_projectile_straight": {
+    "anchor": "centre",
+    "path": "batch008/enemy/enemy_projectile_straight.glb",
+    "size": [
+      0.44,
+      0.44,
+      0.299
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "texel_density": null,
+    "triangles": 104
+  }
+}

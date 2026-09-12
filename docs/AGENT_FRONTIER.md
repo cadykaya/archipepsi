@@ -47,6 +47,268 @@ assets.
 
 ## Completed: v0.8 Echoes 2.0 (S1–S10) and the pre-playtest pass
 
+## Art branch — canonical
+
+The single authoritative art lane is **`claude/archipepsi-art`**, and
+**PR #5** (base `claude/archipepsi-build-inzshp`) is its canonical PR —
+that base is what keeps the art diff properly scoped.
+
+`claude/archipepsi-art-setup-9qsbss` was a temporary setup branch. It was a
+clean linear continuation and has been **fast-forwarded into
+`claude/archipepsi-art`** (merge base 649a6cc, no force, no history
+rewritten, no commits lost). PR #6, opened from it against `main`, is
+**superseded** — it showed the whole stacked project history rather than an
+art diff. Do not maintain two active art branches.
+
+## Art batches — state 2026-09-02, with a 2026-09-13 head note
+
+**THE ART LANE IS WAITING ON AN OWNER VERDICT, NOT IDLE-WITH-WORK-TO-DO.**
+Do not start work in it on a wake-up. Read this section and stop.
+
+**2026-09-13 — three things another lane may need, from
+`docs/art/reports/2026-09-13-presentation-study.md`:**
+
+1. ~~**`shell_yard_gantry`'s two doorways are refused.**~~ **WRONG,
+   withdrawn same day.** `shells.is_offerable` *reports*
+   `doorways_off_the_body` and returns regardless, because a manifest
+   rule cannot see floor and the assembled crossing decides. Art's gate
+   now reports the 0.395 m without failing. **No socket repair is
+   requested.**
+2. ~~**The binder used to prove it is a proposal not wired into the
+   game.**~~ **WRONG, withdrawn same day: the runtime binder exists.**
+   `ThemeMaterials._material` asks `ThemePack.texture_for` first and
+   falls back to `ProcTextures` on null. The art-side binder is deleted.
+   What survives is the check nothing else makes — the pixels the GPU
+   samples, against the authored PNG, through the real import — run
+   against the material Production builds.
+3. **Production reads shell sockets by kind and by name**, so a three- or
+   four-connection room is readable. **A four-connection asset is still
+   not a four-neighbour room in a generated Zone.**
+4. **Every opening now declares its own arrival region**, named after its
+   socket — Art's half of §11.3. Handoff:
+   `docs/art-requests/2026-09-13-capacity-and-arrival-handoff.md`. It
+   also corrects the capacity claim for `shell_bay_terminus`, which has
+   **no `exit` socket** and is a destination, not a through-room.
+5. ~~**Lettering cannot be fixed in UVs.**~~ **WRONG, withdrawn.**
+   An authored `.glb` shell keeps the materials Blender baked:
+   `ContentInstantiator` performs no material operation at all
+   ("material" appears zero times in it), while `chamber_builders.gd`
+   names `ThemeMaterials` 46 times. Themed materials are the PROCEDURAL
+   path. The UV repair therefore lands, and is proved on both faces of a
+   two-sided sign and with the room rotated. **The mirrored stencil is
+   still real on the procedural path** — that is a separate, unfiled
+   item, not Batch 044's.
+6. **"LEAF" IS NOT "DEAD END".** A branch destination in this
+   implementation can still host onward branches. Production's
+   `dead_ends` is a measured degree (`n == 1` adjacency); Art's
+   `dead_end` is a shape tag describing a treatment, and **nothing in
+   Production reads it**. Measured: from the Terminus's approach the
+   one-neighbour and two-neighbour states are pixel-identical (the mouth
+   hides both side openings); from inside, an assigned branch is plainly
+   a way on. Evaluate a one-neighbour assignment separately.
+7. **`shell_bay_terminus` cannot be composed at all today**, and it is a
+   PRODUCER limit, not a door count: `topology.compose_chain` returns
+   `edges=()` when any chamber lacks the literal `entry`+`exit` pair, and
+   `compose_with_branch` calls it first and returns immediately. So one
+   destination room in the list seals every room's doors. A leaf is
+   rejected before it can become a leaf. Dess's and Prod's to resolve.
+
+**ALL TWELVE AUTHORED ROOM SHELLS PASS** (owner, 2026-09-04). The eight
+P2 shells passed on 2026-09-02 after Production certified them at
+`6640d86`; the hall and the three Wave 1 rooms were promoted on
+2026-09-04 with owner form approval, Production's technical certification
+at `7e13f44` and an independent audit at `f97545f` all agreeing. Nothing
+in the pack is `pending` except the three projectile substitutions.
+
+**`pass` DOES NOT MEAN THE MOVEMENT OFFERS ARE LIVE.** The four large
+rooms carry `rail_route`, `launch_source`/`launch_target` and
+`grapple_point` declarations reserved against a player-facing
+movement-package consumer that is **not implemented**. A passing shell
+can be placed, entered and walked end to end today; nobody can ride its
+rail. Report:
+`docs/art/reports/2026-09-04-wave1-promotion.md`.
+
+**THE LARGE ROOM LIBRARY IS APPROVED AND WAVE 1 IS BUILT.** The owner
+approved the ten-room slate (`docs/art/LARGE_ROOM_SLATE.md`) and the
+3 / 4 / 3 wave plan. Wave 1 -- `shell_plenum_helix` (20x72x20, a 129 m
+rail), `shell_yard_gantry` (84x16x52) and `shell_span_basin` (30x22x90)
+-- is authored, verified and, since 2026-09-04, `review: "pass"`.
+Package: `docs/art/review/wave1/`. **Wave 2 is four rooms and does NOT
+start on a wake-up.** The Wave 1 verdict it was waiting on has arrived
+and is a promotion, not an instruction to continue: Wave 2 needs its own
+owner brief.
+
+**`shell_hall_transit` is repaired** against Production's final walk law
+at `b37fe07`: two of its three climbs were built backwards, and all three
+were single wedges the import-time flood could not see through.
+`shell_tower_spiral`'s `platform_8_to_deck` is a `gap`, from Production's
+own probe.
+
+**PHYSICAL-TRUTH REPAIR LANDED (2026-09-03).** The seven items of the
+plenum/hall/span brief are done and measured:
+
+* the three plenum collars ship as **12 convex sectors each** (117 -> 150
+  colliders, same 1656 triangles). `roomcollision.assert_convex` now
+  refuses ANY non-convex collider at build time, in all six builders
+  that author collision — a
+  `-convcolonly` node imports as the convex HULL of its vertices, so an
+  annulus was shipping as a filled disc.
+* every collar destination is on the band and none on the machine axis:
+  three `landing_N_to_collar_K` endpoints, three `enemy_anchors`, the
+  `check_anchor`, the `reward` and the launch target, all through one
+  `_collar_point`, which now shares `_collar_axis` with the bridge that
+  builds the spur.
+* **`shell_plenum_helix`'s launch serves the LOW collar now, not the
+  middle one.** Measured over 4537 floor stances on a 0.25 m grid: the
+  top collar is reachable from none, the middle from five, the low from
+  141. The reward stays on the middle collar.
+* the plenum rail, the hall rail and the span rail were all rerouted off
+  geometry their BAKED curve was inside; the plenum's grapple_1 moved a
+  metre inward for its swing room.
+
+New gates, both in `tools/verify_content_pack.sh`:
+`tools/content/measure_offers.py` measures every declared rail, launch
+and grapple against the shipped collider triangles, and
+`tools/content/replay_audited.py` replays the pre-repair pack out of git
+and FAILS unless every audited finding still comes back.
+`tools/content/sabotage_offers.py` is their negative-control suite and
+runs from `tools/sabotage_checks.sh`.
+
+**AND THE TWO LAUNCH PADS, on the owner's ruling of the same day:** keep
+both launches, move both pads the least that clears them. The hall's and
+the span's flights each went through the platform they land on — 0.08 m
+at first contact, 0.643 m and 0.806 m at their worst. An arc's shape is
+fixed by its two heights, so neither could be dodged along z: the hall's
+pad goes **3.00 m west to (9, 0, 18)** and the span's **7.02 m to
+(−7, 0, 45)**, out from under the deck, and onto the basin's face. Both
+are the nearest round metre that leaves a flying body the 0.325 m a rail
+beam must keep. Targets, landings, routes and radii unchanged, and
+`measure_offers.RAISED` is empty again. Reports:
+`docs/art/reports/2026-09-03-physical-truth-repair.md` and
+`docs/art/reports/2026-09-03-launch-pads.md`.
+
+**RESOLVED 2026-09-04 — `launch_source.radius`.** Settled at Production
+`833fe80` and guarded at `7e13f44`: `launch_source.position` is the exact
+**foot-contact** launch origin, and `radius` reserves space for the
+constructed pad — it is **not** a disc of possible ballistic origins. All
+four large-room pads are correct as authored. *Superseded history: this
+was previously recorded here as an open Production question.*
+
+**RESOLVED — req 40.** `ShellValidator` is kind-aware through
+`TraversalLaw`; it no longer applies base-kit jump bounds to continuous
+walks or to ramps. Fixed before the Wave 1 promotion, so no room in the
+library is refused by it. *Superseded history: this was previously
+recorded here as needing Production.*
+
+**THEME PACK: PREPARED AND PROVED, NOT BUILT (2026-09-10).** Two
+inspection-only batches, no asset rebuilt and all twelve shells
+byte-identical. The role contract is reconciled against
+`ARCHIPEPSI_THEME_PACK_SYSTEM_AUTHORITY_20260903.txt`; all 597 shipped
+material slots classify (0 canonical, 597 legacy, 0 unknown) and Godot
+preserves every name exactly, so a binder can recover the role at runtime
+with no manifest field; and one shipped room has been shown wearing two
+themes **at once**, by per-surface override, with the shared mesh
+unchanged and the collision digest identical. Reports:
+`docs/art/reports/2026-09-10-theme-pack-preparation.md` and
+`docs/art/reports/2026-09-10-batch041-two-themes.md`.
+
+**What is left is PRODUCTION's, and there are four of them:** a ruling on
+`hazard` (the authority makes it a required per-theme role; the art lane's
+standing rule is that hazard is a universal colour no theme may re-tint,
+and no theme has a hazard texture), the `material mode` and
+`protected_materials` fields the registry entry schema does not have,
+somewhere for the 37-PNG theme texture set to ship, and the binder itself.
+**Do not start canonical `<role>` renaming on a wake-up** — it would
+change all twelve shells' bytes to buy tidiness a legacy-aware binder does
+not need.
+
+**ECMS GLYPH IS AVAILABLE AND HAS BEEN RUN (2026-09-10).**
+`cadykaya/ECMS-GLYPH` at **`727129e1`** on `main` — the implementation
+merge. An earlier note in this lane read the frozen authority snapshot
+`0cf872d` and concluded Glyph was "a specification, not a program"; that is
+**superseded**, and the difference was the branch, not the project. `npm ci`
+and `npm run build` are clean on Node 22, the worked example runs, and one
+128 × 128 `concrete_facility` wall has been authored through it on the house
+palette and structure, then bound onto real room geometry through Batch
+041's override path. **It ships nowhere** and no approved asset changed.
+Report: `docs/art/reports/2026-09-10-glyph-first-texture.md`.
+
+Two things a later agent should not have to rediscover. **Glyph's indexed
+colour has no partial mix**, and the house look is built from partial mixes,
+so a Glyph-authored surface comes out crisper than `materials.py`'s — a
+direction question, not a defect. And **the owner has settled `hazard`**:
+every pack must resolve the role, but may resolve it to the same shared
+universal material; separate theme-coloured hazard textures are not
+required.
+
+**001–022 PASS. 031–037 PASS** (031; 032 *with boundary*; 033 *audit, build
+nothing*; 034 *the visual principle*; 035-R; 036-R; 037-R *with a documented
+caveat*; boss audit *accepted, build nothing*).
+
+**PENDING owner review: 023–030 only.** Nothing about them is actionable
+without a verdict.
+
+### The boundary — do NOT start the next art system
+
+Two systems are being designed by the owner and a design collaborator, each
+arriving as its own owner-authored brief:
+
+1. **Modular Echo visual construction / kitbash system**
+2. **Diegetic in-world interface system**
+
+Until those briefs exist:
+
+- **No Batch 038.**
+- **Do not design or mass-produce Echo visual parts.** Requirement 32 is
+  *only* the architectural seam — the Echo family must be visible through a
+  swappable / composable `EchoPart` seam. The three built ranged / melee /
+  grapple forms are **proof-of-seam only**, and are explicitly not approval
+  of seven fixed family models, a final attachment grammar, a final part
+  taxonomy, runtime composition rules, family silhouette rules, or
+  provenance / source influence rules.
+- **Do not expand the interaction kit** into menus, terminals, Archive UI,
+  Forge UI, Zone-selection UI, or any other large physical interface.
+- **No heartbeat, no polling, no autonomous expansion.**
+
+### Rules locked by the post-030 review, worth carrying forward
+
+- **If a distinction must survive gameplay distance, the distinguishing
+  feature must affect object-scale SILHOUETTE.** Surface is what distance
+  takes away first.
+- Three channels on any operable object: **silhouette/structure** = what
+  kind of thing; **interaction hardware** = yes this one is operable;
+  **state treatment** = what it is doing now. The plate/bezel may stay as
+  standardized hardware only while it is not the sole source of truth and
+  does not rely on hue alone.
+- Secrets: **no universal secret colour**; a cue is a **deviation from a
+  learned environmental pattern**; a smaller reliable vocabulary beats a
+  padded one. **Stop revising secrets until real in-game Zone testing.**
+- Enemy surface: **plate** = proud slab / impact-bearing; **mechanism** =
+  recessed, ribbed, rodded exposed function. No role colours.
+- Accepted caveat: brute vs scuttler surface identity is weak. **Do not
+  alter the approved scuttler silhouette or body to force a stronger
+  surface distinction** — revisit only with gameplay evidence.
+
+**Still blocked, and deliberately not routed around:** requirement 31 —
+`ENEMY_ARCHETYPES` is still `("melee", "ranged", "brute")`, so seven roles
+have a body, a collider, a telegraph seat and a surface, and no way to be
+spawned.
+
+**The art heartbeat is PAUSED** (`trig_01DSWy2dbCpeSefcx2YGS9Ys`, disabled
+2026-08-29) under the owner's rule: pause the routine when there is no work,
+resume it when there is a task. **Do not re-enable it on an idle lane.** PR
+#5 activity still wakes the session directly, so nothing is missed.
+
+Earlier decisions standing: `objective_marker`, `arch_objective_socket`,
+`arch_signage_mount` and `arch_affordance_socket` all struck, each because
+nothing places them. `arch_vista_socket` still blocked on a contract.
+Requirement 23: engine `trim_mat` maps to authored `trim_plain`. The Batch
+023 landmark audit was corrected on 2026-08-29 — Production **has** an
+authored-content pipeline (`ContentRegistry`, `ContentInstantiator`,
+`landmark` as a real L4 category); what is missing is the `.glb` →
+`res://content/` scene step, a `landmark_id`, a placement path and a landmark
+envelope. Requirement 24, reworded.
+
 ## Open decision, deliberately not guessed
 `challenge_marker` (§14.2) and its `challenge_timer` readout (§14.1) have a complete bridge half — grantable, recorded, `best_seconds` improves — and no world half, because neither section says where a run starts, what ends it, or what counts as one. `test_stage_tripwires.py::test_the_challenge_marker_still_has_no_challenge` names the decision and comes due when it is made.
 
