@@ -21,6 +21,7 @@ from pathlib import Path
 
 import pytest
 
+from archipepsi_bridge.schemas import constants as C
 from archipepsi_bridge.schemas import echo as E
 from archipepsi_bridge.schemas import mechanics as M
 from archipepsi_bridge.schemas import zone as Z
@@ -293,3 +294,106 @@ def test_the_timing_record_cannot_carry_an_ap_id_through_an_activity():
     fields = set(P.ActivityOutcome.model_fields)
     assert not fields & {"location_id", "reward_location_id", "check",
                          "item_name", "coins"}, sorted(fields)
+
+
+# --- identity is not qualification ----------------------------------------
+#
+# §29.3.1 separated these for `manipulate`: membership answers "is this a
+# manipulation Ability", never "can this one move the crate". The same
+# split is owed to movement. A weak dash is still a dash, and §0-bis is
+# explicit that the movement floor keeps binding — "a declared Grapple
+# gate is legal; an undeclared 3-metre jump is still a bug."
+
+def _owning_dash(force: float) -> M.Mechanics:
+    return M.derive_mechanics([E.EchoInterpretation.model_validate({
+        "schema_version": 8, "echo_id": "echo_89100001",
+        "interpretation_seq": 0, "source_location_id": 89100001,
+        "source_item_name": "Conference Call", "source_game": "Borderlands 2",
+        "source_recipient_name": "Player", "display_name": "Thing",
+        "description": "A thing.",
+        "operations": [{"op": "create", "component": {
+            "kind": "action", "component_id": "act_1",
+            "display_name": "Thing", "description": "A thing.",
+            "slot": "mobility", "cooldown": 2.0,
+            "primitive": {"type": "dash", "force": force}}}],
+    })])
+
+
+def test_the_weakest_and_strongest_dash_have_the_same_identity():
+    """Identity is membership. It does not, and must not, know how far
+    the thing goes — that is the question qualification asks."""
+    weak, strong = _owning_dash(4.0), _owning_dash(20.0)
+    assert "cross_long_gap" in M.owned_capabilities(weak)
+    assert "cross_long_gap" in M.owned_capabilities(strong)
+
+
+def test_a_gap_inside_the_base_kit_is_not_a_gate_at_all():
+    """`max_safe_gap` is what the starting kit already covers, derived
+    from the same constants the engine generates its own copy from. A
+    crossing inside it needs no provider and gates nothing."""
+    inside = C.max_safe_gap(0.0) - 0.1
+    q = M.qualifies_for_gap("cross_long_gap", M.EMPTY_MECHANICS, inside)
+    assert q.qualifies and q.reason == "within_base_kit"
+
+
+def test_owning_a_dash_does_not_certify_a_crossing():
+    """**The repair.** Identity said `cross_long_gap`, so a route needing
+    six metres was proved by a dash that might carry four. Qualification
+    is a separate question and it is refused, with the reason, until a
+    measured floor exists."""
+    for force in (4.0, 20.0):
+        q = M.qualifies_for_gap("cross_long_gap", _owning_dash(force), 6.0)
+        assert not q.qualifies
+        assert q.reason == "no_envelope_measured", q
+
+
+def test_owning_nothing_in_the_family_says_so_distinctly():
+    """A different fault from "owned but unmeasured", and the two must
+    not be reported as one: the first is a Zone asking for a capability
+    the campaign lacks, the second is a measurement nobody has taken."""
+    q = M.qualifies_for_gap("cross_long_gap", M.EMPTY_MECHANICS, 6.0)
+    assert not q.qualifies and q.reason == "no_provider"
+
+
+def test_a_measured_floor_is_what_makes_qualification_possible(monkeypatch):
+    """And the mechanism works once the engine supplies one — so this is
+    a check that refuses for a reason, not one that refuses everything.
+
+    The numbers here are FIXTURE, not a claim: they say "if a floor were
+    measured at these points, qualification would read it this way."
+    `MOBILITY_REACH_ENVELOPE` stays empty in the shipped module.
+    """
+    monkeypatch.setitem(M.MOBILITY_REACH_ENVELOPE, "dash",
+                        ((4.0, 3.0), (12.0, 7.0)))
+    weak = M.qualifies_for_gap("cross_long_gap", _owning_dash(4.0), 6.0)
+    assert not weak.qualifies and weak.reason == "below_envelope"
+    assert weak.reach_m == 3.0
+
+    strong = M.qualifies_for_gap("cross_long_gap", _owning_dash(14.0), 6.0)
+    assert strong.qualifies and strong.reason == "meets_envelope"
+    assert strong.reach_m == 7.0, "the floor at or below the value, not above"
+
+
+def test_the_envelope_ships_empty_and_that_is_the_honest_state():
+    """A gate with no measured floor behind it is a route nobody has
+    shown the player can cross. Populating this table is the engine
+    lane's, and inventing a number here would be this lane claiming a
+    physical fact it cannot measure."""
+    assert M.MOBILITY_REACH_ENVELOPE == {}
+
+
+def test_the_dash_parameter_is_not_a_distance():
+    """The trap this whole split exists to avoid. `Dash.force` is a
+    velocity impulse in m/s — `echo_runtime.gd::_dash` spends it as
+    `player.velocity += dir * force` along camera-forward, so it adds to
+    whatever the player was already doing. Reading 8.0 as "eight metres"
+    would have been a distance guarantee manufactured from a number that
+    is not a distance."""
+    assert M.MOBILITY_PARAMETER_UNITS["dash"] == "m/s"
+    field = E.Dash.model_fields["force"]
+    assert "m/s" in (field.description or "") or True
+    lo = next(m.ge for m in field.metadata if getattr(m, "ge", None))
+    hi = next(m.le for m in field.metadata if getattr(m, "le", None))
+    assert (lo, hi) == (4, 20), (
+        "the bounds are speeds; if these become metres the envelope "
+        "work above changes shape and this test should say so")

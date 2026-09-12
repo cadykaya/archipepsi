@@ -31,8 +31,10 @@ from typing import Literal, Union
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 try:
+    from . import constants as C
     from . import echo as E
 except ImportError:  # pragma: no cover
+    import constants as C
     import echo as E
 
 
@@ -299,6 +301,20 @@ BASELINE_CAPABILITIES: tuple[str, ...] = ("ranged_hit",)
 def _capability_is_satisfied(
     capability: str, primitives: set[str], stats: set[str]
 ) -> bool:
+    """**IDENTITY, not qualification.** Is this a dash at all?
+
+    Deliberately Boolean and deliberately about names, exactly as §29.3.1
+    separates the two questions for `manipulate`: membership answers
+    "is this a manipulation Ability", never "can this one move the
+    crate". Here it answers "does the campaign own something in the dash
+    family", never "does that dash cross this gap".
+
+    **No numeric envelope belongs in this intersection.** `stats` is a
+    set of stat NAMES off the components — `_primitives_and_stats` adds
+    `component.stat`, a label — so putting a floor here would be
+    comparing a number against a word. Qualification reads resolved
+    provider parameters instead; see `qualifies_for_gap`.
+    """
     requirement = ACTIVITY_CAPABILITIES.get(capability)
     if requirement is None:
         return False
@@ -364,6 +380,146 @@ def available_capabilities(mechanics, slots) -> tuple[str, ...]:
         capability for capability in ACTIVITY_CAPABILITIES
         if capability in BASELINE_CAPABILITIES
         or _capability_is_satisfied(capability, primitives, stats)))
+
+
+# --- provider qualification, which is not capability identity ------------
+#
+# §29.3.1, applied to movement. `owned_capabilities` says the campaign
+# owns a dash. It does not say the dash crosses the gap in front of the
+# player, and §0-bis is explicit that the movement floor still binds: "a
+# declared Grapple gate is legal; an undeclared 3-metre jump is still a
+# bug." A weak dash is still a dash, and it must not certify a route it
+# cannot cross.
+
+#: The resolved parameter each movement primitive carries, and its UNIT.
+#:
+#: **These are not distances.** `Dash.force` is documented in `echo.py`
+#: as "instantaneous velocity change in m/s", bounded 4–20, and
+#: `echo_runtime.gd::_dash` spends it as `player.velocity += dir * force`
+#: along CAMERA-FORWARD — so it adds to whatever the player was already
+#: doing, and its direction carries the camera's pitch. `_air_dash`
+#: replaces horizontal velocity instead. How far either carries a body
+#: depends on the speed it was already moving at, the look angle, ground
+#: friction and air damping, and how long the body stays airborne. There
+#: is no closed form to write here and this lane must not invent one.
+MOBILITY_PARAMETER_UNITS: dict[str, str] = {
+    "dash": "m/s", "air_dash": "m/s", "double_jump": "m/s",
+    "wall_kick": "m/s", "blink": "m", "glide": "unitless",
+    "hover": "s", "grapple_to_surface": "m", "grapple_swing": "m",
+    "grapple_pull_target": "m",
+}
+
+#: Measured horizontal reach, in metres, guaranteed by a provider at a
+#: given parameter value. **Engine-owned, and empty until measured.**
+#:
+#: The pattern is §29.3.2's, which already solved this for `manipulate`:
+#: a mandatory-route envelope, content authored against the MINIMUM, and
+#: a reference solution replayed at exactly that minimum so anything
+#: qualifying can solve it. The equivalent here is a measured floor —
+#: "a `dash` at force F carries a standing player at least D metres
+#: under the worst legal loadout" — and only the engine can produce it,
+#: for the same reason it owns `scene_digest`: the bridge has no body,
+#: no controller and no physics frame.
+#:
+#: Until an entry exists, NOTHING QUALIFIES. That is the honest state,
+#: not a placeholder: a gate with no measured floor behind it is a route
+#: nobody has shown the player can cross.
+MOBILITY_REACH_ENVELOPE: dict[str, tuple[tuple[float, float], ...]] = {}
+
+
+class ProviderQualification(Strict):
+    """Can THIS provider make THIS crossing?
+
+    Separate from `CapabilityGuarantee`, which asks whether the player
+    can get a capability at all. Both have to hold: a gate needs a
+    capability the generator can prove is obtainable AND a provider that
+    actually spans the gap.
+    """
+
+    capability: str = Field(max_length=32)
+    qualifies: bool
+    reason: Literal[
+        # The base kit already covers it; no provider is needed and the
+        # crossing is not a gate at all.
+        "within_base_kit",
+        # A measured envelope exists and this provider's resolved
+        # parameter meets it.
+        "meets_envelope",
+        # A measured envelope exists and it does not.
+        "below_envelope",
+        # The campaign owns nothing in the family.
+        "no_provider",
+        # The family is owned and no measured floor exists, so no claim
+        # about crossing can be made. See `MOBILITY_REACH_ENVELOPE`.
+        "no_envelope_measured",
+    ]
+    #: The gap asked for and the reach proved, both metres, when known.
+    gap_m: float | None = None
+    reach_m: float | None = None
+
+
+def _reach_for(primitive: str, value: float) -> float | None:
+    """Measured metres for this primitive at this parameter, or None."""
+    table = MOBILITY_REACH_ENVELOPE.get(primitive)
+    if not table:
+        return None
+    # Largest measured floor at or below the provider's value: a measured
+    # point is a guarantee for that value and anything above it only if
+    # the table says so, so interpolation is not invented here either.
+    best: float | None = None
+    for at, reach in sorted(table):
+        if value + 1e-9 >= at:
+            best = reach
+    return best
+
+
+def qualifies_for_gap(capability: str, mechanics, gap_m: float,
+                      rise_m: float = 0.0) -> ProviderQualification:
+    """Does anything the campaign owns actually cross `gap_m`?
+
+    `gap_m` is the crossing the route needs, in metres. The base kit's
+    own reach is `C.max_safe_gap(rise_m)` — derived from the same
+    constants the engine generates its own copy from — so a gap inside
+    that needs no provider and is not a gate.
+    """
+    base = C.max_safe_gap(rise_m)
+    if gap_m <= base:
+        return ProviderQualification(
+            capability=capability, qualifies=True,
+            reason="within_base_kit", gap_m=gap_m, reach_m=base)
+
+    wanted = set(ACTIVITY_CAPABILITIES.get(capability, {})
+                 .get("primitives", ()))
+    best_reach: float | None = None
+    saw_provider = False
+    for owned in mechanics.owned:
+        primitive = getattr(owned.component, "primitive", None)
+        if primitive is None or primitive.type not in wanted:
+            continue
+        saw_provider = True
+        # The RESOLVED parameter off this provider, not a constant and
+        # not the primitive's name.
+        value = getattr(primitive, "force", None)
+        if value is None:
+            value = getattr(primitive, "range", None)
+        if value is None:
+            continue
+        reach = _reach_for(primitive.type, float(value))
+        if reach is not None and (best_reach is None or reach > best_reach):
+            best_reach = reach
+
+    if not saw_provider:
+        return ProviderQualification(
+            capability=capability, qualifies=False, reason="no_provider",
+            gap_m=gap_m, reach_m=base)
+    if best_reach is None:
+        return ProviderQualification(
+            capability=capability, qualifies=False,
+            reason="no_envelope_measured", gap_m=gap_m)
+    return ProviderQualification(
+        capability=capability, qualifies=best_reach >= gap_m,
+        reason="meets_envelope" if best_reach >= gap_m else "below_envelope",
+        gap_m=gap_m, reach_m=best_reach)
 
 
 class CapabilityGuarantee(Strict):

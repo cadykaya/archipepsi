@@ -134,11 +134,36 @@ traces the acquisition chain and compares explicit capability items
 against guaranteed local acquisition represented in AP logic — for each,
 where the guarantee comes from, how location rules match it, and how a
 qualifying provider reaches the player. The two options are different
-games; that is the choice. It also names a repair owed under either:
-`_capability_is_satisfied` tests primitives only, so a 2-metre dash
-satisfies `cross_long_gap`. **Until it is settled the bridge keeps
-refusing AP-relevant gates — a temporary restriction, not a verdict on
-the gameplay.**
+games; that is the choice. The choice is narrower than the
+first draft claimed: an AP progression item does **not** cost the
+interpretation premise, because a guarantee is a contract on FUNCTION
+(primitive family, resolved parameters at or above the envelope) and
+presentation stays interpreted and validated exactly as it is today.
+What actually differs is whether capability progression sits in the
+multiworld or beside it. Also corrected there: access rules are fixed
+at seed generation, so the capability contract flows AP -> runtime
+(location_id -> required capabilities, in slot data) and the allocator
+obeys it — the runtime cannot attach a rule to a Zone it allocates
+hours later. And hidden Checks are **not** exempt under the
+gate-only-optional option: optional to finishing a Zone is not optional
+to AP accessibility.
+
+**PROVIDER QUALIFICATION IS SEPARATE FROM IDENTITY, and now
+implemented.** `owned_capabilities` said `cross_long_gap` for a 4 m/s
+dash and a 20 m/s dash alike, so a six-metre route was proved by a
+provider that might carry three. `qualifies_for_gap` reads RESOLVED
+provider parameters against the route's requirement in metres;
+`max_safe_gap(rise)` is the base kit's own reach, so a crossing inside
+it is not a gate at all. **No envelope went into the `stats` Boolean** —
+`stats` holds stat NAMES, and that branch is the identity question.
+`MOBILITY_REACH_ENVELOPE` ships EMPTY and nothing qualifies without it:
+`Dash.force` is a velocity impulse in m/s that `_dash` ADDS to current
+velocity along camera-forward, so no closed form exists here and the
+measured floor is the engine lane's, like `scene_digest`. Design 1
+§13.1 calls `DASH_IMPULSE` a distance in metres while the schema carries
+m/s — a divergence someone has to reconcile.
+`docs/AP_CAPABILITY_LOGIC.md` §8b has the table shape for Prod.
+**AP-relevant gates without a matching guarantee stay refused.**
 
 **Capability gates are searched, not sampled.** A previous guard removed
 one gate edge at a time with every other gate left passable, so two
