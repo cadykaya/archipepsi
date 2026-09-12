@@ -19,8 +19,18 @@ one is about a POINT. Production added the engine-side measurement
 (`ContentInstantiator.doorways_outside_envelope()`); this is the art-side
 one, and it asks a harder question than "is the number inside the box":
 
-  1. **ON THE ROOM.** The socket lies within the shell's own envelope.
-     This is the defect Production reported.
+  1. **ON THE ROOM.** The socket lies within the shell's own envelope,
+     **grown by the same slack Production allows** --
+     `ChamberBuilders.WALL_THICKNESS + SPAN_TOLERANCE`, 0.405 m -- on all
+     three axes, mirroring `ContentInstantiator.doorways_outside_envelope`.
+
+     An earlier version of this file used a zero tolerance and reported
+     `shell_yard_gantry` as a fourth instance of Production's defect. That
+     was wrong twice over: their check reads all three axes, not depth
+     only, and the yard's 0.40 m is INSIDE the slack. Being outside a
+     zero-tolerance envelope is not by itself a defect and is not a reason
+     to move an authored socket. What matters is whether the assembled
+     crossing has a gap or an obstruction, which is what 2 and 3 measure.
 
   2. **THROUGH A CLEAR OPENING.** Where a wall stands at the doorway plane,
      the declared width and height must actually be clear through it.
@@ -49,40 +59,63 @@ import sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 FLOOR_TOLERANCE = 0.020    # m; a step this small is a seam, not a ledge
+
+## The slack Production's own envelope check allows, mirrored rather than
+## invented: `ChamberBuilders.WALL_THICKNESS` (0.4) + `SPAN_TOLERANCE`
+## (0.005), grown on all three axes. Keeping the two numbers the same is
+## the point -- a stricter art-side envelope reports defects Production
+## does not have, and a looser one misses the ones it does.
+ENVELOPE_SLACK = 0.405
+
+## What kind of thing went wrong. `KNOWN` matches on the PAIR of doorway
+## and kind, so a doorway excused for a support gap is still checked for
+## an obstruction and for its coordinate -- see KNOWN.
+ENVELOPE = "envelope"
+OBSTRUCTION = "obstruction"
+SUPPORT = "support"
 REACH = 1.0                # m back into the room that must hold a player
 SAMPLES = 9                # across a door's width, and along the reach
 
 
 ## KNOWN, REPORTED, NOT YET AUTHORIZED.
 ##
-## The 2026-09-12 brief authorized three shells: the hall's, the plenum's
-## and the span's `exit`. Measuring all twelve turned up five more doorways
-## with the same two defects, on shells the same brief says to preserve. A
-## check that passed anyway would be a check that lies; one carrying a
-## silent skip list would go stale the moment somebody fixed one. So they
-## are named here with what is wrong, and this list is enforced in BOTH
-## directions -- a finding that disappears fails just as loudly as a new
-## one, the way Production's own test does, so the day one is repaired this
-## says so instead of going quiet.
+## Keyed by `"<shell>/<doorway>:<kind>"`, and the kind is the part that
+## matters. Keying on the doorway alone -- which this file did first --
+## exempts that doorway's whole identity: a doorway excused for a support
+## gap would go on silently passing if somebody later moved its socket 2 m
+## into the air or built a wall across its opening, which is precisely the
+## class of defect the file exists to catch. One known defect buys an
+## exception for itself and for nothing else.
 ##
-## None of these is a regression from the 2026-09-12 repair: every one was
-## already true of the shipped art, and `shell_yard_gantry` is the one that
-## matters most, because it is the same "doorway outside its own envelope"
-## defect Production reported -- on the X axis, where a depth-only check
-## cannot see it.
+## Enforced in BOTH directions, the way Production's own test is: an entry
+## that no longer measures as a defect FAILS, so a repair has to retire
+## its exception rather than leave a skip behind for the next three to
+## slip through.
 KNOWN = {
-    "shell_corner_left/exit": "threshold: cl_floor stops at x 3.00 and the "
-                              "socket is on the wall's outer face at 3.40",
-    "shell_corner_right/exit": "threshold: cr_floor stops at x -3.00 and the "
-                               "socket is on the wall's outer face at -3.40",
-    "shell_plenum_helix/entry": "opens onto air: past the 0.6 m sill the "
-                                "nearest floor at y 68 is pl_run_0_tread6, "
-                                "4.57 m away in -x, and the drop is 68 m",
-    "shell_yard_gantry/entry": "0.40 m outside the envelope on X, and no "
-                               "floor at the socket -- the same defect "
-                               "Production reported, on the other axis",
-    "shell_yard_gantry/exit": "0.40 m outside the envelope on X, and no "
-                              "floor at the socket",
+    # Both corners: the floor stops 0.40 m short of the socket, which is
+    # true geometry and NOT a demonstrated gap -- a player crosses both,
+    # at the origin and placed and yawed, in `crossing_test.gd`. Reported
+    # and left alone on the 2026-09-12 ruling: repair what the assembled
+    # crossing demonstrates, not what a zero-tolerance rule dislikes.
+    "shell_corner_left/exit:support":
+        "cl_floor stops at x 3.00 and the socket is on the wall's outer "
+        "face at 3.40 -- 0.40 m, and the crossing carries it",
+    "shell_corner_right/exit:support":
+        "cr_floor stops at x -3.00 and the socket is on the wall's outer "
+        "face at -3.40 -- 0.40 m, and the crossing carries it",
+    # The yard, after the 2026-09-12 threshold repair. Its floor used to
+    # stop 1.60 m short and a player fell at 1.22 m, measured. The
+    # threshold carries the first 1.20 m -- the inset and the wall -- and
+    # the remaining 0.40 m is the socket standing proud of the wall, which
+    # the crossing carries at 0.029 m and 0.053 m of dip. Building out to
+    # the socket would have grown the shell from 85.20 m to 86.00 m, and a
+    # doorway repair is not a reason to resize a room.
+    "shell_yard_gantry/entry:support":
+        "the socket stands 0.40 m proud of the wall face the threshold "
+        "reaches -- crossed at 0.029 m of dip",
+    "shell_yard_gantry/exit:support":
+        "the socket stands 0.40 m proud of the wall face the threshold "
+        "reaches -- crossed at 0.053 m of dip",
 }
 
 
@@ -165,14 +198,18 @@ def solid_at(parts, x, y, z):
             if lo[0] < x < hi[0] and lo[1] < y < hi[1] and lo[2] < z < hi[2]]
 
 
-def check(shell, entry, glb_path, verbose=False):
-    gltf = read_glb(glb_path)
-    parts = boxes(gltf)
-    width, depth, height = entry["size"]
-    problems = []
-    lines = []
+def doorway_problems(shell, size, sockets, parts):
+    """Every defect in one shell's doorways, as (label, kind, message).
 
-    for socket in entry.get("sockets", []):
+    Takes PARTS rather than a path so the self-test beside this file can
+    hand it synthetic geometry -- an open control and a blocked one, in
+    all four wall orientations -- instead of hoping the shipped shells
+    happen to contain the case that would catch a bug.
+    """
+    width, depth, height = size
+    problems = []
+
+    for socket in sockets:
         if socket.get("kind") != "doorway":
             continue
         name = socket["name"]
@@ -180,33 +217,40 @@ def check(shell, entry, glb_path, verbose=False):
         dw, dh = socket.get("width", 2.4), socket.get("height", 3.2)
         ix, iz = inward(socket.get("yaw", 0.0))
         axis = 2 if iz else 0
-        span = depth if axis == 2 else width
-        along = sz if axis == 2 else sx
         label = "%s/%s" % (shell, name)
 
-        # --- 1. on the room --------------------------------------------
-        lo_bound = 0.0 if axis == 2 else -span / 2.0
-        hi_bound = span if axis == 2 else span / 2.0
-        if not (lo_bound - 1e-6 <= along <= hi_bound + 1e-6):
-            problems.append(
-                "%s: the doorway is at %.2f but the shell runs %.2f..%.2f "
-                "on that axis -- it is %.2f m outside its own room, so "
-                "ZoneBuilder joins the corridor over nothing."
-                % (label, along, lo_bound, hi_bound,
-                   max(lo_bound - along, along - hi_bound)))
+        # --- 1. on the room, by Production's own slack -----------------
+        # Their envelope is AABB((-w/2, 0, 0), (w, h, d)) grown by
+        # WALL_THICKNESS + SPAN_TOLERANCE, tested on all three axes.
+        lo = (-width / 2.0 - ENVELOPE_SLACK, -ENVELOPE_SLACK,
+              -ENVELOPE_SLACK)
+        hi = (width / 2.0 + ENVELOPE_SLACK, height + ENVELOPE_SLACK,
+              depth + ENVELOPE_SLACK)
+        at = (sx, sy, sz)
+        worst = max(max(lo[k] - at[k], at[k] - hi[k]) for k in range(3))
+        if worst > 0.0:
+            problems.append((label, ENVELOPE,
+                "%s: the doorway is %.2f m outside its own envelope even "
+                "with Production's %.3f m of slack, so ZoneBuilder joins "
+                "the corridor over nothing." % (label, worst, ENVELOPE_SLACK)))
 
         # --- 2. a clear opening, where there is a wall to cut ----------
         cross_axis = 0 if axis == 2 else 2
         cross_at = sx if axis == 2 else sz
-        wall = [(nm, lo, hi) for nm, lo, hi in parts
-                if lo[axis] - 1e-6 <= along <= hi[axis] + 1e-6
-                and hi[1] > sy + 0.05
-                and lo[cross_axis] - 1e-6 <= cross_at <= hi[cross_axis] + 1e-6]
+        wall = [(nm, blo, bhi) for nm, blo, bhi in parts
+                if blo[axis] - 1e-6 <= at[axis] <= bhi[axis] + 1e-6
+                and bhi[1] > sy + 0.05
+                and blo[cross_axis] - 1e-6 <= cross_at <= bhi[cross_axis] + 1e-6]
         if wall:
-            # Read at the wall's mid-thickness: at the face itself every
-            # box merely touches the plane and nothing reads as solid.
-            thickness = min(hi[axis] - lo[axis] for _, lo, hi in wall)
-            probe = along - (iz or ix) * thickness / 2.0
+            # INWARD by half the wall's thickness, into the middle of it.
+            #
+            # This read `along - (iz or ix) * thickness / 2` and stepped
+            # the other way -- out past the face, into open air, where
+            # nothing is solid and every doorway passed however completely
+            # a wall filled it. `inward()` returns the direction the ROOM
+            # is in, so reaching the wall's middle is a step ALONG it.
+            thickness = min(bhi[axis] - blo[axis] for _, blo, bhi in wall)
+            probe = at[axis] + (iz or ix) * thickness / 2.0
             blocked = set()
             for i in range(SAMPLES):
                 across = cross_at + dw * (i / (SAMPLES - 1.0) - 0.5) * 0.98
@@ -216,32 +260,44 @@ def check(shell, entry, glb_path, verbose=False):
                              else (probe, up, across))
                     blocked.update(solid_at(parts, *point))
             if blocked:
-                problems.append(
+                problems.append((label, OBSTRUCTION,
                     "%s: the declared %.1f x %.1f m opening is blocked by "
                     "%s. A doorway nobody fits through is not a doorway."
-                    % (label, dw, dh, ", ".join(sorted(blocked))))
+                    % (label, dw, dh, ", ".join(sorted(blocked)))))
 
         # --- 3. supported at the threshold -----------------------------
         gap = None
         for j in range(SAMPLES):
             step = REACH * j / (SAMPLES - 1.0)
-            px = sx + ix * step
-            pz = sz + iz * step
-            if not standing_on(parts, px, pz, sy):
+            if not standing_on(parts, sx + ix * step, sz + iz * step, sy):
                 gap = step
                 break
         if gap is not None:
-            problems.append(
+            problems.append((label, SUPPORT,
                 "%s: nothing to stand on %.2f m in from the doorway, at "
                 "height %.2f. The floor stops before the threshold does."
-                % (label, gap, sy))
-        lines.append("  %-34s %-5s at [%.1f, %.1f, %.1f]  %s"
-                     % (label, name, sx, sy, sz,
-                        "supported" if gap is None else "UNSUPPORTED"))
+                % (label, gap, sy)))
 
+    return problems
+
+
+def check(shell, entry, glb_path, verbose=False):
+    parts = boxes(read_glb(glb_path))
+    problems = doorway_problems(shell, entry["size"],
+                                entry.get("sockets", []), parts)
     if verbose:
-        for line in lines:
-            print(line)
+        hit = {}
+        for label, kind, _ in problems:
+            hit.setdefault(label, []).append(kind)
+        for socket in entry.get("sockets", []):
+            if socket.get("kind") != "doorway":
+                continue
+            label = "%s/%s" % (shell, socket["name"])
+            kinds = hit.get(label, [])
+            print("  %-34s at [%.1f, %.1f, %.1f]  %s"
+                  % (label, socket["position"][0], socket["position"][1],
+                     socket["position"][2],
+                     "ok" if not kinds else ", ".join(sorted(kinds)).upper()))
     return problems
 
 
@@ -258,7 +314,8 @@ def main():
                 continue
             glb = os.path.join(os.path.dirname(manifest), "%s.glb" % shell)
             if not os.path.exists(glb):
-                problems.append("%s: no .glb at %s" % (shell, glb))
+                problems.append((shell, "missing",
+                             "%s: no .glb at %s" % (shell, glb)))
                 continue
             seen += 1
             problems.extend(check(shell, entry, glb, verbose))
@@ -269,28 +326,28 @@ def main():
         return 1
 
     fresh, matched = [], set()
-    for problem in problems:
-        door = problem.split(":", 1)[0]
-        if door in KNOWN:
-            matched.add(door)
+    for label, kind, message in problems:
+        key = "%s:%s" % (label, kind)
+        if key in KNOWN:
+            matched.add(key)
             continue
-        fresh.append(problem)
+        fresh.append(message)
 
-    for problem in fresh:
-        print("measure-doorways: FAIL -- %s" % problem, file=sys.stderr)
+    for message in fresh:
+        print("measure-doorways: FAIL -- %s" % message, file=sys.stderr)
     stale = sorted(set(KNOWN) - matched)
-    for door in stale:
+    for key in stale:
         print("measure-doorways: FAIL -- %s is listed as a known open "
               "finding and no longer measures as one. If it was repaired, "
               "delete its line from KNOWN in this file; a skip list nobody "
-              "prunes is how the next three get through." % door,
+              "prunes is how the next three get through." % key,
               file=sys.stderr)
     if fresh or stale:
         return 1
 
-    print("measure-doorways: %d shell(s), every doorway on its room, "
-          "through a clear opening, and supported %.1f m back -- except %d "
-          "reported and unauthorized (see KNOWN)."
+    print("measure-doorways: %d shell(s), every doorway inside Production's "
+          "envelope slack, through a clear opening, and supported %.1f m "
+          "back -- except %d reported and unauthorized (see KNOWN)."
           % (seen, REACH, len(KNOWN)))
     return 0
 

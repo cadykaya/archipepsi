@@ -39,12 +39,28 @@ const FLOOR_MAX_ANGLE := deg_to_rad(46.0)
 
 const STEP := 1.0 / 60.0
 const CORRIDOR := 6.0            # m of stub beyond the socket
-const START_BACK := 3.0          # m inside the room the walk starts
+const START_BACK := 3.0          # m back from the socket the walk starts
+## THROUGH the doorway and still standing -- that is the whole question.
+##
+## This used to ask for a fixed distance past the socket, which grades a
+## doorway on what the room keeps near it: all three treasure rooms
+## "failed" by walking in 1.2-2.1 m and stopping against their own
+## plinths, which is furniture, not a join. So a crossing succeeds when the
+## player gets a body's width past the socket and never falls, and the walk
+## runs its whole length so a fall AFTER the threshold still counts -- the
+## yard's entry drops at 1.22 m, well past any threshold.
+const THROUGH := 0.8             # m past the socket = through it
+const LIMIT_OUT := 4.0           # m of the 6 m stub to walk
+const LIMIT_IN := 3.0            # m into the room before stopping
 const FELL := 2.5                # m below the doorway floor = fell
 
-## Each repaired join: the shell, its exit socket in runtime metres, and
-## the yaw the doorway faces. Read from the manifest at run time rather
-## than typed here, so a socket that moves again cannot pass by being stale.
+## EVERY doorway of every shell, both ways.
+##
+## An `exit` is walked from inside the room out onto the stub; an `entry`
+## is walked from the stub into the room, because that is the direction a
+## player meets it. Both are read from the manifests at run time rather
+## than typed here, so a socket that moves again cannot pass by being
+## stale -- and so that adding a shell adds its crossings.
 var _models: String
 var _out: String
 var _bench: GDScript
@@ -70,24 +86,50 @@ func _fail(what: String) -> void:
 	printerr("[crossing] FAIL: %s" % what)
 
 
-func _socket_of(rel_manifest: String, shell: String) -> Dictionary:
-	var path := "%s/%s" % [_models, rel_manifest]
-	var text := FileAccess.get_file_as_string(path)
-	if text == "":
-		_fail("no manifest at %s" % path)
-		return {}
-	var data: Variant = JSON.parse_string(text)
-	if typeof(data) != TYPE_DICTIONARY:
-		_fail("%s is not JSON" % path)
-		return {}
-	var entries: Dictionary = (data as Dictionary).get("assets", data)
-	var entry: Dictionary = entries.get(shell, {})
-	for raw: Variant in entry.get("sockets", []):
-		var s: Dictionary = raw
-		if s.get("name") == "exit":
-			return s
-	_fail("%s declares no exit socket" % shell)
-	return {}
+## Every (manifest, shell, socket) triple the shipped manifests declare.
+func _joins() -> Array:
+	var out := []
+	for rel: String in ["batch015/shells/manifest.json",
+			"batch016/shells/manifest.json",
+			"batch017/shells/manifest.json",
+			"batch018/shells/manifest.json",
+			"batch019/shells/manifest.json",
+			"batch039/shells/manifest.json",
+			"batch040/shells/manifest.json"]:
+		var path := "%s/%s" % [_models, rel]
+		var text := FileAccess.get_file_as_string(path)
+		if text == "":
+			continue
+		var data: Variant = JSON.parse_string(text)
+		if typeof(data) != TYPE_DICTIONARY:
+			_fail("%s is not JSON" % path)
+			continue
+		var entries: Dictionary = (data as Dictionary).get("assets", data)
+		for shell: String in entries:
+			var entry: Variant = entries[shell]
+			if typeof(entry) != TYPE_DICTIONARY:
+				continue
+			for raw: Variant in (entry as Dictionary).get("sockets", []):
+				var socket: Dictionary = raw
+				if socket.get("kind") != "doorway":
+					continue
+				out.append({"glb": "%s/%s.glb" % [rel.get_base_dir(), shell],
+						"shell": shell, "socket": socket})
+	return out
+
+
+## The direction a doorway faces, out of the room, in world space.
+##
+## This was `place.basis * Vector3(0, 0, 1)` -- the shell's own +Z,
+## whatever the socket said. It is right for the six doorways this harness
+## first carried, all of them yaw 0 or 180, and wrong for every one that
+## faces along X: the corner pair and the yard both had their corridor
+## stub built out of the side of the room instead of out of the doorway,
+## so three joins "fell" into a gap that was not there and the yard's
+## entry "crossed" a stub it never touched. Read the yaw.
+func _facing(socket: Dictionary, place: Transform3D) -> Vector3:
+	var yaw := deg_to_rad(float(socket.get("yaw", 0.0)))
+	return (place.basis * (Basis(Vector3.UP, yaw) * Vector3(0, 0, 1))).normalized()
 
 
 ## The room, its collision, and a corridor stub attached at the socket --
@@ -108,7 +150,7 @@ func _stage(glb: String, socket: Dictionary, place: Transform3D) -> Node3D:
 
 	var at: Vector3 = place * (Vector3(socket["position"][0],
 			socket["position"][1], socket["position"][2]))
-	var out_dir: Vector3 = (place.basis * Vector3(0, 0, 1)).normalized()
+	var out_dir := _facing(socket, place)
 
 	var floor_body := StaticBody3D.new()
 	floor_body.name = "corridor_stub"
@@ -128,7 +170,10 @@ func _stage(glb: String, socket: Dictionary, place: Transform3D) -> Node3D:
 	# for all three shells and both placements, which is what gave it away:
 	# three different rooms cannot fail at the same 3.53 m. `root` is
 	# identity, so the local transform is the global one.
-	floor_body.transform = Transform3D(place.basis,
+	# Oriented to the doorway, not to the shell: the stub's length has to
+	# run the way the player walks.
+	var yaw := deg_to_rad(float(socket.get("yaw", 0.0)))
+	floor_body.transform = Transform3D(place.basis * Basis(Vector3.UP, yaw),
 			at + out_dir * (CORRIDOR / 2.0) + Vector3(0, -0.2, 0))
 	root.add_child(floor_body)
 	return root
@@ -149,10 +194,11 @@ func _collide(node: Node3D) -> void:
 		mi.add_child(body)
 
 
-func _walk(root: Node3D, socket: Dictionary, place: Transform3D) -> Dictionary:
+func _walk(root: Node3D, socket: Dictionary, place: Transform3D,
+		going_in: bool) -> Dictionary:
 	var at: Vector3 = place * (Vector3(socket["position"][0],
 			socket["position"][1], socket["position"][2]))
-	var out_dir: Vector3 = (place.basis * Vector3(0, 0, 1)).normalized()
+	var out_dir := _facing(socket, place)
 
 	# One room in the world, checked rather than assumed.
 	var staged := 0
@@ -172,60 +218,64 @@ func _walk(root: Node3D, socket: Dictionary, place: Transform3D) -> Dictionary:
 	body.add_child(shape)
 	body.floor_max_angle = FLOOR_MAX_ANGLE
 	root.add_child(body)
-	# Feet on the doorway floor, START_BACK metres inside the room.
-	body.global_position = at - out_dir * START_BACK \
+	# An exit is walked out of the room; an entry is walked into it, off
+	# the corridor the router attached. `travel` is the way the player
+	# faces either way, so everything below reads the same.
+	var travel := -out_dir if going_in else out_dir
+	body.global_position = at - travel * START_BACK \
 			+ Vector3(0, PLAYER_HEIGHT / 2.0 + 0.05, 0)
 
 	var floor_y := at.y
 	var lowest := body.global_position.y
-	var crossed := false
 	var fell := false
 	var space := 0.0
-	for _i in range(int(12.0 / STEP)):
+	var limit := LIMIT_IN if going_in else LIMIT_OUT
+	for _i in range(int(6.0 / STEP)):
 		var v := body.velocity
 		if body.is_on_floor():
 			v.y = 0.0
 		else:
 			v.y -= GRAVITY * STEP
-		var flat := out_dir * WALK_SPEED
+		var flat := travel * WALK_SPEED
 		v.x = flat.x
 		v.z = flat.z
 		body.velocity = v
 		body.move_and_slide()
 		lowest = minf(lowest, body.global_position.y - PLAYER_HEIGHT / 2.0)
-		var travelled := (body.global_position - at).dot(out_dir)
+		# The FURTHEST it got, not where it ended: a player blocked by a
+		# plinth slides back a little and the question is whether it ever
+		# made it through.
+		space = maxf(space, (body.global_position - at).dot(travel))
 		if body.global_position.y - PLAYER_HEIGHT / 2.0 < floor_y - FELL:
 			fell = true
-			space = travelled
 			break
-		if travelled > CORRIDOR - 1.0:
-			crossed = true
-			space = travelled
+		if space > limit:
 			break
 	var drop := floor_y - lowest
 	body.queue_free()
-	return {"crossed": crossed, "fell": fell,
+	return {"crossed": not fell and space >= THROUGH, "fell": fell,
+			"blocked_before_the_threshold": not fell and space < THROUGH,
 			"reached_m_past_socket": snappedf(space, 0.01),
 			"max_drop_below_threshold_m": snappedf(maxf(drop, 0.0), 0.001)}
 
 
-func _cross(shell: String, manifest: String, place: Transform3D,
-		label: String) -> void:
-	var socket := _socket_of(manifest, shell)
-	if socket.is_empty():
-		return
-	var glb := "%s/%s" % [_models, manifest.get_base_dir() + "/" + shell + ".glb"]
-	var root := _stage(glb, socket, place)
+func _cross(join: Dictionary, place: Transform3D, label: String) -> void:
+	var socket: Dictionary = join["socket"]
+	var shell: String = join["shell"]
+	var going_in: bool = str(socket.get("name", "")) == "entry"
+	var root := _stage("%s/%s" % [_models, join["glb"]], socket, place)
 	if root == null:
 		return
-	var result := _walk(root, socket, place)
+	var result := _walk(root, socket, place, going_in)
 	result["socket"] = socket["position"]
+	result["direction"] = "in" if going_in else "out"
 	result["placed"] = [snappedf(place.origin.x, 0.01),
 			snappedf(place.origin.y, 0.01), snappedf(place.origin.z, 0.01)]
-	_log["%s %s" % [shell, label]] = result
+	var key := "%s/%s %s" % [shell, socket.get("name", "?"), label]
+	_log[key] = result
 	if not result["crossed"] or result["fell"]:
-		_fail("%s %s: the player did not cross -- %s"
-				% [shell, label, JSON.stringify(result)])
+		_fail("%s: the player did not cross -- %s"
+				% [key, JSON.stringify(result)])
 	# `free`, not `queue_free`. A queued free happens at the END of the
 	# frame and all six crossings run inside one frame, so queuing left
 	# every previous room standing in the same world. The plenum's walk
@@ -235,27 +285,27 @@ func _cross(shell: String, manifest: String, place: Transform3D,
 	root.free()
 
 
-func _run() -> void:
-	var joins := [
-		["shell_hall_transit", "batch039/shells/manifest.json"],
-		["shell_plenum_helix", "batch040/shells/manifest.json"],
-		["shell_span_basin", "batch040/shells/manifest.json"],
-	]
-	for raw: Variant in joins:
-		var pair: Array = raw
-		_cross(pair[0], pair[1], Transform3D.IDENTITY, "at the origin")
-	# The placed and yawed case. A join that only works at the origin is a
-	# join that works in the preview and not in a Zone.
-	for raw: Variant in joins:
-		var pair: Array = raw
-		var placed := Transform3D(
-				Basis(Vector3.UP, deg_to_rad(37.0)),
-				Vector3(-18.5, 0.0, 46.25))
-		_cross(pair[0], pair[1], placed, "placed and yawed 37 deg")
+## Doorways known to stand over nothing, with no repair yet authorized.
+## Matched by "<shell>/<socket>", mirroring measure_doorways.KNOWN, and
+## enforced the same way in both directions: an entry here that CROSSES
+## fails, so a repair retires its exception instead of leaving a skip.
+const KNOWN_UNCROSSABLE := {}
 
-	if _log.size() != 6:
-		_fail(("%d of 6 crossings ran; a crossing that did not happen is "
-				+ "not evidence that it works") % _log.size())
+
+func _run() -> void:
+	var joins := _joins()
+	if joins.size() < 24:
+		_fail("only %d doorways were found; a crossing that did not happen "
+				% joins.size() + "is not evidence that it works")
+	var placed := Transform3D(Basis(Vector3.UP, deg_to_rad(37.0)),
+			Vector3(-18.5, 0.0, 46.25))
+	for raw: Variant in joins:
+		_cross(raw, Transform3D.IDENTITY, "at the origin")
+	# A join that only works at the origin is a join that works in the
+	# preview and not in a Zone.
+	for raw: Variant in joins:
+		_cross(raw, placed, "placed and yawed 37 deg")
+
 	for key: String in _log:
 		print("[crossing] %s: %s" % [key, JSON.stringify(_log[key])])
 
@@ -267,9 +317,26 @@ func _run() -> void:
 			f.store_string(JSON.stringify(_log, "  "))
 			f.close()
 
-	if _problems.is_empty():
-		print("[crossing] 6 crossings, 0 problem(s)")
+	# Known failures are expected; an unknown one, or a known one that
+	# quietly started working, is not.
+	var fresh: Array[String] = []
+	var matched := {}
+	for problem: String in _problems:
+		var door := problem.split(" ")[0]
+		if KNOWN_UNCROSSABLE.has(door):
+			matched[door] = true
+			continue
+		fresh.append(problem)
+	for door: String in KNOWN_UNCROSSABLE:
+		if not matched.has(door):
+			fresh.append("%s is listed as a known uncrossable join and "
+					% door + "crossed anyway. If it was repaired, delete "
+					+ "its line from KNOWN_UNCROSSABLE.")
+	if fresh.is_empty():
+		print("[crossing] %d crossings, %d known-uncrossable, 0 new problems"
+				% [_log.size(), KNOWN_UNCROSSABLE.size() * 2])
 		quit(0)
 		return
-	printerr("[crossing] %d problem(s)" % _problems.size())
+	for problem: String in fresh:
+		printerr("[crossing] UNEXPECTED: %s" % problem)
 	quit(1)

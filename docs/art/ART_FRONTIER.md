@@ -325,6 +325,39 @@ binder itself. ~~Gap 4 (`THEME` as a build argument) remains the next
 Art-owned item and is unblocked.~~ **Gap 4 was done on 2026-09-12** — see
 below. Gap 3 is now the next Art-owned item.
 
+### Doorway repairs, round 2 (2026-09-12)
+
+Report: `docs/art/reports/2026-09-12-doorway-repair-2.md`.
+
+**A correction first.** `doorways_outside_envelope()` reads **all three
+axes** and grows the envelope by `WALL_THICKNESS + SPAN_TOLERANCE` =
+**0.405 m**. The yard's 0.40 m is inside it. My envelope rule was stricter
+than Production's; it mirrors their number now. Being outside a
+zero-tolerance envelope is not a defect and is not a reason to move an
+authored socket — what gets repaired is what the assembled crossing
+demonstrates.
+
+**Repaired.** The plenum's entry moved to `_corner(0)`, over landing_0,
+where the room's own `surface_id` and `player_entry` volume already said
+the player arrives. A walkway was measured and refused: `run_0` leaves that
+landing along the same wall and a 0.5 m slab at the entry's height would
+leave 0.31 m of headroom over tread5. The yard gained `yd_threshold_±1`,
+carrying its floor the 1.20 m to the wall face — a player had been falling
+at 1.22 m. It stops at the face rather than the socket, because reaching
+the socket would have grown the shell from 85.20 m to 86.00 m.
+
+**Three checkers were wrong and each is now proved by sabotage**: the
+aperture probe stepped outward (a walled-up doorway passed), `KNOWN`
+exempted a doorway's whole identity rather than one defect, and
+`theme_for()` read `--theme concrete_facility` as no choice at all.
+`test_measure_doorways.py` is new: 14 synthetic cases, open and blocked in
+all four wall orientations.
+
+**48 crossings, 0 problems** — every doorway of all twelve shells, both
+directions, at the origin and placed and yawed 37°. Four 0.40 m steps stay
+reported and unrepaired in `KNOWN`: both corners and both yard doorways,
+all crossed.
+
 ### Theme-pack gap 4 — `THEME` is a build argument (2026-09-12)
 
 Report: `docs/art/reports/2026-09-12-theme-argument.md`.
@@ -370,12 +403,11 @@ yawed 37°, with a 0.000 m dip; the same harness fails all six against the art
 as it shipped. Two bugs in that harness were found first, both of which would
 have produced a confident wrong report — see the report.
 
-**Five more doorways are open and unrepaired**, on shells the brief said to
-preserve, listed in `KNOWN` in `tools/content/measure_doorways.py`. The one
-to authorize next is **`shell_yard_gantry`**: both its doorways are 0.40 m
-outside the envelope on X — Production's own defect class, on the axis their
-depth-only check cannot see. `shell_plenum_helix/entry` is the most severe
-(it opens onto a 68 m drop) but needs new geometry, not a coordinate.
+~~Five more doorways are open and unrepaired~~ — **superseded 2026-09-12**,
+see the section above. The yard claim was wrong twice: Production's check
+reads all three axes and allows 0.405 m of slack, so the yard's 0.40 m was
+never the defect. Its floor stopping 1.60 m short of its own doorway was,
+and that is repaired, along with the plenum's entry.
 
 `shell_span_basin`'s route/collider hold is NOT lifted by this.
 

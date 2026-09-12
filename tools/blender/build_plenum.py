@@ -223,21 +223,48 @@ def build():
             (side * (W + WALL) / 2.0, roomkit.y(D / 2.0), H / 2.0)),
             name, "wall"))
     # South wall, with the entry high in it; north wall, with the exit low.
-    for tag, z, hole_y in (("south", WALL / 2.0, TOP), ("north", D - WALL / 2.0, 0.0)):
-        span = (W - DOOR_W) / 2.0
-        for side in (-1.0, 1.0):
+    #
+    # THE ENTRY IS OVER LANDING 0, NOT OVER THE MIDDLE OF THE WALL.
+    #
+    # Both doors used to be centred at x 0, because this loop centred
+    # them. At floor level that is right -- the floor is continuous
+    # underneath. At y = TOP it put the entry over the open shaft: past
+    # its own 0.6 m sill there was nothing at all, and the first floor at
+    # that height was landing_0, 7.9 m away in -x, over a 68 m drop.
+    #
+    # The room already said where the player arrives. `surface_id` on the
+    # entry socket says `landing_0`, and the `player_entry` volume below
+    # is at `_corner(0)`, which IS landing_0. Only the hole in the wall
+    # disagreed, so the hole moved rather than anything else.
+    #
+    # A WALKWAY WAS THE OTHER OPTION AND THE GEOMETRY REFUSES IT. run_0
+    # leaves landing_0 along this same wall, descending east, and rises to
+    # meet anything laid at the entry's height: a 0.5 m slab from the door
+    # west to the top tread would leave 0.31 m of headroom over tread5 and
+    # 1.12 m over tread4, sealing the top of the helix. Measured, not
+    # estimated -- see the report.
+    #
+    # The door is 2.4 m wide over a 3.0 m landing, so it clears the
+    # landing's edges by 0.3 m on each side, and `_corner(0)` is read
+    # rather than typed: move the helix and the door follows it.
+    for tag, z, hole_y, door_x in (("south", WALL / 2.0, TOP, _corner(0)[0]),
+                                   ("north", D - WALL / 2.0, 0.0, 0.0)):
+        jamb_w, jamb_e = door_x - DOOR_W / 2.0, door_x + DOOR_W / 2.0
+        for side, edge, jamb in ((-1.0, -W / 2.0, jamb_w),
+                                 (1.0, W / 2.0, jamb_e)):
             parts.append(_paint(brushkit.block(
-                "%s_%s_%d" % (name, tag, int(side)), (span, WALL, H),
-                (side * (DOOR_W + span) / 2.0, roomkit.y(z), H / 2.0)),
+                "%s_%s_%d" % (name, tag, int(side)),
+                (abs(jamb - edge), WALL, H),
+                ((edge + jamb) / 2.0, roomkit.y(z), H / 2.0)),
                 name, "wall"))
         if hole_y > 0.0:
             parts.append(_paint(brushkit.block(
                 "%s_%s_sill" % (name, tag), (DOOR_W, WALL, hole_y),
-                (0.0, roomkit.y(z), hole_y / 2.0)), name, "wall"))
+                (door_x, roomkit.y(z), hole_y / 2.0)), name, "wall"))
         head = H - hole_y - DOOR_H
         parts.append(_paint(brushkit.block(
             "%s_%s_head" % (name, tag), (DOOR_W, WALL, head),
-            (0.0, roomkit.y(z), H - head / 2.0)), name, "wall"))
+            (door_x, roomkit.y(z), H - head / 2.0)), name, "wall"))
 
     # --- the hanging machine ------------------------------------------
     mh = MACH / 2.0
@@ -495,7 +522,7 @@ def main():
 
     entry["sockets"] = [
         roomcontract.socket("entry", "doorway",
-                            (0.0, 0.0, TOP), yaw=180.0,
+                            (_corner(0)[0], 0.0, TOP), yaw=180.0,
                             width=DOOR_W, height=DOOR_H,
                             surface_id="landing_0"),
         roomcontract.socket("exit", "doorway",

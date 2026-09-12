@@ -64,20 +64,34 @@ DEFAULT_THEME = "concrete_facility"
 
 
 def _requested_theme():
-    """The theme named on the command line, in the environment, or neither.
+    """(theme, was it asked for) -- and the second half is load-bearing.
 
-    Blender puts everything after `--` into `sys.argv`, so a builder run
-    through Blender and one run through plain Python read the same flag.
+    "Which theme" and "did somebody choose one" are different questions,
+    and answering only the first got this wrong: `--theme
+    concrete_facility` names the default, so a check of the NAME reads it
+    as no choice at all. `build_plenum` then stayed rusted industrial
+    through a run that explicitly asked for concrete, which is the
+    opposite of what the argument is for -- and the run would have written
+    the shipped tree while doing it, because isolation was keyed on the
+    same wrong question.
+
+    So the flag being PRESENT is what decides both, and the name only says
+    which theme. Blender puts everything after `--` into `sys.argv`, so a
+    builder run through Blender and one run through plain Python read the
+    same flag.
     """
     argv = sys.argv
     if "--" in argv:
         argv = argv[argv.index("--") + 1:]
     for i, token in enumerate(argv):
         if token == "--theme" and i + 1 < len(argv):
-            return argv[i + 1]
+            return argv[i + 1], True
         if token.startswith("--theme="):
-            return token.split("=", 1)[1]
-    return os.environ.get("ART_THEME") or DEFAULT_THEME
+            return token.split("=", 1)[1], True
+    from_env = os.environ.get("ART_THEME")
+    if from_env:
+        return from_env, True
+    return DEFAULT_THEME, False
 
 
 def theme():
@@ -87,7 +101,7 @@ def theme():
     every surface from a silently empty table and export an asset nobody
     could tell from a real one by looking at it.
     """
-    name = _requested_theme()
+    name, _ = _requested_theme()
     known = pal.theme_names()
     if name not in known:
         raise SystemExit(
@@ -97,21 +111,25 @@ def theme():
 
 
 THEME = theme()
-IS_DEFAULT_THEME = THEME == DEFAULT_THEME
+
+#: Did somebody ASK for a theme, rather than get the default by saying
+#: nothing? Everything below keys on this and not on the theme's name --
+#: see `_requested_theme`.
+THEME_EXPLICIT = _requested_theme()[1]
 
 
 def theme_for(house):
     """For a builder whose own house theme is not the pack default.
 
     `build_plenum` is rusted industrial by authorial choice, not by
-    inheriting a default, and an ordinary build has to keep it -- the
-    byte-identity of the shipped shell depends on it. A `--theme` run
-    still has to reach it, so the argument wins when one is given and the
-    builder's own choice stands when it is not.
+    inheriting a default, so a run that asked for nothing has to keep it --
+    the byte-identity of the shipped shell depends on that. A run that
+    asked for a theme overrides it, INCLUDING a run that asked for
+    `concrete_facility`: naming the default is still naming one.
     """
-    return house if IS_DEFAULT_THEME else THEME
+    return THEME if THEME_EXPLICIT else house
 
-if IS_DEFAULT_THEME:
+if not THEME_EXPLICIT:
     MODEL_DIR = os.path.join(REPO_ROOT, "assets", "models")
     TEXTURE_DIR = os.path.join(REPO_ROOT, "assets", "textures")
 else:
@@ -817,7 +835,7 @@ def _refuse_shipped_path(out_path, kind):
     otherwise replace twelve approved shells and be noticed as binary
     churn in a diff, days later.
     """
-    if IS_DEFAULT_THEME:
+    if not THEME_EXPLICIT:
         return
     shipped = os.path.join(REPO_ROOT, "assets", kind) + os.sep
     if os.path.abspath(out_path).startswith(os.path.abspath(shipped)):

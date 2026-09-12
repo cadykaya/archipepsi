@@ -1950,7 +1950,7 @@
      "ranged",
      "wide"
     ],
-    "collision": 39,
+    "collision": 41,
     "offers": [
      {
       "name": "rail_crane",
@@ -1991,7 +1991,7 @@
     ],
     "surface_probe": []
    },
-   "triangles": 516
+   "triangles": 540
   }
  ]
 }

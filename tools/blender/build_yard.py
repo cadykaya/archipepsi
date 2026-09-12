@@ -66,6 +66,14 @@ WALL = 0.60
 DOOR_W, DOOR_H = 2.40, 3.20
 
 IN_X = W / 2.0 - WALL
+#: Where a joining corridor attaches, on either side.
+DOOR_OUT = W / 2.0 + 1.0
+#: The outer face of the short walls -- as far as the threshold below goes.
+#: NOT out to DOOR_OUT: the socket stands 0.40 m proud of the wall, and
+#: floor built out to meet it grows the shell's own `size` from 85.20 to
+#: 86.00, which is a dimension Production's composer derives chamber
+#: dimensions from. Repairing a doorway is not a reason to resize a room.
+WALL_FACE = W / 2.0 + WALL
 CAT_Y, CRANE_Y = 8.0, 12.0
 CAT_W = 3.4
 DOCK_W, DOCK_D = 10.0, 5.0
@@ -106,6 +114,34 @@ def build():
 
     # --- the box ------------------------------------------------------
     surface("floor", -IN_X, IN_X, WALL, D - WALL, 0.0, 1.0)
+    # THE FLOOR HAS TO REACH THE DOORWAY, AND IT DID NOT.
+    #
+    # The slab above is inset by WALL on every edge, which is right for a
+    # floor and wrong for a threshold. Between its edge at IN_X (41.40)
+    # and the socket at DOOR_OUT (43.00) there was 1.60 m of nothing: the
+    # 0.60 m inset, the 0.60 m wall with no sill under its opening, and
+    # the 0.40 m the socket stands proud of the wall.
+    #
+    # This carries the floor across the first 1.20 m, to the wall's outer
+    # face, and no further -- the last 0.40 m is the same step both corner
+    # shells carry today and a player crosses, and building out to the
+    # socket would have widened the shell from 85.20 m to 86.00 m.
+    #
+    # `ZoneBuilder` attaches the corridor AT the socket, so a player
+    # walking in from it fell 1.22 m past the doorway -- measured, at the
+    # origin and placed and yawed, in `tools/content/crossing_test.gd`.
+    # The socket itself is fine: it is inside the slack Production's own
+    # envelope check allows, and an authored coordinate is not moved to
+    # satisfy a checker. The floor is what was missing.
+    #
+    # Geometry only, declaring no Surface -- the same as the hall's and
+    # the span's sill tops, and the plenum's north threshold.
+    for side in (-1.0, 1.0):
+        parts.append(_paint(brushkit.block(
+            "%s_threshold_%d" % (name, int(side)),
+            (WALL_FACE - IN_X, DOOR_W, 1.0),
+            (side * (WALL_FACE + IN_X) / 2.0, roomkit.y(D / 2.0), -0.5)),
+            name, "floor"))
     parts.append(_paint(brushkit.block(
         "%s_roof" % name, (W, D, WALL),
         (0.0, roomkit.y(D / 2.0), H + WALL / 2.0)), name, "ceiling"))
@@ -244,11 +280,11 @@ def main():
 
     entry["sockets"] = [
         roomcontract.socket("entry", "doorway",
-                            (-W / 2.0 - 1.0, roomkit.y(D / 2.0), 0.0),
+                            (-DOOR_OUT, roomkit.y(D / 2.0), 0.0),
                             yaw=-90.0, width=DOOR_W, height=DOOR_H,
                             surface_id="floor"),
         roomcontract.socket("exit", "doorway",
-                            (W / 2.0 + 1.0, roomkit.y(D / 2.0), 0.0),
+                            (DOOR_OUT, roomkit.y(D / 2.0), 0.0),
                             yaw=90.0, width=DOOR_W, height=DOOR_H,
                             surface_id="floor"),
     ]

@@ -99,6 +99,15 @@ python3 tools/content/verify_exported_geometry.py >/dev/null || \
 # shells shipped an `exit` 2 m past their own back wall and twelve shells
 # passed every other check, because every other shell rule is about a SPAN
 # and this one is about a POINT.
+# The doorway checker against geometry built to make it fail, before it is
+# trusted on geometry we believe. Its aperture probe stepped the wrong way
+# for a while and no shipped shell could have shown it.
+python3 tools/content/test_measure_doorways.py >/dev/null || \
+  fail "test-doorways: the doorway checker no longer tells an open doorway
+    from a blocked one, in one of the four wall orientations. Run
+
+    python3 tools/content/test_measure_doorways.py"
+
 python3 tools/content/measure_doorways.py >/dev/null || \
   fail "measure-doorways: a shell doorway is outside its own room, blocked,
     or standing over nothing -- or a finding listed as KNOWN was repaired

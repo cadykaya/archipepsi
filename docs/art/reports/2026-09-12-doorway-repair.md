@@ -106,6 +106,19 @@ Neither bug was in the art. Both would have produced a confident report.
 
 ## Five more doorways, on shells I was told to preserve
 
+> **Corrected 2026-09-12.** This section said Production's
+> `doorways_outside_envelope()` compares `exit` z against `size` depth and
+> so could not see `shell_yard_gantry`. **Both halves were wrong.** It
+> tests all three axes, and it grows the envelope by
+> `ChamberBuilders.WALL_THICKNESS + SPAN_TOLERANCE` = **0.405 m** — so the
+> yard's 0.40 m is *inside* its tolerance and is not the defect they
+> reported. Being outside a zero-tolerance envelope is not itself a
+> defect, and it is not a reason to move an authored socket. What the yard
+> actually had was a **demonstrated gap**: its floor stopped 1.60 m short
+> of the socket and a player walking in fell at 1.22 m. That is repaired —
+> see `2026-09-12-doorway-repair-2.md`.
+
+
 Measuring all twelve rather than the three turned up five findings I have
 **not** repaired, because the brief authorized three shells. They are named
 in `KNOWN` in `tools/content/measure_doorways.py`, enforced in both
@@ -114,15 +127,16 @@ day any is repaired the check says so instead of going quiet.
 
 | doorway | finding |
 | --- | --- |
-| **`shell_yard_gantry/entry`** | **0.40 m outside its envelope on X** — the same defect Production reported, on the axis a depth-only check cannot see. No floor at the socket either. |
-| **`shell_yard_gantry/exit`** | the same, mirrored. |
+| **`shell_yard_gantry/entry`** | ~~0.40 m outside its envelope on X~~ — **struck, see the correction above.** The real finding was no floor at the socket: **repaired 2026-09-12.** |
+| **`shell_yard_gantry/exit`** | the same, mirrored. **Repaired.** |
 | **`shell_plenum_helix/entry`** | **opens onto air.** Past the 0.6 m sill the nearest floor at y 68 is `pl_run_0_tread6`, **4.57 m away in −x**, and the drop is 68 m. Its `surface_id` says `landing_0`, which is 7.9 m away. |
 | `shell_corner_left/exit` | `cl_floor` stops at x 3.00; the socket is on the wall's outer face at 3.40. A 0.4 m threshold gap. |
 | `shell_corner_right/exit` | the same, mirrored. |
 
-The yard is the one to authorize next: it is Production's own defect class,
-and their `doorways_outside_envelope()` will not report it. The plenum's
-entry is the most severe — but repairing it means **new geometry** (a landing
+~~The yard is the one to authorize next: it is Production's own defect class,
+and their `doorways_outside_envelope()` will not report it.~~ **Struck** —
+see the correction above; the yard's coordinate is fine and its floor was
+not. The plenum's entry is the most severe — but repairing it means **new geometry** (a landing
 in front of the door, meeting the helix), which is a design decision and not
 a targeted repair.
 

@@ -29,6 +29,19 @@ is the test working: delete the three names.
 
 ## One thing worth your attention
 
+> **Corrected 2026-09-12.** My first reply said Production's
+> `doorways_outside_envelope()` compares `exit` z against `size` depth and
+> so could not see `shell_yard_gantry`. **Both halves were wrong.** It
+> tests all three axes, and it grows the envelope by
+> `ChamberBuilders.WALL_THICKNESS + SPAN_TOLERANCE` = **0.405 m** — so the
+> yard's 0.40 m is *inside* its tolerance and is not the defect they
+> reported. Being outside a zero-tolerance envelope is not itself a
+> defect, and it is not a reason to move an authored socket. What the yard
+> actually had was a **demonstrated gap**: its floor stopped 1.60 m short
+> of the socket and a player walking in fell at 1.22 m. That is repaired —
+> see `2026-09-12-doorway-repair-2.md`.
+
+
 `shell_yard_gantry` has the **same defect you reported**, on the other axis:
 its `entry` at x −43.0 and `exit` at x +43.0 are both **0.40 m outside** an
 envelope that runs −42.60 … 42.60. `doorways_outside_envelope()` compares

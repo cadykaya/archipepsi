@@ -27,6 +27,13 @@ The feature is the easy half. The half worth checking is the blast radius:
     otherwise paint every surface from an empty table and export an asset
     nobody could tell from a real one by looking at it.
 
+  * **Asking for the default is still asking.** `--theme concrete_facility`
+    names the theme the pack already uses, so a check of the NAME reads it
+    as no choice at all -- and `build_plenum`, whose house theme is rusted
+    industrial, stayed rusted through a run that explicitly asked for
+    concrete, while writing the shipped tree. Both halves key on whether
+    the flag was PRESENT now, and both halves are checked here.
+
 `common.py` imports `bpy`, so each case runs in its own subprocess through
 Blender rather than by importing it here.
 """
@@ -43,7 +50,7 @@ sys.path.insert(0, os.path.join(%r, "tools", "blender"))
 import common
 print("PROBE " + json.dumps({
     "theme": common.THEME,
-    "is_default": common.IS_DEFAULT_THEME,
+    "explicit": common.THEME_EXPLICIT,
     "models": os.path.relpath(common.MODEL_DIR, %r),
     "textures": os.path.relpath(common.TEXTURE_DIR, %r),
     "house_override": common.theme_for("rusted_industrial"),
@@ -86,6 +93,9 @@ def main():
         if got["theme"] != "concrete_facility":
             problems.append("the default theme is '%s', not concrete_facility"
                             % got["theme"])
+        if got["explicit"]:
+            problems.append("a run with no argument was read as an explicit "
+                            "choice, so it would build into scratch")
         if got["models"] != os.path.join("assets", "models"):
             problems.append("the default build writes models to %s, not "
                             "assets/models" % got["models"])
@@ -96,7 +106,29 @@ def main():
             problems.append("theme_for() lost a builder's own house theme on "
                             "a default build: %s" % got["house_override"])
 
-    # 2. a second theme -> scratch, and nowhere near the pack.
+    # 2. asking for the DEFAULT by name is still asking: the override
+    #    reaches a house-themed builder, and the run is isolated anyway.
+    got, run = probe(["--theme", "concrete_facility"])
+    if got is None:
+        problems.append("--theme concrete_facility did not resolve:\n%s"
+                        % run.stderr[-400:])
+    else:
+        if not got["explicit"]:
+            problems.append("--theme concrete_facility was read as no "
+                            "choice at all")
+        if got["house_override"] != "concrete_facility":
+            problems.append(
+                "--theme concrete_facility did not override a builder's "
+                "house theme: theme_for() returned '%s'"
+                % got["house_override"])
+        want = os.path.join("assets", "themed", "concrete_facility", "models")
+        if got["models"] != want:
+            problems.append(
+                "--theme concrete_facility wrote to %s. It changes what a "
+                "house-themed builder exports, so it is a variant build "
+                "and must be isolated like any other." % got["models"])
+
+    # 3. a second theme -> scratch, and nowhere near the pack.
     for args, env, how in ((["--theme", "temple_ruin"], None, "--theme"),
                            ([], {"ART_THEME": "temple_ruin"}, "ART_THEME")):
         got, run = probe(args, env)
@@ -114,7 +146,7 @@ def main():
             problems.append("%s did not reach a builder with its own house "
                             "theme: %s" % (how, got["house_override"]))
 
-    # 3. an unknown theme must refuse rather than paint from nothing.
+    # 4. an unknown theme must refuse rather than paint from nothing.
     got, run = probe(["--theme", "temple_ruins"])
     if got is not None:
         problems.append("'temple_ruins' built as '%s' instead of being "
