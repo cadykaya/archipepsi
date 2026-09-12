@@ -1332,8 +1332,8 @@ nothing about what a player reaches.
   From DORMANT, `abandon_zone` returns them to the pool, the Hub goes
   `ZONE_AVAILABLE`, and the next Zone generates and draws on those ids.
 
-**Two defects, reported and NOT fixed here** — they are outside the
-return-pad repair and widening it was not authorised.
+**Two defects, both AUTHORISED and repaired** — see §5.7b. They are
+kept here as the diagnosis.
 
 1. **The Hub's only offer after exhaustion is the loop.** In
    `ZONE_DORMANT` the portal is enabled and `resume_zone_id` names the
@@ -1351,6 +1351,70 @@ return-pad repair and widening it was not authorised.
    looks — `_apply` is never reached, so the save is unchanged and the
    player can still abandon — but it is an exception where a refusal
    belongs, and it is only reachable because of defect 1.
+
+
+### 5.7b The failed Zone is a Zone to discard — **done, bridge side**
+
+**Owner decision, 2026-09-12**, on both §5.7a findings.
+
+**A Zone whose layout attempts are exhausted and which never had an
+accepted manifest is not enterable.** `ZoneRecord.layout_exhausted` is
+the predicate: no manifest, `layout_state == "REFUSED"`, and the budget
+spent. Three facts already in the record, read together — **no fourth
+field and no new `ZoneState`**, because a second place recording the
+same thing is a place it can disagree with itself.
+
+`hub_mode_for(record)` is the ONE function that turns it into a Hub
+mode, and the mode is `ZONE_FAILED`: derived on every snapshot, never
+stored. It is in `ZONE_HELD_MODES` (the Zone still reserves its Checks)
+and deliberately in neither `ZONE_ENTERABLE_MODES` nor
+`ZONE_REQUEST_MODES`, so `portal_enabled` and `accepts_zone_request` are
+both false without anything setting them. `enter_zone` refuses it at the
+transition as well, so a replayed intent or a debug command cannot route
+around the Hub.
+
+**The offer is to discard, and `abandon_zone` already is that
+transition.** Nothing is abandoned automatically: releasing the
+locations is a decision with a cost. Afterwards the ids come back
+through `abandon_zone` and no other path, the Hub may request the next
+Zone, that Zone may allocate the released ids, and the discarded Zone
+stays discarded. All of it asserted through the handlers.
+
+**The budget is spent exactly once.** `layout_refusals` saturates at
+`MAX_LAYOUT_REFUSALS` — which now has ONE definition, in `protocol`,
+read by the transition that spends it and the record that reports it
+spent — and a further `layout_result` for an exhausted Zone is an
+ignored stale result: no notification, no recompose, and the save
+object is unchanged. 120 retries leave the field at 3 and the save
+loading. A resend after a dropped connection is the ordinary case.
+
+**A committed Zone is never swept in.** Its replay may be refused any
+number of times; it keeps its manifest, saturates the same counter,
+stays `ZONE_DORMANT` and stays enterable.
+
+> **For Prod — the Hub half, and it is small.**
+>
+> `hub.gd` already has the control. `AbandonConsole` has the wording
+> ("[E] ABANDON HELD ZONE"), the confirm step ("CONFIRM ABANDON? —
+> unclaimed Checks return to the pool") and the intent. Two changes:
+>
+> 1. **`_visible_modes` gains `"ZONE_FAILED"`.** It is currently
+>    `["GENERATING", "ZONE_READY", "ZONE_ACTIVE"]`, so the console is
+>    hidden for a Zone nobody is standing in — which is every failed
+>    one.
+> 2. **Take the id from `hub.discard_zone_id`, not from
+>    `BridgeClient.active_zone()`.** A failed Zone is DORMANT, so
+>    `active_zone()` is empty and the console has nothing to send.
+>    `discard_zone_name` is there for the label.
+>
+> Nothing else changes. `_on_portal_activated` needs no new arm:
+> `ZONE_FAILED` is not in `ZONE_ENTERABLE_MODES`, the portal is
+> disabled, and the headline already says "ZONE FAILED TO BUILD — It
+> could not be laid out. Discard it to return its Checks to the pool."
+>
+> **The only way to make this wrong is to leave the player a mode with
+> no control**, so if the console cannot be shown in `ZONE_FAILED`, say
+> so rather than adding a second way in.
 
 
 ## 6. What remains in this lane

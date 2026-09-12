@@ -150,6 +150,44 @@ each test walks the *adjacent* path rather than the originally reported one.
     the door on a Zone already on disk — and `hub.revisitable` lists the
     finished Zones that stay open, bounded only by how many the campaign
     finished.
+65b. **A Zone that never laid out is not a way back in, and the offer
+    is to discard it.** When every layout attempt is refused and no
+    manifest was ever accepted, `ZoneRecord.layout_exhausted` is true
+    and the Hub shows `ZONE_FAILED`: `portal_enabled` and
+    `accepts_zone_request` are false, `resume_zone_id` is empty, and
+    `hub.discard_zone_id` names the Zone the abandon console acts on.
+    `enter_zone` refuses it at the transition too, so a replayed intent
+    cannot route around the Hub. The Hub used to advertise a way back
+    into geometry the validator had refused three times: the player
+    walked in, the layout was refused again, and it went dormant once
+    more — the only affordance on screen was the loop.
+
+    **Nothing is abandoned automatically.** Discarding releases the
+    Zone's allocated locations, which is a decision with a cost and the
+    player's to make. Afterwards the locations return through
+    `abandon_zone` and no other path, the Hub may request the next Zone,
+    that Zone may legally allocate the released ids, and the discarded
+    Zone stays discarded.
+
+    **`ZONE_FAILED` is DERIVED, never persisted.** `state`,
+    `layout_state` and "is there a manifest" already answer the
+    question; a fourth field recording the same fact is a fact that can
+    disagree with itself. `hub_mode_for` is the one place that decides,
+    and `MAX_LAYOUT_REFUSALS` has one definition that both the
+    transition spending the budget and the record reporting it spent
+    read. The state is distinct from a **committed** Zone whose replay
+    was later refused (that one keeps its manifest and stays
+    re-enterable), from a Zone with attempts still left (recomposed),
+    and from one temporarily pending a layout.
+
+65c. **The refusal budget is spent exactly once.** `layout_refusals` is
+    persisted and bounded, and no sequence of `layout_result` messages
+    may push it past that bound: it saturates at `MAX_LAYOUT_REFUSALS`,
+    and a further result for an exhausted Zone is an ignored stale
+    result that leaves the save unchanged — never a schema exception out
+    of a transition. A resend after a dropped connection is the ordinary
+    case and is not an error.
+
 66. *(needs the shop)* **Buying leaves stock and enters the ledger
     atomically.** After a purchase the item is gone from `shop.stock` and
     present in `pending_checks`, and `coins_spent` has risen by its cost. A

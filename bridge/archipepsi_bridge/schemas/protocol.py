@@ -255,6 +255,29 @@ class ZoneRecord(Strict):
     #: not stuck -- but a Zone that cannot be composed soundly must stop
     #: trying, or a client that refuses every layout spins forever.
     layout_refusals: int = Field(default=0, ge=0, le=99)
+
+    @property
+    def layout_exhausted(self) -> bool:
+        """Every layout attempt failed, and none was ever accepted.
+
+        **Three existing facts, read together; no fourth field.** No
+        manifest means nothing was ever committed. `REFUSED` means the
+        last attempt was rejected rather than merely pending. The
+        spent budget means the bridge has stopped composing it again.
+
+        This is the state the Hub must not offer as a way back in, and
+        it is deliberately NOT any of:
+
+        * a **committed** Zone whose replay was later refused — that one
+          has a manifest, keeps it, and stays re-enterable;
+        * a Zone with attempts **still left**, which goes back to
+          `PENDING_GENERATION` and is composed again;
+        * a Zone **temporarily pending** a layout, which has refused
+          nothing yet.
+        """
+        return (self.manifest is None
+                and self.layout_state == "REFUSED"
+                and self.layout_refusals >= MAX_LAYOUT_REFUSALS)
     #: `_LOC`, not `_NON_FINALE_LOC`: the finale Zone legitimately holds the
     #: goal. `_finale_owns_the_goal` below splits the two cases — this is the
     #: ONE model in the packet allowed to carry Check 030 on an
@@ -904,11 +927,22 @@ HubMode = Literal[
     "ZONE_READY",        # a Zone is GENERATED but not yet entered
     "ZONE_ACTIVE",       # a Zone is ACTIVE; portal resumes it
     "ZONE_DORMANT",      # a Zone was left with work outstanding; portal returns
+    "ZONE_FAILED",       # no layout was ever accepted; the offer is to discard
     "ZONE_AVAILABLE",    # portal generates a new ordinary Zone
     "FINALE_ONLY",       # finale unlocked and nothing ordinary remains
     "WAITING_FOR_AP",    # nothing eligible; other players hold progression
     "ALL_CHECKS_CLEARED",  # everything done; postgame, nothing left to play
 ]
+
+#: How many refused layouts a Zone gets before it stops being composed
+#: again. Three, because a second attempt is an ordinary bad roll and a
+#: fourth is a defect nothing here can fix by trying harder.
+#:
+#: Defined here rather than in `transitions`, which imports it, because
+#: `ZoneRecord.layout_exhausted` reads it too and a budget spelled twice
+#: is a budget that can disagree with itself about being spent.
+MAX_LAYOUT_REFUSALS = 3
+
 
 #: Zone state -> Hub mode, **total over `ZoneState` by assertion**.
 #:
@@ -942,6 +976,24 @@ assert set(ZONE_STATE_HUB_MODE) == set(get_args(ZoneState)), (
     "missing from this map raises KeyError on the next snapshot")
 
 
+def hub_mode_for(record) -> str:
+    """The Hub mode a held Zone shows. **The only place that decides.**
+
+    `ZONE_STATE_HUB_MODE` answers "what does this state normally show",
+    and one case needs more than the state: a Zone whose every layout
+    attempt was refused and which never had a manifest is DORMANT like
+    any other, and it must not be offered as a way back in.
+
+    **Derived, never stored.** There is no `FAILED` `ZoneState` and
+    there must not be: `state` plus `layout_state` plus "is there a
+    manifest" already answer the question, and a fourth field recording
+    the same fact is a fact that can disagree with itself.
+    """
+    if getattr(record, "layout_exhausted", False):
+        return "ZONE_FAILED"
+    return ZONE_STATE_HUB_MODE[record.state]
+
+
 #: The only two modes in which a `request_next_zone` intent is legal. Every
 #: other mode either already holds a Zone or has nothing to allocate. Both
 #: kinds of generation — ordinary and finale — are covered: the finale is
@@ -955,8 +1007,11 @@ ZONE_REQUEST_MODES = ("ZONE_AVAILABLE", "FINALE_ONLY")
 #: blocks generation, but nothing said so, and the Hub fell through to
 #: ZONE_AVAILABLE and offered to design a new one. The bridge then
 #: refused with "still holds locations" and there was no way back in.
+#: `ZONE_FAILED` is held too: the Zone still reserves its Checks, which
+#: is exactly why discarding it is an explicit act with a cost rather
+#: than something the bridge does on the player's behalf.
 ZONE_HELD_MODES = ("GENERATING", "ZONE_READY", "ZONE_ACTIVE",
-                   "ZONE_DORMANT")
+                   "ZONE_DORMANT", "ZONE_FAILED")
 
 #: Modes in which the player is STANDING IN a Zone, so `active_zone` is
 #: non-null. Not the same question as `ZONE_HELD_MODES`, and conflating
@@ -983,9 +1038,18 @@ ZONE_OCCUPIED_MODES = ("GENERATING", "ZONE_READY", "ZONE_ACTIVE")
 #: nobody rebinds either. So `ZONE_ENTER_MODES` is gone rather than kept
 #: equal to this by hand, and the engine's `HubController` spells it the
 #: same way.
+#: **`ZONE_FAILED` is deliberately absent.** That is the whole of the
+#: repair on this side: the Hub used to advertise RETURN TO ZONE over a
+#: Zone whose geometry the validator had refused three times, the player
+#: walked in, the layout was refused again, and it went dormant once
+#: more. The only affordance on screen was the loop.
 ZONE_ENTERABLE_MODES = ("ZONE_READY", "ZONE_ACTIVE", "ZONE_DORMANT")
 
 assert set(ZONE_ENTERABLE_MODES) <= set(get_args(HubMode))
+assert set(ZONE_HELD_MODES) <= set(get_args(HubMode))
+assert "ZONE_FAILED" not in ZONE_ENTERABLE_MODES + ZONE_REQUEST_MODES, (
+    "a Zone that never laid out is neither enterable nor a reason to "
+    "start another; it is a Zone to discard")
 
 
 class ZoneHandle(Strict):
@@ -1048,25 +1112,22 @@ class HubStatus(Strict):
     resume_zone_id: str = Field(default="", max_length=C.MAX_AP_STRING_LEN)
     resume_zone_name: str = Field(default="", max_length=C.MAX_TEXT_LEN)
 
-    #: **Is the held Zone one a player can actually walk back into?**
+    #: WHICH Zone the discard affordance acts on, in `ZONE_FAILED` only.
+    #: Empty otherwise, and a non-empty value IS the offer — there is no
+    #: separate boolean, for the same reason `revisitable` has none.
     #:
-    #: `AMALGAM_BRIDGE.md` §5.7a defect 1, and the owner's decision on
-    #: it: a Zone that was NEVER ACCEPTED and has spent its layout
-    #: attempts is not enterable. The portal used to offer "RETURN TO
-    #: ZONE" for one anyway — into geometry the validator had refused
-    #: three times — and entering succeeded, the client sent a layout,
-    #: it was refused, and the Zone went DORMANT again. The escape
-    #: (abandon) existed and nothing pointed at it.
+    #: **A separate name from `resume_zone_id`, deliberately.** This Zone
+    #: must not be entered, and a single id field whose safety depended
+    #: on the reader also checking the mode is precisely how the portal
+    #: came to light up over a Zone it could not enter. A consumer
+    #: holding `discard_zone_id` cannot accidentally resume with it.
     #:
-    #: A FACT, NOT AN AFFORDANCE. This is `no committed manifest AND
-    #: refusals spent`, computed where `MAX_LAYOUT_REFUSALS` lives; what
-    #: the Hub shows instead is the client's to decide. A client that
-    #: reads presentation text to tell these apart is reading the wrong
-    #: field, which is why this one exists.
-    #:
-    #: A genuinely committed dormant Zone — one with a manifest, walked
-    #: out of with work unfinished — is enterable and this stays false.
-    resume_layout_exhausted: bool = False
+    #: The Hub already has the control: `hub.gd`'s `AbandonConsole`,
+    #: with its confirm step and "unclaimed Checks return to the pool".
+    #: It reads `BridgeClient.active_zone()` for the id, which is empty
+    #: for a Zone nobody is standing in — so this is what it needs.
+    discard_zone_id: str = Field(default="", max_length=C.MAX_AP_STRING_LEN)
+    discard_zone_name: str = Field(default="", max_length=C.MAX_TEXT_LEN)
 
     #: Finished Zones the player may walk back into, newest first.
     #:

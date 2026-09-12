@@ -483,9 +483,10 @@ func _on_enter_zone() -> void:
 	# `enter_zone` that arrives from anywhere else -- a stale prompt, a
 	# queued input, a driver -- must not restart the refusal loop the
 	# owner's decision closes.
-	if HubController.layout_exhausted():
-		hud.toast("That Zone cannot be built. Discard it at the abandon "
-				+ "console.", Color(0.9, 0.5, 0.3))
+	if BridgeClient.hub_mode() == "ZONE_FAILED" \
+			or zid == HubController.discard_target():
+		hud.toast("That Zone cannot be built. Discard it at the console.",
+				Color(0.9, 0.5, 0.3))
 		return
 	_entering_zone = true
 	BridgeClient.send_intent({"type": "enter_zone", "zone_id": zid})

@@ -3172,6 +3172,7 @@
               "ZONE_READY",
               "ZONE_ACTIVE",
               "ZONE_DORMANT",
+              "ZONE_FAILED",
               "ZONE_AVAILABLE",
               "FINALE_ONLY",
               "WAITING_FOR_AP",
@@ -3223,10 +3224,17 @@
             "title": "Resume Zone Name",
             "type": "string"
           },
-          "resume_layout_exhausted": {
-            "default": false,
-            "title": "Resume Layout Exhausted",
-            "type": "boolean"
+          "discard_zone_id": {
+            "default": "",
+            "maxLength": 96,
+            "title": "Discard Zone Id",
+            "type": "string"
+          },
+          "discard_zone_name": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Discard Zone Name",
+            "type": "string"
           },
           "revisitable": {
             "default": [],
@@ -7938,6 +7946,7 @@
               "ZONE_READY",
               "ZONE_ACTIVE",
               "ZONE_DORMANT",
+              "ZONE_FAILED",
               "ZONE_AVAILABLE",
               "FINALE_ONLY",
               "WAITING_FOR_AP",
@@ -7989,10 +7998,17 @@
             "title": "Resume Zone Name",
             "type": "string"
           },
-          "resume_layout_exhausted": {
-            "default": false,
-            "title": "Resume Layout Exhausted",
-            "type": "boolean"
+          "discard_zone_id": {
+            "default": "",
+            "maxLength": 96,
+            "title": "Discard Zone Id",
+            "type": "string"
+          },
+          "discard_zone_name": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Discard Zone Name",
+            "type": "string"
           },
           "revisitable": {
             "default": [],

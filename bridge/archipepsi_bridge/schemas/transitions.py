@@ -34,6 +34,7 @@ try:
     from . import constants as C
     from .echo import EchoInterpretation
     from .protocol import (
+        MAX_LAYOUT_REFUSALS,
         OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         TERMINAL_ZONE_STATES,
         CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
@@ -44,6 +45,7 @@ except ImportError:  # pragma: no cover
     import constants as C
     from echo import EchoInterpretation
     from protocol import (
+        MAX_LAYOUT_REFUSALS,
         OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         TERMINAL_ZONE_STATES,
         CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
@@ -159,6 +161,17 @@ def enter_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
     if rec.state not in REVISITABLE_ZONE_STATES:
         raise ValueError(
             f"Zone '{zone_id}' is {rec.state}; nothing to enter")
+    # A ZONE THAT NEVER LAID OUT IS NOT ENTERABLE (owner decision,
+    # 2026-09-12). It is DORMANT like any other, and the only thing
+    # behind the portal is geometry the validator has already refused
+    # three times: entering it gets the layout refused again and puts it
+    # straight back. Refused here rather than only in the Hub, so a
+    # replayed intent or a debug command cannot route around it.
+    if rec.layout_exhausted:
+        raise ValueError(
+            f"Zone '{zone_id}' never laid out after "
+            f"{rec.layout_refusals} attempts; it cannot be entered. "
+            "Discard it to release its Checks.")
     # A FINISHED ZONE IS VISITED, NOT RE-ENTERED. Sending it back through
     # ACTIVE would make it reserve its old locations again — colliding
     # with whatever Zone is genuinely in flight, and re-opening Checks
@@ -290,12 +303,6 @@ def commit_layout(save: CampaignSave, zone_id: str,
                                         layout_state="ACCEPTED"))
 
 
-#: How many refused layouts a Zone gets before it stops being composed
-#: again. Three, because a second attempt is an ordinary bad roll and a
-#: fourth is a defect nothing here can fix by trying harder.
-MAX_LAYOUT_REFUSALS = 3
-
-
 def refuse_layout(save: CampaignSave, zone_id: str) -> CampaignSave:
     """The validator rejected this Zone's geometry. Compose it again.
 
@@ -316,7 +323,11 @@ def refuse_layout(save: CampaignSave, zone_id: str) -> CampaignSave:
     **And it stops.** A client that refuses every layout would otherwise
     compose forever, so after `MAX_LAYOUT_REFUSALS` the Zone goes DORMANT
     instead: still holding its locations, out of the player's way, and
-    waiting for a human rather than spinning.
+    waiting for the player to discard it. `ZoneRecord.layout_exhausted`
+    is that state, `hub_mode_for` turns it into `ZONE_FAILED`, and the
+    Hub offers ABANDON rather than a way back into geometry it already
+    refused. Nothing abandons it automatically: that releases the Zone's
+    locations, which is the player's call and has a cost.
 
     **A COMMITTED Zone is preserved, not recomposed.** A refused replay
     of an already-accepted layout is a different situation: the Zone was
@@ -330,7 +341,25 @@ def refuse_layout(save: CampaignSave, zone_id: str) -> CampaignSave:
     rec = _require_zone(save, zone_id)
     if rec.state in TERMINAL_ZONE_STATES:
         return save
-    tries = rec.layout_refusals + 1
+    # A STALE RESULT FOR A ZONE THAT ALREADY GAVE UP CHANGES NOTHING.
+    #
+    # The budget stopped the RECOMPOSING and not the counting: a client
+    # that kept sending `layout_result` kept incrementing a field bounded
+    # at 99, and the hundredth refusal raised `ValidationError` out of
+    # this function — a schema exception where a domain refusal belongs.
+    # Reachable because the Hub then offered the failed Zone as a way
+    # back in, so the loop had somewhere to come from.
+    #
+    # Ignored rather than refused, because a resend after a dropped
+    # connection is the ordinary case and never an error — the same
+    # reasoning `_progress` is written under.
+    if rec.layout_exhausted:
+        return save
+    # SATURATING, not wrapping and not unbounded. Past the budget the
+    # count answers no question anyone asks: it is spent either way, and
+    # the alternative is a persisted field that grows until it leaves
+    # its own bounds.
+    tries = min(rec.layout_refusals + 1, MAX_LAYOUT_REFUSALS)
     # A COMMITTED ZONE IS NOT RECOMPOSED.
     #
     # The recovery below clears `zone` and `manifest` whatever the Zone

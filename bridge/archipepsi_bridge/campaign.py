@@ -501,7 +501,7 @@ class CampaignEngine:
             for r in reversed(self.save.zones)
             if r.state == "COMPLETE")
         if held is not None:
-            mode = P.ZONE_STATE_HUB_MODE[held.state]
+            mode = P.hub_mode_for(held)
             headline, detail = {
                 "GENERATING": ("EPSILON IS DESIGNING",
                                "A Zone is being generated. Hold."),
@@ -514,17 +514,24 @@ class CampaignEngine:
                                  "with work unfinished."
                                  if held.zone else
                                  "You left a Zone with work unfinished."),
+                "ZONE_FAILED": ("ZONE FAILED TO BUILD",
+                                "It could not be laid out. Discard it to "
+                                "return its Checks to the pool."),
             }[mode]
+            # THE OFFER IS TO DISCARD, NOT TO ENTER. `resume_zone_id`
+            # stays empty for a Zone that cannot be entered: its whole
+            # meaning is "which Zone the portal enters", and filling it
+            # here is how the portal came to light up over a Zone it
+            # could not open.
+            failed = mode == "ZONE_FAILED"
+            name = held.zone.display_name if held.zone else ""
             return HubStatus(mode=mode, headline=headline, detail=detail,
                              holding_finale=(az is not None
                                              and az.is_finale),
-                             resume_zone_id=held.zone_id,
-                             resume_zone_name=(held.zone.display_name
-                                               if held.zone else ""),
-                             resume_layout_exhausted=(
-                                 held.manifest is None
-                                 and held.layout_refusals
-                                 >= T.MAX_LAYOUT_REFUSALS),
+                             resume_zone_id="" if failed else held.zone_id,
+                             resume_zone_name="" if failed else name,
+                             discard_zone_id=held.zone_id if failed else "",
+                             discard_zone_name=name if failed else "",
                              **base)
 
         finale_unlocked = (progress >= self.config.finale_required_checks()
@@ -1172,6 +1179,16 @@ class CampaignEngine:
         if rec is None or rec.zone is None:
             raise IntentError(
                 f"no generated Zone '{intent.zone_id}' to place")
+        # A RESULT FOR A ZONE THAT ALREADY GAVE UP IS STALE, and stale is
+        # not an error: a client retrying after a dropped connection is
+        # the ordinary case. Nothing is composed again, nothing is
+        # notified again, and the save does not move. Without this the
+        # handler kept notifying LAYOUT REFUSED and kept asking the
+        # provider for a Zone the bridge had already stopped composing.
+        if rec.layout_exhausted:
+            log.info("zone %s already exhausted its layout attempts; "
+                     "ignoring a stale result", intent.zone_id)
+            return
         verdict = layout_check.validate(rec.zone, intent.layout)
         if verdict.legacy:
             log.info("zone %s has no graph; layout not certified",
