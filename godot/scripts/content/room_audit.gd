@@ -424,6 +424,31 @@ static func _openings_are_holes(room: Dictionary, to_world: Transform3D,
 ## ones included: a door the layout does not report is refused by the
 ## bridge rather than skipped, which is what makes the probe inverted
 ## rather than optional.
+## THE WHOLE LAYOUT'S EVIDENCE, measured once, in one place.
+##
+## `apertures` and `arrival_ok` are what the bridge refuses a layout on,
+## and only the engine can see the geometry they are about. Living
+## inside `ZoneController` meant only a live played Zone could produce
+## them -- so a harness that composed twenty Zones and sent their
+## manifests off to the validator had every one of them refused for
+## carrying no measurement, which says nothing about the layouts and
+## everything about the harness. The Zone's root must be in the tree and
+## settled; `space` is `get_world_3d().direct_space_state`.
+static func measure_layout(build: Dictionary,
+		space: PhysicsDirectSpaceState3D) -> Dictionary:
+	var apertures := {}
+	for entry: Dictionary in build.get("chambers", []):
+		var rid := str((entry["chamber"] as Dictionary).get("id", ""))
+		var measured := aperture_polarity(entry["build"] as Dictionary,
+				entry["xform"] as Transform3D, space)
+		for socket: String in measured:
+			apertures["%s/%s" % [rid, socket]] = bool(measured[socket])
+	var arrival_ok := {}
+	for name: String in build.get("anchors", {}):
+		arrival_ok[name] = arrival_is_supported(space,
+				(build["anchors"] as Dictionary)[name])
+	return {"apertures": apertures, "arrival_ok": arrival_ok}
+
 static func aperture_polarity(room: Dictionary, to_world: Transform3D,
 		space: PhysicsDirectSpaceState3D) -> Dictionary:
 	var out := {}

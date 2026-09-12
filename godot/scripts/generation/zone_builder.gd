@@ -80,6 +80,27 @@ static func _clearance_budget(placed: Array) -> int:
 static func _all_but_last(laid: Array) -> Array:
 	return [] if laid.size() < 2 else laid.slice(0, laid.size() - 1)
 
+## The first pair of committed rooms that overlap by the BRIDGE's rule:
+## a positive extent on all three axes past a millimetre. `layout.py`
+## `_overlaps` is the same arithmetic, and this exists so the two sides
+## cannot disagree about what "overlap" means.
+static func _rooms_that_overlap(rooms: Dictionary) -> Array:
+	var ids: Array = rooms.keys()
+	ids.sort()
+	for i in ids.size():
+		var a: AABB = (rooms[ids[i]] as Dictionary).get("bounds", AABB())
+		for j in range(i + 1, ids.size()):
+			var b: AABB = (rooms[ids[j]] as Dictionary).get(
+					"bounds", AABB())
+			var hit := a.intersection(b)
+			if hit.size.x > BRIDGE_EPSILON and hit.size.y > BRIDGE_EPSILON \
+					and hit.size.z > BRIDGE_EPSILON:
+				return [str(ids[i]), str(ids[j])]
+	return []
+
+## `EPSILON_JOIN` in `bridge/archipepsi_bridge/layout.py`.
+const BRIDGE_EPSILON := 0.001
+
 static func _overlaps(placed: Array, candidate: AABB) -> bool:
 	for existing: AABB in placed:
 		if existing.intersection(candidate).get_volume() > 0.5:
@@ -1203,6 +1224,18 @@ static func _exit_reservation(build: Dictionary,
 	return out
 
 ## Two reservation ladders, rung by rung, into one.
+##
+## MEASURED AND REJECTED: A THIRD RUNG HOLDING THE BRANCH ROOM'S OWN
+## ENVELOPE. Reserving where a declared branch shell would stand, rather
+## than only the corridor to its door, is the obvious next reservation
+## and it is worse. A branch shell can be 39 m deep and 50 m tall in a
+## Zone 51 m tall; demanding that much empty space in front of every
+## junction that owes a branch pushed the whole spine around to find it.
+## The wider sample went from sixteen of twenty to FIFTEEN, and two of
+## the five preserved controls stopped laying out. The graded ladder did
+## its job -- nothing crashed, the rung was simply dropped -- and the
+## Zones it cost were ones whose parents had been placed somewhere
+## worse to satisfy a rung that was then dropped anyway.
 static func _both_reservations(a: Array, b: Array) -> Array:
 	var out: Array = []
 	for k in RESERVED_CONNECTORS:
@@ -1214,9 +1247,6 @@ static func _both_reservations(a: Array, b: Array) -> Array:
 		out.append(rung)
 	return out
 
-## The branch socket ids a room still owes, read from the same two
-## sources the branch queue reads so a reservation cannot describe a
-## branch that never gets built.
 static func _declared_branch_sockets(graph_branches: Dictionary,
 		chamber: Dictionary) -> Array:
 	var out: Array = []
@@ -1505,7 +1535,16 @@ static func _emit_connector(root: Node3D, theme: String, cursor: Vector3,
 ## backtracking with the stack written down rather than unwound, and it
 ## terminates because the ladder is counted, not because it runs out of
 ## luck.
-const MAX_PLACEMENT_NUDGES := 4
+const MAX_PLACEMENT_NUDGES := 6
+
+## How far ONE room may be nudged before the ladder walks further back.
+##
+## Nudging the same room over and over is a shallow backtrack, and the
+## wider sample showed exactly where it runs out: four Zones wedged on a
+## branch, spent all four rungs moving the junction that branch hangs
+## off, and failed the same way each time. Past this many, the junction
+## is not the room with the choice left in it -- the one before it is.
+const PER_ROOM_NUDGES := 2
 
 ## The ladder. `_build_once` is one greedy solve; this is the bounded
 ## retry around it.
@@ -1530,8 +1569,8 @@ static func build(zone: Dictionary, theme_override := "",
 	if (layout.get("rooms", {}) as Dictionary).is_empty():
 		while attempts <= MAX_PLACEMENT_NUDGES \
 				and bool(out.get("wedge", false)):
-			var who := _wedged_after(zone, out)
-			if who == "" or int(nudge.get(who, 0)) >= MAX_PLACEMENT_NUDGES:
+			var who := _wedged_after(zone, out, nudge)
+			if who == "":
 				break
 			var spent := float(Time.get_ticks_msec() - started)
 			if budget_ms > 0.0 and spent >= budget_ms:
@@ -1546,28 +1585,46 @@ static func build(zone: Dictionary, theme_override := "",
 	out["placement_ms"] = float(Time.get_ticks_msec() - started)
 	return out
 
-## The room whose pose to nudge: the one the wedged room was joined to.
-## For a spine room that is its predecessor on the spine; for a branch it
-## is the junction the branch hangs off, because that is where its mouth
-## is and moving the branch means moving the mouth.
-static func _wedged_after(zone: Dictionary, out: Dictionary) -> String:
+## The room whose pose to nudge: the one the wedged room was joined to,
+## and then, once that room has had its turns, the one before IT.
+##
+## For a spine room the join is its predecessor on the spine; for a
+## branch it is the junction the branch hangs off, because that is where
+## the mouth is and moving the branch means moving the mouth. From there
+## the ladder walks backwards along the spine past every room that has
+## already spent its `PER_ROOM_NUDGES`, which is what makes this a
+## backtrack rather than four tries at the same room.
+static func _wedged_after(zone: Dictionary, out: Dictionary,
+		nudge: Dictionary) -> String:
 	var blocking: Array = out.get("blocking_rooms", [])
 	if blocking.is_empty():
 		return ""
 	var stuck := str(blocking[0])
 	var graph := placement_plan(zone)
 	var spine: Array = graph.get("spine", [])
+	var at := -1
 	for i in spine.size():
 		if str(spine[i]) == stuck:
-			return "" if i == 0 else str(spine[i - 1])
-	var branches: Dictionary = graph.get("branches", {})
-	for parent_id: Variant in branches:
-		for raw: Variant in (branches[parent_id] as Array):
-			if typeof(raw) != TYPE_DICTIONARY:
-				continue
-			var kid: Dictionary = (raw as Dictionary).get("chamber", {})
-			if str(kid.get("id", "")) == stuck:
-				return str(parent_id)
+			at = i - 1
+			break
+	if at < 0 and not spine.has(stuck):
+		var branches: Dictionary = graph.get("branches", {})
+		for parent_id: Variant in branches:
+			for raw: Variant in (branches[parent_id] as Array):
+				if typeof(raw) != TYPE_DICTIONARY:
+					continue
+				var kid: Dictionary = (raw as Dictionary).get(
+						"chamber", {})
+				if str(kid.get("id", "")) != stuck:
+					continue
+				for i in spine.size():
+					if str(spine[i]) == str(parent_id):
+						at = i
+	while at >= 0:
+		var who := str(spine[at])
+		if int(nudge.get(who, 0)) < PER_ROOM_NUDGES:
+			return who
+		at -= 1
 	return ""
 
 static func _build_once(zone: Dictionary, theme_override := "",
@@ -2337,6 +2394,28 @@ static func _build_once(zone: Dictionary, theme_override := "",
 		plug.position = anchors[source]
 		root.add_child(plug)
 		plugs.append(plug)
+	# THE VALIDATOR'S OWN OVERLAP RULE, ASKED BEFORE THE LAYOUT IS
+	# CLAIMED. `_overlaps` above tolerates half a cubic metre so a room's
+	# inset entry socket can swallow a little of the connector it joins;
+	# `layout.py` tolerates a MILLIMETRE on every axis and refuses the
+	# whole manifest. A thin, wide intersection sits inside the first
+	# tolerance and outside the second, and the router then returns
+	# LAYOUT_OK for a proposal the bridge will not take -- measured on
+	# the declared sample: `zone_10`'s c008/c018 and `zone_12`'s
+	# c005/c006. Reported as a wedge so the placement ladder re-solves
+	# it, which is the machinery that already exists for "this room is
+	# in the wrong place".
+	var touching := _rooms_that_overlap(room_transforms)
+	if not touching.is_empty() \
+			and (layout.get("rooms", {}) as Dictionary).is_empty():
+		root.free()
+		return {"status": "LAYOUT_INFEASIBLE", "exhausted": true,
+				"policy": routing_policy(placed, policy_override),
+				"blocking_rooms": [str(touching[1])],
+				"blocking_pairs": [touching], "wedge": true,
+				"failed": "rooms '%s' and '%s' overlap by more than the "
+				% [str(touching[0]), str(touching[1])]
+				+ "bridge will accept, so this layout would be refused"}
 	return {"root": root, "spawn_transform": spawn,
 			"chambers": built_chambers, "exit_portal": portal,
 			"bounds_list": bounds_list,

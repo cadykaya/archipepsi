@@ -87,6 +87,11 @@ func _run() -> void:
 		_finish(1)
 		return
 
+	# ---- The lifetime control: a Zone discarded mid-certification --------
+	if not await _test_a_zone_survives_being_torn_down_mid_certification():
+		_finish(1)
+		return
+
 	# ---- Pass 2: play the campaign to the end -----------------------------
 	var zones_played := 2
 	var stock_ever_seen := false
@@ -833,6 +838,133 @@ func _test_a_refused_layout_is_not_playable() -> bool:
 	return true
 
 
+## THE ZONE GOES AWAY WHILE ITS LAYOUT IS BEING CERTIFIED, twice, and a
+## replacement then completes its own acceptance.
+##
+## `_publish_layout` is not awaited by anything. It settles, certifies
+## each chain by replaying a real crate against a real plate, sends the
+## result and then waits on a verdict -- seconds of asynchronous work
+## belonging to a Zone the player can leave at any point inside it. The
+## first symptom was a SIGABRT in `ChainCertificate._settle` on a freed
+## node; guarding that stopped the crash and left the rest, which does
+## not crash and is worse:
+##
+## * the half-finished certification was SENT ANYWAY, because
+##   `_certify_physics` returned early and `send_layout_result` on the
+##   next line did not care why;
+## * the abandoned `_await_verdict` kept spinning in a frame loop for a
+##   Zone nobody was in, and answered by holding or releasing a `player`
+##   that had been freed -- `!= null` is not alive in GDScript;
+## * and a stale REFUSED from that loop would have sent the REPLACEMENT
+##   player back to the Hub out of a Zone that was accepted.
+##
+## Torn down at two offsets on purpose: early, inside the settle and the
+## replay, and later, while the verdict is outstanding. Process survival
+## is the least of what is asserted -- what matters is that nothing the
+## discarded attempt did reaches the bridge, the player, or the campaign.
+func _test_a_zone_survives_being_torn_down_mid_certification() -> bool:
+	BridgeClient.send_intent({"type": "request_next_zone",
+			"finale": false})
+	if not await _await_condition("ZONE_READY for the teardown control",
+			func() -> bool: return BridgeClient.hub_mode() == "ZONE_READY",
+			30.0):
+		return false
+	var record := BridgeClient.active_zone()
+	var zone_id := str(record.get("zone_id", ""))
+	var zone_dict: Dictionary = record.get("zone", {})
+	# WHAT THE CAMPAIGN HELD BEFORE ANY OF THIS. Certification drives
+	# real crates onto real plates; if that were ever mistaken for a
+	# player solving the puzzle, this is the number that would move.
+	var checks_before: Array = BridgeClient.snapshot.get(
+			"checked_location_ids", []).duplicate()
+	var allocated_before: Array = record.get(
+			"allocated_location_ids", []).duplicate()
+
+	BridgeClient.send_intent({"type": "enter_zone", "zone_id": zone_id})
+	if not await _await_condition("ZONE_ACTIVE for the teardown control",
+			func() -> bool:
+				return BridgeClient.hub_mode() == "ZONE_ACTIVE"):
+		return false
+
+	for offset: int in [3, 14]:
+		var doomed := ZoneController.new()
+		var refusals: Array[String] = []
+		doomed.layout_refused.connect(
+				func(id: String) -> void: refusals.append(id))
+		get_tree().root.add_child(doomed)
+		doomed.setup(zone_dict)
+		for _i in offset:
+			await get_tree().physics_frame
+		var caught := doomed.layout_verdict
+		var ghost: Player = doomed.player
+		doomed.free()
+		# FRAMES AFTER THE FREE, which is the whole point: an abandoned
+		# `_publish_layout` resumes on the NEXT frame, not on this one.
+		for _i in 40:
+			await get_tree().process_frame
+		_check(not is_instance_valid(ghost),
+				"the torn-down Zone's player went with it (offset %d)"
+				% offset)
+		_check(refusals.is_empty(),
+				"the discarded attempt raised no verdict of its own, "
+				+ "and it raised %s (offset %d)" % [str(refusals), offset])
+		_check(caught == "",
+				"the discarded attempt had not yet acted on a verdict "
+				+ "when it was freed, so anything it did after is the "
+				+ "bug under test (it held '%s', offset %d)"
+				% [caught, offset])
+		_check(BridgeClient.hub_mode() == "ZONE_ACTIVE",
+				"the campaign is still in %s after the teardown, and it "
+				% zone_id + "is in %s (offset %d)"
+				% [BridgeClient.hub_mode(), offset])
+		_check(str(BridgeClient.active_zone().get("layout_state", ""))
+					!= "REFUSED",
+				"no partial certification from the discarded attempt was "
+				+ "refused as if this Zone had sent one: layout_state is "
+				+ "'%s' (offset %d)"
+				% [str(BridgeClient.active_zone().get(
+						"layout_state", "")), offset])
+
+	# AND THE REPLACEMENT COMPLETES ITS OWN ACCEPTANCE, normally, from
+	# the same committed Zone the discarded attempts were building.
+	var heir := ZoneController.new()
+	get_tree().root.add_child(heir)
+	heir.setup(zone_dict)
+	if not await _await_condition("the replacement Zone gets a verdict",
+			func() -> bool: return heir.layout_verdict != "", 30.0):
+		heir.queue_free()
+		return false
+	_check(heir.layout_verdict == "ACCEPTED",
+			"the replacement Zone reached its own ACCEPTED verdict, and "
+			+ "it reached '%s'" % heir.layout_verdict)
+	_check(not is_instance_valid(heir.player)
+				or not heir.player.holds().has(ZoneController.LAYOUT_HOLD),
+			"no stale verdict left the replacement player held: %s"
+			% (str(heir.player.holds())
+				if is_instance_valid(heir.player) else "no player"))
+	# NOTHING THE CERTIFIER DID IS PLAYER PROGRESS. It replayed crates
+	# onto plates three times per chain, twice discarded and once for
+	# real, and the campaign holds exactly what it held before.
+	var checks_after: Array = BridgeClient.snapshot.get(
+			"checked_location_ids", []).duplicate()
+	checks_before.sort()
+	checks_after.sort()
+	_check(checks_before == checks_after,
+			"certification and replay awarded no Check: the campaign "
+			+ "held %s and now holds %s"
+			% [str(checks_before), str(checks_after)])
+	var allocated_after: Array = BridgeClient.active_zone().get(
+			"allocated_location_ids", []).duplicate()
+	allocated_before.sort()
+	allocated_after.sort()
+	_check(allocated_before == allocated_after,
+			"the teardown stranded no allocated location: %s before, %s "
+			% [str(allocated_before), str(allocated_after)] + "after")
+	heir.queue_free()
+	await get_tree().process_frame
+	return true
+
+
 ## `already_ready` plays the Zone the campaign is ALREADY holding rather
 ## than asking for a new one -- which the Hub refuses while one is ready,
 ## and which is the state the refusal control leaves behind.
@@ -882,11 +1014,25 @@ func _play_one_zone(detailed: bool, already_ready := false) -> bool:
 		controller = ZoneController.new()
 		get_tree().root.add_child(controller)
 		controller.setup(zone_dict)
-		for _i in 12:
-			await get_tree().physics_frame
-		var verdict := str(BridgeClient.active_zone().get(
-				"layout_state", ""))
-		if verdict != "REFUSED":
+		# THE CONTROLLER'S OWN VERDICT, WAITED FOR.
+		#
+		# This sampled `layout_state` off the shared snapshot after
+		# twelve physics frames, and both halves of that were a guess.
+		# The snapshot can still be carrying the PREVIOUS round's
+		# REFUSED -- which is the exact hazard `_await_verdict` has its
+		# `layout_refusals` guard for, and reading the raw field walks
+		# straight past that guard. And twelve frames is a bet on how
+		# long a solve, a certification pass of real replayed crates and
+		# a socket round trip take; the placement ladder made the solve
+		# longer and the bet started losing, which is how a Zone that
+		# was accepted came to be read as refused and then waited on for
+		# a recomposition nobody had asked for.
+		if not await _await_condition("a layout verdict for %s"
+					% str(record.get("zone_id", "")),
+				func() -> bool: return controller.layout_verdict != "",
+				30.0):
+			return false
+		if controller.layout_verdict != "REFUSED":
 			break
 		print("zone %s: layout refused, composing again (attempt %d)"
 				% [str(record.get("zone_id", "")), attempt + 1])

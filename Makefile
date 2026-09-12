@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -221,6 +221,26 @@ godot-graphs: godot-import
 # rather than edited. Five consecutive Zones of a real campaign.
 zone-fixtures:
 	cd bridge && $(PY) tools/dump_zones.py --count 5
+
+# THE DECLARED SAMPLE, wider than the five preserved controls: the first
+# twenty consecutive ordinary Zones of a real campaign at DEFAULT_CONFIG,
+# of which those five are exactly the prefix. Composed, and then the
+# manifests judged by the bridge's own validator -- LAYOUT_OK from the
+# router is not acceptance, and only one of the two is measured in the
+# engine. Every result is printed, refusals included.
+zone-sample: godot-import
+	cd bridge && $(PY) tools/dump_zones.py --count 20 \
+	  --out ../godot/tests/fixtures/sample
+	@out=$$($(GODOT) --headless --path godot -- --graphs --sample 2>&1); \
+	printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" ; \
+	printf '%s\n' "$$out" | grep -q "GODOT GRAPH TESTS OK" || exit 1
+	@echo "-- and the bridge's own verdict on each emitted manifest --"
+	@echo "   REPORT ONLY: an unplayed Zone's doorways are probed without"
+	@echo "   the setup a played Zone gets, so door-polarity refusals here"
+	@echo "   are about this harness. Acceptance is gated live, by"
+	@echo "   godot-integration. The manifest-only class this once caught"
+	@echo "   -- room overlap -- the router now refuses itself."
+	-cd bridge && $(PY) tools/check_sample_layouts.py
 
 godot-movement: godot-import   # P3.0 rails, launch pads, and the offer seam
 	@out=$$($(GODOT) --headless --path godot -- --movement-test 2>&1); \

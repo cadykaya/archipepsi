@@ -654,6 +654,18 @@ func _publish_layout(build: Dictionary) -> void:
 		return
 	_measure_layout_evidence(build)
 	await _certify_physics(build)
+	# THE BOUNDARY BETWEEN CERTIFYING AND SENDING.
+	#
+	# `_certify_physics` gives up the moment the Zone leaves the tree,
+	# which stopped it measuring freed nodes -- and then returned here,
+	# where the next line sent the half-measured result anyway. A Zone
+	# torn down during settling published a PARTIAL certification under
+	# a committed Zone's name, and `_await_verdict` below then sat in a
+	# frame loop belonging to a Zone nobody is in, holding and releasing
+	# a player who has been replaced. The discarded attempt has to be
+	# discarded here too.
+	if not is_inside_tree():
+		return
 	send_layout_result(build)
 	await _await_verdict()
 
@@ -672,7 +684,11 @@ func _await_verdict() -> void:
 	if (zone.get("edges", []) as Array).is_empty():
 		layout_verdict = "UNCERTIFIED"
 		return
-	if player != null:
+	# `!= null` IS NOT ALIVE. A freed Node is not null in GDScript -- it
+	# is a reference that answers every comparison and errors on every
+	# call -- so a Zone torn down while its verdict was outstanding put
+	# a hold on, or took one off, a player that no longer exists.
+	if is_instance_valid(player):
 		player.hold(LAYOUT_HOLD)
 	# THE PREVIOUS ANSWER IS NOT THIS ONE.
 	#
@@ -696,7 +712,7 @@ func _await_verdict() -> void:
 				"layout_state", ""))
 		if state == "ACCEPTED":
 			layout_verdict = state
-			if player != null:
+			if is_instance_valid(player):
 				# ONLY THIS CLAIM. Clearing the boolean here released a
 				# pause the player had opened while they waited.
 				player.release(LAYOUT_HOLD)
@@ -713,6 +729,13 @@ func _await_verdict() -> void:
 			layout_refused.emit(zone_id)
 			return
 		await get_tree().process_frame
+		# THE ZONE THIS VERDICT IS ABOUT CAN GO AWAY MID-WAIT. Carrying
+		# on would announce a refusal for a Zone nobody is in, and
+		# `layout_refused` is what sends the player back to the Hub --
+		# from a Zone they have already left, past the replacement they
+		# are now standing in.
+		if not is_inside_tree():
+			return
 		waited += get_process_delta_time()
 	# NO VERDICT IS NOT AN ACCEPTANCE. A bridge that never answers leaves
 	# the player frozen forever, which is worse than the Zone they are
@@ -769,14 +792,16 @@ func _certify_physics(build: Dictionary) -> void:
 ## answer and is not what this reports.
 func _measure_layout_evidence(build: Dictionary) -> void:
 	var space := get_world_3d().direct_space_state
-	var apertures := {}
+	# ONE MEASUREMENT, SHARED. `RoomAudit.measure_layout` is what a
+	# played Zone and an offline harness both ask, so a manifest sent
+	# from either carries the same evidence measured the same way.
+	var evidence := RoomAudit.measure_layout(build, space)
+	var apertures: Dictionary = evidence["apertures"]
 	for entry: Dictionary in build.get("chambers", []):
 		var rid := str((entry["chamber"] as Dictionary).get("id", ""))
 		var measured := RoomAudit.aperture_polarity(
 				entry["build"] as Dictionary,
 				entry["xform"] as Transform3D, space)
-		for socket: String in measured:
-			apertures["%s/%s" % [rid, socket]] = bool(measured[socket])
 		# AND WHAT IS STANDING IN THE ONES THAT DISAGREE.
 		#
 		# The bridge refuses the whole layout on "door 'c002/entry' is
@@ -801,11 +826,7 @@ func _measure_layout_evidence(build: Dictionary) -> void:
 						+ "name")))
 	build["apertures"] = apertures
 	measured_apertures = apertures
-	var arrival_ok := {}
-	for name: String in build.get("anchors", {}):
-		arrival_ok[name] = RoomAudit.arrival_is_supported(space,
-				(build["anchors"] as Dictionary)[name])
-	build["arrival_ok"] = arrival_ok
+	build["arrival_ok"] = evidence["arrival_ok"]
 
 ## Can a body ARRIVE here? Not "is this space empty".
 ##
