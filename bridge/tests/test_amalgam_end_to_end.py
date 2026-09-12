@@ -1045,7 +1045,14 @@ def _placement(layout: dict, zone, room_id: str, outcome: str,
     outcome, `searched` and the diagnostic detail alongside.
     """
     out = dict(layout)
-    out["plug_placement"] = dict(layout.get("plug_placement") or {})
+    # A SUPPLIED REPORT COVERS EVERY PLUG, which is what an engine that
+    # measured the Zone sends. Filling only the plug under test made the
+    # rest read as a client that never sent one — the legacy path taken
+    # by a current client, for every plug whose answer was left out.
+    out["plug_placement"] = {
+        **{p.edge_id: {"outcome": "PLACED", "searched": 1}
+           for p in zone.plugs},
+        **(layout.get("plug_placement") or {})}
     plug = next(p for p in zone.plugs if p.room_id == room_id)
     out["plug_placement"][plug.edge_id] = {
         "outcome": outcome, "searched": searched, **detail}
@@ -1609,4 +1616,146 @@ def test_the_offer_carries_the_identity_the_client_captures(tmp_path):
                  if m.zone.zone_id == zid]
         assert len(again) == 2
         assert again[0].proposal_id != again[1].proposal_id
+    run(go())
+
+
+# --- absent, or supplied: the decoder ------------------------------------
+#
+# Three defects, each measured before repair. The key guard refused only
+# when NO supplied key matched a plug, so one valid edge-keyed record let
+# an unrelated room-keyed NO_CANDIDATE through beside it — the exact
+# payload a half-migrated engine sends. `result.get(...) or {}` read an
+# empty list as absence. And a non-container reached `set()` and raised
+# TypeError out of a validator whose whole job is to turn bad evidence
+# into a sentence.
+
+def _with_report(zone, report, supplied=True):
+    layout = _place(zone)
+    if supplied:
+        layout["plug_placement"] = report
+    return layout
+
+
+def _full_report(zone):
+    return {p.edge_id: {"outcome": "PLACED", "searched": 1}
+            for p in zone.plugs}
+
+
+def test_an_absent_report_keeps_the_documented_legacy_behaviour(tmp_path):
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        plain = _place(zone)
+        assert "plug_placement" not in plain
+        await _offer(engine, zid, plain)
+        rec = engine.save.zone_by_id(zid)
+        assert rec.manifest is not None, "an older valid payload was failed"
+        assert rec.unhostable_rooms == ()
+    run(go())
+
+
+def test_a_valid_current_report_commits(tmp_path):
+    """The control. Without it every case below could pass on a rule
+    that refuses every supplied report."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        await _offer(engine, zid, _with_report(zone, _full_report(zone)))
+        rec = engine.save.zone_by_id(zid)
+        assert rec.manifest is not None, "a valid report was refused"
+        assert rec.unhostable_rooms == ()
+    run(go())
+
+
+def test_every_supplied_key_must_name_a_plug(tmp_path):
+    """All wrong: keyed by room id throughout."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        await _offer(engine, zid, _with_report(zone, {
+            p.room_id: {"outcome": "PLACED"} for p in zone.plugs}))
+        rec = engine.save.zone_by_id(zid)
+        assert rec.manifest is None
+        assert rec.unhostable_rooms == ()
+    run(go())
+
+
+def test_one_good_key_does_not_carry_a_wrong_one(tmp_path):
+    """**The hole.** Refusing only when NONE matched let a room-keyed
+    NO_CANDIDATE ride along beside a valid edge-keyed record — and a
+    half-migrated engine sends exactly that."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        stowaway = zone.plugs[1]
+        mixed = {**_full_report(zone),
+                 stowaway.room_id: {"outcome": "NO_CANDIDATE",
+                                    "searched": 16}}
+        await _offer(engine, zid, _with_report(zone, mixed))
+        rec = engine.save.zone_by_id(zid)
+        assert rec.manifest is None, "a wrong key rode in beside a right one"
+        assert rec.unhostable_rooms == (), "and it must not bar on it"
+    run(go())
+
+
+def test_a_supplied_report_covers_every_plug(tmp_path):
+    """An entry quietly missing would otherwise take the legacy path for
+    that one plug, in a client that plainly does send reports."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        short = _full_report(zone)
+        left_out = zone.plugs[0].edge_id
+        del short[left_out]
+        await _offer(engine, zid, _with_report(zone, short))
+        rec = engine.save.zone_by_id(zid)
+        assert rec.manifest is None, "a partial report passed as legacy"
+        assert rec.unhostable_rooms == ()
+    run(go())
+
+
+@pytest.mark.parametrize("container", [[], 7, None, "PLACED", 0.0])
+def test_a_malformed_container_is_supplied_and_refused(tmp_path, container):
+    """Supplied is the KEY being there, never its truthiness: an empty
+    list read as absence, and a non-container raised TypeError."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        await _offer(engine, zid, _with_report(zone, container))
+        rec = engine.save.zone_by_id(zid)
+        assert rec.manifest is None, f"{container!r} was read as absence"
+        assert rec.unhostable_rooms == ()
+    run(go())
+
+
+@pytest.mark.parametrize("record", ["PLACED", ["PLACED"], 3, None,
+                                    {"outcome": "PROBABLY_FINE"},
+                                    {"searched": 4}])
+def test_a_malformed_record_is_refused(tmp_path, record):
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        bad = {**_full_report(zone), zone.plugs[0].edge_id: record}
+        await _offer(engine, zid, _with_report(zone, bad))
+        rec = engine.save.zone_by_id(zid)
+        assert rec.manifest is None, f"{record!r} was accepted"
+        assert rec.unhostable_rooms == ()
+    run(go())
+
+
+def test_the_decoder_never_raises_out_of_the_validator(tmp_path):
+    """Every shape above turns into a sentence. A validator that raises
+    is a refusal nobody handled — which is how a nonzero integer became
+    a TypeError in a background task."""
+    from archipepsi_bridge import layout as LAY
+
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        for shape in ([], 7, None, "x", 0.0, {}, {1: 2},
+                      {zone.plugs[0].edge_id: object()},
+                      {"": {"outcome": "PLACED"}}):
+            verdict = LAY.validate(zone, _with_report(zone, shape))
+            assert not verdict.accepted, shape
+            assert verdict.unhostable_rooms == (), shape
     run(go())

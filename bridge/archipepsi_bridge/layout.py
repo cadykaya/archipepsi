@@ -44,6 +44,9 @@ from . import shells as _SH
 #: producer is the mirror of the vocabulary-with-no-consumer this
 #: project keeps finding.
 PLACEMENT_OUTCOMES = ("PLACED", "NO_EVIDENCE", "NO_CANDIDATE")
+
+#: "The key was not there", which is the only thing that means legacy.
+_ABSENT = object()
 from .schemas import physics as _PH
 
 #: Two things meet when they are this close. Metres, and radians.
@@ -673,27 +676,53 @@ def validate(zone, result: dict) -> Verdict:
     # what ran, how far, and whether the reserved spot had to move. No exhaustive proof of impossibility is
     # asked for — a bounded search, stated. The bridge branches on the
     # outcome and never on the prose.
-    placement = result.get("plug_placement") or {}
-    # A REPORT THAT NAMES NOTHING THIS ZONE HAS IS NOT ABSENCE.
-    #
-    # This is how the two shapes passed each other in silence: keyed by
-    # room id, every `placement.get(edge_id)` came back `None`, every
-    # plug looked like a payload predating the field, and a
-    # `NO_CANDIDATE` was ACCEPTED. A non-empty report about other
-    # identities is a report about something else, refused loudly rather
-    # than read as an older client.
-    if placement and not (set(placement) & {p.edge_id for p in zone.plugs}):
-        c.fail("'plug_placement' names %s and this Zone's plugs are %s; "
-               "a placement report keyed by something else is not an "
-               "older payload" % (sorted(placement)[:4],
-                                  sorted(p.edge_id for p in zone.plugs)[:4]))
+    # ABSENT OR SUPPLIED, and the difference is the KEY being there —
+    # never its truthiness. `result.get(...) or {}` read an empty list as
+    # absence, and a non-container reached `set()` and raised
+    # `TypeError` out of a validator whose whole job is to turn bad
+    # evidence into a sentence.
+    # A SENTINEL, not `None`. Reading absence as "the value is None"
+    # makes an explicit `"plug_placement": null` — supplied, and
+    # unreadable — indistinguishable from a client that never sent one,
+    # which is the very confusion this block exists to end.
+    placement = result.get("plug_placement", _ABSENT)
+
+    if placement is _ABSENT:
+        # LEGACY. The check does not apply; the anchor, support and
+        # clearance rules above still govern, exactly as before this
+        # field existed. Absence is never `NO_CANDIDATE`.
+        pass
+    elif not isinstance(placement, dict):
+        c.fail(f"'plug_placement' is {type(placement).__name__}, not a "
+               "map of plug to placement; a supplied report that cannot "
+               "be read is not an older client")
+    else:
+        edges = {pl.edge_id for pl in zone.plugs}
+        # EVERY SUPPLIED KEY NAMES A PLUG. Refusing only when NONE of
+        # them did was the hole: one valid edge-keyed record let an
+        # unrelated room-keyed `NO_CANDIDATE` through beside it, which
+        # is exactly the mixed payload a half-migrated engine sends.
+        stray = sorted(map(str, set(placement) - edges))
+        if stray:
+            c.fail("'plug_placement' names %s, which %s no plug of this "
+                   "Zone; a report keyed by something else is not an "
+                   "older payload"
+                   % (stray[:4], "are" if len(stray) > 1 else "is"))
+        # AND IT COVERS EVERY PLUG. A supplied report with an entry
+        # quietly missing would otherwise read as a client that never
+        # sent one — the legacy path, taken by a current client, for the
+        # one plug whose answer was left out.
+        absent = sorted(edges - set(placement))
+        if absent:
+            c.fail("'plug_placement' is supplied and says nothing about "
+                   "%s; a report that covers some plugs is not a report "
+                   "that predates the field" % absent[:4])
+
     for pl in zone.plugs:
+        if not isinstance(placement, dict):
+            break
         if pl.edge_id not in placement:
-            # ABSENT: the check does not apply. The anchor, support and
-            # clearance rules above still govern acceptance exactly as
-            # they did before this field existed, so every older valid
-            # payload stays valid. Absence is NEVER `NO_CANDIDATE`.
-            continue
+            continue                       # already named above
         told = placement[pl.edge_id]
         if not isinstance(told, dict):
             # PRESENT AND MALFORMED. Not absence: a new report that
