@@ -56,6 +56,7 @@ func _run() -> void:
 	_every_refusal_says_which_one_it_was()
 	_a_fallback_room_never_reports_itself_authored()
 	_godot_decides_the_shared_cases_the_way_they_say()
+	_the_physics_digest_vectors_agree_with_the_bridge()
 	_cleanup()
 	# Both awaited. A function containing `await` called WITHOUT one
 	# returns at its first suspend, and the suite goes on to print OK
@@ -1720,3 +1721,98 @@ func _cluster_is_accepted(entry: Dictionary) -> bool:
 	var reg := ContentRegistry.new()
 	reg._accept("probe_pack", entry.duplicate(true))
 	return reg.entries.has(str(entry.get("id", "")))
+
+
+## LEVEL 1 OF THREE: THE TWO LANES BUILD THE SAME BYTES.
+##
+## `package_digest` is what a replay's evidence is filed under. The
+## engine computes it over the package it is about to replay; the bridge
+## recomputes it over the package it is about to accept. A disagreement
+## means evidence about one package read as evidence about another, and
+## since neither lane can see the other's serializer, the only thing that
+## catches a drift is a shared vector run through both.
+##
+## **CONSTRUCTED, NEVER COPIED.** Every vector carries the `canonical`
+## string beside its package, and hashing that string would prove the
+## file is self-consistent and nothing at all about this code. Each
+## package is built into a `PhysicsPackage` and serialized by this lane's
+## own writer, and BOTH the bytes and the digest are compared -- a digest
+## check alone cannot say whether two implementations built different
+## objects or serialized the same object differently.
+##
+## This says nothing about `scene_digest` describing a real scene (level
+## 2) and nothing about anything being replayable (level 3). There is no
+## physics runtime. `docs/AMALGAM_BRIDGE.md` §6.2b.
+func _the_physics_digest_vectors_agree_with_the_bridge() -> void:
+	var text := FileAccess.get_file_as_string(
+			"res://tests/fixtures/physics_digest_vectors.json")
+	var fixture: Variant = JSON.parse_string(text)
+	if typeof(fixture) != TYPE_DICTIONARY:
+		_check(false, "the physics digest vectors did not parse")
+		return
+	var vectors: Array = (fixture as Dictionary).get("vectors", [])
+	_check(vectors.size() >= 9,
+			"%d physics digest vectors; the shared set is nine"
+			% vectors.size())
+	var agreed := 0
+	for raw: Variant in vectors:
+		var vector: Dictionary = raw
+		var name := str(vector.get("name", "?"))
+		var errors: Array[String] = []
+		var package := PhysicsPackage.from_dict(
+				vector.get("package", {}) as Dictionary, errors)
+		if package == null:
+			_check(false, "vector '%s' would not build: %s"
+					% [name, str(errors)])
+			continue
+		# THE BYTES FIRST. A digest that matches over different bytes is
+		# a collision and a digest that differs tells you nothing about
+		# WHERE; this says which character.
+		var mine := package.canonical_text()
+		var theirs := str(vector.get("canonical", ""))
+		if mine != theirs:
+			_check(false, "vector '%s' serializes differently:\n"
+					% name + "    bridge: %s\n    engine: %s\n    %s"
+					% [theirs, mine, _first_difference(theirs, mine)])
+			continue
+		_check(package.digest() == str(vector.get("digest", "")),
+				"vector '%s' hashes to %s and the bridge says %s"
+				% [name, package.digest(), str(vector.get("digest", ""))])
+		agreed += 1
+	print("  PHYSICS DIGEST %d of %d vectors agree byte for byte"
+			% [agreed, vectors.size()])
+	# AND THE SERIALIZER IS NOT A CONSTANT. Every vector agreeing would
+	# also be true of a writer that returned the stored string, so one
+	# package is changed in the smallest way the contract admits and the
+	# digest has to move with it.
+	var first: Dictionary = (vectors[0] as Dictionary).get("package", {})
+	var moved: Dictionary = first.duplicate(true)
+	((moved["setup"] as Dictionary)["bodies"] as Array)[0]["mass_kg"] = 80.5
+	var errors: Array[String] = []
+	var changed := PhysicsPackage.from_dict(moved, errors)
+	_check(changed != null and changed.digest()
+				!= str((vectors[0] as Dictionary).get("digest", "")),
+			"half a kilogram changed nothing in the digest, so the "
+			+ "serializer is not reading the package")
+	# AND A FIELD THIS LANE DOES NOT MODEL IS REFUSED, not dropped: a
+	# producer that silently ignores a new field digests less than the
+	# bridge hashes.
+	var extra: Dictionary = first.duplicate(true)
+	extra["restitution"] = 0.4
+	var complaints: Array[String] = []
+	_check(PhysicsPackage.from_dict(extra, complaints) == null
+				and not complaints.is_empty(),
+			"a package carrying a field this lane does not model was "
+			+ "accepted, so its digest would be computed over less than "
+			+ "the bridge hashes")
+
+## Where two canonical strings first part company, for a reader.
+func _first_difference(a: String, b: String) -> String:
+	var limit := mini(a.length(), b.length())
+	for i in limit:
+		if a[i] != b[i]:
+			return ("first differ at %d: ...%s... vs ...%s..."
+					% [i, a.substr(maxi(0, i - 20), 45),
+						b.substr(maxi(0, i - 20), 45)])
+	return "identical for %d characters; one is longer (%d vs %d)" \
+			% [limit, a.length(), b.length()]

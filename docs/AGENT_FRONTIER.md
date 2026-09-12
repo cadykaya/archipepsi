@@ -95,6 +95,10 @@ finding, not a join one — the corridor either side of it crosses.
 Procedural `ChamberBuilders` spawn placement is not covered by the
 doorway rule; only the authored-shell path is.
 
+**Done since:** level 1 of the physics digest, both lanes — see the
+three-levels paragraph below. Levels 2 and 3 still need a scene and a
+runtime respectively.
+
 ## BRIDGE LANE — the Zone is a graph, and the path is connected — 2026-09-12
 
 **`claude/archipepsi-amalgam-bridge`, from the engine slice `82d500f`,
@@ -200,8 +204,16 @@ Serialization agreement (the nine shared vectors in
 `godot/tests/fixtures/physics_digest_vectors.json`, **constructed from
 each vector's `package` and run through each lane's own production
 serializer** — hashing the stored strings proves the file is
-self-consistent and nothing about the code) — Python side done, Godot
-side owed. Scene binding (`scene_digest` computed from a real setup, not
+self-consistent and nothing about the code) — **both sides done, 2026-09
+-12**: `PhysicsPackage` (`godot/scripts/content/physics_package.gd`)
+builds each package and writes its own canonical bytes, and all nine
+vectors agree BYTE FOR BYTE, not merely in digest. It carries its own
+JSON writer because Godot's differs from Python's in two ways that both
+change the hash — an integral float prints as `80` rather than `80.0`,
+and non-ASCII is emitted raw rather than `\uXXXX`-escaped. Falsified
+two ways in `godot-content`: half a kilogram of mass moves the digest,
+and a package carrying a field this lane does not model is refused
+rather than dropped out of the hash. Scene binding (`scene_digest` computed from a real setup, not
 a constant) — not started; coverage list is `docs/AMALGAM_BRIDGE.md`
 §6.2b, with **five decisions for the engine lane** (float
 quantization, whether effective values are statically readable, what

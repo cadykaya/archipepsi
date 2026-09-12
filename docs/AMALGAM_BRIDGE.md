@@ -702,7 +702,7 @@ none of them substitutes for another:
 
 | Level | Artefact | Proves | Status |
 |---|---|---|---|
-| 1. Serialization agreement | the shared vectors, run through both production serializers | the two lanes build and hash the same bytes from the same input | **fixture-tested** — Python side done, Godot side owed |
+| 1. Serialization agreement | the shared vectors, run through both production serializers | the two lanes build and hash the same bytes from the same input | **done 2026-09-12, both lanes** — `PhysicsPackage` in `godot/scripts/content/physics_package.gd`, checked in `godot-content`; all nine agree byte for byte |
 | 2. Scene binding | `scene_digest` computed from the **real** setup, not a constant | the evidence names the scene it ran against | **not started** — needs a physics scene |
 | 3. Physical outcome | replaying that setup and observing the latches | the puzzle is actually solvable as built | **not started** — needs a physics runtime |
 
@@ -757,13 +757,24 @@ Nothing above needs the full physics system. In order:
    deliverable the bridge is waiting on**; the schema for its output
    already exists and is validated.
 
-**Before any of that, one small shared thing:** the nine vectors in
-`physics_digest_vectors.json` passing in GDScript — **constructed from
-each vector's `package` and run through the engine's own serializer**,
-not hashed from the stored strings. It needs no physics at all — it is
-JSON and sha256 — and it is what makes every later piece of evidence
-mean something. Doing it first means the harness has somewhere to put
-its answer on the day it works.
+~~**Before any of that, one small shared thing:** the nine vectors in
+`physics_digest_vectors.json` passing in GDScript.~~ **Done
+2026-09-12.** `PhysicsPackage` builds each vector's `package` and writes
+its own canonical bytes; the test compares the BYTES and then the
+digest, because a digest check alone cannot say whether two lanes built
+different objects or serialized the same object differently.
+
+Two things it needed that were not obvious. Godot's `JSON.stringify`
+prints an integral float as `80` where Python prints `80.0`, and emits
+non-ASCII directly where Python's default `ensure_ascii=True` escapes it
+as `\uXXXX` — either alone produces a digest the bridge cannot match for
+a package both lanes agree about in every other respect. So the engine
+writes its own JSON rather than borrowing one.
+
+Falsified two ways: half a kilogram of mass moves the digest, and a
+package carrying a field the engine does not model is REFUSED rather
+than dropped, because a producer that silently ignores a new field
+digests less than the bridge hashes.
 
 `scene_digest` comes next and needs a scene but no runtime: §6.2b is the
 coverage list to agree before it is computed for real. Until then the
