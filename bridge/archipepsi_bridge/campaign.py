@@ -33,9 +33,10 @@ from .schemas.echo import (
 from .schemas.protocol import (
     CampaignScale,
     BridgeError, CampaignSave, CampaignSnapshot, EarnedLocalReward, HubStatus,
-    Notification, ScoutedLocation, ShopState, SlotAssignment, ZoneReady,
-    ZoneRecord,
+    Notification, ScoutedLocation, ShopState, SlotAssignment, ZoneHandle,
+    ZoneReady, ZoneRecord,
 )
+from .schemas import protocol as P
 from .echo_projection import detail_examples, history_view
 from . import instrumentation
 from . import layout as layout_check
@@ -452,6 +453,18 @@ class CampaignEngine:
                    & set(range(config.first_location_id,
                                config.goal_location_id)))
 
+
+    def _dormant_zone(self):
+        """The Zone the player walked out of, if there is one.
+
+        At most one Zone is unfinished at a time — it holds its Checks
+        and blocks generation until it is finished or abandoned — so
+        `next` is a choice between one candidate and none. Ordered by
+        the save's own zone order so two calls never disagree.
+        """
+        return next((r for r in self.save.zones if r.state == "DORMANT"),
+                    None)
+
     def hub_status(self) -> HubStatus:
         ap = self.ap
         keys = ap.signal_keys
@@ -471,21 +484,43 @@ class CampaignEngine:
                              ap_online=base["ap_online"], signal_keys=keys,
                              finale_progress=progress)
 
+        # WHICH ZONE THE PORTAL IS HOLDING.
+        #
+        # `active_zone` is only the Zone the player is standing in, and
+        # `rest_zone` clears it — so a Zone walked out of was invisible
+        # here, the Hub reported ZONE_AVAILABLE, and the portal offered
+        # to design a new one. The bridge then refused that with "still
+        # holds locations". A player who walked out and restarted had no
+        # way back in short of abandoning the Zone.
         az = self.save.active_zone
-        if az is not None:
-            mode = {"PENDING_GENERATION": "GENERATING",
-                    "GENERATED": "ZONE_READY",
-                    "ACTIVE": "ZONE_ACTIVE"}[az.state]
+        held = az or self._dormant_zone()
+        base["revisitable"] = tuple(
+            ZoneHandle(zone_id=r.zone_id,
+                       display_name=r.zone.display_name if r.zone else "")
+            for r in reversed(self.save.zones)
+            if r.state == "COMPLETE")
+        if held is not None:
+            mode = P.ZONE_STATE_HUB_MODE[held.state]
             headline, detail = {
                 "GENERATING": ("EPSILON IS DESIGNING",
                                "A Zone is being generated. Hold."),
                 "ZONE_READY": ("ZONE READY",
-                               az.zone.display_name if az.zone else ""),
+                               held.zone.display_name if held.zone else ""),
                 "ZONE_ACTIVE": ("ZONE IN PROGRESS",
                                 "Step back through the portal to resume."),
+                "ZONE_DORMANT": ("ZONE WAITING",
+                                 f"{held.zone.display_name} — you left "
+                                 "with work unfinished."
+                                 if held.zone else
+                                 "You left a Zone with work unfinished."),
             }[mode]
             return HubStatus(mode=mode, headline=headline, detail=detail,
-                             holding_finale=az.is_finale, **base)
+                             holding_finale=(az is not None
+                                             and az.is_finale),
+                             resume_zone_id=held.zone_id,
+                             resume_zone_name=(held.zone.display_name
+                                               if held.zone else ""),
+                             **base)
 
         finale_unlocked = (progress >= self.config.finale_required_checks()
                           and keys >= C.FINALE_REQUIRED_SIGNAL_KEYS)

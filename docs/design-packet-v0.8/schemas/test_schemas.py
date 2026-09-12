@@ -1596,7 +1596,8 @@ def test_a_zone_check_is_never_charged_and_a_shop_check_always_is():
 
 #: Every HubMode, sorted into exactly one bucket.
 MODE_BUCKETS = {
-    "holds_a_zone": ("GENERATING", "ZONE_READY", "ZONE_ACTIVE"),
+    "holds_a_zone": ("GENERATING", "ZONE_READY", "ZONE_ACTIVE",
+                     "ZONE_DORMANT"),
     "may_request":  ("ZONE_AVAILABLE", "FINALE_ONLY"),
     "idle":         ("NO_CAMPAIGN", "WAITING_FOR_AP", "ALL_CHECKS_CLEARED"),
 }
@@ -1673,11 +1674,12 @@ def test_every_non_terminal_zone_state_pins_exactly_one_hub_mode():
     so it is where they are made to agree."""
     want = {"PENDING_GENERATION": "GENERATING",
             "GENERATED": "ZONE_READY", "ACTIVE": "ZONE_ACTIVE"}
-    #: DORMANT pins no mode ON PURPOSE. It is the one non-terminal state
-    #: that is never the active Zone -- it still reserves its Checks and
-    #: the player is in the Hub -- so the Hub shows no Zone in play and
-    #: going back is an affordance rather than a mode. A ZONE_DORMANT
-    #: mode would put a Zone on screen that nobody is standing in.
+    #: DORMANT is never the ACTIVE Zone -- it still reserves its Checks
+    #: and the player is in the Hub -- and it does pin a mode:
+    #: ZONE_DORMANT, which says the campaign holds a Zone that nobody is
+    #: standing in. An earlier version of this comment said it pinned no
+    #: mode and left going back as "an affordance"; no affordance was
+    #: built, and the Hub offered to design a new Zone instead.
     never_active = {"DORMANT"}
     states = [s for s in typing_args_of_zone_state()
               if s not in P.TERMINAL_ZONE_STATES and s not in never_active]
@@ -1709,10 +1711,46 @@ def typing_args_of_zone_state():
     return typing.get_args(P.ZoneState)
 
 
-def test_a_mode_that_claims_a_zone_must_have_one():
-    for mode in MODE_BUCKETS["holds_a_zone"]:
+def test_a_mode_that_says_you_are_standing_in_a_zone_must_have_one():
+    """OCCUPIED, not held. A dormant Zone is held and unoccupied at once
+    — it reserves its Checks and the player is in the Hub — and the two
+    questions used one list until that made the state impossible to
+    describe."""
+    for mode in P.ZONE_OCCUPIED_MODES:
         with pytest.raises(ValidationError, match="active_zone is null"):
             _snapshot(hub=_hub(mode=mode))
+
+
+def test_zone_dormant_holds_a_zone_without_anyone_standing_in_it():
+    """The mode that did not exist, and the softlock it cost.
+
+    A Zone walked out of still reserves its Checks, so the campaign must
+    not start another; and nobody is in it, so `active_zone` is null.
+    Without a mode that says both, the Hub fell through to
+    ZONE_AVAILABLE, offered to design a new Zone, and the bridge refused
+    that with "still holds locations" — no way back in short of
+    abandoning the Zone and losing its Checks and its progress.
+    """
+    ok = _snapshot(hub=_hub(mode="ZONE_DORMANT"))
+    assert ok.hub.mode == "ZONE_DORMANT"
+    assert "ZONE_DORMANT" in P.ZONE_HELD_MODES, "it blocks generation"
+    assert "ZONE_DORMANT" not in P.ZONE_OCCUPIED_MODES, "nobody is in it"
+    assert "ZONE_DORMANT" not in P.ZONE_REQUEST_MODES, (
+        "requesting a Zone here is the call the bridge refuses")
+    # And it still may not be presented as the active Zone.
+    with pytest.raises(ValidationError, match="not the active Zone"):
+        _snapshot(active_zone=_record(state="DORMANT"),
+                  hub=_hub(mode="ZONE_DORMANT"))
+
+
+def test_the_portal_is_told_which_zone_it_enters():
+    """`ZONE_ENTER_MODES` is the consumer's one branch, and
+    `resume_zone_id` is what it sends. A mode in that list with no Zone
+    named is a portal that lights up and does nothing."""
+    assert set(P.ZONE_ENTER_MODES) <= set(P.ZONE_HELD_MODES)
+    h = _hub(mode="ZONE_DORMANT", resume_zone_id="zone_001",
+             resume_zone_name="The Quiet Floor")
+    assert h.resume_zone_id == "zone_001"
 
 
 def test_a_terminal_zone_is_never_presented_as_active():

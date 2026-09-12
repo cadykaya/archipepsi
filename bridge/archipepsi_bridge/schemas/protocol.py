@@ -40,7 +40,7 @@ a claim it could not keep:
 
 from __future__ import annotations
 
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal, Union, get_args
 
 from pydantic import (
     BaseModel, ConfigDict, Field, computed_field, model_validator,
@@ -885,11 +885,49 @@ HubMode = Literal[
     "GENERATING",        # a Zone is PENDING_GENERATION; nothing to enter yet
     "ZONE_READY",        # a Zone is GENERATED but not yet entered
     "ZONE_ACTIVE",       # a Zone is ACTIVE; portal resumes it
+    "ZONE_DORMANT",      # a Zone was left with work outstanding; portal returns
     "ZONE_AVAILABLE",    # portal generates a new ordinary Zone
     "FINALE_ONLY",       # finale unlocked and nothing ordinary remains
     "WAITING_FOR_AP",    # nothing eligible; other players hold progression
     "ALL_CHECKS_CLEARED",  # everything done; postgame, nothing left to play
 ]
+
+#: Zone state -> Hub mode, **total over `ZoneState` by assertion**.
+#:
+#: This was three entries in a dict literal inside `hub_status`, and
+#: adding `VISITING` to the lifecycle without adding it here made every
+#: snapshot raise `KeyError: 'VISITING'` the moment a player walked back
+#: into a finished Zone. A partial map over a closed vocabulary is a
+#: crash waiting for the next member; the assertion below is what makes
+#: adding one impossible to forget, and it fires at import rather than
+#: in front of a player.
+ZONE_STATE_HUB_MODE: dict[str, HubMode] = {
+    "PENDING_GENERATION": "GENERATING",
+    "GENERATED": "ZONE_READY",
+    "ACTIVE": "ZONE_ACTIVE",
+    "DORMANT": "ZONE_DORMANT",
+    # A revisit is the same experience as a first visit: the player is
+    # in a Zone. It differs in accounting, not in what the Hub should
+    # say about where they are — the snapshot invariant already said so,
+    # and `hub_status` raised KeyError instead of implementing it.
+    "VISITING": "ZONE_ACTIVE",
+    # Neither is a Zone the Hub is holding: COMPLETE and ABANDONED both
+    # release the player back to the Hub, and a COMPLETE Zone is offered
+    # through `revisitable` rather than as the one Zone in hand.
+    "COMPLETE": "",
+    "ABANDONED": "",
+}
+
+#: The modes in which the portal ENTERS a Zone that already exists,
+#: rather than generating one. The Hub has one branch for all of them
+#: and reads `resume_zone_id` for which Zone it is.
+ZONE_ENTER_MODES = ("ZONE_READY", "ZONE_ACTIVE", "ZONE_DORMANT")
+
+assert set(ZONE_STATE_HUB_MODE) == set(get_args(ZoneState)), (
+    "every ZoneState needs a Hub mode or an explicit empty one; a state "
+    "missing from this map raises KeyError on the next snapshot")
+assert set(ZONE_ENTER_MODES) <= set(get_args(HubMode))
+
 
 #: The only two modes in which a `request_next_zone` intent is legal. Every
 #: other mode either already holds a Zone or has nothing to allocate. Both
@@ -898,11 +936,31 @@ HubMode = Literal[
 ZONE_REQUEST_MODES = ("ZONE_AVAILABLE", "FINALE_ONLY")
 
 #: Modes in which the campaign already has a Zone and must not start another.
-ZONE_HELD_MODES = ("GENERATING", "ZONE_READY", "ZONE_ACTIVE")
+#:
+#: **`ZONE_DORMANT` belongs here and did not exist**, which is the whole
+#: softlock: a Zone walked out of still reserves its Checks and still
+#: blocks generation, but nothing said so, and the Hub fell through to
+#: ZONE_AVAILABLE and offered to design a new one. The bridge then
+#: refused with "still holds locations" and there was no way back in.
+ZONE_HELD_MODES = ("GENERATING", "ZONE_READY", "ZONE_ACTIVE",
+                   "ZONE_DORMANT")
+
+#: Modes in which the player is STANDING IN a Zone, so `active_zone` is
+#: non-null. Not the same question as `ZONE_HELD_MODES`, and conflating
+#: the two is what made a dormant Zone impossible to describe: it is
+#: held and unoccupied at once, which the single list could not say.
+ZONE_OCCUPIED_MODES = ("GENERATING", "ZONE_READY", "ZONE_ACTIVE")
 
 #: Modes with something the player can walk into right now. Entering one of
 #: these needs no Archipelago round-trip: the Zone already exists locally.
 ZONE_ENTERABLE_MODES = ("ZONE_READY", "ZONE_ACTIVE")
+
+
+class ZoneHandle(Strict):
+    """Enough to offer a Zone and no more: what to send, what to show."""
+
+    zone_id: str = Field(min_length=1, max_length=C.MAX_AP_STRING_LEN)
+    display_name: str = Field(default="", max_length=C.MAX_TEXT_LEN)
 
 
 class HubStatus(Strict):
@@ -943,6 +1001,28 @@ class HubStatus(Strict):
     #: Whether the Zone currently held IS the finale. Checked against
     #: `active_zone.is_finale` on the snapshot.
     holding_finale: bool = False
+
+    #: WHICH Zone the portal enters, when `mode` is one of
+    #: `ZONE_ENTER_MODES`. Empty otherwise.
+    #:
+    #: **The Hub could not name a dormant Zone before this existed.**
+    #: `rest_zone` clears `active_zone_id` — nobody is standing in the
+    #: Zone any more — so the consumer's `active_zone()` came back empty
+    #: and the portal had nothing to send `enter_zone` about. The Hub
+    #: then reported ZONE_AVAILABLE and offered to design a new Zone,
+    #: which the bridge refused with "still holds locations": a softlock
+    #: reachable by walking out of a Zone and restarting, with the only
+    #: escape being to abandon it and lose the Checks and the progress.
+    resume_zone_id: str = Field(default="", max_length=C.MAX_AP_STRING_LEN)
+    resume_zone_name: str = Field(default="", max_length=C.MAX_TEXT_LEN)
+
+    #: Finished Zones the player may walk back into, newest first.
+    #:
+    #: Separate from `resume_zone_id` because they are different offers:
+    #: at most one Zone is unfinished and blocks generation, while any
+    #: number of COMPLETE ones stay open and block nothing. A revisit
+    #: reserves no locations and counts no completion twice.
+    revisitable: tuple[ZoneHandle, ...] = Field(default=(), max_length=64)
 
     #: The two operands of the finale gate, and the two thresholds.
     signal_keys: int = Field(default=0, ge=0)
@@ -1208,32 +1288,32 @@ class CampaignSnapshot(Strict):
             )
         # DORMANT is the one non-terminal state that is never the active
         # Zone: it still reserves its Checks, and the player is in the
-        # Hub. It therefore pins NO hub mode -- the Hub shows no Zone in
-        # play, and going back is a separate affordance rather than a
-        # mode. Inventing a ZONE_DORMANT mode would put a Zone on screen
-        # that nobody is standing in.
+        # Hub. That half stands.
+        #
+        # **The other half of this comment was wrong and cost a
+        # softlock.** It said DORMANT "pins NO hub mode" and that
+        # "inventing a ZONE_DORMANT mode would put a Zone on screen that
+        # nobody is standing in", with going back left as "a separate
+        # affordance". No affordance was ever built. What shipped was a
+        # Hub reporting ZONE_AVAILABLE over a Zone holding fifteen
+        # Checks, a portal offering to design a new one, and a bridge
+        # refusing that with "still holds locations" — reachable by
+        # walking out of a Zone and restarting, escapable only by
+        # abandoning it. ZONE_DORMANT does not put a Zone on screen;
+        # it puts a DOOR on screen, which is what the player needs.
         if az is not None and az.state == "DORMANT":
             raise ValueError(
                 f"active_zone '{az.zone_id}' is DORMANT; it is yours and "
                 "you are not in it, so it is not the active Zone"
             )
 
-        expected = {
-            "PENDING_GENERATION": "GENERATING",
-            "GENERATED": "ZONE_READY",
-            "ACTIVE": "ZONE_ACTIVE",
-            # A revisit is the same experience as a first visit: the
-            # player is in a Zone. It differs in accounting, not in what
-            # the Hub should say about where they are.
-            "VISITING": "ZONE_ACTIVE",
-        }
         if az is None:
-            if self.hub.mode in ZONE_HELD_MODES:
+            if self.hub.mode in ZONE_OCCUPIED_MODES:
                 raise ValueError(
                     f"mode {self.hub.mode} claims a Zone but active_zone is null"
                 )
         else:
-            want = expected[az.state]
+            want = ZONE_STATE_HUB_MODE[az.state]
             if self.hub.mode != want:
                 raise ValueError(
                     f"active_zone is {az.state}, so mode must be {want}, "

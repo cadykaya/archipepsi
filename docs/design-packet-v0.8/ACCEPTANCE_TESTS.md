@@ -8,7 +8,7 @@ All examples use the canonical fixture in `IMPLEMENTATION_PLAN.md` §3.1. v0.3 s
 
 # 1. Schema tests — ship with the packet
 
-`schemas/test_schemas.py` — 127 tests at time of writing, all passing. Run them first, before writing anything else. The count will grow; what matters is that they are green on arrival, so any red one is a regression you introduced.
+`schemas/test_schemas.py` — 129 tests at time of writing, all passing. Run them first, before writing anything else. The count will grow; what matters is that they are green on arrival, so any red one is a regression you introduced.
 
 They pin: the derived jump gap and its margin; the worst-case Zone clear time; the PRNG recipe (with a pinned seed value); Zone structural and semantic rules; the impossibility of expressing an Echo gate; Echo composition rules; rejection of invented fields and unsupported effects; save round-tripping; and that a `PENDING_GENERATION` Zone retains its allocation.
 
@@ -133,6 +133,18 @@ each test walks the *adjacent* path rather than the originally reported one.
     snapshot, `PENDING_GENERATION`/`GENERATED`/`ACTIVE` admit exactly
     `GENERATING`/`ZONE_READY`/`ZONE_ACTIVE`; a terminal Zone is never
     presented as active; `holding_finale` matches `active_zone.is_finale`.
+    The map is total over `ZoneState`, so a state added to the lifecycle
+    cannot be forgotten into a `KeyError` on the next snapshot.
+65a. **A Zone you walked out of is still yours, and the Hub says so.**
+    `DORMANT` admits `ZONE_DORMANT`: the campaign holds a Zone — it
+    still reserves its Checks and still blocks generation — and nobody
+    is standing in it, so `active_zone` is null. Those are two
+    questions, and `ZONE_HELD_MODES` and `ZONE_OCCUPIED_MODES` answer
+    one each; with a single list the state could not be described, so
+    the Hub fell through to `ZONE_AVAILABLE` and offered to design a
+    Zone the bridge then refused to allocate. `hub.resume_zone_id` names
+    which Zone the portal enters in every mode in `ZONE_ENTER_MODES`,
+    and `hub.revisitable` lists the finished Zones that stay open.
 66. *(needs the shop)* **Buying leaves stock and enters the ledger
     atomically.** After a purchase the item is gone from `shop.stock` and
     present in `pending_checks`, and `coins_spent` has risen by its cost. A

@@ -197,10 +197,29 @@ class SolverConfig(Strict):
 
 
 class PhysicsSetup(Strict):
-    """The bodies and solver a package's solution is authored against."""
+    """The bodies and solver a package's solution is authored against.
+
+    **`scene_digest` is the engine's, and it has to be.** Body id, mass
+    and constrained-ness are what the CONTRACT reasons about; they are
+    not what a replay ran against. Collision geometry, initial
+    transforms, static obstacles, gravity, layer masks — all of it can
+    change while every field here stays identical, and a solution that
+    latched before the crate was moved two metres left is not evidence
+    about the room as it now stands.
+
+    The bridge cannot compute this: it has no scene. The engine computes
+    it over the actual replay setup and supplies it, and the bridge
+    folds it into `package_digest` so that a scene change invalidates
+    the evidence exactly as a solver change does. **Opaque here on
+    purpose** — the bridge never re-derives a physical fact.
+    """
 
     bodies: tuple[BodySpec, ...] = Field(default=(), max_length=40)
     solver: SolverConfig
+    #: Sixteen hex characters, computed by the engine over the scene the
+    #: replay ran in. See `AMALGAM_BRIDGE.md` §6.2b for what it covers.
+    scene_digest: str = Field(min_length=16, max_length=16,
+                              pattern=r"^[0-9a-f]{16}$")
 
 
 class ReferenceSolution(Strict):
@@ -236,6 +255,17 @@ class PhysicsPackage(Strict):
     vector_latches: tuple[int, ...] = Field(default=(),
                                             max_length=MAX_VECTOR_LATCHES)
     #: Does a mandatory route depend on this package?
+    #: Which latches a MANDATORY ROUTE depends on, by `latch_id`.
+    #:
+    #: Distinct from `vector_latches`, which is the verifier's budget
+    #: question — what it reasons about as a state dimension. A latch can
+    #: be promoted without a required route depending on it (it opens a
+    #: shortcut the search should know about). **The reverse cannot
+    #: hold**: §23.1 says a latch left out of `vector_latches` is one
+    #: "nothing on a mandatory route depends on", so anything required is
+    #: necessarily promoted, and `_required_latches_are_promoted`
+    #: enforces that rather than leaving it to prose.
+    required_latches: tuple[str, ...] = Field(default=(), max_length=16)
     on_mandatory_route: bool = False
     setup: PhysicsSetup | None = None
     reference_solution: ReferenceSolution | None = None
@@ -269,14 +299,74 @@ class PhysicsPackage(Strict):
                 "spends the budget anyway")
         return self
 
+    @model_validator(mode="after")
+    def _required_latches_are_promoted(self):
+        declared = {c.latch_id for c in self.latch_conditions}
+        unknown = sorted(set(self.required_latches) - declared)
+        if unknown:
+            raise ValueError(
+                f"package '{self.package_id}' requires latch(es) "
+                f"{unknown} it does not declare")
+        promoted = {c.latch_id for c in self.promoted}
+        unpromoted = sorted(set(self.required_latches) - promoted)
+        if unpromoted:
+            raise ValueError(
+                f"package '{self.package_id}' requires latch(es) "
+                f"{unpromoted} without promoting them; a latch a "
+                "mandatory route depends on is by definition one the "
+                "verifier must reason about (§23.1)")
+        return self
+
     @property
     def promoted(self) -> tuple[LatchCondition, ...]:
         return tuple(self.latch_conditions[i] for i in self.vector_latches)
+
+    @property
+    def load_bearing(self) -> bool:
+        """Does anything the verifier or a route depends on ride on this?"""
+        return bool(self.vector_latches or self.on_mandatory_route
+                    or self.required_latches)
 
 
 # --------------------------------------------------------------------------
 # THE CONTENT DIGEST — one function, both sides.
 # --------------------------------------------------------------------------
+
+def canonical_bytes(package: PhysicsPackage) -> bytes:
+    """Exactly what gets hashed. **The only canonicalization here.**
+
+    Split out from `package_digest` so a test can compare the BYTES and
+    not merely the hash. A vector that only checks digests cannot say
+    whether two implementations built different objects or serialized
+    the same object differently, and a test that hashes a stored string
+    instead of calling this cannot catch the serializer drifting at all.
+
+    Anything that wants a canonical form calls this. A second
+    implementation in the same language is how the two stop agreeing.
+    """
+    body = {
+        "package_id": package.package_id,
+        "latch_conditions": [
+            {"latch_id": c.latch_id, "kind": c.kind, "detail": c.detail}
+            for c in package.latch_conditions],
+        "vector_latches": list(package.vector_latches),
+        "required_latches": sorted(package.required_latches),
+        "setup": None if package.setup is None else {
+            "bodies": [{"body_id": b.body_id, "mass_kg": b.mass_kg,
+                        "constrained": b.constrained}
+                       for b in package.setup.bodies],
+            "scene_digest": package.setup.scene_digest,
+            "solver": {
+                "iterations": package.setup.solver.iterations,
+                "fixed_step_hz": package.setup.solver.fixed_step_hz,
+                "settle_timeout_s": package.setup.solver.settle_timeout_s},
+        },
+        "reference_solution": None if package.reference_solution is None
+        else list(package.reference_solution.steps),
+    }
+    return json.dumps(body, sort_keys=True,
+                      separators=(",", ":")).encode("utf-8")
+
 
 def package_digest(package: PhysicsPackage) -> str:
     """What a replay ran against, as sixteen hex characters.
@@ -299,26 +389,7 @@ def package_digest(package: PhysicsPackage) -> str:
     which are promoted, the bodies, the solver settings, and the
     reference solution's steps. Change any and the evidence is stale.
     """
-    body = {
-        "package_id": package.package_id,
-        "latch_conditions": [
-            {"latch_id": c.latch_id, "kind": c.kind, "detail": c.detail}
-            for c in package.latch_conditions],
-        "vector_latches": list(package.vector_latches),
-        "setup": None if package.setup is None else {
-            "bodies": [{"body_id": b.body_id, "mass_kg": b.mass_kg,
-                        "constrained": b.constrained}
-                       for b in package.setup.bodies],
-            "solver": {
-                "iterations": package.setup.solver.iterations,
-                "fixed_step_hz": package.setup.solver.fixed_step_hz,
-                "settle_timeout_s": package.setup.solver.settle_timeout_s},
-        },
-        "reference_solution": None if package.reference_solution is None
-        else list(package.reference_solution.steps),
-    }
-    blob = json.dumps(body, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
+    return hashlib.sha256(canonical_bytes(package)).hexdigest()[:16]
 
 
 class ReplayEvidence(Strict):
@@ -444,9 +515,34 @@ def check_physics_content(packages, *, macro_variables=(), local_keys=0,
             "compete for the same budget")
 
     for p in packages:
-        needs_proof = bool(p.vector_latches) or p.on_mandatory_route
-        if not needs_proof:
+        if not p.load_bearing:
             continue
+
+        # A PROOF OF NOTHING IS NOT A PROOF. Three green runs against no
+        # setup, no solution, or no required outcome are three runs of
+        # nothing, and a digest over `null` is a consistent digest of an
+        # absence. Load-bearing content has to have something to replay
+        # and something the replay must show.
+        if p.setup is None or not p.setup.bodies:
+            errors.append(
+                f"package '{p.package_id}' is load-bearing and declares "
+                "no physical setup; there is nothing for a replay to have "
+                "run against")
+            continue
+        if p.reference_solution is None \
+                or not p.reference_solution.steps:
+            errors.append(
+                f"package '{p.package_id}' is load-bearing and declares "
+                "no reference solution; a replay needs something to "
+                "replay")
+            continue
+        if p.on_mandatory_route and not p.required_latches:
+            errors.append(
+                f"package '{p.package_id}' sits on a mandatory route and "
+                "names no required latch; a route that depends on nothing "
+                "in particular cannot be proved passable")
+            continue
+
         ev = p.evidence
         if ev is None:
             errors.append(
@@ -481,10 +577,33 @@ def check_physics_content(packages, *, macro_variables=(), local_keys=0,
                 f"/ {ev.provider_mass_kg:.0f} kg, not at the envelope; a "
                 "stronger provider solving it is not the claim")
             continue
-        missed = ev.latched_every_run(c.latch_id for c in p.promoted)
+        # §23.5 check 20: the reference solution latches EVERY latch
+        # condition, not merely the promoted ones. A package whose
+        # optional latch never fires has a solution that does not do
+        # what it says, and the verifier reasons about the promoted ones
+        # on the strength of the same solution.
+        must = {c.latch_id for c in p.latch_conditions}
+        if not must:
+            # BACKSTOP, and unreachable today — deliberately kept.
+            # Three separate rules have to hold for it to stay that way:
+            # a promoted index cannot point into an empty tuple, a
+            # required latch must be declared, and the mandatory-route
+            # guard above already refuses the only remaining way to be
+            # load-bearing with nothing declared. Loosen any one and a
+            # package proving nothing arrives here, where
+            # `latched_every_run(set())` would find nothing missing and
+            # accept it. `test_nothing_load_bearing_reaches_the_empty_
+            # latch_backstop` pins all three, so this branch showing up
+            # as unmeasured in a mutation run is the expected result and
+            # not an invitation to write a test that cannot exist.
+            errors.append(
+                f"package '{p.package_id}' is load-bearing and declares "
+                "no latch condition; there is no outcome to require")
+            continue
+        missed = ev.latched_every_run(must)
         if missed:
             errors.append(
-                f"package '{p.package_id}' promotes latch(es) "
+                f"package '{p.package_id}' declares latch(es) "
                 f"{list(missed)} that did not latch in every run; three "
                 "runs each latching a different part is not three "
                 "successes")

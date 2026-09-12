@@ -449,3 +449,147 @@ def test_a_gate_before_a_key_is_caught_too():
     assert not result.ok
     assert any("key-bearing" in e or "R is not a subset" in e
                for e in result.errors), result.errors
+
+
+def test_a_room_no_capability_would_reach_is_named_as_simply_unreachable():
+    """Mutation testing found this one: every reachability test so far
+    stranded rooms behind a GATE, so the branch that says "not reachable
+    at all" had never fired. The two blames are not interchangeable —
+    one says declare the capability in AP logic, the other says the
+    graph is broken — and a validator that only ever reaches the first
+    would tell the engine to fix the wrong thing."""
+    z = _chain8()
+    # One middle edge walkable only backwards. No capability exists that
+    # helps, so the strandedness survives granting every one of them.
+    z = z.model_copy(update={"edges": tuple(
+        e.model_copy(update={"direction": "B_TO_A"})
+        if e.edge_id == "e:c004:c005" else e for e in z.edges)})
+    result = topology.reachability(z)
+    assert not result.ok
+    assert any("not reachable at all" in e for e in result.errors), \
+        result.errors
+    assert not any("does not declare" in e for e in result.errors), (
+        "no gate is involved; blaming AP logic would send the engine "
+        "lane to fix a declaration that is not the problem")
+
+
+# --- SOLUTIONS_CATALOGUE §0-bis condition 4, and what the escape check
+# --- actually buys ---------------------------------------------------------
+#
+# THE CORRECTION. These tests previously claimed the escape check caught
+# a trap that "satisfied every existing rule". It does not, and cannot:
+# `R ⊆ E` asks whether the exit is reachable from every state, the
+# escape check asks whether the entrance OR the exit is — and the first
+# implies the second. No Zone exists that the escape check refuses and
+# `R ⊆ E` accepts. The fixture offered as proof also deleted two spine
+# edges, so the exit was unreachable from everywhere and three other
+# rules fired first.
+#
+# What it adds is the distinction between the two failures, which
+# `R ⊆ E` reports with one sentence: blocked but able to walk away
+# (§0-bis's "NOT YET is good gameplay") versus blocked and stuck (the
+# dead run the catalogue warns about).
+
+
+def test_an_ordinary_zone_can_always_be_left():
+    """The control. A rule that refuses everything is as broken as one
+    that refuses nothing, and every composed Zone must pass this."""
+    for z in (_chain8(), _shortcut(_chain8(), "c002", "c006", None)):
+        result = topology.reachability(z)
+        assert not any("not left" in e for e in result.errors), result.errors
+
+
+def test_the_escape_check_never_refuses_what_r_subset_e_accepts():
+    """The subsumption, asserted rather than assumed.
+
+    This is the claim the earlier write-up got wrong, so it is a test
+    now: across a family of deliberately broken Zones, no state is ever
+    named as trapped without `R ⊆ E` also failing. If someone relaxes
+    `R ⊆ E` — §0-bis does permit a gated exit — this test stops holding
+    and the escape check stops being a backstop and starts being load
+    bearing, which is exactly when it needs to be noticed.
+    """
+    broken = []
+    z = _chain8()
+    one_way = TopologyEdge(edge_id="e:c002:c007:drop", room_a="c002",
+                           room_b="c007", realization="TRAVERSAL_ONLY",
+                           direction="A_TO_B")
+    broken.append(z.model_copy(update={"edges": tuple(
+        e.model_copy(update={"capability": "blink"})
+        if e.edge_id in ("e:c006:c007", "e:c007:c008") else e
+        for e in z.edges) + (one_way,)}))
+    broken.append(z.model_copy(update={"edges": tuple(
+        e.model_copy(update={"direction": "B_TO_A"})
+        if e.edge_id == "e:c004:c005" else e for e in z.edges)}))
+    broken.append(_gate(_chain8(), "c005", "grapple"))
+    broken.append(_chain8())
+
+    for bad in broken:
+        errors = topology.reachability(bad).errors
+        if any("not left" in e for e in errors):
+            assert any("R is not a subset of E" in e for e in errors), (
+                "the escape check named a trap that R ⊆ E accepted; it is "
+                "supposed to be strictly weaker", errors)
+
+
+def test_a_trap_is_reported_as_a_trap_and_not_only_as_an_unreachable_exit():
+    """What the check is FOR. The Zone is refused either way; this says
+    the player is stuck rather than merely unable to finish."""
+    z = _chain8()
+    one_way = TopologyEdge(edge_id="e:c002:c007:drop", room_a="c002",
+                           room_b="c007", realization="TRAVERSAL_ONLY",
+                           direction="A_TO_B")
+    z = z.model_copy(update={"edges": tuple(
+        e.model_copy(update={"capability": "blink"})
+        if e.edge_id in ("e:c006:c007", "e:c007:c008") else e
+        for e in z.edges) + (one_way,)})
+    errors = topology.reachability(z).errors
+    assert any("R is not a subset of E" in e for e in errors), errors
+    assert any("can be entered and not left" in e for e in errors), (
+        "R ⊆ E already refuses this; the point of the escape line is to "
+        "say the player cannot get back out either", errors)
+    assert any("c007" in e for e in errors if "not left" in e)
+
+
+def test_blocked_but_able_to_walk_away_is_not_reported_as_a_trap():
+    """The other half of the distinction, and the case §0-bis is about.
+
+    The exit is gated and the player does not hold the capability, so
+    `R ⊆ E` refuses — correctly, the gate is undeclared. But they can
+    walk back to the entrance, come back with it, and finish. Reporting
+    that as a trap would call the intended gameplay a dead run.
+    """
+    z = _gate(_chain8(), "c008", "blink", edge_id="e:c007:c008")
+    errors = topology.reachability(z).errors
+    assert any("R is not a subset of E" in e for e in errors), errors
+    assert not any("not left" in e for e in errors), errors
+
+
+def test_declaring_the_capability_opens_the_way_back_out():
+    """And the same Zone with the capability guaranteed is fine."""
+    z = _chain8()
+    z = z.model_copy(update={"edges": tuple(
+        e.model_copy(update={"capability": "blink"})
+        if e.edge_id == "e:c006:c007" else e for e in z.edges)})
+    assert not topology.reachability(z).ok
+    ok = topology.reachability(z, declared_capabilities=["blink"])
+    assert ok.ok, ok.errors
+
+
+def test_a_key_in_hand_counts_toward_getting_back_out():
+    """The retreat search starts from the keys the player is holding at
+    that point, not from nothing. A locked door behind you that your own
+    key opens is not a trap, and a search that forgot the key would call
+    it one.
+
+    The gate on the exit is what makes the retreat matter at all: with
+    the way forward open, walking out the far end is an escape and the
+    door behind you never gets asked about.
+    """
+    z = _chain8()
+    z = _holds(z, "c002", "red")
+    z = _locked(z, "c004", "entry", "e:c003:c004", "red")
+    z = _gate(z, "c008", "blink", edge_id="e:c007:c008")
+    result = topology.reachability(z)
+    assert not any("not left" in e for e in result.errors), result.errors
+    assert not result.ok, "the undeclared gate is still a refusal"

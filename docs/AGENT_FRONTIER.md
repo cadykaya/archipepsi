@@ -14,6 +14,51 @@ a reload from disk re-enters with layout, keys and locks preserved.
 `test_amalgam_end_to_end.py` is that path and assigns to `engine.save`
 nowhere.
 
+**THE SEAM IS CROSSED, by the engine lane.** All three §5 items
+landed at `dc4ef39`: `layout_result` is serialized, aperture and arrival
+verdicts travel with it, and the committed manifest is replayed instead
+of re-solved. That is their evidence — no Godot here, nothing in this
+lane has run the integration driver.
+
+**What this lane verified from the merge is narrower, and found a hole
+that was mine.** The engine appends an exit room nobody declared and
+files reserved joins (`e:__exit__`, `r:<room>`); the validator knew the
+names and checked nothing else. It took two passes. Pass one caught an
+exit room with no bounds and one inside `c001` — and **claimed a case it
+had not fixed**: a corridor that *ends* ten kilometres away, as opposed
+to one broken in the middle, still accepted, because internal continuity
+has no opinion about where a corridor goes. So did deleting the reserved
+pair outright, and a piece of a kind the engine cannot rebuild.
+
+Pass two takes the contract from `zone_builder` instead of from taste:
+the reserved pair is **required** (every LAYOUT_OK appends it), pieces
+must satisfy `malformed_pieces` — kind, pose, a corner's turn — because
+**that is the guard the engine runs before replaying a committed chain,
+and when it trips the Zone returns LAYOUT_INFEASIBLE and does not
+open**, and `e:__exit__` gets the full `socket_a -> chain -> socket_b`
+walk, which the builder makes close exactly. The old fixtures were
+brought up to that shape rather than the contract brought down to them.
+34 of 34 refusals in `layout.py` are exercised. `docs/AMALGAM_BRIDGE.md`
+§5.4.
+
+**TWO QUESTIONS WAITING ON THE ENGINE LANE**, both implementation
+details rather than owner decisions:
+1. **`r:<room>` endpoints** — `docs/AMALGAM_BRIDGE.md` §5.4a. Can it be
+   filed with doorway endpoints like `e:__exit__` already is? If yes the
+   bridge deletes a special case and walks it like any other edge. One
+   dictionary literal in `_joins`, one branch in `_check_reserved_join`.
+2. **`scene_digest` coverage** — §6.2b. Five decisions with proposed
+   defaults: float quantization, whether effective physics values are
+   statically readable at all, what counts as participating geometry,
+   ordering across saves, versioning granularity.
+
+The bridge's half of the replay is connected and measured — re-entry
+emits the manifest and `test_the_whole_path` asserts the emitted message
+carries it. **Deleting that emit passed all 1091 tests until it was
+asserted**: the save file is identical either way, so the suite was
+reading storage and calling it the seam. Assert the message, not the
+record.
+
 **Connected since 2026-09-12 (engine lane):** all three of the items
 this section used to list as missing. The engine serializes
 `layout_result`, measures aperture polarity and arrival support and
@@ -52,12 +97,87 @@ not done":
 | **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | layout evidence validation (the engine does not send `layout_result`), the physics contract in `schemas/physics.py` (no runtime exists). **Both stay in this row until real engine output passes through their actual acceptance path** — a synthetic payload exercising a validator is not the seam being crossed |
 | **Requires Godot** | physical reachability and the whole physics substrate — `docs/AMALGAM_BRIDGE.md` §6. Aperture polarity and the manifest replay consumer moved to **Connected** on 2026-09-12 |
 
+**The physics digest has three levels and only the first is done.**
+Serialization agreement (the nine shared vectors in
+`godot/tests/fixtures/physics_digest_vectors.json`, **constructed from
+each vector's `package` and run through each lane's own production
+serializer** — hashing the stored strings proves the file is
+self-consistent and nothing about the code) — Python side done, Godot
+side owed. Scene binding (`scene_digest` computed from a real setup, not
+a constant) — not started; coverage list is `docs/AMALGAM_BRIDGE.md`
+§6.2b, with **five decisions for the engine lane** (float
+quantization, whether effective values are statically readable, what
+counts as participating geometry, ordering, versioning granularity) —
+each with a proposed default so the answer can be yes. Physical outcome
+(replay) — not started. Level 1 passing says nothing about level 2, and
+**a constant `scene_digest` passes every check on this side**: sixteen
+hex characters is all the bridge can see. Regenerate the vectors with
+`make physics-vectors`; **that is a contract change and the engine lane
+must re-run.**
+
+**THE WAY BACK INTO A ZONE WAS NOT REACHABLE.** Walk out, restart, and
+the Hub said `ZONE_AVAILABLE` — "PORTAL READY" — over a DORMANT Zone
+holding 15 Checks; pressing the portal got "still holds locations", and
+the only way forward was to abandon the Zone. Beside it, `hub_status`
+raised `KeyError: 'VISITING'` — out of the snapshot path — the moment a
+player revisited a finished Zone. The bridge half is fixed:
+`ZONE_DORMANT`, `hub.resume_zone_id`/`resume_zone_name`,
+`hub.revisitable`, `ZONE_HELD_MODES` split from a new
+`ZONE_OCCUPIED_MODES` (held and unoccupied could not be said with one
+list), and `ZONE_STATE_HUB_MODE` total over `ZoneState` by assertion.
+Proved by entering only through what the snapshot exposes.
+**Two lines are owed by the Hub and are Prod's to write** —
+`docs/AMALGAM_BRIDGE.md` §5.5b.
+
+**A gate may stop you; it may not keep you — and `R ⊆ E` already said
+so.** A claim here said §0-bis condition 4 "had no rule" and that a
+one-way edge into a dead end passed every check. False: `R ⊆ E` requires
+the exit reachable from every state, `_escapable` requires the entrance
+or the exit, and the first implies the second — no Zone is refused by
+one and accepted by the other. The fixture offered as proof also
+disconnected the exit entirely. What `_escapable` adds is the
+distinction between "blocked, can walk back and return with the
+capability" (the intended gameplay) and "blocked and stuck" (a dead
+run), which `R ⊆ E` reports with one sentence. It is also the backstop
+for the day `R ⊆ E` is relaxed to allow a legally gated exit;
+a test asserts the subsumption so that day gets noticed.
+
+**Conditions 1 and 2 need an owner decision, and the proposal is
+written.** `reachability` takes `declared_capabilities` and nothing
+passes it, because capabilities are not AP items: they come from Epsilon
+interpreting whatever the multiworld gave you, which is a random reward
+rather than a proof of obtainability. **`docs/AP_CAPABILITY_LOGIC.md`**
+traces the acquisition chain and compares explicit capability items
+against guaranteed local acquisition represented in AP logic — for each,
+where the guarantee comes from, how location rules match it, and how a
+qualifying provider reaches the player. The two options are different
+games; that is the choice. It also names a repair owed under either:
+`_capability_is_satisfied` tests primitives only, so a 2-metre dash
+satisfies `cross_long_gap`. **Until it is settled the bridge keeps
+refusing AP-relevant gates — a temporary restriction, not a verdict on
+the gameplay.**
+
 **Capability gates are searched, not sampled.** A previous guard removed
 one gate edge at a time with every other gate left passable, so two
 undeclared gates each validated the other. Availability is a set the
 question is asked under, and everything — exit, Checks, keys, `R ⊆ E` —
 is asked under it. `BASELINE_CAPABILITIES` counts: `ranged_hit` is Static
 Pulse and needs no AP logic behind it.
+
+**`make mutate-bridge` asks which refusals anything has ever fired.**
+Mute one, run the tests, and a green suite means nothing was reading it.
+First run: eleven unmeasured, including the whole re-entry manifest
+replay (deleting it passed all 1091 tests — every assertion read the
+saved record, and the save file is identical either way) and the chain
+walk's inductive step, which the single-piece fixture could not reach.
+`layout.py` and `topology.py` are now at zero. **Seventeen survivors
+remain in `schemas/transitions.py`, in pre-existing campaign
+transitions** — `start_generation`, `accept_zone`, `abandon_zone`,
+`release_location`, `claim_zone_check`, the shop pair,
+`grant_local_reward` — left standing on purpose because they are not
+this lane's; `docs/AMALGAM_BRIDGE.md` §4.1a has the command. A survivor
+is a real gap, a backstop unreachable by construction, or dead code —
+never something to close by weakening the check.
 
 **The lesson worth keeping.** The first validator skipped every check
 whose input was absent, so a layout with no apertures, no bounds and no

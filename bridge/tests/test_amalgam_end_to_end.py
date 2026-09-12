@@ -15,12 +15,13 @@ import pytest
 
 from archipepsi_bridge import store
 from archipepsi_bridge.schemas import constants as C
+from archipepsi_bridge.schemas import protocol as P
 from archipepsi_bridge.schemas.protocol import ClientMessage
 from pydantic import TypeAdapter
 
 from archipepsi_bridge.schemas import transitions as T
 
-from .conftest import connected_engine, drain, run
+from .conftest import Collector, connected_engine, drain, run
 
 _ADAPTER = TypeAdapter(ClientMessage)
 
@@ -28,6 +29,21 @@ SPACING = 50.0
 HALF_W = 9.0
 DEPTH = 16.0
 BRANCH_X = 90.0
+
+
+def _corridor(a, b) -> dict:
+    """One chain piece in the shape `zone_builder` emits one.
+
+    Pose and kind as well as endpoints: the engine refuses to replay a
+    committed chain whose pieces carry no `position`/`yaw` or an unknown
+    `kind` (`malformed_pieces`), so a fixture without them stands in for
+    a payload the engine could not rebuild.
+    """
+    return {"kind": "CONNECTOR", "position": list(a), "yaw": 0.0,
+            "entry": list(a), "exit": list(b),
+            "bounds": {"position": [min(a[0], b[0]) - 1.5, 0.0,
+                                    min(a[2], b[2])],
+                       "size": [3.0, 4.0, max(abs(b[2] - a[2]), 0.1)]}}
 
 
 def _place(zone) -> dict:
@@ -87,13 +103,7 @@ def _place(zone) -> dict:
             if abs(bx - ax) < 1e-6 else \
             [bx + (-HALF_W if bx > ax else HALF_W), 0.0, bz]
         joins[e.edge_id] = {
-            "socket_a": sa, "socket_b": sb,
-            "chain": [{"kind": "CONNECTOR", "entry": sa, "exit": sb,
-                       "bounds": {"position": [min(sa[0], sb[0]) - 1.5, 0.0,
-                                               min(sa[2], sb[2])],
-                                  "size": [3.0, 4.0,
-                                           max(abs(sb[2] - sa[2]), 0.1)]}}],
-        }
+            "socket_a": sa, "socket_b": sb, "chain": [_corridor(sa, sb)]}
 
     stations = []
     for p in zone.plugs:
@@ -102,6 +112,22 @@ def _place(zone) -> dict:
         arrival_ok.setdefault(p.source_anchor, True)
         arrival_ok.setdefault(p.destination, True)
 
+    # THE ENGINE'S OWN GEOMETRY, which every finished build appends: an
+    # exit room with the portal in it, and the approach to it filed
+    # under the reserved edge id. A payload without them is not one
+    # `zone_builder` could have produced.
+    far = max(z for _, z in centre.values()) + SPACING
+    rooms["exit"] = {
+        "position": [0.0, 0.0, far], "yaw": 0.0,
+        "bounds": {"position": [-HALF_W, 0.0, far - DEPTH / 2],
+                   "size": [HALF_W * 2, 5.0, DEPTH]}}
+    tail = max((c.id for c in zone.chambers),
+               key=lambda rid: centre[rid][1])
+    tz = centre[tail][1] + DEPTH / 2
+    joins["e:__exit__"] = {
+        "room_a": tail, "room_b": "exit", "synthetic": True,
+        "socket_a": [0.0, 0.0, tz], "socket_b": [0.0, 0.0, far],
+        "chain": [_corridor([0.0, 0.0, tz], [0.0, 0.0, far])]}
     return {"status": "LAYOUT_OK", "rooms": rooms, "joins": joins,
             "anchors": anchors, "arrival_ok": arrival_ok,
             "apertures": apertures, "stations": stations}
@@ -124,12 +150,21 @@ async def _branching_zone(engine):
 def test_the_whole_path(tmp_path):
     async def go():
         engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        sink = Collector(engine)
 
         # 1. GENERATION produces a graph, not a list.
         zone_id, zone = await _branching_zone(engine)
         assert zone.edges and zone.plugs
         junction = max(c.door_degree for c in zone.chambers)
         assert junction >= 3, "an ordinary Zone should carry a junction"
+        # A Zone being SOLVED for the first time carries no manifest.
+        # This is the control for the re-entry assertion in step 6: with
+        # nothing to contrast against, `manifest` present would prove
+        # only that the field exists.
+        born = [m for m in sink.of_type("zone_ready")
+                if m.zone.zone_id == zone_id]
+        assert born and all(m.manifest is None for m in born), (
+            "a first generation has nothing to replay")
         key = next(k.key_id for c in zone.chambers for k in c.keys)
         room, socket = next((c.id, d.socket_id) for c in zone.chambers
                             for d in c.doors if d.usage == "LOCKED")
@@ -182,8 +217,25 @@ def test_the_whole_path(tmp_path):
 
         # 6. RE-ENTER, and everything is where it was.
         engine.save = reloaded
+        sink.messages.clear()
         await engine.handle_enter_zone(zone_id)
         rec = engine.save.zone_by_id(zone_id)
+        # THE REPLAY ITSELF, not merely the stored manifest. The record
+        # keeping its layout is storage; SENDING it back down is what
+        # makes re-entry deterministic (Law 47c, AMALGAM_BRIDGE §5.3),
+        # and deleting the emit is invisible to every other assertion
+        # here — the save file looks identical either way.
+        replayed = [m for m in sink.of_type("zone_ready")
+                    if m.zone.zone_id == zone_id]
+        assert len(replayed) == 1, (
+            "re-entering a laid-out Zone sends the committed layout "
+            "back down exactly once")
+        assert replayed[0].manifest is not None, (
+            "an engine told to enter without a manifest has no choice "
+            "but to solve the layout again")
+        assert replayed[0].manifest["manifest_digest"] == digest, (
+            "the layout replayed is the layout committed")
+        assert replayed[0].manifest["joins"] == rec.manifest["joins"]
         assert rec.state == "ACTIVE"
         assert rec.manifest["manifest_digest"] == digest
         assert rec.progress.collected_keys == (key,)
@@ -314,4 +366,118 @@ def test_a_zone_that_keeps_failing_stops_being_recomposed(tmp_path):
             f"{rec.state}; it should have stopped being recomposed")
         assert set(rec.allocated_location_ids) == held, (
             "giving up on a layout released the Zone's locations")
+# --- the way back in ------------------------------------------------------
+#
+# The lifecycle existed and the player could not reach it. `rest_zone`
+# clears `active_zone_id` — nobody is in the Zone — so the Hub's
+# `active_zone()` came back empty, the mode fell through to
+# ZONE_AVAILABLE, and the portal offered to design a new Zone. Pressing
+# it got "Zone 'zone_001' still holds locations; finish or abandon it
+# first". Walk out of a Zone, restart, and the only way forward was to
+# abandon it and lose its Checks and its progress.
+#
+# These tests enter using ONLY what the snapshot exposes. Reaching into
+# `save.zones` for the id would prove the transition works and nothing
+# about whether the portal can find it, which is the half that was
+# broken.
+
+def _portal_target(engine):
+    """What `hub.gd` will have: a mode, and the Zone id to send."""
+    hub = engine.snapshot().hub
+    if hub.mode not in P.ZONE_ENTER_MODES:
+        return None
+    return hub.resume_zone_id
+
+
+def test_the_portal_can_find_the_zone_you_walked_out_of(tmp_path):
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zone_id, zone = await _branching_zone(engine)
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zone_id,
+             "layout": _place(zone)}))
+        digest = engine.save.zone_by_id(zone_id).manifest["manifest_digest"]
+        await engine.handle_enter_zone(zone_id)
+        key = next(k.key_id for c in zone.chambers for k in c.keys)
+        await engine.handle_progress(_ADAPTER.validate_python(
+            {"type": "key_collected", "zone_id": zone_id, "key_id": key}))
+        outstanding = set(engine.save.zone_by_id(zone_id)
+                          .allocated_location_ids)
+        assert outstanding, "leave with work still to do"
+
+        await engine.handle_exit_zone(zone_id)
+        await drain()
+
+        # RESTART. A new process, reading the bytes off disk.
+        engine.save = store.load_save(engine._save_path)
+        hub = engine.snapshot().hub
+        assert hub.mode == "ZONE_DORMANT", (
+            f"the Hub says {hub.mode} over a Zone holding "
+            f"{len(outstanding)} Checks")
+        assert not hub.accepts_zone_request, (
+            "offering to design a new Zone here is the call the bridge "
+            "refuses; the portal must not light up for it")
+        target = _portal_target(engine)
+        assert target == zone_id, "the portal has no way to name the Zone"
+        assert hub.resume_zone_name, "and nothing to put on the sign"
+
+        # ENTER THE WAY THE PORTAL WILL, by the id the Hub handed over.
+        await engine.handle_enter_zone(target)
+        rec = engine.save.zone_by_id(target)
+        assert rec.state == "ACTIVE"
+        assert rec.manifest["manifest_digest"] == digest, "manifest kept"
+        assert rec.progress.collected_keys == (key,), "progress kept"
+        assert set(rec.allocated_location_ids) == outstanding, "Checks kept"
+    run(go())
+
+
+def test_a_finished_zone_is_offered_back_and_counts_nothing_twice(tmp_path):
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zone_id, zone = await _branching_zone(engine)
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zone_id,
+             "layout": _place(zone)}))
+        await engine.handle_enter_zone(zone_id)
+        import archipepsi_bridge.schemas.transitions as T
+        rec = engine.save.zone_by_id(zone_id)
+        for i, loc in enumerate(rec.allocated_location_ids):
+            engine._apply(T.claim_zone_check(
+                engine.save, zone_id=zone_id, location_id=loc,
+                transaction_id=f"t{i}"))
+            engine._apply(T.confirm_check(engine.save, loc))
+        # `_apply` rather than a bare assignment: it writes the save, so
+        # the reload below reads a finished campaign rather than the one
+        # from before the last three transitions.
+        engine._apply(T.complete_zone(engine.save, zone_id))
+        counted = engine.save.completed_zone_count
+        history = engine.save.zone_history
+        assert counted == 1
+
+        # RESTART, so this is the Hub a returning player actually sees.
+        engine.save = store.load_save(engine._save_path)
+        offered = {h.zone_id for h in engine.snapshot().hub.revisitable}
+        assert zone_id in offered, (
+            "a finished Zone stays open; the Hub has to be able to say so")
+
+        await engine.handle_enter_zone(zone_id)
+        assert engine.save.zone_by_id(zone_id).state == "VISITING"
+        assert engine.snapshot().hub.mode == "ZONE_ACTIVE", (
+            "a revisit is the same experience as a first visit")
+        # RESERVES nothing — the record keeps the Check identities it
+        # held, which is history; what matters is that none of them is
+        # still held against the pool, so a revisit cannot block the
+        # next Zone the way a dormant one does.
+        assert not engine.save.zone_by_id(zone_id).holds_locations, \
+            "a revisit reserves nothing"
+        assert not (set(engine.save.zone_by_id(zone_id)
+                        .allocated_location_ids)
+                    & engine._held_location_ids())
+
+        await engine.handle_exit_zone(zone_id)
+        await drain()
+        assert engine.save.zone_by_id(zone_id).state == "COMPLETE"
+        assert engine.save.completed_zone_count == counted, (
+            "walking back through a finished Zone completed it again")
+        assert engine.save.zone_history == history
     run(go())
