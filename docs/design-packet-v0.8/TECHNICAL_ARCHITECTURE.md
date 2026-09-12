@@ -302,6 +302,13 @@ Handle every state explicitly:
 | `GENERATED` | resumable. `active_zone_id` points at it, the Hub shows `ZONE_READY`. **Never silently orphan it** |
 | `ACTIVE` | resume; if every Check is confirmed, run the completion procedure |
 | `COMPLETE` / `ABANDONED` | terminal; its locations are back in the pool |
+| `DORMANT` | left without finishing, and **not** terminal. The player walked out of a Zone with Checks outstanding, so it still holds its locations and is re-entered rather than regenerated. `ZoneProgress` on the record is what makes re-entry mean something: the keys held, the locks opened, the stations lit and the anchor the player left from |
+| `VISITING` | a finished Zone the player has walked back into. It **reserves nothing** — its locations went back to the pool when it completed — and that is the whole point of separating it from `ACTIVE`: "does this hold locations" and "can you walk back in" are different questions that one constant used to answer. Ruled 2026-09-12: a fully cleared Zone stays revisitable, and final-Check completion does not close it |
+
+**Terminal and revisitable are two questions.** `TERMINAL_ZONE_STATES`
+answers the first and is unchanged; `REVISITABLE_ZONE_STATES` answers the
+second. A `COMPLETE` Zone is terminal *and* revisitable, which no single
+set could express.
 
 The `GENERATED` row is the one that was missing. In v0.4 the state had no Hub mode, no entering intent, no snapshot field and no reconciliation clause, while §10.4 still excluded its locations from every pool — so quitting at a loading screen orphaned 2–3 real AP locations permanently, and doing it twice put the reachable Check count below the finale threshold and made the campaign unwinnable.
 

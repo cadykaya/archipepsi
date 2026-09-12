@@ -113,6 +113,15 @@ branch) returned changes requested against `cb3bf64`; this slice builds
 only what is invariant across how the `TRAVERSAL_ONLY` contradiction is
 resolved.
 
+**Dess has the bridge on `claude/archipepsi-amalgam-bridge`, from
+`82d500f`** (owner assignment, 2026-09-11). Nothing in this lane
+implements `TopologyEdge`, `DoorAssignment` / `PlugAssignment`,
+`ZoneProgress`, `DORMANT`, `R ⊆ E`, the manifest or check 19e.
+
+**Owner ruling, 2026-09-11: a fully cleared Zone stays revisitable.**
+Final-Check completion does not permanently close it. This closes the
+question this lane had open and is what §0-bis condition 5 needs.
+
 **§30.11.2e constraint 3 is a refusal, not a solver.** `build()` returns
 `LAYOUT_INFEASIBLE` naming `blocking_pairs` when a `JOINED` edge would
 close a spatial cycle, before allocating anything, and
@@ -120,6 +129,35 @@ close a spatial cycle, before allocating anything, and
 never counted — a return plug creates no spatial cycle. Closing a real
 loop needs a router that can return to a fixed transform and is not
 built. See `docs/AMALGAM_SLICE1.md` §5e.
+
+**Branches are placed, walked and remembered.** A chamber may declare
+`branches: [{socket_id, chamber}]`; the branch is placed off that side
+socket by the same route search the chain uses, furnished by the same
+`_furnish_room`, and refused if the socket is not a way through. The
+integrated proof crosses the lock into the branch, returns through its
+plug, and re-enters to find the lock still open.
+
+**THE SEAM IS CROSSED.** `placement_plan` reads the bridge's `edges` and
+each chamber's `doors` and places the real branching graph; the layout
+goes back as `layout_result` with measured apertures and arrival
+verdicts; and `ZoneReady.manifest` is replayed on re-entry rather than
+re-solved. Five of six generated Zones commit a layout with a digest.
+
+**One thing blocks the sixth, and it is Art's.** `shell_hall_transit`,
+`shell_plenum_helix` and `shell_span_basin` each declare their `exit`
+doorway **2.0 m outside their own envelope** — the router joins the
+corridor at the socket and the wall is two metres away, which is the
+playtest's "the connecter isnt connected at all". Measured and NOT
+changed (a manifest coordinate is authored geometry):
+`docs/art-requests/2026-09-11-doorways-outside-their-envelope.md`. A Zone
+holding one of these shells is refused by the layout validator until it
+lands.
+
+**Evidence comes from the body now, not only the model.** The flood
+proposes a route and a real `Player` walks it; the two are reported
+separately. c015, c005 and the pit are all left on foot, and the whole
+branch journey — lock, key, crossing, plug, persist, re-enter — is walked
+by a real body. See `docs/AMALGAM_SLICE1.md` §5o.
 
 ## THE ACTIVE FRONTIER: v0.9 — production and the authored-content transition
 

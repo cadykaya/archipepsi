@@ -64,7 +64,15 @@ def _place(zone) -> dict:
                        "size": [HALF_W * 2, 5.0, DEPTH]},
         }
         for d in ch.doors:
-            apertures[f"{ch.id}/{d.socket_id}"] = d.passable_geometry
+            # THE FIRST ROOM'S `entry` IS THE ZONE'S FRONT DOOR: no edge
+            # names it so it is declared SEALED, and the player arrives
+            # through it. This helper reported it as solid, which is a
+            # Zone whose first room is walled shut -- the engine built
+            # exactly that until `cut_plan` learned to carve it.
+            front = (ch.id == zone.chambers[0].id
+                     and d.socket_id == "entry")
+            apertures[f"{ch.id}/{d.socket_id}"] = (
+                True if front else d.passable_geometry)
         if any(d.usage != "SEALED" for d in ch.doors):
             a = f"room:{ch.id}:arrival"
             anchors[a] = [x, 0.0, z]

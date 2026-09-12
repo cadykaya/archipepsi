@@ -629,6 +629,22 @@ static func cut_plan(chamber: Dictionary) -> Dictionary:
 		if id == "":
 			continue
 		out[id] = str(door.get("usage", "USED")) != "SEALED"
+	# THE ZONE'S FRONT DOOR IS CARVED WHATEVER THE GRAPH SAYS.
+	#
+	# Nothing joins into the head of the spine, so no `TopologyEdge`
+	# names its `entry` and the composer seals it by omission -- and the
+	# player walks in through exactly there, from the Zone start. Sealing
+	# it walls the player out of their own Zone, which is what a
+	# generated Zone actually did: the bridge measured `c001/entry` as
+	# solid and refused the layout for it.
+	#
+	# ONLY WHEN A COMPOSER SPOKE. An empty plan means no door assignment
+	# exists and `_perimeter` falls back to the two-door defaults, which
+	# already carve the entry -- adding one key would turn that fallback
+	# off and seal every other opening in the room, which is exactly what
+	# it did: a Zone's first room came back with its EXIT walled up.
+	if not out.is_empty() and bool(chamber.get("zone_entrance", false)):
+		out["entry"] = true
 	return out
 
 static func _perimeter(root: Node3D, width: float, depth: float,

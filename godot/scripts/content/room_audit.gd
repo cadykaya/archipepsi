@@ -410,16 +410,28 @@ static func _openings_are_holes(room: Dictionary, to_world: Transform3D,
 ## the case that fails it. A sealed door that is accidentally a hole is a
 ## way past a lock, and if the probe is skipped it is indistinguishable
 ## in the report from one that is correctly solid.
-static func _assigned_doors_match_their_usage(room: Dictionary,
-		to_world: Transform3D, space: PhysicsDirectSpaceState3D,
-		who: String) -> Array[String]:
-	var out: Array[String] = []
+## IS EACH DECLARED DOOR A HOLE? The measurement, without the verdict.
+##
+## **Architectural, not "can the player walk through right now".** A
+## `LOCKED` door is a slab standing in an aperture that IS carved, and
+## the two are different facts: the hole is the architecture and the lock
+## is content placed in it. `_blocked` skips placed content -- a
+## `LockedDoor` included -- so a locked door measures as the hole it is,
+## and whether it currently stops the player is the lock's business and
+## is reported separately.
+##
+## Returns `socket_id -> passes`, one entry per declared door, `SEALED`
+## ones included: a door the layout does not report is refused by the
+## bridge rather than skipped, which is what makes the probe inverted
+## rather than optional.
+static func aperture_polarity(room: Dictionary, to_world: Transform3D,
+		space: PhysicsDirectSpaceState3D) -> Dictionary:
+	var out := {}
 	for raw: Variant in room.get("doors", []):
 		if typeof(raw) != TYPE_DICTIONARY:
 			continue
 		var door: Dictionary = raw
 		var at: Vector3 = door["position"]
-		var want_open := bool(door["passable"])
 		# Stand where the floor is, exactly as the two-door probe does:
 		# an aperture's sill is not always the height its socket names.
 		var ground := _ray(space, to_world * (at + Vector3.UP * 1.0),
@@ -437,6 +449,23 @@ static func _assigned_doors_match_their_usage(room: Dictionary,
 			if _blocked(space, to_world * (at + inward * step + stance)):
 				blocked = true
 				break
+		out[str(door["socket_id"])] = not blocked
+	return out
+
+static func _assigned_doors_match_their_usage(room: Dictionary,
+		to_world: Transform3D, space: PhysicsDirectSpaceState3D,
+		who: String) -> Array[String]:
+	var out: Array[String] = []
+	# ONE MEASUREMENT, TWO CONSUMERS. The audit turns it into a
+	# violation; the layout result puts it on the wire. Two probes for
+	# one question is how the report and the refusal come to disagree.
+	var measured := aperture_polarity(room, to_world, space)
+	for raw: Variant in room.get("doors", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var door: Dictionary = raw
+		var want_open := bool(door["passable"])
+		var blocked := not bool(measured.get(str(door["socket_id"]), true))
 		if want_open and blocked:
 			out.append("%s: door '%s' is %s and must be passable, but "
 					% [who, str(door["socket_id"]), str(door["usage"])]

@@ -34,6 +34,7 @@ try:
     from . import constants as C
     from .echo import EchoInterpretation
     from .protocol import (
+        OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
         ShopStockItem, ZoneRecord,
     )
@@ -42,6 +43,7 @@ except ImportError:  # pragma: no cover
     import constants as C
     from echo import EchoInterpretation
     from protocol import (
+        OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
         CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
         ShopStockItem, ZoneRecord,
     )
@@ -137,13 +139,203 @@ def accept_zone(save: CampaignSave, zone: Zone, *,
 
 
 def enter_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
-    """GENERATED -> ACTIVE. Idempotent on an already-ACTIVE Zone."""
+    """GENERATED, DORMANT or COMPLETE -> ACTIVE. Idempotent on ACTIVE.
+
+    **Re-entry, not regeneration.** The layout rebuilds from the
+    committed manifest and is identical by construction; `progress` is
+    untouched, so the keys collected and the locks opened are still
+    collected and open. That is what "returning to the same Zone" means:
+    familiar rooms, the branch you left, and your progress still there.
+
+    `COMPLETE` is enterable because claiming the final Check does not
+    close the place (ruled 2026-09-12). `ABANDONED` is not, because
+    abandonment is the deliberate act that gives the Zone back.
+    """
     rec = _require_zone(save, zone_id)
-    if rec.state == "ACTIVE":
+    if rec.state in OCCUPIED_ZONE_STATES:
         return save
-    if rec.state != "GENERATED":
-        raise ValueError(f"Zone '{zone_id}' is {rec.state}; nothing to enter")
-    return _rebuild(save, zones=_replace_zone(save, zone_id, state="ACTIVE"))
+    if rec.state not in REVISITABLE_ZONE_STATES:
+        raise ValueError(
+            f"Zone '{zone_id}' is {rec.state}; nothing to enter")
+    # A FINISHED ZONE IS VISITED, NOT RE-ENTERED. Sending it back through
+    # ACTIVE would make it reserve its old locations again — colliding
+    # with whatever Zone is genuinely in flight, and re-opening Checks
+    # the campaign already counted. VISITING is the same experience and
+    # different accounting.
+    state = "VISITING" if rec.state == "COMPLETE" else "ACTIVE"
+    return _rebuild(save,
+                    zones=_replace_zone(save, zone_id, state=state),
+                    active_zone_id=zone_id)
+
+
+def rest_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
+    """ACTIVE -> DORMANT: left with work outstanding, and kept whole.
+
+    Everything survives — the committed layout, the Check identities,
+    which of them are claimed, and the player's progress. **Returning
+    unclaimed Checks to the allocator is `abandon_zone`'s behaviour and
+    only `abandon_zone`'s**; it is an explicit act with an explicit
+    cost, never the silent consequence of walking out of a door.
+
+    A Zone with nothing left to claim goes to `COMPLETE` instead, which
+    is also revisitable — the two differ only in whether work remains.
+    """
+    rec = _require_zone(save, zone_id)
+    if rec.state in ("DORMANT", "COMPLETE"):
+        return save
+    # Leaving a VISIT puts the Zone back exactly as it was. No counter
+    # moves, no history entry, no cursor: the campaign already recorded
+    # this Zone the first time, and walking through it again is not a
+    # second completion.
+    if rec.state == "VISITING":
+        return _rebuild(save,
+                        zones=_replace_zone(save, zone_id,
+                                            state="COMPLETE"),
+                        active_zone_id=None)
+    if rec.state != "ACTIVE":
+        raise ValueError(f"Zone '{zone_id}' is {rec.state}, not ACTIVE")
+    if any(p.location_id in set(rec.allocated_location_ids)
+           for p in save.pending_checks):
+        raise ValueError(
+            f"Zone '{zone_id}' still has Checks in flight; confirm or "
+            "release them before leaving it dormant")
+    return _rebuild(save,
+                    zones=_replace_zone(save, zone_id, state="DORMANT"),
+                    active_zone_id=None)
+
+
+def _chambers_of(rec: ZoneRecord):
+    """This record's chambers, however the Zone happens to be stored.
+
+    `ZoneRecord.zone` is a model in a live save and a plain dict when it
+    came off disk mid-migration, and a validator that only understood
+    one of those would refuse real progress on a real Zone.
+    """
+    zone = rec.zone
+    if zone is None:
+        return ()
+    chambers = zone.get("chambers", ()) if isinstance(zone, dict) \
+        else zone.chambers
+    out = []
+    for ch in chambers or ():
+        out.append(ch if isinstance(ch, dict) else ch.model_dump())
+    return out
+
+
+def _declared_keys(rec: ZoneRecord) -> set[str]:
+    return {str(k.get("key_id")) for ch in _chambers_of(rec)
+            for k in (ch.get("keys") or ())}
+
+
+def _declared_locks(rec: ZoneRecord) -> set[tuple[str, str]]:
+    return {(str(ch.get("id")), str(d.get("socket_id")))
+            for ch in _chambers_of(rec)
+            for d in (ch.get("doors") or ())
+            if str(d.get("usage")) == "LOCKED"}
+
+
+def _declared_stations(rec: ZoneRecord) -> set[str]:
+    return {str(s) for s in (rec.manifest or {}).get("stations", ())}
+
+
+def _progress(save: CampaignSave, zone_id: str, change,
+              known) -> CampaignSave:
+    """Apply a monotone progress change, idempotently and only if real.
+
+    Every progress set only grows, so applying the same event twice is
+    applying it once. A resend after a dropped connection is the normal
+    case and must never be an error — which is why this returns `save`
+    unchanged rather than raising when nothing moved.
+
+    **An unknown identity is refused, not recorded.** A key the Zone
+    never declared, a lock on a door that is not locked, a station the
+    layout never placed: each would otherwise become permanent save
+    data describing something that does not exist, and progress sets are
+    monotone, so nothing would ever take it out again.
+    """
+    rec = _require_zone(save, zone_id)
+    if rec.state not in REVISITABLE_ZONE_STATES:
+        raise ValueError(
+            f"Zone '{zone_id}' is {rec.state}; it records no progress")
+    known(rec)
+    nxt = change(rec.progress)
+    if nxt == rec.progress:
+        return save
+    return _rebuild(save,
+                    zones=_replace_zone(save, zone_id, progress=nxt))
+
+
+def commit_layout(save: CampaignSave, zone_id: str,
+                  manifest: dict) -> CampaignSave:
+    """Store a validated layout. Once, and then never recomputed.
+
+    The caller has already validated: this transition is the atomic
+    write, not the decision. A Zone that already carries a manifest keeps
+    it — a layout is solved once and replayed forever, so a second
+    proposal for the same Zone is a bug upstream rather than an update.
+    """
+    rec = _require_zone(save, zone_id)
+    if rec.manifest is not None:
+        if rec.manifest.get("manifest_digest") \
+                == manifest.get("manifest_digest"):
+            return save
+        raise ValueError(
+            f"Zone '{zone_id}' already carries layout "
+            f"{rec.manifest.get('manifest_digest')}; a committed layout "
+            "is replayed, never replaced")
+    return _rebuild(save,
+                    zones=_replace_zone(save, zone_id, manifest=manifest))
+
+
+def record_key(save: CampaignSave, zone_id: str, key_id: str) -> CampaignSave:
+    """A Zone-local key collected. Idempotent by `key_id`."""
+    def known(rec):
+        declared = _declared_keys(rec)
+        if key_id not in declared:
+            raise ValueError(
+                f"Zone '{zone_id}' declares no key '{key_id}'"
+                + (f"; it holds {sorted(declared)}" if declared
+                   else " and holds none"))
+    return _progress(save, zone_id, lambda p: p.with_key(key_id), known)
+
+
+def record_lock(save: CampaignSave, zone_id: str, room_id: str,
+                socket_id: str) -> CampaignSave:
+    """A lock opened. Idempotent by `(room_id, socket_id)`.
+
+    Identified by the DOOR, not the key: one key may open several locks,
+    so the key is not the identity of the event.
+    """
+    def known(rec):
+        locks = _declared_locks(rec)
+        if (room_id, socket_id) not in locks:
+            raise ValueError(
+                f"Zone '{zone_id}' has no locked door "
+                f"'{room_id}/{socket_id}'"
+                + (f"; its locks are {sorted(locks)}" if locks
+                   else " and has no locks at all"))
+    return _progress(save, zone_id,
+                     lambda p: p.with_lock(room_id, socket_id), known)
+
+
+def record_station(save: CampaignSave, zone_id: str,
+                   station_id: str) -> CampaignSave:
+    """A warp station reached. Idempotent by `station_id`.
+
+    Travel and save. **Never loadout editing** — editing a loadout
+    mid-Zone would re-specify the capabilities validated at entry, which
+    is why all five proposals deferred it and why this ruling did not
+    bring it back.
+    """
+    def known(rec):
+        stations = _declared_stations(rec)
+        if station_id not in stations:
+            raise ValueError(
+                f"Zone '{zone_id}' placed no station '{station_id}'"
+                + (f"; it has {sorted(stations)}" if stations
+                   else " and its layout records none"))
+    return _progress(save, zone_id,
+                     lambda p: p.with_station(station_id), known)
 
 
 def complete_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
@@ -154,8 +346,17 @@ def complete_zone(save: CampaignSave, zone_id: str) -> CampaignSave:
     which is correct and is exactly why this must be one transition.
     """
     rec = _require_zone(save, zone_id)
-    if rec.state != "ACTIVE":
-        raise ValueError(f"Zone '{zone_id}' is {rec.state}, not ACTIVE")
+    if zone_id in save.zone_history:
+        raise ValueError(
+            f"Zone '{zone_id}' is already counted in this campaign's "
+            "history; a revisit completes nothing a second time")
+    # ACTIVE or DORMANT: §14.5 completes a Zone with every Check
+    # confirmed WHEREVER THE PLAYER IS, and a Zone put down with work
+    # outstanding is exactly the case where the last Check can land
+    # while they stand in the Hub.
+    if rec.state not in ("ACTIVE", "DORMANT"):
+        raise ValueError(
+            f"Zone '{zone_id}' is {rec.state}, not ACTIVE or DORMANT")
     if any(p.location_id in set(rec.allocated_location_ids)
            for p in save.pending_checks):
         raise ValueError(
@@ -424,4 +625,6 @@ TRANSITIONS = (
     release_location, claim_zone_check, buy_shop_stock, confirm_check,
     rollback_shop_purchase, restock_shop, append_interpretation,
     slot_action, grant_local_reward,
+    rest_zone, record_key, record_lock, record_station,
+    commit_layout,
 )

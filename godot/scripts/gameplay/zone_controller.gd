@@ -101,6 +101,15 @@ var _stations: Array = []
 ## the exception the contract names: a POSITION, overwritten rather than
 ## accumulated, and losing it costs a walk rather than a run.
 var _stations_reached := {}
+## The manifest the bridge committed for this Zone, if it has one. Set
+## before `setup`; empty means this is the first visit and the layout is
+## solved rather than replayed.
+var committed_manifest := {}
+## What the bridge said about the layout this session sent, for a caller
+## or a suite to read: "", "ACCEPTED", "LAYOUT_REFUSED", ...
+var layout_verdict := ""
+## Every Check this Zone holds, from its own chambers.
+var _zone_locations: Array[int] = []
 ## PROGRESS CARRIED IN, set before `setup` by whoever is remembering.
 ##
 ## `locked_door.gd` already states the rule this serves: opened locks are
@@ -141,7 +150,13 @@ func setup(zone_dict: Dictionary) -> void:
 	zone = zone_dict
 	zone_id = zone.get("zone_id", "")
 	var theme: String = zone.get("theme", "void_glitch")
-	var build := ZoneBuilder.build(zone)
+	# A COMMITTED MANIFEST IS REPLAYED, NOT RE-SOLVED. `ZoneReady` carries
+	# one on every visit after the first, and laying those transforms back
+	# down is what makes a revisited Zone the same Zone -- a re-search
+	# would be a second layout for a place the player already knows.
+	var build := ZoneBuilder.build(zone, "", 0.0,
+			ZoneBuilder.layout_from_json(committed_manifest) \
+			if not committed_manifest.is_empty() else {})
 	# A ZONE THAT COULD NOT BE LAID OUT IS NOT A ZONE. `ZoneBuilder`
 	# reports a routing failure rather than attaching a room on top of
 	# another one, and the honest thing to do with that report is to
@@ -247,6 +262,20 @@ func setup(zone_dict: Dictionary) -> void:
 		var area := node as Area3D
 		area.body_entered.connect(_on_secret_entered.bind(area))
 
+	# THE MEASURED HALF OF THE LAYOUT RESULT, taken from the Zone that
+	# was actually built and while it is standing in the tree.
+	#
+	# The bridge cannot measure any of this -- whether a standing capsule
+	# fits at an anchor, or whether a declared door is a hole -- and it
+	# refuses a layout that does not carry it rather than assuming. A
+	# coordinate is not evidence a body fits there.
+	_measure_layout_evidence(build)
+	# SENT AFTER THE EVIDENCE IS MEASURED, which is the only order that
+	# works: the first version sent the layout forty lines earlier, so
+	# every arrival verdict and every aperture reading was attached to a
+	# dictionary the bridge had already been handed a copy of. It refused
+	# the Zone for carrying no measurements, which was true.
+	send_layout_result(build)
 	for entry: Dictionary in build["chambers"]:
 		var chamber: Dictionary = entry["chamber"]
 		var xform: Transform3D = entry["xform"]
@@ -315,6 +344,10 @@ func setup(zone_dict: Dictionary) -> void:
 		for extra: Variant in chamber.get(
 				"additional_reward_location_ids", []) as Array:
 			locations.append(int(extra))
+		# THE ZONE'S OWN CHECKS, kept where the Zone can be asked about
+		# them without the bridge having to call it the active one.
+		for location: Variant in locations:
+			_zone_locations.append(int(location))
 
 		var anchor: Vector3 = result.get("reward_position", Vector3(0, 0, 1))
 		record["rewards"] = []
@@ -526,6 +559,52 @@ func keys_held() -> Dictionary:
 
 func locks_opened() -> Dictionary:
 	return _locks_open.duplicate()
+
+## Aperture polarity and arrival verdicts, measured and attached.
+##
+## `apertures` is ARCHITECTURAL: a `LOCKED` door reads as a hole because
+## it is one, and the slab standing in it is content. Whether that slab
+## currently stops the player is a different question with a different
+## answer and is not what this reports.
+func _measure_layout_evidence(build: Dictionary) -> void:
+	var space := get_world_3d().direct_space_state
+	var apertures := {}
+	for entry: Dictionary in build.get("chambers", []):
+		var rid := str((entry["chamber"] as Dictionary).get("id", ""))
+		var measured := RoomAudit.aperture_polarity(
+				entry["build"] as Dictionary,
+				entry["xform"] as Transform3D, space)
+		for socket: String in measured:
+			apertures["%s/%s" % [rid, socket]] = bool(measured[socket])
+	build["apertures"] = apertures
+	var arrival_ok := {}
+	for name: String in build.get("anchors", {}):
+		arrival_ok[name] = _capsule_fits(space,
+				(build["anchors"] as Dictionary)[name])
+	build["arrival_ok"] = arrival_ok
+
+## Does a standing player fit here? The one question a coordinate cannot
+## answer, asked of the physics the player will actually collide with.
+func _capsule_fits(space: PhysicsDirectSpaceState3D, at: Vector3) -> bool:
+	var shape := CapsuleShape3D.new()
+	shape.height = Constants.PLAYER_HEIGHT
+	shape.radius = Constants.PLAYER_RADIUS
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = shape
+	query.transform = Transform3D(Basis.IDENTITY,
+			at + Vector3(0, Constants.PLAYER_HEIGHT / 2.0 + 0.1, 0))
+	query.collide_with_areas = false
+	return space.intersect_shape(query, 1).is_empty()
+
+## THE LAYOUT GOES BACK, which is the half of the exchange that was
+## missing. `zone_builder.build()` returned everything the validator
+## needs and returned it into Godot, where nothing put it on the wire.
+func send_layout_result(build: Dictionary) -> void:
+	if zone_id == "":
+		return
+	BridgeClient.send_intent({"type": "layout_result",
+			"zone_id": zone_id,
+			"layout": ZoneBuilder.layout_to_json(build)})
 
 ## Which stations are online, for whoever is carrying progress out.
 func stations_reached() -> Dictionary:
@@ -781,17 +860,21 @@ func refresh() -> void:
 		var reward: RewardObject = record["reward"]
 		if reward != null:
 			reward.refresh_from_snapshot()
-	# The bridge auto-completes the Zone when its last Check confirms; the
-	# snapshot then reports no active zone (or a different one). That is the
-	# exit portal's unlock signal.
-	var active := BridgeClient.active_zone()
-	var complete: bool = active.is_empty() \
-			or active.get("zone_id") != zone_id \
-			or _all_checks_confirmed()
+	# THE ZONE'S OWN CHECKS DECIDE, not whether the bridge still calls
+	# this Zone active.
+	#
+	# "No active Zone means this one completed" was sound while the only
+	# way to stop being active was to finish. It is not any more: a Zone
+	# walked out of with work outstanding goes DORMANT and
+	# `active_zone_id` is cleared, so the old inference opened the exit
+	# portal on a Zone the player had barely started -- and the label read
+	# "0 CHECKS REMAIN" because the outstanding count came from the same
+	# empty record.
 	var outstanding := 0
-	for location in active.get("allocated_location_ids", []):
-		if not BridgeClient.is_checked(int(location)):
+	for location: int in _zone_locations:
+		if not BridgeClient.is_checked(location):
 			outstanding += 1
+	var complete := outstanding == 0
 	_exit_portal.set_unlocked(complete, outstanding)
 	# The unlock is pushed on every snapshot, so remark on the edge only.
 	if complete and _portal_was_locked and hud != null:
@@ -878,12 +961,12 @@ func _process(delta: float) -> void:
 	else:
 		hud.clear_waypoint()
 
+## Every Check THIS Zone holds, confirmed. Asked of the Zone's own
+## chambers for the same reason the portal is: a Zone that is not the
+## active one is not thereby a finished one.
 func _all_checks_confirmed() -> bool:
-	var active := BridgeClient.active_zone()
-	if active.is_empty():
-		return true
-	for location in active.get("allocated_location_ids", []):
-		if not BridgeClient.is_checked(int(location)):
+	for location: int in _zone_locations:
+		if not BridgeClient.is_checked(location):
 			return false
 	return true
 

@@ -868,8 +868,20 @@ func _process_chamber(controller: ZoneController,
 				return BridgeClient.is_checked(reward.location_id), 15.0)
 
 ## Acceptance Test I: leave and resume. Clears ONE chamber, leaves via the
-## pause path, verifies the Zone stays ACTIVE and no new Zone can start,
+## pause path, verifies the Zone goes DORMANT and still blocks a new one,
 ## then rebuilds the scene and verifies transient reset + persistence.
+##
+## **Leaving no longer keeps the Zone ACTIVE.** The bridge lane separated
+## the two questions a single state used to answer: a Zone walked out of
+## with work outstanding becomes `DORMANT` and `active_zone_id` is
+## cleared, and it is re-entered rather than resumed-in-place. It still
+## reserves its Checks -- `holds_locations` is "not terminal" and DORMANT
+## is not terminal -- so the one-Zone-at-a-time rule is unchanged and is
+## what this still asserts.
+##
+## The old assertion read the snapshot BEFORE the leave landed, so a mode
+## that was still `ZONE_ACTIVE` from the previous frame satisfied it and
+## the real post-leave state was never examined.
 func _test_leave_and_resume(controller: ZoneController,
 		zone_dict: Dictionary) -> ZoneController:
 	var first: Dictionary = {}
@@ -893,19 +905,46 @@ func _test_leave_and_resume(controller: ZoneController,
 	await get_tree().process_frame
 	BridgeClient.send_intent({"type": "leave_zone", "zone_id": zone_id})
 	await get_tree().process_frame
+	# WAIT FOR THE LEAVE TO LAND, not for a mode that was already true.
 	if not await _await_condition("snapshot after leave",
 			func() -> bool:
-				return BridgeClient.hub_mode() == "ZONE_ACTIVE", 5.0):
+				return BridgeClient.hub_mode() != "ZONE_ACTIVE", 5.0):
 		return null
-	_check(BridgeClient.hub_mode() == "ZONE_ACTIVE",
-			"zone stays ACTIVE after leaving (test I)")
+	var after_leave := BridgeClient.hub_mode()
+	_check(after_leave != "ZONE_ACTIVE",
+			"the Zone was left and the Hub still calls it active (test I)")
 
 	var errors_before := _error_count
 	BridgeClient.send_intent({"type": "request_next_zone", "finale": false})
-	await _await_condition("second zone request refused",
+	var refused := await _await_condition("second zone request refused",
 			func() -> bool: return _error_count > errors_before, 5.0)
-	_check(BridgeClient.hub_mode() == "ZONE_ACTIVE",
-			"no new zone can be generated while one is ACTIVE (test I)")
+	_check(refused,
+			"a second Zone was requested while a DORMANT one still holds "
+			+ "its locations and nothing refused it (test I)")
+	# AND NOTHING STARTED. A refusal that still generated would show up
+	# here and nowhere else.
+	_check(BridgeClient.hub_mode() != "GENERATING"
+				and BridgeClient.hub_mode() != "ZONE_READY",
+			"a new Zone began generating while a DORMANT one still holds "
+			+ "its locations: mode is '%s' (test I)"
+			% BridgeClient.hub_mode())
+
+	# RE-ENTRY IS AN INTENT NOW, not a rebuild of the scene.
+	#
+	# A DORMANT Zone is re-entered rather than resumed in place: the
+	# bridge moves it back to ACTIVE and makes it the active Zone again,
+	# and nothing the player does inside it counts until it has. The old
+	# flow rebuilt the controller and went straight on claiming Checks,
+	# which the bridge now refuses because the Zone it names is not the
+	# one in play.
+	BridgeClient.send_intent({"type": "enter_zone", "zone_id": zone_id})
+	if not await _await_condition("re-entry makes the Zone active again",
+			func() -> bool:
+				return BridgeClient.hub_mode() == "ZONE_ACTIVE", 5.0):
+		return null
+	_check(str(BridgeClient.active_zone().get("zone_id", "")) == zone_id,
+			"re-entering the DORMANT Zone made a different Zone active "
+			+ "(test I)")
 
 	var resumed := ZoneController.new()
 	get_tree().root.add_child(resumed)

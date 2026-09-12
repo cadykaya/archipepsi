@@ -96,6 +96,11 @@ that was verified by removing them.
 | **Everything built is committed** | `zone_builder.gd`, `room_contract_driver.gd` `_box_key` | every box in `bounds_list` is accounted for by a committed room or chain piece; the check found two real omissions (§5i) |
 | **The walk prober is no kinder than the body** | `room_contract_driver.gd` `_rise_over`, `_is_a_ramp` | the ascent bound is read off a real `Player`'s `floor_max_angle` and is strictly less than `MAX_VERTICAL_STEP`; with climbing disabled all three escape proofs fail, so the rule is live |
 | **A branch is a placed room, crossed, returned from and remembered** | `zone_builder.gd` branches, `slice1_fixture.gd`, `zone_controller.gd` carried progress | the vault is refused reachable with the lock standing and reachable once it opens, its plug lands standable at `zone_start`, and the opened lock, the key and the station all survive a leave and a re-entry |
+| **A branch is furnished like any other room** | `zone_builder.gd` `_furnish_room` | a 280 m² branch declaring a key gets the key and the warp station it is owed; discarding the branch's furnishing turns both red |
+| **The actual Player leaves c015 and c005** | `room_contract_driver.gd` `_player_walks_to` | a real `Player`, real input actions, real physics: c015 in 69 frames, c005 in 126, and out of the pit in 102 along a route the flood proposed |
+| **The actual Player walks the whole branch journey** | `_test_a_real_player_walks_the_whole_branch_journey` | lock shut → vault unreachable; key picked up at 0.34 m → lock opens; body crosses into the vault; walks onto the plug and lands at `zone_start`; progress through a file and back and the lock is still open |
+| **A branch may branch** | `zone_builder.gd` branch queue, `unreachable_branches` | a depth-two branch is placed, furnished and reachability-checked; removing the recursion reports "branching is one level deep" |
+| **A committed layout replays without re-solving** (law 47c) | `zone_builder.gd` `_replay_route`, `build(..., layout)` | a manifest replays under a **0.001 ms** budget — the budget that makes solving impossible — with every room within 0.001 m, the same piece count and the same box count |
 
 ## 4. Implemented but not integrated
 
@@ -129,20 +134,130 @@ that was verified by removing them.
   engine being the unknown. All twelve shipping shells remain two-door
   and remain valid.
 - The exit unlock.
+- **Persisting the manifest.** Replay is implemented and proved; nothing
+  writes a layout to disk or hashes it into `manifest_digest`. The Zone
+  record is the bridge's.
 - **§30.11.2e constraint 1 (Join).** Needs the socket assignment to say
   which two sockets are supposed to meet, which is the bridge column.
   Constraints 2 and 4 are measured (§5h); 3 is refused (§5e).
-- **A branch's own keys, locks and stations.** The branch is a room to
-  everything downstream — its Checks, activities and enemies are wired by
-  the same controller code as the chain's — but the per-room key, lock
-  and station placement still runs only over `zone.chambers`. A branch
-  that wants its own locked door does not get one yet.
 - **Checks in the vault.** A Check id is an AP allocation, so the slice
   fixture's branch carries a puzzle instead. The owner's design puts
   Checks in a gated dead end and that arrives with `RoomAssignment`.
 - **Closing** a spatial cycle. Refusal is implemented and proved (§5e);
   the router still builds chains, so a Zone that wants a genuine loop
   gets a typed `LAYOUT_INFEASIBLE` naming the pair, not a layout.
+
+## 5o. The flood proposes, the body disposes
+
+The brief asked for evidence from the actual Player rather than from the
+flood, and the two are now kept apart and reported apart.
+
+**The flood is a diagnostic.** It samples columns and joins them by a
+slope rule. It is fast, it covers a Zone, and it is a *model*.
+
+**The Player is the evidence.** `Player.create()`, `move_and_slide`,
+gravity, the capsule, and the real input actions — `move_forward` pressed
+and the body steered by yaw, because `_physics_process` reads
+`Input.get_vector` and a test that set `velocity` would be testing
+arithmetic instead of the controller. No offer is constructed, no Echo
+equipped, no constant touched.
+
+The two work together the way a player does: the flood **proposes a
+route** and the body **walks it**. Steering straight at a goal is not how
+anyone leaves a pit — the ramp is round a corner — and a player pressed
+into the wall nearest the exit measures the steering, not the room.
+
+### What the body did
+
+| | frames | result |
+|---|---:|---|
+| c015, entry → exit | 69 | out |
+| c005, entry → exit | 126 | out |
+| c005, **fallen into the pit** → exit | 102 | out, via 11 waypoints |
+| journey: onto the key | 95 | picked up at **0.34 m** |
+| journey: into the vault | 277 | entered at waypoint 24 of 27 |
+| journey: onto the plug | 25 | landed at `zone_start` |
+
+### Three defects the body found that the model did not
+
+1. **The flood measured the player's own head.** Flooding a room with a
+   real Player standing in it read the capsule's top as the floor: a body
+   at −0.75 m reported a start height of 1.02 m, one standable cell, and
+   a sealed pit. The probe takes an exclusion list now.
+2. **A stuck leg is not a stuck walk.** The straight line between two
+   waypoints clips the corner beside a doorway; abandoning the walk on
+   the first stuck leg stopped the body in the room it started in and
+   reported the vault unreachable. Only a run of four gives up.
+3. **Something may move the body mid-walk.** The return plug sends the
+   player home from the dead end they just walked into — and the finger
+   is still on the key, so the walk carried on from the Zone start and
+   reported a position twelve metres into that *second* walk as where the
+   plug had put them. A walk can now end on entering a region.
+
+### And one rule that is stricter but not yet distinguished
+
+Two standable cells 0.5 m apart can have a 0.4 m wall **entirely between
+them**, so the flood could walk through masonry. The midpoint is now
+checked as well. **No current fixture separates the two behaviours** —
+this is recorded as a correctness improvement, not claimed as proved.
+
+## 5m. Solved once, replayed forever — and a corner that could not be
+
+Law 47c: *"the layout is solved once and committed… every later load
+replays the committed transforms and does not re-solve."* Nothing in the
+engine could replay one. `build()` now takes an optional `layout`, and a
+room the manifest mentions is **laid down** rather than searched for: the
+transform comes from `rooms`, the connectors and corners from `links`.
+A room the manifest does not mention is still solved, so a partial
+manifest degrades rather than lies.
+
+**The proof that it does not search is the budget.** A build under a
+0.001 ms budget cannot solve — the suite already relies on that to
+separate a timeout from an infeasibility — so a replay that *succeeds*
+under the same budget did not search. Asserting only that the transforms
+match would pass for a solver that redid the work and happened to agree,
+which is precisely what law 47c says not to depend on. (The budget now
+bounds the solve only: reporting `LAYOUT_TIMEOUT` for a replay would
+claim a search space was unexhausted when no search ran.)
+
+**Writing the replay found the third hole in the manifest.** A committed
+`CORNER` recorded its position, yaw and bounds and **not which way it
+bends** — so a replayed corner was a guess, and the chain after it walks
+off in the wrong direction. Nothing could see this while the only
+consumer of `links` was a test asking whether the recorded fields were
+well-formed. Each of the three holes (§5i, and this) was found by trying
+to *use* the manifest for what it promises, which is the only check that
+was ever going to find them.
+
+Still missing, and named: nothing writes a layout to disk or hashes it
+into `manifest_digest`. That is the Zone record, and the Zone record is
+the bridge's.
+
+## 5n. A branch may branch
+
+The owner's shape is a gated dead end whose far end holds the key to the
+next one, so depth two is not a curiosity. A flat loop over
+`chamber.branches` read a branch's own `branches` with nothing at all,
+and the reachability guard walked only `zone.chambers` — so a room
+unreachable at depth two was exactly as invisible as one at depth one and
+had no check at all.
+
+Both are queues now, and depth is whatever the Zone declares.
+
+## 5l. A branch is a room, not a room-shaped exception
+
+The branch's Checks, activities and enemies came free, because a branch
+joins `built_chambers` and the controller wires that list. Its **keys,
+its locked doors and its warp station did not**: those were written
+inline in the chain loop and iterated `zone.chambers`, so a gated dead
+end could not hold the key to the next gate — which is most of what a
+gated dead end is for — and a large one offered nowhere to save.
+
+`_furnish_room` is that block, extracted and called from both paths. A
+second copy for branches would have been two places to forget the same
+thing. Proved on a 280 m² branch declaring a key: it gets the key and
+the station it is owed, and discarding the branch's furnishing turns
+both assertions red.
 
 ## 5k. The door opened onto the outside of a wall
 
