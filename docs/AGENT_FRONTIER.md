@@ -54,10 +54,27 @@ Zones do not lay out at all:
 **This is the next thing to fix and it is the engine's.** The graphs are
 legal; the router cannot lay four of them out. `branch_mouth` fixed the
 case where the mouth was inside its own junction; what is left is a
-route search that runs out of room — `MAX_ROUTE_TURNS` is 2 and a branch
-reaching around laid geometry may need more, which is a bound to raise
-deliberately and measure, not a seed to tune. The smallest failing
-shapes are captured in `godot/tests/fixtures/generated/`.
+route search that runs out of room. The smallest failing shapes are
+captured in `godot/tests/fixtures/generated/`, and
+`godot-bin/godot --headless --path godot -- --graphs --no-walk` composes
+all five in about forty seconds, which is the loop to iterate the router
+against.
+
+**One lever was measured and does not fix it: `MAX_ROUTE_TURNS` 2 → 3.**
+Still four failures, but on LATER rooms and with more boxes standing —
+`c020` off `c018` at 43 boxes instead of `c021` off `c016` at 42,
+`c014` off `c009` at 41 instead of `c015` off `c014` at 36. So more
+turns does let the router get further before it wedges, and getting
+further is not getting there: the Zone is refused either way, and the
+extra search buys nothing a player can walk. Reverted to 2. **Written
+down so the next pass does not spend the same afternoon on it.**
+
+The shape of the real fix is structural rather than a constant: the
+placement walk is greedy and never backtracks, so a Zone with eight
+rooms off its spine eventually paints itself into a corner and the room
+that cannot fit is whichever one was unlucky enough to be last. Either
+the walk backtracks, or branch placement reserves its space before the
+spine consumes it.
 
 **The player leg of that target reports and does not assert**, and the
 comment in `_walk_one` says why: standing a body at an arbitrary

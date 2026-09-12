@@ -113,6 +113,14 @@ func _walk_one(file: String) -> void:
 	# 3. AND CAN A BODY GET TO ONE AND BACK? The real `Player`, from the
 	#    junction the side room hangs off, through the doorway the
 	#    assignment names.
+	# COMPOSE-ONLY, for iterating on the router. The walk is the slow
+	# half by two orders of magnitude, and a change to the placement
+	# search is answered by whether the five Zones lay out.
+	if OS.get_cmdline_user_args().has("--no-walk"):
+		(out["root"] as Node3D).queue_free()
+		await get_tree().process_frame
+		return
+
 	# THE PLAYER LEG IS REPORTED, NOT ASSERTED, AND HERE IS WHY.
 	#
 	# Standing a body at an arbitrary junction's side doorway is not a
