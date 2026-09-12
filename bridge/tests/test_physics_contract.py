@@ -1,10 +1,14 @@
-"""The physics contract, written before the physics.
+"""The physics contract, and the day a runtime landed.
 
-Nothing here can be executed: zero `RigidBody3D` in the project. What
-these prove is that the RULES are decidable and already refuse the
-things they will have to refuse — so the day a runtime lands, what it
-has to satisfy is written down and tested rather than invented under
-pressure to make a demo work.
+This opened "nothing here can be executed: zero `RigidBody3D` in the
+project", and that was true until 2026-09-12. The engine now has
+`ManipulableBody` and `Manipulation` and `make godot-physics` measures
+them, so the rules below have something to be rules ABOUT.
+
+What is still true: nothing in THIS file executes a body. These prove
+the rules are decidable and already refuse what they will have to
+refuse, plus — at the end — that the two lanes agree about the numbers,
+which is the only part of the contract Python can check on its own.
 """
 
 from __future__ import annotations
@@ -545,3 +549,142 @@ def test_nothing_load_bearing_reaches_the_empty_latch_backstop():
     assert not any("no latch condition" in e for e in errors), (
         "if the backstop is what fires, one of the three rules above "
         "has loosened and this test should have caught it first")
+
+
+# --- the engine builds a provider against these numbers -------------------
+
+GD_CONSTANTS = (__import__("pathlib").Path(__file__).resolve().parents[2]
+                / "godot" / "scripts" / "autoload" / "constants.gd")
+
+
+def test_the_envelope_reaches_the_engine_unchanged():
+    """§29.3.2's three minima, as GDScript sees them.
+
+    The bridge never touches a body, so these numbers are useless on this
+    side alone: the ENGINE is what has to build a provider at exactly the
+    envelope and a body at exactly the limit. They are exported from
+    `physics.py` by `export.py` rather than retyped into `constants.py`,
+    because two sources for one contract is the drift the export
+    mechanism exists to prevent — and a `ManipulableBody` whose friction
+    is derived from a stale 700 makes a mandatory route unsolvable by the
+    host the verifier says qualifies.
+    """
+    import re
+
+    gd = GD_CONSTANTS.read_text(encoding="utf-8")
+    for name, value in (("ENVELOPE_FORCE_N", P.ENVELOPE_FORCE_N),
+                        ("ENVELOPE_RANGE_M", P.ENVELOPE_RANGE_M),
+                        ("ENVELOPE_MASS_KG", P.ENVELOPE_MASS_KG)):
+        found = re.search(rf"^const {name} = ([-\d.e+]+)$", gd, re.M)
+        assert found, (
+            f"{name} is no longer exported to GDScript, so the engine is "
+            "back to guessing what a guaranteed provider is")
+        assert float(found.group(1)) == pytest.approx(value), (
+            f"GDScript {name} is {found.group(1)}, Python's is {value}")
+    verbs = re.search(r"^const MANIPULATE_VERBS = (\[[^\]]*\])$", gd, re.M)
+    assert verbs, "the manipulate verbs are no longer exported"
+    assert sorted(eval(verbs.group(1))) == sorted(P.MANIPULATE_VERBS), (
+        "the engine and the bridge disagree about which verbs grant "
+        f"manipulate: {verbs.group(1)} vs {sorted(P.MANIPULATE_VERBS)}")
+
+
+def test_the_substrate_can_keep_the_envelope_s_promise():
+    """A host at the minimum must be able to move a body at the limit.
+
+    The engine derives a manipulable body's friction from these numbers
+    rather than choosing one, and that is not decoration: Godot's default
+    friction of 1.0 resists a 120 kg body with about 1176 N against 700 N
+    of push, so under the default the contract promised something the
+    substrate refused. `make godot-physics` measured exactly that on its
+    first run -- "700 N moved 120 kg by 0.00 m" -- and this states the
+    arithmetic on the side that owns the numbers, so changing one of them
+    to something unkeepable fails here rather than in a playtest.
+    """
+    gravity = 9.8
+    bound = P.ENVELOPE_FORCE_N / (P.ENVELOPE_MASS_KG * gravity)
+    assert bound > 0.0, "the envelope admits no friction at all"
+    assert bound < 1.0, (
+        "the envelope would be kept under Godot's default friction of "
+        "1.0, so deriving one in the engine proves nothing -- check "
+        "whether these numbers still mean what this test assumes")
+
+
+HARNESS_GD = (__import__("pathlib").Path(__file__).resolve().parents[2]
+              / "godot" / "scripts" / "gameplay" / "replay_harness.gd")
+
+
+def test_the_harness_emits_exactly_what_the_evidence_model_requires():
+    """`ReplayEvidence` is the wire shape and the harness is what fills it.
+
+    The engine is the only side that can produce one and the bridge is
+    the only side that can validate one, so neither can catch a field
+    that is named differently on the other. A record missing
+    `content_digest` is refused as malformed and the engine would have
+    no way to know why; one carrying an extra key is refused outright,
+    because the model is `extra="forbid"`.
+
+    Read off the harness's own return literal rather than a copy, so a
+    field renamed on either side fails here.
+    """
+    import re
+
+    gd = HARNESS_GD.read_text(encoding="utf-8")
+    emitted = set(re.findall(r'^\t\t"([a-z_]+)": ', gd, re.M))
+    required = set(ReplayEvidence_fields())
+    assert emitted == required, (
+        "the harness emits "
+        + str(sorted(emitted))
+        + " and ReplayEvidence takes "
+        + str(sorted(required))
+        + "; the engine is the only side that can produce one and the "
+        "bridge the only side that can validate one, so a name that "
+        "differs is a record neither lane can explain"
+    )
+
+
+def ReplayEvidence_fields():
+    return tuple(P.ReplayEvidence.model_fields)
+
+
+def test_a_harness_record_validates_and_is_bound_to_its_package():
+    """The shape `godot-physics` produced, through the real model.
+
+    Exactly the payload the harness returned for its `crate_home`
+    package on 2026-09-12, including the digest it computed. It is here
+    so that a change to the canonical serializer on EITHER side -- which
+    would move `content_digest` -- shows up as evidence that no longer
+    matches its package rather than as a green suite on both.
+    """
+    package = P.PhysicsPackage(
+        package_id="crate_home",
+        latch_conditions=(P.LatchCondition(
+            latch_id="crate_home", kind="POSITION_REGION",
+            detail="crate_a in goal"),),
+        vector_latches=(0,),
+        required_latches=("crate_home",),
+        on_mandatory_route=True,
+        setup=P.PhysicsSetup(
+            bodies=(P.BodySpec(body_id="crate_a", mass_kg=100.0),),
+            solver=P.SolverConfig(iterations=8, fixed_step_hz=60.0,
+                                  settle_timeout_s=8.0),
+            scene_digest="0123456789abcdef"),
+        reference_solution=P.ReferenceSolution(
+            steps=("push crate_a 0 1 2.0", "settle")))
+    evidence = P.ReplayEvidence(
+        package_id="crate_home",
+        content_digest=P.package_digest(package),
+        provider_force_n=P.ENVELOPE_FORCE_N,
+        provider_range_m=P.ENVELOPE_RANGE_M,
+        provider_mass_kg=P.ENVELOPE_MASS_KG,
+        per_run_latched=(("crate_home",), ("crate_home",),
+                         ("crate_home",)))
+    assert evidence.runs == 3
+    assert evidence.at_the_envelope
+    assert evidence.latched_every_run(package.required_latches) == ()
+    # THE DIGEST THE ENGINE COMPUTED, recorded so a serializer change on
+    # either side is caught here rather than in a playtest.
+    assert evidence.content_digest == "b42a0d5ef34c8706", (
+        "the canonical serializer moved: `godot-physics` computed "
+        "b42a0d5ef34c8706 for this package and Python now computes "
+        f"{evidence.content_digest}"
+    )

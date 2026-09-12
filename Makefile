@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture physics-vectors mutate-bridge version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-activity godot-room godot-room-contract godot-movement godot-playtest3a godot-zone-audit zone-shots godot-boot godot-legible godot-integration godot-reload
+.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture physics-vectors mutate-bridge version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-activity godot-room godot-room-contract godot-movement godot-playtest3a godot-zone-audit zone-shots godot-boot godot-legible godot-integration godot-reload godot-physics
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -397,6 +397,20 @@ RELOAD_SAVES := $(CURDIR)/.reload-saves
 # from a bridge that still had everything in memory. It is stopped and
 # started again between the phases now, against the same save directory,
 # so the only thing that crosses the restart is the file on disk.
+# THE PHYSICS SUBSTRATE (`docs/AMALGAM_BRIDGE.md` §6.3): a rigid body
+# that rests and can be pushed, and one verb resolving to force, range
+# and mass. Its own target because it is the only suite that steps
+# physics for hundreds of frames, and folding it into `godot-content`
+# would make a fast contract suite slow for everybody.
+godot-physics: godot-import
+	@out=$$($(GODOT) --headless --path godot -- --physics-test 2>&1); \
+	status=$$?; printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: a test that crashed is not a test that passed"; \
+	  exit 1; \
+	fi; \
+	exit $$status
+
 godot-reload: godot-import
 	rm -rf $(RELOAD_SAVES) $(HOME)/.local/share/godot/app_userdata/Archipepsi/reload_notes.json
 	cd bridge && ARCHIPEPSI_SAVE_DIR=$(RELOAD_SAVES) \

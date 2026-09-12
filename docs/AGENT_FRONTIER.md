@@ -95,11 +95,41 @@ finding, not a join one — the corridor either side of it crosses.
 Procedural `ChamberBuilders` spawn placement is not covered by the
 doorway rule; only the authored-shell path is.
 
-**Done since:** levels 1 and 2 of the physics digest — see the
-three-levels paragraph below. Level 3 needs a physics runtime, which is
-the next thing in `docs/AMALGAM_BRIDGE.md` §6.3: a rigid body that rests
-and can be pushed, one verb resolving to force/range/mass, then the
-headless replay harness.
+**Done since:** levels 1 and 2 of the physics digest, and the first two
+of `docs/AMALGAM_BRIDGE.md` §6.3's three — a rigid body that rests and
+can be pushed (`ManipulableBody`), and one verb resolving to force,
+range and mass (`Manipulation`). `make godot-physics`, 25 checks.
+
+**THE ENGINE HAD NO `RigidBody3D` AT ALL** until this, so the physics
+contract in `schemas/physics.py` described a system with no runtime.
+Building one found a real disagreement: Godot's default friction of 1.0
+resists a 120 kg body with ~1176 N against the envelope's 700 N of push,
+so §29.3.2 promised something the substrate refused and a mandatory
+route authored at the envelope would have been unsolvable by the host
+the verifier says qualifies. A manipulable body's friction is derived
+from the envelope now, and the three constants are exported to GDScript
+from `physics.py` rather than retyped.
+
+**And the headless replay harness (§6.3 item 3) runs.** `ReplayHarness`
+replays a package three times, a fresh stage each, at the package's own
+`fixed_step_hz`, against a provider at exactly the envelope, and reports
+what latched PER RUN. A crate pushed onto a region latches in all three;
+the same package with the push reversed latches in none, which is the
+falsification. The substrate under it is deterministic: the same push
+twice landed 0.000000 m apart, against a digest quantum of 1e-4 m.
+
+`detail` and `reference_solution.steps` are opaque to the bridge by
+design, so nothing had ever said what they contain. The engine's
+vocabularies are written down in `docs/AMALGAM_BRIDGE.md` §6.3 now:
+`POSITION_REGION` and `WEIGHT_THRESHOLD` are observed, `CONSTRAINT_STATE`
+and `ATTACH_SENSOR` are **refused** because no joints and no attachment
+sensors exist. Refused is not unlatched — a kind with no runtime reported
+as "did not latch" is a harness claiming a puzzle is unsolvable.
+
+**Still owed:** nothing in a campaign AUTHORS a physics package, so no
+Zone has produced evidence and `handle_layout_result` has no path that
+carries one. Levels 1, 2 and 3 all run; what has not happened is a
+package reaching them from content.
 
 ## BRIDGE LANE — the Zone is a graph, and the path is connected — 2026-09-12
 

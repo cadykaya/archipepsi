@@ -128,6 +128,7 @@ jobs:
           make godot-movement
           make godot-zone-audit
           make godot-legible
+          make godot-physics
 
       - name: Whole campaign, headlessly
         run: make godot-integration

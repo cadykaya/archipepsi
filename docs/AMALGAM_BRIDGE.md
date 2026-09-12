@@ -704,7 +704,7 @@ none of them substitutes for another:
 |---|---|---|---|
 | 1. Serialization agreement | the shared vectors, run through both production serializers | the two lanes build and hash the same bytes from the same input | **done 2026-09-12, both lanes** — `PhysicsPackage` in `godot/scripts/content/physics_package.gd`, checked in `godot-content`; all nine agree byte for byte |
 | 2. Scene binding | `scene_digest` computed from the **real** setup, not a constant | the evidence names the scene it ran against | **computed 2026-09-12** — `SceneDigest` in `godot/scripts/content/scene_digest.gd`, falsified in `godot-content`; not yet called from a replay, because there is no replay |
-| 3. Physical outcome | replaying that setup and observing the latches | the puzzle is actually solvable as built | **not started** — needs a physics runtime |
+| 3. Physical outcome | replaying that setup and observing the latches | the puzzle is actually solvable as built | **runs 2026-09-12** — `ReplayHarness`, three runs in `godot-physics`; no Zone authors a package yet, so nothing in a campaign has produced evidence |
 
 Level 1 passing says nothing about level 2, and both passing say nothing
 about level 3. The contract stays labelled **fixture-tested** until real
@@ -747,15 +747,68 @@ every consumer.
 
 Nothing above needs the full physics system. In order:
 
-1. **A rigid body that rests and can be pushed** — the substrate. Until
-   this exists nothing else can be measured.
-2. **One verb resolving to force, range and mass** — enough to evaluate
-   the envelope for one host.
-3. **The headless replay harness** — three runs at fixed solver
-   settings against a synthetic provider at exactly the envelope,
-   reporting which `latch_id`s latched **per run**. **This is the
-   deliverable the bridge is waiting on**; the schema for its output
-   already exists and is validated.
+1. ~~**A rigid body that rests and can be pushed**~~ — **done
+   2026-09-12.** `ManipulableBody` (`godot/scripts/gameplay/`), measured
+   by `make godot-physics`: it falls, comes to rest on the floor and
+   sleeps, and a push wakes and moves it.
+2. ~~**One verb resolving to force, range and mass**~~ — **done
+   2026-09-12.** `Manipulation`. Identity stays Boolean and the newtons
+   never reach the verifier: `grants_manipulate` answers §29.3.1, and
+   `Envelope` resolves §29.3.2's three minima at the entry check and
+   stores nothing. A refused push says WHICH of `out_of_reach`,
+   `too_heavy`, `constrained` or `no_direction` it was, because "nothing
+   moved" is the same report as a bug.
+3. ~~**The headless replay harness**~~ — **done 2026-09-12.**
+   `ReplayHarness`. Three runs, a fresh stage each, at the package's own
+   `fixed_step_hz`, against a provider at exactly the envelope — the
+   numbers are read from `Constants` and are not a parameter, because
+   replaying above the envelope proves a strong provider can solve it,
+   which is not the claim. Per run, never a union.
+
+   Falsified: a solution that pushes the crate the wrong way latches in
+   none of the three, and the harness reports that rather than what was
+   hoped.
+
+**Two vocabularies are the engine's, and here they are.** `detail` and
+`reference_solution.steps` are opaque to the bridge by design — it never
+re-derives a physical fact — which means nothing was written down about
+what they say. They are:
+
+| `kind` | `detail` | observed |
+|---|---|---|
+| `POSITION_REGION` | `<body_id> in <region_id>` | the body's origin inside the region |
+| `WEIGHT_THRESHOLD` | `<plate_id> >= <kg>` | the total mass of bodies over the plate |
+| `CONSTRAINT_STATE` | — | **refused**: no joints exist |
+| `ATTACH_SENSOR` | — | **refused**: no attachment sensors exist |
+
+| step | |
+|---|---|
+| `push <body_id> <dx> <dz> <seconds>` | one held push, at the envelope |
+| `wait <seconds>` | |
+| `settle` | until every body is at rest, bounded by `settle_timeout_s` |
+
+**REFUSED IS NOT UNLATCHED**, and the distinction is load-bearing. A
+latch kind with no runtime, a step nobody wrote, a body the stage does
+not build — each comes back as a refusal naming what it was. Reporting
+one as "did not latch" would be the harness saying the puzzle is
+unsolvable, which is a verdict about the content instead of about the
+harness.
+
+**What building the substrate found.** §29.3.2 promises a host at
+exactly `ENVELOPE_FORCE_N` can move a body at exactly
+`ENVELOPE_MASS_KG`. Godot's default friction is 1.0, so a 120 kg body
+resists with about 1176 N against 700 N of push — the contract promised
+something the substrate refused, and a mandatory route authored at the
+envelope would have been unsolvable by the host the verifier says
+qualifies. The first run of `godot-physics` reported it in one line:
+*700 N moved 120 kg by 0.00 m.*
+
+A manipulable body therefore carries its own `PhysicsMaterial` whose
+friction is **derived** from the envelope (two thirds of `F / m g`, so
+the body accelerates rather than creeping) rather than chosen, and the
+three constants are **exported to GDScript from `physics.py`** rather
+than retyped into `constants.py` — two sources for one contract is the
+drift the export mechanism exists to prevent.
 
 ~~**Before any of that, one small shared thing:** the nine vectors in
 `physics_digest_vectors.json` passing in GDScript.~~ **Done
