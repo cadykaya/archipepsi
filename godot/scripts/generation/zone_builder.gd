@@ -1081,6 +1081,12 @@ static var policy_override := {}
 ## happened to agree would satisfy it. This counts the thing the law
 ## forbids, so a test can assert the search was never entered at all.
 static var searches := 0
+static var poses := 0
+static var turns_taken := 0
+## Candidate poses this plan must step OVER before it accepts one.
+## Static because `_search` recurses and a route's candidates are one
+## sequence however many frames it is spread across.
+static var skip_left := 0
 
 ## WHERE A BRANCH LEAVES ITS JUNCTION, and which way it faces.
 ##
@@ -1133,10 +1139,143 @@ static func branch_mouth(build: Dictionary, chamber: Dictionary,
 		turn = PI if away.z < 0.0 else 0.0
 	return {"position": at, "turn": turn}
 
+## How much corridor a room's UNROUTED BRANCH DOORS keep for themselves.
+##
+## A room is placed by asking whether its own envelope clears. That
+## question is too small for a room that still owes the graph a branch:
+## the envelope cleared, the room was committed, and the space its side
+## door opens onto was already a room someone else had placed. Measured,
+## not reasoned about -- in three of the four recorded infeasible Zones
+## the FIRST connector out of the junction's branch mouth started inside
+## a standing room, so the branch search broke at push zero with open
+## space two to eleven connectors further on that it could never reach.
+## `zone_02` missed by 0.37 m of lateral clip; `zone_03` by 92 cubic
+## metres.
+##
+## Two is the whole reservation: enough corridor to clear the immediate
+## neighbourhood and give the branch search a position it can turn from,
+## and small enough that it does not become a second, invisible room.
+const RESERVED_CONNECTORS := 2
+
+## The corridor a room's declared branch doors will need, in the room's
+## OWN frame, so it travels with the room as the search moves it.
+##
+## Every yaw in this router is a multiple of 90 degrees, so composing the
+## socket's turn with the room's placement yaw rotates these boxes
+## exactly; nothing is inflated to stay axis-aligned.
+static func _socket_reservations(build: Dictionary, chamber: Dictionary,
+		sockets: Array, shape: Dictionary) -> Array:
+	var out: Array = []
+	for _k in RESERVED_CONNECTORS:
+		out.append([])
+	for raw: Variant in sockets:
+		var mouth := branch_mouth(build, chamber, str(raw))
+		if mouth.is_empty():
+			continue
+		var turn := float(mouth["turn"])
+		var at: Vector3 = mouth["position"]
+		for k in RESERVED_CONNECTORS:
+			(out[k] as Array).append(
+					_world_aabb(shape["bounds"] as AABB, at, turn))
+			at += _rot(turn, shape["exit_offset"] as Vector3)
+	return out
+
+## The same promise, made forward along the spine: the corridor the NEXT
+## room will arrive down. A room whose envelope clears but whose exit
+## opens onto a standing wall has not been placed, it has been wedged --
+## and the chain only finds out several rooms later, when there is no
+## candidate left anywhere in the bounded space. Reserving the exit stub
+## refuses the wedge at the moment it is made, which is the only moment
+## the search still has somewhere else to put the room.
+static func _exit_reservation(build: Dictionary,
+		shape: Dictionary) -> Array:
+	var out: Array = []
+	var at: Vector3 = build.get("exit_offset", Vector3.ZERO)
+	# `exit_yaw` IS DEGREES. The chain reads it through `deg_to_rad`
+	# three hundred lines further down; a reservation that forgot to
+	# pointed its corridor 90 RADIANS off and reserved empty sky.
+	var declared := float(build.get("exit_yaw", 0.0))
+	var turn := deg_to_rad(declared) \
+			if RoomContract.EXIT_YAWS.has(declared) else 0.0
+	for _k in RESERVED_CONNECTORS:
+		out.append([_world_aabb(shape["bounds"] as AABB, at, turn)])
+		at += _rot(turn, shape["exit_offset"] as Vector3)
+	return out
+
+## Two reservation ladders, rung by rung, into one.
+static func _both_reservations(a: Array, b: Array) -> Array:
+	var out: Array = []
+	for k in RESERVED_CONNECTORS:
+		var rung: Array = []
+		if k < a.size():
+			rung.append_array(a[k] as Array)
+		if k < b.size():
+			rung.append_array(b[k] as Array)
+		out.append(rung)
+	return out
+
+## The branch socket ids a room still owes, read from the same two
+## sources the branch queue reads so a reservation cannot describe a
+## branch that never gets built.
+static func _declared_branch_sockets(graph_branches: Dictionary,
+		chamber: Dictionary) -> Array:
+	var out: Array = []
+	for raw: Variant in graph_branches.get(
+			str(chamber.get("id", "?")), []):
+		if typeof(raw) == TYPE_DICTIONARY:
+			out.append(str((raw as Dictionary).get("socket_id",
+					"side_left")))
+	for raw: Variant in chamber.get("branches", []):
+		if typeof(raw) == TYPE_DICTIONARY:
+			out.append(str((raw as Dictionary).get("socket_id",
+					"side_left")))
+	return out
+
+## Whether a candidate pose leaves every reserved corridor standing.
+## Judged against what was ALREADY THERE, never against the route being
+## planned: a reservation is a promise to later rooms, and grazing the
+## approach corridor this room arrived down is not a broken one.
+static func _reserved_clear(placed: Array, reserve: Array,
+		origin: Vector3, yaw: float) -> bool:
+	for raw: Variant in reserve:
+		if _overlaps(placed, _world_aabb(raw as AABB, origin, yaw)):
+			return false
+	return true
+
+## PLACEMENT IS TRIED TWICE AND NO MORE. Once demanding that the room's
+## unrouted branch doors keep their corridor, and -- only if no pose in
+## the whole bounded candidate space satisfies that -- once without.
+##
+## The second pass is what keeps this a repair rather than a new refusal:
+## a reservation that cannot be honoured must not turn a Zone that used
+## to lay out into one that does not. Both passes are the same bounded
+## search over the same candidates in the same order, so the cost is
+## twice a bounded number and the outcome is still decided by geometry.
 static func _plan_route(shape: Dictionary, corners: Dictionary,
 		room: AABB, entry_at: Vector3, cursor: Vector3, yaw: float,
-		placed: Array, prefer: int) -> Dictionary:
+		placed: Array, prefer: int, reserve: Array = [],
+		skip := 0) -> Dictionary:
+	poses = 0
+	turns_taken = 0
+	for depth in range(mini(reserve.size(), RESERVED_CONNECTORS), 0, -1):
+		var want: Array = []
+		for k in depth:
+			want.append_array(reserve[k] as Array)
+		if want.is_empty():
+			continue
+		var kept := _route_once(shape, corners, room, entry_at, cursor,
+				yaw, placed, prefer, want, skip)
+		if bool(kept["ok"]):
+			return kept
+	return _route_once(shape, corners, room, entry_at, cursor, yaw,
+			placed, prefer, [], skip)
+
+static func _route_once(shape: Dictionary, corners: Dictionary,
+		room: AABB, entry_at: Vector3, cursor: Vector3, yaw: float,
+		placed: Array, prefer: int, reserve: Array,
+		skip: int) -> Dictionary:
 	searches += 1
+	skip_left = skip
 	var budget := int(routing_policy(placed,
 			policy_override)["clearance_budget"])
 	var turns_allowed := int(routing_policy(placed,
@@ -1151,18 +1290,18 @@ static func _plan_route(shape: Dictionary, corners: Dictionary,
 			var bent := _search(shape, corners, room, entry_at,
 					cursor + _rot(yaw, corner["exit_offset"] as Vector3),
 					yaw + float(prefer) * PI / 2.0, placed,
-					turns_allowed - 1, prefer, budget,
+					turns_allowed - 1, prefer, budget, reserve,
 					[_world_aabb(corner["bounds"], cursor, yaw)])
 			if bool(bent["ok"]):
 				var route: Array = [{"turn": prefer, "connectors": 0}]
 				route.append_array(bent["route"] as Array)
 				return {"ok": true, "route": route}
 	return _search(shape, corners, room, entry_at, cursor, yaw, placed,
-			turns_allowed, prefer, budget)
+			turns_allowed, prefer, budget, reserve)
 
 static func _search(shape: Dictionary, corners: Dictionary, room: AABB,
 		entry_at: Vector3, cursor: Vector3, yaw: float, placed: Array,
-		turns_left: int, prefer: int, budget: int,
+		turns_left: int, prefer: int, budget: int, reserve: Array = [],
 		mine: Array = []) -> Dictionary:
 	# A ROUTE MUST CLEAR ITSELF, not only what was already there. Without
 	# `mine` -- the pieces this route has planned so far -- a room was
@@ -1183,9 +1322,17 @@ static func _search(shape: Dictionary, corners: Dictionary, room: AABB,
 	var at := cursor
 	var laid: Array = mine.duplicate()
 	for i in budget + 1:
-		var here := _world_aabb(room, origin_for(at, yaw, entry_at), yaw)
-		if not _overlaps(_all_but_last(chain), here):
-			return {"ok": true, "route": [{"turn": 0, "connectors": i}]}
+		poses += 1
+		var pose := origin_for(at, yaw, entry_at)
+		var here := _world_aabb(room, pose, yaw)
+		if not _overlaps(_all_but_last(chain), here) \
+				and _reserved_clear(placed, reserve, pose, yaw):
+			if skip_left <= 0:
+				return {"ok": true, "route": [{"turn": 0, "connectors": i}]}
+			# A POSE STEPPED OVER, NOT A POSE REFUSED. The search keeps
+			# going from here, so the candidate order is the one it
+			# always had and the nudge is only ever "take the next one".
+			skip_left -= 1
 		if turns_left > 0:
 			var first := prefer if prefer != 0 else 1
 			for turn: int in [first, -first]:
@@ -1193,6 +1340,7 @@ static func _search(shape: Dictionary, corners: Dictionary, room: AABB,
 				var corner_box := _world_aabb(corner["bounds"], at, yaw)
 				if _overlaps(_all_but_last(chain), corner_box):
 					continue
+				turns_taken += 1
 				var beyond := laid.duplicate()
 				beyond.append(corner_box)
 				var sub := _search(shape, corners, room, entry_at,
@@ -1200,7 +1348,7 @@ static func _search(shape: Dictionary, corners: Dictionary, room: AABB,
 						yaw + float(turn) * PI / 2.0, placed,
 						turns_left - 1, prefer,
 						budget if turns_left == 1 else EXPLORE_CONNECTORS,
-						beyond)
+						reserve, beyond)
 				if bool(sub["ok"]):
 					var route: Array = [{"turn": 0, "connectors": i},
 							{"turn": turn, "connectors": 0}]
@@ -1347,8 +1495,83 @@ static func _emit_connector(root: Node3D, theme: String, cursor: Vector3,
 ## manifest says and every connector and corner is laid rather than
 ## rediscovered. A room the manifest does not mention is still solved, so
 ## a partial manifest degrades rather than lies.
+## How many times a wedged layout may be re-solved with one earlier room
+## nudged onto its next candidate pose.
+##
+## FOUR, AND FOUR IS THE WHOLE LADDER. Each attempt is the same search
+## over the same candidates in the same order, with the same seed, the
+## same graph and the same shells; the only difference is that one named
+## room takes the next pose its own search already offered. That is
+## backtracking with the stack written down rather than unwound, and it
+## terminates because the ladder is counted, not because it runs out of
+## luck.
+const MAX_PLACEMENT_NUDGES := 4
+
+## The ladder. `_build_once` is one greedy solve; this is the bounded
+## retry around it.
+##
+## A GREEDY ROUTER'S REFUSAL IS NOT A PROOF. `_search` walks forward from
+## the cursor and stops at the first connector it cannot lay, so a room
+## whose approach is blocked at push zero exhausts a candidate space of
+## THREE poses out of a seventy-one connector budget and then reports the
+## Zone infeasible. Measured on `zone_02`: `poses tested=3, corners
+## entered=0`. What is actually wrong is a room placed several steps
+## earlier, and the only honest answer is to go back and put it
+## somewhere else.
 static func build(zone: Dictionary, theme_override := "",
 		budget_ms := 0.0, layout := {}) -> Dictionary:
+	var started := Time.get_ticks_msec()
+	var nudge := {}
+	var attempts := 1
+	var out := _build_once(zone, theme_override, budget_ms, layout, nudge)
+	# A REPLAY IS NEVER RE-SOLVED. The manifest already says where every
+	# room went; nudging one would produce a Zone the player has never
+	# been in, with a committed layout's name on it.
+	if (layout.get("rooms", {}) as Dictionary).is_empty():
+		while attempts <= MAX_PLACEMENT_NUDGES \
+				and bool(out.get("wedge", false)):
+			var who := _wedged_after(zone, out)
+			if who == "" or int(nudge.get(who, 0)) >= MAX_PLACEMENT_NUDGES:
+				break
+			var spent := float(Time.get_ticks_msec() - started)
+			if budget_ms > 0.0 and spent >= budget_ms:
+				break
+			nudge[who] = int(nudge.get(who, 0)) + 1
+			attempts += 1
+			out = _build_once(zone, theme_override,
+					maxf(budget_ms - spent, 1.0) if budget_ms > 0.0
+					else 0.0, layout, nudge)
+	out["placement_attempts"] = attempts
+	out["placement_nudges"] = nudge
+	out["placement_ms"] = float(Time.get_ticks_msec() - started)
+	return out
+
+## The room whose pose to nudge: the one the wedged room was joined to.
+## For a spine room that is its predecessor on the spine; for a branch it
+## is the junction the branch hangs off, because that is where its mouth
+## is and moving the branch means moving the mouth.
+static func _wedged_after(zone: Dictionary, out: Dictionary) -> String:
+	var blocking: Array = out.get("blocking_rooms", [])
+	if blocking.is_empty():
+		return ""
+	var stuck := str(blocking[0])
+	var graph := placement_plan(zone)
+	var spine: Array = graph.get("spine", [])
+	for i in spine.size():
+		if str(spine[i]) == stuck:
+			return "" if i == 0 else str(spine[i - 1])
+	var branches: Dictionary = graph.get("branches", {})
+	for parent_id: Variant in branches:
+		for raw: Variant in (branches[parent_id] as Array):
+			if typeof(raw) != TYPE_DICTIONARY:
+				continue
+			var kid: Dictionary = (raw as Dictionary).get("chamber", {})
+			if str(kid.get("id", "")) == stuck:
+				return str(parent_id)
+	return ""
+
+static func _build_once(zone: Dictionary, theme_override := "",
+		budget_ms := 0.0, layout := {}, nudge := {}) -> Dictionary:
 	var theme: String = theme_override if theme_override != "" \
 			else zone.get("theme", "void_glitch")
 	# THE BUDGET IS WHAT A TIMEOUT MEASURES, and it is the caller's.
@@ -1582,13 +1805,44 @@ static func build(zone: Dictionary, theme_override := "",
 					+ "part of the Zone and re-solve the rest"}
 		var plan := {"ok": true} if replaying \
 				else _plan_route(shape, corners, result["bounds"] as AABB,
-						entry_at, cursor, yaw, placed, prefer)
+						entry_at, cursor, yaw, placed, prefer,
+						_both_reservations(
+								_socket_reservations(result, chamber,
+										_declared_branch_sockets(
+												graph_branches, chamber),
+										shape),
+								_exit_reservation(result, shape)),
+						int(nudge.get(str(chamber.get("id", "?")), 0)))
 		# NO ROOM IS EVER ATTACHED ON TOP OF ANOTHER. Straight ahead and
 		# both corners were tried, connectors included, and none of them
 		# clears. A Zone with a room inside another room is a Check in a
 		# wall and an enemy inside the floor; there is no version of that
 		# worth returning, so the build FAILS and the caller decides.
 		if not bool(plan["ok"]):
+			if OS.get_cmdline_user_args().has("--router-diag"):
+				print("  DIAG spine %s: cursor=%v yaw=%.0f room=%v entry=%v"
+						% [str(chamber.get("id", "?")), cursor,
+							rad_to_deg(yaw),
+							(result["bounds"] as AABB).size, entry_at])
+				print("       budget=%d poses tested=%d corners entered=%d"
+						% [int(routing_policy(placed,
+								policy_override)["clearance_budget"]),
+							poses, turns_taken])
+				var _seen: Array = _all_but_last(placed)
+				var _at := cursor
+				for _i in 14:
+					var _pose := origin_for(_at, yaw, entry_at)
+					var _here := _world_aabb(
+							result["bounds"] as AABB, _pose, yaw)
+					var _link := _world_aabb(
+							shape["bounds"] as AABB, _at, yaw)
+					print("       step %d room_fits=%s link_fits=%s"
+							% [_i, str(not _overlaps(_seen, _here)),
+								str(not _overlaps(_seen, _link))])
+					if not _overlaps(_seen, _here):
+						break
+					_seen.append(_link)
+					_at += _rot(yaw, shape["exit_offset"] as Vector3)
 			# EXHAUSTED, not expired. `_search` returns false only after
 			# it has walked its whole candidate space, so this is
 			# infeasibility UNDER THE DECLARED POLICY and says nothing
@@ -1599,6 +1853,7 @@ static func build(zone: Dictionary, theme_override := "",
 					"policy": routing_policy(placed, policy_override),
 					"blocking_rooms": [str(chamber.get("id", "?"))],
 					"blocking_pairs": [],
+					"wedge": true,
 					"failed": "room '%s' could not be placed clear of "
 					% str(chamber.get("id", "?"))
 					+ "the %d room(s) before it" % placed.size()}
@@ -1779,8 +2034,40 @@ static func build(zone: Dictionary, theme_override := "",
 			var b_plan := {"ok": true} if b_replaying \
 					else _plan_route(shape, corners,
 							b_result["bounds"] as AABB, b_entry, b_cursor,
-							b_yaw, placed, 0)
+							b_yaw, placed, 0,
+							_socket_reservations(b_result, b_chamber,
+									_declared_branch_sockets(
+											graph_branches, b_chamber),
+									shape))
 			if not bool(b_plan["ok"]):
+				if OS.get_cmdline_user_args().has("--router-diag"):
+					var _span: AABB = placed[0]
+					for _b: AABB in placed:
+						_span = _span.merge(_b)
+					print("  DIAG %s off %s: mouth=%v yaw=%.0f room=%v"
+							% [str(b_chamber.get("id", "?")),
+								str(parent.get("id", "?")), b_cursor,
+								rad_to_deg(b_yaw),
+								(b_result["bounds"] as AABB).size])
+					print("       placed=%d span=%v..%v"
+							% [placed.size(), _span.position,
+								_span.position + _span.size])
+					var _seen: Array = _all_but_last(placed)
+					var _at := b_cursor
+					for _i in 12:
+						var _here := _world_aabb(
+								b_result["bounds"] as AABB,
+								origin_for(_at, b_yaw, b_entry), b_yaw)
+						var _link := _world_aabb(
+								shape["bounds"] as AABB, _at, b_yaw)
+						print("       step %d room_fits=%s link_fits=%s"
+								% [_i,
+									str(not _overlaps(_seen, _here)),
+									str(not _overlaps(_seen, _link))])
+						if not _overlaps(_seen, _here):
+							break
+						_seen.append(_link)
+						_at += _rot(b_yaw, shape["exit_offset"] as Vector3)
 				(b_result["root"] as Node3D).free()
 				(result["root"] as Node3D).free()
 				root.free()
@@ -1788,6 +2075,7 @@ static func build(zone: Dictionary, theme_override := "",
 						"policy": routing_policy(placed, policy_override),
 						"blocking_rooms": [str(b_chamber.get("id", "?"))],
 						"blocking_pairs": [],
+						"wedge": true,
 						"failed": "branch room '%s' off '%s' could not "
 						% [str(b_chamber.get("id", "?")),
 							str(parent.get("id", "?"))]

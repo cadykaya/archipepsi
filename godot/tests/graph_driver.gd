@@ -20,32 +20,52 @@ extends Node
 const WALK_FRAMES := 1500
 const ARRIVED := 4.0
 
-## ZONES THE ROUTER CANNOT LAY OUT TODAY, and the room it wedges on.
+## ZONES THE ROUTER CANNOT LAY OUT TODAY: the status, and where it wedges.
 ##
-## Four of five ordinary generated Zones come back LAYOUT_INFEASIBLE:
-## the graphs are legal and the placement walk is greedy and never
-## backtracks, so a Zone with eight rooms off its spine paints itself
-## into a corner and the room that cannot fit is whichever one was last.
-## `docs/AGENT_FRONTIER.md` has the arithmetic -- at this rate about two
-## Zones in five exhaust their recompositions and go DORMANT, which is a
-## Zone the player is offered and cannot enter.
+## **EMPTY, AND THAT IS THE POINT.** Every preserved ordinary input lays
+## out, so there is no waiver left to grant and each of the five is a
+## POSITIVE regression control: the `else` arm below demands
+## `LAYOUT_OK` of any Zone not named here, and nothing is named here.
 ##
-## **Listed rather than tolerated silently, and the list is checked both
-## ways.** A Zone that composes today and stops is a regression and
-## fails; a Zone on this list that starts composing means the router was
-## fixed and the list is stale, which also fails. The alternative -- a
-## target that is simply red on a known defect -- is a target people
-## learn to ignore, and then the regression it was meant to catch
-## arrives unnoticed.
-const KNOWN_INFEASIBLE := {
-	"zone_02.json": "branch room 'c021' off 'c016'",
-	"zone_03.json": "branch room 'c015' off 'c014'",
-	"zone_04.json": "branch room 'c019' off 'c018'",
-	"zone_05.json": "room 'c017' could not be placed",
-}
+## It stays in the file because the shape of the record is what made the
+## repair legible. Four Zones sat on it -- `zone_02` wedging on branch
+## `c021` off `c016`, `zone_03` on `c015` off `c014`, `zone_04` on
+## `c019` off `c018`, `zone_05` on spine room `c017` -- and the entries
+## pinned the STATUS as well as the room, because `LAYOUT_TIMEOUT` and
+## `LAYOUT_INFEASIBLE` are different answers and a repair that swapped
+## one for the other while the Zone stayed unbuildable would have read
+## as "unchanged".
+##
+## **A BASELINE IS NOT A PASS.** If a Zone is ever added back here, it
+## records what is broken so a change to it is visible; it does not make
+## that Zone playable. The strict playable-acceptance result below counts
+## every Zone that does not lay out, whether or not it is listed here,
+## and fails. Two results, deliberately: one answers "did this change?",
+## the other answers "can a player be given this Zone?", and they are
+## not the same question.
+##
+## Checked both ways. A Zone that composes today and stops is a
+## regression; a Zone on this list that starts composing means the router
+## was repaired and the list is stale. Both fail.
+const KNOWN_INFEASIBLE := {}
 
 var failures := 0
-var walked_zones := 0
+## The retry ladder, measured rather than estimated.
+var attempts_total := 0
+var solve_ms_total := 0.0
+## THE THREE OUTCOMES OF A JOURNEY, COUNTED APART.
+##
+## `inconclusive` is the one that matters: a harness that could not
+## START -- no junction with a placed off-spine neighbour, no committed
+## door position, a body that fell through the floor before it took a
+## step -- has measured nothing about the Zone. Reporting that as a pass
+## is how a suite comes to claim more than it did.
+var journeys_valid := 0
+var journeys_entered := 0
+var journeys_returned := 0
+var journeys_inconclusive := 0
+## Zones that did not lay out, whether or not they are on the list.
+var unplayable: Array[String] = []
 
 func _check(condition: bool, message: String) -> void:
 	if condition:
@@ -74,10 +94,53 @@ func _run() -> void:
 			% names.size())
 	for file: String in names:
 		await _walk_one(file)
-	print("\n%d of %d Zone(s) had a branch a body reached from the "
-			% [walked_zones, names.size()] + "junction doorway; see the "
-			+ "note in `_walk_one` for why that is reported and not "
-			+ "asserted here")
+
+	# --- the two results, reported apart ---------------------------------
+	print("\nBASELINE   %d Zone(s) waived as unbuildable; the other %d "
+			% [KNOWN_INFEASIBLE.size(),
+				names.size() - KNOWN_INFEASIBLE.size()]
+			+ "are positive controls and must lay out"
+			if failures == 0
+			else "\nBASELINE   drifted; see the failures above")
+	print("SOLVE      %d placement attempt(s) across %d Zone(s) in "
+			% [attempts_total, names.size()]
+			+ "%.0f ms total" % solve_ms_total)
+	print("JOURNEYS   %d valid start(s): %d entered a branch, %d got "
+			% [journeys_valid, journeys_entered, journeys_returned]
+			+ "back out. %d inconclusive (the harness could not start)"
+			% journeys_inconclusive)
+
+	# A HARNESS THAT NEVER MANAGED A VALID START MEASURED NOTHING, and
+	# saying so is the difference between "no defects found" and "no
+	# search performed". Not asked in compose-only mode, where no
+	# journey was attempted and zero valid starts is the expected count
+	# rather than a finding.
+	if not OS.get_cmdline_user_args().has("--no-walk"):
+		_check(journeys_valid >= 1,
+				"at least one Zone gave the harness a valid start; %d "
+				% journeys_inconclusive + "were inconclusive and a suite "
+				+ "that cannot begin has not passed")
+
+	# --- STRICT PLAYABLE ACCEPTANCE, which is a different question -------
+	#
+	# `KNOWN_INFEASIBLE` documents what is broken so a CHANGE to it is
+	# visible. It does not make a Zone playable, and a suite that went
+	# green on the strength of it would be reporting "unchanged" as
+	# "ready". A Zone the composer produced and the router cannot lay out
+	# is a Zone the player is offered and cannot enter.
+	var playable := names.size() - unplayable.size()
+	print("PLAYABLE   %d of %d generated Zone(s) lay out%s"
+			% [playable, names.size(),
+				"" if unplayable.is_empty()
+				else "; unbuildable: %s" % str(unplayable)])
+	if not unplayable.is_empty():
+		print("GODOT GRAPH TESTS: NOT PLAYABLE -- %d of %d Zone(s) do "
+				% [unplayable.size(), names.size()] + "not lay out (%s)"
+				% str(unplayable)
+				+ "\n  the baseline is unchanged, which is not the same "
+				+ "claim: see KNOWN_INFEASIBLE in graph_driver.gd")
+		get_tree().quit(1)
+		return
 	if failures == 0:
 		print("GODOT GRAPH TESTS OK")
 		get_tree().quit(0)
@@ -103,17 +166,40 @@ func _walk_one(file: String) -> void:
 	print("    layout %s%s" % [status,
 			"" if status == "LAYOUT_OK"
 			else ": %s" % str(out.get("failed", "?"))])
+	# WHAT THE REPAIR ACTUALLY COST, per input: how many bounded
+	# re-solves it took and how long they took. "Four of five failed" is
+	# an observation about layouts; this is an observation about the
+	# retry ladder, and they are different numbers.
+	print("    solve  %d placement attempt(s) in %.0f ms; nudged %s"
+			% [int(out.get("placement_attempts", 1)),
+				float(out.get("placement_ms", 0.0)),
+				"nothing" if (out.get("placement_nudges", {})
+					as Dictionary).is_empty()
+				else str(out.get("placement_nudges", {}))])
+	attempts_total += int(out.get("placement_attempts", 1))
+	solve_ms_total += float(out.get("placement_ms", 0.0))
+	if status != "LAYOUT_OK":
+		unplayable.append(file)
 	if KNOWN_INFEASIBLE.has(file):
+		var recorded: Dictionary = KNOWN_INFEASIBLE[file]
 		# A CLAIM, NOT A NARRATION OF THE FAILURE. `_check` prints its
 		# message either way, so it has to read true when it passes.
 		_check(status != "LAYOUT_OK",
 				"%s is still one the router cannot lay out; the day it "
 				% file + "composes, this list is stale and this line is "
 				+ "how you find out")
+		# THE STATUS, NOT ONLY THE ROOM. A timeout and an infeasibility
+		# are different answers -- the clock ran out, versus no layout
+		# exists -- and a change that swapped one for the other while
+		# the Zone stayed unbuildable would otherwise read as
+		# "unchanged".
+		_check(status == str(recorded["status"]),
+				"%s still fails as %s, which is the status recorded for "
+				% [file, status] + "it (%s)" % str(recorded["status"]))
 		_check(str(out.get("failed", "")).contains(
-					str(KNOWN_INFEASIBLE[file])),
+					str(recorded["where"])),
 				"%s wedges where it was recorded wedging (%s) rather "
-				% [file, str(KNOWN_INFEASIBLE[file])]
+				% [file, str(recorded["where"])]
 				+ "than somewhere new: %s" % str(out.get("failed", "")))
 	else:
 		_check(status == "LAYOUT_OK",
@@ -158,22 +244,41 @@ func _walk_one(file: String) -> void:
 		await get_tree().process_frame
 		return
 
-	# THE PLAYER LEG IS REPORTED, NOT ASSERTED, AND HERE IS WHY.
+	# THREE OUTCOMES, AND THEY ARE NOT ONE OUTCOME.
 	#
-	# Standing a body at an arbitrary junction's side doorway is not a
-	# solved problem: the room-contract journey walks c008's interior
-	# and its branch from a spawn that was established for that room,
-	# and this driver has no equivalent for a junction it has never
-	# seen. A walk that cannot START is a finding about the harness, and
-	# failing the target on it would report a Zone defect that is not
-	# there — which is the opposite of separating the claims.
+	# * **setup** -- could the harness even start? No junction with a
+	#   placed off-spine neighbour, no committed door position, or a
+	#   body that fell through the floor before it took a step, and this
+	#   run has measured NOTHING about the Zone. That is inconclusive,
+	#   not a pass: the previous version returned `walked` for it and
+	#   the summary then claimed a journey nobody made.
+	# * **entry** -- did the body reach the side destination?
+	# * **return** -- did it get back out, by the junction or by the
+	#   Zone's own return pad?
 	#
-	# What this target DOES assert is composition and placement, which
-	# are the engine's and are where it is currently red.
+	# Once the setup is valid the last two are ASSERTED. A journey that
+	# started and then broke is a Zone finding, and a harness whose
+	# route can break without failing anything is a harness measuring
+	# nothing.
 	var reached := await _reach_a_branch(out, zone, spine, side)
 	print("    player: %s" % str(reached["how"]))
-	if bool(reached["walked"]):
-		walked_zones += 1
+	if not bool(reached["valid"]):
+		journeys_inconclusive += 1
+		print("    player: INCONCLUSIVE -- the harness could not start, "
+				+ "so this says nothing about the Zone")
+	else:
+		journeys_valid += 1
+		if bool(reached["entered"]):
+			journeys_entered += 1
+		if bool(reached["returned"]):
+			journeys_returned += 1
+		_check(bool(reached["entered"]),
+				"%s: a body that started at the junction reached the "
+				% file + "side destination (%s)" % str(reached["how"]))
+		if bool(reached["entered"]):
+			_check(bool(reached["returned"]),
+					"%s: and got back out again (%s)"
+					% [file, str(reached["how"])])
 	(out["root"] as Node3D).queue_free()
 	await get_tree().process_frame
 
@@ -182,7 +287,7 @@ func _walk_one(file: String) -> void:
 func _reach_a_branch(out: Dictionary, zone: Dictionary, spine: Array,
 		side: Array) -> Dictionary:
 	if side.is_empty():
-		return {"walked": false, "how": "no side destination to reach"}
+		return _no_start("no side destination to reach")
 	var doors: Dictionary = out.get("doors", {})
 	var rooms: Dictionary = out["rooms"]
 	for raw: Variant in zone.get("chambers", []):
@@ -192,17 +297,16 @@ func _reach_a_branch(out: Dictionary, zone: Dictionary, spine: Array,
 			var door: Dictionary = raw_door
 			if str(door.get("usage", "")) != "USED":
 				continue
-			if not str(door.get("socket_id", "")).begins_with("side_"):
-				continue
-			var served := ""
-			for raw_edge: Variant in zone.get("edges", []):
-				var edge: Dictionary = raw_edge
-				if str(edge.get("edge_id", "")) \
-						!= str(door.get("edge_id", "")):
-					continue
-				served = str(edge["room_b"]) \
-						if str(edge["room_a"]) == junction \
-						else str(edge["room_a"])
+			# **THE ASSIGNMENT SAYS WHICH DOOR SERVES THE BRANCH, not
+			# the socket's name.** This used to require a `side_` prefix,
+			# which was the procedural room's naming convention and
+			# nothing more -- so Arty's `branch_east` / `branch_west`
+			# openings were invisible to it and a junction built from one
+			# of those shells read as "no open side door". What makes a
+			# door a branch door is the JOINED edge it carries and the
+			# off-spine room at the other end of it.
+			var served := _joined_through(zone, junction,
+					str(door.get("edge_id", "")))
 			if served == "" or not side.has(served) \
 					or not rooms.has(served):
 				continue
@@ -212,8 +316,29 @@ func _reach_a_branch(out: Dictionary, zone: Dictionary, spine: Array,
 			if mouth == Vector3.INF:
 				continue
 			return await _walk_into(out, junction, served, mouth)
-	return {"walked": false,
-			"how": "no open side door onto a placed off-spine room"}
+	return _no_start("no door carrying a JOINED edge onto a placed "
+			+ "off-spine room")
+
+## The room on the other end of `edge_id`, if it is a JOINED edge of
+## `from`. Empty for a plug, an unrealized edge, or an id nothing carries.
+func _joined_through(zone: Dictionary, from: String,
+		edge_id: String) -> String:
+	if edge_id == "":
+		return ""
+	for raw: Variant in zone.get("edges", []):
+		var edge: Dictionary = raw
+		if str(edge.get("edge_id", "")) != edge_id:
+			continue
+		if str(edge.get("realization", "JOINED")) != "JOINED":
+			return ""
+		return str(edge["room_b"]) if str(edge["room_a"]) == from \
+				else str(edge["room_a"])
+	return ""
+
+## The harness could not begin. Not a pass and not a Zone failure.
+func _no_start(why: String) -> Dictionary:
+	return {"valid": false, "entered": false, "returned": false,
+			"how": why}
 
 func _walk_into(out: Dictionary, junction: String, branch: String,
 		mouth: Vector3) -> Dictionary:
@@ -234,27 +359,57 @@ func _walk_into(out: Dictionary, junction: String, branch: String,
 	body.velocity = Vector3.ZERO
 	for _settle in 20:
 		await get_tree().physics_frame
+	# DID THE BODY EVEN GET A PLACE TO STAND? A capsule that fell out of
+	# the world during the settle never started, and everything measured
+	# after that is about the fall. `from` is the junction's committed
+	# envelope, so "below its floor" is a fact and not a guess.
+	if body.global_position.y < from.position.y - Constants.PLAYER_HEIGHT:
+		var fell := body.global_position
+		body.queue_free()
+		return _no_start("the body fell out of '%s' before it took a "
+				% junction + "step (ended at %v)" % fell)
+
 	var into := await _walk(body, Vector3(target.x,
 			body.global_position.y, target.z), box.grow(1.0))
 	var inside := box.grow(2.0).has_point(Vector3(
 			body.global_position.x, target.y, body.global_position.z))
 	if not inside:
+		var stopped := body.global_position
 		body.queue_free()
-		return {"walked": false,
+		return {"valid": true, "entered": false, "returned": false,
 				"how": "%s -> %s: stopped %.1f m short at %v"
-					% [junction, branch, float(into["closest"]),
-						body.global_position]}
+					% [junction, branch, float(into["closest"]), stopped]}
+
+	# AND BACK. Either way the Zone offers: out through the junction, or
+	# the return pad the composer put in the destination. `returned` is
+	# the answer to that question and not to the previous one -- the
+	# version before this reported success for a journey that got in and
+	# could not get out, which is the half that matters to a player.
 	var back := await _walk(body, Vector3(mouth.x,
 			body.global_position.y, mouth.z), AABB())
+	var start := _anchor_of(out, "zone_start")
+	var by_pad := start != Vector3.INF and Vector2(
+			body.global_position.x - start.x,
+			body.global_position.z - start.z).length() < 6.0
 	var out_again := not box.grow(1.0).has_point(body.global_position)
+	var returned := bool(back["arrived"]) or by_pad or out_again
+	var ended := body.global_position
 	body.queue_free()
-	return {"walked": true,
+	return {"valid": true, "entered": true, "returned": returned,
 			"how": "%s -> %s entered, and %s"
 				% [junction, branch,
 					("walked back out" if bool(back["arrived"])
-						or out_again
-					else "could not walk back out (closest %.1f m)"
-						% float(back["closest"]))]}
+					else ("taken home by the return pad" if by_pad
+					else ("left the room" if out_again
+					else "could NOT get back out (closest %.1f m, at %v)"
+						% [float(back["closest"]), ended])))]}
+
+## The Zone start, from the committed anchors, or `Vector3.INF`.
+func _anchor_of(out: Dictionary, name: String) -> Vector3:
+	var anchors: Dictionary = out.get("anchors", {})
+	if not anchors.has(name):
+		return Vector3.INF
+	return anchors[name]
 
 ## The same steer-and-press the room contract uses, kept short here: this
 ## driver's subject is the graph, not the controller.
