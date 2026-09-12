@@ -10,7 +10,7 @@
       [
         40.0,
         39.0,
-        62.0
+        60.0
       ]
     ],
     "check_anchor": [
@@ -44,7 +44,7 @@
     "exit_offset": [
       0.0,
       28.0,
-      62.0
+      60.0
     ],
     "exit_yaw": 0.0,
     "interior": [
@@ -201,7 +201,7 @@
         "position": [
           0.0,
           28.0,
-          62.0
+          60.0
         ],
         "surface_id": "exit_platform",
         "width": 2.4,

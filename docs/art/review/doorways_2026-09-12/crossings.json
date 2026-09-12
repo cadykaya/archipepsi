@@ -1,0 +1,98 @@
+{
+  "shell_hall_transit at the origin": {
+    "crossed": true,
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 5.05,
+    "socket": [
+      0.0,
+      28.0,
+      60.0
+    ]
+  },
+  "shell_hall_transit placed and yawed 37 deg": {
+    "crossed": true,
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      -18.5,
+      0.0,
+      46.25
+    ],
+    "reached_m_past_socket": 5.05,
+    "socket": [
+      0.0,
+      28.0,
+      60.0
+    ]
+  },
+  "shell_plenum_helix at the origin": {
+    "crossed": true,
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 5.05,
+    "socket": [
+      0.0,
+      0.0,
+      20.0
+    ]
+  },
+  "shell_plenum_helix placed and yawed 37 deg": {
+    "crossed": true,
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      -18.5,
+      0.0,
+      46.25
+    ],
+    "reached_m_past_socket": 5.05,
+    "socket": [
+      0.0,
+      0.0,
+      20.0
+    ]
+  },
+  "shell_span_basin at the origin": {
+    "crossed": true,
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 5.05,
+    "socket": [
+      0.0,
+      14.0,
+      90.0
+    ]
+  },
+  "shell_span_basin placed and yawed 37 deg": {
+    "crossed": true,
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      -18.5,
+      0.0,
+      46.25
+    ],
+    "reached_m_past_socket": 5.05,
+    "socket": [
+      0.0,
+      14.0,
+      90.0
+    ]
+  }
+}

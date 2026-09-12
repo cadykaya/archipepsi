@@ -1647,7 +1647,7 @@
      "descent",
      "rail"
     ],
-    "collision": 150,
+    "collision": 151,
     "offers": [
      {
       "name": "rail_descent",
@@ -1688,7 +1688,7 @@
     ],
     "surface_probe": []
    },
-   "triangles": 1656
+   "triangles": 1668
   },
   {
    "content_id": "shell_span_basin",

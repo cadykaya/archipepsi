@@ -28,6 +28,9 @@
 #     geometry that was exported
 #   * assets/art_budgets.json still matches its own derivation
 #   * the asset interface BATCH_043_INTEGRATION.md quotes still holds
+#   * every shell doorway is on its own room, through a clear opening, and
+#     has a floor under it -- and a player-shaped body can walk each
+#     repaired join, placed and yawed
 #   * every builder on disk is in the rebuild list, so none is silently
 #     exempt from the line below
 #   * every .glb and .png rebuilds byte-identical from its source
@@ -92,6 +95,17 @@ python3 tools/content/verify_exported_geometry.py >/dev/null || \
 
     python3 tools/content/verify_exported_geometry.py"
 
+# Every shell doorway against the geometry it was exported from. Three
+# shells shipped an `exit` 2 m past their own back wall and twelve shells
+# passed every other check, because every other shell rule is about a SPAN
+# and this one is about a POINT.
+python3 tools/content/measure_doorways.py >/dev/null || \
+  fail "measure-doorways: a shell doorway is outside its own room, blocked,
+    or standing over nothing -- or a finding listed as KNOWN was repaired
+    and its line was left behind. Run
+
+    python3 tools/content/measure_doorways.py"
+
 python3 tools/blender/derive_budgets.py --write >/dev/null
 if ! cmp -s assets/art_budgets.json /tmp/art_budgets_committed.json; then
   fail "assets/art_budgets.json no longer matches derive_budgets.py. Either a
@@ -115,8 +129,15 @@ if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
     Run
 
     tools/content/run_import_examples.sh"
+
+  say "the repaired doorway crossings..."
+  tools/content/run_crossing_test.sh >/dev/null 2>&1 || \
+    fail "crossing: a player-shaped body can no longer walk one of the three
+    repaired joins, at the origin or placed and yawed. Run
+
+    tools/content/run_crossing_test.sh"
 else
-  say "SKIPPED the import examples -- no godot at ${GODOT:-$ROOT/.tools/godot}"
+  say "SKIPPED the engine checks -- no godot at ${GODOT:-$ROOT/.tools/godot}"
 fi
 
 # --- 5. the preview project has not drifted from the game ---------------

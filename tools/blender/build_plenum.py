@@ -201,6 +201,17 @@ def build():
 
     # --- the shaft ----------------------------------------------------
     surface("floor", -IN, IN, WALL, D - WALL, 0.0, 1.0)
+    # THE FLOOR UNDER THE NORTH DOORWAY. The slab above runs between the
+    # walls' INNER faces, which is right for a floor and wrong for a
+    # threshold: the exit aperture is cut at floor level, so the last 0.6 m
+    # to the doorway face had nothing under it and a player crossing the
+    # repaired join would have walked into the shaft. Same width and same
+    # underside as the floor, so it reads as the floor continuing rather
+    # than as a step. Geometry only -- it declares no Surface, exactly as
+    # the hall's and the span's sill tops do not.
+    parts.append(_paint(brushkit.block(
+        "%s_north_threshold" % name, (DOOR_W, WALL, 1.0),
+        (0.0, roomkit.y(D - WALL / 2.0), -0.5)), name, "floor"))
     parts.append(_paint(brushkit.block(
         "%s_roof" % name, (W, D, WALL), (0.0, roomkit.y(D / 2.0),
                                          H + WALL / 2.0)), name, "ceiling"))
@@ -381,7 +392,29 @@ def main():
     if probe:
         entry["surface_probe"] = probe
 
-    entry["exit_offset"] = [0.0, 0.0, round(D + 2.0, 2)]
+    # THE EXIT IS ON THE DOORWAY FACE, NOT TWO METRES PAST IT.
+    #
+    # This read `D + 2.0` and shipped a room whose declared exit stood 2 m
+    # beyond its own north wall. ZoneBuilder joins the next corridor AT the
+    # socket, so a real Zone had the room's wall at D and the corridor
+    # starting at D + 2 with nothing in between -- no floor, no wall, a
+    # hole. The 2026-09-11 playtest opened with "oof the connecter isnt
+    # connected at all haha".
+    #
+    # D is the OUTER FACE of the north wall, measured from the export:
+    #
+    #   pl_north_-1 / pl_north_1 / pl_north_head
+    #       z 19.40 .. 20.00        (D = 20.0, WALL = 0.6)
+    #   the aperture  x -1.2..1.2, y 0.0..3.2, through that wall
+    #
+    # AND THIS ONE NEEDED GEOMETRY AS WELL AS A NUMBER. Unlike the hall and
+    # the span, whose exits are raised and therefore have a sill whose top
+    # IS the threshold, this exit is at floor level -- so `hole_y` is 0, no
+    # sill is built, and `surface("floor", ...)` below stops at D - WALL,
+    # the wall's INNER face. Moving the socket to D alone would have put
+    # the doorway on the far side of a 0.6 m hole in the floor. The
+    # threshold slab beside the floor carries it across.
+    entry["exit_offset"] = [0.0, 0.0, round(D, 2)]
     entry["exit_yaw"] = 0.0
     # THE MIDDLE COLLAR, AT THE BRIDGE END OF IT. This was
     # `[0, land_y[7], D/2]` -- the machine's axis at collar height, four
@@ -406,7 +439,7 @@ def main():
     # off it would be keeping a defect because nobody measures it.
     entry["enemy_anchors"] = [list(_collar_point(t, _corner(li), near=False))
                               for t, li in collars]
-    entry["bounds"] = [[-W / 2.0, -1.0, 0.0], [W, H + 1.0, D + 2.0]]
+    entry["bounds"] = [[-W / 2.0, -1.0, 0.0], [W, H + 1.0, D]]
     entry["interior"] = [W, H, D]
     entry["total_rise"] = 0.0
     entry["surfaces"] = roomcontract.surfaces_from_stones(
@@ -464,7 +497,7 @@ def main():
                             width=DOOR_W, height=DOOR_H,
                             surface_id="landing_0"),
         roomcontract.socket("exit", "doorway",
-                            (0.0, roomkit.y(D + 2.0), 0.0), yaw=0.0,
+                            (0.0, roomkit.y(D), 0.0), yaw=0.0,
                             width=DOOR_W, height=DOOR_H,
                             surface_id="floor"),
     ]

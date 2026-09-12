@@ -4000,7 +4000,7 @@ brief room by room. All three are `review: "pending"`; Art does not write
 
 | Shell | Metrics | Proportion | Landmark |
 | --- | --- | --- | --- |
-| `shell_plenum_helix` | 1656 tris · 21.20 × 20.00 × 73.60 m · 32.0 texels/m | 1 : 3.6 tall | a machine column hung from the roof, never founded, with three walkable collars |
+| `shell_plenum_helix` | 1668 tris · 21.20 × 20.00 × 73.60 m · 32.0 texels/m | 1 : 3.6 tall | a machine column hung from the roof, never founded, with three walkable collars |
 | `shell_yard_gantry` | 516 tris · 85.20 × 52.00 × 17.60 m · 32.0 texels/m | 5.3 : 1 wide | an 84 m gantry crane spanning the full width at 12 m |
 | `shell_span_basin` | 672 tris · 31.20 × 90.00 × 23.60 m · 32.0 texels/m | 3 : 1 long | one 90 m deck on two pylons, with a walkable basin under all of it |
 

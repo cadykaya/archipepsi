@@ -441,12 +441,34 @@ def main():
                                        "  (grazing)" if f.get("grazing")
                                        else ""))
 
-    entry["exit_offset"] = [0.0, Y_EXIT, round(D + 2.0, 2)]
+    # THE EXIT IS ON THE DOORWAY FACE, NOT TWO METRES PAST IT.
+    #
+    # This read `D + 2.0` and shipped a room whose declared exit stood 2 m
+    # beyond its own back wall. ZoneBuilder joins the next corridor AT the
+    # socket, so a real Zone had the room's wall at D and the corridor
+    # starting at D + 2 with nothing in between -- no floor, no wall, a
+    # hole. The 2026-09-11 playtest opened with "oof the connecter isnt
+    # connected at all haha", and the bridge's layout validator refuses the
+    # Zone by name.
+    #
+    # D is the OUTER FACE of the back wall, measured from the export:
+    #   hl_back_-1 / hl_back_1 / hl_back_sill / hl_back_head
+    #       z 59.40 .. 60.00        (D = 60.0, WALL = 0.6)
+    #   the aperture  x -3.0..3.0, y 28.0..36.0, through that wall
+    #   hl_back_sill top  y 28.00, z 59.40..60.00  <- the threshold
+    #   hl_exit_platform  y 28.00, z 54.00..59.40  <- the run up to it
+    #
+    # So the walking surface is continuous at Y_EXIT from the platform
+    # through the sill top to the face at D, and the doorway is there.
+    # `exit_offset`, `bounds` and the `exit` socket all name that one
+    # point and move together -- in all twelve shells they agree, and
+    # they agreed here too, on the wrong number.
+    entry["exit_offset"] = [0.0, Y_EXIT, round(D, 2)]
     entry["exit_yaw"] = 0.0
     entry["check_anchor"] = [0.0, Y_MID, 52.0]
     entry["enemy_anchors"] = [[-16.0, Y_GALLERY, 42.0], [16.0, Y_MID, 27.0],
                               [0.0, Y_MID, 41.5], [5.0, Y_MID, 52.0]]
-    entry["bounds"] = [[-W / 2.0, -1.0, 0.0], [W, H + 1.0, D + 2.0]]
+    entry["bounds"] = [[-W / 2.0, -1.0, 0.0], [W, H + 1.0, D]]
     entry["interior"] = [W, H, D]
     entry["total_rise"] = Y_EXIT
 
@@ -535,7 +557,7 @@ def main():
         roomcontract.socket("entry", "doorway", (0.0, 0.0, 0.0), yaw=180.0,
                             width=DOOR_W, height=DOOR_H,
                             surface_id="vestibule"),
-        roomcontract.socket("exit", "doorway", (0.0, _y(D + 2.0), Y_EXIT),
+        roomcontract.socket("exit", "doorway", (0.0, _y(D), Y_EXIT),
                             yaw=0.0, width=DOOR_W, height=DOOR_H,
                             surface_id="exit_platform"),
     ]

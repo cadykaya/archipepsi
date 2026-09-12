@@ -193,12 +193,32 @@ def main():
     if probe:
         entry["surface_probe"] = probe
 
-    entry["exit_offset"] = [0.0, DECK_Y, round(D + 2.0, 2)]
+    # THE EXIT IS ON THE DOORWAY FACE, NOT TWO METRES PAST IT.
+    #
+    # This read `D + 2.0` and shipped a room whose declared exit stood 2 m
+    # beyond its own back wall. ZoneBuilder joins the next corridor AT the
+    # socket, so a real Zone had the room's wall at D and the corridor
+    # starting at D + 2 with nothing in between -- no floor, no wall, a
+    # hole. The 2026-09-11 playtest opened with "oof the connecter isnt
+    # connected at all haha", and the bridge's layout validator refuses the
+    # Zone by name.
+    #
+    # D is the OUTER FACE of the back wall, measured from the export:
+    #   sp_north_0 / sp_north_1 / sp_north_sill / sp_north_head
+    #       z 89.40 .. 90.00        (D = 90.0, WALL = 0.6)
+    #   the aperture  x -1.2..1.2, y 14.0..17.2, through that wall
+    #   sp_north_sill top  y 14.00, z 89.40..90.00  <- the threshold
+    #   sp_deck           y 14.00, z  0.60..89.40  <- the walk to it
+    #
+    # The deck meets the sill top at the same height, so the crossing
+    # is already supported all the way to the face; only the declared
+    # point was wrong. THE STAIRS ARE NOT TOUCHED (owner, 2026-09-12).
+    entry["exit_offset"] = [0.0, DECK_Y, round(D, 2)]
     entry["exit_yaw"] = 0.0
     entry["check_anchor"] = [0.0, 0.0, D / 2.0]
     entry["enemy_anchors"] = [[0.0, DECK_Y, D * 0.3], [0.0, DECK_Y, D * 0.7],
                               [0.0, SHOULDER_Y, D * 0.3]]
-    entry["bounds"] = [[-W / 2.0, -1.0, 0.0], [W, H + 1.0, D + 2.0]]
+    entry["bounds"] = [[-W / 2.0, -1.0, 0.0], [W, H + 1.0, D]]
     entry["interior"] = [W, H, D]
     entry["total_rise"] = 0.0
     entry["surfaces"] = roomcontract.surfaces_from_stones(
@@ -243,7 +263,7 @@ def main():
                             yaw=180.0, width=DOOR_W, height=DOOR_H,
                             surface_id="deck"),
         roomcontract.socket("exit", "doorway",
-                            (0.0, roomkit.y(D + 2.0), DECK_Y), yaw=0.0,
+                            (0.0, roomkit.y(D), DECK_Y), yaw=0.0,
                             width=DOOR_W, height=DOOR_H, surface_id="deck"),
     ]
     for i, sname in enumerate(("deck", "shoulder_0", "shoulder_1",

@@ -324,6 +324,36 @@ theme-tinted hazard texture passed silently. It runs unconditionally now.
 binder itself. Gap 4 (`THEME` as a build argument) remains the next
 Art-owned item and is unblocked.
 
+### Three doorways moved back onto their own rooms (2026-09-12)
+
+Report: `docs/art/reports/2026-09-12-doorway-repair.md`. Repairing
+Production's `docs/art-requests/2026-09-11-doorways-outside-their-envelope.md`
+at `dc4ef39`.
+
+`shell_hall_transit`, `shell_plenum_helix` and `shell_span_basin` each
+declared an `exit` 2.0 m past their own back wall, so `ZoneBuilder` joined
+the next corridor over a hole. Confirmed from the export — in all three the
+wall's OUTER face is exactly at the declared depth, so `size` was right and
+the socket was wrong. `exit_offset`, `bounds` depth and the socket all moved
+to `D`; the registry was regenerated. The hall's and span's `.glb` files are
+byte-identical: their exits are raised and a sill already carried the
+threshold. The plenum needed `pl_north_threshold` as well, because its exit
+is at floor level and its floor stopped at the wall's inner face.
+
+A player-shaped body now walks all three joins, at the origin and placed and
+yawed 37°, with a 0.000 m dip; the same harness fails all six against the art
+as it shipped. Two bugs in that harness were found first, both of which would
+have produced a confident wrong report — see the report.
+
+**Five more doorways are open and unrepaired**, on shells the brief said to
+preserve, listed in `KNOWN` in `tools/content/measure_doorways.py`. The one
+to authorize next is **`shell_yard_gantry`**: both its doorways are 0.40 m
+outside the envelope on X — Production's own defect class, on the axis their
+depth-only check cannot see. `shell_plenum_helix/entry` is the most severe
+(it opens onto a 68 m drop) but needs new geometry, not a coordinate.
+
+`shell_span_basin`'s route/collider hold is NOT lifted by this.
+
 ### The verification repair (2026-09-11, revision 4 of Batch 043)
 
 The owner found that `run_import_examples.sh` ended in `|| true`, masking
