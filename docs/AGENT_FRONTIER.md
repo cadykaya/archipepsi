@@ -60,10 +60,31 @@ rewritten, no commits lost). PR #6, opened from it against `main`, is
 **superseded** — it showed the whole stacked project history rather than an
 art diff. Do not maintain two active art branches.
 
-## Art batches — state 2026-09-02
+## Art batches — state 2026-09-02, with a 2026-09-13 head note
 
 **THE ART LANE IS WAITING ON AN OWNER VERDICT, NOT IDLE-WITH-WORK-TO-DO.**
 Do not start work in it on a wake-up. Read this section and stop.
+
+**2026-09-13 — three things another lane may need, from
+`docs/art/reports/2026-09-13-presentation-study.md`:**
+
+1. **`shell_yard_gantry`'s two doorways are refused by
+   `shells.doorways_off_the_body` at current Production** — 0.395 m past
+   the shell's declared 85.20 m size, against a 0.005 m rounding
+   allowance. Art's own gate carried the wrong number (0.405, the
+   *layout* allowance) and now carries 0.005. **Not repaired**: the fix is
+   one line but rewrites an approved manifest, so it needs Prod's and the
+   owner's word.
+2. **The six-theme pack is proved to bind authored pixels through the real
+   Godot import**, with three controls. The binder used to prove it
+   (`tools/content/theme_binder.gd`) is a **proposal** and is not wired
+   into the game — the shipped `ThemeMaterials` is still fully procedural,
+   which is exactly why "the Zone still builds" proved nothing.
+   `texture_filter` and `texture_repeat` are **material** state in Godot 4,
+   not importer parameters.
+3. **Production now reads shell sockets by kind and by name**, so a three-
+   or four-connection room is readable. **A four-connection asset is still
+   not a four-neighbour room in a generated Zone.**
 
 **ALL TWELVE AUTHORED ROOM SHELLS PASS** (owner, 2026-09-04). The eight
 P2 shells passed on 2026-09-02 after Production certified them at

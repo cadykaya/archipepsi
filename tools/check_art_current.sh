@@ -46,6 +46,10 @@
 # `git diff` then shows exactly what was out of date.
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+#: This script's own absolute path, captured BEFORE the cd. The coverage
+#: gate below reads it, and a hardcoded name would make a sabotaged copy
+#: grade the original -- which is a check that cannot be tested.
+SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 cd "$ROOT"
 BLENDER="${BLENDER:-$ROOT/.tools/blender/blender}"
 PATHS="assets/art_palette.json assets/art_budgets.json assets/models assets/textures"
@@ -136,6 +140,22 @@ python3 tools/content/measure_doorways.py >/dev/null || \
 
 # Theme-pack gap 4: the theme is an argument, and a non-default one must
 # not be able to reach the shipped pack.
+# Ordinary decoration may not impersonate a signal. Fast, and it was not
+# being run by anything at all -- see the coverage gate below.
+python3 tools/content/check_decal_colours.py >/dev/null || \
+  fail "decal-colours: a decal has drifted into one of the six reserved
+    universal colours, so ordinary dirt now reads as interactive. Run
+
+    python3 tools/content/check_decal_colours.py"
+
+# The exported content pack against its manifests and markers. This is
+# where verify_manifest.py and verify_markers.py are reached.
+tools/verify_content_pack.sh >/dev/null 2>&1 || \
+  fail "verify-content-pack: the exported pack no longer matches its
+    manifests or its markers. Run
+
+    tools/verify_content_pack.sh"
+
 python3 tools/content/verify_theme_argument.py >/dev/null || \
   fail "verify-theme: the default build no longer writes the shipped pack, a
     --theme run can reach it, or an unknown theme builds instead of being
@@ -235,6 +255,40 @@ for f in tools/blender/build_*.py; do
     *) fail "$name is not in this script's rebuild list, so nothing proves
   the art it writes came from its source. Add it to SCRIPTS in
   tools/check_art_current.sh." ;;
+  esac
+done
+
+# --- 5b. every content GATE is actually run -----------------------------
+#
+# The same rule as the builder list above, for the same reason: a check
+# nobody runs is worse than no check, because it is quoted. It found three
+# on the day it was written -- check_decal_colours.py, which nothing at
+# all called, and verify_manifest.py and verify_markers.py, which only
+# verify_content_pack.sh called and which this script did not run either.
+#
+# Only GATES. The `run_*.sh` harnesses that render evidence are not in
+# scope: requiring them here would re-render the whole review library on
+# every run, and some of them take minutes.
+#
+# WHAT IT DOES NOT CATCH, said out loud: it matches the path anywhere in
+# the text, so a gate named only inside a `fail` message reads as covered.
+# The failure mode it is built for -- a gate nothing mentions at all -- is
+# caught, and that is the one that happened. Sabotage-tested by removing
+# verify_content_pack.sh's only call: it then reports verify_manifest.py
+# and verify_markers.py, which is exactly right.
+# This file, PLUS every tools/*.sh it names -- "through a script it calls"
+# has to mean that literally, or verify_manifest.py and verify_markers.py
+# (reached only by verify_content_pack.sh) would read as uncovered.
+reach="$SELF $(grep -o 'tools/[a-z_/]*\.sh' "$SELF" | sort -u)"
+# shellcheck disable=SC2086
+covered=" $(grep -ho 'tools/[a-z_/]*\.\(py\|sh\)' $reach | sort -u \
+            | tr '\n' ' ') "
+for f in tools/content/verify_*.py tools/content/check_*.py \
+         tools/content/test_*.py; do
+  case "$covered" in
+    *" $f "*) ;;
+    *) fail "$f is a gate and nothing in this script runs it, directly or
+  through a script it calls. Add it, or add whatever does run it." ;;
   esac
 done
 

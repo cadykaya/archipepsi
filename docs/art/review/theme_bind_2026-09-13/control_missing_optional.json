@@ -1,0 +1,206 @@
+{
+  "mode": "missing_optional",
+  "problems": [],
+  "themes": {
+    "concrete_facility": {
+      "authored": {
+        "accent": true,
+        "ceiling": true,
+        "floor": true,
+        "hazard": false,
+        "trim": true,
+        "trim_plain": true,
+        "wall": true,
+        "wall_ribbed": true
+      },
+      "disqualified": false,
+      "fell_back": {
+        "ceiling": "wall"
+      },
+      "pixels_match": {
+        "accent": true,
+        "ceiling": true,
+        "floor": true,
+        "trim": true,
+        "trim_plain": true,
+        "wall": true,
+        "wall_ribbed": true
+      },
+      "uv1_scale": {
+        "accent": 0.25,
+        "ceiling": 0.25,
+        "floor": 0.25,
+        "trim": 0.25,
+        "trim_plain": 0.25,
+        "wall": 0.25,
+        "wall_ribbed": 0.25
+      },
+      "why": []
+    },
+    "gothic_stone": {
+      "authored": {
+        "accent": true,
+        "ceiling": true,
+        "floor": true,
+        "hazard": false,
+        "trim": true,
+        "trim_plain": true,
+        "wall": true,
+        "wall_ribbed": false
+      },
+      "disqualified": false,
+      "fell_back": {
+
+      },
+      "pixels_match": {
+        "accent": true,
+        "ceiling": true,
+        "floor": true,
+        "trim": true,
+        "trim_plain": true,
+        "wall": true
+      },
+      "uv1_scale": {
+        "accent": 0.25,
+        "ceiling": 0.25,
+        "floor": 0.25,
+        "trim": 0.25,
+        "trim_plain": 0.25,
+        "wall": 0.25
+      },
+      "why": []
+    },
+    "neon_transit": {
+      "authored": {
+        "accent": true,
+        "ceiling": true,
+        "floor": true,
+        "hazard": false,
+        "trim": true,
+        "trim_plain": true,
+        "wall": true,
+        "wall_ribbed": false
+      },
+      "disqualified": false,
+      "fell_back": {
+
+      },
+      "pixels_match": {
+        "accent": true,
+        "ceiling": true,
+        "floor": true,
+        "trim": true,
+        "trim_plain": true,
+        "wall": true
+      },
+      "uv1_scale": {
+        "accent": 0.25,
+        "ceiling": 0.25,
+        "floor": 0.25,
+        "trim": 0.25,
+        "trim_plain": 0.25,
+        "wall": 0.25
+      },
+      "why": []
+    },
+    "rusted_industrial": {
+      "authored": {
+        "accent": true,
+        "ceiling": true,
+        "floor": true,
+        "hazard": false,
+        "trim": true,
+        "trim_plain": true,
+        "wall": true,
+        "wall_ribbed": false
+      },
+      "disqualified": false,
+      "fell_back": {
+
+      },
+      "pixels_match": {
+        "accent": true,
+        "ceiling": true,
+        "floor": true,
+        "trim": true,
+        "trim_plain": true,
+        "wall": true
+      },
+      "uv1_scale": {
+        "accent": 0.25,
+        "ceiling": 0.25,
+        "floor": 0.25,
+        "trim": 0.25,
+        "trim_plain": 0.25,
+        "wall": 0.25
+      },
+      "why": []
+    },
+    "temple_ruin": {
+      "authored": {
+        "accent": true,
+        "ceiling": true,
+        "floor": true,
+        "hazard": false,
+        "trim": true,
+        "trim_plain": true,
+        "wall": true,
+        "wall_ribbed": false
+      },
+      "disqualified": false,
+      "fell_back": {
+
+      },
+      "pixels_match": {
+        "accent": true,
+        "ceiling": true,
+        "floor": true,
+        "trim": true,
+        "trim_plain": true,
+        "wall": true
+      },
+      "uv1_scale": {
+        "accent": 0.25,
+        "ceiling": 0.25,
+        "floor": 0.25,
+        "trim": 0.25,
+        "trim_plain": 0.25,
+        "wall": 0.25
+      },
+      "why": []
+    },
+    "void_glitch": {
+      "authored": {
+        "accent": true,
+        "ceiling": true,
+        "floor": true,
+        "hazard": false,
+        "trim": true,
+        "trim_plain": true,
+        "wall": true,
+        "wall_ribbed": false
+      },
+      "disqualified": false,
+      "fell_back": {
+
+      },
+      "pixels_match": {
+        "accent": true,
+        "ceiling": true,
+        "floor": true,
+        "trim": true,
+        "trim_plain": true,
+        "wall": true
+      },
+      "uv1_scale": {
+        "accent": 0.25,
+        "ceiling": 0.25,
+        "floor": 0.25,
+        "trim": 0.25,
+        "trim_plain": 0.25,
+        "wall": 0.25
+      },
+      "why": []
+    }
+  }
+}
