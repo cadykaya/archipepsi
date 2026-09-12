@@ -62,6 +62,25 @@ func _run() -> void:
 				return BridgeClient.hub_mode() == "ZONE_AVAILABLE"):
 		_finish(1)
 		return
+
+	# ---- ONE CONTROL, AT THE SCALE ITS SUBJECT NEEDS --------------------
+	#
+	# `make godot-integration` runs a whole campaign at PROTOTYPE scale,
+	# where a Zone is three rooms -- and three rooms cannot carry a
+	# branch, so they carry no return device and there is no host to
+	# bar. Measured: four consecutive Zones with no plug at all. The
+	# re-selection journey needs a branched Zone, so `make
+	# godot-return-journey` runs THIS DRIVER against a bridge started at
+	# `--mock-scale=default`, and runs that one control. Same harness,
+	# same helpers, same live bridge; the only difference is the size of
+	# the Zones the campaign hands out.
+	if OS.get_cmdline_user_args().has("--return-journey"):
+		var travelled := await _test_reselection_and_return_journey()
+		print("  %d assertion failure(s) in the re-selection journey"
+				% failures)
+		_finish(0 if travelled and failures == 0 else 1)
+		return
+
 	_check(BridgeClient.snapshot.get("scouted", []).size() == 30,
 			"30 locations scouted")
 	await _check_hub_builds()
@@ -1061,6 +1080,450 @@ func _a_zone_with_one_door_dropped(zone: Variant) -> Dictionary:
 		if dropped != "":
 			chamber["doors"] = kept
 	return {} if dropped == "" else out
+
+
+## THE WHOLE RECOVERY FROM AN UNHOSTABLE HOST, AND THE RETURN THAT
+## FOLLOWS IT -- measurement, bar, re-selection, a late result from the
+## proposal that was replaced, acceptance, a walk onto the device, and a
+## restart that replays it. §5.9 and §5.7.
+##
+## TWO KINDS OF EVIDENCE, LABELLED APART. The BRIDGE CONTROLS below
+## assert what the campaign did with the engine's verdict; the PHYSICAL
+## EVIDENCE asserts what a body in the accepted Zone can actually do. A
+## helper that posts a layout on the client's behalf establishes the
+## first and nothing whatever about the second, which is why the return
+## is walked into rather than asserted from a field.
+##
+## THE FALSIFICATION, AND WHY IT HAS TO BE ONE. After the lattice repair
+## in `room_audit.gd` -- both axes carry a zero offset now -- **no room
+## the composer may propose fails placement any more.** Measured: every
+## arena from `PROCEDURAL_ARENA_MIN_SPAN` (10 m) upward places, a
+## `platform_path` places on its declared ledges, and the cliff is at
+## 6 m square. The one schema-legal shape that genuinely cannot host a
+## return is a minimum corridor, 6 x 4, and the composer does not make
+## corridors into branch destinations. That is the repair working. It
+## also means the recovery path can no longer be reached by asking for
+## Zones until one breaks, so this client builds the branch host at
+## 5.5 m square -- smaller than the composer may propose, HONESTLY built
+## and HONESTLY measured, with the bridge still holding the room it
+## really sent. The engine's verdict is its own.
+func _test_reselection_and_return_journey() -> bool:
+	# A ZONE WITH A BRANCH, because a Zone with none has no host to bar.
+	# The composer branches when the chambers can carry one and returns
+	# a plain chain when they cannot, and by this point in the run the
+	# campaign has spent several Zones -- so ask until one has a return
+	# rather than failing on the draw. Bounded, and a run that never
+	# sees one says exactly that.
+	var record := {}
+	var host := ""
+	for _attempt in 4:
+		BridgeClient.send_intent({"type": "request_next_zone",
+				"finale": false})
+		if not await _await_condition(
+				"ZONE_READY for the re-selection control",
+				func() -> bool:
+					return BridgeClient.hub_mode() == "ZONE_READY", 30.0):
+			return false
+		record = BridgeClient.active_zone()
+		host = _first_plug_host(record.get("zone"))
+		if host != "":
+			break
+		# Put it back and ask again. Abandoning returns its Checks to
+		# the pool, so nothing is spent by looking.
+		BridgeClient.send_intent({"type": "abandon_zone",
+				"zone_id": str(record.get("zone_id", ""))})
+		if not await _await_condition("the unbranched Zone is released",
+				func() -> bool:
+					return BridgeClient.active_zone().is_empty(), 20.0):
+			return false
+	if host == "":
+		_check(false, "four Zones in a row carried no return plug, so "
+				+ "there was no host to bar and this control measured "
+				+ "nothing")
+		return false
+	var zone_id := str(record.get("zone_id", ""))
+	var proposal_a := BridgeClient.proposal_for(zone_id)
+	_check(proposal_a != "",
+			"the bridge issued an identity for the Zone it offered, on "
+			+ "the carrier the build path reads")
+	var shrunk := _with_a_host_too_small_for_a_return(
+			record.get("zone"), host)
+	var rooms_a := _room_ids(record.get("zone"))
+
+	# ---- BRIDGE CONTROL 1: the engine measures, the bridge bars -------
+	BridgeClient.send_intent({"type": "enter_zone", "zone_id": zone_id})
+	if not await _await_condition("ZONE_ACTIVE for the re-selection control",
+			func() -> bool:
+				return BridgeClient.hub_mode() == "ZONE_ACTIVE"):
+		return false
+	var a := ZoneController.new()
+	get_tree().root.add_child(a)
+	a.setup(shrunk)
+	if a.layout_failed != "":
+		_check(false, "the shrunk Zone would not lay out at all (%s), "
+				% a.layout_failed + "so nothing was measured and this "
+				+ "control proves nothing")
+		a.queue_free()
+		return false
+	_check(a.proposal_id == proposal_a,
+			"the controller bound the identity of the proposal it is "
+			+ "building (%s) and it bound %s" % [proposal_a, a.proposal_id])
+	# `_publish_layout` is deferred -- two physics frames, then the
+	# settle -- so the evidence is not on the controller the instant
+	# `setup` returns. Waited for rather than read: the first version of
+	# this assertion read an empty dictionary and failed while the bar
+	# it was about arrived correctly a second later.
+	var edge := _plug_edge(record.get("zone"))
+	if not await _await_condition("the engine measures the shrunk host",
+			func() -> bool:
+				return (a.measured_placement as Dictionary).has(edge),
+			20.0):
+		a.queue_free()
+		return false
+	var told: Dictionary = a.measured_placement
+	_check(str((told.get(edge, {}) as Dictionary).get("outcome", ""))
+				== "NO_CANDIDATE",
+			"the engine measured the shrunk host and reported "
+			+ "NO_CANDIDATE -- the one outcome that may bar a host "
+			+ "(%s)" % str(told.get(edge, {})))
+	if not await _await_condition("the bridge bars the host and offers a "
+			+ "re-selected Zone",
+			func() -> bool:
+				var az := BridgeClient.active_zone()
+				return (az.get("unhostable_rooms", []) as Array).has(host), 30.0):
+		a.queue_free()
+		return false
+	_check((BridgeClient.active_zone().get("unhostable_rooms", [])
+				as Array) == [host],
+			"and it barred exactly the room the engine named (%s)"
+			% str(BridgeClient.active_zone().get("unhostable_rooms", [])))
+
+	# ---- BRIDGE CONTROL 2: the replacement is a different proposal ----
+	if not await _await_condition("the re-selected Zone is offered",
+			func() -> bool:
+				return BridgeClient.hub_mode() == "ZONE_READY" \
+					and str(BridgeClient.active_zone().get(
+						"zone_id", "")) == zone_id, 30.0):
+		a.queue_free()
+		return false
+	var replacement := BridgeClient.active_zone()
+	var proposal_b := BridgeClient.proposal_for(zone_id)
+	var host_b := _first_plug_host(replacement.get("zone"))
+	_check(proposal_b != "" and proposal_b != proposal_a,
+			"the re-selected Zone is a different proposal (%s vs %s)"
+			% [proposal_a, proposal_b])
+	_check(_room_ids(replacement.get("zone")) == rooms_a,
+			"and it reuses every room name -- the content is kept and "
+			+ "only the GRAPH is replaced, so an identity over room "
+			+ "names would not have moved (%s)" % str(rooms_a))
+	_check(host_b != "" and host_b != host,
+			"and the branch moved to another host (%s, was %s)"
+			% [host_b, host])
+	_check(_plug_count(replacement.get("zone"))
+				== _plug_count(record.get("zone")),
+			"and the branch count is preserved: %d returns before and "
+			% _plug_count(record.get("zone"))
+			+ "%d after" % _plug_count(replacement.get("zone")))
+
+	# ---- BRIDGE CONTROL 3: A reports late, and nothing moves ---------
+	_check(a.proposal_id == proposal_a,
+			"A still carries the identity it started with; an old "
+			+ "coroutine must never acquire the replacement's (%s)"
+			% a.proposal_id)
+	var before := int(BridgeClient.active_zone().get("layout_refusals", -1))
+	var state_before := str(BridgeClient.active_zone().get(
+			"layout_state", ""))
+	var barred_before: Array = (BridgeClient.active_zone().get(
+			"unhostable_rooms", []) as Array).duplicate()
+	# AND NOBODY IS RELEASED BY IT. A verdict is what lifts the
+	# acceptance hold -- `_await_verdict` holds the player until the
+	# bridge answers -- so "no verdict came back for the late result" is
+	# the same fact as "no player's hold was released by it". Counted
+	# rather than reasoned about.
+	var verdicts: Array[String] = []
+	a.layout_refused.connect(
+			func(refused: String) -> void: verdicts.append(refused))
+	var stale := ZoneBuilder.build(shrunk)
+	if stale.has("failed"):
+		_check(false, "the shrunk Zone would not lay out again: %s"
+				% str(stale["failed"]))
+		a.queue_free()
+		return false
+	a.send_layout_result(stale)
+	for _i in 60:
+		await get_tree().process_frame
+	var after := BridgeClient.active_zone()
+	_check(int(after.get("layout_refusals", -1)) == before,
+			"A's late result spent none of the replacement's refusal "
+			+ "budget (%d, was %d)"
+			% [int(after.get("layout_refusals", -1)), before])
+	_check(str(after.get("layout_state", "")) == state_before,
+			"and changed none of its layout state (%s, was %s)"
+			% [str(after.get("layout_state", "")), state_before])
+	_check(after.get("manifest") == null,
+			"and committed nothing: a late result must not commit the "
+			+ "layout of the Zone it replaced")
+	_check((after.get("unhostable_rooms", []) as Array) == barred_before,
+			"and barred nothing further (%s, was %s)"
+			% [str(after.get("unhostable_rooms", [])), str(barred_before)])
+	_check(_first_plug_host(BridgeClient.active_zone().get("zone"))
+				== host_b,
+			"and changed none of its graph")
+	_check(verdicts.is_empty(),
+			"and drew no verdict at all: a stale result the bridge "
+			+ "ignores cannot release the hold its replacement's player "
+			+ "is standing in (%s)" % str(verdicts))
+	(stale["root"] as Node3D).queue_free()
+	a.queue_free()
+	await get_tree().process_frame
+
+	# ---- BRIDGE CONTROL 4: the replacement completes its acceptance ---
+	BridgeClient.send_intent({"type": "enter_zone", "zone_id": zone_id})
+	if not await _await_condition("ZONE_ACTIVE for the replacement",
+			func() -> bool:
+				return BridgeClient.hub_mode() == "ZONE_ACTIVE"):
+		return false
+	var b := ZoneController.new()
+	get_tree().root.add_child(b)
+	b.setup(replacement.get("zone"))
+	_check(b.proposal_id == proposal_b,
+			"the replacement's build bound its own identity (%s) and "
+			% proposal_b + "bound %s" % b.proposal_id)
+	var accepted := await _await_condition("the replacement is accepted",
+			func() -> bool:
+				return str(BridgeClient.active_zone().get(
+						"layout_state", "")) == "ACCEPTED", 60.0)
+	_check(accepted, "the replacement completed its own acceptance "
+			+ "after A's late result was ignored")
+	if not accepted:
+		# WHAT IS BLOCKING IT, said here rather than left as a timeout.
+		#
+		# The re-selection itself is proved above. What stops the
+		# replacement being ACCEPTED is a different, older defect:
+		# `platform_path` declares two side doorways and raises solid
+		# walls where they are, so any Zone the composer branches off
+		# one is refused on aperture polarity. That is `godot-reload`'s
+		# PHASE 1 refusal and `godot-zone-audit`'s counted waiver.
+		print("  JOURNEY BLOCKED after re-selection: the replacement "
+				+ "was not accepted, so the walk onto the return and "
+				+ "the restart replay did not run. Bridge said: %s"
+				% str(BridgeClient.snapshot.get("last_generation_error",
+					"(see the bridge log for the refusal)")))
+		b.queue_free()
+		return false
+	var manifest: Variant = BridgeClient.active_zone().get("manifest")
+	_check(manifest != null, "and committed its own manifest")
+
+	# ---- PHYSICAL EVIDENCE: the return is walked into and it works ----
+	#
+	# What the body does, in the Zone the bridge just accepted. The walk
+	# under test is ARRIVAL -> DEVICE, which is the §5.7 journey and the
+	# thing the placement search exists to make possible; crossing the
+	# Zone to reach the room is measured elsewhere (`godot-graphs`) and
+	# is not what a placement control is about, so the body starts where
+	# a player entering that room arrives.
+	var walked := await _the_return_carries_a_body_home(b, host_b)
+	b.queue_free()
+	await get_tree().process_frame
+
+	# ---- BRIDGE CONTROL 5: a cold restart replays what was committed --
+	#
+	# A fresh controller, handed the committed manifest the way a
+	# restarted client is, lays the same pieces down -- return device
+	# included, in the same room, at the same place.
+	BridgeClient.send_intent({"type": "enter_zone", "zone_id": zone_id})
+	if not await _await_condition("ZONE_ACTIVE for the replay",
+			func() -> bool:
+				return BridgeClient.hub_mode() == "ZONE_ACTIVE"):
+		return false
+	var replayed := BridgeClient.active_zone()
+	var c := ZoneController.new()
+	c.committed_manifest = (replayed.get("manifest", {}) as Dictionary)
+	get_tree().root.add_child(c)
+	c.setup(replayed.get("zone"))
+	_check(c.layout_failed == "",
+			"the committed manifest was replayed (%s)" % c.layout_failed)
+	var replug := _a_return_in(c, host_b)
+	_check(replug != null,
+			"and the return device is back, in the same room (%s)"
+			% host_b)
+	if replug != null:
+		var was: Vector3 = _return_anchor(b, host_b)
+		_check(replug.global_position.distance_to(was) < 0.01
+					or was == Vector3.INF,
+				"and at the same place: %v, and it was %v"
+				% [replug.global_position, was])
+	_check(str(BridgeClient.active_zone().get("layout_state", ""))
+				== "ACCEPTED",
+			"and the Zone is still accepted after the replay")
+	c.queue_free()
+	await get_tree().process_frame
+
+	# LEAVE THE CAMPAIGN AS IT WAS FOUND. The next control asks for a
+	# Zone, and `request_next_zone` is refused while one is held.
+	BridgeClient.send_intent({"type": "abandon_zone", "zone_id": zone_id})
+	await _await_condition("the control's Zone is released",
+			func() -> bool:
+				return BridgeClient.active_zone().is_empty() \
+					or str(BridgeClient.active_zone().get(
+						"zone_id", "")) != zone_id, 20.0)
+	return walked
+
+
+## THE RETURN, USED ON PURPOSE. Not "the device exists" and not "an
+## event fired": a body put where a player entering this room arrives,
+## walked into the trigger, and then FOUND somewhere else.
+func _the_return_carries_a_body_home(controller: ZoneController,
+		host: String) -> bool:
+	var plug := _a_return_in(controller, host)
+	var body: Player = controller.player
+	if plug == null or not is_instance_valid(body):
+		_check(false, "PHYSICAL: no return device in %s, or no player, "
+				% host + "so nothing can be walked")
+		return false
+	var fired: Array[String] = []
+	plug.traversed.connect(func(edge: String, _to: String) -> void:
+			fired.append(edge))
+	var arrival: Vector3 = controller._zone_anchors.get(
+			"room:%s:arrival" % host, Vector3.INF)
+	var home: Vector3 = controller._zone_anchors.get("zone_start",
+			Vector3.INF)
+	if arrival == Vector3.INF or home == Vector3.INF:
+		_check(false, "PHYSICAL: the accepted Zone published no arrival "
+				+ "for %s or no start anchor" % host)
+		return false
+	body.velocity = Vector3.ZERO
+	body.global_position = arrival + Vector3(0.0, 0.2, 0.0)
+	for _settle in 40:
+		await get_tree().physics_frame
+	_check(fired.is_empty(),
+			"PHYSICAL: a body standing at the arrival is NOT inside the "
+			+ "device -- the return must not fire on the way in (%s)"
+			% str(fired))
+	_check(body.is_on_floor(),
+			"PHYSICAL: and the arrival holds it up")
+	var pad := plug.global_position
+	await _walk_to(body, Vector3(pad.x, body.global_position.y, pad.z),
+			func() -> bool: return not fired.is_empty())
+	_check(fired.size() == 1,
+			"PHYSICAL: walking into the pad raised exactly one "
+			+ "traversal and it raised %d %s" % [fired.size(), str(fired)])
+	for _settle in 30:
+		await get_tree().physics_frame
+	var gap := Vector2(body.global_position.x - home.x,
+			body.global_position.z - home.z).length()
+	_check(gap < 3.0,
+			"PHYSICAL: and the production consumer put the body at the "
+			+ "Zone start: %.1f m away" % gap)
+	return fired.size() == 1 and gap < 3.0
+
+
+## Steer a body toward a point until it arrives or the caller's
+## condition fires. The stopping condition is the device's own trigger,
+## never a distance guess: a four-metre tolerance is how a walk that
+## stopped short of a 1.4 m trigger read as "could not get back".
+func _walk_to(body: Player, goal: Vector3, until: Callable,
+		frames := 420) -> void:
+	var still := 0
+	var last := body.global_position
+	# THE SAME STEERING AS `graph_driver._walk`: the real input action,
+	# so the body moves the way `Player._physics_process` moves it and
+	# not by assignment. A driver that sets `global_position` proves the
+	# trigger can be placed on top of a body, which is not the question.
+	Input.action_press("move_forward", 1.0)
+	for _i in frames:
+		if until.call():
+			break
+		var here := body.global_position
+		var flat := Vector2(goal.x - here.x, goal.z - here.z)
+		if flat.length() < 0.3:
+			break
+		body.rotation.y = atan2(-flat.x, -flat.y)
+		# A body wedged on furniture jumps, then gives up rather than
+		# spending the whole budget pressed against a crate.
+		if (here - last).length() < 0.012:
+			still += 1
+			if still == 24 and body.is_on_floor():
+				Input.action_press("jump", 1.0)
+				await get_tree().physics_frame
+				Input.action_release("jump")
+				still = 0
+		else:
+			still = 0
+		last = here
+		if still > 90:
+			break
+		await get_tree().physics_frame
+	Input.action_release("move_forward")
+
+
+## The return device standing in one room of a built Zone.
+func _a_return_in(controller: ZoneController, host: String) -> ReturnPlug:
+	for node: Node in controller.find_children("*", "ReturnPlug", true,
+			false):
+		var plug: ReturnPlug = node
+		if str(plug.get_meta("room_id", "")) == host:
+			return plug
+	return null
+
+func _return_anchor(controller: ZoneController, host: String) -> Vector3:
+	if not is_instance_valid(controller):
+		return Vector3.INF
+	return controller._zone_anchors.get("room:%s:return" % host,
+			Vector3.INF)
+
+## The room the first return plug in a Zone proposal stands in.
+func _first_plug_host(zone: Variant) -> String:
+	if typeof(zone) != TYPE_DICTIONARY:
+		return ""
+	for raw: Variant in (zone as Dictionary).get("plugs", []):
+		return str((raw as Dictionary).get("room_id", ""))
+	return ""
+
+func _plug_edge(zone: Variant) -> String:
+	if typeof(zone) != TYPE_DICTIONARY:
+		return ""
+	for raw: Variant in (zone as Dictionary).get("plugs", []):
+		return str((raw as Dictionary).get("edge_id", ""))
+	return ""
+
+func _plug_count(zone: Variant) -> int:
+	if typeof(zone) != TYPE_DICTIONARY:
+		return -1
+	return ((zone as Dictionary).get("plugs", []) as Array).size()
+
+## Every room id a Zone proposal declares, sorted.
+func _room_ids(zone: Variant) -> Array:
+	var out: Array = []
+	if typeof(zone) != TYPE_DICTIONARY:
+		return out
+	for raw: Variant in (zone as Dictionary).get("chambers", []):
+		out.append(str((raw as Dictionary).get("id", "")))
+	out.sort()
+	return out
+
+## The same Zone with one room too small to stand a return in.
+##
+## 5.5 m square: measured, the cliff is at 6.0. Only the branch host is
+## touched and only its span -- the type, the doors and everything else
+## are the Zone's own, so the room this client builds is the room the
+## bridge sent in every respect but the one under test.
+func _with_a_host_too_small_for_a_return(zone: Variant,
+		host: String) -> Dictionary:
+	if typeof(zone) != TYPE_DICTIONARY:
+		return {}
+	var out: Dictionary = (zone as Dictionary).duplicate(true)
+	for raw: Variant in out.get("chambers", []):
+		var chamber: Dictionary = raw
+		if str(chamber.get("id", "")) != host:
+			continue
+		if chamber.has("width"):
+			chamber["width"] = 5.5
+		if chamber.has("depth"):
+			chamber["depth"] = 5.5
+		if chamber.has("length"):
+			chamber["length"] = 5.5
+	return out
 
 
 ## THE ZONE GOES AWAY WHILE ITS LAYOUT IS BEING CERTIFIED, twice, and a

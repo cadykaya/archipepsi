@@ -635,6 +635,13 @@ class CampaignEngine:
             slots=save.slots if save else SlotAssignment(),
             local_rewards=save.local_rewards if save else (),
             active_zone=save.active_zone if save else None,
+            # Derived here on every send, from the record just above it,
+            # so the identity and the content it identifies cannot come
+            # apart in flight. See `CampaignSnapshot.active_proposal_id`.
+            active_proposal_id=(
+                layout_check.proposal_digest(save.active_zone.zone)
+                if save and save.active_zone
+                and save.active_zone.zone is not None else ""),
             completed_zone_count=save.completed_zone_count if save else 0,
             shop=save.shop if save else ShopState(),
             pending_checks=save.pending_checks if save else (),

@@ -602,6 +602,15 @@ static func door_plan(chamber: Dictionary, width: float,
 static func procedural_sockets(width: float, depth: float,
 		exit_at := Vector3.INF) -> Array:
 	var way_out := exit_at if exit_at.is_finite() else Vector3(0, 0, depth)
+	# AND THE SIDES ARE AT THE MIDDLE OF THE SIDE WALL, which is the
+	# shape of a FLAT room and is FALSE of `platform_path`: there the
+	# middle of the side wall is over the kill pit and below the
+	# walkway. That room declares two doorways it cannot hold, and
+	# `zone_01`'s `c008` refuses its layout for exactly that. The fix is
+	# not a `side_at` here -- measured: moving the socket onto the start
+	# ledge carves honestly and then the branch off `c008` cannot be
+	# placed at all. See the note in `platform_path`.
+	var sides := Vector3(0, 0, depth / 2.0)
 	return [
 		{"name": "entry", "kind": "doorway", "position": Vector3(0, 0, 0),
 			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": 180.0},
@@ -609,10 +618,10 @@ static func procedural_sockets(width: float, depth: float,
 			"position": way_out,
 			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": 0.0},
 		{"name": "side_left", "kind": "doorway",
-			"position": Vector3(-width / 2.0, 0, depth / 2.0),
+			"position": Vector3(-width / 2.0, sides.y, sides.z),
 			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": 90.0},
 		{"name": "side_right", "kind": "doorway",
-			"position": Vector3(width / 2.0, 0, depth / 2.0),
+			"position": Vector3(width / 2.0, sides.y, sides.z),
 			"width": DOOR_WIDTH, "height": DOOR_HEIGHT, "yaw": -90.0},
 	]
 
@@ -1165,10 +1174,39 @@ static func _secret_alcove(root: Node3D, theme: String, side: float,
 	trigger.add_to_group(SECRET_GROUP)
 	root.add_child(trigger)
 
+## Where a crate may stand along a wall that has a doorway in it, given
+## where it wanted to stand.
+##
+## The doorway is at `depth / 2` and `DOOR_WIDTH` across; a crate blocks
+## it when its own half-width plus a body's radius reaches into that
+## span. Pushed to whichever edge of the band is nearer and clamped to
+## the wall run; `NAN` when the wall is too short to hold the crate
+## anywhere clear, in which case the room simply does not get that
+## crate. A doorway that cannot be walked through is worth more than a
+## box beside it.
+static func _clear_of_side_door(along: float, size: float,
+		depth: float) -> float:
+	var keep := DOOR_WIDTH / 2.0 + size / 2.0 + Constants.PLAYER_RADIUS
+	var middle := depth / 2.0
+	if absf(along - middle) >= keep:
+		return along
+	var near := middle - keep
+	var far := middle + keep
+	var low := 2.0
+	var high := depth - 2.0
+	if along < middle and near >= low:
+		return near
+	if far <= high:
+		return far
+	if near >= low:
+		return near
+	return NAN
+
 ## Corner buttresses, perimeter crates and a hazard strip for room-like
 ## spaces. Crates hug the walls so the arena floor stays fightable.
 static func _greeble_room(root: Node3D, width: float, depth: float,
-		height: float, theme: String, rng: RandomNumberGenerator) -> void:
+		height: float, theme: String, rng: RandomNumberGenerator,
+		cut := {}) -> void:
 	var trim := ThemeMaterials.trim_mat(theme)
 	var accent := ThemeMaterials.accent_mat(theme)
 	for corner_x in [-1.0, 1.0]:
@@ -1181,10 +1219,32 @@ static func _greeble_room(root: Node3D, width: float, depth: float,
 		var size := rng.randf_range(0.7, 1.3)
 		var crate_position: Vector3
 		if against_x:
+			# A SIDE-HUGGING CRATE MUST NOT STAND IN A SIDE DOORWAY.
+			#
+			# The back-wall branch below has kept clear of the exit lane
+			# since it was written -- "a 1.3 m crate is taller than
+			# MAX_VERTICAL_STEP, so it must never block a door" -- and
+			# this branch never learned the same thing, because when it
+			# was written a procedural room had two doors and neither
+			# was in a side wall. `PROCEDURAL_SOCKETS` is four now.
+			# Measured on `zone_01`: a 0.95 m crate 0.45 m inside
+			# `c011/side_right`, a 0.78 m crate inside `c018/side_left`,
+			# both USED or LOCKED, both refusing the whole layout on
+			# aperture polarity.
+			#
+			# ROLLED FIRST, THEN MOVED, so the rng stream is untouched
+			# and a room with no side door is byte-identical to what it
+			# was. The same shape as `_free_prop_spot`.
+			var wall_sign := -1.0 if rng.randf() < 0.5 else 1.0
+			var along := rng.randf_range(2.0, depth - 2.0)
+			var socket := "side_left" if wall_sign < 0.0 else "side_right"
+			if bool(cut.get(socket, false)):
+				along = _clear_of_side_door(along, size, depth)
+			if is_nan(along):
+				continue
 			crate_position = Vector3(
-					(-1.0 if rng.randf() < 0.5 else 1.0)
-					* (width / 2.0 - size / 2.0 - 0.4),
-					size / 2.0, rng.randf_range(2.0, depth - 2.0))
+					wall_sign * (width / 2.0 - size / 2.0 - 0.4),
+					size / 2.0, along)
 		else:
 			# Back wall — keep clear of the exit door lane (a 1.3 m crate is
 			# taller than MAX_VERTICAL_STEP, so it must never block a door).
@@ -1250,10 +1310,27 @@ static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 	_box(root, Vector3(width, 0.5, length),
 			Vector3(0, -0.25, length / 2.0), ThemeMaterials.floor_mat(theme))
 	var wall := ThemeMaterials.wall_mat(theme)
-	_box(root, Vector3(WALL_THICKNESS, height, length),
-			Vector3(-width / 2.0, height / 2.0, length / 2.0), wall)
-	_box(root, Vector3(WALL_THICKNESS, height, length),
-			Vector3(width / 2.0, height / 2.0, length / 2.0), wall)
+	# THE SIDES ARE CUT WHEN THE COMPOSER ASSIGNED THEM, and they were
+	# not.
+	#
+	# `PROCEDURAL_SOCKETS` is four for every procedural room, so
+	# `compose_with_branch` hangs branches off a corridor's `side_left`
+	# and `side_right` exactly as it does off an arena's -- and this
+	# builder raised two solid slabs and `door_plan` then declared a
+	# doorway in the middle of each. Measured on `zone_01`: `c013/
+	# side_left` USED and the engine measured it as solid, and the
+	# bridge refuses the whole layout for it (rule 5, aperture
+	# polarity). `_perimeter` has honoured the cut plan for years; a
+	# corridor raises its own walls and never learned to.
+	var corridor_cut := cut_plan(chamber)
+	for wall_x: float in [-width / 2.0, width / 2.0]:
+		var socket := "side_left" if wall_x < 0.0 else "side_right"
+		if bool(corridor_cut.get(socket, false)):
+			_side_wall_with_gap(root, wall_x, height, length, wall,
+					length / 2.0, DOOR_WIDTH, DOOR_HEIGHT)
+		else:
+			_box(root, Vector3(WALL_THICKNESS, height, length),
+					Vector3(wall_x, height / 2.0, length / 2.0), wall)
 	_box(root, Vector3(width, WALL_THICKNESS, length),
 			Vector3(0, height, length / 2.0),
 			ThemeMaterials.trim_mat(theme))
@@ -1274,7 +1351,6 @@ static func corridor(chamber: Dictionary, theme: String) -> Dictionary:
 	# builder declares. Two pieces then meet back-to-back at the seam
 	# rather than occupying the same slab -- the difference between a
 	# door frame and a z-fight.
-	var corridor_cut := cut_plan(chamber)
 	_end_wall(root, width, height, WALL_THICKNESS / 2.0, wall, 0.0,
 			bool(corridor_cut.get("entry", true)))
 	_end_wall(root, width, height, length - WALL_THICKNESS / 2.0, wall,
@@ -1696,7 +1772,8 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 		_light(root, corner, theme, 16.0)
 	_light(root, Vector3(0, wall_height - 0.5, depth / 2.0), theme, 18.0)
 	var greeble_rng := _greeble_rng(chamber, theme)
-	_greeble_room(root, width, depth, wall_height, theme, greeble_rng)
+	_greeble_room(root, width, depth, wall_height, theme, greeble_rng,
+			cut_plan(chamber))
 	# Roughly one arena in three gets a ledge you cannot walk to. It holds
 	# nothing but one of Epsilon's notes; see `_secret_alcove`.
 	if greeble_rng.randf() < 0.34:
@@ -1873,17 +1950,40 @@ static func platform_path(chamber: Dictionary, theme: String) -> Dictionary:
 	_box(root, Vector3(width, 0.5, total),
 			Vector3(0, Constants.FALL_KILL_Y - 6.0, total / 2.0),
 			ThemeMaterials.hazard_mat(theme), false)
-	# Side walls, full height.
+	# SIDE WALLS, FULL HEIGHT AND SOLID -- AND THIS ROOM STILL DECLARES
+	# TWO SIDE DOORWAYS IT CANNOT HOLD. **OPEN DEFECT, diagnosed, not
+	# fixed here.**
+	#
+	# `PROCEDURAL_SOCKETS` is four for every procedural room, so
+	# `compose_with_branch` hangs branches off a `platform_path`'s sides
+	# exactly as it does off an arena's, and `door_plan` then declares a
+	# doorway in the middle of each of these slabs. Measured on
+	# `zone_01`: `c008/side_left` USED and `c008/side_right` LOCKED,
+	# both solid, and the bridge refuses the whole layout on aperture
+	# polarity (rule 5). That is the `godot-reload` PHASE 1 refusal and
+	# the one that stops a default-scale Zone being accepted at all.
+	#
+	# CARVING HERE IS NOT THE FIX. The declared position is the middle
+	# of the side wall, which for this room is over the kill pit and
+	# BELOW the walkway: a hole onto nothing. Measured alternative:
+	# moving the side socket onto the start ledge (the one place this
+	# room has floor at y = 0 beside a wall) carves honestly and then
+	# `zone_01` fails to lay out at all -- "branch room 'c014' off
+	# 'c008' could not be placed clear of the 29 room(s) already
+	# standing" -- because the branch mouth moved to the room's entry
+	# end. The remaining answers are compositional: the composer stops
+	# offering a climbing room's sides as junctions, or the room grows a
+	# landing at the opening. Neither is a wall this builder can cut.
 	var wall := ThemeMaterials.wall_mat(theme)
 	_box(root, Vector3(WALL_THICKNESS, wall_height + 40.0, total),
 			Vector3(-width / 2.0, wall_height / 2.0 - 20.0, total / 2.0), wall)
 	_box(root, Vector3(WALL_THICKNESS, wall_height + 40.0, total),
 			Vector3(width / 2.0, wall_height / 2.0 - 20.0, total / 2.0), wall)
+	var path_cut := cut_plan(chamber)
 	# Ends and a ceiling. There were none: the lights below hung off
 	# nothing, and the chamber was open to the void sideways of its own
 	# doorways. The exit doorway is raised by `rise` because that is
 	# where the path leaves from.
-	var path_cut := cut_plan(chamber)
 	_end_wall(root, width, wall_height, 0.0, wall, 0.0,
 			bool(path_cut.get("entry", true)))
 	_end_wall(root, width, wall_height, total, wall, rise,

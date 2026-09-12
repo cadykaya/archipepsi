@@ -1,5 +1,165 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — one placement contract, one proposal identity, and the door that blocks acceptance — 2026-09-12
+
+**`claude/archipepsi-echoes-continuation-b1adno`**, bridge lane merged at
+`1297bb8`, art lane at `1a9f1c9`. Read this first.
+
+### The placement seam is ONE contract, checked on real bytes
+
+`RoomAudit` speaks `AMALGAM_BRIDGE.md` §5.9: **`PLACED` / `NO_EVIDENCE` /
+`NO_CANDIDATE`, keyed by the plug's `edge_id`**, with `repaired` and
+`how` beside `searched` and `probed`. `MEASURED` and `REPAIRED` collapse
+into `PLACED` — the device is placed either way. An engine that measured
+nothing now **says `NO_EVIDENCE`** instead of falling silent: silence
+means "this payload predates the field", and a current client must not
+describe itself that way.
+
+`make godot-zone-audit` writes four payloads through the real serializer
+and commits them with `captures.json` — the exact Zone proposal, the
+outcome each demonstrates, the controller digest, the source commit, and
+the one command that remakes them:
+
+| capture | outcome | from |
+|---|---|---|
+| `supported` | `PLACED` | a `platform_path` whose reserved spot already holds |
+| `repaired` | `PLACED`, `repaired: true` | an arena with its anchor moved into the arrival's clearance |
+| `no_evidence` | `NO_EVIDENCE` | the same arena with its arrival unpublished |
+| `exhausted` | `NO_CANDIDATE` | the pit room with its stands removed and its envelope lifted 60 m |
+
+`bridge/tests/test_placement_contract.py` runs the **real validator** over
+exactly those bytes — no key or outcome rewritten — and follows
+`unhostable_rooms` into `compose_with_branch(barred=...)`. The decoder's
+own shape rules are the bridge lane's and are not duplicated.
+
+### The lattice had no centre line, and every corridor paid for it
+
+`RETURN_OFFSETS` promises "a narrow room is served by its long axis". It
+was not: the inner loop offered `dx = 0` and the outer loop never offered
+`dz = 0`, so every candidate sat ≥ 2.5 m off the arrival **on both
+axes** — and `grow(-0.6)` takes a 4 m-wide corridor to 2.8. Measured
+before the fix: a corridor 8 × 4, a vault and a shaft each reported
+`NO_CANDIDATE` **having run zero physics queries**. The one outcome that
+bars a host, for three ordinary rooms with metres of clear floor.
+
+Both axes carry zero now. `searched` (candidates enumerated) and
+`probed` (positions put to the world) are separate, because one number
+could not tell a finished search from an absent one — `searched: 80,
+probed: 0` is a real answer; `searched: 0` was the bug.
+
+**Consequence worth stating: no room the composer may propose fails
+placement any more.** Every arena from `PROCEDURAL_ARENA_MIN_SPAN` (10 m)
+up places; `platform_path` places on its declared ledges; the cliff is at
+6 m square. The one schema-legal shape that genuinely cannot host a
+return is a minimum corridor, 6 × 4, and corridors are not made into
+branch destinations. `c012` is closed.
+
+### The proposal identity reaches the build — by the carrier the build reads
+
+`ZoneReady.proposal_id` exists, and **`zone_ready` does not reach a
+build**: `main.gd::_to_zone` builds from
+`BridgeClient.active_zone()["zone"]`, and `zone_ready_received` has no
+connections anywhere in the client. Traced rather than assumed:
+
+| path | offer before the build? |
+|---|---|
+| fresh entry | yes, at generation |
+| re-selection | yes, `_reselect_hosts` re-offers |
+| re-entry to a COMMITTED Zone | yes, the replay carries it |
+| **cold restart into a Zone generated but never committed** | **no** |
+
+So the **carrier adjustment**: `CampaignSnapshot.active_proposal_id`,
+derived on every send from the record beside it, stored nowhere. Not two
+copies of a fact — both it and `zone_ready.proposal_id` are
+`layout.proposal_digest` of the same Zone, so they cannot disagree. This
+is the same argument `test_physics_carrier.py` makes for `progress`.
+**Dess: this is the one bridge-side line of mine in your lane.**
+
+`ZoneController.setup` captures it where the build STARTS and
+`send_layout_result` echoes what was captured, never what is current. An
+omission is not silent: a controller that binds nothing while the bridge
+holds that Zone says so.
+
+### The re-selection journey — `make godot-return-journey`
+
+One control, the same integration driver, a live bridge at
+`--mock-scale=default` (prototype Zones are three rooms and carry no
+branch — measured: four consecutive Zones with no plug at all). The
+branch host is built at 5.5 m square in this client only; after the
+lattice repair no room the composer may propose fails, so the recovery
+path can no longer be reached by asking for Zones until one breaks.
+
+**Bridge controls — all green:**
+
+* the engine measures the shrunk host and reports `NO_CANDIDATE`;
+* the bridge bars **exactly** `c011`, re-selects, and the branch moves to
+  `c009` with the branch count preserved (8 → 8);
+* the replacement is a different proposal while reusing **all 23 room
+  names** — a digest over the graph alone would not have moved;
+* A, still holding the old identity, reports late: **no refusal budget
+  spent, no state changed, nothing committed, nothing further barred, the
+  graph untouched**;
+* the replacement binds its own identity.
+
+**Blocked at acceptance**, and by something older — below.
+
+### THE BLOCKER: a declared door the builder does not cut
+
+`PROCEDURAL_SOCKETS` is four for every procedural room, so
+`compose_with_branch` hangs branches off `side_left` / `side_right` as
+readily as off `entry` / `exit` — and the bridge refuses the **whole
+layout** when a door declared `USED`/`LOCKED` measures solid. That is
+`godot-reload`'s PHASE 1 refusal, and it is what stops a default-scale
+Zone being accepted at all. Diagnosed on `zone_01`, three parts:
+
+| producer | what it did | now |
+|---|---|---|
+| `corridor` | raised two solid slabs and declared a doorway in each | **cuts them** |
+| `arena` | cut them, then stood a perimeter crate 0.45 m inside | **`_greeble_room` keeps clear**, as it always has for the exit lane |
+| `platform_path` | raises two solid slabs and **cannot honestly cut them** | **open** |
+
+A `platform_path`'s declared side position is the middle of its side
+wall: over the kill pit, below the walkway. Measured alternative —
+moving the socket onto the start ledge cuts honestly and then `zone_01`
+does not lay out at all ("branch room 'c014' off 'c008' could not be
+placed clear of the 29 room(s) already standing"), because the branch
+mouth moves to the room's entry end. **The remaining answers are
+compositional** — the composer stops offering a climbing room's sides as
+junctions, or the room grows a landing — and neither is a wall this
+builder can cut. Waived by room type and **counted** in
+`godot-zone-audit`, so a change either way goes red.
+
+### NOT DONE, and not started
+
+1. **The `platform_path` side door**, above. One decision, then the
+   journey's last three legs (acceptance, the walk onto the return, the
+   restart replay) run without further work — the control is written and
+   waiting behind it.
+2. **Overlap reconciliation.** The join/collar distinction, the separate
+   "router found a candidate" vs "bridge accepted it" publication, and
+   the bounds diagnosis for the four large-shell failures. The four
+   reverted attempts are recorded in `zone_builder.gd`.
+3. **The pending-room integration proof.** Registry seam, one-neighbour
+   Terminus with unused openings closed, onward branch with its real
+   departure, rotated placement. Asset at
+   `assets/models/batch044/shells/shell_bay_terminus.glb`.
+4. **The three journey gaps** — the fall at waypoint 0, the two
+   stop-shorts, and the device standing between the arrival and the
+   content.
+
+### For the other lanes
+
+* **Dess** — a deterministic recomposition returns **byte-identical
+  content**, so `proposal_digest` does not move: measured live,
+  `4c1cd2d5405eeadf` before and after a refusal-driven recompose, and A's
+  late result was then read as current. Re-selection does move it (the
+  graph changes). Whether identical content over two generations should
+  count as one proposal is yours to say; nothing here depends on the
+  answer. The decoder holes in your own note (`or {}` on a list, a
+  non-mapping container, a partly-wrong key set) are untouched by this
+  lane.
+* **Arty** — no assignment from this work.
+
 ## ENGINE LANE — the journey measures itself honestly now — 2026-09-13
 
 **`claude/archipepsi-echoes-continuation-b1adno`**, bridge lane merged at

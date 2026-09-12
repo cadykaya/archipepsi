@@ -18,6 +18,9 @@ signal chamber_entered(index: int)
 
 var zone: Dictionary = {}
 var zone_id := ""
+## The proposal this controller is building, captured by `setup` and
+## echoed on `layout_result`. `""` when the bridge offered none.
+var proposal_id := ""
 var player: Player
 var tones: Tones = null          # set by main; null in headless tests
 var hud: Hud = null              # set by main; null in headless tests
@@ -128,6 +131,12 @@ var layout_verdict := ""
 ## the falsification actually carved something rather than pass on
 ## somebody else's refusal.
 var measured_apertures := {}
+## The placement outcome this client measured and sent, per plug
+## `edge_id` (`AMALGAM_BRIDGE.md` §5.9). Kept for the same reason as
+## `measured_apertures`: a suite that drives a room to `NO_CANDIDATE`
+## has to be able to say the ENGINE reported it, rather than reading a
+## bar off the bridge and calling that a measurement.
+var measured_placement := {}
 ## How long to hold before treating silence as a refusal.
 const VERDICT_TIMEOUT := 10.0
 
@@ -176,6 +185,31 @@ const _QUIET_BEFORE_ASIDE := 75.0
 func setup(zone_dict: Dictionary) -> void:
 	zone = zone_dict
 	zone_id = zone.get("zone_id", "")
+	# WHICH PROPOSAL THIS BUILD IS OF, taken NOW and not when the result
+	# is sent (`AMALGAM_BRIDGE.md` §5.9).
+	#
+	# `_publish_layout` awaits physics frames and then settles every
+	# physics package, which is long enough for Epsilon to compose new
+	# content or for `reselect_hosts` to regraph this Zone onto other
+	# hosts. Reading the current identity at send time would hand this
+	# build the REPLACEMENT's id -- and the bridge would then spend the
+	# replacement's refusal budget on an old build's verdict, bar the
+	# replacement's rooms, or commit a layout of the Zone it replaced.
+	# Captured here, the old build carries the old id however long it
+	# takes to come back, and is ignored outright.
+	proposal_id = BridgeClient.proposal_for(zone_id)
+	# AND AN OMISSION IS NEVER SILENT. Absent on the wire means "cannot
+	# be checked" -- the documented behaviour for a client older than
+	# the field -- so a current client that binds nothing looks exactly
+	# like one. If the bridge held this Zone and offered no identity for
+	# it, that is a carrier that did not reach the build path and it is
+	# said out loud rather than discovered later as an unexplained
+	# acceptance.
+	if proposal_id == "" and zone_id != "" \
+			and str(BridgeClient.active_zone().get("zone_id", "")) == zone_id:
+		push_warning("zone: %s is being built with no proposal identity; "
+				% zone_id + "a late result for it cannot be told from a "
+				+ "current one (AMALGAM_BRIDGE.md 5.9)")
 	var theme: String = zone.get("theme", "void_glitch")
 	# A COMMITTED MANIFEST IS REPLAYED, NOT RE-SOLVED. `ZoneReady` carries
 	# one on every visit after the first, and laying those transforms back
@@ -829,6 +863,7 @@ func _measure_layout_evidence(build: Dictionary) -> void:
 	build["arrival_ok"] = evidence["arrival_ok"]
 	build["plug_clear"] = evidence["plug_clear"]
 	build["plug_placement"] = evidence["plug_placement"]
+	measured_placement = evidence["plug_placement"]
 
 ## Can a body ARRIVE here? Not "is this space empty".
 ##
@@ -845,9 +880,19 @@ func _measure_layout_evidence(build: Dictionary) -> void:
 func send_layout_result(build: Dictionary) -> void:
 	if zone_id == "":
 		return
-	BridgeClient.send_intent({"type": "layout_result",
-			"zone_id": zone_id,
-			"layout": ZoneBuilder.layout_to_json(build)})
+	var message := {"type": "layout_result", "zone_id": zone_id,
+			"layout": ZoneBuilder.layout_to_json(build)}
+	# THE IDENTITY THIS BUILD STARTED WITH, and never the current one.
+	#
+	# Omitted only when the bridge offered none: `LayoutResult` makes it
+	# optional so a client older than the field behaves as it always
+	# did, and "absent" means "cannot be checked", never "stale". A
+	# client that HAD one and left it off would be indistinguishable
+	# from that older client, which is why this reads the captured field
+	# rather than asking again.
+	if proposal_id != "":
+		message["proposal_id"] = proposal_id
+	BridgeClient.send_intent(message)
 
 ## Which stations are online, for whoever is carrying progress out.
 func stations_reached() -> Dictionary:

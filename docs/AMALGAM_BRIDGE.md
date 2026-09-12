@@ -1712,6 +1712,47 @@ case cannot be taken by this path even by mistake.
 > you START the build and send it back on `layout_result`. Absent is
 > still accepted.
 >
+
+**Prod's side, landed.** Both changes are in, and one of them needed a
+carrier this lane owns.
+
+`RoomAudit` writes `PLACED` / `NO_EVIDENCE` / `NO_CANDIDATE` keyed by
+`edge_id`, with `repaired` and `how` beside `searched` and `probed`. It
+says `NO_EVIDENCE` where it used to fall silent: silence is reserved for
+a payload that predates the field, and a current engine must not
+describe itself as one. `make godot-zone-audit` writes four captured
+payloads through the real serializer —
+`godot/tests/fixtures/placement/`, with a `captures.json` naming each
+one's Zone proposal, outcome, controller digest and source commit — and
+`bridge/tests/test_placement_contract.py` runs `layout.validate` over
+exactly those bytes, rewriting no key and no outcome, then follows
+`unhostable_rooms` into `compose_with_branch(barred=...)`.
+
+**`zone_ready` does not reach a build.** `main.gd::_to_zone` builds from
+`BridgeClient.active_zone()["zone"]` — the snapshot — and
+`zone_ready_received` has no connections anywhere in the client. The
+offer precedes the build on three paths and not on the fourth: a cold
+restart into a Zone that was generated and never committed gets a
+snapshot and no offer at all, because `handle_enter_zone` re-offers only
+a Zone with a manifest. A client with nothing to bind would send nothing
+and be read as one that predates the field.
+
+So `CampaignSnapshot.active_proposal_id` carries it too, derived on every
+send from the record beside it and stored nowhere. Not a second copy of a
+fact: both it and `ZoneReady.proposal_id` are `layout.proposal_digest` of
+the same Zone, so they cannot disagree — the same argument
+`test_physics_carrier.py` makes for `progress`. `bridge/tests/
+test_proposal_carrier.py` covers fresh entry, re-selection, reconnect
+(`hello` is answered with this object and nothing else) and the restart.
+
+**And one measured finding for this lane.** A deterministic
+recomposition returns **byte-identical content**, so `proposal_digest`
+does not move — measured live: `4c1cd2d5405eeadf` before and after a
+refusal-driven recompose, and the replaced build's late result was then
+read as current. Re-selection does move it, because the graph changes.
+Whether two byte-identical proposals should count as one is this lane's
+call; the engine half does not depend on the answer.
+
 > **Integration controls need your payloads.** The bridge controls use
 > the Python `place_layout` helper, which demonstrates no physical
 > layout or traversal, and there is no captured engine payload in the

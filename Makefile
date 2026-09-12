@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
+.PHONY: apworld bridge doctor godot-graphs zone-fixtures zone-sample dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-return-journey godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -386,6 +386,7 @@ godot-affordance: godot-import # world affordances, local rewards, readouts
 # counter climbed forever, "coins were genuinely spent" passed on coins an
 # earlier run had spent, and the shop assertion failed at random.
 INTEGRATION_SAVES := $(CURDIR)/.integration-saves
+JOURNEY_SAVES := $(CURDIR)/.journey-saves
 
 # The S2/S5 action-runner suite: press, release, cancel and death, with a
 # real player over a real floor.
@@ -497,4 +498,28 @@ godot-integration: godot-import   # full loop through a live mock bridge, fresh 
 	  echo "bridge did not start (port already serving? see the traceback above)"; \
 	  exit 1; }; \
 	$(GODOT) --headless --path godot -- --integration-test; \
+	STATUS=$$?; kill $$BRIDGE_PID; exit $$STATUS
+
+# THE RE-SELECTION JOURNEY, at the scale its subject needs.
+#
+# Same driver, same live bridge, one control: an unhostable host
+# measured by the engine, barred, re-selected, a late result from the
+# proposal that was replaced, acceptance, a walk onto the return device
+# and a restart that replays it. `godot-integration` runs at PROTOTYPE
+# scale, where a Zone is three rooms -- and three rooms carry no branch,
+# so they carry no return device and there is no host to bar. Measured:
+# four consecutive Zones with no plug at all. So the bridge here is
+# started at `--mock-scale=default`, which is the size the composer
+# actually branches at.
+godot-return-journey: godot-import
+	rm -rf $(JOURNEY_SAVES)
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(JOURNEY_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "bridge did not start (port already serving?)"; \
+	  exit 1; }; \
+	$(GODOT) --headless --path godot -- --integration-test \
+	  --return-journey; \
 	STATUS=$$?; kill $$BRIDGE_PID; exit $$STATUS

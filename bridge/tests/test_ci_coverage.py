@@ -25,7 +25,17 @@ WORKFLOW = REPO / ".github" / "workflows" / "integration.yml"
 
 # `godot-import` is a dependency of every suite rather than a suite itself,
 # and `godot-integration` runs in its own CI step against a live bridge.
-NOT_A_SUITE = {"godot-import", "godot-integration"}
+#
+# `godot-return-journey` is the same driver as `godot-integration`, run
+# against a live bridge at `--mock-scale=default` because a prototype-scale
+# Zone is three rooms and carries no branch to re-select. It is not in the
+# headless step for that reason -- there is no bridge there -- and it has no
+# step of its own because its last three legs are blocked on the
+# `platform_path` side-door defect (`docs/AGENT_FRONTIER.md`). It is run by
+# hand and its result is reported there; give it a CI step the day that
+# defect is closed.
+NOT_A_SUITE = {"godot-import", "godot-integration",
+               "godot-return-journey"}
 
 
 #: HYPHENS INCLUDED. This read `godot-[a-z]+`, which stops dead at the
