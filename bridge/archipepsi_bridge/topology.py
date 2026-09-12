@@ -440,7 +440,7 @@ class BranchRoute:
         return self.lock is not None
 
 
-def _branch_routes(chambers, caps, required=()
+def _branch_routes(chambers, caps, required=(), barred=()
                    ) -> tuple[list[BranchRoute], tuple[str, ...]]:
     """Which rooms branch off which, and why the rest do not.
 
@@ -506,7 +506,16 @@ def _branch_routes(chambers, caps, required=()
     # the key — every key landed in the room the player spawns in, where
     # "is this key reachable before its lock" has no content. Branching
     # off the later spine leaves the early rooms to hold keys.
-    chosen = [c for c in interior if worthwhile(c)][-affordable:]
+    # BARRED HOSTS ARE NOT CHOSEN, and this is the only thing that
+    # keeps a Zone whose engine cannot stand a return in one room. A
+    # destination is a dead end and a dead end takes a return device;
+    # `layout.validate` names the rooms the engine measured and could
+    # not stand one in, and they stop being offered a branch. Not a room
+    # TYPE and not "it has a pit": these are the rooms the engine
+    # actually refused, by name.
+    barred_ids = set(barred)
+    chosen = [c for c in interior
+              if worthwhile(c) and c.id not in barred_ids][-affordable:]
     # Required leaves first, then the budget's picks, in Zone order so
     # the junction search below still walks backwards from each.
     taken_ids = {c.id for c in must}
@@ -703,7 +712,8 @@ def _refused(refusal: GraphRefusal, notes: tuple[str, ...] = ()
                         refusal=refusal)
 
 
-def compose_with_branch(chambers, shell_sockets=None) -> GraphProduct:
+def compose_with_branch(chambers, shell_sockets=None,
+                        barred=()) -> GraphProduct:
     """The chain, with every room a junction can afford moved onto a
     branch off it — locked where a lock has a key to go with it.
 
@@ -752,7 +762,12 @@ def compose_with_branch(chambers, shell_sockets=None) -> GraphProduct:
             notes=("chain: %d rooms, %d of them destinations that carry "
                    "no departure" % (len(chambers), len(leaves)),))
 
-    routes, why = _branch_routes(chambers, caps, required=leaves)
+    # A BARRED LEAF IS STILL REQUIRED. A room that declares no `exit`
+    # can only be a destination, so barring it does not make it a
+    # through-room — it makes the Zone uncomposable, and that is the
+    # refusal it already has rather than a silently dropped return.
+    routes, why = _branch_routes(chambers, caps, required=leaves,
+                                 barred=barred)
     unplaced = [c.id for c in leaves
                 if c.id not in {r.destination.id for r in routes}]
     if unplaced:

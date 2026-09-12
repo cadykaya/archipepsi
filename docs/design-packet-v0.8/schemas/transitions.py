@@ -414,6 +414,58 @@ def refuse_layout(save: CampaignSave, zone_id: str) -> CampaignSave:
                     active_zone_id=None if clear else save.active_zone_id)
 
 
+def reselect_hosts(save: CampaignSave, zone_id: str, rooms,
+                   zone: Zone) -> CampaignSave:
+    """The engine could not host a required return; try other rooms.
+
+    **A different host, not a different Zone.** A branch destination is
+    a dead end and takes a return device, and whether a body can stand
+    somewhere in that room is a measurement only the engine takes.
+    Until now the answer "not in this room" cost the whole Zone: the
+    layout was refused, the record went back to PENDING_GENERATION, and
+    Epsilon composed a different Zone against the same Checks. Measured
+    in a live campaign: a Zone exhausted on a return-location failure.
+
+    So the content and the allocation stay exactly as they are and only
+    the GRAPH changes — `zone` is the same chambers recomposed with
+    those rooms barred as destinations. The branch is not dropped and
+    branching is not suppressed; it moves.
+
+    **Only a fresh proposal.** A record holding a committed manifest is
+    a solved Zone the player may be part-way through, and Law 47c says
+    every later load replays it; that one keeps its manifest and is
+    handled by `refuse_layout`. This raises rather than quietly doing
+    the wrong thing to it.
+
+    **Monotone, which is what makes it terminate.** Every refused room
+    accumulates, so no host is offered twice and the composer cannot
+    oscillate between two of them. The set is finite, so the worst case
+    is a Zone with fewer branches — or none, which is the chain it was
+    always allowed to be — rather than a Zone that is lost.
+    """
+    rec = _require_zone(save, zone_id)
+    if rec.manifest is not None:
+        raise ValueError(
+            f"Zone '{zone_id}' has a committed manifest; a solved Zone "
+            "is replayed, never recomposed")
+    if rec.state in TERMINAL_ZONE_STATES:
+        raise ValueError(f"Zone '{zone_id}' is {rec.state}")
+    known = set(rec.unhostable_rooms)
+    fresh = {str(r) for r in rooms} - known
+    if not fresh:
+        raise ValueError(
+            f"Zone '{zone_id}' was already told about {sorted(known)}; "
+            "re-selecting on the same rooms would not terminate")
+    if zone.zone_id != zone_id:
+        raise ValueError(
+            f"recomposed zone '{zone.zone_id}' is not '{zone_id}'")
+    return _rebuild(save, zones=_replace_zone(
+        save, zone_id, state="GENERATED", zone=zone.model_dump(),
+        layout_state="UNCERTIFIED",
+        unhostable_rooms=tuple(sorted(known | fresh))),
+        active_zone_id=zone_id)
+
+
 def record_key(save: CampaignSave, zone_id: str, key_id: str) -> CampaignSave:
     """A Zone-local key collected. Idempotent by `key_id`."""
     def known(rec):
@@ -829,5 +881,6 @@ TRANSITIONS = (
     rollback_shop_purchase, restock_shop, append_interpretation,
     slot_action, grant_local_reward,
     rest_zone, record_key, record_latch, record_lock, record_station,
+    reselect_hosts,
     commit_layout, refuse_layout,
 )

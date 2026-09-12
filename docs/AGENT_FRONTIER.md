@@ -451,6 +451,21 @@ handler takes the bounded recovery a failed generation already had. The
 "no edges and a note" tests are gone; the controls drive the wrapper and
 the real handler, and removing the consumption fails all five.
 
+**A RETURN NEEDS A ROOM THAT CAN HOLD IT** (§5.9). `played_zone`'s
+`c012` is a `platform_path` over a kill pit; the engine measured four
+placements and none is standable and clear of the arrival, and the whole
+Zone was lost for it. The bridge reads the engine's MEASURED verdict per
+room — `arrival_ok` false at the return anchor, never the room's type
+and never a flag — and answers with a different host: the graph is
+recomposed with that room barred, keeping the content, the allocation
+and the Checks. `ZoneRecord.unhostable_rooms` is monotone, so no host is
+offered twice and the floor is a Zone with fewer branches (or the chain)
+rather than a Zone that spins. An UNRESOLVED anchor is deliberately not
+a host verdict — read as one for a commit, it recomposed every Zone
+forever because an empty layout publishes no anchors. Four recoveries
+now, still separate: composition refusal, host re-selection, fresh-
+proposal layout failure, committed-Zone preservation.
+
 **NEXT FOR THIS LANE: nothing, until integration says otherwise**
 (owner, 2026-09-12). Topology behaviour is to stay stable while Prod
 exercises the integrated build. The next bridge work is **a specific

@@ -1581,6 +1581,76 @@ a real graph on the released ids. Removing the consumption fails all
 five.
 
 
+### 5.9 A return needs a room that can hold it
+
+**Engine-lane finding at `594dba3`.** `played_zone`'s `c012` is a
+`platform_path` — rising islands and two narrow ledges over a kill pit
+— and the composer gives it a branch, which makes it a dead end, which
+requires a return device. The engine tried four placements and measured
+every one: the reserved spot, the arrival's height, a lattice around the
+arrival, and the room's own declared `stand` surfaces probed in world
+space. Nothing in that room is both standable and clear of the arrival
+by trigger plus capsule. `godot-reload` red; a live campaign exhausted
+a Zone on it.
+
+**The engine is right that this is a composition question.** It has run
+out of places to look, and the remaining decision is which room gets the
+branch — which is this lane's.
+
+**What the bridge reads, and what it does not.** Only the engine's
+MEASURED verdict, per room: `arrival_ok["room:<rid>:return"] is False`.
+Not the room's type, not whether it has a pit, and not a flag anyone
+sets — `layout.Verdict.unhostable_rooms` carries the rooms the engine
+actually refused, by name.
+
+**An unresolved anchor is NOT that**, and reading it as one was a defect
+for a commit: an engine that placed nothing at all publishes no anchors,
+so every plug's room looked unhostable, every Zone recomposed forever
+and the refusal budget stopped counting because nothing reached it. A
+missing measurement is an ordinary refusal, the same as everywhere else
+in that validator. Unverified is not a verdict.
+
+**The answer is a different host, not a different Zone.**
+`compose_with_branch(..., barred=...)` stops offering those rooms a
+branch; `transitions.reselect_hosts` keeps the content, the allocation
+and the progress, replaces only the GRAPH, and sends the Zone back to be
+laid out. The return is not dropped and branching is not suppressed —
+the branch moves.
+
+**`ZoneRecord.unhostable_rooms` is monotone, and that is what makes it
+terminate.** No host is offered twice and two rooms cannot trade places.
+The set is finite, so the worst case is a Zone with fewer branches, or
+none — the chain it was always allowed to be, which lays out and commits
+and keeps every Check. It survives a reload, because the engine may
+report after a restart.
+
+**Four recoveries, still four.** This one is new and touches none of the
+others:
+
+| when | what happens |
+|---|---|
+| the composer cannot build a graph at all | `GraphRefused` → abandon, Checks to the pool (§5.8a) |
+| **the engine cannot host a required return** | **recompose the graph with that room barred; content and Checks kept** |
+| a fresh proposal's layout fails otherwise | `refuse_layout` → recompose from Epsilon, then `ZONE_FAILED` (§5.7b) |
+| a COMMITTED Zone's replay is refused | DORMANT with its manifest, content and progress (Law 47c) |
+
+`reselect_hosts` raises on a record holding a manifest, so the committed
+case cannot be taken by this path even by mistake.
+
+> **For Prod — nothing is asked of the engine here.** The evidence
+> already arrives: `arrival_ok` for the return anchor, and `plug_clear`
+> per plug. What changed is that a `False` now costs a branch rather
+> than the Zone. Naming the room in the engine's own message stays
+> useful for the log; the bridge reads the verdict, not the sentence.
+>
+> `played_zone` is regenerated from source (`make zone-fixture`), so
+> `c012` stops being a destination the moment a run reports it — and
+> until then the fixture composes as it always did. No committed
+> manifest was rewritten.
+>
+> Yours still: the standing, trigger, route and cold-reload evidence.
+
+
 ## 6. What remains in this lane
 
 **The five conditions §0-bis puts on a legal capability gate**

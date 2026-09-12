@@ -75,6 +75,22 @@ class Verdict:
     #: manifest, because "we did not check" and "we checked and it
     #: passed" must never produce the same artefact.
     legacy: bool = False
+    #: Rooms the engine could not stand this Zone's required return
+    #: device in. **The engine's verdict, never a judgement made here.**
+    #:
+    #: A branch destination is a dead end, so the composer requires a
+    #: return in it; whether a body can stand somewhere in that room,
+    #: clear of the arrival by the trigger plus a capsule, is a physical
+    #: measurement and only the engine takes it. `played_zone`'s `c012`
+    #: is a `platform_path` over a kill pit, and the engine reported
+    #: four placements tried and none standable — so the room is not a
+    #: viable host, which is a COMPOSITION question and not a placement
+    #: one.
+    #:
+    #: Naming them turns a whole-Zone loss into a different host. Not a
+    #: room type and not "it has a pit": the rooms named here are the
+    #: ones the engine actually refused.
+    unhostable_rooms: tuple[str, ...] = ()
 
     @property
     def accepted(self) -> bool:
@@ -142,6 +158,10 @@ class _Check:
     """One validation pass, collecting sentences rather than raising."""
 
     errors: list[str] = field(default_factory=list)
+    #: Rooms whose required return the engine could not stand anywhere.
+    #: Collected alongside the sentence, so the campaign can act on the
+    #: room without reading the sentence.
+    unhostable: set = field(default_factory=set)
 
     def fail(self, msg: str) -> None:
         self.errors.append(msg)
@@ -607,6 +627,22 @@ def validate(zone, result: dict) -> Verdict:
     # already exists for a refusal.
     plug_clear = result.get("plug_clear") or {}
     for pl in zone.plugs:
+        # WHICH ROOM THE ENGINE MEASURED AND COULD NOT HOST.
+        #
+        # **A measured `False` and nothing else.** An anchor the layout
+        # never resolved is not this: the engine may have placed nothing
+        # at all, and reading a missing measurement as "this room cannot
+        # hold a return" is exactly the unverified judgement that must
+        # not stand in for the physical half. It was read that way for
+        # one commit, and an empty layout then recomposed every Zone
+        # forever instead of exhausting — the budget stopped counting
+        # because nothing ever reached it.
+        #
+        # Missing evidence stays an ordinary refusal, which is what the
+        # rest of this validator does with it.
+        if arrival_ok.get(pl.source_anchor) is False:
+            c.unhostable.add(pl.room_id)
+    for pl in zone.plugs:
         if pl.source_anchor == f"room:{pl.room_id}:arrival":
             c.fail(f"plug '{pl.edge_id}' stands at '{pl.source_anchor}', "
                    "which is where a body entering that room arrives; a "
@@ -623,6 +659,7 @@ def validate(zone, result: dict) -> Verdict:
             c.fail(f"plug '{pl.edge_id}' clearance verdict is "
                    f"{verdict!r}, not a boolean")
         elif verdict is False:
+            c.unhostable.add(pl.room_id)
             c.fail(f"the engine reports a body at the arrival of room "
                    f"'{pl.room_id}' stands inside plug '{pl.edge_id}'; "
                    "the return would fire on the way in")
@@ -678,7 +715,8 @@ def validate(zone, result: dict) -> Verdict:
 
     if c.errors:
         return Verdict(status="LAYOUT_REFUSED", errors=tuple(c.errors),
-                       engine=result)
+                       engine=result,
+                       unhostable_rooms=tuple(sorted(c.unhostable)))
     return Verdict(status="ACCEPTED",
                    manifest=_manifest(zone, result, positions, placed))
 

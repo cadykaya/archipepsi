@@ -1021,3 +1021,208 @@ def test_a_genuine_legacy_zone_with_no_graph_still_loads(tmp_path):
         assert not again.refused, "an ordinary Zone refuses nothing"
         assert again.edges, "and it composes a graph"
     run(go())
+
+
+# --- a return needs a room that can hold it --------------------------------
+#
+# A branch destination is a dead end, so the composer requires a return
+# device in it. Whether a body can stand somewhere in that room, clear
+# of the arrival by the trigger plus a capsule, is a physical
+# measurement and only the engine takes it. `played_zone`'s `c012` is a
+# `platform_path` over a kill pit; the engine reported four placements
+# tried and none standable, and the whole Zone was lost for it — a live
+# campaign exhausted one that way.
+#
+# The room is not decided by its TYPE and not by having a pit. What is
+# read here is the engine's own measured verdict, by room, and the
+# answer is a different host rather than a different Zone.
+
+def _refuse_host(layout: dict, zone, room_id: str) -> dict:
+    """The engine's answer for one room: the return spot holds no body."""
+    out = dict(layout)
+    out["arrival_ok"] = dict(layout["arrival_ok"])
+    plug = next(p for p in zone.plugs if p.room_id == room_id)
+    out["arrival_ok"][plug.source_anchor] = False
+    return out
+
+
+async def _zone_with_branches(engine):
+    await engine.handle_request_next_zone(False)
+    await drain()
+    zid = engine.save.active_zone_id
+    zone = engine.save.zone_by_id(zid).zone
+    assert zone.plugs, "this test needs a Zone with a branch in it"
+    return zid, zone
+
+
+def test_an_unhostable_room_costs_a_branch_and_not_the_zone(tmp_path):
+    """The repair. The Checks, the content and the allocation all stay."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        sink = Collector(engine)
+        zid, zone = await _zone_with_branches(engine)
+        held = set(engine.save.zone_by_id(zid).allocated_location_ids)
+        refused = zone.plugs[0].room_id
+
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zid,
+             "layout": _refuse_host(_place(zone), zone, refused)}))
+        await drain()
+
+        rec = engine.save.zone_by_id(zid)
+        # NOT LOST: same Zone, same Checks, still offered.
+        assert rec.state == "GENERATED", rec.state
+        assert set(rec.allocated_location_ids) == held
+        assert rec.zone is not None and rec.zone.zone_id == zid
+        assert rec.manifest is None, "nothing was committed"
+        # THE ROOM IS REMEMBERED, by the engine's verdict.
+        assert refused in rec.unhostable_rooms
+        # AND IT IS NO LONGER A DESTINATION — the return moved rather
+        # than being dropped, and branching was not suppressed.
+        assert refused not in {p.room_id for p in rec.zone.plugs}
+        assert rec.zone.plugs, "branching was suppressed to dodge the device"
+        assert len(rec.zone.plugs) == len(
+            [e for e in rec.zone.edges if e.realization == "TRAVERSAL_ONLY"])
+        # The client is asked to lay the new graph out.
+        offered = [m for m in sink.of_type("zone_ready")
+                   if m.zone.zone_id == zid]
+        assert len(offered) == 2, "the recomposed Zone was never sent"
+        assert refused not in {p.room_id for p in offered[-1].zone.plugs}
+    run(go())
+
+
+def test_a_supported_host_commits_and_never_reselects(tmp_path):
+    """The control. Without it the test above could pass on a rule that
+    fires for every layout."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        before = {p.room_id for p in zone.plugs}
+
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zid,
+             "layout": _place(zone)}))
+        await drain()
+
+        rec = engine.save.zone_by_id(zid)
+        assert rec.manifest is not None, "a good layout was refused"
+        assert rec.unhostable_rooms == ()
+        assert {p.room_id for p in rec.zone.plugs} == before
+    run(go())
+
+
+def test_re_selection_terminates_and_the_floor_is_a_chain(tmp_path):
+    """**Monotone, which is what makes it stop.**
+
+    Refuse every host the composer offers, one round after another. The
+    accumulated set only grows, so no room is offered twice and two
+    rooms cannot trade places. The worst case is a Zone with no branches
+    — the chain it was always allowed to be — and not a Zone that spins
+    or a Zone that is lost.
+    """
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        held = set(engine.save.zone_by_id(zid).allocated_location_ids)
+
+        seen, rounds = set(), 0
+        while rounds < 40:
+            rec = engine.save.zone_by_id(zid)
+            if rec.manifest is not None or not rec.zone.plugs:
+                break
+            room = rec.zone.plugs[0].room_id
+            assert room not in seen, f"'{room}' was offered twice"
+            seen.add(room)
+            await engine.handle_layout_result(_ADAPTER.validate_python(
+                {"type": "layout_result", "zone_id": zid,
+                 "layout": _refuse_host(_place(rec.zone), rec.zone, room)}))
+            await drain()
+            rounds += 1
+        assert rounds < 40, "re-selection did not terminate"
+
+        rec = engine.save.zone_by_id(zid)
+        assert not rec.zone.plugs, "it should have run out of hosts"
+        assert rec.zone.edges, "and still be a graph — the chain"
+        assert set(rec.allocated_location_ids) == held, "Checks were lost"
+        assert TOPO.reachability(rec.zone).ok
+
+        # AND THE CHAIN LAYS OUT AND COMMITS. The Zone is playable.
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zid,
+             "layout": _place(rec.zone)}))
+        await drain()
+        done = engine.save.zone_by_id(zid)
+        assert done.manifest is not None
+        assert set(done.allocated_location_ids) == held
+    run(go())
+
+
+def test_a_committed_zone_is_never_recomposed_for_a_host(tmp_path):
+    """The separation that must hold.
+
+    A solved Zone is replayed, not recomposed — Law 47c — and the player
+    may be part-way through it. A host verdict against one arrives after
+    commitment only as a refused REPLAY, which keeps the manifest.
+    """
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zid,
+             "layout": _place(zone)}))
+        digest = engine.save.zone_by_id(zid).manifest["manifest_digest"]
+        room = zone.plugs[0].room_id
+
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zid,
+             "layout": _refuse_host(_place(zone), zone, room)}))
+        await drain()
+
+        rec = engine.save.zone_by_id(zid)
+        assert rec.manifest["manifest_digest"] == digest, "it was rewritten"
+        assert rec.state == "DORMANT", "the committed-Zone recovery"
+        assert rec.unhostable_rooms == (), "a committed Zone is not re-hosted"
+        assert {p.room_id for p in rec.zone.plugs} == {
+            p.room_id for p in zone.plugs}
+        # And the transition refuses it outright, so no other caller can.
+        with pytest.raises(ValueError, match="committed manifest"):
+            T.reselect_hosts(engine.save, zid, (room,), rec.zone)
+    run(go())
+
+
+def test_the_same_room_twice_does_not_re_select(tmp_path):
+    """Monotone means the second telling changes nothing — the ordinary
+    layout refusal takes it, and the budget counts as it always did."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        room = zone.plugs[0].room_id
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zid,
+             "layout": _refuse_host(_place(zone), zone, room)}))
+        await drain()
+        rec = engine.save.zone_by_id(zid)
+        assert rec.unhostable_rooms == (room,)
+
+        with pytest.raises(ValueError, match="would not terminate"):
+            T.reselect_hosts(engine.save, zid, (room,), rec.zone)
+    run(go())
+
+
+def test_the_unhostable_set_survives_a_reload(tmp_path):
+    """It has to: the engine may report after a restart, and a host
+    offered again would be a host measured again for nothing."""
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zid, zone = await _zone_with_branches(engine)
+        room = zone.plugs[0].room_id
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zid,
+             "layout": _refuse_host(_place(zone), zone, room)}))
+        await drain()
+
+        engine.save = store.load_save(engine._save_path)
+        rec = engine.save.zone_by_id(zid)
+        assert rec.unhostable_rooms == (room,)
+        assert room not in {p.room_id for p in rec.zone.plugs}
+    run(go())

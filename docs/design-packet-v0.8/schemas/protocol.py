@@ -256,6 +256,22 @@ class ZoneRecord(Strict):
     #: trying, or a client that refuses every layout spins forever.
     layout_refusals: int = Field(default=0, ge=0, le=99)
 
+    #: Rooms the engine measured and could not stand this Zone's
+    #: required return device in.
+    #:
+    #: **The engine's verdict, accumulated.** A branch destination is a
+    #: dead end and takes a return; whether a body can stand somewhere
+    #: in that room, clear of the arrival, is physical and only the
+    #: engine answers it. `played_zone`'s `c012` is a `platform_path`
+    #: over a kill pit where four measured placements found nothing, and
+    #: the whole Zone used to be discarded for it.
+    #:
+    #: Monotone, so the composer cannot be handed the same host twice
+    #: and cannot oscillate between two of them — which is what makes
+    #: re-selection terminate. Not a room type and not a flag the bridge
+    #: sets: every id here was refused by a measurement.
+    unhostable_rooms: tuple[str, ...] = Field(default=(), max_length=64)
+
     @property
     def layout_exhausted(self) -> bool:
         """Every layout attempt failed, and none was ever accepted.
