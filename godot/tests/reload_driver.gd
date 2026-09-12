@@ -312,7 +312,7 @@ func _resume() -> void:
 			(main.hub as HubController).portal()
 	print("portal: mode %s, prompt '%s'"
 			% [BridgeClient.hub_mode(), portal.interact_prompt()])
-	_check(BridgeClient.hub_mode() in HubController.ZONE_ENTER_MODES,
+	_check(BridgeClient.hub_mode() in HubController.ZONE_ENTERABLE_MODES,
 			"the Hub is in a mode the portal can enter a Zone from (%s)"
 			% BridgeClient.hub_mode())
 	var searches_before := ZoneBuilder.searches

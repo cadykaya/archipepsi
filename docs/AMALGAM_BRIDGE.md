@@ -910,27 +910,6 @@ untouched.
 
 ### 5.5a-bis The other half of the restart — **done, on both sides**
 
-**DONE 2026-09-12, and one line of it was on the bridge's side.** Both
-consumer changes below landed; `make godot-reload` presses the real
-portal in `ZONE_DORMANT` and lands back in the Zone it left.
-
-The line the engine lane had to touch in `protocol.py`, flagged here
-because it is the bridge's file: **`portal_enabled` was reading a second
-list.** `ZONE_ENTER_MODES` gained `ZONE_DORMANT`; `ZONE_ENTERABLE_MODES`
-— the same question, under a different name — did not, and
-`portal_enabled` reads that one. So the portal showed the mode's prompt
-and refused to fire: a way back into a Zone that is wired, labelled and
-dead, and no test on either side could see it because each lane's half
-was correct.
-
-`ZONE_ENTERABLE_MODES` is now `ZONE_ENTER_MODES` rather than a copy of
-it. Two names for one question is how they drifted; please keep the
-collapse, or say which question the second name was meant to be asking.
-
-Two places, and deliberately small. **Neither lane should edit the other
-side of this seam** — this was the proposal, and the engine lane took
-it.
-
 The manifest survived a restart and the progress did not: `main.gd` read
 keys, locks, stations and the resume point out of its own in-memory
 dictionaries, which a new process starts empty. Same rooms, every key
@@ -968,13 +947,36 @@ a restart and a re-entry, the **serialized snapshot's**
 > when convenient; whether `ZoneReady.manifest` should stay at all is
 > the engine lane's call, since it is their consumer that decides.
 
-### 5.5b The one task still open for Prod: the dormant portal
+### 5.5b The dormant portal — **done 2026-09-12, engine lane**
 
-**Scope: the dormant Hub portal and `resume_zone_id` routing, and
-nothing else.** Progress restoration was folded in here once and has
-been removed — the engine lane already did it (§5.5a-bis). What is left
-is one place, and it is deliberately small. **Neither lane should edit
-the other side of this seam** — this is the proposal, not a patch.
+**Scope was the dormant Hub portal and `resume_zone_id` routing, and
+nothing else.** Progress restoration was folded in here once and
+removed — the engine lane had already done it (§5.5a-bis). Both changes
+below landed; `make godot-reload` presses the real portal in
+`ZONE_DORMANT`, across a restart of BOTH processes, and lands back in
+the Zone it left. The proposal is kept as written because it is what was
+taken.
+
+**DONE 2026-09-12, and one line of it was on the bridge's side.** Both
+consumer changes below landed; `make godot-reload` presses the real
+portal in `ZONE_DORMANT` and lands back in the Zone it left.
+
+**Both lanes found the same last obstacle, from opposite ends.**
+`portal_enabled` was reading a second list: one of two near-identically
+named constants gained `ZONE_DORMANT` and the other did not. From the
+bridge it looked like a button greyed out over a Zone the Hub was
+naming; from the engine it looked like a portal that showed the mode's
+prompt and refused to fire. No test on either side could see it, because
+each lane's half was correct.
+
+There is one name now — `ZONE_ENTERABLE_MODES`, the bridge's spelling,
+which `portal_enabled` reads — and `HubController` spells it the same
+way. The alternative (two tuples kept equal by hand) is the same defect
+waiting for the next mode.
+
+Two places, and deliberately small. **Neither lane should edit the other
+side of this seam** — this was the proposal, and the engine lane took
+it.
 
 **`hub.gd::_on_portal_activated`** — one arm gains a mode:
 

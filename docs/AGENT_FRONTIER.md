@@ -68,12 +68,12 @@ its own room's doorway is the room's property and is proved by
 `_test_the_played_zone_rooms_can_be_left_on_foot`.
 
 **THE WAY BACK IN IS REAL, ON BOTH SIDES OF A RESTART.**
-`ZONE_ENTERABLE_MODES` and `ZONE_ENTER_MODES` were two lists for one
-question and they drifted: `ZONE_DORMANT` was added to the second so the
-Hub's portal branch would accept it, and `portal_enabled` went on
-reading the first. The portal showed the mode's prompt and refused to
-fire — a way back that is wired, labelled and dead. One list now, and
-the portal carries `[E] RETURN TO ZONE`.
+Two near-identically named constants were one question: `ZONE_DORMANT`
+went into one and `portal_enabled` reads the other, so the portal showed
+the mode's prompt and refused to fire — a way back that is wired,
+labelled and dead. Both lanes found it independently, from opposite
+ends. One name now (`ZONE_ENTERABLE_MODES`, the bridge's, spelled the
+same in `HubController`), and the portal carries `[E] RETURN TO ZONE`.
 
 `make godot-reload` **restarts the bridge too**. It used to stay up
 across the two Godot processes, so "the campaign loads from disk" meant
@@ -208,12 +208,20 @@ bridge alone.
 **Not connected:** the physics contract in `schemas/physics.py` — no
 runtime exists for it yet.
 
-~~And one player-facing hole, in the bridge column: a DORMANT Zone
-leaves the Hub in `ZONE_AVAILABLE`, so the portal sends
-`request_next_zone`.~~ **Closed 2026-09-12.** The bridge carries
-`ZONE_DORMANT` and `resume_zone_id`, the Hub's portal branch reads them,
-and `portal_enabled` was the last thing still saying no — see the engine
--lane section above. `make godot-reload` presses the real portal.
+~~**The DORMANT-Hub hole (`AMALGAM_SLICE1.md` §5q) is half closed.**~~
+**Closed on both sides, 2026-09-12.** The bridge side landed first:
+`ZONE_DORMANT`, `hub.resume_zone_id`/`resume_zone_name` naming which
+Zone the portal enters, `hub.revisitable` for finished Zones, and
+`portal_enabled` true for the dormant mode. The Hub affordance landed in
+the engine lane the same day — the portal branch reads the mode,
+`_on_enter_zone` takes the id from `resume_zone_id`, and the portal
+carries `[E] RETURN TO ZONE`. `make godot-reload` presses it, through a
+restart of BOTH processes.
+
+Both lanes found the same last obstacle independently and from opposite
+ends: `portal_enabled` was reading a second constant that had never
+heard of the new mode. There is one list now rather than two with equal
+contents.
 
 **All three of SOLUTIONS_CATALOGUE §2's local-key rules are enforced.**
 A key reachable without passing its own lock, an acyclic key graph, and
@@ -222,10 +230,13 @@ exit declared in the matching AP logic. The third is currently a refusal
 of everything — the apworld declares no prerequisites — which is the
 intended behaviour and is a refusal rather than a silence.
 
-**`manipulate` and `vector_latches` are blocked at the substrate**, not
-waiting on this lane. Zero `RigidBody3D` in the project, and the
-capability vocabulary deliberately omits `manipulate` so a Zone cannot
-declare a gate no build can satisfy.
+~~**`manipulate` and `vector_latches` are blocked at the substrate.**
+Zero `RigidBody3D` in the project.~~ **The substrate landed 2026-09-12**
+(engine lane): `ManipulableBody`, `Manipulation` resolving §29.3.2's
+three minima, and `ReplayHarness` replaying three times at exactly the
+envelope. The capability vocabulary still omits `manipulate` on purpose
+— a Zone must not declare a gate before content can author one — and
+that is now a CONTENT gap rather than a substrate one.
 
 **Three levels of evidence, kept apart.** The frontier is not "done /
 not done":
@@ -233,7 +244,7 @@ not done":
 | | |
 |---|---|
 | **Connected** — runs in a real campaign | graph composition at acceptance, reachability refusing an unreachable Zone, `layout_result` validated and committed, progress identities checked, DORMANT/VISITING, leave-reload-re-enter |
-| **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | layout evidence validation (the engine does not send `layout_result`), the physics contract in `schemas/physics.py` (no runtime exists). **Both stay in this row until real engine output passes through their actual acceptance path** — a synthetic payload exercising a validator is not the seam being crossed |
+| **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | **nothing in this row today.** Layout evidence validation moved up when the engine sent a real `layout_result` (`dc4ef39`); the physics contract moved up on 2026-09-12 when the engine lane built `ManipulableBody`, `SceneDigest` and `ReplayHarness` and `make godot-physics` began measuring them. What is left is not a rule waiting for a runtime — it is that no CONTENT authors a physics package yet |
 | **Requires Godot** | physical reachability and the whole physics substrate — `docs/AMALGAM_BRIDGE.md` §6. Aperture polarity and the manifest replay consumer moved to **Connected** on 2026-09-12 |
 
 **The physics digest has three levels and only the first is done.**

@@ -349,6 +349,101 @@ describes it as repositioning the player a fixed distance. The
 implemented `Dash` carries a velocity in m/s. Those are different
 quantities, and whichever is intended, one of the two needs to change.
 
+### 8b-ANSWERED. Engine lane, 2026-09-12
+
+Both questions, and one correction to the premise.
+
+**The physics package's `scene_digest` does not answer this.** They are
+different identities and folding them would certify the wrong thing.
+`scene_digest` covers the SCENE a replay ran in — colliders, transforms,
+gravity, materials, each body's starting state, the physics build. A
+crossing depends on the CONTROLLER: `WALK_SPEED`, `AIR_CONTROL`, the
+gravity the character integrates, the capsule, `floor_max_angle`, and
+the body of `echo_runtime.gd::_dash` itself. Change `_dash` from adding
+to velocity to replacing it and every reach in the table moves while the
+scene digest of the measurement platform stays byte-identical. So the
+expected setup identity is its own value.
+
+**1. What produces it: a `controller_digest`, engine-computed.** Same
+reason `scene_digest` is engine-computed — the bridge has no controller
+and no physics frame — and the bridge folds it without looking inside,
+exactly as it does the other one.
+
+**What it covers:**
+
+| in | why |
+|---|---|
+| every movement constant the controller reads, quantised and named | the obvious half |
+| the **source digest of the movement scripts** — `player.gd`, `echo_runtime.gd` | a change to `_dash` moves the reach and no constant moves with it. This is the half a constants-only digest would miss, and it is the half that matters |
+| the character body: capsule height and radius, `floor_max_angle` | a shorter capsule clears a different lip |
+| the physics build — Godot version, physics backend — and the tick rate | the same reason `scene_digest` carries it: a different solver is a different experiment |
+
+**Granularity: one per build, not one per measurement session.** The
+thing being identified is *what this executable does when you press
+dash*, which does not vary within a build. A per-session id would make
+two measurements of the same build incomparable, which is the opposite
+of what the comparison is for.
+
+**2. How the bridge receives it: in `layout_result`.** Three reasons,
+and the third is the one that decides it:
+
+* it is already the message carrying engine measurements the bridge
+  folds without re-deriving (`apertures`, `arrival_ok`, the manifest);
+* it arrives per Zone entry, which is exactly when `layout.validate` —
+  the consumer §8c names — needs it;
+* **slot data would certify the wrong build.** Slot data is fixed at
+  seed generation and the client can be updated between seeding and
+  playing, so a digest sent there describes a build the player may not
+  be running. `layout_result` is emitted by the build that is running,
+  every time.
+
+Sending a per-build constant on every Zone entry is mildly redundant and
+that is the point: it always describes the executable in the room with
+the player.
+
+**3. The shape: the bands are right, with one scalar added.** `dash`
+ADDS to current velocity, so how fast the body was already moving is in
+the answer. A floor measured from a running start would over-certify a
+player who dashes from standing.
+
+```python
+CrossingEvidence(
+    primitive="dash", parameter="force",
+    parameter_min=10.0, parameter_max=14.0,
+    rise_min_m=-1.0, rise_max_m=1.5,
+    entry_speed_mps=0.0,       # NEW: measured from rest
+    reach_m=6.4,               # floor across both bands, at that entry
+    setup_digest="…")          # the controller_digest above
+```
+
+**Measure from rest and record it.** Reach is monotone in entry speed
+for a horizontal dash, so a floor taken at 0.0 m/s holds for every
+approach — the guarantee becomes unconditional instead of conditional on
+how the content's approach is built. The field exists so the assumption
+is visible rather than implicit; a future row measured from a running
+start is then honestly narrower rather than silently wrong.
+
+Everything else in §8a stands. `reach_m` is a floor and not a best case;
+outside either band is `outside_measured_scope`; stronger is not
+automatically suitable.
+
+**4. Keep unsupported qualification unavailable until both halves
+exist.** Explicitly: until the engine sends `controller_digest` AND
+`CROSSING_EVIDENCE` carries a row for the provider, `qualifies_for_gap`
+must keep answering `setup_identity_unknown` / `no_envelope_measured`
+and the gate must stay refused. **Do not wire `layout.validate` to it
+before both**, for the reason §8c already gives: with the table empty,
+wiring it refuses every gated Zone with a message indistinguishable from
+a genuinely unsound one.
+
+**5. The `DASH_IMPULSE` divergence, not settled here.** What the engine
+implements is a velocity in m/s: `player.velocity += dir * force`, along
+camera-forward, bounded 4–20 by `echo.py`. Design 1 §13.1's "distance in
+metres" is not what any code does. Changing the schema to match the
+implementation costs a doc edit; changing the implementation to match
+the doc changes how every existing dash feels and invalidates any
+measurement taken before it. That is a design call, not an engine one.
+
 ### 8c. The integration boundary, stated plainly
 
 **`qualifies_for_gap` has test callers only.** Nothing in production

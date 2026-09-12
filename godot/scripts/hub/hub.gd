@@ -339,11 +339,11 @@ void fragment() {
 ## -- a player at the portal with no way back into the Zone they walked
 ## out of. Dess added the mode and `resume_zone_id`; this is the list
 ## that reads it.
-const ZONE_ENTER_MODES := ["ZONE_READY", "ZONE_ACTIVE", "ZONE_DORMANT"]
+const ZONE_ENTERABLE_MODES := ["ZONE_READY", "ZONE_ACTIVE", "ZONE_DORMANT"]
 
 func _on_portal_activated() -> void:
 	var mode := BridgeClient.hub_mode()
-	if mode in ZONE_ENTER_MODES:
+	if mode in ZONE_ENTERABLE_MODES:
 		enter_zone_requested.emit()
 		return
 	match mode:
