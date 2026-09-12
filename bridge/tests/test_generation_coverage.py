@@ -281,3 +281,53 @@ def test_no_socket_carries_two_edges():
             assert len({d.socket_id for d in carrying}) == len(carrying)
             assert len({d.edge_id for d in carrying}) == len(carrying), (
                 f"{chamber.id} puts one edge on two sockets")
+
+
+def _hollow_zone(n: int):
+    """A Zone whose interior rooms hold nothing worth a detour.
+
+    Legal, and not contrived: a long transit stretch with its Checks at
+    the two ends is a shape the content budget produces. It is the case
+    where the branch planner can *afford* a branch and has nowhere
+    worth sending one.
+    """
+    from .test_topology import _arena, _zone
+    return _zone([_arena(f"c{i:03d}",
+                         reward=89100000 + i if i in (1, n) else None)
+                  for i in range(1, n + 1)])
+
+
+def test_affording_a_branch_with_nowhere_worth_going_falls_back_to_the_chain():
+    """Enough rooms to pay for a branch, no destination worth one.
+
+    The planner's own words are the deliverable here: a Zone that does
+    not branch has to say which of the three costs was not met, and
+    "none carrying a Check or a key" is a different fact from "not
+    enough rooms". Both the helper and the composer are exercised
+    because the composer is what production calls.
+    """
+    caps = topology._shell_sockets()
+    for n in (5, 8, 12):
+        z = _hollow_zone(n)
+        chambers = list(z.chambers)
+
+        plan, notes = topology._branch_plan(chambers, caps)
+        assert plan == [], f"{n} rooms: nothing here is worth a branch"
+        assert any("none carrying a Check or a key" in note
+                   for note in notes), notes
+        # ACCURATE, not merely present: the count it reports is the
+        # number of interior rooms it looked at.
+        assert any(f"{n - 2} interior room(s)" in note
+                   for note in notes), notes
+
+        product = topology.compose_with_branch(chambers, caps)
+        assert not [d for doors in product.doors.values() for d in doors
+                    if d.usage == "LOCKED"], "no lock without a branch"
+        assert product.plugs == () or not product.plugs
+        # The documented fallback: the plain chain, whole.
+        joined = [e for e in product.edges if e.realization == "JOINED"]
+        assert len(joined) == n - 1, [e.edge_id for e in joined]
+        assert any("none carrying a Check or a key" in note
+                   for note in product.notes), product.notes
+        out = topology.apply(z, product)
+        assert topology.reachability(out).ok, topology.reachability(out).errors

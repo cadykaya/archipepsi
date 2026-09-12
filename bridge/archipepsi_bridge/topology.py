@@ -253,8 +253,15 @@ def _branch_plan(chambers, caps) -> tuple[list[tuple], tuple[str, ...]]:
     # off the later spine leaves the early rooms to hold keys.
     destinations = [c for c in interior if worthwhile(c)][-affordable:]
     if not destinations:
-        return [], ("no branch: %d interior room(s), %d spare, none "
-                    "carrying a Check or a key" % (len(interior), spare),)
+        # THE CHAIN, INTACT. Affording a branch is not a reason to make
+        # one: a detour to an empty room is a lock the player opens to
+        # find nothing. The note says which of the three costs was not
+        # met, and this one is "nowhere worth going" rather than "not
+        # enough rooms" — a different fact, and the two were once
+        # reported by the same sentence.
+        return [], ("no branch: %d interior room(s), room for %d, none "
+                    "carrying a Check or a key"
+                    % (len(interior), affordable),)
 
     # Junctions are chosen from what STAYS on the spine, so a room can
     # be a junction or a destination and never both.
