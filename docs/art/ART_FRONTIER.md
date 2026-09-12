@@ -185,11 +185,23 @@ is history and this is the state.
      socket, which is Art's whole half of §11.3. 10 openings across the
      three rooms, each supported, clear, and walked into the room from by
      a body placed AT it. `tools/content/run_arrival_test.sh`.
-   * **The mirrored stencil cannot be repaired in UVs.** A local flip
-     fixes the authored material path and is inert at runtime, because
-     `ThemeMaterials` sets `uv1_triplanar = true` and triplanar ignores
-     mesh UVs. Matched pair in `docs/art/review/theme_bind_2026-09-13/`.
-     The runtime repair is a material decision and is Production's.
+   * ~~**The mirrored stencil cannot be repaired in UVs**, because
+     `ThemeMaterials` sets `uv1_triplanar`.~~ **WRONG, and the error was
+     Art's own.** An authored shell NEVER receives `ThemeMaterials`:
+     `ContentInstantiator._from_authored_scene` calls
+     `scene.instantiate()` and the file contains "material" **zero**
+     times, while `chamber_builders.gd` names `ThemeMaterials` 46. Themed
+     materials are the PROCEDURAL half and the gameplay objects. The
+     frame that showed a mirrored board was Art forcibly swapping
+     materials the engine never swaps.
+     **The repair is complete and lands on the real path**:
+     `common.uv_read_right` flips U back inside declared boxes, on the
+     positive-normal face ONLY (a sign has two faces and the projection
+     mirrors one), asserting the U span is unchanged so orientation moves
+     and texel scale does not. Proved on both faces of a two-sided sign
+     and with the room yawed 37°, ordinary tiling unchanged, in
+     `docs/art/review/theme_bind_2026-09-13/`. **No repair request stands
+     against Production for Batch 044.**
    * **Production reads sockets by kind and by NAME now**, so a three- or
      four-connection room is readable — the blocker the Batch 044 handoff
      named is theirs, and gone. **A four-connection asset is still not a

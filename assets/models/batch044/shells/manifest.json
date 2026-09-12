@@ -260,7 +260,7 @@
       ]
     ],
     "check_anchor": null,
-    "colliders": 77,
+    "colliders": 78,
     "enemy_anchors": [],
     "exit_offset": [
       0.0,
@@ -537,7 +537,7 @@
     "texel_density": 32.0,
     "total_rise": 0.0,
     "traversal": [],
-    "triangles": 936,
+    "triangles": 948,
     "volumes": [
       {
         "center": [

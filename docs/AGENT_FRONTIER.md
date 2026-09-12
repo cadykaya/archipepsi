@@ -89,9 +89,21 @@ Do not start work in it on a wake-up. Read this section and stop.
    `docs/art-requests/2026-09-13-capacity-and-arrival-handoff.md`. It
    also corrects the capacity claim for `shell_bay_terminus`, which has
    **no `exit` socket** and is a destination, not a through-room.
-5. **Lettering cannot be fixed in UVs.** `ThemeMaterials` sets
-   `uv1_triplanar = true`, which ignores mesh UVs entirely, so the
-   mirrored stencil is a material decision rather than a projection bug.
+5. ~~**Lettering cannot be fixed in UVs.**~~ **WRONG, withdrawn.**
+   An authored `.glb` shell keeps the materials Blender baked:
+   `ContentInstantiator` performs no material operation at all
+   ("material" appears zero times in it), while `chamber_builders.gd`
+   names `ThemeMaterials` 46 times. Themed materials are the PROCEDURAL
+   path. The UV repair therefore lands, and is proved on both faces of a
+   two-sided sign and with the room rotated. **The mirrored stencil is
+   still real on the procedural path** — that is a separate, unfiled
+   item, not Batch 044's.
+6. **`shell_bay_terminus` cannot be composed at all today**, and it is a
+   PRODUCER limit, not a door count: `topology.compose_chain` returns
+   `edges=()` when any chamber lacks the literal `entry`+`exit` pair, and
+   `compose_with_branch` calls it first and returns immediately. So one
+   destination room in the list seals every room's doors. A leaf is
+   rejected before it can become a leaf. Dess's and Prod's to resolve.
 
 **ALL TWELVE AUTHORED ROOM SHELLS PASS** (owner, 2026-09-04). The eight
 P2 shells passed on 2026-09-02 after Production certified them at

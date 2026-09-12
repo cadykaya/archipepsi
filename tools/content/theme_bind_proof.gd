@@ -204,98 +204,123 @@ func _run() -> void:
 		"missing_required":
 			_control_missing("concrete_facility", "floor")
 		"render":
-			await _render_bound()
+			await _render_signs()
 		_:
 			_fail("unknown mode %s" % _mode)
 	_finish()
 
 
-## A SHELL WEARING MATERIALS PRODUCTION BUILT, not the ones Blender
-## baked into the .glb.
+## THE LETTERING, ON THE PATH THE ENGINE ACTUALLY RUNS.
 ##
-## The preview renderer shows the authored materials the exporter wrote.
-## That is the right thing for judging a room and the WRONG thing for
-## judging a texture fix, because the two paths differ in every way that
-## matters here: tiling comes from `covers_m`, filtering from the
-## material, and triplanar is on. So the surfaces are re-materialled by
-## ROLE -- the imported material's name IS the role id, which is what
-## §8.4 is for -- and what comes out is what a built Zone would show.
-func _render_bound() -> void:
+## **An authored shell keeps the materials Blender baked.**
+## `ContentInstantiator._from_authored_scene` calls `scene.instantiate()`
+## and the file contains the string "material" ZERO times;
+## `chamber_builders.gd` names `ThemeMaterials` 46 times. The split is
+## total: themed materials are the PROCEDURAL half and the gameplay
+## objects, and a `.glb` room is never re-materialled.
+##
+## An earlier version of this function swapped every surface to
+## `ThemeMaterials` and photographed the result, which produced a true
+## picture of a path these rooms do not take. Both frames are kept and
+## both are labelled, because the pair is still the evidence for the
+## PROCEDURAL defect -- it is just not evidence about this shell.
+##
+## So the repair is proved where it lands: the authored materials, both
+## faces of a two-sided sign, and the room rotated, with ordinary wall
+## and floor tiling in the same frame.
+func _render_signs() -> void:
 	var bench := load("res://_harness/artbench.gd") as GDScript
 	if bench == null:
 		_fail("the bench script did not load")
 		return
-	var shell: Node3D = bench.call("load_glb", "%s/%s.glb" % [_models, _shell])
-	if shell == null:
-		_fail("could not load %s" % _shell)
-		return
+	# (camera, target, yaw, name)
+	var shots := [
+		[Vector3(2.1, 2.05, 8.0), Vector3(2.1, 2.05, 13.4), 0.0,
+			"A1_authored_south_board"],
+		[Vector3(2.5, 2.05, 27.0), Vector3(2.5, 2.05, 21.6), 0.0,
+			"A2_authored_north_placard"],
+		[Vector3(2.1, 2.05, 8.0), Vector3(2.1, 2.05, 13.4), 37.0,
+			"A3_authored_south_board_room_yawed_37"],
+		[Vector3(2.5, 2.05, 27.0), Vector3(2.5, 2.05, 21.6), 37.0,
+			"A4_authored_north_placard_room_yawed_37"],
+	]
+	for raw: Variant in shots:
+		var shot: Array = raw
+		await _frame(bench, shot[0], shot[1], float(shot[2]),
+				"%s_%s.png" % [_png.get_basename(), shot[3]], false)
+	# Kept, and relabelled: the procedural path's defect, not this
+	# shell's. Same camera as A1 so the pair still compares.
+	await _frame(bench, Vector3(2.1, 2.05, 8.0), Vector3(2.1, 2.05, 13.4),
+			0.0, "%s_B_thememateri_procedural_path.png" % _png.get_basename(),
+			true)
+	print("[bind] wrote 5 lettering frames")
+
+
+func _frame(bench: GDScript, eye: Vector3, look: Vector3, yaw: float,
+		path: String, themed: bool) -> void:
 	var view: SubViewport = bench.call("make_viewport", self,
 			Vector2i(1280, 720), 0.35)
 	var root := Node3D.new()
 	view.add_child(root)
+	var shell: Node3D = bench.call("load_glb", "%s/%s.glb" % [_models, _shell])
+	if shell == null:
+		_fail("could not load %s" % _shell)
+		return
 	root.add_child(shell)
+	# ROTATING THE ROOM, not the camera round it: triplanar reads world
+	# position, so a yawed room is the case that tells the two mappings
+	# apart. The camera rides the same rotation, so the framing is
+	# identical and only the world axes have moved.
+	var basis := Basis(Vector3.UP, deg_to_rad(yaw))
+	shell.transform = Transform3D(basis, Vector3.ZERO)
 
-	var env0 := (view.get_node_or_null("WorldEnvironment") as WorldEnvironment)
-	if env0 != null:
-		env0.environment.ambient_light_color = Color(0.72, 0.77, 0.82)
-		env0.environment.ambient_light_energy = 0.9
+	var swapped := 0
+	if themed:
+		for child in shell.find_children("*", "MeshInstance3D", true, false):
+			var mi := child as MeshInstance3D
+			if mi.mesh == null:
+				continue
+			for i in mi.mesh.get_surface_count():
+				var had: Material = mi.mesh.surface_get_material(i)
+				var role := "wall" if had == null else str(had.resource_name)
+				var built := _material(_theme, role)
+				if built != null:
+					mi.set_surface_override_material(i, built)
+					swapped += 1
+		if swapped == 0:
+			_fail("the themed frame re-materialled nothing, so it is the "
+					+ ".glb's own materials wearing the wrong caption")
+
+	var env := (view.get_node_or_null("WorldEnvironment") as WorldEnvironment)
+	if env != null:
+		env.environment.ambient_light_color = Color(0.72, 0.77, 0.82)
+		env.environment.ambient_light_energy = 0.9
 	var lamp := OmniLight3D.new()
-	lamp.omni_range = 16.0
+	lamp.omni_range = 20.0
 	lamp.light_energy = 3.0
 	lamp.shadow_enabled = false
 	root.add_child(lamp)
-	lamp.global_position = Vector3(2.1, 4.0, 10.0)
+	lamp.global_position = basis * (eye + Vector3(0, 2.0, 0))
 
-	# THE MATCHED PAIR. One frame with the .glb's own materials and one
-	# with Production's, from the same camera, because the question is
-	# which of the two paths a UV-level repair reaches.
-	await _shoot(view, "%s_A_glb_materials.png" % _png.get_basename())
-
-	var swapped := {}
-	for child in shell.find_children("*", "MeshInstance3D", true, false):
-		var mi := child as MeshInstance3D
-		if mi.mesh == null:
-			continue
-		for i in mi.mesh.get_surface_count():
-			var had: Material = mi.mesh.surface_get_material(i)
-			var role := "" if had == null else str(had.resource_name)
-			if role == "":
-				role = "wall"
-			var built := _material(_theme, role)
-			if built == null:
-				continue
-			mi.set_surface_override_material(i, built)
-			swapped[role] = int(swapped.get(role, 0)) + 1
-	_log["swapped"] = swapped
-	if swapped.is_empty():
-		_fail("no surface was re-materialled, so this picture is the .glb's "
-				+ "own materials and proves nothing about the binding")
-		return
-
-
-	await _shoot(view, "%s_B_themematerials.png" % _png.get_basename())
-	print("[bind] matched pair written (%s)" % JSON.stringify(swapped))
-
-
-func _shoot(view: SubViewport, path: String) -> void:
-	var bench := load("res://_harness/artbench.gd") as GDScript
-	var cam: Camera3D = view.get_node_or_null("ProofCam") as Camera3D
-	if cam == null:
-		cam = Camera3D.new()
-		cam.name = "ProofCam"
-		cam.fov = 50.0
-		view.add_child(cam)
-		cam.global_position = Vector3(2.1, 2.05, 8.0)
-		cam.look_at(Vector3(2.1, 2.05, 13.4), Vector3.UP)
+	var cam := Camera3D.new()
+	cam.fov = 50.0
+	view.add_child(cam)
+	cam.global_position = basis * eye
+	cam.look_at(basis * look, Vector3.UP)
 	await process_frame
 	await process_frame
 	var image := view.get_texture().get_image()
-	var which := "the .glb's OWN materials (uv1_triplanar off)" \
-			if path.ends_with("_A_glb_materials.png") \
-			else "PRODUCTION ThemeMaterials (uv1_triplanar ON)"
-	bench.call("label", image, which, Vector2i(16, 16), Color(1, 0.86, 0.3))
+	var caption := "PRODUCTION ThemeMaterials -- the PROCEDURAL path. An " \
+			+ "authored .glb never receives these." if themed \
+			else "THE AUTHORED MATERIALS -- what ContentInstantiator " \
+			+ "instantiates, unchanged"
+	bench.call("label", image, caption, Vector2i(16, 16), Color(1, 0.86, 0.3))
+	if yaw != 0.0:
+		bench.call("label", image, "room yawed %d degrees" % int(yaw),
+				Vector2i(16, 34), Color(0.82, 0.84, 0.88))
 	if image.save_png(path) != OK:
 		_fail("could not write %s" % path)
+	view.queue_free()
 
 
 ## THE CONTROL, THROUGH PRODUCTION'S OWN SEAM. A descriptor with one

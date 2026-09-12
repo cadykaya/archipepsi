@@ -700,6 +700,15 @@ def cross():
     r.block("gauge_board", (3.2, 0.22, 1.5),
             (2.1, roomkit.y(pz0 - 0.11), 2.05), "accent", "wall",
             readable=True)
+    # THE OPPOSITE-FACING CASE, and it is a test fixture as much as a
+    # placard: a sign has two faces and the projection mirrors exactly
+    # one of them, so a repair proved on a single south-facing board
+    # proves nothing about the north-facing one. The service passage
+    # gets the same panel on the plant's other face, and the pair is
+    # rendered together.
+    r.block("placard", (3.2, 0.22, 1.5),
+            (2.5, roomkit.y(pz1 + 0.11), 2.05), "accent", "wall",
+            readable=True)
     # The machine is PLUMBED, and it is plumbed west. Two trunk lines
     # leave the body at 5.6 m -- clear of the 3.2 m doors and the 4.8 m
     # arm headers -- and run the length of the bay into the west wall.

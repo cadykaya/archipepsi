@@ -4015,7 +4015,7 @@ current player is **0.12 m** — see
 | Shell | Metrics | Connections | Plan |
 | --- | --- | --- | --- |
 | `shell_junction_triad` | 672 tris · 26.00 × 26.00 × 8.66 m · 32.0 texels/m | 3 ways | a T of arms round an open middle, the branch and the bay opening together |
-| `shell_junction_cross` | 936 tris · 30.00 × 30.00 × 9.66 m · 32.0 texels/m | 4 ways | a plated machine you walk around: a 7.5 m working bay on two sides, a 2.5 m service passage on the other two |
+| `shell_junction_cross` | 948 tris · 30.00 × 30.00 × 9.66 m · 32.0 texels/m | 4 ways | a plated machine you walk around: a 7.5 m working bay on two sides, a 2.5 m service passage on the other two |
 | `shell_bay_terminus` | 516 tris · 18.00 × 22.00 × 7.66 m · 32.0 texels/m | 1 used + 2 closable | narrow in, opens out, stops at a recessed end wall |
 
 Measured boxes are Blender-ordered (width, length, height) and include

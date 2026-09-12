@@ -1,10 +1,4 @@
 {
   "mode": "render",
-  "problems": [],
-  "swapped": {
-    "accent": 1,
-    "floor": 1,
-    "trim": 1,
-    "wall": 1
-  }
+  "problems": []
 }

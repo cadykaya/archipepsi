@@ -459,11 +459,34 @@ def uv_read_right(obj, boxes):
                 break
         if not inside:
             continue
+        # ONE SIGN ONLY, and this is the whole reason the helper is not
+        # "flip everything in the box". A sign has two faces; the
+        # projection mirrors exactly one of them. Flipping both turns the
+        # mirrored one round and turns the correct one backwards, which
+        # is what a placard facing the other way would have shown -- so
+        # the rule is keyed on the dominant normal's SIGN and the pair
+        # comes out reading the same way.
+        normal = poly.normal
+        axis = max(range(3), key=lambda i: abs(normal[i]))
+        if normal[axis] <= 0.0:
+            continue
         us = [uv_layer[i].uv[0] for i in poly.loop_indices]
-        span = min(us) + max(us)
+        lo_u, hi_u = min(us), max(us)
+        span = lo_u + hi_u
         for loop_index in poly.loop_indices:
             uv = uv_layer[loop_index].uv
             uv_layer[loop_index].uv = (span - uv[0], uv[1])
+        # ORIENTATION CHANGED, SIZE DID NOT. Mirroring about the face's
+        # own span cannot move the span, and saying so out loud is the
+        # difference between "the letters turn round" and "the texture is
+        # still mapped at the intended size" -- two claims, and only the
+        # first is obvious from a picture.
+        after = [uv_layer[i].uv[0] for i in poly.loop_indices]
+        if abs((max(after) - min(after)) - (hi_u - lo_u)) > 1e-6:
+            raise SystemExit(
+                "uv_read_right: the flip changed a face's U span from "
+                "%.6f to %.6f, so it changed the texel scale as well as "
+                "the direction." % (hi_u - lo_u, max(after) - min(after)))
         touched += 1
     if touched == 0:
         raise SystemExit(

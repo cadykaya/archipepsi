@@ -93,20 +93,37 @@ blank end wall with a maintenance recess. One connection is used; the
 other two are the composer's to seal, and an unassigned socket is
 `SEALED` and gets a slab, which needs no special schema.
 
-**The mismatch to resolve, and it is small.**
-`ContentInstantiator._exit_offset` resolves `depart_edge` through
-`socket_for_edge` first — so a composer that assigns a departing edge to
-`branch_east` or `branch_west` works correctly today. Its fallbacks are
-the problem: no `depart_edge` → look for a socket named `exit`/`end_b` →
-**`Vector3(0, 0, size.z)`**, which on this room is the middle of the
-blank end wall, 22 m in, with no opening.
+**The mismatch is in the PRODUCER, and it is not small.** ~~`_exit_offset`
+resolves `depart_edge` first, so the fallback is the problem.~~ That was
+my reading and it is insufficient — corrected after the owner pointed at
+`compose_with_branch`, and confirmed at `topology.py`:
 
-So: **this room is safe as a leaf, or with an explicit `depart_edge`, and
-unsafe only when a composer routes through it while naming no departing
-socket.** Whether that is worth a guard is yours — the honest options are
-(a) the composer never routes through a `dead_end`-tagged shell, or (b)
-`_exit_offset` refuses rather than guessing when no socket answers. Art
-has no opinion that should outrank either.
+```python
+SPINE_SOCKETS = ("entry", "exit")
+unfit = [c.id for c in chambers
+         if not set(SPINE_SOCKETS) <= set(_sockets_for(c, caps))]
+if unfit:
+    return GraphProduct(edges=(), doors={... _seal_the_rest ...}, ...)
+```
+
+`compose_with_branch` calls `compose_chain` FIRST and returns `base`
+immediately when `base.edges` is empty. So one Terminus in the chamber
+list means **no chain, no branches, and every room's doors sealed** —
+not just the Terminus's own placement. And a room can only be moved to a
+branch after it is on the spine, because `_branch_routes` picks
+destinations from chambers whose sockets leave one SPARE beyond
+`SPINE_SOCKETS`. **A leaf-compatible room is rejected before it can
+become a leaf.**
+
+`_exit_offset`'s fallback to `Vector3(0, 0, size.z)` — the middle of this
+room's blank end wall — is a second, smaller thing behind the same door.
+Fixing only it changes nothing, because composition never gets that far.
+
+**Art is not proposing the fix**: the producer and its consumer are
+Dess's and Prod's. What Art can state is the capacity, truthfully: three
+joinable sockets, none named `exit`, role `destination`/`dead_end`. **No
+`exit` will be fabricated, no further door cut, and the room will not be
+made a through-room to preserve an inaccurate sentence.**
 
 ### The capacity, as declared
 
@@ -185,38 +202,73 @@ not per theme. The last report said the whole theme was disqualified.
 
 ---
 
-## 4 · The mirrored stencil: a local repair that works, and cannot reach you
+## 4 · The mirrored stencil — and a premise of mine that has to be
+withdrawn before anyone acts on it
 
-`common.uv_read_right` flips U back, after projection, **inside declared
-boxes only** — one piece, the Cross's gauge board. Ordinary tiling is
+**~~The repair is inert at runtime because `ThemeMaterials` sets
+`uv1_triplanar`.~~ Wrong, and the error was mine.** An authored shell
+never receives `ThemeMaterials` at all:
+
+```
+occurrences of "material" in content_instantiator.gd ....  0
+occurrences of "ThemeMaterials." in chamber_builders.gd .. 46
+```
+
+`_from_authored_scene` calls `scene.instantiate()` and performs **no
+material operation whatsoever**. Themed materials are the PROCEDURAL
+half and the gameplay objects — enemies, portals, rewards, powered
+links, affordance features. A `.glb` room keeps the materials Blender
+baked into it.
+
+My previous frame B forcibly swapped every surface to `ThemeMaterials`
+and photographed the result. It is a true picture of a path **these
+rooms do not take**, and presenting it as "the production material
+binding" put a repair request on Prod that Batch 044 does not need. That
+request is withdrawn.
+
+### So the repair is complete, and it is proved where it lands
+
+`common.uv_read_right` flips U back after projection, **inside declared
+boxes only**, and **only on the face whose dominant normal is positive**
+— one sign has two faces and the projection mirrors exactly one, so
+flipping both would turn the good one backwards. Ordinary tiling is
 untouched and the world projection is not rewritten.
 
-**It works, and it is inert at runtime.** Matched pair, same camera,
+**Scale is asserted, not eyeballed.** The flip mirrors each face about
+its own U span, and the builder now *checks* the span is unchanged
+afterwards and fails the build if it moved. Orientation changed; texel
+size did not, and that is a separate claim from what a picture shows.
+
+Evidence, all through the authored materials — the path
+`ContentInstantiator` instantiates — in
 `docs/art/review/theme_bind_2026-09-13/`:
 
-| frame | materials | reads |
-|---|---|---|
-| `..._A_glb_materials.png` | the `.glb`'s own | **`SEC 04`** |
-| `..._B_themematerials.png` | `ThemeMaterials`, `uv1_triplanar` **on** | mirrored |
+| frame | what |
+|---|---|
+| `..._A1_authored_south_board` | the gauge board, head-on |
+| `..._A2_authored_north_placard` | **the opposite-facing sign** on the plant's other face |
+| `..._A3_..._room_yawed_37` | the same board with the **room rotated 37°** |
+| `..._A4_..._room_yawed_37` | the same placard, room rotated |
+| `..._B_thememateri_procedural_path` | **kept and relabelled**: `ThemeMaterials` with triplanar, which is the PROCEDURAL path's defect and not this shell's |
 
-**`ThemeMaterials` sets `uv1_triplanar = true`, and triplanar projects in
-the shader from world position — it ignores mesh UVs entirely.** So no
-UV-level repair, local or global, can change what a built Zone shows. The
-world projection is not the runtime cause and rewriting it would have
-fixed nothing.
+Ordinary wall and floor tiling is in every frame and unchanged.
 
-**Reporting the scope rather than taking it**, as asked. The runtime
-repair is a material decision and it is yours:
+### What is genuinely still Production's, narrowed
 
-* **turn `uv1_triplanar` off for the roles that carry lettering** —
-  smallest change, and it also makes the authored UVs meaningful; or
-* **keep text out of tiling textures altogether** and give signage its
-  own non-tiling material — larger, and a theme-pack change Art would
-  make.
+The mirrored-lettering defect **is real on the procedural path**: a
+surface that gets `accent_mat` shows the theme pack's stencil through
+triplanar, which projects from world position and ignores mesh UVs. That
+is not a Batch 044 problem and Art is not asking for it now. If it is
+ever worth repairing, the smallest asset distinction Art can offer is a
+`signage` entry in the descriptor's existing `variants` map — it
+resolves to `accent`'s pixels through the one-hop fallback, needs no new
+texture, and gives a selectable role name without touching `accent`
+everywhere. **Not added in this pass**, because nothing currently
+consumes it and an unused vocabulary word with no consumer is exactly
+what `player_entry` was.
 
-The flip is kept because it is correct for the exported asset and becomes
-visible the moment either lands. The sump band is deliberately **not**
-flipped: a floor decal has no single correct reading direction.
+The sump band is deliberately **not** flipped: a floor decal has no
+single correct reading direction.
 
 ---
 

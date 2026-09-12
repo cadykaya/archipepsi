@@ -25,6 +25,12 @@ commits past the `612a7d2` the last handoff was written against.*
 >    wrong.** The shells declare no spawn points at all. The preview
 >    draws three capsules per declared `enemy_spawn` VOLUME, and three
 >    is the harness's own number.
+> 4. **Added later the same day, and also mine:** the claim that the
+>    mirrored stencil is unfixable because `ThemeMaterials` uses
+>    triplanar. **An authored shell never receives `ThemeMaterials`** —
+>    `ContentInstantiator` performs no material operation at all. The
+>    UV repair lands on the real path and is proved on both faces of a
+>    two-sided sign, with the room rotated.
 
 **Everything about the three Batch 044 rooms is still a proposal. Nothing
 here is owner approval, and nothing here promotes anything.**
