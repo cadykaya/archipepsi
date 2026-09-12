@@ -172,6 +172,11 @@ func _run() -> void:
 	_check(names.size() >= (20 if sampling else 3),
 			"%d generated Zone(s) to walk; one shape is not a sample"
 			% names.size())
+	# THE REFERENCE FIRST. A driver that cannot make one round trip
+	# through the real controller has nothing to say about five Zones.
+	if not OS.get_cmdline_user_args().has("--no-walk") and not sampling:
+		await _a_reference_round_trip()
+		await _the_reference_would_catch_its_own_defects()
 	for file: String in names:
 		await _walk_one(file)
 
@@ -268,6 +273,299 @@ func _run() -> void:
 	else:
 		print("GODOT GRAPH TESTS: %d failures" % failures)
 		get_tree().quit(1)
+
+## ONE ROUND TRIP, THROUGH THE PRODUCTION CONSUMER, BEFORE ANY SAMPLE.
+##
+## The five-Zone walk below was reporting a journey it was not making,
+## and the flat steering was only the visible half. A source review found
+## the rest, and every one of them is the harness measuring itself:
+##
+## * `ARRIVED` is four metres. A `ReturnPlug`'s trigger has a radius of
+##   1.4, so a walk sent to the device stopped OUTSIDE it and the return
+##   read as "could not get back". The runtime volume is not the thing
+##   to widen.
+## * `ReturnPlug` emits `traversed(edge_id, destination)` and moves
+##   NOTHING. `ZoneController._on_plug_traversed` is what reads the
+##   destination anchor and relocates the body -- so a driver that
+##   instantiates the device and a `Player` and nothing else has no
+##   consumer for the event at all, and could not tell a wired return
+##   from an unwired one.
+## * "reached its content" meant the room's geometric middle.
+## * "re-entered" included putting the body at the arrival by hand.
+##
+## So this is the reference: a two-room Zone, a real `ZoneController`,
+## the real return action, and every leg stopped by a condition the
+## thing itself defines. **NO EDGES**, deliberately -- a Zone with no
+## graph is `UNCERTIFIED` and is never held for a layout verdict, so
+## this measures the return path and not the bridge.
+func _a_reference_round_trip() -> void:
+	print("\nREFERENCE  one round trip through ZoneController")
+	var zone := {
+		"zone_id": "zref", "theme": "concrete_facility",
+		"chambers": [
+			{"id": "r001", "type": "corridor", "length": 16.0,
+					"width": 7.9, "enemies": [], "activities": [],
+					"features": []},
+			{"id": "r002", "type": "arena", "width": 18.0, "depth": 18.0,
+					"wall_height": 6.0, "objective": "reach_exit",
+					"enemies": [], "activities": [], "features": []},
+		],
+		"plugs": [{"edge_id": "p:r002:start", "room_id": "r002",
+				"source_anchor": "room:r002:return",
+				"destination": "zone_start", "device": "pad"}],
+	}
+	var controller := ZoneController.new()
+	add_child(controller)
+	controller.setup(zone)
+	for _i in 8:
+		await get_tree().physics_frame
+	if controller.layout_failed != "":
+		_check(false, "the reference Zone did not lay out: %s"
+				% controller.layout_failed)
+		controller.queue_free()
+		return
+	var body: Player = controller.player
+	if not is_instance_valid(body):
+		_check(false, "the reference Zone spawned no player")
+		controller.queue_free()
+		return
+	_check(not body.input_frozen,
+			"an edge-less Zone holds nobody: the reference walk starts "
+			+ "free (holds %s)" % str(body.holds()))
+
+	# THE DEVICE, AND A COUNTER ON ITS SIGNAL. The controller is already
+	# connected -- that connection is the thing under test -- and this
+	# second listener only counts, so a return that fires twice or fires
+	# for the wrong edge is visible.
+	var plug := _find_plug(controller)
+	if plug == null:
+		_check(false, "the reference Zone built no return device")
+		controller.queue_free()
+		return
+	var fired: Array[String] = []
+	plug.traversed.connect(func(edge: String, _to: String) -> void:
+			fired.append(edge))
+	var start: Vector3 = controller._zone_anchors.get("zone_start",
+			Vector3.INF)
+	var room: AABB = controller.room_bounds.get("r002", AABB())
+	_check(room.has_volume() and start != Vector3.INF,
+			"the reference Zone published its start anchor and its "
+			+ "destination room's bounds")
+
+	# 1. ENTER, on foot.
+	var middle := room.position + room.size / 2.0
+	await _walk(body, Vector3(middle.x, body.global_position.y, middle.z),
+			room.grow(-1.0), WALK_FRAMES)
+	var entered := room.grow(1.0).has_point(body.global_position)
+	_check(entered, "the body walked into the destination room (at %v)"
+			% body.global_position)
+	if not entered:
+		controller.queue_free()
+		return
+
+	# 2. REMAIN STANDING, and not be sent home on the way in.
+	for _rest in 30:
+		await get_tree().physics_frame
+	_check(room.grow(1.0).has_point(body.global_position)
+				and body.is_on_floor() and fired.is_empty(),
+			"and stayed standing in it without the return firing (%d "
+			% fired.size() + "traversal(s) so far)")
+
+	# 3. REACH A REAL INTERACTION TARGET, stopped by the PLAYER'S OWN
+	#    probe. `Player._update_interact_target` casts three metres from
+	#    the camera and offers a prompt when it finds something with
+	#    `interact()`; that is what "the player can reach it" means in
+	#    this game, so that is the stopping condition.
+	var target := _an_interactable_in(controller, room)
+	if target == null:
+		_check(false, "the destination room holds nothing interactable, "
+				+ "so 'reached its content' would mean nothing")
+	else:
+		var prompted: Array[String] = []
+		body.interact_prompt_changed.connect(
+				func(text: String) -> void:
+					if text != "":
+						prompted.append(text))
+		var at: Vector3 = (target as Node3D).global_position
+		await _walk(body, Vector3(at.x, body.global_position.y, at.z),
+				AABB(), WALK_FRAMES,
+				func() -> bool: return not prompted.is_empty())
+		_check(not prompted.is_empty(),
+				"the player's own interact probe found %s: '%s'"
+				% [(target as Node).name,
+					prompted[0] if not prompted.is_empty() else ""])
+
+	# 4. DELIBERATELY ENTER THE RETURN TRIGGER. Stopped by the trigger
+	#    itself reporting the body inside it, not by a four-metre guess.
+	var pad := plug.global_position
+	await _walk(body, Vector3(pad.x, body.global_position.y, pad.z),
+			AABB(), WALK_FRAMES,
+			func() -> bool: return not fired.is_empty())
+
+	# 5. ONE EVENT, FOR THE EXPECTED EDGE.
+	_check(fired.size() == 1,
+			"walking into the pad raised exactly one traversal, and it "
+			+ "raised %d %s" % [fired.size(), str(fired)])
+	_check(fired.has("p:r002:start"),
+			"and it named the edge the composer assigned (%s)"
+			% str(fired))
+
+	# 6. AND THE PRODUCTION CONSUMER PUT THE BODY AT THAT EDGE'S
+	#    DESTINATION. This is the half a driver without a controller
+	#    cannot see: the device moves nobody.
+	for _settle in 20:
+		await get_tree().physics_frame
+	var home := Vector2(body.global_position.x - start.x,
+			body.global_position.z - start.z).length()
+	_check(home < 3.0,
+			"the return action put the body at 'zone_start' (%.1f m "
+			% home + "away, at %v)" % body.global_position)
+
+	# 7. AND BACK IN ON FOOT, not by relocation, and it stays.
+	await _walk(body, Vector3(middle.x, body.global_position.y, middle.z),
+			room.grow(-1.0), WALK_FRAMES)
+	var again := room.grow(1.0).has_point(body.global_position)
+	for _rest in 30:
+		await get_tree().physics_frame
+	_check(again and room.grow(1.0).has_point(body.global_position),
+			"and walked back in and stayed: the return does not fire on "
+			+ "entry (%d traversal(s) in total)" % fired.size())
+	_check(fired.size() == 1,
+			"re-entering raised no second traversal (%d in total)"
+			% fired.size())
+	controller.queue_free()
+	await get_tree().process_frame
+
+## TWO CONTROLS ON THE REFERENCE, because a measurement that cannot fail
+## is not one. Both reproduce a defect the old driver had and show the
+## new one detecting it.
+func _the_reference_would_catch_its_own_defects() -> void:
+	print("\nCONTROLS   the reference against its own two defects")
+	var zone := {
+		"zone_id": "zctl", "theme": "concrete_facility",
+		"chambers": [
+			{"id": "r001", "type": "corridor", "length": 16.0,
+					"width": 7.9, "enemies": [], "activities": [],
+					"features": []},
+			{"id": "r002", "type": "arena", "width": 18.0, "depth": 18.0,
+					"wall_height": 6.0, "objective": "reach_exit",
+					"enemies": [], "activities": [], "features": []},
+		],
+		"plugs": [{"edge_id": "p:r002:start", "room_id": "r002",
+				"source_anchor": "room:r002:return",
+				"destination": "zone_start", "device": "pad"}],
+	}
+
+	# CONTROL 1: THE EVENT WITH NOBODY LISTENING. The old driver built
+	# the device and a `Player` and no controller, so nothing consumed
+	# `traversed` -- and a body that walked onto the pad simply stood on
+	# it. If that reads as a completed return, the harness is measuring
+	# the device and calling it the journey.
+	var loose := ZoneController.new()
+	add_child(loose)
+	loose.setup(zone)
+	for _i in 8:
+		await get_tree().physics_frame
+	var body: Player = loose.player
+	var plug := _find_plug(loose)
+	if plug == null or not is_instance_valid(body):
+		_check(false, "the control Zone did not build a device and a "
+				+ "player, so neither control can run")
+		loose.queue_free()
+		return
+	# The one line that makes this the OLD harness: the production
+	# consumer is taken off the signal.
+	plug.traversed.disconnect(loose._on_plug_traversed)
+	var fired: Array[String] = []
+	plug.traversed.connect(func(edge: String, _to: String) -> void:
+			fired.append(edge))
+	var start: Vector3 = loose._zone_anchors.get("zone_start", Vector3.INF)
+	var room: AABB = loose.room_bounds.get("r002", AABB())
+	var middle := room.position + room.size / 2.0
+	await _walk(body, Vector3(middle.x, body.global_position.y, middle.z),
+			room.grow(-1.0), WALK_FRAMES)
+	var pad := plug.global_position
+	await _walk(body, Vector3(pad.x, body.global_position.y, pad.z),
+			AABB(), WALK_FRAMES,
+			func() -> bool: return not fired.is_empty())
+	for _settle in 20:
+		await get_tree().physics_frame
+	var home := Vector2(body.global_position.x - start.x,
+			body.global_position.z - start.z).length()
+	_check(not fired.is_empty(),
+			"the unwired control still RAISED the event -- the device "
+			+ "works and only the consumer was removed")
+	_check(home >= 3.0,
+			"and with nothing consuming it the body did not go home "
+			+ "(%.1f m from the start): a driver that asserts only the "
+			% home + "event cannot tell a wired return from this")
+	loose.queue_free()
+	await get_tree().process_frame
+
+	# CONTROL 2: STOPPING AT `ARRIVED`. Four metres is the tolerance the
+	# old walk used everywhere, and a `ReturnPlug` trigger has a radius
+	# of 1.4 -- so the body stops short of the device and nothing fires.
+	var near := ZoneController.new()
+	add_child(near)
+	near.setup(zone)
+	for _i in 8:
+		await get_tree().physics_frame
+	var walker: Player = near.player
+	var device := _find_plug(near)
+	if device == null or not is_instance_valid(walker):
+		_check(false, "the second control Zone did not build")
+		near.queue_free()
+		return
+	var late: Array[String] = []
+	device.traversed.connect(func(edge: String, _to: String) -> void:
+			late.append(edge))
+	var box: AABB = near.room_bounds.get("r002", AABB())
+	var centre := box.position + box.size / 2.0
+	await _walk(walker, Vector3(centre.x, walker.global_position.y,
+			centre.z), box.grow(-1.0), WALK_FRAMES)
+	var spot := device.global_position
+	# The OLD stopping rule: no `until`, so `_walk` stops at `ARRIVED`.
+	await _walk(walker, Vector3(spot.x, walker.global_position.y, spot.z),
+			AABB(), WALK_FRAMES)
+	for _settle in 20:
+		await get_tree().physics_frame
+	var gap := Vector2(walker.global_position.x - spot.x,
+			walker.global_position.z - spot.z).length()
+	_check(gap > ReturnPlug.RADIUS,
+			"stopping at ARRIVED leaves the body %.1f m from the pad, "
+			% gap + "outside its %.1f m trigger" % ReturnPlug.RADIUS)
+	_check(late.is_empty(),
+			"and nothing fired: the four-metre tolerance is what made "
+			+ "the old journey read 'could NOT get back' (%d event(s))"
+			% late.size())
+	near.queue_free()
+	await get_tree().process_frame
+
+## The first `ReturnPlug` this controller built, or null.
+func _find_plug(node: Node) -> ReturnPlug:
+	for child in node.get_children():
+		if child is ReturnPlug:
+			return child
+		var deeper := _find_plug(child)
+		if deeper != null:
+			return deeper
+	return null
+
+## Something in this room a PLAYER can interact with -- the production
+## test is `has_method("interact")`, which is what `Player`'s own probe
+## asks. A pedestal, a station, the exit portal: whatever the room
+## actually holds, rather than its geometric middle.
+func _an_interactable_in(node: Node, room: AABB) -> Node3D:
+	for child in node.get_children():
+		if child is Node3D and (child as Node3D).is_inside_tree() \
+				and child.has_method("interact") \
+				and room.grow(1.0).has_point(
+					(child as Node3D).global_position):
+			return child
+		var deeper := _an_interactable_in(child, room)
+		if deeper != null:
+			return deeper
+	return null
 
 func _walk_one(file: String) -> void:
 	var text := FileAccess.get_file_as_string("%s/%s" % [_where, file])
@@ -728,17 +1026,45 @@ func _anchor_of(out: Dictionary, name: String) -> Vector3:
 ## The same steer-and-press the room contract uses, kept short here: this
 ## driver's subject is the graph, not the controller.
 func _walk(body: Player, goal: Vector3, stop_inside: AABB,
-		frames := WALK_FRAMES) -> Dictionary:
+		frames := WALK_FRAMES, until := Callable()) -> Dictionary:
 	var closest := INF
 	var still := 0
 	var last := body.global_position
+	var met := false
 	Input.action_press("move_forward", 1.0)
 	for i in frames:
 		var here := body.global_position
 		if stop_inside.has_volume() and stop_inside.has_point(here):
 			break
+		# THE CONDITION THE THING ITSELF DEFINES.
+		#
+		# `ARRIVED` is four metres, which is a tolerance for "near the
+		# middle of a room" and nothing else: a `ReturnPlug` trigger has
+		# a radius of 1.4, so a walk that stopped at `ARRIVED` stopped
+		# OUTSIDE the device it was sent to and the journey then read as
+		# "could not get back". The runtime volume is not the thing to
+		# widen. A leg with a real stopping condition passes its own.
+		if until.is_valid() and until.call():
+			met = true
+			break
 		var flat := Vector2(goal.x - here.x, goal.z - here.z)
 		closest = minf(closest, flat.length())
+		if until.is_valid():
+			body.rotation.y = atan2(-flat.x, -flat.y)
+			if (here - last).length() < 0.012:
+				still += 1
+				if still == 24 and body.is_on_floor():
+					Input.action_press("jump", 1.0)
+					await get_tree().physics_frame
+					Input.action_release("jump")
+					still = 0
+			else:
+				still = 0
+			last = here
+			if still > 90:
+				break
+			await get_tree().physics_frame
+			continue
 		if flat.length() <= ARRIVED:
 			break
 		body.rotation.y = atan2(-flat.x, -flat.y)
@@ -758,6 +1084,8 @@ func _walk(body: Player, goal: Vector3, stop_inside: AABB,
 	Input.action_release("move_forward")
 	var final := Vector2(goal.x - body.global_position.x,
 			goal.z - body.global_position.z).length()
+	if until.is_valid():
+		return {"arrived": met, "closest": closest}
 	return {"arrived": final <= ARRIVED, "closest": closest}
 
 func _shape_of(zone: Dictionary) -> Dictionary:
