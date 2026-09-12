@@ -422,6 +422,22 @@ further result is an ignored stale one, so 120 retries leave the field
 at 3 and the save loading. A committed Zone is never swept in.
 **Prod's half is two lines in `AbandonConsole`** — see §5.7b.
 
+**A DESTINATION NEEDS NO DEPARTURE** (§5.8). `shell_bay_terminus`
+declares `entry`, `branch_east`, `branch_west` and no `exit`.
+`compose_with_branch` called `compose_chain` first as a feasibility
+gate, and that requires an entry/exit pair from every room — so a
+leaf-compatible room was refused as a through-room before it could be
+chosen as a leaf, and the Zone came back with zero edges and every one
+of its openings sealed. Roles are read from declared capacity now
+(`_role`: through / leaf / unjoinable), before anything is composed; a
+leaf is a REQUIRED destination that does not spend the branch budget;
+and a leaf that cannot be placed, or that sits first or last, refuses
+the Zone with the room named rather than linearising around it. A leaf
+hosting one onward branch departs by a real doorway through
+`depart_edge`, which is why `_exit_offset`'s fallback alone could not
+fix it. **A capability probe, not a promotion** — no shipped shell
+lacks `exit`, and nothing here offers a pending asset.
+
 **NEXT FOR THIS LANE: nothing, until integration says otherwise**
 (owner, 2026-09-12). Topology behaviour is to stay stable while Prod
 exercises the integrated build. The next bridge work is **a specific

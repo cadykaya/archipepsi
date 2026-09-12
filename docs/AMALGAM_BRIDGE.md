@@ -1454,6 +1454,78 @@ stays `ZONE_DORMANT` and stays enterable.
 > snapshot and a console with no reachable target are not a recovery.
 
 
+### 5.8 A destination needs no departure — the Terminus
+
+**Owner finding against Art's batch 044, 2026-09-12.**
+`shell_bay_terminus` declares `entry`, `branch_east` and `branch_west`,
+and **no `exit`**; its `shape_tags` are "destination" and "dead_end".
+
+**What it did, measured before repairing it.** `compose_with_branch`
+called `compose_chain` first as a feasibility gate, and `compose_chain`
+requires an entry/exit pair from EVERY room — so a leaf-compatible room
+was refused as a through-room before it could ever be chosen as a leaf.
+The Zone came back with **zero edges and every one of the Terminus's
+openings SEALED**: a linear fallback with the destination walled shut,
+and a single note the only thing that said so.
+
+**Roles are decided before anything is composed.** `_role` reads the
+room's own declaration:
+
+| declares | role | may be |
+|---|---|---|
+| `entry` + `exit` | `ROLE_THROUGH` | on the spine, or a destination |
+| `entry`, no `exit` | `ROLE_LEAF` | a destination only |
+| no `entry` | `ROLE_UNJOINABLE` | refused |
+
+`entry` and `exit` are not two names among many: the contract gives each
+one meaning, and the engine's `socket_by_id` aliases them to a connector
+grammar's `end_a`/`end_b` for exactly that reason. A shell declaring
+`exit` says *the chain may continue through me*; one declaring an
+arrival and no `exit` says *the chain arrives and stops*. That is a
+capacity fact already on the wire.
+
+**`shape_tags` is not consulted and does not reach this lane.** A role
+read off authored prose could disagree with the openings the room
+actually has; the openings are the thing the composer must assign.
+
+**A leaf is a REQUIRED destination, not a budgeted one.** It is placed
+before the spare-room budget picks anything and does not spend it —
+refusing to branch would seal it shut. A leaf may not be the Zone's
+first or last room (it would have to carry the chain), and a leaf no
+room before it can host **refuses the Zone with a reason**. Nothing is
+fabricated, nothing is cut, and there is no silent linear fallback: all
+three are refusals with the room named.
+
+**A leaf that hosts one onward branch departs by a real opening.**
+`depart_edge` resolves through `doors` to `branch_east` — a doorway the
+shell declares — so the engine places the continuation from there. This
+is why fixing `_exit_offset`'s fallback alone was insufficient: the
+manifest still carries `exit_offset: [0, 0, 22]` for a room with no exit
+socket, and the fallback is a departure through a wall. The selector is
+the fix, and it landed in §11.7.
+
+**A capability probe, not a promotion.** No shell in the shipped
+registry lacks `exit`, so ordinary generation cannot produce this today.
+What is proved is that the producer path handles the capacity when a
+shell declaring it arrives — a separate question from whether a pending
+asset may be offered, and this section grants nothing on that.
+
+> **For Prod — what the bridge now sends, and what is yours.**
+>
+> A leaf arrives through `entry` and carries a return plug like any
+> dead end. Its unused declared openings are `SEALED` and its `doors`
+> list every one of them; none is invented. `arrive_edge` names the
+> inbound edge and `depart_edge` is **absent** unless the leaf hosts
+> exactly one onward branch, in which case it names that branch's edge
+> and resolves to a real doorway.
+>
+> Yours: the physical placement — that the body arrives through the
+> assigned opening in a rotated placement, that the sealed side
+> doorways are built closed, and that nothing reads `exit_offset` for a
+> room with no exit socket. The bridge will not fabricate the departure
+> that field implies.
+
+
 ## 6. What remains in this lane
 
 **The five conditions §0-bis puts on a legal capability gate**

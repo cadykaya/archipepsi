@@ -250,6 +250,72 @@ def compose_chain(chambers, shell_sockets=None) -> GraphProduct:
         arrivals=arrivals, departures=departures)
 
 
+#: What a room's declared openings say it can BE.
+#:
+#: `entry` and `exit` are not two names among many here. The contract
+#: gives them one meaning each — the way the chain comes in and the way
+#: it goes on — and the engine's `socket_by_id` aliases them to a
+#: connector grammar's `end_a`/`end_b` for exactly that reason. So a
+#: shell that declares `exit` is saying *the chain may continue through
+#: me*, and one that declares an arrival and no `exit` is saying *the
+#: chain arrives and stops*.
+#:
+#: That is a capacity fact, already on the wire, and it is the whole of
+#: what the bridge needs. `shape_tags` ("destination", "dead_end") never
+#: reaches this lane and is not consulted: a role read off authored
+#: prose could disagree with the openings the room actually has.
+ROLE_THROUGH = "through"        # entry and exit: may sit on the spine
+ROLE_LEAF = "leaf"              # entry, no exit: a destination only
+ROLE_UNJOINABLE = "unjoinable"  # no arrival: nothing can reach it
+
+
+def _role(chamber, shell_sockets) -> str:
+    """Which roles this room's own declaration permits.
+
+    **Read before anything is composed.** `compose_with_branch` used to
+    call `compose_chain` first, and `compose_chain` requires an
+    entry/exit pair from every room — so a leaf-compatible room was
+    refused as a through-room before it could ever be chosen as a leaf,
+    and the Zone came back with no edges at all. A room whose intended
+    role is "destination" cannot be asked for a departure first.
+    """
+    declared = set(_sockets_for(chamber, shell_sockets))
+    if "entry" not in declared:
+        return ROLE_UNJOINABLE
+    if "exit" not in declared:
+        return ROLE_LEAF
+    return ROLE_THROUGH
+
+
+def _roles(chambers, shell_sockets) -> dict[str, str]:
+    return {c.id: _role(c, shell_sockets) for c in chambers}
+
+
+def _role_refusals(chambers, roles: dict[str, str]) -> tuple[str, ...]:
+    """Why this Zone's rooms cannot be given the roles it needs.
+
+    Each of these is a REFUSAL, never a quiet linearisation. A Zone that
+    cannot place a leaf is a Zone the composer must not send: dropping
+    the graph would leave the leaf with every opening sealed and nothing
+    saying so, which is what happened.
+    """
+    notes: list[str] = []
+    stranded = [c.id for c in chambers if roles[c.id] == ROLE_UNJOINABLE]
+    if stranded:
+        notes.append(
+            "no graph: room(s) %s declare no `entry`; nothing can reach "
+            "them and the composer will not invent an opening" % stranded)
+    first, last = chambers[0].id, chambers[-1].id
+    for rid, what in ((first, "the room the player arrives in"),
+                      (last, "the room the Zone leaves by")):
+        if roles[rid] == ROLE_LEAF:
+            notes.append(
+                "no graph: room '%s' is %s and declares no `exit`; a "
+                "destination cannot carry the chain and the composer "
+                "will not fabricate a departure for it" % (rid, what))
+    return tuple(notes)
+
+
 def _side_socket(chamber, spare: tuple[str, ...]) -> str | None:
     """Which spare socket a side door may use.
 
@@ -311,7 +377,8 @@ class BranchRoute:
         return self.lock is not None
 
 
-def _branch_routes(chambers, caps) -> tuple[list[BranchRoute], tuple[str, ...]]:
+def _branch_routes(chambers, caps, required=()
+                   ) -> tuple[list[BranchRoute], tuple[str, ...]]:
     """Which rooms branch off which, and why the rest do not.
 
     **Topology only.** Nothing here decides whether a route is locked;
@@ -336,7 +403,12 @@ def _branch_routes(chambers, caps) -> tuple[list[BranchRoute], tuple[str, ...]]:
     """
     notes: list[str] = []
     order = [c.id for c in chambers]
-    if len(chambers) < MIN_SPINE + 1:
+    # A LEAF IS NOT A CHOICE. A room that declares no `exit` can only be
+    # a destination, so it is placed before anything the budget picks and
+    # it does not spend the budget: refusing to branch would leave it
+    # with every opening sealed.
+    must = [c for c in chambers if c.id in {r.id for r in required}]
+    if len(chambers) < MIN_SPINE + 1 and not must:
         return [], ("no branch: %d rooms, a spine of %d needs every one"
                     % (len(chambers), MIN_SPINE),)
 
@@ -371,7 +443,13 @@ def _branch_routes(chambers, caps) -> tuple[list[BranchRoute], tuple[str, ...]]:
     # the key — every key landed in the room the player spawns in, where
     # "is this key reachable before its lock" has no content. Branching
     # off the later spine leaves the early rooms to hold keys.
-    destinations = [c for c in interior if worthwhile(c)][-affordable:]
+    chosen = [c for c in interior if worthwhile(c)][-affordable:]
+    # Required leaves first, then the budget's picks, in Zone order so
+    # the junction search below still walks backwards from each.
+    taken_ids = {c.id for c in must}
+    destinations = [c for c in chambers
+                    if c.id in taken_ids
+                    or c.id in {d.id for d in chosen} - taken_ids]
     if not destinations:
         # THE CHAIN, INTACT. Affording a branch is not a reason to make
         # one: a detour to an empty room is a lock the player opens to
@@ -420,6 +498,7 @@ def _branch_routes(chambers, caps) -> tuple[list[BranchRoute], tuple[str, ...]]:
                          "it has a socket to spare within %d of the spine"
                          % (destination.id, MAX_SIDE_DEPTH))
             continue
+
         # THE NEAREST ROOM BEFORE IT, WALKING BACK. Nearest first is what
         # makes nesting happen where the shape already supports it: when
         # the previous destination sits immediately before this one and
@@ -566,11 +645,51 @@ def compose_with_branch(chambers, shell_sockets=None) -> GraphProduct:
     a note naming which cost was not met.
     """
     caps = _shell_sockets() if shell_sockets is None else shell_sockets
-    base = compose_chain(chambers, caps)
-    if not base.edges:
-        return base
 
-    routes, why = _branch_routes(chambers, caps)
+    # ROLES FIRST, and this is the repair. `compose_chain` requires an
+    # entry/exit pair from EVERY room, so calling it here as a
+    # feasibility gate refused a leaf-compatible room as a through-room
+    # before it could be chosen as a leaf — and the Zone came back with
+    # no edges at all, every one of that room's openings SEALED, and
+    # only a note to say so. A room whose declared role is "destination"
+    # must not be asked for a departure first.
+    roles = _roles(chambers, caps)
+    blocked = _role_refusals(chambers, roles)
+    if blocked:
+        return GraphProduct(
+            edges=(), doors={c.id: _seal_the_rest(c, {}, caps)
+                             for c in chambers},
+            keys={}, plugs=(), notes=blocked)
+    leaves = [c for c in chambers if roles[c.id] == ROLE_LEAF]
+
+    if not leaves:
+        base = compose_chain(chambers, caps)
+        if not base.edges:
+            return base
+    else:
+        # A Zone carrying a leaf has no plain-chain fallback: the chain
+        # cannot pass through it. `compose_chain` is not consulted, and
+        # its notes are replaced by one that says what this Zone is.
+        base = GraphProduct(
+            edges=(), doors={}, keys={}, plugs=(),
+            notes=("chain: %d rooms, %d of them destinations that carry "
+                   "no departure" % (len(chambers), len(leaves)),))
+
+    routes, why = _branch_routes(chambers, caps, required=leaves)
+    unplaced = [c.id for c in leaves
+                if c.id not in {r.destination.id for r in routes}]
+    if unplaced:
+        # REFUSED, never linearised. A leaf with no branch is a room the
+        # chain cannot reach and cannot pass through, and composing the
+        # Zone without it would seal it shut in silence.
+        return GraphProduct(
+            edges=(), doors={c.id: _seal_the_rest(c, {}, caps)
+                             for c in chambers},
+            keys={}, plugs=(),
+            notes=why + ("no graph: destination room(s) %s declare no "
+                         "`exit` and no room before them had a socket to "
+                         "spare; the chain cannot reach them and cannot "
+                         "pass through them" % unplaced,))
     if not routes:
         return GraphProduct(
             *(base.edges, base.doors, base.keys, base.plugs),
