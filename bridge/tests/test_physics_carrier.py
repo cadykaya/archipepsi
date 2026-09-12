@@ -66,8 +66,17 @@ async def _committed(tmp_path, packages=None, *, config=C.DEFAULT_CONFIG):
     engine, _ = await connected_engine(tmp_path, config=config)
     zid, zone, room, ref = await _zone_with_a_shell(engine)
     layout = _place(zone)
+    # APPENDED, NOT SUBSTITUTED. `_place` already offers a package for
+    # every chain the Zone's own content declares -- the engine does,
+    # and the fabricator has to send what the engine sends. Replacing
+    # the list drops those, the declared-versus-offered count disagrees,
+    # and the layout is refused for a reason that has nothing to do with
+    # the package the test is about.
     if packages is not None:
-        layout["packages"] = packages(zone, room, ref)
+        offered = packages(zone, room, ref)
+        layout["packages"] = (list(layout.get("packages") or [])
+                              + list(offered)
+                              if isinstance(offered, list) else offered)
     await engine.handle_layout_result(_ADAPTER.validate_python(
         {"type": "layout_result", "zone_id": zid, "layout": layout}))
     return engine, zid, zone, room, ref
@@ -85,8 +94,9 @@ def test_an_accepted_package_is_persisted_with_the_manifest(tmp_path):
             tmp_path, lambda z, r, c: [_placed(z, r, c, pkg)])
         rec = engine.save.zone_by_id(zid)
         assert rec.manifest is not None, "the layout was refused"
-        carried = rec.manifest["packages"]
-        assert [p["package_id"] for p in carried] == ["counterweight"]
+        carried = [p for p in rec.manifest["packages"]
+                   if p["package_id"] == "counterweight"]
+        assert len(carried) == 1
         assert carried[0]["room_id"] == room
         assert carried[0]["content_ref"] == ref
         assert carried[0]["zone_id"] == zone.zone_id
@@ -96,14 +106,24 @@ def test_an_accepted_package_is_persisted_with_the_manifest(tmp_path):
     run(go())
 
 
-def test_a_zone_with_no_packages_still_commits(tmp_path):
-    """The control. Every Zone today has none, so a rule that refused an
-    empty set would be refusing everything while looking strict."""
+def test_a_zone_with_no_package_of_its_own_still_commits(tmp_path):
+    """The control, and its premise moved under it.
+
+    It used to read "every Zone today has none", which stopped being
+    true the day the engine began certifying `powered_door` chains: the
+    Zone the composer builds now declares one and the layout offers a
+    package for it. The claim worth keeping is the other half — that a
+    Zone carrying no package **the engine was asked to add** still
+    commits, so a rule refusing an empty set is not refusing everything
+    while looking strict.
+    """
     async def go():
         engine, zid, _z, _r, _c = await _committed(tmp_path)
         rec = engine.save.zone_by_id(zid)
         assert rec.manifest is not None
-        assert rec.manifest["packages"] == []
+        added = [p for p in rec.manifest["packages"]
+                 if not p["content_ref"].startswith("feature:")]
+        assert added == []
     run(go())
 
 
@@ -233,8 +253,8 @@ async def _latched_zone(tmp_path):
     # NOT MERELY COMMITTED: carrying the package. Without this the
     # refusal tests below pass on "this Zone accepted no packages at
     # all", which is a different sentence and a weaker claim.
-    assert [p["package_id"] for p in manifest["packages"]] == [
-        "counterweight"]
+    assert "counterweight" in [p["package_id"]
+                              for p in manifest["packages"]]
     await engine.handle_enter_zone(zid)
     return engine, zid
 
@@ -321,8 +341,8 @@ def test_a_latched_consequence_survives_a_reload(tmp_path):
         assert rec.progress.latched == ("counterweight/l0",)
         # And the packages it was validated against came back with it,
         # so the next latch is checked against the same set.
-        assert [p["package_id"] for p in rec.manifest["packages"]] == [
-            "counterweight"]
+        assert "counterweight" in [p["package_id"]
+                                   for p in rec.manifest["packages"]]
         await engine.handle_enter_zone(zid)
         await engine.handle_progress(_fire(zid, "counterweight", "l0"))
         assert engine.save.zone_by_id(zid).progress.latched == (

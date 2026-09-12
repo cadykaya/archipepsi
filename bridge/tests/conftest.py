@@ -14,6 +14,8 @@ if str(BRIDGE_ROOT) not in sys.path:
 from archipepsi_bridge.campaign import CampaignEngine  # noqa: E402
 from archipepsi_bridge.epsilon import FallbackEpsilonProvider  # noqa: E402
 from archipepsi_bridge.mock_ap import MockAPBackend, MockServerState  # noqa: E402
+from archipepsi_bridge import layout as _LAYOUT  # noqa: E402
+from archipepsi_bridge.schemas import physics as _PHYS  # noqa: E402
 
 
 def run(coro):
@@ -171,6 +173,7 @@ def place_layout(zone) -> dict:
         centre[rid] = (BRANCH_X, order.index(rid) * SPACING)
 
     rooms, apertures, anchors, arrival_ok = {}, {}, {}, {}
+    physics: list[dict] = []
     for ch in zone.chambers:
         x, z = centre[ch.id]
         rooms[ch.id] = {
@@ -183,6 +186,10 @@ def place_layout(zone) -> dict:
             # the head's `entry` included: the player arrives 1.2 m
             # inside the first room, so its front wall is a wall.
             apertures[f"{ch.id}/{d.socket_id}"] = d.passable_geometry
+        for i, f in enumerate(
+                [f for f in ch.features
+                 if f.tag in _LAYOUT.CERTIFIED_TAGS]):
+            physics.append(certified_chain(ch.id, i, zone.zone_id))
         if any(d.usage != "SEALED" for d in ch.doors):
             a = f"room:{ch.id}:arrival"
             anchors[a] = [x, 0.0, z]
@@ -227,7 +234,52 @@ def place_layout(zone) -> dict:
         "chain": [corridor_piece([0.0, 0.0, tz], [0.0, 0.0, far])]}
     return {"status": "LAYOUT_OK", "rooms": rooms, "joins": joins,
             "anchors": anchors, "arrival_ok": arrival_ok,
-            "apertures": apertures, "stations": stations}
+            "apertures": apertures, "stations": stations,
+            "packages": physics}
+
+
+def certified_chain(room_id: str, index: int = 0,
+                    zone_id: str = "z1") -> dict:
+    """What the engine sends for one `powered_door` chain it built.
+
+    Fabricated here the way `apertures` is: the engine measures and
+    replays the real thing, and a fixture that could not produce a
+    complete payload would be testing a Zone no build sends.
+    `ChainCertificate` in the Godot lane is what produces it for real.
+    """
+    package = {
+        "package_id": f"{room_id}_pd{index}",
+        "latch_conditions": [{"latch_id": "plate_loaded",
+                              "kind": "WEIGHT_THRESHOLD",
+                              "detail": "plate >= 36.0000"}],
+        "vector_latches": [], "required_latches": [],
+        "on_mandatory_route": False,
+        "setup": {
+            "bodies": [{"body_id": "crate", "mass_kg": 60.0,
+                        "constrained": False}],
+            "solver": {"iterations": 8, "fixed_step_hz": 60.0,
+                       "settle_timeout_s": 0.75},
+            "scene_digest": "0123456789abcdef"},
+        "reference_solution": {
+            "steps": ["push crate 0.0000 1.0000 0.8000", "settle"]},
+    }
+    digest = _PHYS.package_digest(_PHYS.PhysicsPackage(**package))
+    package["evidence"] = {
+        "package_id": package["package_id"],
+        "content_digest": digest,
+        "provider_force_n": _PHYS.ENVELOPE_FORCE_N,
+        "provider_range_m": _PHYS.ENVELOPE_RANGE_M,
+        "provider_mass_kg": _PHYS.ENVELOPE_MASS_KG,
+        "per_run_latched": [["plate_loaded"]] * 3,
+    }
+    return {
+        "package_id": package["package_id"],
+        "zone_id": zone_id,
+        "room_id": room_id,
+        "content_ref": "feature:powered_door",
+        "package": package,
+    }
+
 
 
 async def _branching_zone(engine):

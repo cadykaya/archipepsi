@@ -95,6 +95,14 @@ var _zone_anchors := {}
 
 ## `room_id -> world AABB`, from the committed layout.
 var room_bounds := {}
+## `"<room_id>/<socket_id>" -> world position of that doorway.`
+##
+## The builder already computes this so the lock slab and the door probe
+## cannot disagree about where a socket is; a suite walking a real body
+## from one opening of a junction to another needs the same answer, and
+## deriving it a second time from room bounds is how the third answer
+## starts. Empty on a Zone with no door assignments.
+var door_positions := {}
 ## MONOTONE, and that is what makes a resume safe. A Zone's key set and
 ## its opened-lock set only ever grow, so a reload can never put the
 ## player back behind a door they already opened.
@@ -214,6 +222,7 @@ func setup(zone_dict: Dictionary) -> void:
 	for rid: String in build.get("rooms", {}) as Dictionary:
 		room_bounds[rid] = (build["rooms"] as Dictionary)[rid].get(
 				"bounds", AABB())
+	door_positions = (build.get("doors", {}) as Dictionary).duplicate()
 	for raw: Variant in build.get("plugs", []):
 		var plug: ReturnPlug = raw
 		plug.traversed.connect(_on_plug_traversed)
@@ -375,10 +384,32 @@ func setup(zone_dict: Dictionary) -> void:
 				# with it from a distance is how the two drift apart.
 				_activity_room[runtime.activity_id] = runtime.room_id
 
+		# NOBODY SPAWNS IN A DOORWAY, WHOEVER BUILT THE ROOM.
+		#
+		# `ContentInstantiator._enemy_spawns` pushes an authored room's
+		# spawns clear of its openings, and the procedural builders --
+		# four of them, each laying its own ring of spawn points --
+		# never did: `Vector3(cos(a) * width * 0.3, ...)` clears the
+		# wall by `0.2 * width`, which is 1.2 m in a six-metre room and
+		# smaller than the doorway it has to clear. One enemy standing
+		# in `c002/entry` is what turned `godot-integration` red for
+		# three runs, and that one was in an authored room.
+		#
+		# Applied HERE, in the runtime placement path, because this is
+		# the one place every producer's spawns become a body. A room
+		# whose producer already cleared them is unchanged: the nudge is
+		# a no-op on a point that is already out of every doorway.
+		var mouths: Array = []
+		for plan: Variant in result.get("doors", []):
+			mouths.append((plan as Dictionary).get("position",
+					Vector3.ZERO))
+		var middle: Vector3 = (result["bounds"] as AABB).position \
+				+ (result["bounds"] as AABB).size / 2.0
 		for spawn: Dictionary in result.get("enemy_spawns", []):
 			var enemy := Enemy.create(spawn["archetype"], theme)
 			add_child(enemy)
-			enemy.global_position = xform * spawn["position"]
+			enemy.global_position = xform * ContentInstantiator \
+					.out_of_any_doorway(spawn["position"], mouths, middle)
 			record["enemies"].append(enemy)
 			enemy.enemy_died.connect(_on_enemy_died.bind(record))
 
@@ -622,6 +653,7 @@ func _publish_layout(build: Dictionary) -> void:
 	if not is_inside_tree():
 		return
 	_measure_layout_evidence(build)
+	await _certify_physics(build)
 	send_layout_result(build)
 	await _await_verdict()
 
@@ -689,6 +721,45 @@ func _await_verdict() -> void:
 	push_warning("zone: %s waited %.1fs for a layout verdict"
 			% [zone_id, VERDICT_TIMEOUT])
 	layout_refused.emit(zone_id)
+
+## THE CHAINS THIS ZONE BUILT, CERTIFIED. `AMALGAM_BRIDGE.md` §5.6a.
+##
+## `apertures` says a doorway is a hole; nothing said whether a
+## `powered_door` feature's crate can actually be put on its plate in
+## the room the composer placed it in. Both are failures a Zone can ship
+## with, and neither is visible to the bridge, which has no geometry.
+##
+## **The engine certifies; the composer only asked.** A chamber declares
+## `features: [{tag: "powered_door"}]` and that is intent. What goes on
+## the wire here is a `PhysicsPackage` the engine built and the
+## `ReplayEvidence` of replaying it three times at exactly the
+## manipulation envelope -- the contract's own models, carried in the
+## layout proposal that is already committed with the manifest, so
+## nothing needed a second carrier.
+##
+## The previous version of this was a four-word verdict in a key called
+## `mechanisms` that `layout_to_json` never forwarded. It measured
+## something real and told nobody.
+func _certify_physics(build: Dictionary) -> void:
+	var out: Array = []
+	var rooms: Dictionary = build.get("rooms", {})
+	for raw: Variant in build.get("chambers", []):
+		var entry: Dictionary = raw
+		var chamber: Dictionary = entry["chamber"]
+		var rid := str(chamber.get("id", ""))
+		var placed: Dictionary = rooms.get(rid, {})
+		var bounds: AABB = placed.get("bounds", AABB())
+		# THE ZONE CAN GO AWAY WHILE THIS RUNS. Certifying a chain takes
+		# seconds and `_publish_layout` is not awaited by anything, so a
+		# Zone freed mid-certification leaves this loop measuring nodes
+		# that no longer exist.
+		if not is_inside_tree():
+			return
+		for certified: Variant in await ChainCertificate.of_room(
+				get_tree(), zone_id, chamber, entry["node"] as Node3D,
+				bounds):
+			out.append(certified)
+	build["packages"] = out
 
 ## Aperture polarity and arrival verdicts, measured and attached.
 ##

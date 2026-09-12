@@ -44,11 +44,14 @@ func _run() -> void:
 	await _a_body_out_of_reach_is_refused()
 	await _a_bolted_body_is_refused_and_does_not_move()
 	await _the_same_push_twice_ends_in_the_same_place()
+	await _the_player_shoves_a_crate_with_their_own_body()
+	await _a_player_opens_a_powered_door_by_shoving_a_crate()
 	await _a_solvable_package_latches_in_every_run()
 	await _a_solution_that_misses_latches_in_none()
 	await _a_weight_threshold_needs_the_weight()
 	await _a_latch_this_engine_cannot_observe_is_refused()
 	_the_envelope_friction_keeps_the_contract_s_promise()
+	_the_controller_digest_covers_the_code_and_not_only_the_numbers()
 	_the_verb_set_decides_the_capability()
 	_the_envelope_says_which_minimum_a_host_misses()
 	if failures == 0:
@@ -487,3 +490,197 @@ func _crate_to_region_package() -> Dictionary:
 		"reference_solution": {"steps": ["push crate_a 0 1 2.0",
 				"settle"]},
 	}
+
+# --- the base character, shoving --------------------------------------
+
+## CAN THE CURRENTLY PLAYABLE CHARACTER MOVE A CRATE?
+##
+## Everything else in this file applies force through `Manipulation`,
+## which is the qualification question -- does a HOST meet §29.3.2's
+## envelope. That says nothing about whether a player with no Echo at
+## all can move anything, and the environmental-agency chain rests
+## entirely on their being able to: a crate only the harness can shove
+## is a crate no player can use.
+##
+## `CharacterBody3D` does not push a `RigidBody3D` on its own.
+## `move_and_slide` resolves the contact by sliding the character, so
+## `Player._shove_what_i_walked_into` is what makes this true, and this
+## is where it is measured -- on a flat floor, with nothing else in the
+## room, so a failure is about the shove and not about a Zone.
+func _the_player_shoves_a_crate_with_their_own_body() -> void:
+	var room := _room()
+	var crate := ManipulableBody.create("crate_a", 60.0,
+			Vector3(0.7, 0.7, 0.7))
+	room.add_child(crate)
+	crate.global_position = Vector3(0.0, 0.4, 0.0)
+	await _step(60)
+	var was := crate.global_position
+	var body := Player.create()
+	room.add_child(body)
+	body.global_position = Vector3(0.0, 0.9, -2.0)
+	await _step(10)
+	# Facing +Z, which is how `move_forward` is spent: the player walks
+	# along -Z of its own basis.
+	body.rotation.y = PI
+	Input.action_press("move_forward", 1.0)
+	for _i in 180:
+		await get_tree().physics_frame
+	Input.action_release("move_forward")
+	await _step(60)
+	var moved := Vector2(crate.global_position.x - was.x,
+			crate.global_position.z - was.z).length()
+	_check(moved >= 1.0,
+			"a player walking into a 60 kg crate for three seconds moved "
+			+ "it %.2f m (from %s to %s); the chain rests on this and "
+			% [moved, str(was.snapped(Vector3.ONE * 0.01)),
+				str(crate.global_position.snapped(Vector3.ONE * 0.01))]
+			+ "nothing else in the build can do it")
+	# AND IT WENT THE WAY THEY WERE WALKING, not sideways off a corner.
+	_check(crate.global_position.z - was.z >= moved * 0.8,
+			"and it went forward rather than skidding aside (%.2f m of "
+			% (crate.global_position.z - was.z) + "%.2f m)" % moved)
+	# AND A HEAVY ONE RESISTS, which is what makes the light one a
+	# statement about mass rather than about the code always working.
+	var anvil := ManipulableBody.create("anvil", 900.0,
+			Vector3(0.7, 0.7, 0.7))
+	room.add_child(anvil)
+	anvil.global_position = Vector3(6.0, 0.4, 0.0)
+	await _step(60)
+	var anvil_was := anvil.global_position
+	body.global_position = Vector3(6.0, 0.9, -2.0)
+	body.velocity = Vector3.ZERO
+	await _step(10)
+	Input.action_press("move_forward", 1.0)
+	for _i in 180:
+		await get_tree().physics_frame
+	Input.action_release("move_forward")
+	await _step(60)
+	_check(anvil.global_position.distance_to(anvil_was) < 0.5,
+			"a 900 kg one barely moves (%.2f m), so the shove is a "
+			% anvil.global_position.distance_to(anvil_was)
+			+ "momentum transfer and not a teleport")
+	room.queue_free()
+	await get_tree().process_frame
+
+## THE WHOLE CHAIN, OPENED BY THE PLAYER.
+##
+## `06_THE_AMALGAM.md` §5.4a's requirement, performed rather than
+## simulated: physical crate -> plate -> signal -> powered door. The only
+## input is `move_forward`. Nothing here calls `apply_central_force`,
+## `apply_central_impulse` or `Manipulation.push`; every newton comes
+## from `Player._shove_what_i_walked_into`, which needs no verb, no
+## capability and no Echo.
+##
+## On a flat floor with nothing else in the room, because that is what
+## makes a failure a statement about the chain. Whether ORDINARY
+## GENERATION emits one is `godot-room-contract`'s question and is
+## measured there, on the Zone the fallback actually composes.
+##
+## Three properties: the door is shut and impassable; the player's own
+## walking opens it; and removing the crate leaves the same walk with
+## the door shut.
+func _a_player_opens_a_powered_door_by_shoving_a_crate() -> void:
+	var room := _room()
+	var link := PoweredLink.create("concrete_facility",
+			Vector3(0.0, 0.0, 4.0), 36.0)
+	link.position = Vector3(0.0, 0.0, 0.0)
+	room.add_child(link)
+	var crate := ManipulableBody.create("crate_a", 60.0,
+			Vector3(0.7, 0.7, 0.7))
+	room.add_child(crate)
+	crate.global_position = Vector3(0.0, 0.4, -3.0)
+	await _step(60)
+
+	_check(not link.powered, "the door starts unpowered")
+	_check(not link.doorway_is_clear(_world_space()),
+			"and a capsule does not fit through it")
+
+	var body := await _walk_into_the_crate(room, link)
+	_check(link.mass_on_plate() >= link.threshold_kg,
+			"walking into the crate put %.0f kg on the plate, which asks "
+			% link.mass_on_plate() + "for %.0f" % link.threshold_kg)
+	_check(link.powered, "so the signal went high")
+	_check(link.doorway_is_clear(_world_space()),
+			"and the doorway a capsule could not fit through is open")
+	body.queue_free()
+	await get_tree().process_frame
+
+	# SABOTAGE. Same room, same walk, no crate.
+	crate.queue_free()
+	await get_tree().process_frame
+	await _step(16)
+	_check(not link.powered and not link.doorway_is_clear(_world_space()),
+			"with the crate removed the same walk leaves the door shut "
+			+ "(%.0f kg on the plate), so the crate is the cause"
+			% link.mass_on_plate())
+	var again := await _walk_into_the_crate(room, link)
+	_check(not link.powered,
+			"and walking the same line changes nothing without it")
+	again.queue_free()
+	room.queue_free()
+	await get_tree().process_frame
+
+## A body that walks forward from where the crate starts, along the same
+## line, and stops pushing when the door opens or after four seconds.
+##
+## **The INPUT is the control, not the duration.** Both walks start in
+## the same place, face the same way and hold the same key; what differs
+## is that one of them has a crate in front of it. A player stops
+## shoving when the door opens, and a walk that carried on would push
+## the crate straight off the far side of the plate — which the first
+## version did, in 200 frames, and reported an empty plate.
+func _walk_into_the_crate(room: Node3D, link: PoweredLink) -> Player:
+	var body := Player.create()
+	room.add_child(body)
+	body.global_position = Vector3(0.0, 0.9, -4.4)
+	await _step(10)
+	body.rotation.y = PI
+	Input.action_press("move_forward", 1.0)
+	for _i in 240:
+		await get_tree().physics_frame
+		if link.mass_on_plate() >= link.threshold_kg:
+			break
+	Input.action_release("move_forward")
+	await _step(40)
+	return body
+
+func _world_space() -> PhysicsDirectSpaceState3D:
+	return get_viewport().world_3d.direct_space_state
+
+## WHICH BUILD'S CONTROLLER, and the half a constants list would miss.
+##
+## `AP_CAPABILITY_LOGIC.md` §8b-ANSWERED promised the bridge a
+## `controller_digest` and said what it covers. A promise is not a
+## digest; this is where the claim is measured.
+##
+## **The source of the movement scripts is the half that matters.**
+## Change `EchoRuntime._dash` from adding to velocity to replacing it and
+## every crossing in a movement table moves while every constant stays
+## where it was -- and while the physics package's `scene_digest`, which
+## describes the platform and not the controller, stays byte-identical.
+## So this asserts the script bodies are actually in it, against the
+## files themselves, rather than trusting that a line naming them runs.
+func _the_controller_digest_covers_the_code_and_not_only_the_numbers() \
+		-> void:
+	var text := ControllerDigest.text()
+	var digest := ControllerDigest.digest()
+	_check(digest.length() == 16 and digest == digest.to_lower(),
+			"the controller digest is sixteen lowercase hex characters "
+			+ "(%s)" % digest)
+	_check(digest == ControllerDigest.digest(),
+			"and it is the same twice in one build, which is what 'one "
+			+ "per build' means")
+	for path: String in ControllerDigest.MOVEMENT_SCRIPTS:
+		var source := FileAccess.get_file_as_string(path)
+		_check(source != "",
+				"'%s' is named as a movement script and could not be "
+				% path + "read; a digest over a missing file is a "
+				+ "constant")
+		_check(text.contains(source.sha256_text().substr(0, 16)),
+				"the digest carries the CONTENT of '%s', so changing "
+				% path + "what it does invalidates a measurement even "
+				+ "when no constant moves")
+	# AND IT IS NOT THE SCENE DIGEST. Different question, different
+	# answer; §8b says so and this is the assertion behind it.
+	_check(text.contains("WALK_SPEED") and text.contains("floor_max_angle"),
+			"it covers the controller's own numbers: %s" % text)

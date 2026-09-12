@@ -107,7 +107,7 @@ static func _unreplayable(package: Dictionary) -> String:
 static func _one_run(tree: SceneTree, package: PhysicsPackage,
 		stage: Stage) -> Variant:
 	for spec: PhysicsPackage.BodySpec in package.setup.bodies:
-		if not stage.bodies.has(spec.body_id):
+		if not _standing(stage, spec.body_id):
 			return ("the stage builds no body '%s', which the setup "
 					% spec.body_id + "declares")
 	var latched := {}
@@ -133,6 +133,16 @@ static func _one_run(tree: SceneTree, package: PhysicsPackage,
 						float(parts[2]), 0.0, float(parts[3])) * 10.0
 				var frames := _frames(float(parts[4]), package)
 				for _i in frames:
+					# CHECKED EVERY FRAME, because the body may not be
+					# the harness's. `ChainCertificate` replays the
+					# ROOM'S OWN crate, so a Zone freed mid-run takes
+					# the body with it -- and a run whose body has
+					# stopped existing is the refusal this file already
+					# has a sentence for, not a crash.
+					if not _standing(stage, parts[1]):
+						return ("the stage stopped building body '%s' "
+								% parts[1] + "while the solution was "
+								+ "still running")
 					# THE HOST FOLLOWS THE CRATE, two metres behind it
 					# and a little above, recomputed each frame -- which
 					# is what a player pushing something does. A host
@@ -189,6 +199,8 @@ static func _holds(latch: PhysicsPackage.LatchCondition,
 			# `<body_id> in <region_id>`
 			if parts.size() != 3 or parts[1] != "in":
 				return false
+			if not _standing(stage, parts[0]):
+				return false
 			var body: ManipulableBody = stage.bodies.get(parts[0])
 			var region: Variant = stage.regions.get(parts[2])
 			if body == null or typeof(region) != TYPE_AABB:
@@ -203,6 +215,8 @@ static func _holds(latch: PhysicsPackage.LatchCondition,
 				return false
 			var carried := 0.0
 			for id: String in stage.bodies:
+				if not _standing(stage, id):
+					continue
 				var body: ManipulableBody = stage.bodies[id]
 				if (plate as AABB).has_point(body.global_position):
 					carried += body.mass
@@ -211,9 +225,23 @@ static func _holds(latch: PhysicsPackage.LatchCondition,
 
 static func _all_at_rest(stage: Stage) -> bool:
 	for id: String in stage.bodies:
+		if not _standing(stage, id):
+			continue
 		if not (stage.bodies[id] as ManipulableBody).at_rest():
 			return false
 	return true
+
+## Does the stage still have this body, and does it still exist?
+##
+## **UNTYPED, and that is the whole point.** A `ManipulableBody`-typed
+## parameter is checked before the body of the function runs, and a
+## freed object fails that check -- so a guard written to survive a
+## freed body would raise on one. `is_instance_valid` first, cast after.
+static func _standing(stage: Stage, id: String) -> bool:
+	if not stage.bodies.has(id):
+		return false
+	var raw: Variant = stage.bodies[id]
+	return is_instance_valid(raw) and (raw as ManipulableBody) != null
 
 ## Seconds to physics frames, at the package's OWN fixed step. A replay
 ## that used the project's tick rate would be a different experiment from

@@ -695,7 +695,7 @@ static func _from_authored_scene(entry: Dictionary, chamber: Dictionary,
 		# from where the rooms join. The connector is a transform on the
 		# envelope and may sit outside it; this is the interior region
 		# the arrival has to be safe in.
-		"player_entry": _player_entry(entry),
+		"player_entry": _player_entry(entry, chamber),
 		"exit_offset": _exit_offset(entry, size, chamber),
 		"bounds": AABB(
 			Vector3(-size.x / 2.0, -FLOOR_ALLOWANCE, 0.0),
@@ -1009,17 +1009,41 @@ static func _entry_offset(entry: Dictionary,
 ## since S12 and was read by NOTHING -- a vocabulary word with no
 ## consumer, which is how three rooms came to declare an arrival region
 ## that no probe ever looked at.
-static func _player_entry(entry: Dictionary) -> Dictionary:
+## **RESOLVED PER ARRIVING SOCKET** (`09_ROOM_CONTRACT.md` §11.3).
+## The restriction this lifts was real and was the engine's: a room had
+## ONE arrival region however many openings it had, so a four-door
+## junction entered from the side vouched for the space in front of its
+## front door. A shell names a region after the socket it belongs to and
+## that one is used; a shell with a single unnamed region is every shell
+## that exists today and is unchanged.
+##
+## Which socket the chain arrives by is the composer's answer, carried
+## on `arrive_edge` and resolved through `socket_for_edge` -- the same
+## lookup `_entry_offset` uses, so the region and the attachment point
+## cannot come from different doors.
+static func _player_entry(entry: Dictionary,
+		chamber: Dictionary = {}) -> Dictionary:
+	var arriving := ""
+	var assigned := socket_for_edge(entry, chamber, "arrive_edge")
+	if not assigned.is_empty():
+		arriving = str(assigned.get("name", ""))
+	var fallback := {}
 	for volume: Variant in entry.get("volumes", []):
 		if typeof(volume) != TYPE_DICTIONARY:
 			continue
 		var v: Dictionary = volume
-		if str(v.get("kind", "")) == "player_entry":
-			return {
-				"position": _vector(v.get("center", []), Vector3.ZERO),
-				"extent": _vector(v.get("size", []), Vector3.ONE),
-			}
-	return {}
+		if str(v.get("kind", "")) != "player_entry":
+			continue
+		var region := {
+			"position": _vector(v.get("center", []), Vector3.ZERO),
+			"extent": _vector(v.get("size", []), Vector3.ONE),
+		}
+		var named := str(v.get("name", ""))
+		if named != "" and arriving != "" and named == arriving:
+			return region
+		if fallback.is_empty():
+			fallback = region
+	return fallback
 
 static func _exit_offset(entry: Dictionary, size: Vector3,
 		chamber: Dictionary = {}) -> Vector3:
@@ -1221,7 +1245,7 @@ static func _enemy_spawns(entry: Dictionary, chamber: Dictionary) -> Array:
 				fposmod(float(index) * 2.3, maxf(extent.z, 0.01))
 						- extent.z / 2.0)
 			spawns.append({"archetype": group["archetype"],
-					"position": _out_of_any_doorway(at, doorways, middle)})
+					"position": out_of_any_doorway(at, doorways, middle)})
 			index += 1
 	return spawns
 
@@ -1264,7 +1288,7 @@ static func _fallback_spawn_zone(entry: Dictionary,
 ## middle of the room, which is a direction that always exists because a
 ## doorway is cut into a wall. Bounded, because two doorways close
 ## together could otherwise pass a body back and forth.
-static func _out_of_any_doorway(at: Vector3, doorways: Array,
+static func out_of_any_doorway(at: Vector3, doorways: Array,
 		middle: Vector3) -> Vector3:
 	var here := at
 	for _tries in 8:

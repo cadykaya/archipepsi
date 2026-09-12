@@ -673,6 +673,13 @@ FEATURE_MIN_WIDTH = {
     "wind_volume": 7.9,
     "bounce_pad": 7.1,
     "moving_platform": 7.9,
+    # The chain needs a run, and it is laid along DEPTH. Deliberately
+    # equal to the widest tag that already existed rather than larger: a
+    # wider one widens every corridor the fallback hangs features on, and
+    # at 9.5 it did -- `played_zone` stopped composing for want of space
+    # at its twenty-second room. Optional content that costs the Zone its
+    # layout is not optional.
+    "powered_door": 7.9,
 }
 
 #: The narrowest chamber that can host ANY feature — the cheapest thing a

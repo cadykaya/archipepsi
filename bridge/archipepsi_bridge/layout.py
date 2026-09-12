@@ -716,7 +716,71 @@ def _packages(c: "_Check", zone, result: dict) -> tuple:
         for err in _PH.check_physics_content(
                 [pp.package for pp in placed], local_keys=len(keys)):
             c.fail(err)
+
+    _certified_features(c, zone, placed)
     return tuple(placed)
+
+
+# Affordance tags whose construction is a PHYSICAL CLAIM rather than a
+# decoration: the engine must certify one it built, and the bridge
+# refuses a Zone that declares one and reports nothing about it. It
+# grows as the engine learns to build more; a tag outside it is a mesh
+# and a note and needs no replay.
+CERTIFIED_TAGS = frozenset({"powered_door"})
+
+
+def _certified_features(c: "_Check", zone, placed) -> None:
+    """The three things `check_physics_content` deliberately does not ask.
+
+    It skips every package that is not load-bearing, and correctly: its
+    subject is progression guarantees, and a `powered_door` chain guards
+    a note. So on its own it would accept every chain in silence — the
+    recurring defect in this project, a measurement that exists, is
+    correct, and is never handed the case that fails it.
+
+    1. **Unreported is refused**, exactly as an unreported aperture is.
+       A room that declares a `powered_door` and offers no package has
+       either failed to build it and not said so, or built it and not
+       replayed it.
+    2. **Its evidence is checked anyway.** `evidence_fault` is the same
+       function `check_physics_content` calls, asked here of the
+       packages it skips — one implementation, two callers.
+    3. **§13.2: a feature may never lie on the mandatory path.** A
+       package realizing a `feature:` ref that claims a route depends on
+       it is claiming the opposite of what the affordance contract
+       promises, whatever its evidence says.
+    """
+    reported: dict[tuple[str, str], int] = {}
+    for pp in placed:
+        kind, _, name = pp.content_ref.partition(":")
+        if kind != "feature" or name not in CERTIFIED_TAGS:
+            continue
+        reported[(pp.room_id, name)] = reported.get(
+            (pp.room_id, name), 0) + 1
+        where = f"chain '{pp.package_id}' in room '{pp.room_id}'"
+        if pp.package.load_bearing:
+            c.fail(f"{where} realizes the optional affordance "
+                   f"'{name}' and its package is load-bearing; §13.2 "
+                   "forbids a feature on the mandatory path")
+        if pp.package.evidence is None:
+            c.fail(f"{where} was built and carries no replay evidence; "
+                   "a chain nobody has replayed is a claim, not a "
+                   "certificate")
+            continue
+        fault = _PH.evidence_fault(pp.package, pp.package.evidence)
+        if fault:
+            c.fail(f"{where}: {fault}")
+
+    for ch in zone.chambers:
+        for tag in CERTIFIED_TAGS:
+            want = sum(1 for f in ch.features if f.tag == tag)
+            got = reported.get((ch.id, tag), 0)
+            if got != want:
+                c.fail(f"room '{ch.id}' declares {want} '{tag}' "
+                       f"chain(s) the engine must certify and the "
+                       f"layout offers {got}; the inverted probe cannot "
+                       "be skipped for a feature the layout never "
+                       "mentions")
 
 
 def _manifest(zone, result: dict, positions: dict, placed=()) -> dict:

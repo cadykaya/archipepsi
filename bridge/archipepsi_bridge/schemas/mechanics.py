@@ -248,6 +248,18 @@ AFFORDANCE_REQUIREMENTS: dict[str, dict[str, tuple[str, ...]]] = {
     # carries anyone. Requiring nothing is a real entry, not an omission.
     "bounce_pad": {},
     "moving_platform": {},
+    # AND THE CRATE IS SHOVED BY A BODY, so this requires nothing either.
+    #
+    # The temptation is to write `{"capabilities": ("manipulate",)}` here
+    # and it would be wrong twice over. `manipulate` is §29.3.1's
+    # question -- does a HOST qualify to be relied on by content authored
+    # at §29.3.2's 700 N / 20 m / 120 kg envelope -- and the chain does
+    # not need a host at all: the player walks into the crate and their
+    # own momentum moves it, which every character can do from the first
+    # Zone. Requiring a capability here would make a note behind a door
+    # into a gate, and `manipulate` is deliberately not in the
+    # capability vocabulary precisely so nothing can declare one.
+    "powered_door": {},
 }
 
 

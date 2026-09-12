@@ -364,6 +364,16 @@ to velocity to replacing it and every reach in the table moves while the
 scene digest of the measurement platform stays byte-identical. So the
 expected setup identity is its own value.
 
+**DELIVERED 2026-09-12.** `ControllerDigest`
+(`godot/scripts/gameplay/controller_digest.gd`) computes it and
+`layout_to_json` sends it as `layout_result.layout["controller_digest"]`
+on every Zone entry. `godot-physics` asserts the script bodies are
+actually in it, against the files themselves — a digest that named the
+movement scripts in a comment and hashed only constants would pass every
+test a constants list can write. **Qualification is still unavailable**:
+this is one half, the measured band is the other, and §8c's consumer
+gets no verdict from one of them.
+
 **1. What produces it: a `controller_digest`, engine-computed.** Same
 reason `scene_digest` is engine-computed — the bridge has no controller
 and no physics frame — and the bridge folds it without looking inside,

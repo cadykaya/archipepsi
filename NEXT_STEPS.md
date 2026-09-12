@@ -1,5 +1,201 @@
 # Archipepsi — build state
 
+## 2026-09-13 (later) — Dess's carrier, five Zones, and the theme pack
+
+Bridge lane merged at `0ec9e8e`, art lane at `19e271b`.
+
+### The package travels on the carrier the bridge built
+
+Dess landed `PlacedPackage` while this lane was building a parallel
+`layout["physics"]` key. Hers binds the package to the Zone, the room
+and the declared content it realizes, and commits it into the manifest
+under the same digest; the parallel key did none of that. So it is gone
+rather than kept beside hers: `ChainCertificate` emits
+`layout["packages"]`, with the `ReplayEvidence` inside the package where
+`PhysicsPackage` already has a field for it.
+
+**Three checks were added to her `_packages`, and the reason is worth
+keeping.** `check_physics_content` skips every package that is not
+load-bearing — correctly, since its subject is progression guarantees —
+and a `powered_door` chain guards a note. So on its own it would have
+accepted every chain in silence, which is this project's recurring
+defect in its purest form. `_certified_features` asks the three it
+skips: the inverted probe (a declared chain with no package offered),
+the evidence gate (the same `evidence_fault`, asked of the packages it
+passes over), and §13.2 (an optional feature's package may not be
+load-bearing).
+
+A chain the engine could not build or could not replay is **not
+offered**, and the absence is what refuses the layout. Warned loudly
+engine-side, refused bridge-side by the count. Dropping it quietly would
+build the room and leave the mechanism inert.
+
+### Five ordinary Zones, and no preferred shape
+
+`bridge/tools/dump_zones.py` writes a run of consecutive Zones from a
+real campaign; `make zone-fixtures` regenerates them and
+`make godot-graphs` walks them. Each is composed, its shape reported,
+and the real `Player` sent into a side destination and back.
+
+What the composer makes today, measured rather than assumed:
+
+| | rooms | joined edges | degrees | junctions | dead ends |
+|---|---|---|---|---|---|
+| zone_01–03 | 23 | 22 | 1×7, 2×12, 3×3, 4×1 | 4 | 7 |
+| zone_04 | 20 | 19 | 1×7, 2×9, 3×3, 4×1 | 4 | 7 |
+| zone_05 | 20 | 19 | 1×8, 2×7, 3×4, 4×1 | 5 | 8 |
+
+**No topology is preferred and none is ruled out.** Hub-and-spoke,
+shallow branches, deep nesting, several branches off one junction, dead
+ends — all legal. Nothing in this lane scores one against another; what
+is measured is whether the shape the composer chose can be built and
+walked.
+
+### The theme pack binds
+
+`ThemePack` answers `(theme, role)` with one fallback hop, checks
+`sha256_16` where the source bytes are readable, drives `uv1_scale` from
+`covers_m`, and never binds a universal role. `ThemeMaterials._material`
+asks it and falls back to `ProcTextures`. A real built room: **22
+surfaces painted from Arty's export, 3 from the procedural fallback.**
+
+**The hazard contradiction, reconciled.** The descriptor said `hazard`
+was required AND that a pack must not paint its own;
+`ASSET_INVENTORY.md` says why the treatment is shared. Satisfying
+clause 3 meant breaking the rule clause 3 existed to protect. The split:
+`floor`, `wall`, `trim`, `accent` need authored pixels per theme;
+`hazard` is required at runtime and resolved from the shared material in
+every theme. Nothing is removed from the runtime; a per-pack obligation
+that could only be met by making the shared signal six signals is.
+Arty owns the descriptor wording. Four controls run beside the binding
+proof — a required role removed, a digest that does not match, a role
+with no fallback, and a pack that paints the universal role.
+
+### Still open
+
+* Art's half of §11.3: a `player_entry` volume named per opening.
+* The three Batch 044 junction shells are `review: "pending"`, not
+  exported to `godot/content/`, and not selectable. **The owner reviews
+  them; this lane does not write `pass`**, and a four-connection asset
+  is not yet a four-neighbour room in a generated Zone.
+* `latch_fired` from the engine when a player satisfies a declared
+  latch. The chain's consequence today is the local reward behind the
+  door, on the validated path every reward takes.
+* The Span's two basin climbs are completed only by jumping (13 times
+  each). Not silently fixed by raising the global step height; the
+  bounded engine-or-geometry decision is a design call, and Arty owns
+  any geometry half of it.
+
+
+## 2026-09-13 — the chain certifies, and the junction is walked
+
+`claude/archipepsi-echoes-continuation-b1adno`, with the bridge lane
+merged at `603e876` and the art lane at `19e271b`. Read
+`docs/AGENT_FRONTIER.md` first; this is the longer version.
+
+### The environmental-agency chain, closed
+
+A physical crate, a plate, a live signal, a powered door, and the
+**currently playable character** performing it. Three things had to be
+true and none of them was:
+
+* **A body has to be able to move a body.** `CharacterBody3D` does not
+  push a `RigidBody3D`: `move_and_slide` resolves the contact by sliding
+  the character. `Player._shove_what_i_walked_into` applies the impulse,
+  and it took three attempts to find the right quantity — `velocity`
+  read after the slide is zero by construction, the velocity carried
+  into the slide is near-zero once the player is pressed against the
+  crate, and `_walk_intent` (direction × speed) is the one that stays
+  constant while leaning. 60 kg moves 7.10 m in three seconds; 900 kg
+  moves 0.00 m.
+* **The chain has to be in a Zone ordinary generation emits.**
+  `powered_door` is the eighth `AffordanceTag`, base-kit, §13.2-bound so
+  it can never lie on the mandatory path or host a Check. The fallback
+  composer declares one per Zone and `AffordanceFeatures` builds it.
+* **The outcome has to stop when a link is removed.** `godot-physics`
+  walks the same line with the crate gone and the door stays shut.
+
+The proof is split on purpose: `godot-physics` proves the
+player-performed chain on a flat floor with no force call by the test,
+`godot-room-contract` proves ordinary generation emits it and the built
+chain gates. Steering a crude walker down a corridor it shares with a
+crate produced findings about the steering, four times.
+
+### The carrier, reconciled rather than added
+
+`ZoneController._measure_mechanisms` measured the same physical fact and
+put a four-word verdict in `build["mechanisms"]` — a key
+`layout_to_json` never forwarded. `ChainCertificate` replaces it with
+the contract's own models on the carrier that already reaches the
+bridge: `layout_result.layout["physics"]`, one entry per declared
+feature, each a `PhysicsPackage` and the `ReplayEvidence` of replaying
+it three times at exactly the manipulation envelope.
+
+**It replays in the room, on the real chain** — the room's own crate and
+plate, reset between runs, put back afterwards. A reconstruction on a
+clean floor agrees with the generator by construction; the failure worth
+catching is a pylon between the crate and the plate, and the suite drops
+a slab there and requires the certificate to stop.
+
+`layout.validate` is the acceptance consumer. `physics.evidence_fault`
+is one function with two callers so the question cannot grow two
+answers — `check_physics_content` could not have done this alone: it
+skips packages that are not load-bearing, and these deliberately are
+not. Not written into the manifest: a manifest replays byte-identically
+forever and a scene digest is re-measured every entry.
+`AMALGAM_BRIDGE.md` §5.6a.
+
+### Branching, as a journey
+
+Ordinary generation now produces **four junctions and eight rooms off
+the spine**, and the first Zone with two branches off one junction would
+not compose. The branch mouth came from `ChamberBuilders.socket_placed`
+— the procedural socket table — and `c008` answered a 17.9 m chamber
+with a 41 × 60 m authored shell, so the mouth landed inside the junction
+and every route failed at the first connector.
+`ZoneBuilder.branch_mouth` reads the room's own door plan now, whichever
+producer wrote it, and derives outward from the room's envelope rather
+than from the name `side_left`. `09_ROOM_CONTRACT.md` §11.8.
+
+The real `Player` then walks it: across the interior of a
+four-neighbour junction between the two openings that matter, into a
+side destination that is not the next room on the route, and back out.
+The branching test that used to pin one junction and one branch room now
+counts the structure — a test that names `c020` fails on the day the
+composer makes four branches, for a reason that is not about branching.
+
+### Two restrictions lifted, one handed back
+
+* §11.4 (branch mouth) — **lifted**, above.
+* §11.3 (arrival per socket) — **the engine half is lifted**:
+  `_player_entry` resolves by the socket the chain arrives through,
+  using `socket_for_edge(entry, chamber, "arrive_edge")`, the same
+  lookup `_entry_offset` uses. Art's half is naming each `player_entry`
+  volume after the opening it serves, and is the only half left.
+* The doorway-spawn nudge moved to the **runtime placement path**, where
+  every producer's spawns become a body. The four procedural builders
+  never had it.
+
+### Arty's Span repair, with the actual Player
+
+The art lane's evidence is a capsule and says so. The real `Player`
+walks the repaired routes now. The mandatory deck route walks; the two
+basin climbs are completed **only by jumping**, which is a finding about
+a sixteen-riser staircase declared `kind: "walk"` and not a defect this
+batch fixes — `move_and_slide` has no step-up anywhere and that is the
+law. `KNOWN_JUMPED_WALKS` records it so the day it becomes a walk the
+test says the list is stale.
+
+### Not done, and named
+
+* The three Batch 044 junction shells (`shell_junction_triad`,
+  `shell_junction_cross`, `shell_bay_terminus`) are `review: "pending"`,
+  are not exported to `godot/content/`, and are not selectable. The
+  owner reviews them; this lane does not write `pass`.
+* Art's half of §11.3.
+* The fun verdict is a human's.
+
+
 ## 2026-09-12 (later) — the merged Zone opens, and the physics has a runtime
 
 `claude/archipepsi-echoes-continuation-b1adno`, from the art merge

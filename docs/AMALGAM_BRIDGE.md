@@ -910,6 +910,30 @@ untouched.
 
 ### 5.5a-bis The other half of the restart — **done, on both sides**
 
+**DONE 2026-09-12, and one line of it was on the bridge's side.** Both
+consumer changes below landed; `make godot-reload` presses the real
+portal in `ZONE_DORMANT` and lands back in the Zone it left.
+
+The line the engine lane had to touch in `protocol.py`, flagged here
+because it is the bridge's file: **`portal_enabled` was reading a second
+list.** `ZONE_ENTER_MODES` gained `ZONE_DORMANT`; `ZONE_ENTERABLE_MODES`
+— the same question, under a different name — did not, and
+`portal_enabled` reads that one. So the portal showed the mode's prompt
+and refused to fire: a way back into a Zone that is wired, labelled and
+dead, and no test on either side could see it because each lane's half
+was correct.
+
+**Settled: one name, not an alias.** `ZONE_ENTER_MODES` is gone rather
+than aliased — an alias is still two names, a reader who greps the dead
+one finds a definition and may add to it, and the aliasing only holds
+while nobody rebinds either. The surviving question is "what the portal
+can enter without Archipelago", `portal_enabled` is its consumer, and
+the engine's `HubController` spells it the same way.
+
+Two places, and deliberately small. **Neither lane should edit the other
+side of this seam** — this was the proposal, and the engine lane took
+it.
+
 The manifest survived a restart and the progress did not: `main.gd` read
 keys, locks, stations and the resume point out of its own in-memory
 dictionaries, which a new process starts empty. Same rooms, every key
@@ -1172,6 +1196,55 @@ nothing about how far a dash carries a body.
 > the accepted package declares is satisfied. Two things are NOT
 > requested: any field on the Zone, and any second carrier for what a
 > player has latched.
+
+
+### 5.6a-bis ANSWERED by the engine lane, 2026-09-12: it emits them
+
+**What the engine owes is paid.** `ChainCertificate`
+(`godot/scripts/gameplay/chain_certificate.gd`) builds a
+`PhysicsPackage` for every `powered_door` a room declares, replays it
+three times at exactly the manipulation envelope, and
+`layout_to_json` sends the result as `layout["packages"]` — the
+`PlacedPackage` wrapper above, `content_ref: "feature:powered_door"`,
+with the `ReplayEvidence` inside the package where the model already
+has a field for it. No second carrier, and nothing on the Zone.
+
+**It replays IN THE ROOM, on the real chain.** The room's own crate and
+its own plate, reset between the three runs and put back afterwards. A
+reconstruction on a clean floor agrees with the generator by
+construction; the failure worth catching is the one where the composer
+put something between the crate and the plate, and
+`godot-room-contract` drops a slab there and requires the certificate
+to stop. The latch is a `WEIGHT_THRESHOLD` naming the plate and its
+kilograms, because that is what `PoweredLink` reads every physics
+frame. `setup.scene_digest` is the real `SceneDigest` over the room,
+taken after the crate has settled and been zeroed so the setup is the
+same setup every time. It costs about five seconds of Zone-entry time
+per chain, inside the hold the player is already under.
+
+**And three checks were added to `_packages`, because
+`check_physics_content` deliberately skips these.** Its subject is
+progression guarantees, so it passes over every package that is not
+load-bearing — and a chain guarding a note is not. On its own it would
+have accepted every chain in silence, which is this project's recurring
+defect: a measurement that exists, is correct, and is never handed the
+case that fails it. `_certified_features` asks the three it skips:
+
+| check | why |
+|---|---|
+| one package per declared `powered_door` | the inverted probe: a room that declares a chain and offers nothing has either failed to build it and not said so, or built it and not replayed it |
+| its evidence passes `evidence_fault` | the same function `check_physics_content` calls, asked of the packages it skips — one implementation, two callers |
+| the package is not load-bearing | §13.2 forbids a feature on the mandatory path; a package claiming a route depends on it claims the opposite of what the affordance contract promises |
+
+**A chain the engine could not build or could not replay is not
+offered, and the absence is what refuses the layout.** Warned loudly
+engine-side, refused bridge-side by the count. Dropping it quietly
+would build the room and leave the mechanism inert — the downgrade this
+carrier exists to make impossible.
+
+**Still owed by this lane:** `latch_fired` when a player satisfies a
+declared latch. The chain's consequence today is the local reward
+behind the door, which rides the validated path every reward does.
 
 
 ## 6. What remains in this lane

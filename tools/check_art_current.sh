@@ -98,6 +98,15 @@ python3 tools/content/verify_theme_set.py >/dev/null || \
 
     python3 tools/content/verify_theme_set.py"
 
+# The exported theme pack against the set it came from, and against the
+# digests Production's loader refuses on. Gap 3's shipping half.
+python3 tools/content/verify_theme_export.py >/dev/null || \
+  fail "verify-theme-export: godot/content/theme/ is stale, a digest no
+    longer matches its descriptor row, or a sidecar is missing or is
+    importing without mipmaps. Re-export and re-import:
+
+    python3 tools/export_content_pack.py && tools/import_godot_content.sh"
+
 # The Batch 043 candidates' declared geometry against what was exported.
 python3 tools/content/verify_exported_geometry.py >/dev/null || \
   fail "verify-geometry: a declared runtime size or attachment point
@@ -213,7 +222,7 @@ SCRIPTS="build_materials build_architecture build_props
   build_epsilon_states build_forge build_checkpoint build_pickups
   build_interaction_kit build_secrets build_enemy_roles build_zone_keys
   build_viewmodel build_gates build_decoys build_physics_props
-  build_machinery build_wave1_repair_overlay"
+  build_machinery build_wave1_repair_overlay build_junctions"
 
 # Unquoted on purpose: word-splitting collapses the list's line breaks, so a
 # name that happens to sit at the end of a line is still delimited by spaces.

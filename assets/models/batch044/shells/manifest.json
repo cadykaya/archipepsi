@@ -1,0 +1,732 @@
+{
+  "shell_bay_terminus": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -9.0,
+        -1.0,
+        0.0
+      ],
+      [
+        18.0,
+        7.0,
+        22.0
+      ]
+    ],
+    "check_anchor": null,
+    "colliders": 43,
+    "enemy_anchors": [],
+    "exit_offset": [
+      0.0,
+      0.0,
+      22.0
+    ],
+    "exit_yaw": 0.0,
+    "interior": [
+      18.0,
+      6.0,
+      22.0
+    ],
+    "path": "batch044/shells/shell_bay_terminus.glb",
+    "shape_tags": [
+      "destination",
+      "dead_end"
+    ],
+    "size": [
+      18.0,
+      22.0,
+      7.66
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_class": "small",
+    "size_godot": [
+      18.0,
+      7.66,
+      22.0
+    ],
+    "sockets": [
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "entry",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "surface_id": "approach_w",
+        "width": 2.4,
+        "yaw": 180.0
+      },
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "branch_east",
+        "position": [
+          9.0,
+          0.0,
+          16.0
+        ],
+        "surface_id": "chamber_e",
+        "width": 2.4,
+        "yaw": 90.0
+      },
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "branch_west",
+        "position": [
+          -9.0,
+          0.0,
+          16.0
+        ],
+        "surface_id": "chamber_w",
+        "width": 2.4,
+        "yaw": 270.0
+      }
+    ],
+    "surfaces": [
+      {
+        "center": [
+          -2.1,
+          0.0,
+          5.8
+        ],
+        "extent": [
+          3.8,
+          10.4
+        ],
+        "name": "approach_w"
+      },
+      {
+        "center": [
+          2.1,
+          0.0,
+          5.8
+        ],
+        "extent": [
+          3.8,
+          10.4
+        ],
+        "name": "approach_e"
+      },
+      {
+        "center": [
+          -4.3,
+          0.0,
+          16.2
+        ],
+        "extent": [
+          8.2,
+          10.4
+        ],
+        "name": "chamber_w"
+      },
+      {
+        "center": [
+          4.3,
+          0.0,
+          16.2
+        ],
+        "extent": [
+          8.2,
+          10.4
+        ],
+        "name": "chamber_e"
+      }
+    ],
+    "texel_density": 32.0,
+    "total_rise": 0.0,
+    "traversal": [],
+    "triangles": 516,
+    "volumes": [
+      {
+        "center": [
+          0.0,
+          1.0,
+          3.0
+        ],
+        "kind": "player_entry",
+        "name": "arrival",
+        "size": [
+          2.4,
+          2.0,
+          2.4
+        ]
+      },
+      {
+        "center": [
+          0.0,
+          1.0,
+          14.5
+        ],
+        "kind": "enemy_spawn",
+        "name": "fight",
+        "size": [
+          12.0,
+          2.0,
+          6.0
+        ]
+      },
+      {
+        "center": [
+          0.0,
+          1.0,
+          18.6
+        ],
+        "kind": "objective",
+        "name": "prize",
+        "size": [
+          6.0,
+          2.2,
+          4.0
+        ]
+      }
+    ]
+  },
+  "shell_junction_cross": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -15.0,
+        -1.0,
+        0.0
+      ],
+      [
+        30.0,
+        9.0,
+        30.0
+      ]
+    ],
+    "check_anchor": null,
+    "colliders": 70,
+    "enemy_anchors": [],
+    "exit_offset": [
+      0.0,
+      0.0,
+      30.0
+    ],
+    "exit_yaw": 0.0,
+    "interior": [
+      30.0,
+      8.0,
+      30.0
+    ],
+    "path": "batch044/shells/shell_junction_cross.glb",
+    "shape_tags": [
+      "junction",
+      "branching"
+    ],
+    "size": [
+      30.0,
+      30.0,
+      9.66
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_class": "medium",
+    "size_godot": [
+      30.0,
+      9.66,
+      30.0
+    ],
+    "sockets": [
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "entry",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "surface_id": "arm_s_w",
+        "width": 2.4,
+        "yaw": 180.0
+      },
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "exit",
+        "position": [
+          0.0,
+          0.0,
+          30.0
+        ],
+        "surface_id": "arm_n_w",
+        "width": 2.4,
+        "yaw": 0.0
+      },
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "branch_east",
+        "position": [
+          15.0,
+          0.0,
+          15.0
+        ],
+        "surface_id": "arm_e_s",
+        "width": 2.4,
+        "yaw": 90.0
+      },
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "branch_west",
+        "position": [
+          -15.0,
+          0.0,
+          15.0
+        ],
+        "surface_id": "arm_w_s",
+        "width": 2.4,
+        "yaw": 270.0
+      }
+    ],
+    "surfaces": [
+      {
+        "center": [
+          0.0,
+          0.0,
+          8.5
+        ],
+        "extent": [
+          18.0,
+          5.0
+        ],
+        "name": "amb_south"
+      },
+      {
+        "center": [
+          0.0,
+          0.0,
+          21.5
+        ],
+        "extent": [
+          18.0,
+          5.0
+        ],
+        "name": "amb_north"
+      },
+      {
+        "center": [
+          -6.5,
+          0.0,
+          15.0
+        ],
+        "extent": [
+          5.0,
+          8.0
+        ],
+        "name": "amb_west"
+      },
+      {
+        "center": [
+          6.5,
+          0.0,
+          15.0
+        ],
+        "extent": [
+          5.0,
+          8.0
+        ],
+        "name": "amb_east"
+      },
+      {
+        "center": [
+          -2.1,
+          0.0,
+          3.3
+        ],
+        "extent": [
+          3.8,
+          5.4
+        ],
+        "name": "arm_s_w"
+      },
+      {
+        "center": [
+          2.1,
+          0.0,
+          3.3
+        ],
+        "extent": [
+          3.8,
+          5.4
+        ],
+        "name": "arm_s_e"
+      },
+      {
+        "center": [
+          -2.1,
+          0.0,
+          26.7
+        ],
+        "extent": [
+          3.8,
+          5.4
+        ],
+        "name": "arm_n_w"
+      },
+      {
+        "center": [
+          2.1,
+          0.0,
+          26.7
+        ],
+        "extent": [
+          3.8,
+          5.4
+        ],
+        "name": "arm_n_e"
+      },
+      {
+        "center": [
+          -11.7,
+          0.0,
+          12.9
+        ],
+        "extent": [
+          5.4,
+          3.8
+        ],
+        "name": "arm_w_s"
+      },
+      {
+        "center": [
+          -11.7,
+          0.0,
+          17.1
+        ],
+        "extent": [
+          5.4,
+          3.8
+        ],
+        "name": "arm_w_n"
+      },
+      {
+        "center": [
+          11.7,
+          0.0,
+          12.9
+        ],
+        "extent": [
+          5.4,
+          3.8
+        ],
+        "name": "arm_e_s"
+      },
+      {
+        "center": [
+          11.7,
+          0.0,
+          17.1
+        ],
+        "extent": [
+          5.4,
+          3.8
+        ],
+        "name": "arm_e_n"
+      }
+    ],
+    "texel_density": 32.0,
+    "total_rise": 0.0,
+    "traversal": [],
+    "triangles": 852,
+    "volumes": [
+      {
+        "center": [
+          0.0,
+          1.0,
+          3.0
+        ],
+        "kind": "player_entry",
+        "name": "arrival",
+        "size": [
+          2.4,
+          2.0,
+          2.4
+        ]
+      },
+      {
+        "center": [
+          -6.5,
+          1.0,
+          15.0
+        ],
+        "kind": "enemy_spawn",
+        "name": "fight_west",
+        "size": [
+          4.6,
+          2.0,
+          7.6
+        ]
+      },
+      {
+        "center": [
+          6.5,
+          1.0,
+          15.0
+        ],
+        "kind": "enemy_spawn",
+        "name": "fight_east",
+        "size": [
+          4.6,
+          2.0,
+          7.6
+        ]
+      },
+      {
+        "center": [
+          6.4,
+          1.0,
+          21.6
+        ],
+        "kind": "objective",
+        "name": "north_bay",
+        "size": [
+          3.6,
+          2.0,
+          3.6
+        ]
+      },
+      {
+        "center": [
+          0.0,
+          2.7,
+          15.0
+        ],
+        "kind": "no_build",
+        "name": "plant",
+        "size": [
+          8.0,
+          5.4,
+          8.0
+        ]
+      }
+    ]
+  },
+  "shell_junction_triad": {
+    "anchor": "entrance",
+    "bounds": [
+      [
+        -13.0,
+        -1.0,
+        0.0
+      ],
+      [
+        26.0,
+        8.0,
+        26.0
+      ]
+    ],
+    "check_anchor": null,
+    "colliders": 56,
+    "enemy_anchors": [],
+    "exit_offset": [
+      0.0,
+      0.0,
+      26.0
+    ],
+    "exit_yaw": 0.0,
+    "interior": [
+      26.0,
+      7.0,
+      26.0
+    ],
+    "path": "batch044/shells/shell_junction_triad.glb",
+    "shape_tags": [
+      "junction",
+      "branching"
+    ],
+    "size": [
+      26.0,
+      26.0,
+      8.66
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "size_class": "medium",
+    "size_godot": [
+      26.0,
+      8.66,
+      26.0
+    ],
+    "sockets": [
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "entry",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "surface_id": "spine_ws",
+        "width": 2.4,
+        "yaw": 180.0
+      },
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "exit",
+        "position": [
+          0.0,
+          0.0,
+          26.0
+        ],
+        "surface_id": "spine_wn",
+        "width": 2.4,
+        "yaw": 0.0
+      },
+      {
+        "height": 3.2,
+        "kind": "doorway",
+        "name": "branch_east",
+        "position": [
+          13.0,
+          0.0,
+          13.0
+        ],
+        "surface_id": "arm_east",
+        "width": 2.4,
+        "yaw": 90.0
+      }
+    ],
+    "surfaces": [
+      {
+        "center": [
+          -3.1,
+          0.0,
+          6.7
+        ],
+        "extent": [
+          5.8,
+          12.2
+        ],
+        "name": "spine_ws"
+      },
+      {
+        "center": [
+          -3.1,
+          0.0,
+          19.3
+        ],
+        "extent": [
+          5.8,
+          12.2
+        ],
+        "name": "spine_wn"
+      },
+      {
+        "center": [
+          3.1,
+          0.0,
+          6.7
+        ],
+        "extent": [
+          5.8,
+          12.2
+        ],
+        "name": "spine_es"
+      },
+      {
+        "center": [
+          3.1,
+          0.0,
+          19.3
+        ],
+        "extent": [
+          5.8,
+          12.2
+        ],
+        "name": "spine_en"
+      },
+      {
+        "center": [
+          9.2,
+          0.0,
+          13.0
+        ],
+        "extent": [
+          6.4,
+          7.0
+        ],
+        "name": "arm_east"
+      },
+      {
+        "center": [
+          -9.2,
+          0.0,
+          13.0
+        ],
+        "extent": [
+          6.4,
+          7.0
+        ],
+        "name": "bay_west"
+      }
+    ],
+    "texel_density": 32.0,
+    "total_rise": 0.0,
+    "traversal": [],
+    "triangles": 672,
+    "volumes": [
+      {
+        "center": [
+          0.0,
+          1.0,
+          3.0
+        ],
+        "kind": "player_entry",
+        "name": "arrival",
+        "size": [
+          2.4,
+          2.0,
+          2.4
+        ]
+      },
+      {
+        "center": [
+          0.0,
+          1.0,
+          13.0
+        ],
+        "kind": "enemy_spawn",
+        "name": "fight",
+        "size": [
+          10.0,
+          2.0,
+          8.0
+        ]
+      },
+      {
+        "center": [
+          -9.6,
+          1.0,
+          13.0
+        ],
+        "kind": "objective",
+        "name": "bay",
+        "size": [
+          4.4,
+          2.0,
+          5.0
+        ]
+      },
+      {
+        "center": [
+          10.4,
+          1.3,
+          10.8
+        ],
+        "kind": "no_build",
+        "name": "overlook",
+        "size": [
+          4.0,
+          2.6,
+          2.4
+        ]
+      }
+    ]
+  }
+}

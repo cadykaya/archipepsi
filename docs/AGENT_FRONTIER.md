@@ -1,5 +1,187 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — Dess's carrier, and five Zones walked — 2026-09-13
+
+**`claude/archipepsi-echoes-continuation-b1adno`, with the bridge lane
+merged at `0ec9e8e` and the art lane at `19e271b`.** Read this section
+first on a wake-up.
+
+**THE PHYSICS PACKAGE TRAVELS ON DESS'S CARRIER.** Her `PlacedPackage`
+landed while this lane was building a parallel `layout["physics"]` key;
+hers is better — it binds the package to the Zone, the room AND the
+declared content it realizes, and it goes into the manifest under the
+same digest. So this lane took it: `ChainCertificate` emits
+`layout["packages"]` as `PlacedPackage` records with the
+`ReplayEvidence` inside the package, and the ad-hoc key is gone rather
+than kept beside hers.
+
+Three checks were added to her `_packages`, because
+`check_physics_content` deliberately skips them: it passes over every
+package that is not load-bearing — correctly, its subject is
+progression guarantees — and a chain guarding a note is not one. On its
+own it would have accepted every chain in silence.
+`_certified_features` asks the inverted probe (a declared
+`powered_door` with no package offered), the evidence gate (the same
+`evidence_fault` function, asked of the packages it skips), and §13.2
+(an optional feature's package may not be load-bearing).
+
+**FIVE ORDINARY GENERATED ZONES, COMPOSED AND WALKED.**
+`bridge/tools/dump_zones.py` writes a run of consecutive Zones from a
+real campaign and `make godot-graphs` builds each one, reports its
+shape, and sends the real `Player` into a side destination and back.
+The shapes the composer makes today: 20–23 rooms, 4–5 junctions, 7–8
+dead ends, degrees up to four. **No topology is preferred and none is
+ruled out** — what is measured is whether the shape the composer chose
+can be built and walked.
+
+**Also landed:** the theme pack binds (22 surfaces of a real built room
+painted from Arty's export, 3 from the procedural fallback), with the
+hazard-role contradiction reconciled in the shared handoff — `hazard` is
+universal, four roles need authored pixels, and a pack that paints its
+own hazard is refused.
+
+**AND FOUR OF THE FIVE ZONES DO NOT LAY OUT AT ALL:**
+
+| | shape | layout |
+|---|---|---|
+| zone_01 | 23 rooms, 4 junctions, 7 dead ends | **LAYOUT_OK** |
+| zone_02 | 23 rooms, 4 junctions, 7 dead ends | INFEASIBLE — branch `c021` off `c016`, 42 boxes standing |
+| zone_03 | 23 rooms, 4 junctions, 7 dead ends | INFEASIBLE — branch `c015` off `c014`, 36 boxes |
+| zone_04 | 20 rooms, 4 junctions, 7 dead ends | INFEASIBLE — branch `c019` off `c018`, 36 boxes |
+| zone_05 | 20 rooms, 5 junctions, 8 dead ends | INFEASIBLE — spine room `c017`, 65 boxes |
+
+**How bad is it, exactly.** An infeasible layout is not a dead end on
+its own: `handle_layout_result` refuses it, puts the record back to
+PENDING_GENERATION and composes again, up to `MAX_LAYOUT_REFUSALS` (3).
+So a Zone gets four attempts, each a fresh shape. **One of the five
+measured composed.** At that rate about two Zones in five would exhaust
+all four attempts and go DORMANT — a Zone the player is offered and
+cannot enter. Five samples is a small sample and the rate is not a
+constant of nature, but the order of magnitude is what matters: this is
+a degradation the player meets, not a test-only defect.
+
+**This is the next thing to fix and it is the engine's.** The graphs are
+legal; the router cannot lay four of them out. `branch_mouth` fixed the
+case where the mouth was inside its own junction; what is left is a
+route search that runs out of room. The smallest failing shapes are
+captured in `godot/tests/fixtures/generated/`, and
+`godot-bin/godot --headless --path godot -- --graphs --no-walk` composes
+all five in about forty seconds, which is the loop to iterate the router
+against.
+
+**One lever was measured and does not fix it: `MAX_ROUTE_TURNS` 2 → 3.**
+Still four failures, but on LATER rooms and with more boxes standing —
+`c020` off `c018` at 43 boxes instead of `c021` off `c016` at 42,
+`c014` off `c009` at 41 instead of `c015` off `c014` at 36. So more
+turns does let the router get further before it wedges, and getting
+further is not getting there: the Zone is refused either way, and the
+extra search buys nothing a player can walk. Reverted to 2. **Written
+down so the next pass does not spend the same afternoon on it.**
+
+The shape of the real fix is structural rather than a constant: the
+placement walk is greedy and never backtracks, so a Zone with eight
+rooms off its spine eventually paints itself into a corner and the room
+that cannot fit is whichever one was unlucky enough to be last. Either
+the walk backtracks, or branch placement reserves its space before the
+spine consumes it.
+
+**`make godot-graphs` is GREEN and that is not the same as "this is
+fine".** The four are recorded in `KNOWN_INFEASIBLE` with the room each
+one wedges on, and the list is checked BOTH ways: a Zone that composes
+today and stops is a regression and fails; one on the list that starts
+composing means the router was fixed and the list is stale, which also
+fails. A target simply left red on a known defect is a target people
+learn to ignore, and then the regression it was meant to catch arrives
+unnoticed. The defect is not hidden by this — it is in the list, in this
+section, and in `NEXT_STEPS.md`.
+
+**The player leg of that target reports and does not assert**, and the
+comment in `_walk_one` says why: standing a body at an arbitrary
+junction's side doorway is not solved, and failing on a walk that cannot
+start would report a Zone defect that is not there. The junction
+interior and branch that ARE walked with a proven spawn are in
+`godot-room-contract`.
+
+**Still open, and named rather than implied:** the four infeasible
+layouts above; Art's half of §11.3 (a `player_entry` volume per
+opening); the three Batch 044 junction shells are `review: "pending"`,
+not exported, not selectable, and the owner's to review — **a
+four-connection asset is not yet a four-neighbour room in a generated
+Zone**; `latch_fired` from the engine when a player satisfies a declared
+latch; and the fun verdict is not this lane's to award.
+
+---
+
+## ENGINE LANE — the chain is certified and the junction is walked — 2026-09-12
+
+**`claude/archipepsi-echoes-continuation-b1adno`, with the bridge lane
+merged at `603e876` and the art lane at `19e271b`.** Read this section
+first on a wake-up.
+
+**THE ENVIRONMENTAL-AGENCY CHAIN IS CLOSED, END TO END.** A physical
+crate, a plate, a live signal and a powered door, in a Zone ordinary
+generation produced — and the currently playable character performs it.
+`Player._shove_what_i_walked_into` is what makes a body move a body:
+`move_and_slide` resolves the contact by sliding the character, so
+walking into a crate did nothing at all until the impulse was applied
+from `_walk_intent` (direction × speed), which is the only quantity that
+stays constant while a player leans on something. A 60 kg crate moves
+7.10 m in three seconds; a 900 kg one moves 0.00 m.
+
+`godot-physics` walks the whole chain with no force call by the test:
+the door starts shut, a capsule does not fit through it, walking into
+the crate puts 60 kg on a plate that asks for 36, the signal goes high,
+the doorway opens — **and with the crate removed the same walk leaves
+the door shut**, which is the sabotage that makes the rest evidence.
+
+**AND THE ENGINE CERTIFIES IT IN THE CONTRACT'S OWN WORDS.**
+`ChainCertificate` builds a `PhysicsPackage` for every `powered_door` a
+room declares and replays it three times at exactly the manipulation
+envelope **in the room it was built in** — the room's own crate, the
+room's own plate, reset between runs — and sends the package and its
+`ReplayEvidence` in `layout_result.layout["physics"]`.
+`layout.validate` refuses a Zone whose declared chain is unreported,
+unreplayed, replayed above the envelope, replayed against another
+revision, or claims anything load-bearing (§13.2). `AMALGAM_BRIDGE.md`
+§5.6a is the agreed shape. It costs about five seconds of Zone-entry
+time per chain, inside the hold the player is already under.
+
+The version this replaced measured the same physical fact and put a
+four-word verdict in `build["mechanisms"]`, a key `layout_to_json` never
+forwarded. It told nobody.
+
+**BRANCHING IS A JOURNEY NOW, AND THE JUNCTION WAS BROKEN.** Ordinary
+generation produces four junctions and eight rooms off the spine, and
+the first Zone with two branches off one junction would not compose:
+the branch mouth came from `ChamberBuilders.socket_placed` — the
+PROCEDURAL socket table — and `c008` had answered a 17.9 m chamber with
+a 41 × 60 m authored shell, so the mouth landed inside the junction
+itself and every route failed at the first connector.
+`ZoneBuilder.branch_mouth` reads the room's own door plan now, whichever
+producer wrote it, and derives outward from the room's envelope rather
+than from the name `side_left`. `09_ROOM_CONTRACT.md` §11.8.
+
+With that fixed the real `Player` walks the whole journey in the
+generated Zone: across the interior of a four-neighbour junction from
+the opening it arrived through to the opening the branch leaves by, into
+a side destination that is not the next room on the route, and back out.
+Twenty-one corridor crossings never proved this; a corridor has two ends
+and no inside.
+
+**Also in this batch:** nobody spawns in a doorway whichever producer
+built the room (the nudge moved to the runtime placement path, where
+every producer's spawns become a body); the arrival region resolves by
+the socket the chain arrives through (§11.3); and Arty's Span Basin
+repair is walked by the actual Player rather than by a capsule.
+
+**Still open, and named rather than implied:** Art's half of §11.3 (a
+`player_entry` volume per opening); the three Batch 044 junction shells
+are `review: "pending"` and are not selectable — the owner's to review,
+and this lane does not write `pass`; and the fun verdict is not this
+lane's to award.
+
+---
+
 ## ENGINE LANE — the merged Zone opens again, and the way back is real — 2026-09-12
 
 **`claude/archipepsi-echoes-continuation-b1adno`, from the art merge
@@ -295,8 +477,14 @@ deliberate refusal as its control; `make godot-reload` reopens a campaign
 in a SECOND PROCESS and recovers the layout and the progress from the
 bridge alone.
 
-**Not connected:** the physics contract in `schemas/physics.py` — no
-runtime exists for it yet.
+**Connected as of 2026-09-12:** the physics contract in
+`schemas/physics.py`. The engine builds a `PhysicsPackage` for every
+`powered_door` chain an ordinarily generated room declares, replays it
+three times at exactly the manipulation envelope **in the room it built
+it in**, and sends both in `layout_result.layout["physics"]`;
+`layout.validate` refuses the Zone if a declared chain is unreported,
+unreplayed, replayed above the envelope, replayed against a different
+revision, or claims anything load-bearing. `AMALGAM_BRIDGE.md` §5.6a.
 
 ~~**The DORMANT-Hub hole (`AMALGAM_SLICE1.md` §5q) is half closed.**~~
 **Closed on both sides, 2026-09-12.** The bridge side landed first:
@@ -334,7 +522,7 @@ not done":
 | | |
 |---|---|
 | **Connected** — runs in a real campaign | graph composition at acceptance, reachability refusing an unreachable Zone, `layout_result` validated and committed, progress identities checked, DORMANT/VISITING, leave-reload-re-enter |
-| **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | **nothing in this row today.** Layout evidence validation moved up when the engine sent a real `layout_result` (`dc4ef39`); the physics contract moved up on 2026-09-12 when the engine lane built `ManipulableBody`, `SceneDigest` and `ReplayHarness` and `make godot-physics` began measuring them. What is left is not a rule waiting for a runtime — it is that no CONTENT authors a physics package yet |
+| **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | **nothing in this row today.** Layout evidence validation moved up when the engine sent a real `layout_result` (`dc4ef39`); the physics contract moved up on 2026-09-12 when the engine lane built `ManipulableBody`, `SceneDigest` and `ReplayHarness`, and moved to **Connected** the same day when `ChainCertificate` began producing a package and its evidence for an ordinarily generated Zone and `layout.validate` began refusing on them |
 | **Requires Godot** | physical reachability and the whole physics substrate — `docs/AMALGAM_BRIDGE.md` §6. Aperture polarity and the manifest replay consumer moved to **Connected** on 2026-09-12 |
 
 **The physics digest has three levels and only the first is done.**

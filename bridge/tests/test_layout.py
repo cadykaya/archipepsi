@@ -16,7 +16,9 @@ from __future__ import annotations
 import pytest
 
 from archipepsi_bridge import layout, topology
+from archipepsi_bridge.schemas import physics
 from archipepsi_bridge.schemas.zone import Zone
+from .conftest import certified_chain
 
 STEP = 40.0          # how far apart the fixture puts consecutive rooms
 DEPTH = 15.0
@@ -773,3 +775,199 @@ def test_a_corner_that_does_not_bend_is_refused(turn):
     v = layout.validate(z, bad)
     assert not v.accepted
     assert any("does not bend" in e for e in v.errors), v.errors
+
+
+# --- the chains a room declared, as the engine certified them ------------
+#
+# `AMALGAM_BRIDGE.md` §5.6a. The composer declares INTENT -- an ordinary
+# optional affordance -- and the engine builds the crate, the plate, the
+# signal and the door, replays the chain three times at exactly the
+# manipulation envelope, and sends the `PhysicsPackage` and the
+# `ReplayEvidence` back in the layout proposal. These are the cases
+# where that claim is not one the bridge may accept.
+
+def _chain_zone(n: int = 8) -> Zone:
+    """A Zone whose second room is a corridor carrying a chain.
+
+    Wide, because `FEATURE_MIN_WIDTH` refuses a `powered_door` in a
+    corridor too narrow to host the alcove, and this fixture has to be
+    a Zone the composer could actually have produced.
+    """
+    chambers: list = [_arena(f"c{i:03d}", reward=89100000 + i)
+                      for i in range(1, n + 1)]
+    chambers[1] = {"id": "c002", "type": "corridor", "length": 14.0,
+                   "width": 9.0, "reward_location_id": 89100002,
+                   "features": [{"tag": "powered_door", "at": (0.5, 0.5)}]}
+    z = Zone(zone_id="z1", display_name="T", target_game="T",
+             theme="void_glitch", chambers=tuple(chambers))
+    return topology.apply(z, topology.compose_with_branch(list(z.chambers)))
+
+
+def _certified(zone) -> dict:
+    result = _ok_result(zone)
+    result["packages"] = [certified_chain("c002", 0, zone.zone_id)]
+    return result
+
+
+def test_a_certified_chain_is_accepted():
+    zone = _chain_zone()
+    assert layout.validate(zone, _certified(zone)).accepted
+
+
+def test_a_declared_chain_the_layout_never_mentions_is_refused():
+    """The inverted probe, for features.
+
+    A room that declares a `powered_door` and reports nothing about it
+    has either failed to build it and not said so or built it and not
+    replayed it. Silence used to read as "no chains here".
+    """
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"] = []
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("declares 1 'powered_door' chain" in e
+               for e in v.errors), v.errors
+
+
+def test_a_chain_the_engine_declined_to_build_is_still_refused():
+    """`AffordanceFeatures.fits` dropping a tag is a legal outcome for
+    the ENGINE and not an acceptable layout.
+
+    A corridor too narrow for the rig is not a defect; a Zone whose
+    composer asked for a chain and whose engine built nothing is a Zone
+    whose content was quietly downgraded, and committing its manifest
+    would leave the room built and the mechanism absent with nothing
+    anywhere saying so. The engine warns and offers no package; the
+    count disagrees and the layout is refused, which sends the Zone
+    back to be composed into a room that can host it.
+    """
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"] = []
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("the layout offers 0" in e for e in v.errors), v.errors
+
+
+def test_a_chain_built_and_not_replayed_is_refused():
+    zone = _chain_zone()
+    result = _certified(zone)
+    del result["packages"][0]["package"]["evidence"]
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("carries no replay evidence" in e for e in v.errors), v.errors
+
+
+def test_evidence_for_a_different_chain_is_refused():
+    """The defect the content digest closes, at this consumer.
+
+    One room's certificate pasted onto another room's chain is the case
+    where every field is well-formed and the claim is about something
+    else.
+    """
+    zone = _chain_zone()
+    result = _certified(zone)
+    other = certified_chain("c003", 0, zone.zone_id)
+    result["packages"][0]["package"]["evidence"] = \
+        other["package"]["evidence"]
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("recorded for" in e for e in v.errors), v.errors
+
+
+def test_a_chain_replayed_against_a_changed_scene_is_refused():
+    """Move one collider and the evidence is about a room that is gone."""
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"][0]["package"]["setup"]["scene_digest"] = "f" * 16
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("has changed since its replay" in e for e in v.errors), \
+        v.errors
+
+
+@pytest.mark.parametrize("runs", [1, 2, 4])
+def test_a_chain_replayed_other_than_three_times_is_refused(runs):
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"][0]["package"]["evidence"]["per_run_latched"] = \
+        [["plate_loaded"]] * runs
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("check 20 replays three" in e for e in v.errors), v.errors
+
+
+def test_a_chain_that_latched_in_only_two_of_three_runs_is_refused():
+    """Three runs, one of which did nothing, is not three successes."""
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"][0]["package"]["evidence"]["per_run_latched"] = \
+        [["plate_loaded"], [], ["plate_loaded"]]
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("did not latch in every run" in e for e in v.errors), \
+        v.errors
+
+
+def test_a_chain_replayed_by_a_stronger_provider_is_refused():
+    """Above the envelope proves a strong host can do it, not the claim."""
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"][0]["package"]["evidence"]["provider_force_n"] = \
+        2000.0
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("not at the envelope" in e for e in v.errors), v.errors
+
+
+def test_a_chain_offered_for_another_room_is_refused():
+    """A package valid in itself and attached to the wrong thing."""
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"][0]["room_id"] = "c003"
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("realizes" in e or "declares" in e
+               for e in v.errors), v.errors
+
+
+def test_a_load_bearing_chain_is_refused_however_good_its_evidence():
+    """§13.2: a feature may never lie on the mandatory path.
+
+    The evidence here is perfect. What is refused is the package
+    claiming a route depends on an optional affordance, which is the
+    opposite of what the affordance contract promises.
+    """
+    zone = _chain_zone()
+    result = _certified(zone)
+    package = result["packages"][0]["package"]
+    package["vector_latches"] = [0]
+    package["required_latches"] = ["plate_loaded"]
+    evidence = package.pop("evidence")
+    evidence["content_digest"] = physics.package_digest(
+        physics.PhysicsPackage(**package))
+    package["evidence"] = evidence
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("load-bearing" in e for e in v.errors), v.errors
+
+
+def test_a_chain_certifying_a_room_this_zone_never_declared_is_refused():
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"].append(certified_chain("c999", 0, zone.zone_id))
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("does not have" in e for e in v.errors), v.errors
+
+
+def test_two_chains_sharing_a_package_id_are_refused():
+    """A latch is `package_id/latch_id`, so the pair has to be unique."""
+    zone = _chain_zone()
+    result = _certified(zone)
+    result["packages"].append(certified_chain("c002", 0, zone.zone_id))
+    v = layout.validate(zone, result)
+    assert not v.accepted
+    assert any("share the id" in e or "declares 1" in e
+               for e in v.errors), v.errors
