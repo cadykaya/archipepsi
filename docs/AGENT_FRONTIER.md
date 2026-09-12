@@ -157,14 +157,27 @@ is real — spare rooms (`SPINE_SHARE`, **provisional tuning**), declared
 socket capacity, and the `Zone` schema's own plug and edge maximums,
 read from the schema rather than copied.
 
-**AND EIGHT BRANCHES WAS ONE CORRIDOR.** The old report counted locked
-doors; the new one reads the JOINED graph the Zone serialized
+**AND EIGHT BRANCHES WAS ONE SIDE CHAIN.** The old report counted
+locked doors; the new one reads the JOINED graph the Zone serialized
 (`tests/zone_shape.py`). Eight "branches", seven "nested", were one side
-chain eight rooms deep: one turning, taken once. Default scale now
-measures **3-4 distinct side paths, 4-5 junctions, 2 inside a side path,
-5-6 side dead ends, 4 locked and 4 open branch edges**; prototype scale
-still composes chains and still says why. Two instrument controls hand
-the report a spur and a fan that move the same four rooms.
+chain eight rooms deep: one turning, taken once, **counted wrong**.
+Default scale now measures **3-4 distinct side paths, 4-5 junctions, 2
+inside a side path, 5-6 side dead ends, 4 locked and 4 open branch
+edges**; prototype scale still composes chains and still says why. Two
+instrument controls hand the report a spur and a fan that move the same
+four rooms.
+
+**NO SHAPE IS RULED OUT** (owner clarification, 2026-09-12). `SPINE_SHARE`
+and `MAX_SIDE_DEPTH` are **provisional tuning and nothing more** — dials
+where they currently sit, kept only if play evidence later gives them a
+reason. A central junction connecting many rooms is good dungeon design,
+and so are deep branches, shallow ones, nested ones, hubs, spurs and
+dead ends. **The post-3A/3B complaint was never about graph shape**: it
+was that rooms behaved like enlarged corridors, with little reason to
+occupy or revisit them. That is a question about what is IN a room —
+content, not topology — and no value of either constant answers it. Do
+not promote either into a design law, and do not read the distribution
+above as a target.
 
 Two defects the measuring found: the planner gave up on a destination
 when the *nearest* candidate junction had only its elevated wall spare
