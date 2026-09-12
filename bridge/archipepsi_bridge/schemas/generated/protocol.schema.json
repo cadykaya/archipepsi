@@ -5582,6 +5582,17 @@
             ],
             "default": null,
             "title": "Manifest"
+          },
+          "progress": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ZoneProgress"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           }
         },
         "required": [

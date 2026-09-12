@@ -844,6 +844,40 @@ collected keys and allocated Checks all intact; and a revisit that
 reserves nothing and leaves `completed_zone_count` and `zone_history`
 untouched.
 
+### 5.5a-bis The other half of the restart: what you already did
+
+The manifest survived a restart and the **progress did not**, for the
+same shape of reason the portal was dark: the bridge held the truth and
+the consumer read something else.
+
+`main.gd` takes the layout off `ZoneReady` (`record.get("manifest")`)
+and takes keys, locks, stations and the resume point out of its own
+in-memory dictionaries — `_zone_resume`, `_zone_stations`, `_zone_keys`,
+`_zone_locks_open`, populated by `_remember_zone_progress()` on the way
+out. Within one session that works. **A new process starts them empty**,
+so a returning player got the same rooms in the same places with every
+key back on the floor and every door locked again. Nothing in Godot
+reads `record.progress`; the bridge persisted it and said nothing about
+it on the message that rebuilds the Zone.
+
+**`ZoneReady.progress` now travels beside `ZoneReady.manifest`** — same
+message, same condition: present on a re-entry, absent on a first
+generation, which is the difference between restoring a Zone and
+solving one. Empty is meaningful: a Zone walked into and straight back
+out of has a manifest and nothing done in it.
+
+```json
+"progress": {
+  "collected_keys": ["red"],
+  "opened_locks": ["c014/side_left"],
+  "reached_stations": ["room:c014:arrival"],
+  "resume_anchor": "room:c014:arrival"
+}
+```
+
+Asserted on the emitted message and through `model_dump_json`, against a
+first generation that carries none.
+
 ### 5.5b The consumer change, for Prod to make
 
 Two places, and deliberately small. **Neither lane should edit the other
@@ -876,6 +910,25 @@ func _on_enter_zone() -> void:
 
 `resume_zone_id` is filled for `ZONE_READY` and `ZONE_ACTIVE` too, so
 this one path replaces the old one rather than sitting beside it.
+
+**`main.gd::_to_zone`** — take the progress from the message that
+carries the layout, rather than from dictionaries a restart empties:
+
+```gdscript
+    var saved: Variant = record.get("progress")
+    var prog: Dictionary = saved if typeof(saved) == TYPE_DICTIONARY else {}
+    zone.resume_anchor = str(prog.get("resume_anchor",
+            _zone_resume.get(zid, "")))
+    zone.keys_carried = prog.get("collected_keys", _zone_keys.get(zid, {}))
+    zone.locks_carried = prog.get("opened_locks",
+            _zone_locks_open.get(zid, {}))
+```
+
+The in-memory dictionaries can stay as the within-session fallback or
+go entirely — the bridge's copy is authoritative and survives a restart,
+which is the case they cannot serve. Note the shapes differ: the wire
+sends arrays, `keys_carried` and `locks_carried` are dictionaries today,
+so whichever conversion the controller wants belongs on that side.
 
 **The serialized offer, which is the contract.** Proved on the wire in
 `test_the_portal_can_find_the_zone_you_walked_out_of`, against
