@@ -472,3 +472,153 @@ def test_a_door_measurement_that_is_not_a_boolean_is_refused():
         v = layout.validate(z, bad)
         assert not v.accepted, measured
         assert any("not a boolean" in e for e in v.errors), v.errors
+
+
+# --- the engine's own rooms, which "reserved" was excusing from every
+# --- check ----------------------------------------------------------------
+#
+# `zone_builder` appends an exit room nobody declared and files its
+# approach under `e:__exit__`, plus `r:<room>` for the first room on the
+# spine. The validator knew the names and did nothing else with them:
+# the exit room's transform was never parsed, so it never reached
+# `boxes` and neither the overlap check nor 1b could see it, and the
+# reserved joins were `continue`d straight past the walk. An exit room
+# with no bounds, an exit room inside `c001`, and an exit corridor
+# ending ten kilometres away were all ACCEPTED — and the manifest
+# replays exactly that.
+
+def _with_exit(zone, result: dict, pieces: int = 2) -> dict:
+    """The two entries the engine appends to every Zone it builds."""
+    tail = zone.chambers[-1].id
+    z0 = len(zone.chambers) * STEP
+    a = (len(zone.chambers) - 1) * STEP + DEPTH
+    result["rooms"]["exit"] = {
+        "position": [0.0, 0.0, z0], "yaw": 0.0,
+        "bounds": {"position": [-8.0, 0.0, z0],
+                   "size": [16.0, 5.0, DEPTH]}}
+    pts = [[0.0, 0.0, a + (z0 - a) * i / pieces] for i in range(pieces + 1)]
+    result["joins"]["e:__exit__"] = {
+        "room_a": tail, "room_b": "exit", "synthetic": True,
+        "socket_a": [0.0, 0.0, a], "socket_b": [0.0, 0.0, z0],
+        "chain": [{"kind": "CONNECTOR", "entry": pts[i], "exit": pts[i + 1]}
+                  for i in range(pieces)]}
+    return result
+
+
+def test_the_engines_exit_room_and_approach_are_accepted():
+    """The control. These are legitimate and must not be refused."""
+    z = _zone()
+    v = layout.validate(z, _with_exit(z, _ok_result(z)))
+    assert v.accepted, v.errors
+    assert "e:__exit__" in v.manifest["joins"], (
+        "the last leg has to be in the manifest or re-entry re-solves it")
+
+
+def test_a_broken_exit_approach_is_refused():
+    z = _zone()
+    bad = _with_exit(z, _ok_result(z), pieces=3)
+    bad["joins"]["e:__exit__"]["chain"][2]["entry"] = [0.0, 0.0, -9999.0]
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("broken between" in e for e in v.errors), v.errors
+
+
+def test_an_exit_approach_with_no_chain_is_refused():
+    z = _zone()
+    bad = _with_exit(z, _ok_result(z))
+    bad["joins"]["e:__exit__"].pop("chain")
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("reports no chain" in e for e in v.errors), v.errors
+
+
+@pytest.mark.parametrize("shape", [{"kind": "CONNECTOR"}, "corridor", 7])
+def test_an_exit_approach_whose_chain_is_not_a_list_is_refused(shape):
+    z = _zone()
+    bad = _with_exit(z, _ok_result(z))
+    bad["joins"]["e:__exit__"]["chain"] = shape
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("not a list of pieces" in e for e in v.errors), v.errors
+
+
+def test_an_exit_approach_piece_that_is_not_a_piece_is_refused():
+    z = _zone()
+    bad = _with_exit(z, _ok_result(z))
+    bad["joins"]["e:__exit__"]["chain"][1] = "a corridor, honest"
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("piece 1 is not a piece" in e for e in v.errors), v.errors
+
+
+def test_an_exit_approach_to_a_room_that_was_not_placed_is_refused():
+    z = _zone()
+    bad = _with_exit(z, _ok_result(z))
+    bad["rooms"].pop("exit")
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("does not place" in e for e in v.errors), v.errors
+
+
+def test_an_exit_room_with_no_bounds_is_refused():
+    """It is a body in the world; without a box nothing can say whether
+    it is standing inside `c001`."""
+    z = _zone()
+    bad = _with_exit(z, _ok_result(z))
+    bad["rooms"]["exit"].pop("bounds")
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("reports no bounds" in e for e in v.errors), v.errors
+
+
+def test_an_exit_room_that_overlaps_a_chamber_is_refused():
+    z = _zone()
+    bad = _with_exit(z, _ok_result(z))
+    # Same box as the first chamber: two rooms in one place.
+    bad["rooms"]["exit"]["position"] = [0.0, 0.0, 0.0]
+    bad["rooms"]["exit"]["bounds"] = {"position": [-8.0, 0.0, 0.0],
+                                      "size": [16.0, 5.0, DEPTH]}
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("overlap" in e for e in v.errors), v.errors
+
+
+def test_the_first_rooms_approach_is_filed_under_its_reserved_key():
+    """`r:<room>` is how the engine files a corridor no edge names —
+    nothing joins INTO the first room on the spine. It is a real
+    approach and gets walked like one; `room_a` is empty by design and
+    an empty name is not a missing one."""
+    z = _zone()
+    first = z.chambers[0].id
+    good = _ok_result(z)
+    good["joins"][f"r:{first}"] = {
+        "room_a": "", "room_b": first, "synthetic": True,
+        "socket_a": [0.0, 0.0, 0.0], "socket_b": [0.0, 0.0, 3.0],
+        "chain": [{"kind": "CONNECTOR", "entry": [0.0, 0.0, -6.0],
+                   "exit": [0.0, 0.0, -3.0]},
+                  {"kind": "CONNECTOR", "entry": [0.0, 0.0, -3.0],
+                   "exit": [0.0, 0.0, 0.0]}]}
+    assert layout.validate(z, good).accepted
+
+    bad = _ok_result(z)
+    bad["joins"][f"r:{first}"] = dict(good["joins"][f"r:{first}"])
+    bad["joins"][f"r:{first}"]["chain"] = [
+        {"kind": "CONNECTOR", "entry": [0.0, 0.0, -6.0],
+         "exit": [0.0, 0.0, -3.0]},
+        {"kind": "CONNECTOR", "entry": [0.0, 0.0, 500.0],
+         "exit": [0.0, 0.0, 0.0]}]
+    v = layout.validate(z, bad)
+    assert not v.accepted
+    assert any("broken between" in e for e in v.errors), v.errors
+
+
+def test_a_reserved_join_that_is_not_a_join_is_refused():
+    """`"e:__exit__": null` and `"e:__exit__": "yes"` are not approaches.
+    Reading either as one would look for a chain on a string."""
+    z = _zone()
+    for shape in (None, "yes", 3, ["chain"]):
+        bad = _with_exit(z, _ok_result(z))
+        bad["joins"]["e:__exit__"] = shape
+        v = layout.validate(z, bad)
+        assert not v.accepted, shape
+        assert any("is not a join" in e for e in v.errors), v.errors

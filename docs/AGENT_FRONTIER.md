@@ -14,14 +14,28 @@ a reload from disk re-enters with layout, keys and locks preserved.
 `test_amalgam_end_to_end.py` is that path and assigns to `engine.save`
 nowhere.
 
-**Not connected:** the engine does not serialize `layout_result`, does
-not surface aperture polarity, and does not consume the committed
-manifest. Those three are `docs/AMALGAM_BRIDGE.md` §5. The bridge's
-half of the replay is connected and measured — re-entry emits the
-manifest and `test_the_whole_path` asserts the emitted message carries
-it. **Deleting that emit passed all 1091 tests until it was asserted**:
-the save file is identical either way, so the suite was reading storage
-and calling it the seam. Assert the message, not the record.
+**THE SEAM IS CROSSED, by the engine lane.** All three §5 items
+landed at `dc4ef39`: `layout_result` is serialized, aperture and arrival
+verdicts travel with it, and the committed manifest is replayed instead
+of re-solved. That is their evidence — no Godot here, nothing in this
+lane has run the integration driver.
+
+**What this lane verified from the merge is narrower, and found a hole
+that was mine.** The engine appends an exit room nobody declared and
+files reserved joins (`e:__exit__`, `r:<room>`); the validator knew the
+names and checked nothing else, so an exit room with no bounds, an exit
+room inside `c001`, and an exit corridor ending ten kilometres away were
+all ACCEPTED — and the manifest replays what it accepts. Now refused;
+`docs/AMALGAM_BRIDGE.md` §5.4, which also carries the one open question
+(whether reserved joins can be filed as doorways so the last leg gets
+walked end to end like any other).
+
+The bridge's half of the replay is connected and measured — re-entry
+emits the manifest and `test_the_whole_path` asserts the emitted message
+carries it. **Deleting that emit passed all 1091 tests until it was
+asserted**: the save file is identical either way, so the suite was
+reading storage and calling it the seam. Assert the message, not the
+record.
 
 **All three of SOLUTIONS_CATALOGUE §2's local-key rules are enforced.**
 A key reachable without passing its own lock, an acyclic key graph, and
@@ -41,7 +55,7 @@ not done":
 | | |
 |---|---|
 | **Connected** — runs in a real campaign | graph composition at acceptance, reachability refusing an unreachable Zone, `layout_result` validated and committed, progress identities checked, DORMANT/VISITING, leave-reload-re-enter |
-| **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | layout evidence validation (the engine does not send `layout_result`), the physics contract in `schemas/physics.py` (no runtime exists). **Both stay in this row until real engine output passes through their actual acceptance path** — a synthetic payload exercising a validator is not the seam being crossed |
+| **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | the physics contract in `schemas/physics.py` (no runtime exists). Layout evidence validation has **moved up**: the engine sends a real `layout_result` (`dc4ef39`), which is the engine lane's evidence — there is no Godot in the bridge environment and nothing here has run the integration driver |
 | **Requires Godot** | aperture polarity in the layout result, the manifest replay consumer, physical reachability, and the whole physics substrate — `docs/AMALGAM_BRIDGE.md` §5 and §6 |
 
 **The physics digest has three levels and only the first is done.**

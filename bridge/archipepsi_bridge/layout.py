@@ -149,6 +149,70 @@ ENGINE_EXIT_EDGE = "e:__exit__"
 ENGINE_ROOM_EDGE = "r:"
 
 
+
+def _check_reserved_join(c: "_Check", eid: str, raw, boxes: dict) -> None:
+    """The engine's own joins: the exit approach and `r:<room>`.
+
+    **Reserved was buying a pass on everything.** These were skipped
+    past the walk, so an exit approach whose corridor ended ten
+    kilometres from the room was ACCEPTED — and the manifest replays
+    exactly this, so a Zone would be rebuilt around a corridor reaching
+    nowhere. That is the playtest's "the connecter isnt connected at
+    all", one room further along.
+
+    **What is checked here is deliberately less than for a JOINED
+    edge, and the difference is not laziness.** A JOINED edge's
+    `socket_a` and `socket_b` are two DOORWAYS, so the walk may demand
+    they abut. A reserved join's endpoints are not doorways:
+    `zone_builder` files `r:<room>` from the room's own `position` to
+    its `arrival`, and the exit approach ends at the exit room's
+    `position` — points several metres from any wall by construction.
+    Demanding abutment there would refuse every real Zone, which is the
+    other way to get a check wrong.
+
+    So: the pieces are pieces, and the chain is continuous THROUGH
+    ITSELF. Whether a reserved join's endpoints should abut a socket is
+    a question for the engine lane, and is recorded as open in
+    `AMALGAM_BRIDGE.md` §5.4 rather than guessed at here.
+    """
+    if not isinstance(raw, dict):
+        c.fail(f"reserved join '{eid}' is not a join")
+        return
+    chain = raw.get("chain")
+    if chain is None:
+        c.fail(f"reserved join '{eid}' reports no chain; the engine "
+               "files every approach it built, and a manifest missing "
+               "one re-solves that leg on re-entry")
+        return
+    if not isinstance(chain, list):
+        c.fail(f"reserved join '{eid}' chain is not a list of pieces")
+        return
+    cursor, where = None, None
+    for n, piece in enumerate(chain):
+        if not isinstance(piece, dict):
+            c.fail(f"reserved join '{eid}' piece {n} is not a piece")
+            return
+        pe = c.read(_vec, piece.get("entry"), f"join '{eid}' piece {n} entry")
+        px = c.read(_vec, piece.get("exit"), f"join '{eid}' piece {n} exit")
+        if pe is None or px is None:
+            return
+        if cursor is not None:
+            gap = _apart(cursor, pe)
+            if gap > EPSILON_JOIN:
+                c.fail(f"reserved join '{eid}' is broken between {where} "
+                       f"and piece {n}: {gap:.3f} m apart")
+                return
+        cursor, where = px, f"piece {n}"
+    # AND A ROOM IT NAMES IS A ROOM THAT WAS PLACED. An approach to a
+    # room with no transform cannot be replayed at all.
+    # `r:<room>` files `room_a` as the empty string on purpose — nothing
+    # is on the far side of the first room's approach — so an empty name
+    # is not a missing one.
+    for rid in (raw.get("room_a"), raw.get("room_b")):
+        if isinstance(rid, str) and rid and rid not in boxes:
+            c.fail(f"reserved join '{eid}' approaches room '{rid}', "
+                   "which the layout does not place")
+
 def validate(zone, result: dict) -> Verdict:
     """Check a proposed layout against the Zone that asked for it.
 
@@ -186,7 +250,22 @@ def validate(zone, result: dict) -> Verdict:
     positions: dict[str, tuple] = {}
 
     # --- 1. every room placed, with finite numbers and a real box ------
-    for rid in declared:
+    # THE ENGINE'S EXIT ROOM IS PARSED LIKE ANY OTHER, when it is there.
+    #
+    # Being reserved bought it a pass on everything: its transform was
+    # never read, so it never entered `boxes`, so the overlap check could
+    # not see it and neither could 1b. An exit room with no bounds at
+    # all, and one sitting inside `c001`, were both ACCEPTED. It is real
+    # geometry with a portal in it and a player walks through it —
+    # "allowed by name" was never meant to mean "unchecked".
+    #
+    # Optional and not required: only a Zone the engine actually built
+    # carries one, and `test_a_zone_with_no_graph_is_not_certified_here`
+    # and every fixture predating the seam do not.
+    inspect = list(declared)
+    if isinstance(rooms.get(ENGINE_EXIT_ROOM), dict):
+        inspect.append(ENGINE_EXIT_ROOM)
+    for rid in inspect:
         entry = rooms.get(rid)
         if not isinstance(entry, dict):
             c.fail(f"room '{rid}' has no placement in the layout")
@@ -311,13 +390,14 @@ def validate(zone, result: dict) -> Verdict:
     for eid in joins:
         if eid in {e.edge_id for e in joined}:
             continue
-        if eid == ENGINE_EXIT_EDGE:
+        reserved = (eid == ENGINE_EXIT_EDGE
+                    or (eid.startswith(ENGINE_ROOM_EDGE)
+                        and eid[len(ENGINE_ROOM_EDGE):] in placeable))
+        if not reserved:
+            c.fail(f"the layout reports a join for '{eid}', which is not "
+                   "a JOINED edge of this Zone")
             continue
-        if (eid.startswith(ENGINE_ROOM_EDGE)
-                and eid[len(ENGINE_ROOM_EDGE):] in placeable):
-            continue
-        c.fail(f"the layout reports a join for '{eid}', which is not "
-               "a JOINED edge of this Zone")
+        _check_reserved_join(c, eid, joins[eid], boxes)
 
     # --- 4. arrival is a MEASURED VERDICT, never a coordinate ----------
     #

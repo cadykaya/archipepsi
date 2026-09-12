@@ -194,11 +194,12 @@ wording that hid it is corrected here.
 | **Helper-level evidence** | a function proved in isolation. `test_layout.py` and `test_topology.py` are this: they establish that a validator refuses what it should, not that anything calls it |
 
 **The end-to-end test's one synthetic part is the engine.** `_place()`
-builds the layout payload that `zone_builder.build()` will send once it
-serializes one. Everything downstream of that payload is the real path;
-everything upstream is the real path. **The seam itself is not yet
-crossed by a running engine**, and no test here should be read as
-evidence that it is.
+builds the layout payload in the shape `zone_builder.layout_to_json`
+produces. Everything downstream of that payload is the real path; so is
+everything upstream. **The engine now serializes a real one** (§5), so
+the seam is crossed — but it is crossed in the engine lane's
+environment, and nothing in *this* suite has run Godot. A green run
+here is still evidence about the validator, not about the exchange.
 
 ### 4.1a Which refusals has anything ever triggered?
 
@@ -251,18 +252,26 @@ cd bridge && python3 tools/mutate.py archipepsi_bridge/schemas/transitions.py \
 
 ### 4.2 Gaps, precisely
 
-1. **The engine does not send `layout_result`.** The intent, the route,
-   the handler, the validator and the manifest store all exist and are
-   exercised; `zone_builder.build()` returns its result into Godot and
-   nothing puts it on the wire. **§5 is the handoff.**
-2. **Aperture evidence is not in the layout result.**
-   `_assigned_doors_match_their_usage` measures both polarities in
-   `room_audit.gd`. Until it travels, a real Zone will be **refused**
-   rather than silently accepted — which is the correct failure, and is
-   why closing this is worth doing before the emitter ships.
-3. **No engine consumes the replayed manifest.** `handle_enter_zone`
-   sends `ZoneReady.manifest` on a re-entry. Laying those pieces back
-   down instead of re-searching is the engine's half.
+1. ~~**The engine does not send `layout_result`.**~~ It does:
+   `zone_controller.gd::send_layout_result`, after
+   `_measure_layout_evidence`, which is the only order that works — an
+   earlier version sent the layout before measuring and the bridge
+   refused it for carrying no measurements, correctly.
+2. ~~**Aperture evidence is not in the layout result.**~~ It travels,
+   as `apertures` and `arrival_ok` — verdicts, not coordinates.
+3. ~~**No engine consumes the replayed manifest.**~~ `zone_builder`
+   replays committed transforms and chains instead of re-solving.
+
+   **All three are the engine lane's evidence, not this lane's** —
+   there is no Godot here. What this lane verified from the merge is
+   narrower and is in §5.4: the engine's payload shape against the
+   validator, which found a hole on *this* side.
+3b. **One Zone in six is still refused, and it is Art's.**
+   `shell_hall_transit`, `shell_plenum_helix` and `shell_span_basin`
+   declare an `exit` doorway 2.0 m outside their own envelope, so the
+   validator refuses a Zone holding one. That is the correct failure —
+   the playtest's "the connecter isnt connected at all" — and the
+   request is `docs/art-requests/2026-09-11-doorways-outside-their-envelope.md`.
 4. **Physical reachability is unproved and is not this lane's.** `R ⊆ E`
    is a graph property; it cannot see a key inside a crate. Per owner
    direction the `c8ed2e9` walk flood is **not** authoritative — it
@@ -275,9 +284,20 @@ cd bridge && python3 tools/mutate.py archipepsi_bridge/schemas/transitions.py \
    asserts the boundary so lifting it is deliberate. Revisiting a
    finished Zone is unaffected — VISITING reserves nothing.
 
-## 5. Handoff to the engine lane
+## 5. Handoff to the engine lane — **all three landed**
 
-Three items, in the order that makes each one testable when it lands.
+The engine lane reports the seam crossed at `dc4ef39`: `placement_plan`
+reads the bridge's `edges` and each chamber's `doors` and places the real
+branching graph, the layout goes back as `layout_result` with measured
+apertures and arrival verdicts, and `ZoneReady.manifest` is replayed on
+re-entry rather than re-solved. See `docs/AGENT_FRONTIER.md` and
+`docs/AMALGAM_SLICE1.md` §5o.
+
+**That is their evidence, not this lane's.** There is no Godot binary in
+the bridge environment, so nothing here has run the integration driver;
+what follows is what the three items asked for, kept because the
+payload shapes are the contract and a reader needs them. §5.4 is what
+crossing the seam turned up on this side.
 
 ### 5.1 Surface aperture polarity
 
@@ -326,6 +346,51 @@ fits.
 On re-entry `ZoneReady` carries `manifest`. Laying its `rooms` and
 `joins` back down is what makes a revisited Zone the same Zone; a
 re-search would be a second layout for a place the player already knows.
+
+### 5.4 What the crossing found on this side — and one open question
+
+Reading the engine's `layout_to_json` against the validator turned up a
+hole that was mine. `zone_builder` appends an **exit room nobody
+declared** (`rooms["exit"]`, a real body with a portal in it) and files
+its approach under `e:__exit__`, plus `r:<room>` for the first room on
+the spine, which no edge names because nothing joins *into* it.
+
+The validator knew those three names and **did nothing else with them**.
+The exit room's transform was never parsed, so it never reached `boxes`
+and neither the overlap check nor the position-in-bounds check could
+see it; the reserved joins were skipped straight past the chain walk. So
+all of these were ACCEPTED, and the manifest replays exactly what it
+accepted:
+
+| Accepted before | Now |
+|---|---|
+| an exit room with **no bounds at all** | refused |
+| an exit room sitting **inside `c001`** | refused |
+| an exit approach whose corridor **ends ten kilometres away** | refused |
+| an approach to an exit room **that was never placed** | refused |
+| `"e:__exit__": "yes"` | refused |
+
+"Allowed by name" was never meant to mean "unchecked", and the comment
+above those constants claimed they were "checked as reserved" while
+nothing checked them.
+
+**Reserved joins are checked LESS than a JOINED edge, and the difference
+is not laziness.** A JOINED edge's `socket_a` and `socket_b` are two
+doorways, so the walk may demand they abut. A reserved join's endpoints
+are not doorways: `r:<room>` runs from the room's own `position` to its
+`arrival`, and the exit approach ends at the exit room's `position` —
+points several metres from any wall by construction. Demanding abutment
+there would refuse every real Zone, which is the other way to get a
+check wrong. So the pieces must be pieces and the chain must be
+continuous **through itself**, and the endpoints are not asserted.
+
+> **Open, for the engine lane.** Should a reserved join's endpoints abut
+> something checkable — the spine tail's `exit` doorway on one side, the
+> exit room's own doorway on the other — rather than a room origin? If
+> the engine can file them as doorways, this lane can walk them end to
+> end exactly like a JOINED edge, and the last leg stops being the one
+> corridor nobody verifies. If it cannot, say so and the weaker check
+> stands as the honest one.
 
 ## 6. The physics dependency, and what the engine lane owes it
 
