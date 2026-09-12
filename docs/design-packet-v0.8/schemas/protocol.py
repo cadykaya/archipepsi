@@ -164,6 +164,20 @@ class ZoneProgress(Strict):
     opened_locks: tuple[str, ...] = ()
     #: Warp stations reached.
     reached_stations: tuple[str, ...] = ()
+    #: Physics latches that have fired, as `package_id/latch_id`.
+    #:
+    #: Design 2 §5.7: once satisfied, never re-evaluated, never cleared
+    #: by reset or death — and **quitting is a reset**, which is the
+    #: whole reason this is persisted rather than held in the runtime.
+    #: The engine's live `latch_fired` signal is not state; what becomes
+    #: state is the APPROVED consequence, recorded only after the event
+    #: has been checked against the packages the committed manifest
+    #: accepted.
+    #:
+    #: Global identity, never a bare `latch_id`: two packages may both
+    #: call a latch `bridge_down`. See `physics.latch_ref`.
+    latched: tuple[str, ...] = Field(default=(), max_length=32)
+
     #: The station a re-entering player returns to. The one field that is
     #: a POSITION rather than progress: it is overwritten rather than
     #: accumulated, and losing it costs a walk rather than a run.
@@ -181,6 +195,10 @@ class ZoneProgress(Strict):
             return self
         return self.model_copy(update={
             "opened_locks": tuple(sorted({*self.opened_locks, ref}))})
+
+    def with_latch(self, ref: str) -> "ZoneProgress":
+        return self if ref in self.latched else self.model_copy(update={
+            "latched": tuple(sorted({*self.latched, ref}))})
 
     def with_station(self, station_id: str) -> "ZoneProgress":
         if station_id in self.reached_stations:
@@ -1465,6 +1483,29 @@ class KeyCollected(Strict):
                         pattern=r"^[a-z0-9_]+$")
 
 
+class LatchFired(Strict):
+    """A physics latch satisfied in the world.
+
+    **Idempotent by `package_id/latch_id`, because a latch is monotone.**
+    Design 2 §5.7 says a satisfied latch is never re-evaluated, so the
+    same latch twice is one latch and a resend after a dropped
+    connection is the normal case rather than an error.
+
+    **Validated against the packages the manifest accepted, not against
+    the message.** `record_key` once took any `key_id` the engine sent
+    and wrote it into monotone save data; the identity of a latch is
+    checked the same way a key's is now — against what the Zone's
+    committed layout actually holds — because a latch nobody placed
+    would otherwise become permanent state describing nothing.
+    """
+    type: Literal["latch_fired"]
+    zone_id: str = _ID
+    package_id: str = Field(min_length=1, max_length=32,
+                            pattern=r"^[a-z0-9_]+$")
+    latch_id: str = Field(min_length=1, max_length=32,
+                          pattern=r"^[a-z0-9_]+$")
+
+
 class LockOpened(Strict):
     """A locked door opened, identified by the door rather than the key.
 
@@ -1667,7 +1708,8 @@ ClientMessage = Annotated[
         Hello, ApConnect, ApDisconnect, StartMockCampaign, RequestNextZone,
         EnterZone, LeaveZone, ExitZone, AbandonZone, ClaimCheck, BuyShopStock,
         SlotAction, GrantLocalReward, SetCreativity, DebugCommand,
-        ZoneTiming, KeyCollected, LockOpened, StationReached, LayoutResult,
+        ZoneTiming, KeyCollected, LockOpened, StationReached, LatchFired,
+        LayoutResult,
     ],
     Field(discriminator="type"),
 ]

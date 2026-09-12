@@ -14,6 +14,7 @@ import logging
 import uuid
 from collections import defaultdict
 from pathlib import Path
+from pydantic import ValidationError
 
 from .ap_backend import APBackend, APData, ScoutInfo
 from .epsilon import (
@@ -1119,14 +1120,30 @@ class CampaignEngine:
             raise IntentError(
                 f"no Zone '{intent.zone_id}' in this campaign")
         before = self.save
-        if intent.type == "key_collected":
-            nxt = T.record_key(self.save, intent.zone_id, intent.key_id)
-        elif intent.type == "lock_opened":
-            nxt = T.record_lock(self.save, intent.zone_id, intent.room_id,
-                                intent.socket_id)
-        else:
-            nxt = T.record_station(self.save, intent.zone_id,
-                                   intent.station_id)
+        # AN UNKNOWN IDENTITY IS A REFUSED INTENT, NOT A CRASH. The
+        # transitions raise `ValueError` for an illegal request, as their
+        # module says; without this the generic arm in `server.py` caught
+        # them, logged a traceback for every one, and answered
+        # "ValueError: ..." — a refusal dressed as a bridge fault, which
+        # is noise that hides the real ones. A `ValidationError` is NOT
+        # translated: that one means this module built an invalid save
+        # and is a bug rather than a bad message.
+        try:
+            if intent.type == "key_collected":
+                nxt = T.record_key(self.save, intent.zone_id, intent.key_id)
+            elif intent.type == "latch_fired":
+                nxt = T.record_latch(self.save, intent.zone_id,
+                                     intent.package_id, intent.latch_id)
+            elif intent.type == "lock_opened":
+                nxt = T.record_lock(self.save, intent.zone_id,
+                                    intent.room_id, intent.socket_id)
+            else:
+                nxt = T.record_station(self.save, intent.zone_id,
+                                       intent.station_id)
+        except ValidationError:
+            raise
+        except ValueError as exc:
+            raise IntentError(str(exc)) from exc
         if nxt is before:
             return          # already recorded; nothing to save or announce
         self._apply(nxt)

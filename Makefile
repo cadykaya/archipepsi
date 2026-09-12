@@ -244,7 +244,7 @@ zone-shots: godot-import
 # means -- it is not automatically a missing test.
 mutate-bridge:
 	cd bridge && $(PY) tools/mutate.py archipepsi_bridge/layout.py \
-	  "c.fail(" tests/test_layout.py
+	  "c.fail(" tests/test_layout.py tests/test_physics_carrier.py
 	cd bridge && $(PY) tools/mutate.py archipepsi_bridge/topology.py \
 	  "errors.append(" tests/test_topology.py
 	cd bridge && $(PY) tools/mutate.py archipepsi_bridge/schemas/physics.py \

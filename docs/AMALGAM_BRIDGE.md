@@ -1110,6 +1110,70 @@ carrier is the open question, and it is genuinely joint:
 > other.
 
 
+### 5.6a Option 2 taken — a package travels with the layout
+
+**Owner direction, 2026-09-12: option 2.** A package is a physical fact,
+so it moves the way the layout moves. Implemented on the bridge side;
+what the engine owes is at the end.
+
+**The path.** The engine resolves the Zone's bounded intent into a real
+setup, measures it, replays it, and offers the result inside
+`layout_result` as `layout["packages"]` — a list of `PlacedPackage`.
+`layout.validate` is where it is checked, so it goes through the same
+**validate-then-commit** gate the layout does, and an accepted package
+is written into the manifest under the same `manifest_digest`. Nothing
+is on the Zone, so `test_epsilon_vocabulary` never walks it and the two
+fields that refused the first attempt — `LatchCondition.detail` and
+`ReferenceSolution.steps` — stay out of Epsilon's reach by
+construction rather than by exemption.
+
+**Three identities, all resolved against the Zone.** `zone_id` is the
+Zone the layout was offered for; `room_id` is a room it declares;
+`content_ref` is `feature:<tag>` or `shell:<shell_id>` and must name
+content that room declares. Neither half of that vocabulary is new. A
+package that parses, describes a real mechanism, and is attached to the
+wrong thing is the failure the wrapper exists to make impossible.
+
+**A bad package refuses the layout and is never dropped.** Committing
+the manifest without it would build the room and leave the mechanism
+inert — the content the engine asked for, quietly downgraded, with
+nothing saying so. Load-bearing or not: the engine declared it.
+
+**`check_physics_content` runs over the accepted set**, which is where a
+load-bearing latch with no evidence, evidence recorded for another
+package, and evidence for another revision of this one are each refused.
+`local_keys` is passed because it is a real dimension with a real count;
+the rest of the state vector is the verifier's budget question and
+nothing derives it from a Zone yet, so what is checked there is a
+**floor** rather than the whole vector, and the code says so.
+
+**The consequence, and only the approved one.** `latch_fired` is a
+client intent; `record_latch` checks it against the packages the
+committed manifest accepted and only then adds
+`package_id/latch_id` to `ZoneProgress.latched` — monotone, idempotent,
+and persisted, because Design 2 §5.7 says a satisfied latch is never
+cleared by a reset and quitting is a reset. The live signal is not
+state. **One carrier**: `ZoneProgress` on the `ZoneRecord` the snapshot
+already carries and `main.gd::_to_zone` already reads. Nothing was added
+to `ZoneReady`.
+
+**Nothing became load-bearing.** No engine produces evidence yet, so
+every load-bearing package is refused — which is the accessibility
+guarantee stated as a test rather than as a promise
+(`test_a_load_bearing_package_without_evidence_refuses_the_layout`).
+`CROSSING_EVIDENCE` is untouched: a package proving a crate moves says
+nothing about how far a dash carries a body.
+
+> **What the engine lane owes, concretely.** Emit `layout["packages"]`
+> from `zone_builder`/`ReplayHarness` as a list of
+> `{package_id, zone_id, room_id, content_ref, package}` — the wrapper
+> is `schemas/physics.py::PlacedPackage` and `package` is the shape
+> `physics_package.gd` already builds. Send `latch_fired` when a latch
+> the accepted package declares is satisfied. Two things are NOT
+> requested: any field on the Zone, and any second carrier for what a
+> player has latched.
+
+
 ## 6. What remains in this lane
 
 **The five conditions §0-bis puts on a legal capability gate**

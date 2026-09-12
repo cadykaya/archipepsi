@@ -27,6 +27,7 @@ import math
 from dataclasses import dataclass, field
 
 from . import shells as _SH
+from .schemas import physics as _PH
 
 #: Two things meet when they are this close. Metres, and radians.
 EPSILON_JOIN = 0.001
@@ -627,14 +628,98 @@ def validate(zone, result: dict) -> Verdict:
                "edges, so room-keyed evidence is ambiguous; the engine "
                "must key by edge_id before this Zone can be committed")
 
+    # --- 7. the physics packages the engine instantiated, if any.
+    placed = _packages(c, zone, result)
+
     if c.errors:
         return Verdict(status="LAYOUT_REFUSED", errors=tuple(c.errors),
                        engine=result)
     return Verdict(status="ACCEPTED",
-                   manifest=_manifest(zone, result, positions))
+                   manifest=_manifest(zone, result, positions, placed))
 
 
-def _manifest(zone, result: dict, positions: dict) -> dict:
+def _content_refs(chamber) -> set[str]:
+    """What a room declares that a package could be realizing.
+
+    Both halves already exist and neither is new vocabulary: an
+    affordance tag the chamber asked for, and the authored shell it was
+    built from. A `content_ref` naming anything else names nothing.
+    """
+    refs = {f"feature:{f.tag}" for f in chamber.features}
+    if chamber.shell_id:
+        refs.add(f"shell:{chamber.shell_id}")
+    return refs
+
+
+def _packages(c: "_Check", zone, result: dict) -> tuple:
+    """The proposed physics packages, bound to this Zone or refused.
+
+    **A proposal is not a certificate.** The engine resolves the Zone's
+    bounded intent into a real setup, measures it and replays it; what
+    arrives here is a claim, and every part of it is checked before any
+    of it is committed:
+
+    1. It parses as a `PlacedPackage`, strictly.
+    2. Its `zone_id` is this Zone and its `room_id` is a room this Zone
+       declares.
+    3. Its `content_ref` names content that room declares.
+    4. `check_physics_content` passes over the whole set — which is
+       where a load-bearing latch with no replay evidence, evidence
+       recorded for another package, and evidence for another revision
+       of this one are each refused.
+
+    **A bad package refuses the LAYOUT; it is never dropped.** Silently
+    committing the manifest without it would build the room and leave
+    the mechanism inert — the content the engine asked for, quietly
+    downgraded, with nothing anywhere saying so. Load-bearing or not:
+    the engine declared it, so dropping it is the downgrade.
+    """
+    raw = result.get("packages") or []
+    if not isinstance(raw, list):
+        c.fail(f"'packages' is {type(raw).__name__}, not a list")
+        return ()
+    rooms = {ch.id: ch for ch in zone.chambers}
+    placed = []
+    for i, entry in enumerate(raw):
+        try:
+            pp = _PH.PlacedPackage.model_validate(entry)
+        except Exception as exc:                      # pydantic ValidationError
+            first = str(exc).splitlines()
+            c.fail(f"package entry {i} is malformed: "
+                   + " ".join(first[1:3]).strip())
+            continue
+        if pp.zone_id != zone.zone_id:
+            c.fail(f"package '{pp.package_id}' is filed under Zone "
+                   f"'{pp.zone_id}' and was offered for '{zone.zone_id}'")
+            continue
+        room = rooms.get(pp.room_id)
+        if room is None:
+            c.fail(f"package '{pp.package_id}' stands in room "
+                   f"'{pp.room_id}', which this Zone does not have")
+            continue
+        refs = _content_refs(room)
+        if pp.content_ref not in refs:
+            c.fail(f"package '{pp.package_id}' realizes "
+                   f"'{pp.content_ref}' in room '{pp.room_id}', which "
+                   "declares "
+                   + (str(sorted(refs)) if refs else "no such content"))
+            continue
+        placed.append(pp)
+
+    if placed:
+        # LOCAL KEYS are a real state dimension with a real count, so
+        # they are passed. The others are the verifier's budget question
+        # and nothing derives them from a Zone yet, so what is checked
+        # here is a FLOOR on the state vector rather than the whole of
+        # it — said out loud rather than implied by a default.
+        keys = {k.key_id for ch in zone.chambers for k in ch.keys}
+        for err in _PH.check_physics_content(
+                [pp.package for pp in placed], local_keys=len(keys)):
+            c.fail(err)
+    return tuple(placed)
+
+
+def _manifest(zone, result: dict, positions: dict, placed=()) -> dict:
     """The committed layout, and the digest that pins it.
 
     Solved once and replayed forever: every later load uses these
@@ -650,6 +735,12 @@ def _manifest(zone, result: dict, positions: dict) -> dict:
         "stations": sorted(result.get("stations") or []),
         "edges": [e.model_dump() for e in zone.edges],
         "plugs": [p.model_dump() for p in zone.plugs],
+        # THE ACCEPTED PACKAGE DESCRIPTION, with the layout it was
+        # measured in. It rides the manifest because it is the same kind
+        # of fact: solved once, replayed forever, and pinned by the same
+        # digest — so a package cannot be swapped under a Zone that was
+        # certified with a different one.
+        "packages": [pp.model_dump() for pp in placed],
     }
     blob = json.dumps(body, sort_keys=True, separators=(",", ":"),
                       default=str)
