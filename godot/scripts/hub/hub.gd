@@ -328,17 +328,38 @@ void fragment() {
 	_fuzz.material = material
 	fuzz_layer.add_child(_fuzz)
 
+## The Hub modes whose portal leads INTO a Zone rather than asking for a
+## new one. Named once, because the portal branch, the prompt and the
+## suites all have to agree about which they are.
+##
+## ZONE_DORMANT IS A WAY BACK IN, and it is the mode that did not exist.
+## A Zone left with work outstanding cleared `active_zone_id`, so the Hub
+## fell through to ZONE_AVAILABLE, the portal asked for a NEW Zone, and
+## the bridge refused it while the dormant one still held its locations
+## -- a player at the portal with no way back into the Zone they walked
+## out of. Dess added the mode and `resume_zone_id`; this is the list
+## that reads it.
+const ZONE_ENTER_MODES := ["ZONE_READY", "ZONE_ACTIVE", "ZONE_DORMANT"]
+
 func _on_portal_activated() -> void:
-	var hub := BridgeClient.hub()
-	match BridgeClient.hub_mode():
+	var mode := BridgeClient.hub_mode()
+	if mode in ZONE_ENTER_MODES:
+		enter_zone_requested.emit()
+		return
+	match mode:
 		"ZONE_AVAILABLE":
 			BridgeClient.send_intent(
 					{"type": "request_next_zone", "finale": false})
 		"FINALE_ONLY":
 			BridgeClient.send_intent(
 					{"type": "request_next_zone", "finale": true})
-		"ZONE_READY", "ZONE_ACTIVE":
-			enter_zone_requested.emit()
+
+## The Zone portal, for whoever is driving the Hub instead of standing in
+## it. Read-only: the suites activate it through `interact` exactly as a
+## player does, so a portal that offers no prompt cannot be "activated"
+## from a test either.
+func portal() -> HubPortal:
+	return _portal
 
 func _on_finale_activated() -> void:
 	BridgeClient.send_intent({"type": "request_next_zone", "finale": true})
@@ -765,6 +786,14 @@ class HubPortal extends StaticBody3D:
 			"ZONE_ACTIVE":
 				_prompt = "[E] RESUME ZONE"
 				_label.text = "ZONE IN PROGRESS"
+			"ZONE_DORMANT":
+				# THE PROMPT FOR THE MODE THAT DID NOT EXIST. The branch
+				# above accepts ZONE_DORMANT and this fell through to the
+				# default, so a player standing at the portal after
+				# walking out of a Zone read "PORTAL" with no `[E]` at
+				# all -- the way back was wired and invisible.
+				_prompt = "[E] RETURN TO ZONE"
+				_label.text = "ZONE WAITING"
 			"GENERATING":
 				_prompt = "EPSILON IS DESIGNING…"
 				_label.text = "GENERATING"

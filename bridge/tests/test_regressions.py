@@ -15,7 +15,7 @@ from archipepsi_bridge.schemas.protocol import (
     ShopStockItem, ZoneRecord,
 )
 
-from .conftest import (
+from .conftest import (enter_zone, 
     BlockedProvider, connected_engine, drain, run,
 )
 from .test_campaign import NON_GOAL, TIER0, _crafted_completed, preload_items
@@ -187,7 +187,7 @@ def test_65_hub_mode_agrees_with_zone_state(tmp_path):
         snap = engine.snapshot()
         assert snap.active_zone.state == "GENERATED"
         assert snap.hub.mode == "ZONE_READY"
-        await engine.handle_enter_zone(snap.active_zone.zone_id)
+        await enter_zone(engine, snap.active_zone.zone_id)
         snap = engine.snapshot()
         assert snap.active_zone.state == "ACTIVE"
         assert snap.hub.mode == "ZONE_ACTIVE"
@@ -287,7 +287,7 @@ def test_69_release_location_keeps_zone(tmp_path):
         await engine.handle_request_next_zone(False)
         await engine._generation_task
         zone = engine.save.active_zone
-        await engine.handle_enter_zone(zone.zone_id)
+        await enter_zone(engine, zone.zone_id)
         ids = list(zone.allocated_location_ids)
         assert len(ids) >= 2
 

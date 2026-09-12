@@ -21,7 +21,7 @@ from archipepsi_bridge.schemas import constants as C
 from archipepsi_bridge.schemas.protocol import CampaignSave
 from archipepsi_bridge.server import BridgeServer
 
-from .conftest import (
+from .conftest import (enter_zone, 
     BlockedProvider, Collector, connected_engine, drain, make_engine, run,
 )
 
@@ -160,7 +160,7 @@ def test_8_pending_still_missing_is_resent(tmp_path):
         await engine.handle_request_next_zone(False)
         await engine._generation_task
         zone = engine.save.active_zone
-        await engine.handle_enter_zone(zone.zone_id)
+        await enter_zone(engine, zone.zone_id)
         loc = zone.allocated_location_ids[0]
         await TX.claim_check(engine, zone.zone_id, loc)
         assert engine.save.pending_checks           # in flight, unconfirmed
@@ -187,7 +187,7 @@ def test_9_checked_pending_finalizes_without_event(tmp_path):
         await engine.handle_request_next_zone(False)
         await engine._generation_task
         zone = engine.save.active_zone
-        await engine.handle_enter_zone(zone.zone_id)
+        await enter_zone(engine, zone.zone_id)
         loc = zone.allocated_location_ids[0]
         await TX.claim_check(engine, zone.zone_id, loc)
         assert engine.save.pending_checks
@@ -212,7 +212,7 @@ def test_10_claim_already_checked_finalizes_immediately(tmp_path):
         await engine.handle_request_next_zone(False)
         await engine._generation_task
         zone = engine.save.active_zone
-        await engine.handle_enter_zone(zone.zone_id)
+        await enter_zone(engine, zone.zone_id)
         loc = zone.allocated_location_ids[0]
         backend.server.checked.add(loc)
         backend._sync_from_server()

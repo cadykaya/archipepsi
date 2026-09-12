@@ -1,0 +1,276 @@
+#!/usr/bin/env sh
+# Fails when committed art does not match the source that generates it.
+#
+#   tools/check_art_current.sh
+#
+# ## Why this exists
+#
+# Generated assets go stale in silence. A model is built by one command and
+# its review sheet by another; a pass that runs only the first leaves every
+# sheet describing an object that no longer exists. Nothing fails: the build
+# is deterministic, the tests are green, and the assets are simply older than
+# their source. mario-3 carried a stale character through two commits that
+# way and spent a three-worktree forensic audit establishing that nothing was
+# wrong except the staleness.
+#
+# This is the two minutes that replaces all of that: rebuild everything, and
+# fail if git sees a difference.
+#
+# ## What it covers
+#
+#   * every engineering number the art lane reads is still live
+#   * the palette's anchors still match THEME_MATERIALS, every ramp still
+#     contains its own anchor, and the value sandwich still holds
+#   * the numbers ART_REVIEW.md and ASSET_INVENTORY.md quote match the build
+#   * every shell's material names still resolve to a theme role, and every
+#     theme still carries every role a shell uses
+#   * every declared runtime size and attachment point still matches the
+#     geometry that was exported
+#   * assets/art_budgets.json still matches its own derivation
+#   * the asset interface BATCH_043_INTEGRATION.md quotes still holds
+#   * every shell doorway is on its own room, through a clear opening, and
+#     has a floor under it -- and a player-shaped body can walk each
+#     repaired join, placed and yawed
+#   * every builder on disk is in the rebuild list, so none is silently
+#     exempt from the line below
+#   * every .glb and .png rebuilds byte-identical from its source
+#   * the preview project's renderer settings still match godot/'s
+#   * files the build produces that were never committed at all, which
+#     `git diff` cannot see
+#
+# NOT covered: the review sheets in docs/art/review/. They are renders, not
+# build output, and re-rendering them is a 15-minute job -- but a stale .glb
+# implies a stale sheet, and this catches the .glb.
+#
+# On failure the rebuilt assets are left in the working tree deliberately:
+# `git diff` then shows exactly what was out of date.
+set -e
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+BLENDER="${BLENDER:-$ROOT/.tools/blender/blender}"
+PATHS="assets/art_palette.json assets/art_budgets.json assets/models assets/textures"
+status=0
+
+say() { printf 'check-art: %s\n' "$1"; }
+fail() { printf 'check-art: FAIL -- %s\n' "$1"; status=1; }
+
+# --- 1. the numbers the art lane borrows -------------------------------
+say "engineering numbers..."
+python3 tools/blender/engine_truth.py >/dev/null || \
+  fail "engine_truth: a value the art lane reads has moved. Run
+    python3 tools/blender/engine_truth.py
+  for the list. Update engine_truth, never the asset."
+
+# --- 2. palette ---------------------------------------------------------
+say "palette..."
+python3 tools/blender/palette.py >/dev/null || \
+  fail "palette: anchors drifted, a ramp lost its anchor, or a signalling
+  colour stopped separating from a wall. Run
+    python3 tools/blender/palette.py"
+
+# --- 3. the documents quote the numbers the build actually produced -----
+say "document metrics match the build..."
+python3 tools/blender/check_docs_metrics.py >/dev/null || \
+  fail "check_docs_metrics: a triangle count or measured size quoted in
+  ART_REVIEW.md or ASSET_INVENTORY.md does not match the manifest. The
+  owner's ledger is the one place a wrong number is invisible. Run
+    python3 tools/blender/check_docs_metrics.py"
+
+# --- 4. budgets still match their own derivation ------------------------
+say "budgets match their derivation..."
+cp assets/art_budgets.json /tmp/art_budgets_committed.json
+# The theme role convention, over EVERY shell on disk rather than a list.
+# Cheap, and gap 2 of the theme-pack queue: nothing else stops the next
+# builder naming a surface something no binder can resolve.
+python3 tools/content/check_theme_roles.py >/dev/null || \
+  fail "check_theme_roles: a shell carries a material name that resolves to
+    no theme role, or a theme is short a role a shell uses. Run
+
+    python3 tools/content/check_theme_roles.py"
+
+# Theme-pack gap 3's unblocked half: the six-theme texture set as a
+# shippable thing, and one description a binder could be written against.
+# Where it lands is Production's and nothing here decides it.
+python3 tools/content/verify_theme_set.py >/dev/null || \
+  fail "verify-theme-set: the six-theme texture set is short a required
+    role, a theme has painted a universal one, or THEME_PACK.json no longer
+    matches the set. Run
+
+    python3 tools/content/verify_theme_set.py"
+
+# The Batch 043 candidates' declared geometry against what was exported.
+python3 tools/content/verify_exported_geometry.py >/dev/null || \
+  fail "verify-geometry: a declared runtime size or attachment point
+    disagrees with the exported .glb. Run
+
+    python3 tools/content/verify_exported_geometry.py"
+
+# Every shell doorway against the geometry it was exported from. Three
+# shells shipped an `exit` 2 m past their own back wall and twelve shells
+# passed every other check, because every other shell rule is about a SPAN
+# and this one is about a POINT.
+# The doorway checker against geometry built to make it fail, before it is
+# trusted on geometry we believe. Its aperture probe stepped the wrong way
+# for a while and no shipped shell could have shown it.
+python3 tools/content/test_measure_doorways.py >/dev/null || \
+  fail "test-doorways: the doorway checker no longer tells an open doorway
+    from a blocked one, in one of the four wall orientations. Run
+
+    python3 tools/content/test_measure_doorways.py"
+
+python3 tools/content/measure_doorways.py >/dev/null || \
+  fail "measure-doorways: a shell doorway is outside its own room, blocked,
+    or standing over nothing -- or a finding listed as KNOWN was repaired
+    and its line was left behind. Run
+
+    python3 tools/content/measure_doorways.py"
+
+# Theme-pack gap 4: the theme is an argument, and a non-default one must
+# not be able to reach the shipped pack.
+python3 tools/content/verify_theme_argument.py >/dev/null || \
+  fail "verify-theme: the default build no longer writes the shipped pack, a
+    --theme run can reach it, or an unknown theme builds instead of being
+    refused. Run
+
+    python3 tools/content/verify_theme_argument.py"
+
+python3 tools/blender/derive_budgets.py --write >/dev/null
+if ! cmp -s assets/art_budgets.json /tmp/art_budgets_committed.json; then
+  fail "assets/art_budgets.json no longer matches derive_budgets.py. Either a
+  game dimension moved (good -- re-render everything) or somebody edited the
+  JSON by hand (bad -- edit the derivation, or the reasoning stops being why
+  and becomes decoration)."
+  diff -u /tmp/art_budgets_committed.json assets/art_budgets.json | head -30 || true
+fi
+
+# --- 4b. the exported asset interface still matches the handoff ---------
+# BATCH_043_INTEGRATION.md quotes this script's measurements as the contract
+# Production imports against. It exits non-zero on a missing model, a renamed
+# part, a short result or a moved end stop, so it is worth running rather
+# than merely quoting. Needs the engine; skipped without it, like the
+# rebuild below.
+if [ -x "${GODOT:-$ROOT/.tools/godot}" ]; then
+  say "the Batch 043 import examples..."
+  tools/content/run_import_examples.sh >/dev/null 2>&1 || \
+    fail "import_examples: the asset interface quoted in
+    docs/art/BATCH_043_INTEGRATION.md no longer matches the exported assets.
+    Run
+
+    tools/content/run_import_examples.sh"
+
+  say "the repaired doorway crossings..."
+  tools/content/run_crossing_test.sh >/dev/null 2>&1 || \
+    fail "crossing: a player-shaped body can no longer walk one of the three
+    repaired joins, at the origin or placed and yawed. Run
+
+    tools/content/run_crossing_test.sh"
+else
+  say "SKIPPED the engine checks -- no godot at ${GODOT:-$ROOT/.tools/godot}"
+fi
+
+# --- 5. the preview project has not drifted from the game ---------------
+say "preview renderer settings match godot/..."
+for setting in "textures/canvas_textures/default_texture_filter=0"; do
+  if grep -qF "$setting" godot/project.godot; then
+    grep -qF "$setting" tools/artpreview/project.godot || \
+      fail "tools/artpreview/project.godot is missing '$setting', which
+  godot/project.godot sets. A preview that renders with different settings
+  from the game is a camera that lies."
+  else
+    fail "godot/project.godot no longer sets '$setting'. The preview mirrors
+  it; find out what replaced it before trusting another render."
+  fi
+done
+if ! grep -q "f62fdbde1" tools/artpreview/project.godot; then
+  fail "tools/artpreview/project.godot no longer records the pinned Godot
+  build. The preview and the game must run the same engine."
+fi
+
+# EVERY builder, not the ones that existed when this was written. The
+# batch002 scripts were added and this loop was not, so the newest assets in
+# the tree were the only ones nothing proved could be rebuilt -- the same
+# shape of gap as L-33.
+#
+# It happened again: `build_physics_props`, `build_machinery` and
+# `build_wave1_repair_overlay` each shipped .glb files into assets/models and
+# none was listed here. The Batch 043 pair were the two builders behind the
+# candidates pinned for an integration trial, so the art Production was about
+# to import against was the art with the least proof behind it.
+#
+# Twice is a pattern, and a list maintained by remembering is not a check. So
+# the list is now compared with the directory, and a builder that exists but
+# is not named here FAILS -- rather than being quietly skipped, which is what
+# made both gaps invisible. This runs whether or not Blender is installed.
+SCRIPTS="build_materials build_architecture build_props
+  build_concept_epsilon build_concept_check build_concept_portal
+  build_concept_enemy build_concept_anchor build_batch002_enemies
+  build_epsilon_installation build_hub build_lab build_check
+  build_ways_out build_traversal build_projectile build_affordances
+  build_dressing build_rails build_theme_dressing build_lights
+  build_shells build_arenas build_paths build_towers build_rooms
+  build_hall build_hall_overlay build_plenum build_yard build_span
+  build_arch_kit build_arch_services build_navigation build_landmarks
+  build_epsilon_states build_forge build_checkpoint build_pickups
+  build_interaction_kit build_secrets build_enemy_roles build_zone_keys
+  build_viewmodel build_gates build_decoys build_physics_props
+  build_machinery build_wave1_repair_overlay"
+
+# Unquoted on purpose: word-splitting collapses the list's line breaks, so a
+# name that happens to sit at the end of a line is still delimited by spaces.
+# (The first version quoted it, and flagged all six line-terminal builders.)
+listed=" $(echo $SCRIPTS) "
+for f in tools/blender/build_*.py; do
+  name=$(basename "$f" .py)
+  case "$listed" in
+    *" $name "*) ;;
+    *) fail "$name is not in this script's rebuild list, so nothing proves
+  the art it writes came from its source. Add it to SCRIPTS in
+  tools/check_art_current.sh." ;;
+  esac
+done
+
+# --- 6. everything rebuilds byte-identical ------------------------------
+if [ ! -x "$BLENDER" ]; then
+  say "SKIPPED rebuild -- no blender at $BLENDER (set BLENDER=...)"
+  say "  Everything above still ran."
+  exit $status
+fi
+
+if ! git diff --quiet -- $PATHS; then
+  say "SKIPPED rebuild -- generated assets are already modified in the tree."
+  say "  Commit or stash them first; otherwise this cannot tell your edits"
+  say "  from drift."
+  exit 2
+fi
+
+for script in $SCRIPTS; do
+  say "rebuilding $script..."
+  "$BLENDER" --background --python "tools/blender/$script.py" >/dev/null 2>&1 || \
+    fail "$script.py did not complete. Run it directly for the traceback."
+done
+
+if ! git diff --quiet -- $PATHS; then
+  fail "committed art is out of date with its source:"
+  git diff --stat -- $PATHS | sed 's/^/    /'
+  echo "    (rebuilt files left in the working tree; 'git diff' shows the drift)"
+  echo "    Re-render the review sheets too: tools/batch001_sheets.sh"
+fi
+
+# Theme-pack gap 4: the default is the thing this whole script compares
+# against, so it has to be the thing that was built. A shipped asset
+# carrying another theme's paint would rebuild byte-identical here and be
+# wrong in every render.
+if [ -n "${ART_THEME:-}" ] && [ "$ART_THEME" != "concrete_facility" ]; then
+  fail "ART_THEME=$ART_THEME is set, so the rebuild above did not build the
+  shipped pack. Unset it and run again; this script only means anything
+  against the default theme."
+fi
+
+untracked=$(git ls-files --others --exclude-standard -- $PATHS)
+if [ -n "$untracked" ]; then
+  fail "the build produces files that were never committed:"
+  echo "$untracked" | sed 's/^/    /'
+fi
+
+[ $status -eq 0 ] && say "PASS -- every generated asset matches its source."
+exit $status

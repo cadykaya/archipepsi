@@ -1,5 +1,6 @@
 # GENERATED FILE - do not edit.
-# Source: schemas/constants.py. Regenerate with `python export.py`.
+# Source: schemas/constants.py and the manipulation envelope in
+# schemas/physics.py. Regenerate with `python export.py`.
 #
 # Godot reads its gameplay numbers from here so the engine cannot
 # drift from the bounds the Python validator enforces.
@@ -165,6 +166,10 @@ const ZONE_MIN_CHECKS = 2
 const ZONE_TARGET_CHECKS = 3
 const ZONE_TARGET_CHECKS_MAX = 30
 const ZONE_TARGET_CHECKS_MIN = 1
+const ENVELOPE_FORCE_N = 700.0
+const ENVELOPE_RANGE_M = 20.0
+const ENVELOPE_MASS_KG = 120.0
+const MANIPULATE_VERBS = ["HOLD", "PULL", "PUSH"]
 
 ## Largest gap a MANDATORY jump may span, landing this much
 ## higher. The joint bound: gap and step maxed independently is

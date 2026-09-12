@@ -1,0 +1,488 @@
+{
+  "notes": [
+    "`hazard` resolved by the shared universal hazard ramp (owner ruling, 2026-09-10), and no theme paints one \u2014 which is the required state"
+  ],
+  "problems": [],
+  "roles_used": {
+    "accent": [
+      "shell_corridor_narrow"
+    ],
+    "ceiling": [
+      "shell_arena_balcony",
+      "shell_arena_pillars",
+      "shell_arena_pit",
+      "shell_arena_split",
+      "shell_corner_left",
+      "shell_corner_right",
+      "shell_corridor_bays",
+      "shell_corridor_gallery",
+      "shell_corridor_narrow",
+      "shell_corridor_stepped",
+      "shell_hall_transit",
+      "shell_plenum_helix",
+      "shell_span_basin",
+      "shell_treasure_cache",
+      "shell_treasure_coffer",
+      "shell_treasure_vault",
+      "shell_yard_gantry"
+    ],
+    "floor": [
+      "shell_arena_balcony",
+      "shell_arena_pillars",
+      "shell_arena_pit",
+      "shell_arena_split",
+      "shell_corner_left",
+      "shell_corner_right",
+      "shell_corridor_bays",
+      "shell_corridor_gallery",
+      "shell_corridor_narrow",
+      "shell_corridor_stepped",
+      "shell_hall_transit",
+      "shell_path_ascent",
+      "shell_path_spans",
+      "shell_path_stagger",
+      "shell_plenum_helix",
+      "shell_span_basin",
+      "shell_tower_collapsed",
+      "shell_tower_gantry",
+      "shell_tower_spiral",
+      "shell_treasure_cache",
+      "shell_treasure_coffer",
+      "shell_treasure_vault",
+      "shell_yard_gantry"
+    ],
+    "trim": [
+      "shell_arena_balcony",
+      "shell_arena_pillars",
+      "shell_arena_pit",
+      "shell_arena_split",
+      "shell_corner_left",
+      "shell_corner_right",
+      "shell_corridor_bays",
+      "shell_corridor_gallery",
+      "shell_corridor_narrow",
+      "shell_corridor_stepped",
+      "shell_hall_transit",
+      "shell_path_ascent",
+      "shell_path_spans",
+      "shell_path_stagger",
+      "shell_span_basin",
+      "shell_tower_collapsed",
+      "shell_tower_gantry",
+      "shell_tower_spiral",
+      "shell_treasure_cache",
+      "shell_treasure_coffer",
+      "shell_treasure_vault",
+      "shell_yard_gantry"
+    ],
+    "wall": [
+      "shell_arena_balcony",
+      "shell_arena_pillars",
+      "shell_arena_pit",
+      "shell_arena_split",
+      "shell_corner_left",
+      "shell_corner_right",
+      "shell_corridor_bays",
+      "shell_corridor_gallery",
+      "shell_corridor_narrow",
+      "shell_corridor_stepped",
+      "shell_hall_transit",
+      "shell_path_ascent",
+      "shell_path_spans",
+      "shell_path_stagger",
+      "shell_plenum_helix",
+      "shell_span_basin",
+      "shell_tower_collapsed",
+      "shell_tower_gantry",
+      "shell_tower_spiral",
+      "shell_treasure_cache",
+      "shell_treasure_coffer",
+      "shell_treasure_vault",
+      "shell_yard_gantry"
+    ]
+  },
+  "shells": {
+    "shell_arena_balcony": {
+      "kinds": {
+        "legacy": 40
+      },
+      "paths": [
+        "assets/models/batch016/shells/shell_arena_balcony.glb"
+      ],
+      "roles": [
+        "ceiling",
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 40,
+      "unresolved": []
+    },
+    "shell_arena_pillars": {
+      "kinds": {
+        "legacy": 62
+      },
+      "paths": [
+        "assets/models/batch016/shells/shell_arena_pillars.glb"
+      ],
+      "roles": [
+        "ceiling",
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 62,
+      "unresolved": []
+    },
+    "shell_arena_pit": {
+      "kinds": {
+        "legacy": 26
+      },
+      "paths": [
+        "assets/models/batch016/shells/shell_arena_pit.glb"
+      ],
+      "roles": [
+        "ceiling",
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 26,
+      "unresolved": []
+    },
+    "shell_arena_split": {
+      "kinds": {
+        "legacy": 24
+      },
+      "paths": [
+        "assets/models/batch016/shells/shell_arena_split.glb"
+      ],
+      "roles": [
+        "ceiling",
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 24,
+      "unresolved": []
+    },
+    "shell_corner_left": {
+      "kinds": {
+        "legacy": 18
+      },
+      "paths": [
+        "assets/models/batch019/shells/shell_corner_left.glb",
+        "godot/content/shells/shell_corner_left.glb"
+      ],
+      "roles": [
+        "ceiling",
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 18,
+      "unresolved": []
+    },
+    "shell_corner_right": {
+      "kinds": {
+        "legacy": 18
+      },
+      "paths": [
+        "assets/models/batch019/shells/shell_corner_right.glb",
+        "godot/content/shells/shell_corner_right.glb"
+      ],
+      "roles": [
+        "ceiling",
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 18,
+      "unresolved": []
+    },
+    "shell_corridor_bays": {
+      "kinds": {
+        "legacy": 34
+      },
+      "paths": [
+        "assets/models/batch015/shells/shell_corridor_bays.glb"
+      ],
+      "roles": [
+        "ceiling",
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 34,
+      "unresolved": []
+    },
+    "shell_corridor_gallery": {
+      "kinds": {
+        "legacy": 20
+      },
+      "paths": [
+        "assets/models/batch015/shells/shell_corridor_gallery.glb"
+      ],
+      "roles": [
+        "ceiling",
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 20,
+      "unresolved": []
+    },
+    "shell_corridor_narrow": {
+      "kinds": {
+        "legacy": 11
+      },
+      "paths": [
+        "assets/models/batch015/shells/shell_corridor_narrow.glb"
+      ],
+      "roles": [
+        "accent",
+        "ceiling",
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 11,
+      "unresolved": []
+    },
+    "shell_corridor_stepped": {
+      "kinds": {
+        "legacy": 11
+      },
+      "paths": [
+        "assets/models/batch015/shells/shell_corridor_stepped.glb"
+      ],
+      "roles": [
+        "ceiling",
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 11,
+      "unresolved": []
+    },
+    "shell_hall_transit": {
+      "kinds": {
+        "legacy": 77
+      },
+      "paths": [
+        "assets/models/batch039/shells/shell_hall_transit.glb",
+        "godot/content/shells/shell_hall_transit.glb"
+      ],
+      "roles": [
+        "ceiling",
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 77,
+      "unresolved": []
+    },
+    "shell_path_ascent": {
+      "kinds": {
+        "legacy": 25
+      },
+      "paths": [
+        "assets/models/batch017/shells/shell_path_ascent.glb"
+      ],
+      "roles": [
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 25,
+      "unresolved": []
+    },
+    "shell_path_spans": {
+      "kinds": {
+        "legacy": 18
+      },
+      "paths": [
+        "assets/models/batch017/shells/shell_path_spans.glb"
+      ],
+      "roles": [
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 18,
+      "unresolved": []
+    },
+    "shell_path_stagger": {
+      "kinds": {
+        "legacy": 26
+      },
+      "paths": [
+        "assets/models/batch017/shells/shell_path_stagger.glb"
+      ],
+      "roles": [
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 26,
+      "unresolved": []
+    },
+    "shell_plenum_helix": {
+      "kinds": {
+        "legacy": 117
+      },
+      "paths": [
+        "assets/models/batch040/shells/shell_plenum_helix.glb",
+        "godot/content/shells/shell_plenum_helix.glb"
+      ],
+      "roles": [
+        "ceiling",
+        "floor",
+        "wall"
+      ],
+      "slots": 117,
+      "unresolved": []
+    },
+    "shell_span_basin": {
+      "kinds": {
+        "legacy": 56
+      },
+      "paths": [
+        "assets/models/batch040/shells/shell_span_basin.glb",
+        "godot/content/shells/shell_span_basin.glb"
+      ],
+      "roles": [
+        "ceiling",
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 56,
+      "unresolved": []
+    },
+    "shell_tower_collapsed": {
+      "kinds": {
+        "legacy": 44
+      },
+      "paths": [
+        "assets/models/batch018/shells/shell_tower_collapsed.glb",
+        "godot/content/shells/shell_tower_collapsed.glb"
+      ],
+      "roles": [
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 44,
+      "unresolved": []
+    },
+    "shell_tower_gantry": {
+      "kinds": {
+        "legacy": 71
+      },
+      "paths": [
+        "assets/models/batch018/shells/shell_tower_gantry.glb",
+        "godot/content/shells/shell_tower_gantry.glb"
+      ],
+      "roles": [
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 71,
+      "unresolved": []
+    },
+    "shell_tower_spiral": {
+      "kinds": {
+        "legacy": 53
+      },
+      "paths": [
+        "assets/models/batch018/shells/shell_tower_spiral.glb",
+        "godot/content/shells/shell_tower_spiral.glb"
+      ],
+      "roles": [
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 53,
+      "unresolved": []
+    },
+    "shell_treasure_cache": {
+      "kinds": {
+        "legacy": 38
+      },
+      "paths": [
+        "assets/models/batch019/shells/shell_treasure_cache.glb",
+        "godot/content/shells/shell_treasure_cache.glb"
+      ],
+      "roles": [
+        "ceiling",
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 38,
+      "unresolved": []
+    },
+    "shell_treasure_coffer": {
+      "kinds": {
+        "legacy": 32
+      },
+      "paths": [
+        "assets/models/batch019/shells/shell_treasure_coffer.glb",
+        "godot/content/shells/shell_treasure_coffer.glb"
+      ],
+      "roles": [
+        "ceiling",
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 32,
+      "unresolved": []
+    },
+    "shell_treasure_vault": {
+      "kinds": {
+        "legacy": 30
+      },
+      "paths": [
+        "assets/models/batch019/shells/shell_treasure_vault.glb",
+        "godot/content/shells/shell_treasure_vault.glb"
+      ],
+      "roles": [
+        "ceiling",
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 30,
+      "unresolved": []
+    },
+    "shell_yard_gantry": {
+      "kinds": {
+        "legacy": 43
+      },
+      "paths": [
+        "assets/models/batch040/shells/shell_yard_gantry.glb",
+        "godot/content/shells/shell_yard_gantry.glb"
+      ],
+      "roles": [
+        "ceiling",
+        "floor",
+        "trim",
+        "wall"
+      ],
+      "slots": 43,
+      "unresolved": []
+    }
+  },
+  "themes": [
+    "concrete_facility",
+    "gothic_stone",
+    "neon_transit",
+    "rusted_industrial",
+    "temple_ruin",
+    "void_glitch"
+  ]
+}

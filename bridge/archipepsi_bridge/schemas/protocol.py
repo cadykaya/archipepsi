@@ -949,12 +949,23 @@ ZONE_OCCUPIED_MODES = ("GENERATING", "ZONE_READY", "ZONE_ACTIVE")
 #: Modes with something the player can walk into right now. Entering one of
 #: these needs no Archipelago round-trip: the Zone already exists locally.
 #:
-#: **This is the list `portal_enabled` reads, and therefore the list the
-#: game obeys.** Adding `ZONE_DORMANT` to a second, near-identically
-#: named constant left the portal dark over a Zone the Hub was naming —
-#: the mode said "your Zone is waiting", `resume_zone_id` said which
-#: one, and the button was greyed out. Two spellings of one fact is how
-#: the lanes come to disagree; there is one spelling.
+#: Modes with something the player can walk into right now. Entering one
+#: of these needs no Archipelago round-trip: the Zone already exists
+#: locally.
+#:
+#: **ONE NAME, and the engine lane asked which.** Both lanes diagnosed
+#: the same defect from opposite ends: `ZONE_ENTER_MODES` and
+#: `ZONE_ENTERABLE_MODES` were one question under two names,
+#: `ZONE_DORMANT` went into one, and `portal_enabled` read the other —
+#: so the Hub named the Zone and greyed the button out. Neither half was
+#: wrong, which is why nothing caught it.
+#:
+#: The collapse was `ZONE_ENTERABLE_MODES = ZONE_ENTER_MODES`. This
+#: keeps the single name instead: an alias is still two names, a reader
+#: who greps the other one finds a definition and may add to it, and the
+#: aliasing only holds while nobody rebinds either. The question it was
+#: asking is this one's — **what the portal can enter without
+#: Archipelago** — and `portal_enabled` is the consumer that decides it.
 ZONE_ENTERABLE_MODES = ("ZONE_READY", "ZONE_ACTIVE", "ZONE_DORMANT")
 
 

@@ -22,7 +22,7 @@ import asyncio
 
 from archipepsi_bridge.epsilon import FallbackEpsilonProvider
 
-from .conftest import connected_engine, drain, run
+from .conftest import enter_zone, connected_engine, drain, run
 
 
 class SlowProvider:
@@ -132,7 +132,7 @@ def test_a_generation_for_a_DIFFERENT_zone_still_starts(tmp_path):
         await engine.handle_request_next_zone(False)
         first = engine.save.active_zone.zone_id
         await asyncio.gather(engine._generation_task)
-        await engine.handle_enter_zone(first)
+        await enter_zone(engine, first)
         await drain()
 
         # Abandon it so the Hub accepts a new request, then ask again.

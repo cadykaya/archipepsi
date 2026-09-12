@@ -56,6 +56,8 @@ func _run() -> void:
 	_every_refusal_says_which_one_it_was()
 	_a_fallback_room_never_reports_itself_authored()
 	_godot_decides_the_shared_cases_the_way_they_say()
+	_the_physics_digest_vectors_agree_with_the_bridge()
+	await _a_scene_digest_changes_when_the_scene_does()
 	_cleanup()
 	# Both awaited. A function containing `await` called WITHOUT one
 	# returns at its first suspend, and the suite goes on to print OK
@@ -1720,3 +1722,221 @@ func _cluster_is_accepted(entry: Dictionary) -> bool:
 	var reg := ContentRegistry.new()
 	reg._accept("probe_pack", entry.duplicate(true))
 	return reg.entries.has(str(entry.get("id", "")))
+
+
+## LEVEL 1 OF THREE: THE TWO LANES BUILD THE SAME BYTES.
+##
+## `package_digest` is what a replay's evidence is filed under. The
+## engine computes it over the package it is about to replay; the bridge
+## recomputes it over the package it is about to accept. A disagreement
+## means evidence about one package read as evidence about another, and
+## since neither lane can see the other's serializer, the only thing that
+## catches a drift is a shared vector run through both.
+##
+## **CONSTRUCTED, NEVER COPIED.** Every vector carries the `canonical`
+## string beside its package, and hashing that string would prove the
+## file is self-consistent and nothing at all about this code. Each
+## package is built into a `PhysicsPackage` and serialized by this lane's
+## own writer, and BOTH the bytes and the digest are compared -- a digest
+## check alone cannot say whether two implementations built different
+## objects or serialized the same object differently.
+##
+## This says nothing about `scene_digest` describing a real scene (level
+## 2) and nothing about anything being replayable (level 3). There is no
+## physics runtime. `docs/AMALGAM_BRIDGE.md` §6.2b.
+func _the_physics_digest_vectors_agree_with_the_bridge() -> void:
+	var text := FileAccess.get_file_as_string(
+			"res://tests/fixtures/physics_digest_vectors.json")
+	var fixture: Variant = JSON.parse_string(text)
+	if typeof(fixture) != TYPE_DICTIONARY:
+		_check(false, "the physics digest vectors did not parse")
+		return
+	var vectors: Array = (fixture as Dictionary).get("vectors", [])
+	_check(vectors.size() >= 9,
+			"%d physics digest vectors; the shared set is nine"
+			% vectors.size())
+	var agreed := 0
+	for raw: Variant in vectors:
+		var vector: Dictionary = raw
+		var name := str(vector.get("name", "?"))
+		var errors: Array[String] = []
+		var package := PhysicsPackage.from_dict(
+				vector.get("package", {}) as Dictionary, errors)
+		if package == null:
+			_check(false, "vector '%s' would not build: %s"
+					% [name, str(errors)])
+			continue
+		# THE BYTES FIRST. A digest that matches over different bytes is
+		# a collision and a digest that differs tells you nothing about
+		# WHERE; this says which character.
+		var mine := package.canonical_text()
+		var theirs := str(vector.get("canonical", ""))
+		if mine != theirs:
+			_check(false, "vector '%s' serializes differently:\n"
+					% name + "    bridge: %s\n    engine: %s\n    %s"
+					% [theirs, mine, _first_difference(theirs, mine)])
+			continue
+		_check(package.digest() == str(vector.get("digest", "")),
+				"vector '%s' hashes to %s and the bridge says %s"
+				% [name, package.digest(), str(vector.get("digest", ""))])
+		agreed += 1
+	print("  PHYSICS DIGEST %d of %d vectors agree byte for byte"
+			% [agreed, vectors.size()])
+	# AND THE SERIALIZER IS NOT A CONSTANT. Every vector agreeing would
+	# also be true of a writer that returned the stored string, so one
+	# package is changed in the smallest way the contract admits and the
+	# digest has to move with it.
+	var first: Dictionary = (vectors[0] as Dictionary).get("package", {})
+	var moved: Dictionary = first.duplicate(true)
+	((moved["setup"] as Dictionary)["bodies"] as Array)[0]["mass_kg"] = 80.5
+	var errors: Array[String] = []
+	var changed := PhysicsPackage.from_dict(moved, errors)
+	_check(changed != null and changed.digest()
+				!= str((vectors[0] as Dictionary).get("digest", "")),
+			"half a kilogram changed nothing in the digest, so the "
+			+ "serializer is not reading the package")
+	# AND A FIELD THIS LANE DOES NOT MODEL IS REFUSED, not dropped: a
+	# producer that silently ignores a new field digests less than the
+	# bridge hashes.
+	var extra: Dictionary = first.duplicate(true)
+	extra["restitution"] = 0.4
+	var complaints: Array[String] = []
+	_check(PhysicsPackage.from_dict(extra, complaints) == null
+				and not complaints.is_empty(),
+			"a package carrying a field this lane does not model was "
+			+ "accepted, so its digest would be computed over less than "
+			+ "the bridge hashes")
+
+## Where two canonical strings first part company, for a reader.
+func _first_difference(a: String, b: String) -> String:
+	var limit := mini(a.length(), b.length())
+	for i in limit:
+		if a[i] != b[i]:
+			return ("first differ at %d: ...%s... vs ...%s..."
+					% [i, a.substr(maxi(0, i - 20), 45),
+						b.substr(maxi(0, i - 20), 45)])
+	return "identical for %d characters; one is longer (%d vs %d)" \
+			% [limit, a.length(), b.length()]
+
+
+## LEVEL 2: THE DIGEST NAMES THE SCENE IT RAN AGAINST.
+##
+## A constant passes the bridge. Sixteen hex characters is all it can
+## see, so `"0123456789abcdef"` folds into `package_digest` exactly as a
+## real digest does and nothing on that side will ever tell them apart.
+## That makes the falsification the engine lane's, and this is it: a
+## digest is only evidence if changing the scene changes it.
+##
+## Three properties, and the second is what makes the first mean
+## anything. The same scene digests the same however its nodes were
+## added; a collider moved by a MILLIMETRE digests differently; and a
+## move a tenth of the quantum does not, because a digest that churns on
+## single-precision noise invalidates evidence nothing changed about.
+func _a_scene_digest_changes_when_the_scene_does() -> void:
+	var bounds := AABB(Vector3(-20, -5, -20), Vector3(40, 20, 40))
+	var first := _digest_room(false)
+	add_child(first["root"] as Node3D)
+	await get_tree().physics_frame
+	var baseline := SceneDigest.of_room(first["root"] as Node3D, bounds,
+			first["bodies"] as Array)
+	_check(baseline.length() == 16
+				and baseline == baseline.to_lower()
+				and baseline.is_valid_hex_number(false),
+			"a scene digest is sixteen lowercase hex characters, and "
+			+ "this is '%s'" % baseline)
+
+	# THE SAME ROOM, BUILT IN A DIFFERENT ORDER. Scene-tree order is not
+	# stable across saves, so an unordered digest makes the same scene
+	# digest differently on reload -- which reads as "the room changed"
+	# every time anybody loads it.
+	var shuffled := _digest_room(true)
+	add_child(shuffled["root"] as Node3D)
+	await get_tree().physics_frame
+	_check(SceneDigest.of_room(shuffled["root"] as Node3D, bounds,
+				shuffled["bodies"] as Array) == baseline,
+			"the same room built in a different node order digested "
+			+ "differently, so every reload would invalidate its own "
+			+ "evidence")
+
+	# A MILLIMETRE. `EPSILON_JOIN` is 1e-3 m, so this is the smallest
+	# move anything in this game reasons about.
+	var wall := (first["root"] as Node3D).get_node("obstacle") as Node3D
+	var was := wall.position
+	wall.position = was + Vector3(0.001, 0.0, 0.0)
+	await get_tree().physics_frame
+	_check(SceneDigest.of_room(first["root"] as Node3D, bounds,
+				first["bodies"] as Array) != baseline,
+			"a collider moved a millimetre left the digest unchanged, "
+			+ "so it is a constant with extra steps")
+
+	# AND A TENTH OF THE QUANTUM DOES NOT MOVE IT.
+	wall.position = was + Vector3(SceneDigest.QUANTUM / 10.0, 0.0, 0.0)
+	await get_tree().physics_frame
+	_check(SceneDigest.of_room(first["root"] as Node3D, bounds,
+				first["bodies"] as Array) == baseline,
+			"a move a tenth of the quantum changed the digest, so it "
+			+ "churns on single-precision noise and invalidates "
+			+ "evidence nothing changed about")
+
+	# AND THE BODY'S OWN STATE IS IN IT. Mass is the contract's and is
+	# already in `package_digest`; the starting VELOCITY is not, and a
+	# crate that begins the replay moving is a different experiment.
+	wall.position = was
+	var crate := (first["bodies"] as Array)[0] as RigidBody3D
+	crate.linear_velocity = Vector3(0.5, 0.0, 0.0)
+	await get_tree().physics_frame
+	_check(SceneDigest.of_room(first["root"] as Node3D, bounds,
+				first["bodies"] as Array) != baseline,
+			"a body that starts the replay moving digested the same as "
+			+ "one at rest")
+	(first["root"] as Node3D).queue_free()
+	(shuffled["root"] as Node3D).queue_free()
+
+## A small room with a floor, an obstacle and one crate. `shuffled` adds
+## the same nodes in the opposite order, which is the only difference.
+func _digest_room(shuffled: bool) -> Dictionary:
+	var root := Node3D.new()
+	root.name = "digest_room"
+	var pieces: Array[Node3D] = [
+		_solid("floor", Vector3(0, -0.5, 0), Vector3(40, 1, 40)),
+		_solid("obstacle", Vector3(3, 1, 0), Vector3(1, 2, 4)),
+		_solid("ledge", Vector3(-6, 0.5, 2), Vector3(2, 1, 2)),
+	]
+	if shuffled:
+		pieces.reverse()
+	for piece: Node3D in pieces:
+		root.add_child(piece)
+	var crate := RigidBody3D.new()
+	crate.name = "crate_a"
+	crate.mass = 80.0
+	crate.position = Vector3(0, 1, 0)
+	# FROZEN, because a digest is of the SETUP.
+	#
+	# The first version of this left the crate falling, so the baseline
+	# and every comparison were taken at different points of its arc and
+	# two of the four properties failed -- a statement about the test,
+	# not about the digest. A replay harness builds the setup, digests
+	# it, and THEN steps; a body already moving when the digest is taken
+	# means the digest is of a moment nobody can reproduce.
+	crate.freeze = true
+	crate.freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+	var shape := CollisionShape3D.new()
+	shape.name = "hull"
+	var box := BoxShape3D.new()
+	box.size = Vector3(1, 1, 1)
+	shape.shape = box
+	crate.add_child(shape)
+	root.add_child(crate)
+	return {"root": root, "bodies": [crate]}
+
+func _solid(named: String, at: Vector3, size: Vector3) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.name = named
+	body.position = at
+	var shape := CollisionShape3D.new()
+	shape.name = "hull"
+	var box := BoxShape3D.new()
+	box.size = size
+	shape.shape = box
+	body.add_child(shape)
+	return body

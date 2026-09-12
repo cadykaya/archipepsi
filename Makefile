@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture physics-vectors mutate-bridge version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-activity godot-room godot-room-contract godot-movement godot-playtest3a godot-zone-audit zone-shots godot-boot godot-legible godot-integration godot-reload
+.PHONY: apworld bridge doctor dual-real dual-real-soak export godot-activity godot-affordance godot-blink godot-boot godot-content godot-hud godot-import godot-integration godot-lab godot-legible godot-movement godot-physics godot-playtest3a godot-reload godot-room godot-room-contract godot-rules godot-stats godot-test godot-verbs godot-zone-audit host mutate-bridge notices physics-vectors rules-fixture seed seed-multi setup smoke test test-apworld test-bridge test-schemas verbs-fixture version world-install zone-shots
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -396,6 +396,25 @@ RELOAD_SAVES := $(CURDIR)/.reload-saves
 #
 # `--mock-scale default` because a locked branch needs a Zone big enough
 # to spare a room, and the prototype's thirty locations do not make one.
+# BOTH SIDES RESTART. The bridge used to stay up across the two Godot
+# processes, so "the campaign loads from disk" was the CLIENT loading
+# from a bridge that still had everything in memory. It is stopped and
+# started again between the phases now, against the same save directory,
+# so the only thing that crosses the restart is the file on disk.
+# THE PHYSICS SUBSTRATE (`docs/AMALGAM_BRIDGE.md` §6.3): a rigid body
+# that rests and can be pushed, and one verb resolving to force, range
+# and mass. Its own target because it is the only suite that steps
+# physics for hundreds of frames, and folding it into `godot-content`
+# would make a fast contract suite slow for everybody.
+godot-physics: godot-import
+	@out=$$($(GODOT) --headless --path godot -- --physics-test 2>&1); \
+	status=$$?; printf '%s\n' "$$out" | grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)"; \
+	if printf '%s\n' "$$out" | grep -q "SCRIPT ERROR"; then \
+	  echo "-- a script error was raised: a test that crashed is not a test that passed"; \
+	  exit 1; \
+	fi; \
+	exit $$status
+
 godot-reload: godot-import
 	rm -rf $(RELOAD_SAVES) $(HOME)/.local/share/godot/app_userdata/Archipepsi/reload_notes.json
 	cd bridge && ARCHIPEPSI_SAVE_DIR=$(RELOAD_SAVES) \
@@ -408,7 +427,14 @@ godot-reload: godot-import
 	RECORD=$$?; \
 	grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" /tmp/reload-record.log | tail -25; \
 	if [ $$RECORD -ne 0 ]; then kill $$BRIDGE_PID; exit $$RECORD; fi; \
-	echo "-- second process --"; \
+	echo "-- both processes restart: the bridge too, from its own save --"; \
+	kill $$BRIDGE_PID; wait $$BRIDGE_PID 2>/dev/null || true; \
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(RELOAD_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "the restarted bridge did not come back"; exit 1; }; \
 	$(GODOT) --headless --path godot -- --reload-phase=resume > /tmp/reload-resume.log 2>&1; \
 	RESUME=$$?; \
 	grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" /tmp/reload-resume.log | tail -30; \

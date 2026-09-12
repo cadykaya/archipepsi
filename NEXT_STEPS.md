@@ -1,5 +1,68 @@
 # Archipepsi — build state
 
+## 2026-09-12 (later) — the merged Zone opens, and the physics has a runtime
+
+`claude/archipepsi-echoes-continuation-b1adno`, from the art merge
+`dfad94c`. Read `docs/AGENT_FRONTIER.md` first; this is the longer
+version.
+
+**The generated Zone opens again.** `make godot-integration` had been red
+since the art lane merged: `zone_001` refused three times on *door
+'c002/entry' is USED and the engine measured it as solid*, and the client
+never left the Hub. The door was not solid — an **enemy was standing in
+it**. `_enemy_spawns` fell back to `Vector3.ZERO` for a shell that
+declares no `enemy_spawn` volume, and a shell's local origin is not its
+centre, it is the wall the entry doorway is cut into. Ten enemies, one
+2.4 m opening, and the comment beside that fallback said "the room's
+centre" while the code said the origin.
+
+Three things were wrong: the placement (fixed — largest declared
+standable surface, and every spawn pushed out of any doorway it lands
+in), the probe (`aperture_polarity` is architectural and already looks
+past a crate, a lock and the player; an enemy is placed content by the
+same reasoning), and the report (the engine names the collider now).
+
+**And the census had never measured a door.** `_chamber_for` built every
+registry shell with no `doors` at all, so two probes ran over an empty
+list and printed a clean sheet for twelve shells. The census declares
+every doorway socket now, and a second test places each shell in a real
+furnished three-room Zone **in all six themes** and reads the apertures
+the way `ZoneController` reads them before putting them on the wire.
+
+**The unresolved crossings are closed.** The body walks the join's
+committed chain now, doorway to doorway, instead of steering straight at
+an arrival through whatever stands between: 21 JOINED edges measured, 21
+crossed, 0 not, including the five level changes the flood cannot grid
+and used to skip. `KNOWN_UNWALKED_JOINS` is identity → reason and is
+empty, enforced in both directions.
+
+**The way back into a Zone is real on both sides of a restart.**
+`ZONE_ENTERABLE_MODES` and `ZONE_ENTER_MODES` were two lists for one
+question and they drifted, so the portal showed `ZONE_DORMANT`'s prompt
+and refused to fire. One list now. `make godot-reload` restarts the
+**bridge** too, so "the campaign loads from disk" is the bridge loading
+from disk, and the second process presses the real portal.
+
+**A committed Zone survives a refused replay.** `refuse_layout` cleared
+`zone` and `manifest` whatever the Zone was, so a rejected replay sent a
+*different* Zone back under the same id holding the same Checks, with the
+player's keys recorded against rooms that no longer existed.
+
+**The physics contract has a runtime.** All three levels of
+`docs/AMALGAM_BRIDGE.md` §6 run: the nine shared digest vectors agree
+byte for byte in both lanes, `SceneDigest` names the scene a replay ran
+against (falsified four ways), and `ReplayHarness` replays a package
+three times at exactly the envelope and reports what latched per run.
+Building it found that §29.3.2 promised something the substrate refused —
+Godot's default friction of 1.0 resists a 120 kg body with 1176 N against
+700 N of push. `make godot-physics`, 36 checks, in CI.
+
+**Still open.** Nothing in a campaign authors a physics package, so no
+Zone has produced replay evidence. `shell_span_basin`'s pylon is Arty's
+open item and is a ROOM finding, not a join one. Procedural
+`ChamberBuilders` spawn placement is not covered by the doorway rule;
+only the authored-shell path is.
+
 ## 2026-09-12 — the layout exchange is connected end to end
 
 `claude/archipepsi-amalgam-slice1`. Acceptance gating was in place and no
@@ -24,13 +87,12 @@ What runs now:
   geometry's: every join the flood refuses is handed to a real `Player`
   first. Five of eight were the prober; three are geometry.
 
-Open, and both named: `shell_hall_transit`, `shell_plenum_helix` and
-`shell_span_basin` are withheld until Art moves their `exit` doorway back
-onto their body (`docs/art-requests/2026-09-11-doorways-outside-their-envelope.md`),
-which is what currently leaves a generated Zone with no authored movement
-offer. And a DORMANT Zone has no Hub affordance to re-enter it — the
-`enter_zone` intent works, the portal has no mode that sends it. That one
-is the bridge's `HubMode` vocabulary: `docs/AMALGAM_SLICE1.md` §5q.
+~~Open, and both named: three shells withheld over their `exit` doorway,
+and a DORMANT Zone with no Hub affordance to re-enter it.~~ **Both closed
+later the same day — see the section above.** The doorway question was
+settled by the assembled crossing rather than by another threshold, and
+the portal's missing mode turned out to be one constant reading a stale
+list.
 
 ## Where this is
 **The full v0.7 POC (Phases 0–7) is complete and green**, and the build has

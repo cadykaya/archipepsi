@@ -27,12 +27,14 @@ from pydantic import TypeAdapter
 try:
     from . import constants as C
     from . import echo as E
+    from . import physics as PH
     from .echo import EchoInterpretation
     from .protocol import CampaignSnapshot, ClientMessage, ServerMessage
     from .zone import Zone
 except ImportError:  # pragma: no cover
     import constants as C
     import echo as E
+    import physics as PH
     from echo import EchoInterpretation
     from protocol import CampaignSnapshot, ClientMessage, ServerMessage
     from zone import Zone
@@ -48,6 +50,21 @@ except ImportError:  # pragma: no cover
 #: value against the tested range is exactly what the client should do.
 GD_SKIP = ("ENEMY_STATS", "TIER_BOUNDS", "DEFAULT_CONFIG",
            "PROTOTYPE_CONFIG", "ENEMY_ENVELOPES")
+
+#: Exported from `physics.py` as well, by name.
+#:
+#: §29.3.2's mandatory-route envelope is what a host must meet to count
+#: as a guaranteed provider, and the ENGINE is the side that has to build
+#: a provider at exactly it -- the numbers are useless on the bridge
+#: alone, which never touches a body. They live in `physics.py` because
+#: that is the module that states the rule; retyping them in
+#: `constants.py` to get them exported would be two sources for one
+#: contract, which is the drift this whole file exists to prevent.
+#:
+#: Named rather than swept, because `physics.py` also holds bounds that
+#: are the VERIFIER's budget (`STATE_VECTOR_BOUND`,
+#: `MAX_VECTOR_LATCHES`) and mean nothing in a scene.
+GD_PHYSICS = ("ENVELOPE_FORCE_N", "ENVELOPE_RANGE_M", "ENVELOPE_MASS_KG")
 
 
 def _gd_literal(value) -> str:
@@ -69,7 +86,8 @@ def _gd_literal(value) -> str:
 def export_constants_gd() -> str:
     lines = [
         "# GENERATED FILE - do not edit.",
-        "# Source: schemas/constants.py. Regenerate with `python export.py`.",
+        "# Source: schemas/constants.py and the manipulation envelope in",
+        "# schemas/physics.py. Regenerate with `python export.py`.",
         "#",
         "# Godot reads its gameplay numbers from here so the engine cannot",
         "# drift from the bounds the Python validator enforces.",
@@ -89,6 +107,20 @@ def export_constants_gd() -> str:
                 f"export: cannot express constant {name} in GDScript ({exc}). "
                 "Add it to GD_SKIP deliberately, or change its type."
             ) from exc
+
+    # §29.3.2's envelope, from the module that states the rule.
+    for name in GD_PHYSICS:
+        if not hasattr(PH, name):
+            raise SystemExit(
+                f"export: physics.py no longer defines {name}, which the "
+                "engine builds a provider against. Remove it from "
+                "GD_PHYSICS deliberately, or restore it.")
+        lines.append(f"const {name} = {_gd_literal(getattr(PH, name))}")
+    # `MANIPULATE_VERBS` is a frozenset and GDScript has no set literal,
+    # so it goes over as a sorted Array -- which is also how the engine
+    # wants to read it.
+    lines.append("const MANIPULATE_VERBS = %s"
+                 % _gd_literal(sorted(PH.MANIPULATE_VERBS)))
 
     # The joint gap/step bound, as a FUNCTION rather than a number.
     #

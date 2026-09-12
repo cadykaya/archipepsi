@@ -251,11 +251,36 @@ func _resume() -> void:
 		_finish(1)
 		return
 	var zone_id := str(notes["zone_id"])
+	# THE BRIDGE RESTARTED TOO, so the campaign is not in anybody's
+	# memory. It used to stay up across the two processes and "the
+	# campaign loads from disk" meant the CLIENT loading from a bridge
+	# that still had everything. Both sides are new now, and the only
+	# thing that crossed is the file in `ARCHIPEPSI_SAVE_DIR` -- so this
+	# process does what a freshly launched client does: it connects, and
+	# the bridge loads the slot's save rather than creating one.
+	if BridgeClient.hub_mode() == "NO_CAMPAIGN":
+		BridgeClient.send_intent({"type": "start_mock_campaign"})
 	if not await _await("the campaign loads from disk",
 			func() -> bool:
 				return BridgeClient.hub_mode() != "NO_CAMPAIGN", 30.0):
 		_finish(1)
 		return
+	# AND IT IS THE SAVED ONE, not a fresh campaign under the same name.
+	# A `start_mock_campaign` that created rather than loaded would put
+	# this process in a brand new campaign that has never heard of the
+	# Zone the first one recorded -- which would pass every assertion
+	# below about "nothing is remembered" and none of the ones about what
+	# came back.
+	#
+	# Asked of the HUB, not of `active_zone`: a Zone walked out of is
+	# dormant, and a dormant Zone is deliberately not the active one.
+	# `resume_zone_id` is the bridge naming the Zone the portal leads to,
+	# which is the only thing that can name it before the portal is
+	# pressed.
+	_check(str(BridgeClient.hub().get("resume_zone_id", "")) == zone_id,
+			"the restarted bridge loaded the save holding %s rather "
+			% zone_id + "than creating a new campaign; the Hub offers "
+			+ "'%s'" % str(BridgeClient.hub().get("resume_zone_id", "")))
 
 	# THE SAVE IS THE ONLY THING THAT CROSSED. Nothing in this process
 	# has ever seen this Zone, so `Main`'s in-memory dictionaries are
@@ -264,22 +289,45 @@ func _resume() -> void:
 				and main._zone_resume.is_empty(),
 			"this process remembers nothing of its own about any Zone")
 
-	# RE-ENTRY IS THE `enter_zone` INTENT, and `Main._on_snapshot` is
-	# what builds what comes back -- the same two steps `_on_enter_zone`
-	# takes. It is spelled out here rather than called because
-	# `_on_enter_zone` reads the ACTIVE Zone to find its id, and a
-	# dormant Zone is not the active one: the Hub's portal has no
-	# affordance for going back to a Zone you left, which is a bridge
-	# -column gap recorded in `docs/AMALGAM_SLICE1.md`. Everything past
-	# the intent is the shipping path.
+	# RE-ENTRY IS THE PORTAL, pressed.
+	#
+	# This used to set `main._entering_zone` and send the `enter_zone`
+	# intent itself, because `_on_enter_zone` read the ACTIVE Zone to
+	# find its id and a dormant Zone is not the active one -- the Hub had
+	# no affordance for going back to a Zone you walked out of. That gap
+	# is closed: the bridge carries `resume_zone_id` and the mode
+	# `ZONE_DORMANT`, the Hub's portal branch accepts it, and
+	# `_on_enter_zone` reads it. So the driver presses the portal and
+	# every step after it -- which id, which intent, which handler --
+	# belongs to the shipping path.
+	var offered := func() -> bool:
+		var standing := main.hub as HubController
+		if standing == null or standing.portal() == null:
+			return false
+		return standing.portal().interact_prompt() != ""
+	if not await _await("the Hub offers the way back", offered, 30.0):
+		_finish(1)
+		return
+	var portal: HubController.HubPortal = \
+			(main.hub as HubController).portal()
+	print("portal: mode %s, prompt '%s'"
+			% [BridgeClient.hub_mode(), portal.interact_prompt()])
+	_check(BridgeClient.hub_mode() in HubController.ZONE_ENTER_MODES,
+			"the Hub is in a mode the portal can enter a Zone from (%s)"
+			% BridgeClient.hub_mode())
 	var searches_before := ZoneBuilder.searches
-	main._entering_zone = true
-	BridgeClient.send_intent({"type": "enter_zone", "zone_id": zone_id})
+	portal.interact(main)
+	_check(main._entering_zone,
+			"pressing the portal put Main into its entry path")
 	if not await _await("ZONE_ACTIVE",
 			func() -> bool:
 				return BridgeClient.hub_mode() == "ZONE_ACTIVE"):
 		_finish(1)
 		return
+	_check(str(BridgeClient.active_zone().get("zone_id", "")) == zone_id,
+			"the portal led back into %s, and it led into '%s'"
+			% [zone_id, str(BridgeClient.active_zone().get(
+				"zone_id", ""))])
 	var record := _record_for(zone_id)
 	_check(not record.is_empty(),
 			"the reloaded campaign still holds %s" % zone_id)

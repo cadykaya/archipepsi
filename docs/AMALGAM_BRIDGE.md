@@ -702,9 +702,9 @@ none of them substitutes for another:
 
 | Level | Artefact | Proves | Status |
 |---|---|---|---|
-| 1. Serialization agreement | the shared vectors, run through both production serializers | the two lanes build and hash the same bytes from the same input | **fixture-tested** — Python side done, Godot side owed |
-| 2. Scene binding | `scene_digest` computed from the **real** setup, not a constant | the evidence names the scene it ran against | **not started** — needs a physics scene |
-| 3. Physical outcome | replaying that setup and observing the latches | the puzzle is actually solvable as built | **not started** — needs a physics runtime |
+| 1. Serialization agreement | the shared vectors, run through both production serializers | the two lanes build and hash the same bytes from the same input | **done 2026-09-12, both lanes** — `PhysicsPackage` in `godot/scripts/content/physics_package.gd`, checked in `godot-content`; all nine agree byte for byte |
+| 2. Scene binding | `scene_digest` computed from the **real** setup, not a constant | the evidence names the scene it ran against | **computed 2026-09-12** — `SceneDigest` in `godot/scripts/content/scene_digest.gd`, falsified in `godot-content`; not yet called from a replay, because there is no replay |
+| 3. Physical outcome | replaying that setup and observing the latches | the puzzle is actually solvable as built | **runs 2026-09-12** — `ReplayHarness`, three runs in `godot-physics`; no Zone authors a package yet, so nothing in a campaign has produced evidence |
 
 Level 1 passing says nothing about level 2, and both passing say nothing
 about level 3. The contract stays labelled **fixture-tested** until real
@@ -747,23 +747,87 @@ every consumer.
 
 Nothing above needs the full physics system. In order:
 
-1. **A rigid body that rests and can be pushed** — the substrate. Until
-   this exists nothing else can be measured.
-2. **One verb resolving to force, range and mass** — enough to evaluate
-   the envelope for one host.
-3. **The headless replay harness** — three runs at fixed solver
-   settings against a synthetic provider at exactly the envelope,
-   reporting which `latch_id`s latched **per run**. **This is the
-   deliverable the bridge is waiting on**; the schema for its output
-   already exists and is validated.
+1. ~~**A rigid body that rests and can be pushed**~~ — **done
+   2026-09-12.** `ManipulableBody` (`godot/scripts/gameplay/`), measured
+   by `make godot-physics`: it falls, comes to rest on the floor and
+   sleeps, and a push wakes and moves it.
+2. ~~**One verb resolving to force, range and mass**~~ — **done
+   2026-09-12.** `Manipulation`. Identity stays Boolean and the newtons
+   never reach the verifier: `grants_manipulate` answers §29.3.1, and
+   `Envelope` resolves §29.3.2's three minima at the entry check and
+   stores nothing. A refused push says WHICH of `out_of_reach`,
+   `too_heavy`, `constrained` or `no_direction` it was, because "nothing
+   moved" is the same report as a bug.
+3. ~~**The headless replay harness**~~ — **done 2026-09-12.**
+   `ReplayHarness`. Three runs, a fresh stage each, at the package's own
+   `fixed_step_hz`, against a provider at exactly the envelope — the
+   numbers are read from `Constants` and are not a parameter, because
+   replaying above the envelope proves a strong provider can solve it,
+   which is not the claim. Per run, never a union.
 
-**Before any of that, one small shared thing:** the nine vectors in
-`physics_digest_vectors.json` passing in GDScript — **constructed from
-each vector's `package` and run through the engine's own serializer**,
-not hashed from the stored strings. It needs no physics at all — it is
-JSON and sha256 — and it is what makes every later piece of evidence
-mean something. Doing it first means the harness has somewhere to put
-its answer on the day it works.
+   Falsified: a solution that pushes the crate the wrong way latches in
+   none of the three, and the harness reports that rather than what was
+   hoped.
+
+**Two vocabularies are the engine's, and here they are.** `detail` and
+`reference_solution.steps` are opaque to the bridge by design — it never
+re-derives a physical fact — which means nothing was written down about
+what they say. They are:
+
+| `kind` | `detail` | observed |
+|---|---|---|
+| `POSITION_REGION` | `<body_id> in <region_id>` | the body's origin inside the region |
+| `WEIGHT_THRESHOLD` | `<plate_id> >= <kg>` | the total mass of bodies over the plate |
+| `CONSTRAINT_STATE` | — | **refused**: no joints exist |
+| `ATTACH_SENSOR` | — | **refused**: no attachment sensors exist |
+
+| step | |
+|---|---|
+| `push <body_id> <dx> <dz> <seconds>` | one held push, at the envelope |
+| `wait <seconds>` | |
+| `settle` | until every body is at rest, bounded by `settle_timeout_s` |
+
+**REFUSED IS NOT UNLATCHED**, and the distinction is load-bearing. A
+latch kind with no runtime, a step nobody wrote, a body the stage does
+not build — each comes back as a refusal naming what it was. Reporting
+one as "did not latch" would be the harness saying the puzzle is
+unsolvable, which is a verdict about the content instead of about the
+harness.
+
+**What building the substrate found.** §29.3.2 promises a host at
+exactly `ENVELOPE_FORCE_N` can move a body at exactly
+`ENVELOPE_MASS_KG`. Godot's default friction is 1.0, so a 120 kg body
+resists with about 1176 N against 700 N of push — the contract promised
+something the substrate refused, and a mandatory route authored at the
+envelope would have been unsolvable by the host the verifier says
+qualifies. The first run of `godot-physics` reported it in one line:
+*700 N moved 120 kg by 0.00 m.*
+
+A manipulable body therefore carries its own `PhysicsMaterial` whose
+friction is **derived** from the envelope (two thirds of `F / m g`, so
+the body accelerates rather than creeping) rather than chosen, and the
+three constants are **exported to GDScript from `physics.py`** rather
+than retyped into `constants.py` — two sources for one contract is the
+drift the export mechanism exists to prevent.
+
+~~**Before any of that, one small shared thing:** the nine vectors in
+`physics_digest_vectors.json` passing in GDScript.~~ **Done
+2026-09-12.** `PhysicsPackage` builds each vector's `package` and writes
+its own canonical bytes; the test compares the BYTES and then the
+digest, because a digest check alone cannot say whether two lanes built
+different objects or serialized the same object differently.
+
+Two things it needed that were not obvious. Godot's `JSON.stringify`
+prints an integral float as `80` where Python prints `80.0`, and emits
+non-ASCII directly where Python's default `ensure_ascii=True` escapes it
+as `\uXXXX` — either alone produces a digest the bridge cannot match for
+a package both lanes agree about in every other respect. So the engine
+writes its own JSON rather than borrowing one.
+
+Falsified two ways: half a kilogram of mass moves the digest, and a
+package carrying a field the engine does not model is REFUSED rather
+than dropped, because a producer that silently ignores a new field
+digests less than the bridge hashes.
 
 `scene_digest` comes next and needs a scene but no runtime: §6.2b is the
 coverage list to agree before it is computed for real. Until then the
@@ -845,6 +909,27 @@ reserves nothing and leaves `completed_zone_count` and `zone_history`
 untouched.
 
 ### 5.5a-bis The other half of the restart — **done, on both sides**
+
+**DONE 2026-09-12, and one line of it was on the bridge's side.** Both
+consumer changes below landed; `make godot-reload` presses the real
+portal in `ZONE_DORMANT` and lands back in the Zone it left.
+
+The line the engine lane had to touch in `protocol.py`, flagged here
+because it is the bridge's file: **`portal_enabled` was reading a second
+list.** `ZONE_ENTER_MODES` gained `ZONE_DORMANT`; `ZONE_ENTERABLE_MODES`
+— the same question, under a different name — did not, and
+`portal_enabled` reads that one. So the portal showed the mode's prompt
+and refused to fire: a way back into a Zone that is wired, labelled and
+dead, and no test on either side could see it because each lane's half
+was correct.
+
+`ZONE_ENTERABLE_MODES` is now `ZONE_ENTER_MODES` rather than a copy of
+it. Two names for one question is how they drifted; please keep the
+collapse, or say which question the second name was meant to be asking.
+
+Two places, and deliberately small. **Neither lane should edit the other
+side of this seam** — this was the proposal, and the engine lane took
+it.
 
 The manifest survived a restart and the progress did not: `main.gd` read
 keys, locks, stations and the resume point out of its own in-memory
@@ -1041,3 +1126,114 @@ satisfies `cross_long_gap` and a gate is proved against the wrong claim.
   rather than accidental.
 - Physical reachability stays the engine lane's: `R ⊆ E` is a graph
   property and cannot see a key inside a crate.
+
+### 5.4a ANSWERED by the engine lane, 2026-09-12: yes, and it is done
+
+**Yes.** `r:<room>` is filed with doorway endpoints now, and this lane's
+special case can go.
+
+`zone_builder._joins` emits:
+
+| field | was | is |
+|---|---|---|
+| `socket_a` | the room's own `position` | the chain's FIRST piece's `entry` |
+| `socket_b` | the room's `arrival`, metres inside | `door_world["<room>/entry"]`, the doorway |
+
+So `socket_a -> chain -> socket_b` closes exactly, the way `e:__exit__`
+does, and the first room's approach stops being the one corridor checked
+more loosely than the rest. Delete the branch in `_check_reserved_join`
+and walk it like a `JOINED` edge.
+
+**Two fallbacks, both narrow and both stated.** A room whose chamber
+declares no `doors` at all has no `door_world` entry — the pre-graph
+shape — and falls back to the room's `position`; a room placed with an
+EMPTY chain has `socket_a == socket_b`, which is a zero-length walk and
+should pass rather than refuse. Neither arises in a composed Zone; they
+are there so a legacy fixture does not become unbuildable.
+
+The reason it was the old shape was not a decision: `_joins` was written
+before every producer emitted a door plan, so `door_world` had nothing
+for the head room and the only points available were the transform's.
+That changed when `_doors_from_bounds` landed and nothing went back to
+look.
+
+### 6.2b ANSWERED by the engine lane, 2026-09-12
+
+All five defaults are **accepted**, with one narrowed and one widened.
+None of this is implemented yet — this is the agreement §6.2b asks for
+before a real digest is computed, so that the first record written is
+already under the final rule.
+
+**1. Float quantization — accepted as proposed.** 1e-4 m, 1e-4 rad,
+1e-4 m/s, fixed decimal representation, never a raw float's printed form.
+The engine-side reason to be comfortable with 1e-4: `EPSILON_JOIN` is
+1e-3 m and `MAX_VERTICAL_STEP` is 1.0 m, so a quantum is an order of
+magnitude below the tightest distance anything in this game reasons
+about, and four below the smallest one a player can feel.
+
+**2. Effective values — accepted, and here is which are readable.** In
+Godot 4.5 the engine can read statically: `ProjectSettings`
+`physics/3d/default_gravity` and `default_gravity_vector`;
+`RigidBody3D.mass`, `gravity_scale`, `linear_damp`, `angular_damp` and
+their `*_damp_mode`; `collision_layer` and `collision_mask`. Friction and
+restitution live on a `PhysicsMaterial` that may be null, inherited, or
+shared — so those follow the proposal exactly and are digested as
+**resource path plus the resource's own digest**, never as a resolved
+number. `Area3D` gravity overrides are read from the areas themselves and
+digested as (path, mode, value, priority); resolving what a body actually
+experiences requires stepping the sim, and a digest must not step
+anything.
+
+**3. "Participating" — accepted and NARROWED.** Every collider on the
+collision layers the package's bodies test against, within the room the
+package belongs to — plus, explicitly, **the connector pieces named in
+that room's join chain**. The narrowing is the word "room": a Zone is one
+scene, so "within the room" needs the room's committed world `bounds`
+from the manifest to be decidable at all, and that is what the engine
+will use. Not a radius, agreed, and for the reason given.
+
+**4. Ordering — accepted as proposed**, with one addition. Bodies by
+`body_id`, static colliders by scene-relative node path. The addition:
+node paths must be taken relative to the **room's** root rather than the
+Zone's, because a Zone re-entered after a different number of rooms were
+placed gives the same room a different Zone-relative path. That is the
+same bug class the ordering rule exists to close.
+
+**5. Versioning — accepted and WIDENED by one field.** Godot version,
+physics backend name and version, and a hand-bumped generator constant.
+The addition: the **shell registry digest** for any authored shell whose
+geometry is in the room. Arty regenerates shells from Blender source and
+a repaired collider changes the experiment without touching any engine
+constant — 2026-09-12's threshold repair moved `shell_yard_gantry`'s
+floor 1.20 m and bumped no version anywhere. A generator constant a human
+remembers to bump cannot cover a lane that ships geometry independently.
+
+**And the level-2 hole is acknowledged as the engine lane's.** A constant
+passes the bridge's check; nothing on that side will ever catch a fake
+digest. What catches it here is the same shape as the crossing control
+in `room_contract_driver`: a digest is only evidence if changing the
+scene changes it.
+
+**Implemented 2026-09-12** as `SceneDigest`, under exactly the five
+answers above, and falsified four ways in `godot-content`: the same room
+built in a different node order digests the same; a collider moved by
+1e-3 m digests differently; a move a tenth of the quantum does not; and a
+body that starts the replay moving digests differently from one at rest.
+Without those the function is a constant with extra steps.
+
+Two things the implementation taught, recorded because they change what
+the answers above claim:
+
+* **The digest is of the SETUP, before anything is stepped.** A body
+  still falling when the digest is taken makes the digest a moment
+  nobody can reproduce. The bodies therefore carry their starting
+  transform, velocity and sleep state, and a replay harness digests
+  before it runs.
+* **The shell registry digest is the weaker half of decision 5, not the
+  strong one.** The reason given for adding it was Arty's threshold
+  repair, and the collider enumeration is what actually catches that:
+  `yd_threshold_±1` added colliders while `size` and the sockets stayed
+  byte-identical. The registry digest covers the other direction — a
+  DECLARATION that moved without the geometry moving — which the
+  collider list cannot see. Both are in; the claim about which catches
+  what is corrected here.

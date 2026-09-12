@@ -64,6 +64,7 @@ const DRIVERS := {
 	"--room-contract": preload("res://tests/room_contract_driver.gd"),
 	"--movement-test": preload("res://tests/movement_driver.gd"),
 	"--playtest3a-test": preload("res://tests/playtest3a_driver.gd"),
+	"--physics-test": preload("res://tests/physics_driver.gd"),
 }
 
 func _ready() -> void:
@@ -339,6 +340,19 @@ func _on_bridge_error(err: Dictionary) -> void:
 
 func _clear_world() -> void:
 	for child in world.get_children():
+		# OUT OF THE TREE NOW, not at the end of the frame.
+		#
+		# `queue_free` is deferred: the old world's colliders stay
+		# registered with the physics server until the frame ends, and
+		# the new one is built AND MEASURED before that. Both worlds are
+		# built around the origin, so the Hub's floor stood in the hall's
+		# entry doorway and `_measure_layout_evidence` reported
+		# `c002/entry` solid -- the bridge refused the layout, three
+		# times over, and the Zone never opened.
+		#
+		# `remove_child` is immediate and unregisters the colliders;
+		# `queue_free` still runs, so nothing leaks.
+		world.remove_child(child)
 		child.queue_free()
 	hub = null
 	zone = null
@@ -449,12 +463,20 @@ func _toggle_shop() -> void:
 	_update_modal()
 
 func _on_enter_zone() -> void:
-	var active := BridgeClient.active_zone()
-	if active.is_empty():
+	# WHICH ZONE, from the Hub rather than from `active_zone`.
+	#
+	# A DORMANT Zone is not the active one -- `active_zone_id` is cleared
+	# when the player walks out -- so reading `active_zone()` returned
+	# nothing and this returned early, which is why there was no way back
+	# into a Zone you had left. `resume_zone_id` is the bridge saying
+	# which Zone the portal leads to, in every mode that has one.
+	var zid := str(BridgeClient.hub().get("resume_zone_id", ""))
+	if zid == "":
+		zid = str(BridgeClient.active_zone().get("zone_id", ""))
+	if zid == "":
 		return
 	_entering_zone = true
-	BridgeClient.send_intent({"type": "enter_zone",
-			"zone_id": active.get("zone_id", "")})
+	BridgeClient.send_intent({"type": "enter_zone", "zone_id": zid})
 
 func _to_zone(zone_dict: Dictionary) -> void:
 	_clear_world()
@@ -738,7 +760,12 @@ func _update_modal() -> void:
 	elif zone != null:
 		player = zone.player
 	if player != null:
-		player.input_frozen = modal
+		# A NAMED CLAIM, not the boolean. `player.input_frozen = modal`
+		# cleared an acceptance hold every time the inventory closed.
+		if modal:
+			player.hold("modal")
+		else:
+			player.release("modal")
 	hud.set_crosshair_visible(not modal)
 	if view == View.MENU or pause_menu.visible or inventory.visible \
 			or shop.visible:

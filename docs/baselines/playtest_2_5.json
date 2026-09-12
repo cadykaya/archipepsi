@@ -953,7 +953,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 903,
+        "content_value": 909,
         "enemy_total": 35,
         "rooms_holding_no_check": 8
       },
@@ -1007,6 +1007,36 @@
               ],
               "types": [
                 "corridor"
+              ]
+            },
+            "shell_hall_transit": {
+              "size": [
+                41.2,
+                39.6,
+                60.0
+              ],
+              "types": [
+                "arena"
+              ]
+            },
+            "shell_plenum_helix": {
+              "size": [
+                21.2,
+                73.6,
+                20.0
+              ],
+              "types": [
+                "tower"
+              ]
+            },
+            "shell_span_basin": {
+              "size": [
+                31.2,
+                23.6,
+                90.0
+              ],
+              "types": [
+                "arena"
               ]
             },
             "shell_tower_collapsed": {
@@ -1077,14 +1107,30 @@
               "types": [
                 "treasure_room"
               ]
+            },
+            "shell_yard_gantry": {
+              "size": [
+                85.2,
+                17.6,
+                52.0
+              ],
+              "types": [
+                "arena"
+              ]
             }
           },
           "room_shells": {
+            "arena": [
+              "shell_hall_transit",
+              "shell_span_basin",
+              "shell_yard_gantry"
+            ],
             "corridor": [
               "shell_corner_left",
               "shell_corner_right"
             ],
             "tower": [
+              "shell_plenum_helix",
               "shell_tower_collapsed",
               "shell_tower_gantry",
               "shell_tower_spiral"
@@ -1427,7 +1473,7 @@
                 "kind": "target_challenge"
               }
             ],
-            "depth": 13.1,
+            "depth": 89.2,
             "enemies": [
               {
                 "archetype": "melee",
@@ -1437,9 +1483,10 @@
             "id": "c006",
             "objective": "kill_all",
             "reward_location_id": 89100004,
+            "shell_id": "shell_span_basin",
             "type": "arena",
-            "wall_height": 5.9,
-            "width": 19.8
+            "wall_height": 23.6,
+            "width": 30.4
           },
           {
             "activities": [
@@ -1450,7 +1497,7 @@
             ],
             "id": "c007",
             "length": 6.0,
-            "shell_id": "shell_corner_right",
+            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 6.0
           },
@@ -1510,7 +1557,7 @@
           {
             "id": "c010",
             "length": 6.0,
-            "shell_id": "shell_corner_left",
+            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 6.0
           },
@@ -1561,7 +1608,7 @@
           {
             "id": "c013",
             "length": 6.0,
-            "shell_id": "shell_corner_right",
+            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 6.0
           },
@@ -1630,7 +1677,7 @@
             ],
             "id": "c016",
             "length": 6.0,
-            "shell_id": "shell_corner_left",
+            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 6.0
           },
@@ -1673,7 +1720,7 @@
           {
             "id": "c019",
             "length": 6.0,
-            "shell_id": "shell_corner_right",
+            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 6.0
           },
@@ -1723,7 +1770,7 @@
             ],
             "id": "c022",
             "length": 6.0,
-            "shell_id": "shell_corner_left",
+            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 6.0
           },
@@ -1767,7 +1814,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 907,
+        "content_value": 915,
         "enemy_total": 26,
         "rooms_holding_no_check": 8
       },
@@ -1821,6 +1868,36 @@
               ],
               "types": [
                 "corridor"
+              ]
+            },
+            "shell_hall_transit": {
+              "size": [
+                41.2,
+                39.6,
+                60.0
+              ],
+              "types": [
+                "arena"
+              ]
+            },
+            "shell_plenum_helix": {
+              "size": [
+                21.2,
+                73.6,
+                20.0
+              ],
+              "types": [
+                "tower"
+              ]
+            },
+            "shell_span_basin": {
+              "size": [
+                31.2,
+                23.6,
+                90.0
+              ],
+              "types": [
+                "arena"
               ]
             },
             "shell_tower_collapsed": {
@@ -1891,14 +1968,30 @@
               "types": [
                 "treasure_room"
               ]
+            },
+            "shell_yard_gantry": {
+              "size": [
+                85.2,
+                17.6,
+                52.0
+              ],
+              "types": [
+                "arena"
+              ]
             }
           },
           "room_shells": {
+            "arena": [
+              "shell_hall_transit",
+              "shell_span_basin",
+              "shell_yard_gantry"
+            ],
             "corridor": [
               "shell_corner_left",
               "shell_corner_right"
             ],
             "tower": [
+              "shell_plenum_helix",
               "shell_tower_collapsed",
               "shell_tower_gantry",
               "shell_tower_spiral"
@@ -2209,7 +2302,7 @@
                 "kind": "switch_sequence"
               }
             ],
-            "depth": 11.6,
+            "depth": 59.2,
             "enemies": [
               {
                 "archetype": "melee",
@@ -2219,9 +2312,10 @@
             "id": "c005",
             "objective": "kill_all",
             "reward_location_id": 89100103,
+            "shell_id": "shell_hall_transit",
             "type": "arena",
-            "wall_height": 6.4,
-            "width": 16.4
+            "wall_height": 39.6,
+            "width": 40.4
           },
           {
             "activities": [
@@ -2257,7 +2351,7 @@
             ],
             "id": "c007",
             "length": 6.0,
-            "shell_id": "shell_corner_left",
+            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 6.0
           },
@@ -2317,7 +2411,7 @@
           {
             "id": "c010",
             "length": 6.0,
-            "shell_id": "shell_corner_right",
+            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 6.0
           },
@@ -2361,7 +2455,7 @@
           {
             "id": "c013",
             "length": 6.0,
-            "shell_id": "shell_corner_left",
+            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 6.0
           },
@@ -2423,7 +2517,7 @@
           {
             "id": "c016",
             "length": 6.0,
-            "shell_id": "shell_corner_right",
+            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 6.0
           },
@@ -2472,7 +2566,7 @@
             ],
             "id": "c019",
             "length": 6.0,
-            "shell_id": "shell_corner_left",
+            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 6.0
           },
@@ -2522,7 +2616,7 @@
             ],
             "id": "c022",
             "length": 6.0,
-            "shell_id": "shell_corner_right",
+            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 6.0
           },
@@ -2566,7 +2660,7 @@
         ],
         "chambers": 23,
         "checks": 15,
-        "content_value": 918,
+        "content_value": 902,
         "enemy_total": 32,
         "rooms_holding_no_check": 8
       },
@@ -2620,6 +2714,36 @@
               ],
               "types": [
                 "corridor"
+              ]
+            },
+            "shell_hall_transit": {
+              "size": [
+                41.2,
+                39.6,
+                60.0
+              ],
+              "types": [
+                "arena"
+              ]
+            },
+            "shell_plenum_helix": {
+              "size": [
+                21.2,
+                73.6,
+                20.0
+              ],
+              "types": [
+                "tower"
+              ]
+            },
+            "shell_span_basin": {
+              "size": [
+                31.2,
+                23.6,
+                90.0
+              ],
+              "types": [
+                "arena"
               ]
             },
             "shell_tower_collapsed": {
@@ -2690,14 +2814,30 @@
               "types": [
                 "treasure_room"
               ]
+            },
+            "shell_yard_gantry": {
+              "size": [
+                85.2,
+                17.6,
+                52.0
+              ],
+              "types": [
+                "arena"
+              ]
             }
           },
           "room_shells": {
+            "arena": [
+              "shell_hall_transit",
+              "shell_span_basin",
+              "shell_yard_gantry"
+            ],
             "corridor": [
               "shell_corner_left",
               "shell_corner_right"
             ],
             "tower": [
+              "shell_plenum_helix",
               "shell_tower_collapsed",
               "shell_tower_gantry",
               "shell_tower_spiral"
@@ -2989,7 +3129,7 @@
                 "kind": "switch_sequence"
               }
             ],
-            "depth": 12.6,
+            "depth": 59.2,
             "enemies": [
               {
                 "archetype": "melee",
@@ -2999,9 +3139,10 @@
             "id": "c005",
             "objective": "kill_all",
             "reward_location_id": 89100203,
+            "shell_id": "shell_hall_transit",
             "type": "arena",
-            "wall_height": 4.9,
-            "width": 12.3
+            "wall_height": 39.6,
+            "width": 40.4
           },
           {
             "activities": [
@@ -3037,7 +3178,7 @@
             ],
             "id": "c007",
             "length": 6.0,
-            "shell_id": "shell_corner_left",
+            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 6.0
           },
@@ -3103,7 +3244,7 @@
             ],
             "id": "c010",
             "length": 6.0,
-            "shell_id": "shell_corner_right",
+            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 6.0
           },
@@ -3145,11 +3286,6 @@
                 "element_count": 4,
                 "kind": "timed_run",
                 "time_limit": 16.0
-              },
-              {
-                "element_count": 5,
-                "kind": "timed_run",
-                "time_limit": 20.0
               }
             ],
             "gap_size": 2.03,
@@ -3169,7 +3305,7 @@
             ],
             "id": "c013",
             "length": 6.0,
-            "shell_id": "shell_corner_left",
+            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 6.0
           },
@@ -3231,7 +3367,7 @@
           {
             "id": "c016",
             "length": 6.0,
-            "shell_id": "shell_corner_right",
+            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 6.0
           },
@@ -3280,7 +3416,7 @@
             ],
             "id": "c019",
             "length": 6.0,
-            "shell_id": "shell_corner_left",
+            "shell_id": "shell_corner_right",
             "type": "corridor",
             "width": 6.0
           },
@@ -3324,7 +3460,7 @@
           {
             "id": "c022",
             "length": 6.0,
-            "shell_id": "shell_corner_right",
+            "shell_id": "shell_corner_left",
             "type": "corridor",
             "width": 6.0
           },

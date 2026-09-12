@@ -34,7 +34,7 @@ from archipepsi_bridge.schemas import zone as Z
 from archipepsi_bridge.schemas.echo import (EchoInterpretation,
                                             validate_interpretation)
 
-from .conftest import drain, run
+from .conftest import enter_zone, drain, run
 
 _ZONE = TypeAdapter(Z.Zone)
 _ECHO = TypeAdapter(EchoInterpretation)
@@ -395,7 +395,7 @@ class TestThePlayedZoneIsTheSameZoneEveryTime:
                 active = engine.save.active_zone if engine.save else None
                 if active is not None and active.zone is not None:
                     break
-            await engine.handle_enter_zone(active.zone_id)
+            await enter_zone(engine, active.zone_id)
             await drain()
             engine.record_zone_timing(ZoneTiming(
                 type="zone_timing", zone_id=active.zone_id,

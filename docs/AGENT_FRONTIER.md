@@ -1,5 +1,141 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the merged Zone opens again, and the way back is real — 2026-09-12
+
+**`claude/archipepsi-echoes-continuation-b1adno`, from the art merge
+`dfad94c`.** Read this section first on a wake-up; the bridge-lane
+section below is still the payload reference.
+
+**Green as of this section:** `make test` 1322, `check_packet.py`, and
+every Godot target — `godot-test`, `-content`, `-room-contract`,
+`-playtest3a`, `-zone-audit`, `-boot`, `-legible`, `-movement`, `-room`,
+`-activity`, `-physics`, `-integration`, `-reload`. CI itself is red for
+a reason that is not the tree: see `docs/CI.md`.
+
+**THE GENERATED ZONE OPENS AGAIN.** `make godot-integration` was red
+from the moment the art lane merged: `zone_001` was refused three times
+on "door 'c002/entry' is USED and the engine measured it as solid" and
+the client never left the Hub. The door was not solid. An **enemy was
+standing in it** — `_enemy_spawns` fell back to `Vector3.ZERO` for a
+shell that declares no `enemy_spawn` volume, and a shell's local origin
+is not its centre, it is the wall the entry doorway is cut into. Ten
+enemies, one 2.4 m opening.
+
+Three things were wrong and all three are fixed:
+
+* **The placement.** The fallback is the largest surface the shell
+  declares standable, and every spawn is pushed out of any doorway it
+  lands in (`ContentInstantiator.IN_THE_DOORWAY`). A player
+  body-blocked in the only door is a defect whoever trips over it.
+* **The probe.** `aperture_polarity` is ARCHITECTURAL — it already
+  looks past a crate, a lock and the player. An enemy is placed content
+  by the same reasoning and is looked past now.
+* **The report.** "The engine measured it as solid" named the door and
+  nothing else, so a Zone that would not open gave nobody a suspect.
+  `RoomAudit.aperture_blockers` names the collider and the engine logs
+  it.
+
+**AND THE CENSUS HAD NEVER MEASURED A DOOR.** `_chamber_for` built
+every registry shell with no `doors` at all, so
+`_assigned_doors_match_their_usage` and `aperture_polarity` both ran
+over an empty list and printed a clean sheet for twelve shells. The
+recurring defect, again: a measurement that exists, is correct, and is
+never handed the case that fails it. The census declares every doorway
+socket now, and a second test
+(`_test_every_shell_reports_its_apertures_once_placed`) places each
+shell in a real three-room Zone, furnished the way the campaign
+furnishes one, **in all six themes**, and reads the apertures the way
+`ZoneController` reads them before putting them on the wire.
+
+**THE UNRESOLVED CROSSINGS ARE CLOSED, AND THE LEVEL CHANGES ARE
+COVERED.** `_player_walks_to` steers straight at its goal, so the old
+test asked a body to walk through whatever stood between two arrivals
+and pinned three joins on the result. The join's committed chain is the
+route, and the body walks it doorway to doorway. `played_zone.json`:
+**21 JOINED edges measured, 1 held behind a locked door, 21 crossed, 0
+not** — 7 gridded arrival to arrival by the flood, 14 walked along the
+corridor, five of those changing level by more than `MAX_VERTICAL_STEP`
+(which the flood cannot grid and used to skip). `KNOWN_UNWALKED_JOINS`
+is a dictionary of identity → reason and is **empty**, enforced in both
+directions: a name that appears is a join that stopped connecting, and a
+name that stops appearing has to be struck off. When a crossing does
+fail, `_why_the_body_stopped` names the collider, the unsupported
+interval, or the step the controller cannot climb — and says so when the
+corridor is clear and the finding is about the steering.
+
+What those 14 prove is the CORRIDOR. Getting from where a body lands to
+its own room's doorway is the room's property and is proved by
+`_test_the_played_zone_rooms_can_be_left_on_foot`.
+
+**THE WAY BACK IN IS REAL, ON BOTH SIDES OF A RESTART.**
+`ZONE_ENTERABLE_MODES` and `ZONE_ENTER_MODES` were two lists for one
+question and they drifted: `ZONE_DORMANT` was added to the second so the
+Hub's portal branch would accept it, and `portal_enabled` went on
+reading the first. The portal showed the mode's prompt and refused to
+fire — a way back that is wired, labelled and dead. One list now, and
+the portal carries `[E] RETURN TO ZONE`.
+
+`make godot-reload` **restarts the bridge too**. It used to stay up
+across the two Godot processes, so "the campaign loads from disk" meant
+the client loading from a bridge that still had everything in memory.
+Both sides are new now, the bridge logs `loaded campaign`, and the
+second process presses the real portal instead of setting
+`_entering_zone` and sending the intent itself. 18 checks, including a
+replay with **0 route searches**.
+
+**A COMMITTED ZONE SURVIVES A REFUSED REPLAY.** `refuse_layout` cleared
+`zone` and `manifest` whatever the Zone was, so a replay the validator
+rejected sent a DIFFERENT Zone back under the same id, holding the same
+Checks, with the player's keys and opened locks recorded against rooms
+that no longer existed. `commit_layout` already refused to replace a
+committed manifest; this was the other door into the same room. A
+committed Zone keeps its manifest, its content and its progress and goes
+DORMANT.
+
+**Still unproved.** The physics contract in `schemas/physics.py` has no
+runtime. The shared digest vectors, scene binding, rigid-body
+interaction and the replay harness from the Amalgam brief are not
+started. `shell_span_basin`'s pylon is Arty's open item and is a ROOM
+finding, not a join one — the corridor either side of it crosses.
+Procedural `ChamberBuilders` spawn placement is not covered by the
+doorway rule; only the authored-shell path is.
+
+**Done since:** levels 1 and 2 of the physics digest, and the first two
+of `docs/AMALGAM_BRIDGE.md` §6.3's three — a rigid body that rests and
+can be pushed (`ManipulableBody`), and one verb resolving to force,
+range and mass (`Manipulation`). `make godot-physics`, 25 checks.
+
+**THE ENGINE HAD NO `RigidBody3D` AT ALL** until this, so the physics
+contract in `schemas/physics.py` described a system with no runtime.
+Building one found a real disagreement: Godot's default friction of 1.0
+resists a 120 kg body with ~1176 N against the envelope's 700 N of push,
+so §29.3.2 promised something the substrate refused and a mandatory
+route authored at the envelope would have been unsolvable by the host
+the verifier says qualifies. A manipulable body's friction is derived
+from the envelope now, and the three constants are exported to GDScript
+from `physics.py` rather than retyped.
+
+**And the headless replay harness (§6.3 item 3) runs.** `ReplayHarness`
+replays a package three times, a fresh stage each, at the package's own
+`fixed_step_hz`, against a provider at exactly the envelope, and reports
+what latched PER RUN. A crate pushed onto a region latches in all three;
+the same package with the push reversed latches in none, which is the
+falsification. The substrate under it is deterministic: the same push
+twice landed 0.000000 m apart, against a digest quantum of 1e-4 m.
+
+`detail` and `reference_solution.steps` are opaque to the bridge by
+design, so nothing had ever said what they contain. The engine's
+vocabularies are written down in `docs/AMALGAM_BRIDGE.md` §6.3 now:
+`POSITION_REGION` and `WEIGHT_THRESHOLD` are observed, `CONSTRAINT_STATE`
+and `ATTACH_SENSOR` are **refused** because no joints and no attachment
+sensors exist. Refused is not unlatched — a kind with no runtime reported
+as "did not latch" is a harness claiming a puzzle is unsolvable.
+
+**Still owed:** nothing in a campaign AUTHORS a physics package, so no
+Zone has produced evidence and `handle_layout_result` has no path that
+carries one. Levels 1, 2 and 3 all run; what has not happened is a
+package reaching them from content.
+
 ## BRIDGE LANE — the Zone is a graph, and the path is connected — 2026-09-12
 
 **`claude/archipepsi-amalgam-bridge`, from the engine slice `82d500f`,
@@ -72,14 +208,12 @@ bridge alone.
 **Not connected:** the physics contract in `schemas/physics.py` — no
 runtime exists for it yet.
 
-**The DORMANT-Hub hole (`AMALGAM_SLICE1.md` §5q) is half closed.** The
-bridge side landed: `ZONE_DORMANT`, `hub.resume_zone_id` naming which
-Zone the portal enters, `hub.portal_enabled` true for it (one constant,
-`ZONE_ENTERABLE_MODES` — naming a Zone and lighting the button were two
-and that is why it stayed dark), and `hub.revisitable` for finished
-Zones. What is left is the Hub affordance itself:
-`docs/AMALGAM_BRIDGE.md` §5.5b, and it is the only open item on that
-seam — progress restoration is done on both sides.
+~~And one player-facing hole, in the bridge column: a DORMANT Zone
+leaves the Hub in `ZONE_AVAILABLE`, so the portal sends
+`request_next_zone`.~~ **Closed 2026-09-12.** The bridge carries
+`ZONE_DORMANT` and `resume_zone_id`, the Hub's portal branch reads them,
+and `portal_enabled` was the last thing still saying no — see the engine
+-lane section above. `make godot-reload` presses the real portal.
 
 **All three of SOLUTIONS_CATALOGUE §2's local-key rules are enforced.**
 A key reachable without passing its own lock, an acyclic key graph, and
@@ -99,7 +233,7 @@ not done":
 | | |
 |---|---|
 | **Connected** — runs in a real campaign | graph composition at acceptance, reachability refusing an unreachable Zone, `layout_result` validated and committed, progress identities checked, DORMANT/VISITING, leave-reload-re-enter |
-| **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | the physics contract in `schemas/physics.py` (no runtime exists). Layout evidence validation has **moved up**: the engine sends a real `layout_result` (`dc4ef39`), which is the engine lane's evidence — there is no Godot in the bridge environment and nothing here has run the integration driver |
+| **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | layout evidence validation (the engine does not send `layout_result`), the physics contract in `schemas/physics.py` (no runtime exists). **Both stay in this row until real engine output passes through their actual acceptance path** — a synthetic payload exercising a validator is not the seam being crossed |
 | **Requires Godot** | physical reachability and the whole physics substrate — `docs/AMALGAM_BRIDGE.md` §6. Aperture polarity and the manifest replay consumer moved to **Connected** on 2026-09-12 |
 
 **The physics digest has three levels and only the first is done.**
@@ -107,13 +241,25 @@ Serialization agreement (the nine shared vectors in
 `godot/tests/fixtures/physics_digest_vectors.json`, **constructed from
 each vector's `package` and run through each lane's own production
 serializer** — hashing the stored strings proves the file is
-self-consistent and nothing about the code) — Python side done, Godot
-side owed. Scene binding (`scene_digest` computed from a real setup, not
+self-consistent and nothing about the code) — **both sides done, 2026-09
+-12**: `PhysicsPackage` (`godot/scripts/content/physics_package.gd`)
+builds each package and writes its own canonical bytes, and all nine
+vectors agree BYTE FOR BYTE, not merely in digest. It carries its own
+JSON writer because Godot's differs from Python's in two ways that both
+change the hash — an integral float prints as `80` rather than `80.0`,
+and non-ASCII is emitted raw rather than `\uXXXX`-escaped. Falsified
+two ways in `godot-content`: half a kilogram of mass moves the digest,
+and a package carrying a field this lane does not model is refused
+rather than dropped out of the hash. Scene binding (`scene_digest` computed from a real setup, not
 a constant) — not started; coverage list is `docs/AMALGAM_BRIDGE.md`
 §6.2b, with **five decisions for the engine lane** (float
 quantization, whether effective values are statically readable, what
 counts as participating geometry, ordering, versioning granularity) —
-each with a proposed default so the answer can be yes. Physical outcome
+all five answered and **implemented 2026-09-12** as `SceneDigest`
+(`godot/scripts/content/scene_digest.gd`), falsified four ways: node
+order does not move it, a millimetre does, a tenth of the quantum does
+not, and a body that starts the replay moving does. Not yet called from
+a replay, because there is no replay. Physical outcome
 (replay) — not started. Level 1 passing says nothing about level 2, and
 **a constant `scene_digest` passes every check on this side**: sixteen
 hex characters is all the bridge can see. Regenerate the vectors with
@@ -1241,6 +1387,223 @@ to the goal and 20 to a full clear.
 So **do not quote "~20 hours" as the campaign length** — that is the
 clear, not the ending. Both numbers are real and they are four hours
 apart.
+
+## Art branch — canonical
+
+The single authoritative art lane is **`claude/archipepsi-art`**, and
+**PR #5** (base `claude/archipepsi-build-inzshp`) is its canonical PR —
+that base is what keeps the art diff properly scoped.
+
+`claude/archipepsi-art-setup-9qsbss` was a temporary setup branch. It was a
+clean linear continuation and has been **fast-forwarded into
+`claude/archipepsi-art`** (merge base 649a6cc, no force, no history
+rewritten, no commits lost). PR #6, opened from it against `main`, is
+**superseded** — it showed the whole stacked project history rather than an
+art diff. Do not maintain two active art branches.
+
+## Art batches — state 2026-09-02
+
+**THE ART LANE IS WAITING ON AN OWNER VERDICT, NOT IDLE-WITH-WORK-TO-DO.**
+Do not start work in it on a wake-up. Read this section and stop.
+
+**ALL TWELVE AUTHORED ROOM SHELLS PASS** (owner, 2026-09-04). The eight
+P2 shells passed on 2026-09-02 after Production certified them at
+`6640d86`; the hall and the three Wave 1 rooms were promoted on
+2026-09-04 with owner form approval, Production's technical certification
+at `7e13f44` and an independent audit at `f97545f` all agreeing. Nothing
+in the pack is `pending` except the three projectile substitutions.
+
+**`pass` DOES NOT MEAN THE MOVEMENT OFFERS ARE LIVE.** The four large
+rooms carry `rail_route`, `launch_source`/`launch_target` and
+`grapple_point` declarations reserved against a player-facing
+movement-package consumer that is **not implemented**. A passing shell
+can be placed, entered and walked end to end today; nobody can ride its
+rail. Report:
+`docs/art/reports/2026-09-04-wave1-promotion.md`.
+
+**THE LARGE ROOM LIBRARY IS APPROVED AND WAVE 1 IS BUILT.** The owner
+approved the ten-room slate (`docs/art/LARGE_ROOM_SLATE.md`) and the
+3 / 4 / 3 wave plan. Wave 1 -- `shell_plenum_helix` (20x72x20, a 129 m
+rail), `shell_yard_gantry` (84x16x52) and `shell_span_basin` (30x22x90)
+-- is authored, verified and, since 2026-09-04, `review: "pass"`.
+Package: `docs/art/review/wave1/`. **Wave 2 is four rooms and does NOT
+start on a wake-up.** The Wave 1 verdict it was waiting on has arrived
+and is a promotion, not an instruction to continue: Wave 2 needs its own
+owner brief.
+
+**`shell_hall_transit` is repaired** against Production's final walk law
+at `b37fe07`: two of its three climbs were built backwards, and all three
+were single wedges the import-time flood could not see through.
+`shell_tower_spiral`'s `platform_8_to_deck` is a `gap`, from Production's
+own probe.
+
+**PHYSICAL-TRUTH REPAIR LANDED (2026-09-03).** The seven items of the
+plenum/hall/span brief are done and measured:
+
+* the three plenum collars ship as **12 convex sectors each** (117 -> 150
+  colliders, same 1656 triangles). `roomcollision.assert_convex` now
+  refuses ANY non-convex collider at build time, in all six builders
+  that author collision — a
+  `-convcolonly` node imports as the convex HULL of its vertices, so an
+  annulus was shipping as a filled disc.
+* every collar destination is on the band and none on the machine axis:
+  three `landing_N_to_collar_K` endpoints, three `enemy_anchors`, the
+  `check_anchor`, the `reward` and the launch target, all through one
+  `_collar_point`, which now shares `_collar_axis` with the bridge that
+  builds the spur.
+* **`shell_plenum_helix`'s launch serves the LOW collar now, not the
+  middle one.** Measured over 4537 floor stances on a 0.25 m grid: the
+  top collar is reachable from none, the middle from five, the low from
+  141. The reward stays on the middle collar.
+* the plenum rail, the hall rail and the span rail were all rerouted off
+  geometry their BAKED curve was inside; the plenum's grapple_1 moved a
+  metre inward for its swing room.
+
+New gates, both in `tools/verify_content_pack.sh`:
+`tools/content/measure_offers.py` measures every declared rail, launch
+and grapple against the shipped collider triangles, and
+`tools/content/replay_audited.py` replays the pre-repair pack out of git
+and FAILS unless every audited finding still comes back.
+`tools/content/sabotage_offers.py` is their negative-control suite and
+runs from `tools/sabotage_checks.sh`.
+
+**AND THE TWO LAUNCH PADS, on the owner's ruling of the same day:** keep
+both launches, move both pads the least that clears them. The hall's and
+the span's flights each went through the platform they land on — 0.08 m
+at first contact, 0.643 m and 0.806 m at their worst. An arc's shape is
+fixed by its two heights, so neither could be dodged along z: the hall's
+pad goes **3.00 m west to (9, 0, 18)** and the span's **7.02 m to
+(−7, 0, 45)**, out from under the deck, and onto the basin's face. Both
+are the nearest round metre that leaves a flying body the 0.325 m a rail
+beam must keep. Targets, landings, routes and radii unchanged, and
+`measure_offers.RAISED` is empty again. Reports:
+`docs/art/reports/2026-09-03-physical-truth-repair.md` and
+`docs/art/reports/2026-09-03-launch-pads.md`.
+
+**RESOLVED 2026-09-04 — `launch_source.radius`.** Settled at Production
+`833fe80` and guarded at `7e13f44`: `launch_source.position` is the exact
+**foot-contact** launch origin, and `radius` reserves space for the
+constructed pad — it is **not** a disc of possible ballistic origins. All
+four large-room pads are correct as authored. *Superseded history: this
+was previously recorded here as an open Production question.*
+
+**RESOLVED — req 40.** `ShellValidator` is kind-aware through
+`TraversalLaw`; it no longer applies base-kit jump bounds to continuous
+walks or to ramps. Fixed before the Wave 1 promotion, so no room in the
+library is refused by it. *Superseded history: this was previously
+recorded here as needing Production.*
+
+**THEME PACK: PREPARED AND PROVED, NOT BUILT (2026-09-10).** Two
+inspection-only batches, no asset rebuilt and all twelve shells
+byte-identical. The role contract is reconciled against
+`ARCHIPEPSI_THEME_PACK_SYSTEM_AUTHORITY_20260903.txt`; all 597 shipped
+material slots classify (0 canonical, 597 legacy, 0 unknown) and Godot
+preserves every name exactly, so a binder can recover the role at runtime
+with no manifest field; and one shipped room has been shown wearing two
+themes **at once**, by per-surface override, with the shared mesh
+unchanged and the collision digest identical. Reports:
+`docs/art/reports/2026-09-10-theme-pack-preparation.md` and
+`docs/art/reports/2026-09-10-batch041-two-themes.md`.
+
+**What is left is PRODUCTION's, and there are four of them:** a ruling on
+`hazard` (the authority makes it a required per-theme role; the art lane's
+standing rule is that hazard is a universal colour no theme may re-tint,
+and no theme has a hazard texture), the `material mode` and
+`protected_materials` fields the registry entry schema does not have,
+somewhere for the 37-PNG theme texture set to ship, and the binder itself.
+**Do not start canonical `<role>` renaming on a wake-up** — it would
+change all twelve shells' bytes to buy tidiness a legacy-aware binder does
+not need.
+
+**ECMS GLYPH IS AVAILABLE AND HAS BEEN RUN (2026-09-10).**
+`cadykaya/ECMS-GLYPH` at **`727129e1`** on `main` — the implementation
+merge. An earlier note in this lane read the frozen authority snapshot
+`0cf872d` and concluded Glyph was "a specification, not a program"; that is
+**superseded**, and the difference was the branch, not the project. `npm ci`
+and `npm run build` are clean on Node 22, the worked example runs, and one
+128 × 128 `concrete_facility` wall has been authored through it on the house
+palette and structure, then bound onto real room geometry through Batch
+041's override path. **It ships nowhere** and no approved asset changed.
+Report: `docs/art/reports/2026-09-10-glyph-first-texture.md`.
+
+Two things a later agent should not have to rediscover. **Glyph's indexed
+colour has no partial mix**, and the house look is built from partial mixes,
+so a Glyph-authored surface comes out crisper than `materials.py`'s — a
+direction question, not a defect. And **the owner has settled `hazard`**:
+every pack must resolve the role, but may resolve it to the same shared
+universal material; separate theme-coloured hazard textures are not
+required.
+
+**001–022 PASS. 031–037 PASS** (031; 032 *with boundary*; 033 *audit, build
+nothing*; 034 *the visual principle*; 035-R; 036-R; 037-R *with a documented
+caveat*; boss audit *accepted, build nothing*).
+
+**PENDING owner review: 023–030 only.** Nothing about them is actionable
+without a verdict.
+
+### The boundary — do NOT start the next art system
+
+Two systems are being designed by the owner and a design collaborator, each
+arriving as its own owner-authored brief:
+
+1. **Modular Echo visual construction / kitbash system**
+2. **Diegetic in-world interface system**
+
+Until those briefs exist:
+
+- **No Batch 038.**
+- **Do not design or mass-produce Echo visual parts.** Requirement 32 is
+  *only* the architectural seam — the Echo family must be visible through a
+  swappable / composable `EchoPart` seam. The three built ranged / melee /
+  grapple forms are **proof-of-seam only**, and are explicitly not approval
+  of seven fixed family models, a final attachment grammar, a final part
+  taxonomy, runtime composition rules, family silhouette rules, or
+  provenance / source influence rules.
+- **Do not expand the interaction kit** into menus, terminals, Archive UI,
+  Forge UI, Zone-selection UI, or any other large physical interface.
+- **No heartbeat, no polling, no autonomous expansion.**
+
+### Rules locked by the post-030 review, worth carrying forward
+
+- **If a distinction must survive gameplay distance, the distinguishing
+  feature must affect object-scale SILHOUETTE.** Surface is what distance
+  takes away first.
+- Three channels on any operable object: **silhouette/structure** = what
+  kind of thing; **interaction hardware** = yes this one is operable;
+  **state treatment** = what it is doing now. The plate/bezel may stay as
+  standardized hardware only while it is not the sole source of truth and
+  does not rely on hue alone.
+- Secrets: **no universal secret colour**; a cue is a **deviation from a
+  learned environmental pattern**; a smaller reliable vocabulary beats a
+  padded one. **Stop revising secrets until real in-game Zone testing.**
+- Enemy surface: **plate** = proud slab / impact-bearing; **mechanism** =
+  recessed, ribbed, rodded exposed function. No role colours.
+- Accepted caveat: brute vs scuttler surface identity is weak. **Do not
+  alter the approved scuttler silhouette or body to force a stronger
+  surface distinction** — revisit only with gameplay evidence.
+
+**Still blocked, and deliberately not routed around:** requirement 31 —
+`ENEMY_ARCHETYPES` is still `("melee", "ranged", "brute")`, so seven roles
+have a body, a collider, a telegraph seat and a surface, and no way to be
+spawned.
+
+**The art heartbeat is PAUSED** (`trig_01DSWy2dbCpeSefcx2YGS9Ys`, disabled
+2026-08-29) under the owner's rule: pause the routine when there is no work,
+resume it when there is a task. **Do not re-enable it on an idle lane.** PR
+#5 activity still wakes the session directly, so nothing is missed.
+
+Earlier decisions standing: `objective_marker`, `arch_objective_socket`,
+`arch_signage_mount` and `arch_affordance_socket` all struck, each because
+nothing places them. `arch_vista_socket` still blocked on a contract.
+Requirement 23: engine `trim_mat` maps to authored `trim_plain`. The Batch
+023 landmark audit was corrected on 2026-08-29 — Production **has** an
+authored-content pipeline (`ContentRegistry`, `ContentInstantiator`,
+`landmark` as a real L4 category); what is missing is the `.glb` →
+`res://content/` scene step, a `landmark_id`, a placement path and a landmark
+envelope. Requirement 24, reworded.
+
+## Open decision, deliberately not guessed
+`challenge_marker` (§14.2) and its `challenge_timer` readout (§14.1) have a complete bridge half — grantable, recorded, `best_seconds` improves — and no world half, because neither section says where a run starts, what ends it, or what counts as one. `test_stage_tripwires.py::test_the_challenge_marker_still_has_no_challenge` names the decision and comes due when it is made.
 
 It is NOT to be changed yet: both figures are the unmeasured 40-minute
 target multiplied out, and retuning a real gate to satisfy a guess is

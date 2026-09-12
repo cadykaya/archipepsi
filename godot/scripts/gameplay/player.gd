@@ -57,7 +57,42 @@ const BOB_SWAY := 0.020
 const LAND_DIP_MAX := 0.15
 
 var hp: float = Constants.PLAYER_MAX_HP
-var input_frozen := false
+## NAMED REASONS THIS BODY IS BEING HELD STILL.
+##
+## `input_frozen` was one boolean with two owners: `Main._update_modal`
+## wrote it on every menu open and close, and `ZoneController` wrote it
+## while waiting for the bridge's layout verdict. Whichever wrote last
+## won, so closing the inventory released an acceptance hold and an
+## acceptance released a pause. A hold is not a state, it is a CLAIM,
+## and claims compose.
+var _holds := {}
+
+## Held while ANY claim stands. Read by everything that was reading the
+## boolean; assigning it still works and takes the unnamed claim, which
+## is what a test or a single-reason caller wants.
+var input_frozen: bool:
+	get:
+		return not _holds.is_empty()
+	set(value):
+		if value:
+			_holds["direct"] = true
+		else:
+			_holds.erase("direct")
+
+## Claim this body, under a name only this holder uses.
+func hold(reason: String) -> void:
+	_holds[reason] = true
+
+## Drop one claim. The body moves again when the last one goes.
+func release(reason: String) -> void:
+	_holds.erase(reason)
+
+## Which claims stand, for a test or a diagnostic that needs to say why.
+func holds() -> Array:
+	var out: Array = _holds.keys()
+	out.sort()
+	return out
+
 var gravity_mult := 1.0
 var speed_mult := 1.0
 ## The rest of the S5 derived stat stack, refreshed every physics frame

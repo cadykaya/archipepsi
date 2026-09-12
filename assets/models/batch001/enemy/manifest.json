@@ -1,0 +1,38 @@
+{
+  "enemy_brute_squat": {
+    "anchor": "floor",
+    "path": "batch001/enemy/enemy_brute_squat.glb",
+    "size": [
+      1.695,
+      1.54,
+      2.496
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "texel_density": null,
+    "triangles": 424
+  },
+  "enemy_melee_stooped": {
+    "anchor": "floor",
+    "path": "batch001/enemy/enemy_melee_stooped.glb",
+    "size": [
+      0.77,
+      0.57,
+      1.57
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "texel_density": null,
+    "triangles": 460
+  },
+  "enemy_ranged_tripod": {
+    "anchor": "floor",
+    "path": "batch001/enemy/enemy_ranged_tripod.glb",
+    "size": [
+      0.57,
+      0.595,
+      1.378
+    ],
+    "size_axes": "authoring (Blender) Z-up: width X, depth Y, height Z. NOT runtime axes -- see runtime_size()",
+    "texel_density": null,
+    "triangles": 368
+  }
+}

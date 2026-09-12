@@ -109,3 +109,22 @@ make dual-real-soak
 Python, platform. CI attaches it to every integration run, and the bridge
 banner prints the commit (with a `*` when the tree is dirty) so a
 playtest bug report carries its own provenance.
+
+## Observed 2026-09-12: every hosted run fails in 3–4 s with no logs
+
+**What was measured, and only that.** Every workflow run on every branch
+— including branches whose trees had not changed — ended in 3 to 4
+seconds. `runner_id: 0`, no runner assigned, and **no step logs at all**,
+so nothing in the job ever executed. Re-running one spent the re-run and
+produced the same result.
+
+**No root cause is recorded here, because none was established.** The
+repository is public, so the private-minutes-exhaustion explanation was
+checked and does not hold. The symptom is consistent with the hosted
+runner pool not assigning a runner; that is an observation about where
+the failure is, not a diagnosis of why.
+
+**What this does NOT mean.** No test failed. The tiers above were run
+locally on the container for this batch and the results are recorded on
+the frontier. A red badge from this class of failure is not evidence
+about the tree.

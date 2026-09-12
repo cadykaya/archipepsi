@@ -916,13 +916,33 @@ static func _joins(zone: Dictionary, links: Dictionary,
 				break
 		if already:
 			continue
+		# DOORWAY ENDPOINTS, answering AMALGAM_BRIDGE.md 5.4a: yes.
+		#
+		# This filed `socket_a` as the room's own POSITION and `socket_b`
+		# as its ARRIVAL — a point several metres inside — so the two
+		# declared ends were not the two ends of the chain, and the
+		# bridge had to check this one join by "does the chain arrive"
+		# rather than by walking it. That made the first room's approach
+		# the one corridor checked more loosely than every other.
+		#
+		# It has doorway endpoints available and always did: the chain's
+		# own first piece is where the corridor starts, and
+		# `door_world["<room>/entry"]` is the doorway it arrives at. So
+		# it is filed the way `e:__exit__` is and walks like any JOINED
+		# edge.
+		var chain: Array = links[rid]
+		var mouth: Vector3 = (rooms[rid] as Dictionary).get(
+				"position", Vector3.ZERO)
+		if door_world.has("%s/entry" % rid):
+			mouth = door_world["%s/entry" % rid]
+		var from: Vector3 = mouth
+		if not chain.is_empty() \
+				and typeof(chain[0]) == TYPE_DICTIONARY:
+			from = (chain[0] as Dictionary).get("entry", mouth)
 		out["%s%s" % [ROOM_EDGE_PREFIX, rid]] = {
 			"room_a": "", "room_b": rid,
-			"socket_a": (rooms[rid] as Dictionary).get("position",
-					Vector3.ZERO),
-			"socket_b": (rooms[rid] as Dictionary).get("arrival",
-					Vector3.ZERO),
-			"chain": links[rid], "synthetic": true}
+			"socket_a": from, "socket_b": mouth,
+			"chain": chain, "synthetic": true}
 	# THE EXIT ROOM'S APPROACH IS A JOIN TOO, under the reserved id, so a
 	# manifest carries the last leg instead of leaving it to be re-solved.
 	if rooms.has(EXIT_ROOM_ID):
