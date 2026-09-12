@@ -205,8 +205,14 @@ deliberate refusal as its control; `make godot-reload` reopens a campaign
 in a SECOND PROCESS and recovers the layout and the progress from the
 bridge alone.
 
-**Not connected:** the physics contract in `schemas/physics.py` — no
-runtime exists for it yet.
+**Connected as of 2026-09-12:** the physics contract in
+`schemas/physics.py`. The engine builds a `PhysicsPackage` for every
+`powered_door` chain an ordinarily generated room declares, replays it
+three times at exactly the manipulation envelope **in the room it built
+it in**, and sends both in `layout_result.layout["physics"]`;
+`layout.validate` refuses the Zone if a declared chain is unreported,
+unreplayed, replayed above the envelope, replayed against a different
+revision, or claims anything load-bearing. `AMALGAM_BRIDGE.md` §5.6a.
 
 ~~**The DORMANT-Hub hole (`AMALGAM_SLICE1.md` §5q) is half closed.**~~
 **Closed on both sides, 2026-09-12.** The bridge side landed first:
@@ -244,7 +250,7 @@ not done":
 | | |
 |---|---|
 | **Connected** — runs in a real campaign | graph composition at acceptance, reachability refusing an unreachable Zone, `layout_result` validated and committed, progress identities checked, DORMANT/VISITING, leave-reload-re-enter |
-| **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | **nothing in this row today.** Layout evidence validation moved up when the engine sent a real `layout_result` (`dc4ef39`); the physics contract moved up on 2026-09-12 when the engine lane built `ManipulableBody`, `SceneDigest` and `ReplayHarness` and `make godot-physics` began measuring them. What is left is not a rule waiting for a runtime — it is that no CONTENT authors a physics package yet |
+| **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | **nothing in this row today.** Layout evidence validation moved up when the engine sent a real `layout_result` (`dc4ef39`); the physics contract moved up on 2026-09-12 when the engine lane built `ManipulableBody`, `SceneDigest` and `ReplayHarness`, and moved to **Connected** the same day when `ChainCertificate` began producing a package and its evidence for an ordinarily generated Zone and `layout.validate` began refusing on them |
 | **Requires Godot** | physical reachability and the whole physics substrate — `docs/AMALGAM_BRIDGE.md` §6. Aperture polarity and the manifest replay consumer moved to **Connected** on 2026-09-12 |
 
 **The physics digest has three levels and only the first is done.**
@@ -394,6 +400,32 @@ Prod, §8c the boundary. Design 1 §13.1 calls `DASH_IMPULSE` a distance
 in metres while the schema carries m/s — a divergence someone has to
 reconcile. **AP-relevant gates without a matching guarantee stay
 refused.**
+
+**BRANCHING COMES FROM THE CATALOGUE NOW.** `AUTHORED_SOCKETS` hardcoded
+`("entry", "exit")` — true of all twelve shells, never a property of
+being authored, and a three-door shell would have been composed as a
+two-door one with its third opening SEALED. Capacity is read from the
+catalogue end to end: `shells.joinable_sockets` off the entry,
+`rule_of` carrying it on the wire so a generator can choose a shell that
+branches, `topology` reading it and refusing rather than assuming for an
+unknown shell. Junction candidacy is capacity, not authorship.
+
+Composition derives what a Zone can afford from two things that already
+exist — the spine keeps half the spare rooms, and `KeyColour` has four
+values so a fifth branch would reuse a colour. Multiple branches and
+branches off branches, with destinations that carry a Check or a key.
+`make test` includes generation coverage over declared inputs that
+REPORTS the distribution: prototype scale 3-4 rooms and 0 branches, each
+saying which cost it could not meet; default scale 19-23 rooms, all
+branching, all nesting, four each because the colour vocabulary caps it.
+
+**Physics packages have no carrier yet and the reason is a boundary, not
+an oversight.** `Chamber.packages` was refused by
+`test_epsilon_vocabulary`: `LatchCondition.detail` and
+`ReferenceSolution.steps` are free text, so a package on the Zone is a
+package a creative provider could author. `docs/AMALGAM_BRIDGE.md` §5.6
+puts three carrier shapes to Prod; this lane's half is ready to write
+behind whichever answer.
 
 **Capability gates are searched, not sampled.** A previous guard removed
 one gate edge at a time with every other gate left passable, so two

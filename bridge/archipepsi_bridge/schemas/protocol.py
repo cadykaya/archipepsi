@@ -949,19 +949,25 @@ ZONE_OCCUPIED_MODES = ("GENERATING", "ZONE_READY", "ZONE_ACTIVE")
 #: Modes with something the player can walk into right now. Entering one of
 #: these needs no Archipelago round-trip: the Zone already exists locally.
 #:
-#: **THE LIST `portal_enabled` READS, AND THEREFORE THE LIST THE GAME
-#: OBEYS.** There is one, and this is it.
+#: Modes with something the player can walk into right now. Entering one
+#: of these needs no Archipelago round-trip: the Zone already exists
+#: locally.
 #:
-#: Both lanes found the same defect independently, from opposite ends.
-#: ZONE_DORMANT was added to one of two near-identically named
-#: constants, and the portal went dark over a Zone the Hub was naming:
-#: the mode said "your Zone is waiting", `resume_zone_id` said which
-#: one, and the button was greyed out. From the engine side it looked
-#: like a portal that showed the mode's prompt and refused to fire.
+#: **ONE NAME, and both lanes found the defect from opposite ends.**
+#: `ZONE_ENTER_MODES` and `ZONE_ENTERABLE_MODES` were one question under
+#: two names, `ZONE_DORMANT` went into one, and `portal_enabled` read
+#: the other — so the Hub named the Zone and greyed the button out. From
+#: the engine side it looked like a portal that showed the mode's prompt
+#: and refused to fire. Neither half was wrong, which is why nothing
+#: caught it.
 #:
-#: Two spellings of one fact is how the lanes come to disagree, so
-#: `ZONE_ENTER_MODES` is gone rather than kept equal to this by hand,
-#: and the engine's `HubController` spells it the same way.
+#: The collapse was `ZONE_ENTERABLE_MODES = ZONE_ENTER_MODES`. This
+#: keeps the single name instead: an alias is still two names, a reader
+#: who greps the other one finds a definition and may add to it, and the
+#: aliasing only holds while nobody rebinds either. The question it was
+#: asking is this one's — **what the portal can enter without
+#: Archipelago** — and `portal_enabled` is the consumer that decides it.
+#: The engine's `HubController` spells it the same way.
 ZONE_ENTERABLE_MODES = ("ZONE_READY", "ZONE_ACTIVE", "ZONE_DORMANT")
 
 assert set(ZONE_ENTERABLE_MODES) <= set(get_args(HubMode))

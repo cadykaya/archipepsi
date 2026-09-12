@@ -508,3 +508,57 @@ Stated because each of these was checked and found not to bite:
 * **Two-door shells.** Every one of the twelve stays valid. The
   fallbacks in §2.1 are by construction, not by promise, and
   `godot-room-contract` builds all twelve every run.
+
+## 11.7 Restriction 1 answered — the bridge now writes both edge ids
+
+**Bridge lane, 2026-09-12, against the engine lane's `7adc5e5`.** §11.2
+named `arrive_edge` / `depart_edge` as read by the engine and written by
+nobody. They are written now, and nothing in §11 changed to make room
+for them.
+
+**They name an edge, exactly as §11.2 asked.** `ChamberBase.arrive_edge`
+and `ChamberBase.depart_edge` are optional `str | None`, held to the
+same `[a-z0-9_:]` charset as every other edge id, additive, and
+`schema_version` stays 7. A chamber carrying neither is the chamber that
+shipped before multi-door existed and the engine's fallback applies —
+which is still what all twelve two-door shells get, because the composer
+puts their chain on `entry` and `exit`.
+
+**Derived from the door assignment, not maintained beside it.** The
+composer already decides which socket serves which edge; these two
+fields are pointers into that decision, carried on `GraphProduct` as
+`arrivals` / `departures` and written by `topology.apply`. Three rules
+keep them from becoming a second topology:
+
+* each must name an edge one of that room's own **non-`SEALED`** doors
+  carries — because `socket_for_edge` returns an empty socket when it
+  finds none, and an empty answer is the legacy fallback taken
+  *silently*, which is a filled-in field that does nothing;
+* `arrive_edge` must name an edge the room is the **`room_b`** of, and
+  `depart_edge` an edge it is the **`room_a`** of, per §11.1 and §6.5;
+* they may not be the same edge.
+
+**What the composer emits today.** Spine rooms arrive by the edge from
+the previous spine room and depart by the edge to the next. A branch
+destination arrives by its vault. A junction on the spine does **not**
+depart by its branch — it departs by the spine, and the branch mouth is
+placed by the engine's own socket table, which is §11.4 and yours. A
+nested junction with exactly one onward vault departs by it; with two
+there is no single continuation, so the field is left unset and your
+documented fallback is the honest answer rather than an arbitrary pick.
+
+**Proved against your lookup, not against our intention.**
+`test_a_non_default_opening_survives_the_wire_and_names_its_edge`
+composes a room whose chain enters through `side_left` and leaves
+through `side_right` with both default sockets `SEALED`, serializes it,
+re-parses it, and resolves the result with a transcription of
+`socket_for_edge` — so the assertion is what the engine will land on. A
+second control runs every room of every composed Zone through the same
+lookup and refuses a selector that resolves to the fallback. Three more
+refuse an edge the room does not carry, a selector pointing the wrong
+way down its edge, and a selector onto a sealed door.
+
+**Unchanged, and yours:** §11.3 per-socket arrival regions, §11.4 branch
+mouths from the procedural socket table. A `joinable` list in the offer
+proves capacity is visible and these two fields say which opening the
+chain uses; neither is a claim that the body arrives through it.

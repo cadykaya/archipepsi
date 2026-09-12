@@ -910,6 +910,30 @@ untouched.
 
 ### 5.5a-bis The other half of the restart — **done, on both sides**
 
+**DONE 2026-09-12, and one line of it was on the bridge's side.** Both
+consumer changes below landed; `make godot-reload` presses the real
+portal in `ZONE_DORMANT` and lands back in the Zone it left.
+
+The line the engine lane had to touch in `protocol.py`, flagged here
+because it is the bridge's file: **`portal_enabled` was reading a second
+list.** `ZONE_ENTER_MODES` gained `ZONE_DORMANT`; `ZONE_ENTERABLE_MODES`
+— the same question, under a different name — did not, and
+`portal_enabled` reads that one. So the portal showed the mode's prompt
+and refused to fire: a way back into a Zone that is wired, labelled and
+dead, and no test on either side could see it because each lane's half
+was correct.
+
+**Settled: one name, not an alias.** `ZONE_ENTER_MODES` is gone rather
+than aliased — an alias is still two names, a reader who greps the dead
+one finds a definition and may add to it, and the aliasing only holds
+while nobody rebinds either. The surviving question is "what the portal
+can enter without Archipelago", `portal_enabled` is its consumer, and
+the engine's `HubController` spells it the same way.
+
+Two places, and deliberately small. **Neither lane should edit the other
+side of this seam** — this was the proposal, and the engine lane took
+it.
+
 The manifest survived a restart and the progress did not: `main.gd` read
 keys, locks, stations and the resume point out of its own in-memory
 dictionaries, which a new process starts empty. Same rooms, every key
@@ -956,10 +980,6 @@ below landed; `make godot-reload` presses the real portal in
 `ZONE_DORMANT`, across a restart of BOTH processes, and lands back in
 the Zone it left. The proposal is kept as written because it is what was
 taken.
-
-**DONE 2026-09-12, and one line of it was on the bridge's side.** Both
-consumer changes below landed; `make godot-reload` presses the real
-portal in `ZONE_DORMANT` and lands back in the Zone it left.
 
 **Both lanes found the same last obstacle, from opposite ends.**
 `portal_enabled` was reading a second list: one of two near-identically
@@ -1038,6 +1058,76 @@ one object. Offering the dormant Zone on the portal and finished Zones
 through some other affordance is the obvious split, but which affordance
 is a Hub design question and is yours. The bridge exposes the list; it
 does not assume a widget.
+
+
+## 5.6 Environmental agency: where a physics package may live
+
+**The engine half exists.** `ReplayHarness.replay` returns exactly the
+`ReplayEvidence` shape this lane already validates — `package_id`,
+`content_digest`, the three provider values, `per_run_latched` — and
+refuses with a reason when a package has no setup or no reference
+solution. What is missing is the other end: **nothing produces a
+package**, so the harness has nothing to replay and the evidence gate
+has nothing to gate.
+
+This lane owns package validation, acceptance plumbing and the
+persistent consequence. Before writing them it tried the obvious
+placement — `Chamber.packages`, beside `keys`, additive and empty — and
+**a guard refused it, correctly**:
+
+```
+these fields let Epsilon say an arbitrary string:
+    LatchCondition.detail
+    PhysicsPackage.required_latches
+    ReferenceSolution.steps
+    ReplayEvidence.per_run_latched
+```
+
+`test_epsilon_vocabulary` walks the Zone schema as **Epsilon's output
+surface**, because the Zone is what a creative provider fills. Two of
+those four are safe under the existing precedent — `required_latches`
+and `per_run_latched` are charset-constrained ids resolved against a
+declaration in the same object, exactly like `edge_id` and `key_id`.
+**Two are not.** `LatchCondition.detail` is what the engine must
+observe, and `ReferenceSolution.steps` is the engine's own script. A
+provider that can write those is a provider authoring a physical claim,
+which is the lane boundary itself: *Epsilon emits validated structured
+creative interpretation only.*
+
+So the placement was wrong and the field is not in the tree. The
+carrier is the open question, and it is genuinely joint:
+
+> **For Prod.** A package has to reach the engine, and it must not be
+> reachable by Epsilon. Three shapes, and the choice decides what this
+> lane builds:
+>
+> 1. **Composer-written, on the Zone.** Packages land where `doors`,
+>    `edges` and `plugs` land — added by `topology.apply` after
+>    acceptance, so the provider never sees the field. Needs the
+>    vocabulary guard taught that these fields are composer-owned, the
+>    same exemption `edge_id` already has and for the same reason.
+> 2. **Beside the manifest.** A package is physical, like the layout, so
+>    it travels with `layout_result`/the committed manifest rather than
+>    with the Zone. Fits "the engine owns physical truth" and means a
+>    package is part of what a re-entry replays.
+> 3. **Its own carrier.** Rejected here unless one of the above fails:
+>    the brief is explicit that competing truths beside `ZoneReady` and
+>    the snapshot are what this seam keeps getting wrong.
+>
+> Whichever it is, the bridge's half is the same and is ready to write:
+> `PhysicsPackage` validation at acceptance via `check_physics_content`,
+> a `latch_fired` intent validated against packages the Zone actually
+> declares (the `record_key`-accepts-anything defect, not repeated), and
+> `ZoneProgress.latched` as a monotone set that survives a reload —
+> §5.7's "never cleared by reset or death" includes quitting.
+>
+> **Nothing becomes load-bearing on the way.** A latch is recorded
+> before any route depends on one, and what a route may depend on waits
+> on `AP_CAPABILITY_LOGIC.md` §8. **And movement qualification stays
+> separate**: `CROSSING_EVIDENCE` is not populated from a physics
+> replay. A package proving a crate moves says nothing about how far a
+> dash carries a body, and the two contracts do not establish each
+> other.
 
 
 ## 5.6a ANSWERED by the engine lane, 2026-09-12: option 2, and the engine produces it
@@ -1144,11 +1234,15 @@ this project's recurring defect — a measurement that exists, is
 correct, and is never handed the case that fails it — caught at design
 time for once.
 
-`physics.evidence_fault` is one function with two callers:
-`check_physics_content` asks it of a load-bearing package, where
-unsound evidence means a progression gate nobody measured;
-`layout.validate` asks it of every chain a generated room built. The
-question is the same and must not grow two answers.
+**`check_physics_content` alone could not do this**, and that is worth
+saying because §5.6 offered it. It skips every package that is not
+load-bearing — correctly, since its subject is progression guarantees —
+and these packages are deliberately not load-bearing, so it would have
+accepted every chain in silence. `physics.evidence_fault` is the shared
+half, one function with two callers: `check_physics_content` asks it of
+a load-bearing package, where unsound evidence means a progression gate
+nobody measured; `layout.validate` asks it of every chain a generated
+room built. The question is the same and must not grow two answers.
 
 **It is validated at acceptance and NOT written into the manifest.** A
 manifest is replayed byte-identically forever; a scene digest is

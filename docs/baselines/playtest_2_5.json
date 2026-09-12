@@ -990,6 +990,10 @@
           ],
           "room_shell_rules": {
             "shell_corner_left": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 6.8,
                 4.5,
@@ -1000,6 +1004,10 @@
               ]
             },
             "shell_corner_right": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 6.8,
                 4.5,
@@ -1010,6 +1018,10 @@
               ]
             },
             "shell_hall_transit": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 41.2,
                 39.6,
@@ -1020,6 +1032,10 @@
               ]
             },
             "shell_plenum_helix": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 21.2,
                 73.6,
@@ -1030,6 +1046,10 @@
               ]
             },
             "shell_span_basin": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 31.2,
                 23.6,
@@ -1042,6 +1062,10 @@
             "shell_tower_collapsed": {
               "fits_floors": [
                 2
+              ],
+              "joinable": [
+                "entry",
+                "exit"
               ],
               "size": [
                 12.8,
@@ -1056,6 +1080,10 @@
               "fits_floors": [
                 5
               ],
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 12.8,
                 20.5,
@@ -1069,6 +1097,10 @@
               "fits_floors": [
                 3
               ],
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 12.8,
                 14.5,
@@ -1079,6 +1111,10 @@
               ]
             },
             "shell_treasure_cache": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 8.8,
                 5.4,
@@ -1089,6 +1125,10 @@
               ]
             },
             "shell_treasure_coffer": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 8.8,
                 6.3,
@@ -1099,6 +1139,10 @@
               ]
             },
             "shell_treasure_vault": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 8.8,
                 5.4,
@@ -1109,6 +1153,10 @@
               ]
             },
             "shell_yard_gantry": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 85.2,
                 17.6,
@@ -1858,6 +1906,10 @@
           ],
           "room_shell_rules": {
             "shell_corner_left": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 6.8,
                 4.5,
@@ -1868,6 +1920,10 @@
               ]
             },
             "shell_corner_right": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 6.8,
                 4.5,
@@ -1878,6 +1934,10 @@
               ]
             },
             "shell_hall_transit": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 41.2,
                 39.6,
@@ -1888,6 +1948,10 @@
               ]
             },
             "shell_plenum_helix": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 21.2,
                 73.6,
@@ -1898,6 +1962,10 @@
               ]
             },
             "shell_span_basin": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 31.2,
                 23.6,
@@ -1910,6 +1978,10 @@
             "shell_tower_collapsed": {
               "fits_floors": [
                 2
+              ],
+              "joinable": [
+                "entry",
+                "exit"
               ],
               "size": [
                 12.8,
@@ -1924,6 +1996,10 @@
               "fits_floors": [
                 5
               ],
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 12.8,
                 20.5,
@@ -1937,6 +2013,10 @@
               "fits_floors": [
                 3
               ],
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 12.8,
                 14.5,
@@ -1947,6 +2027,10 @@
               ]
             },
             "shell_treasure_cache": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 8.8,
                 5.4,
@@ -1957,6 +2041,10 @@
               ]
             },
             "shell_treasure_coffer": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 8.8,
                 6.3,
@@ -1967,6 +2055,10 @@
               ]
             },
             "shell_treasure_vault": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 8.8,
                 5.4,
@@ -1977,6 +2069,10 @@
               ]
             },
             "shell_yard_gantry": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 85.2,
                 17.6,
@@ -2708,6 +2804,10 @@
           ],
           "room_shell_rules": {
             "shell_corner_left": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 6.8,
                 4.5,
@@ -2718,6 +2818,10 @@
               ]
             },
             "shell_corner_right": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 6.8,
                 4.5,
@@ -2728,6 +2832,10 @@
               ]
             },
             "shell_hall_transit": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 41.2,
                 39.6,
@@ -2738,6 +2846,10 @@
               ]
             },
             "shell_plenum_helix": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 21.2,
                 73.6,
@@ -2748,6 +2860,10 @@
               ]
             },
             "shell_span_basin": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 31.2,
                 23.6,
@@ -2760,6 +2876,10 @@
             "shell_tower_collapsed": {
               "fits_floors": [
                 2
+              ],
+              "joinable": [
+                "entry",
+                "exit"
               ],
               "size": [
                 12.8,
@@ -2774,6 +2894,10 @@
               "fits_floors": [
                 5
               ],
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 12.8,
                 20.5,
@@ -2787,6 +2911,10 @@
               "fits_floors": [
                 3
               ],
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 12.8,
                 14.5,
@@ -2797,6 +2925,10 @@
               ]
             },
             "shell_treasure_cache": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 8.8,
                 5.4,
@@ -2807,6 +2939,10 @@
               ]
             },
             "shell_treasure_coffer": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 8.8,
                 6.3,
@@ -2817,6 +2953,10 @@
               ]
             },
             "shell_treasure_vault": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 8.8,
                 5.4,
@@ -2827,6 +2967,10 @@
               ]
             },
             "shell_yard_gantry": {
+              "joinable": [
+                "entry",
+                "exit"
+              ],
               "size": [
                 85.2,
                 17.6,

@@ -68,20 +68,94 @@ def test_the_branch_producer_makes_a_junction_a_lock_and_a_way_back():
     product = topology.compose_with_branch(list(z.chambers))
     out = topology.apply(z, product)
 
-    junction = [c for c in out.chambers if c.door_degree == 3]
-    assert len(junction) == 1, "exactly one three-door room"
-    locked = [d for d in junction[0].doors if d.usage == "LOCKED"]
-    assert len(locked) == 1 and locked[0].key_id == "red"
+    # EVERY branch, not one: how many a Zone gets is derived from what it
+    # can afford, so the invariants are stated per branch.
+    locked = [(c, d) for c in out.chambers for d in c.doors
+              if d.usage == "LOCKED"]
+    assert locked, "an eight-room Zone can afford at least one branch"
+    joined = [e for e in out.edges if e.realization == "JOINED"]
+    for room, door in locked:
+        # A junction carries the side door AND whatever else joins it.
+        # Not a fixed 3: the first room has no inbound edge, and a NESTED
+        # junction is reached by a branch rather than by the spine.
+        others = [d for d in room.doors
+                  if d.usage != "SEALED" and d.socket_id != door.socket_id]
+        assert others, f"'{room.id}' is a junction off nothing"
+        assert room.door_degree == len(
+            [e for e in joined if room.id in e.rooms]), room.id
+        assert door.key_id and door.colour, "a lock needs its key"
 
-    assert len(out.plugs) == 1
-    plug = out.plugs[0]
-    assert plug.destination == "zone_start"
+    # ONE WAY BACK PER BRANCH — counted off the branches, not off the
+    # locks. Those were the same number while every branch was locked,
+    # and an open branch needs its way home just as much.
+    branch_edges = {d.edge_id for c in out.chambers for d in c.doors
+                    if d.socket_id not in ("entry", "exit") and d.edge_id}
+    assert len(out.plugs) == len(branch_edges), (
+        sorted(branch_edges), [pl.room_id for pl in out.plugs])
     plug_edges = [e for e in out.edges if e.realization == "TRAVERSAL_ONLY"]
-    assert len(plug_edges) == 1
-    assert plug_edges[0].edge_id == plug.edge_id
-    assert plug_edges[0].direction == "A_TO_B", "a plug is one-way"
+    assert len(plug_edges) == len(out.plugs)
+    for plug in out.plugs:
+        assert plug.destination == "zone_start"
+        edge = next(e for e in plug_edges if e.edge_id == plug.edge_id)
+        assert edge.direction == "A_TO_B", "a plug is one-way"
+
+    # Distinct keys, so two branches are two decisions rather than one.
+    ids = [d.key_id for _, d in locked]
+    assert len(set(ids)) == len(ids), ids
 
     assert topology.reachability(out).ok, topology.reachability(out).errors
+
+
+def test_an_unlocked_branch_is_a_real_branch_with_a_real_way_back():
+    """A branch need not be locked, and an open one is not a lesser one.
+
+    It is the same edge on the same socket with the same return plug;
+    what it does not have is a key errand attached. Written because
+    "every branch is locked" was true for so long that several checks
+    counted locks and called the answer branches — including the one
+    directly above this, which counted `len(out.plugs) == len(locked)`
+    and would have passed forever while open branches went uncounted.
+    """
+    z = _chain_zone(20)
+    out = topology.apply(z, topology.compose_with_branch(list(z.chambers)))
+    side = [(c, d) for c in out.chambers for d in c.doors
+            if d.socket_id not in ("entry", "exit") and d.usage != "SEALED"]
+    open_side = [(c, d) for c, d in side if d.usage == "USED"]
+    locked_side = [(c, d) for c, d in side if d.usage == "LOCKED"]
+    assert open_side, "a 20-room Zone should outrun the four key colours"
+    assert locked_side, "and should still lock the ones it can key"
+
+    joined = {e.edge_id: e for e in out.edges if e.realization == "JOINED"}
+    for room, door in open_side:
+        assert door.key_id is None and door.colour is None, (
+            f"'{room.id}/{door.socket_id}' is USED and carries a key")
+        edge = joined[door.edge_id]
+        far = edge.room_b if edge.room_a == room.id else edge.room_a
+        assert any(pl.room_id == far for pl in out.plugs), (
+            f"open branch to '{far}' has no way back")
+    assert topology.reachability(out).ok, topology.reachability(out).errors
+
+
+def test_one_colour_names_one_lock_in_a_zone():
+    """Readable presentation: "the red door" names exactly one door.
+
+    Two locks of one colour opened by different keys read as one lock
+    and behave as two, which is the confusion that "more branches" must
+    not be paid for with.
+    """
+    for n in (8, 12, 16, 20, 24):
+        z = _chain_zone(n)
+        out = topology.apply(z, topology.compose_with_branch(list(z.chambers)))
+        locked = [d for c in out.chambers for d in c.doors
+                  if d.usage == "LOCKED"]
+        colours = [d.colour for d in locked]
+        assert len(set(colours)) == len(colours), (n, colours)
+        assert len({d.key_id for d in locked}) == len(locked), (n, locked)
+        # And one key per lock, wherever it was put.
+        spec = [k for c in out.chambers for k in c.keys]
+        assert sorted(s.key_id for s in spec) == sorted(
+            d.key_id for d in locked), (n, spec, locked)
+        assert {s.colour for s in spec} == set(colours), n
 
 
 def test_a_plug_consumes_no_joining_socket():
@@ -92,12 +166,21 @@ def test_a_plug_consumes_no_joining_socket():
     room = next(c for c in out.chambers if c.id == plug.room_id)
     carried_by_a_door = [d for d in room.doors if d.edge_id == plug.edge_id]
     assert not carried_by_a_door
-    # and the branch room's door budget is unaffected by holding a plug
-    assert room.door_degree == 1
+    # And the room's door degree is its JOINED degree exactly — holding a
+    # plug adds nothing. Counted off the edges rather than asserted as a
+    # constant, because a destination may itself be a junction for a
+    # nested branch and a hardcoded 1 would quietly stop testing this.
+    joined = [e for e in out.edges
+              if e.realization == "JOINED" and room.id in e.rooms]
+    assert room.door_degree == len(joined), (
+        room.id, room.door_degree, [e.edge_id for e in joined])
 
 
 def test_a_zone_too_small_to_branch_returns_the_chain_rather_than_guessing():
-    z = _chain_zone(4)
+    """A spine of `MIN_SPINE` has no room to spare, so every room is
+    load-bearing for the chain and the note says which cost was not met
+    rather than the Zone silently coming back unbranched."""
+    z = _chain_zone(topology.MIN_SPINE)
     product = topology.compose_with_branch(list(z.chambers))
     assert all(e.realization == "JOINED" for e in product.edges)
     assert not product.plugs
@@ -207,7 +290,12 @@ def test_an_unreachable_check_is_caught():
     broken = []
     for c in out.chambers:
         if c.id == "c003":
-            broken.append(c.model_copy(update={"doors": tuple(
+            # Its arrival selector goes with the door. Leaving it behind
+            # is a different defect and `ChamberBase` now names it
+            # first, which would make this test stop asking its own
+            # question.
+            broken.append(c.model_copy(update={"arrive_edge": None,
+                                               "doors": tuple(
                 d.model_copy(update={"usage": "SEALED", "edge_id": None})
                 if d.socket_id == "entry" else d for d in c.doors)}))
         else:
@@ -593,3 +681,211 @@ def test_a_key_in_hand_counts_toward_getting_back_out():
     result = topology.reachability(z)
     assert not any("not left" in e for e in result.errors), result.errors
     assert not result.ok, "the undeclared gate is still a refusal"
+
+
+# --- §11.2: which opening the chain arrives and departs through ----------
+#
+# `content_instantiator.socket_for_edge` reads `chamber.arrive_edge` /
+# `chamber.depart_edge`, finds the door carrying that edge, and returns
+# its socket; an empty answer is the legacy `entry`/`exit` fallback. The
+# engine's half shipped at Prod's 7adc5e5 and nothing wrote the two
+# fields, so every room fell through to the fallback and an authored
+# junction would have been entered through the wrong opening.
+
+def _resolve_like_the_engine(chamber: dict, key: str) -> str:
+    """`socket_for_edge`, transcribed.
+
+    Not an independent implementation and not a second topology: it is
+    the consumer's own lookup — `godot/scripts/content/
+    content_instantiator.gd::socket_for_edge` — written out so a test
+    can assert what the ENGINE will resolve rather than what the bridge
+    meant. `""` is the engine's empty answer, which is the legacy
+    fallback.
+    """
+    want = chamber.get(key) or ""
+    if not want:
+        return ""
+    for door in chamber.get("doors", []):
+        if door.get("edge_id") != want or door.get("usage") == "SEALED":
+            continue
+        return door.get("socket_id", "")
+    return ""
+
+
+def _joined(a: str, sa: str, b: str, sb: str):
+    edge = TopologyEdge(edge_id=f"e:{a}:{b}", room_a=a, room_b=b,
+                        direction="BIDIRECTIONAL", realization="JOINED")
+    return edge, (a, sa), (b, sb)
+
+
+def _through(n: int, joins):
+    """A Zone wired through named sockets on BOTH ends of every edge.
+
+    A capability control, not ordinary generation: no shipped shell
+    declares a third joinable socket, so the composer has no reason to
+    put the chain anywhere but `entry`/`exit` today. What this asks is
+    whether a non-default choice survives composition, the schema and
+    the wire — because the day it does not, the failure is a room
+    entered through the wrong wall and nothing saying so.
+    """
+    z = _chain_zone(n)
+    edges, doors = [], {c.id: {} for c in z.chambers}
+    arrivals, departures = {}, {}
+    for a, sa, b, sb in joins:
+        edge, (a, sa), (b, sb) = _joined(a, sa, b, sb)
+        edges.append(edge)
+        doors[a][sa] = DoorAssignment(socket_id=sa, usage="USED",
+                                      edge_id=edge.edge_id)
+        doors[b][sb] = DoorAssignment(socket_id=sb, usage="USED",
+                                      edge_id=edge.edge_id)
+        departures[a] = edge.edge_id
+        arrivals[b] = edge.edge_id
+    caps = topology._shell_sockets()
+    return topology.apply(z, topology.GraphProduct(
+        edges=tuple(edges),
+        doors={c.id: topology._seal_the_rest(c, doors[c.id], caps)
+               for c in z.chambers},
+        keys={}, plugs=(), arrivals=arrivals, departures=departures))
+
+
+def test_a_non_default_opening_survives_the_wire_and_names_its_edge():
+    """The whole point of §11.2, end to end.
+
+    c002's chain comes in through `side_left` and leaves through
+    `side_right` — its `entry` and `exit` are sealed. Serialized,
+    re-parsed, and then resolved the way the engine resolves it.
+    """
+    import json
+    z = _through(4, [("c001", "exit", "c002", "side_left"),
+                     ("c002", "side_right", "c003", "entry"),
+                     ("c003", "exit", "c004", "entry")])
+    wire = json.loads(z.model_dump_json())
+    back = Zone.model_validate(wire)
+    assert back == z, "the selectors did not survive a round trip"
+
+    room = next(c for c in wire["chambers"] if c["id"] == "c002")
+    assert room["arrive_edge"] == "e:c001:c002"
+    assert room["depart_edge"] == "e:c002:c003"
+    # AND THE ENGINE LANDS ON THE INTENDED OPENING, which is the claim
+    # that matters. Both of c002's default sockets are sealed, so the
+    # legacy fallback would have placed it at `entry` — a wall.
+    assert _resolve_like_the_engine(room, "arrive_edge") == "side_left"
+    assert _resolve_like_the_engine(room, "depart_edge") == "side_right"
+    sealed = {d["socket_id"] for d in room["doors"] if d["usage"] == "SEALED"}
+    assert {"entry", "exit"} <= sealed
+
+    # And the ordinary rooms keep the legacy pair, so the fallback is
+    # still what a two-door shell gets.
+    first = next(c for c in wire["chambers"] if c["id"] == "c001")
+    assert first["arrive_edge"] is None, "the first room arrives from outside"
+    assert _resolve_like_the_engine(first, "depart_edge") == "exit"
+
+
+def test_the_selectors_that_ordinary_generation_emits_resolve_to_its_doors():
+    """Every room of every composed Zone, against the engine's lookup.
+
+    The claim is not "the field is filled in" — it is that what the
+    engine resolves from it is the socket the composer assigned. A
+    selector that resolves to `""` is the legacy fallback taken
+    silently, which is indistinguishable from the field never existing.
+    """
+    import json
+    for n in (3, 6, 8, 12, 20):
+        z = _chain_zone(n)
+        for out in (topology.apply(z, topology.compose_chain(
+                        list(z.chambers))),
+                    topology.apply(z, topology.compose_with_branch(
+                        list(z.chambers)))):
+            wire = json.loads(out.model_dump_json())
+            assert Zone.model_validate(wire) == out
+            joined = {e.edge_id: e for e in out.edges
+                      if e.realization == "JOINED"}
+            for room in wire["chambers"]:
+                for key, end in (("arrive_edge", "room_b"),
+                                 ("depart_edge", "room_a")):
+                    if room[key] is None:
+                        continue
+                    socket = _resolve_like_the_engine(room, key)
+                    assert socket, (n, room["id"], key,
+                                    "resolves to the legacy fallback")
+                    door = next(d for d in room["doors"]
+                                if d["socket_id"] == socket)
+                    assert door["edge_id"] == room[key]
+                    assert getattr(joined[room[key]], end) == room["id"]
+            # THE ZONE'S OWN ENDS. The first room is arrived at from
+            # outside the Zone and the last departs to the Hub, so
+            # neither carries the selector for that direction.
+            assert wire["chambers"][0]["arrive_edge"] is None
+            last = wire["chambers"][-1]
+            assert last["depart_edge"] is None, (n, last["id"])
+
+
+def test_a_selector_naming_an_edge_this_room_does_not_carry_is_refused():
+    """The engine answers `""` and falls back silently, so the bridge is
+    the only place this can be caught."""
+    z = _through(4, [("c001", "exit", "c002", "entry"),
+                     ("c002", "exit", "c003", "entry"),
+                     ("c003", "exit", "c004", "entry")])
+    wire = z.model_dump()
+    wire["chambers"][1]["arrive_edge"] = "e:c003:c004"
+    with pytest.raises(ValueError, match="carries no open door onto it"):
+        Zone.model_validate(wire)
+
+
+def test_a_selector_pointing_the_wrong_way_down_its_edge_is_refused():
+    """Arrival is the INBOUND edge (§11.1/§6.5). A room that named its
+    outbound edge as its arrival would be placed by the opening it
+    leaves through."""
+    z = _through(4, [("c001", "exit", "c002", "entry"),
+                     ("c002", "exit", "c003", "entry"),
+                     ("c003", "exit", "c004", "entry")])
+    wire = z.model_dump()
+    wire["chambers"][1]["arrive_edge"] = "e:c002:c003"
+    wire["chambers"][1]["depart_edge"] = "e:c001:c002"
+    with pytest.raises(ValueError, match="the arrival is the inbound edge"):
+        Zone.model_validate(wire)
+
+
+def test_a_selector_naming_a_sealed_door_is_refused():
+    """`socket_for_edge` skips SEALED doors, so a selector onto one
+    resolves to the fallback — a filled-in field that does nothing."""
+    z = _through(4, [("c001", "exit", "c002", "entry"),
+                     ("c002", "exit", "c003", "entry"),
+                     ("c003", "exit", "c004", "entry")])
+    wire = z.model_dump()
+    room = wire["chambers"][1]
+    for door in room["doors"]:
+        if door["socket_id"] == "entry":
+            door["usage"], door["edge_id"] = "SEALED", None
+    with pytest.raises(ValueError, match="carries no open door onto it"):
+        Zone.model_validate(wire)
+
+
+def test_a_selector_can_never_point_at_a_plug():
+    """A plug realizes no geometry, so there is no opening to arrive
+    through — and the route to that mistake is closed one step earlier.
+
+    A selector must name an edge one of this room's own OPEN DOORS
+    carries, and a door carrying a `TRAVERSAL_ONLY` edge is already
+    refused. So the two rules compose: the reason the plug case cannot
+    be built is checked here rather than assumed, because "it cannot
+    happen" is the sentence that precedes it happening.
+    """
+    z = _chain_zone(8)
+    out = topology.apply(z, topology.compose_with_branch(list(z.chambers)))
+    plug = out.plugs[0]
+
+    # One: no door may carry it.
+    wire = out.model_dump()
+    room = next(c for c in wire["chambers"] if c["id"] == plug.room_id)
+    sealed = next(d for d in room["doors"] if d["usage"] == "SEALED")
+    sealed["usage"], sealed["edge_id"] = "USED", plug.edge_id
+    with pytest.raises(ValueError, match="TRAVERSAL_ONLY edge .* is named"):
+        Zone.model_validate(wire)
+
+    # Two: so naming it as an arrival is a selector onto no open door.
+    wire = out.model_dump()
+    room = next(c for c in wire["chambers"] if c["id"] == plug.room_id)
+    room["arrive_edge"] = plug.edge_id
+    with pytest.raises(ValueError, match="carries no open door onto it"):
+        Zone.model_validate(wire)
