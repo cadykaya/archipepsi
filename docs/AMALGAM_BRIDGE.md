@@ -770,6 +770,107 @@ coverage list to agree before it is computed for real. Until then the
 field is engine-supplied and the bridge only folds it in, so a constant
 placeholder passes level 1 and proves nothing at level 2.
 
+## 5.5 The way back into a Zone — bridge done, two lines owed by the Hub
+
+**The lifecycle existed and the player could not reach it.** Walk out of
+a Zone, restart, and this is what happened:
+
+| | |
+|---|---|
+| the Zone | `DORMANT`, holding 15 allocated Checks, manifest and progress intact |
+| `active_zone_id` | `None` — `rest_zone` clears it, because nobody is standing in the Zone |
+| what the Hub said | **`ZONE_AVAILABLE` — "PORTAL READY — Epsilon is waiting to design your next Zone."** |
+| what the portal did | sent `request_next_zone`, which the bridge refused: *"Zone 'zone_001' still holds locations; finish or abandon it first"* |
+| the way out | abandon the Zone, losing its Checks and everything done in it |
+
+A softlock reachable by ordinary play, with the Hub actively
+recommending the one call that cannot work. **And a crash beside it:**
+`hub_status` mapped three Zone states to modes and `VISITING` was not
+one of them, so walking back into a finished Zone raised
+`KeyError: 'VISITING'` out of the snapshot path — which every client
+update goes through.
+
+A comment in `protocol.py` explained why this was fine: DORMANT "pins NO
+hub mode… going back is a separate affordance rather than a mode", and
+"inventing a ZONE_DORMANT mode would put a Zone on screen that nobody is
+standing in". Half of that is right — a dormant Zone is not the *active*
+Zone. The other half assumed an affordance that was never built.
+`ZONE_DORMANT` does not put a Zone on screen; it puts a **door** on
+screen.
+
+### 5.5a What the bridge now provides
+
+- **`ZONE_DORMANT`** — the campaign holds a Zone and nobody is in it.
+- **`ZONE_HELD_MODES`** now includes it (it blocks generation), and a new
+  **`ZONE_OCCUPIED_MODES`** is the *other* question (`active_zone` is
+  non-null). Those were one list, which is precisely why "held and
+  unoccupied" could not be described.
+- **`hub.resume_zone_id` / `resume_zone_name`** — which Zone the portal
+  enters, filled for every mode in **`ZONE_ENTER_MODES`**
+  (`ZONE_READY`, `ZONE_ACTIVE`, `ZONE_DORMANT`). One branch, one field.
+- **`hub.revisitable`** — finished Zones the player may walk back into,
+  newest first, as `{zone_id, display_name}`. Separate from
+  `resume_zone_id` because they are different offers: at most one Zone is
+  unfinished and blocks generation; any number of COMPLETE ones stay open
+  and block nothing.
+- **`ZONE_STATE_HUB_MODE`** is total over `ZoneState` by assertion, so the
+  next lifecycle state cannot be forgotten into a `KeyError` in front of
+  a player. `VISITING` maps to `ZONE_ACTIVE` — the snapshot invariant
+  already said a revisit is the same experience as a first visit; only
+  the producer disagreed.
+
+Proved on this side, entering **only by what the snapshot exposes**
+(reaching into `save.zones` for the id would prove the transition works
+and nothing about whether the portal can find it):
+`test_the_portal_can_find_the_zone_you_walked_out_of` and
+`test_a_finished_zone_is_offered_back_and_counts_nothing_twice` —
+restart, the Hub names the Zone, enter by that id, manifest digest,
+collected keys and allocated Checks all intact; and a revisit that
+reserves nothing and leaves `completed_zone_count` and `zone_history`
+untouched.
+
+### 5.5b The consumer change, for Prod to make
+
+Two places, and deliberately small. **Neither lane should edit the other
+side of this seam** — this is the proposal, not a patch.
+
+**`hub.gd::_on_portal_activated`** — one arm gains a mode:
+
+```gdscript
+    "ZONE_READY", "ZONE_ACTIVE", "ZONE_DORMANT":
+        enter_zone_requested.emit()
+```
+
+or, better, drive it off the constant so the next mode needs no edit
+here: `if BridgeClient.hub_mode() in Constants.ZONE_ENTER_MODES:`.
+
+**`main.gd::_on_enter_zone`** — take the id from the Hub rather than
+from `active_zone()`, which is empty for a dormant Zone:
+
+```gdscript
+func _on_enter_zone() -> void:
+    var zid := str(BridgeClient.hub().get("resume_zone_id", ""))
+    if zid == "":
+        return
+    _entering_zone = true
+    BridgeClient.send_intent({"type": "enter_zone", "zone_id": zid})
+```
+
+`resume_zone_id` is filled for `ZONE_READY` and `ZONE_ACTIVE` too, so
+this one path replaces the old one rather than sitting beside it.
+
+**What proves it, and it is the engine lane's to run:** restart with a
+dormant Zone, press the portal, and arrive in the same layout with the
+same keys, locks and Checks. This lane has no Godot; everything above is
+the bridge half.
+
+**Open for Prod:** `revisitable` can hold many Zones and the portal is
+one object. Offering the dormant Zone on the portal and finished Zones
+through some other affordance is the obvious split, but which affordance
+is a Hub design question and is yours. The bridge exposes the list; it
+does not assume a widget.
+
+
 ## 6. What remains in this lane
 
 **The five conditions §0-bis puts on a legal capability gate**

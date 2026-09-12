@@ -98,6 +98,20 @@ hex characters is all the bridge can see. Regenerate the vectors with
 `make physics-vectors`; **that is a contract change and the engine lane
 must re-run.**
 
+**THE WAY BACK INTO A ZONE WAS NOT REACHABLE.** Walk out, restart, and
+the Hub said `ZONE_AVAILABLE` — "PORTAL READY" — over a DORMANT Zone
+holding 15 Checks; pressing the portal got "still holds locations", and
+the only way forward was to abandon the Zone. Beside it, `hub_status`
+raised `KeyError: 'VISITING'` — out of the snapshot path — the moment a
+player revisited a finished Zone. The bridge half is fixed:
+`ZONE_DORMANT`, `hub.resume_zone_id`/`resume_zone_name`,
+`hub.revisitable`, `ZONE_HELD_MODES` split from a new
+`ZONE_OCCUPIED_MODES` (held and unoccupied could not be said with one
+list), and `ZONE_STATE_HUB_MODE` total over `ZoneState` by assertion.
+Proved by entering only through what the snapshot exposes.
+**Two lines are owed by the Hub and are Prod's to write** —
+`docs/AMALGAM_BRIDGE.md` §5.5b.
+
 **A gate may stop you; it may not keep you — and `R ⊆ E` already said
 so.** A claim here said §0-bis condition 4 "had no rule" and that a
 one-way edge into a dead end passed every check. False: `R ⊆ E` requires

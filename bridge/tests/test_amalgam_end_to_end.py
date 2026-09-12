@@ -15,6 +15,7 @@ import pytest
 
 from archipepsi_bridge import store
 from archipepsi_bridge.schemas import constants as C
+from archipepsi_bridge.schemas import protocol as P
 from archipepsi_bridge.schemas.protocol import ClientMessage
 from pydantic import TypeAdapter
 
@@ -283,4 +284,121 @@ def test_a_committed_layout_is_replayed_not_replaced(tmp_path):
             await engine.handle_layout_result(_ADAPTER.validate_python(
                 {"type": "layout_result", "zone_id": zone_id,
                  "layout": moved}))
+    run(go())
+
+
+# --- the way back in ------------------------------------------------------
+#
+# The lifecycle existed and the player could not reach it. `rest_zone`
+# clears `active_zone_id` — nobody is in the Zone — so the Hub's
+# `active_zone()` came back empty, the mode fell through to
+# ZONE_AVAILABLE, and the portal offered to design a new Zone. Pressing
+# it got "Zone 'zone_001' still holds locations; finish or abandon it
+# first". Walk out of a Zone, restart, and the only way forward was to
+# abandon it and lose its Checks and its progress.
+#
+# These tests enter using ONLY what the snapshot exposes. Reaching into
+# `save.zones` for the id would prove the transition works and nothing
+# about whether the portal can find it, which is the half that was
+# broken.
+
+def _portal_target(engine):
+    """What `hub.gd` will have: a mode, and the Zone id to send."""
+    hub = engine.snapshot().hub
+    if hub.mode not in P.ZONE_ENTER_MODES:
+        return None
+    return hub.resume_zone_id
+
+
+def test_the_portal_can_find_the_zone_you_walked_out_of(tmp_path):
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zone_id, zone = await _branching_zone(engine)
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zone_id,
+             "layout": _place(zone)}))
+        digest = engine.save.zone_by_id(zone_id).manifest["manifest_digest"]
+        await engine.handle_enter_zone(zone_id)
+        key = next(k.key_id for c in zone.chambers for k in c.keys)
+        await engine.handle_progress(_ADAPTER.validate_python(
+            {"type": "key_collected", "zone_id": zone_id, "key_id": key}))
+        outstanding = set(engine.save.zone_by_id(zone_id)
+                          .allocated_location_ids)
+        assert outstanding, "leave with work still to do"
+
+        await engine.handle_exit_zone(zone_id)
+        await drain()
+
+        # RESTART. A new process, reading the bytes off disk.
+        engine.save = store.load_save(engine._save_path)
+        hub = engine.snapshot().hub
+        assert hub.mode == "ZONE_DORMANT", (
+            f"the Hub says {hub.mode} over a Zone holding "
+            f"{len(outstanding)} Checks")
+        assert not hub.accepts_zone_request, (
+            "offering to design a new Zone here is the call the bridge "
+            "refuses; the portal must not light up for it")
+        target = _portal_target(engine)
+        assert target == zone_id, "the portal has no way to name the Zone"
+        assert hub.resume_zone_name, "and nothing to put on the sign"
+
+        # ENTER THE WAY THE PORTAL WILL, by the id the Hub handed over.
+        await engine.handle_enter_zone(target)
+        rec = engine.save.zone_by_id(target)
+        assert rec.state == "ACTIVE"
+        assert rec.manifest["manifest_digest"] == digest, "manifest kept"
+        assert rec.progress.collected_keys == (key,), "progress kept"
+        assert set(rec.allocated_location_ids) == outstanding, "Checks kept"
+    run(go())
+
+
+def test_a_finished_zone_is_offered_back_and_counts_nothing_twice(tmp_path):
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zone_id, zone = await _branching_zone(engine)
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zone_id,
+             "layout": _place(zone)}))
+        await engine.handle_enter_zone(zone_id)
+        import archipepsi_bridge.schemas.transitions as T
+        rec = engine.save.zone_by_id(zone_id)
+        for i, loc in enumerate(rec.allocated_location_ids):
+            engine._apply(T.claim_zone_check(
+                engine.save, zone_id=zone_id, location_id=loc,
+                transaction_id=f"t{i}"))
+            engine._apply(T.confirm_check(engine.save, loc))
+        # `_apply` rather than a bare assignment: it writes the save, so
+        # the reload below reads a finished campaign rather than the one
+        # from before the last three transitions.
+        engine._apply(T.complete_zone(engine.save, zone_id))
+        counted = engine.save.completed_zone_count
+        history = engine.save.zone_history
+        assert counted == 1
+
+        # RESTART, so this is the Hub a returning player actually sees.
+        engine.save = store.load_save(engine._save_path)
+        offered = {h.zone_id for h in engine.snapshot().hub.revisitable}
+        assert zone_id in offered, (
+            "a finished Zone stays open; the Hub has to be able to say so")
+
+        await engine.handle_enter_zone(zone_id)
+        assert engine.save.zone_by_id(zone_id).state == "VISITING"
+        assert engine.snapshot().hub.mode == "ZONE_ACTIVE", (
+            "a revisit is the same experience as a first visit")
+        # RESERVES nothing — the record keeps the Check identities it
+        # held, which is history; what matters is that none of them is
+        # still held against the pool, so a revisit cannot block the
+        # next Zone the way a dormant one does.
+        assert not engine.save.zone_by_id(zone_id).holds_locations, \
+            "a revisit reserves nothing"
+        assert not (set(engine.save.zone_by_id(zone_id)
+                        .allocated_location_ids)
+                    & engine._held_location_ids())
+
+        await engine.handle_exit_zone(zone_id)
+        await drain()
+        assert engine.save.zone_by_id(zone_id).state == "COMPLETE"
+        assert engine.save.completed_zone_count == counted, (
+            "walking back through a finished Zone completed it again")
+        assert engine.save.zone_history == history
     run(go())
