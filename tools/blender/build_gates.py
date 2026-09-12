@@ -73,7 +73,7 @@ import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 OUT = "batch034/gates"
 BOX = (9.0, 6.0, 6.5)
 

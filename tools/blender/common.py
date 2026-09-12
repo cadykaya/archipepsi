@@ -35,8 +35,95 @@ import engine_truth  # noqa: E402
 import palette as pal  # noqa: E402
 
 REPO_ROOT = engine_truth.REPO_ROOT
-MODEL_DIR = os.path.join(REPO_ROOT, "assets", "models")
-TEXTURE_DIR = os.path.join(REPO_ROOT, "assets", "textures")
+
+# --- the theme this run builds ------------------------------------------
+#
+# Theme-pack gap 4. Every builder held `THEME = "concrete_facility"` as a
+# module constant, so a second theme of an existing room meant editing 45
+# files or waiting for a runtime binder nobody has written yet. It is an
+# argument now:
+#
+#   blender -b --python tools/blender/build_rooms.py -- --theme temple_ruin
+#   ART_THEME=temple_ruin blender -b --python tools/blender/build_rooms.py
+#
+# TWO PROPERTIES MATTER MORE THAN THE FEATURE.
+#
+# 1. THE DEFAULT IS UNCHANGED. Omit the argument and the build is
+#    byte-identical to what shipped -- `check_art_current.sh` rebuilds all
+#    52 builders and compares against git, so this is checked rather than
+#    hoped for.
+#
+# 2. A NON-DEFAULT RUN CANNOT TOUCH A SHIPPED ASSET. The output directories
+#    redirect under `assets/themed/<theme>/`, and `export_glb` refuses to
+#    write outside them. Without that, one `--theme` typo silently replaces
+#    twelve approved shells with differently-painted ones, `git diff` shows
+#    binary churn across the whole pack, and the only thing standing
+#    between the repository and that is somebody remembering. The redirect
+#    is not a convenience; it is the reason this is safe to add at all.
+DEFAULT_THEME = "concrete_facility"
+
+
+def _requested_theme():
+    """The theme named on the command line, in the environment, or neither.
+
+    Blender puts everything after `--` into `sys.argv`, so a builder run
+    through Blender and one run through plain Python read the same flag.
+    """
+    argv = sys.argv
+    if "--" in argv:
+        argv = argv[argv.index("--") + 1:]
+    for i, token in enumerate(argv):
+        if token == "--theme" and i + 1 < len(argv):
+            return argv[i + 1]
+        if token.startswith("--theme="):
+            return token.split("=", 1)[1]
+    return os.environ.get("ART_THEME") or DEFAULT_THEME
+
+
+def theme():
+    """The theme this run builds. Refuses a name the palette does not know.
+
+    A typo must not build: `--theme temple_ruins` would otherwise paint
+    every surface from a silently empty table and export an asset nobody
+    could tell from a real one by looking at it.
+    """
+    name = _requested_theme()
+    known = pal.theme_names()
+    if name not in known:
+        raise SystemExit(
+            "theme '%s' is not one the palette knows. It has: %s"
+            % (name, ", ".join(sorted(known))))
+    return name
+
+
+THEME = theme()
+IS_DEFAULT_THEME = THEME == DEFAULT_THEME
+
+
+def theme_for(house):
+    """For a builder whose own house theme is not the pack default.
+
+    `build_plenum` is rusted industrial by authorial choice, not by
+    inheriting a default, and an ordinary build has to keep it -- the
+    byte-identity of the shipped shell depends on it. A `--theme` run
+    still has to reach it, so the argument wins when one is given and the
+    builder's own choice stands when it is not.
+    """
+    return house if IS_DEFAULT_THEME else THEME
+
+if IS_DEFAULT_THEME:
+    MODEL_DIR = os.path.join(REPO_ROOT, "assets", "models")
+    TEXTURE_DIR = os.path.join(REPO_ROOT, "assets", "textures")
+else:
+    # Scratch, and deliberately not beside the shipped pack: a second theme
+    # is evidence that the pipeline works, not an asset. Nothing exports
+    # from here, nothing is reviewed here, and no manifest names it.
+    _THEMED = os.path.join(REPO_ROOT, "assets", "themed", THEME)
+    MODEL_DIR = os.path.join(_THEMED, "models")
+    TEXTURE_DIR = os.path.join(_THEMED, "textures")
+    # `log` is defined below this block, so the prefix is spelled out.
+    print("[art] building theme '%s' into assets/themed/%s/ -- the shipped "
+          "pack is not written by this run" % (THEME, THEME))
 
 DIM = engine_truth.dimensions()
 BUDGETS = pal.budgets()
@@ -720,6 +807,26 @@ def assert_fits(obj, asset_name, max_size, why):
 # export
 # ----------------------------------------------------------------------
 
+def _refuse_shipped_path(out_path, kind):
+    """A non-default theme must not be able to write a shipped asset.
+
+    Both writers below route through here. The redirect above already
+    points MODEL_DIR and TEXTURE_DIR at the scratch tree, so this can only
+    fire if somebody rebuilds one of those constants or passes an absolute
+    `relative_path` -- which is exactly the kind of accident that would
+    otherwise replace twelve approved shells and be noticed as binary
+    churn in a diff, days later.
+    """
+    if IS_DEFAULT_THEME:
+        return
+    shipped = os.path.join(REPO_ROOT, "assets", kind) + os.sep
+    if os.path.abspath(out_path).startswith(os.path.abspath(shipped)):
+        raise SystemExit(
+            "theme '%s' tried to write the SHIPPED %s at %s. A non-default "
+            "theme builds into assets/themed/ and nowhere else."
+            % (THEME, kind, out_path))
+
+
 def export_glb(obj, relative_path, category, tier=None, texture_size=None,
                check_flat=True, anchor="floor", collision=(), parts=()):
     """Write a .glb, after every assertion that can be made has been made.
@@ -762,6 +869,7 @@ def export_glb(obj, relative_path, category, tier=None, texture_size=None,
                                  tier, texture_size)
 
     out_path = os.path.join(MODEL_DIR, relative_path)
+    _refuse_shipped_path(out_path, "models")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
 
     bpy.ops.object.select_all(action="DESELECT")
@@ -818,6 +926,7 @@ def export_glb(obj, relative_path, category, tier=None, texture_size=None,
 
 def save_texture(image, relative_path):
     out_path = os.path.join(TEXTURE_DIR, relative_path)
+    _refuse_shipped_path(out_path, "textures")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     image.filepath_raw = out_path
     image.file_format = "PNG"

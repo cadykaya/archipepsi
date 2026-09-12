@@ -73,7 +73,7 @@ import materials  # noqa: E402
 import palette as pal  # noqa: E402
 import routecheck  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 OUT = "batch017/shells"
 
 DIM = common.DIM

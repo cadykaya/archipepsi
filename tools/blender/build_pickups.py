@@ -95,7 +95,7 @@ import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 OUT = "batch027/pickups"
 BOX = (1.4, 1.4, 1.4)
 

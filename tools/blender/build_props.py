@@ -27,7 +27,7 @@ import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
 DIM = common.DIM
-THEME = "concrete_facility"
+THEME = common.THEME
 
 
 def _finish(obj, name, canvas, relative, category="prop", bevel=None,

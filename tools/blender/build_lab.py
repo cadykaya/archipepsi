@@ -62,7 +62,7 @@ import paintkit  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 
 #: Read from `hub/echo_lab.gd` and `hub/lab_fixtures.gd`.
 LAB_W, LAB_D, LAB_H = 16.0, 26.0, 6.0

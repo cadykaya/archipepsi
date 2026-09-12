@@ -43,7 +43,7 @@ import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 #: reward.gd: BoxShape3D 1.4 x 2.6 x 1.4, centred at y 1.3.
 CHECK_BOX = (1.4, 1.4, 2.6)
 

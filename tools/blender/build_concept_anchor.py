@@ -46,7 +46,7 @@ import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 FOOT = common.DIM["affordance_footprint"]["grapple_anchor"]
 #: The whole fixture must live inside the footprint Godot reserves.
 ANCHOR_BOX = (FOOT["half_width"] * 2.0, FOOT["half_depth"] * 2.0, None)

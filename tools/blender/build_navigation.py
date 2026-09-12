@@ -95,6 +95,11 @@ OUT = "batch022/navigation"
 
 #: Set per build pass. The module-level default keeps the helpers readable
 #: and every builder below theme-agnostic.
+#:
+#: NOT `common.THEME`, and not an oversight: this builder writes every
+#: module once per theme in one run (see the loop over THEMES below), so
+#: "which theme is this build" is not a question it has. A `--theme` run
+#: would narrow a set whose whole point is being complete.
 THEME = THEMES[0]
 
 DIM = common.DIM

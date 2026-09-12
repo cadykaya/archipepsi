@@ -108,7 +108,7 @@ EYE = DIM["player_eye_height"]
 TALL = DIM["player_height"]
 
 _IMAGES = {}
-_THEME = "concrete_facility"
+_THEME = common.THEME
 
 
 def _image(role):

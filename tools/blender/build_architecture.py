@@ -43,7 +43,7 @@ import paintkit  # noqa: E402
 import palette as pal  # noqa: E402
 
 DIM = common.DIM
-THEME = "concrete_facility"
+THEME = common.THEME
 MODULE = 4.0
 ARCH_DENSITY = materials.ARCH_DENSITY
 ARCH_SIZE = materials.ARCH_SIZE

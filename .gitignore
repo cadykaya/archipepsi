@@ -25,3 +25,8 @@ godot-bin/
 
 # Scratch JPEGs for tools/shots/make_review_pdf.py, rebuilt on demand.
 .pdfcache/
+
+# A non-default `--theme` build. Scratch by construction: it proves the
+# pipeline can wear a second theme, it is not an asset. Nothing exports
+# from here, nothing is reviewed here, and no manifest names it.
+assets/themed/

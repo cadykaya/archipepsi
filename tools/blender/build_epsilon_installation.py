@@ -99,7 +99,7 @@ import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 
 #: 7.2 m of wall, 2.9 m tall, 1.2 m deep. Against the Hub's 22 x 16 x 5 m
 #: room that is a third of one wall and well over head height -- an

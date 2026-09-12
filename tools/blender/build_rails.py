@@ -63,7 +63,7 @@ import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 OUT = "batch011/affordance"
 
 #: FOOTPRINT["rail"] -- half_width 0.5, half_depth 3.5, height 3.6.

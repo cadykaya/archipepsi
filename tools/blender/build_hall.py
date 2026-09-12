@@ -106,7 +106,7 @@ import roomcontract  # noqa: E402
 import palette as pal  # noqa: E402
 
 OUT = "batch039/shells"
-THEME = "concrete_facility"
+THEME = common.THEME
 
 #: The hall, in metres. Godot order for the reader: width, height, depth.
 W, H, D = 40.0, 38.0, 60.0

@@ -104,7 +104,7 @@ import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 OUT = "batch030/enemies"
 
 #: Read from Production, never redefined here. If these drift, the models

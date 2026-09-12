@@ -58,7 +58,7 @@ import traversallaw  # noqa: E402
 import palette as pal  # noqa: E402
 
 OUT = "batch040/shells"
-THEME = "concrete_facility"
+THEME = common.THEME
 
 W, H, D = 30.0, 22.0, 90.0
 WALL = 0.60

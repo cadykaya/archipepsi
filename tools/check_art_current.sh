@@ -106,6 +106,15 @@ python3 tools/content/measure_doorways.py >/dev/null || \
 
     python3 tools/content/measure_doorways.py"
 
+# Theme-pack gap 4: the theme is an argument, and a non-default one must
+# not be able to reach the shipped pack.
+python3 tools/content/verify_theme_argument.py >/dev/null || \
+  fail "verify-theme: the default build no longer writes the shipped pack, a
+    --theme run can reach it, or an unknown theme builds instead of being
+    refused. Run
+
+    python3 tools/content/verify_theme_argument.py"
+
 python3 tools/blender/derive_budgets.py --write >/dev/null
 if ! cmp -s assets/art_budgets.json /tmp/art_budgets_committed.json; then
   fail "assets/art_budgets.json no longer matches derive_budgets.py. Either a
@@ -226,6 +235,16 @@ if ! git diff --quiet -- $PATHS; then
   git diff --stat -- $PATHS | sed 's/^/    /'
   echo "    (rebuilt files left in the working tree; 'git diff' shows the drift)"
   echo "    Re-render the review sheets too: tools/batch001_sheets.sh"
+fi
+
+# Theme-pack gap 4: the default is the thing this whole script compares
+# against, so it has to be the thing that was built. A shipped asset
+# carrying another theme's paint would rebuild byte-identical here and be
+# wrong in every render.
+if [ -n "${ART_THEME:-}" ] && [ "$ART_THEME" != "concrete_facility" ]; then
+  fail "ART_THEME=$ART_THEME is set, so the rebuild above did not build the
+  shipped pack. Unset it and run again; this script only means anything
+  against the default theme."
 fi
 
 untracked=$(git ls-files --others --exclude-standard -- $PATHS)

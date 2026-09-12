@@ -94,6 +94,15 @@ def budgets():
     return _CACHE["b"]
 
 
+def theme_names():
+    """Every theme the palette records, in the order it records them.
+
+    The authority for "is this a real theme", so a builder invoked with a
+    misspelt `--theme` refuses instead of painting from an empty table.
+    """
+    return list(palette()["themes"].keys())
+
+
 def theme(name, role, step):
     """A theme colour as an sRGB hex string. `role` is base/accent/trim."""
     data = palette()["themes"]

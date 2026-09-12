@@ -92,7 +92,7 @@ import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 
 #: PROPOSED collision boxes, in Blender order (x, y, z) = (width, depth,
 #: height). Engineering has agreed none of these; see the module docstring.

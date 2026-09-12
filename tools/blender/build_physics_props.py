@@ -80,7 +80,7 @@ import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 OUT = "batch043/physics"
 #: The one colour the whole family shares. L* 11.4, low-chroma so it never
 #: reads as a signalling family.

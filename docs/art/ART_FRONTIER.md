@@ -321,8 +321,33 @@ theme-tinted hazard texture passed silently. It runs unconditionally now.
 
 **Still Production's, and still open:** the material-mode and
 `protected_materials` fields, where the six-theme texture set lands, and the
-binder itself. Gap 4 (`THEME` as a build argument) remains the next
-Art-owned item and is unblocked.
+binder itself. ~~Gap 4 (`THEME` as a build argument) remains the next
+Art-owned item and is unblocked.~~ **Gap 4 was done on 2026-09-12** — see
+below. Gap 3 is now the next Art-owned item.
+
+### Theme-pack gap 4 — `THEME` is a build argument (2026-09-12)
+
+Report: `docs/art/reports/2026-09-12-theme-argument.md`.
+
+Forty-five builders held `THEME = "concrete_facility"` as a module constant.
+Thirty-six now read `common.THEME`, set by `--theme <name>` after Blender's
+`--` or by `ART_THEME`. Two keep their own semantics and say why in the file:
+`build_plenum` is rusted industrial by authorial choice
+(`common.theme_for()` preserves it on a default build), and
+`build_navigation` writes all six themes in one run.
+
+**The blast radius is the part that is checked.** A non-default theme
+redirects under `assets/themed/<theme>/` (gitignored, scratch), the exporter
+refuses a path into the shipped tree, an unknown theme name refuses rather
+than painting from an empty table, and `check_art_current.sh` refuses to run
+at all with a non-default `ART_THEME` set. `verify_theme_argument.py` checks
+all three and both its sabotage tests were confirmed failing first.
+
+The default is unchanged: all 52 builders rebuild byte-identical.
+
+**Gap 3 (the six-theme texture set ships nowhere) is the next Art-owned
+item**, and it needs a Production decision on where the set lands before the
+shipping half can start.
 
 ### Three doorways moved back onto their own rooms (2026-09-12)
 

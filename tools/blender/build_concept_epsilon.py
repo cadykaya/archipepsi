@@ -42,7 +42,7 @@ import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 #: Provisional. Inside hub.gd's existing terminal envelope on every axis.
 EPSILON_BOX = (1.4, 1.4, 2.8)
 

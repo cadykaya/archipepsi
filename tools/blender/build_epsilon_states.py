@@ -111,7 +111,7 @@ import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 OUT = "batch024/epsilon"
 
 #: The 002-R clip ceiling. Nothing in this batch exceeds it.

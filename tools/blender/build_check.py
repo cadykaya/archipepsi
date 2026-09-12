@@ -103,7 +103,7 @@ import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 from build_concept_check import concept_a_pedestal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 OUT = "batch005/check"
 
 #: reward.gd: BoxShape3D 1.4 x 2.6 x 1.4, centred at y 1.3. Blender is Z-up.

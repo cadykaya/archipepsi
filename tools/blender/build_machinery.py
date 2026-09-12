@@ -53,7 +53,7 @@ import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 OUT = "batch043/machinery"
 DENSITY = 32.0                       # texels per metre, architecture budget
 BAND_TILE = (64, 16)                 # the Glyph band, 2.00 m x 0.50 m

@@ -63,7 +63,7 @@ import traversallaw  # noqa: E402
 import roomcontract
 import routecheck  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 OUT = "batch018/shells"
 
 DIM = common.DIM

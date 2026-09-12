@@ -68,7 +68,9 @@ import traversallaw  # noqa: E402
 import palette as pal  # noqa: E402
 
 OUT = "batch040/shells"
-THEME = "rusted_industrial"
+#: Rusted industrial by authorial choice, not by default -- so an ordinary
+#: build keeps it and a `--theme` run overrides it. See common.theme_for.
+THEME = common.theme_for("rusted_industrial")
 
 #: Godot order for the reader: width, height, depth.
 W, H, D = 20.0, 72.0, 20.0

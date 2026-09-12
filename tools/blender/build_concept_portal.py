@@ -31,7 +31,7 @@ import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 #: The binding width is NOT exit_portal.gd's 3.2 m frame -- an authored
 #: portal replaces that frame, so it may be wider. It is the narrowest
 #: corridor Epsilon may ask for: `zone.py` bounds corridor width at 4.0 m,

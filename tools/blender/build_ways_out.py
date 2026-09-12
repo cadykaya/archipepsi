@@ -74,7 +74,7 @@ import common  # noqa: E402
 import materials  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 OUT = "batch006"
 
 #: build_concept_portal.APERTURE -- the opening the approved breach leaves.

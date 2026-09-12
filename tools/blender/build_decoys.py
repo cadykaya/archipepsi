@@ -72,7 +72,7 @@ import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 OUT = "batch035/decoys"
 BOX = (2.6, 2.6, 2.8)
 

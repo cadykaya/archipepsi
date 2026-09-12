@@ -75,7 +75,7 @@ import propkit  # noqa: E402
 import materials  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 ARCH_DENSITY = pal.budgets()["texel_density"]["architecture"]["target"]
 ARCH_SIZE = 128
 

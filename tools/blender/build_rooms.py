@@ -68,7 +68,7 @@ import roomcollision
 import roomcontract  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 OUT = "batch019/shells"
 
 DIM = common.DIM

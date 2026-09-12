@@ -101,7 +101,7 @@ import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 OUT = "batch026/checkpoint"
 
 PAD_R = 1.30            # the arrival pad

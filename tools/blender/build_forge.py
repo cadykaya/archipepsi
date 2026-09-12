@@ -106,7 +106,7 @@ import common  # noqa: E402
 import propkit  # noqa: E402
 import palette as pal  # noqa: E402
 
-THEME = "concrete_facility"
+THEME = common.THEME
 OUT = "batch025/forge"
 
 #: Inherited from 002-R and re-measured there: above this the green channel
