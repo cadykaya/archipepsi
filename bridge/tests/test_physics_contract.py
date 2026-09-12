@@ -432,25 +432,78 @@ def test_re_replaying_in_the_moved_scene_accepts_again():
 
 # --- one recipe, two languages --------------------------------------------
 
-def test_the_shared_digest_vectors_reproduce():
-    """`godot/tests/fixtures/physics_digest_vectors.json` is executed by
-    both lanes. `canonical` is the exact string hashed, so a
-    cross-language mismatch says whether construction or hashing
-    diverged rather than only that they disagree.
-    """
-    import hashlib
+def _vectors():
     import json
     from pathlib import Path
-
     path = (Path(__file__).resolve().parents[2] / "godot" / "tests"
             / "fixtures" / "physics_digest_vectors.json")
-    data = json.loads(path.read_text(encoding="utf-8"))
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def test_the_shared_vectors_run_through_the_production_serializer():
+    """Construct from `package`, then compare BYTES and digest.
+
+    Hashing the stored `canonical` string would prove the file is
+    self-consistent and nothing about the code — the serializer could
+    drift and every vector would still pass. Comparing the canonical
+    bytes as well as the hash is also what tells a cross-language
+    mismatch apart: differing bytes is a construction difference,
+    matching bytes with a differing hash is a hashing one.
+    """
+    data = _vectors()
     assert data["vectors"], "the shared vectors must not be empty"
     for v in data["vectors"]:
-        got = hashlib.sha256(
-            v["canonical"].encode("utf-8")).hexdigest()[:16]
-        assert got == v["digest"], f"{v['name']}: {got} != {v['digest']}"
-    # and the digests are actually distinct, so a vector set that proved
-    # nothing would show up here
-    digests = {v["digest"] for v in data["vectors"]}
-    assert len(digests) == len(data["vectors"])
+        pkg = P.PhysicsPackage.model_validate(v["package"])
+        got_bytes = P.canonical_bytes(pkg).decode("utf-8")
+        assert got_bytes == v["canonical"], (
+            f"{v['name']}: the production serializer no longer produces "
+            "the canonical string this vector records")
+        assert P.package_digest(pkg) == v["digest"], v["name"]
+
+
+def test_the_vectors_cover_things_that_must_and_must_not_change_it():
+    """A vector set where everything hashes the same proves nothing, and
+    so does one where everything differs."""
+    by_name = {v["name"]: v for v in _vectors()["vectors"]}
+    base = by_name["a fully specified load-bearing package"]["digest"]
+
+    # Same content, declared differently: the digest must NOT move.
+    for name in ("integral floats, which must not print as integers",
+                 "declaration order that differs from canonical order"):
+        assert by_name[name]["digest"] == base, (
+            f"{name}: input formatting reached the output")
+
+    # Different content: the digest MUST move.
+    for name in ("the same package with a moved scene",
+                 "empty: no setup, no solution, no latches",
+                 "unicode and punctuation in a detail"):
+        assert by_name[name]["digest"] != base, name
+
+    # The two sequences in the canonical form are treated OPPOSITELY,
+    # and with one entry each the difference is invisible. These three
+    # vectors carry several, which is what makes `sorted()` on one and
+    # `list()` on the other load-bearing rather than interchangeable.
+    multi = by_name[
+        "several requirements and promotions, declared out of order"]["digest"]
+    assert by_name["the same requirements, declared already sorted"][
+        "digest"] == multi, (
+        "required_latches is a SET of names: two declarations of the "
+        "same set must canonicalize the same")
+    assert by_name["the same latches promoted in a different bit order"][
+        "digest"] != multi, (
+        "vector_latches is the state vector's BIT ORDER, so it is "
+        "content: sorting it would silently renumber the verifier's "
+        "dimensions and this vector would stop noticing")
+
+
+def test_there_is_one_canonicalization_in_this_language():
+    """`package_digest` hashes `canonical_bytes` and does not re-serialize.
+
+    Two implementations in one language is how the two stop agreeing,
+    and the generator that writes the vectors calls the same pair.
+    """
+    import inspect
+    src = inspect.getsource(P.package_digest)
+    assert "canonical_bytes" in src
+    assert "json.dumps" not in src
+    assert inspect.getsource(P).count("json.dumps") == 1

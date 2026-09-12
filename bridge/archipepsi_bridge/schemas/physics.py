@@ -332,26 +332,17 @@ class PhysicsPackage(Strict):
 # THE CONTENT DIGEST — one function, both sides.
 # --------------------------------------------------------------------------
 
-def package_digest(package: PhysicsPackage) -> str:
-    """What a replay ran against, as sixteen hex characters.
+def canonical_bytes(package: PhysicsPackage) -> bytes:
+    """Exactly what gets hashed. **The only canonicalization here.**
 
-    **This is identity and freshness, not authentication.** It does not
-    stop anyone forging a record; it stops a record that was true of one
-    thing being read as true of another. Those are different problems
-    and only the second one is the bridge's.
+    Split out from `package_digest` so a test can compare the BYTES and
+    not merely the hash. A vector that only checks digests cannot say
+    whether two implementations built different objects or serialized
+    the same object differently, and a test that hashes a stored string
+    instead of calling this cannot catch the serializer drifting at all.
 
-    Evidence names counts, provider values and latch names. None of that
-    describes the CONTENT replayed, so a successful record from one
-    package passed for a different package with different conditions —
-    which is the whole of the defect this closes.
-
-    **Producer and validator call this same function.** The engine
-    computes it over the package it is about to replay and returns it
-    with the result; the bridge recomputes it over the package it is
-    about to accept and compares. Everything that could change what a
-    replay proves is in it: the latch conditions including their detail,
-    which are promoted, the bodies, the solver settings, and the
-    reference solution's steps. Change any and the evidence is stale.
+    Anything that wants a canonical form calls this. A second
+    implementation in the same language is how the two stop agreeing.
     """
     body = {
         "package_id": package.package_id,
@@ -373,8 +364,32 @@ def package_digest(package: PhysicsPackage) -> str:
         "reference_solution": None if package.reference_solution is None
         else list(package.reference_solution.steps),
     }
-    blob = json.dumps(body, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
+    return json.dumps(body, sort_keys=True,
+                      separators=(",", ":")).encode("utf-8")
+
+
+def package_digest(package: PhysicsPackage) -> str:
+    """What a replay ran against, as sixteen hex characters.
+
+    **This is identity and freshness, not authentication.** It does not
+    stop anyone forging a record; it stops a record that was true of one
+    thing being read as true of another. Those are different problems
+    and only the second one is the bridge's.
+
+    Evidence names counts, provider values and latch names. None of that
+    describes the CONTENT replayed, so a successful record from one
+    package passed for a different package with different conditions —
+    which is the whole of the defect this closes.
+
+    **Producer and validator call this same function.** The engine
+    computes it over the package it is about to replay and returns it
+    with the result; the bridge recomputes it over the package it is
+    about to accept and compares. Everything that could change what a
+    replay proves is in it: the latch conditions including their detail,
+    which are promoted, the bodies, the solver settings, and the
+    reference solution's steps. Change any and the evidence is stale.
+    """
+    return hashlib.sha256(canonical_bytes(package)).hexdigest()[:16]
 
 
 class ReplayEvidence(Strict):

@@ -359,8 +359,10 @@ not stop anyone forging a record; it stops a record that was true of one
 thing being read as true of another.
 
 **The producer and the validator compute it the same way.** The bridge's
-implementation is `schemas/physics.py::package_digest`; the engine must
-match it byte for byte:
+implementation is `schemas/physics.py::canonical_bytes`, hashed by
+`package_digest`; there is exactly one canonicalization per language and
+a test asserts it (`test_there_is_one_canonicalization_in_this_language`).
+Two implementations in one language is how the two stop agreeing.
 
 1. Build this object, exactly these fields, exactly these names:
 
@@ -370,24 +372,84 @@ match it byte for byte:
                        "kind": "CONSTRAINT_STATE",
                        "detail": "hinge at rest below 5 degrees"}],
  "vector_latches": [0],
+ "required_latches": ["bridge_down"],
  "setup": {"bodies": [{"body_id": "crate_a", "mass_kg": 80.0,
                        "constrained": false}],
+           "scene_digest": "0123456789abcdef",
            "solver": {"iterations": 8, "fixed_step_hz": 60.0,
                       "settle_timeout_s": 8.0}},
  "reference_solution": ["push_crate", "wait_for_settle"]}
 ```
 
-2. Serialize as JSON with **sorted keys** and **no whitespace**
-   (`separators=(",", ":")`).
-3. `sha256`, hex, **first 16 characters**.
+2. The two sequences are treated **oppositely, and deliberately**:
+   - `required_latches` is a **set of names** → **sorted**. Two
+     declarations of the same requirements must digest identically.
+   - `vector_latches` is the state vector's **bit order** → **preserved
+     as declared**. Sorting it would silently renumber the verifier's
+     dimensions, which is a content change wearing a formatting mask.
+3. Serialize as JSON with **sorted keys** and **no whitespace**
+   (`separators=(",", ":")`), non-ASCII escaped (`\uXXXX`).
+4. `sha256`, hex, **first 16 characters**.
 
 `setup` and `reference_solution` are `null` when absent — **but a
 load-bearing package may not have them absent**, see §6.2c. Everything
 that could change what a replay proves is in there: the conditions
-*including their detail*, which are promoted, which are required, the
-bodies, the **scene digest**, the solver settings, and the solution's
-steps. **Change any one and the evidence is stale and is refused**,
-which is a prompt to re-replay rather than an accusation.
+*including their detail*, which are promoted and in what order, which
+are required, the bodies, the **scene digest**, the solver settings, and
+the solution's steps. **Change any one and the evidence is stale and is
+refused**, which is a prompt to re-replay rather than an accusation.
+
+**One shared file, constructed by both lanes.**
+`godot/tests/fixtures/physics_digest_vectors.json` holds nine vectors.
+Each carries the structured `package` **input** as well as the expected
+`canonical` string and `digest`.
+
+> **Both lanes construct the package from `package` and run their own
+> production serializer.** Hashing the stored `canonical` string proves
+> the file is self-consistent and nothing whatever about the code — the
+> serializer could drift and every vector would still pass. Comparing
+> the canonical bytes *as well as* the hash is also what tells the two
+> failure modes apart: differing bytes is a construction difference,
+> matching bytes with a differing hash is a hashing one.
+
+The vectors are chosen so each isolates one way to diverge, and so that
+every rule above is load-bearing:
+
+| Vector | Pins |
+|---|---|
+| a fully specified load-bearing package | the base |
+| the same package with a moved scene | `scene_digest` reaches the digest |
+| empty: no setup, no solution, no latches | absences serialize as `null` |
+| unicode and punctuation in a detail | escaping agrees |
+| integral floats, which must not print as integers | `80.0` is not `80` — the classic cross-language divergence |
+| declaration order that differs from canonical order | input key order does **not** reach the output |
+| several requirements and promotions, declared out of order | the multi base |
+| the same requirements, declared already sorted | same digest → `required_latches` **is** sorted |
+| the same latches promoted in a different bit order | different digest → `vector_latches` is **not** |
+
+The last three exist because with one required latch and one promoted
+index, `sorted()` and `list()` are interchangeable with each other and
+with doing nothing at all: a vector set that cannot see a change to the
+serializer is the same defect one level down.
+
+**Generated, never hand-edited.** Regenerate with:
+
+```
+make physics-vectors        # cd bridge && python3 -m archipepsi_bridge.schemas.physics_vectors
+```
+
+The generator calls `canonical_bytes` and `package_digest` — no second
+copy of the recipe — so the file cannot drift from the serializer it
+documents.
+
+**What this cannot catch, stated plainly.** Python generating the file
+and Python checking it is a closed loop for anything that is a *contract
+change* rather than an internal inconsistency: change the separators and
+regenerate, and the Python suite goes green. Only the Godot lane running
+these same inputs closes it. The two ordering vectors survive a
+regeneration (they assert relationships between vectors, not literals),
+but the general case does not, and **regenerating this file is a
+contract change that requires the engine lane to re-run.**
 
 ### 6.2b `scene_digest` — the part only the engine can compute
 
@@ -404,26 +466,46 @@ exists to prevent. The engine computes it over the actual replay setup
 and supplies it; the bridge folds it into `package_digest` so a scene
 change invalidates evidence exactly as a solver change does.
 
-What it must cover, at minimum — **agree this list before implementing,
-because widening it later invalidates every existing record**:
+**Coverage — agreed with the engine lane before implementing, because
+widening it later invalidates every existing record.**
 
-| | |
+| Included | |
 |---|---|
 | Geometry | every collider participating in the replay: shape, extents, transform |
 | Initial state | each body's starting transform, linear and angular velocity, sleep state |
-| Physics configuration | gravity, layer/mask assignments, friction and restitution where not default |
+| Effective physics values | gravity, mass, friction, restitution, damping, layer and mask — **the values in force, including those inherited from project defaults or a shared material** |
 | Static content | the room geometry the bodies interact with |
+| Versioning | the Godot/physics-engine version and the construction version of the generator that built the scene |
 
-Excluded on purpose: anything that cannot change the outcome —
-materials, lighting, audio, decals.
+| Excluded on purpose | |
+|---|---|
+| Visual-only materials | albedo, shaders, textures — anything with no collision consequence |
+| Lighting | lights, probes, environment, post-processing |
+| Decoration | props with no collider, decals, audio, particles |
 
-**One shared file, executed by both lanes.**
-`godot/tests/fixtures/physics_digest_vectors.json` holds four vectors,
-each with the exact `canonical` string and its `digest`. Python runs
-them in `test_physics_contract.py`; Godot must reproduce every one byte
-for byte. Including the canonical string is deliberate: **a mismatch
-then says whether construction or hashing diverged**, rather than only
-that the two disagree.
+Two of these are easy to get wrong and are called out for that reason:
+
+- **Effective, not overridden.** Digesting only the values a node
+  overrides means a change to the project default — the one that moves
+  every body at once — leaves every digest untouched. The digest records
+  what the solver actually used.
+- **Versioning is part of the scene.** The same bodies under a different
+  solver build are not the same experiment. A physics-engine upgrade
+  must invalidate the evidence, and nothing else in the digest would
+  notice it.
+
+**The three levels, kept apart.** Each proves exactly one thing, and
+none of them substitutes for another:
+
+| Level | Artefact | Proves | Status |
+|---|---|---|---|
+| 1. Serialization agreement | the shared vectors, run through both production serializers | the two lanes build and hash the same bytes from the same input | **fixture-tested** — Python side done, Godot side owed |
+| 2. Scene binding | `scene_digest` computed from the **real** setup, not a constant | the evidence names the scene it ran against | **not started** — needs a physics scene |
+| 3. Physical outcome | replaying that setup and observing the latches | the puzzle is actually solvable as built | **not started** — needs a physics runtime |
+
+Level 1 passing says nothing about level 2, and both passing say nothing
+about level 3. The contract stays labelled **fixture-tested** until real
+engine output passes through its actual acceptance path.
 
 ### 6.2c A proof of nothing is not a proof
 
@@ -472,11 +554,18 @@ Nothing above needs the full physics system. In order:
    deliverable the bridge is waiting on**; the schema for its output
    already exists and is validated.
 
-**Before any of that, one small shared thing:** `scene_digest`, and the
-four vectors in `physics_digest_vectors.json` passing in GDScript. It
-needs no physics at all — it is JSON and sha256 — and it is what makes
-every later piece of evidence mean something. Doing it first means the
-harness has somewhere to put its answer on the day it works.
+**Before any of that, one small shared thing:** the nine vectors in
+`physics_digest_vectors.json` passing in GDScript — **constructed from
+each vector's `package` and run through the engine's own serializer**,
+not hashed from the stored strings. It needs no physics at all — it is
+JSON and sha256 — and it is what makes every later piece of evidence
+mean something. Doing it first means the harness has somewhere to put
+its answer on the day it works.
+
+`scene_digest` comes next and needs a scene but no runtime: §6.2b is the
+coverage list to agree before it is computed for real. Until then the
+field is engine-supplied and the bridge only folds it in, so a constant
+placeholder passes level 1 and proves nothing at level 2.
 
 ## 6. What remains in this lane
 

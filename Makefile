@@ -10,7 +10,7 @@ PY := python3
 # ModuleUpdate.update(), which drops into a bare input() without a TTY.
 export SKIP_REQUIREMENTS_UPDATE = 1
 
-.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-activity godot-room godot-room-contract godot-movement godot-playtest3a godot-zone-audit zone-shots godot-boot godot-legible godot-integration
+.PHONY: notices doctor setup test test-schemas test-bridge test-apworld world-install seed seed-multi host apworld export rules-fixture verbs-fixture physics-vectors version dual-real dual-real-soak bridge smoke godot-import godot-test godot-blink godot-hud godot-rules godot-stats godot-lab godot-affordance godot-verbs godot-content godot-activity godot-room godot-room-contract godot-movement godot-playtest3a godot-zone-audit zone-shots godot-boot godot-legible godot-integration
 
 setup:
 	cd bridge && $(PY) bootstrap.py --root ../.archipelago
@@ -238,6 +238,13 @@ zone-shots: godot-import
 	@xvfb-run -a -s "-screen 0 1600x1000x24" $(GODOT) --path godot \
 	  --rendering-driver opengl3 -- --zone-shots 2>&1 \
 	  | grep -vE "^(ERROR|USER ERROR|WARNING|   at:|GDScript backtrace|       \[)"
+
+# The shared package-digest vectors, generated from the production
+# serializer rather than edited. Regenerating is a CONTRACT CHANGE: the
+# engine lane must re-run its side against the new file. See
+# docs/AMALGAM_BRIDGE.md 6.2a.
+physics-vectors:
+	cd bridge && $(PY) -m archipepsi_bridge.schemas.physics_vectors
 
 # The audit's fixture, regenerated from the engine rather than edited.
 zone-fixture:

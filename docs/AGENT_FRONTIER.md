@@ -39,6 +39,19 @@ not done":
 | **Fixture-tested** — the rule is decidable and proved, nothing calls it from a running engine yet | layout evidence validation (the engine does not send `layout_result`), the physics contract in `schemas/physics.py` (no runtime exists). **Both stay in this row until real engine output passes through their actual acceptance path** — a synthetic payload exercising a validator is not the seam being crossed |
 | **Requires Godot** | aperture polarity in the layout result, the manifest replay consumer, physical reachability, and the whole physics substrate — `docs/AMALGAM_BRIDGE.md` §5 and §6 |
 
+**The physics digest has three levels and only the first is done.**
+Serialization agreement (the nine shared vectors in
+`godot/tests/fixtures/physics_digest_vectors.json`, **constructed from
+each vector's `package` and run through each lane's own production
+serializer** — hashing the stored strings proves the file is
+self-consistent and nothing about the code) — Python side done, Godot
+side owed. Scene binding (`scene_digest` computed from a real setup, not
+a constant) — not started; coverage list is `docs/AMALGAM_BRIDGE.md`
+§6.2b. Physical outcome (replay) — not started. Level 1 passing says
+nothing about level 2. Regenerate the vectors with `cd bridge && python3
+-m archipepsi_bridge.schemas.physics_vectors`; **that is a contract
+change and the engine lane must re-run.**
+
 **Capability gates are searched, not sampled.** A previous guard removed
 one gate edge at a time with every other gate left passable, so two
 undeclared gates each validated the other. Availability is a set the
