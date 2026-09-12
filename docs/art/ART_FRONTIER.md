@@ -156,6 +156,70 @@ is history and this is the state.
    `protected_materials` fields, somewhere for the six-theme texture set
    to ship, and the binder. See the Batch 041 section below.
 
+9. **FRONTIER, 2026-09-13 — where this lane actually is.** Report:
+   `docs/art/reports/2026-09-13-presentation-study.md`. Production read at
+   `claude/archipepsi-echoes-continuation-b1adno` `05dd5d6`.
+
+   * **Batch 044's three branching rooms are PROPOSALS.** Nothing is
+     approved and nothing is promoted. `shell_junction_cross` has had the
+     presentation pass; the triad and the terminus have **not**, and their
+     surfaces carry the same defect the cross's did — the block painted in
+     the room's architecture material, so it reads as corridor wall.
+     **That is the next Art task.**
+   * **The theme pack BINDS, through PRODUCTION'S OWN CONSUMER.**
+     ~~by a reference binder that is a proposal~~ — **the runtime binder
+     is not missing**: `ThemeMaterials._material` asks `ThemePack` before
+     falling back to `ProcTextures`, and the art-side binder written on a
+     wrong premise is **deleted**. `tools/content/theme_bind_proof.gd`
+     drives their `ThemePack` and `ThemeMaterials`, fetched read-only,
+     and keeps the one check that is still Art's: the pixels the GPU
+     samples, against the authored PNG, through the real import. The
+     control uses their own `_descriptor_override`.
+   * ~~**The yard's two doorways are REFUSED by Production's current
+     manifest rule.**~~ **WRONG, withdrawn.** `shells.is_offerable`
+     *reports* `doorways_off_the_body` and returns regardless — a
+     manifest rule cannot see floor, and the assembled crossing decides.
+     `measure_doorways.py` now reports the 0.395 m without failing, and
+     **no socket repair is requested.**
+   * **EVERY OPENING HAS ITS OWN ARRIVAL REGION**, named after its
+     socket, which is Art's whole half of §11.3. 10 openings across the
+     three rooms, each supported, clear, and walked into the room from by
+     a body placed AT it. `tools/content/run_arrival_test.sh`.
+   * ~~**The mirrored stencil cannot be repaired in UVs**, because
+     `ThemeMaterials` sets `uv1_triplanar`.~~ **WRONG, and the error was
+     Art's own.** An authored shell NEVER receives `ThemeMaterials`:
+     `ContentInstantiator._from_authored_scene` calls
+     `scene.instantiate()` and the file contains "material" **zero**
+     times, while `chamber_builders.gd` names `ThemeMaterials` 46. Themed
+     materials are the PROCEDURAL half and the gameplay objects. The
+     frame that showed a mirrored board was Art forcibly swapping
+     materials the engine never swaps.
+     **The repair is complete and lands on the real path**:
+     `common.uv_read_right` flips U back inside declared boxes, on the
+     positive-normal face ONLY (a sign has two faces and the projection
+     mirrors one), asserting the U span is unchanged so orientation moves
+     and texel scale does not. Proved on both faces of a two-sided sign
+     and with the room yawed 37°, ordinary tiling unchanged, in
+     `docs/art/review/theme_bind_2026-09-13/`. **No repair request stands
+     against Production for Batch 044.**
+   * **Production reads sockets by kind and by NAME now**, so a three- or
+     four-connection room is readable — the blocker the Batch 044 handoff
+     named is theirs, and gone. **A four-connection asset is still not a
+     four-neighbour room in a generated Zone.**
+   * **"Leaf" is not "dead end", and Art's tag says nothing about
+     degree.** `shell_bay_terminus` carries three joinable sockets and
+     can be assigned one neighbour or three. Its `dead_end` shape tag
+     describes the END-WALL TREATMENT and is read by nothing in
+     Production, whose own `dead_ends` is a measured adjacency count.
+     Both states rendered: from the approach they are pixel-identical,
+     because the 8 m mouth hides the side openings; from inside, an
+     assigned branch is plainly a way on.
+   * **Span is closed on completion, not on walkability.** Sixteen jumps,
+     one per riser. The capsule limits (0.12 m step, 1.50 m jump, 46°
+     ramps) are a measurement of the shipped constants by one harness —
+     **not** a rule forbidding slopes or vertical rooms, and **not** a
+     licence to raise `MAX_VERTICAL_STEP`.
+
 **There is no Art-side blocker.** The lane is idle by intent, not by
 obstruction.
 

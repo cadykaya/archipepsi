@@ -7,17 +7,69 @@
   "glass": null,
   "metal": "trim"
  },
- "required_roles": [
-  "floor",
-  "wall",
-  "trim",
-  "accent",
-  "hazard"
- ],
+ "role_contract": {
+  "accent": {
+   "disqualifies_theme_if_missing": true,
+   "engine_accessor": "ThemeMaterials.accent_mat",
+   "pack_pixels": "required",
+   "resolved_by": "the pack, by (theme, role)"
+  },
+  "ceiling": {
+   "disqualifies_theme_if_missing": false,
+   "engine_accessor": null,
+   "pack_pixels": "shipped",
+   "resolved_by": "the pack, by (theme, role)"
+  },
+  "floor": {
+   "disqualifies_theme_if_missing": true,
+   "engine_accessor": "ThemeMaterials.floor_mat",
+   "pack_pixels": "required",
+   "resolved_by": "the pack, by (theme, role)"
+  },
+  "hazard": {
+   "disqualifies_theme_if_missing": false,
+   "engine_accessor": "ThemeMaterials.hazard_mat",
+   "pack_pixels": "none",
+   "resolved_by": "ThemeMaterials.hazard_mat(theme) -- procedural, the theme's own accent colour with the 'hazard' noise; and on a shell, the art lane's shared universal hazard ramp, which no theme may re-tint (owner, 2026-09-10). The pack paints none, and a theme that shipped one would be the finding."
+  },
+  "trim": {
+   "disqualifies_theme_if_missing": true,
+   "engine_accessor": "ThemeMaterials.trim_mat",
+   "pack_pixels": "required",
+   "resolved_by": "the pack, by (theme, role)"
+  },
+  "trim_plain": {
+   "disqualifies_theme_if_missing": false,
+   "engine_accessor": null,
+   "pack_pixels": "shipped",
+   "resolved_by": "the pack, by (theme, role)"
+  },
+  "wall": {
+   "disqualifies_theme_if_missing": true,
+   "engine_accessor": "ThemeMaterials.wall_mat",
+   "pack_pixels": "required",
+   "resolved_by": "the pack, by (theme, role)"
+  },
+  "wall_ribbed": {
+   "disqualifies_theme_if_missing": false,
+   "engine_accessor": null,
+   "pack_pixels": "shipped",
+   "resolved_by": "the pack, by (theme, role)"
+  }
+ },
  "roles_not_shipped_by_every_theme": {
   "wall_ribbed": [
    "concrete_facility"
   ]
+ },
+ "roles_requiring_authored_pixels": [
+  "accent",
+  "floor",
+  "trim",
+  "wall"
+ ],
+ "roles_resolved_without_pack_pixels": {
+  "hazard": "ThemeMaterials.hazard_mat(theme) -- procedural, the theme's own accent colour with the 'hazard' noise; and on a shell, the art lane's shared universal hazard ramp, which no theme may re-tint (owner, 2026-09-10). The pack paints none, and a theme that shipped one would be the finding."
  },
  "roles_shipped": [
   "accent",
@@ -298,9 +350,6 @@
   "temple_ruin",
   "void_glitch"
  ],
- "universal_roles": {
-  "hazard": "resolve to the shared universal material; a pack must not paint its own"
- },
  "variants": {
   "trim_plain": "trim",
   "wall_ribbed": "wall"

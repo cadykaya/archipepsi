@@ -60,12 +60,37 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 FLOOR_TOLERANCE = 0.020    # m; a step this small is a seam, not a ledge
 
-## The slack Production's own envelope check allows, mirrored rather than
-## invented: `ChamberBuilders.WALL_THICKNESS` (0.4) + `SPAN_TOLERANCE`
-## (0.005), grown on all three axes. Keeping the two numbers the same is
-## the point -- a stricter art-side envelope reports defects Production
-## does not have, and a looser one misses the ones it does.
-ENVELOPE_SLACK = 0.405
+## How far a doorway sits off its shell's declared body. REPORTED, NOT
+## REFUSED -- and that is Production's own current position, not a
+## relaxation invented here.
+##
+## ~~STRUCK (2026-09-12): 0.405 m, the LAYOUT allowance.~~
+## ~~STRUCK (2026-09-13 morning): 0.005 m, and a FAILURE.~~ Both wrong,
+## and the second one was wrong in the more expensive direction: it
+## reported `shell_yard_gantry` as refused by Production when Production
+## had already stopped refusing it.
+##
+## `shells.is_offerable` at current Production calls
+## `doorways_off_the_body`, logs what it finds, and returns regardless.
+## Their comment says why, measured from both sides:
+##
+##   * `shell_corner_left`'s exit sits exactly ON its envelope face and
+##     0.40 m past its own FLOOR, because the floor is inset by a wall;
+##     `shell_yard_gantry`'s sits 0.40 m past the envelope. **The step a
+##     body walks over is the same 0.40 m in both**, and the envelope
+##     disagrees about which is which.
+##   * The yard's threshold repair carries its floor out as MESH -- not a
+##     declared surface, not in `size` -- so no manifest rule can see the
+##     repair at all.
+##
+## **The authority is the assembled crossing**, measured in the engine.
+## Theirs walks a real `Player` out of all 24 authored doorways;
+## `run_crossing_test.sh` is this lane's half and covers 34, open, placed,
+## yawed and closed.
+##
+## So this number is the threshold for SAYING SOMETHING, not for failing.
+## A doorway metres off its body is still worth naming out loud.
+ENVELOPE_SLACK = 0.005
 
 ## What kind of thing went wrong. `KNOWN` matches on the PAIR of doorway
 ## and kind, so a doorway excused for a support gap is still checked for
@@ -116,6 +141,12 @@ KNOWN = {
     "shell_yard_gantry/exit:support":
         "the socket stands 0.40 m proud of the wall face the threshold "
         "reaches -- crossed at 0.053 m of dip",
+    # ~~STRUCK, SAME DAY IT WAS WRITTEN: two `:envelope` entries for the
+    # yard, added when this file failed on the off-body distance.
+    # Production does not fail on it -- `is_offerable` logs and returns --
+    # so they described a refusal that does not exist. The measurement
+    # survives as a REPORT above; the exemption is gone because there is
+    # nothing left to be exempt from.~~
 }
 
 
@@ -243,8 +274,9 @@ def doorway_problems(shell, size, sockets, parts):
         label = "%s/%s" % (shell, name)
 
         # --- 1. on the room, by Production's own slack -----------------
-        # Their envelope is AABB((-w/2, 0, 0), (w, h, d)) grown by
-        # WALL_THICKNESS + SPAN_TOLERANCE, tested on all three axes.
+        # `shells.doorways_off_the_body`: AABB((-w/2, 0, 0), (w, h, d)) --
+        # the shell's declared size, which is the OUTER FACE -- grown by
+        # SPAN_TOLERANCE alone, tested on all three axes.
         lo = (-width / 2.0 - ENVELOPE_SLACK, -ENVELOPE_SLACK,
               -ENVELOPE_SLACK)
         hi = (width / 2.0 + ENVELOPE_SLACK, height + ENVELOPE_SLACK,
@@ -252,10 +284,15 @@ def doorway_problems(shell, size, sockets, parts):
         at = (sx, sy, sz)
         worst = max(max(lo[k] - at[k], at[k] - hi[k]) for k in range(3))
         if worst > 0.0:
+            # A REPORT, mirroring `shells.is_offerable`, which logs this
+            # and returns anyway. It goes in the record and in the
+            # summary; it does not fail the run, because a manifest rule
+            # cannot see floor and the crossing can.
             problems.append((label, ENVELOPE,
-                "%s: the doorway is %.2f m outside its own envelope even "
-                "with Production's %.3f m of slack, so ZoneBuilder joins "
-                "the corridor over nothing." % (label, worst, ENVELOPE_SLACK)))
+                "%s: the doorway is %.3f m past the shell's own declared "
+                "size. Reported, the way `shells.is_offerable` reports it "
+                "-- the assembled crossing decides, and this one crosses."
+                % (label, worst)))
 
         # --- 2. a clear opening, where there is a wall to cut ----------
         cross_axis = 0 if axis == 2 else 2
@@ -348,13 +385,25 @@ def main():
               "this proved nothing.", file=sys.stderr)
         return 1
 
-    fresh, matched = [], set()
+    # ENVELOPE IS MEASURED AND REPORTED, NEVER FAILED -- the position
+    # `shells.is_offerable` reached on 2026-09-12, for the same measured
+    # reason: a manifest rule cannot see floor, and the assembled
+    # crossing can. It stays in the output because a doorway metres off
+    # its body is worth saying; it stays out of the verdict because
+    # saying it is all a manifest can honestly do.
+    fresh, matched, reported = [], set(), []
     for label, kind, message in problems:
+        if kind == ENVELOPE:
+            reported.append(message)
+            continue
         key = "%s:%s" % (label, kind)
         if key in KNOWN:
             matched.add(key)
             continue
         fresh.append(message)
+
+    for message in sorted(reported):
+        print("measure-doorways: REPORT -- %s" % message)
 
     for message in fresh:
         print("measure-doorways: FAIL -- %s" % message, file=sys.stderr)
@@ -368,10 +417,10 @@ def main():
     if fresh or stale:
         return 1
 
-    print("measure-doorways: %d shell(s), every doorway inside Production's "
-          "envelope slack, through a clear opening, and supported %.1f m "
-          "back -- except %d reported and unauthorized (see KNOWN)."
-          % (seen, REACH, len(KNOWN)))
+    print("measure-doorways: %d shell(s), every doorway through a clear "
+          "opening and supported %.1f m back -- %d off-body report(s), "
+          "which the crossing decides, and %d known open finding(s)."
+          % (seen, REACH, len(reported), len(KNOWN)))
     return 0
 
 

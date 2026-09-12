@@ -85,8 +85,12 @@ def kinds(socket, parts):
 
 def main():
     failures = []
+    #: A COUNTED number, not a quoted one. This line used to say "14
+    #: cases" and went on saying it after two more were added.
+    cases = [0]
 
     def expect(what, got, want):
+        cases[0] += 1
         if got != want:
             failures.append("%s: measured %s, expected %s"
                             % (what, got or "nothing", want or "nothing"))
@@ -106,24 +110,34 @@ def main():
         socket, parts = room(yaw, floored=False)
         expect("yaw %3.0f unfloored" % yaw, kinds(socket, parts), [SUPPORT])
 
-    # THE ENVELOPE RULE, ISOLATED FROM THE SUPPORT RULE. 0.405 m is
-    # Production's own slack, WALL_THICKNESS + SPAN_TOLERANCE.
+    # THE ENVELOPE RULE, ISOLATED FROM THE SUPPORT RULE. The slack is
+    # SPAN_TOLERANCE, 0.005 m -- manifest rounding and nothing more,
+    # because a shell's declared `size` IS its outer face.
     #
     # These assert only whether ENVELOPE fires, because a socket past the
     # wall face has no floor under it either and would otherwise be graded
-    # on two rules at once. That is not a fixture convenience -- it is the
-    # yard's exact situation: 0.40 m out, INSIDE the slack, so its
-    # coordinate is not a defect, while the missing floor at its threshold
-    # still is. Conflating the two is what made an earlier version of the
-    # checker report the yard as a fourth instance of Production's bug.
-    for out, want in ((0.40, False), (2.00, True)):
+    # on two rules at once.
+    #
+    # ~~STRUCK: (0.40, False), on a 0.405 m slack.~~ That expectation was
+    # the yard's situation and it is no longer the rule: Production split
+    # its two allowances, and the manifest one -- the one this file can
+    # evaluate, because it reads the manifest -- allows only rounding.
+    # 0.40 m out is now a defect, and the yard is where it is reported.
+    #
+    # BOTH SIDES OF THE NEW BOUNDARY, not just the far side: 0.004 m has
+    # to pass or a tightened rule would fail every shell in the library
+    # for two-decimal rounding, which is the thing the allowance exists
+    # for.
+    for out, want in ((0.004, False), (0.05, True),
+                      (0.40, True), (2.00, True)):
         socket, parts = room(0.0)
         socket["position"][2] = D + out
         got = ENVELOPE in kinds(socket, parts)
+        cases[0] += 1
         if got != want:
             failures.append(
-                "%.2f m outside the face: ENVELOPE %s, expected %s "
-                "(the slack is 0.405 m)"
+                "%.3f m outside the face: ENVELOPE %s, expected %s "
+                "(the slack is SPAN_TOLERANCE, 0.005 m)"
                 % (out, "fired" if got else "did not fire",
                    "it to" if want else "it not to"))
 
@@ -131,7 +145,8 @@ def main():
         print("test-doorways: FAIL -- %s" % line, file=sys.stderr)
     if failures:
         return 1
-    print("test-doorways: 14 cases -- open, blocked and unfloored in all "
+    print("test-doorways: %d cases -- open, blocked and unfloored in all "
+          % cases[0] +
           "four orientations, plus both sides of the envelope slack.")
     return 0
 

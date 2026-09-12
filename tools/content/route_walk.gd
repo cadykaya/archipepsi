@@ -28,7 +28,14 @@ const PLAYER_HEIGHT := 1.8
 const PLAYER_RADIUS := 0.4
 const FLOOR_MAX_ANGLE := deg_to_rad(46.0)
 const STEP := 1.0 / 60.0
-const ARRIVED := 1.2             # m of the waypoint that counts as reached
+# m of the waypoint that counts as reached. THE DEFAULT IS WIDER THAN SOME
+# ROUTES ARE. 1.2 m of slop in a 2.5 m service passage lets the body turn a
+# corner up to 1.2 m early -- which is how it came to turn west while still
+# south of the plant's north face and walk into the machine. So it is a
+# property of the walk, and a route that threads a passage passes a tighter
+# one. Tighter is STRICTER: the body has to reach each waypoint more nearly,
+# and may cut less.
+const ARRIVED := 1.2
 const STALL_FRAMES := 8          # frames of no progress before jumping
 
 var _models: String
@@ -68,7 +75,8 @@ func _collide(node: Node3D) -> void:
 		mi.add_child(body)
 
 
-func _walk(glb: String, waypoints: Array, budget: float) -> Dictionary:
+func _walk(glb: String, waypoints: Array, budget: float,
+		arrived: float = ARRIVED) -> Dictionary:
 	var root := Node3D.new()
 	get_root().add_child(root)
 	var shell: Node3D = _bench.call("load_glb", glb)
@@ -93,6 +101,11 @@ func _walk(glb: String, waypoints: Array, budget: float) -> Dictionary:
 
 	var leg := 1
 	var jumps := 0
+	# WHERE it jumped, not just how often. Twice now a jump count alone
+	# has been diagnosed by reading the geometry and guessing, and twice
+	# the guess was wrong. A number that cannot say where is a number you
+	# argue with.
+	var jumped_at := []
 	var stalled := 0
 	var last := start
 	var highest := start.y
@@ -104,7 +117,7 @@ func _walk(glb: String, waypoints: Array, budget: float) -> Dictionary:
 		var here := body.global_position - Vector3(0, PLAYER_HEIGHT / 2.0, 0)
 		var flat := Vector3(goal.x - here.x, 0.0, goal.z - here.z)
 		# Arrived at this waypoint when it is under foot AND at its height.
-		if flat.length() < ARRIVED and absf(here.y - goal.y) < 0.6:
+		if flat.length() < arrived and absf(here.y - goal.y) < 0.6:
 			reached.append(leg)
 			leg += 1
 			continue
@@ -115,6 +128,10 @@ func _walk(glb: String, waypoints: Array, budget: float) -> Dictionary:
 			if stalled > STALL_FRAMES:
 				v.y = JUMP_VELOCITY
 				jumps += 1
+				var foot := body.global_position \
+						- Vector3(0, PLAYER_HEIGHT / 2.0, 0)
+				jumped_at.append([snappedf(foot.x, 0.1),
+						snappedf(foot.y, 0.1), snappedf(foot.z, 0.1), leg])
 				stalled = 0
 		else:
 			v.y -= GRAVITY * STEP
@@ -144,7 +161,9 @@ func _walk(glb: String, waypoints: Array, budget: float) -> Dictionary:
 		"completed": done,
 		"waypoints_reached": reached.size(),
 		"waypoints_total": waypoints.size() - 1,
+		"arrived_within": arrived,
 		"jumps": jumps,
+		"jumped_at": jumped_at,
 		"highest_y": snappedf(highest, 0.01),
 		"ended_at": [snappedf(end.x, 0.01), snappedf(end.y, 0.01),
 				snappedf(end.z, 0.01)],
@@ -200,17 +219,32 @@ func _run() -> void:
 	# A straight line from the entry to anywhere else in this room passes
 	# through either a corner fill or five metres of machine, which is the
 	# room working: you cannot cut the corner of a plant room.
-	_log["cross entry to exit, west of the plant"] = _walk(crs, [
-		Vector3(0.0, 0.0, 1.4), Vector3(0.0, 0.0, 7.5),
-		Vector3(-6.5, 0.0, 9.0), Vector3(-6.5, 0.0, 21.0),
-		Vector3(0.0, 0.0, 28.6)], 40.0)
+	# THROUGH THE BAY and THROUGH THE PASSAGE, which are now two different
+	# walks rather than two halves of one ring.
+	_log["cross entry to exit, through the bay"] = _walk(crs, [
+		Vector3(0.0, 0.0, 1.4), Vector3(0.0, 0.0, 8.0),
+		Vector3(-5.0, 0.0, 10.0), Vector3(-5.0, 0.0, 22.0),
+		Vector3(0.0, 0.0, 28.6)], 40.0, 0.5)
+	# The fourth waypoint is the ROUTE, not a concession. Without it the
+	# list asked the body to go from (7.7, 22.5) straight at the exit,
+	# and that line crosses the north-east corner fill -- solid mass,
+	# floor to roof -- at about x 5.8. The body stalled against it, jumped
+	# (uselessly, 1.33 m of nothing), then slid west along the face and
+	# completed anyway. That one jump was the harness cutting a corner
+	# through a wall, not the room asking for a jump: the bay route walks
+	# the same shape and reports none only because -5.0 happens to lie
+	# inside the north arm's +-4 m mouth by 0.5 m. Walking the passage out
+	# to the arm's centre line first is what a player does.
+	_log["cross entry to exit, through the passage"] = _walk(crs, [
+		Vector3(0.0, 0.0, 1.4), Vector3(0.0, 0.0, 8.0),
+		Vector3(7.7, 0.0, 11.0), Vector3(7.7, 0.0, 22.75),
+		Vector3(0.0, 0.0, 22.75), Vector3(0.0, 0.0, 28.6)], 40.0, 0.5)
 	_log["cross entry to the east branch"] = _walk(crs, [
-		Vector3(0.0, 0.0, 1.4), Vector3(0.0, 0.0, 7.5),
-		Vector3(6.5, 0.0, 9.0), Vector3(13.6, 0.0, 15.0)], 40.0)
-	_log["cross entry to the north bay"] = _walk(crs, [
-		Vector3(0.0, 0.0, 1.4), Vector3(0.0, 0.0, 7.5),
-		Vector3(6.5, 0.0, 9.0), Vector3(6.5, 0.0, 21.0),
-		Vector3(6.6, 0.0, 21.8)], 40.0)
+		Vector3(0.0, 0.0, 1.4), Vector3(0.0, 0.0, 8.0),
+		Vector3(7.7, 0.0, 12.0), Vector3(13.6, 0.0, 15.0)], 40.0)
+	_log["cross entry to the sump"] = _walk(crs, [
+		Vector3(0.0, 0.0, 1.4), Vector3(0.0, 0.0, 8.0),
+		Vector3(-6.0, 0.0, 9.6)], 40.0)
 
 	var bay := "%s/batch044/shells/shell_bay_terminus.glb" % _models
 	_log["terminus entry to the prize"] = _walk(bay, [

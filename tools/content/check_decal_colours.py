@@ -137,9 +137,19 @@ def judge(rgb, guard):
 
 
 def pixels(path):
+    """Every RGBA texel, counted.
+
+    `getdata()` is deprecated in Pillow 12 and removed in 14, and its
+    warning was printing on every `check_art_current.sh` run. The
+    replacement is a rename, so this prefers it and falls back rather
+    than pinning a Pillow version: same pixels either way, and the check
+    was re-run against both to be sure.
+    """
     from PIL import Image
     with Image.open(path) as im:
-        return Counter(im.convert("RGBA").getdata())  # noqa: PIL deprecation
+        rgba = im.convert("RGBA")
+        read = getattr(rgba, "get_flattened_data", None) or rgba.getdata
+        return Counter(read())
 
 
 def selftest(guard):

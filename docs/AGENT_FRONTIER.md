@@ -2122,10 +2122,58 @@ rewritten, no commits lost). PR #6, opened from it against `main`, is
 **superseded** — it showed the whole stacked project history rather than an
 art diff. Do not maintain two active art branches.
 
-## Art batches — state 2026-09-02
+## Art batches — state 2026-09-02, with a 2026-09-13 head note
 
 **THE ART LANE IS WAITING ON AN OWNER VERDICT, NOT IDLE-WITH-WORK-TO-DO.**
 Do not start work in it on a wake-up. Read this section and stop.
+
+**2026-09-13 — three things another lane may need, from
+`docs/art/reports/2026-09-13-presentation-study.md`:**
+
+1. ~~**`shell_yard_gantry`'s two doorways are refused.**~~ **WRONG,
+   withdrawn same day.** `shells.is_offerable` *reports*
+   `doorways_off_the_body` and returns regardless, because a manifest
+   rule cannot see floor and the assembled crossing decides. Art's gate
+   now reports the 0.395 m without failing. **No socket repair is
+   requested.**
+2. ~~**The binder used to prove it is a proposal not wired into the
+   game.**~~ **WRONG, withdrawn same day: the runtime binder exists.**
+   `ThemeMaterials._material` asks `ThemePack.texture_for` first and
+   falls back to `ProcTextures` on null. The art-side binder is deleted.
+   What survives is the check nothing else makes — the pixels the GPU
+   samples, against the authored PNG, through the real import — run
+   against the material Production builds.
+3. **Production reads shell sockets by kind and by name**, so a three- or
+   four-connection room is readable. **A four-connection asset is still
+   not a four-neighbour room in a generated Zone.**
+4. **Every opening now declares its own arrival region**, named after its
+   socket — Art's half of §11.3. Handoff:
+   `docs/art-requests/2026-09-13-capacity-and-arrival-handoff.md`. It
+   also corrects the capacity claim for `shell_bay_terminus`, which has
+   **no `exit` socket** and is a destination, not a through-room.
+5. ~~**Lettering cannot be fixed in UVs.**~~ **WRONG, withdrawn.**
+   An authored `.glb` shell keeps the materials Blender baked:
+   `ContentInstantiator` performs no material operation at all
+   ("material" appears zero times in it), while `chamber_builders.gd`
+   names `ThemeMaterials` 46 times. Themed materials are the PROCEDURAL
+   path. The UV repair therefore lands, and is proved on both faces of a
+   two-sided sign and with the room rotated. **The mirrored stencil is
+   still real on the procedural path** — that is a separate, unfiled
+   item, not Batch 044's.
+6. **"LEAF" IS NOT "DEAD END".** A branch destination in this
+   implementation can still host onward branches. Production's
+   `dead_ends` is a measured degree (`n == 1` adjacency); Art's
+   `dead_end` is a shape tag describing a treatment, and **nothing in
+   Production reads it**. Measured: from the Terminus's approach the
+   one-neighbour and two-neighbour states are pixel-identical (the mouth
+   hides both side openings); from inside, an assigned branch is plainly
+   a way on. Evaluate a one-neighbour assignment separately.
+7. **`shell_bay_terminus` cannot be composed at all today**, and it is a
+   PRODUCER limit, not a door count: `topology.compose_chain` returns
+   `edges=()` when any chamber lacks the literal `entry`+`exit` pair, and
+   `compose_with_branch` calls it first and returns immediately. So one
+   destination room in the list seals every room's doors. A leaf is
+   rejected before it can become a leaf. Dess's and Prod's to resolve.
 
 **ALL TWELVE AUTHORED ROOM SHELLS PASS** (owner, 2026-09-04). The eight
 P2 shells passed on 2026-09-02 after Production certified them at
