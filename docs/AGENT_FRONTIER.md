@@ -125,15 +125,20 @@ run), which `R ⊆ E` reports with one sentence. It is also the backstop
 for the day `R ⊆ E` is relaxed to allow a legally gated exit;
 a test asserts the subsumption so that day gets noticed.
 
-**Condition 2 is blocked on a design decision, not a wire.**
-`reachability` takes `declared_capabilities` and **nothing has ever
-passed it**, because capabilities are not AP items — the apworld's pool
-is Signal Key, Epsilon Coin, Epsilon Static, and `grapple`/`blink`/
-`cross_long_gap` are nowhere in its logic. So the declare-the-gate rule
-is one no gate can satisfy: it fails safe, not open. Either Echo
-capabilities become AP items with their own logic, or an AP-relevant
-route may never be gated on one. Owner's call;
-`docs/AMALGAM_BRIDGE.md` §6a.
+**Conditions 1 and 2 need an owner decision, and the proposal is
+written.** `reachability` takes `declared_capabilities` and nothing
+passes it, because capabilities are not AP items: they come from Epsilon
+interpreting whatever the multiworld gave you, which is a random reward
+rather than a proof of obtainability. **`docs/AP_CAPABILITY_LOGIC.md`**
+traces the acquisition chain and compares explicit capability items
+against guaranteed local acquisition represented in AP logic — for each,
+where the guarantee comes from, how location rules match it, and how a
+qualifying provider reaches the player. The two options are different
+games; that is the choice. It also names a repair owed under either:
+`_capability_is_satisfied` tests primitives only, so a 2-metre dash
+satisfies `cross_long_gap`. **Until it is settled the bridge keeps
+refusing AP-relevant gates — a temporary restriction, not a verdict on
+the gameplay.**
 
 **Capability gates are searched, not sampled.** A previous guard removed
 one gate edge at a time with every other gate left passable, so two

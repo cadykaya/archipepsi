@@ -924,31 +924,28 @@ hold the item yet, `_escapable` stops being subsumed and becomes the
 only thing between that player and a Zone they cannot leave. The
 subsumption test is what will notice.
 
-### 6a. Condition 2 is blocked on something bigger than this lane
+### 6a. Conditions 1 and 2 need an Archipelago decision
 
-`reachability` takes `declared_capabilities`, and **nothing has ever
-passed it** — not production, not one test. So the guarantee set is
-always `BASELINE_CAPABILITIES`, and the rule that a gate must be
-declared is, today, a rule that no gate can ever satisfy. A check that
-can only refuse is as broken as one that can only accept; it simply
-fails safe instead of failing open.
+`reachability` takes `declared_capabilities`, and **nothing passes it**
+— not production, not one test. So the guarantee set is always
+`BASELINE_CAPABILITIES` and the rule that a gate must be declared is one
+no gate can satisfy. It fails safe rather than open, and composition
+emits no gates, so nothing is wrongly refused today.
 
 The reason is not a missing wire. **Capabilities are not Archipelago
-items.** The apworld's pool is `Signal Key`, `Epsilon Coin`,
-`Epsilon Static`, and its logic is tier-based on Signal Key count;
-`grapple`, `blink` and `cross_long_gap` appear nowhere in it. §0-bis
-condition 2 asks Archipelago to prove a capability progression is
-obtainable, and Archipelago currently has no such progression to
-reason about.
+items**, and the thing that produces them is Epsilon interpreting
+whatever the multiworld gave you — a random reward, which is not a proof
+of obtainability whatever it happens to yield.
 
-> **For the owner, not for this lane to decide.** Either Echo
-> capabilities become AP items with their own logic — a real apworld
-> change, pool and rules — or they stay outside the multiworld, in which
-> case an AP-relevant route may never be gated on one and the guard is
-> correctly a wall rather than a gate. Both are coherent; they are
-> different games. Until it is settled, composition emits no gates, the
-> rule is dormant, and the first gate to appear is refused rather than
-> waved through.
+**The proposal is `docs/AP_CAPABILITY_LOGIC.md`**: the acquisition chain
+traced end to end, explicit capability items compared against guaranteed
+local acquisition represented in AP logic, and for each the three things
+that have to hold — where the guarantee comes from, how specific
+location rules match it, and how a qualifying provider actually reaches
+the player. It ends with the owner choice, which is real: the two
+options are different games. It also names one repair owed under either
+— `_capability_is_satisfied` tests primitives only, so a 2-metre dash
+satisfies `cross_long_gap` and a gate is proved against the wrong claim.
 
 ### 6b. Still open
 
