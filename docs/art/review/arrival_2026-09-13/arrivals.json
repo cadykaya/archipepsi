@@ -55,7 +55,7 @@
     }
   },
   "shell_junction_cross": {
-    "colliders": 77,
+    "colliders": 78,
     "doorways": [
       "entry",
       "exit",
