@@ -83,6 +83,39 @@
         "surface_id": "chamber_w",
         "width": 2.4,
         "yaw": 270.0
+      },
+      {
+        "kind": "cover",
+        "name": "cover_0",
+        "position": [
+          -4.6,
+          0.3,
+          13.4
+        ],
+        "surface_id": "chamber_w",
+        "yaw": 0.0
+      },
+      {
+        "kind": "cover",
+        "name": "cover_1",
+        "position": [
+          4.6,
+          0.3,
+          13.4
+        ],
+        "surface_id": "chamber_e",
+        "yaw": 0.0
+      },
+      {
+        "kind": "reactive",
+        "name": "reactive_0",
+        "position": [
+          -6.6,
+          0.3,
+          19.6
+        ],
+        "surface_id": "chamber_w",
+        "yaw": 0.0
       }
     ],
     "surfaces": [
@@ -199,7 +232,7 @@
       ]
     ],
     "check_anchor": null,
-    "colliders": 70,
+    "colliders": 77,
     "enemy_anchors": [],
     "exit_offset": [
       0.0,
@@ -281,56 +314,100 @@
         "surface_id": "arm_w_s",
         "width": 2.4,
         "yaw": 270.0
+      },
+      {
+        "kind": "cover",
+        "name": "cover_0",
+        "position": [
+          -4.4,
+          0.3,
+          11.4
+        ],
+        "surface_id": "bay_west",
+        "yaw": 0.0
+      },
+      {
+        "kind": "cover",
+        "name": "cover_1",
+        "position": [
+          2.6,
+          0.3,
+          8.6
+        ],
+        "surface_id": "bay_south",
+        "yaw": 0.0
+      },
+      {
+        "kind": "reactive",
+        "name": "reactive_0",
+        "position": [
+          -3.0,
+          0.3,
+          16.2
+        ],
+        "surface_id": "bay_west",
+        "yaw": 0.0
+      },
+      {
+        "kind": "reactive",
+        "name": "reactive_1",
+        "position": [
+          7.7,
+          0.3,
+          18.6
+        ],
+        "surface_id": "pass_east",
+        "yaw": 0.0
       }
     ],
     "surfaces": [
       {
         "center": [
-          0.0,
-          0.0,
-          8.5
-        ],
-        "extent": [
-          18.0,
-          5.0
-        ],
-        "name": "amb_south"
-      },
-      {
-        "center": [
-          0.0,
-          0.0,
-          21.5
-        ],
-        "extent": [
-          18.0,
-          5.0
-        ],
-        "name": "amb_north"
-      },
-      {
-        "center": [
-          -6.5,
+          -5.25,
           0.0,
           15.0
         ],
         "extent": [
-          5.0,
-          8.0
+          7.5,
+          18.0
         ],
-        "name": "amb_west"
+        "name": "bay_west"
       },
       {
         "center": [
-          6.5,
+          3.75,
           0.0,
-          15.0
+          9.75
         ],
         "extent": [
-          5.0,
+          10.5,
+          7.5
+        ],
+        "name": "bay_south"
+      },
+      {
+        "center": [
+          7.75,
+          0.0,
+          17.5
+        ],
+        "extent": [
+          2.5,
           8.0
         ],
-        "name": "amb_east"
+        "name": "pass_east"
+      },
+      {
+        "center": [
+          3.75,
+          0.0,
+          22.75
+        ],
+        "extent": [
+          10.5,
+          2.5
+        ],
+        "name": "pass_north"
       },
       {
         "center": [
@@ -432,7 +509,7 @@
     "texel_density": 32.0,
     "total_rise": 0.0,
     "traversal": [],
-    "triangles": 852,
+    "triangles": 936,
     "volumes": [
       {
         "center": [
@@ -450,51 +527,51 @@
       },
       {
         "center": [
-          -6.5,
+          -5.0,
           1.0,
-          15.0
+          12.0
         ],
         "kind": "enemy_spawn",
-        "name": "fight_west",
+        "name": "fight_bay",
         "size": [
-          4.6,
+          7.0,
           2.0,
-          7.6
+          11.0
         ]
       },
       {
         "center": [
-          6.5,
+          7.7,
           1.0,
-          15.0
+          17.5
         ],
         "kind": "enemy_spawn",
-        "name": "fight_east",
+        "name": "fight_passage",
         "size": [
-          4.6,
           2.0,
-          7.6
+          2.0,
+          6.0
         ]
       },
       {
         "center": [
-          6.4,
+          -6.0,
           1.0,
-          21.6
+          9.6
         ],
         "kind": "objective",
-        "name": "north_bay",
+        "name": "sump",
         "size": [
-          3.6,
+          4.0,
           2.0,
-          3.6
+          4.0
         ]
       },
       {
         "center": [
-          0.0,
+          2.5,
           2.7,
-          15.0
+          17.5
         ],
         "kind": "no_build",
         "name": "plant",
@@ -590,6 +667,50 @@
         "surface_id": "arm_east",
         "width": 2.4,
         "yaw": 90.0
+      },
+      {
+        "kind": "cover",
+        "name": "cover_0",
+        "position": [
+          -3.4,
+          0.3,
+          9.6
+        ],
+        "surface_id": "spine_ws",
+        "yaw": 0.0
+      },
+      {
+        "kind": "cover",
+        "name": "cover_1",
+        "position": [
+          3.4,
+          0.3,
+          16.4
+        ],
+        "surface_id": "spine_en",
+        "yaw": 0.0
+      },
+      {
+        "kind": "reactive",
+        "name": "reactive_0",
+        "position": [
+          8.4,
+          0.3,
+          15.2
+        ],
+        "surface_id": "arm_east",
+        "yaw": 0.0
+      },
+      {
+        "kind": "enemy_high",
+        "name": "high_0",
+        "position": [
+          10.4,
+          2.8,
+          10.8
+        ],
+        "surface_id": "arm_east",
+        "yaw": 0.0
       }
     ],
     "surfaces": [

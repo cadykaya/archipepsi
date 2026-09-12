@@ -53,9 +53,63 @@ SET_DIR = os.path.join(REPO, "assets", "textures", "theme")
 MANIFEST = os.path.join(SET_DIR, "manifest.json")
 DESCRIPTOR = os.path.join(SET_DIR, "THEME_PACK.json")
 
-#: Roles a pack resolves to a SHARED material and must never paint itself.
-#: Mirrors check_theme_roles.UNIVERSAL_ROLES rather than restating it.
-UNIVERSAL_ROLES = ("hazard",)
+#: WHICH ROLES NEED AUTHORED PIXELS, AND WHICH ARE ANSWERED ELSEWHERE.
+#:
+#: The descriptor used to emit `required_roles` straight from
+#: `inspect_materials.REQUIRED_ROLES` -- floor, wall, trim, accent, hazard --
+#: and separately reported that no theme ships a `hazard` texture, on the
+#: owner's 2026-09-10 ruling. Production's clause 3 disqualifies a theme
+#: missing a required role, so the two statements together disqualified all
+#: six themes. Neither statement was wrong; together they were not a
+#: contract.
+#:
+#: They are two different questions and the file now asks them separately:
+#: §8.1's list is which roles a PACK MUST RESOLVE, and this is which of them
+#: the pack resolves WITH ITS OWN PIXELS.
+#:
+#: Read from `godot/scripts/generation/theme_materials.gd` at Production
+#: `7adc5e5`, which is the only thing in the engine that answers "what does
+#: this theme look like":
+#:
+#:     floor_mat(theme)   _material(theme, "floor")
+#:     wall_mat(theme)    _material(theme, "wall")
+#:     accent_mat(theme)  _material(theme, "accent", "panel")
+#:     trim_mat(theme)    _material(theme, "trim", "panel")
+#:     hazard_mat(theme)  _material(theme, "accent", "hazard")
+#:
+#: HAZARD IS NOT A SHARED MATERIAL IN THE ENGINE, and an earlier version of
+#: this file said it was. `hazard_mat` is theme-parameterised: it takes the
+#: theme's own accent colour and overrides only the noise. What is true is
+#: narrower and is what the ruling actually buys: **the pack supplies no
+#: hazard pixels**, and the role keeps a supported implementation --
+#: procedurally in the engine through `hazard_mat`, and on a shell through
+#: the art lane's shared universal hazard ramp, which no theme may re-tint.
+#:
+#: So hazard is not removed from anything. It is a real runtime obligation
+#: met somewhere other than the pack, and the descriptor now says which.
+PIXELS_REQUIRED = ("floor", "wall", "trim", "accent")
+
+#: Required by §8.1, resolved without pack pixels. Value: how.
+RESOLVED_ELSEWHERE = {
+    "hazard": "ThemeMaterials.hazard_mat(theme) -- procedural, the theme's "
+              "own accent colour with the 'hazard' noise; and on a shell, "
+              "the art lane's shared universal hazard ramp, which no theme "
+              "may re-tint (owner, 2026-09-10). The pack paints none, and a "
+              "theme that shipped one would be the finding.",
+}
+
+#: The engine accessor each role is answered by, at Production `7adc5e5`.
+#: `ceiling` has none: the pack ships one for all six themes and nothing in
+#: the engine asks for it yet, which is worth Production knowing before the
+#: binder decides what to do with those pixels.
+ENGINE_ACCESSOR = {
+    "floor": "ThemeMaterials.floor_mat",
+    "wall": "ThemeMaterials.wall_mat",
+    "accent": "ThemeMaterials.accent_mat",
+    "trim": "ThemeMaterials.trim_mat",
+    "hazard": "ThemeMaterials.hazard_mat",
+    "ceiling": None,
+}
 
 
 def themes():
@@ -111,21 +165,33 @@ def describe(problems):
             problems.append("theme '%s' is in the palette and ships no "
                             "texture at all" % theme)
 
-    # Required roles, and the universals no theme may paint.
+    # §8.1's roles, split by the question that actually matters: does the
+    # PACK answer this one with pixels, or does something else answer it?
     for role in mat.REQUIRED_ROLES:
-        if role in UNIVERSAL_ROLES:
+        if role in RESOLVED_ELSEWHERE:
             painted = [t for t in all_themes if role in shipped.get(t, {})]
             if painted:
                 problems.append(
-                    "%s paint a '%s' texture. It is a UNIVERSAL role: a "
-                    "pack resolves it to the shared material and must not "
-                    "re-tint it (owner, 2026-09-10)."
-                    % (", ".join(painted), role))
+                    "%s ship a '%s' texture. The pack supplies no pixels "
+                    "for it -- it is resolved by %s"
+                    % (", ".join(painted), role, RESOLVED_ELSEWHERE[role]))
+            continue
+        if role not in PIXELS_REQUIRED:
+            problems.append(
+                "role '%s' is required by 8.1 and this file says neither "
+                "that the pack paints it nor how else it is resolved. That "
+                "is the gap that disqualified all six themes: add it to "
+                "PIXELS_REQUIRED or to RESOLVED_ELSEWHERE." % role)
             continue
         missing = [t for t in all_themes if role not in shipped.get(t, {})]
         if missing:
-            problems.append("required role '%s' (8.1) is missing from %s"
-                            % (role, ", ".join(missing)))
+            problems.append("role '%s' needs authored pixels and %s ship "
+                            "none" % (role, ", ".join(missing)))
+    for role in PIXELS_REQUIRED:
+        if role not in mat.REQUIRED_ROLES:
+            problems.append(
+                "'%s' is listed as needing authored pixels and is not a "
+                "required role (8.1); the two lists have drifted" % role)
 
     # Whatever else is shipped must be shipped by every theme, or a binder
     # finds a role in five packs and a hole in the sixth.
@@ -176,10 +242,26 @@ def describe(problems):
                     "does not exist yet. No destination is chosen here.",
         "themes": all_themes,
         "roles_shipped": roles,
-        "required_roles": list(mat.REQUIRED_ROLES),
-        "universal_roles": {r: "resolve to the shared universal material; "
-                               "a pack must not paint its own"
-                            for r in UNIVERSAL_ROLES},
+        # `required_roles` USED TO BE HERE and was the whole problem:
+        # Production's clause 3 read it as "a theme missing one of these is
+        # disqualified", and `hazard` is in it and shipped by nobody, so
+        # every theme was disqualified. The list was not wrong; it answered
+        # a different question -- which roles a pack must RESOLVE -- and
+        # clause 3 needs the narrower one.
+        "roles_requiring_authored_pixels": sorted(PIXELS_REQUIRED),
+        "roles_resolved_without_pack_pixels": dict(RESOLVED_ELSEWHERE),
+        "role_contract": {
+            role: {
+                "pack_pixels": ("required" if role in PIXELS_REQUIRED
+                                else "none" if role in RESOLVED_ELSEWHERE
+                                else "shipped"),
+                "disqualifies_theme_if_missing": role in PIXELS_REQUIRED,
+                "engine_accessor": ENGINE_ACCESSOR.get(role),
+                "resolved_by": RESOLVED_ELSEWHERE.get(
+                    role, "the pack, by (theme, role)"),
+            }
+            for role in sorted(set(mat.REQUIRED_ROLES) | set(roles))
+        },
         "optional_role_fallbacks": dict(mat.OPTIONAL_ROLES),
         "variants": dict(mat.VARIANTS),
         "roles_not_shipped_by_every_theme": {r: sorted(t)
@@ -232,10 +314,12 @@ def main():
         print("verify-theme-set: FAIL -- %s" % problem, file=sys.stderr)
     if problems:
         return 1
-    print("verify-theme-set: %d theme(s), %d texture(s), %d role(s); every "
-          "required role present or universal, and the description matches."
+    print("verify-theme-set: %d theme(s), %d texture(s), %d role(s); the %d "
+          "role(s) needing authored pixels present in every theme, %d "
+          "resolved elsewhere, and the description matching."
           % (len(described["themes"]), len(described["textures"]),
-             len(described["roles_shipped"])))
+             len(described["roles_shipped"]), len(PIXELS_REQUIRED),
+             len(RESOLVED_ELSEWHERE)))
     return 0
 
 
