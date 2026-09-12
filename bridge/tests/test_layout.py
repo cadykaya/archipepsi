@@ -125,14 +125,19 @@ def _ok_result(zone) -> dict:
             "chain": [_piece([0.0, 0.0, a_face], [0.0, 0.0, b_face])],
         }
 
+    plug_clear = {}
     for p in zone.plugs:
         anchors.setdefault(p.source_anchor, [0.0, 0.0, 1.0])
         anchors.setdefault(p.destination, [0.0, 0.0, 0.0])
         arrival_ok.setdefault(p.source_anchor, True)
         arrival_ok.setdefault(p.destination, True)
+        # THE ENGINE MEASURES THIS; the stand-in reports a pass. A body
+        # at the room's arrival is outside the device's trigger volume.
+        plug_clear[p.edge_id] = True
 
     out = {"status": "LAYOUT_OK", "rooms": rooms, "joins": joins,
            "anchors": anchors, "arrival_ok": arrival_ok,
+           "plug_clear": plug_clear,
            "apertures": apertures, "stations": []}
     return _with_exit(zone, out)
 
@@ -187,6 +192,7 @@ def test_a_zone_with_no_graph_is_not_certified_here():
     ("joins", "no join evidence"),
     ("arrival_ok", "no measured arrival verdict"),
     ("anchors", "was not resolved"),
+    ("plug_clear", "carries no measured clearance"),
 ])
 def test_dropping_a_whole_evidence_map_is_refused(drop, expect):
     z = _zone()
@@ -971,3 +977,132 @@ def test_two_chains_sharing_a_package_id_are_refused():
     assert not v.accepted
     assert any("share the id" in e or "declares 1" in e
                for e in v.errors), v.errors
+
+
+# --- the return stands clear of the way in --------------------------------
+#
+# `ReturnPlug` is an Area3D firing on `body_entered`, and the composer
+# anchored it at the room's arrival — the exact spot `zone_builder`
+# stands a body entering the room. Every side destination sent the
+# player home on the first frame, and again on every re-entry. The
+# engine lane found it in the integrated build; this is the bridge half
+# of the repair.
+
+def _branched():
+    """A Zone with a real branch, and its layout."""
+    from archipepsi_bridge import topology
+    z = _zone()
+    out = topology.apply(z, topology.compose_with_branch(list(z.chambers)))
+    assert out.plugs, "this fixture exists to have a plug in it"
+    return out, _ok_result(out)
+
+
+def test_the_composer_anchors_a_return_away_from_the_arrival():
+    """The repair itself, at the producer."""
+    out, _ = _branched()
+    for pl in out.plugs:
+        assert pl.source_anchor == f"room:{pl.room_id}:return"
+        assert pl.source_anchor != f"room:{pl.room_id}:arrival"
+        # AND THE DESTINATION SEMANTICS ARE UNCHANGED. The repair moves
+        # where the device stands, never where it sends you.
+        assert pl.destination == "zone_start"
+
+
+def test_a_return_anchored_on_the_arrival_is_refused():
+    """The defect, named where it can be caught.
+
+    Not on the model: `ZoneRecord.zone` is a typed `Zone`, so refusing
+    this spelling there would refuse to LOAD every save that already
+    holds a branched Zone. A committed manifest never runs `validate`
+    again, so an accepted layout keeps the devices it was certified
+    with and an uncommitted Zone is refused and recomposed.
+    """
+    out, result = _branched()
+    trapped = out.model_copy(update={"plugs": tuple(
+        pl.model_copy(update={
+            "source_anchor": f"room:{pl.room_id}:arrival"})
+        for pl in out.plugs)})
+    result = _ok_result(trapped)
+    v = layout.validate(trapped, result)
+    assert not v.accepted and v.manifest is None
+    assert any("where a body entering that room arrives" in e
+               for e in v.errors), v.errors
+
+
+def test_a_return_the_engine_did_not_place_is_refused():
+    """A missing anchor. `zone_builder` warns and SKIPS the plug, which
+    would leave a dead end with no way out and a Zone that still said
+    LAYOUT_OK — so the refusal has to be here."""
+    out, result = _branched()
+    gone = out.plugs[0].source_anchor
+    result["anchors"].pop(gone)
+    result["arrival_ok"].pop(gone, None)
+    v = layout.validate(out, result)
+    assert not v.accepted
+    assert any(f"'{gone}' was not resolved" in e for e in v.errors), v.errors
+
+
+def test_a_return_with_no_measured_clearance_is_refused():
+    """A distinct anchor is not evidence the device is clear of the
+    arrival. Whether a body standing at the arrival is inside the
+    trigger volume is a physics query, and only the engine answers it."""
+    out, result = _branched()
+    result["plug_clear"].pop(out.plugs[0].edge_id)
+    v = layout.validate(out, result)
+    assert not v.accepted
+    assert any("carries no measured clearance" in e for e in v.errors)
+
+
+def test_a_return_the_engine_measures_as_overlapping_is_refused():
+    out, result = _branched()
+    result["plug_clear"][out.plugs[0].edge_id] = False
+    v = layout.validate(out, result)
+    assert not v.accepted
+    assert any("would fire on the way in" in e for e in v.errors), v.errors
+
+
+def test_a_clearance_verdict_that_is_not_a_verdict_is_refused():
+    """A coordinate where a boolean belongs is how "measured" comes to
+    mean "mentioned"."""
+    out, result = _branched()
+    result["plug_clear"][out.plugs[0].edge_id] = [0.0, 0.0, 3.0]
+    v = layout.validate(out, result)
+    assert not v.accepted
+    assert any("not a boolean" in e for e in v.errors), v.errors
+
+
+def test_the_return_anchor_survives_the_wire_and_stays_out_of_the_manifest_it_was_not_in():
+    """Serialized, re-parsed, and committed under the anchor the
+    composer chose — and an ALREADY COMMITTED manifest is untouched by
+    any of this."""
+    import json
+    out, result = _branched()
+    wire = json.loads(out.model_dump_json())
+    back = Zone.model_validate(wire)
+    assert back == out
+    for spec in wire["plugs"]:
+        assert spec["source_anchor"].endswith(":return")
+        assert spec["destination"] == "zone_start"
+
+    v = layout.validate(back, result)
+    assert v.accepted, v.errors
+    committed = {p["edge_id"]: p["source_anchor"] for p in v.manifest["plugs"]}
+    assert committed == {pl.edge_id: pl.source_anchor for pl in out.plugs}
+    # The manifest is built from the ZONE's plugs, so nothing here
+    # repositions a device: a Zone certified with the old anchor keeps
+    # the old anchor in the layout it was certified with.
+    assert all(a.endswith(":return") for a in committed.values())
+
+
+def test_an_old_committed_zone_still_loads():
+    """The reason this rule is not on the model.
+
+    A save holding a branched Zone anchored at `:arrival` has to keep
+    parsing, or the repair costs the player their campaign.
+    """
+    out, _ = _branched()
+    old = out.model_copy(update={"plugs": tuple(
+        pl.model_copy(update={
+            "source_anchor": f"room:{pl.room_id}:arrival"})
+        for pl in out.plugs)})
+    assert Zone.model_validate(old.model_dump()) == old

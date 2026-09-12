@@ -210,11 +210,15 @@ def place_layout(zone) -> dict:
             "socket_a": sa, "socket_b": sb, "chain": [corridor_piece(sa, sb)]}
 
     stations = []
+    plug_clear = {}
     for p in zone.plugs:
         anchors.setdefault(p.source_anchor, [0.0, 0.0, 1.0])
         anchors.setdefault(p.destination, [0.0, 0.0, 0.0])
         arrival_ok.setdefault(p.source_anchor, True)
         arrival_ok.setdefault(p.destination, True)
+        # THE ENGINE MEASURES THIS; the stand-in reports a pass. A body
+        # at the room's arrival is outside the device's trigger volume.
+        plug_clear[p.edge_id] = True
 
     # THE ENGINE'S OWN GEOMETRY, which every finished build appends: an
     # exit room with the portal in it, and the approach to it filed
@@ -234,6 +238,7 @@ def place_layout(zone) -> dict:
         "chain": [corridor_piece([0.0, 0.0, tz], [0.0, 0.0, far])]}
     return {"status": "LAYOUT_OK", "rooms": rooms, "joins": joins,
             "anchors": anchors, "arrival_ok": arrival_ok,
+            "plug_clear": plug_clear,
             "apertures": apertures, "stations": stations,
             "packages": physics}
 

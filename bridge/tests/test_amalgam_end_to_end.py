@@ -577,3 +577,128 @@ def test_a_legacy_zone_with_no_edges_still_claims(tmp_path):
             "a legacy Zone with no graph could not claim its own Check")
 
     run(go())
+
+
+# --- when no layout is ever accepted --------------------------------------
+#
+# Every existing test of this path calls `T.refuse_layout` on the save
+# directly, which is the thing this file's own docstring warns about: it
+# proves the transition works and says nothing about what a player
+# reaches. These go through `handle_layout_result` and read the Hub the
+# way `hub.gd` reads it.
+
+_UNPLACEABLE = {"status": "LAYOUT_OK"}     # OK, and not one room placed
+
+
+async def _exhausted(tmp_path):
+    """A Zone that never lays out, refused until the bridge stops trying."""
+    engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+    await engine.handle_request_next_zone(False)
+    await drain()
+    zid = engine.save.active_zone_id
+    held = set(engine.save.zone_by_id(zid).allocated_location_ids)
+    assert held, "a Zone holding nothing proves nothing about recovery"
+    for _ in range(T.MAX_LAYOUT_REFUSALS):
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zid,
+             "layout": dict(_UNPLACEABLE)}))
+        await drain()
+    return engine, zid, held
+
+
+def test_a_zone_that_never_lays_out_keeps_its_checks_and_stops_composing(
+        tmp_path):
+    """DORMANT, holding everything it was allocated.
+
+    The locations are NOT returned here: giving them back is
+    `abandon_zone`'s behaviour and only its, because it is a decision
+    with a cost and a refused layout is not the player's doing.
+    """
+    async def go():
+        engine, zid, held = await _exhausted(tmp_path)
+        rec = engine.save.zone_by_id(zid)
+        assert rec.state == "DORMANT"
+        assert rec.layout_state == "REFUSED"
+        assert rec.layout_refusals == T.MAX_LAYOUT_REFUSALS
+        assert set(rec.allocated_location_ids) == held
+        assert rec.manifest is None, "nothing was ever committed"
+        # AND IT STOPS COMPOSING. A fourth attempt would otherwise run
+        # the provider again on a Zone that has already failed three.
+        assert rec.state != "PENDING_GENERATION"
+    run(go())
+
+
+def test_the_hub_will_not_start_a_new_zone_over_an_exhausted_one(tmp_path):
+    """The one-Zone rule holds through the failure path too: the Checks
+    are still reserved, so a new Zone would collide with them."""
+    async def go():
+        engine, zid, _held = await _exhausted(tmp_path)
+        hub = engine.snapshot().hub
+        assert hub.mode == "ZONE_DORMANT"
+        assert not hub.accepts_zone_request
+        with pytest.raises(IntentError):
+            await engine.handle_request_next_zone(False)
+    run(go())
+
+
+def test_abandoning_an_exhausted_zone_recovers_its_locations(tmp_path):
+    """**The campaign is never permanently stuck.** Confirmed through
+    the handlers rather than inferred from the transition: abandon the
+    Zone and the next one generates."""
+    async def go():
+        engine, zid, held = await _exhausted(tmp_path)
+        await engine.handle_abandon_zone(zid)
+        await drain()
+        assert engine.save.zone_by_id(zid).state == "ABANDONED"
+        hub = engine.snapshot().hub
+        assert hub.mode == "ZONE_AVAILABLE" and hub.accepts_zone_request
+
+        await engine.handle_request_next_zone(False)
+        await drain()
+        fresh = engine.save.active_zone_id
+        assert fresh and fresh != zid
+        # The reserved ids came back to the pool rather than being lost
+        # with the Zone that could not be built.
+        assert set(engine.save.zone_by_id(fresh).allocated_location_ids) & held
+    run(go())
+
+
+def test_a_refused_replay_never_costs_a_committed_zone_its_manifest(tmp_path):
+    """The distinction that must not blur.
+
+    A Zone that has NEVER been accepted is recomposed — a fresh
+    proposal, and nothing is lost. A Zone that HAS committed a manifest
+    is a different thing entirely: it was solved once, Law 47c says
+    every later load replays it, and the player's keys and locks are
+    recorded against its rooms. Refusing its replay must not send it
+    back to be composed again as a different Zone under the same id.
+    """
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zone_id, zone = await _branching_zone(engine)
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zone_id,
+             "layout": _place(zone)}))
+        digest = engine.save.zone_by_id(zone_id).manifest["manifest_digest"]
+        await engine.handle_enter_zone(zone_id)
+        key = next(k.key_id for c in zone.chambers for k in c.keys)
+        await engine.handle_progress(_ADAPTER.validate_python(
+            {"type": "key_collected", "zone_id": zone_id, "key_id": key}))
+
+        # Now refuse a replay of the layout that was already committed.
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zone_id,
+             "layout": dict(_UNPLACEABLE)}))
+        await drain()
+
+        rec = engine.save.zone_by_id(zone_id)
+        assert rec.state == "DORMANT", "it is out of the player's hands"
+        assert rec.layout_state == "REFUSED"
+        assert rec.manifest is not None, "the committed layout was thrown away"
+        assert rec.manifest["manifest_digest"] == digest
+        assert rec.zone is not None, "its content was thrown away"
+        assert rec.zone.zone_id == zone_id
+        assert rec.progress.collected_keys == (key,), "progress was lost"
+        assert rec.state != "PENDING_GENERATION", (
+            "a committed Zone was sent back to be composed again")
+    run(go())

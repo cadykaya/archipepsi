@@ -632,6 +632,18 @@ def compose_with_branch(chambers, shell_sockets=None) -> GraphProduct:
         # is a dead end; one that carries a return is a place you chose
         # to visit. TRAVERSAL_ONLY, so it spends no socket and the room
         # keeps its JOINED degree of 1.
+        #
+        # IT STANDS AT `:return`, NOT AT `:arrival`. This named the
+        # arrival, which is exactly where `zone_builder` puts a body
+        # entering the room — so the plug's trigger volume was centred
+        # on the player the instant they walked in and sent them home
+        # before they could use the branch. The device was correct, the
+        # edge was correct, and the anchor was the place the player is
+        # standing. Found by the engine lane in the integrated build.
+        #
+        # The composer still names only an ANCHOR. Where `:return` is,
+        # and how much clearance it has, is the engine's answer — see
+        # `ROOM_ANCHOR_KINDS` and `layout.validate` rule 4b.
         plug_edge = TopologyEdge(
             edge_id=f"p:{destination.id}:start", room_a=destination.id,
             room_b=spine[0], direction="A_TO_B",
@@ -639,7 +651,7 @@ def compose_with_branch(chambers, shell_sockets=None) -> GraphProduct:
         edges.append(plug_edge)
         plugs.append(PlugAssignment(
             edge_id=plug_edge.edge_id, room_id=destination.id,
-            source_anchor=f"room:{destination.id}:arrival",
+            source_anchor=f"room:{destination.id}:return",
             destination="zone_start", device="pad"))
 
         if not route.locked:
