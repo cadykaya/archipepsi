@@ -1579,6 +1579,21 @@ class LayoutResult(Strict):
     type: Literal["layout_result"]
     zone_id: str = _ID
     layout: dict
+    #: Which PROPOSAL this result is about — `layout.proposal_digest` of
+    #: the Zone as it was when the client started this build, echoed
+    #: back from `ZoneReady`.
+    #:
+    #: A Zone can be replaced while a build is in flight: Epsilon
+    #: composes new content after a refusal, and `reselect_hosts`
+    #: regraphs the same content onto different hosts. A result that
+    #: arrives afterwards is about a Zone that no longer exists, and
+    #: without this it would spend the replacement's refusal budget, bar
+    #: the replacement's rooms, or commit a layout of what it replaced.
+    #:
+    #: Optional, so a client that does not send one behaves exactly as
+    #: it does today. Absent means "cannot be checked", never "stale".
+    proposal_id: str | None = Field(default=None, min_length=16,
+                                    max_length=16, pattern=r"^[0-9a-f]{16}$")
 
 
 class KeyCollected(Strict):
@@ -1845,6 +1860,10 @@ class ZoneReady(Strict):
     type: Literal["zone_ready"]
     zone: Zone
     used_fallback: bool
+    #: The identity of THIS proposal, for the client to capture when it
+    #: starts building and echo back on `layout_result`. See
+    #: `LayoutResult.proposal_id`.
+    proposal_id: str = Field(default="", max_length=16)
     #: The committed layout, when this Zone already has one. Present on
     #: a re-entry and absent on a first generation, which is exactly the
     #: difference between replaying a layout and solving one.

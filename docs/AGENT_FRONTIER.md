@@ -923,9 +923,27 @@ Zone was lost for it. The bridge answers with a different host: the
 graph is recomposed with that room barred, keeping the content, the
 allocation and the Checks.
 
-**What bars a room is a PLACEMENT OUTCOME and nothing else** — an
-explicit `plug_placement` per plug, `PLACED` / `CANDIDATE_REJECTED` /
-`NO_CANDIDATE`, and only the last. Neither `arrival_ok` nor `plug_clear`
+**ONE PLACEMENT CONTRACT, and the two halves did not meet.** Both lanes
+shipped a `plug_placement`: the engine keyed by ROOM id with
+MEASURED/REPAIRED/NO_EVIDENCE/NO_CANDIDATE, the bridge by EDGE id with
+PLACED/CANDIDATE_REJECTED/NO_CANDIDATE. Traced: a `NO_CANDIDATE` in the
+engine's shape was **accepted** here and barred nothing — a Zone
+committing with a return that was never placed, both halves correct
+alone. Reconciled to edge-keyed `PLACED` / `NO_EVIDENCE` /
+`NO_CANDIDATE`, with MEASURED-vs-REPAIRED kept as diagnostic detail and
+`CANDIDATE_REJECTED` dropped for having no producer. A report keyed by
+something else is now REFUSED rather than read as an older payload,
+which is how the mismatch stayed silent. Prod's half is two lines; until
+it lands, absence means the check does not apply.
+
+**STALE PROPOSALS ARE CLOSED.** `proposal_id` on `zone_ready`, echoed on
+`layout_result`, digesting the whole Zone so content replacement counts
+as much as regraphing. A late result from a replaced proposal spends no
+budget, bars no room, changes no graph and commits nothing, and the
+replacement still completes its own acceptance.
+
+**What bars a room is a PLACEMENT OUTCOME and nothing else** — and only
+`NO_CANDIDATE`. Neither `arrival_ok` nor `plug_clear`
 can carry that verdict and this lane read both as if they could:
 `plugs_clear_of_arrivals` writes false when the ARRIVAL anchor is
 missing, and `_settle_return_anchors` skips searching whenever the

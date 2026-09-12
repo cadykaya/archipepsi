@@ -28,11 +28,22 @@ from dataclasses import dataclass, field
 
 from . import shells as _SH
 
-#: What the engine can say about placing one return device.
+#: What the engine says about placing one return device.
 #:
-#: Three outcomes because three things happen, and only the last is a
-#: fact about the ROOM. See the table at rule 4b.
-PLACEMENT_OUTCOMES = ("PLACED", "CANDIDATE_REJECTED", "NO_CANDIDATE")
+#: **One vocabulary, keyed by the plug's `edge_id`.** Both lanes shipped
+#: a `plug_placement` and they did not meet: the engine keyed by ROOM id
+#: with `MEASURED`/`REPAIRED`/`NO_EVIDENCE`/`NO_CANDIDATE`, this side
+#: keyed by EDGE id with `PLACED`/`CANDIDATE_REJECTED`/`NO_CANDIDATE`.
+#: Measured: a `NO_CANDIDATE` in the engine's shape was ACCEPTED here
+#: and barred nothing, so a Zone committed with a return device that was
+#: never placed. A field on both sides is not a field that connects.
+#:
+#: `MEASURED` and `REPAIRED` are one outcome — the device is placed —
+#: and which of them it was is diagnostic, carried in `repaired`.
+#: `CANDIDATE_REJECTED` is gone: nothing produced it, and a word with no
+#: producer is the mirror of the vocabulary-with-no-consumer this
+#: project keeps finding.
+PLACEMENT_OUTCOMES = ("PLACED", "NO_EVIDENCE", "NO_CANDIDATE")
 from .schemas import physics as _PH
 
 #: Two things meet when they are this close. Metres, and radians.
@@ -653,71 +664,62 @@ def validate(zone, result: dict) -> Verdict:
     #
     # | outcome | means | this lane |
     # |---|---|---|
-    # | *(no entry)* | the report was not made | this check does not run |
-    # | `CANDIDATE_REJECTED` | this position failed, the search did not finish | refuse; do not bar |
+    # | *(absent)* | this payload predates the field | the check does not apply |
+    # | `NO_EVIDENCE` | the engine measured nothing | refuse; do not bar |
     # | `NO_CANDIDATE` | the declared bounded search finished and nothing held | **bar the host** |
     # | `PLACED` | a position with support and clearance | nothing |
     #
-    # `policy` and `tried` ride along and are for the LOG: what search
-    # ran and how much of it. No exhaustive proof of impossibility is
+    # `searched`, `how` and `repaired` ride along and are for the LOG:
+    # what ran, how far, and whether the reserved spot had to move. No exhaustive proof of impossibility is
     # asked for — a bounded search, stated. The bridge branches on the
     # outcome and never on the prose.
-    #
-    # WHAT ABSENCE DOES, EXACTLY, because the prose here used to say it
-    # refuses and the code has always skipped. **Skipping is the
-    # intended rollout** and the prose was wrong: this check is additive
-    # and every rule that governed acceptance before it still does, so a
-    # payload from an engine that predates the report is judged exactly
-    # as it was. It is not accepted BECAUSE the entry is missing — the
-    # anchor, support and clearance rules below decide it. In practice
-    # the two cases separate cleanly: an older engine sends a sound
-    # `plug_clear` and is accepted, while the current engine omits the
-    # placement entry only when it also had no arrival to measure
-    # against, so it omits the clearance verdict too and this layout is
-    # refused a few lines down for the missing measurement.
-    #
-    # A MALFORMED REPORT IS NOT ABSENCE. `isinstance(told, dict)` as the
-    # gate meant a present entry of the wrong shape — a bare outcome
-    # string, a null, a list — took the legacy path and was accepted in
-    # silence. Absence is a key that is not there; anything else is a
-    # report, and a report this contract cannot read is a failure.
     placement = result.get("plug_placement") or {}
-    if not isinstance(placement, dict):
-        c.fail(f"the layout reports 'plug_placement' as "
-               f"{type(placement).__name__}, not a mapping of edge id "
-               "to placement outcome")
-        placement = {}
+    # A REPORT THAT NAMES NOTHING THIS ZONE HAS IS NOT ABSENCE.
+    #
+    # This is how the two shapes passed each other in silence: keyed by
+    # room id, every `placement.get(edge_id)` came back `None`, every
+    # plug looked like a payload predating the field, and a
+    # `NO_CANDIDATE` was ACCEPTED. A non-empty report about other
+    # identities is a report about something else, refused loudly rather
+    # than read as an older client.
+    if placement and not (set(placement) & {p.edge_id for p in zone.plugs}):
+        c.fail("'plug_placement' names %s and this Zone's plugs are %s; "
+               "a placement report keyed by something else is not an "
+               "older payload" % (sorted(placement)[:4],
+                                  sorted(p.edge_id for p in zone.plugs)[:4]))
     for pl in zone.plugs:
         if pl.edge_id not in placement:
+            # ABSENT: the check does not apply. The anchor, support and
+            # clearance rules above still govern acceptance exactly as
+            # they did before this field existed, so every older valid
+            # payload stays valid. Absence is NEVER `NO_CANDIDATE`.
             continue
         told = placement[pl.edge_id]
         if not isinstance(told, dict):
-            c.fail(f"plug '{pl.edge_id}' carries a placement report of "
-                   f"{told!r}, which is not a report; an entry this "
-                   "contract cannot read is a malformed report and not "
-                   "the absence of one")
+            # PRESENT AND MALFORMED. Not absence: a new report that
+            # cannot be read must not masquerade as a client that never
+            # sent one.
+            c.fail(f"plug '{pl.edge_id}' reports placement {told!r}, "
+                   "which is not a placement record")
             continue
         outcome = told.get("outcome")
         if outcome not in PLACEMENT_OUTCOMES:
             c.fail(f"plug '{pl.edge_id}' reports placement outcome "
                    f"{outcome!r}, which is not one this contract "
                    f"declares: {list(PLACEMENT_OUTCOMES)}")
-        elif outcome == "CANDIDATE_REJECTED":
-            # The device has no good position YET. A refusal, because a
-            # return in a bad place is a return that fires on the way
-            # in — and NOT a bar, because the search is unfinished.
-            c.fail(f"plug '{pl.edge_id}' has no accepted position in "
-                   f"room '{pl.room_id}': {told.get('tried', 0)} "
-                   f"candidate(s) rejected under '{told.get('policy')}' "
-                   "and the search did not finish")
+        elif outcome == "NO_EVIDENCE":
+            # The engine measured nothing — no arrival anchor, no room.
+            # A refusal, because an unmeasured device is not a placed
+            # one, and NOT a bar: nothing was learned about the room.
+            c.fail(f"plug '{pl.edge_id}' in room '{pl.room_id}' was not "
+                   "measured; an unmeasured return is not a placed one")
         elif outcome == "NO_CANDIDATE":
             # Both. A required return with nowhere to go fails this
             # layout, and the room is where it had nowhere to go.
             c.unhostable.add(pl.room_id)
             c.fail(f"plug '{pl.edge_id}': room '{pl.room_id}' offers no "
                    f"position with support and clearance — "
-                   f"{told.get('tried', 0)} candidate(s) under "
-                   f"'{told.get('policy')}'")
+                   f"{told.get('searched', 0)} candidate(s) searched")
     for pl in zone.plugs:
         if pl.source_anchor == f"room:{pl.room_id}:arrival":
             c.fail(f"plug '{pl.edge_id}' stands at '{pl.source_anchor}', "
@@ -939,6 +941,29 @@ def _certified_features(c: "_Check", zone, placed) -> None:
                        f"layout offers {got}; the inverted probe cannot "
                        "be skipped for a feature the layout never "
                        "mentions")
+
+
+def proposal_digest(zone) -> str:
+    """Which proposal this is: its content AND its graph, in one id.
+
+    **Captured when the client starts a build and echoed back with the
+    result.** A Zone can be replaced twice over while a build is in
+    flight — Epsilon composes new content after a refusal, and
+    `reselect_hosts` regraphs the same content onto different hosts —
+    and a result that arrives afterwards is about a Zone that no longer
+    exists. Without an identity it would spend the replacement's refusal
+    budget, bar the replacement's rooms, or commit a layout of the
+    thing it replaced.
+
+    The whole serialized Zone, so **content replacement counts as much
+    as regraphing**: identical edges over different rooms is a different
+    proposal, and digesting only the graph would call them one.
+
+    Derived, never stored. Nothing can go stale against the record
+    because it is computed from the record.
+    """
+    blob = zone.model_dump_json()
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
 
 
 def _manifest(zone, result: dict, positions: dict, placed=()) -> dict:

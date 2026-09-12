@@ -977,8 +977,10 @@ class CampaignEngine:
         if outcome.used_fallback and self.provider_name != "fallback":
             await self._notify("fallback_used", "EPSILON OFFLINE — FALLBACK USED",
                                (outcome.error or "",))
-        await self._emit(ZoneReady(type="zone_ready", zone=composed,
-                                   used_fallback=outcome.used_fallback))
+        await self._emit(ZoneReady(
+            type="zone_ready", zone=composed,
+            proposal_id=layout_check.proposal_digest(composed),
+            used_fallback=outcome.used_fallback))
         await self.broadcast_snapshot()
 
     async def _reselect_hosts(self, rec, rooms) -> bool:
@@ -1025,6 +1027,7 @@ class CampaignEngine:
                  len(regraphed.plugs))
         await self._emit(ZoneReady(
             type="zone_ready", zone=regraphed,
+            proposal_id=layout_check.proposal_digest(regraphed),
             used_fallback=self.save.zone_by_id(rec.zone_id).used_fallback))
         await self.broadcast_snapshot()
         return True
@@ -1111,8 +1114,13 @@ class CampaignEngine:
         rec = self.save.zone_by_id(zone_id)
         if rec is not None and rec.zone is not None \
                 and rec.manifest is not None:
+            # A REPLAY carries its identity too. The Zone is committed,
+            # so a result about it takes the committed path either way —
+            # but a re-entry that is about to rebuild should echo what
+            # it rebuilt, not nothing.
             await self._emit(ZoneReady(
                 type="zone_ready", zone=rec.zone,
+                proposal_id=layout_check.proposal_digest(rec.zone),
                 used_fallback=rec.used_fallback,
                 manifest=rec.manifest))
         await self.broadcast_snapshot()
@@ -1267,6 +1275,27 @@ class CampaignEngine:
         if rec is None or rec.zone is None:
             raise IntentError(
                 f"no generated Zone '{intent.zone_id}' to place")
+        # A RESULT FOR A PROPOSAL THAT NO LONGER EXISTS IS NOT ABOUT
+        # THIS ZONE, and must touch nothing of the one that replaced it.
+        #
+        # The client captures `proposal_id` from `zone_ready` when it
+        # STARTS a build and echoes it here, so an old build carries the
+        # old id however long it takes to come back. Without this a late
+        # result spends the replacement's refusal budget, bars the
+        # replacement's rooms, or commits a layout of the Zone it
+        # replaced. Ignored outright: nothing counted, nothing barred,
+        # nothing committed, and the record left exactly as it is.
+        #
+        # A client that sends no id behaves as it does today. Absent
+        # means "cannot be checked", never "stale".
+        if intent.proposal_id is not None:
+            current = layout_check.proposal_digest(rec.zone)
+            if intent.proposal_id != current:
+                log.info("zone %s: a layout_result for proposal %s "
+                         "arrived after %s replaced it; ignored",
+                         intent.zone_id, intent.proposal_id, current)
+                return
+
         # A RESULT FOR A ZONE THAT ALREADY GAVE UP IS STALE, and stale is
         # not an error: a client retrying after a dropped connection is
         # the ordinary case. Nothing is composed again, nothing is
