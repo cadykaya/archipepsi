@@ -137,6 +137,23 @@ def read_glb(path):
 def boxes(gltf):
     """Every mesh node as an axis-aligned box in runtime metres.
 
+    THE COLLIDERS, WHERE THERE ARE ANY, AND NOT THE VISIBLE MESH.
+    
+    A shell exports its visible geometry JOINED into one node and its
+    colliders as one `-convcolonly` node per part. This used to read every
+    primitive of both, on the assumption that a primitive's AABB is a box
+    -- which holds only while each primitive happens to be one part.
+    Batch 044 broke it by sharing one material per role, as §8.4 asks: five
+    materials meant five primitives, each spanning every wall in the room,
+    and the room's own doorway read as blocked by its own walls.
+    
+    The colliders are the right source anyway, and not merely the
+    surviving one. Every question here is physical -- is there floor at the
+    threshold, is the opening clear -- and collision is what answers it. A
+    visible mesh that disagreed with its colliders would be a different
+    defect, and `roomcollision.assert_exact` already refuses that at build
+    time.
+    
     Godot's import-hint suffixes are stripped so a part reads by the name
     its builder gave it. Rotations are refused rather than approximated --
     these shells export none, and guessing would defeat the point.
@@ -145,11 +162,17 @@ def boxes(gltf):
     for i, node in enumerate(gltf.get("nodes", [])):
         for child in node.get("children", []):
             parents[child] = i
+    has_colliders = any("colonly" in (n.get("name") or "")
+                        for n in gltf.get("nodes", [])
+                        if n.get("mesh") is not None)
     out = []
     for i, node in enumerate(gltf.get("nodes", [])):
         if node.get("mesh") is None:
             continue
-        name = re.sub(r"-(conv|)col(only|)$", "", node.get("name", ""))
+        raw_name = node.get("name", "")
+        if has_colliders and "colonly" not in raw_name:
+            continue
+        name = re.sub(r"-(conv|)col(only|)$", "", raw_name)
         offset, cursor = [0.0, 0.0, 0.0], i
         while cursor is not None:
             here = gltf["nodes"][cursor]

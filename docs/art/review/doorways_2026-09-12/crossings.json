@@ -1,4 +1,166 @@
 {
+  "shell_bay_terminus/branch_east at the origin": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 4.0,
+    "socket": [
+      9.0,
+      0.0,
+      16.0
+    ]
+  },
+  "shell_bay_terminus/branch_east closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      9.0,
+      0.0,
+      16.0
+    ]
+  },
+  "shell_bay_terminus/branch_east placed and yawed 37 deg": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      -18.5,
+      0.0,
+      46.25
+    ],
+    "reached_m_past_socket": 4.0,
+    "socket": [
+      9.0,
+      0.0,
+      16.0
+    ]
+  },
+  "shell_bay_terminus/branch_west at the origin": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 4.0,
+    "socket": [
+      -9.0,
+      0.0,
+      16.0
+    ]
+  },
+  "shell_bay_terminus/branch_west closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      -9.0,
+      0.0,
+      16.0
+    ]
+  },
+  "shell_bay_terminus/branch_west placed and yawed 37 deg": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      -18.5,
+      0.0,
+      46.25
+    ],
+    "reached_m_past_socket": 4.0,
+    "socket": [
+      -9.0,
+      0.0,
+      16.0
+    ]
+  },
+  "shell_bay_terminus/entry at the origin": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.053,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 3.07,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_bay_terminus/entry closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_bay_terminus/entry placed and yawed 37 deg": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.053,
+    "placed": [
+      -18.5,
+      0.0,
+      46.25
+    ],
+    "reached_m_past_socket": 3.07,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
   "shell_corner_left/entry at the origin": {
     "blocked_before_the_threshold": false,
     "crossed": true,
@@ -11,6 +173,24 @@
       0.0
     ],
     "reached_m_past_socket": 3.07,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_corner_left/entry closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
     "socket": [
       0.0,
       0.0,
@@ -53,6 +233,24 @@
       3.0
     ]
   },
+  "shell_corner_left/exit closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      3.4,
+      0.0,
+      3.0
+    ]
+  },
   "shell_corner_left/exit placed and yawed 37 deg": {
     "blocked_before_the_threshold": false,
     "crossed": true,
@@ -83,6 +281,24 @@
       0.0
     ],
     "reached_m_past_socket": 3.07,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_corner_right/entry closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
     "socket": [
       0.0,
       0.0,
@@ -125,6 +341,24 @@
       3.0
     ]
   },
+  "shell_corner_right/exit closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      -3.4,
+      0.0,
+      3.0
+    ]
+  },
   "shell_corner_right/exit placed and yawed 37 deg": {
     "blocked_before_the_threshold": false,
     "crossed": true,
@@ -155,6 +389,24 @@
       0.0
     ],
     "reached_m_past_socket": 3.07,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_hall_transit/entry closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
     "socket": [
       0.0,
       0.0,
@@ -197,6 +449,24 @@
       60.0
     ]
   },
+  "shell_hall_transit/exit closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      0.0,
+      28.0,
+      60.0
+    ]
+  },
   "shell_hall_transit/exit placed and yawed 37 deg": {
     "blocked_before_the_threshold": false,
     "crossed": true,
@@ -215,6 +485,384 @@
       60.0
     ]
   },
+  "shell_junction_cross/branch_east at the origin": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.052,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 4.09,
+    "socket": [
+      15.0,
+      0.0,
+      15.0
+    ]
+  },
+  "shell_junction_cross/branch_east closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.052,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      15.0,
+      0.0,
+      15.0
+    ]
+  },
+  "shell_junction_cross/branch_east placed and yawed 37 deg": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.052,
+    "placed": [
+      -18.5,
+      0.0,
+      46.25
+    ],
+    "reached_m_past_socket": 4.09,
+    "socket": [
+      15.0,
+      0.0,
+      15.0
+    ]
+  },
+  "shell_junction_cross/branch_west at the origin": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.052,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 4.09,
+    "socket": [
+      -15.0,
+      0.0,
+      15.0
+    ]
+  },
+  "shell_junction_cross/branch_west closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.052,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      -15.0,
+      0.0,
+      15.0
+    ]
+  },
+  "shell_junction_cross/branch_west placed and yawed 37 deg": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.052,
+    "placed": [
+      -18.5,
+      0.0,
+      46.25
+    ],
+    "reached_m_past_socket": 4.09,
+    "socket": [
+      -15.0,
+      0.0,
+      15.0
+    ]
+  },
+  "shell_junction_cross/entry at the origin": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.053,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 3.07,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_junction_cross/entry closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_junction_cross/entry placed and yawed 37 deg": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.053,
+    "placed": [
+      -18.5,
+      0.0,
+      46.25
+    ],
+    "reached_m_past_socket": 3.07,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_junction_cross/exit at the origin": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.052,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 4.09,
+    "socket": [
+      0.0,
+      0.0,
+      30.0
+    ]
+  },
+  "shell_junction_cross/exit closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.052,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      0.0,
+      0.0,
+      30.0
+    ]
+  },
+  "shell_junction_cross/exit placed and yawed 37 deg": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.052,
+    "placed": [
+      -18.5,
+      0.0,
+      46.25
+    ],
+    "reached_m_past_socket": 4.09,
+    "socket": [
+      0.0,
+      0.0,
+      30.0
+    ]
+  },
+  "shell_junction_triad/branch_east at the origin": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 4.0,
+    "socket": [
+      13.0,
+      0.0,
+      13.0
+    ]
+  },
+  "shell_junction_triad/branch_east closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      13.0,
+      0.0,
+      13.0
+    ]
+  },
+  "shell_junction_triad/branch_east placed and yawed 37 deg": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      -18.5,
+      0.0,
+      46.25
+    ],
+    "reached_m_past_socket": 4.0,
+    "socket": [
+      13.0,
+      0.0,
+      13.0
+    ]
+  },
+  "shell_junction_triad/entry at the origin": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.053,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 3.07,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_junction_triad/entry closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_junction_triad/entry placed and yawed 37 deg": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.053,
+    "placed": [
+      -18.5,
+      0.0,
+      46.25
+    ],
+    "reached_m_past_socket": 3.07,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_junction_triad/exit at the origin": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.052,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 4.09,
+    "socket": [
+      0.0,
+      0.0,
+      26.0
+    ]
+  },
+  "shell_junction_triad/exit closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.052,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      0.0,
+      0.0,
+      26.0
+    ]
+  },
+  "shell_junction_triad/exit placed and yawed 37 deg": {
+    "blocked_before_the_threshold": false,
+    "crossed": true,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.052,
+    "placed": [
+      -18.5,
+      0.0,
+      46.25
+    ],
+    "reached_m_past_socket": 4.09,
+    "socket": [
+      0.0,
+      0.0,
+      26.0
+    ]
+  },
   "shell_plenum_helix/entry at the origin": {
     "blocked_before_the_threshold": false,
     "crossed": true,
@@ -227,6 +875,24 @@
       0.0
     ],
     "reached_m_past_socket": 3.07,
+    "socket": [
+      -7.9,
+      68.0,
+      0.0
+    ]
+  },
+  "shell_plenum_helix/entry closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
     "socket": [
       -7.9,
       68.0,
@@ -269,6 +935,24 @@
       20.0
     ]
   },
+  "shell_plenum_helix/exit closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      0.0,
+      0.0,
+      20.0
+    ]
+  },
   "shell_plenum_helix/exit placed and yawed 37 deg": {
     "blocked_before_the_threshold": false,
     "crossed": true,
@@ -299,6 +983,24 @@
       0.0
     ],
     "reached_m_past_socket": 3.07,
+    "socket": [
+      0.0,
+      14.0,
+      0.0
+    ]
+  },
+  "shell_span_basin/entry closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
     "socket": [
       0.0,
       14.0,
@@ -341,6 +1043,24 @@
       90.0
     ]
   },
+  "shell_span_basin/exit closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      0.0,
+      14.0,
+      90.0
+    ]
+  },
   "shell_span_basin/exit placed and yawed 37 deg": {
     "blocked_before_the_threshold": false,
     "crossed": true,
@@ -371,6 +1091,24 @@
       0.0
     ],
     "reached_m_past_socket": 3.07,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_tower_collapsed/entry closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
     "socket": [
       0.0,
       0.0,
@@ -413,6 +1151,24 @@
       14.2
     ]
   },
+  "shell_tower_collapsed/exit closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      0.0,
+      6.0,
+      14.2
+    ]
+  },
   "shell_tower_collapsed/exit placed and yawed 37 deg": {
     "blocked_before_the_threshold": false,
     "crossed": true,
@@ -443,6 +1199,24 @@
       0.0
     ],
     "reached_m_past_socket": 3.07,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_tower_gantry/entry closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
     "socket": [
       0.0,
       0.0,
@@ -485,6 +1259,24 @@
       14.2
     ]
   },
+  "shell_tower_gantry/exit closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      0.0,
+      15.0,
+      14.2
+    ]
+  },
   "shell_tower_gantry/exit placed and yawed 37 deg": {
     "blocked_before_the_threshold": false,
     "crossed": true,
@@ -515,6 +1307,24 @@
       0.0
     ],
     "reached_m_past_socket": 3.07,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_tower_spiral/entry closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
     "socket": [
       0.0,
       0.0,
@@ -557,6 +1367,24 @@
       14.2
     ]
   },
+  "shell_tower_spiral/exit closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      0.0,
+      9.0,
+      14.2
+    ]
+  },
   "shell_tower_spiral/exit placed and yawed 37 deg": {
     "blocked_before_the_threshold": false,
     "crossed": true,
@@ -587,6 +1415,24 @@
       0.0
     ],
     "reached_m_past_socket": 2.1,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_treasure_cache/entry closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
     "socket": [
       0.0,
       0.0,
@@ -629,6 +1475,24 @@
       8.0
     ]
   },
+  "shell_treasure_cache/exit closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      0.0,
+      0.0,
+      8.0
+    ]
+  },
   "shell_treasure_cache/exit placed and yawed 37 deg": {
     "blocked_before_the_threshold": false,
     "crossed": true,
@@ -659,6 +1523,24 @@
       0.0
     ],
     "reached_m_past_socket": 1.98,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_treasure_coffer/entry closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
     "socket": [
       0.0,
       0.0,
@@ -701,6 +1583,24 @@
       8.0
     ]
   },
+  "shell_treasure_coffer/exit closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      0.0,
+      0.0,
+      8.0
+    ]
+  },
   "shell_treasure_coffer/exit placed and yawed 37 deg": {
     "blocked_before_the_threshold": false,
     "crossed": true,
@@ -731,6 +1631,24 @@
       0.0
     ],
     "reached_m_past_socket": 1.17,
+    "socket": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shell_treasure_vault/entry closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
     "socket": [
       0.0,
       0.0,
@@ -773,6 +1691,24 @@
       8.0
     ]
   },
+  "shell_treasure_vault/exit closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      0.0,
+      0.0,
+      8.0
+    ]
+  },
   "shell_treasure_vault/exit placed and yawed 37 deg": {
     "blocked_before_the_threshold": false,
     "crossed": true,
@@ -809,6 +1745,24 @@
       26.0
     ]
   },
+  "shell_yard_gantry/entry closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "in",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
+    "socket": [
+      -43.0,
+      0.0,
+      26.0
+    ]
+  },
   "shell_yard_gantry/entry placed and yawed 37 deg": {
     "blocked_before_the_threshold": false,
     "crossed": true,
@@ -839,6 +1793,24 @@
       0.0
     ],
     "reached_m_past_socket": 4.09,
+    "socket": [
+      43.0,
+      0.0,
+      26.0
+    ]
+  },
+  "shell_yard_gantry/exit closed": {
+    "blocked_before_the_threshold": true,
+    "crossed": false,
+    "direction": "out",
+    "fell": false,
+    "max_drop_below_threshold_m": 0.0,
+    "placed": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reached_m_past_socket": 0.0,
     "socket": [
       43.0,
       0.0,

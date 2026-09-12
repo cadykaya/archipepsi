@@ -1,0 +1,122 @@
+{
+  "basin_north_to_deck": {
+    "completed": true,
+    "ended_at": [
+      1.17,
+      14.0,
+      73.92
+    ],
+    "highest_y": 14.53,
+    "jumps": 16,
+    "waypoints_reached": 3,
+    "waypoints_total": 3
+  },
+  "basin_south_to_deck": {
+    "completed": true,
+    "ended_at": [
+      1.17,
+      14.0,
+      16.08
+    ],
+    "highest_y": 14.53,
+    "jumps": 16,
+    "waypoints_reached": 3,
+    "waypoints_total": 3
+  },
+  "cross entry to exit, west of the plant": {
+    "completed": true,
+    "ended_at": [
+      -0.61,
+      0.0,
+      27.65
+    ],
+    "highest_y": 0.04,
+    "jumps": 0,
+    "waypoints_reached": 4,
+    "waypoints_total": 4
+  },
+  "cross entry to the east branch": {
+    "completed": true,
+    "ended_at": [
+      12.68,
+      0.0,
+      14.3
+    ],
+    "highest_y": 0.04,
+    "jumps": 0,
+    "waypoints_reached": 3,
+    "waypoints_total": 3
+  },
+  "cross entry to the north bay": {
+    "completed": true,
+    "ended_at": [
+      6.49,
+      0.1,
+      20.7
+    ],
+    "highest_y": 0.11,
+    "jumps": 0,
+    "waypoints_reached": 4,
+    "waypoints_total": 4
+  },
+  "terminus entry to the prize": {
+    "completed": true,
+    "ended_at": [
+      0.0,
+      -0.05,
+      16.8
+    ],
+    "highest_y": 0.04,
+    "jumps": 0,
+    "waypoints_reached": 2,
+    "waypoints_total": 2
+  },
+  "terminus entry to the west door": {
+    "completed": true,
+    "ended_at": [
+      -6.55,
+      0.0,
+      15.43
+    ],
+    "highest_y": 0.04,
+    "jumps": 0,
+    "waypoints_reached": 2,
+    "waypoints_total": 2
+  },
+  "triad entry to exit": {
+    "completed": true,
+    "ended_at": [
+      0.0,
+      -0.05,
+      23.45
+    ],
+    "highest_y": 0.04,
+    "jumps": 0,
+    "waypoints_reached": 2,
+    "waypoints_total": 2
+  },
+  "triad entry to the east branch": {
+    "completed": true,
+    "ended_at": [
+      10.42,
+      0.0,
+      12.89
+    ],
+    "highest_y": 0.04,
+    "jumps": 0,
+    "waypoints_reached": 2,
+    "waypoints_total": 2
+  },
+  "triad entry to the west bay": {
+    "completed": true,
+    "ended_at": [
+      -8.43,
+      0.0,
+      12.78
+    ],
+    "highest_y": 0.04,
+    "jumps": 0,
+    "waypoints_reached": 2,
+    "waypoints_total": 2
+  }
+}
