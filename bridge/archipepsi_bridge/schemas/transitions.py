@@ -318,6 +318,12 @@ def refuse_layout(save: CampaignSave, zone_id: str) -> CampaignSave:
     instead: still holding its locations, out of the player's way, and
     waiting for a human rather than spinning.
 
+    **A COMMITTED Zone is preserved, not recomposed.** A refused replay
+    of an already-accepted layout is a different situation: the Zone was
+    solved once, the manifest is the thing every later load replays, and
+    the player's progress is recorded against its rooms. That Zone goes
+    DORMANT with its manifest, its content and its progress intact.
+
     Idempotent in the sense that matters: a second refusal counts once
     more and does the same thing.
     """
@@ -325,6 +331,35 @@ def refuse_layout(save: CampaignSave, zone_id: str) -> CampaignSave:
     if rec.state in TERMINAL_ZONE_STATES:
         return save
     tries = rec.layout_refusals + 1
+    # A COMMITTED ZONE IS NOT RECOMPOSED.
+    #
+    # The recovery below clears `zone` and `manifest` whatever the Zone
+    # was — so a refused REPLAY of an already-accepted layout threw the
+    # committed manifest away and sent the Zone back to be composed
+    # again: a DIFFERENT Zone, under the same id, holding the same
+    # Checks, with the player's collected keys and opened locks still
+    # recorded against rooms that no longer exist.
+    #
+    # Law 47c: the layout is solved once and committed, and every later
+    # load replays it. `commit_layout` already refuses to replace a
+    # committed manifest; this is the other door into the same room.
+    # Regeneration recovery is for a FRESH proposal, and a saved Zone is
+    # not one.
+    #
+    # So a Zone that has committed a manifest keeps it, keeps its
+    # content and keeps its progress. The refusal still counts, still
+    # takes the Zone out of the player's hands, and still stops it being
+    # played against geometry the validator rejected — what it does not
+    # do is quietly replace the Zone they were halfway through.
+    if rec.manifest is not None:
+        return _rebuild(save,
+                        zones=_replace_zone(save, zone_id,
+                                            state="DORMANT",
+                                            layout_state="REFUSED",
+                                            layout_refusals=tries),
+                        active_zone_id=None
+                        if save.active_zone_id == zone_id
+                        else save.active_zone_id)
     if tries < MAX_LAYOUT_REFUSALS:
         return _rebuild(save,
                         zones=_replace_zone(save, zone_id,
@@ -503,6 +538,29 @@ def claim_zone_check(save: CampaignSave, *, zone_id: str, location_id: int,
     rec = _require_zone(save, zone_id)
     if rec.state != "ACTIVE":
         raise ValueError(f"Zone '{zone_id}' is {rec.state}, not ACTIVE")
+    # ACTIVE IS NOT ACCEPTED, and the gap between them is a real window.
+    #
+    # A graph Zone goes ACTIVE the moment the player walks in and stays
+    # UNCERTIFIED until its layout comes back and is validated. That gap
+    # is where the client is holding the player still, and it is exactly
+    # when a reward that fires on its own -- a timer, a kill, an activity
+    # completing -- would have claimed against geometry nobody had
+    # checked. `refuse_layout` then puts the Zone back to be composed
+    # again, and the Check has already gone to Archipelago and cannot be
+    # recalled. The refusal test proved what happens AFTER a rejection;
+    # this is the waiting period.
+    #
+    # A ZONE WITH NO `edges` IS EXEMPT, explicitly rather than by
+    # accident. It is the pre-graph shape, it sends no `layout_result`,
+    # and its `layout_state` is UNCERTIFIED forever -- so requiring
+    # acceptance of it would make every legacy Zone unplayable.
+    # `ZoneController._await_verdict` draws the line in the same place.
+    if rec.zone is not None and rec.zone.edges \
+            and rec.layout_state != "ACCEPTED":
+        raise ValueError(
+            f"Zone '{zone_id}' has not had its layout accepted "
+            f"(layout_state {rec.layout_state}); a graph Zone cannot "
+            "claim a Check against geometry the bridge has not validated")
     if location_id not in rec.allocated_location_ids:
         raise ValueError(f"Zone '{zone_id}' does not hold {location_id}")
     if any(p.location_id == location_id for p in save.pending_checks):

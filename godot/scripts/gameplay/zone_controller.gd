@@ -113,8 +113,20 @@ var committed_manifest := {}
 ## What the bridge said about the layout this session sent, for a caller
 ## or a suite to read: "", "ACCEPTED", "LAYOUT_REFUSED", ...
 var layout_verdict := ""
+
+## The aperture polarity this client measured and sent, `room/socket ->
+## is a hole`. Kept because it is the evidence behind the bridge's
+## refusal, and a suite that falsifies a door needs to be able to say
+## the falsification actually carved something rather than pass on
+## somebody else's refusal.
+var measured_apertures := {}
 ## How long to hold before treating silence as a refusal.
 const VERDICT_TIMEOUT := 10.0
+
+## The name this controller holds the player under while a graph Zone's
+## layout is unaccepted. Its own claim, so a menu opening and closing
+## beside it changes nothing.
+const LAYOUT_HOLD := "layout_verdict"
 ## Every Check this Zone holds, from its own chambers.
 var _zone_locations: Array[int] = []
 ## PROGRESS CARRIED IN, set before `setup` by whoever is remembering.
@@ -256,6 +268,16 @@ func setup(zone_dict: Dictionary) -> void:
 
 	player = Player.create()
 	add_child(player)
+	# THE HOLD GOES ON HERE, not when the verdict wait begins.
+	#
+	# `_publish_layout` awaits two physics frames before it measures and
+	# sends, and `_await_verdict` only ran after that -- so a graph Zone
+	# handed the player two live frames before anyone had checked its
+	# geometry. Two frames is a jump. The claim is made the moment the
+	# body exists and is dropped by the verdict, so there is no window at
+	# all.
+	if not (zone.get("edges", []) as Array).is_empty():
+		player.hold(LAYOUT_HOLD)
 	# RESUME AT THE STATION, when there is one to resume to.
 	#
 	# `handle_leave_zone` is already non-destructive on the bridge --
@@ -619,7 +641,23 @@ func _await_verdict() -> void:
 		layout_verdict = "UNCERTIFIED"
 		return
 	if player != null:
-		player.input_frozen = true
+		player.hold(LAYOUT_HOLD)
+	# THE PREVIOUS ANSWER IS NOT THIS ONE.
+	#
+	# A refusal sends the Zone back to be composed again, and the client
+	# enters the recomposed Zone and sends a new layout -- while its own
+	# snapshot is still carrying `REFUSED` from the round before. This
+	# loop read that, announced "layout refused; leaving", and left a
+	# Zone the bridge committed a quarter of a second later, with the
+	# acceptance hold still on the player.
+	#
+	# `layout_refusals` counts what the validator has rejected for this
+	# Zone, so a REFUSED that has not incremented it is the old answer
+	# and is waited past. An ACCEPTED needs no such guard: the only way
+	# to be holding a stale one is to be re-entering a Zone whose layout
+	# really was accepted, which is the replay path and is the truth.
+	var before := int(BridgeClient.active_zone().get(
+			"layout_refusals", 0))
 	var waited := 0.0
 	while waited < VERDICT_TIMEOUT:
 		var state := str(BridgeClient.active_zone().get(
@@ -627,12 +665,17 @@ func _await_verdict() -> void:
 		if state == "ACCEPTED":
 			layout_verdict = state
 			if player != null:
-				player.input_frozen = false
+				# ONLY THIS CLAIM. Clearing the boolean here released a
+				# pause the player had opened while they waited.
+				player.release(LAYOUT_HOLD)
 			return
+		var refusals := int(BridgeClient.active_zone().get(
+				"layout_refusals", 0))
 		# A refusal clears the active Zone, so the record stops being
 		# there at all -- which is the same news arriving a different way.
-		if state == "REFUSED" or (BridgeClient.active_zone().is_empty()
-				and waited > 0.25):
+		if (state == "REFUSED" and refusals > before) \
+				or (BridgeClient.active_zone().is_empty()
+					and waited > 0.25):
 			layout_verdict = "REFUSED"
 			push_warning("zone: %s layout refused; leaving" % zone_id)
 			layout_refused.emit(zone_id)
@@ -663,7 +706,30 @@ func _measure_layout_evidence(build: Dictionary) -> void:
 				entry["xform"] as Transform3D, space)
 		for socket: String in measured:
 			apertures["%s/%s" % [rid, socket]] = bool(measured[socket])
+		# AND WHAT IS STANDING IN THE ONES THAT DISAGREE.
+		#
+		# The bridge refuses the whole layout on "door 'c002/entry' is
+		# USED and the engine measured it as solid", and that sentence
+		# names the door and nothing else -- so a Zone that would not
+		# open gave nobody a suspect. The engine is the only side that
+		# can see the geometry, so it is the side that says what it saw.
+		var blockers := RoomAudit.aperture_blockers(
+				entry["build"] as Dictionary,
+				entry["xform"] as Transform3D, space)
+		for raw_door: Variant in (entry["chamber"] as Dictionary) \
+				.get("doors", []):
+			var door: Dictionary = raw_door
+			var socket := str(door.get("socket_id", ""))
+			if str(door.get("usage", "")) == "SEALED":
+				continue
+			if bool(measured.get(socket, true)):
+				continue
+			push_warning("zone: door '%s/%s' is %s and measures solid: "
+					% [rid, socket, str(door.get("usage", ""))]
+					+ str(blockers.get(socket, "nothing the probe could "
+						+ "name")))
 	build["apertures"] = apertures
+	measured_apertures = apertures
 	var arrival_ok := {}
 	for name: String in build.get("anchors", {}):
 		arrival_ok[name] = RoomAudit.arrival_is_supported(space,

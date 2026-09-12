@@ -959,3 +959,92 @@ satisfies `cross_long_gap` and a gate is proved against the wrong claim.
   rather than accidental.
 - Physical reachability stays the engine lane's: `R ⊆ E` is a graph
   property and cannot see a key inside a crate.
+
+### 5.4a ANSWERED by the engine lane, 2026-09-12: yes, and it is done
+
+**Yes.** `r:<room>` is filed with doorway endpoints now, and this lane's
+special case can go.
+
+`zone_builder._joins` emits:
+
+| field | was | is |
+|---|---|---|
+| `socket_a` | the room's own `position` | the chain's FIRST piece's `entry` |
+| `socket_b` | the room's `arrival`, metres inside | `door_world["<room>/entry"]`, the doorway |
+
+So `socket_a -> chain -> socket_b` closes exactly, the way `e:__exit__`
+does, and the first room's approach stops being the one corridor checked
+more loosely than the rest. Delete the branch in `_check_reserved_join`
+and walk it like a `JOINED` edge.
+
+**Two fallbacks, both narrow and both stated.** A room whose chamber
+declares no `doors` at all has no `door_world` entry — the pre-graph
+shape — and falls back to the room's `position`; a room placed with an
+EMPTY chain has `socket_a == socket_b`, which is a zero-length walk and
+should pass rather than refuse. Neither arises in a composed Zone; they
+are there so a legacy fixture does not become unbuildable.
+
+The reason it was the old shape was not a decision: `_joins` was written
+before every producer emitted a door plan, so `door_world` had nothing
+for the head room and the only points available were the transform's.
+That changed when `_doors_from_bounds` landed and nothing went back to
+look.
+
+### 6.2b ANSWERED by the engine lane, 2026-09-12
+
+All five defaults are **accepted**, with one narrowed and one widened.
+None of this is implemented yet — this is the agreement §6.2b asks for
+before a real digest is computed, so that the first record written is
+already under the final rule.
+
+**1. Float quantization — accepted as proposed.** 1e-4 m, 1e-4 rad,
+1e-4 m/s, fixed decimal representation, never a raw float's printed form.
+The engine-side reason to be comfortable with 1e-4: `EPSILON_JOIN` is
+1e-3 m and `MAX_VERTICAL_STEP` is 1.0 m, so a quantum is an order of
+magnitude below the tightest distance anything in this game reasons
+about, and four below the smallest one a player can feel.
+
+**2. Effective values — accepted, and here is which are readable.** In
+Godot 4.5 the engine can read statically: `ProjectSettings`
+`physics/3d/default_gravity` and `default_gravity_vector`;
+`RigidBody3D.mass`, `gravity_scale`, `linear_damp`, `angular_damp` and
+their `*_damp_mode`; `collision_layer` and `collision_mask`. Friction and
+restitution live on a `PhysicsMaterial` that may be null, inherited, or
+shared — so those follow the proposal exactly and are digested as
+**resource path plus the resource's own digest**, never as a resolved
+number. `Area3D` gravity overrides are read from the areas themselves and
+digested as (path, mode, value, priority); resolving what a body actually
+experiences requires stepping the sim, and a digest must not step
+anything.
+
+**3. "Participating" — accepted and NARROWED.** Every collider on the
+collision layers the package's bodies test against, within the room the
+package belongs to — plus, explicitly, **the connector pieces named in
+that room's join chain**. The narrowing is the word "room": a Zone is one
+scene, so "within the room" needs the room's committed world `bounds`
+from the manifest to be decidable at all, and that is what the engine
+will use. Not a radius, agreed, and for the reason given.
+
+**4. Ordering — accepted as proposed**, with one addition. Bodies by
+`body_id`, static colliders by scene-relative node path. The addition:
+node paths must be taken relative to the **room's** root rather than the
+Zone's, because a Zone re-entered after a different number of rooms were
+placed gives the same room a different Zone-relative path. That is the
+same bug class the ordering rule exists to close.
+
+**5. Versioning — accepted and WIDENED by one field.** Godot version,
+physics backend name and version, and a hand-bumped generator constant.
+The addition: the **shell registry digest** for any authored shell whose
+geometry is in the room. Arty regenerates shells from Blender source and
+a repaired collider changes the experiment without touching any engine
+constant — 2026-09-12's threshold repair moved `shell_yard_gantry`'s
+floor 1.20 m and bumped no version anywhere. A generator constant a human
+remembers to bump cannot cover a lane that ships geometry independently.
+
+**And the level-2 hole is acknowledged as the engine lane's.** A constant
+passes the bridge's check; nothing on that side will ever catch a fake
+digest. What will catch it here is the same shape as the crossing
+control in `room_contract_driver`: a digest is only evidence if changing
+the scene changes it, so the first test computes a digest, moves one
+collider by 1e-3 m, and requires a different digest. Without that
+sabotage the function is a constant with extra steps.

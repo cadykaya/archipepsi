@@ -953,7 +953,15 @@ ZONE_OCCUPIED_MODES = ("GENERATING", "ZONE_READY", "ZONE_ACTIVE")
 
 #: Modes with something the player can walk into right now. Entering one of
 #: these needs no Archipelago round-trip: the Zone already exists locally.
-ZONE_ENTERABLE_MODES = ("ZONE_READY", "ZONE_ACTIVE")
+#:
+#: **The same question as `ZONE_ENTER_MODES`, and it is that list.** Two
+#: names for one question is how they drift, and they did: ZONE_DORMANT
+#: was added to `ZONE_ENTER_MODES` so the Hub's portal branch would
+#: accept it, and `portal_enabled` went on reading a second list that
+#: had never heard of it. So the portal showed the mode's prompt and
+#: refused to fire, which is a way back into a Zone that is wired,
+#: labelled and dead.
+ZONE_ENTERABLE_MODES = ZONE_ENTER_MODES
 
 
 class ZoneHandle(Strict):

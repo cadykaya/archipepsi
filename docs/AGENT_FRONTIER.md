@@ -1,5 +1,100 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — the merged Zone opens again, and the way back is real — 2026-09-12
+
+**`claude/archipepsi-amalgam-slice1`, from the art merge `dfad94c`.**
+Four things became playable and one placement defect was found under
+them. Read this section first on a wake-up; the bridge-lane section
+below is still the payload reference.
+
+**THE GENERATED ZONE OPENS AGAIN.** `make godot-integration` was red
+from the moment the art lane merged: `zone_001` was refused three times
+on "door 'c002/entry' is USED and the engine measured it as solid" and
+the client never left the Hub. The door was not solid. An **enemy was
+standing in it** — `_enemy_spawns` fell back to `Vector3.ZERO` for a
+shell that declares no `enemy_spawn` volume, and a shell's local origin
+is not its centre, it is the wall the entry doorway is cut into. Ten
+enemies, one 2.4 m opening.
+
+Three things were wrong and all three are fixed:
+
+* **The placement.** The fallback is the largest surface the shell
+  declares standable, and every spawn is pushed out of any doorway it
+  lands in (`ContentInstantiator.IN_THE_DOORWAY`). A player
+  body-blocked in the only door is a defect whoever trips over it.
+* **The probe.** `aperture_polarity` is ARCHITECTURAL — it already
+  looks past a crate, a lock and the player. An enemy is placed content
+  by the same reasoning and is looked past now.
+* **The report.** "The engine measured it as solid" named the door and
+  nothing else, so a Zone that would not open gave nobody a suspect.
+  `RoomAudit.aperture_blockers` names the collider and the engine logs
+  it.
+
+**AND THE CENSUS HAD NEVER MEASURED A DOOR.** `_chamber_for` built
+every registry shell with no `doors` at all, so
+`_assigned_doors_match_their_usage` and `aperture_polarity` both ran
+over an empty list and printed a clean sheet for twelve shells. The
+recurring defect, again: a measurement that exists, is correct, and is
+never handed the case that fails it. The census declares every doorway
+socket now, and a second test
+(`_test_every_shell_reports_its_apertures_once_placed`) places each
+shell in a real three-room Zone, furnished the way the campaign
+furnishes one, **in all six themes**, and reads the apertures the way
+`ZoneController` reads them before putting them on the wire.
+
+**THE UNRESOLVED CROSSINGS ARE CLOSED, AND THE LEVEL CHANGES ARE
+COVERED.** `_player_walks_to` steers straight at its goal, so the old
+test asked a body to walk through whatever stood between two arrivals
+and pinned three joins on the result. The join's committed chain is the
+route, and the body walks it doorway to doorway. `played_zone.json`:
+**21 JOINED edges measured, 1 held behind a locked door, 21 crossed, 0
+not** — 7 gridded arrival to arrival by the flood, 14 walked along the
+corridor, five of those changing level by more than `MAX_VERTICAL_STEP`
+(which the flood cannot grid and used to skip). `KNOWN_UNWALKED_JOINS`
+is a dictionary of identity → reason and is **empty**, enforced in both
+directions: a name that appears is a join that stopped connecting, and a
+name that stops appearing has to be struck off. When a crossing does
+fail, `_why_the_body_stopped` names the collider, the unsupported
+interval, or the step the controller cannot climb — and says so when the
+corridor is clear and the finding is about the steering.
+
+What those 14 prove is the CORRIDOR. Getting from where a body lands to
+its own room's doorway is the room's property and is proved by
+`_test_the_played_zone_rooms_can_be_left_on_foot`.
+
+**THE WAY BACK IN IS REAL, ON BOTH SIDES OF A RESTART.**
+`ZONE_ENTERABLE_MODES` and `ZONE_ENTER_MODES` were two lists for one
+question and they drifted: `ZONE_DORMANT` was added to the second so the
+Hub's portal branch would accept it, and `portal_enabled` went on
+reading the first. The portal showed the mode's prompt and refused to
+fire — a way back that is wired, labelled and dead. One list now, and
+the portal carries `[E] RETURN TO ZONE`.
+
+`make godot-reload` **restarts the bridge too**. It used to stay up
+across the two Godot processes, so "the campaign loads from disk" meant
+the client loading from a bridge that still had everything in memory.
+Both sides are new now, the bridge logs `loaded campaign`, and the
+second process presses the real portal instead of setting
+`_entering_zone` and sending the intent itself. 18 checks, including a
+replay with **0 route searches**.
+
+**A COMMITTED ZONE SURVIVES A REFUSED REPLAY.** `refuse_layout` cleared
+`zone` and `manifest` whatever the Zone was, so a replay the validator
+rejected sent a DIFFERENT Zone back under the same id, holding the same
+Checks, with the player's keys and opened locks recorded against rooms
+that no longer existed. `commit_layout` already refused to replace a
+committed manifest; this was the other door into the same room. A
+committed Zone keeps its manifest, its content and its progress and goes
+DORMANT.
+
+**Still unproved.** The physics contract in `schemas/physics.py` has no
+runtime. The shared digest vectors, scene binding, rigid-body
+interaction and the replay harness from the Amalgam brief are not
+started. `shell_span_basin`'s pylon is Arty's open item and is a ROOM
+finding, not a join one — the corridor either side of it crosses.
+Procedural `ChamberBuilders` spawn placement is not covered by the
+doorway rule; only the authored-shell path is.
+
 ## BRIDGE LANE — the Zone is a graph, and the path is connected — 2026-09-12
 
 **`claude/archipepsi-amalgam-bridge`, from the engine slice `82d500f`,
@@ -70,11 +165,14 @@ in a SECOND PROCESS and recovers the layout and the progress from the
 bridge alone.
 
 **Not connected:** the physics contract in `schemas/physics.py` — no
-runtime exists for it yet. And one player-facing hole, in the bridge
-column: a DORMANT Zone leaves the Hub in `ZONE_AVAILABLE`, so the portal
-sends `request_next_zone`, which the bridge refuses while that Zone still
-holds its locations. `enter_zone` works and every suite uses it; the Hub
-has no affordance that sends it. `docs/AMALGAM_SLICE1.md` §5q.
+runtime exists for it yet.
+
+~~And one player-facing hole, in the bridge column: a DORMANT Zone
+leaves the Hub in `ZONE_AVAILABLE`, so the portal sends
+`request_next_zone`.~~ **Closed 2026-09-12.** The bridge carries
+`ZONE_DORMANT` and `resume_zone_id`, the Hub's portal branch reads them,
+and `portal_enabled` was the last thing still saying no — see the engine
+-lane section above. `make godot-reload` presses the real portal.
 
 **All three of SOLUTIONS_CATALOGUE §2's local-key rules are enforced.**
 A key reachable without passing its own lock, an acyclic key graph, and

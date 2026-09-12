@@ -19,119 +19,14 @@ from archipepsi_bridge.schemas import protocol as P
 from archipepsi_bridge.schemas.protocol import ClientMessage
 from pydantic import TypeAdapter
 
+from archipepsi_bridge import transactions as TX
+from archipepsi_bridge.campaign import IntentError
 from archipepsi_bridge.schemas import transitions as T
 
-from .conftest import Collector, connected_engine, drain, run
+from .conftest import (Collector, connected_engine, drain,
+                       enter_zone, place_layout as _place, run)
 
 _ADAPTER = TypeAdapter(ClientMessage)
-
-SPACING = 50.0
-HALF_W = 9.0
-DEPTH = 16.0
-BRANCH_X = 90.0
-
-
-def _corridor(a, b) -> dict:
-    """One chain piece in the shape `zone_builder` emits one.
-
-    Pose and kind as well as endpoints: the engine refuses to replay a
-    committed chain whose pieces carry no `position`/`yaw` or an unknown
-    `kind` (`malformed_pieces`), so a fixture without them stands in for
-    a payload the engine could not rebuild.
-    """
-    return {"kind": "CONNECTOR", "position": list(a), "yaw": 0.0,
-            "entry": list(a), "exit": list(b),
-            "bounds": {"position": [min(a[0], b[0]) - 1.5, 0.0,
-                                    min(a[2], b[2])],
-                       "size": [3.0, 4.0, max(abs(b[2] - a[2]), 0.1)]}}
-
-
-def _place(zone) -> dict:
-    """A physically sound layout for this Zone, in the engine's shape.
-
-    Stands in for `zone_builder.build()` until the engine serializes its
-    result. The geometry is deliberately spread out — rooms 50 m apart
-    with real connector chains between them — so that no join passes by
-    happening to touch.
-    """
-    order = [c.id for c in zone.chambers]
-    joined = [e for e in zone.edges if e.realization == "JOINED"]
-    # A room reached only by the vault edge is the branch; it goes to one
-    # side so it cannot overlap the spine.
-    spine = [r for r in order]
-    off_spine = {e.room_b for e in joined
-                 if sum(1 for x in joined if e.room_b in x.rooms) == 1
-                 and order.index(e.room_b) < order.index(e.room_a)}
-
-    centre: dict[str, tuple[float, float]] = {}
-    slot = 0
-    for rid in spine:
-        if rid in off_spine:
-            continue
-        centre[rid] = (0.0, slot * SPACING)
-        slot += 1
-    for rid in off_spine:
-        centre[rid] = (BRANCH_X, order.index(rid) * SPACING)
-
-    rooms, apertures, anchors, arrival_ok = {}, {}, {}, {}
-    for ch in zone.chambers:
-        x, z = centre[ch.id]
-        rooms[ch.id] = {
-            "position": [x, 0.0, z], "yaw": 0.0,
-            "bounds": {"position": [x - HALF_W, 0.0, z - DEPTH / 2],
-                       "size": [HALF_W * 2, 5.0, DEPTH]},
-        }
-        for d in ch.doors:
-            # Every door reports exactly what its assignment declares,
-            # the head's `entry` included: the player arrives 1.2 m
-            # inside the first room, so its front wall is a wall.
-            apertures[f"{ch.id}/{d.socket_id}"] = d.passable_geometry
-        if any(d.usage != "SEALED" for d in ch.doors):
-            a = f"room:{ch.id}:arrival"
-            anchors[a] = [x, 0.0, z]
-            arrival_ok[a] = True
-
-    joins = {}
-    for e in joined:
-        ax, az = centre[e.room_a]
-        bx, bz = centre[e.room_b]
-        # Each socket sits on its own room's boundary, facing the other.
-        sa = [ax, 0.0, az + (DEPTH / 2 if bz >= az else -DEPTH / 2)] \
-            if abs(bx - ax) < 1e-6 else \
-            [ax + (HALF_W if bx > ax else -HALF_W), 0.0, az]
-        sb = [bx, 0.0, bz + (-DEPTH / 2 if bz >= az else DEPTH / 2)] \
-            if abs(bx - ax) < 1e-6 else \
-            [bx + (-HALF_W if bx > ax else HALF_W), 0.0, bz]
-        joins[e.edge_id] = {
-            "socket_a": sa, "socket_b": sb, "chain": [_corridor(sa, sb)]}
-
-    stations = []
-    for p in zone.plugs:
-        anchors.setdefault(p.source_anchor, [0.0, 0.0, 1.0])
-        anchors.setdefault(p.destination, [0.0, 0.0, 0.0])
-        arrival_ok.setdefault(p.source_anchor, True)
-        arrival_ok.setdefault(p.destination, True)
-
-    # THE ENGINE'S OWN GEOMETRY, which every finished build appends: an
-    # exit room with the portal in it, and the approach to it filed
-    # under the reserved edge id. A payload without them is not one
-    # `zone_builder` could have produced.
-    far = max(z for _, z in centre.values()) + SPACING
-    rooms["exit"] = {
-        "position": [0.0, 0.0, far], "yaw": 0.0,
-        "bounds": {"position": [-HALF_W, 0.0, far - DEPTH / 2],
-                   "size": [HALF_W * 2, 5.0, DEPTH]}}
-    tail = max((c.id for c in zone.chambers),
-               key=lambda rid: centre[rid][1])
-    tz = centre[tail][1] + DEPTH / 2
-    joins["e:__exit__"] = {
-        "room_a": tail, "room_b": "exit", "synthetic": True,
-        "socket_a": [0.0, 0.0, tz], "socket_b": [0.0, 0.0, far],
-        "chain": [_corridor([0.0, 0.0, tz], [0.0, 0.0, far])]}
-    return {"status": "LAYOUT_OK", "rooms": rooms, "joins": joins,
-            "anchors": anchors, "arrival_ok": arrival_ok,
-            "apertures": apertures, "stations": stations}
-
 
 async def _branching_zone(engine):
     """Generate until one is big enough to carry a branch."""
@@ -366,6 +261,69 @@ def test_a_zone_that_keeps_failing_stops_being_recomposed(tmp_path):
             f"{rec.state}; it should have stopped being recomposed")
         assert set(rec.allocated_location_ids) == held, (
             "giving up on a layout released the Zone's locations")
+def test_a_committed_zone_survives_a_refused_replay(tmp_path):
+    """A refused REPLAY must not replace the Zone it replayed.
+
+    Regeneration recovery composes the Zone again against the ids it
+    already holds — right for a FRESH proposal, and wrong for one that
+    has already been solved. Law 47c: the layout is solved once and
+    committed, and every later load replays it. `commit_layout` already
+    refuses to replace a committed manifest; this is the other door into
+    the same room, and it used to be open: the refusal cleared `zone`
+    and `manifest`, so a replay the validator rejected sent a DIFFERENT
+    Zone back under the same id, holding the same Checks, with the
+    player's keys and opened locks recorded against rooms that no longer
+    existed.
+    """
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zone_id, _ = await _branching_zone(engine)
+        await enter_zone(engine, zone_id)
+        rec = engine.save.zone_by_id(zone_id)
+        assert rec.layout_state == "ACCEPTED" and rec.manifest, (
+            "this test needs a committed layout to refuse a replay of")
+        digest = rec.manifest.get("manifest_digest")
+        rooms = tuple(c.id for c in rec.zone.chambers)
+        key = rec.zone.chambers[0].keys[0].key_id \
+            if rec.zone.chambers[0].keys else None
+        if key is not None:
+            engine._apply(T.record_key(engine.save, zone_id, key))
+        held = set(rec.allocated_location_ids)
+
+        engine._apply(T.refuse_layout(engine.save, zone_id))
+
+        after = engine.save.zone_by_id(zone_id)
+        assert after.manifest is not None, (
+            "a refused replay threw away the committed manifest")
+        assert after.manifest.get("manifest_digest") == digest, (
+            "the committed layout changed under a refusal: "
+            f"{digest} became {after.manifest.get('manifest_digest')}")
+        assert after.zone is not None \
+            and tuple(c.id for c in after.zone.chambers) == rooms, (
+                "the Zone was recomposed, so the progress below is "
+                "recorded against rooms that no longer exist")
+        if key is not None:
+            assert key in after.progress.collected_keys, (
+                "a refused replay lost the player's progress")
+        assert set(after.allocated_location_ids) == held, (
+            "a refused replay released the Zone's Checks")
+        assert after.state == "DORMANT", (
+            f"a Zone whose replay was refused is {after.state}; it must "
+            "not be left playable and must not be recomposed")
+        assert after.layout_state == "REFUSED"
+        assert after.layout_refusals == 1
+
+        # AND IT IS STILL ONLY ONE REFUSAL AWAY FROM ITSELF. A second
+        # refusal changes nothing else: there is no recomposition to
+        # count down to, because there is nothing to recompose.
+        engine._apply(T.refuse_layout(engine.save, zone_id))
+        again = engine.save.zone_by_id(zone_id)
+        assert again.manifest is not None \
+            and again.manifest.get("manifest_digest") == digest
+        assert again.layout_refusals == 2
+    run(go())
+
+
 # --- the way back in ------------------------------------------------------
 #
 # The lifecycle existed and the player could not reach it. `rest_zone`
@@ -480,4 +438,108 @@ def test_a_finished_zone_is_offered_back_and_counts_nothing_twice(tmp_path):
         assert engine.save.completed_zone_count == counted, (
             "walking back through a finished Zone completed it again")
         assert engine.save.zone_history == history
+    run(go())
+
+
+def test_a_graph_zone_claims_nothing_while_its_verdict_is_pending(tmp_path):
+    """The WAITING PERIOD, which the refusal test does not cover.
+
+    `claim_zone_check` required `state == ACTIVE` and said nothing about
+    the layout. A graph Zone is ACTIVE from the moment the player walks
+    in and UNCERTIFIED until its layout comes back — so between those two
+    moments a reward that fires on its own (a timer, a kill, an activity
+    completing) claimed against geometry nobody had checked, sent it to
+    Archipelago, and could not take it back when `refuse_layout` sent the
+    Zone away to be composed again.
+
+    All three states, through `transactions.claim_check` — the real path
+    the `claim_check` intent takes — because a rule proved only on the
+    pure transition is a rule nothing calls.
+    """
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zone_id, zone = await _branching_zone(engine)
+        held = list(engine.save.zone_by_id(zone_id).allocated_location_ids)
+        loc = held[0]
+
+        # 1. PENDING. Entered, ACTIVE, no layout sent yet.
+        await engine.handle_enter_zone(zone_id)
+        rec = engine.save.zone_by_id(zone_id)
+        assert rec.state == "ACTIVE" and rec.layout_state == "UNCERTIFIED"
+        with pytest.raises(IntentError) as caught:
+            await TX.claim_check(engine, zone_id, loc)
+        assert "has not had its layout accepted" in str(caught.value)
+        # AND NOTHING LEAKED: no pending record, nothing sent to AP.
+        assert not engine.save.pending_checks, (
+            "a claim refused for a pending verdict still entered the ledger")
+        assert loc not in engine.ap.checked
+        assert set(engine.save.zone_by_id(zone_id).allocated_location_ids) \
+            == set(held), "the allocation must survive the refusal"
+
+        # 2. ACCEPTED — the control. The same call, after the same layout
+        #    the client sends, succeeds.
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zone_id,
+             "layout": _place(zone)}))
+        assert engine.save.zone_by_id(zone_id).layout_state == "ACCEPTED"
+        await TX.claim_check(engine, zone_id, loc)
+        assert loc in engine.ap.checked or engine.save.pending_checks, (
+            "an accepted Zone's claim went nowhere")
+
+        # 3. REFUSED, on a second campaign so the accepted one is not in
+        #    the way: the allocation is preserved and the claim is still
+        #    refused afterwards.
+        engine2, _ = await connected_engine(tmp_path / "refused",
+                                            config=C.DEFAULT_CONFIG)
+        zid2, zone2 = await _branching_zone(engine2)
+        before = set(engine2.save.zone_by_id(zid2).allocated_location_ids)
+        await engine2.handle_enter_zone(zid2)
+        bad = _place(zone2)
+        bad["apertures"] = {}
+        await engine2.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zid2, "layout": bad}))
+        rec2 = engine2.save.zone_by_id(zid2)
+        assert rec2.layout_state == "REFUSED" or rec2.state != "ACTIVE"
+        assert set(rec2.allocated_location_ids) == before, (
+            "a refused layout spent the Zone's Checks")
+        with pytest.raises(IntentError):
+            await TX.claim_check(engine2, zid2, sorted(before)[0])
+        assert not engine2.save.pending_checks
+
+    run(go())
+
+
+def test_a_legacy_zone_with_no_edges_still_claims(tmp_path):
+    """The exemption, stated rather than left to chance.
+
+    A Zone with no `edges` is the pre-graph shape: it sends no
+    `layout_result`, so its `layout_state` is UNCERTIFIED forever.
+    Requiring acceptance of it would make every such Zone unplayable, and
+    a rule with an exemption nothing exercises is a rule that will lose
+    the exemption the next time somebody tidies it.
+    """
+    async def go():
+        engine, _ = await connected_engine(tmp_path)
+        await engine.handle_request_next_zone(False)
+        await drain()
+        zone_id = engine.save.active_zone_id
+        # Strip the graph, the way a pre-graph provider would have sent it.
+        rec = engine.save.zone_by_id(zone_id)
+        # The doors go with the graph: an assignment naming an edge that
+        # does not exist is refused by `validate_zone`, and rightly.
+        legacy = rec.zone.model_copy(update={
+            "edges": (), "plugs": (),
+            "chambers": tuple(c.model_copy(update={"doors": (), "keys": ()})
+                              for c in rec.zone.chambers)})
+        engine.save = engine.save.model_copy(update={"zones": tuple(
+            r.model_copy(update={"zone": legacy}) if r.zone_id == zone_id
+            else r for r in engine.save.zones)})
+        await engine.handle_enter_zone(zone_id)
+        rec = engine.save.zone_by_id(zone_id)
+        assert not rec.zone.edges and rec.layout_state == "UNCERTIFIED"
+        loc = sorted(rec.allocated_location_ids)[0]
+        await TX.claim_check(engine, zone_id, loc)
+        assert loc in engine.ap.checked or engine.save.pending_checks, (
+            "a legacy Zone with no graph could not claim its own Check")
+
     run(go())

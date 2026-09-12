@@ -392,6 +392,11 @@ RELOAD_SAVES := $(CURDIR)/.reload-saves
 #
 # `--mock-scale default` because a locked branch needs a Zone big enough
 # to spare a room, and the prototype's thirty locations do not make one.
+# BOTH SIDES RESTART. The bridge used to stay up across the two Godot
+# processes, so "the campaign loads from disk" was the CLIENT loading
+# from a bridge that still had everything in memory. It is stopped and
+# started again between the phases now, against the same save directory,
+# so the only thing that crosses the restart is the file on disk.
 godot-reload: godot-import
 	rm -rf $(RELOAD_SAVES) $(HOME)/.local/share/godot/app_userdata/Archipepsi/reload_notes.json
 	cd bridge && ARCHIPEPSI_SAVE_DIR=$(RELOAD_SAVES) \
@@ -404,7 +409,14 @@ godot-reload: godot-import
 	RECORD=$$?; \
 	grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" /tmp/reload-record.log | tail -25; \
 	if [ $$RECORD -ne 0 ]; then kill $$BRIDGE_PID; exit $$RECORD; fi; \
-	echo "-- second process --"; \
+	echo "-- both processes restart: the bridge too, from its own save --"; \
+	kill $$BRIDGE_PID; wait $$BRIDGE_PID 2>/dev/null || true; \
+	cd bridge && ARCHIPEPSI_SAVE_DIR=$(RELOAD_SAVES) \
+	  $(PY) -m archipepsi_bridge --ap=mock --epsilon=fallback \
+	  --mock-scale=default & \
+	BRIDGE_PID=$$!; sleep 2; \
+	kill -0 $$BRIDGE_PID 2>/dev/null || { \
+	  echo "the restarted bridge did not come back"; exit 1; }; \
 	$(GODOT) --headless --path godot -- --reload-phase=resume > /tmp/reload-resume.log 2>&1; \
 	RESUME=$$?; \
 	grep -vE "^(ERROR|USER ERROR|   at:|GDScript backtrace|       \[|WARNING)" /tmp/reload-resume.log | tail -30; \

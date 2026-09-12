@@ -14,7 +14,7 @@ from archipepsi_bridge.schemas import constants as C
 from archipepsi_bridge.campaign import IntentError
 from archipepsi_bridge.schemas.protocol import CampaignSave
 
-from .conftest import (
+from .conftest import (enter_zone, 
     Collector, connected_engine, drain, make_engine, run,
 )
 
@@ -158,7 +158,7 @@ def test_32_33_finale_zone_and_goal_once(tmp_path):
         assert tuple(zone.allocated_location_ids) == (C.GOAL_LOCATION_ID,)
         assert zone.zone.reward_location_ids == [C.GOAL_LOCATION_ID]  # test 32
 
-        await engine.handle_enter_zone(zone.zone_id)
+        await enter_zone(engine, zone.zone_id)
         await TX.claim_check(engine, zone.zone_id, C.GOAL_LOCATION_ID)
         await drain()
         assert engine.save.goal_sent is True

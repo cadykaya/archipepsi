@@ -159,12 +159,36 @@ def is_offerable(entry: ContentEntry) -> bool:
         return False
     if entry.review == "pending":
         return False
+    # NO LONGER A GATE, and the reason is measured.
+    #
+    # This refused a shell whose doorway stood proud of `size`. Two
+    # measurements on 2026-09-12 killed the rule from both sides.
+    # `shell_corner_left`'s exit sits exactly ON its envelope face and
+    # 0.40 m past its own FLOOR, because the floor is inset by a wall;
+    # `shell_yard_gantry`'s sits 0.40 m past the envelope. The step a
+    # body walks over is the same 0.40 m in both, and the envelope
+    # disagrees about which is which. And Arty's threshold repair carries
+    # the yard's floor out as MESH -- not a declared surface, not in
+    # `size` -- so no manifest rule can see the repair at all.
+    #
+    # THE AUTHORITY IS THE ASSEMBLED CROSSING, measured in the engine:
+    # `room_contract_driver._test_every_shell_doorway_is_crossed_by_a_real_body`
+    # builds each shell through the production importer, lays a connector
+    # stub at each doorway the way `ZoneBuilder` does, and walks a real
+    # `Player` out. All 24 authored doorways cross, 3.05-3.11 m past the
+    # socket with 0.08 m of dip; a stub detached by 2.0 m drops the body
+    # 5.87 m, which is what proves the measurement can fail.
+    #
+    # What stays here is the REPORT. A doorway metres off its body is
+    # still worth saying out loud, and `doorways_off_the_body` still says
+    # it -- it just no longer decides, because it cannot see floor.
     adrift = doorways_off_the_body(entry)
     if adrift:
-        log.warning("shell '%s' is not offerable: %s", entry.id,
-                    "; ".join(f"doorway '{n}' is {m:.2f} m off the body"
-                              for n, m in sorted(adrift.items())))
-        return False
+        log.info("shell '%s' declares a doorway off its envelope: %s "
+                 "(a report, not a refusal -- the crossing test decides)",
+                 entry.id,
+                 "; ".join(f"'{n}' by {m:.2f} m"
+                           for n, m in sorted(adrift.items())))
     return not entry.procedural_fallback
 
 

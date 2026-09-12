@@ -1144,10 +1144,33 @@ static func _band_misfit(entry: Dictionary, chamber: Dictionary) -> String:
 	return "provides %s elevation band(s) and this chamber declares a '%s'" \
 			% [named, kind]
 
+## How close to a doorway's centre counts as standing IN it: half the
+## 2.4 m opening plus a body's radius. A capsule nearer than this is in
+## the gap or across its edge.
+const IN_THE_DOORWAY := ChamberBuilders.DOOR_WIDTH / 2.0 \
+		+ Constants.PLAYER_RADIUS
+
 ## Enemy placement stays the generator's decision; the shell only says
-## WHERE it is safe to put one. An authored shell with no `enemy_spawn`
-## volume gets its enemies at the room's centre, which is what a
-## builder-provided room would have done.
+## WHERE it is safe to put one.
+##
+## THE FALLBACK WAS THE DOORWAY, AND IT SAID IT WAS THE CENTRE. This
+## used to read "an authored shell with no `enemy_spawn` volume gets its
+## enemies at the room's centre, which is what a builder-provided room
+## would have done" -- and then wrote `Vector3.ZERO`. A shell's local
+## origin is not its centre: it is the z = 0 wall, which is the wall the
+## ENTRY DOORWAY is cut into.
+##
+## So the hall, given ten enemies and no `enemy_spawn` volume, stood
+## every one of them in its own 2.4 m entry. `aperture_polarity` read
+## the doorway as solid, the bridge refused the layout on "door
+## 'c002/entry' is USED and the engine measured it as solid", and
+## `zone_001` was recomposed three times and never opened.
+##
+## The centre this always meant is `_objective`'s, and the better answer
+## is the largest surface the shell itself declares standable. Either
+## way nobody is left in an opening: a spawn inside one is pushed toward
+## the middle of the room until it is out, because a player body-blocked
+## in the only door is a defect whether or not a probe trips over it.
 static func _enemy_spawns(entry: Dictionary, chamber: Dictionary) -> Array:
 	var zones: Array = []
 	for volume: Variant in entry.get("volumes", []):
@@ -1155,27 +1178,97 @@ static func _enemy_spawns(entry: Dictionary, chamber: Dictionary) -> Array:
 			continue
 		if str((volume as Dictionary).get("kind", "")) == "enemy_spawn":
 			zones.append(volume)
+	var middle := _room_middle(entry)
+	if zones.is_empty():
+		zones.append(_fallback_spawn_zone(entry, middle))
+	var doorways: Array[Vector3] = []
+	for raw: Variant in entry.get("sockets", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var socket: Dictionary = raw
+		if str((socket as Dictionary).get("kind", "")) != "doorway":
+			continue
+		doorways.append(_vector((socket as Dictionary).get("position", []),
+				Vector3.ZERO))
 
 	var spawns: Array = []
 	var index := 0
 	for group: Dictionary in chamber.get("enemies", []):
 		for i in int(group.get("count", 0)):
-			var at := Vector3.ZERO
-			if not zones.is_empty():
-				var zone: Dictionary = zones[index % zones.size()]
-				var centre := _vector(zone.get("center", []), Vector3.ZERO)
-				var extent := _vector(zone.get("size", []), Vector3.ZERO)
-				# Spread deterministically inside the declared volume: the
-				# same seed must lay out the same room on every machine.
-				at = centre + Vector3(
-					fposmod(float(index) * 1.7, maxf(extent.x, 0.01))
-							- extent.x / 2.0,
-					0.0,
-					fposmod(float(index) * 2.3, maxf(extent.z, 0.01))
-							- extent.z / 2.0)
-			spawns.append({"archetype": group["archetype"], "position": at})
+			var zone: Dictionary = zones[index % zones.size()]
+			var centre := _vector(zone.get("center", []), middle)
+			var extent := _vector(zone.get("size", []), Vector3.ZERO)
+			# Spread deterministically inside the declared volume: the
+			# same seed must lay out the same room on every machine.
+			var at := centre + Vector3(
+				fposmod(float(index) * 1.7, maxf(extent.x, 0.01))
+						- extent.x / 2.0,
+				0.0,
+				fposmod(float(index) * 2.3, maxf(extent.z, 0.01))
+						- extent.z / 2.0)
+			spawns.append({"archetype": group["archetype"],
+					"position": _out_of_any_doorway(at, doorways, middle)})
 			index += 1
 	return spawns
+
+## The middle of the room, by the one convention this file already uses
+## for "somewhere in the room and not at its wall".
+static func _room_middle(entry: Dictionary) -> Vector3:
+	var size := _vector(entry.get("size", []), Vector3(10.0, 4.0, 10.0))
+	return Vector3(0.0, 0.0, size.z / 2.0)
+
+## Where enemies go in a shell that declares no `enemy_spawn` volume:
+## spread over the largest surface it says a body can stand on, inset by
+## a body's radius so the spread cannot hang one over the lip. A shell
+## with no surfaces at all gets the middle of its envelope.
+static func _fallback_spawn_zone(entry: Dictionary,
+		middle: Vector3) -> Dictionary:
+	var size := _vector(entry.get("size", []), Vector3(10.0, 4.0, 10.0))
+	var best := {"center": [middle.x, middle.y, middle.z],
+			"size": [size.x / 2.0, 0.0, size.z / 2.0]}
+	var widest := 0.0
+	for raw: Variant in entry.get("surfaces", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var surface: Dictionary = raw
+		var extent := _pair(surface.get("extent", []))
+		var area := extent.x * extent.y
+		if area <= widest:
+			continue
+		widest = area
+		var centre := _vector(surface.get("center", []), middle)
+		best = {"center": [centre.x, centre.y, centre.z],
+				"size": [maxf(extent.x - 2.0 * Constants.PLAYER_RADIUS,
+						0.5), 0.0,
+					maxf(extent.y - 2.0 * Constants.PLAYER_RADIUS, 0.5)]}
+	return best
+
+## NOBODY SPAWNS IN A DOORWAY.
+##
+## The opening is the only way through the room, so a body standing in
+## it is a player stuck in a door. Pushed from the doorway toward the
+## middle of the room, which is a direction that always exists because a
+## doorway is cut into a wall. Bounded, because two doorways close
+## together could otherwise pass a body back and forth.
+static func _out_of_any_doorway(at: Vector3, doorways: Array,
+		middle: Vector3) -> Vector3:
+	var here := at
+	for _tries in 8:
+		var worst := -1.0
+		var mouth := Vector3.ZERO
+		for raw: Variant in doorways:
+			var door: Vector3 = raw
+			var apart := Vector2(here.x - door.x, here.z - door.z).length()
+			if apart < IN_THE_DOORWAY and (worst < 0.0 or apart < worst):
+				worst = apart
+				mouth = door
+		if worst < 0.0:
+			return here
+		var away := Vector3(middle.x - mouth.x, 0.0, middle.z - mouth.z)
+		if away.length() < 0.01:
+			away = Vector3(0.0, 0.0, 1.0)
+		here += away.normalized() * (IN_THE_DOORWAY - worst + 0.1)
+	return here
 
 static func _objective(entry: Dictionary, size: Vector3) -> Vector3:
 	for volume: Variant in entry.get("volumes", []):

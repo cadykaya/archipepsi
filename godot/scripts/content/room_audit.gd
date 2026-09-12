@@ -432,16 +432,7 @@ static func aperture_polarity(room: Dictionary, to_world: Transform3D,
 			continue
 		var door: Dictionary = raw
 		var at: Vector3 = door["position"]
-		# Stand where the floor is, exactly as the two-door probe does:
-		# an aperture's sill is not always the height its socket names.
-		var ground := _ray(space, to_world * (at + Vector3.UP * 1.0),
-				to_world * (at + Vector3.DOWN * 1.0))
-		var base := at.y
-		if not ground.is_empty():
-			base = (to_world.affine_inverse()
-					* (ground["position"] as Vector3)).y
-		var stance := Vector3.UP * (base - at.y
-				+ Constants.PLAYER_HEIGHT / 2.0 + 0.05)
+		var stance := _door_stance(to_world, space, at)
 		# INWARD, because a room's own doors are measured from inside it.
 		var inward := _inward(at, room["bounds"] as AABB)
 		var blocked := false
@@ -451,6 +442,23 @@ static func aperture_polarity(room: Dictionary, to_world: Transform3D,
 				break
 		out[str(door["socket_id"])] = not blocked
 	return out
+
+## Where a body stands to be measured in this doorway.
+##
+## Stand where the floor is: an aperture's sill is not always the height
+## its socket names. Shared by the polarity reading and the blocker
+## reading, because two stances for one doorway is how a report and the
+## refusal it explains come to disagree.
+static func _door_stance(to_world: Transform3D,
+		space: PhysicsDirectSpaceState3D, at: Vector3) -> Vector3:
+	var ground := _ray(space, to_world * (at + Vector3.UP * 1.0),
+			to_world * (at + Vector3.DOWN * 1.0))
+	var base := at.y
+	if not ground.is_empty():
+		base = (to_world.affine_inverse()
+				* (ground["position"] as Vector3)).y
+	return Vector3.UP * (base - at.y + Constants.PLAYER_HEIGHT / 2.0
+			+ 0.05)
 
 static func _assigned_doors_match_their_usage(room: Dictionary,
 		to_world: Transform3D, space: PhysicsDirectSpaceState3D,
@@ -805,6 +813,17 @@ static func _arrival_is_safe(room: Dictionary, to_world: Transform3D,
 
 static func _blocked(space: PhysicsDirectSpaceState3D,
 		at: Vector3) -> bool:
+	return _blocker(space, at) != null
+
+## WHAT IS STANDING HERE, not merely that something is.
+##
+## One probe, two readings. `_blocked` asked a yes/no question and threw
+## the answer away, so every refusal downstream -- including the bridge's
+## "the engine measured it as solid", which stops a Zone opening -- named
+## the door and nothing else. Whoever had to fix it then had a doorway
+## and no suspect.
+static func _blocker(space: PhysicsDirectSpaceState3D,
+		at: Vector3) -> Node:
 	var capsule := CapsuleShape3D.new()
 	# Very slightly slimmer than the player, so an opening built exactly
 	# to the minimum is not refused by float error.
@@ -816,5 +835,27 @@ static func _blocked(space: PhysicsDirectSpaceState3D,
 	query.collide_with_areas = false
 	for hit: Dictionary in space.intersect_shape(query, 8):
 		if not _is_placed_content(hit.get("collider")):
-			return true
-	return false
+			return hit.get("collider") as Node
+	return null
+
+## `socket_id -> what stands in it`, for the declared doors that measure
+## solid. Empty when every aperture is the hole it was declared to be.
+static func aperture_blockers(room: Dictionary, to_world: Transform3D,
+		space: PhysicsDirectSpaceState3D) -> Dictionary:
+	var out := {}
+	for raw: Variant in room.get("doors", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var door: Dictionary = raw
+		var at: Vector3 = door["position"]
+		var inward := _inward(at, room["bounds"] as AABB)
+		for step: float in [0.0, 0.45]:
+			var who := _blocker(space, to_world * (at + inward * step
+					+ _door_stance(to_world, space, at)))
+			if who == null:
+				continue
+			out[str(door["socket_id"])] = ("%s (%s), %.2f m inside the "
+					% [str(who.get_path()), who.get_class(), step]
+					+ "doorway")
+			break
+	return out

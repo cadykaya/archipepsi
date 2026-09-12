@@ -293,6 +293,24 @@ static func is_placed_content(collider: Variant) -> bool:
 		# which is true and useless.
 		if node is Player:
 			return true
+		# AN ENEMY IS NOT THE WALL EITHER, and for the same reason.
+		#
+		# These probes ask about ARCHITECTURE. An enemy is a body the
+		# composer put in the room: it walks, it dies, and whether it is
+		# standing in a doorway this second is a different question with
+		# a different answer -- exactly the distinction that already
+		# lets a `LockedDoor` be content in an opening rather than the
+		# opening's absence.
+		#
+		# What it cost to leave out: a `melee` spawned in the hall's
+		# 2.4 m entry, `aperture_polarity` read the doorway as solid,
+		# the bridge refused the layout on "door 'c002/entry' is USED
+		# and the engine measured it as solid", and the integration
+		# slice never opened a Zone at all. Where an enemy may spawn is
+		# a placement rule and is enforced as one; it is not this
+		# measurement's business.
+		if node is Enemy:
+			return true
 		if node.is_in_group(DestructibleCover.GROUP):
 			return true
 		# A LOCK IS CONTENT IN AN OPENING, NOT THE OPENING.

@@ -670,12 +670,24 @@ func _check_hit_confirmation() -> void:
 ## name.
 ##
 ## NO TEST SEAM IN THE ENGINE. The falsification is in this driver's own
-## COPY of the Zone: one `USED` door is flipped to `SEALED` before the
-## controller builds it, so the engine honestly builds a wall, honestly
-## measures it as solid, and honestly says so -- while the bridge still
-## holds the `USED` assignment it composed. That is not a doctored
-## message; it is exactly the disagreement the exchange exists to catch,
-## and every line of the path between them is the shipping one.
+## COPY of the Zone: one declared door is DROPPED before the controller
+## builds it. The engine then builds the room exactly as it would have --
+## a socket nobody declares is sealed by omission either way -- and
+## honestly reports a measurement for every door it was given, which is
+## one fewer than the bridge composed. The bridge refuses, because "a
+## door the layout does not report is refused rather than skipped" is
+## what makes its aperture probe inverted rather than optional.
+##
+## Nothing in the message is doctored: the two copies genuinely disagree
+## about which doors exist, and every line of the path between them is
+## the shipping one.
+##
+## It used to flip an arena's SEALED `side_left` to `USED` and rely on
+## `_perimeter` carving the hole. Every arena the composer builds now
+## adopts an authored shell, an authored shell declares two doorway
+## sockets and no sides, and the search found nothing to flip -- so the
+## falsification stopped falsifying and the test went red rather than
+## vacuous, which is the only reason this was noticed.
 func _test_a_refused_layout_is_not_playable() -> bool:
 	BridgeClient.send_intent({"type": "request_next_zone", "finale": false})
 	if not await _await_condition("ZONE_READY for the refusal control",
@@ -701,25 +713,35 @@ func _test_a_refused_layout_is_not_playable() -> bool:
 	# So the engine honestly carves a hole, honestly measures it as one,
 	# and says so; the bridge is still holding SEALED. Nothing in the
 	# message is doctored.
-	var flipped := ""
+	# WHICH DOOR, and why that one.
+	#
+	# A SEALED door carrying NO edge. No edge, because `placement_plan`
+	# refuses a JOINED edge whose room drops its door -- that makes the
+	# Zone unbuildable rather than wrong, and the controller then never
+	# reaches the bridge at all. SEALED, because a sealed socket is
+	# sealed by omission too, so the room this client builds is the same
+	# room, down to the geometry: the ONLY difference is that one
+	# aperture goes unmeasured.
+	var dropped := ""
 	for raw_chamber: Variant in falsified.get("chambers", []):
 		var chamber: Dictionary = raw_chamber
-		if flipped != "" or str(chamber.get("type", "")) != "arena":
+		if dropped != "":
 			continue
+		var kept: Array = []
 		for raw_door: Variant in chamber.get("doors", []):
 			var door: Dictionary = raw_door
-			if str(door.get("socket_id", "")) != "side_left":
+			if dropped == "" and str(door.get("usage", "")) == "SEALED" \
+					and door.get("edge_id") == null:
+				dropped = "%s/%s" % [str(chamber.get("id", "?")),
+						str(door.get("socket_id", "?"))]
 				continue
-			if str(door.get("usage", "")) != "SEALED":
-				continue
-			if door.get("edge_id") != null:
-				continue
-			door["usage"] = "USED"
-			flipped = "%s/side_left" % str(chamber.get("id", "?"))
-	_check(flipped != "",
-			"an arena's sealed side door (%s) was carved open in this "
-			% flipped + "client's copy only")
-	if flipped == "":
+			kept.append(door)
+		if dropped != "":
+			chamber["doors"] = kept
+	_check(dropped != "",
+			"a sealed, edge-less door (%s) was dropped from this "
+			% dropped + "client's copy only")
+	if dropped == "":
 		return false
 
 	BridgeClient.send_intent({"type": "enter_zone", "zone_id": zone_id})
@@ -740,6 +762,19 @@ func _test_a_refused_layout_is_not_playable() -> bool:
 			refused, 20.0):
 		controller.queue_free()
 		return false
+	# THE FALSIFICATION ACTUALLY FALSIFIED SOMETHING.
+	#
+	# A drop the client measured anyway leaves the two copies agreeing
+	# about that door, and any refusal then came from somewhere else --
+	# which is a test passing on somebody else's evidence. The engine's
+	# own measurement says which apertures it reported.
+	_check(not controller.measured_apertures.has(dropped),
+			"this client reported no measurement for %s, which is the "
+			% dropped + "disagreement under test; it reported %s"
+			% str(controller.measured_apertures.get(dropped)))
+	_check(controller.measured_apertures.size() > 0,
+			"the client measured no apertures at all, so the missing "
+			+ "one proves nothing")
 	# The controller polls the same snapshot this driver does, so seeing
 	# REFUSED here says nothing about whether its own loop has come
 	# round yet. Give it frames before asking what it did.
@@ -750,6 +785,21 @@ func _test_a_refused_layout_is_not_playable() -> bool:
 			% zone_id + "raised %s" % str(refusals))
 	_check(controller.player == null or controller.player.input_frozen,
 			"the player is held while the layout is unaccepted")
+	# AND THE TWO HOLDS COMPOSE. `Main._update_modal` and this controller
+	# both used to write one boolean, so whichever wrote last won: closing
+	# the inventory released an acceptance hold, and an acceptance
+	# released a pause. Opened and closed here while the verdict hold
+	# stands, which is the case that was broken.
+	if controller.player != null:
+		controller.player.hold("modal")
+		controller.player.release("modal")
+		_check(controller.player.input_frozen,
+				"closing a menu released the acceptance hold: holds are "
+				+ "%s" % str(controller.player.holds()))
+		_check(controller.player.holds().has(
+					ZoneController.LAYOUT_HOLD),
+				"the acceptance hold is not named among %s"
+				% str(controller.player.holds()))
 
 	# AND THE REFUSED ZONE CANNOT CLAIM A CHECK. The intent is the real
 	# one, sent the way a reward sends it; the bridge's Zone is no longer
@@ -860,6 +910,35 @@ func _play_one_zone(detailed: bool, already_ready := false) -> bool:
 				== "ACCEPTED",
 			"the Zone this client is playing has an accepted layout (%s)"
 			% str(BridgeClient.active_zone().get("layout_state", "?")))
+	# AND THE HOLD IS GONE, but only that one. A pause the player opens
+	# now is theirs to close.
+	#
+	# WAITED FOR, not counted in frames. `layout_state` going ACCEPTED is
+	# the bridge answering; the controller releasing its hold is a
+	# separate event one turn of its own loop later, and a fixed twelve
+	# physics frames is a guess about a round trip over a socket. The
+	# controller records the verdict it acted on, so that is what is
+	# waited for.
+	if not await _await_condition("the controller acts on the verdict",
+			func() -> bool:
+				return controller.layout_verdict != "", 10.0):
+		return false
+	_check(controller.layout_verdict == "ACCEPTED",
+			"the controller acted on an ACCEPTED verdict, and it acted "
+			+ "on '%s'" % controller.layout_verdict)
+	_check(controller.player == null
+				or not controller.player.holds().has(
+					ZoneController.LAYOUT_HOLD),
+			"the acceptance hold outlived the acceptance: %s"
+			% str(controller.player.holds()))
+	if controller.player != null:
+		controller.player.hold("modal")
+		_check(controller.player.input_frozen,
+				"a menu opened after acceptance does not hold the player")
+		controller.player.release("modal")
+		_check(not controller.player.input_frozen,
+				"the player is still held with no claim standing: %s"
+				% str(controller.player.holds()))
 	await get_tree().process_frame
 	await get_tree().process_frame
 
