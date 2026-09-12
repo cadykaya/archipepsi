@@ -98,16 +98,18 @@ hex characters is all the bridge can see. Regenerate the vectors with
 `make physics-vectors`; **that is a contract change and the engine lane
 must re-run.**
 
-**A gate may stop you; it may not keep you.** §0-bis puts five
-conditions on a legal capability gate and condition 4 — "the player can
-safely leave the blocked Zone" — had no rule, though the catalogue calls
-it load-bearing. Every other property asks whether the player can get
-somewhere; none asked whether they could get back, so a one-way edge
-into a dead end satisfied all of them. `_escapable` now asks, of every
-reachable state, whether the entrance or the exit is reachable from
-there, under the same capabilities and starting from the keys in hand.
-Not `R ⊆ E` reversed: the exit may legally sit behind a gate, the
-entrance never may.
+**A gate may stop you; it may not keep you — and `R ⊆ E` already said
+so.** A claim here said §0-bis condition 4 "had no rule" and that a
+one-way edge into a dead end passed every check. False: `R ⊆ E` requires
+the exit reachable from every state, `_escapable` requires the entrance
+or the exit, and the first implies the second — no Zone is refused by
+one and accepted by the other. The fixture offered as proof also
+disconnected the exit entirely. What `_escapable` adds is the
+distinction between "blocked, can walk back and return with the
+capability" (the intended gameplay) and "blocked and stuck" (a dead
+run), which `R ⊆ E` reports with one sentence. It is also the backstop
+for the day `R ⊆ E` is relaxed to allow a legally gated exit;
+a test asserts the subsumption so that day gets noticed.
 
 **Condition 2 is blocked on a design decision, not a wire.**
 `reachability` takes `declared_capabilities` and **nothing has ever

@@ -395,24 +395,39 @@ def _key_graph_is_acyclic(zone, doors_by_room, keys_by_room,
 
 def _escapable(real: Reach, ways_out: frozenset[str], edges, doors_by_room,
                keys_by_room, have: frozenset[str]) -> tuple[str, ...]:
-    """SOLUTIONS_CATALOGUE §0-bis condition 4: you can always leave.
+    """SOLUTIONS_CATALOGUE §0-bis condition 4, and **it never changes the
+    verdict**. It says which KIND of failure a refused Zone has.
 
-    A capability gate is legal and "NOT YET" is good gameplay — but only
-    while the player can walk away from the Zone that blocked them. A
-    gate you cannot retreat past is not hard progression, it is a dead
-    run: the Zone holds its allocated Checks, the player is standing in
-    it, and nothing short of abandoning the Zone gets them out.
+    **The correction.** An earlier version of this docstring, and the
+    write-up that went with it, said condition 4 "had no rule" and that
+    a one-way edge into a dead end "satisfied every check". Both were
+    false, and the mistake is worth keeping written down because it is
+    not a detail — it is a claim about what a new check bought, made
+    without checking what the old ones already caught.
 
-    So this asks, of every state the player can actually get into,
-    whether a way out is still reachable FROM THERE, under the same
-    guaranteed capabilities. Keys are monotone, so a state carrying more
-    of them can only do better — the search starts from the keys in
-    hand rather than from nothing.
+    `R ⊆ E` asks, of every reachable state, whether `exit ∈ onward`.
+    This asks whether `{entry, exit} ∩ onward` is non-empty. The first
+    condition IMPLIES the second, so **no Zone exists that this refuses
+    and `R ⊆ E` accepts** — it is subsumed, by construction, not by
+    coincidence. The fixture offered as proof was worse than redundant:
+    it deleted two spine edges, so the exit was not merely unreachable
+    from the trapped room, it was unreachable from anywhere, and three
+    other rules fired first.
 
-    Note this is not `R ⊆ E` with the arrow reversed. `R ⊆ E` asks
-    whether the exit stays reachable, and the exit may legally sit
-    behind a gate; this asks whether the ENTRANCE does, and the
-    entrance never may.
+    **What it actually adds**, which is real and is why it stays: among
+    the states `R ⊆ E` already refuses, it separates the two that matter
+    to a player. "You cannot finish from here, and you can walk back to
+    the entrance" is §0-bis's *NOT YET is good gameplay* — leave, find
+    the capability, return. "You cannot finish and you cannot get back"
+    is the dead run the catalogue warns about. `R ⊆ E` reports both with
+    one sentence.
+
+    **And it is a backstop.** §0-bis explicitly permits the Zone exit
+    itself to sit behind a capability gate. The day `R ⊆ E` is relaxed
+    to model a player who does not hold the item yet, this stops being
+    subsumed and becomes the only thing between that player and a Zone
+    they cannot leave. Deleting it now would delete the guard exactly
+    when it is cheapest to keep.
     """
     trapped: dict[str, frozenset[str]] = {}
     memo: dict[tuple[str, frozenset[str]], bool] = {}

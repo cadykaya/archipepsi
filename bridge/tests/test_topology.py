@@ -473,19 +473,23 @@ def test_a_room_no_capability_would_reach_is_named_as_simply_unreachable():
         "lane to fix a declaration that is not the problem")
 
 
-# --- SOLUTIONS_CATALOGUE §0-bis condition 4: a gate may stop you, and
-# --- may not keep you ------------------------------------------------------
+# --- SOLUTIONS_CATALOGUE §0-bis condition 4, and what the escape check
+# --- actually buys ---------------------------------------------------------
 #
-# Four of the five conditions the catalogue puts on a legal capability
-# gate had a rule here. Condition 4 — "the player can safely leave the
-# blocked Zone" — had none, and the catalogue is explicit that it is
-# load-bearing: "a gate you cannot walk away from, or cannot come back
-# to, converts hard progression into a dead run".
+# THE CORRECTION. These tests previously claimed the escape check caught
+# a trap that "satisfied every existing rule". It does not, and cannot:
+# `R ⊆ E` asks whether the exit is reachable from every state, the
+# escape check asks whether the entrance OR the exit is — and the first
+# implies the second. No Zone exists that the escape check refuses and
+# `R ⊆ E` accepts. The fixture offered as proof also deleted two spine
+# edges, so the exit was unreachable from everywhere and three other
+# rules fired first.
 #
-# Every other rule asks whether the player can get somewhere. This is
-# the only one that asks whether they can get back, and it is not `R ⊆
-# E` reversed: the exit may legally sit behind a gate, the entrance
-# never may.
+# What it adds is the distinction between the two failures, which
+# `R ⊆ E` reports with one sentence: blocked but able to walk away
+# (§0-bis's "NOT YET is good gameplay") versus blocked and stuck (the
+# dead run the catalogue warns about).
+
 
 def test_an_ordinary_zone_can_always_be_left():
     """The control. A rule that refuses everything is as broken as one
@@ -495,52 +499,79 @@ def test_an_ordinary_zone_can_always_be_left():
         assert not any("not left" in e for e in result.errors), result.errors
 
 
-def test_a_one_way_door_into_a_dead_end_is_refused():
-    """Walk in, and there is no way back to the entrance or the exit.
-    Every existing rule is satisfied: the exit is reachable, every Check
-    sits in a reachable room, no key is behind its own lock. The player
-    is simply standing in a room they cannot leave."""
+def test_the_escape_check_never_refuses_what_r_subset_e_accepts():
+    """The subsumption, asserted rather than assumed.
+
+    This is the claim the earlier write-up got wrong, so it is a test
+    now: across a family of deliberately broken Zones, no state is ever
+    named as trapped without `R ⊆ E` also failing. If someone relaxes
+    `R ⊆ E` — §0-bis does permit a gated exit — this test stops holding
+    and the escape check stops being a backstop and starts being load
+    bearing, which is exactly when it needs to be noticed.
+    """
+    broken = []
     z = _chain8()
-    # A side room off c003 you can enter and not come back from.
-    extra = TopologyEdge(edge_id="e:c003:trap", room_a="c003",
-                         room_b="c007", realization="TRAVERSAL_ONLY",
-                         direction="A_TO_B")
-    z = z.model_copy(update={"edges": tuple(
-        e for e in z.edges if e.edge_id not in ("e:c006:c007",
-                                                "e:c007:c008")) + (extra,)})
-    result = topology.reachability(z)
-    assert not result.ok
-    assert any("can be entered and not left" in e for e in result.errors), \
-        result.errors
-    assert any("c007" in e for e in result.errors if "not left" in e)
+    one_way = TopologyEdge(edge_id="e:c002:c007:drop", room_a="c002",
+                           room_b="c007", realization="TRAVERSAL_ONLY",
+                           direction="A_TO_B")
+    broken.append(z.model_copy(update={"edges": tuple(
+        e.model_copy(update={"capability": "blink"})
+        if e.edge_id in ("e:c006:c007", "e:c007:c008") else e
+        for e in z.edges) + (one_way,)}))
+    broken.append(z.model_copy(update={"edges": tuple(
+        e.model_copy(update={"direction": "B_TO_A"})
+        if e.edge_id == "e:c004:c005" else e for e in z.edges)}))
+    broken.append(_gate(_chain8(), "c005", "grapple"))
+    broken.append(_chain8())
+
+    for bad in broken:
+        errors = topology.reachability(bad).errors
+        if any("not left" in e for e in errors):
+            assert any("R is not a subset of E" in e for e in errors), (
+                "the escape check named a trap that R ⊆ E accepted; it is "
+                "supposed to be strictly weaker", errors)
 
 
-def test_a_gate_you_cannot_retreat_past_is_refused_as_a_trap():
-    """The case §0-bis is actually about. `blink` gets you in; nothing
-    gets you out, because the way back is the same gated edge and the
-    player never had the capability to begin with."""
+def test_a_trap_is_reported_as_a_trap_and_not_only_as_an_unreachable_exit():
+    """What the check is FOR. The Zone is refused either way; this says
+    the player is stuck rather than merely unable to finish."""
     z = _chain8()
-    one_way_in = TopologyEdge(edge_id="e:c002:c007:drop", room_a="c002",
-                              room_b="c007", realization="TRAVERSAL_ONLY",
-                              direction="A_TO_B")
+    one_way = TopologyEdge(edge_id="e:c002:c007:drop", room_a="c002",
+                           room_b="c007", realization="TRAVERSAL_ONLY",
+                           direction="A_TO_B")
     z = z.model_copy(update={"edges": tuple(
         e.model_copy(update={"capability": "blink"})
         if e.edge_id in ("e:c006:c007", "e:c007:c008") else e
-        for e in z.edges) + (one_way_in,)})
-    result = topology.reachability(z)
-    assert not result.ok
-    assert any("not left" in e for e in result.errors), result.errors
+        for e in z.edges) + (one_way,)})
+    errors = topology.reachability(z).errors
+    assert any("R is not a subset of E" in e for e in errors), errors
+    assert any("can be entered and not left" in e for e in errors), (
+        "R ⊆ E already refuses this; the point of the escape line is to "
+        "say the player cannot get back out either", errors)
+    assert any("c007" in e for e in errors if "not left" in e)
+
+
+def test_blocked_but_able_to_walk_away_is_not_reported_as_a_trap():
+    """The other half of the distinction, and the case §0-bis is about.
+
+    The exit is gated and the player does not hold the capability, so
+    `R ⊆ E` refuses — correctly, the gate is undeclared. But they can
+    walk back to the entrance, come back with it, and finish. Reporting
+    that as a trap would call the intended gameplay a dead run.
+    """
+    z = _gate(_chain8(), "c008", "blink", edge_id="e:c007:c008")
+    errors = topology.reachability(z).errors
+    assert any("R is not a subset of E" in e for e in errors), errors
+    assert not any("not left" in e for e in errors), errors
 
 
 def test_declaring_the_capability_opens_the_way_back_out():
-    """And the same Zone with the capability guaranteed is fine: the
-    player can retreat the way they would have come."""
+    """And the same Zone with the capability guaranteed is fine."""
     z = _chain8()
     z = z.model_copy(update={"edges": tuple(
         e.model_copy(update={"capability": "blink"})
         if e.edge_id == "e:c006:c007" else e for e in z.edges)})
-    assert any("not left" in e or "does not declare" in e
-               for e in topology.reachability(z).errors)
+    assert not topology.reachability(z).ok
     ok = topology.reachability(z, declared_capabilities=["blink"])
     assert ok.ok, ok.errors
 
@@ -553,8 +584,7 @@ def test_a_key_in_hand_counts_toward_getting_back_out():
 
     The gate on the exit is what makes the retreat matter at all: with
     the way forward open, walking out the far end is an escape and the
-    door behind you never gets asked about. The Zone is still refused —
-    the gate is undeclared — and it must not be refused for *this*.
+    door behind you never gets asked about.
     """
     z = _chain8()
     z = _holds(z, "c002", "red")

@@ -781,24 +781,47 @@ scoreboard for this part of the Amalgam:
 | 1 | the matching AP location logic declares the same prerequisite | **enforced** — `reachability` searches under the guaranteed set and blames a gate when one is the reason |
 | 2 | Archipelago proves the capability progression is obtainable | **blocked, and further than it looks** — see below |
 | 3 | the physical Zone graph agrees with that AP logic | **enforced** — same search |
-| 4 | the player can safely leave the blocked Zone | **enforced now.** It was not, and the catalogue calls it load-bearing |
+| 4 | the player can safely leave the blocked Zone | **enforced, and it always was** — by `R ⊆ E`. See the correction below |
 | 5 | the Zone remains re-enterable | **enforced** by the lifecycle: DORMANT keeps the Zone's Checks and its committed manifest, and `enter_zone` replays it |
 
-**Condition 4 had no rule at all.** Every other property here asks
-whether the player can get *somewhere*; none asked whether they could
-get *back*. So a one-way edge into a dead end satisfied every check —
-the exit was reachable, every Check sat in a reachable room, no key was
-behind its own lock — and left the player standing in a room they could
-not leave, in a Zone still holding its allocated Checks. That is the
-"dead run" §0-bis names. `_escapable` now asks, of every state the
-player can reach, whether the entrance or the exit is still reachable
-**from there**, under the same guaranteed capabilities and starting from
-the keys already in hand.
+**A correction, because the previous version of this section was
+wrong.** It said condition 4 "had no rule at all" and that a one-way
+edge into a dead end "satisfied every check — the exit was reachable,
+every Check sat in a reachable room, no key was behind its own lock".
+None of that was true.
 
-It is not `R ⊆ E` with the arrow reversed: `R ⊆ E` asks whether the exit
-stays reachable, and **the exit may legally sit behind a gate**; this
-asks whether the entrance does, and the entrance never may. A gate is
-allowed to stop you. It is not allowed to keep you.
+`R ⊆ E` asks, of every reachable state, whether the **exit** is still
+reachable. `_escapable` asks whether the **entrance or the exit** is.
+The first condition implies the second, so **there is no Zone that
+`_escapable` refuses and `R ⊆ E` accepts** — it is subsumed by
+construction. Worse, the fixture offered as proof deleted two spine
+edges, so the exit was unreachable from *everywhere*, and three other
+rules fired before either of them. The claim was made without checking
+what the existing rules already caught, which is the same error as
+claiming a corridor-ends-far-away case was refused when the test behind
+it broke a chain in the middle.
+
+**What `_escapable` does add**, which is why it stays. Among the states
+`R ⊆ E` already refuses, it separates the two that mean different
+things to a player:
+
+| Situation | `R ⊆ E` | `_escapable` | What it is |
+|---|---|---|---|
+| exit gated, entrance reachable | refuses | passes | §0-bis's **"NOT YET is good gameplay"** — leave, find the capability, come back |
+| exit gated, one-way edge in | refuses | refuses | the **dead run** the catalogue warns about |
+
+`R ⊆ E` reports both with one sentence. The escape line says which one
+it is. It never changes the verdict, and
+`test_the_escape_check_never_refuses_what_r_subset_e_accepts` asserts
+that rather than assuming it.
+
+**And it is a backstop.** §0-bis explicitly permits the Zone exit itself
+to sit behind a capability gate. Today a *declared* gate puts the
+capability into the guaranteed set, so the exit is reachable and
+`R ⊆ E` holds; the day that is relaxed to model a player who does not
+hold the item yet, `_escapable` stops being subsumed and becomes the
+only thing between that player and a Zone they cannot leave. The
+subsumption test is what will notice.
 
 ### 6a. Condition 2 is blocked on something bigger than this lane
 
