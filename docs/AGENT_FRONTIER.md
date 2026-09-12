@@ -51,6 +51,16 @@ Zones do not lay out at all:
 | zone_04 | 20 rooms, 4 junctions, 7 dead ends | INFEASIBLE — branch `c019` off `c018`, 36 boxes |
 | zone_05 | 20 rooms, 5 junctions, 8 dead ends | INFEASIBLE — spine room `c017`, 65 boxes |
 
+**How bad is it, exactly.** An infeasible layout is not a dead end on
+its own: `handle_layout_result` refuses it, puts the record back to
+PENDING_GENERATION and composes again, up to `MAX_LAYOUT_REFUSALS` (3).
+So a Zone gets four attempts, each a fresh shape. **One of the five
+measured composed.** At that rate about two Zones in five would exhaust
+all four attempts and go DORMANT — a Zone the player is offered and
+cannot enter. Five samples is a small sample and the rate is not a
+constant of nature, but the order of magnitude is what matters: this is
+a degradation the player meets, not a test-only defect.
+
 **This is the next thing to fix and it is the engine's.** The graphs are
 legal; the router cannot lay four of them out. `branch_mouth` fixed the
 case where the mouth was inside its own junction; what is left is a
