@@ -1,0 +1,26 @@
+{
+  "basin_north_to_deck": {
+    "completed": true,
+    "ended_at": [
+      1.17,
+      14.0,
+      73.92
+    ],
+    "highest_y": 14.53,
+    "jumps": 16,
+    "waypoints_reached": 3,
+    "waypoints_total": 3
+  },
+  "basin_south_to_deck": {
+    "completed": true,
+    "ended_at": [
+      1.17,
+      14.0,
+      16.08
+    ],
+    "highest_y": 14.53,
+    "jumps": 16,
+    "waypoints_reached": 3,
+    "waypoints_total": 3
+  }
+}

@@ -159,8 +159,28 @@ def build():
         roomkit.flight(parts, _paint, name, "ramp_%d" % j,
                        IN_X - 5.0, IN_X, z0, z1, 0.0, DECK_Y, "y", flip)
         # A landing joining the flight's head to the deck edge.
+        #
+        # IT STOPS AT THE FLIGHT, AND IT DID NOT. Its x range ran to
+        # `IN_X` -- the flight's far edge -- so the landing slab lay ON TOP
+        # OF the flight's last three treads, 13.50..14.00 over tops at
+        # 12.25, 13.12 and 14.00. tread14 had 0.38 m of headroom and
+        # tread15 was inside it. That is the 2026-09-11 playtest, word for
+        # word: "the ugly stairs that don't work, they are just square
+        # pegs and the catwalk on top is above the stairs".
+        #
+        # It is also why the flight measured three risers short. Rays
+        # dropped from above at x 11.9 hit the landing at 14.00 and then
+        # the last tread they could SEE at 11.38, so the stair read as
+        # ending 2.62 m below the deck. It does not: it has all sixteen
+        # treads and its top is at DECK_Y. The three above 11.38 were
+        # buried, not missing.
+        #
+        # Stopping at `IN_X - 5.0` puts the landing's east edge exactly on
+        # the flight's west edge, tops flush at DECK_Y, so the climb
+        # finishes on tread15 and steps sideways onto the landing and then
+        # the deck -- all three surfaces at 14.00.
         surface("landing_%d" % j,
-                -DECK_W / 2.0, IN_X,
+                -DECK_W / 2.0, IN_X - 5.0,
                 (z1 - 3.0) if not flip else z0,
                 (z1) if not flip else (z0 + 3.0), DECK_Y, 0.5)
 
