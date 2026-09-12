@@ -3223,6 +3223,11 @@
             "title": "Resume Zone Name",
             "type": "string"
           },
+          "resume_layout_exhausted": {
+            "default": false,
+            "title": "Resume Layout Exhausted",
+            "type": "boolean"
+          },
           "revisitable": {
             "default": [],
             "items": {
@@ -7983,6 +7988,11 @@
             "maxLength": 160,
             "title": "Resume Zone Name",
             "type": "string"
+          },
+          "resume_layout_exhausted": {
+            "default": false,
+            "title": "Resume Layout Exhausted",
+            "type": "boolean"
           },
           "revisitable": {
             "default": [],

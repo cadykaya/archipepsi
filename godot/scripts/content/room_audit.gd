@@ -447,7 +447,43 @@ static func measure_layout(build: Dictionary,
 	for name: String in build.get("anchors", {}):
 		arrival_ok[name] = arrival_is_supported(space,
 				(build["anchors"] as Dictionary)[name])
-	return {"apertures": apertures, "arrival_ok": arrival_ok}
+	return {"apertures": apertures, "arrival_ok": arrival_ok,
+			"plug_clear": plugs_clear_of_arrivals(build)}
+
+## IS A BODY AT THE ROOM'S ARRIVAL OUTSIDE THE RETURN DEVICE?
+##
+## `AMALGAM_BRIDGE.md` §5.7 rule 4b, and the question is deliberately
+## about a BODY and not about two points. `ReturnPlug`'s trigger is a
+## cylinder of `RADIUS` by `HEIGHT` standing on the device; a player is
+## a capsule of `PLAYER_RADIUS` by `PLAYER_HEIGHT` standing on the
+## arrival. They overlap when the horizontal gap is less than the two
+## radii together AND the two vertical spans meet -- which is the
+## `Area3D` would actually report, arithmetic rather than a guess.
+##
+## One entry per plug, keyed by edge id. Missing is a refusal on the
+## bridge side, so a plug whose room published no arrival still gets an
+## answer here: `false`, because nothing was shown to be clear.
+static func plugs_clear_of_arrivals(build: Dictionary) -> Dictionary:
+	var out := {}
+	var anchors: Dictionary = build.get("anchors", {})
+	for raw: Variant in build.get("plugs", []):
+		if not is_instance_valid(raw as Object):
+			continue
+		var plug: ReturnPlug = raw
+		var room := str(plug.get_meta("room_id", ""))
+		var arrive: Variant = anchors.get("room:%s:arrival" % room)
+		if arrive == null:
+			out[plug.edge_id] = false
+			continue
+		var at: Vector3 = arrive
+		var here := plug.global_position if plug.is_inside_tree() \
+				else plug.position
+		var flat := Vector2(at.x - here.x, at.z - here.z).length()
+		var apart := flat >= ReturnPlug.RADIUS + Constants.PLAYER_RADIUS
+		var above := at.y >= here.y + ReturnPlug.HEIGHT
+		var below := at.y + Constants.PLAYER_HEIGHT <= here.y
+		out[plug.edge_id] = apart or above or below
+	return out
 
 static func aperture_polarity(room: Dictionary, to_world: Transform3D,
 		space: PhysicsDirectSpaceState3D) -> Dictionary:

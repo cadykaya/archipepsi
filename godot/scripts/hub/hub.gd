@@ -341,10 +341,24 @@ void fragment() {
 ## that reads it.
 const ZONE_ENTERABLE_MODES := ["ZONE_READY", "ZONE_ACTIVE", "ZONE_DORMANT"]
 
+## Is the Zone the Hub is holding one that can never be built?
+##
+## ONE FACT, READ IN ONE PLACE. `resume_layout_exhausted` is the bridge
+## saying "no committed manifest, and the layout attempts are spent" --
+## `AMALGAM_BRIDGE.md` §5.7a. Everything on this side that would offer
+## the player a way INTO that Zone asks here, and nothing asks the
+## headline or the prompt: presentation text is not a state.
+static func layout_exhausted() -> bool:
+	return bool(BridgeClient.hub().get("resume_layout_exhausted", false))
+
 func _on_portal_activated() -> void:
 	var mode := BridgeClient.hub_mode()
-	if mode in ZONE_ENTERABLE_MODES:
+	if mode in ZONE_ENTERABLE_MODES and not layout_exhausted():
 		enter_zone_requested.emit()
+		return
+	if layout_exhausted():
+		# Nothing to enter and nothing to generate: the only move is the
+		# abandon console, which is now standing next to this one.
 		return
 	match mode:
 		"ZONE_AVAILABLE":
@@ -360,6 +374,13 @@ func _on_portal_activated() -> void:
 ## from a test either.
 func portal() -> HubPortal:
 	return _portal
+
+## The abandon console, for the same reason the portal is exposed: a
+## suite asks what a player standing in the room can DO, and reaching
+## into the child list by name is how a test comes to pass against a
+## node that has been renamed.
+func abandon_console() -> Node3D:
+	return _abandon
 
 func _on_finale_activated() -> void:
 	BridgeClient.send_intent({"type": "request_next_zone", "finale": true})
@@ -792,8 +813,25 @@ class HubPortal extends StaticBody3D:
 				# default, so a player standing at the portal after
 				# walking out of a Zone read "PORTAL" with no `[E]` at
 				# all -- the way back was wired and invisible.
-				_prompt = "[E] RETURN TO ZONE"
-				_label.text = "ZONE WAITING"
+				#
+				# EXCEPT WHERE THERE IS NOTHING TO RETURN TO.
+				# `AMALGAM_BRIDGE.md` §5.7a defect 1, owner's decision: a
+				# Zone that was NEVER ACCEPTED and has spent its layout
+				# attempts is not enterable. Offering the way in led
+				# into geometry the validator had refused three times --
+				# entering succeeded, the client sent a layout, it was
+				# refused, and the Zone went DORMANT again. Read off
+				# `resume_layout_exhausted`, which is the bridge's fact
+				# about the held Zone; a committed dormant Zone has it
+				# false and keeps the way back in.
+				if bool(hub.get("resume_layout_exhausted", false)):
+					_enabled = false
+					_prompt = "ZONE CANNOT BE BUILT — DISCARD IT AT THE " \
+							+ "ABANDON CONSOLE"
+					_label.text = "ZONE UNBUILDABLE"
+				else:
+					_prompt = "[E] RETURN TO ZONE"
+					_label.text = "ZONE WAITING"
 			"GENERATING":
 				_prompt = "EPSILON IS DESIGNING…"
 				_label.text = "GENERATING"
@@ -900,6 +938,7 @@ class SimpleStation extends StaticBody3D:
 
 class AbandonConsole extends StaticBody3D:
 	var _visible_modes := ["GENERATING", "ZONE_READY", "ZONE_ACTIVE"]
+	var _exhausted := false
 	var _zone_id := ""
 	var _armed := false
 	var _label: Label3D
@@ -927,16 +966,29 @@ class AbandonConsole extends StaticBody3D:
 		add_child(_label)
 
 	func refresh(mode: String, active_zone: Dictionary) -> void:
-		visible = mode in _visible_modes
+		# THE ONE MOVE LEFT, AND IT HAS TO BE REACHABLE. A Zone that
+		# exhausted its layout attempts is DORMANT, which is not in
+		# `_visible_modes`, and `active_zone` is empty in that mode --
+		# so the escape from §5.7a defect 1 existed and was both
+		# invisible and unaddressed. `resume_zone_id` names the held
+		# Zone in every mode that has one.
+		_exhausted = HubController.layout_exhausted()
+		visible = mode in _visible_modes or _exhausted
 		_zone_id = str(active_zone.get("zone_id", ""))
+		if _zone_id == "":
+			_zone_id = str(BridgeClient.hub().get("resume_zone_id", ""))
 		if not visible:
 			_armed = false
-		_label.text = "ABANDON ZONE" if not _armed \
+		_label.text = ("DISCARD UNBUILDABLE ZONE" if _exhausted
+				else "ABANDON ZONE") if not _armed \
 				else "CONFIRM ABANDON?\nUnclaimed Checks return to the pool"
 
 	func interact_prompt() -> String:
-		return "[E] CONFIRM ABANDON — unclaimed Checks return to the pool" \
-				if _armed else "[E] ABANDON HELD ZONE"
+		if _armed:
+			return "[E] CONFIRM ABANDON — unclaimed Checks return to " \
+					+ "the pool"
+		return "[E] DISCARD UNBUILDABLE ZONE" if _exhausted \
+				else "[E] ABANDON HELD ZONE"
 
 	func interact(_player: Node) -> void:
 		if _zone_id == "":

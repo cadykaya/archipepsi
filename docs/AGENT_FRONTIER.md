@@ -1,5 +1,169 @@
 # AGENT FRONTIER
 
+## ENGINE LANE — every preserved Zone lays out, and the journey is measured — 2026-09-13
+
+**`claude/archipepsi-echoes-continuation-b1adno`, with the bridge lane
+merged at `ef8ab36` and the art lane at `19e271b`.** Read this section
+first on a wake-up; the one below it is the state this replaced.
+
+### The router repair
+
+**FIVE OF FIVE PRESERVED ORDINARY INPUTS NOW LAY OUT**, against the
+same fixtures that recorded four failures, with topology and selected
+shells held fixed. `KNOWN_INFEASIBLE` in `graph_driver.gd` is EMPTY and
+all five are positive controls. Two faults, both diagnosed with
+`--router-diag` before anything was changed:
+
+1. **A room was placed without the corridor its own doors will need.**
+   In three of the four failures the FIRST connector out of the
+   junction's branch mouth started inside a standing room, so the branch
+   search broke at push zero with open space two to eleven connectors
+   further on that it could never reach. `zone_02` missed by 0.37 m of
+   lateral clip; `zone_03` by 92 m³. A room now carries reservations for
+   its unrouted branch doors and its own exit, two connectors deep, in
+   its local frame, graded so a rung that cannot be honoured is dropped
+   rather than costing the Zone the rungs that can.
+2. **A refusal that had not looked.** `_search` stops at the first
+   connector it cannot lay, so a room whose approach is blocked at push
+   zero exhausted a candidate space of THREE poses out of a
+   seventy-one connector budget and reported the Zone infeasible.
+   Measured on `zone_02`'s `c022`: poses tested 3, corners entered 0.
+   `ZoneBuilder.build` is now a bounded ladder around one greedy solve —
+   when a layout wedges, the room the wedged one joined to takes the
+   NEXT pose its own search already offered and the Zone is re-solved.
+   Same seed, same graph, same shells, same candidate order; six rungs,
+   two per room before it walks further back.
+
+**Measured and rejected, recorded in the source:** a third reservation
+rung holding the branch ROOM's envelope. Reserving 39 m × 50 m in front
+of every junction that owes a branch pushed the spine around to find it
+— the wider sample fell to fifteen and two preserved controls stopped
+laying out.
+
+### The declared sample: 14 of 20
+
+Declared before it was run: the first twenty consecutive ordinary Zones
+of a real campaign at `DEFAULT_CONFIG`, of which the preserved five are
+exactly the prefix (generation is deterministic). `make zone-sample`
+regenerates it; `SAMPLE_FLOOR` in `graph_driver.gd` ratchets it.
+
+**41 placement attempts across the twenty in 8.3 s** — the retry
+lifecycle measured, not estimated. The preserved five take 8 attempts
+and 1.7 s. Six do not lay out:
+
+* `zone_07`, `zone_13`, `zone_18`, `zone_20` — each wedges on an
+  authored branch shell around **39 m deep and 50 m tall in a Zone 51 m
+  tall**, with 30–50 rooms standing. The mouth is clear, the first five
+  connectors are clear, and the room has nowhere to be. **This is a
+  shell-vs-budget contract question, not a router repair**, and it is
+  reported rather than fixed: either the world budget grows or a shell
+  that size stops being eligible for a branch in a crowded Zone.
+* `zone_10`, `zone_12` — overlap by less than the router used to care
+  about. See below.
+
+**THE ROUTER AND THE VALIDATOR DISAGREED ABOUT "OVERLAP".** `_overlaps`
+in `zone_builder` tolerates half a cubic metre so a room's inset entry
+socket can swallow a little of the connector it joins; `layout.py`
+tolerates a MILLIMETRE on every axis and refuses the whole manifest. A
+thin, wide intersection sits inside one and outside the other, and the
+router returned `LAYOUT_OK` for two proposals the bridge would not take.
+It now asks the validator's own question before claiming `LAYOUT_OK`.
+That is why the recorded coverage is fourteen and not sixteen: **the
+smaller number is the true one.**
+
+### The player journey, measured leg by leg
+
+`_walk_into` follows the **committed `links` corridor** waypoint by
+waypoint. Steering a body at a side room's centre walks it into whichever
+wall is between — which is what three of five Zones were reporting as
+"stopped N metres short" while the route stood open.
+
+Six results, ratcheted separately by `JOURNEY_FLOOR`:
+
+| leg | today |
+|---|---|
+| valid start | 5 of 5 |
+| crossed the junction to the intended door | 5 |
+| entered the side destination | 2 |
+| could remain in it, standing, not sent home | 2 |
+| crossed it to its content | 2 |
+| **completed the intended return** | **0** |
+
+**THE JOURNEY IS NOT CLOSED AND THIS IS NOT A PASS.** `_walk` presses
+forward and steers flat; these Zones have rooms fifty metres tall with
+elevation bands, so a body steered at a waypoint on another level walks
+off a ledge — `zone_05`'s ended twelve metres down. Three approaches and
+both returns fall that way. **That is a harness limit, not a Zone
+verdict**: two Zones' side rooms are demonstrably enterable and
+crossable; the other three are unmeasured. **Next frontier item: a
+walker that follows the corridor's floor rather than a flat bearing.**
+
+### The return pad — §5.7 engine half, landed with Dess's
+
+The composer names `room:<rid>:return` (`ef8ab36`) and this lane now:
+reserves the spot with `_clear_spot` against the room's own furniture
+(claimed before the cover crates roll, `return_clearance` = trigger +
+capsule + margin); publishes `anchors["room:<rid>:return"]` for every
+room; stands `ReturnPlug` there; and measures `plug_clear[edge_id]` —
+capsule at the arrival against the device's trigger cylinder — reported
+beside `apertures` and `arrival_ok`. Generated fixtures regenerated: all
+five now name `:return`.
+
+### The exhausted-layout Hub — §5.7a defect 1, owner's decision
+
+A never-accepted Zone that spends its layout attempts is **not
+enterable**. New snapshot field, computed where `MAX_LAYOUT_REFUSALS`
+lives:
+
+> **`HubStatus.resume_layout_exhausted: bool`** — "no committed manifest
+> AND refusals spent". **Dess: this is the seam; confirm the spelling.**
+> Nothing on the client derives the distinction from presentation text.
+
+The portal offers no `[E]` in that state and refuses to emit; the
+abandon console becomes visible and takes its zone id from
+`resume_zone_id` (it read `active_zone`, which is empty in DORMANT, so
+the only escape was both invisible and unarmed); and `_on_enter_zone`
+refuses as a second lock, so stale `enter_zone` traffic cannot restart
+the loop. A committed dormant Zone is unaffected — asserted as the
+control in `godot-legible`. Dess's defect 2 (`layout_refusals` `le=99`
+raising on the 100th) is now unreachable: it needed the loop.
+
+### The lifetime boundary — after certify, before send
+
+`_certify_physics` gave up when the Zone left the tree and then returned
+to `send_layout_result`, which sent the half-measured result anyway; the
+abandoned `_await_verdict` then spun for a Zone nobody is in and held or
+released a **freed** `player` (`!= null` is not alive in GDScript).
+Closed, with a regression in `godot-integration` that tears a Zone down
+at two offsets and asserts a replacement reaches its own ACCEPTED
+verdict, no freed-node access, no stale refusal, and no Check awarded by
+certification.
+
+### Two harness repairs, both of which had been reporting more than they measured
+
+* the graph driver read every fixture from the generated directory
+  whatever directory it was given — the sample read five files, failed
+  to read fifteen, and announced "20 of 20 lay out" on fifteen empty
+  Dictionaries;
+* the integration driver sampled `layout_state` off the shared snapshot
+  twelve physics frames after setup, walking past the very
+  `layout_refusals` guard `_await_verdict` has for stale REFUSED. It
+  waits for the controller's own recorded verdict now.
+
+### What is still open
+
+1. **The walker** (above) — the single thing between here and a measured
+   round trip.
+2. **Four sample Zones wedge on oversized authored branch shells** — a
+   contract decision, not a router one.
+3. **`zone_10` / `zone_12`** still overlap after the ladder; the router
+   refuses them honestly now, but they are two Zones a player would be
+   offered and could not enter.
+4. **Offline layout acceptance** cannot be reproduced without playing
+   the Zone (`ZoneController.setup` does more than `ZoneBuilder`), so
+   `check_sample_layouts.py` is a REPORT. Acceptance is gated live by
+   `godot-integration`.
+
 ## ENGINE LANE — Dess's carrier, and five Zones walked — 2026-09-13
 
 **`claude/archipepsi-echoes-continuation-b1adno`, with the bridge lane

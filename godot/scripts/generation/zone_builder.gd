@@ -363,6 +363,14 @@ static func _furnish_room(root: Node3D, theme: String,
 				and not (result["player_entry"] as Dictionary).is_empty() \
 			else Vector3(0, 0, 3.0)
 	anchors["room:%s:arrival" % rid] = origin + _rot(yaw, arrive)
+	# AND WHERE A RETURN DEVICE WOULD GO, which is NOT there.
+	# `AMALGAM_BRIDGE.md` §5.7. Published for every room rather than for
+	# the rooms this Zone happens to plug, because a plug is named by the
+	# composer against an anchor and an anchor that does not exist is a
+	# refusal (rule 4) -- silently skipping one is what the old
+	# `push_warning` did.
+	anchors["room:%s:return" % rid] = origin + _rot(yaw,
+			ChamberBuilders.return_spot(result, chamber))
 	# THE ENVELOPE TRAVELS WITH THE TRANSFORM.
 	#
 	# §30.11.2e constraint 2 is measured on the COMMITTED layout and
@@ -736,6 +744,11 @@ static func layout_to_json(result: Dictionary) -> Dictionary:
 			"rooms": rooms, "joins": joins, "anchors": anchors,
 			"arrival_ok": result.get("arrival_ok", {}),
 			"apertures": result.get("apertures", {}),
+			# One boolean per return device: is a body standing at its
+			# room's arrival outside its trigger volume. §5.7 rule 4b --
+			# a distinct anchor is not evidence, the same way a
+			# coordinate is not evidence a capsule fits.
+			"plug_clear": result.get("plug_clear", {}),
 			# The chains the engine built and replayed, as
 			# `PlacedPackage` records bound to this Zone, the room and
 			# the declared content they realize. Passed through rather
@@ -2391,6 +2404,12 @@ static func _build_once(zone: Dictionary, theme_override := "",
 		var plug := ReturnPlug.create(str(spec.get("edge_id", "")),
 				str(spec.get("destination", "zone_start")),
 				str(spec.get("device", "threshold")), theme)
+		# WHICH ROOM'S ARRIVAL THIS DEVICE HAS TO STAND CLEAR OF. The
+		# composer names the room in the plug; the measurement needs it
+		# and a plug is not otherwise attached to one.
+		plug.set_meta("room_id", str(spec.get("room_id",
+				source.split(":")[1] if source.begins_with("room:")
+				else "")))
 		plug.position = anchors[source]
 		root.add_child(plug)
 		plugs.append(plug)

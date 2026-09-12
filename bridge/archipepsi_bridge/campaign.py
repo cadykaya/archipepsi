@@ -521,6 +521,10 @@ class CampaignEngine:
                              resume_zone_id=held.zone_id,
                              resume_zone_name=(held.zone.display_name
                                                if held.zone else ""),
+                             resume_layout_exhausted=(
+                                 held.manifest is None
+                                 and held.layout_refusals
+                                 >= T.MAX_LAYOUT_REFUSALS),
                              **base)
 
         finale_unlocked = (progress >= self.config.finale_required_checks()

@@ -1048,6 +1048,26 @@ class HubStatus(Strict):
     resume_zone_id: str = Field(default="", max_length=C.MAX_AP_STRING_LEN)
     resume_zone_name: str = Field(default="", max_length=C.MAX_TEXT_LEN)
 
+    #: **Is the held Zone one a player can actually walk back into?**
+    #:
+    #: `AMALGAM_BRIDGE.md` §5.7a defect 1, and the owner's decision on
+    #: it: a Zone that was NEVER ACCEPTED and has spent its layout
+    #: attempts is not enterable. The portal used to offer "RETURN TO
+    #: ZONE" for one anyway — into geometry the validator had refused
+    #: three times — and entering succeeded, the client sent a layout,
+    #: it was refused, and the Zone went DORMANT again. The escape
+    #: (abandon) existed and nothing pointed at it.
+    #:
+    #: A FACT, NOT AN AFFORDANCE. This is `no committed manifest AND
+    #: refusals spent`, computed where `MAX_LAYOUT_REFUSALS` lives; what
+    #: the Hub shows instead is the client's to decide. A client that
+    #: reads presentation text to tell these apart is reading the wrong
+    #: field, which is why this one exists.
+    #:
+    #: A genuinely committed dormant Zone — one with a manifest, walked
+    #: out of with work unfinished — is enterable and this stays false.
+    resume_layout_exhausted: bool = False
+
     #: Finished Zones the player may walk back into, newest first.
     #:
     #: Separate from `resume_zone_id` because they are different offers:

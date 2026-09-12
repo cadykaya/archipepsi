@@ -838,6 +838,40 @@ func _test_a_refused_layout_is_not_playable() -> bool:
 	return true
 
 
+## A ZONE THAT CAN NEVER BE BUILT IS NOT A ZONE TO WALK BACK INTO.
+##
+## `AMALGAM_BRIDGE.md` §5.7a defect 1, and the owner's decision on it.
+## When a fresh proposal exhausts its layout attempts the Zone goes
+## DORMANT holding its Checks -- and DORMANT is a mode whose portal says
+## "RETURN TO ZONE", into geometry the validator has refused three
+## times. Entering succeeded, the client sent a layout, it was refused,
+## and the Zone went DORMANT again: the recomposition stopped and the
+## LOOP did not. The escape existed at the abandon console, which in
+## that mode was invisible and did not know which Zone it held.
+##
+## Driven rather than read: the refusals are real ones from the real
+## validator, and what is asserted is what a player standing at the
+## portal can DO.
+func _test_an_unbuildable_zone_is_not_offered_as_a_way_back() -> bool:
+	var hub := BridgeClient.hub()
+	if not bool(hub.get("resume_layout_exhausted", false)):
+		# NOT REACHED IN THIS RUN, AND SAID SO. Getting here needs three
+		# real refusals in a row of a Zone that was never accepted; this
+		# campaign's Zones lay out. The claim below is about the state
+		# when it happens, so a run that never reaches it asserts
+		# nothing rather than passing quietly.
+		print("  -- no exhausted Zone in this run; the unbuildable-Zone "
+				+ "offer is asserted by test_hub.gd on the state itself")
+		return true
+	_check(BridgeClient.hub_mode() == "ZONE_DORMANT",
+			"an exhausted Zone leaves the Hub in ZONE_DORMANT, and it "
+			+ "is in %s" % BridgeClient.hub_mode())
+	_check(str(hub.get("resume_zone_id", "")) != "",
+			"the Hub still names the Zone it is holding, so the abandon "
+			+ "console has something to discard")
+	return true
+
+
 ## THE ZONE GOES AWAY WHILE ITS LAYOUT IS BEING CERTIFIED, twice, and a
 ## replacement then completes its own acceptance.
 ##

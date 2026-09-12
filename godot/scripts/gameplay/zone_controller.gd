@@ -827,6 +827,7 @@ func _measure_layout_evidence(build: Dictionary) -> void:
 	build["apertures"] = apertures
 	measured_apertures = apertures
 	build["arrival_ok"] = evidence["arrival_ok"]
+	build["plug_clear"] = evidence["plug_clear"]
 
 ## Can a body ARRIVE here? Not "is this space empty".
 ##

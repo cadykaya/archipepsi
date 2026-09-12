@@ -73,6 +73,7 @@ func _run() -> void:
 	_the_lab_doorway_is_a_hole_not_a_picture_of_one(hub)
 	_the_lab_corridor_has_walls(hub)
 	_the_hub_board_shows_the_whole_campaign()
+	await _an_unbuildable_zone_offers_no_way_in(hub)
 	_zone_signage_faces_the_player_too()
 	_the_three_projectiles_read_apart_in_silhouette()
 	_the_silhouette_is_decided_by_flight_not_by_colour()
@@ -250,6 +251,72 @@ func _zone_signage_faces_the_player_too() -> void:
 ## 6.7% of the multiworld, presented as the multiworld. Both numbers were
 ## typed in when thirty was the only scale there was, which is the CS8b
 ## shape one more time: the options scaled and a consumer did not.
+## A ZONE THAT CAN NEVER BE BUILT OFFERS NO WAY IN, and one way out.
+##
+## `AMALGAM_BRIDGE.md` §5.7a defect 1, owner's decision. The portal used
+## to read "[E] RETURN TO ZONE" in ZONE_DORMANT whatever the Zone's
+## layout had done -- so a proposal that had been refused three times
+## was offered as somewhere to walk, entering succeeded, the layout was
+## refused again, and it went DORMANT again. Meanwhile the abandon
+## console was invisible in that mode and, reading `active_zone` for a
+## Zone nobody is in, did not know what it would be discarding.
+##
+## Driven on the STATE, not on the text: `resume_layout_exhausted` is
+## the bridge's fact, and what is asserted here is that the prompt
+## carries no `[E]`, that the portal refuses to emit, and that the
+## abandon console is visible and armed with the held Zone's id.
+func _an_unbuildable_zone_offers_no_way_in(hub: HubController) -> void:
+	var was := BridgeClient.snapshot
+	# AN ARRAY, BECAUSE A GDSCRIPT LAMBDA CAPTURES LOCALS BY VALUE. An
+	# `int` counter incremented inside the handler increments a copy and
+	# reads zero here forever, which is a test that cannot fail.
+	var asked: Array[int] = [0]
+	hub.enter_zone_requested.connect(func() -> void: asked[0] += 1)
+
+	# The committed dormant Zone FIRST, which is the control: a Zone with
+	# a manifest, walked out of with work unfinished, is still a way back
+	# in and nothing here may take that away.
+	BridgeClient.snapshot = {"hub": {"mode": "ZONE_DORMANT",
+			"headline": "ZONE WAITING", "portal_enabled": true,
+			"resume_zone_id": "zone_009", "resume_layout_exhausted": false}}
+	hub.refresh()
+	await get_tree().process_frame
+	_check(hub.portal().interact_prompt().contains("[E]"),
+			"a committed dormant Zone still offers a way back in, and "
+			+ "the portal says '%s'" % hub.portal().interact_prompt())
+	hub._on_portal_activated()
+	_check(asked[0] == 1,
+			"activating the portal on a committed dormant Zone asks to "
+			+ "enter it (asked %d times)" % asked[0])
+
+	# And now the one that cannot be built.
+	BridgeClient.snapshot = {"hub": {"mode": "ZONE_DORMANT",
+			"headline": "ZONE WAITING", "portal_enabled": true,
+			"resume_zone_id": "zone_009", "resume_layout_exhausted": true}}
+	hub.refresh()
+	await get_tree().process_frame
+	_check(not hub.portal().interact_prompt().contains("[E]"),
+			"an unbuildable Zone offers no way in, and the portal says "
+			+ "'%s'" % hub.portal().interact_prompt())
+	hub._on_portal_activated()
+	_check(asked[0] == 1,
+			"activating the portal on an unbuildable Zone asks for "
+			+ "nothing (asked %d times in total)" % asked[0])
+	var console := hub.abandon_console()
+	_check(console != null and console.visible,
+			"the abandon console is visible, because discarding the "
+			+ "Zone is the only move left")
+	if console != null:
+		_check(console.interact_prompt().contains("[E]"),
+				"and it offers an action: '%s'"
+				% console.interact_prompt())
+		_check(str(console.get("_zone_id")) == "zone_009",
+				"and it knows which Zone it would discard ('%s'), which "
+				% str(console.get("_zone_id"))
+				+ "`active_zone` cannot tell it in this mode")
+	BridgeClient.snapshot = was
+	hub.refresh()
+
 func _the_hub_board_shows_the_whole_campaign() -> void:
 	var cells := Constants.TIER_COUNT * Constants.TIER_SIZE
 	for total in [30, 120, 450, Constants.LOCATION_COUNT_MAX]:

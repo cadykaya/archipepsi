@@ -622,6 +622,51 @@ static func procedural_sockets(width: float, depth: float,
 ## every run, which Law 47c needs. Candidates walk a ring inward from the
 ## room's quarter points so a key lands in the open rather than against a
 ## wall, and the first clear one wins.
+## THE SPACE A RETURN DEVICE TAKES, and a body's room to stand clear of
+## it. `ReturnPlug.RADIUS` is the trigger; a player at the edge of it is
+## already inside, so the claim is the trigger plus a capsule plus a
+## little, and `plug_clear` is then a measurement that can come back
+## true rather than a hope.
+static func return_clearance(at: Vector3) -> AABB:
+	var reach := ReturnPlug.RADIUS + Constants.PLAYER_RADIUS + 0.6
+	return AABB(at - Vector3(reach, 0.0, reach),
+			Vector3(reach * 2.0, ReturnPlug.HEIGHT, reach * 2.0))
+
+## Where a room's return device goes, in room-local space.
+##
+## A room that reserved one when it was built says so and that is the
+## answer. A room that did not -- an authored shell, or any builder that
+## does not run the dense path -- gets one found the same way, against
+## everything the build DOES declare it put somewhere: the arrival, the
+## reward pedestal and every key spot. Reconstructed rather than
+## invented; the alternative is an offset, and an offset is what §5.7
+## is about.
+static func return_spot(build: Dictionary, chamber: Dictionary) -> Vector3:
+	if build.has("return_spot"):
+		return build["return_spot"]
+	var box: AABB = build.get("bounds", AABB())
+	var claimed: Array[AABB] = []
+	var arrive: Vector3 = (build.get("player_entry", {}) as Dictionary) \
+			.get("position", PROCEDURAL_ARRIVAL)
+	claimed.append(AABB(arrive - Vector3(0.8, 0.0, 0.8),
+			Vector3(1.6, Constants.PLAYER_HEIGHT + 0.2, 1.6)))
+	if build.has("reward_position"):
+		claimed.append(reward_clearance(chamber,
+				build["reward_position"] as Vector3))
+	for raw: Variant in build.get("key_spots", []):
+		var spot: Dictionary = raw
+		claimed.append(AABB(
+				(spot["position"] as Vector3) - Vector3(0.8, 0.0, 0.8),
+				Vector3(1.6, 2.0, 1.6)))
+	# `_clear_spot` samples x in +/- 0.34 of width and z in 0.2..0.8 of
+	# depth, both measured from a room whose origin is its entry face;
+	# an authored shell's envelope can start somewhere else, so the spot
+	# is carried back onto the envelope it was measured against.
+	var at := _clear_spot(box.size.x, box.size.z, claimed,
+			hash("return:" + str(chamber.get("id", "c"))))
+	return Vector3(at.x + box.position.x + box.size.x / 2.0, box.position.y,
+			at.z + box.position.z)
+
 static func _clear_spot(width: float, depth: float, claimed: Array,
 		seed_value: int) -> Vector3:
 	var rng := RandomNumberGenerator.new()
@@ -1560,6 +1605,17 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 		key_spots.append({"key_id": str(spec.get("key_id", "")),
 				"colour": str(spec.get("colour", "gold")),
 				"position": spot})
+	# AND THE RETURN DEVICE'S SPACE, RESERVED THE SAME WAY. `AMALGAM
+	# _BRIDGE.md` §5.7: the plug used to stand on `room:<rid>:arrival`,
+	# which is where a body entering the room is put, so walking into a
+	# side destination fired the return on the first frame and walking
+	# back in fired it again. An offset from the arrival is not the
+	# repair -- it lands in a crate, in a wall, or outside the room. The
+	# builder knows where it put its furniture, so the builder reserves
+	# this too, before the cover crates roll.
+	var return_at := _clear_spot(width, depth, claimed,
+			hash("return:" + str(chamber.get("id", "c"))))
+	claimed.append(return_clearance(return_at))
 	# Crude cover: a few boxes and a wedge.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(str(chamber.get("id", "c")) + theme)
@@ -1688,6 +1744,7 @@ static func arena(chamber: Dictionary, theme: String) -> Dictionary:
 			"doors": door_plan(chamber, width, depth),
 			"player_entry": {"position": PROCEDURAL_ARRIVAL},
 			"key_spots": key_spots,
+			"return_spot": return_at,
 			"bounds": AABB(Vector3(-width / 2.0, lowest, 0),
 					Vector3(width, wall_height - lowest, depth)),
 			"enemy_spawns": spawns,
