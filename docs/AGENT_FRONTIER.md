@@ -118,6 +118,13 @@ Zone being accepted at all. Diagnosed on `zone_01`, three parts:
 | `arena` | cut them, then stood a perimeter crate 0.45 m inside | **`_greeble_room` keeps clear**, as it always has for the exit lane |
 | `platform_path` | raises two solid slabs and **cannot honestly cut them** | **open** |
 
+**Narrowed, measured, after the two fixes.** `godot-reload` PHASE 1 used
+to be refused for `c008/side_left`, `c008/side_right` **and**
+`c011/side_right`; it is now refused for the two `c008` doors alone, and
+the re-selection journey's replacement for `c008` and `c012` alone —
+every one of them a `platform_path`. One producer stands between this
+project and an accepted default-scale Zone.
+
 A `platform_path`'s declared side position is the middle of its side
 wall: over the kill pit, below the walkway. Measured alternative —
 moving the socket onto the start ledge cuts honestly and then `zone_01`
@@ -129,12 +136,23 @@ junctions, or the room grows a landing — and neither is a wall this
 builder can cut. Waived by room type and **counted** in
 `godot-zone-audit`, so a change either way goes red.
 
+### Suites, at this commit
+
+`godot-zone-audit`, `godot-test`, `godot-room`, `godot-room-contract`,
+`godot-content`, `godot-activity`, `godot-graphs`, `godot-physics`,
+`godot-movement`, `godot-integration` — **OK**. 1314 passed in
+`bridge/tests`; schemas and the v0.8 packet check clean.
+
+`godot-reload` — **RED**, PHASE 1, and now for the `platform_path` side
+door and nothing else. `godot-return-journey` — **RED at its last three
+legs**, same cause, everything before them green.
+
 ### NOT DONE, and not started
 
-1. **The `platform_path` side door**, above. One decision, then the
-   journey's last three legs (acceptance, the walk onto the return, the
-   restart replay) run without further work — the control is written and
-   waiting behind it.
+1. **The `platform_path` side door**, above. One decision, then
+   `godot-reload` goes green and the journey's last three legs
+   (acceptance, the walk onto the return, the restart replay) run
+   without further work — the control is written and waiting behind it.
 2. **Overlap reconciliation.** The join/collar distinction, the separate
    "router found a candidate" vs "bridge accepted it" publication, and
    the bounds diagnosis for the four large-shell failures. The four
