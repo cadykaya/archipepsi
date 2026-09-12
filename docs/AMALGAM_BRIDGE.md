@@ -597,8 +597,15 @@ placeholder passes level 1 and proves nothing at level 2.
 ## 6. What remains in this lane
 
 - Consume a real `layout_result` (§4.1) and commit a real manifest.
-- Re-entry that rebuilds from the committed manifest rather than
-  regenerating — the state machine is done, the manifest replay is not.
+- ~~Re-entry that rebuilds from the committed manifest rather than
+  regenerating.~~ **Done on this side, and now actually measured.**
+  `handle_enter_zone` sends the committed manifest back down, and
+  `test_the_whole_path` asserts the *emitted* `zone_ready` carries it
+  with the same digest — against a first generation, which carries
+  none. Deleting the replay outright used to pass all 1091 tests: the
+  save file looks identical whether or not the manifest is ever sent,
+  so every assertion in the suite was reading storage rather than the
+  seam. What remains is the engine **consuming** it (§5.3).
 - The `manipulate` capability contract, `vector_latches`, and the model
   check's physics properties: the next Amalgam dependencies after this
   slice, none of them started.

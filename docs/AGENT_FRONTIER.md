@@ -15,8 +15,13 @@ a reload from disk re-enters with layout, keys and locks preserved.
 nowhere.
 
 **Not connected:** the engine does not serialize `layout_result`, does
-not surface aperture polarity, and does not replay the committed
-manifest. Those three are `docs/AMALGAM_BRIDGE.md` §5.
+not surface aperture polarity, and does not consume the committed
+manifest. Those three are `docs/AMALGAM_BRIDGE.md` §5. The bridge's
+half of the replay is connected and measured — re-entry emits the
+manifest and `test_the_whole_path` asserts the emitted message carries
+it. **Deleting that emit passed all 1091 tests until it was asserted**:
+the save file is identical either way, so the suite was reading storage
+and calling it the seam. Assert the message, not the record.
 
 **All three of SOLUTIONS_CATALOGUE §2's local-key rules are enforced.**
 A key reachable without passing its own lock, an acyclic key graph, and

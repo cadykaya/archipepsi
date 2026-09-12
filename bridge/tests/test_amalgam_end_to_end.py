@@ -18,7 +18,7 @@ from archipepsi_bridge.schemas import constants as C
 from archipepsi_bridge.schemas.protocol import ClientMessage
 from pydantic import TypeAdapter
 
-from .conftest import connected_engine, drain, run
+from .conftest import Collector, connected_engine, drain, run
 
 _ADAPTER = TypeAdapter(ClientMessage)
 
@@ -119,12 +119,21 @@ async def _branching_zone(engine):
 def test_the_whole_path(tmp_path):
     async def go():
         engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        sink = Collector(engine)
 
         # 1. GENERATION produces a graph, not a list.
         zone_id, zone = await _branching_zone(engine)
         assert zone.edges and zone.plugs
         junction = max(c.door_degree for c in zone.chambers)
         assert junction >= 3, "an ordinary Zone should carry a junction"
+        # A Zone being SOLVED for the first time carries no manifest.
+        # This is the control for the re-entry assertion in step 6: with
+        # nothing to contrast against, `manifest` present would prove
+        # only that the field exists.
+        born = [m for m in sink.of_type("zone_ready")
+                if m.zone.zone_id == zone_id]
+        assert born and all(m.manifest is None for m in born), (
+            "a first generation has nothing to replay")
         key = next(k.key_id for c in zone.chambers for k in c.keys)
         room, socket = next((c.id, d.socket_id) for c in zone.chambers
                             for d in c.doors if d.usage == "LOCKED")
@@ -177,8 +186,25 @@ def test_the_whole_path(tmp_path):
 
         # 6. RE-ENTER, and everything is where it was.
         engine.save = reloaded
+        sink.messages.clear()
         await engine.handle_enter_zone(zone_id)
         rec = engine.save.zone_by_id(zone_id)
+        # THE REPLAY ITSELF, not merely the stored manifest. The record
+        # keeping its layout is storage; SENDING it back down is what
+        # makes re-entry deterministic (Law 47c, AMALGAM_BRIDGE §5.3),
+        # and deleting the emit is invisible to every other assertion
+        # here — the save file looks identical either way.
+        replayed = [m for m in sink.of_type("zone_ready")
+                    if m.zone.zone_id == zone_id]
+        assert len(replayed) == 1, (
+            "re-entering a laid-out Zone sends the committed layout "
+            "back down exactly once")
+        assert replayed[0].manifest is not None, (
+            "an engine told to enter without a manifest has no choice "
+            "but to solve the layout again")
+        assert replayed[0].manifest["manifest_digest"] == digest, (
+            "the layout replayed is the layout committed")
+        assert replayed[0].manifest["joins"] == rec.manifest["joins"]
         assert rec.state == "ACTIVE"
         assert rec.manifest["manifest_digest"] == digest
         assert rec.progress.collected_keys == (key,)
