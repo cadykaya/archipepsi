@@ -772,16 +772,69 @@ placeholder passes level 1 and proves nothing at level 2.
 
 ## 6. What remains in this lane
 
-- Consume a real `layout_result` (§4.1) and commit a real manifest.
-- ~~Re-entry that rebuilds from the committed manifest rather than
-  regenerating.~~ **Done on this side, and now actually measured.**
-  `handle_enter_zone` sends the committed manifest back down, and
-  `test_the_whole_path` asserts the *emitted* `zone_ready` carries it
-  with the same digest — against a first generation, which carries
-  none. Deleting the replay outright used to pass all 1091 tests: the
-  save file looks identical whether or not the manifest is ever sent,
-  so every assertion in the suite was reading storage rather than the
-  seam. What remains is the engine **consuming** it (§5.3).
+**The five conditions §0-bis puts on a legal capability gate**
+(`docs/design-packet-v0.10/SOLUTIONS_CATALOGUE.md`), which is the real
+scoreboard for this part of the Amalgam:
+
+| | Condition | State |
+|---|---|---|
+| 1 | the matching AP location logic declares the same prerequisite | **enforced** — `reachability` searches under the guaranteed set and blames a gate when one is the reason |
+| 2 | Archipelago proves the capability progression is obtainable | **blocked, and further than it looks** — see below |
+| 3 | the physical Zone graph agrees with that AP logic | **enforced** — same search |
+| 4 | the player can safely leave the blocked Zone | **enforced now.** It was not, and the catalogue calls it load-bearing |
+| 5 | the Zone remains re-enterable | **enforced** by the lifecycle: DORMANT keeps the Zone's Checks and its committed manifest, and `enter_zone` replays it |
+
+**Condition 4 had no rule at all.** Every other property here asks
+whether the player can get *somewhere*; none asked whether they could
+get *back*. So a one-way edge into a dead end satisfied every check —
+the exit was reachable, every Check sat in a reachable room, no key was
+behind its own lock — and left the player standing in a room they could
+not leave, in a Zone still holding its allocated Checks. That is the
+"dead run" §0-bis names. `_escapable` now asks, of every state the
+player can reach, whether the entrance or the exit is still reachable
+**from there**, under the same guaranteed capabilities and starting from
+the keys already in hand.
+
+It is not `R ⊆ E` with the arrow reversed: `R ⊆ E` asks whether the exit
+stays reachable, and **the exit may legally sit behind a gate**; this
+asks whether the entrance does, and the entrance never may. A gate is
+allowed to stop you. It is not allowed to keep you.
+
+### 6a. Condition 2 is blocked on something bigger than this lane
+
+`reachability` takes `declared_capabilities`, and **nothing has ever
+passed it** — not production, not one test. So the guarantee set is
+always `BASELINE_CAPABILITIES`, and the rule that a gate must be
+declared is, today, a rule that no gate can ever satisfy. A check that
+can only refuse is as broken as one that can only accept; it simply
+fails safe instead of failing open.
+
+The reason is not a missing wire. **Capabilities are not Archipelago
+items.** The apworld's pool is `Signal Key`, `Epsilon Coin`,
+`Epsilon Static`, and its logic is tier-based on Signal Key count;
+`grapple`, `blink` and `cross_long_gap` appear nowhere in it. §0-bis
+condition 2 asks Archipelago to prove a capability progression is
+obtainable, and Archipelago currently has no such progression to
+reason about.
+
+> **For the owner, not for this lane to decide.** Either Echo
+> capabilities become AP items with their own logic — a real apworld
+> change, pool and rules — or they stay outside the multiworld, in which
+> case an AP-relevant route may never be gated on one and the guard is
+> correctly a wall rather than a gate. Both are coherent; they are
+> different games. Until it is settled, composition emits no gates, the
+> rule is dormant, and the first gate to appear is refused rather than
+> waved through.
+
+### 6b. Still open
+
 - The `manipulate` capability contract, `vector_latches`, and the model
-  check's physics properties: the next Amalgam dependencies after this
-  slice, none of them started.
+  check's physics properties: blocked at the substrate — still zero
+  `RigidBody3D` in the project, and the capability vocabulary
+  deliberately omits `manipulate` so a Zone cannot declare a gate no
+  build can satisfy.
+- **One unfinished Zone holds locations at a time** — the current
+  implementation limit, asserted by a test so lifting it is deliberate
+  rather than accidental.
+- Physical reachability stays the engine lane's: `R ⊆ E` is a graph
+  property and cannot see a key inside a crate.

@@ -471,3 +471,95 @@ def test_a_room_no_capability_would_reach_is_named_as_simply_unreachable():
     assert not any("does not declare" in e for e in result.errors), (
         "no gate is involved; blaming AP logic would send the engine "
         "lane to fix a declaration that is not the problem")
+
+
+# --- SOLUTIONS_CATALOGUE §0-bis condition 4: a gate may stop you, and
+# --- may not keep you ------------------------------------------------------
+#
+# Four of the five conditions the catalogue puts on a legal capability
+# gate had a rule here. Condition 4 — "the player can safely leave the
+# blocked Zone" — had none, and the catalogue is explicit that it is
+# load-bearing: "a gate you cannot walk away from, or cannot come back
+# to, converts hard progression into a dead run".
+#
+# Every other rule asks whether the player can get somewhere. This is
+# the only one that asks whether they can get back, and it is not `R ⊆
+# E` reversed: the exit may legally sit behind a gate, the entrance
+# never may.
+
+def test_an_ordinary_zone_can_always_be_left():
+    """The control. A rule that refuses everything is as broken as one
+    that refuses nothing, and every composed Zone must pass this."""
+    for z in (_chain8(), _shortcut(_chain8(), "c002", "c006", None)):
+        result = topology.reachability(z)
+        assert not any("not left" in e for e in result.errors), result.errors
+
+
+def test_a_one_way_door_into_a_dead_end_is_refused():
+    """Walk in, and there is no way back to the entrance or the exit.
+    Every existing rule is satisfied: the exit is reachable, every Check
+    sits in a reachable room, no key is behind its own lock. The player
+    is simply standing in a room they cannot leave."""
+    z = _chain8()
+    # A side room off c003 you can enter and not come back from.
+    extra = TopologyEdge(edge_id="e:c003:trap", room_a="c003",
+                         room_b="c007", realization="TRAVERSAL_ONLY",
+                         direction="A_TO_B")
+    z = z.model_copy(update={"edges": tuple(
+        e for e in z.edges if e.edge_id not in ("e:c006:c007",
+                                                "e:c007:c008")) + (extra,)})
+    result = topology.reachability(z)
+    assert not result.ok
+    assert any("can be entered and not left" in e for e in result.errors), \
+        result.errors
+    assert any("c007" in e for e in result.errors if "not left" in e)
+
+
+def test_a_gate_you_cannot_retreat_past_is_refused_as_a_trap():
+    """The case §0-bis is actually about. `blink` gets you in; nothing
+    gets you out, because the way back is the same gated edge and the
+    player never had the capability to begin with."""
+    z = _chain8()
+    one_way_in = TopologyEdge(edge_id="e:c002:c007:drop", room_a="c002",
+                              room_b="c007", realization="TRAVERSAL_ONLY",
+                              direction="A_TO_B")
+    z = z.model_copy(update={"edges": tuple(
+        e.model_copy(update={"capability": "blink"})
+        if e.edge_id in ("e:c006:c007", "e:c007:c008") else e
+        for e in z.edges) + (one_way_in,)})
+    result = topology.reachability(z)
+    assert not result.ok
+    assert any("not left" in e for e in result.errors), result.errors
+
+
+def test_declaring_the_capability_opens_the_way_back_out():
+    """And the same Zone with the capability guaranteed is fine: the
+    player can retreat the way they would have come."""
+    z = _chain8()
+    z = z.model_copy(update={"edges": tuple(
+        e.model_copy(update={"capability": "blink"})
+        if e.edge_id == "e:c006:c007" else e for e in z.edges)})
+    assert any("not left" in e or "does not declare" in e
+               for e in topology.reachability(z).errors)
+    ok = topology.reachability(z, declared_capabilities=["blink"])
+    assert ok.ok, ok.errors
+
+
+def test_a_key_in_hand_counts_toward_getting_back_out():
+    """The retreat search starts from the keys the player is holding at
+    that point, not from nothing. A locked door behind you that your own
+    key opens is not a trap, and a search that forgot the key would call
+    it one.
+
+    The gate on the exit is what makes the retreat matter at all: with
+    the way forward open, walking out the far end is an escape and the
+    door behind you never gets asked about. The Zone is still refused —
+    the gate is undeclared — and it must not be refused for *this*.
+    """
+    z = _chain8()
+    z = _holds(z, "c002", "red")
+    z = _locked(z, "c004", "entry", "e:c003:c004", "red")
+    z = _gate(z, "c008", "blink", edge_id="e:c007:c008")
+    result = topology.reachability(z)
+    assert not any("not left" in e for e in result.errors), result.errors
+    assert not result.ok, "the undeclared gate is still a refusal"

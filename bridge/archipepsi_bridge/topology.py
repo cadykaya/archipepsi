@@ -392,6 +392,52 @@ def _key_graph_is_acyclic(zone, doors_by_room, keys_by_room,
     return out
 
 
+
+def _escapable(real: Reach, ways_out: frozenset[str], edges, doors_by_room,
+               keys_by_room, have: frozenset[str]) -> tuple[str, ...]:
+    """SOLUTIONS_CATALOGUE §0-bis condition 4: you can always leave.
+
+    A capability gate is legal and "NOT YET" is good gameplay — but only
+    while the player can walk away from the Zone that blocked them. A
+    gate you cannot retreat past is not hard progression, it is a dead
+    run: the Zone holds its allocated Checks, the player is standing in
+    it, and nothing short of abandoning the Zone gets them out.
+
+    So this asks, of every state the player can actually get into,
+    whether a way out is still reachable FROM THERE, under the same
+    guaranteed capabilities. Keys are monotone, so a state carrying more
+    of them can only do better — the search starts from the keys in
+    hand rather than from nothing.
+
+    Note this is not `R ⊆ E` with the arrow reversed. `R ⊆ E` asks
+    whether the exit stays reachable, and the exit may legally sit
+    behind a gate; this asks whether the ENTRANCE does, and the
+    entrance never may.
+    """
+    trapped: dict[str, frozenset[str]] = {}
+    memo: dict[tuple[str, frozenset[str]], bool] = {}
+    for room, held in sorted(real.states, key=lambda st: (st[0], sorted(st[1]))):
+        if room in ways_out:
+            continue
+        key = (room, held)
+        if key not in memo:
+            back = _explore(room, edges, doors_by_room, keys_by_room, have,
+                            start_held=held)
+            memo[key] = bool(back.rooms & ways_out)
+        if not memo[key] and room not in trapped:
+            trapped[room] = held
+    if not trapped:
+        return ()
+    named = ", ".join(
+        f"'{room}'" + (f" holding {sorted(held)}" if held else "")
+        for room, held in sorted(trapped.items()))
+    return (
+        f"room(s) {named} can be entered and not left: no way back to "
+        f"{sorted(ways_out)} from there. A capability gate the player "
+        "cannot retreat past is not hard progression (§0-bis condition "
+        "4); it is a Zone holding its Checks with the player stuck "
+        "inside it",)
+
 def reachability(zone, entry_id: str | None = None,
                  exit_id: str | None = None,
                  declared_capabilities=None) -> Reach:
@@ -405,6 +451,10 @@ def reachability(zone, entry_id: str | None = None,
     3. **Every allocated Check sits in a reachable room.**
     4. **Every key is obtainable without passing its own lock**, and the
        key graph is acyclic.
+    4b. **Every room can be left again** — from any state the player can
+       reach, the entrance or the exit is still reachable
+       (SOLUTIONS_CATALOGUE §0-bis condition 4). A gate is allowed to
+       stop you; it is not allowed to keep you.
     5. **Every capability gate on the way to any of the above is
        declared** in the matching Archipelago logic
        (SOLUTIONS_CATALOGUE §2 rule 3, `06` §29.5a, check 23).
@@ -458,6 +508,15 @@ def reachability(zone, entry_id: str | None = None,
     blame("Check-bearing room(s)",
           [c.id for c in chambers if c.reward_ids])
     blame("key-bearing room(s)", [c.id for c in chambers if c.keys])
+
+    # §0-bis CONDITION 4. The catalogue calls this load-bearing and
+    # nothing was enforcing it: every rule above asks whether the player
+    # can get somewhere, and none asks whether they can get back. Both
+    # the way in and the way out count as a way out — leaving by
+    # finishing is still leaving.
+    errors.extend(_escapable(real, frozenset({entry, exit_room}),
+                             zone.edges, doors_by_room, keys_by_room,
+                             have))
 
     # R subset E, over STATES rather than rooms: a room you can stand in
     # holding the wrong keys is a different situation from the same room

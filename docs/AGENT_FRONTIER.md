@@ -98,6 +98,27 @@ hex characters is all the bridge can see. Regenerate the vectors with
 `make physics-vectors`; **that is a contract change and the engine lane
 must re-run.**
 
+**A gate may stop you; it may not keep you.** §0-bis puts five
+conditions on a legal capability gate and condition 4 — "the player can
+safely leave the blocked Zone" — had no rule, though the catalogue calls
+it load-bearing. Every other property asks whether the player can get
+somewhere; none asked whether they could get back, so a one-way edge
+into a dead end satisfied all of them. `_escapable` now asks, of every
+reachable state, whether the entrance or the exit is reachable from
+there, under the same capabilities and starting from the keys in hand.
+Not `R ⊆ E` reversed: the exit may legally sit behind a gate, the
+entrance never may.
+
+**Condition 2 is blocked on a design decision, not a wire.**
+`reachability` takes `declared_capabilities` and **nothing has ever
+passed it**, because capabilities are not AP items — the apworld's pool
+is Signal Key, Epsilon Coin, Epsilon Static, and `grapple`/`blink`/
+`cross_long_gap` are nowhere in its logic. So the declare-the-gate rule
+is one no gate can satisfy: it fails safe, not open. Either Echo
+capabilities become AP items with their own logic, or an AP-relevant
+route may never be gated on one. Owner's call;
+`docs/AMALGAM_BRIDGE.md` §6a.
+
 **Capability gates are searched, not sampled.** A previous guard removed
 one gate edge at a time with every other gate left passable, so two
 undeclared gates each validated the other. Availability is a set the
