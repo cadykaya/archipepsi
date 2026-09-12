@@ -76,15 +76,67 @@ def load_registry(directory: Path | None = None) -> dict[str, ContentEntry]:
         return {}
 
 
+def doorways_off_the_body(entry: ContentEntry) -> dict[str, float]:
+    """`socket name -> metres adrift`, for doorways not on this shell.
+
+    The Python half of `ContentInstantiator.doorways_outside_envelope`,
+    measuring the same allowance against the same manifest so the two
+    lanes cannot disagree about which shells are joinable.
+
+    A doorway socket is an ATTACHMENT TRANSFORM: the plane where the
+    next connector begins. It legitimately sits proud of the interior,
+    because a room's outer wall face is where a corridor meets it -- so
+    the allowance is one `WALL_THICKNESS` plus the manifests' rounding
+    tolerance, and `shell_yard_gantry`, whose doorways sit exactly on
+    that face, is fine.
+
+    What it is not is a free coordinate. A socket metres past the body
+    puts a corridor's mouth in open air with the room's wall behind it,
+    and the composer's overlap test never considered that volume because
+    the room does not claim it. This measures that distance and nothing
+    else: it says nothing about whether the aperture is cut, whether a
+    lock blocks it, or whether a body can stand at it -- those are three
+    other measurements, taken in the engine, against real geometry.
+    """
+    out: dict[str, float] = {}
+    w, h, d = (float(v) for v in entry.size)
+    if w <= 0.0 or d <= 0.0:
+        return out
+    slack = WALL_THICKNESS + SPAN_TOLERANCE
+    lo = (-w / 2.0 - slack, -slack, -slack)
+    hi = (w / 2.0 + slack, h + slack, d + slack)
+    for socket in entry.sockets:
+        if socket.kind != "doorway":
+            continue
+        worst = max(max(lo[i] - socket.position[i],
+                        socket.position[i] - hi[i]) for i in range(3))
+        if worst > 0.0:
+            out[socket.name] = worst
+    return out
+
+
 def is_offerable(entry: ContentEntry) -> bool:
     """Whether this entry may be put in front of Epsilon at all.
 
-    Three gates, and the middle one is the art lane's:
+    Four gates, and the middle two are the art lane's:
 
     * it is a room shell;
     * it is not `review: pending` -- a file existing in the tree is not
       approval, and offering a pending asset decides for whoever is
       still deciding;
+    * every doorway it declares lies on its own body. `review: pass`
+      approved how these three look, and nothing in that review
+      measured where their doorways were: `shell_hall_transit`,
+      `shell_plenum_helix` and `shell_span_basin` each put `exit` two
+      metres past their own declared depth, so a Zone built with one
+      has its wall at the depth and its corridor starting two metres
+      further on, with nothing in between. That is the join the
+      2026-09-11 playtest opened with ("the connecter isnt connected at
+      all") and what the layout validator now refuses a generated Zone
+      for, by name. Withheld rather than repaired: an authored
+      coordinate is Art's, the repair is filed
+      (`docs/art-requests/2026-09-11-doorways-outside-their-envelope.md`),
+      and this gate lets the shell back in the moment it lands;
     * it is authored. A procedural entry is the fallback the builder
       reaches anyway, so naming it explicitly buys nothing and would let
       Epsilon "choose" the thing it gets by choosing nothing.
@@ -92,6 +144,12 @@ def is_offerable(entry: ContentEntry) -> bool:
     if entry.category != "room_shell":
         return False
     if entry.review == "pending":
+        return False
+    adrift = doorways_off_the_body(entry)
+    if adrift:
+        log.warning("shell '%s' is not offerable: %s", entry.id,
+                    "; ".join(f"doorway '{n}' is {m:.2f} m off the body"
+                              for n, m in sorted(adrift.items())))
         return False
     return not entry.procedural_fallback
 

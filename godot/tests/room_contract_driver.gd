@@ -130,6 +130,7 @@ func _run() -> void:
 	await _test_a_committed_layout_replays_without_re_solving()
 	await _test_a_generated_zone_places_its_branch_off_the_spine()
 	_test_no_new_shell_puts_a_doorway_outside_its_room()
+	await _test_the_assembled_crossing_is_walkable()
 	await _test_an_arrival_verdict_means_supported_ground()
 	await _test_the_branch_is_crossed_returned_from_and_remembered()
 	await _test_a_real_player_walks_the_whole_branch_journey()
@@ -3303,6 +3304,136 @@ func _standable_near(at: Vector3) -> bool:
 			at + Vector3(0, Constants.PLAYER_HEIGHT / 2.0 + 0.1, 0))
 	return space.intersect_shape(query, 1).is_empty()
 
+## IS THE CROSSING REAL, IN THE ASSEMBLED ZONE?
+##
+## "The socket is outside the shell's declared size" is a measurement of
+## a MANIFEST. It is not by itself an invalid socket: an attachment
+## transform says where the next piece is fastened, an aperture is the
+## hole in the wall, and a player arrival is where a body lands -- three
+## different things that a single `doorway` socket has been carrying.
+##
+## The question that actually matters is whether a body can walk from one
+## room into the next through the geometry that was assembled. That is
+## measured here, on a real Zone, with the real floor.
+func _test_the_assembled_crossing_is_walkable() -> void:
+	var text := FileAccess.get_file_as_string(
+			"res://tests/fixtures/played_zone.json")
+	var zone: Dictionary = JSON.parse_string(text)
+	var out := ZoneBuilder.build(zone)
+	if str(out.get("status", "")) != "LAYOUT_OK" or not out.has("root"):
+		_check(false, "the generated Zone did not compose: %s"
+				% str(out.get("failed", "?")))
+		return
+	add_child(out["root"] as Node3D)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var rooms: Dictionary = out["rooms"]
+	var whole: AABB = (out["bounds_list"] as Array)[0]
+	for box: AABB in out["bounds_list"] as Array:
+		whole = whole.merge(box)
+	# One pair per JOINED edge: arrival to arrival, on foot.
+	var broken: Array[String] = []
+	var walked := 0
+	var skipped := 0
+	for raw_edge: Variant in zone.get("edges", []):
+		var edge: Dictionary = raw_edge
+		if str(edge.get("realization", "JOINED")) != "JOINED":
+			continue
+		var a := str(edge.get("room_a", ""))
+		var b := str(edge.get("room_b", ""))
+		if not rooms.has(a) or not rooms.has(b):
+			continue
+		# The locked branch is supposed to be unreachable; this is about
+		# the joins the player walks, not the ones a key opens.
+		var gated := false
+		for raw_door: Variant in _doors_of(zone, a) + _doors_of(zone, b):
+			var door: Dictionary = raw_door
+			if str(door.get("edge_id", "")) == str(edge.get("edge_id", "")) \
+					and str(door.get("usage", "")) == "LOCKED":
+				gated = true
+		if gated:
+			continue
+		var from: Vector3 = (rooms[a] as Dictionary)["arrival"]
+		var to: Vector3 = (rooms[b] as Dictionary)["arrival"]
+		# LOCAL, because a Zone-scale flood cannot answer this. It casts
+		# from ONE height below the lowest ceiling in the Zone, and this
+		# Zone holds a 23.6 m shell and a 3.6 m corridor -- so a single
+		# pass reads every room as disconnected and reports all 21 joins
+		# broken, which is a statement about the prober. The pair of
+		# rooms plus the corridor between them is a region one height
+		# serves.
+		# ONE RAY HEIGHT, SO ONE FLOOR LEVEL.
+		#
+		# The flood casts from a single height and takes the first
+		# surface below it, so it can only speak about a region with one
+		# ceiling and one floor. Two rooms whose arrivals sit four metres
+		# apart vertically are joined by stairs or a lift, and this
+		# prober cannot walk either -- reporting them broken would be a
+		# statement about the prober. They are COUNTED AND NAMED as
+		# unmeasured rather than passed quietly.
+		if absf(from.y - to.y) > Constants.MAX_VERTICAL_STEP:
+			skipped += 1
+			continue
+		var region: AABB = ((rooms[a] as Dictionary)["bounds"] as AABB) \
+				.merge((rooms[b] as Dictionary)["bounds"] as AABB) \
+				.grow(CONNECTOR_SLACK)
+		# Below the corridor roof, not below the room's: a cast from just
+		# under a 23 m shell's ceiling starts inside a 3.6 m corridor's
+		# roof and reads that roof as the corridor's floor.
+		var ceiling := minf(from.y, to.y) + 2.6
+		var walk := _walk_bounds(region, Vector2(from.x, from.z),
+				Vector2(to.x, to.z), 0.5, ceiling)
+		walked += 1
+		if not bool(walk["ok"]):
+			broken.append("%s->%s (%s)" % [a, b, str(walk["why"])])
+	print("  CROSSING %d joins walked, %d broken, %d skipped as "
+			% [walked, broken.size(), skipped]
+			+ "level changes this prober cannot climb: %s" % str(broken))
+	_check(walked >= 6,
+			"only %d joins were on one level in a 23-room Zone, so this "
+			% walked + "measured too little to mean anything")
+	# THE PROBER CAN CROSS A JOIN, which is what makes the rest of this
+	# a statement about the Zone rather than about the prober.
+	_check(broken.size() < walked,
+			"every one of the %d same-level joins failed, so this is "
+			% walked + "measuring the flood and not the geometry")
+	# AND WHAT IT FOUND IS RECORDED RATHER THAN ASSERTED.
+	#
+	# %d of them do not walk, in a Zone dumped from the Python path the
+	# game runs. That corroborates the playtest's first sentence and the
+	# Art request, and it is NOT yet separated from what this prober
+	# cannot do: it casts from one height, so a lip, a lift or a ramp
+	# inside a join reads the same as a hole. Asserting zero here would
+	# claim a distinction that has not been made; asserting nothing at
+	# all would let the number grow in silence, so the COUNT is pinned.
+	_check(broken.size() <= KNOWN_UNWALKED_JOINS,
+			"%d same-level joins in the generated Zone do not walk, up "
+			% broken.size() + "from the %d recorded; a join stopped "
+			% KNOWN_UNWALKED_JOINS + "connecting: %s" % str(broken))
+	if broken.size() < KNOWN_UNWALKED_JOINS:
+		print("  CROSSING fewer broken joins than recorded (%d < %d) -- "
+				% [broken.size(), KNOWN_UNWALKED_JOINS]
+				+ "something was repaired; lower the number")
+	rooms_checked += 1
+	(out["root"] as Node3D).queue_free()
+	await get_tree().process_frame
+
+## How far outside the two rooms the corridor between them may reach.
+const CONNECTOR_SLACK := 12.0
+
+## How many same-level joins in `played_zone.json` the flood cannot
+## cross today. Pinned so the number cannot grow quietly, and NOT a
+## target: the split between "the geometry is broken" and "this prober
+## casts from one height" has not been made yet.
+const KNOWN_UNWALKED_JOINS := 10
+
+func _doors_of(zone: Dictionary, room: String) -> Array:
+	for raw: Variant in zone.get("chambers", []):
+		var chamber: Dictionary = raw
+		if str(chamber.get("id", "")) == room:
+			return chamber.get("doors", [])
+	return []
+
 ## AN ARRIVAL VERDICT IS ABOUT GROUND, not about empty air.
 ##
 ## The layout result's first version asked only whether a standing
@@ -3448,22 +3579,56 @@ func _test_a_generated_zone_places_its_branch_off_the_spine() -> void:
 	_check(str(plan.get("refused", "")) == "",
 			"the generated Zone's graph was refused: %s"
 			% str(plan.get("refused", "")))
+	# WHICH ROOMS, read off the fixture instead of typed in. This named
+	# `c014` and `c020` because that is where the composer put them on
+	# the day it was written, and a regenerated fixture -- which is a
+	# generated artifact and regenerates whenever the provider changes --
+	# moved the junction to another room and failed a test about
+	# branching for a reason that had nothing to do with branching. The
+	# claim is "the room with the LOCKED side door carries the branch",
+	# and that sentence has the ids in it.
+	var junction := ""
+	var side := ""
+	var branch_room := ""
+	for raw_chamber: Variant in zone["chambers"] as Array:
+		var chamber: Dictionary = raw_chamber
+		for raw_door: Variant in chamber.get("doors", []) as Array:
+			var door: Dictionary = raw_door
+			if str(door.get("usage", "")) != "LOCKED":
+				continue
+			if not str(door.get("socket_id", "")).begins_with("side_"):
+				continue
+			junction = str(chamber["id"])
+			side = str(door["socket_id"])
+			for raw_edge: Variant in zone["edges"] as Array:
+				var edge: Dictionary = raw_edge
+				if str(edge.get("edge_id", "")) != str(door.get("edge_id", "")):
+					continue
+				branch_room = str(edge["room_b"]) \
+						if str(edge["room_a"]) == junction \
+						else str(edge["room_a"])
+	_check(junction != "" and branch_room != "",
+			"the generated Zone fixture declares no LOCKED side door, so "
+			+ "this test cannot say anything about a branch")
+	if junction == "" or branch_room == "":
+		return
+
 	var spine: Array = plan.get("spine", [])
 	var branches: Dictionary = plan.get("branches", {})
-	_check(not spine.has("c020"),
-			"'c020' is on the spine, so the branch the bridge composed "
-			+ "is still being built in line")
-	_check(branches.has("c014"),
-			"'c014' carries the LOCKED side door in the fixture and no "
-			+ "branch hangs off it: %s" % str(branches.keys()))
-	if branches.has("c014"):
-		var hook: Dictionary = (branches["c014"] as Array)[0]
-		_check(str(hook["socket_id"]) == "side_left",
-				"the branch hangs off '%s' and the door is on side_left"
-				% str(hook["socket_id"]))
-		_check(str((hook["chamber"] as Dictionary)["id"]) == "c020",
-				"the branch room is '%s', not c020"
-				% str((hook["chamber"] as Dictionary)["id"]))
+	_check(not spine.has(branch_room),
+			"'%s' is on the spine, so the branch the bridge composed "
+			% branch_room + "is still being built in line")
+	_check(branches.has(junction),
+			"'%s' carries the LOCKED side door in the fixture and no "
+			% junction + "branch hangs off it: %s" % str(branches.keys()))
+	if branches.has(junction):
+		var hook: Dictionary = (branches[junction] as Array)[0]
+		_check(str(hook["socket_id"]) == side,
+				"the branch hangs off '%s' and the door is on %s"
+				% [str(hook["socket_id"]), side])
+		_check(str((hook["chamber"] as Dictionary)["id"]) == branch_room,
+				"the branch room is '%s', not %s"
+				% [str((hook["chamber"] as Dictionary)["id"]), branch_room])
 	# Every chamber is placed somewhere.
 	var placed_ids := {}
 	for rid: Variant in spine:
@@ -3488,15 +3653,22 @@ func _test_a_generated_zone_places_its_branch_off_the_spine() -> void:
 	add_child(out["root"] as Node3D)
 	await get_tree().physics_frame
 	var rooms: Dictionary = out["rooms"]
-	_check(rooms.has("c020") and (out["links"] as Dictionary).has("c020"),
+	_check(rooms.has(branch_room)
+				and (out["links"] as Dictionary).has(branch_room),
 			"the branch room committed no transform or approach chain")
-	if rooms.has("c020") and rooms.has("c019") and rooms.has("c021"):
-		# Its neighbours in the CHAMBER LIST are c019 and c021; on the
-		# spine they are adjacent to each other, and c020 is not between
-		# them. A room built in line would be.
-		var a: Vector3 = (rooms["c019"] as Dictionary)["position"]
-		var b: Vector3 = (rooms["c021"] as Dictionary)["position"]
-		var v: Vector3 = (rooms["c020"] as Dictionary)["position"]
+	var order: Array[String] = []
+	for raw_chamber: Variant in zone["chambers"] as Array:
+		order.append(str((raw_chamber as Dictionary)["id"]))
+	var at := order.find(branch_room)
+	var before := order[at - 1] if at > 0 else ""
+	var after := order[at + 1] if at >= 0 and at + 1 < order.size() else ""
+	if rooms.has(branch_room) and rooms.has(before) and rooms.has(after):
+		# Its neighbours in the CHAMBER LIST are adjacent to each other
+		# on the spine, and the branch room is not between them. A room
+		# built in line would be.
+		var a: Vector3 = (rooms[before] as Dictionary)["position"]
+		var b: Vector3 = (rooms[after] as Dictionary)["position"]
+		var v: Vector3 = (rooms[branch_room] as Dictionary)["position"]
 		var along := (b - a).normalized()
 		var off := (v - a) - along * (v - a).dot(along)
 		_check(off.length() > 6.0,
@@ -3506,10 +3678,10 @@ func _test_a_generated_zone_places_its_branch_off_the_spine() -> void:
 	# 3. THE LOCK, THE KEY AND THE PLUG all landed where the graph says.
 	var locks: Array = out["locks"]
 	_check(locks.size() == 1
-				and str((locks[0] as LockedDoor).room_id) == "c014"
-				and str((locks[0] as LockedDoor).socket_id) == "side_left",
-			"%d lock(s), and the graph declares one on c014/side_left"
-			% locks.size())
+				and str((locks[0] as LockedDoor).room_id) == junction
+				and str((locks[0] as LockedDoor).socket_id) == side,
+			"%d lock(s), and the graph declares one on %s/%s"
+			% [locks.size(), junction, side])
 	_check((out["keys"] as Array).size() == 1,
 			"%d keys, and the graph declares one"
 			% (out["keys"] as Array).size())

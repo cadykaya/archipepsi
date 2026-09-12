@@ -5588,6 +5588,23 @@
             "default": null,
             "title": "Manifest"
           },
+          "layout_state": {
+            "default": "UNCERTIFIED",
+            "enum": [
+              "UNCERTIFIED",
+              "ACCEPTED",
+              "REFUSED"
+            ],
+            "title": "Layout State",
+            "type": "string"
+          },
+          "layout_refusals": {
+            "default": 0,
+            "maximum": 99,
+            "minimum": 0,
+            "title": "Layout Refusals",
+            "type": "integer"
+          },
           "allocated_location_ids": {
             "items": {
               "maximum": 89100600,
@@ -10008,6 +10025,23 @@
             ],
             "default": null,
             "title": "Manifest"
+          },
+          "layout_state": {
+            "default": "UNCERTIFIED",
+            "enum": [
+              "UNCERTIFIED",
+              "ACCEPTED",
+              "REFUSED"
+            ],
+            "title": "Layout State",
+            "type": "string"
+          },
+          "layout_refusals": {
+            "default": 0,
+            "maximum": 99,
+            "minimum": 0,
+            "title": "Layout Refusals",
+            "type": "integer"
           },
           "allocated_location_ids": {
             "items": {

@@ -35,6 +35,7 @@ try:
     from .echo import EchoInterpretation
     from .protocol import (
         OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
+        TERMINAL_ZONE_STATES,
         CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
         ShopStockItem, ZoneRecord,
     )
@@ -44,6 +45,7 @@ except ImportError:  # pragma: no cover
     from echo import EchoInterpretation
     from protocol import (
         OCCUPIED_ZONE_STATES, REVISITABLE_ZONE_STATES,
+        TERMINAL_ZONE_STATES,
         CampaignSave, EarnedLocalReward, PendingCheck, ShopState,
         ShopStockItem, ZoneRecord,
     )
@@ -284,7 +286,68 @@ def commit_layout(save: CampaignSave, zone_id: str,
             f"{rec.manifest.get('manifest_digest')}; a committed layout "
             "is replayed, never replaced")
     return _rebuild(save,
-                    zones=_replace_zone(save, zone_id, manifest=manifest))
+                    zones=_replace_zone(save, zone_id, manifest=manifest,
+                                        layout_state="ACCEPTED"))
+
+
+#: How many refused layouts a Zone gets before it stops being composed
+#: again. Three, because a second attempt is an ordinary bad roll and a
+#: fourth is a defect nothing here can fix by trying harder.
+MAX_LAYOUT_REFUSALS = 3
+
+
+def refuse_layout(save: CampaignSave, zone_id: str) -> CampaignSave:
+    """The validator rejected this Zone's geometry. Compose it again.
+
+    **A refusal has to change something.** The first version logged,
+    notified, and left the Zone ACTIVE — so the client went on playing a
+    Zone the validator had just said does not hold together, and went on
+    claiming its Checks against it.
+
+    **The Checks are preserved, and the campaign is not stuck.** Giving
+    unclaimed locations back to the allocator is `abandon_zone`'s
+    behaviour and only its: an explicit act with an explicit cost. A
+    refused layout is a generation problem, not a decision the player
+    made — so the Zone goes back to `PENDING_GENERATION` against the
+    ids it already holds, which is the same recovery a crash
+    mid-generation gets. Epsilon composes it again; nothing is
+    re-allocated.
+
+    **And it stops.** A client that refuses every layout would otherwise
+    compose forever, so after `MAX_LAYOUT_REFUSALS` the Zone goes DORMANT
+    instead: still holding its locations, out of the player's way, and
+    waiting for a human rather than spinning.
+
+    Idempotent in the sense that matters: a second refusal counts once
+    more and does the same thing.
+    """
+    rec = _require_zone(save, zone_id)
+    if rec.state in TERMINAL_ZONE_STATES:
+        return save
+    tries = rec.layout_refusals + 1
+    if tries < MAX_LAYOUT_REFUSALS:
+        return _rebuild(save,
+                        zones=_replace_zone(save, zone_id,
+                                            state="PENDING_GENERATION",
+                                            zone=None, manifest=None,
+                                            layout_state="REFUSED",
+                                            layout_refusals=tries),
+                        active_zone_id=zone_id)
+    # DORMANT WHATEVER IT WAS, because DORMANT is precisely "yours, not
+    # finished, still holding its Checks, and you are not in it". That is
+    # true of a Zone the player was standing in and of one they had not
+    # entered yet: a GENERATED Zone whose geometry does not hold together
+    # must not be offered as ready either.
+    #
+    # And DORMANT is the one non-terminal state that is never the active
+    # Zone, so clearing `active_zone_id` is not a choice here -- the save
+    # refuses to validate otherwise, which is the invariant doing its job.
+    clear = save.active_zone_id == zone_id
+    return _rebuild(save,
+                    zones=_replace_zone(save, zone_id, state="DORMANT",
+                                        layout_state="REFUSED",
+                                        layout_refusals=tries),
+                    active_zone_id=None if clear else save.active_zone_id)
 
 
 def record_key(save: CampaignSave, zone_id: str, key_id: str) -> CampaignSave:
@@ -626,5 +689,5 @@ TRANSITIONS = (
     rollback_shop_purchase, restock_shop, append_interpretation,
     slot_action, grant_local_reward,
     rest_zone, record_key, record_lock, record_station,
-    commit_layout,
+    commit_layout, refuse_layout,
 )

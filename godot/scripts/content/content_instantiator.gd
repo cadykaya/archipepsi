@@ -179,6 +179,12 @@ static func build_chamber(chamber: Dictionary, theme: String,
 ## `length` and no `depth`, and re-deriving a socket from a field the
 ## chamber may not carry is how the plan and the room come to disagree
 ## about where a doorway is.
+##
+## And the EXIT comes from the producer's own `exit_offset` rather than
+## from the envelope's far face, for the same reason: the envelope says
+## how far the room reaches and the producer says where it lets the
+## player out, and for `platform_path` and `tower` those are different
+## heights.
 static func _doors_from_bounds(result: Dictionary,
 		chamber: Dictionary) -> Array:
 	if (chamber.get("doors", []) as Array).is_empty():
@@ -186,7 +192,9 @@ static func _doors_from_bounds(result: Dictionary,
 	var box: AABB = result.get("bounds", AABB())
 	if box.size.x <= 0.0 or box.size.z <= 0.0:
 		return []
-	return ChamberBuilders.door_plan(chamber, box.size.x, box.size.z)
+	var way_out: Vector3 = result.get("exit_offset", Vector3.INF)
+	return ChamberBuilders.door_plan(chamber, box.size.x, box.size.z,
+			way_out)
 
 ## WHERE AN AUTHORED ROOM PUTS A KEY IT WAS ASKED TO HOLD.
 ##

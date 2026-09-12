@@ -476,10 +476,32 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	# Empty on a first entry, which is every Zone before a station is
 	# reached, so nothing changes for a Zone nobody has left.
 	var zid := str(record.get("zone_id", ""))
-	zone.resume_anchor = str(_zone_resume.get(zid, ""))
-	zone.stations_online = _zone_stations.get(zid, {})
-	zone.keys_carried = _zone_keys.get(zid, {})
-	zone.locks_carried = _zone_locks_open.get(zid, {})
+	# FROM THE BRIDGE FIRST, because the bridge is what survives quitting.
+	#
+	# These four came only from the in-memory dictionaries below, which
+	# is why the docstring on `_zone_resume` says "it does not survive
+	# quitting, and nothing here pretends it does". `ZoneProgress` landed
+	# and has been persisted on every `key_collected`, `lock_opened` and
+	# `station_reached` since -- the save held the progress and the game
+	# read past it, so relaunching put the player back in front of a lock
+	# they had already opened with a key that was no longer there to
+	# collect.
+	#
+	# UNION, not replacement. The dictionaries stay as the in-flight
+	# half: an intent sent in the same breath as leaving may not be in
+	# the snapshot yet, and both sides are monotone sets, so taking both
+	# cannot lose progress and cannot invent it.
+	var progress: Dictionary = record.get("progress", {}) \
+			if typeof(record.get("progress")) == TYPE_DICTIONARY else {}
+	var saved_resume := str(progress.get("resume_anchor", "")) \
+			if progress.get("resume_anchor") != null else ""
+	zone.resume_anchor = str(_zone_resume.get(zid, saved_resume))
+	zone.stations_online = _union_progress(
+			progress.get("reached_stations", []), _zone_stations.get(zid, {}))
+	zone.keys_carried = _union_progress(
+			progress.get("collected_keys", []), _zone_keys.get(zid, {}))
+	zone.locks_carried = _union_progress(
+			progress.get("opened_locks", []), _zone_locks_open.get(zid, {}))
 	# THE COMMITTED LAYOUT, when this Zone has one. `ZoneReady` carries
 	# the manifest the bridge accepted on the first visit, and replaying
 	# it is what makes the Zone the player walks back into the Zone they
@@ -489,6 +511,7 @@ func _to_zone(zone_dict: Dictionary) -> void:
 			if typeof(committed) == TYPE_DICTIONARY else {}
 	zone.setup(Slice1Fixture.decorate(zone_dict) if _slice1 else zone_dict)
 	zone.exit_requested.connect(_on_exit_zone)
+	zone.layout_refused.connect(_on_layout_refused)
 	hud.bind_player(zone.player)
 	zone.player.fired_pulse.connect(func() -> void: tones.play("pulse"))
 	zone.player.footstep.connect(func(kind: String) -> void: tones.play(kind))
@@ -531,6 +554,24 @@ func _to_zone(zone_dict: Dictionary) -> void:
 	zone.refresh()
 	_update_modal()
 
+## THE LAYOUT WAS REFUSED, SO THE ZONE IS NOT PLAYABLE.
+##
+## The bridge has already moved it to DORMANT and stopped it being the
+## active Zone, so nothing the player does in it can reach the campaign.
+## Standing in it is the only thing left, and standing in a Zone whose
+## geometry the validator just rejected is how a player ends up inside a
+## wall. Back to the Hub, with the Checks still allocated to that Zone.
+func _on_layout_refused(refused_id: String) -> void:
+	if view != View.ZONE or zone == null or zone.zone_id != refused_id:
+		return
+	push_warning("main: leaving '%s'; its layout was refused"
+			% refused_id)
+	if hud != null:
+		hud.toast("LAYOUT REFUSED — RETURNING TO HUB",
+				Color(0.95, 0.5, 0.45), 4.0)
+	_remember_zone_progress()
+	_to_hub()
+
 func _on_exit_zone() -> void:
 	_send_zone_timing(true)
 	BridgeClient.send_intent({"type": "exit_zone", "zone_id": zone.zone_id})
@@ -563,6 +604,21 @@ func _on_return_to_hub() -> void:
 ##
 ## Read from the controller rather than pushed to it, so a Zone plays
 ## identically whether or not anything is remembering.
+## The saved list and the in-flight dictionary, as one set.
+##
+## `ZoneController` asks these `has()`, so the shape is a set keyed by id
+## and the value is only ever `true`.
+static func _union_progress(saved: Variant, held: Variant) -> Dictionary:
+	var out := {}
+	if typeof(saved) == TYPE_ARRAY:
+		for entry: Variant in saved as Array:
+			out[str(entry)] = true
+	if typeof(held) == TYPE_DICTIONARY:
+		for entry: Variant in (held as Dictionary):
+			out[str(entry)] = true
+	return out
+
+
 func _remember_zone_progress() -> void:
 	if zone == null or zone.zone_id == "":
 		return

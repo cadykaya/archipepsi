@@ -313,7 +313,12 @@
      "colour": null
     }
    ],
-   "keys": [],
+   "keys": [
+    {
+     "key_id": "red",
+     "colour": "red"
+    }
+   ],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -372,6 +377,20 @@
      "edge_id": "e:c006:c007",
      "key_id": null,
      "colour": null
+    },
+    {
+     "socket_id": "side_left",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
+    },
+    {
+     "socket_id": "side_right",
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
     }
    ],
    "keys": [],
@@ -392,13 +411,13 @@
      "requires": []
     }
    ],
-   "shell_id": "shell_span_basin",
+   "shell_id": null,
    "size_class": null,
    "intent": [],
    "type": "arena",
-   "width": 30.4,
-   "depth": 89.2,
-   "wall_height": 23.6,
+   "width": 19.8,
+   "depth": 13.1,
+   "wall_height": 5.9,
    "objective": "kill_all",
    "enemies": [
     {
@@ -429,12 +448,7 @@
      "colour": null
     }
    ],
-   "keys": [
-    {
-     "key_id": "red",
-     "colour": "red"
-    }
-   ],
+   "keys": [],
    "additional_reward_location_ids": [],
    "activities": [
     {
@@ -445,7 +459,7 @@
      "requires": []
     }
    ],
-   "shell_id": "shell_corner_left",
+   "shell_id": "shell_corner_right",
    "size_class": null,
    "intent": [],
    "type": "corridor",
@@ -538,10 +552,10 @@
     },
     {
      "socket_id": "side_left",
-     "usage": "SEALED",
-     "edge_id": null,
-     "key_id": null,
-     "colour": null
+     "usage": "LOCKED",
+     "edge_id": "e:c009:c020",
+     "key_id": "red",
+     "colour": "red"
     },
     {
      "socket_id": "side_right",
@@ -557,6 +571,13 @@
     {
      "kind": "switch_sequence",
      "element_count": 2,
+     "time_limit": 0.0,
+     "ordered": false,
+     "requires": []
+    },
+    {
+     "kind": "switch_sequence",
+     "element_count": 3,
      "time_limit": 0.0,
      "ordered": false,
      "requires": []
@@ -608,7 +629,7 @@
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [],
-   "shell_id": "shell_corner_right",
+   "shell_id": "shell_corner_left",
    "size_class": null,
    "intent": [],
    "type": "corridor",
@@ -764,7 +785,7 @@
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [],
-   "shell_id": "shell_corner_left",
+   "shell_id": "shell_corner_right",
    "size_class": null,
    "intent": [],
    "type": "corridor",
@@ -794,10 +815,10 @@
     },
     {
      "socket_id": "side_left",
-     "usage": "LOCKED",
-     "edge_id": "e:c014:c020",
-     "key_id": "red",
-     "colour": "red"
+     "usage": "SEALED",
+     "edge_id": null,
+     "key_id": null,
+     "colour": null
     },
     {
      "socket_id": "side_right",
@@ -836,9 +857,9 @@
    "size_class": null,
    "intent": [],
    "type": "arena",
-   "width": 26.0,
+   "width": 27.3,
    "depth": 24.0,
-   "wall_height": 7.0,
+   "wall_height": 8.0,
    "objective": "kill_all",
    "enemies": [
     {
@@ -912,13 +933,7 @@
      "count": 2
     }
    ],
-   "elevation": {
-    "kind": "gallery",
-    "rise": 1.86,
-    "coverage": 0.3,
-    "side": "back",
-    "access": "ramp"
-   }
+   "elevation": null
   },
   {
    "id": "c016",
@@ -952,7 +967,7 @@
      "requires": []
     }
    ],
-   "shell_id": "shell_corner_right",
+   "shell_id": "shell_corner_left",
    "size_class": null,
    "intent": [],
    "type": "corridor",
@@ -1102,7 +1117,7 @@
    "keys": [],
    "additional_reward_location_ids": [],
    "activities": [],
-   "shell_id": "shell_corner_left",
+   "shell_id": "shell_corner_right",
    "size_class": null,
    "intent": [],
    "type": "corridor",
@@ -1119,7 +1134,7 @@
     {
      "socket_id": "entry",
      "usage": "USED",
-     "edge_id": "e:c014:c020",
+     "edge_id": "e:c009:c020",
      "key_id": null,
      "colour": null
     },
@@ -1260,7 +1275,7 @@
      "requires": []
     }
    ],
-   "shell_id": "shell_corner_right",
+   "shell_id": "shell_corner_left",
    "size_class": null,
    "intent": [],
    "type": "corridor",
@@ -1501,8 +1516,8 @@
    "capability": null
   },
   {
-   "edge_id": "e:c014:c020",
-   "room_a": "c014",
+   "edge_id": "e:c009:c020",
+   "room_a": "c009",
    "room_b": "c020",
    "direction": "BIDIRECTIONAL",
    "realization": "JOINED",

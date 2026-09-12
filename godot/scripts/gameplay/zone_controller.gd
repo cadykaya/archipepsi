@@ -10,6 +10,8 @@ const REWARD_SPACING := 4.0
 ## leaving the Zone, which is why leaving resets objectives (§14.3).
 
 signal exit_requested
+## The bridge refused this Zone's layout; it is not safe to play.
+signal layout_refused(zone_id: String)
 ## The player moved into a different chamber's bounds — the rule engine's
 ## `chamber_enter` event. Fires for the first chamber on the first frame.
 signal chamber_entered(index: int)
@@ -108,6 +110,8 @@ var committed_manifest := {}
 ## What the bridge said about the layout this session sent, for a caller
 ## or a suite to read: "", "ACCEPTED", "LAYOUT_REFUSED", ...
 var layout_verdict := ""
+## How long to hold before treating silence as a refusal.
+const VERDICT_TIMEOUT := 10.0
 ## Every Check this Zone holds, from its own chambers.
 var _zone_locations: Array[int] = []
 ## PROGRESS CARRIED IN, set before `setup` by whoever is remembering.
@@ -575,6 +579,51 @@ func _publish_layout(build: Dictionary) -> void:
 		return
 	_measure_layout_evidence(build)
 	send_layout_result(build)
+	await _await_verdict()
+
+## HOLD THE PLAYER UNTIL THE LAYOUT IS ACCEPTED.
+##
+## A refusal used to change nothing: the bridge logged it, sent a
+## notification, and the client went on playing a Zone whose geometry the
+## validator had just said does not hold together -- and went on claiming
+## its Checks against it. Gameplay waits for the verdict now, and a
+## refusal leaves the Zone instead of continuing in it.
+##
+## A ZONE WITH NO GRAPH IS NOT HELD. There are no edges for the evidence
+## to be about, so there is no verdict coming; that Zone is the chain
+## that shipped before any of this and it plays exactly as it did.
+func _await_verdict() -> void:
+	if (zone.get("edges", []) as Array).is_empty():
+		layout_verdict = "UNCERTIFIED"
+		return
+	if player != null:
+		player.input_frozen = true
+	var waited := 0.0
+	while waited < VERDICT_TIMEOUT:
+		var state := str(BridgeClient.active_zone().get(
+				"layout_state", ""))
+		if state == "ACCEPTED":
+			layout_verdict = state
+			if player != null:
+				player.input_frozen = false
+			return
+		# A refusal clears the active Zone, so the record stops being
+		# there at all -- which is the same news arriving a different way.
+		if state == "REFUSED" or (BridgeClient.active_zone().is_empty()
+				and waited > 0.25):
+			layout_verdict = "REFUSED"
+			push_warning("zone: %s layout refused; leaving" % zone_id)
+			layout_refused.emit(zone_id)
+			return
+		await get_tree().process_frame
+		waited += get_process_delta_time()
+	# NO VERDICT IS NOT AN ACCEPTANCE. A bridge that never answers leaves
+	# the player frozen forever, which is worse than the Zone they are
+	# standing in; treat silence as a refusal and go back to the Hub.
+	layout_verdict = "REFUSED"
+	push_warning("zone: %s waited %.1fs for a layout verdict"
+			% [zone_id, VERDICT_TIMEOUT])
+	layout_refused.emit(zone_id)
 
 ## Aperture polarity and arrival verdicts, measured and attached.
 ##

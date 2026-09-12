@@ -217,6 +217,26 @@ class ZoneRecord(Strict):
     #: predates the graph. A Zone with no manifest is not a broken Zone;
     #: it is one whose topology is still its chamber order.
     manifest: dict | None = None
+    #: WHETHER THE LAYOUT WAS ACCEPTED, and therefore whether this Zone
+    #: is safe to play.
+    #:
+    #: A refused layout used to change nothing: `handle_layout_result`
+    #: logged, sent a notification, and left the Zone ACTIVE — so the
+    #: client kept playing a Zone whose geometry the validator had just
+    #: said does not hold together, and could claim its Checks.
+    #:
+    #: `UNCERTIFIED` is the honest state for a Zone with no graph: there
+    #: are no edges for the evidence to be about, so it is neither
+    #: accepted nor refused and it plays exactly as it always did.
+    layout_state: Literal["UNCERTIFIED", "ACCEPTED", "REFUSED"] = \
+        "UNCERTIFIED"
+    #: How many layouts for this Zone the validator has rejected.
+    #:
+    #: A refusal sends the Zone back to be composed again against the
+    #: SAME location ids -- the Checks are preserved and the campaign is
+    #: not stuck -- but a Zone that cannot be composed soundly must stop
+    #: trying, or a client that refuses every layout spins forever.
+    layout_refusals: int = Field(default=0, ge=0, le=99)
     #: `_LOC`, not `_NON_FINALE_LOC`: the finale Zone legitimately holds the
     #: goal. `_finale_owns_the_goal` below splits the two cases — this is the
     #: ONE model in the packet allowed to carry Check 030 on an

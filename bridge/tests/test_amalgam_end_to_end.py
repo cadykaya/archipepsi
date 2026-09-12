@@ -18,6 +18,8 @@ from archipepsi_bridge.schemas import constants as C
 from archipepsi_bridge.schemas.protocol import ClientMessage
 from pydantic import TypeAdapter
 
+from archipepsi_bridge.schemas import transitions as T
+
 from .conftest import connected_engine, drain, run
 
 _ADAPTER = TypeAdapter(ClientMessage)
@@ -64,15 +66,10 @@ def _place(zone) -> dict:
                        "size": [HALF_W * 2, 5.0, DEPTH]},
         }
         for d in ch.doors:
-            # THE FIRST ROOM'S `entry` IS THE ZONE'S FRONT DOOR: no edge
-            # names it so it is declared SEALED, and the player arrives
-            # through it. This helper reported it as solid, which is a
-            # Zone whose first room is walled shut -- the engine built
-            # exactly that until `cut_plan` learned to carve it.
-            front = (ch.id == zone.chambers[0].id
-                     and d.socket_id == "entry")
-            apertures[f"{ch.id}/{d.socket_id}"] = (
-                True if front else d.passable_geometry)
+            # Every door reports exactly what its assignment declares,
+            # the head's `entry` included: the player arrives 1.2 m
+            # inside the first room, so its front wall is a wall.
+            apertures[f"{ch.id}/{d.socket_id}"] = d.passable_geometry
         if any(d.usage != "SEALED" for d in ch.doors):
             a = f"room:{ch.id}:arrival"
             anchors[a] = [x, 0.0, z]
@@ -232,4 +229,89 @@ def test_a_committed_layout_is_replayed_not_replaced(tmp_path):
             await engine.handle_layout_result(_ADAPTER.validate_python(
                 {"type": "layout_result", "zone_id": zone_id,
                  "layout": moved}))
+    run(go())
+
+
+def test_a_refused_layout_stops_the_zone_and_keeps_its_checks(tmp_path):
+    """A refusal must change what the player can do, and cost nothing.
+
+    The first version logged, notified, and left the Zone ACTIVE — so the
+    client went on playing geometry the validator had just rejected and
+    went on claiming Checks against it. The control is the same path with
+    a sound layout, because "the Zone stopped being active" means nothing
+    unless an accepted one stays active.
+    """
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zone_id, zone = await _branching_zone(engine)
+        held = set(engine.save.zone_by_id(zone_id).allocated_location_ids)
+        assert held, "the Zone should hold locations before any of this"
+
+        # THE CONTROL: a sound layout leaves the Zone in play.
+        await engine.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zone_id,
+             "layout": _place(zone)}))
+        rec = engine.save.zone_by_id(zone_id)
+        assert rec.layout_state == "ACCEPTED", rec.layout_state
+        assert engine.save.active_zone_id == zone_id, (
+            "an accepted layout must leave the Zone active")
+        assert rec.manifest is not None
+
+        # THE REFUSAL, on a fresh campaign so the accepted one is not in
+        # the way: the same handler, a layout with no aperture evidence.
+        engine2, _ = await connected_engine(tmp_path / "b",
+                                            config=C.DEFAULT_CONFIG)
+        zid2, zone2 = await _branching_zone(engine2)
+        before = set(engine2.save.zone_by_id(zid2).allocated_location_ids)
+        bad = _place(zone2)
+        bad["apertures"].clear()
+        await engine2.handle_layout_result(_ADAPTER.validate_python(
+            {"type": "layout_result", "zone_id": zid2, "layout": bad}))
+        after = engine2.save.zone_by_id(zid2)
+        assert after.layout_state == "REFUSED", after.layout_state
+        assert after.manifest is None, "a refused layout must not commit"
+        assert after.state != "ACTIVE", (
+            "a refused Zone must not stay ACTIVE; the client would keep "
+            f"playing it (state {after.state})")
+        # THE CHECKS ARE STILL ITS OWN. Giving them back is abandon's job.
+        assert set(after.allocated_location_ids) == before, (
+            "a refused layout released the Zone's locations")
+        assert after.holds_locations, (
+            "a refused Zone stopped reserving its Checks, so the seed "
+            "would re-allocate them elsewhere")
+        # AND IT CANNOT CLAIM ONE, through the path that claims them.
+        #
+        # The first version of this called `engine.handle_claim_check`,
+        # which does not exist -- so `pytest.raises(Exception)` caught an
+        # AttributeError and the assertion was about a typo rather than
+        # about the Zone. `transactions.claim_check` is the real one.
+        import archipepsi_bridge.transactions as TX
+        from archipepsi_bridge.campaign import IntentError
+        with pytest.raises((ValueError, IntentError)) as refused:
+            await TX.claim_check(engine2, zid2, next(iter(before)))
+        assert "not ACTIVE" in str(refused.value), str(refused.value)
+    run(go())
+
+
+def test_a_zone_that_keeps_failing_stops_being_recomposed(tmp_path):
+    """Regeneration is a recovery, not a loop.
+
+    A refusal composes the Zone again against the ids it already holds —
+    the same recovery a crash mid-generation gets. A client that refuses
+    every layout would otherwise ask forever, so it stops and the record
+    waits for a human instead of spinning.
+    """
+    async def go():
+        engine, _ = await connected_engine(tmp_path, config=C.DEFAULT_CONFIG)
+        zone_id, _ = await _branching_zone(engine)
+        held = set(engine.save.zone_by_id(zone_id).allocated_location_ids)
+        for _ in range(T.MAX_LAYOUT_REFUSALS + 2):
+            engine._apply(T.refuse_layout(engine.save, zone_id))
+        rec = engine.save.zone_by_id(zone_id)
+        assert rec.layout_refusals >= T.MAX_LAYOUT_REFUSALS
+        assert rec.state == "DORMANT", (
+            f"after {rec.layout_refusals} refusals the Zone is "
+            f"{rec.state}; it should have stopped being recomposed")
+        assert set(rec.allocated_location_ids) == held, (
+            "giving up on a layout released the Zone's locations")
     run(go())

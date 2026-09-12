@@ -293,6 +293,18 @@ const COLLAR_SLACK := 0.1
 ## Appends into `keys`, `locks` and `stations` and writes into `anchors`
 ## and `room_transforms`; returns the room's footprint, which is the only
 ## thing the caller still has a use for.
+## One entry of a built room's own door plan, by socket id, or empty.
+static func _planned_door(result: Dictionary, socket_id: String) -> Dictionary:
+	if socket_id == "":
+		return {}
+	for raw: Variant in result.get("doors", []):
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var plan: Dictionary = raw
+		if str(plan.get("socket_id", "")) == socket_id:
+			return plan
+	return {}
+
 static func _furnish_room(root: Node3D, theme: String,
 		chamber: Dictionary, result: Dictionary, origin: Vector3,
 		yaw: float, anchors: Dictionary, room_transforms: Dictionary,
@@ -354,16 +366,22 @@ static func _furnish_room(root: Node3D, theme: String,
 	# A LOCKED door's slab, standing in an aperture that IS carved.
 	# The audit still sweeps the capsule through the opening and
 	# still requires it to be a hole; this is what stands in it.
+	#
+	# READ OFF THE ROOM'S OWN PLAN, which is the same list `door_world`
+	# and the aperture report read. This used to re-derive the socket
+	# from `chamber.width`/`chamber.depth` -- fields a `platform_path`
+	# does not carry at all, so the derivation fell to a 16 x 16 default
+	# and put the slab in a room that is 8 m wide. `socket_placed` says
+	# out loud that a second derivation is how the two come to disagree;
+	# this was the second derivation.
 	for raw_door: Variant in chamber.get("doors", []):
 		if typeof(raw_door) != TYPE_DICTIONARY:
 			continue
 		var door: Dictionary = raw_door
 		if str(door.get("usage", "")) != "LOCKED":
 			continue
-		var socket := ChamberBuilders.socket_placed(
-				str(door.get("socket_id", "")),
-				float(chamber.get("width", 16.0)),
-				float(chamber.get("depth", 16.0)))
+		var socket := _planned_door(result,
+				str(door.get("socket_id", "")))
 		if socket.is_empty():
 			continue
 		var slab := LockedDoor.create(rid,
@@ -1411,18 +1429,10 @@ static func build(zone: Dictionary, theme_override := "",
 			chamber_by_id[str((raw_chamber as Dictionary).get("id", ""))] \
 					= raw_chamber
 	var graph_branches: Dictionary = graph.get("branches", {})
-	var head_id := str((graph.get("spine", []) as Array)[0]) \
-			if not (graph.get("spine", []) as Array).is_empty() else ""
 	for spine_id: Variant in graph.get("spine", []):
 		var chamber: Dictionary = chamber_by_id.get(str(spine_id), {})
 		if chamber.is_empty():
 			continue
-		# The head of the spine is where the player comes in. Marked on a
-		# COPY so nothing upstream sees a chamber the composer did not
-		# write.
-		if str(spine_id) == head_id:
-			chamber = chamber.duplicate(true)
-			chamber["zone_entrance"] = true
 		# S13: every chamber's geometry is chosen here, not assumed.
 		# Today every route ends at ChamberBuilders because every registry
 		# entry is still a declared placeholder; the routing is what lets an
