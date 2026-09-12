@@ -37,10 +37,12 @@ extends RigidBody3D
 const LINEAR_DAMP := 1.2
 const ANGULAR_DAMP := 2.0
 
-## How long a body must be near-still before it sleeps. Godot's default
-## is 0.5 s; a replay that waits `settle_timeout_s` for a latch needs the
-## body to have actually stopped well inside that window.
-const SLEEP_AFTER := 0.4
+## HOW LONG BEFORE A BODY SLEEPS IS NOT A KNOB HERE. Godot's sleep
+## threshold and delay are project settings, not per-body properties, so
+## a constant on this class claiming to set one would be a number that
+## looks load-bearing and is not. `scene_digest` records `sleeping`
+## because the setting is part of the experiment; `at_rest` asks the
+## solver rather than re-deriving it.
 
 ## FRICTION, DERIVED FROM THE ENVELOPE RATHER THAN CHOSEN.
 ##

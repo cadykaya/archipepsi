@@ -2,10 +2,15 @@
 
 ## ENGINE LANE — the merged Zone opens again, and the way back is real — 2026-09-12
 
-**`claude/archipepsi-amalgam-slice1`, from the art merge `dfad94c`.**
-Four things became playable and one placement defect was found under
-them. Read this section first on a wake-up; the bridge-lane section
-below is still the payload reference.
+**`claude/archipepsi-echoes-continuation-b1adno`, from the art merge
+`dfad94c`.** Read this section first on a wake-up; the bridge-lane
+section below is still the payload reference.
+
+**Green as of this section:** `make test` 1322, `check_packet.py`, and
+every Godot target — `godot-test`, `-content`, `-room-contract`,
+`-playtest3a`, `-zone-audit`, `-boot`, `-legible`, `-movement`, `-room`,
+`-activity`, `-physics`, `-integration`, `-reload`. CI itself is red for
+a reason that is not the tree: see `docs/CI.md`.
 
 **THE GENERATED ZONE OPENS AGAIN.** `make godot-integration` was red
 from the moment the art lane merged: `zone_001` was refused three times

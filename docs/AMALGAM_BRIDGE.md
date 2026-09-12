@@ -895,8 +895,26 @@ untouched.
 
 ### 5.5b The consumer change, for Prod to make
 
+**DONE 2026-09-12, and one line of it was on the bridge's side.** Both
+consumer changes below landed; `make godot-reload` presses the real
+portal in `ZONE_DORMANT` and lands back in the Zone it left.
+
+The line the engine lane had to touch in `protocol.py`, flagged here
+because it is the bridge's file: **`portal_enabled` was reading a second
+list.** `ZONE_ENTER_MODES` gained `ZONE_DORMANT`; `ZONE_ENTERABLE_MODES`
+— the same question, under a different name — did not, and
+`portal_enabled` reads that one. So the portal showed the mode's prompt
+and refused to fire: a way back into a Zone that is wired, labelled and
+dead, and no test on either side could see it because each lane's half
+was correct.
+
+`ZONE_ENTERABLE_MODES` is now `ZONE_ENTER_MODES` rather than a copy of
+it. Two names for one question is how they drifted; please keep the
+collapse, or say which question the second name was meant to be asking.
+
 Two places, and deliberately small. **Neither lane should edit the other
-side of this seam** — this is the proposal, not a patch.
+side of this seam** — this was the proposal, and the engine lane took
+it.
 
 **`hub.gd::_on_portal_activated`** — one arm gains a mode:
 
