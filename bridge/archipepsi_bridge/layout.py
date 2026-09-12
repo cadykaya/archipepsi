@@ -582,6 +582,51 @@ def validate(zone, result: dict) -> Verdict:
             c.fail(f"the engine reports a standing capsule does not fit "
                    f"at '{anchor}'")
 
+    # --- 4b. a return stands clear of the way in -----------------------
+    #
+    # THE BRANCH SENT THE PLAYER HOME BEFORE THEY COULD USE IT.
+    # `ReturnPlug` is an `Area3D` that fires on `body_entered`, and the
+    # composer anchored it at `room:<rid>:arrival` — which is precisely
+    # where `zone_builder` stands a body entering the room. Walking into
+    # a side destination triggered the return on the first frame, every
+    # time, and re-entering did it again. Found by the engine lane in the
+    # integrated build.
+    #
+    # Two halves and this is the bridge's. The composer names `:return`
+    # instead (`topology.compose_with_branch`); WHERE that is and how
+    # much room it has is the engine's to reserve and to measure. What
+    # is checked here is that the two are not the same place and that
+    # the engine says a body at the arrival is outside the device.
+    #
+    # NOT ENFORCED ON THE MODEL. `ZoneRecord.zone` is a typed `Zone`, so
+    # a rule there would refuse to LOAD every save that already holds a
+    # branched Zone. A committed manifest never runs this function
+    # again, so an accepted layout keeps exactly the devices it was
+    # certified with; an old Zone that has not been laid out yet is
+    # refused here and recomposed, which is the recovery path that
+    # already exists for a refusal.
+    plug_clear = result.get("plug_clear") or {}
+    for pl in zone.plugs:
+        if pl.source_anchor == f"room:{pl.room_id}:arrival":
+            c.fail(f"plug '{pl.edge_id}' stands at '{pl.source_anchor}', "
+                   "which is where a body entering that room arrives; a "
+                   "return on the arrival fires before the player can "
+                   "use the room")
+            continue
+        verdict = plug_clear.get(pl.edge_id)
+        if verdict is None:
+            c.fail(f"plug '{pl.edge_id}' carries no measured clearance; "
+                   "whether a body at the room's arrival stands inside "
+                   "the device's trigger volume is a physics query and "
+                   "a distinct anchor is not the answer to it")
+        elif not isinstance(verdict, bool):
+            c.fail(f"plug '{pl.edge_id}' clearance verdict is "
+                   f"{verdict!r}, not a boolean")
+        elif verdict is False:
+            c.fail(f"the engine reports a body at the arrival of room "
+                   f"'{pl.room_id}' stands inside plug '{pl.edge_id}'; "
+                   "the return would fire on the way in")
+
     # --- 5. aperture polarity, for every declared door -----------------
     #
     # EVERY DOOR, INCLUDING THE HEAD'S `entry`, AND NO EXEMPTION.

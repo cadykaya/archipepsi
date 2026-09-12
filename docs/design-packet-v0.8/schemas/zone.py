@@ -39,6 +39,23 @@ except ImportError:  # pragma: no cover
 #: without one.
 PROCEDURAL_SOCKETS = ("entry", "exit", "side_left", "side_right")
 
+#: The per-room anchors the engine resolves, as `room:<room_id>:<kind>`.
+#:
+#: `arrival` is where a body entering the room stands — the room's own
+#: `player_entry`, carried into world space by `zone_builder`.
+#:
+#: `return` is a spot RESERVED for a return device, reconciled against
+#: the room's furniture, its reward pedestal and its key spots by the
+#: builder that placed them (`ChamberBuilders._clear_spot`), and clear
+#: of `arrival` by enough that a body standing at the arrival is not
+#: inside the device's trigger volume.
+#:
+#: The two are separate because they were once the same, and a return
+#: plug standing on the arrival fires the moment the player walks in:
+#: the branch sent them home before they could use it. Found by the
+#: engine lane in the integrated build.
+ROOM_ANCHOR_KINDS = ("arrival", "return")
+
 SCHEMA_VERSION = 7
 
 Theme = Literal[
@@ -865,12 +882,24 @@ class Zone(Strict):
         # bridge checks the FORM and the room id; whether the anchor
         # exists in the built scene is the engine's answer, returned as
         # evidence.
+        #
+        # `:return` is ADDITIVE and `:arrival` is kept. Every save that
+        # already holds a branched Zone names `:arrival` as its plug's
+        # source, and `ZoneRecord.zone` is a typed `Zone` — so refusing
+        # that spelling here would refuse to load those saves. The
+        # placement defect it represents is caught where it can be
+        # caught safely: `layout.validate`, which a committed manifest
+        # never runs again.
         for pl in self.plugs:
             for anchor in (pl.source_anchor, pl.destination):
                 if anchor in ("zone_start", "last_large_room"):
                     continue
-                if anchor.startswith("room:") and anchor.endswith(":arrival"):
-                    rid = anchor[len("room:"):-len(":arrival")]
+                room_anchor = next(
+                    (suffix for suffix in ROOM_ANCHOR_KINDS
+                     if anchor.startswith("room:")
+                     and anchor.endswith(f":{suffix}")), None)
+                if room_anchor is not None:
+                    rid = anchor[len("room:"):-len(f":{room_anchor}")]
                     if rid not in rooms:
                         raise ValueError(
                             f"plug '{pl.edge_id}' names anchor '{anchor}' "

@@ -1247,6 +1247,112 @@ declared latch. The chain's consequence today is the local reward
 behind the door, which rides the validated path every reward does.
 
 
+### 5.7 The return pad stood where the player lands
+
+**Engine-lane finding, integrated build, 2026-09-12.** `ReturnPlug` is
+an `Area3D` firing on `body_entered`, and the composer anchored it at
+`room:<rid>:arrival` — which is exactly where `zone_builder` stands a
+body entering the room (`anchors["room:%s:arrival"]` is the room's own
+`player_entry`, carried into world space). So walking into a side
+destination triggered the return on the first frame, every time, and
+re-entering did it again. **The device was right, the edge was right,
+and the anchor was the place the player is standing.**
+
+**The composer names `room:<rid>:return` now.** `ROOM_ANCHOR_KINDS` has
+two entries; the composer still names only an anchor and no world
+coordinate appears in this lane.
+
+**Where `:arrival` is kept, and why.** It stays a legal anchor form.
+`ZoneRecord.zone` is a typed `Zone`, so refusing that spelling in the
+model would refuse to LOAD every save already holding a branched Zone.
+The defect is caught in `layout.validate` instead — rule 4b — which a
+committed manifest never runs again. So:
+
+* a Zone with a committed manifest keeps exactly the devices it was
+  certified with, and nothing repositions anything inside one;
+* an accepted-but-unplaced Zone is refused and recomposed, which is the
+  recovery path a refusal already has;
+* **already-committed saves keep the old placement**, and the repair
+  reaches them on their next Zone. Said out loud rather than hidden.
+
+**What rule 4b requires.** That the plug does not stand on its room's
+arrival, and that the engine has MEASURED the separation:
+`plug_clear[edge_id]` is a boolean per plug, true when a body standing
+at the room's arrival is outside that device's trigger volume. Missing
+is a refusal, not a pass — a distinct anchor is not evidence, the same
+way a coordinate is not evidence a capsule fits.
+
+> **For Prod — the engine half, and the smallest version of it.**
+>
+> 1. **Reserve the spot with the contract that already exists.**
+>    `ChamberBuilders._clear_spot(width, depth, claimed, seed)` is what
+>    reconciles key spots and the reward pedestal against the room's own
+>    furniture, and it CLAIMS the space so nothing else lands there.
+>    A return spot is the same kind of thing, and the comment beside
+>    `key_spots` already says why: "the builder knows where it put its
+>    furniture, so the builder is what reconciles them." An offset from
+>    the arrival is not this — it can land in a crate, in a wall, or
+>    outside the room.
+> 2. **Publish it** as `anchors["room:<rid>:return"]`, for every room
+>    the Zone gives a plug. An unpublished anchor is already refused
+>    here (rule 4), so nothing silently skips a return the way
+>    `zone_builder`'s `push_warning` does today.
+> 3. **Measure and report `plug_clear`**, one boolean per plug, the way
+>    `arrival_ok` and `apertures` are reported.
+> 4. **Clearance is yours to set**, because it is `ReturnPlug.RADIUS`
+>    plus the player capsule plus whatever margin you want. This lane
+>    does not spell an engine number: it asks for the verdict.
+>
+> **These two halves must land together.** A branching Zone composed
+> here names `:return`, and until the engine publishes it rule 4
+> refuses the layout — loudly, naming the anchor. That is the
+> coordination cost of the repair and it is visible rather than silent;
+> ordering it any other way means either a vacuous rule or leaving the
+> trap in.
+>
+> Also yours: the player test. Enter normally, reach the room's
+> content, deliberately take the return exactly once, and re-enter.
+
+
+### 5.7a The lifecycle after every layout attempt fails — driven, not read
+
+Asked for alongside §5.7. Driven through `handle_layout_result` and the
+Hub, because every existing test of this path calls `T.refuse_layout` on
+the save directly and so proves the transition works while saying
+nothing about what a player reaches.
+
+**Two things are correct and now have controls.**
+
+* **A never-accepted Zone and a committed one are properly distinct.**
+  The fresh proposal is recomposed twice and then goes DORMANT holding
+  its Checks; a Zone with a manifest keeps the manifest, its content and
+  its progress, and is never sent back to be composed again. The
+  committed one is not erased to recover the failed one.
+* **The locations are recoverable and the campaign is never stuck.**
+  From DORMANT, `abandon_zone` returns them to the pool, the Hub goes
+  `ZONE_AVAILABLE`, and the next Zone generates and draws on those ids.
+
+**Two defects, reported and NOT fixed here** — they are outside the
+return-pad repair and widening it was not authorised.
+
+1. **The Hub's only offer after exhaustion is the loop.** In
+   `ZONE_DORMANT` the portal is enabled and `resume_zone_id` names the
+   exhausted Zone, so the affordance on screen is "RETURN TO ZONE" —
+   into geometry the validator has refused three times. Entering
+   succeeds, the client asks for a layout, it is refused, and the Zone
+   goes DORMANT again. `layout_refusals` is never read after the third,
+   so *"and it stops"* stops the RECOMPOSITION and not the loop. The
+   escape (abandon) exists and is reachable; nothing points at it.
+   Whether the fix is a Hub affordance, a `layout_state == "REFUSED"`
+   arm on entry, or a notification is a design call, not mine to make.
+2. **The refusal counter outlives its bound.** `layout_refusals` is
+   `le=99` and incremented on every refusal without limit; the 100th
+   raises `ValidationError` out of `refuse_layout`. Milder than it
+   looks — `_apply` is never reached, so the save is unchanged and the
+   player can still abandon — but it is an exception where a refusal
+   belongs, and it is only reachable because of defect 1.
+
+
 ## 6. What remains in this lane
 
 **The five conditions §0-bis puts on a legal capability gate**

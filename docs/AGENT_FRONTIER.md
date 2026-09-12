@@ -385,6 +385,30 @@ only the approved consequence is persisted, in `ZoneProgress.latched`.
 every load-bearing package is refused, and that is a test rather than a
 promise. `docs/AMALGAM_BRIDGE.md` §5.6a says what the engine lane owes.
 
+**THE RETURN PAD STOOD WHERE THE PLAYER LANDS** (engine-lane finding,
+integrated build). The composer anchored a branch's return plug at
+`room:<rid>:arrival`, which is exactly where `zone_builder` stands a
+body entering the room, and `ReturnPlug` fires on `body_entered` — so
+every side destination sent the player home on the first frame and did
+it again on re-entry. The composer names `room:<rid>:return` now;
+`layout.validate` rule 4b refuses a plug on the arrival and requires the
+engine's measured `plug_clear`. `:arrival` stays a legal form so saves
+already holding a branched Zone keep loading, and a committed manifest
+is never repositioned. **The two halves must land together** — see
+`AMALGAM_BRIDGE.md` §5.7 for the engine's side, which is
+`ChamberBuilders._clear_spot` and one boolean.
+
+**AND THE LIFECYCLE AFTER EVERY LAYOUT FAILS** (§5.7a), driven through
+the handlers rather than read. Two things correct and now controlled: a
+never-accepted Zone and a committed one stay properly distinct, and the
+locations are recoverable — abandon returns them and the next Zone
+generates. Two defects REPORTED AND NOT FIXED, because widening this
+repair was not authorised: after exhaustion the Hub's only offer is
+re-entry into the same refusal (`layout_refusals` is never read again,
+so the stop stops recomposition and not the loop), and the counter is
+`le=99` but incremented without limit, so the 100th refusal raises
+instead of refusing.
+
 **NEXT FOR THIS LANE: nothing, until integration says otherwise**
 (owner, 2026-09-12). Topology behaviour is to stay stable while Prod
 exercises the integrated build. The next bridge work is **a specific
