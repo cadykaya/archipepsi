@@ -17,9 +17,13 @@ its own usage on the assembled Zone, with a counterpart that mislabels
 a real opening.
 
 **Mounting asks the geometry now.** As shipped it put 27 of 27 SHOT
-elements on walls it never looked for. It needs a wall behind the
-stalk, floor under the mount, and floor to shoot from; 11 of 27 mount
-in the diagnostic Zone and every decline is printed by room.
+elements on walls it never looked for. It needs a real wall behind the
+stalk and somewhere a body can stand and shoot it from -- NOT floor
+under the mount, which is the question a floor-placed element is owed
+and which a first cut wrongly required. 15 of 27 mount in the
+diagnostic Zone; every decline is printed by room, and there is no
+quota. `godot-zone-audit` was corrected in the same pass: a mounted
+element owes a standable firing position, not ground beneath it.
 
 **The station panel reaches `main.gd`'s real consumers** — one warp,
 no stale warp after the Zone is left, `leave_zone` never

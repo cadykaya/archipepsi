@@ -79,29 +79,52 @@ establish a wall behind the stalk."* Correct, and worse than it sounds:
 measured on the real Zone, the mount as shipped put **27 of 27** SHOT
 elements on walls it had never looked for.
 
-Three things are asked now, all of the same real geometry:
+**Two** things are asked, and only two, both of the same real geometry:
 
-1. **a wall behind the stalk** — every wall is built by `_box`, which
-   gives it a collision hull, and `all_solid_boxes` reads hulls without
-   the architecture filter it applies to meshes, so the wall really is
-   in `solids`;
-2. **floor under the mount** — a thin column under the target's own
-   footprint, thin on purpose so it cannot find the wall and call that
-   a floor;
-3. **somewhere to shoot it from** — floor sampled a few strides out,
-   which is the case the queue named by hand: a real wall over a kill
-   pit.
+1. **a real wall behind the stalk** — every wall is built by `_box`,
+   which gives it a collision hull, and `all_solid_boxes` reads hulls
+   without the architecture filter it applies to meshes, so the wall
+   really is in `solids`;
+2. **somewhere a body can stand and shoot it from** — sampled out into
+   the room, each sample needing floor *and* standing headroom. That is
+   the case the brief named by hand: a real wall over a **kill pit** is
+   a target nobody can address.
 
-On the assembled Zone: **11 of 27 mount**, all in arenas. Every decline
-is printed by chamber type and room — `c002`, `c006` (arena) and
-`c007`, `c022` (6.8 m corridors, where the along-wall window left after
-the threshold clearances lies entirely inside the side doorway's
-keep-out). **Unmounted is a documented limitation, not a silent
-fallback.**
+**Not floor under the mount.** A first cut required it and that was
+wrong: nobody stands beneath a wall target, and the requirement refuses
+a perfectly ordinary one hanging over a walkway recess. It is the
+question a *floor-placed* element is owed.
+
+Correcting it moved the count from 11 to **15 of 27**, all in arenas.
+Every decline is printed by chamber type and room — `c002`, `c006`
+(arena) and `c007`, `c022` (6.8 m corridors, where the along-wall
+window left after the threshold clearances lies entirely inside the
+side doorway's keep-out). **Unmounted is a documented limitation, not
+a silent fallback, and there is no quota.**
+
+**The other consumer was corrected in the same pass**, which is the
+part that would otherwise have been left answering the wrong question.
+`godot-zone-audit` required ground beneath every element. It still does
+for floor-placed ones; a **mounted** element is instead required to
+have a standable position with clear line of sight inside weapon range,
+using `RoomAudit.player_stands_here` so there is no second notion of
+"a body fits". That is strictly more than the floor test ever asked.
+
+Four controls, each verified decisive:
+
+| control | what it proves |
+|---|---|
+| a target over a real gap | mounted, and hit with the real Static Pulse from a supported position 9 m away |
+| a room with no walls | declines, and still builds all 3 elements |
+| a wall with nowhere to stand in front of it | declines, and still builds both elements |
+| a shot through a 4 m slab | misses |
+
+Preserved through the change: player clearance (`RoomAudit.HEADROOM`),
+shot range, the door keep-out, the element count in every decline case,
+and the rotated footprint each element claims.
 
 The surface-vouched exclusion is gone with it: rooms are no longer
-skipped by category, they are asked the three questions, and a
-`platform_path` answers no to the floor ones on its own.
+skipped by category, they are asked the two questions.
 
 ### C — the panel reaches the real consumers
 
@@ -130,7 +153,7 @@ wipes first.
 |---|---|
 | mounted, player height | `evidence/away-batch-0.3/eye_mounted_target_challenge_c002_0.png` |
 | mounted, second room | `evidence/away-batch-0.3/eye_mounted_target_challenge_c018_0.png` |
-| **the limitation** | `evidence/away-batch-0.3/eye_unmounted_target_challenge_c006_0.png` |
+| **the limitation** | `evidence/away-batch-0.3/eye_unmounted_target_challenge_c007_0.png` |
 | the travel panel, open | `evidence/away-batch-0.3/station_travel_panel.png` |
 | the F5 schematic | `evidence/away-batch-0.3/nav_schematic_prototype.png` |
 
@@ -176,7 +199,7 @@ engine-visible, and `_repair_station_for` is where it would show.
   The exact Whistle crossing and the original exit seam stay unresolved
   until a **private copy** of the slot JSON exists. Nothing here claims
   any fixture reproduces them.
-- **16 of 27 targets do not mount** in the diagnostic Zone. Every one is
+- **12 of 27 targets do not mount** in the diagnostic Zone. Every one is
   named. Whether the unmounted look is an acceptable fallback or wants
   a floor stand is an art and design call.
 - **`c001/side_left`'s walk still reports LOST.** The sweep says that

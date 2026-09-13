@@ -948,11 +948,12 @@ func _the_way_back_from(space: PhysicsDirectSpaceState3D, at: Vector3,
 
 ## WHICH ROOMS COULD HANG A TARGET, AND WHICH COULD NOT.
 ##
-## Mounting is an OFFER that may be declined: it needs a real wall
-## behind the stalk, floor under the mount, and -- where the room
-## vouched its walkable surfaces -- one of them facing the target close
-## enough to shoot from. A room that answers no to any of those keeps
-## the older floor-plan placement.
+## Mounting is an OFFER that may be declined. It needs two things and
+## only two: a real wall behind the stalk, and somewhere a body can
+## stand and shoot it from. It does NOT need floor under the target --
+## nobody stands beneath a wall target, and requiring it refuses a
+## perfectly ordinary one hanging over a walkway recess. A room that
+## cannot offer both keeps the older floor-plan placement.
 ##
 ## This is the census the decline rate is read from, by chamber type,
 ## across the whole assembled Zone. It asserts only that the feature
@@ -994,8 +995,8 @@ func _where_targets_mounted_and_where_they_did_not() -> void:
 		var rooms: Array = declined[kind]
 		_note("DECLINED in %s: %s -- kept the floor-plan placement "
 				% [str(kind), ", ".join(PackedStringArray(rooms))]
-				+ "because the room offers no wall with floor under it "
-				+ "and something to shoot from")
+				+ "because the room offers no real wall with a place to "
+				+ "stand and shoot it from")
 	_check(seen == 0 or total > 0,
 			"wall mounting reaches the real Zone: %d of %d SHOT "
 			% [total, seen] + "elements found a wall")

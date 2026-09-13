@@ -658,6 +658,8 @@ func _audit(build: Dictionary, declared: Array) -> void:
 		var unreachable := 0
 		var no_ground := 0
 		var blockers: Array = []
+		var mounted_seen := 0
+		var no_firing := 0
 		for element in runtime.elements:
 			var p := element.global_position
 			positions.append([snappedf(p.x, 0.01), snappedf(p.y, 0.01),
@@ -671,7 +673,21 @@ func _audit(build: Dictionary, declared: Array) -> void:
 					in_other_activity += 1
 				else:
 					in_level += 1
-			if not _has_ground(space, element, runtime):
+			# WHICH QUESTION THIS ELEMENT IS OWED.
+			#
+			# A floor-placed element is reached by standing at it, so
+			# ground beneath it is the requirement. A WALL-MOUNTED
+			# target is shot from a distance and nobody stands under
+			# one -- asking it for ground below is asking the wrong
+			# question, and answering it would refuse a perfectly good
+			# target over a walkway recess. What a mounted target owes
+			# is a place to stand and shoot it from, which is strictly
+			# more than the floor test ever asked.
+			if bool(element.get_meta("mounted", false)):
+				mounted_seen += 1
+				if not _has_firing_position(space, element):
+					no_firing += 1
+			elif not _has_ground(space, element, runtime):
 				no_ground += 1
 			if not _is_reachable(space, element, bounds, runtime):
 				unreachable += 1
@@ -708,6 +724,14 @@ func _audit(build: Dictionary, declared: Array) -> void:
 		_check(no_ground == 0,
 				"activity '%s': %d element(s) have nothing to stand on "
 				% [id, no_ground] + "within reach below them")
+		# THE MOUNTED HALF OF THE SAME OBLIGATION. An element nobody can
+		# address is as dead as one hanging in a void, and this is what
+		# "addressable" means for a target on a wall.
+		record["mounted"] = mounted_seen
+		record["no_firing_position"] = no_firing
+		_check(no_firing == 0,
+				"activity '%s': %d wall-mounted element(s) have nowhere "
+				% [id, no_firing] + "to stand and shoot them from")
 		_note(unreachable == 0,
 				"activity '%s': %d element(s) cannot be seen from the "
 				% [id, unreachable] + "room's walking space (blocked by %s)"
@@ -969,6 +993,47 @@ func _has_ground(space: PhysicsDirectSpaceState3D,
 	query.collide_with_areas = false
 	query.exclude = _all_activity_rids
 	return not space.intersect_ray(query).is_empty()
+
+## CAN THIS MOUNTED TARGET BE SHOT BY SOMEBODY STANDING SOMEWHERE?
+##
+## Sampled out along the target's own facing -- its face normal is local
+## +Z, the stalk is behind it -- because that is the side a player is
+## on. Each sample has to hold a standing body and see the target, and
+## both are asked of the assembled Zone rather than of a declaration.
+##
+## `RoomAudit.player_stands_here` for the standing half, so this cannot
+## invent a second notion of "a body fits". The seeing half excludes
+## every activity element, exactly as `_is_reachable` does: a ray
+## stopped by another puzzle piece is not a target nobody can shoot.
+func _has_firing_position(space: PhysicsDirectSpaceState3D,
+		element: ActivityElement) -> bool:
+	var target := _world_box(element).get_center()
+	var facing := element.global_transform.basis.z.normalized()
+	for out: float in [2.0, 3.0, 4.5, 6.0, 8.0, 11.0]:
+		for lateral: float in [0.0, -1.5, 1.5]:
+			var side := facing.cross(Vector3.UP).normalized()
+			var probe := target + facing * out + side * lateral
+			var down := PhysicsRayQueryParameters3D.create(
+					probe + Vector3.UP * 2.0,
+					probe + Vector3.DOWN * 14.0)
+			down.collide_with_areas = false
+			down.exclude = _all_activity_rids
+			var ground := space.intersect_ray(down)
+			if ground.is_empty():
+				continue
+			var foot: Vector3 = ground["position"]
+			if not RoomAudit.player_stands_here(foot + Vector3.UP * 0.05,
+					Transform3D.IDENTITY, space):
+				continue
+			var eye := foot + Vector3.UP * Constants.PLAYER_EYE_HEIGHT
+			if eye.distance_to(target) > Constants.STATIC_PULSE_RANGE:
+				continue
+			var shot := PhysicsRayQueryParameters3D.create(eye, target)
+			shot.collide_with_areas = false
+			shot.exclude = _all_activity_rids
+			if space.intersect_ray(shot).is_empty():
+				return true
+	return false
 
 ## How many points along the walking lane the reachability probe tries.
 const PROBE_STEPS := 9

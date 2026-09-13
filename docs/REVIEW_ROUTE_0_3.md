@@ -80,31 +80,31 @@ arena (c014)" — rather than by its id alone.
 
 ---
 
-## 3. c006 — the big Hall. The limitation, on purpose
+## 3. c007 — a small corridor. The limitation, on purpose
 
-This is the large authored room. Its `target_challenge` targets are
-**not mounted**: they hang in the air on their stalks, the way every
-target used to.
+Its one `target_challenge` target is **not mounted**: it hangs in the
+air on its stalk, the way every target used to.
 
-![not mounted](evidence/away-batch-0.3/eye_unmounted_target_challenge_c006_0.png)
+![not mounted](evidence/away-batch-0.3/eye_unmounted_target_challenge_c007_0.png)
 
 That is the offer being declined, not a regression. Mounting needs a
-real wall behind the stalk, floor under the mount, and somewhere to
-shoot it from; where a room cannot give all three the older placement
-stands rather than a target being invented onto a wall that is not
-there. **11 of the Zone's 27 targets mount; the rest look like this.**
+real wall behind the stalk and somewhere a body can stand and shoot it
+from; where a room cannot give both, the older placement stands rather
+than a target being invented onto a wall that is not there. **15 of the
+Zone's 27 targets mount; the other 12 look like this.**
 
-The rooms that decline in this Zone: **c002** and **c006** (some of
-their targets), and **c007** and **c022** — 6.8 m corridors where the
-only wall stretch left after the doorway clearances is the doorway
-itself.
+The rooms that decline: **c002** and **c006** (some of their targets),
+and **c007** and **c022** — 6.8 m corridors where the only wall stretch
+left after the doorway clearances is the doorway itself.
 
-Worth your eye: is the unmounted look acceptable as a fallback, or
-does it want a floor stand? **That is an art and design call, not one
-this batch made.**
+Worth your eye: is the unmounted look acceptable as a fallback, or does
+it want a floor stand? **That is an art and design call, not one this
+batch made.**
 
-There is a station in this room. Reaching it is what gives the panel in
-step 1 something to travel to.
+**c006, the big Hall**, is on the way and now mounts most of its
+targets — worth a look for the contrast, and it has a station in it.
+Reaching that station is what gives the panel in step 1 something to
+travel to.
 
 ---
 

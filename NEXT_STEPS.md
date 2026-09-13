@@ -30,7 +30,7 @@ interaction position, the reward's own interaction running there, the
 room being LEAVABLE (a dead-end `platform_path` whose reward sits
 beyond an unjumpable gap is a softlock), and no SEALED socket open.
 
-### Mounting had no evidence and now has three kinds
+### Mounting had no evidence, and then had one requirement too many
 
 `_wall_spot` took `width / 2 - WALL_MARGIN` for the wall plane, which
 is the declared ENVELOPE rather than a wall. Measured on the real Zone
@@ -38,11 +38,30 @@ it mounted 27 of 27 SHOT elements on walls nothing had looked for.
 
 Walls are built by `_box`, which gives them a collision hull, and
 `all_solid_boxes` reads hulls WITHOUT the architecture filter it
-applies to meshes -- so the wall is in `solids` and can be asked for. A
-mount now needs a wall behind the stalk, floor under it (a thin column,
-so it cannot find the wall and call that a floor), and floor a few
-strides out to shoot from. 11 of 27 mount; declines are printed by
-chamber type and room.
+applies to meshes -- so the wall is in `solids` and can be asked for.
+
+A mount needs TWO things: a real wall behind the stalk, and somewhere a
+body can stand and shoot it from (floor AND standing headroom at a
+sample out in front). It does NOT need floor under the mount. A first
+cut required that and it was wrong -- nobody stands beneath a wall
+target, and the requirement refuses an ordinary one hanging over a
+walkway recess. It is the question a FLOOR-PLACED element is owed.
+Correcting it moved the count from 11 to 15 of 27.
+
+THE OTHER CONSUMER WAS CORRECTED IN THE SAME PASS, which is the part
+that would otherwise have been left answering the wrong question.
+`zone_audit_driver._has_ground` required ground beneath every element;
+it still does for floor-placed ones, and a MOUNTED element is instead
+required to have a standable position with clear line of sight inside
+weapon range -- via `RoomAudit.player_stands_here`, so there is no
+second notion of "a body fits". That is strictly more than the floor
+test asked.
+
+Four controls, each verified decisive: a target over a real gap
+(mounted, and hit with the real Static Pulse from a supported position
+9 m away), a room with no walls, a wall with nowhere to stand in front
+of it, and a shot through a slab. Each decline case asserts the element
+count, so a refusal never quietly loses a target. No quota.
 
 The surface-vouched exclusion is gone: rooms are asked rather than
 skipped by category.

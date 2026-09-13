@@ -31,6 +31,12 @@ func _ready() -> void:
 
 func _run() -> void:
 	await get_tree().process_frame
+	# ONE RUN'S OUTPUT, not an archive. Shots are named for what they
+	# SHOW -- `eye_mounted_...`, `eye_unmounted_...` -- so when the rule
+	# that decides which rooms mount changes, yesterday's names stay on
+	# disk describing a placement the game no longer makes, and get
+	# copied into an evidence folder beside today's. Cleared first.
+	_clear_output()
 	BridgeClient.snapshot = {
 		"type": "campaign_snapshot",
 		"mechanics": {"owned": [], "aliases": [], "links": [],
@@ -217,6 +223,17 @@ func _run() -> void:
 			% [shot, ProjectSettings.globalize_path(OUT_DIR)])
 	print("GODOT ZONE SHOTS OK")
 	get_tree().quit(0)
+
+## Empty the shot directory, so what is in it is this run's.
+func _clear_output() -> void:
+	var path := ProjectSettings.globalize_path(OUT_DIR)
+	DirAccess.make_dir_recursive_absolute(path)
+	var dir := DirAccess.open(path)
+	if dir == null:
+		return
+	for name: String in dir.get_files():
+		if name.ends_with(".png"):
+			dir.remove(name)
 
 func _runtimes_under(node: Node, out: Array[ActivityRuntime]) -> void:
 	if node is ActivityRuntime:
