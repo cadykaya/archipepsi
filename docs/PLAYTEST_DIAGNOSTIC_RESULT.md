@@ -359,6 +359,158 @@ That is the cost of the silent-activity finding stated properly: not
 "the room lacked polish" but **"the room was solvable and the game hid
 it."**
 
+### Owner decision, confirmed against the corrected facts
+
+The owner completed the five-pad room using a teleport Echo (Warp
+Whistle Mk4), confirming it is solvable, and ruled: *"it just wasnt fun.
+we need to cut these."*
+
+**Cut `pressure_routing` and `timed_run` as activity families. Keep the
+plate as a mechanic.** The engine lane agrees, and the reasoning is
+recorded so it can be overruled on better grounds:
+
+* **Legibility would not have saved it.** Adding a set sound, a visible
+  countdown and a readable held state fixes finding 2 and turns "I
+  failed and do not know why" into "I failed and know why". The puzzle
+  is still not good, because —
+* **it contains no decision.** A routing puzzle should ask the player to
+  CHOOSE an order. This one has exactly one viable order,
+  nearest-neighbour, and the only question is execution speed.
+* **Movement trivialises it.** The owner solved it by teleporting. A
+  puzzle whose difficulty is walking speed evaporates the moment the
+  game grants a movement Echo — which this game does constantly and
+  deliberately.
+* `timed_run` fails the same way: execution rather than thought, and two
+  in one room do not even say which goal belongs to which start.
+
+### Keep the atom, not the family
+
+**`PLATE_HOLD_SECONDS = 4.0` is the valuable part**, and it is not the
+"hold all N at once" rule. A plate that stays down for four seconds
+after the player steps off is what lets a plate **open a door the player
+then has time to run through**. That is readable, classic, and unlike
+the family it has a decision in it: which door, when, and is there time.
+
+It is also the thing the owner asked for twice by different routes —
+"a pressure plate as a button that does something", and the button that
+opens a wall revealing the last target.
+
+**The plan:** cut both families; keep the `STAND` trigger and the
+four-second linger as a mechanic; point it at the two survivors,
+`target_challenge` and `switch_sequence`. A plate opens a wall, a target
+is behind it. The decision moves from *how fast can I walk* to *what do
+I do and in what order* — which is the room the owner described
+unprompted earlier in the session.
+
+**Keystone dependency:** this needs inter-element dependency, one
+element gating another, which does not exist today. Already recorded
+under "what the activity system cannot express"; this promotes it from
+a nice-to-have to the thing the whole plan rests on.
+
+Structural note: dropping both leaves two families, and
+`switch_sequence` is the hardcoded fallback
+(`RULES.get(kind, RULES["switch_sequence"])`), so nothing breaks. CS7
+already cut the list to "primitives that actually exist". Note also that
+`STAND` is used by `pressure_routing` alone, so cutting the family
+without keeping the trigger would orphan it.
+
+## FIFTH FINDING: a Metroidvania with no map, and a station that can never be repaired
+
+Owner, late in the session: *"im lost. i realize we have made a 3d
+metroidvania with no map. i have 3 keys but ive found no door that uses
+them [...] im at another pressure pads room thats impossible so i cant
+warp back but also its the end of a branch and has no warp back, this
+makes me as the player think there is more to this room."*
+
+### The compound soft-lock
+
+Two findings on this page combine into something neither shows alone:
+
+* `zone_builder` gives a room with ANY activities a station created
+  **broken** (`rid if puzzled else ""`).
+* `zone_controller` repairs that station **only** when that room's
+  activity is solved.
+* a `pressure_routing` room whose pads exceed the 28 m route budget
+  (finding 4, as corrected) has **no solution**.
+
+Therefore a room whose activity cannot be completed holds a save point
+that can **never** come online, and the Zone's warp network is
+permanently incomplete. Not a movement trap — the player can walk back
+out the way they came — but a permanent false promise. **Conditional on
+the generated layout, not universal** — which makes it harder to find,
+not less real.
+
+**The damage is the promise, and the owner named it precisely.** A
+broken station tells the player there is more here. An unsolvable puzzle
+makes that a claim the game can never honour, and a conscientious player
+correctly refuses to leave. An unsolvable activity does not merely waste
+a puzzle; **it strands the player against a lie.**
+
+### There is no map
+
+Confirmed: no minimap, no compass, nothing in `hud.gd`. The only
+wayfinding in the game is the single CHECK tracker with a bearing and a
+distance.
+
+And the game is structurally a Metroidvania: local keys, colour-coded
+locks (`BRANCH_COLOURS`), branches off a spine, warp stations to
+backtrack between, dead ends that send the player home. **Every
+structural element of the genre, and none of the supporting UI.**
+
+That is the diagnosis for "I'm lost." The Zones are not confusing; the
+game is built on a convention whose instrument it has never shipped.
+
+### The three unused keys are the same finding
+
+Keys do not auto-open locks — the save carries them separately (`the
+save carries the key 'blue'` / `the save carries the opened lock
+'c005/side_right'`) and opened doors stay open. So three keys means
+three findable doors exist. The player simply has no instrument capable
+of finding them. Not a key bug; the map finding again.
+
+## FOURTH FINDING: nothing checks that a `pressure_routing` route exists
+
+**Corrected.** An earlier revision of this page claimed the family was
+"unsolvable by construction". That was wrong, it reached the frontier
+head, and it is retracted here in full. The error: the owner said "this
+is impossible" and this lane converted a player's experience into a
+mechanical claim without reading the mechanism — the same mistake as the
+retracted hazard drums, twice in one session.
+
+**Plates linger.** `ActivityElement._on_body_exited` sets
+`_hold_left = Constants.PLATE_HOLD_SECONDS`, and `PLATE_HOLD_SECONDS`
+is `4.0`. Stepping off starts a four-second timer, not an instant
+release. At `WALK_SPEED = 7.0` that is a **28 metre travel budget**, and
+`pressure_routing` is exactly what its name says: a ROUTING puzzle.
+Success needs every plate set at once, so the whole path from leaving
+the first plate to standing on the last must fit inside four seconds.
+
+### The actual defect
+
+**Solvability is a function of pad layout against that 28 m budget, and
+nothing checks which layout was generated.** Five pads about 7 m apart
+is tight and fair. Five pads scattered across a large arena is sixty
+metres of walking and cannot be done. `activities._spot_on_surface`
+places elements to avoid overlapping each other and has no notion of a
+route between them, or of a time budget.
+
+This stays in the same family as the undeclared capability gate:
+**content validated as PLACED and never as COMPLETABLE.** The claim is
+narrower than the retracted one and it is the one the evidence supports.
+
+### The two-pad room was probably legibility, not layout
+
+The owner called an earlier two-pad room impossible. Two pads on a 28 m
+budget should be trivial, which points at finding 2 rather than at
+placement: **the only signal that a plate is still holding is a glow
+energy change** (`SET_ENERGY` 3.2 against `IDLE_ENERGY` 0.9). No sound,
+no countdown, no held-state readout. A player steps off, nothing says
+the plate is still down, and they reasonably conclude it released.
+
+That is the cost of the silent-activity finding stated properly: not
+"the room lacked polish" but **"the room was solvable and the game hid
+it."**
+
 ### Owner decision, recorded
 
 Scrap `timed_run` and `pressure_routing`; keep the pressure plate as a
